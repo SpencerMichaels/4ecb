@@ -21,6 +21,7 @@
 !.env.example
 result
 result-*
+/.pnpm-home/
 
 # .NET build output
 **/bin/

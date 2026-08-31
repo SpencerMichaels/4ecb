@@ -1,0 +1,8 @@
+{
+  "relayUrl": null,
+  "defaultPackUrl": null,
+  "features": {
+    "playMode": false,
+    "sessionRelay": false
+  }
+}

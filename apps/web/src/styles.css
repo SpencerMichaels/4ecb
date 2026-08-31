@@ -1,0 +1,290 @@
+:root {
+  color: #20272a;
+  background: #f4f1e8;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  line-height: 1.5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 720px;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button,
+.file-button {
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible,
+.file-button:focus-within {
+  outline: 3px solid #315f73;
+  outline-offset: 2px;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-header {
+  align-items: center;
+  background: #243238;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  padding: 1.25rem 2rem;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1,
+h2 {
+  margin-bottom: 0.25rem;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.2rem;
+  text-transform: uppercase;
+}
+
+.unofficial {
+  margin: 0;
+  max-width: 32rem;
+  text-align: right;
+}
+
+.primary-nav {
+  align-items: center;
+  background: #fff;
+  border-bottom: 1px solid #b9b9b2;
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.75rem 2rem;
+}
+
+.primary-nav a {
+  color: #193f50;
+  font-weight: 700;
+}
+
+.primary-nav span {
+  color: #777;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(19rem, 26rem) minmax(0, 1fr);
+  min-height: calc(100vh - 9rem);
+}
+
+.pack-panel,
+.content-panel {
+  padding: 1.5rem;
+}
+
+.pack-panel {
+  background: #e7e3d8;
+  border-right: 1px solid #b9b9b2;
+}
+
+.section-heading,
+.content-toolbar {
+  align-items: end;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.file-button,
+.pack-actions button {
+  background: #fff;
+  border: 1px solid #53636a;
+  border-radius: 0.2rem;
+  color: #243238;
+  padding: 0.45rem 0.7rem;
+}
+
+.file-button input {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.status,
+.result-count,
+.identifier {
+  color: #566066;
+  font-size: 0.875rem;
+}
+
+.error {
+  background: #fff0ed;
+  border-left: 4px solid #9d2d1c;
+  display: grid;
+  gap: 0.25rem;
+  margin: 1rem 0;
+  padding: 0.75rem;
+}
+
+.empty-state {
+  background: rgb(255 255 255 / 55%);
+  border: 1px dashed #8d918e;
+  padding: 1rem;
+}
+
+.pack-list,
+.entity-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.pack-list > li {
+  border-top: 1px solid #b9b9b2;
+  padding: 0.75rem 0;
+}
+
+.pack-list > li > button,
+.entity-list button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.5rem;
+  text-align: left;
+  width: 100%;
+}
+
+.pack-list > li > button.selected,
+.entity-list button:hover {
+  background: #fff;
+}
+
+.pack-list span,
+.entity-list span {
+  color: #566066;
+  font-size: 0.8rem;
+}
+
+.pack-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.content-toolbar {
+  border-bottom: 1px solid #b9b9b2;
+  padding-bottom: 1rem;
+}
+
+.content-toolbar label {
+  display: grid;
+  font-size: 0.85rem;
+  font-weight: 700;
+  gap: 0.25rem;
+}
+
+.content-toolbar input {
+  border: 1px solid #69757a;
+  min-width: 18rem;
+  padding: 0.45rem;
+}
+
+.content-columns {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(16rem, 22rem) minmax(24rem, 1fr);
+}
+
+.entity-list {
+  border: 1px solid #c8c7c1;
+  max-height: calc(100vh - 16rem);
+  overflow: auto;
+}
+
+.entity-list li + li {
+  border-top: 1px solid #deddd7;
+}
+
+.entity-detail {
+  max-height: calc(100vh - 12rem);
+  overflow: auto;
+  padding: 1rem 0 3rem;
+}
+
+.facts,
+.field-list {
+  display: grid;
+  gap: 0;
+}
+
+.facts {
+  border: 1px solid #c8c7c1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.facts > div,
+.field-list > div {
+  border-bottom: 1px solid #deddd7;
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) minmax(0, 2fr);
+  padding: 0.5rem;
+}
+
+dt {
+  font-weight: 700;
+}
+
+dd {
+  margin: 0;
+}
+
+.preserve-lines {
+  white-space: pre-wrap;
+}
+
+@media (max-width: 960px) {
+  .workspace {
+    grid-template-columns: 20rem minmax(0, 1fr);
+  }
+
+  .content-columns {
+    display: block;
+  }
+
+  .entity-list,
+  .entity-detail {
+    max-height: none;
+  }
+}

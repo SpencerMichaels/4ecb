@@ -1,0 +1,21 @@
+{
+  "name": "@4ecb/browser-storage",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@4ecb/content-pack": "workspace:*",
+    "idb": "8.0.3"
+  },
+  "devDependencies": {
+    "@4ecb/content-domain": "workspace:*",
+    "fake-indexeddb": "6.2.5",
+    "typescript": "catalog:"
+  }
+}

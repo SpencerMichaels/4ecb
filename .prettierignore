@@ -1,0 +1,15 @@
+CharacterBuilder/
+CBLoader/
+reverse-engineering/
+reverse-engineering/generated/
+reverse-engineering/reference/cbloader-source/
+reverse-engineering/tools/dotnet/
+tmp/
+node_modules/
+dist/
+coverage/
+pnpm-lock.yaml
+*.dnd4e
+*.dndcamp
+*.part
+*.xml

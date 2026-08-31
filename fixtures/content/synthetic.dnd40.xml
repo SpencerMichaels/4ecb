@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<D20Rules game-system="D&amp;D4E">
+  <RulesElement internal-id="ID_4ECB_SYNTHETIC_RACE_1" name="Cliffkin" type="Race" source="4ECB Synthetic Fixtures" revision-date="2026-08-31">
+    <Category>Race, Natural Origin</Category>
+    <Flavor>Sure-footed travelers from high stone settlements.</Flavor>
+    <specific name="Size">Medium</specific>
+    <specific name="Speed">6 squares</specific>
+    <specific name="Short Description">A synthetic race used to exercise imports.</specific>
+    <rules>
+      <statadd name="Speed" value="+6" />
+      <textstring name="Size" value="Medium" />
+      <select type="Race Ability Bonus" number="1" Category="Dexterity|Wisdom" />
+    </rules>
+    Choose Cliffkin when testing content compilation and browser storage.
+  </RulesElement>
+  <RulesElement internal-id="ID_4ECB_SYNTHETIC_FEAT_1" name="Measured Step" type="Feat" source="4ECB Synthetic Fixtures" revision-date="2026-08-31">
+    <Category>Heroic Tier</Category>
+    <Prereqs>Level 1</Prereqs>
+    <specific name="Tier">Heroic</specific>
+    <specific name="Short Description">Gain a synthetic bonus to a test statistic.</specific>
+    <rules>
+      <statadd name="Synthetic Movement Bonus" value="+1" />
+    </rules>
+    You have practiced moving carefully through deliberately artificial terrain.
+  </RulesElement>
+  <RulesElement internal-id="ID_4ECB_SYNTHETIC_POWER_1" name="Test the Boundary" type="Power" source="4ECB Synthetic Fixtures" revision-date="2026-08-31">
+    <Category>Cliffkin Racial Power</Category>
+    <Flavor>A concise action reveals whether the boundary holds.</Flavor>
+    <specific name="Power Usage">Encounter</specific>
+    <specific name="Action Type">Minor Action</specific>
+    <specific name="Attack Type">Personal</specific>
+    <specific name="Effect">Gain a +2 power bonus to the next synthetic check you make this turn.</specific>
+    <rules />
+    This record exists only to exercise power fields and card-oriented content.
+  </RulesElement>
+  <FixtureMetadata purpose="top-level raw element preservation" />
+</D20Rules>

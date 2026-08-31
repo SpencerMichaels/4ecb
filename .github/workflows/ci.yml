@@ -1,0 +1,19 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  public-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: cachix/install-nix-action@v31
+      - name: Run tests and deterministic fixture build
+        run: nix develop path:. --command bash scripts/check.sh

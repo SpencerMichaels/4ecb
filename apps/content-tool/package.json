@@ -1,0 +1,20 @@
+{
+  "name": "@4ecb/content-tool",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@4ecb/content-domain": "workspace:*",
+    "@4ecb/content-pack": "workspace:*",
+    "@4ecb/legacy-wotc": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "tsx": "4.23.13",
+    "typescript": "catalog:"
+  }
+}

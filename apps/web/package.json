@@ -1,0 +1,27 @@
+{
+  "name": "@4ecb/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json"
+  },
+  "dependencies": {
+    "@4ecb/browser-storage": "workspace:*",
+    "@4ecb/content-domain": "workspace:*",
+    "@4ecb/content-pack": "workspace:*",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "@vitejs/plugin-react": "6.0.0",
+    "typescript": "catalog:",
+    "vite": "8.2.2",
+    "vite-plugin-pwa": "1.3.0"
+  }
+}
