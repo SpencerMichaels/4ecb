@@ -107,16 +107,30 @@ later against functioning screens in short feedback loops with the product
 owner. No workflow may depend on animation or decorative presentation for its
 correctness.
 
+### D017 — M2 uses a purpose-built in-memory query index
+
+The first physical compendium index is a dependency-free, worker-hosted inverted
+token index over normalized entities. It precomputes normalized facets and
+numeric sort/filter values, resolves ID-valued facets to display names, and
+builds relationship edges from stable-ID references. The public serializable
+query AST remains independent of this implementation so a later measured need
+can replace it without changing URLs, saved searches, builder choice dialogs, or
+UI contracts. Full-corpus measurements met the M2 budgets without adding a
+search runtime or prebuilt binary index.
+
+### D018 — IndexedDB stores verified encoded pack bytes
+
+New content-pack installations retain the original verified `.4ecp` bytes in
+IndexedDB rather than cloning the much larger decoded object graph. Readers
+decompress and decode on demand in a worker. This keeps the installed private
+corpus close to its approximately 5.6 MiB gzip size and makes storage writes
+proportional to the portable artifact. M1 object-form records remain readable so
+the change does not invalidate existing browser installations.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed
 to choose well.
-
-### Search implementation
-
-Choose or build the physical full-text/facet index during M2 after benchmarking
-the normalized full corpus. The serializable query AST and typed facet contract
-are fixed first so the choice is replaceable.
 
 ### Content-pack physical encoding
 
@@ -148,12 +162,6 @@ required restart behavior warrants it.
 Room TTL, payload limits, connection limits, and rate limits require realistic
 M7 bundle sizes and load tests. Secure conservative defaults are fixed before a
 public endpoint launches.
-
-### Package manager and detailed build orchestration
-
-Choose during M1 based on the repository's generated workspace, Nix integration,
-CI caching, and developer ergonomics. This does not change the product
-architecture.
 
 ## ADR template
 

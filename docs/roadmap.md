@@ -72,6 +72,10 @@ corpus into an internal content pack.
 
 ## M2 — Compendium vertical slice
 
+**Status:** complete (2026-08-31). Query semantics and measured budgets are in
+[query-engine.md](query-engine.md); verification evidence is in
+[implementation-status.md](implementation-status.md).
+
 ### Goal
 
 Deliver the first independently useful public-facing capability and benchmark

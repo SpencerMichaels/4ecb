@@ -1,7 +1,7 @@
 # Modern D&D 4E Character Builder workspace
 
 This workspace contains the supplied legacy Character Builder application and
-data, the compatibility research, and the first production foundation for its
+data, the compatibility research, and the working compendium alpha for its
 modern web replacement.
 
 - Start with [`docs/README.md`](docs/README.md) for the product definition,
@@ -38,10 +38,20 @@ merge and pack build with:
 nix develop path:. --command bash scripts/build-private-content.sh
 ```
 
+Import `tmp/content/full-local.4ecp`, activate it under Content settings, and
+open the Compendium to search the complete local corpus. Query state is kept in
+the URL fragment and saved searches remain in browser-local storage.
+
+Measure the query engine against a private pack with:
+
+```sh
+nix develop path:. --command pnpm benchmark:query tmp/content/full-local.4ecp
+```
+
 Build the unprivileged production container with `docker build -t 4ecb .`, or
 the live development target with `docker build --target development -t 4ecb-dev
 .`. Neither image includes the ignored legacy application or official corpus.
 
-Milestone M1 is complete. See [`docs/implementation-status.md`](docs/implementation-status.md)
+Milestones M1 and M2 are complete. See [`docs/implementation-status.md`](docs/implementation-status.md)
 for verified evidence and [`docs/roadmap.md`](docs/roadmap.md) for the next
 milestone.

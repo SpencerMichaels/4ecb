@@ -21,6 +21,8 @@ application's architecture.
    corpus representation and compatibility rules.
 6. [Implementation status](implementation-status.md) records completed work,
    verification evidence, and the next stopping boundary.
+7. [Query engine](query-engine.md) specifies compendium query semantics,
+   worker/index behavior, URL state, and measured performance budgets.
 
 ## Definition hierarchy
 
@@ -38,5 +40,5 @@ application's architecture.
 ## Status
 
 The reverse-engineering specification remains the compatibility evidence base.
-The M1 workspace and content-pack foundation is implemented and verified; M2 is
-the next executable milestone in the [roadmap](roadmap.md).
+The M1 foundation and M2 compendium vertical slice are implemented and verified;
+M3 is the next executable milestone in the [roadmap](roadmap.md).
