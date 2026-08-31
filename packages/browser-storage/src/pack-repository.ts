@@ -1,15 +1,26 @@
 import {
+  decodeContentPack,
+  encodeContentPack,
   validateContentPack,
   type ContentPack,
   type ContentPackManifest,
 } from "@4ecb/content-pack";
 import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from "idb";
 
-interface StoredContentPack {
+interface StoredContentPackBase {
   readonly packId: string;
   readonly manifest: ContentPackManifest;
+}
+
+interface EncodedStoredContentPack extends StoredContentPackBase {
+  readonly encodedPack: ArrayBuffer;
+}
+
+interface LegacyStoredContentPack extends StoredContentPackBase {
   readonly pack: ContentPack;
 }
+
+type StoredContentPack = EncodedStoredContentPack | LegacyStoredContentPack;
 
 interface Setting<Value> {
   readonly key: string;
@@ -53,6 +64,14 @@ export class ContentPackRepository {
   }
 
   async install(pack: ContentPack): Promise<ContentPackManifest> {
+    const bytes = new TextEncoder().encode(encodeContentPack(pack));
+    return this.installEncoded(pack, bytes.buffer);
+  }
+
+  async installEncoded(
+    pack: ContentPack,
+    encodedPack: ArrayBuffer,
+  ): Promise<ContentPackManifest> {
     const validation = await validateContentPack(pack);
     if (!validation.valid) {
       throw new Error(
@@ -74,7 +93,7 @@ export class ContentPackRepository {
       await database.put("contentPacks", {
         packId: pack.manifest.packId,
         manifest: pack.manifest,
-        pack,
+        encodedPack,
       });
       return pack.manifest;
     } finally {
@@ -95,7 +114,10 @@ export class ContentPackRepository {
   async get(packId: string): Promise<ContentPack | undefined> {
     const database = await openContentDatabase(this.#databaseName);
     try {
-      return (await database.get("contentPacks", packId))?.pack;
+      const stored = await database.get("contentPacks", packId);
+      if (stored === undefined) return undefined;
+      if ("pack" in stored) return stored.pack;
+      return decodeStoredPack(stored.encodedPack);
     } finally {
       database.close();
     }
@@ -158,6 +180,19 @@ export class ContentPackRepository {
       database.close();
     }
   }
+}
+
+async function decodeStoredPack(encoded: ArrayBuffer): Promise<ContentPack> {
+  const bytes = new Uint8Array(encoded);
+  const isGzip = bytes[0] === 0x1f && bytes[1] === 0x8b;
+  const text = isGzip
+    ? await new Response(
+        new Blob([encoded])
+          .stream()
+          .pipeThrough(new DecompressionStream("gzip")),
+      ).text()
+    : new TextDecoder().decode(bytes);
+  return decodeContentPack(text);
 }
 
 export async function deleteContentDatabase(

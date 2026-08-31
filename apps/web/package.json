@@ -13,6 +13,7 @@
     "@4ecb/browser-storage": "workspace:*",
     "@4ecb/content-domain": "workspace:*",
     "@4ecb/content-pack": "workspace:*",
+    "@4ecb/query-engine": "workspace:*",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },

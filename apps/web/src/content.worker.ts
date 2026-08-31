@@ -37,7 +37,10 @@ async function importPack(buffer: ArrayBuffer): Promise<void> {
       );
     }
     respond({ type: "progress", phase: "storing" });
-    const manifest = await new ContentPackRepository().install(pack);
+    const manifest = await new ContentPackRepository().installEncoded(
+      pack,
+      buffer,
+    );
     respond({ type: "complete", manifest });
   } catch (error: unknown) {
     respond({

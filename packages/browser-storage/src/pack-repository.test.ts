@@ -90,4 +90,18 @@ describe("ContentPackRepository", () => {
       storage.install(await makePack("collision", "second")),
     ).rejects.toThrow("different digest");
   });
+
+  it("installs and decodes pre-encoded pack bytes", async () => {
+    const storage = repository();
+    const pack = await makePack("encoded");
+    const encoded = await new Response(
+      new Blob([JSON.stringify(pack)])
+        .stream()
+        .pipeThrough(new CompressionStream("gzip")),
+    ).arrayBuffer();
+    await storage.installEncoded(pack, encoded);
+    expect((await storage.get("encoded"))?.manifest.contentDigest).toBe(
+      pack.manifest.contentDigest,
+    );
+  });
 });
