@@ -127,6 +127,17 @@ corpus close to its approximately 5.6 MiB gzip size and makes storage writes
 proportional to the portable artifact. M1 object-form records remain readable so
 the change does not invalidate existing browser installations.
 
+### D019 — M3 preserves the complete legacy character envelope verbatim
+
+Before the modern rules engine can regenerate every legacy cache, an imported
+character stores the complete `.dnd4e` XML string alongside a normalized,
+versioned read model. Export returns that envelope unchanged, so comments,
+ordering, unknown elements and attributes, unresolved choices, and compatibility
+caches survive. Library metadata, content binding, and sheet preferences live
+outside the envelope. M4 commands will make normalized authoritative state
+editable; engine-backed export will then update recognized XML while retaining
+unknown extensions. The UI labels all M3 calculations as legacy cached values.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

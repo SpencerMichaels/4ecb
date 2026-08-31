@@ -6,6 +6,7 @@ import {
 
 export type AppRoute =
   | { readonly page: "settings" }
+  | { readonly page: "characters"; readonly characterId?: string }
   | {
       readonly page: "compendium";
       readonly query: CompendiumQuery;
@@ -16,6 +17,15 @@ export function parseHashRoute(hash: string): AppRoute {
   const route = hash.replace(/^#/, "") || "/compendium";
   const [path = "/compendium", search = ""] = route.split("?", 2);
   if (path === "/settings") return { page: "settings" };
+  if (path === "/characters") return { page: "characters" };
+  const characterPrefix = "/characters/";
+  if (path.startsWith(characterPrefix)) {
+    const characterId = decodeURIComponent(path.slice(characterPrefix.length));
+    return {
+      page: "characters",
+      ...(characterId.length === 0 ? {} : { characterId }),
+    };
+  }
   const entityPrefix = "/compendium/entity/";
   if (path.startsWith(entityPrefix)) {
     const entityId = decodeURIComponent(path.slice(entityPrefix.length));

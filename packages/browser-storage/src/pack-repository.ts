@@ -5,6 +5,7 @@ import {
   type ContentPack,
   type ContentPackManifest,
 } from "@4ecb/content-pack";
+import type { CharacterRecord } from "@4ecb/character-domain";
 import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from "idb";
 
 interface StoredContentPackBase {
@@ -37,6 +38,11 @@ interface CharacterBuilderDatabase extends DBSchema {
     key: string;
     value: Setting<unknown>;
   };
+  characters: {
+    key: string;
+    value: CharacterRecord;
+    indexes: { "by-updated": string; "by-deleted": string };
+  };
 }
 
 const DEFAULT_DATABASE_NAME = "4ecb";
@@ -45,13 +51,24 @@ const ACTIVE_PACK_KEY = "active-content-pack";
 async function openContentDatabase(
   databaseName: string,
 ): Promise<IDBPDatabase<CharacterBuilderDatabase>> {
-  return openDB<CharacterBuilderDatabase>(databaseName, 1, {
+  return openDB<CharacterBuilderDatabase>(databaseName, 2, {
     upgrade(database) {
-      const packs = database.createObjectStore("contentPacks", {
-        keyPath: "packId",
-      });
-      packs.createIndex("by-name", "manifest.name");
-      database.createObjectStore("settings", { keyPath: "key" });
+      if (!database.objectStoreNames.contains("contentPacks")) {
+        const packs = database.createObjectStore("contentPacks", {
+          keyPath: "packId",
+        });
+        packs.createIndex("by-name", "manifest.name");
+      }
+      if (!database.objectStoreNames.contains("settings")) {
+        database.createObjectStore("settings", { keyPath: "key" });
+      }
+      if (!database.objectStoreNames.contains("characters")) {
+        const characters = database.createObjectStore("characters", {
+          keyPath: "id",
+        });
+        characters.createIndex("by-updated", "updatedAt");
+        characters.createIndex("by-deleted", "deletedAt");
+      }
     },
   });
 }

@@ -109,6 +109,11 @@ the real content/query workload.
 
 ## M3 — Legacy character import, library, and read-only sheets
 
+**Status:** complete (2026-08-31). The compatibility/storage contract and
+verification evidence are recorded in
+[character-import-and-sheets.md](character-import-and-sheets.md) and
+[implementation-status.md](implementation-status.md).
+
 ### Goal
 
 Make existing character collections usable without yet claiming full editing

@@ -1,0 +1,395 @@
+import type {
+  LegacyCharacterSnapshot,
+  LegacyEnvelope,
+  LegacyLootSnapshot,
+  LegacyPowerSnapshot,
+  LegacyRuleElement,
+  LegacyWeaponSnapshot,
+} from "@4ecb/character-domain";
+import { SaxesParser } from "saxes";
+
+export interface Dnd4eImportDiagnostic {
+  readonly severity: "error" | "warning" | "info";
+  readonly code: string;
+  readonly message: string;
+}
+
+export interface Dnd4eImportReport {
+  readonly diagnostics: readonly Dnd4eImportDiagnostic[];
+  readonly rootVersion?: string;
+  readonly gameSystem?: string;
+  readonly legality?: string;
+  readonly levelCount: number;
+  readonly selectedRuleCount: number;
+  readonly powerCount: number;
+  readonly lootCount: number;
+  readonly unknownRootElements: readonly string[];
+  readonly usesLegacyCache: true;
+}
+
+export interface Dnd4eImportResult {
+  readonly envelope: LegacyEnvelope;
+  readonly snapshot: LegacyCharacterSnapshot;
+  readonly report: Dnd4eImportReport;
+}
+
+interface XmlNode {
+  readonly name: string;
+  readonly attributes: Readonly<Record<string, string>>;
+  readonly children: XmlNode[];
+  text: string;
+}
+
+function key(value: string): string {
+  return value.toLocaleLowerCase();
+}
+
+function attribute(node: XmlNode, name: string): string | undefined {
+  const wanted = key(name);
+  return Object.entries(node.attributes).find(
+    ([candidate]) => key(candidate) === wanted,
+  )?.[1];
+}
+
+function direct(node: XmlNode, name: string): XmlNode[] {
+  const wanted = key(name);
+  return node.children.filter((child) => key(child.name) === wanted);
+}
+
+function first(node: XmlNode | undefined, name: string): XmlNode | undefined {
+  return node === undefined ? undefined : direct(node, name)[0];
+}
+
+function normalizedText(node: XmlNode | undefined): string {
+  if (node === undefined) return "";
+  const nested = node.children.map(normalizedText).join("");
+  return `${node.text}${nested}`.replace(/\r\n?/g, "\n").trim();
+}
+
+function parseTree(xml: string): XmlNode {
+  const stack: XmlNode[] = [];
+  let root: XmlNode | undefined;
+  const parser = new SaxesParser({ xmlns: false });
+  parser.on("opentag", (tag) => {
+    const node: XmlNode = {
+      name: tag.name,
+      attributes: Object.fromEntries(Object.entries(tag.attributes)),
+      children: [],
+      text: "",
+    };
+    const parent = stack.at(-1);
+    if (parent === undefined) root = node;
+    else parent.children.push(node);
+    stack.push(node);
+  });
+  const append = (value: string) => {
+    const node = stack.at(-1);
+    if (node !== undefined) node.text += value;
+  };
+  parser.on("text", append);
+  parser.on("cdata", append);
+  parser.on("closetag", () => {
+    stack.pop();
+  });
+  parser.write(xml).close();
+  if (root === undefined)
+    throw new Error("The file does not contain an XML root element");
+  return root;
+}
+
+function detailsFrom(sheet: XmlNode | undefined): Record<string, string> {
+  const details = first(sheet, "Details");
+  if (details === undefined) return {};
+  return Object.fromEntries(
+    details.children.map((node) => [node.name, normalizedText(node)]),
+  );
+}
+
+function abilitiesFrom(sheet: XmlNode | undefined): Record<string, number> {
+  const scores = first(sheet, "AbilityScores");
+  if (scores === undefined) return {};
+  return Object.fromEntries(
+    scores.children.flatMap((node) => {
+      const score = Number(attribute(node, "score"));
+      return Number.isFinite(score) ? [[node.name, score] as const] : [];
+    }),
+  );
+}
+
+function statsFrom(sheet: XmlNode | undefined): Record<string, string> {
+  const block = first(sheet, "StatBlock");
+  if (block === undefined) return {};
+  const result: Record<string, string> = {};
+  for (const stat of direct(block, "Stat")) {
+    const value = attribute(stat, "value") ?? "";
+    for (const alias of direct(stat, "alias")) {
+      const name = attribute(alias, "name");
+      if (name !== undefined && result[name] === undefined)
+        result[name] = value;
+    }
+  }
+  return result;
+}
+
+function ruleElement(node: XmlNode): LegacyRuleElement {
+  const id = attribute(node, "internal-id");
+  const legality = attribute(node, "legality");
+  const description = direct(node, "specific").find(
+    (specific) =>
+      key(attribute(specific, "name") ?? "") === "short description",
+  );
+  const shortDescription = normalizedText(description) || undefined;
+  return {
+    ...(id === undefined ? {} : { id }),
+    name: attribute(node, "name") ?? "",
+    type: attribute(node, "type") ?? "",
+    ...(legality === undefined ? {} : { legality }),
+    ...(shortDescription === undefined
+      ? {}
+      : { description: shortDescription }),
+  };
+}
+
+function selectedRulesFrom(sheet: XmlNode | undefined): LegacyRuleElement[] {
+  const tally = first(sheet, "RulesElementTally");
+  return tally === undefined
+    ? []
+    : direct(tally, "RulesElement").map(ruleElement);
+}
+
+function specifics(node: XmlNode): Record<string, string> {
+  return Object.fromEntries(
+    direct(node, "specific").map((specific) => [
+      attribute(specific, "name") ?? "",
+      normalizedText(specific),
+    ]),
+  );
+}
+
+function weaponFrom(node: XmlNode): LegacyWeaponSnapshot {
+  const value = (name: string) =>
+    normalizedText(first(node, name)) || undefined;
+  const attackBonus = value("AttackBonus");
+  const damage = value("Damage");
+  const attackStat = value("AttackStat");
+  const defense = value("Defense");
+  const hitComponents = value("HitComponents");
+  const damageComponents = value("DamageComponents");
+  const conditions = value("Conditions");
+  return {
+    name: attribute(node, "name") ?? "Unspecified",
+    ...(attackBonus === undefined ? {} : { attackBonus }),
+    ...(damage === undefined ? {} : { damage }),
+    ...(attackStat === undefined ? {} : { attackStat }),
+    ...(defense === undefined ? {} : { defense }),
+    ...(hitComponents === undefined ? {} : { hitComponents }),
+    ...(damageComponents === undefined ? {} : { damageComponents }),
+    ...(conditions === undefined ? {} : { conditions }),
+  };
+}
+
+function powersFrom(sheet: XmlNode | undefined): LegacyPowerSnapshot[] {
+  const powerStats = first(sheet, "PowerStats");
+  const tally = first(sheet, "RulesElementTally");
+  if (powerStats === undefined) return [];
+  const tallyPowers = new Map<string, XmlNode>();
+  for (const node of tally === undefined ? [] : direct(tally, "RulesElement")) {
+    if (key(attribute(node, "type") ?? "") === "power")
+      tallyPowers.set(key(attribute(node, "name") ?? ""), node);
+  }
+  return direct(powerStats, "Power").map((power) => {
+    const name = attribute(power, "name") ?? "Unnamed power";
+    const cached = specifics(power);
+    const selected = tallyPowers.get(key(name));
+    const fields = selected === undefined ? {} : specifics(selected);
+    const id =
+      selected === undefined ? undefined : attribute(selected, "internal-id");
+    return {
+      name,
+      ...(id === undefined ? {} : { id }),
+      ...(cached["Power Usage"] === undefined
+        ? {}
+        : { usage: cached["Power Usage"] }),
+      ...(cached["Action Type"] === undefined
+        ? {}
+        : { actionType: cached["Action Type"] }),
+      ...(fields.Keywords === undefined ? {} : { keywords: fields.Keywords }),
+      ...(fields["Attack Type"] === undefined
+        ? {}
+        : { attackType: fields["Attack Type"] }),
+      ...(fields.Target === undefined ? {} : { target: fields.Target }),
+      ...(fields["Power Description"] === undefined
+        ? {}
+        : { description: fields["Power Description"] }),
+      ...(fields.Source === undefined ? {} : { source: fields.Source }),
+      ...(fields.Level === undefined ? {} : { level: fields.Level }),
+      weapons: direct(power, "Weapon").map(weaponFrom),
+    };
+  });
+}
+
+function lootFrom(sheet: XmlNode | undefined): LegacyLootSnapshot[] {
+  const tally = first(sheet, "LootTally");
+  if (tally === undefined) return [];
+  return direct(tally, "loot").flatMap((loot) => {
+    const elements = direct(loot, "RulesElement").map(ruleElement);
+    const count = Number.parseInt(attribute(loot, "count") ?? "0", 10) || 0;
+    if (
+      count <= 0 &&
+      (Number.parseInt(attribute(loot, "equip-count") ?? "0", 10) || 0) <= 0
+    )
+      return [];
+    return [
+      {
+        name:
+          attribute(loot, "name") ??
+          elements
+            .map((item) => item.name)
+            .filter(Boolean)
+            .join(" "),
+        count,
+        equippedCount:
+          Number.parseInt(attribute(loot, "equip-count") ?? "0", 10) || 0,
+        showPowerCard: attribute(loot, "ShowPowerCard") !== "0",
+        elements,
+      },
+    ];
+  });
+}
+
+function textStringsFrom(root: XmlNode): Record<string, string> {
+  return Object.fromEntries(
+    direct(root, "textstring").map((node) => [
+      attribute(node, "name") ?? "",
+      normalizedText(node),
+    ]),
+  );
+}
+
+export function importDnd4e(input: string): Dnd4eImportResult {
+  const sourceXml = input;
+  const root = parseTree(input.startsWith("\uFEFF") ? input.slice(1) : input);
+  if (key(root.name) !== "d20character")
+    throw new Error(`Expected D20Character root but found ${root.name}`);
+  const gameSystem = attribute(root, "game-system");
+  const version = attribute(root, "Version");
+  const legality = attribute(root, "legality");
+  const sheet = first(root, "CharacterSheet");
+  const known = new Set([
+    "charactersheet",
+    "d20campaignsetting",
+    "level",
+    "textstring",
+    "alternate",
+    "grabbag",
+    "ruleselementtally",
+    "loot",
+    "loottally",
+    "abilityscores",
+    "statblock",
+    "journal",
+    "companions",
+    "powerstats",
+    "details",
+  ]);
+  const unknownRootElements = root.children
+    .map((node) => node.name)
+    .filter((name) => !known.has(key(name)));
+  const levelCount = direct(root, "Level").length;
+  const selectedRules = selectedRulesFrom(sheet);
+  const details = detailsFrom(sheet);
+  for (const type of [
+    "Race",
+    "Class",
+    "Theme",
+    "Paragon Path",
+    "Epic Destiny",
+  ]) {
+    const selected = selectedRules.find((rule) => key(rule.type) === key(type));
+    const detailKey = type.replaceAll(" ", "");
+    if (details[detailKey] === undefined && selected?.name) {
+      details[detailKey] = selected.name;
+    }
+  }
+  const powers = powersFrom(sheet);
+  const loot = lootFrom(sheet);
+  const diagnostics: Dnd4eImportDiagnostic[] = [];
+  if (gameSystem !== "D&D4E")
+    diagnostics.push({
+      severity: "warning",
+      code: "root.game-system",
+      message: `Unexpected game system: ${gameSystem ?? "missing"}`,
+    });
+  if (sheet === undefined)
+    diagnostics.push({
+      severity: "warning",
+      code: "snapshot.missing",
+      message:
+        "No CharacterSheet cache is present; only limited metadata can be displayed until the rules engine is available.",
+    });
+  if (unknownRootElements.length > 0)
+    diagnostics.push({
+      severity: "info",
+      code: "extensions.preserved",
+      message: `${unknownRootElements.length} unknown root element(s) were preserved verbatim.`,
+    });
+  diagnostics.push({
+    severity: "info",
+    code: "snapshot.legacy-cache",
+    message:
+      "Displayed calculations come from the legacy CharacterSheet cache and have not yet been recalculated.",
+  });
+  return {
+    envelope: {
+      format: "dnd4e",
+      ...(version === undefined ? {} : { version }),
+      ...(gameSystem === undefined ? {} : { gameSystem }),
+      ...(legality === undefined ? {} : { legality }),
+      sourceXml,
+    },
+    snapshot: {
+      details,
+      abilities: abilitiesFrom(sheet),
+      stats: statsFrom(sheet),
+      selectedRules,
+      powers,
+      loot,
+      textStrings: textStringsFrom(root),
+      levelCount,
+      source: "legacy-cache",
+    },
+    report: {
+      diagnostics,
+      ...(version === undefined ? {} : { rootVersion: version }),
+      ...(gameSystem === undefined ? {} : { gameSystem }),
+      ...(legality === undefined ? {} : { legality }),
+      levelCount,
+      selectedRuleCount: selectedRules.length,
+      powerCount: powers.length,
+      lootCount: loot.length,
+      unknownRootElements,
+      usesLegacyCache: true,
+    },
+  };
+}
+
+/** M3 is loss-preserving: until engine-backed edits exist, export the imported envelope byte-for-byte (apart from an optional BOM). */
+export function exportDnd4e(envelope: LegacyEnvelope): string {
+  return envelope.sourceXml;
+}
+
+export function comparePreservation(
+  before: string,
+  after: string,
+): { readonly identical: boolean; readonly firstDifference?: number } {
+  if (before === after) return { identical: true };
+  const length = Math.min(before.length, after.length);
+  let firstDifference = length;
+  for (let index = 0; index < length; index += 1) {
+    if (before[index] !== after[index]) {
+      firstDifference = index;
+      break;
+    }
+  }
+  return { identical: false, firstDifference };
+}

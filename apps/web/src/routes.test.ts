@@ -3,6 +3,14 @@ import { describe, expect, it } from "vitest";
 import { compendiumHash, parseHashRoute } from "./routes";
 
 describe("hash routes", () => {
+  it("parses character library and sheet routes", () => {
+    expect(parseHashRoute("#/characters")).toEqual({ page: "characters" });
+    expect(parseHashRoute("#/characters/character%201")).toEqual({
+      page: "characters",
+      characterId: "character 1",
+    });
+  });
+
   it("keeps compendium query state in a fragment route", () => {
     const hash = compendiumHash({
       text: "stone step",

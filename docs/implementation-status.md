@@ -2,10 +2,57 @@
 
 ## Current stopping point
 
-Milestones M1 and M2 are complete. The application is now a useful local-first,
-offline compendium alpha, but it is deliberately not yet a character builder.
-The next work is M3: loss-preserving `.dnd4e` import, a local character library,
-read-only sheets, printing, and familiar power/item cards.
+Milestones M1 through M3 are complete. The application is now a local-first
+compendium and legacy character viewer, but it deliberately does not edit builds
+or claim modern rules-engine parity. The next work is M4: the recovered rule
+language evaluator, authoritative character history, and generic builder.
+
+## M3 delivered
+
+- `character-domain`, `legacy-dnd4e`, and `sheet-model` packages separating the
+  versioned durable record, compatibility adapter, and semantic rendering model.
+- A SAX-based `.dnd4e` importer that extracts details, final cached stats,
+  selections, level count, text strings, inventory, powers, and weapon
+  calculations without dropping the source envelope.
+- Exact legacy-envelope export and an export/re-import preservation diff. No-edit
+  exports keep comments, whitespace, order, unknown attributes/elements, and
+  opaque link tokens unchanged.
+- IndexedDB schema v2 with character list/get/put, metadata and content-profile
+  binding, sheet preferences, duplication, recoverable trash, permanent purge,
+  and full native JSON backup/restore.
+- An accessible local character library with `.dnd4e` import reports, explicit
+  missing-profile state and rebinding, metadata editing, backup/restore, and
+  checked legacy export.
+- A browser sheet with summary sections, familiar usage-colored power/item
+  cards, bound-content enrichment, cached-value warnings, blank hit points,
+  Letter/A4 selection, monochrome mode, card inclusion switches, and browser
+  print/save-to-PDF entry point.
+
+## M3 verification record
+
+On 2026-08-31:
+
+- formatting, ESLint, all TypeScript projects, 35 unit/integration tests, and the
+  production Vite/PWA build passed;
+- the supplied private level-8 character imported as Hu Sheng-ming with 8 level
+  records, 185 selected rules, 21 powers, 24 carried/equipped loot entries, and
+  113 cached stat aliases; exact export/re-import comparison found no differing
+  character;
+- the live browser exercised file import, IndexedDB persistence, the structured
+  import report, library navigation, final ability/defense/skill values, all 45
+  power and item cards, and a reload after changing A4 plus blank-HP settings;
+- rendered card geometry formed three stable columns and reported zero
+  horizontal or vertical overflow for all 45 cards at the tested desktop
+  viewport; print CSS uses explicit Letter/A4 page rules, three-column grids,
+  and `break-inside: avoid` for sections and cards; and
+- the seven-page legacy-generated Letter PDF was rendered and visually inspected
+  as the reference for section hierarchy, usage colors, and three-by-three card
+  density. The modern sheet intentionally omits legacy ornamental chrome.
+
+The private character and reference PDF remain ignored local evidence. Public
+tests use only synthetic XML. See
+[character-import-and-sheets.md](character-import-and-sheets.md) for the storage,
+compatibility, and known-limitations contract.
 
 ## M2 delivered
 
@@ -94,9 +141,8 @@ merger; begin from `combined.dnd40.original.xml` as the script does.
 
 ## Deferred by design
 
-- M3 owns `.dnd4e` compatibility, character storage, read-only sheets, printing,
-  and power cards.
-- M4 and M5 own the character engine/editor and MVP parity closure.
+- M4 and M5 own the character engine/editor, regenerated `.dnd4e` snapshots,
+  exhaustive cross-browser print goldens, and MVP parity closure.
 - M6 and M7 own mobile play state and encrypted relay-linked sessions.
 - Visual theming, animation, and fine interaction polish wait for the tighter
   user feedback loop requested for later UI work.

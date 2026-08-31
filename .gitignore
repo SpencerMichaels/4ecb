@@ -3,6 +3,7 @@
 /CBLoader/
 /WotC.index
 /*.pdf
+/*.dnd4e
 
 # Generated reverse-engineering evidence and private content builds
 /reverse-engineering/generated/

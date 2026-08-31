@@ -4,6 +4,8 @@ import { ContentPackRepository } from "@4ecb/browser-storage";
 import type { ContentPackManifest } from "@4ecb/content-pack";
 
 import { CompendiumPage } from "./CompendiumPage";
+import { CharacterLibraryPage } from "./CharacterLibraryPage";
+import { CharacterSheetPage } from "./CharacterSheetPage";
 import { parseHashRoute } from "./routes";
 import { SettingsPage } from "./SettingsPage";
 
@@ -44,7 +46,7 @@ export function App() {
       </a>
       <header className="app-header">
         <div>
-          <p className="eyebrow">Compendium alpha</p>
+          <p className="eyebrow">Character viewer alpha</p>
           <h1>4E Character Builder</h1>
         </div>
         <p className="unofficial">
@@ -59,7 +61,12 @@ export function App() {
         >
           Compendium
         </a>
-        <span aria-disabled="true">Characters</span>
+        <a
+          aria-current={route.page === "characters" ? "page" : undefined}
+          href="#/characters"
+        >
+          Characters
+        </a>
         <a
           aria-current={route.page === "settings" ? "page" : undefined}
           href="#/settings"
@@ -85,6 +92,18 @@ export function App() {
           {...(activePackId === undefined ? {} : { activePackId })}
           onChanged={refresh}
         />
+      ) : route.page === "characters" ? (
+        route.characterId === undefined ? (
+          <CharacterLibraryPage
+            manifests={manifests}
+            {...(activePackId === undefined ? {} : { activePackId })}
+          />
+        ) : (
+          <CharacterSheetPage
+            characterId={route.characterId}
+            manifests={manifests}
+          />
+        )
       ) : (
         <CompendiumPage
           {...(activePackId === undefined ? {} : { activePackId })}

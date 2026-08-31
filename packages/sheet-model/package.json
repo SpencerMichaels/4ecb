@@ -1,5 +1,5 @@
 {
-  "name": "@4ecb/browser-storage",
+  "name": "@4ecb/sheet-model",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -11,12 +11,9 @@
   },
   "dependencies": {
     "@4ecb/character-domain": "workspace:*",
-    "@4ecb/content-pack": "workspace:*",
-    "idb": "8.0.3"
+    "@4ecb/content-domain": "workspace:*"
   },
   "devDependencies": {
-    "@4ecb/content-domain": "workspace:*",
-    "fake-indexeddb": "6.2.5",
     "typescript": "catalog:"
   }
 }

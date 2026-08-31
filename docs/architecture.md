@@ -31,7 +31,7 @@ The core architectural invariant is:
 
 A React, TypeScript, and Vite PWA supplies route-level, code-split experiences:
 
-- `/library` for local characters and profiles;
+- `/characters` for the local character library and read-only sheets;
 - `/compendium` for global search and entity detail;
 - `/builder/:characterId` for desktop/tablet character construction;
 - `/sheet/:characterId` for browser reference and print preview;
@@ -145,6 +145,12 @@ export and for explaining how a character reached its current state.
 `legacyEnvelope` retains unrecognized XML, attributes, ordering hints, and
 compatibility caches needed for loss-preserving export. Recognized semantic data
 is never read back from this envelope as the normal source of truth.
+
+M3 uses a transitional but versioned subset of this aggregate: library metadata,
+profile binding, sheet settings, the verbatim legacy envelope, and a normalized
+legacy-cache snapshot. This subset is deliberately read-only. M4 migrates it to
+authoritative selections, history, and inventory commands before any build edit
+is permitted; it does not make cached `CharacterSheet` values authoritative.
 
 ### PlayState
 

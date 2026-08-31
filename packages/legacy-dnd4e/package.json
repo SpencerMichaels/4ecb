@@ -1,5 +1,5 @@
 {
-  "name": "@4ecb/browser-storage",
+  "name": "@4ecb/legacy-dnd4e",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -11,12 +11,10 @@
   },
   "dependencies": {
     "@4ecb/character-domain": "workspace:*",
-    "@4ecb/content-pack": "workspace:*",
-    "idb": "8.0.3"
+    "saxes": "6.0.0"
   },
   "devDependencies": {
-    "@4ecb/content-domain": "workspace:*",
-    "fake-indexeddb": "6.2.5",
+    "@types/node": "catalog:",
     "typescript": "catalog:"
   }
 }

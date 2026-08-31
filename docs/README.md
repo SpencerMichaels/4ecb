@@ -23,6 +23,9 @@ application's architecture.
    verification evidence, and the next stopping boundary.
 7. [Query engine](query-engine.md) specifies compendium query semantics,
    worker/index behavior, URL state, and measured performance budgets.
+8. [Character import and sheets](character-import-and-sheets.md) specifies the
+   M3 character record, lossless legacy envelope, local repository, sheet model,
+   and current compatibility boundary.
 
 ## Definition hierarchy
 
@@ -40,5 +43,6 @@ application's architecture.
 ## Status
 
 The reverse-engineering specification remains the compatibility evidence base.
-The M1 foundation and M2 compendium vertical slice are implemented and verified;
-M3 is the next executable milestone in the [roadmap](roadmap.md).
+The M1 foundation, M2 compendium vertical slice, and M3 legacy character viewer
+are implemented and verified. M4—the rules engine and generic editor—is the next
+executable milestone in the [roadmap](roadmap.md).
