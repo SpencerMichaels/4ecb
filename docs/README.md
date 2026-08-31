@@ -17,6 +17,10 @@ application's architecture.
    with explicit entry and exit criteria.
 4. [Decision log](decisions.md) records settled architectural decisions and the
    few decisions intentionally deferred until implementation evidence exists.
+5. [Content-pack format](content-pack-format.md) specifies the portable internal
+   corpus representation and compatibility rules.
+6. [Implementation status](implementation-status.md) records completed work,
+   verification evidence, and the next stopping boundary.
 
 ## Definition hierarchy
 
@@ -33,7 +37,6 @@ application's architecture.
 
 ## Status
 
-The reverse-engineering and compatibility specification is the current evidence
-base. Product implementation has not begun. The next executable milestone is
-M1 in the [roadmap](roadmap.md).
-
+The reverse-engineering specification remains the compatibility evidence base.
+The M1 workspace and content-pack foundation is implemented and verified; M2 is
+the next executable milestone in the [roadmap](roadmap.md).

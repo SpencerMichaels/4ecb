@@ -34,6 +34,9 @@ portion.
 
 ## M1 — Workspace and content-pack foundation
 
+**Status:** complete (2026-08-31). Verification evidence and intentional M2
+boundaries are recorded in [implementation-status.md](implementation-status.md).
+
 ### Goal
 
 Establish the production monorepo and deterministically compile the legacy
