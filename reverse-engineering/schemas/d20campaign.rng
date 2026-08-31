@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+  <start>
+    <element name="D20CampaignSetting">
+      <optional><attribute name="name"><text/></attribute></optional>
+      <mixed>
+        <zeroOrMore>
+          <choice>
+            <element name="Restricted"><zeroOrMore><ref name="extension-element"/></zeroOrMore></element>
+            <element name="Houserules"><zeroOrMore><ref name="extension-element"/></zeroOrMore></element>
+          </choice>
+        </zeroOrMore>
+      </mixed>
+    </element>
+  </start>
+  <define name="extension-element">
+    <element>
+      <anyName/>
+      <zeroOrMore><attribute><anyName/></attribute></zeroOrMore>
+      <mixed><zeroOrMore><ref name="extension-element"/></zeroOrMore></mixed>
+    </element>
+  </define>
+</grammar>

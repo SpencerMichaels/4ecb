@@ -1,0 +1,28 @@
+{
+  "$comment": "Synthetic evaluator cases; IDs and names do not copy game prose.",
+  "requires": [
+    {"expression": "A&B", "owned": ["A", "B"], "expected": true},
+    {"expression": "A&B", "owned": ["A"], "expected": false},
+    {"expression": "A|B&C", "owned": ["B"], "expected": false, "note": "Top level is OR tokens A and B&C; B alone is insufficient when B&C recurses."},
+    {"expression": "A|B&C", "owned": ["B", "C"], "expected": true},
+    {"expression": "A&(!B)", "owned": ["A"], "expected": true}
+  ],
+  "category": [
+    {"expression": "Arcane,Encounter|Daily,!Fire", "categories": ["Arcane", "Daily"], "expected": true},
+    {"expression": "Arcane,Encounter|Daily,!Fire", "categories": ["Arcane", "Daily", "Fire"], "expected": false}
+  ],
+  "typedStats": [
+    {
+      "base": 10,
+      "adds": [
+        {"value": 1, "type": null},
+        {"value": 2, "type": "Feat"},
+        {"value": 3, "type": "Feat"},
+        {"value": -1, "type": "Penalty"},
+        {"value": -4, "type": "Penalty"}
+      ],
+      "expected": 10,
+      "explanation": "10 + untyped 1 + max Feat 3 + most-negative Penalty -4"
+    }
+  ]
+}

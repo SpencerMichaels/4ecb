@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+  <start>
+    <element name="D20Rules">
+      <optional><attribute name="game-system"><text/></attribute></optional>
+      <mixed>
+        <zeroOrMore>
+          <choice>
+            <ref name="rules-element"/>
+            <ref name="part-operation"/>
+            <ref name="extension-element"/>
+          </choice>
+        </zeroOrMore>
+      </mixed>
+    </element>
+  </start>
+
+  <define name="rules-element">
+    <element name="RulesElement">
+      <attribute name="name"><text/></attribute>
+      <attribute name="type"><text/></attribute>
+      <attribute name="internal-id"><text/></attribute>
+      <optional><attribute name="source"><text/></attribute></optional>
+      <optional><attribute name="revision-date"><text/></attribute></optional>
+      <mixed>
+        <zeroOrMore><ref name="extension-element"/></zeroOrMore>
+      </mixed>
+    </element>
+  </define>
+
+  <define name="part-operation">
+    <choice>
+      <element name="AppendNodes"><ref name="operation-content"/></element>
+      <element name="RemoveNodes"><ref name="operation-content"/></element>
+      <element name="DeleteElement"><ref name="operation-content"/></element>
+      <element name="MassAppend"><ref name="operation-content"/></element>
+      <element name="AppendRawElements"><ref name="operation-content"/></element>
+      <element name="UpdateInfo"><ref name="operation-content"/></element>
+      <element name="Changelog"><ref name="operation-content"/></element>
+    </choice>
+  </define>
+
+  <define name="operation-content">
+    <zeroOrMore><attribute><anyName/></attribute></zeroOrMore>
+    <mixed><zeroOrMore><ref name="extension-element"/></zeroOrMore></mixed>
+  </define>
+
+  <define name="extension-element">
+    <element>
+      <anyName/>
+      <zeroOrMore><attribute><anyName/></attribute></zeroOrMore>
+      <mixed><zeroOrMore><ref name="extension-element"/></zeroOrMore></mixed>
+    </element>
+  </define>
+</grammar>

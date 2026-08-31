@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+  <start>
+    <element name="D20Character">
+      <optional><attribute name="game-system"><text/></attribute></optional>
+      <optional><attribute name="Version"><text/></attribute></optional>
+      <optional><attribute name="legality"><text/></attribute></optional>
+      <mixed><zeroOrMore><ref name="extension-element"/></zeroOrMore></mixed>
+    </element>
+  </start>
+
+  <define name="extension-element">
+    <element>
+      <anyName/>
+      <zeroOrMore><attribute><anyName/></attribute></zeroOrMore>
+      <mixed><zeroOrMore><ref name="extension-element"/></zeroOrMore></mixed>
+    </element>
+  </define>
+</grammar>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<D20Rules game-system="D&amp;D4E">
+  <RulesElement name="Alpha" type="Feat" internal-id="ID_FIXTURE_A"
+                source="Core" revision-date="old">
+    <Category>Red, Blue</Category>
+    <specific name="Keep">old</specific>
+    <specific name="RemoveMe">gone</specific>
+    <rules><statadd name="Fixture" value="+1"/></rules>
+  </RulesElement>
+  <RulesElement name="Beta" type="Feat" internal-id="ID_FIXTURE_B" source="Core"/>
+</D20Rules>

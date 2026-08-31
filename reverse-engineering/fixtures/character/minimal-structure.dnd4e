@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<D20Character game-system="D&amp;D4E" Version="0.07a" legality="rules-legal">
+  <Level>
+    <RulesElement name="1" type="Level" internal-id="ID_INTERNAL_LEVEL_1" charelem="fixture-level">
+      <RulesElement name="" type="" charelem="fixture-unresolved"/>
+    </RulesElement>
+    <loot count="1" equip-count="1"><RulesElement name="Fixture Item" type="Gear" internal-id="ID_FIXTURE_ITEM"/></loot>
+  </Level>
+  <alternate SelectName="Fixture Select" name="Fixture Provider" type="Class Feature" internal-id="ID_FIXTURE_PROVIDER">
+    <RulesElement name="Fixture Alternate" type="Power" internal-id="ID_FIXTURE_ALTERNATE"/>
+  </alternate>
+  <textstring name="NOTE_FIXTURE">Preserve &amp; escape user text.</textstring>
+</D20Character>

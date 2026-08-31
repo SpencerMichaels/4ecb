@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<D20Rules game-system="D&amp;D4E">
+  <AppendNodes internal-id="ID_FIXTURE_A" source="Patch">
+    <Category>Blue, Green</Category>
+    <specific name="Keep">appended</specific>
+    <rules><statadd name="Fixture" value="+2" type="Patch"/></rules>
+  </AppendNodes>
+  <MassAppend ids="ID_FIXTURE_A, ID_FIXTURE_B, ID_MISSING">
+    <specific name="Mass">yes</specific>
+  </MassAppend>
+  <RemoveNodes internal-id="ID_FIXTURE_A">
+    <specific name="RemoveMe"/>
+    <Attribute name="revision-date"/>
+  </RemoveNodes>
+  <DeleteElement internal-id="ID_FIXTURE_B"/>
+  <RulesElement name="Gamma" type="Power" internal-id="ID_FIXTURE_C" source="Patch">
+    <Category>Green</Category>
+  </RulesElement>
+  <AppendRawElements><FixtureRaw value="preserved"/></AppendRawElements>
+  <UpdateInfo><Version>fixture</Version></UpdateInfo>
+</D20Rules>

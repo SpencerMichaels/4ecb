@@ -1,0 +1,41 @@
+# Supplied proprietary application and game-data payloads
+/CharacterBuilder/
+/CBLoader/
+/WotC.index
+/*.pdf
+
+# Generated reverse-engineering evidence and private content builds
+/reverse-engineering/generated/
+/reverse-engineering/tools/dotnet/
+/data/private/
+*.4ecp
+*.4ecp.gz
+
+# Local agent/editor state and scratch output
+/.agents/
+/.codex/
+/tmp/
+.direnv/
+.env
+.env.*
+!.env.example
+result
+result-*
+
+# .NET build output
+**/bin/
+**/obj/
+
+# JavaScript build and test output
+node_modules/
+dist/
+coverage/
+.vite/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# Logs and operating-system files
+*.log
+.DS_Store
+Thumbs.db
