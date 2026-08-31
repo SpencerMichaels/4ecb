@@ -9,7 +9,12 @@
     "node": ">=24.0.0",
     "pnpm": ">=11.0.0"
   },
+  "dependencies": {
+    "@4ecb/content-pack": "workspace:*",
+    "@4ecb/query-engine": "workspace:*"
+  },
   "scripts": {
+    "benchmark:query": "tsx scripts/benchmark-query.ts",
     "build": "pnpm typecheck && pnpm --filter @4ecb/web build",
     "content-tool": "tsx apps/content-tool/src/main.ts",
     "dev": "pnpm --filter @4ecb/web dev",

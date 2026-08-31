@@ -25,5 +25,6 @@ build_pack "$scratch_dir/second.4ecp"
 cmp "$scratch_dir/first.4ecp" "$scratch_dir/second.4ecp"
 pnpm content-tool validate "$scratch_dir/first.4ecp"
 pnpm content-tool diff "$scratch_dir/first.4ecp" "$scratch_dir/second.4ecp"
+pnpm benchmark:query "$scratch_dir/first.4ecp"
 
 echo "All public checks passed."
