@@ -55,6 +55,46 @@ function combatStat(name: string, value: number): EvaluatedStat {
 }
 
 describe("power evaluation", () => {
+  it("applies one contribution once across overlapping implement and weapon channels", () => {
+    const [power] = evaluatePowers({
+      level: 7,
+      activeDefinitionIds: ["POWER"],
+      inventory: [
+        {
+          id: "blade",
+          definitionIds: ["BLADE"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Wisdom modifier": stat("Wisdom modifier", 4),
+        "melee:damage": combatStat("melee:damage", 2),
+      },
+      overlays: [],
+      entities: [
+        entity("POWER", "Synthetic Beast Strike", "Power", {
+          Keywords: "Implement, Primal",
+          "Attack Type": "Melee beast 1",
+          Attack: "Wisdom vs. Reflex",
+          Hit: "1d8 + Wisdom modifier damage.",
+        }),
+        entity("BLADE", "Synthetic Blade", "Weapon", {
+          Damage: "1d8",
+          "Proficiency Bonus": "2",
+        }),
+      ],
+    });
+
+    expect(power?.variants[0]?.damage).toBe("1d8+6");
+    expect(
+      power?.variants[0]?.damageComponents.filter(
+        ({ provenanceId }) => provenanceId === "bonus:melee:damage",
+      ),
+    ).toHaveLength(1);
+  });
+
   it("produces explainable weapon and unarmed variants", () => {
     const entities = [
       entity("POWER", "Overwhelming Strike", "Power", {

@@ -16,6 +16,7 @@
 /.agents/
 /.codex/
 /tmp/
+/sample-chars/
 .direnv/
 .env
 .env.*

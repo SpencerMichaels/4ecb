@@ -7,6 +7,7 @@ export interface PowerComponent {
   readonly label: string;
   readonly value: number;
   readonly source?: string;
+  readonly provenanceId?: string;
 }
 
 export interface PowerVariant {
@@ -424,9 +425,22 @@ function combatStatComponents(
           label: name,
           value: contribution.numericValue,
           source: contribution.providerName,
+          provenanceId: contribution.id,
         },
       ];
     });
+  });
+}
+
+function uniquePowerComponents(
+  components: readonly PowerComponent[],
+): PowerComponent[] {
+  const seen = new Set<string>();
+  return components.filter(({ provenanceId }) => {
+    if (provenanceId === undefined) return true;
+    if (seen.has(provenanceId)) return false;
+    seen.add(provenanceId);
+    return true;
   });
 }
 
@@ -803,7 +817,8 @@ export function evaluatePowers(input: {
           label: "power damage bonus",
           value: powerDamageBonus,
         });
-      const damageBonus = damageComponents.reduce(
+      const uniqueDamageComponents = uniquePowerComponents(damageComponents);
+      const damageBonus = uniqueDamageComponents.reduce(
         (sum, component) => sum + component.value,
         0,
       );
@@ -844,7 +859,7 @@ export function evaluatePowers(input: {
         ...(critical === undefined ? {} : { critical }),
         ...(brutal === undefined ? {} : { brutal: Number(brutal) }),
         attackComponents,
-        damageComponents,
+        damageComponents: uniqueDamageComponents,
         conditionalDamage,
       };
     });

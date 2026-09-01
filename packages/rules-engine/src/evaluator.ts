@@ -366,16 +366,25 @@ export function evaluateCharacter(
   const diagnostics: EngineDiagnostic[] = [];
   const inventory = aggregateInventory(input.inventory, input.level);
   const currentInput = { ...input, inventory };
+  const savedDefinitionIds = new Set(
+    input.occurrences.map(({ definitionId }) => key(definitionId)),
+  );
   const inventoryOccurrences: CharacterOccurrence[] = inventory.flatMap(
     (entry) =>
       entry.acquiredLevel > input.level || entry.equippedQuantity <= 0
         ? []
-        : entry.definitionIds.map((definitionId, definitionIndex) => ({
-            id: `${entry.id}:definition:${definitionIndex}`,
-            definitionId,
-            acquiredLevel: entry.acquiredLevel,
-            kind: "grabbag" as const,
-          })),
+        : entry.definitionIds.flatMap((definitionId, definitionIndex) =>
+            savedDefinitionIds.has(key(definitionId))
+              ? []
+              : [
+                  {
+                    id: `${entry.id}:definition:${definitionIndex}`,
+                    definitionId,
+                    acquiredLevel: entry.acquiredLevel,
+                    kind: "grabbag" as const,
+                  },
+                ],
+          ),
   );
   const saved: CharacterOccurrence[] = [
     ...input.occurrences.filter(

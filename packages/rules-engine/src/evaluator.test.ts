@@ -67,6 +67,56 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it("does not execute one equipped holding twice when legacy tally repeats it", () => {
+    const content = [
+      entity("ROOT", "Root", "Test"),
+      entity("ARMBANDS", "Synthetic Armbands", "Magic Item", {
+        rules: [rule("statadd", { name: "melee:damage", value: "+2" }, 0)],
+      }),
+      entity("STANCE", "Synthetic Stance", "Feat", {
+        rules: [rule("statadd", { name: "melee:damage", value: "+1" }, 0)],
+      }),
+    ];
+    const evaluated = evaluateCharacter(
+      {
+        level: 3,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "legacy-tally-item",
+            definitionId: "ARMBANDS",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+          {
+            id: "distinct-stance",
+            definitionId: "STANCE",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+        ],
+        inventory: [
+          {
+            id: "same-physical-holding",
+            definitionIds: ["ARMBANDS"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+      },
+      content,
+    );
+
+    expect(evaluated.stats["melee:damage"]?.value).toBe(3);
+    expect(
+      evaluated.stats["melee:damage"]?.contributions.filter(
+        ({ applied }) => applied,
+      ),
+    ).toHaveLength(2);
+  });
+
   it("aggregates legacy inventory deltas before activating item rules", () => {
     const content = [
       entity("ROOT", "Root", "Test"),
