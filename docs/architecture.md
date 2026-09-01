@@ -537,6 +537,9 @@ storage does not move into the relay merely because it exists.
 - XML parsing disables external entities and resource fetching.
 - browser onboarding does not import legacy decryption keys or process update
   URLs; encrypted-container and `.part` merging stays in the local Nix tool;
+- encoded content input and streaming decompression have independent 128 MiB
+  caps before UTF-8 or JSON decoding, and pack IDs/names are bounded before
+  worker and storage use;
 - Archive imports enforce entry-count, path, compression-ratio, and total-size
   limits.
 - Worker messages and stored documents are schema-validated at runtime.

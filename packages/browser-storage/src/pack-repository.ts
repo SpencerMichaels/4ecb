@@ -1,5 +1,5 @@
 import {
-  decodeContentPack,
+  decodeContentPackBytes,
   encodeContentPack,
   validateContentPack,
   type ContentPack,
@@ -93,10 +93,15 @@ export class ContentPackRepository {
 
   async install(pack: ContentPack): Promise<ContentPackManifest> {
     const bytes = new TextEncoder().encode(encodeContentPack(pack));
-    return this.installEncoded(pack, bytes.buffer);
+    return this.#store(pack, bytes.buffer);
   }
 
-  async installEncoded(
+  async installEncoded(encodedPack: ArrayBuffer): Promise<ContentPackManifest> {
+    const pack = await decodeContentPackBytes(encodedPack);
+    return this.#store(pack, encodedPack);
+  }
+
+  async #store(
     pack: ContentPack,
     encodedPack: ArrayBuffer,
   ): Promise<ContentPackManifest> {
@@ -211,16 +216,7 @@ export class ContentPackRepository {
 }
 
 async function decodeStoredPack(encoded: ArrayBuffer): Promise<ContentPack> {
-  const bytes = new Uint8Array(encoded);
-  const isGzip = bytes[0] === 0x1f && bytes[1] === 0x8b;
-  const text = isGzip
-    ? await new Response(
-        new Blob([encoded])
-          .stream()
-          .pipeThrough(new DecompressionStream("gzip")),
-      ).text()
-    : new TextDecoder().decode(bytes);
-  return decodeContentPack(text);
+  return decodeContentPackBytes(encoded);
 }
 
 export async function deleteContentDatabase(

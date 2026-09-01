@@ -188,6 +188,13 @@ deterministic content checks, and the query benchmark.
 - The UI documents that encrypted containers and loose `.part` files must be
   processed with the local Nix content tool. The public app does not retain
   decryption keys or interpret legacy update metadata.
+- Pack input and decompressed output have separate 128 MiB checks. Gzip output is
+  consumed incrementally and cancelled before JSON parsing when it crosses the
+  decoded cap, preventing a small compressed pack from expanding without bound.
+- Local profile IDs are limited to 64 safe ASCII identifier characters, and
+  display names to 120 trimmed, control-free characters. The checks run before
+  worker creation; generated packs enforce them again, and encoded portable
+  packs are decoded and revalidated inside the storage repository before commit.
 
 Public tests cover source classification, bounded read-only discovery without
 opening candidate files, deterministic browser-side compilation of the
@@ -195,9 +202,12 @@ synthetic rules XML, compressed pack decode, and digest equality. Live Chromium
 rendering confirms the directory control and labeled ordinary-file fallback;
 the actual OS directory chooser remains a user-mediated system surface. The
 onboarding page produced no Chromium console errors. The complete public gate
-passes 113 tests across 26 files plus formatting, ESLint, every TypeScript
+passes 117 tests across 26 files plus formatting, ESLint, every TypeScript
 project, the production/PWA build and cache-boundary assertion, deterministic
-content checks, and the query benchmark.
+content checks, and the query benchmark. Adversarial cases additionally cover a
+small gzip expanding past the decoded limit, an oversized encoded input,
+oversized generated output, unsafe/oversized profile identifiers, control
+characters, and storage-boundary revalidation.
 
 ## M4 delivered
 

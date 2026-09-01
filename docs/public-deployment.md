@@ -73,7 +73,9 @@ ordinary picker is the Firefox/Safari fallback. Rules XML is normalized and
 validated in a worker before its generated pack is stored. A private pack can be
 built locally with the documented content tool. The public browser never reads
 legacy decryption keys, opens encrypted containers, follows legacy update URLs,
-or merges loose `.part` files.
+or merges loose `.part` files. Pack input and streaming decompression are each
+limited to 128 MiB before JSON parsing; local profile IDs and names use bounded,
+validated forms.
 
 When a new service worker is ready, the application prompts rather than
 refreshing silently. The user may defer the update; choosing **Reload and

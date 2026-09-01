@@ -4,9 +4,12 @@ import type { ParsedContentSource } from "@4ecb/content-domain";
 
 import {
   buildContentPack,
+  contentPackIdentityErrors,
   decodeContentPack,
+  decodeContentPackBytes,
   diffContentPacks,
   encodeContentPack,
+  encodeContentPackBytes,
   validateContentPack,
 } from "./index";
 
@@ -82,5 +85,60 @@ describe("content pack", () => {
       changed: [],
       unchangedCount: 0,
     });
+  });
+
+  it("rejects unsafe or oversized profile identity fields", async () => {
+    expect(contentPackIdentityErrors("../private", "Local rules")).toHaveLength(
+      1,
+    );
+    expect(contentPackIdentityErrors("valid-id", " bad\nname ")).toHaveLength(
+      1,
+    );
+    await expect(
+      buildContentPack(source, { packId: "bad id", name: "Synthetic" }),
+    ).rejects.toThrow("Invalid content pack identity");
+
+    const valid = await buildContentPack(source, {
+      packId: "synthetic",
+      name: "Synthetic",
+    });
+    const invalid = {
+      ...valid,
+      manifest: { ...valid.manifest, packId: "x".repeat(65) },
+    };
+    await expect(validateContentPack(invalid)).resolves.toMatchObject({
+      valid: false,
+      errors: expect.arrayContaining([expect.stringContaining("packId")]),
+    });
+  });
+
+  it("bounds compressed and decoded bytes before JSON parsing", async () => {
+    const expanded = "x".repeat(2_048);
+    const compressed = await new Response(
+      new Blob([expanded]).stream().pipeThrough(new CompressionStream("gzip")),
+    ).arrayBuffer();
+    expect(compressed.byteLength).toBeLessThan(128);
+    await expect(
+      decodeContentPackBytes(compressed, {
+        maxEncodedBytes: 128,
+        maxDecodedBytes: 1_024,
+      }),
+    ).rejects.toThrow("Decoded content pack exceeds");
+    await expect(
+      decodeContentPackBytes(new ArrayBuffer(129), {
+        maxEncodedBytes: 128,
+        maxDecodedBytes: 1_024,
+      }),
+    ).rejects.toThrow("input-size limit");
+  });
+
+  it("bounds generated pack encoding before compression", async () => {
+    const pack = await buildContentPack(source, {
+      packId: "synthetic",
+      name: "Synthetic",
+    });
+    expect(() => encodeContentPackBytes(pack, 32)).toThrow(
+      "decoded-size limit",
+    );
   });
 });

@@ -77,8 +77,10 @@ human-facing contract.
 `.dnd40.xml` file. Portable packs are decoded and digest-validated in a worker.
 Legacy rules XML is parsed and normalized in the worker, assigned the local
 profile ID and name entered by the user, encoded as a compressed pack, validated,
-and only then committed to IndexedDB. The 512 MiB input limit applies before a
-worker receives either format.
+and only then committed to IndexedDB. A 128 MiB input cap applies before a
+worker receives either format, and streaming gzip decode stops once output
+exceeds 128 MiB before JSON parsing. The known complete local corpus is roughly
+70 MiB decoded, leaving headroom without accepting unbounded expansion.
 
 On browsers with the File System Access directory picker, a user may choose a
 legacy-data or pack directory. Discovery is read-only, limited to four nested

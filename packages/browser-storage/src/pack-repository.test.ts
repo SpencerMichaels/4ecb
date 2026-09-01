@@ -99,9 +99,25 @@ describe("ContentPackRepository", () => {
         .stream()
         .pipeThrough(new CompressionStream("gzip")),
     ).arrayBuffer();
-    await storage.installEncoded(pack, encoded);
+    await storage.installEncoded(encoded);
     expect((await storage.get("encoded"))?.manifest.contentDigest).toBe(
       pack.manifest.contentDigest,
     );
+  });
+
+  it("revalidates encoded profile metadata at the storage boundary", async () => {
+    const storage = repository();
+    const pack = await makePack("safe");
+    const unsafe = {
+      ...pack,
+      manifest: { ...pack.manifest, packId: "../unsafe" },
+    };
+    const encoded = new TextEncoder().encode(JSON.stringify(unsafe));
+    const buffer = new ArrayBuffer(encoded.byteLength);
+    new Uint8Array(buffer).set(encoded);
+    await expect(storage.installEncoded(buffer)).rejects.toThrow(
+      "Cannot install invalid content pack",
+    );
+    await expect(storage.list()).resolves.toEqual([]);
   });
 });

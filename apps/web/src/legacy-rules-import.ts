@@ -1,6 +1,6 @@
 import {
   buildContentPack,
-  encodeContentPack,
+  encodeContentPackBytes,
   type ContentPack,
 } from "@4ecb/content-pack";
 import { parseD20Rules } from "@4ecb/legacy-wotc";
@@ -30,8 +30,10 @@ export async function buildPackFromLegacyRules(
 export async function encodeCompressedPack(
   pack: ContentPack,
 ): Promise<ArrayBuffer> {
-  const bytes = new TextEncoder().encode(encodeContentPack(pack));
+  const bytes = encodeContentPackBytes(pack);
+  const buffer = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(buffer).set(bytes);
   return new Response(
-    new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip")),
+    new Blob([buffer]).stream().pipeThrough(new CompressionStream("gzip")),
   ).arrayBuffer();
 }

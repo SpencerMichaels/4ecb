@@ -10,6 +10,10 @@ import type {
 
 export const CONTENT_PACK_FORMAT = "4ecb-content-pack";
 export const CONTENT_PACK_VERSION = 1;
+export const MAX_CONTENT_PACK_ENCODED_BYTES = 128 * 1024 * 1024;
+export const MAX_CONTENT_PACK_DECODED_BYTES = 128 * 1024 * 1024;
+export const MAX_CONTENT_PACK_ID_LENGTH = 64;
+export const MAX_CONTENT_PACK_NAME_LENGTH = 120;
 
 export interface ContentTypeCount {
   readonly type: string;
@@ -74,6 +78,36 @@ export interface ContentPackDiff {
   readonly unchangedCount: number;
 }
 
+export interface ContentPackByteLimits {
+  readonly maxEncodedBytes?: number;
+  readonly maxDecodedBytes?: number;
+}
+
+export function contentPackIdentityErrors(
+  packId: string,
+  name: string,
+): string[] {
+  const errors: string[] = [];
+  if (
+    packId.length === 0 ||
+    packId.length > MAX_CONTENT_PACK_ID_LENGTH ||
+    !/^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(packId)
+  )
+    errors.push(
+      `packId must be 1-${MAX_CONTENT_PACK_ID_LENGTH} ASCII letters, digits, dots, underscores, colons, or hyphens and start with a letter or digit`,
+    );
+  if (
+    name.length === 0 ||
+    name.length > MAX_CONTENT_PACK_NAME_LENGTH ||
+    name !== name.trim() ||
+    /[\u0000-\u001f\u007f]/.test(name)
+  )
+    errors.push(
+      `name must be 1-${MAX_CONTENT_PACK_NAME_LENGTH} trimmed characters without control characters`,
+    );
+  return errors;
+}
+
 function typeCounts(entities: readonly ContentEntity[]): ContentTypeCount[] {
   const counts = new Map<string, number>();
   for (const entity of entities)
@@ -131,9 +165,14 @@ export async function buildContentPack(
   source: ParsedContentSource,
   options: BuildContentPackOptions,
 ): Promise<ContentPack> {
-  if (options.packId.trim().length === 0)
-    throw new Error("packId cannot be empty");
-  if (options.name.trim().length === 0) throw new Error("name cannot be empty");
+  const identityErrors = contentPackIdentityErrors(
+    options.packId,
+    options.name,
+  );
+  if (identityErrors.length > 0)
+    throw new Error(
+      `Invalid content pack identity: ${identityErrors.join("; ")}`,
+    );
 
   const entities = source.entities.map(normalizeParsedEntity);
   const manifestWithoutDigest: ContentPackManifest = {
@@ -165,6 +204,18 @@ export async function buildContentPack(
 
 export function encodeContentPack(pack: ContentPack): string {
   return `${JSON.stringify(pack)}\n`;
+}
+
+export function encodeContentPackBytes(
+  pack: ContentPack,
+  maxBytes = MAX_CONTENT_PACK_DECODED_BYTES,
+): Uint8Array {
+  const bytes = new TextEncoder().encode(encodeContentPack(pack));
+  if (bytes.byteLength > maxBytes)
+    throw new Error(
+      `Encoded content pack exceeds the ${maxBytes.toLocaleString()} byte decoded-size limit`,
+    );
+  return bytes;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -212,12 +263,62 @@ export function decodeContentPack(value: string): ContentPack {
   return decoded;
 }
 
+export async function decodeContentPackBytes(
+  value: ArrayBuffer,
+  limits: ContentPackByteLimits = {},
+): Promise<ContentPack> {
+  const maxEncodedBytes =
+    limits.maxEncodedBytes ?? MAX_CONTENT_PACK_ENCODED_BYTES;
+  const maxDecodedBytes =
+    limits.maxDecodedBytes ?? MAX_CONTENT_PACK_DECODED_BYTES;
+  if (value.byteLength > maxEncodedBytes)
+    throw new Error(
+      `Content pack exceeds the ${maxEncodedBytes.toLocaleString()} byte input-size limit`,
+    );
+
+  const bytes = new Uint8Array(value);
+  const gzip = bytes[0] === 0x1f && bytes[1] === 0x8b;
+  const stream = gzip
+    ? new Blob([value]).stream().pipeThrough(new DecompressionStream("gzip"))
+    : new Blob([value]).stream();
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let decodedBytes = 0;
+  try {
+    while (true) {
+      const result = await reader.read();
+      if (result.done) break;
+      decodedBytes += result.value.byteLength;
+      if (decodedBytes > maxDecodedBytes) {
+        await reader.cancel();
+        throw new Error(
+          `Decoded content pack exceeds the ${maxDecodedBytes.toLocaleString()} byte limit`,
+        );
+      }
+      chunks.push(result.value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const decoded = new Uint8Array(decodedBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    decoded.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return decodeContentPack(new TextDecoder().decode(decoded));
+}
+
 export async function validateContentPack(
   pack: ContentPack,
 ): Promise<ContentPackValidation> {
   const errors: string[] = [];
   const warnings: string[] = [];
   const ids = new Set<string>();
+
+  errors.push(
+    ...contentPackIdentityErrors(pack.manifest.packId, pack.manifest.name),
+  );
 
   if (pack.manifest.recordCount !== pack.entities.length) {
     errors.push(

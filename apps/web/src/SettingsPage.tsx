@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
 import { ContentPackRepository } from "@4ecb/browser-storage";
-import type { ContentPackManifest } from "@4ecb/content-pack";
+import {
+  contentPackIdentityErrors,
+  MAX_CONTENT_PACK_ENCODED_BYTES,
+  type ContentPackManifest,
+} from "@4ecb/content-pack";
 
 import type {
   ContentImportRequest,
@@ -18,7 +22,6 @@ import {
 } from "./content-onboarding";
 
 const repository = new ContentPackRepository();
-const MAX_IMPORT_BYTES = 512 * 1024 * 1024;
 
 interface StorageStatus {
   readonly supported: boolean;
@@ -140,16 +143,19 @@ export function SettingsPage({
     file: File,
     sourceKind: ContentSourceKind,
   ): Promise<void> {
-    if (file.size > MAX_IMPORT_BYTES) {
-      throw new Error("Pack exceeds the 512 MiB import limit");
+    if (file.size > MAX_CONTENT_PACK_ENCODED_BYTES) {
+      throw new Error("Content source exceeds the 128 MiB input limit");
     }
-    if (
-      sourceKind === "legacy-rules-xml" &&
-      (localPackId.trim().length === 0 || localPackName.trim().length === 0)
-    )
-      throw new Error(
-        "Rules XML import requires a non-empty local profile ID and name",
+    if (sourceKind === "legacy-rules-xml") {
+      const identityErrors = contentPackIdentityErrors(
+        localPackId,
+        localPackName,
       );
+      if (identityErrors.length > 0)
+        throw new Error(
+          `Rules XML profile metadata is invalid: ${identityErrors.join("; ")}`,
+        );
+    }
     workerRef.current?.terminate();
     const worker = new Worker(new URL("./content.worker.ts", import.meta.url), {
       type: "module",
@@ -197,8 +203,8 @@ export function SettingsPage({
             type: "import-legacy-rules",
             buffer,
             sourceKey: file.name,
-            packId: localPackId.trim(),
-            name: localPackName.trim(),
+            packId: localPackId,
+            name: localPackName,
           };
     worker.postMessage(request, [buffer]);
   }
