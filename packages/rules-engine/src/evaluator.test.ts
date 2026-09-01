@@ -152,6 +152,29 @@ describe("character evaluator", () => {
     );
   });
 
+  it("materializes optional replacement slots without making them incomplete", () => {
+    const result = evaluateCharacter(
+      {
+        level: 2,
+        baseAbilities: {},
+        occurrences: [rootOccurrence],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "Root", "Test", {
+          rules: [rule("replace", { optional: "true", retrain: "true" }, 0)],
+        }),
+      ],
+    );
+    expect(result.choices).toEqual([
+      expect.objectContaining({ type: "Replacement", optional: true }),
+    ]);
+    expect(result.complete).toBe(true);
+    expect(result.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "replace.requires-command" }),
+    );
+  });
+
   it("applies list, replacement, and die-step overlays without mutating content", () => {
     const power = entity("POWER", "Power", "Power", {
       specifics: { Keywords: "Arcane", Damage: "1d8 + 2" },

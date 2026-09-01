@@ -146,11 +146,12 @@ export and for explaining how a character reached its current state.
 compatibility caches needed for loss-preserving export. Recognized semantic data
 is never read back from this envelope as the normal source of truth.
 
-M3 uses a transitional but versioned subset of this aggregate: library metadata,
-profile binding, sheet settings, the verbatim legacy envelope, and a normalized
-legacy-cache snapshot. This subset is deliberately read-only. M4 migrates it to
-authoritative selections, history, and inventory commands before any build edit
-is permitted; it does not make cached `CharacterSheet` values authoritative.
+Schema 2 implements the first authoritative subset of this aggregate. It adds a
+level-tree `CharacterBuild` with stable occurrence IDs, retraining links, base
+abilities, inventory, text values, and transactional commands. Imported schema-1
+records migrate lazily in the browser. The normalized legacy `CharacterSheet`
+snapshot remains a comparison/read model and never becomes authoritative; the
+verbatim envelope remains the compatibility source for no-edit export.
 
 ### PlayState
 

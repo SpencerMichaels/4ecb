@@ -26,6 +26,7 @@ import {
   type SelectRule,
 } from "./ir";
 import { StatAccumulator, type EvaluatedStat } from "./stats";
+import { evaluatePrerequisite } from "./prerequisites";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -123,6 +124,7 @@ export class RulesIndex {
   readonly #byId = new Map<string, ContentEntity>();
   readonly #byNameType = new Map<string, ContentEntity>();
   readonly #byType = new Map<string, ContentEntity[]>();
+  readonly #expandedCategoryValues = new Map<string, ReadonlySet<string>>();
   readonly categoryAliases = new Map<string, ReadonlySet<string>>();
 
   constructor(entities: readonly ContentEntity[]) {
@@ -134,10 +136,13 @@ export class RulesIndex {
         ...(this.#byType.get(key(entity.type)) ?? []),
         entity,
       ]);
-      if (key(entity.type) === "category") {
-        const aliases = new Set([key(entity.id), key(entity.name)]);
-        for (const value of aliases) this.categoryAliases.set(value, aliases);
-      }
+      const aliases = new Set([
+        key(entity.id),
+        key(entity.name),
+        key(`${entity.name} ${entity.type}`),
+        key(`${entity.type} ${entity.name}`),
+      ]);
+      for (const value of aliases) this.categoryAliases.set(value, aliases);
     }
   }
 
@@ -154,6 +159,19 @@ export class RulesIndex {
   }
   type(type: string): readonly ContentEntity[] {
     return this.#byType.get(key(type)) ?? [];
+  }
+  categoryValues(entity: ContentEntity): ReadonlySet<string> {
+    const id = key(entity.id);
+    const cached = this.#expandedCategoryValues.get(id);
+    if (cached !== undefined) return cached;
+    const values = new Set<string>();
+    for (const value of [entity.id, entity.name, ...entity.categories]) {
+      values.add(key(value));
+      for (const alias of this.categoryAliases.get(key(value)) ?? [])
+        values.add(key(alias));
+    }
+    this.#expandedCategoryValues.set(id, values);
+    return values;
   }
 }
 
@@ -297,6 +315,7 @@ export function evaluateCharacter(
         input.textStrings ?? {},
       ),
       categoryAliases: index.categoryAliases,
+      categoryValuesFor: (entity) => index.categoryValues(entity),
     };
     const additions: CharacterOccurrence[] = [];
     const dropped = new Set<string>();
@@ -396,6 +415,7 @@ export function evaluateCharacter(
       input.textStrings ?? {},
     ),
     categoryAliases: index.categoryAliases,
+    categoryValuesFor: (entity) => index.categoryValues(entity),
   };
   const equipment = equippedState(input, index);
   const stats = new StatAccumulator(equipment);
@@ -412,6 +432,29 @@ export function evaluateCharacter(
   const suggestions: EvaluatedCharacter["suggestions"][number][] = [];
   const text = { ...(input.textStrings ?? {}) };
   const candidateCache = new Map<string, CandidateDecision[]>();
+  const universalSkillIds = new Set<string>();
+  for (const occurrence of occurrences) {
+    const provider = index.get(occurrence.definitionId);
+    if (provider === undefined) continue;
+    for (const rule of parseRules(provider.id, provider.rules)) {
+      if (
+        rule.kind !== "modify" ||
+        key(rule.field) !== "universalclassskill" ||
+        key(rule.value ?? "") !== "true" ||
+        !activeAt(rule, input.level) ||
+        (rule.requires !== undefined &&
+          !evaluateRequires(parseRequires(rule.requires), expressionContext))
+      )
+        continue;
+      for (const candidate of index.type(rule.type ?? "Skill Training"))
+        if (
+          rule.name === undefined ||
+          key(candidate.name) === key(rule.name) ||
+          key(candidate.id) === key(rule.name)
+        )
+          universalSkillIds.add(key(candidate.id));
+    }
+  }
 
   const candidatesFor = (
     rule: SelectRule,
@@ -434,6 +477,9 @@ export function evaluateCharacter(
           group.alternatives.map((term) => term.value),
         );
         match ||= terms.some((term) => isUniversalSkill(candidate, term));
+        match ||=
+          universalSkillIds.has(key(candidate.id)) &&
+          terms.some((term) => key(index.find(term)?.type ?? "") === "class");
         match ||= terms.some((term) =>
           diverseStudyException(candidate, term, ownedIds),
         );
@@ -451,11 +497,6 @@ export function evaluateCharacter(
         match ||= isCustomChoiceException(candidate);
         if (!match) reasons.push("category");
       }
-      if (
-        candidate.prerequisites !== undefined &&
-        candidate.prerequisites.trim().length > 0
-      )
-        reasons.push("unverified-prerequisite");
       return {
         definitionId: candidate.id,
         eligible: reasons.length === 0,
@@ -545,15 +586,42 @@ export function evaluateCharacter(
           }
           break;
         }
-        case "replace":
-          diagnostics.push({
-            severity: "warning",
-            code: "replace.requires-command",
-            message: `${entity.name} has a replacement choice that must be resolved through character history commands.`,
-            occurrenceId: occurrence.id,
+        case "replace": {
+          const selected = occurrences.find(
+            (candidate) =>
+              candidate.parentId === occurrence.id &&
+              candidate.ruleOrdinal === rule.source.ordinal &&
+              candidate.replacesId !== undefined,
+          );
+          const replacementCandidates = occurrences
+            .filter(
+              (candidate) =>
+                candidate.acquiredLevel < occurrence.acquiredLevel &&
+                candidate.kind === "choice" &&
+                (rule.powerReplace === undefined ||
+                  key(index.get(candidate.definitionId)?.type ?? "") ===
+                    "power"),
+            )
+            .map((candidate) => ({
+              definitionId: candidate.definitionId,
+              eligible: true,
+              reasons: [] as string[],
+            }));
+          choices.push({
+            id: `${occurrence.id}:replacement:${rule.source.ordinal}`,
+            providerOccurrenceId: occurrence.id,
             ruleOrdinal: rule.source.ordinal,
+            index: 0,
+            type: "Replacement",
+            ...(rule.label === undefined ? {} : { name: rule.label }),
+            optional: rule.optional,
+            ...(selected === undefined
+              ? {}
+              : { selectedOccurrenceId: selected.id }),
+            candidates: replacementCandidates,
           });
           break;
+        }
         case "modify":
           if (
             rule.wearing === undefined ||
@@ -588,6 +656,33 @@ export function evaluateCharacter(
   const evaluatedStats = Object.fromEntries(
     stats.allNames().map((name) => [name, stats.evaluate(name)]),
   );
+  const prerequisiteContext = {
+    owned: ownedDefinitions,
+    level: input.level,
+    abilities: Object.fromEntries(
+      [
+        "Strength",
+        "Constitution",
+        "Dexterity",
+        "Intelligence",
+        "Wisdom",
+        "Charisma",
+      ].map((ability) => {
+        const value = stats.evaluate(ability).value;
+        return [ability, typeof value === "number" ? value : 0];
+      }),
+    ),
+    ownedTokens: new Set(
+      ownedDefinitions.flatMap((entity) =>
+        [
+          entity.id,
+          entity.name,
+          `${entity.name} ${entity.type}`,
+          `${entity.type} ${entity.name}`,
+        ].map((value) => value.trim().toLocaleLowerCase().replaceAll("_", " ")),
+      ),
+    ),
+  };
   for (const choice of choices)
     if (!choice.optional && choice.selectedOccurrenceId === undefined)
       diagnostics.push({
@@ -605,17 +700,42 @@ export function evaluateCharacter(
     const selected = choice.candidates.find(
       (candidate) => candidate.definitionId === selectedDefinitionId,
     );
-    if (selected?.reasons.includes("unverified-prerequisite"))
+    const selectedEntity =
+      selectedDefinitionId === undefined
+        ? undefined
+        : index.get(selectedDefinitionId);
+    const prerequisite = evaluatePrerequisite(
+      selectedEntity?.prerequisites,
+      prerequisiteContext,
+    );
+    const exactOwnedPrerequisite =
+      selectedEntity?.prerequisites !== undefined &&
+      !/[;,]/.test(selectedEntity.prerequisites) &&
+      evaluateRequires(
+        parseRequires(selectedEntity.prerequisites),
+        expressionContext,
+      );
+    if (prerequisite.status === "unverified")
       diagnostics.push({
         severity: "warning",
         code: "prerequisite.unverified",
-        message: `The selected ${choice.type} has a legacy prerequisite that is not yet machine-verified: ${selected.definitionId}`,
+        message: `The selected ${choice.type} has a legacy prerequisite that is not yet machine-verified: ${selectedDefinitionId ?? "unknown"}`,
+        occurrenceId: choice.selectedOccurrenceId,
+        ruleOrdinal: choice.ruleOrdinal,
+      });
+    if (prerequisite.status === "failed")
+      diagnostics.push({
+        severity: "error",
+        code: "prerequisite.failed",
+        message: `The selected ${choice.type} does not satisfy its prerequisite: ${selectedEntity?.prerequisites ?? "unknown"}.`,
         occurrenceId: choice.selectedOccurrenceId,
         ruleOrdinal: choice.ruleOrdinal,
       });
     if (
       selected !== undefined &&
-      selected.reasons.some((reason) => reason !== "unverified-prerequisite")
+      selected.reasons.some(
+        (reason) => reason !== "category" || !exactOwnedPrerequisite,
+      )
     )
       diagnostics.push({
         severity: "error",

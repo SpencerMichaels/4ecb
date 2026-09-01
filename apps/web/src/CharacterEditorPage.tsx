@@ -20,6 +20,56 @@ import {
 const characters = new CharacterRepository();
 const packs = new ContentPackRepository();
 
+function CommitNumberInput({
+  value,
+  min,
+  max,
+  label,
+  onCommit,
+}: {
+  readonly value: number;
+  readonly min: number;
+  readonly max?: number;
+  readonly label?: string;
+  readonly onCommit: (value: number) => void;
+}) {
+  const [draft, setDraft] = useState(String(value));
+
+  useEffect(() => setDraft(String(value)), [value]);
+
+  function commit() {
+    const next = Number(draft);
+    if (
+      !Number.isInteger(next) ||
+      next < min ||
+      (max !== undefined && next > max)
+    ) {
+      setDraft(String(value));
+      return;
+    }
+    if (next !== value) onCommit(next);
+  }
+
+  return (
+    <input
+      {...(label === undefined ? {} : { "aria-label": label })}
+      type="number"
+      min={min}
+      {...(max === undefined ? {} : { max })}
+      value={draft}
+      onChange={(event) => setDraft(event.currentTarget.value)}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") event.currentTarget.blur();
+        if (event.key === "Escape") {
+          setDraft(String(value));
+          event.currentTarget.blur();
+        }
+      }}
+    />
+  );
+}
+
 function OccurrenceTree({
   occurrence,
   byId,
@@ -190,6 +240,51 @@ export function CharacterEditorPage({
               ))}
             </select>
           </label>
+          <div className="inline-actions">
+            <button
+              type="button"
+              disabled={build.levels.length >= 30 || entities.length === 0}
+              onClick={() => {
+                const level = build.levels.length + 1;
+                const definition = byId.get(
+                  `id_internal_level_${level}`.toLocaleLowerCase(),
+                );
+                if (definition === undefined) {
+                  setError(
+                    `The active content profile has no level ${level} record.`,
+                  );
+                  return;
+                }
+                void dispatch({
+                  kind: "add-level",
+                  frame: {
+                    level,
+                    root: {
+                      id: `web:${crypto.randomUUID()}`,
+                      identity: {
+                        definitionId: definition.id,
+                        name: definition.name,
+                        type: definition.type,
+                      },
+                      acquiredLevel: level,
+                      legality: "rules-legal",
+                      children: [],
+                      unresolved: false,
+                    },
+                  },
+                });
+              }}
+            >
+              Add level
+            </button>
+            <button
+              type="button"
+              disabled={build.levels.length <= 1}
+              onClick={() => void dispatch({ kind: "remove-last-level" })}
+            >
+              Remove last level
+            </button>
+          </div>
           {evaluation === undefined ? null : (
             <dl className="report-facts">
               <div>
@@ -221,16 +316,15 @@ export function CharacterEditorPage({
             ].map((ability) => (
               <label key={ability}>
                 {ability}
-                <input
-                  type="number"
-                  min="1"
-                  max="30"
+                <CommitNumberInput
                   value={build.baseAbilities[ability] ?? 10}
-                  onChange={(event) =>
+                  min={1}
+                  max={30}
+                  onCommit={(value) =>
                     void dispatch({
                       kind: "set-base-ability",
                       ability,
-                      value: Number(event.currentTarget.value),
+                      value,
                     })
                   }
                 />
@@ -248,6 +342,7 @@ export function CharacterEditorPage({
           <p>No active choices at this level.</p>
         ) : (
           evaluation.choices.map((choice) => {
+            const replacement = choice.type === "Replacement";
             const provider = evaluation.occurrences.find(
               (occurrence) => occurrence.id === choice.providerOccurrenceId,
             );
@@ -277,9 +372,15 @@ export function CharacterEditorPage({
             return (
               <label key={choice.id}>
                 {choice.name || `Choose ${choice.type}`}
+                {replacement ? (
+                  <small>
+                    Retraining is represented in the history model; the focused
+                    replacement picker is still under construction.
+                  </small>
+                ) : null}
                 <select
                   value={selectedDefinitionId ?? ""}
-                  disabled={buildProvider === undefined}
+                  disabled={buildProvider === undefined || replacement}
                   onChange={(event) => {
                     const candidate = byId.get(
                       event.currentTarget.value.toLocaleLowerCase(),
@@ -362,6 +463,81 @@ export function CharacterEditorPage({
                 </li>
               ))}
             </ul>
+          )}
+        </section>
+        <section className="panel inventory-editor">
+          <h3>Inventory and equipment</h3>
+          {build.inventory.filter((entry) => entry.quantity > 0).length ===
+          0 ? (
+            <p>No carried inventory.</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Owned</th>
+                  <th>Equipped</th>
+                </tr>
+              </thead>
+              <tbody>
+                {build.inventory
+                  .filter((entry) => entry.quantity > 0)
+                  .map((entry) => (
+                    <tr key={entry.id}>
+                      <th scope="row">
+                        {entry.name ||
+                          entry.elements
+                            .map((element) =>
+                              element.definitionId === undefined
+                                ? element.name
+                                : (byId.get(
+                                    element.definitionId.toLocaleLowerCase(),
+                                  )?.name ?? element.name),
+                            )
+                            .filter(Boolean)
+                            .join(" + ")}
+                      </th>
+                      <td>
+                        <CommitNumberInput
+                          label={`Owned quantity for ${entry.name ?? entry.id}`}
+                          value={entry.quantity}
+                          min={0}
+                          onCommit={(quantity) => {
+                            void dispatch({
+                              kind: "put-inventory",
+                              entry: {
+                                ...entry,
+                                quantity,
+                                equippedQuantity: Math.min(
+                                  entry.equippedQuantity,
+                                  quantity,
+                                ),
+                              },
+                            });
+                          }}
+                        />
+                      </td>
+                      <td>
+                        <CommitNumberInput
+                          label={`Equipped quantity for ${entry.name ?? entry.id}`}
+                          max={entry.quantity}
+                          value={entry.equippedQuantity}
+                          min={0}
+                          onCommit={(equippedQuantity) =>
+                            void dispatch({
+                              kind: "put-inventory",
+                              entry: {
+                                ...entry,
+                                equippedQuantity,
+                              },
+                            })
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
           )}
         </section>
       </div>

@@ -904,6 +904,28 @@ textarea {
 .diagnostic-list li {
   margin: 0.3rem 0;
 }
+.inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.inventory-editor {
+  overflow-x: auto;
+}
+.inventory-editor table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.inventory-editor th,
+.inventory-editor td {
+  border-bottom: 1px solid #ddd5c8;
+  padding: 0.4rem;
+  text-align: left;
+}
+.inventory-editor input {
+  width: 5rem;
+}
 
 @media (max-width: 60rem) {
   .editor-grid {

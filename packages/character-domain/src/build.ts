@@ -54,6 +54,7 @@ export interface CharacterBuild {
 }
 
 export type CharacterCommand =
+  | { readonly kind: "batch"; readonly commands: readonly CharacterCommand[] }
   | { readonly kind: "set-effective-level"; readonly level: number }
   | {
       readonly kind: "set-base-ability";
@@ -73,6 +74,13 @@ export type CharacterCommand =
   | {
       readonly kind: "replace-occurrence";
       readonly occurrenceId: string;
+      readonly replacement: BuildOccurrence;
+    }
+  | {
+      readonly kind: "retrain";
+      readonly parentId: string;
+      readonly index: number;
+      readonly replacesId: string;
       readonly replacement: BuildOccurrence;
     }
   | { readonly kind: "add-level"; readonly frame: BuildLevelFrame }
@@ -132,6 +140,8 @@ export function applyCharacterCommand(
   command: CharacterCommand,
 ): CharacterBuild {
   switch (command.kind) {
+    case "batch":
+      return command.commands.reduce(applyCharacterCommand, build);
     case "set-effective-level": {
       if (
         !Number.isInteger(command.level) ||
@@ -167,6 +177,16 @@ export function applyCharacterCommand(
         ...command.replacement,
         replacesId: current.id,
       }));
+    case "retrain":
+      return applyCharacterCommand(build, {
+        kind: "choose",
+        parentId: command.parentId,
+        index: command.index,
+        occurrence: {
+          ...command.replacement,
+          replacesId: command.replacesId,
+        },
+      });
     case "add-level": {
       const expected = build.levels.length + 1;
       if (command.frame.level !== expected || expected > 30)

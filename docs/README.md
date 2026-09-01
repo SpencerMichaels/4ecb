@@ -26,6 +26,8 @@ application's architecture.
 8. [Character import and sheets](character-import-and-sheets.md) specifies the
    M3 character record, lossless legacy envelope, local repository, sheet model,
    and current compatibility boundary.
+9. [Rules engine](rules-engine.md) specifies the recovered evaluator,
+   authoritative build boundary, parity evidence, and remaining M4 work.
 
 ## Definition hierarchy
 
@@ -44,5 +46,6 @@ application's architecture.
 
 The reverse-engineering specification remains the compatibility evidence base.
 The M1 foundation, M2 compendium vertical slice, and M3 legacy character viewer
-are implemented and verified. M4—the rules engine and generic editor—is the next
-executable milestone in the [roadmap](roadmap.md).
+are implemented and verified. M4 has a working rules-engine/editor checkpoint
+and remains active until its broader parity and exception exit criteria are met.
+See the [roadmap](roadmap.md) and [implementation status](implementation-status.md).

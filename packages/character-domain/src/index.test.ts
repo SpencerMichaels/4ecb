@@ -99,4 +99,45 @@ describe("character records", () => {
     expect(build.levels[0]?.root.children).toEqual([]);
     expect(changed.levels[0]?.root.children[0]?.id).toBe("choice");
   });
+
+  it("keeps the historical occurrence when retraining into a later frame", () => {
+    const oldChoice = {
+      id: "old-feat",
+      identity: { definitionId: "OLD", name: "Old", type: "Feat" },
+      acquiredLevel: 1,
+      legality: "rules-legal" as const,
+      children: [],
+      unresolved: false,
+    };
+    const withHistory: CharacterBuild = {
+      ...build,
+      levels: [
+        {
+          ...build.levels[0]!,
+          root: { ...build.levels[0]!.root, children: [oldChoice] },
+        },
+        {
+          level: 2,
+          root: {
+            ...build.levels[0]!.root,
+            id: "level-2",
+            acquiredLevel: 2,
+            children: [],
+          },
+        },
+      ],
+    };
+    const changed = new CharacterTransaction(withHistory).dispatch({
+      kind: "retrain",
+      parentId: "level-2",
+      index: 0,
+      replacesId: "old-feat",
+      replacement: { ...oldChoice, id: "new-feat", acquiredLevel: 2 },
+    });
+    expect(changed.levels[0]?.root.children[0]?.id).toBe("old-feat");
+    expect(changed.levels[1]?.root.children[0]).toMatchObject({
+      id: "new-feat",
+      replacesId: "old-feat",
+    });
+  });
 });

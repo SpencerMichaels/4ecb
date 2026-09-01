@@ -105,6 +105,7 @@ export interface ExpressionContext {
   readonly level: number;
   readonly dynamicCategories?: Readonly<Record<string, ReadonlySet<string>>>;
   readonly categoryAliases?: ReadonlyMap<string, ReadonlySet<string>>;
+  readonly categoryValuesFor?: (entity: ContentEntity) => ReadonlySet<string>;
 }
 
 function same(left: string, right: string): boolean {
@@ -127,6 +128,18 @@ function categoryValues(
   ];
 }
 
+function normalizedCategoryValues(
+  entity: ContentEntity,
+  context: ExpressionContext,
+): ReadonlySet<string> {
+  return (
+    context.categoryValuesFor?.(entity) ??
+    new Set(
+      categoryValues(entity, context).map((value) => value.toLocaleLowerCase()),
+    )
+  );
+}
+
 function numericMatch(
   entity: ContentEntity,
   value: string,
@@ -145,6 +158,8 @@ function numericMatch(
   if (match[2] === "+") return entityLevel >= minimum;
   if (match[3] !== undefined)
     return entityLevel >= minimum && entityLevel <= Number(match[3]);
+  if (entity.type.toLocaleLowerCase() === "power")
+    return entityLevel <= minimum;
   return entityLevel === minimum;
 }
 
@@ -153,24 +168,19 @@ export function matchesCategory(
   expression: CategoryExpression,
   context: ExpressionContext,
 ): boolean {
+  const values = normalizedCategoryValues(entity, context);
   if (expression.dynamicPrefix !== undefined) {
     const prefix = expression.dynamicPrefix.toLocaleUpperCase();
     const allowed = context.dynamicCategories?.[prefix];
     if (allowed !== undefined) {
-      const belongs = categoryValues(entity, context).some((value) =>
-        allowed.has(value.toLocaleLowerCase()),
-      );
+      const belongs = [...values].some((value) => allowed.has(value));
       if (prefix === "$$NOT_CLASS" ? belongs : !belongs) return false;
     }
   }
   return expression.groups.every((group) =>
     group.alternatives.some((term) => {
       const numeric = numericMatch(entity, term.value, context.level);
-      const match =
-        numeric ??
-        categoryValues(entity, context).some((value) =>
-          same(value, term.value),
-        );
+      const match = numeric ?? values.has(term.value.toLocaleLowerCase());
       return term.negated ? !match : match;
     }),
   );

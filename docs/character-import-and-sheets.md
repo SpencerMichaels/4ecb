@@ -14,25 +14,31 @@ calculations are a modern rules engine. Three packages own the boundary:
 
 React renders the model. It never parses XML or calculates a character value.
 
-## Durable record version 1
+## Durable record version 2
 
 The IndexedDB `characters` store uses the character UUID as its key and indexes
 `updatedAt` and `deletedAt`. A record contains:
 
 ```text
-schemaVersion = 1
+schemaVersion = 2
 id, title, notes
 createdAt, updatedAt, deletedAt?
 profileBinding? { packId, contentDigest? }
 sheetSettings { paper, monochrome, blankHitPoints, powerCards, itemCards }
 legacy { format, version?, gameSystem?, legality?, sourceXml }
 snapshot { details, abilities, stats, selections, powers, loot, textStrings }
+build { effectiveLevel, levels, grabbag, inventory, alternates,
+        baseAbilities, textStrings }
 ```
 
-Library title/notes, profile binding, trash state, and sheet preferences are
-native metadata and do not modify the compatibility file. A backup is a
+The build is authoritative for modern edits. Its level frames preserve nested
+selection history, occurrence IDs, acquisition levels, house-rule markers, and
+replacement links. The snapshot remains an imported legacy cache used for the
+current sheet and parity checks. Existing schema-1 records migrate lazily when
+read. Library title/notes, profile binding, trash state, and sheet preferences
+are native metadata and do not modify the compatibility file. A backup is a
 versioned JSON object containing every active and trashed record, including the
-complete envelope, profile references, and settings.
+complete envelope, build, profile references, and settings.
 
 ## Import semantics
 
@@ -52,9 +58,10 @@ elements. It reads:
   `Details` blocks omit them.
 
 The normalized snapshot is explicitly tagged `legacy-cache`. It is a read model,
-not editable build state. Authoritative level trees, alternates, loot history,
-unresolved slots, custom extensions, comments, whitespace, and all other XML
-remain in `sourceXml` even where M3 does not project them.
+not editable build state. The importer also projects the complete serialized
+level tree, grabbag, alternates, base abilities, and inventory into the
+authoritative build. Custom extensions, comments, whitespace, cached sheet
+values, and other unmodeled XML remain in `sourceXml`.
 
 ## Export compatibility
 
@@ -90,10 +97,19 @@ provides Letter and A4 page rules. Blank hit points, card inclusion, and
 monochrome preferences persist with the character. Browser printing is the PDF
 workflow; no PDF bytes are stored in the character.
 
-## Known limitations before M4/M5
+## Current limitations before M4/M5 closure
 
-- Calculations and legality are not recomputed after import.
-- M3 does not edit build choices, level history, equipment, or legacy XML.
+- The M4 evaluator recomputes general choices, grants, prerequisites, stats,
+  text, overlays, equipment predicates, and legality, but does not yet compute
+  complete power attack/damage/critical variants.
+- The editor handles abilities, level frames, ordinary choices, inventory, and
+  undo/redo. Focused replacement picking and choices supplied by newly created
+  synthetic grant providers still need their dedicated editing flow.
+- Edited builds do not yet regenerate the semantic sheet snapshot or `.dnd4e`
+  caches; no-edit legacy export remains exact.
+- Candidate lists are structurally filtered up front. Full prerequisite
+  evaluation currently runs for selected choices, so a newly selected illegal
+  option remains editable and is then explained by diagnostics.
 - Full card prose requires the matching content pack because `.dnd4e`
   `PowerStats` contains calculations but not every rule field.
 - Portrait file URLs from the Windows application are retained in XML but are

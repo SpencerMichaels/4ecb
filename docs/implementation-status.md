@@ -2,10 +2,39 @@
 
 ## Current stopping point
 
-Milestones M1 through M3 are complete. The application is now a local-first
-compendium and legacy character viewer, but it deliberately does not edit builds
-or claim modern rules-engine parity. The next work is M4: the recovered rule
-language evaluator, authoritative character history, and generic builder.
+Milestones M1 through M3 are complete. M4 now has a verified vertical slice: an
+authoritative character build, recovered rule-language evaluator, transactional
+editor, and exact cached-stat parity for the supplied legacy character. M4 is
+not complete; power calculations, broader golden-character coverage, several
+legacy exception families, and focused replacement/grant editing remain.
+
+## M4 checkpoint delivered
+
+- `rules-engine` parses every rule opcode and attribute found in the 38,339
+  entity private corpus: 54,012 statements audit with no unknown opcode,
+  attribute, or unexplained required field.
+- Fixed-point grants and choices, category expressions, stat modifiers and
+  aliases, text updates, field overlays, equipped-item predicates, structured
+  prerequisites, provenance, and editable incomplete/illegal states.
+- Schema-2 records with an authoritative level-tree build, stable occurrence
+  IDs, retained retraining links, base abilities, inventory, text values, and a
+  lazy migration from the M3 read-only record.
+- Transactional commands with undo/redo for abilities, effective level, level
+  frames, choices, retraining, inventory, and text values.
+- A desktop/tablet character editor for abilities, advancement, choices,
+  inventory quantities/equipment, history, and engine diagnostics.
+- A private-corpus audit and a supplied-character parity reporter, kept outside
+  the distributable public fixtures.
+
+## M4 checkpoint verification
+
+On 2026-08-31, the supplied level-8 character converged in one fixed-point
+iteration and matched all 72 comparable cached numeric aliases. Its only
+remaining legality findings are its explicit house-rule selection and one
+custom feat prerequisite the imported content cannot prove. The public suite
+passes 63 tests plus formatting, ESLint, all TypeScript projects, and the
+production PWA build. See [rules-engine.md](rules-engine.md) for the evaluator
+boundary, performance result, and remaining closure work.
 
 ## M3 delivered
 
@@ -141,8 +170,11 @@ merger; begin from `combined.dnd40.original.xml` as the script does.
 
 ## Deferred by design
 
-- M4 and M5 own the character engine/editor, regenerated `.dnd4e` snapshots,
-  exhaustive cross-browser print goldens, and MVP parity closure.
+- The remainder of M4 owns power attack/damage calculation, broader rules and
+  golden-character coverage, focused replacement/grant editing, and unresolved
+  native exception families.
+- M5 owns regenerated `.dnd4e` snapshots, exhaustive cross-browser print
+  goldens, and MVP parity closure.
 - M6 and M7 own mobile play state and encrypted relay-linked sessions.
 - Visual theming, animation, and fine interaction polish wait for the tighter
   user feedback loop requested for later UI work.
