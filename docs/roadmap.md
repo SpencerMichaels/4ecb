@@ -231,6 +231,11 @@ The following slice separately projects the recovered Hunter's Quarry,
 Warlock's Curse, and Sneak Attack conditional damage families, including hybrid
 class-power gates and Sneak Attack weapon eligibility. Unknown variants remain
 unsupported, and the remaining named/situational tail still blocks closure.
+The recovered fixed-output `SpecialCase` slice now also covers Bond of
+Censure's tier dice and ability suppression plus three exact ongoing-10 hit
+forms. Exact-profile Hu power fields consequently match 52/52; the other
+decoded native special strings remain explicitly unsupported and still block
+closure.
 
 ### Goal
 

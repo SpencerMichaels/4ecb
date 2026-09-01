@@ -17,6 +17,25 @@ MVP declaration.
 
 ## M5 checkpoints
 
+### Fixed-output native power special cases
+
+- Power math now ports the recovered early-return behavior for `Bond of
+Censure`: its conditional movement prose yields `1d10`, or `2d10` at level
+  21, without incorrectly adding the mentioned Intelligence modifier. Ordinary
+  implement enhancement still applies after that native branch.
+- Three recovered hit-text branches now retain their fixed `ongoing 10` output:
+  the exact Brilliant Beacon radiant line, Baleful Gaze of the Basilisk's
+  stunned/poison line, and Contagion's longer failed-save line.
+- Public same-profile fixtures cover heroic/epic Bond output, +1 implement
+  enhancement, and all three ongoing forms. Other recovered `SpecialCase`
+  strings remain explicitly tagged `native-special-case:<power-id>` rather than
+  receiving guessed math.
+- The ignored supplied Hu level-8 exact-profile comparison improved from 49/52
+  to 52/52 cached power fields while retaining 72/72 numeric aliases. Its two
+  legality diagnostics are unchanged. The unrelated nine-character historical
+  matrix remains 501/509 aliases and 277/371 power fields with 67 conditional
+  variants; those unknown-revision caches remain diagnostics, not goldens.
+
 ### Conditional striker power projections
 
 - The renderer-neutral power model now separates conditional damage from the

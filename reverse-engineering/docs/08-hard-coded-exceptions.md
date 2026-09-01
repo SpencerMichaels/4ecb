@@ -89,6 +89,14 @@ feature IDs additionally require a power from their Ranger, Rogue, or Warlock
 class family. These observed branches are safe to model explicitly; similarly
 named unknown feature variants are not.
 
+The power `SpecialCase` body also has a fixed-output family. It checks Bond of
+Censure by exact name and returns `1d10`, or `2d10` at level 21, before the
+ordinary prose ability parser. Later equipment processing still supplies
+implement enhancement. Three exact hit forms return `ongoing 10`: Brilliant
+Beacon's radiant line, Baleful Gaze of the Basilisk's stunned poison line, and
+the Contagion prefix that continues with a failed-save rider. The other decoded
+strings are distinct branches and must not inherit these results by similarity.
+
 The exact output is richer than `ability modifier + half level + proficiency +
 enhancement`. Use the saved `PowerStats` corpus as golden oracles and keep every
 component explainable.

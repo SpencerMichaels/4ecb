@@ -113,7 +113,10 @@ budgets remain active during M5.
       The 2026-09-01 host had no project-local Wine/Xvfb/.NET Framework runtime,
       so all original-application rows remain explicitly unexecuted.
 - [ ] Close the named M4 native exception and private exact-profile parity
-      blockers without reclassifying cross-profile diagnostics as goldens.
+      blockers without reclassifying cross-profile diagnostics as goldens. The
+      fixed-output slice covers Bond of Censure and three exact ongoing-10 hit
+      forms, with Hu now 52/52 on exact-profile cached power fields; other
+      decoded native special strings remain explicitly unsupported.
 - [x] Repeat the automated Letter/A4 color/monochrome PDF matrix in supported
       Firefox.
 

@@ -264,6 +264,51 @@ function formatDamage(dice: string, bonus: number): string {
   return `${dice}${bonus > 0 ? "+" : ""}${bonus}`;
 }
 
+function nativeSpecialDamage(
+  power: ContentEntity,
+  hitLine: string | undefined,
+  level: number,
+):
+  | {
+      readonly dice?: string;
+      readonly expression?: string;
+      readonly suppressAbility?: boolean;
+    }
+  | undefined {
+  // The legacy engine checks this exact power name before parsing its
+  // conditional movement prose.
+  if (key(power.name) === "bond of censure")
+    return { dice: level >= 21 ? "2d10" : "1d10", suppressAbility: true };
+
+  const hit = key(hitLine ?? "");
+  if (
+    hit === "the target takes ongoing 10 radiant damage (save ends)." ||
+    hit ===
+      "the target is stunned and takes ongoing 10 poison damage (save ends both)." ||
+    hit.startsWith("ongoing 10 poison damage (save ends).")
+  )
+    return { expression: "ongoing 10" };
+  return undefined;
+}
+
+function unresolvedNativeSpecialCase(hitLine: string | undefined): boolean {
+  const hit = key(hitLine ?? "");
+  return (
+    hit.startsWith("deal damage equal to your strength modifier,") ||
+    hit ===
+      "the target takes necrotic damage equal to the damage you took from the attack." ||
+    hit.startsWith("you deal damage based on the level of the rage power") ||
+    hit ===
+      "the target is slowed and takes ongoing damage equal to 10 + your dexterity modifier (save ends both)." ||
+    hit ===
+      "you take damage equal to your level, and the target takes 3d10 + constitution modifier damage plus extra damage equal to one-half your level." ||
+    hit ===
+      "you pull the target 4 squares, and it takes 4[w] + your charisma modifier psychic damage. the enemy then chooses either to be pushed 3 squares or to take a -2 penalty to attack rolls (save ends)." ||
+    hit ===
+      "whenever the target deals damage with an attack before the end of your next turn, it takes 15 force damage and is dazed until the end of your next turn."
+  );
+}
+
 function criticalExpression(
   equipment: Loadout,
   level: number,
@@ -642,12 +687,14 @@ export function evaluatePowers(input: {
         });
 
       const damageComponents: PowerComponent[] = [];
+      const specialDamage = nativeSpecialDamage(power, hitLine, input.level);
       const weaponMatch = hitLine?.match(/(\d+)\[W\]/i);
       const fixedMatch = hitLine?.match(/(\d+d\d+)/i);
       const dice =
-        weaponMatch !== null && weaponMatch !== undefined
+        specialDamage?.dice ??
+        (weaponMatch !== null && weaponMatch !== undefined
           ? diceTimes(equipment.weaponDamage ?? "1d4", Number(weaponMatch[1]))
-          : fixedMatch?.[1];
+          : fixedMatch?.[1]);
       const ongoing = /\bongoing\b/i.test(hitLine ?? "");
       const primaryDamageClause = (hitLine ?? "").split(/\bdamage\b/i)[0] ?? "";
       let damageAbilities: readonly string[] = abilityNames.filter((ability) =>
@@ -665,11 +712,15 @@ export function evaluatePowers(input: {
         damageAbilities[0] === "Dexterity"
       )
         damageAbilities = ["Strength"];
-      const additiveAbilities = /\bor\b/i.test(primaryDamageClause)
-        ? listedAbilities.includes(attackStat as (typeof abilityNames)[number])
-          ? [attackStat]
-          : damageAbilities.slice(0, 1)
-        : damageAbilities;
+      const additiveAbilities = specialDamage?.suppressAbility
+        ? []
+        : /\bor\b/i.test(primaryDamageClause)
+          ? listedAbilities.includes(
+              attackStat as (typeof abilityNames)[number],
+            )
+            ? [attackStat]
+            : damageAbilities.slice(0, 1)
+          : damageAbilities;
       if (dice !== undefined)
         damageComponents.push(
           ...additiveAbilities.map((ability) => ({
@@ -762,11 +813,13 @@ export function evaluatePowers(input: {
           (sum, component) => sum + component.value,
           0,
         ),
-        ...(dice === undefined
-          ? ongoing
-            ? { damage: "Ongoing" }
-            : {}
-          : { damage: formatDamage(dice, damageBonus) }),
+        ...(specialDamage?.expression !== undefined
+          ? { damage: specialDamage.expression }
+          : dice === undefined
+            ? ongoing
+              ? { damage: "Ongoing" }
+              : {}
+            : { damage: formatDamage(dice, damageBonus) }),
         ...(critical === undefined ? {} : { critical }),
         ...(brutal === undefined ? {} : { brutal: Number(brutal) }),
         attackComponents,
@@ -801,6 +854,8 @@ export function evaluatePowers(input: {
       variants.some((variant) => variant.damage === undefined)
     )
       unsupported.push("unparsed-hit");
+    if (unresolvedNativeSpecialCase(hitLine))
+      unsupported.push(`native-special-case:${power.id}`);
     const usage = effectiveField(power, "Power Usage", input.overlays);
     const actionType = effectiveField(power, "Action Type", input.overlays);
     return [

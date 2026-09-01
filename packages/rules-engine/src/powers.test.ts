@@ -361,6 +361,99 @@ describe("power evaluation", () => {
     expect(power?.unsupported).toEqual([]);
   });
 
+  it("projects recovered fixed-output native power special cases", () => {
+    const powers = evaluatePowers({
+      level: 21,
+      activeDefinitionIds: [
+        "BOND",
+        "BEACON",
+        "BASILISK",
+        "CONTAGION",
+        "UNRESOLVED",
+      ],
+      inventory: [
+        {
+          id: "symbol",
+          definitionIds: ["SYMBOL"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: { "Wisdom modifier": stat("Wisdom modifier", 6) },
+      overlays: [],
+      entities: [
+        entity("BOND", "Bond of Censure", "Power", {
+          Keywords: "Divine, Implement, Radiant",
+          "Attack Type": "Ranged 5",
+          Attack: "Wisdom vs. Will",
+          Hit: "You pull the target a number of squares equal to your Intelligence modifier. If the target ends this movement adjacent to you, it takes 1d10 radiant damage.\nLevel 21: 2d10 radiant damage.",
+        }),
+        entity("BEACON", "Brilliant Beacon", "Power", {
+          Keywords: "Divine, Implement, Radiant",
+          "Attack Type": "Area burst 1",
+          Attack: "Wisdom vs. Will",
+          Hit: "The target takes ongoing 10 radiant damage (save ends).",
+        }),
+        entity("BASILISK", "Baleful Gaze of the Basilisk", "Power", {
+          Keywords: "Arcane, Implement, Poison",
+          "Attack Type": "Ranged 10",
+          Attack: "Wisdom vs. Fortitude",
+          Hit: "The target is stunned and takes ongoing 10 poison damage (save ends both).",
+        }),
+        entity("CONTAGION", "Contagion", "Power", {
+          Keywords: "Arcane, Implement, Poison",
+          "Attack Type": "Ranged 10",
+          Attack: "Wisdom vs. Fortitude",
+          Hit: "Ongoing 10 poison damage (save ends). The first time the target fails a saving throw against this ongoing damage, each enemy within 2 squares of the target takes ongoing 5 poison damage (save ends).",
+        }),
+        entity("SYMBOL", "Symbol +1", "Magic Item", {
+          "Magic Item Type": "Holy Symbol",
+          Enhancement: "+1",
+        }),
+        entity("UNRESOLVED", "Unresolved Native Exception", "Power", {
+          Keywords: "Arcane, Implement, Necrotic",
+          "Attack Type": "Ranged 10",
+          Attack: "Wisdom vs. Fortitude",
+          Hit: "The target takes necrotic damage equal to the damage you took from the attack.",
+        }),
+      ],
+    });
+
+    expect(
+      powers
+        .find(({ definitionId }) => definitionId === "BOND")
+        ?.variants.find(({ equipmentName }) => equipmentName === "Symbol +1")
+        ?.damage,
+    ).toBe("2d10+1");
+    for (const id of ["BEACON", "BASILISK", "CONTAGION"])
+      expect(
+        powers.find(({ definitionId }) => definitionId === id)?.variants[0]
+          ?.damage,
+      ).toBe("ongoing 10");
+    expect(
+      powers.find(({ definitionId }) => definitionId === "UNRESOLVED")
+        ?.unsupported,
+    ).toContain("native-special-case:UNRESOLVED");
+
+    const [heroicBond] = evaluatePowers({
+      level: 20,
+      activeDefinitionIds: ["BOND"],
+      inventory: [],
+      stats: { "Wisdom modifier": stat("Wisdom modifier", 5) },
+      overlays: [],
+      entities: [
+        entity("BOND", "Bond of Censure", "Power", {
+          Keywords: "Divine, Implement, Radiant",
+          "Attack Type": "Ranged 5",
+          Attack: "Wisdom vs. Will",
+          Hit: "Conditional movement prose with no parseable damage dice.",
+        }),
+      ],
+    });
+    expect(heroicBond?.variants[0]?.damage).toBe("1d10");
+  });
+
   it("classifies healing surges and temporary hit point effects", () => {
     const [power] = evaluatePowers({
       level: 6,

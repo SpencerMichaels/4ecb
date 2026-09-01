@@ -116,6 +116,14 @@ prevent illegal custom-power replacements; Hybrid preserves only two visible
 workflows, not a claim that every class or named native power exception is
 closed.
 
+The recovered fixed-output power branch is partially ported. Bond of Censure
+uses native `1d10`/epic `2d10` output, suppresses the conditional prose's
+Intelligence modifier, and still receives ordinary implement enhancement.
+Exact Brilliant Beacon, Baleful Gaze of the Basilisk, and Contagion hit forms
+produce `ongoing 10`. Public same-profile tests cover these forms; other decoded
+`SpecialCase` strings report `native-special-case:<power-id>` until their full
+components are modeled.
+
 Power loadouts now consume the durable `_INTERNAL_MainHandWeapon` selection and
 project explicit main/off-hand roles plus the paired equipment name without
 discarding alternate `PowerStats` variants. The recovered native
