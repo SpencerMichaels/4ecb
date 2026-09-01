@@ -13,6 +13,8 @@
           chromium
           dotnet-sdk_8
           docker-client
+          firefox
+          geckodriver
           jq
           libxml2
           nodejs_24

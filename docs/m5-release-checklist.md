@@ -17,7 +17,7 @@ is run through the documented private scripts.
 | Client                                 | Critical workflows                                                                          | Keyboard/semantics                                                          | Letter/A4 print                           | Status  |
 | -------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------- | ------- |
 | Current desktop Chromium               | Content/profile, compendium, character import/edit/sheet/export, backup, PWA update/offline | Top-level semantic audit and route focus pass; full workflow traversal open | Automated Letter/A4 color/monochrome pass | Partial |
-| Current desktop Firefox                | Ordinary-file fallback required; full workflow open                                         | Open                                                                        | Open                                      | Open    |
+| Current desktop Firefox                | Ordinary-file fallback required; full workflow open                                         | Open                                                                        | Automated Letter/A4 color/monochrome pass | Partial |
 | Current desktop Safari, where feasible | Ordinary-file fallback required; full workflow open                                         | Open                                                                        | Open                                      | Open    |
 | Current iPadOS Safari                  | Builder/sheet/content/backup workflow open                                                  | Reflow/touch/keyboard open                                                  | Print/PDF open                            | Open    |
 | Current Android Chromium tablet        | Builder/sheet/content/backup workflow open                                                  | Reflow/touch/keyboard open                                                  | Platform print open                       | Open    |
@@ -79,15 +79,18 @@ the ordinary `.4ecp` and decrypted/merged-rules file input used by every client.
       the automated durability matrix.
 - [x] Original `.dnd4e` preservation and edited 0.07a regeneration have public
       round-trip/escaping/profile-revision gates.
-- [x] Pinned Chromium generates tagged five-page Letter and A4 PDFs in color and
-      monochrome from 18 short/long-prose powers and six item cards. All pages have
-      the requested dimensions, extracted text is complete, mutable hit points are
-      blank, application chrome is absent, and no card reports DOM overflow.
+- [x] Pinned Chromium and Firefox generate five-page Letter and A4 PDFs in color
+      and monochrome from 18 short/long-prose powers and six item cards. All pages
+      have the requested dimensions, extracted text is complete, mutable hit points
+      are blank, application chrome is absent, and no card reports DOM overflow.
+      Chromium output is tagged; Firefox 154 output is not tagged.
 - [ ] Open edited exports in the original Windows builder across the curated
       application matrix.
 - [ ] Close the named M4 native exception and private exact-profile parity
       blockers without reclassifying cross-profile diagnostics as goldens.
-- [ ] Repeat the Letter/A4 color/monochrome print matrix in supported Firefox
-      and Safari engines and inspect their raster output for visual regressions.
+- [x] Repeat the automated Letter/A4 color/monochrome PDF matrix in supported
+      Firefox.
+- [ ] Repeat the matrix in Safari and inspect Firefox/Safari raster output for
+      visual regressions.
 
 M5 is not complete while any unchecked item above maps to an MVP exit criterion.

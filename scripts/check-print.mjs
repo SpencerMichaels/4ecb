@@ -137,7 +137,7 @@ try {
     true,
   );
 
-  const results = [];
+  const chromiumResults = [];
   for (const variant of [
     { name: "letter-color", paper: "letter", monochrome: false },
     { name: "letter-monochrome", paper: "letter", monochrome: true },
@@ -205,10 +205,11 @@ try {
     const pdfPath = join(scratch, `${variant.name}.pdf`);
     await writeFile(pdfPath, Buffer.from(pdf.data, "base64"));
     const evidence = await inspectPdf(pdfPath, variant.paper);
-    results.push({ ...variant, ...layout, ...evidence });
+    chromiumResults.push({ ...variant, ...layout, ...evidence });
   }
 
   assert(browserMessages.length === 0, browserMessages.join("\n"));
+  const firefoxResults = await firefoxPrintMatrix(character, origin, scratch);
   console.log(
     JSON.stringify(
       {
@@ -219,7 +220,9 @@ try {
           itemCards: character.snapshot.loot.length,
           blankHitPoints: character.sheetSettings.blankHitPoints,
         },
-        results,
+        chromiumResults,
+        firefox: await firefoxVersion(),
+        firefoxResults,
       },
       null,
       2,
@@ -231,6 +234,164 @@ try {
   preview.kill("SIGTERM");
   await Promise.allSettled([processExit(chromium), processExit(preview)]);
   await rm(scratch, { recursive: true, force: true });
+}
+
+async function firefoxPrintMatrix(character, origin, outputDirectory) {
+  const port = await availablePort();
+  const driver = spawn("geckodriver", ["--port", String(port)], {
+    stdio: "ignore",
+  });
+  let sessionId;
+  try {
+    await waitForHttp(`http://127.0.0.1:${port}/status`);
+    const session = await webdriverRequest(port, "/session", "POST", {
+      capabilities: {
+        alwaysMatch: {
+          browserName: "firefox",
+          "moz:firefoxOptions": { args: ["-headless"] },
+        },
+      },
+    });
+    sessionId = session.sessionId;
+    await webdriverNavigate(port, sessionId, `${origin}/#/settings`);
+    await webdriverWait(
+      port,
+      sessionId,
+      `return document.body.textContent.includes("Content profiles")`,
+    );
+    await webdriverExecuteAsync(
+      port,
+      sessionId,
+      `const character = arguments[0];
+       const done = arguments[arguments.length - 1];
+       (async () => {
+         const database = await new Promise((resolve, reject) => {
+           const request = indexedDB.open("4ecb");
+           request.onsuccess = () => resolve(request.result);
+           request.onerror = () => reject(request.error);
+         });
+         await new Promise((resolve, reject) => {
+           const transaction = database.transaction("characters", "readwrite");
+           transaction.objectStore("characters").put(character);
+           transaction.oncomplete = () => resolve();
+           transaction.onerror = () => reject(transaction.error);
+           transaction.onabort = () => reject(transaction.error);
+         });
+         database.close();
+         done(true);
+       })().catch((error) => done({ error: String(error) }));`,
+      [character],
+    );
+
+    const results = [];
+    for (const variant of [
+      { name: "letter-color", paper: "letter", monochrome: false },
+      { name: "letter-monochrome", paper: "letter", monochrome: true },
+      { name: "a4-color", paper: "a4", monochrome: false },
+      { name: "a4-monochrome", paper: "a4", monochrome: true },
+    ]) {
+      await webdriverExecuteAsync(
+        port,
+        sessionId,
+        `const [id, paper, monochrome] = arguments;
+         const done = arguments[arguments.length - 1];
+         (async () => {
+           const database = await new Promise((resolve, reject) => {
+             const request = indexedDB.open("4ecb");
+             request.onsuccess = () => resolve(request.result);
+             request.onerror = () => reject(request.error);
+           });
+           const character = await new Promise((resolve, reject) => {
+             const request = database.transaction("characters").objectStore("characters").get(id);
+             request.onsuccess = () => resolve(request.result);
+             request.onerror = () => reject(request.error);
+           });
+           character.sheetSettings = { ...character.sheetSettings, paper, monochrome };
+           await new Promise((resolve, reject) => {
+             const transaction = database.transaction("characters", "readwrite");
+             transaction.objectStore("characters").put(character);
+             transaction.oncomplete = () => resolve();
+             transaction.onerror = () => reject(transaction.error);
+             transaction.onabort = () => reject(transaction.error);
+           });
+           database.close();
+           done(true);
+         })().catch((error) => done({ error: String(error) }));`,
+        [character.id, variant.paper, variant.monochrome],
+      );
+      await webdriverNavigate(
+        port,
+        sessionId,
+        `${origin}/?firefox-print=${encodeURIComponent(variant.name)}#/characters/${character.id}`,
+      );
+      await webdriverWait(
+        port,
+        sessionId,
+        `const sheet = document.querySelector(".sheet-page");
+         return document.body.textContent.includes("${character.title}") &&
+           document.querySelectorAll(".sheet-card").length === 24 &&
+           sheet?.classList.contains("paper-${variant.paper}") === true &&
+           sheet?.classList.contains("sheet-monochrome") === ${variant.monochrome} &&
+           document.querySelector('link[data-print-paper="${variant.paper}"]') !== null;`,
+      );
+      const layout = await webdriverExecute(
+        port,
+        sessionId,
+        `const cards = [...document.querySelectorAll(".sheet-card")];
+         const overflowing = cards.filter((card) =>
+           card.scrollHeight > card.clientHeight + 1 ||
+           card.scrollWidth > card.clientWidth + 1
+         ).map((card) => card.querySelector("h3")?.textContent ?? "unnamed");
+         const header = document.querySelector(".item-card > header");
+         const style = header === null ? undefined : getComputedStyle(header);
+         return {
+           cardCount: cards.length,
+           overflowing,
+           itemHeaderBackground: style?.backgroundColor,
+           itemHeaderColor: style?.color,
+         };`,
+      );
+      assert(
+        layout.cardCount === 24,
+        `Firefox ${variant.name} did not render every card`,
+      );
+      assert(
+        layout.overflowing.length === 0,
+        `Firefox ${variant.name} clips cards: ${layout.overflowing.join(", ")}`,
+      );
+      if (variant.monochrome)
+        assert(
+          layout.itemHeaderBackground === "rgb(255, 255, 255)" &&
+            layout.itemHeaderColor === "rgb(0, 0, 0)",
+          `Firefox ${variant.name} did not apply monochrome colors`,
+        );
+      const printed = await webdriverRequest(
+        port,
+        `/session/${sessionId}/print`,
+        "POST",
+        {
+          background: true,
+          shrinkToFit: true,
+          page:
+            variant.paper === "letter"
+              ? { width: 21.59, height: 27.94 }
+              : { width: 21, height: 29.7 },
+        },
+      );
+      const path = join(outputDirectory, `firefox-${variant.name}.pdf`);
+      await writeFile(path, Buffer.from(printed, "base64"));
+      const evidence = await inspectPdf(path, variant.paper, false);
+      results.push({ ...variant, ...layout, ...evidence });
+    }
+    return results;
+  } finally {
+    if (sessionId !== undefined)
+      await webdriverRequest(port, `/session/${sessionId}`, "DELETE").catch(
+        () => undefined,
+      );
+    driver.kill("SIGTERM");
+    await processExit(driver);
+  }
 }
 
 function printCharacter() {
@@ -391,7 +552,7 @@ async function updateSheetSettings(cdp, id, variant) {
   );
 }
 
-async function inspectPdf(path, paper) {
+async function inspectPdf(path, paper, requireTagged = true) {
   const [{ stdout: info }, { stdout: text }] = await Promise.all([
     execute("pdfinfo", [path]),
     execute("pdftotext", ["-layout", path, "-"]),
@@ -408,7 +569,8 @@ async function inspectPdf(path, paper) {
   assert(Math.abs(width - expected[0]) < 1, `${path} has width ${width}`);
   assert(Math.abs(height - expected[1]) < 1, `${path} has height ${height}`);
   assert(pages >= 3 && pages <= 15, `${path} has implausible ${pages} pages`);
-  assert(/^Tagged:\s+yes$/m.test(info), `${path} is not a tagged PDF`);
+  const tagged = /^Tagged:\s+yes$/m.test(info);
+  if (requireTagged) assert(tagged, `${path} is not a tagged PDF`);
   const { stdout: pageInfo } = await execute("pdfinfo", [
     "-f",
     "1",
@@ -446,7 +608,13 @@ async function inspectPdf(path, paper) {
       normalizedText.includes(required.toLocaleLowerCase()),
       `${path} is missing text: ${required}`,
     );
-  for (const hidden of ["Ready offline", "Unofficial, local-first software"])
+  for (const hidden of [
+    "Ready offline",
+    "Unofficial, local-first software",
+    "Print or save PDF",
+    "Blank hit points",
+    "Monochrome",
+  ])
     assert(
       !normalizedText.includes(hidden.toLocaleLowerCase()),
       `${path} includes application chrome: ${hidden}`,
@@ -455,12 +623,62 @@ async function inspectPdf(path, paper) {
     !/Hit Points\s+72/i.test(compactText),
     `${path} did not blank the mutable hit-point value`,
   );
-  return { pages, widthPoints: width, heightPoints: height, tagged: true };
+  return { pages, widthPoints: width, heightPoints: height, tagged };
 }
 
 async function chromiumVersion() {
   const { stdout } = await execute("chromium", ["--version"]);
   return stdout.trim();
+}
+
+async function firefoxVersion() {
+  const { stdout } = await execute("firefox", ["--version"]);
+  return stdout.trim();
+}
+
+async function webdriverRequest(port, path, method = "GET", body) {
+  const response = await fetch(`http://127.0.0.1:${port}${path}`, {
+    method,
+    headers: { "content-type": "application/json; charset=utf-8" },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  const payload = await response.json();
+  if (!response.ok || payload.value?.error !== undefined)
+    throw new Error(
+      payload.value?.message ??
+        `WebDriver ${method} ${path} failed with ${response.status}`,
+    );
+  return payload.value;
+}
+
+async function webdriverNavigate(port, sessionId, url) {
+  await webdriverRequest(port, `/session/${sessionId}/url`, "POST", { url });
+}
+
+async function webdriverExecute(port, sessionId, script, args = []) {
+  return webdriverRequest(port, `/session/${sessionId}/execute/sync`, "POST", {
+    script,
+    args,
+  });
+}
+
+async function webdriverExecuteAsync(port, sessionId, script, args = []) {
+  const value = await webdriverRequest(
+    port,
+    `/session/${sessionId}/execute/async`,
+    "POST",
+    { script, args },
+  );
+  if (value?.error !== undefined) throw new Error(value.error);
+  return value;
+}
+
+async function webdriverWait(port, sessionId, script) {
+  for (let attempt = 0; attempt < 150; attempt += 1) {
+    if (await webdriverExecute(port, sessionId, script)) return;
+    await delay(100);
+  }
+  throw new Error(`Timed out waiting for Firefox expression: ${script}`);
 }
 
 async function availablePort() {

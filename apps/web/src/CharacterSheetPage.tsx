@@ -177,6 +177,17 @@ export function CharacterSheetPage({
           exactProfile ? content?.entities : undefined,
         );
   }, [character, content, evaluation, exactProfile]);
+  const printPaper = character?.sheetSettings.paper;
+  useEffect(() => {
+    if (printPaper === undefined) return;
+    const link = document.createElement("link");
+    link.dataset.printPaper = printPaper;
+    link.href = `${import.meta.env.BASE_URL}print-${printPaper}.css`;
+    link.media = "print";
+    link.rel = "stylesheet";
+    document.head.append(link);
+    return () => link.remove();
+  }, [printPaper]);
   if (error !== undefined)
     return (
       <main className="sheet-page" id="main-content">

@@ -273,26 +273,32 @@ updated shell had no forced minimum width or console warnings/errors. The full
 public gate passes 127 tests across 29 files. Full keyboard traversal and the
 other supported-client checklist entries remain open and are not claimed.
 
-### Chromium Letter/A4 PDF release gate
+### Chromium and Firefox Letter/A4 PDF release gate
 
-- Chromium 152 and Poppler are pinned in the project-local Nix shell. The public
-  gate starts the production preview and an ephemeral headless browser profile,
-  seeds a synthetic schema-2 character, and prints the real sheet route through
-  the browser debugging protocol.
+- Chromium 152, Firefox 154, geckodriver 0.37, and Poppler are pinned in the
+  project-local Nix shell. The public gate starts the production preview and
+  ephemeral headless browser profiles, seeds a synthetic schema-2 character,
+  and prints the real sheet route through Chromium's debugging protocol and the
+  standard Firefox WebDriver print command.
 - The fixture contains 18 powers with alternating long/short prose, six item
   cards, features, skills, equipment, and blank hit points. Four variants cover
   Letter/A4 crossed with color/monochrome.
-- Each variant produces a tagged five-page PDF. Every page—not just the
-  first—measures 612 × 792 points for Letter or approximately 594.96 × 841.92
-  for A4. Extracted text contains both section headings and the first/last power
-  and item, while the mutable hit-point value and application chrome are absent.
-  All 24 cards report no DOM overflow, and monochrome variants compute white
-  headers with black text.
+- Each browser/variant combination produces a five-page PDF. Every page—not just
+  the first—measures 612 × 792 points for Letter or approximately 595 × 842 for
+  A4. Extracted text contains both section headings and the first/last power and
+  item, while the mutable hit-point value and application chrome are absent. All
+  24 cards report no DOM overflow, and monochrome variants compute white headers
+  with black text. Chromium output is tagged; Firefox 154 output is explicitly
+  recorded as untagged.
+- Firefox ignores the named-page switch when a global Letter page is present.
+  The character sheet therefore installs a same-origin global print stylesheet
+  for the persisted Letter/A4 choice; named pages remain a progressive
+  enhancement. Both engines now honor the selected paper size.
 
 The harness deletes its browser profile and PDFs and uses only public synthetic
-data. `scripts/check.sh` now includes this real-browser print gate after the
-production build. Firefox and Safari print/raster inspection remain open in the
-supported-client matrix, so M5 print closure is not yet claimed.
+data. `scripts/check.sh` includes this real-browser print gate after the
+production build. Safari execution and Firefox/Safari raster inspection remain
+open in the supported-client matrix, so M5 print closure is not yet claimed.
 
 ## M4 delivered
 

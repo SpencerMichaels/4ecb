@@ -1090,6 +1090,9 @@ textarea {
   .item-section {
     break-before: page;
   }
+  .paper-a4 {
+    page: a4sheet;
+  }
   .paper-a4 .print-sheet,
   .paper-a4 .card-section {
     page: a4sheet;

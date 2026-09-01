@@ -198,13 +198,14 @@ requests, quota diagnostics, an installable offline PWA with explicit update
 prompts, a hardened public Docker boundary, public-distribution notices, and
 exact-profile authoritative browser sheets with a visible legacy-cache fallback.
 Edited export now has explicit byte-preserving and 0.07a regenerated targets
-with a semantic re-import gate. The original-application launch matrix,
-supported-browser print closure, release matrices, and the other M5 exit
-criteria remain open. Content onboarding now provides bounded read-only
+with a semantic re-import gate. Automated Chromium and Firefox Letter/A4 PDF
+matrices pass; Safari and cross-engine raster inspection remain open alongside
+the original-application launch matrix, release matrices, and the other M5 exit
+criteria. Content onboarding now provides bounded read-only
 directory discovery plus an ordinary `.4ecp`/decrypted-rules file fallback.
 The public import/rendering security pass, automated storage durability matrix,
 route-focus/contrast/responsive accessibility baseline, and durable supported-
-client release checklist are complete; full browser/keyboard/print/device
+client release checklist are complete; full browser/keyboard/Safari/device
 execution remains open.
 
 ### Goal

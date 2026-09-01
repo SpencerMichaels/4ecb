@@ -398,7 +398,10 @@ One visual card component supports:
 Print settings form a persisted `SheetRenderProfile` with paper size, orientation,
 included sections, card options, color mode, font scale, and blank-field policy.
 Print CSS uses explicit page boxes, break controls, fixed card grids, and cut-safe
-margins. US Letter and A4 both have golden-output tests.
+margins. The sheet loads a same-origin global print stylesheet for its persisted
+Letter/A4 choice because Firefox does not apply the nested named-page switch
+reliably; named pages remain available to engines that support them. Chromium and
+Firefox both have real-PDF artifact tests for Letter/A4 and color/monochrome.
 
 The initial PDF path is browser print/save-to-PDF. A future deterministic PDF
 backend may consume the same `SheetDocument`; PDF concerns must not enter the
