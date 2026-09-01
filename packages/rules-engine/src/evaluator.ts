@@ -271,13 +271,40 @@ function activeAt(rule: ExecutableRule, level: number): boolean {
   );
 }
 
+export function aggregateInventory(
+  entries: readonly CharacterInventoryEntry[],
+  level: number,
+): readonly CharacterInventoryEntry[] {
+  const aggregated = new Map<string, CharacterInventoryEntry>();
+  for (const entry of entries.filter((item) => item.acquiredLevel <= level)) {
+    const identity = `${entry.name ?? ""}\0${entry.definitionIds.join("\0")}`;
+    const current = aggregated.get(identity);
+    aggregated.set(
+      identity,
+      current === undefined
+        ? entry
+        : {
+            ...current,
+            quantity: current.quantity + entry.quantity,
+            equippedQuantity: current.equippedQuantity + entry.equippedQuantity,
+            overrides: { ...current.overrides, ...entry.overrides },
+          },
+    );
+  }
+  return [...aggregated.values()].filter(
+    (entry) => entry.quantity > 0 || entry.equippedQuantity > 0,
+  );
+}
+
 export function evaluateCharacter(
   input: EvaluationInput,
   entities: readonly ContentEntity[],
 ): EvaluatedCharacter {
   const index = new RulesIndex(entities);
   const diagnostics: EngineDiagnostic[] = [];
-  const inventoryOccurrences: CharacterOccurrence[] = input.inventory.flatMap(
+  const inventory = aggregateInventory(input.inventory, input.level);
+  const currentInput = { ...input, inventory };
+  const inventoryOccurrences: CharacterOccurrence[] = inventory.flatMap(
     (entry) =>
       entry.acquiredLevel > input.level || entry.equippedQuantity <= 0
         ? []
@@ -421,7 +448,7 @@ export function evaluateCharacter(
     categoryAliases: index.categoryAliases,
     categoryValuesFor: (entity) => index.categoryValues(entity),
   };
-  const equipment = equippedState(input, index);
+  const equipment = equippedState(currentInput, index);
   const stats = new StatAccumulator(equipment);
   for (const [ability, value] of Object.entries(input.baseAbilities))
     stats.add({
@@ -767,7 +794,7 @@ export function evaluateCharacter(
   const powers = evaluatePowers({
     level: input.level,
     activeDefinitionIds,
-    inventory: input.inventory,
+    inventory,
     stats: evaluatedStats,
     overlays,
     entities,

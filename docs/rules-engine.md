@@ -43,7 +43,9 @@ grabbag occurrences, inventory, alternates, base abilities, and text strings.
 Every occurrence has a character-local ID, definition identity, acquisition
 level, legality marker, children, and optional replacement link. Imported trees
 are mapped against all provider slots even when those slots activate only at a
-later level, so future grants do not activate prematurely.
+later level, so future grants do not activate prematurely. Legacy inventory rows
+are level-history deltas; evaluation sums them into a current owned/equipped
+projection before activating item rules or constructing power loadouts.
 
 Commands cover choosing/removing/replacing/retraining occurrences, adding and
 removing level frames, effective level and ability changes, inventory, and text.
@@ -73,7 +75,7 @@ character arguments it uses the bundled sample heroes. This matrix is diagnostic
 it records incomplete/illegal imports and every stat/power mismatch rather than
 relaxing assertions to make a percentage pass.
 
-The initial nine-character bundled-sample baseline matches 489/509 comparable
+The initial nine-character bundled-sample baseline matches 494/509 comparable
 numeric stat aliases and 219/371 cached power attack/damage fields. Two
 characters have exact numeric-stat parity. The remaining clusters identify the
 work still named below: conditional stat-channel eligibility, shield and

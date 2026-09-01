@@ -66,6 +66,48 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it("aggregates legacy inventory deltas before activating item rules", () => {
+    const content = [
+      entity("ROOT", "Root", "Test"),
+      entity("SHIELD", "Shield", "Armor", {
+        rules: [rule("statadd", { name: "AC", value: "+2" }, 0)],
+      }),
+    ];
+    const evaluated = evaluateCharacter(
+      {
+        level: 3,
+        baseAbilities: {},
+        occurrences: [rootOccurrence],
+        inventory: [
+          {
+            id: "shield-start",
+            definitionIds: ["SHIELD"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+          {
+            id: "shield-off",
+            definitionIds: ["SHIELD"],
+            quantity: 0,
+            equippedQuantity: -1,
+            acquiredLevel: 2,
+          },
+          {
+            id: "shield-on",
+            definitionIds: ["SHIELD"],
+            quantity: 0,
+            equippedQuantity: 1,
+            acquiredLevel: 3,
+          },
+        ],
+      },
+      content,
+    );
+
+    expect(evaluated.stats.AC?.value).toBe(2);
+  });
+
   it("runs grants to a fixed point and exposes required selections", () => {
     const content = [
       entity("ROOT", "Root", "Test", {
