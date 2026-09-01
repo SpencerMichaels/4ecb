@@ -5,6 +5,7 @@ import type { ContentPackManifest } from "@4ecb/content-pack";
 
 import { CompendiumPage } from "./CompendiumPage";
 import { CharacterLibraryPage } from "./CharacterLibraryPage";
+import { CharacterEditorPage } from "./CharacterEditorPage";
 import { CharacterSheetPage } from "./CharacterSheetPage";
 import { parseHashRoute } from "./routes";
 import { SettingsPage } from "./SettingsPage";
@@ -98,6 +99,8 @@ export function App() {
             manifests={manifests}
             {...(activePackId === undefined ? {} : { activePackId })}
           />
+        ) : route.mode === "edit" ? (
+          <CharacterEditorPage characterId={route.characterId} />
         ) : (
           <CharacterSheetPage
             characterId={route.characterId}

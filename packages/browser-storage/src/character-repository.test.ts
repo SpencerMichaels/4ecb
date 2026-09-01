@@ -32,6 +32,16 @@ function character(id = "character-one") {
       levelCount: 1,
       source: "legacy-cache",
     },
+    {
+      formatVersion: 1,
+      effectiveLevel: 1,
+      levels: [],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    },
     { id, now: "2026-01-01T00:00:00.000Z" },
   );
 }

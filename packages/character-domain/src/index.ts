@@ -1,4 +1,8 @@
-export const CHARACTER_SCHEMA_VERSION = 1 as const;
+export * from "./build";
+
+import type { CharacterBuild } from "./build";
+
+export const CHARACTER_SCHEMA_VERSION = 2 as const;
 
 export interface CharacterProfileBinding {
   readonly packId: string;
@@ -94,6 +98,7 @@ export interface CharacterRecord {
   readonly profileBinding?: CharacterProfileBinding;
   readonly legacy: LegacyEnvelope;
   readonly snapshot: LegacyCharacterSnapshot;
+  readonly build: CharacterBuild;
   readonly sheetSettings: SheetSettings;
 }
 
@@ -107,6 +112,7 @@ export interface CharacterBackup {
 export function newCharacterRecord(
   legacy: LegacyEnvelope,
   snapshot: LegacyCharacterSnapshot,
+  build: CharacterBuild,
   options: {
     readonly id?: string;
     readonly now?: string;
@@ -127,6 +133,7 @@ export function newCharacterRecord(
       : { profileBinding: options.profileBinding }),
     legacy,
     snapshot,
+    build,
     sheetSettings: DEFAULT_SHEET_SETTINGS,
   };
 }

@@ -1,11 +1,13 @@
 import {
   duplicateCharacterRecord,
+  type CharacterBuild,
   type CharacterBackup,
   type CharacterProfileBinding,
   type CharacterRecord,
   type SheetSettings,
 } from "@4ecb/character-domain";
 import type { ContentPack } from "@4ecb/content-pack";
+import { importDnd4e } from "@4ecb/legacy-dnd4e";
 import { openDB, type DBSchema } from "idb";
 
 interface CharacterDatabase extends DBSchema {
@@ -77,7 +79,11 @@ export class CharacterRepository {
   async get(id: string): Promise<CharacterRecord | undefined> {
     const db = await database(this.#databaseName);
     try {
-      return await db.get("characters", id);
+      const stored = await db.get("characters", id);
+      if (stored === undefined) return undefined;
+      const character = upgradeRecord(stored);
+      if (character !== stored) await db.put("characters", character);
+      return character;
     } finally {
       db.close();
     }
@@ -88,7 +94,15 @@ export class CharacterRepository {
   ): Promise<CharacterRecord[]> {
     const db = await database(this.#databaseName);
     try {
-      const records = await db.getAllFromIndex("characters", "by-updated");
+      const stored = await db.getAllFromIndex("characters", "by-updated");
+      const records = stored.map(upgradeRecord);
+      await Promise.all(
+        records.map((record, index) =>
+          record === stored[index]
+            ? Promise.resolve()
+            : db.put("characters", record).then(() => undefined),
+        ),
+      );
       return records
         .filter((record) =>
           options.deleted === true
@@ -135,6 +149,16 @@ export class CharacterRepository {
           }),
       updatedAt: new Date().toISOString(),
     };
+    await this.put(updated);
+    return updated;
+  }
+
+  async updateBuild(
+    id: string,
+    build: CharacterBuild,
+  ): Promise<CharacterRecord> {
+    const current = await this.required(id);
+    const updated = { ...current, build, updatedAt: new Date().toISOString() };
     await this.put(updated);
     return updated;
   }
@@ -191,27 +215,15 @@ export class CharacterRepository {
       !Array.isArray(backup.characters)
     )
       throw new Error("Unsupported character backup");
-    if (
-      !backup.characters.every(
-        (character) =>
-          character !== null &&
-          typeof character === "object" &&
-          character.schemaVersion === 1 &&
-          typeof character.id === "string" &&
-          typeof character.title === "string" &&
-          character.legacy?.format === "dnd4e" &&
-          typeof character.legacy.sourceXml === "string" &&
-          character.snapshot?.source === "legacy-cache" &&
-          character.sheetSettings?.paper !== undefined,
-      )
-    ) {
+    if (!backup.characters.every(isStoredCharacter)) {
       throw new Error("Character backup contains an invalid record");
     }
+    const characters = backup.characters.map(upgradeRecord);
     const db = await database(this.#databaseName);
     try {
       const transaction = db.transaction("characters", "readwrite");
       await Promise.all(
-        backup.characters.map((character) => transaction.store.put(character)),
+        characters.map((character) => transaction.store.put(character)),
       );
       await transaction.done;
       return backup.characters.length;
@@ -225,4 +237,44 @@ export class CharacterRepository {
     if (character === undefined) throw new Error(`Character not found: ${id}`);
     return character;
   }
+}
+
+interface LegacyV1Record extends Omit<
+  CharacterRecord,
+  "schemaVersion" | "build"
+> {
+  readonly schemaVersion: 1;
+}
+
+function isStoredCharacter(value: unknown): value is CharacterRecord {
+  if (value === null || typeof value !== "object") return false;
+  const character = value as {
+    schemaVersion?: number;
+    id?: unknown;
+    title?: unknown;
+    legacy?: { format?: unknown; sourceXml?: unknown };
+    snapshot?: { source?: unknown };
+    sheetSettings?: { paper?: unknown };
+  };
+  return (
+    (character.schemaVersion === 1 || character.schemaVersion === 2) &&
+    typeof character.id === "string" &&
+    typeof character.title === "string" &&
+    character.legacy?.format === "dnd4e" &&
+    typeof character.legacy.sourceXml === "string" &&
+    character.snapshot?.source === "legacy-cache" &&
+    character.sheetSettings?.paper !== undefined
+  );
+}
+
+function upgradeRecord(value: CharacterRecord): CharacterRecord {
+  if ((value as { readonly schemaVersion: number }).schemaVersion === 2)
+    return value;
+  const legacy = value as unknown as LegacyV1Record;
+  const imported = importDnd4e(legacy.legacy.sourceXml);
+  return {
+    ...legacy,
+    schemaVersion: 2,
+    build: imported.build,
+  };
 }

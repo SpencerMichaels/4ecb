@@ -6,7 +6,11 @@ import {
 
 export type AppRoute =
   | { readonly page: "settings" }
-  | { readonly page: "characters"; readonly characterId?: string }
+  | {
+      readonly page: "characters";
+      readonly characterId?: string;
+      readonly mode?: "sheet" | "edit";
+    }
   | {
       readonly page: "compendium";
       readonly query: CompendiumQuery;
@@ -20,10 +24,16 @@ export function parseHashRoute(hash: string): AppRoute {
   if (path === "/characters") return { page: "characters" };
   const characterPrefix = "/characters/";
   if (path.startsWith(characterPrefix)) {
-    const characterId = decodeURIComponent(path.slice(characterPrefix.length));
+    const suffix = path.slice(characterPrefix.length);
+    const editing = suffix.endsWith("/edit");
+    const encodedId = editing ? suffix.slice(0, -5) : suffix;
+    const characterId = decodeURIComponent(encodedId);
     return {
       page: "characters",
       ...(characterId.length === 0 ? {} : { characterId }),
+      ...(characterId.length === 0 || !editing
+        ? {}
+        : { mode: "edit" as const }),
     };
   }
   const entityPrefix = "/compendium/entity/";

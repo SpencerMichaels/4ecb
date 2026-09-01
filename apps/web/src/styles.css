@@ -855,6 +855,62 @@ textarea {
   color: #000;
 }
 
+.editor-page {
+  margin: 0 auto;
+  max-width: 90rem;
+  padding: 1.5rem;
+}
+.editor-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 1rem 0;
+}
+.panel {
+  background: var(--surface, #fff);
+  border: 1px solid #c9c2b5;
+  border-radius: 0.35rem;
+  padding: 1rem;
+}
+.panel > h3 {
+  margin-top: 0;
+}
+.ability-editor {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.ability-editor label,
+.editor-choices label {
+  display: grid;
+  gap: 0.2rem;
+}
+.ability-editor input {
+  max-width: 7rem;
+}
+.editor-choices {
+  display: grid;
+  gap: 0.75rem;
+}
+.editor-choices h3 {
+  margin-bottom: 0;
+}
+.occurrence-tree,
+.occurrence-tree ul,
+.diagnostic-list {
+  padding-left: 1.25rem;
+}
+.occurrence-tree li,
+.diagnostic-list li {
+  margin: 0.3rem 0;
+}
+
+@media (max-width: 60rem) {
+  .editor-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @page {
   size: letter;
   margin: 0.35in;

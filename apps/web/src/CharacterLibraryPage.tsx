@@ -67,16 +67,21 @@ export function CharacterLibraryPage({
     const manifest = manifests.find(
       (candidate) => candidate.packId === activePackId,
     );
-    const character = newCharacterRecord(imported.envelope, imported.snapshot, {
-      ...(manifest === undefined
-        ? {}
-        : {
-            profileBinding: {
-              packId: manifest.packId,
-              contentDigest: manifest.contentDigest,
-            },
-          }),
-    });
+    const character = newCharacterRecord(
+      imported.envelope,
+      imported.snapshot,
+      imported.build,
+      {
+        ...(manifest === undefined
+          ? {}
+          : {
+              profileBinding: {
+                packId: manifest.packId,
+                contentDigest: manifest.contentDigest,
+              },
+            }),
+      },
+    );
     await repository.put(character);
     setReport(imported.report);
     setStatus(`Imported ${character.title}.`);
@@ -285,6 +290,13 @@ export function CharacterLibraryPage({
                       {character.title}
                     </a>
                   </h3>
+                  <p>
+                    <a
+                      href={`#/characters/${encodeURIComponent(character.id)}/edit`}
+                    >
+                      Edit build
+                    </a>
+                  </p>
                   <p
                     className={
                       profileMissing || profileMismatch

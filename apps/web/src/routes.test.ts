@@ -9,6 +9,11 @@ describe("hash routes", () => {
       page: "characters",
       characterId: "character 1",
     });
+    expect(parseHashRoute("#/characters/character%201/edit")).toEqual({
+      page: "characters",
+      characterId: "character 1",
+      mode: "edit",
+    });
   });
 
   it("keeps compendium query state in a fragment route", () => {

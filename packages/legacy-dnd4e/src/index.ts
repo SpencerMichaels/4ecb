@@ -1,4 +1,10 @@
 import type {
+  BuildAlternate,
+  BuildElementIdentity,
+  BuildInventoryEntry,
+  BuildLegality,
+  BuildOccurrence,
+  CharacterBuild,
   LegacyCharacterSnapshot,
   LegacyEnvelope,
   LegacyLootSnapshot,
@@ -30,6 +36,7 @@ export interface Dnd4eImportReport {
 export interface Dnd4eImportResult {
   readonly envelope: LegacyEnvelope;
   readonly snapshot: LegacyCharacterSnapshot;
+  readonly build: CharacterBuild;
   readonly report: Dnd4eImportReport;
 }
 
@@ -147,6 +154,163 @@ function ruleElement(node: XmlNode): LegacyRuleElement {
     ...(shortDescription === undefined
       ? {}
       : { description: shortDescription }),
+  };
+}
+
+function buildLegality(value: string | undefined): BuildLegality {
+  return value === undefined || key(value) === "rules-legal"
+    ? "rules-legal"
+    : "houserule";
+}
+
+function buildIdentity(node: XmlNode): BuildElementIdentity {
+  const definitionId = attribute(node, "internal-id");
+  const url = attribute(node, "url");
+  return {
+    ...(definitionId === undefined ? {} : { definitionId }),
+    name: attribute(node, "name") ?? "",
+    type: attribute(node, "type") ?? "",
+    ...(url === undefined ? {} : { url }),
+  };
+}
+
+interface ParsedOccurrence extends BuildOccurrence {
+  readonly legacyToken?: string;
+  readonly replacesToken?: string;
+  readonly children: readonly ParsedOccurrence[];
+}
+
+function occurrenceFrom(
+  node: XmlNode,
+  level: number,
+  path: string,
+): ParsedOccurrence {
+  const legacyToken = attribute(node, "charelem");
+  const replacesToken = attribute(node, "replaces");
+  const identity = buildIdentity(node);
+  return {
+    id: legacyToken === undefined ? `legacy:${path}` : `legacy:${legacyToken}`,
+    identity,
+    acquiredLevel: level,
+    legality: buildLegality(attribute(node, "legality")),
+    children: direct(node, "RulesElement").map((child, index) =>
+      occurrenceFrom(child, level, `${path}.${index}`),
+    ),
+    unresolved:
+      identity.definitionId === undefined &&
+      identity.name.length === 0 &&
+      identity.type.length === 0,
+    ...(legacyToken === undefined ? {} : { legacyToken }),
+    ...(replacesToken === undefined ? {} : { replacesToken }),
+  };
+}
+
+function resolveReplacementLinks(
+  rootOccurrences: readonly ParsedOccurrence[],
+): BuildOccurrence[] {
+  const tokenIds = new Map<string, string>();
+  const visit = (occurrence: ParsedOccurrence) => {
+    if (occurrence.legacyToken !== undefined)
+      tokenIds.set(occurrence.legacyToken, occurrence.id);
+    occurrence.children.forEach(visit);
+  };
+  rootOccurrences.forEach(visit);
+  const clean = (occurrence: ParsedOccurrence): BuildOccurrence => {
+    const { legacyToken, replacesToken, ...base } = occurrence;
+    void legacyToken;
+    return {
+      ...base,
+      ...(replacesToken === undefined
+        ? {}
+        : {
+            replacesId:
+              tokenIds.get(replacesToken) ?? `legacy:${replacesToken}`,
+          }),
+      children: occurrence.children.map(clean),
+    };
+  };
+  return rootOccurrences.map(clean);
+}
+
+function inventoryFrom(root: XmlNode): BuildInventoryEntry[] {
+  const result: BuildInventoryEntry[] = [];
+  for (const [levelIndex, levelNode] of direct(root, "Level").entries()) {
+    for (const [lootIndex, loot] of direct(levelNode, "loot").entries()) {
+      const quantity =
+        Number.parseInt(attribute(loot, "count") ?? "0", 10) || 0;
+      const equippedQuantity =
+        Number.parseInt(attribute(loot, "equip-count") ?? "0", 10) || 0;
+      const known = new Set(["count", "equip-count", "name", "showpowercard"]);
+      const overrides = Object.fromEntries(
+        Object.entries(loot.attributes).filter(
+          ([name]) => !known.has(key(name)),
+        ),
+      );
+      const name = attribute(loot, "name");
+      result.push({
+        id: `legacy:loot:${levelIndex + 1}:${lootIndex}`,
+        acquiredLevel: levelIndex + 1,
+        quantity,
+        equippedQuantity,
+        elements: direct(loot, "RulesElement").map(buildIdentity),
+        ...(name === undefined ? {} : { name }),
+        ...(attribute(loot, "ShowPowerCard") === undefined
+          ? {}
+          : { showPowerCard: attribute(loot, "ShowPowerCard") !== "0" }),
+        overrides,
+        legality: buildLegality(attribute(loot, "legality")),
+      });
+    }
+  }
+  return result;
+}
+
+function buildFrom(
+  root: XmlNode,
+  snapshotAbilities: Readonly<Record<string, number>>,
+  textStrings: Readonly<Record<string, string>>,
+): CharacterBuild {
+  const parsedLevels = direct(root, "Level").flatMap((levelNode, index) => {
+    const rootElement = direct(levelNode, "RulesElement")[0];
+    return rootElement === undefined
+      ? []
+      : [occurrenceFrom(rootElement, index + 1, `level:${index + 1}`)];
+  });
+  const parsedGrabbag = direct(root, "Grabbag").flatMap((container, index) =>
+    direct(container, "RulesElement").map((node, childIndex) =>
+      occurrenceFrom(node, 0, `grabbag:${index}:${childIndex}`),
+    ),
+  );
+  const resolved = resolveReplacementLinks([...parsedLevels, ...parsedGrabbag]);
+  const levelRoots = resolved.slice(0, parsedLevels.length);
+  const grabbag = resolved.slice(parsedLevels.length);
+  const alternates: BuildAlternate[] = direct(root, "alternate").flatMap(
+    (node, index) => {
+      const choice = direct(node, "RulesElement")[0];
+      if (choice === undefined) return [];
+      const provider = buildIdentity(node);
+      return [
+        {
+          id: `legacy:alternate:${index}`,
+          selectName: attribute(node, "SelectName") ?? "",
+          provider,
+          choice: occurrenceFrom(choice, 0, `alternate:${index}`),
+        },
+      ];
+    },
+  );
+  return {
+    formatVersion: 1,
+    effectiveLevel: Math.max(1, parsedLevels.length),
+    levels: levelRoots.map((rootOccurrence, index) => ({
+      level: index + 1,
+      root: rootOccurrence,
+    })),
+    grabbag,
+    inventory: inventoryFrom(root),
+    alternates,
+    baseAbilities: snapshotAbilities,
+    textStrings,
   };
 }
 
@@ -313,6 +477,8 @@ export function importDnd4e(input: string): Dnd4eImportResult {
   }
   const powers = powersFrom(sheet);
   const loot = lootFrom(sheet);
+  const abilities = abilitiesFrom(sheet);
+  const textStrings = textStringsFrom(root);
   const diagnostics: Dnd4eImportDiagnostic[] = [];
   if (gameSystem !== "D&D4E")
     diagnostics.push({
@@ -349,15 +515,16 @@ export function importDnd4e(input: string): Dnd4eImportResult {
     },
     snapshot: {
       details,
-      abilities: abilitiesFrom(sheet),
+      abilities,
       stats: statsFrom(sheet),
       selectedRules,
       powers,
       loot,
-      textStrings: textStringsFrom(root),
+      textStrings,
       levelCount,
       source: "legacy-cache",
     },
+    build: buildFrom(root, abilities, textStrings),
     report: {
       diagnostics,
       ...(version === undefined ? {} : { rootVersion: version }),
