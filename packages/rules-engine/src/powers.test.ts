@@ -66,6 +66,7 @@ describe("power evaluation", () => {
       entity("GOUGE", "Gouge", "Weapon", {
         Damage: "2d6",
         "Proficiency Bonus": "2",
+        Properties: "High Crit, Brutal 1",
       }),
       entity("MAGIC", "Way-Leader Weapon +1", "Magic Item", {
         "Magic Item Type": "Weapon",
@@ -102,7 +103,8 @@ describe("power evaluation", () => {
         defense: "AC",
         attackBonus: 12,
         damage: "2d8+8",
-        critical: "+1d6 damage",
+        critical: "+2d8 high crit damage; +1d6 damage",
+        brutal: 1,
       },
       {
         equipmentName: "Unarmed",
@@ -336,6 +338,57 @@ describe("power evaluation", () => {
       equipmentName: "Unarmed",
       attackBonus: 1,
     });
+  });
+
+  it("recognizes ongoing damage expressed through an ability modifier", () => {
+    const [power] = evaluatePowers({
+      level: 7,
+      activeDefinitionIds: ["POWER"],
+      inventory: [],
+      stats: { "Dexterity modifier": stat("Dexterity modifier", 4) },
+      overlays: [],
+      entities: [
+        entity("POWER", "Strength to Weakness", "Power", {
+          Keywords: "Implement",
+          "Attack Type": "Melee touch",
+          Attack: "Dexterity vs. Fortitude",
+          Hit: "Ongoing damage equal to your Dexterity modifier (save ends).",
+        }),
+      ],
+    });
+
+    expect(power?.variants[0]?.damage).toBe("Ongoing");
+    expect(power?.unsupported).toEqual([]);
+  });
+
+  it("classifies healing surges and temporary hit point effects", () => {
+    const [power] = evaluatePowers({
+      level: 6,
+      activeDefinitionIds: ["POWER"],
+      inventory: [],
+      stats: {},
+      overlays: [],
+      entities: [
+        entity("POWER", "Restoring Word", "Power", {
+          "Attack Type": "Close burst 5",
+          Effect:
+            "The target can spend a healing surge and regain 2d6 additional hit points. Each ally gains temporary hit points equal to 5 + your Charisma modifier.",
+        }),
+      ],
+    });
+
+    expect(power?.recoveries).toEqual([
+      {
+        kind: "healing-surge",
+        expression:
+          "The target can spend a healing surge and regain 2d6 additional hit points.",
+      },
+      {
+        kind: "temporary-hit-points",
+        expression:
+          "Each ally gains temporary hit points equal to 5 + your Charisma modifier.",
+      },
+    ]);
   });
 
   it("treats magic staves as both implements and quarterstaff weapons", () => {

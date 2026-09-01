@@ -27,7 +27,10 @@ application's architecture.
    M3 character record, lossless legacy envelope, local repository, sheet model,
    and current compatibility boundary.
 9. [Rules engine](rules-engine.md) specifies the recovered evaluator,
-   authoritative build boundary, parity evidence, and remaining M4 work.
+   authoritative build boundary, parity evidence, and M5 blockers.
+10. [M4 compatibility ledger](m4-compatibility-ledger.md) records exact-golden
+    policy, exception-family disposition, the historical diagnostic baseline,
+    and the M4 exit-criterion mapping.
 
 ## Definition hierarchy
 
@@ -45,7 +48,7 @@ application's architecture.
 ## Status
 
 The reverse-engineering specification remains the compatibility evidence base.
-The M1 foundation, M2 compendium vertical slice, and M3 legacy character viewer
-are implemented and verified. M4 has a working rules-engine/editor checkpoint
-and remains active until its broader parity and exception exit criteria are met.
+Milestones M1 through M4 are implemented and verified. M4 is a builder beta;
+the compatibility ledger names the native exception and cross-profile findings
+that must close before M5 can be called the public MVP.
 See the [roadmap](roadmap.md) and [implementation status](implementation-status.md).

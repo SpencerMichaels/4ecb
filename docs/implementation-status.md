@@ -2,13 +2,14 @@
 
 ## Current stopping point
 
-Milestones M1 through M3 are complete. M4 now has a verified vertical slice: an
-authoritative character build, recovered rule-language evaluator, transactional
-editor, and exact cached-stat parity for the supplied legacy character. M4 is
-not complete; advanced power exceptions, broader golden-character coverage,
-several legacy exception families, and focused replacement/grant editing remain.
+Milestones M1 through M4 are complete at their stated release boundaries. M4 is
+the builder beta: it delivers the authoritative rules-backed editor, records the
+remaining native parity risks as explicit M5 blockers, and does not claim public
+MVP readiness. The next milestone is M5 closure of those blockers plus edited
+legacy export, profile adoption, finished printing, storage hardening, and
+public-release verification.
 
-## M4 checkpoint delivered
+## M4 delivered
 
 - `rules-engine` parses every rule opcode and attribute found in the 38,339
   entity private corpus: 54,012 statements audit with no unknown opcode,
@@ -34,21 +35,34 @@ several legacy exception families, and focused replacement/grant editing remain.
   serialized grants suppress duplicate fixed-point grants. Equipment projection
   recognizes weapon groups, magic implements, dual-use staves, and mundane holy
   symbols in the forms used by the corpus.
+- Psionic parents materialize their augment-version records; heavy-thrown and
+  weapon-as-implement calculations, multiple ability modifiers, ongoing damage,
+  high-crit/brutal metadata, and recovery effects broaden the power model.
+- Observed compound equipment selectors and common published prerequisite prose
+  are evaluated, with unknown prose explicitly reported as unverified.
+- Full-pack evaluation runs in a dedicated browser worker, preserving a
+  responsive editor and one engine-owned calculation boundary.
+- A distributable three-character golden matrix spans heroic, paragon, and epic
+  play; martial, psionic, and primal sources; dual weapons and implements;
+  companions, custom content, advancement, and retraining.
 
-## M4 checkpoint verification
+## M4 verification record
 
 On 2026-08-31, the supplied level-8 character converged in one fixed-point
 iteration and matched all 72 comparable cached numeric aliases. Its only
 remaining legality findings are its explicit house-rule selection and one
 custom feat prerequisite the imported content cannot prove. The public suite
 also matches all 52 comparable cached attack/damage fields across its power
-variants. The bundled nine-character diagnostic matrix currently matches
-501/509 numeric aliases and 270/371 cached power fields. The remaining sample
-differences are concentrated in historical content revisions, dual-weapon and
-monk/weapon-as-implement exceptions, and a small set of class-specific rules.
-The public suite passes 79 tests plus formatting, ESLint, and all TypeScript
-projects. See [rules-engine.md](rules-engine.md) for the evaluator boundary,
-performance result, and remaining closure work.
+variants. The bundled nine-character cross-profile diagnostic matrix matches
+501/509 numeric aliases and 277/371 cached power fields. The remaining sample
+differences are concentrated in historical content revisions, removed internal
+definitions, hand-specific calculations, and named native power exceptions.
+The public suite passes 91 tests plus formatting, ESLint, all TypeScript
+projects, the production/PWA build, deterministic content checks, and the query
+benchmark. Live browser verification loaded the 38,339-record profile in the
+rules worker, completed evaluation, persisted an edit, and restored it through
+undo. See [m4-compatibility-ledger.md](m4-compatibility-ledger.md) for the M4
+acceptance boundary and exact M5 blocker inventory.
 
 ## M3 delivered
 
@@ -184,11 +198,9 @@ merger; begin from `combined.dnd40.original.xml` as the script does.
 
 ## Deferred by design
 
-- The remainder of M4 owns advanced power branches and broader rules/golden-
-  character coverage, focused replacement/grant editing, and unresolved native
-  exception families.
-- M5 owns regenerated `.dnd4e` snapshots, exhaustive cross-browser print
-  goldens, and MVP parity closure.
+- M5 owns the explicitly recorded native exception blockers, regenerated
+  `.dnd4e` snapshots, exhaustive cross-browser print goldens, profile adoption,
+  and MVP parity closure.
 - M6 and M7 own mobile play state and encrypted relay-linked sessions.
 - Visual theming, animation, and fine interaction polish wait for the tighter
   user feedback loop requested for later UI work.

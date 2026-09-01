@@ -77,27 +77,22 @@ relaxing assertions to make a percentage pass.
 
 The initial nine-character bundled-sample baseline was 494/509 comparable
 numeric stat aliases and 219/371 cached power attack/damage fields. The current
-checkpoint is 501/509 and 270/371 after projecting legacy alternates, suppressing
+checkpoint is 501/509 and 277/371 after projecting legacy alternates, suppressing
 duplicate serialized grants, recognizing corpus equipment groups/implements,
-and consuming category-specific combat stats. The remaining clusters identify
-the work still named below: historical profile revisions, conditional stat-
-channel eligibility, custom/two-weapon math, weapon-as-implement behavior, and
-class-specific power bonuses. These samples are compatibility evidence, not
-public test fixtures.
+consuming category-specific combat stats, and broadening ordinary power
+semantics. These samples were created against unidentified older content and are
+cross-profile compatibility evidence, not exact public test fixtures.
 
-## Remaining M4 closure work
+## M4 closure and M5 blockers
 
-- Close advanced power branches: augment/psionic versions, off-hand and dual-
-  weapon/implement selection, high-crit and brutal dice, striker additions,
-  healing, conditionals, and named power special cases.
-- Close and fixture psionic, Essentials, hybrid, companion, deity, paragon
-  multiclass, and remaining equipment/native exception families.
-- Build a representative golden matrix across tiers, power sources, equipment
-  styles, companions, custom content, advancement, and retraining.
-- Decide from browser profiling whether evaluation belongs in a worker and add
-  incremental invalidation only if it materially improves interaction latency.
-- Regenerate the semantic sheet and edited `.dnd4e` compatibility caches from
-  authoritative evaluation; this crosses into M5 export closure.
+M4's exact public matrix spans three tiers and the required build dimensions.
+Full evaluation now runs off the main thread. Psionic augment records, common
+prerequisites, the observed equipment-selector language, recovery
+classification, and ordinary weapon/implement variants are directly covered.
 
-Until that work passes the M4 exit criteria, this checkpoint is an engineering
-vertical slice rather than a claim of complete legacy-builder parity.
+The remaining hand-specific, situational, and named native exceptions are M5
+MVP blockers, as are authoritative cache regeneration and edited `.dnd4e`
+export. The complete disposition is maintained in
+[m4-compatibility-ledger.md](m4-compatibility-ledger.md). M4 is therefore a
+completed builder beta, not a claim of complete legacy-builder parity or a
+public MVP.

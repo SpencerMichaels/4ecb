@@ -18,6 +18,7 @@ export interface PowerVariant {
   readonly damage?: string;
   readonly damageType?: string;
   readonly critical?: string;
+  readonly brutal?: number;
   readonly attackComponents: readonly PowerComponent[];
   readonly damageComponents: readonly PowerComponent[];
 }
@@ -30,7 +31,13 @@ export interface EvaluatedPower {
   readonly attackType?: string;
   readonly keywords: readonly string[];
   readonly variants: readonly PowerVariant[];
+  readonly recoveries: readonly PowerRecovery[];
   readonly unsupported: readonly string[];
+}
+
+export interface PowerRecovery {
+  readonly kind: "healing" | "healing-surge" | "temporary-hit-points";
+  readonly expression: string;
 }
 
 interface Loadout {
@@ -210,6 +217,51 @@ function formatDamage(dice: string, bonus: number): string {
   return `${dice}${bonus > 0 ? "+" : ""}${bonus}`;
 }
 
+function criticalExpression(
+  equipment: Loadout,
+  level: number,
+): string | undefined {
+  const parts = equipment.critical === undefined ? [] : [equipment.critical];
+  if (
+    equipment.weaponDamage !== undefined &&
+    equipment.properties.includes("high crit")
+  ) {
+    const dice = diceTimes(
+      equipment.weaponDamage,
+      1 + Math.floor((Math.max(1, level) - 1) / 10),
+    );
+    parts.unshift(`+${dice} high crit damage`);
+  }
+  return parts.length === 0 ? undefined : parts.join("; ");
+}
+
+function recoveryExpressions(
+  ...values: Array<string | undefined>
+): PowerRecovery[] {
+  const seen = new Set<string>();
+  return values.flatMap((value) =>
+    (value ?? "")
+      .split(/(?<=[.!?])\s+|\n+/)
+      .map((expression) => expression.trim())
+      .filter(Boolean)
+      .flatMap((expression) => {
+        const kind = /temporary hit points/i.test(expression)
+          ? "temporary-hit-points"
+          : /healing surge/i.test(expression)
+            ? "healing-surge"
+            : /regain(?:s)?\s+(?:all of (?:your|his|her|their)\s+)?hit points/i.test(
+                  expression,
+                )
+              ? "healing"
+              : undefined;
+        const identity = `${kind}\0${expression}`;
+        if (kind === undefined || seen.has(identity)) return [];
+        seen.add(identity);
+        return [{ kind, expression }];
+      }),
+  );
+}
+
 function combatStatComponents(
   stats: Readonly<Record<string, EvaluatedStat>>,
   equipment: Loadout,
@@ -365,6 +417,7 @@ export function evaluatePowers(input: {
       input.level,
     );
     const effectLine = effectiveField(power, "Effect", input.overlays);
+    const recoveries = recoveryExpressions(hitLine, effectLine);
     const attack = attackLine?.match(/^(.*?)\s+vs\.?\s+([A-Za-z]+)/i);
     const weaponPower = keywords.some((value) => key(value) === "weapon");
     const implementPower = keywords.some((value) => key(value) === "implement");
@@ -453,7 +506,7 @@ export function evaluatePowers(input: {
         weaponMatch !== null && weaponMatch !== undefined
           ? diceTimes(equipment.weaponDamage ?? "1d4", Number(weaponMatch[1]))
           : fixedMatch?.[1];
-      const ongoing = /\bongoing\s+\d+\b/i.test(hitLine ?? "");
+      const ongoing = /\bongoing\b/i.test(hitLine ?? "");
       const primaryDamageClause = (hitLine ?? "").split(/\bdamage\b/i)[0] ?? "";
       let damageAbilities: readonly string[] = abilityNames.filter((ability) =>
         new RegExp(`\\b${ability} modifier\\b`, "i").test(primaryDamageClause),
@@ -521,6 +574,10 @@ export function evaluatePowers(input: {
         (sum, component) => sum + component.value,
         0,
       );
+      const critical = criticalExpression(equipment, input.level);
+      const brutal = equipment.properties
+        .map((property) => /^brutal\s+(\d+)$/i.exec(property)?.[1])
+        .find((value) => value !== undefined);
       return {
         id: `${power.id}:${equipment.id}`,
         equipmentName: equipment.name,
@@ -535,9 +592,8 @@ export function evaluatePowers(input: {
             ? { damage: "Ongoing" }
             : {}
           : { damage: formatDamage(dice, damageBonus) }),
-        ...(equipment.critical === undefined
-          ? {}
-          : { critical: equipment.critical }),
+        ...(critical === undefined ? {} : { critical }),
+        ...(brutal === undefined ? {} : { brutal: Number(brutal) }),
         attackComponents,
         damageComponents,
       };
@@ -564,6 +620,7 @@ export function evaluatePowers(input: {
         ...(attackType === undefined ? {} : { attackType }),
         keywords,
         variants,
+        recoveries,
         unsupported,
       },
     ];

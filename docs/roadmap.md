@@ -183,6 +183,12 @@ Implement the hardest compatibility core and build an editor driven by that core
 **Release characterization:** builder beta; broad compatibility work may still
 block MVP declaration.
 
+**Status (2026-08-31): complete.** The authoritative editor, public cross-tier
+goldens, exception ledger, parity reporter, and background evaluation worker are
+verified. Unresolved native `SpecialCase`, hand-specific, historical-profile,
+and prerequisite-tail findings are explicitly carried into M5, whose first
+deliverable is closure of blocking M4 parity findings.
+
 ## M5 — MVP closure: credible legacy-builder replacement
 
 ### Goal
