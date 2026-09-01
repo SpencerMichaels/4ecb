@@ -12,9 +12,11 @@ import {
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
+  commandForEvaluatedChoice,
   evaluateCharacter,
   findBuildChildIndex,
   projectBuildForEvaluation,
+  type EvaluatedChoice,
 } from "@4ecb/rules-engine";
 
 const characters = new CharacterRepository();
@@ -95,6 +97,107 @@ function OccurrenceTree({
         </ul>
       )}
     </li>
+  );
+}
+
+function ReplacementPicker({
+  choice,
+  buildProvider,
+  providerEntity,
+  byId,
+  selectedOccurrence,
+  onDispatch,
+}: {
+  readonly choice: EvaluatedChoice;
+  readonly buildProvider: BuildOccurrence;
+  readonly providerEntity: ContentEntity | undefined;
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly selectedOccurrence:
+    | {
+        readonly definitionId: string;
+        readonly replacesId?: string;
+      }
+    | undefined;
+  readonly onDispatch: (command: CharacterCommand) => void;
+}) {
+  const options = choice.replacementOptions ?? [];
+  const [targetId, setTargetId] = useState(
+    selectedOccurrence?.replacesId ?? options[0]?.replacesOccurrenceId ?? "",
+  );
+  const target = options.find(
+    (option) => option.replacesOccurrenceId === targetId,
+  );
+  return (
+    <fieldset className="replacement-picker">
+      <legend>{choice.name || "Retrain a previous choice"}</legend>
+      <label>
+        Replace
+        <select
+          value={targetId}
+          onChange={(event) => setTargetId(event.currentTarget.value)}
+        >
+          <option value="">Choose an earlier selection</option>
+          {options.map((option) => (
+            <option
+              key={option.replacesOccurrenceId}
+              value={option.replacesOccurrenceId}
+            >
+              {byId.get(option.definitionId.toLocaleLowerCase())?.name ??
+                option.definitionId}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        With
+        <select
+          value={selectedOccurrence?.definitionId ?? ""}
+          disabled={target === undefined}
+          onChange={(event) => {
+            const candidate = byId.get(
+              event.currentTarget.value.toLocaleLowerCase(),
+            );
+            if (candidate === undefined || target === undefined) return;
+            onDispatch({
+              kind: "retrain",
+              parentId: buildProvider.id,
+              index: findBuildChildIndex(
+                buildProvider,
+                providerEntity,
+                choice.ruleOrdinal,
+                choice.index,
+              ),
+              replacesId: target.replacesOccurrenceId,
+              replacement: {
+                id: `web:${crypto.randomUUID()}`,
+                identity: {
+                  definitionId: candidate.id,
+                  name: candidate.name,
+                  type: candidate.type,
+                },
+                acquiredLevel: buildProvider.acquiredLevel,
+                legality: "rules-legal",
+                children: [],
+                unresolved: false,
+              },
+            });
+          }}
+        >
+          <option value="">Choose a replacement</option>
+          {(target?.candidates ?? [])
+            .filter((candidate) => candidate.eligible)
+            .map((candidate) => (
+              <option
+                key={candidate.definitionId}
+                value={candidate.definitionId}
+              >
+                {byId.get(candidate.definitionId.toLocaleLowerCase())?.name ??
+                  candidate.definitionId}
+              </option>
+            ))}
+        </select>
+      </label>
+    </fieldset>
   );
 }
 
@@ -350,60 +453,84 @@ export function CharacterEditorPage({
               build,
               choice.providerOccurrenceId,
             );
-            const providerEntity =
-              provider === undefined
-                ? undefined
-                : byId.get(provider.definitionId.toLocaleLowerCase());
-            const childIndex =
-              buildProvider === undefined
-                ? -1
-                : findBuildChildIndex(
-                    buildProvider,
-                    providerEntity,
-                    choice.ruleOrdinal,
-                    choice.index,
-                  );
+            const materializableGrant =
+              buildProvider === undefined &&
+              provider?.kind === "grant" &&
+              provider.parentId !== undefined &&
+              findOccurrence(build, provider.parentId) !== undefined;
             const selectedDefinitionId =
               choice.selectedOccurrenceId === undefined
                 ? undefined
                 : evaluation.occurrences.find(
                     (item) => item.id === choice.selectedOccurrenceId,
                   )?.definitionId;
+            const selectedOccurrence =
+              choice.selectedOccurrenceId === undefined
+                ? undefined
+                : evaluation.occurrences.find(
+                    (item) => item.id === choice.selectedOccurrenceId,
+                  );
+            if (replacement && buildProvider !== undefined)
+              return (
+                <ReplacementPicker
+                  key={choice.id}
+                  choice={choice}
+                  buildProvider={buildProvider}
+                  providerEntity={
+                    provider === undefined
+                      ? undefined
+                      : byId.get(provider.definitionId.toLocaleLowerCase())
+                  }
+                  byId={byId}
+                  selectedOccurrence={selectedOccurrence}
+                  onDispatch={(command) => void dispatch(command)}
+                />
+              );
             return (
               <label key={choice.id}>
                 {choice.name || `Choose ${choice.type}`}
-                {replacement ? (
-                  <small>
-                    Retraining is represented in the history model; the focused
-                    replacement picker is still under construction.
-                  </small>
-                ) : null}
                 <select
                   value={selectedDefinitionId ?? ""}
-                  disabled={buildProvider === undefined || replacement}
+                  disabled={
+                    (!materializableGrant && buildProvider === undefined) ||
+                    replacement
+                  }
                   onChange={(event) => {
                     const candidate = byId.get(
                       event.currentTarget.value.toLocaleLowerCase(),
                     );
-                    if (candidate === undefined || buildProvider === undefined)
-                      return;
-                    void dispatch({
-                      kind: "choose",
-                      parentId: buildProvider.id,
-                      index: childIndex,
-                      occurrence: {
-                        id: `web:${crypto.randomUUID()}`,
-                        identity: {
-                          definitionId: candidate.id,
-                          name: candidate.name,
-                          type: candidate.type,
-                        },
-                        acquiredLevel: buildProvider.acquiredLevel,
-                        legality: "rules-legal",
-                        children: [],
-                        unresolved: false,
+                    if (candidate === undefined) return;
+                    const selected: BuildOccurrence = {
+                      id: `web:${crypto.randomUUID()}`,
+                      identity: {
+                        definitionId: candidate.id,
+                        name: candidate.name,
+                        type: candidate.type,
                       },
-                    });
+                      acquiredLevel:
+                        buildProvider?.acquiredLevel ??
+                        provider?.acquiredLevel ??
+                        build.effectiveLevel,
+                      legality: "rules-legal",
+                      children: [],
+                      unresolved: false,
+                    };
+                    const command = commandForEvaluatedChoice(
+                      build,
+                      choice,
+                      evaluation.occurrences,
+                      entities,
+                      selected,
+                      (index) =>
+                        `web:placeholder:${index}:${crypto.randomUUID()}`,
+                    );
+                    if (command === undefined) {
+                      setError(
+                        "This generated choice is nested more deeply than the editor can materialize.",
+                      );
+                      return;
+                    }
+                    void dispatch(command);
                   }}
                 >
                   <option value="">Unresolved</option>

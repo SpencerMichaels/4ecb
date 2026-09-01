@@ -299,6 +299,64 @@ describe("character evaluator", () => {
     );
   });
 
+  it("offers original slot candidates for ordinary retraining", () => {
+    const result = evaluateCharacter(
+      {
+        level: 2,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "level-1",
+            definitionId: "LEVEL_1",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "old-feat",
+            definitionId: "FEAT_A",
+            acquiredLevel: 1,
+            parentId: "level-1",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+          {
+            id: "level-2",
+            definitionId: "LEVEL_2",
+            acquiredLevel: 2,
+            kind: "root",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("LEVEL_1", "1", "Level", {
+          rules: [rule("select", { type: "Feat", number: "1" }, 0)],
+        }),
+        entity("LEVEL_2", "2", "Level", {
+          rules: [rule("replace", { retrain: "true", optional: "true" }, 0)],
+        }),
+        entity("FEAT_A", "Old feat", "Feat"),
+        entity("FEAT_B", "New feat", "Feat"),
+      ],
+    );
+
+    expect(
+      result.choices.find((choice) => choice.type === "Replacement"),
+    ).toMatchObject({
+      replacementOptions: [
+        {
+          replacesOccurrenceId: "old-feat",
+          definitionId: "FEAT_A",
+          candidates: [
+            { definitionId: "FEAT_A", eligible: true },
+            { definitionId: "FEAT_B", eligible: true },
+          ],
+        },
+      ],
+    });
+  });
+
   it("applies list, replacement, and die-step overlays without mutating content", () => {
     const power = entity("POWER", "Power", "Power", {
       specifics: { Keywords: "Arcane", Damage: "1d8 + 2" },

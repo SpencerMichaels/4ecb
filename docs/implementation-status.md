@@ -22,7 +22,8 @@ several legacy exception families, and focused replacement/grant editing remain.
 - Transactional commands with undo/redo for abilities, effective level, level
   frames, choices, retraining, inventory, and text values.
 - A desktop/tablet character editor for abilities, advancement, choices,
-  inventory quantities/equipment, history, and engine diagnostics.
+  materialized nested grants, focused retraining/replacements, inventory
+  quantities/equipment, history, and engine diagnostics.
 - A private-corpus audit and a supplied-character parity reporter, kept outside
   the distributable public fixtures.
 - A renderer-neutral power result model with explicit equipment variants,
@@ -42,10 +43,10 @@ remaining legality findings are its explicit house-rule selection and one
 custom feat prerequisite the imported content cannot prove. The public suite
 also matches all 52 comparable cached attack/damage fields across its power
 variants. The bundled nine-character diagnostic matrix currently matches
-501/509 numeric aliases and 260/371 cached power fields. The remaining sample
+501/509 numeric aliases and 270/371 cached power fields. The remaining sample
 differences are concentrated in historical content revisions, dual-weapon and
 monk/weapon-as-implement exceptions, and a small set of class-specific rules.
-The public suite passes 77 tests plus formatting, ESLint, and all TypeScript
+The public suite passes 79 tests plus formatting, ESLint, and all TypeScript
 projects. See [rules-engine.md](rules-engine.md) for the evaluator boundary,
 performance result, and remaining closure work.
 

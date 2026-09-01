@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import type { CharacterBuild } from "@4ecb/character-domain";
+import {
+  applyCharacterCommand,
+  type CharacterBuild,
+} from "@4ecb/character-domain";
 import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
 
-import { projectBuildForEvaluation } from "./build-projection";
+import {
+  commandForEvaluatedChoice,
+  projectBuildForEvaluation,
+} from "./build-projection";
 import { evaluateCharacter } from "./evaluator";
 
 function statement(
@@ -173,5 +179,79 @@ describe("build projection", () => {
         kind: "grabbag",
       }),
     );
+  });
+
+  it("materializes a generated grant and its nested choice atomically", () => {
+    const content = [
+      entity("LEVEL", "1", "Level", [
+        statement("grant", { name: "FEATURE", type: "Feature" }, 0),
+      ]),
+      entity("FEATURE", "Granted feature", "Feature", [
+        statement("statadd", { name: "AC", value: "+1" }, 0),
+        statement("select", { type: "Feat", number: "1" }, 1),
+      ]),
+      entity("FEAT", "Chosen feat", "Feat"),
+    ];
+    const build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 1,
+      levels: [
+        {
+          level: 1,
+          root: {
+            id: "level",
+            identity: { definitionId: "LEVEL", name: "1", type: "Level" },
+            acquiredLevel: 1,
+            legality: "rules-legal",
+            unresolved: false,
+            children: [],
+          },
+        },
+      ],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    const initial = evaluateCharacter(
+      projectBuildForEvaluation(build, content),
+      content,
+    );
+    const choice = initial.choices[0]!;
+    const command = commandForEvaluatedChoice(
+      build,
+      choice,
+      initial.occurrences,
+      content,
+      {
+        id: "chosen",
+        identity: { definitionId: "FEAT", name: "Chosen feat", type: "Feat" },
+        acquiredLevel: 1,
+        legality: "rules-legal",
+        children: [],
+        unresolved: false,
+      },
+      (index) => `placeholder:${index}`,
+    );
+
+    expect(command).toMatchObject({
+      kind: "choose",
+      parentId: "level",
+      index: 0,
+      occurrence: {
+        id: "level:grant:0",
+        children: [{ id: "chosen" }],
+      },
+    });
+    const completed = evaluateCharacter(
+      projectBuildForEvaluation(
+        applyCharacterCommand(build, command!),
+        content,
+      ),
+      content,
+    );
+    expect(completed.complete).toBe(true);
+    expect(completed.stats.AC?.value).toBe(1);
   });
 });

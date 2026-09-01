@@ -77,7 +77,7 @@ relaxing assertions to make a percentage pass.
 
 The initial nine-character bundled-sample baseline was 494/509 comparable
 numeric stat aliases and 219/371 cached power attack/damage fields. The current
-checkpoint is 501/509 and 260/371 after projecting legacy alternates, suppressing
+checkpoint is 501/509 and 270/371 after projecting legacy alternates, suppressing
 duplicate serialized grants, recognizing corpus equipment groups/implements,
 and consuming category-specific combat stats. The remaining clusters identify
 the work still named below: historical profile revisions, conditional stat-
@@ -90,8 +90,6 @@ public test fixtures.
 - Close advanced power branches: augment/psionic versions, off-hand and dual-
   weapon/implement selection, high-crit and brutal dice, striker additions,
   healing, conditionals, and named power special cases.
-- Add focused replacement/retraining selection UI and materialize newly granted
-  providers so their nested choices can be edited immediately.
 - Close and fixture psionic, Essentials, hybrid, companion, deity, paragon
   multiclass, and remaining equipment/native exception families.
 - Build a representative golden matrix across tiers, power sources, equipment

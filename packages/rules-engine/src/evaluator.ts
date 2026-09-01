@@ -75,6 +75,11 @@ export interface EvaluatedChoice {
   readonly optional: boolean;
   readonly selectedOccurrenceId?: string;
   readonly candidates: readonly CandidateDecision[];
+  readonly replacementOptions?: readonly {
+    readonly replacesOccurrenceId: string;
+    readonly definitionId: string;
+    readonly candidates: readonly CandidateDecision[];
+  }[];
 }
 
 export interface FieldOverlay {
@@ -639,20 +644,60 @@ export function evaluateCharacter(
               candidate.ruleOrdinal === rule.source.ordinal &&
               candidate.replacesId !== undefined,
           );
-          const replacementCandidates = occurrences
-            .filter(
-              (candidate) =>
+          const replacementOptions = saved
+            .filter((candidate) => {
+              const candidateType = key(
+                index.get(candidate.definitionId)?.type ?? "",
+              );
+              const powerOnly =
+                rule.powerReplace !== undefined ||
+                rule.multiclass !== undefined ||
+                rule.powerSwap !== undefined;
+              const ordinaryRetraining =
+                rule.retrain === undefined ||
+                ["feat", "power", "skill training"].includes(candidateType);
+              return (
                 candidate.acquiredLevel < occurrence.acquiredLevel &&
                 candidate.kind === "choice" &&
-                (rule.powerReplace === undefined ||
-                  key(index.get(candidate.definitionId)?.type ?? "") ===
-                    "power"),
-            )
-            .map((candidate) => ({
-              definitionId: candidate.definitionId,
-              eligible: true,
-              reasons: [] as string[],
-            }));
+                ordinaryRetraining &&
+                (!powerOnly || candidateType === "power")
+              );
+            })
+            .flatMap((candidate) => {
+              const originalProvider = saved.find(
+                (provider) => provider.id === candidate.parentId,
+              );
+              const originalDefinition =
+                originalProvider === undefined
+                  ? undefined
+                  : index.get(originalProvider.definitionId);
+              const originalSelect =
+                originalDefinition === undefined
+                  ? undefined
+                  : parseRules(originalDefinition.id, originalDefinition.rules)
+                      .filter(
+                        (candidateRule): candidateRule is SelectRule =>
+                          candidateRule.kind === "select",
+                      )
+                      .find(
+                        (candidateRule) =>
+                          candidateRule.source.ordinal ===
+                          candidate.ruleOrdinal,
+                      );
+              return originalProvider === undefined ||
+                originalSelect === undefined
+                ? []
+                : [
+                    {
+                      replacesOccurrenceId: candidate.id,
+                      definitionId: candidate.definitionId,
+                      candidates: candidatesFor(
+                        originalSelect,
+                        originalProvider,
+                      ),
+                    },
+                  ];
+            });
           choices.push({
             id: `${occurrence.id}:replacement:${rule.source.ordinal}`,
             providerOccurrenceId: occurrence.id,
@@ -664,7 +709,12 @@ export function evaluateCharacter(
             ...(selected === undefined
               ? {}
               : { selectedOccurrenceId: selected.id }),
-            candidates: replacementCandidates,
+            candidates: replacementOptions.map((option) => ({
+              definitionId: option.definitionId,
+              eligible: true,
+              reasons: [],
+            })),
+            replacementOptions,
           });
           break;
         }
