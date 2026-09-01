@@ -116,6 +116,12 @@ is behind the latest saved level. Library metadata remains outside both export
 targets. Structural round-trip coverage is automated; the curated original-
 application launch matrix remains an open M5 release check.
 
+The automated compatibility boundary preserves unsupported native power and
+prerequisite behavior as explicit evaluator diagnostics while retaining the
+source envelope and cached sheet. This differs from the original-builder
+matrix: semantic re-import proves modern round-trip consistency, while only the
+manual Windows open/save/reopen check proves original-application acceptance.
+
 `docs/legacy-builder-launch-matrix.md` records the recovered one-argument file
 open contract, CBLoader merged-cache path, deterministic regenerated candidate
 commands, and the actual 2026-09-01 runtime blocker. Semantic re-import remains

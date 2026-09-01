@@ -94,8 +94,8 @@ the browser is currently offline.
 ## Release checks still required
 
 Before an M5 tag, run the public suite, inspect the built image contents, verify
-offline reload with the server stopped, and repeat focused functional workflows
-in the primary development browser. Docker build/runtime verification requires
+offline reload with the server stopped, and retain or repeat focused functional
+workflows in the primary development browser when UI behavior changes. Docker build/runtime verification requires
 a reachable local daemon and is recorded separately from the Nix build.
 The public suite's `check:print` stage uses the Nix-pinned Chromium/Poppler pair
 and Firefox/geckodriver to produce and inspect ephemeral Letter/A4
@@ -105,3 +105,9 @@ inspection are M5.5 checks against the designed interface.
 User-facing installation, content import, backup, recovery, update, and known
 compatibility guidance is maintained in the
 [user guide and recovery handbook](user-guide.md).
+
+The final M5 threat review confirms that native creation, worker evaluation,
+profile adoption, backup/recovery, and regenerated export add no server upload
+or new network trust boundary. Operators remain responsible for preserving the
+reference response headers and protecting the browser profile that stores local
+private data.

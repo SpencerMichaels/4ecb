@@ -137,6 +137,14 @@ stat block are available to the power evaluator. The private level-9 audit
 currently selects a qualifying power but no companion occurrence, so it proves
 the blocker rather than the substitution result.
 
+For the M5 automated boundary, unimplemented recovered branches remain visible
+as `native-special-case:*`, `companion-ability:*`, `unparsed-hit`, or
+`prerequisite.unverified`. These diagnostics are supported outcomes: they do
+not authorize a guessed calculation or illegal selection, and the imported
+definition plus legacy cache remain available for inspection. Item-set and
+inherent-bonus definitions use ordinary evaluation only when a build or import
+explicitly activates them; no implicit campaign flag is synthesized.
+
 Power loadouts now consume the durable `_INTERNAL_MainHandWeapon` selection and
 project explicit main/off-hand roles plus the paired equipment name without
 discarding alternate `PowerStats` variants. The recovered native

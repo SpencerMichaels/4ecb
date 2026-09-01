@@ -191,7 +191,8 @@ deliverable is closure of blocking M4 parity findings.
 
 ## M5 — MVP closure: credible legacy-builder replacement
 
-**Status:** in progress. Verified checkpoints make content-profile migration a
+**Status:** automated closure complete; original-builder matrix pending manual
+follow-up. Verified checkpoints make content-profile migration a
 worker-evaluated preview followed by explicit adoption and add checksummed
 backup inspection, restartable character migration recovery, persistence
 requests, quota diagnostics, an installable offline PWA with explicit update
@@ -201,8 +202,8 @@ Edited export now has explicit byte-preserving and 0.07a regenerated targets
 with a semantic re-import gate. Automated Chromium and Firefox Letter/A4 PDF
 matrices pass as functional regression evidence; cross-browser visual print
 review belongs to M5.5 after the real interface is designed. The
-original-application launch matrix and the other core-compatibility criteria
-remain open. Content onboarding now provides bounded read-only
+original-application launch/open/save/reopen matrix is the one remaining manual
+criterion. Content onboarding now provides bounded read-only
 directory discovery plus an ordinary `.4ecp`/decrypted-rules file fallback.
 The public import/rendering security pass, automated storage durability matrix,
 and route-focus/contrast/responsive structural baseline are complete. Full
@@ -220,28 +221,36 @@ paths through level 30, plus a recorded Hybrid Cleric/Fighter path through level
 only.
 They cover nested choices, ordinary and class-specific power replacement,
 equipment, serialization, authoritative sheet construction, and edited-export
-semantic re-import. This closes the previously recorded absence of
-cross-family full-profile native advancement evidence; broader class/build and
-named M4 power-math compatibility families still block criteria 2 and 3.
+semantic re-import. This closes the automated cross-family advancement boundary
+without claiming a private differential for every published build.
 The first focused power-math closure slice now carries the saved main-hand
 selection into explicit paired variants and implements the distinct off-hand
 enhancement calculation for `Dual Implement Spellcaster`, backed by exact public
-same-profile differentials. Remaining named/situational power exceptions still
-block the compatibility criteria.
+same-profile differentials. Remaining named/situational power exceptions use
+the explicit diagnostic boundary below.
 The following slice separately projects the recovered Hunter's Quarry,
 Warlock's Curse, and Sneak Attack conditional damage families, including hybrid
 class-power gates and Sneak Attack weapon eligibility. Unknown variants remain
-unsupported, and the remaining named/situational tail still blocks closure.
+unsupported under that boundary.
 The recovered fixed-output `SpecialCase` slice now also covers Bond of
 Censure's tier dice and ability suppression plus three exact ongoing-10 hit
 forms and the exact Dexterity-modifier ongoing form. Exact-profile Hu power
 fields consequently match 52/52, while a separate level-5 native selection
 audit covers the Dexterity branch. Five identified native special entities
-remain explicitly unsupported and still block closure.
+remain explicitly unsupported and recoverable.
 Beast-ability damage now has an explicit provenance guard: character abilities
 are not silently substituted for absent companion scores. The full-profile
 native audit still fails to materialize a companion occurrence, so companion
-power parity remains open.
+ability substitution reports its absent provenance instead of guessing.
+
+The remaining compatibility tail is closed for the automated M5 boundary by an
+explicit support contract: exact implemented families calculate
+authoritatively; `native-special-case:*`, `companion-ability:*`,
+`prerequisite.unverified`, and unparsed-power diagnostics preserve unsupported
+content visibly and editably. Item-set and inherent-bonus rules execute only
+when imported or serialized content activates them; the application does not
+invent an absent legacy campaign setting. Exact activation artifacts remain the
+future validation path, not an unreported assumption.
 
 ### Goal
 

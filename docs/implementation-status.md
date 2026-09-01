@@ -3,19 +3,41 @@
 ## Current stopping point
 
 Milestones M1 through M4 are complete at their stated release boundaries. M4 is
-the builder beta: it delivers the authoritative rules-backed editor, records the
-remaining native parity risks as explicit M5 blockers, and does not claim public
-MVP readiness. M5 is in progress. Profile migration preview and explicit
-adoption are implemented; blocker closure and the legacy-builder export launch
-matrix remain open. Functional print regression coverage is complete in
+the builder beta: it delivers the authoritative rules-backed editor and records
+native parity risks. M5 has reached its automated closure boundary. Profile
+migration preview and explicit adoption are implemented; only the manual
+legacy-builder open/save/reopen matrix remains open. Functional print regression coverage is complete in
 Chromium and Firefox. Exhaustive cross-browser, keyboard, screen-reader, zoom,
 touch, device, and visual-print validation is intentionally owned by M5.5 after
 the interface is designed with the product owner. The installable PWA, update/offline
 UX, content onboarding, public-distribution boundary, production Docker guide,
-and authoritative exact-profile browser sheet are verified checkpoints, not an
-MVP declaration.
+and authoritative exact-profile browser sheet are verified checkpoints. A final
+MVP declaration still requires the manual legacy-builder matrix.
 
 ## M5 checkpoints
+
+### Automated closure boundary and final security review
+
+- Exact implemented compatibility families remain authoritative. Five
+  identified native `SpecialCase` entities, absent-companion ability
+  substitution, unknown prerequisite prose, and unparsed power expressions keep
+  stable diagnostics; no cached field or selection is discarded to improve a
+  percentage.
+- Item-set and inherent-bonus rules are supported when imported or serialized
+  content activates their ordinary rules. No available private character or
+  settings artifact activates the recovered implicit campaign fallback, so M5
+  does not synthesize one. A same-profile activation artifact is the required
+  future differential.
+- Public cross-tier fixtures plus full-profile Fighter, Psion, Shaman, Knight,
+  Hybrid Cleric/Fighter, Hu, fixed-special, and companion-blocker audits cover
+  the generic automated boundary. Unknown-revision caches remain diagnostics.
+- The final threat-model review found no new network or trust boundary in native
+  creation, migration, evaluation, sheets, or regenerated export. Bounded
+  decoders, schema-validated workers/storage, text-only rendering, XML escaping,
+  checksummed backup, atomic migration, CSP, and corpus-exclusion gates cover
+  the completed behavior. Residual local-device access, weakened deployment
+  headers, unsupported rules, and the manual legacy application remain
+  documented operator/user risks.
 
 ### Companion ability provenance guard
 
@@ -96,8 +118,8 @@ Censure`: its conditional movement prose yields `1d10`, or `2d10` at level
 - The ignored nine-character historical matrix remains 501/509 comparable
   numeric aliases and 277/371 cached power fields after the change. Those
   unknown-revision caches are regression diagnostics, not goldens. The native
-  `SpecialCase` and situational striker/conditional tails remain open M5 parity
-  blockers.
+  `SpecialCase` and situational striker/conditional tails use the later explicit
+  diagnostic boundary.
 
 ### First-class native character creation
 
@@ -182,8 +204,8 @@ print artifacts, deterministic content checks, and the query benchmark.
   but that report did not retain its preferred component IDs and cannot be
   reproduced exactly. A newly recorded Hybrid Cleric/Fighter request reaches
   level 30 complete and legal with 65 resolved choices, eight intact
-  retrainings, and zero diagnostics. Broader class/build sampling and the named
-  power-math exception families remain open criterion-2/3 evidence.
+  retrainings, and zero diagnostics. Broader class/build sampling remains useful
+  future evidence rather than an allowlist requirement.
 
 ### Profile migration preview and explicit adoption
 

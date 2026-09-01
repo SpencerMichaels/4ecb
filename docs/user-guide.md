@@ -210,10 +210,12 @@ backups remain accepted with an explicit no-checksum warning.
 
 ## Current release limitations
 
-- The remaining native named/hand-specific power exceptions, advanced
-  companion/item-set/inherent-bonus behavior, prerequisite prose tail, and
-  Essentials/hybrid differential cases are explicit compatibility blockers in
-  the [M4 compatibility ledger](m4-compatibility-ledger.md).
+- Exact implemented rules are authoritative. Unsupported native special powers
+  report `native-special-case`, absent beast scores report `companion-ability`,
+  and unknown prerequisite prose reports `prerequisite.unverified`; original
+  content and cached sheets stay recoverable. Item-set/inherent behavior requires
+  an explicit imported or serialized activation and is not inferred from an
+  absent campaign setting. See the [compatibility ledger](m4-compatibility-ledger.md).
 - Edited exports have not completed the curated original Windows application
   launch matrix.
 - Full supported-browser critical workflows, keyboard traversal,
@@ -223,6 +225,7 @@ backups remain accepted with an explicit no-checksum warning.
 - Runtime configuration is reserved and network-only but not consumed by the
   current application. It cannot currently enable features or change URLs.
 
-The compatibility and original-application items prevent an M5 completion
-claim. The UI/device items are later release-readiness work and do not block the
+Only the original-application matrix prevents the final M5 completion claim.
+The compatibility limits above are the explicit, explainable automated support
+boundary. UI/device items are later release-readiness work and do not block the
 functional M5 boundary.

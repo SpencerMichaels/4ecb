@@ -572,6 +572,24 @@ no-referrer, same-origin isolation, and least-privilege feature headers to every
 route. React renders imported strings as text; the release security contract
 rejects executable-markup sinks in application source.
 
+### Final M5 threat-model review
+
+The 2026-09-01 closure review followed data from untrusted pack/XML input through
+bounded decoding, worker messages, rules evaluation, IndexedDB persistence,
+sheet rendering, backup, migration, and regenerated XML export. Native creation
+and compatibility diagnostics add no network authority. Imported prose remains
+text, regenerated XML is escaped, workers and stored records are runtime
+decoded, backups are checksummed before replacement, and migration journals
+preserve the old record until commit. Public build inspection continues to
+exclude private packs, characters, keys, telemetry, and upload endpoints.
+
+Residual risks are explicit: anyone controlling the browser profile can read
+local characters; operators can weaken response headers; unsupported rules may
+require legacy comparison; and the original Windows application is outside this
+web application's trust boundary. The product mitigates these with local backup
+guidance, reference headers, visible provenance diagnostics, byte-preserving
+source retention, and a separate manual legacy launch matrix.
+
 - Cryptography uses browser/platform primitives and a reviewed protocol; the
   project does not invent encryption constructions.
 - Pairing secrets are redacted from logs and excluded from server-visible query

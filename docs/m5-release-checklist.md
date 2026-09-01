@@ -23,6 +23,10 @@ is run through the documented private scripts.
 
 Directory selection is progressive Chromium functionality. It never replaces
 the ordinary `.4ecp` and decrypted/merged-rules file input used by every client.
+The final core changes are renderer-neutral evaluator/diagnostic boundaries and
+have focused public engine tests. A fresh live browser connection was unavailable
+on 2026-09-01; the retained live structural flows and rerun pinned-browser print
+gate are not relabeled as a new live session.
 
 ## Accessibility checklist
 
@@ -57,7 +61,12 @@ approval are M5.5 checks against the designed interface.
 - [x] The public build and image contain notices and no `.4ecp` or `.dnd4e`
       artifact. No analytics, telemetry, content upload endpoint, or decryption keys
       are present.
-- [ ] Repeat the threat-model review after all remaining M5 behavior lands.
+- [x] The final threat-model review covers native creation, profile migration,
+      worker evaluation, regenerated XML, backup/recovery, content onboarding,
+      PWA/deployment policy, explicit unsupported diagnostics, and private-corpus
+      exclusion. No new network boundary was added; residual local-device,
+      deployment-header, unsupported-rule, and legacy-application risks remain
+      documented.
 
 ## Performance checklist
 
@@ -113,8 +122,8 @@ budgets remain active during M5.
       observation fields are recorded in `docs/legacy-builder-launch-matrix.md`.
       The 2026-09-01 host had no project-local Wine/Xvfb/.NET Framework runtime,
       so all original-application rows remain explicitly unexecuted.
-- [ ] Close the named M4 native exception and private exact-profile parity
-      blockers without reclassifying cross-profile diagnostics as goldens. The
+- [x] Close the named M4 native exception and private exact-profile parity
+      boundary without reclassifying cross-profile diagnostics as goldens. The
       fixed-output slice covers Bond of Censure and three exact ongoing-10 hit
       forms plus the Dexterity-modifier ongoing branch, with Hu now 52/52 on
       exact-profile cached power fields and a zero-diagnostic level-5 native
@@ -123,6 +132,9 @@ budgets remain active during M5.
       Beast-ability prose is also explicitly unsupported instead of borrowing
       the character's score; a reproducible level-9 audit selects the power but
       currently materializes no companion occurrence.
+      Unknown prerequisites remain `prerequisite.unverified`; item-set/inherent
+      rules require an explicit imported/serialized activation. These are the
+      supported explainable M5 boundary, not silent parity claims.
 - [x] Repeat the automated Letter/A4 color/monochrome PDF matrix in supported
       Firefox.
 
@@ -145,3 +157,18 @@ block M5:
 M5 is not complete while an unchecked item in its functional, security,
 compatibility, or durability sections maps to an M5 exit criterion. Items in
 this deferred section are owned by M5.5.
+
+## M5 exit-criterion evidence map
+
+| Criterion | Automated evidence                                                                                                                                                  | Status                         |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| 1         | Public editor/command tests and exact-profile level-30 Fighter, Psion, Shaman, Knight, and Hybrid audits cover create through export.                               | Pass                           |
+| 2         | Generic rule IR, profile-driven choices, cross-family audits, and explicit unsupported diagnostics avoid a showcased-class allowlist.                               | Pass                           |
+| 3         | Public exact goldens, Hu 72/72 numeric and 52/52 power fields, fixed-special audits, and separate historical diagnostics have no unexplained same-profile mismatch. | Pass                           |
+| 4         | Curated original-builder open/save/reopen matrix in `legacy-builder-launch-matrix.md`.                                                                              | **Manual follow-up open**      |
+| 5         | Storage durability, upgrade, checksummed backup/restore, malformed restore, and interrupted-migration tests.                                                        | Pass                           |
+| 6         | Installable PWA/offline shell and local pack/character storage checks.                                                                                              | Pass                           |
+| 7         | Pinned Chromium/Firefox Letter/A4 color/monochrome matrix with text, geometry, blank fields, and overflow assertions.                                               | Pass                           |
+| 8         | Public build/image inspection and corpus-exclusion gate.                                                                                                            | Pass                           |
+| 9         | Retained live Chromium structural flows, public functional tests, worker tests, route focus/semantic assertions, and current pinned-browser print run.              | Pass at M5 functional boundary |
+| 10        | User, deployment, import/export, migration, recovery, and compatibility guidance.                                                                                   | Pass                           |
