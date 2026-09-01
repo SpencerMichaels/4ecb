@@ -272,6 +272,7 @@ function nativeSpecialDamage(
   | {
       readonly dice?: string;
       readonly expression?: string;
+      readonly ability?: string;
       readonly suppressAbility?: boolean;
     }
   | undefined {
@@ -288,6 +289,11 @@ function nativeSpecialDamage(
     hit.startsWith("ongoing 10 poison damage (save ends).")
   )
     return { expression: "ongoing 10" };
+  if (
+    hit ===
+    "the target is slowed and takes ongoing damage equal to 10 + your dexterity modifier (save ends both)."
+  )
+    return { dice: "ongoing 10", ability: "Dexterity" };
   return undefined;
 }
 
@@ -298,8 +304,6 @@ function unresolvedNativeSpecialCase(hitLine: string | undefined): boolean {
     hit ===
       "the target takes necrotic damage equal to the damage you took from the attack." ||
     hit.startsWith("you deal damage based on the level of the rage power") ||
-    hit ===
-      "the target is slowed and takes ongoing damage equal to 10 + your dexterity modifier (save ends both)." ||
     hit ===
       "you take damage equal to your level, and the target takes 3d10 + constitution modifier damage plus extra damage equal to one-half your level." ||
     hit ===
@@ -712,15 +716,17 @@ export function evaluatePowers(input: {
         damageAbilities[0] === "Dexterity"
       )
         damageAbilities = ["Strength"];
-      const additiveAbilities = specialDamage?.suppressAbility
-        ? []
-        : /\bor\b/i.test(primaryDamageClause)
-          ? listedAbilities.includes(
-              attackStat as (typeof abilityNames)[number],
-            )
-            ? [attackStat]
-            : damageAbilities.slice(0, 1)
-          : damageAbilities;
+      const additiveAbilities = specialDamage?.ability
+        ? [specialDamage.ability]
+        : specialDamage?.suppressAbility
+          ? []
+          : /\bor\b/i.test(primaryDamageClause)
+            ? listedAbilities.includes(
+                attackStat as (typeof abilityNames)[number],
+              )
+              ? [attackStat]
+              : damageAbilities.slice(0, 1)
+            : damageAbilities;
       if (dice !== undefined)
         damageComponents.push(
           ...additiveAbilities.map((ability) => ({

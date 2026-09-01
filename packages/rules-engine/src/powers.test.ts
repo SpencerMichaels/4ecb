@@ -369,6 +369,7 @@ describe("power evaluation", () => {
         "BEACON",
         "BASILISK",
         "CONTAGION",
+        "SUBTLE",
         "UNRESOLVED",
       ],
       inventory: [
@@ -380,7 +381,10 @@ describe("power evaluation", () => {
           acquiredLevel: 1,
         },
       ],
-      stats: { "Wisdom modifier": stat("Wisdom modifier", 6) },
+      stats: {
+        "Wisdom modifier": stat("Wisdom modifier", 6),
+        "Dexterity modifier": stat("Dexterity modifier", 4),
+      },
       overlays: [],
       entities: [
         entity("BOND", "Bond of Censure", "Power", {
@@ -407,6 +411,12 @@ describe("power evaluation", () => {
           Attack: "Wisdom vs. Fortitude",
           Hit: "Ongoing 10 poison damage (save ends). The first time the target fails a saving throw against this ongoing damage, each enemy within 2 squares of the target takes ongoing 5 poison damage (save ends).",
         }),
+        entity("SUBTLE", "Synthetic Dexterity Ongoing", "Power", {
+          Keywords: "Martial, Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. AC",
+          Hit: "The target is slowed and takes ongoing damage equal to 10 + your Dexterity modifier (save ends both).",
+        }),
         entity("SYMBOL", "Symbol +1", "Magic Item", {
           "Magic Item Type": "Holy Symbol",
           Enhancement: "+1",
@@ -431,6 +441,10 @@ describe("power evaluation", () => {
         powers.find(({ definitionId }) => definitionId === id)?.variants[0]
           ?.damage,
       ).toBe("ongoing 10");
+    expect(
+      powers.find(({ definitionId }) => definitionId === "SUBTLE")?.variants[0]
+        ?.damage,
+    ).toBe("ongoing 10+4");
     expect(
       powers.find(({ definitionId }) => definitionId === "UNRESOLVED")
         ?.unsupported,

@@ -96,6 +96,9 @@ implement enhancement. Three exact hit forms return `ongoing 10`: Brilliant
 Beacon's radiant line, Baleful Gaze of the Basilisk's stunned poison line, and
 the Contagion prefix that continues with a failed-save rider. The other decoded
 strings are distinct branches and must not inherit these results by similarity.
+The exact slowed/ongoing string separately initializes `ongoing 10+0` and then
+parses Dexterity, yielding `ongoing 10+<modifier>`; it is not one of the fixed
+ongoing-10 results.
 
 The exact output is richer than `ability modifier + half level + proficiency +
 enhancement`. Use the saved `PowerStats` corpus as golden oracles and keep every

@@ -124,6 +124,11 @@ produce `ongoing 10`. Public same-profile tests cover these forms; other decoded
 `SpecialCase` strings report `native-special-case:<power-id>` until their full
 components are modeled.
 
+The exact slowed/ongoing hit form that adds Dexterity is also ported as
+`ongoing 10+<Dexterity modifier>`. The full private profile can select that
+level-5 power through a complete, legal native workflow with no diagnostics;
+the generated character remains ignored and is not a public golden.
+
 Power loadouts now consume the durable `_INTERNAL_MainHandWeapon` selection and
 project explicit main/off-hand roles plus the paired equipment name without
 discarding alternate `PowerStats` variants. The recovered native

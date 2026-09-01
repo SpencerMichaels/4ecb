@@ -115,8 +115,10 @@ budgets remain active during M5.
 - [ ] Close the named M4 native exception and private exact-profile parity
       blockers without reclassifying cross-profile diagnostics as goldens. The
       fixed-output slice covers Bond of Censure and three exact ongoing-10 hit
-      forms, with Hu now 52/52 on exact-profile cached power fields; other
-      decoded native special strings remain explicitly unsupported.
+      forms plus the Dexterity-modifier ongoing branch, with Hu now 52/52 on
+      exact-profile cached power fields and a zero-diagnostic level-5 native
+      selection audit; five identified native special entities remain
+      explicitly unsupported.
 - [x] Repeat the automated Letter/A4 color/monochrome PDF matrix in supported
       Firefox.
 

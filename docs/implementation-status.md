@@ -35,6 +35,11 @@ Censure`: its conditional movement prose yields `1d10`, or `2d10` at level
   legality diagnostics are unchanged. The unrelated nine-character historical
   matrix remains 501/509 aliases and 277/371 power fields with 67 conditional
   variants; those unknown-revision caches remain diagnostics, not goldens.
+- A follow-up exact-pack inventory identified six remaining native branches.
+  The level-5 Dexterity ongoing branch has a reproducible, zero-diagnostic
+  native selection path and now produces `ongoing 10+<Dexterity modifier>`.
+  The other five identified entities remain unsupported pending equivalent
+  exact-profile selection or character evidence.
 
 ### Conditional striker power projections
 

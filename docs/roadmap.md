@@ -233,9 +233,10 @@ class-power gates and Sneak Attack weapon eligibility. Unknown variants remain
 unsupported, and the remaining named/situational tail still blocks closure.
 The recovered fixed-output `SpecialCase` slice now also covers Bond of
 Censure's tier dice and ability suppression plus three exact ongoing-10 hit
-forms. Exact-profile Hu power fields consequently match 52/52; the other
-decoded native special strings remain explicitly unsupported and still block
-closure.
+forms and the exact Dexterity-modifier ongoing form. Exact-profile Hu power
+fields consequently match 52/52, while a separate level-5 native selection
+audit covers the Dexterity branch. Five identified native special entities
+remain explicitly unsupported and still block closure.
 
 ### Goal
 
