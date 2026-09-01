@@ -129,6 +129,13 @@ The exact slowed/ongoing hit form that adds Dexterity is also ported as
 level-5 power through a complete, legal native workflow with no diagnostics;
 the generated character remains ignored and is not a public golden.
 
+Power prose naming a `beast's <ability> modifier` is not a character-ability
+reference. Such a clause is excluded from ordinary ability math and emits
+`companion-ability:<power-id>` until the selected companion occurrence and its
+stat block are available to the power evaluator. The private level-9 audit
+currently selects a qualifying power but no companion occurrence, so it proves
+the blocker rather than the substitution result.
+
 Power loadouts now consume the durable `_INTERNAL_MainHandWeapon` selection and
 project explicit main/off-hand roles plus the paired equipment name without
 discarding alternate `PowerStats` variants. The recovered native

@@ -237,6 +237,10 @@ forms and the exact Dexterity-modifier ongoing form. Exact-profile Hu power
 fields consequently match 52/52, while a separate level-5 native selection
 audit covers the Dexterity branch. Five identified native special entities
 remain explicitly unsupported and still block closure.
+Beast-ability damage now has an explicit provenance guard: character abilities
+are not silently substituted for absent companion scores. The full-profile
+native audit still fails to materialize a companion occurrence, so companion
+power parity remains open.
 
 ### Goal
 

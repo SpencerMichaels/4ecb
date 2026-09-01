@@ -468,6 +468,27 @@ describe("power evaluation", () => {
     expect(heroicBond?.variants[0]?.damage).toBe("1d10");
   });
 
+  it("does not substitute character abilities for beast modifiers", () => {
+    const [power] = evaluatePowers({
+      level: 9,
+      activeDefinitionIds: ["BEAST_POWER"],
+      inventory: [],
+      stats: { "Wisdom modifier": stat("Wisdom modifier", 6) },
+      overlays: [],
+      entities: [
+        entity("BEAST_POWER", "Synthetic Beast Power", "Power", {
+          Keywords: "Beast, Martial, Psychic",
+          "Attack Type": "Close burst 1",
+          Attack: "Beast's attack bonus vs. Will",
+          Hit: "1d8 + beast's Wisdom modifier psychic damage, and the target is immobilized (save ends).",
+        }),
+      ],
+    });
+
+    expect(power?.variants[0]?.damage).toBe("1d8");
+    expect(power?.unsupported).toContain("companion-ability:BEAST_POWER");
+  });
+
   it("classifies healing surges and temporary hit point effects", () => {
     const [power] = evaluatePowers({
       level: 6,

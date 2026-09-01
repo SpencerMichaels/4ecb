@@ -313,6 +313,19 @@ function unresolvedNativeSpecialCase(hitLine: string | undefined): boolean {
   );
 }
 
+function hasCompanionAbilityDamage(hitLine: string | undefined): boolean {
+  return /\b(?:your\s+)?beast(?:'s)?\s+(?:Strength|Constitution|Dexterity|Intelligence|Wisdom|Charisma)\s+modifier\b/i.test(
+    hitLine ?? "",
+  );
+}
+
+function withoutCompanionAbilityDamage(value: string): string {
+  return value.replace(
+    /\b(?:your\s+)?beast(?:'s)?\s+(?:Strength|Constitution|Dexterity|Intelligence|Wisdom|Charisma)\s+modifier\b/gi,
+    "",
+  );
+}
+
 function criticalExpression(
   equipment: Loadout,
   level: number,
@@ -700,7 +713,9 @@ export function evaluatePowers(input: {
           ? diceTimes(equipment.weaponDamage ?? "1d4", Number(weaponMatch[1]))
           : fixedMatch?.[1]);
       const ongoing = /\bongoing\b/i.test(hitLine ?? "");
-      const primaryDamageClause = (hitLine ?? "").split(/\bdamage\b/i)[0] ?? "";
+      const primaryDamageClause = withoutCompanionAbilityDamage(
+        (hitLine ?? "").split(/\bdamage\b/i)[0] ?? "",
+      );
       let damageAbilities: readonly string[] = abilityNames.filter((ability) =>
         new RegExp(`\\b${ability} modifier\\b`, "i").test(primaryDamageClause),
       );
@@ -862,6 +877,8 @@ export function evaluatePowers(input: {
       unsupported.push("unparsed-hit");
     if (unresolvedNativeSpecialCase(hitLine))
       unsupported.push(`native-special-case:${power.id}`);
+    if (hasCompanionAbilityDamage(hitLine))
+      unsupported.push(`companion-ability:${power.id}`);
     const usage = effectiveField(power, "Power Usage", input.overlays);
     const actionType = effectiveField(power, "Action Type", input.overlays);
     return [

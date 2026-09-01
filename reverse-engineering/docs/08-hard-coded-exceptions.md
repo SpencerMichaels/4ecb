@@ -65,6 +65,12 @@ The `wearing`/`not-wearing` evaluator has named branches for:
 - item augments and item-set counts;
 - inherent bonuses when no appropriate magic item bonus applies.
 
+Damage parsing recognizes the literal token `beast's`, consumes the following
+ability name, reads that score from the first selected beast companion, and
+adds its modifier with a `beast's <ability> modifier` component label. A
+character ability of the same name is not a fallback when the companion is
+absent.
+
 These selectors are an engine DSL despite being serialized as strings. Centralize
 them in one equipment-predicate module.
 

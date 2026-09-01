@@ -17,6 +17,21 @@ MVP declaration.
 
 ## M5 checkpoints
 
+### Companion ability provenance guard
+
+- Recovered power parsing treats `beast's <ability> modifier` as the selected
+  companion's score, not the character's same-named score. Until companion
+  occurrences and their stat blocks are connected to power evaluation, these
+  clauses are removed from ordinary character-ability math and reported as
+  `companion-ability:<power-id>`.
+- A public synthetic fixture prevents the prior silent substitution. An ignored
+  full-profile level-9 audit selected the corresponding beast power through a
+  complete, legal workflow, but did not materialize its requested companion;
+  that run is blocker reproduction, not companion parity evidence.
+- No local character or settings artifact activates the recovered inherent-bonus
+  entity, so inherent fallback behavior remains unimplemented rather than being
+  inferred from the entity alone.
+
 ### Fixed-output native power special cases
 
 - Power math now ports the recovered early-return behavior for `Bond of

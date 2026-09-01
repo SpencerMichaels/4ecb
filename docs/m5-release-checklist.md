@@ -119,6 +119,9 @@ budgets remain active during M5.
       exact-profile cached power fields and a zero-diagnostic level-5 native
       selection audit; five identified native special entities remain
       explicitly unsupported.
+      Beast-ability prose is also explicitly unsupported instead of borrowing
+      the character's score; a reproducible level-9 audit selects the power but
+      currently materializes no companion occurrence.
 - [x] Repeat the automated Letter/A4 color/monochrome PDF matrix in supported
       Firefox.
 
