@@ -109,9 +109,9 @@ Multi-slot choices reject duplicate siblings.
 Human/Fighter, Psion, Shaman, Knight, and two-component Hybrid paths complete
 level 30. Every path passes persistence,
 authoritative-sheet, and edited-export semantic round-trip gates. Psion and
-Knight have zero diagnostics. Fighter also reaches zero diagnostics after
-typed bracketed feat prerequisites and prerequisite-aware retraining prevent an
-illegal custom-power replacement; Shaman and Hybrid preserve only visible
-`prerequisite.unverified` prose. These are deterministic private-profile
+Knight have zero diagnostics. Fighter and Shaman also reach zero diagnostics
+after typed bracketed feat prerequisites and prerequisite-aware retraining
+prevent illegal custom-power replacements; Hybrid preserves only two visible
+`prerequisite.unverified` findings. These are deterministic private-profile
 workflows, not a claim that every class or named native power exception is
 closed.

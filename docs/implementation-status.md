@@ -85,14 +85,15 @@ print artifacts, deterministic content checks, and the query benchmark.
 - The same 38,339-record profile now has additional deterministic family
   evidence. Human/Psion reaches level 30 complete and legal with 63 choices,
   nine retrainings, zero diagnostics, and exact persistence/sheet/export gates.
-  Human/Shaman reaches level 30 complete with 61 choices and eight retrainings;
-  its four findings are preserved `prerequisite.unverified` prose. Human/Knight
-  reaches level 30 complete and legal with 50 choices and zero diagnostics,
-  exercising the Essentials class-alias and nested future-grant paths. A Hybrid
-  shell with two distinct imported component classes reaches level 30 complete
-  with 68 resolved choices, eight intact retraining links, and two preserved
-  unverified prerequisites. Broader class/build sampling and the named
-  power-math exception families remain open criterion-2/3 evidence.
+  Human/Shaman reaches level 30 complete and legal with 61 choices, eight
+  retrainings, and zero diagnostics after the same prerequisite-aware candidate
+  policy. Human/Knight reaches level 30 complete and legal with 50 choices and
+  zero diagnostics, exercising the Essentials class-alias and nested
+  future-grant paths. A Hybrid shell with two distinct imported component
+  classes reaches level 30 complete with 68 resolved choices, eight intact
+  retraining links, and two preserved unverified prerequisites. Broader
+  class/build sampling and the named power-math exception families remain open
+  criterion-2/3 evidence.
 
 ### Profile migration preview and explicit adoption
 

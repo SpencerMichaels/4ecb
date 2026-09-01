@@ -95,7 +95,7 @@ the ordinary `.4ecp` and decrypted/merged-rules file input used by every client.
       complete level 30. All pass persistence, sheet, and
       edited-export semantic re-import gates, with only explicitly reported
       unverified prerequisites outside the zero-diagnostic
-      Fighter/Psion/Knight paths.
+      Fighter/Psion/Shaman/Knight paths.
 - [x] Repository reconstruction, historical database upgrade, checksummed
       backup/restore, malformed restore rejection, and interrupted migration are in
       the automated durability matrix.
