@@ -49,6 +49,13 @@ product theme or motion language is finalized. Theme tokens must remain easy to
 replace; domain and feature components must not depend on ornamental effects or
 animation timing for correctness.
 
+Hash-route changes move focus to the newly rendered main landmark after the
+initial load. Narrow/tablet breakpoints remove desktop minimum widths and stack
+dense compendium, library, editor, and sheet layouts; print keeps its separate
+fixed Letter/A4 rules. Release tests pin the normal-text palette to WCAG AA
+contrast, while the supported-client matrix owns keyboard, zoom, screen-reader,
+touch, and print traversal.
+
 ### Content tool
 
 The command-line content tool runs in the project-local Nix environment. It:

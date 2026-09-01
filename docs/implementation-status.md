@@ -249,6 +249,30 @@ cache behavior. The complete public gate passes 123 tests across 27 files. This
 checkpoint does not replace the still-open supported-browser and accessibility
 matrices.
 
+### Accessibility and responsive-shell pass
+
+- Hash-route changes now move focus to the new `main` landmark while preserving
+  the browser's ordinary initial focus. The focus helper has missing-landmark and
+  successful-handoff tests.
+- The 720 px body minimum was removed. At tablet/narrow breakpoints the header,
+  navigation, compendium workspace, library/editor forms, sheet columns/cards,
+  and fact grids wrap or stack; fixed three-column card rules remain scoped to
+  print.
+- A palette contract checks every normal-size shell/status/action/power/item
+  foreground/background pair at the WCAG AA 4.5:1 threshold. The item-card
+  orange was darkened because its prior white-text contrast did not pass.
+- The durable M5 release checklist now distinguishes completed automated/live
+  Chromium evidence from the open Firefox, Safari, tablet, keyboard,
+  screen-reader, zoom/touch, performance-device, and print matrices.
+
+Live production Chromium found one `h1`, one `main`, no duplicate IDs, and no
+unnamed native interactive controls on the top-level empty-state Settings,
+Characters, and Compendium routes. Clicking between routes placed focus on the
+new `main` with `tabIndex=-1`; the fresh initial load kept body focus and the
+updated shell had no forced minimum width or console warnings/errors. The full
+public gate passes 127 tests across 29 files. Full keyboard traversal and the
+other supported-client checklist entries remain open and are not claimed.
+
 ## M4 delivered
 
 - `rules-engine` parses every rule opcode and attribute found in the 38,339

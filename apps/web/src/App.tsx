@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ContentPackRepository } from "@4ecb/browser-storage";
 import type { ContentPackManifest } from "@4ecb/content-pack";
@@ -8,6 +8,7 @@ import { CharacterLibraryPage } from "./CharacterLibraryPage";
 import { CharacterEditorPage } from "./CharacterEditorPage";
 import { CharacterSheetPage } from "./CharacterSheetPage";
 import { parseHashRoute } from "./routes";
+import { focusMainContent } from "./route-focus";
 import { PwaStatus } from "./PwaStatus";
 import { SettingsPage } from "./SettingsPage";
 
@@ -19,6 +20,7 @@ export function App() {
   const [activePackId, setActivePackId] = useState<string>();
   const [storageReady, setStorageReady] = useState(false);
   const [error, setError] = useState<string>();
+  const firstRoute = useRef(true);
   const route = useMemo(() => parseHashRoute(hash), [hash]);
 
   const refresh = useCallback(async () => {
@@ -40,6 +42,15 @@ export function App() {
     });
     return () => window.removeEventListener("hashchange", onHashChange);
   }, [refresh]);
+
+  useEffect(() => {
+    if (firstRoute.current) {
+      firstRoute.current = false;
+      return;
+    }
+    const frame = requestAnimationFrame(() => focusMainContent(document));
+    return () => cancelAnimationFrame(frame);
+  }, [hash]);
 
   return (
     <div className="app-shell">

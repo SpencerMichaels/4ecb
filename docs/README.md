@@ -37,6 +37,9 @@ application's architecture.
 12. [Public PWA and Docker deployment](public-deployment.md) defines the
     proprietary-content boundary, hardened container operation, runtime
     configuration, offline/update behavior, and remaining release checks.
+13. [M5 release checklist](m5-release-checklist.md) maps browser, accessibility,
+    print, security, performance, compatibility, and durability evidence to the
+    remaining MVP exit criteria.
 
 ## Definition hierarchy
 
