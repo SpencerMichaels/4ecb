@@ -593,6 +593,13 @@ rejects executable-markup sinks in application source.
 9. **Original-application smoke tests:** a curated exported corpus opened in the
    legacy builder where automation or repeatable manual testing is practical.
 
+The public print gate uses Chromium and Poppler pinned by the project Nix shell.
+It seeds only a synthetic character into an ephemeral browser profile, prints
+the real production sheet route through the browser debugging protocol, verifies
+all-page geometry/text/tags/overflow, and deletes the generated PDFs. Firefox
+and Safari remain explicit manual release-matrix engines rather than being
+silently represented by Chromium output.
+
 ### Compatibility reporting
 
 Engine parity is reported by feature and corpus coverage rather than one vague

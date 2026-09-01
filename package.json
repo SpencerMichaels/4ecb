@@ -23,6 +23,7 @@
     "build": "pnpm typecheck && pnpm --filter @4ecb/web build",
     "content-tool": "tsx apps/content-tool/src/main.ts",
     "dev": "pnpm --filter @4ecb/web dev",
+    "check:print": "node scripts/check-print.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",

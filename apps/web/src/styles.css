@@ -1051,8 +1051,11 @@ textarea {
   }
   .app-header,
   .primary-nav,
+  .public-notice,
+  .pwa-status,
   .sheet-toolbar,
   .cache-warning,
+  .sheet-page > .status,
   .skip-link {
     display: none !important;
   }

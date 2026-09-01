@@ -10,12 +10,14 @@
     in {
       devShells.${system}.default = pkgs.mkShell {
         packages = with pkgs; [
+          chromium
           dotnet-sdk_8
           docker-client
           jq
           libxml2
           nodejs_24
           pnpm
+          poppler-utils
           python313
           ripgrep
           xmlstarlet

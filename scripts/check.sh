@@ -10,6 +10,7 @@ pnpm format:check
 pnpm lint
 pnpm test
 pnpm build
+pnpm check:print
 
 test -f apps/web/dist/sw.js
 test -f apps/web/dist/manifest.webmanifest
