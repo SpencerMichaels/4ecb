@@ -129,12 +129,14 @@ export function projectBuildForEvaluation(
 
   const inventory: CharacterInventoryEntry[] = build.inventory.map((entry) => ({
     id: entry.id,
+    ...(entry.name === undefined ? {} : { name: entry.name }),
     definitionIds: entry.elements.flatMap((element) =>
       element.definitionId === undefined ? [] : [element.definitionId],
     ),
     quantity: entry.quantity,
     equippedQuantity: entry.equippedQuantity,
     acquiredLevel: entry.acquiredLevel,
+    overrides: entry.overrides,
   }));
   return {
     level: build.effectiveLevel,

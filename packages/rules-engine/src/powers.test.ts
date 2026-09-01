@@ -61,10 +61,12 @@ describe("power evaluation", () => {
       inventory: [
         {
           id: "gouge",
+          name: "Custom gouge",
           definitionIds: ["GOUGE", "MAGIC"],
           quantity: 1,
-          equippedQuantity: 1,
+          equippedQuantity: 0,
           acquiredLevel: 1,
+          overrides: { Damage: "2d8" },
         },
       ],
       stats: {
@@ -77,11 +79,11 @@ describe("power evaluation", () => {
 
     expect(power?.variants).toMatchObject([
       {
-        equipmentName: "Way-Leader Gouge +1",
+        equipmentName: "Custom gouge",
         attackStat: "Wisdom",
         defense: "AC",
         attackBonus: 12,
-        damage: "2d6+8",
+        damage: "2d8+8",
         critical: "+1d6 damage",
       },
       {
@@ -195,5 +197,32 @@ describe("power evaluation", () => {
         attackBonus: 4,
       },
     ]);
+  });
+
+  it("chooses the best attack ability and retains explicit power bonuses", () => {
+    const [power] = evaluatePowers({
+      level: 4,
+      activeDefinitionIds: ["POWER"],
+      inventory: [],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 2),
+        "Charisma modifier": stat("Charisma modifier", 5),
+      },
+      overlays: [],
+      entities: [
+        entity("POWER", "Flexible strike", "Power", {
+          Keywords: "Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength or Charisma + 2 vs. AC",
+          Hit: "1[W] + Charisma modifier + 3 bonus damage.",
+        }),
+      ],
+    });
+
+    expect(power?.variants[0]).toMatchObject({
+      attackStat: "Charisma",
+      attackBonus: 9,
+      damage: "1d4+8",
+    });
   });
 });

@@ -104,7 +104,7 @@ function loadouts(
 ): readonly Loadout[] {
   const byId = new Map(entities.map((entity) => [key(entity.id), entity]));
   const result: Loadout[] = [];
-  for (const entry of inventory.filter((item) => item.equippedQuantity > 0)) {
+  for (const entry of inventory.filter((item) => item.quantity > 0)) {
     const parts = entry.definitionIds.flatMap((id) => {
       const entity = byId.get(key(id));
       return entity === undefined ? [] : [entity];
@@ -126,10 +126,13 @@ function loadouts(
     const critical = field(magic ?? emptyEntity, "Critical");
     result.push({
       id: entry.id,
-      name: equipmentName(parts),
+      name: entry.name ?? equipmentName(parts),
       ...(weapon === undefined
         ? {}
-        : { weaponDamage: field(weapon, "Damage") ?? "1d4" }),
+        : {
+            weaponDamage:
+              entry.overrides?.Damage ?? field(weapon, "Damage") ?? "1d4",
+          }),
       proficiency:
         Number(field(weapon ?? emptyEntity, "Proficiency Bonus")) || 0,
       enhancement: parseEnhancement(magic),
@@ -247,9 +250,7 @@ export function evaluatePowers(input: {
       input.level,
     );
     const effectLine = effectiveField(power, "Effect", input.overlays);
-    const attack = attackLine?.match(
-      /([A-Za-z]+)(?: modifier)?\s+vs\.?\s+([A-Za-z]+)/i,
-    );
+    const attack = attackLine?.match(/^(.*?)\s+vs\.?\s+([A-Za-z]+)/i);
     const weaponPower = keywords.some((value) => key(value) === "weapon");
     const implementPower = keywords.some((value) => key(value) === "implement");
     const effectOnlyCalculation =
@@ -269,10 +270,21 @@ export function evaluatePowers(input: {
             ? equipped
             : equipped.filter((item) => item.unarmed);
     const variants = candidates.map((equipment): PowerVariant => {
-      const parsedAttackStat = attack?.[1] ?? "Unknown";
-      const attackStat = /^(?:primary|ability)$/i.test(parsedAttackStat)
-        ? highestAbility(input.stats)
-        : parsedAttackStat;
+      const attackLeft = attack?.[1] ?? "";
+      const availableAbilities = abilityNames.filter((ability) =>
+        new RegExp(`\\b${ability}\\b`, "i").test(attackLeft),
+      );
+      const attackStat =
+        availableAbilities.length > 0
+          ? availableAbilities.reduce((best, candidate) =>
+              numericStat(input.stats, `${candidate} modifier`) >
+              numericStat(input.stats, `${best} modifier`)
+                ? candidate
+                : best,
+            )
+          : /primary ability/i.test(attackLeft)
+            ? highestAbility(input.stats)
+            : "Unknown";
       const defense = attack?.[2] ?? "Unknown";
       const attackComponents: PowerComponent[] = [
         {
@@ -290,6 +302,12 @@ export function evaluatePowers(input: {
         attackComponents.push({
           label: "enhancement bonus",
           value: equipment.enhancement,
+        });
+      const powerAttackBonus = Number(attackLeft.match(/\+\s*(\d+)/)?.[1] ?? 0);
+      if (powerAttackBonus !== 0)
+        attackComponents.push({
+          label: "power attack bonus",
+          value: powerAttackBonus,
         });
 
       const damageComponents: PowerComponent[] = [];
@@ -322,6 +340,14 @@ export function evaluatePowers(input: {
         if (melee !== 0)
           damageComponents.push({ label: "melee damage", value: melee });
       }
+      const powerDamageBonus = Number(
+        hitLine?.match(/\+\s*(\d+)\s+(?:[a-z]+\s+)*damage\b/i)?.[1] ?? 0,
+      );
+      if (dice !== undefined && powerDamageBonus !== 0)
+        damageComponents.push({
+          label: "power damage bonus",
+          value: powerDamageBonus,
+        });
       const damageBonus = damageComponents.reduce(
         (sum, component) => sum + component.value,
         0,

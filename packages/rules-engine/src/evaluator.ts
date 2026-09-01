@@ -43,10 +43,12 @@ export interface CharacterOccurrence {
 
 export interface CharacterInventoryEntry {
   readonly id: string;
+  readonly name?: string;
   readonly definitionIds: readonly string[];
   readonly quantity: number;
   readonly equippedQuantity: number;
   readonly acquiredLevel: number;
+  readonly overrides?: Readonly<Record<string, string>>;
 }
 
 export interface EvaluationInput {

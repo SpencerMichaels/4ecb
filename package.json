@@ -19,6 +19,7 @@
     "benchmark:query": "tsx scripts/benchmark-query.ts",
     "audit:rules": "tsx scripts/audit-rules.ts",
     "evaluate:character": "tsx scripts/evaluate-character.ts",
+    "evaluate:matrix": "bash scripts/evaluate-character-matrix.sh",
     "build": "pnpm typecheck && pnpm --filter @4ecb/web build",
     "content-tool": "tsx apps/content-tool/src/main.ts",
     "dev": "pnpm --filter @4ecb/web dev",

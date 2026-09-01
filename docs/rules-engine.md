@@ -67,6 +67,20 @@ and damage fields across weapon, implement, and unarmed variants. These two
 counts are separate because the legacy `PowerStats` blocks are cached per
 power/loadout combination.
 
+Run `pnpm evaluate:matrix PACK.4ecp [CHARACTER.dnd4e ...]` inside the project
+Nix environment for JSON-lines reports over multiple legacy characters. With no
+character arguments it uses the bundled sample heroes. This matrix is diagnostic:
+it records incomplete/illegal imports and every stat/power mismatch rather than
+relaxing assertions to make a percentage pass.
+
+The initial nine-character bundled-sample baseline matches 489/509 comparable
+numeric stat aliases and 219/371 cached power attack/damage fields. Two
+characters have exact numeric-stat parity. The remaining clusters identify the
+work still named below: conditional stat-channel eligibility, shield and
+unarmored stacking, custom/two-weapon dice, multi-ability attacks, and class-
+specific power bonuses. These samples are compatibility evidence, not public
+test fixtures.
+
 ## Remaining M4 closure work
 
 - Close advanced power branches: augment/psionic versions, off-hand and dual-

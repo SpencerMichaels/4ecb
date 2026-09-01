@@ -36,9 +36,11 @@ iteration and matched all 72 comparable cached numeric aliases. Its only
 remaining legality findings are its explicit house-rule selection and one
 custom feat prerequisite the imported content cannot prove. The public suite
 also matches all 52 comparable cached attack/damage fields across its power
-variants. The public suite passes 67 tests plus formatting, ESLint, all TypeScript projects, and the
-production PWA build. See [rules-engine.md](rules-engine.md) for the evaluator
-boundary, performance result, and remaining closure work.
+variants. The bundled nine-character diagnostic matrix currently matches
+489/509 numeric aliases and 219/371 cached power fields. The public suite passes
+68 tests plus formatting, ESLint, all TypeScript projects, and the production
+PWA build. See [rules-engine.md](rules-engine.md) for the evaluator boundary,
+performance result, and remaining closure work.
 
 ## M3 delivered
 
