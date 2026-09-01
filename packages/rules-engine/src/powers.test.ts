@@ -611,4 +611,178 @@ describe("power evaluation", () => {
     ]);
     expect(powers.flatMap((power) => power.unsupported)).toEqual([]);
   });
+
+  it("binds main/off-hand weapon variants to the saved loadout selection", () => {
+    const entities = [
+      entity("POWER", "Off-Hand Diversion", "Power", {
+        Keywords: "Martial, Weapon",
+        "Attack Type": "Melee weapon",
+        Attack: "Strength vs. AC (off-hand weapon)",
+        Hit: "1[W] + Strength modifier damage.",
+      }),
+      entity("SWORD", "Longsword", "Weapon", {
+        Damage: "1d8",
+        "Proficiency Bonus": "3",
+      }),
+      entity("DAGGER", "Dagger", "Weapon", {
+        Damage: "1d4",
+        "Proficiency Bonus": "3",
+        Properties: "Off-hand",
+      }),
+    ];
+    const [power] = evaluatePowers({
+      level: 5,
+      activeDefinitionIds: ["POWER"],
+      inventory: [
+        {
+          id: "sword",
+          name: "Main blade",
+          definitionIds: ["SWORD"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+        {
+          id: "dagger",
+          name: "Left dagger",
+          definitionIds: ["DAGGER"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      textStrings: { _INTERNAL_MainHandWeapon: "Main blade" },
+      stats: { "Strength modifier": stat("Strength modifier", 4) },
+      overlays: [],
+      entities,
+    });
+
+    expect(power?.variants).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          equipmentName: "Left dagger",
+          hand: "off",
+          pairedEquipmentName: "Main blade",
+          damage: "1d4+4",
+        }),
+      ]),
+    );
+    expect(power?.variants).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          equipmentName: "Main blade",
+          hand: "main",
+          pairedEquipmentName: "Left dagger",
+        }),
+      ]),
+    );
+  });
+
+  it("uses only the selected off-hand implement enhancement for dual implements", () => {
+    const entities = [
+      entity("POWER", "Arcane Bolt", "Power", {
+        Keywords: "Arcane, Implement",
+        "Attack Type": "Ranged 10",
+        Attack: "Intelligence vs. Reflex",
+        Hit: "1d8 + Intelligence modifier force damage.",
+      }),
+      entity("FEAT", "Dual Implement Spellcaster", "Feat", {}),
+      entity("ORB", "Accurate Orb +3", "Magic Item", {
+        "Magic Item Type": "Orb",
+        Enhancement: "+3 attack rolls and damage rolls",
+      }),
+      entity("WAND", "Defensive Wand +2", "Magic Item", {
+        "Magic Item Type": "Wand",
+        Enhancement: "+2 attack rolls and damage rolls",
+      }),
+      entity("ROD", "Uncertain Rod +1", "Magic Item", {
+        "Magic Item Type": "Rod",
+        Enhancement: "+1 attack rolls and damage rolls",
+      }),
+    ];
+    const powers = (mainHand: string, ambiguous = false) =>
+      evaluatePowers({
+        level: 10,
+        activeDefinitionIds: ["POWER", "FEAT"],
+        inventory: [
+          {
+            id: "orb",
+            name: "Accurate Orb +3",
+            definitionIds: ["ORB"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+          {
+            id: "wand",
+            name: "Defensive Wand +2",
+            definitionIds: ["WAND"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+          ...(ambiguous
+            ? [
+                {
+                  id: "rod",
+                  name: "Uncertain Rod +1",
+                  definitionIds: ["ROD"],
+                  quantity: 1,
+                  equippedQuantity: 1,
+                  acquiredLevel: 1,
+                },
+              ]
+            : []),
+        ],
+        textStrings: { _INTERNAL_MainHandWeapon: mainHand },
+        stats: {
+          "Intelligence modifier": stat("Intelligence modifier", 5),
+        },
+        overlays: [],
+        entities,
+      })[0];
+
+    expect(powers("Accurate Orb +3")?.variants).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          equipmentName: "Accurate Orb +3",
+          hand: "main",
+          pairedEquipmentName: "Defensive Wand +2",
+          attackBonus: 13,
+          damage: "1d8+10",
+          damageComponents: expect.arrayContaining([
+            expect.objectContaining({
+              label: "off-hand implement enhancement bonus",
+              value: 2,
+              source: "Dual Implement Spellcaster",
+            }),
+          ]),
+        }),
+      ]),
+    );
+    expect(powers("Defensive Wand +2")?.variants).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          equipmentName: "Defensive Wand +2",
+          hand: "main",
+          pairedEquipmentName: "Accurate Orb +3",
+          attackBonus: 12,
+          damage: "1d8+10",
+        }),
+      ]),
+    );
+    expect(
+      powers("Accurate Orb +3", true)?.variants.find(
+        (variant) => variant.hand === "main",
+      ),
+    ).toMatchObject({
+      equipmentName: "Accurate Orb +3",
+      damage: "1d8+8",
+      damageComponents: expect.not.arrayContaining([
+        expect.objectContaining({
+          label: "off-hand implement enhancement bonus",
+        }),
+      ]),
+    });
+  });
 });

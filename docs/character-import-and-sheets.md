@@ -164,10 +164,11 @@ current browser/variant combination.
 
 ## Current limitations before M4/M5 closure
 
-- The M4 evaluator recomputes general choices, grants, prerequisites, stats,
-  text, overlays, equipment predicates, legality, and ordinary weapon/implement
-  power variants. Advanced critical, augment, off-hand, striker, healing, and
-  named special-case branches remain incomplete.
+- The evaluator recomputes general choices, grants, prerequisites, stats, text,
+  overlays, equipment predicates, legality, ordinary weapon/implement power
+  variants, explicit main/off-hand pairing, and the named dual-implement
+  enhancement path. Advanced striker, situational, and remaining named
+  special-case branches remain incomplete.
 - The editor handles abilities, level frames, ordinary choices, inventory, and
   undo/redo. Focused replacement picking and choices supplied by newly created
   synthetic grant providers still need their dedicated editing flow.

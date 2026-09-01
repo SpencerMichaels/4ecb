@@ -115,3 +115,16 @@ prevent illegal custom-power replacements; Hybrid preserves only two visible
 `prerequisite.unverified` findings. These are deterministic private-profile
 workflows, not a claim that every class or named native power exception is
 closed.
+
+Power loadouts now consume the durable `_INTERNAL_MainHandWeapon` selection and
+project explicit main/off-hand roles plus the paired equipment name without
+discarding alternate `PowerStats` variants. The recovered native
+`Dual Implement Spellcaster` exception is evaluated by exact feat identity/name:
+an implement attack made through the selected equipped main-hand implement adds
+the distinct equipped off-hand implement's enhancement to damage, with a named
+provenance component. If multiple equipped off-hand implements make that pair
+ambiguous, the engine adds no bonus rather than selecting one by inventory
+order. Public same-profile fixtures swap two unequal implement
+enhancements and require the bonus to follow the hand selection exactly. The
+ignored nine-character historical matrix remains cross-profile diagnostic
+evidence; it is not used to define these calculations.

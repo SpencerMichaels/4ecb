@@ -222,6 +222,11 @@ equipment, serialization, authoritative sheet construction, and edited-export
 semantic re-import. This closes the previously recorded absence of
 cross-family full-profile native advancement evidence; broader class/build and
 named M4 power-math compatibility families still block criteria 2 and 3.
+The first focused power-math closure slice now carries the saved main-hand
+selection into explicit paired variants and implements the distinct off-hand
+enhancement calculation for `Dual Implement Spellcaster`, backed by exact public
+same-profile differentials. Remaining named/situational power exceptions still
+block the compatibility criteria.
 
 ### Goal
 

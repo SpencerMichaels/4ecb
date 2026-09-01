@@ -12,6 +12,8 @@ export interface PowerComponent {
 export interface PowerVariant {
   readonly id: string;
   readonly equipmentName: string;
+  readonly hand?: "main" | "off";
+  readonly pairedEquipmentName?: string;
   readonly attackStat?: string;
   readonly defense?: string;
   readonly attackBonus?: number;
@@ -49,6 +51,10 @@ interface Loadout {
   readonly critical?: string;
   readonly unarmed: boolean;
   readonly weaponDefinition: boolean;
+  readonly implementDefinition: boolean;
+  readonly equipped: boolean;
+  readonly hand?: "main" | "off";
+  readonly pairedEquipmentName?: string;
   readonly tags: readonly string[];
   readonly properties: readonly string[];
 }
@@ -111,6 +117,7 @@ function equipmentName(parts: readonly ContentEntity[]): string {
 function loadouts(
   inventory: readonly CharacterInventoryEntry[],
   entities: readonly ContentEntity[],
+  textStrings: Readonly<Record<string, string>>,
 ): readonly Loadout[] {
   const byId = new Map(entities.map((entity) => [key(entity.id), entity]));
   const result: Loadout[] = [];
@@ -154,6 +161,8 @@ function loadouts(
       ...(critical ? { critical } : {}),
       unarmed: false,
       weaponDefinition: weapon !== undefined,
+      implementDefinition: implement !== undefined,
+      equipped: entry.equippedQuantity > 0,
       tags: [
         ...parts.map((entity) => entity.name),
         ...(weapon === undefined
@@ -180,10 +189,41 @@ function loadouts(
     enhancement: 0,
     unarmed: true,
     weaponDefinition: false,
+    implementDefinition: false,
+    equipped: false,
     tags: ["unarmed"],
     properties: [],
   });
-  return result;
+  const mainHandName = Object.entries(textStrings).find(
+    ([name]) => key(name) === "_internal_mainhandweapon",
+  )?.[1];
+  const mainIndex =
+    mainHandName === undefined
+      ? -1
+      : result.findIndex(
+          (item) => item.equipped && key(item.name) === key(mainHandName),
+        );
+  if (mainIndex < 0) return result;
+  const handed = result.map((item, index): Loadout =>
+    !item.equipped || (!item.weaponDefinition && !item.implementDefinition)
+      ? item
+      : { ...item, hand: index === mainIndex ? "main" : "off" },
+  );
+  return handed.map((item) => {
+    if (item.hand === undefined) return item;
+    const pairs = handed.filter(
+      (candidate) =>
+        candidate.hand !== undefined &&
+        candidate.hand !== item.hand &&
+        (item.weaponDefinition
+          ? candidate.weaponDefinition
+          : candidate.implementDefinition),
+    );
+    const pair = pairs.length === 1 ? pairs[0] : undefined;
+    return pair === undefined
+      ? item
+      : { ...item, pairedEquipmentName: pair.name };
+  });
 }
 
 function effectiveField(
@@ -381,12 +421,17 @@ export function evaluatePowers(input: {
   readonly inventory: readonly CharacterInventoryEntry[];
   readonly stats: Readonly<Record<string, EvaluatedStat>>;
   readonly overlays: readonly FieldOverlay[];
+  readonly textStrings?: Readonly<Record<string, string>>;
   readonly entities: readonly ContentEntity[];
 }): readonly EvaluatedPower[] {
   const byId = new Map(
     input.entities.map((entity) => [key(entity.id), entity]),
   );
-  const equipped = loadouts(input.inventory, input.entities);
+  const equipped = loadouts(
+    input.inventory,
+    input.entities,
+    input.textStrings ?? {},
+  );
   const activePowerIds = [
     ...new Set(
       input.activeDefinitionIds.flatMap((definitionId) => {
@@ -441,7 +486,18 @@ export function evaluatePowers(input: {
           : implementPower
             ? equipped
             : equipped.filter((item) => item.unarmed);
-    const variants = candidates.map((equipment): PowerVariant => {
+    // Legacy PowerStats retains every legal equipment variant even for prose
+    // that names one hand. The saved main-hand selection describes the active
+    // pairing; it must not erase the alternate variants a user can select.
+    const handCandidates = candidates;
+    const hasDualImplementSpellcaster = input.activeDefinitionIds.some((id) => {
+      const entity = byId.get(key(id));
+      return (
+        key(id) === "id_fmp_feat_1127" ||
+        key(entity?.name ?? "") === "dual implement spellcaster"
+      );
+    });
+    const variants = handCandidates.map((equipment): PowerVariant => {
       const attackLeft = attack?.[1] ?? "";
       const availableAbilities = abilityNames.filter((ability) =>
         new RegExp(`\\b${ability}\\b`, "i").test(attackLeft),
@@ -540,6 +596,25 @@ export function evaluatePowers(input: {
           label: "enhancement bonus",
           value: equipment.enhancement,
         });
+      const offHandImplements = handCandidates.filter(
+        (candidate) =>
+          candidate.hand === "off" &&
+          candidate.equipped &&
+          candidate.implementDefinition,
+      );
+      const pairedImplement =
+        implementPower &&
+        hasDualImplementSpellcaster &&
+        equipment.hand === "main" &&
+        offHandImplements.length === 1
+          ? offHandImplements[0]
+          : undefined;
+      if (dice !== undefined && (pairedImplement?.enhancement ?? 0) !== 0)
+        damageComponents.push({
+          label: "off-hand implement enhancement bonus",
+          value: pairedImplement?.enhancement ?? 0,
+          source: "Dual Implement Spellcaster",
+        });
       if (dice !== undefined)
         damageComponents.push(
           ...combatStatComponents(
@@ -581,6 +656,10 @@ export function evaluatePowers(input: {
       return {
         id: `${power.id}:${equipment.id}`,
         equipmentName: equipment.name,
+        ...(equipment.hand === undefined ? {} : { hand: equipment.hand }),
+        ...(equipment.pairedEquipmentName === undefined
+          ? {}
+          : { pairedEquipmentName: equipment.pairedEquipmentName }),
         attackStat,
         defense,
         attackBonus: attackComponents.reduce(

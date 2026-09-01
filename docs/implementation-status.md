@@ -17,6 +17,26 @@ MVP declaration.
 
 ## M5 checkpoints
 
+### Explicit hand pairing and dual-implement selection
+
+- Power evaluation now consumes the durable `_INTERNAL_MainHandWeapon` value,
+  identifies the selected equipped main hand and a distinct equipped off hand,
+  and exposes both roles and the paired equipment name on calculated variants.
+  Alternate legal variants remain present, matching the legacy `PowerStats`
+  boundary rather than treating current hand selection as inventory deletion.
+- The recovered `Dual Implement Spellcaster` native exception recognizes the
+  exact feat ID or name. For implement powers, only the selected main-hand
+  variant receives the distinct off-hand implement's enhancement as an
+  explainable damage component. An ambiguous multi-off-hand state adds no bonus
+  rather than inventing a pairing. Swapping unequal +3/+2 implements in the public
+  same-profile differential swaps attack enhancement and off-hand damage bonus
+  exactly; an off-hand-only weapon fixture also proves stable explicit pairing.
+- The ignored nine-character historical matrix remains 501/509 comparable
+  numeric aliases and 277/371 cached power fields after the change. Those
+  unknown-revision caches are regression diagnostics, not goldens. The native
+  `SpecialCase` and situational striker/conditional tails remain open M5 parity
+  blockers.
+
 ### First-class native character creation
 
 - The Characters route can create a profile-bound native record without an
