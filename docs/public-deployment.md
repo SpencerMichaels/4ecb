@@ -98,5 +98,10 @@ offline reload with the server stopped, and run the critical workflows on the
 supported Chromium, Firefox, and Safari matrix. Docker build/runtime verification
 requires a reachable local daemon and is recorded separately from the Nix build.
 The public suite's `check:print` stage uses the Nix-pinned Chromium/Poppler pair
-to produce and inspect ephemeral Letter/A4 color/monochrome PDFs. It does not
-replace the Firefox/Safari print rows in the release checklist.
+and Firefox/geckodriver to produce and inspect ephemeral Letter/A4
+color/monochrome PDFs. Safari execution and cross-engine raster inspection
+remain open in the release checklist.
+
+User-facing installation, content import, backup, recovery, update, and known
+compatibility guidance is maintained in the
+[user guide and recovery handbook](user-guide.md).

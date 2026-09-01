@@ -40,6 +40,9 @@ application's architecture.
 13. [M5 release checklist](m5-release-checklist.md) maps browser, accessibility,
     print, security, performance, compatibility, and durability evidence to the
     remaining MVP exit criteria.
+14. [User guide and recovery handbook](user-guide.md) covers installation,
+    private content, character/profile workflows, compatibility export, sheets,
+    backup/restore, updates, recovery, and current limitations.
 
 ## Definition hierarchy
 

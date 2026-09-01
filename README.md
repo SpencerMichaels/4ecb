@@ -6,6 +6,8 @@ modern web replacement.
 
 - Start with [`docs/README.md`](docs/README.md) for the product definition,
   architecture, MVP boundary, milestones, and architectural decisions.
+- Users and self-hosting operators should start with the
+  [user guide and recovery handbook](docs/user-guide.md).
 - Start with
   [`reverse-engineering/docs/INDEX.md`](reverse-engineering/docs/INDEX.md) for
   the recovered game-data formats, `.dnd4e` compatibility, rule language, and

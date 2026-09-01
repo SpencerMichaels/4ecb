@@ -206,7 +206,9 @@ directory discovery plus an ordinary `.4ecp`/decrypted-rules file fallback.
 The public import/rendering security pass, automated storage durability matrix,
 route-focus/contrast/responsive accessibility baseline, and durable supported-
 client release checklist are complete; full browser/keyboard/Safari/device
-execution remains open.
+execution remains open. The user and recovery handbook now covers installation,
+private content, profile migration, import/export, sheets, storage, updates,
+recovery, and the known release limitations required by exit criterion 10.
 
 ### Goal
 

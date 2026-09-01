@@ -141,12 +141,13 @@ monochrome preferences persist with the character. Browser printing is the PDF
 workflow; no PDF bytes are stored in the character.
 
 The public release harness drives the production sheet route in pinned headless
-Chromium with a synthetic long/short-prose character. It generates Letter and A4
-PDFs in color and monochrome, checks every page dimension, tagged-PDF metadata,
-all card names and headings in extracted text, blank hit points, hidden
-application chrome, computed monochrome colors, and DOM card overflow. The PDFs
-remain ephemeral test output; the harness records five correctly sized pages for
-each current variant.
+Chromium and Firefox with a synthetic long/short-prose character. It generates
+Letter and A4 PDFs in color and monochrome, checks every page dimension, all card
+names and headings in extracted text, blank hit points, hidden application
+chrome, computed monochrome colors, and DOM card overflow. Chromium PDFs are
+tagged; Firefox 154 PDFs are explicitly recorded as untagged. The PDFs remain
+ephemeral test output; the harness records five correctly sized pages for each
+current browser/variant combination.
 
 ## Current limitations before M4/M5 closure
 
@@ -169,6 +170,6 @@ each current variant.
 - Portrait file URLs from the Windows application are retained in XML but are
   not dereferenced by the web application.
 - Exact pagination varies with card prose and browser print engines. The current
-  Chromium release fixture has no card overflow and complete extracted text;
-  Firefox and Safari Letter/A4 execution remains in the M5 supported-browser
-  matrix.
+  Chromium and Firefox release fixtures have no card overflow and complete
+  extracted text; Safari execution and cross-engine raster inspection remain in
+  the M5 supported-browser matrix.

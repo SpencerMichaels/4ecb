@@ -300,6 +300,19 @@ data. `scripts/check.sh` includes this real-browser print gate after the
 production build. Safari execution and Firefox/Safari raster inspection remain
 open in the supported-client matrix, so M5 print closure is not yet claimed.
 
+### User and recovery documentation
+
+The maintained user guide now covers hosted/PWA and reference-Docker
+installation, project-local private pack construction, bounded content and
+character import, storage persistence, exact-revision profile migration, both
+compatibility export targets, sheet/PDF controls, checksummed backup inspection
+and restore, application updates, offline and migration recovery, destructive
+actions, and troubleshooting. It also names the current blank-character,
+compatibility, legacy-launch, supported-browser/accessibility, performance,
+Safari/raster, Firefox tagging, and reserved-runtime-configuration limitations.
+This closes the documentation boundary in M5 exit criterion 10; it does not
+close the product and release-matrix criteria those limitations reference.
+
 ## M4 delivered
 
 - `rules-engine` parses every rule opcode and attribute found in the 38,339

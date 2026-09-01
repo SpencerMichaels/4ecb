@@ -72,6 +72,16 @@ the ordinary `.4ecp` and decrypted/merged-rules file input used by every client.
 - [ ] Record full content import, level-30 edit/evaluation, initial shell, and
       print-preview timing on representative supported desktop/tablet hardware.
 
+## User documentation checklist
+
+- [x] Installation/self-hosting, private content preparation/import, storage
+      persistence, exact-revision migration, both `.dnd4e` targets, sheets/PDF,
+      backup inspection/restore, PWA updates/offline recovery, and destructive
+      actions are documented in the user guide.
+- [x] Known product, compatibility, browser/accessibility, performance, Safari
+      print, Firefox tagging, and reserved runtime-configuration limitations are
+      stated without an MVP completion claim.
+
 ## Compatibility, print, and durability closure
 
 - [x] Repository reconstruction, historical database upgrade, checksummed
