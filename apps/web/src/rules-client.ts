@@ -1,4 +1,9 @@
-import type { EvaluatedCharacter, EvaluationInput } from "@4ecb/rules-engine";
+import type { CharacterBuild } from "@4ecb/character-domain";
+import type {
+  EvaluatedCharacter,
+  EvaluationInput,
+  ProfileMigrationPreview,
+} from "@4ecb/rules-engine";
 
 import type {
   RulesWorkerRequest,
@@ -12,7 +17,11 @@ interface PendingRequest {
 
 type RequestWithoutId =
   | Omit<Extract<RulesWorkerRequest, { type: "initialize" }>, "requestId">
-  | Omit<Extract<RulesWorkerRequest, { type: "evaluate" }>, "requestId">;
+  | Omit<Extract<RulesWorkerRequest, { type: "evaluate" }>, "requestId">
+  | Omit<
+      Extract<RulesWorkerRequest, { type: "preview-profile-migration" }>,
+      "requestId"
+    >;
 
 export class RulesWorkerClient {
   readonly #worker: Worker;
@@ -47,6 +56,24 @@ export class RulesWorkerClient {
     const response = await this.#request({ type: "evaluate", input });
     if (response.type !== "evaluation")
       throw new Error("Unexpected rules-worker evaluation response");
+    return response.result;
+  }
+
+  async previewProfileMigration(
+    build: CharacterBuild,
+    targetPackId: string,
+    sourcePackId?: string,
+    sourceContentDigest?: string,
+  ): Promise<ProfileMigrationPreview> {
+    const response = await this.#request({
+      type: "preview-profile-migration",
+      build,
+      targetPackId,
+      ...(sourcePackId === undefined ? {} : { sourcePackId }),
+      ...(sourceContentDigest === undefined ? {} : { sourceContentDigest }),
+    });
+    if (response.type !== "profile-migration-preview")
+      throw new Error("Unexpected profile-migration response");
     return response.result;
   }
 

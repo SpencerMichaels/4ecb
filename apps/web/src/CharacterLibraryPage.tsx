@@ -13,8 +13,195 @@ import {
   importDnd4e,
   type Dnd4eImportReport,
 } from "@4ecb/legacy-dnd4e";
+import type { ProfileMigrationPreview } from "@4ecb/rules-engine";
+
+import { RulesWorkerClient } from "./rules-client";
 
 const repository = new CharacterRepository();
+
+function ProfileMigrationControl({
+  character,
+  manifests,
+  onAdopted,
+  onError,
+}: {
+  readonly character: CharacterRecord;
+  readonly manifests: readonly ContentPackManifest[];
+  readonly onAdopted: (message: string) => Promise<void>;
+  readonly onError: (message: string) => void;
+}) {
+  const [targetPackId, setTargetPackId] = useState(
+    character.profileBinding?.packId ?? "",
+  );
+  const [preview, setPreview] = useState<ProfileMigrationPreview>();
+  const [previewTarget, setPreviewTarget] = useState<string>();
+  const [previewing, setPreviewing] = useState(false);
+  const target = manifests.find((manifest) => manifest.packId === targetPackId);
+
+  async function loadPreview(): Promise<void> {
+    if (target === undefined) return;
+    const client = new RulesWorkerClient();
+    setPreviewing(true);
+    setPreview(undefined);
+    try {
+      const result = await client.previewProfileMigration(
+        character.build,
+        target.packId,
+        character.profileBinding?.packId,
+        character.profileBinding?.contentDigest,
+      );
+      setPreview(result);
+      setPreviewTarget(target.packId);
+    } finally {
+      client.terminate();
+      setPreviewing(false);
+    }
+  }
+
+  async function adopt(): Promise<void> {
+    if (target === undefined || previewTarget !== target.packId) return;
+    await repository.updateMetadata(character.id, {
+      profileBinding: {
+        packId: target.packId,
+        contentDigest: target.contentDigest,
+      },
+    });
+    setPreview(undefined);
+    await onAdopted(`Adopted ${target.name} after migration preview.`);
+  }
+
+  return (
+    <section
+      className="profile-migration"
+      aria-label="Content profile migration"
+    >
+      <h4>Content profile</h4>
+      <label>
+        Migration target
+        <select
+          value={targetPackId}
+          onChange={(event) => {
+            setTargetPackId(event.currentTarget.value);
+            setPreview(undefined);
+            setPreviewTarget(undefined);
+          }}
+        >
+          <option value="">Choose an installed profile</option>
+          {manifests.map((manifest) => (
+            <option key={manifest.packId} value={manifest.packId}>
+              {manifest.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        type="button"
+        disabled={target === undefined || previewing}
+        onClick={() =>
+          void loadPreview().catch((reason: unknown) =>
+            onError(reason instanceof Error ? reason.message : String(reason)),
+          )
+        }
+      >
+        {previewing ? "Evaluating migration…" : "Preview migration"}
+      </button>
+      {preview === undefined || previewTarget !== targetPackId ? null : (
+        <div className="migration-preview" aria-live="polite">
+          {!preview.sourceAvailable ? (
+            <p className="profile-warning">
+              The exact source profile revision is not installed. Target checks
+              are complete, but value changes from the old revision cannot be
+              calculated.
+            </p>
+          ) : null}
+          <dl className="report-facts">
+            <div>
+              <dt>Referenced records</dt>
+              <dd>{preview.referencedDefinitionCount}</dd>
+            </div>
+            <div>
+              <dt>Missing in target</dt>
+              <dd>{preview.missingDefinitionIds.length}</dd>
+            </div>
+            <div>
+              <dt>Changed definitions</dt>
+              <dd>{preview.changedDefinitionIds.length}</dd>
+            </div>
+            <div>
+              <dt>Calculated stats changed</dt>
+              <dd>{preview.statChanges.length}</dd>
+            </div>
+            <div>
+              <dt>Powers changed</dt>
+              <dd>{preview.powerChanges.length}</dd>
+            </div>
+            <div>
+              <dt>Target state</dt>
+              <dd>
+                {preview.target.complete ? "Complete" : "Incomplete"};{" "}
+                {preview.target.legal ? "rules legal" : "has legality findings"}
+              </dd>
+            </div>
+          </dl>
+          {preview.missingDefinitionIds.length === 0 ? null : (
+            <p>
+              <strong>Missing IDs:</strong>{" "}
+              {preview.missingDefinitionIds.slice(0, 8).join(", ")}
+              {preview.missingDefinitionIds.length > 8 ? "…" : ""}
+            </p>
+          )}
+          {preview.statChanges.length === 0 ? null : (
+            <details>
+              <summary>Calculated stat differences</summary>
+              <ul>
+                {preview.statChanges.slice(0, 20).map((change) => (
+                  <li key={change.name}>
+                    {change.name}: {change.before ?? "missing"} →{" "}
+                    {change.after ?? "missing"}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+          {preview.targetDiagnostics.length === 0 ? null : (
+            <details>
+              <summary>
+                Target diagnostics ({preview.targetDiagnostics.length})
+              </summary>
+              <ul>
+                {preview.targetDiagnostics
+                  .slice(0, 20)
+                  .map((diagnostic, index) => (
+                    <li key={`${diagnostic.code}-${index}`}>
+                      <strong>{diagnostic.code}</strong>: {diagnostic.message}
+                    </li>
+                  ))}
+              </ul>
+            </details>
+          )}
+          <button
+            type="button"
+            disabled={!preview.target.converged}
+            onClick={() =>
+              void adopt().catch((reason: unknown) =>
+                onError(
+                  reason instanceof Error ? reason.message : String(reason),
+                ),
+              )
+            }
+          >
+            Adopt this profile revision
+          </button>
+          {!preview.target.converged ? (
+            <p className="profile-warning">
+              Adoption is disabled because target evaluation did not converge.
+            </p>
+          ) : null}
+        </div>
+      )}
+    </section>
+  );
+}
 
 function download(name: string, contents: string, type: string): void {
   const url = URL.createObjectURL(new Blob([contents], { type }));
@@ -84,8 +271,8 @@ export function CharacterLibraryPage({
     );
     await repository.put(character);
     setReport(imported.report);
-    setStatus(`Imported ${character.title}.`);
     await refresh();
+    setStatus(`Imported ${character.title}.`);
   }
 
   async function saveMetadata(
@@ -93,21 +280,12 @@ export function CharacterLibraryPage({
     form: HTMLFormElement,
   ): Promise<void> {
     const data = new FormData(form);
-    const packId = String(data.get("profile") ?? "");
-    const manifest = manifests.find((candidate) => candidate.packId === packId);
     await repository.updateMetadata(character.id, {
       title: String(data.get("title") ?? ""),
       notes: String(data.get("notes") ?? ""),
-      profileBinding:
-        manifest === undefined
-          ? null
-          : {
-              packId: manifest.packId,
-              contentDigest: manifest.contentDigest,
-            },
     });
-    setStatus("Character metadata saved.");
     await refresh();
+    setStatus("Library details saved.");
   }
 
   async function exportCharacter(character: CharacterRecord): Promise<void> {
@@ -332,30 +510,17 @@ export function CharacterLibraryPage({
                       rows={2}
                     />
                   </label>
-                  <label>
-                    Content profile
-                    <select
-                      name="profile"
-                      defaultValue={character.profileBinding?.packId ?? ""}
-                    >
-                      <option value="">None</option>
-                      {profileMissing ? (
-                        <option
-                          value={character.profileBinding?.packId}
-                          disabled
-                        >
-                          Missing: {character.profileBinding?.packId}
-                        </option>
-                      ) : null}
-                      {manifests.map((manifest) => (
-                        <option key={manifest.packId} value={manifest.packId}>
-                          {manifest.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button type="submit">Save metadata</button>
+                  <button type="submit">Save library details</button>
                 </form>
+                <ProfileMigrationControl
+                  character={character}
+                  manifests={manifests}
+                  onAdopted={async (message) => {
+                    await refresh();
+                    setStatus(message);
+                  }}
+                  onError={setError}
+                />
                 <div className="character-actions">
                   <a
                     className="button-link"

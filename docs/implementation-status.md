@@ -5,9 +5,36 @@
 Milestones M1 through M4 are complete at their stated release boundaries. M4 is
 the builder beta: it delivers the authoritative rules-backed editor, records the
 remaining native parity risks as explicit M5 blockers, and does not claim public
-MVP readiness. The next milestone is M5 closure of those blockers plus edited
-legacy export, profile adoption, finished printing, storage hardening, and
-public-release verification.
+MVP readiness. M5 is in progress. Profile migration preview and explicit
+adoption are implemented; blocker closure, edited legacy export, finished
+printing, storage hardening, onboarding/deployment work, and public-release
+verification remain open.
+
+## M5 checkpoints
+
+### Profile migration preview and explicit adoption
+
+- A character's pinned profile can no longer be changed by an ordinary library
+  metadata save. Changing or accepting a content revision requires a separate
+  preview and explicit adoption action.
+- Preview evaluation runs in the rules worker. It checks every definition ID
+  referenced by authoritative level history, grabbag, alternates, and inventory;
+  compares referenced definitions when the exact source pack is installed; and
+  reports calculated stat, power, completeness, legality, convergence, and
+  diagnostic changes.
+- A stored source digest is checked before treating an installed pack as the
+  source revision. If that exact revision is unavailable, the UI says so and
+  reports target-only compatibility evidence rather than fabricating a delta.
+- Missing or illegal target content remains visible and adoptable when the
+  evaluator converges, preserving the project's editable-invalid-state policy.
+  Nonconvergent target evaluation blocks adoption.
+
+Verification on 2026-08-31 used the project-local Nix environment: two focused
+profile-migration tests, affected TypeScript projects, and affected ESLint files
+passed. A live browser run installed and activated a public synthetic pack,
+imported the public `.dnd4e` structural fixture, previewed its four missing
+definition references, and explicitly adopted the profile with no console
+warnings or errors. The full public suite is rerun before the checkpoint commit.
 
 ## M4 delivered
 

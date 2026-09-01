@@ -2,7 +2,7 @@
 
 import { ContentPackRepository } from "@4ecb/browser-storage";
 import type { ContentEntity } from "@4ecb/content-domain";
-import { evaluateCharacter } from "@4ecb/rules-engine";
+import { evaluateCharacter, previewProfileMigration } from "@4ecb/rules-engine";
 
 import type {
   RulesWorkerRequest,
@@ -40,6 +40,36 @@ async function handle(request: RulesWorkerRequest): Promise<void> {
       const result = evaluateCharacter(request.input, entities);
       respond({
         type: "evaluation",
+        requestId: request.requestId,
+        result,
+        elapsedMilliseconds: performance.now() - started,
+      });
+      break;
+    }
+    case "preview-profile-migration": {
+      const repository = new ContentPackRepository();
+      const [source, target] = await Promise.all([
+        request.sourcePackId === undefined
+          ? Promise.resolve(undefined)
+          : repository.get(request.sourcePackId),
+        repository.get(request.targetPackId),
+      ]);
+      if (target === undefined)
+        throw new Error(
+          `Installed target content pack ${request.targetPackId} was not found`,
+        );
+      const started = performance.now();
+      const sourceMatchesBinding =
+        source !== undefined &&
+        (request.sourceContentDigest === undefined ||
+          source.manifest.contentDigest === request.sourceContentDigest);
+      const result = previewProfileMigration(
+        request.build,
+        sourceMatchesBinding ? source.entities : undefined,
+        target.entities,
+      );
+      respond({
+        type: "profile-migration-preview",
         requestId: request.requestId,
         result,
         elapsedMilliseconds: performance.now() - started,

@@ -79,10 +79,14 @@ library metadata never implies editing the `.dnd4e` document.
 
 Import binds the active immutable content pack when one exists. The binding pins
 both pack ID and digest. A missing pack is visible in the library and sheet;
-users can install it or explicitly rebind the character. A bound installed pack
-enriches cards by stable element ID with full normalized specifics and
-descriptions. Without it, cached names, usage, attacks, and damage still render,
-but rules text can be incomplete.
+users can install it or explicitly migrate the character. Profile migration is a
+separate worker-evaluated workflow: it previews missing and changed referenced
+definitions, calculated stat and power changes, legality/completeness, and
+diagnostics before adoption. The stored source digest must match the installed
+source pack before value differences are presented; otherwise the preview is
+explicitly target-only. A bound installed pack enriches cards by stable element
+ID with full normalized specifics and descriptions. Without it, cached names,
+usage, attacks, and damage still render, but rules text can be incomplete.
 
 ## Sheet and print behavior
 

@@ -1,4 +1,9 @@
-import type { EvaluatedCharacter, EvaluationInput } from "@4ecb/rules-engine";
+import type { CharacterBuild } from "@4ecb/character-domain";
+import type {
+  EvaluatedCharacter,
+  EvaluationInput,
+  ProfileMigrationPreview,
+} from "@4ecb/rules-engine";
 
 export type RulesWorkerRequest =
   | {
@@ -10,6 +15,14 @@ export type RulesWorkerRequest =
       readonly type: "evaluate";
       readonly requestId: number;
       readonly input: EvaluationInput;
+    }
+  | {
+      readonly type: "preview-profile-migration";
+      readonly requestId: number;
+      readonly build: CharacterBuild;
+      readonly sourcePackId?: string;
+      readonly sourceContentDigest?: string;
+      readonly targetPackId: string;
     };
 
 export type RulesWorkerResponse =
@@ -23,6 +36,12 @@ export type RulesWorkerResponse =
       readonly type: "evaluation";
       readonly requestId: number;
       readonly result: EvaluatedCharacter;
+      readonly elapsedMilliseconds: number;
+    }
+  | {
+      readonly type: "profile-migration-preview";
+      readonly requestId: number;
+      readonly result: ProfileMigrationPreview;
       readonly elapsedMilliseconds: number;
     }
   | {
