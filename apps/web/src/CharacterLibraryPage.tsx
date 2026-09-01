@@ -350,7 +350,7 @@ export function CharacterLibraryPage({
     const restored = await repository.restoreBackup(pendingBackup.value);
     setPendingBackup(undefined);
     await refresh();
-    setStatus(`Restored ${restored} verified backup record(s).`);
+    setStatus(`Restored ${restored} backup record(s).`);
   }
 
   return (
@@ -433,7 +433,7 @@ export function CharacterLibraryPage({
             <div>
               <dt>Checksum</dt>
               <dd>
-                {pendingBackup.inspection.verified
+                {pendingBackup.inspection.checksumVerified
                   ? "Verified"
                   : "Unavailable in legacy backup"}
               </dd>
@@ -451,7 +451,7 @@ export function CharacterLibraryPage({
               <dd>{pendingBackup.inspection.conflictingIds.length}</dd>
             </div>
           </dl>
-          {!pendingBackup.inspection.verified ? (
+          {!pendingBackup.inspection.checksumVerified ? (
             <p className="profile-warning">
               This older backup has no checksum. Its records are structurally
               valid, but payload integrity cannot be verified.

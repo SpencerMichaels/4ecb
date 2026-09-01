@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   CharacterTransaction,
   duplicateCharacterRecord,
+  isCharacterRecord,
+  isLegacyCharacterRecordV1,
   newCharacterRecord,
   type CharacterBuild,
 } from ".";
@@ -65,6 +67,36 @@ describe("character records", () => {
       title: "Ada (copy)",
       schemaVersion: 2,
     });
+    expect(isCharacterRecord(source)).toBe(true);
+  });
+
+  it("rejects incomplete records and invalid nested authoritative builds", () => {
+    const record = newCharacterRecord(
+      { format: "dnd4e", sourceXml: "<D20Character/>" },
+      snapshot,
+      build,
+      { id: "validated", now: "2026-01-01T00:00:00.000Z" },
+    );
+    const { build: _build, ...withoutBuild } = record;
+    void _build;
+    expect(isCharacterRecord(withoutBuild)).toBe(false);
+    expect(
+      isCharacterRecord({
+        ...record,
+        build: {
+          ...record.build,
+          levels: [
+            {
+              level: 1,
+              root: { ...record.build.levels[0]?.root, children: "invalid" },
+            },
+          ],
+        },
+      }),
+    ).toBe(false);
+    expect(
+      isLegacyCharacterRecordV1({ ...withoutBuild, schemaVersion: 1 }),
+    ).toBe(true);
   });
 
   it("applies atomic commands with undo and redo", () => {

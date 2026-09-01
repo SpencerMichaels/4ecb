@@ -41,6 +41,11 @@ warnings or errors. The full public suite is rerun before the checkpoint commit.
 - New native backups are format version 2. Their manifest records the character
   count and a SHA-256 digest over the complete ordered character payload. Restore
   rejects a changed payload or count before opening a write transaction.
+- Every restored record also passes the character-domain decoder, including
+  required metadata, snapshot arrays and scalar maps, sheet settings, nested
+  authoritative occurrences, inventory quantities, alternates, and build
+  bounds. A self-checksummed payload cannot use the integrity field to bypass
+  structural validation.
 - Backup selection now performs a non-mutating preview first. It reports format
   version, checksum availability, active/trashed counts, and IDs that will
   replace existing records; restore requires a separate explicit action. Legacy
@@ -56,14 +61,17 @@ warnings or errors. The full public suite is rerun before the checkpoint commit.
   storage where the API is supported and explains a denied request without
   treating it as durable-backup success.
 
-Focused browser-storage tests cover checksummed round trip, tamper rejection,
-legacy backup inspection, and a simulated interrupted migration recovery. Live
+Focused browser-storage tests cover checksummed round trip, tamper rejection, a
+self-checksummed malformed schema-2 record, legacy backup inspection, and a
+simulated interrupted migration recovery. Live
 browser verification displayed the persistence/quota facts against the public
 synthetic profile; backup export reported one complete record. Full
 restart/upgrade/restore browser matrices remain part of M5 exit-criterion 5 and
 are not claimed by this checkpoint. The checkpoint public suite passes 98 tests
 across 23 files plus formatting, ESLint, every TypeScript project, the
 production/PWA build, deterministic content checks, and the query benchmark.
+After adding the comprehensive domain decoder and crafted self-checksummed
+malformed-record fixture, the same public suite passes 100 tests.
 
 ## M4 delivered
 

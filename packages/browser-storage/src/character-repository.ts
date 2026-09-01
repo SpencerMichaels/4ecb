@@ -1,9 +1,13 @@
 import {
   duplicateCharacterRecord,
+  isCharacterRecord,
+  isLegacyCharacterRecordV1,
   type CharacterBuild,
   type CharacterBackup,
   type CharacterProfileBinding,
   type CharacterRecord,
+  type LegacyCharacterRecordV1,
+  type StoredCharacterRecord,
   type SupportedCharacterBackup,
   type SheetSettings,
 } from "@4ecb/character-domain";
@@ -33,7 +37,7 @@ interface CharacterDatabase extends DBSchema {
   };
   characters: {
     key: string;
-    value: CharacterRecord;
+    value: StoredCharacterRecord;
     indexes: { "by-updated": string; "by-deleted": string };
   };
   characterMigrations: {
@@ -44,7 +48,7 @@ interface CharacterDatabase extends DBSchema {
 
 interface CharacterMigrationJournal {
   readonly id: string;
-  readonly previous: CharacterRecord;
+  readonly previous: StoredCharacterRecord;
   readonly startedAt: string;
 }
 
@@ -52,7 +56,7 @@ const DEFAULT_DATABASE_NAME = "4ecb";
 
 export interface CharacterBackupInspection {
   readonly version: 1 | 2;
-  readonly verified: boolean;
+  readonly checksumVerified: boolean;
   readonly characterCount: number;
   readonly activeCount: number;
   readonly trashedCount: number;
@@ -66,7 +70,7 @@ function bytesToHex(bytes: Uint8Array): string {
 }
 
 async function characterPayloadDigest(
-  characters: readonly CharacterRecord[],
+  characters: readonly StoredCharacterRecord[],
 ): Promise<string> {
   const bytes = new TextEncoder().encode(JSON.stringify(characters));
   return bytesToHex(
@@ -255,7 +259,7 @@ export class CharacterRepository {
     const currentIds = new Set(current.map((character) => character.id));
     return {
       version: supported.version,
-      verified: supported.version === 2,
+      checksumVerified: supported.version === 2,
       characterCount: supported.characters.length,
       activeCount: supported.characters.filter(
         (character) => character.deletedAt === undefined,
@@ -333,38 +337,13 @@ async function validateBackup(
   return candidate as SupportedCharacterBackup;
 }
 
-interface LegacyV1Record extends Omit<
-  CharacterRecord,
-  "schemaVersion" | "build"
-> {
-  readonly schemaVersion: 1;
+function isStoredCharacter(value: unknown): value is StoredCharacterRecord {
+  return isCharacterRecord(value) || isLegacyCharacterRecordV1(value);
 }
 
-function isStoredCharacter(value: unknown): value is CharacterRecord {
-  if (value === null || typeof value !== "object") return false;
-  const character = value as {
-    schemaVersion?: number;
-    id?: unknown;
-    title?: unknown;
-    legacy?: { format?: unknown; sourceXml?: unknown };
-    snapshot?: { source?: unknown };
-    sheetSettings?: { paper?: unknown };
-  };
-  return (
-    (character.schemaVersion === 1 || character.schemaVersion === 2) &&
-    typeof character.id === "string" &&
-    typeof character.title === "string" &&
-    character.legacy?.format === "dnd4e" &&
-    typeof character.legacy.sourceXml === "string" &&
-    character.snapshot?.source === "legacy-cache" &&
-    character.sheetSettings?.paper !== undefined
-  );
-}
-
-function upgradeRecord(value: CharacterRecord): CharacterRecord {
-  if ((value as { readonly schemaVersion: number }).schemaVersion === 2)
-    return value;
-  const legacy = value as unknown as LegacyV1Record;
+function upgradeRecord(value: StoredCharacterRecord): CharacterRecord {
+  if (value.schemaVersion === 2) return value;
+  const legacy: LegacyCharacterRecordV1 = value;
   const imported = importDnd4e(legacy.legacy.sourceXml);
   return {
     ...legacy,
@@ -375,10 +354,9 @@ function upgradeRecord(value: CharacterRecord): CharacterRecord {
 
 async function migrateStoredRecord(
   db: Awaited<ReturnType<typeof database>>,
-  stored: CharacterRecord,
+  stored: StoredCharacterRecord,
 ): Promise<CharacterRecord> {
-  if ((stored as { readonly schemaVersion: number }).schemaVersion === 2)
-    return stored;
+  if (stored.schemaVersion === 2) return stored;
   await db.put("characterMigrations", {
     id: stored.id,
     previous: stored,

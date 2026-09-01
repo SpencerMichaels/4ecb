@@ -102,6 +102,15 @@ export interface CharacterRecord {
   readonly sheetSettings: SheetSettings;
 }
 
+export interface LegacyCharacterRecordV1 extends Omit<
+  CharacterRecord,
+  "schemaVersion" | "build"
+> {
+  readonly schemaVersion: 1;
+}
+
+export type StoredCharacterRecord = CharacterRecord | LegacyCharacterRecordV1;
+
 export interface CharacterBackup {
   readonly format: "4ecb-character-backup";
   readonly version: 2;
@@ -115,10 +124,283 @@ export interface LegacyCharacterBackup {
   readonly format: "4ecb-character-backup";
   readonly version: 1;
   readonly exportedAt: string;
-  readonly characters: readonly CharacterRecord[];
+  readonly characters: readonly StoredCharacterRecord[];
 }
 
 export type SupportedCharacterBackup = CharacterBackup | LegacyCharacterBackup;
+
+function object(value: unknown): Record<string, unknown> | undefined {
+  return value !== null && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function optionalString(value: unknown): boolean {
+  return value === undefined || typeof value === "string";
+}
+
+function stringRecord(value: unknown): boolean {
+  const record = object(value);
+  return (
+    record !== undefined &&
+    Object.values(record).every((entry) => typeof entry === "string")
+  );
+}
+
+function numberRecord(value: unknown): boolean {
+  const record = object(value);
+  return (
+    record !== undefined &&
+    Object.values(record).every(
+      (entry) => typeof entry === "number" && Number.isFinite(entry),
+    )
+  );
+}
+
+function ruleElement(value: unknown): boolean {
+  const entry = object(value);
+  return (
+    entry !== undefined &&
+    optionalString(entry.id) &&
+    typeof entry.name === "string" &&
+    typeof entry.type === "string" &&
+    optionalString(entry.legality) &&
+    optionalString(entry.description)
+  );
+}
+
+function weaponSnapshot(value: unknown): boolean {
+  const weapon = object(value);
+  return (
+    weapon !== undefined &&
+    typeof weapon.name === "string" &&
+    [
+      "attackBonus",
+      "damage",
+      "attackStat",
+      "defense",
+      "hitComponents",
+      "damageComponents",
+      "conditions",
+    ].every((name) => optionalString(weapon[name]))
+  );
+}
+
+function powerSnapshot(value: unknown): boolean {
+  const power = object(value);
+  return (
+    power !== undefined &&
+    typeof power.name === "string" &&
+    [
+      "id",
+      "usage",
+      "actionType",
+      "keywords",
+      "attackType",
+      "target",
+      "description",
+      "source",
+      "level",
+    ].every((name) => optionalString(power[name])) &&
+    Array.isArray(power.weapons) &&
+    power.weapons.every(weaponSnapshot)
+  );
+}
+
+function lootSnapshot(value: unknown): boolean {
+  const loot = object(value);
+  return (
+    loot !== undefined &&
+    typeof loot.name === "string" &&
+    Number.isInteger(loot.count) &&
+    typeof loot.count === "number" &&
+    loot.count >= 0 &&
+    Number.isInteger(loot.equippedCount) &&
+    typeof loot.equippedCount === "number" &&
+    loot.equippedCount >= 0 &&
+    typeof loot.showPowerCard === "boolean" &&
+    Array.isArray(loot.elements) &&
+    loot.elements.every(ruleElement)
+  );
+}
+
+function characterSnapshot(value: unknown): boolean {
+  const snapshot = object(value);
+  return (
+    snapshot !== undefined &&
+    snapshot.source === "legacy-cache" &&
+    stringRecord(snapshot.details) &&
+    numberRecord(snapshot.abilities) &&
+    stringRecord(snapshot.stats) &&
+    Array.isArray(snapshot.selectedRules) &&
+    snapshot.selectedRules.every(ruleElement) &&
+    Array.isArray(snapshot.powers) &&
+    snapshot.powers.every(powerSnapshot) &&
+    Array.isArray(snapshot.loot) &&
+    snapshot.loot.every(lootSnapshot) &&
+    stringRecord(snapshot.textStrings) &&
+    Number.isInteger(snapshot.levelCount) &&
+    typeof snapshot.levelCount === "number" &&
+    snapshot.levelCount >= 0 &&
+    snapshot.levelCount <= 30
+  );
+}
+
+function elementIdentity(value: unknown): boolean {
+  const identity = object(value);
+  return (
+    identity !== undefined &&
+    optionalString(identity.definitionId) &&
+    typeof identity.name === "string" &&
+    typeof identity.type === "string" &&
+    optionalString(identity.url)
+  );
+}
+
+function buildOccurrence(
+  value: unknown,
+  seen: WeakSet<object>,
+  depth: number,
+): boolean {
+  const occurrence = object(value);
+  if (occurrence === undefined || depth > 100 || seen.has(occurrence))
+    return false;
+  seen.add(occurrence);
+  return (
+    typeof occurrence.id === "string" &&
+    elementIdentity(occurrence.identity) &&
+    Number.isInteger(occurrence.acquiredLevel) &&
+    typeof occurrence.acquiredLevel === "number" &&
+    occurrence.acquiredLevel >= 0 &&
+    occurrence.acquiredLevel <= 30 &&
+    (occurrence.legality === "rules-legal" ||
+      occurrence.legality === "houserule") &&
+    optionalString(occurrence.replacesId) &&
+    Array.isArray(occurrence.children) &&
+    occurrence.children.every((child) =>
+      buildOccurrence(child, seen, depth + 1),
+    ) &&
+    typeof occurrence.unresolved === "boolean"
+  );
+}
+
+function characterBuild(value: unknown): boolean {
+  const build = object(value);
+  if (build === undefined) return false;
+  const seen = new WeakSet<object>();
+  return (
+    build.formatVersion === 1 &&
+    Number.isInteger(build.effectiveLevel) &&
+    typeof build.effectiveLevel === "number" &&
+    build.effectiveLevel >= 1 &&
+    build.effectiveLevel <= 30 &&
+    Array.isArray(build.levels) &&
+    build.levels.every((value) => {
+      const frame = object(value);
+      return (
+        frame !== undefined &&
+        Number.isInteger(frame.level) &&
+        typeof frame.level === "number" &&
+        frame.level >= 1 &&
+        frame.level <= 30 &&
+        buildOccurrence(frame.root, seen, 0)
+      );
+    }) &&
+    Array.isArray(build.grabbag) &&
+    build.grabbag.every((entry) => buildOccurrence(entry, seen, 0)) &&
+    Array.isArray(build.inventory) &&
+    build.inventory.every((value) => {
+      const entry = object(value);
+      return (
+        entry !== undefined &&
+        typeof entry.id === "string" &&
+        Number.isInteger(entry.acquiredLevel) &&
+        typeof entry.acquiredLevel === "number" &&
+        entry.acquiredLevel >= 0 &&
+        entry.acquiredLevel <= 30 &&
+        Number.isInteger(entry.quantity) &&
+        typeof entry.quantity === "number" &&
+        entry.quantity >= 0 &&
+        Number.isInteger(entry.equippedQuantity) &&
+        typeof entry.equippedQuantity === "number" &&
+        entry.equippedQuantity >= 0 &&
+        entry.equippedQuantity <= entry.quantity &&
+        Array.isArray(entry.elements) &&
+        entry.elements.every(elementIdentity) &&
+        optionalString(entry.name) &&
+        (entry.showPowerCard === undefined ||
+          typeof entry.showPowerCard === "boolean") &&
+        stringRecord(entry.overrides) &&
+        (entry.legality === "rules-legal" || entry.legality === "houserule")
+      );
+    }) &&
+    Array.isArray(build.alternates) &&
+    build.alternates.every((value) => {
+      const alternate = object(value);
+      return (
+        alternate !== undefined &&
+        typeof alternate.id === "string" &&
+        typeof alternate.selectName === "string" &&
+        elementIdentity(alternate.provider) &&
+        buildOccurrence(alternate.choice, seen, 0)
+      );
+    }) &&
+    numberRecord(build.baseAbilities) &&
+    stringRecord(build.textStrings)
+  );
+}
+
+function characterRecordBase(
+  value: unknown,
+): Record<string, unknown> | undefined {
+  const record = object(value);
+  const legacy = object(record?.legacy);
+  const profile = object(record?.profileBinding);
+  const settings = object(record?.sheetSettings);
+  if (
+    record === undefined ||
+    typeof record.id !== "string" ||
+    record.id.length === 0 ||
+    typeof record.title !== "string" ||
+    typeof record.notes !== "string" ||
+    typeof record.createdAt !== "string" ||
+    Number.isNaN(Date.parse(record.createdAt)) ||
+    typeof record.updatedAt !== "string" ||
+    Number.isNaN(Date.parse(record.updatedAt)) ||
+    !optionalString(record.deletedAt) ||
+    (record.profileBinding !== undefined &&
+      (profile === undefined ||
+        typeof profile.packId !== "string" ||
+        profile.packId.length === 0 ||
+        !optionalString(profile.contentDigest))) ||
+    legacy === undefined ||
+    legacy.format !== "dnd4e" ||
+    !optionalString(legacy.version) ||
+    !optionalString(legacy.gameSystem) ||
+    !optionalString(legacy.legality) ||
+    typeof legacy.sourceXml !== "string" ||
+    !characterSnapshot(record.snapshot) ||
+    settings === undefined ||
+    (settings.paper !== "letter" && settings.paper !== "a4") ||
+    typeof settings.monochrome !== "boolean" ||
+    typeof settings.blankHitPoints !== "boolean" ||
+    typeof settings.includePowerCards !== "boolean" ||
+    typeof settings.includeItemCards !== "boolean"
+  )
+    return undefined;
+  return record;
+}
+
+export function isCharacterRecord(value: unknown): value is CharacterRecord {
+  const record = characterRecordBase(value);
+  return record?.schemaVersion === 2 && characterBuild(record.build);
+}
+
+export function isLegacyCharacterRecordV1(
+  value: unknown,
+): value is LegacyCharacterRecordV1 {
+  return characterRecordBase(value)?.schemaVersion === 1;
+}
 
 export function newCharacterRecord(
   legacy: LegacyEnvelope,

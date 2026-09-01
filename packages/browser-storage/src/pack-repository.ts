@@ -5,7 +5,7 @@ import {
   type ContentPack,
   type ContentPackManifest,
 } from "@4ecb/content-pack";
-import type { CharacterRecord } from "@4ecb/character-domain";
+import type { StoredCharacterRecord } from "@4ecb/character-domain";
 import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from "idb";
 
 interface StoredContentPackBase {
@@ -40,14 +40,14 @@ interface CharacterBuilderDatabase extends DBSchema {
   };
   characters: {
     key: string;
-    value: CharacterRecord;
+    value: StoredCharacterRecord;
     indexes: { "by-updated": string; "by-deleted": string };
   };
   characterMigrations: {
     key: string;
     value: {
       readonly id: string;
-      readonly previous: CharacterRecord;
+      readonly previous: StoredCharacterRecord;
       readonly startedAt: string;
     };
   };

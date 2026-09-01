@@ -47,6 +47,18 @@ function character(id = "character-one") {
   );
 }
 
+async function payloadDigest(characters: readonly unknown[]): Promise<string> {
+  const digest = new Uint8Array(
+    await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(JSON.stringify(characters)),
+    ),
+  );
+  return [...digest]
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 afterEach(async () => {
   await Promise.all(
     databases.splice(0).map((name) => deleteContentDatabase(name)),
@@ -121,7 +133,7 @@ describe("CharacterRepository", () => {
     const destination = repository();
     await expect(destination.inspectBackup(backup)).resolves.toMatchObject({
       version: 2,
-      verified: true,
+      checksumVerified: true,
       characterCount: 1,
       conflictingIds: [],
     });
@@ -144,6 +156,25 @@ describe("CharacterRepository", () => {
     expect(await destination.list()).toEqual([]);
   });
 
+  it("rejects a self-checksummed backup with an incomplete schema-2 record", async () => {
+    const source = repository();
+    await source.put(character());
+    const backup = await source.exportBackup();
+    const { build: _build, ...incomplete } = backup.characters[0]!;
+    void _build;
+    const characters = [incomplete];
+    const crafted = {
+      ...backup,
+      characters,
+      payloadDigest: await payloadDigest(characters),
+    };
+    const destination = repository();
+    await expect(destination.restoreBackup(crafted)).rejects.toThrow(
+      "invalid record",
+    );
+    expect(await destination.list()).toEqual([]);
+  });
+
   it("inspects and restores legacy unchecksummed backups explicitly", async () => {
     const storage = repository();
     const legacy = {
@@ -154,7 +185,7 @@ describe("CharacterRepository", () => {
     };
     await expect(storage.inspectBackup(legacy)).resolves.toMatchObject({
       version: 1,
-      verified: false,
+      checksumVerified: false,
       characterCount: 1,
     });
     await expect(storage.restoreBackup(legacy)).resolves.toBe(1);
