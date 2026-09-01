@@ -41,7 +41,9 @@ interface Loadout {
   readonly enhancement: number;
   readonly critical?: string;
   readonly unarmed: boolean;
+  readonly weaponDefinition: boolean;
   readonly tags: readonly string[];
+  readonly properties: readonly string[];
 }
 
 function key(value: string): string {
@@ -144,6 +146,7 @@ function loadouts(
       enhancement: parseEnhancement(magic),
       ...(critical ? { critical } : {}),
       unarmed: false,
+      weaponDefinition: weapon !== undefined,
       tags: [
         ...parts.map((entity) => entity.name),
         ...(weapon === undefined
@@ -156,6 +159,10 @@ function loadouts(
       ]
         .map(key)
         .filter(Boolean),
+      properties: (field(weapon ?? emptyEntity, "Properties") ?? "")
+        .split(",")
+        .map(key)
+        .filter(Boolean),
     });
   }
   result.push({
@@ -165,7 +172,9 @@ function loadouts(
     proficiency: 0,
     enhancement: 0,
     unarmed: true,
+    weaponDefinition: false,
     tags: ["unarmed"],
+    properties: [],
   });
   return result;
 }
@@ -326,7 +335,21 @@ export function evaluatePowers(input: {
     input.entities.map((entity) => [key(entity.id), entity]),
   );
   const equipped = loadouts(input.inventory, input.entities);
-  return input.activeDefinitionIds.flatMap((definitionId) => {
+  const activePowerIds = [
+    ...new Set(
+      input.activeDefinitionIds.flatMap((definitionId) => {
+        const power = byId.get(key(definitionId));
+        const versions = field(power ?? emptyEntity, "_AugmentVersions")
+          ?.split(",")
+          .map((value) => value.trim())
+          .filter(Boolean);
+        return versions === undefined || versions.length === 0
+          ? [definitionId]
+          : versions;
+      }),
+    ),
+  ];
+  return activePowerIds.flatMap((definitionId) => {
     const power = byId.get(key(definitionId));
     if (power === undefined || key(power.type) !== "power") return [];
     const keywords = (effectiveField(power, "Keywords", input.overlays) ?? "")
@@ -370,7 +393,7 @@ export function evaluatePowers(input: {
       const availableAbilities = abilityNames.filter((ability) =>
         new RegExp(`\\b${ability}\\b`, "i").test(attackLeft),
       );
-      const attackStat =
+      let attackStat =
         availableAbilities.length > 0
           ? availableAbilities.reduce((best, candidate) =>
               numericStat(input.stats, `${candidate} modifier`) >
@@ -381,6 +404,13 @@ export function evaluatePowers(input: {
           : /primary ability/i.test(attackLeft)
             ? highestAbility(input.stats)
             : "Unknown";
+      if (
+        weaponPower &&
+        /^ranged\b/i.test(attackType ?? "") &&
+        attackStat === "Dexterity" &&
+        equipment.properties.includes("heavy thrown")
+      )
+        attackStat = "Strength";
       const defense = attack?.[2] ?? "Unknown";
       const attackComponents: PowerComponent[] = [
         {
@@ -424,19 +454,34 @@ export function evaluatePowers(input: {
           ? diceTimes(equipment.weaponDamage ?? "1d4", Number(weaponMatch[1]))
           : fixedMatch?.[1];
       const ongoing = /\bongoing\s+\d+\b/i.test(hitLine ?? "");
-      const explicitAbility =
-        hitLine !== undefined &&
-        new RegExp(`${attackStat} modifier`, "i").test(hitLine);
-      const multipleAbilities =
-        hitLine !== undefined &&
-        abilityNames.filter((ability) =>
-          new RegExp(`\\b${ability}\\b`, "i").test(hitLine),
-        ).length > 1;
-      if (dice !== undefined && (explicitAbility || multipleAbilities))
-        damageComponents.push({
-          label: `${attackStat} modifier`,
-          value: numericStat(input.stats, `${attackStat} modifier`),
-        });
+      const primaryDamageClause = (hitLine ?? "").split(/\bdamage\b/i)[0] ?? "";
+      let damageAbilities: readonly string[] = abilityNames.filter((ability) =>
+        new RegExp(`\\b${ability} modifier\\b`, "i").test(primaryDamageClause),
+      );
+      const listedAbilities = abilityNames.filter((ability) =>
+        new RegExp(`\\b${ability}\\b`, "i").test(primaryDamageClause),
+      );
+      if (damageAbilities.length === 0 && listedAbilities.length > 1)
+        damageAbilities = [attackStat];
+      if (
+        equipment.properties.includes("heavy thrown") &&
+        attackStat === "Strength" &&
+        damageAbilities.length === 1 &&
+        damageAbilities[0] === "Dexterity"
+      )
+        damageAbilities = ["Strength"];
+      const additiveAbilities = /\bor\b/i.test(primaryDamageClause)
+        ? listedAbilities.includes(attackStat as (typeof abilityNames)[number])
+          ? [attackStat]
+          : damageAbilities.slice(0, 1)
+        : damageAbilities;
+      if (dice !== undefined)
+        damageComponents.push(
+          ...additiveAbilities.map((ability) => ({
+            label: `${ability} modifier`,
+            value: numericStat(input.stats, `${ability} modifier`),
+          })),
+        );
       if (dice !== undefined && equipment.enhancement !== 0)
         damageComponents.push({
           label: "enhancement bonus",
@@ -449,6 +494,17 @@ export function evaluatePowers(input: {
             equipment,
             power.name,
             weaponPower ? "weapon" : "implement",
+            "damage",
+            attackType,
+          ),
+        );
+      if (dice !== undefined && implementPower && equipment.weaponDefinition)
+        damageComponents.push(
+          ...combatStatComponents(
+            input.stats,
+            equipment,
+            power.name,
+            "weapon",
             "damage",
             attackType,
           ),
@@ -488,8 +544,8 @@ export function evaluatePowers(input: {
     });
     const unsupported: string[] = [];
     if (
-      /augment/i.test(power.name) ||
-      power.specifics.some((s) => /^Augment/i.test(s.name))
+      power.specifics.some((specific) => /^Augment/i.test(specific.name)) &&
+      field(power, "_AugmentVersions") === undefined
     )
       unsupported.push("augment");
     if (

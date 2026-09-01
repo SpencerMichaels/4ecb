@@ -7,6 +7,7 @@ import {
 } from "./equipment";
 import {
   diverseStudyException,
+  EXCEPTION_IDS,
   isCustomChoiceException,
   isUniversalSkill,
   seekerException,
@@ -192,21 +193,17 @@ function dynamicCategories(
   const hybridValues = new Set<string>();
   const multiclassValues = new Set<string>();
   for (const entity of owned) {
+    const countsAsClass = field(entity, "CountsAsClass");
     const target =
       key(entity.type) === "hybrid class"
         ? hybridValues
         : key(entity.type) === "class"
           ? classValues
-          : key(entity.type) === "countsasclass"
+          : key(entity.type) === "countsasclass" || countsAsClass !== undefined
             ? multiclassValues
             : undefined;
     if (target !== undefined)
-      [
-        entity.id,
-        entity.name,
-        ...entity.categories,
-        field(entity, "CountsAsClass") ?? "",
-      ]
+      [entity.id, entity.name, ...entity.categories, countsAsClass ?? ""]
         .filter(Boolean)
         .forEach((value) => target.add(key(value)));
   }
@@ -214,6 +211,12 @@ function dynamicCategories(
     ([name]) => key(name) === "powersasclass",
   )?.[1];
   if (powersAsClass) classValues.add(key(powersAsClass));
+  if (
+    owned.some(
+      (entity) => key(entity.id) === key(EXCEPTION_IDS.paragonMulticlassing),
+    )
+  )
+    for (const value of multiclassValues) classValues.add(value);
   const all = new Set([...classValues, ...multiclassValues]);
   return {
     $$CLASS: classValues,

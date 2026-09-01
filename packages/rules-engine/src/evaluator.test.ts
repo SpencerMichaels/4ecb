@@ -7,6 +7,7 @@ import {
   evaluateCharacter,
   type CharacterOccurrence,
 } from "./evaluator";
+import { EXCEPTION_IDS } from "./exceptions";
 
 function rule(
   name: string,
@@ -252,6 +253,62 @@ describe("character evaluator", () => {
     );
 
     expect(result.stats.AC?.value).toBe(2);
+  });
+
+  it("promotes CountsAsClass power categories for paragon multiclassing", () => {
+    const result = evaluateCharacter(
+      {
+        level: 11,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "wizard",
+            definitionId: "WIZARD",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+          {
+            id: "fighter-training",
+            definitionId: "FIGHTER_TRAINING",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+          {
+            id: "paragon-multiclassing",
+            definitionId: EXCEPTION_IDS.paragonMulticlassing,
+            acquiredLevel: 11,
+            kind: "grabbag",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "Root", "Test", {
+          rules: [rule("select", { type: "Power", Category: "$$CLASS" }, 0)],
+        }),
+        entity("WIZARD", "Wizard", "Class"),
+        entity("FIGHTER_TRAINING", "Fighter Training", "Multiclass", {
+          specifics: { CountsAsClass: "Fighter" },
+        }),
+        entity(
+          EXCEPTION_IDS.paragonMulticlassing,
+          "Paragon Multiclassing",
+          "Paragon Path",
+        ),
+        entity("WIZARD_POWER", "Wizard Spell", "Power", {
+          categories: ["Wizard"],
+        }),
+        entity("FIGHTER_POWER", "Fighter Exploit", "Power", {
+          categories: ["Fighter"],
+        }),
+      ],
+    );
+
+    expect(result.choices[0]?.candidates).toEqual([
+      { definitionId: "WIZARD_POWER", eligible: true, reasons: [] },
+      { definitionId: "FIGHTER_POWER", eligible: true, reasons: [] },
+    ]);
   });
 
   it("keeps house rules visible but makes the result non-legal", () => {

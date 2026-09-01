@@ -19,6 +19,26 @@ function normalized(values: readonly string[]): Set<string> {
   );
 }
 
+function selectorTerms(operand: string): readonly string[] {
+  return operand
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+function matchesTerms(
+  categories: ReadonlySet<string>,
+  properties: ReadonlySet<string>,
+  operand: string,
+): boolean {
+  return selectorTerms(operand).every((term) => {
+    const negated = term.startsWith("!");
+    const value = negated ? term.slice(1) : term;
+    const match = categories.has(value) || properties.has(value);
+    return negated ? !match : match;
+  });
+}
+
 export function matchesEquipmentSelector(
   item: EquippedItem,
   selector: string,
@@ -34,19 +54,19 @@ export function matchesEquipmentSelector(
     case "armor":
       return (
         item.type.toLocaleLowerCase() === "armor" &&
-        (operand.length === 0 || categories.has(operand))
+        (operand.length === 0 ||
+          operand === "*" ||
+          matchesTerms(categories, properties, operand))
       );
     case "weapon":
       return (
         item.type.toLocaleLowerCase() === "weapon" &&
-        (operand.length === 0 ||
-          categories.has(operand) ||
-          properties.has(operand))
+        (operand.length === 0 || matchesTerms(categories, properties, operand))
       );
     case "implement":
       return (
         categories.has("implement") &&
-        (operand.length === 0 || categories.has(operand))
+        (operand.length === 0 || matchesTerms(categories, properties, operand))
       );
     case "slot":
       return operand.length === 0
@@ -55,14 +75,15 @@ export function matchesEquipmentSelector(
     case "only-weapon":
       return (
         item.type.toLocaleLowerCase() === "weapon" &&
-        (operand.length === 0 || categories.has(operand))
+        (operand.length === 0 || matchesTerms(categories, properties, operand))
       );
     case "versatile":
       return (
         properties.has("versatile") &&
-        (item.hands ?? 1) >= 2 &&
-        (operand.length === 0 || categories.has(operand))
+        (operand.length === 0 || matchesTerms(categories, properties, operand))
       );
+    case "defensive":
+      return properties.has("defensive");
     default:
       return (
         categories.has(value) ||
@@ -78,20 +99,56 @@ export function equipmentPredicate(
   selector: string,
 ): boolean {
   const value = selector.trim().toLocaleLowerCase();
-  if (value.startsWith("dual-wielding:")) {
-    const operand = value.slice("dual-wielding:".length);
+  if (value.startsWith("only-weapon:")) {
+    const weapons = state.items.filter(
+      (item) => item.quantity > 0 && item.type.toLocaleLowerCase() === "weapon",
+    );
     return (
-      state.items
-        .filter(
-          (item) =>
-            item.type.toLocaleLowerCase() === "weapon" &&
-            (operand.length === 0 ||
-              matchesEquipmentSelector(item, `weapon:${operand}`)),
-        )
-        .reduce((sum, item) => sum + item.quantity, 0) >= 2
+      weapons.reduce((sum, item) => sum + item.quantity, 0) === 1 &&
+      weapons.some((item) => matchesEquipmentSelector(item, value))
     );
   }
-  if (value === "dual-shields" || value === "dual-shielding:")
+  if (value.startsWith("dual-wielding:")) {
+    const operand = value.slice("dual-wielding:".length);
+    const weapons = state.items
+      .filter(
+        (item) =>
+          item.quantity > 0 && item.type.toLocaleLowerCase() === "weapon",
+      )
+      .flatMap((item) => Array.from({ length: item.quantity }, () => item));
+    const terms = selectorTerms(operand);
+    if (terms.length === 0) return weapons.length >= 2;
+    if (terms.length === 1)
+      return (
+        weapons.filter((item) =>
+          matchesEquipmentSelector(item, `weapon:${terms[0]}`),
+        ).length >= 2
+      );
+    const assign = (
+      remaining: readonly EquippedItem[],
+      index: number,
+    ): boolean => {
+      if (index >= terms.length) return true;
+      const term = terms[index];
+      if (term === undefined) return true;
+      return remaining.some(
+        (item, itemIndex) =>
+          matchesEquipmentSelector(item, `weapon:${term}`) &&
+          assign(
+            remaining.filter(
+              (_, candidateIndex) => candidateIndex !== itemIndex,
+            ),
+            index + 1,
+          ),
+      );
+    };
+    return assign(weapons, 0);
+  }
+  if (
+    value === "dual-shields" ||
+    value === "dual-shielding:" ||
+    value === "dual-shield:"
+  )
     return (
       state.items
         .filter((item) => normalized(item.categories).has("shield"))

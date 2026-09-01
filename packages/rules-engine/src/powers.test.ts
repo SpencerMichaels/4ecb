@@ -232,7 +232,7 @@ describe("power evaluation", () => {
           Keywords: "Weapon",
           "Attack Type": "Melee weapon",
           Attack: "Strength or Charisma + 2 vs. AC",
-          Hit: "1[W] + Charisma modifier + 3 bonus damage.",
+          Hit: "1[W] + Strength or Charisma modifier + 3 bonus damage.",
         }),
       ],
     });
@@ -407,5 +407,155 @@ describe("power evaluation", () => {
       attackBonus: 3,
       damage: "1d6+2",
     });
+  });
+
+  it("uses Strength for ranged attacks with Heavy Thrown weapons", () => {
+    const entities = [
+      entity("BASIC", "Ranged Basic Attack", "Power", {
+        Keywords: "Weapon",
+        "Attack Type": "Ranged weapon",
+        Attack: "Dexterity vs. AC",
+        Hit: "1[W] + Dexterity modifier damage.",
+      }),
+      entity("HANDAXE", "Handaxe", "Weapon", {
+        Damage: "1d6",
+        "Proficiency Bonus": "2",
+        Properties: "Heavy Thrown, Off-Hand",
+      }),
+    ];
+    const [power] = evaluatePowers({
+      level: 4,
+      activeDefinitionIds: ["BASIC"],
+      inventory: [
+        {
+          id: "handaxe",
+          definitionIds: ["HANDAXE"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 5),
+        "Dexterity modifier": stat("Dexterity modifier", 3),
+      },
+      overlays: [],
+      entities,
+    });
+
+    expect(power?.variants[0]).toMatchObject({
+      attackStat: "Strength",
+      attackBonus: 9,
+      damage: "1d6+5",
+    });
+  });
+
+  it("adds every explicitly additive ability modifier to damage", () => {
+    const [power] = evaluatePowers({
+      level: 4,
+      activeDefinitionIds: ["POWER"],
+      inventory: [],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 4),
+        "Constitution modifier": stat("Constitution modifier", 3),
+      },
+      overlays: [],
+      entities: [
+        entity("POWER", "Brash Strike", "Power", {
+          Keywords: "Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. AC",
+          Hit: "1[W] + Strength modifier + Constitution modifier damage.",
+        }),
+      ],
+    });
+
+    expect(power?.variants[0]).toMatchObject({ damage: "1d4+7" });
+  });
+
+  it("applies weapon damage bonuses when a weapon serves as an implement", () => {
+    const entities = [
+      entity("POWER", "Sword Burst", "Power", {
+        Keywords: "Arcane, Implement",
+        "Attack Type": "Close burst 1",
+        Attack: "Intelligence vs. Reflex",
+        Hit: "1d6 + Intelligence modifier force damage.",
+      }),
+      entity("BLADE", "Longsword", "Weapon", {
+        Damage: "1d8",
+        "Proficiency Bonus": "3",
+        Group: "Heavy Blade",
+      }),
+      entity("IMPLEMENT", "Magic Blade +1", "Magic Item", {
+        "Magic Item Type": "Implement",
+        Enhancement: "+1 attack rolls and damage rolls",
+      }),
+    ];
+    const [power] = evaluatePowers({
+      level: 4,
+      activeDefinitionIds: ["POWER"],
+      inventory: [
+        {
+          id: "blade",
+          definitionIds: ["BLADE", "IMPLEMENT"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Intelligence modifier": stat("Intelligence modifier", 4),
+        "heavy blade group,weapon:damage": combatStat(
+          "heavy blade group,weapon:damage",
+          2,
+        ),
+      },
+      overlays: [],
+      entities,
+    });
+
+    expect(power?.variants[0]).toMatchObject({
+      attackBonus: 7,
+      damage: "1d6+7",
+    });
+  });
+
+  it("materializes and deduplicates psionic augment versions", () => {
+    const entities = [
+      entity("PARENT", "Mind Thrust", "Power", {
+        Keywords: "Augmentable, Implement, Psionic",
+        _AugmentVersions: "AUGMENT0,AUGMENT2",
+      }),
+      entity("AUGMENT0", "Mind Thrust (Augment 0)", "Power", {
+        Keywords: "Augmentable, Implement, Psionic",
+        "Attack Type": "Ranged 10",
+        Attack: "Intelligence vs. Will",
+        Hit: "1d10 + Intelligence modifier psychic damage.",
+      }),
+      entity("AUGMENT2", "Mind Thrust (Augment 2)", "Power", {
+        Keywords: "Augmentable, Implement, Psionic",
+        "Attack Type": "Ranged 10",
+        Attack: "Intelligence vs. Will",
+        Hit: "2d10 + Intelligence modifier psychic damage.",
+      }),
+    ];
+    const powers = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["PARENT", "AUGMENT0"],
+      inventory: [],
+      stats: { "Intelligence modifier": stat("Intelligence modifier", 4) },
+      overlays: [],
+      entities,
+    });
+
+    expect(powers.map((power) => power.name)).toEqual([
+      "Mind Thrust (Augment 0)",
+      "Mind Thrust (Augment 2)",
+    ]);
+    expect(powers.map((power) => power.variants[0]?.damage)).toEqual([
+      "1d10+4",
+      "2d10+4",
+    ]);
+    expect(powers.flatMap((power) => power.unsupported)).toEqual([]);
   });
 });

@@ -9,7 +9,26 @@ const owned = [
   { id: "SOURCE", name: "Divine", type: "Power Source" },
   { id: "TRAINING", name: "Athletics", type: "Skill Training" },
   { id: "MULTI", name: "Multiclass", type: "Multiclass" },
-] as ContentEntity[];
+  {
+    id: "PROFICIENCY",
+    name: "Weapon Proficiency (Longsword)",
+    type: "Proficiency",
+  },
+  {
+    id: "DEITY",
+    name: "Ioun",
+    type: "Deity",
+    categories: [],
+    specifics: [
+      {
+        name: "Domains",
+        value: "Arcana, Knowledge, Skill",
+        extraAttributes: [],
+        ordinal: 0,
+      },
+    ],
+  },
+] as unknown as ContentEntity[];
 const context = {
   owned,
   level: 8,
@@ -36,8 +55,30 @@ describe("legacy prerequisites", () => {
   it("distinguishes native markers and unknown prose", () => {
     expect(evaluatePrerequisite("~HUMAN", context).status).toBe("satisfied");
     expect(
+      evaluatePrerequisite("must have crossed the silver sea", context).status,
+    ).toBe("unverified");
+  });
+
+  it("covers level, tier, class, training, proficiency, and deity prose", () => {
+    expect(evaluatePrerequisite("8th level", context).status).toBe("satisfied");
+    expect(evaluatePrerequisite("Paragon Tier", context).status).toBe("failed");
+    expect(evaluatePrerequisite("Avenger class", context).status).toBe(
+      "satisfied",
+    );
+    expect(
+      evaluatePrerequisite("You must have training in Athletics.", context)
+        .status,
+    ).toBe("satisfied");
+    expect(
+      evaluatePrerequisite("proficiency with longsword", context).status,
+    ).toBe("satisfied");
+    expect(evaluatePrerequisite("must worship Ioun", context).status).toBe(
+      "satisfied",
+    );
+    expect(
       evaluatePrerequisite("must worship a deity of the skill domain", context)
         .status,
-    ).toBe("unverified");
+    ).toBe("satisfied");
+    expect(evaluatePrerequisite("Unselectable", context).status).toBe("failed");
   });
 });

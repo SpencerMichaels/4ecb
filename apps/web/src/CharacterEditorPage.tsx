@@ -13,11 +13,13 @@ import {
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
   commandForEvaluatedChoice,
-  evaluateCharacter,
   findBuildChildIndex,
   projectBuildForEvaluation,
+  type EvaluatedCharacter,
   type EvaluatedChoice,
 } from "@4ecb/rules-engine";
+
+import { RulesWorkerClient } from "./rules-client";
 
 const characters = new CharacterRepository();
 const packs = new ContentPackRepository();
@@ -211,7 +213,11 @@ export function CharacterEditorPage({
   const [, setRevision] = useState(0);
   const [status, setStatus] = useState("Loading build…");
   const [error, setError] = useState<string>();
+  const [evaluation, setEvaluation] = useState<EvaluatedCharacter>();
+  const [readyPackId, setReadyPackId] = useState<string>();
   const transaction = useRef<CharacterTransaction | undefined>(undefined);
+  const rulesClient = useRef<RulesWorkerClient | undefined>(undefined);
+  const evaluationRevision = useRef(0);
 
   useEffect(() => {
     void characters
@@ -231,6 +237,32 @@ export function CharacterEditorPage({
       );
   }, [characterId]);
 
+  const packId = character?.profileBinding?.packId;
+  useEffect(() => {
+    rulesClient.current?.terminate();
+    rulesClient.current = undefined;
+    setReadyPackId(undefined);
+    setEvaluation(undefined);
+    if (packId === undefined) return;
+    const client = new RulesWorkerClient();
+    rulesClient.current = client;
+    let cancelled = false;
+    void client
+      .initialize(packId)
+      .then(() => {
+        if (!cancelled) setReadyPackId(packId);
+      })
+      .catch((reason: unknown) => {
+        if (!cancelled)
+          setError(reason instanceof Error ? reason.message : String(reason));
+      });
+    return () => {
+      cancelled = true;
+      client.terminate();
+      if (rulesClient.current === client) rulesClient.current = undefined;
+    };
+  }, [packId]);
+
   const build = transaction.current?.current;
   const byId = useMemo(
     () =>
@@ -239,16 +271,31 @@ export function CharacterEditorPage({
       ),
     [entities],
   );
-  const evaluation = useMemo(
-    () =>
-      build === undefined || entities.length === 0
-        ? undefined
-        : evaluateCharacter(
-            projectBuildForEvaluation(build, entities),
-            entities,
-          ),
-    [build, entities],
-  );
+  useEffect(() => {
+    const client = rulesClient.current;
+    if (
+      build === undefined ||
+      entities.length === 0 ||
+      packId === undefined ||
+      readyPackId !== packId ||
+      client === undefined
+    )
+      return;
+    const revision = evaluationRevision.current + 1;
+    evaluationRevision.current = revision;
+    setStatus("Evaluating build…");
+    void client
+      .evaluate(projectBuildForEvaluation(build, entities))
+      .then((result) => {
+        if (evaluationRevision.current !== revision) return;
+        setEvaluation(result);
+        setStatus("Build evaluated. Changes are saved in this browser.");
+      })
+      .catch((reason: unknown) => {
+        if (evaluationRevision.current !== revision) return;
+        setError(reason instanceof Error ? reason.message : String(reason));
+      });
+  }, [build, entities, packId, readyPackId]);
 
   async function persist(next: ReturnType<CharacterTransaction["dispatch"]>) {
     const updated = await characters.updateBuild(characterId, next);
