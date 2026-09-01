@@ -15,6 +15,10 @@ import {
 } from "@4ecb/legacy-dnd4e";
 import type { ProfileMigrationPreview } from "@4ecb/rules-engine";
 
+import {
+  contentProfileRevisionKey,
+  previewMatchesTargetRevision,
+} from "./profile-migration";
 import { RulesWorkerClient } from "./rules-client";
 
 const repository = new CharacterRepository();
@@ -34,7 +38,7 @@ function ProfileMigrationControl({
     character.profileBinding?.packId ?? "",
   );
   const [preview, setPreview] = useState<ProfileMigrationPreview>();
-  const [previewTarget, setPreviewTarget] = useState<string>();
+  const [previewRevision, setPreviewRevision] = useState<string>();
   const [previewing, setPreviewing] = useState(false);
   const target = manifests.find((manifest) => manifest.packId === targetPackId);
 
@@ -51,7 +55,7 @@ function ProfileMigrationControl({
         character.profileBinding?.contentDigest,
       );
       setPreview(result);
-      setPreviewTarget(target.packId);
+      setPreviewRevision(contentProfileRevisionKey(target));
     } finally {
       client.terminate();
       setPreviewing(false);
@@ -59,7 +63,11 @@ function ProfileMigrationControl({
   }
 
   async function adopt(): Promise<void> {
-    if (target === undefined || previewTarget !== target.packId) return;
+    if (
+      target === undefined ||
+      !previewMatchesTargetRevision(previewRevision, target)
+    )
+      return;
     await repository.updateMetadata(character.id, {
       profileBinding: {
         packId: target.packId,
@@ -83,7 +91,7 @@ function ProfileMigrationControl({
           onChange={(event) => {
             setTargetPackId(event.currentTarget.value);
             setPreview(undefined);
-            setPreviewTarget(undefined);
+            setPreviewRevision(undefined);
           }}
         >
           <option value="">Choose an installed profile</option>
@@ -105,7 +113,8 @@ function ProfileMigrationControl({
       >
         {previewing ? "Evaluating migration…" : "Preview migration"}
       </button>
-      {preview === undefined || previewTarget !== targetPackId ? null : (
+      {preview === undefined ||
+      !previewMatchesTargetRevision(previewRevision, target) ? null : (
         <div className="migration-preview" aria-live="polite">
           {!preview.sourceAvailable ? (
             <p className="profile-warning">
@@ -487,7 +496,7 @@ export function CharacterLibraryPage({
                       : profileMissing
                         ? `Missing profile: ${character.profileBinding.packId}`
                         : profileMismatch
-                          ? `Profile changed: ${profile.name}; save metadata to accept this revision`
+                          ? `Profile changed: ${profile.name}; preview and adopt this revision below`
                           : `Profile: ${profile?.name}`}
                   </p>
                 </div>
