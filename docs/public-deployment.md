@@ -8,9 +8,12 @@ the official D&D 4E corpus, the supplied legacy application, imported character
 files, or locally generated `.4ecp` artifacts. See the repository
 [public distribution notice](../NOTICE.md).
 
-The default runtime configuration is `apps/web/public/runtime-config.json`.
-Operators may replace it at container start without rebuilding the application.
-It contains deployment URLs and feature flags only; do not put secrets or
+The reserved runtime configuration path is
+`apps/web/public/runtime-config.json`. Operators may replace it at container
+start without rebuilding the application, but the current application does not
+yet load or apply its URL and feature-flag fields. It is kept outside the service
+worker precache and served network-only so a future loader cannot receive a
+build-time default in place of an operator override. Do not put secrets or
 character/content data in it.
 
 ## Build and run
@@ -34,9 +37,10 @@ nix develop path:. --command docker run --rm \
 
 The health endpoint is `GET /healthz`. Application assets use immutable cache
 headers when content-hashed; navigation uses `no-cache`; and
-`/runtime-config.json` uses `no-store`.
+`/runtime-config.json` uses `no-store` and a network-only service-worker route.
 
-To supply operator configuration, bind-mount a non-secret JSON file read-only:
+To stage future operator configuration, bind-mount a non-secret JSON file
+read-only. Its fields remain reserved until the application implements a loader:
 
 ```sh
 nix develop path:. --command docker run --rm \

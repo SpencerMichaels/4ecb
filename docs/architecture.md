@@ -501,10 +501,13 @@ The MVP image contains a static, unprivileged web server and built assets:
 /data/content/          optional read-only mounted packs
 ```
 
-Runtime configuration selects default pack URLs, feature flags, base path,
-storage guidance, and future relay URL without rebuilding the image. The image
-has a health endpoint, read-only root filesystem support, no bundled proprietary
-corpus, and documented reverse-proxy/HTTPS configuration.
+The runtime-configuration path is reserved for future default pack URLs, feature
+flags, base path, storage guidance, and relay URL without rebuilding the image;
+the current application does not load those fields. The file stays outside the
+service-worker precache and is network-only so later operator overrides cannot
+be shadowed by the build-time default. The image has a health endpoint,
+read-only root filesystem support, no bundled proprietary corpus, and documented
+reverse-proxy/HTTPS configuration.
 
 ### Post-MVP Compose deployment
 

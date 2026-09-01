@@ -85,13 +85,17 @@ malformed-record fixture, the same public suite passes 100 tests.
   build, CI, and image distribution boundary without treating it as legal
   advice.
 - The production image serves immutable application assets from `/app/static`
-  while keeping `/app/runtime-config.json` separately replaceable. It runs as
-  the upstream unprivileged nginx user with a read-only root filesystem and a
-  bounded writable `/tmp` in the documented invocation.
+  while keeping the reserved `/app/runtime-config.json` separately replaceable,
+  outside the service-worker precache, and network-only. The application does
+  not yet consume its fields. The image runs as the upstream unprivileged nginx
+  user with a read-only root filesystem and a bounded writable `/tmp` in the
+  documented invocation.
 - The public suite now requires a standalone web manifest, service worker,
-  runtime configuration, and absence of `.4ecp` and `.dnd4e` artifacts from the
-  production web build. The deployment guide documents HTTPS, reverse-proxy
-  caching, health checks, update behavior, and the browser-local backup boundary.
+  runtime configuration, a generated-worker assertion that the configuration is
+  network-only rather than precached, and absence of `.4ecp` and `.dnd4e`
+  artifacts from the production web build. The deployment guide documents
+  HTTPS, reverse-proxy caching, health checks, update behavior, and the
+  browser-local backup boundary.
 
 Verification on 2026-08-31 used a production build in the project-local Nix
 environment and a live Chromium browser. The installed service worker announced

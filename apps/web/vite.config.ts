@@ -26,6 +26,14 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{css,html,js,json,svg}"],
+        globIgnores: ["runtime-config.json"],
+        runtimeCaching: [
+          {
+            urlPattern: /\/runtime-config\.json$/,
+            handler: "NetworkOnly",
+            method: "GET",
+          },
+        ],
       },
     }),
   ],
