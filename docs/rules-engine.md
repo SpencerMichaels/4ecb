@@ -83,6 +83,15 @@ consuming category-specific combat stats, and broadening ordinary power
 semantics. These samples were created against unidentified older content and are
 cross-profile compatibility evidence, not exact public test fixtures.
 
+An additional ignored seven-character correction corpus exercises a different
+compatibility surface. It now converges and completes all seven records with
+zero unresolved choices, matches 464/470 comparable numeric aliases and 354/411
+cached power fields, and passes seven regenerated-export semantic re-imports.
+Those cache totals remain cross-profile diagnostics. The public assertions are
+instead synthetic exact fixtures for contribution provenance, structural
+weapon/magic-item identity, uniquely categorized nested race choices, and the
+three recovered power forms below.
+
 ## M4 closure and M5 blockers
 
 M4's exact public matrix spans three tiers and the required build dimensions.
@@ -129,6 +138,13 @@ The exact slowed/ongoing hit form that adds Dexterity is also ported as
 `ongoing 10+<Dexterity modifier>`. The full private profile can select that
 level-5 power through a complete, legal native workflow with no diagnostics;
 the generated character remains ignored and is not a public golden.
+
+Ordinary named parsing also preserves Howling Strike's level-scaled extra die
+beside its weapon dice, treats Knockdown Assault as ability-only damage without
+weapon/enhancement damage additions, and records Call of the Beast's psychic
+damage as a next-turn conditional expression rather than an immediate hit.
+Exact synthetic fixtures pin all three forms. Unknown prose still takes the
+explicit unsupported path.
 
 Power prose naming a `beast's <ability> modifier` is not a character-ability
 reference. Such a clause is excluded from ordinary ability math and emits

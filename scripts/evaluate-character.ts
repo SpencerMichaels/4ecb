@@ -70,8 +70,8 @@ async function main(): Promise<void> {
         : evaluatedPowers.get(cachedPower.id)) ??
       evaluated.powers.find((candidate) => candidate.name === cachedPower.name);
     return cachedPower.weapons.flatMap((cachedWeapon) => {
-      const variant = power?.variants.find(
-        (candidate) => legacyEquipmentIdentityMatches(cachedWeapon, candidate),
+      const variant = power?.variants.find((candidate) =>
+        legacyEquipmentIdentityMatches(cachedWeapon, candidate),
       );
       const fields = [
         ...(cachedWeapon.attackBonus === undefined

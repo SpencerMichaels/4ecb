@@ -86,6 +86,15 @@ fields by removing an incorrectly inferred Intelligence modifier from Bond of
 Censure; the supplied +1 implement enhancement remains. The comparison retains
 its existing legality diagnostics and does not discard evidence.
 
+A separate ignored seven-character correction corpus is also diagnostic rather
+than golden evidence. After provenance deduplication, structural cached-variant
+matching, unique nested race-choice recovery, and three exact named power
+forms, all seven records converge and complete with zero unresolved choices.
+They report 464/470 comparable numeric aliases and 354/411 cached power fields;
+one power remains explicitly unsupported. Seven regenerated edited exports pass
+semantic re-import. The remaining cache differences are preserved because the
+files' originating content revisions are not established.
+
 ## M4 exit-criterion mapping
 
 - Rule-language coverage is enforced by the corpus audit and direct parser,

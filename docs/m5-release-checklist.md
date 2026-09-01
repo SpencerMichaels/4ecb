@@ -135,6 +135,14 @@ budgets remain active during M5.
       Unknown prerequisites remain `prerequisite.unverified`; item-set/inherent
       rules require an explicit imported/serialized activation. These are the
       supported explainable M5 boundary, not silent parity claims.
+- [x] Correct the ignored seven-sample compatibility findings without promoting
+      cross-profile caches to goldens. Public exact fixtures cover duplicate
+      provenance, structural Dwarven Thrower/Luckblade/Foe-Seeking identity,
+      unique nested race-bonus recovery, Howling Strike extra dice, Knockdown
+      Assault ability-only damage, and Call of the Beast conditional damage.
+      All seven private evaluations converge and complete with zero unresolved
+      choices; all seven edited exports pass semantic re-import. One remaining
+      power stays explicitly unsupported and recoverable.
 - [x] Repeat the automated Letter/A4 color/monochrome PDF matrix in supported
       Firefox.
 

@@ -377,7 +377,10 @@ export function canonicalLegacyEquipmentName(value: string): string {
 
 export function legacyEquipmentIdentityMatches(
   cached: LegacyWeaponSnapshot,
-  candidate: { readonly equipmentName: string; readonly definitionIds: readonly string[] },
+  candidate: {
+    readonly equipmentName: string;
+    readonly definitionIds: readonly string[];
+  },
 ): boolean {
   if ((cached.definitionIds?.length ?? 0) > 0) {
     const cachedIds = new Set(cached.definitionIds?.map((id) => key(id)));

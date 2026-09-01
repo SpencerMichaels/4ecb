@@ -39,6 +39,31 @@ MVP declaration still requires the manual legacy-builder matrix.
   headers, unsupported rules, and the manual legacy application remain
   documented operator/user risks.
 
+### Seven-sample private compatibility correction pass
+
+- A new ignored seven-character corpus exposed three importer/evaluator defects
+  without changing the same-profile golden contract. Power damage contributions
+  now deduplicate by serialized rule-contribution provenance, so one rule seen
+  through overlapping implement/weapon channels applies once while distinct
+  providers remain additive.
+- Cached power variants now match evaluated loadouts by their serialized
+  weapon/magic-item definition set when available. Unknown older records fall
+  back to order-insensitive canonical display tokens; rendered name order is no
+  longer treated as identity. Public synthetic differentials cover Dwarven
+  Thrower, Luckblade, and Foe-Seeking ordering.
+- Legacy race selections nested under a generated Grants subtree are recovered
+  only when the parent race's category leaves exactly one matching descendant.
+  Both observed private cases now have zero unresolved choices; ambiguous
+  structures retain the ordinary required-choice diagnostic.
+- Exact public power fixtures cover Howling Strike's combined `[W]` plus extra
+  die, Knockdown Assault's ability-only damage, and Call of the Beast's deferred
+  conditional damage. Across the seven ignored samples, all seven evaluations
+  converge and complete with zero unresolved choices; numeric cache diagnostics
+  are 464/470 and power cache diagnostics are 354/411. These caches are not
+  known-profile goldens. One power retains explicit `native-special-case` plus
+  `unparsed-hit` diagnostics. All seven regenerated edited exports pass semantic
+  re-import.
+
 ### Companion ability provenance guard
 
 - Recovered power parsing treats `beast's <ability> modifier` as the selected
