@@ -106,8 +106,8 @@ class categories distinguish primary Essentials ancestry from multiclass
 markers while binding Hybrid Class records through their explicit `_BaseClass`.
 Multi-slot choices reject duplicate siblings.
 
-Human/Fighter, Psion, Shaman, and Knight paths complete level 30, while a
-two-component Hybrid path completes level 10. Every path passes persistence,
+Human/Fighter, Psion, Shaman, Knight, and two-component Hybrid paths complete
+level 30. Every path passes persistence,
 authoritative-sheet, and edited-export semantic round-trip gates. Psion and
 Knight have zero diagnostics; Fighter, Shaman, and Hybrid preserve only visible
 `prerequisite.unverified` prose. These are deterministic private-profile

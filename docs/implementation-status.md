@@ -87,10 +87,10 @@ print artifacts, deterministic content checks, and the query benchmark.
   its four findings are preserved `prerequisite.unverified` prose. Human/Knight
   reaches level 30 complete and legal with 50 choices and zero diagnostics,
   exercising the Essentials class-alias and nested future-grant paths. A Hybrid
-  shell with two distinct imported component classes completes heroic levels
-  1–10 with 38 resolved choices and one preserved unverified prerequisite.
-  Broader class/build sampling, epic Hybrid execution, and the named power-math
-  exception families remain open criterion-2/3 evidence.
+  shell with two distinct imported component classes reaches level 30 complete
+  with 68 resolved choices, eight intact retraining links, and two preserved
+  unverified prerequisites. Broader class/build sampling and the named
+  power-math exception families remain open criterion-2/3 evidence.
 
 ### Profile migration preview and explicit adoption
 

@@ -91,8 +91,8 @@ the ordinary `.4ecp` and decrypted/merged-rules file input used by every client.
       The ignored full-profile audit additionally resolves 63 real choices and
       8 retrainings on a Human/Fighter path, equips an item, constructs the
       authoritative sheet, and retains every replacement target through export.
-      Psion, Shaman, and Essentials Knight also complete level 30; a distinct
-      two-component Hybrid completes level 10. All pass persistence, sheet, and
+      Psion, Shaman, Essentials Knight, and a distinct two-component Hybrid also
+      complete level 30. All pass persistence, sheet, and
       edited-export semantic re-import gates, with only explicitly reported
       unverified prerequisites outside the zero-diagnostic Psion/Knight paths.
 - [x] Repository reconstruction, historical database upgrade, checksummed
