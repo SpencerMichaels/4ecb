@@ -8,6 +8,7 @@ import type {
   RulesWorkerRequest,
   RulesWorkerResponse,
 } from "./rules-worker-messages";
+import { contentProfileMatchesRevision } from "./profile-migration";
 
 const worker = self as DedicatedWorkerGlobalScope;
 let entities: readonly ContentEntity[] | undefined;
@@ -24,11 +25,26 @@ async function handle(request: RulesWorkerRequest): Promise<void> {
         throw new Error(
           `Installed content pack ${request.packId} was not found`,
         );
+      if (
+        !contentProfileMatchesRevision(
+          {
+            packId: request.packId,
+            ...(request.contentDigest === undefined
+              ? {}
+              : { contentDigest: request.contentDigest }),
+          },
+          pack.manifest,
+        )
+      )
+        throw new Error(
+          `Installed content pack ${request.packId} no longer matches the bound revision`,
+        );
       entities = pack.entities;
       respond({
         type: "initialized",
         requestId: request.requestId,
         packId: request.packId,
+        contentDigest: pack.manifest.contentDigest,
         recordCount: entities.length,
       });
       break;

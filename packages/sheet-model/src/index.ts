@@ -1,8 +1,15 @@
 import type {
+  CharacterBuild,
   LegacyCharacterSnapshot,
   LegacyPowerSnapshot,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
+import {
+  aggregateInventory,
+  applyFieldOverlays,
+  type EvaluatedCharacter,
+  type EvaluatedPower,
+} from "@4ecb/rules-engine";
 
 export interface SheetValue {
   readonly label: string;
@@ -24,7 +31,7 @@ export interface SheetCard {
 }
 
 export interface CharacterSheetModel {
-  readonly source: "legacy-cache";
+  readonly source: "legacy-cache" | "authoritative-evaluation";
   readonly identity: readonly SheetValue[];
   readonly abilities: readonly SheetValue[];
   readonly defenses: readonly SheetValue[];
@@ -93,6 +100,103 @@ function entityFields(entity: ContentEntity | undefined): SheetValue[] {
         : [{ label: field.name, value: field.value }],
     ) ?? []
   );
+}
+
+function field(entity: ContentEntity | undefined, name: string): string {
+  return (
+    entity?.specifics.find(
+      (specific) =>
+        specific.name.trim().toLocaleLowerCase() ===
+        name.trim().toLocaleLowerCase(),
+    )?.value ?? ""
+  );
+}
+
+function evaluatedStat(
+  evaluation: EvaluatedCharacter,
+  name: string,
+): string | undefined {
+  const exact = evaluation.stats[name];
+  const found =
+    exact ??
+    Object.entries(evaluation.stats).find(
+      ([candidate]) =>
+        candidate.trim().toLocaleLowerCase() ===
+        name.trim().toLocaleLowerCase(),
+    )?.[1];
+  return found === undefined ? undefined : String(found.value);
+}
+
+function signed(value: number): string {
+  return value >= 0 ? `+${value}` : String(value);
+}
+
+function evaluatedPowerCards(
+  power: EvaluatedPower,
+  entity: ContentEntity | undefined,
+  evaluation: EvaluatedCharacter,
+): SheetCard[] {
+  const fields =
+    entity === undefined ? {} : applyFieldOverlays(entity, evaluation.overlays);
+  const commonFields: SheetValue[] = [
+    ...Object.entries(fields)
+      .filter(
+        ([name, value]) =>
+          value.length > 0 &&
+          !["power usage", "action type", "keywords"].includes(
+            name.toLocaleLowerCase(),
+          ),
+      )
+      .map(([label, value]) => ({ label, value })),
+    ...power.recoveries.map((recovery) => ({
+      label: "Recovery",
+      value: recovery.expression,
+    })),
+    ...(power.unsupported.length === 0
+      ? []
+      : [{ label: "Compatibility", value: power.unsupported.join("; ") }]),
+  ];
+  const variants = power.variants.length === 0 ? [undefined] : power.variants;
+  return variants.map((variant) => ({
+    id:
+      variant === undefined
+        ? power.definitionId
+        : `${power.definitionId}:${variant.id}`,
+    kind: "power",
+    name:
+      variant === undefined
+        ? power.name
+        : `${power.name} — ${variant.equipmentName}`,
+    ...(power.usage === undefined ? {} : { usage: power.usage }),
+    ...(power.actionType === undefined ? {} : { actionType: power.actionType }),
+    ...(power.keywords.length === 0
+      ? {}
+      : { keywords: power.keywords.join(", ") }),
+    ...(variant?.attackBonus === undefined
+      ? {}
+      : {
+          attack: `${signed(variant.attackBonus)} vs ${variant.defense ?? "defense"}`,
+        }),
+    ...(variant?.damage === undefined ? {} : { damage: variant.damage }),
+    fields: [
+      ...commonFields,
+      ...(variant?.damageType === undefined
+        ? []
+        : [{ label: "Damage type", value: variant.damageType }]),
+      ...(variant?.critical === undefined
+        ? []
+        : [{ label: "Critical", value: variant.critical }]),
+      ...(variant?.brutal === undefined
+        ? []
+        : [{ label: "Brutal", value: String(variant.brutal) }]),
+    ],
+    ...(entity?.description === undefined || entity.description.length === 0
+      ? {}
+      : { description: entity.description }),
+    ...(entity?.source === undefined || entity.source.length === 0
+      ? {}
+      : { source: entity.source }),
+  }));
 }
 
 function powerCard(
@@ -246,6 +350,198 @@ export function buildSheetModel(
       detail[name] === undefined || detail[name]?.length === 0
         ? []
         : [{ label: name, value: detail[name] ?? "" }],
+    ),
+  };
+}
+
+/** Build a sheet only from a converged rules evaluation and its exact content profile. */
+export function buildEvaluatedSheetModel(
+  snapshot: LegacyCharacterSnapshot,
+  build: CharacterBuild,
+  evaluation: EvaluatedCharacter,
+  content: readonly ContentEntity[],
+): CharacterSheetModel {
+  if (!evaluation.converged)
+    throw new Error("A nonconvergent evaluation cannot produce a sheet");
+
+  const entities = entityMap(content);
+  const active = evaluation.occurrences.flatMap((occurrence) => {
+    const entity = entities.get(occurrence.definitionId.toLocaleLowerCase());
+    return entity === undefined ? [] : [{ occurrence, entity }];
+  });
+  const identityDetails: Record<string, string> = {
+    ...snapshot.details,
+    Level: String(evaluation.level),
+  };
+  for (const [type, detailName] of [
+    ["Race", "Race"],
+    ["Class", "Class"],
+    ["Theme", "Theme"],
+    ["Paragon Path", "ParagonPath"],
+    ["Epic Destiny", "EpicDestiny"],
+  ] as const) {
+    const selected = active.find(
+      ({ entity }) =>
+        entity.type.toLocaleLowerCase() === type.toLocaleLowerCase(),
+    );
+    if (selected !== undefined)
+      identityDetails[detailName] = selected.entity.name;
+  }
+
+  const features = new Map<string, SheetValue[]>();
+  const seenFeatures = new Set<string>();
+  for (const { occurrence, entity } of active) {
+    if (
+      ![
+        "Racial Trait",
+        "Class Feature",
+        "Feat",
+        "Theme",
+        "Background",
+        "Paragon Path",
+        "Epic Destiny",
+        "Language",
+      ].includes(entity.type) ||
+      seenFeatures.has(entity.id)
+    )
+      continue;
+    seenFeatures.add(entity.id);
+    features.set(entity.type, [
+      ...(features.get(entity.type) ?? []),
+      {
+        label: entity.name,
+        value: [
+          occurrence.legality === "houserule" ? "House rule" : "",
+          field(entity, "Short Description") || entity.description,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+      },
+    ]);
+  }
+
+  const inventory = aggregateInventory(
+    build.inventory.map((entry) => ({
+      id: entry.id,
+      ...(entry.name === undefined ? {} : { name: entry.name }),
+      definitionIds: entry.elements.flatMap((element) =>
+        element.definitionId === undefined ? [] : [element.definitionId],
+      ),
+      quantity: entry.quantity,
+      equippedQuantity: entry.equippedQuantity,
+      acquiredLevel: entry.acquiredLevel,
+      overrides: entry.overrides,
+    })),
+    evaluation.level,
+  );
+  const itemCards: SheetCard[] = inventory.flatMap((entry) => {
+    const original = build.inventory.find(
+      (candidate) => candidate.id === entry.id,
+    );
+    if (original?.showPowerCard === false) return [];
+    const entity = [...entry.definitionIds]
+      .reverse()
+      .map((id) => entities.get(id.toLocaleLowerCase()))
+      .find((candidate) => candidate !== undefined);
+    const preservedName = original?.elements
+      .map((element) => element.name)
+      .filter(Boolean)
+      .join(" ");
+    return [
+      {
+        ...(entity === undefined ? {} : { id: entity.id }),
+        kind: "item" as const,
+        name:
+          entry.name ??
+          original?.name ??
+          (preservedName ||
+            entry.definitionIds
+              .map((id) => entities.get(id.toLocaleLowerCase())?.name ?? id)
+              .join(" ")),
+        fields: [
+          { label: "Quantity", value: String(entry.quantity) },
+          ...(entry.equippedQuantity === 0
+            ? []
+            : [
+                {
+                  label: "Equipped",
+                  value: String(entry.equippedQuantity),
+                },
+              ]),
+          ...entityFields(entity),
+        ],
+        ...(entity?.description === undefined || entity.description.length === 0
+          ? {}
+          : { description: entity.description }),
+        ...(entity?.source === undefined || entity.source.length === 0
+          ? {}
+          : { source: entity.source }),
+      },
+    ];
+  });
+
+  const powerCards = evaluation.powers.flatMap((power) =>
+    evaluatedPowerCards(
+      power,
+      entities.get(power.definitionId.toLocaleLowerCase()),
+      evaluation,
+    ),
+  );
+  const evaluatedValues = (names: readonly string[]) =>
+    names.flatMap((name) => {
+      const value = evaluatedStat(evaluation, name);
+      return value === undefined ? [] : [{ label: name, value }];
+    });
+
+  return {
+    source: "authoritative-evaluation",
+    identity: [
+      "name",
+      "Level",
+      "Race",
+      "Class",
+      "ParagonPath",
+      "EpicDestiny",
+      "Player",
+      "Experience",
+      "Company",
+    ].flatMap((name) =>
+      identityDetails[name] === undefined || identityDetails[name]?.length === 0
+        ? []
+        : [{ label: name, value: identityDetails[name] ?? "" }],
+    ),
+    abilities: ABILITIES.flatMap((name) => {
+      const value =
+        evaluatedStat(evaluation, name) ??
+        build.baseAbilities[name] ??
+        snapshot.abilities[name];
+      return value === undefined ? [] : [{ label: name, value: String(value) }];
+    }),
+    defenses: evaluatedValues(["AC", "Fortitude", "Reflex", "Will"]),
+    resources: evaluatedValues([
+      "Hit Points",
+      "Healing Surges",
+      "Healing Surge Value",
+      "Action Point",
+      "Speed",
+      "Initiative",
+    ]),
+    senses: evaluatedValues(["Passive Insight", "Passive Perception"]),
+    skills: evaluatedValues(SKILLS),
+    features: [...features].map(([group, entries]) => ({ group, entries })),
+    powers: powerCards,
+    items: itemCards,
+    notes: [
+      "Traits",
+      "Appearance",
+      "Companions",
+      "Notes",
+      "CarriedMoney",
+      "StoredMoney",
+    ].flatMap((name) =>
+      identityDetails[name] === undefined || identityDetails[name]?.length === 0
+        ? []
+        : [{ label: name, value: identityDetails[name] ?? "" }],
     ),
   };
 }

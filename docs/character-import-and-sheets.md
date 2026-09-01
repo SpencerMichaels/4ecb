@@ -9,8 +9,9 @@ calculations are a modern rules engine. Three packages own the boundary:
   original envelope, and exports it losslessly;
 - `character-domain` defines the versioned browser record and portable native
   backup; and
-- `sheet-model` converts a read snapshot plus optional content entities into
-  renderer-neutral sections and cards.
+- `sheet-model` converts either a converged authoritative evaluation or the
+  preserved read snapshot plus optional content entities into renderer-neutral
+  sections and cards.
 
 React renders the model. It never parses XML or calculates a character value.
 
@@ -33,12 +34,12 @@ build { effectiveLevel, levels, grabbag, inventory, alternates,
 
 The build is authoritative for modern edits. Its level frames preserve nested
 selection history, occurrence IDs, acquisition levels, house-rule markers, and
-replacement links. The snapshot remains an imported legacy cache used for the
-current sheet and parity checks. Existing schema-1 records migrate lazily when
-read. Library title/notes, profile binding, trash state, and sheet preferences
-are native metadata and do not modify the compatibility file. A backup is a
-versioned JSON object containing every active and trashed record, including the
-complete envelope, build, profile references, and settings.
+replacement links. The snapshot remains an imported legacy cache used for
+fallback display and parity checks. Existing schema-1 records migrate lazily
+when read. Library title/notes, profile binding, trash state, and sheet
+preferences are native metadata and do not modify the compatibility file. A
+backup is a versioned JSON object containing every active and trashed record,
+including the complete envelope, build, profile references, and settings.
 
 New native backups use format version 2 with a character count and SHA-256
 payload digest. Restore first presents a non-mutating inspection of active,
@@ -105,6 +106,15 @@ senses, skills, feature groups, notes, inventory, powers, and cards. The browser
 renderer supplies a conservative desktop/tablet layout modeled on the legacy
 sheet's familiar hierarchy, not its proprietary artwork.
 
+When the exact content pack ID and digest bound to the character are installed,
+the sheet runs the authoritative build through the rules worker and projects
+current stats, selections, inventory, field overlays, and every calculated power
+loadout. Worker initialization checks the digest again so a same-ID pack
+replacement cannot race the UI check. A missing/mismatched profile,
+nonconvergence, or evaluation error leaves the original cached sheet visible
+with an explicit legacy-cache warning. Unknown inputs stay absent rather than
+being fabricated as zeroes.
+
 Print mode hides application navigation and warnings, uses an explicit
 three-column grid, prevents breaks inside cards and summary sections, and
 provides Letter and A4 page rules. Blank hit points, card inclusion, and
@@ -120,8 +130,9 @@ workflow; no PDF bytes are stored in the character.
 - The editor handles abilities, level frames, ordinary choices, inventory, and
   undo/redo. Focused replacement picking and choices supplied by newly created
   synthetic grant providers still need their dedicated editing flow.
-- Edited builds do not yet regenerate the semantic sheet snapshot or `.dnd4e`
-  caches; no-edit legacy export remains exact.
+- Edited builds regenerate the semantic browser sheet from a converged exact-
+  profile evaluation. Edited `.dnd4e` cache serialization is still open;
+  no-edit legacy export remains exact.
 - Candidate lists are structurally filtered up front. Full prerequisite
   evaluation currently runs for selected choices, so a newly selected illegal
   option remains editable and is then explained by diagnostics.

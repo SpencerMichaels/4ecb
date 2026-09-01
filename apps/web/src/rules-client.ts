@@ -46,8 +46,12 @@ export class RulesWorkerClient {
     };
   }
 
-  async initialize(packId: string): Promise<void> {
-    const response = await this.#request({ type: "initialize", packId });
+  async initialize(packId: string, contentDigest?: string): Promise<void> {
+    const response = await this.#request({
+      type: "initialize",
+      packId,
+      ...(contentDigest === undefined ? {} : { contentDigest }),
+    });
     if (response.type !== "initialized")
       throw new Error("Unexpected rules-worker initialization response");
   }

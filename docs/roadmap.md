@@ -195,8 +195,10 @@ deliverable is closure of blocking M4 parity findings.
 worker-evaluated preview followed by explicit adoption and add checksummed
 backup inspection, restartable character migration recovery, persistence
 requests, quota diagnostics, an installable offline PWA with explicit update
-prompts, a hardened public Docker boundary, and public-distribution notices. The
-other M5 deliverables and MVP exit criteria remain open.
+prompts, a hardened public Docker boundary, public-distribution notices, and
+exact-profile authoritative browser sheets with a visible legacy-cache fallback.
+Edited export, supported-browser print closure, and the other M5 exit criteria
+remain open.
 
 ### Goal
 

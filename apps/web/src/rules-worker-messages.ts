@@ -10,6 +10,7 @@ export type RulesWorkerRequest =
       readonly type: "initialize";
       readonly requestId: number;
       readonly packId: string;
+      readonly contentDigest?: string;
     }
   | {
       readonly type: "evaluate";
@@ -30,6 +31,7 @@ export type RulesWorkerResponse =
       readonly type: "initialized";
       readonly requestId: number;
       readonly packId: string;
+      readonly contentDigest: string;
       readonly recordCount: number;
     }
   | {

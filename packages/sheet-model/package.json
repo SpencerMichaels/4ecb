@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@4ecb/character-domain": "workspace:*",
-    "@4ecb/content-domain": "workspace:*"
+    "@4ecb/content-domain": "workspace:*",
+    "@4ecb/rules-engine": "workspace:*"
   },
   "devDependencies": {
     "typescript": "catalog:"

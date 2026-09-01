@@ -7,10 +7,18 @@ import {
 import type { CharacterRecord, SheetSettings } from "@4ecb/character-domain";
 import type { ContentPackManifest } from "@4ecb/content-pack";
 import {
+  projectBuildForEvaluation,
+  type EvaluatedCharacter,
+} from "@4ecb/rules-engine";
+import {
+  buildEvaluatedSheetModel,
   buildSheetModel,
   type SheetCard,
   type SheetValue,
 } from "@4ecb/sheet-model";
+
+import { contentProfileMatchesRevision } from "./profile-migration";
+import { RulesWorkerClient } from "./rules-client";
 
 const characters = new CharacterRepository();
 const packs = new ContentPackRepository();
@@ -89,7 +97,15 @@ export function CharacterSheetPage({
   const [content, setContent] =
     useState<Awaited<ReturnType<ContentPackRepository["get"]>>>();
   const [error, setError] = useState<string>();
+  const [evaluationError, setEvaluationError] = useState<string>();
+  const [evaluation, setEvaluation] = useState<EvaluatedCharacter>();
+  const [evaluating, setEvaluating] = useState(false);
   useEffect(() => {
+    setError(undefined);
+    setCharacter(undefined);
+    setContent(undefined);
+    setEvaluation(undefined);
+    setEvaluationError(undefined);
     void characters
       .get(characterId)
       .then(async (loaded) => {
@@ -101,16 +117,66 @@ export function CharacterSheetPage({
         setError(reason instanceof Error ? reason.message : String(reason)),
       );
   }, [characterId]);
+  const exactProfile = contentProfileMatchesRevision(
+    character?.profileBinding,
+    content?.manifest,
+  );
+  useEffect(() => {
+    if (character === undefined || content === undefined || !exactProfile)
+      return;
+    const client = new RulesWorkerClient();
+    let cancelled = false;
+    setEvaluating(true);
+    setEvaluation(undefined);
+    setEvaluationError(undefined);
+    void client
+      .initialize(
+        content.manifest.packId,
+        character.profileBinding?.contentDigest,
+      )
+      .then(() =>
+        client.evaluate(
+          projectBuildForEvaluation(character.build, content.entities),
+        ),
+      )
+      .then((result) => {
+        if (cancelled) return;
+        if (!result.converged) {
+          setEvaluationError(
+            "The rules engine did not converge, so the legacy cached sheet remains visible.",
+          );
+          return;
+        }
+        setEvaluation(result);
+      })
+      .catch((reason: unknown) => {
+        if (!cancelled)
+          setEvaluationError(
+            reason instanceof Error ? reason.message : String(reason),
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setEvaluating(false);
+      });
+    return () => {
+      cancelled = true;
+      client.terminate();
+    };
+  }, [character?.build, content, exactProfile]);
   const model = useMemo(() => {
     if (character === undefined) return undefined;
-    const expectedDigest = character.profileBinding?.contentDigest;
-    const matchingContent =
-      expectedDigest === undefined ||
-      content?.manifest.contentDigest === expectedDigest
-        ? (content?.entities ?? [])
-        : [];
-    return buildSheetModel(character.snapshot, matchingContent);
-  }, [character, content]);
+    return evaluation !== undefined && content !== undefined && exactProfile
+      ? buildEvaluatedSheetModel(
+          character.snapshot,
+          character.build,
+          evaluation,
+          content.entities,
+        )
+      : buildSheetModel(
+          character.snapshot,
+          exactProfile ? content?.entities : undefined,
+        );
+  }, [character, content, evaluation, exactProfile]);
   if (error !== undefined)
     return (
       <main className="sheet-page" id="main-content">
@@ -216,19 +282,41 @@ export function CharacterSheetPage({
           </button>
         </fieldset>
       </div>
-      <aside className="cache-warning">
-        <strong>Legacy cached calculations.</strong> Values shown here were
-        computed by the original builder and have not yet been recalculated by
-        the modern rules engine.{" "}
-        {character.profileBinding === undefined
-          ? "No content profile is bound, so card rules text may be limited."
-          : boundManifest === undefined
-            ? `The bound content profile (${character.profileBinding.packId}) is missing; re-import it to restore full card text.`
-            : profileMismatch
-              ? `The installed ${boundManifest.name} revision differs from the one bound to this character; rebind it in the library before relying on enriched card text.`
-              : content === undefined
-                ? "Loading card text from the bound profile…"
-                : `Card text is enriched from ${boundManifest.name}.`}
+      <aside
+        className={
+          model.source === "authoritative-evaluation"
+            ? "status"
+            : "cache-warning"
+        }
+        aria-live="polite"
+      >
+        {model.source === "authoritative-evaluation" &&
+        evaluation !== undefined ? (
+          <>
+            <strong>Authoritative rules evaluation.</strong> Values, selections,
+            inventory, and power variants were regenerated from the exact bound
+            profile. The character is{" "}
+            {evaluation.complete ? "complete" : "incomplete"}
+            {" and "}
+            {evaluation.legal ? "rules legal" : "has legality findings"}.
+          </>
+        ) : (
+          <>
+            <strong>Legacy cached calculations.</strong> Values shown here were
+            computed by the original builder because an exact modern evaluation
+            is not available.{" "}
+            {character.profileBinding === undefined
+              ? "No content profile is bound, so card rules text may be limited."
+              : boundManifest === undefined
+                ? `The bound content profile (${character.profileBinding.packId}) is missing; re-import it to restore evaluation and full card text.`
+                : profileMismatch
+                  ? `The installed ${boundManifest.name} revision differs from the one bound to this character; preview and adopt it in the library before evaluation.`
+                  : evaluating
+                    ? "The rules engine is evaluating the bound profile…"
+                    : (evaluationError ??
+                      `The exact ${boundManifest.name} profile is installed, but evaluation is not available.`)}
+          </>
+        )}
       </aside>
       <article className="print-sheet summary-sheet">
         <header className="sheet-title">

@@ -248,7 +248,7 @@ export function CharacterEditorPage({
     rulesClient.current = client;
     let cancelled = false;
     void client
-      .initialize(packId)
+      .initialize(packId, character?.profileBinding?.contentDigest)
       .then(() => {
         if (!cancelled) setReadyPackId(packId);
       })
@@ -261,7 +261,7 @@ export function CharacterEditorPage({
       client.terminate();
       if (rulesClient.current === client) rulesClient.current = undefined;
     };
-  }, [packId]);
+  }, [character?.profileBinding?.contentDigest, packId]);
 
   const build = transaction.current?.current;
   const byId = useMemo(

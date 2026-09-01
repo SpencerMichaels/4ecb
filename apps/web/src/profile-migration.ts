@@ -19,3 +19,16 @@ export function previewMatchesTargetRevision(
     previewRevision === contentProfileRevisionKey(target)
   );
 }
+
+export function contentProfileMatchesRevision(
+  binding: ContentProfileRevision | undefined,
+  installed: ContentProfileRevision | undefined,
+): boolean {
+  return (
+    binding !== undefined &&
+    installed !== undefined &&
+    binding.packId === installed.packId &&
+    (binding.contentDigest === undefined ||
+      binding.contentDigest === installed.contentDigest)
+  );
+}

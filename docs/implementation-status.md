@@ -9,8 +9,8 @@ MVP readiness. M5 is in progress. Profile migration preview and explicit
 adoption are implemented; blocker closure, edited legacy export, finished
 printing, remaining storage upgrade/restart matrices, onboarding, and
 public-release verification remain open. The installable PWA, update/offline UX,
-public-distribution boundary, and production Docker guide are verified
-checkpoints, not an MVP declaration.
+public-distribution boundary, production Docker guide, and authoritative
+exact-profile browser sheet are verified checkpoints, not an MVP declaration.
 
 ## M5 checkpoints
 
@@ -109,6 +109,35 @@ read-only with a bounded temporary filesystem. Supported-browser critical-flow,
 accessibility, security, and performance release matrices remain open M5 exit
 criteria. The checkpoint public suite passes 102 tests across 24 files plus
 formatting, ESLint, every TypeScript project, the production/PWA build,
+deterministic content checks, and the query benchmark.
+
+### Authoritative browser sheet with recoverable fallback
+
+- `sheet-model` now projects a converged `EvaluatedCharacter` into identity,
+  current ability/stat sections, selected feature groups, aggregated inventory,
+  item cards, and every evaluated power/equipment variant. Field overlays and
+  current content prose feed the cards; the legacy snapshot remains a separate
+  fallback input.
+- The sheet evaluates in the rules worker only when the installed pack ID and
+  digest match the character binding. Worker initialization repeats the digest
+  assertion so a same-ID pack replacement cannot be evaluated after an earlier
+  UI check.
+- Missing or mismatched content, nonconvergence, and worker errors retain the
+  imported sheet cache with an explicit warning. Sparse preserved characters do
+  not gain fabricated zero-valued abilities.
+- The existing Letter/A4, blank-hit-point, monochrome, power-card, item-card,
+  and browser-print controls now operate on the authoritative model when that
+  model is available. Supported-browser pagination goldens remain open.
+
+Focused tests cover current engine stats over stale cached values, identity
+updates, evaluated weapon variants, authoritative inventory cards,
+nonconvergence rejection, sparse-value preservation, and exact revision gating.
+A live Chromium run opened the public synthetic character against its exact
+bound digest, displayed the authoritative evaluation state and regenerated
+inventory, omitted unknown abilities instead of showing zeroes, and produced no
+console warnings or errors. The full public-suite result is recorded with the
+checkpoint commit: 105 tests across 24 files plus formatting, ESLint, every
+TypeScript project, the production/PWA build and cache-boundary assertion,
 deterministic content checks, and the query benchmark.
 
 ## M4 delivered

@@ -375,6 +375,12 @@ cards[]
 renderWarnings[]
 ```
 
+The current sheet route evaluates the authoritative build in the rules worker
+only when the installed pack matches the character's bound ID and digest. The
+worker repeats that revision check at initialization. Missing, mismatched, or
+nonconvergent inputs use the preserved legacy snapshot as a clearly labeled
+recovery view; they never mix cached and newly calculated values silently.
+
 Reference-card models contain semantic labeled fields, not preformatted HTML.
 One visual card component supports:
 
