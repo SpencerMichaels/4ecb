@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   CharacterRepository,
+  ContentPackRepository,
   type CharacterBackupInspection,
 } from "@4ecb/browser-storage";
 import {
@@ -10,20 +11,29 @@ import {
 } from "@4ecb/character-domain";
 import type { ContentPackManifest } from "@4ecb/content-pack";
 import {
+  compareEditedDnd4eRoundTrip,
   comparePreservation,
+  DND4E_EXPORT_TARGETS,
   exportDnd4e,
+  exportEditedDnd4e,
   importDnd4e,
+  type Dnd4eExportTarget,
   type Dnd4eImportReport,
 } from "@4ecb/legacy-dnd4e";
-import type { ProfileMigrationPreview } from "@4ecb/rules-engine";
+import {
+  projectBuildForEvaluation,
+  type ProfileMigrationPreview,
+} from "@4ecb/rules-engine";
 
 import {
+  contentProfileMatchesRevision,
   contentProfileRevisionKey,
   previewMatchesTargetRevision,
 } from "./profile-migration";
 import { RulesWorkerClient } from "./rules-client";
 
 const repository = new CharacterRepository();
+const contentRepository = new ContentPackRepository();
 
 function ProfileMigrationControl({
   character,
@@ -237,6 +247,9 @@ export function CharacterLibraryPage({
   const [status, setStatus] = useState("Loading character library…");
   const [error, setError] = useState<string>();
   const [report, setReport] = useState<Dnd4eImportReport>();
+  const [exportTargets, setExportTargets] = useState<
+    Readonly<Record<string, Dnd4eExportTarget>>
+  >({});
   const [pendingBackup, setPendingBackup] = useState<{
     readonly value: unknown;
     readonly inspection: CharacterBackupInspection;
@@ -303,25 +316,75 @@ export function CharacterLibraryPage({
     setStatus("Library details saved.");
   }
 
-  async function exportCharacter(character: CharacterRecord): Promise<void> {
-    const xml = exportDnd4e(character.legacy);
-    const reimported = importDnd4e(xml);
-    const preservation = comparePreservation(
-      character.legacy.sourceXml,
-      reimported.envelope.sourceXml,
-    );
-    if (!preservation.identical)
-      throw new Error(
-        `Preservation check failed at character ${preservation.firstDifference ?? 0}`,
+  async function exportCharacter(
+    character: CharacterRecord,
+    target: Dnd4eExportTarget,
+  ): Promise<void> {
+    let xml: string;
+    let message: string;
+    if (target === "preserve-original") {
+      xml = exportDnd4e(character.legacy);
+      const reimported = importDnd4e(xml);
+      const preservation = comparePreservation(
+        character.legacy.sourceXml,
+        reimported.envelope.sourceXml,
       );
+      if (!preservation.identical)
+        throw new Error(
+          `Preservation check failed at character ${preservation.firstDifference ?? 0}`,
+        );
+      message =
+        "Exported the original imported file byte-for-byte. Local build edits are intentionally excluded.";
+    } else {
+      const binding = character.profileBinding;
+      if (binding?.contentDigest === undefined)
+        throw new Error(
+          "Edited export requires an adopted content profile revision. Preview and adopt an installed revision first.",
+        );
+      const pack = await contentRepository.get(binding.packId);
+      if (
+        pack === undefined ||
+        !contentProfileMatchesRevision(binding, pack.manifest)
+      )
+        throw new Error(
+          "Edited export requires the exact content profile revision bound to this character.",
+        );
+      const client = new RulesWorkerClient();
+      try {
+        await client.initialize(binding.packId, binding.contentDigest);
+        const evaluation = await client.evaluate(
+          projectBuildForEvaluation(character.build, pack.entities),
+        );
+        xml = exportEditedDnd4e({
+          target,
+          envelope: character.legacy,
+          snapshot: character.snapshot,
+          build: character.build,
+          evaluation,
+          content: pack.entities,
+        });
+        const reimported = importDnd4e(xml);
+        const comparison = compareEditedDnd4eRoundTrip(
+          character.build,
+          reimported.build,
+        );
+        if (!comparison.equivalent)
+          throw new Error(
+            `Edited export re-import check failed: ${comparison.differences.join(" ")}`,
+          );
+        message = evaluation.complete
+          ? "Exported edited state for Legacy Character Builder 0.07a; semantic re-import check passed."
+          : "Exported incomplete edited state for Legacy Character Builder 0.07a; semantic re-import check passed.";
+      } finally {
+        client.terminate();
+      }
+    }
     download(
       `${character.title.replace(/[^a-z0-9_-]+/gi, "-")}.dnd4e`,
       xml,
       "application/xml",
     );
-    setStatus(
-      "Exported the preserved legacy file; re-import preservation check passed.",
-    );
+    setStatus(message);
   }
 
   async function exportBackup(): Promise<void> {
@@ -606,10 +669,33 @@ export function CharacterLibraryPage({
                   >
                     View sheet
                   </a>
+                  <label>
+                    Export target
+                    <select
+                      value={exportTargets[character.id] ?? "preserve-original"}
+                      onChange={(event) => {
+                        const target = event.currentTarget
+                          .value as Dnd4eExportTarget;
+                        setExportTargets((current) => ({
+                          ...current,
+                          [character.id]: target,
+                        }));
+                      }}
+                    >
+                      {DND4E_EXPORT_TARGETS.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <button
                     type="button"
                     onClick={() =>
-                      void exportCharacter(character).catch((reason: unknown) =>
+                      void exportCharacter(
+                        character,
+                        exportTargets[character.id] ?? "preserve-original",
+                      ).catch((reason: unknown) =>
                         setError(
                           reason instanceof Error
                             ? reason.message

@@ -197,8 +197,9 @@ backup inspection, restartable character migration recovery, persistence
 requests, quota diagnostics, an installable offline PWA with explicit update
 prompts, a hardened public Docker boundary, public-distribution notices, and
 exact-profile authoritative browser sheets with a visible legacy-cache fallback.
-Edited export, supported-browser print closure, and the other M5 exit criteria
-remain open.
+Edited export now has explicit byte-preserving and 0.07a regenerated targets
+with a semantic re-import gate. The original-application launch matrix,
+supported-browser print closure, and the other M5 exit criteria remain open.
 
 ### Goal
 

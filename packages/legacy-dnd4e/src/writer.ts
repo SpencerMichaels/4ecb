@@ -1,0 +1,723 @@
+import type {
+  BuildElementIdentity,
+  BuildInventoryEntry,
+  BuildOccurrence,
+  CharacterBuild,
+  LegacyCharacterSnapshot,
+  LegacyEnvelope,
+} from "@4ecb/character-domain";
+import type { ContentEntity } from "@4ecb/content-domain";
+import {
+  aggregateInventory,
+  applyFieldOverlays,
+  projectBuildForEvaluation,
+  type EvaluatedCharacter,
+} from "@4ecb/rules-engine";
+import { SaxesParser } from "saxes";
+
+export const DND4E_EXPORT_TARGETS = [
+  {
+    id: "preserve-original",
+    label: "Original imported file (no edits)",
+  },
+  {
+    id: "legacy-builder-0.07a",
+    label: "Legacy Character Builder 0.07a",
+  },
+] as const;
+
+export type Dnd4eExportTarget = (typeof DND4E_EXPORT_TARGETS)[number]["id"];
+
+export interface EditedDnd4eExportInput {
+  readonly target: "legacy-builder-0.07a";
+  readonly envelope: LegacyEnvelope;
+  readonly snapshot: LegacyCharacterSnapshot;
+  readonly build: CharacterBuild;
+  readonly evaluation: EvaluatedCharacter;
+  readonly content: readonly ContentEntity[];
+}
+
+export interface Dnd4eRoundTripComparison {
+  readonly equivalent: boolean;
+  readonly differences: readonly string[];
+}
+
+interface XmlNode {
+  readonly name: string;
+  readonly attributes: Readonly<Record<string, string>>;
+  readonly children: XmlNode[];
+  text: string;
+}
+
+interface RootFragment {
+  readonly name: string;
+  readonly raw: string;
+}
+
+const ABILITIES = [
+  "Strength",
+  "Constitution",
+  "Dexterity",
+  "Intelligence",
+  "Wisdom",
+  "Charisma",
+] as const;
+
+function key(value: string): string {
+  return value.trim().toLocaleLowerCase();
+}
+
+function xmlSafe(value: string): string {
+  for (const character of value) {
+    const point = character.codePointAt(0) ?? 0;
+    if (
+      point !== 0x9 &&
+      point !== 0xa &&
+      point !== 0xd &&
+      !(point >= 0x20 && point <= 0xd7ff) &&
+      !(point >= 0xe000 && point <= 0xfffd) &&
+      !(point >= 0x10000 && point <= 0x10ffff)
+    )
+      throw new Error("Edited export contains an invalid XML 1.0 character");
+  }
+  return value;
+}
+
+function escapeText(value: string): string {
+  return xmlSafe(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+function escapeAttribute(value: string): string {
+  return escapeText(value).replaceAll('"', "&quot;").replaceAll("'", "&apos;");
+}
+
+function attributes(
+  values: Readonly<Record<string, string | number | undefined>>,
+): string {
+  return Object.entries(values)
+    .flatMap(([name, value]) =>
+      value === undefined
+        ? []
+        : [` ${name}="${escapeAttribute(String(value))}"`],
+    )
+    .join("");
+}
+
+function element(
+  name: string,
+  values: Readonly<Record<string, string | number | undefined>> = {},
+  contents = "",
+): string {
+  const attrs = attributes(values);
+  return contents.length === 0
+    ? `<${name}${attrs}/>`
+    : `<${name}${attrs}>${contents}</${name}>`;
+}
+
+function parseTree(xml: string): XmlNode {
+  const stack: XmlNode[] = [];
+  let root: XmlNode | undefined;
+  const parser = new SaxesParser({ xmlns: false });
+  parser.on("opentag", (tag) => {
+    const node: XmlNode = {
+      name: tag.name,
+      attributes: Object.fromEntries(Object.entries(tag.attributes)),
+      children: [],
+      text: "",
+    };
+    const parent = stack.at(-1);
+    if (parent === undefined) root = node;
+    else parent.children.push(node);
+    stack.push(node);
+  });
+  const append = (value: string) => {
+    const node = stack.at(-1);
+    if (node !== undefined) node.text += value;
+  };
+  parser.on("text", append);
+  parser.on("cdata", append);
+  parser.on("closetag", () => stack.pop());
+  parser.write(xml).close();
+  if (root === undefined)
+    throw new Error("The source envelope has no XML root element");
+  return root;
+}
+
+/** Extracts direct children so preserved extension payload stays byte-exact. */
+function childFragments(source: string, parentName: string): RootFragment[] {
+  const xml = source.startsWith("\uFEFF") ? source.slice(1) : source;
+  const fragments: RootFragment[] = [];
+  let depth = 0;
+  let parentDepth: number | undefined;
+  let openingParent = false;
+  let childStart: number | undefined;
+  let childName: string | undefined;
+  const parser = new SaxesParser({ xmlns: false });
+  parser.on("opentagstart", (tag) => {
+    openingParent =
+      parentDepth === undefined && key(tag.name) === key(parentName);
+    if (parentDepth !== undefined && depth === parentDepth) {
+      childStart = xml.lastIndexOf("<", parser.position - 1);
+      childName = tag.name;
+    }
+  });
+  parser.on("opentag", () => {
+    depth += 1;
+    if (openingParent) {
+      parentDepth = depth;
+      openingParent = false;
+    }
+  });
+  parser.on("closetag", () => {
+    if (
+      parentDepth !== undefined &&
+      depth === parentDepth + 1 &&
+      childStart !== undefined &&
+      childName !== undefined
+    ) {
+      fragments.push({
+        name: childName,
+        raw: xml.slice(childStart, parser.position),
+      });
+      childStart = undefined;
+      childName = undefined;
+    }
+    if (parentDepth !== undefined && depth === parentDepth)
+      parentDepth = undefined;
+    depth -= 1;
+  });
+  parser.write(xml).close();
+  return fragments;
+}
+
+function identityAttributes(
+  identity: BuildElementIdentity,
+): Record<string, string | undefined> {
+  return {
+    name: identity.name,
+    type: identity.type,
+    "internal-id": identity.definitionId,
+    url: identity.url,
+  };
+}
+
+function allOccurrences(build: CharacterBuild): BuildOccurrence[] {
+  const result: BuildOccurrence[] = [];
+  const visit = (occurrence: BuildOccurrence) => {
+    result.push(occurrence);
+    occurrence.children.forEach(visit);
+  };
+  build.levels.forEach((frame) => visit(frame.root));
+  build.grabbag.forEach(visit);
+  build.alternates.forEach((alternate) => visit(alternate.choice));
+  return result;
+}
+
+function occurrencePaths(build: CharacterBuild): ReadonlyMap<string, string> {
+  const result = new Map<string, string>();
+  const visit = (occurrence: BuildOccurrence, path: string) => {
+    result.set(occurrence.id, path);
+    occurrence.children.forEach((child, index) =>
+      visit(child, `${path}.children[${index}]`),
+    );
+  };
+  build.levels.forEach((frame, index) =>
+    visit(frame.root, `levels[${index}].root`),
+  );
+  build.grabbag.forEach((occurrence, index) =>
+    visit(occurrence, `grabbag[${index}]`),
+  );
+  build.alternates.forEach((alternate, index) =>
+    visit(alternate.choice, `alternates[${index}].choice`),
+  );
+  return result;
+}
+
+function sortedRecord<T>(record: Readonly<Record<string, T>>): [string, T][] {
+  return Object.entries(record).sort(([left], [right]) =>
+    left.localeCompare(right),
+  );
+}
+
+function semanticBuild(build: CharacterBuild): unknown {
+  const paths = occurrencePaths(build);
+  const occurrence = (value: BuildOccurrence): unknown => ({
+    identity: value.identity,
+    acquiredLevel: value.acquiredLevel,
+    legality: value.legality,
+    ...(value.replacesId === undefined
+      ? {}
+      : { replacesPath: paths.get(value.replacesId) ?? "unresolved" }),
+    unresolved: value.unresolved,
+    children: value.children.map(occurrence),
+  });
+  return {
+    formatVersion: build.formatVersion,
+    effectiveLevel: build.effectiveLevel,
+    levels: build.levels.map((frame) => ({
+      level: frame.level,
+      root: occurrence(frame.root),
+    })),
+    grabbag: build.grabbag.map(occurrence),
+    inventory: build.inventory.map((entry) => ({
+      acquiredLevel: entry.acquiredLevel,
+      quantity: entry.quantity,
+      equippedQuantity: entry.equippedQuantity,
+      elements: entry.elements,
+      ...(entry.name === undefined ? {} : { name: entry.name }),
+      ...(entry.showPowerCard === undefined
+        ? {}
+        : { showPowerCard: entry.showPowerCard }),
+      overrides: sortedRecord(entry.overrides),
+      legality: entry.legality,
+    })),
+    alternates: build.alternates.map((alternate) => ({
+      selectName: alternate.selectName,
+      provider: alternate.provider,
+      choice: occurrence(alternate.choice),
+    })),
+    baseAbilities: sortedRecord(build.baseAbilities),
+    textStrings: sortedRecord(build.textStrings),
+  };
+}
+
+/** Compares build meaning while deliberately ignoring regenerated local IDs. */
+export function compareEditedDnd4eRoundTrip(
+  expected: CharacterBuild,
+  actual: CharacterBuild,
+): Dnd4eRoundTripComparison {
+  const before = JSON.stringify(semanticBuild(expected));
+  const after = JSON.stringify(semanticBuild(actual));
+  return before === after
+    ? { equivalent: true, differences: [] }
+    : {
+        equivalent: false,
+        differences: [
+          "The re-imported level, selection, replacement, inventory, alternate, ability, or text structure differs from the edited build.",
+        ],
+      };
+}
+
+function occurrenceTokens(build: CharacterBuild): Map<string, string> {
+  const result = new Map<string, string>();
+  for (const [index, occurrence] of allOccurrences(build).entries()) {
+    if (result.has(occurrence.id))
+      throw new Error(
+        `Duplicate occurrence ID cannot be exported: ${occurrence.id}`,
+      );
+    result.set(occurrence.id, `4ecb-${index + 1}`);
+  }
+  return result;
+}
+
+function serializeOccurrence(
+  occurrence: BuildOccurrence,
+  tokens: ReadonlyMap<string, string>,
+): string {
+  const token = tokens.get(occurrence.id);
+  if (token === undefined)
+    throw new Error(`Missing export token for occurrence ${occurrence.id}`);
+  const replacement =
+    occurrence.replacesId === undefined
+      ? undefined
+      : tokens.get(occurrence.replacesId);
+  return element(
+    "RulesElement",
+    {
+      ...identityAttributes(occurrence.identity),
+      charelem: token,
+      ...(replacement === undefined ? {} : { replaces: replacement }),
+      legality: occurrence.legality === "rules-legal" ? undefined : "houserule",
+    },
+    occurrence.children
+      .map((child) => serializeOccurrence(child, tokens))
+      .join(""),
+  );
+}
+
+function serializeInventory(entry: BuildInventoryEntry): string {
+  const reserved = new Set([
+    "count",
+    "equip-count",
+    "name",
+    "showpowercard",
+    "legality",
+  ]);
+  const overrides = Object.fromEntries(
+    Object.entries(entry.overrides).filter(
+      ([name]) =>
+        /^[A-Za-z_][A-Za-z0-9_.:-]*$/.test(name) && !reserved.has(key(name)),
+    ),
+  );
+  return element(
+    "loot",
+    {
+      count: entry.quantity,
+      "equip-count": entry.equippedQuantity,
+      name: entry.name,
+      ShowPowerCard:
+        entry.showPowerCard === undefined
+          ? undefined
+          : entry.showPowerCard
+            ? "1"
+            : "0",
+      legality: entry.legality === "rules-legal" ? undefined : "houserule",
+      ...overrides,
+    },
+    entry.elements
+      .map((identity) => element("RulesElement", identityAttributes(identity)))
+      .join(""),
+  );
+}
+
+function levelXml(build: CharacterBuild, tokens: ReadonlyMap<string, string>) {
+  return build.levels.map((frame) =>
+    element(
+      "Level",
+      {},
+      `${serializeOccurrence(frame.root, tokens)}${build.inventory
+        .filter((entry) => entry.acquiredLevel === frame.level)
+        .map(serializeInventory)
+        .join("")}`,
+    ),
+  );
+}
+
+function grabbagXml(
+  build: CharacterBuild,
+  tokens: ReadonlyMap<string, string>,
+): string {
+  return build.grabbag.length === 0
+    ? ""
+    : element(
+        "Grabbag",
+        {},
+        build.grabbag
+          .map((occurrence) => serializeOccurrence(occurrence, tokens))
+          .join(""),
+      );
+}
+
+function alternatesXml(
+  build: CharacterBuild,
+  tokens: ReadonlyMap<string, string>,
+): string[] {
+  return build.alternates.map((alternate) =>
+    element(
+      "alternate",
+      {
+        SelectName: alternate.selectName,
+        ...identityAttributes(alternate.provider),
+      },
+      serializeOccurrence(alternate.choice, tokens),
+    ),
+  );
+}
+
+function evaluatedValue(
+  evaluation: EvaluatedCharacter,
+  name: string,
+): string | undefined {
+  const stat =
+    evaluation.stats[name] ??
+    Object.entries(evaluation.stats).find(
+      ([candidate]) => key(candidate) === key(name),
+    )?.[1];
+  return stat === undefined ? undefined : String(stat.value);
+}
+
+function contentMap(content: readonly ContentEntity[]) {
+  return new Map(content.map((entity) => [key(entity.id), entity]));
+}
+
+function detailsXml(
+  snapshot: LegacyCharacterSnapshot,
+  evaluation: EvaluatedCharacter,
+  entities: ReadonlyMap<string, ContentEntity>,
+): string {
+  const details: Record<string, string> = {
+    ...snapshot.details,
+    Level: String(evaluation.level),
+  };
+  for (const [type, detail] of [
+    ["Race", "Race"],
+    ["Class", "Class"],
+    ["Theme", "Theme"],
+    ["Paragon Path", "ParagonPath"],
+    ["Epic Destiny", "EpicDestiny"],
+  ] as const) {
+    const selected = evaluation.occurrences
+      .map((occurrence) => entities.get(key(occurrence.definitionId)))
+      .find((entity) => entity !== undefined && key(entity.type) === key(type));
+    if (selected !== undefined) details[detail] = selected.name;
+  }
+  return element(
+    "Details",
+    {},
+    Object.entries(details)
+      .map(([name, value]) => element(name, {}, escapeText(value)))
+      .join(""),
+  );
+}
+
+function abilityScoresXml(
+  snapshot: LegacyCharacterSnapshot,
+  build: CharacterBuild,
+  evaluation: EvaluatedCharacter,
+): string {
+  return element(
+    "AbilityScores",
+    {},
+    ABILITIES.flatMap((ability) => {
+      const score =
+        evaluatedValue(evaluation, ability) ??
+        build.baseAbilities[ability] ??
+        snapshot.abilities[ability];
+      return score === undefined
+        ? []
+        : [element(ability, { score: String(score) })];
+    }).join(""),
+  );
+}
+
+function statBlockXml(evaluation: EvaluatedCharacter): string {
+  return element(
+    "StatBlock",
+    {},
+    Object.entries(evaluation.stats)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([name, stat]) =>
+        element(
+          "Stat",
+          { value: String(stat.value) },
+          element("alias", { name }),
+        ),
+      )
+      .join(""),
+  );
+}
+
+function ruleTallyXml(
+  evaluation: EvaluatedCharacter,
+  entities: ReadonlyMap<string, ContentEntity>,
+): string {
+  return element(
+    "RulesElementTally",
+    {},
+    evaluation.occurrences
+      .flatMap((occurrence) => {
+        const entity = entities.get(key(occurrence.definitionId));
+        if (entity === undefined) return [];
+        const fields = applyFieldOverlays(entity, evaluation.overlays);
+        return [
+          element(
+            "RulesElement",
+            {
+              name: entity.name,
+              type: entity.type,
+              "internal-id": entity.id,
+              legality:
+                occurrence.legality === "rules-legal" ? undefined : "houserule",
+            },
+            Object.entries(fields)
+              .map(([name, value]) =>
+                element("specific", { name }, escapeText(value)),
+              )
+              .join(""),
+          ),
+        ];
+      })
+      .join(""),
+  );
+}
+
+function activeInventory(
+  build: CharacterBuild,
+): readonly BuildInventoryEntry[] {
+  const projected = projectBuildForEvaluation(build, []);
+  const aggregated = aggregateInventory(
+    projected.inventory,
+    build.effectiveLevel,
+  );
+  return aggregated.flatMap((entry) => {
+    const original = build.inventory.find(
+      (candidate) => candidate.id === entry.id,
+    );
+    return original === undefined
+      ? []
+      : [
+          {
+            ...original,
+            quantity: entry.quantity,
+            equippedQuantity: entry.equippedQuantity,
+          },
+        ];
+  });
+}
+
+function lootTallyXml(build: CharacterBuild): string {
+  return element(
+    "LootTally",
+    {},
+    activeInventory(build).map(serializeInventory).join(""),
+  );
+}
+
+function powerStatsXml(evaluation: EvaluatedCharacter): string {
+  return element(
+    "PowerStats",
+    {},
+    evaluation.powers
+      .map((power) =>
+        element(
+          "Power",
+          { name: power.name },
+          `${power.usage === undefined ? "" : element("specific", { name: "Power Usage" }, escapeText(power.usage))}${
+            power.actionType === undefined
+              ? ""
+              : element(
+                  "specific",
+                  { name: "Action Type" },
+                  escapeText(power.actionType),
+                )
+          }${power.variants
+            .map((variant) =>
+              element(
+                "Weapon",
+                { name: variant.equipmentName },
+                `${variant.attackBonus === undefined ? "" : element("AttackBonus", {}, escapeText(String(variant.attackBonus)))}${
+                  variant.damage === undefined
+                    ? ""
+                    : element("Damage", {}, escapeText(variant.damage))
+                }${
+                  variant.attackStat === undefined
+                    ? ""
+                    : element("AttackStat", {}, escapeText(variant.attackStat))
+                }${
+                  variant.defense === undefined
+                    ? ""
+                    : element("Defense", {}, escapeText(variant.defense))
+                }${
+                  variant.attackComponents.length === 0
+                    ? ""
+                    : element(
+                        "HitComponents",
+                        {},
+                        escapeText(
+                          variant.attackComponents
+                            .map((part) => `${part.label} ${part.value}`)
+                            .join(" + "),
+                        ),
+                      )
+                }${
+                  variant.damageComponents.length === 0
+                    ? ""
+                    : element(
+                        "DamageComponents",
+                        {},
+                        escapeText(
+                          variant.damageComponents
+                            .map((part) => `${part.label} ${part.value}`)
+                            .join(" + "),
+                        ),
+                      )
+                }`,
+              ),
+            )
+            .join("")}`,
+        ),
+      )
+      .join(""),
+  );
+}
+
+function characterSheetXml(input: EditedDnd4eExportInput): string {
+  const entities = contentMap(input.content);
+  const regenerated = new Set([
+    "details",
+    "abilityscores",
+    "statblock",
+    "ruleselementtally",
+    "loottally",
+    "powerstats",
+  ]);
+  const preserved = childFragments(input.envelope.sourceXml, "CharacterSheet")
+    .filter((fragment) => !regenerated.has(key(fragment.name)))
+    .map((fragment) => fragment.raw)
+    .join("");
+  return element(
+    "CharacterSheet",
+    {},
+    `${detailsXml(input.snapshot, input.evaluation, entities)}${abilityScoresXml(
+      input.snapshot,
+      input.build,
+      input.evaluation,
+    )}${statBlockXml(input.evaluation)}${ruleTallyXml(
+      input.evaluation,
+      entities,
+    )}${lootTallyXml(input.build)}${powerStatsXml(input.evaluation)}${preserved}`,
+  );
+}
+
+export function exportEditedDnd4e(input: EditedDnd4eExportInput): string {
+  if (input.target !== "legacy-builder-0.07a")
+    throw new Error(
+      `Unsupported edited export target: ${String(input.target)}`,
+    );
+  if (!input.evaluation.converged)
+    throw new Error("Edited export requires a converged rules evaluation");
+  if (input.evaluation.level !== input.build.effectiveLevel)
+    throw new Error("Edited export evaluation does not match the build level");
+  if (input.build.effectiveLevel !== input.build.levels.length)
+    throw new Error(
+      "Legacy Builder export requires the evaluation horizon to be the latest level",
+    );
+
+  const sourceXml = input.envelope.sourceXml.startsWith("\uFEFF")
+    ? input.envelope.sourceXml.slice(1)
+    : input.envelope.sourceXml;
+  const sourceRoot = parseTree(sourceXml);
+  if (key(sourceRoot.name) !== "d20character")
+    throw new Error(`Expected D20Character root but found ${sourceRoot.name}`);
+
+  const replaced = new Set([
+    "level",
+    "grabbag",
+    "alternate",
+    "textstring",
+    "charactersheet",
+  ]);
+  const preserved = childFragments(sourceXml, "D20Character")
+    .filter((fragment) => !replaced.has(key(fragment.name)))
+    .map((fragment) => fragment.raw);
+  const tokens = occurrenceTokens(input.build);
+  const textStrings = Object.entries(input.build.textStrings).map(
+    ([name, value]) => element("textstring", { name }, escapeText(value)),
+  );
+  const rootAttributes: Record<string, string | undefined> = {
+    ...Object.fromEntries(
+      Object.entries(sourceRoot.attributes).filter(
+        ([name]) => !["game-system", "version", "legality"].includes(key(name)),
+      ),
+    ),
+    "game-system": "D&D4E",
+    Version: "0.07a",
+    legality: input.evaluation.legal ? "rules-legal" : "houserule",
+  };
+  const body = [
+    ...levelXml(input.build, tokens),
+    grabbagXml(input.build, tokens),
+    ...alternatesXml(input.build, tokens),
+    ...textStrings,
+    ...preserved,
+    characterSheetXml(input),
+  ]
+    .filter(Boolean)
+    .join("\n  ");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<D20Character${attributes(
+    rootAttributes,
+  )}>\n  ${body}\n</D20Character>\n`;
+}

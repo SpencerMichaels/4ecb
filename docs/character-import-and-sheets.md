@@ -81,10 +81,23 @@ present. The UI immediately re-imports the result and requires an identical
 preservation comparison before offering the download. Thus an imported file that
 opened in the original builder remains the same compatibility file.
 
-This is intentionally narrower than future edited export. M4/M5 must serialize
-engine-backed authoritative state, repair occurrence links, regenerate
-`CharacterSheet`, and merge preserved unknown extensions. Until then, editing
-library metadata never implies editing the `.dnd4e` document.
+The library now makes that behavior an explicit **Original imported file (no
+edits)** target. A separate **Legacy Character Builder 0.07a** target evaluates
+the authoritative build against its exact bound pack revision, allocates fresh
+document-local occurrence tokens, repairs representable replacement links,
+serializes level history, grabbag, inventory, alternates, and text values, and
+regenerates the `CharacterSheet` calculation caches. Campaign and unknown root
+elements are copied from the source envelope; companion, journal, and unknown
+sheet blocks are retained. XML user content is escaped; an invalid XML 1.0 code point blocks the
+export rather than being silently changed or producing a malformed document.
+
+Before download, edited output is re-imported and compared to the authoritative
+level, selection, replacement, inventory, alternate, ability, and text
+structure. Export is blocked when that semantic check fails, evaluation does
+not converge, the exact pack revision is unavailable, or the evaluation horizon
+is behind the latest saved level. Library metadata remains outside both export
+targets. Structural round-trip coverage is automated; the curated original-
+application launch matrix remains an open M5 release check.
 
 ## Content-profile behavior
 
@@ -132,9 +145,10 @@ workflow; no PDF bytes are stored in the character.
 - The editor handles abilities, level frames, ordinary choices, inventory, and
   undo/redo. Focused replacement picking and choices supplied by newly created
   synthetic grant providers still need their dedicated editing flow.
-- Edited builds regenerate the semantic browser sheet from a converged exact-
-  profile evaluation. Edited `.dnd4e` cache serialization is still open;
-  no-edit legacy export remains exact.
+- Edited builds regenerate both the semantic browser sheet and the explicit
+  0.07a `.dnd4e` target from a converged exact-profile evaluation. The no-edit
+  target remains exact. Original-application launch-matrix evidence is still
+  required before compatibility release closure.
 - Candidate lists are structurally filtered up front. Full prerequisite
   evaluation currently runs for selected choices, so a newly selected illegal
   option remains editable and is then explained by diagnostics.

@@ -138,6 +138,18 @@ outside the envelope. M4 commands will make normalized authoritative state
 editable; engine-backed export will then update recognized XML while retaining
 unknown extensions. The UI labels all M3 calculations as legacy cached values.
 
+### D020 — Edited `.dnd4e` export is a separate explicit compatibility target
+
+The byte-exact imported envelope remains available as **Original imported file
+(no edits)** and never silently absorbs native edits. **Legacy Character Builder
+0.07a** is a separate target that requires a converged exact-profile evaluation,
+regenerates recognized authoritative structures and `CharacterSheet` caches,
+and merges opaque campaign/extension data from the envelope. It allocates fresh
+document-local occurrence tokens and repairs representable replacement links.
+The application re-imports and semantically compares edited output before
+download. Structural round-trip success is necessary but does not claim old-
+application compatibility until the curated launch matrix passes.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

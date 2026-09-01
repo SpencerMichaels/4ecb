@@ -14,6 +14,8 @@ import type {
 } from "@4ecb/character-domain";
 import { SaxesParser } from "saxes";
 
+export * from "./writer";
+
 export interface Dnd4eImportDiagnostic {
   readonly severity: "error" | "warning" | "info";
   readonly code: string;
@@ -240,7 +242,13 @@ function inventoryFrom(root: XmlNode): BuildInventoryEntry[] {
         Number.parseInt(attribute(loot, "count") ?? "0", 10) || 0;
       const equippedQuantity =
         Number.parseInt(attribute(loot, "equip-count") ?? "0", 10) || 0;
-      const known = new Set(["count", "equip-count", "name", "showpowercard"]);
+      const known = new Set([
+        "count",
+        "equip-count",
+        "name",
+        "showpowercard",
+        "legality",
+      ]);
       const overrides = Object.fromEntries(
         Object.entries(loot.attributes).filter(
           ([name]) => !known.has(key(name)),

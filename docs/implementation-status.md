@@ -6,11 +6,12 @@ Milestones M1 through M4 are complete at their stated release boundaries. M4 is
 the builder beta: it delivers the authoritative rules-backed editor, records the
 remaining native parity risks as explicit M5 blockers, and does not claim public
 MVP readiness. M5 is in progress. Profile migration preview and explicit
-adoption are implemented; blocker closure, edited legacy export, finished
-printing, remaining storage upgrade/restart matrices, onboarding, and
-public-release verification remain open. The installable PWA, update/offline UX,
-public-distribution boundary, production Docker guide, and authoritative
-exact-profile browser sheet are verified checkpoints, not an MVP declaration.
+adoption are implemented; blocker closure, the legacy-builder export launch
+matrix, finished printing, remaining storage upgrade/restart matrices,
+onboarding, and public-release verification remain open. The installable PWA,
+update/offline UX, public-distribution boundary, production Docker guide, and
+authoritative exact-profile browser sheet are verified checkpoints, not an MVP
+declaration.
 
 ## M5 checkpoints
 
@@ -110,6 +111,36 @@ accessibility, security, and performance release matrices remain open M5 exit
 criteria. The checkpoint public suite passes 102 tests across 24 files plus
 formatting, ESLint, every TypeScript project, the production/PWA build,
 deterministic content checks, and the query benchmark.
+
+### Explicit original and edited `.dnd4e` export targets
+
+- The library exposes two non-ambiguous targets. **Original imported file (no
+  edits)** keeps the byte-exact M3 envelope path; **Legacy Character Builder
+  0.07a** serializes current authoritative state and regenerated caches.
+- Edited export requires a converged evaluation from the exact adopted content
+  pack digest and the latest saved level. It writes fresh document-local
+  occurrence tokens, repairs replacement links when their target remains
+  representable, escapes XML content, and regenerates details, abilities, stats,
+  selected-rule and loot tallies, and power calculations.
+- Level history, grabbag, inventory, alternates, and text values come from the
+  build. Opaque campaign and unknown root blocks remain byte-exact; companion
+  journal, and unknown sheet blocks are carried into the regenerated sheet.
+- Every edited download is re-imported first and compared with the build while
+  ignoring regenerated local IDs. A difference in levels, choices, replacement
+  topology, inventory, alternates, abilities, or text blocks the download.
+
+Public structural fixtures cover edited ability/text/inventory state, XML
+escaping, preserved opaque data, fresh tokens, repaired replacements,
+regenerated sheet caches, semantic re-import, and the latest-level guard. These
+checks establish the writer boundary but do not substitute for opening a
+curated exported corpus in the original Windows application. M5 exit criterion
+4 remains open until that launch matrix is recorded. The complete public gate
+passes 108 tests across 24 files plus formatting, ESLint, every TypeScript
+project, the production/PWA build and cache-boundary assertion, deterministic
+content checks, and the query benchmark. A live Chromium run selected and
+downloaded both targets against the public synthetic character: edited export
+reported a passed semantic re-import, original export explicitly reported that
+local edits were excluded, and the final post-fix flows added no console errors.
 
 ### Authoritative browser sheet with recoverable fallback
 
