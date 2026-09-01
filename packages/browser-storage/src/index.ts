@@ -2,4 +2,7 @@ export {
   ContentPackRepository,
   deleteContentDatabase,
 } from "./pack-repository";
-export { CharacterRepository } from "./character-repository";
+export {
+  CharacterRepository,
+  type CharacterBackupInspection,
+} from "./character-repository";

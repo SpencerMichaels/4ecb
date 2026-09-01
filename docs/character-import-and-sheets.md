@@ -40,6 +40,14 @@ are native metadata and do not modify the compatibility file. A backup is a
 versioned JSON object containing every active and trashed record, including the
 complete envelope, build, profile references, and settings.
 
+New native backups use format version 2 with a character count and SHA-256
+payload digest. Restore first presents a non-mutating inspection of active,
+trashed, and conflicting records, then verifies the payload again before its
+single write transaction. Version-1 backups remain importable with an explicit
+warning that they predate checksums. IndexedDB schema 3 journals the untouched
+schema-1 record before lazy conversion and recovers that record if migration is
+interrupted before commit.
+
 ## Import semantics
 
 The importer validates a `D20Character` root case-insensitively and reports an

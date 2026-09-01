@@ -104,10 +104,21 @@ export interface CharacterRecord {
 
 export interface CharacterBackup {
   readonly format: "4ecb-character-backup";
+  readonly version: 2;
+  readonly exportedAt: string;
+  readonly characterCount: number;
+  readonly payloadDigest: string;
+  readonly characters: readonly CharacterRecord[];
+}
+
+export interface LegacyCharacterBackup {
+  readonly format: "4ecb-character-backup";
   readonly version: 1;
   readonly exportedAt: string;
   readonly characters: readonly CharacterRecord[];
 }
+
+export type SupportedCharacterBackup = CharacterBackup | LegacyCharacterBackup;
 
 export function newCharacterRecord(
   legacy: LegacyEnvelope,

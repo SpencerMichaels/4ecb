@@ -12,6 +12,49 @@ import type {
 const repository = new ContentPackRepository();
 const MAX_IMPORT_BYTES = 512 * 1024 * 1024;
 
+interface StorageStatus {
+  readonly supported: boolean;
+  readonly persistenceSupported: boolean;
+  readonly persisted?: boolean;
+  readonly usage?: number;
+  readonly quota?: number;
+}
+
+function formatBytes(bytes: number | undefined): string {
+  if (bytes === undefined) return "Unavailable";
+  const units = ["B", "KiB", "MiB", "GiB"];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${value.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
+}
+
+async function readStorageStatus(): Promise<StorageStatus> {
+  const storage = navigator.storage;
+  if (storage === undefined)
+    return { supported: false, persistenceSupported: false };
+  const persistenceSupported = typeof storage.persisted === "function";
+  const [estimate, persisted] = await Promise.all([
+    typeof storage.estimate === "function"
+      ? storage.estimate()
+      : Promise.resolve<StorageEstimate>({}),
+    persistenceSupported
+      ? storage.persisted()
+      : Promise.resolve<boolean | undefined>(undefined),
+  ]);
+  return {
+    supported: true,
+    persistenceSupported:
+      persistenceSupported && typeof storage.persist === "function",
+    ...(persisted === undefined ? {} : { persisted }),
+    ...(estimate.usage === undefined ? {} : { usage: estimate.usage }),
+    ...(estimate.quota === undefined ? {} : { quota: estimate.quota }),
+  };
+}
+
 function phaseLabel(phase: ImportPackProgressPhase): string {
   switch (phase) {
     case "decoding":
@@ -39,9 +82,37 @@ export function SettingsPage({
   );
   const [error, setError] = useState<string>();
   const [importing, setImporting] = useState(false);
+  const [storageStatus, setStorageStatus] = useState<StorageStatus>();
+  const [requestingPersistence, setRequestingPersistence] = useState(false);
   const workerRef = useRef<Worker | undefined>(undefined);
 
-  useEffect(() => () => workerRef.current?.terminate(), []);
+  useEffect(() => {
+    void readStorageStatus()
+      .then(setStorageStatus)
+      .catch(() =>
+        setStorageStatus({
+          supported: false,
+          persistenceSupported: false,
+        }),
+      );
+    return () => workerRef.current?.terminate();
+  }, []);
+
+  async function requestPersistence(): Promise<void> {
+    if (typeof navigator.storage?.persist !== "function") return;
+    setRequestingPersistence(true);
+    try {
+      const persisted = await navigator.storage.persist();
+      setStorageStatus(await readStorageStatus());
+      setStatus(
+        persisted
+          ? "Persistent browser storage was granted."
+          : "The browser did not grant persistent storage; keep current backups and review browser site-data settings.",
+      );
+    } finally {
+      setRequestingPersistence(false);
+    }
+  }
 
   async function importFile(file: File): Promise<void> {
     if (file.size > MAX_IMPORT_BYTES) {
@@ -148,6 +219,79 @@ export function SettingsPage({
           <span>{error}</span>
         </div>
       )}
+
+      <section className="panel storage-diagnostics">
+        <div>
+          <p className="eyebrow">Browser storage</p>
+          <h3>Persistence and quota</h3>
+          <p>
+            Characters and private packs live only in this browser profile.
+            Persistent storage reduces automatic eviction risk; backups remain
+            the recovery path for device or browser loss.
+          </p>
+        </div>
+        {storageStatus === undefined ? (
+          <p>Checking browser storage…</p>
+        ) : !storageStatus.supported ? (
+          <p className="profile-warning">
+            This browser does not expose storage quota diagnostics.
+          </p>
+        ) : (
+          <>
+            <dl className="report-facts">
+              <div>
+                <dt>Persistence</dt>
+                <dd>
+                  {storageStatus.persisted === true
+                    ? "Granted"
+                    : storageStatus.persisted === false
+                      ? "Not granted"
+                      : "Unavailable"}
+                </dd>
+              </div>
+              <div>
+                <dt>Used</dt>
+                <dd>{formatBytes(storageStatus.usage)}</dd>
+              </div>
+              <div>
+                <dt>Quota</dt>
+                <dd>{formatBytes(storageStatus.quota)}</dd>
+              </div>
+              <div>
+                <dt>Quota used</dt>
+                <dd>
+                  {storageStatus.usage === undefined ||
+                  storageStatus.quota === undefined ||
+                  storageStatus.quota === 0
+                    ? "Unavailable"
+                    : `${((storageStatus.usage / storageStatus.quota) * 100).toFixed(1)}%`}
+                </dd>
+              </div>
+            </dl>
+            <button
+              type="button"
+              disabled={
+                !storageStatus.persistenceSupported ||
+                storageStatus.persisted === true ||
+                requestingPersistence
+              }
+              onClick={() =>
+                void requestPersistence().catch((reason: unknown) =>
+                  setError(
+                    reason instanceof Error ? reason.message : String(reason),
+                  ),
+                )
+              }
+            >
+              {storageStatus.persisted === true
+                ? "Persistent storage granted"
+                : requestingPersistence
+                  ? "Requesting…"
+                  : "Request persistent storage"}
+            </button>
+          </>
+        )}
+      </section>
 
       {manifests.length === 0 ? (
         <div className="empty-state">

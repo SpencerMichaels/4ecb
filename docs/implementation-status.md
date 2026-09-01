@@ -7,8 +7,8 @@ the builder beta: it delivers the authoritative rules-backed editor, records the
 remaining native parity risks as explicit M5 blockers, and does not claim public
 MVP readiness. M5 is in progress. Profile migration preview and explicit
 adoption are implemented; blocker closure, edited legacy export, finished
-printing, storage hardening, onboarding/deployment work, and public-release
-verification remain open.
+printing, remaining storage upgrade/restart matrices, onboarding/deployment
+work, and public-release verification remain open.
 
 ## M5 checkpoints
 
@@ -35,6 +35,35 @@ passed. A live browser run installed and activated a public synthetic pack,
 imported the public `.dnd4e` structural fixture, previewed its four missing
 definition references, and explicitly adopted the profile with no console
 warnings or errors. The full public suite is rerun before the checkpoint commit.
+
+### Storage persistence, migration recovery, and verified backup
+
+- New native backups are format version 2. Their manifest records the character
+  count and a SHA-256 digest over the complete ordered character payload. Restore
+  rejects a changed payload or count before opening a write transaction.
+- Backup selection now performs a non-mutating preview first. It reports format
+  version, checksum availability, active/trashed counts, and IDs that will
+  replace existing records; restore requires a separate explicit action. Legacy
+  version-1 backups remain structurally validated and are clearly labeled as
+  unchecksummed.
+- IndexedDB schema 3 adds a character migration journal. Lazy schema-1 migration
+  writes the untouched prior record before conversion and removes the journal
+  only in the same transaction that commits schema 2. Startup recovery restores
+  a journaled prior record if an interrupted migration left the character
+  missing, then restarts the ordinary migration.
+- Content settings display the browser's current persistence decision, storage
+  use, quota, and percentage used. A user-triggered action requests persistent
+  storage where the API is supported and explains a denied request without
+  treating it as durable-backup success.
+
+Focused browser-storage tests cover checksummed round trip, tamper rejection,
+legacy backup inspection, and a simulated interrupted migration recovery. Live
+browser verification displayed the persistence/quota facts against the public
+synthetic profile; backup export reported one complete record. Full
+restart/upgrade/restore browser matrices remain part of M5 exit-criterion 5 and
+are not claimed by this checkpoint. The checkpoint public suite passes 98 tests
+across 23 files plus formatting, ESLint, every TypeScript project, the
+production/PWA build, deterministic content checks, and the query benchmark.
 
 ## M4 delivered
 

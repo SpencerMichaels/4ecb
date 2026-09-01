@@ -191,9 +191,11 @@ deliverable is closure of blocking M4 parity findings.
 
 ## M5 — MVP closure: credible legacy-builder replacement
 
-**Status:** in progress. The first verified checkpoint makes content-profile
-migration a worker-evaluated preview followed by explicit adoption; the other
-M5 deliverables and MVP exit criteria remain open.
+**Status:** in progress. Verified checkpoints make content-profile migration a
+worker-evaluated preview followed by explicit adoption and add checksummed
+backup inspection, restartable character migration recovery, persistence
+requests, and quota diagnostics. The other M5 deliverables and MVP exit criteria
+remain open.
 
 ### Goal
 

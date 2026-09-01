@@ -43,6 +43,14 @@ interface CharacterBuilderDatabase extends DBSchema {
     value: CharacterRecord;
     indexes: { "by-updated": string; "by-deleted": string };
   };
+  characterMigrations: {
+    key: string;
+    value: {
+      readonly id: string;
+      readonly previous: CharacterRecord;
+      readonly startedAt: string;
+    };
+  };
 }
 
 const DEFAULT_DATABASE_NAME = "4ecb";
@@ -51,7 +59,7 @@ const ACTIVE_PACK_KEY = "active-content-pack";
 async function openContentDatabase(
   databaseName: string,
 ): Promise<IDBPDatabase<CharacterBuilderDatabase>> {
-  return openDB<CharacterBuilderDatabase>(databaseName, 2, {
+  return openDB<CharacterBuilderDatabase>(databaseName, 3, {
     upgrade(database) {
       if (!database.objectStoreNames.contains("contentPacks")) {
         const packs = database.createObjectStore("contentPacks", {
@@ -68,6 +76,9 @@ async function openContentDatabase(
         });
         characters.createIndex("by-updated", "updatedAt");
         characters.createIndex("by-deleted", "deletedAt");
+      }
+      if (!database.objectStoreNames.contains("characterMigrations")) {
+        database.createObjectStore("characterMigrations", { keyPath: "id" });
       }
     },
   });

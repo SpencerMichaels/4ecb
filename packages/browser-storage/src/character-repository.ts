@@ -4,6 +4,7 @@ import {
   type CharacterBackup,
   type CharacterProfileBinding,
   type CharacterRecord,
+  type SupportedCharacterBackup,
   type SheetSettings,
 } from "@4ecb/character-domain";
 import type { ContentPack } from "@4ecb/content-pack";
@@ -35,12 +36,46 @@ interface CharacterDatabase extends DBSchema {
     value: CharacterRecord;
     indexes: { "by-updated": string; "by-deleted": string };
   };
+  characterMigrations: {
+    key: string;
+    value: CharacterMigrationJournal;
+  };
+}
+
+interface CharacterMigrationJournal {
+  readonly id: string;
+  readonly previous: CharacterRecord;
+  readonly startedAt: string;
 }
 
 const DEFAULT_DATABASE_NAME = "4ecb";
 
+export interface CharacterBackupInspection {
+  readonly version: 1 | 2;
+  readonly verified: boolean;
+  readonly characterCount: number;
+  readonly activeCount: number;
+  readonly trashedCount: number;
+  readonly conflictingIds: readonly string[];
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return [...bytes]
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function characterPayloadDigest(
+  characters: readonly CharacterRecord[],
+): Promise<string> {
+  const bytes = new TextEncoder().encode(JSON.stringify(characters));
+  return bytesToHex(
+    new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
+  );
+}
+
 async function database(name: string) {
-  return openDB<CharacterDatabase>(name, 2, {
+  return openDB<CharacterDatabase>(name, 3, {
     upgrade(db) {
       if (!db.objectStoreNames.contains("contentPacks")) {
         const packs = db.createObjectStore("contentPacks", {
@@ -55,6 +90,9 @@ async function database(name: string) {
         const store = db.createObjectStore("characters", { keyPath: "id" });
         store.createIndex("by-updated", "updatedAt");
         store.createIndex("by-deleted", "deletedAt");
+      }
+      if (!db.objectStoreNames.contains("characterMigrations")) {
+        db.createObjectStore("characterMigrations", { keyPath: "id" });
       }
     },
   });
@@ -79,11 +117,10 @@ export class CharacterRepository {
   async get(id: string): Promise<CharacterRecord | undefined> {
     const db = await database(this.#databaseName);
     try {
+      await recoverCharacterMigrations(db);
       const stored = await db.get("characters", id);
       if (stored === undefined) return undefined;
-      const character = upgradeRecord(stored);
-      if (character !== stored) await db.put("characters", character);
-      return character;
+      return await migrateStoredRecord(db, stored);
     } finally {
       db.close();
     }
@@ -94,14 +131,10 @@ export class CharacterRepository {
   ): Promise<CharacterRecord[]> {
     const db = await database(this.#databaseName);
     try {
+      await recoverCharacterMigrations(db);
       const stored = await db.getAllFromIndex("characters", "by-updated");
-      const records = stored.map(upgradeRecord);
-      await Promise.all(
-        records.map((record, index) =>
-          record === stored[index]
-            ? Promise.resolve()
-            : db.put("characters", record).then(() => undefined),
-        ),
+      const records = await Promise.all(
+        stored.map((record) => migrateStoredRecord(db, record)),
       );
       return records
         .filter((record) =>
@@ -197,28 +230,48 @@ export class CharacterRepository {
   async exportBackup(): Promise<CharacterBackup> {
     const db = await database(this.#databaseName);
     try {
+      await recoverCharacterMigrations(db);
+      const characters = await Promise.all(
+        (await db.getAll("characters")).map((record) =>
+          migrateStoredRecord(db, record),
+        ),
+      );
       return {
         format: "4ecb-character-backup",
-        version: 1,
+        version: 2,
         exportedAt: new Date().toISOString(),
-        characters: await db.getAll("characters"),
+        characterCount: characters.length,
+        payloadDigest: await characterPayloadDigest(characters),
+        characters,
       };
     } finally {
       db.close();
     }
   }
 
-  async restoreBackup(backup: CharacterBackup): Promise<number> {
-    if (
-      backup.format !== "4ecb-character-backup" ||
-      backup.version !== 1 ||
-      !Array.isArray(backup.characters)
-    )
-      throw new Error("Unsupported character backup");
-    if (!backup.characters.every(isStoredCharacter)) {
-      throw new Error("Character backup contains an invalid record");
-    }
-    const characters = backup.characters.map(upgradeRecord);
+  async inspectBackup(backup: unknown): Promise<CharacterBackupInspection> {
+    const supported = await validateBackup(backup);
+    const current = await this.listAll();
+    const currentIds = new Set(current.map((character) => character.id));
+    return {
+      version: supported.version,
+      verified: supported.version === 2,
+      characterCount: supported.characters.length,
+      activeCount: supported.characters.filter(
+        (character) => character.deletedAt === undefined,
+      ).length,
+      trashedCount: supported.characters.filter(
+        (character) => character.deletedAt !== undefined,
+      ).length,
+      conflictingIds: supported.characters
+        .filter((character) => currentIds.has(character.id))
+        .map((character) => character.id),
+    };
+  }
+
+  async restoreBackup(backup: unknown): Promise<number> {
+    const supported = await validateBackup(backup);
+    const characters = supported.characters.map(upgradeRecord);
     const db = await database(this.#databaseName);
     try {
       const transaction = db.transaction("characters", "readwrite");
@@ -226,7 +279,7 @@ export class CharacterRepository {
         characters.map((character) => transaction.store.put(character)),
       );
       await transaction.done;
-      return backup.characters.length;
+      return characters.length;
     } finally {
       db.close();
     }
@@ -237,6 +290,47 @@ export class CharacterRepository {
     if (character === undefined) throw new Error(`Character not found: ${id}`);
     return character;
   }
+
+  private async listAll(): Promise<CharacterRecord[]> {
+    const db = await database(this.#databaseName);
+    try {
+      await recoverCharacterMigrations(db);
+      return await Promise.all(
+        (await db.getAll("characters")).map((record) =>
+          migrateStoredRecord(db, record),
+        ),
+      );
+    } finally {
+      db.close();
+    }
+  }
+}
+
+async function validateBackup(
+  backup: unknown,
+): Promise<SupportedCharacterBackup> {
+  if (backup === null || typeof backup !== "object")
+    throw new Error("Unsupported character backup");
+  const candidate = backup as Partial<SupportedCharacterBackup>;
+  if (
+    candidate.format !== "4ecb-character-backup" ||
+    (candidate.version !== 1 && candidate.version !== 2) ||
+    !Array.isArray(candidate.characters)
+  )
+    throw new Error("Unsupported character backup");
+  if (!candidate.characters.every(isStoredCharacter))
+    throw new Error("Character backup contains an invalid record");
+  if (candidate.version === 2) {
+    if (
+      candidate.characterCount !== candidate.characters.length ||
+      typeof candidate.payloadDigest !== "string"
+    )
+      throw new Error("Character backup manifest does not match its payload");
+    const digest = await characterPayloadDigest(candidate.characters);
+    if (digest !== candidate.payloadDigest)
+      throw new Error("Character backup checksum verification failed");
+  }
+  return candidate as SupportedCharacterBackup;
 }
 
 interface LegacyV1Record extends Omit<
@@ -277,4 +371,51 @@ function upgradeRecord(value: CharacterRecord): CharacterRecord {
     schemaVersion: 2,
     build: imported.build,
   };
+}
+
+async function migrateStoredRecord(
+  db: Awaited<ReturnType<typeof database>>,
+  stored: CharacterRecord,
+): Promise<CharacterRecord> {
+  if ((stored as { readonly schemaVersion: number }).schemaVersion === 2)
+    return stored;
+  await db.put("characterMigrations", {
+    id: stored.id,
+    previous: stored,
+    startedAt: new Date().toISOString(),
+  });
+  const migrated = upgradeRecord(stored);
+  const transaction = db.transaction(
+    ["characters", "characterMigrations"],
+    "readwrite",
+  );
+  await transaction.objectStore("characters").put(migrated);
+  await transaction.objectStore("characterMigrations").delete(stored.id);
+  await transaction.done;
+  return migrated;
+}
+
+async function recoverCharacterMigrations(
+  db: Awaited<ReturnType<typeof database>>,
+): Promise<void> {
+  const journals = await db.getAll("characterMigrations");
+  for (const journal of journals) {
+    const current = await db.get("characters", journal.id);
+    if (
+      current !== undefined &&
+      (current as { readonly schemaVersion: number }).schemaVersion === 2
+    ) {
+      await db.delete("characterMigrations", journal.id);
+      continue;
+    }
+    if (current === undefined) {
+      const transaction = db.transaction(
+        ["characters", "characterMigrations"],
+        "readwrite",
+      );
+      await transaction.objectStore("characters").put(journal.previous);
+      await transaction.objectStore("characterMigrations").delete(journal.id);
+      await transaction.done;
+    }
+  }
 }

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { CharacterRepository } from "@4ecb/browser-storage";
+import {
+  CharacterRepository,
+  type CharacterBackupInspection,
+} from "@4ecb/browser-storage";
 import {
   newCharacterRecord,
-  type CharacterBackup,
   type CharacterRecord,
 } from "@4ecb/character-domain";
 import type { ContentPackManifest } from "@4ecb/content-pack";
@@ -235,6 +237,10 @@ export function CharacterLibraryPage({
   const [status, setStatus] = useState("Loading character library…");
   const [error, setError] = useState<string>();
   const [report, setReport] = useState<Dnd4eImportReport>();
+  const [pendingBackup, setPendingBackup] = useState<{
+    readonly value: unknown;
+    readonly inspection: CharacterBackupInspection;
+  }>();
 
   const refresh = useCallback(async () => {
     const [active, deleted] = await Promise.all([
@@ -328,6 +334,25 @@ export function CharacterLibraryPage({
     setStatus(`Backed up ${backup.characters.length} character record(s).`);
   }
 
+  async function inspectBackupFile(file: File): Promise<void> {
+    if (file.size > 100 * 1024 * 1024)
+      throw new Error("Backup exceeds the 100 MiB inspection limit");
+    const value: unknown = JSON.parse(await file.text());
+    const inspection = await repository.inspectBackup(value);
+    setPendingBackup({ value, inspection });
+    setStatus(
+      `Inspected ${inspection.characterCount} backup record(s); no data has been restored yet.`,
+    );
+  }
+
+  async function restoreInspectedBackup(): Promise<void> {
+    if (pendingBackup === undefined) return;
+    const restored = await repository.restoreBackup(pendingBackup.value);
+    setPendingBackup(undefined);
+    await refresh();
+    setStatus(`Restored ${restored} verified backup record(s).`);
+  }
+
   return (
     <main className="characters-page" id="main-content">
       <header className="page-heading">
@@ -377,21 +402,11 @@ export function CharacterLibraryPage({
               onChange={(event) => {
                 const file = event.currentTarget.files?.[0];
                 if (file !== undefined)
-                  void file
-                    .text()
-                    .then((text) =>
-                      repository.restoreBackup(
-                        JSON.parse(text) as CharacterBackup,
-                      ),
-                    )
-                    .then(refresh)
-                    .catch((reason: unknown) =>
-                      setError(
-                        reason instanceof Error
-                          ? reason.message
-                          : String(reason),
-                      ),
-                    );
+                  void inspectBackupFile(file).catch((reason: unknown) =>
+                    setError(
+                      reason instanceof Error ? reason.message : String(reason),
+                    ),
+                  );
                 event.currentTarget.value = "";
               }}
             />
@@ -406,6 +421,60 @@ export function CharacterLibraryPage({
           <strong>Problem</strong>
           <span>{error}</span>
         </div>
+      )}
+      {pendingBackup === undefined ? null : (
+        <section className="import-report" aria-label="Backup restore preview">
+          <h3>Backup restore preview</h3>
+          <dl className="report-facts">
+            <div>
+              <dt>Format</dt>
+              <dd>Version {pendingBackup.inspection.version}</dd>
+            </div>
+            <div>
+              <dt>Checksum</dt>
+              <dd>
+                {pendingBackup.inspection.verified
+                  ? "Verified"
+                  : "Unavailable in legacy backup"}
+              </dd>
+            </div>
+            <div>
+              <dt>Active</dt>
+              <dd>{pendingBackup.inspection.activeCount}</dd>
+            </div>
+            <div>
+              <dt>Trashed</dt>
+              <dd>{pendingBackup.inspection.trashedCount}</dd>
+            </div>
+            <div>
+              <dt>Existing IDs replaced</dt>
+              <dd>{pendingBackup.inspection.conflictingIds.length}</dd>
+            </div>
+          </dl>
+          {!pendingBackup.inspection.verified ? (
+            <p className="profile-warning">
+              This older backup has no checksum. Its records are structurally
+              valid, but payload integrity cannot be verified.
+            </p>
+          ) : null}
+          <div className="inline-actions">
+            <button
+              type="button"
+              onClick={() =>
+                void restoreInspectedBackup().catch((reason: unknown) =>
+                  setError(
+                    reason instanceof Error ? reason.message : String(reason),
+                  ),
+                )
+              }
+            >
+              Restore {pendingBackup.inspection.characterCount} record(s)
+            </button>
+            <button type="button" onClick={() => setPendingBackup(undefined)}>
+              Cancel
+            </button>
+          </div>
+        </section>
       )}
       {report === undefined ? null : (
         <section className="import-report" aria-label="Latest import report">
