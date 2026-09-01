@@ -23,6 +23,7 @@ LABEL org.opencontainers.image.title="4E Character Builder" \
   org.opencontainers.image.description="Unofficial offline-first 4E character builder; no official rules corpus included"
 
 COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/security-headers.conf /etc/nginx/security-headers.conf
 COPY --from=web-build /workspace/apps/web/dist /app/static
 COPY apps/web/public/runtime-config.json /app/runtime-config.json
 COPY NOTICE.md /app/NOTICE.md

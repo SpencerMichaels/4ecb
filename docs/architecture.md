@@ -543,9 +543,19 @@ storage does not move into the relay merely because it exists.
 - encoded content input and streaming decompression have independent 128 MiB
   caps before UTF-8 or JSON decoding, and pack IDs/names are bounded before
   worker and storage use;
+- portable-pack structure is decoded through all nested normalized entities and
+  preserved nodes before digest validation or storage, with 100,000-record and
+  100-node-depth ceilings;
 - Archive imports enforce entry-count, path, compression-ratio, and total-size
   limits.
 - Worker messages and stored documents are schema-validated at runtime.
+
+The hosted HTML carries a restrictive same-origin content policy. The reference
+nginx container adds the same policy with framing disabled plus no-sniff,
+no-referrer, same-origin isolation, and least-privilege feature headers to every
+route. React renders imported strings as text; the release security contract
+rejects executable-markup sinks in application source.
+
 - Cryptography uses browser/platform primitives and a reviewed protocol; the
   project does not invent encryption constructions.
 - Pairing secrets are redacted from logs and excluded from server-visible query

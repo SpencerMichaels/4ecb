@@ -141,4 +141,46 @@ describe("content pack", () => {
       "decoded-size limit",
     );
   });
+
+  it("rejects malformed nested content before validation or storage", async () => {
+    const pack = await buildContentPack(source, {
+      packId: "synthetic",
+      name: "Synthetic",
+    });
+    const malformed = {
+      ...pack,
+      entities: [
+        {
+          ...pack.entities[0],
+          rules: [{ name: "incomplete attacker-controlled rule" }],
+        },
+      ],
+    };
+    expect(() => decodeContentPack(JSON.stringify(malformed))).toThrow(
+      "valid records",
+    );
+  });
+
+  it("rejects content nodes nested beyond the decoder depth limit", async () => {
+    const pack = await buildContentPack(source, {
+      packId: "synthetic",
+      name: "Synthetic",
+    });
+    let node: unknown = { kind: "text", value: "bottom" };
+    for (let depth = 0; depth < 102; depth += 1)
+      node = {
+        kind: "element",
+        name: "deep",
+        attributes: [],
+        children: [node],
+      };
+    expect(() =>
+      decodeContentPack(
+        JSON.stringify({
+          ...pack,
+          rawTopLevel: [node],
+        }),
+      ),
+    ).toThrow("raw top-level nodes");
+  });
 });

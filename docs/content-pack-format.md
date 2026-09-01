@@ -80,7 +80,12 @@ profile ID and name entered by the user, encoded as a compressed pack, validated
 and only then committed to IndexedDB. A 128 MiB input cap applies before a
 worker receives either format, and streaming gzip decode stops once output
 exceeds 128 MiB before JSON parsing. The known complete local corpus is roughly
-70 MiB decoded, leaving headroom without accepting unbounded expansion.
+70 MiB decoded, leaving headroom without accepting unbounded expansion. The
+runtime decoder then validates every manifest count, diagnostic, entity,
+specific field, rule statement, preserved node, extension, rejection, and
+provenance field before digest validation or IndexedDB storage. It accepts at
+most 100,000 records and 100 preserved-node nesting levels; the known corpus has
+38,339 records.
 
 On browsers with the File System Access directory picker, a user may choose a
 legacy-data or pack directory. Discovery is read-only, limited to four nested

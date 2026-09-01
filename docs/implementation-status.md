@@ -222,6 +222,33 @@ small gzip expanding past the decoded limit, an oversized encoded input,
 oversized generated output, unsafe/oversized profile identifiers, control
 characters, and storage-boundary revalidation.
 
+### Public import and rendering security pass
+
+- Portable-pack decoding now validates the complete nested normalized domain
+  before digest checking or IndexedDB storage. Manifest counts, entities,
+  attributes, specific fields, rule statements and children, extensions,
+  preserved/rejected nodes, diagnostics, and provenance are all required.
+- Packs are limited to 100,000 accepted or rejected records and preserved XML
+  nodes to 100 levels of nesting in addition to the independent encoded and
+  decoded byte limits. The complete known private corpus remains below both
+  record and byte ceilings.
+- Hosted HTML carries a same-origin CSP. The reference nginx image applies that
+  policy with frame denial, no-sniff, no-referrer, same-origin opener/resource,
+  and least-privilege browser-feature headers to health, configuration, asset,
+  and application routes. A public test also prevents executable-markup sinks
+  from entering the React application source.
+
+Focused adversarial tests reject an incomplete nested rule and a preserved node
+beyond the depth ceiling before validation/storage. A production build loaded
+under the HTML policy in live Chromium, installed its service worker, reported
+offline readiness, rendered content onboarding, and produced no console warning
+or error. The rebuilt image ran with a read-only root and bounded temporary
+filesystem; application, immutable-asset, runtime-configuration, and health
+routes all returned the required security policy while retaining their distinct
+cache behavior. The complete public gate passes 123 tests across 27 files. This
+checkpoint does not replace the still-open supported-browser and accessibility
+matrices.
+
 ## M4 delivered
 
 - `rules-engine` parses every rule opcode and attribute found in the 38,339

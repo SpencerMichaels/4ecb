@@ -77,6 +77,14 @@ or merges loose `.part` files. Pack input and streaming decompression are each
 limited to 128 MiB before JSON parsing; local profile IDs and names use bounded,
 validated forms.
 
+The hosted HTML includes a same-origin Content Security Policy that disables
+plugins and base-URL rewriting and permits only the local application workers
+(plus their browser-created blob bootstrap). The reference nginx container
+also denies framing and sends `nosniff`, no-referrer, same-origin opener/resource,
+and camera/geolocation/microphone/payment/USB-denial headers on every route.
+Deployments that replace nginx should preserve or strengthen those response
+headers; the HTML policy remains a defense-in-depth baseline.
+
 When a new service worker is ready, the application prompts rather than
 refreshing silently. The user may defer the update; choosing **Reload and
 update** keeps IndexedDB data and replaces only the versioned application shell.

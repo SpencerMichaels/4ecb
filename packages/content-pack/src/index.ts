@@ -14,6 +14,8 @@ export const MAX_CONTENT_PACK_ENCODED_BYTES = 128 * 1024 * 1024;
 export const MAX_CONTENT_PACK_DECODED_BYTES = 128 * 1024 * 1024;
 export const MAX_CONTENT_PACK_ID_LENGTH = 64;
 export const MAX_CONTENT_PACK_NAME_LENGTH = 120;
+export const MAX_CONTENT_PACK_RECORDS = 100_000;
+export const MAX_CONTENT_NODE_DEPTH = 100;
 
 export interface ContentTypeCount {
   readonly type: string;
@@ -222,6 +224,139 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function isNonnegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
+function isOptionalString(value: unknown): value is string | undefined {
+  return value === undefined || typeof value === "string";
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) && value.every((entry) => typeof entry === "string")
+  );
+}
+
+function isAttribute(value: unknown): boolean {
+  const attribute = isRecord(value) ? value : undefined;
+  return (
+    attribute !== undefined &&
+    typeof attribute.name === "string" &&
+    typeof attribute.value === "string"
+  );
+}
+
+function isAttributeArray(value: unknown): boolean {
+  return Array.isArray(value) && value.every(isAttribute);
+}
+
+function isContentNode(value: unknown, depth = 0): boolean {
+  if (depth > MAX_CONTENT_NODE_DEPTH) return false;
+  const node = isRecord(value) ? value : undefined;
+  if (node === undefined) return false;
+  if (node.kind === "text" || node.kind === "comment")
+    return typeof node.value === "string";
+  return (
+    node.kind === "element" &&
+    typeof node.name === "string" &&
+    isAttributeArray(node.attributes) &&
+    Array.isArray(node.children) &&
+    node.children.every((child) => isContentNode(child, depth + 1))
+  );
+}
+
+function isSpecificField(value: unknown): boolean {
+  const field = isRecord(value) ? value : undefined;
+  return (
+    field !== undefined &&
+    typeof field.name === "string" &&
+    typeof field.value === "string" &&
+    isAttributeArray(field.extraAttributes) &&
+    isNonnegativeInteger(field.ordinal)
+  );
+}
+
+function isRuleStatement(value: unknown): boolean {
+  const statement = isRecord(value) ? value : undefined;
+  return (
+    statement !== undefined &&
+    typeof statement.name === "string" &&
+    isAttributeArray(statement.attributes) &&
+    typeof statement.text === "string" &&
+    Array.isArray(statement.children) &&
+    statement.children.every((child) => isContentNode(child)) &&
+    isNonnegativeInteger(statement.ordinal)
+  );
+}
+
+function isContentEntity(value: unknown): boolean {
+  const entity = isRecord(value) ? value : undefined;
+  const provenance = isRecord(entity?.provenance)
+    ? entity.provenance
+    : undefined;
+  return (
+    entity !== undefined &&
+    typeof entity.id === "string" &&
+    typeof entity.name === "string" &&
+    typeof entity.type === "string" &&
+    typeof entity.source === "string" &&
+    isStringArray(entity.sources) &&
+    isOptionalString(entity.revisionDate) &&
+    isAttributeArray(entity.attributes) &&
+    isStringArray(entity.categories) &&
+    isOptionalString(entity.flavor) &&
+    isOptionalString(entity.prerequisites) &&
+    isOptionalString(entity.printPrerequisites) &&
+    Array.isArray(entity.specifics) &&
+    entity.specifics.every(isSpecificField) &&
+    Array.isArray(entity.rules) &&
+    entity.rules.every(isRuleStatement) &&
+    typeof entity.description === "string" &&
+    Array.isArray(entity.extensions) &&
+    entity.extensions.every((value) => {
+      const extension = isRecord(value) ? value : undefined;
+      return (
+        extension !== undefined &&
+        isNonnegativeInteger(extension.ordinal) &&
+        isContentNode(extension.node)
+      );
+    }) &&
+    provenance !== undefined &&
+    typeof provenance.sourceKey === "string" &&
+    isNonnegativeInteger(provenance.sourceOrdinal)
+  );
+}
+
+function isAccounting(value: unknown): boolean {
+  const accounting = isRecord(value) ? value : undefined;
+  return (
+    accounting !== undefined &&
+    [
+      "topLevelRecords",
+      "acceptedRecords",
+      "warnedRecords",
+      "rejectedRecords",
+      "rawTopLevelElements",
+    ].every((field) => isNonnegativeInteger(accounting[field]))
+  );
+}
+
+function isDiagnostic(value: unknown): boolean {
+  const diagnostic = isRecord(value) ? value : undefined;
+  return (
+    diagnostic !== undefined &&
+    (diagnostic.severity === "error" ||
+      diagnostic.severity === "warning" ||
+      diagnostic.severity === "info") &&
+    typeof diagnostic.code === "string" &&
+    typeof diagnostic.message === "string" &&
+    isOptionalString(diagnostic.entityId) &&
+    (diagnostic.ordinal === undefined ||
+      isNonnegativeInteger(diagnostic.ordinal))
+  );
+}
+
 function assertPackShape(value: unknown): asserts value is ContentPack {
   if (!isRecord(value)) throw new Error("Content pack must be a JSON object");
   if (value.format !== CONTENT_PACK_FORMAT) {
@@ -245,16 +380,64 @@ function assertPackShape(value: unknown): asserts value is ContentPack {
       throw new Error(`Manifest field ${field} must be a string`);
     }
   }
-  if (!Array.isArray(value.entities))
-    throw new Error("Content pack entities must be an array");
-  if (!Array.isArray(value.rejected))
-    throw new Error("Content pack rejected must be an array");
-  if (!Array.isArray(value.rawTopLevel)) {
-    throw new Error("Content pack rawTopLevel must be an array");
-  }
-  if (!Array.isArray(value.diagnostics)) {
-    throw new Error("Content pack diagnostics must be an array");
-  }
+  if (
+    !isNonnegativeInteger(value.manifest.recordCount) ||
+    !Array.isArray(value.manifest.typeCounts) ||
+    !value.manifest.typeCounts.every((entry) => {
+      const count = isRecord(entry) ? entry : undefined;
+      return (
+        count !== undefined &&
+        typeof count.type === "string" &&
+        isNonnegativeInteger(count.count)
+      );
+    }) ||
+    !isAccounting(value.manifest.accounting)
+  )
+    throw new Error("Content pack manifest counts are invalid");
+  const diagnosticCounts = isRecord(value.manifest.diagnosticCounts)
+    ? value.manifest.diagnosticCounts
+    : undefined;
+  if (
+    diagnosticCounts === undefined ||
+    !["error", "warning", "info"].every((severity) =>
+      isNonnegativeInteger(diagnosticCounts[severity]),
+    )
+  )
+    throw new Error("Content pack diagnostic counts are invalid");
+  if (
+    !Array.isArray(value.entities) ||
+    value.entities.length > MAX_CONTENT_PACK_RECORDS ||
+    !value.entities.every(isContentEntity)
+  )
+    throw new Error(
+      `Content pack entities must contain at most ${MAX_CONTENT_PACK_RECORDS.toLocaleString()} valid records`,
+    );
+  if (
+    !Array.isArray(value.rejected) ||
+    value.rejected.length > MAX_CONTENT_PACK_RECORDS ||
+    !value.rejected.every((value) => {
+      const rejected = isRecord(value) ? value : undefined;
+      return (
+        rejected !== undefined &&
+        isNonnegativeInteger(rejected.ordinal) &&
+        typeof rejected.reason === "string" &&
+        isContentNode(rejected.content) &&
+        isRecord(rejected.content) &&
+        rejected.content.kind === "element"
+      );
+    })
+  )
+    throw new Error("Content pack rejected records are invalid");
+  if (
+    !Array.isArray(value.rawTopLevel) ||
+    !value.rawTopLevel.every((node) => isContentNode(node))
+  )
+    throw new Error("Content pack raw top-level nodes are invalid");
+  if (
+    !Array.isArray(value.diagnostics) ||
+    !value.diagnostics.every(isDiagnostic)
+  )
+    throw new Error("Content pack diagnostics are invalid");
 }
 
 export function decodeContentPack(value: string): ContentPack {
