@@ -4,10 +4,18 @@ import { ContentPackRepository } from "@4ecb/browser-storage";
 import type { ContentPackManifest } from "@4ecb/content-pack";
 
 import type {
+  ContentImportRequest,
   ImportPackProgressPhase,
-  ImportPackRequest,
   ImportPackResponse,
 } from "./worker-messages";
+import {
+  chooseContentDirectory,
+  classifyContentSource,
+  discoverContentSources,
+  supportsDirectoryPicker,
+  type ContentSourceKind,
+  type DiscoveredContentSource,
+} from "./content-onboarding";
 
 const repository = new ContentPackRepository();
 const MAX_IMPORT_BYTES = 512 * 1024 * 1024;
@@ -59,6 +67,10 @@ function phaseLabel(phase: ImportPackProgressPhase): string {
   switch (phase) {
     case "decoding":
       return "Decoding pack…";
+    case "parsing-rules":
+      return "Parsing legacy rules XML…";
+    case "building-pack":
+      return "Building a portable pack…";
     case "validating":
       return "Validating digest and records…";
     case "storing":
@@ -84,7 +96,17 @@ export function SettingsPage({
   const [importing, setImporting] = useState(false);
   const [storageStatus, setStorageStatus] = useState<StorageStatus>();
   const [requestingPersistence, setRequestingPersistence] = useState(false);
+  const [scanningDirectory, setScanningDirectory] = useState(false);
+  const [directorySources, setDirectorySources] = useState<
+    readonly DiscoveredContentSource[]
+  >([]);
+  const [selectedSourcePath, setSelectedSourcePath] = useState("");
+  const [localPackId, setLocalPackId] = useState("local-legacy-rules");
+  const [localPackName, setLocalPackName] = useState(
+    "Local legacy rules corpus",
+  );
   const workerRef = useRef<Worker | undefined>(undefined);
+  const directoryPickerSupported = supportsDirectoryPicker(window);
 
   useEffect(() => {
     void readStorageStatus()
@@ -114,10 +136,20 @@ export function SettingsPage({
     }
   }
 
-  async function importFile(file: File): Promise<void> {
+  async function importFile(
+    file: File,
+    sourceKind: ContentSourceKind,
+  ): Promise<void> {
     if (file.size > MAX_IMPORT_BYTES) {
       throw new Error("Pack exceeds the 512 MiB import limit");
     }
+    if (
+      sourceKind === "legacy-rules-xml" &&
+      (localPackId.trim().length === 0 || localPackName.trim().length === 0)
+    )
+      throw new Error(
+        "Rules XML import requires a non-empty local profile ID and name",
+      );
     workerRef.current?.terminate();
     const worker = new Worker(new URL("./content.worker.ts", import.meta.url), {
       type: "module",
@@ -158,8 +190,50 @@ export function SettingsPage({
     };
 
     const buffer = await file.arrayBuffer();
-    const request: ImportPackRequest = { type: "import-pack", buffer };
+    const request: ContentImportRequest =
+      sourceKind === "portable-pack"
+        ? { type: "import-pack", buffer }
+        : {
+            type: "import-legacy-rules",
+            buffer,
+            sourceKey: file.name,
+            packId: localPackId.trim(),
+            name: localPackName.trim(),
+          };
     worker.postMessage(request, [buffer]);
+  }
+
+  async function scanDirectory(): Promise<void> {
+    setScanningDirectory(true);
+    setError(undefined);
+    try {
+      const directory = await chooseContentDirectory(window);
+      setStatus(`Scanning ${directory.name} without reading file contents…`);
+      const sources = await discoverContentSources(directory);
+      setDirectorySources(sources);
+      setSelectedSourcePath(sources[0]?.relativePath ?? "");
+      setStatus(
+        sources.length === 0
+          ? "No portable .4ecp pack or decrypted/merged .dnd40 XML was found. Encrypted containers and .part files must first be merged with the local content tool."
+          : `Found ${sources.length} supported content source${sources.length === 1 ? "" : "s"}. Choose one to validate and install.`,
+      );
+    } catch (reason: unknown) {
+      if (reason instanceof DOMException && reason.name === "AbortError") {
+        setStatus("Directory selection cancelled. No files were read.");
+      } else {
+        throw reason;
+      }
+    } finally {
+      setScanningDirectory(false);
+    }
+  }
+
+  async function importDiscoveredSource(): Promise<void> {
+    const source = directorySources.find(
+      (candidate) => candidate.relativePath === selectedSourcePath,
+    );
+    if (source === undefined) return;
+    await importFile(await source.handle.getFile(), source.kind);
   }
 
   function cancelImport(): void {
@@ -182,21 +256,31 @@ export function SettingsPage({
         </div>
         <div className="heading-actions">
           <label className="file-button">
-            Import pack
+            Import file
             <input
-              accept=".4ecp,application/json"
+              accept=".4ecp,.xml,application/json,application/xml,text/xml"
               type="file"
               disabled={importing}
               onChange={(event) => {
                 const file = event.currentTarget.files?.[0];
                 if (file !== undefined) {
-                  void importFile(file).catch((reason: unknown) => {
+                  const kind = classifyContentSource(file.name);
+                  if (kind === undefined) {
                     setError(
-                      reason instanceof Error ? reason.message : String(reason),
+                      "Choose a .4ecp pack or a decrypted/merged .dnd40 XML file.",
                     );
-                    setStatus("Import failed.");
-                    setImporting(false);
-                  });
+                    setStatus("Import not started.");
+                  } else {
+                    void importFile(file, kind).catch((reason: unknown) => {
+                      setError(
+                        reason instanceof Error
+                          ? reason.message
+                          : String(reason),
+                      );
+                      setStatus("Import failed.");
+                      setImporting(false);
+                    });
+                  }
                 }
                 event.currentTarget.value = "";
               }}
@@ -219,6 +303,102 @@ export function SettingsPage({
           <span>{error}</span>
         </div>
       )}
+
+      <section className="panel content-onboarding">
+        <div>
+          <p className="eyebrow">Bring your own data</p>
+          <h3>Install a content source</h3>
+          <p>
+            Import a portable `.4ecp` pack, or compile a decrypted/merged
+            `.dnd40.xml` rules file locally in this browser. Source files are
+            read only after you choose them and are never uploaded.
+          </p>
+        </div>
+        <div className="onboarding-fields">
+          <label>
+            Local profile ID for rules XML
+            <input
+              value={localPackId}
+              disabled={importing}
+              onChange={(event) => setLocalPackId(event.currentTarget.value)}
+            />
+          </label>
+          <label>
+            Local profile name for rules XML
+            <input
+              value={localPackName}
+              disabled={importing}
+              onChange={(event) => setLocalPackName(event.currentTarget.value)}
+            />
+          </label>
+        </div>
+        {directoryPickerSupported ? (
+          <button
+            type="button"
+            disabled={importing || scanningDirectory}
+            onClick={() =>
+              void scanDirectory().catch((reason: unknown) => {
+                setError(
+                  reason instanceof Error ? reason.message : String(reason),
+                );
+                setStatus("Directory scan failed.");
+                setScanningDirectory(false);
+              })
+            }
+          >
+            {scanningDirectory
+              ? "Scanning selected directory…"
+              : "Choose legacy data or pack directory"}
+          </button>
+        ) : (
+          <p className="profile-warning">
+            Directory selection is unavailable in this browser. Use the Import
+            file control above; it supports the same portable pack and rules XML
+            formats.
+          </p>
+        )}
+        {directorySources.length === 0 ? null : (
+          <div className="directory-source-picker">
+            <label>
+              Discovered source
+              <select
+                value={selectedSourcePath}
+                disabled={importing}
+                onChange={(event) =>
+                  setSelectedSourcePath(event.currentTarget.value)
+                }
+              >
+                {directorySources.map((source) => (
+                  <option key={source.relativePath} value={source.relativePath}>
+                    {source.relativePath} — {source.kind}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              disabled={importing || selectedSourcePath.length === 0}
+              onClick={() =>
+                void importDiscoveredSource().catch((reason: unknown) => {
+                  setError(
+                    reason instanceof Error ? reason.message : String(reason),
+                  );
+                  setStatus("Import failed.");
+                  setImporting(false);
+                })
+              }
+            >
+              Install selected source
+            </button>
+          </div>
+        )}
+        <p className="field-help">
+          Legacy encrypted containers and loose `.part` files are not decrypted
+          or merged by the public web app. Use the project-local content tool to
+          create a private `.4ecp` first; this avoids persisting decryption keys
+          or update metadata in the browser.
+        </p>
+      </section>
 
       <section className="panel storage-diagnostics">
         <div>

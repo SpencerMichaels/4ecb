@@ -8,10 +8,10 @@ remaining native parity risks as explicit M5 blockers, and does not claim public
 MVP readiness. M5 is in progress. Profile migration preview and explicit
 adoption are implemented; blocker closure, the legacy-builder export launch
 matrix, finished printing, remaining storage upgrade/restart matrices,
-onboarding, and public-release verification remain open. The installable PWA,
-update/offline UX, public-distribution boundary, production Docker guide, and
-authoritative exact-profile browser sheet are verified checkpoints, not an MVP
-declaration.
+and public-release verification remain open. The installable PWA, update/offline
+UX, content onboarding, public-distribution boundary, production Docker guide,
+and authoritative exact-profile browser sheet are verified checkpoints, not an
+MVP declaration.
 
 ## M5 checkpoints
 
@@ -172,6 +172,32 @@ console warnings or errors. The full public-suite result is recorded with the
 checkpoint commit: 105 tests across 24 files plus formatting, ESLint, every
 TypeScript project, the production/PWA build and cache-boundary assertion,
 deterministic content checks, and the query benchmark.
+
+### Data-directory and portable-pack onboarding
+
+- Content settings accepts portable `.4ecp` files and decrypted/merged
+  `.dnd40.xml` through the ordinary file input. Rules XML is compiled with the
+  production parser/content-pack builder in a worker, compressed, validated, and
+  committed only after validation succeeds.
+- Browsers with the File System Access API expose a read-only directory picker.
+  Discovery examines names only, stops after four nested levels or 2,000
+  entries, and offers supported candidates for a separate install action.
+  Handles are kept only in component memory.
+- Browsers without that progressive API receive an explicit Firefox/Safari-safe
+  fallback message and use the ordinary file picker for the same formats.
+- The UI documents that encrypted containers and loose `.part` files must be
+  processed with the local Nix content tool. The public app does not retain
+  decryption keys or interpret legacy update metadata.
+
+Public tests cover source classification, bounded read-only discovery without
+opening candidate files, deterministic browser-side compilation of the
+synthetic rules XML, compressed pack decode, and digest equality. Live Chromium
+rendering confirms the directory control and labeled ordinary-file fallback;
+the actual OS directory chooser remains a user-mediated system surface. The
+onboarding page produced no Chromium console errors. The complete public gate
+passes 113 tests across 26 files plus formatting, ESLint, every TypeScript
+project, the production/PWA build and cache-boundary assertion, deterministic
+content checks, and the query benchmark.
 
 ## M4 delivered
 

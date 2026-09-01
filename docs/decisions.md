@@ -150,6 +150,18 @@ The application re-imports and semantically compares edited output before
 download. Structural round-trip success is necessary but does not claim old-
 application compatibility until the curated launch matrix passes.
 
+### D021 — Browser directory onboarding reads normalized sources, not keys
+
+The progressive directory picker discovers portable `.4ecp` packs and
+recognized decrypted/merged `.dnd40.xml` files through a bounded, read-only
+scan. It keeps directory handles ephemeral and reads only the candidate the user
+chooses to install. Rules XML is parsed, normalized, compressed, and validated
+in a worker before IndexedDB commit. The ordinary file picker accepts the same
+formats as a Firefox/Safari fallback. Encrypted-container decryption, update URL
+processing, and loose `.part` merging remain in the project-local Nix content
+tool so the public browser does not acquire private keys or a legacy updater
+attack surface.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

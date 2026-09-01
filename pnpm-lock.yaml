@@ -94,6 +94,9 @@ importers:
       '@4ecb/legacy-dnd4e':
         specifier: workspace:*
         version: link:../../packages/legacy-dnd4e
+      '@4ecb/legacy-wotc':
+        specifier: workspace:*
+        version: link:../../packages/legacy-wotc
       '@4ecb/query-engine':
         specifier: workspace:*
         version: link:../../packages/query-engine

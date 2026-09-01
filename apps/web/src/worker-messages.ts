@@ -5,7 +5,18 @@ export interface ImportPackRequest {
   readonly buffer: ArrayBuffer;
 }
 
-export type ImportPackProgressPhase = "decoding" | "validating" | "storing";
+export interface ImportLegacyRulesRequest {
+  readonly type: "import-legacy-rules";
+  readonly buffer: ArrayBuffer;
+  readonly sourceKey: string;
+  readonly packId: string;
+  readonly name: string;
+}
+
+export type ContentImportRequest = ImportPackRequest | ImportLegacyRulesRequest;
+
+export type ImportPackProgressPhase =
+  "decoding" | "parsing-rules" | "building-pack" | "validating" | "storing";
 
 export type ImportPackResponse =
   | { readonly type: "progress"; readonly phase: ImportPackProgressPhase }

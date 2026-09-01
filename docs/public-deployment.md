@@ -66,10 +66,14 @@ browser data.
 ## User onboarding and updates
 
 Users install or open the PWA, visit **Content settings**, inspect browser
-persistence/quota status, and import a `.4ecp` file through the ordinary file
-picker. A private pack can be built locally with the documented content tool.
-Directory-selection support remains an open M5 item; the portable-pack file
-picker is the cross-browser fallback.
+persistence/quota status, and import a `.4ecp` file or decrypted/merged
+`.dnd40.xml` through the ordinary file picker. Chromium-family browsers also
+offer read-only, bounded directory discovery for those same source types; the
+ordinary picker is the Firefox/Safari fallback. Rules XML is normalized and
+validated in a worker before its generated pack is stored. A private pack can be
+built locally with the documented content tool. The public browser never reads
+legacy decryption keys, opens encrypted containers, follows legacy update URLs,
+or merges loose `.part` files.
 
 When a new service worker is ready, the application prompts rather than
 refreshing silently. The user may defer the update; choosing **Reload and

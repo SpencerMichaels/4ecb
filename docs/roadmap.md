@@ -199,7 +199,9 @@ prompts, a hardened public Docker boundary, public-distribution notices, and
 exact-profile authoritative browser sheets with a visible legacy-cache fallback.
 Edited export now has explicit byte-preserving and 0.07a regenerated targets
 with a semantic re-import gate. The original-application launch matrix,
-supported-browser print closure, and the other M5 exit criteria remain open.
+supported-browser print closure, release matrices, and the other M5 exit
+criteria remain open. Content onboarding now provides bounded read-only
+directory discovery plus an ordinary `.4ecp`/decrypted-rules file fallback.
 
 ### Goal
 

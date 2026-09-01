@@ -70,3 +70,25 @@ and digest, not to the current globally active pack.
 Use `pnpm content-tool inspect`, `validate`, and `diff` to diagnose packs. The
 implementation types are in `packages/content-pack`; this document is the stable
 human-facing contract.
+
+## Browser onboarding
+
+**Content settings** accepts either a portable `.4ecp` or a decrypted/merged
+`.dnd40.xml` file. Portable packs are decoded and digest-validated in a worker.
+Legacy rules XML is parsed and normalized in the worker, assigned the local
+profile ID and name entered by the user, encoded as a compressed pack, validated,
+and only then committed to IndexedDB. The 512 MiB input limit applies before a
+worker receives either format.
+
+On browsers with the File System Access directory picker, a user may choose a
+legacy-data or pack directory. Discovery is read-only, limited to four nested
+directory levels and 2,000 entries, and considers only `.4ecp` and recognized
+decrypted/merged `.dnd40.xml` files. It reads file contents only after the user
+selects a discovered candidate. Directory handles and source paths are not
+persisted. The ordinary file input exposes the same formats and remains the
+cross-browser fallback.
+
+The public web application deliberately does not open encrypted official
+containers, import decryption keys, follow update URLs, or merge loose `.part`
+files. Those operations remain in the project-local Nix content-tool workflow;
+its private `.4ecp` output is the portable onboarding path.

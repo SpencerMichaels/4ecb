@@ -483,6 +483,8 @@ Storage rules:
 - transactions cover each user-visible mutation;
 - migrations are restartable and preserve the previous record until commit;
 - content packs are verified by digest before activation;
+- progressive directory onboarding keeps handles ephemeral, bounds name-only
+  discovery, and reads only the candidate the user explicitly installs;
 - snapshots and indexes are rebuildable caches;
 - user-authored documents are never evicted by application cleanup code;
 - the application requests persistent storage where supported and explains the
@@ -533,6 +535,8 @@ storage does not move into the relay merely because it exists.
 - Rendering escapes content; rich rules text uses a small parsed markup model,
   never unrestricted HTML.
 - XML parsing disables external entities and resource fetching.
+- browser onboarding does not import legacy decryption keys or process update
+  URLs; encrypted-container and `.part` merging stays in the local Nix tool;
 - Archive imports enforce entry-count, path, compression-ratio, and total-size
   limits.
 - Worker messages and stored documents are schema-validated at runtime.

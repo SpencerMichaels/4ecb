@@ -15,6 +15,7 @@
     "@4ecb/content-domain": "workspace:*",
     "@4ecb/content-pack": "workspace:*",
     "@4ecb/legacy-dnd4e": "workspace:*",
+    "@4ecb/legacy-wotc": "workspace:*",
     "@4ecb/query-engine": "workspace:*",
     "@4ecb/rules-engine": "workspace:*",
     "@4ecb/sheet-model": "workspace:*",
