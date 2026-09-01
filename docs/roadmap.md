@@ -209,6 +209,11 @@ client release checklist are complete; full browser/keyboard/Safari/device
 execution remains open. The user and recovery handbook now covers installation,
 private content, profile migration, import/export, sheets, storage, updates,
 recovery, and the known release limitations required by exit criterion 10.
+First-class native creation now binds a blank level-1 build to an exact profile,
+uses the generic evaluator/editor for required identity choices, advances with
+canonical level records through 30, persists/reloads, and regenerates the edited
+0.07a target. The rest of exit criterion 1 still depends on the full private
+level-1-through-30 workflow and compatibility closure.
 
 ### Goal
 

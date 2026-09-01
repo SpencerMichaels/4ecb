@@ -486,6 +486,7 @@ export function importDnd4e(input: string): Dnd4eImportResult {
   const powers = powersFrom(sheet);
   const loot = lootFrom(sheet);
   const abilities = abilitiesFrom(sheet);
+  const rootAbilities = abilitiesFrom(root);
   const textStrings = textStringsFrom(root);
   const diagnostics: Dnd4eImportDiagnostic[] = [];
   if (gameSystem !== "D&D4E")
@@ -516,6 +517,7 @@ export function importDnd4e(input: string): Dnd4eImportResult {
   return {
     envelope: {
       format: "dnd4e",
+      origin: "imported",
       ...(version === undefined ? {} : { version }),
       ...(gameSystem === undefined ? {} : { gameSystem }),
       ...(legality === undefined ? {} : { legality }),
@@ -532,7 +534,11 @@ export function importDnd4e(input: string): Dnd4eImportResult {
       levelCount,
       source: "legacy-cache",
     },
-    build: buildFrom(root, abilities, textStrings),
+    build: buildFrom(
+      root,
+      Object.keys(rootAbilities).length === 0 ? abilities : rootAbilities,
+      textStrings,
+    ),
     report: {
       diagnostics,
       ...(version === undefined ? {} : { rootVersion: version }),

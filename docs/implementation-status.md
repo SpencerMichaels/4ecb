@@ -15,6 +15,39 @@ MVP declaration.
 
 ## M5 checkpoints
 
+### First-class native character creation
+
+- The Characters route can create a profile-bound native record without an
+  imported `.dnd4e`. Creation requires the active pack's canonical
+  `ID_INTERNAL_LEVEL_1`, pins its ID and digest, persists six base ability inputs
+  of 10, and enters the existing rules-worker editor.
+- Required Race, Class, Feat, and generated nested choices are supplied by the
+  level/content rules and use the same generic durable choice commands as
+  imported builds. The editor's shared canonical-level constructor advances the
+  same build through level 30.
+- Native records carry a minimal 0.07a compatibility envelope explicitly marked
+  as native. The library omits the meaningless no-edit target and offers only
+  regenerated 0.07a export. Root-level authoritative ability input is written
+  separately from the derived sheet cache so a rule-derived bonus cannot become
+  a compounded base score after re-import.
+- The public synthetic profile now includes level 1, Class, Race, Feat, and
+  nested Race Ability Bonus candidates. Unit/integration smoke coverage resolves
+  all required identity choices, advances level 1 through 30, rejects missing
+  canonical levels/inexact profiles/unsafe names, and round-trips a native build
+  whose base Dexterity 10 evaluates to 12.
+
+Live production-browser verification on 2026-09-01 imported and activated the
+seven-record public profile, created a native character, displayed the required
+generic choices, resolved Race/Class/Feat and nested ability choice to a
+complete legal build, reloaded with every selection persisted, exposed only the
+edited export target, and passed its semantic re-import gate without console
+warnings or errors. This closes the old-application dependency for starting a
+character, but the full private level-1-through-30 workflow and remaining M4
+compatibility/release matrices still block M5 exit criterion 1.
+The complete public gate passes 134 tests across 30 files plus formatting,
+ESLint, every TypeScript project, the production/PWA build, Chromium/Firefox
+print artifacts, deterministic content checks, and the query benchmark.
+
 ### Profile migration preview and explicit adoption
 
 - A character's pinned profile can no longer be changed by an ordinary library

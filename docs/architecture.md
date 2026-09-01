@@ -160,6 +160,12 @@ records migrate lazily in the browser. The normalized legacy `CharacterSheet`
 snapshot remains a comparison/read model and never becomes authoritative; the
 verbatim envelope remains the compatibility source for no-edit export.
 
+Native records use the same schema and command/evaluation path. They begin with
+the exact profile's canonical level-1 entity and a minimal compatibility
+envelope marked as native. Because there is no imported artifact, they offer
+only regenerated compatibility export. That export separates root-level base
+ability input from derived `CharacterSheet` ability caches.
+
 ### PlayState
 
 `PlayState` is a separate mutable overlay:

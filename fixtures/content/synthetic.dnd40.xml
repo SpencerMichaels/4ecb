@@ -1,5 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <D20Rules game-system="D&amp;D4E">
+  <RulesElement internal-id="ID_INTERNAL_LEVEL_1" name="1" type="Level" source="4ECB Synthetic Fixtures" revision-date="2026-09-01">
+    <rules>
+      <select type="Race" number="1" />
+      <select type="Class" number="1" />
+      <select type="Feat" number="1" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_4ECB_SYNTHETIC_CLASS_1" name="Boundary Warden" type="Class" source="4ECB Synthetic Fixtures" revision-date="2026-09-01">
+    <Category>Class, Martial</Category>
+    <specific name="Power Source">Martial</specific>
+    <specific name="Short Description">A synthetic class for native character creation.</specific>
+    <rules />
+    Boundary Wardens exercise the generic class selection path.
+  </RulesElement>
+  <RulesElement internal-id="ID_4ECB_SYNTHETIC_RACE_BONUS_DEX" name="Dexterity" type="Race Ability Bonus" source="4ECB Synthetic Fixtures" revision-date="2026-09-01">
+    <Category>Dexterity</Category>
+    <rules>
+      <statadd name="Dexterity" value="+2" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_4ECB_SYNTHETIC_RACE_BONUS_WIS" name="Wisdom" type="Race Ability Bonus" source="4ECB Synthetic Fixtures" revision-date="2026-09-01">
+    <Category>Wisdom</Category>
+    <rules>
+      <statadd name="Wisdom" value="+2" />
+    </rules>
+  </RulesElement>
   <RulesElement internal-id="ID_4ECB_SYNTHETIC_RACE_1" name="Cliffkin" type="Race" source="4ECB Synthetic Fixtures" revision-date="2026-08-31">
     <Category>Race, Natural Origin</Category>
     <Flavor>Sure-footed travelers from high stone settlements.</Flavor>

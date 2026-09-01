@@ -31,7 +31,7 @@ export interface SheetCard {
 }
 
 export interface CharacterSheetModel {
-  readonly source: "legacy-cache" | "authoritative-evaluation";
+  readonly source: "legacy-cache" | "native-empty" | "authoritative-evaluation";
   readonly identity: readonly SheetValue[];
   readonly abilities: readonly SheetValue[];
   readonly defenses: readonly SheetValue[];
@@ -306,7 +306,7 @@ export function buildSheetModel(
     });
   const detail = snapshot.details;
   return {
-    source: "legacy-cache",
+    source: snapshot.source,
     identity: [
       "name",
       "Level",

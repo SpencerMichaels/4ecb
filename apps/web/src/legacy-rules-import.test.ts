@@ -25,7 +25,7 @@ describe("legacy rules onboarding", () => {
 
     expect(first.manifest).toMatchObject({
       packId: "browser-synthetic",
-      recordCount: 3,
+      recordCount: 7,
       gameSystem: "D&D4E",
     });
     expect(first.manifest.contentDigest).toBe(second.manifest.contentDigest);

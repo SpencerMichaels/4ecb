@@ -1,6 +1,6 @@
 export * from "./build";
 
-import type { CharacterBuild } from "./build";
+import type { BuildElementIdentity, CharacterBuild } from "./build";
 
 export const CHARACTER_SCHEMA_VERSION = 2 as const;
 
@@ -11,6 +11,8 @@ export interface CharacterProfileBinding {
 
 export interface LegacyEnvelope {
   readonly format: "dnd4e";
+  /** Missing on historical records; native records have no imported original. */
+  readonly origin?: "imported" | "native";
   readonly version?: string;
   readonly gameSystem?: string;
   readonly legality?: string;
@@ -68,7 +70,7 @@ export interface LegacyCharacterSnapshot {
   readonly loot: readonly LegacyLootSnapshot[];
   readonly textStrings: Readonly<Record<string, string>>;
   readonly levelCount: number;
-  readonly source: "legacy-cache";
+  readonly source: "legacy-cache" | "native-empty";
 }
 
 export interface SheetSettings {
@@ -228,7 +230,8 @@ function characterSnapshot(value: unknown): boolean {
   const snapshot = object(value);
   return (
     snapshot !== undefined &&
-    snapshot.source === "legacy-cache" &&
+    (snapshot.source === "legacy-cache" ||
+      snapshot.source === "native-empty") &&
     stringRecord(snapshot.details) &&
     numberRecord(snapshot.abilities) &&
     stringRecord(snapshot.stats) &&
@@ -375,6 +378,9 @@ function characterRecordBase(
         !optionalString(profile.contentDigest))) ||
     legacy === undefined ||
     legacy.format !== "dnd4e" ||
+    (legacy.origin !== undefined &&
+      legacy.origin !== "imported" &&
+      legacy.origin !== "native") ||
     !optionalString(legacy.version) ||
     !optionalString(legacy.gameSystem) ||
     !optionalString(legacy.legality) ||
@@ -429,6 +435,101 @@ export function newCharacterRecord(
     build,
     sheetSettings: DEFAULT_SHEET_SETTINGS,
   };
+}
+
+const NATIVE_BASE_ABILITIES = {
+  Strength: 10,
+  Constitution: 10,
+  Dexterity: 10,
+  Intelligence: 10,
+  Wisdom: 10,
+  Charisma: 10,
+} as const;
+
+export function newNativeCharacterRecord(
+  name: string,
+  levelOne: BuildElementIdentity,
+  profileBinding: CharacterProfileBinding,
+  options: {
+    readonly id?: string;
+    readonly occurrenceId?: string;
+    readonly now?: string;
+  } = {},
+): CharacterRecord {
+  if (
+    name.length === 0 ||
+    name.length > 120 ||
+    name !== name.trim() ||
+    /[\u0000-\u001f\u007f]/.test(name)
+  )
+    throw new Error(
+      "Character name must be 1-120 trimmed characters without control characters",
+    );
+  if (
+    levelOne.definitionId === undefined ||
+    levelOne.definitionId.length === 0 ||
+    levelOne.type.toLocaleLowerCase() !== "level"
+  )
+    throw new Error("Native character creation requires a level 1 definition");
+  if (
+    profileBinding.packId.length === 0 ||
+    profileBinding.contentDigest === undefined ||
+    profileBinding.contentDigest.length === 0
+  )
+    throw new Error(
+      "Native character creation requires an exact content profile",
+    );
+  const snapshot: LegacyCharacterSnapshot = {
+    details: { name, Level: "1" },
+    abilities: {},
+    stats: {},
+    selectedRules: [],
+    powers: [],
+    loot: [],
+    textStrings: {},
+    levelCount: 1,
+    source: "native-empty",
+  };
+  const build: CharacterBuild = {
+    formatVersion: 1,
+    effectiveLevel: 1,
+    levels: [
+      {
+        level: 1,
+        root: {
+          id: options.occurrenceId ?? `web:${crypto.randomUUID()}`,
+          identity: levelOne,
+          acquiredLevel: 1,
+          legality: "rules-legal",
+          children: [],
+          unresolved: false,
+        },
+      },
+    ],
+    grabbag: [],
+    inventory: [],
+    alternates: [],
+    baseAbilities: NATIVE_BASE_ABILITIES,
+    textStrings: {},
+  };
+  return newCharacterRecord(
+    {
+      format: "dnd4e",
+      origin: "native",
+      version: "0.07a",
+      gameSystem: "D&D4E",
+      legality: "rules-legal",
+      sourceXml:
+        '<?xml version="1.0" encoding="UTF-8"?>\n<D20Character game-system="D&amp;D4E" Version="0.07a" legality="rules-legal"/>\n',
+    },
+    snapshot,
+    build,
+    {
+      ...(options.id === undefined ? {} : { id: options.id }),
+      ...(options.now === undefined ? {} : { now: options.now }),
+      profileBinding,
+    },
+  );
 }
 
 export function duplicateCharacterRecord(

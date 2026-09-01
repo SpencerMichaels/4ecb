@@ -31,6 +31,7 @@ import {
   previewMatchesTargetRevision,
 } from "./profile-migration";
 import { RulesWorkerClient } from "./rules-client";
+import { createNativeCharacter } from "./new-character";
 
 const repository = new CharacterRepository();
 const contentRepository = new ContentPackRepository();
@@ -254,6 +255,8 @@ export function CharacterLibraryPage({
     readonly value: unknown;
     readonly inspection: CharacterBackupInspection;
   }>();
+  const [newCharacterName, setNewCharacterName] = useState("");
+  const [creatingCharacter, setCreatingCharacter] = useState(false);
 
   const refresh = useCallback(async () => {
     const [active, deleted] = await Promise.all([
@@ -416,6 +419,29 @@ export function CharacterLibraryPage({
     setStatus(`Restored ${restored} backup record(s).`);
   }
 
+  async function createCharacter(): Promise<void> {
+    if (activePackId === undefined)
+      throw new Error(
+        "Activate a content profile before creating a character.",
+      );
+    const pack = await contentRepository.get(activePackId);
+    if (pack === undefined)
+      throw new Error("The active content profile is not installed.");
+    setCreatingCharacter(true);
+    try {
+      const character = createNativeCharacter(
+        newCharacterName.trim(),
+        pack.manifest,
+        pack.entities,
+      );
+      await repository.put(character);
+      setStatus(`Created ${character.title} at level 1.`);
+      window.location.hash = `#/characters/${encodeURIComponent(character.id)}/edit`;
+    } finally {
+      setCreatingCharacter(false);
+    }
+  }
+
   return (
     <main className="characters-page" id="main-content">
       <header className="page-heading">
@@ -485,6 +511,55 @@ export function CharacterLibraryPage({
           <span>{error}</span>
         </div>
       )}
+      <section className="panel">
+        <div>
+          <p className="eyebrow">Profile-bound level 1</p>
+          <h3>Create a new character</h3>
+          <p>
+            Start an empty authoritative build from the active profile. The
+            generic editor will present that profile&apos;s required race,
+            class, ability, and other level-1 choices.
+          </p>
+        </div>
+        <form
+          className="metadata-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setError(undefined);
+            void createCharacter().catch((reason: unknown) =>
+              setError(
+                reason instanceof Error ? reason.message : String(reason),
+              ),
+            );
+          }}
+        >
+          <label>
+            Character name
+            <input
+              value={newCharacterName}
+              maxLength={120}
+              required
+              disabled={creatingCharacter}
+              onChange={(event) =>
+                setNewCharacterName(event.currentTarget.value)
+              }
+            />
+          </label>
+          <div>
+            <p className="field-help">
+              {activePackId === undefined
+                ? "Activate a content profile in Content settings first."
+                : `New records bind to ${manifests.find((manifest) => manifest.packId === activePackId)?.name ?? activePackId} and its exact digest.`}
+            </p>
+            <button
+              type="submit"
+              disabled={activePackId === undefined || creatingCharacter}
+            >
+              {creatingCharacter ? "Creating…" : "Create and edit"}
+            </button>
+          </div>
+        </form>
+      </section>
       {pendingBackup === undefined ? null : (
         <section className="import-report" aria-label="Backup restore preview">
           <h3>Backup restore preview</h3>
@@ -574,7 +649,8 @@ export function CharacterLibraryPage({
         <div className="empty-state">
           <h3>Your local library is empty</h3>
           <p>
-            Choose a `.dnd4e` file exported by the legacy Character Builder. The
+            Create a level-1 character from the active profile above, or choose
+            a `.dnd4e` file exported by the legacy Character Builder. Imported
             original XML remains embedded for compatible export.
           </p>
         </div>
@@ -594,11 +670,19 @@ export function CharacterLibraryPage({
               profile !== undefined &&
               character.profileBinding?.contentDigest !== undefined &&
               character.profileBinding.contentDigest !== profile.contentDigest;
+            const exportOptions =
+              character.legacy.origin === "native"
+                ? DND4E_EXPORT_TARGETS.filter(
+                    (option) => option.id === "legacy-builder-0.07a",
+                  )
+                : DND4E_EXPORT_TARGETS;
+            const exportTarget =
+              exportTargets[character.id] ?? exportOptions[0]!.id;
             return (
               <li key={character.id}>
                 <div>
                   <p className="eyebrow">
-                    Level {character.snapshot.details.Level || "?"}{" "}
+                    Level {character.build.effectiveLevel}{" "}
                     {character.snapshot.details.Race}{" "}
                     {character.snapshot.details.Class}
                   </p>
@@ -672,7 +756,7 @@ export function CharacterLibraryPage({
                   <label>
                     Export target
                     <select
-                      value={exportTargets[character.id] ?? "preserve-original"}
+                      value={exportTarget}
                       onChange={(event) => {
                         const target = event.currentTarget
                           .value as Dnd4eExportTarget;
@@ -682,7 +766,7 @@ export function CharacterLibraryPage({
                         }));
                       }}
                     >
-                      {DND4E_EXPORT_TARGETS.map((option) => (
+                      {exportOptions.map((option) => (
                         <option key={option.id} value={option.id}>
                           {option.label}
                         </option>
@@ -692,15 +776,13 @@ export function CharacterLibraryPage({
                   <button
                     type="button"
                     onClick={() =>
-                      void exportCharacter(
-                        character,
-                        exportTargets[character.id] ?? "preserve-original",
-                      ).catch((reason: unknown) =>
-                        setError(
-                          reason instanceof Error
-                            ? reason.message
-                            : String(reason),
-                        ),
+                      void exportCharacter(character, exportTarget).catch(
+                        (reason: unknown) =>
+                          setError(
+                            reason instanceof Error
+                              ? reason.message
+                              : String(reason),
+                          ),
                       )
                     }
                   >

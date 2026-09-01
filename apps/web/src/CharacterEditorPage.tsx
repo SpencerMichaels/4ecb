@@ -20,6 +20,7 @@ import {
 } from "@4ecb/rules-engine";
 
 import { RulesWorkerClient } from "./rules-client";
+import { createLevelFrame } from "./new-character";
 
 const characters = new CharacterRepository();
 const packs = new ContentPackRepository();
@@ -396,33 +397,17 @@ export function CharacterEditorPage({
               disabled={build.levels.length >= 30 || entities.length === 0}
               onClick={() => {
                 const level = build.levels.length + 1;
-                const definition = byId.get(
-                  `id_internal_level_${level}`.toLocaleLowerCase(),
-                );
-                if (definition === undefined) {
+                try {
+                  void dispatch({
+                    kind: "add-level",
+                    frame: createLevelFrame(level, entities),
+                  });
+                } catch (reason: unknown) {
                   setError(
-                    `The active content profile has no level ${level} record.`,
+                    reason instanceof Error ? reason.message : String(reason),
                   );
                   return;
                 }
-                void dispatch({
-                  kind: "add-level",
-                  frame: {
-                    level,
-                    root: {
-                      id: `web:${crypto.randomUUID()}`,
-                      identity: {
-                        definitionId: definition.id,
-                        name: definition.name,
-                        type: definition.type,
-                      },
-                      acquiredLevel: level,
-                      legality: "rules-legal",
-                      children: [],
-                      unresolved: false,
-                    },
-                  },
-                });
               }}
             >
               Add level

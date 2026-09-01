@@ -26,7 +26,7 @@ id, title, notes
 createdAt, updatedAt, deletedAt?
 profileBinding? { packId, contentDigest? }
 sheetSettings { paper, monochrome, blankHitPoints, powerCards, itemCards }
-legacy { format, version?, gameSystem?, legality?, sourceXml }
+legacy { format, origin?, version?, gameSystem?, legality?, sourceXml }
 snapshot { details, abilities, stats, selections, powers, loot, textStrings }
 build { effectiveLevel, levels, grabbag, inventory, alternates,
         baseAbilities, textStrings }
@@ -78,6 +78,14 @@ level tree, grabbag, alternates, base abilities, and inventory into the
 authoritative build. Custom extensions, comments, whitespace, cached sheet
 values, and other unmodeled XML remain in `sourceXml`.
 
+Native creation starts from the active pack's exact ID/digest and canonical
+`ID_INTERNAL_LEVEL_1` definition. It persists a level-1 root, six base ability
+inputs of 10, empty inventory/history extensions, and a minimal valid 0.07a
+envelope marked `origin: native`; it does not invent a legacy calculation
+snapshot. The ordinary evaluator immediately exposes the level record's Race,
+Class, Feat, and nested choices. The same canonical-level constructor advances
+the record through level 30.
+
 ## Export compatibility
 
 M3 no-edit export returns `sourceXml` exactly, including a leading BOM if one was
@@ -94,6 +102,11 @@ regenerates the `CharacterSheet` calculation caches. Campaign and unknown root
 elements are copied from the source envelope; companion, journal, and unknown
 sheet blocks are retained. XML user content is escaped; an invalid XML 1.0 code point blocks the
 export rather than being silently changed or producing a malformed document.
+
+Native-created records omit the no-edit target because no imported original
+exists. Edited export writes root-level authoritative `AbilityScores` as well as
+the derived `CharacterSheet` ability cache; import prefers the root values for
+the build so racial or other rule modifiers cannot be compounded on round trip.
 
 Before download, edited output is re-imported and compared to the authoritative
 level, selection, replacement, inventory, alternate, ability, and text

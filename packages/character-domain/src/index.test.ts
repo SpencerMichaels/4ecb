@@ -6,6 +6,7 @@ import {
   isCharacterRecord,
   isLegacyCharacterRecordV1,
   newCharacterRecord,
+  newNativeCharacterRecord,
   type CharacterBuild,
 } from ".";
 
@@ -68,6 +69,68 @@ describe("character records", () => {
       schemaVersion: 2,
     });
     expect(isCharacterRecord(source)).toBe(true);
+  });
+
+  it("creates an exact-profile native level-1 record without legacy cache claims", () => {
+    const record = newNativeCharacterRecord(
+      "New Hero",
+      {
+        definitionId: "ID_INTERNAL_LEVEL_1",
+        name: "1",
+        type: "Level",
+      },
+      { packId: "private", contentDigest: "digest-1" },
+      {
+        id: "native-one",
+        occurrenceId: "native-level-one",
+        now: "2026-09-01T00:00:00.000Z",
+      },
+    );
+    expect(record).toMatchObject({
+      id: "native-one",
+      title: "New Hero",
+      profileBinding: { packId: "private", contentDigest: "digest-1" },
+      legacy: { origin: "native", version: "0.07a" },
+      snapshot: { source: "native-empty" },
+      build: {
+        effectiveLevel: 1,
+        baseAbilities: {
+          Strength: 10,
+          Constitution: 10,
+          Dexterity: 10,
+          Intelligence: 10,
+          Wisdom: 10,
+          Charisma: 10,
+        },
+        levels: [
+          {
+            root: {
+              id: "native-level-one",
+              identity: { definitionId: "ID_INTERNAL_LEVEL_1" },
+            },
+          },
+        ],
+      },
+    });
+    expect(record.snapshot.stats).toEqual({});
+    expect(isCharacterRecord(record)).toBe(true);
+  });
+
+  it("rejects unsafe native names and inexact native profiles", () => {
+    const level = {
+      definitionId: "ID_INTERNAL_LEVEL_1",
+      name: "1",
+      type: "Level",
+    };
+    expect(() =>
+      newNativeCharacterRecord(" bad\nname ", level, {
+        packId: "private",
+        contentDigest: "digest-1",
+      }),
+    ).toThrow("Character name");
+    expect(() =>
+      newNativeCharacterRecord("Hero", level, { packId: "private" }),
+    ).toThrow("exact content profile");
   });
 
   it("rejects incomplete records and invalid nested authoritative builds", () => {

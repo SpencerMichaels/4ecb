@@ -84,6 +84,10 @@ the ordinary `.4ecp` and decrypted/merged-rules file input used by every client.
 
 ## Compatibility, print, and durability closure
 
+- [x] A native character can start at level 1 from an exact active profile,
+      resolve required Race/Class/Feat and nested choices through the generic
+      editor, advance with canonical level records through 30, persist/reload,
+      and regenerate an edited `.dnd4e` with a semantic re-import gate.
 - [x] Repository reconstruction, historical database upgrade, checksummed
       backup/restore, malformed restore rejection, and interrupted migration are in
       the automated durability matrix.

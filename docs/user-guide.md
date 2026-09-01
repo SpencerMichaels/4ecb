@@ -14,8 +14,8 @@ application, decryption keys, or imported characters. You need:
   automated PDF paths; Safari and tablet release checks are still open;
 - a private `.4ecp` content pack or a decrypted, fully merged `.dnd40.xml`
   rules file; and
-- an existing `.dnd4e` character to start a browser character record. Creating
-  a character from an entirely blank record is not implemented yet.
+- optionally, an existing `.dnd4e` character to import. A new authoritative
+  character can instead start at level 1 from the active content profile.
 
 Characters and private packs stay in the current browser profile's IndexedDB.
 There is no account, sync service, server-side copy, or telemetry. Treat the
@@ -94,15 +94,20 @@ Installing a pack with an existing ID replaces that installed revision. Stored
 characters remain bound to their exact original digest and show a mismatch
 until that revision is restored or a migration is previewed and adopted.
 
-## Import and manage characters
+## Create, import, and manage characters
 
-1. Open **Characters** and choose **Import .dnd4e**. Character files are limited
-   to 10 MiB.
-2. Read the import report. Unknown extensions remain preserved in the original
-   envelope; warnings are not silently discarded.
+1. To start without the old application, enter a name under **Create a new
+   character** and choose **Create and edit**. The record binds to the active
+   pack ID and digest, starts at level 1 with six base scores of 10, and exposes
+   the profile's required Race, Class, Feat, and nested choices through the
+   generic editor.
+2. To bring in an existing character instead, choose **Import .dnd4e**.
+   Character files are limited to 10 MiB. Read the import report; unknown
+   extensions remain preserved and warnings are not silently discarded.
 3. Use **Edit build** for level history, ability inputs, choices, inventory,
-   retraining, undo, and redo. The active exact profile supplies candidates and
-   rules evaluation.
+   retraining, undo, and redo. The bound exact profile supplies candidates and
+   rules evaluation. **Add level** uses that profile's canonical
+   `ID_INTERNAL_LEVEL_n` definitions through level 30.
 4. Use **View sheet** for the evaluated sheet and print controls. If the exact
    profile or evaluation is unavailable, the application shows a labeled
    legacy cached fallback instead of mixing calculated revisions.
@@ -130,7 +135,7 @@ new preview.
 
 ## Export compatibility characters
 
-Each character has two explicit `.dnd4e` targets:
+An imported character has two explicit `.dnd4e` targets:
 
 - **Original imported file (no edits)** downloads the preserved XML
   byte-for-byte. Browser build edits and library metadata are intentionally
@@ -139,6 +144,11 @@ Each character has two explicit `.dnd4e` targets:
   its adopted exact pack revision, regenerates the representable build and
   sheet caches, re-imports the result, and blocks download if the semantic
   round trip differs.
+
+Native-created characters have no imported original, so they expose only the
+regenerated 0.07a target. That target writes authoritative base ability input
+separately from the final regenerated ability cache so rule-derived bonuses do
+not become new base scores when the file is re-imported.
 
 Edited export also blocks on a missing/mismatched profile, nonconvergent
 evaluation, an evaluation horizon behind the latest saved level, or invalid XML
@@ -199,8 +209,6 @@ backups remain accepted with an explicit no-checksum warning.
 
 ## Current release limitations
 
-- Blank-character creation is not implemented; the current flow starts from an
-  imported `.dnd4e` record.
 - The remaining native named/hand-specific power exceptions, advanced
   companion/item-set/inherent-bonus behavior, prerequisite prose tail, and
   Essentials/hybrid differential cases are explicit compatibility blockers in

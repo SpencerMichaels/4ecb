@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 
 import { describe, expect, it } from "vitest";
 
+import { newNativeCharacterRecord } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
   evaluateCharacter,
@@ -213,6 +214,93 @@ describe("legacy .dnd4e import", () => {
         content,
       }),
     ).toThrow("evaluation horizon to be the latest level");
+  });
+
+  it("regenerates a native-created record from its minimal compatibility envelope", () => {
+    const level = entity("ID_INTERNAL_LEVEL_1", "1", "Level");
+    const racialBonus: ContentEntity = {
+      ...entity("RACIAL_BONUS", "Dexterity", "Race Ability Bonus"),
+      rules: [
+        {
+          name: "statadd",
+          attributes: [
+            { name: "name", value: "Dexterity" },
+            { name: "value", value: "+2" },
+          ],
+          text: "",
+          children: [],
+          ordinal: 0,
+        },
+      ],
+    };
+    const created = newNativeCharacterRecord(
+      "Native <Hero> & Co",
+      {
+        definitionId: level.id,
+        name: level.name,
+        type: level.type,
+      },
+      { packId: "private", contentDigest: "digest" },
+      {
+        id: "native",
+        occurrenceId: "native-level-1",
+        now: "2026-09-01T00:00:00.000Z",
+      },
+    );
+    const record = {
+      ...created,
+      build: {
+        ...created.build,
+        levels: [
+          {
+            ...created.build.levels[0]!,
+            root: {
+              ...created.build.levels[0]!.root,
+              children: [
+                {
+                  id: "racial-bonus",
+                  identity: {
+                    definitionId: racialBonus.id,
+                    name: racialBonus.name,
+                    type: racialBonus.type,
+                  },
+                  acquiredLevel: 1,
+                  legality: "rules-legal" as const,
+                  children: [],
+                  unresolved: false,
+                },
+              ],
+            },
+          },
+        ],
+      },
+    };
+    const content = [level, racialBonus];
+    const evaluation = evaluateCharacter(
+      projectBuildForEvaluation(record.build, content),
+      content,
+    );
+    const xml = exportEditedDnd4e({
+      target: "legacy-builder-0.07a",
+      envelope: record.legacy,
+      snapshot: record.snapshot,
+      build: record.build,
+      evaluation,
+      content,
+    });
+    const reimported = importDnd4e(xml);
+    expect(xml).toContain("<name>Native &lt;Hero&gt; &amp; Co</name>");
+    expect(xml).toContain('internal-id="ID_INTERNAL_LEVEL_1"');
+    expect(xml).toContain('<AbilityScores><Strength score="10"');
+    expect(reimported.build.baseAbilities.Dexterity).toBe(10);
+    expect(reimported.snapshot.abilities.Dexterity).toBe(12);
+    expect(reimported.snapshot.details.name).toBe("Native <Hero> & Co");
+    expect(compareEditedDnd4eRoundTrip(record.build, reimported.build)).toEqual(
+      {
+        equivalent: true,
+        differences: [],
+      },
+    );
   });
 
   it("blocks invalid XML characters instead of silently changing user text", () => {

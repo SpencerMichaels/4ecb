@@ -483,6 +483,19 @@ function abilityScoresXml(
   );
 }
 
+function baseAbilityScoresXml(build: CharacterBuild): string {
+  return element(
+    "AbilityScores",
+    {},
+    ABILITIES.flatMap((ability) => {
+      const score = build.baseAbilities[ability];
+      return score === undefined
+        ? []
+        : [element(ability, { score: String(score) })];
+    }).join(""),
+  );
+}
+
 function statBlockXml(evaluation: EvaluatedCharacter): string {
   return element(
     "StatBlock",
@@ -689,6 +702,7 @@ export function exportEditedDnd4e(input: EditedDnd4eExportInput): string {
     "alternate",
     "textstring",
     "charactersheet",
+    "abilityscores",
   ]);
   const preserved = childFragments(sourceXml, "D20Character")
     .filter((fragment) => !replaced.has(key(fragment.name)))
@@ -712,6 +726,7 @@ export function exportEditedDnd4e(input: EditedDnd4eExportInput): string {
     grabbagXml(input.build, tokens),
     ...alternatesXml(input.build, tokens),
     ...textStrings,
+    baseAbilityScoresXml(input.build),
     ...preserved,
     characterSheetXml(input),
   ]

@@ -311,6 +311,20 @@ export function CharacterSheetPage({
             {" and "}
             {evaluation.legal ? "rules legal" : "has legality findings"}.
           </>
+        ) : model.source === "native-empty" ? (
+          <>
+            <strong>No cached calculation snapshot.</strong> This character was
+            created in the web builder and needs its exact content profile for
+            an authoritative sheet.{" "}
+            {boundManifest === undefined
+              ? `The bound content profile (${character.profileBinding?.packId ?? "unknown"}) is missing; re-import it to restore evaluation.`
+              : profileMismatch
+                ? `The installed ${boundManifest.name} revision differs from the one bound to this character; preview and adopt it in the library before evaluation.`
+                : evaluating
+                  ? "The rules engine is evaluating the bound profile…"
+                  : (evaluationError ??
+                    `The exact ${boundManifest.name} profile is installed, but evaluation is not available.`)}
+          </>
         ) : (
           <>
             <strong>Legacy cached calculations.</strong> Values shown here were

@@ -70,6 +70,25 @@ describe("sheet model", () => {
     });
   });
 
+  it("preserves an empty native snapshot source without relabeling it as legacy", () => {
+    const model = buildSheetModel({
+      details: { name: "New Hero", Level: "1" },
+      abilities: {},
+      stats: {},
+      selectedRules: [],
+      powers: [],
+      loot: [],
+      textStrings: {},
+      levelCount: 1,
+      source: "native-empty",
+    });
+    expect(model.source).toBe("native-empty");
+    expect(model.identity).toContainEqual({
+      label: "name",
+      value: "New Hero",
+    });
+  });
+
   it("projects converged engine values, current selections, powers, and inventory", () => {
     const snapshot: LegacyCharacterSnapshot = {
       details: { name: "Ada", Level: "1", Race: "Old race" },
