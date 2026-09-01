@@ -984,9 +984,7 @@ export function evaluateCharacter(
     inventory,
     stats: evaluatedStats,
     overlays,
-    ...(input.textStrings === undefined
-      ? {}
-      : { textStrings: input.textStrings }),
+    textStrings: text,
     entities,
   });
   return {

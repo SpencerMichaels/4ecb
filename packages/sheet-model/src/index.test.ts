@@ -184,6 +184,7 @@ describe("sheet model", () => {
               damage: "1d6+4",
               attackComponents: [],
               damageComponents: [],
+              conditionalDamage: [],
             },
           ],
           recoveries: [],

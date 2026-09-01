@@ -80,6 +80,15 @@ Native power math includes special handling for:
 - augmentable power versions, item powers, and conditional damage components;
 - power-specific exceptional hit/damage text through `SpecialCase`.
 
+`CalcStrikers` confirms that Hunter's Quarry and Warlock's Curse are emitted as
+conditional damage for damaging powers, while Sneak Attack first checks the
+weapon's recovered groups/names. `CalcStriker` reads the feature's `... Dice`
+stat, optional flat stat and `... Die` text override, then records the expression
+with its once-per-round/turn usage instead of adding it to every hit. The hybrid
+feature IDs additionally require a power from their Ranger, Rogue, or Warlock
+class family. These observed branches are safe to model explicitly; similarly
+named unknown feature variants are not.
+
 The exact output is richer than `ability modifier + half level + proficiency +
 enhancement`. Use the saved `PowerStats` corpus as golden oracles and keep every
 component explainable.

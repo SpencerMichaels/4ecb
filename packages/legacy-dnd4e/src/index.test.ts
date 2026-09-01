@@ -168,6 +168,44 @@ describe("legacy .dnd4e import", () => {
     expect(xml).toContain(
       '<SheetExtension future="yes">before<Nested/>after</SheetExtension>',
     );
+    const conditionalXml = exportEditedDnd4e({
+      target: "legacy-builder-0.07a",
+      envelope: imported.envelope,
+      snapshot: imported.snapshot,
+      build,
+      evaluation: {
+        ...evaluation,
+        powers: [
+          {
+            definitionId: "POWER",
+            name: "Conditional Strike",
+            keywords: ["Weapon"],
+            variants: [
+              {
+                id: "POWER:weapon",
+                equipmentName: "Test blade",
+                damage: "1d8+4",
+                attackComponents: [],
+                damageComponents: [],
+                conditionalDamage: [
+                  {
+                    source: "Hunter's Quarry",
+                    expression: "3d8",
+                    condition: "once per round against your quarry",
+                  },
+                ],
+              },
+            ],
+            recoveries: [],
+            unsupported: [],
+          },
+        ],
+      },
+      content,
+    });
+    expect(conditionalXml).toContain(
+      "<Conditions>+3d8 to damage once per round against your quarry (Hunter's Quarry)</Conditions>",
+    );
     expect(xml).toContain('charelem="4ecb-1"');
     expect(xml).toMatch(/charelem="4ecb-3" replaces="4ecb-2"/);
     expect(xml).not.toContain('charelem="root"');

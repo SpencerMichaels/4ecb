@@ -167,8 +167,11 @@ current browser/variant combination.
 - The evaluator recomputes general choices, grants, prerequisites, stats, text,
   overlays, equipment predicates, legality, ordinary weapon/implement power
   variants, explicit main/off-hand pairing, and the named dual-implement
-  enhancement path. Advanced striker, situational, and remaining named
-  special-case branches remain incomplete.
+  enhancement path. Quarry, curse, and sneak-attack damage is retained as a
+  separate conditional projection, including the recovered hybrid and weapon
+  gates, and edited export writes that projection back to the legacy
+  `Conditions` cache. Other situational and remaining named special-case
+  branches remain incomplete.
 - The editor handles abilities, level frames, ordinary choices, inventory, and
   undo/redo. Focused replacement picking and choices supplied by newly created
   synthetic grant providers still need their dedicated editing flow.

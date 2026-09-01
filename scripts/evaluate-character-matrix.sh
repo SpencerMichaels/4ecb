@@ -31,7 +31,8 @@ for character_path in "${character_paths[@]}"; do
         matching: .cachedPowerParity.matchingFields,
         comparable: .cachedPowerParity.comparableFields,
         mismatches: .cachedPowerParity.mismatches,
-        unsupported: .cachedPowerParity.unsupported
+        unsupported: .cachedPowerParity.unsupported,
+        conditionalDamageVariants: .cachedPowerParity.conditionalDamageVariants
       }
     }'
 done

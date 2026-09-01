@@ -105,6 +105,7 @@ async function main(): Promise<void> {
           comparison.field === "attack"
             ? variant?.attackComponents
             : variant?.damageComponents,
+        conditionalDamage: variant?.conditionalDamage ?? [],
         unsupported: power?.unsupported ?? [],
         matches: comparison.expected === comparison.actual,
       }));
@@ -175,6 +176,19 @@ async function main(): Promise<void> {
               power: power.name,
               reasons: power.unsupported,
             })),
+          conditionalDamageVariants: evaluated.powers.flatMap((power) =>
+            power.variants.flatMap((variant) =>
+              variant.conditionalDamage.length === 0
+                ? []
+                : [
+                    {
+                      power: power.name,
+                      equipment: variant.equipmentName,
+                      conditionalDamage: variant.conditionalDamage,
+                    },
+                  ],
+            ),
+          ),
         },
         diagnostics: evaluated.diagnostics.slice(0, 100),
       },

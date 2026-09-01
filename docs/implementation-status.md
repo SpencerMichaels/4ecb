@@ -17,6 +17,29 @@ MVP declaration.
 
 ## M5 checkpoints
 
+### Conditional striker power projections
+
+- The renderer-neutral power model now separates conditional damage from the
+  ordinary hit total. The recovered `Hunter's Quarry`, `Warlock's Curse`, and
+  `Sneak Attack` class-feature IDs use evaluated tier-scaled dice, optional flat
+  bonuses, and rule-generated die-size text overrides with named cadence and
+  provenance.
+- Hybrid quarry, curse, and sneak-attack IDs apply only to powers from their
+  Ranger, Warlock, or Rogue class category. Sneak Attack additionally checks the
+  recovered crossbow/light-blade/shortbow/sling weapon families. Unknown class
+  feature variants carrying those names remain visible in `unsupported` rather
+  than receiving guessed behavior.
+- Exact public fixtures require epic `3d8+2` quarry damage to stay outside the
+  ordinary `1d8` hit, verify hybrid class-power exclusion, enforce Sneak Attack
+  weapon eligibility, and retain an unknown-variant diagnostic. Evaluated
+  textstring rules now feed power math, so content-authored die overrides are
+  authoritative rather than limited to imported text input. Edited 0.07a export
+  regenerates these expressions in each weapon variant's `Conditions` cache.
+- The ignored historical matrix remains 501/509 numeric aliases and 277/371
+  cached power fields. Its new diagnostic-only projection records 67 conditional
+  variants: 48 Hunter's Quarry and 19 Warlock's Curse. This is regression and
+  plausibility evidence, not same-profile parity.
+
 ### Explicit hand pairing and dual-implement selection
 
 - Power evaluation now consumes the durable `_INTERNAL_MainHandWeapon` value,

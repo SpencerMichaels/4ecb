@@ -785,4 +785,156 @@ describe("power evaluation", () => {
       ]),
     });
   });
+
+  it("limits hybrid striker damage to its class powers", () => {
+    const entities = [
+      entity("RANGER_POWER", "Ranger Shot", "Power", {
+        Keywords: "Martial, Weapon",
+        "Attack Type": "Ranged weapon",
+        Attack: "Dexterity vs. AC",
+        Hit: "1[W] + Dexterity modifier damage.",
+      }),
+      entity("OTHER_POWER", "Borrowed Shot", "Power", {
+        Keywords: "Martial, Weapon",
+        "Attack Type": "Ranged weapon",
+        Attack: "Dexterity vs. AC",
+        Hit: "1[W] + Dexterity modifier damage.",
+      }),
+      entity("BOW", "Longbow", "Weapon", {
+        Damage: "1d10",
+        "Proficiency Bonus": "2",
+        Group: "Bow",
+      }),
+    ].map((value) =>
+      value.id === "RANGER_POWER"
+        ? { ...value, categories: ["ID_FMP_CLASS_5"] }
+        : value,
+    );
+    const powers = evaluatePowers({
+      level: 11,
+      activeDefinitionIds: [
+        "RANGER_POWER",
+        "OTHER_POWER",
+        "ID_FMP_CLASS_FEATURE_1530",
+      ],
+      inventory: [
+        {
+          id: "bow",
+          definitionIds: ["BOW"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Dexterity modifier": stat("Dexterity modifier", 5),
+        "Hunter's Quarry Dice": stat("Hunter's Quarry Dice", 2),
+      },
+      overlays: [],
+      entities,
+    });
+
+    expect(
+      powers.find(({ definitionId }) => definitionId === "RANGER_POWER")
+        ?.variants[0]?.conditionalDamage,
+    ).toEqual([
+      {
+        source: "Hunter's Quarry",
+        expression: "2d6",
+        condition: "once per round against your quarry",
+      },
+    ]);
+    expect(
+      powers.find(({ definitionId }) => definitionId === "OTHER_POWER")
+        ?.variants[0]?.conditionalDamage,
+    ).toEqual([]);
+  });
+
+  it("projects sneak attack only for recovered eligible weapon families", () => {
+    const entities = [
+      entity("POWER", "Rogue Strike", "Power", {
+        Keywords: "Martial, Weapon",
+        "Attack Type": "Melee weapon",
+        Attack: "Dexterity vs. AC",
+        Hit: "1[W] + Dexterity modifier damage.",
+      }),
+      entity("DAGGER", "Dagger", "Weapon", {
+        Damage: "1d4",
+        "Proficiency Bonus": "3",
+        Group: "Light Blade",
+      }),
+      entity("AXE", "Battleaxe", "Weapon", {
+        Damage: "1d10",
+        "Proficiency Bonus": "2",
+        Group: "Axe",
+      }),
+    ];
+    const [power] = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["POWER", "ID_FMP_CLASS_FEATURE_322"],
+      inventory: [
+        {
+          id: "dagger",
+          definitionIds: ["DAGGER"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+        {
+          id: "axe",
+          definitionIds: ["AXE"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Dexterity modifier": stat("Dexterity modifier", 4),
+        "Sneak Attack Dice": stat("Sneak Attack Dice", 2),
+      },
+      overlays: [],
+      entities,
+    });
+
+    expect(
+      power?.variants.find(({ equipmentName }) => equipmentName === "Dagger")
+        ?.conditionalDamage,
+    ).toEqual([
+      {
+        source: "Sneak Attack",
+        expression: "2d6",
+        condition: "once per turn with combat advantage and an eligible weapon",
+      },
+    ]);
+    expect(
+      power?.variants.find(({ equipmentName }) => equipmentName === "Battleaxe")
+        ?.conditionalDamage,
+    ).toEqual([]);
+  });
+
+  it("retains unsupported diagnostics for unknown striker feature variants", () => {
+    const [power] = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["POWER", "CUSTOM_QUARRY"],
+      inventory: [],
+      stats: {},
+      overlays: [],
+      entities: [
+        entity("POWER", "Strike", "Power", {
+          Keywords: "Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. AC",
+          Hit: "1[W] damage.",
+        }),
+        entity(
+          "CUSTOM_QUARRY",
+          "Hunter's Quarry (Unmapped Variant)",
+          "Class Feature",
+          {},
+        ),
+      ],
+    });
+
+    expect(power?.unsupported).toContain("striker-feature:CUSTOM_QUARRY");
+  });
 });

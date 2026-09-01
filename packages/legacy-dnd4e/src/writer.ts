@@ -681,6 +681,21 @@ function powerStatsXml(evaluation: EvaluatedCharacter): string {
                             .join(" + "),
                         ),
                       )
+                }${
+                  variant.conditionalDamage.length === 0
+                    ? ""
+                    : element(
+                        "Conditions",
+                        {},
+                        escapeText(
+                          variant.conditionalDamage
+                            .map(
+                              ({ source, expression, condition }) =>
+                                `${expression.startsWith("-") ? "" : "+"}${expression} to damage ${condition} (${source})`,
+                            )
+                            .join("\n"),
+                        ),
+                      )
                 }`,
               ),
             )

@@ -227,6 +227,10 @@ selection into explicit paired variants and implements the distinct off-hand
 enhancement calculation for `Dual Implement Spellcaster`, backed by exact public
 same-profile differentials. Remaining named/situational power exceptions still
 block the compatibility criteria.
+The following slice separately projects the recovered Hunter's Quarry,
+Warlock's Curse, and Sneak Attack conditional damage families, including hybrid
+class-power gates and Sneak Attack weapon eligibility. Unknown variants remain
+unsupported, and the remaining named/situational tail still blocks closure.
 
 ### Goal
 

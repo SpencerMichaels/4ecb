@@ -23,6 +23,13 @@ export interface PowerVariant {
   readonly brutal?: number;
   readonly attackComponents: readonly PowerComponent[];
   readonly damageComponents: readonly PowerComponent[];
+  readonly conditionalDamage: readonly PowerConditionalDamage[];
+}
+
+export interface PowerConditionalDamage {
+  readonly source: string;
+  readonly expression: string;
+  readonly condition: string;
 }
 
 export interface EvaluatedPower {
@@ -415,6 +422,85 @@ function lineAtLevel(
   return selected;
 }
 
+const strikerFeatures = [
+  {
+    name: "Hunter's Quarry",
+    standardId: "id_fmp_class_feature_602",
+    hybridId: "id_fmp_class_feature_1530",
+    hybridClassId: "id_fmp_class_5",
+    condition: "once per round against your quarry",
+  },
+  {
+    name: "Warlock's Curse",
+    standardId: "id_fmp_class_feature_605",
+    hybridId: "id_fmp_class_feature_1533",
+    hybridClassId: "id_fmp_class_7",
+    condition: "once per turn against a cursed target",
+  },
+  {
+    name: "Sneak Attack",
+    standardId: "id_fmp_class_feature_322",
+    hybridId: "id_fmp_class_feature_1531",
+    hybridClassId: "id_fmp_class_6",
+    condition: "once per turn with combat advantage and an eligible weapon",
+    weaponRestricted: true,
+  },
+] as const;
+
+function textValue(
+  values: Readonly<Record<string, string>>,
+  name: string,
+): string | undefined {
+  return Object.entries(values).find(
+    ([candidate]) => key(candidate) === key(name),
+  )?.[1];
+}
+
+function sneakAttackWeapon(equipment: Loadout): boolean {
+  return equipment.tags.some((tag) =>
+    /^(?:crossbow|light blade|shortbow|sling)(?: group)?$/i.test(tag),
+  );
+}
+
+function conditionalStrikerDamage(input: {
+  readonly activeDefinitionIds: readonly string[];
+  readonly stats: Readonly<Record<string, EvaluatedStat>>;
+  readonly textStrings: Readonly<Record<string, string>>;
+  readonly power: ContentEntity;
+  readonly equipment: Loadout;
+}): readonly PowerConditionalDamage[] {
+  const activeIds = new Set(input.activeDefinitionIds.map(key));
+  return strikerFeatures.flatMap((feature) => {
+    const standard = activeIds.has(feature.standardId);
+    const hybrid = activeIds.has(feature.hybridId);
+    if (!standard && !hybrid) return [];
+    if (
+      hybrid &&
+      !standard &&
+      !input.power.categories.some(
+        (category) => key(category) === feature.hybridClassId,
+      )
+    )
+      return [];
+    if (
+      "weaponRestricted" in feature &&
+      feature.weaponRestricted &&
+      !sneakAttackWeapon(input.equipment)
+    )
+      return [];
+    const dice = numericStat(input.stats, `${feature.name} Dice`);
+    const flat = numericStat(input.stats, feature.name);
+    if (dice <= 0 && flat === 0) return [];
+    const die = textValue(input.textStrings, `${feature.name} Die`) ?? "d6";
+    const diceExpression = dice > 0 ? `${dice}${die}` : "";
+    const expression = [
+      diceExpression,
+      flat === 0 ? "" : `${flat > 0 && diceExpression ? "+" : ""}${flat}`,
+    ].join("");
+    return [{ source: feature.name, expression, condition: feature.condition }];
+  });
+}
+
 export function evaluatePowers(input: {
   readonly level: number;
   readonly activeDefinitionIds: readonly string[];
@@ -653,6 +739,16 @@ export function evaluatePowers(input: {
       const brutal = equipment.properties
         .map((property) => /^brutal\s+(\d+)$/i.exec(property)?.[1])
         .find((value) => value !== undefined);
+      const conditionalDamage =
+        dice === undefined
+          ? []
+          : conditionalStrikerDamage({
+              activeDefinitionIds: input.activeDefinitionIds,
+              stats: input.stats,
+              textStrings: input.textStrings ?? {},
+              power,
+              equipment,
+            });
       return {
         id: `${power.id}:${equipment.id}`,
         equipmentName: equipment.name,
@@ -675,9 +771,26 @@ export function evaluatePowers(input: {
         ...(brutal === undefined ? {} : { brutal: Number(brutal) }),
         attackComponents,
         damageComponents,
+        conditionalDamage,
       };
     });
     const unsupported: string[] = [];
+    const supportedStrikerIds = new Set<string>(
+      strikerFeatures.flatMap(({ standardId, hybridId }) => [
+        standardId,
+        hybridId,
+      ]),
+    );
+    for (const activeId of input.activeDefinitionIds) {
+      const active = byId.get(key(activeId));
+      if (
+        active !== undefined &&
+        key(active.type) === "class feature" &&
+        /hunter's quarry|warlock's curse|sneak attack/i.test(active.name) &&
+        !supportedStrikerIds.has(key(active.id))
+      )
+        unsupported.push(`striker-feature:${active.id}`);
+    }
     if (
       power.specifics.some((specific) => /^Augment/i.test(specific.name)) &&
       field(power, "_AugmentVersions") === undefined

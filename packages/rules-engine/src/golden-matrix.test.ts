@@ -191,6 +191,96 @@ describe("representative public character goldens", () => {
     );
   });
 
+  it("projects conditional striker damage without adding it to every hit", () => {
+    const entities = [
+      derivedStats,
+      entity("ID_FMP_CLASS_5", "Ranger", "Class"),
+      entity("PARAGON", "Paragon Tier", "Tier"),
+      entity("EPIC", "Epic Tier", "Tier"),
+      entity("ID_FMP_CLASS_FEATURE_602", "Hunter's Quarry", "Class Feature", {
+        rules: [
+          rule("statadd", { name: "Hunter's Quarry Dice", value: "+1" }, 0),
+          rule(
+            "statadd",
+            {
+              name: "Hunter's Quarry Dice",
+              value: "+1",
+              requires: "Paragon Tier",
+            },
+            1,
+          ),
+          rule(
+            "statadd",
+            {
+              name: "Hunter's Quarry Dice",
+              value: "+1",
+              requires: "Epic Tier",
+            },
+            2,
+          ),
+        ],
+      }),
+      entity("IMPROVED_QUARRY", "Improved Quarry", "Feat", {
+        rules: [
+          rule("textstring", { name: "Hunter's Quarry Die", value: "d8" }, 0),
+          rule("statadd", { name: "Hunter's Quarry", value: "+2" }, 1),
+        ],
+      }),
+      entity("STRIKE", "Twin Strike", "Power", {
+        categories: ["ID_FMP_CLASS_5"],
+        specifics: {
+          Keywords: "Martial, Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. AC",
+          Hit: "1[W] damage.",
+        },
+      }),
+      entity("SWORD", "Longsword", "Weapon", {
+        specifics: {
+          Damage: "1d8",
+          "Proficiency Bonus": "3",
+          Group: "Heavy Blade",
+        },
+      }),
+    ];
+    const result = evaluateCharacter(
+      {
+        level: 21,
+        baseAbilities: { Strength: 20 },
+        occurrences: [
+          occurrence("DERIVED", 1),
+          occurrence("ID_FMP_CLASS_5", 1),
+          occurrence("PARAGON", 11),
+          occurrence("EPIC", 21),
+          occurrence("ID_FMP_CLASS_FEATURE_602", 1),
+          occurrence("IMPROVED_QUARRY", 11),
+          occurrence("STRIKE", 1),
+        ],
+        inventory: [
+          {
+            id: "sword",
+            definitionIds: ["SWORD"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+      },
+      entities,
+    );
+
+    expect(result.powers[0]?.variants[0]).toMatchObject({
+      damage: "1d8",
+      conditionalDamage: [
+        {
+          source: "Hunter's Quarry",
+          expression: "3d8+2",
+          condition: "once per round against your quarry",
+        },
+      ],
+    });
+  });
+
   it("evaluates paragon psionic augment versions through a magic implement", () => {
     const entities = [
       derivedStats,

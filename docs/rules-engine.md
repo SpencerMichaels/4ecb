@@ -128,3 +128,12 @@ order. Public same-profile fixtures swap two unequal implement
 enhancements and require the bonus to follow the hand selection exactly. The
 ignored nine-character historical matrix remains cross-profile diagnostic
 evidence; it is not used to define these calculations.
+
+Recovered striker features are projected separately from unconditional hit
+damage. `Hunter's Quarry`, `Warlock's Curse`, and `Sneak Attack` consume their
+evaluated `... Dice` stat, optional flat stat, and generated `... Die` text
+override to produce an explainable conditional expression and cadence. Hybrid
+feature IDs apply only to powers carrying the corresponding Ranger, Warlock, or
+Rogue class category. Sneak Attack additionally requires a recovered eligible
+weapon family. Unknown class-feature variants with those names remain in the
+power's `unsupported` list instead of inheriting guessed semantics.
