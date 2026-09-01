@@ -116,6 +116,11 @@ is behind the latest saved level. Library metadata remains outside both export
 targets. Structural round-trip coverage is automated; the curated original-
 application launch matrix remains an open M5 release check.
 
+`docs/legacy-builder-launch-matrix.md` records the recovered one-argument file
+open contract, CBLoader merged-cache path, deterministic regenerated candidate
+commands, and the actual 2026-09-01 runtime blocker. Semantic re-import remains
+separate from an observed original-application open.
+
 ## Content-profile behavior
 
 Import binds the active immutable content pack when one exists. The binding pins

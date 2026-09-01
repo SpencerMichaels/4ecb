@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { gunzip } from "node:zlib";
 import { promisify } from "node:util";
@@ -291,7 +291,7 @@ async function main(): Promise<void> {
   const packArgument = process.argv[2];
   if (packArgument === undefined)
     throw new Error(
-      "Usage: pnpm audit:native-workflow PACK.4ecp [--max-level=N] [PREFERRED_DEFINITION_ID ...]",
+      "Usage: pnpm audit:native-workflow PACK.4ecp [--max-level=N] [--output=CHARACTER.dnd4e] [PREFERRED_DEFINITION_ID ...]",
     );
   const extraArguments = process.argv.slice(3);
   const maxLevelArgument = extraArguments.find((value) =>
@@ -300,9 +300,18 @@ async function main(): Promise<void> {
   const maxLevel = Number(maxLevelArgument?.split("=")[1] ?? 30);
   if (!Number.isInteger(maxLevel) || maxLevel < 1 || maxLevel > 30)
     throw new Error("--max-level must be an integer from 1 through 30");
+  const outputArgument = extraArguments.find((value) =>
+    value.startsWith("--output="),
+  );
+  const outputPath = outputArgument?.slice("--output=".length);
+  if (outputArgument !== undefined && outputPath === "")
+    throw new Error("--output requires a path");
   const preferredDefinitionIds = new Set(
     extraArguments
-      .filter((value) => !value.startsWith("--max-level="))
+      .filter(
+        (value) =>
+          !value.startsWith("--max-level=") && !value.startsWith("--output="),
+      )
       .map(key),
   );
   const encoded = await readFile(resolve(packArgument));
@@ -522,6 +531,8 @@ async function main(): Promise<void> {
     importDnd4e(xml).build,
   );
   if (!comparison.equivalent) throw new Error(comparison.differences.join(" "));
+  if (outputPath !== undefined)
+    await writeFile(resolve(outputPath), xml, "utf8");
 
   process.stdout.write(
     `${JSON.stringify(
@@ -572,6 +583,7 @@ async function main(): Promise<void> {
         },
         persistence: "domain-decode-passed",
         export: "semantic-round-trip-passed",
+        exportPath: outputPath === undefined ? undefined : resolve(outputPath),
         levelEvidence,
       },
       null,

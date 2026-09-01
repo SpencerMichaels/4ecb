@@ -281,6 +281,18 @@ downloaded both targets against the public synthetic character: edited export
 reported a passed semantic re-import, original export explicitly reported that
 local edits were excluded, and the final post-fix flows added no console errors.
 
+The original-application boundary now has a repeatable candidate builder and
+an exact recovered launch contract in `docs/legacy-builder-launch-matrix.md`.
+The 2026-09-01 candidate set includes a public custom-content diagnostic, an
+ignored exact-profile imported level-8 character, and an ignored native
+exact-profile level-1 character. All three pass edited-export semantic
+re-import; the native case is complete, legal, converged, and diagnostic-free.
+This host could not execute the Windows matrix because neither project Nix
+shell contains Wine/Xvfb, no project-local prefix or offline Microsoft .NET
+Framework runtime exists, and no Wine package is already available in the Nix
+store. No original-application pass is claimed; M5 exit criterion 4 remains
+open pending observed UI results on a prepared compatibility host.
+
 ### Authoritative browser sheet with recoverable fallback
 
 - `sheet-model` now projects a converged `EvaluatedCharacter` into identity,

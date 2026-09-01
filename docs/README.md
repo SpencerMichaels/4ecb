@@ -43,6 +43,9 @@ application's architecture.
 14. [User guide and recovery handbook](user-guide.md) covers installation,
     private content, character/profile workflows, compatibility export, sheets,
     backup/restore, updates, recovery, and current limitations.
+15. [Original Character Builder launch matrix](legacy-builder-launch-matrix.md)
+    records the recovered executable/data contract, curated regenerated
+    candidates, repeatable execution procedure, and observed runtime results.
 
 ## Definition hierarchy
 

@@ -107,7 +107,11 @@ budgets remain active during M5.
       are blank, application chrome is absent, and no card reports DOM overflow.
       Chromium output is tagged; Firefox 154 output is not tagged.
 - [ ] Open edited exports in the original Windows builder across the curated
-      application matrix.
+      application matrix. The executable/config/cache paths, direct-open
+      argument contract, three-candidate regeneration commands, and manual
+      observation fields are recorded in `docs/legacy-builder-launch-matrix.md`.
+      The 2026-09-01 host had no project-local Wine/Xvfb/.NET Framework runtime,
+      so all original-application rows remain explicitly unexecuted.
 - [ ] Close the named M4 native exception and private exact-profile parity
       blockers without reclassifying cross-profile diagnostics as goldens.
 - [x] Repeat the automated Letter/A4 color/monochrome PDF matrix in supported
