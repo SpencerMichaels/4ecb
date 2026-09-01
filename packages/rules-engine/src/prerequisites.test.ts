@@ -81,4 +81,18 @@ describe("legacy prerequisites", () => {
     ).toBe("satisfied");
     expect(evaluatePrerequisite("Unselectable", context).status).toBe("failed");
   });
+
+  it("evaluates bracketed feat references by their definition name", () => {
+    const prerequisite = "Blood Thirst [Multiclass Vampire] feat";
+    expect(evaluatePrerequisite(prerequisite, context).status).toBe("failed");
+    expect(
+      evaluatePrerequisite(prerequisite, {
+        ...context,
+        owned: [
+          ...owned,
+          { id: "BLOOD_THIRST", name: "Blood Thirst", type: "Feat" },
+        ] as ContentEntity[],
+      }).status,
+    ).toBe("satisfied");
+  });
 });

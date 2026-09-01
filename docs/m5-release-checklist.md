@@ -94,7 +94,8 @@ the ordinary `.4ecp` and decrypted/merged-rules file input used by every client.
       Psion, Shaman, Essentials Knight, and a distinct two-component Hybrid also
       complete level 30. All pass persistence, sheet, and
       edited-export semantic re-import gates, with only explicitly reported
-      unverified prerequisites outside the zero-diagnostic Psion/Knight paths.
+      unverified prerequisites outside the zero-diagnostic
+      Fighter/Psion/Knight paths.
 - [x] Repository reconstruction, historical database upgrade, checksummed
       backup/restore, malformed restore rejection, and interrupted migration are in
       the automated durability matrix.

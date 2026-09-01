@@ -156,34 +156,17 @@ function candidateFor(
   evaluation: EvaluatedCharacter,
   preferredDefinitionIds: ReadonlySet<string>,
 ): ContentEntity | undefined {
-  const owned = evaluation.occurrences.flatMap((occurrence) => {
-    const entity = entitiesById.get(key(occurrence.definitionId));
-    return entity === undefined ? [] : [entity];
-  });
-  const abilities = Object.fromEntries(
-    [
-      "Strength",
-      "Constitution",
-      "Dexterity",
-      "Intelligence",
-      "Wisdom",
-      "Charisma",
-    ].map((ability) => {
-      const value = evaluation.stats[ability]?.value;
-      return [ability, typeof value === "number" ? value : 0];
-    }),
-  );
+  const prerequisiteContext = prerequisiteContextFor(evaluation, entitiesById);
   return choice.candidates
     .filter((candidate) => candidate.eligible)
     .map((candidate) => entitiesById.get(key(candidate.definitionId)))
     .filter((candidate): candidate is ContentEntity => candidate !== undefined)
     .map((candidate) => ({
       candidate,
-      prerequisite: evaluatePrerequisite(candidate.prerequisites, {
-        owned,
-        level: evaluation.level,
-        abilities,
-      }).status,
+      prerequisite: evaluatePrerequisite(
+        candidate.prerequisites,
+        prerequisiteContext,
+      ).status,
     }))
     .filter(({ prerequisite }) => prerequisite !== "failed")
     .toSorted(
@@ -202,10 +185,36 @@ function candidateFor(
     )[0]?.candidate;
 }
 
+function prerequisiteContextFor(
+  evaluation: EvaluatedCharacter,
+  entitiesById: ReadonlyMap<string, ContentEntity>,
+) {
+  const owned = evaluation.occurrences.flatMap((occurrence) => {
+    const entity = entitiesById.get(key(occurrence.definitionId));
+    return entity === undefined ? [] : [entity];
+  });
+  const abilities = Object.fromEntries(
+    [
+      "Strength",
+      "Constitution",
+      "Dexterity",
+      "Intelligence",
+      "Wisdom",
+      "Charisma",
+    ].map((ability) => {
+      const value = evaluation.stats[ability]?.value;
+      return [ability, typeof value === "number" ? value : 0];
+    }),
+  );
+  return { owned, level: evaluation.level, abilities };
+}
+
 function replacementCommand(
   build: CharacterBuild,
   choice: EvaluatedChoice,
   entitiesById: ReadonlyMap<string, ContentEntity>,
+  evaluation: EvaluatedCharacter,
+  preferredDefinitionIds: ReadonlySet<string>,
   serial: number,
 ) {
   const provider = findOccurrence(build, choice.providerOccurrenceId);
@@ -214,21 +223,36 @@ function replacementCommand(
     provider.identity.definitionId === undefined
       ? undefined
       : entitiesById.get(key(provider.identity.definitionId));
+  const prerequisiteContext = prerequisiteContextFor(evaluation, entitiesById);
   const option = (choice.replacementOptions ?? [])
-    .toSorted((left, right) =>
-      left.replacesOccurrenceId.localeCompare(right.replacesOccurrenceId),
-    )
-    .map((value) => ({
-      value,
-      candidate: value.candidates
+    .flatMap((value) =>
+      value.candidates
         .filter((candidate) => candidate.eligible)
-        .toSorted((left, right) =>
-          left.definitionId.localeCompare(right.definitionId),
-        )
         .map((candidate) => entitiesById.get(key(candidate.definitionId)))
-        .find((candidate) => candidate !== undefined),
-    }))
-    .find(({ candidate }) => candidate !== undefined);
+        .filter(
+          (candidate): candidate is ContentEntity => candidate !== undefined,
+        )
+        .map((candidate) => ({
+          value,
+          candidate,
+          prerequisite: evaluatePrerequisite(
+            candidate.prerequisites,
+            prerequisiteContext,
+          ).status,
+        }))
+        .filter(({ prerequisite }) => prerequisite !== "failed"),
+    )
+    .toSorted(
+      (left, right) =>
+        Number(!preferredDefinitionIds.has(key(left.candidate.id))) -
+          Number(!preferredDefinitionIds.has(key(right.candidate.id))) ||
+        Number(left.prerequisite === "unverified") -
+          Number(right.prerequisite === "unverified") ||
+        left.value.replacesOccurrenceId.localeCompare(
+          right.value.replacesOccurrenceId,
+        ) ||
+        left.candidate.id.localeCompare(right.candidate.id),
+    )[0];
   if (option?.candidate === undefined) return undefined;
   return {
     kind: "retrain" as const,
@@ -354,7 +378,14 @@ async function main(): Promise<void> {
           choice,
           replacement:
             choice.type === "Replacement"
-              ? replacementCommand(transaction.current, choice, byId, serial)
+              ? replacementCommand(
+                  transaction.current,
+                  choice,
+                  byId,
+                  current,
+                  preferredDefinitionIds,
+                  serial,
+                )
               : undefined,
           definition:
             choice.type === "Replacement"
@@ -521,6 +552,17 @@ async function main(): Promise<void> {
                 ).length,
               ]),
           ),
+          diagnosticDetails: finalEvaluation.diagnostics.map((diagnostic) => ({
+            severity: diagnostic.severity,
+            code: diagnostic.code,
+            message: diagnostic.message,
+            ...(diagnostic.occurrenceId === undefined
+              ? {}
+              : { occurrenceId: diagnostic.occurrenceId }),
+            ...(diagnostic.ruleOrdinal === undefined
+              ? {}
+              : { ruleOrdinal: diagnostic.ruleOrdinal }),
+          })),
           powers: finalEvaluation.powers.length,
         },
         sheet: {

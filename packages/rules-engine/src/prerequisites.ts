@@ -176,6 +176,16 @@ function clauseStatus(
     )
       ? "satisfied"
       : "failed";
+  const bracketedDefinition = /^(.+?)\s+\[[^\]]+\]\s+(feat|power)$/i.exec(
+    canonical,
+  );
+  if (
+    bracketedDefinition?.[1] !== undefined &&
+    bracketedDefinition[2] !== undefined
+  )
+    return ownsTyped(context, bracketedDefinition[1], bracketedDefinition[2])
+      ? "satisfied"
+      : "failed";
   const className = /^(.+?)\s+class$/i.exec(canonical);
   if (className?.[1] !== undefined)
     return ownsTyped(context, className[1], "Class") ||
