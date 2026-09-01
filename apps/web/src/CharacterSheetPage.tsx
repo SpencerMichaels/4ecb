@@ -371,10 +371,9 @@ export function CharacterSheetPage({
             <section>
               <h3>Equipment</h3>
               <ul>
-                {character.snapshot.loot.map((loot) => (
-                  <li key={`${loot.name}-${loot.count}`}>
-                    {loot.name} × {loot.count}
-                    {loot.equippedCount > 0 ? " (equipped)" : ""}
+                {model.equipment.map((item) => (
+                  <li key={`${item.label}-${item.value}`}>
+                    {item.label} {item.value}
                   </li>
                 ))}
               </ul>

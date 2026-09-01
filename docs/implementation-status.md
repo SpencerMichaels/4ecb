@@ -116,8 +116,9 @@ deterministic content checks, and the query benchmark.
 - `sheet-model` now projects a converged `EvaluatedCharacter` into identity,
   current ability/stat sections, selected feature groups, aggregated inventory,
   item cards, and every evaluated power/equipment variant. Field overlays and
-  current content prose feed the cards; the legacy snapshot remains a separate
-  fallback input.
+  current content prose feed the cards. The visible equipment summary and cards
+  both come from that model, including edited quantity and equipped state; the
+  legacy snapshot remains a separate fallback input.
 - The sheet evaluates in the rules worker only when the installed pack ID and
   digest match the character binding. Worker initialization repeats the digest
   assertion so a same-ID pack replacement cannot be evaluated after an earlier
@@ -130,7 +131,8 @@ deterministic content checks, and the query benchmark.
   model is available. Supported-browser pagination goldens remain open.
 
 Focused tests cover current engine stats over stale cached values, identity
-updates, evaluated weapon variants, authoritative inventory cards,
+updates, evaluated weapon variants, authoritative equipment quantities and
+equipped state, inventory cards,
 nonconvergence rejection, sparse-value preservation, and exact revision gating.
 A live Chromium run opened the public synthetic character against its exact
 bound digest, displayed the authoritative evaluation state and regenerated

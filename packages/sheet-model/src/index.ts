@@ -38,6 +38,7 @@ export interface CharacterSheetModel {
   readonly resources: readonly SheetValue[];
   readonly senses: readonly SheetValue[];
   readonly skills: readonly SheetValue[];
+  readonly equipment: readonly SheetValue[];
   readonly features: readonly {
     readonly group: string;
     readonly entries: readonly SheetValue[];
@@ -336,6 +337,15 @@ export function buildSheetModel(
     ]),
     senses: values(snapshot.stats, ["Passive Insight", "Passive Perception"]),
     skills: values(snapshot.stats, SKILLS),
+    equipment: snapshot.loot.map((loot) => ({
+      label: loot.name,
+      value: [
+        `× ${loot.count}`,
+        loot.equippedCount > 0 ? `${loot.equippedCount} equipped` : "",
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    })),
     features: [...ruleGroups].map(([group, entries]) => ({ group, entries })),
     powers: snapshot.powers.map((power) => powerCard(power, entities)),
     items: itemCards,
@@ -528,6 +538,32 @@ export function buildEvaluatedSheetModel(
     ]),
     senses: evaluatedValues(["Passive Insight", "Passive Perception"]),
     skills: evaluatedValues(SKILLS),
+    equipment: inventory.map((entry) => {
+      const original = build.inventory.find(
+        (candidate) => candidate.id === entry.id,
+      );
+      const preservedName = original?.elements
+        .map((element) => element.name)
+        .filter(Boolean)
+        .join(" ");
+      return {
+        label:
+          entry.name ??
+          original?.name ??
+          (preservedName ||
+            entry.definitionIds
+              .map((id) => entities.get(id.toLocaleLowerCase())?.name ?? id)
+              .join(" ")),
+        value: [
+          `× ${entry.quantity}`,
+          entry.equippedQuantity > 0
+            ? `${entry.equippedQuantity} equipped`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" · "),
+      };
+    }),
     features: [...features].map(([group, entries]) => ({ group, entries })),
     powers: powerCards,
     items: itemCards,

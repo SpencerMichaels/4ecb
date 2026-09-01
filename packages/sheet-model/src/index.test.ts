@@ -77,7 +77,15 @@ describe("sheet model", () => {
       stats: { AC: "12" },
       selectedRules: [],
       powers: [],
-      loot: [],
+      loot: [
+        {
+          name: "Stale wand",
+          count: 9,
+          equippedCount: 0,
+          showPowerCard: true,
+          elements: [],
+        },
+      ],
       textStrings: {},
       levelCount: 1,
       source: "legacy-cache",
@@ -99,7 +107,7 @@ describe("sheet model", () => {
         {
           id: "wand-entry",
           acquiredLevel: 1,
-          quantity: 1,
+          quantity: 2,
           equippedQuantity: 1,
           elements: [
             { definitionId: "ITEM_1", name: "Test wand", type: "Magic Item" },
@@ -229,6 +237,12 @@ describe("sheet model", () => {
       damage: "1d6+4",
     });
     expect(model.items[0]).toMatchObject({ name: "Test wand" });
+    expect(model.equipment).toEqual([
+      { label: "Test wand", value: "× 2 · 1 equipped" },
+    ]);
+    expect(model.equipment).not.toContainEqual(
+      expect.objectContaining({ label: "Stale wand" }),
+    );
   });
 
   it("rejects nonconvergent evaluations and never fabricates missing abilities", () => {

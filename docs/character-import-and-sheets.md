@@ -109,7 +109,9 @@ sheet's familiar hierarchy, not its proprietary artwork.
 When the exact content pack ID and digest bound to the character are installed,
 the sheet runs the authoritative build through the rules worker and projects
 current stats, selections, inventory, field overlays, and every calculated power
-loadout. Worker initialization checks the digest again so a same-ID pack
+loadout. Both the equipment summary and item cards consume that active sheet
+model, so stale cached quantities or equipped state cannot leak into an
+authoritative sheet. Worker initialization checks the digest again so a same-ID pack
 replacement cannot race the UI check. A missing/mismatched profile,
 nonconvergence, or evaluation error leaves the original cached sheet visible
 with an explicit legacy-cache warning. Unknown inputs stay absent rather than
