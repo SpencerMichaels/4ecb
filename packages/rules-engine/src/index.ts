@@ -5,4 +5,5 @@ export * from "./exceptions";
 export * from "./expressions";
 export * from "./ir";
 export * from "./prerequisites";
+export * from "./powers";
 export * from "./stats";

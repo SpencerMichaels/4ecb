@@ -5,8 +5,8 @@
 Milestones M1 through M3 are complete. M4 now has a verified vertical slice: an
 authoritative character build, recovered rule-language evaluator, transactional
 editor, and exact cached-stat parity for the supplied legacy character. M4 is
-not complete; power calculations, broader golden-character coverage, several
-legacy exception families, and focused replacement/grant editing remain.
+not complete; advanced power exceptions, broader golden-character coverage,
+several legacy exception families, and focused replacement/grant editing remain.
 
 ## M4 checkpoint delivered
 
@@ -25,6 +25,9 @@ legacy exception families, and focused replacement/grant editing remain.
   inventory quantities/equipment, history, and engine diagnostics.
 - A private-corpus audit and a supplied-character parity reporter, kept outside
   the distributable public fixtures.
+- A renderer-neutral power result model with explicit equipment variants,
+  attack/damage components, ordinary weapon and implement math, level-scaled
+  hit lines, chosen abilities, enhancement/proficiency, and melee bonuses.
 
 ## M4 checkpoint verification
 
@@ -32,7 +35,8 @@ On 2026-08-31, the supplied level-8 character converged in one fixed-point
 iteration and matched all 72 comparable cached numeric aliases. Its only
 remaining legality findings are its explicit house-rule selection and one
 custom feat prerequisite the imported content cannot prove. The public suite
-passes 63 tests plus formatting, ESLint, all TypeScript projects, and the
+also matches all 52 comparable cached attack/damage fields across its power
+variants. The public suite passes 67 tests plus formatting, ESLint, all TypeScript projects, and the
 production PWA build. See [rules-engine.md](rules-engine.md) for the evaluator
 boundary, performance result, and remaining closure work.
 
@@ -170,9 +174,9 @@ merger; begin from `combined.dnd40.original.xml` as the script does.
 
 ## Deferred by design
 
-- The remainder of M4 owns power attack/damage calculation, broader rules and
-  golden-character coverage, focused replacement/grant editing, and unresolved
-  native exception families.
+- The remainder of M4 owns advanced power branches and broader rules/golden-
+  character coverage, focused replacement/grant editing, and unresolved native
+  exception families.
 - M5 owns regenerated `.dnd4e` snapshots, exhaustive cross-browser print
   goldens, and MVP parity closure.
 - M6 and M7 own mobile play state and encrypted relay-linked sessions.

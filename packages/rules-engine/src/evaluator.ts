@@ -27,6 +27,7 @@ import {
 } from "./ir";
 import { StatAccumulator, type EvaluatedStat } from "./stats";
 import { evaluatePrerequisite } from "./prerequisites";
+import { evaluatePowers, type EvaluatedPower } from "./powers";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -103,6 +104,7 @@ export interface EvaluatedCharacter {
   readonly stats: Readonly<Record<string, EvaluatedStat>>;
   readonly textStrings: Readonly<Record<string, string>>;
   readonly overlays: readonly FieldOverlay[];
+  readonly powers: readonly EvaluatedPower[];
   readonly suggestions: readonly {
     readonly providerOccurrenceId: string;
     readonly definitionId: string;
@@ -757,6 +759,17 @@ export function evaluateCharacter(
         diagnostic.code === "prerequisite.unverified",
     ) &&
     !occurrences.some((occurrence) => occurrence.legality === "houserule");
+  const activeDefinitionIds = occurrences.map(
+    (occurrence) => occurrence.definitionId,
+  );
+  const powers = evaluatePowers({
+    level: input.level,
+    activeDefinitionIds,
+    inventory: input.inventory,
+    stats: evaluatedStats,
+    overlays,
+    entities,
+  });
   return {
     level: input.level,
     converged,
@@ -764,13 +777,12 @@ export function evaluateCharacter(
     complete,
     legal,
     occurrences,
-    activeDefinitionIds: occurrences.map(
-      (occurrence) => occurrence.definitionId,
-    ),
+    activeDefinitionIds,
     choices,
     stats: evaluatedStats,
     textStrings: text,
     overlays,
+    powers,
     suggestions,
     diagnostics,
   };

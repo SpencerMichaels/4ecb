@@ -57,6 +57,50 @@ async function main(): Promise<void> {
         : [];
     },
   );
+  const evaluatedPowers = new Map(
+    evaluated.powers.map((power) => [power.definitionId, power]),
+  );
+  const powerComparisons = imported.snapshot.powers.flatMap((cachedPower) => {
+    const power =
+      (cachedPower.id === undefined
+        ? undefined
+        : evaluatedPowers.get(cachedPower.id)) ??
+      evaluated.powers.find((candidate) => candidate.name === cachedPower.name);
+    return cachedPower.weapons.flatMap((cachedWeapon) => {
+      const variant = power?.variants.find(
+        (candidate) => candidate.equipmentName === cachedWeapon.name,
+      );
+      const fields = [
+        ...(cachedWeapon.attackBonus === undefined
+          ? []
+          : [
+              {
+                field: "attack",
+                expected: cachedWeapon.attackBonus,
+                actual:
+                  variant?.attackBonus === undefined
+                    ? undefined
+                    : String(variant.attackBonus),
+              },
+            ]),
+        ...(cachedWeapon.damage === undefined
+          ? []
+          : [
+              {
+                field: "damage",
+                expected: cachedWeapon.damage,
+                actual: variant?.damage,
+              },
+            ]),
+      ];
+      return fields.map((comparison) => ({
+        power: cachedPower.name,
+        equipment: cachedWeapon.name,
+        ...comparison,
+        matches: comparison.expected === comparison.actual,
+      }));
+    });
+  });
   process.stdout.write(
     `${JSON.stringify(
       {
@@ -92,6 +136,26 @@ async function main(): Promise<void> {
           comparable: cachedStats.length,
           matching: cachedStats.filter((stat) => stat.matches).length,
           mismatches: cachedStats.filter((stat) => !stat.matches).slice(0, 50),
+        },
+        cachedPowerParity: {
+          powers: evaluated.powers.length,
+          variants: evaluated.powers.reduce(
+            (sum, power) => sum + power.variants.length,
+            0,
+          ),
+          comparableFields: powerComparisons.length,
+          matchingFields: powerComparisons.filter(
+            (comparison) => comparison.matches,
+          ).length,
+          mismatches: powerComparisons
+            .filter((comparison) => !comparison.matches)
+            .slice(0, 100),
+          unsupported: evaluated.powers
+            .filter((power) => power.unsupported.length > 0)
+            .map((power) => ({
+              power: power.name,
+              reasons: power.unsupported,
+            })),
         },
         diagnostics: evaluated.diagnostics.slice(0, 100),
       },

@@ -100,8 +100,9 @@ workflow; no PDF bytes are stored in the character.
 ## Current limitations before M4/M5 closure
 
 - The M4 evaluator recomputes general choices, grants, prerequisites, stats,
-  text, overlays, equipment predicates, and legality, but does not yet compute
-  complete power attack/damage/critical variants.
+  text, overlays, equipment predicates, legality, and ordinary weapon/implement
+  power variants. Advanced critical, augment, off-hand, striker, healing, and
+  named special-case branches remain incomplete.
 - The editor handles abilities, level frames, ordinary choices, inventory, and
   undo/redo. Focused replacement picking and choices supplied by newly created
   synthetic grant providers still need their dedicated editing flow.

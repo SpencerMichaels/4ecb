@@ -62,11 +62,16 @@ this is a checkpoint measurement, not a final browser budget.
 The character remains intentionally reported as illegal because its file marks
 a house-rule selection and the corpus cannot prove one custom feat
 prerequisite. Those are evidence-preserving diagnostics rather than parity
-failures.
+failures. Its ordinary power results also match all 52 comparable cached attack
+and damage fields across weapon, implement, and unarmed variants. These two
+counts are separate because the legacy `PowerStats` blocks are cached per
+power/loadout combination.
 
 ## Remaining M4 closure work
 
-- Calculate power attack, damage, critical, weapon/implement, and variant data.
+- Close advanced power branches: augment/psionic versions, off-hand and dual-
+  weapon/implement selection, high-crit and brutal dice, striker additions,
+  healing, conditionals, and named power special cases.
 - Add focused replacement/retraining selection UI and materialize newly granted
   providers so their nested choices can be edited immediately.
 - Close and fixture psionic, Essentials, hybrid, companion, deity, paragon
