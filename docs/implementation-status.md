@@ -7,8 +7,8 @@ the builder beta: it delivers the authoritative rules-backed editor, records the
 remaining native parity risks as explicit M5 blockers, and does not claim public
 MVP readiness. M5 is in progress. Profile migration preview and explicit
 adoption are implemented; blocker closure, the legacy-builder export launch
-matrix, finished printing, remaining storage upgrade/restart matrices,
-and public-release verification remain open. The installable PWA, update/offline
+matrix, finished printing, supported-browser workflow coverage, and other
+public-release verification remain open. The installable PWA, update/offline
 UX, content onboarding, public-distribution boundary, production Docker guide,
 and authoritative exact-profile browser sheet are verified checkpoints, not an
 MVP declaration.
@@ -59,22 +59,35 @@ warnings or errors. The full public suite is rerun before the checkpoint commit.
   only in the same transaction that commits schema 2. Startup recovery restores
   a journaled prior record if an interrupted migration left the character
   missing, then restarts the ordinary migration.
+- A reconstruction test saves native metadata, exact profile binding, and every
+  sheet preference, discards the repository instance, and requires a newly
+  constructed repository over the same database to return the complete record.
+  An application-upgrade fixture creates the historical database version 2 with
+  a schema-1 character, legacy object-form pack, and active-profile setting. The
+  current repositories upgrade it to database version 3, migrate the character,
+  preserve and read the pack and setting, create the journal store, and leave no
+  stale journal entry.
 - Content settings display the browser's current persistence decision, storage
   use, quota, and percentage used. A user-triggered action requests persistent
   storage where the API is supported and explains a denied request without
   treating it as durable-backup success.
 
 Focused browser-storage tests cover checksummed round trip, tamper rejection, a
-self-checksummed malformed schema-2 record, legacy backup inspection, and a
-simulated interrupted migration recovery. Live
+self-checksummed malformed schema-2 record, legacy backup inspection, repository
+reconstruction, historical application upgrade, and a simulated interrupted
+migration recovery. Live
 browser verification displayed the persistence/quota facts against the public
 synthetic profile; backup export reported one complete record. Full
-restart/upgrade/restore browser matrices remain part of M5 exit-criterion 5 and
-are not claimed by this checkpoint. The checkpoint public suite passes 98 tests
+supported-browser critical-workflow coverage remains part of M5 exit-criterion
+9; the automated restart, application-upgrade, restore, and interrupted-migration
+matrix now covers the four durability cases in exit-criterion 5. The original
+checkpoint public suite passed 98 tests
 across 23 files plus formatting, ESLint, every TypeScript project, the
 production/PWA build, deterministic content checks, and the query benchmark.
 After adding the comprehensive domain decoder and crafted self-checksummed
-malformed-record fixture, the same public suite passes 100 tests.
+malformed-record fixture, that public suite passed 100 tests. The current full
+M5 public gate, including the durability matrix, passes 119 tests across 26
+files.
 
 ### Installable PWA and public Docker boundary
 

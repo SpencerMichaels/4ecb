@@ -482,6 +482,9 @@ Storage rules:
 
 - transactions cover each user-visible mutation;
 - migrations are restartable and preserve the previous record until commit;
+- application database upgrades create missing current stores without replacing
+  historical character, pack, or settings stores; lazy record migration follows
+  after the schema transaction completes;
 - content packs are verified by digest before activation;
 - progressive directory onboarding keeps handles ephemeral, bounds name-only
   discovery, and reads only the candidate the user explicitly installs;

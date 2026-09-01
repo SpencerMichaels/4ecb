@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { openDB } from "idb";
 
 import { newCharacterRecord } from "@4ecb/character-domain";
+import { buildContentPack } from "@4ecb/content-pack";
+import type { ParsedContentSource } from "@4ecb/content-domain";
 
 import { CharacterRepository } from "./character-repository";
 import {
@@ -47,6 +49,22 @@ function character(id = "character-one") {
   );
 }
 
+const emptyContentSource: ParsedContentSource = {
+  gameSystem: "D&D4E",
+  sourceKey: "synthetic-empty",
+  entities: [],
+  rejected: [],
+  rawTopLevel: [],
+  diagnostics: [],
+  accounting: {
+    topLevelRecords: 0,
+    acceptedRecords: 0,
+    warnedRecords: 0,
+    rejectedRecords: 0,
+    rawTopLevelElements: 0,
+  },
+};
+
 async function payloadDigest(characters: readonly unknown[]): Promise<string> {
   const digest = new Uint8Array(
     await crypto.subtle.digest(
@@ -71,6 +89,95 @@ describe("CharacterRepository", () => {
     databases.push(name);
     await new CharacterRepository(name).put(character());
     await expect(new ContentPackRepository(name).list()).resolves.toEqual([]);
+  });
+
+  it("preserves a complete character across repository reconstruction", async () => {
+    const name = `4ecb-restart-${crypto.randomUUID()}`;
+    databases.push(name);
+    const beforeRestart = new CharacterRepository(name);
+    await beforeRestart.put(character("restartable"));
+    const saved = await beforeRestart.updateMetadata("restartable", {
+      notes: "Keep this after a browser restart.",
+      profileBinding: {
+        packId: "installed-profile",
+        contentDigest: "digest-1",
+      },
+      sheetSettings: {
+        paper: "a4",
+        monochrome: true,
+        blankHitPoints: true,
+        includePowerCards: false,
+        includeItemCards: false,
+      },
+    });
+
+    const afterRestart = new CharacterRepository(name);
+    await expect(afterRestart.get("restartable")).resolves.toEqual(saved);
+  });
+
+  it("upgrades an application-v2 database without losing records or settings", async () => {
+    const name = `4ecb-application-upgrade-${crypto.randomUUID()}`;
+    databases.push(name);
+    const current = character("from-v2");
+    const { build: _build, ...legacyFields } = current;
+    void _build;
+    const legacy = { ...legacyFields, schemaVersion: 1 as const };
+    const pack = await buildContentPack(emptyContentSource, {
+      packId: "v2-profile",
+      name: "Version 2 profile",
+    });
+    const oldDatabase = await openDB(name, 2, {
+      upgrade(database) {
+        const packs = database.createObjectStore("contentPacks", {
+          keyPath: "packId",
+        });
+        packs.createIndex("by-name", "manifest.name");
+        database.createObjectStore("settings", { keyPath: "key" });
+        const characters = database.createObjectStore("characters", {
+          keyPath: "id",
+        });
+        characters.createIndex("by-updated", "updatedAt");
+        characters.createIndex("by-deleted", "deletedAt");
+      },
+    });
+    const transaction = oldDatabase.transaction(
+      ["contentPacks", "settings", "characters"],
+      "readwrite",
+    );
+    await transaction.objectStore("contentPacks").put({
+      packId: pack.manifest.packId,
+      manifest: pack.manifest,
+      pack,
+    });
+    await transaction
+      .objectStore("settings")
+      .put({ key: "active-content-pack", value: pack.manifest.packId });
+    await transaction.objectStore("characters").put(legacy);
+    await transaction.done;
+    oldDatabase.close();
+
+    const upgradedCharacter = await new CharacterRepository(name).get(
+      legacy.id,
+    );
+    expect(upgradedCharacter).toMatchObject({
+      id: legacy.id,
+      schemaVersion: 2,
+      build: { formatVersion: 1 },
+    });
+    const upgradedContent = new ContentPackRepository(name);
+    await expect(upgradedContent.activePackId()).resolves.toBe("v2-profile");
+    await expect(upgradedContent.get("v2-profile")).resolves.toEqual(pack);
+
+    const inspected = await openDB(name);
+    expect(inspected.version).toBe(3);
+    expect([...inspected.objectStoreNames]).toEqual([
+      "characterMigrations",
+      "characters",
+      "contentPacks",
+      "settings",
+    ]);
+    expect(await inspected.getAll("characterMigrations")).toHaveLength(0);
+    inspected.close();
   });
 
   it("recovers an interrupted lazy migration from its preserved record", async () => {

@@ -49,7 +49,11 @@ authenticity claim, and every nested character record is independently decoded
 before storage. Version-1 backups remain importable with an explicit warning
 that they predate checksums. IndexedDB schema 3 journals the untouched schema-1
 record before lazy conversion and recovers that record if migration is
-interrupted before commit.
+interrupted before commit. Automated durability fixtures reconstruct a
+repository over the same database, and upgrade the historical database version
+2 while preserving its schema-1 character, legacy object-form content pack, and
+active-profile setting. Opening the current repository upgrades the database to
+version 3, migrates the character, and removes the completed journal entry.
 
 ## Import semantics
 
