@@ -115,6 +115,16 @@ export function commandForEvaluatedChoice(
     evaluatedProvider === undefined
       ? undefined
       : byId.get(evaluatedProvider.definitionId.toLocaleLowerCase());
+  const atStorageLevel = (
+    occurrence: BuildOccurrence,
+    acquiredLevel: number,
+  ): BuildOccurrence => ({
+    ...occurrence,
+    acquiredLevel,
+    children: occurrence.children.map((child) =>
+      atStorageLevel(child, acquiredLevel),
+    ),
+  });
   const chooseAt = (
     parent: BuildOccurrence,
     index: number,
@@ -141,7 +151,9 @@ export function commandForEvaluatedChoice(
         });
       },
     );
-    commands.push(choose(index, occurrence));
+    commands.push(
+      choose(index, atStorageLevel(occurrence, parent.acquiredLevel)),
+    );
     return commands.length === 1
       ? (commands[0] as CharacterCommand)
       : { kind: "batch", commands };
@@ -262,7 +274,13 @@ export function projectBuildForEvaluation(
     kind: CharacterOccurrence["kind"],
     parentId?: string,
     slot?: ChildSlot,
+    parentEffectiveLevel?: number,
   ) => {
+    const effectiveAcquiredLevel = Math.max(
+      occurrence.acquiredLevel,
+      slot?.minimumLevel ?? occurrence.acquiredLevel,
+      parentEffectiveLevel ?? occurrence.acquiredLevel,
+    );
     if (
       occurrence.identity.definitionId !== undefined &&
       !occurrence.unresolved
@@ -270,10 +288,7 @@ export function projectBuildForEvaluation(
       occurrences.push({
         id: occurrence.id,
         definitionId: occurrence.identity.definitionId,
-        acquiredLevel: Math.max(
-          occurrence.acquiredLevel,
-          slot?.minimumLevel ?? occurrence.acquiredLevel,
-        ),
+        acquiredLevel: effectiveAcquiredLevel,
         kind,
         ...(parentId === undefined ? {} : { parentId }),
         ...(slot === undefined
@@ -299,7 +314,13 @@ export function projectBuildForEvaluation(
         kind: "choice" as const,
         minimumLevel: child.acquiredLevel,
       };
-      visit(child, childSlot.kind, occurrence.id, childSlot);
+      visit(
+        child,
+        childSlot.kind,
+        occurrence.id,
+        childSlot,
+        effectiveAcquiredLevel,
+      );
     });
   };
   for (const frame of build.levels) visit(frame.root, "root");

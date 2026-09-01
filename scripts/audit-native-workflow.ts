@@ -330,14 +330,13 @@ async function main(): Promise<void> {
         },
       });
     }
-    let previousUnresolvedId: string | undefined;
     for (let attempt = 0; attempt < 512; attempt += 1) {
       const current = evaluate(transaction.current, pack.entities);
-      const choice = current.choices.find(
+      const unresolvedChoices = current.choices.filter(
         (candidate) =>
           !candidate.optional && candidate.selectedOccurrenceId === undefined,
       );
-      if (choice === undefined) {
+      if (unresolvedChoices.length === 0) {
         levelEvidence.push({
           level,
           choices: current.choices.length,
@@ -350,38 +349,56 @@ async function main(): Promise<void> {
         );
         break;
       }
-      if (choice.id === previousUnresolvedId)
-        throw new Error(
-          `Resolving ${choice.id} did not make the choice durable at level ${level}`,
+      const resolution = unresolvedChoices
+        .map((choice) => ({
+          choice,
+          replacement:
+            choice.type === "Replacement"
+              ? replacementCommand(transaction.current, choice, byId, serial)
+              : undefined,
+          definition:
+            choice.type === "Replacement"
+              ? undefined
+              : candidateFor(choice, byId, current, preferredDefinitionIds),
+        }))
+        .find(
+          ({ replacement, definition }) =>
+            replacement !== undefined || definition !== undefined,
         );
-      previousUnresolvedId = choice.id;
-      const replacement =
-        choice.type === "Replacement"
-          ? replacementCommand(transaction.current, choice, byId, serial++)
-          : undefined;
+      if (resolution === undefined) {
+        const blocked = unresolvedChoices.map((choice) => {
+          const provider = current.occurrences.find(
+            (occurrence) => occurrence.id === choice.providerOccurrenceId,
+          );
+          return {
+            id: choice.id,
+            type: choice.type,
+            provider,
+            sourceRule:
+              provider === undefined
+                ? undefined
+                : byId.get(key(provider.definitionId))?.rules[
+                    choice.ruleOrdinal
+                  ],
+            candidates: choice.candidates.slice(0, 12),
+          };
+        });
+        throw new Error(
+          `No required choice can currently be resolved at level ${level}: ${JSON.stringify(blocked)}`,
+        );
+      }
+      const { choice, replacement, definition } = resolution;
       if (replacement !== undefined) {
         const before = transaction.current;
         const after = transaction.dispatch(replacement);
         assertNoRemovedOccurrences(before, after, `Resolving ${choice.id}`);
+        serial += 1;
         retrainings += 1;
         resolvedChoices += 1;
         continue;
       }
-      const definition = candidateFor(
-        choice,
-        byId,
-        current,
-        preferredDefinitionIds,
-      );
       if (definition === undefined)
-        throw new Error(
-          `No eligible ${choice.type} candidate at level ${level} for ${choice.id}: ${JSON.stringify(
-            {
-              selected: current.occurrences.map((value) => value.definitionId),
-              candidates: choice.candidates.slice(0, 12),
-            },
-          )}`,
-        );
+        throw new Error(`Internal audit resolution error for ${choice.id}`);
       const provider = current.occurrences.find(
         (occurrence) => occurrence.id === choice.providerOccurrenceId,
       );

@@ -335,6 +335,92 @@ describe("build projection", () => {
     expect(completed.complete).toBe(true);
   });
 
+  it("stores nested choices at their enclosing level and projects effective grant levels", () => {
+    const content = [
+      entity("LEVEL", "1", "Level", [
+        statement(
+          "grant",
+          { name: "ADVANCEMENT", type: "Feature", Level: "2" },
+          0,
+        ),
+      ]),
+      entity("ADVANCEMENT", "Level 2 advancement", "Feature", [
+        statement("select", { type: "Power", number: "1" }, 0),
+      ]),
+      entity("POWER", "Level 2 power", "Power"),
+    ];
+    const build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 2,
+      levels: [
+        {
+          level: 1,
+          root: {
+            id: "level",
+            identity: { definitionId: "LEVEL", name: "1", type: "Level" },
+            acquiredLevel: 1,
+            legality: "rules-legal",
+            unresolved: false,
+            children: [],
+          },
+        },
+        {
+          level: 2,
+          root: {
+            id: "level-2",
+            identity: { name: "2", type: "Level" },
+            acquiredLevel: 2,
+            legality: "rules-legal",
+            unresolved: false,
+            children: [],
+          },
+        },
+      ],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    const initial = evaluateCharacter(
+      projectBuildForEvaluation(build, content),
+      content,
+    );
+    const command = commandForEvaluatedChoice(
+      build,
+      initial.choices[0]!,
+      initial.occurrences,
+      content,
+      {
+        id: "power",
+        identity: {
+          definitionId: "POWER",
+          name: "Level 2 power",
+          type: "Power",
+        },
+        acquiredLevel: 2,
+        legality: "rules-legal",
+        children: [],
+        unresolved: false,
+      },
+      (index) => `placeholder:${index}`,
+    );
+
+    const updated = applyCharacterCommand(build, command!);
+    expect(updated.levels[0]?.root.children[0]).toMatchObject({
+      acquiredLevel: 1,
+      children: [{ id: "power", acquiredLevel: 1 }],
+    });
+    expect(
+      projectBuildForEvaluation(updated, content).occurrences.filter(({ id }) =>
+        ["level:grant:0", "power"].includes(id),
+      ),
+    ).toEqual([
+      expect.objectContaining({ id: "level:grant:0", acquiredLevel: 2 }),
+      expect.objectContaining({ id: "power", acquiredLevel: 2 }),
+    ]);
+  });
+
   it("materializes explicit placeholders when a later choice is selected first", () => {
     const content = [
       entity("LEVEL", "1", "Level", [

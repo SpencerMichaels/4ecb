@@ -346,6 +346,161 @@ describe("character evaluator", () => {
     ]);
   });
 
+  it("uses class-descended CountsAsClass markers for Essentials power choices", () => {
+    const result = evaluateCharacter(
+      {
+        level: 2,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "knight",
+            definitionId: "KNIGHT",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "fighter-marker",
+            definitionId: "COUNTS_AS_FIGHTER",
+            acquiredLevel: 1,
+            parentId: "knight",
+            kind: "grant",
+          },
+          {
+            id: "utility-slot",
+            definitionId: "UTILITY_SLOT",
+            acquiredLevel: 2,
+            parentId: "knight",
+            kind: "grant",
+          },
+          {
+            id: "rogue-training",
+            definitionId: "ROGUE_TRAINING",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("KNIGHT", "Knight", "Class"),
+        entity("COUNTS_AS_FIGHTER", "Fighter", "CountsAsClass"),
+        entity("UTILITY_SLOT", "Level 2 utility", "Class Feature", {
+          rules: [
+            rule("select", { type: "Power", Category: "$$CLASS,Utility,2" }, 0),
+          ],
+        }),
+        entity("ROGUE_TRAINING", "Rogue training", "Multiclass", {
+          specifics: { CountsAsClass: "Rogue" },
+        }),
+        entity("FIGHTER_UTILITY", "Fighter utility", "Power", {
+          categories: ["Fighter", "Utility"],
+          specifics: { Level: "2" },
+        }),
+        entity("ROGUE_UTILITY", "Rogue utility", "Power", {
+          categories: ["Rogue", "Utility"],
+          specifics: { Level: "2" },
+        }),
+      ],
+    );
+
+    expect(result.choices[0]?.candidates).toEqual([
+      { definitionId: "FIGHTER_UTILITY", eligible: true, reasons: [] },
+      {
+        definitionId: "ROGUE_UTILITY",
+        eligible: false,
+        reasons: ["category"],
+      },
+    ]);
+  });
+
+  it("uses distinct hybrid components for both hybrid and primary class categories", () => {
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "hybrid-shell",
+            definitionId: "HYBRID",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "hybrid-cleric",
+            definitionId: "HYBRID_CLERIC",
+            acquiredLevel: 1,
+            parentId: "hybrid-shell",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+          {
+            id: "hybrid-fighter",
+            definitionId: "HYBRID_FIGHTER",
+            acquiredLevel: 1,
+            parentId: "hybrid-shell",
+            ruleOrdinal: 0,
+            choiceIndex: 1,
+            kind: "choice",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("HYBRID", "Hybrid", "Class", {
+          rules: [
+            rule("select", { type: "Hybrid Class", number: "2" }, 0),
+            rule("select", { type: "Power", Category: "$$CLASS" }, 1),
+            rule("select", { type: "Skill", Category: "$$HYBRID" }, 2),
+          ],
+        }),
+        entity("HYBRID_CLERIC", "Hybrid Cleric", "Hybrid Class", {
+          specifics: { _BaseClass: "CLERIC" },
+        }),
+        entity("HYBRID_FIGHTER", "Hybrid Fighter", "Hybrid Class", {
+          specifics: { _BaseClass: "FIGHTER" },
+        }),
+        entity("CLERIC", "Cleric", "Class"),
+        entity("FIGHTER", "Fighter", "Class"),
+        entity("CLERIC_POWER", "Cleric power", "Power", {
+          categories: ["Cleric"],
+        }),
+        entity("FIGHTER_POWER", "Fighter power", "Power", {
+          categories: ["Fighter"],
+        }),
+        entity("WIZARD_POWER", "Wizard power", "Power", {
+          categories: ["Wizard"],
+        }),
+        entity("CLERIC_SKILL", "Cleric skill", "Skill", {
+          categories: ["Cleric"],
+        }),
+      ],
+    );
+
+    expect(result.choices[0]?.candidates).toContainEqual({
+      definitionId: "HYBRID_FIGHTER",
+      eligible: false,
+      reasons: ["duplicate"],
+    });
+    expect(result.choices[1]?.candidates).toContainEqual({
+      definitionId: "HYBRID_CLERIC",
+      eligible: false,
+      reasons: ["duplicate"],
+    });
+    expect(result.choices[2]?.candidates).toEqual([
+      { definitionId: "CLERIC_POWER", eligible: true, reasons: [] },
+      { definitionId: "FIGHTER_POWER", eligible: true, reasons: [] },
+      {
+        definitionId: "WIZARD_POWER",
+        eligible: false,
+        reasons: ["category"],
+      },
+    ]);
+    expect(result.choices[3]?.candidates).toEqual([
+      { definitionId: "CLERIC_SKILL", eligible: true, reasons: [] },
+    ]);
+  });
+
   it("keeps house rules visible but makes the result non-legal", () => {
     const result = evaluateCharacter(
       {
@@ -443,6 +598,76 @@ describe("character evaluator", () => {
           candidates: [
             { definitionId: "FEAT_A", eligible: true },
             { definitionId: "FEAT_B", eligible: true },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("uses a replacement rule's minimum level for early-granted providers", () => {
+    const result = evaluateCharacter(
+      {
+        level: 7,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "class",
+            definitionId: "CLASS",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "old-power",
+            definitionId: "POWER_A",
+            acquiredLevel: 1,
+            parentId: "class",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+          {
+            id: "advancement",
+            definitionId: "ADVANCEMENT",
+            acquiredLevel: 1,
+            kind: "grant",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("CLASS", "Psionic class", "Class", {
+          rules: [
+            rule(
+              "select",
+              { type: "Power", number: "1", Category: "Psionic" },
+              0,
+            ),
+          ],
+        }),
+        entity("ADVANCEMENT", "Augment advancement", "Feature", {
+          rules: [
+            rule("replace", { Level: "7", powerswap: "Psionic,at-will,7" }, 0),
+          ],
+        }),
+        entity("POWER_A", "Old power", "Power", {
+          categories: ["Psionic"],
+        }),
+        entity("POWER_B", "New power", "Power", {
+          categories: ["Psionic"],
+        }),
+      ],
+    );
+
+    expect(
+      result.choices.find((choice) => choice.type === "Replacement"),
+    ).toMatchObject({
+      optional: false,
+      replacementOptions: [
+        {
+          replacesOccurrenceId: "old-power",
+          candidates: [
+            { definitionId: "POWER_A", eligible: true },
+            { definitionId: "POWER_B", eligible: true },
           ],
         },
       ],

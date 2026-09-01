@@ -44,7 +44,7 @@ edited export target, and passed its semantic re-import gate without console
 warnings or errors. This closes the old-application dependency for starting a
 character; the supported-browser end-to-end matrix and remaining M4
 compatibility/release matrices still block complete M5 closure.
-The complete public gate passes 138 tests across 30 files plus formatting,
+The complete public gate passes 142 tests across 30 files plus formatting,
 ESLint, every TypeScript project, the production/PWA build, Chromium/Firefox
 print artifacts, deterministic content checks, and the query benchmark.
 
@@ -57,11 +57,21 @@ print artifacts, deterministic content checks, and the query benchmark.
   an item, JSON-decodes the saved record, constructs the authoritative sheet,
   and requires edited `.dnd4e` semantic re-import parity. Private content and
   output remain ignored evidence.
-- The audit exposed and closed four generic durability defects: out-of-order
+- The audit exposed and closed generic durability defects: out-of-order
   sibling choices no longer create sparse arrays; generated choices can
   materialize through arbitrarily nested grant ancestors; a provider cannot
   select itself recursively; and active replacement chains satisfy every prior
   select/replacement slot while later retraining targets only the active chain.
+  Level-qualified replacements use the rule's effective level even when their
+  provider was granted at level 1. Primary-class grant ancestry extends
+  `CountsAsClass` aliases for Essentials choices, Hybrid Class `_BaseClass`
+  aliases feed both `$$CLASS` and `$$HYBRID`, and repeated multi-slot choices
+  exclude already selected siblings.
+- Durable nested occurrences use the enclosing legacy level while projection
+  propagates the effective grant/select level through descendants. This retains
+  correct advancement timing and makes edited legacy XML semantic re-import
+  exact for later choices nested beneath a level-1 class. The audit resolves
+  dependency-ready choices before temporarily blocked parent-level slots.
 - On 2026-09-01, an explicit Human/Fighter path against the 38,339-record local
   profile reached level 30 complete at every level, resolved 63 choices and 8
   retrainings, retained all 8 replacement targets, equipped one item, survived
@@ -70,6 +80,17 @@ print artifacts, deterministic content checks, and the query benchmark.
   diagnostics are `prerequisite.unverified` prose findings; no prerequisite is
   reported failed and no incomplete choice is hidden. This is one real-profile
   workflow, not evidence that every class/build family passes M5 criterion 2.
+- The same 38,339-record profile now has additional deterministic family
+  evidence. Human/Psion reaches level 30 complete and legal with 63 choices,
+  nine retrainings, zero diagnostics, and exact persistence/sheet/export gates.
+  Human/Shaman reaches level 30 complete with 61 choices and eight retrainings;
+  its four findings are preserved `prerequisite.unverified` prose. Human/Knight
+  reaches level 30 complete and legal with 50 choices and zero diagnostics,
+  exercising the Essentials class-alias and nested future-grant paths. A Hybrid
+  shell with two distinct imported component classes completes heroic levels
+  1–10 with 38 resolved choices and one preserved unverified prerequisite.
+  Broader class/build sampling, epic Hybrid execution, and the named power-math
+  exception families remain open criterion-2/3 evidence.
 
 ### Profile migration preview and explicit adoption
 

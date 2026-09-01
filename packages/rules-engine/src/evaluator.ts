@@ -187,23 +187,63 @@ export class RulesIndex {
 
 function dynamicCategories(
   owned: readonly ContentEntity[],
+  occurrences: readonly CharacterOccurrence[],
+  index: RulesIndex,
   text: Readonly<Record<string, string>>,
 ): Readonly<Record<string, ReadonlySet<string>>> {
   const classValues = new Set<string>();
   const hybridValues = new Set<string>();
   const multiclassValues = new Set<string>();
-  for (const entity of owned) {
+  const occurrencesById = new Map(
+    occurrences.map((occurrence) => [occurrence.id, occurrence]),
+  );
+  const inheritedClassTarget = (
+    occurrence: CharacterOccurrence,
+  ): Set<string> | undefined => {
+    let parentId = occurrence.parentId;
+    const visited = new Set<string>();
+    while (parentId !== undefined && !visited.has(parentId)) {
+      visited.add(parentId);
+      const parent = occurrencesById.get(parentId);
+      if (parent === undefined) return undefined;
+      const parentType = key(index.get(parent.definitionId)?.type ?? "");
+      if (parentType === "class") return classValues;
+      if (parentType === "hybrid class") return hybridValues;
+      parentId = parent.parentId;
+    }
+    return undefined;
+  };
+  for (const occurrence of occurrences) {
+    const entity = index.get(occurrence.definitionId);
+    if (entity === undefined) continue;
     const countsAsClass = field(entity, "CountsAsClass");
-    const target =
-      key(entity.type) === "hybrid class"
-        ? hybridValues
-        : key(entity.type) === "class"
-          ? classValues
-          : key(entity.type) === "countsasclass" || countsAsClass !== undefined
-            ? multiclassValues
-            : undefined;
-    if (target !== undefined)
-      [entity.id, entity.name, ...entity.categories, countsAsClass ?? ""]
+    const baseClassId = field(entity, "_BaseClass");
+    const baseClass =
+      baseClassId === undefined ? undefined : index.get(baseClassId);
+    const entityType = key(entity.type);
+    const targets =
+      entityType === "hybrid class"
+        ? [
+            hybridValues,
+            ...(inheritedClassTarget(occurrence) === classValues
+              ? [classValues]
+              : []),
+          ]
+        : entityType === "class"
+          ? [classValues]
+          : entityType === "countsasclass" || countsAsClass !== undefined
+            ? [inheritedClassTarget(occurrence) ?? multiclassValues]
+            : [];
+    for (const target of targets)
+      [
+        entity.id,
+        entity.name,
+        ...entity.categories,
+        countsAsClass ?? "",
+        baseClassId ?? "",
+        baseClass?.name ?? "",
+        ...(baseClass?.categories ?? []),
+      ]
         .filter(Boolean)
         .forEach((value) => target.add(key(value)));
   }
@@ -378,6 +418,8 @@ export function evaluateCharacter(
       level: input.level,
       dynamicCategories: dynamicCategories(
         definitions,
+        occurrences,
+        index,
         input.textStrings ?? {},
       ),
       categoryAliases: index.categoryAliases,
@@ -479,6 +521,8 @@ export function evaluateCharacter(
     level: input.level,
     dynamicCategories: dynamicCategories(
       ownedDefinitions,
+      occurrences,
+      index,
       input.textStrings ?? {},
     ),
     categoryAliases: index.categoryAliases,
@@ -627,12 +671,31 @@ export function evaluateCharacter(
             text[rule.name] = rule.value;
           break;
         case "select": {
-          const candidates = candidatesFor(rule, occurrence);
+          const baseCandidates = candidatesFor(rule, occurrence);
           for (
             let choiceIndex = 0;
             choiceIndex < rule.number;
             choiceIndex += 1
           ) {
+            const siblingDefinitionIds = new Set(
+              occurrences
+                .filter(
+                  (candidate) =>
+                    candidate.parentId === occurrence.id &&
+                    candidate.ruleOrdinal === rule.source.ordinal &&
+                    (candidate.choiceIndex ?? 0) !== choiceIndex,
+                )
+                .map((candidate) => key(candidate.definitionId)),
+            );
+            const candidates = baseCandidates.map((candidate) =>
+              siblingDefinitionIds.has(key(candidate.definitionId))
+                ? {
+                    ...candidate,
+                    eligible: false,
+                    reasons: [...candidate.reasons, "duplicate"],
+                  }
+                : candidate,
+            );
             const directSelection = saved.find(
               (candidate) =>
                 candidate.parentId === occurrence.id &&
@@ -668,6 +731,10 @@ export function evaluateCharacter(
           break;
         }
         case "replace": {
+          const replacementLevel = Math.max(
+            occurrence.acquiredLevel,
+            rule.source.level.minimum,
+          );
           const directSelection = saved.find(
             (candidate) =>
               candidate.parentId === occurrence.id &&
@@ -700,7 +767,7 @@ export function evaluateCharacter(
                 ["feat", "power", "skill training"].includes(candidateType);
               return (
                 !replacedIds.has(candidate.id) &&
-                candidate.acquiredLevel < occurrence.acquiredLevel &&
+                candidate.acquiredLevel < replacementLevel &&
                 candidate.kind === "choice" &&
                 ordinaryRetraining &&
                 (!powerOnly || candidateType === "power")

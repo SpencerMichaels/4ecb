@@ -100,8 +100,16 @@ public MVP.
 M5's full-profile native workflow audit now verifies that generic choices can
 be selected out of order, nested generated-grant providers become durable, and
 retraining chains keep prior slots satisfied without dangling replacement
-links. A representative Human/Fighter path resolves 63 choices and 8
-retrainings through level 30, then passes persistence, authoritative-sheet, and
-edited-export round-trip gates. Its two remaining legality diagnostics are
-preserved `prerequisite.unverified` prose; broader class/build differentials and
-the named power/equipment exception families above remain open.
+links. Rule-level acquisition controls early-granted power swaps, projection
+propagates effective acquisition through legacy-nested descendants, and dynamic
+class categories distinguish primary Essentials ancestry from multiclass
+markers while binding Hybrid Class records through their explicit `_BaseClass`.
+Multi-slot choices reject duplicate siblings.
+
+Human/Fighter, Psion, Shaman, and Knight paths complete level 30, while a
+two-component Hybrid path completes level 10. Every path passes persistence,
+authoritative-sheet, and edited-export semantic round-trip gates. Psion and
+Knight have zero diagnostics; Fighter, Shaman, and Hybrid preserve only visible
+`prerequisite.unverified` prose. These are deterministic private-profile
+workflows, not a claim that every class or named native power exception is
+closed.
