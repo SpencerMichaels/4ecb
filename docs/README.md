@@ -31,6 +31,9 @@ application's architecture.
 10. [M4 compatibility ledger](m4-compatibility-ledger.md) records exact-golden
     policy, exception-family disposition, the historical diagnostic baseline,
     and the M4 exit-criterion mapping.
+11. [Contributor and agent workflow](contributor-workflow.md) defines milestone
+    ownership, fresh-context handoffs, coordinator review, verification layers,
+    commits, and completion rules.
 
 ## Definition hierarchy
 

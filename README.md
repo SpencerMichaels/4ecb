@@ -10,6 +10,8 @@ modern web replacement.
   [`reverse-engineering/docs/INDEX.md`](reverse-engineering/docs/INDEX.md) for
   the recovered game-data formats, `.dnd4e` compatibility, rule language, and
   legacy character-engine behavior.
+- Contributors and coding agents must follow [`AGENTS.md`](AGENTS.md) and the
+  [durable milestone workflow](docs/contributor-workflow.md).
 - Use the project-local environment with `nix develop path:.`; do not install
   analysis or build dependencies globally. The narrower
   `nix develop path:./reverse-engineering` environment remains available for
@@ -52,6 +54,6 @@ Build the unprivileged production container with `docker build -t 4ecb .`, or
 the live development target with `docker build --target development -t 4ecb-dev
 .`. Neither image includes the ignored legacy application or official corpus.
 
-Milestones M1 and M2 are complete. See [`docs/implementation-status.md`](docs/implementation-status.md)
-for verified evidence and [`docs/roadmap.md`](docs/roadmap.md) for the next
-milestone.
+Milestones M1 through M4 are complete, and M5 is in progress. See
+[`docs/implementation-status.md`](docs/implementation-status.md) for verified
+evidence and [`docs/roadmap.md`](docs/roadmap.md) for the current milestone.
