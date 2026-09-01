@@ -55,6 +55,78 @@ function combatStat(name: string, value: number): EvaluatedStat {
 }
 
 describe("power evaluation", () => {
+  it("evaluates exact synthetic forms of three recovered level-one powers", () => {
+    const powers = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["HOWL", "KNOCKDOWN", "CALL"],
+      inventory: [
+        {
+          id: "axe",
+          definitionIds: ["AXE"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 4),
+        "Wisdom modifier": stat("Wisdom modifier", 4),
+      },
+      overlays: [],
+      entities: [
+        entity("HOWL", "Howling Strike", "Power", {
+          Keywords: "Primal, Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. AC",
+          Hit: "1[W] + 1d6 + Strength modifier damage.",
+        }),
+        entity("KNOCKDOWN", "Knockdown Assault", "Power", {
+          Keywords: "Martial, Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. Fortitude",
+          Hit: "Strength modifier damage, and you knock the target prone.",
+        }),
+        entity("CALL", "Call of the Beast", "Power", {
+          Keywords: "Charm, Implement, Primal, Psychic",
+          "Attack Type": "Area burst 1 within 10 squares",
+          Attack: "Wisdom vs. Will",
+          Hit: "The target can't gain combat advantage until the end of your next turn. In addition, on its next turn the target takes psychic damage equal to 5 + your Wisdom modifier when it makes any attack that doesn't include your ally nearest to it as a target.",
+        }),
+        entity("AXE", "Synthetic Greataxe", "Weapon", {
+          Damage: "1d12",
+          "Proficiency Bonus": "2",
+        }),
+      ],
+    });
+
+    expect(
+      powers.find(({ definitionId }) => definitionId === "HOWL")?.variants[0]
+        ?.damage,
+    ).toBe("1d12+1d6+4");
+    expect(
+      powers.find(({ definitionId }) => definitionId === "KNOCKDOWN")
+        ?.variants[0]?.damage,
+    ).toBe("4");
+    expect(
+      powers.find(({ definitionId }) => definitionId === "CALL")?.variants[0]
+        ?.conditionalDamage,
+    ).toEqual([
+      {
+        source: "Call of the Beast",
+        expression: "9",
+        condition:
+          "on its next turn when the target attacks without including your ally nearest to it",
+      },
+    ]);
+    expect(
+      powers
+        .filter(({ definitionId }) =>
+          ["HOWL", "KNOCKDOWN", "CALL"].includes(definitionId),
+        )
+        .flatMap(({ unsupported }) => unsupported),
+    ).toEqual([]);
+  });
+
   it("applies one contribution once across overlapping implement and weapon channels", () => {
     const [power] = evaluatePowers({
       level: 7,

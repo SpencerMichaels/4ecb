@@ -279,12 +279,15 @@ function nativeSpecialDamage(
       readonly expression?: string;
       readonly ability?: string;
       readonly suppressAbility?: boolean;
+      readonly abilityOnly?: boolean;
     }
   | undefined {
   // The legacy engine checks this exact power name before parsing its
   // conditional movement prose.
   if (key(power.name) === "bond of censure")
     return { dice: level >= 21 ? "2d10" : "1d10", suppressAbility: true };
+  if (key(power.name) === "knockdown assault")
+    return { dice: "", ability: "Strength", abilityOnly: true };
 
   const hit = key(hitLine ?? "");
   if (
@@ -728,7 +731,17 @@ export function evaluatePowers(input: {
       const dice =
         specialDamage?.dice ??
         (weaponMatch !== null && weaponMatch !== undefined
-          ? diceTimes(equipment.weaponDamage ?? "1d4", Number(weaponMatch[1]))
+          ? [
+              diceTimes(
+                equipment.weaponDamage ?? "1d4",
+                Number(weaponMatch[1]),
+              ),
+              key(power.name) === "howling strike"
+                ? fixedMatch?.[1]
+                : undefined,
+            ]
+              .filter(Boolean)
+              .join("+")
           : fixedMatch?.[1]);
       const ongoing = /\bongoing\b/i.test(hitLine ?? "");
       const primaryDamageClause = withoutCompanionAbilityDamage(
@@ -767,7 +780,11 @@ export function evaluatePowers(input: {
             value: numericStat(input.stats, `${ability} modifier`),
           })),
         );
-      if (dice !== undefined && equipment.enhancement !== 0)
+      if (
+        dice !== undefined &&
+        !specialDamage?.abilityOnly &&
+        equipment.enhancement !== 0
+      )
         damageComponents.push({
           label: "enhancement bonus",
           value: equipment.enhancement,
@@ -785,13 +802,17 @@ export function evaluatePowers(input: {
         offHandImplements.length === 1
           ? offHandImplements[0]
           : undefined;
-      if (dice !== undefined && (pairedImplement?.enhancement ?? 0) !== 0)
+      if (
+        dice !== undefined &&
+        !specialDamage?.abilityOnly &&
+        (pairedImplement?.enhancement ?? 0) !== 0
+      )
         damageComponents.push({
           label: "off-hand implement enhancement bonus",
           value: pairedImplement?.enhancement ?? 0,
           source: "Dual Implement Spellcaster",
         });
-      if (dice !== undefined)
+      if (dice !== undefined && !specialDamage?.abilityOnly)
         damageComponents.push(
           ...combatStatComponents(
             input.stats,
@@ -802,7 +823,12 @@ export function evaluatePowers(input: {
             attackType,
           ),
         );
-      if (dice !== undefined && implementPower && equipment.weaponDefinition)
+      if (
+        dice !== undefined &&
+        !specialDamage?.abilityOnly &&
+        implementPower &&
+        equipment.weaponDefinition
+      )
         damageComponents.push(
           ...combatStatComponents(
             input.stats,
@@ -816,7 +842,11 @@ export function evaluatePowers(input: {
       const powerDamageBonus = Number(
         hitLine?.match(/\+\s*(\d+)\s+(?:[a-z]+\s+)*damage\b/i)?.[1] ?? 0,
       );
-      if (dice !== undefined && powerDamageBonus !== 0)
+      if (
+        dice !== undefined &&
+        !specialDamage?.abilityOnly &&
+        powerDamageBonus !== 0
+      )
         damageComponents.push({
           label: "power damage bonus",
           value: powerDamageBonus,
@@ -830,8 +860,21 @@ export function evaluatePowers(input: {
       const brutal = equipment.properties
         .map((property) => /^brutal\s+(\d+)$/i.exec(property)?.[1])
         .find((value) => value !== undefined);
-      const conditionalDamage =
-        dice === undefined
+      const conditionalDamage: readonly PowerConditionalDamage[] = [
+        ...(key(power.name) === "call of the beast"
+          ? [
+              {
+                source: power.name,
+                expression: String(
+                  (input.level >= 21 ? 10 : 5) +
+                    numericStat(input.stats, "Wisdom modifier"),
+                ),
+                condition:
+                  "on its next turn when the target attacks without including your ally nearest to it",
+              },
+            ]
+          : []),
+        ...(dice === undefined
           ? []
           : conditionalStrikerDamage({
               activeDefinitionIds: input.activeDefinitionIds,
@@ -839,7 +882,8 @@ export function evaluatePowers(input: {
               textStrings: input.textStrings ?? {},
               power,
               equipment,
-            });
+            })),
+      ];
       return {
         id: `${power.id}:${equipment.id}`,
         equipmentName: equipment.name,
@@ -860,7 +904,11 @@ export function evaluatePowers(input: {
             ? ongoing
               ? { damage: "Ongoing" }
               : {}
-            : { damage: formatDamage(dice, damageBonus) }),
+            : {
+                damage: specialDamage?.abilityOnly
+                  ? String(damageBonus)
+                  : formatDamage(dice, damageBonus),
+              }),
         ...(critical === undefined ? {} : { critical }),
         ...(brutal === undefined ? {} : { brutal: Number(brutal) }),
         attackComponents,
@@ -892,7 +940,8 @@ export function evaluatePowers(input: {
       unsupported.push("augment");
     if (
       /\bdamage\b/i.test(hitLine ?? "") &&
-      variants.some((variant) => variant.damage === undefined)
+      variants.some((variant) => variant.damage === undefined) &&
+      key(power.name) !== "call of the beast"
     )
       unsupported.push("unparsed-hit");
     if (unresolvedNativeSpecialCase(hitLine))
