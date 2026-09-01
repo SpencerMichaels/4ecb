@@ -8,6 +8,7 @@ import { CharacterLibraryPage } from "./CharacterLibraryPage";
 import { CharacterEditorPage } from "./CharacterEditorPage";
 import { CharacterSheetPage } from "./CharacterSheetPage";
 import { parseHashRoute } from "./routes";
+import { PwaStatus } from "./PwaStatus";
 import { SettingsPage } from "./SettingsPage";
 
 const repository = new ContentPackRepository();
@@ -47,7 +48,7 @@ export function App() {
       </a>
       <header className="app-header">
         <div>
-          <p className="eyebrow">Character viewer alpha</p>
+          <p className="eyebrow">Builder beta · MVP closure in progress</p>
           <h1>4E Character Builder</h1>
         </div>
         <p className="unofficial">
@@ -75,6 +76,8 @@ export function App() {
           Content settings
         </a>
       </nav>
+
+      <PwaStatus />
 
       {error === undefined ? null : (
         <div className="global-error error" role="alert">
@@ -116,6 +119,12 @@ export function App() {
             : { entityId: route.entityId })}
         />
       )}
+      <footer className="public-notice">
+        <strong>Unofficial, local-first software.</strong> This project is not
+        affiliated with or endorsed by Wizards of the Coast. Public builds do
+        not include the official rules corpus; imported packs and characters
+        remain in this browser unless you explicitly export them.
+      </footer>
     </div>
   );
 }

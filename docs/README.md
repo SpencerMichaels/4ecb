@@ -34,6 +34,9 @@ application's architecture.
 11. [Contributor and agent workflow](contributor-workflow.md) defines milestone
     ownership, fresh-context handoffs, coordinator review, verification layers,
     commits, and completion rules.
+12. [Public PWA and Docker deployment](public-deployment.md) defines the
+    proprietary-content boundary, hardened container operation, runtime
+    configuration, offline/update behavior, and remaining release checks.
 
 ## Definition hierarchy
 

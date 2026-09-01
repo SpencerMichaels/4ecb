@@ -220,6 +220,29 @@ a {
   padding: 0.75rem;
 }
 
+.pwa-status {
+  align-items: center;
+  background: #eaf3f6;
+  border-block: 1px solid #8aa5ae;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding: 0.75rem 2rem;
+}
+
+.pwa-status p {
+  flex: 1 1 28rem;
+  margin: 0;
+}
+
+.public-notice {
+  border-top: 1px solid #b9b9b2;
+  color: #566066;
+  font-size: 0.875rem;
+  margin: 2rem;
+  padding-top: 1rem;
+}
+
 .empty-state,
 .loading-state {
   background: rgb(255 255 255 / 55%);

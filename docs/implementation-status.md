@@ -7,8 +7,10 @@ the builder beta: it delivers the authoritative rules-backed editor, records the
 remaining native parity risks as explicit M5 blockers, and does not claim public
 MVP readiness. M5 is in progress. Profile migration preview and explicit
 adoption are implemented; blocker closure, edited legacy export, finished
-printing, remaining storage upgrade/restart matrices, onboarding/deployment
-work, and public-release verification remain open.
+printing, remaining storage upgrade/restart matrices, onboarding, and
+public-release verification remain open. The installable PWA, update/offline UX,
+public-distribution boundary, and production Docker guide are verified
+checkpoints, not an MVP declaration.
 
 ## M5 checkpoints
 
@@ -72,6 +74,38 @@ across 23 files plus formatting, ESLint, every TypeScript project, the
 production/PWA build, deterministic content checks, and the query benchmark.
 After adding the comprehensive domain decoder and crafted self-checksummed
 malformed-record fixture, the same public suite passes 100 tests.
+
+### Installable PWA and public Docker boundary
+
+- The production PWA presents explicit first-offline readiness, offline state,
+  deferred update, and browser installation controls. Updates never silently
+  reload the editor; the user chooses when to activate a waiting worker.
+- Every application route carries the unofficial-product, local-data, and
+  no-official-corpus notice. `NOTICE.md` establishes the repository, hosted
+  build, CI, and image distribution boundary without treating it as legal
+  advice.
+- The production image serves immutable application assets from `/app/static`
+  while keeping `/app/runtime-config.json` separately replaceable. It runs as
+  the upstream unprivileged nginx user with a read-only root filesystem and a
+  bounded writable `/tmp` in the documented invocation.
+- The public suite now requires a standalone web manifest, service worker,
+  runtime configuration, and absence of `.4ecp` and `.dnd4e` artifacts from the
+  production web build. The deployment guide documents HTTPS, reverse-proxy
+  caching, health checks, update behavior, and the browser-local backup boundary.
+
+Verification on 2026-08-31 used a production build in the project-local Nix
+environment and a live Chromium browser. The installed service worker announced
+offline readiness, restored the application after the preview server was fully
+stopped, detected a rebuilt release, offered **Reload and update** and **Later**,
+and deferred without console warnings or errors. The production Docker image
+built successfully, returned `ok` from `/healthz`, served the external runtime
+configuration, contained its service worker, manifest, and notice, and contained
+no `.4ecp` or `.dnd4e` artifacts. It passed the same checks while running
+read-only with a bounded temporary filesystem. Supported-browser critical-flow,
+accessibility, security, and performance release matrices remain open M5 exit
+criteria. The checkpoint public suite passes 102 tests across 24 files plus
+formatting, ESLint, every TypeScript project, the production/PWA build,
+deterministic content checks, and the query benchmark.
 
 ## M4 delivered
 

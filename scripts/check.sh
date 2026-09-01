@@ -11,6 +11,16 @@ pnpm lint
 pnpm test
 pnpm build
 
+test -f apps/web/dist/sw.js
+test -f apps/web/dist/manifest.webmanifest
+test -f apps/web/dist/runtime-config.json
+jq -e '.display == "standalone"' apps/web/dist/manifest.webmanifest >/dev/null
+if find apps/web/dist -type f \( -name '*.4ecp' -o -name '*.dnd4e' \) \
+  -print -quit | grep -q .; then
+  echo "Private content artifact found in public web build" >&2
+  exit 1
+fi
+
 build_pack() {
   local output="$1"
   pnpm content-tool build \

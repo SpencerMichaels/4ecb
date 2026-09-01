@@ -19,8 +19,13 @@ RUN pnpm --filter @4ecb/web build
 
 FROM nginxinc/nginx-unprivileged:1.29-alpine
 
+LABEL org.opencontainers.image.title="4E Character Builder" \
+  org.opencontainers.image.description="Unofficial offline-first 4E character builder; no official rules corpus included"
+
 COPY docker/nginx.conf /etc/nginx/nginx.conf
-COPY --from=web-build /workspace/apps/web/dist /usr/share/nginx/html
+COPY --from=web-build /workspace/apps/web/dist /app/static
+COPY apps/web/public/runtime-config.json /app/runtime-config.json
+COPY NOTICE.md /app/NOTICE.md
 
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

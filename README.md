@@ -50,9 +50,14 @@ Measure the query engine against a private pack with:
 nix develop path:. --command pnpm benchmark:query tmp/content/full-local.4ecp
 ```
 
-Build the unprivileged production container with `docker build -t 4ecb .`, or
-the live development target with `docker build --target development -t 4ecb-dev
-.`. Neither image includes the ignored legacy application or official corpus.
+Build the unprivileged production container with `nix develop path:. --command
+docker build -t 4ecb .`, or the live development target with `nix develop path:.
+--command docker build --target development -t 4ecb-dev .`. Neither image
+includes the ignored legacy application or official corpus. The
+[public deployment guide](docs/public-deployment.md) also documents read-only
+operation, runtime configuration, HTTPS, health checks, PWA updates, and the
+proprietary-content boundary. The repository-wide
+[public distribution notice](NOTICE.md) applies to every hosted build and image.
 
 Milestones M1 through M4 are complete, and M5 is in progress. See
 [`docs/implementation-status.md`](docs/implementation-status.md) for verified

@@ -19,7 +19,8 @@
     "@4ecb/rules-engine": "workspace:*",
     "@4ecb/sheet-model": "workspace:*",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "workbox-window": "7.4.1"
   },
   "devDependencies": {
     "@types/node": "catalog:",

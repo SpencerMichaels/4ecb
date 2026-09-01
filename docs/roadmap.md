@@ -194,8 +194,9 @@ deliverable is closure of blocking M4 parity findings.
 **Status:** in progress. Verified checkpoints make content-profile migration a
 worker-evaluated preview followed by explicit adoption and add checksummed
 backup inspection, restartable character migration recovery, persistence
-requests, and quota diagnostics. The other M5 deliverables and MVP exit criteria
-remain open.
+requests, quota diagnostics, an installable offline PWA with explicit update
+prompts, a hardened public Docker boundary, and public-distribution notices. The
+other M5 deliverables and MVP exit criteria remain open.
 
 ### Goal
 

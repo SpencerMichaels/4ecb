@@ -11,6 +11,7 @@
       devShells.${system}.default = pkgs.mkShell {
         packages = with pkgs; [
           dotnet-sdk_8
+          docker-client
           jq
           libxml2
           nodejs_24
