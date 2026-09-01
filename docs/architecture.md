@@ -43,18 +43,18 @@ request/response messages. UI components do not access rules XML or implement
 calculation formulas.
 
 Initial UI implementation is intentionally visually conservative. It establishes
-semantic page structure, navigation, responsive breakpoints, keyboard behavior,
-loading/empty/error/invalid states, and reusable accessible controls before a
-product theme or motion language is finalized. Theme tokens must remain easy to
-replace; domain and feature components must not depend on ornamental effects or
-animation timing for correctness.
+semantic page structure, navigation, baseline responsive breakpoints, basic
+keyboard behavior, loading/empty/error/invalid states, and replaceable controls
+before a product theme or motion language is finalized. Theme tokens must remain
+easy to replace; domain and feature components must not depend on ornamental
+effects or animation timing for correctness.
 
 Hash-route changes move focus to the newly rendered main landmark after the
 initial load. Narrow/tablet breakpoints remove desktop minimum widths and stack
 dense compendium, library, editor, and sheet layouts; print keeps its separate
-fixed Letter/A4 rules. Release tests pin the normal-text palette to WCAG AA
-contrast, while the supported-client matrix owns keyboard, zoom, screen-reader,
-touch, and print traversal.
+fixed Letter/A4 rules. Functional tests retain basic contrast and semantics.
+M5.5 owns complete keyboard, zoom, screen-reader, touch, device, and visual-print
+validation after product-owner UI design.
 
 ### Content tool
 
@@ -602,12 +602,13 @@ rejects executable-markup sinks in application source.
 9. **Original-application smoke tests:** a curated exported corpus opened in the
    legacy builder where automation or repeatable manual testing is practical.
 
-The public print gate uses Chromium and Poppler pinned by the project Nix shell.
+The public print gate uses Chromium, Firefox, their drivers, and Poppler pinned
+by the project Nix shell.
 It seeds only a synthetic character into an ephemeral browser profile, prints
 the real production sheet route through the browser debugging protocol, verifies
-all-page geometry/text/tags/overflow, and deletes the generated PDFs. Firefox
-and Safari remain explicit manual release-matrix engines rather than being
-silently represented by Chromium output.
+all-page geometry/text/tags/overflow, and deletes the generated PDFs. Safari,
+physical devices, and cross-engine raster review remain explicit M5.5 evidence
+rather than being silently represented by desktop Chromium/Firefox output.
 
 ### Compatibility reporting
 

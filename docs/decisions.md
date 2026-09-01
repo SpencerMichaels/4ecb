@@ -162,6 +162,22 @@ processing, and loose `.part` merging remain in the project-local Nix content
 tool so the public browser does not acquire private keys or a legacy updater
 attack surface.
 
+### D022 — Comprehensive UI validation follows UI design
+
+M5 retains inexpensive structural safeguards: semantic landmarks and labels,
+basic keyboard operation, non-forced viewport sizing, readable functional
+layouts, and automated Letter/A4 print correctness. It does not require full
+keyboard traversal, screen-reader audits, touch/zoom approval, physical-device
+matrices, Safari coverage, raster print review, or subjective visual
+accessibility sign-off while the interface is intentionally provisional.
+
+Those checks apply to the interface that will actually ship, so M5.5 owns a
+product-owner design pass followed by comprehensive desktop/tablet,
+assistive-technology, performance, and visual-print validation. Existing
+Chromium/Firefox functional print automation remains in the public gate as
+valuable regression coverage; moving final UI validation does not discard it or
+relax rules, storage, security, compatibility, or data-integrity requirements.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

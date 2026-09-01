@@ -224,17 +224,20 @@ invented before representative content and engine workloads exist.
 
 ### Accessibility
 
-- All builder and compendium functions are keyboard operable.
-- Semantic headings, labels, tables, validation summaries, focus management, and
-  screen-reader announcements are part of component acceptance criteria.
+- During core implementation, semantic headings, labels, basic keyboard
+  operation, focus management, and text alternatives are structural acceptance
+  criteria.
+- M5.5 validates complete builder and compendium workflows with keyboard and
+  selected screen readers after the interface is designed.
 - Color is never the only signal for power usage, legality, or status.
 - Print output remains legible in monochrome.
 
 ### Browser support
 
-- Builder: current stable desktop Chromium and Firefox, with Safari tested before
-  MVP release where feasible.
-- Tablet: current iPadOS Safari and Chromium-based Android browsers at MVP.
+- M5 functional builder: current stable desktop Chromium and Firefox, with
+  ordinary-file fallbacks for progressive APIs.
+- M5.5 designed builder: current desktop Safari plus iPadOS Safari and
+  Chromium-based Android tablet validation where hardware is available.
 - Phone play mode: current iOS Safari and Android Chromium when M6 ships.
 - Progressive APIs such as directory selection always have ordinary file-input
   and portable-pack fallbacks.

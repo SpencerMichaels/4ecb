@@ -1,8 +1,10 @@
-# M5 release checklist
+# M5 functional closure checklist
 
-This is the durable closure matrix for the first supported offline MVP. A green
-automated test is evidence for its stated boundary, not a substitute for the
-named real-browser or original-application checks.
+This is the durable functional closure matrix for the first offline builder MVP.
+It deliberately does not make exhaustive UI, device, assistive-technology, or
+cross-engine visual validation an M5 blocker: those checks apply to the designed
+interface and are owned by M5.5. A green automated test is evidence only for its
+stated boundary.
 
 ## Public automated gate
 
@@ -12,15 +14,12 @@ runtime-config cache assertion, deterministic content-pack build/validation,
 and the query benchmark. Private corpus and character evidence stays ignored and
 is run through the documented private scripts.
 
-## Supported-client matrix
+## Functional browser evidence retained in M5
 
-| Client                                 | Critical workflows                                                                          | Keyboard/semantics                                                          | Letter/A4 print                           | Status  |
-| -------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------- | ------- |
-| Current desktop Chromium               | Content/profile, compendium, character import/edit/sheet/export, backup, PWA update/offline | Top-level semantic audit and route focus pass; full workflow traversal open | Automated Letter/A4 color/monochrome pass | Partial |
-| Current desktop Firefox                | Ordinary-file fallback required; full workflow open                                         | Open                                                                        | Automated Letter/A4 color/monochrome pass | Partial |
-| Current desktop Safari, where feasible | Ordinary-file fallback required; full workflow open                                         | Open                                                                        | Open                                      | Open    |
-| Current iPadOS Safari                  | Builder/sheet/content/backup workflow open                                                  | Reflow/touch/keyboard open                                                  | Print/PDF open                            | Open    |
-| Current Android Chromium tablet        | Builder/sheet/content/backup workflow open                                                  | Reflow/touch/keyboard open                                                  | Platform print open                       | Open    |
+| Client                   | Functional evidence                                                                                                  | Structural baseline                           | Print regression                          |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ----------------------------------------- |
+| Current desktop Chromium | Live structural and focused product flows pass; broader functional smoke runs remain appropriate as behavior changes | Top-level semantic audit and route focus pass | Automated Letter/A4 color/monochrome pass |
+| Current desktop Firefox  | Ordinary-file fallback is implemented; targeted functional checks remain appropriate as behavior changes             | Structural contracts shared with Chromium     | Automated Letter/A4 color/monochrome pass |
 
 Directory selection is progressive Chromium functionality. It never replaces
 the ordinary `.4ecp` and decrypted/merged-rules file input used by every client.
@@ -40,11 +39,10 @@ the ordinary `.4ecp` and decrypted/merged-rules file input used by every client.
 - [x] The shell no longer forces a 720 px viewport; dense compendium, library,
       editor, sheet, card, facts, and diagnostics layouts stack at tablet/narrow
       breakpoints without changing print rules.
-- [ ] Traverse every create/edit/retrain/equip/save/export/restore action using
-      only the keyboard in Chromium and Firefox.
-- [ ] Run screen-reader announcements and validation-summary checks on the full
-      installed-profile workflow.
-- [ ] Verify 200% zoom/reflow and touch targets on the supported tablet matrix.
+
+These checks establish a low-cost implementation baseline. Full workflow
+keyboard traversal, screen-reader testing, zoom/reflow review, and touch-target
+approval are M5.5 checks against the designed interface.
 
 ## Security and privacy checklist
 
@@ -69,8 +67,10 @@ the ordinary `.4ecp` and decrypted/merged-rules file input used by every client.
       time; the current complete private character evaluates in roughly 1.5 seconds.
 - [x] Content parsing, pack construction, compression, and validation run in an
       import worker with progress and cancellation.
-- [ ] Record full content import, level-30 edit/evaluation, initial shell, and
-      print-preview timing on representative supported desktop/tablet hardware.
+
+Representative desktop/tablet interaction and rendering timings are fixed and
+measured in M5.5 after the UI design stabilizes. Development-host engine/query
+budgets remain active during M5.
 
 ## User documentation checklist
 
@@ -78,9 +78,9 @@ the ordinary `.4ecp` and decrypted/merged-rules file input used by every client.
       persistence, exact-revision migration, both `.dnd4e` targets, sheets/PDF,
       backup inspection/restore, PWA updates/offline recovery, and destructive
       actions are documented in the user guide.
-- [x] Known product, compatibility, browser/accessibility, performance, Safari
-      print, Firefox tagging, and reserved runtime-configuration limitations are
-      stated without an MVP completion claim.
+- [x] Known product, compatibility, current browser evidence, deferred M5.5 UI
+      validation, Firefox tagging, and reserved runtime-configuration limitations
+      are stated without an MVP completion claim.
 
 ## Compatibility, print, and durability closure
 
@@ -112,7 +112,23 @@ the ordinary `.4ecp` and decrypted/merged-rules file input used by every client.
       blockers without reclassifying cross-profile diagnostics as goldens.
 - [x] Repeat the automated Letter/A4 color/monochrome PDF matrix in supported
       Firefox.
-- [ ] Repeat the matrix in Safari and inspect Firefox/Safari raster output for
-      visual regressions.
 
-M5 is not complete while any unchecked item above maps to an MVP exit criterion.
+Safari/device print execution and cross-engine raster inspection are M5.5
+visual-validation work. They do not block the functional M5 boundary.
+
+## Deferred UI stabilization and release-readiness matrix (M5.5)
+
+The following work is intentionally recorded here for continuity but does not
+block M5:
+
+- complete keyboard traversal in Chromium and Firefox;
+- screen-reader announcement and validation-summary testing;
+- 200% zoom, reflow, and touch-target review;
+- full desktop Safari, iPadOS Safari, and Android Chromium tablet workflows;
+- Safari/device print and Firefox/Safari raster inspection;
+- representative supported-device interaction and rendering timings; and
+- final visual accessibility review after the product-owner design pass.
+
+M5 is not complete while an unchecked item in its functional, security,
+compatibility, or durability sections maps to an M5 exit criterion. Items in
+this deferred section are owned by M5.5.

@@ -11,7 +11,8 @@ The public application contains no official D&D 4E rules data, legacy
 application, decryption keys, or imported characters. You need:
 
 - a current desktop Chromium- or Firefox-family browser for the verified
-  automated PDF paths; Safari and tablet release checks are still open;
+  automated PDF paths; Safari and tablet validation is scheduled for M5.5 after
+  the interface design stabilizes;
 - a private `.4ecp` content pack or a decrypted, fully merged `.dnd40.xml`
   rules file; and
 - optionally, an existing `.dnd4e` character to import. A new authoritative
@@ -164,7 +165,7 @@ or save PDF** and confirm the same paper size in the browser print dialog.
 The automated production-artifact matrix covers current Chromium and Firefox,
 Letter/A4, and color/monochrome with long and short card prose. Chromium output
 is tagged; Firefox 154 output is currently untagged. Safari execution and
-cross-engine raster inspection remain open release checks.
+cross-engine raster inspection are deferred M5.5 visual-validation checks.
 
 ## Back up and restore
 
@@ -218,9 +219,10 @@ backups remain accepted with an explicit no-checksum warning.
 - Full supported-browser critical workflows, keyboard traversal,
   screen-reader announcements, 200% zoom/touch/tablet checks, Safari printing,
   cross-engine raster review, and representative-device performance timings
-  remain open in the [M5 release checklist](m5-release-checklist.md).
+  are intentionally deferred to M5.5, after product-owner UI design.
 - Runtime configuration is reserved and network-only but not consumed by the
   current application. It cannot currently enable features or change URLs.
 
-These limitations prevent an MVP completion claim even though the documented
-workflows above are implemented and covered at their stated boundaries.
+The compatibility and original-application items prevent an M5 completion
+claim. The UI/device items are later release-readiness work and do not block the
+functional M5 boundary.

@@ -6,9 +6,11 @@ Milestones M1 through M4 are complete at their stated release boundaries. M4 is
 the builder beta: it delivers the authoritative rules-backed editor, records the
 remaining native parity risks as explicit M5 blockers, and does not claim public
 MVP readiness. M5 is in progress. Profile migration preview and explicit
-adoption are implemented; blocker closure, the legacy-builder export launch
-matrix, finished printing, supported-browser workflow coverage, and other
-public-release verification remain open. The installable PWA, update/offline
+adoption are implemented; blocker closure and the legacy-builder export launch
+matrix remain open. Functional print regression coverage is complete in
+Chromium and Firefox. Exhaustive cross-browser, keyboard, screen-reader, zoom,
+touch, device, and visual-print validation is intentionally owned by M5.5 after
+the interface is designed with the product owner. The installable PWA, update/offline
 UX, content onboarding, public-distribution boundary, production Docker guide,
 and authoritative exact-profile browser sheet are verified checkpoints, not an
 MVP declaration.
@@ -42,8 +44,9 @@ generic choices, resolved Race/Class/Feat and nested ability choice to a
 complete legal build, reloaded with every selection persisted, exposed only the
 edited export target, and passed its semantic re-import gate without console
 warnings or errors. This closes the old-application dependency for starting a
-character; the supported-browser end-to-end matrix and remaining M4
-compatibility/release matrices still block complete M5 closure.
+character; the remaining M4 compatibility and legacy-application matrices still
+block complete M5 closure. Comprehensive UI validation belongs to M5.5 and does
+not block this functional milestone.
 The complete public gate passes 143 tests across 30 files plus formatting,
 ESLint, every TypeScript project, the production/PWA build, Chromium/Firefox
 print artifacts, deterministic content checks, and the query benchmark.
@@ -157,10 +160,10 @@ self-checksummed malformed schema-2 record, legacy backup inspection, repository
 reconstruction, historical application upgrade, and a simulated interrupted
 migration recovery. Live
 browser verification displayed the persistence/quota facts against the public
-synthetic profile; backup export reported one complete record. Full
-supported-browser critical-workflow coverage remains part of M5 exit-criterion
-9; the automated restart, application-upgrade, restore, and interrupted-migration
-matrix now covers the four durability cases in exit-criterion 5. The original
+synthetic profile; backup export reported one complete record. The automated
+restart, application-upgrade, restore, and interrupted-migration matrix covers
+the four durability cases in M5 exit criterion 5. Exhaustive supported-client UI
+traversal is deferred to M5.5. The original
 checkpoint public suite passed 98 tests
 across 23 files plus formatting, ESLint, every TypeScript project, the
 production/PWA build, deterministic content checks, and the query benchmark.
@@ -199,9 +202,9 @@ and deferred without console warnings or errors. The production Docker image
 built successfully, returned `ok` from `/healthz`, served the external runtime
 configuration, contained its service worker, manifest, and notice, and contained
 no `.4ecp` or `.dnd4e` artifacts. It passed the same checks while running
-read-only with a bounded temporary filesystem. Supported-browser critical-flow,
-accessibility, security, and performance release matrices remain open M5 exit
-criteria. The checkpoint public suite passes 102 tests across 24 files plus
+read-only with a bounded temporary filesystem. Core security review remains an
+M5 concern; exhaustive supported-client accessibility and device-performance
+matrices are M5.5 work. The checkpoint public suite passes 102 tests across 24 files plus
 formatting, ESLint, every TypeScript project, the production/PWA build,
 deterministic content checks, and the query benchmark.
 
@@ -326,10 +329,10 @@ or error. The rebuilt image ran with a read-only root and bounded temporary
 filesystem; application, immutable-asset, runtime-configuration, and health
 routes all returned the required security policy while retaining their distinct
 cache behavior. The complete public gate passes 123 tests across 27 files. This
-checkpoint does not replace the still-open supported-browser and accessibility
-matrices.
+checkpoint is a structural and security baseline, not the comprehensive
+interface validation owned by M5.5.
 
-### Accessibility and responsive-shell pass
+### Structural accessibility and responsive-shell baseline
 
 - Hash-route changes now move focus to the new `main` landmark while preserving
   the browser's ordinary initial focus. The focus helper has missing-landmark and
@@ -341,19 +344,20 @@ matrices.
 - A palette contract checks every normal-size shell/status/action/power/item
   foreground/background pair at the WCAG AA 4.5:1 threshold. The item-card
   orange was darkened because its prior white-text contrast did not pass.
-- The durable M5 release checklist now distinguishes completed automated/live
-  Chromium evidence from the open Firefox, Safari, tablet, keyboard,
-  screen-reader, zoom/touch, performance-device, and print matrices.
+- The durable checklist distinguishes this low-cost structural baseline from
+  the comprehensive Firefox/Safari/tablet/keyboard/screen-reader/zoom/touch and
+  visual-print evidence owned by M5.5.
 
 Live production Chromium found one `h1`, one `main`, no duplicate IDs, and no
 unnamed native interactive controls on the top-level empty-state Settings,
 Characters, and Compendium routes. Clicking between routes placed focus on the
 new `main` with `tabIndex=-1`; the fresh initial load kept body focus and the
 updated shell had no forced minimum width or console warnings/errors. The full
-public gate passes 127 tests across 29 files. Full keyboard traversal and the
-other supported-client checklist entries remain open and are not claimed.
+public gate passes 127 tests across 29 files. Full keyboard, assistive-
+technology, device, and visual validation waits for the designed interface in
+M5.5.
 
-### Chromium and Firefox Letter/A4 PDF release gate
+### Chromium and Firefox Letter/A4 functional PDF regression gate
 
 - Chromium 152, Firefox 154, geckodriver 0.37, and Poppler are pinned in the
   project-local Nix shell. The public gate starts the production preview and
@@ -377,8 +381,8 @@ other supported-client checklist entries remain open and are not claimed.
 
 The harness deletes its browser profile and PDFs and uses only public synthetic
 data. `scripts/check.sh` includes this real-browser print gate after the
-production build. Safari execution and Firefox/Safari raster inspection remain
-open in the supported-client matrix, so M5 print closure is not yet claimed.
+production build. It closes M5's functional Letter/A4 boundary. Safari/device
+execution and cross-engine raster inspection are M5.5 visual-validation work.
 
 ### User and recovery documentation
 
@@ -388,10 +392,10 @@ character import, storage persistence, exact-revision profile migration, both
 compatibility export targets, sheet/PDF controls, checksummed backup inspection
 and restore, application updates, offline and migration recovery, destructive
 actions, and troubleshooting. It also names the current blank-character,
-compatibility, legacy-launch, supported-browser/accessibility, performance,
-Safari/raster, Firefox tagging, and reserved-runtime-configuration limitations.
+compatibility, legacy-launch, current browser evidence, deferred M5.5 UI
+validation, Firefox tagging, and reserved-runtime-configuration limitations.
 This closes the documentation boundary in M5 exit criterion 10; it does not
-close the product and release-matrix criteria those limitations reference.
+claim that the later M5.5 design and release-readiness matrix has run.
 
 ## M4 delivered
 

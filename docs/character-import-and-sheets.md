@@ -183,6 +183,6 @@ current browser/variant combination.
 - Portrait file URLs from the Windows application are retained in XML but are
   not dereferenced by the web application.
 - Exact pagination varies with card prose and browser print engines. The current
-  Chromium and Firefox release fixtures have no card overflow and complete
-  extracted text; Safari execution and cross-engine raster inspection remain in
-  the M5 supported-browser matrix.
+  Chromium and Firefox functional fixtures have no card overflow and complete
+  extracted text; Safari/device execution and cross-engine raster inspection
+  belong to the post-design M5.5 validation matrix.

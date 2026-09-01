@@ -199,14 +199,16 @@ prompts, a hardened public Docker boundary, public-distribution notices, and
 exact-profile authoritative browser sheets with a visible legacy-cache fallback.
 Edited export now has explicit byte-preserving and 0.07a regenerated targets
 with a semantic re-import gate. Automated Chromium and Firefox Letter/A4 PDF
-matrices pass; Safari and cross-engine raster inspection remain open alongside
-the original-application launch matrix, release matrices, and the other M5 exit
-criteria. Content onboarding now provides bounded read-only
+matrices pass as functional regression evidence; cross-browser visual print
+review belongs to M5.5 after the real interface is designed. The
+original-application launch matrix and the other core-compatibility criteria
+remain open. Content onboarding now provides bounded read-only
 directory discovery plus an ordinary `.4ecp`/decrypted-rules file fallback.
 The public import/rendering security pass, automated storage durability matrix,
-route-focus/contrast/responsive accessibility baseline, and durable supported-
-client release checklist are complete; full browser/keyboard/Safari/device
-execution remains open. The user and recovery handbook now covers installation,
+and route-focus/contrast/responsive structural baseline are complete. Full
+keyboard, screen-reader, zoom, touch, Safari, and physical-device execution is
+deliberately assigned to M5.5, after UI design with the product owner. The user
+and recovery handbook now covers installation,
 private content, profile migration, import/export, sheets, storage, updates,
 recovery, and the known release limitations required by exit criterion 10.
 First-class native creation now binds a blank level-1 build to an exact profile,
@@ -219,13 +221,12 @@ They cover nested choices, ordinary and class-specific power replacement,
 equipment, serialization, authoritative sheet construction, and edited-export
 semantic re-import. This closes the previously recorded absence of
 cross-family full-profile native advancement evidence; broader class/build and
-named M4 power-math compatibility families still block criteria 2 and 3, while
-the remaining supported-browser workflow matrix blocks complete criterion-1
-closure.
+named M4 power-math compatibility families still block criteria 2 and 3.
 
 ### Goal
 
-Turn the M4 builder into a supported, publicly deployable offline replacement.
+Turn the M4 builder into a credible, publicly deployable functional replacement
+without treating its intentionally provisional interface as final.
 
 ### Deliverables
 
@@ -239,7 +240,8 @@ Turn the M4 builder into a supported, publicly deployable offline replacement.
   verified backup/restore.
 - Installable PWA, update UX, offline tests, and production Docker documentation.
 - Public-distribution notices and separation from proprietary content.
-- Accessibility, browser, security, and performance release passes.
+- Structural accessibility, primary-browser functional smoke coverage,
+  untrusted-input security review, and development-host performance budgets.
 
 ### MVP exit criteria
 
@@ -261,12 +263,56 @@ All of the following must be true:
    can blank mutable table fields.
 8. The public Docker image and hosted build contain no proprietary official
    corpus.
-9. Supported browsers pass critical workflows, keyboard navigation, and the
-   release accessibility checklist.
+9. Core workflows pass automated and live functional checks in the primary
+   development browser, while semantic structure, labeled controls, basic
+   keyboard operation, and non-forced viewport sizing remain intact. Exhaustive
+   cross-browser, assistive-technology, touch, zoom, and visual validation is an
+   M5.5 release-readiness gate after UI design.
 10. Installation, content import, backup, recovery, upgrade, and known
     compatibility limitations are documented.
 
-**Release characterization:** MVP / first supported replacement release.
+**Release characterization:** functional MVP / core builder release; designed
+UI stabilization and its support matrix follow in M5.5.
+
+## M5.5 — Builder UI design and release-readiness validation
+
+### Goal
+
+Design the durable builder interface with the product owner, then validate that
+interface across supported desktop and tablet clients. This work intentionally
+follows core builder parity so visual and interaction evidence is not invalidated
+by a subsequent redesign.
+
+### Deliverables
+
+- Short UI prototype/review cycles covering information hierarchy, density,
+  navigation, forms, choice resolution, sheets, typography, color, and restrained
+  motion.
+- Complete keyboard traversal and screen-reader announcement/validation review.
+- 200% zoom, reflow, and touch-target review on supported desktop/tablet layouts.
+- Critical-workflow smoke runs in desktop Chromium, Firefox, and Safari, plus
+  iPadOS Safari and Android Chromium tablet where hardware is available.
+- Cross-engine and device print/PDF review, including raster inspection where
+  engine output differs.
+- Representative interaction, initial-load, full-corpus import, evaluation, and
+  print-preview timings on supported hardware.
+
+### Exit criteria
+
+- The product owner approves the principal builder, compendium, library, and
+  sheet interaction designs through the agreed feedback loop.
+- Every supported client passes the final critical-workflow matrix for the
+  interface being shipped.
+- Complete workflows are operable with a keyboard, validation and status changes
+  are usable with the selected screen-reader matrix, and 200% zoom/reflow does
+  not hide functionality.
+- Supported tablet layouts meet the approved touch and responsive behavior.
+- Letter/A4 print output is visually reviewed in supported engines with known
+  engine-specific limitations documented.
+- Representative hardware meets the release performance budgets fixed during
+  this milestone.
+
+**Release characterization:** first supported builder release candidate.
 
 ## M6 — Local phone play mode
 
@@ -394,18 +440,20 @@ Declare the complete character-builder product stable and supportable.
 The following are continuous rather than deferred to a cleanup milestone:
 
 - compatibility fixtures and parity reporting;
-- accessibility and keyboard interaction;
+- structural accessibility and basic keyboard operation during functional work;
 - content provenance and licensing boundaries;
 - storage migrations, backups, and recovery;
-- performance measurement on representative hardware;
+- development-host performance budgets, with representative hardware measured
+  during stabilization;
 - threat modeling and untrusted-input handling;
 - documentation and architecture-decision updates; and
 - reproducible project-local Nix tooling.
 
-Visual polish is intentionally not a continuous speculative workstream during
-early implementation. Each milestone must remain readable, responsive, and
-accessible, but substantial theme and motion decisions wait until representative
-workflows exist and can be reviewed interactively.
+Visual polish and exhaustive interface validation are intentionally not
+continuous speculative workstreams during early implementation. Each milestone
+must preserve sound semantic structure and usable functional controls, while
+substantial design, assistive-technology, device, and visual-validation work
+waits for M5.5, when representative workflows can be reviewed interactively.
 
 ## Recommended first implementation slice
 
