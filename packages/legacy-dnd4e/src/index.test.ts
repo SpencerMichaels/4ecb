@@ -15,6 +15,7 @@ import {
   exportDnd4e,
   exportEditedDnd4e,
   importDnd4e,
+  legacyEquipmentIdentityMatches,
 } from ".";
 
 function entity(id: string, name: string, type: string): ContentEntity {
@@ -35,6 +36,30 @@ function entity(id: string, name: string, type: string): ContentEntity {
 }
 
 describe("legacy .dnd4e import", () => {
+  it("matches cached weapon variants by definitions before display order", () => {
+    const xml = `<?xml version="1.0"?><D20Character><CharacterSheet><PowerStats><Power name="Synthetic"><Weapon name="Dwarven Thrower Warhammer +2"><RulesElement name="Warhammer" type="Weapon" internal-id="WEAPON"/><RulesElement name="Dwarven Thrower +2" type="Magic Item" internal-id="MAGIC"/><AttackBonus>8</AttackBonus></Weapon></Power></PowerStats></CharacterSheet><Level/></D20Character>`;
+    const [weapon] = importDnd4e(xml).snapshot.powers[0]?.weapons ?? [];
+    expect(weapon?.definitionIds).toEqual(["WEAPON", "MAGIC"]);
+    expect(
+      weapon === undefined
+        ? false
+        : legacyEquipmentIdentityMatches(weapon, {
+            equipmentName: "Warhammer Dwarven Thrower +2",
+            definitionIds: ["MAGIC", "WEAPON"],
+          }),
+    ).toBe(true);
+    for (const [cached, evaluated] of [
+      ["Luckblade Longsword +1", "Longsword Luckblade +1"],
+      ["Foe-Seeking Bow Longbow +1", "Longbow Foe-Seeking Bow +1"],
+    ] as const)
+      expect(
+        legacyEquipmentIdentityMatches(
+          { name: cached },
+          { equipmentName: evaluated, definitionIds: [] },
+        ),
+      ).toBe(true);
+  });
+
   it("parses the public structural fixture and preserves extensions exactly", async () => {
     const xml = await readFile(
       "reverse-engineering/fixtures/character/minimal-structure.dnd4e",

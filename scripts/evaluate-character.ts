@@ -4,7 +4,10 @@ import { gunzip } from "node:zlib";
 import { promisify } from "node:util";
 
 import { decodeContentPack } from "@4ecb/content-pack";
-import { importDnd4e } from "@4ecb/legacy-dnd4e";
+import {
+  importDnd4e,
+  legacyEquipmentIdentityMatches,
+} from "@4ecb/legacy-dnd4e";
 import {
   evaluateCharacter,
   projectBuildForEvaluation,
@@ -68,7 +71,7 @@ async function main(): Promise<void> {
       evaluated.powers.find((candidate) => candidate.name === cachedPower.name);
     return cachedPower.weapons.flatMap((cachedWeapon) => {
       const variant = power?.variants.find(
-        (candidate) => candidate.equipmentName === cachedWeapon.name,
+        (candidate) => legacyEquipmentIdentityMatches(cachedWeapon, candidate),
       );
       const fields = [
         ...(cachedWeapon.attackBonus === undefined

@@ -13,6 +13,7 @@ export interface PowerComponent {
 export interface PowerVariant {
   readonly id: string;
   readonly equipmentName: string;
+  readonly definitionIds?: readonly string[];
   readonly hand?: "main" | "off";
   readonly pairedEquipmentName?: string;
   readonly attackStat?: string;
@@ -53,6 +54,7 @@ export interface PowerRecovery {
 interface Loadout {
   readonly id: string;
   readonly name: string;
+  readonly definitionIds: readonly string[];
   readonly weaponDamage?: string;
   readonly proficiency: number;
   readonly enhancement: number;
@@ -154,6 +156,7 @@ function loadouts(
     result.push({
       id: entry.id,
       name: entry.name ?? equipmentName(parts),
+      definitionIds: entry.definitionIds,
       ...(weapon === undefined && !/staff/i.test(magicType ?? "")
         ? {}
         : {
@@ -192,6 +195,7 @@ function loadouts(
   result.push({
     id: "unarmed",
     name: "Unarmed",
+    definitionIds: [],
     weaponDamage: "1d4",
     proficiency: 0,
     enhancement: 0,
@@ -839,6 +843,7 @@ export function evaluatePowers(input: {
       return {
         id: `${power.id}:${equipment.id}`,
         equipmentName: equipment.name,
+        definitionIds: equipment.definitionIds,
         ...(equipment.hand === undefined ? {} : { hand: equipment.hand }),
         ...(equipment.pairedEquipmentName === undefined
           ? {}

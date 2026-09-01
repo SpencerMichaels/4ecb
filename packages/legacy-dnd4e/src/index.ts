@@ -350,6 +350,10 @@ function weaponFrom(node: XmlNode): LegacyWeaponSnapshot {
   const conditions = value("Conditions");
   return {
     name: attribute(node, "name") ?? "Unspecified",
+    definitionIds: direct(node, "RulesElement").flatMap((element) => {
+      const id = attribute(element, "internal-id");
+      return id === undefined ? [] : [id];
+    }),
     ...(attackBonus === undefined ? {} : { attackBonus }),
     ...(damage === undefined ? {} : { damage }),
     ...(attackStat === undefined ? {} : { attackStat }),
@@ -358,6 +362,35 @@ function weaponFrom(node: XmlNode): LegacyWeaponSnapshot {
     ...(damageComponents === undefined ? {} : { damageComponents }),
     ...(conditions === undefined ? {} : { conditions }),
   };
+}
+
+export function canonicalLegacyEquipmentName(value: string): string {
+  return value
+    .toLocaleLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .toSorted()
+    .join(" ");
+}
+
+export function legacyEquipmentIdentityMatches(
+  cached: LegacyWeaponSnapshot,
+  candidate: { readonly equipmentName: string; readonly definitionIds: readonly string[] },
+): boolean {
+  if ((cached.definitionIds?.length ?? 0) > 0) {
+    const cachedIds = new Set(cached.definitionIds?.map((id) => key(id)));
+    const candidateIds = new Set(candidate.definitionIds.map((id) => key(id)));
+    return (
+      cachedIds.size === candidateIds.size &&
+      [...cachedIds].every((id) => candidateIds.has(id))
+    );
+  }
+  return (
+    canonicalLegacyEquipmentName(cached.name) ===
+    canonicalLegacyEquipmentName(candidate.equipmentName)
+  );
 }
 
 function powersFrom(sheet: XmlNode | undefined): LegacyPowerSnapshot[] {

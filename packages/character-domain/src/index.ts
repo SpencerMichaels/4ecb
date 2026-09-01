@@ -30,6 +30,7 @@ export interface LegacyRuleElement {
 
 export interface LegacyWeaponSnapshot {
   readonly name: string;
+  readonly definitionIds?: readonly string[];
   readonly attackBonus?: string;
   readonly damage?: string;
   readonly attackStat?: string;
@@ -176,6 +177,9 @@ function weaponSnapshot(value: unknown): boolean {
   return (
     weapon !== undefined &&
     typeof weapon.name === "string" &&
+    (weapon.definitionIds === undefined ||
+      (Array.isArray(weapon.definitionIds) &&
+        weapon.definitionIds.every((id) => typeof id === "string"))) &&
     [
       "attackBonus",
       "damage",
