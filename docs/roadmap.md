@@ -216,7 +216,8 @@ uses the generic evaluator/editor for required identity choices, advances with
 canonical level records through 30, persists/reloads, and regenerates the edited
 0.07a target. Deterministic audits against the 38,339-record private profile now
 complete Human/Fighter, psionic Psion, companion Shaman, and Essentials Knight
-paths through level 30, plus a two-component Hybrid path through level 30.
+paths through level 30, plus a recorded Hybrid Cleric/Fighter path through level 30. The older Hybrid report omitted its component IDs and is historical evidence
+only.
 They cover nested choices, ordinary and class-specific power replacement,
 equipment, serialization, authoritative sheet construction, and edited-export
 semantic re-import. This closes the previously recorded absence of

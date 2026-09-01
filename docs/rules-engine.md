@@ -106,13 +106,14 @@ class categories distinguish primary Essentials ancestry from multiclass
 markers while binding Hybrid Class records through their explicit `_BaseClass`.
 Multi-slot choices reject duplicate siblings.
 
-Human/Fighter, Psion, Shaman, Knight, and two-component Hybrid paths complete
-level 30. Every path passes persistence,
+Human/Fighter, Psion, Shaman, Knight, and a recorded Hybrid Cleric/Fighter path
+complete level 30. Every path passes persistence,
 authoritative-sheet, and edited-export semantic round-trip gates. Psion and
 Knight have zero diagnostics. Fighter and Shaman also reach zero diagnostics
 after typed bracketed feat prerequisites and prerequisite-aware retraining
-prevent illegal custom-power replacements; Hybrid preserves only two visible
-`prerequisite.unverified` findings. These are deterministic private-profile
+prevent illegal custom-power replacements. A historical Hybrid run preserved
+two `prerequisite.unverified` findings but omitted its component IDs, so it
+cannot support parser changes. These are deterministic private-profile
 workflows, not a claim that every class or named native power exception is
 closed.
 

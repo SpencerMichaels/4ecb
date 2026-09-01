@@ -306,14 +306,11 @@ async function main(): Promise<void> {
   const outputPath = outputArgument?.slice("--output=".length);
   if (outputArgument !== undefined && outputPath === "")
     throw new Error("--output requires a path");
-  const preferredDefinitionIds = new Set(
-    extraArguments
-      .filter(
-        (value) =>
-          !value.startsWith("--max-level=") && !value.startsWith("--output="),
-      )
-      .map(key),
+  const requestedDefinitionIds = extraArguments.filter(
+    (value) =>
+      !value.startsWith("--max-level=") && !value.startsWith("--output="),
   );
+  const preferredDefinitionIds = new Set(requestedDefinitionIds.map(key));
   const encoded = await readFile(resolve(packArgument));
   const bytes =
     encoded[0] === 0x1f && encoded[1] === 0x8b
@@ -540,6 +537,10 @@ async function main(): Promise<void> {
         packId: pack.manifest.packId,
         contentDigest: pack.manifest.contentDigest,
         records: pack.entities.length,
+        request: {
+          maxLevel,
+          preferredDefinitionIds: requestedDefinitionIds,
+        },
         levels: saved.build.levels.length,
         resolvedChoices,
         retrainings,

@@ -91,11 +91,12 @@ budgets remain active during M5.
       The ignored full-profile audit additionally resolves 63 real choices and
       8 retrainings on a Human/Fighter path, equips an item, constructs the
       authoritative sheet, and retains every replacement target through export.
-      Psion, Shaman, Essentials Knight, and a distinct two-component Hybrid also
-      complete level 30. All pass persistence, sheet, and
+      Psion, Shaman, Essentials Knight, and a recorded Hybrid Cleric/Fighter
+      path also complete level 30. All pass persistence, sheet, and
       edited-export semantic re-import gates, with only explicitly reported
-      unverified prerequisites outside the zero-diagnostic
-      Fighter/Psion/Shaman/Knight paths.
+      unverified prerequisites outside the zero-diagnostic recorded paths. The
+      older Hybrid 68-choice/two-unverified report omitted its component IDs and
+      is not parser-change evidence.
 - [x] Repository reconstruction, historical database upgrade, checksummed
       backup/restore, malformed restore rejection, and interrupted migration are in
       the automated durability matrix.

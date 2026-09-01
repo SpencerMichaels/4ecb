@@ -141,7 +141,9 @@ print artifacts, deterministic content checks, and the query benchmark.
   through canonical levels, follows ordinary and power-swap retraining, equips
   an item, JSON-decodes the saved record, constructs the authoritative sheet,
   and requires edited `.dnd4e` semantic re-import parity. Private content and
-  output remain ignored evidence.
+  output remain ignored evidence. Its JSON report repeats `maxLevel` and every
+  preferred definition ID so results remain reproducible independently of
+  terminal history.
 - The audit exposed and closed generic durability defects: out-of-order
   sibling choices no longer create sparse arrays; generated choices can
   materialize through arbitrarily nested grant ancestors; a provider cannot
@@ -175,10 +177,13 @@ print artifacts, deterministic content checks, and the query benchmark.
   policy. Human/Knight reaches level 30 complete and legal with 50 choices and
   zero diagnostics, exercising the Essentials class-alias and nested
   future-grant paths. A Hybrid shell with two distinct imported component
-  classes reaches level 30 complete with 68 resolved choices, eight intact
-  retraining links, and two preserved unverified prerequisites. Broader
-  class/build sampling and the named power-math exception families remain open
-  criterion-2/3 evidence.
+  classes historically reached level 30 complete with 68 resolved choices,
+  eight intact retraining links, and two preserved unverified prerequisites,
+  but that report did not retain its preferred component IDs and cannot be
+  reproduced exactly. A newly recorded Hybrid Cleric/Fighter request reaches
+  level 30 complete and legal with 65 resolved choices, eight intact
+  retrainings, and zero diagnostics. Broader class/build sampling and the named
+  power-math exception families remain open criterion-2/3 evidence.
 
 ### Profile migration preview and explicit adoption
 
