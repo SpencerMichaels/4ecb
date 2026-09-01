@@ -331,6 +331,70 @@ export function projectBuildForEvaluation(
   // keeps their provider metadata in a separate <alternate> envelope.
   for (const alternate of build.alternates) visit(alternate.choice, "grabbag");
 
+  // The legacy builder sometimes serializes a race's selected variable ability
+  // bonus inside its generated Grants subtree, alongside the race's fixed
+  // bonus. Recover that choice only when the race rule's category identifies a
+  // single matching descendant; ambiguous or unfamiliar layouts remain
+  // unresolved for the normal evaluator diagnostic.
+  for (const provider of [...occurrences]) {
+    const providerEntity = byId.get(provider.definitionId.toLocaleLowerCase());
+    if (providerEntity === undefined) continue;
+    for (const rule of parseRules(providerEntity.id, providerEntity.rules)) {
+      if (
+        rule.kind !== "select" ||
+        rule.type.toLocaleLowerCase() !== "race ability bonus" ||
+        rule.number !== 1 ||
+        rule.category === undefined ||
+        occurrences.some(
+          (candidate) =>
+            candidate.parentId === provider.id &&
+            candidate.ruleOrdinal === rule.source.ordinal,
+        )
+      )
+        continue;
+      const categoryNames = new Set(
+        rule.category
+          .split("|")
+          .map((name) => name.trim().toLocaleLowerCase())
+          .filter(Boolean),
+      );
+      const isDescendant = (candidate: CharacterOccurrence): boolean => {
+        let parentId = candidate.parentId;
+        for (
+          let depth = 0;
+          parentId !== undefined && depth < occurrences.length;
+          depth += 1
+        ) {
+          if (parentId === provider.id) return true;
+          parentId = occurrences.find(
+            (parent) => parent.id === parentId,
+          )?.parentId;
+        }
+        return false;
+      };
+      const matches = occurrences.filter((candidate) => {
+        if (!isDescendant(candidate)) return false;
+        const definition = byId.get(candidate.definitionId.toLocaleLowerCase());
+        return (
+          definition?.type.toLocaleLowerCase() === "race ability bonus" &&
+          categoryNames.has(definition.name.toLocaleLowerCase())
+        );
+      });
+      if (matches.length !== 1) continue;
+      const selected = matches[0]!;
+      const index = occurrences.findIndex(
+        (candidate) => candidate.id === selected.id,
+      );
+      occurrences[index] = {
+        ...selected,
+        parentId: provider.id,
+        ruleOrdinal: rule.source.ordinal,
+        choiceIndex: 0,
+        kind: "choice",
+      };
+    }
+  }
+
   const inventory: CharacterInventoryEntry[] = build.inventory.map((entry) => ({
     id: entry.id,
     ...(entry.name === undefined ? {} : { name: entry.name }),

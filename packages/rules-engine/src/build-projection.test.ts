@@ -52,6 +52,76 @@ function entity(
 }
 
 describe("build projection", () => {
+  it("recovers a uniquely categorized race ability choice nested under grants", () => {
+    const content = [
+      entity("RACE", "Synthetic ancestry", "Race", [
+        statement("grant", { name: "RACE_GRANTS", type: "Grants" }, 0),
+        statement(
+          "select",
+          {
+            type: "Race Ability Bonus",
+            number: "1",
+            Category: "Wisdom|Charisma",
+          },
+          1,
+        ),
+      ]),
+      entity("RACE_GRANTS", "Synthetic ancestry", "Grants", [
+        statement("grant", { name: "CON", type: "Race Ability Bonus" }, 0),
+      ]),
+      entity("CON", "Constitution", "Race Ability Bonus"),
+      entity("CHA", "Charisma", "Race Ability Bonus", [
+        statement("statadd", { name: "Charisma", value: "+2" }, 0),
+      ]),
+    ];
+    const occurrence = (
+      id: string,
+      definitionId: string,
+      children: CharacterBuild["levels"][number]["root"]["children"] = [],
+    ) => ({
+      id,
+      identity: { definitionId, name: id, type: id },
+      acquiredLevel: 1,
+      legality: "rules-legal" as const,
+      unresolved: false,
+      children,
+    });
+    const build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 1,
+      levels: [
+        {
+          level: 1,
+          root: occurrence("race", "RACE", [
+            occurrence("grants", "RACE_GRANTS", [
+              occurrence("fixed", "CON"),
+              occurrence("selected", "CHA"),
+            ]),
+          ]),
+        },
+      ],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: { Charisma: 10 },
+      textStrings: {},
+    };
+    const projected = projectBuildForEvaluation(build, content);
+    expect(projected.occurrences).toContainEqual(
+      expect.objectContaining({
+        id: "selected",
+        parentId: "race",
+        ruleOrdinal: 1,
+        kind: "choice",
+      }),
+    );
+    const evaluated = evaluateCharacter(projected, content);
+    expect(evaluated.stats.Charisma?.value).toBe(12);
+    expect(evaluated.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "choice.required" }),
+    );
+  });
+
   it("maps serialized child slots to rule ordinals and avoids duplicate grants", () => {
     const content = [
       entity("LEVEL", "1", "Level", [
