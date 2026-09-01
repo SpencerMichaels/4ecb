@@ -20,6 +20,9 @@ importers:
 
   .:
     dependencies:
+      '@4ecb/character-domain':
+        specifier: workspace:*
+        version: link:packages/character-domain
       '@4ecb/content-pack':
         specifier: workspace:*
         version: link:packages/content-pack
@@ -32,6 +35,9 @@ importers:
       '@4ecb/rules-engine':
         specifier: workspace:*
         version: link:packages/rules-engine
+      '@4ecb/sheet-model':
+        specifier: workspace:*
+        version: link:packages/sheet-model
     devDependencies:
       '@types/node':
         specifier: 26.4.0

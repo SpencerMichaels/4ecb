@@ -254,4 +254,159 @@ describe("build projection", () => {
     expect(completed.complete).toBe(true);
     expect(completed.stats.AC?.value).toBe(1);
   });
+
+  it("materializes an arbitrarily nested generated grant chain", () => {
+    const content = [
+      entity("LEVEL", "1", "Level", [
+        statement("grant", { name: "OUTER", type: "Feature" }, 0),
+      ]),
+      entity("OUTER", "Outer feature", "Feature", [
+        statement("grant", { name: "INNER", type: "Feature" }, 0),
+      ]),
+      entity("INNER", "Inner feature", "Feature", [
+        statement("select", { type: "Feat", number: "1" }, 0),
+      ]),
+      entity("FEAT", "Chosen feat", "Feat"),
+    ];
+    const build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 1,
+      levels: [
+        {
+          level: 1,
+          root: {
+            id: "level",
+            identity: { definitionId: "LEVEL", name: "1", type: "Level" },
+            acquiredLevel: 1,
+            legality: "rules-legal",
+            unresolved: false,
+            children: [],
+          },
+        },
+      ],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    const initial = evaluateCharacter(
+      projectBuildForEvaluation(build, content),
+      content,
+    );
+    const choice = initial.choices[0]!;
+    const command = commandForEvaluatedChoice(
+      build,
+      choice,
+      initial.occurrences,
+      content,
+      {
+        id: "chosen",
+        identity: { definitionId: "FEAT", name: "Chosen feat", type: "Feat" },
+        acquiredLevel: 1,
+        legality: "rules-legal",
+        children: [],
+        unresolved: false,
+      },
+      (index) => `placeholder:${index}`,
+    );
+
+    expect(command).toMatchObject({
+      kind: "choose",
+      parentId: "level",
+      index: 0,
+      occurrence: {
+        identity: { definitionId: "OUTER" },
+        children: [
+          {
+            identity: { definitionId: "INNER" },
+            children: [{ id: "chosen" }],
+          },
+        ],
+      },
+    });
+    const completed = evaluateCharacter(
+      projectBuildForEvaluation(
+        applyCharacterCommand(build, command!),
+        content,
+      ),
+      content,
+    );
+    expect(completed.complete).toBe(true);
+  });
+
+  it("materializes explicit placeholders when a later choice is selected first", () => {
+    const content = [
+      entity("LEVEL", "1", "Level", [
+        statement("select", { type: "Race", number: "1" }, 0),
+        statement("select", { type: "Class", number: "1" }, 1),
+        statement("select", { type: "Feat", number: "1" }, 2),
+      ]),
+      entity("RACE", "Race", "Race"),
+      entity("CLASS", "Class", "Class"),
+      entity("FEAT", "Feat", "Feat"),
+    ];
+    const build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 1,
+      levels: [
+        {
+          level: 1,
+          root: {
+            id: "level",
+            identity: { definitionId: "LEVEL", name: "1", type: "Level" },
+            acquiredLevel: 1,
+            legality: "rules-legal",
+            unresolved: false,
+            children: [],
+          },
+        },
+      ],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    const initial = evaluateCharacter(
+      projectBuildForEvaluation(build, content),
+      content,
+    );
+    const choice = initial.choices.find((value) => value.type === "Feat")!;
+    const command = commandForEvaluatedChoice(
+      build,
+      choice,
+      initial.occurrences,
+      content,
+      {
+        id: "chosen",
+        identity: { definitionId: "FEAT", name: "Feat", type: "Feat" },
+        acquiredLevel: 1,
+        legality: "rules-legal",
+        children: [],
+        unresolved: false,
+      },
+      (index) => `placeholder:${index}`,
+    );
+
+    expect(command).toMatchObject({
+      kind: "batch",
+      commands: [
+        { index: 0, occurrence: { id: "placeholder:0", unresolved: true } },
+        { index: 1, occurrence: { id: "placeholder:1", unresolved: true } },
+        { index: 2, occurrence: { id: "chosen", unresolved: false } },
+      ],
+    });
+    const updated = applyCharacterCommand(build, command!);
+    expect(updated.levels[0]?.root.children).toHaveLength(3);
+    const evaluated = evaluateCharacter(
+      projectBuildForEvaluation(updated, content),
+      content,
+    );
+    expect(
+      evaluated.choices.filter(
+        (value) => !value.optional && value.selectedOccurrenceId === undefined,
+      ),
+    ).toHaveLength(2);
+  });
 });

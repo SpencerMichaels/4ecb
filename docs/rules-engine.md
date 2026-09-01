@@ -96,3 +96,12 @@ export. The complete disposition is maintained in
 [m4-compatibility-ledger.md](m4-compatibility-ledger.md). M4 is therefore a
 completed builder beta, not a claim of complete legacy-builder parity or a
 public MVP.
+
+M5's full-profile native workflow audit now verifies that generic choices can
+be selected out of order, nested generated-grant providers become durable, and
+retraining chains keep prior slots satisfied without dangling replacement
+links. A representative Human/Fighter path resolves 63 choices and 8
+retrainings through level 30, then passes persistence, authoritative-sheet, and
+edited-export round-trip gates. Its two remaining legality diagnostics are
+preserved `prerequisite.unverified` prose; broader class/build differentials and
+the named power/equipment exception families above remain open.

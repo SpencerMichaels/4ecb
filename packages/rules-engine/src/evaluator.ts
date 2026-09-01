@@ -351,6 +351,19 @@ export function evaluateCharacter(
   let occurrences = saved.filter(
     (occurrence) => !replacedIds.has(occurrence.id),
   );
+  const replacementIncludes = (
+    candidate: CharacterOccurrence,
+    targetId: string,
+  ): boolean => {
+    let replacedId = candidate.replacesId;
+    const visited = new Set<string>();
+    while (replacedId !== undefined && !visited.has(replacedId)) {
+      if (replacedId === targetId) return true;
+      visited.add(replacedId);
+      replacedId = saved.find(({ id }) => id === replacedId)?.replacesId;
+    }
+    return false;
+  };
   let converged = false;
   let iterations = 0;
 
@@ -524,6 +537,8 @@ export function evaluateCharacter(
     if (cached !== undefined) return cached;
     const decisions = index.type(rule.type).map((candidate) => {
       const reasons: string[] = [];
+      if (key(candidate.id) === key(provider.definitionId))
+        reasons.push("self");
       if (rule.category !== undefined) {
         const category = parseCategoryExpression(rule.category);
         let match = matchesCategory(candidate, category, expressionContext);
@@ -618,12 +633,24 @@ export function evaluateCharacter(
             choiceIndex < rule.number;
             choiceIndex += 1
           ) {
-            const selected = occurrences.find(
+            const directSelection = saved.find(
               (candidate) =>
                 candidate.parentId === occurrence.id &&
                 candidate.ruleOrdinal === rule.source.ordinal &&
                 (candidate.choiceIndex ?? 0) === choiceIndex,
             );
+            const selected =
+              occurrences.find(
+                (candidate) =>
+                  candidate.parentId === occurrence.id &&
+                  candidate.ruleOrdinal === rule.source.ordinal &&
+                  (candidate.choiceIndex ?? 0) === choiceIndex,
+              ) ??
+              (directSelection === undefined
+                ? undefined
+                : occurrences.find((candidate) =>
+                    replacementIncludes(candidate, directSelection.id),
+                  ));
             choices.push({
               id: `${occurrence.id}:choice:${rule.source.ordinal}:${choiceIndex}`,
               providerOccurrenceId: occurrence.id,
@@ -641,12 +668,24 @@ export function evaluateCharacter(
           break;
         }
         case "replace": {
-          const selected = occurrences.find(
+          const directSelection = saved.find(
             (candidate) =>
               candidate.parentId === occurrence.id &&
               candidate.ruleOrdinal === rule.source.ordinal &&
               candidate.replacesId !== undefined,
           );
+          const selected =
+            occurrences.find(
+              (candidate) =>
+                candidate.parentId === occurrence.id &&
+                candidate.ruleOrdinal === rule.source.ordinal &&
+                candidate.replacesId !== undefined,
+            ) ??
+            (directSelection === undefined
+              ? undefined
+              : occurrences.find((candidate) =>
+                  replacementIncludes(candidate, directSelection.id),
+                ));
           const replacementOptions = saved
             .filter((candidate) => {
               const candidateType = key(
@@ -660,6 +699,7 @@ export function evaluateCharacter(
                 rule.retrain === undefined ||
                 ["feat", "power", "skill training"].includes(candidateType);
               return (
+                !replacedIds.has(candidate.id) &&
                 candidate.acquiredLevel < occurrence.acquiredLevel &&
                 candidate.kind === "choice" &&
                 ordinaryRetraining &&
@@ -667,8 +707,21 @@ export function evaluateCharacter(
               );
             })
             .flatMap((candidate) => {
+              let original = candidate;
+              const visited = new Set<string>();
+              while (
+                original.replacesId !== undefined &&
+                !visited.has(original.id)
+              ) {
+                visited.add(original.id);
+                const previous = saved.find(
+                  (value) => value.id === original.replacesId,
+                );
+                if (previous === undefined) break;
+                original = previous;
+              }
               const originalProvider = saved.find(
-                (provider) => provider.id === candidate.parentId,
+                (provider) => provider.id === original.parentId,
               );
               const originalDefinition =
                 originalProvider === undefined
@@ -684,8 +737,7 @@ export function evaluateCharacter(
                       )
                       .find(
                         (candidateRule) =>
-                          candidateRule.source.ordinal ===
-                          candidate.ruleOrdinal,
+                          candidateRule.source.ordinal === original.ruleOrdinal,
                       );
               return originalProvider === undefined ||
                 originalSelect === undefined

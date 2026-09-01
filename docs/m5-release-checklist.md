@@ -88,6 +88,9 @@ the ordinary `.4ecp` and decrypted/merged-rules file input used by every client.
       resolve required Race/Class/Feat and nested choices through the generic
       editor, advance with canonical level records through 30, persist/reload,
       and regenerate an edited `.dnd4e` with a semantic re-import gate.
+      The ignored full-profile audit additionally resolves 63 real choices and
+      8 retrainings on a Human/Fighter path, equips an item, constructs the
+      authoritative sheet, and retains every replacement target through export.
 - [x] Repository reconstruction, historical database upgrade, checksummed
       backup/restore, malformed restore rejection, and interrupted migration are in
       the automated durability matrix.

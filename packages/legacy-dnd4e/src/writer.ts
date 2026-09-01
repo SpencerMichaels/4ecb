@@ -284,20 +284,64 @@ function semanticBuild(build: CharacterBuild): unknown {
   };
 }
 
+function firstSemanticDifference(
+  expected: unknown,
+  actual: unknown,
+  path = "build",
+): string | undefined {
+  if (Object.is(expected, actual)) return undefined;
+  if (Array.isArray(expected) && Array.isArray(actual)) {
+    if (expected.length !== actual.length)
+      return `${path}.length is ${actual.length}; expected ${expected.length}.`;
+    for (const [index, value] of expected.entries()) {
+      const difference = firstSemanticDifference(
+        value,
+        actual[index],
+        `${path}[${index}]`,
+      );
+      if (difference !== undefined) return difference;
+    }
+    return undefined;
+  }
+  if (
+    expected !== null &&
+    actual !== null &&
+    typeof expected === "object" &&
+    typeof actual === "object"
+  ) {
+    const expectedRecord = expected as Readonly<Record<string, unknown>>;
+    const actualRecord = actual as Readonly<Record<string, unknown>>;
+    const expectedKeys = Object.keys(expectedRecord).toSorted();
+    const actualKeys = Object.keys(actualRecord).toSorted();
+    if (JSON.stringify(expectedKeys) !== JSON.stringify(actualKeys))
+      return `${path} has keys ${actualKeys.join(", ")}; expected ${expectedKeys.join(", ")}.`;
+    for (const name of expectedKeys) {
+      const difference = firstSemanticDifference(
+        expectedRecord[name],
+        actualRecord[name],
+        `${path}.${name}`,
+      );
+      if (difference !== undefined) return difference;
+    }
+    return undefined;
+  }
+  return `${path} is ${JSON.stringify(actual)}; expected ${JSON.stringify(expected)}.`;
+}
+
 /** Compares build meaning while deliberately ignoring regenerated local IDs. */
 export function compareEditedDnd4eRoundTrip(
   expected: CharacterBuild,
   actual: CharacterBuild,
 ): Dnd4eRoundTripComparison {
-  const before = JSON.stringify(semanticBuild(expected));
-  const after = JSON.stringify(semanticBuild(actual));
-  return before === after
+  const difference = firstSemanticDifference(
+    semanticBuild(expected),
+    semanticBuild(actual),
+  );
+  return difference === undefined
     ? { equivalent: true, differences: [] }
     : {
         equivalent: false,
-        differences: [
-          "The re-imported level, selection, replacement, inventory, alternate, ability, or text structure differs from the edited build.",
-        ],
+        differences: [difference],
       };
 }
 

@@ -89,8 +89,9 @@ function findBuildOccurrence(
 }
 
 /**
- * Creates a durable choice command, materializing a one-level generated grant
- * when the choice provider exists only in the evaluator's fixed-point graph.
+ * Creates a durable choice command, materializing generated grant ancestors
+ * back to the nearest saved occurrence when the provider exists only in the
+ * evaluator's fixed-point graph.
  */
 export function commandForEvaluatedChoice(
   build: CharacterBuild,
@@ -114,18 +115,81 @@ export function commandForEvaluatedChoice(
     evaluatedProvider === undefined
       ? undefined
       : byId.get(evaluatedProvider.definitionId.toLocaleLowerCase());
-  if (durableProvider !== undefined)
-    return {
-      kind: "choose",
-      parentId: durableProvider.id,
-      index: findBuildChildIndex(
-        durableProvider,
-        providerEntity,
-        choice.ruleOrdinal,
-        choice.index,
-      ),
-      occurrence: selected,
+  const chooseAt = (
+    parent: BuildOccurrence,
+    index: number,
+    occurrence: BuildOccurrence,
+  ): CharacterCommand => {
+    const choose = (slot: number, value: BuildOccurrence) =>
+      ({
+        kind: "choose",
+        parentId: parent.id,
+        index: slot,
+        occurrence: value,
+      }) as const;
+    const commands = Array.from(
+      { length: Math.max(0, index - parent.children.length) },
+      (_, offset) => {
+        const slot = parent.children.length + offset;
+        return choose(slot, {
+          id: placeholderId(slot),
+          identity: { name: "", type: "" },
+          acquiredLevel: parent.acquiredLevel,
+          legality: "rules-legal",
+          children: [],
+          unresolved: true,
+        });
+      },
+    );
+    commands.push(choose(index, occurrence));
+    return commands.length === 1
+      ? (commands[0] as CharacterCommand)
+      : { kind: "batch", commands };
+  };
+  const generatedWithChild = (
+    occurrence: CharacterOccurrence,
+    entity: ContentEntity,
+    ruleOrdinal: number,
+    choiceIndex: number,
+    child: BuildOccurrence,
+  ): BuildOccurrence => {
+    const base: BuildOccurrence = {
+      id: occurrence.id,
+      identity: {
+        definitionId: entity.id,
+        name: entity.name,
+        type: entity.type,
+      },
+      acquiredLevel: occurrence.acquiredLevel,
+      legality: "rules-legal",
+      children: [],
+      unresolved: false,
     };
+    const index = findBuildChildIndex(base, entity, ruleOrdinal, choiceIndex);
+    return {
+      ...base,
+      children: [
+        ...Array.from({ length: index }, (_, slot): BuildOccurrence => ({
+          id: placeholderId(slot),
+          identity: { name: "", type: "" },
+          acquiredLevel: occurrence.acquiredLevel,
+          legality: "rules-legal",
+          children: [],
+          unresolved: true,
+        })),
+        child,
+      ],
+    };
+  };
+  if (durableProvider !== undefined) {
+    const index = findBuildChildIndex(
+      durableProvider,
+      providerEntity,
+      choice.ruleOrdinal,
+      choice.index,
+    );
+    return chooseAt(durableProvider, index, selected);
+  }
   if (
     evaluatedProvider?.kind !== "grant" ||
     evaluatedProvider.parentId === undefined ||
@@ -133,66 +197,55 @@ export function commandForEvaluatedChoice(
     providerEntity === undefined
   )
     return undefined;
-  const durableParent = findBuildOccurrence(build, evaluatedProvider.parentId);
-  if (durableParent === undefined) return undefined;
-  const parentEvaluation = evaluatedOccurrences.find(
-    (occurrence) => occurrence.id === durableParent.id,
-  );
-  const parentEntity =
-    parentEvaluation === undefined
-      ? undefined
-      : byId.get(parentEvaluation.definitionId.toLocaleLowerCase());
-  const providerChoiceIndex = findBuildChildIndex(
-    {
-      id: evaluatedProvider.id,
-      identity: {
-        definitionId: providerEntity.id,
-        name: providerEntity.name,
-        type: providerEntity.type,
-      },
-      acquiredLevel: evaluatedProvider.acquiredLevel,
-      legality: "rules-legal",
-      children: [],
-      unresolved: false,
-    },
+  let cursor = evaluatedProvider;
+  let materialized = generatedWithChild(
+    cursor,
     providerEntity,
     choice.ruleOrdinal,
     choice.index,
+    selected,
   );
-  const children = Array.from(
-    { length: providerChoiceIndex },
-    (_, index): BuildOccurrence => ({
-      id: placeholderId(index),
-      identity: { name: "", type: "" },
-      acquiredLevel: evaluatedProvider.acquiredLevel,
-      legality: "rules-legal",
-      children: [],
-      unresolved: true,
-    }),
-  );
-  children.push(selected);
-  return {
-    kind: "choose",
-    parentId: durableParent.id,
-    index: findBuildChildIndex(
-      durableParent,
+  for (let depth = 0; depth < evaluatedOccurrences.length; depth += 1) {
+    if (cursor.parentId === undefined || cursor.ruleOrdinal === undefined)
+      return undefined;
+    const durableParent = findBuildOccurrence(build, cursor.parentId);
+    if (durableParent !== undefined) {
+      const parentEvaluation = evaluatedOccurrences.find(
+        (occurrence) => occurrence.id === durableParent.id,
+      );
+      const parentEntity =
+        parentEvaluation === undefined
+          ? undefined
+          : byId.get(parentEvaluation.definitionId.toLocaleLowerCase());
+      return chooseAt(
+        durableParent,
+        findBuildChildIndex(
+          durableParent,
+          parentEntity,
+          cursor.ruleOrdinal,
+          cursor.choiceIndex ?? 0,
+        ),
+        materialized,
+      );
+    }
+    const evaluatedParent = evaluatedOccurrences.find(
+      (occurrence) => occurrence.id === cursor.parentId,
+    );
+    if (evaluatedParent?.kind !== "grant") return undefined;
+    const parentEntity = byId.get(
+      evaluatedParent.definitionId.toLocaleLowerCase(),
+    );
+    if (parentEntity === undefined) return undefined;
+    materialized = generatedWithChild(
+      evaluatedParent,
       parentEntity,
-      evaluatedProvider.ruleOrdinal,
-      evaluatedProvider.choiceIndex ?? 0,
-    ),
-    occurrence: {
-      id: evaluatedProvider.id,
-      identity: {
-        definitionId: providerEntity.id,
-        name: providerEntity.name,
-        type: providerEntity.type,
-      },
-      acquiredLevel: evaluatedProvider.acquiredLevel,
-      legality: "rules-legal",
-      children,
-      unresolved: false,
-    },
-  };
+      cursor.ruleOrdinal,
+      cursor.choiceIndex ?? 0,
+      materialized,
+    );
+    cursor = evaluatedParent;
+  }
+  return undefined;
 }
 
 export function projectBuildForEvaluation(

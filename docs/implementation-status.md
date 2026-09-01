@@ -42,11 +42,34 @@ generic choices, resolved Race/Class/Feat and nested ability choice to a
 complete legal build, reloaded with every selection persisted, exposed only the
 edited export target, and passed its semantic re-import gate without console
 warnings or errors. This closes the old-application dependency for starting a
-character, but the full private level-1-through-30 workflow and remaining M4
-compatibility/release matrices still block M5 exit criterion 1.
-The complete public gate passes 134 tests across 30 files plus formatting,
+character; the supported-browser end-to-end matrix and remaining M4
+compatibility/release matrices still block complete M5 closure.
+The complete public gate passes 138 tests across 30 files plus formatting,
 ESLint, every TypeScript project, the production/PWA build, Chromium/Firefox
 print artifacts, deterministic content checks, and the query benchmark.
+
+### Full-profile native advancement audit
+
+- `pnpm audit:native-workflow PACK.4ecp [--max-level=N]
+[PREFERRED_DEFINITION_ID ...]` builds a native record from an exact private
+  pack, resolves prerequisite-aware candidates deterministically, advances
+  through canonical levels, follows ordinary and power-swap retraining, equips
+  an item, JSON-decodes the saved record, constructs the authoritative sheet,
+  and requires edited `.dnd4e` semantic re-import parity. Private content and
+  output remain ignored evidence.
+- The audit exposed and closed four generic durability defects: out-of-order
+  sibling choices no longer create sparse arrays; generated choices can
+  materialize through arbitrarily nested grant ancestors; a provider cannot
+  select itself recursively; and active replacement chains satisfy every prior
+  select/replacement slot while later retraining targets only the active chain.
+- On 2026-09-01, an explicit Human/Fighter path against the 38,339-record local
+  profile reached level 30 complete at every level, resolved 63 choices and 8
+  retrainings, retained all 8 replacement targets, equipped one item, survived
+  domain serialization, produced an authoritative sheet with 20 cards plus one
+  item card, and passed regenerated 0.07a semantic re-import. The final two
+  diagnostics are `prerequisite.unverified` prose findings; no prerequisite is
+  reported failed and no incomplete choice is hidden. This is one real-profile
+  workflow, not evidence that every class/build family passes M5 criterion 2.
 
 ### Profile migration preview and explicit adoption
 

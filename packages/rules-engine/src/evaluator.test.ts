@@ -173,6 +173,41 @@ describe("character evaluator", () => {
     expect(completed.choices[0]?.selectedOccurrenceId).toBe("chosen-feat");
   });
 
+  it("never offers a choice provider as its own recursive child", () => {
+    const content = [
+      entity("ROOT", "Root", "Test", {
+        rules: [rule("grant", { name: "TRAIT", type: "Racial Trait" }, 0)],
+      }),
+      entity("TRAIT", "Dragonborn Subrace", "Racial Trait", {
+        rules: [
+          rule(
+            "select",
+            { type: "Racial Trait", Category: "Dragonborn Subrace" },
+            0,
+          ),
+        ],
+      }),
+      entity("OPTION", "Draconian Wings", "Racial Trait", {
+        categories: ["Dragonborn Subrace"],
+      }),
+    ];
+
+    const evaluated = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [rootOccurrence],
+        inventory: [],
+      },
+      content,
+    );
+
+    expect(evaluated.choices[0]?.candidates).toEqual([
+      { definitionId: "TRAIT", eligible: false, reasons: ["self"] },
+      { definitionId: "OPTION", eligible: true, reasons: [] },
+    ]);
+  });
+
   it("does not duplicate an explicitly serialized granted definition", () => {
     const result = evaluateCharacter(
       {
@@ -412,6 +447,94 @@ describe("character evaluator", () => {
         },
       ],
     });
+  });
+
+  it("re-retrains the active replacement through its original slot", () => {
+    const result = evaluateCharacter(
+      {
+        level: 3,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "level-1",
+            definitionId: "LEVEL_1",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "old-feat",
+            definitionId: "FEAT_A",
+            acquiredLevel: 1,
+            parentId: "level-1",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+          {
+            id: "level-2",
+            definitionId: "LEVEL_2",
+            acquiredLevel: 2,
+            kind: "root",
+          },
+          {
+            id: "new-feat",
+            definitionId: "FEAT_B",
+            acquiredLevel: 2,
+            parentId: "level-2",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            replacesId: "old-feat",
+            kind: "choice",
+          },
+          {
+            id: "level-3",
+            definitionId: "LEVEL_3",
+            acquiredLevel: 3,
+            kind: "root",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("LEVEL_1", "1", "Level", {
+          rules: [rule("select", { type: "Feat", number: "1" }, 0)],
+        }),
+        entity("LEVEL_2", "2", "Level", {
+          rules: [rule("replace", { retrain: "true", optional: "true" }, 0)],
+        }),
+        entity("LEVEL_3", "3", "Level", {
+          rules: [rule("replace", { retrain: "true", optional: "true" }, 0)],
+        }),
+        entity("FEAT_A", "Old feat", "Feat"),
+        entity("FEAT_B", "Current feat", "Feat"),
+        entity("FEAT_C", "Next feat", "Feat"),
+      ],
+    );
+
+    expect(
+      result.choices.find(
+        (choice) => choice.providerOccurrenceId === "level-3",
+      ),
+    ).toMatchObject({
+      replacementOptions: [
+        {
+          replacesOccurrenceId: "new-feat",
+          definitionId: "FEAT_B",
+          candidates: [
+            { definitionId: "FEAT_A", eligible: true },
+            { definitionId: "FEAT_B", eligible: true },
+            { definitionId: "FEAT_C", eligible: true },
+          ],
+        },
+      ],
+    });
+    expect(
+      result.choices.find((choice) => choice.providerOccurrenceId === "level-1")
+        ?.selectedOccurrenceId,
+    ).toBe("new-feat");
+    expect(result.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "choice.required" }),
+    );
   });
 
   it("applies list, replacement, and die-step overlays without mutating content", () => {

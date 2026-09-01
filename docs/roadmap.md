@@ -212,8 +212,13 @@ recovery, and the known release limitations required by exit criterion 10.
 First-class native creation now binds a blank level-1 build to an exact profile,
 uses the generic evaluator/editor for required identity choices, advances with
 canonical level records through 30, persists/reloads, and regenerates the edited
-0.07a target. The rest of exit criterion 1 still depends on the full private
-level-1-through-30 workflow and compatibility closure.
+0.07a target. A deterministic audit against the 38,339-record private profile now completes
+one Human/Fighter path through level 30, including nested choices, eight
+retrainings, equipment, serialization, authoritative sheet construction, and
+edited-export semantic re-import. This closes the previously recorded absence
+of any full-profile native advancement evidence; broader class/build coverage
+and the named M4 compatibility families still block criteria 2 and 3, while the
+remaining supported-browser workflow matrix blocks complete criterion-1 closure.
 
 ### Goal
 
