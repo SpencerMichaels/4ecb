@@ -27,7 +27,12 @@ several legacy exception families, and focused replacement/grant editing remain.
   the distributable public fixtures.
 - A renderer-neutral power result model with explicit equipment variants,
   attack/damage components, ordinary weapon and implement math, level-scaled
-  hit lines, chosen abilities, enhancement/proficiency, and melee bonuses.
+  hit lines, chosen abilities, enhancement/proficiency, weapon-group and
+  implement-category bonuses, primary attacks, and effect-only calculations.
+- Legacy alternates/spellbooks participate in ownership and power evaluation;
+  serialized grants suppress duplicate fixed-point grants. Equipment projection
+  recognizes weapon groups, magic implements, dual-use staves, and mundane holy
+  symbols in the forms used by the corpus.
 
 ## M4 checkpoint verification
 
@@ -37,9 +42,11 @@ remaining legality findings are its explicit house-rule selection and one
 custom feat prerequisite the imported content cannot prove. The public suite
 also matches all 52 comparable cached attack/damage fields across its power
 variants. The bundled nine-character diagnostic matrix currently matches
-494/509 numeric aliases and 219/371 cached power fields. The public suite passes
-69 tests plus formatting, ESLint, all TypeScript projects, and the production
-PWA build. See [rules-engine.md](rules-engine.md) for the evaluator boundary,
+501/509 numeric aliases and 260/371 cached power fields. The remaining sample
+differences are concentrated in historical content revisions, dual-weapon and
+monk/weapon-as-implement exceptions, and a small set of class-specific rules.
+The public suite passes 77 tests plus formatting, ESLint, and all TypeScript
+projects. See [rules-engine.md](rules-engine.md) for the evaluator boundary,
 performance result, and remaining closure work.
 
 ## M3 delivered

@@ -95,8 +95,17 @@ async function main(): Promise<void> {
       ];
       return fields.map((comparison) => ({
         power: cachedPower.name,
+        definitionId: cachedPower.id,
         equipment: cachedWeapon.name,
         ...comparison,
+        powerFound: power !== undefined,
+        availableEquipment:
+          power?.variants.map((candidate) => candidate.equipmentName) ?? [],
+        components:
+          comparison.field === "attack"
+            ? variant?.attackComponents
+            : variant?.damageComponents,
+        unsupported: power?.unsupported ?? [],
         matches: comparison.expected === comparison.actual,
       }));
     });
@@ -130,6 +139,16 @@ async function main(): Promise<void> {
                 (diagnostic) => diagnostic.severity === severity,
               ).length,
             ]),
+          ),
+          combatStats: Object.fromEntries(
+            Object.entries(evaluated.stats)
+              .filter(
+                ([name, stat]) =>
+                  typeof stat.value === "number" &&
+                  stat.value !== 0 &&
+                  /(attack|damage|weapon|implement|melee|ranged)/i.test(name),
+              )
+              .map(([name, stat]) => [name, stat.value]),
           ),
         },
         cachedNumericParity: {

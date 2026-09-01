@@ -117,4 +117,61 @@ describe("build projection", () => {
     ]);
     expect(evaluated.complete).toBe(true);
   });
+
+  it("projects legacy alternate selections as owned elements", () => {
+    const content = [
+      entity("LEVEL", "1", "Level"),
+      entity("SPELL", "Prepared spell", "Power"),
+    ];
+    const build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 1,
+      levels: [
+        {
+          level: 1,
+          root: {
+            id: "level",
+            identity: { definitionId: "LEVEL", name: "1", type: "Level" },
+            acquiredLevel: 1,
+            legality: "rules-legal",
+            unresolved: false,
+            children: [],
+          },
+        },
+      ],
+      grabbag: [],
+      inventory: [],
+      alternates: [
+        {
+          id: "alternate",
+          selectName: "Power Daily 1",
+          provider: { name: "Spellbook", type: "Class Feature" },
+          choice: {
+            id: "spell",
+            identity: {
+              definitionId: "SPELL",
+              name: "Prepared spell",
+              type: "Power",
+            },
+            acquiredLevel: 0,
+            legality: "rules-legal",
+            unresolved: false,
+            children: [],
+          },
+        },
+      ],
+      baseAbilities: {},
+      textStrings: {},
+    };
+
+    expect(
+      projectBuildForEvaluation(build, content).occurrences,
+    ).toContainEqual(
+      expect.objectContaining({
+        id: "spell",
+        definitionId: "SPELL",
+        kind: "grabbag",
+      }),
+    );
+  });
 });

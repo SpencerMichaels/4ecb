@@ -36,6 +36,24 @@ function stat(name: string, value: number): EvaluatedStat {
   return { name, value, contributions: [] };
 }
 
+function combatStat(name: string, value: number): EvaluatedStat {
+  return {
+    name,
+    value,
+    contributions: [
+      {
+        id: `bonus:${name}`,
+        stat: name,
+        value: String(value),
+        providerId: "feat",
+        providerName: "Combat feat",
+        numericValue: value,
+        applied: true,
+      },
+    ],
+  };
+}
+
 describe("power evaluation", () => {
   it("produces explainable weapon and unarmed variants", () => {
     const entities = [
@@ -223,6 +241,171 @@ describe("power evaluation", () => {
       attackStat: "Charisma",
       attackBonus: 9,
       damage: "1d4+8",
+    });
+  });
+
+  it("applies evaluated weapon-group and power-specific combat stats once", () => {
+    const entities = [
+      entity("POWER", "Melee Basic Attack", "Power", {
+        Keywords: "Weapon",
+        "Attack Type": "Melee weapon",
+        Attack: "Strength vs. AC",
+        Hit: "1[W] + Strength modifier damage.",
+      }),
+      entity("BLADE", "Longsword", "Weapon", {
+        Damage: "1d8",
+        "Proficiency Bonus": "3",
+        Group: "Heavy Blade",
+      }),
+    ];
+    const [power] = evaluatePowers({
+      level: 10,
+      activeDefinitionIds: ["POWER"],
+      inventory: [
+        {
+          id: "blade",
+          definitionIds: ["BLADE"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 4),
+        "heavy blade group,weapon:attack": combatStat(
+          "heavy blade group,weapon:attack",
+          2,
+        ),
+        "Heavy Blade group,weapon:damage": combatStat(
+          "Heavy Blade group,weapon:damage",
+          2,
+        ),
+        "melee basic:damage": combatStat("melee basic:damage", 2),
+      },
+      overlays: [],
+      entities,
+    });
+
+    expect(power?.variants[0]).toMatchObject({
+      attackBonus: 14,
+      damage: "1d8+8",
+    });
+  });
+
+  it("handles primary attacks and prose level scaling", () => {
+    const entities = [
+      entity("POWER", "Primary strike", "Power", {
+        Keywords: "Weapon",
+        "Attack Type": "Melee weapon",
+        "Primary Attack": "Strength vs. AC",
+        Hit: "1[W] + Strength modifier damage.\nIncrease damage to 2[W] + Strength modifier damage at 21st level.",
+      }),
+    ];
+    const [power] = evaluatePowers({
+      level: 21,
+      activeDefinitionIds: ["POWER"],
+      inventory: [],
+      stats: { "Strength modifier": stat("Strength modifier", 6) },
+      overlays: [],
+      entities,
+    });
+
+    expect(power?.variants[0]).toMatchObject({
+      attackStat: "Strength",
+      attackBonus: 16,
+      damage: "2d4+6",
+    });
+  });
+
+  it("retains a legacy calculation variant for effect-only utilities", () => {
+    const [power] = evaluatePowers({
+      level: 3,
+      activeDefinitionIds: ["POWER"],
+      inventory: [],
+      stats: {},
+      overlays: [],
+      entities: [
+        entity("POWER", "Regeneration", "Power", {
+          "Attack Type": "Personal",
+          Effect: "You gain regeneration 5.",
+        }),
+      ],
+    });
+
+    expect(power?.variants[0]).toMatchObject({
+      equipmentName: "Unarmed",
+      attackBonus: 1,
+    });
+  });
+
+  it("treats magic staves as both implements and quarterstaff weapons", () => {
+    const entities = [
+      entity("BASIC", "Melee Basic Attack", "Power", {
+        Keywords: "Weapon",
+        "Attack Type": "Melee weapon",
+        Attack: "Strength vs. AC",
+        Hit: "1[W] + Strength modifier damage.",
+      }),
+      entity("STAFF", "Staff of Light +1", "Magic Item", {
+        "Magic Item Type": "Staff",
+        Enhancement: "+1 attack rolls and damage rolls",
+      }),
+    ];
+    const [power] = evaluatePowers({
+      level: 3,
+      activeDefinitionIds: ["BASIC"],
+      inventory: [
+        {
+          id: "staff",
+          definitionIds: ["STAFF"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: { "Strength modifier": stat("Strength modifier", 0) },
+      overlays: [],
+      entities,
+    });
+
+    expect(power?.variants[0]).toMatchObject({
+      equipmentName: "Staff of Light +1",
+      attackBonus: 4,
+      damage: "1d8+1",
+    });
+  });
+
+  it("treats mundane holy symbols as implement choices", () => {
+    const entities = [
+      entity("POWER", "Sacred Flame", "Power", {
+        Keywords: "Divine, Implement",
+        "Attack Type": "Ranged 5",
+        Attack: "Wisdom vs. Reflex",
+        Hit: "1d6 + Wisdom modifier radiant damage.",
+      }),
+      entity("SYMBOL", "Holy Symbol", "Gear", {}),
+    ];
+    const [power] = evaluatePowers({
+      level: 2,
+      activeDefinitionIds: ["POWER"],
+      inventory: [
+        {
+          id: "symbol",
+          definitionIds: ["SYMBOL"],
+          quantity: 1,
+          equippedQuantity: 0,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: { "Wisdom modifier": stat("Wisdom modifier", 2) },
+      overlays: [],
+      entities,
+    });
+
+    expect(power?.variants[0]).toMatchObject({
+      equipmentName: "Holy Symbol",
+      attackBonus: 3,
+      damage: "1d6+2",
     });
   });
 });

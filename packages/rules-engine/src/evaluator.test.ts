@@ -172,6 +172,88 @@ describe("character evaluator", () => {
     expect(completed.choices[0]?.selectedOccurrenceId).toBe("chosen-feat");
   });
 
+  it("does not duplicate an explicitly serialized granted definition", () => {
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "serialized-feature",
+            definitionId: "FEATURE",
+            acquiredLevel: 1,
+            kind: "choice",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "Root", "Test", {
+          rules: [rule("grant", { name: "FEATURE", type: "Feature" }, 0)],
+        }),
+        entity("FEATURE", "Feature", "Feature", {
+          rules: [rule("statadd", { name: "AC", value: "+2" }, 0)],
+        }),
+      ],
+    );
+
+    expect(
+      result.occurrences.filter((item) => item.definitionId === "FEATURE"),
+    ).toHaveLength(1);
+    expect(result.stats.AC?.value).toBe(2);
+  });
+
+  it("exposes weapon groups and magic implement types to equipment rules", () => {
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [rootOccurrence],
+        inventory: [
+          {
+            id: "blade",
+            definitionIds: ["BLADE"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+          {
+            id: "staff",
+            definitionIds: ["STAFF"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+      },
+      [
+        entity("ROOT", "Root", "Test", {
+          rules: [
+            rule(
+              "statadd",
+              { name: "AC", value: "+1", wearing: "weapon:heavy blade" },
+              0,
+            ),
+            rule(
+              "statadd",
+              { name: "AC", value: "+1", wearing: "implement:staff" },
+              1,
+            ),
+          ],
+        }),
+        entity("BLADE", "Longsword", "Weapon", {
+          specifics: { Group: "Heavy Blade" },
+        }),
+        entity("STAFF", "Magic Staff", "Magic Item", {
+          specifics: { "Magic Item Type": "Staff" },
+        }),
+      ],
+    );
+
+    expect(result.stats.AC?.value).toBe(2);
+  });
+
   it("keeps house rules visible but makes the result non-legal", () => {
     const result = evaluateCharacter(
       {

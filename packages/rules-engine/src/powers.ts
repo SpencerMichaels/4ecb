@@ -41,6 +41,7 @@ interface Loadout {
   readonly enhancement: number;
   readonly critical?: string;
   readonly unarmed: boolean;
+  readonly tags: readonly string[];
 }
 
 function key(value: string): string {
@@ -116,28 +117,45 @@ function loadouts(
     );
     const magicType =
       magic === undefined ? "" : field(magic, "Magic Item Type");
-    if (
-      weapon === undefined &&
-      !/(implement|holy symbol|orb|rod|staff|tome|totem|wand)/i.test(
-        magicType ?? "",
-      )
-    )
-      continue;
+    const implement = parts.find((entity) => {
+      const itemType = field(entity, "Magic Item Type") ?? "";
+      return (
+        /(implement|holy symbol|ki focus|orb|rod|staff|tome|totem|wand)/i.test(
+          itemType,
+        ) || /^(holy symbol|ki focus)$/i.test(entity.name)
+      );
+    });
+    if (weapon === undefined && implement === undefined) continue;
     const critical = field(magic ?? emptyEntity, "Critical");
     result.push({
       id: entry.id,
       name: entry.name ?? equipmentName(parts),
-      ...(weapon === undefined
+      ...(weapon === undefined && !/staff/i.test(magicType ?? "")
         ? {}
         : {
             weaponDamage:
-              entry.overrides?.Damage ?? field(weapon, "Damage") ?? "1d4",
+              entry.overrides?.Damage ??
+              field(weapon ?? emptyEntity, "Damage") ??
+              "1d8",
           }),
       proficiency:
-        Number(field(weapon ?? emptyEntity, "Proficiency Bonus")) || 0,
+        Number(field(weapon ?? emptyEntity, "Proficiency Bonus")) ||
+        (/staff/i.test(magicType ?? "") ? 2 : 0),
       enhancement: parseEnhancement(magic),
       ...(critical ? { critical } : {}),
       unarmed: false,
+      tags: [
+        ...parts.map((entity) => entity.name),
+        ...(weapon === undefined
+          ? []
+          : [
+              field(weapon, "Group") ?? "",
+              `${field(weapon, "Group") ?? ""} group`,
+            ]),
+        magicType ?? "",
+      ]
+        .map(key)
+        .filter(Boolean),
     });
   }
   result.push({
@@ -147,6 +165,7 @@ function loadouts(
     proficiency: 0,
     enhancement: 0,
     unarmed: true,
+    tags: ["unarmed"],
   });
   return result;
 }
@@ -180,6 +199,65 @@ function diceTimes(expression: string, multiplier: number): string {
 function formatDamage(dice: string, bonus: number): string {
   if (bonus === 0) return dice;
   return `${dice}${bonus > 0 ? "+" : ""}${bonus}`;
+}
+
+function combatStatComponents(
+  stats: Readonly<Record<string, EvaluatedStat>>,
+  equipment: Loadout,
+  powerName: string,
+  kind: "weapon" | "implement",
+  fieldName: "attack" | "damage",
+  attackType: string | undefined,
+): PowerComponent[] {
+  const suffix = `${kind}:${fieldName}`;
+  const powerTags = [
+    key(powerName),
+    key(powerName).replace(/\s+attack$/, ""),
+    ...(attackType === undefined
+      ? []
+      : [key(attackType).split(/\s+/)[0] ?? ""]),
+  ].filter(Boolean);
+  const relevant = Object.entries(stats).filter(([name]) => {
+    const normalized = key(name);
+    if (normalized === suffix) return true;
+    if (normalized.endsWith(`,${suffix}`)) {
+      const qualifier = normalized.slice(0, -suffix.length - 1);
+      return equipment.tags.includes(qualifier);
+    }
+    if (
+      [...equipment.tags, ...powerTags].some(
+        (tag) => normalized === `${tag}:${fieldName}`,
+      )
+    )
+      return true;
+    // Conditional equipment predicates are encoded before the terminal stat
+    // name (for example, two-melee-weapon:damage). By this stage the stat
+    // accumulator has already decided whether the contribution applies.
+    return normalized.endsWith(`-${suffix}`);
+  });
+  const seen = new Set<string>();
+  return relevant.flatMap(([name, stat]) => {
+    if (stat.contributions.length === 0)
+      return typeof stat.value === "number" && stat.value !== 0
+        ? [{ label: name, value: stat.value }]
+        : [];
+    return stat.contributions.flatMap((contribution) => {
+      if (
+        !contribution.applied ||
+        contribution.numericValue === undefined ||
+        seen.has(contribution.id)
+      )
+        return [];
+      seen.add(contribution.id);
+      return [
+        {
+          label: name,
+          value: contribution.numericValue,
+          source: contribution.providerName,
+        },
+      ];
+    });
+  });
 }
 
 const abilityNames = [
@@ -220,6 +298,18 @@ function lineAtLevel(
       selectedLevel = Number(match[1]);
       selected = match[2];
     }
+    const increase = line.match(
+      /^Increase damage to\s+(.*?)\s+at\s+(\d+)(?:st|nd|rd|th)\s+level/i,
+    );
+    if (
+      increase?.[1] !== undefined &&
+      increase[2] !== undefined &&
+      Number(increase[2]) <= level &&
+      Number(increase[2]) >= selectedLevel
+    ) {
+      selectedLevel = Number(increase[2]);
+      selected = increase[1];
+    }
   }
   return selected;
 }
@@ -244,7 +334,9 @@ export function evaluatePowers(input: {
       .map((value) => value.trim())
       .filter(Boolean);
     const attackType = effectiveField(power, "Attack Type", input.overlays);
-    const attackLine = effectiveField(power, "Attack", input.overlays);
+    const attackLine =
+      effectiveField(power, "Attack", input.overlays) ??
+      effectiveField(power, "Primary Attack", input.overlays);
     const hitLine = lineAtLevel(
       effectiveField(power, "Hit", input.overlays),
       input.level,
@@ -254,13 +346,17 @@ export function evaluatePowers(input: {
     const weaponPower = keywords.some((value) => key(value) === "weapon");
     const implementPower = keywords.some((value) => key(value) === "implement");
     const effectOnlyCalculation =
-      (attack === null || attack === undefined) &&
-      /^close\b/i.test(attackType ?? "") &&
-      effectLine !== undefined;
+      (attack === null || attack === undefined) && effectLine !== undefined;
     const candidates =
       attack === null || attack === undefined
         ? effectOnlyCalculation
-          ? equipped.filter((item) => item.unarmed)
+          ? weaponPower
+            ? equipped.filter(
+                (item) => item.weaponDamage !== undefined || item.unarmed,
+              )
+            : implementPower
+              ? equipped
+              : equipped.filter((item) => item.unarmed)
           : []
         : weaponPower
           ? equipped.filter(
@@ -303,6 +399,16 @@ export function evaluatePowers(input: {
           label: "enhancement bonus",
           value: equipment.enhancement,
         });
+      attackComponents.push(
+        ...combatStatComponents(
+          input.stats,
+          equipment,
+          power.name,
+          weaponPower ? "weapon" : "implement",
+          "attack",
+          attackType,
+        ),
+      );
       const powerAttackBonus = Number(attackLeft.match(/\+\s*(\d+)/)?.[1] ?? 0);
       if (powerAttackBonus !== 0)
         attackComponents.push({
@@ -317,6 +423,7 @@ export function evaluatePowers(input: {
         weaponMatch !== null && weaponMatch !== undefined
           ? diceTimes(equipment.weaponDamage ?? "1d4", Number(weaponMatch[1]))
           : fixedMatch?.[1];
+      const ongoing = /\bongoing\s+\d+\b/i.test(hitLine ?? "");
       const explicitAbility =
         hitLine !== undefined &&
         new RegExp(`${attackStat} modifier`, "i").test(hitLine);
@@ -335,11 +442,17 @@ export function evaluatePowers(input: {
           label: "enhancement bonus",
           value: equipment.enhancement,
         });
-      if (dice !== undefined && /^melee/i.test(attackType ?? "")) {
-        const melee = numericStat(input.stats, "melee:damage");
-        if (melee !== 0)
-          damageComponents.push({ label: "melee damage", value: melee });
-      }
+      if (dice !== undefined)
+        damageComponents.push(
+          ...combatStatComponents(
+            input.stats,
+            equipment,
+            power.name,
+            weaponPower ? "weapon" : "implement",
+            "damage",
+            attackType,
+          ),
+        );
       const powerDamageBonus = Number(
         hitLine?.match(/\+\s*(\d+)\s+(?:[a-z]+\s+)*damage\b/i)?.[1] ?? 0,
       );
@@ -362,7 +475,9 @@ export function evaluatePowers(input: {
           0,
         ),
         ...(dice === undefined
-          ? {}
+          ? ongoing
+            ? { damage: "Ongoing" }
+            : {}
           : { damage: formatDamage(dice, damageBonus) }),
         ...(equipment.critical === undefined
           ? {}

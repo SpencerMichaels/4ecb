@@ -244,8 +244,22 @@ function equippedState(
         field(entity, "Armor Category") ?? "",
         field(entity, "Weapon Category") ?? "",
         field(entity, "Weapon Group") ?? "",
+        field(entity, "Group") ?? "",
         field(entity, "Implement Type") ?? "",
+        field(entity, "Magic Item Type") ?? "",
       ].filter(Boolean);
+      const magicItemType = field(entity, "Magic Item Type") ?? "";
+      if (
+        /(implement|holy symbol|ki focus|orb|rod|staff|tome|totem|wand)/i.test(
+          magicItemType,
+        ) ||
+        /^(holy symbol|ki focus)$/i.test(entity.name)
+      )
+        categories.push(
+          "Implement",
+          /holy symbol/i.test(entity.name) ? "Holy Symbol" : "",
+          /ki focus/i.test(entity.name) ? "Ki Focus" : "",
+        );
       const slot = field(entity, "Item Slot");
       const handsText = field(entity, "Hands Required") ?? "";
       items.push({
@@ -377,6 +391,7 @@ export function evaluateCharacter(
             !occurrences.some(
               (candidate) =>
                 candidate.id === id ||
+                key(candidate.definitionId) === key(target.id) ||
                 (candidate.parentId === occurrence.id &&
                   candidate.ruleOrdinal === rule.source.ordinal &&
                   candidate.kind === "grant"),

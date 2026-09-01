@@ -126,6 +126,11 @@ export function projectBuildForEvaluation(
   };
   for (const frame of build.levels) visit(frame.root, "root");
   for (const occurrence of build.grabbag) visit(occurrence, "grabbag");
+  // Legacy spellbooks and similar "prepared versus known" features store the
+  // non-primary selections outside the level tree. They are still owned
+  // character elements (and must appear on sheets), even though the builder
+  // keeps their provider metadata in a separate <alternate> envelope.
+  for (const alternate of build.alternates) visit(alternate.choice, "grabbag");
 
   const inventory: CharacterInventoryEntry[] = build.inventory.map((entry) => ({
     id: entry.id,

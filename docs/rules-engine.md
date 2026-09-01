@@ -75,13 +75,15 @@ character arguments it uses the bundled sample heroes. This matrix is diagnostic
 it records incomplete/illegal imports and every stat/power mismatch rather than
 relaxing assertions to make a percentage pass.
 
-The initial nine-character bundled-sample baseline matches 494/509 comparable
-numeric stat aliases and 219/371 cached power attack/damage fields. Two
-characters have exact numeric-stat parity. The remaining clusters identify the
-work still named below: conditional stat-channel eligibility, shield and
-unarmored stacking, custom/two-weapon dice, multi-ability attacks, and class-
-specific power bonuses. These samples are compatibility evidence, not public
-test fixtures.
+The initial nine-character bundled-sample baseline was 494/509 comparable
+numeric stat aliases and 219/371 cached power attack/damage fields. The current
+checkpoint is 501/509 and 260/371 after projecting legacy alternates, suppressing
+duplicate serialized grants, recognizing corpus equipment groups/implements,
+and consuming category-specific combat stats. The remaining clusters identify
+the work still named below: historical profile revisions, conditional stat-
+channel eligibility, custom/two-weapon math, weapon-as-implement behavior, and
+class-specific power bonuses. These samples are compatibility evidence, not
+public test fixtures.
 
 ## Remaining M4 closure work
 
