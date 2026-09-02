@@ -871,6 +871,11 @@ export function evaluatePowers(input: {
       let damageAbilities: readonly string[] = abilityNames.filter((ability) =>
         new RegExp(`\\b${ability} modifier\\b`, "i").test(primaryDamageClause),
       );
+      if (
+        damageAbilities.length === 0 &&
+        /\bability modifier\b/i.test(primaryDamageClause)
+      )
+        damageAbilities = [attackStat];
       const listedAbilities = abilityNames.filter((ability) =>
         new RegExp(`\\b${ability}\\b`, "i").test(primaryDamageClause),
       );

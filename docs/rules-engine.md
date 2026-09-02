@@ -91,11 +91,14 @@ longer leak onto carried alternate power variants. These samples were created
 against unidentified older content and are
 cross-profile compatibility evidence, not exact public test fixtures.
 
-An additional ignored seven-character correction corpus exercises a different
+An additional ignored eight-character correction corpus exercises a different
 compatibility surface. It now converges and completes all seven records with
-zero unresolved choices, matches 469/470 comparable numeric aliases and 411/411
+zero unresolved choices, matches 536/537 comparable numeric aliases and 482/482
 cached power fields with no unsupported power branches, and passes seven
-regenerated-export semantic re-imports. Those cache totals remain cross-profile
+regenerated-export semantic re-imports. The eighth record also converges, matches
+all 67 numeric aliases and 71 power fields, and passes regenerated semantic
+re-import while retaining one incomplete and one legality diagnostic. Those
+cache totals remain cross-profile
 diagnostics. Hybrid `half-point` rules now combine signed halves within a stat
 and truncate before linked-stat consumption, closing the prior surge mismatch.
 Native magic-armor composition also adjusts a non-masterwork base through the

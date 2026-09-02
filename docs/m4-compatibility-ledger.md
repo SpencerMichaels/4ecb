@@ -86,20 +86,28 @@ fields by removing an incorrectly inferred Intelligence modifier from Bond of
 Censure; the supplied +1 implement enhancement remains. The comparison retains
 its existing legality diagnostics and does not discard evidence.
 
-A separate ignored seven-character correction corpus is also diagnostic rather
+A separate ignored eight-character correction corpus is also diagnostic rather
 than golden evidence. After provenance deduplication, structural cached-variant
 matching, unique nested race-choice recovery, and three exact named power
 forms, all seven records converge and complete with zero unresolved choices.
 Recovered equipment channels, weapon-specific bonuses, attack-branch choice,
 literal native output, Versatile handling, and weapon-slot keywords bring the
-power diagnostic to 411/411 cached fields with no unsupported powers. The
-numeric diagnostic is 469/470 after implementing the recovered hybrid
+power diagnostic to 482/482 cached fields with no unsupported powers. The
+numeric diagnostic is 536/537 after implementing the recovered hybrid
 `half-point` boundary and native `EssentialsMagicArmor` base adjustment. Seven
 regenerated edited exports pass semantic re-import. The one residual numeric
 difference is internally inconsistent; three older skill-power selections
 remain category-ineligible under both the current level rules and the recovered
 native category matcher. These findings are preserved because the files'
 originating content revisions are not established.
+
+The added level-8 record contributes 67/67 numeric aliases and 71/71 cached
+power fields. Its only initial mismatch family was eight variants across two
+theme weapon powers whose exact Hit text uses generic `ability modifier` after
+an attack with `Primary ability`. Native power calculation reuses the selected
+attack ability for that placeholder; doing the same closes all eight fields.
+Its regenerated edited export passes semantic re-import. One incomplete and one
+legality diagnostic remain visible and are not counted as parity success.
 
 The 2026-09-01 oracle-first residual audit found modern evaluator defects
 with direct native-code and serialized-record evidence. Native

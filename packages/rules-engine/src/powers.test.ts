@@ -604,6 +604,42 @@ describe("power evaluation", () => {
     });
   });
 
+  it("uses the selected primary ability for generic ability-modifier damage", () => {
+    const [power] = evaluatePowers({
+      level: 8,
+      activeDefinitionIds: ["POWER"],
+      inventory: [
+        {
+          id: "bow",
+          definitionIds: ["BOW"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Dexterity modifier": stat("Dexterity modifier", 5),
+      },
+      overlays: [],
+      entities: [
+        entity("POWER", "Synthetic Theme Strike", "Power", {
+          Keywords: "Weapon",
+          "Attack Type": "Ranged weapon",
+          Attack: "Primary ability vs. AC",
+          Hit: "1[W] + ability modifier damage.",
+        }),
+        entity("BOW", "Synthetic Bow", "Weapon", {
+          Damage: "1d12",
+          Group: "Bow",
+          "Weapon Category": "Military Ranged",
+        }),
+      ],
+    });
+
+    expect(power?.variants[0]?.attackStat).toBe("Dexterity");
+    expect(power?.variants[0]?.damage).toBe("1d12+5");
+  });
+
   it("honors a serialized named ability choice for a multi-ability power", () => {
     const [power] = evaluatePowers({
       level: 15,

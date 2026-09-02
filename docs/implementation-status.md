@@ -62,9 +62,9 @@ MVP declaration still requires the manual legacy-builder matrix.
   bonuses, weapon-reach attack-branch selection, Rage Strike's literal output,
   versatile two-handed damage, and serialized two-hand slot keywords. Across
   the seven ignored samples, all seven evaluations converge and complete with
-  zero unresolved choices; numeric cache diagnostics are 469/470 and power
-  cache diagnostics are 411/411 with no unsupported power branches. These caches
-  are not known-profile goldens. All seven regenerated edited exports pass
+  zero unresolved choices; the expanded eight-character diagnostic is 536/537
+  numeric aliases and 482/482 power fields with no unsupported power branches. These caches
+  are not known-profile goldens. All eight regenerated edited exports pass
   semantic re-import.
 - The hybrid surge discrepancy was a real evaluator gap: native `half-point`
   contributions carry a signed half within their target stat, combine before
