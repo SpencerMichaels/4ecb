@@ -13,6 +13,7 @@ import {
   choicesAtLevel,
   groupDependentChoiceFlows,
   groupLevelChoices,
+  groupChoicesByLegacyWorkflow,
   groupParameterizedCandidates,
   groupRepeatedChoiceSlots,
   isCandidateVisible,
@@ -241,6 +242,36 @@ describe("builder planning UI", () => {
       "skill-2",
     ]);
     expect(grouped.ordinary.map(({ id }) => id)).toEqual(["race", "feat"]);
+  });
+
+  it("presents first-level choices in the legacy builder workflow order", () => {
+    const choices = [
+      { id: "gender", type: "Gender" },
+      { id: "feat", type: "Feat" },
+      { id: "daily", type: "Power Daily 1" },
+      { id: "race", type: "Race" },
+      { id: "skills", type: "Skill Training" },
+      { id: "theme", type: "Theme" },
+      { id: "class-feature", type: "Class Feature" },
+      { id: "class", type: "Class" },
+      { id: "alignment", type: "Alignment" },
+      { id: "race-bonus", type: "Race Ability Bonus" },
+    ] as unknown as EvaluatedCharacter["choices"];
+
+    expect(
+      groupChoicesByLegacyWorkflow(choices).map(({ section, choices }) => [
+        section,
+        choices.map(({ id }) => id),
+      ]),
+    ).toEqual([
+      ["Class", ["class", "class-feature"]],
+      ["Race", ["race", "race-bonus"]],
+      ["Background", ["theme"]],
+      ["Skills", ["skills"]],
+      ["Powers", ["daily"]],
+      ["Feats", ["feat"]],
+      ["Character Details", ["gender", "alignment"]],
+    ]);
   });
 
   it("presents nested selections and their replacement as one choice flow", () => {

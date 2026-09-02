@@ -4,6 +4,24 @@ This is the functional surface recovered from the engine API and CharacterBuilde
 pages. It is a domain checklist, not a recommendation to reproduce the old wizard
 layout.
 
+The layout is nevertheless useful compatibility evidence where established
+ordering and selection habits matter. `MainWindow.InitializeWizardPages` builds
+the creation tabs in this order: **Class**, **Race**, **Background**, **Ability
+Scores**, **Skills**, **Powers**, **Spellbook**, **Feats**, **Replacements**, and
+**Display Options**. Its finishing tabs are **Details**, **Level**, **Portrait**,
+**Character Info**, **Journal**, **Companion**, **Summary**, **Campaign**, and
+**Display Options**. The replacement UI may consolidate these panes, but should
+preserve this category order where one screen presents their choices together.
+
+Within the legacy choice panes, `ExpanderD20Choice.MakeChecklist` walks each
+page's predefined type list and creates compact `D20ChoiceInfo` rows in that
+order. Clicking a completed checklist row passes its chosen `RulesElement` to
+the application's shared `InfoViewer`; it does not keep a separate information
+card open for every choice. `DetailsPage` likewise groups gender, alignment,
+deity, age, height, weight, company, and player-identification fields in one
+details surface. These observations support a compact ordered choice list plus
+one focus-driven detail viewer in the modern level workspace.
+
 ## Character creation and identity
 
 - new/reset, open, light-preview open, save, save-as, and preserve/restore snapshot;
@@ -87,9 +105,11 @@ ordinary player-facing detail pane.
 
 ## Modern UX improvement boundaries
 
-The old sequence of modal wizard pages is not part of file compatibility. A modern
-UI can be non-linear and reactive if it preserves provider/level history and never
-silently rewrites choices. Recommended interaction invariants are:
+The old sequence of modal wizard pages is not part of file compatibility, but
+its category order and checklist/detail-viewer behavior are retained as
+interaction familiarity. A modern UI can be non-linear and reactive if it
+preserves provider/level history and never silently rewrites choices.
+Recommended interaction invariants are:
 
 - every edit is a domain command and can be undone;
 - derived state is recomputed transactionally and carries diagnostics;

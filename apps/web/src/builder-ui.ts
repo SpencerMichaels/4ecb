@@ -201,6 +201,144 @@ export interface GroupedLevelChoices {
   readonly ordinary: readonly EvaluatedChoice[];
 }
 
+export type LegacyChoiceSection =
+  | "Class"
+  | "Race"
+  | "Background"
+  | "Ability Scores"
+  | "Skills"
+  | "Powers"
+  | "Spellbook"
+  | "Feats"
+  | "Character Details"
+  | "Other";
+
+const legacySectionOrder: readonly LegacyChoiceSection[] = [
+  "Class",
+  "Race",
+  "Background",
+  "Ability Scores",
+  "Skills",
+  "Powers",
+  "Spellbook",
+  "Feats",
+  "Character Details",
+  "Other",
+];
+
+/**
+ * Recreate the legacy builder's familiar wizard-pane order while retaining
+ * the rules engine's exact choices. This is deliberately a presentation-only
+ * classification: no choice is merged or re-parented.
+ */
+export function legacyChoiceSection(
+  choice: EvaluatedChoice,
+): LegacyChoiceSection {
+  const type = choice.type.trim().toLocaleLowerCase();
+  if (
+    [
+      "class",
+      "hybrid class",
+      "class build",
+      "class feature",
+      "trait package",
+      "proficiency",
+      "god fragment",
+      "magic item",
+      "paragon path",
+      "epic destiny",
+    ].includes(type)
+  )
+    return "Class";
+  if (
+    type === "race" ||
+    type === "racial trait" ||
+    type === "race ability bonus" ||
+    type === "language"
+  )
+    return "Race";
+  if (type === "background" || type === "background choice" || type === "theme")
+    return "Background";
+  if (type.includes("ability score") || type.startsWith("ability increase"))
+    return "Ability Scores";
+  if (type === "skill" || type === "skill training") return "Skills";
+  if (type === "spellbook") return "Spellbook";
+  if (type === "power" || type.startsWith("power ")) return "Powers";
+  if (type === "feat") return "Feats";
+  if (["gender", "alignment", "deity"].includes(type))
+    return "Character Details";
+  return "Other";
+}
+
+export interface LegacyChoiceSectionGroup {
+  readonly section: LegacyChoiceSection;
+  readonly choices: readonly EvaluatedChoice[];
+}
+
+function legacyChoiceTypeRank(choice: EvaluatedChoice): number {
+  const type = choice.type.trim().toLocaleLowerCase();
+  const description = `${type} ${choice.name ?? ""}`.toLocaleLowerCase();
+  const exactOrder = [
+    "class",
+    "hybrid class",
+    "class build",
+    "class feature",
+    "trait package",
+    "proficiency",
+    "god fragment",
+    "magic item",
+    "paragon path",
+    "epic destiny",
+    "race",
+    "racial trait",
+    "race ability bonus",
+    "language",
+    "background",
+    "background choice",
+    "theme",
+    "gender",
+    "alignment",
+    "deity",
+  ];
+  const rank = exactOrder.indexOf(type);
+  if (rank >= 0) return rank;
+  if (description.includes("at-will")) return 100;
+  if (description.includes("encounter")) return 101;
+  if (description.includes("daily")) return 102;
+  if (description.includes("utility")) return 103;
+  if (type === "power") return 100;
+  return 50;
+}
+
+export function groupChoicesByLegacyWorkflow(
+  choices: readonly EvaluatedChoice[],
+): readonly LegacyChoiceSectionGroup[] {
+  const grouped = new Map<LegacyChoiceSection, EvaluatedChoice[]>();
+  for (const choice of choices) {
+    const section = legacyChoiceSection(choice);
+    grouped.set(section, [...(grouped.get(section) ?? []), choice]);
+  }
+  return legacySectionOrder.flatMap((section) => {
+    const sectionChoices = grouped.get(section);
+    return sectionChoices === undefined
+      ? []
+      : [
+          {
+            section,
+            choices: sectionChoices
+              .map((choice, index) => ({ choice, index }))
+              .sort(
+                (left, right) =>
+                  legacyChoiceTypeRank(left.choice) -
+                    legacyChoiceTypeRank(right.choice) ||
+                  left.index - right.index,
+              )
+              .map(({ choice }) => choice),
+          },
+        ];
+  });
+}
+
 /**
  * Keep rules-engine choices exact while presenting choices created by the
  * preceding selection as one progressive decision. For example, a feat that

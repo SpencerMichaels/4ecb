@@ -1633,7 +1633,89 @@ textarea {
 
 .level-choice-page {
   display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.level-choice-workspace {
+  align-items: start;
+  display: grid;
   gap: 1rem;
+  grid-template-columns: minmax(22rem, 0.9fr) minmax(20rem, 1.1fr);
+}
+
+.shared-choice-detail {
+  min-width: 0;
+  position: sticky;
+  top: 1rem;
+}
+
+.legacy-choice-group {
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  overflow: hidden;
+}
+
+.legacy-choice-group > header {
+  align-items: center;
+  background: var(--surface-subtle);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6rem 0.8rem;
+}
+
+.legacy-choice-group > header h4 {
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.legacy-choice-list > .level-choice-section {
+  border: 0;
+  border-radius: 0;
+  padding: 0.75rem 0.8rem;
+}
+
+.legacy-choice-list > .level-choice-section + .level-choice-section {
+  border-top: 1px solid var(--border);
+}
+
+.legacy-choice-list > .level-choice-section > header {
+  border-bottom: 0;
+  margin-bottom: 0.55rem;
+  padding-bottom: 0;
+}
+
+.legacy-choice-list > .level-choice-section > header .eyebrow {
+  margin-bottom: 0.15rem;
+}
+
+.legacy-choice-list > .level-choice-section > header h4 {
+  font-size: 0.95rem;
+}
+
+.level-choice-workspace .choice-selection-layout,
+.level-choice-workspace .skill-training-layout {
+  gap: 0.65rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.level-choice-workspace .choice-editor-fields {
+  gap: 0.55rem;
+}
+
+.level-choice-workspace .choice-editor-fields select {
+  min-height: 2.5rem;
+}
+
+.level-choice-workspace .grouped-choice-list,
+.level-choice-workspace .choice-flow-list {
+  gap: 0.7rem;
+}
+
+.level-choice-workspace .grouped-choice-item + .grouped-choice-item,
+.level-choice-workspace .choice-flow-step + .choice-flow-step {
+  padding-top: 0.7rem;
 }
 
 .level-choice-section {
@@ -2008,6 +2090,7 @@ textarea {
   .compendium-workspace,
   .editor-grid,
   .builder-workspace,
+  .level-choice-workspace,
   .builder-secondary,
   .profile-composer-heading,
   .profile-preview {

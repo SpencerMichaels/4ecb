@@ -289,6 +289,14 @@ their owning progressive flow. The unavailable-choice filter is shared by the
 selected level, and compact mechanical choices may omit a non-informative
 candidate detail pane.
 
+Selected-level choices use the legacy builder's creation-pane category order
+as a presentation convention: Class, Race, Background, Ability Scores, Skills,
+Powers, Spellbook, Feats, and consolidated Character Details. This does not
+change provider ownership, rule order, or serialization. Each category contains
+compact controls and the workspace owns one focus-driven detail viewer, matching
+the legacy checklist/`InfoViewer` relationship without reproducing its modal
+wizard navigation. Numbered step chrome is limited to actual dependent flows.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

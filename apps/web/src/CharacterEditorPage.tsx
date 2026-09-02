@@ -31,6 +31,7 @@ import {
   candidateReason,
   choiceForSkillCandidate,
   choicesAtLevel,
+  groupChoicesByLegacyWorkflow,
   groupLevelChoices,
   groupDependentChoiceFlows,
   groupParameterizedCandidates,
@@ -50,6 +51,13 @@ import { RulesWorkerClient } from "./rules-client";
 const characters = new CharacterRepository();
 const packs = new ContentPackRepository();
 const ShowAllChoicesContext = createContext(false);
+type InspectedOption = {
+  readonly candidate: CandidateDecision;
+  readonly entity: ContentEntity;
+};
+const InspectCandidateContext = createContext<
+  ((option: InspectedOption) => void) | undefined
+>(undefined);
 
 type SaveState =
   | { readonly phase: "loading"; readonly message: string }
@@ -277,6 +285,7 @@ function ReplacementEditor({
     selected?.replacesId ?? options[0]?.replacesOccurrenceId ?? "",
   );
   const showAll = useContext(ShowAllChoicesContext);
+  const inspectCandidate = useContext(InspectCandidateContext);
   const [optimisticSelectedId, setOptimisticSelectedId] = useState(
     selected?.definitionId ?? "",
   );
@@ -309,6 +318,16 @@ function ReplacementEditor({
           candidate.definitionId === perusedId &&
           isCandidateVisible(candidate, showAll, selected?.definitionId),
       );
+  const detailEntity =
+    detailCandidate === undefined
+      ? undefined
+      : byId.get(detailCandidate.definitionId.toLocaleLowerCase());
+
+  const inspect = (candidate: CandidateDecision | undefined): void => {
+    if (candidate === undefined || inspectCandidate === undefined) return;
+    const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
+    if (entity !== undefined) inspectCandidate({ candidate, entity });
+  };
 
   useEffect(() => {
     setOptimisticSelectedId("");
@@ -359,6 +378,15 @@ function ReplacementEditor({
                 (item) => item.replacesOccurrenceId === targetId,
               );
               setPerusedId(option?.definitionId ?? "");
+              inspect(
+                option === undefined
+                  ? undefined
+                  : {
+                      definitionId: option.definitionId,
+                      eligible: true,
+                      reasons: [],
+                    },
+              );
             }}
             onChange={(event) => {
               const nextTargetId = event.currentTarget.value;
@@ -368,6 +396,18 @@ function ReplacementEditor({
                 options.find(
                   (option) => option.replacesOccurrenceId === nextTargetId,
                 )?.definitionId ?? "",
+              );
+              const option = options.find(
+                (item) => item.replacesOccurrenceId === nextTargetId,
+              );
+              inspect(
+                option === undefined
+                  ? undefined
+                  : {
+                      definitionId: option.definitionId,
+                      eligible: true,
+                      reasons: [],
+                    },
               );
             }}
           >
@@ -391,6 +431,13 @@ function ReplacementEditor({
             onFocus={() => {
               setPerusingTarget(false);
               setPerusedId(selectedValue || visible[0]?.definitionId || "");
+              inspect(
+                target?.candidates.find(
+                  (candidate) =>
+                    candidate.definitionId ===
+                    (selectedValue || visible[0]?.definitionId),
+                ),
+              );
             }}
             onChange={(event) => {
               const definitionId = event.currentTarget.value;
@@ -400,6 +447,7 @@ function ReplacementEditor({
               const candidate = target?.candidates.find(
                 (item) => item.definitionId === definitionId,
               );
+              inspect(candidate);
               const definition = byId.get(definitionId.toLocaleLowerCase());
               if (
                 candidate === undefined ||
@@ -448,14 +496,9 @@ function ReplacementEditor({
           </select>
         </label>
       </div>
-      <CandidateDetail
-        candidate={detailCandidate}
-        entity={
-          detailCandidate === undefined
-            ? undefined
-            : byId.get(detailCandidate.definitionId.toLocaleLowerCase())
-        }
-      />
+      {inspectCandidate === undefined ? (
+        <CandidateDetail candidate={detailCandidate} entity={detailEntity} />
+      ) : null}
     </div>
   );
 }
@@ -494,6 +537,7 @@ function ChoiceEditor({
     findOccurrence(build, provider.parentId) !== undefined;
   const selected = selectedOccurrence(choice, evaluation);
   const showAll = useContext(ShowAllChoicesContext);
+  const inspectCandidate = useContext(InspectCandidateContext);
   const [optimisticSelectedId, setOptimisticSelectedId] = useState(
     selected?.definitionId ?? "",
   );
@@ -597,6 +641,7 @@ function ChoiceEditor({
     );
     const definition = byId.get(definitionId.toLocaleLowerCase());
     if (candidate === undefined || definition === undefined) return;
+    inspectCandidate?.({ candidate, entity: definition });
     const occurrence: BuildOccurrence = {
       id: `web:${crypto.randomUUID()}`,
       identity: {
@@ -644,6 +689,12 @@ function ChoiceEditor({
                   const exact = group.options.length === 1;
                   const definitionId = group.options[0]!.candidate.definitionId;
                   setPerusedId(definitionId);
+                  const definition = byId.get(definitionId.toLocaleLowerCase());
+                  if (definition !== undefined)
+                    inspectCandidate?.({
+                      candidate: group.options[0]!.candidate,
+                      entity: definition,
+                    });
                   if (exact) selectDefinition(definitionId);
                 }}
               >
@@ -669,16 +720,23 @@ function ChoiceEditor({
                       ? optimisticSelectedId
                       : ""
                   }
-                  onFocus={() =>
-                    setPerusedId(
+                  onFocus={() => {
+                    const definitionId =
                       displayedGroup.options.find(
                         ({ candidate }) =>
                           candidate.definitionId === optimisticSelectedId,
                       )?.candidate.definitionId ??
-                        displayedGroup.options[0]?.candidate.definitionId ??
-                        "",
-                    )
-                  }
+                      displayedGroup.options[0]?.candidate.definitionId ??
+                      "";
+                    setPerusedId(definitionId);
+                    const candidate = displayedGroup.options.find(
+                      (option) =>
+                        option.candidate.definitionId === definitionId,
+                    )?.candidate;
+                    const entity = byId.get(definitionId.toLocaleLowerCase());
+                    if (candidate !== undefined && entity !== undefined)
+                      inspectCandidate?.({ candidate, entity });
+                  }}
                   onChange={(event) =>
                     selectDefinition(event.currentTarget.value)
                   }
@@ -705,11 +763,17 @@ function ChoiceEditor({
             <select
               disabled={editorDisabled}
               value={selectedValue}
-              onFocus={() =>
-                setPerusedId(
-                  selectedValue || visibleCandidates[0]?.definitionId || "",
-                )
-              }
+              onFocus={() => {
+                const definitionId =
+                  selectedValue || visibleCandidates[0]?.definitionId || "";
+                setPerusedId(definitionId);
+                const candidate = visibleCandidates.find(
+                  (item) => item.definitionId === definitionId,
+                );
+                const entity = byId.get(definitionId.toLocaleLowerCase());
+                if (candidate !== undefined && entity !== undefined)
+                  inspectCandidate?.({ candidate, entity });
+              }}
               onChange={(event) => selectDefinition(event.currentTarget.value)}
             >
               <option value="">Unresolved</option>
@@ -729,7 +793,7 @@ function ChoiceEditor({
           </label>
         )}
       </div>
-      {compact ? null : (
+      {compact || inspectCandidate !== undefined ? null : (
         <CandidateDetail
           candidate={detailCandidate}
           entity={
@@ -1163,6 +1227,7 @@ function SkillTrainingEditor({
     ]),
   );
   const showAll = useContext(ShowAllChoicesContext);
+  const inspectCandidate = useContext(InspectCandidateContext);
   const [optimisticSlots, setOptimisticSlots] = useState(evaluatedSlots);
   const choiceKey = choices.map((choice) => choice.id).join("\0");
 
@@ -1287,9 +1352,25 @@ function SkillTrainingEditor({
                   disabled={disabled}
                   key={definitionId}
                   type="button"
-                  onFocus={() => setPerusedId(definitionId)}
+                  onFocus={() => {
+                    setPerusedId(definitionId);
+                    if (definition !== undefined)
+                      inspectCandidate?.({
+                        candidate:
+                          decisions.find(({ candidate }) => candidate.eligible)
+                            ?.candidate ?? decisions[0]!.candidate,
+                        entity: definition,
+                      });
+                  }}
                   onClick={() => {
                     setPerusedId(definitionId);
+                    if (definition !== undefined)
+                      inspectCandidate?.({
+                        candidate:
+                          decisions.find(({ candidate }) => candidate.eligible)
+                            ?.candidate ?? decisions[0]!.candidate,
+                        entity: definition,
+                      });
                     if (trainedChoice !== undefined) {
                       const command = unresolveEvaluatedChoiceCommand(
                         build,
@@ -1374,16 +1455,18 @@ function SkillTrainingEditor({
             </p>
           )}
         </div>
-        <CandidateDetail
-          candidate={
-            candidateRows.find((row) => row.definitionId === perusedId)
-              ?.candidate
-          }
-          entity={
-            candidateRows.find((row) => row.definitionId === perusedId)
-              ?.definition
-          }
-        />
+        {inspectCandidate === undefined ? (
+          <CandidateDetail
+            candidate={
+              candidateRows.find((row) => row.definitionId === perusedId)
+                ?.candidate
+            }
+            entity={
+              candidateRows.find((row) => row.definitionId === perusedId)
+                ?.definition
+            }
+          />
+        ) : null}
       </div>
     </section>
   );
@@ -1412,6 +1495,7 @@ export function CharacterEditorPage({
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [selectedChoiceId, setSelectedChoiceId] = useState<string>();
   const [showAllChoices, setShowAllChoices] = useState(false);
+  const [inspectedOption, setInspectedOption] = useState<InspectedOption>();
   const [rollbackRevision, setRollbackRevision] = useState(0);
   const transaction = useRef<CharacterTransaction | undefined>(undefined);
   const saveQueue = useRef<
@@ -1592,12 +1676,24 @@ export function CharacterEditorPage({
     groupedLevelChoices.ordinary.filter(
       (choice) => !repeatedGroupByChoiceId.has(choice.id),
     ),
-  );
+  ).filter((flow) => flow.length > 1);
   const dependentFlowByChoiceId = new Map(
     dependentChoiceFlows.flatMap((flow) =>
       flow.map((choice) => [choice.id, flow] as const),
     ),
   );
+  const presentationChoices = primaryLevelChoices.filter((choice) => {
+    if (groupedLevelChoices.backgrounds.includes(choice))
+      return choice === groupedLevelChoices.backgrounds[0];
+    if (groupedLevelChoices.skillTraining.includes(choice))
+      return choice === groupedLevelChoices.skillTraining[0];
+    const repeated = repeatedGroupByChoiceId.get(choice.id);
+    if (repeated !== undefined) return choice === repeated[0];
+    const flow = dependentFlowByChoiceId.get(choice.id);
+    return flow === undefined || choice === flow[0];
+  });
+  const legacyChoiceSections =
+    groupChoicesByLegacyWorkflow(presentationChoices);
   useEffect(() => {
     if (primaryLevelChoices.some((choice) => choice.id === selectedChoiceId))
       return;
@@ -1606,6 +1702,8 @@ export function CharacterEditorPage({
         primaryLevelChoices[0]?.id,
     );
   }, [primaryLevelChoices, selectedChoiceId]);
+
+  useEffect(() => setInspectedOption(undefined), [selectedLevel]);
 
   function dispatch(command: CharacterCommand): void {
     const active = transaction.current;
@@ -1701,6 +1799,105 @@ export function CharacterEditorPage({
     levelChoices.some((choice) =>
       selectedChoiceHasWarning(choice, planningEvaluation),
     );
+
+  const renderPrimaryChoice = (choice: EvaluatedChoice) => {
+    if (planningEvaluation === undefined) return null;
+    if (groupedLevelChoices.backgrounds.includes(choice))
+      return choice === groupedLevelChoices.backgrounds[0] ? (
+        <BackgroundChoiceGroup
+          key="backgrounds"
+          choices={groupedLevelChoices.backgrounds}
+          evaluation={planningEvaluation}
+          build={build}
+          entities={entities}
+          byId={byId}
+          rollbackRevision={rollbackRevision}
+          requestedChoiceId={selectedChoiceId}
+          onDispatch={dispatch}
+        />
+      ) : null;
+    if (groupedLevelChoices.skillTraining.includes(choice))
+      return choice === groupedLevelChoices.skillTraining[0] ? (
+        <SkillTrainingEditor
+          key="skill-training"
+          choices={groupedLevelChoices.skillTraining}
+          evaluation={planningEvaluation}
+          build={build}
+          entities={entities}
+          byId={byId}
+          rollbackRevision={rollbackRevision}
+          onDispatch={dispatch}
+        />
+      ) : null;
+    const repeated = repeatedGroupByChoiceId.get(choice.id);
+    if (repeated !== undefined)
+      return choice === repeated[0] ? (
+        <RepeatedChoiceGroup
+          key={choice.id}
+          choices={repeated}
+          evaluation={planningEvaluation}
+          build={build}
+          entities={entities}
+          byId={byId}
+          rollbackRevision={rollbackRevision}
+          onDispatch={dispatch}
+        />
+      ) : null;
+    const flow = dependentFlowByChoiceId.get(choice.id);
+    if (flow !== undefined)
+      return choice === flow[0] ? (
+        <ChoiceFlowSection
+          key={choice.id}
+          choices={flow}
+          evaluation={planningEvaluation}
+          build={build}
+          entities={entities}
+          byId={byId}
+          rollbackRevision={rollbackRevision}
+          onDispatch={dispatch}
+        />
+      ) : null;
+    const warning = selectedChoiceHasWarning(choice, planningEvaluation);
+    return (
+      <section
+        aria-labelledby={`${choiceSectionId(choice.id)}-heading`}
+        className="level-choice-section"
+        id={choiceSectionId(choice.id)}
+        key={choice.id}
+        tabIndex={-1}
+      >
+        <header>
+          <div>
+            <p className="eyebrow">{choice.type}</p>
+            <h4 id={`${choiceSectionId(choice.id)}-heading`}>
+              {choiceTitle(choice)}
+            </h4>
+          </div>
+          {isUnresolvedChoice(choice) ? (
+            <span className="attention-badge">Unresolved</span>
+          ) : warning ? (
+            <span className="attention-badge">
+              <Icon name="warning" /> House rule
+            </span>
+          ) : (
+            <span className="complete-badge">
+              <Icon name="check" /> Complete
+            </span>
+          )}
+        </header>
+        <ChoiceEditor
+          choice={choice}
+          evaluation={planningEvaluation}
+          build={build}
+          entities={entities}
+          byId={byId}
+          disabled={false}
+          rollbackRevision={rollbackRevision}
+          onDispatch={dispatch}
+        />
+      </section>
+    );
+  };
 
   return (
     <main
@@ -1888,6 +2085,9 @@ export function CharacterEditorPage({
               const timelineChoices = choices.filter(
                 (choice) => !isOptionalRetrainingChoice(choice),
               );
+              const orderedTimelineChoices = groupChoicesByLegacyWorkflow(
+                timelineChoices,
+              ).flatMap(({ choices: sectionChoices }) => sectionChoices);
               const grouped = groupLevelChoices(timelineChoices);
               const repeatedGroups = groupRepeatedChoiceSlots(grouped.ordinary);
               const repeatedByChoiceId = new Map(
@@ -1905,7 +2105,7 @@ export function CharacterEditorPage({
                   flow.map((choice) => [choice.id, flow] as const),
                 ),
               );
-              const summaries = timelineChoices.flatMap((choice) => {
+              const summaries = orderedTimelineChoices.flatMap((choice) => {
                 if (grouped.backgrounds.includes(choice))
                   return choice === grouped.backgrounds[0]
                     ? [
@@ -1973,8 +2173,8 @@ export function CharacterEditorPage({
                     onClick={() => {
                       setSelectedLevel(frame.level);
                       setSelectedChoiceId(
-                        timelineChoices.find(isUnresolvedChoice)?.id ??
-                          timelineChoices[0]?.id,
+                        orderedTimelineChoices.find(isUnresolvedChoice)?.id ??
+                          orderedTimelineChoices[0]?.id,
                       );
                     }}
                   >
@@ -2120,118 +2320,43 @@ export function CharacterEditorPage({
                 </p>
               </div>
             ) : (
-              <div className="level-choice-page">
-                {primaryLevelChoices.map((choice) => {
-                  if (groupedLevelChoices.backgrounds.includes(choice))
-                    return choice === groupedLevelChoices.backgrounds[0] ? (
-                      <BackgroundChoiceGroup
-                        key="backgrounds"
-                        choices={groupedLevelChoices.backgrounds}
-                        evaluation={planningEvaluation}
-                        build={build}
-                        entities={entities}
-                        byId={byId}
-                        rollbackRevision={rollbackRevision}
-                        requestedChoiceId={selectedChoiceId}
-                        onDispatch={dispatch}
-                      />
-                    ) : null;
-                  if (groupedLevelChoices.skillTraining.includes(choice))
-                    return choice === groupedLevelChoices.skillTraining[0] ? (
-                      <SkillTrainingEditor
-                        key="skill-training"
-                        choices={groupedLevelChoices.skillTraining}
-                        evaluation={planningEvaluation}
-                        build={build}
-                        entities={entities}
-                        byId={byId}
-                        rollbackRevision={rollbackRevision}
-                        onDispatch={dispatch}
-                      />
-                    ) : null;
-                  const repeated = repeatedGroupByChoiceId.get(choice.id);
-                  if (repeated !== undefined)
-                    return choice === repeated[0] ? (
-                      <RepeatedChoiceGroup
-                        key={choice.id}
-                        choices={repeated}
-                        evaluation={planningEvaluation}
-                        build={build}
-                        entities={entities}
-                        byId={byId}
-                        rollbackRevision={rollbackRevision}
-                        onDispatch={dispatch}
-                      />
-                    ) : null;
-                  const flow = dependentFlowByChoiceId.get(choice.id);
-                  if (flow !== undefined)
-                    return choice === flow[0] ? (
-                      <ChoiceFlowSection
-                        key={choice.id}
-                        choices={flow}
-                        evaluation={planningEvaluation}
-                        build={build}
-                        entities={entities}
-                        byId={byId}
-                        rollbackRevision={rollbackRevision}
-                        onDispatch={dispatch}
-                      />
-                    ) : null;
-                  const warning = selectedChoiceHasWarning(
-                    choice,
-                    planningEvaluation,
-                  );
-                  return (
-                    <section
-                      aria-labelledby={`${choiceSectionId(choice.id)}-heading`}
-                      className="level-choice-section"
-                      id={choiceSectionId(choice.id)}
-                      key={choice.id}
-                      tabIndex={-1}
-                    >
-                      <header>
-                        <div>
-                          <p className="eyebrow">{choice.type}</p>
-                          <h4 id={`${choiceSectionId(choice.id)}-heading`}>
-                            {choiceTitle(choice)}
-                          </h4>
+              <div className="level-choice-workspace">
+                <InspectCandidateContext.Provider value={setInspectedOption}>
+                  <div className="level-choice-page">
+                    {legacyChoiceSections.map(({ section, choices }) => (
+                      <section className="legacy-choice-group" key={section}>
+                        <header>
+                          <h4>{section}</h4>
+                          <span className="choice-count">
+                            {choices.filter(isUnresolvedChoice).length === 0
+                              ? `${choices.length} ${choices.length === 1 ? "choice" : "choices"}`
+                              : `${choices.filter(isUnresolvedChoice).length} unresolved`}
+                          </span>
+                        </header>
+                        <div className="legacy-choice-list">
+                          {choices.map(renderPrimaryChoice)}
                         </div>
-                        {isUnresolvedChoice(choice) ? (
-                          <span className="attention-badge">Unresolved</span>
-                        ) : warning ? (
-                          <span className="attention-badge">
-                            <Icon name="warning" /> House rule
-                          </span>
-                        ) : (
-                          <span className="complete-badge">
-                            <Icon name="check" /> Complete
-                          </span>
-                        )}
-                      </header>
-                      <ChoiceEditor
-                        choice={choice}
+                      </section>
+                    ))}
+                    {retrainingChoices.length === 0 ? null : (
+                      <RetrainingControls
+                        choices={retrainingChoices}
                         evaluation={planningEvaluation}
                         build={build}
                         entities={entities}
                         byId={byId}
-                        disabled={false}
                         rollbackRevision={rollbackRevision}
                         onDispatch={dispatch}
                       />
-                    </section>
-                  );
-                })}
-                {retrainingChoices.length === 0 ? null : (
-                  <RetrainingControls
-                    choices={retrainingChoices}
-                    evaluation={planningEvaluation}
-                    build={build}
-                    entities={entities}
-                    byId={byId}
-                    rollbackRevision={rollbackRevision}
-                    onDispatch={dispatch}
+                    )}
+                  </div>
+                </InspectCandidateContext.Provider>
+                <div className="shared-choice-detail">
+                  <CandidateDetail
+                    candidate={inspectedOption?.candidate}
+                    entity={inspectedOption?.entity}
                   />
-                )}
+                </div>
               </div>
             )}
           </ShowAllChoicesContext.Provider>
