@@ -422,7 +422,11 @@ function combatStatComponents(
     if (normalized === suffix) return true;
     if (normalized.endsWith(`,${suffix}`)) {
       const qualifier = normalized.slice(0, -suffix.length - 1);
-      return equipment.tags.includes(qualifier);
+      return (
+        equipment.tags.includes(qualifier) ||
+        (equipment.equipped &&
+          (qualifier === "two-weapon" || qualifier === "two-melee-weapon"))
+      );
     }
     if (
       [...equipment.tags, ...powerTags].some(
@@ -758,8 +762,15 @@ export function evaluatePowers(input: {
       const availableAbilities = abilityNames.filter((ability) =>
         new RegExp(`\\b${ability}\\b`, "i").test(attackLeft),
       );
+      const explicitAbilityChoice = abilityNames.find((ability) =>
+        input.activeDefinitionIds.some((definitionId) => {
+          const choice = byId.get(key(definitionId));
+          return key(choice?.name ?? "") === key(`${power.name} ${ability}`);
+        }),
+      );
       let attackStat =
-        availableAbilities.length > 0
+        explicitAbilityChoice ??
+        (availableAbilities.length > 0
           ? availableAbilities.reduce((best, candidate) =>
               numericStat(input.stats, `${candidate} modifier`) >
               numericStat(input.stats, `${best} modifier`)
@@ -768,7 +779,7 @@ export function evaluatePowers(input: {
             )
           : /primary ability/i.test(attackLeft)
             ? highestAbility(input.stats)
-            : "Unknown";
+            : "Unknown");
       if (
         weaponPower &&
         /^ranged\b/i.test(attackType ?? "") &&

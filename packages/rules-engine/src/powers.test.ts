@@ -134,6 +134,7 @@ describe("power evaluation", () => {
       stats: {
         "Strength modifier": stat("Strength modifier", 4),
         "two-melee-weapon:damage": stat("two-melee-weapon:damage", 1),
+        "two-weapon,weapon:damage": stat("two-weapon,weapon:damage", 1),
       },
       overlays: [],
       entities: [
@@ -151,7 +152,7 @@ describe("power evaluation", () => {
       power?.variants.find((variant) => variant.equipmentName === equipmentName)
         ?.damage;
 
-    expect(damage("Equipped Sword")).toBe("1d8+5");
+    expect(damage("Equipped Sword")).toBe("1d8+6");
     expect(damage("Carried Dagger")).toBe("1d4+4");
   });
 
@@ -600,6 +601,33 @@ describe("power evaluation", () => {
       attackStat: "Wisdom",
       attackBonus: 10,
       damage: "2d8+6",
+    });
+  });
+
+  it("honors a serialized named ability choice for a multi-ability power", () => {
+    const [power] = evaluatePowers({
+      level: 15,
+      activeDefinitionIds: ["POWER", "WISDOM_CHOICE"],
+      inventory: [],
+      stats: {
+        "Intelligence modifier": stat("Intelligence modifier", 5),
+        "Wisdom modifier": stat("Wisdom modifier", 3),
+      },
+      overlays: [],
+      entities: [
+        entity("POWER", "Synthetic Flame", "Power", {
+          "Attack Type": "Ranged 10",
+          Attack:
+            "Intelligence +4 vs. Reflex, Wisdom +4 vs. Reflex, or Charisma +4 vs. Reflex\nIncrease to +6 bonus at 11th level and +8 bonus at 21st level.",
+          Hit: "The target grants combat advantage.",
+        }),
+        entity("WISDOM_CHOICE", "Synthetic Flame Wisdom", "Racial Trait", {}),
+      ],
+    });
+
+    expect(power?.variants[0]).toMatchObject({
+      attackStat: "Wisdom",
+      attackBonus: 14,
     });
   });
 

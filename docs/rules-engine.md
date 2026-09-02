@@ -77,7 +77,7 @@ relaxing assertions to make a percentage pass.
 
 The initial nine-character bundled-sample baseline was 494/509 comparable
 numeric stat aliases and 219/371 cached power attack/damage fields. The current
-checkpoint is 513/514 and 300/371 after projecting legacy alternates, suppressing
+checkpoint is 513/514 and 323/371 after projecting legacy alternates, suppressing
 duplicate serialized grants, recognizing corpus equipment groups/implements,
 consuming category-specific combat stats, and broadening ordinary power
 semantics. The latest audit corrected two direct legacy-engine differences:

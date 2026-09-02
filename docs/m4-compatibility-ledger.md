@@ -56,7 +56,7 @@ statistics, attacks, power variants, equipment, advancement, and retraining.
 ## Historical diagnostic baseline
 
 Against the supplied later content pack, the nine bundled legacy heroes match
-513/514 comparable numeric aliases and 300/371 cached attack/damage fields. Run:
+513/514 comparable numeric aliases and 323/371 cached attack/damage fields. Run:
 
 ```sh
 pnpm evaluate:matrix tmp/content/full-local.4ecp
@@ -115,14 +115,12 @@ affecting carried alternate weapon variants (nine power fields).
 
 ### Exhaustive residual accounting (2026-09-01)
 
-The current matrix has one numeric and 71 power-field differences. This is an
+The current matrix has one numeric and 48 power-field differences. This is an
 exhaustive partition; counts are fields rather than powers or variants.
 
 | Family                        |    Fields | Classification                           | Evidence and boundary                                                                                                                                                                                                                                                                   |
 | ----------------------------- | --------: | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Will defense tier bonus       | 1 numeric | Cached component contradicts exact rules | The cached level-20 record contains Iron Will `+2`; the exact feat has base `+2` plus a Paragon-tier `+1`. Native typed stacking consumes both, so current 30 is supported and cached 29 is not forced.                                                                                 |
-| Two named equipped blades     |  22 power | Unresolved item/native gap               | Cutting Steps is correctly confined to the equipped melee pair, following its exact conditional stat and native `WeaponBase`/off-hand checks. Both named variants remain one damage short, but no surviving source identifies that point.                                               |
-| Darkfire                      |   1 power | Unresolved native/definition gap         | The cache attack is one higher than ability, half-level, and the exact power attack bonus; no cached contribution identifies the extra point.                                                                                                                                           |
+| Will defense tier bonus       | 1 numeric | Cached component contradicts exact rules | The cached level-15 record contains Iron Will `+2`; the exact feat has base `+2` plus a Paragon-tier `+1`. The record owns the Paragon tier and acquired the feat at level 14. Native typed stacking consumes both, so current 30 is supported and cached 29 is not forced.             |
 | Heavy-blade expertise         |  12 power | Cached component contradicts exact rules | Every cache line lists expertise `+1`; the exact feat adds another `+1` in Paragon tier and the record is level 13.                                                                                                                                                                     |
 | Curse of the Bloody Fangs     |   2 power | Proven definition difference             | Same ID: cache Hit is `2d10`; exact-pack Hit is `3d10 + Charisma modifier`.                                                                                                                                                                                                             |
 | Freezing Cloud                |   2 power | Proven definition difference             | Same ID: cache Hit is `1d8`; exact-pack Hit is `2d8 + Intelligence modifier`.                                                                                                                                                                                                           |
@@ -133,8 +131,19 @@ exhaustive partition; counts are fields rather than powers or variants.
 The definition-difference classification requires matching IDs and literal
 cached-versus-exact Attack/Hit/Effect fields; it is not a general content-drift
 assumption. The tier cases are supported by cached component text that conflicts
-with active level-gated rules. The remaining 45 power fields stay open because
+with active level-gated rules. The remaining 22 power fields stay open because
 neither proof applies.
+
+The 22 former named-blade residuals are now closed rather than reclassified.
+Their cached `DamageComponents` explicitly name `+1 bonus - Two-Weapon
+Fighting`, the active exact feat encodes `two-weapon,weapon:damage`, and the
+native weapon path evaluates the actual equipped pair. Recognizing that
+qualified stat as an equipped-loadout predicate restores the contribution to
+both equipped blades without leaking it to carried dagger or unarmed variants.
+Darkfire is also closed by its serialized nested `Darkfire Wisdom` choice. The
+cached components identify Wisdom, the exact choice record supports the same
+power ID, and the native select is a persistent ability choice; evaluation now
+honors that named choice instead of taking the first ability alternative.
 
 ## M4 exit-criterion mapping
 
