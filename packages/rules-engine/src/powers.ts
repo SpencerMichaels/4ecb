@@ -815,6 +815,17 @@ export function evaluatePowers(input: {
           attackType,
         ),
       );
+      if (implementPower && equipment.weaponDefinition)
+        attackComponents.push(
+          ...combatStatComponents(
+            input.stats,
+            equipment,
+            power.name,
+            "weapon",
+            "attack",
+            attackType,
+          ),
+        );
       const powerAttackBonus = Number(attackLeft.match(/\+\s*(\d+)/)?.[1] ?? 0);
       if (powerAttackBonus !== 0)
         attackComponents.push({

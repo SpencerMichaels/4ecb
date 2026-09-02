@@ -626,6 +626,26 @@ export function evaluateCharacter(
       providerId: "base-abilities",
       providerName: "Base ability score",
     });
+  for (const occurrence of occurrences) {
+    if (index.get(occurrence.definitionId) !== undefined) continue;
+    const target = occurrence.definitionId.match(
+      /^ID_INTERNAL_FEAT_FOCUSED_EXPERTISE_\((.+)\)$/i,
+    )?.[1];
+    if (target === undefined) continue;
+    const weaponName = target.replaceAll("_", " ");
+    const weapon = index.find(weaponName, "Weapon");
+    if (weapon === undefined) continue;
+    const group = field(weapon, "Group");
+    if (group === undefined) continue;
+    stats.add({
+      id: `${occurrence.id}:legacy-focused-expertise`,
+      stat: `${group} group,weapon:attack`,
+      value: String(1 + Math.floor((Math.max(1, input.level) - 1) / 10)),
+      bonusType: "Feat",
+      providerId: occurrence.id,
+      providerName: `Focused Expertise (${weapon.name})`,
+    });
+  }
   const choices: EvaluatedChoice[] = [];
   const overlays: FieldOverlay[] = [];
   const suggestions: EvaluatedCharacter["suggestions"][number][] = [];

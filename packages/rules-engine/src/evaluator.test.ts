@@ -67,6 +67,38 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it("recovers a missing generated Focused Expertise target", () => {
+    const evaluated = evaluateCharacter(
+      {
+        level: 15,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "expertise",
+            definitionId:
+              "ID_INTERNAL_FEAT_FOCUSED_EXPERTISE_(SYNTHETIC_STRIKE)",
+            acquiredLevel: 4,
+            kind: "choice",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "Root", "Test"),
+        entity("WEAPON", "Synthetic Strike", "Weapon", {
+          specifics: { Group: "Unarmed" },
+        }),
+      ],
+    );
+
+    expect(evaluated.stats["Unarmed group,weapon:attack"]?.value).toBe(2);
+    expect(
+      evaluated.stats["Unarmed group,weapon:attack"]?.contributions[0]
+        ?.providerName,
+    ).toBe("Focused Expertise (Synthetic Strike)");
+  });
+
   it("materializes native race and background skill bonuses from specifics", () => {
     const content = [
       entity("ROOT", "Root", "Test", {

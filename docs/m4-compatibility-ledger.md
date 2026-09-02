@@ -56,7 +56,7 @@ statistics, attacks, power variants, equipment, advancement, and retraining.
 ## Historical diagnostic baseline
 
 Against the supplied later content pack, the nine bundled legacy heroes match
-513/514 comparable numeric aliases and 323/371 cached attack/damage fields. Run:
+513/514 comparable numeric aliases and 331/371 cached attack/damage fields. Run:
 
 ```sh
 pnpm evaluate:matrix tmp/content/full-local.4ecp
@@ -115,24 +115,26 @@ affecting carried alternate weapon variants (nine power fields).
 
 ### Exhaustive residual accounting (2026-09-01)
 
-The current matrix has one numeric and 48 power-field differences. This is an
+The current matrix has one numeric and 40 power-field differences. This is an
 exhaustive partition; counts are fields rather than powers or variants.
 
-| Family                        |    Fields | Classification                           | Evidence and boundary                                                                                                                                                                                                                                                                   |
-| ----------------------------- | --------: | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Will defense tier bonus       | 1 numeric | Cached component contradicts exact rules | The cached level-15 record contains Iron Will `+2`; the exact feat has base `+2` plus a Paragon-tier `+1`. The record owns the Paragon tier and acquired the feat at level 14. Native typed stacking consumes both, so current 30 is supported and cached 29 is not forced.             |
-| Heavy-blade expertise         |  12 power | Cached component contradicts exact rules | Every cache line lists expertise `+1`; the exact feat adds another `+1` in Paragon tier and the record is level 13.                                                                                                                                                                     |
-| Curse of the Bloody Fangs     |   2 power | Proven definition difference             | Same ID: cache Hit is `2d10`; exact-pack Hit is `3d10 + Charisma modifier`.                                                                                                                                                                                                             |
-| Freezing Cloud                |   2 power | Proven definition difference             | Same ID: cache Hit is `1d8`; exact-pack Hit is `2d8 + Intelligence modifier`.                                                                                                                                                                                                           |
-| Magic Missile, two records    |   8 power | Proven definition difference             | Both caches contain attack rolls and `2d4 + Intelligence`; the exact definition has no Attack/Hit and instead uses a fixed Effect (`2/3/5 + Intelligence` by tier). Four attack/damage fields per record remain diagnostic.                                                             |
-| Fireball                      |   2 power | Proven definition difference             | Same ID: cache Hit is `3d6`; exact-pack Hit is `4d6 + Intelligence modifier`.                                                                                                                                                                                                           |
-| Monk attacks and basic attack |  22 power | Unresolved native/loadout gap            | The fields mix attack offsets and changed dice. Native calculation traverses `WeaponBase`, weapon-as-implement choice, and selected hand state; the serialized record does not preserve enough choice provenance to prove one shared cause, so the fields remain individually reported. |
+| Family                     |    Fields | Classification                           | Evidence and boundary                                                                                                                                                                                                                                                                                             |
+| -------------------------- | --------: | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Will defense tier bonus    | 1 numeric | Cached component contradicts exact rules | The cached level-15 record contains Iron Will `+2`; the exact feat has base `+2` plus a Paragon-tier `+1`. The record owns the Paragon tier and acquired the feat at level 14. Native typed stacking consumes both, so current 30 is supported and cached 29 is not forced.                                       |
+| Heavy-blade expertise      |  12 power | Cached component contradicts exact rules | Every cache line lists expertise `+1`; the exact feat adds another `+1` in Paragon tier and the record is level 13.                                                                                                                                                                                               |
+| Curse of the Bloody Fangs  |   2 power | Proven definition difference             | Same ID: cache Hit is `2d10`; exact-pack Hit is `3d10 + Charisma modifier`.                                                                                                                                                                                                                                       |
+| Freezing Cloud             |   2 power | Proven definition difference             | Same ID: cache Hit is `1d8`; exact-pack Hit is `2d8 + Intelligence modifier`.                                                                                                                                                                                                                                     |
+| Magic Missile, two records |   8 power | Proven definition difference             | Both caches contain attack rolls and `2d4 + Intelligence`; the exact definition has no Attack/Hit and instead uses a fixed Effect (`2/3/5 + Intelligence` by tier). Four attack/damage fields per record remain diagnostic.                                                                                       |
+| Fireball                   |   2 power | Proven definition difference             | Same ID: cache Hit is `3d6`; exact-pack Hit is `4d6 + Intelligence modifier`.                                                                                                                                                                                                                                     |
+| Monk AC-target attacks     |   2 power | Proven native/profile difference         | Both cached attacks alone add the monk unarmed strike's `+3` proficiency. The exact Monk implement text says weapon proficiency and other weapon characteristics are irrelevant when the weapon is used as an implement; the other eight implement attacks omit proficiency in both cache and current evaluation. |
+| Monk power damage dice     |  12 power | Proven definition differences            | Seven same-ID powers account for 12 equipped/unarmed damage fields. Cache versus exact Hit dice are respectively `1d8`/`1d10`, `1d6`/`1d8` (two powers), `1d10`/`3d8`, `1d10`/`2d10`, `3d8`/`3d10`, and `3d6`/`4d6`; flat components already agree.                                                               |
 
 The definition-difference classification requires matching IDs and literal
 cached-versus-exact Attack/Hit/Effect fields; it is not a general content-drift
 assumption. The tier cases are supported by cached component text that conflicts
-with active level-gated rules. The remaining 22 power fields stay open because
-neither proof applies.
+with active level-gated rules. No genuinely unresolved field remains in this
+matrix; all 40 power differences and the one numeric difference have an explicit
+definition/tier/native-profile explanation and remain visible diagnostics.
 
 The 22 former named-blade residuals are now closed rather than reclassified.
 Their cached `DamageComponents` explicitly name `+1 bonus - Two-Weapon
@@ -144,6 +146,15 @@ Darkfire is also closed by its serialized nested `Darkfire Wisdom` choice. The
 cached components identify Wisdom, the exact choice record supports the same
 power ID, and the native select is a persistent ability choice; evaluation now
 honors that named choice instead of taking the first ability alternative.
+
+The final monk audit recovered eight attack fields from one shared path. The
+serialized components name `Focused Expertise (Monk Unarmed Strike) +2`; its
+generated internal definition is absent from the exact pack, but its stable ID
+encodes the target and the exact weapon record supplies the Unarmed group.
+Recovering that tier-scaled generated stat and applying weapon-qualified attack
+bonuses when a monk weapon is used as an implement closes the basic attack and
+seven implement attacks. The two AC-target implement attacks and 12 dice fields
+are the proven differences recorded in the table rather than evaluator gaps.
 
 ## M4 exit-criterion mapping
 
