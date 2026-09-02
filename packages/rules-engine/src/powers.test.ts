@@ -55,6 +55,94 @@ function combatStat(name: string, value: number): EvaluatedStat {
 }
 
 describe("power evaluation", () => {
+  it("uses recovered implement aliases and variant-specific range channels", () => {
+    const powers = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["FLEX", "PRIMAL"],
+      inventory: [
+        {
+          id: "blade",
+          definitionIds: ["BLADE"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+        {
+          id: "bow",
+          definitionIds: ["BOW"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+        {
+          id: "totem",
+          definitionIds: ["TOTEM"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 4),
+        "Wisdom modifier": stat("Wisdom modifier", 4),
+        "melee:damage": combatStat("melee:damage", 2),
+        "ranged:damage": combatStat("ranged:damage", 3),
+        "totem implement,implement:attack": combatStat(
+          "totem implement,implement:attack",
+          1,
+        ),
+      },
+      overlays: [],
+      entities: [
+        entity("FLEX", "Flexible Strike", "Power", {
+          Keywords: "Weapon",
+          "Attack Type": "Melee or Ranged weapon",
+          Attack: "Strength vs. AC",
+          Hit: "1[W] + Strength modifier damage.",
+        }),
+        entity("PRIMAL", "Primal Burst", "Power", {
+          Keywords: "Implement, Primal",
+          "Attack Type": "Area burst 1 within 10 squares",
+          Attack: "Wisdom vs. Will",
+          Hit: "1d6 + Wisdom modifier damage.",
+        }),
+        entity("BLADE", "Synthetic Blade", "Weapon", {
+          Damage: "1d8",
+          "Proficiency Bonus": "2",
+          "Weapon Category": "Military Melee",
+        }),
+        entity("BOW", "Synthetic Bow", "Weapon", {
+          Damage: "1d10",
+          "Proficiency Bonus": "2",
+          "Weapon Category": "Military Ranged",
+        }),
+        entity("TOTEM", "Synthetic Totem +1", "Magic Item", {
+          "Magic Item Type": "Totem",
+          Enhancement: "+1 attack rolls and damage rolls",
+        }),
+      ],
+    });
+
+    const flexible = powers.find(({ definitionId }) => definitionId === "FLEX");
+    expect(
+      flexible?.variants.find(
+        ({ equipmentName }) => equipmentName === "Synthetic Blade",
+      )?.damage,
+    ).toBe("1d8+6");
+    expect(
+      flexible?.variants.find(
+        ({ equipmentName }) => equipmentName === "Synthetic Bow",
+      )?.damage,
+    ).toBe("1d10+7");
+    expect(
+      powers
+        .find(({ definitionId }) => definitionId === "PRIMAL")
+        ?.variants.find(
+          ({ equipmentName }) => equipmentName === "Synthetic Totem +1",
+        )?.attackBonus,
+    ).toBe(6);
+  });
+
   it("evaluates exact synthetic forms of three recovered level-one powers", () => {
     const powers = evaluatePowers({
       level: 1,

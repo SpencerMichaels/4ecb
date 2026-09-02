@@ -7,6 +7,7 @@ import { decodeContentPack } from "@4ecb/content-pack";
 import {
   importDnd4e,
   legacyEquipmentIdentityMatches,
+  legacyPowerValueMatches,
 } from "@4ecb/legacy-dnd4e";
 import {
   evaluateCharacter,
@@ -110,7 +111,10 @@ async function main(): Promise<void> {
             : variant?.damageComponents,
         conditionalDamage: variant?.conditionalDamage ?? [],
         unsupported: power?.unsupported ?? [],
-        matches: comparison.expected === comparison.actual,
+        matches: legacyPowerValueMatches(
+          comparison.expected,
+          comparison.actual,
+        ),
       }));
     });
   });

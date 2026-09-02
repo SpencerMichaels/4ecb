@@ -396,6 +396,25 @@ export function legacyEquipmentIdentityMatches(
   );
 }
 
+function canonicalLegacyPowerValue(value: string): string {
+  return value
+    .replace(/\s+/g, "")
+    .split("+")
+    .filter((part, index) => index === 0 || !/^0(?:d\d+)?$/i.test(part))
+    .join("+")
+    .toLocaleLowerCase();
+}
+
+export function legacyPowerValueMatches(
+  expected: string,
+  actual: string | undefined,
+): boolean {
+  return (
+    actual !== undefined &&
+    canonicalLegacyPowerValue(expected) === canonicalLegacyPowerValue(actual)
+  );
+}
+
 function powersFrom(sheet: XmlNode | undefined): LegacyPowerSnapshot[] {
   const powerStats = first(sheet, "PowerStats");
   const tally = first(sheet, "RulesElementTally");

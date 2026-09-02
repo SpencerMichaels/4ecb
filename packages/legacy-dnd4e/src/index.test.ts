@@ -16,6 +16,7 @@ import {
   exportEditedDnd4e,
   importDnd4e,
   legacyEquipmentIdentityMatches,
+  legacyPowerValueMatches,
 } from ".";
 
 function entity(id: string, name: string, type: string): ContentEntity {
@@ -36,6 +37,12 @@ function entity(id: string, name: string, type: string): ContentEntity {
 }
 
 describe("legacy .dnd4e import", () => {
+  it("normalizes additive zero terms in cached power diagnostics", () => {
+    expect(legacyPowerValueMatches("1d4+0", "1d4")).toBe(true);
+    expect(legacyPowerValueMatches("1d4 + 0", "1d4")).toBe(true);
+    expect(legacyPowerValueMatches("1d4+1", "1d4")).toBe(false);
+  });
+
   it("matches cached weapon variants by definitions before display order", () => {
     const xml = `<?xml version="1.0"?><D20Character><CharacterSheet><PowerStats><Power name="Synthetic"><Weapon name="Dwarven Thrower Warhammer +2"><RulesElement name="Warhammer" type="Weapon" internal-id="WEAPON"/><RulesElement name="Dwarven Thrower +2" type="Magic Item" internal-id="MAGIC"/><AttackBonus>8</AttackBonus></Weapon></Power></PowerStats></CharacterSheet><Level/></D20Character>`;
     const [weapon] = importDnd4e(xml).snapshot.powers[0]?.weapons ?? [];

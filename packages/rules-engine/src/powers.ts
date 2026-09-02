@@ -67,6 +67,7 @@ interface Loadout {
   readonly pairedEquipmentName?: string;
   readonly tags: readonly string[];
   readonly properties: readonly string[];
+  readonly weaponCategory?: string;
 }
 
 function key(value: string): string {
@@ -183,6 +184,9 @@ function loadouts(
               `${field(weapon, "Group") ?? ""} group`,
             ]),
         magicType ?? "",
+        ...(implement === undefined || !magicType
+          ? []
+          : [`${magicType} implement`]),
       ]
         .map(key)
         .filter(Boolean),
@@ -190,6 +194,9 @@ function loadouts(
         .split(",")
         .map(key)
         .filter(Boolean),
+      ...(weapon === undefined
+        ? {}
+        : { weaponCategory: key(field(weapon, "Weapon Category") ?? "") }),
     });
   }
   result.push({
@@ -205,6 +212,7 @@ function loadouts(
     equipped: false,
     tags: ["unarmed"],
     properties: [],
+    weaponCategory: "melee",
   });
   const mainHandName = Object.entries(textStrings).find(
     ([name]) => key(name) === "_internal_mainhandweapon",
@@ -388,12 +396,20 @@ function combatStatComponents(
   attackType: string | undefined,
 ): PowerComponent[] {
   const suffix = `${kind}:${fieldName}`;
+  const attackTypeTags = (() => {
+    const normalized = key(attackType ?? "");
+    if (/melee\s+or\s+ranged/.test(normalized)) {
+      if (equipment.weaponCategory?.includes("ranged")) return ["ranged"];
+      if (equipment.weaponCategory?.includes("melee")) return ["melee"];
+    }
+    return ["melee", "ranged", "area", "close"].filter((candidate) =>
+      new RegExp(`\\b${candidate}\\b`).test(normalized),
+    );
+  })();
   const powerTags = [
     key(powerName),
     key(powerName).replace(/\s+attack$/, ""),
-    ...(attackType === undefined
-      ? []
-      : [key(attackType).split(/\s+/)[0] ?? ""]),
+    ...attackTypeTags,
   ].filter(Boolean);
   const relevant = Object.entries(stats).filter(([name]) => {
     const normalized = key(name);
