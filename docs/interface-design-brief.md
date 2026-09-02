@@ -45,12 +45,14 @@ application's protected visual assets.
   so a player can plan many levels ahead, but they are inactive in current
   calculations and compatibility exports. Lowering the planning horizon hides
   rather than deletes preserved future choices; raising it restores them.
-- Show valid choices by default. Each selection surface provides a temporary
-  control that reveals all options, including illegal or currently unavailable
-  choices, with the objective reason for their status. Do not persist this mode
-  on the character or automatically apply it to later choice lists. Selecting an
-  illegal option remains an intentional user action rather than an accidental
-  consequence of changing the filter.
+- Show candidates belonging to the choice category and currently legal by
+  default. Each selection surface provides a temporary control that also
+  reveals same-category options blocked by prerequisites or another objective
+  rules limitation, with the reason for their status. Records that do not match
+  the choice category are never browsing options for that slot. Do not persist
+  this mode on the character or automatically apply it to later choice lists.
+  Selecting an illegal option remains an intentional user action rather than an
+  accidental consequence of changing the filter.
 - Do not label choices as popular or recommended. The application may present
   objective legality, prerequisites, source, and mechanical consequences; it
   must not invent subjective build advice.
@@ -62,6 +64,11 @@ application's protected visual assets.
   count.
 - Keep important evaluation, save, and validation feedback immediate and
   comprehensible. Interaction responsiveness is a product requirement.
+- Selecting an option updates the visible control and its detail pane
+  immediately; IndexedDB persistence and rules reevaluation continue in the
+  background. Every information-bearing selection surface keeps the focused or
+  selected option's source, prerequisites, description, and mechanical fields
+  in an adjacent detail pane.
 - Autosave every committed character change. Show concise saving, saved, and
   failure states without interrupting ordinary work, retain transactional undo
   and redo, and never imply persistence before the storage commit succeeds.

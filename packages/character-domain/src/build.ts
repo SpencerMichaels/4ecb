@@ -7,6 +7,11 @@ export interface BuildElementIdentity {
   readonly url?: string;
 }
 
+export interface BuildInventoryElement extends BuildElementIdentity {
+  /** Saved choices nested under this item definition in legacy loot XML. */
+  readonly children?: readonly BuildOccurrence[];
+}
+
 export interface BuildOccurrence {
   /** Stable within the character. Imported charelem tokens are never treated as global IDs. */
   readonly id: string;
@@ -28,7 +33,7 @@ export interface BuildInventoryEntry {
   readonly acquiredLevel: number;
   readonly quantity: number;
   readonly equippedQuantity: number;
-  readonly elements: readonly BuildElementIdentity[];
+  readonly elements: readonly BuildInventoryElement[];
   readonly name?: string;
   readonly showPowerCard?: boolean;
   readonly overrides: Readonly<Record<string, string>>;

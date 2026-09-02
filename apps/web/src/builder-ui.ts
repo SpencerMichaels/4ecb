@@ -1,6 +1,10 @@
 import type { CharacterBuild, CharacterCommand } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import type { EvaluatedCharacter, EvaluatedChoice } from "@4ecb/rules-engine";
+import type {
+  CandidateDecision,
+  EvaluatedCharacter,
+  EvaluatedChoice,
+} from "@4ecb/rules-engine";
 
 import { createLevelFrame } from "./new-character";
 
@@ -13,7 +17,13 @@ export function choicesAtLevel(
   evaluation: EvaluatedCharacter | undefined,
 ): readonly EvaluatedChoice[] {
   return (
-    evaluation?.choices.filter((choice) => choiceLevel(choice) === level) ?? []
+    evaluation?.choices.filter(
+      (choice) =>
+        choiceLevel(choice) === level &&
+        evaluation.occurrences.find(
+          (occurrence) => occurrence.id === choice.providerOccurrenceId,
+        )?.kind !== "inventory",
+    ) ?? []
   );
 }
 
@@ -55,4 +65,17 @@ export function candidateReason(reasons: readonly string[]): string {
     self: "A feature cannot select itself",
   };
   return reasons.map((reason) => labels[reason] ?? reason).join("; ");
+}
+
+export function isCandidateVisible(
+  candidate: CandidateDecision,
+  showAll: boolean,
+  selectedDefinitionId?: string,
+): boolean {
+  if (candidate.reasons.includes("category")) return false;
+  return (
+    showAll ||
+    candidate.eligible ||
+    candidate.definitionId === selectedDefinitionId
+  );
 }

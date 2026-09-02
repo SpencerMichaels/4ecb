@@ -15,6 +15,7 @@ import {
   commandForEvaluatedChoice,
   findBuildChildIndex,
   projectBuildForEvaluation,
+  type CandidateDecision,
   type EvaluatedCharacter,
   type EvaluatedChoice,
 } from "@4ecb/rules-engine";
@@ -22,10 +23,12 @@ import {
 import {
   candidateReason,
   choicesAtLevel,
+  isCandidateVisible,
   isUnresolvedChoice,
   planningHorizonCommand,
 } from "./builder-ui";
 import { Icon } from "./Icon";
+import { OptimisticBuildSaveQueue } from "./optimistic-save";
 import { RulesWorkerClient } from "./rules-client";
 
 const characters = new CharacterRepository();
@@ -149,6 +152,90 @@ function choiceHasWarning(
   );
 }
 
+function CandidateDetail({
+  candidate,
+  entity,
+}: {
+  readonly candidate: CandidateDecision | undefined;
+  readonly entity: ContentEntity | undefined;
+}) {
+  if (candidate === undefined || entity === undefined)
+    return (
+      <aside className="candidate-detail candidate-detail-empty">
+        <p className="eyebrow">Option details</p>
+        <h4>Choose an option to inspect it</h4>
+        <p>
+          Move through the selection control with the keyboard or pointer to
+          review normalized content before choosing.
+        </p>
+      </aside>
+    );
+
+  const headingId = `candidate-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
+  return (
+    <aside
+      aria-labelledby={headingId}
+      className="candidate-detail"
+      tabIndex={0}
+    >
+      <header>
+        <div>
+          <p className="eyebrow">{entity.type}</p>
+          <h4 id={headingId}>{entity.name}</h4>
+        </div>
+        <span
+          className={
+            candidate.eligible ? "candidate-legal" : "candidate-unavailable"
+          }
+        >
+          {candidate.eligible ? "Rules-legal" : "Unavailable"}
+        </span>
+      </header>
+      {candidate.eligible ? null : (
+        <p className="candidate-reason">{candidateReason(candidate.reasons)}</p>
+      )}
+      <dl className="candidate-facts">
+        <div>
+          <dt>Source</dt>
+          <dd>{entity.source || "Not specified"}</dd>
+        </div>
+        <div>
+          <dt>Categories</dt>
+          <dd>{entity.categories.join(", ") || "None"}</dd>
+        </div>
+      </dl>
+      {entity.prerequisites === undefined ? null : (
+        <section>
+          <h5>Prerequisites</h5>
+          <p className="preserve-lines">{entity.prerequisites}</p>
+        </section>
+      )}
+      {entity.flavor === undefined ? null : (
+        <p className="candidate-flavor">{entity.flavor}</p>
+      )}
+      {entity.description.length === 0 ? null : (
+        <section>
+          <h5>Description</h5>
+          <p className="preserve-lines">{entity.description}</p>
+        </section>
+      )}
+      {entity.specifics.length === 0 ? null : (
+        <section>
+          <h5>Details</h5>
+          <dl className="candidate-fields">
+            {entity.specifics.map((field) => (
+              <div key={`${field.ordinal}-${field.name}`}>
+                <dt>{field.name || "Detail"}</dt>
+                <dd className="preserve-lines">{field.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+    </aside>
+  );
+}
+
 function ReplacementEditor({
   choice,
   evaluation,
@@ -156,6 +243,7 @@ function ReplacementEditor({
   providerEntity,
   byId,
   disabled,
+  rollbackRevision,
   onDispatch,
 }: {
   readonly choice: EvaluatedChoice;
@@ -164,6 +252,7 @@ function ReplacementEditor({
   readonly providerEntity: ContentEntity | undefined;
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly disabled: boolean;
+  readonly rollbackRevision: number;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
   const options = choice.replacementOptions ?? [];
@@ -172,105 +261,198 @@ function ReplacementEditor({
     selected?.replacesId ?? options[0]?.replacesOccurrenceId ?? "",
   );
   const [showAll, setShowAll] = useState(false);
+  const [optimisticSelectedId, setOptimisticSelectedId] = useState(
+    selected?.definitionId ?? "",
+  );
+  const [perusedId, setPerusedId] = useState(selected?.definitionId ?? "");
+  const [perusingTarget, setPerusingTarget] = useState(false);
   const target = options.find(
     (option) => option.replacesOccurrenceId === targetId,
   );
-  const visible = (target?.candidates ?? []).filter(
-    (candidate) =>
-      showAll ||
-      candidate.eligible ||
-      candidate.definitionId === selected?.definitionId,
+  const visible = (target?.candidates ?? []).filter((candidate) =>
+    isCandidateVisible(candidate, showAll, selected?.definitionId),
   );
+  const selectedValue = visible.some(
+    (candidate) => candidate.definitionId === optimisticSelectedId,
+  )
+    ? optimisticSelectedId
+    : "";
+  const targetOption = options.find(
+    (option) => option.replacesOccurrenceId === targetId,
+  );
+  const detailCandidate = perusingTarget
+    ? targetOption === undefined
+      ? undefined
+      : {
+          definitionId: targetOption.definitionId,
+          eligible: true,
+          reasons: [],
+        }
+    : (target?.candidates ?? []).find(
+        (candidate) =>
+          candidate.definitionId === perusedId &&
+          isCandidateVisible(candidate, showAll, selected?.definitionId),
+      );
+
+  useEffect(() => {
+    setOptimisticSelectedId("");
+    setPerusedId("");
+    setPerusingTarget(false);
+  }, [rollbackRevision]);
+
+  useEffect(() => {
+    setTargetId(selected?.replacesId ?? options[0]?.replacesOccurrenceId ?? "");
+    setOptimisticSelectedId(selected?.definitionId ?? "");
+    setPerusedId(selected?.definitionId ?? "");
+    setPerusingTarget(false);
+  }, [choice.id, evaluation, selected?.definitionId, selected?.replacesId]);
+
+  useEffect(() => {
+    if (
+      perusingTarget ||
+      visible.some((candidate) => candidate.definitionId === perusedId)
+    )
+      return;
+    setPerusedId(
+      visible.find(
+        (candidate) => candidate.definitionId === optimisticSelectedId,
+      )?.definitionId ??
+        visible[0]?.definitionId ??
+        "",
+    );
+  }, [
+    optimisticSelectedId,
+    perusedId,
+    perusingTarget,
+    showAll,
+    targetId,
+    visible,
+  ]);
 
   return (
-    <div className="choice-editor-fields">
-      <label>
-        Replace
-        <select
-          disabled={disabled}
-          value={targetId}
-          onChange={(event) => setTargetId(event.currentTarget.value)}
-        >
-          <option value="">Choose an earlier selection</option>
-          {options.map((option) => (
-            <option
-              key={option.replacesOccurrenceId}
-              value={option.replacesOccurrenceId}
-            >
-              {byId.get(option.definitionId.toLocaleLowerCase())?.name ??
-                option.definitionId}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        With
-        <select
-          disabled={disabled || target === undefined}
-          value={selected?.definitionId ?? ""}
-          onChange={(event) => {
-            const candidate = target?.candidates.find(
-              (item) => item.definitionId === event.currentTarget.value,
-            );
-            const definition = byId.get(
-              event.currentTarget.value.toLocaleLowerCase(),
-            );
-            if (
-              candidate === undefined ||
-              definition === undefined ||
-              target === undefined
-            )
-              return;
-            onDispatch({
-              kind: "retrain",
-              parentId: buildProvider.id,
-              index: findBuildChildIndex(
-                buildProvider,
-                providerEntity,
-                choice.ruleOrdinal,
-                choice.index,
-              ),
-              replacesId: target.replacesOccurrenceId,
-              replacement: {
-                id: `web:${crypto.randomUUID()}`,
-                identity: {
-                  definitionId: definition.id,
-                  name: definition.name,
-                  type: definition.type,
+    <div className="choice-selection-layout">
+      <div className="choice-editor-fields">
+        <label>
+          Replace
+          <select
+            disabled={disabled}
+            value={targetId}
+            onFocus={() => {
+              setPerusingTarget(true);
+              const option = options.find(
+                (item) => item.replacesOccurrenceId === targetId,
+              );
+              setPerusedId(option?.definitionId ?? "");
+            }}
+            onChange={(event) => {
+              const nextTargetId = event.currentTarget.value;
+              setTargetId(nextTargetId);
+              setPerusingTarget(true);
+              setPerusedId(
+                options.find(
+                  (option) => option.replacesOccurrenceId === nextTargetId,
+                )?.definitionId ?? "",
+              );
+            }}
+          >
+            <option value="">Choose an earlier selection</option>
+            {options.map((option) => (
+              <option
+                key={option.replacesOccurrenceId}
+                value={option.replacesOccurrenceId}
+              >
+                {byId.get(option.definitionId.toLocaleLowerCase())?.name ??
+                  option.definitionId}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          With
+          <select
+            disabled={disabled || target === undefined}
+            value={selectedValue}
+            onFocus={() => {
+              setPerusingTarget(false);
+              setPerusedId(selectedValue || visible[0]?.definitionId || "");
+            }}
+            onChange={(event) => {
+              const definitionId = event.currentTarget.value;
+              setPerusingTarget(false);
+              setOptimisticSelectedId(definitionId);
+              setPerusedId(definitionId);
+              const candidate = target?.candidates.find(
+                (item) => item.definitionId === definitionId,
+              );
+              const definition = byId.get(definitionId.toLocaleLowerCase());
+              if (
+                candidate === undefined ||
+                definition === undefined ||
+                target === undefined
+              )
+                return;
+              onDispatch({
+                kind: "retrain",
+                parentId: buildProvider.id,
+                index: findBuildChildIndex(
+                  buildProvider,
+                  providerEntity,
+                  choice.ruleOrdinal,
+                  choice.index,
+                ),
+                replacesId: target.replacesOccurrenceId,
+                replacement: {
+                  id: `web:${crypto.randomUUID()}`,
+                  identity: {
+                    definitionId: definition.id,
+                    name: definition.name,
+                    type: definition.type,
+                  },
+                  acquiredLevel: buildProvider.acquiredLevel,
+                  legality: candidate.eligible ? "rules-legal" : "houserule",
+                  children: [],
+                  unresolved: false,
                 },
-                acquiredLevel: buildProvider.acquiredLevel,
-                legality: candidate.eligible ? "rules-legal" : "houserule",
-                children: [],
-                unresolved: false,
-              },
-            });
-          }}
-        >
-          <option value="">Choose a replacement</option>
-          {visible.map((candidate) => (
-            <option key={candidate.definitionId} value={candidate.definitionId}>
-              {byId.get(candidate.definitionId.toLocaleLowerCase())?.name ??
-                candidate.definitionId}
-              {candidate.eligible
-                ? ""
-                : ` — unavailable: ${candidateReason(candidate.reasons)}`}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="show-all-control">
-        <input
-          checked={showAll}
-          disabled={disabled}
-          type="checkbox"
-          onChange={(event) => setShowAll(event.currentTarget.checked)}
-        />
-        Show all options for this choice
-      </label>
-      <p className="field-help">
-        Unavailable options include their objective rules reason and are saved
-        as a house-rule choice when selected.
-      </p>
+              });
+            }}
+          >
+            <option value="">Choose a replacement</option>
+            {visible.map((candidate) => (
+              <option
+                key={candidate.definitionId}
+                value={candidate.definitionId}
+              >
+                {byId.get(candidate.definitionId.toLocaleLowerCase())?.name ??
+                  candidate.definitionId}
+                {candidate.eligible
+                  ? ""
+                  : ` — unavailable: ${candidateReason(candidate.reasons)}`}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="show-all-control">
+          <input
+            checked={showAll}
+            disabled={disabled}
+            type="checkbox"
+            onChange={(event) => setShowAll(event.currentTarget.checked)}
+          />
+          Show all options for this choice
+        </label>
+        <p className="field-help">
+          Unavailable same-category options include their objective rules reason
+          and are saved as a house-rule choice when selected.
+        </p>
+      </div>
+      <CandidateDetail
+        candidate={detailCandidate}
+        entity={
+          detailCandidate === undefined
+            ? undefined
+            : byId.get(detailCandidate.definitionId.toLocaleLowerCase())
+        }
+      />
     </div>
   );
 }
@@ -282,6 +464,7 @@ function ChoiceEditor({
   entities,
   byId,
   disabled,
+  rollbackRevision,
   onDispatch,
 }: {
   readonly choice: EvaluatedChoice;
@@ -290,6 +473,7 @@ function ChoiceEditor({
   readonly entities: readonly ContentEntity[];
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly disabled: boolean;
+  readonly rollbackRevision: number;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
   const provider = evaluation.occurrences.find(
@@ -303,6 +487,54 @@ function ChoiceEditor({
     findOccurrence(build, provider.parentId) !== undefined;
   const selected = selectedOccurrence(choice, evaluation);
   const [showAll, setShowAll] = useState(false);
+  const [optimisticSelectedId, setOptimisticSelectedId] = useState(
+    selected?.definitionId ?? "",
+  );
+  const [perusedId, setPerusedId] = useState(selected?.definitionId ?? "");
+
+  const visibleCandidates = choice.candidates.filter((candidate) =>
+    isCandidateVisible(candidate, showAll, selected?.definitionId),
+  );
+  const selectedValue = visibleCandidates.some(
+    (candidate) => candidate.definitionId === optimisticSelectedId,
+  )
+    ? optimisticSelectedId
+    : "";
+  const detailCandidate = choice.candidates.find(
+    (candidate) =>
+      candidate.definitionId === perusedId &&
+      isCandidateVisible(candidate, showAll, selected?.definitionId),
+  );
+  const editorDisabled =
+    disabled ||
+    (!materializableGrant && buildProvider === undefined) ||
+    choice.type === "Replacement";
+
+  useEffect(() => {
+    setOptimisticSelectedId("");
+    setPerusedId("");
+  }, [rollbackRevision]);
+
+  useEffect(() => {
+    setOptimisticSelectedId(selected?.definitionId ?? "");
+    setPerusedId(selected?.definitionId ?? "");
+  }, [choice.id, evaluation, selected?.definitionId]);
+
+  useEffect(() => {
+    if (
+      visibleCandidates.some(
+        (candidate) => candidate.definitionId === perusedId,
+      )
+    )
+      return;
+    setPerusedId(
+      visibleCandidates.find(
+        (candidate) => candidate.definitionId === optimisticSelectedId,
+      )?.definitionId ??
+        visibleCandidates[0]?.definitionId ??
+        "",
+    );
+  }, [optimisticSelectedId, perusedId, showAll, visibleCandidates]);
 
   if (choice.type === "Replacement" && buildProvider !== undefined)
     return (
@@ -317,87 +549,97 @@ function ChoiceEditor({
         }
         byId={byId}
         disabled={disabled}
+        rollbackRevision={rollbackRevision}
         onDispatch={onDispatch}
       />
     );
 
-  const visibleCandidates = choice.candidates.filter(
-    (candidate) =>
-      showAll ||
-      candidate.eligible ||
-      candidate.definitionId === selected?.definitionId,
-  );
-  const editorDisabled =
-    disabled ||
-    (!materializableGrant && buildProvider === undefined) ||
-    choice.type === "Replacement";
-
   return (
-    <div className="choice-editor-fields">
-      <label>
-        Selection
-        <select
-          disabled={editorDisabled}
-          value={selected?.definitionId ?? ""}
-          onChange={(event) => {
-            const candidate = choice.candidates.find(
-              (item) => item.definitionId === event.currentTarget.value,
-            );
-            const definition = byId.get(
-              event.currentTarget.value.toLocaleLowerCase(),
-            );
-            if (candidate === undefined || definition === undefined) return;
-            const occurrence: BuildOccurrence = {
-              id: `web:${crypto.randomUUID()}`,
-              identity: {
-                definitionId: definition.id,
-                name: definition.name,
-                type: definition.type,
-              },
-              acquiredLevel:
-                buildProvider?.acquiredLevel ??
-                provider?.acquiredLevel ??
-                evaluation.level,
-              legality: candidate.eligible ? "rules-legal" : "houserule",
-              children: [],
-              unresolved: false,
-            };
-            const command = commandForEvaluatedChoice(
-              build,
-              choice,
-              evaluation.occurrences,
-              entities,
-              occurrence,
-              (index) => `web:placeholder:${index}:${crypto.randomUUID()}`,
-            );
-            if (command !== undefined) onDispatch(command);
-          }}
-        >
-          <option value="">Unresolved</option>
-          {visibleCandidates.map((candidate) => (
-            <option key={candidate.definitionId} value={candidate.definitionId}>
-              {byId.get(candidate.definitionId.toLocaleLowerCase())?.name ??
-                candidate.definitionId}
-              {candidate.eligible
-                ? ""
-                : ` — unavailable: ${candidateReason(candidate.reasons)}`}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="show-all-control">
-        <input
-          checked={showAll}
-          disabled={disabled}
-          type="checkbox"
-          onChange={(event) => setShowAll(event.currentTarget.checked)}
-        />
-        Show all options for this choice
-      </label>
-      <p className="field-help">
-        Valid choices are shown by default. This filter resets when you open a
-        different choice; unavailable selections are explicit house rules.
-      </p>
+    <div className="choice-selection-layout">
+      <div className="choice-editor-fields">
+        <label>
+          Selection
+          <select
+            disabled={editorDisabled}
+            value={selectedValue}
+            onFocus={() =>
+              setPerusedId(
+                selectedValue || visibleCandidates[0]?.definitionId || "",
+              )
+            }
+            onChange={(event) => {
+              const definitionId = event.currentTarget.value;
+              setOptimisticSelectedId(definitionId);
+              setPerusedId(definitionId);
+              const candidate = choice.candidates.find(
+                (item) => item.definitionId === definitionId,
+              );
+              const definition = byId.get(definitionId.toLocaleLowerCase());
+              if (candidate === undefined || definition === undefined) return;
+              const occurrence: BuildOccurrence = {
+                id: `web:${crypto.randomUUID()}`,
+                identity: {
+                  definitionId: definition.id,
+                  name: definition.name,
+                  type: definition.type,
+                },
+                acquiredLevel:
+                  buildProvider?.acquiredLevel ??
+                  provider?.acquiredLevel ??
+                  evaluation.level,
+                legality: candidate.eligible ? "rules-legal" : "houserule",
+                children: [],
+                unresolved: false,
+              };
+              const command = commandForEvaluatedChoice(
+                build,
+                choice,
+                evaluation.occurrences,
+                entities,
+                occurrence,
+                (index) => `web:placeholder:${index}:${crypto.randomUUID()}`,
+              );
+              if (command !== undefined) onDispatch(command);
+            }}
+          >
+            <option value="">Unresolved</option>
+            {visibleCandidates.map((candidate) => (
+              <option
+                key={candidate.definitionId}
+                value={candidate.definitionId}
+              >
+                {byId.get(candidate.definitionId.toLocaleLowerCase())?.name ??
+                  candidate.definitionId}
+                {candidate.eligible
+                  ? ""
+                  : ` — unavailable: ${candidateReason(candidate.reasons)}`}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="show-all-control">
+          <input
+            checked={showAll}
+            disabled={disabled}
+            type="checkbox"
+            onChange={(event) => setShowAll(event.currentTarget.checked)}
+          />
+          Show all options for this choice
+        </label>
+        <p className="field-help">
+          Valid choices are shown by default. This filter resets when you open a
+          different choice; unavailable same-category selections are explicit
+          house rules.
+        </p>
+      </div>
+      <CandidateDetail
+        candidate={detailCandidate}
+        entity={
+          detailCandidate === undefined
+            ? undefined
+            : byId.get(detailCandidate.definitionId.toLocaleLowerCase())
+        }
+      />
     </div>
   );
 }
@@ -424,28 +666,78 @@ export function CharacterEditorPage({
   const [visibleHorizon, setVisibleHorizon] = useState(1);
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [selectedChoiceId, setSelectedChoiceId] = useState<string>();
+  const [rollbackRevision, setRollbackRevision] = useState(0);
   const transaction = useRef<CharacterTransaction | undefined>(undefined);
+  const saveQueue = useRef<
+    OptimisticBuildSaveQueue<CharacterRecord> | undefined
+  >(undefined);
   const rulesClient = useRef<RulesWorkerClient | undefined>(undefined);
   const evaluationRevision = useRef(0);
 
   useEffect(() => {
+    let cancelled = false;
     void characters
       .get(characterId)
       .then(async (loaded) => {
         if (loaded === undefined) throw new Error("Character not found");
+        if (cancelled) return;
         setCharacter(loaded);
         transaction.current = new CharacterTransaction(loaded.build);
+        saveQueue.current = new OptimisticBuildSaveQueue(
+          loaded.build,
+          (next) => characters.updateBuild(characterId, next),
+          (result) => result.build,
+          {
+            onSaving: (pendingCount) => {
+              if (cancelled) return;
+              setSaveState({
+                phase: "saving",
+                message:
+                  pendingCount === 1
+                    ? "Saving…"
+                    : `Saving ${pendingCount} changes…`,
+              });
+            },
+            onCommit: (updated) => {
+              if (!cancelled) setCharacter(updated);
+            },
+            onSaved: (message) => {
+              if (!cancelled) setSaveState({ phase: "saved", message });
+            },
+            onFailure: (reason, lastPersistedBuild, rolledBackCount) => {
+              if (cancelled) return;
+              transaction.current = new CharacterTransaction(
+                lastPersistedBuild,
+              );
+              setRevision((value) => value + 1);
+              setRollbackRevision((value) => value + 1);
+              setSaveState({
+                phase: "failed",
+                message: `Save failed; rolled back ${rolledBackCount} ${
+                  rolledBackCount === 1 ? "change" : "changes"
+                }: ${reason instanceof Error ? reason.message : String(reason)}`,
+              });
+            },
+          },
+        );
         setVisibleHorizon(loaded.build.levels.length);
         setSelectedLevel(loaded.build.effectiveLevel);
+        setSaveState({ phase: "saved", message: "Saved locally" });
         if (loaded.profileBinding !== undefined) {
           const pack = await packs.get(loaded.profileBinding.packId);
-          if (pack !== undefined) setEntities(pack.entities);
+          if (!cancelled && pack !== undefined) setEntities(pack.entities);
         }
-        setSaveState({ phase: "saved", message: "Saved locally" });
       })
-      .catch((reason: unknown) =>
-        setLoadError(reason instanceof Error ? reason.message : String(reason)),
-      );
+      .catch((reason: unknown) => {
+        if (!cancelled)
+          setLoadError(
+            reason instanceof Error ? reason.message : String(reason),
+          );
+      });
+    return () => {
+      cancelled = true;
+      saveQueue.current = undefined;
+    };
   }, [characterId]);
 
   const packId = character?.profileBinding?.packId;
@@ -544,70 +836,38 @@ export function CharacterEditorPage({
     );
   }, [levelChoices, selectedChoiceId]);
 
-  async function dispatch(command: CharacterCommand): Promise<void> {
+  function dispatch(command: CharacterCommand): void {
     const active = transaction.current;
-    if (active === undefined || saveState.phase === "saving") return;
-    setSaveState({ phase: "saving", message: "Saving…" });
-    let changed = false;
+    const queue = saveQueue.current;
+    if (active === undefined || queue === undefined) return;
     try {
       const next = active.dispatch(command);
-      changed = true;
-      const updated = await characters.updateBuild(characterId, next);
-      setCharacter(updated);
       setRevision((value) => value + 1);
-      setSaveState({ phase: "saved", message: "Saved locally" });
+      queue.enqueue(next, "Saved locally");
     } catch (reason: unknown) {
-      if (changed) active.undo();
-      setRevision((value) => value + 1);
       setSaveState({
         phase: "failed",
-        message: `Save failed: ${reason instanceof Error ? reason.message : String(reason)}`,
+        message: `Change rejected: ${reason instanceof Error ? reason.message : String(reason)}`,
       });
     }
   }
 
-  async function undo(): Promise<void> {
+  function undo(): void {
     const active = transaction.current;
-    if (active === undefined || saveState.phase === "saving") return;
-    setSaveState({ phase: "saving", message: "Saving undo…" });
-    let changed = false;
-    try {
-      const next = active.undo();
-      changed = true;
-      const updated = await characters.updateBuild(characterId, next);
-      setCharacter(updated);
-      setRevision((value) => value + 1);
-      setSaveState({ phase: "saved", message: "Undo saved locally" });
-    } catch (reason: unknown) {
-      if (changed) active.redo();
-      setRevision((value) => value + 1);
-      setSaveState({
-        phase: "failed",
-        message: `Undo was not saved: ${reason instanceof Error ? reason.message : String(reason)}`,
-      });
-    }
+    const queue = saveQueue.current;
+    if (active === undefined || queue === undefined || !active.canUndo) return;
+    const next = active.undo();
+    setRevision((value) => value + 1);
+    queue.enqueue(next, "Undo saved locally");
   }
 
-  async function redo(): Promise<void> {
+  function redo(): void {
     const active = transaction.current;
-    if (active === undefined || saveState.phase === "saving") return;
-    setSaveState({ phase: "saving", message: "Saving redo…" });
-    let changed = false;
-    try {
-      const next = active.redo();
-      changed = true;
-      const updated = await characters.updateBuild(characterId, next);
-      setCharacter(updated);
-      setRevision((value) => value + 1);
-      setSaveState({ phase: "saved", message: "Redo saved locally" });
-    } catch (reason: unknown) {
-      if (changed) active.undo();
-      setRevision((value) => value + 1);
-      setSaveState({
-        phase: "failed",
-        message: `Redo was not saved: ${reason instanceof Error ? reason.message : String(reason)}`,
-      });
-    }
+    const queue = saveQueue.current;
+    if (active === undefined || queue === undefined || !active.canRedo) return;
+    const next = active.redo();
+    setRevision((value) => value + 1);
+    queue.enqueue(next, "Redo saved locally");
   }
 
   if (loadError !== undefined)
@@ -706,15 +966,15 @@ export function CharacterEditorPage({
           </a>
           <button
             type="button"
-            disabled={saving || !transaction.current?.canUndo}
-            onClick={() => void undo()}
+            disabled={!transaction.current?.canUndo}
+            onClick={undo}
           >
             <Icon name="undo" /> Undo
           </button>
           <button
             type="button"
-            disabled={saving || !transaction.current?.canRedo}
-            onClick={() => void redo()}
+            disabled={!transaction.current?.canRedo}
+            onClick={redo}
           >
             <Icon name="redo" /> Redo
           </button>
@@ -738,13 +998,12 @@ export function CharacterEditorPage({
           <label className="current-level-control">
             Current level
             <select
-              disabled={saving}
               value={build.effectiveLevel}
               onChange={(event) => {
                 const level = Number(event.currentTarget.value);
                 setVisibleHorizon((current) => Math.max(current, level));
                 setSelectedLevel(level);
-                void dispatch({ kind: "set-effective-level", level });
+                dispatch({ kind: "set-effective-level", level });
               }}
             >
               {build.levels.map((frame) => (
@@ -809,7 +1068,7 @@ export function CharacterEditorPage({
             <label>
               Show plan through
               <select
-                disabled={saving || entities.length === 0}
+                disabled={entities.length === 0}
                 value={visibleHorizon}
                 onChange={(event) => {
                   const target = Number(event.currentTarget.value);
@@ -822,7 +1081,7 @@ export function CharacterEditorPage({
                       entities,
                       (level) => `web:level:${level}:${crypto.randomUUID()}`,
                     );
-                    if (command !== undefined) void dispatch(command);
+                    if (command !== undefined) dispatch(command);
                   } catch (reason: unknown) {
                     setSaveState({
                       phase: "failed",
@@ -1000,8 +1259,9 @@ export function CharacterEditorPage({
               build={build}
               entities={entities}
               byId={byId}
-              disabled={saving}
-              onDispatch={(command) => void dispatch(command)}
+              disabled={false}
+              rollbackRevision={rollbackRevision}
+              onDispatch={dispatch}
             />
           )}
         </section>
@@ -1025,12 +1285,11 @@ export function CharacterEditorPage({
               <label key={ability}>
                 {ability}
                 <CommitNumberInput
-                  disabled={saving}
                   value={build.baseAbilities[ability] ?? 10}
                   min={1}
                   max={30}
                   onCommit={(value) =>
-                    void dispatch({ kind: "set-base-ability", ability, value })
+                    dispatch({ kind: "set-base-ability", ability, value })
                   }
                 />
               </label>
@@ -1100,12 +1359,11 @@ export function CharacterEditorPage({
                       </th>
                       <td>
                         <CommitNumberInput
-                          disabled={saving}
                           label={`Owned quantity for ${entry.name ?? entry.id}`}
                           value={entry.quantity}
                           min={0}
                           onCommit={(quantity) =>
-                            void dispatch({
+                            dispatch({
                               kind: "put-inventory",
                               entry: {
                                 ...entry,
@@ -1121,13 +1379,12 @@ export function CharacterEditorPage({
                       </td>
                       <td>
                         <CommitNumberInput
-                          disabled={saving}
                           label={`Equipped quantity for ${entry.name ?? entry.id}`}
                           max={entry.quantity}
                           value={entry.equippedQuantity}
                           min={0}
                           onCommit={(equippedQuantity) =>
-                            void dispatch({
+                            dispatch({
                               kind: "put-inventory",
                               entry: { ...entry, equippedQuantity },
                             })

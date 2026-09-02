@@ -97,6 +97,16 @@ are separate; equipment-dependent rules test the equipped tally. Notes use
 `LOOTNOTE_...` text strings. `LootTally` is the regenerated, field-expanded view and
 must not override acquisition history.
 
+An item definition may itself own a `select` (for example the damage type of
+Armor of Resistance). The selected child can be absent from the authoritative
+level `loot` record while appearing nested under the same definition in the
+current `CharacterSheet/LootTally`. This is structural choice state, not a
+calculated numeric cache. An importer may recover it only after an exact ordered
+definition-identity match to an active positive acquisition, and must preserve
+the nested occurrence/token as a child of the corresponding item definition.
+It must not use the tally to change acquisition level, quantities, equipment
+state, or mismatched item identities.
+
 Preserve unknown loot attributes because custom items and older serializer versions
 may add field overrides.
 

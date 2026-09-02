@@ -5,8 +5,14 @@ import {
   type CharacterBuild,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
+import type { EvaluatedCharacter } from "@4ecb/rules-engine";
 
-import { candidateReason, planningHorizonCommand } from "./builder-ui";
+import {
+  candidateReason,
+  choicesAtLevel,
+  isCandidateVisible,
+  planningHorizonCommand,
+} from "./builder-ui";
 
 const level = (number: number): ContentEntity => ({
   id: `ID_INTERNAL_LEVEL_${number}`,
@@ -74,5 +80,54 @@ describe("builder planning UI", () => {
     expect(candidateReason(["category", "self"])).toBe(
       "Does not match this choice category; A feature cannot select itself",
     );
+  });
+
+  it("never exposes category mismatches through the Show all filter", () => {
+    const categoryMismatch = {
+      definitionId: "cross-category",
+      eligible: false,
+      reasons: ["category"],
+    };
+    expect(isCandidateVisible(categoryMismatch, false)).toBe(false);
+    expect(isCandidateVisible(categoryMismatch, true)).toBe(false);
+    expect(isCandidateVisible(categoryMismatch, true, "cross-category")).toBe(
+      false,
+    );
+  });
+
+  it("shows legal, explicitly revealed, and recoverable selected candidates", () => {
+    const legal = { definitionId: "legal", eligible: true, reasons: [] };
+    const unavailable = {
+      definitionId: "unavailable",
+      eligible: false,
+      reasons: ["prerequisite"],
+    };
+    expect(isCandidateVisible(legal, false)).toBe(true);
+    expect(isCandidateVisible(unavailable, false)).toBe(false);
+    expect(isCandidateVisible(unavailable, true)).toBe(true);
+    expect(isCandidateVisible(unavailable, false, "unavailable")).toBe(true);
+  });
+
+  it("keeps inventory-owned configuration out of the level-up timeline", () => {
+    const evaluation = {
+      occurrences: [
+        {
+          id: "level",
+          kind: "root",
+        },
+        {
+          id: "item",
+          kind: "inventory",
+        },
+      ],
+      choices: [
+        { id: "advancement", level: 8, providerOccurrenceId: "level" },
+        { id: "item-choice", level: 8, providerOccurrenceId: "item" },
+      ],
+    } as unknown as EvaluatedCharacter;
+
+    expect(choicesAtLevel(8, evaluation).map(({ id }) => id)).toEqual([
+      "advancement",
+    ]);
   });
 });

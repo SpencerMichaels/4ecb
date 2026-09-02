@@ -565,4 +565,63 @@ describe("build projection", () => {
       ),
     ).toHaveLength(2);
   });
+
+  it("projects saved inventory choices beneath the synthetic item provider", () => {
+    const content = [
+      entity("ITEM", "Armor of Resistance", "Magic Item", [
+        statement("select", { type: "Class Feature", number: "1" }, 0),
+      ]),
+      entity("POISON", "Poison", "Class Feature"),
+    ];
+    const build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 1,
+      levels: [],
+      grabbag: [],
+      inventory: [
+        {
+          id: "loot",
+          acquiredLevel: 1,
+          quantity: 1,
+          equippedQuantity: 1,
+          elements: [
+            {
+              definitionId: "ITEM",
+              name: "Armor of Resistance",
+              type: "Magic Item",
+              children: [
+                {
+                  id: "poison",
+                  identity: {
+                    definitionId: "POISON",
+                    name: "Poison",
+                    type: "Class Feature",
+                  },
+                  acquiredLevel: 1,
+                  legality: "rules-legal",
+                  children: [],
+                  unresolved: false,
+                },
+              ],
+            },
+          ],
+          overrides: {},
+          legality: "rules-legal",
+        },
+      ],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+
+    const evaluated = evaluateCharacter(
+      projectBuildForEvaluation(build, content),
+      content,
+    );
+    expect(evaluated.choices[0]).toMatchObject({
+      providerOccurrenceId: "loot:definition:0",
+      selectedOccurrenceId: "poison",
+    });
+    expect(evaluated.complete).toBe(true);
+  });
 });

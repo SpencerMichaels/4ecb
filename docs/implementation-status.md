@@ -55,13 +55,17 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   durable separately hidden horizon remains a named schema follow-up rather
   than being encoded in unrelated character fields.
 - Choice surfaces show valid candidates by default. **Show all options for this
-  choice** is local to the focused choice, exposes evaluator reasons, resets when
-  focus changes, and marks an intentionally selected unavailable candidate as a
-  house rule. The UI adds no popularity or recommendation inference.
+  choice** is local to the focused choice, exposes same-category candidates
+  blocked by objective rules, excludes category mismatches, resets when focus
+  changes, and marks an intentionally selected unavailable candidate as a house
+  rule. The focused/selected record renders in an adjacent source,
+  prerequisite, description, and mechanical-detail pane. The UI adds no
+  popularity or recommendation inference.
 - Autosave now exposes loading, saving, saved, and failure states independently
-  from rules evaluation. Storage failure rolls the in-memory transaction back
-  to the persisted build; undo and redo retain the same commit-before-success
-  contract. The application shell adds system/light/dark theme preference,
+  from rules evaluation. Selection controls update optimistically while a
+  serialized background queue persists rapid edits. Storage failure rolls the
+  complete pending suffix back to the last persisted build; undo and redo retain
+  the same commit-before-success contract. The application shell adds system/light/dark theme preference,
   simple inline monochrome icons, and semantic color tokens preserving the
   established at-will, encounter, daily, and item mappings.
 - Future planning no longer blocks or contaminates compatibility output. The
@@ -77,7 +81,16 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   regenerated 0.07a semantic re-import with the future plan retained only in
   the native record. At 900 px and 375 px the builder collapsed to one column
   with no horizontal overflow; the browser console had no warnings or errors.
-- `nix develop path:. -c bash scripts/check.sh` passes 184 tests across 34 files,
+- A Silaqui-focused oracle pass traced three prototype discrepancies through
+  native `CategoryMatch`, replacement, and loot serialization paths. Completed
+  retraining now retains its inactive source option; power-only `$$CLASS`
+  matching recognizes the selected theme through `Class`/`_ThemePower`; and an
+  exactly matched current loot tally recovers item selections omitted from the
+  level acquisition record. Silaqui now has zero unresolved choices, Sly Gambit
+  is legal in the level-7 encounter slot, and the existing Poison armor choice
+  suppresses the false level-8 prompt while cached parity remains 67/67 numeric
+  and 71/71 power fields.
+- `nix develop path:. -c bash scripts/check.sh` passes 193 tests across 35 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

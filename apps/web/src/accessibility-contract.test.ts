@@ -59,6 +59,10 @@ describe("release accessibility contract", () => {
     expect(styles).toMatch(
       /@media \(max-width: 60rem\)[\s\S]*?\.builder-workspace,[\s\S]*?\.builder-secondary,[\s\S]*?grid-template-columns: 1fr/,
     );
+    expect(styles).toMatch(
+      /@media \(max-width: 48rem\)[\s\S]*?\.choice-selection-layout[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/,
+    );
+    expect(styles).toMatch(/\.candidate-detail:focus-visible/);
   });
 
   it("supports system color preference and explicit light or dark overrides", () => {

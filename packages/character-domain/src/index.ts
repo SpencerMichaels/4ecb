@@ -269,6 +269,17 @@ function elementIdentity(value: unknown): boolean {
   );
 }
 
+function inventoryElement(value: unknown, seen: WeakSet<object>): boolean {
+  const identity = object(value);
+  return (
+    elementIdentity(value) &&
+    identity !== undefined &&
+    (identity.children === undefined ||
+      (Array.isArray(identity.children) &&
+        identity.children.every((child) => buildOccurrence(child, seen, 0))))
+  );
+}
+
 function buildOccurrence(
   value: unknown,
   seen: WeakSet<object>,
@@ -338,7 +349,7 @@ function characterBuild(value: unknown): boolean {
         entry.equippedQuantity >= 0 &&
         entry.equippedQuantity <= entry.quantity &&
         Array.isArray(entry.elements) &&
-        entry.elements.every(elementIdentity) &&
+        entry.elements.every((element) => inventoryElement(element, seen)) &&
         optionalString(entry.name) &&
         (entry.showPowerCard === undefined ||
           typeof entry.showPowerCard === "boolean") &&

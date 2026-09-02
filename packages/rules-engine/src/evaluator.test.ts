@@ -735,6 +735,68 @@ describe("character evaluator", () => {
     ]);
   });
 
+  it("treats an owned theme as a class category for power choices only", () => {
+    const result = evaluateCharacter(
+      {
+        level: 7,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "ranger",
+            definitionId: "RANGER",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "theme",
+            definitionId: "DUNE_TRADER",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+          {
+            id: "slot",
+            definitionId: "LEVEL_7_SLOT",
+            acquiredLevel: 7,
+            kind: "grabbag",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("RANGER", "Ranger", "Class"),
+        entity("DUNE_TRADER", "Dune Trader", "Theme"),
+        entity("LEVEL_7_SLOT", "Level 7", "Level", {
+          rules: [
+            rule(
+              "select",
+              { type: "Power", Category: "$$CLASS,Encounter,7" },
+              0,
+            ),
+            rule("select", { type: "Feat", Category: "$$CLASS" }, 1),
+          ],
+        }),
+        entity("SLY_GAMBIT", "Sly Gambit", "Power", {
+          categories: ["DUNE_TRADER", "Encounter", "7"],
+          specifics: { Level: "7" },
+        }),
+        entity("THEME_FEAT", "Theme feat", "Feat", {
+          categories: ["DUNE_TRADER"],
+        }),
+      ],
+    );
+
+    expect(result.choices[0]?.candidates).toContainEqual({
+      definitionId: "SLY_GAMBIT",
+      eligible: true,
+      reasons: [],
+    });
+    expect(result.choices[1]?.candidates).toContainEqual({
+      definitionId: "THEME_FEAT",
+      eligible: false,
+      reasons: ["category"],
+    });
+  });
+
   it("uses distinct hybrid components for both hybrid and primary class categories", () => {
     const result = evaluateCharacter(
       {
@@ -946,6 +1008,73 @@ describe("character evaluator", () => {
             { definitionId: "FEAT_A", eligible: true },
             { definitionId: "FEAT_B", eligible: true },
           ],
+        },
+      ],
+    });
+  });
+
+  it("keeps the replaced occurrence visible in its completed retraining slot", () => {
+    const result = evaluateCharacter(
+      {
+        level: 2,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "level-1",
+            definitionId: "LEVEL_1",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "old-power",
+            definitionId: "POWER_A",
+            acquiredLevel: 1,
+            parentId: "level-1",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+          {
+            id: "level-2",
+            definitionId: "LEVEL_2",
+            acquiredLevel: 2,
+            kind: "root",
+          },
+          {
+            id: "new-power",
+            definitionId: "POWER_B",
+            acquiredLevel: 2,
+            parentId: "level-2",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            replacesId: "old-power",
+            kind: "choice",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("LEVEL_1", "1", "Level", {
+          rules: [rule("select", { type: "Power", number: "1" }, 0)],
+        }),
+        entity("LEVEL_2", "2", "Level", {
+          rules: [rule("replace", { retrain: "true", optional: "true" }, 0)],
+        }),
+        entity("POWER_A", "Old power", "Power"),
+        entity("POWER_B", "New power", "Power"),
+      ],
+    );
+
+    expect(
+      result.choices.find(
+        (choice) => choice.providerOccurrenceId === "level-2",
+      ),
+    ).toMatchObject({
+      selectedOccurrenceId: "new-power",
+      replacementOptions: [
+        {
+          replacesOccurrenceId: "old-power",
+          definitionId: "POWER_A",
         },
       ],
     });

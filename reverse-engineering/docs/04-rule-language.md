@@ -205,6 +205,10 @@ Semantics:
 
 - create `number` positional choice slots;
 - candidate record type must match and its category/level expression must match;
+- for a `Power` candidate only, the native `$$CLASS`/`$$NOT_CLASS` test also
+  treats the selected theme as a class-category value; the power's `Class` or
+  `_ThemePower` field supplies that membership even when the normalized
+  category list does not contain the theme ID;
 - exclude already selected values unless the statement permits/requires existing;
 - `optional` unresolved slots do not make the character incomplete;
 - `default` is filled when available but remains a real choice;
@@ -226,6 +230,10 @@ multiclass power swap, and specific power replacement.
 
 The displaced occurrence is retained in history, not deleted. It can become active
 again if the replacing provider disappears or a character level is rewound.
+The native choice retains the displaced occurrence as the source option for a
+completed replacement. Candidate construction must therefore include the
+selected replacement's `replaces` target even though that target is inactive;
+otherwise a saved retraining is falsely displayed as an empty choice.
 
 ## `suggest`
 

@@ -18,6 +18,12 @@ searchable in `../generated/decompiled/D20RulesEngine/-Module-.cs`.
 - selected class, hybrid class, `CountsAsClass`, multiclass-derived class,
   paragon-multiclassing, and a `PowersAsClass` text override build separate dynamic
   sets used by the `$$...` category prefixes.
+- `CategoryMatch::Matches` has an additional power-only theme branch: when the
+  ordinary selected-class scan fails for `$$CLASS`, it tests the candidate
+  `Power` against the character's selected theme. Theme powers identify that
+  relationship through `Class`/`_ThemePower`; this is why Dune Trader's Sly
+  Gambit legally fills an ordinary level-7 encounter-power slot. The exception
+  does not make theme feats or other record types class choices.
 - custom feat/power definitions can bypass ordinary category rejection.
 
 Several branches bind published records by stable ID, including

@@ -213,6 +213,9 @@ function allOccurrences(build: CharacterBuild): BuildOccurrence[] {
   build.levels.forEach((frame) => visit(frame.root));
   build.grabbag.forEach(visit);
   build.alternates.forEach((alternate) => visit(alternate.choice));
+  build.inventory.forEach((entry) =>
+    entry.elements.forEach((element) => element.children?.forEach(visit)),
+  );
   return result;
 }
 
@@ -232,6 +235,16 @@ function occurrencePaths(build: CharacterBuild): ReadonlyMap<string, string> {
   );
   build.alternates.forEach((alternate, index) =>
     visit(alternate.choice, `alternates[${index}].choice`),
+  );
+  build.inventory.forEach((entry, entryIndex) =>
+    entry.elements.forEach((element, elementIndex) =>
+      element.children?.forEach((child, childIndex) =>
+        visit(
+          child,
+          `inventory[${entryIndex}].elements[${elementIndex}].children[${childIndex}]`,
+        ),
+      ),
+    ),
   );
   return result;
 }
@@ -266,7 +279,15 @@ function semanticBuild(build: CharacterBuild): unknown {
       acquiredLevel: entry.acquiredLevel,
       quantity: entry.quantity,
       equippedQuantity: entry.equippedQuantity,
-      elements: entry.elements,
+      elements: entry.elements.map((identity) => ({
+        definitionId: identity.definitionId,
+        name: identity.name,
+        type: identity.type,
+        url: identity.url,
+        ...(identity.children === undefined
+          ? {}
+          : { children: identity.children.map(occurrence) }),
+      })),
       ...(entry.name === undefined ? {} : { name: entry.name }),
       ...(entry.showPowerCard === undefined
         ? {}
@@ -382,7 +403,10 @@ function serializeOccurrence(
   );
 }
 
-function serializeInventory(entry: BuildInventoryEntry): string {
+function serializeInventory(
+  entry: BuildInventoryEntry,
+  tokens: ReadonlyMap<string, string>,
+): string {
   const reserved = new Set([
     "count",
     "equip-count",
@@ -412,7 +436,15 @@ function serializeInventory(entry: BuildInventoryEntry): string {
       ...overrides,
     },
     entry.elements
-      .map((identity) => element("RulesElement", identityAttributes(identity)))
+      .map((identity) =>
+        element(
+          "RulesElement",
+          identityAttributes(identity),
+          (identity.children ?? [])
+            .map((child) => serializeOccurrence(child, tokens))
+            .join(""),
+        ),
+      )
       .join(""),
   );
 }
@@ -424,7 +456,7 @@ function levelXml(build: CharacterBuild, tokens: ReadonlyMap<string, string>) {
       {},
       `${serializeOccurrence(frame.root, tokens)}${build.inventory
         .filter((entry) => entry.acquiredLevel === frame.level)
-        .map(serializeInventory)
+        .map((entry) => serializeInventory(entry, tokens))
         .join("")}`,
     ),
   );
@@ -629,11 +661,16 @@ export function projectBuildForLegacyExport(
   };
 }
 
-function lootTallyXml(build: CharacterBuild): string {
+function lootTallyXml(
+  build: CharacterBuild,
+  tokens: ReadonlyMap<string, string>,
+): string {
   return element(
     "LootTally",
     {},
-    activeInventory(build).map(serializeInventory).join(""),
+    activeInventory(build)
+      .map((entry) => serializeInventory(entry, tokens))
+      .join(""),
   );
 }
 
@@ -720,7 +757,10 @@ function powerStatsXml(evaluation: EvaluatedCharacter): string {
   );
 }
 
-function characterSheetXml(input: EditedDnd4eExportInput): string {
+function characterSheetXml(
+  input: EditedDnd4eExportInput,
+  tokens: ReadonlyMap<string, string>,
+): string {
   const entities = contentMap(input.content);
   const regenerated = new Set([
     "details",
@@ -742,7 +782,7 @@ function characterSheetXml(input: EditedDnd4eExportInput): string {
     )}${statBlockXml(input.evaluation)}${ruleTallyXml(
       input.evaluation,
       entities,
-    )}${lootTallyXml(input.build)}${powerStatsXml(input.evaluation)}${preserved}`,
+    )}${lootTallyXml(input.build, tokens)}${powerStatsXml(input.evaluation)}${preserved}`,
   );
 }
 
@@ -790,7 +830,7 @@ export function exportEditedDnd4e(input: EditedDnd4eExportInput): string {
     legality: input.evaluation.legal ? "rules-legal" : "houserule",
   };
   const body = [
-    characterSheetXml({ ...input, build }),
+    characterSheetXml({ ...input, build }, tokens),
     ...preserved,
     ...levelXml(build, tokens),
     grabbagXml(build, tokens),

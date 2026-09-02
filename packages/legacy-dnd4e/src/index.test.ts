@@ -125,6 +125,57 @@ describe("legacy .dnd4e import", () => {
     expect(imported.report.usesLegacyCache).toBe(true);
   });
 
+  it("recovers item choices nested only in the structurally matching loot cache", () => {
+    const imported = importDnd4e(
+      `<D20Character game-system="D&amp;D4E"><CharacterSheet><LootTally><loot count="1" equip-count="1"><RulesElement name="Armor" type="Armor" internal-id="ARMOR"/><RulesElement name="Armor of Resistance" type="Magic Item" internal-id="RESIST"><RulesElement name="Poison" type="Class Feature" internal-id="POISON" charelem="poison"/></RulesElement></loot></LootTally></CharacterSheet><Level><RulesElement name="1" type="Level" internal-id="L1"/><loot count="1" equip-count="1"><RulesElement name="Armor" type="Armor" internal-id="ARMOR"/><RulesElement name="Armor of Resistance" type="Magic Item" internal-id="RESIST"/></loot></Level></D20Character>`,
+    );
+
+    expect(imported.build.inventory[0]?.elements[1]?.children).toEqual([
+      expect.objectContaining({
+        id: "legacy:poison",
+        identity: expect.objectContaining({ definitionId: "POISON" }),
+      }),
+    ]);
+
+    const content = [
+      entity("L1", "1", "Level"),
+      entity("ARMOR", "Armor", "Armor"),
+      {
+        ...entity("RESIST", "Armor of Resistance", "Magic Item"),
+        rules: [
+          {
+            name: "select",
+            attributes: [
+              { name: "type", value: "Class Feature" },
+              { name: "number", value: "1" },
+            ],
+            text: "",
+            children: [],
+            ordinal: 0,
+          },
+        ],
+      },
+      entity("POISON", "Poison", "Class Feature"),
+    ];
+    const evaluation = evaluateCharacter(
+      projectBuildForEvaluation(imported.build, content),
+      content,
+    );
+    const exported = exportEditedDnd4e({
+      target: "legacy-builder-0.07a",
+      envelope: imported.envelope,
+      snapshot: imported.snapshot,
+      build: imported.build,
+      evaluation,
+      content,
+    });
+    expect(exported).toContain('internal-id="POISON"');
+    expect(
+      importDnd4e(exported).build.inventory[0]?.elements[1]?.children?.[0]
+        ?.identity.definitionId,
+    ).toBe("POISON");
+  });
+
   it("rejects unrelated XML", () => {
     expect(() => importDnd4e("<NotACharacter/>")).toThrow(
       "Expected D20Character",

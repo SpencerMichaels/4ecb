@@ -330,6 +330,39 @@ export function projectBuildForEvaluation(
   // character elements (and must appear on sheets), even though the builder
   // keeps their provider metadata in a separate <alternate> envelope.
   for (const alternate of build.alternates) visit(alternate.choice, "grabbag");
+  // Item-specific selections (for example an Armor of Resistance damage type)
+  // are serialized beneath the relevant loot definition, not in the level
+  // tree. Project them beneath the evaluator's synthetic inventory provider so
+  // an already-completed item choice is not presented as unresolved.
+  for (const entry of build.inventory) {
+    entry.elements.forEach((element, definitionIndex) => {
+      const children = element.children ?? [];
+      if (children.length === 0) return;
+      const providerId = `${entry.id}:definition:${definitionIndex}`;
+      const provider: BuildOccurrence = {
+        id: providerId,
+        identity: element,
+        acquiredLevel: entry.acquiredLevel,
+        legality: entry.legality,
+        children,
+        unresolved: element.definitionId === undefined,
+      };
+      const entity =
+        element.definitionId === undefined
+          ? undefined
+          : byId.get(element.definitionId.toLocaleLowerCase());
+      const slots = childSlots(provider, entity);
+      children.forEach((child, index) => {
+        const slot = slots[index] ?? {
+          ruleOrdinal: index,
+          choiceIndex: 0,
+          kind: "choice" as const,
+          minimumLevel: child.acquiredLevel,
+        };
+        visit(child, slot.kind, providerId, slot, entry.acquiredLevel);
+      });
+    });
+  }
 
   // The legacy builder sometimes serializes a race's selected variable ability
   // bonus inside its generated Grants subtree, alongside the race's fixed

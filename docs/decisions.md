@@ -214,6 +214,18 @@ their transactional storage commit and remain undoable; the interface exposes
 truthful saving, saved, and failure states instead of relying on an explicit
 Save action.
 
+### D026 — Choice browsing is category-bounded and optimistically responsive
+
+The temporary **Show all** control expands a choice only to candidates that
+belong to that slot's category but fail an objective legality constraint such as
+a prerequisite. Category mismatches are evaluator diagnostics and recovery
+evidence, not options for that slot, so the control never exposes them. Every
+information-bearing choice presents the focused/selected record in an adjacent
+detail pane. A selection updates the in-memory transaction and visible control
+before storage completes; IndexedDB writes are serialized in the background.
+Success remains truthful only after commit, and failure rolls the entire pending
+suffix back to the last durable build.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

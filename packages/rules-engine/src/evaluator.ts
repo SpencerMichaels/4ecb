@@ -37,7 +37,7 @@ export interface CharacterOccurrence {
   readonly parentId?: string;
   readonly ruleOrdinal?: number;
   readonly choiceIndex?: number;
-  readonly kind: "root" | "choice" | "grant" | "grabbag";
+  readonly kind: "root" | "choice" | "grant" | "grabbag" | "inventory";
   readonly legality?: "rules-legal" | "houserule";
   readonly replacesId?: string;
 }
@@ -462,7 +462,7 @@ export function evaluateCharacter(
                     id: `${entry.id}:definition:${definitionIndex}`,
                     definitionId,
                     acquiredLevel: entry.acquiredLevel,
-                    kind: "grabbag" as const,
+                    kind: "inventory" as const,
                   },
                 ],
           ),
@@ -618,6 +618,15 @@ export function evaluateCharacter(
     categoryAliases: index.categoryAliases,
     categoryValuesFor: (entity) => index.categoryValues(entity),
   };
+  const selectedTheme = ownedDefinitions.find(
+    (definition) => key(definition.type) === "theme",
+  );
+  const themeClassValues =
+    selectedTheme === undefined
+      ? []
+      : [selectedTheme.id, selectedTheme.name, ...selectedTheme.categories].map(
+          key,
+        );
   const equipment = equippedState(currentInput, index);
   const stats = new StatAccumulator(equipment);
   for (const [ability, value] of Object.entries(input.baseAbilities))
@@ -695,7 +704,34 @@ export function evaluateCharacter(
         reasons.push("self");
       if (rule.category !== undefined) {
         const category = parseCategoryExpression(rule.category);
-        let match = matchesCategory(candidate, category, expressionContext);
+        // The legacy engine treats the selected theme as a class category for
+        // power choices only. This is what permits a theme attack such as Sly
+        // Gambit to occupy the ordinary level-7 class encounter-power slot.
+        const candidateContext =
+          key(candidate.type) !== "power" || themeClassValues.length === 0
+            ? expressionContext
+            : {
+                ...expressionContext,
+                dynamicCategories: {
+                  ...expressionContext.dynamicCategories,
+                  $$CLASS: new Set([
+                    ...(expressionContext.dynamicCategories?.$$CLASS ?? []),
+                    ...themeClassValues,
+                  ]),
+                  $$NOT_CLASS: new Set([
+                    ...(expressionContext.dynamicCategories?.$$NOT_CLASS ?? []),
+                    ...themeClassValues,
+                  ]),
+                },
+                categoryValuesFor: (entity: ContentEntity) =>
+                  new Set([
+                    ...index.categoryValues(entity),
+                    ...[field(entity, "Class"), field(entity, "_ThemePower")]
+                      .filter((value): value is string => value !== undefined)
+                      .map(key),
+                  ]),
+              };
+        let match = matchesCategory(candidate, category, candidateContext);
         const terms = category.groups.flatMap((group) =>
           group.alternatives.map((term) => term.value),
         );
@@ -909,7 +945,8 @@ export function evaluateCharacter(
                 rule.retrain === undefined ||
                 ["feat", "power", "skill training"].includes(candidateType);
               return (
-                !replacedIds.has(candidate.id) &&
+                (!replacedIds.has(candidate.id) ||
+                  candidate.id === selected?.replacesId) &&
                 candidate.acquiredLevel < replacementLevel &&
                 candidate.kind === "choice" &&
                 ordinaryRetraining &&

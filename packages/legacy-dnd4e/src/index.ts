@@ -234,7 +234,10 @@ function resolveReplacementLinks(
   return rootOccurrences.map(clean);
 }
 
-function inventoryFrom(root: XmlNode): BuildInventoryEntry[] {
+function inventoryFrom(
+  root: XmlNode,
+  sheet: XmlNode | undefined,
+): BuildInventoryEntry[] {
   const result: BuildInventoryEntry[] = [];
   for (const [levelIndex, levelNode] of direct(root, "Level").entries()) {
     for (const [lootIndex, loot] of direct(levelNode, "loot").entries()) {
@@ -255,12 +258,29 @@ function inventoryFrom(root: XmlNode): BuildInventoryEntry[] {
         ),
       );
       const name = attribute(loot, "name");
+      const elements = direct(loot, "RulesElement").map(
+        (node, elementIndex) => {
+          const children = resolveReplacementLinks(
+            direct(node, "RulesElement").map((child, childIndex) =>
+              occurrenceFrom(
+                child,
+                levelIndex + 1,
+                `loot:${levelIndex + 1}:${lootIndex}:definition:${elementIndex}:${childIndex}`,
+              ),
+            ),
+          );
+          return {
+            ...buildIdentity(node),
+            ...(children.length === 0 ? {} : { children }),
+          };
+        },
+      );
       result.push({
         id: `legacy:loot:${levelIndex + 1}:${lootIndex}`,
         acquiredLevel: levelIndex + 1,
         quantity,
         equippedQuantity,
-        elements: direct(loot, "RulesElement").map(buildIdentity),
+        elements,
         ...(name === undefined ? {} : { name }),
         ...(attribute(loot, "ShowPowerCard") === undefined
           ? {}
@@ -270,11 +290,50 @@ function inventoryFrom(root: XmlNode): BuildInventoryEntry[] {
       });
     }
   }
+  const tally = sheet === undefined ? undefined : first(sheet, "LootTally");
+  const cachedLootEntries = tally === undefined ? [] : direct(tally, "loot");
+  for (const [cachedIndex, cachedLoot] of cachedLootEntries.entries()) {
+    const cachedElements = direct(cachedLoot, "RulesElement");
+    const identity = cachedElements
+      .map(
+        (node) =>
+          attribute(node, "internal-id") ?? attribute(node, "name") ?? "",
+      )
+      .join("\0")
+      .toLocaleLowerCase();
+    const matchIndex = result.findLastIndex(
+      (entry) =>
+        entry.quantity > 0 &&
+        entry.elements
+          .map((element) => element.definitionId ?? element.name)
+          .join("\0")
+          .toLocaleLowerCase() === identity,
+    );
+    if (matchIndex < 0) continue;
+    const match = result[matchIndex]!;
+    const elements = match.elements.map((element, elementIndex) => {
+      if ((element.children?.length ?? 0) > 0) return element;
+      const cachedElement = cachedElements[elementIndex];
+      if (cachedElement === undefined) return element;
+      const children = resolveReplacementLinks(
+        direct(cachedElement, "RulesElement").map((child, childIndex) =>
+          occurrenceFrom(
+            child,
+            match.acquiredLevel,
+            `cached-loot:${cachedIndex}:definition:${elementIndex}:${childIndex}`,
+          ),
+        ),
+      );
+      return children.length === 0 ? element : { ...element, children };
+    });
+    result[matchIndex] = { ...match, elements };
+  }
   return result;
 }
 
 function buildFrom(
   root: XmlNode,
+  sheet: XmlNode | undefined,
   snapshotAbilities: Readonly<Record<string, number>>,
   textStrings: Readonly<Record<string, string>>,
 ): CharacterBuild {
@@ -315,7 +374,7 @@ function buildFrom(
       root: rootOccurrence,
     })),
     grabbag,
-    inventory: inventoryFrom(root),
+    inventory: inventoryFrom(root, sheet),
     alternates,
     baseAbilities: snapshotAbilities,
     textStrings,
@@ -591,6 +650,7 @@ export function importDnd4e(input: string): Dnd4eImportResult {
     },
     build: buildFrom(
       root,
+      sheet,
       Object.keys(rootAbilities).length === 0 ? abilities : rootAbilities,
       textStrings,
     ),
