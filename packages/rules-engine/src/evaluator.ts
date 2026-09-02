@@ -358,6 +358,53 @@ export function aggregateInventory(
   );
 }
 
+const magicArmorAdjustment = {
+  light: [0, 0, 0, 0, 1, 1, 2],
+  heavy: [0, 0, 1, 2, 3, 4, 6],
+} as const;
+
+function leadingInteger(value: string | undefined): number {
+  const match = /^[+-]?\d+/.exec(value?.trim() ?? "");
+  return match === null ? 0 : Number(match[0]);
+}
+
+function essentialsMagicArmorBonuses(
+  inventory: readonly CharacterInventoryEntry[],
+  index: RulesIndex,
+): ReadonlyMap<string, number> {
+  const bonuses = new Map<string, number>();
+  for (const entry of inventory.filter(
+    ({ equippedQuantity }) => equippedQuantity > 0,
+  )) {
+    const definitions = entry.definitionIds.flatMap((definitionId) => {
+      const definition = index.get(definitionId);
+      return definition === undefined ? [] : [definition];
+    });
+    const armor = definitions.find(({ type }) => key(type) === "armor");
+    const enchantment = definitions.find(
+      (definition) =>
+        definition !== armor && field(definition, "Enhancement") !== undefined,
+    );
+    if (
+      armor === undefined ||
+      enchantment === undefined ||
+      leadingInteger(field(armor, "Minimum Enhancement Bonus")) !== 0
+    )
+      continue;
+    const enhancement = leadingInteger(field(enchantment, "Enhancement"));
+    const armorType = key(field(armor, "Armor Type") ?? "");
+    const adjustment =
+      magicArmorAdjustment[armorType === "heavy" ? "heavy" : "light"][
+        enhancement
+      ] ?? 0;
+    if (adjustment === 0) continue;
+    const adjusted = leadingInteger(field(armor, "Armor Bonus")) + adjustment;
+    const id = key(armor.id);
+    bonuses.set(id, Math.max(bonuses.get(id) ?? 0, adjusted));
+  }
+  return bonuses;
+}
+
 export function evaluateCharacter(
   input: EvaluationInput,
   entities: readonly ContentEntity[],
@@ -365,6 +412,10 @@ export function evaluateCharacter(
   const index = new RulesIndex(entities);
   const diagnostics: EngineDiagnostic[] = [];
   const inventory = aggregateInventory(input.inventory, input.level);
+  const adjustedMagicArmorBonuses = essentialsMagicArmorBonuses(
+    inventory,
+    index,
+  );
   const currentInput = { ...input, inventory };
   const savedDefinitionIds = new Set(
     input.occurrences.map(({ definitionId }) => key(definitionId)),
@@ -647,11 +698,19 @@ export function evaluateCharacter(
       )
         continue;
       switch (rule.kind) {
-        case "statadd":
+        case "statadd": {
+          const adjustedArmorBonus = adjustedMagicArmorBonuses.get(
+            key(entity.id),
+          );
           stats.add({
             id: `${occurrence.id}:${rule.source.ordinal}`,
             stat: rule.name,
-            value: rule.value,
+            value:
+              adjustedArmorBonus !== undefined &&
+              key(rule.name) === "armor class" &&
+              key(rule.bonusType ?? "") === "armor"
+                ? String(adjustedArmorBonus)
+                : rule.value,
             providerId: occurrence.id,
             providerName: entity.name,
             ...(rule.bonusType === undefined
@@ -669,6 +728,7 @@ export function evaluateCharacter(
             ...(rule.halfPoint === undefined ? {} : { halfPoint: true }),
           });
           break;
+        }
         case "statalias":
           stats.alias(rule.name, rule.alias);
           break;

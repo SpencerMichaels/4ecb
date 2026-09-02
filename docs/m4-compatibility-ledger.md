@@ -93,10 +93,10 @@ forms, all seven records converge and complete with zero unresolved choices.
 Recovered equipment channels, weapon-specific bonuses, attack-branch choice,
 literal native output, Versatile handling, and weapon-slot keywords bring the
 power diagnostic to 411/411 cached fields with no unsupported powers. The
-numeric diagnostic is 465/470 after implementing the recovered hybrid
-`half-point` accumulation/truncation boundary. Seven regenerated edited exports
-pass semantic re-import. The five residual numeric differences are internally
-inconsistent or trace to exact-pack armor/feature revisions; three older skill-power selections
+numeric diagnostic is 469/470 after implementing the recovered hybrid
+`half-point` boundary and native `EssentialsMagicArmor` base adjustment. Seven
+regenerated edited exports pass semantic re-import. The one residual numeric
+difference is internally inconsistent; three older skill-power selections
 remain category-ineligible under both the current level rules and the recovered
 native category matcher. These findings are preserved because the files'
 originating content revisions are not established.

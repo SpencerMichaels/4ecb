@@ -65,6 +65,26 @@ The `wearing`/`not-wearing` evaluator has named branches for:
 - item augments and item-set counts;
 - inherent bonuses when no appropriate magic item bonus applies.
 
+`EquipLoot` executes the base holding and its enchantment and then calls
+`EssentialsMagicArmor`. For a base `Armor` record whose `Minimum Enhancement
+Bonus` is zero, that method parses the base `Armor Bonus`, classifies `Armor
+Type` as heavy or light, parses the enchantment's `Enhancement`, and applies the
+hard-coded adjustment table below. A nonzero minimum marks an already-masterwork
+base and bypasses this substitution.
+
+| Enhancement | +0 | +1 | +2 | +3 | +4 | +5 | +6 |
+| ----------- | -- | -- | -- | -- | -- | -- | -- |
+| Light       | 0  | 0  | 0  | 0  | 1  | 1  | 2  |
+| Heavy       | 0  | 0  | 1  | 2  | 3  | 4  | 6  |
+
+The method changes both the base record's displayed `Armor Bonus` and that
+holding's `Armor Class` stat contribution with bonus type `Armor`; enhancement
+remains a separate typed contribution. Consequently ordinary heavy armor gains
++1 base AC when paired with a +2 armor enchantment. In
+`PanelItemModelDefense.Update`, the character-sheet ARMOR/ABIL field is the sum
+of AC contributions whose type is `Armor` (or `Ability` for other defenses), so
+it displays the adjusted base rather than base plus enhancement.
+
 Damage parsing recognizes the literal token `beast's`, consumes the following
 ability name, reads that score from the first selected beast companion, and
 adds its modifier with a `beast's <ability> modifier` component label. A

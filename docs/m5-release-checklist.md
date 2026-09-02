@@ -143,7 +143,7 @@ budgets remain active during M5.
       All seven private evaluations converge and complete with zero unresolved
       choices; the cross-profile power diagnostic is 411/411 with no unsupported
       branches, and all seven edited exports pass semantic re-import. The
-      465/470 numeric result and three category-ineligible legacy skill-power
+      469/470 numeric result and three category-ineligible legacy skill-power
       placements remain visible because current exact-pack/recovered behavior
       does not support rewriting those historical caches as legal goldens.
 - [x] Repeat the automated Letter/A4 color/monochrome PDF matrix in supported

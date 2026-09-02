@@ -67,6 +67,99 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it("applies native magic-armor base adjustments but preserves masterwork armor", () => {
+    const content = [
+      entity("ROOT", "Root", "Test", {
+        rules: [
+          rule("statalias", { name: "AC", alias: "Armor Class" }, 0),
+          rule("statadd", { name: "AC", value: "+10" }, 1),
+        ],
+      }),
+      entity("CHAIN", "Synthetic Chain", "Armor", {
+        rules: [
+          rule(
+            "statadd",
+            { name: "Armor Class", value: "6", type: "Armor" },
+            0,
+          ),
+        ],
+        specifics: {
+          "Armor Bonus": "6",
+          "Armor Type": "Heavy",
+          "Minimum Enhancement Bonus": "",
+        },
+      }),
+      entity("MASTERWORK", "Synthetic Masterwork Chain", "Armor", {
+        rules: [
+          rule(
+            "statadd",
+            { name: "Armor Class", value: "9", type: "Armor" },
+            0,
+          ),
+        ],
+        specifics: {
+          "Armor Bonus": "9",
+          "Armor Type": "Heavy",
+          "Minimum Enhancement Bonus": "3",
+        },
+      }),
+      entity("MAGIC_2", "Synthetic Armor +2", "Magic Item", {
+        rules: [
+          rule(
+            "statadd",
+            { name: "Armor Class", value: "+2", type: "Enhancement" },
+            0,
+          ),
+        ],
+        specifics: { Enhancement: "+2 AC", "Magic Item Type": "Armor" },
+      }),
+      entity("MAGIC_3", "Synthetic Armor +3", "Magic Item", {
+        rules: [
+          rule(
+            "statadd",
+            { name: "Armor Class", value: "+3", type: "Enhancement" },
+            0,
+          ),
+        ],
+        specifics: { Enhancement: "+3 AC", "Magic Item Type": "Armor" },
+      }),
+    ];
+    const evaluateArmor = (definitionIds: string[]) =>
+      evaluateCharacter(
+        {
+          level: 1,
+          baseAbilities: {},
+          occurrences: [rootOccurrence],
+          inventory: [
+            {
+              id: "armor",
+              definitionIds,
+              quantity: 1,
+              equippedQuantity: 1,
+              acquiredLevel: 1,
+            },
+          ],
+        },
+        content,
+      );
+
+    const adjusted = evaluateArmor(["CHAIN", "MAGIC_2"]);
+    expect(adjusted.stats.AC?.value).toBe(19);
+    expect(
+      adjusted.stats.AC?.contributions.find(
+        ({ providerName }) => providerName === "Synthetic Chain",
+      )?.numericValue,
+    ).toBe(7);
+
+    const masterwork = evaluateArmor(["MASTERWORK", "MAGIC_3"]);
+    expect(masterwork.stats.AC?.value).toBe(22);
+    expect(
+      masterwork.stats.AC?.contributions.find(
+        ({ providerName }) => providerName === "Synthetic Masterwork Chain",
+      )?.numericValue,
+    ).toBe(9);
+  });
+
   it("combines hybrid half points within a stat and truncates before links", () => {
     const content = [
       entity("ROOT", "Root", "Test", {

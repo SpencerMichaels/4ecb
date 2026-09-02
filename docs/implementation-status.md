@@ -62,7 +62,7 @@ MVP declaration still requires the manual legacy-builder matrix.
   bonuses, weapon-reach attack-branch selection, Rage Strike's literal output,
   versatile two-handed damage, and serialized two-hand slot keywords. Across
   the seven ignored samples, all seven evaluations converge and complete with
-  zero unresolved choices; numeric cache diagnostics are 465/470 and power
+  zero unresolved choices; numeric cache diagnostics are 469/470 and power
   cache diagnostics are 411/411 with no unsupported power branches. These caches
   are not known-profile goldens. All seven regenerated edited exports pass
   semantic re-import.
@@ -72,11 +72,16 @@ MVP declaration still requires the manual legacy-builder matrix.
   hybrid's serialized `3` and `4` surge components therefore represent 3.5 and
   4.5 and correctly add the missing whole point; public synthetic tests also pin
   the lone-half link boundary and negative half direction.
-- The five remaining numeric cache differences are retained as cross-profile
-  evidence: two cached armor values differ from the current exact pack's armor
-  values, and one feature cache omits the base bonus that both its own serialized
-  description and dependent defense contribution retain (each defense appears
-  under both of its legacy aliases). Three
+- The two armor discrepancies were also evaluator gaps, not content drift.
+  Recovered `EquipLoot` calls `EssentialsMagicArmor` after composing base armor
+  with its enchantment. Its native heavy-armor table adds +1 to a non-masterwork
+  base at enhancement +2, while leaving enhancement as a distinct typed bonus;
+  this produces the serialized 7 and 8 Armor contributions from current bases 6
+  and 7. Public fixtures pin the +2 adjustment and the nonzero-minimum masterwork
+  bypass.
+- The one remaining numeric cache difference is retained as internally
+  inconsistent evidence: one feature cache omits the base bonus that both its
+  own serialized description and dependent defense contribution retain. Three
   older skill-power selections in ordinary level utility slots also remain
   `choice.ineligible`: the current exact pack exposes skill-power substitution
   through a separate feat selection, and the recovered native category matcher
