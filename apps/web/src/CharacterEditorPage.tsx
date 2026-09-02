@@ -29,7 +29,7 @@ import {
 
 import {
   candidateReason,
-  choiceForSkillCandidate,
+  choiceForRepeatedCandidate,
   choicesAtLevel,
   groupChoicesByLegacyWorkflow,
   groupLevelChoices,
@@ -974,6 +974,206 @@ function repeatedSlotLabel(choice: EvaluatedChoice, index: number): string {
   return `${choice.type} ${index + 1}`;
 }
 
+const abilityOrder = [
+  "Strength",
+  "Constitution",
+  "Dexterity",
+  "Intelligence",
+  "Wisdom",
+  "Charisma",
+] as const;
+
+function AbilityIncreaseEditor({
+  choices,
+  evaluation,
+  build,
+  entities,
+  byId,
+  rollbackRevision,
+  onDispatch,
+}: {
+  readonly choices: readonly EvaluatedChoice[];
+  readonly evaluation: EvaluatedCharacter;
+  readonly build: CharacterRecord["build"];
+  readonly entities: readonly ContentEntity[];
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly rollbackRevision: number;
+  readonly onDispatch: (command: CharacterCommand) => void;
+}) {
+  const evaluatedSlots = new Map(
+    choices.map((choice) => [
+      choice.id,
+      selectedDefinitionId(choice, evaluation),
+    ]),
+  );
+  const [optimisticSlots, setOptimisticSlots] = useState(evaluatedSlots);
+  const choiceKey = choices.map((choice) => choice.id).join("\0");
+
+  useEffect(() => setOptimisticSlots(new Map()), [rollbackRevision]);
+  useEffect(
+    () =>
+      setOptimisticSlots(
+        new Map(
+          choices.map((choice) => [
+            choice.id,
+            selectedDefinitionId(choice, evaluation),
+          ]),
+        ),
+      ),
+    [choiceKey, evaluation],
+  );
+
+  const candidateIds = [
+    ...new Set(
+      choices.flatMap((choice) =>
+        choice.candidates.map((candidate) => candidate.definitionId),
+      ),
+    ),
+  ].sort((left, right) => {
+    const leftName = byId.get(left.toLocaleLowerCase())?.name ?? left;
+    const rightName = byId.get(right.toLocaleLowerCase())?.name ?? right;
+    const leftRank = abilityOrder.indexOf(
+      leftName as (typeof abilityOrder)[number],
+    );
+    const rightRank = abilityOrder.indexOf(
+      rightName as (typeof abilityOrder)[number],
+    );
+    return (
+      (leftRank < 0 ? abilityOrder.length : leftRank) -
+        (rightRank < 0 ? abilityOrder.length : rightRank) ||
+      leftName.localeCompare(rightName)
+    );
+  });
+  const occupiedChoiceIds = new Set(
+    [...optimisticSlots].flatMap(([choiceId, definitionId]) =>
+      definitionId === undefined ? [] : [choiceId],
+    ),
+  );
+  const chosenCount = occupiedChoiceIds.size;
+
+  return (
+    <section
+      aria-labelledby={`${choiceSectionId(choices[0]!.id)}-heading`}
+      className="level-choice-section ability-increase-section"
+      id={choiceSectionId(choices[0]!.id)}
+      tabIndex={-1}
+    >
+      <header>
+        <h4 id={`${choiceSectionId(choices[0]!.id)}-heading`}>
+          Choose {choices.length} ability scores
+        </h4>
+        <strong className="ability-choice-count" aria-live="polite">
+          {chosenCount} of {choices.length} chosen
+        </strong>
+      </header>
+      <div className="ability-increase-grid">
+        {candidateIds.map((definitionId) => {
+          const definition = byId.get(definitionId.toLocaleLowerCase());
+          const selectedChoice = choices.find(
+            (choice) => optimisticSlots.get(choice.id) === definitionId,
+          );
+          const targetChoice = choiceForRepeatedCandidate(
+            choices,
+            occupiedChoiceIds,
+            definitionId,
+            false,
+          );
+          const targetCandidate = targetChoice?.candidates.find(
+            (candidate) => candidate.definitionId === definitionId,
+          );
+          const disabled =
+            selectedChoice === undefined &&
+            (chosenCount >= choices.length ||
+              targetChoice === undefined ||
+              targetCandidate === undefined);
+          return (
+            <button
+              aria-pressed={selectedChoice !== undefined}
+              className={
+                selectedChoice === undefined ? undefined : "ability-selected"
+              }
+              disabled={disabled}
+              key={definitionId}
+              type="button"
+              onClick={() => {
+                if (selectedChoice !== undefined) {
+                  const command = unresolveEvaluatedChoiceCommand(
+                    build,
+                    selectedChoice,
+                    evaluation,
+                    entities,
+                    `web:placeholder:ability:${crypto.randomUUID()}`,
+                  );
+                  if (command === undefined) return;
+                  setOptimisticSlots((current) => {
+                    const next = new Map(current);
+                    next.set(selectedChoice.id, undefined);
+                    return next;
+                  });
+                  onDispatch(command);
+                  return;
+                }
+                if (
+                  targetChoice === undefined ||
+                  targetCandidate === undefined ||
+                  definition === undefined
+                )
+                  return;
+                const provider = evaluation.occurrences.find(
+                  (occurrence) =>
+                    occurrence.id === targetChoice.providerOccurrenceId,
+                );
+                const buildProvider = findOccurrence(
+                  build,
+                  targetChoice.providerOccurrenceId,
+                );
+                const occurrence: BuildOccurrence = {
+                  id: `web:${crypto.randomUUID()}`,
+                  identity: {
+                    definitionId: definition.id,
+                    name: definition.name,
+                    type: definition.type,
+                  },
+                  acquiredLevel:
+                    buildProvider?.acquiredLevel ??
+                    provider?.acquiredLevel ??
+                    evaluation.level,
+                  legality: targetCandidate.eligible
+                    ? "rules-legal"
+                    : "houserule",
+                  children: [],
+                  unresolved: false,
+                };
+                const command = commandForEvaluatedChoice(
+                  build,
+                  targetChoice,
+                  evaluation.occurrences,
+                  entities,
+                  occurrence,
+                  (index) => `web:placeholder:${index}:${crypto.randomUUID()}`,
+                );
+                if (command === undefined) return;
+                setOptimisticSlots((current) => {
+                  const next = new Map(current);
+                  next.set(targetChoice.id, definitionId);
+                  return next;
+                });
+                onDispatch(command);
+              }}
+            >
+              <span>{definition?.name ?? definitionId}</span>
+              {selectedChoice === undefined ? null : <Icon name="check" />}
+            </button>
+          );
+        })}
+      </div>
+      {chosenCount < choices.length ? null : (
+        <p className="field-help">Clear one ability before choosing another.</p>
+      )}
+    </section>
+  );
+}
+
 function RepeatedChoiceGroup({
   choices,
   evaluation,
@@ -1396,7 +1596,7 @@ function SkillTrainingEditor({
               const trainedChoice = choices.find(
                 (choice) => optimisticSlots.get(choice.id) === definitionId,
               );
-              const targetChoice = choiceForSkillCandidate(
+              const targetChoice = choiceForRepeatedCandidate(
                 choices,
                 occupiedChoiceIds,
                 definitionId,
@@ -1998,7 +2198,20 @@ export function CharacterEditorPage({
       ) : null;
     const repeated = repeatedGroupByChoiceId.get(choice.id);
     if (repeated !== undefined)
-      return choice === repeated[0] ? (
+      return choice !== repeated[0] ? null : repeated.every((item) =>
+          item.type.startsWith("Ability Increase"),
+        ) ? (
+        <AbilityIncreaseEditor
+          key={choice.id}
+          choices={repeated}
+          evaluation={planningEvaluation}
+          build={build}
+          entities={entities}
+          byId={byId}
+          rollbackRevision={rollbackRevision}
+          onDispatch={dispatch}
+        />
+      ) : (
         <RepeatedChoiceGroup
           key={choice.id}
           choices={repeated}
@@ -2009,7 +2222,7 @@ export function CharacterEditorPage({
           rollbackRevision={rollbackRevision}
           onDispatch={dispatch}
         />
-      ) : null;
+      );
     const flow = dependentFlowByChoiceId.get(choice.id);
     if (flow !== undefined)
       return choice === flow[0] ? (

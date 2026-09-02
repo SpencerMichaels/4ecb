@@ -306,6 +306,12 @@ when the underlying replacement rule has exactly one candidate and that
 candidate is visible; selecting the replaced occurrence then dispatches that
 exact candidate automatically.
 
+Repeated ability-increase slots from one legacy select rule render as one
+six-ability toggle grid rather than positional dropdowns. The UI preserves the
+two exact underlying occurrences, allows each ability at most once, updates the
+count optimistically, and requires clearing one selected ability before choosing
+a different one when all slots are occupied.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

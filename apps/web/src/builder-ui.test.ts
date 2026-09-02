@@ -9,7 +9,7 @@ import type { EvaluatedCharacter } from "@4ecb/rules-engine";
 
 import {
   candidateReason,
-  choiceForSkillCandidate,
+  choiceForRepeatedCandidate,
   choicesAtLevel,
   groupDependentChoiceFlows,
   groupLevelChoices,
@@ -367,7 +367,8 @@ describe("builder planning UI", () => {
       },
     ] as unknown as EvaluatedCharacter["choices"];
     expect(
-      choiceForSkillCandidate(choices, new Set(["chosen"]), "ARCANA", true)?.id,
+      choiceForRepeatedCandidate(choices, new Set(["chosen"]), "ARCANA", true)
+        ?.id,
     ).toBe("available");
   });
 

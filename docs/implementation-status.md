@@ -157,11 +157,17 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   replacement immediately and omits the redundant **With** control. Live
   Silaqui verification selected Fading Strike and observed Rapid Shot applied,
   then restored the original build through undo.
+- Paired ability-score increases now render as one ordered six-button selector
+  with a live `N of 2 chosen` count. Selected abilities can be cleared, duplicate
+  selection is impossible, and the other four abilities are disabled once both
+  exact rules-engine slots are occupied. Live Silaqui level-8 verification
+  confirmed immediate optimistic selection/clearing, restoration of her
+  Constitution/Dexterity choices, and no horizontal overflow at 374 px.
 - Silaqui's false level-6 house-rule warning was a presentation bug: warning
   detection flattened candidate decisions from every possible replacement
   target. It now evaluates the selected replacement only, correctly recognizing
   the imported Nimble Strike to Fading Strike retraining as rules-legal.
-- `nix develop path:. -c bash scripts/check.sh` passes 202 tests across 35 files,
+- `nix develop path:. -c bash scripts/check.sh` passes 204 tests across 35 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

@@ -426,7 +426,7 @@ export function selectedDefinitionId(
   )?.definitionId;
 }
 
-export function choiceForSkillCandidate(
+export function choiceForRepeatedCandidate(
   choices: readonly EvaluatedChoice[],
   occupiedChoiceIds: ReadonlySet<string>,
   definitionId: string,
