@@ -301,6 +301,8 @@ function nativeSpecialDamage(
     return { dice: "", ability: "Strength", abilityOnly: true };
 
   const hit = key(hitLine ?? "");
+  if (hit.startsWith("you deal damage based on the level of the rage power"))
+    return { expression: "As Above" };
   if (
     hit === "the target takes ongoing 10 radiant damage (save ends)." ||
     hit ===
@@ -322,7 +324,6 @@ function unresolvedNativeSpecialCase(hitLine: string | undefined): boolean {
     hit.startsWith("deal damage equal to your strength modifier,") ||
     hit ===
       "the target takes necrotic damage equal to the damage you took from the attack." ||
-    hit.startsWith("you deal damage based on the level of the rage power") ||
     hit ===
       "you take damage equal to your level, and the target takes 3d10 + constitution modifier damage plus extra damage equal to one-half your level." ||
     hit ===

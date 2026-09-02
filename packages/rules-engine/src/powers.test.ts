@@ -227,7 +227,7 @@ describe("power evaluation", () => {
   it("evaluates exact synthetic forms of three recovered level-one powers", () => {
     const powers = evaluatePowers({
       level: 1,
-      activeDefinitionIds: ["HOWL", "KNOCKDOWN", "CALL"],
+      activeDefinitionIds: ["HOWL", "KNOCKDOWN", "CALL", "RAGE"],
       inventory: [
         {
           id: "axe",
@@ -261,6 +261,12 @@ describe("power evaluation", () => {
           Attack: "Wisdom vs. Will",
           Hit: "The target can't gain combat advantage until the end of your next turn. In addition, on its next turn the target takes psychic damage equal to 5 + your Wisdom modifier when it makes any attack that doesn't include your ally nearest to it as a target.",
         }),
+        entity("RAGE", "Rage Strike", "Power", {
+          Keywords: "Primal, Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. AC",
+          Hit: "You deal damage based on the level of the rage power you expend:\n1st level 3[W] + Strength modifier",
+        }),
         entity("AXE", "Synthetic Greataxe", "Weapon", {
           Damage: "1d12",
           "Proficiency Bonus": "2",
@@ -288,9 +294,13 @@ describe("power evaluation", () => {
       },
     ]);
     expect(
+      powers.find(({ definitionId }) => definitionId === "RAGE")?.variants[0]
+        ?.damage,
+    ).toBe("As Above");
+    expect(
       powers
         .filter(({ definitionId }) =>
-          ["HOWL", "KNOCKDOWN", "CALL"].includes(definitionId),
+          ["HOWL", "KNOCKDOWN", "CALL", "RAGE"].includes(definitionId),
         )
         .flatMap(({ unsupported }) => unsupported),
     ).toEqual([]);
