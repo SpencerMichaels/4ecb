@@ -13,6 +13,7 @@ export interface StatContribution {
   readonly notWearing?: string;
   readonly zeroOnly?: boolean;
   readonly nonZeroOnly?: boolean;
+  readonly halfPoint?: boolean;
 }
 
 export interface EvaluatedContribution extends StatContribution {
@@ -139,13 +140,17 @@ export class StatAccumulator {
         evaluated.push({ ...contribution, applied: false, reason: "cycle" });
         continue;
       }
+      const numeric =
+        contribution.halfPoint === true && raw !== 0
+          ? raw + (raw > 0 ? 0.5 : -0.5)
+          : raw;
       if (
         (contribution.zeroOnly === true && untyped !== 0) ||
         (contribution.nonZeroOnly === true && untyped === 0)
       ) {
         evaluated.push({
           ...contribution,
-          numericValue: raw,
+          numericValue: numeric,
           applied: false,
           reason: "zero-gate",
         });
@@ -155,13 +160,17 @@ export class StatAccumulator {
         contribution.bonusType === undefined ||
         contribution.bonusType.trim().length === 0
       ) {
-        untyped += raw;
-        evaluated.push({ ...contribution, numericValue: raw, applied: true });
+        untyped += numeric;
+        evaluated.push({
+          ...contribution,
+          numericValue: numeric,
+          applied: true,
+        });
       } else {
         const group = key(contribution.bonusType);
         typed.set(group, [
           ...(typed.get(group) ?? []),
-          { contribution, value: raw },
+          { contribution, value: numeric },
         ]);
       }
     }
@@ -190,7 +199,7 @@ export class StatAccumulator {
           (candidate) => typeof this.#value(candidate.value, next) === "string",
         )
           ? (strings.at(-1) ?? "")
-          : untyped,
+          : Math.trunc(untyped),
       contributions: evaluated,
     };
   }

@@ -136,10 +136,16 @@ A signed/unsigned numeric value is a constant. A nonnumeric signed value is a
 link to another named stat with multiplier `+1` or `-1`; examples in the corpus
 include `+Constitution modifier`. `ABILITYMOD(X)` requests the ability modifier of
 the linked score. Recovered flags also support half-modifier/half-point behavior
-and a minimum-one behavior. Stat names can contain `[Choice Name]`; the bracketed
-named selection is replaced with its chosen record ID before lookup.
+and a minimum-one behavior. A `half-point="true"` numeric contribution carries
+one signed half within its target stat; paired hybrid halves therefore make a
+whole point, while the evaluated stat truncates a lone half before another stat
+links to it. This matches native cached hybrid HP/surge components, which
+serialize integer contribution values while retaining the combined half in the
+stat total. Stat names can contain `[Choice Name]`; the bracketed named selection
+is replaced with its chosen record ID before lookup.
 
-Keep numeric values as exact integers in the compatibility evaluator. Strings are
+Keep ordinary numeric values exact in the compatibility evaluator and preserve
+the half-point flag separately from their serialized integer value. Strings are
 valid stat values and use a separate last-value/stacked concatenation path.
 
 ### Applicability and stacking

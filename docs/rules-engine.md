@@ -85,12 +85,13 @@ cross-profile compatibility evidence, not exact public test fixtures.
 
 An additional ignored seven-character correction corpus exercises a different
 compatibility surface. It now converges and completes all seven records with
-zero unresolved choices, matches 464/470 comparable numeric aliases and 411/411
+zero unresolved choices, matches 465/470 comparable numeric aliases and 411/411
 cached power fields with no unsupported power branches, and passes seven
 regenerated-export semantic re-imports. Those cache totals remain cross-profile
-diagnostics. The six numeric differences are retained because their serialized
-components or exact-pack armor/feature definitions disagree with the cached
-totals. Three legacy skill-power selections also remain explicitly
+diagnostics. Hybrid `half-point` rules now combine signed halves within a stat
+and truncate before linked-stat consumption, closing the prior surge mismatch.
+The five residual numeric differences are retained because exact-pack armor or
+feature definitions disagree with the cached totals. Three legacy skill-power selections also remain explicitly
 category-ineligible: current level choices require a class utility, while the
 exact pack models skill-power substitution through a separate feat choice. The
 public assertions are instead synthetic exact fixtures for contribution

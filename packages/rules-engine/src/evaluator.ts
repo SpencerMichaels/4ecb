@@ -666,6 +666,7 @@ export function evaluateCharacter(
               : { notWearing: rule.notWearing }),
             ...(rule.zero === undefined ? {} : { zeroOnly: true }),
             ...(rule.nonZero === undefined ? {} : { nonZeroOnly: true }),
+            ...(rule.halfPoint === undefined ? {} : { halfPoint: true }),
           });
           break;
         case "statalias":

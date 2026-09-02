@@ -67,6 +67,75 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it("combines hybrid half points within a stat and truncates before links", () => {
+    const content = [
+      entity("ROOT", "Root", "Test", {
+        rules: [
+          rule("statadd", { name: "Hit Point Step", value: "+Per Level" }, 0),
+        ],
+      }),
+      entity("HYBRID_A", "Synthetic Hybrid A", "Hybrid Class", {
+        rules: [
+          rule(
+            "statadd",
+            {
+              name: "Healing Surges",
+              value: "+3",
+              "half-point": "true",
+            },
+            0,
+          ),
+          rule(
+            "statadd",
+            { name: "Per Level", value: "+2", "half-point": "true" },
+            1,
+          ),
+        ],
+      }),
+      entity("HYBRID_B", "Synthetic Hybrid B", "Hybrid Class", {
+        rules: [
+          rule(
+            "statadd",
+            {
+              name: "Healing Surges",
+              value: "+4",
+              "half-point": "true",
+            },
+            0,
+          ),
+          rule("statadd", { name: "Per Level", value: "+3" }, 1),
+        ],
+      }),
+    ];
+    const evaluated = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "hybrid-a",
+            definitionId: "HYBRID_A",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+          {
+            id: "hybrid-b",
+            definitionId: "HYBRID_B",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+        ],
+        inventory: [],
+      },
+      content,
+    );
+
+    expect(evaluated.stats["Healing Surges"]?.value).toBe(8);
+    expect(evaluated.stats["Per Level"]?.value).toBe(5);
+    expect(evaluated.stats["Hit Point Step"]?.value).toBe(5);
+  });
+
   it("does not execute one equipped holding twice when legacy tally repeats it", () => {
     const content = [
       entity("ROOT", "Root", "Test"),

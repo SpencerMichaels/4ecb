@@ -51,6 +51,42 @@ describe("stat evaluation", () => {
     expect(penalties.evaluate("Check").value).toBe(-3);
   });
 
+  it("preserves signed half-point contributions for hybrid totals", () => {
+    const stats = new StatAccumulator();
+    stats.add({
+      id: "hybrid-warlord",
+      stat: "Healing Surges",
+      value: "+3",
+      providerId: "hybrid-warlord",
+      providerName: "Synthetic Hybrid Warlord",
+      halfPoint: true,
+    });
+    stats.add({
+      id: "hybrid-fighter",
+      stat: "Healing Surges",
+      value: "+4",
+      providerId: "hybrid-fighter",
+      providerName: "Synthetic Hybrid Fighter",
+      halfPoint: true,
+    });
+    stats.add({
+      id: "negative-adjustment",
+      stat: "Adjustment",
+      value: "-3",
+      providerId: "negative-adjustment",
+      providerName: "Synthetic Negative Adjustment",
+      halfPoint: true,
+    });
+
+    expect(stats.evaluate("Healing Surges").value).toBe(8);
+    expect(stats.evaluate("Adjustment").value).toBe(-3);
+    expect(
+      stats
+        .evaluate("Healing Surges")
+        .contributions.map((entry) => entry.numericValue),
+    ).toEqual([3.5, 4.5]);
+  });
+
   it("retains but suppresses conditional and unmet equipment contributions", () => {
     const stats = new StatAccumulator({
       items: [

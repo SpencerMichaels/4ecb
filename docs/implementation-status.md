@@ -62,15 +62,21 @@ MVP declaration still requires the manual legacy-builder matrix.
   bonuses, weapon-reach attack-branch selection, Rage Strike's literal output,
   versatile two-handed damage, and serialized two-hand slot keywords. Across
   the seven ignored samples, all seven evaluations converge and complete with
-  zero unresolved choices; numeric cache diagnostics are 464/470 and power
+  zero unresolved choices; numeric cache diagnostics are 465/470 and power
   cache diagnostics are 411/411 with no unsupported power branches. These caches
   are not known-profile goldens. All seven regenerated edited exports pass
   semantic re-import.
-- The six remaining numeric cache differences are retained as cross-profile
-  evidence: one cached surge total is inconsistent with its own serialized
-  contribution components, two cached armor values differ from the current
-  exact pack's armor values, and one feature cache predates the current pack's
-  base bonus (each defense appears under both of its legacy aliases). Three
+- The hybrid surge discrepancy was a real evaluator gap: native `half-point`
+  contributions carry a signed half within their target stat, combine before
+  truncation, and truncate before linked stats consume the result. The observed
+  hybrid's serialized `3` and `4` surge components therefore represent 3.5 and
+  4.5 and correctly add the missing whole point; public synthetic tests also pin
+  the lone-half link boundary and negative half direction.
+- The five remaining numeric cache differences are retained as cross-profile
+  evidence: two cached armor values differ from the current exact pack's armor
+  values, and one feature cache omits the base bonus that both its own serialized
+  description and dependent defense contribution retain (each defense appears
+  under both of its legacy aliases). Three
   older skill-power selections in ordinary level utility slots also remain
   `choice.ineligible`: the current exact pack exposes skill-power substitution
   through a separate feat selection, and the recovered native category matcher
