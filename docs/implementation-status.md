@@ -23,7 +23,10 @@ next run showed Strength and Intelligence one point high. Recovered native save
 code proved that our extra root score block and levels-first ordering were
 non-native; level-up choices themselves were not duplicated. Export now follows
 the native sheet/campaign/levels/grabbag/text order, emits one sheet score block,
-and rejects duplicate occurrence tokens. The newest correction awaits retest.
+and rejects duplicate occurrence tokens. The newest correction opens in the
+original builder, and PDFs exported there from the original and regenerated Hu
+records are visually identical under manual comparison. Save/reopen and the
+remaining curated candidates still require manual execution.
 
 ## M5 checkpoints
 
