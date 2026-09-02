@@ -1739,10 +1739,82 @@ function SkillTrainingEditor({
   );
 }
 
+function CharacterTextField({
+  name,
+  label,
+  value,
+  multiline = false,
+  onDispatch,
+}: {
+  readonly name: string;
+  readonly label: string;
+  readonly value: string;
+  readonly multiline?: boolean;
+  readonly onDispatch: (command: CharacterCommand) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  const pendingCommit = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+
+  useEffect(() => setDraft(value), [value]);
+  useEffect(
+    () => () => {
+      if (pendingCommit.current !== undefined)
+        clearTimeout(pendingCommit.current);
+    },
+    [],
+  );
+
+  const commit = (next: string) => {
+    if (pendingCommit.current !== undefined) {
+      clearTimeout(pendingCommit.current);
+      pendingCommit.current = undefined;
+    }
+    const committed = name === "Name" ? next.trim() : next;
+    if (name === "Name" && committed.length === 0) {
+      setDraft(value);
+      return;
+    }
+    if (committed !== draft) setDraft(committed);
+    if (committed !== value)
+      onDispatch({ kind: "set-text", name, value: committed });
+  };
+  const change = (next: string) => {
+    setDraft(next);
+    if (pendingCommit.current !== undefined)
+      clearTimeout(pendingCommit.current);
+    pendingCommit.current = setTimeout(() => commit(next), 500);
+  };
+
+  return (
+    <label>
+      {label}
+      {multiline ? (
+        <textarea
+          rows={5}
+          value={draft}
+          onBlur={() => commit(draft)}
+          onChange={(event) => change(event.currentTarget.value)}
+        />
+      ) : (
+        <input
+          {...(name === "Name" ? { maxLength: 120, required: true } : {})}
+          value={draft}
+          onBlur={() => commit(draft)}
+          onChange={(event) => change(event.currentTarget.value)}
+        />
+      )}
+    </label>
+  );
+}
+
 function CharacterDetailsEditor({
   choices,
   evaluation,
   build,
+  snapshotDetails,
+  characterTitle,
   entities,
   byId,
   rollbackRevision,
@@ -1751,12 +1823,75 @@ function CharacterDetailsEditor({
   readonly choices: readonly EvaluatedChoice[];
   readonly evaluation: EvaluatedCharacter | undefined;
   readonly build: CharacterRecord["build"];
+  readonly snapshotDetails: Readonly<Record<string, string>>;
+  readonly characterTitle: string;
   readonly entities: readonly ContentEntity[];
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly rollbackRevision: number;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
   const [inspectedOption, setInspectedOption] = useState<InspectedOption>();
+  const textValue = (name: string, detailName?: string) =>
+    Object.hasOwn(build.textStrings, name)
+      ? (build.textStrings[name] ?? "")
+      : detailName === undefined
+        ? ""
+        : (snapshotDetails[detailName] ?? "");
+  const textFields = [
+    {
+      name: "Name",
+      label: "Character name",
+      value: textValue("Name", "name") || characterTitle,
+    },
+    {
+      name: "Player",
+      label: "Player name",
+      value: textValue("Player", "Player"),
+    },
+    {
+      name: "Company",
+      label: "Adventuring company",
+      value: textValue("Company", "Company"),
+    },
+    { name: "RPGA", label: "RPGA number", value: textValue("RPGA", "RPGA") },
+  ] as const;
+  const physicalFields = [
+    { name: "Age", label: "Age", value: textValue("Age", "Age") },
+    { name: "Height", label: "Height", value: textValue("Height", "Height") },
+    { name: "Weight", label: "Weight", value: textValue("Weight", "Weight") },
+  ] as const;
+  const noteFields = [
+    {
+      name: "NOTE_Personality Traits",
+      label: "Personality traits",
+      value: textValue("NOTE_Personality Traits", "Traits"),
+    },
+    {
+      name: "NOTE_Mannerisms and Appearance",
+      label: "Mannerisms and appearance",
+      value: textValue("NOTE_Mannerisms and Appearance", "Appearance"),
+    },
+    {
+      name: "NOTE_Character Background",
+      label: "Character background",
+      value: textValue("NOTE_Character Background"),
+    },
+    {
+      name: "NOTE_Companions And Allies",
+      label: "Companions and allies",
+      value: textValue("NOTE_Companions And Allies", "Companions"),
+    },
+    {
+      name: "NOTE_Session and Campaign Notes",
+      label: "Session and campaign notes",
+      value: textValue("NOTE_Session and Campaign Notes", "Notes"),
+    },
+    {
+      name: "NOTE_RPGA Notes",
+      label: "RPGA notes",
+      value: textValue("NOTE_RPGA Notes"),
+    },
+  ] as const;
 
   return (
     <section
@@ -1769,37 +1904,80 @@ function CharacterDetailsEditor({
           <h3 id="character-details-heading">Character details</h3>
         </div>
       </header>
-      {evaluation === undefined ? (
-        <p>Content is unavailable for editing character details.</p>
-      ) : (
-        <div className="level-choice-workspace">
-          <InspectCandidateContext.Provider value={setInspectedOption}>
-            <div className="compact-detail-list">
-              {choices.map((choice) => (
-                <div className="compact-detail-row" key={choice.id}>
-                  <ChoiceEditor
-                    choice={choice}
-                    evaluation={evaluation}
-                    build={build}
-                    entities={entities}
-                    byId={byId}
-                    disabled={false}
-                    selectionLabel={choice.type}
-                    rollbackRevision={rollbackRevision}
-                    onDispatch={onDispatch}
-                  />
-                </div>
+      <div className="character-details-workspace">
+        <div className="character-details-form">
+          <section className="character-detail-group">
+            <h4>Identity</h4>
+            <div className="character-detail-fields character-detail-fields-compact">
+              {textFields.map((field) => (
+                <CharacterTextField
+                  key={field.name}
+                  {...field}
+                  onDispatch={onDispatch}
+                />
               ))}
             </div>
-          </InspectCandidateContext.Provider>
+          </section>
+          <section className="character-detail-group">
+            <h4>Personal details</h4>
+            {evaluation === undefined ? (
+              <p className="field-help">
+                Rules content is unavailable for gender, alignment, and deity.
+              </p>
+            ) : (
+              <InspectCandidateContext.Provider value={setInspectedOption}>
+                <div className="compact-detail-list">
+                  {choices.map((choice) => (
+                    <div className="compact-detail-row" key={choice.id}>
+                      <ChoiceEditor
+                        choice={choice}
+                        evaluation={evaluation}
+                        build={build}
+                        entities={entities}
+                        byId={byId}
+                        disabled={false}
+                        selectionLabel={choice.type}
+                        rollbackRevision={rollbackRevision}
+                        onDispatch={onDispatch}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </InspectCandidateContext.Provider>
+            )}
+            <div className="character-detail-fields character-physical-fields">
+              {physicalFields.map((field) => (
+                <CharacterTextField
+                  key={field.name}
+                  {...field}
+                  onDispatch={onDispatch}
+                />
+              ))}
+            </div>
+          </section>
+          <section className="character-detail-group">
+            <h4>Character information</h4>
+            <div className="character-detail-fields character-note-fields">
+              {noteFields.map((field) => (
+                <CharacterTextField
+                  key={field.name}
+                  {...field}
+                  multiline
+                  onDispatch={onDispatch}
+                />
+              ))}
+            </div>
+          </section>
+        </div>
+        {evaluation === undefined ? null : (
           <div className="shared-choice-detail">
             <CandidateDetail
               candidate={inspectedOption?.candidate}
               entity={inspectedOption?.entity}
             />
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </section>
   );
 }
@@ -2786,6 +2964,8 @@ export function CharacterEditorPage({
           choices={characterDetailChoices}
           evaluation={planningEvaluation}
           build={build}
+          snapshotDetails={character.snapshot.details}
+          characterTitle={character.title}
           entities={entities}
           byId={byId}
           rollbackRevision={rollbackRevision}

@@ -1,7 +1,8 @@
-import type {
-  CharacterBuild,
-  LegacyCharacterSnapshot,
-  LegacyPowerSnapshot,
+import {
+  detailsWithLegacyTextStrings,
+  type CharacterBuild,
+  type LegacyCharacterSnapshot,
+  type LegacyPowerSnapshot,
 } from "@4ecb/character-domain";
 import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
 import {
@@ -46,6 +47,19 @@ export interface CharacterSheetModel {
   readonly powers: readonly SheetCard[];
   readonly items: readonly SheetCard[];
   readonly notes: readonly SheetValue[];
+}
+
+function extendedLegacyNotes(
+  textStrings: Readonly<Record<string, string>>,
+): SheetValue[] {
+  const fields = [
+    ["Character Background", "NOTE_Character Background"],
+    ["RPGA Notes", "NOTE_RPGA Notes"],
+  ] as const;
+  return fields.flatMap(([label, name]) => {
+    const value = textStrings[name];
+    return value === undefined || value.length === 0 ? [] : [{ label, value }];
+  });
 }
 
 const ABILITIES = [
@@ -304,7 +318,10 @@ export function buildSheetModel(
         ...(entity?.source === undefined ? {} : { source: entity.source }),
       };
     });
-  const detail = snapshot.details;
+  const detail = detailsWithLegacyTextStrings(
+    snapshot.details,
+    snapshot.textStrings,
+  );
   return {
     source: snapshot.source,
     identity: [
@@ -350,17 +367,20 @@ export function buildSheetModel(
     powers: snapshot.powers.map((power) => powerCard(power, entities)),
     items: itemCards,
     notes: [
-      "Traits",
-      "Appearance",
-      "Companions",
-      "Notes",
-      "CarriedMoney",
-      "StoredMoney",
-    ].flatMap((name) =>
-      detail[name] === undefined || detail[name]?.length === 0
-        ? []
-        : [{ label: name, value: detail[name] ?? "" }],
-    ),
+      ...[
+        "Traits",
+        "Appearance",
+        "Companions",
+        "Notes",
+        "CarriedMoney",
+        "StoredMoney",
+      ].flatMap((name) =>
+        detail[name] === undefined || detail[name]?.length === 0
+          ? []
+          : [{ label: name, value: detail[name] ?? "" }],
+      ),
+      ...extendedLegacyNotes(snapshot.textStrings),
+    ],
   };
 }
 
@@ -380,7 +400,7 @@ export function buildEvaluatedSheetModel(
     return entity === undefined ? [] : [{ occurrence, entity }];
   });
   const identityDetails: Record<string, string> = {
-    ...snapshot.details,
+    ...detailsWithLegacyTextStrings(snapshot.details, build.textStrings),
     Level: String(evaluation.level),
   };
   for (const [type, detailName] of [
@@ -568,16 +588,20 @@ export function buildEvaluatedSheetModel(
     powers: powerCards,
     items: itemCards,
     notes: [
-      "Traits",
-      "Appearance",
-      "Companions",
-      "Notes",
-      "CarriedMoney",
-      "StoredMoney",
-    ].flatMap((name) =>
-      identityDetails[name] === undefined || identityDetails[name]?.length === 0
-        ? []
-        : [{ label: name, value: identityDetails[name] ?? "" }],
-    ),
+      ...[
+        "Traits",
+        "Appearance",
+        "Companions",
+        "Notes",
+        "CarriedMoney",
+        "StoredMoney",
+      ].flatMap((name) =>
+        identityDetails[name] === undefined ||
+        identityDetails[name]?.length === 0
+          ? []
+          : [{ label: name, value: identityDetails[name] ?? "" }],
+      ),
+      ...extendedLegacyNotes(build.textStrings),
+    ],
   };
 }

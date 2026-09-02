@@ -209,7 +209,12 @@ describe("legacy .dnd4e import", () => {
     const build = {
       ...imported.build,
       baseAbilities: { ...imported.build.baseAbilities, Strength: 18 },
-      textStrings: { NOTE: "new & safe", EMPTY: "" },
+      textStrings: {
+        NOTE: "new & safe",
+        EMPTY: "",
+        Name: "Ada Prime",
+        "NOTE_Personality Traits": "Curious & exacting",
+      },
       inventory: imported.build.inventory.map((entry) => ({
         ...entry,
         name: "Edited bag",
@@ -246,6 +251,10 @@ describe("legacy .dnd4e import", () => {
     for (const [ability, score] of Object.entries(build.baseAbilities))
       expect(xml).toContain(`<${ability} score="${score}"`);
     expect(xml).toContain('<textstring name="EMPTY"></textstring>');
+    expect(reimported.snapshot.details).toMatchObject({
+      name: "Ada Prime",
+      Traits: "Curious & exacting",
+    });
     expect(xml).not.toMatch(
       /<(?:textstring|specific|AttackBonus|Damage|AttackStat|Defense)\b[^>]*\/>/,
     );

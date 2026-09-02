@@ -169,11 +169,23 @@ export class CharacterRepository {
     const { profileBinding: _currentProfileBinding, ...withoutProfileBinding } =
       current;
     void _currentProfileBinding;
+    const requestedTitle = changes.title?.trim();
     const updated: CharacterRecord = {
       ...withoutProfileBinding,
+      ...(requestedTitle === undefined || requestedTitle.length === 0
+        ? {}
+        : {
+            build: {
+              ...current.build,
+              textStrings: {
+                ...current.build.textStrings,
+                Name: requestedTitle,
+              },
+            },
+          }),
       ...(changes.title === undefined
         ? {}
-        : { title: changes.title.trim() || current.title }),
+        : { title: requestedTitle || current.title }),
       ...(changes.notes === undefined ? {} : { notes: changes.notes }),
       ...(profileBinding === undefined ? {} : { profileBinding }),
       ...(changes.sheetSettings === undefined
@@ -195,7 +207,15 @@ export class CharacterRepository {
     build: CharacterBuild,
   ): Promise<CharacterRecord> {
     const current = await this.required(id);
-    const updated = { ...current, build, updatedAt: new Date().toISOString() };
+    const legacyName = build.textStrings.Name?.trim();
+    const updated = {
+      ...current,
+      build,
+      ...(legacyName === undefined || legacyName.length === 0
+        ? {}
+        : { title: legacyName }),
+      updatedAt: new Date().toISOString(),
+    };
     await this.put(updated);
     return updated;
   }

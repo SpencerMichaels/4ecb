@@ -312,6 +312,16 @@ two exact underlying occurrences, allows each ability at most once, updates the
 count optimistically, and requires clearing one selected ability before choosing
 a different one when all slots are occupied.
 
+The Character details tab covers the legacy finishing-data pattern, not merely
+the three rule-backed examples. It exposes the seven primary legacy text fields,
+Gender/Alignment/Deity choices, and the six known `NOTE_` information fields.
+Text edits remain exact `set-text` commands, debounce into the existing
+optimistic save queue, and are projected into regenerated CharacterSheet details
+where the legacy format has a corresponding cache field. Name edits also update
+the native library title. Portrait manipulation and arbitrary journal-entry
+management remain separate later surfaces, matching their distinct legacy data
+models rather than pretending they are ordinary strings.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

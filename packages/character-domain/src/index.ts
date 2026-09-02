@@ -520,7 +520,7 @@ export function newNativeCharacterRecord(
     selectedRules: [],
     powers: [],
     loot: [],
-    textStrings: {},
+    textStrings: { Name: name },
     levelCount: 1,
     source: "native-empty",
   };
@@ -544,7 +544,7 @@ export function newNativeCharacterRecord(
     inventory: [],
     alternates: [],
     baseAbilities: NATIVE_BASE_ABILITIES,
-    textStrings: {},
+    textStrings: { Name: name },
   };
   return newCharacterRecord(
     {

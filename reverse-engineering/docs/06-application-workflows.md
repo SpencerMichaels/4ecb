@@ -22,6 +22,30 @@ deity, age, height, weight, company, and player-identification fields in one
 details surface. These observations support a compact ordered choice list plus
 one focus-driven detail viewer in the modern level workspace.
 
+The finishing area is broader than that primary `DetailsPage`. Recovered
+`MainWindow` construction places **Details**, **Portrait**, **Information**, and
+**Journal** alongside the other finishing pages. The authoritative
+string-backed fields are:
+
+| Legacy surface | Workspace text-string keys |
+|---|---|
+| Details | `Name`, `Height`, `Weight`, `Age`, `Company`, `Player`, `RPGA` |
+| Rule choices on Details | typed Gender, Alignment, and Deity choices |
+| Character information | `NOTE_Personality Traits`, `NOTE_Mannerisms and Appearance`, `NOTE_Companions And Allies`, `NOTE_Session and Campaign Notes` |
+| Additional recognized note fields | `NOTE_Character Background`, `NOTE_RPGA Notes` |
+| Portrait | `Character Portrait`, `PortraitLeftMargin`, `PortraitTopMargin`, `PortraitZoomScale` |
+| Journal | open-ended `NOTE_...` journal entries and image entries |
+
+This list comes from `DetailsPage`, `CharInfoPage`, `JournalPage`, the decoded
+embedded string table, and `CharacterSheetViewer.PanelModelNotes`. The sheet
+viewer has explicit panels for Personality Traits, Mannerisms and Appearance,
+Character Background, Companions and Allies, and Session and Campaign Notes.
+When `NOTE_Character Background` is empty, it synthesizes a display-only summary
+from chosen Background elements; that fallback must not be mistaken for authored
+text or written back automatically. `NOTE_` names are open-ended, so preserving
+unknown notes remains necessary even when the modern details form exposes the
+known fields.
+
 ## Character creation and identity
 
 - new/reset, open, light-preview open, save, save-as, and preserve/restore snapshot;

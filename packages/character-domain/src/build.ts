@@ -58,6 +58,32 @@ export interface CharacterBuild {
   readonly textStrings: Readonly<Record<string, string>>;
 }
 
+/** Legacy text fields that are also projected into CharacterSheet/Details. */
+export const LEGACY_DETAIL_TEXT_MAP = {
+  Name: "name",
+  Player: "Player",
+  Height: "Height",
+  Weight: "Weight",
+  Age: "Age",
+  Company: "Company",
+  "NOTE_Personality Traits": "Traits",
+  "NOTE_Mannerisms and Appearance": "Appearance",
+  "NOTE_Companions And Allies": "Companions",
+  "NOTE_Session and Campaign Notes": "Notes",
+} as const;
+
+export function detailsWithLegacyTextStrings(
+  details: Readonly<Record<string, string>>,
+  textStrings: Readonly<Record<string, string>>,
+): Record<string, string> {
+  const updated = { ...details };
+  for (const [textName, detailName] of Object.entries(LEGACY_DETAIL_TEXT_MAP)) {
+    if (Object.hasOwn(textStrings, textName))
+      updated[detailName] = textStrings[textName] ?? "";
+  }
+  return updated;
+}
+
 export type CharacterCommand =
   | { readonly kind: "batch"; readonly commands: readonly CharacterCommand[] }
   | { readonly kind: "set-effective-level"; readonly level: number }

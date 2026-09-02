@@ -163,11 +163,20 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   exact rules-engine slots are occupied. Live Silaqui level-8 verification
   confirmed immediate optimistic selection/clearing, restoration of her
   Constitution/Dexterity choices, and no horizontal overflow at 374 px.
+- Character details now implements the complete recovered legacy text-field
+  pattern: character/player/company/RPGA identity, age/height/weight, the three
+  rule-backed identity choices, and Personality, Appearance, Character
+  Background, Companions, Session/Campaign, and RPGA notes. Text edits update
+  optimistically, autosave after a short pause or blur, survive `.dnd4e` export,
+  refresh corresponding derived sheet fields, and keep the library title in sync
+  with Character Name. Live Silaqui verification confirmed all fields load,
+  temporary rename and restoration update immediately, the page has no console
+  errors, and it has no horizontal overflow at 374 px.
 - Silaqui's false level-6 house-rule warning was a presentation bug: warning
   detection flattened candidate decisions from every possible replacement
   target. It now evaluates the selected replacement only, correctly recognizing
   the imported Nimble Strike to Fading Strike retraining as rules-legal.
-- `nix develop path:. -c bash scripts/check.sh` passes 204 tests across 35 files,
+- `nix develop path:. -c bash scripts/check.sh` passes 206 tests across 35 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

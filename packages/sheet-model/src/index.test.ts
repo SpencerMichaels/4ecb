@@ -13,7 +13,7 @@ describe("sheet model", () => {
   it("maps legacy cached values and enriches cards from content", () => {
     const model = buildSheetModel(
       {
-        details: { name: "Ada", Level: "3" },
+        details: { name: "Ada", Level: "3", Traits: "Stale" },
         abilities: { Strength: 14 },
         stats: { AC: "19", Arcana: "8", Strength: "16" },
         selectedRules: [{ id: "POWER_1", name: "Arc Flash", type: "Power" }],
@@ -33,7 +33,10 @@ describe("sheet model", () => {
           },
         ],
         loot: [],
-        textStrings: {},
+        textStrings: {
+          "NOTE_Personality Traits": "Observant",
+          "NOTE_Character Background": "Raised among artificers.",
+        },
         levelCount: 3,
         source: "legacy-cache",
       },
@@ -77,6 +80,11 @@ describe("sheet model", () => {
     expect(model.powers[0]?.fields).toEqual([
       { label: "Effect", value: "A test spark." },
     ]);
+    expect(model.notes).toContainEqual({ label: "Traits", value: "Observant" });
+    expect(model.notes).toContainEqual({
+      label: "Character Background",
+      value: "Raised among artificers.",
+    });
   });
 
   it("preserves an empty native snapshot source without relabeling it as legacy", () => {

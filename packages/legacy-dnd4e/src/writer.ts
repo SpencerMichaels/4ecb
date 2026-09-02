@@ -1,10 +1,11 @@
-import type {
-  BuildElementIdentity,
-  BuildInventoryEntry,
-  BuildOccurrence,
-  CharacterBuild,
-  LegacyCharacterSnapshot,
-  LegacyEnvelope,
+import {
+  detailsWithLegacyTextStrings,
+  type BuildElementIdentity,
+  type BuildInventoryEntry,
+  type BuildOccurrence,
+  type CharacterBuild,
+  type LegacyCharacterSnapshot,
+  type LegacyEnvelope,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
@@ -499,11 +500,12 @@ function contentMap(content: readonly ContentEntity[]) {
 
 function detailsXml(
   snapshot: LegacyCharacterSnapshot,
+  build: CharacterBuild,
   evaluation: EvaluatedCharacter,
   entities: ReadonlyMap<string, ContentEntity>,
 ): string {
   const details: Record<string, string> = {
-    ...snapshot.details,
+    ...detailsWithLegacyTextStrings(snapshot.details, build.textStrings),
     Level: String(evaluation.level),
   };
   for (const [type, detail] of [
@@ -777,7 +779,7 @@ function characterSheetXml(
   return element(
     "CharacterSheet",
     {},
-    `${detailsXml(input.snapshot, input.evaluation, entities)}${baseAbilityScoresXml(
+    `${detailsXml(input.snapshot, input.build, input.evaluation, entities)}${baseAbilityScoresXml(
       input.build,
     )}${statBlockXml(input.evaluation)}${ruleTallyXml(
       input.evaluation,

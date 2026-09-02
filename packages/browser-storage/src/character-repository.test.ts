@@ -225,12 +225,26 @@ describe("CharacterRepository", () => {
     expect((await storage.get("character-one"))?.sheetSettings.paper).toBe(
       "a4",
     );
+    expect((await storage.get("character-one"))?.build.textStrings.Name).toBe(
+      "Ada Prime",
+    );
     expect(copy.title).toBe("Ada Prime (copy)");
     await storage.moveToTrash("character-one");
     expect(await storage.list()).toHaveLength(1);
     expect(await storage.list({ deleted: true })).toHaveLength(1);
     await storage.restore("character-one");
     expect(await storage.list()).toHaveLength(2);
+  });
+
+  it("keeps the library title synchronized with the legacy character name", async () => {
+    const storage = repository();
+    const source = character("renamed");
+    await storage.put(source);
+    const updated = await storage.updateBuild("renamed", {
+      ...source.build,
+      textStrings: { ...source.build.textStrings, Name: "Ada Lovelace" },
+    });
+    expect(updated.title).toBe("Ada Lovelace");
   });
 
   it("round-trips complete records through native backup", async () => {

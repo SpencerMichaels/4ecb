@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   CharacterTransaction,
+  detailsWithLegacyTextStrings,
   duplicateCharacterRecord,
   isCharacterRecord,
   isLegacyCharacterRecordV1,
@@ -113,7 +114,26 @@ describe("character records", () => {
       },
     });
     expect(record.snapshot.stats).toEqual({});
+    expect(record.build.textStrings.Name).toBe("New Hero");
     expect(isCharacterRecord(record)).toBe(true);
+  });
+
+  it("projects edited legacy detail text into the derived sheet fields", () => {
+    expect(
+      detailsWithLegacyTextStrings(
+        { name: "Old", Traits: "Old traits", Race: "Human" },
+        {
+          Name: "New",
+          "NOTE_Personality Traits": "New traits",
+          "NOTE_Mannerisms and Appearance": "",
+        },
+      ),
+    ).toEqual({
+      name: "New",
+      Traits: "New traits",
+      Appearance: "",
+      Race: "Human",
+    });
   });
 
   it("rejects unsafe native names and inexact native profiles", () => {

@@ -1687,6 +1687,61 @@ textarea {
   min-height: 24rem;
 }
 
+.character-details-workspace {
+  align-items: start;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(30rem, 1fr) minmax(20rem, 0.7fr);
+}
+
+.character-details-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.character-detail-group {
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  overflow: hidden;
+}
+
+.character-detail-group > h4 {
+  background: var(--surface-subtle);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+}
+
+.character-detail-fields {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.8rem;
+}
+
+.character-detail-fields label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.character-detail-fields-compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.character-physical-fields {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.character-note-fields textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.character-detail-group > .field-help {
+  margin: 0;
+  padding: 0.8rem;
+}
+
 .compact-detail-list {
   border: 1px solid var(--border);
   border-radius: 0.45rem;
@@ -2184,6 +2239,7 @@ textarea {
   .editor-grid,
   .builder-workspace,
   .level-choice-workspace,
+  .character-details-workspace,
   .builder-secondary,
   .profile-composer-heading,
   .profile-preview {
@@ -2234,6 +2290,11 @@ textarea {
 }
 
 @media (max-width: 34rem) {
+  .character-detail-fields-compact,
+  .character-physical-fields {
+    grid-template-columns: 1fr;
+  }
+
   .card-grid,
   .facts,
   .identity-block .sheet-values,
