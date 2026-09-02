@@ -192,6 +192,17 @@ IDs/digests, and resolution policy. Existing single-pack activation is read as
 a one-layer profile. Changed immutable revisions require a new
 revision-qualified pack ID; a digest may not replace an installed ID.
 
+### D024 — Printed sheets are selectable views of one sheet model
+
+The builder and printed character sheets use separate presentation layouts over
+the same authoritative sheet model. Print preview exposes a sheet-template
+choice. The first maintained template closely preserves the legacy sheet's page
+and information geography because it is familiar and supplies the lowest-risk
+starting point; later modern templates may redesign hierarchy and pagination.
+Templates do not fork character data, rules evaluation, or content-profile
+bindings. A new template is therefore presentation work with its own print
+regression fixtures, not a new character format.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

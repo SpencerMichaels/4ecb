@@ -36,12 +36,42 @@ application's protected visual assets.
 - Use a hybrid structure: an always-available build/character overview, an
   ordered per-level choice sidebar, and focused detail/selection content in the
   main pane.
-- Show valid choices by default. Provide an explicit persistent mode that shows
-  all options, including illegal or currently unavailable choices, with the
-  reason for their status. Selecting an illegal option remains an intentional
-  user action rather than an accidental consequence of changing the filter.
+- When a user selects a target level, create the complete level timeline
+  immediately and present its unresolved decisions. Include every level through
+  the target: unresolved items are prominent, completed levels remain visible in
+  a compact form, and future choices may be inspected out of order.
+- Show valid choices by default. Each selection surface provides a temporary
+  control that reveals all options, including illegal or currently unavailable
+  choices, with the objective reason for their status. Do not persist this mode
+  on the character or automatically apply it to later choice lists. Selecting an
+  illegal option remains an intentional user action rather than an accidental
+  consequence of changing the filter.
+- Do not label choices as popular or recommended. The application may present
+  objective legality, prerequisites, source, and mechanical consequences; it
+  must not invent subjective build advice.
+- Use Build, Character sheet, Compendium, Characters/library, and Content/settings
+  as the initial top-level information architecture. This remains subject to
+  prototype review because navigation is easier to judge in context.
+- Keep a compact character overview available during building: name, optional
+  portrait/token, race, class, level, role, experience, and unresolved or warning
+  count.
 - Keep important evaluation, save, and validation feedback immediate and
   comprehensible. Interaction responsiveness is a product requirement.
+
+## Character-sheet templates
+
+- Screen-oriented builder views and printed sheets are distinct layouts sharing
+  the same authoritative sheet model.
+- Printing supports an explicit sheet-template selection so multiple formats can
+  coexist without forking character data or calculation behavior.
+- The first template is a close modern implementation of the legacy sheet. Its
+  principal compatibility goal is familiar information geography: users should
+  find a given value in roughly the same part of the same page as before.
+- A later modern template may substantially redesign hierarchy, density, and
+  pagination while retaining the recognizable 4E power and stat semantics.
+- Template identity and relevant print options must be explicit in previews and
+  exports; adding a template must not change existing saved characters' rules
+  interpretation.
 
 ## Priority journey
 
