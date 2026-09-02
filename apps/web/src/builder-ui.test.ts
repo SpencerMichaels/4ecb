@@ -11,9 +11,10 @@ import {
   candidateReason,
   choiceForSkillCandidate,
   choicesAtLevel,
-  groupParameterizedCandidates,
   groupDependentChoiceFlows,
   groupLevelChoices,
+  groupParameterizedCandidates,
+  groupRepeatedChoiceSlots,
   isCandidateVisible,
   planningHorizonCommand,
   unresolveEvaluatedChoiceCommand,
@@ -222,6 +223,38 @@ describe("builder planning UI", () => {
         flow.map(({ id }) => id),
       ),
     ).toEqual([["feat", "mastery", "replacement"], ["utility"]]);
+  });
+
+  it("groups positional slots emitted by the same rule", () => {
+    const choices = [
+      {
+        id: "ability-1",
+        level: 8,
+        providerOccurrenceId: "level-8",
+        ruleOrdinal: 3,
+        type: "Ability Increase (Level 8)",
+      },
+      {
+        id: "ability-2",
+        level: 8,
+        providerOccurrenceId: "level-8",
+        ruleOrdinal: 3,
+        type: "Ability Increase (Level 8)",
+      },
+      {
+        id: "feat",
+        level: 8,
+        providerOccurrenceId: "level-8",
+        ruleOrdinal: 2,
+        type: "Feat",
+      },
+    ] as unknown as EvaluatedCharacter["choices"];
+
+    expect(
+      groupRepeatedChoiceSlots(choices).map((group) =>
+        group.map(({ id }) => id),
+      ),
+    ).toEqual([["ability-1", "ability-2"]]);
   });
 
   it("fills the first unresolved skill slot that can accept a candidate", () => {

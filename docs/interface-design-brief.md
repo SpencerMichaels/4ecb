@@ -111,6 +111,13 @@ This is presentation-only: each step still dispatches and stores its exact
 rules-engine occurrence. Archery Mastery therefore reads as one section that
 flows from the feat to Rapid Shot Mastery to the at-will power being replaced.
 
+Repeated positional slots emitted by one rules selection are likewise one
+section with an explicit completion count. Each slot remains independently
+selectable and stored. This covers the paired ability increases at levels 4,
+8, and later intervals, the usual pair of level-1 at-will powers, and the two
+class slots of a hybrid character. Slot-specific controls such as Background
+and Skill Training retain their more specialized grouped presentations.
+
 ## Priority journey
 
 Optimize the first design and prototype around this end-to-end journey:

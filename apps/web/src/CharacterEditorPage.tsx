@@ -27,6 +27,7 @@ import {
   groupLevelChoices,
   groupDependentChoiceFlows,
   groupParameterizedCandidates,
+  groupRepeatedChoiceSlots,
   isCandidateVisible,
   isUnresolvedChoice,
   planningHorizonCommand,
@@ -837,6 +838,96 @@ function ChoiceFlowSection({
   );
 }
 
+function repeatedSlotLabel(choice: EvaluatedChoice, index: number): string {
+  if (choice.type.startsWith("Ability Increase"))
+    return index === 0
+      ? "First ability"
+      : index === 1
+        ? "Second ability"
+        : `Ability ${index + 1}`;
+  return `${choice.type} ${index + 1}`;
+}
+
+function RepeatedChoiceGroup({
+  choices,
+  evaluation,
+  build,
+  entities,
+  byId,
+  rollbackRevision,
+  onDispatch,
+}: {
+  readonly choices: readonly EvaluatedChoice[];
+  readonly evaluation: EvaluatedCharacter;
+  readonly build: CharacterRecord["build"];
+  readonly entities: readonly ContentEntity[];
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly rollbackRevision: number;
+  readonly onDispatch: (command: CharacterCommand) => void;
+}) {
+  const root = choices[0]!;
+  const chosen = choices.filter(
+    (choice) => choice.selectedOccurrenceId !== undefined,
+  ).length;
+  const warning = choices.some((choice) =>
+    choiceHasWarning(choice, evaluation),
+  );
+  return (
+    <section
+      aria-labelledby={`${choiceSectionId(root.id)}-heading`}
+      className="level-choice-section grouped-choice-section"
+      id={choiceSectionId(root.id)}
+      tabIndex={-1}
+    >
+      <header>
+        <div>
+          <p className="eyebrow">{root.type}</p>
+          <h4 id={`${choiceSectionId(root.id)}-heading`}>
+            {choiceTitle(root)}
+          </h4>
+        </div>
+        {chosen < choices.length ? (
+          <span className="attention-badge">
+            {chosen} of {choices.length} chosen
+          </span>
+        ) : warning ? (
+          <span className="attention-badge">
+            <Icon name="warning" /> House rule
+          </span>
+        ) : (
+          <span className="complete-badge">
+            <Icon name="check" /> {chosen} of {choices.length} chosen
+          </span>
+        )}
+      </header>
+      <div className="grouped-choice-list">
+        {choices.map((choice, index) => (
+          <section
+            aria-labelledby={`${choiceSectionId(choice.id)}-slot-heading`}
+            className="grouped-choice-item"
+            id={index === 0 ? undefined : choiceSectionId(choice.id)}
+            key={choice.id}
+          >
+            <h5 id={`${choiceSectionId(choice.id)}-slot-heading`}>
+              {repeatedSlotLabel(choice, index)}
+            </h5>
+            <ChoiceEditor
+              choice={choice}
+              evaluation={evaluation}
+              build={build}
+              entities={entities}
+              byId={byId}
+              disabled={false}
+              rollbackRevision={rollbackRevision}
+              onDispatch={onDispatch}
+            />
+          </section>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function BackgroundChoiceGroup({
   choices,
   evaluation,
@@ -1377,8 +1468,18 @@ export function CharacterEditorPage({
 
   const levelChoices = choicesAtLevel(selectedLevel, planningEvaluation);
   const groupedLevelChoices = groupLevelChoices(levelChoices);
-  const dependentChoiceFlows = groupDependentChoiceFlows(
+  const repeatedChoiceGroups = groupRepeatedChoiceSlots(
     groupedLevelChoices.ordinary,
+  );
+  const repeatedGroupByChoiceId = new Map(
+    repeatedChoiceGroups.flatMap((group) =>
+      group.map((choice) => [choice.id, group] as const),
+    ),
+  );
+  const dependentChoiceFlows = groupDependentChoiceFlows(
+    groupedLevelChoices.ordinary.filter(
+      (choice) => !repeatedGroupByChoiceId.has(choice.id),
+    ),
   );
   const dependentFlowByChoiceId = new Map(
     dependentChoiceFlows.flatMap((flow) =>
@@ -1669,7 +1770,17 @@ export function CharacterEditorPage({
             {build.levels.slice(0, visibleHorizon).map((frame) => {
               const choices = choicesAtLevel(frame.level, planningEvaluation);
               const grouped = groupLevelChoices(choices);
-              const flows = groupDependentChoiceFlows(grouped.ordinary);
+              const repeatedGroups = groupRepeatedChoiceSlots(grouped.ordinary);
+              const repeatedByChoiceId = new Map(
+                repeatedGroups.flatMap((group) =>
+                  group.map((choice) => [choice.id, group] as const),
+                ),
+              );
+              const flows = groupDependentChoiceFlows(
+                grouped.ordinary.filter(
+                  (choice) => !repeatedByChoiceId.has(choice.id),
+                ),
+              );
               const flowByChoiceId = new Map(
                 flows.flatMap((flow) =>
                   flow.map((choice) => [choice.id, flow] as const),
@@ -1693,6 +1804,11 @@ export function CharacterEditorPage({
                           choices: grouped.skillTraining,
                         },
                       ]
+                    : [];
+                const repeated = repeatedByChoiceId.get(choice.id);
+                if (repeated !== undefined)
+                  return choice === repeated[0]
+                    ? [{ label: choiceTitle(choice), choices: repeated }]
                     : [];
                 const flow = flowByChoiceId.get(choice.id);
                 if (flow !== undefined)
@@ -1892,6 +2008,20 @@ export function CharacterEditorPage({
                     <SkillTrainingEditor
                       key="skill-training"
                       choices={groupedLevelChoices.skillTraining}
+                      evaluation={planningEvaluation}
+                      build={build}
+                      entities={entities}
+                      byId={byId}
+                      rollbackRevision={rollbackRevision}
+                      onDispatch={dispatch}
+                    />
+                  ) : null;
+                const repeated = repeatedGroupByChoiceId.get(choice.id);
+                if (repeated !== undefined)
+                  return choice === repeated[0] ? (
+                    <RepeatedChoiceGroup
+                      key={choice.id}
+                      choices={repeated}
                       evaluation={planningEvaluation}
                       build={build}
                       entities={entities}

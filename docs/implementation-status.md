@@ -119,7 +119,14 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   Silaqui's level-8 feat, Rapid Shot Mastery selection, and resulting at-will
   replacement appear under one Archery Mastery heading and one timeline entry;
   the three exact saved occurrences and legacy export topology are unchanged.
-- `nix develop path:. -c bash scripts/check.sh` passes 200 tests across 35 files,
+- Repeated positional slots from one rule now share one section and timeline
+  summary with an `X of Y chosen` status. A complete private-corpus audit found
+  the generic treatment applies to paired ability increases, level-1 at-will
+  powers, and hybrid-class pairs; Background and Skill Training remain under
+  their existing specialized controls. Live Silaqui verification confirmed one
+  level-8 ability section with Dexterity and Constitution as its two slots and
+  one level-1 Power section with two slots.
+- `nix develop path:. -c bash scripts/check.sh` passes 201 tests across 35 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

@@ -207,6 +207,24 @@ export function groupDependentChoiceFlows(
   return flows;
 }
 
+/** Group positional slots emitted by one select rule without merging them. */
+export function groupRepeatedChoiceSlots(
+  choices: readonly EvaluatedChoice[],
+): readonly (readonly EvaluatedChoice[])[] {
+  const groups = new Map<string, EvaluatedChoice[]>();
+  for (const choice of choices) {
+    const key = [
+      choice.level,
+      choice.providerOccurrenceId,
+      choice.ruleOrdinal,
+      choice.type,
+      choice.name,
+    ].join("\0");
+    groups.set(key, [...(groups.get(key) ?? []), choice]);
+  }
+  return [...groups.values()].filter((group) => group.length > 1);
+}
+
 export function groupLevelChoices(
   choices: readonly EvaluatedChoice[],
 ): GroupedLevelChoices {

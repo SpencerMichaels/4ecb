@@ -276,6 +276,10 @@ are also grouped for presentation. They remain separate evaluated and stored
 choices, but the level pane and timeline expose one progressive flow. This
 keeps multi-part decisions such as Archery Mastery together without introducing
 a special composite domain command or weakening round-trip compatibility.
+Repeated slots from the same provider, rule ordinal, type, and level are also
+one presentation group with separate exact controls. Corpus auditing confirms
+this general rule covers paired ability increases, level-1 at-will selections,
+and hybrid-class pairs without conflating unrelated choices.
 
 ## Deferred decisions and decision points
 
