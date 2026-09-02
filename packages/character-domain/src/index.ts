@@ -7,6 +7,11 @@ export const CHARACTER_SCHEMA_VERSION = 2 as const;
 export interface CharacterProfileBinding {
   readonly packId: string;
   readonly contentDigest?: string;
+  readonly layers?: readonly {
+    readonly packId: string;
+    readonly contentDigest: string;
+  }[];
+  readonly resolutionPolicy?: "last-pack-wins-v1";
 }
 
 export interface LegacyEnvelope {
@@ -379,7 +384,21 @@ function characterRecordBase(
       (profile === undefined ||
         typeof profile.packId !== "string" ||
         profile.packId.length === 0 ||
-        !optionalString(profile.contentDigest))) ||
+        !optionalString(profile.contentDigest) ||
+        (profile.layers !== undefined &&
+          (!Array.isArray(profile.layers) ||
+            !profile.layers.every((layer) => {
+              const value = object(layer);
+              return (
+                value !== undefined &&
+                typeof value.packId === "string" &&
+                value.packId.length > 0 &&
+                typeof value.contentDigest === "string" &&
+                value.contentDigest.length > 0
+              );
+            }))) ||
+        (profile.resolutionPolicy !== undefined &&
+          profile.resolutionPolicy !== "last-pack-wins-v1"))) ||
     legacy === undefined ||
     legacy.format !== "dnd4e" ||
     (legacy.origin !== undefined &&

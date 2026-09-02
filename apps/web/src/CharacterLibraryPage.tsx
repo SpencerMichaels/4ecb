@@ -4,6 +4,7 @@ import {
   CharacterRepository,
   ContentPackRepository,
   type CharacterBackupInspection,
+  type ContentProfileDefinition,
 } from "@4ecb/browser-storage";
 import {
   newCharacterRecord,
@@ -237,11 +238,13 @@ function download(name: string, contents: string, type: string): void {
 export interface CharacterLibraryPageProps {
   readonly manifests: readonly ContentPackManifest[];
   readonly activePackId?: string;
+  readonly activeProfile?: ContentProfileDefinition;
 }
 
 export function CharacterLibraryPage({
   manifests,
   activePackId,
+  activeProfile,
 }: CharacterLibraryPageProps) {
   const [characters, setCharacters] = useState<CharacterRecord[]>([]);
   const [trash, setTrash] = useState<CharacterRecord[]>([]);
@@ -296,6 +299,12 @@ export function CharacterLibraryPage({
               profileBinding: {
                 packId: manifest.packId,
                 contentDigest: manifest.contentDigest,
+                ...(activeProfile?.materializedPackId === manifest.packId
+                  ? {
+                      layers: activeProfile.layers,
+                      resolutionPolicy: activeProfile.resolutionPolicy,
+                    }
+                  : {}),
               },
             }),
       },
@@ -433,6 +442,16 @@ export function CharacterLibraryPage({
         newCharacterName.trim(),
         pack.manifest,
         pack.entities,
+        activeProfile === undefined
+          ? {}
+          : {
+              profileBinding: {
+                packId: activeProfile.materializedPackId,
+                contentDigest: activeProfile.contentDigest,
+                layers: activeProfile.layers,
+                resolutionPolicy: activeProfile.resolutionPolicy,
+              },
+            },
       );
       await repository.put(character);
       setStatus(`Created ${character.title} at level 1.`);

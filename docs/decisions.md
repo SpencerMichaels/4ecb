@@ -178,6 +178,20 @@ Chromium/Firefox functional print automation remains in the public gate as
 valuable regression coverage; moving final UI validation does not discard it or
 relax rules, storage, security, compatibility, or data-integrity requirements.
 
+### D023 — Layered local content profiles with advertised baselines
+
+Administrators may advertise an ordered immutable baseline of `.4ecp` URLs and
+exact digests through non-secret runtime configuration. Browsers download with
+the ordinary 128 MiB bound, validate the configured identity/digest, and retain
+verified bytes in IndexedDB for offline use. Users may layer ordered personal
+packs above that baseline; personal bytes never upload. Stable-ID collisions
+use explicit `last-pack-wins-v1` resolution and are previewed before activation.
+Installing or downloading never changes the active profile or an existing
+character. Characters bind to the materialized digest, ordered source
+IDs/digests, and resolution policy. Existing single-pack activation is read as
+a one-layer profile. Changed immutable revisions require a new
+revision-qualified pack ID; a digest may not replace an installed ID.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

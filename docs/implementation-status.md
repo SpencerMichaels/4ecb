@@ -13,6 +13,17 @@ the interface is designed with the product owner. The installable PWA, update/of
 UX, content onboarding, public-distribution boundary, production Docker guide,
 and authoritative exact-profile browser sheet are verified checkpoints. A final
 MVP declaration still requires the manual legacy-builder matrix.
+The content model now supports an administrator-advertised immutable baseline
+plus ordered local personal overlays. Same-origin downloads are size-bounded,
+identity/digest verified, and cached for offline use; availability does not
+imply activation. Profiles preview last-layer-wins collisions, materialize an
+exact digest for existing workers, and preserve single-pack activation as a
+one-layer migration. New character bindings record ordered layer digests and
+the resolution policy. Personal packs have no upload path.
+The focused Chromium workflow rendered a migrated one-layer profile, previewed
+one layer with zero overrides and a resolved digest, and completed explicit
+activation without console errors. Tablet and 375 px phone settings layouts
+were also checked; the phone viewport had no horizontal overflow.
 The first manual Hu attempt failed before opening because regenerated empty
 `textstring` values self-closed; the legacy parser requires an explicit body.
 Body-required leaves now serialize as paired tags, and that correction opens in
@@ -45,8 +56,11 @@ remaining curated candidates still require manual execution.
 - Public cross-tier fixtures plus full-profile Fighter, Psion, Shaman, Knight,
   Hybrid Cleric/Fighter, Hu, fixed-special, and companion-blocker audits cover
   the generic automated boundary. Unknown-revision caches remain diagnostics.
-- The final threat-model review found no new network or trust boundary in native
-  creation, migration, evaluation, sheets, or regenerated export. Bounded
+- The advertised-baseline extension adds one same-origin read boundary. Runtime
+  configuration pins identity/digest; downloads and decoding are bounded and
+  validated before IndexedDB storage, never auto-activate, and add no upload
+  endpoint. Native creation, migration, evaluation, sheets, and regenerated
+  export retain their prior trust boundaries. Bounded
   decoders, schema-validated workers/storage, text-only rendering, XML escaping,
   checksummed backup, atomic migration, CSP, and corpus-exclusion gates cover
   the completed behavior. Residual local-device access, weakened deployment

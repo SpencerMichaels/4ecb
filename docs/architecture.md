@@ -273,6 +273,14 @@ rulesSemanticsVersion
 resolvedDigest
 ```
 
+The implementation materializes the resolved profile as another verified local
+pack so query and rules workers retain one immutable input. Server-advertised
+packs form a fixed ordered prefix; personal packs may be reordered only above
+it. Stable-ID collisions resolve from first to last (`last-pack-wins-v1`) and
+remain visible in preview diagnostics. Activation is explicit. Character
+bindings retain both the materialized ID/digest and ordered source ID/digest
+list, so later downloads cannot alter an existing evaluation.
+
 Characters pin a resolved profile revision. Installing a newer pack does not
 alter them. Profile migration produces a preview of missing IDs, changed rules,
 new diagnostics, and calculated differences before the user accepts it.
@@ -528,9 +536,10 @@ The MVP image contains a static, unprivileged web server and built assets:
 /data/content/          optional read-only mounted packs
 ```
 
-The runtime-configuration path is reserved for future default pack URLs, feature
-flags, base path, storage guidance, and relay URL without rebuilding the image;
-the current application does not load those fields. The file stays outside the
+The runtime-configuration path supplies feature flags, relay configuration, and
+an optional ordered `contentPacks` baseline without rebuilding the image. Each
+advertisement contains a revision-qualified pack ID, exact content digest, and
+same-origin immutable URL. The file stays outside the
 service-worker precache and is network-only so later operator overrides cannot
 be shadowed by the build-time default. The image has a health endpoint,
 read-only root filesystem support, no bundled proprietary corpus, and documented
@@ -576,14 +585,19 @@ rejects executable-markup sinks in application source.
 
 The 2026-09-01 closure review followed data from untrusted pack/XML input through
 bounded decoding, worker messages, rules evaluation, IndexedDB persistence,
-sheet rendering, backup, migration, and regenerated XML export. Native creation
-and compatibility diagnostics add no network authority. Imported prose remains
+sheet rendering, backup, migration, and regenerated XML export. Advertised
+content adds a bounded same-origin read boundary: configuration pins pack ID and
+digest, downloads are capped before and during streaming, decoded structures
+and internal digests are validated, and only verified bytes reach IndexedDB.
+It creates no upload path and never activates content implicitly. Imported prose remains
 text, regenerated XML is escaped, workers and stored records are runtime
 decoded, backups are checksummed before replacement, and migration journals
 preserve the old record until commit. Public build inspection continues to
 exclude private packs, characters, keys, telemetry, and upload endpoints.
 
-Residual risks are explicit: anyone controlling the browser profile can read
+Residual risks are explicit: advertised pack URLs are readable by anyone with
+deployment access unless its reverse proxy protects the boundary; anyone
+controlling the browser profile can read
 local characters; operators can weaken response headers; unsupported rules may
 require legacy comparison; and the original Windows application is outside this
 web application's trust boundary. The product mitigates these with local backup

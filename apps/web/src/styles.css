@@ -289,8 +289,210 @@ a {
 }
 
 .profile-facts dd {
+  margin-left: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.profile-facts code,
+.active-profile-summary code,
+.layer-digest code {
+  overflow-wrap: anywhere;
+}
+
+.administrator-content,
+.profile-composer,
+.storage-diagnostics {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.server-pack-list,
+.profile-layer-list,
+.collision-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.server-pack-list,
+.profile-layer-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.server-pack-list > li {
+  background: #f5f8f9;
+  border: 1px solid #9eb0b7;
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem;
+}
+
+.server-pack-list h4,
+.profile-layer-list h4,
+.profile-preview h4 {
+  margin: 0;
+}
+
+.server-pack-list .profile-facts {
+  grid-template-columns: minmax(8rem, 0.4fr) minmax(16rem, 1fr);
+}
+
+.digest-fact {
+  min-width: 0;
+}
+
+.digest-fact dd {
+  white-space: normal;
+}
+
+.download-progress {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.download-progress progress {
+  inline-size: min(28rem, 100%);
+}
+
+.profile-availability-error {
+  background: #fff0ed;
+  border-left: 4px solid #9d2d1c;
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 0.6rem;
+}
+
+.profile-composer-heading {
+  align-items: start;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(20rem, 1fr) minmax(20rem, 0.8fr);
+}
+
+.profile-state,
+.active-profile-summary,
+.profile-safety-note {
+  background: #eef4f5;
+  border: 1px solid #a8b8bd;
+  margin: 0;
+  padding: 0.75rem;
+}
+
+.active-profile-summary {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.active-profile-summary dd {
+  margin: 0.15rem 0 0;
+}
+
+.profile-layer-list {
+  counter-reset: profile-layers;
+}
+
+.profile-layer-list > li {
+  align-items: start;
+  background: #fff;
+  border: 1px solid #b9b9b2;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+  padding: 0.85rem;
+}
+
+.profile-layer-list > li.missing-layer {
+  border-color: #9d2d1c;
+}
+
+.layer-order {
+  align-items: center;
+  background: #315f73;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  font-weight: 700;
+  height: 2rem;
+  justify-content: center;
+  width: 2rem;
+}
+
+.layer-description p:last-child {
+  margin-bottom: 0;
+}
+
+.layer-digest {
+  color: #566066;
+  font-size: 0.8rem;
+  margin: 0.35rem 0;
+}
+
+.layer-actions {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.fixed-layer {
+  color: #566066;
+  font-size: 0.85rem;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.add-overlay-control {
+  align-items: end;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(16rem, 1fr) auto;
+}
+
+.add-overlay-control label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.profile-activation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.profile-preview {
+  align-items: end;
+  background: #edf5ec;
+  border: 2px solid #5d7c58;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 1rem;
+}
+
+.profile-preview .profile-facts {
+  margin: 0.75rem 0;
+}
+
+.collision-list {
+  columns: 2;
+  margin-top: 0.5rem;
+}
+
+.collision-list li {
+  break-inside: avoid;
+  margin-bottom: 0.25rem;
+}
+
+.section-heading {
+  margin: 1.5rem 0 0.75rem;
+}
+
+.section-heading p:last-child {
+  max-width: 52rem;
 }
 
 .compendium-heading {
@@ -1004,7 +1206,9 @@ textarea {
     padding-inline: 1rem;
   }
   .compendium-workspace,
-  .editor-grid {
+  .editor-grid,
+  .profile-composer-heading,
+  .profile-preview {
     grid-template-columns: 1fr;
   }
   .character-grid {
@@ -1020,7 +1224,9 @@ textarea {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .onboarding-fields,
-  .directory-source-picker {
+  .directory-source-picker,
+  .add-overlay-control,
+  .server-pack-list .profile-facts {
     grid-template-columns: 1fr;
   }
 }
@@ -1032,6 +1238,23 @@ textarea {
   .profile-facts,
   .report-facts {
     grid-template-columns: 1fr;
+  }
+
+  .profile-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .profile-layer-list > li {
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+  }
+
+  .layer-actions,
+  .fixed-layer {
+    grid-column: 2;
+  }
+
+  .collision-list {
+    columns: 1;
   }
 }
 

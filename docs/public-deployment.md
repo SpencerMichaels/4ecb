@@ -8,13 +8,31 @@ the official D&D 4E corpus, the supplied legacy application, imported character
 files, or locally generated `.4ecp` artifacts. See the repository
 [public distribution notice](../NOTICE.md).
 
-The reserved runtime configuration path is
+The runtime configuration path is
 `apps/web/public/runtime-config.json`. Operators may replace it at container
-start without rebuilding the application, but the current application does not
-yet load or apply its URL and feature-flag fields. It is kept outside the service
-worker precache and served network-only so a future loader cannot receive a
-build-time default in place of an operator override. Do not put secrets or
-character/content data in it.
+start without rebuilding the application. It is kept outside the service-worker
+precache and served network-only. Do not put secrets in it. Advertised pack URLs
+are downloads, not access controls: anyone who can access the deployment can
+download them. The operator/reverse proxy owns authentication and authorization
+for both the app and pack paths.
+
+```json
+{
+  "contentPacks": [
+    {
+      "packId": "campaign-core-2026-09-01",
+      "name": "Campaign core",
+      "contentDigest": "<64 lowercase hex characters>",
+      "url": "/private-packs/campaign-core-2026-09-01.4ecp"
+    }
+  ]
+}
+```
+
+Use immutable URLs and a new revision-qualified `packId` for every changed
+digest. The browser requires same-origin URLs, bounds encoded and decoded bytes,
+and verifies internal
+identity/digest before caching. Downloading never activates a profile.
 
 ## Build and run
 
@@ -39,8 +57,7 @@ The health endpoint is `GET /healthz`. Application assets use immutable cache
 headers when content-hashed; navigation uses `no-cache`; and
 `/runtime-config.json` uses `no-store` and a network-only service-worker route.
 
-To stage future operator configuration, bind-mount a non-secret JSON file
-read-only. Its fields remain reserved until the application implements a loader:
+To supply operator configuration, bind-mount a non-secret JSON file read-only:
 
 ```sh
 nix develop path:. --command docker run --rm \
@@ -62,6 +79,11 @@ The static container has no account database, analytics endpoint, content upload
 endpoint, or relay. Browser character and pack data remain in each user's
 IndexedDB. Backups are the user's recovery path; container volumes do not back up
 browser data.
+
+If `/private-packs/` is served by a reverse proxy, configure TLS,
+authorization, response-size, and cache policy deliberately. A public
+deployment makes that file public. Personal packs are never uploaded there or
+to any other server.
 
 ## User onboarding and updates
 

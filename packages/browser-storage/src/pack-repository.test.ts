@@ -74,6 +74,15 @@ describe("ContentPackRepository", () => {
 
     await storage.activate(pack.manifest.packId);
     expect(await storage.activePackId()).toBe(pack.manifest.packId);
+    await expect(storage.activeProfile()).resolves.toMatchObject({
+      materializedPackId: pack.manifest.packId,
+      layers: [
+        {
+          packId: pack.manifest.packId,
+          contentDigest: pack.manifest.contentDigest,
+        },
+      ],
+    });
     await storage.deactivate();
     expect(await storage.activePackId()).toBeUndefined();
 
@@ -103,6 +112,43 @@ describe("ContentPackRepository", () => {
     expect((await storage.get("encoded"))?.manifest.contentDigest).toBe(
       pack.manifest.contentDigest,
     );
+  });
+
+  it("materializes ordered profiles without silently replacing active bindings", async () => {
+    const storage = repository();
+    const baseline = await makePack("baseline", "baseline");
+    const personal = await makePack("personal", "personal override");
+    await storage.install(baseline);
+    await storage.install(personal);
+    await storage.activate("baseline");
+    const preview = await storage.previewProfile("table", "Table", [
+      "baseline",
+      "personal",
+    ]);
+    expect(await storage.activePackId()).toBe("baseline");
+    expect(preview.collisions).toEqual(["ID_TEST"]);
+    const active = await storage.activateProfile("table", "Table", [
+      "baseline",
+      "personal",
+    ]);
+    expect(active.layers.map(({ packId }) => packId)).toEqual([
+      "baseline",
+      "personal",
+    ]);
+    expect(await storage.activePackId()).toBe(active.materializedPackId);
+    expect(
+      (await storage.get(active.materializedPackId))?.entities[0]?.description,
+    ).toBe("personal override");
+    await expect(storage.remove("baseline")).rejects.toThrow("active profile");
+    const secondOverlay = await makePack("second-overlay", "second override");
+    await storage.install(secondOverlay);
+    const revised = await storage.activateProfile("table", "Table", [
+      "baseline",
+      "personal",
+      "second-overlay",
+    ]);
+    expect(revised.materializedPackId).not.toBe(active.materializedPackId);
+    await expect(storage.get(active.materializedPackId)).resolves.toBeDefined();
   });
 
   it("revalidates encoded profile metadata at the storage boundary", async () => {

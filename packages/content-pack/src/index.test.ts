@@ -4,6 +4,7 @@ import type { ParsedContentSource } from "@4ecb/content-domain";
 
 import {
   buildContentPack,
+  composeContentPacks,
   contentPackIdentityErrors,
   decodeContentPack,
   decodeContentPackBytes,
@@ -85,6 +86,49 @@ describe("content pack", () => {
       changed: [],
       unchangedCount: 0,
     });
+  });
+
+  it("composes ordered layers with explicit last-pack-wins collisions", async () => {
+    const baseline = await buildContentPack(source, {
+      packId: "baseline",
+      name: "Baseline",
+    });
+    const personal = await buildContentPack(
+      {
+        ...source,
+        sourceKey: "personal.xml",
+        entities: [
+          { ...source.entities[0]!, name: "Personal override" },
+          { ...source.entities[0]!, id: "ID_PERSONAL", name: "Personal" },
+        ],
+        accounting: {
+          ...source.accounting,
+          topLevelRecords: 2,
+          acceptedRecords: 2,
+        },
+      },
+      { packId: "personal", name: "Personal" },
+    );
+    const composed = await composeContentPacks([baseline, personal], {
+      packId: "profile",
+      name: "Layered profile",
+    });
+    expect(composed.layers.map(({ packId }) => packId)).toEqual([
+      "baseline",
+      "personal",
+    ]);
+    expect(composed.pack.entities.map(({ id, name }) => [id, name])).toEqual([
+      ["ID_PERSONAL", "Personal"],
+      ["ID_TEST_1", "Personal override"],
+    ]);
+    expect(composed.pack.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "profile.entity-overridden",
+          entityId: "ID_TEST_1",
+        }),
+      ]),
+    );
   });
 
   it("rejects unsafe or oversized profile identity fields", async () => {

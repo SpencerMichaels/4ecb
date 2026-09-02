@@ -205,6 +205,10 @@ review belongs to M5.5 after the real interface is designed. The
 original-application launch/open/save/reopen matrix is the one remaining manual
 criterion. Content onboarding now provides bounded read-only
 directory discovery plus an ordinary `.4ecp`/decrypted-rules file fallback.
+Administrator runtime configuration may also advertise an ordered immutable
+same-origin baseline; verified downloads cache offline without activation, and
+users explicitly compose/adopt personal overlays above it. Materialized profile
+digests and ordered layer bindings preserve existing character behavior.
 The public import/rendering security pass, automated storage durability matrix,
 and route-focus/contrast/responsive structural baseline are complete. Full
 keyboard, screen-reader, zoom, touch, Safari, and physical-device execution is

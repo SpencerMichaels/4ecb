@@ -59,6 +59,21 @@ and digest is idempotent; importing the same ID with a different digest is
 rejected rather than silently replacing a profile. Later profile-update UX must
 make replacement or migration explicit.
 
+## Layered profiles
+
+A profile is an ordered list of exact `(packId, contentDigest)` references plus
+the `last-pack-wins-v1` resolution policy. Entity IDs resolve from first to
+last; a later definition replaces an earlier definition with the same stable ID
+and produces a collision diagnostic. The result is materialized as a locally
+verified pack whose digest binds the complete resolution. Characters retain
+that materialized identity, ordered source references, and policy. Existing
+single-pack settings migrate as one-layer profiles.
+
+Runtime configuration may advertise an ordered server baseline. Verified bytes
+are cached in IndexedDB, while imported personal packs remain above the baseline
+and never upload. Download/import changes availability only; profile activation
+and character migration remain explicit.
+
 ## Compatibility policy
 
 Readers reject unsupported format versions. Any future incompatible shape gets

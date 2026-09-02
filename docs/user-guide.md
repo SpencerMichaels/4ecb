@@ -83,8 +83,18 @@ limit.
    `.dnd40.xml`. For rules XML, set the local profile ID and name first.
 4. Wait for decoding, parsing, validation, and storage to complete. Cancelling
    the worker before completion saves no partial pack.
-5. Choose **Activate** on the installed profile. The Compendium and new
-   character imports use that active profile.
+5. Review the ordered profile. A deployment-provided baseline stays first;
+   imported personal packs can be ordered above it. Collision preview identifies
+   stable IDs whose later definition wins.
+6. Choose **Activate profile**. Downloads and imports alone never change the
+   Compendium or any character. New characters bind to the exact ordered
+   IDs/digests and `last-pack-wins-v1` policy; existing characters keep their
+   prior binding until migration is previewed and explicitly adopted.
+
+Server-advertised packs download into the same offline IndexedDB cache. Their
+URLs are not private merely because they appear in runtime configuration:
+anyone with deployment access can download them. Personal packs remain in this
+browser and are never uploaded.
 
 Chromium-family browsers also provide bounded, read-only directory discovery.
 Firefox and Safari use **Import file**, which accepts the same source formats.

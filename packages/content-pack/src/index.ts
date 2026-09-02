@@ -51,6 +51,19 @@ export interface BuildContentPackOptions {
   readonly name: string;
 }
 
+export const CONTENT_PROFILE_RESOLUTION_POLICY = "last-pack-wins-v1" as const;
+
+export interface ContentProfileLayer {
+  readonly packId: string;
+  readonly contentDigest: string;
+}
+
+export interface ComposedContentProfile {
+  readonly layers: readonly ContentProfileLayer[];
+  readonly resolutionPolicy: typeof CONTENT_PROFILE_RESOLUTION_POLICY;
+  readonly pack: ContentPack;
+}
+
 export interface ContentPackValidation {
   readonly valid: boolean;
   readonly errors: readonly string[];
@@ -201,6 +214,86 @@ export async function buildContentPack(
   return {
     ...packWithoutDigest,
     manifest: { ...manifestWithoutDigest, contentDigest },
+  };
+}
+
+export async function composeContentPacks(
+  packs: readonly ContentPack[],
+  options: BuildContentPackOptions,
+): Promise<ComposedContentProfile> {
+  if (packs.length === 0)
+    throw new Error("A content profile requires at least one pack");
+  const identities = new Set<string>();
+  const gameSystem = packs[0]?.manifest.gameSystem;
+  for (const pack of packs) {
+    const identity = `${pack.manifest.packId}:${pack.manifest.contentDigest}`;
+    if (identities.has(identity))
+      throw new Error(`Duplicate content profile layer ${identity}`);
+    identities.add(identity);
+    if (pack.manifest.gameSystem !== gameSystem)
+      throw new Error("Content profile layers must use the same game system");
+  }
+  const resolved = new Map<string, ContentEntity>();
+  const collisions: ContentDiagnostic[] = [];
+  for (const pack of packs) {
+    for (const entity of pack.entities) {
+      const previous = resolved.get(entity.id);
+      if (previous !== undefined)
+        collisions.push({
+          severity: "info",
+          code: "profile.entity-overridden",
+          message: `${entity.id} from ${pack.manifest.packId} overrides an earlier layer`,
+          entityId: entity.id,
+        });
+      resolved.set(entity.id, entity);
+    }
+  }
+  const entities = [...resolved.values()].sort((left, right) =>
+    left.id.localeCompare(right.id),
+  );
+  const pack = await buildContentPack(
+    {
+      gameSystem: gameSystem ?? "D&D4E",
+      sourceKey: packs
+        .map(({ manifest }) => `${manifest.packId}:${manifest.contentDigest}`)
+        .join(" > "),
+      entities: entities.map((entity) => ({ ...entity, content: [] })),
+      rejected: packs.flatMap((candidate) => candidate.rejected),
+      rawTopLevel: [],
+      diagnostics: [
+        ...packs.flatMap((candidate) => candidate.diagnostics),
+        ...collisions,
+      ],
+      accounting: {
+        topLevelRecords:
+          entities.length +
+          packs.reduce(
+            (sum, candidate) =>
+              sum + candidate.manifest.accounting.rejectedRecords,
+            0,
+          ),
+        acceptedRecords: entities.length,
+        warnedRecords: packs.reduce(
+          (sum, candidate) => sum + candidate.manifest.accounting.warnedRecords,
+          0,
+        ),
+        rejectedRecords: packs.reduce(
+          (sum, candidate) =>
+            sum + candidate.manifest.accounting.rejectedRecords,
+          0,
+        ),
+        rawTopLevelElements: 0,
+      },
+    },
+    options,
+  );
+  return {
+    layers: packs.map(({ manifest }) => ({
+      packId: manifest.packId,
+      contentDigest: manifest.contentDigest,
+    })),
+    resolutionPolicy: CONTENT_PROFILE_RESOLUTION_POLICY,
+    pack,
   };
 }
 

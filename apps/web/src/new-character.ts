@@ -2,6 +2,7 @@ import {
   newNativeCharacterRecord,
   type BuildLevelFrame,
   type CharacterRecord,
+  type CharacterProfileBinding,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import type { ContentPackManifest } from "@4ecb/content-pack";
@@ -30,6 +31,7 @@ export function createNativeCharacter(
     readonly id?: string;
     readonly occurrenceId?: string;
     readonly now?: string;
+    readonly profileBinding?: CharacterProfileBinding;
   } = {},
 ): CharacterRecord {
   const definition = levelDefinition(entities, 1);
@@ -40,7 +42,10 @@ export function createNativeCharacter(
       name: definition.name,
       type: definition.type,
     },
-    { packId: manifest.packId, contentDigest: manifest.contentDigest },
+    options.profileBinding ?? {
+      packId: manifest.packId,
+      contentDigest: manifest.contentDigest,
+    },
     options,
   );
 }

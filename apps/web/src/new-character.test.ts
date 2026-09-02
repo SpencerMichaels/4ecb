@@ -88,7 +88,20 @@ describe("native character creation", () => {
       id: "native-character",
       occurrenceId: "level-one",
       now: "2026-09-01T00:00:00.000Z",
+      profileBinding: {
+        packId: "profile:fixture:revision",
+        contentDigest: "resolved-digest",
+        layers: [
+          { packId: "baseline", contentDigest: "baseline-digest" },
+          { packId: "personal", contentDigest: "personal-digest" },
+        ],
+        resolutionPolicy: "last-pack-wins-v1",
+      },
     });
+    expect(record.profileBinding?.layers?.map(({ packId }) => packId)).toEqual([
+      "baseline",
+      "personal",
+    ]);
     const transaction = new CharacterTransaction(record.build);
     let evaluation = evaluateCharacter(
       projectBuildForEvaluation(transaction.current, entities),
