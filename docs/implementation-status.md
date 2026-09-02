@@ -143,6 +143,13 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   dependent multi-step choices. Live Silaqui verification confirmed the
   first-level group/row order, click-to-inspect Alignment details, one mounted
   detail viewer, no inline duplicates, and no horizontal overflow.
+- Base ability scores now live only in the level-1 Ability Scores group, before
+  racial increases, and no longer appear as an unrelated editor below the level
+  workspace. A replacement choice with exactly one visible result treats that
+  result as implied: choosing the source to replace dispatches the exact
+  replacement immediately and omits the redundant **With** control. Live
+  Silaqui verification selected Fading Strike and observed Rapid Shot applied,
+  then restored the original build through undo.
 - Silaqui's false level-6 house-rule warning was a presentation bug: warning
   detection flattened candidate decisions from every possible replacement
   target. It now evaluates the selected replacement only, correctly recognizing

@@ -296,6 +296,12 @@ change provider ownership, rule order, or serialization. Each category contains
 compact controls and the workspace owns one focus-driven detail viewer, matching
 the legacy checklist/`InfoViewer` relationship without reproducing its modal
 wizard navigation. Numbered step chrome is limited to actual dependent flows.
+Base ability scores are part of the level-1 Ability Scores presentation even
+though they remain scalar fields in the native build rather than evaluated
+choice occurrences. Replacement choices suppress their result selector only
+when the underlying replacement rule has exactly one candidate and that
+candidate is visible; selecting the replaced occurrence then dispatches that
+exact candidate automatically.
 
 ## Deferred decisions and decision points
 

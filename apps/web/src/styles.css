@@ -1694,6 +1694,10 @@ textarea {
   font-size: 0.95rem;
 }
 
+.base-ability-choice > header h5 {
+  margin: 0;
+}
+
 .level-choice-workspace .choice-selection-layout,
 .level-choice-workspace .skill-training-layout {
   gap: 0.65rem;

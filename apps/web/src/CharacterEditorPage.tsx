@@ -241,6 +241,51 @@ function CandidateDetail({
   );
 }
 
+function BaseAbilityScoreEditor({
+  build,
+  onDispatch,
+}: {
+  readonly build: CharacterRecord["build"];
+  readonly onDispatch: (command: CharacterCommand) => void;
+}) {
+  return (
+    <section
+      className="level-choice-section base-ability-choice"
+      aria-labelledby="base-abilities"
+    >
+      <header>
+        <div>
+          <p className="eyebrow">Starting scores</p>
+          <h5 id="base-abilities">Choose base ability scores</h5>
+        </div>
+        <span className="choice-count">Before racial increases</span>
+      </header>
+      <div className="ability-editor">
+        {[
+          "Strength",
+          "Constitution",
+          "Dexterity",
+          "Intelligence",
+          "Wisdom",
+          "Charisma",
+        ].map((ability) => (
+          <label key={ability}>
+            {ability}
+            <CommitNumberInput
+              value={build.baseAbilities[ability] ?? 10}
+              min={1}
+              max={30}
+              onCommit={(value) =>
+                onDispatch({ kind: "set-base-ability", ability, value })
+              }
+            />
+          </label>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function retrainingCategory(type: string | undefined): string | undefined {
   const normalized = type?.trim().toLocaleLowerCase();
   if (normalized === "skill training" || normalized === "skill") return "skill";
@@ -281,9 +326,7 @@ function ReplacementEditor({
               byId.get(option.definitionId.toLocaleLowerCase())?.type,
             ) === targetType,
         );
-  const [targetId, setTargetId] = useState(
-    selected?.replacesId ?? options[0]?.replacesOccurrenceId ?? "",
-  );
+  const [targetId, setTargetId] = useState(selected?.replacesId ?? "");
   const showAll = useContext(ShowAllChoicesContext);
   const inspectCandidate = useContext(InspectCandidateContext);
   const [optimisticSelectedId, setOptimisticSelectedId] = useState(
@@ -336,7 +379,7 @@ function ReplacementEditor({
   }, [rollbackRevision]);
 
   useEffect(() => {
-    setTargetId(selected?.replacesId ?? options[0]?.replacesOccurrenceId ?? "");
+    setTargetId(selected?.replacesId ?? "");
     setOptimisticSelectedId(selected?.definitionId ?? "");
     setPerusedId(selected?.definitionId ?? "");
     setPerusingTarget(false);
@@ -363,6 +406,43 @@ function ReplacementEditor({
     targetId,
     visible,
   ]);
+
+  const selectReplacement = (
+    replacementTarget: NonNullable<
+      EvaluatedChoice["replacementOptions"]
+    >[number],
+    candidate: CandidateDecision,
+  ): void => {
+    const definition = byId.get(candidate.definitionId.toLocaleLowerCase());
+    if (definition === undefined) return;
+    setPerusingTarget(false);
+    setOptimisticSelectedId(candidate.definitionId);
+    setPerusedId(candidate.definitionId);
+    inspect(candidate);
+    onDispatch({
+      kind: "retrain",
+      parentId: buildProvider.id,
+      index: findBuildChildIndex(
+        buildProvider,
+        providerEntity,
+        choice.ruleOrdinal,
+        choice.index,
+      ),
+      replacesId: replacementTarget.replacesOccurrenceId,
+      replacement: {
+        id: `web:${crypto.randomUUID()}`,
+        identity: {
+          definitionId: definition.id,
+          name: definition.name,
+          type: definition.type,
+        },
+        acquiredLevel: buildProvider.acquiredLevel,
+        legality: candidate.eligible ? "rules-legal" : "houserule",
+        children: [],
+        unresolved: false,
+      },
+    });
+  };
 
   return (
     <div className="choice-selection-layout">
@@ -409,6 +489,20 @@ function ReplacementEditor({
                       reasons: [],
                     },
               );
+              const nextVisible = (option?.candidates ?? []).filter(
+                (candidate) =>
+                  isCandidateVisible(
+                    candidate,
+                    showAll,
+                    selected?.definitionId,
+                  ),
+              );
+              if (
+                option !== undefined &&
+                option.candidates.length === 1 &&
+                nextVisible.length === 1
+              )
+                selectReplacement(option, nextVisible[0]!);
             }}
           >
             <option value="">Choose an earlier selection</option>
@@ -423,78 +517,48 @@ function ReplacementEditor({
             ))}
           </select>
         </label>
-        <label>
-          With
-          <select
-            disabled={disabled || target === undefined}
-            value={selectedValue}
-            onFocus={() => {
-              setPerusingTarget(false);
-              setPerusedId(selectedValue || visible[0]?.definitionId || "");
-              inspect(
-                target?.candidates.find(
-                  (candidate) =>
-                    candidate.definitionId ===
-                    (selectedValue || visible[0]?.definitionId),
-                ),
-              );
-            }}
-            onChange={(event) => {
-              const definitionId = event.currentTarget.value;
-              setPerusingTarget(false);
-              setOptimisticSelectedId(definitionId);
-              setPerusedId(definitionId);
-              const candidate = target?.candidates.find(
-                (item) => item.definitionId === definitionId,
-              );
-              inspect(candidate);
-              const definition = byId.get(definitionId.toLocaleLowerCase());
-              if (
-                candidate === undefined ||
-                definition === undefined ||
-                target === undefined
-              )
-                return;
-              onDispatch({
-                kind: "retrain",
-                parentId: buildProvider.id,
-                index: findBuildChildIndex(
-                  buildProvider,
-                  providerEntity,
-                  choice.ruleOrdinal,
-                  choice.index,
-                ),
-                replacesId: target.replacesOccurrenceId,
-                replacement: {
-                  id: `web:${crypto.randomUUID()}`,
-                  identity: {
-                    definitionId: definition.id,
-                    name: definition.name,
-                    type: definition.type,
-                  },
-                  acquiredLevel: buildProvider.acquiredLevel,
-                  legality: candidate.eligible ? "rules-legal" : "houserule",
-                  children: [],
-                  unresolved: false,
-                },
-              });
-            }}
-          >
-            <option value="">Choose a replacement</option>
-            {visible.map((candidate) => (
-              <option
-                key={candidate.definitionId}
-                value={candidate.definitionId}
-              >
-                {byId.get(candidate.definitionId.toLocaleLowerCase())?.name ??
-                  candidate.definitionId}
-                {candidate.eligible
-                  ? ""
-                  : ` — unavailable: ${candidateReason(candidate.reasons)}`}
-              </option>
-            ))}
-          </select>
-        </label>
+        {target === undefined ||
+        (target.candidates.length === 1 && visible.length === 1) ? null : (
+          <label>
+            With
+            <select
+              disabled={disabled}
+              value={selectedValue}
+              onFocus={() => {
+                setPerusingTarget(false);
+                setPerusedId(selectedValue || visible[0]?.definitionId || "");
+                inspect(
+                  target.candidates.find(
+                    (candidate) =>
+                      candidate.definitionId ===
+                      (selectedValue || visible[0]?.definitionId),
+                  ),
+                );
+              }}
+              onChange={(event) => {
+                const candidate = target.candidates.find(
+                  (item) => item.definitionId === event.currentTarget.value,
+                );
+                if (candidate !== undefined)
+                  selectReplacement(target, candidate);
+              }}
+            >
+              <option value="">Choose a replacement</option>
+              {visible.map((candidate) => (
+                <option
+                  key={candidate.definitionId}
+                  value={candidate.definitionId}
+                >
+                  {byId.get(candidate.definitionId.toLocaleLowerCase())?.name ??
+                    candidate.definitionId}
+                  {candidate.eligible
+                    ? ""
+                    : ` — unavailable: ${candidateReason(candidate.reasons)}`}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
       {inspectCandidate === undefined ? (
         <CandidateDetail candidate={detailCandidate} entity={detailEntity} />
@@ -1694,6 +1758,29 @@ export function CharacterEditorPage({
   });
   const legacyChoiceSections =
     groupChoicesByLegacyWorkflow(presentationChoices);
+  const abilitySectionIndex = legacyChoiceSections.findIndex(({ section }) =>
+    ["Ability Scores", "Skills", "Powers", "Spellbook", "Feats"].includes(
+      section,
+    ),
+  );
+  const displayedChoiceSections =
+    selectedLevel !== 1 ||
+    legacyChoiceSections.some(({ section }) => section === "Ability Scores")
+      ? legacyChoiceSections
+      : [
+          ...legacyChoiceSections.slice(
+            0,
+            abilitySectionIndex < 0
+              ? legacyChoiceSections.length
+              : abilitySectionIndex,
+          ),
+          { section: "Ability Scores" as const, choices: [] },
+          ...legacyChoiceSections.slice(
+            abilitySectionIndex < 0
+              ? legacyChoiceSections.length
+              : abilitySectionIndex,
+          ),
+        ];
   useEffect(() => {
     if (primaryLevelChoices.some((choice) => choice.id === selectedChoiceId))
       return;
@@ -2310,7 +2397,7 @@ export function CharacterEditorPage({
           <ShowAllChoicesContext.Provider value={showAllChoices}>
             {planningEvaluation === undefined ? (
               <p>Content is unavailable for planning.</p>
-            ) : levelChoices.length === 0 ? (
+            ) : levelChoices.length === 0 && selectedLevel !== 1 ? (
               <div className="choice-empty-state">
                 <Icon name="check" />
                 <h4>No choices need attention at level {selectedLevel}</h4>
@@ -2323,17 +2410,26 @@ export function CharacterEditorPage({
               <div className="level-choice-workspace">
                 <InspectCandidateContext.Provider value={setInspectedOption}>
                   <div className="level-choice-page">
-                    {legacyChoiceSections.map(({ section, choices }) => (
+                    {displayedChoiceSections.map(({ section, choices }) => (
                       <section className="legacy-choice-group" key={section}>
                         <header>
                           <h4>{section}</h4>
                           <span className="choice-count">
-                            {choices.filter(isUnresolvedChoice).length === 0
-                              ? `${choices.length} ${choices.length === 1 ? "choice" : "choices"}`
-                              : `${choices.filter(isUnresolvedChoice).length} unresolved`}
+                            {section === "Ability Scores" && selectedLevel === 1
+                              ? "6 scores"
+                              : choices.filter(isUnresolvedChoice).length === 0
+                                ? `${choices.length} ${choices.length === 1 ? "choice" : "choices"}`
+                                : `${choices.filter(isUnresolvedChoice).length} unresolved`}
                           </span>
                         </header>
                         <div className="legacy-choice-list">
+                          {section === "Ability Scores" &&
+                          selectedLevel === 1 ? (
+                            <BaseAbilityScoreEditor
+                              build={build}
+                              onDispatch={dispatch}
+                            />
+                          ) : null}
                           {choices.map(renderPrimaryChoice)}
                         </div>
                       </section>
@@ -2367,31 +2463,6 @@ export function CharacterEditorPage({
         aria-label="Additional character editing"
         className="builder-secondary"
       >
-        <details className="panel" open>
-          <summary>Base ability scores</summary>
-          <div className="ability-editor">
-            {[
-              "Strength",
-              "Constitution",
-              "Dexterity",
-              "Intelligence",
-              "Wisdom",
-              "Charisma",
-            ].map((ability) => (
-              <label key={ability}>
-                {ability}
-                <CommitNumberInput
-                  value={build.baseAbilities[ability] ?? 10}
-                  min={1}
-                  max={30}
-                  onCommit={(value) =>
-                    dispatch({ kind: "set-base-ability", ability, value })
-                  }
-                />
-              </label>
-            ))}
-          </div>
-        </details>
         <details className="panel">
           <summary>Diagnostics and legality</summary>
           {currentEvaluation === undefined ||
