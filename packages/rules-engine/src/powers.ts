@@ -467,6 +467,54 @@ function uniquePowerComponents(
   });
 }
 
+function powerWeaponSpecificBonuses(
+  power: ContentEntity,
+  equipment: Loadout,
+  stats: Readonly<Record<string, EvaluatedStat>>,
+): {
+  readonly attack: readonly PowerComponent[];
+  readonly damage: readonly PowerComponent[];
+} {
+  const clauses = power.specifics
+    .filter((specific) => key(specific.name) === "weapon")
+    .map((specific) => specific.value);
+  const hasFamily = (families: readonly string[]) =>
+    families.some((family) => equipment.tags.includes(family));
+  const attack = clauses.flatMap((clause) => {
+    if (
+      !/bonus to the attack roll equal to one-half your Strength modifier/i.test(
+        clause,
+      ) ||
+      !hasFamily(["axe", "flail", "heavy blade", "pick"])
+    )
+      return [];
+    return [
+      {
+        label: "power weapon bonus",
+        value: Math.floor(numericStat(stats, "Strength modifier") / 2),
+        source: power.name,
+      },
+    ];
+  });
+  const damage = clauses.flatMap((clause) => {
+    if (
+      !/attack deals extra damage equal to your Constitution modifier/i.test(
+        clause,
+      ) ||
+      !hasFamily(["axe", "hammer", "mace"])
+    )
+      return [];
+    return [
+      {
+        label: "Constitution modifier",
+        value: numericStat(stats, "Constitution modifier"),
+        source: power.name,
+      },
+    ];
+  });
+  return { attack, damage };
+}
+
 const abilityNames = [
   "Strength",
   "Constitution",
@@ -683,6 +731,11 @@ export function evaluatePowers(input: {
       );
     });
     const variants = handCandidates.map((equipment): PowerVariant => {
+      const weaponSpecific = powerWeaponSpecificBonuses(
+        power,
+        equipment,
+        input.stats,
+      );
       const attackLeft = attack?.[1] ?? "";
       const availableAbilities = abilityNames.filter((ability) =>
         new RegExp(`\\b${ability}\\b`, "i").test(attackLeft),
@@ -739,6 +792,7 @@ export function evaluatePowers(input: {
           label: "power attack bonus",
           value: powerAttackBonus,
         });
+      attackComponents.push(...weaponSpecific.attack);
 
       const damageComponents: PowerComponent[] = [];
       const specialDamage = nativeSpecialDamage(power, hitLine, input.level);
@@ -805,6 +859,7 @@ export function evaluatePowers(input: {
           label: "enhancement bonus",
           value: equipment.enhancement,
         });
+      if (dice !== undefined) damageComponents.push(...weaponSpecific.damage);
       const offHandImplements = handCandidates.filter(
         (candidate) =>
           candidate.hand === "off" &&

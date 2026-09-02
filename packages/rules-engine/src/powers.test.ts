@@ -55,6 +55,75 @@ function combatStat(name: string, value: number): EvaluatedStat {
 }
 
 describe("power evaluation", () => {
+  it("applies recovered weapon-field ability bonuses only to eligible families", () => {
+    const powers = evaluatePowers({
+      level: 8,
+      activeDefinitionIds: ["SWEEP", "BRASH"],
+      inventory: [
+        {
+          id: "axe",
+          definitionIds: ["AXE"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+        {
+          id: "bow",
+          definitionIds: ["BOW"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 5),
+        "Constitution modifier": stat("Constitution modifier", 2),
+      },
+      overlays: [],
+      entities: [
+        entity("SWEEP", "Sweeping Blow", "Power", {
+          Keywords: "Martial, Weapon",
+          "Attack Type": "Close burst 1",
+          Attack: "Strength vs. AC",
+          " Weapon":
+            "If you're wielding an axe, a flail, a heavy blade, or a pick, you gain a bonus to the attack roll equal to one-half your Strength modifier.",
+          Hit: "1[W] + Strength modifier damage.",
+        }),
+        entity("BRASH", "Brash Strike", "Power", {
+          Keywords: "Martial, Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength +2 vs. AC",
+          Hit: "1[W] + Strength modifier damage.",
+          " Weapon":
+            "If you're wielding an axe, a hammer, or a mace, the attack deals extra damage equal to your Constitution modifier.",
+        }),
+        entity("AXE", "Synthetic Axe", "Weapon", {
+          Damage: "1d12",
+          "Proficiency Bonus": "2",
+          Group: "Axe",
+          "Weapon Category": "Military Melee",
+        }),
+        entity("BOW", "Synthetic Bow", "Weapon", {
+          Damage: "1d10",
+          "Proficiency Bonus": "2",
+          Group: "Bow",
+          "Weapon Category": "Military Ranged",
+        }),
+      ],
+    });
+    const variant = (powerId: string, equipmentName: string) =>
+      powers
+        .find(({ definitionId }) => definitionId === powerId)
+        ?.variants.find(
+          (candidate) => candidate.equipmentName === equipmentName,
+        );
+
+    expect(variant("SWEEP", "Synthetic Axe")?.attackBonus).toBe(13);
+    expect(variant("SWEEP", "Synthetic Bow")?.attackBonus).toBe(11);
+    expect(variant("BRASH", "Synthetic Axe")?.damage).toBe("1d12+7");
+    expect(variant("BRASH", "Synthetic Bow")?.damage).toBe("1d10+5");
+  });
+
   it("uses recovered implement aliases and variant-specific range channels", () => {
     const powers = evaluatePowers({
       level: 1,
