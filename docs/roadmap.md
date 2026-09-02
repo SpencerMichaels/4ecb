@@ -311,6 +311,12 @@ UI stabilization and its support matrix follow in M5.5.
 
 ## M5.5 — Builder UI design and release-readiness validation
 
+The product-owner direction for this milestone is recorded in
+[`interface-design-brief.md`](interface-design-brief.md). Product design and
+prototype approval precede M6; comprehensive accessibility and broad client
+certification may be deferred closer to 1.0 while structural accessibility
+remains a continuous constraint.
+
 ### Goal
 
 Design the durable builder interface with the product owner, then validate that
