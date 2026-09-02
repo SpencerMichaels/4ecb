@@ -2,17 +2,17 @@
 
 ## Current stopping point
 
-Milestones M1 through M4 are complete at their stated release boundaries. M4 is
+Milestones M1 through M5 are complete at their stated release boundaries. M4 is
 the builder beta: it delivers the authoritative rules-backed editor and records
-native parity risks. M5 has reached its automated closure boundary. Profile
-migration preview and explicit adoption are implemented; only the manual
-legacy-builder open/save/reopen matrix remains open. Functional print regression coverage is complete in
+native parity risks. M5 is the functional MVP/core builder release. Profile
+migration preview and explicit adoption are implemented, and the product owner
+successfully opened, saved, and reopened several regenerated real level-8
+characters in the original builder. Functional print regression coverage is complete in
 Chromium and Firefox. Exhaustive cross-browser, keyboard, screen-reader, zoom,
 touch, device, and visual-print validation is intentionally owned by M5.5 after
 the interface is designed with the product owner. The installable PWA, update/offline
 UX, content onboarding, public-distribution boundary, production Docker guide,
-and authoritative exact-profile browser sheet are verified checkpoints. A final
-MVP declaration still requires the manual legacy-builder matrix.
+and authoritative exact-profile browser sheet are verified checkpoints.
 The content model now supports an administrator-advertised immutable baseline
 plus ordered local personal overlays. Same-origin downloads are size-bounded,
 identity/digest verified, and cached for offline use; availability does not
@@ -36,8 +36,10 @@ non-native; level-up choices themselves were not duplicated. Export now follows
 the native sheet/campaign/levels/grabbag/text order, emits one sheet score block,
 and rejects duplicate occurrence tokens. The newest correction opens in the
 original builder, and PDFs exported there from the original and regenerated Hu
-records are visually identical under manual comparison. Save/reopen and the
-remaining curated candidates still require manual execution.
+records are visually identical under manual comparison. Subsequent product-owner
+testing successfully saved and reopened several regenerated real level-8
+characters. That representative evidence closes the M5 legacy-application
+criterion; future character-specific failures remain tracked compatibility bugs.
 
 ## M5 checkpoints
 

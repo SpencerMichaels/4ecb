@@ -1,8 +1,11 @@
 # Original Character Builder launch matrix
 
-This matrix is the remaining executable compatibility check for regenerated
+This matrix records original-builder compatibility evidence for regenerated
 `.dnd4e` files. A successful semantic re-import into 4eCB is a prerequisite,
-not evidence that the original Windows application opened the file.
+not evidence that the original Windows application opened the file. The product
+owner's representative open/save/reopen checks across several real level-8
+characters close the M5 boundary; this file retains narrower diagnostic rows and
+the procedure for investigating future compatibility bugs.
 
 ## Recovered local application contract
 
@@ -74,11 +77,11 @@ CharacterBuilder\CharacterBuilder.exe <absolute-character-path>
 
 ## Observed matrix — 2026-09-01
 
-| Candidate                                  | Provenance                                        | Regeneration evidence                                                                                                                    | Original application result                                                                                      |
-| ------------------------------------------ | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `public-synthetic-structural-edited.dnd4e` | Public structural fixture + public synthetic pack | Converged but incomplete/illegal with five retained missing-content diagnostics; semantic re-import passed                               | Not run: no compatible runtime                                                                                   |
-| `imported-hu-level-8-edited.dnd4e`         | Ignored imported character + exact private pack   | Level 8 converged and complete; semantic re-import passed; two legality diagnostics retained; native ordering and occurrence checks pass | Corrected file opens; its legacy-builder PDF appears identical to the original Hu PDF. Save/reopen remains open. |
-| `native-level-1-edited.dnd4e`              | Ignored native exact-profile audit                | Complete, legal, converged, zero diagnostics; 14 choices; one equipped item; semantic re-import passed                                   | Not run: no compatible runtime                                                                                   |
+| Candidate                                  | Provenance                                        | Regeneration evidence                                                                                                                    | Original application result                                                                                                                                             |
+| ------------------------------------------ | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `public-synthetic-structural-edited.dnd4e` | Public structural fixture + public synthetic pack | Converged but incomplete/illegal with five retained missing-content diagnostics; semantic re-import passed                               | Not run: no compatible runtime                                                                                                                                          |
+| `imported-hu-level-8-edited.dnd4e`         | Ignored imported character + exact private pack   | Level 8 converged and complete; semantic re-import passed; two legality diagnostics retained; native ordering and occurrence checks pass | Corrected file opens; its legacy-builder PDF appears identical to the original Hu PDF. Representative real level-8 regenerated characters save and reopen successfully. |
+| `native-level-1-edited.dnd4e`              | Ignored native exact-profile audit                | Complete, legal, converged, zero diagnostics; 14 choices; one equipped item; semantic re-import passed                                   | Not run: no compatible runtime                                                                                                                                          |
 
 This checkout's root and reverse-engineering Nix shells contain no Wine, Xvfb,
 Winetricks, or Microsoft .NET Framework runtime. No project-local Wine prefix or
@@ -86,8 +89,8 @@ offline Framework installer is present, and no Wine package is already in the
 Nix store. Therefore the original application was not launched here. Adding a
 new Wine/.NET acquisition path would expand the declared toolchain and still
 would not truthfully establish WPF compatibility without the Microsoft runtime.
-The release criterion remains open until the procedure above records actual UI
-results on a prepared compatibility host. A manual Hu attempt subsequently
+The product owner's prepared compatibility host subsequently supplied the UI
+evidence needed for M5 closure. A manual Hu attempt first
 proved that the original parser rejects self-closing `textstring` elements even
 though the modern semantic importer accepted them. The serializer now emits
 paired start/end tags whenever a text-valued element was explicitly requested,
@@ -106,5 +109,8 @@ block. The legacy target now follows the native order and emits only the sheet
 base scores. All `charelem` tokens are also required to be unique. The newly
 corrected Hu candidate opens successfully, and a manual side-by-side review
 found its legacy-builder PDF indistinguishable from the PDF exported from the
-original Hu record. Hu save/reopen and the other curated candidates remain
-unexecuted.
+original Hu record. The product owner later confirmed successful save/reopen
+behavior across several regenerated real level-8 characters. The public
+synthetic and native level-1 rows remain useful diagnostics but are not required
+representative same-profile evidence, and were not relabeled as manually
+executed.

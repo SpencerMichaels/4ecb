@@ -116,7 +116,7 @@ budgets remain active during M5.
       have the requested dimensions, extracted text is complete, mutable hit points
       are blank, application chrome is absent, and no card reports DOM overflow.
       Chromium output is tagged; Firefox 154 output is not tagged.
-- [ ] Open edited exports in the original Windows builder across the curated
+- [x] Open edited exports in the original Windows builder across the curated
       application matrix. The executable/config/cache paths, direct-open
       argument contract, three-candidate regeneration commands, and manual
       observation fields are recorded in `docs/legacy-builder-launch-matrix.md`.
@@ -127,8 +127,11 @@ budgets remain active during M5.
       one point high. Recovered save code identified non-native levels-first
       ordering plus an extra root score block. The native-ordered, single-block
       correction now opens, and its original-builder PDF appears identical to
-      the original Hu PDF under manual comparison. Hu save/reopen and the other
-      curated application rows remain open.
+      the original Hu PDF under manual comparison. The product owner subsequently
+      opened, saved, and reopened several regenerated real level-8 characters.
+      This representative same-profile evidence is accepted for the M5
+      compatibility boundary; later character-specific failures remain ordinary
+      compatibility bugs.
 - [x] Close the named M4 native exception and private exact-profile parity
       boundary without reclassifying cross-profile diagnostics as goldens. The
       fixed-output slice covers Bond of Censure and three exact ongoing-10 hit
@@ -183,7 +186,7 @@ this deferred section are owned by M5.5.
 | 1         | Public editor/command tests and exact-profile level-30 Fighter, Psion, Shaman, Knight, and Hybrid audits cover create through export.                               | Pass                           |
 | 2         | Generic rule IR, profile-driven choices, cross-family audits, and explicit unsupported diagnostics avoid a showcased-class allowlist.                               | Pass                           |
 | 3         | Public exact goldens, Hu 72/72 numeric and 52/52 power fields, fixed-special audits, and separate historical diagnostics have no unexplained same-profile mismatch. | Pass                           |
-| 4         | Curated original-builder open/save/reopen matrix in `legacy-builder-launch-matrix.md`.                                                                              | **Manual follow-up open**      |
+| 4         | Product-owner original-builder open/save/reopen checks across several regenerated real level-8 characters; details in `legacy-builder-launch-matrix.md`.            | Pass                           |
 | 5         | Storage durability, upgrade, checksummed backup/restore, malformed restore, and interrupted-migration tests.                                                        | Pass                           |
 | 6         | Installable PWA/offline shell and local pack/character storage checks.                                                                                              | Pass                           |
 | 7         | Pinned Chromium/Firefox Letter/A4 color/monochrome matrix with text, geometry, blank fields, and overflow assertions.                                               | Pass                           |

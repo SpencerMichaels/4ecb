@@ -191,8 +191,9 @@ deliverable is closure of blocking M4 parity findings.
 
 ## M5 — MVP closure: credible legacy-builder replacement
 
-**Status:** automated closure complete; original-builder matrix pending manual
-follow-up. Verified checkpoints make content-profile migration a
+**Status (2026-09-01): complete.** Automated closure passes, and the product
+owner successfully opened, saved, and reopened several regenerated real level-8
+characters in the original builder. Verified checkpoints make content-profile migration a
 worker-evaluated preview followed by explicit adoption and add checksummed
 backup inspection, restartable character migration recovery, persistence
 requests, quota diagnostics, an installable offline PWA with explicit update
@@ -202,8 +203,9 @@ Edited export now has explicit byte-preserving and 0.07a regenerated targets
 with a semantic re-import gate. Automated Chromium and Firefox Letter/A4 PDF
 matrices pass as functional regression evidence; cross-browser visual print
 review belongs to M5.5 after the real interface is designed. The
-original-application launch/open/save/reopen matrix is the one remaining manual
-criterion. Content onboarding now provides bounded read-only
+Representative original-application open/save/reopen compatibility is therefore
+accepted at the M5 boundary; later character-specific findings remain ordinary
+compatibility bugs rather than reopening the milestone. Content onboarding now provides bounded read-only
 directory discovery plus an ordinary `.4ecp`/decrypted-rules file fallback.
 Administrator runtime configuration may also advertise an ordered immutable
 same-origin baseline; verified downloads cache offline without activation, and
