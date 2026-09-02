@@ -126,7 +126,18 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   their existing specialized controls. Live Silaqui verification confirmed one
   level-8 ability section with Dexterity and Constitution as its two slots and
   one level-1 Power section with two slots.
-- `nix develop path:. -c bash scripts/check.sh` passes 201 tests across 35 files,
+- Choice-list filtering is now one temporary level-wide **Show unavailable
+  options** control. Ability-increase groups omit repeated filter prose and
+  empty candidate-detail cards. Generic optional replacements are presented as
+  collapsed, category-specific retraining actions and are omitted from timeline
+  summaries; existing retraining remains visible as completed history. Live
+  Silaqui verification confirmed the unused level-5 actions, category-filtered
+  Power editor and cancellation, and her saved level-6 Power retraining.
+- Silaqui's false level-6 house-rule warning was a presentation bug: warning
+  detection flattened candidate decisions from every possible replacement
+  target. It now evaluates the selected replacement only, correctly recognizing
+  the imported Nimble Strike to Fading Strike retraining as rules-legal.
+- `nix develop path:. -c bash scripts/check.sh` passes 202 tests across 35 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

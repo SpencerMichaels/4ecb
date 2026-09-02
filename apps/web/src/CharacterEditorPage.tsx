@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import {
   CharacterRepository,
@@ -29,9 +36,11 @@ import {
   groupParameterizedCandidates,
   groupRepeatedChoiceSlots,
   isCandidateVisible,
+  isOptionalRetrainingChoice,
   isUnresolvedChoice,
   planningHorizonCommand,
   selectedDefinitionId,
+  selectedChoiceHasWarning,
   unresolveEvaluatedChoiceCommand,
 } from "./builder-ui";
 import { Icon } from "./Icon";
@@ -40,6 +49,7 @@ import { RulesWorkerClient } from "./rules-client";
 
 const characters = new CharacterRepository();
 const packs = new ContentPackRepository();
+const ShowAllChoicesContext = createContext(false);
 
 type SaveState =
   | { readonly phase: "loading"; readonly message: string }
@@ -142,23 +152,6 @@ function choiceTitle(choice: EvaluatedChoice): string {
   return choice.name || `Choose ${choice.type}`;
 }
 
-function choiceHasWarning(
-  choice: EvaluatedChoice,
-  evaluation: EvaluatedCharacter,
-): boolean {
-  const selected = selectedOccurrence(choice, evaluation);
-  if (selected === undefined) return false;
-  if (selected.legality === "houserule") return true;
-  const decisions = [
-    ...choice.candidates,
-    ...(choice.replacementOptions ?? []).flatMap((option) => option.candidates),
-  ];
-  return decisions.some(
-    (candidate) =>
-      candidate.definitionId === selected.definitionId && !candidate.eligible,
-  );
-}
-
 function CandidateDetail({
   candidate,
   entity,
@@ -240,6 +233,13 @@ function CandidateDetail({
   );
 }
 
+function retrainingCategory(type: string | undefined): string | undefined {
+  const normalized = type?.trim().toLocaleLowerCase();
+  if (normalized === "skill training" || normalized === "skill") return "skill";
+  if (normalized === "feat" || normalized === "power") return normalized;
+  return undefined;
+}
+
 function ReplacementEditor({
   choice,
   evaluation,
@@ -247,6 +247,7 @@ function ReplacementEditor({
   providerEntity,
   byId,
   disabled,
+  targetType,
   rollbackRevision,
   onDispatch,
 }: {
@@ -256,15 +257,26 @@ function ReplacementEditor({
   readonly providerEntity: ContentEntity | undefined;
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly disabled: boolean;
+  readonly targetType?: string;
   readonly rollbackRevision: number;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
-  const options = choice.replacementOptions ?? [];
+  const allOptions = choice.replacementOptions ?? [];
   const selected = selectedOccurrence(choice, evaluation);
+  const options =
+    targetType === undefined
+      ? allOptions
+      : allOptions.filter(
+          (option) =>
+            option.replacesOccurrenceId === selected?.replacesId ||
+            retrainingCategory(
+              byId.get(option.definitionId.toLocaleLowerCase())?.type,
+            ) === targetType,
+        );
   const [targetId, setTargetId] = useState(
     selected?.replacesId ?? options[0]?.replacesOccurrenceId ?? "",
   );
-  const [showAll, setShowAll] = useState(false);
+  const showAll = useContext(ShowAllChoicesContext);
   const [optimisticSelectedId, setOptimisticSelectedId] = useState(
     selected?.definitionId ?? "",
   );
@@ -435,19 +447,6 @@ function ReplacementEditor({
             ))}
           </select>
         </label>
-        <label className="show-all-control">
-          <input
-            checked={showAll}
-            disabled={disabled}
-            type="checkbox"
-            onChange={(event) => setShowAll(event.currentTarget.checked)}
-          />
-          Show all options for this choice
-        </label>
-        <p className="field-help">
-          Unavailable same-category options include their objective rules reason
-          and are saved as a house-rule choice when selected.
-        </p>
       </div>
       <CandidateDetail
         candidate={detailCandidate}
@@ -468,6 +467,8 @@ function ChoiceEditor({
   entities,
   byId,
   disabled,
+  compact = false,
+  replacementTargetType,
   rollbackRevision,
   onDispatch,
 }: {
@@ -477,6 +478,8 @@ function ChoiceEditor({
   readonly entities: readonly ContentEntity[];
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly disabled: boolean;
+  readonly compact?: boolean;
+  readonly replacementTargetType?: string;
   readonly rollbackRevision: number;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
@@ -490,7 +493,7 @@ function ChoiceEditor({
     provider.parentId !== undefined &&
     findOccurrence(build, provider.parentId) !== undefined;
   const selected = selectedOccurrence(choice, evaluation);
-  const [showAll, setShowAll] = useState(false);
+  const showAll = useContext(ShowAllChoicesContext);
   const [optimisticSelectedId, setOptimisticSelectedId] = useState(
     selected?.definitionId ?? "",
   );
@@ -541,6 +544,8 @@ function ChoiceEditor({
     setStagedGroupKey(undefined);
   }, [rollbackRevision]);
 
+  useEffect(() => setStagedGroupKey(undefined), [showAll]);
+
   useEffect(() => {
     setOptimisticSelectedId(selected?.definitionId ?? "");
     setPerusedId(selected?.definitionId ?? "");
@@ -576,6 +581,9 @@ function ChoiceEditor({
         }
         byId={byId}
         disabled={disabled}
+        {...(replacementTargetType === undefined
+          ? {}
+          : { targetType: replacementTargetType })}
         rollbackRevision={rollbackRevision}
         onDispatch={onDispatch}
       />
@@ -616,7 +624,9 @@ function ChoiceEditor({
   };
 
   return (
-    <div className="choice-selection-layout">
+    <div
+      className={`choice-selection-layout${compact ? " choice-selection-compact" : ""}`}
+    >
       <div className="choice-editor-fields">
         {hasParameterizedGroups ? (
           <>
@@ -718,32 +728,17 @@ function ChoiceEditor({
             </select>
           </label>
         )}
-        <label className="show-all-control">
-          <input
-            checked={showAll}
-            disabled={disabled}
-            type="checkbox"
-            onChange={(event) => {
-              setShowAll(event.currentTarget.checked);
-              setStagedGroupKey(undefined);
-            }}
-          />
-          Show all options for this choice
-        </label>
-        <p className="field-help">
-          Valid choices are shown by default. This filter resets when you open a
-          different choice; unavailable same-category selections are explicit
-          house rules.
-        </p>
       </div>
-      <CandidateDetail
-        candidate={detailCandidate}
-        entity={
-          detailCandidate === undefined
-            ? undefined
-            : byId.get(detailCandidate.definitionId.toLocaleLowerCase())
-        }
-      />
+      {compact ? null : (
+        <CandidateDetail
+          candidate={detailCandidate}
+          entity={
+            detailCandidate === undefined
+              ? undefined
+              : byId.get(detailCandidate.definitionId.toLocaleLowerCase())
+          }
+        />
+      )}
     </div>
   );
 }
@@ -777,7 +772,7 @@ function ChoiceFlowSection({
       : byId.get(selectedRoot.definitionId.toLocaleLowerCase());
   const unresolved = choices.some(isUnresolvedChoice);
   const warning = choices.some((choice) =>
-    choiceHasWarning(choice, evaluation),
+    selectedChoiceHasWarning(choice, evaluation),
   );
   return (
     <section
@@ -870,7 +865,7 @@ function RepeatedChoiceGroup({
     (choice) => choice.selectedOccurrenceId !== undefined,
   ).length;
   const warning = choices.some((choice) =>
-    choiceHasWarning(choice, evaluation),
+    selectedChoiceHasWarning(choice, evaluation),
   );
   return (
     <section
@@ -918,12 +913,132 @@ function RepeatedChoiceGroup({
               entities={entities}
               byId={byId}
               disabled={false}
+              compact={choice.type.startsWith("Ability Increase")}
               rollbackRevision={rollbackRevision}
               onDispatch={onDispatch}
             />
           </section>
         ))}
       </div>
+    </section>
+  );
+}
+
+function RetrainingControls({
+  choices,
+  evaluation,
+  build,
+  entities,
+  byId,
+  rollbackRevision,
+  onDispatch,
+}: {
+  readonly choices: readonly EvaluatedChoice[];
+  readonly evaluation: EvaluatedCharacter;
+  readonly build: CharacterRecord["build"];
+  readonly entities: readonly ContentEntity[];
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly rollbackRevision: number;
+  readonly onDispatch: (command: CharacterCommand) => void;
+}) {
+  const selectedChoice = choices.find(
+    (choice) => choice.selectedOccurrenceId !== undefined,
+  );
+  const selected =
+    selectedChoice === undefined
+      ? undefined
+      : selectedOccurrence(selectedChoice, evaluation);
+  const replaced = (selectedChoice?.replacementOptions ?? []).find(
+    (option) => option.replacesOccurrenceId === selected?.replacesId,
+  );
+  const selectedCategory = retrainingCategory(
+    replaced === undefined
+      ? undefined
+      : byId.get(replaced.definitionId.toLocaleLowerCase())?.type,
+  );
+  const [active, setActive] = useState<{
+    readonly choiceId: string;
+    readonly category: string;
+  }>();
+  useEffect(
+    () =>
+      setActive(
+        selectedChoice !== undefined && selectedCategory !== undefined
+          ? { choiceId: selectedChoice.id, category: selectedCategory }
+          : undefined,
+      ),
+    [rollbackRevision, selectedCategory, selectedChoice],
+  );
+
+  const categories = ["skill", "feat", "power"].filter((category) =>
+    choices.some((choice) =>
+      (choice.replacementOptions ?? []).some(
+        (option) =>
+          retrainingCategory(
+            byId.get(option.definitionId.toLocaleLowerCase())?.type,
+          ) === category,
+      ),
+    ),
+  );
+  const activeChoice =
+    choices.find((choice) => choice.id === active?.choiceId) ?? selectedChoice;
+  if (activeChoice === undefined || active === undefined)
+    return (
+      <div className="retraining-actions" aria-label="Optional retraining">
+        {categories.map((category) => (
+          <button
+            className="progressive-choice-button"
+            key={category}
+            type="button"
+            onClick={() =>
+              setActive({
+                choiceId: choices[0]!.id,
+                category,
+              })
+            }
+          >
+            Retrain a {category}…
+          </button>
+        ))}
+      </div>
+    );
+
+  return (
+    <section
+      aria-labelledby={`${choiceSectionId(activeChoice.id)}-heading`}
+      className="level-choice-section retraining-section"
+      id={choiceSectionId(activeChoice.id)}
+      tabIndex={-1}
+    >
+      <header>
+        <div>
+          <p className="eyebrow">Optional retraining</p>
+          <h4 id={`${choiceSectionId(activeChoice.id)}-heading`}>
+            {active.category[0]!.toLocaleUpperCase() + active.category.slice(1)}{" "}
+            retraining
+          </h4>
+        </div>
+        {selectedChoice === undefined ? (
+          <button type="button" onClick={() => setActive(undefined)}>
+            Cancel
+          </button>
+        ) : (
+          <span className="complete-badge">
+            <Icon name="check" /> Complete
+          </span>
+        )}
+      </header>
+      <ChoiceEditor
+        choice={activeChoice}
+        evaluation={evaluation}
+        build={build}
+        entities={entities}
+        byId={byId}
+        disabled={false}
+        replacementTargetType={active.category}
+        rollbackRevision={rollbackRevision}
+        onDispatch={onDispatch}
+      />
     </section>
   );
 }
@@ -1047,7 +1162,7 @@ function SkillTrainingEditor({
       selectedDefinitionId(choice, evaluation),
     ]),
   );
-  const [showAll, setShowAll] = useState(false);
+  const showAll = useContext(ShowAllChoicesContext);
   const [optimisticSlots, setOptimisticSlots] = useState(evaluatedSlots);
   const choiceKey = choices.map((choice) => choice.id).join("\0");
 
@@ -1253,14 +1368,6 @@ function SkillTrainingEditor({
               );
             })}
           </div>
-          <label className="show-all-control">
-            <input
-              checked={showAll}
-              type="checkbox"
-              onChange={(event) => setShowAll(event.currentTarget.checked)}
-            />
-            Show unavailable same-category skills
-          </label>
           {chosenCount < choices.length ? null : (
             <p className="field-help">
               Untrain a skill before choosing another.
@@ -1304,6 +1411,7 @@ export function CharacterEditorPage({
   const [visibleHorizon, setVisibleHorizon] = useState(1);
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [selectedChoiceId, setSelectedChoiceId] = useState<string>();
+  const [showAllChoices, setShowAllChoices] = useState(false);
   const [rollbackRevision, setRollbackRevision] = useState(0);
   const transaction = useRef<CharacterTransaction | undefined>(undefined);
   const saveQueue = useRef<
@@ -1467,7 +1575,11 @@ export function CharacterEditorPage({
   }, [build, selectedLevel, visibleHorizon]);
 
   const levelChoices = choicesAtLevel(selectedLevel, planningEvaluation);
-  const groupedLevelChoices = groupLevelChoices(levelChoices);
+  const retrainingChoices = levelChoices.filter(isOptionalRetrainingChoice);
+  const primaryLevelChoices = levelChoices.filter(
+    (choice) => !isOptionalRetrainingChoice(choice),
+  );
+  const groupedLevelChoices = groupLevelChoices(primaryLevelChoices);
   const repeatedChoiceGroups = groupRepeatedChoiceSlots(
     groupedLevelChoices.ordinary,
   );
@@ -1487,11 +1599,13 @@ export function CharacterEditorPage({
     ),
   );
   useEffect(() => {
-    if (levelChoices.some((choice) => choice.id === selectedChoiceId)) return;
+    if (primaryLevelChoices.some((choice) => choice.id === selectedChoiceId))
+      return;
     setSelectedChoiceId(
-      levelChoices.find(isUnresolvedChoice)?.id ?? levelChoices[0]?.id,
+      primaryLevelChoices.find(isUnresolvedChoice)?.id ??
+        primaryLevelChoices[0]?.id,
     );
-  }, [levelChoices, selectedChoiceId]);
+  }, [primaryLevelChoices, selectedChoiceId]);
 
   function dispatch(command: CharacterCommand): void {
     const active = transaction.current;
@@ -1575,7 +1689,7 @@ export function CharacterEditorPage({
     planningEvaluation?.choices.filter(
       (choice) =>
         choice.level <= visibleHorizon &&
-        choiceHasWarning(choice, planningEvaluation),
+        selectedChoiceHasWarning(choice, planningEvaluation),
     ).length ?? 0;
   const warningCount = Math.max(
     diagnosticWarningCount,
@@ -1584,7 +1698,9 @@ export function CharacterEditorPage({
   );
   const selectedLevelHasWarning =
     planningEvaluation !== undefined &&
-    levelChoices.some((choice) => choiceHasWarning(choice, planningEvaluation));
+    levelChoices.some((choice) =>
+      selectedChoiceHasWarning(choice, planningEvaluation),
+    );
 
   return (
     <main
@@ -1769,7 +1885,10 @@ export function CharacterEditorPage({
           <ol className="timeline-levels">
             {build.levels.slice(0, visibleHorizon).map((frame) => {
               const choices = choicesAtLevel(frame.level, planningEvaluation);
-              const grouped = groupLevelChoices(choices);
+              const timelineChoices = choices.filter(
+                (choice) => !isOptionalRetrainingChoice(choice),
+              );
+              const grouped = groupLevelChoices(timelineChoices);
               const repeatedGroups = groupRepeatedChoiceSlots(grouped.ordinary);
               const repeatedByChoiceId = new Map(
                 repeatedGroups.flatMap((group) =>
@@ -1786,7 +1905,7 @@ export function CharacterEditorPage({
                   flow.map((choice) => [choice.id, flow] as const),
                 ),
               );
-              const summaries = choices.flatMap((choice) => {
+              const summaries = timelineChoices.flatMap((choice) => {
                 if (grouped.backgrounds.includes(choice))
                   return choice === grouped.backgrounds[0]
                     ? [
@@ -1837,7 +1956,7 @@ export function CharacterEditorPage({
               });
               const unresolved = choices.filter(isUnresolvedChoice).length;
               const choiceWarnings = choices.filter((choice) =>
-                choiceHasWarning(choice, planningEvaluation!),
+                selectedChoiceHasWarning(choice, planningEvaluation!),
               ).length;
               return (
                 <li
@@ -1854,7 +1973,8 @@ export function CharacterEditorPage({
                     onClick={() => {
                       setSelectedLevel(frame.level);
                       setSelectedChoiceId(
-                        choices.find(isUnresolvedChoice)?.id ?? choices[0]?.id,
+                        timelineChoices.find(isUnresolvedChoice)?.id ??
+                          timelineChoices[0]?.id,
                       );
                     }}
                   >
@@ -1878,7 +1998,7 @@ export function CharacterEditorPage({
                         const summaryUnresolved =
                           summary.choices.filter(isUnresolvedChoice).length;
                         const summaryWarning = summary.choices.some((choice) =>
-                          choiceHasWarning(choice, planningEvaluation!),
+                          selectedChoiceHasWarning(choice, planningEvaluation!),
                         );
                         const selectedNames = summary.choices.flatMap(
                           (choice) => {
@@ -1961,132 +2081,160 @@ export function CharacterEditorPage({
               </p>
               <h3 id="choice-pane-heading">Level {selectedLevel} choices</h3>
             </div>
-            {unresolvedCount > 0 ? (
-              <span className="attention-badge">
-                {unresolvedCount} unresolved
-              </span>
-            ) : selectedLevelHasWarning ? (
-              <span className="attention-badge">
-                <Icon name="warning" /> Review warnings
-              </span>
-            ) : (
-              <span className="complete-badge">
-                <Icon name="check" /> Complete
-              </span>
-            )}
+            <div className="choice-pane-actions">
+              <label className="show-all-control">
+                <input
+                  checked={showAllChoices}
+                  type="checkbox"
+                  onChange={(event) =>
+                    setShowAllChoices(event.currentTarget.checked)
+                  }
+                />
+                Show unavailable options
+              </label>
+              {unresolvedCount > 0 ? (
+                <span className="attention-badge">
+                  {unresolvedCount} unresolved
+                </span>
+              ) : selectedLevelHasWarning ? (
+                <span className="attention-badge">
+                  <Icon name="warning" /> Review warnings
+                </span>
+              ) : (
+                <span className="complete-badge">
+                  <Icon name="check" /> Complete
+                </span>
+              )}
+            </div>
           </header>
-          {planningEvaluation === undefined ? (
-            <p>Content is unavailable for planning.</p>
-          ) : levelChoices.length === 0 ? (
-            <div className="choice-empty-state">
-              <Icon name="check" />
-              <h4>No choices need attention at level {selectedLevel}</h4>
-              <p>
-                Select another level from the timeline or review the completed
-                history below.
-              </p>
-            </div>
-          ) : (
-            <div className="level-choice-page">
-              {levelChoices.map((choice) => {
-                if (groupedLevelChoices.backgrounds.includes(choice))
-                  return choice === groupedLevelChoices.backgrounds[0] ? (
-                    <BackgroundChoiceGroup
-                      key="backgrounds"
-                      choices={groupedLevelChoices.backgrounds}
-                      evaluation={planningEvaluation}
-                      build={build}
-                      entities={entities}
-                      byId={byId}
-                      rollbackRevision={rollbackRevision}
-                      requestedChoiceId={selectedChoiceId}
-                      onDispatch={dispatch}
-                    />
-                  ) : null;
-                if (groupedLevelChoices.skillTraining.includes(choice))
-                  return choice === groupedLevelChoices.skillTraining[0] ? (
-                    <SkillTrainingEditor
-                      key="skill-training"
-                      choices={groupedLevelChoices.skillTraining}
-                      evaluation={planningEvaluation}
-                      build={build}
-                      entities={entities}
-                      byId={byId}
-                      rollbackRevision={rollbackRevision}
-                      onDispatch={dispatch}
-                    />
-                  ) : null;
-                const repeated = repeatedGroupByChoiceId.get(choice.id);
-                if (repeated !== undefined)
-                  return choice === repeated[0] ? (
-                    <RepeatedChoiceGroup
+          <ShowAllChoicesContext.Provider value={showAllChoices}>
+            {planningEvaluation === undefined ? (
+              <p>Content is unavailable for planning.</p>
+            ) : levelChoices.length === 0 ? (
+              <div className="choice-empty-state">
+                <Icon name="check" />
+                <h4>No choices need attention at level {selectedLevel}</h4>
+                <p>
+                  Select another level from the timeline or review the completed
+                  history below.
+                </p>
+              </div>
+            ) : (
+              <div className="level-choice-page">
+                {primaryLevelChoices.map((choice) => {
+                  if (groupedLevelChoices.backgrounds.includes(choice))
+                    return choice === groupedLevelChoices.backgrounds[0] ? (
+                      <BackgroundChoiceGroup
+                        key="backgrounds"
+                        choices={groupedLevelChoices.backgrounds}
+                        evaluation={planningEvaluation}
+                        build={build}
+                        entities={entities}
+                        byId={byId}
+                        rollbackRevision={rollbackRevision}
+                        requestedChoiceId={selectedChoiceId}
+                        onDispatch={dispatch}
+                      />
+                    ) : null;
+                  if (groupedLevelChoices.skillTraining.includes(choice))
+                    return choice === groupedLevelChoices.skillTraining[0] ? (
+                      <SkillTrainingEditor
+                        key="skill-training"
+                        choices={groupedLevelChoices.skillTraining}
+                        evaluation={planningEvaluation}
+                        build={build}
+                        entities={entities}
+                        byId={byId}
+                        rollbackRevision={rollbackRevision}
+                        onDispatch={dispatch}
+                      />
+                    ) : null;
+                  const repeated = repeatedGroupByChoiceId.get(choice.id);
+                  if (repeated !== undefined)
+                    return choice === repeated[0] ? (
+                      <RepeatedChoiceGroup
+                        key={choice.id}
+                        choices={repeated}
+                        evaluation={planningEvaluation}
+                        build={build}
+                        entities={entities}
+                        byId={byId}
+                        rollbackRevision={rollbackRevision}
+                        onDispatch={dispatch}
+                      />
+                    ) : null;
+                  const flow = dependentFlowByChoiceId.get(choice.id);
+                  if (flow !== undefined)
+                    return choice === flow[0] ? (
+                      <ChoiceFlowSection
+                        key={choice.id}
+                        choices={flow}
+                        evaluation={planningEvaluation}
+                        build={build}
+                        entities={entities}
+                        byId={byId}
+                        rollbackRevision={rollbackRevision}
+                        onDispatch={dispatch}
+                      />
+                    ) : null;
+                  const warning = selectedChoiceHasWarning(
+                    choice,
+                    planningEvaluation,
+                  );
+                  return (
+                    <section
+                      aria-labelledby={`${choiceSectionId(choice.id)}-heading`}
+                      className="level-choice-section"
+                      id={choiceSectionId(choice.id)}
                       key={choice.id}
-                      choices={repeated}
-                      evaluation={planningEvaluation}
-                      build={build}
-                      entities={entities}
-                      byId={byId}
-                      rollbackRevision={rollbackRevision}
-                      onDispatch={dispatch}
-                    />
-                  ) : null;
-                const flow = dependentFlowByChoiceId.get(choice.id);
-                if (flow !== undefined)
-                  return choice === flow[0] ? (
-                    <ChoiceFlowSection
-                      key={choice.id}
-                      choices={flow}
-                      evaluation={planningEvaluation}
-                      build={build}
-                      entities={entities}
-                      byId={byId}
-                      rollbackRevision={rollbackRevision}
-                      onDispatch={dispatch}
-                    />
-                  ) : null;
-                const warning = choiceHasWarning(choice, planningEvaluation);
-                return (
-                  <section
-                    aria-labelledby={`${choiceSectionId(choice.id)}-heading`}
-                    className="level-choice-section"
-                    id={choiceSectionId(choice.id)}
-                    key={choice.id}
-                    tabIndex={-1}
-                  >
-                    <header>
-                      <div>
-                        <p className="eyebrow">{choice.type}</p>
-                        <h4 id={`${choiceSectionId(choice.id)}-heading`}>
-                          {choiceTitle(choice)}
-                        </h4>
-                      </div>
-                      {isUnresolvedChoice(choice) ? (
-                        <span className="attention-badge">Unresolved</span>
-                      ) : warning ? (
-                        <span className="attention-badge">
-                          <Icon name="warning" /> House rule
-                        </span>
-                      ) : (
-                        <span className="complete-badge">
-                          <Icon name="check" /> Complete
-                        </span>
-                      )}
-                    </header>
-                    <ChoiceEditor
-                      choice={choice}
-                      evaluation={planningEvaluation}
-                      build={build}
-                      entities={entities}
-                      byId={byId}
-                      disabled={false}
-                      rollbackRevision={rollbackRevision}
-                      onDispatch={dispatch}
-                    />
-                  </section>
-                );
-              })}
-            </div>
-          )}
+                      tabIndex={-1}
+                    >
+                      <header>
+                        <div>
+                          <p className="eyebrow">{choice.type}</p>
+                          <h4 id={`${choiceSectionId(choice.id)}-heading`}>
+                            {choiceTitle(choice)}
+                          </h4>
+                        </div>
+                        {isUnresolvedChoice(choice) ? (
+                          <span className="attention-badge">Unresolved</span>
+                        ) : warning ? (
+                          <span className="attention-badge">
+                            <Icon name="warning" /> House rule
+                          </span>
+                        ) : (
+                          <span className="complete-badge">
+                            <Icon name="check" /> Complete
+                          </span>
+                        )}
+                      </header>
+                      <ChoiceEditor
+                        choice={choice}
+                        evaluation={planningEvaluation}
+                        build={build}
+                        entities={entities}
+                        byId={byId}
+                        disabled={false}
+                        rollbackRevision={rollbackRevision}
+                        onDispatch={dispatch}
+                      />
+                    </section>
+                  );
+                })}
+                {retrainingChoices.length === 0 ? null : (
+                  <RetrainingControls
+                    choices={retrainingChoices}
+                    evaluation={planningEvaluation}
+                    build={build}
+                    entities={entities}
+                    byId={byId}
+                    rollbackRevision={rollbackRevision}
+                    onDispatch={dispatch}
+                  />
+                )}
+              </div>
+            )}
+          </ShowAllChoicesContext.Provider>
         </section>
       </div>
 

@@ -1624,6 +1624,13 @@ textarea {
   margin-bottom: 0;
 }
 
+.choice-pane-actions {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
 .level-choice-page {
   display: grid;
   gap: 1rem;
@@ -1717,6 +1724,16 @@ textarea {
   width: 100%;
 }
 
+.retraining-actions {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.retraining-actions .progressive-choice-button {
+  margin-top: 0;
+}
+
 .skill-training-layout {
   align-items: start;
   display: grid;
@@ -1793,6 +1810,10 @@ textarea {
   display: grid;
   gap: 1.25rem;
   grid-template-columns: minmax(15rem, 0.6fr) minmax(20rem, 1fr);
+}
+
+.choice-selection-layout.choice-selection-compact {
+  grid-template-columns: minmax(0, 32rem);
 }
 
 .choice-editor-fields > label:not(.show-all-control) {

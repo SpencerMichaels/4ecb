@@ -281,6 +281,14 @@ one presentation group with separate exact controls. Corpus auditing confirms
 this general rule covers paired ability increases, level-1 at-will selections,
 and hybrid-class pairs without conflating unrelated choices.
 
+Generic optional replacement rules are an on-demand retraining affordance, not
+a standing choice card or timeline to-do. Their skill, feat, and power actions
+filter only the replaceable targets while retaining the evaluator's exact
+replacement candidates and command. Named replacement consequences remain in
+their owning progressive flow. The unavailable-choice filter is shared by the
+selected level, and compact mechanical choices may omit a non-informative
+candidate detail pane.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

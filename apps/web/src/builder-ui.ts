@@ -32,6 +32,38 @@ export function isUnresolvedChoice(choice: EvaluatedChoice): boolean {
   return !choice.optional && choice.selectedOccurrenceId === undefined;
 }
 
+export function isOptionalRetrainingChoice(choice: EvaluatedChoice): boolean {
+  return (
+    choice.type === "Replacement" &&
+    choice.optional &&
+    (choice.name === undefined || choice.name.trim() === "")
+  );
+}
+
+export function selectedChoiceHasWarning(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+): boolean {
+  const selected =
+    choice.selectedOccurrenceId === undefined
+      ? undefined
+      : evaluation.occurrences.find(
+          (occurrence) => occurrence.id === choice.selectedOccurrenceId,
+        );
+  if (selected === undefined) return false;
+  if (selected.legality === "houserule") return true;
+  const decisions =
+    choice.type === "Replacement"
+      ? ((choice.replacementOptions ?? []).find(
+          (option) => option.replacesOccurrenceId === selected.replacesId,
+        )?.candidates ?? [])
+      : choice.candidates;
+  return decisions.some(
+    (candidate) =>
+      candidate.definitionId === selected.definitionId && !candidate.eligible,
+  );
+}
+
 export function planningHorizonCommand(
   build: CharacterBuild,
   targetLevel: number,

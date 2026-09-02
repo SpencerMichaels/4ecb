@@ -16,7 +16,9 @@ import {
   groupParameterizedCandidates,
   groupRepeatedChoiceSlots,
   isCandidateVisible,
+  isOptionalRetrainingChoice,
   planningHorizonCommand,
+  selectedChoiceHasWarning,
   unresolveEvaluatedChoiceCommand,
 } from "./builder-ui";
 
@@ -153,6 +155,48 @@ describe("builder planning UI", () => {
     expect(isCandidateVisible(unavailable, false)).toBe(false);
     expect(isCandidateVisible(unavailable, true)).toBe(true);
     expect(isCandidateVisible(unavailable, false, "unavailable")).toBe(true);
+  });
+
+  it("checks replacement legality only against the selected target", () => {
+    const choice = {
+      id: "replacement",
+      type: "Replacement",
+      optional: true,
+      selectedOccurrenceId: "fading",
+      replacementOptions: [
+        {
+          replacesOccurrenceId: "nimble",
+          definitionId: "NIMBLE",
+          candidates: [{ definitionId: "FADING", eligible: true, reasons: [] }],
+        },
+        {
+          replacesOccurrenceId: "twin",
+          definitionId: "TWIN",
+          candidates: [
+            {
+              definitionId: "FADING",
+              eligible: false,
+              reasons: ["prerequisite"],
+            },
+          ],
+        },
+      ],
+    } as unknown as EvaluatedCharacter["choices"][number];
+    const evaluation = {
+      occurrences: [
+        {
+          id: "fading",
+          definitionId: "FADING",
+          replacesId: "nimble",
+          legality: "rules-legal",
+        },
+      ],
+    } as unknown as EvaluatedCharacter;
+    expect(selectedChoiceHasWarning(choice, evaluation)).toBe(false);
+    expect(isOptionalRetrainingChoice(choice)).toBe(true);
+    expect(
+      isOptionalRetrainingChoice({ ...choice, name: "Mastery replacement" }),
+    ).toBe(false);
   });
 
   it("keeps inventory-owned configuration out of the level-up timeline", () => {

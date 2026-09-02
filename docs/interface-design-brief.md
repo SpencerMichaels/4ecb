@@ -118,6 +118,21 @@ selectable and stored. This covers the paired ability increases at levels 4,
 class slots of a hybrid character. Slot-specific controls such as Background
 and Skill Training retain their more specialized grouped presentations.
 
+The temporary **Show unavailable options** control is level-wide rather than
+repeated in every choice. Compact choices whose candidate records add no useful
+player-facing explanation, notably ability increases, omit the empty detail
+pane and supporting filter prose.
+
+Ordinary optional replacement rules are presented as retraining, matching the
+player-facing game concept. An unused retraining slot is absent from the level
+timeline and initially renders only **Retrain a skill…**, **Retrain a feat…**,
+and **Retrain a power…** actions for categories actually available. Activating
+one reveals a category-filtered editor that can be cancelled before a choice is
+made. An imported or completed retraining remains visible in the level pane as
+history, but not as a required timeline decision. Special replacements that
+are consequences of another choice, such as Rapid Shot Mastery, remain inside
+that choice's progressive flow rather than being relabeled as retraining.
+
 ## Priority journey
 
 Optimize the first design and prototype around this end-to-end journey:
