@@ -153,6 +153,7 @@ describe("power evaluation", () => {
       ],
       stats: {
         "Strength modifier": stat("Strength modifier", 4),
+        "Dexterity modifier": stat("Dexterity modifier", 3),
         "Wisdom modifier": stat("Wisdom modifier", 4),
         "melee:damage": combatStat("melee:damage", 2),
         "ranged:damage": combatStat("ranged:damage", 3),
@@ -166,8 +167,8 @@ describe("power evaluation", () => {
         entity("FLEX", "Flexible Strike", "Power", {
           Keywords: "Weapon",
           "Attack Type": "Melee or Ranged weapon",
-          Attack: "Strength vs. AC",
-          Hit: "1[W] + Strength modifier damage.",
+          Attack: "Strength vs. AC (melee) or Dexterity vs. AC (ranged)",
+          Hit: "1[W] + Strength modifier damage (melee) or 1[W] + Dexterity modifier damage (ranged).",
         }),
         entity("PRIMAL", "Primal Burst", "Power", {
           Keywords: "Implement, Primal",
@@ -184,6 +185,7 @@ describe("power evaluation", () => {
           Damage: "1d10",
           "Proficiency Bonus": "2",
           "Weapon Category": "Military Ranged",
+          Range: "20/40",
         }),
         entity("TOTEM", "Synthetic Totem +1", "Magic Item", {
           "Magic Item Type": "Totem",
@@ -202,7 +204,17 @@ describe("power evaluation", () => {
       flexible?.variants.find(
         ({ equipmentName }) => equipmentName === "Synthetic Bow",
       )?.damage,
-    ).toBe("1d10+7");
+    ).toBe("1d10+6");
+    expect(
+      flexible?.variants.find(
+        ({ equipmentName }) => equipmentName === "Synthetic Blade",
+      )?.attackStat,
+    ).toBe("Strength");
+    expect(
+      flexible?.variants.find(
+        ({ equipmentName }) => equipmentName === "Synthetic Bow",
+      )?.attackStat,
+    ).toBe("Dexterity");
     expect(
       powers
         .find(({ definitionId }) => definitionId === "PRIMAL")

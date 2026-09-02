@@ -68,6 +68,7 @@ interface Loadout {
   readonly tags: readonly string[];
   readonly properties: readonly string[];
   readonly weaponCategory?: string;
+  readonly rangedWeapon: boolean;
 }
 
 function key(value: string): string {
@@ -197,6 +198,7 @@ function loadouts(
       ...(weapon === undefined
         ? {}
         : { weaponCategory: key(field(weapon, "Weapon Category") ?? "") }),
+      rangedWeapon: Boolean(field(weapon ?? emptyEntity, "Range")),
     });
   }
   result.push({
@@ -213,6 +215,7 @@ function loadouts(
     tags: ["unarmed"],
     properties: [],
     weaponCategory: "melee",
+    rangedWeapon: false,
   });
   const mainHandName = Object.entries(textStrings).find(
     ([name]) => key(name) === "_internal_mainhandweapon",
@@ -695,30 +698,31 @@ export function evaluatePowers(input: {
       input.level,
     );
     const effectLine = effectiveField(power, "Effect", input.overlays);
+    const hasAttack = /\bvs\.?\s+[A-Za-z]+/i.test(attackLine ?? "");
     const recoveries = recoveryExpressions(hitLine, effectLine);
-    const attack = attackLine?.match(/^(.*?)\s+vs\.?\s+([A-Za-z]+)/i);
+    const dualAttack = /\(melee[^]*\sor\s[^]*\(ranged/i.test(attackLine ?? "")
+      ? attackLine?.split(/\s+or\s+/i)
+      : undefined;
     const weaponPower = keywords.some((value) => key(value) === "weapon");
     const implementPower = keywords.some((value) => key(value) === "implement");
-    const effectOnlyCalculation =
-      (attack === null || attack === undefined) && effectLine !== undefined;
-    const candidates =
-      attack === null || attack === undefined
-        ? effectOnlyCalculation
-          ? weaponPower
-            ? equipped.filter(
-                (item) => item.weaponDamage !== undefined || item.unarmed,
-              )
-            : implementPower
-              ? equipped
-              : equipped.filter((item) => item.unarmed)
-          : []
-        : weaponPower
+    const effectOnlyCalculation = !hasAttack && effectLine !== undefined;
+    const candidates = !hasAttack
+      ? effectOnlyCalculation
+        ? weaponPower
           ? equipped.filter(
               (item) => item.weaponDamage !== undefined || item.unarmed,
             )
           : implementPower
             ? equipped
-            : equipped.filter((item) => item.unarmed);
+            : equipped.filter((item) => item.unarmed)
+        : []
+      : weaponPower
+        ? equipped.filter(
+            (item) => item.weaponDamage !== undefined || item.unarmed,
+          )
+        : implementPower
+          ? equipped
+          : equipped.filter((item) => item.unarmed);
     // Legacy PowerStats retains every legal equipment variant even for prose
     // that names one hand. The saved main-hand selection describes the active
     // pairing; it must not erase the alternate variants a user can select.
@@ -736,6 +740,13 @@ export function evaluatePowers(input: {
         equipment,
         input.stats,
       );
+      const selectedAttackLine =
+        dualAttack !== undefined && dualAttack.length > 1
+          ? equipment.rangedWeapon
+            ? dualAttack.at(-1)
+            : dualAttack[0]
+          : attackLine;
+      const attack = selectedAttackLine?.match(/^(.*?)\s+vs\.?\s+([A-Za-z]+)/i);
       const attackLeft = attack?.[1] ?? "";
       const availableAbilities = abilityNames.filter((ability) =>
         new RegExp(`\\b${ability}\\b`, "i").test(attackLeft),
@@ -814,8 +825,17 @@ export function evaluatePowers(input: {
               .join("+")
           : fixedMatch?.[1]);
       const ongoing = /\bongoing\b/i.test(hitLine ?? "");
+      const hitClauses = /\(melee[^]*\sor\s[^]*\(ranged/i.test(hitLine ?? "")
+        ? (hitLine ?? "").split(/\s+or\s+/i)
+        : [hitLine ?? ""];
+      const selectedHitClause =
+        hitClauses.length > 1
+          ? equipment.rangedWeapon
+            ? hitClauses.at(-1)
+            : hitClauses[0]
+          : hitLine;
       const primaryDamageClause = withoutCompanionAbilityDamage(
-        (hitLine ?? "").split(/\bdamage\b/i)[0] ?? "",
+        (selectedHitClause ?? "").split(/\bdamage\b/i)[0] ?? "",
       );
       let damageAbilities: readonly string[] = abilityNames.filter((ability) =>
         new RegExp(`\\b${ability} modifier\\b`, "i").test(primaryDamageClause),
