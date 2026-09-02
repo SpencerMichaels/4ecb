@@ -1558,6 +1558,13 @@ textarea {
   width: 100%;
 }
 
+.timeline-choices button > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .timeline-choices button[aria-current="true"] {
   outline: 2px solid var(--accent);
   outline-offset: 0;
@@ -1615,6 +1622,108 @@ textarea {
 
 .choice-pane > header h3 {
   margin-bottom: 0;
+}
+
+.level-choice-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.level-choice-section {
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  padding: 1rem;
+  scroll-margin-top: 1rem;
+}
+
+.level-choice-section:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.level-choice-section > header {
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+}
+
+.level-choice-section > header h4 {
+  margin: 0;
+}
+
+.choice-count,
+.skill-choice-count {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.grouped-choice-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.grouped-choice-item + .grouped-choice-item {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.grouped-choice-item h5 {
+  margin-top: 0;
+}
+
+.progressive-choice-button {
+  background: transparent;
+  border-style: dashed;
+  color: var(--accent);
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.skill-training-layout {
+  align-items: start;
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(16rem, 0.65fr) minmax(20rem, 1fr);
+}
+
+.skill-training-controls {
+  display: grid;
+  gap: 1rem;
+}
+
+.skill-toggle-list {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.skill-toggle-list button {
+  align-items: start;
+  background: var(--surface-subtle);
+  border-color: var(--border);
+  color: var(--text);
+  display: grid;
+  gap: 0.15rem;
+  min-height: 3.25rem;
+  text-align: left;
+}
+
+.skill-toggle-list button small {
+  color: var(--muted);
+}
+
+.skill-toggle-list button.skill-trained {
+  background: var(--success-soft);
+  border-color: var(--success);
+}
+
+.skill-toggle-list button.skill-trained strong {
+  color: var(--success);
+  font-size: 0.72rem;
 }
 
 .attention-badge,
@@ -1879,12 +1988,17 @@ textarea {
 }
 
 @media (max-width: 48rem) {
-  .choice-selection-layout {
+  .choice-selection-layout,
+  .skill-training-layout {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .candidate-detail {
     max-height: none;
+  }
+
+  .skill-toggle-list {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

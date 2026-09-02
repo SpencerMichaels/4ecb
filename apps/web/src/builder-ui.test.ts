@@ -9,9 +9,12 @@ import type { EvaluatedCharacter } from "@4ecb/rules-engine";
 
 import {
   candidateReason,
+  choiceForSkillCandidate,
   choicesAtLevel,
+  groupLevelChoices,
   isCandidateVisible,
   planningHorizonCommand,
+  unresolveEvaluatedChoiceCommand,
 } from "./builder-ui";
 
 const level = (number: number): ContentEntity => ({
@@ -129,5 +132,134 @@ describe("builder planning UI", () => {
     expect(choicesAtLevel(8, evaluation).map(({ id }) => id)).toEqual([
       "advancement",
     ]);
+  });
+
+  it("groups repeated background and skill slots without losing order", () => {
+    const choices = [
+      { id: "race", type: "Race" },
+      { id: "background-1", type: "Background" },
+      { id: "skill-1", type: "Skill Training" },
+      { id: "background-2", type: "Background" },
+      { id: "skill-2", type: "Skill Training" },
+      { id: "feat", type: "Feat" },
+    ] as unknown as EvaluatedCharacter["choices"];
+    const grouped = groupLevelChoices(choices);
+    expect(grouped.backgrounds.map(({ id }) => id)).toEqual([
+      "background-1",
+      "background-2",
+    ]);
+    expect(grouped.skillTraining.map(({ id }) => id)).toEqual([
+      "skill-1",
+      "skill-2",
+    ]);
+    expect(grouped.ordinary.map(({ id }) => id)).toEqual(["race", "feat"]);
+  });
+
+  it("fills the first unresolved skill slot that can accept a candidate", () => {
+    const choices = [
+      {
+        id: "chosen",
+        selectedOccurrenceId: "athletics",
+        candidates: [],
+      },
+      {
+        id: "blocked",
+        candidates: [
+          { definitionId: "ARCANA", eligible: false, reasons: ["category"] },
+        ],
+      },
+      {
+        id: "available",
+        candidates: [{ definitionId: "ARCANA", eligible: true, reasons: [] }],
+      },
+    ] as unknown as EvaluatedCharacter["choices"];
+    expect(
+      choiceForSkillCandidate(choices, new Set(["chosen"]), "ARCANA", true)?.id,
+    ).toBe("available");
+  });
+
+  it("clears a trained skill by replacing its exact positional slot", () => {
+    const provider = level(1);
+    const entity = {
+      ...provider,
+      rules: [
+        {
+          name: "select",
+          attributes: [
+            { name: "type", value: "Skill Training" },
+            { name: "number", value: "2" },
+          ],
+          text: "",
+          children: [],
+          ordinal: 0,
+        },
+      ],
+    } satisfies ContentEntity;
+    const skillBuild: CharacterBuild = {
+      ...build,
+      levels: [
+        {
+          ...build.levels[0]!,
+          root: {
+            ...build.levels[0]!.root,
+            children: [
+              {
+                id: "athletics",
+                identity: {
+                  definitionId: "ATHLETICS",
+                  name: "Athletics",
+                  type: "Skill Training",
+                },
+                acquiredLevel: 1,
+                legality: "rules-legal",
+                children: [],
+                unresolved: false,
+              },
+              {
+                id: "arcana",
+                identity: {
+                  definitionId: "ARCANA",
+                  name: "Arcana",
+                  type: "Skill Training",
+                },
+                acquiredLevel: 1,
+                legality: "rules-legal",
+                children: [],
+                unresolved: false,
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const evaluation = {
+      occurrences: [
+        { id: "level-1", definitionId: entity.id },
+        { id: "arcana", definitionId: "ARCANA" },
+      ],
+    } as unknown as EvaluatedCharacter;
+    const choice = {
+      providerOccurrenceId: "level-1",
+      ruleOrdinal: 0,
+      index: 1,
+      selectedOccurrenceId: "arcana",
+    } as unknown as EvaluatedCharacter["choices"][number];
+    const command = unresolveEvaluatedChoiceCommand(
+      skillBuild,
+      choice,
+      evaluation,
+      [entity],
+      "placeholder-skill",
+    );
+    expect(command).toMatchObject({
+      kind: "choose",
+      parentId: "level-1",
+      index: 1,
+      occurrence: { id: "placeholder-skill", unresolved: true },
+    });
+    expect(
+      applyCharacterCommand(skillBuild, command!).levels[0]?.root.children[0]
+        ?.id,
+    ).toBe("athletics");
   });
 });

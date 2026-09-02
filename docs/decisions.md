@@ -226,6 +226,20 @@ before storage completes; IndexedDB writes are serialized in the background.
 Success remains truthful only after commit, and failure rolls the entire pending
 suffix back to the last durable build.
 
+### D027 — Levels are workspace pages and repeated slots use specialized controls
+
+The main builder pane presents the selected level as one scrollable page with a
+subsection for every choice; the timeline summarizes status and navigates into
+that page instead of replacing it with a one-dropdown screen. Repeated
+Background slots retain their evaluator order but progressively disclose
+optional empty slots behind **Add another background…**. Skill Training slots
+render as one category-bounded toggle list with an `X out of Y` count. These are
+presentation groupings only: every background and skill still maps to its exact
+provider, rule ordinal, and choice index. Clearing a trained skill writes a
+blank unresolved placeholder at the same position, and filling chooses the
+first compatible unresolved position, so history and legacy serialization do
+not compact or reorder.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

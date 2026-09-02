@@ -36,6 +36,10 @@ application's protected visual assets.
 - Use a hybrid structure: an always-available build/character overview, an
   ordered per-level choice sidebar, and focused detail/selection content in the
   main pane.
+- Treat a level, rather than an individual slot, as the main builder workspace.
+  Selecting a level shows one scrollable page with a subsection for every
+  choice at that level. The sidebar remains a compact status summary and may
+  navigate to a subsection without hiding the others.
 - When a user selects a target level, create the complete level timeline
   immediately and present its unresolved decisions. Include every level through
   the target: unresolved items are prominent, completed levels remain visible in
@@ -69,6 +73,13 @@ application's protected visual assets.
   background. Every information-bearing selection surface keeps the focused or
   selected option's source, prerequisites, description, and mechanical fields
   in an adjacent detail pane.
+- Repeated Background slots use one primary **Choose background** section;
+  already selected extras remain visible and optional empty slots appear one at
+  a time through **Add another background…**.
+- Skill Training uses one toggle list rather than repeated dropdowns. It shows
+  every category-valid skill, marks trained skills, permits direct train/untrain
+  toggles, and announces **X out of Y skills chosen** while preserving the
+  evaluator's positional slots underneath.
 - Autosave every committed character change. Show concise saving, saved, and
   failure states without interrupting ordinary work, retain transactional undo
   and redo, and never imply persistence before the storage commit succeeds.
@@ -100,6 +111,16 @@ Optimize the first design and prototype around this end-to-end journey:
 
 Import, retraining, compendium browsing, and detailed correction workflows must
 remain supported, but they are secondary when resolving early design tradeoffs.
+
+## Deferred equipment-choice presentation
+
+The legacy builder unusually displays item-owned selections, such as Armor of
+Resistance's damage type, in the wearer's Class pane. Preserve that underlying
+choice and its legacy export topology, but do not treat the placement as a
+modern information-architecture requirement. When the character equipment pane
+is fully designed, item configuration should be reviewed there with a clear
+link back to any character-level consequences. Until then, inventory-owned
+choices remain evaluable and recoverable without cluttering level advancement.
 
 ## Validation sequencing
 

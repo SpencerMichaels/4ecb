@@ -22,10 +22,14 @@ import {
 
 import {
   candidateReason,
+  choiceForSkillCandidate,
   choicesAtLevel,
+  groupLevelChoices,
   isCandidateVisible,
   isUnresolvedChoice,
   planningHorizonCommand,
+  selectedDefinitionId,
+  unresolveEvaluatedChoiceCommand,
 } from "./builder-ui";
 import { Icon } from "./Icon";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
@@ -644,6 +648,364 @@ function ChoiceEditor({
   );
 }
 
+function choiceSectionId(choiceId: string): string {
+  return `choice-section-${choiceId.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
+}
+
+function BackgroundChoiceGroup({
+  choices,
+  evaluation,
+  build,
+  entities,
+  byId,
+  rollbackRevision,
+  requestedChoiceId,
+  onDispatch,
+}: {
+  readonly choices: readonly EvaluatedChoice[];
+  readonly evaluation: EvaluatedCharacter;
+  readonly build: CharacterRecord["build"];
+  readonly entities: readonly ContentEntity[];
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly rollbackRevision: number;
+  readonly requestedChoiceId: string | undefined;
+  readonly onDispatch: (command: CharacterCommand) => void;
+}) {
+  const selectedCount = choices.reduce(
+    (highest, choice, index) =>
+      choice.selectedOccurrenceId === undefined ? highest : index + 1,
+    1,
+  );
+  const [revealedCount, setRevealedCount] = useState(selectedCount);
+
+  useEffect(() => {
+    const requestedIndex = choices.findIndex(
+      (choice) => choice.id === requestedChoiceId,
+    );
+    setRevealedCount((current) =>
+      Math.max(current, selectedCount, requestedIndex + 1),
+    );
+  }, [choices, requestedChoiceId, selectedCount]);
+
+  return (
+    <section
+      className="level-choice-section grouped-choice-section"
+      id={choiceSectionId(choices[0]!.id)}
+      tabIndex={-1}
+    >
+      <header>
+        <div>
+          <p className="eyebrow">Background</p>
+          <h4>Choose background</h4>
+        </div>
+        <span className="choice-count">
+          {
+            choices.filter(
+              (choice) => choice.selectedOccurrenceId !== undefined,
+            ).length
+          }{" "}
+          chosen
+        </span>
+      </header>
+      <div className="grouped-choice-list">
+        {choices.slice(0, revealedCount).map((choice, index) => (
+          <section
+            aria-labelledby={`${choiceSectionId(choice.id)}-heading`}
+            className="grouped-choice-item"
+            id={index === 0 ? undefined : choiceSectionId(choice.id)}
+            key={choice.id}
+          >
+            {index === 0 ? null : (
+              <h5 id={`${choiceSectionId(choice.id)}-heading`}>
+                Additional background {index + 1}
+              </h5>
+            )}
+            <ChoiceEditor
+              choice={choice}
+              evaluation={evaluation}
+              build={build}
+              entities={entities}
+              byId={byId}
+              disabled={false}
+              rollbackRevision={rollbackRevision}
+              onDispatch={onDispatch}
+            />
+          </section>
+        ))}
+      </div>
+      {revealedCount >= choices.length ? null : (
+        <button
+          className="progressive-choice-button"
+          type="button"
+          onClick={() =>
+            setRevealedCount((current) => Math.min(choices.length, current + 1))
+          }
+        >
+          Add another background…
+        </button>
+      )}
+    </section>
+  );
+}
+
+function SkillTrainingEditor({
+  choices,
+  evaluation,
+  build,
+  entities,
+  byId,
+  rollbackRevision,
+  onDispatch,
+}: {
+  readonly choices: readonly EvaluatedChoice[];
+  readonly evaluation: EvaluatedCharacter;
+  readonly build: CharacterRecord["build"];
+  readonly entities: readonly ContentEntity[];
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly rollbackRevision: number;
+  readonly onDispatch: (command: CharacterCommand) => void;
+}) {
+  const evaluatedSlots = new Map(
+    choices.map((choice) => [
+      choice.id,
+      selectedDefinitionId(choice, evaluation),
+    ]),
+  );
+  const [showAll, setShowAll] = useState(false);
+  const [optimisticSlots, setOptimisticSlots] = useState(evaluatedSlots);
+  const choiceKey = choices.map((choice) => choice.id).join("\0");
+
+  useEffect(() => setOptimisticSlots(new Map()), [rollbackRevision]);
+  useEffect(
+    () =>
+      setOptimisticSlots(
+        new Map(
+          choices.map((choice) => [
+            choice.id,
+            selectedDefinitionId(choice, evaluation),
+          ]),
+        ),
+      ),
+    [choiceKey, evaluation],
+  );
+
+  const candidateIds = [
+    ...new Set(
+      choices.flatMap((choice) =>
+        choice.candidates.map((candidate) => candidate.definitionId),
+      ),
+    ),
+  ];
+  const candidateRows = candidateIds.flatMap((definitionId) => {
+    const decisions = choices.flatMap((choice) =>
+      choice.candidates
+        .filter((candidate) => candidate.definitionId === definitionId)
+        .map((candidate) => ({ candidate, choice })),
+    );
+    if (
+      !decisions.some(({ candidate, choice }) =>
+        isCandidateVisible(
+          candidate,
+          showAll,
+          selectedDefinitionId(choice, evaluation),
+        ),
+      )
+    )
+      return [];
+    const candidate =
+      decisions.find(({ candidate }) => candidate.eligible)?.candidate ??
+      decisions.find(({ candidate }) => !candidate.reasons.includes("category"))
+        ?.candidate;
+    return candidate === undefined
+      ? []
+      : [
+          {
+            candidate,
+            decisions,
+            definition: byId.get(definitionId.toLocaleLowerCase()),
+            definitionId,
+          },
+        ];
+  });
+  const [perusedId, setPerusedId] = useState(
+    [...evaluatedSlots.values()].find(
+      (definitionId): definitionId is string => definitionId !== undefined,
+    ) ?? candidateRows[0]?.definitionId,
+  );
+  useEffect(() => {
+    if (candidateRows.some((row) => row.definitionId === perusedId)) return;
+    setPerusedId(
+      [...optimisticSlots.values()].find(
+        (definitionId): definitionId is string =>
+          definitionId !== undefined &&
+          candidateRows.some((row) => row.definitionId === definitionId),
+      ) ?? candidateRows[0]?.definitionId,
+    );
+  }, [candidateRows, optimisticSlots, perusedId]);
+  const chosenCount = [...optimisticSlots.values()].filter(
+    (definitionId) => definitionId !== undefined,
+  ).length;
+  const occupiedChoiceIds = new Set(
+    [...optimisticSlots].flatMap(([choiceId, definitionId]) =>
+      definitionId === undefined ? [] : [choiceId],
+    ),
+  );
+
+  return (
+    <section
+      className="level-choice-section skill-training-section"
+      id={choiceSectionId(choices[0]!.id)}
+      tabIndex={-1}
+    >
+      <header>
+        <div>
+          <p className="eyebrow">Skills</p>
+          <h4>Skill Training</h4>
+        </div>
+        <strong className="skill-choice-count" aria-live="polite">
+          {chosenCount} out of {choices.length} skills chosen
+        </strong>
+      </header>
+      <div className="skill-training-layout">
+        <div className="skill-training-controls">
+          <div className="skill-toggle-list">
+            {candidateRows.map(({ decisions, definition, definitionId }) => {
+              const trainedChoice = choices.find(
+                (choice) => optimisticSlots.get(choice.id) === definitionId,
+              );
+              const targetChoice = choiceForSkillCandidate(
+                choices,
+                occupiedChoiceIds,
+                definitionId,
+                showAll,
+              );
+              const targetCandidate = targetChoice?.candidates.find(
+                (candidate) => candidate.definitionId === definitionId,
+              );
+              const reason = decisions
+                .map(({ candidate }) => candidate)
+                .find((candidate) => !candidate.reasons.includes("category"));
+              const disabled =
+                trainedChoice === undefined && targetChoice === undefined;
+              return (
+                <button
+                  aria-pressed={trainedChoice !== undefined}
+                  className={
+                    trainedChoice === undefined ? undefined : "skill-trained"
+                  }
+                  disabled={disabled}
+                  key={definitionId}
+                  type="button"
+                  onFocus={() => setPerusedId(definitionId)}
+                  onClick={() => {
+                    setPerusedId(definitionId);
+                    if (trainedChoice !== undefined) {
+                      const command = unresolveEvaluatedChoiceCommand(
+                        build,
+                        trainedChoice,
+                        evaluation,
+                        entities,
+                        `web:placeholder:skill:${crypto.randomUUID()}`,
+                      );
+                      if (command === undefined) return;
+                      setOptimisticSlots((current) => {
+                        const next = new Map(current);
+                        next.set(trainedChoice.id, undefined);
+                        return next;
+                      });
+                      onDispatch(command);
+                      return;
+                    }
+                    if (
+                      targetChoice === undefined ||
+                      targetCandidate === undefined ||
+                      definition === undefined
+                    )
+                      return;
+                    const provider = evaluation.occurrences.find(
+                      (occurrence) =>
+                        occurrence.id === targetChoice.providerOccurrenceId,
+                    );
+                    const buildProvider = findOccurrence(
+                      build,
+                      targetChoice.providerOccurrenceId,
+                    );
+                    const occurrence: BuildOccurrence = {
+                      id: `web:${crypto.randomUUID()}`,
+                      identity: {
+                        definitionId: definition.id,
+                        name: definition.name,
+                        type: definition.type,
+                      },
+                      acquiredLevel:
+                        buildProvider?.acquiredLevel ??
+                        provider?.acquiredLevel ??
+                        evaluation.level,
+                      legality: targetCandidate.eligible
+                        ? "rules-legal"
+                        : "houserule",
+                      children: [],
+                      unresolved: false,
+                    };
+                    const command = commandForEvaluatedChoice(
+                      build,
+                      targetChoice,
+                      evaluation.occurrences,
+                      entities,
+                      occurrence,
+                      (index) =>
+                        `web:placeholder:${index}:${crypto.randomUUID()}`,
+                    );
+                    if (command === undefined) return;
+                    setOptimisticSlots((current) => {
+                      const next = new Map(current);
+                      next.set(targetChoice.id, definitionId);
+                      return next;
+                    });
+                    onDispatch(command);
+                  }}
+                >
+                  <span>{definition?.name ?? definitionId}</span>
+                  {trainedChoice !== undefined ? (
+                    <strong>Trained</strong>
+                  ) : reason?.eligible === false ? (
+                    <small>{candidateReason(reason.reasons)}</small>
+                  ) : (
+                    <small>Available</small>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <label className="show-all-control">
+            <input
+              checked={showAll}
+              type="checkbox"
+              onChange={(event) => setShowAll(event.currentTarget.checked)}
+            />
+            Show unavailable same-category skills
+          </label>
+          {chosenCount < choices.length ? null : (
+            <p className="field-help">
+              Untrain a skill before choosing another.
+            </p>
+          )}
+        </div>
+        <CandidateDetail
+          candidate={
+            candidateRows.find((row) => row.definitionId === perusedId)
+              ?.candidate
+          }
+          entity={
+            candidateRows.find((row) => row.definitionId === perusedId)
+              ?.definition
+          }
+        />
+      </div>
+    </section>
+  );
+}
+
 export function CharacterEditorPage({
   characterId,
 }: {
@@ -829,6 +1191,7 @@ export function CharacterEditorPage({
   }, [build, selectedLevel, visibleHorizon]);
 
   const levelChoices = choicesAtLevel(selectedLevel, planningEvaluation);
+  const groupedLevelChoices = groupLevelChoices(levelChoices);
   useEffect(() => {
     if (levelChoices.some((choice) => choice.id === selectedChoiceId)) return;
     setSelectedChoiceId(
@@ -925,9 +1288,9 @@ export function CharacterEditorPage({
     plannedHouseRuleCount,
     plannedChoiceWarningCount,
   );
-  const selectedChoice = levelChoices.find(
-    (choice) => choice.id === selectedChoiceId,
-  );
+  const selectedLevelHasWarning =
+    planningEvaluation !== undefined &&
+    levelChoices.some((choice) => choiceHasWarning(choice, planningEvaluation));
 
   return (
     <main
@@ -1112,6 +1475,28 @@ export function CharacterEditorPage({
           <ol className="timeline-levels">
             {build.levels.slice(0, visibleHorizon).map((frame) => {
               const choices = choicesAtLevel(frame.level, planningEvaluation);
+              const grouped = groupLevelChoices(choices);
+              const summaries = choices.flatMap((choice) => {
+                if (grouped.backgrounds.includes(choice))
+                  return choice === grouped.backgrounds[0]
+                    ? [
+                        {
+                          label: "Backgrounds",
+                          choices: grouped.backgrounds,
+                        },
+                      ]
+                    : [];
+                if (grouped.skillTraining.includes(choice))
+                  return choice === grouped.skillTraining[0]
+                    ? [
+                        {
+                          label: "Skill Training",
+                          choices: grouped.skillTraining,
+                        },
+                      ]
+                    : [];
+                return [{ label: choiceTitle(choice), choices: [choice] }];
+              });
               const unresolved = choices.filter(isUnresolvedChoice).length;
               const choiceWarnings = choices.filter((choice) =>
                 choiceHasWarning(choice, planningEvaluation!),
@@ -1151,52 +1536,69 @@ export function CharacterEditorPage({
                     <p className="timeline-empty">No decisions at this level</p>
                   ) : (
                     <ul className="timeline-choices">
-                      {choices.map((choice) => {
-                        const selected = selectedOccurrence(
-                          choice,
-                          planningEvaluation!,
+                      {summaries.map((summary) => {
+                        const summaryUnresolved =
+                          summary.choices.filter(isUnresolvedChoice).length;
+                        const summaryWarning = summary.choices.some((choice) =>
+                          choiceHasWarning(choice, planningEvaluation!),
                         );
-                        const resolvedName =
-                          selected === undefined
-                            ? undefined
-                            : byId.get(
+                        const selectedNames = summary.choices.flatMap(
+                          (choice) => {
+                            const selected = selectedOccurrence(
+                              choice,
+                              planningEvaluation!,
+                            );
+                            if (selected === undefined) return [];
+                            return [
+                              byId.get(
                                 selected.definitionId.toLocaleLowerCase(),
-                              )?.name;
-                        const choiceWarning = choiceHasWarning(
-                          choice,
-                          planningEvaluation!,
+                              )?.name ?? selected.definitionId,
+                            ];
+                          },
                         );
+                        const targetChoice =
+                          summary.choices.find(isUnresolvedChoice) ??
+                          summary.choices[0]!;
                         return (
-                          <li key={choice.id}>
+                          <li key={summary.choices[0]!.id}>
                             <button
                               aria-current={
-                                choice.id === selectedChoiceId
+                                summary.choices.some(
+                                  (choice) => choice.id === selectedChoiceId,
+                                )
                                   ? "true"
                                   : undefined
                               }
                               className={
-                                isUnresolvedChoice(choice)
+                                summaryUnresolved > 0
                                   ? "choice-unresolved"
-                                  : choiceWarning
+                                  : summaryWarning
                                     ? "choice-warning"
                                     : "choice-complete"
                               }
                               type="button"
                               onClick={() => {
                                 setSelectedLevel(frame.level);
-                                setSelectedChoiceId(choice.id);
+                                setSelectedChoiceId(targetChoice.id);
+                                requestAnimationFrame(() => {
+                                  const section = document.getElementById(
+                                    choiceSectionId(summary.choices[0]!.id),
+                                  );
+                                  section?.scrollIntoView({ block: "start" });
+                                  section?.focus({ preventScroll: true });
+                                });
                               }}
                             >
-                              {isUnresolvedChoice(choice) || choiceWarning ? (
+                              {summaryUnresolved > 0 || summaryWarning ? (
                                 <Icon name="warning" />
                               ) : (
                                 <Icon name="check" />
                               )}
                               <span>
-                                {choiceTitle(choice)}
-                                {resolvedName === undefined
+                                {summary.label}
+                                {selectedNames.length === 0
                                   ? ""
-                                  : ` · ${resolvedName}`}
+                                  : ` · ${selectedNames.join(", ")}`}
                               </span>
                             </button>
                           </li>
@@ -1219,20 +1621,15 @@ export function CharacterEditorPage({
                   ? " · planned"
                   : " · current"}
               </p>
-              <h3 id="choice-pane-heading">
-                {selectedChoice === undefined
-                  ? `Level ${selectedLevel}`
-                  : choiceTitle(selectedChoice)}
-              </h3>
+              <h3 id="choice-pane-heading">Level {selectedLevel} choices</h3>
             </div>
             {unresolvedCount > 0 ? (
               <span className="attention-badge">
                 {unresolvedCount} unresolved
               </span>
-            ) : selectedChoice !== undefined &&
-              choiceHasWarning(selectedChoice, planningEvaluation!) ? (
+            ) : selectedLevelHasWarning ? (
               <span className="attention-badge">
-                <Icon name="warning" /> House rule
+                <Icon name="warning" /> Review warnings
               </span>
             ) : (
               <span className="complete-badge">
@@ -1242,7 +1639,7 @@ export function CharacterEditorPage({
           </header>
           {planningEvaluation === undefined ? (
             <p>Content is unavailable for planning.</p>
-          ) : selectedChoice === undefined ? (
+          ) : levelChoices.length === 0 ? (
             <div className="choice-empty-state">
               <Icon name="check" />
               <h4>No choices need attention at level {selectedLevel}</h4>
@@ -1252,17 +1649,77 @@ export function CharacterEditorPage({
               </p>
             </div>
           ) : (
-            <ChoiceEditor
-              key={selectedChoice.id}
-              choice={selectedChoice}
-              evaluation={planningEvaluation}
-              build={build}
-              entities={entities}
-              byId={byId}
-              disabled={false}
-              rollbackRevision={rollbackRevision}
-              onDispatch={dispatch}
-            />
+            <div className="level-choice-page">
+              {levelChoices.map((choice) => {
+                if (groupedLevelChoices.backgrounds.includes(choice))
+                  return choice === groupedLevelChoices.backgrounds[0] ? (
+                    <BackgroundChoiceGroup
+                      key="backgrounds"
+                      choices={groupedLevelChoices.backgrounds}
+                      evaluation={planningEvaluation}
+                      build={build}
+                      entities={entities}
+                      byId={byId}
+                      rollbackRevision={rollbackRevision}
+                      requestedChoiceId={selectedChoiceId}
+                      onDispatch={dispatch}
+                    />
+                  ) : null;
+                if (groupedLevelChoices.skillTraining.includes(choice))
+                  return choice === groupedLevelChoices.skillTraining[0] ? (
+                    <SkillTrainingEditor
+                      key="skill-training"
+                      choices={groupedLevelChoices.skillTraining}
+                      evaluation={planningEvaluation}
+                      build={build}
+                      entities={entities}
+                      byId={byId}
+                      rollbackRevision={rollbackRevision}
+                      onDispatch={dispatch}
+                    />
+                  ) : null;
+                const warning = choiceHasWarning(choice, planningEvaluation);
+                return (
+                  <section
+                    aria-labelledby={`${choiceSectionId(choice.id)}-heading`}
+                    className="level-choice-section"
+                    id={choiceSectionId(choice.id)}
+                    key={choice.id}
+                    tabIndex={-1}
+                  >
+                    <header>
+                      <div>
+                        <p className="eyebrow">{choice.type}</p>
+                        <h4 id={`${choiceSectionId(choice.id)}-heading`}>
+                          {choiceTitle(choice)}
+                        </h4>
+                      </div>
+                      {isUnresolvedChoice(choice) ? (
+                        <span className="attention-badge">Unresolved</span>
+                      ) : warning ? (
+                        <span className="attention-badge">
+                          <Icon name="warning" /> House rule
+                        </span>
+                      ) : (
+                        <span className="complete-badge">
+                          <Icon name="check" /> Complete
+                        </span>
+                      )}
+                    </header>
+                    <ChoiceEditor
+                      choice={choice}
+                      evaluation={planningEvaluation}
+                      build={build}
+                      entities={entities}
+                      byId={byId}
+                      disabled={false}
+                      rollbackRevision={rollbackRevision}
+                      onDispatch={dispatch}
+                    />
+                  </section>
+                );
+              })}
+            </div>
           )}
         </section>
       </div>

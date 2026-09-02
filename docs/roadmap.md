@@ -367,6 +367,15 @@ This checkpoint begins the prototype feedback loop; it does not claim product
 owner approval or close the keyboard, screen-reader, zoom, touch, Safari,
 physical-device, performance, or cross-engine visual-print exit criteria above.
 
+The second product-owner review makes each level the main-pane workspace: all
+choices for that level appear as sections on one scrollable page while the
+timeline remains its compact status and navigation summary. Repeated background
+slots use a progressive “Add another background…” control, and skill training
+uses a single toggle list with an explicit chosen/required count. The legacy
+placement of item-owned resistance choices in the Class pane is documented for
+compatibility, but its redesigned presentation is deferred to the equipment
+workspace rather than copied into the advancement flow.
+
 ## M6 — Local phone play mode
 
 ### Goal

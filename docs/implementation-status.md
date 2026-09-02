@@ -44,10 +44,11 @@ criterion; future character-specific failures remain tracked compatibility bugs.
 ## M5.5 first builder-interface draft
 
 - The working rules-backed editor now uses the approved hybrid structure: a
-  compact character overview, ordered per-level timeline, and one focused
-  choice pane. Unresolved decisions are prominent, completed selections stay
-  visible in compact form, and a chosen target creates every intervening level
-  in one autosaved transaction without advancing the current effective level.
+  compact character overview, ordered per-level timeline, and a selected-level
+  workspace containing every choice section. Unresolved decisions are
+  prominent, completed selections stay visible in compact form, and a chosen
+  target creates every intervening level in one autosaved transaction without
+  advancing the current effective level.
 - The builder evaluates the current character and the full saved planning
   timeline as separate projections. Future choices can be inspected and edited
   out of order without entering current calculations. Lowering **Show plan
@@ -90,7 +91,17 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   is legal in the level-7 encounter slot, and the existing Poison armor choice
   suppresses the false level-8 prompt while cached parity remains 67/67 numeric
   and 71/71 power fields.
-- `nix develop path:. -c bash scripts/check.sh` passes 193 tests across 35 files,
+- The second product-review pass changes the main interaction unit from one
+  choice to one level. A selected level now renders all of its choice sections;
+  timeline Background and Skill Training entries are aggregated summaries that
+  navigate to their grouped controls. Silaqui's two selected backgrounds remain
+  visible under one primary section while further optional slots reveal through
+  **Add another background…**. Her five Skill Training slots render as one
+  eight-skill toggle list with a live `5 out of 5` count and adjacent details.
+  Browser verification exercised optimistic untrain/train, restored the original
+  skills through undo, and found no fresh console errors or horizontal overflow
+  at 1200 px or 375 px.
+- `nix develop path:. -c bash scripts/check.sh` passes 196 tests across 35 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

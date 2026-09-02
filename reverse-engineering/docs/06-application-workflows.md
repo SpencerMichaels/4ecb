@@ -37,6 +37,13 @@ layout.
 - custom items and rituals, auto-equip, automatic magic-item selection, money and
   cost accounting.
 
+The legacy UI routes existing item-owned selections through its **Class** pane:
+`ClassPage.CreateExpanderList` registers `StockTypeMagicItem()` in
+`ClassChoiceList`, then appends other existing choices to the same panel. Thus an
+Armor of Resistance damage-type selection appears beside class choices even
+though its provider is the equipped item. This is observed compatibility
+behavior, not a recommended ownership model for the replacement UI.
+
 ## Review and output
 
 - continuously show completeness and legality with repairable explanations;
