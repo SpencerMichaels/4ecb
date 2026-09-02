@@ -631,6 +631,51 @@ describe("power evaluation", () => {
     });
   });
 
+  it("does not bridge unrelated weapon expertise onto implement attacks", () => {
+    const [power] = evaluatePowers({
+      level: 15,
+      activeDefinitionIds: ["POWER"],
+      inventory: [
+        {
+          id: "strike",
+          definitionIds: ["STRIKE", "MAGIC"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Dexterity modifier": stat("Dexterity modifier", 7),
+        "heavy blade group,weapon:attack": stat(
+          "heavy blade group,weapon:attack",
+          2,
+        ),
+      },
+      overlays: [],
+      entities: [
+        entity("POWER", "Synthetic Discipline", "Power", {
+          Keywords: "Implement",
+          "Attack Type": "Melee 1",
+          Attack: "Dexterity vs. Reflex",
+          Hit: "1d8 + Dexterity modifier damage.",
+        }),
+        entity("STRIKE", "Synthetic Unarmed Strike", "Weapon", {
+          Damage: "1d8",
+          Group: "Heavy Blade",
+        }),
+        entity("MAGIC", "Quick Strike +3", "Magic Item", {
+          "Magic Item Type": "Weapon",
+          Enhancement: "+3 attack rolls and damage rolls",
+        }),
+      ],
+    });
+
+    expect(power?.variants[0]?.attackBonus).toBe(17);
+    expect(power?.variants[0]?.attackComponents).not.toContainEqual(
+      expect.objectContaining({ label: "heavy blade group,weapon:attack" }),
+    );
+  });
+
   it("retains the legacy half-level calculation for close effect powers", () => {
     const [power] = evaluatePowers({
       level: 8,

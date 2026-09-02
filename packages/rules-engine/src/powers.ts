@@ -824,6 +824,8 @@ export function evaluatePowers(input: {
             "weapon",
             "attack",
             attackType,
+          ).filter(({ provenanceId }) =>
+            provenanceId?.endsWith(":legacy-focused-expertise"),
           ),
         );
       const powerAttackBonus = Number(attackLeft.match(/\+\s*(\d+)/)?.[1] ?? 0);

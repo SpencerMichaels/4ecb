@@ -155,6 +155,11 @@ Recovering that tier-scaled generated stat and applying weapon-qualified attack
 bonuses when a monk weapon is used as an implement closes the basic attack and
 seven implement attacks. The two AC-target implement attacks and 12 dice fields
 are the proven differences recorded in the table rather than evaluator gaps.
+The bridge is deliberately limited to contributions recovered from the missing
+generated Focused Expertise definition. A broader weapon-qualified bridge made
+two unrelated swordmage implement attacks consume Heavy Blade Expertise and
+reduced the full matrix to 329/371; the focused provenance gate restores those
+two fields and the verified 331/371 baseline.
 
 ## M4 exit-criterion mapping
 
