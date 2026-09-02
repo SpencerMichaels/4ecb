@@ -77,10 +77,18 @@ relaxing assertions to make a percentage pass.
 
 The initial nine-character bundled-sample baseline was 494/509 comparable
 numeric stat aliases and 219/371 cached power attack/damage fields. The current
-checkpoint is 501/509 and 277/371 after projecting legacy alternates, suppressing
+checkpoint is 513/514 and 300/371 after projecting legacy alternates, suppressing
 duplicate serialized grants, recognizing corpus equipment groups/implements,
 consuming category-specific combat stats, and broadening ordinary power
-semantics. These samples were created against unidentified older content and are
+semantics. The latest audit corrected two direct legacy-engine differences:
+Versatile damage now requires the serialized
+`_INTERNAL_VersatileUsedTwoHanded` choice, and the alternate native `Weapon`
+clause wording used by Crushing Blow adds the Constitution modifier for an
+axe, hammer, or mace. Native race `Skill Bonuses` and background `Benefit`
+specifics now materialize their old merged-database contributions without
+duplicating explicit racial bonus grants. Equipped-loadout predicates also no
+longer leak onto carried alternate power variants. These samples were created
+against unidentified older content and are
 cross-profile compatibility evidence, not exact public test fixtures.
 
 An additional ignored seven-character correction corpus exercises a different

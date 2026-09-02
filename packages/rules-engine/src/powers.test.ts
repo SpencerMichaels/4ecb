@@ -55,7 +55,7 @@ function combatStat(name: string, value: number): EvaluatedStat {
 }
 
 describe("power evaluation", () => {
-  it("adds versatile damage only when no second weapon is equipped", () => {
+  it("adds versatile damage only when the legacy two-handed choice is set", () => {
     const entities = [
       entity("POWER", "Synthetic Strike", "Power", {
         Keywords: "Weapon",
@@ -75,7 +75,7 @@ describe("power evaluation", () => {
         "Magic Item Type": "Totem",
       }),
     ];
-    const evaluate = (secondDefinitionId: string) =>
+    const evaluate = (secondDefinitionId: string, usedTwoHanded: string) =>
       evaluatePowers({
         level: 1,
         activeDefinitionIds: ["POWER"],
@@ -97,20 +97,68 @@ describe("power evaluation", () => {
         ],
         stats: { "Strength modifier": stat("Strength modifier", 4) },
         overlays: [],
+        textStrings: {
+          _INTERNAL_VersatileUsedTwoHanded: usedTwoHanded,
+        },
         entities,
       })[0]?.variants.find(
         ({ equipmentName }) => equipmentName === "Synthetic Sword",
       );
 
-    expect(evaluate("TOTEM")?.damage).toBe("1d8+5");
-    expect(evaluate("DAGGER")?.damage).toBe("1d8+4");
-    expect(evaluate("SHIELD")?.damage).toBe("1d8+4");
+    expect(evaluate("TOTEM", "1")?.damage).toBe("1d8+5");
+    expect(evaluate("TOTEM", "0")?.damage).toBe("1d8+4");
+    expect(evaluate("DAGGER", "1")?.damage).toBe("1d8+5");
+    expect(evaluate("SHIELD", "1")?.damage).toBe("1d8+5");
+  });
+
+  it("limits equipped-loadout combat predicates to equipped power variants", () => {
+    const [power] = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["POWER"],
+      inventory: [
+        {
+          id: "main",
+          definitionIds: ["SWORD"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+        {
+          id: "alternate",
+          definitionIds: ["DAGGER"],
+          quantity: 1,
+          equippedQuantity: 0,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 4),
+        "two-melee-weapon:damage": stat("two-melee-weapon:damage", 1),
+      },
+      overlays: [],
+      entities: [
+        entity("POWER", "Synthetic Strike", "Power", {
+          Keywords: "Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. AC",
+          Hit: "1[W] + Strength modifier damage.",
+        }),
+        entity("SWORD", "Equipped Sword", "Weapon", { Damage: "1d8" }),
+        entity("DAGGER", "Carried Dagger", "Weapon", { Damage: "1d4" }),
+      ],
+    });
+    const damage = (equipmentName: string) =>
+      power?.variants.find((variant) => variant.equipmentName === equipmentName)
+        ?.damage;
+
+    expect(damage("Equipped Sword")).toBe("1d8+5");
+    expect(damage("Carried Dagger")).toBe("1d4+4");
   });
 
   it("applies recovered weapon-field ability bonuses only to eligible families", () => {
     const powers = evaluatePowers({
       level: 8,
-      activeDefinitionIds: ["SWEEP", "BRASH"],
+      activeDefinitionIds: ["SWEEP", "BRASH", "CRUSH"],
       inventory: [
         {
           id: "axe",
@@ -149,6 +197,14 @@ describe("power evaluation", () => {
           " Weapon":
             "If you're wielding an axe, a hammer, or a mace, the attack deals extra damage equal to your Constitution modifier.",
         }),
+        entity("CRUSH", "Crushing Blow", "Power", {
+          Keywords: "Martial, Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. AC",
+          Hit: "2[W] + Strength modifier damage.",
+          " Weapon":
+            "If you're wielding an axe, a hammer, or a mace, you gain a bonus to the damage roll equal to your Constitution modifier.",
+        }),
         entity("AXE", "Synthetic Axe", "Weapon", {
           Damage: "1d12",
           "Proficiency Bonus": "2",
@@ -174,6 +230,8 @@ describe("power evaluation", () => {
     expect(variant("SWEEP", "Synthetic Bow")?.attackBonus).toBe(11);
     expect(variant("BRASH", "Synthetic Axe")?.damage).toBe("1d12+7");
     expect(variant("BRASH", "Synthetic Bow")?.damage).toBe("1d10+5");
+    expect(variant("CRUSH", "Synthetic Axe")?.damage).toBe("2d12+7");
+    expect(variant("CRUSH", "Synthetic Bow")?.damage).toBe("2d10+5");
   });
 
   it("uses recovered implement aliases and variant-specific range channels", () => {

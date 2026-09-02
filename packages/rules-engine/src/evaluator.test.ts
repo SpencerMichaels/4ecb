@@ -67,6 +67,84 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it("materializes native race and background skill bonuses from specifics", () => {
+    const content = [
+      entity("ROOT", "Root", "Test", {
+        rules: [],
+      }),
+      entity("RACE", "Synthetic Race", "Race", {
+        specifics: { "Skill Bonuses": "+2 Arcana, +2 History" },
+      }),
+      entity("BACKGROUND", "Synthetic Region", "Background", {
+        specifics: {
+          Benefit:
+            "You can reroll a check. You also gain a +1 bonus on initiative checks.",
+        },
+      }),
+      entity("ARCANA_BONUS", "Arcana Bonus", "Racial Trait", {
+        rules: [
+          rule(
+            "statadd",
+            { name: "Arcana Misc", value: "+2", type: "Racial" },
+            0,
+          ),
+        ],
+      }),
+    ];
+    const evaluated = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "race",
+            definitionId: "RACE",
+            acquiredLevel: 1,
+            kind: "choice",
+          },
+          {
+            id: "background",
+            definitionId: "BACKGROUND",
+            acquiredLevel: 1,
+            kind: "choice",
+          },
+        ],
+        inventory: [],
+      },
+      content,
+    );
+
+    expect(evaluated.stats["Arcana Misc"]?.value).toBe(2);
+    expect(evaluated.stats["History Misc"]?.value).toBe(2);
+    expect(evaluated.stats["Initiative Misc"]?.value).toBe(1);
+
+    const withExplicitBonus = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "race",
+            definitionId: "RACE",
+            acquiredLevel: 1,
+            kind: "choice",
+          },
+          {
+            id: "arcana-bonus",
+            definitionId: "ARCANA_BONUS",
+            acquiredLevel: 1,
+            kind: "grant",
+          },
+        ],
+        inventory: [],
+      },
+      content,
+    );
+    expect(withExplicitBonus.stats["Arcana Misc"]?.value).toBe(2);
+  });
+
   it("applies native magic-armor base adjustments but preserves masterwork armor", () => {
     const content = [
       entity("ROOT", "Root", "Test", {

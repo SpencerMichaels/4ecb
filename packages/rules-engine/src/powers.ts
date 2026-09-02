@@ -433,7 +433,7 @@ function combatStatComponents(
     // Conditional equipment predicates are encoded before the terminal stat
     // name (for example, two-melee-weapon:damage). By this stage the stat
     // accumulator has already decided whether the contribution applies.
-    return normalized.endsWith(`-${suffix}`);
+    return equipment.equipped && normalized.endsWith(`-${suffix}`);
   });
   const seen = new Set<string>();
   return relevant.flatMap(([name, stat]) => {
@@ -504,7 +504,7 @@ function powerWeaponSpecificBonuses(
   });
   const damage = clauses.flatMap((clause) => {
     if (
-      !/attack deals extra damage equal to your Constitution modifier/i.test(
+      !/(?:attack deals extra damage|gain a bonus to the damage roll) equal to your Constitution modifier/i.test(
         clause,
       ) ||
       !hasFamily(["axe", "hammer", "mace"])
@@ -671,17 +671,10 @@ export function evaluatePowers(input: {
     input.entities,
     input.textStrings ?? {},
   );
-  const equippedShield = input.inventory.some(
-    (entry) =>
-      entry.equippedQuantity > 0 &&
-      entry.definitionIds.some((id) => {
-        const entity = byId.get(key(id));
-        return (
-          /\bshield\b/i.test(entity?.name ?? "") ||
-          /\bshield\b/i.test(field(entity ?? emptyEntity, "Armor Type") ?? "")
-        );
-      }),
-  );
+  const versatileUsedTwoHanded =
+    Number(
+      textValue(input.textStrings ?? {}, "_INTERNAL_VersatileUsedTwoHanded"),
+    ) !== 0;
   const activePowerIds = [
     ...new Set(
       input.activeDefinitionIds.flatMap((definitionId) => {
@@ -928,18 +921,11 @@ export function evaluatePowers(input: {
             attackType,
           ),
         );
-      const otherEquippedWeapons = handCandidates.filter(
-        (candidate) =>
-          candidate.id !== equipment.id &&
-          candidate.equipped &&
-          candidate.weaponDefinition,
-      );
       if (
         dice !== undefined &&
         weaponPower &&
         equipment.properties.includes("versatile") &&
-        otherEquippedWeapons.length === 0 &&
-        !equippedShield
+        versatileUsedTwoHanded
       )
         damageComponents.push({
           label: "versatile weapon used two-handed",

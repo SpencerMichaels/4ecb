@@ -612,7 +612,7 @@ remaining legality findings are its explicit house-rule selection and one
 custom feat prerequisite the imported content cannot prove. The public suite
 also matches all 52 comparable cached attack/damage fields across its power
 variants. The bundled nine-character cross-profile diagnostic matrix matches
-501/509 numeric aliases and 277/371 cached power fields. The remaining sample
+513/514 numeric aliases and 300/371 cached power fields. The remaining sample
 differences are concentrated in historical content revisions, removed internal
 definitions, hand-specific calculations, and named native power exceptions.
 The public suite passes 91 tests plus formatting, ESLint, all TypeScript

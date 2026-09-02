@@ -56,7 +56,7 @@ statistics, attacks, power variants, equipment, advancement, and retraining.
 ## Historical diagnostic baseline
 
 Against the supplied later content pack, the nine bundled legacy heroes match
-501/509 comparable numeric aliases and 277/371 cached attack/damage fields. Run:
+513/514 comparable numeric aliases and 300/371 cached attack/damage fields. Run:
 
 ```sh
 pnpm evaluate:matrix tmp/content/full-local.4ecp
@@ -100,6 +100,41 @@ difference is internally inconsistent; three older skill-power selections
 remain category-ineligible under both the current level rules and the recovered
 native category matcher. These findings are preserved because the files'
 originating content revisions are not established.
+
+The 2026-09-01 oracle-first residual audit found modern evaluator defects
+with direct native-code and serialized-record evidence. Native
+`VersatileUsedTwoHanded` reads `_INTERNAL_VersatileUsedTwoHanded` and does not
+infer the choice from an empty off-hand; honoring that choice removes 17 false
+damage contributions in this matrix while retaining explicit two-handed choices
+in the correction corpus. Native `CalcBonuses` also recognizes the `Weapon`
+specific whose text says the wielder gains a bonus to the damage roll equal to
+Constitution modifier; accepting that recovered wording closes both Crushing
+Blow variants. It also recovers race `Skill Bonuses` and background `Benefit`
+specifics (seven numeric aliases) and prevents equipped-loadout predicates from
+affecting carried alternate weapon variants (nine power fields).
+
+### Exhaustive residual accounting (2026-09-01)
+
+The current matrix has one numeric and 71 power-field differences. This is an
+exhaustive partition; counts are fields rather than powers or variants.
+
+| Family                        |    Fields | Classification                           | Evidence and boundary                                                                                                                                                                                                                                                                   |
+| ----------------------------- | --------: | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Will defense tier bonus       | 1 numeric | Cached component contradicts exact rules | The cached level-20 record contains Iron Will `+2`; the exact feat has base `+2` plus a Paragon-tier `+1`. Native typed stacking consumes both, so current 30 is supported and cached 29 is not forced.                                                                                 |
+| Two named equipped blades     |  22 power | Unresolved item/native gap               | Cutting Steps is correctly confined to the equipped melee pair, following its exact conditional stat and native `WeaponBase`/off-hand checks. Both named variants remain one damage short, but no surviving source identifies that point.                                               |
+| Darkfire                      |   1 power | Unresolved native/definition gap         | The cache attack is one higher than ability, half-level, and the exact power attack bonus; no cached contribution identifies the extra point.                                                                                                                                           |
+| Heavy-blade expertise         |  12 power | Cached component contradicts exact rules | Every cache line lists expertise `+1`; the exact feat adds another `+1` in Paragon tier and the record is level 13.                                                                                                                                                                     |
+| Curse of the Bloody Fangs     |   2 power | Proven definition difference             | Same ID: cache Hit is `2d10`; exact-pack Hit is `3d10 + Charisma modifier`.                                                                                                                                                                                                             |
+| Freezing Cloud                |   2 power | Proven definition difference             | Same ID: cache Hit is `1d8`; exact-pack Hit is `2d8 + Intelligence modifier`.                                                                                                                                                                                                           |
+| Magic Missile, two records    |   8 power | Proven definition difference             | Both caches contain attack rolls and `2d4 + Intelligence`; the exact definition has no Attack/Hit and instead uses a fixed Effect (`2/3/5 + Intelligence` by tier). Four attack/damage fields per record remain diagnostic.                                                             |
+| Fireball                      |   2 power | Proven definition difference             | Same ID: cache Hit is `3d6`; exact-pack Hit is `4d6 + Intelligence modifier`.                                                                                                                                                                                                           |
+| Monk attacks and basic attack |  22 power | Unresolved native/loadout gap            | The fields mix attack offsets and changed dice. Native calculation traverses `WeaponBase`, weapon-as-implement choice, and selected hand state; the serialized record does not preserve enough choice provenance to prove one shared cause, so the fields remain individually reported. |
+
+The definition-difference classification requires matching IDs and literal
+cached-versus-exact Attack/Hit/Effect fields; it is not a general content-drift
+assumption. The tier cases are supported by cached component text that conflicts
+with active level-gated rules. The remaining 45 power fields stay open because
+neither proof applies.
 
 ## M4 exit-criterion mapping
 
