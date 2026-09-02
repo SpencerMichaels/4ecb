@@ -183,6 +183,8 @@ function loadouts(
           : [
               field(weapon, "Group") ?? "",
               `${field(weapon, "Group") ?? ""} group`,
+              field(weapon, "Item Slot") ?? "",
+              field(weapon, "Hands Required") ?? "",
             ]),
         magicType ?? "",
         ...(implement === undefined || !magicType

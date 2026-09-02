@@ -209,6 +209,8 @@ describe("power evaluation", () => {
         "Wisdom modifier": stat("Wisdom modifier", 4),
         "melee:damage": combatStat("melee:damage", 2),
         "ranged:damage": combatStat("ranged:damage", 3),
+        "two-hands,weapon:attack": combatStat("two-hands,weapon:attack", 1),
+        "two-hands:damage": combatStat("two-hands:damage", 1),
         "totem implement,implement:attack": combatStat(
           "totem implement,implement:attack",
           1,
@@ -238,6 +240,7 @@ describe("power evaluation", () => {
           "Proficiency Bonus": "2",
           "Weapon Category": "Military Ranged",
           Range: "20/40",
+          "Item Slot": "Two-Hands",
         }),
         entity("TOTEM", "Synthetic Totem +1", "Magic Item", {
           "Magic Item Type": "Totem",
@@ -256,7 +259,7 @@ describe("power evaluation", () => {
       flexible?.variants.find(
         ({ equipmentName }) => equipmentName === "Synthetic Bow",
       )?.damage,
-    ).toBe("1d10+6");
+    ).toBe("1d10+7");
     expect(
       flexible?.variants.find(
         ({ equipmentName }) => equipmentName === "Synthetic Blade",
@@ -267,6 +270,11 @@ describe("power evaluation", () => {
         ({ equipmentName }) => equipmentName === "Synthetic Bow",
       )?.attackStat,
     ).toBe("Dexterity");
+    expect(
+      flexible?.variants.find(
+        ({ equipmentName }) => equipmentName === "Synthetic Bow",
+      )?.attackBonus,
+    ).toBe(6);
     expect(
       powers
         .find(({ definitionId }) => definitionId === "PRIMAL")
