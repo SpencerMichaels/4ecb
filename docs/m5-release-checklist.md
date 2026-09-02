@@ -123,8 +123,11 @@ budgets remain active during M5.
       A manual Hu open exposed and locally fixed a self-closing empty
       `textstring` incompatibility. The fixed file opened, then exposed final
       ability totals incorrectly stored as base allocation (Wisdom 20 versus
-      16). Both fixes pass local structural/semantic gates; the newest candidate
-      still requires original-application open/save/reopen retest.
+      16). That fixed Wisdom, but the next run showed Strength and Intelligence
+      one point high. Recovered save code identified non-native levels-first
+      ordering plus an extra root score block; the native-ordered, single-block
+      correction passes local gates and still requires original-application
+      open/save/reopen retest.
 - [x] Close the named M4 native exception and private exact-profile parity
       boundary without reclassifying cross-profile diagnostics as goldens. The
       fixed-output slice covers Bond of Censure and three exact ongoing-10 hit

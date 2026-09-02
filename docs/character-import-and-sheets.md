@@ -104,9 +104,12 @@ sheet blocks are retained. XML user content is escaped; an invalid XML 1.0 code 
 export rather than being silently changed or producing a malformed document.
 
 Native-created records omit the no-edit target because no imported original
-exists. Edited export writes root-level authoritative `AbilityScores` as well as
-the derived `CharacterSheet` ability cache; import prefers the root values for
-the build so racial or other rule modifiers cannot be compounded on round trip.
+exists. Recovered `SaveCharacter`/`WriteCharacterSheet` behavior writes the
+single base-allocation `AbilityScores` block inside the leading
+`CharacterSheet`; final adjusted scores belong in `StatBlock`. Edited export
+follows that native order before campaign data, level history, grabbag, and text
+state. Import still tolerates root-level scores from non-native producers, but
+the legacy-builder target does not emit that alternate form.
 
 Before download, edited output is re-imported and compared to the authoritative
 level, selection, replacement, inventory, alternate, ability, and text

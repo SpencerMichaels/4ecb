@@ -189,10 +189,10 @@ describe("legacy .dnd4e import", () => {
 
     expect(xml).toContain('Version="0.07a"');
     expect(xml).toContain('vendor="kept"');
+    expect(xml).toMatch(/<D20Character[^>]*>\n  <CharacterSheet>/);
+    expect(xml.match(/<AbilityScores\b/g)).toHaveLength(1);
     for (const [ability, score] of Object.entries(build.baseAbilities))
-      expect(
-        xml.match(new RegExp(`<${ability} score="${score}"`, "g")),
-      ).toHaveLength(2);
+      expect(xml).toContain(`<${ability} score="${score}"`);
     expect(xml).toContain('<textstring name="EMPTY"></textstring>');
     expect(xml).not.toMatch(
       /<(?:textstring|specific|AttackBonus|Damage|AttackStat|Defense)\b[^>]*\/>/,

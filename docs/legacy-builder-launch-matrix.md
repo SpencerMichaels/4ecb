@@ -74,11 +74,11 @@ CharacterBuilder\CharacterBuilder.exe <absolute-character-path>
 
 ## Observed matrix — 2026-09-01
 
-| Candidate                                  | Provenance                                        | Regeneration evidence                                                                                                                      | Original application result                                                                                                              |
-| ------------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `public-synthetic-structural-edited.dnd4e` | Public structural fixture + public synthetic pack | Converged but incomplete/illegal with five retained missing-content diagnostics; semantic re-import passed                                 | Not run: no compatible runtime                                                                                                           |
-| `imported-hu-level-8-edited.dnd4e`         | Ignored imported character + exact private pack   | Level 8 converged and complete; semantic re-import passed; two legality diagnostics retained; body and base-ability structural checks pass | The body fix opens. Second run showed Wisdom too high because the sheet cached final 20 as base; corrected base-16 export awaits retest. |
-| `native-level-1-edited.dnd4e`              | Ignored native exact-profile audit                | Complete, legal, converged, zero diagnostics; 14 choices; one equipped item; semantic re-import passed                                     | Not run: no compatible runtime                                                                                                           |
+| Candidate                                  | Provenance                                        | Regeneration evidence                                                                                                                    | Original application result                                                                                      |
+| ------------------------------------------ | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `public-synthetic-structural-edited.dnd4e` | Public structural fixture + public synthetic pack | Converged but incomplete/illegal with five retained missing-content diagnostics; semantic re-import passed                               | Not run: no compatible runtime                                                                                   |
+| `imported-hu-level-8-edited.dnd4e`         | Ignored imported character + exact private pack   | Level 8 converged and complete; semantic re-import passed; two legality diagnostics retained; native ordering and occurrence checks pass | Body fix opened; base-Wisdom fix exposed STR/INT +1. Native-ordered single-score-block correction awaits retest. |
+| `native-level-1-edited.dnd4e`              | Ignored native exact-profile audit                | Complete, legal, converged, zero diagnostics; 14 choices; one equipped item; semantic re-import passed                                   | Not run: no compatible runtime                                                                                   |
 
 This checkout's root and reverse-engineering Nix shells contain no Wine, Xvfb,
 Winetricks, or Microsoft .NET Framework runtime. No project-local Wine prefix or
@@ -96,8 +96,12 @@ Hu candidate then opened in the original application, which exposed a second
 masked incompatibility: `CharacterSheet/AbilityScores` is the base allocation,
 but the exporter wrote evaluated totals there. Hu therefore wrote final Wisdom
 20 where the source base is 16, and the builder reapplied racial and level
-increases. Both root and sheet ability sections now serialize the build's six
-base scores; evaluated totals remain in `StatBlock`. All 102 ability values in
-the 17 regenerated private records match their source base allocations, and the
-regeneration gate checks sheet abilities separately from the root-backed build
-round trip. The newly corrected Hu candidate still awaits manual retest.
+increases. Writing base scores fixed Wisdom, but the next manual run showed
+Strength and Intelligence each one point high. The four level-4/8 increase
+occurrences are each serialized exactly once, matching the source. Recovered
+`D20RulesEngine.SaveCharacter` instead showed the structural deviation: native
+files write `CharacterSheet` first and have only its `AbilityScores`, whereas
+the regenerated file put level history first and added a second root score
+block. The legacy target now follows the native order and emits only the sheet
+base scores. All `charelem` tokens are also required to be unique. The newly
+corrected Hu candidate still awaits manual retest.

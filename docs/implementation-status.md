@@ -18,8 +18,12 @@ The first manual Hu attempt failed before opening because regenerated empty
 Body-required leaves now serialize as paired tags, and that correction opens in
 the original builder. The open then exposed evaluated ability totals written in
 the base-allocation sheet field (Hu Wisdom 20 instead of 16). Both ability
-sections now preserve all six build base scores, with a separate sheet invariant
-in the regeneration gate; this second corrected export awaits manual retest.
+scores then preserved the base allocation and Wisdom loaded correctly, but the
+next run showed Strength and Intelligence one point high. Recovered native save
+code proved that our extra root score block and levels-first ordering were
+non-native; level-up choices themselves were not duplicated. Export now follows
+the native sheet/campaign/levels/grabbag/text order, emits one sheet score block,
+and rejects duplicate occurrence tokens. The newest correction awaits retest.
 
 ## M5 checkpoints
 

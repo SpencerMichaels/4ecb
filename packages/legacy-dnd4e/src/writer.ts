@@ -747,13 +747,12 @@ export function exportEditedDnd4e(input: EditedDnd4eExportInput): string {
     legality: input.evaluation.legal ? "rules-legal" : "houserule",
   };
   const body = [
+    characterSheetXml(input),
+    ...preserved,
     ...levelXml(input.build, tokens),
     grabbagXml(input.build, tokens),
     ...alternatesXml(input.build, tokens),
     ...textStrings,
-    baseAbilityScoresXml(input.build),
-    ...preserved,
-    characterSheetXml(input),
   ]
     .filter(Boolean)
     .join("\n  ");
