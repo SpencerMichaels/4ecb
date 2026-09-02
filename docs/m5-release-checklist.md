@@ -141,8 +141,11 @@ budgets remain active during M5.
       unique nested race-bonus recovery, Howling Strike extra dice, Knockdown
       Assault ability-only damage, and Call of the Beast conditional damage.
       All seven private evaluations converge and complete with zero unresolved
-      choices; all seven edited exports pass semantic re-import. One remaining
-      power stays explicitly unsupported and recoverable.
+      choices; the cross-profile power diagnostic is 411/411 with no unsupported
+      branches, and all seven edited exports pass semantic re-import. The
+      464/470 numeric result and three category-ineligible legacy skill-power
+      placements remain visible because current exact-pack/recovered behavior
+      does not support rewriting those historical caches as legal goldens.
 - [x] Repeat the automated Letter/A4 color/monochrome PDF matrix in supported
       Firefox.
 

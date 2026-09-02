@@ -85,12 +85,18 @@ cross-profile compatibility evidence, not exact public test fixtures.
 
 An additional ignored seven-character correction corpus exercises a different
 compatibility surface. It now converges and completes all seven records with
-zero unresolved choices, matches 464/470 comparable numeric aliases and 354/411
-cached power fields, and passes seven regenerated-export semantic re-imports.
-Those cache totals remain cross-profile diagnostics. The public assertions are
-instead synthetic exact fixtures for contribution provenance, structural
-weapon/magic-item identity, uniquely categorized nested race choices, and the
-three recovered power forms below.
+zero unresolved choices, matches 464/470 comparable numeric aliases and 411/411
+cached power fields with no unsupported power branches, and passes seven
+regenerated-export semantic re-imports. Those cache totals remain cross-profile
+diagnostics. The six numeric differences are retained because their serialized
+components or exact-pack armor/feature definitions disagree with the cached
+totals. Three legacy skill-power selections also remain explicitly
+category-ineligible: current level choices require a class utility, while the
+exact pack models skill-power substitution through a separate feat choice. The
+public assertions are instead synthetic exact fixtures for contribution
+provenance, structural weapon/magic-item identity, uniquely categorized nested
+race choices, equipment-channel and weapon-branch semantics, and the recovered
+power forms below.
 
 ## M4 closure and M5 blockers
 

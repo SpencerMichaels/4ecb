@@ -90,10 +90,15 @@ A separate ignored seven-character correction corpus is also diagnostic rather
 than golden evidence. After provenance deduplication, structural cached-variant
 matching, unique nested race-choice recovery, and three exact named power
 forms, all seven records converge and complete with zero unresolved choices.
-They report 464/470 comparable numeric aliases and 354/411 cached power fields;
-one power remains explicitly unsupported. Seven regenerated edited exports pass
-semantic re-import. The remaining cache differences are preserved because the
-files' originating content revisions are not established.
+Recovered equipment channels, weapon-specific bonuses, attack-branch choice,
+literal native output, Versatile handling, and weapon-slot keywords bring the
+power diagnostic to 411/411 cached fields with no unsupported powers. The
+numeric diagnostic remains 464/470. Seven regenerated edited exports pass
+semantic re-import. The six numeric differences are internally inconsistent or
+trace to exact-pack armor/feature revisions; three older skill-power selections
+remain category-ineligible under both the current level rules and the recovered
+native category matcher. These findings are preserved because the files'
+originating content revisions are not established.
 
 ## M4 exit-criterion mapping
 

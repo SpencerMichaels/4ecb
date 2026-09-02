@@ -57,12 +57,25 @@ MVP declaration still requires the manual legacy-builder matrix.
   structures retain the ordinary required-choice diagnostic.
 - Exact public power fixtures cover Howling Strike's combined `[W]` plus extra
   die, Knockdown Assault's ability-only damage, and Call of the Beast's deferred
-  conditional damage. Across the seven ignored samples, all seven evaluations
-  converge and complete with zero unresolved choices; numeric cache diagnostics
-  are 464/470 and power cache diagnostics are 354/411. These caches are not
-  known-profile goldens. One power retains explicit `native-special-case` plus
-  `unparsed-hit` diagnostics. All seven regenerated edited exports pass semantic
-  re-import.
+  conditional damage. Follow-up recovered-code slices add qualified implement
+  aliases, actual melee/ranged weapon-channel selection, power weapon-field
+  bonuses, weapon-reach attack-branch selection, Rage Strike's literal output,
+  versatile two-handed damage, and serialized two-hand slot keywords. Across
+  the seven ignored samples, all seven evaluations converge and complete with
+  zero unresolved choices; numeric cache diagnostics are 464/470 and power
+  cache diagnostics are 411/411 with no unsupported power branches. These caches
+  are not known-profile goldens. All seven regenerated edited exports pass
+  semantic re-import.
+- The six remaining numeric cache differences are retained as cross-profile
+  evidence: one cached surge total is inconsistent with its own serialized
+  contribution components, two cached armor values differ from the current
+  exact pack's armor values, and one feature cache predates the current pack's
+  base bonus (each defense appears under both of its legacy aliases). Three
+  older skill-power selections in ordinary level utility slots also remain
+  `choice.ineligible`: the current exact pack exposes skill-power substitution
+  through a separate feat selection, and the recovered native category matcher
+  does not authorize bypassing the level rule's class category. No cache total
+  or legality diagnostic was suppressed to improve the aggregate.
 
 ### Companion ability provenance guard
 

@@ -106,6 +106,28 @@ The exact slowed/ongoing string separately initializes `ongoing 10+0` and then
 parses Dexterity, yielding `ongoing 10+<modifier>`; it is not one of the fixed
 ongoing-10 results.
 
+Additional recovered calculation branches establish several non-obvious
+equipment rules. `BuildKeywordSet` includes serialized implement subtype and
+weapon slot/hand fields, so qualified channels such as totem implement and
+two-hands participate in rule matching. `WhichAttack` chooses the ranged clause
+of an explicit melee-or-ranged power when the selected weapon has range,
+including a thrown melee weapon, and otherwise chooses melee. `CalcBonuses`
+handles the exact weapon-group prose used by the observed Strength-attack and
+Constitution-damage power families. `CalcVersatile` adds one weapon damage only
+while a Versatile weapon is used without another weapon or shield. Rage Strike's
+native branch returns the literal `As Above`; it is not parsed as ordinary hit
+math. Each behavior is pinned by public synthetic differentials rather than by
+unknown-revision cached totals.
+
+The native `CategoryMatch::Matches` path applies every positive category term
+and its dynamic class term; it has named exceptions for custom rules, diverse
+study, universal skills, seeker, and versatile master, but no blanket exception
+for skill powers occupying a class utility slot. The current exact pack likewise
+keeps ordinary level utility selection (`$$CLASS,utility,<level>`) separate from
+the Skill Power feat's `$$LEVEL,Skill Power` selection. Older imports that embed
+a skill power directly beneath an ordinary level therefore remain recoverable
+but category-ineligible rather than silently legalized.
+
 The exact output is richer than `ability modifier + half level + proficiency +
 enhancement`. Use the saved `PowerStats` corpus as golden oracles and keep every
 component explainable.
