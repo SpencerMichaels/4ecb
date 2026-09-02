@@ -523,11 +523,16 @@ async function main(): Promise<void> {
     evaluation: finalEvaluation,
     content: pack.entities,
   });
-  const comparison = compareEditedDnd4eRoundTrip(
-    saved.build,
-    importDnd4e(xml).build,
-  );
+  const reimported = importDnd4e(xml);
+  const comparison = compareEditedDnd4eRoundTrip(saved.build, reimported.build);
   if (!comparison.equivalent) throw new Error(comparison.differences.join(" "));
+  for (const [ability, expected] of Object.entries(saved.build.baseAbilities)) {
+    const actual = reimported.snapshot.abilities[ability];
+    if (actual !== expected)
+      throw new Error(
+        `Edited export CharacterSheet base ability ${ability} is ${String(actual)}; expected ${expected}.`,
+      );
+  }
   if (outputPath !== undefined)
     await writeFile(resolve(outputPath), xml, "utf8");
 

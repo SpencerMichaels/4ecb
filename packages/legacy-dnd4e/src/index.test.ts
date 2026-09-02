@@ -189,6 +189,10 @@ describe("legacy .dnd4e import", () => {
 
     expect(xml).toContain('Version="0.07a"');
     expect(xml).toContain('vendor="kept"');
+    for (const [ability, score] of Object.entries(build.baseAbilities))
+      expect(
+        xml.match(new RegExp(`<${ability} score="${score}"`, "g")),
+      ).toHaveLength(2);
     expect(xml).toContain('<textstring name="EMPTY"></textstring>');
     expect(xml).not.toMatch(
       /<(?:textstring|specific|AttackBonus|Damage|AttackStat|Defense)\b[^>]*\/>/,
@@ -367,7 +371,8 @@ describe("legacy .dnd4e import", () => {
     expect(xml).toContain('internal-id="ID_INTERNAL_LEVEL_1"');
     expect(xml).toContain('<AbilityScores><Strength score="10"');
     expect(reimported.build.baseAbilities.Dexterity).toBe(10);
-    expect(reimported.snapshot.abilities.Dexterity).toBe(12);
+    expect(reimported.snapshot.abilities.Dexterity).toBe(10);
+    expect(reimported.snapshot.stats.Dexterity).toBe("12");
     expect(reimported.snapshot.details.name).toBe("Native <Hero> & Co");
     expect(compareEditedDnd4eRoundTrip(record.build, reimported.build)).toEqual(
       {

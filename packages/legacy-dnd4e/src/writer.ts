@@ -461,18 +461,6 @@ function alternatesXml(
   );
 }
 
-function evaluatedValue(
-  evaluation: EvaluatedCharacter,
-  name: string,
-): string | undefined {
-  const stat =
-    evaluation.stats[name] ??
-    Object.entries(evaluation.stats).find(
-      ([candidate]) => key(candidate) === key(name),
-    )?.[1];
-  return stat === undefined ? undefined : String(stat.value);
-}
-
 function contentMap(content: readonly ContentEntity[]) {
   return new Map(content.map((entity) => [key(entity.id), entity]));
 }
@@ -504,26 +492,6 @@ function detailsXml(
     Object.entries(details)
       .map(([name, value]) => element(name, {}, escapeText(value)))
       .join(""),
-  );
-}
-
-function abilityScoresXml(
-  snapshot: LegacyCharacterSnapshot,
-  build: CharacterBuild,
-  evaluation: EvaluatedCharacter,
-): string {
-  return element(
-    "AbilityScores",
-    {},
-    ABILITIES.flatMap((ability) => {
-      const score =
-        evaluatedValue(evaluation, ability) ??
-        build.baseAbilities[ability] ??
-        snapshot.abilities[ability];
-      return score === undefined
-        ? []
-        : [element(ability, { score: String(score) })];
-    }).join(""),
   );
 }
 
@@ -723,10 +691,8 @@ function characterSheetXml(input: EditedDnd4eExportInput): string {
   return element(
     "CharacterSheet",
     {},
-    `${detailsXml(input.snapshot, input.evaluation, entities)}${abilityScoresXml(
-      input.snapshot,
+    `${detailsXml(input.snapshot, input.evaluation, entities)}${baseAbilityScoresXml(
       input.build,
-      input.evaluation,
     )}${statBlockXml(input.evaluation)}${ruleTallyXml(
       input.evaluation,
       entities,

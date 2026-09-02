@@ -15,8 +15,11 @@ and authoritative exact-profile browser sheet are verified checkpoints. A final
 MVP declaration still requires the manual legacy-builder matrix.
 The first manual Hu attempt failed before opening because regenerated empty
 `textstring` values self-closed; the legacy parser requires an explicit body.
-Body-required leaves now serialize as paired tags and pass the strengthened
-structural/semantic gate, but the corrected export still awaits manual retest.
+Body-required leaves now serialize as paired tags, and that correction opens in
+the original builder. The open then exposed evaluated ability totals written in
+the base-allocation sheet field (Hu Wisdom 20 instead of 16). Both ability
+sections now preserve all six build base scores, with a separate sheet invariant
+in the regeneration gate; this second corrected export awaits manual retest.
 
 ## M5 checkpoints
 

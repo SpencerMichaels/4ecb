@@ -120,9 +120,11 @@ budgets remain active during M5.
       application matrix. The executable/config/cache paths, direct-open
       argument contract, three-candidate regeneration commands, and manual
       observation fields are recorded in `docs/legacy-builder-launch-matrix.md`.
-      A manual Hu open exposed and now locally fixes a self-closing empty
-      `textstring` incompatibility; the corrected candidate still requires
-      original-application open/save/reopen retest.
+      A manual Hu open exposed and locally fixed a self-closing empty
+      `textstring` incompatibility. The fixed file opened, then exposed final
+      ability totals incorrectly stored as base allocation (Wisdom 20 versus
+      16). Both fixes pass local structural/semantic gates; the newest candidate
+      still requires original-application open/save/reopen retest.
 - [x] Close the named M4 native exception and private exact-profile parity
       boundary without reclassifying cross-profile diagnostics as goldens. The
       fixed-output slice covers Bond of Censure and three exact ongoing-10 hit

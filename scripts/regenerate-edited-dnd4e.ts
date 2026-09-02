@@ -49,14 +49,24 @@ async function main(): Promise<void> {
     evaluation,
     content: pack.entities,
   });
+  const reimported = importDnd4e(xml);
   const comparison = compareEditedDnd4eRoundTrip(
     imported.build,
-    importDnd4e(xml).build,
+    reimported.build,
   );
   if (!comparison.equivalent)
     throw new Error(
       `Edited export failed semantic re-import: ${comparison.differences.join(" ")}`,
     );
+  for (const [ability, expected] of Object.entries(
+    imported.build.baseAbilities,
+  )) {
+    const actual = reimported.snapshot.abilities[ability];
+    if (actual !== expected)
+      throw new Error(
+        `Edited export CharacterSheet base ability ${ability} is ${String(actual)}; expected ${expected}.`,
+      );
+  }
 
   const outputPath = resolve(outputArgument);
   await writeFile(outputPath, xml, "utf8");
