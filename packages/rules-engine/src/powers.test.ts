@@ -55,6 +55,58 @@ function combatStat(name: string, value: number): EvaluatedStat {
 }
 
 describe("power evaluation", () => {
+  it("adds versatile damage only when no second weapon is equipped", () => {
+    const entities = [
+      entity("POWER", "Synthetic Strike", "Power", {
+        Keywords: "Weapon",
+        "Attack Type": "Melee weapon",
+        Attack: "Strength vs. AC",
+        Hit: "1[W] + Strength modifier damage.",
+      }),
+      entity("SWORD", "Synthetic Sword", "Weapon", {
+        Damage: "1d8",
+        Properties: "Versatile",
+      }),
+      entity("DAGGER", "Synthetic Dagger", "Weapon", { Damage: "1d4" }),
+      entity("SHIELD", "Synthetic Shield", "Armor", {
+        "Armor Type": "Shield",
+      }),
+      entity("TOTEM", "Synthetic Totem", "Magic Item", {
+        "Magic Item Type": "Totem",
+      }),
+    ];
+    const evaluate = (secondDefinitionId: string) =>
+      evaluatePowers({
+        level: 1,
+        activeDefinitionIds: ["POWER"],
+        inventory: [
+          {
+            id: "sword",
+            definitionIds: ["SWORD"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+          {
+            id: "second",
+            definitionIds: [secondDefinitionId],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+        stats: { "Strength modifier": stat("Strength modifier", 4) },
+        overlays: [],
+        entities,
+      })[0]?.variants.find(
+        ({ equipmentName }) => equipmentName === "Synthetic Sword",
+      );
+
+    expect(evaluate("TOTEM")?.damage).toBe("1d8+5");
+    expect(evaluate("DAGGER")?.damage).toBe("1d8+4");
+    expect(evaluate("SHIELD")?.damage).toBe("1d8+4");
+  });
+
   it("applies recovered weapon-field ability bonuses only to eligible families", () => {
     const powers = evaluatePowers({
       level: 8,
