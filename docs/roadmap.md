@@ -376,6 +376,10 @@ placement of item-owned resistance choices in the Class pane is documented for
 compatibility, but its redesigned presentation is deferred to the equipment
 workspace rather than copied into the advancement flow.
 
+The follow-up choice pass adds exact legacy support for the three Archery
+Mastery power replacements and groups large parenthetical feat families into a
+family-plus-parameter control without changing the exact stored feat identity.
+
 ## M6 — Local phone play mode
 
 ### Goal

@@ -67,6 +67,79 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it("offers the selected archery mastery power as a ranger at-will replacement", () => {
+    const result = evaluateCharacter(
+      {
+        level: 8,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "level-1",
+            definitionId: "LEVEL_1",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "fading-strike",
+            definitionId: "FADING_STRIKE",
+            acquiredLevel: 6,
+            parentId: "level-1",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+          {
+            id: "mastery",
+            definitionId: EXCEPTION_IDS.rapidShotMastery,
+            acquiredLevel: 8,
+            kind: "choice",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("LEVEL_1", "1", "Level"),
+        entity("FADING_STRIKE", "Fading Strike", "Power", {
+          specifics: {
+            Class: "ID_FMP_CLASS_5",
+            "Power Usage": "At-Will",
+            "Power Type": "Attack",
+            Level: "1",
+          },
+        }),
+        entity(
+          EXCEPTION_IDS.rapidShotMastery,
+          "Rapid Shot Mastery",
+          "Class Feature",
+        ),
+        entity("ID_FMP_POWER_13587", "Rapid Shot", "Power"),
+      ],
+    );
+
+    expect(
+      result.choices.find(
+        (choice) => choice.id === "mastery:archery-mastery-replacement",
+      ),
+    ).toMatchObject({
+      level: 8,
+      optional: true,
+      name: "Rapid Shot Mastery power replacement",
+      replacementOptions: [
+        {
+          replacesOccurrenceId: "fading-strike",
+          definitionId: "FADING_STRIKE",
+          candidates: [
+            {
+              definitionId: "ID_FMP_POWER_13587",
+              eligible: true,
+              reasons: [],
+            },
+          ],
+        },
+      ],
+    });
+  });
+
   it("recovers a missing generated Focused Expertise target", () => {
     const evaluated = evaluateCharacter(
       {

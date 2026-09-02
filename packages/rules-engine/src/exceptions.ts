@@ -8,7 +8,16 @@ export const EXCEPTION_IDS = {
   seekerClass: "ID_FMP_CLASS_104",
   versatileMasterPrerequisite: "ID_FMP_FEAT_1082",
   paragonMulticlassing: "ID_INTERNAL_PARAGON_PATH_PARAGON_MULTICLASSING",
+  cleverShotMastery: "ID_CDJ_CLASS_FEATURE_34501",
+  rapidShotMastery: "ID_CDJ_CLASS_FEATURE_34502",
+  aimedShotMastery: "ID_CDJ_CLASS_FEATURE_34503",
 } as const;
+
+const archeryMasteryPowers = new Map([
+  [EXCEPTION_IDS.cleverShotMastery.toLocaleLowerCase(), "ID_FMP_POWER_13586"],
+  [EXCEPTION_IDS.rapidShotMastery.toLocaleLowerCase(), "ID_FMP_POWER_13587"],
+  [EXCEPTION_IDS.aimedShotMastery.toLocaleLowerCase(), "ID_FMP_POWER_13585"],
+]);
 
 function owns(ownedIds: ReadonlySet<string>, id: string): boolean {
   return ownedIds.has(id.toLocaleLowerCase());
@@ -18,6 +27,22 @@ function field(entity: ContentEntity, name: string): string | undefined {
     (specific) =>
       specific.name.toLocaleLowerCase() === name.toLocaleLowerCase(),
   )?.value;
+}
+
+export function archeryMasteryPowerId(
+  provider: ContentEntity,
+): string | undefined {
+  return archeryMasteryPowers.get(provider.id.toLocaleLowerCase());
+}
+
+export function isLeveledRangerAtWillAttack(candidate: ContentEntity): boolean {
+  return (
+    candidate.type.toLocaleLowerCase() === "power" &&
+    field(candidate, "Class")?.toLocaleLowerCase() === "id_fmp_class_5" &&
+    field(candidate, "Power Usage")?.toLocaleLowerCase() === "at-will" &&
+    field(candidate, "Power Type")?.toLocaleLowerCase() === "attack" &&
+    (field(candidate, "Level")?.trim().length ?? 0) > 0
+  );
 }
 
 export function isUniversalSkill(

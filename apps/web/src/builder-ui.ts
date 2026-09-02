@@ -81,6 +81,88 @@ export function isCandidateVisible(
   );
 }
 
+export interface CandidatePresentationOption {
+  readonly candidate: CandidateDecision;
+  readonly label: string;
+}
+
+export interface CandidatePresentationGroup {
+  readonly key: string;
+  readonly label: string;
+  readonly parameterLabel?: string;
+  readonly options: readonly CandidatePresentationOption[];
+}
+
+function parentheticalName(
+  name: string,
+): { readonly base: string; readonly variant: string } | undefined {
+  const open = name.indexOf(" (");
+  return open <= 0 || !name.endsWith(")")
+    ? undefined
+    : { base: name.slice(0, open), variant: name.slice(open + 2, -1) };
+}
+
+export function groupParameterizedCandidates(
+  candidates: readonly CandidateDecision[],
+  nameFor: (definitionId: string) => string,
+  minimumFamilySize = 4,
+): readonly CandidatePresentationGroup[] {
+  const parsed = candidates.map((candidate) => ({
+    candidate,
+    name: nameFor(candidate.definitionId),
+    parsed: parentheticalName(nameFor(candidate.definitionId)),
+  }));
+  const familyCounts = new Map<string, number>();
+  for (const item of parsed)
+    if (item.parsed !== undefined)
+      familyCounts.set(
+        item.parsed.base,
+        (familyCounts.get(item.parsed.base) ?? 0) + 1,
+      );
+  const groups: CandidatePresentationGroup[] = [];
+  const familyGroups = new Map<string, number>();
+  for (const item of parsed) {
+    const family =
+      item.parsed !== undefined &&
+      (familyCounts.get(item.parsed.base) ?? 0) >= minimumFamilySize
+        ? item.parsed
+        : undefined;
+    if (family === undefined) {
+      groups.push({
+        key: `candidate:${item.candidate.definitionId}`,
+        label: item.name,
+        options: [{ candidate: item.candidate, label: item.name }],
+      });
+      continue;
+    }
+    const existing = familyGroups.get(family.base);
+    if (existing === undefined) {
+      familyGroups.set(family.base, groups.length);
+      groups.push({
+        key: `family:${family.base}`,
+        label: family.base,
+        parameterLabel:
+          family.base === "Weapon Proficiency"
+            ? "Weapon type"
+            : family.base === "Superior Implement Training"
+              ? "Implement type"
+              : "Option",
+        options: [{ candidate: item.candidate, label: family.variant }],
+      });
+    } else {
+      const group = groups[existing]!;
+      groups[existing] = {
+        ...group,
+        options: [
+          ...group.options,
+          { candidate: item.candidate, label: family.variant },
+        ],
+      };
+    }
+  }
+  return groups;
+}
+
 export interface GroupedLevelChoices {
   readonly backgrounds: readonly EvaluatedChoice[];
   readonly skillTraining: readonly EvaluatedChoice[];

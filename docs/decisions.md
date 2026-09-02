@@ -255,6 +255,22 @@ path rejects underscore fields and applies type-specific standard-field
 exclusions, while its generic detail path does not enumerate the entire raw
 specific collection.
 
+### D029 — Archery mastery is an exact legacy exception; feat families are presentation groups
+
+The three published Archery Mastery class-feature IDs synthesize an optional
+replacement choice for their corresponding Expert Archer power. Eligible
+targets are owned, leveled Ranger at-will attack powers; the replacement remains
+an exact occurrence with `replacesId`, preserving retraining history and legacy
+serialization. This is deliberately ID-bounded because these feature records
+carry associated-power metadata but no declarative replacement rule.
+
+Large parenthetical feat families use a two-stage control when at least four
+currently visible candidates share the same outer base name. The first stage
+chooses the family and the second its parameter; only the final exact candidate
+is dispatched. Thus `Weapon Proficiency` plus `Greatbow` still stores and exports
+the original `Weapon Proficiency (Greatbow)` definition. Smaller families remain
+ordinary exact choices, and this grouping never changes rules eligibility.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

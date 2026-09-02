@@ -25,6 +25,7 @@ import {
   choiceForSkillCandidate,
   choicesAtLevel,
   groupLevelChoices,
+  groupParameterizedCandidates,
   isCandidateVisible,
   isUnresolvedChoice,
   planningHorizonCommand,
@@ -492,9 +493,30 @@ function ChoiceEditor({
     selected?.definitionId ?? "",
   );
   const [perusedId, setPerusedId] = useState(selected?.definitionId ?? "");
+  const [stagedGroupKey, setStagedGroupKey] = useState<string>();
 
   const visibleCandidates = choice.candidates.filter((candidate) =>
     isCandidateVisible(candidate, showAll, selected?.definitionId),
+  );
+  const presentationGroups =
+    choice.type.toLocaleLowerCase() === "feat"
+      ? groupParameterizedCandidates(visibleCandidates, (definitionId) => {
+          const definition = byId.get(definitionId.toLocaleLowerCase());
+          return definition?.name ?? definitionId;
+        })
+      : [];
+  const hasParameterizedGroups = presentationGroups.some(
+    (group) => group.parameterLabel !== undefined,
+  );
+  const selectedPresentationGroup = presentationGroups.find((group) =>
+    group.options.some(
+      ({ candidate }) => candidate.definitionId === optimisticSelectedId,
+    ),
+  );
+  const displayedGroupKey =
+    stagedGroupKey ?? selectedPresentationGroup?.key ?? "";
+  const displayedGroup = presentationGroups.find(
+    (group) => group.key === displayedGroupKey,
   );
   const selectedValue = visibleCandidates.some(
     (candidate) => candidate.definitionId === optimisticSelectedId,
@@ -514,11 +536,13 @@ function ChoiceEditor({
   useEffect(() => {
     setOptimisticSelectedId("");
     setPerusedId("");
+    setStagedGroupKey(undefined);
   }, [rollbackRevision]);
 
   useEffect(() => {
     setOptimisticSelectedId(selected?.definitionId ?? "");
     setPerusedId(selected?.definitionId ?? "");
+    setStagedGroupKey(undefined);
   }, [choice.id, evaluation, selected?.definitionId]);
 
   useEffect(() => {
@@ -555,75 +579,152 @@ function ChoiceEditor({
       />
     );
 
+  const selectDefinition = (definitionId: string): void => {
+    setOptimisticSelectedId(definitionId);
+    setPerusedId(definitionId);
+    const candidate = choice.candidates.find(
+      (item) => item.definitionId === definitionId,
+    );
+    const definition = byId.get(definitionId.toLocaleLowerCase());
+    if (candidate === undefined || definition === undefined) return;
+    const occurrence: BuildOccurrence = {
+      id: `web:${crypto.randomUUID()}`,
+      identity: {
+        definitionId: definition.id,
+        name: definition.name,
+        type: definition.type,
+      },
+      acquiredLevel:
+        buildProvider?.acquiredLevel ??
+        provider?.acquiredLevel ??
+        evaluation.level,
+      legality: candidate.eligible ? "rules-legal" : "houserule",
+      children: [],
+      unresolved: false,
+    };
+    const command = commandForEvaluatedChoice(
+      build,
+      choice,
+      evaluation.occurrences,
+      entities,
+      occurrence,
+      (index) => `web:placeholder:${index}:${crypto.randomUUID()}`,
+    );
+    if (command !== undefined) onDispatch(command);
+  };
+
   return (
     <div className="choice-selection-layout">
       <div className="choice-editor-fields">
-        <label>
-          Selection
-          <select
-            disabled={editorDisabled}
-            value={selectedValue}
-            onFocus={() =>
-              setPerusedId(
-                selectedValue || visibleCandidates[0]?.definitionId || "",
-              )
-            }
-            onChange={(event) => {
-              const definitionId = event.currentTarget.value;
-              setOptimisticSelectedId(definitionId);
-              setPerusedId(definitionId);
-              const candidate = choice.candidates.find(
-                (item) => item.definitionId === definitionId,
-              );
-              const definition = byId.get(definitionId.toLocaleLowerCase());
-              if (candidate === undefined || definition === undefined) return;
-              const occurrence: BuildOccurrence = {
-                id: `web:${crypto.randomUUID()}`,
-                identity: {
-                  definitionId: definition.id,
-                  name: definition.name,
-                  type: definition.type,
-                },
-                acquiredLevel:
-                  buildProvider?.acquiredLevel ??
-                  provider?.acquiredLevel ??
-                  evaluation.level,
-                legality: candidate.eligible ? "rules-legal" : "houserule",
-                children: [],
-                unresolved: false,
-              };
-              const command = commandForEvaluatedChoice(
-                build,
-                choice,
-                evaluation.occurrences,
-                entities,
-                occurrence,
-                (index) => `web:placeholder:${index}:${crypto.randomUUID()}`,
-              );
-              if (command !== undefined) onDispatch(command);
-            }}
-          >
-            <option value="">Unresolved</option>
-            {visibleCandidates.map((candidate) => (
-              <option
-                key={candidate.definitionId}
-                value={candidate.definitionId}
+        {hasParameterizedGroups ? (
+          <>
+            <label>
+              Feat
+              <select
+                disabled={editorDisabled}
+                value={displayedGroupKey}
+                onChange={(event) => {
+                  const group = presentationGroups.find(
+                    (candidate) => candidate.key === event.currentTarget.value,
+                  );
+                  setStagedGroupKey(event.currentTarget.value);
+                  if (group === undefined) return;
+                  const exact = group.options.length === 1;
+                  const definitionId = group.options[0]!.candidate.definitionId;
+                  setPerusedId(definitionId);
+                  if (exact) selectDefinition(definitionId);
+                }}
               >
-                {byId.get(candidate.definitionId.toLocaleLowerCase())?.name ??
-                  candidate.definitionId}
-                {candidate.eligible
-                  ? ""
-                  : ` — unavailable: ${candidateReason(candidate.reasons)}`}
-              </option>
-            ))}
-          </select>
-        </label>
+                <option value="">Choose a feat</option>
+                {presentationGroups.map((group) => (
+                  <option key={group.key} value={group.key}>
+                    {group.label}
+                    {group.parameterLabel === undefined ? "" : "…"}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {displayedGroup?.parameterLabel === undefined ? null : (
+              <label>
+                {displayedGroup.parameterLabel}
+                <select
+                  disabled={editorDisabled}
+                  value={
+                    displayedGroup.options.some(
+                      ({ candidate }) =>
+                        candidate.definitionId === optimisticSelectedId,
+                    )
+                      ? optimisticSelectedId
+                      : ""
+                  }
+                  onFocus={() =>
+                    setPerusedId(
+                      displayedGroup.options.find(
+                        ({ candidate }) =>
+                          candidate.definitionId === optimisticSelectedId,
+                      )?.candidate.definitionId ??
+                        displayedGroup.options[0]?.candidate.definitionId ??
+                        "",
+                    )
+                  }
+                  onChange={(event) =>
+                    selectDefinition(event.currentTarget.value)
+                  }
+                >
+                  <option value="">Choose {displayedGroup.label}</option>
+                  {displayedGroup.options.map(({ candidate, label }) => (
+                    <option
+                      key={candidate.definitionId}
+                      value={candidate.definitionId}
+                    >
+                      {label}
+                      {candidate.eligible
+                        ? ""
+                        : ` — unavailable: ${candidateReason(candidate.reasons)}`}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </>
+        ) : (
+          <label>
+            Selection
+            <select
+              disabled={editorDisabled}
+              value={selectedValue}
+              onFocus={() =>
+                setPerusedId(
+                  selectedValue || visibleCandidates[0]?.definitionId || "",
+                )
+              }
+              onChange={(event) => selectDefinition(event.currentTarget.value)}
+            >
+              <option value="">Unresolved</option>
+              {visibleCandidates.map((candidate) => (
+                <option
+                  key={candidate.definitionId}
+                  value={candidate.definitionId}
+                >
+                  {byId.get(candidate.definitionId.toLocaleLowerCase())?.name ??
+                    candidate.definitionId}
+                  {candidate.eligible
+                    ? ""
+                    : ` — unavailable: ${candidateReason(candidate.reasons)}`}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="show-all-control">
           <input
             checked={showAll}
             disabled={disabled}
             type="checkbox"
-            onChange={(event) => setShowAll(event.currentTarget.checked)}
+            onChange={(event) => {
+              setShowAll(event.currentTarget.checked);
+              setStagedGroupKey(undefined);
+            }}
           />
           Show all options for this choice
         </label>

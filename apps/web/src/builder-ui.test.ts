@@ -11,6 +11,7 @@ import {
   candidateReason,
   choiceForSkillCandidate,
   choicesAtLevel,
+  groupParameterizedCandidates,
   groupLevelChoices,
   isCandidateVisible,
   planningHorizonCommand,
@@ -60,6 +61,47 @@ const build: CharacterBuild = {
 };
 
 describe("builder planning UI", () => {
+  it("groups large parenthetical families without changing exact candidates", () => {
+    const candidates = [
+      "GREATBOW",
+      "HANDAXE",
+      "RAPIER",
+      "LONGBOW",
+      "OTHER",
+      "SMALL_A",
+      "SMALL_B",
+    ].map((definitionId) => ({
+      definitionId,
+      eligible: true,
+      reasons: [],
+    }));
+    const names: Record<string, string> = {
+      GREATBOW: "Weapon Proficiency (Greatbow)",
+      HANDAXE: "Weapon Proficiency (Handaxe)",
+      RAPIER: "Weapon Proficiency (Rapier)",
+      LONGBOW: "Weapon Proficiency (Longbow)",
+      OTHER: "Alertness",
+      SMALL_A: "Special Training (First)",
+      SMALL_B: "Special Training (Second)",
+    };
+    const groups = groupParameterizedCandidates(candidates, (id) => names[id]!);
+    expect(groups[0]).toMatchObject({
+      label: "Weapon Proficiency",
+      parameterLabel: "Weapon type",
+      options: [
+        { candidate: { definitionId: "GREATBOW" }, label: "Greatbow" },
+        { candidate: { definitionId: "HANDAXE" }, label: "Handaxe" },
+        { candidate: { definitionId: "RAPIER" }, label: "Rapier" },
+        { candidate: { definitionId: "LONGBOW" }, label: "Longbow" },
+      ],
+    });
+    expect(groups.slice(1).map(({ label }) => label)).toEqual([
+      "Alertness",
+      "Special Training (First)",
+      "Special Training (Second)",
+    ]);
+  });
+
   it("creates every intervening level without advancing the current level", () => {
     const command = planningHorizonCommand(
       build,

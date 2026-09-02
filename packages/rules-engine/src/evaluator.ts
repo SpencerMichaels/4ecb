@@ -6,8 +6,10 @@ import {
   type EquipmentState,
 } from "./equipment";
 import {
+  archeryMasteryPowerId,
   diverseStudyException,
   EXCEPTION_IDS,
+  isLeveledRangerAtWillAttack,
   isCustomChoiceException,
   isUniversalSkill,
   seekerException,
@@ -1050,6 +1052,72 @@ export function evaluateCharacter(
         default:
           break;
       }
+    }
+    const masteryPowerId = archeryMasteryPowerId(entity);
+    const masteryPower =
+      masteryPowerId === undefined ? undefined : index.get(masteryPowerId);
+    if (masteryPower !== undefined) {
+      const ruleOrdinal = 0;
+      const directSelection = saved.find(
+        (candidate) =>
+          candidate.parentId === occurrence.id &&
+          candidate.ruleOrdinal === ruleOrdinal &&
+          candidate.replacesId !== undefined,
+      );
+      const selected =
+        occurrences.find(
+          (candidate) =>
+            candidate.parentId === occurrence.id &&
+            candidate.ruleOrdinal === ruleOrdinal &&
+            candidate.replacesId !== undefined,
+        ) ??
+        (directSelection === undefined
+          ? undefined
+          : occurrences.find((candidate) =>
+              replacementIncludes(candidate, directSelection.id),
+            ));
+      const replacementOptions = saved.flatMap((candidate) => {
+        const candidateEntity = index.get(candidate.definitionId);
+        return candidate.kind === "choice" &&
+          candidate.acquiredLevel <= occurrence.acquiredLevel &&
+          (!replacedIds.has(candidate.id) ||
+            candidate.id === selected?.replacesId) &&
+          candidateEntity !== undefined &&
+          isLeveledRangerAtWillAttack(candidateEntity)
+          ? [
+              {
+                replacesOccurrenceId: candidate.id,
+                definitionId: candidate.definitionId,
+                candidates: [
+                  {
+                    definitionId: masteryPower.id,
+                    eligible: true,
+                    reasons: [],
+                  },
+                ],
+              },
+            ]
+          : [];
+      });
+      choices.push({
+        id: `${occurrence.id}:archery-mastery-replacement`,
+        level: occurrence.acquiredLevel,
+        providerOccurrenceId: occurrence.id,
+        ruleOrdinal,
+        index: 0,
+        type: "Replacement",
+        name: `${entity.name} power replacement`,
+        optional: true,
+        ...(selected === undefined
+          ? {}
+          : { selectedOccurrenceId: selected.id }),
+        candidates: replacementOptions.map((option) => ({
+          definitionId: option.definitionId,
+          eligible: true,
+          reasons: [],
+        })),
+        replacementOptions,
+      });
     }
   }
   const evaluatedStats = Object.fromEntries(

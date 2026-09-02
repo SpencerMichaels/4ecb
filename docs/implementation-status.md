@@ -107,7 +107,15 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   rules/query/export layers but are omitted from display. The builder and
   compendium now use `printPrerequisites` for authored prerequisite prose and
   never present the rules-engine `prerequisites` expression as player text.
-- `nix develop path:. -c bash scripts/check.sh` passes 197 tests across 35 files,
+- Silaqui's selected Rapid Shot Mastery now exposes the legacy optional power
+  replacement at level 8, limited to her leveled Ranger at-will attacks; live
+  verification replaced Fading Strike with Rapid Shot, observed immediate and
+  persisted selection, then restored the original build through undo. Large
+  parenthetical feat families now render as a family selector followed by a
+  parameter selector while dispatching the original exact candidate. Live
+  verification changed `Weapon Proficiency (Greatbow)` to the Handaxe variant,
+  confirmed the exact timeline identity, and restored Greatbow through undo.
+- `nix develop path:. -c bash scripts/check.sh` passes 199 tests across 35 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

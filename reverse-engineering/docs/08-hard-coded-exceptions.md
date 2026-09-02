@@ -43,6 +43,11 @@ branch with a fixture before refactoring it into generalized data.
   traversal;
 - companion-specific prerequisite parsing and ability-increase behavior;
 - deity-choice suppression/requirement based on class/hybrid choices.
+- Archery Mastery's three selected feature records
+  (`ID_CDJ_CLASS_FEATURE_34501` through `34503`) have no declarative replacement
+  rule. The legacy workflow nevertheless lets their Clever Shot, Rapid Shot, or
+  Aimed Shot power replace a leveled Ranger at-will attack. The replacement is
+  optional and uses the selected mastery feature as its provider.
 
 ## Prerequisite exceptions
 

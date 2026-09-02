@@ -80,6 +80,10 @@ application's protected visual assets.
   every category-valid skill, marks trained skills, permits direct train/untrain
   toggles, and announces **X out of Y skills chosen** while preserving the
   evaluator's positional slots underneath.
+- Large parenthetical feat families use progressive two-stage selection: choose
+  the feat family first, then its weapon, implement, skill, or other parameter.
+  This is presentation-only; the selected exact legacy feat remains visible in
+  the timeline and is the identity stored by the character.
 - Autosave every committed character change. Show concise saving, saved, and
   failure states without interrupting ordinary work, retain transactional undo
   and redo, and never imply persistence before the storage commit succeeds.
