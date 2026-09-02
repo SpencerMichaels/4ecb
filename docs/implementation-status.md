@@ -101,7 +101,13 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   Browser verification exercised optimistic untrain/train, restored the original
   skills through undo, and found no fresh console errors or horizontal overflow
   at 1200 px or 375 px.
-- `nix develop path:. -c bash scripts/check.sh` passes 196 tests across 35 files,
+- Player-facing detail and sheet-card surfaces no longer dump internal content
+  metadata. Raw categories, underscore-prefixed relationship fields, and
+  uppercase underscore-delimited machine-token values remain available to the
+  rules/query/export layers but are omitted from display. The builder and
+  compendium now use `printPrerequisites` for authored prerequisite prose and
+  never present the rules-engine `prerequisites` expression as player text.
+- `nix develop path:. -c bash scripts/check.sh` passes 197 tests across 35 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

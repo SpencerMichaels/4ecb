@@ -240,6 +240,21 @@ blank unresolved placeholder at the same position, and filling chooses the
 first compatible unresolved position, so history and legacy serialization do
 not compact or reorder.
 
+### D028 — Raw content metadata is preserved but not presented as rules text
+
+Imported categories, underscore-prefixed specifics, rules-engine prerequisite
+expressions, and specific values made only of uppercase underscore-delimited
+machine tokens remain losslessly stored and available to the rules, query, and
+compatibility layers. Builder detail, compendium detail, and sheet-card
+presentation omit them, along with the legacy renderer's named internal fields
+such as `Display`, `InternalOnly`, equivalence links, and granted-power IDs.
+Player-facing prerequisite text comes only from the separate
+printable-prerequisite field. This follows the legacy builder's
+separation between display fields and internal relationship metadata: its card
+path rejects underscore fields and applies type-specific standard-field
+exclusions, while its generic detail path does not enumerate the entire raw
+specific collection.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

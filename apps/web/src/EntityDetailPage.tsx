@@ -1,4 +1,4 @@
-import type { ContentEntity } from "@4ecb/content-domain";
+import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
 import type { CompendiumQuery, EntityRelationships } from "@4ecb/query-engine";
 
 import { compendiumHash } from "./routes";
@@ -33,6 +33,8 @@ export function EntityDetailPage({
     );
   }
 
+  const visibleSpecifics = entity.specifics.filter(isUserFacingSpecific);
+
   return (
     <article className="compendium-detail" aria-labelledby="entity-heading">
       <a className="back-link" href={compendiumHash(query)}>
@@ -56,10 +58,6 @@ export function EntityDetailPage({
           <dd>{entity.revisionDate ?? "Not specified"}</dd>
         </div>
         <div>
-          <dt>Categories</dt>
-          <dd>{entity.categories.join(", ") || "None"}</dd>
-        </div>
-        <div>
           <dt>Rules</dt>
           <dd>{entity.rules.length.toLocaleString()}</dd>
         </div>
@@ -71,10 +69,10 @@ export function EntityDetailPage({
           <p>{entity.flavor}</p>
         </section>
       )}
-      {entity.prerequisites === undefined ? null : (
+      {entity.printPrerequisites === undefined ? null : (
         <section>
           <h3>Prerequisites</h3>
-          <p className="preserve-lines">{entity.prerequisites}</p>
+          <p className="preserve-lines">{entity.printPrerequisites}</p>
         </section>
       )}
       {entity.description.length === 0 ? null : (
@@ -83,11 +81,11 @@ export function EntityDetailPage({
           <p className="preserve-lines">{entity.description}</p>
         </section>
       )}
-      {entity.specifics.length === 0 ? null : (
+      {visibleSpecifics.length === 0 ? null : (
         <section>
           <h3>Fields</h3>
           <dl className="field-list">
-            {entity.specifics.map((field) => (
+            {visibleSpecifics.map((field) => (
               <div key={`${field.ordinal}-${field.name}`}>
                 <dt>{field.name || "Unnamed field"}</dt>
                 <dd className="preserve-lines">{field.value}</dd>

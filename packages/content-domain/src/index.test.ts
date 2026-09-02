@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { getAttribute, getElementText, normalizeDisplayText } from "./index";
+import {
+  getAttribute,
+  getElementText,
+  isUserFacingSpecific,
+  normalizeDisplayText,
+} from "./index";
 
 describe("content-domain helpers", () => {
   it("looks attributes up case-insensitively", () => {
@@ -31,5 +36,32 @@ describe("content-domain helpers", () => {
 
   it("normalizes line endings without collapsing meaningful whitespace", () => {
     expect(normalizeDisplayText("  first\r\n second  ")).toBe("first\n second");
+  });
+
+  it("classifies internal names and machine-token values as presentation metadata", () => {
+    const field = (name: string, value = "Player-facing text") => ({
+      name,
+      value,
+      extraAttributes: [],
+      ordinal: 0,
+    });
+    expect(isUserFacingSpecific(field("Effect"))).toBe(true);
+    expect(isUserFacingSpecific(field("_REQUIRESID"))).toBe(false);
+    expect(isUserFacingSpecific(field("  _SUPPORTSID"))).toBe(false);
+    expect(
+      isUserFacingSpecific(
+        field("Class", "ID_FMP_CLASS_0, ID_FMP_CLASS_ORDER_ADEPT"),
+      ),
+    ).toBe(false);
+    expect(
+      isUserFacingSpecific(field("Category", "VALUES_FORMATTED_LIKE_THIS")),
+    ).toBe(false);
+    expect(isUserFacingSpecific(field("Display", "Wizard Attack 1"))).toBe(
+      false,
+    );
+    expect(isUserFacingSpecific(field("InternalOnly", "1"))).toBe(false);
+    expect(isUserFacingSpecific(field("Keywords", "Arcane, Implement"))).toBe(
+      true,
+    );
   });
 });

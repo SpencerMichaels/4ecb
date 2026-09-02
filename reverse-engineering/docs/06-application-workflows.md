@@ -60,9 +60,21 @@ behavior, not a recommended ownership model for the replacement UI.
 - search by name/body and browse by open-ended type;
 - category, level/tier, source, campaign entitlement, legality, owned/available,
   prerequisite, and recommendation filters;
-- show source, printable prerequisite, internal prerequisite result, flavor,
-  description, all `specific` fields, custom/official status, and stable ID;
+- show source, printable prerequisite, flavor, description, player-facing
+  `specific` fields, custom/official status, and stable ID; retain internal
+  prerequisite expressions and relationship fields for diagnostics without
+  presenting them as rules text;
 - explain why an option is unavailable rather than simply hiding it.
+
+The display boundary is visible in the legacy implementation. Power-card
+`BuildSpecifics` skips underscore-prefixed fields and a type-specific exclusion
+list; `CheckerSpecifics` applies the same underscore rule and caller-provided
+standard-field exclusions. Generic `StockElemToPanel` renders authored
+description and specialized sections rather than dumping the raw specific
+collection. The normalized `categories` array contains relationship/index IDs,
+not authored category labels, and the raw `prerequisites` property is an engine
+expression (for example `~ELF`); only `printPrerequisites` is suitable for the
+ordinary player-facing detail pane.
 
 ## House-rule workflows
 

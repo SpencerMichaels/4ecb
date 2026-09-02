@@ -10,7 +10,7 @@ import {
   type CharacterCommand,
   type CharacterRecord,
 } from "@4ecb/character-domain";
-import type { ContentEntity } from "@4ecb/content-domain";
+import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
 import {
   commandForEvaluatedChoice,
   findBuildChildIndex,
@@ -176,6 +176,7 @@ function CandidateDetail({
     );
 
   const headingId = `candidate-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const visibleSpecifics = entity.specifics.filter(isUserFacingSpecific);
   return (
     <aside
       aria-labelledby={headingId}
@@ -203,15 +204,11 @@ function CandidateDetail({
           <dt>Source</dt>
           <dd>{entity.source || "Not specified"}</dd>
         </div>
-        <div>
-          <dt>Categories</dt>
-          <dd>{entity.categories.join(", ") || "None"}</dd>
-        </div>
       </dl>
-      {entity.prerequisites === undefined ? null : (
+      {entity.printPrerequisites === undefined ? null : (
         <section>
           <h5>Prerequisites</h5>
-          <p className="preserve-lines">{entity.prerequisites}</p>
+          <p className="preserve-lines">{entity.printPrerequisites}</p>
         </section>
       )}
       {entity.flavor === undefined ? null : (
@@ -223,11 +220,11 @@ function CandidateDetail({
           <p className="preserve-lines">{entity.description}</p>
         </section>
       )}
-      {entity.specifics.length === 0 ? null : (
+      {visibleSpecifics.length === 0 ? null : (
         <section>
           <h5>Details</h5>
           <dl className="candidate-fields">
-            {entity.specifics.map((field) => (
+            {visibleSpecifics.map((field) => (
               <div key={`${field.ordinal}-${field.name}`}>
                 <dt>{field.name || "Detail"}</dt>
                 <dd className="preserve-lines">{field.value}</dd>

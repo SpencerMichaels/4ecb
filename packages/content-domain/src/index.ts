@@ -128,3 +128,26 @@ export function getElementText(node: ContentElementNode): string {
 export function normalizeDisplayText(value: string): string {
   return value.replace(/\r\n?/g, "\n").trim();
 }
+
+const internalSpecificNames = new Set([
+  "categories",
+  "display",
+  "enchantequiv",
+  "granted powers",
+  "internalonly",
+  "weaponequiv",
+]);
+
+export function isUserFacingSpecific(field: SpecificField): boolean {
+  const name = field.name.trim();
+  const value = field.value.trim();
+  if (
+    name.length === 0 ||
+    value.length === 0 ||
+    name.startsWith("_") ||
+    internalSpecificNames.has(name.toLocaleLowerCase())
+  )
+    return false;
+  const tokens = value.split(/\s*[,;]\s*/);
+  return !tokens.every((token) => /^[A-Z0-9]+(?:_[A-Z0-9-]+)+$/.test(token));
+}

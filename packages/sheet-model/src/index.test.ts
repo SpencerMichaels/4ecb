@@ -53,6 +53,12 @@ describe("sheet model", () => {
               extraAttributes: [],
               ordinal: 0,
             },
+            {
+              name: "_REQUIRESID",
+              value: "ID_INTERNAL_REQUIREMENT",
+              extraAttributes: [],
+              ordinal: 1,
+            },
           ],
           rules: [],
           description: "Description",
@@ -68,6 +74,9 @@ describe("sheet model", () => {
       damage: "1d6+4",
       description: "Description",
     });
+    expect(model.powers[0]?.fields).toEqual([
+      { label: "Effect", value: "A test spark." },
+    ]);
   });
 
   it("preserves an empty native snapshot source without relabeling it as legacy", () => {

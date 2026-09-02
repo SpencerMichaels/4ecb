@@ -3,7 +3,7 @@ import type {
   LegacyCharacterSnapshot,
   LegacyPowerSnapshot,
 } from "@4ecb/character-domain";
-import type { ContentEntity } from "@4ecb/content-domain";
+import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
 import {
   aggregateInventory,
   applyFieldOverlays,
@@ -96,7 +96,7 @@ function entityMap(
 function entityFields(entity: ContentEntity | undefined): SheetValue[] {
   return (
     entity?.specifics.flatMap((field) =>
-      field.value.length === 0
+      field.value.length === 0 || !isUserFacingSpecific(field)
         ? []
         : [{ label: field.name, value: field.value }],
     ) ?? []
