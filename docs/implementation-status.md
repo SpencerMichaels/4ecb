@@ -183,7 +183,17 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   detection flattened candidate decisions from every possible replacement
   target. It now evaluates the selected replacement only, correctly recognizing
   the imported Nimble Strike to Fading Strike retraining as rules-legal.
-- `nix develop path:. -c bash scripts/check.sh` passes 209 tests across 36 files,
+- A direct legacy-resource and recovered-code audit now documents the builder's
+  visual language. The web shell uses its PHB navy, SteelBlue selection cue,
+  neutral/ice/cream surfaces, and exact at-will, encounter, daily, utility, and
+  item identities. Choice categories, entity details, compendium results, and
+  navigation use original monochrome SVG symbols alongside text. The layout is
+  denser and square-edged, with full-width bars and dividers replacing pill and
+  floating-card chrome; a contrast-checked derived dark palette preserves the
+  same semantic meanings. Live Silaqui checks covered light and dark desktop
+  rendering plus both themes at 374 px, including an encounter-power detail
+  pane, without clipped controls or horizontal spill.
+- `nix develop path:. -c bash scripts/check.sh` passes 212 tests across 37 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

@@ -14,8 +14,10 @@ import {
 } from "@4ecb/query-engine";
 
 import { EntityDetailPage } from "./EntityDetailPage";
+import { Icon } from "./Icon";
 import { QueryWorkerClient, type QueryIndexInfo } from "./query-client";
 import { compendiumHash } from "./routes";
+import { entityTypeIcon } from "./visual-language";
 
 interface SavedQuery {
   readonly id: string;
@@ -677,6 +679,7 @@ export function CompendiumPage({
                     <li key={item.id}>
                       <a href={compendiumHash(query, item.id)}>
                         <span>
+                          <Icon name={entityTypeIcon(item.type)} />
                           <strong>{item.name}</strong>
                           <span>{item.type}</span>
                         </span>

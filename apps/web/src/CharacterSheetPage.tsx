@@ -43,7 +43,14 @@ function ValueList({
 }
 
 function Card({ card }: { readonly card: SheetCard }) {
-  const usage = (card.usage ?? "item")
+  const powerType = card.fields.find(
+    (field) => field.label.trim().toLocaleLowerCase() === "power type",
+  )?.value;
+  const usage = (
+    powerType?.trim().toLocaleLowerCase() === "utility"
+      ? "utility"
+      : (card.usage ?? "item")
+  )
     .trim()
     .toLocaleLowerCase()
     .replace(/[^a-z]+/g, "-");

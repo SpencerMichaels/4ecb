@@ -333,6 +333,23 @@ the native library title. Portrait manipulation and arbitrary journal-entry
 management remain separate later surfaces, matching their distinct legacy data
 models rather than pretending they are ordinary strings.
 
+The interactive visual language preserves the legacy builder's semantic and
+spatial grammar without reproducing its period Windows chrome. The exact sheet
+identities are authoritative: at-will is `#006400`/`#AADDAA`, encounter is
+`#8B0000`/`#DDBBBB`, daily is `#808080`/`#D3D3D3`, utility is
+`#000080`/`#BBBBDD`, and items are `#FF8C00`/`#FFE3CC`. The application shell
+uses the recovered PHB navy `#1D3D5D`, neutral `#DEDCCB`, SteelBlue selection
+cue `#4682B4`, cool ice canvas, and cream detail surface. A derived dark palette
+keeps those semantic identities while lifting their visible accents for
+contrast. Dense square-edged groups, full-width category bars, dividers, and a
+persistent information pane replace rounded floating-card chrome. Small
+original monochrome SVGs accompany text for entity families and status; emoji
+and proprietary legacy raster/logo assets are excluded. System UI type remains
+the control/body default, with the recovered Goudy Old Style role represented
+by a conservative old-style serif stack only for app and page identity. The
+evidence and confidence boundary are recorded in
+`reverse-engineering/docs/10-visual-language.md`.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

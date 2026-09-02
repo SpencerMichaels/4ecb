@@ -43,14 +43,20 @@ import {
   isCharacterDetailChoice,
   isOptionalRetrainingChoice,
   isUnresolvedChoice,
+  legacyChoiceSection,
   planningHorizonCommand,
   selectedDefinitionId,
   selectedChoiceHasWarning,
   unresolveEvaluatedChoiceCommand,
 } from "./builder-ui";
-import { Icon } from "./Icon";
+import { Icon, type IconName } from "./Icon";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
 import { RulesWorkerClient } from "./rules-client";
+import {
+  entityTypeIcon,
+  entityVisualTone,
+  visualToneClass,
+} from "./visual-language";
 
 const characters = new CharacterRepository();
 const packs = new ContentPackRepository();
@@ -164,6 +170,31 @@ function choiceTitle(choice: EvaluatedChoice): string {
   return choice.name || `Choose ${choice.type}`;
 }
 
+function choiceSectionIcon(section: string): IconName {
+  switch (section) {
+    case "Class":
+      return "class";
+    case "Race":
+      return "race";
+    case "Background":
+      return "background";
+    case "Ability Scores":
+      return "ability";
+    case "Skills":
+      return "skill";
+    case "Powers":
+      return "power";
+    case "Spellbook":
+      return "book";
+    case "Feats":
+      return "feat";
+    case "Character Details":
+      return "details";
+    default:
+      return "content";
+  }
+}
+
 function CandidateDetail({
   candidate,
   entity,
@@ -185,15 +216,18 @@ function CandidateDetail({
 
   const headingId = `candidate-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
   const visibleSpecifics = entity.specifics.filter(isUserFacingSpecific);
+  const tone = visualToneClass(entityVisualTone(entity));
   return (
     <aside
       aria-labelledby={headingId}
-      className="candidate-detail"
+      className={`candidate-detail ${tone}`}
       tabIndex={0}
     >
       <header>
         <div>
-          <p className="eyebrow">{entity.type}</p>
+          <p className="eyebrow entity-kind">
+            <Icon name={entityTypeIcon(entity.type)} /> {entity.type}
+          </p>
           <h4 id={headingId}>{entity.name}</h4>
         </div>
         <span
@@ -2681,7 +2715,7 @@ export function CharacterEditorPage({
           type="button"
           onClick={() => setWorkspaceTab("build")}
         >
-          Build
+          <Icon name="level" /> Build
         </button>
         <button
           aria-selected={workspaceTab === "details"}
@@ -2689,7 +2723,7 @@ export function CharacterEditorPage({
           type="button"
           onClick={() => setWorkspaceTab("details")}
         >
-          Character details
+          <Icon name="details" /> Character details
           {characterDetailChoices.some(isUnresolvedChoice) ? (
             <span className="tab-attention">Needs attention</span>
           ) : null}
@@ -2890,9 +2924,7 @@ export function CharacterEditorPage({
                               });
                             }}
                           >
-                            <Icon
-                              name={abilityPointBuy.legal ? "check" : "warning"}
-                            />
+                            <Icon name="ability" />
                             <span>
                               Ability Scores ·{" "}
                               {abilityPointBuy.legal
@@ -2963,6 +2995,11 @@ export function CharacterEditorPage({
                                 <Icon name="check" />
                               )}
                               <span>
+                                <Icon
+                                  name={choiceSectionIcon(
+                                    legacyChoiceSection(summary.choices[0]!),
+                                  )}
+                                />
                                 {summary.label}
                                 {selectedNames.length === 0
                                   ? ""
@@ -3036,7 +3073,10 @@ export function CharacterEditorPage({
                     {displayedChoiceSections.map(({ section, choices }) => (
                       <section className="legacy-choice-group" key={section}>
                         <header>
-                          <h4>{section}</h4>
+                          <div className="legacy-choice-title">
+                            <Icon name={choiceSectionIcon(section)} />
+                            <h4>{section}</h4>
+                          </div>
                           <span className="choice-count">
                             {section === "Ability Scores" && selectedLevel === 1
                               ? "6 scores"

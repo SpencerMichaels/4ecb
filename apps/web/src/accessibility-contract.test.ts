@@ -29,17 +29,15 @@ function contrast(foreground: string, background: string): number {
 describe("release accessibility contract", () => {
   it("keeps every normal-text palette pair above WCAG AA contrast", () => {
     const pairs = [
-      ["#20272a", "#f4f1e8"],
-      ["#ffffff", "#243238"],
-      ["#15516b", "#f4f1e8"],
-      ["#193f50", "#ffffff"],
-      ["#566066", "#f4f1e8"],
-      ["#ffffff", "#315f73"],
-      ["#8a2d1d", "#ffffff"],
-      ["#ffffff", "#176c2a"],
-      ["#ffffff", "#8c1717"],
-      ["#ffffff", "#444444"],
-      ["#ffffff", "#8a4800"],
+      ["#1e2933", "#eef2f6"],
+      ["#ffffff", "#1d3d5d"],
+      ["#315f85", "#ffffff"],
+      ["#52616e", "#eef2f6"],
+      ["#ffffff", "#006400"],
+      ["#ffffff", "#8b0000"],
+      ["#111111", "#808080"],
+      ["#ffffff", "#000080"],
+      ["#211406", "#ff8c00"],
     ] as const;
     for (const [foreground, background] of pairs)
       expect(
@@ -74,16 +72,28 @@ describe("release accessibility contract", () => {
     expect(styles).toContain("@media (prefers-color-scheme: dark)");
     expect(styles).toContain(":root:not([data-theme])");
     for (const [foreground, background] of [
-      ["#edf2f4", "#111619"],
-      ["#b6c1c6", "#111619"],
-      ["#7fc0db", "#111619"],
-      ["#ff9a88", "#45241f"],
-      ["#f2bc70", "#3d3020"],
-      ["#85ce91", "#1f3b26"],
+      ["#f2f4f7", "#111727"],
+      ["#b7c1d1", "#111727"],
+      ["#7eaed2", "#111727"],
+      ["#ffaaa1", "#482525"],
+      ["#ffc36b", "#46351f"],
+      ["#83d18b", "#203c2a"],
     ] as const)
       expect(
         contrast(foreground, background),
         `${foreground} on ${background}`,
       ).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("keeps the legacy semantic palette and avoids pill-shaped chrome", () => {
+    for (const token of [
+      "--power-at-will: #006400",
+      "--power-encounter: #8b0000",
+      "--power-daily: #808080",
+      "--power-utility: #000080",
+      "--power-item: #ff8c00",
+    ])
+      expect(styles).toContain(token);
+    expect(styles).not.toContain("border-radius: 999px");
   });
 });

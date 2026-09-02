@@ -1,7 +1,13 @@
 import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
 import type { CompendiumQuery, EntityRelationships } from "@4ecb/query-engine";
 
+import { Icon } from "./Icon";
 import { compendiumHash } from "./routes";
+import {
+  entityTypeIcon,
+  entityVisualTone,
+  visualToneClass,
+} from "./visual-language";
 
 export interface EntityDetailPageProps {
   readonly entityId: string;
@@ -36,13 +42,18 @@ export function EntityDetailPage({
   const visibleSpecifics = entity.specifics.filter(isUserFacingSpecific);
 
   return (
-    <article className="compendium-detail" aria-labelledby="entity-heading">
+    <article
+      className={`compendium-detail ${visualToneClass(entityVisualTone(entity))}`}
+      aria-labelledby="entity-heading"
+    >
       <a className="back-link" href={compendiumHash(query)}>
         ← Back to results
       </a>
       <header className="detail-heading">
         <div>
-          <p className="eyebrow">{entity.type}</p>
+          <p className="eyebrow entity-kind">
+            <Icon name={entityTypeIcon(entity.type)} /> {entity.type}
+          </p>
           <h2 id="entity-heading">{entity.name}</h2>
           <p className="identifier">{entity.id}</p>
         </div>

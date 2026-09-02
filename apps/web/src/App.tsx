@@ -209,14 +209,18 @@ export function App() {
         Skip to main content
       </a>
       <header className="app-header">
-        <div>
-          <p className="eyebrow">Modern builder preview</p>
-          <h1>4E Character Builder</h1>
-        </div>
+        <a
+          className="app-brand"
+          href="#/characters"
+          aria-label="4E Character Builder home"
+        >
+          <span className="app-brand-mark">4E</span>
+          <span className="app-brand-name">
+            <strong>Character Builder</strong>
+            <small>Fourth Edition</small>
+          </span>
+        </a>
         <div className="app-header-actions">
-          <p className="unofficial">
-            Unofficial fan project. Bring your own legally obtained data.
-          </p>
           <label className="theme-picker">
             Theme
             <select
