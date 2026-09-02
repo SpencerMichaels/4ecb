@@ -169,6 +169,44 @@ export interface GroupedLevelChoices {
   readonly ordinary: readonly EvaluatedChoice[];
 }
 
+/**
+ * Keep rules-engine choices exact while presenting choices created by the
+ * preceding selection as one progressive decision. For example, a feat that
+ * grants a mastery choice and that mastery's power replacement should read as
+ * one flow rather than three unrelated cards.
+ */
+export function groupDependentChoiceFlows(
+  choices: readonly EvaluatedChoice[],
+): readonly (readonly EvaluatedChoice[])[] {
+  const choiceBySelectedOccurrence = new Map(
+    choices.flatMap((choice) =>
+      choice.selectedOccurrenceId === undefined
+        ? []
+        : [[choice.selectedOccurrenceId, choice] as const],
+    ),
+  );
+  const children = new Map<string, EvaluatedChoice[]>();
+  const roots: EvaluatedChoice[] = [];
+  for (const choice of choices) {
+    const parent = choiceBySelectedOccurrence.get(choice.providerOccurrenceId);
+    if (parent === undefined || parent.id === choice.id) roots.push(choice);
+    else children.set(parent.id, [...(children.get(parent.id) ?? []), choice]);
+  }
+  const visited = new Set<string>();
+  const collect = (root: EvaluatedChoice): EvaluatedChoice[] => {
+    if (visited.has(root.id)) return [];
+    visited.add(root.id);
+    return [
+      root,
+      ...(children.get(root.id) ?? []).flatMap((child) => collect(child)),
+    ];
+  };
+  const flows = roots.map(collect).filter((flow) => flow.length > 0);
+  for (const choice of choices)
+    if (!visited.has(choice.id)) flows.push(collect(choice));
+  return flows;
+}
+
 export function groupLevelChoices(
   choices: readonly EvaluatedChoice[],
 ): GroupedLevelChoices {

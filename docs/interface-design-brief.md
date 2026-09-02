@@ -103,6 +103,14 @@ application's protected visual assets.
   exports; adding a template must not change existing saved characters' rules
   interpretation.
 
+Rules choices created by the immediately preceding selection are presented as
+one progressive choice flow, not as independent level cards. The first chosen
+entity names the flow when available, and numbered steps keep the initiating
+choice, its dependent feature choice, and any resulting replacement together.
+This is presentation-only: each step still dispatches and stores its exact
+rules-engine occurrence. Archery Mastery therefore reads as one section that
+flows from the feat to Rapid Shot Mastery to the at-will power being replaced.
+
 ## Priority journey
 
 Optimize the first design and prototype around this end-to-end journey:

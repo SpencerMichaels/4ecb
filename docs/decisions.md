@@ -271,6 +271,12 @@ is dispatched. Thus `Weapon Proficiency` plus `Greatbow` still stores and export
 the original `Weapon Proficiency (Greatbow)` definition. Smaller families remain
 ordinary exact choices, and this grouping never changes rules eligibility.
 
+Dependent choices whose provider is the preceding choice's selected occurrence
+are also grouped for presentation. They remain separate evaluated and stored
+choices, but the level pane and timeline expose one progressive flow. This
+keeps multi-part decisions such as Archery Mastery together without introducing
+a special composite domain command or weakening round-trip compatibility.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

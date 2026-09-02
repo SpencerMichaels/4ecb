@@ -1675,6 +1675,40 @@ textarea {
   margin-top: 0;
 }
 
+.choice-flow-list {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.choice-flow-step + .choice-flow-step {
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+}
+
+.choice-flow-step-heading {
+  align-items: center;
+  display: flex;
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+}
+
+.choice-flow-step-heading > span {
+  align-items: center;
+  background: var(--accent);
+  border-radius: 999px;
+  color: #fff;
+  display: inline-flex;
+  flex: 0 0 1.55rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  height: 1.55rem;
+  justify-content: center;
+}
+
+.choice-flow-step-heading h5 {
+  margin: 0;
+}
+
 .progressive-choice-button {
   background: transparent;
   border-style: dashed;

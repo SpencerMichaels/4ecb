@@ -115,7 +115,11 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   parameter selector while dispatching the original exact candidate. Live
   verification changed `Weapon Proficiency (Greatbow)` to the Handaxe variant,
   confirmed the exact timeline identity, and restored Greatbow through undo.
-- `nix develop path:. -c bash scripts/check.sh` passes 199 tests across 35 files,
+- Dependent rules choices now collapse into one numbered progressive section.
+  Silaqui's level-8 feat, Rapid Shot Mastery selection, and resulting at-will
+  replacement appear under one Archery Mastery heading and one timeline entry;
+  the three exact saved occurrences and legacy export topology are unchanged.
+- `nix develop path:. -c bash scripts/check.sh` passes 200 tests across 35 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

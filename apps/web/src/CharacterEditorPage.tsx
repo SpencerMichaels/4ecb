@@ -25,6 +25,7 @@ import {
   choiceForSkillCandidate,
   choicesAtLevel,
   groupLevelChoices,
+  groupDependentChoiceFlows,
   groupParameterizedCandidates,
   isCandidateVisible,
   isUnresolvedChoice,
@@ -750,6 +751,92 @@ function choiceSectionId(choiceId: string): string {
   return `choice-section-${choiceId.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
 }
 
+function ChoiceFlowSection({
+  choices,
+  evaluation,
+  build,
+  entities,
+  byId,
+  rollbackRevision,
+  onDispatch,
+}: {
+  readonly choices: readonly EvaluatedChoice[];
+  readonly evaluation: EvaluatedCharacter;
+  readonly build: CharacterRecord["build"];
+  readonly entities: readonly ContentEntity[];
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly rollbackRevision: number;
+  readonly onDispatch: (command: CharacterCommand) => void;
+}) {
+  const root = choices[0]!;
+  const selectedRoot = selectedOccurrence(root, evaluation);
+  const selectedRootEntity =
+    selectedRoot?.definitionId === undefined
+      ? undefined
+      : byId.get(selectedRoot.definitionId.toLocaleLowerCase());
+  const unresolved = choices.some(isUnresolvedChoice);
+  const warning = choices.some((choice) =>
+    choiceHasWarning(choice, evaluation),
+  );
+  return (
+    <section
+      aria-labelledby={`${choiceSectionId(root.id)}-heading`}
+      className="level-choice-section grouped-choice-section choice-flow-section"
+      id={choiceSectionId(root.id)}
+      tabIndex={-1}
+    >
+      <header>
+        <div>
+          <p className="eyebrow">{root.type}</p>
+          <h4 id={`${choiceSectionId(root.id)}-heading`}>
+            {choices.length > 1 && selectedRootEntity !== undefined
+              ? selectedRootEntity.name
+              : choiceTitle(root)}
+          </h4>
+        </div>
+        {unresolved ? (
+          <span className="attention-badge">Unresolved</span>
+        ) : warning ? (
+          <span className="attention-badge">
+            <Icon name="warning" /> House rule
+          </span>
+        ) : (
+          <span className="complete-badge">
+            <Icon name="check" /> Complete
+          </span>
+        )}
+      </header>
+      <div className="choice-flow-list">
+        {choices.map((choice, index) => (
+          <section
+            aria-labelledby={`${choiceSectionId(choice.id)}-step-heading`}
+            className="choice-flow-step"
+            id={index === 0 ? undefined : choiceSectionId(choice.id)}
+            key={choice.id}
+          >
+            <div className="choice-flow-step-heading">
+              <span aria-hidden="true">{index + 1}</span>
+              <h5 id={`${choiceSectionId(choice.id)}-step-heading`}>
+                {index === 0 ? `Choose ${choice.type}` : choiceTitle(choice)}
+              </h5>
+            </div>
+            <ChoiceEditor
+              choice={choice}
+              evaluation={evaluation}
+              build={build}
+              entities={entities}
+              byId={byId}
+              disabled={false}
+              rollbackRevision={rollbackRevision}
+              onDispatch={onDispatch}
+            />
+          </section>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function BackgroundChoiceGroup({
   choices,
   evaluation,
@@ -1290,6 +1377,14 @@ export function CharacterEditorPage({
 
   const levelChoices = choicesAtLevel(selectedLevel, planningEvaluation);
   const groupedLevelChoices = groupLevelChoices(levelChoices);
+  const dependentChoiceFlows = groupDependentChoiceFlows(
+    groupedLevelChoices.ordinary,
+  );
+  const dependentFlowByChoiceId = new Map(
+    dependentChoiceFlows.flatMap((flow) =>
+      flow.map((choice) => [choice.id, flow] as const),
+    ),
+  );
   useEffect(() => {
     if (levelChoices.some((choice) => choice.id === selectedChoiceId)) return;
     setSelectedChoiceId(
@@ -1574,6 +1669,12 @@ export function CharacterEditorPage({
             {build.levels.slice(0, visibleHorizon).map((frame) => {
               const choices = choicesAtLevel(frame.level, planningEvaluation);
               const grouped = groupLevelChoices(choices);
+              const flows = groupDependentChoiceFlows(grouped.ordinary);
+              const flowByChoiceId = new Map(
+                flows.flatMap((flow) =>
+                  flow.map((choice) => [choice.id, flow] as const),
+                ),
+              );
               const summaries = choices.flatMap((choice) => {
                 if (grouped.backgrounds.includes(choice))
                   return choice === grouped.backgrounds[0]
@@ -1590,6 +1691,29 @@ export function CharacterEditorPage({
                         {
                           label: "Skill Training",
                           choices: grouped.skillTraining,
+                        },
+                      ]
+                    : [];
+                const flow = flowByChoiceId.get(choice.id);
+                if (flow !== undefined)
+                  return choice === flow[0]
+                    ? [
+                        {
+                          label:
+                            flow.length > 1
+                              ? selectedDefinitionId(
+                                  choice,
+                                  planningEvaluation!,
+                                ) === undefined
+                                ? choiceTitle(choice)
+                                : (byId.get(
+                                    selectedDefinitionId(
+                                      choice,
+                                      planningEvaluation!,
+                                    )!.toLocaleLowerCase(),
+                                  )?.name ?? choiceTitle(choice))
+                              : choiceTitle(choice),
+                          choices: flow,
                         },
                       ]
                     : [];
@@ -1768,6 +1892,20 @@ export function CharacterEditorPage({
                     <SkillTrainingEditor
                       key="skill-training"
                       choices={groupedLevelChoices.skillTraining}
+                      evaluation={planningEvaluation}
+                      build={build}
+                      entities={entities}
+                      byId={byId}
+                      rollbackRevision={rollbackRevision}
+                      onDispatch={dispatch}
+                    />
+                  ) : null;
+                const flow = dependentFlowByChoiceId.get(choice.id);
+                if (flow !== undefined)
+                  return choice === flow[0] ? (
+                    <ChoiceFlowSection
+                      key={choice.id}
+                      choices={flow}
                       evaluation={planningEvaluation}
                       build={build}
                       entities={entities}

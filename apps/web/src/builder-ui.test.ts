@@ -12,6 +12,7 @@ import {
   choiceForSkillCandidate,
   choicesAtLevel,
   groupParameterizedCandidates,
+  groupDependentChoiceFlows,
   groupLevelChoices,
   isCandidateVisible,
   planningHorizonCommand,
@@ -195,6 +196,32 @@ describe("builder planning UI", () => {
       "skill-2",
     ]);
     expect(grouped.ordinary.map(({ id }) => id)).toEqual(["race", "feat"]);
+  });
+
+  it("presents nested selections and their replacement as one choice flow", () => {
+    const choices = [
+      {
+        id: "feat",
+        selectedOccurrenceId: "archery-mastery",
+        providerOccurrenceId: "level-8",
+      },
+      {
+        id: "mastery",
+        selectedOccurrenceId: "rapid-shot-mastery",
+        providerOccurrenceId: "archery-mastery",
+      },
+      {
+        id: "replacement",
+        providerOccurrenceId: "rapid-shot-mastery",
+      },
+      { id: "utility", providerOccurrenceId: "level-8" },
+    ] as unknown as EvaluatedCharacter["choices"];
+
+    expect(
+      groupDependentChoiceFlows(choices).map((flow) =>
+        flow.map(({ id }) => id),
+      ),
+    ).toEqual([["feat", "mastery", "replacement"], ["utility"]]);
   });
 
   it("fills the first unresolved skill slot that can accept a candidate", () => {
