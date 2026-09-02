@@ -583,6 +583,52 @@ function activeInventory(
   });
 }
 
+/**
+ * The legacy format has one active level horizon. Native records may retain a
+ * longer planning timeline, so compatibility export deliberately projects the
+ * durable build to its current effective level instead of serializing inactive
+ * future choices.
+ */
+export function projectBuildForLegacyExport(
+  build: CharacterBuild,
+): CharacterBuild {
+  const activeLevel = build.effectiveLevel;
+  const activeOccurrence = (occurrence: BuildOccurrence): BuildOccurrence => ({
+    ...occurrence,
+    children: occurrence.children
+      .filter((child) => child.acquiredLevel <= activeLevel)
+      .map(activeOccurrence),
+  });
+  const activeIds = new Set<string>();
+  const remember = (occurrence: BuildOccurrence) => {
+    activeIds.add(occurrence.id);
+    occurrence.children.forEach(remember);
+  };
+  const levels = build.levels
+    .filter((frame) => frame.level <= activeLevel)
+    .map((frame) => ({ ...frame, root: activeOccurrence(frame.root) }));
+  const grabbag = build.grabbag
+    .filter((occurrence) => occurrence.acquiredLevel <= activeLevel)
+    .map(activeOccurrence);
+  levels.forEach((frame) => remember(frame.root));
+  grabbag.forEach(remember);
+  return {
+    ...build,
+    levels,
+    grabbag,
+    inventory: build.inventory.filter(
+      (entry) => entry.acquiredLevel <= activeLevel,
+    ),
+    alternates: build.alternates.flatMap((alternate) =>
+      alternate.choice.acquiredLevel <= activeLevel &&
+      (alternate.choice.replacesId === undefined ||
+        activeIds.has(alternate.choice.replacesId))
+        ? [{ ...alternate, choice: activeOccurrence(alternate.choice) }]
+        : [],
+    ),
+  };
+}
+
 function lootTallyXml(build: CharacterBuild): string {
   return element(
     "LootTally",
@@ -709,10 +755,7 @@ export function exportEditedDnd4e(input: EditedDnd4eExportInput): string {
     throw new Error("Edited export requires a converged rules evaluation");
   if (input.evaluation.level !== input.build.effectiveLevel)
     throw new Error("Edited export evaluation does not match the build level");
-  if (input.build.effectiveLevel !== input.build.levels.length)
-    throw new Error(
-      "Legacy Builder export requires the evaluation horizon to be the latest level",
-    );
+  const build = projectBuildForLegacyExport(input.build);
 
   const sourceXml = input.envelope.sourceXml.startsWith("\uFEFF")
     ? input.envelope.sourceXml.slice(1)
@@ -732,9 +775,9 @@ export function exportEditedDnd4e(input: EditedDnd4eExportInput): string {
   const preserved = childFragments(sourceXml, "D20Character")
     .filter((fragment) => !replaced.has(key(fragment.name)))
     .map((fragment) => fragment.raw);
-  const tokens = occurrenceTokens(input.build);
-  const textStrings = Object.entries(input.build.textStrings).map(
-    ([name, value]) => element("textstring", { name }, escapeText(value)),
+  const tokens = occurrenceTokens(build);
+  const textStrings = Object.entries(build.textStrings).map(([name, value]) =>
+    element("textstring", { name }, escapeText(value)),
   );
   const rootAttributes: Record<string, string | undefined> = {
     ...Object.fromEntries(
@@ -747,11 +790,11 @@ export function exportEditedDnd4e(input: EditedDnd4eExportInput): string {
     legality: input.evaluation.legal ? "rules-legal" : "houserule",
   };
   const body = [
-    characterSheetXml(input),
+    characterSheetXml({ ...input, build }),
     ...preserved,
-    ...levelXml(input.build, tokens),
-    grabbagXml(input.build, tokens),
-    ...alternatesXml(input.build, tokens),
+    ...levelXml(build, tokens),
+    grabbagXml(build, tokens),
+    ...alternatesXml(build, tokens),
     ...textStrings,
   ]
     .filter(Boolean)

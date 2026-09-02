@@ -10,6 +10,7 @@ import { CompendiumPage } from "./CompendiumPage";
 import { CharacterLibraryPage } from "./CharacterLibraryPage";
 import { CharacterEditorPage } from "./CharacterEditorPage";
 import { CharacterSheetPage } from "./CharacterSheetPage";
+import { Icon } from "./Icon";
 import { parseHashRoute } from "./routes";
 import { focusMainContent } from "./route-focus";
 import { PwaStatus } from "./PwaStatus";
@@ -19,6 +20,12 @@ import {
   parseRuntimeContentConfig,
   type AdvertisedContentPack,
 } from "./runtime-content";
+import {
+  applyThemePreference,
+  parseThemePreference,
+  THEME_STORAGE_KEY,
+  type ThemePreference,
+} from "./theme";
 
 const repository = new ContentPackRepository();
 
@@ -47,9 +54,30 @@ export function App() {
   const [runtimeContentError, setRuntimeContentError] = useState<string>();
   const [storageReady, setStorageReady] = useState(false);
   const [error, setError] = useState<string>();
+  const [theme, setTheme] = useState<ThemePreference>(() => {
+    try {
+      return parseThemePreference(localStorage.getItem(THEME_STORAGE_KEY));
+    } catch {
+      return "system";
+    }
+  });
   const firstRoute = useRef(true);
   const runtimeContentStarted = useRef(false);
   const route = useMemo(() => parseHashRoute(hash), [hash]);
+  const openCharacterId =
+    route.page === "characters" ? route.characterId : undefined;
+  const openCharacterMode =
+    route.page === "characters" ? route.mode : undefined;
+
+  useEffect(() => {
+    applyThemePreference(document.documentElement, theme);
+    try {
+      if (theme === "system") localStorage.removeItem(THEME_STORAGE_KEY);
+      else localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // The visual preference still applies for this session.
+    }
+  }, [theme]);
 
   const refresh = useCallback(async () => {
     const [installed, active, profile] = await Promise.all([
@@ -182,32 +210,76 @@ export function App() {
       </a>
       <header className="app-header">
         <div>
-          <p className="eyebrow">Builder beta · MVP closure in progress</p>
+          <p className="eyebrow">Modern builder preview</p>
           <h1>4E Character Builder</h1>
         </div>
-        <p className="unofficial">
-          Unofficial fan project. Bring your own legally obtained data.
-        </p>
+        <div className="app-header-actions">
+          <p className="unofficial">
+            Unofficial fan project. Bring your own legally obtained data.
+          </p>
+          <label className="theme-picker">
+            Theme
+            <select
+              aria-label="Color theme"
+              value={theme}
+              onChange={(event) =>
+                setTheme(event.currentTarget.value as ThemePreference)
+              }
+            >
+              <option value="system">System</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
+        </div>
       </header>
 
       <nav className="primary-nav" aria-label="Primary navigation">
+        {openCharacterId === undefined ? (
+          <span aria-disabled="true" className="nav-disabled">
+            <Icon name="character" /> Build
+          </span>
+        ) : (
+          <a
+            aria-current={openCharacterMode === "edit" ? "page" : undefined}
+            href={`#/characters/${encodeURIComponent(openCharacterId)}/edit`}
+          >
+            <Icon name="character" /> Build
+          </a>
+        )}
+        {openCharacterId === undefined ? (
+          <span aria-disabled="true" className="nav-disabled">
+            <Icon name="sheet" /> Character sheet
+          </span>
+        ) : (
+          <a
+            aria-current={openCharacterMode !== "edit" ? "page" : undefined}
+            href={`#/characters/${encodeURIComponent(openCharacterId)}`}
+          >
+            <Icon name="sheet" /> Character sheet
+          </a>
+        )}
         <a
           aria-current={route.page === "compendium" ? "page" : undefined}
           href="#/compendium"
         >
-          Compendium
+          <Icon name="book" /> Compendium
         </a>
         <a
-          aria-current={route.page === "characters" ? "page" : undefined}
+          aria-current={
+            route.page === "characters" && openCharacterId === undefined
+              ? "page"
+              : undefined
+          }
           href="#/characters"
         >
-          Characters
+          <Icon name="character" /> Characters
         </a>
         <a
           aria-current={route.page === "settings" ? "page" : undefined}
           href="#/settings"
         >
-          Content settings
+          <Icon name="content" /> Content
         </a>
       </nav>
 

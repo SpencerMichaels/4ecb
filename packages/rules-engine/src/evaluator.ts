@@ -68,6 +68,8 @@ export interface CandidateDecision {
 
 export interface EvaluatedChoice {
   readonly id: string;
+  /** Effective level of this decision, including a rule's delayed minimum. */
+  readonly level: number;
   readonly providerOccurrenceId: string;
   readonly ruleOrdinal: number;
   readonly index: number;
@@ -853,6 +855,10 @@ export function evaluateCharacter(
                   ));
             choices.push({
               id: `${occurrence.id}:choice:${rule.source.ordinal}:${choiceIndex}`,
+              level: Math.max(
+                occurrence.acquiredLevel,
+                rule.source.level.minimum,
+              ),
               providerOccurrenceId: occurrence.id,
               ruleOrdinal: rule.source.ordinal,
               index: choiceIndex,
@@ -959,6 +965,7 @@ export function evaluateCharacter(
             });
           choices.push({
             id: `${occurrence.id}:replacement:${rule.source.ordinal}`,
+            level: replacementLevel,
             providerOccurrenceId: occurrence.id,
             ruleOrdinal: rule.source.ordinal,
             index: 0,

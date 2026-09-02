@@ -355,6 +355,18 @@ by a subsequent redesign.
 
 **Release characterization:** first supported builder release candidate.
 
+**Current M5.5 checkpoint (2026-09-02):** The first working builder-interface
+draft is implemented over the real rules/storage commands. It establishes the
+compact overview, complete level timeline, focused choice pane, temporary
+show-all legality filter, truthful autosave states, responsive desktop/tablet
+foundation, system/light/dark themes, monochrome interface icons, and existing
+4E power-color semantics. Current level and saved future frames now operate as
+separate evaluation/export projections; lowering the visible horizon is a
+non-destructive session view until a dedicated persisted preference is added.
+This checkpoint begins the prototype feedback loop; it does not claim product
+owner approval or close the keyboard, screen-reader, zoom, touch, Safari,
+physical-device, performance, or cross-engine visual-print exit criteria above.
+
 ## M6 — Local phone play mode
 
 ### Goal

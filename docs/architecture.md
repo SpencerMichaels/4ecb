@@ -149,6 +149,19 @@ the record; components do not mutate nested fields directly.
 flattened current build is a derived projection. This is essential for legacy
 export and for explaining how a character reached its current state.
 
+Schema 2's `effectiveLevel` is the current calculated/exported level, while the
+length of `levels` is the highest materialized planning level. The M5.5 builder
+evaluates those projections separately: current overview, diagnostics, sheets,
+and compatibility export use `effectiveLevel`; the planning timeline evaluates
+through the highest saved frame so future decisions remain inspectable and
+editable. Adding a target horizon is one atomic batch that creates every
+intervening frame and restores the prior effective level. Legacy 0.07a export
+projects the build to the effective level, including nested occurrences,
+inventory, and alternates, before serialization and semantic re-import
+comparison. The narrower user-visible horizon is presently a session-only view
+filter; persisting that hidden/expanded preference requires a later schema field
+and is not inferred from or allowed to delete saved frames.
+
 `legacyEnvelope` retains unrecognized XML, attributes, ordering hints, and
 compatibility caches needed for loss-preserving export. Recognized semantic data
 is never read back from this envelope as the normal source of truth.

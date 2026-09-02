@@ -41,6 +41,51 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## M5.5 first builder-interface draft
+
+- The working rules-backed editor now uses the approved hybrid structure: a
+  compact character overview, ordered per-level timeline, and one focused
+  choice pane. Unresolved decisions are prominent, completed selections stay
+  visible in compact form, and a chosen target creates every intervening level
+  in one autosaved transaction without advancing the current effective level.
+- The builder evaluates the current character and the full saved planning
+  timeline as separate projections. Future choices can be inspected and edited
+  out of order without entering current calculations. Lowering **Show plan
+  through** hides levels for the session and never mutates saved frames; a
+  durable separately hidden horizon remains a named schema follow-up rather
+  than being encoded in unrelated character fields.
+- Choice surfaces show valid candidates by default. **Show all options for this
+  choice** is local to the focused choice, exposes evaluator reasons, resets when
+  focus changes, and marks an intentionally selected unavailable candidate as a
+  house rule. The UI adds no popularity or recommendation inference.
+- Autosave now exposes loading, saving, saved, and failure states independently
+  from rules evaluation. Storage failure rolls the in-memory transaction back
+  to the persisted build; undo and redo retain the same commit-before-success
+  contract. The application shell adds system/light/dark theme preference,
+  simple inline monochrome icons, and semantic color tokens preserving the
+  established at-will, encounter, daily, and item mappings.
+- Future planning no longer blocks or contaminates compatibility output. The
+  canonical legacy-export projection trims frames, nested choices, inventory,
+  and alternates above `effectiveLevel`; the library uses that same projection
+  for its post-export semantic re-import gate. The full native record remains
+  unchanged.
+- Production in-app-browser verification on 2026-09-02 used an uncommitted
+  public 11-record synthetic profile. It created and completed a native level-1
+  Human Fighter, planned through level 4 while current level remained 1,
+  selected an objectively unavailable future feat through the temporary
+  show-all mode, exercised autosave/undo/redo and the dark override, and passed
+  regenerated 0.07a semantic re-import with the future plan retained only in
+  the native record. At 900 px and 375 px the builder collapsed to one column
+  with no horizontal overflow; the browser console had no warnings or errors.
+- `nix develop path:. -c bash scripts/check.sh` passes 184 tests across 34 files,
+  formatting, ESLint, all TypeScript projects, the production/PWA build,
+  Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
+  and the query benchmark.
+
+This is a coherent prototype checkpoint, not M5.5 completion. Product-owner
+review and the milestone's comprehensive keyboard, screen-reader, 200% zoom,
+touch, Safari/tablet hardware, performance, and visual-print matrices remain.
+
 ## M5 checkpoints
 
 ### Automated closure boundary and final security review

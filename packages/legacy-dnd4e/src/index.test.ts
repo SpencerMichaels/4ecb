@@ -17,6 +17,7 @@ import {
   importDnd4e,
   legacyEquipmentIdentityMatches,
   legacyPowerValueMatches,
+  projectBuildForLegacyExport,
 } from ".";
 
 function entity(id: string, name: string, type: string): ContentEntity {
@@ -272,26 +273,76 @@ describe("legacy .dnd4e import", () => {
     });
   });
 
-  it("blocks edited export when the evaluation horizon is behind level history", () => {
+  it("exports only the current level while preserving inactive future planning", () => {
     const imported = importDnd4e(
-      `<D20Character game-system="D&amp;D4E"><Level><RulesElement name="1" type="Level" internal-id="L1"/></Level><Level><RulesElement name="2" type="Level" internal-id="L2"/></Level></D20Character>`,
+      `<D20Character game-system="D&amp;D4E"><Level><RulesElement name="1" type="Level" internal-id="L1"/></Level><Level><RulesElement name="2" type="Level" internal-id="L2"><RulesElement name="Future feat" type="Feat" internal-id="FUTURE"/></RulesElement><loot count="1" equip-count="0"><RulesElement name="Future item" type="Gear" internal-id="FUTURE_ITEM"/></loot></Level></D20Character>`,
     );
     const build = { ...imported.build, effectiveLevel: 1 };
-    const content = [entity("L1", "1", "Level"), entity("L2", "2", "Level")];
+    const content = [
+      entity("L1", "1", "Level"),
+      entity("L2", "2", "Level"),
+      entity("FUTURE", "Future feat", "Feat"),
+      entity("FUTURE_ITEM", "Future item", "Gear"),
+    ];
     const evaluation = evaluateCharacter(
       projectBuildForEvaluation(build, content),
       content,
     );
-    expect(() =>
-      exportEditedDnd4e({
-        target: "legacy-builder-0.07a",
-        envelope: imported.envelope,
-        snapshot: imported.snapshot,
-        build,
-        evaluation,
-        content,
-      }),
-    ).toThrow("evaluation horizon to be the latest level");
+    const xml = exportEditedDnd4e({
+      target: "legacy-builder-0.07a",
+      envelope: imported.envelope,
+      snapshot: imported.snapshot,
+      build,
+      evaluation,
+      content,
+    });
+    const reimported = importDnd4e(xml);
+    expect(reimported.build.levels).toHaveLength(1);
+    expect(xml).not.toContain("Future feat");
+    expect(xml).not.toContain("Future item");
+    expect(build.levels).toHaveLength(2);
+    const projectedAlternate = projectBuildForLegacyExport({
+      ...build,
+      alternates: [
+        {
+          id: "active-alternate",
+          selectName: "Prepared",
+          provider: { name: "Provider", type: "Class Feature" },
+          choice: {
+            id: "active-choice",
+            identity: {
+              definitionId: "FUTURE",
+              name: "Active choice",
+              type: "Feat",
+            },
+            acquiredLevel: 1,
+            legality: "rules-legal",
+            unresolved: false,
+            children: [
+              {
+                id: "future-child",
+                identity: {
+                  definitionId: "FUTURE",
+                  name: "Future child",
+                  type: "Feat",
+                },
+                acquiredLevel: 2,
+                legality: "rules-legal",
+                unresolved: false,
+                children: [],
+              },
+            ],
+          },
+        },
+      ],
+    });
+    expect(projectedAlternate.alternates[0]?.choice.children).toEqual([]);
+    expect(
+      compareEditedDnd4eRoundTrip(
+        projectBuildForLegacyExport(build),
+        reimported.build,
+      ),
+    ).toEqual({ equivalent: true, differences: [] });
   });
 
   it("regenerates a native-created record from its minimal compatibility envelope", () => {

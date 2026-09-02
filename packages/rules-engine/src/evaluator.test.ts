@@ -868,6 +868,31 @@ describe("character evaluator", () => {
     );
   });
 
+  it("reports a delayed choice at its rule level instead of its provider level", () => {
+    const result = evaluateCharacter(
+      {
+        level: 7,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "class",
+            definitionId: "CLASS",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("CLASS", "Class", "Class", {
+          rules: [rule("select", { type: "Feat", number: "1", Level: "5" }, 0)],
+        }),
+        entity("FEAT", "Delayed feat", "Feat"),
+      ],
+    );
+    expect(result.choices[0]?.level).toBe(5);
+  });
+
   it("offers original slot candidates for ordinary retraining", () => {
     const result = evaluateCharacter(
       {

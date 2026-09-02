@@ -56,5 +56,26 @@ describe("release accessibility contract", () => {
     expect(styles).toMatch(
       /@media \(max-width: 60rem\)[\s\S]*?\.metadata-form,[\s\S]*?\.sheet-columns[\s\S]*?grid-template-columns: 1fr/,
     );
+    expect(styles).toMatch(
+      /@media \(max-width: 60rem\)[\s\S]*?\.builder-workspace,[\s\S]*?\.builder-secondary,[\s\S]*?grid-template-columns: 1fr/,
+    );
+  });
+
+  it("supports system color preference and explicit light or dark overrides", () => {
+    expect(styles).toContain(':root[data-theme="dark"]');
+    expect(styles).toContain("@media (prefers-color-scheme: dark)");
+    expect(styles).toContain(":root:not([data-theme])");
+    for (const [foreground, background] of [
+      ["#edf2f4", "#111619"],
+      ["#b6c1c6", "#111619"],
+      ["#7fc0db", "#111619"],
+      ["#ff9a88", "#45241f"],
+      ["#f2bc70", "#3d3020"],
+      ["#85ce91", "#1f3b26"],
+    ] as const)
+      expect(
+        contrast(foreground, background),
+        `${foreground} on ${background}`,
+      ).toBeGreaterThanOrEqual(4.5);
   });
 });

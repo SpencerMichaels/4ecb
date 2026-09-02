@@ -18,6 +18,7 @@ import {
   exportDnd4e,
   exportEditedDnd4e,
   importDnd4e,
+  projectBuildForLegacyExport,
   type Dnd4eExportTarget,
   type Dnd4eImportReport,
 } from "@4ecb/legacy-dnd4e";
@@ -377,7 +378,7 @@ export function CharacterLibraryPage({
         });
         const reimported = importDnd4e(xml);
         const comparison = compareEditedDnd4eRoundTrip(
-          character.build,
+          projectBuildForLegacyExport(character.build),
           reimported.build,
         );
         if (!comparison.equivalent)
