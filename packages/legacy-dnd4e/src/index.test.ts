@@ -480,7 +480,8 @@ describe("legacy .dnd4e import", () => {
     const reimported = importDnd4e(xml);
     expect(xml).toContain("<name>Native &lt;Hero&gt; &amp; Co</name>");
     expect(xml).toContain('internal-id="ID_INTERNAL_LEVEL_1"');
-    expect(xml).toContain('<AbilityScores><Strength score="10"');
+    expect(xml).toContain('<AbilityScores><Strength score="8"');
+    expect(reimported.build.baseAbilities.Strength).toBe(8);
     expect(reimported.build.baseAbilities.Dexterity).toBe(10);
     expect(reimported.snapshot.abilities.Dexterity).toBe(10);
     expect(reimported.snapshot.stats.Dexterity).toBe("12");

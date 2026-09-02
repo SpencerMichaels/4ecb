@@ -96,7 +96,7 @@ describe("character records", () => {
       build: {
         effectiveLevel: 1,
         baseAbilities: {
-          Strength: 10,
+          Strength: 8,
           Constitution: 10,
           Dexterity: 10,
           Intelligence: 10,

@@ -13,6 +13,16 @@ Scores**, **Skills**, **Powers**, **Spellbook**, **Feats**, **Replacements**, an
 **Display Options**. The replacement UI may consolidate these panes, but should
 preserve this category order where one screen presents their choices together.
 
+`AbilityScorePage` is point-buy-first even though it also exposes **Auto Pick**,
+**Roll Dice**, and **Use an Array** shortcuts. Its point-buy panel starts from
+`8, 10, 10, 10, 10, 10`, reports **Points Left** out of 22, supplies plus/minus
+buttons and a reset action, and keeps a separate derived-score display so racial
+and later bonuses do not alter the base allocation. The panel describes the
+incremental costs as 1 point when raising a current score of 8–12, 2 points at
+13–15, 3 points at 16, and 4 points at 17. It also permits direct score entry;
+non-point-buy values remain recoverable and are indicated by the house-rule
+icon rather than silently normalized.
+
 Within the legacy choice panes, `ExpanderD20Choice.MakeChecklist` walks each
 page's predefined type list and creates compact `D20ChoiceInfo` rows in that
 order. Clicking a completed checklist row passes its chosen `RulesElement` to

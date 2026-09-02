@@ -306,6 +306,17 @@ when the underlying replacement rule has exactly one candidate and that
 candidate is visible; selecting the replaced occurrence then dispatches that
 exact candidate automatically.
 
+Base ability entry defaults to the legacy 22-point-buy workflow. A new native
+character starts at `8, 10, 10, 10, 10, 10`; the level-1 editor uses compact
+plus/minus steppers, reports points remaining, shows the cost of the next
+increase, and offers an atomic reset to that allocation. The level timeline and
+overview count an allocation with unspent points as unresolved. Exact 22-point
+allocations are complete; overspent, out-of-range, or multiple-low-score arrays
+are retained and displayed as house rules. Direct numeric entry remains
+available for rolled/custom characters, preserving the legacy builder's
+separation between recoverability and legality. Racial and level adjustments
+remain outside these base inputs.
+
 Repeated ability-increase slots from one legacy select rule render as one
 six-ability toggle grid rather than positional dropdowns. The UI preserves the
 two exact underlying occurrences, allows each ability at most once, updates the

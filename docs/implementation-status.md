@@ -152,7 +152,14 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   nor browser-console errors.
 - Base ability scores now live only in the level-1 Ability Scores group, before
   racial increases, and no longer appear as an unrelated editor below the level
-  workspace. A replacement choice with exactly one visible result treats that
+  workspace. The editor now mirrors the legacy 22-point-buy path: new native
+  characters start from `8, 10, 10, 10, 10, 10`, escalating-cost steppers show
+  points remaining and next-increase cost, exact allocations complete the level
+  timeline item, and invalid/custom arrays remain editable with a house-rule
+  status. Live Silaqui verification confirmed her existing standard allocation
+  is recognized as complete, decrementing a score immediately reports the point
+  difference, undo restores it, and the control has no horizontal overflow at
+  374 px. A replacement choice with exactly one visible result treats that
   result as implied: choosing the source to replace dispatches the exact
   replacement immediately and omits the redundant **With** control. Live
   Silaqui verification selected Fading Strike and observed Rapid Shot applied,
@@ -176,7 +183,7 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   detection flattened candidate decisions from every possible replacement
   target. It now evaluates the selected replacement only, correctly recognizing
   the imported Nimble Strike to Fading Strike retraining as rules-legal.
-- `nix develop path:. -c bash scripts/check.sh` passes 206 tests across 35 files,
+- `nix develop path:. -c bash scripts/check.sh` passes 209 tests across 36 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

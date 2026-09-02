@@ -109,9 +109,12 @@ until that revision is restored or a migration is previewed and adopted.
 
 1. To start without the old application, enter a name under **Create a new
    character** and choose **Create and edit**. The record binds to the active
-   pack ID and digest, starts at level 1 with six base scores of 10, and exposes
-   the profile's required Race, Class, Feat, and nested choices through the
-   generic editor.
+   pack ID and digest and starts at level 1 with the legacy point-buy baseline
+   of `8, 10, 10, 10, 10, 10`. Spend the displayed 22 points in **Ability
+   Scores**; the timeline remains unresolved until the exact budget is spent.
+   Direct score entry is available for rolled or custom arrays, which are kept
+   but identified as house rules when they do not satisfy point-buy legality.
+   The profile supplies the remaining required mechanical choices.
 2. To bring in an existing character instead, choose **Import .dnd4e**.
    Character files are limited to 10 MiB. Read the import report; unknown
    extensions remain preserved and warnings are not silently discarded.

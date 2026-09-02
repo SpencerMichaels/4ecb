@@ -19,8 +19,11 @@ import {
 } from "@4ecb/character-domain";
 import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
 import {
+  ABILITY_SCORE_NAMES,
+  assessAbilityPointBuy,
   commandForEvaluatedChoice,
   findBuildChildIndex,
+  pointBuyCostToRaise,
   projectBuildForEvaluation,
   type CandidateDecision,
   type EvaluatedCharacter,
@@ -249,6 +252,23 @@ function BaseAbilityScoreEditor({
   readonly build: CharacterRecord["build"];
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
+  const assessment = assessAbilityPointBuy(build.baseAbilities);
+  const pointStatus = assessment.legal
+    ? "Point buy complete"
+    : assessment.reason === "missing"
+      ? "Ability scores incomplete"
+      : assessment.reason !== undefined ||
+          (assessment.remaining !== undefined && assessment.remaining < 0)
+        ? "Custom scores · House rule"
+        : `${assessment.remaining ?? 22} ${assessment.remaining === 1 ? "point" : "points"} left`;
+  const resetCommands: CharacterCommand = {
+    kind: "batch",
+    commands: ABILITY_SCORE_NAMES.map((ability, index) => ({
+      kind: "set-base-ability" as const,
+      ability,
+      value: index === 0 ? 8 : 10,
+    })),
+  };
   return (
     <section
       className="level-choice-section base-ability-choice"
@@ -256,33 +276,91 @@ function BaseAbilityScoreEditor({
     >
       <header>
         <div>
-          <p className="eyebrow">Starting scores</p>
-          <h5 id="base-abilities">Choose base ability scores</h5>
+          <h5 id="base-abilities">Point buy</h5>
+          <p className="field-help">Scores shown before racial increases</p>
         </div>
-        <span className="choice-count">Before racial increases</span>
+        <span
+          className={
+            assessment.legal
+              ? "complete-badge"
+              : assessment.complete
+                ? "attention-badge"
+                : "choice-count"
+          }
+        >
+          {pointStatus}
+        </span>
       </header>
       <div className="ability-editor">
-        {[
-          "Strength",
-          "Constitution",
-          "Dexterity",
-          "Intelligence",
-          "Wisdom",
-          "Charisma",
-        ].map((ability) => (
-          <label key={ability}>
-            {ability}
-            <CommitNumberInput
-              value={build.baseAbilities[ability] ?? 10}
-              min={1}
-              max={30}
-              onCommit={(value) =>
-                onDispatch({ kind: "set-base-ability", ability, value })
-              }
-            />
-          </label>
-        ))}
+        {ABILITY_SCORE_NAMES.map((ability) => {
+          const value = build.baseAbilities[ability] ?? 10;
+          const raiseCost = pointBuyCostToRaise(value);
+          return (
+            <div className="ability-point-buy-row" key={ability}>
+              <span className="ability-name">{ability}</span>
+              <div className="ability-stepper">
+                <button
+                  aria-label={`Decrease ${ability}`}
+                  disabled={value <= 8}
+                  type="button"
+                  onClick={() =>
+                    onDispatch({
+                      kind: "set-base-ability",
+                      ability,
+                      value: value - 1,
+                    })
+                  }
+                >
+                  −
+                </button>
+                <CommitNumberInput
+                  label={ability}
+                  value={value}
+                  min={1}
+                  max={30}
+                  onCommit={(next) =>
+                    onDispatch({
+                      kind: "set-base-ability",
+                      ability,
+                      value: next,
+                    })
+                  }
+                />
+                <button
+                  aria-label={`Increase ${ability}`}
+                  disabled={value >= 18}
+                  type="button"
+                  onClick={() =>
+                    onDispatch({
+                      kind: "set-base-ability",
+                      ability,
+                      value: value + 1,
+                    })
+                  }
+                >
+                  +
+                </button>
+              </div>
+              <small>
+                {raiseCost === undefined
+                  ? value > 18
+                    ? "Outside point-buy range"
+                    : "Maximum"
+                  : `Next +1: ${raiseCost} ${raiseCost === 1 ? "point" : "points"}`}
+              </small>
+            </div>
+          );
+        })}
       </div>
+      <footer className="ability-point-buy-footer">
+        <p>
+          Raising 8–12 costs 1 point; 13–15 costs 2; 16 costs 3; and 17 costs 4.
+          Only one score may start below 10.
+        </p>
+        <button type="button" onClick={() => onDispatch(resetCommands)}>
+          Reset point buy
+        </button>
+      </footer>
     </section>
   );
 }
@@ -2313,11 +2391,17 @@ export function CharacterEditorPage({
   const role = selectedClass?.specifics.find(
     (specific) => specific.name.toLocaleLowerCase() === "role",
   )?.value;
+  const abilityPointBuy = assessAbilityPointBuy(build.baseAbilities);
+  const abilityScoresIncomplete = !abilityPointBuy.complete;
+  const abilityScoresHouseRuled =
+    abilityPointBuy.complete && !abilityPointBuy.legal;
   const unresolvedCount =
-    mechanicalLevelChoices.filter(isUnresolvedChoice).length;
-  const totalUnresolved = (planningEvaluation?.choices ?? []).filter(
-    (choice) => isUnresolvedChoice(choice) && choice.level <= visibleHorizon,
-  ).length;
+    mechanicalLevelChoices.filter(isUnresolvedChoice).length +
+    (selectedLevel === 1 && abilityScoresIncomplete ? 1 : 0);
+  const totalUnresolved =
+    (planningEvaluation?.choices ?? []).filter(
+      (choice) => isUnresolvedChoice(choice) && choice.level <= visibleHorizon,
+    ).length + (visibleHorizon >= 1 && abilityScoresIncomplete ? 1 : 0);
   const diagnosticWarningCount =
     planningEvaluation?.diagnostics.filter(
       (diagnostic) => diagnostic.severity !== "info",
@@ -2338,12 +2422,14 @@ export function CharacterEditorPage({
     diagnosticWarningCount,
     plannedHouseRuleCount,
     plannedChoiceWarningCount,
+    abilityScoresHouseRuled ? 1 : 0,
   );
   const selectedLevelHasWarning =
     planningEvaluation !== undefined &&
-    mechanicalLevelChoices.some((choice) =>
+    (mechanicalLevelChoices.some((choice) =>
       selectedChoiceHasWarning(choice, planningEvaluation),
-    );
+    ) ||
+      (selectedLevel === 1 && abilityScoresHouseRuled));
 
   const renderPrimaryChoice = (choice: EvaluatedChoice) => {
     if (planningEvaluation === undefined) return null;
@@ -2741,10 +2827,13 @@ export function CharacterEditorPage({
                 return [{ label: choiceTitle(choice), choices: [choice] }];
               });
               const unresolved =
-                timelineChoices.filter(isUnresolvedChoice).length;
-              const choiceWarnings = timelineChoices.filter((choice) =>
-                selectedChoiceHasWarning(choice, planningEvaluation!),
-              ).length;
+                timelineChoices.filter(isUnresolvedChoice).length +
+                (frame.level === 1 && abilityScoresIncomplete ? 1 : 0);
+              const choiceWarnings =
+                timelineChoices.filter((choice) =>
+                  selectedChoiceHasWarning(choice, planningEvaluation!),
+                ).length +
+                (frame.level === 1 && abilityScoresHouseRuled ? 1 : 0);
               return (
                 <li
                   className={
@@ -2777,10 +2866,44 @@ export function CharacterEditorPage({
                           : "Complete"}
                     </strong>
                   </button>
-                  {timelineChoices.length === 0 ? (
+                  {timelineChoices.length === 0 && frame.level !== 1 ? (
                     <p className="timeline-empty">No decisions at this level</p>
                   ) : (
                     <ul className="timeline-choices">
+                      {frame.level === 1 ? (
+                        <li>
+                          <button
+                            className={
+                              abilityScoresIncomplete
+                                ? "choice-unresolved"
+                                : abilityScoresHouseRuled
+                                  ? "choice-warning"
+                                  : "choice-complete"
+                            }
+                            type="button"
+                            onClick={() => {
+                              setSelectedLevel(1);
+                              requestAnimationFrame(() => {
+                                document
+                                  .getElementById("base-abilities")
+                                  ?.scrollIntoView({ block: "start" });
+                              });
+                            }}
+                          >
+                            <Icon
+                              name={abilityPointBuy.legal ? "check" : "warning"}
+                            />
+                            <span>
+                              Ability Scores ·{" "}
+                              {abilityPointBuy.legal
+                                ? "Point buy complete"
+                                : abilityScoresHouseRuled
+                                  ? "House rule"
+                                  : `${abilityPointBuy.remaining ?? 22} ${abilityPointBuy.remaining === 1 ? "point" : "points"} left`}
+                            </span>
+                          </button>
+                        </li>
+                      ) : null}
                       {summaries.map((summary) => {
                         const summaryUnresolved =
                           summary.choices.filter(isUnresolvedChoice).length;

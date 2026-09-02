@@ -103,6 +103,20 @@ The standard modifier is floor((score − 10) / 2), including correct floor beha
 for values below 10. Point-buy validation and automatic arrays are engine behavior,
 not mere form validation.
 
+The exact native `AbilityCost` table for scores 8 through 18 is
+`0, 1, 2, 3, 4, 5, 7, 9, 11, 14, 18`. `TotalCost` sums those values and subtracts
+10, which makes `8, 10, 10, 10, 10, 10` the zero-spend starting allocation. It
+returns invalid for a score outside 8–18 or when more than one score is below
+10. `LegalAbilityScores` accepts a nonblank allocation only when `TotalCost` is
+exactly 22; it does not reject or rewrite an invalid allocation. The familiar
+standard array `16, 14, 13, 12, 11, 10` therefore costs exactly 22 points.
+
+`AbilityScorePage.ScoresComplete` and the house-rule indicator demonstrate that
+completeness and point-buy legality are distinct: an explicitly entered rolled
+or custom array may be complete while remaining house-ruled. Racial bonuses and
+level increases operate on derived scores/contributions, while `score_base` is
+the point-buy input serialized in `CharacterSheet/AbilityScores`.
+
 ## Stats and explanations
 
 Each stat stores aliases and a list of contributions with provider, type,

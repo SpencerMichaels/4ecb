@@ -1,3 +1,4 @@
+export * from "./ability-scores";
 export * from "./build-projection";
 export * from "./equipment";
 export * from "./evaluator";

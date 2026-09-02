@@ -472,7 +472,7 @@ export function newCharacterRecord(
 }
 
 const NATIVE_BASE_ABILITIES = {
-  Strength: 10,
+  Strength: 8,
   Constitution: 10,
   Dexterity: 10,
   Intelligence: 10,
