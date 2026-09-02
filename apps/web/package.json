@@ -19,6 +19,7 @@
     "@4ecb/query-engine": "workspace:*",
     "@4ecb/rules-engine": "workspace:*",
     "@4ecb/sheet-model": "workspace:*",
+    "lucide-react": "^1.39.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "workbox-window": "7.4.1"

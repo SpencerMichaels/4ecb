@@ -9,6 +9,7 @@ import type { EvaluatedCharacter } from "@4ecb/rules-engine";
 
 import {
   candidateReason,
+  choicePresentationLabel,
   choiceForRepeatedCandidate,
   choicesAtLevel,
   groupDependentChoiceFlows,
@@ -16,6 +17,7 @@ import {
   groupChoicesByLegacyWorkflow,
   groupParameterizedCandidates,
   groupRepeatedChoiceSlots,
+  identityChoiceLabel,
   isCandidateVisible,
   isCharacterDetailChoice,
   isOptionalRetrainingChoice,
@@ -67,6 +69,25 @@ const build: CharacterBuild = {
 };
 
 describe("builder planning UI", () => {
+  it("uses concise player-facing labels in the level timeline", () => {
+    expect(choicePresentationLabel("Choose Class Feature")).toBe(
+      "Class Feature",
+    );
+    expect(choicePresentationLabel("Choose Background Choice")).toBe(
+      "Background",
+    );
+    expect(choicePresentationLabel("Power Encounter 1")).toBe(
+      "Encounter Power",
+    );
+    expect(choicePresentationLabel("Power Utility 6")).toBe("Utility Power");
+    expect(choicePresentationLabel("Choose Ability Increase (Level 8)")).toBe(
+      "Ability Score Increase",
+    );
+    expect(identityChoiceLabel("Class")).toBe("Class");
+    expect(identityChoiceLabel("Race")).toBe("Race");
+    expect(identityChoiceLabel("Class Feature")).toBeUndefined();
+  });
+
   it("groups large parenthetical families without changing exact candidates", () => {
     const candidates = [
       "GREATBOW",

@@ -342,9 +342,16 @@ uses the recovered PHB navy `#1D3D5D`, neutral `#DEDCCB`, SteelBlue selection
 cue `#4682B4`, cool ice canvas, and cream detail surface. A derived dark palette
 keeps those semantic identities while lifting their visible accents for
 contrast. Dense square-edged groups, full-width category bars, dividers, and a
-persistent information pane replace rounded floating-card chrome. Small
-original monochrome SVGs accompany text for entity families and status; emoji
-and proprietary legacy raster/logo assets are excluded. System UI type remains
+persistent information pane replace rounded floating-card chrome. Tree-shaken
+Lucide SVG components provide a consistent open-source monochrome icon set for
+entity families and status; emoji, private-use icon-font glyphs, and proprietary
+legacy raster/logo assets are excluded. Completed timeline choices color their
+single category icon while unresolved choices leave it muted; a redundant
+checkmark is not added. Player-facing choice titles remove evaluator phrasing
+such as `Choose` and reorder internal names such as `Power Encounter 1` to
+`Encounter Power` within an already level-scoped list. Positive `Rules-legal`
+badges are omitted; only unavailable options and actual house rules receive a
+legality marker. System UI type remains
 the control/body default, with the recovered Goudy Old Style role represented
 by a conservative old-style serif stack only for app and page identity. The
 evidence and confidence boundary are recorded in

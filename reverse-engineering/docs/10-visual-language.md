@@ -216,6 +216,8 @@ alone: expose an accessible text equivalent such as “Close blast 3.”
   inherit `currentColor`; semantic context supplies the hue.
 - Prefer a small, consistent open-licensed subset (for example Font Awesome
   Free or another bundled SVG set) and add purpose-built blast/burst glyphs.
+  The web implementation uses tree-shaken Lucide React components for the
+  general-purpose subset; attack-area glyphs remain a future specialized set.
   Nerd Font code points are acceptable only if the corresponding font is
   reliably bundled; missing private-use glyphs are otherwise brittle.
 - Preserve the silhouettes and meaning, not the legacy pixels. The extracted
@@ -417,4 +419,3 @@ A first theme pass should be considered faithful when:
    display accents;
 7. focus, selected, invalid, unavailable, and house-rule states remain
    distinguishable without color alone and meet automated contrast checks.
-

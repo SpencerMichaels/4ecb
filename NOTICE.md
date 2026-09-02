@@ -12,3 +12,9 @@ selected browser profile unless the user explicitly exports or transfers them.
 
 The synthetic fixtures in this repository are original test data. This notice is
 an engineering and distribution boundary, not legal advice.
+
+## Third-party interface assets
+
+General-purpose interface icons are provided by Lucide through `lucide-react`
+under the ISC license. Only the components imported by the web application are
+included in production bundles. See <https://lucide.dev>.

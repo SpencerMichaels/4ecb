@@ -46,6 +46,32 @@ export function isCharacterDetailChoice(choice: EvaluatedChoice): boolean {
   );
 }
 
+export function choicePresentationLabel(label: string): string {
+  const concise = label.trim().replace(/^Choose\s+/i, "");
+  const power = /^Power\s+(At-Will|Encounter|Daily|Utility)(?:\s+\d+)?$/i.exec(
+    concise,
+  );
+  if (power !== null) {
+    const usage = power[1]!.toLocaleLowerCase();
+    const displayUsage =
+      usage === "at-will"
+        ? "At-Will"
+        : `${usage[0]!.toLocaleUpperCase()}${usage.slice(1)}`;
+    return `${displayUsage} Power`;
+  }
+  if (/^Ability Increase(?:\s*\(Level\s+\d+\))?$/i.test(concise))
+    return "Ability Score Increase";
+  return concise.replace(/\s+Choice$/i, "");
+}
+
+export function identityChoiceLabel(type: string): string | undefined {
+  return ["class", "hybrid class", "race"].includes(
+    type.trim().toLocaleLowerCase(),
+  )
+    ? choicePresentationLabel(type)
+    : undefined;
+}
+
 export function selectedChoiceHasWarning(
   choice: EvaluatedChoice,
   evaluation: EvaluatedCharacter,

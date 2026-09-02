@@ -32,6 +32,7 @@ import {
 
 import {
   candidateReason,
+  choicePresentationLabel,
   choiceForRepeatedCandidate,
   choicesAtLevel,
   groupChoicesByLegacyWorkflow,
@@ -39,6 +40,7 @@ import {
   groupDependentChoiceFlows,
   groupParameterizedCandidates,
   groupRepeatedChoiceSlots,
+  identityChoiceLabel,
   isCandidateVisible,
   isCharacterDetailChoice,
   isOptionalRetrainingChoice,
@@ -167,7 +169,15 @@ function selectedOccurrence(
 }
 
 function choiceTitle(choice: EvaluatedChoice): string {
-  return choice.name || `Choose ${choice.type}`;
+  return choicePresentationLabel(choice.name || choice.type);
+}
+
+function timelineChoiceTitle(choice: EvaluatedChoice): string {
+  const identityLabel = identityChoiceLabel(choice.type);
+  if (identityLabel !== undefined) return identityLabel;
+  return ["Class", "Race", "Background"].includes(legacyChoiceSection(choice))
+    ? choicePresentationLabel(choice.type)
+    : choiceTitle(choice);
 }
 
 function choiceSectionIcon(section: string): IconName {
@@ -230,13 +240,9 @@ function CandidateDetail({
           </p>
           <h4 id={headingId}>{entity.name}</h4>
         </div>
-        <span
-          className={
-            candidate.eligible ? "candidate-legal" : "candidate-unavailable"
-          }
-        >
-          {candidate.eligible ? "Rules-legal" : "Unavailable"}
-        </span>
+        {candidate.eligible ? null : (
+          <span className="candidate-unavailable">Unavailable</span>
+        )}
       </header>
       {candidate.eligible ? null : (
         <p className="candidate-reason">{candidateReason(candidate.reasons)}</p>
@@ -2812,6 +2818,7 @@ export function CharacterEditorPage({
                 ),
               );
               const summaries = orderedTimelineChoices.flatMap((choice) => {
+                const identityLabel = identityChoiceLabel(choice.type);
                 if (grouped.backgrounds.includes(choice))
                   return choice === grouped.backgrounds[0]
                     ? [
@@ -2833,7 +2840,12 @@ export function CharacterEditorPage({
                 const repeated = repeatedByChoiceId.get(choice.id);
                 if (repeated !== undefined)
                   return choice === repeated[0]
-                    ? [{ label: choiceTitle(choice), choices: repeated }]
+                    ? [
+                        {
+                          label: timelineChoiceTitle(choice),
+                          choices: repeated,
+                        },
+                      ]
                     : [];
                 const flow = flowByChoiceId.get(choice.id);
                 if (flow !== undefined)
@@ -2841,24 +2853,31 @@ export function CharacterEditorPage({
                     ? [
                         {
                           label:
-                            flow.length > 1
-                              ? selectedDefinitionId(
-                                  choice,
-                                  planningEvaluation!,
-                                ) === undefined
-                                ? choiceTitle(choice)
-                                : (byId.get(
-                                    selectedDefinitionId(
-                                      choice,
-                                      planningEvaluation!,
-                                    )!.toLocaleLowerCase(),
-                                  )?.name ?? choiceTitle(choice))
-                              : choiceTitle(choice),
+                            identityLabel !== undefined
+                              ? identityLabel
+                              : flow.length > 1
+                                ? selectedDefinitionId(
+                                    choice,
+                                    planningEvaluation!,
+                                  ) === undefined
+                                  ? timelineChoiceTitle(choice)
+                                  : (byId.get(
+                                      selectedDefinitionId(
+                                        choice,
+                                        planningEvaluation!,
+                                      )!.toLocaleLowerCase(),
+                                    )?.name ?? timelineChoiceTitle(choice))
+                                : timelineChoiceTitle(choice),
                           choices: flow,
                         },
                       ]
                     : [];
-                return [{ label: choiceTitle(choice), choices: [choice] }];
+                return [
+                  {
+                    label: timelineChoiceTitle(choice),
+                    choices: [choice],
+                  },
+                ];
               });
               const unresolved =
                 timelineChoices.filter(isUnresolvedChoice).length +
@@ -2989,11 +3008,6 @@ export function CharacterEditorPage({
                                 });
                               }}
                             >
-                              {summaryUnresolved > 0 || summaryWarning ? (
-                                <Icon name="warning" />
-                              ) : (
-                                <Icon name="check" />
-                              )}
                               <span>
                                 <Icon
                                   name={choiceSectionIcon(

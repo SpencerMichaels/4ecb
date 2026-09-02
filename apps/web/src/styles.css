@@ -1779,7 +1779,7 @@ textarea {
 }
 
 .choice-unresolved .icon {
-  color: var(--warning);
+  color: var(--muted);
 }
 
 .choice-complete {
@@ -2384,18 +2384,12 @@ textarea {
   padding-top: 0.85rem;
 }
 
-.candidate-legal,
 .candidate-unavailable {
   border-left: 3px solid currentColor;
   flex: 0 0 auto;
   font-size: 0.7rem;
   font-weight: 800;
   padding: 0.25rem 0.5rem;
-}
-
-.candidate-legal {
-  background: var(--success-soft);
-  color: var(--success);
 }
 
 .candidate-unavailable {
