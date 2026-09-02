@@ -203,6 +203,17 @@ Templates do not fork character data, rules evaluation, or content-profile
 bindings. A new template is therefore presentation work with its own print
 regression fixtures, not a new character format.
 
+### D025 — Current level and planned build horizon are distinct
+
+A character has a current effective level and may retain planned selections at
+higher levels. Future selections remain editable and survive planning-horizon
+changes, but do not contribute to current evaluation, sheets, or compatibility
+exports until their level becomes active. Lowering the planning horizon hides
+rather than destroys retained future work. Character commands autosave after
+their transactional storage commit and remain undoable; the interface exposes
+truthful saving, saved, and failure states instead of relying on an explicit
+Save action.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

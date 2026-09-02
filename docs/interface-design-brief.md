@@ -40,6 +40,11 @@ application's protected visual assets.
   immediately and present its unresolved decisions. Include every level through
   the target: unresolved items are prominent, completed levels remain visible in
   a compact form, and future choices may be inspected out of order.
+- Distinguish the character's current effective level from the build-planning
+  horizon. Choices above the current level are preserved, visible, and editable
+  so a player can plan many levels ahead, but they are inactive in current
+  calculations and compatibility exports. Lowering the planning horizon hides
+  rather than deletes preserved future choices; raising it restores them.
 - Show valid choices by default. Each selection surface provides a temporary
   control that reveals all options, including illegal or currently unavailable
   choices, with the objective reason for their status. Do not persist this mode
@@ -57,6 +62,9 @@ application's protected visual assets.
   count.
 - Keep important evaluation, save, and validation feedback immediate and
   comprehensible. Interaction responsiveness is a product requirement.
+- Autosave every committed character change. Show concise saving, saved, and
+  failure states without interrupting ordinary work, retain transactional undo
+  and redo, and never imply persistence before the storage commit succeeds.
 
 ## Character-sheet templates
 
