@@ -4,6 +4,16 @@ import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   plugins: [
+    {
+      name: "development-style-csp",
+      apply: "serve",
+      transformIndexHtml(html) {
+        return html.replace(
+          "style-src 'self';",
+          "style-src 'self' 'unsafe-inline';",
+        );
+      },
+    },
     react(),
     VitePWA({
       injectRegister: "auto",
