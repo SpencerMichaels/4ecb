@@ -120,8 +120,9 @@ budgets remain active during M5.
       application matrix. The executable/config/cache paths, direct-open
       argument contract, three-candidate regeneration commands, and manual
       observation fields are recorded in `docs/legacy-builder-launch-matrix.md`.
-      The 2026-09-01 host had no project-local Wine/Xvfb/.NET Framework runtime,
-      so all original-application rows remain explicitly unexecuted.
+      A manual Hu open exposed and now locally fixes a self-closing empty
+      `textstring` incompatibility; the corrected candidate still requires
+      original-application open/save/reopen retest.
 - [x] Close the named M4 native exception and private exact-profile parity
       boundary without reclassifying cross-profile diagnostics as goldens. The
       fixed-output slice covers Bond of Censure and three exact ongoing-10 hit

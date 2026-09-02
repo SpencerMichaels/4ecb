@@ -109,10 +109,10 @@ function attributes(
 function element(
   name: string,
   values: Readonly<Record<string, string | number | undefined>> = {},
-  contents = "",
+  contents?: string,
 ): string {
   const attrs = attributes(values);
-  return contents.length === 0
+  return contents === undefined
     ? `<${name}${attrs}/>`
     : `<${name}${attrs}>${contents}</${name}>`;
 }

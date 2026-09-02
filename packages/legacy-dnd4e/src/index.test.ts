@@ -157,7 +157,7 @@ describe("legacy .dnd4e import", () => {
     const build = {
       ...imported.build,
       baseAbilities: { ...imported.build.baseAbilities, Strength: 18 },
-      textStrings: { NOTE: "new & safe" },
+      textStrings: { NOTE: "new & safe", EMPTY: "" },
       inventory: imported.build.inventory.map((entry) => ({
         ...entry,
         name: "Edited bag",
@@ -189,6 +189,10 @@ describe("legacy .dnd4e import", () => {
 
     expect(xml).toContain('Version="0.07a"');
     expect(xml).toContain('vendor="kept"');
+    expect(xml).toContain('<textstring name="EMPTY"></textstring>');
+    expect(xml).not.toMatch(
+      /<(?:textstring|specific|AttackBonus|Damage|AttackStat|Defense)\b[^>]*\/>/,
+    );
     expect(xml).toContain(
       '<D20CampaignSetting><Secret value="private &amp; exact"/></D20CampaignSetting>',
     );

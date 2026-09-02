@@ -74,11 +74,11 @@ CharacterBuilder\CharacterBuilder.exe <absolute-character-path>
 
 ## Observed matrix — 2026-09-01
 
-| Candidate                                  | Provenance                                        | Regeneration evidence                                                                                      | Original application result    |
-| ------------------------------------------ | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| `public-synthetic-structural-edited.dnd4e` | Public structural fixture + public synthetic pack | Converged but incomplete/illegal with five retained missing-content diagnostics; semantic re-import passed | Not run: no compatible runtime |
-| `imported-hu-level-8-edited.dnd4e`         | Ignored imported character + exact private pack   | Level 8 converged and complete; semantic re-import passed; two legality diagnostics retained               | Not run: no compatible runtime |
-| `native-level-1-edited.dnd4e`              | Ignored native exact-profile audit                | Complete, legal, converged, zero diagnostics; 14 choices; one equipped item; semantic re-import passed     | Not run: no compatible runtime |
+| Candidate                                  | Provenance                                        | Regeneration evidence                                                                                                                        | Original application result                                                                                          |
+| ------------------------------------------ | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `public-synthetic-structural-edited.dnd4e` | Public structural fixture + public synthetic pack | Converged but incomplete/illegal with five retained missing-content diagnostics; semantic re-import passed                                   | Not run: no compatible runtime                                                                                       |
+| `imported-hu-level-8-edited.dnd4e`         | Ignored imported character + exact private pack   | Level 8 converged and complete; semantic re-import passed; two legality diagnostics retained; empty body-required leaves now use paired tags | Failed before window: `tag 'textstring' missing a body` at line 63 column 42. Corrected export awaits manual retest. |
+| `native-level-1-edited.dnd4e`              | Ignored native exact-profile audit                | Complete, legal, converged, zero diagnostics; 14 choices; one equipped item; semantic re-import passed                                       | Not run: no compatible runtime                                                                                       |
 
 This checkout's root and reverse-engineering Nix shells contain no Wine, Xvfb,
 Winetricks, or Microsoft .NET Framework runtime. No project-local Wine prefix or
@@ -87,4 +87,10 @@ Nix store. Therefore the original application was not launched here. Adding a
 new Wine/.NET acquisition path would expand the declared toolchain and still
 would not truthfully establish WPF compatibility without the Microsoft runtime.
 The release criterion remains open until the procedure above records actual UI
-results on a prepared compatibility host.
+results on a prepared compatibility host. A manual Hu attempt subsequently
+proved that the original parser rejects self-closing `textstring` elements even
+though the modern semantic importer accepted them. The serializer now emits
+paired start/end tags whenever a text-valued element was explicitly requested,
+including empty `textstring`, `specific`, and power-stat leaves. The corrected
+Hu candidate passes structural and semantic regeneration locally but has not yet
+been reopened in the original application.

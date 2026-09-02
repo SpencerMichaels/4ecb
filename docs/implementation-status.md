@@ -13,6 +13,10 @@ the interface is designed with the product owner. The installable PWA, update/of
 UX, content onboarding, public-distribution boundary, production Docker guide,
 and authoritative exact-profile browser sheet are verified checkpoints. A final
 MVP declaration still requires the manual legacy-builder matrix.
+The first manual Hu attempt failed before opening because regenerated empty
+`textstring` values self-closed; the legacy parser requires an explicit body.
+Body-required leaves now serialize as paired tags and pass the strengthened
+structural/semantic gate, but the corrected export still awaits manual retest.
 
 ## M5 checkpoints
 
