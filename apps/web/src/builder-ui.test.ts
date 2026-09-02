@@ -17,6 +17,7 @@ import {
   groupParameterizedCandidates,
   groupRepeatedChoiceSlots,
   isCandidateVisible,
+  isCharacterDetailChoice,
   isOptionalRetrainingChoice,
   planningHorizonCommand,
   selectedChoiceHasWarning,
@@ -242,6 +243,21 @@ describe("builder planning UI", () => {
       "skill-2",
     ]);
     expect(grouped.ordinary.map(({ id }) => id)).toEqual(["race", "feat"]);
+  });
+
+  it("separates non-level character details from mechanical choices", () => {
+    expect(
+      ["Gender", "Alignment", "Deity"].map((type) =>
+        isCharacterDetailChoice({
+          type,
+        } as EvaluatedCharacter["choices"][number]),
+      ),
+    ).toEqual([true, true, true]);
+    expect(
+      isCharacterDetailChoice({
+        type: "Race",
+      } as EvaluatedCharacter["choices"][number]),
+    ).toBe(false);
   });
 
   it("presents first-level choices in the legacy builder workflow order", () => {

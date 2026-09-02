@@ -1444,11 +1444,44 @@ textarea {
   background: rgb(138 45 29 / 45%);
 }
 
+.builder-tabs {
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.builder-tabs button {
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  color: var(--muted);
+  margin-bottom: -1px;
+  padding: 0.65rem 0.9rem;
+}
+
+.builder-tabs button[aria-selected="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+.tab-attention {
+  color: var(--warning);
+  font-size: 0.7rem;
+  margin-left: 0.45rem;
+}
+
 .builder-workspace {
   align-items: start;
   display: grid;
   gap: 1rem;
   grid-template-columns: minmax(19rem, 25rem) minmax(28rem, 1fr);
+}
+
+.builder-workspace[hidden],
+.modern-builder > div[hidden] {
+  display: none;
 }
 
 .build-timeline,
@@ -1648,6 +1681,28 @@ textarea {
   min-width: 0;
   position: sticky;
   top: 1rem;
+}
+
+.character-details-pane {
+  min-height: 24rem;
+}
+
+.compact-detail-list {
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  overflow: hidden;
+}
+
+.compact-detail-row {
+  padding: 0.75rem 0.8rem;
+}
+
+.compact-detail-row + .compact-detail-row {
+  border-top: 1px solid var(--border);
+}
+
+.compact-detail-row .choice-editor-fields {
+  gap: 0;
 }
 
 .legacy-choice-group {

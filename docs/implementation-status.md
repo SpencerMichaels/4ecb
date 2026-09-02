@@ -133,16 +133,23 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   summaries; existing retraining remains visible as completed history. Live
   Silaqui verification confirmed the unused level-5 actions, category-filtered
   Power editor and cancellation, and her saved level-6 Power retraining.
-- The selected-level workspace now follows the legacy builder's recovered pane
-  order: Class, Race, Background, Ability Scores, Skills, Powers, Spellbook,
-  Feats, then consolidated Character Details. Gender, alignment, and deity are
-  compact rows in that one details group rather than unrelated full cards.
+- The selected-level workspace now follows the legacy builder's recovered
+  mechanical pane order: Class, Race, Background, Ability Scores, Skills,
+  Powers, Spellbook, and Feats. Gender, alignment, and deity live outside the
+  level timeline in a sibling Character details tab, matching the legacy
+  builder's Build/Details separation, and render as compact labeled rows rather
+  than unrelated full cards.
   Choice controls occupy one ordered middle list and update a single sticky
   detail viewer; no per-choice detail cards remain mounted. Single decisions no
   longer inherit the numbered progressive-flow chrome reserved for genuinely
   dependent multi-step choices. Live Silaqui verification confirmed the
   first-level group/row order, click-to-inspect Alignment details, one mounted
   detail viewer, no inline duplicates, and no horizontal overflow.
+- Live Silaqui verification confirmed that level 1 and its timeline contain no
+  identity choices, Character details orders Gender, Alignment, and Deity as
+  three direct label/control rows with no nested headings, switching tabs hides
+  the build workspace, and the 374 px viewport has neither horizontal overflow
+  nor browser-console errors.
 - Base ability scores now live only in the level-1 Ability Scores group, before
   racial increases, and no longer appear as an unrelated editor below the level
   workspace. A replacement choice with exactly one visible result treats that

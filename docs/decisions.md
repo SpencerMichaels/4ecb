@@ -289,13 +289,16 @@ their owning progressive flow. The unavailable-choice filter is shared by the
 selected level, and compact mechanical choices may omit a non-informative
 candidate detail pane.
 
-Selected-level choices use the legacy builder's creation-pane category order
-as a presentation convention: Class, Race, Background, Ability Scores, Skills,
-Powers, Spellbook, Feats, and consolidated Character Details. This does not
-change provider ownership, rule order, or serialization. Each category contains
-compact controls and the workspace owns one focus-driven detail viewer, matching
-the legacy checklist/`InfoViewer` relationship without reproducing its modal
-wizard navigation. Numbered step chrome is limited to actual dependent flows.
+Selected-level choices use the legacy builder's mechanical creation-pane
+category order as a presentation convention: Class, Race, Background, Ability
+Scores, Skills, Powers, Spellbook, and Feats. Gender, alignment, and deity are
+excluded from levels and the level timeline and live in a sibling Character
+details tab. This does not change provider ownership, rule order, or
+serialization. Each category contains compact controls and the workspace owns
+one focus-driven detail viewer, matching the legacy checklist/`InfoViewer`
+relationship without reproducing its modal wizard navigation. Numbered step
+chrome is limited to actual dependent flows; simple detail choices render as
+one label and one control.
 Base ability scores are part of the level-1 Ability Scores presentation even
 though they remain scalar fields in the native build rather than evaluated
 choice occurrences. Replacement choices suppress their result selector only

@@ -40,6 +40,12 @@ export function isOptionalRetrainingChoice(choice: EvaluatedChoice): boolean {
   );
 }
 
+export function isCharacterDetailChoice(choice: EvaluatedChoice): boolean {
+  return ["gender", "alignment", "deity"].includes(
+    choice.type.trim().toLocaleLowerCase(),
+  );
+}
+
 export function selectedChoiceHasWarning(
   choice: EvaluatedChoice,
   evaluation: EvaluatedCharacter,

@@ -37,6 +37,7 @@ import {
   groupParameterizedCandidates,
   groupRepeatedChoiceSlots,
   isCandidateVisible,
+  isCharacterDetailChoice,
   isOptionalRetrainingChoice,
   isUnresolvedChoice,
   planningHorizonCommand,
@@ -575,6 +576,7 @@ function ChoiceEditor({
   byId,
   disabled,
   compact = false,
+  selectionLabel = "Selection",
   replacementTargetType,
   rollbackRevision,
   onDispatch,
@@ -586,6 +588,7 @@ function ChoiceEditor({
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly disabled: boolean;
   readonly compact?: boolean;
+  readonly selectionLabel?: string;
   readonly replacementTargetType?: string;
   readonly rollbackRevision: number;
   readonly onDispatch: (command: CharacterCommand) => void;
@@ -823,7 +826,7 @@ function ChoiceEditor({
           </>
         ) : (
           <label>
-            Selection
+            {selectionLabel}
             <select
               disabled={editorDisabled}
               value={selectedValue}
@@ -1536,6 +1539,71 @@ function SkillTrainingEditor({
   );
 }
 
+function CharacterDetailsEditor({
+  choices,
+  evaluation,
+  build,
+  entities,
+  byId,
+  rollbackRevision,
+  onDispatch,
+}: {
+  readonly choices: readonly EvaluatedChoice[];
+  readonly evaluation: EvaluatedCharacter | undefined;
+  readonly build: CharacterRecord["build"];
+  readonly entities: readonly ContentEntity[];
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly rollbackRevision: number;
+  readonly onDispatch: (command: CharacterCommand) => void;
+}) {
+  const [inspectedOption, setInspectedOption] = useState<InspectedOption>();
+
+  return (
+    <section
+      aria-labelledby="character-details-heading"
+      className="choice-pane character-details-pane"
+    >
+      <header>
+        <div>
+          <p className="eyebrow">Character identity</p>
+          <h3 id="character-details-heading">Character details</h3>
+        </div>
+      </header>
+      {evaluation === undefined ? (
+        <p>Content is unavailable for editing character details.</p>
+      ) : (
+        <div className="level-choice-workspace">
+          <InspectCandidateContext.Provider value={setInspectedOption}>
+            <div className="compact-detail-list">
+              {choices.map((choice) => (
+                <div className="compact-detail-row" key={choice.id}>
+                  <ChoiceEditor
+                    choice={choice}
+                    evaluation={evaluation}
+                    build={build}
+                    entities={entities}
+                    byId={byId}
+                    disabled={false}
+                    selectionLabel={choice.type}
+                    rollbackRevision={rollbackRevision}
+                    onDispatch={onDispatch}
+                  />
+                </div>
+              ))}
+            </div>
+          </InspectCandidateContext.Provider>
+          <div className="shared-choice-detail">
+            <CandidateDetail
+              candidate={inspectedOption?.candidate}
+              entity={inspectedOption?.entity}
+            />
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function CharacterEditorPage({
   characterId,
 }: {
@@ -1558,6 +1626,9 @@ export function CharacterEditorPage({
   const [visibleHorizon, setVisibleHorizon] = useState(1);
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [selectedChoiceId, setSelectedChoiceId] = useState<string>();
+  const [workspaceTab, setWorkspaceTab] = useState<"build" | "details">(
+    "build",
+  );
   const [showAllChoices, setShowAllChoices] = useState(false);
   const [inspectedOption, setInspectedOption] = useState<InspectedOption>();
   const [rollbackRevision, setRollbackRevision] = useState(0);
@@ -1723,8 +1794,16 @@ export function CharacterEditorPage({
   }, [build, selectedLevel, visibleHorizon]);
 
   const levelChoices = choicesAtLevel(selectedLevel, planningEvaluation);
-  const retrainingChoices = levelChoices.filter(isOptionalRetrainingChoice);
-  const primaryLevelChoices = levelChoices.filter(
+  const characterDetailChoices = groupChoicesByLegacyWorkflow(
+    (planningEvaluation?.choices ?? []).filter(isCharacterDetailChoice),
+  ).flatMap(({ choices }) => choices);
+  const mechanicalLevelChoices = levelChoices.filter(
+    (choice) => !isCharacterDetailChoice(choice),
+  );
+  const retrainingChoices = mechanicalLevelChoices.filter(
+    isOptionalRetrainingChoice,
+  );
+  const primaryLevelChoices = mechanicalLevelChoices.filter(
     (choice) => !isOptionalRetrainingChoice(choice),
   );
   const groupedLevelChoices = groupLevelChoices(primaryLevelChoices);
@@ -1856,7 +1935,8 @@ export function CharacterEditorPage({
   const role = selectedClass?.specifics.find(
     (specific) => specific.name.toLocaleLowerCase() === "role",
   )?.value;
-  const unresolvedCount = levelChoices.filter(isUnresolvedChoice).length;
+  const unresolvedCount =
+    mechanicalLevelChoices.filter(isUnresolvedChoice).length;
   const totalUnresolved = (planningEvaluation?.choices ?? []).filter(
     (choice) => isUnresolvedChoice(choice) && choice.level <= visibleHorizon,
   ).length;
@@ -1883,7 +1963,7 @@ export function CharacterEditorPage({
   );
   const selectedLevelHasWarning =
     planningEvaluation !== undefined &&
-    levelChoices.some((choice) =>
+    mechanicalLevelChoices.some((choice) =>
       selectedChoiceHasWarning(choice, planningEvaluation),
     );
 
@@ -2113,7 +2193,33 @@ export function CharacterEditorPage({
         </dl>
       </section>
 
-      <div className="builder-workspace">
+      <div
+        aria-label="Character editor sections"
+        className="builder-tabs"
+        role="tablist"
+      >
+        <button
+          aria-selected={workspaceTab === "build"}
+          role="tab"
+          type="button"
+          onClick={() => setWorkspaceTab("build")}
+        >
+          Build
+        </button>
+        <button
+          aria-selected={workspaceTab === "details"}
+          role="tab"
+          type="button"
+          onClick={() => setWorkspaceTab("details")}
+        >
+          Character details
+          {characterDetailChoices.some(isUnresolvedChoice) ? (
+            <span className="tab-attention">Needs attention</span>
+          ) : null}
+        </button>
+      </div>
+
+      <div className="builder-workspace" hidden={workspaceTab !== "build"}>
         <aside aria-labelledby="timeline-heading" className="build-timeline">
           <div className="timeline-heading">
             <div>
@@ -2170,7 +2276,9 @@ export function CharacterEditorPage({
             {build.levels.slice(0, visibleHorizon).map((frame) => {
               const choices = choicesAtLevel(frame.level, planningEvaluation);
               const timelineChoices = choices.filter(
-                (choice) => !isOptionalRetrainingChoice(choice),
+                (choice) =>
+                  !isOptionalRetrainingChoice(choice) &&
+                  !isCharacterDetailChoice(choice),
               );
               const orderedTimelineChoices = groupChoicesByLegacyWorkflow(
                 timelineChoices,
@@ -2241,8 +2349,9 @@ export function CharacterEditorPage({
                     : [];
                 return [{ label: choiceTitle(choice), choices: [choice] }];
               });
-              const unresolved = choices.filter(isUnresolvedChoice).length;
-              const choiceWarnings = choices.filter((choice) =>
+              const unresolved =
+                timelineChoices.filter(isUnresolvedChoice).length;
+              const choiceWarnings = timelineChoices.filter((choice) =>
                 selectedChoiceHasWarning(choice, planningEvaluation!),
               ).length;
               return (
@@ -2277,7 +2386,7 @@ export function CharacterEditorPage({
                           : "Complete"}
                     </strong>
                   </button>
-                  {choices.length === 0 ? (
+                  {timelineChoices.length === 0 ? (
                     <p className="timeline-empty">No decisions at this level</p>
                   ) : (
                     <ul className="timeline-choices">
@@ -2457,6 +2566,18 @@ export function CharacterEditorPage({
             )}
           </ShowAllChoicesContext.Provider>
         </section>
+      </div>
+
+      <div hidden={workspaceTab !== "details"}>
+        <CharacterDetailsEditor
+          choices={characterDetailChoices}
+          evaluation={planningEvaluation}
+          build={build}
+          entities={entities}
+          byId={byId}
+          rollbackRevision={rollbackRevision}
+          onDispatch={dispatch}
+        />
       </div>
 
       <section
