@@ -328,7 +328,23 @@ candidate.
   seconds cold and 1.5 seconds warm. A live level-10 selection kept the complete
   workspace visible throughout reevaluation and settled end-to-end in about
   2.3 seconds before the test plan and choice were restored through undo.
-- `nix develop path:. -c bash scripts/check.sh` passes 250 tests across 39 files,
+- Builder evaluations now expand complete candidate lists only for the viewed
+  level. Other levels retain their exact choice topology, selected-candidate
+  legality, and the active candidates needed by `existing` rules. The scoped
+  result omits category mismatches that **Show unavailable options** is not
+  allowed to reveal. Nested ordinary-retraining candidates are generated only
+  after the user opens a retraining editor; completed selections retain their
+  selected replacement while collapsed.
+- On Silaqui, the ordinary level-8 builder projection now carries 3,861 direct
+  candidate decisions instead of 144,490, and three nested replacement
+  decisions instead of 112,597. Warm evaluation fell to approximately 0.45
+  seconds (about 2.7 seconds cold). A live future level-10 selection remained
+  usable while reevaluating and settled end-to-end in 0.69 seconds; opening a
+  feat-retraining editor populated its on-demand target choices, and all test
+  edits were restored through undo/cancel. Exhaustive compatibility evaluation
+  remains available and unchanged in shape; category-parser reuse also reduced
+  its warm benchmark from about 1.5 to 1.2 seconds.
+- `nix develop path:. -c bash scripts/check.sh` passes 252 tests across 39 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

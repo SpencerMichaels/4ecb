@@ -87,6 +87,17 @@ approximately 5.7 seconds cold and 1.5 seconds warm in the development runner,
 versus about 13.1 seconds on every pass before these caches. These are checkpoint
 measurements, not final browser budgets.
 
+`EvaluationInput.candidateDetailLevels` provides a presentation-only projection
+for interactive builders. Choices outside those levels retain selected and
+active candidate decisions required for legality and completeness, while the
+requested levels expand their selectable-category candidates. Optional
+replacement lists are independently requested through
+`candidateDetailReplacementChoiceIds` when their editor opens. Omitting both
+fields preserves the exhaustive compatibility/reporting result. With subsequent
+category-parser reuse, exhaustive Silaqui evaluation measures approximately 5.1
+seconds cold and 1.2 seconds warm; the ordinary level-8 builder projection is
+approximately 2.7 seconds cold and 0.45 seconds warm.
+
 The character remains intentionally reported as illegal because its file marks
 a house-rule selection and the corpus cannot prove one custom feat
 prerequisite. Those are evidence-preserving diagnostics rather than parity

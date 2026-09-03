@@ -287,6 +287,104 @@ describe("character evaluator", () => {
     ]);
   });
 
+  it("expands candidates only for requested detail levels", () => {
+    const definitions = [
+      entity("ROOT", "1", "Level", {
+        rules: [rule("select", { type: "Feat" }, 0)],
+      }),
+      entity("LEVEL_2", "2", "Level", {
+        rules: [rule("select", { type: "Power" }, 0)],
+      }),
+      entity("SELECTED_FEAT", "Selected feat", "Feat"),
+      entity("OTHER_FEAT", "Other feat", "Feat"),
+      entity("POWER_A", "Power A", "Power"),
+      entity("POWER_B", "Power B", "Power"),
+    ];
+    const input = {
+      level: 2,
+      baseAbilities: {},
+      occurrences: [
+        rootOccurrence,
+        {
+          id: "selected-feat",
+          definitionId: "SELECTED_FEAT",
+          acquiredLevel: 1,
+          parentId: "root",
+          ruleOrdinal: 0,
+          choiceIndex: 0,
+          kind: "choice" as const,
+        },
+        {
+          id: "level-2",
+          definitionId: "LEVEL_2",
+          acquiredLevel: 2,
+          kind: "root" as const,
+        },
+      ],
+      inventory: [],
+    };
+    const full = evaluateCharacter(input, definitions);
+    const scoped = evaluateCharacter(
+      { ...input, candidateDetailLevels: [2] },
+      definitions,
+    );
+
+    expect(full.choices.map((choice) => choice.candidates.length)).toEqual([
+      2, 2,
+    ]);
+    expect(scoped.choices.map((choice) => choice.candidates.length)).toEqual([
+      1, 2,
+    ]);
+    expect(scoped.choices[0]?.candidates[0]?.definitionId).toBe(
+      "SELECTED_FEAT",
+    );
+    expect(scoped.choices.map((choice) => choice.selectedOccurrenceId)).toEqual(
+      full.choices.map((choice) => choice.selectedOccurrenceId),
+    );
+    expect({ complete: scoped.complete, legal: scoped.legal }).toEqual({
+      complete: full.complete,
+      legal: full.legal,
+    });
+  });
+
+  it("omits category mismatches from presentation-scoped candidates", () => {
+    const definitions = [
+      entity("ROOT", "1", "Level", {
+        rules: [rule("select", { type: "Feat", Category: "Allowed" }, 0)],
+      }),
+      entity("ALLOWED", "Allowed feat", "Feat", {
+        categories: ["Allowed"],
+      }),
+      entity("WRONG_CATEGORY", "Wrong category", "Feat", {
+        categories: ["Other"],
+      }),
+    ];
+    const full = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [rootOccurrence],
+        inventory: [],
+      },
+      definitions,
+    );
+    const scoped = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [rootOccurrence],
+        inventory: [],
+        candidateDetailLevels: [1],
+      },
+      definitions,
+    );
+
+    expect(full.choices[0]?.candidates).toHaveLength(2);
+    expect(
+      scoped.choices[0]?.candidates.map(({ definitionId }) => definitionId),
+    ).toEqual(["ALLOWED"]);
+  });
+
   it("passes the full definition index and candidate subject to resolved prerequisites", () => {
     const result = evaluateCharacter(
       {
@@ -1369,46 +1467,45 @@ describe("character evaluator", () => {
   });
 
   it("offers original slot candidates for ordinary retraining", () => {
-    const result = evaluateCharacter(
-      {
-        level: 2,
-        baseAbilities: {},
-        occurrences: [
-          {
-            id: "level-1",
-            definitionId: "LEVEL_1",
-            acquiredLevel: 1,
-            kind: "root",
-          },
-          {
-            id: "old-feat",
-            definitionId: "FEAT_A",
-            acquiredLevel: 1,
-            parentId: "level-1",
-            ruleOrdinal: 0,
-            choiceIndex: 0,
-            kind: "choice",
-          },
-          {
-            id: "level-2",
-            definitionId: "LEVEL_2",
-            acquiredLevel: 2,
-            kind: "root",
-          },
-        ],
-        inventory: [],
-      },
-      [
-        entity("LEVEL_1", "1", "Level", {
-          rules: [rule("select", { type: "Feat", number: "1" }, 0)],
-        }),
-        entity("LEVEL_2", "2", "Level", {
-          rules: [rule("replace", { retrain: "true", optional: "true" }, 0)],
-        }),
-        entity("FEAT_A", "Old feat", "Feat"),
-        entity("FEAT_B", "New feat", "Feat"),
+    const input = {
+      level: 2,
+      baseAbilities: {},
+      occurrences: [
+        {
+          id: "level-1",
+          definitionId: "LEVEL_1",
+          acquiredLevel: 1,
+          kind: "root" as const,
+        },
+        {
+          id: "old-feat",
+          definitionId: "FEAT_A",
+          acquiredLevel: 1,
+          parentId: "level-1",
+          ruleOrdinal: 0,
+          choiceIndex: 0,
+          kind: "choice" as const,
+        },
+        {
+          id: "level-2",
+          definitionId: "LEVEL_2",
+          acquiredLevel: 2,
+          kind: "root" as const,
+        },
       ],
-    );
+      inventory: [],
+    };
+    const definitions = [
+      entity("LEVEL_1", "1", "Level", {
+        rules: [rule("select", { type: "Feat", number: "1" }, 0)],
+      }),
+      entity("LEVEL_2", "2", "Level", {
+        rules: [rule("replace", { retrain: "true", optional: "true" }, 0)],
+      }),
+      entity("FEAT_A", "Old feat", "Feat"),
+      entity("FEAT_B", "New feat", "Feat"),
+    ];
+    const result = evaluateCharacter(input, definitions);
 
     expect(
       result.choices.find((choice) => choice.type === "Replacement"),
@@ -1424,6 +1521,26 @@ describe("character evaluator", () => {
         },
       ],
     });
+    const closed = evaluateCharacter(
+      { ...input, candidateDetailLevels: [2] },
+      definitions,
+    );
+    const open = evaluateCharacter(
+      {
+        ...input,
+        candidateDetailLevels: [2],
+        candidateDetailReplacementChoiceIds: ["level-2:replacement:0"],
+      },
+      definitions,
+    );
+    expect(
+      closed.choices.find((choice) => choice.type === "Replacement")
+        ?.replacementOptions?.[0]?.candidates,
+    ).toEqual([]);
+    expect(
+      open.choices.find((choice) => choice.type === "Replacement")
+        ?.replacementOptions?.[0]?.candidates,
+    ).toHaveLength(2);
   });
 
   it("keeps the replaced occurrence visible in its completed retraining slot", () => {

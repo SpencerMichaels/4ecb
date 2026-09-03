@@ -68,6 +68,16 @@ export interface EvaluationInput {
    * source-entitled. A configured list always includes Core implicitly.
    */
   readonly sourceEntitlements?: readonly string[];
+  /**
+   * Levels whose choices need complete candidate lists. Undefined preserves
+   * the exhaustive compatibility/reporting result; presentation-scoped lists
+   * omit category mismatches because the builder never exposes those as
+   * options. An empty list keeps only selected candidates and the active
+   * candidates needed by `existing` choices.
+   */
+  readonly candidateDetailLevels?: readonly number[];
+  /** Optional replacement choices whose nested replacement lists are open. */
+  readonly candidateDetailReplacementChoiceIds?: readonly string[];
 }
 
 export interface CandidateDecision {
@@ -991,6 +1001,18 @@ export function evaluateCharacter(
   const suggestions: EvaluatedCharacter["suggestions"][number][] = [];
   const text = { ...(input.textStrings ?? {}) };
   const candidateCache = new Map<string, CandidateDecision[]>();
+  const categoryCache = new Map<
+    string,
+    ReturnType<typeof parseCategoryExpression>
+  >();
+  const categoryTermsCache = new Map<string, readonly string[]>();
+  const candidateDetailLevels =
+    input.candidateDetailLevels === undefined
+      ? undefined
+      : new Set(input.candidateDetailLevels);
+  const candidateDetailReplacementChoiceIds = new Set(
+    input.candidateDetailReplacementChoiceIds ?? [],
+  );
   const universalSkillIds = new Set<string>();
   for (const occurrence of occurrences) {
     const provider = index.get(occurrence.definitionId);
@@ -1015,6 +1037,91 @@ export function evaluateCharacter(
     }
   }
 
+  const candidateFor = (
+    rule: SelectRule,
+    provider: CharacterOccurrence,
+    candidate: ContentEntity,
+  ): CandidateDecision => {
+    const reasons: string[] = [];
+    if (key(candidate.id) === key(provider.definitionId)) reasons.push("self");
+    if (rule.category !== undefined) {
+      const category =
+        categoryCache.get(rule.category) ??
+        parseCategoryExpression(rule.category);
+      categoryCache.set(rule.category, category);
+      // The legacy engine treats the selected theme as a class category for
+      // power choices only. This is what permits a theme attack such as Sly
+      // Gambit to occupy the ordinary level-7 class encounter-power slot.
+      const candidateContext =
+        key(candidate.type) !== "power" || themeClassValues.length === 0
+          ? expressionContext
+          : {
+              ...expressionContext,
+              dynamicCategories: {
+                ...expressionContext.dynamicCategories,
+                $$CLASS: new Set([
+                  ...(expressionContext.dynamicCategories?.$$CLASS ?? []),
+                  ...themeClassValues,
+                ]),
+                $$NOT_CLASS: new Set([
+                  ...(expressionContext.dynamicCategories?.$$NOT_CLASS ?? []),
+                  ...themeClassValues,
+                ]),
+              },
+              categoryValuesFor: (entity: ContentEntity) =>
+                new Set([
+                  ...index.categoryValues(entity),
+                  ...[field(entity, "Class"), field(entity, "_ThemePower")]
+                    .filter((value): value is string => value !== undefined)
+                    .map(key),
+                ]),
+            };
+      let match = matchesCategory(candidate, category, candidateContext);
+      const terms =
+        categoryTermsCache.get(rule.category) ??
+        category.groups.flatMap((group) =>
+          group.alternatives.map((term) => term.value),
+        );
+      categoryTermsCache.set(rule.category, terms);
+      match ||= terms.some((term) => isUniversalSkill(candidate, term));
+      match ||=
+        universalSkillIds.has(key(candidate.id)) &&
+        terms.some((term) => key(index.find(term)?.type ?? "") === "class");
+      match ||= terms.some((term) =>
+        diverseStudyException(candidate, term, ownedIds),
+      );
+      match ||= seekerException(
+        candidate,
+        provider.definitionId,
+        terms,
+        ownedIds,
+      );
+      match ||= versatileMasterException(
+        candidate,
+        provider.definitionId,
+        ownedIds,
+      );
+      match ||= isCustomChoiceException(candidate);
+      if (!match) reasons.push("category");
+    }
+    const membership = memberships.get(key(candidate.id));
+    if (rule.existing && membership === undefined) reasons.push("existing");
+    const sourceEntitled = isSourceEntitled(candidate);
+    if (!sourceEntitled) reasons.push("source-unentitled");
+    const rulesLegal = !reasons.some(
+      (reason) => reason !== "source-unentitled",
+    );
+    return {
+      definitionId: candidate.id,
+      eligible: sourceEntitled && rulesLegal,
+      sourceEntitled,
+      rulesLegal,
+      activeDefinition: membership !== undefined,
+      activeOccurrenceIds: membership?.occurrenceIds ?? [],
+      providerOccurrenceIds: membership?.providerOccurrenceIds ?? [],
+      reasons,
+    };
+  };
   const candidatesFor = (
     rule: SelectRule,
     provider: CharacterOccurrence,
@@ -1028,82 +1135,9 @@ export function evaluateCharacter(
     ].join("\0");
     const cached = candidateCache.get(cacheKey);
     if (cached !== undefined) return cached;
-    const decisions = index.type(rule.type).map((candidate) => {
-      const reasons: string[] = [];
-      if (key(candidate.id) === key(provider.definitionId))
-        reasons.push("self");
-      if (rule.category !== undefined) {
-        const category = parseCategoryExpression(rule.category);
-        // The legacy engine treats the selected theme as a class category for
-        // power choices only. This is what permits a theme attack such as Sly
-        // Gambit to occupy the ordinary level-7 class encounter-power slot.
-        const candidateContext =
-          key(candidate.type) !== "power" || themeClassValues.length === 0
-            ? expressionContext
-            : {
-                ...expressionContext,
-                dynamicCategories: {
-                  ...expressionContext.dynamicCategories,
-                  $$CLASS: new Set([
-                    ...(expressionContext.dynamicCategories?.$$CLASS ?? []),
-                    ...themeClassValues,
-                  ]),
-                  $$NOT_CLASS: new Set([
-                    ...(expressionContext.dynamicCategories?.$$NOT_CLASS ?? []),
-                    ...themeClassValues,
-                  ]),
-                },
-                categoryValuesFor: (entity: ContentEntity) =>
-                  new Set([
-                    ...index.categoryValues(entity),
-                    ...[field(entity, "Class"), field(entity, "_ThemePower")]
-                      .filter((value): value is string => value !== undefined)
-                      .map(key),
-                  ]),
-              };
-        let match = matchesCategory(candidate, category, candidateContext);
-        const terms = category.groups.flatMap((group) =>
-          group.alternatives.map((term) => term.value),
-        );
-        match ||= terms.some((term) => isUniversalSkill(candidate, term));
-        match ||=
-          universalSkillIds.has(key(candidate.id)) &&
-          terms.some((term) => key(index.find(term)?.type ?? "") === "class");
-        match ||= terms.some((term) =>
-          diverseStudyException(candidate, term, ownedIds),
-        );
-        match ||= seekerException(
-          candidate,
-          provider.definitionId,
-          terms,
-          ownedIds,
-        );
-        match ||= versatileMasterException(
-          candidate,
-          provider.definitionId,
-          ownedIds,
-        );
-        match ||= isCustomChoiceException(candidate);
-        if (!match) reasons.push("category");
-      }
-      const membership = memberships.get(key(candidate.id));
-      if (rule.existing && membership === undefined) reasons.push("existing");
-      const sourceEntitled = isSourceEntitled(candidate);
-      if (!sourceEntitled) reasons.push("source-unentitled");
-      const rulesLegal = !reasons.some(
-        (reason) => reason !== "source-unentitled",
-      );
-      return {
-        definitionId: candidate.id,
-        eligible: sourceEntitled && rulesLegal,
-        sourceEntitled,
-        rulesLegal,
-        activeDefinition: membership !== undefined,
-        activeOccurrenceIds: membership?.occurrenceIds ?? [],
-        providerOccurrenceIds: membership?.providerOccurrenceIds ?? [],
-        reasons,
-      };
-    });
+    const decisions = index
+      .type(rule.type)
+      .map((candidate) => candidateFor(rule, provider, candidate));
     candidateCache.set(cacheKey, decisions);
     return decisions;
   };
@@ -1188,7 +1222,10 @@ export function evaluateCharacter(
             text[rule.name] = rule.value;
           break;
         case "select": {
-          const baseCandidates = candidatesFor(rule, occurrence);
+          const choiceLevel = Math.max(
+            occurrence.acquiredLevel,
+            rule.source.level.minimum,
+          );
           for (
             let choiceIndex = 0;
             choiceIndex < rule.number;
@@ -1222,34 +1259,59 @@ export function evaluateCharacter(
                 )
                 .map((candidate) => key(candidate.definitionId)),
             );
-            const candidates = baseCandidates.map((candidate) => {
-              const definition = index.get(candidate.definitionId);
-              if (
-                rule.existing ||
-                definition === undefined ||
-                key(definition.name) === key(defaultName(rule) ?? "")
-              )
-                return candidate;
-              const equivalent = passThroughDefinition(definition);
-              const duplicate =
-                siblingDefinitionIds.has(key(definition.id)) ||
-                (equivalent !== definition &&
-                  siblingDefinitionIds.has(key(equivalent.id)));
-              return duplicate
-                ? {
-                    ...candidate,
-                    eligible: false,
-                    rulesLegal: false,
-                    reasons: [...candidate.reasons, "duplicate"],
-                  }
-                : candidate;
-            });
+            const detailed =
+              candidateDetailLevels === undefined ||
+              candidateDetailLevels.has(choiceLevel);
+            const selectedEntity =
+              selected === undefined
+                ? undefined
+                : index.get(selected.definitionId);
+            const baseCandidates = detailed
+              ? candidatesFor(rule, occurrence)
+              : selectedEntity !== undefined
+                ? [candidateFor(rule, occurrence, selectedEntity)]
+                : rule.existing
+                  ? ownedDefinitions
+                      .filter(
+                        (candidate) => key(candidate.type) === key(rule.type),
+                      )
+                      .map((candidate) =>
+                        candidateFor(rule, occurrence, candidate),
+                      )
+                  : [];
+            const candidates = baseCandidates
+              .map((candidate) => {
+                const definition = index.get(candidate.definitionId);
+                if (
+                  rule.existing ||
+                  siblingDefinitionIds.size === 0 ||
+                  definition === undefined ||
+                  key(definition.name) === key(defaultName(rule) ?? "")
+                )
+                  return candidate;
+                const equivalent = passThroughDefinition(definition);
+                const duplicate =
+                  siblingDefinitionIds.has(key(definition.id)) ||
+                  (equivalent !== definition &&
+                    siblingDefinitionIds.has(key(equivalent.id)));
+                return duplicate
+                  ? {
+                      ...candidate,
+                      eligible: false,
+                      rulesLegal: false,
+                      reasons: [...candidate.reasons, "duplicate"],
+                    }
+                  : candidate;
+              })
+              .filter(
+                (candidate) =>
+                  candidateDetailLevels === undefined ||
+                  candidate.definitionId === selected?.definitionId ||
+                  !candidate.reasons.includes("category"),
+              );
             choices.push({
               id: `${occurrence.id}:choice:${rule.source.ordinal}:${choiceIndex}`,
-              level: Math.max(
-                occurrence.acquiredLevel,
-                rule.source.level.minimum,
-              ),
+              level: choiceLevel,
               providerOccurrenceId: occurrence.id,
               ruleOrdinal: rule.source.ordinal,
               index: choiceIndex,
@@ -1265,10 +1327,14 @@ export function evaluateCharacter(
           break;
         }
         case "replace": {
+          const replacementChoiceId = `${occurrence.id}:replacement:${rule.source.ordinal}`;
           const replacementLevel = Math.max(
             occurrence.acquiredLevel,
             rule.source.level.minimum,
           );
+          const detailedReplacement =
+            candidateDetailLevels === undefined ||
+            candidateDetailReplacementChoiceIds.has(replacementChoiceId);
           const directSelection = saved.find(
             (candidate) =>
               candidate.parentId === occurrence.id &&
@@ -1341,6 +1407,10 @@ export function evaluateCharacter(
                         (candidateRule) =>
                           candidateRule.source.ordinal === original.ruleOrdinal,
                       );
+              const selectedReplacement =
+                selected?.replacesId === candidate.id
+                  ? index.get(selected.definitionId)
+                  : undefined;
               return originalProvider === undefined ||
                 originalSelect === undefined
                 ? []
@@ -1348,15 +1418,22 @@ export function evaluateCharacter(
                     {
                       replacesOccurrenceId: candidate.id,
                       definitionId: candidate.definitionId,
-                      candidates: candidatesFor(
-                        originalSelect,
-                        originalProvider,
-                      ),
+                      candidates: detailedReplacement
+                        ? candidatesFor(originalSelect, originalProvider)
+                        : selectedReplacement === undefined
+                          ? []
+                          : [
+                              candidateFor(
+                                originalSelect,
+                                originalProvider,
+                                selectedReplacement,
+                              ),
+                            ],
                     },
                   ];
             });
           choices.push({
-            id: `${occurrence.id}:replacement:${rule.source.ordinal}`,
+            id: replacementChoiceId,
             level: replacementLevel,
             providerOccurrenceId: occurrence.id,
             ruleOrdinal: rule.source.ordinal,

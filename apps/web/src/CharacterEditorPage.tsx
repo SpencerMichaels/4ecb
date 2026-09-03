@@ -1463,6 +1463,7 @@ function RetrainingControls({
   entities,
   byId,
   rollbackRevision,
+  onRequestDetails,
   onDispatch,
 }: {
   readonly choices: readonly EvaluatedChoice[];
@@ -1471,6 +1472,7 @@ function RetrainingControls({
   readonly entities: readonly ContentEntity[];
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly rollbackRevision: number;
+  readonly onRequestDetails: (choiceId: string | undefined) => void;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
   const selectedChoice = choices.find(
@@ -1492,15 +1494,14 @@ function RetrainingControls({
     readonly choiceId: string;
     readonly category: string;
   }>();
-  useEffect(
-    () =>
-      setActive(
-        selectedChoice !== undefined && selectedCategory !== undefined
-          ? { choiceId: selectedChoice.id, category: selectedCategory }
-          : undefined,
-      ),
-    [rollbackRevision, selectedCategory, selectedChoice],
-  );
+  useEffect(() => {
+    const next =
+      selectedChoice !== undefined && selectedCategory !== undefined
+        ? { choiceId: selectedChoice.id, category: selectedCategory }
+        : undefined;
+    setActive(next);
+    onRequestDetails(next?.choiceId);
+  }, [onRequestDetails, rollbackRevision, selectedCategory, selectedChoice]);
 
   const categories = ["skill", "feat", "power"].filter((category) =>
     choices.some((choice) =>
@@ -1522,12 +1523,14 @@ function RetrainingControls({
             className="progressive-choice-button"
             key={category}
             type="button"
-            onClick={() =>
-              setActive({
+            onClick={() => {
+              const next = {
                 choiceId: choices[0]!.id,
                 category,
-              })
-            }
+              };
+              setActive(next);
+              onRequestDetails(next.choiceId);
+            }}
           >
             Retrain a {category}…
           </button>
@@ -1551,7 +1554,13 @@ function RetrainingControls({
           </h4>
         </div>
         {selectedChoice === undefined ? (
-          <button type="button" onClick={() => setActive(undefined)}>
+          <button
+            type="button"
+            onClick={() => {
+              setActive(undefined);
+              onRequestDetails(undefined);
+            }}
+          >
             Cancel
           </button>
         ) : (
@@ -2268,6 +2277,8 @@ export function CharacterEditorPage({
   const [showAllChoices, setShowAllChoices] = useState(false);
   const [inspectedOption, setInspectedOption] = useState<InspectedOption>();
   const [rollbackRevision, setRollbackRevision] = useState(0);
+  const [expandedReplacementChoiceId, setExpandedReplacementChoiceId] =
+    useState<string>();
   const transaction = useRef<CharacterTransaction | undefined>(undefined);
   const saveQueue = useRef<
     OptimisticBuildSaveQueue<CharacterRecord> | undefined
@@ -2420,18 +2431,27 @@ export function CharacterEditorPage({
       while (cache.size > 3) cache.delete(cache.keys().next().value!);
       return evaluated;
     };
-    const currentRequest = evaluateCached(
-      projectBuildForEvaluation(projectBuildForLegacyExport(build), entities),
-    );
-    const planningRequest =
+    const planningRequest = evaluateCached({
+      ...projectBuildForEvaluation(
+        { ...build, effectiveLevel: build.levels.length },
+        entities,
+      ),
+      candidateDetailLevels: [selectedLevel],
+      candidateDetailReplacementChoiceIds:
+        expandedReplacementChoiceId === undefined
+          ? []
+          : [expandedReplacementChoiceId],
+    });
+    const currentRequest =
       build.effectiveLevel === build.levels.length
-        ? currentRequest
-        : evaluateCached(
-            projectBuildForEvaluation(
-              { ...build, effectiveLevel: build.levels.length },
+        ? planningRequest
+        : evaluateCached({
+            ...projectBuildForEvaluation(
+              projectBuildForLegacyExport(build),
               entities,
             ),
-          );
+            candidateDetailLevels: [],
+          });
     void Promise.all([currentRequest, planningRequest])
       .then(([current, planning]) => {
         if (evaluationRevision.current !== revision) return;
@@ -2445,7 +2465,15 @@ export function CharacterEditorPage({
           `Rules evaluation failed: ${reason instanceof Error ? reason.message : String(reason)}`,
         );
       });
-  }, [build, contentDigest, entities, packId, readyPackId]);
+  }, [
+    build,
+    contentDigest,
+    entities,
+    expandedReplacementChoiceId,
+    packId,
+    readyPackId,
+    selectedLevel,
+  ]);
 
   useEffect(() => {
     if (build === undefined) return;
@@ -2533,7 +2561,10 @@ export function CharacterEditorPage({
     );
   }, [primaryLevelChoices, selectedChoiceId]);
 
-  useEffect(() => setInspectedOption(undefined), [selectedLevel]);
+  useEffect(() => {
+    setInspectedOption(undefined);
+    setExpandedReplacementChoiceId(undefined);
+  }, [selectedLevel]);
 
   function dispatch(command: CharacterCommand): void {
     const active = transaction.current;
@@ -3307,6 +3338,7 @@ export function CharacterEditorPage({
                         entities={entities}
                         byId={byId}
                         rollbackRevision={rollbackRevision}
+                        onRequestDetails={setExpandedReplacementChoiceId}
                         onDispatch={dispatch}
                       />
                     )}
