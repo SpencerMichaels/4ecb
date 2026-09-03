@@ -233,12 +233,13 @@ subsection for every choice; the timeline summarizes status and navigates into
 that page instead of replacing it with a one-dropdown screen. Repeated
 Background slots retain their evaluator order but progressively disclose
 optional empty slots behind **Add another background…**. Skill Training slots
-render as one category-bounded toggle list with an `X out of Y` count. These are
-presentation groupings only: every background and skill still maps to its exact
-provider, rule ordinal, and choice index. Clearing a trained skill writes a
-blank unresolved placeholder at the same position, and filling chooses the
-first compatible unresolved position, so history and legacy serialization do
-not compact or reorder.
+render as category-bounded toggle lists with an `X out of Y` count. A filled
+single-slot scope behaves like a radio group: clicking another eligible skill
+replaces the current selection immediately. These are presentation groupings
+only: every background and skill still maps to its exact provider, rule ordinal,
+and choice index. Clearing a trained skill writes a blank unresolved placeholder
+at the same position, and filling chooses the first compatible unresolved
+position, so history and legacy serialization do not compact or reorder.
 
 Background-benefit records use a presentation-only two-stage control grouped
 by their legacy names: language, +2 to one skill, add a class skill, background

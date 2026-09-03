@@ -218,12 +218,13 @@ criterion; future character-specific failures remain tracked compatibility bugs.
 - Skill Training now separates different evaluator scopes rather than combining
   them into one ambiguous toggle list. Silaqui sees one **Dungeoneering or
   Nature** selector (`1 of 1`) followed by **Ranger skills** (`4 of 4`), with
-  duplicate choices disabled across scopes. Browser verification changed the
-  constrained choice to Dungeoneering and restored Nature through undo.
+  duplicate choices disabled across scopes. A filled one-slot scope replaces
+  its selection when another eligible skill is clicked, without requiring an
+  intermediate deselection.
   Level-1 point buy now uses one full-width row per ability and reports points
   as `X out of 22 points spent`; browser inspection confirmed the steppers no
   longer collide in the middle pane.
-- `nix develop path:. -c bash scripts/check.sh` passes 216 tests across 37 files,
+- `nix develop path:. -c bash scripts/check.sh` passes 217 tests across 37 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

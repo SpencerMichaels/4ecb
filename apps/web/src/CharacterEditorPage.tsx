@@ -1801,6 +1801,7 @@ function SkillTrainingEditor({
                             occupiedChoiceIds,
                             definitionId,
                             showAll,
+                            true,
                           );
                       const targetCandidate = targetChoice?.candidates.find(
                         (candidate) => candidate.definitionId === definitionId,

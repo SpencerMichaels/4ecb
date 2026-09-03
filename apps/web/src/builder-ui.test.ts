@@ -469,6 +469,37 @@ describe("builder planning UI", () => {
     ).toBe("available");
   });
 
+  it("reuses a filled single-choice skill slot for the last candidate clicked", () => {
+    const choices = [
+      {
+        id: "restricted",
+        selectedOccurrenceId: "nature",
+        candidates: [
+          { definitionId: "DUNGEONEERING", eligible: true, reasons: [] },
+          { definitionId: "NATURE", eligible: true, reasons: [] },
+        ],
+      },
+    ] as unknown as EvaluatedCharacter["choices"];
+
+    expect(
+      choiceForRepeatedCandidate(
+        choices,
+        new Set(["restricted"]),
+        "DUNGEONEERING",
+        false,
+        true,
+      )?.id,
+    ).toBe("restricted");
+    expect(
+      choiceForRepeatedCandidate(
+        choices,
+        new Set(["restricted"]),
+        "DUNGEONEERING",
+        false,
+      ),
+    ).toBeUndefined();
+  });
+
   it("clears a trained skill by replacing its exact positional slot", () => {
     const provider = level(1);
     const entity = {

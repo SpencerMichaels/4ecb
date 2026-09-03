@@ -518,8 +518,9 @@ export function choiceForRepeatedCandidate(
   occupiedChoiceIds: ReadonlySet<string>,
   definitionId: string,
   showAll: boolean,
+  replaceFilledSingleChoice = false,
 ): EvaluatedChoice | undefined {
-  return choices.find(
+  const available = choices.find(
     (choice) =>
       !occupiedChoiceIds.has(choice.id) &&
       choice.candidates.some(
@@ -528,6 +529,16 @@ export function choiceForRepeatedCandidate(
           isCandidateVisible(candidate, showAll),
       ),
   );
+  if (available !== undefined) return available;
+  if (!replaceFilledSingleChoice || choices.length !== 1) return undefined;
+  const choice = choices[0]!;
+  return choice.candidates.some(
+    (candidate) =>
+      candidate.definitionId === definitionId &&
+      isCandidateVisible(candidate, showAll),
+  )
+    ? choice
+    : undefined;
 }
 
 export interface RepeatedCandidateScope {
