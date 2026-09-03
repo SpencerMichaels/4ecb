@@ -1937,9 +1937,7 @@ textarea {
 }
 
 .legacy-choice-group.choice-group-incomplete {
-  background: var(--warning-soft);
-  border: 2px solid var(--warning);
-  border-top-width: 4px;
+  border-top-color: var(--warning);
 }
 
 .legacy-choice-group.choice-group-incomplete > header {
@@ -2073,8 +2071,7 @@ textarea {
 }
 
 .level-choice-section.choice-section-incomplete {
-  background: var(--warning-soft);
-  border: 2px solid var(--warning);
+  border-color: var(--border);
 }
 
 .level-choice-section.choice-section-incomplete > header {
@@ -2082,10 +2079,6 @@ textarea {
   border-bottom-color: var(--warning);
   margin: -1rem -1rem 1rem;
   padding: 0.75rem 1rem;
-}
-
-.legacy-choice-list > .level-choice-section.choice-section-incomplete {
-  box-shadow: inset 5px 0 var(--warning);
 }
 
 .legacy-choice-list > .level-choice-section.choice-section-incomplete > header {

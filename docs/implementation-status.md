@@ -370,11 +370,17 @@ candidate.
   parsing, multi-slot preset application, and evaluator completeness. A live
   full-profile test selected Hunter Ranger and applied 12 class-feature, feat,
   skill, and power choices to a fresh Ranger in one action.
-- Incomplete current-level groups and their individual subsections now color the
-  full container, use a heavier warning border, and give the subsection header a
-  substantially stronger warning fill. A fresh-character browser check verified
+- Incomplete current-level groups and their individual subsections now give the
+  header a substantially stronger warning fill while leaving the choice contents
+  on their ordinary surface background. A fresh-character browser check verified
   the treatment in the dark theme; future-plan groups remain neutral. The
   temporary test character was moved to the recoverable app trash afterward.
+- Ordinary choice dropdowns now commit **Unresolved** through an exact-slot
+  character command and optimistically clear the control and detail pane rather
+  than snapping back to the prior selection. A live Silaqui check cleared Hunter
+  Fighting Style, observed the saved unresolved state and header-only warning
+  treatment after reevaluation, then restored Hunter Fighting Style through
+  Undo.
 - A live Silaqui check confirmed the level-8 heading is simply **Level 8**, the
   timeline reads **Feat · Archery Mastery**, and the progressive mastery flow
   still offers both **Twin Strike** and **Fading Strike** as replacement targets.

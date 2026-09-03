@@ -1043,6 +1043,23 @@ function ChoiceEditor({
     if (command !== undefined) onDispatch(command);
   };
 
+  const clearSelection = (): void => {
+    if (selected === undefined) return;
+    const command = unresolveEvaluatedChoiceCommand(
+      build,
+      choice,
+      evaluation,
+      entities,
+      `web:placeholder:${crypto.randomUUID()}`,
+    );
+    if (command === undefined) return;
+    setOptimisticSelectedId("");
+    setPerusedId("");
+    setStagedGroupKey(undefined);
+    inspectCandidate?.(undefined);
+    onDispatch(command);
+  };
+
   return (
     <div
       className={`choice-selection-layout${compact ? " choice-selection-compact" : ""}`}
@@ -1069,7 +1086,10 @@ function ChoiceEditor({
                     (candidate) => candidate.key === event.currentTarget.value,
                   );
                   setStagedGroupKey(event.currentTarget.value);
-                  if (group === undefined) return;
+                  if (group === undefined) {
+                    if (event.currentTarget.value === "") clearSelection();
+                    return;
+                  }
                   const exact = group.options.length === 1;
                   const definitionId = group.options[0]!.candidate.definitionId;
                   setPerusedId(definitionId);
@@ -1125,9 +1145,11 @@ function ChoiceEditor({
                     if (candidate !== undefined && entity !== undefined)
                       inspectCandidate?.({ candidate, entity });
                   }}
-                  onChange={(event) =>
-                    selectDefinition(event.currentTarget.value)
-                  }
+                  onChange={(event) => {
+                    const definitionId = event.currentTarget.value;
+                    if (definitionId === "") clearSelection();
+                    else selectDefinition(definitionId);
+                  }}
                 >
                   <option value="">Choose {displayedGroup.label}</option>
                   {displayedGroup.options.map(({ candidate, label }) => (
@@ -1164,7 +1186,11 @@ function ChoiceEditor({
                 if (candidate !== undefined && entity !== undefined)
                   inspectCandidate?.({ candidate, entity });
               }}
-              onChange={(event) => selectDefinition(event.currentTarget.value)}
+              onChange={(event) => {
+                const definitionId = event.currentTarget.value;
+                if (definitionId === "") clearSelection();
+                else selectDefinition(definitionId);
+              }}
             >
               <option value="">Unresolved</option>
               {visibleCandidates.map((candidate) => (

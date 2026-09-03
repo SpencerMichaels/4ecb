@@ -431,9 +431,16 @@ The timeline counts incomplete choices only at or below `effectiveLevel`.
 Future-plan choices are neutral because they are planning opportunities, not
 requirements for the current character. Stable colors, icons, and inset markers
 carry ordinary complete/incomplete state without repeated prose or changing
-font metrics. An incomplete subsection colors its full container and gives its
-header a stronger warning fill and border; textual warnings remain for
+font metrics. An incomplete subsection gives its header a strong warning fill
+while retaining the ordinary content background; textual warnings remain for
 exceptional house-rule and evaluation states.
+
+Selecting **Unresolved** in an ordinary choice is a first-class character
+command, not transient form state. It writes an unresolved placeholder into the
+same provider/rule/index slot, clears the focused detail immediately, and uses
+the normal autosave and undo path. Dependent choices disappear through ordinary
+reevaluation of the now-unresolved provider rather than by deleting unrelated
+historical occurrences.
 
 ## Deferred decisions and decision points
 

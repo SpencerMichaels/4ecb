@@ -47,8 +47,9 @@ application's protected visual assets.
 - Treat only unresolved decisions at or below the effective character level as
   incomplete. Future-plan decisions remain neutral until that level becomes
   current. Communicate completion and attention primarily through stable icon
-  color, fills, and inset markers rather than repeated status prose; state
-  changes must not alter typography or move adjacent controls.
+  color and subsection-header fills rather than repeated status prose. Keep the
+  selection contents on their ordinary surface color; state changes must not
+  alter typography or move adjacent controls.
 - Distinguish the character's current effective level from the build-planning
   horizon. Choices above the current level are preserved, visible, and editable
   so a player can plan many levels ahead, but they are inactive in current
@@ -102,6 +103,10 @@ application's protected visual assets.
 - Autosave every committed character change. Show concise saving, saved, and
   failure states without interrupting ordinary work, retain transactional undo
   and redo, and never imply persistence before the storage commit succeeds.
+- An ordinary dropdown's **Unresolved** option is a real edit: it replaces that
+  exact saved slot with an unresolved placeholder, immediately updates the
+  control, autosaves, and remains undoable. It must never be a visual-only value
+  that snaps back on reevaluation.
 
 ## Character-sheet templates
 
