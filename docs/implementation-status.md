@@ -344,7 +344,16 @@ candidate.
   edits were restored through undo/cancel. Exhaustive compatibility evaluation
   remains available and unchanged in shape; category-parser reuse also reduced
   its warm benchmark from about 1.5 to 1.2 seconds.
-- `nix develop path:. -c bash scripts/check.sh` passes 252 tests across 39 files,
+- Optional additions now have a complete reversible interaction. A newly
+  revealed empty background slot can be cancelled; a completed extra background
+  can be removed without touching the required primary slot; and completed
+  ordinary retraining exposes **Remove retraining**, which clears the exact
+  replacement slot so the evaluator restores its source selection. Removal uses
+  the ordinary optimistic save and undo transaction. Focused browser checks
+  covered empty background and retraining cancellation plus the presence of
+  removal actions on Silaqui; a public command regression covers completed
+  background and retraining slots.
+- `nix develop path:. -c bash scripts/check.sh` passes 253 tests across 39 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

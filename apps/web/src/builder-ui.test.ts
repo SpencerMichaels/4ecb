@@ -678,4 +678,149 @@ describe("builder planning UI", () => {
         ?.id,
     ).toBe("athletics");
   });
+
+  it("clears completed optional backgrounds and retraining in their exact slots", () => {
+    const levelOne = level(1, [
+      {
+        name: "select",
+        attributes: [
+          { name: "type", value: "Background" },
+          { name: "number", value: "2" },
+        ],
+        text: "",
+        children: [],
+        ordinal: 0,
+      },
+    ]);
+    const levelTwo = level(2, [
+      {
+        name: "replace",
+        attributes: [
+          { name: "retrain", value: "true" },
+          { name: "optional", value: "true" },
+        ],
+        text: "",
+        children: [],
+        ordinal: 0,
+      },
+    ]);
+    const optionalBuild: CharacterBuild = {
+      ...build,
+      effectiveLevel: 2,
+      levels: [
+        {
+          level: 1,
+          root: {
+            ...build.levels[0]!.root,
+            children: [
+              {
+                id: "primary-background",
+                identity: {
+                  definitionId: "BACKGROUND_A",
+                  name: "First background",
+                  type: "Background",
+                },
+                acquiredLevel: 1,
+                legality: "rules-legal",
+                children: [],
+                unresolved: false,
+              },
+              {
+                id: "extra-background",
+                identity: {
+                  definitionId: "BACKGROUND_B",
+                  name: "Second background",
+                  type: "Background",
+                },
+                acquiredLevel: 1,
+                legality: "rules-legal",
+                children: [],
+                unresolved: false,
+              },
+            ],
+          },
+        },
+        {
+          level: 2,
+          root: {
+            id: "level-2",
+            identity: {
+              definitionId: levelTwo.id,
+              name: levelTwo.name,
+              type: levelTwo.type,
+            },
+            acquiredLevel: 2,
+            legality: "rules-legal",
+            children: [
+              {
+                id: "retrained-feat",
+                identity: {
+                  definitionId: "FEAT_B",
+                  name: "New feat",
+                  type: "Feat",
+                },
+                acquiredLevel: 2,
+                legality: "rules-legal",
+                children: [],
+                unresolved: false,
+                replacesId: "old-feat",
+              },
+            ],
+            unresolved: false,
+          },
+        },
+      ],
+    };
+    const evaluation = {
+      occurrences: [
+        { id: "level-1", definitionId: levelOne.id },
+        { id: "level-2", definitionId: levelTwo.id },
+      ],
+    } as unknown as EvaluatedCharacter;
+    const backgroundChoice = {
+      providerOccurrenceId: "level-1",
+      ruleOrdinal: 0,
+      index: 1,
+      selectedOccurrenceId: "extra-background",
+    } as unknown as EvaluatedCharacter["choices"][number];
+    const retrainingChoice = {
+      providerOccurrenceId: "level-2",
+      ruleOrdinal: 0,
+      index: 0,
+      selectedOccurrenceId: "retrained-feat",
+    } as unknown as EvaluatedCharacter["choices"][number];
+
+    const withoutBackground = applyCharacterCommand(
+      optionalBuild,
+      unresolveEvaluatedChoiceCommand(
+        optionalBuild,
+        backgroundChoice,
+        evaluation,
+        [levelOne, levelTwo],
+        "empty-background",
+      )!,
+    );
+    expect(withoutBackground.levels[0]?.root.children).toMatchObject([
+      { id: "primary-background", unresolved: false },
+      { id: "empty-background", unresolved: true },
+    ]);
+
+    const withoutRetraining = applyCharacterCommand(
+      optionalBuild,
+      unresolveEvaluatedChoiceCommand(
+        optionalBuild,
+        retrainingChoice,
+        evaluation,
+        [levelOne, levelTwo],
+        "empty-retraining",
+      )!,
+    );
+    expect(withoutRetraining.levels[1]?.root.children).toMatchObject([
+      {
+        id: "empty-retraining",
+        unresolved: true,
+        identity: { name: "", type: "" },
+      },
+    ]);
+  });
 });

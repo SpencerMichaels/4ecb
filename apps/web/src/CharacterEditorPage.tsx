@@ -83,7 +83,7 @@ function evaluationCacheKey(
   return `${profileRevision}\0${JSON.stringify(input)}`;
 }
 const InspectCandidateContext = createContext<
-  ((option: InspectedOption) => void) | undefined
+  ((option: InspectedOption | undefined) => void) | undefined
 >(undefined);
 
 type SaveState =
@@ -1475,6 +1475,7 @@ function RetrainingControls({
   readonly onRequestDetails: (choiceId: string | undefined) => void;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
+  const inspectCandidate = useContext(InspectCandidateContext);
   const selectedChoice = choices.find(
     (choice) => choice.selectedOccurrenceId !== undefined,
   );
@@ -1564,9 +1565,31 @@ function RetrainingControls({
             Cancel
           </button>
         ) : (
-          <span className="complete-badge">
-            <Icon name="check" /> Complete
-          </span>
+          <div className="optional-choice-actions">
+            <span className="complete-badge">
+              <Icon name="check" /> Complete
+            </span>
+            <button
+              className="remove-optional-choice"
+              type="button"
+              onClick={() => {
+                const command = unresolveEvaluatedChoiceCommand(
+                  build,
+                  selectedChoice,
+                  evaluation,
+                  entities,
+                  `web:placeholder:retraining:${crypto.randomUUID()}`,
+                );
+                if (command === undefined) return;
+                setActive(undefined);
+                onRequestDetails(undefined);
+                inspectCandidate?.(undefined);
+                onDispatch(command);
+              }}
+            >
+              <Icon name="remove" /> Remove retraining
+            </button>
+          </div>
         )}
       </header>
       <ChoiceEditor
@@ -1603,21 +1626,46 @@ function BackgroundChoiceGroup({
   readonly requestedChoiceId: string | undefined;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
+  const inspectCandidate = useContext(InspectCandidateContext);
+  const [pendingRemovalIds, setPendingRemovalIds] = useState<
+    ReadonlySet<string>
+  >(new Set());
+  const chosenCount = choices.filter(
+    (choice) =>
+      choice.selectedOccurrenceId !== undefined &&
+      !pendingRemovalIds.has(choice.id),
+  ).length;
   const selectedCount = choices.reduce(
     (highest, choice, index) =>
-      choice.selectedOccurrenceId === undefined ? highest : index + 1,
+      choice.selectedOccurrenceId === undefined ||
+      pendingRemovalIds.has(choice.id)
+        ? highest
+        : index + 1,
     1,
   );
   const [revealedCount, setRevealedCount] = useState(selectedCount);
 
   useEffect(() => {
     const requestedIndex = choices.findIndex(
-      (choice) => choice.id === requestedChoiceId,
+      (choice) =>
+        choice.id === requestedChoiceId && !pendingRemovalIds.has(choice.id),
     );
     setRevealedCount((current) =>
       Math.max(current, selectedCount, requestedIndex + 1),
     );
-  }, [choices, requestedChoiceId, selectedCount]);
+  }, [choices, pendingRemovalIds, requestedChoiceId, selectedCount]);
+
+  useEffect(() => {
+    setPendingRemovalIds((current) => {
+      const pending = [...current].filter((choiceId) =>
+        choices.some(
+          (choice) =>
+            choice.id === choiceId && choice.selectedOccurrenceId !== undefined,
+        ),
+      );
+      return pending.length === current.size ? current : new Set(pending);
+    });
+  }, [choices]);
 
   return (
     <section
@@ -1627,14 +1675,7 @@ function BackgroundChoiceGroup({
     >
       <header>
         <h4>Backgrounds</h4>
-        <span className="choice-count">
-          {
-            choices.filter(
-              (choice) => choice.selectedOccurrenceId !== undefined,
-            ).length
-          }{" "}
-          chosen
-        </span>
+        <span className="choice-count">{chosenCount} chosen</span>
       </header>
       <div className="grouped-choice-list">
         {choices.slice(0, revealedCount).map((choice, index) => (
@@ -1658,6 +1699,38 @@ function BackgroundChoiceGroup({
               rollbackRevision={rollbackRevision}
               onDispatch={onDispatch}
             />
+            {index === 0 || !choice.optional ? null : (
+              <button
+                className="remove-optional-choice"
+                disabled={pendingRemovalIds.has(choice.id)}
+                type="button"
+                onClick={() => {
+                  if (choice.selectedOccurrenceId !== undefined) {
+                    const command = unresolveEvaluatedChoiceCommand(
+                      build,
+                      choice,
+                      evaluation,
+                      entities,
+                      `web:placeholder:background:${crypto.randomUUID()}`,
+                    );
+                    if (command === undefined) return;
+                    setPendingRemovalIds(
+                      (current) => new Set([...current, choice.id]),
+                    );
+                    inspectCandidate?.(undefined);
+                    onDispatch(command);
+                  }
+                  setRevealedCount((current) =>
+                    index === current - 1 ? Math.max(1, current - 1) : current,
+                  );
+                }}
+              >
+                <Icon name="remove" />
+                {choice.selectedOccurrenceId === undefined
+                  ? "Cancel additional background"
+                  : "Remove background"}
+              </button>
+            )}
           </section>
         ))}
       </div>

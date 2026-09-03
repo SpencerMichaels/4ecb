@@ -17,6 +17,7 @@ import {
   Undo2,
   UserRound,
   UsersRound,
+  X,
   Zap,
   type LucideIcon,
 } from "lucide-react";
@@ -38,6 +39,7 @@ export type IconName =
   | "power"
   | "race"
   | "redo"
+  | "remove"
   | "sheet"
   | "skill"
   | "undo"
@@ -60,6 +62,7 @@ const icons: Record<IconName, LucideIcon> = {
   power: Zap,
   race: UsersRound,
   redo: Redo2,
+  remove: X,
   sheet: FileText,
   skill: GraduationCap,
   undo: Undo2,

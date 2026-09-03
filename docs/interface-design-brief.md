@@ -75,7 +75,9 @@ application's protected visual assets.
   in an adjacent detail pane.
 - Repeated Background slots use one primary **Choose background** section;
   already selected extras remain visible and optional empty slots appear one at
-  a time through **Add another background…**.
+  a time through **Add another background…**. A revealed empty slot can be
+  cancelled, and every completed optional background has an explicit removal
+  action; removing one never clears the required primary background.
 - Skill Training uses one toggle list rather than repeated dropdowns. It shows
   every category-valid skill, marks trained skills, permits direct train/untrain
   toggles, and announces **X out of Y skills chosen** while preserving the
@@ -129,7 +131,8 @@ timeline and initially renders only **Retrain a skill…**, **Retrain a feat…*
 and **Retrain a power…** actions for categories actually available. Activating
 one reveals a category-filtered editor that can be cancelled before a choice is
 made. An imported or completed retraining remains visible in the level pane as
-history, but not as a required timeline decision. Special replacements that
+history, but not as a required timeline decision, and can be explicitly removed
+to restore the replaced selection. Special replacements that
 are consequences of another choice, such as Rapid Shot Mastery, remain inside
 that choice's progressive flow rather than being relabeled as retraining.
 
