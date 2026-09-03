@@ -211,6 +211,76 @@ describe("native construction conformance", () => {
     },
   );
 
+  it("uses a power-swap rule's gain category instead of the displaced slot", () => {
+    const oldPower = {
+      ...entity("OLD", "Old power", "Power"),
+      categories: ["Wizard", "daily", "1"],
+      specifics: [
+        { name: "Level", value: "1", extraAttributes: [], ordinal: 0 },
+      ],
+    };
+    const newPower = {
+      ...entity("NEW", "New power", "Power"),
+      categories: ["Wizard", "daily", "15"],
+      specifics: [
+        { name: "Level", value: "15", extraAttributes: [], ordinal: 0 },
+      ],
+    };
+    const content = [
+      entity("SOURCE_PROVIDER", "Source provider", "Feature", [
+        statement(
+          "select",
+          {
+            type: "Power",
+            number: "1",
+            Category: "Wizard,daily,1",
+          },
+          0,
+        ),
+      ]),
+      entity("REPLACE_PROVIDER", "Replacement provider", "Level", [
+        statement("replace", { powerswap: "Wizard,daily,15", Level: "15" }, 0),
+      ]),
+      oldPower,
+      newPower,
+    ];
+    const result = evaluateCharacter(
+      input(15, [
+        occurrence("source-provider", "SOURCE_PROVIDER", 1, "root"),
+        occurrence("old", "OLD", 1, "choice", {
+          parentId: "source-provider",
+          ruleOrdinal: 0,
+          choiceIndex: 0,
+        }),
+        occurrence("replace-provider", "REPLACE_PROVIDER", 15, "root"),
+        occurrence("new", "NEW", 15, "choice", {
+          parentId: "replace-provider",
+          ruleOrdinal: 0,
+          choiceIndex: 0,
+          replacesId: "old",
+        }),
+      ]),
+      content,
+    );
+    const replacement = result.choices.find(
+      (choice) => choice.providerOccurrenceId === "replace-provider",
+    );
+
+    expect(replacement?.replacementOptions?.[0]?.candidates).toContainEqual(
+      expect.objectContaining({
+        definitionId: "NEW",
+        rulesLegal: true,
+        reasons: [],
+      }),
+    );
+    expect(result.diagnostics).not.toContainEqual(
+      expect.objectContaining({
+        code: "choice.ineligible",
+        occurrenceId: "new",
+      }),
+    );
+  });
+
   it("follows an explicit replacement chain while preserving both source occurrences", () => {
     const content = [
       entity("SOURCE_PROVIDER", "Source provider", "Feature", [
@@ -602,6 +672,59 @@ describe("native construction conformance", () => {
     expect(replacementSource.activeDefinitionIds).toContain("WRAPPER");
     expect(replacementSource.choices[0]?.selectedOccurrenceId).toBe(
       "replacement",
+    );
+  });
+
+  it("retains an earlier choice when a later existing selector grants another use", () => {
+    const content = [
+      entity("LEVEL", "Level", "Level", [
+        statement("select", { type: "Power", number: "1" }, 0),
+      ]),
+      entity("EXTRA_USE", "Extra use", "Feature", [
+        statement(
+          "select",
+          { type: "Power", number: "1", existing: "true" },
+          0,
+        ),
+      ]),
+      entity("POWER", "Encounter power", "Power"),
+    ];
+    const result = evaluateCharacter(
+      input(11, [
+        occurrence("level", "LEVEL", 1, "root"),
+        occurrence("original", "POWER", 1, "choice", {
+          parentId: "level",
+          ruleOrdinal: 0,
+          choiceIndex: 0,
+        }),
+        occurrence("extra-use", "EXTRA_USE", 11, "root"),
+        occurrence("existing-reference", "POWER", 11, "choice", {
+          parentId: "extra-use",
+          ruleOrdinal: 0,
+          choiceIndex: 0,
+        }),
+      ]),
+      content,
+    );
+
+    expect(result.choices).toEqual([
+      expect.objectContaining({
+        providerOccurrenceId: "level",
+        selectedOccurrenceId: "original",
+      }),
+      expect.objectContaining({
+        providerOccurrenceId: "extra-use",
+        selectedOccurrenceId: "existing-reference",
+      }),
+    ]);
+    expect(result.activeDefinitions).toContainEqual(
+      expect.objectContaining({
+        definitionId: "POWER",
+        occurrenceIds: ["original", "existing-reference"],
+      }),
+    );
+    expect(result.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "choice.required" }),
     );
   });
 });

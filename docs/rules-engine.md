@@ -83,6 +83,23 @@ the recovered native `ParseAlternate` → `FindProvider` path while leaving the
 durable alternate envelope intact for exact export. Unresolvable envelopes
 remain grabbag occurrences so malformed or custom evidence stays recoverable.
 
+Duplicate-choice cleanup is evaluated at the choice's own effective level, as
+the native `CheckPrevious` → `AlreadyHas` path does. An occurrence acquired at a
+later level therefore cannot retroactively empty an earlier slot. This matters
+for `existing="true"` features such as Adroit Explorer's Ambitious Effort: the
+later feature preserves a second occurrence of an already-known encounter power
+so its `_ADDITIONAL_USES` modification can apply, while the original level-3 or
+level-7 power remains the resolved source choice. Active-definition membership
+still collapses by definition; occurrence topology does not.
+
+Replacement gain candidates follow the replacement rule's mode. In particular,
+`powerswap` supplies the gain category used by the native
+`UpdateReplacement` path; it is not validated against the displaced power's
+older select category. The prior select remains satisfied through the linked
+replacement chain, while legality is decided by the active replacement slot.
+Ordinary retraining continues to inherit its source select until its distinct
+mode rules are implemented from equivalent evidence.
+
 ## Verified parity and performance
 
 The supplied private level-8 character matches all 72 numeric aliases shared by

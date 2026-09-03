@@ -1656,10 +1656,12 @@ describe("character evaluator", () => {
           ],
         }),
         entity("POWER_A", "Old power", "Power", {
-          categories: ["Psionic"],
+          categories: ["Psionic", "at-will"],
+          specifics: { Level: "1" },
         }),
         entity("POWER_B", "New power", "Power", {
-          categories: ["Psionic"],
+          categories: ["Psionic", "at-will"],
+          specifics: { Level: "7" },
         }),
       ],
     );

@@ -835,10 +835,15 @@ export function evaluateCharacter(
             )
               continue;
             const equivalent = passThroughDefinition(selectedDefinition);
+            const choiceLevel = Math.max(
+              occurrence.acquiredLevel,
+              rule.source.level.minimum,
+            );
             const duplicate = occurrences.some((candidate) => {
               if (
                 candidate.id === selected.id ||
-                isDescendantOf(candidate, selected.id)
+                isDescendantOf(candidate, selected.id) ||
+                candidate.acquiredLevel > choiceLevel
               )
                 return false;
               const candidateKey = key(candidate.definitionId);
@@ -1412,30 +1417,38 @@ export function evaluateCharacter(
                         (candidateRule) =>
                           candidateRule.source.ordinal === original.ruleOrdinal,
                       );
+              if (
+                originalProvider === undefined ||
+                originalSelect === undefined
+              )
+                return [];
               const selectedReplacement =
                 selected?.replacesId === candidate.id
                   ? index.get(selected.definitionId)
                   : undefined;
-              return originalProvider === undefined ||
-                originalSelect === undefined
-                ? []
-                : [
-                    {
-                      replacesOccurrenceId: candidate.id,
-                      definitionId: candidate.definitionId,
-                      candidates: detailedReplacement
-                        ? candidatesFor(originalSelect, originalProvider)
-                        : selectedReplacement === undefined
-                          ? []
-                          : [
-                              candidateFor(
-                                originalSelect,
-                                originalProvider,
-                                selectedReplacement,
-                              ),
-                            ],
-                    },
-                  ];
+              const gainSelect =
+                rule.powerSwap === undefined
+                  ? originalSelect
+                  : { ...originalSelect, category: rule.powerSwap };
+              const gainProvider =
+                rule.powerSwap === undefined ? originalProvider : occurrence;
+              return [
+                {
+                  replacesOccurrenceId: candidate.id,
+                  definitionId: candidate.definitionId,
+                  candidates: detailedReplacement
+                    ? candidatesFor(gainSelect, gainProvider)
+                    : selectedReplacement === undefined
+                      ? []
+                      : [
+                          candidateFor(
+                            gainSelect,
+                            gainProvider,
+                            selectedReplacement,
+                          ),
+                        ],
+                },
+              ];
             });
           choices.push({
             id: replacementChoiceId,
@@ -1710,9 +1723,16 @@ export function evaluateCharacter(
       });
   for (const choice of choices) {
     if (choice.selectedOccurrenceId === undefined) continue;
-    const selectedDefinitionId = occurrences.find(
+    const selectedOccurrence = occurrences.find(
       (occurrence) => occurrence.id === choice.selectedOccurrenceId,
-    )?.definitionId;
+    );
+    if (
+      selectedOccurrence?.replacesId !== undefined &&
+      (selectedOccurrence.parentId !== choice.providerOccurrenceId ||
+        selectedOccurrence.ruleOrdinal !== choice.ruleOrdinal)
+    )
+      continue;
+    const selectedDefinitionId = selectedOccurrence?.definitionId;
     const selected = choice.candidates.find(
       (candidate) => candidate.definitionId === selectedDefinitionId,
     );

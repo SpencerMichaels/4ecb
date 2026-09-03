@@ -365,7 +365,27 @@ candidate.
   diagnostics; the UI presents **Daily Spell** and **Utility Spell** beneath a
   distinct **Spellbook** group. Live testing changed the daily alternate,
   persisted it, undid it, and confirmed Freezing Cloud after reload.
-- `nix develop path:. -c bash scripts/check.sh` passes 253 tests across 39 files,
+- Continuing that review found false unresolved level-3/7 encounter slots on
+  Japheth and Raidon. Both choose an already-known power again through Adroit
+  Explorer's `existing="true"` Ambitious Effort feature. Native
+  `CheckPrevious`/`AlreadyHas` evaluates duplication at the original choice's
+  historical level, so the later extra-use occurrence must not erase it. The
+  evaluator now preserves both occurrence identities while keeping one active
+  definition membership. The same review found that level-13/15 `powerswap`
+  gains were being checked against the displaced level-3/1 category; gain
+  legality now uses the replacement rule's category, matching native
+  `UpdateReplacement`. Japheth is consequently complete, legal, and diagnostic
+  free; Raidon has no unresolved slots or category errors.
+- The nine bundled heroes now have no unexplained required builder choices
+  except Binwin's item-owned resistance choice, which remains assigned to the
+  deferred equipment-pane work. Six evaluate complete/legal without
+  diagnostics. Geran retains two explicitly serialized house-rule powers and
+  unverified legacy feat prerequisites. Raidon retains three missing-definition
+  diagnostics for two cached Monk class-feature records and one generated
+  Focused Expertise variant absent from the installed pack, plus two unverified
+  legacy feat prerequisites; the importer preserves that evidence rather than
+  inventing rules for it.
+- `nix develop path:. -c bash scripts/check.sh` passes 255 tests across 39 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.
