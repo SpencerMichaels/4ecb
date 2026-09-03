@@ -360,11 +360,21 @@ candidate.
   visually neutral and do not increase unresolved counts. Optional backgrounds
   and retraining share a compact accessible X removal action.
 - Legacy Build records are now optional one-shot starting presets rather than
-  persistent level-1 selections. Eligible presets fill only matching open legal
-  choices in one undoable batch, leave existing work untouched, and are omitted
-  from the timeline and unresolved counts; imported Build occurrences remain
-  preserved for exact compatibility. Focused tests cover suggestion parsing,
-  multi-slot preset application, and evaluator completeness.
+  persistent level-1 selections. They use one dropdown plus Apply button, and
+  the selected preset's authored description and structured suggestion list
+  appear in the shared right-hand detail pane. Eligible presets fill only
+  matching open legal choices in one undoable batch, leave existing work
+  untouched, report the applied count or a no-match result immediately, and are
+  omitted from the timeline and unresolved counts; imported Build occurrences
+  remain preserved for exact compatibility. Focused tests cover suggestion
+  parsing, multi-slot preset application, and evaluator completeness. A live
+  full-profile test selected Hunter Ranger and applied 12 class-feature, feat,
+  skill, and power choices to a fresh Ranger in one action.
+- Incomplete current-level groups and their individual subsections now color the
+  full container, use a heavier warning border, and give the subsection header a
+  substantially stronger warning fill. A fresh-character browser check verified
+  the treatment in the dark theme; future-plan groups remain neutral. The
+  temporary test character was moved to the recoverable app trash afterward.
 - A live Silaqui check confirmed the level-8 heading is simply **Level 8**, the
   timeline reads **Feat · Archery Mastery**, and the progressive mastery flow
   still offers both **Twin Strike** and **Fading Strike** as replacement targets.

@@ -84,10 +84,13 @@ application's protected visual assets.
   removed with the same compact X action used for a completed optional
   background; removing one never clears the required primary background.
 - Legacy Build records are starting presets, not persistent mechanical choices.
-  Present them after class selection as one-shot actions that fill only matching,
-  currently open, rules-legal level-1 choices. Applying a preset never overwrites
-  work already chosen, and an imported legacy Build occurrence remains preserved
-  internally for round-trip compatibility without appearing as a to-do.
+  Present them after class selection as one dropdown and an explicit Apply
+  action. The selected preset drives the shared detail pane, with its authored
+  description followed by the suggested feature, feat, skill, and power list.
+  Applying it fills only matching, currently open, rules-legal level-1 choices,
+  reports the result immediately, and never overwrites work already chosen. An
+  imported legacy Build occurrence remains preserved internally for round-trip
+  compatibility without appearing as a to-do.
 - Skill Training uses one toggle list rather than repeated dropdowns. It shows
   every category-valid skill, marks trained skills, permits direct train/untrain
   toggles, and announces **X out of Y skills chosen** while preserving the

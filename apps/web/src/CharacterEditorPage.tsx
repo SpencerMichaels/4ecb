@@ -35,7 +35,6 @@ import {
 
 import {
   applyBuildPresetCommand,
-  buildPresetSuggestionNames,
   candidateReason,
   choicePresentationLabel,
   choiceForRepeatedCandidate,
@@ -360,7 +359,7 @@ function BaseAbilityScoreEditor({
   };
   return (
     <section
-      className="level-choice-section base-ability-choice"
+      className={`level-choice-section base-ability-choice${assessment.complete ? "" : " choice-section-incomplete"}`}
       aria-labelledby="base-abilities"
     >
       <header>
@@ -478,49 +477,99 @@ function BuildPresetPanel({
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
-  const presets = choices
-    .flatMap((choice) => choice.candidates)
-    .filter((candidate) => candidate.eligible)
-    .map((candidate) => byId.get(candidate.definitionId.toLocaleLowerCase()))
-    .filter((entity): entity is ContentEntity => entity !== undefined);
+  const inspectCandidate = useContext(InspectCandidateContext);
+  const presets = useMemo(
+    () =>
+      choices.flatMap((choice) =>
+        choice.candidates.flatMap((candidate) => {
+          const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
+          return candidate.eligible && entity !== undefined
+            ? [{ candidate, entity }]
+            : [];
+        }),
+      ),
+    [byId, choices],
+  );
+  const [selectedPresetId, setSelectedPresetId] = useState(
+    presets[0]?.entity.id ?? "",
+  );
+  const [applyStatus, setApplyStatus] = useState<string>();
+  const selectedPreset = presets.find(
+    ({ entity }) => entity.id === selectedPresetId,
+  );
+
+  useEffect(() => {
+    const selected = presets.find(
+      ({ entity }) => entity.id === selectedPresetId,
+    );
+    const next = selected ?? presets[0];
+    setSelectedPresetId(next?.entity.id ?? "");
+    inspectCandidate?.(next);
+  }, [inspectCandidate, presets, selectedPresetId]);
+
   if (presets.length === 0) return null;
   return (
     <section className="build-presets" aria-labelledby="build-presets-heading">
-      <header>
-        <h5 id="build-presets-heading">Starting presets</h5>
-      </header>
-      <div className="build-preset-list">
-        {presets.map((preset) => {
-          const suggestions = buildPresetSuggestionNames(preset);
-          return (
-            <article className="build-preset" key={preset.id}>
-              <div>
-                <strong>{preset.name}</strong>
-                {suggestions.length === 0 ? null : (
-                  <p>{suggestions.join(" · ")}</p>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const command = applyBuildPresetCommand(
-                    build,
-                    preset,
-                    levelChoices,
-                    evaluation,
-                    entities,
-                    (definitionId, index) =>
-                      `web:preset:${definitionId}:${index}:${crypto.randomUUID()}`,
-                  );
-                  if (command !== undefined) onDispatch(command);
-                }}
-              >
-                Apply
-              </button>
-            </article>
-          );
-        })}
+      <label htmlFor="starting-preset" id="build-presets-heading">
+        Starting preset
+      </label>
+      <div className="build-preset-control">
+        <select
+          id="starting-preset"
+          value={selectedPresetId}
+          onFocus={() => {
+            if (selectedPreset !== undefined)
+              inspectCandidate?.(selectedPreset);
+          }}
+          onChange={(event) => {
+            const selected = presets.find(
+              ({ entity }) => entity.id === event.currentTarget.value,
+            );
+            setSelectedPresetId(event.currentTarget.value);
+            setApplyStatus(undefined);
+            inspectCandidate?.(selected);
+          }}
+        >
+          {presets.map(({ entity }) => (
+            <option key={entity.id} value={entity.id}>
+              {entity.name}
+            </option>
+          ))}
+        </select>
+        <button
+          disabled={selectedPreset === undefined}
+          type="button"
+          onClick={() => {
+            if (selectedPreset === undefined) return;
+            const command = applyBuildPresetCommand(
+              build,
+              selectedPreset.entity,
+              levelChoices,
+              evaluation,
+              entities,
+              (definitionId, index) =>
+                `web:preset:${definitionId}:${index}:${crypto.randomUUID()}`,
+            );
+            if (command === undefined) {
+              setApplyStatus("No open choices match this preset.");
+              return;
+            }
+            const applied =
+              command.kind === "batch" ? command.commands.length : 1;
+            setApplyStatus(
+              `${applied} ${applied === 1 ? "choice" : "choices"} applied.`,
+            );
+            onDispatch(command);
+          }}
+        >
+          Apply
+        </button>
       </div>
+      {applyStatus === undefined ? null : (
+        <p aria-live="polite" className="build-preset-status">
+          {applyStatus}
+        </p>
+      )}
     </section>
   );
 }
@@ -1183,7 +1232,7 @@ function ChoiceFlowSection({
   return (
     <section
       aria-labelledby={`${choiceSectionId(root.id)}-heading`}
-      className="level-choice-section grouped-choice-section choice-flow-section"
+      className={`level-choice-section grouped-choice-section choice-flow-section${unresolved && root.level <= build.effectiveLevel ? " choice-section-incomplete" : ""}`}
       id={choiceSectionId(root.id)}
       tabIndex={-1}
     >
@@ -1327,7 +1376,7 @@ function AbilityIncreaseEditor({
   return (
     <section
       aria-labelledby={`${choiceSectionId(choices[0]!.id)}-heading`}
-      className="level-choice-section ability-increase-section"
+      className={`level-choice-section ability-increase-section${chosenCount < choices.length && choices[0]!.level <= build.effectiveLevel ? " choice-section-incomplete" : ""}`}
       id={choiceSectionId(choices[0]!.id)}
       tabIndex={-1}
     >
@@ -1474,7 +1523,7 @@ function RepeatedChoiceGroup({
   return (
     <section
       aria-labelledby={`${choiceSectionId(root.id)}-heading`}
-      className="level-choice-section grouped-choice-section"
+      className={`level-choice-section grouped-choice-section${chosen < choices.length && root.level <= build.effectiveLevel ? " choice-section-incomplete" : ""}`}
       id={choiceSectionId(root.id)}
       tabIndex={-1}
     >
@@ -1732,7 +1781,7 @@ function BackgroundChoiceGroup({
 
   return (
     <section
-      className="level-choice-section grouped-choice-section"
+      className={`level-choice-section grouped-choice-section${choices.some(isUnresolvedChoice) && choices[0]!.level <= build.effectiveLevel ? " choice-section-incomplete" : ""}`}
       id={choiceSectionId(choices[0]!.id)}
       tabIndex={-1}
     >
@@ -1939,7 +1988,7 @@ function SkillTrainingEditor({
 
   return (
     <section
-      className="level-choice-section skill-training-section"
+      className={`level-choice-section skill-training-section${chosenCount < choices.length && choices[0]!.level <= build.effectiveLevel ? " choice-section-incomplete" : ""}`}
       id={choiceSectionId(choices[0]!.id)}
       tabIndex={-1}
     >
@@ -2620,20 +2669,36 @@ export function CharacterEditorPage({
       setSelectedLevel(Math.min(visibleHorizon, build.levels.length));
   }, [build, selectedLevel, visibleHorizon]);
 
-  const levelChoices = choicesAtLevel(selectedLevel, planningEvaluation);
-  const characterDetailChoices = groupChoicesByLegacyWorkflow(
-    (planningEvaluation?.choices ?? []).filter(isCharacterDetailChoice),
-  ).flatMap(({ choices }) => choices);
-  const mechanicalLevelChoices = levelChoices.filter(
-    (choice) => !isCharacterDetailChoice(choice),
+  const levelChoices = useMemo(
+    () => choicesAtLevel(selectedLevel, planningEvaluation),
+    [planningEvaluation, selectedLevel],
   );
-  const buildPresetChoices = mechanicalLevelChoices.filter(isBuildPresetChoice);
-  const retrainingChoices = mechanicalLevelChoices.filter(
-    isOptionalRetrainingChoice,
+  const characterDetailChoices = useMemo(
+    () =>
+      groupChoicesByLegacyWorkflow(
+        (planningEvaluation?.choices ?? []).filter(isCharacterDetailChoice),
+      ).flatMap(({ choices }) => choices),
+    [planningEvaluation],
   );
-  const primaryLevelChoices = mechanicalLevelChoices.filter(
-    (choice) =>
-      !isOptionalRetrainingChoice(choice) && !isBuildPresetChoice(choice),
+  const mechanicalLevelChoices = useMemo(
+    () => levelChoices.filter((choice) => !isCharacterDetailChoice(choice)),
+    [levelChoices],
+  );
+  const buildPresetChoices = useMemo(
+    () => mechanicalLevelChoices.filter(isBuildPresetChoice),
+    [mechanicalLevelChoices],
+  );
+  const retrainingChoices = useMemo(
+    () => mechanicalLevelChoices.filter(isOptionalRetrainingChoice),
+    [mechanicalLevelChoices],
+  );
+  const primaryLevelChoices = useMemo(
+    () =>
+      mechanicalLevelChoices.filter(
+        (choice) =>
+          !isOptionalRetrainingChoice(choice) && !isBuildPresetChoice(choice),
+      ),
+    [mechanicalLevelChoices],
   );
   const groupedLevelChoices = groupLevelChoices(primaryLevelChoices);
   const repeatedChoiceGroups = groupRepeatedChoiceSlots(
@@ -2896,7 +2961,7 @@ export function CharacterEditorPage({
         {...(omitIndividualHeading
           ? { "aria-label": choiceTitle(choice) }
           : { "aria-labelledby": `${choiceSectionId(choice.id)}-heading` })}
-        className="level-choice-section"
+        className={`level-choice-section${selectedLevel <= build.effectiveLevel && isUnresolvedChoice(choice) ? " choice-section-incomplete" : ""}`}
         id={choiceSectionId(choice.id)}
         key={choice.id}
         tabIndex={-1}
@@ -3424,7 +3489,7 @@ export function CharacterEditorPage({
                   <div className="level-choice-page">
                     {displayedChoiceSections.map(({ section, choices }) => (
                       <section
-                        className={`legacy-choice-group${selectedLevel <= build.effectiveLevel && choices.some(isUnresolvedChoice) ? " choice-group-incomplete" : ""}`}
+                        className={`legacy-choice-group${selectedLevel <= build.effectiveLevel && (choices.some(isUnresolvedChoice) || (section === "Ability Scores" && selectedLevel === 1 && abilityScoresIncomplete)) ? " choice-group-incomplete" : ""}`}
                         key={section}
                       >
                         <header>

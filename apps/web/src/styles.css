@@ -1937,7 +1937,18 @@ textarea {
 }
 
 .legacy-choice-group.choice-group-incomplete {
-  border-top-color: var(--warning);
+  background: var(--warning-soft);
+  border: 2px solid var(--warning);
+  border-top-width: 4px;
+}
+
+.legacy-choice-group.choice-group-incomplete > header {
+  background: color-mix(in srgb, var(--warning-soft), var(--warning) 24%);
+  border-bottom-color: var(--warning);
+}
+
+.legacy-choice-group.choice-group-incomplete .legacy-choice-title .icon {
+  color: var(--warning);
 }
 
 .legacy-choice-group > header {
@@ -1999,34 +2010,30 @@ textarea {
   padding: 0.75rem 0.8rem;
 }
 
-.build-presets > header h5,
-.build-presets > header p,
-.build-preset p {
-  margin: 0;
+.build-presets > label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
 }
 
-.build-presets > header p,
-.build-preset p {
+.build-preset-status {
   color: var(--muted);
   font-size: 0.78rem;
+  margin: 0.35rem 0 0;
 }
 
-.build-preset-list {
-  display: grid;
-  gap: 0.5rem;
-  margin-top: 0.65rem;
-}
-
-.build-preset {
-  align-items: center;
-  border-left: 3px solid var(--accent);
+.build-preset-control {
   display: flex;
-  gap: 1rem;
-  justify-content: space-between;
-  padding: 0.55rem 0 0.55rem 0.7rem;
+  gap: 0.5rem;
 }
 
-.build-preset button {
+.build-preset-control select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.build-preset-control button {
   flex: 0 0 auto;
 }
 
@@ -2063,6 +2070,27 @@ textarea {
   border-radius: 0;
   padding: 1rem;
   scroll-margin-top: 1rem;
+}
+
+.level-choice-section.choice-section-incomplete {
+  background: var(--warning-soft);
+  border: 2px solid var(--warning);
+}
+
+.level-choice-section.choice-section-incomplete > header {
+  background: color-mix(in srgb, var(--warning-soft), var(--warning) 24%);
+  border-bottom-color: var(--warning);
+  margin: -1rem -1rem 1rem;
+  padding: 0.75rem 1rem;
+}
+
+.legacy-choice-list > .level-choice-section.choice-section-incomplete {
+  box-shadow: inset 5px 0 var(--warning);
+}
+
+.legacy-choice-list > .level-choice-section.choice-section-incomplete > header {
+  margin: -0.75rem -0.8rem 0.7rem;
+  padding: 0.65rem 0.8rem;
 }
 
 .level-choice-section:focus-visible {
