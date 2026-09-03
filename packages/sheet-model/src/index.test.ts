@@ -179,6 +179,18 @@ describe("sheet model", () => {
         },
       ],
       activeDefinitionIds: ["RACE_1", "POWER_1"],
+      activeDefinitions: [
+        {
+          definitionId: "RACE_1",
+          occurrenceIds: [occurrence.id],
+          providerOccurrenceIds: [],
+        },
+        {
+          definitionId: "POWER_1",
+          occurrenceIds: ["power-occurrence"],
+          providerOccurrenceIds: [],
+        },
+      ],
       choices: [],
       stats: {
         Strength: { name: "Strength", value: 16, contributions: [] },
@@ -312,6 +324,7 @@ describe("sheet model", () => {
       legal: true,
       occurrences: [],
       activeDefinitionIds: [],
+      activeDefinitions: [],
       choices: [],
       stats: {},
       textStrings: {},

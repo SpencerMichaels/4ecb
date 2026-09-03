@@ -3,6 +3,7 @@ import {
   type BuildElementIdentity,
   type BuildInventoryEntry,
   type BuildOccurrence,
+  type BuildUserRule,
   type CharacterBuild,
   type LegacyCharacterSnapshot,
   type LegacyEnvelope,
@@ -212,6 +213,9 @@ function allOccurrences(build: CharacterBuild): BuildOccurrence[] {
     occurrence.children.forEach(visit);
   };
   build.levels.forEach((frame) => visit(frame.root));
+  build.levels.forEach((frame) => {
+    if (frame.userEdit !== undefined) visit(frame.userEdit.root);
+  });
   build.grabbag.forEach(visit);
   build.alternates.forEach((alternate) => visit(alternate.choice));
   build.inventory.forEach((entry) =>
@@ -231,6 +235,10 @@ function occurrencePaths(build: CharacterBuild): ReadonlyMap<string, string> {
   build.levels.forEach((frame, index) =>
     visit(frame.root, `levels[${index}].root`),
   );
+  build.levels.forEach((frame, index) => {
+    if (frame.userEdit !== undefined)
+      visit(frame.userEdit.root, `levels[${index}].userEdit.root`);
+  });
   build.grabbag.forEach((occurrence, index) =>
     visit(occurrence, `grabbag[${index}]`),
   );
@@ -274,6 +282,14 @@ function semanticBuild(build: CharacterBuild): unknown {
     levels: build.levels.map((frame) => ({
       level: frame.level,
       root: occurrence(frame.root),
+      ...(frame.userEdit === undefined
+        ? {}
+        : {
+            userEdit: {
+              root: occurrence(frame.userEdit.root),
+              rules: frame.userEdit.rules,
+            },
+          }),
     })),
     grabbag: build.grabbag.map(occurrence),
     inventory: build.inventory.map((entry) => ({
@@ -450,6 +466,40 @@ function serializeInventory(
   );
 }
 
+function serializeUserRule(rule: BuildUserRule): string {
+  if (
+    !/^[A-Za-z_][A-Za-z0-9_.:-]*$/.test(rule.name) ||
+    rule.attributes.some(
+      ({ name }) => !/^[A-Za-z_][A-Za-z0-9_.:-]*$/.test(name),
+    )
+  )
+    throw new Error("A user-edit rule contains an invalid XML name");
+  const contents = `${escapeText(rule.text)}${rule.children
+    .map(serializeUserRule)
+    .join("")}`;
+  return element(
+    rule.name,
+    Object.fromEntries(rule.attributes.map(({ name, value }) => [name, value])),
+    contents.length === 0 ? undefined : contents,
+  );
+}
+
+function userEditXml(
+  frame: CharacterBuild["levels"][number],
+  tokens: ReadonlyMap<string, string>,
+): string {
+  if (frame.userEdit === undefined) return "";
+  return element(
+    "UserEdit",
+    {},
+    `${serializeOccurrence(frame.userEdit.root, tokens)}${element(
+      "rules",
+      {},
+      frame.userEdit.rules.map(serializeUserRule).join(""),
+    )}`,
+  );
+}
+
 function levelXml(build: CharacterBuild, tokens: ReadonlyMap<string, string>) {
   return build.levels.map((frame) =>
     element(
@@ -458,7 +508,7 @@ function levelXml(build: CharacterBuild, tokens: ReadonlyMap<string, string>) {
       `${serializeOccurrence(frame.root, tokens)}${build.inventory
         .filter((entry) => entry.acquiredLevel === frame.level)
         .map((entry) => serializeInventory(entry, tokens))
-        .join("")}`,
+        .join("")}${userEditXml(frame, tokens)}`,
     ),
   );
 }
@@ -640,7 +690,18 @@ export function projectBuildForLegacyExport(
   };
   const levels = build.levels
     .filter((frame) => frame.level <= activeLevel)
-    .map((frame) => ({ ...frame, root: activeOccurrence(frame.root) }));
+    .map((frame) => ({
+      ...frame,
+      root: activeOccurrence(frame.root),
+      ...(frame.userEdit === undefined
+        ? {}
+        : {
+            userEdit: {
+              ...frame.userEdit,
+              root: activeOccurrence(frame.userEdit.root),
+            },
+          }),
+    }));
   const grabbag = build.grabbag
     .filter((occurrence) => occurrence.acquiredLevel <= activeLevel)
     .map(activeOccurrence);

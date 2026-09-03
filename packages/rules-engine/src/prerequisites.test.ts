@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ContentEntity } from "@4ecb/content-domain";
 
-import { evaluatePrerequisite } from "./prerequisites";
+import { evaluatePrerequisite, internalizePrerequisite } from "./prerequisites";
 
 const owned = [
   { id: "CLASS", name: "Avenger", type: "Class" },
@@ -29,8 +29,18 @@ const owned = [
     ],
   },
 ] as unknown as ContentEntity[];
+const definitions = [
+  ...owned,
+  { id: "WIZARD", name: "Wizard", type: "Class" } as ContentEntity,
+  {
+    id: "BLOOD_THIRST",
+    name: "Blood Thirst",
+    type: "Feat",
+  } as ContentEntity,
+];
 const context = {
   owned,
+  definitions,
   level: 8,
   abilities: { Strength: 13, Wisdom: 16 },
 };
@@ -38,10 +48,8 @@ const context = {
 describe("legacy prerequisites", () => {
   it("evaluates ability, level, training, source, identity, and boolean clauses", () => {
     expect(
-      evaluatePrerequisite(
-        "Str 13, Wis 13; ~MULTICLASS or Unlimited Multiclass; !Wizard",
-        context,
-      ).status,
+      evaluatePrerequisite("Str 13, Wis 13; Multiclass; !Wizard", context)
+        .status,
     ).toBe("satisfied");
     expect(evaluatePrerequisite("Trained in Athletics", context).status).toBe(
       "satisfied",
@@ -52,8 +60,8 @@ describe("legacy prerequisites", () => {
     expect(evaluatePrerequisite("Level 11", context).status).toBe("failed");
   });
 
-  it("distinguishes native markers and unknown prose", () => {
-    expect(evaluatePrerequisite("~HUMAN", context).status).toBe("satisfied");
+  it("keeps unresolved markers and unknown prose unverified", () => {
+    expect(evaluatePrerequisite("~HUMAN", context).status).toBe("unverified");
     expect(
       evaluatePrerequisite("must have crossed the silver sea", context).status,
     ).toBe("unverified");
@@ -137,6 +145,177 @@ describe("legacy prerequisites", () => {
         ...context,
         knownTokens,
         ownedTokens: new Set(),
+      }).status,
+    ).toBe("failed");
+  });
+
+  it("builds the confirmed semicolon, comma, and word-and tree", () => {
+    const definitions = [
+      { id: "A", name: "A", type: "Feat" },
+      { id: "B", name: "B", type: "Feat" },
+      { id: "C", name: "C", type: "Feat" },
+    ] as ContentEntity[];
+    const ir = internalizePrerequisite("A, B and C; 11th level", {
+      ...context,
+      definitions,
+    });
+    expect(ir).toMatchObject({
+      kind: "all",
+      children: [
+        {
+          kind: "all",
+          children: [
+            { kind: "element" },
+            { kind: "element" },
+            { kind: "element" },
+          ],
+        },
+        { kind: "level", minimum: 11 },
+      ],
+    });
+    expect(
+      evaluatePrerequisite("A, B and C; 11th level", {
+        ...context,
+        level: 11,
+        definitions,
+        owned: definitions,
+      }).status,
+    ).toBe("satisfied");
+    expect(
+      evaluatePrerequisite("A, B and C; 11th level", {
+        ...context,
+        level: 11,
+        definitions,
+        owned: definitions.slice(0, 2),
+      }).status,
+    ).toBe("failed");
+  });
+
+  it("builds A, B, or C as one OR branch", () => {
+    const definitions = ["A", "B", "C"].map(
+      (name) => ({ id: name, name, type: "Feat" }) as ContentEntity,
+    );
+    expect(
+      internalizePrerequisite("A, B, or C", {
+        ...context,
+        definitions,
+      }),
+    ).toMatchObject({
+      kind: "any",
+      children: [{ kind: "element" }, { kind: "element" }, { kind: "element" }],
+    });
+    expect(
+      evaluatePrerequisite("A, B, or C", {
+        ...context,
+        definitions,
+        owned: [definitions[1] as ContentEntity],
+      }).status,
+    ).toBe("satisfied");
+  });
+
+  it("honors evidenced parentheses around nested connective groups", () => {
+    const definitions = ["A", "B", "C"].map(
+      (name) => ({ id: name, name, type: "Feat" }) as ContentEntity,
+    );
+    expect(
+      internalizePrerequisite("A and (B or C)", {
+        ...context,
+        definitions,
+      }),
+    ).toMatchObject({
+      kind: "all",
+      children: [
+        { kind: "element", definitionIds: ["A"] },
+        { kind: "any", children: [{ kind: "element" }, { kind: "element" }] },
+      ],
+    });
+    expect(
+      evaluatePrerequisite("A and (B or C)", {
+        ...context,
+        definitions,
+        owned: [definitions[0], definitions[2]] as ContentEntity[],
+      }).status,
+    ).toBe("satisfied");
+  });
+
+  it("resolves exact names, internal IDs, and type-qualified references", () => {
+    const feat = {
+      id: "ID_FEAT_ALPHA",
+      name: "Shared Name",
+      type: "Feat",
+    } as ContentEntity;
+    const power = {
+      id: "ID_POWER_ALPHA",
+      name: "Shared Name",
+      type: "Power",
+    } as ContentEntity;
+    const resolvedContext = {
+      ...context,
+      definitions: [feat, power],
+      owned: [feat],
+    };
+    expect(evaluatePrerequisite("ID_FEAT_ALPHA", resolvedContext).status).toBe(
+      "satisfied",
+    );
+    expect(
+      evaluatePrerequisite("Shared Name feat", resolvedContext).status,
+    ).toBe("satisfied");
+    expect(
+      evaluatePrerequisite("Shared Name power", resolvedContext).status,
+    ).toBe("failed");
+    expect(
+      evaluatePrerequisite(
+        "Shared Name [Multiclass Example] feat",
+        resolvedContext,
+      ).status,
+    ).toBe("satisfied");
+  });
+
+  it("evaluates same-type tilde markers as mutual exclusions", () => {
+    const subject = {
+      id: "PATH_A",
+      name: "Path A",
+      type: "Feat",
+      prerequisites: "~EXCLUSIVE_PATH",
+    } as ContentEntity;
+    const competing = {
+      id: "PATH_B",
+      name: "Path B",
+      type: "Feat",
+      prerequisites: "Str 13, ~EXCLUSIVE_PATH; Paragon Tier",
+    } as ContentEntity;
+    const otherType = {
+      id: "RACE_PATH",
+      name: "Race Path",
+      type: "Race",
+      prerequisites: "~EXCLUSIVE_PATH",
+    } as ContentEntity;
+    const definitions = [subject, competing, otherType];
+    expect(
+      internalizePrerequisite(subject.prerequisites, {
+        ...context,
+        subject,
+        definitions,
+      }),
+    ).toEqual({
+      kind: "exclusive",
+      text: "~EXCLUSIVE_PATH",
+      definitionIds: ["PATH_B"],
+    });
+    expect(
+      evaluatePrerequisite(subject.prerequisites, {
+        ...context,
+        subject,
+        definitions,
+        owned: [subject, otherType],
+      }).status,
+    ).toBe("satisfied");
+    expect(
+      evaluatePrerequisite(subject.prerequisites, {
+        ...context,
+        subject,
+        definitions,
+        owned: [competing],
       }).status,
     ).toBe("failed");
   });

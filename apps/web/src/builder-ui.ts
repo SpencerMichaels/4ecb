@@ -129,9 +129,15 @@ export function candidateReason(reasons: readonly string[]): string {
     category: "Does not match this choice category",
     prerequisite: "Does not meet prerequisites",
     "prerequisite-unverified": "Prerequisites could not be verified",
+    "source-unentitled": "Not included in this character's allowed sources",
     self: "A feature cannot select itself",
+    duplicate: "Already selected in another slot",
   };
   return reasons.map((reason) => labels[reason] ?? reason).join("; ");
+}
+
+export function isCandidateSelectable(candidate: CandidateDecision): boolean {
+  return candidate.sourceEntitled !== false;
 }
 
 export function isCandidateVisible(
@@ -527,6 +533,7 @@ export function choiceForRepeatedCandidate(
       choice.candidates.some(
         (candidate) =>
           candidate.definitionId === definitionId &&
+          isCandidateSelectable(candidate) &&
           isCandidateVisible(candidate, showAll),
       ),
   );
@@ -536,6 +543,7 @@ export function choiceForRepeatedCandidate(
   return choice.candidates.some(
     (candidate) =>
       candidate.definitionId === definitionId &&
+      isCandidateSelectable(candidate) &&
       isCandidateVisible(candidate, showAll),
   )
     ? choice

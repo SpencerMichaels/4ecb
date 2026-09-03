@@ -43,6 +43,7 @@ import {
   groupRepeatedCandidateScopes,
   groupRepeatedChoiceSlots,
   identityChoiceLabel,
+  isCandidateSelectable,
   isCandidateVisible,
   isCharacterDetailChoice,
   isOptionalRetrainingChoice,
@@ -502,6 +503,11 @@ function ReplacementEditor({
       : {
           definitionId: targetOption.definitionId,
           eligible: true,
+          sourceEntitled: true,
+          rulesLegal: true,
+          activeDefinition: true,
+          activeOccurrenceIds: [targetOption.replacesOccurrenceId],
+          providerOccurrenceIds: [],
           reasons: [],
         }
     : (target?.candidates ?? []).find(
@@ -562,7 +568,7 @@ function ReplacementEditor({
     candidate: CandidateDecision,
   ): void => {
     const definition = byId.get(candidate.definitionId.toLocaleLowerCase());
-    if (definition === undefined) return;
+    if (definition === undefined || !isCandidateSelectable(candidate)) return;
     setPerusingTarget(false);
     setOptimisticSelectedId(candidate.definitionId);
     setPerusedId(candidate.definitionId);
@@ -612,6 +618,11 @@ function ReplacementEditor({
                   : {
                       definitionId: option.definitionId,
                       eligible: true,
+                      sourceEntitled: true,
+                      rulesLegal: true,
+                      activeDefinition: true,
+                      activeOccurrenceIds: [option.replacesOccurrenceId],
+                      providerOccurrenceIds: [],
                       reasons: [],
                     },
               );
@@ -634,6 +645,11 @@ function ReplacementEditor({
                   : {
                       definitionId: option.definitionId,
                       eligible: true,
+                      sourceEntitled: true,
+                      rulesLegal: true,
+                      activeDefinition: true,
+                      activeOccurrenceIds: [option.replacesOccurrenceId],
+                      providerOccurrenceIds: [],
                       reasons: [],
                     },
               );
@@ -694,6 +710,7 @@ function ReplacementEditor({
               <option value="">Choose a replacement</option>
               {visible.map((candidate) => (
                 <option
+                  disabled={!isCandidateSelectable(candidate)}
                   key={candidate.definitionId}
                   value={candidate.definitionId}
                 >
@@ -856,13 +873,18 @@ function ChoiceEditor({
     );
 
   const selectDefinition = (definitionId: string): void => {
-    setOptimisticSelectedId(definitionId);
-    setPerusedId(definitionId);
     const candidate = choice.candidates.find(
       (item) => item.definitionId === definitionId,
     );
     const definition = byId.get(definitionId.toLocaleLowerCase());
-    if (candidate === undefined || definition === undefined) return;
+    if (
+      candidate === undefined ||
+      definition === undefined ||
+      !isCandidateSelectable(candidate)
+    )
+      return;
+    setOptimisticSelectedId(definitionId);
+    setPerusedId(definitionId);
     inspectCandidate?.({ candidate, entity: definition });
     const occurrence: BuildOccurrence = {
       id: `web:${crypto.randomUUID()}`,
@@ -972,6 +994,7 @@ function ChoiceEditor({
                   <option value="">Choose {displayedGroup.label}</option>
                   {displayedGroup.options.map(({ candidate, label }) => (
                     <option
+                      disabled={!isCandidateSelectable(candidate)}
                       key={candidate.definitionId}
                       value={candidate.definitionId}
                     >
@@ -1008,6 +1031,7 @@ function ChoiceEditor({
               <option value="">Unresolved</option>
               {visibleCandidates.map((candidate) => (
                 <option
+                  disabled={!isCandidateSelectable(candidate)}
                   key={candidate.definitionId}
                   value={candidate.definitionId}
                 >

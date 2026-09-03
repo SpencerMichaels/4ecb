@@ -28,13 +28,14 @@ profileBinding? { packId, contentDigest? }
 sheetSettings { paper, monochrome, blankHitPoints, powerCards, itemCards }
 legacy { format, origin?, version?, gameSystem?, legality?, sourceXml }
 snapshot { details, abilities, stats, selections, powers, loot, textStrings }
-build { effectiveLevel, levels, grabbag, inventory, alternates,
+build { effectiveLevel, levels { root, userEdit? }, grabbag, inventory, alternates,
         baseAbilities, textStrings }
 ```
 
 The build is authoritative for modern edits. Its level frames preserve nested
-selection history, occurrence IDs, acquisition levels, house-rule markers, and
-replacement links. The snapshot remains an imported legacy cache used for
+selection history, occurrence IDs, acquisition levels, house-rule markers,
+replacement links, and a typed recursive representation of any native
+`UserEdit` provider and rule statements. The snapshot remains an imported legacy cache used for
 fallback display and parity checks. Existing schema-1 records migrate lazily
 when read. Library title/notes, profile binding, trash state, and sheet
 preferences are native metadata and do not modify the compatibility file. A
@@ -74,7 +75,7 @@ elements. It reads:
 
 The normalized snapshot is explicitly tagged `legacy-cache`. It is a read model,
 not editable build state. The importer also projects the complete serialized
-level tree, grabbag, alternates, base abilities, and inventory into the
+level tree, per-level `UserEdit` containers, grabbag, alternates, base abilities, and inventory into the
 authoritative build. Custom extensions, comments, whitespace, cached sheet
 values, and other unmodeled XML remain in `sourceXml`.
 
@@ -97,7 +98,8 @@ The library now makes that behavior an explicit **Original imported file (no
 edits)** target. A separate **Legacy Character Builder 0.07a** target evaluates
 the authoritative build against its exact bound pack revision, allocates fresh
 document-local occurrence tokens, repairs representable replacement links,
-serializes level history, grabbag, inventory, alternates, and text values, and
+serializes level history (including typed `UserEdit` payloads), grabbag,
+inventory, alternates, and text values, and
 regenerates the `CharacterSheet` calculation caches. Campaign and unknown root
 elements are copied from the source envelope; companion, journal, and unknown
 sheet blocks are retained. XML user content is escaped; an invalid XML 1.0 code point blocks the
@@ -115,9 +117,16 @@ Before download, edited output is re-imported and compared to the authoritative
 level, selection, replacement, inventory, alternate, ability, and text
 structure. Export is blocked when that semantic check fails, evaluation does
 not converge, the exact pack revision is unavailable, or the evaluation horizon
-is behind the latest saved level. Library metadata remains outside both export
+does not equal the build's current effective level. Library metadata remains outside both export
 targets. Structural round-trip coverage is automated; the curated original-
 application launch matrix remains an open M5 release check.
+
+Typed `UserEdit` payloads are projected as stable character-local content
+entities alongside `EvaluationInput`. Their rules use the same fixed-point,
+stat, choice, and power paths as profile content, remain intrinsically
+source-entitled, and contribute to regenerated sheet caches without being
+published into a shared content pack. The original-import target remains byte
+exact; the edited target retains and executes the typed rules.
 
 The automated compatibility boundary preserves unsupported native power and
 prerequisite behavior as explicit evaluator diagnostics while retaining the

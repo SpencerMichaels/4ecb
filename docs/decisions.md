@@ -395,6 +395,24 @@ are memoized per evaluation so the 38,339-record private profile does not repeat
 full-pack scans. The connective and internalization evidence is specified in
 `reverse-engineering/docs/04-rule-language.md`.
 
+### D031 — Choice ownership dimensions remain separate
+
+Candidate decisions expose source entitlement, rules legality,
+active-definition membership, active occurrence identities, and provider
+occurrence ownership independently. The older `eligible` field remains a
+compatibility aggregate and is true only when both source entitlement and rules
+legality pass. Absence of an entitlement list preserves local/offline behavior
+by entitling every source; a configured list adds Core and follows the recovered
+`_RequiresID` dependency recursively.
+
+**Show unavailable options** reveals same-category rules-illegal choices and may
+store one as an explicit house rule, matching `D20Choice.Choose` checking source
+ownership rather than the `Legal` bit. Source-unentitled content may be shown to
+explain the restriction, but ordinary selection controls disable it and command
+handlers reject it rather than relabeling it as a house rule. Already-imported
+source-unentitled, illegal, custom, or missing occurrences remain recoverable and
+carry structured diagnostics.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

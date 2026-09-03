@@ -23,9 +23,31 @@ export interface BuildOccurrence {
   readonly unresolved: boolean;
 }
 
+/** A content-independent rule statement stored by a native UserEdit. */
+export interface BuildUserRule {
+  readonly name: string;
+  readonly attributes: readonly {
+    readonly name: string;
+    readonly value: string;
+  }[];
+  readonly text: string;
+  readonly children: readonly BuildUserRule[];
+}
+
+/**
+ * The legacy engine stores one generated provider and its executable rules in
+ * a per-level UserEdit container. They remain character-local rather than
+ * becoming shared content definitions.
+ */
+export interface BuildUserEdit {
+  readonly root: BuildOccurrence;
+  readonly rules: readonly BuildUserRule[];
+}
+
 export interface BuildLevelFrame {
   readonly level: number;
   readonly root: BuildOccurrence;
+  readonly userEdit?: BuildUserEdit;
 }
 
 export interface BuildInventoryEntry {

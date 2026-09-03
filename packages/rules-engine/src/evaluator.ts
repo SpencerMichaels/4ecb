@@ -60,12 +60,37 @@ export interface EvaluationInput {
   readonly occurrences: readonly CharacterOccurrence[];
   readonly inventory: readonly CharacterInventoryEntry[];
   readonly textStrings?: Readonly<Record<string, string>>;
+  /** Character-local definitions synthesized from legacy per-level UserEdit rules. */
+  readonly localEntities?: readonly ContentEntity[];
+  /**
+   * Legacy source entitlements by Source name/ID. Undefined means that no
+   * entitlement list is configured and therefore every definition is
+   * source-entitled. A configured list always includes Core implicitly.
+   */
+  readonly sourceEntitlements?: readonly string[];
 }
 
 export interface CandidateDecision {
   readonly definitionId: string;
+  /** Compatibility aggregate: sourceEntitled && rulesLegal. */
   readonly eligible: boolean;
+  /** Whether campaign/source policy permits choosing this definition. */
+  readonly sourceEntitled: boolean;
+  /** The native Legal bit: structural and prerequisite legality only. */
+  readonly rulesLegal: boolean;
+  /** Whether this definition is already present in active membership. */
+  readonly activeDefinition: boolean;
+  /** Active occurrences carrying this definition. */
+  readonly activeOccurrenceIds: readonly string[];
+  /** Occurrences whose rules/slots own those active occurrences. */
+  readonly providerOccurrenceIds: readonly string[];
   readonly reasons: readonly string[];
+}
+
+export interface ActiveDefinitionMembership {
+  readonly definitionId: string;
+  readonly occurrenceIds: readonly string[];
+  readonly providerOccurrenceIds: readonly string[];
 }
 
 export interface EvaluatedChoice {
@@ -112,6 +137,7 @@ export interface EvaluatedCharacter {
   readonly legal: boolean;
   readonly occurrences: readonly CharacterOccurrence[];
   readonly activeDefinitionIds: readonly string[];
+  readonly activeDefinitions: readonly ActiveDefinitionMembership[];
   readonly choices: readonly EvaluatedChoice[];
   readonly stats: Readonly<Record<string, EvaluatedStat>>;
   readonly textStrings: Readonly<Record<string, string>>;
@@ -131,6 +157,45 @@ function key(value: string): string {
 function field(entity: ContentEntity, name: string): string | undefined {
   return entity.specifics.find((specific) => key(specific.name) === key(name))
     ?.value;
+}
+
+function sourceEntitlementChecker(
+  configured: readonly string[] | undefined,
+  index: RulesIndex,
+): (entity: ContentEntity) => boolean {
+  if (configured === undefined) return () => true;
+  const entitled = new Set(["core", ...configured.map(key)]);
+  for (const requested of [...entitled]) {
+    const source =
+      index.find(requested, "Source") ??
+      index.type("Source").find((entity) => key(entity.id) === requested);
+    if (source === undefined) continue;
+    entitled.add(key(source.id));
+    entitled.add(key(source.name));
+  }
+  const memo = new Map<string, boolean>();
+  const visiting = new Set<string>();
+  const check = (entity: ContentEntity): boolean => {
+    const entityKey = key(entity.id);
+    const cached = memo.get(entityKey);
+    if (cached !== undefined) return cached;
+    if (visiting.has(entityKey)) return false;
+    visiting.add(entityKey);
+    const requiresId =
+      field(entity, "_RequiresID") ??
+      entity.attributes.find(({ name }) => key(name) === "_requiresid")?.value;
+    const dependency =
+      requiresId === undefined ? undefined : index.get(requiresId);
+    const dependencyEntitled = dependency === undefined || check(dependency);
+    const ownSourceEntitled = entity.sources.some((source) =>
+      entitled.has(key(source)),
+    );
+    const result = dependencyEntitled && ownSourceEntitled;
+    visiting.delete(entityKey);
+    memo.set(entityKey, result);
+    return result;
+  };
+  return check;
 }
 
 function nativeSpecificStatBonuses(
@@ -441,7 +506,12 @@ export function evaluateCharacter(
   input: EvaluationInput,
   entities: readonly ContentEntity[],
 ): EvaluatedCharacter {
-  const index = new RulesIndex(entities);
+  const evaluationEntities = [...entities, ...(input.localEntities ?? [])];
+  const index = new RulesIndex(evaluationEntities);
+  const isSourceEntitled = sourceEntitlementChecker(
+    input.sourceEntitlements,
+    index,
+  );
   const diagnostics: EngineDiagnostic[] = [];
   const inventory = aggregateInventory(input.inventory, input.level);
   const adjustedMagicArmorBonuses = essentialsMagicArmorBonuses(
@@ -493,6 +563,37 @@ export function evaluateCharacter(
       if (replacedId === targetId) return true;
       visited.add(replacedId);
       replacedId = saved.find(({ id }) => id === replacedId)?.replacesId;
+    }
+    return false;
+  };
+  const passThroughDefinition = (definition: ContentEntity): ContentEntity => {
+    const rules = parseRules(definition.id, definition.rules);
+    if (rules.length !== 1 || rules[0]?.kind !== "grant") return definition;
+    const target = index.find(rules[0].name, rules[0].type);
+    return target !== undefined &&
+      ["proficiency", "skill training"].includes(key(target.type))
+      ? target
+      : definition;
+  };
+  const defaultName = (rule: SelectRule): string | undefined => {
+    if (rule.defaultId === undefined) return undefined;
+    const textKey = /^\[([^\]]+)\]$/.exec(rule.defaultId)?.[1];
+    const value =
+      textKey === undefined
+        ? rule.defaultId
+        : (input.textStrings?.[textKey] ?? "");
+    return value.trim().length === 0 ? undefined : value;
+  };
+  const isDescendantOf = (
+    candidate: CharacterOccurrence,
+    ancestorId: string,
+  ): boolean => {
+    let parentId = candidate.parentId;
+    const visited = new Set<string>();
+    while (parentId !== undefined && !visited.has(parentId)) {
+      if (parentId === ancestorId) return true;
+      visited.add(parentId);
+      parentId = occurrences.find(({ id }) => id === parentId)?.parentId;
     }
     return false;
   };
@@ -564,6 +665,43 @@ export function evaluateCharacter(
               kind: "grant",
             });
         } else if (rule.kind === "drop") {
+          if (rule.select !== undefined) {
+            for (const selectProvider of occurrences) {
+              const selectEntity = index.get(selectProvider.definitionId);
+              if (selectEntity === undefined) continue;
+              for (const selectRule of parseRules(
+                selectEntity.id,
+                selectEntity.rules,
+              )) {
+                if (
+                  selectRule.kind !== "select" ||
+                  key(selectRule.name ?? "") !== key(rule.select) ||
+                  !activeAt(selectRule, input.level)
+                )
+                  continue;
+                for (
+                  let choiceIndex = 0;
+                  choiceIndex < selectRule.number;
+                  choiceIndex += 1
+                ) {
+                  const selected = saved.find(
+                    (candidate) =>
+                      candidate.parentId === selectProvider.id &&
+                      candidate.ruleOrdinal === selectRule.source.ordinal &&
+                      (candidate.choiceIndex ?? 0) === choiceIndex,
+                  );
+                  if (selected === undefined) continue;
+                  const active = occurrences.find(
+                    (candidate) =>
+                      candidate.id === selected.id ||
+                      replacementIncludes(candidate, selected.id),
+                  );
+                  if (active !== undefined) dropped.add(active.id);
+                }
+              }
+            }
+            continue;
+          }
           for (const candidate of occurrences) {
             const definition = index.get(candidate.definitionId);
             if (
@@ -576,9 +714,94 @@ export function evaluateCharacter(
             )
               dropped.add(candidate.id);
           }
+        } else if (rule.kind === "select" && rule.defaultId !== undefined) {
+          const target = index.find(rule.defaultId, rule.type);
+          if (target === undefined || !isSourceEntitled(target)) continue;
+          for (
+            let choiceIndex = 0;
+            choiceIndex < rule.number;
+            choiceIndex += 1
+          ) {
+            const direct = saved.find(
+              (candidate) =>
+                candidate.parentId === occurrence.id &&
+                candidate.ruleOrdinal === rule.source.ordinal &&
+                (candidate.choiceIndex ?? 0) === choiceIndex,
+            );
+            if (
+              occurrences.some(
+                (candidate) =>
+                  (candidate.parentId === occurrence.id &&
+                    candidate.ruleOrdinal === rule.source.ordinal &&
+                    (candidate.choiceIndex ?? 0) === choiceIndex) ||
+                  (direct !== undefined &&
+                    replacementIncludes(candidate, direct.id)),
+              )
+            )
+              continue;
+            additions.push({
+              id: `${occurrence.id}:default:${rule.source.ordinal}:${choiceIndex}`,
+              definitionId: target.id,
+              acquiredLevel: Math.max(
+                occurrence.acquiredLevel,
+                rule.source.level.minimum,
+              ),
+              parentId: occurrence.id,
+              ruleOrdinal: rule.source.ordinal,
+              choiceIndex,
+              kind: "choice",
+            });
+          }
+        }
+        if (rule.kind === "select" && !rule.existing) {
+          for (
+            let choiceIndex = 0;
+            choiceIndex < rule.number;
+            choiceIndex += 1
+          ) {
+            const direct = saved.find(
+              (candidate) =>
+                candidate.parentId === occurrence.id &&
+                candidate.ruleOrdinal === rule.source.ordinal &&
+                (candidate.choiceIndex ?? 0) === choiceIndex,
+            );
+            const selected = occurrences.find(
+              (candidate) =>
+                (candidate.parentId === occurrence.id &&
+                  candidate.ruleOrdinal === rule.source.ordinal &&
+                  (candidate.choiceIndex ?? 0) === choiceIndex) ||
+                (direct !== undefined &&
+                  replacementIncludes(candidate, direct.id)),
+            );
+            if (selected === undefined) continue;
+            const selectedDefinition = index.get(selected.definitionId);
+            if (
+              selectedDefinition === undefined ||
+              key(selectedDefinition.name) === key(defaultName(rule) ?? "")
+            )
+              continue;
+            const equivalent = passThroughDefinition(selectedDefinition);
+            const duplicate = occurrences.some((candidate) => {
+              if (
+                candidate.id === selected.id ||
+                isDescendantOf(candidate, selected.id)
+              )
+                return false;
+              const candidateKey = key(candidate.definitionId);
+              return (
+                candidateKey === key(selectedDefinition.id) ||
+                (equivalent !== selectedDefinition &&
+                  candidateKey === key(equivalent.id))
+              );
+            });
+            if (duplicate) dropped.add(selected.id);
+          }
         }
       }
     }
+    for (const candidate of occurrences)
+      if ([...dropped].some((id) => isDescendantOf(candidate, id)))
+        dropped.add(candidate.id);
     occurrences = [
       ...occurrences.filter((occurrence) => !dropped.has(occurrence.id)),
       ...additions,
@@ -607,6 +830,37 @@ export function evaluateCharacter(
     });
     return [];
   });
+  const memberships = new Map<
+    string,
+    {
+      definitionId: string;
+      occurrenceIds: string[];
+      providerOccurrenceIds: string[];
+    }
+  >();
+  for (const occurrence of occurrences) {
+    const definitionKey = key(occurrence.definitionId);
+    const membership = memberships.get(definitionKey) ?? {
+      definitionId: occurrence.definitionId,
+      occurrenceIds: [],
+      providerOccurrenceIds: [],
+    };
+    membership.occurrenceIds.push(occurrence.id);
+    if (
+      occurrence.parentId !== undefined &&
+      !membership.providerOccurrenceIds.includes(occurrence.parentId)
+    )
+      membership.providerOccurrenceIds.push(occurrence.parentId);
+    memberships.set(definitionKey, membership);
+    const definition = index.get(occurrence.definitionId);
+    if (definition !== undefined && !isSourceEntitled(definition))
+      diagnostics.push({
+        severity: "error",
+        code: "occurrence.source-unentitled",
+        message: `${definition.name} is not included in the configured source entitlements.`,
+        occurrenceId: occurrence.id,
+      });
+  }
   const ownedIds = new Set(ownedDefinitions.map((entity) => key(entity.id)));
   const expressionContext: ExpressionContext = {
     owned: ownedDefinitions,
@@ -620,6 +874,37 @@ export function evaluateCharacter(
     categoryAliases: index.categoryAliases,
     categoryValuesFor: (entity) => index.categoryValues(entity),
   };
+  // Active-definition membership is intentionally collapsed by definition,
+  // but every active grant provider remains an owner of its rule occurrence.
+  // This preserves the native distinction even where the modern evaluator has
+  // already deduplicated a generated grant from the occurrence projection.
+  for (const provider of occurrences) {
+    const providerDefinition = index.get(provider.definitionId);
+    if (providerDefinition === undefined) continue;
+    for (const rule of parseRules(
+      providerDefinition.id,
+      providerDefinition.rules,
+    )) {
+      if (
+        rule.kind !== "grant" ||
+        !activeAt(rule, input.level) ||
+        (rule.requires !== undefined &&
+          !evaluateRequires(parseRequires(rule.requires), expressionContext))
+      )
+        continue;
+      const target = index.find(rule.name, rule.type);
+      if (target === undefined) continue;
+      const membership = memberships.get(key(target.id));
+      if (
+        membership !== undefined &&
+        !membership.providerOccurrenceIds.includes(provider.id)
+      )
+        membership.providerOccurrenceIds.push(provider.id);
+    }
+  }
+  const activeDefinitions: ActiveDefinitionMembership[] = [
+    ...memberships.values(),
+  ];
   const selectedTheme = ownedDefinitions.find(
     (definition) => key(definition.type) === "theme",
   );
@@ -697,6 +982,7 @@ export function evaluateCharacter(
       rule.category ?? "",
       provider.definitionId,
       input.level,
+      rule.existing,
     ].join("\0");
     const cached = candidateCache.get(cacheKey);
     if (cached !== undefined) return cached;
@@ -758,9 +1044,21 @@ export function evaluateCharacter(
         match ||= isCustomChoiceException(candidate);
         if (!match) reasons.push("category");
       }
+      const membership = memberships.get(key(candidate.id));
+      if (rule.existing && membership === undefined) reasons.push("existing");
+      const sourceEntitled = isSourceEntitled(candidate);
+      if (!sourceEntitled) reasons.push("source-unentitled");
+      const rulesLegal = !reasons.some(
+        (reason) => reason !== "source-unentitled",
+      );
       return {
         definitionId: candidate.id,
-        eligible: reasons.length === 0,
+        eligible: sourceEntitled && rulesLegal,
+        sourceEntitled,
+        rulesLegal,
+        activeDefinition: membership !== undefined,
+        activeOccurrenceIds: membership?.occurrenceIds ?? [],
+        providerOccurrenceIds: membership?.providerOccurrenceIds ?? [],
         reasons,
       };
     });
@@ -854,25 +1152,6 @@ export function evaluateCharacter(
             choiceIndex < rule.number;
             choiceIndex += 1
           ) {
-            const siblingDefinitionIds = new Set(
-              occurrences
-                .filter(
-                  (candidate) =>
-                    candidate.parentId === occurrence.id &&
-                    candidate.ruleOrdinal === rule.source.ordinal &&
-                    (candidate.choiceIndex ?? 0) !== choiceIndex,
-                )
-                .map((candidate) => key(candidate.definitionId)),
-            );
-            const candidates = baseCandidates.map((candidate) =>
-              siblingDefinitionIds.has(key(candidate.definitionId))
-                ? {
-                    ...candidate,
-                    eligible: false,
-                    reasons: [...candidate.reasons, "duplicate"],
-                  }
-                : candidate,
-            );
             const directSelection = saved.find(
               (candidate) =>
                 candidate.parentId === occurrence.id &&
@@ -891,6 +1170,38 @@ export function evaluateCharacter(
                 : occurrences.find((candidate) =>
                     replacementIncludes(candidate, directSelection.id),
                   ));
+            const siblingDefinitionIds = new Set(
+              occurrences
+                .filter(
+                  (candidate) =>
+                    candidate.parentId === occurrence.id &&
+                    candidate.ruleOrdinal === rule.source.ordinal &&
+                    (candidate.choiceIndex ?? 0) !== choiceIndex,
+                )
+                .map((candidate) => key(candidate.definitionId)),
+            );
+            const candidates = baseCandidates.map((candidate) => {
+              const definition = index.get(candidate.definitionId);
+              if (
+                rule.existing ||
+                definition === undefined ||
+                key(definition.name) === key(defaultName(rule) ?? "")
+              )
+                return candidate;
+              const equivalent = passThroughDefinition(definition);
+              const duplicate =
+                siblingDefinitionIds.has(key(definition.id)) ||
+                (equivalent !== definition &&
+                  siblingDefinitionIds.has(key(equivalent.id)));
+              return duplicate
+                ? {
+                    ...candidate,
+                    eligible: false,
+                    rulesLegal: false,
+                    reasons: [...candidate.reasons, "duplicate"],
+                  }
+                : candidate;
+            });
             choices.push({
               id: `${occurrence.id}:choice:${rule.source.ordinal}:${choiceIndex}`,
               level: Math.max(
@@ -1016,8 +1327,24 @@ export function evaluateCharacter(
               : { selectedOccurrenceId: selected.id }),
             candidates: replacementOptions.map((option) => ({
               definitionId: option.definitionId,
-              eligible: true,
-              reasons: [],
+              eligible:
+                index.get(option.definitionId) === undefined ||
+                isSourceEntitled(index.get(option.definitionId)!),
+              sourceEntitled:
+                index.get(option.definitionId) === undefined ||
+                isSourceEntitled(index.get(option.definitionId)!),
+              rulesLegal: true,
+              activeDefinition: memberships.has(key(option.definitionId)),
+              activeOccurrenceIds:
+                memberships.get(key(option.definitionId))?.occurrenceIds ?? [],
+              providerOccurrenceIds:
+                memberships.get(key(option.definitionId))
+                  ?.providerOccurrenceIds ?? [],
+              reasons:
+                index.get(option.definitionId) !== undefined &&
+                !isSourceEntitled(index.get(option.definitionId)!)
+                  ? ["source-unentitled"]
+                  : [],
             })),
             replacementOptions,
           });
@@ -1091,8 +1418,19 @@ export function evaluateCharacter(
                 candidates: [
                   {
                     definitionId: masteryPower.id,
-                    eligible: true,
-                    reasons: [],
+                    eligible: isSourceEntitled(masteryPower),
+                    sourceEntitled: isSourceEntitled(masteryPower),
+                    rulesLegal: true,
+                    activeDefinition: memberships.has(key(masteryPower.id)),
+                    activeOccurrenceIds:
+                      memberships.get(key(masteryPower.id))?.occurrenceIds ??
+                      [],
+                    providerOccurrenceIds:
+                      memberships.get(key(masteryPower.id))
+                        ?.providerOccurrenceIds ?? [],
+                    reasons: isSourceEntitled(masteryPower)
+                      ? []
+                      : ["source-unentitled"],
                   },
                 ],
               },
@@ -1113,8 +1451,24 @@ export function evaluateCharacter(
           : { selectedOccurrenceId: selected.id }),
         candidates: replacementOptions.map((option) => ({
           definitionId: option.definitionId,
-          eligible: true,
-          reasons: [],
+          eligible:
+            index.get(option.definitionId) === undefined ||
+            isSourceEntitled(index.get(option.definitionId)!),
+          sourceEntitled:
+            index.get(option.definitionId) === undefined ||
+            isSourceEntitled(index.get(option.definitionId)!),
+          rulesLegal: true,
+          activeDefinition: memberships.has(key(option.definitionId)),
+          activeOccurrenceIds:
+            memberships.get(key(option.definitionId))?.occurrenceIds ?? [],
+          providerOccurrenceIds:
+            memberships.get(key(option.definitionId))?.providerOccurrenceIds ??
+            [],
+          reasons:
+            index.get(option.definitionId) !== undefined &&
+            !isSourceEntitled(index.get(option.definitionId)!)
+              ? ["source-unentitled"]
+              : [],
         })),
         replacementOptions,
       });
@@ -1125,6 +1479,7 @@ export function evaluateCharacter(
   );
   const prerequisiteContext = {
     owned: ownedDefinitions,
+    definitions: evaluationEntities,
     level: input.level,
     abilities: Object.fromEntries(
       [
@@ -1150,7 +1505,7 @@ export function evaluateCharacter(
       ),
     ),
     knownTokens: new Set(
-      entities.flatMap((entity) =>
+      evaluationEntities.flatMap((entity) =>
         [
           entity.id,
           entity.name,
@@ -1173,7 +1528,12 @@ export function evaluateCharacter(
       if (prerequisiteStatus === undefined) {
         prerequisiteStatus = evaluatePrerequisite(
           candidateEntity?.prerequisites,
-          prerequisiteContext,
+          {
+            ...prerequisiteContext,
+            ...(candidateEntity === undefined
+              ? {}
+              : { subject: candidateEntity }),
+          },
         ).status;
         candidatePrerequisiteStatuses.set(candidateKey, prerequisiteStatus);
       }
@@ -1186,6 +1546,7 @@ export function evaluateCharacter(
       return {
         ...candidate,
         eligible: false,
+        rulesLegal: false,
         reasons: [
           ...candidate.reasons,
           prerequisiteStatus === "failed"
@@ -1196,7 +1557,35 @@ export function evaluateCharacter(
     }),
   }));
   for (const choice of choices)
-    if (!choice.optional && choice.selectedOccurrenceId === undefined)
+    if (
+      !choice.optional &&
+      choice.selectedOccurrenceId === undefined &&
+      !(() => {
+        const provider = occurrences.find(
+          ({ id }) => id === choice.providerOccurrenceId,
+        );
+        const definition =
+          provider === undefined ? undefined : index.get(provider.definitionId);
+        const rule =
+          definition === undefined
+            ? undefined
+            : parseRules(definition.id, definition.rules).find(
+                (candidate) => candidate.source.ordinal === choice.ruleOrdinal,
+              );
+        return (
+          rule?.kind === "select" &&
+          rule.existing &&
+          !choice.candidates.some(
+            (candidate) =>
+              candidate.activeDefinition && candidate.sourceEntitled,
+          )
+        );
+      })() &&
+      !(
+        choice.type === "Replacement" &&
+        (choice.replacementOptions?.length ?? 0) === 0
+      )
+    )
       diagnostics.push({
         severity: "error",
         code: "choice.required",
@@ -1216,10 +1605,10 @@ export function evaluateCharacter(
       selectedDefinitionId === undefined
         ? undefined
         : index.get(selectedDefinitionId);
-    const prerequisite = evaluatePrerequisite(
-      selectedEntity?.prerequisites,
-      prerequisiteContext,
-    );
+    const prerequisite = evaluatePrerequisite(selectedEntity?.prerequisites, {
+      ...prerequisiteContext,
+      ...(selectedEntity === undefined ? {} : { subject: selectedEntity }),
+    });
     const exactOwnedPrerequisite =
       selectedEntity?.prerequisites !== undefined &&
       !/[;,]/.test(selectedEntity.prerequisites) &&
@@ -1282,7 +1671,7 @@ export function evaluateCharacter(
     stats: evaluatedStats,
     overlays,
     textStrings: text,
-    entities,
+    entities: evaluationEntities,
   });
   return {
     level: input.level,
@@ -1292,6 +1681,7 @@ export function evaluateCharacter(
     legal,
     occurrences,
     activeDefinitionIds,
+    activeDefinitions,
     choices,
     stats: evaluatedStats,
     textStrings: text,

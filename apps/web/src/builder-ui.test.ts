@@ -5,7 +5,7 @@ import {
   type CharacterBuild,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import type { EvaluatedCharacter } from "@4ecb/rules-engine";
+import type { CandidateDecision, EvaluatedCharacter } from "@4ecb/rules-engine";
 
 import {
   candidateReason,
@@ -20,6 +20,7 @@ import {
   groupRepeatedCandidateScopes,
   groupRepeatedChoiceSlots,
   identityChoiceLabel,
+  isCandidateSelectable,
   isCandidateVisible,
   isCharacterDetailChoice,
   isOptionalRetrainingChoice,
@@ -27,6 +28,23 @@ import {
   selectedChoiceHasWarning,
   unresolveEvaluatedChoiceCommand,
 } from "./builder-ui";
+
+function candidate(
+  definitionId: string,
+  eligible = true,
+  reasons: readonly string[] = [],
+): CandidateDecision {
+  return {
+    definitionId,
+    eligible,
+    sourceEntitled: true,
+    rulesLegal: eligible,
+    activeDefinition: false,
+    activeOccurrenceIds: [],
+    providerOccurrenceIds: [],
+    reasons,
+  };
+}
 
 const level = (number: number): ContentEntity => ({
   id: `ID_INTERNAL_LEVEL_${number}`,
@@ -99,11 +117,7 @@ describe("builder planning UI", () => {
       "OTHER",
       "SMALL_A",
       "SMALL_B",
-    ].map((definitionId) => ({
-      definitionId,
-      eligible: true,
-      reasons: [],
-    }));
+    ].map((definitionId) => candidate(definitionId));
     const names: Record<string, string> = {
       GREATBOW: "Weapon Proficiency (Greatbow)",
       HANDAXE: "Weapon Proficiency (Handaxe)",
@@ -138,11 +152,9 @@ describe("builder planning UI", () => {
       LANGUAGE: "Learn Draconic",
       BENEFIT: "Wild Hunter Benefit",
     };
-    const candidates = Object.keys(names).map((definitionId) => ({
-      definitionId,
-      eligible: true,
-      reasons: [],
-    }));
+    const candidates = Object.keys(names).map((definitionId) =>
+      candidate(definitionId),
+    );
     expect(
       groupBackgroundChoiceCandidates(candidates, (id) => names[id]!).map(
         ({ label, parameterLabel, options }) => ({
@@ -231,11 +243,7 @@ describe("builder planning UI", () => {
   });
 
   it("never exposes category mismatches through the Show all filter", () => {
-    const categoryMismatch = {
-      definitionId: "cross-category",
-      eligible: false,
-      reasons: ["category"],
-    };
+    const categoryMismatch = candidate("cross-category", false, ["category"]);
     expect(isCandidateVisible(categoryMismatch, false)).toBe(false);
     expect(isCandidateVisible(categoryMismatch, true)).toBe(false);
     expect(isCandidateVisible(categoryMismatch, true, "cross-category")).toBe(
@@ -244,16 +252,31 @@ describe("builder planning UI", () => {
   });
 
   it("shows legal, explicitly revealed, and recoverable selected candidates", () => {
-    const legal = { definitionId: "legal", eligible: true, reasons: [] };
-    const unavailable = {
-      definitionId: "unavailable",
-      eligible: false,
-      reasons: ["prerequisite"],
-    };
+    const legal = candidate("legal");
+    const unavailable = candidate("unavailable", false, ["prerequisite"]);
     expect(isCandidateVisible(legal, false)).toBe(true);
     expect(isCandidateVisible(unavailable, false)).toBe(false);
     expect(isCandidateVisible(unavailable, true)).toBe(true);
     expect(isCandidateVisible(unavailable, false, "unavailable")).toBe(true);
+  });
+
+  it("reveals source-unentitled options for explanation but does not make them selectable", () => {
+    const candidate = {
+      definitionId: "unowned",
+      eligible: false,
+      sourceEntitled: false,
+      rulesLegal: true,
+      activeDefinition: false,
+      activeOccurrenceIds: [],
+      providerOccurrenceIds: [],
+      reasons: ["source-unentitled"],
+    };
+    expect(isCandidateVisible(candidate, false)).toBe(false);
+    expect(isCandidateVisible(candidate, true)).toBe(true);
+    expect(isCandidateSelectable(candidate)).toBe(false);
+    expect(candidateReason(candidate.reasons)).toBe(
+      "Not included in this character's allowed sources",
+    );
   });
 
   it("checks replacement legality only against the selected target", () => {

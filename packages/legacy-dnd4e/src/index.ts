@@ -4,6 +4,8 @@ import type {
   BuildInventoryEntry,
   BuildLegality,
   BuildOccurrence,
+  BuildUserEdit,
+  BuildUserRule,
   CharacterBuild,
   LegacyCharacterSnapshot,
   LegacyEnvelope,
@@ -73,6 +75,18 @@ function normalizedText(node: XmlNode | undefined): string {
   if (node === undefined) return "";
   const nested = node.children.map(normalizedText).join("");
   return `${node.text}${nested}`.replace(/\r\n?/g, "\n").trim();
+}
+
+function buildUserRule(node: XmlNode): BuildUserRule {
+  return {
+    name: node.name,
+    attributes: Object.entries(node.attributes).map(([name, value]) => ({
+      name,
+      value,
+    })),
+    text: node.text.replace(/\r\n?/g, "\n").trim(),
+    children: node.children.map(buildUserRule),
+  };
 }
 
 function parseTree(xml: string): XmlNode {
@@ -337,12 +351,19 @@ function buildFrom(
   snapshotAbilities: Readonly<Record<string, number>>,
   textStrings: Readonly<Record<string, string>>,
 ): CharacterBuild {
-  const parsedLevels = direct(root, "Level").flatMap((levelNode, index) => {
+  const levelNodes = direct(root, "Level");
+  const parsedLevelEntries = levelNodes.flatMap((levelNode, index) => {
     const rootElement = direct(levelNode, "RulesElement")[0];
     return rootElement === undefined
       ? []
-      : [occurrenceFrom(rootElement, index + 1, `level:${index + 1}`)];
+      : [
+          {
+            node: levelNode,
+            root: occurrenceFrom(rootElement, index + 1, `level:${index + 1}`),
+          },
+        ];
   });
+  const parsedLevels = parsedLevelEntries.map((entry) => entry.root);
   const parsedGrabbag = direct(root, "Grabbag").flatMap((container, index) =>
     direct(container, "RulesElement").map((node, childIndex) =>
       occurrenceFrom(node, 0, `grabbag:${index}:${childIndex}`),
@@ -351,6 +372,21 @@ function buildFrom(
   const resolved = resolveReplacementLinks([...parsedLevels, ...parsedGrabbag]);
   const levelRoots = resolved.slice(0, parsedLevels.length);
   const grabbag = resolved.slice(parsedLevels.length);
+  const userEditFrom = (
+    levelNode: XmlNode | undefined,
+    level: number,
+  ): BuildUserEdit | undefined => {
+    const container = first(levelNode, "UserEdit");
+    const rootElement = first(container, "RulesElement");
+    if (container === undefined || rootElement === undefined) return undefined;
+    const rules = first(container, "rules");
+    return {
+      root: resolveReplacementLinks([
+        occurrenceFrom(rootElement, level, `user-edit:${level}`),
+      ])[0]!,
+      rules: rules?.children.map(buildUserRule) ?? [],
+    };
+  };
   const alternates: BuildAlternate[] = direct(root, "alternate").flatMap(
     (node, index) => {
       const choice = direct(node, "RulesElement")[0];
@@ -369,10 +405,14 @@ function buildFrom(
   return {
     formatVersion: 1,
     effectiveLevel: Math.max(1, parsedLevels.length),
-    levels: levelRoots.map((rootOccurrence, index) => ({
-      level: index + 1,
-      root: rootOccurrence,
-    })),
+    levels: levelRoots.map((rootOccurrence, index) => {
+      const userEdit = userEditFrom(parsedLevelEntries[index]?.node, index + 1);
+      return {
+        level: index + 1,
+        root: rootOccurrence,
+        ...(userEdit === undefined ? {} : { userEdit }),
+      };
+    }),
     grabbag,
     inventory: inventoryFrom(root, sheet),
     alternates,

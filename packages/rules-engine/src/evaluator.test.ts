@@ -35,14 +35,15 @@ function entity(
     prerequisites?: string;
     rules?: RuleStatement[];
     specifics?: Record<string, string>;
+    source?: string;
   } = {},
 ): ContentEntity {
   return {
     id,
     name,
     type,
-    source: "test",
-    sources: ["test"],
+    source: options.source ?? "test",
+    sources: [options.source ?? "test"],
     attributes: [],
     categories: options.categories ?? [],
     specifics: Object.entries(options.specifics ?? {}).map(
@@ -71,6 +72,183 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it("separates source entitlement, rules legality, active membership, and provider ownership", () => {
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        sourceEntitlements: ["Allowed Book"],
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "chosen-allowed",
+            definitionId: "ALLOWED",
+            acquiredLevel: 1,
+            parentId: "root",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+          {
+            id: "imported-blocked",
+            definitionId: "BLOCKED",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "1", "Level", {
+          source: "Allowed Book",
+          rules: [rule("select", { type: "Feat" }, 0)],
+        }),
+        entity("ALLOWED", "Allowed feat", "Feat", {
+          source: "Allowed Book",
+        }),
+        entity("ILLEGAL", "Illegal feat", "Feat", {
+          source: "Allowed Book",
+          prerequisites: "2nd level",
+        }),
+        entity("CORE", "Core feat", "Feat", { source: "Core" }),
+        entity("BLOCKED", "Blocked feat", "Feat", {
+          source: "Blocked Book",
+        }),
+        entity("DEPENDENT", "Dependent feat", "Feat", {
+          source: "Allowed Book",
+          specifics: { _RequiresID: "BLOCKED" },
+        }),
+      ],
+    );
+
+    expect(result.choices[0]?.candidates).toMatchObject([
+      {
+        definitionId: "ALLOWED",
+        eligible: true,
+        sourceEntitled: true,
+        rulesLegal: true,
+        activeDefinition: true,
+        activeOccurrenceIds: ["chosen-allowed"],
+        providerOccurrenceIds: ["root"],
+      },
+      {
+        definitionId: "ILLEGAL",
+        eligible: false,
+        sourceEntitled: true,
+        rulesLegal: false,
+        reasons: ["prerequisite"],
+      },
+      {
+        definitionId: "CORE",
+        eligible: true,
+        sourceEntitled: true,
+        rulesLegal: true,
+      },
+      {
+        definitionId: "BLOCKED",
+        eligible: false,
+        sourceEntitled: false,
+        rulesLegal: true,
+        activeDefinition: true,
+        reasons: ["source-unentitled"],
+      },
+      {
+        definitionId: "DEPENDENT",
+        eligible: false,
+        sourceEntitled: false,
+        rulesLegal: true,
+        reasons: ["source-unentitled"],
+      },
+    ]);
+    expect(result.activeDefinitions).toContainEqual({
+      definitionId: "ALLOWED",
+      occurrenceIds: ["chosen-allowed"],
+      providerOccurrenceIds: ["root"],
+    });
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "occurrence.source-unentitled",
+        occurrenceId: "imported-blocked",
+      }),
+    );
+  });
+
+  it("treats every source as entitled when no list is configured", () => {
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [rootOccurrence],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "1", "Level", {
+          rules: [rule("select", { type: "Feat" }, 0)],
+        }),
+        entity("ANY_SOURCE", "Any source feat", "Feat", {
+          source: "An unconfigured source",
+        }),
+      ],
+    );
+
+    expect(result.choices[0]?.candidates[0]).toMatchObject({
+      sourceEntitled: true,
+      eligible: true,
+    });
+  });
+
+  it("retains every grant provider when active membership is deduplicated", () => {
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "provider-a",
+            definitionId: "PROVIDER_A",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+          {
+            id: "provider-b",
+            definitionId: "PROVIDER_B",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+          {
+            id: "serialized-shared-grant",
+            definitionId: "SHARED",
+            acquiredLevel: 1,
+            parentId: "provider-a",
+            ruleOrdinal: 0,
+            kind: "grant",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "Root", "Test"),
+        entity("PROVIDER_A", "Provider A", "Feature", {
+          rules: [rule("grant", { name: "SHARED", type: "Feature" }, 0)],
+        }),
+        entity("PROVIDER_B", "Provider B", "Feature", {
+          rules: [rule("grant", { name: "SHARED", type: "Feature" }, 0)],
+        }),
+        entity("SHARED", "Shared", "Feature"),
+      ],
+    );
+
+    expect(
+      result.activeDefinitions.find(
+        ({ definitionId }) => definitionId === "SHARED",
+      ),
+    ).toMatchObject({
+      occurrenceIds: ["serialized-shared-grant"],
+      providerOccurrenceIds: ["provider-a", "provider-b"],
+    });
+  });
+
   it("filters every candidate by its legacy prerequisites", () => {
     const result = evaluateCharacter(
       {
@@ -94,7 +272,7 @@ describe("character evaluator", () => {
       ],
     );
 
-    expect(result.choices[0]?.candidates).toEqual([
+    expect(result.choices[0]?.candidates).toMatchObject([
       { definitionId: "LEGAL_FEAT", eligible: true, reasons: [] },
       {
         definitionId: "ARCANE_ADMIXTURE_IV",
@@ -107,6 +285,65 @@ describe("character evaluator", () => {
         reasons: ["prerequisite-unverified"],
       },
     ]);
+  });
+
+  it("passes the full definition index and candidate subject to resolved prerequisites", () => {
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "selected-path-a",
+            definitionId: "PATH_A",
+            acquiredLevel: 1,
+            parentId: "root",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+          {
+            id: "competing-path",
+            definitionId: "PATH_B",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "1", "Level", {
+          rules: [rule("select", { type: "Feat" }, 0)],
+        }),
+        entity("PATH_A", "Path A", "Feat", {
+          prerequisites: "~EXCLUSIVE_PATH",
+        }),
+        entity("PATH_B", "Path B", "Feat", {
+          prerequisites: "Str 13, ~EXCLUSIVE_PATH; Paragon Tier",
+        }),
+        entity("RACE_PATH", "Race Path", "Race", {
+          prerequisites: "~EXCLUSIVE_PATH",
+        }),
+      ],
+    );
+
+    expect(
+      result.choices[0]?.candidates.find(
+        ({ definitionId }) => definitionId === "PATH_A",
+      ),
+    ).toMatchObject({
+      eligible: false,
+      rulesLegal: false,
+      sourceEntitled: true,
+      reasons: ["prerequisite"],
+    });
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "prerequisite.failed",
+        occurrenceId: "selected-path-a",
+      }),
+    );
   });
 
   it("limits background benefits to owned background associations", () => {
@@ -152,7 +389,7 @@ describe("character evaluator", () => {
         ),
       ],
     );
-    expect(result.choices[0]?.candidates).toEqual([
+    expect(result.choices[0]?.candidates).toMatchObject([
       { definitionId: "NATURE_CLASS", eligible: true, reasons: [] },
       {
         definitionId: "ATHLETICS_CLASS",
@@ -634,7 +871,7 @@ describe("character evaluator", () => {
     expect(first.stats.Strength?.value).toBe(12);
     expect(first.stats.Attack?.value).toBe(12);
     expect(first.complete).toBe(false);
-    expect(first.choices[0]?.candidates).toEqual([
+    expect(first.choices[0]?.candidates).toMatchObject([
       { definitionId: "FEAT_A", eligible: true, reasons: [] },
       { definitionId: "FEAT_B", eligible: false, reasons: ["category"] },
     ]);
@@ -692,7 +929,7 @@ describe("character evaluator", () => {
       content,
     );
 
-    expect(evaluated.choices[0]?.candidates).toEqual([
+    expect(evaluated.choices[0]?.candidates).toMatchObject([
       { definitionId: "TRAIT", eligible: false, reasons: ["self"] },
       { definitionId: "OPTION", eligible: true, reasons: [] },
     ]);
@@ -830,7 +1067,7 @@ describe("character evaluator", () => {
       ],
     );
 
-    expect(result.choices[0]?.candidates).toEqual([
+    expect(result.choices[0]?.candidates).toMatchObject([
       { definitionId: "WIZARD_POWER", eligible: true, reasons: [] },
       { definitionId: "FIGHTER_POWER", eligible: true, reasons: [] },
     ]);
@@ -893,7 +1130,7 @@ describe("character evaluator", () => {
       ],
     );
 
-    expect(result.choices[0]?.candidates).toEqual([
+    expect(result.choices[0]?.candidates).toMatchObject([
       { definitionId: "FIGHTER_UTILITY", eligible: true, reasons: [] },
       {
         definitionId: "ROGUE_UTILITY",
@@ -953,16 +1190,20 @@ describe("character evaluator", () => {
       ],
     );
 
-    expect(result.choices[0]?.candidates).toContainEqual({
-      definitionId: "SLY_GAMBIT",
-      eligible: true,
-      reasons: [],
-    });
-    expect(result.choices[1]?.candidates).toContainEqual({
-      definitionId: "THEME_FEAT",
-      eligible: false,
-      reasons: ["category"],
-    });
+    expect(result.choices[0]?.candidates).toContainEqual(
+      expect.objectContaining({
+        definitionId: "SLY_GAMBIT",
+        eligible: true,
+        reasons: [],
+      }),
+    );
+    expect(result.choices[1]?.candidates).toContainEqual(
+      expect.objectContaining({
+        definitionId: "THEME_FEAT",
+        eligible: false,
+        reasons: ["category"],
+      }),
+    );
   });
 
   it("uses distinct hybrid components for both hybrid and primary class categories", () => {
@@ -1029,17 +1270,21 @@ describe("character evaluator", () => {
       ],
     );
 
-    expect(result.choices[0]?.candidates).toContainEqual({
-      definitionId: "HYBRID_FIGHTER",
-      eligible: false,
-      reasons: ["duplicate"],
-    });
-    expect(result.choices[1]?.candidates).toContainEqual({
-      definitionId: "HYBRID_CLERIC",
-      eligible: false,
-      reasons: ["duplicate"],
-    });
-    expect(result.choices[2]?.candidates).toEqual([
+    expect(result.choices[0]?.candidates).toContainEqual(
+      expect.objectContaining({
+        definitionId: "HYBRID_FIGHTER",
+        eligible: false,
+        reasons: ["duplicate"],
+      }),
+    );
+    expect(result.choices[1]?.candidates).toContainEqual(
+      expect.objectContaining({
+        definitionId: "HYBRID_CLERIC",
+        eligible: false,
+        reasons: ["duplicate"],
+      }),
+    );
+    expect(result.choices[2]?.candidates).toMatchObject([
       { definitionId: "CLERIC_POWER", eligible: true, reasons: [] },
       { definitionId: "FIGHTER_POWER", eligible: true, reasons: [] },
       {
@@ -1048,7 +1293,7 @@ describe("character evaluator", () => {
         reasons: ["category"],
       },
     ]);
-    expect(result.choices[3]?.candidates).toEqual([
+    expect(result.choices[3]?.candidates).toMatchObject([
       { definitionId: "CLERIC_SKILL", eligible: true, reasons: [] },
     ]);
   });

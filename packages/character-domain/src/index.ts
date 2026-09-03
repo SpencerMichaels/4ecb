@@ -307,6 +307,29 @@ function buildOccurrence(
   );
 }
 
+function buildUserRule(value: unknown, depth: number): boolean {
+  const rule = object(value);
+  return (
+    rule !== undefined &&
+    depth <= 100 &&
+    typeof rule.name === "string" &&
+    /^[A-Za-z_][A-Za-z0-9_.:-]*$/.test(rule.name) &&
+    Array.isArray(rule.attributes) &&
+    rule.attributes.every((entry) => {
+      const attribute = object(entry);
+      return (
+        attribute !== undefined &&
+        typeof attribute.name === "string" &&
+        /^[A-Za-z_][A-Za-z0-9_.:-]*$/.test(attribute.name) &&
+        typeof attribute.value === "string"
+      );
+    }) &&
+    typeof rule.text === "string" &&
+    Array.isArray(rule.children) &&
+    rule.children.every((child) => buildUserRule(child, depth + 1))
+  );
+}
+
 function characterBuild(value: unknown): boolean {
   const build = object(value);
   if (build === undefined) return false;
@@ -326,7 +349,17 @@ function characterBuild(value: unknown): boolean {
         typeof frame.level === "number" &&
         frame.level >= 1 &&
         frame.level <= 30 &&
-        buildOccurrence(frame.root, seen, 0)
+        buildOccurrence(frame.root, seen, 0) &&
+        (frame.userEdit === undefined ||
+          (() => {
+            const userEdit = object(frame.userEdit);
+            return (
+              userEdit !== undefined &&
+              buildOccurrence(userEdit.root, seen, 0) &&
+              Array.isArray(userEdit.rules) &&
+              userEdit.rules.every((rule) => buildUserRule(rule, 0))
+            );
+          })())
       );
     }) &&
     Array.isArray(build.grabbag) &&

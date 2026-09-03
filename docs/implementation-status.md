@@ -55,6 +55,57 @@ ownership, refines the update/convergence sequence, and records the history-exit
 and stale-evaluation boundary of native save. No production code or public fixture
 depends on the decompiled application or ignored private corpus.
 
+The P0 ownership follow-up is now implemented in the public evaluator model.
+Candidate decisions separately report source entitlement, rules legality,
+active definition/occurrence membership, and owning provider occurrences;
+evaluated snapshots also expose the deduplicated membership projection. A
+configured source list includes Core and recursively follows `_RequiresID`,
+while an absent list retains the existing all-content-entitled local behavior.
+Focused engine tests cover configured/unconfigured sources, dependency
+entitlement, imported blocked occurrences, and provider identities. Builder
+tests verify that unavailable source content remains explainable but cannot be
+chosen as a house rule; rules-illegal content retains the explicit Show
+Unavailable workflow.
+
+The P1 construction-conformance follow-up adds public synthetic differentials
+for deferred future grants, multi-iteration generated topology, level-one
+grabbag timing, named definition drops, explicit replacement source identities
+across ordinary/retrain/multiclass/power-swap/power-replace modes, replacement
+chains, spellbook alternates, impossible replacement completeness, and current-
+level regenerated export that rejects a historical evaluation and replaces
+stale imported caches. Typed per-level `UserEdit` providers and recursive rule
+statements now survive import, current-level projection, regenerated export,
+and semantic re-import. Projection now synthesizes stable character-local
+entities for them, and the evaluator executes their stat/grant/select effects
+through the ordinary fixed-point path before regenerating sheet caches.
+
+Named-select drops follow a saved selection through its active replacement
+chain, blank selects materialize an available default and restart topology, and
+an `existing` select with no active candidate does not make the character
+incomplete. Contextual duplicate clearing now covers exact definitions and the
+native one-hop Proficiency/Skill Training pass-through, preserves defaults and
+same-definition replacement sources, removes derived descendants, and restarts
+topology. The native prior-level active-mask edge remains documented for a later
+temporal-membership model; it is not approximated with acquisition level.
+Optional Auto Pick and UI sorting remain outside this follow-up.
+
+Verification for this slice: `nix develop path:. -c pnpm --filter
+@4ecb/character-domain typecheck`, the equivalent `@4ecb/rules-engine` and
+`@4ecb/legacy-dnd4e` typechecks, and `nix develop path:. -c pnpm vitest run
+packages/character-domain packages/rules-engine packages/legacy-dnd4e` all
+pass. The package run covers 145 passing tests in 16 files.
+
+The final public checkpoint `nix develop path:. -c scripts/check.sh` passes 248
+tests, every workspace typecheck, the production/PWA build, Chromium and Firefox
+print checks, deterministic pack build/diff, and query benchmarks. The ignored
+full-pack diagnostic covers all eight user samples: cached powers match 482/482
+comparable fields and numeric stats match 536/537. The sole numeric difference
+remains Idon Tkare's previously investigated `Barbarian Agility` cache value
+(legacy 0, evaluated 1). Silaqui is 67/67 numeric and 71/71 power fields with no
+evaluation diagnostics. A profile-identity-cached definition lookup prevents
+resolved prerequisite parsing from rescanning all 38,339 definitions for every
+candidate.
+
 ## M5.5 first builder-interface draft
 
 - The working rules-backed editor now uses the approved hybrid structure: a

@@ -1,9 +1,15 @@
 import type {
   BuildOccurrence,
+  BuildUserRule,
   CharacterBuild,
   CharacterCommand,
 } from "@4ecb/character-domain";
-import type { ContentEntity } from "@4ecb/content-domain";
+import type {
+  ContentElementNode,
+  ContentEntity,
+  ContentNode,
+  RuleStatement,
+} from "@4ecb/content-domain";
 
 import type {
   CharacterInventoryEntry,
@@ -264,8 +270,56 @@ export function projectBuildForEvaluation(
   build: CharacterBuild,
   entities: readonly ContentEntity[],
 ): EvaluationInput {
+  const ruleChildren = (rule: BuildUserRule): ContentNode[] => [
+    ...(rule.text.length === 0
+      ? []
+      : [{ kind: "text" as const, value: rule.text }]),
+    ...rule.children.map((child): ContentElementNode => ({
+      kind: "element",
+      name: child.name,
+      attributes: child.attributes,
+      children: ruleChildren(child),
+    })),
+  ];
+  const localEntities: ContentEntity[] = build.levels.flatMap(
+    (frame, frameIndex) => {
+      if (frame.userEdit === undefined) return [];
+      const id = `ID_INTERNAL_USER_EDIT_${frame.userEdit.root.id}`;
+      const rules: RuleStatement[] = frame.userEdit.rules.map(
+        (rule, ordinal) => ({
+          name: rule.name,
+          attributes: rule.attributes,
+          text: rule.text,
+          children: ruleChildren(rule),
+          ordinal,
+        }),
+      );
+      return [
+        {
+          id,
+          name: frame.userEdit.root.identity.name,
+          type: frame.userEdit.root.identity.type,
+          // Character-local rules are intrinsically available even when the
+          // campaign configures a restricted source-entitlement list.
+          source: "Core",
+          sources: ["Core"],
+          attributes: [],
+          categories: [],
+          specifics: [],
+          rules,
+          description: "",
+          extensions: [],
+          provenance: {
+            sourceKey: "character-user-edit",
+            sourceOrdinal: frameIndex,
+          },
+        },
+      ];
+    },
+  );
+  const evaluationEntities = [...entities, ...localEntities];
   const byId = new Map(
-    entities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
+    evaluationEntities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
   );
   const occurrences: CharacterOccurrence[] = [];
 
@@ -323,7 +377,22 @@ export function projectBuildForEvaluation(
       );
     });
   };
-  for (const frame of build.levels) visit(frame.root, "root");
+  for (const frame of build.levels) {
+    visit(frame.root, "root");
+    if (frame.userEdit !== undefined)
+      visit(
+        {
+          ...frame.userEdit.root,
+          identity: {
+            ...frame.userEdit.root.identity,
+            definitionId: `ID_INTERNAL_USER_EDIT_${frame.userEdit.root.id}`,
+          },
+          acquiredLevel: frame.level,
+          unresolved: false,
+        },
+        "root",
+      );
+  }
   for (const occurrence of build.grabbag) visit(occurrence, "grabbag");
   // Legacy spellbooks and similar "prepared versus known" features store the
   // non-primary selections outside the level tree. They are still owned
@@ -445,5 +514,6 @@ export function projectBuildForEvaluation(
     occurrences,
     inventory,
     textStrings: build.textStrings,
+    localEntities,
   };
 }

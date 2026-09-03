@@ -14,6 +14,18 @@ diagnostics explain missing choices, unresolved definitions, prerequisites,
 house rules, and nonconvergence. This lets users repair old, custom, or partially
 built characters instead of preventing them from opening.
 
+Choice availability does not collapse the legacy engine's different ownership
+relations. Every candidate reports `sourceEntitled` (campaign/source access),
+`rulesLegal` (the native-style legality bit), `activeDefinition` plus the active
+occurrence IDs (global membership), and the provider occurrence IDs that own
+those active occurrences. `eligible` remains the compatibility conjunction of
+source entitlement and rules legality. With no entitlement list configured all
+content is source-entitled; a configured list includes Core implicitly and
+recursively honors `_RequiresID`. Source-unentitled imported selections remain
+recoverable and diagnostic, but the ordinary choose command does not turn them
+into house rules. Rules-illegal same-category candidates remain revealable and
+selectable through the explicit unavailable/house-rule workflow.
+
 ## Recovered rule language
 
 Content statements are parsed into a typed IR for `select`, `grant`, `modify`,
@@ -41,13 +53,21 @@ required field. Public tests use synthetic content; private files remain ignored
 ## Authoritative character history
 
 `CharacterBuild` stores effective level, one nested root per acquired level,
-grabbag occurrences, inventory, alternates, base abilities, and text strings.
+typed per-level native user edits, grabbag occurrences, inventory, alternates,
+base abilities, and text strings.
 Every occurrence has a character-local ID, definition identity, acquisition
 level, legality marker, children, and optional replacement link. Imported trees
 are mapped against all provider slots even when those slots activate only at a
 later level, so future grants do not activate prematurely. Legacy inventory rows
 are level-history deltas; evaluation sums them into a current owned/equipped
 projection before activating item rules or constructing power loadouts.
+
+Native `UserEdit` containers are parsed and re-emitted as a generated provider
+plus recursive typed rule statements. Projection synthesizes stable
+character-local content entities and passes them alongside `EvaluationInput`,
+so the evaluator executes their rules through the same index and fixed-point
+phases as profile content. They are intrinsically source-entitled, affect
+regenerated sheet caches, and never become shared pack records.
 
 Commands cover choosing/removing/replacing/retraining occurrences, adding and
 removing level frames, effective level and ability changes, inventory, and text.

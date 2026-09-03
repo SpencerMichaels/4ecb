@@ -260,6 +260,16 @@ Semantics:
 - `existing` selects among already owned occurrences rather than the whole DB;
 - `grant` links a companion grant behavior used by a published special case.
 
+After a choice is updated, `CheckPrevious` can clear it and restart evaluation
+when its exact definition is already active. The only pass-through equivalence
+is a wrapper with exactly one rule, a `grant` resolving to stock `Proficiency`
+or `Skill Training`; the check follows that grant by one hop. It excludes the
+choice occurrence and its descendants. A literal default, or a nonempty default
+resolved from `[Character Text Key]`, is exempt when it matches the chosen
+definition name case-insensitively. The current replacement source's exact
+definition is also exempt. This duplicate clearing is distinct from the
+candidate `Legal` bit.
+
 The native choice's candidate array is the complete per-type database array, so
 its indices and `Legal`/`Selected` bitsets follow database/type ordinal. That is
 an engine identity boundary, not a promise that every page displays that order.

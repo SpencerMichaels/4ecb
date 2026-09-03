@@ -230,6 +230,12 @@ contains:
 Snapshots may be cached but are disposable. Given identical versioned inputs,
 evaluation must be deterministic.
 
+Candidate projections keep source entitlement, rules legality, active-definition
+membership, and occurrence-provider ownership as separate facts. This prevents
+campaign access policy from being confused with a user-authored house rule and
+preserves provider provenance even when active definition membership is
+deduplicated.
+
 ### PortablePlayBundle
 
 A portable play bundle transfers one character to a phone without transferring
