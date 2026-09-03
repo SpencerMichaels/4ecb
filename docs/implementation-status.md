@@ -89,6 +89,14 @@ topology. The native prior-level active-mask edge remains documented for a later
 temporal-membership model; it is not approximated with acquisition level.
 Optional Auto Pick and UI sorting remain outside this follow-up.
 
+The current M5.5 interaction pass replaces feat and power dropdowns with
+searchable tables backed by authored legacy metadata. Feats expose printable
+prerequisites and Short Description; powers expose flavor plus icon-only action
+and attack types whose exact labels remain accessible. Repeated at-will and
+other same-category slots share one multi-select table, selected rows update
+optimistically, and a 150-row rendered window prevents large eligible feat sets
+from blocking the page while search still covers the complete set.
+
 Verification for this slice: `nix develop path:. -c pnpm --filter
 @4ecb/character-domain typecheck`, the equivalent `@4ecb/rules-engine` and
 `@4ecb/legacy-dnd4e` typechecks, and `nix develop path:. -c pnpm vitest run
@@ -419,7 +427,7 @@ candidate.
   Focused Expertise variant absent from the installed pack, plus two unverified
   legacy feat prerequisites; the importer preserves that evidence rather than
   inventing rules for it.
-- `nix develop path:. -c bash scripts/check.sh` passes 258 tests across 39 files,
+- `nix develop path:. -c scripts/check.sh` passes 260 tests across 39 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

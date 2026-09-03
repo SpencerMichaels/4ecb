@@ -5,14 +5,25 @@ import {
   Check,
   ChevronRight,
   ChevronsUp,
+  CircleDashed,
+  CircleDot,
   Clock3,
+  Crosshair,
+  Feather,
   FileText,
+  Footprints,
   GraduationCap,
   LayoutGrid,
+  Minus,
   Redo2,
+  Reply,
+  ScanLine,
   ScrollText,
   Shield,
+  ShieldAlert,
+  Shuffle,
   Sparkles,
+  Swords,
   TriangleAlert,
   Undo2,
   UserRound,
@@ -24,6 +35,19 @@ import {
 
 export type IconName =
   | "ability"
+  | "action-free"
+  | "action-interrupt"
+  | "action-minor"
+  | "action-move"
+  | "action-none"
+  | "action-reaction"
+  | "action-standard"
+  | "attack-area"
+  | "attack-close"
+  | "attack-melee"
+  | "attack-personal"
+  | "attack-ranged"
+  | "attack-versatile"
   | "background"
   | "book"
   | "class"
@@ -47,6 +71,19 @@ export type IconName =
 
 const icons: Record<IconName, LucideIcon> = {
   ability: ChartNoAxesColumnIncreasing,
+  "action-free": Feather,
+  "action-interrupt": ShieldAlert,
+  "action-minor": CircleDot,
+  "action-move": Footprints,
+  "action-none": Minus,
+  "action-reaction": Reply,
+  "action-standard": Zap,
+  "attack-area": CircleDashed,
+  "attack-close": ScanLine,
+  "attack-melee": Swords,
+  "attack-personal": UserRound,
+  "attack-ranged": Crosshair,
+  "attack-versatile": Shuffle,
   background: ScrollText,
   book: BookOpen,
   class: Shield,

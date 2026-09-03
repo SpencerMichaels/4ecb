@@ -442,6 +442,19 @@ the normal autosave and undo path. Dependent choices disappear through ordinary
 reevaluation of the now-unresolved provider rather than by deleting unrelated
 historical occurrences.
 
+### D033 — Feats and powers use metadata-backed selection tables
+
+Feat and power choices use searchable row tables instead of dropdowns. Feats
+show the legacy builder's own compact `Prereqs` and `ShortDesc` fields. Powers
+show authored flavor plus icon-only action and attack-type fields; exact source
+strings remain available through tooltips and accessible names. Repeated slots
+from one rules selection share one multi-select table while continuing to write
+the exact underlying slot and definition identities. Large result sets render a
+bounded window over a full-corpus search to prevent candidate browsing from
+stalling the editor. This changes only presentation: legality, source
+entitlement, house-rule selection, command construction, autosave, and undo all
+remain evaluator/domain responsibilities.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

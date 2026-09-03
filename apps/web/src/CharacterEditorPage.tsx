@@ -1,5 +1,6 @@
 import {
   createContext,
+  Fragment,
   useContext,
   useEffect,
   useMemo,
@@ -36,9 +37,12 @@ import {
 import {
   applyBuildPresetCommand,
   candidateReason,
+  choiceSelectionTableKind,
+  choiceTableSummary,
   choicePresentationLabel,
   choiceForRepeatedCandidate,
   choicesAtLevel,
+  contentSpecificValue,
   evaluationAtHorizon,
   groupChoicesByLegacyWorkflow,
   groupBackgroundChoiceCandidates,
@@ -66,6 +70,8 @@ import { RulesWorkerClient } from "./rules-client";
 import {
   entityTypeIcon,
   entityVisualTone,
+  powerActionIcon,
+  powerAttackIcon,
   type LegacyVisualTone,
   visualToneClass,
 } from "./visual-language";
@@ -914,6 +920,7 @@ function ChoiceEditor({
     isCandidateVisible(candidate, showAll, selected?.definitionId),
   );
   const normalizedChoiceType = choice.type.trim().toLocaleLowerCase();
+  const selectionTableKind = choiceSelectionTableKind(choice);
   const candidateName = (definitionId: string) => {
     const definition = byId.get(definitionId.toLocaleLowerCase());
     return definition?.name ?? definitionId;
@@ -1065,7 +1072,28 @@ function ChoiceEditor({
       className={`choice-selection-layout${compact ? " choice-selection-compact" : ""}`}
     >
       <div className="choice-editor-fields">
-        {groupedPresentation ? (
+        {selectionTableKind !== undefined ? (
+          <CandidateSelectionTable
+            kind={selectionTableKind}
+            candidates={visibleCandidates}
+            featGroups={selectionTableKind === "feat" ? presentationGroups : []}
+            selectedIds={new Set(selectedValue === "" ? [] : [selectedValue])}
+            expandedGroupKey={displayedGroupKey}
+            byId={byId}
+            disabled={editorDisabled}
+            onExpandGroup={setStagedGroupKey}
+            onInspect={(candidate) => {
+              setPerusedId(candidate.definitionId);
+              const entity = byId.get(
+                candidate.definitionId.toLocaleLowerCase(),
+              );
+              if (entity !== undefined)
+                inspectCandidate?.({ candidate, entity });
+            }}
+            onToggle={selectDefinition}
+            onClear={clearSelection}
+          />
+        ) : groupedPresentation ? (
           <>
             <label>
               {hideSelectionLabel
@@ -1226,6 +1254,335 @@ function ChoiceEditor({
 
 function choiceSectionId(choiceId: string): string {
   return `choice-section-${choiceId.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
+}
+
+type FeatPresentationGroup = ReturnType<
+  typeof groupParameterizedCandidates
+>[number];
+
+function MetadataIcon({
+  kind,
+  value,
+}: {
+  readonly kind: "action" | "attack";
+  readonly value: string | undefined;
+}) {
+  const label =
+    value ||
+    (kind === "action" ? "Action not specified" : "Attack type not specified");
+  return (
+    <span className="selection-metadata-icon" aria-label={label} title={label}>
+      <Icon
+        name={
+          kind === "action" ? powerActionIcon(value) : powerAttackIcon(value)
+        }
+      />
+    </span>
+  );
+}
+
+function CandidateSelectionTable({
+  kind,
+  candidates,
+  featGroups,
+  selectedIds,
+  expandedGroupKey,
+  byId,
+  disabled,
+  selectionLimit,
+  onExpandGroup,
+  onInspect,
+  onToggle,
+  onClear,
+}: {
+  readonly kind: "feat" | "power";
+  readonly candidates: readonly CandidateDecision[];
+  readonly featGroups: readonly FeatPresentationGroup[];
+  readonly selectedIds: ReadonlySet<string>;
+  readonly expandedGroupKey: string;
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly disabled: boolean;
+  readonly selectionLimit?: number;
+  readonly onExpandGroup: (key: string) => void;
+  readonly onInspect: (candidate: CandidateDecision) => void;
+  readonly onToggle: (definitionId: string) => void;
+  readonly onClear: () => void;
+}) {
+  const rowLimit = 150;
+  const [filter, setFilter] = useState("");
+  const normalizedFilter = filter.trim().toLocaleLowerCase();
+  const entityFor = (candidate: CandidateDecision) =>
+    byId.get(candidate.definitionId.toLocaleLowerCase());
+  const matchesFilter = (candidate: CandidateDecision, label?: string) => {
+    if (normalizedFilter === "") return true;
+    const entity = entityFor(candidate);
+    return [
+      label,
+      entity?.name,
+      entity?.printPrerequisites,
+      entity === undefined ? undefined : choiceTableSummary(entity, kind),
+      entity === undefined
+        ? undefined
+        : contentSpecificValue(entity, "Action Type"),
+      entity === undefined
+        ? undefined
+        : contentSpecificValue(entity, "Attack Type"),
+    ].some((value) => value?.toLocaleLowerCase().includes(normalizedFilter));
+  };
+  const visibleCandidates = candidates.filter((candidate) =>
+    matchesFilter(candidate),
+  );
+  const visibleFeatGroups = featGroups.filter(
+    (group) =>
+      group.label.toLocaleLowerCase().includes(normalizedFilter) ||
+      group.options.some(({ candidate, label }) =>
+        matchesFilter(candidate, label),
+      ),
+  );
+  const prioritizedCandidates = [
+    ...visibleCandidates.filter((candidate) =>
+      selectedIds.has(candidate.definitionId),
+    ),
+    ...visibleCandidates.filter(
+      (candidate) => !selectedIds.has(candidate.definitionId),
+    ),
+  ];
+  const displayedCandidates = prioritizedCandidates.slice(0, rowLimit);
+  const prioritizedFeatGroups = [
+    ...visibleFeatGroups.filter((group) =>
+      group.options.some(({ candidate }) =>
+        selectedIds.has(candidate.definitionId),
+      ),
+    ),
+    ...visibleFeatGroups.filter(
+      (group) =>
+        !group.options.some(({ candidate }) =>
+          selectedIds.has(candidate.definitionId),
+        ),
+    ),
+  ];
+  const displayedFeatGroups = prioritizedFeatGroups.slice(0, rowLimit);
+  const totalRows =
+    kind === "power" ? visibleCandidates.length : visibleFeatGroups.length;
+  const shownRows = Math.min(totalRows, rowLimit);
+
+  const candidateRow = (
+    candidate: CandidateDecision,
+    label: string,
+    nested = false,
+  ) => {
+    const entity = entityFor(candidate);
+    const selected = selectedIds.has(candidate.definitionId);
+    const summary =
+      entity === undefined ? undefined : choiceTableSummary(entity, kind);
+    const unavailable = !candidate.eligible;
+    const tone =
+      entity === undefined
+        ? "tone-neutral"
+        : visualToneClass(entityVisualTone(entity));
+    return (
+      <tr
+        className={`${tone}${selected ? " selection-row-selected" : ""}${unavailable ? " selection-row-unavailable" : ""}`}
+        key={candidate.definitionId}
+      >
+        <td className={nested ? "selection-table-nested" : undefined}>
+          <button
+            aria-pressed={selected}
+            disabled={
+              disabled ||
+              !isCandidateSelectable(candidate) ||
+              (!selected &&
+                selectionLimit !== undefined &&
+                selectedIds.size >= selectionLimit)
+            }
+            type="button"
+            onClick={() => onToggle(candidate.definitionId)}
+            onFocus={() => onInspect(candidate)}
+            onMouseEnter={() => onInspect(candidate)}
+          >
+            {selected ? <Icon name="check" /> : null}
+            <span>{label}</span>
+          </button>
+          {unavailable ? (
+            <small>{candidateReason(candidate.reasons)}</small>
+          ) : null}
+        </td>
+        {kind === "feat" ? (
+          <>
+            <td>{entity?.printPrerequisites || "—"}</td>
+            <td>
+              <span className="selection-table-summary">{summary || "—"}</span>
+            </td>
+          </>
+        ) : (
+          <>
+            <td>
+              <MetadataIcon
+                kind="action"
+                value={
+                  entity === undefined
+                    ? undefined
+                    : contentSpecificValue(entity, "Action Type")
+                }
+              />
+            </td>
+            <td>
+              <MetadataIcon
+                kind="attack"
+                value={
+                  entity === undefined
+                    ? undefined
+                    : contentSpecificValue(entity, "Attack Type")
+                }
+              />
+            </td>
+            <td>
+              <span className="selection-table-summary">{summary || "—"}</span>
+            </td>
+          </>
+        )}
+      </tr>
+    );
+  };
+
+  return (
+    <div className={`candidate-selection-table candidate-selection-${kind}`}>
+      <div className="selection-table-toolbar">
+        <label>
+          <span className="visually-hidden">
+            Filter {kind === "feat" ? "feats" : "powers"}
+          </span>
+          <input
+            placeholder={`Filter ${kind === "feat" ? "feats" : "powers"}`}
+            type="search"
+            value={filter}
+            onChange={(event) => setFilter(event.currentTarget.value)}
+          />
+        </label>
+        <button
+          disabled={disabled || selectedIds.size === 0}
+          type="button"
+          onClick={onClear}
+        >
+          Clear
+        </button>
+        <span className="selection-table-count">
+          {shownRows === totalRows
+            ? `${totalRows} shown`
+            : `${shownRows} of ${totalRows} shown`}
+        </span>
+      </div>
+      <div className="selection-table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">{kind === "feat" ? "Feat" : "Power"}</th>
+              {kind === "feat" ? (
+                <>
+                  <th scope="col">Prerequisites</th>
+                  <th scope="col">Description</th>
+                </>
+              ) : (
+                <>
+                  <th scope="col">
+                    <span
+                      className="selection-metadata-icon"
+                      aria-label="Action type"
+                      title="Action type"
+                    >
+                      <Icon name="clock" />
+                    </span>
+                  </th>
+                  <th scope="col">
+                    <span
+                      className="selection-metadata-icon"
+                      aria-label="Attack type"
+                      title="Attack type"
+                    >
+                      <Icon name="attack-versatile" />
+                    </span>
+                  </th>
+                  <th scope="col">Description</th>
+                </>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {kind === "power"
+              ? displayedCandidates.map((candidate) =>
+                  candidateRow(
+                    candidate,
+                    entityFor(candidate)?.name ?? candidate.definitionId,
+                  ),
+                )
+              : displayedFeatGroups.map((group) => {
+                  if (group.parameterLabel === undefined) {
+                    const candidate = group.options[0]!.candidate;
+                    return candidateRow(candidate, group.label);
+                  }
+                  const selected = group.options.some(({ candidate }) =>
+                    selectedIds.has(candidate.definitionId),
+                  );
+                  const expanded =
+                    expandedGroupKey === group.key ||
+                    selected ||
+                    normalizedFilter !== "";
+                  const representative =
+                    group.options.find(({ candidate }) =>
+                      selectedIds.has(candidate.definitionId),
+                    )?.candidate ?? group.options[0]!.candidate;
+                  const matchingOptions = group.options.filter(
+                    ({ candidate, label }) => matchesFilter(candidate, label),
+                  );
+                  return (
+                    <Fragment key={group.key}>
+                      <tr className="selection-family-row">
+                        <td>
+                          <button
+                            aria-expanded={expanded}
+                            type="button"
+                            onClick={() =>
+                              onExpandGroup(expanded ? "" : group.key)
+                            }
+                            onFocus={() => onInspect(representative)}
+                            onMouseEnter={() => onInspect(representative)}
+                          >
+                            {selected ? <Icon name="check" /> : null}
+                            <span>{group.label}…</span>
+                          </button>
+                        </td>
+                        <td colSpan={2}>Choose {group.parameterLabel}</td>
+                      </tr>
+                      {expanded
+                        ? matchingOptions.map(({ candidate, label }) =>
+                            candidateRow(candidate, label, true),
+                          )
+                        : null}
+                    </Fragment>
+                  );
+                })}
+            {totalRows > shownRows ? (
+              <tr className="selection-table-more">
+                <td colSpan={kind === "feat" ? 3 : 4}>
+                  Filter the table to see the remaining {totalRows - shownRows}{" "}
+                  options.
+                </td>
+              </tr>
+            ) : null}
+            {(kind === "power"
+              ? visibleCandidates.length
+              : visibleFeatGroups.length) === 0 ? (
+              <tr>
+                <td colSpan={kind === "feat" ? 3 : 4}>
+                  No matching {kind === "feat" ? "feats" : "powers"}.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
 
 function ChoiceFlowSection({
@@ -1540,6 +1897,7 @@ function RepeatedChoiceGroup({
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
   const root = choices[0]!;
+  const tableKind = choiceSelectionTableKind(root);
   const chosen = choices.filter(
     (choice) => choice.selectedOccurrenceId !== undefined,
   ).length;
@@ -1570,28 +1928,255 @@ function RepeatedChoiceGroup({
         )}
       </header>
       <div className="grouped-choice-list">
-        {choices.map((choice, index) => (
-          <section
-            className="grouped-choice-item"
-            id={index === 0 ? undefined : choiceSectionId(choice.id)}
-            key={choice.id}
-          >
-            <ChoiceEditor
-              choice={choice}
-              evaluation={evaluation}
-              build={build}
-              entities={entities}
-              byId={byId}
-              disabled={false}
-              compact={choice.type.startsWith("Ability Increase")}
-              selectionLabel={repeatedSlotLabel(choice, index)}
-              rollbackRevision={rollbackRevision}
-              onDispatch={onDispatch}
-            />
-          </section>
-        ))}
+        {tableKind === undefined ? (
+          choices.map((choice, index) => (
+            <section
+              className="grouped-choice-item"
+              id={index === 0 ? undefined : choiceSectionId(choice.id)}
+              key={choice.id}
+            >
+              <ChoiceEditor
+                choice={choice}
+                evaluation={evaluation}
+                build={build}
+                entities={entities}
+                byId={byId}
+                disabled={false}
+                compact={choice.type.startsWith("Ability Increase")}
+                selectionLabel={repeatedSlotLabel(choice, index)}
+                rollbackRevision={rollbackRevision}
+                onDispatch={onDispatch}
+              />
+            </section>
+          ))
+        ) : (
+          <RepeatedCandidateTableEditor
+            kind={tableKind}
+            choices={choices}
+            evaluation={evaluation}
+            build={build}
+            entities={entities}
+            byId={byId}
+            rollbackRevision={rollbackRevision}
+            onDispatch={onDispatch}
+          />
+        )}
       </div>
     </section>
+  );
+}
+
+function RepeatedCandidateTableEditor({
+  kind,
+  choices,
+  evaluation,
+  build,
+  entities,
+  byId,
+  rollbackRevision,
+  onDispatch,
+}: {
+  readonly kind: "feat" | "power";
+  readonly choices: readonly EvaluatedChoice[];
+  readonly evaluation: EvaluatedCharacter;
+  readonly build: CharacterRecord["build"];
+  readonly entities: readonly ContentEntity[];
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly rollbackRevision: number;
+  readonly onDispatch: (command: CharacterCommand) => void;
+}) {
+  const showAll = useContext(ShowAllChoicesContext);
+  const inspectCandidate = useContext(InspectCandidateContext);
+  const evaluatedSlots = new Map(
+    choices.map((choice) => [
+      choice.id,
+      selectedDefinitionId(choice, evaluation),
+    ]),
+  );
+  const [optimisticSlots, setOptimisticSlots] = useState(evaluatedSlots);
+  const [expandedGroupKey, setExpandedGroupKey] = useState("");
+  const choiceKey = choices.map((choice) => choice.id).join("\0");
+
+  useEffect(() => setOptimisticSlots(new Map()), [rollbackRevision]);
+  useEffect(
+    () =>
+      setOptimisticSlots(
+        new Map(
+          choices.map((choice) => [
+            choice.id,
+            selectedDefinitionId(choice, evaluation),
+          ]),
+        ),
+      ),
+    [choiceKey, evaluation],
+  );
+
+  const selectedIds = new Set(
+    [...optimisticSlots.values()].filter(
+      (definitionId): definitionId is string => definitionId !== undefined,
+    ),
+  );
+  const occupiedChoiceIds = new Set(
+    [...optimisticSlots].flatMap(([choiceId, definitionId]) =>
+      definitionId === undefined ? [] : [choiceId],
+    ),
+  );
+  const candidateIds = [
+    ...new Set(
+      choices.flatMap((choice) =>
+        choice.candidates.map((candidate) => candidate.definitionId),
+      ),
+    ),
+  ];
+  const candidates = candidateIds.flatMap((definitionId) => {
+    const decisions = choices.flatMap((choice) =>
+      choice.candidates
+        .filter((candidate) => candidate.definitionId === definitionId)
+        .map((candidate) => ({ candidate, choice })),
+    );
+    if (
+      !decisions.some(({ candidate, choice }) =>
+        isCandidateVisible(
+          candidate,
+          showAll,
+          selectedDefinitionId(choice, evaluation),
+        ),
+      )
+    )
+      return [];
+    const candidate =
+      decisions.find(({ candidate }) => candidate.eligible)?.candidate ??
+      decisions.find(({ candidate }) => !candidate.reasons.includes("category"))
+        ?.candidate;
+    return candidate === undefined ? [] : [candidate];
+  });
+  const featGroups =
+    kind === "feat"
+      ? groupParameterizedCandidates(
+          candidates,
+          (definitionId) =>
+            byId.get(definitionId.toLocaleLowerCase())?.name ?? definitionId,
+        )
+      : [];
+
+  const toggle = (definitionId: string): void => {
+    const selectedChoice = choices.find(
+      (choice) => optimisticSlots.get(choice.id) === definitionId,
+    );
+    if (selectedChoice !== undefined) {
+      const command = unresolveEvaluatedChoiceCommand(
+        build,
+        selectedChoice,
+        evaluation,
+        entities,
+        `web:placeholder:table:${crypto.randomUUID()}`,
+      );
+      if (command === undefined) return;
+      setOptimisticSlots((current) => {
+        const next = new Map(current);
+        next.set(selectedChoice.id, undefined);
+        return next;
+      });
+      inspectCandidate?.(undefined);
+      onDispatch(command);
+      return;
+    }
+    const targetChoice = choiceForRepeatedCandidate(
+      choices,
+      occupiedChoiceIds,
+      definitionId,
+      showAll,
+    );
+    const candidate = targetChoice?.candidates.find(
+      (item) => item.definitionId === definitionId,
+    );
+    const definition = byId.get(definitionId.toLocaleLowerCase());
+    if (
+      targetChoice === undefined ||
+      candidate === undefined ||
+      definition === undefined ||
+      !isCandidateSelectable(candidate)
+    )
+      return;
+    const provider = evaluation.occurrences.find(
+      (occurrence) => occurrence.id === targetChoice.providerOccurrenceId,
+    );
+    const buildProvider = findOccurrence(
+      build,
+      targetChoice.providerOccurrenceId,
+    );
+    const command = commandForEvaluatedChoice(
+      build,
+      targetChoice,
+      evaluation.occurrences,
+      entities,
+      {
+        id: `web:${crypto.randomUUID()}`,
+        identity: {
+          definitionId: definition.id,
+          name: definition.name,
+          type: definition.type,
+        },
+        acquiredLevel:
+          buildProvider?.acquiredLevel ??
+          provider?.acquiredLevel ??
+          evaluation.level,
+        legality: candidate.eligible ? "rules-legal" : "houserule",
+        children: [],
+        unresolved: false,
+      },
+      (index) => `web:placeholder:${index}:${crypto.randomUUID()}`,
+    );
+    if (command === undefined) return;
+    setOptimisticSlots((current) => {
+      const next = new Map(current);
+      next.set(targetChoice.id, definitionId);
+      return next;
+    });
+    inspectCandidate?.({ candidate, entity: definition });
+    onDispatch(command);
+  };
+
+  const clear = (): void => {
+    const commands = choices.flatMap((choice) => {
+      if (optimisticSlots.get(choice.id) === undefined) return [];
+      const command = unresolveEvaluatedChoiceCommand(
+        build,
+        choice,
+        evaluation,
+        entities,
+        `web:placeholder:table:${crypto.randomUUID()}`,
+      );
+      return command === undefined ? [] : [command];
+    });
+    if (commands.length === 0) return;
+    setOptimisticSlots(
+      new Map(choices.map((choice) => [choice.id, undefined])),
+    );
+    inspectCandidate?.(undefined);
+    onDispatch(
+      commands.length === 1 ? commands[0]! : { kind: "batch", commands },
+    );
+  };
+
+  return (
+    <CandidateSelectionTable
+      kind={kind}
+      candidates={candidates}
+      featGroups={featGroups}
+      selectedIds={selectedIds}
+      expandedGroupKey={expandedGroupKey}
+      byId={byId}
+      disabled={false}
+      selectionLimit={choices.length}
+      onExpandGroup={setExpandedGroupKey}
+      onInspect={(candidate) => {
+        const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
+        if (entity !== undefined) inspectCandidate?.({ candidate, entity });
+      }}
+      onToggle={toggle}
+      onClear={clear}
+    />
   );
 }
 

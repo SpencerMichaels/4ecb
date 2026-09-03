@@ -16,7 +16,10 @@ import {
   applyBuildPresetCommand,
   buildPresetSuggestionNames,
   candidateReason,
+  choiceSelectionTableKind,
+  choiceTableSummary,
   choicePresentationLabel,
+  contentSpecificValue,
   choiceForRepeatedCandidate,
   choicesAtLevel,
   evaluationAtHorizon,
@@ -158,6 +161,55 @@ describe("builder planning UI", () => {
       "magic missile",
       "scorching burst",
     ]);
+  });
+
+  it("derives feat and power table fields from authored legacy metadata", () => {
+    const feat = {
+      ...level(0),
+      type: "Feat",
+      flavor: "Longer flavor",
+      specifics: [
+        {
+          name: "Short Description",
+          value: "Gain a +2 feat bonus.",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+    const power = {
+      ...level(0),
+      type: "Power",
+      flavor: "Move before striking.",
+      description: "Long rules text",
+      specifics: [
+        {
+          name: "Action Type",
+          value: "Standard action",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+
+    expect(
+      choiceSelectionTableKind({
+        type: "Feat",
+      } as EvaluatedCharacter["choices"][number]),
+    ).toBe("feat");
+    expect(
+      choiceSelectionTableKind({
+        type: "Power Encounter 1",
+      } as EvaluatedCharacter["choices"][number]),
+    ).toBe("power");
+    expect(
+      choiceSelectionTableKind({
+        type: "Feat Choice",
+      } as EvaluatedCharacter["choices"][number]),
+    ).toBe("feat");
+    expect(choiceTableSummary(feat, "feat")).toBe("Gain a +2 feat bonus.");
+    expect(choiceTableSummary(power, "power")).toBe("Move before striking.");
+    expect(contentSpecificValue(power, "action type")).toBe("Standard action");
   });
 
   it("applies a Build preset only to matching unresolved choices", () => {

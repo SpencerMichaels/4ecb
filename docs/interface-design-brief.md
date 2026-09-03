@@ -100,6 +100,20 @@ application's protected visual assets.
   the feat family first, then its weapon, implement, skill, or other parameter.
   This is presentation-only; the selected exact legacy feat remains visible in
   the timeline and is the identity stored by the character.
+- Feat and power choices use searchable tables rather than native dropdowns.
+  Feat rows show name, printable prerequisites, and the authored Short
+  Description. Power rows show name and a compact authored flavor summary;
+  action type and attack type are each represented by one monochrome icon, with
+  the exact source value retained as its tooltip and accessible name. Power
+  usage keeps the familiar 4E at-will/encounter/daily/utility color treatment.
+  Focusing or hovering a row updates the shared detail pane, and choosing a row
+  updates selection state immediately while reevaluation and autosave run in
+  the background.
+- Repeated feat or power slots in one section share a single multi-select table
+  and one **X of Y chosen** count. Selected rows remain visible. To keep large
+  feat corpora responsive, search always covers the complete candidate set but
+  the DOM renders a bounded result window and tells the player when filtering
+  is needed to reach the remainder.
 - Autosave every committed character change. Show concise saving, saved, and
   failure states without interrupting ordinary work, retain transactional undo
   and redo, and never imply persistence before the storage commit succeeds.

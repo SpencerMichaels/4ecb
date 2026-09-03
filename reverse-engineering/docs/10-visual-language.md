@@ -273,6 +273,26 @@ Modern translation:
 - keep hover/press transitions around 80–140 ms and animate only state or
   spatial continuity.
 
+### Feat and power selection-row evidence
+
+The legacy specialized pages do not treat these choices as bare names.
+`FeatPage.AddFeatAtCategory` constructs each `FeatInfo` from
+`RulesElementName`, `RulesElementPrereqs`, and rules-element field 14631; the
+corresponding `FeatInfo` properties are `Name`, `Prereqs`, and `ShortDesc`.
+Those are therefore the authoritative compact columns for a modern feat table.
+The selected feat remains an exact rules-element identity even when the modern
+surface groups a large parenthetical family.
+
+`PowerPage` builds its grouped candidate rows as `PowerInfo(name, source, ...)`;
+the old tree itself exposes name/source and delegates the complete rules text to
+the detail view. The content records additionally carry authored `Action Type`
+and `Attack Type` specifics and an authored flavor line. The modern table uses
+those existing fields as a compact scan aid rather than deriving them from
+rules text: one monochrome glyph for action, one for attack geometry, and the
+flavor line as the summary. Exact field text remains the glyph's tooltip and
+accessible name. This is a deliberate modern extension of the legacy row, not
+evidence that the legacy tree displayed those columns.
+
 ## Proposed modern token palette
 
 These are derived implementation tokens. The legacy values above remain the

@@ -60,6 +60,40 @@ export function isBuildPresetChoice(choice: EvaluatedChoice): boolean {
   );
 }
 
+export type ChoiceSelectionTableKind = "feat" | "power";
+
+export function choiceSelectionTableKind(
+  choice: EvaluatedChoice,
+): ChoiceSelectionTableKind | undefined {
+  const type = choice.type.trim().toLocaleLowerCase();
+  if (type === "feat" || type.startsWith("feat ")) return "feat";
+  if (
+    type === "power" ||
+    /^power (at-will|encounter|daily|utility)\b/.test(type)
+  )
+    return "power";
+  return undefined;
+}
+
+export function contentSpecificValue(
+  entity: ContentEntity,
+  name: string,
+): string | undefined {
+  const value = entity.specifics.find(
+    (field) =>
+      field.name.trim().toLocaleLowerCase() === name.trim().toLocaleLowerCase(),
+  )?.value;
+  return value === undefined || value.trim() === "" ? undefined : value.trim();
+}
+
+export function choiceTableSummary(
+  entity: ContentEntity,
+  kind: ChoiceSelectionTableKind,
+): string | undefined {
+  if (kind === "feat") return contentSpecificValue(entity, "Short Description");
+  return entity.flavor?.trim() || entity.description.trim() || undefined;
+}
+
 export function buildPresetSuggestionNames(
   preset: ContentEntity,
 ): readonly string[] {

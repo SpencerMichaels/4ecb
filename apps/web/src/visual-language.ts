@@ -67,6 +67,30 @@ export function entityTypeIcon(type: string): IconName {
   }
 }
 
+export function powerActionIcon(value: string | undefined): IconName {
+  const normalized = value?.trim().toLocaleLowerCase() ?? "";
+  if (normalized === "" || normalized.includes("no action"))
+    return "action-none";
+  if (normalized.includes("interrupt")) return "action-interrupt";
+  if (normalized.includes("reaction")) return "action-reaction";
+  if (normalized.includes("minor")) return "action-minor";
+  if (normalized.includes("move")) return "action-move";
+  if (normalized.includes("free")) return "action-free";
+  return "action-standard";
+}
+
+export function powerAttackIcon(value: string | undefined): IconName {
+  const normalized = value?.trim().toLocaleLowerCase() ?? "";
+  if (normalized.includes("melee") && normalized.includes("ranged"))
+    return "attack-versatile";
+  if (normalized.includes("melee")) return "attack-melee";
+  if (normalized.includes("ranged")) return "attack-ranged";
+  if (normalized.includes("close")) return "attack-close";
+  if (normalized.includes("area")) return "attack-area";
+  if (normalized.includes("personal")) return "attack-personal";
+  return "action-none";
+}
+
 export function visualToneClass(tone: LegacyVisualTone): string {
   return `tone-${tone}`;
 }

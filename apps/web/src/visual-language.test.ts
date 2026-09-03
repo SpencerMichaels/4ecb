@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import type { ContentEntity } from "@4ecb/content-domain";
 
-import { entityTypeIcon, entityVisualTone } from "./visual-language";
+import {
+  entityTypeIcon,
+  entityVisualTone,
+  powerActionIcon,
+  powerAttackIcon,
+} from "./visual-language";
 
 function entity(
   type: string,
@@ -50,5 +55,16 @@ describe("legacy-derived visual language", () => {
     expect(entityTypeIcon("Feat")).toBe("feat");
     expect(entityTypeIcon("Power")).toBe("power");
     expect(entityTypeIcon("Armor")).toBe("item");
+  });
+
+  it("maps power action and attack metadata to compact semantic icons", () => {
+    expect(powerActionIcon("Standard Action")).toBe("action-standard");
+    expect(powerActionIcon("Immediate Interrupt")).toBe("action-interrupt");
+    expect(powerActionIcon("Free Action")).toBe("action-free");
+    expect(powerActionIcon(undefined)).toBe("action-none");
+    expect(powerAttackIcon("Melee weapon")).toBe("attack-melee");
+    expect(powerAttackIcon("Melee or Ranged weapon")).toBe("attack-versatile");
+    expect(powerAttackIcon("Area burst 1 within 10")).toBe("attack-area");
+    expect(powerAttackIcon(undefined)).toBe("action-none");
   });
 });
