@@ -379,6 +379,22 @@ by a conservative old-style serif stack only for app and page identity. The
 evidence and confidence boundary are recorded in
 `reverse-engineering/docs/10-visual-language.md`.
 
+### D030 — Candidate legality uses executable `Prereqs`, not printable prose
+
+Every choice candidate is filtered through the same prerequisite evaluator used
+for selected-choice diagnostics. Failed prerequisites and unrecognized tokens
+are unavailable by default but remain visible through **Show unavailable
+options**, matching the legacy feat page's `choice.Legal`/`ShowIllegal` path.
+Selected imported illegal records remain recoverable.
+
+The authoritative field is `RulesElement/Prereqs`. The legacy engine parses it
+at database load into its in-memory `_INTERNAL_PREREQS` tree; `print-prereqs` is
+presentation-only. The modern content index retains the source expression and
+resolves its names and IDs against indexed definition tokens. Candidate results
+are memoized per evaluation so the 38,339-record private profile does not repeat
+full-pack scans. The connective and internalization evidence is specified in
+`reverse-engineering/docs/04-rule-language.md`.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

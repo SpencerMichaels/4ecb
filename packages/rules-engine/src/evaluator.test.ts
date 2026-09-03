@@ -71,6 +71,44 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it("filters every candidate by its legacy prerequisites", () => {
+    const result = evaluateCharacter(
+      {
+        level: 8,
+        baseAbilities: {},
+        occurrences: [rootOccurrence],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "1", "Level", {
+          rules: [rule("select", { type: "Feat" }, 0)],
+        }),
+        entity("LEGAL_FEAT", "Legal Feat", "Feat"),
+        entity("ARCANE_ADMIXTURE_IV", "Arcane Admixture IV", "Feat", {
+          prerequisites:
+            "Arcane Admixture III,11th level, any arcane class; Paragon Tier",
+        }),
+        entity("UNKNOWN_FEAT", "Unknown Feat", "Feat", {
+          prerequisites: "must have crossed the silver sea",
+        }),
+      ],
+    );
+
+    expect(result.choices[0]?.candidates).toEqual([
+      { definitionId: "LEGAL_FEAT", eligible: true, reasons: [] },
+      {
+        definitionId: "ARCANE_ADMIXTURE_IV",
+        eligible: false,
+        reasons: ["prerequisite"],
+      },
+      {
+        definitionId: "UNKNOWN_FEAT",
+        eligible: false,
+        reasons: ["prerequisite-unverified"],
+      },
+    ]);
+  });
+
   it("limits background benefits to owned background associations", () => {
     const result = evaluateCharacter(
       {
@@ -98,6 +136,7 @@ describe("character evaluator", () => {
           ],
         }),
         entity("NATURE_ASSOCIATION", "Nature", "Background Association"),
+        entity("ATHLETICS_ASSOCIATION", "Athletics", "Background Association"),
         entity("NATURE_CLASS", "Nature class skill", "Background Choice", {
           categories: ["BG_BENEFIT"],
           prerequisites: "Nature background association",

@@ -659,7 +659,7 @@ export function evaluateCharacter(
       providerName: `Focused Expertise (${weapon.name})`,
     });
   }
-  const choices: EvaluatedChoice[] = [];
+  let choices: EvaluatedChoice[] = [];
   const overlays: FieldOverlay[] = [];
   const suggestions: EvaluatedCharacter["suggestions"][number][] = [];
   const text = { ...(input.textStrings ?? {}) };
@@ -757,25 +757,6 @@ export function evaluateCharacter(
         );
         match ||= isCustomChoiceException(candidate);
         if (!match) reasons.push("category");
-      }
-      if (key(candidate.type) === "background choice") {
-        const prerequisite = candidate.prerequisites?.trim();
-        const association = prerequisite?.match(
-          /^(.+?)\s+background association$/i,
-        )?.[1];
-        const missingAssociation =
-          association !== undefined &&
-          !ownedDefinitions.some(
-            (owned) =>
-              key(owned.type) === "background association" &&
-              key(owned.name) === key(association),
-          );
-        const missingExactBackground =
-          prerequisite !== undefined &&
-          /^ID_[A-Z0-9_+()'-]+$/i.test(prerequisite) &&
-          !ownedIds.has(key(prerequisite));
-        if (missingAssociation || missingExactBackground)
-          reasons.push("prerequisite");
       }
       return {
         definitionId: candidate.id,
@@ -1168,7 +1149,52 @@ export function evaluateCharacter(
         ].map((value) => value.trim().toLocaleLowerCase().replaceAll("_", " ")),
       ),
     ),
+    knownTokens: new Set(
+      entities.flatMap((entity) =>
+        [
+          entity.id,
+          entity.name,
+          `${entity.name} ${entity.type}`,
+          `${entity.type} ${entity.name}`,
+        ].map((value) => value.trim().toLocaleLowerCase().replaceAll("_", " ")),
+      ),
+    ),
   };
+  const candidatePrerequisiteStatuses = new Map<
+    string,
+    ReturnType<typeof evaluatePrerequisite>["status"]
+  >();
+  choices = choices.map((choice) => ({
+    ...choice,
+    candidates: choice.candidates.map((candidate) => {
+      const candidateEntity = index.get(candidate.definitionId);
+      const candidateKey = key(candidate.definitionId);
+      let prerequisiteStatus = candidatePrerequisiteStatuses.get(candidateKey);
+      if (prerequisiteStatus === undefined) {
+        prerequisiteStatus = evaluatePrerequisite(
+          candidateEntity?.prerequisites,
+          prerequisiteContext,
+        ).status;
+        candidatePrerequisiteStatuses.set(candidateKey, prerequisiteStatus);
+      }
+      if (
+        prerequisiteStatus === "satisfied" ||
+        candidate.reasons.includes("prerequisite") ||
+        candidate.reasons.includes("prerequisite-unverified")
+      )
+        return candidate;
+      return {
+        ...candidate,
+        eligible: false,
+        reasons: [
+          ...candidate.reasons,
+          prerequisiteStatus === "failed"
+            ? "prerequisite"
+            : "prerequisite-unverified",
+        ],
+      };
+    }),
+  }));
   for (const choice of choices)
     if (!choice.optional && choice.selectedOccurrenceId === undefined)
       diagnostics.push({
@@ -1220,7 +1246,10 @@ export function evaluateCharacter(
     if (
       selected !== undefined &&
       selected.reasons.some(
-        (reason) => reason !== "category" || !exactOwnedPrerequisite,
+        (reason) =>
+          reason !== "prerequisite" &&
+          reason !== "prerequisite-unverified" &&
+          (reason !== "category" || !exactOwnedPrerequisite),
       )
     )
       diagnostics.push({

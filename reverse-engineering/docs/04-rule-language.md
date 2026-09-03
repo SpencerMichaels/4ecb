@@ -87,6 +87,45 @@ Power:Arcane,Encounter    an owned Power in both categories
 When checking a provider's own rule, the engine can exclude that occurrence to
 avoid self-satisfying prerequisites.
 
+## Element `Prereqs` and the internal prerequisite tree
+
+`RulesElement/Prereqs` is executable input, despite resembling English in some
+records. It is distinct from `print-prereqs`, which is display text. At database
+load, `D20RulesEngine.InternalizePrereqs` parses `Prereqs` once and stores a
+native `Prereq` tree on the rules element; the public accessor is named
+`RulesElement_internal_prereqs`, and the binary also names this field
+`_INTERNAL_PREREQS`. The tree is derived runtime state, not a second XML field
+that content-pack ingestion can copy directly.
+
+The confirmed connective grammar is:
+
+- semicolon-delimited blocks are joined with AND;
+- top-level commas and the word `and` ordinarily join items with AND;
+- a comma followed by `or` changes a comma-delimited list to OR, so
+  `A, B, or C` means any one of the three;
+- top-level `or` also creates an OR branch;
+- parentheses protect nested separators.
+
+Individual tokens are internalized rather than compared as prose. Exact names
+and internal IDs resolve to `RulesElement` pointers; known prefixes and suffixes
+limit the record type; levels, tiers, abilities, class/power-source tests,
+training, proficiency, and other recognized phrases become value or predicate
+nodes. Unrecognized tokens resolve to an illegal stub, so uncertainty is not
+treated as eligibility. `CheckLegality` recursively evaluates the resulting
+AND/OR tree against owned elements and the relevant character level.
+
+The feat UI consumes that result through `choice.Legal(index)`: by default it
+adds only legal and owned candidate records, while its `ShowIllegal` toggle also
+adds failed candidates and displays `LegalExplanation`. This is the legacy
+behavior the modern **Show unavailable options** control mirrors.
+
+Evidence: recovered methods `InternalizePrereqs`, `InternalizeBlock`,
+`InternalizeOr`, `InternalizeElement`, `CheckPrereq`, and `CheckLegality` in
+`D20RulesEngine.dll`, plus `FeatPage.DisplayFeatTree` in
+`CharacterBuilder.exe`. The original Arcane Admixture IV record corroborates
+the field split: `Prereqs` contains `Arcane Admixture III,11th level, any arcane
+class; Paragon Tier`, while its parallel `print-prereqs` is for presentation.
+
 ## Category expressions
 
 Ordinary category constraints are comma-separated AND groups. Within a group,

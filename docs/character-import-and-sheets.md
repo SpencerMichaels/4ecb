@@ -193,9 +193,10 @@ current browser/variant combination.
   0.07a `.dnd4e` target from a converged exact-profile evaluation. The no-edit
   target remains exact. Original-application launch-matrix evidence is still
   required before compatibility release closure.
-- Candidate lists are structurally filtered up front. Full prerequisite
-  evaluation currently runs for selected choices, so a newly selected illegal
-  option remains editable and is then explained by diagnostics.
+- Candidate lists apply both structural constraints and the legacy executable
+  `Prereqs` expression. Failed or unrecognized prerequisites are hidden by
+  default and remain recoverable through **Show unavailable options**; an
+  imported selected illegal option remains visible and explained by diagnostics.
 - Full card prose requires the matching content pack because `.dnd4e`
   `PowerStats` contains calculations but not every rule field.
 - Portrait file URLs from the Windows application are retained in XML but are

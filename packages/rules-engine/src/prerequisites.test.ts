@@ -59,6 +59,27 @@ describe("legacy prerequisites", () => {
     ).toBe("unverified");
   });
 
+  it("fails an absent prerequisite that names a known definition", () => {
+    const arcaneAdmixture = {
+      id: "ARCANE_ADMIXTURE_II",
+      name: "Arcane Admixture II",
+      type: "Feat",
+    } as ContentEntity;
+    expect(
+      evaluatePrerequisite("Arcane Admixture II", {
+        ...context,
+        knownTokens: new Set(["arcane admixture ii"]),
+      }).status,
+    ).toBe("failed");
+    expect(
+      evaluatePrerequisite("Arcane Admixture II", {
+        ...context,
+        owned: [...owned, arcaneAdmixture],
+        knownTokens: new Set(["arcane admixture ii"]),
+      }).status,
+    ).toBe("satisfied");
+  });
+
   it("covers level, tier, class, training, proficiency, and deity prose", () => {
     expect(evaluatePrerequisite("8th level", context).status).toBe("satisfied");
     expect(evaluatePrerequisite("Paragon Tier", context).status).toBe("failed");
@@ -94,5 +115,29 @@ describe("legacy prerequisites", () => {
         ] as ContentEntity[],
       }).status,
     ).toBe("satisfied");
+  });
+
+  it("treats comma-delimited lists ending in or as alternatives", () => {
+    const prerequisite =
+      "ID_FMP_POWER_917, ID_FMP_POWER_4368, or ID_FMP_POWER_10591";
+    const knownTokens = new Set([
+      "id fmp power 917",
+      "id fmp power 4368",
+      "id fmp power 10591",
+    ]);
+    expect(
+      evaluatePrerequisite(prerequisite, {
+        ...context,
+        knownTokens,
+        ownedTokens: new Set(["id fmp power 4368"]),
+      }).status,
+    ).toBe("satisfied");
+    expect(
+      evaluatePrerequisite(prerequisite, {
+        ...context,
+        knownTokens,
+        ownedTokens: new Set(),
+      }).status,
+    ).toBe("failed");
   });
 });

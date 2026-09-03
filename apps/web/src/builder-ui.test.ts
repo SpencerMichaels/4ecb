@@ -225,8 +225,8 @@ describe("builder planning UI", () => {
   });
 
   it("turns evaluator reasons into objective user-facing text", () => {
-    expect(candidateReason(["category", "self"])).toBe(
-      "Does not match this choice category; A feature cannot select itself",
+    expect(candidateReason(["prerequisite", "prerequisite-unverified"])).toBe(
+      "Does not meet prerequisites; Prerequisites could not be verified",
     );
   });
 

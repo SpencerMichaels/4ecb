@@ -128,6 +128,7 @@ export function candidateReason(reasons: readonly string[]): string {
   const labels: Readonly<Record<string, string>> = {
     category: "Does not match this choice category",
     prerequisite: "Does not meet prerequisites",
+    "prerequisite-unverified": "Prerequisites could not be verified",
     self: "A feature cannot select itself",
   };
   return reasons.map((reason) => labels[reason] ?? reason).join("; ");

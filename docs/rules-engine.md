@@ -27,9 +27,11 @@ Evaluation proceeds as follows:
 1. Resolve active build occurrences and equipped definitions for the effective
    level.
 2. Iterate automatic grants to a fixed point with stable synthetic identities.
-3. Materialize choice/replacement slots and structurally eligible candidates.
+3. Materialize choice/replacement slots and evaluate every candidate's
+   structural constraints and internalized `Prereqs` expression.
 4. Apply stat operations, typed stacking, aliases, text values, and overlays.
-5. Check prerequisites for selected elements against the final evaluated state.
+5. Recheck selected elements against the final evaluated state and emit
+   recoverable legality diagnostics.
 6. Return values with provenance, completeness, legality, and diagnostics.
 
 The full local corpus contains 54,012 statements across 38,339 entities. The

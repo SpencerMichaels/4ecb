@@ -224,7 +224,16 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   Level-1 point buy now uses one full-width row per ability and reports points
   as `X out of 22 points spent`; browser inspection confirmed the steppers no
   longer collide in the middle pane.
-- `nix develop path:. -c bash scripts/check.sh` passes 217 tests across 37 files,
+- Choice candidates now apply the legacy executable `Prereqs` expression before
+  presentation. Silaqui's level-1 feat selector drops from 3,330 candidates to
+  299 candidates plus its placeholder by default; **Show unavailable options**
+  restores the full list, including Arcane Admixture IV. The implementation
+  resolves prerequisite names/IDs through indexed definition tokens and caches
+  each result per evaluation. Direct inspection of the legacy engine confirms
+  `_INTERNAL_PREREQS` is an in-memory tree parsed from `Prereqs`, not a separate
+  XML metadata field; `print-prereqs` remains display-only. The recovered
+  `A, B, or C` grammar also eliminates Silaqui's false Archery Mastery warning.
+- `nix develop path:. -c bash scripts/check.sh` passes 220 tests across 37 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

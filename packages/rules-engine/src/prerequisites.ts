@@ -5,6 +5,7 @@ export interface PrerequisiteContext {
   readonly level: number;
   readonly abilities: Readonly<Record<string, number>>;
   readonly ownedTokens?: ReadonlySet<string>;
+  readonly knownTokens?: ReadonlySet<string>;
 }
 
 export interface PrerequisiteResult {
@@ -22,14 +23,23 @@ function normalized(value: string): string {
 function owns(context: PrerequisiteContext, token: string): boolean {
   const wanted = normalized(token);
   if (context.ownedTokens !== undefined) return context.ownedTokens.has(wanted);
-  return context.owned.some((entity) =>
-    [
-      entity.id,
-      entity.name,
-      `${entity.name} ${entity.type}`,
-      `${entity.type} ${entity.name}`,
-    ].some((value) => normalized(value) === wanted),
-  );
+  return context.owned.some((entity) => definitionMatches(entity, wanted));
+}
+
+function definitionMatches(entity: ContentEntity, wanted: string): boolean {
+  return [
+    entity.id,
+    entity.name,
+    `${entity.name} ${entity.type}`,
+    `${entity.type} ${entity.name}`,
+  ].some((value) => normalized(value) === wanted);
+}
+
+function isKnownDefinition(
+  context: PrerequisiteContext,
+  token: string,
+): boolean {
+  return context.knownTokens?.has(normalized(token)) ?? false;
 }
 
 function fieldValues(
@@ -220,6 +230,7 @@ function clauseStatus(
       ? "satisfied"
       : "failed";
   if (owns(context, clause)) return "satisfied";
+  if (isKnownDefinition(context, clause)) return "failed";
   return "unverified";
 }
 
@@ -230,7 +241,14 @@ export function evaluatePrerequisite(
   if (prerequisite === undefined || prerequisite.trim().length === 0)
     return { status: "satisfied", clauses: [] };
   const clauses = prerequisite
-    .split(/\s*;\s*|\s*,\s*/)
+    .split(/\s*;\s*/)
+    .flatMap((section) => {
+      const commaParts = section.split(/\s*,\s*/).filter(Boolean);
+      const last = commaParts.at(-1);
+      return commaParts.length > 1 && /^or\s+/i.test(last ?? "")
+        ? [commaParts.map((part) => part.replace(/^or\s+/i, "")).join(" or ")]
+        : commaParts;
+    })
     .filter(Boolean)
     .map((text) => ({ text, status: clauseStatus(text, context) }));
   return {
