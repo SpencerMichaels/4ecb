@@ -17,6 +17,7 @@ import {
   groupChoicesByLegacyWorkflow,
   groupBackgroundChoiceCandidates,
   groupParameterizedCandidates,
+  groupRepeatedCandidateScopes,
   groupRepeatedChoiceSlots,
   identityChoiceLabel,
   isCandidateVisible,
@@ -133,7 +134,6 @@ describe("builder planning UI", () => {
   it("groups background benefits without changing exact candidates", () => {
     const names: Record<string, string> = {
       TWO: "+2 to Nature",
-      PAIR: "+1 to Nature and +1 to Perception",
       CLASS: "Arcana class skill",
       LANGUAGE: "Learn Draconic",
       BENEFIT: "Wild Hunter Benefit",
@@ -154,11 +154,6 @@ describe("builder planning UI", () => {
     ).toEqual([
       { label: "+2 to a skill", parameterLabel: "Skill", options: ["Nature"] },
       {
-        label: "+1 to two skills",
-        parameterLabel: "Skills",
-        options: ["+1 to Nature and +1 to Perception"],
-      },
-      {
         label: "Add a class skill",
         parameterLabel: "Skill",
         options: ["Arcana"],
@@ -168,6 +163,44 @@ describe("builder planning UI", () => {
         label: "Background benefit",
         parameterLabel: "Benefit",
         options: ["Wild Hunter"],
+      },
+    ]);
+  });
+
+  it("keeps constrained and freeform skill slots in separate scopes", () => {
+    const choices = [
+      {
+        id: "restricted",
+        providerOccurrenceId: "ranger",
+        candidates: [
+          { definitionId: "DUNGEONEERING", eligible: true, reasons: [] },
+          { definitionId: "NATURE", eligible: true, reasons: [] },
+          { definitionId: "ARCANA", eligible: false, reasons: ["category"] },
+        ],
+      },
+      ...[0, 1, 2, 3].map((index) => ({
+        id: `class-${index}`,
+        providerOccurrenceId: "ranger",
+        candidates: [
+          { definitionId: "DUNGEONEERING", eligible: true, reasons: [] },
+          { definitionId: "NATURE", eligible: false, reasons: ["duplicate"] },
+          { definitionId: "ATHLETICS", eligible: true, reasons: [] },
+        ],
+      })),
+    ] as unknown as EvaluatedCharacter["choices"];
+    expect(
+      groupRepeatedCandidateScopes(choices).map((scope) => ({
+        choiceIds: scope.choices.map((choice) => choice.id),
+        candidateIds: scope.candidateIds,
+      })),
+    ).toEqual([
+      {
+        choiceIds: ["restricted"],
+        candidateIds: ["DUNGEONEERING", "NATURE"],
+      },
+      {
+        choiceIds: ["class-0", "class-1", "class-2", "class-3"],
+        candidateIds: ["DUNGEONEERING", "NATURE", "ATHLETICS"],
       },
     ]);
   });

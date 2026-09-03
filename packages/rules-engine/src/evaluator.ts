@@ -758,6 +758,25 @@ export function evaluateCharacter(
         match ||= isCustomChoiceException(candidate);
         if (!match) reasons.push("category");
       }
+      if (key(candidate.type) === "background choice") {
+        const prerequisite = candidate.prerequisites?.trim();
+        const association = prerequisite?.match(
+          /^(.+?)\s+background association$/i,
+        )?.[1];
+        const missingAssociation =
+          association !== undefined &&
+          !ownedDefinitions.some(
+            (owned) =>
+              key(owned.type) === "background association" &&
+              key(owned.name) === key(association),
+          );
+        const missingExactBackground =
+          prerequisite !== undefined &&
+          /^ID_[A-Z0-9_+()'-]+$/i.test(prerequisite) &&
+          !ownedIds.has(key(prerequisite));
+        if (missingAssociation || missingExactBackground)
+          reasons.push("prerequisite");
+      }
       return {
         definitionId: candidate.id,
         eligible: reasons.length === 0,

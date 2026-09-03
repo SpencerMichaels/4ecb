@@ -127,6 +127,7 @@ export function candidateReason(reasons: readonly string[]): string {
   if (reasons.length === 0) return "Available";
   const labels: Readonly<Record<string, string>> = {
     category: "Does not match this choice category",
+    prerequisite: "Does not meet prerequisites",
     self: "A feature cannot select itself",
   };
   return reasons.map((reason) => labels[reason] ?? reason).join("; ");
@@ -238,13 +239,6 @@ export function groupBackgroundChoiceCandidates(
       parameterLabel: "Skill",
       match: (name: string) => /^\+2 to /i.test(name),
       optionLabel: (name: string) => name.replace(/^\+2 to /i, ""),
-    },
-    {
-      key: "two-skills-plus-one",
-      label: "+1 to two skills",
-      parameterLabel: "Skills",
-      match: (name: string) => /^\+1 to .+\+1 to /i.test(name),
-      optionLabel: (name: string) => name,
     },
     {
       key: "class-skill",
@@ -534,6 +528,38 @@ export function choiceForRepeatedCandidate(
           isCandidateVisible(candidate, showAll),
       ),
   );
+}
+
+export interface RepeatedCandidateScope {
+  readonly key: string;
+  readonly choices: readonly EvaluatedChoice[];
+  readonly candidateIds: readonly string[];
+}
+
+export function groupRepeatedCandidateScopes(
+  choices: readonly EvaluatedChoice[],
+): readonly RepeatedCandidateScope[] {
+  const groups = new Map<string, RepeatedCandidateScope>();
+  for (const choice of choices) {
+    const candidateIds = [
+      ...new Set(
+        choice.candidates
+          .filter((candidate) => !candidate.reasons.includes("category"))
+          .map((candidate) => candidate.definitionId),
+      ),
+    ];
+    const signature = `${choice.providerOccurrenceId}\0${[...candidateIds]
+      .sort((left, right) => left.localeCompare(right))
+      .join("\0")}`;
+    const existing = groups.get(signature);
+    groups.set(
+      signature,
+      existing === undefined
+        ? { key: signature, choices: [choice], candidateIds }
+        : { ...existing, choices: [...existing.choices, choice] },
+    );
+  }
+  return [...groups.values()];
 }
 
 export function unresolveEvaluatedChoiceCommand(

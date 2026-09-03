@@ -1317,7 +1317,7 @@ textarea {
 .ability-editor {
   display: grid;
   gap: 0.65rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
 }
 .ability-editor label,
 .editor-choices label {
@@ -2037,22 +2037,6 @@ textarea {
   font-size: 0.78rem;
 }
 
-.skill-slot-guidance {
-  background: var(--surface-subtle);
-  border-left: 3px solid var(--accent);
-  color: var(--muted);
-  margin: -0.25rem 0 1rem;
-  padding: 0.55rem 0.7rem;
-}
-
-.skill-slot-guidance p {
-  margin: 0;
-}
-
-.skill-slot-guidance p + p {
-  margin-top: 0.35rem;
-}
-
 .grouped-choice-list {
   display: grid;
   gap: 1rem;
@@ -2129,6 +2113,28 @@ textarea {
 .skill-training-controls {
   display: grid;
   gap: 1rem;
+}
+
+.skill-scope + .skill-scope {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.skill-scope > header {
+  align-items: baseline;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-bottom: 0.55rem;
+}
+
+.skill-scope > header h5 {
+  margin: 0;
+}
+
+.skill-scope > header span {
+  color: var(--muted);
+  font-size: 0.78rem;
 }
 
 .skill-toggle-list {

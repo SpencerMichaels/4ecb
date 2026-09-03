@@ -32,6 +32,7 @@ function entity(
   type: string,
   options: {
     categories?: string[];
+    prerequisites?: string;
     rules?: RuleStatement[];
     specifics?: Record<string, string>;
   } = {},
@@ -56,6 +57,9 @@ function entity(
     description: "",
     extensions: [],
     provenance: { sourceKey: "test", sourceOrdinal: 0 },
+    ...(options.prerequisites === undefined
+      ? {}
+      : { prerequisites: options.prerequisites }),
   };
 }
 
@@ -67,6 +71,58 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it("limits background benefits to owned background associations", () => {
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "nature-association",
+            definitionId: "NATURE_ASSOCIATION",
+            acquiredLevel: 1,
+            kind: "grant",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "1", "Level", {
+          rules: [
+            rule(
+              "select",
+              { type: "Background Choice", Category: "BG_BENEFIT" },
+              0,
+            ),
+          ],
+        }),
+        entity("NATURE_ASSOCIATION", "Nature", "Background Association"),
+        entity("NATURE_CLASS", "Nature class skill", "Background Choice", {
+          categories: ["BG_BENEFIT"],
+          prerequisites: "Nature background association",
+        }),
+        entity(
+          "ATHLETICS_CLASS",
+          "Athletics class skill",
+          "Background Choice",
+          {
+            categories: ["BG_BENEFIT"],
+            prerequisites: "Athletics background association",
+          },
+        ),
+      ],
+    );
+    expect(result.choices[0]?.candidates).toEqual([
+      { definitionId: "NATURE_CLASS", eligible: true, reasons: [] },
+      {
+        definitionId: "ATHLETICS_CLASS",
+        eligible: false,
+        reasons: ["prerequisite"],
+      },
+    ]);
+  });
+
   it("offers the selected archery mastery power as a ranger at-will replacement", () => {
     const result = evaluateCharacter(
       {

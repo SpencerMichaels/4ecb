@@ -210,12 +210,20 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   Powers**, with only **Power 1** and **Power 2** beneath it. Her background
   benefit is a two-stage **Benefit type** and exact parameter control covering
   language, skill bonuses, class skills, and named benefits without changing
-  the stored candidate. An incomplete skill selection now explains the exact
-  provider slot and its remaining eligible skills; occupied-slot alternatives
-  say that rearrangement is required instead of appearing available. Browser
-  verification exercised both incomplete skill states and restored Silaqui's
-  original five choices through undo.
-- `nix develop path:. -c bash scripts/check.sh` passes 214 tests across 37 files,
+  the stored candidate. Background-association and exact-background
+  prerequisites now limit those options to benefits supplied by at least one
+  selected background; Silaqui consequently sees only Nature, Perception, and
+  Athletics for both skill-bonus and add-class-skill choices. The unconfirmed
+  Dragon 383 +1-to-two-skills form is intentionally not synthesized.
+- Skill Training now separates different evaluator scopes rather than combining
+  them into one ambiguous toggle list. Silaqui sees one **Dungeoneering or
+  Nature** selector (`1 of 1`) followed by **Ranger skills** (`4 of 4`), with
+  duplicate choices disabled across scopes. Browser verification changed the
+  constrained choice to Dungeoneering and restored Nature through undo.
+  Level-1 point buy now uses one full-width row per ability and reports points
+  as `X out of 22 points spent`; browser inspection confirmed the steppers no
+  longer collide in the middle pane.
+- `nix develop path:. -c bash scripts/check.sh` passes 216 tests across 37 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

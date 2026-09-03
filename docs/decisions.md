@@ -241,13 +241,18 @@ first compatible unresolved position, so history and legacy serialization do
 not compact or reorder.
 
 Background-benefit records use a presentation-only two-stage control grouped
-by their legacy names: language, +2 to one skill, +1 to two skills, add a class
-skill, background benefit, and an explicit fallback for unknown forms. The
-second stage always dispatches the original exact content record. When repeated
-skill slots have different candidate sets, the toggle list names the provider
-and eligible untrained candidates for every open slot; a skill that could fit
-only after moving an occupied positional choice is described as requiring
-rearrangement rather than misleadingly marked available.
+by their legacy names: language, +2 to one skill, add a class skill, background
+benefit, and an explicit fallback for unknown forms. The second stage always
+dispatches the original exact content record. The optional +1-to-two-skills
+rule is deliberately not synthesized without confirmed legacy-builder storage
+behavior. When repeated skill slots have different candidate sets, the UI
+groups identical scopes into separate selectors so constrained grants and
+ordinary class training remain visibly distinct.
+Standard background-benefit candidates whose prerequisites name a background
+association or exact background ID are eligible only while that association or
+background is currently owned. This mirrors the legacy content's explicit
+prerequisite fields and prevents unrelated class-skill, skill-bonus, language,
+and named-benefit records from leaking into the default selector.
 
 ### D028 — Raw content metadata is preserved but not presented as rules text
 

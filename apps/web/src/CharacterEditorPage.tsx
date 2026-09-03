@@ -40,6 +40,7 @@ import {
   groupLevelChoices,
   groupDependentChoiceFlows,
   groupParameterizedCandidates,
+  groupRepeatedCandidateScopes,
   groupRepeatedChoiceSlots,
   identityChoiceLabel,
   isCandidateVisible,
@@ -323,14 +324,12 @@ function BaseAbilityScoreEditor({
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
   const assessment = assessAbilityPointBuy(build.baseAbilities);
-  const pointStatus = assessment.legal
-    ? "Point buy complete"
-    : assessment.reason === "missing"
+  const pointStatus =
+    assessment.reason === "missing"
       ? "Ability scores incomplete"
-      : assessment.reason !== undefined ||
-          (assessment.remaining !== undefined && assessment.remaining < 0)
+      : assessment.reason !== undefined || assessment.spent === undefined
         ? "Custom scores · House rule"
-        : `${assessment.remaining ?? 22} ${assessment.remaining === 1 ? "point" : "points"} left`;
+        : `${assessment.spent} out of 22 points spent${assessment.spent > 22 ? " · House rule" : ""}`;
   const resetCommands: CharacterCommand = {
     kind: "batch",
     commands: ABILITY_SCORE_NAMES.map((ability, index) => ({
@@ -1735,31 +1734,23 @@ function SkillTrainingEditor({
       (definitionId): definitionId is string => definitionId !== undefined,
     ),
   );
-  const openSlotGuidance = choices.flatMap((choice) => {
-    if (optimisticSlots.get(choice.id) !== undefined) return [];
-    const eligibleNames = choice.candidates.flatMap((candidate) => {
-      if (
-        !candidate.eligible ||
-        candidate.reasons.includes("category") ||
-        selectedDefinitionIds.has(candidate.definitionId)
-      )
-        return [];
-      return [
-        byId.get(candidate.definitionId.toLocaleLowerCase())?.name ??
-          candidate.definitionId,
-      ];
-    });
-    if (eligibleNames.length === 0) return [];
+  const skillScopes = groupRepeatedCandidateScopes(choices);
+  const scopeTitle = (scope: (typeof skillScopes)[number]): string => {
+    const candidateNames = scope.candidateIds.map(
+      (definitionId) =>
+        byId.get(definitionId.toLocaleLowerCase())?.name ?? definitionId,
+    );
+    if (candidateNames.length <= 3) return candidateNames.join(" or ");
     const provider = evaluation.occurrences.find(
-      (occurrence) => occurrence.id === choice.providerOccurrenceId,
+      (occurrence) => occurrence.id === scope.choices[0]?.providerOccurrenceId,
     );
     const providerName =
       provider === undefined
-        ? choicePresentationLabel(choice.type)
+        ? "Class"
         : (byId.get(provider.definitionId.toLocaleLowerCase())?.name ??
-          choicePresentationLabel(choice.type));
-    return [{ eligibleNames, providerName }];
-  });
+          "Class");
+    return `${providerName} skills`;
+  };
 
   return (
     <section
@@ -1773,153 +1764,179 @@ function SkillTrainingEditor({
           {chosenCount} out of {choices.length} skills chosen
         </strong>
       </header>
-      {openSlotGuidance.length === 0 ? null : (
-        <div className="skill-slot-guidance" aria-live="polite">
-          {openSlotGuidance.map(({ eligibleNames, providerName }, index) => (
-            <p key={`${providerName}:${index}`}>
-              <strong>Remaining {providerName} choice:</strong>{" "}
-              {eligibleNames.length === 1
-                ? `${eligibleNames[0]} is the only eligible untrained skill for this slot.`
-                : `Choose one of ${eligibleNames.join(", ")}.`}
-            </p>
-          ))}
-        </div>
-      )}
       <div className="skill-training-layout">
         <div className="skill-training-controls">
-          <div className="skill-toggle-list">
-            {candidateRows.map(({ decisions, definition, definitionId }) => {
-              const trainedChoice = choices.find(
-                (choice) => optimisticSlots.get(choice.id) === definitionId,
-              );
-              const targetChoice = choiceForRepeatedCandidate(
-                choices,
-                occupiedChoiceIds,
-                definitionId,
-                showAll,
-              );
-              const targetCandidate = targetChoice?.candidates.find(
-                (candidate) => candidate.definitionId === definitionId,
-              );
-              const reason = decisions
-                .map(({ candidate }) => candidate)
-                .find((candidate) => !candidate.reasons.includes("category"));
-              const disabled =
-                trainedChoice === undefined && targetChoice === undefined;
-              return (
-                <button
-                  aria-pressed={trainedChoice !== undefined}
-                  className={
-                    trainedChoice === undefined ? undefined : "skill-trained"
-                  }
-                  disabled={disabled}
-                  key={definitionId}
-                  type="button"
-                  onFocus={() => {
-                    setPerusedId(definitionId);
-                    if (definition !== undefined)
-                      inspectCandidate?.({
-                        candidate:
-                          decisions.find(({ candidate }) => candidate.eligible)
-                            ?.candidate ?? decisions[0]!.candidate,
-                        entity: definition,
-                      });
-                  }}
-                  onClick={() => {
-                    setPerusedId(definitionId);
-                    if (definition !== undefined)
-                      inspectCandidate?.({
-                        candidate:
-                          decisions.find(({ candidate }) => candidate.eligible)
-                            ?.candidate ?? decisions[0]!.candidate,
-                        entity: definition,
-                      });
-                    if (trainedChoice !== undefined) {
-                      const command = unresolveEvaluatedChoiceCommand(
-                        build,
-                        trainedChoice,
-                        evaluation,
-                        entities,
-                        `web:placeholder:skill:${crypto.randomUUID()}`,
-                      );
-                      if (command === undefined) return;
-                      setOptimisticSlots((current) => {
-                        const next = new Map(current);
-                        next.set(trainedChoice.id, undefined);
-                        return next;
-                      });
-                      onDispatch(command);
-                      return;
-                    }
-                    if (
-                      targetChoice === undefined ||
-                      targetCandidate === undefined ||
-                      definition === undefined
+          {skillScopes.map((scope) => {
+            const scopeChosen = scope.choices.filter(
+              (choice) => optimisticSlots.get(choice.id) !== undefined,
+            ).length;
+            return (
+              <section className="skill-scope" key={scope.key}>
+                <header>
+                  <h5>{scopeTitle(scope)}</h5>
+                  <span>
+                    {scopeChosen} of {scope.choices.length} chosen
+                  </span>
+                </header>
+                <div className="skill-toggle-list">
+                  {candidateRows
+                    .filter(({ definitionId }) =>
+                      scope.candidateIds.includes(definitionId),
                     )
-                      return;
-                    const provider = evaluation.occurrences.find(
-                      (occurrence) =>
-                        occurrence.id === targetChoice.providerOccurrenceId,
-                    );
-                    const buildProvider = findOccurrence(
-                      build,
-                      targetChoice.providerOccurrenceId,
-                    );
-                    const occurrence: BuildOccurrence = {
-                      id: `web:${crypto.randomUUID()}`,
-                      identity: {
-                        definitionId: definition.id,
-                        name: definition.name,
-                        type: definition.type,
-                      },
-                      acquiredLevel:
-                        buildProvider?.acquiredLevel ??
-                        provider?.acquiredLevel ??
-                        evaluation.level,
-                      legality: targetCandidate.eligible
-                        ? "rules-legal"
-                        : "houserule",
-                      children: [],
-                      unresolved: false,
-                    };
-                    const command = commandForEvaluatedChoice(
-                      build,
-                      targetChoice,
-                      evaluation.occurrences,
-                      entities,
-                      occurrence,
-                      (index) =>
-                        `web:placeholder:${index}:${crypto.randomUUID()}`,
-                    );
-                    if (command === undefined) return;
-                    setOptimisticSlots((current) => {
-                      const next = new Map(current);
-                      next.set(targetChoice.id, definitionId);
-                      return next;
-                    });
-                    onDispatch(command);
-                  }}
-                >
-                  <span>{definition?.name ?? definitionId}</span>
-                  {trainedChoice !== undefined ? (
-                    <strong>Trained</strong>
-                  ) : targetChoice === undefined &&
-                    decisions.some(({ candidate }) => candidate.eligible) ? (
-                    <small>Requires rearranging a trained skill</small>
-                  ) : reason?.eligible === false ? (
-                    <small>{candidateReason(reason.reasons)}</small>
-                  ) : (
-                    <small>Available</small>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          {chosenCount < choices.length ? null : (
-            <p className="field-help">
-              Untrain a skill before choosing another.
-            </p>
-          )}
+                    .map(({ decisions, definition, definitionId }) => {
+                      const scopeDecisions = decisions.filter(({ choice }) =>
+                        scope.choices.includes(choice),
+                      );
+                      const trainedChoice = scope.choices.find(
+                        (choice) =>
+                          optimisticSlots.get(choice.id) === definitionId,
+                      );
+                      const chosenElsewhere =
+                        trainedChoice === undefined &&
+                        selectedDefinitionIds.has(definitionId);
+                      const targetChoice = chosenElsewhere
+                        ? undefined
+                        : choiceForRepeatedCandidate(
+                            scope.choices,
+                            occupiedChoiceIds,
+                            definitionId,
+                            showAll,
+                          );
+                      const targetCandidate = targetChoice?.candidates.find(
+                        (candidate) => candidate.definitionId === definitionId,
+                      );
+                      const reason = scopeDecisions
+                        .map(({ candidate }) => candidate)
+                        .find(
+                          (candidate) =>
+                            !candidate.reasons.includes("category"),
+                        );
+                      const inspectedCandidate =
+                        scopeDecisions.find(
+                          ({ candidate }) => candidate.eligible,
+                        )?.candidate ?? scopeDecisions[0]?.candidate;
+                      return (
+                        <button
+                          aria-pressed={trainedChoice !== undefined}
+                          className={
+                            trainedChoice === undefined
+                              ? undefined
+                              : "skill-trained"
+                          }
+                          disabled={
+                            trainedChoice === undefined &&
+                            targetChoice === undefined
+                          }
+                          key={definitionId}
+                          type="button"
+                          onFocus={() => {
+                            setPerusedId(definitionId);
+                            if (
+                              definition !== undefined &&
+                              inspectedCandidate !== undefined
+                            )
+                              inspectCandidate?.({
+                                candidate: inspectedCandidate,
+                                entity: definition,
+                              });
+                          }}
+                          onClick={() => {
+                            setPerusedId(definitionId);
+                            if (
+                              definition !== undefined &&
+                              inspectedCandidate !== undefined
+                            )
+                              inspectCandidate?.({
+                                candidate: inspectedCandidate,
+                                entity: definition,
+                              });
+                            if (trainedChoice !== undefined) {
+                              const command = unresolveEvaluatedChoiceCommand(
+                                build,
+                                trainedChoice,
+                                evaluation,
+                                entities,
+                                `web:placeholder:skill:${crypto.randomUUID()}`,
+                              );
+                              if (command === undefined) return;
+                              setOptimisticSlots((current) => {
+                                const next = new Map(current);
+                                next.set(trainedChoice.id, undefined);
+                                return next;
+                              });
+                              onDispatch(command);
+                              return;
+                            }
+                            if (
+                              targetChoice === undefined ||
+                              targetCandidate === undefined ||
+                              definition === undefined
+                            )
+                              return;
+                            const provider = evaluation.occurrences.find(
+                              (occurrence) =>
+                                occurrence.id ===
+                                targetChoice.providerOccurrenceId,
+                            );
+                            const buildProvider = findOccurrence(
+                              build,
+                              targetChoice.providerOccurrenceId,
+                            );
+                            const occurrence: BuildOccurrence = {
+                              id: `web:${crypto.randomUUID()}`,
+                              identity: {
+                                definitionId: definition.id,
+                                name: definition.name,
+                                type: definition.type,
+                              },
+                              acquiredLevel:
+                                buildProvider?.acquiredLevel ??
+                                provider?.acquiredLevel ??
+                                evaluation.level,
+                              legality: targetCandidate.eligible
+                                ? "rules-legal"
+                                : "houserule",
+                              children: [],
+                              unresolved: false,
+                            };
+                            const command = commandForEvaluatedChoice(
+                              build,
+                              targetChoice,
+                              evaluation.occurrences,
+                              entities,
+                              occurrence,
+                              (index) =>
+                                `web:placeholder:${index}:${crypto.randomUUID()}`,
+                            );
+                            if (command === undefined) return;
+                            setOptimisticSlots((current) => {
+                              const next = new Map(current);
+                              next.set(targetChoice.id, definitionId);
+                              return next;
+                            });
+                            onDispatch(command);
+                          }}
+                        >
+                          <span>{definition?.name ?? definitionId}</span>
+                          {trainedChoice !== undefined ? (
+                            <strong>Trained</strong>
+                          ) : chosenElsewhere ? (
+                            <small>Chosen in another group</small>
+                          ) : targetChoice === undefined &&
+                            scopeChosen === scope.choices.length ? (
+                            <small>Clear a skill in this group to choose</small>
+                          ) : reason?.eligible === false ? (
+                            <small>{candidateReason(reason.reasons)}</small>
+                          ) : (
+                            <small>Available</small>
+                          )}
+                        </button>
+                      );
+                    })}
+                </div>
+              </section>
+            );
+          })}
         </div>
         {inspectCandidate === undefined ? (
           <CandidateDetail
