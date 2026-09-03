@@ -1943,18 +1943,18 @@ function SkillTrainingEditor({
                           }}
                         >
                           <span>{definition?.name ?? definitionId}</span>
-                          {trainedChoice !== undefined ? (
-                            <strong>Trained</strong>
-                          ) : chosenElsewhere ? (
-                            <small>Chosen in another group</small>
-                          ) : targetChoice === undefined &&
-                            scopeChosen === scope.choices.length ? (
-                            <small>Clear a skill in this group to choose</small>
-                          ) : reason?.eligible === false ? (
-                            <small>{candidateReason(reason.reasons)}</small>
-                          ) : (
-                            <small>Available</small>
-                          )}
+                          <span className="skill-toggle-status">
+                            {trainedChoice !== undefined
+                              ? "Trained"
+                              : chosenElsewhere
+                                ? "Chosen in another group"
+                                : targetChoice === undefined &&
+                                    scopeChosen === scope.choices.length
+                                  ? "Clear a skill in this group to choose"
+                                  : reason?.eligible === false
+                                    ? candidateReason(reason.reasons)
+                                    : "Available"}
+                          </span>
                         </button>
                       );
                     })}

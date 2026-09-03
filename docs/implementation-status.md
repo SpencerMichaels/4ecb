@@ -134,6 +134,11 @@ candidate.
   the same commit-before-success contract. The application shell adds system/light/dark theme preference,
   simple inline monochrome icons, and semantic color tokens preserving the
   established at-will, encounter, daily, and item mappings.
+- Interactive state changes use color, icons, fills, and inset markers without
+  changing typography or control geometry. Timeline entries retain identical
+  font metrics and height when unresolved, selected, warned, or complete; skill
+  buttons reserve the same two-line status area for trained, available, and
+  unavailable explanations so choices do not shift during interaction.
 - Future planning no longer blocks or contaminates compatibility output. The
   canonical legacy-export projection trims frames, nested choices, inventory,
   and alternates above `effectiveLevel`; the library uses that same projection

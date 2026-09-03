@@ -1735,7 +1735,10 @@ textarea {
 .timeline-choices button {
   align-items: center;
   display: flex;
+  font-size: 0.78rem;
   gap: 0.45rem;
+  min-height: 2.75rem;
+  padding-block: 0.2rem;
   text-align: left;
   width: 100%;
 }
@@ -1761,8 +1764,6 @@ textarea {
   border: 0;
   border-left: 4px solid var(--warning);
   color: var(--text);
-  font-weight: 700;
-  min-height: 2.75rem;
 }
 
 .choice-warning {
@@ -1770,8 +1771,6 @@ textarea {
   border: 0;
   border-left: 4px solid var(--danger);
   color: var(--text);
-  font-weight: 700;
-  min-height: 2.75rem;
 }
 
 .choice-warning .icon {
@@ -1786,9 +1785,6 @@ textarea {
   background: transparent;
   border-color: transparent;
   color: var(--muted);
-  font-size: 0.78rem;
-  min-height: 2rem;
-  padding-block: 0.2rem;
 }
 
 .choice-complete .icon {
@@ -2154,8 +2150,16 @@ textarea {
   text-align: left;
 }
 
-.skill-toggle-list button small {
+.skill-toggle-status {
   color: var(--muted);
+  display: -webkit-box;
+  font-size: 0.72rem;
+  font-weight: 700;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1rem;
+  min-height: 2rem;
+  overflow: hidden;
 }
 
 .skill-toggle-list button.skill-trained {
@@ -2164,9 +2168,8 @@ textarea {
   box-shadow: inset 4px 0 var(--success);
 }
 
-.skill-toggle-list button.skill-trained strong {
+.skill-toggle-list button.skill-trained .skill-toggle-status {
   color: var(--success);
-  font-size: 0.72rem;
 }
 
 .ability-choice-count {
