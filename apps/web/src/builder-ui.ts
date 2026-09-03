@@ -28,6 +28,13 @@ export function choicesAtLevel(
   );
 }
 
+export function evaluationAtHorizon(
+  evaluation: EvaluatedCharacter | undefined,
+  horizon: number | undefined,
+): EvaluatedCharacter | undefined {
+  return evaluation?.level === horizon ? evaluation : undefined;
+}
+
 export function isUnresolvedChoice(choice: EvaluatedChoice): boolean {
   return !choice.optional && choice.selectedOccurrenceId === undefined;
 }

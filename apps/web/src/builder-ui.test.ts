@@ -4,14 +4,20 @@ import {
   applyCharacterCommand,
   type CharacterBuild,
 } from "@4ecb/character-domain";
-import type { ContentEntity } from "@4ecb/content-domain";
-import type { CandidateDecision, EvaluatedCharacter } from "@4ecb/rules-engine";
+import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
+import {
+  evaluateCharacter,
+  projectBuildForEvaluation,
+  type CandidateDecision,
+  type EvaluatedCharacter,
+} from "@4ecb/rules-engine";
 
 import {
   candidateReason,
   choicePresentationLabel,
   choiceForRepeatedCandidate,
   choicesAtLevel,
+  evaluationAtHorizon,
   groupDependentChoiceFlows,
   groupLevelChoices,
   groupChoicesByLegacyWorkflow,
@@ -46,7 +52,10 @@ function candidate(
   };
 }
 
-const level = (number: number): ContentEntity => ({
+const level = (
+  number: number,
+  rules: readonly RuleStatement[] = [],
+): ContentEntity => ({
   id: `ID_INTERNAL_LEVEL_${number}`,
   name: String(number),
   type: "Level",
@@ -55,7 +64,7 @@ const level = (number: number): ContentEntity => ({
   attributes: [],
   categories: [],
   specifics: [],
-  rules: [],
+  rules,
   description: "",
   extensions: [],
   provenance: { sourceKey: "builder-ui", sourceOrdinal: number },
@@ -89,6 +98,14 @@ const build: CharacterBuild = {
 };
 
 describe("builder planning UI", () => {
+  it("does not present a stale current-level result as a future plan", () => {
+    const current = { level: 1 } as EvaluatedCharacter;
+    const planned = { level: 4 } as EvaluatedCharacter;
+
+    expect(evaluationAtHorizon(current, 4)).toBeUndefined();
+    expect(evaluationAtHorizon(planned, 4)).toBe(planned);
+  });
+
   it("uses concise player-facing labels in the level timeline", () => {
     expect(choicePresentationLabel("Choose Class Feature")).toBe(
       "Class Feature",
@@ -228,6 +245,60 @@ describe("builder planning UI", () => {
     const planned = applyCharacterCommand(build, command!);
     expect(planned.levels.map((frame) => frame.level)).toEqual([1, 2, 3, 4]);
     expect(planned.effectiveLevel).toBe(1);
+  });
+
+  it("shows future choices without applying future stats to the current character", () => {
+    const rules = (
+      name: string,
+      attributes: Readonly<Record<string, string>>,
+      ordinal: number,
+    ): RuleStatement => ({
+      name,
+      attributes: Object.entries(attributes).map(([attribute, value]) => ({
+        name: attribute,
+        value,
+      })),
+      text: "",
+      children: [],
+      ordinal,
+    });
+    const entities = [
+      level(1),
+      level(2, [
+        rules("select", { type: "Feat" }, 0),
+        rules("statadd", { name: "Future bonus", value: "+2" }, 1),
+      ]),
+      {
+        ...level(3),
+        id: "FUTURE_FEAT",
+        name: "Future feat",
+        type: "Feat",
+      },
+    ];
+    const command = planningHorizonCommand(
+      build,
+      2,
+      entities,
+      (value) => `level-${value}`,
+    );
+    const planned = applyCharacterCommand(build, command!);
+    const current = evaluateCharacter(
+      projectBuildForEvaluation(planned, entities),
+      entities,
+    );
+    const future = evaluateCharacter(
+      projectBuildForEvaluation(
+        { ...planned, effectiveLevel: planned.levels.length },
+        entities,
+      ),
+      entities,
+    );
+
+    expect(current.level).toBe(1);
+    expect(choicesAtLevel(2, current)).toEqual([]);
+    expect(current.stats["Future bonus"]).toBeUndefined();
+    expect(choicesAtLevel(2, future)).toHaveLength(1);
+    expect(future.stats["Future bonus"]?.value).toBe(2);
   });
 
   it("does not mutate stored levels when the visible horizon is lowered", () => {

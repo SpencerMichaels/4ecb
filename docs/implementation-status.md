@@ -119,7 +119,10 @@ candidate.
   out of order without entering current calculations. Lowering **Show plan
   through** hides levels for the session and never mutates saved frames; a
   durable separately hidden horizon remains a named schema follow-up rather
-  than being encoded in unrelated character fields.
+  than being encoded in unrelated character fields. Changing or extending the
+  plan immediately invalidates both displayed projections: future levels show
+  an evaluating state until a result for the exact saved horizon arrives,
+  rather than rendering a stale current-level result as “no choices.”
 - Choice surfaces show valid candidates by default. **Show all options for this
   choice** is local to the focused choice, exposes same-category candidates
   blocked by objective rules, excludes category mismatches, resets when focus

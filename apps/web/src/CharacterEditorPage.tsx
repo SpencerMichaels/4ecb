@@ -35,6 +35,7 @@ import {
   choicePresentationLabel,
   choiceForRepeatedCandidate,
   choicesAtLevel,
+  evaluationAtHorizon,
   groupChoicesByLegacyWorkflow,
   groupBackgroundChoiceCandidates,
   groupLevelChoices,
@@ -2236,9 +2237,9 @@ export function CharacterEditorPage({
     message: "Loading build…",
   });
   const [loadError, setLoadError] = useState<string>();
-  const [currentEvaluation, setCurrentEvaluation] =
+  const [currentEvaluationResult, setCurrentEvaluation] =
     useState<EvaluatedCharacter>();
-  const [planningEvaluation, setPlanningEvaluation] =
+  const [planningEvaluationResult, setPlanningEvaluation] =
     useState<EvaluatedCharacter>();
   const [evaluationStatus, setEvaluationStatus] = useState("Loading rules…");
   const [readyPackId, setReadyPackId] = useState<string>();
@@ -2354,6 +2355,14 @@ export function CharacterEditorPage({
   }, [character?.profileBinding?.contentDigest, packId]);
 
   const build = transaction.current?.current;
+  const currentEvaluation = evaluationAtHorizon(
+    currentEvaluationResult,
+    build?.effectiveLevel,
+  );
+  const planningEvaluation = evaluationAtHorizon(
+    planningEvaluationResult,
+    build?.levels.length,
+  );
   const byId = useMemo(
     () =>
       new Map(
@@ -2374,6 +2383,8 @@ export function CharacterEditorPage({
       return;
     const revision = evaluationRevision.current + 1;
     evaluationRevision.current = revision;
+    setCurrentEvaluation(undefined);
+    setPlanningEvaluation(undefined);
     setEvaluationStatus("Evaluating current build and plan…");
     const currentRequest = client.evaluate(
       projectBuildForEvaluation(build, entities),
@@ -2496,6 +2507,9 @@ export function CharacterEditorPage({
     if (active === undefined || queue === undefined) return;
     try {
       const next = active.dispatch(command);
+      setCurrentEvaluation(undefined);
+      setPlanningEvaluation(undefined);
+      setEvaluationStatus("Evaluating current build and plan…");
       setRevision((value) => value + 1);
       queue.enqueue(next, "Saved locally");
     } catch (reason: unknown) {
@@ -2511,6 +2525,9 @@ export function CharacterEditorPage({
     const queue = saveQueue.current;
     if (active === undefined || queue === undefined || !active.canUndo) return;
     const next = active.undo();
+    setCurrentEvaluation(undefined);
+    setPlanningEvaluation(undefined);
+    setEvaluationStatus("Evaluating current build and plan…");
     setRevision((value) => value + 1);
     queue.enqueue(next, "Undo saved locally");
   }
@@ -2520,6 +2537,9 @@ export function CharacterEditorPage({
     const queue = saveQueue.current;
     if (active === undefined || queue === undefined || !active.canRedo) return;
     const next = active.redo();
+    setCurrentEvaluation(undefined);
+    setPlanningEvaluation(undefined);
+    setEvaluationStatus("Evaluating current build and plan…");
     setRevision((value) => value + 1);
     queue.enqueue(next, "Redo saved locally");
   }
@@ -3042,7 +3062,9 @@ export function CharacterEditorPage({
                           : "Complete"}
                     </strong>
                   </button>
-                  {timelineChoices.length === 0 && frame.level !== 1 ? (
+                  {planningEvaluation === undefined && frame.level !== 1 ? (
+                    <p className="timeline-empty">Evaluating choices…</p>
+                  ) : timelineChoices.length === 0 && frame.level !== 1 ? (
                     <p className="timeline-empty">No decisions at this level</p>
                   ) : (
                     <ul className="timeline-choices">
@@ -3176,7 +3198,9 @@ export function CharacterEditorPage({
                 />
                 Show unavailable options
               </label>
-              {unresolvedCount > 0 ? (
+              {planningEvaluation === undefined ? (
+                <span className="attention-badge">Evaluating…</span>
+              ) : unresolvedCount > 0 ? (
                 <span className="attention-badge">
                   {unresolvedCount} unresolved
                 </span>
@@ -3193,7 +3217,11 @@ export function CharacterEditorPage({
           </header>
           <ShowAllChoicesContext.Provider value={showAllChoices}>
             {planningEvaluation === undefined ? (
-              <p>Content is unavailable for planning.</p>
+              <p>
+                {entities.length === 0
+                  ? "Content is unavailable for planning."
+                  : `Evaluating choices through level ${build.levels.length}…`}
+              </p>
             ) : levelChoices.length === 0 && selectedLevel !== 1 ? (
               <div className="choice-empty-state">
                 <Icon name="check" />
