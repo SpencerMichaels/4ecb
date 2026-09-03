@@ -1327,7 +1327,9 @@ export function evaluateCharacter(
               ...(rule.spellbook === undefined
                 ? {}
                 : { spellbook: rule.spellbook }),
-              optional: rule.optional,
+              optional:
+                rule.optional ||
+                ["build", "class build"].includes(key(rule.type)),
               ...(selected === undefined
                 ? {}
                 : { selectedOccurrenceId: selected.id }),

@@ -345,14 +345,32 @@ candidate.
   remains available and unchanged in shape; category-parser reuse also reduced
   its warm benchmark from about 1.5 to 1.2 seconds.
 - Optional additions now have a complete reversible interaction. A newly
-  revealed empty background slot can be cancelled; a completed extra background
+  revealed empty background slot can be removed; a completed extra background
   can be removed without touching the required primary slot; and completed
-  ordinary retraining exposes **Remove retraining**, which clears the exact
+  ordinary retraining exposes the same accessible X action, which clears the exact
   replacement slot so the evaluator restores its source selection. Removal uses
   the ordinary optimistic save and undo transaction. Focused browser checks
   covered empty background and retraining cancellation plus the presence of
   removal actions on Silaqui; a public command regression covers completed
   background and retraining slots.
+- The level workspace now uses one **Level X** heading, with no redundant
+  current/choices labels. Required choices at or below the effective level use
+  stable warning color and inset markers; completed choices use the established
+  colored icons without repeating **Complete**, while future-plan choices remain
+  visually neutral and do not increase unresolved counts. Optional backgrounds
+  and retraining share a compact accessible X removal action.
+- Legacy Build records are now optional one-shot starting presets rather than
+  persistent level-1 selections. Eligible presets fill only matching open legal
+  choices in one undoable batch, leave existing work untouched, and are omitted
+  from the timeline and unresolved counts; imported Build occurrences remain
+  preserved for exact compatibility. Focused tests cover suggestion parsing,
+  multi-slot preset application, and evaluator completeness.
+- A live Silaqui check confirmed the level-8 heading is simply **Level 8**, the
+  timeline reads **Feat · Archery Mastery**, and the progressive mastery flow
+  still offers both **Twin Strike** and **Fading Strike** as replacement targets.
+  The earlier level-1 at-wills remain present; domain and evaluator regressions
+  separately enforce later-frame replacement overlays and retention of earlier
+  choices when a later selector grants another use.
 - A representative cross-character builder review found that the bundled
   level-3 Wizard Jim Darkmagic displayed two generic required **Power** choices
   even though his alternate Daily and Utility spellbook selections were saved.
@@ -385,7 +403,7 @@ candidate.
   Focused Expertise variant absent from the installed pack, plus two unverified
   legacy feat prerequisites; the importer preserves that evidence rather than
   inventing rules for it.
-- `nix develop path:. -c bash scripts/check.sh` passes 255 tests across 39 files,
+- `nix develop path:. -c bash scripts/check.sh` passes 258 tests across 39 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

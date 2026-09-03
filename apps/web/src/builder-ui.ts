@@ -1,6 +1,13 @@
-import type { CharacterBuild, CharacterCommand } from "@4ecb/character-domain";
+import {
+  applyCharacterCommand,
+  type CharacterBuild,
+  type CharacterCommand,
+} from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import { findBuildChildIndex } from "@4ecb/rules-engine";
+import {
+  commandForEvaluatedChoice,
+  findBuildChildIndex,
+} from "@4ecb/rules-engine";
 import type {
   CandidateDecision,
   EvaluatedCharacter,
@@ -45,6 +52,102 @@ export function isOptionalRetrainingChoice(choice: EvaluatedChoice): boolean {
     choice.optional &&
     (choice.name === undefined || choice.name.trim() === "")
   );
+}
+
+export function isBuildPresetChoice(choice: EvaluatedChoice): boolean {
+  return ["build", "class build"].includes(
+    choice.type.trim().toLocaleLowerCase(),
+  );
+}
+
+export function buildPresetSuggestionNames(
+  preset: ContentEntity,
+): readonly string[] {
+  const suggested = preset.specifics.find(
+    (field) => field.name.trim().toLocaleLowerCase() === "suggested",
+  )?.value;
+  if (suggested === undefined) return [];
+  return suggested.split(/\r?\n/).flatMap((line) => {
+    const separator = line.indexOf(":");
+    if (separator < 0) return [];
+    const value = line.slice(separator + 1).trim();
+    const humanFeat = /\(Human feat:\s*([^)]+)\)/i.exec(value)?.[1]?.trim();
+    const ordinary = value.replace(/\s*\(Human feat:[^)]+\)\s*/i, "");
+    return [
+      ...ordinary.split(",").map((name) => name.trim()),
+      ...(humanFeat === undefined ? [] : [humanFeat]),
+    ].filter(Boolean);
+  });
+}
+
+export function applyBuildPresetCommand(
+  build: CharacterBuild,
+  preset: ContentEntity,
+  choices: readonly EvaluatedChoice[],
+  evaluation: EvaluatedCharacter,
+  entities: readonly ContentEntity[],
+  occurrenceId: (definitionId: string, index: number) => string,
+): CharacterCommand | undefined {
+  const byId = new Map(
+    entities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
+  );
+  const assignedChoices = new Set<string>();
+  const assignedDefinitions = new Set<string>();
+  const commands: CharacterCommand[] = [];
+  let projectedBuild = build;
+  for (const [suggestionIndex, suggestion] of buildPresetSuggestionNames(
+    preset,
+  ).entries()) {
+    const normalized = suggestion.toLocaleLowerCase();
+    const match = choices
+      .filter(
+        (choice) =>
+          !isBuildPresetChoice(choice) &&
+          choice.selectedOccurrenceId === undefined &&
+          !assignedChoices.has(choice.id),
+      )
+      .flatMap((choice) =>
+        choice.candidates.map((candidate) => ({ choice, candidate })),
+      )
+      .find(({ candidate }) => {
+        const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
+        return (
+          entity?.name.trim().toLocaleLowerCase() === normalized &&
+          candidate.eligible &&
+          !assignedDefinitions.has(candidate.definitionId.toLocaleLowerCase())
+        );
+      });
+    if (match === undefined) continue;
+    const definition = byId.get(
+      match.candidate.definitionId.toLocaleLowerCase(),
+    );
+    if (definition === undefined) continue;
+    const command = commandForEvaluatedChoice(
+      projectedBuild,
+      match.choice,
+      evaluation.occurrences,
+      entities,
+      {
+        id: occurrenceId(definition.id, suggestionIndex),
+        identity: {
+          definitionId: definition.id,
+          name: definition.name,
+          type: definition.type,
+        },
+        acquiredLevel: match.choice.level,
+        legality: "rules-legal",
+        children: [],
+        unresolved: false,
+      },
+      (index) => `web:placeholder:preset:${suggestionIndex}:${index}`,
+    );
+    if (command === undefined) continue;
+    assignedChoices.add(match.choice.id);
+    assignedDefinitions.add(definition.id.toLocaleLowerCase());
+    commands.push(command);
+    projectedBuild = applyCharacterCommand(projectedBuild, command);
+  }
+  return commands.length === 0 ? undefined : { kind: "batch", commands };
 }
 
 export function isCharacterDetailChoice(choice: EvaluatedChoice): boolean {
@@ -347,6 +450,7 @@ export function legacyChoiceSection(
     [
       "class",
       "hybrid class",
+      "build",
       "class build",
       "class feature",
       "trait package",
@@ -389,6 +493,7 @@ function legacyChoiceTypeRank(choice: EvaluatedChoice): number {
   const exactOrder = [
     "class",
     "hybrid class",
+    "build",
     "class build",
     "class feature",
     "trait package",

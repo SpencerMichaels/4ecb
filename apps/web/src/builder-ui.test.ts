@@ -13,6 +13,8 @@ import {
 } from "@4ecb/rules-engine";
 
 import {
+  applyBuildPresetCommand,
+  buildPresetSuggestionNames,
   candidateReason,
   choicePresentationLabel,
   choiceForRepeatedCandidate,
@@ -29,6 +31,7 @@ import {
   isCandidateSelectable,
   isCandidateVisible,
   isCharacterDetailChoice,
+  isBuildPresetChoice,
   isOptionalRetrainingChoice,
   planningHorizonCommand,
   selectedChoiceHasWarning,
@@ -123,6 +126,120 @@ describe("builder planning UI", () => {
     expect(identityChoiceLabel("Class")).toBe("Class");
     expect(identityChoiceLabel("Race")).toBe("Race");
     expect(identityChoiceLabel("Class Feature")).toBeUndefined();
+  });
+
+  it("treats Build choices as preset controls and parses their package", () => {
+    const preset = {
+      ...level(0),
+      id: "BUILD",
+      name: "War Wizard",
+      type: "Build",
+      specifics: [
+        {
+          name: "Suggested",
+          value:
+            "Feat: Expanded Spellbook (Human feat: Action Surge)\nSkills: Arcana, History\nAt-Will Powers: magic missile, scorching burst",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+
+    expect(
+      isBuildPresetChoice({
+        type: "Build",
+      } as EvaluatedCharacter["choices"][number]),
+    ).toBe(true);
+    expect(buildPresetSuggestionNames(preset)).toEqual([
+      "Expanded Spellbook",
+      "Action Surge",
+      "Arcana",
+      "History",
+      "magic missile",
+      "scorching burst",
+    ]);
+  });
+
+  it("applies a Build preset only to matching unresolved choices", () => {
+    const rules = [
+      {
+        name: "select",
+        attributes: [
+          { name: "type", value: "Build" },
+          { name: "number", value: "1" },
+        ],
+        text: "",
+        children: [],
+        ordinal: 0,
+      },
+      {
+        name: "select",
+        attributes: [
+          { name: "type", value: "Feat" },
+          { name: "number", value: "1" },
+        ],
+        text: "",
+        children: [],
+        ordinal: 1,
+      },
+      {
+        name: "select",
+        attributes: [
+          { name: "type", value: "Skill Training" },
+          { name: "number", value: "1" },
+        ],
+        text: "",
+        children: [],
+        ordinal: 2,
+      },
+    ] satisfies RuleStatement[];
+    const provider = level(1, rules);
+    const preset = {
+      ...level(0),
+      id: "BUILD",
+      name: "Preset",
+      type: "Build",
+      specifics: [
+        {
+          name: "Suggested",
+          value: "Feat: Power Attack\nSkills: Athletics",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+    const feat = {
+      ...level(0),
+      id: "FEAT",
+      name: "Power Attack",
+      type: "Feat",
+    };
+    const skill = {
+      ...level(0),
+      id: "SKILL",
+      name: "Athletics",
+      type: "Skill Training",
+    };
+    const entities = [provider, preset, feat, skill];
+    const evaluation = evaluateCharacter(
+      projectBuildForEvaluation(build, entities),
+      entities,
+    );
+    const command = applyBuildPresetCommand(
+      build,
+      preset,
+      evaluation.choices,
+      evaluation,
+      entities,
+      (definitionId) => `selected:${definitionId}`,
+    );
+    const updated = applyCharacterCommand(build, command!);
+
+    expect(
+      updated.levels[0]?.root.children.map(
+        (child) => child.identity.definitionId,
+      ),
+    ).toEqual([undefined, "FEAT", "SKILL"]);
   });
 
   it("groups large parenthetical families without changing exact candidates", () => {

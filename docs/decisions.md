@@ -413,6 +413,24 @@ handlers reject it rather than relabeling it as a house rule. Already-imported
 source-unentitled, illegal, custom, or missing occurrences remain recoverable and
 carry structured diagnostics.
 
+### D032 — Legacy builds are non-binding starting presets
+
+Legacy `Build` and `Class Build` selections describe suggested packages rather
+than a durable mechanical identity. The evaluator therefore treats their select
+slots as optional. The level-1 UI removes them from required-choice and timeline
+projections and presents eligible records as one-shot starting presets after a
+class is chosen. Applying one batches only exact-name, currently eligible
+suggestions into still-open choices and never overwrites an existing selection.
+Imported Build occurrences remain losslessly stored for legacy round trips even
+though the modern builder does not ask the player to maintain one.
+
+The timeline counts incomplete choices only at or below `effectiveLevel`.
+Future-plan choices are neutral because they are planning opportunities, not
+requirements for the current character. Stable colors, icons, and inset markers
+carry ordinary complete/incomplete state without repeated prose or changing
+font metrics; textual warnings remain for exceptional house-rule and evaluation
+states.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

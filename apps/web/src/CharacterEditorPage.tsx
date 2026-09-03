@@ -34,6 +34,8 @@ import {
 } from "@4ecb/rules-engine";
 
 import {
+  applyBuildPresetCommand,
+  buildPresetSuggestionNames,
   candidateReason,
   choicePresentationLabel,
   choiceForRepeatedCandidate,
@@ -50,6 +52,7 @@ import {
   isCandidateSelectable,
   isCandidateVisible,
   isCharacterDetailChoice,
+  isBuildPresetChoice,
   isOptionalRetrainingChoice,
   isUnresolvedChoice,
   legacyChoiceSection,
@@ -456,6 +459,70 @@ function retrainingCategory(type: string | undefined): string | undefined {
   if (normalized === "skill training" || normalized === "skill") return "skill";
   if (normalized === "feat" || normalized === "power") return normalized;
   return undefined;
+}
+
+function BuildPresetPanel({
+  choices,
+  levelChoices,
+  evaluation,
+  build,
+  entities,
+  byId,
+  onDispatch,
+}: {
+  readonly choices: readonly EvaluatedChoice[];
+  readonly levelChoices: readonly EvaluatedChoice[];
+  readonly evaluation: EvaluatedCharacter;
+  readonly build: CharacterRecord["build"];
+  readonly entities: readonly ContentEntity[];
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly onDispatch: (command: CharacterCommand) => void;
+}) {
+  const presets = choices
+    .flatMap((choice) => choice.candidates)
+    .filter((candidate) => candidate.eligible)
+    .map((candidate) => byId.get(candidate.definitionId.toLocaleLowerCase()))
+    .filter((entity): entity is ContentEntity => entity !== undefined);
+  if (presets.length === 0) return null;
+  return (
+    <section className="build-presets" aria-labelledby="build-presets-heading">
+      <header>
+        <h5 id="build-presets-heading">Starting presets</h5>
+      </header>
+      <div className="build-preset-list">
+        {presets.map((preset) => {
+          const suggestions = buildPresetSuggestionNames(preset);
+          return (
+            <article className="build-preset" key={preset.id}>
+              <div>
+                <strong>{preset.name}</strong>
+                {suggestions.length === 0 ? null : (
+                  <p>{suggestions.join(" · ")}</p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const command = applyBuildPresetCommand(
+                    build,
+                    preset,
+                    levelChoices,
+                    evaluation,
+                    entities,
+                    (definitionId, index) =>
+                      `web:preset:${definitionId}:${index}:${crypto.randomUUID()}`,
+                  );
+                  if (command !== undefined) onDispatch(command);
+                }}
+              >
+                Apply
+              </button>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
 }
 
 function ReplacementEditor({
@@ -1128,17 +1195,13 @@ function ChoiceFlowSection({
               : choiceTitle(root)}
           </h4>
         </div>
-        {unresolved ? (
-          <span className="attention-badge">Unresolved</span>
-        ) : warning ? (
+        {warning ? (
           <span className="attention-badge">
             <Icon name="warning" /> House rule
           </span>
-        ) : (
-          <span className="complete-badge">
-            <Icon name="check" /> Complete
-          </span>
-        )}
+        ) : unresolved ? (
+          <span className="visually-hidden">Incomplete</span>
+        ) : null}
       </header>
       <div className="choice-flow-list">
         {choices.map((choice, index) => (
@@ -1421,17 +1484,13 @@ function RepeatedChoiceGroup({
             {repeatedChoiceGroupTitle(choices, byId)}
           </h4>
         </div>
-        {chosen < choices.length ? (
-          <span className="attention-badge">
-            {chosen} of {choices.length} chosen
-          </span>
-        ) : warning ? (
+        {warning ? (
           <span className="attention-badge">
             <Icon name="warning" /> House rule
           </span>
         ) : (
-          <span className="complete-badge">
-            <Icon name="check" /> {chosen} of {choices.length} chosen
+          <span className="choice-count">
+            {chosen} of {choices.length} chosen
           </span>
         )}
       </header>
@@ -1571,11 +1630,10 @@ function RetrainingControls({
           </button>
         ) : (
           <div className="optional-choice-actions">
-            <span className="complete-badge">
-              <Icon name="check" /> Complete
-            </span>
             <button
-              className="remove-optional-choice"
+              aria-label="Remove retraining"
+              className="remove-optional-choice icon-only-button"
+              title="Remove retraining"
               type="button"
               onClick={() => {
                 const command = unresolveEvaluatedChoiceCommand(
@@ -1592,7 +1650,7 @@ function RetrainingControls({
                 onDispatch(command);
               }}
             >
-              <Icon name="remove" /> Remove retraining
+              <Icon name="remove" />
             </button>
           </div>
         )}
@@ -1706,8 +1764,10 @@ function BackgroundChoiceGroup({
             />
             {index === 0 || !choice.optional ? null : (
               <button
-                className="remove-optional-choice"
+                aria-label="Remove background"
+                className="remove-optional-choice icon-only-button"
                 disabled={pendingRemovalIds.has(choice.id)}
+                title="Remove background"
                 type="button"
                 onClick={() => {
                   if (choice.selectedOccurrenceId !== undefined) {
@@ -1731,9 +1791,6 @@ function BackgroundChoiceGroup({
                 }}
               >
                 <Icon name="remove" />
-                {choice.selectedOccurrenceId === undefined
-                  ? "Cancel additional background"
-                  : "Remove background"}
               </button>
             )}
           </section>
@@ -2570,11 +2627,13 @@ export function CharacterEditorPage({
   const mechanicalLevelChoices = levelChoices.filter(
     (choice) => !isCharacterDetailChoice(choice),
   );
+  const buildPresetChoices = mechanicalLevelChoices.filter(isBuildPresetChoice);
   const retrainingChoices = mechanicalLevelChoices.filter(
     isOptionalRetrainingChoice,
   );
   const primaryLevelChoices = mechanicalLevelChoices.filter(
-    (choice) => !isOptionalRetrainingChoice(choice),
+    (choice) =>
+      !isOptionalRetrainingChoice(choice) && !isBuildPresetChoice(choice),
   );
   const groupedLevelChoices = groupLevelChoices(primaryLevelChoices);
   const repeatedChoiceGroups = groupRepeatedChoiceSlots(
@@ -2716,12 +2775,19 @@ export function CharacterEditorPage({
   const abilityScoresHouseRuled =
     abilityPointBuy.complete && !abilityPointBuy.legal;
   const unresolvedCount =
-    mechanicalLevelChoices.filter(isUnresolvedChoice).length +
-    (selectedLevel === 1 && abilityScoresIncomplete ? 1 : 0);
+    selectedLevel > build.effectiveLevel
+      ? 0
+      : mechanicalLevelChoices.filter(
+          (choice) =>
+            !isBuildPresetChoice(choice) && isUnresolvedChoice(choice),
+        ).length + (selectedLevel === 1 && abilityScoresIncomplete ? 1 : 0);
   const totalUnresolved =
     (planningEvaluation?.choices ?? []).filter(
-      (choice) => isUnresolvedChoice(choice) && choice.level <= visibleHorizon,
-    ).length + (visibleHorizon >= 1 && abilityScoresIncomplete ? 1 : 0);
+      (choice) =>
+        isUnresolvedChoice(choice) &&
+        !isBuildPresetChoice(choice) &&
+        choice.level <= build.effectiveLevel,
+    ).length + (build.effectiveLevel >= 1 && abilityScoresIncomplete ? 1 : 0);
   const diagnosticWarningCount =
     planningEvaluation?.diagnostics.filter(
       (diagnostic) => diagnostic.severity !== "info",
@@ -2842,17 +2908,13 @@ export function CharacterEditorPage({
                 {choiceTitle(choice)}
               </h4>
             </div>
-            {isUnresolvedChoice(choice) ? (
-              <span className="attention-badge">Unresolved</span>
-            ) : warning ? (
+            {warning ? (
               <span className="attention-badge">
                 <Icon name="warning" /> House rule
               </span>
-            ) : (
-              <span className="complete-badge">
-                <Icon name="check" /> Complete
-              </span>
-            )}
+            ) : isUnresolvedChoice(choice) ? (
+              <span className="visually-hidden">Incomplete</span>
+            ) : null}
           </header>
         )}
         <ChoiceEditor
@@ -3082,7 +3144,8 @@ export function CharacterEditorPage({
               const timelineChoices = choices.filter(
                 (choice) =>
                   !isOptionalRetrainingChoice(choice) &&
-                  !isCharacterDetailChoice(choice),
+                  !isCharacterDetailChoice(choice) &&
+                  !isBuildPresetChoice(choice),
               );
               const orderedTimelineChoices = groupChoicesByLegacyWorkflow(
                 timelineChoices,
@@ -3139,22 +3202,7 @@ export function CharacterEditorPage({
                   return choice === flow[0]
                     ? [
                         {
-                          label:
-                            identityLabel !== undefined
-                              ? identityLabel
-                              : flow.length > 1
-                                ? selectedDefinitionId(
-                                    choice,
-                                    planningEvaluation!,
-                                  ) === undefined
-                                  ? timelineChoiceTitle(choice)
-                                  : (byId.get(
-                                      selectedDefinitionId(
-                                        choice,
-                                        planningEvaluation!,
-                                      )!.toLocaleLowerCase(),
-                                    )?.name ?? timelineChoiceTitle(choice))
-                                : timelineChoiceTitle(choice),
+                          label: identityLabel ?? timelineChoiceTitle(choice),
                           choices: flow,
                         },
                       ]
@@ -3167,8 +3215,10 @@ export function CharacterEditorPage({
                 ];
               });
               const unresolved =
-                timelineChoices.filter(isUnresolvedChoice).length +
-                (frame.level === 1 && abilityScoresIncomplete ? 1 : 0);
+                frame.level > build.effectiveLevel
+                  ? 0
+                  : timelineChoices.filter(isUnresolvedChoice).length +
+                    (frame.level === 1 && abilityScoresIncomplete ? 1 : 0);
               const choiceWarnings =
                 timelineChoices.filter((choice) =>
                   selectedChoiceHasWarning(choice, planningEvaluation!),
@@ -3176,11 +3226,12 @@ export function CharacterEditorPage({
                 (frame.level === 1 && abilityScoresHouseRuled ? 1 : 0);
               return (
                 <li
-                  className={
-                    frame.level === selectedLevel
-                      ? "timeline-selected"
-                      : undefined
-                  }
+                  className={[
+                    frame.level === selectedLevel ? "timeline-selected" : "",
+                    unresolved > 0 ? "timeline-incomplete" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                   key={frame.level}
                 >
                   <button
@@ -3197,14 +3248,15 @@ export function CharacterEditorPage({
                     <span>Level {frame.level}</span>
                     {frame.level > build.effectiveLevel ? (
                       <small>Planned</small>
-                    ) : null}
-                    <strong>
-                      {unresolved > 0
-                        ? `${unresolved} unresolved`
-                        : choiceWarnings > 0
-                          ? `${choiceWarnings} warning`
-                          : "Complete"}
-                    </strong>
+                    ) : unresolved > 0 ? (
+                      <span className="visually-hidden">
+                        {unresolved} unresolved
+                      </span>
+                    ) : choiceWarnings > 0 ? (
+                      <Icon name="warning" />
+                    ) : (
+                      <Icon name="check" />
+                    )}
                   </button>
                   {planningEvaluation === undefined && frame.level !== 1 ? (
                     <p className="timeline-empty">Evaluating choices…</p>
@@ -3246,7 +3298,9 @@ export function CharacterEditorPage({
                       ) : null}
                       {summaries.map((summary) => {
                         const summaryUnresolved =
-                          summary.choices.filter(isUnresolvedChoice).length;
+                          frame.level > build.effectiveLevel
+                            ? 0
+                            : summary.choices.filter(isUnresolvedChoice).length;
                         const summaryWarning = summary.choices.some((choice) =>
                           selectedChoiceHasWarning(choice, planningEvaluation!),
                         );
@@ -3278,11 +3332,13 @@ export function CharacterEditorPage({
                                   : undefined
                               }
                               className={
-                                summaryUnresolved > 0
-                                  ? "choice-unresolved"
-                                  : summaryWarning
-                                    ? "choice-warning"
-                                    : "choice-complete"
+                                frame.level > build.effectiveLevel
+                                  ? "choice-planned"
+                                  : summaryUnresolved > 0
+                                    ? "choice-unresolved"
+                                    : summaryWarning
+                                      ? "choice-warning"
+                                      : "choice-complete"
                               }
                               type="button"
                               onClick={() => {
@@ -3320,17 +3376,12 @@ export function CharacterEditorPage({
           </ol>
         </aside>
 
-        <section aria-labelledby="choice-pane-heading" className="choice-pane">
+        <section
+          aria-labelledby="choice-pane-heading"
+          className={`choice-pane${selectedLevel <= build.effectiveLevel && unresolvedCount > 0 ? " choice-pane-incomplete" : ""}`}
+        >
           <header>
-            <div>
-              <p className="eyebrow">
-                Level {selectedLevel}
-                {selectedLevel > build.effectiveLevel
-                  ? " · planned"
-                  : " · current"}
-              </p>
-              <h3 id="choice-pane-heading">Level {selectedLevel} choices</h3>
-            </div>
+            <h3 id="choice-pane-heading">Level {selectedLevel}</h3>
             <div className="choice-pane-actions">
               <label className="show-all-control">
                 <input
@@ -3344,19 +3395,11 @@ export function CharacterEditorPage({
               </label>
               {planningEvaluation === undefined ? (
                 <span className="attention-badge">Evaluating…</span>
-              ) : unresolvedCount > 0 ? (
-                <span className="attention-badge">
-                  {unresolvedCount} unresolved
-                </span>
               ) : selectedLevelHasWarning ? (
                 <span className="attention-badge">
                   <Icon name="warning" /> Review warnings
                 </span>
-              ) : (
-                <span className="complete-badge">
-                  <Icon name="check" /> Complete
-                </span>
-              )}
+              ) : null}
             </div>
           </header>
           <ShowAllChoicesContext.Provider value={showAllChoices}>
@@ -3380,7 +3423,10 @@ export function CharacterEditorPage({
                 <InspectCandidateContext.Provider value={setInspectedOption}>
                   <div className="level-choice-page">
                     {displayedChoiceSections.map(({ section, choices }) => (
-                      <section className="legacy-choice-group" key={section}>
+                      <section
+                        className={`legacy-choice-group${selectedLevel <= build.effectiveLevel && choices.some(isUnresolvedChoice) ? " choice-group-incomplete" : ""}`}
+                        key={section}
+                      >
                         <header>
                           <div className="legacy-choice-title">
                             <Icon name={choiceSectionIcon(section)} />
@@ -3389,12 +3435,21 @@ export function CharacterEditorPage({
                           <span className="choice-count">
                             {section === "Ability Scores" && selectedLevel === 1
                               ? "6 scores"
-                              : choices.filter(isUnresolvedChoice).length === 0
-                                ? `${choices.length} ${choices.length === 1 ? "choice" : "choices"}`
-                                : `${choices.filter(isUnresolvedChoice).length} unresolved`}
+                              : `${choices.length} ${choices.length === 1 ? "choice" : "choices"}`}
                           </span>
                         </header>
                         <div className="legacy-choice-list">
+                          {section === "Class" && selectedLevel === 1 ? (
+                            <BuildPresetPanel
+                              choices={buildPresetChoices}
+                              levelChoices={mechanicalLevelChoices}
+                              evaluation={planningEvaluation}
+                              build={build}
+                              entities={entities}
+                              byId={byId}
+                              onDispatch={dispatch}
+                            />
+                          ) : null}
                           {section === "Ability Scores" &&
                           selectedLevel === 1 ? (
                             <BaseAbilityScoreEditor

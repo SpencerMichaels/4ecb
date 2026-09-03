@@ -588,6 +588,24 @@ describe("native construction conformance", () => {
     expect(result.complete).toBe(true);
   });
 
+  it("treats legacy Build records as optional suggestion presets", () => {
+    const result = evaluateCharacter(
+      input(1, [occurrence("class", "CLASS", 1, "root")]),
+      [
+        entity("CLASS", "Class", "Class", [
+          statement("select", { type: "Build", number: "1" }, 0),
+        ]),
+        entity("BUILD", "Suggested build", "Build"),
+      ],
+    );
+
+    expect(result.choices[0]).toMatchObject({ type: "Build", optional: true });
+    expect(result.complete).toBe(true);
+    expect(result.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "choice.required" }),
+    );
+  });
+
   it("clears ordinary and pass-through duplicates but retains defaults and replacement sources", () => {
     const wrapper = entity("WRAPPER", "Training wrapper", "Feature", [
       statement("grant", { name: "TRAINING", type: "Skill Training" }, 0),

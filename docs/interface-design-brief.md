@@ -44,6 +44,11 @@ application's protected visual assets.
   immediately and present its unresolved decisions. Include every level through
   the target: unresolved items are prominent, completed levels remain visible in
   a compact form, and future choices may be inspected out of order.
+- Treat only unresolved decisions at or below the effective character level as
+  incomplete. Future-plan decisions remain neutral until that level becomes
+  current. Communicate completion and attention primarily through stable icon
+  color, fills, and inset markers rather than repeated status prose; state
+  changes must not alter typography or move adjacent controls.
 - Distinguish the character's current effective level from the build-planning
   horizon. Choices above the current level are preserved, visible, and editable
   so a player can plan many levels ahead, but they are inactive in current
@@ -76,8 +81,13 @@ application's protected visual assets.
 - Repeated Background slots use one primary **Choose background** section;
   already selected extras remain visible and optional empty slots appear one at
   a time through **Add another background…**. A revealed empty slot can be
-  cancelled, and every completed optional background has an explicit removal
-  action; removing one never clears the required primary background.
+  removed with the same compact X action used for a completed optional
+  background; removing one never clears the required primary background.
+- Legacy Build records are starting presets, not persistent mechanical choices.
+  Present them after class selection as one-shot actions that fill only matching,
+  currently open, rules-legal level-1 choices. Applying a preset never overwrites
+  work already chosen, and an imported legacy Build occurrence remains preserved
+  internally for round-trip compatibility without appearing as a to-do.
 - Skill Training uses one toggle list rather than repeated dropdowns. It shows
   every category-valid skill, marks trained skills, permits direct train/untrain
   toggles, and announces **X out of Y skills chosen** while preserving the
@@ -132,7 +142,8 @@ and **Retrain a power…** actions for categories actually available. Activating
 one reveals a category-filtered editor that can be cancelled before a choice is
 made. An imported or completed retraining remains visible in the level pane as
 history, but not as a required timeline decision, and can be explicitly removed
-to restore the replaced selection. Special replacements that
+with the same compact X affordance used for other optional additions to restore
+the replaced selection. Special replacements that
 are consequences of another choice, such as Rapid Shot Mastery, remain inside
 that choice's progressive flow rather than being relabeled as retraining.
 
