@@ -110,9 +110,13 @@ Individual tokens are internalized rather than compared as prose. Exact names
 and internal IDs resolve to `RulesElement` pointers; known prefixes and suffixes
 limit the record type; levels, tiers, abilities, class/power-source tests,
 training, proficiency, and other recognized phrases become value or predicate
-nodes. Unrecognized tokens resolve to an illegal stub, so uncertainty is not
-treated as eligibility. `CheckLegality` recursively evaluates the resulting
-AND/OR tree against owned elements and the relevant character level.
+nodes. A tilde-prefixed token is an exclusivity marker: internalization finds
+other records of the same type whose prerequisite text contains the same marker
+and creates negated element prerequisites for them. It is therefore executable
+mutual-exclusion logic, not metadata that can be accepted unconditionally.
+Unrecognized tokens resolve to an illegal stub, so uncertainty is not treated as
+eligibility. `CheckLegality` recursively evaluates the resulting AND/OR tree
+against owned elements and the relevant character level.
 
 The feat UI consumes that result through `choice.Legal(index)`: by default it
 adds only legal and owned candidate records, while its `ShowIllegal` toggle also
@@ -256,8 +260,14 @@ Semantics:
 - `existing` selects among already owned occurrences rather than the whole DB;
 - `grant` links a companion grant behavior used by a published special case.
 
-Candidate ordering comes from database/type order plus suggestion ranking; do not
-use localized display-name sorting as domain identity.
+The native choice's candidate array is the complete per-type database array, so
+its indices and `Legal`/`Selected` bitsets follow database/type ordinal. That is
+an engine identity boundary, not a promise that every page displays that order.
+Generic expanders optionally sort within source buckets by display name; feats,
+powers, skills, and replacements apply their own category/name/source ordering.
+Suggestions are stored in a separate insertion-ordered list. The feat page gives
+suggested feats a preferred group, and automatic completion tries suggestions
+before its other heuristics, but neither operation rewrites the choice array.
 
 ## `replace`
 
@@ -276,8 +286,11 @@ otherwise a saved retraining is falsely displayed as an empty choice.
 
 ## `suggest`
 
-`suggest name="…" type="…"` adds ranking/display guidance. Suggestions do not grant
-or satisfy a required choice and must not affect legality.
+`suggest name="…" type="…"` appends unique ranking/display guidance. It does not
+grant a record and does not affect candidate legality. It can indirectly satisfy
+a required slot when the user invokes native auto-completion, because
+`D20Choice.AutoComplete` tries eligible, unselected suggested records before its
+fallback heuristics.
 
 ## `modify`
 

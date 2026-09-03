@@ -26,6 +26,13 @@ UI clone.
    is not data-driven and therefore must not be lost in a generic interpreter.
 10. [Campaign files](09-campaign-format.md) specifies `.dndcamp` restrictions and
     embedded house rules, including a malformed legacy-ID edge case.
+11. [Visual language](10-visual-language.md) records the recovered interaction and
+    presentation evidence used by the modern builder without copying legacy
+    assets.
+12. [Construction-logic audit](11-construction-logic-audit.md) traces candidate,
+    choice, grant/drop, update, level, replacement, ownership, and save behavior
+    from the original UI through the native engine and records implementation
+    follow-ups.
 
 The modern product architecture, release scope, and implementation milestones
 are maintained separately in [`../../docs/README.md`](../../docs/README.md).

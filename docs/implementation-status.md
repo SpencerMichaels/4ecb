@@ -41,6 +41,20 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## Legacy construction-logic audit (2026-09-02)
+
+A systematic documentation-only audit traced the original builder pages through
+`D20Workspace` and the recovered native engine for candidate enumeration,
+prerequisite internalization, Show Illegal behavior, grant/drop topology, choice
+slots, fixed-point phases, level/history operations, replacements, suggestions,
+ownership/duplicates, and save effects. The resulting
+[construction-logic ledger](../reverse-engineering/docs/11-construction-logic-audit.md)
+corrects the prior universal-order claim, records that suggestions guide Auto Pick
+without changing legality, separates source entitlement from active/provider
+ownership, refines the update/convergence sequence, and records the history-exit
+and stale-evaluation boundary of native save. No production code or public fixture
+depends on the decompiled application or ignored private corpus.
+
 ## M5.5 first builder-interface draft
 
 - The working rules-backed editor now uses the approved hybrid structure: a

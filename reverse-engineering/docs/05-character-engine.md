@@ -21,22 +21,29 @@ derived state. The recovered sequence is:
    suggestions, tallies, and calculation caches;
 2. restore the six base ability scores and validate point-buy legality;
 3. build dynamic category sets from current class/hybrid/counts-as selections;
-4. for every level, run two topology/skeleton passes over the level record, saved
-   user edits, and its element tree; record active elements and drain deferred
-   grants after each pass;
-5. execute non-level/grabbag character elements;
-6. for every level, execute full rules with normal guts enabled;
-7. perform a special psionic/augmentable-power pass;
-8. rebuild ability and category-option caches;
-9. tally inventory and determine equipped effects;
-10. record final element ownership, validate children and choices, erase choices
-    whose providers are no longer owned, and update selection state;
-11. mark the character incomplete for any unresolved active nonoptional choice;
+4. for every level, run exactly two topology/skeleton passes in this order:
+   the level's saved-selection root, the character grabbag root on level 1 only,
+   and the internal level record (whose rule list also carries user edits); after
+   each pass record active elements and rebuild dynamic category options;
+5. after those two passes, drain grants deferred to that level, then record and
+   rebuild category options once more;
+6. execute every active occurrence in the global occurrence list;
+7. for every level, execute the grabbag root on level 1 and then the internal
+   level record with normal guts enabled;
+8. perform a special psionic/augmentable-power pass;
+9. rebuild ability and category-option caches;
+10. tally inventory and determine equipped effects;
+11. record final active-element membership, clear a selected definition that is
+    no longer source-entitled, and update every active choice's replacement list,
+    legality/selected bitsets, defaults, and completeness state;
 12. restart from step 1 when topology changed.
 
-The restart loop is capped at 30 iterations. A replacement should expose failure
-to converge as a diagnostic containing the providers/rules that changed each
-iteration; it must not return a plausible partial character.
+The restart counter fails after it exceeds 30. Because the check occurs after an
+`UpdateInternal` call, decompiled control flow can enter a 31st pass before
+returning `false`. The original exposes no useful per-iteration convergence
+trace in this path. A replacement should impose an explicit bound and add a
+diagnostic containing the providers/rules that changed each iteration; it must
+not return a plausible partial character.
 
 All caches are scoped to both character and effective level. History mode evaluates
 the character as of an earlier level without deleting later acquisition state.
@@ -65,13 +72,27 @@ provider occurrence and rule position. Candidate eligibility includes:
 - replacement/retraining mode and provider history;
 - hard-coded published exceptions.
 
-A saved child in the same positional slot is retained when still eligible. If it
-is no longer eligible, it is flagged illegal or cleared according to the rule mode;
-the engine avoids silently substituting another user choice. Defaults and automatic
-choices may fill deterministic slots. A required active blank slot makes the
-character incomplete, not necessarily rules-illegal.
+A saved child in the same positional slot is retained when still eligible. A
+selected record that fails prerequisites or category constraints remains selected,
+is flagged illegal, and makes the character illegal. The engine clears it in the
+separate duplicate check when the same definition is already active elsewhere
+(except the rule's default and replacement-source cases), or when the definition
+is no longer source-entitled. It does not silently substitute an ordinary user
+choice. Defaults and automatic choices may fill slots; native auto-completion is
+heuristic and can be random after suggestion and preferred-option passes. A
+required active blank slot makes the character incomplete, not necessarily
+rules-illegal. A replacement or `existing` choice with no possible occurrence
+to lose is specially exempted from incompleteness.
 
-Suggestions rank or highlight candidates but never satisfy a slot.
+`Choose` itself enforces source entitlement, but it does not require the
+candidate's `Legal` bit. The legacy pages normally hide failed candidates; their
+Show Illegal/house-rule mode exposes them with `LegalExplanation` and permits a
+selection that the next update marks illegal. Loaded custom or missing definitions
+use an illegal stub and remain recoverable.
+
+Suggestions highlight candidates and guide native auto-completion. They never
+grant directly or change legality, but auto-completion can select a suggested
+legal candidate and thereby satisfy a slot.
 
 ## Legality
 

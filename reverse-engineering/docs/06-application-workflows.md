@@ -96,6 +96,13 @@ Armor of Resistance damage-type selection appears beside class choices even
 though its provider is the equipped item. This is observed compatibility
 behavior, not a recommended ownership model for the replacement UI.
 
+The candidate order visible to a player is page behavior, not one universal
+engine order. Choice indices follow database/type ordinal. Generic expanders can
+then group by source and optionally sort by display name; the feat, power, skill,
+and replacement panes each apply specialized grouping and sorting. Suggestions
+appear as preferred UI groups and feed Auto Pick, but do not alter the candidate
+indices or legality bitset.
+
 ## Review and output
 
 - continuously show completeness and legality with repairable explanations;
@@ -106,6 +113,19 @@ behavior, not a recommended ownership model for the replacement UI.
 - journal entries and notes;
 - character sheet generation and layout data;
 - import/export `.dnd4e`, campaign files, and lossless legacy extensions.
+
+Native save is stateful beyond writing bytes. `D20Workspace.Save` first leaves
+history mode with `History(-1)`, then serializes the current generated
+`CharacterSheet`, campaign, every level's saved selection tree/loot/user edits,
+the grabbag, and text strings. `History(-1)` updates if the horizon changed, but
+save requests no additional fresh `Update` before serialization. After a
+successful write it updates the in-memory `Character Save File` text string, so
+that new path is not present in the bytes just written unless another save
+follows. The desktop shell then adds the file to its local list, clears its
+save-step/dirty state, and refreshes next-step UI. A replacement may choose a less
+surprising persistence contract, but legacy-compatible export must be generated
+from a current full evaluation and must not accidentally export a historical
+horizon.
 
 ## Search, filtering, and provenance
 
