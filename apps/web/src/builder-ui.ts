@@ -227,6 +227,73 @@ export function groupParameterizedCandidates(
   return groups;
 }
 
+export function groupBackgroundChoiceCandidates(
+  candidates: readonly CandidateDecision[],
+  nameFor: (definitionId: string) => string,
+): readonly CandidatePresentationGroup[] {
+  const definitions = [
+    {
+      key: "skill-plus-two",
+      label: "+2 to a skill",
+      parameterLabel: "Skill",
+      match: (name: string) => /^\+2 to /i.test(name),
+      optionLabel: (name: string) => name.replace(/^\+2 to /i, ""),
+    },
+    {
+      key: "two-skills-plus-one",
+      label: "+1 to two skills",
+      parameterLabel: "Skills",
+      match: (name: string) => /^\+1 to .+\+1 to /i.test(name),
+      optionLabel: (name: string) => name,
+    },
+    {
+      key: "class-skill",
+      label: "Add a class skill",
+      parameterLabel: "Skill",
+      match: (name: string) => / class skill$/i.test(name),
+      optionLabel: (name: string) => name.replace(/ class skill$/i, ""),
+    },
+    {
+      key: "language",
+      label: "Language",
+      parameterLabel: "Language",
+      match: (name: string) => /^Learn /i.test(name),
+      optionLabel: (name: string) => name.replace(/^Learn /i, ""),
+    },
+    {
+      key: "benefit",
+      label: "Background benefit",
+      parameterLabel: "Benefit",
+      match: (name: string) => / Benefit$/i.test(name),
+      optionLabel: (name: string) => name.replace(/ Benefit$/i, ""),
+    },
+  ] as const;
+  const groups = new Map<string, CandidatePresentationGroup>();
+  for (const candidate of candidates) {
+    const name = nameFor(candidate.definitionId);
+    const definition = definitions.find(({ match }) => match(name)) ?? {
+      key: "other",
+      label: "Other",
+      parameterLabel: "Option",
+      optionLabel: (value: string) => value,
+    };
+    const option = { candidate, label: definition.optionLabel(name) };
+    const existing = groups.get(definition.key);
+    groups.set(
+      definition.key,
+      existing === undefined
+        ? {
+            key: `background:${definition.key}`,
+            label: definition.label,
+            parameterLabel: definition.parameterLabel,
+            options: [option],
+          }
+        : { ...existing, options: [...existing.options, option] },
+    );
+  }
+  return [...groups.values()];
+}
+
 export interface GroupedLevelChoices {
   readonly backgrounds: readonly EvaluatedChoice[];
   readonly skillTraining: readonly EvaluatedChoice[];

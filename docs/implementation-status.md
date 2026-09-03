@@ -202,7 +202,20 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   selected house rules remain explicit. Live Silaqui verification confirmed the
   concise level-1 labels, the single-icon rows, and an Encounter Power detail
   without a `Rules-legal` marker.
-- `nix develop path:. -c bash scripts/check.sh` passes 213 tests across 37 files,
+- Choice chrome now applies one hierarchy rule across generic, repeated,
+  progressive, background, and skill controls: category bars are not echoed by
+  type eyebrows, ordinary dropdowns omit the visible **Selection** boilerplate,
+  and subordinate labels remain only where they distinguish real steps or
+  slots. Silaqui's level-1 repeated group and timeline now say **At-Will
+  Powers**, with only **Power 1** and **Power 2** beneath it. Her background
+  benefit is a two-stage **Benefit type** and exact parameter control covering
+  language, skill bonuses, class skills, and named benefits without changing
+  the stored candidate. An incomplete skill selection now explains the exact
+  provider slot and its remaining eligible skills; occupied-slot alternatives
+  say that rearrangement is required instead of appearing available. Browser
+  verification exercised both incomplete skill states and restored Silaqui's
+  original five choices through undo.
+- `nix develop path:. -c bash scripts/check.sh` passes 214 tests across 37 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

@@ -2037,6 +2037,22 @@ textarea {
   font-size: 0.78rem;
 }
 
+.skill-slot-guidance {
+  background: var(--surface-subtle);
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+  margin: -0.25rem 0 1rem;
+  padding: 0.55rem 0.7rem;
+}
+
+.skill-slot-guidance p {
+  margin: 0;
+}
+
+.skill-slot-guidance p + p {
+  margin-top: 0.35rem;
+}
+
 .grouped-choice-list {
   display: grid;
   gap: 1rem;

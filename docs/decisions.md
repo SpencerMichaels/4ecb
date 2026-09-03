@@ -240,6 +240,15 @@ blank unresolved placeholder at the same position, and filling chooses the
 first compatible unresolved position, so history and legacy serialization do
 not compact or reorder.
 
+Background-benefit records use a presentation-only two-stage control grouped
+by their legacy names: language, +2 to one skill, +1 to two skills, add a class
+skill, background benefit, and an explicit fallback for unknown forms. The
+second stage always dispatches the original exact content record. When repeated
+skill slots have different candidate sets, the toggle list names the provider
+and eligible untrained candidates for every open slot; a skill that could fit
+only after moving an occupied positional choice is described as requiring
+rearrangement rather than misleadingly marked available.
+
 ### D028 — Raw content metadata is preserved but not presented as rules text
 
 Imported categories, underscore-prefixed specifics, rules-engine prerequisite
@@ -299,6 +308,13 @@ one focus-driven detail viewer, matching the legacy checklist/`InfoViewer`
 relationship without reproducing its modal wizard navigation. Numbered step
 chrome is limited to actual dependent flows; simple detail choices render as
 one label and one control.
+Choice headings follow the same rule across all categories: the outer bar names
+the legacy workflow category once, an inner heading is retained only when it
+identifies a distinct decision or dependent flow, and generic dropdowns do not
+visibly repeat the word **Selection**. Repeated power groups derive their
+player-facing usage label from same-category candidates (for example,
+**At-Will Powers**) and keep positional labels only where they distinguish
+multiple exact slots.
 Base ability scores are part of the level-1 Ability Scores presentation even
 though they remain scalar fields in the native build rather than evaluated
 choice occurrences. Replacement choices suppress their result selector only

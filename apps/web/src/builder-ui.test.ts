@@ -15,6 +15,7 @@ import {
   groupDependentChoiceFlows,
   groupLevelChoices,
   groupChoicesByLegacyWorkflow,
+  groupBackgroundChoiceCandidates,
   groupParameterizedCandidates,
   groupRepeatedChoiceSlots,
   identityChoiceLabel,
@@ -126,6 +127,48 @@ describe("builder planning UI", () => {
       "Alertness",
       "Special Training (First)",
       "Special Training (Second)",
+    ]);
+  });
+
+  it("groups background benefits without changing exact candidates", () => {
+    const names: Record<string, string> = {
+      TWO: "+2 to Nature",
+      PAIR: "+1 to Nature and +1 to Perception",
+      CLASS: "Arcana class skill",
+      LANGUAGE: "Learn Draconic",
+      BENEFIT: "Wild Hunter Benefit",
+    };
+    const candidates = Object.keys(names).map((definitionId) => ({
+      definitionId,
+      eligible: true,
+      reasons: [],
+    }));
+    expect(
+      groupBackgroundChoiceCandidates(candidates, (id) => names[id]!).map(
+        ({ label, parameterLabel, options }) => ({
+          label,
+          parameterLabel,
+          options: options.map((option) => option.label),
+        }),
+      ),
+    ).toEqual([
+      { label: "+2 to a skill", parameterLabel: "Skill", options: ["Nature"] },
+      {
+        label: "+1 to two skills",
+        parameterLabel: "Skills",
+        options: ["+1 to Nature and +1 to Perception"],
+      },
+      {
+        label: "Add a class skill",
+        parameterLabel: "Skill",
+        options: ["Arcana"],
+      },
+      { label: "Language", parameterLabel: "Language", options: ["Draconic"] },
+      {
+        label: "Background benefit",
+        parameterLabel: "Benefit",
+        options: ["Wild Hunter"],
+      },
     ]);
   });
 

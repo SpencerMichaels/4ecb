@@ -36,6 +36,7 @@ import {
   choiceForRepeatedCandidate,
   choicesAtLevel,
   groupChoicesByLegacyWorkflow,
+  groupBackgroundChoiceCandidates,
   groupLevelChoices,
   groupDependentChoiceFlows,
   groupParameterizedCandidates,
@@ -57,6 +58,7 @@ import { RulesWorkerClient } from "./rules-client";
 import {
   entityTypeIcon,
   entityVisualTone,
+  type LegacyVisualTone,
   visualToneClass,
 } from "./visual-language";
 
@@ -178,6 +180,34 @@ function timelineChoiceTitle(choice: EvaluatedChoice): string {
   return ["Class", "Race", "Background"].includes(legacyChoiceSection(choice))
     ? choicePresentationLabel(choice.type)
     : choiceTitle(choice);
+}
+
+const powerGroupLabels: Readonly<Record<LegacyVisualTone, string>> = {
+  "at-will": "At-Will Powers",
+  encounter: "Encounter Powers",
+  daily: "Daily Powers",
+  utility: "Utility Powers",
+  item: "Item Powers",
+  neutral: "Powers",
+};
+
+function repeatedChoiceGroupTitle(
+  choices: readonly EvaluatedChoice[],
+  byId: ReadonlyMap<string, ContentEntity>,
+): string {
+  if (!choices.every((choice) => choice.type.trim().toLowerCase() === "power"))
+    return choiceTitle(choices[0]!);
+  const tones = new Set(
+    choices.flatMap((choice) =>
+      choice.candidates.flatMap((candidate) => {
+        if (candidate.reasons.includes("category")) return [];
+        const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
+        return entity === undefined ? [] : [entityVisualTone(entity)];
+      }),
+    ),
+  );
+  tones.delete("neutral");
+  return tones.size === 1 ? powerGroupLabels[[...tones][0]!] : "Powers";
 }
 
 function choiceSectionIcon(section: string): IconName {
@@ -694,6 +724,7 @@ function ChoiceEditor({
   byId,
   disabled,
   compact = false,
+  hideSelectionLabel = false,
   selectionLabel = "Selection",
   replacementTargetType,
   rollbackRevision,
@@ -706,6 +737,7 @@ function ChoiceEditor({
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly disabled: boolean;
   readonly compact?: boolean;
+  readonly hideSelectionLabel?: boolean;
   readonly selectionLabel?: string;
   readonly replacementTargetType?: string;
   readonly rollbackRevision: number;
@@ -732,16 +764,22 @@ function ChoiceEditor({
   const visibleCandidates = choice.candidates.filter((candidate) =>
     isCandidateVisible(candidate, showAll, selected?.definitionId),
   );
+  const normalizedChoiceType = choice.type.trim().toLocaleLowerCase();
+  const candidateName = (definitionId: string) => {
+    const definition = byId.get(definitionId.toLocaleLowerCase());
+    return definition?.name ?? definitionId;
+  };
   const presentationGroups =
-    choice.type.toLocaleLowerCase() === "feat"
+    normalizedChoiceType === "feat"
       ? groupParameterizedCandidates(visibleCandidates, (definitionId) => {
-          const definition = byId.get(definitionId.toLocaleLowerCase());
-          return definition?.name ?? definitionId;
+          return candidateName(definitionId);
         })
-      : [];
-  const hasParameterizedGroups = presentationGroups.some(
-    (group) => group.parameterLabel !== undefined,
-  );
+      : normalizedChoiceType === "background choice"
+        ? groupBackgroundChoiceCandidates(visibleCandidates, candidateName)
+        : [];
+  const groupedPresentation =
+    normalizedChoiceType === "background choice" ||
+    presentationGroups.some((group) => group.parameterLabel !== undefined);
   const selectedPresentationGroup = presentationGroups.find((group) =>
     group.options.some(
       ({ candidate }) => candidate.definitionId === optimisticSelectedId,
@@ -858,10 +896,12 @@ function ChoiceEditor({
       className={`choice-selection-layout${compact ? " choice-selection-compact" : ""}`}
     >
       <div className="choice-editor-fields">
-        {hasParameterizedGroups ? (
+        {groupedPresentation ? (
           <>
             <label>
-              Feat
+              {normalizedChoiceType === "background choice"
+                ? "Benefit type"
+                : "Feat"}
               <select
                 disabled={editorDisabled}
                 value={displayedGroupKey}
@@ -883,7 +923,11 @@ function ChoiceEditor({
                   if (exact) selectDefinition(definitionId);
                 }}
               >
-                <option value="">Choose a feat</option>
+                <option value="">
+                  {normalizedChoiceType === "background choice"
+                    ? "Choose a benefit type"
+                    : "Choose a feat"}
+                </option>
                 {presentationGroups.map((group) => (
                   <option key={group.key} value={group.key}>
                     {group.label}
@@ -944,8 +988,9 @@ function ChoiceEditor({
           </>
         ) : (
           <label>
-            {selectionLabel}
+            {hideSelectionLabel ? null : <span>{selectionLabel}</span>}
             <select
+              aria-label={selectionLabel}
               disabled={editorDisabled}
               value={selectedValue}
               onFocus={() => {
@@ -1032,7 +1077,6 @@ function ChoiceFlowSection({
     >
       <header>
         <div>
-          <p className="eyebrow">{root.type}</p>
           <h4 id={`${choiceSectionId(root.id)}-heading`}>
             {choices.length > 1 && selectedRootEntity !== undefined
               ? selectedRootEntity.name
@@ -1062,7 +1106,9 @@ function ChoiceFlowSection({
             <div className="choice-flow-step-heading">
               <span aria-hidden="true">{index + 1}</span>
               <h5 id={`${choiceSectionId(choice.id)}-step-heading`}>
-                {index === 0 ? `Choose ${choice.type}` : choiceTitle(choice)}
+                {index === 0
+                  ? choicePresentationLabel(choice.type)
+                  : choiceTitle(choice)}
               </h5>
             </div>
             <ChoiceEditor
@@ -1072,6 +1118,7 @@ function ChoiceFlowSection({
               entities={entities}
               byId={byId}
               disabled={false}
+              hideSelectionLabel
               rollbackRevision={rollbackRevision}
               onDispatch={onDispatch}
             />
@@ -1089,7 +1136,7 @@ function repeatedSlotLabel(choice: EvaluatedChoice, index: number): string {
       : index === 1
         ? "Second ability"
         : `Ability ${index + 1}`;
-  return `${choice.type} ${index + 1}`;
+  return `${choicePresentationLabel(choice.type)} ${index + 1}`;
 }
 
 const abilityOrder = [
@@ -1325,9 +1372,8 @@ function RepeatedChoiceGroup({
     >
       <header>
         <div>
-          <p className="eyebrow">{root.type}</p>
           <h4 id={`${choiceSectionId(root.id)}-heading`}>
-            {choiceTitle(root)}
+            {repeatedChoiceGroupTitle(choices, byId)}
           </h4>
         </div>
         {chosen < choices.length ? (
@@ -1347,14 +1393,10 @@ function RepeatedChoiceGroup({
       <div className="grouped-choice-list">
         {choices.map((choice, index) => (
           <section
-            aria-labelledby={`${choiceSectionId(choice.id)}-slot-heading`}
             className="grouped-choice-item"
             id={index === 0 ? undefined : choiceSectionId(choice.id)}
             key={choice.id}
           >
-            <h5 id={`${choiceSectionId(choice.id)}-slot-heading`}>
-              {repeatedSlotLabel(choice, index)}
-            </h5>
             <ChoiceEditor
               choice={choice}
               evaluation={evaluation}
@@ -1363,6 +1405,7 @@ function RepeatedChoiceGroup({
               byId={byId}
               disabled={false}
               compact={choice.type.startsWith("Ability Increase")}
+              selectionLabel={repeatedSlotLabel(choice, index)}
               rollbackRevision={rollbackRevision}
               onDispatch={onDispatch}
             />
@@ -1534,10 +1577,7 @@ function BackgroundChoiceGroup({
       tabIndex={-1}
     >
       <header>
-        <div>
-          <p className="eyebrow">Background</p>
-          <h4>Choose background</h4>
-        </div>
+        <h4>Backgrounds</h4>
         <span className="choice-count">
           {
             choices.filter(
@@ -1550,16 +1590,10 @@ function BackgroundChoiceGroup({
       <div className="grouped-choice-list">
         {choices.slice(0, revealedCount).map((choice, index) => (
           <section
-            aria-labelledby={`${choiceSectionId(choice.id)}-heading`}
             className="grouped-choice-item"
             id={index === 0 ? undefined : choiceSectionId(choice.id)}
             key={choice.id}
           >
-            {index === 0 ? null : (
-              <h5 id={`${choiceSectionId(choice.id)}-heading`}>
-                Additional background {index + 1}
-              </h5>
-            )}
             <ChoiceEditor
               choice={choice}
               evaluation={evaluation}
@@ -1567,6 +1601,11 @@ function BackgroundChoiceGroup({
               entities={entities}
               byId={byId}
               disabled={false}
+              selectionLabel={
+                index === 0
+                  ? "Background"
+                  : `Additional background ${index + 1}`
+              }
               rollbackRevision={rollbackRevision}
               onDispatch={onDispatch}
             />
@@ -1691,6 +1730,36 @@ function SkillTrainingEditor({
       definitionId === undefined ? [] : [choiceId],
     ),
   );
+  const selectedDefinitionIds = new Set(
+    [...optimisticSlots.values()].filter(
+      (definitionId): definitionId is string => definitionId !== undefined,
+    ),
+  );
+  const openSlotGuidance = choices.flatMap((choice) => {
+    if (optimisticSlots.get(choice.id) !== undefined) return [];
+    const eligibleNames = choice.candidates.flatMap((candidate) => {
+      if (
+        !candidate.eligible ||
+        candidate.reasons.includes("category") ||
+        selectedDefinitionIds.has(candidate.definitionId)
+      )
+        return [];
+      return [
+        byId.get(candidate.definitionId.toLocaleLowerCase())?.name ??
+          candidate.definitionId,
+      ];
+    });
+    if (eligibleNames.length === 0) return [];
+    const provider = evaluation.occurrences.find(
+      (occurrence) => occurrence.id === choice.providerOccurrenceId,
+    );
+    const providerName =
+      provider === undefined
+        ? choicePresentationLabel(choice.type)
+        : (byId.get(provider.definitionId.toLocaleLowerCase())?.name ??
+          choicePresentationLabel(choice.type));
+    return [{ eligibleNames, providerName }];
+  });
 
   return (
     <section
@@ -1699,14 +1768,23 @@ function SkillTrainingEditor({
       tabIndex={-1}
     >
       <header>
-        <div>
-          <p className="eyebrow">Skills</p>
-          <h4>Skill Training</h4>
-        </div>
+        <h4>Skill Training</h4>
         <strong className="skill-choice-count" aria-live="polite">
           {chosenCount} out of {choices.length} skills chosen
         </strong>
       </header>
+      {openSlotGuidance.length === 0 ? null : (
+        <div className="skill-slot-guidance" aria-live="polite">
+          {openSlotGuidance.map(({ eligibleNames, providerName }, index) => (
+            <p key={`${providerName}:${index}`}>
+              <strong>Remaining {providerName} choice:</strong>{" "}
+              {eligibleNames.length === 1
+                ? `${eligibleNames[0]} is the only eligible untrained skill for this slot.`
+                : `Choose one of ${eligibleNames.join(", ")}.`}
+            </p>
+          ))}
+        </div>
+      )}
       <div className="skill-training-layout">
         <div className="skill-training-controls">
           <div className="skill-toggle-list">
@@ -1825,6 +1903,9 @@ function SkillTrainingEditor({
                   <span>{definition?.name ?? definitionId}</span>
                   {trainedChoice !== undefined ? (
                     <strong>Trained</strong>
+                  ) : targetChoice === undefined &&
+                    decisions.some(({ candidate }) => candidate.eligible) ? (
+                    <small>Requires rearranging a trained skill</small>
                   ) : reason?.eligible === false ? (
                     <small>{candidateReason(reason.reasons)}</small>
                   ) : (
@@ -2552,7 +2633,6 @@ export function CharacterEditorPage({
       >
         <header>
           <div>
-            <p className="eyebrow">{choice.type}</p>
             <h4 id={`${choiceSectionId(choice.id)}-heading`}>
               {choiceTitle(choice)}
             </h4>
@@ -2576,6 +2656,7 @@ export function CharacterEditorPage({
           entities={entities}
           byId={byId}
           disabled={false}
+          hideSelectionLabel
           rollbackRevision={rollbackRevision}
           onDispatch={dispatch}
         />
@@ -2842,7 +2923,7 @@ export function CharacterEditorPage({
                   return choice === repeated[0]
                     ? [
                         {
-                          label: timelineChoiceTitle(choice),
+                          label: repeatedChoiceGroupTitle(repeated, byId),
                           choices: repeated,
                         },
                       ]
