@@ -80,6 +80,10 @@ const definitionIndexCache = new WeakMap<
   readonly ContentEntity[],
   DefinitionIndex
 >();
+const prerequisiteIrCache = new WeakMap<
+  readonly ContentEntity[],
+  Map<string, PrerequisiteIr>
+>();
 
 function definitionIndex(
   definitions: readonly ContentEntity[],
@@ -385,12 +389,30 @@ export function internalizePrerequisite(
 ): PrerequisiteIr | undefined {
   if (prerequisite === undefined || prerequisite.trim().length === 0)
     return undefined;
+  const definitions = context.definitions;
+  const subject = context.subject;
+  const cache =
+    definitions === undefined || subject === undefined
+      ? undefined
+      : (prerequisiteIrCache.get(definitions) ??
+        new Map<string, PrerequisiteIr>());
+  if (
+    definitions !== undefined &&
+    cache !== undefined &&
+    !prerequisiteIrCache.has(definitions)
+  )
+    prerequisiteIrCache.set(definitions, cache);
+  const cacheKey = `${subject?.id ?? ""}\0${prerequisite}`;
+  const cached = cache?.get(cacheKey);
+  if (cached !== undefined) return cached;
   const blocks = splitTopLevel(prerequisite, [/^\s*;\s*/]);
-  return connective(
+  const result = connective(
     "all",
     prerequisite,
     blocks.map((block) => internalizeBlock(block.text, context)),
   );
+  cache?.set(cacheKey, result);
+  return result;
 }
 
 function ownsDefinition(
@@ -398,6 +420,7 @@ function ownsDefinition(
   definitionId: string,
 ): boolean {
   const wanted = normalized(definitionId);
+  if (context.ownedTokens !== undefined) return context.ownedTokens.has(wanted);
   if (
     context.owned.some((entity) =>
       [
@@ -409,7 +432,7 @@ function ownsDefinition(
     )
   )
     return true;
-  return context.ownedTokens?.has(wanted) ?? false;
+  return false;
 }
 
 function aggregate(

@@ -79,9 +79,13 @@ objects. Persistence remains explicit at the application boundary.
 The supplied private level-8 character matches all 72 numeric aliases shared by
 the modern evaluation and legacy cached `StatBlock`, including ability-derived
 values, typed modifier stacking, defenses, resources, senses, and skills. It
-converges in one grant iteration. Indexed category values keep a complete
-evaluation at roughly 1.5 seconds in the development runner on the full pack;
-this is a checkpoint measurement, not a final browser budget.
+converges in one grant iteration. The immutable full-profile rules index,
+known-definition tokens, and compiled prerequisite trees are cached by profile
+array identity; per-character prerequisite ownership uses a normalized token
+index. On the 38,339-record private pack, a four-pass Silaqui benchmark measures
+approximately 5.7 seconds cold and 1.5 seconds warm in the development runner,
+versus about 13.1 seconds on every pass before these caches. These are checkpoint
+measurements, not final browser budgets.
 
 The character remains intentionally reported as illegal because its file marks
 a house-rule selection and the corpus cannot prove one custom feat

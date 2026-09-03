@@ -18,6 +18,7 @@ import {
   type CharacterRecord,
 } from "@4ecb/character-domain";
 import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
+import { projectBuildForLegacyExport } from "@4ecb/legacy-dnd4e";
 import {
   ABILITY_SCORE_NAMES,
   assessAbilityPointBuy,
@@ -29,6 +30,7 @@ import {
   type CandidateDecision,
   type EvaluatedCharacter,
   type EvaluatedChoice,
+  type EvaluationInput,
 } from "@4ecb/rules-engine";
 
 import {
@@ -73,6 +75,13 @@ type InspectedOption = {
   readonly candidate: CandidateDecision;
   readonly entity: ContentEntity;
 };
+
+function evaluationCacheKey(
+  profileRevision: string,
+  input: EvaluationInput,
+): string {
+  return `${profileRevision}\0${JSON.stringify(input)}`;
+}
 const InspectCandidateContext = createContext<
   ((option: InspectedOption) => void) | undefined
 >(undefined);
@@ -2265,6 +2274,7 @@ export function CharacterEditorPage({
   >(undefined);
   const rulesClient = useRef<RulesWorkerClient | undefined>(undefined);
   const evaluationRevision = useRef(0);
+  const evaluationCache = useRef(new Map<string, EvaluatedCharacter>());
 
   useEffect(() => {
     let cancelled = false;
@@ -2333,9 +2343,11 @@ export function CharacterEditorPage({
   }, [characterId]);
 
   const packId = character?.profileBinding?.packId;
+  const contentDigest = character?.profileBinding?.contentDigest;
   useEffect(() => {
     rulesClient.current?.terminate();
     rulesClient.current = undefined;
+    evaluationCache.current.clear();
     setReadyPackId(undefined);
     setCurrentEvaluation(undefined);
     setPlanningEvaluation(undefined);
@@ -2344,7 +2356,7 @@ export function CharacterEditorPage({
     rulesClient.current = client;
     let cancelled = false;
     void client
-      .initialize(packId, character?.profileBinding?.contentDigest)
+      .initialize(packId, contentDigest)
       .then(() => {
         if (!cancelled) setReadyPackId(packId);
       })
@@ -2359,7 +2371,7 @@ export function CharacterEditorPage({
       client.terminate();
       if (rulesClient.current === client) rulesClient.current = undefined;
     };
-  }, [character?.profileBinding?.contentDigest, packId]);
+  }, [contentDigest, packId]);
 
   const build = transaction.current?.current;
   const currentEvaluation = evaluationAtHorizon(
@@ -2390,16 +2402,31 @@ export function CharacterEditorPage({
       return;
     const revision = evaluationRevision.current + 1;
     evaluationRevision.current = revision;
-    setCurrentEvaluation(undefined);
-    setPlanningEvaluation(undefined);
     setEvaluationStatus("Evaluating current build and plan…");
-    const currentRequest = client.evaluate(
-      projectBuildForEvaluation(build, entities),
+    const evaluateCached = async (
+      input: EvaluationInput,
+    ): Promise<EvaluatedCharacter> => {
+      const cache = evaluationCache.current;
+      const profileRevision = `${packId}\0${contentDigest ?? ""}`;
+      const cacheKey = evaluationCacheKey(profileRevision, input);
+      const cached = cache.get(cacheKey);
+      if (cached !== undefined) {
+        cache.delete(cacheKey);
+        cache.set(cacheKey, cached);
+        return cached;
+      }
+      const evaluated = await client.evaluate(input);
+      cache.set(cacheKey, evaluated);
+      while (cache.size > 3) cache.delete(cache.keys().next().value!);
+      return evaluated;
+    };
+    const currentRequest = evaluateCached(
+      projectBuildForEvaluation(projectBuildForLegacyExport(build), entities),
     );
     const planningRequest =
       build.effectiveLevel === build.levels.length
         ? currentRequest
-        : client.evaluate(
+        : evaluateCached(
             projectBuildForEvaluation(
               { ...build, effectiveLevel: build.levels.length },
               entities,
@@ -2418,7 +2445,7 @@ export function CharacterEditorPage({
           `Rules evaluation failed: ${reason instanceof Error ? reason.message : String(reason)}`,
         );
       });
-  }, [build, entities, packId, readyPackId]);
+  }, [build, contentDigest, entities, packId, readyPackId]);
 
   useEffect(() => {
     if (build === undefined) return;
@@ -2514,8 +2541,6 @@ export function CharacterEditorPage({
     if (active === undefined || queue === undefined) return;
     try {
       const next = active.dispatch(command);
-      setCurrentEvaluation(undefined);
-      setPlanningEvaluation(undefined);
       setEvaluationStatus("Evaluating current build and plan…");
       setRevision((value) => value + 1);
       queue.enqueue(next, "Saved locally");
@@ -2532,8 +2557,6 @@ export function CharacterEditorPage({
     const queue = saveQueue.current;
     if (active === undefined || queue === undefined || !active.canUndo) return;
     const next = active.undo();
-    setCurrentEvaluation(undefined);
-    setPlanningEvaluation(undefined);
     setEvaluationStatus("Evaluating current build and plan…");
     setRevision((value) => value + 1);
     queue.enqueue(next, "Undo saved locally");
@@ -2544,8 +2567,6 @@ export function CharacterEditorPage({
     const queue = saveQueue.current;
     if (active === undefined || queue === undefined || !active.canRedo) return;
     const next = active.redo();
-    setCurrentEvaluation(undefined);
-    setPlanningEvaluation(undefined);
     setEvaluationStatus("Evaluating current build and plan…");
     setRevision((value) => value + 1);
     queue.enqueue(next, "Redo saved locally");

@@ -313,6 +313,21 @@ candidate.
   category bar no longer repeats its individual title, and grouped feat
   selectors suppress the redundant visible **Feat** field label while retaining
   an accessible control name.
+- Rules reevaluation is now stale-while-revalidate for an unchanged planning
+  horizon: the worker updates in the background while the last complete choice
+  workspace remains mounted and optimistic controls remain responsive. A small
+  profile-revision-keyed result cache reuses the unchanged current-level
+  projection during future-level edits and recent exact projections during
+  undo/redo. Only creating a genuinely new planning horizon shows the loading
+  state because no result for those new levels exists yet.
+- Full-profile evaluation now reuses immutable rules indexes, known-definition
+  tokens, and compiled prerequisite trees. Prerequisite ownership tests use the
+  evaluator's existing normalized token set instead of repeatedly scanning and
+  normalizing every owned definition. A four-pass Silaqui/full-pack development
+  benchmark improved from approximately 13.1 seconds on every pass to 5.7
+  seconds cold and 1.5 seconds warm. A live level-10 selection kept the complete
+  workspace visible throughout reevaluation and settled end-to-end in about
+  2.3 seconds before the test plan and choice were restored through undo.
 - `nix develop path:. -c bash scripts/check.sh` passes 250 tests across 39 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,

@@ -282,6 +282,43 @@ export class RulesIndex {
   }
 }
 
+const sharedRulesIndexCache = new WeakMap<
+  readonly ContentEntity[],
+  RulesIndex
+>();
+
+function sharedRulesIndex(entities: readonly ContentEntity[]): RulesIndex {
+  const cached = sharedRulesIndexCache.get(entities);
+  if (cached !== undefined) return cached;
+  const created = new RulesIndex(entities);
+  sharedRulesIndexCache.set(entities, created);
+  return created;
+}
+
+const knownDefinitionTokensCache = new WeakMap<
+  readonly ContentEntity[],
+  ReadonlySet<string>
+>();
+
+function knownDefinitionTokens(
+  entities: readonly ContentEntity[],
+): ReadonlySet<string> {
+  const cached = knownDefinitionTokensCache.get(entities);
+  if (cached !== undefined) return cached;
+  const tokens = new Set(
+    entities.flatMap((entity) =>
+      [
+        entity.id,
+        entity.name,
+        `${entity.name} ${entity.type}`,
+        `${entity.type} ${entity.name}`,
+      ].map((value) => value.trim().toLocaleLowerCase().replaceAll("_", " ")),
+    ),
+  );
+  knownDefinitionTokensCache.set(entities, tokens);
+  return tokens;
+}
+
 function dynamicCategories(
   owned: readonly ContentEntity[],
   occurrences: readonly CharacterOccurrence[],
@@ -506,8 +543,13 @@ export function evaluateCharacter(
   input: EvaluationInput,
   entities: readonly ContentEntity[],
 ): EvaluatedCharacter {
-  const evaluationEntities = [...entities, ...(input.localEntities ?? [])];
-  const index = new RulesIndex(evaluationEntities);
+  const localEntities = input.localEntities ?? [];
+  const evaluationEntities =
+    localEntities.length === 0 ? entities : [...entities, ...localEntities];
+  const index =
+    localEntities.length === 0
+      ? sharedRulesIndex(entities)
+      : new RulesIndex(evaluationEntities);
   const isSourceEntitled = sourceEntitlementChecker(
     input.sourceEntitlements,
     index,
@@ -1504,16 +1546,7 @@ export function evaluateCharacter(
         ].map((value) => value.trim().toLocaleLowerCase().replaceAll("_", " ")),
       ),
     ),
-    knownTokens: new Set(
-      evaluationEntities.flatMap((entity) =>
-        [
-          entity.id,
-          entity.name,
-          `${entity.name} ${entity.type}`,
-          `${entity.type} ${entity.name}`,
-        ].map((value) => value.trim().toLocaleLowerCase().replaceAll("_", " ")),
-      ),
-    ),
+    knownTokens: knownDefinitionTokens(evaluationEntities),
   };
   const candidatePrerequisiteStatuses = new Map<
     string,
