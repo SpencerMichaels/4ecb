@@ -342,6 +342,7 @@ export function legacyChoiceSection(
   choice: EvaluatedChoice,
 ): LegacyChoiceSection {
   const type = choice.type.trim().toLocaleLowerCase();
+  if (choice.spellbook !== undefined) return "Spellbook";
   if (
     [
       "class",

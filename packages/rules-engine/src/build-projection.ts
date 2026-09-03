@@ -164,6 +164,49 @@ export function commandForEvaluatedChoice(
       ? (commands[0] as CharacterCommand)
       : { kind: "batch", commands };
   };
+  const providerRule =
+    providerEntity === undefined
+      ? undefined
+      : parseRules(providerEntity.id, providerEntity.rules).find(
+          (rule) =>
+            rule.source.ordinal === choice.ruleOrdinal &&
+            rule.kind === "select",
+        );
+  if (
+    providerEntity !== undefined &&
+    providerRule?.kind === "select" &&
+    providerRule.spellbook !== undefined
+  ) {
+    const spellbook = providerRule.spellbook;
+    const sameProvider = (alternate: CharacterBuild["alternates"][number]) =>
+      alternate.provider.definitionId !== undefined
+        ? alternate.provider.definitionId.toLocaleLowerCase() ===
+          providerEntity.id.toLocaleLowerCase()
+        : alternate.provider.name.toLocaleLowerCase() ===
+            providerEntity.name.toLocaleLowerCase() &&
+          alternate.provider.type.toLocaleLowerCase() ===
+            providerEntity.type.toLocaleLowerCase();
+    const existing = build.alternates.find(
+      (alternate) =>
+        alternate.choice.id === choice.selectedOccurrenceId ||
+        (sameProvider(alternate) &&
+          alternate.selectName.toLocaleLowerCase() ===
+            spellbook.toLocaleLowerCase()),
+    );
+    return {
+      kind: "put-alternate",
+      alternate: {
+        id: existing?.id ?? `web:alternate:${selected.id}`,
+        selectName: existing?.selectName ?? spellbook,
+        provider: existing?.provider ?? {
+          definitionId: providerEntity.id,
+          name: providerEntity.name,
+          type: providerEntity.type,
+        },
+        choice: atStorageLevel(selected, choice.level),
+      },
+    };
+  }
   const generatedWithChild = (
     occurrence: CharacterOccurrence,
     entity: ContentEntity,
@@ -433,11 +476,67 @@ export function projectBuildForEvaluation(
       );
   }
   for (const occurrence of build.grabbag) visit(occurrence, "grabbag");
-  // Legacy spellbooks and similar "prepared versus known" features store the
-  // non-primary selections outside the level tree. They are still owned
-  // character elements (and must appear on sheets), even though the builder
-  // keeps their provider metadata in a separate <alternate> envelope.
-  for (const alternate of build.alternates) visit(alternate.choice, "grabbag");
+  // Legacy spellbooks and similar "prepared versus known" features serialize
+  // the non-primary selection in an <alternate> envelope. On load, the legacy
+  // engine resolves its provider identity and SelectName back to the matching
+  // spellbook select slot, then installs the alternate element in that slot.
+  // Preserve the envelope in CharacterBuild while projecting the same logical
+  // parent/rule relationship for evaluation. Unknown providers remain owned as
+  // grabbag evidence rather than being discarded.
+  for (const alternate of build.alternates) {
+    const provider = occurrences.find((occurrence) => {
+      const providerEntity = byId.get(
+        occurrence.definitionId.toLocaleLowerCase(),
+      );
+      const identityMatches =
+        alternate.provider.definitionId !== undefined
+          ? occurrence.definitionId.toLocaleLowerCase() ===
+            alternate.provider.definitionId.toLocaleLowerCase()
+          : providerEntity?.name.toLocaleLowerCase() ===
+              alternate.provider.name.toLocaleLowerCase() &&
+            providerEntity.type.toLocaleLowerCase() ===
+              alternate.provider.type.toLocaleLowerCase();
+      return (
+        identityMatches &&
+        providerEntity !== undefined &&
+        parseRules(providerEntity.id, providerEntity.rules).some(
+          (rule) =>
+            rule.kind === "select" &&
+            rule.spellbook?.toLocaleLowerCase() ===
+              alternate.selectName.toLocaleLowerCase(),
+        )
+      );
+    });
+    const providerEntity =
+      provider === undefined
+        ? undefined
+        : byId.get(provider.definitionId.toLocaleLowerCase());
+    const selectRule =
+      providerEntity === undefined
+        ? undefined
+        : parseRules(providerEntity.id, providerEntity.rules).find(
+            (rule) =>
+              rule.kind === "select" &&
+              rule.spellbook?.toLocaleLowerCase() ===
+                alternate.selectName.toLocaleLowerCase(),
+          );
+    if (provider === undefined || selectRule?.kind !== "select") {
+      visit(alternate.choice, "grabbag");
+      continue;
+    }
+    visit(
+      alternate.choice,
+      "choice",
+      provider.id,
+      {
+        ruleOrdinal: selectRule.source.ordinal,
+        choiceIndex: 0,
+        kind: "choice",
+        minimumLevel: selectRule.source.level.minimum,
+      },
+      provider.acquiredLevel,
+    );
+  }
   // Item-specific selections (for example an Armor of Resistance damage type)
   // are serialized beneath the relevant loot definition, not in the level
   // tree. Project them beneath the evaluator's synthetic inventory provider so

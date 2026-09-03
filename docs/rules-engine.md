@@ -70,9 +70,18 @@ phases as profile content. They are intrinsically source-entitled, affect
 regenerated sheet caches, and never become shared pack records.
 
 Commands cover choosing/removing/replacing/retraining occurrences, adding and
-removing level frames, effective level and ability changes, inventory, and text.
+removing level frames, effective level and ability changes, alternate-slot
+spellbook choices, inventory, and text.
 `CharacterTransaction` provides session undo/redo without mutating persisted
 objects. Persistence remains explicit at the application boundary.
+
+Legacy `<alternate>` entries are not generic bonus ownership when their provider
+and `SelectName` resolve. Projection matches the provider definition, finds the
+select rule whose `spellbook` attribute names that slot, and emits the alternate
+as that choice's selected occurrence at the rule's effective level. This mirrors
+the recovered native `ParseAlternate` → `FindProvider` path while leaving the
+durable alternate envelope intact for exact export. Unresolvable envelopes
+remain grabbag occurrences so malformed or custom evidence stays recoverable.
 
 ## Verified parity and performance
 

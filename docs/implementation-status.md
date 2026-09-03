@@ -353,6 +353,18 @@ candidate.
   covered empty background and retraining cancellation plus the presence of
   removal actions on Silaqui; a public command regression covers completed
   background and retraining slots.
+- A representative cross-character builder review found that the bundled
+  level-3 Wizard Jim Darkmagic displayed two generic required **Power** choices
+  even though his alternate Daily and Utility spellbook selections were saved.
+  Recovered `D20RulesEngine.ParseAlternate` calls
+  `FindProvider(provider, SelectName)` and replaces the element in that exact
+  `spellbook` select slot. Evaluation now projects the preserved alternate
+  envelope through the same provider/rule relationship, and editing upserts the
+  alternate rather than creating an ordinary level child. Jim consequently
+  moves from two unresolved choices/two errors to complete, legal, and zero
+  diagnostics; the UI presents **Daily Spell** and **Utility Spell** beneath a
+  distinct **Spellbook** group. Live testing changed the daily alternate,
+  persisted it, undid it, and confirmed Freezing Cloud after reload.
 - `nix develop path:. -c bash scripts/check.sh` passes 253 tests across 39 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,

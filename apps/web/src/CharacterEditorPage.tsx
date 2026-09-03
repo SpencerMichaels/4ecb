@@ -184,6 +184,11 @@ function selectedOccurrence(
 }
 
 function choiceTitle(choice: EvaluatedChoice): string {
+  const spellbook = /^Power\s+(Daily|Utility)\s+(\d+)$/i.exec(
+    choice.spellbook ?? "",
+  );
+  if (spellbook !== null)
+    return `${spellbook[1]![0]!.toLocaleUpperCase()}${spellbook[1]!.slice(1).toLocaleLowerCase()} Spell`;
   return choicePresentationLabel(choice.name || choice.type);
 }
 

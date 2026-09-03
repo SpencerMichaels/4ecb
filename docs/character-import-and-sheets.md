@@ -75,8 +75,15 @@ elements. It reads:
 
 The normalized snapshot is explicitly tagged `legacy-cache`. It is a read model,
 not editable build state. The importer also projects the complete serialized
-level tree, per-level `UserEdit` containers, grabbag, alternates, base abilities, and inventory into the
-authoritative build. Custom extensions, comments, whitespace, cached sheet
+level tree, per-level `UserEdit` containers, grabbag, alternates, base abilities,
+and inventory into the authoritative build. An `<alternate>` retains its
+`SelectName` and provider identity. During evaluation, that pair is resolved to
+the provider's matching `spellbook` select rule and the alternate choice is
+projected into that logical slot; the legacy engine's `ParseAlternate` follows
+the same `FindProvider(provider, SelectName)` path before replacing the slot's
+element. If no exact provider/slot can be resolved, the choice remains owned as
+recoverable grabbag evidence rather than being discarded. Custom extensions,
+comments, whitespace, cached sheet
 values, and other unmodeled XML remain in `sourceXml`.
 
 Native creation starts from the active pack's exact ID/digest and canonical
@@ -104,6 +111,9 @@ regenerates the `CharacterSheet` calculation caches. Campaign and unknown root
 elements are copied from the source envelope; companion, journal, and unknown
 sheet blocks are retained. XML user content is escaped; an invalid XML 1.0 code point blocks the
 export rather than being silently changed or producing a malformed document.
+Spellbook edits update the existing alternate envelope—or create one for a
+native character—rather than inserting the extra known spell into ordinary
+level children.
 
 Native-created records omit the no-edit target because no imported original
 exists. Recovered `SaveCharacter`/`WriteCharacterSheet` behavior writes the

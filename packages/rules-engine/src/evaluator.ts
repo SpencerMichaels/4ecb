@@ -112,6 +112,8 @@ export interface EvaluatedChoice {
   readonly index: number;
   readonly type: string;
   readonly name?: string;
+  /** Legacy alternate-slot name for spellbook/prepared-power choices. */
+  readonly spellbook?: string;
   readonly optional: boolean;
   readonly selectedOccurrenceId?: string;
   readonly candidates: readonly CandidateDecision[];
@@ -1317,6 +1319,9 @@ export function evaluateCharacter(
               index: choiceIndex,
               type: rule.type,
               ...(rule.name === undefined ? {} : { name: rule.name }),
+              ...(rule.spellbook === undefined
+                ? {}
+                : { spellbook: rule.spellbook }),
               optional: rule.optional,
               ...(selected === undefined
                 ? {}

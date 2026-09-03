@@ -136,6 +136,7 @@ export type CharacterCommand =
       readonly replacesId: string;
       readonly replacement: BuildOccurrence;
     }
+  | { readonly kind: "put-alternate"; readonly alternate: BuildAlternate }
   | { readonly kind: "add-level"; readonly frame: BuildLevelFrame }
   | { readonly kind: "remove-last-level" }
   | { readonly kind: "put-inventory"; readonly entry: BuildInventoryEntry }
@@ -240,6 +241,19 @@ export function applyCharacterCommand(
           replacesId: command.replacesId,
         },
       });
+    case "put-alternate": {
+      const index = build.alternates.findIndex(
+        (alternate) => alternate.id === command.alternate.id,
+      );
+      if (index < 0)
+        return {
+          ...build,
+          alternates: [...build.alternates, command.alternate],
+        };
+      const alternates = [...build.alternates];
+      alternates[index] = command.alternate;
+      return { ...build, alternates };
+    }
     case "add-level": {
       const expected = build.levels.length + 1;
       if (command.frame.level !== expected || expected > 30)

@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import type { CharacterBuild } from "@4ecb/character-domain";
+import {
+  applyCharacterCommand,
+  type CharacterBuild,
+} from "@4ecb/character-domain";
 import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
 
-import { projectBuildForEvaluation } from "./build-projection";
+import {
+  commandForEvaluatedChoice,
+  projectBuildForEvaluation,
+} from "./build-projection";
 import { evaluateCharacter, type CharacterOccurrence } from "./evaluator";
 
 function statement(
@@ -260,19 +266,70 @@ describe("native construction conformance", () => {
     ).toBe("new-occurrence");
   });
 
-  it("projects spellbook alternates as owned without moving their durable envelope", () => {
-    const content = [entity("SPELL", "Prepared spell", "Power")];
+  it("projects spellbook alternates into their named select slot without moving their durable envelope", () => {
+    const content = [
+      entity("LEVEL", "Level 1", "Level", [
+        statement("grant", { name: "BOOK", type: "Class Feature" }, 0),
+      ]),
+      entity("BOOK", "Spellbook", "Class Feature", [
+        statement(
+          "select",
+          {
+            type: "Power",
+            number: "1",
+            Category: "Wizard,daily,1",
+            spellbook: "Power Daily 1",
+            Level: "1",
+          },
+          0,
+        ),
+      ]),
+      entity("SPELL", "Prepared spell", "Power"),
+    ];
     const build: CharacterBuild = {
       formatVersion: 1,
       effectiveLevel: 1,
-      levels: [],
+      levels: [
+        {
+          level: 1,
+          root: {
+            id: "level",
+            identity: {
+              definitionId: "LEVEL",
+              name: "Level 1",
+              type: "Level",
+            },
+            acquiredLevel: 1,
+            legality: "rules-legal",
+            children: [
+              {
+                id: "book",
+                identity: {
+                  definitionId: "BOOK",
+                  name: "Spellbook",
+                  type: "Class Feature",
+                },
+                acquiredLevel: 1,
+                legality: "rules-legal",
+                children: [],
+                unresolved: false,
+              },
+            ],
+            unresolved: false,
+          },
+        },
+      ],
       grabbag: [],
       inventory: [],
       alternates: [
         {
           id: "alternate",
-          selectName: "Daily Spellbook",
-          provider: { name: "Spellbook", type: "Class Feature" },
+          selectName: "Power Daily 1",
+          provider: {
+            definitionId: "BOOK",
+            name: "Spellbook",
+            type: "Class Feature",
+          },
           choice: {
             id: "prepared-spell",
             identity: {
@@ -292,13 +349,57 @@ describe("native construction conformance", () => {
     };
 
     const projected = projectBuildForEvaluation(build, content);
-    expect(projected.occurrences).toEqual([
+    expect(projected.occurrences).toContainEqual(
       expect.objectContaining({
         id: "prepared-spell",
         definitionId: "SPELL",
-        kind: "grabbag",
+        kind: "choice",
+        parentId: "book",
+        ruleOrdinal: 0,
+        choiceIndex: 0,
       }),
-    ]);
+    );
+    const evaluated = evaluateCharacter(projected, content);
+    expect(evaluated.choices).toContainEqual(
+      expect.objectContaining({
+        providerOccurrenceId: "book",
+        selectedOccurrenceId: "prepared-spell",
+      }),
+    );
+    expect(evaluated.complete).toBe(true);
+    const spellbookChoice = evaluated.choices.find(
+      (choice) => choice.spellbook === "Power Daily 1",
+    )!;
+    const command = commandForEvaluatedChoice(
+      build,
+      spellbookChoice,
+      evaluated.occurrences,
+      content,
+      {
+        id: "new-prepared-spell",
+        identity: {
+          definitionId: "SPELL",
+          name: "Prepared spell",
+          type: "Power",
+        },
+        acquiredLevel: 1,
+        legality: "rules-legal",
+        children: [],
+        unresolved: false,
+      },
+      (index) => `placeholder:${index}`,
+    );
+    expect(command).toMatchObject({
+      kind: "put-alternate",
+      alternate: {
+        id: "alternate",
+        selectName: "Power Daily 1",
+        choice: { id: "new-prepared-spell" },
+      },
+    });
+    expect(
+      applyCharacterCommand(build, command!).alternates[0]?.choice.id,
+    ).toBe("new-prepared-spell");
     expect(build.alternates).toHaveLength(1);
     expect(build.grabbag).toEqual([]);
   });
