@@ -380,8 +380,9 @@ The follow-up choice pass adds exact legacy support for the three Archery
 Mastery power replacements and groups large parenthetical feat families into a
 family-plus-parameter control without changing the exact stored feat identity.
 Feat and power selections now use searchable metadata tables: feat rows expose
-the legacy printable prerequisite and short-description fields, while power
-rows use accessible monochrome action/attack icons and authored flavor. Repeated
+the authored short description while prerequisite text remains searchable and
+available in the detail pane; power rows use accessible monochrome action/attack
+icons and authored flavor. Repeated
 slots share one multi-select surface, and large corpora use a bounded rendered
 window over full-candidate search to preserve interaction speed.
 

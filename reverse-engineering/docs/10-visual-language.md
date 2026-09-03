@@ -279,9 +279,12 @@ The legacy specialized pages do not treat these choices as bare names.
 `FeatPage.AddFeatAtCategory` constructs each `FeatInfo` from
 `RulesElementName`, `RulesElementPrereqs`, and rules-element field 14631; the
 corresponding `FeatInfo` properties are `Name`, `Prereqs`, and `ShortDesc`.
-Those are therefore the authoritative compact columns for a modern feat table.
-The selected feat remains an exact rules-element identity even when the modern
-surface groups a large parenthetical family.
+Those are therefore the authoritative compact browsing fields. The modern
+table keeps `Name` and `ShortDesc` as standing columns, while `Prereqs` remains
+searchable and appears in the focused detail pane: legal rows already satisfy
+it, and revealed unavailable rows carry a concise failure reason. The selected
+feat remains an exact rules-element identity even when the modern surface
+groups a large parenthetical family.
 
 `PowerPage` builds its grouped candidate rows as `PowerInfo(name, source, ...)`;
 the old tree itself exposes name/source and delegates the complete rules text to

@@ -1408,12 +1408,9 @@ function CandidateSelectionTable({
           ) : null}
         </td>
         {kind === "feat" ? (
-          <>
-            <td>{entity?.printPrerequisites || "—"}</td>
-            <td>
-              <span className="selection-table-summary">{summary || "—"}</span>
-            </td>
-          </>
+          <td>
+            <span className="selection-table-summary">{summary || "—"}</span>
+          </td>
         ) : (
           <>
             <td>
@@ -1478,10 +1475,7 @@ function CandidateSelectionTable({
             <tr>
               <th scope="col">{kind === "feat" ? "Feat" : "Power"}</th>
               {kind === "feat" ? (
-                <>
-                  <th scope="col">Prerequisites</th>
-                  <th scope="col">Description</th>
-                </>
+                <th scope="col">Description</th>
               ) : (
                 <>
                   <th scope="col">
@@ -1551,7 +1545,7 @@ function CandidateSelectionTable({
                             <span>{group.label}…</span>
                           </button>
                         </td>
-                        <td colSpan={2}>Choose {group.parameterLabel}</td>
+                        <td>Choose {group.parameterLabel}</td>
                       </tr>
                       {expanded
                         ? matchingOptions.map(({ candidate, label }) =>
@@ -1563,7 +1557,7 @@ function CandidateSelectionTable({
                 })}
             {totalRows > shownRows ? (
               <tr className="selection-table-more">
-                <td colSpan={kind === "feat" ? 3 : 4}>
+                <td colSpan={kind === "feat" ? 2 : 4}>
                   Filter the table to see the remaining {totalRows - shownRows}{" "}
                   options.
                 </td>
@@ -1573,7 +1567,7 @@ function CandidateSelectionTable({
               ? visibleCandidates.length
               : visibleFeatGroups.length) === 0 ? (
               <tr>
-                <td colSpan={kind === "feat" ? 3 : 4}>
+                <td colSpan={kind === "feat" ? 2 : 4}>
                   No matching {kind === "feat" ? "feats" : "powers"}.
                 </td>
               </tr>

@@ -101,8 +101,11 @@ application's protected visual assets.
   This is presentation-only; the selected exact legacy feat remains visible in
   the timeline and is the identity stored by the character.
 - Feat and power choices use searchable tables rather than native dropdowns.
-  Feat rows show name, printable prerequisites, and the authored Short
-  Description. Power rows show name and a compact authored flavor summary;
+  Feat rows show name and the authored Short Description. Printable
+  prerequisites remain searchable and appear in the focused detail pane; they
+  are omitted as a standing column because legal choices already satisfy them,
+  while unavailable rows state why they are blocked. Power rows show name and a
+  compact authored flavor summary;
   action type and attack type are each represented by one monochrome icon, with
   the exact source value retained as its tooltip and accessible name. Power
   usage keeps the familiar 4E at-will/encounter/daily/utility color treatment.

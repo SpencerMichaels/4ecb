@@ -91,8 +91,9 @@ Optional Auto Pick and UI sorting remain outside this follow-up.
 
 The current M5.5 interaction pass replaces feat and power dropdowns with
 searchable tables backed by authored legacy metadata. Feats expose printable
-prerequisites and Short Description; powers expose flavor plus icon-only action
-and attack types whose exact labels remain accessible. Repeated at-will and
+prerequisites in search/details and Short Description in the table, avoiding a
+redundant prerequisite column for already-legal rows; powers expose flavor plus
+icon-only action and attack types whose exact labels remain accessible. Repeated at-will and
 other same-category slots share one multi-select table, selected rows update
 optimistically, and a 150-row rendered window prevents large eligible feat sets
 from blocking the page while search still covers the complete set.

@@ -445,8 +445,10 @@ historical occurrences.
 ### D033 — Feats and powers use metadata-backed selection tables
 
 Feat and power choices use searchable row tables instead of dropdowns. Feats
-show the legacy builder's own compact `Prereqs` and `ShortDesc` fields. Powers
-show authored flavor plus icon-only action and attack-type fields; exact source
+show the legacy builder's compact `ShortDesc`; its `Prereqs` remains searchable
+and appears in the focused detail pane rather than occupying a redundant column
+after legal rows. Powers show authored flavor plus icon-only action and
+attack-type fields; exact source
 strings remain available through tooltips and accessible names. Repeated slots
 from one rules selection share one multi-select table while continuing to write
 the exact underlying slot and definition identities. Large result sets render a
