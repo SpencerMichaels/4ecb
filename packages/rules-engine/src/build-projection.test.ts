@@ -7,6 +7,7 @@ import {
 import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
 
 import {
+  canMaterializeEvaluatedChoiceProvider,
   commandForEvaluatedChoice,
   projectBuildForEvaluation,
 } from "./build-projection";
@@ -289,6 +290,14 @@ describe("build projection", () => {
       content,
     );
     const choice = initial.choices[0]!;
+    expect(
+      canMaterializeEvaluatedChoiceProvider(
+        build,
+        choice,
+        initial.occurrences,
+        content,
+      ),
+    ).toBe(true);
     const command = commandForEvaluatedChoice(
       build,
       choice,
@@ -365,6 +374,14 @@ describe("build projection", () => {
       content,
     );
     const choice = initial.choices[0]!;
+    expect(
+      canMaterializeEvaluatedChoiceProvider(
+        build,
+        choice,
+        initial.occurrences,
+        content,
+      ),
+    ).toBe(true);
     const command = commandForEvaluatedChoice(
       build,
       choice,

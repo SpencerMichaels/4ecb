@@ -266,6 +266,45 @@ export function commandForEvaluatedChoice(
   return undefined;
 }
 
+/**
+ * Reports whether an evaluated choice has a durable provider, or a complete
+ * generated-grant ancestry that can be materialized beneath one.
+ *
+ * Generated providers may be nested several grants deep (racial traits are a
+ * common example), so callers must not assume that only the immediate parent
+ * needs to exist in the stored build.
+ */
+export function canMaterializeEvaluatedChoiceProvider(
+  build: CharacterBuild,
+  choice: EvaluatedChoice,
+  evaluatedOccurrences: readonly CharacterOccurrence[],
+  entities: readonly ContentEntity[],
+): boolean {
+  if (findBuildOccurrence(build, choice.providerOccurrenceId) !== undefined)
+    return true;
+
+  const byId = new Map(
+    entities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
+  );
+  let cursor = evaluatedOccurrences.find(
+    (occurrence) => occurrence.id === choice.providerOccurrenceId,
+  );
+  for (let depth = 0; depth < evaluatedOccurrences.length; depth += 1) {
+    if (
+      cursor?.kind !== "grant" ||
+      cursor.parentId === undefined ||
+      cursor.ruleOrdinal === undefined ||
+      !byId.has(cursor.definitionId.toLocaleLowerCase())
+    )
+      return false;
+    if (findBuildOccurrence(build, cursor.parentId) !== undefined) return true;
+    cursor = evaluatedOccurrences.find(
+      (occurrence) => occurrence.id === cursor?.parentId,
+    );
+  }
+  return false;
+}
+
 export function projectBuildForEvaluation(
   build: CharacterBuild,
   entities: readonly ContentEntity[],

@@ -306,7 +306,14 @@ candidate.
   `_INTERNAL_PREREQS` is an in-memory tree parsed from `Prereqs`, not a separate
   XML metadata field; `print-prereqs` remains display-only. The recovered
   `A, B, or C` grammar also eliminates Silaqui's false Archery Mastery warning.
-- `nix develop path:. -c bash scripts/check.sh` passes 220 tests across 37 files,
+- Choice controls now recognize the same arbitrarily deep generated-grant
+  ancestry that the build projection can materialize. This keeps an unresolved
+  racial-trait selector enabled when its race grants an intermediate feature
+  before exposing the actual choice. A single ordinary choice beneath a
+  category bar no longer repeats its individual title, and grouped feat
+  selectors suppress the redundant visible **Feat** field label while retaining
+  an accessible control name.
+- `nix develop path:. -c bash scripts/check.sh` passes 250 tests across 39 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

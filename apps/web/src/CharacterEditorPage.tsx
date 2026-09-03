@@ -21,6 +21,7 @@ import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
 import {
   ABILITY_SCORE_NAMES,
   assessAbilityPointBuy,
+  canMaterializeEvaluatedChoiceProvider,
   commandForEvaluatedChoice,
   findBuildChildIndex,
   pointBuyCostToRaise,
@@ -764,11 +765,12 @@ function ChoiceEditor({
     (occurrence) => occurrence.id === choice.providerOccurrenceId,
   );
   const buildProvider = findOccurrence(build, choice.providerOccurrenceId);
-  const materializableGrant =
-    buildProvider === undefined &&
-    provider?.kind === "grant" &&
-    provider.parentId !== undefined &&
-    findOccurrence(build, provider.parentId) !== undefined;
+  const materializableProvider = canMaterializeEvaluatedChoiceProvider(
+    build,
+    choice,
+    evaluation.occurrences,
+    entities,
+  );
   const selected = selectedOccurrence(choice, evaluation);
   const showAll = useContext(ShowAllChoicesContext);
   const inspectCandidate = useContext(InspectCandidateContext);
@@ -818,9 +820,7 @@ function ChoiceEditor({
       isCandidateVisible(candidate, showAll, selected?.definitionId),
   );
   const editorDisabled =
-    disabled ||
-    (!materializableGrant && buildProvider === undefined) ||
-    choice.type === "Replacement";
+    disabled || !materializableProvider || choice.type === "Replacement";
 
   useEffect(() => {
     setOptimisticSelectedId("");
@@ -921,10 +921,17 @@ function ChoiceEditor({
         {groupedPresentation ? (
           <>
             <label>
-              {normalizedChoiceType === "background choice"
-                ? "Benefit type"
-                : "Feat"}
+              {hideSelectionLabel
+                ? null
+                : normalizedChoiceType === "background choice"
+                  ? "Benefit type"
+                  : "Feat"}
               <select
+                aria-label={
+                  normalizedChoiceType === "background choice"
+                    ? "Benefit type"
+                    : "Feat"
+                }
                 disabled={editorDisabled}
                 value={displayedGroupKey}
                 onChange={(event) => {
@@ -2614,7 +2621,10 @@ export function CharacterEditorPage({
     ) ||
       (selectedLevel === 1 && abilityScoresHouseRuled));
 
-  const renderPrimaryChoice = (choice: EvaluatedChoice) => {
+  const renderPrimaryChoice = (
+    choice: EvaluatedChoice,
+    omitIndividualHeading = false,
+  ) => {
     if (planningEvaluation === undefined) return null;
     if (groupedLevelChoices.backgrounds.includes(choice))
       return choice === groupedLevelChoices.backgrounds[0] ? (
@@ -2687,30 +2697,34 @@ export function CharacterEditorPage({
     const warning = selectedChoiceHasWarning(choice, planningEvaluation);
     return (
       <section
-        aria-labelledby={`${choiceSectionId(choice.id)}-heading`}
+        {...(omitIndividualHeading
+          ? { "aria-label": choiceTitle(choice) }
+          : { "aria-labelledby": `${choiceSectionId(choice.id)}-heading` })}
         className="level-choice-section"
         id={choiceSectionId(choice.id)}
         key={choice.id}
         tabIndex={-1}
       >
-        <header>
-          <div>
-            <h4 id={`${choiceSectionId(choice.id)}-heading`}>
-              {choiceTitle(choice)}
-            </h4>
-          </div>
-          {isUnresolvedChoice(choice) ? (
-            <span className="attention-badge">Unresolved</span>
-          ) : warning ? (
-            <span className="attention-badge">
-              <Icon name="warning" /> House rule
-            </span>
-          ) : (
-            <span className="complete-badge">
-              <Icon name="check" /> Complete
-            </span>
-          )}
-        </header>
+        {omitIndividualHeading ? null : (
+          <header>
+            <div>
+              <h4 id={`${choiceSectionId(choice.id)}-heading`}>
+                {choiceTitle(choice)}
+              </h4>
+            </div>
+            {isUnresolvedChoice(choice) ? (
+              <span className="attention-badge">Unresolved</span>
+            ) : warning ? (
+              <span className="attention-badge">
+                <Icon name="warning" /> House rule
+              </span>
+            ) : (
+              <span className="complete-badge">
+                <Icon name="check" /> Complete
+              </span>
+            )}
+          </header>
+        )}
         <ChoiceEditor
           choice={choice}
           evaluation={planningEvaluation}
@@ -3258,7 +3272,9 @@ export function CharacterEditorPage({
                               onDispatch={dispatch}
                             />
                           ) : null}
-                          {choices.map(renderPrimaryChoice)}
+                          {choices.map((choice) =>
+                            renderPrimaryChoice(choice, choices.length === 1),
+                          )}
                         </div>
                       </section>
                     ))}
