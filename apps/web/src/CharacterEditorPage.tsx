@@ -38,6 +38,7 @@ import {
   candidateReason,
   candidateTableTypeGroup,
   classTableMetadata,
+  contextualChoiceName,
   choiceSelectionTableKind,
   choiceTableSummary,
   choicePresentationLabel,
@@ -250,12 +251,36 @@ function choiceTitle(choice: EvaluatedChoice): string {
   return choicePresentationLabel(choice.name || choice.type);
 }
 
+function contextualChoiceTitle(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+  byId: ReadonlyMap<string, ContentEntity>,
+): string {
+  return (
+    contextualChoiceName(choice, evaluation, (reference) =>
+      byId.get(reference.trim().toLocaleLowerCase()),
+    ) ?? choiceTitle(choice)
+  );
+}
+
 function timelineChoiceTitle(choice: EvaluatedChoice): string {
   const identityLabel = identityChoiceLabel(choice.type);
   if (identityLabel !== undefined) return identityLabel;
   return ["Class", "Race", "Background"].includes(legacyChoiceSection(choice))
     ? choicePresentationLabel(choice.type)
     : choiceTitle(choice);
+}
+
+function contextualTimelineChoiceTitle(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+  byId: ReadonlyMap<string, ContentEntity>,
+): string {
+  return (
+    contextualChoiceName(choice, evaluation, (reference) =>
+      byId.get(reference.trim().toLocaleLowerCase()),
+    ) ?? timelineChoiceTitle(choice)
+  );
 }
 
 const powerGroupLabels: Readonly<Record<LegacyVisualTone, string>> = {
@@ -616,6 +641,7 @@ function BuildPresetPanel({
     presets[0]?.entity.id ?? "",
   );
   const [applyStatus, setApplyStatus] = useState<string>();
+  const [open, setOpen] = useState(false);
   const selectedPreset = presets.find(
     ({ entity }) => entity.id === selectedPresetId,
   );
@@ -626,76 +652,84 @@ function BuildPresetPanel({
     );
     const next = selected ?? presets[0];
     setSelectedPresetId(next?.entity.id ?? "");
-    inspectCandidate?.(next);
-  }, [inspectCandidate, presets, selectedPresetId]);
+    if (open) inspectCandidate?.(next);
+  }, [inspectCandidate, open, presets, selectedPresetId]);
 
   if (presets.length === 0) return null;
   return (
-    <section className="build-presets" aria-labelledby="build-presets-heading">
-      <h5 id="build-presets-heading">Starting preset</h5>
-      <CandidateSelectionTable
-        kind="preset"
-        candidates={presets.map(({ candidate }) => candidate)}
-        featGroups={[]}
-        selectedIds={new Set(selectedPresetId === "" ? [] : [selectedPresetId])}
-        expandedGroupKey=""
-        byId={byId}
-        disabled={false}
-        onExpandGroup={() => undefined}
-        onInspect={(candidate) => {
-          const selected = presets.find(
-            ({ candidate: option }) =>
-              option.definitionId === candidate.definitionId,
-          );
-          setSelectedPresetId(candidate.definitionId);
-          setApplyStatus(undefined);
-          inspectCandidate?.(selected);
-        }}
-        onToggle={(definitionId) => {
-          const selected = presets.find(
-            ({ candidate }) => candidate.definitionId === definitionId,
-          );
-          setSelectedPresetId(definitionId);
-          setApplyStatus(undefined);
-          inspectCandidate?.(selected);
-        }}
-      />
-      <div className="build-preset-actions">
-        <button
-          disabled={selectedPreset === undefined}
-          type="button"
-          onClick={() => {
-            if (selectedPreset === undefined) return;
-            const command = applyBuildPresetCommand(
-              build,
-              selectedPreset.entity,
-              levelChoices,
-              evaluation,
-              entities,
-              (definitionId, index) =>
-                `web:preset:${definitionId}:${index}:${crypto.randomUUID()}`,
+    <details
+      className="build-presets"
+      open={open}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary>Starting presets</summary>
+      <div className="build-presets-content">
+        <CandidateSelectionTable
+          kind="preset"
+          candidates={presets.map(({ candidate }) => candidate)}
+          featGroups={[]}
+          selectedIds={
+            new Set(selectedPresetId === "" ? [] : [selectedPresetId])
+          }
+          expandedGroupKey=""
+          byId={byId}
+          disabled={false}
+          onExpandGroup={() => undefined}
+          onInspect={(candidate) => {
+            const selected = presets.find(
+              ({ candidate: option }) =>
+                option.definitionId === candidate.definitionId,
             );
-            if (command === undefined) {
-              setApplyStatus("No open choices match this preset.");
-              return;
-            }
-            const applied =
-              command.kind === "batch" ? command.commands.length : 1;
-            setApplyStatus(
-              `${applied} ${applied === 1 ? "choice" : "choices"} applied.`,
-            );
-            onDispatch(command);
+            setSelectedPresetId(candidate.definitionId);
+            setApplyStatus(undefined);
+            inspectCandidate?.(selected);
           }}
-        >
-          Apply
-        </button>
+          onToggle={(definitionId) => {
+            const selected = presets.find(
+              ({ candidate }) => candidate.definitionId === definitionId,
+            );
+            setSelectedPresetId(definitionId);
+            setApplyStatus(undefined);
+            inspectCandidate?.(selected);
+          }}
+        />
+        <div className="build-preset-actions">
+          <button
+            disabled={selectedPreset === undefined}
+            type="button"
+            onClick={() => {
+              if (selectedPreset === undefined) return;
+              const command = applyBuildPresetCommand(
+                build,
+                selectedPreset.entity,
+                levelChoices,
+                evaluation,
+                entities,
+                (definitionId, index) =>
+                  `web:preset:${definitionId}:${index}:${crypto.randomUUID()}`,
+              );
+              if (command === undefined) {
+                setApplyStatus("No open choices match this preset.");
+                return;
+              }
+              const applied =
+                command.kind === "batch" ? command.commands.length : 1;
+              setApplyStatus(
+                `${applied} ${applied === 1 ? "choice" : "choices"} applied.`,
+              );
+              onDispatch(command);
+            }}
+          >
+            Apply
+          </button>
+        </div>
+        {applyStatus === undefined ? null : (
+          <p aria-live="polite" className="build-preset-status">
+            {applyStatus}
+          </p>
+        )}
       </div>
-      {applyStatus === undefined ? null : (
-        <p aria-live="polite" className="build-preset-status">
-          {applyStatus}
-        </p>
-      )}
-    </section>
+    </details>
   );
 }
 
@@ -1356,6 +1390,7 @@ function candidateTableNoun(
     power: ["Power", "powers"],
     deity: ["Deity", "deities"],
     class: ["Class", "classes"],
+    feature: ["Class Feature", "class features"],
     preset: ["Preset", "presets"],
     option: ["Option", "options"],
   };
@@ -1849,9 +1884,12 @@ function ChoiceFlowSection({
       <header>
         <div>
           <h4 id={`${choiceSectionId(root.id)}-heading`}>
-            {choices.length > 1 && selectedRootEntity !== undefined
-              ? selectedRootEntity.name
-              : choiceTitle(root)}
+            {contextualChoiceName(root, evaluation, (reference) =>
+              byId.get(reference.trim().toLocaleLowerCase()),
+            ) ??
+              (choices.length > 1 && selectedRootEntity !== undefined
+                ? selectedRootEntity.name
+                : choiceTitle(root))}
           </h4>
         </div>
         {warning ? (
@@ -1875,7 +1913,7 @@ function ChoiceFlowSection({
               <h5 id={`${choiceSectionId(choice.id)}-step-heading`}>
                 {index === 0
                   ? choicePresentationLabel(choice.type)
-                  : choiceTitle(choice)}
+                  : contextualChoiceTitle(choice, evaluation, byId)}
               </h5>
             </div>
             <ChoiceEditor
@@ -2126,7 +2164,9 @@ function RepeatedChoiceGroup({
   const root = choices[0]!;
   const candidateKind = choiceSelectionTableKind(root);
   const tableKind =
-    candidateKind === "feat" || candidateKind === "power"
+    candidateKind === "feat" ||
+    candidateKind === "power" ||
+    candidateKind === "feature"
       ? candidateKind
       : undefined;
   const chosen = choices.filter(
@@ -2145,7 +2185,9 @@ function RepeatedChoiceGroup({
       <header>
         <div>
           <h4 id={`${choiceSectionId(root.id)}-heading`}>
-            {repeatedChoiceGroupTitle(choices, byId)}
+            {candidateKind === "feature"
+              ? contextualChoiceTitle(root, evaluation, byId)
+              : repeatedChoiceGroupTitle(choices, byId)}
           </h4>
         </div>
         {warning ? (
@@ -2207,7 +2249,7 @@ function RepeatedCandidateTableEditor({
   rollbackRevision,
   onDispatch,
 }: {
-  readonly kind: "feat" | "power";
+  readonly kind: "feat" | "power" | "feature";
   readonly choices: readonly EvaluatedChoice[];
   readonly evaluation: EvaluatedCharacter;
   readonly build: CharacterRecord["build"];
@@ -3874,7 +3916,13 @@ export function CharacterEditorPage({
     return (
       <section
         {...(omitIndividualHeading
-          ? { "aria-label": choiceTitle(choice) }
+          ? {
+              "aria-label": contextualChoiceTitle(
+                choice,
+                planningEvaluation,
+                byId,
+              ),
+            }
           : { "aria-labelledby": `${choiceSectionId(choice.id)}-heading` })}
         className={`level-choice-section${selectedLevel <= build.effectiveLevel && isUnresolvedChoice(choice) ? " choice-section-incomplete" : ""}`}
         id={choiceSectionId(choice.id)}
@@ -3885,7 +3933,7 @@ export function CharacterEditorPage({
           <header>
             <div>
               <h4 id={`${choiceSectionId(choice.id)}-heading`}>
-                {choiceTitle(choice)}
+                {contextualChoiceTitle(choice, planningEvaluation, byId)}
               </h4>
             </div>
             {warning ? (
@@ -4284,7 +4332,14 @@ export function CharacterEditorPage({
                       return choice === repeated[0]
                         ? [
                             {
-                              label: repeatedChoiceGroupTitle(repeated, byId),
+                              label:
+                                choiceSelectionTableKind(choice) === "feature"
+                                  ? contextualTimelineChoiceTitle(
+                                      choice,
+                                      planningEvaluation!,
+                                      byId,
+                                    )
+                                  : repeatedChoiceGroupTitle(repeated, byId),
                               choices: repeated,
                             },
                           ]
@@ -4295,14 +4350,23 @@ export function CharacterEditorPage({
                         ? [
                             {
                               label:
-                                identityLabel ?? timelineChoiceTitle(choice),
+                                identityLabel ??
+                                contextualTimelineChoiceTitle(
+                                  choice,
+                                  planningEvaluation!,
+                                  byId,
+                                ),
                               choices: flow,
                             },
                           ]
                         : [];
                     return [
                       {
-                        label: timelineChoiceTitle(choice),
+                        label: contextualTimelineChoiceTitle(
+                          choice,
+                          planningEvaluation!,
+                          byId,
+                        ),
                         choices: [choice],
                       },
                     ];
@@ -4636,18 +4700,6 @@ export function CharacterEditorPage({
                         role="tabpanel"
                       >
                         <div className="legacy-choice-list">
-                          {activeChoiceSection.section === "Class" &&
-                          selectedLevel === 1 ? (
-                            <BuildPresetPanel
-                              choices={buildPresetChoices}
-                              levelChoices={mechanicalLevelChoices}
-                              evaluation={planningEvaluation}
-                              build={build}
-                              entities={entities}
-                              byId={byId}
-                              onDispatch={dispatch}
-                            />
-                          ) : null}
                           {activeChoiceSection.section === "Ability Scores" &&
                           selectedLevel === 1 ? (
                             <BaseAbilityScoreEditor
@@ -4655,12 +4707,28 @@ export function CharacterEditorPage({
                               onDispatch={dispatch}
                             />
                           ) : null}
-                          {activeChoiceSection.choices.map((choice) =>
-                            renderPrimaryChoice(
-                              choice,
-                              activeChoiceSection.choices.length === 1,
-                            ),
-                          )}
+                          {activeChoiceSection.choices.map((choice) => (
+                            <Fragment key={choice.id}>
+                              {renderPrimaryChoice(
+                                choice,
+                                activeChoiceSection.choices.length === 1,
+                              )}
+                              {activeChoiceSection.section === "Class" &&
+                              selectedLevel === 1 &&
+                              choice.type.trim().toLocaleLowerCase() ===
+                                "class" ? (
+                                <BuildPresetPanel
+                                  choices={buildPresetChoices}
+                                  levelChoices={mechanicalLevelChoices}
+                                  evaluation={planningEvaluation}
+                                  build={build}
+                                  entities={entities}
+                                  byId={byId}
+                                  onDispatch={dispatch}
+                                />
+                              ) : null}
+                            </Fragment>
+                          ))}
                         </div>
                       </section>
                     )}

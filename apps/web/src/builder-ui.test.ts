@@ -18,6 +18,7 @@ import {
   candidateReason,
   candidateTableTypeGroup,
   classTableMetadata,
+  contextualChoiceName,
   choiceSelectionTableKind,
   choiceTableSummary,
   choicePresentationLabel,
@@ -230,6 +231,11 @@ describe("builder planning UI", () => {
     ).toBe("class");
     expect(
       choiceSelectionTableKind({
+        type: "Class Feature",
+      } as unknown as EvaluatedCharacter["choices"][number]),
+    ).toBe("feature");
+    expect(
+      choiceSelectionTableKind({
         type: "Deity",
       } as unknown as EvaluatedCharacter["choices"][number]),
     ).toBe("deity");
@@ -308,6 +314,81 @@ describe("builder planning UI", () => {
     expect(firstSentence("First sentence. Second sentence.")).toBe(
       "First sentence.",
     );
+  });
+
+  it("names a generic class-feature choice from its authored provider", () => {
+    const provider = {
+      ...level(0),
+      id: "FEATURE_CENSURE",
+      name: "Avenger's Censure",
+      type: "Class Feature",
+    };
+    const option = {
+      ...level(0),
+      id: "FEATURE_UNITY",
+      name: "Censure of Unity",
+      type: "Class Feature",
+      categories: ["FEATURE_CENSURE", "1"],
+      specifics: [
+        {
+          name: "Short Description",
+          value: "Fight more effectively beside your allies.",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+    const choice = {
+      id: "censure-choice",
+      level: 1,
+      providerOccurrenceId: "censure-provider",
+      ruleOrdinal: 0,
+      index: 0,
+      type: "Class Feature",
+      optional: false,
+      candidates: [candidate(option.id)],
+    } as EvaluatedCharacter["choices"][number];
+    const evaluation = {
+      occurrences: [
+        {
+          id: "censure-provider",
+          definitionId: provider.id,
+          acquiredLevel: 1,
+          kind: "grant",
+        },
+      ],
+    } as unknown as EvaluatedCharacter;
+    const byId = new Map(
+      [provider, option].map((entity) => [entity.id, entity] as const),
+    );
+
+    expect(contextualChoiceName(choice, evaluation, (id) => byId.get(id))).toBe(
+      "Avenger's Censure",
+    );
+    expect(choiceTableSummary(option, "feature")).toBe(
+      "Fight more effectively beside your allies.",
+    );
+    expect(
+      contextualChoiceName(
+        choice,
+        { occurrences: [] } as unknown as EvaluatedCharacter,
+        (id) => byId.get(id),
+      ),
+    ).toBe("Avenger's Censure");
+
+    const anonymousOption = {
+      ...option,
+      id: "FEATURE_ANONYMOUS",
+      name: "Anonymous Option",
+      categories: ["1"],
+    };
+    expect(
+      contextualChoiceName(
+        { ...choice, candidates: [candidate(anonymousOption.id)] },
+        { occurrences: [] } as unknown as EvaluatedCharacter,
+        (id) => (id === anonymousOption.id ? anonymousOption : undefined),
+      ),
+    ).toBeUndefined();
   });
 
   it("applies a Build preset only to matching unresolved choices", () => {

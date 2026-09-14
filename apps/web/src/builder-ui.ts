@@ -61,7 +61,7 @@ export function isBuildPresetChoice(choice: EvaluatedChoice): boolean {
 }
 
 export type ChoiceSelectionTableKind =
-  "feat" | "power" | "class" | "deity" | "preset" | "option";
+  "feat" | "power" | "class" | "feature" | "deity" | "preset" | "option";
 
 export function choiceSelectionTableKind(
   choice: EvaluatedChoice,
@@ -74,6 +74,7 @@ export function choiceSelectionTableKind(
   )
     return "power";
   if (type === "class") return "class";
+  if (type === "class feature") return "feature";
   if (type === "deity") return "deity";
   if (type !== "background choice" && (choice.candidates?.length ?? 0) > 8)
     return "option";
@@ -98,6 +99,11 @@ export function choiceTableSummary(
   if (kind === "feat") return contentSpecificValue(entity, "Short Description");
   if (kind === "class")
     return contentSpecificValue(entity, "Short Description");
+  if (kind === "feature")
+    return (
+      contentSpecificValue(entity, "Short Description") ??
+      firstSentence(entity.description)
+    );
   if (kind === "deity") return contentSpecificValue(entity, "Alignment");
   if (kind === "preset") return firstSentence(entity.description);
   return entity.flavor?.trim() || entity.description.trim() || undefined;
@@ -143,6 +149,41 @@ export function classTableMetadata(entity: ContentEntity): {
       contentSpecificValue(entity, "Power Source"),
     ),
   };
+}
+
+/**
+ * Recovers the authored parent feature behind a generic nested select. The
+ * evaluator keeps the provider occurrence, while shared candidate categories
+ * provide a fallback for unresolved or partially materialized legacy builds.
+ */
+export function contextualChoiceName(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+  resolveEntity: (reference: string) => ContentEntity | undefined,
+): string | undefined {
+  const type = choice.type.trim().toLocaleLowerCase();
+  if (type !== "class feature") return undefined;
+
+  const provider = evaluation.occurrences.find(
+    (occurrence) => occurrence.id === choice.providerOccurrenceId,
+  );
+  const providerEntity =
+    provider === undefined ? undefined : resolveEntity(provider.definitionId);
+  if (providerEntity?.type.trim().toLocaleLowerCase() === type)
+    return providerEntity.name;
+
+  const candidateEntities = choice.candidates.flatMap((candidate) => {
+    const entity = resolveEntity(candidate.definitionId);
+    return entity === undefined ? [] : [entity];
+  });
+  const first = candidateEntities[0];
+  if (first === undefined) return undefined;
+  const sharedCategories = first.categories.filter((category) =>
+    candidateEntities.every((entity) => entity.categories.includes(category)),
+  );
+  return sharedCategories
+    .map(resolveEntity)
+    .find((entity) => entity?.type.trim().toLocaleLowerCase() === type)?.name;
 }
 
 export interface CandidateTableTypeGroup {

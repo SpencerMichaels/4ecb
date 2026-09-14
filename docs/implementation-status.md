@@ -365,6 +365,12 @@ candidate.
   retained-description pairs (for example, `Striker` plus its explanatory
   prose). Starting-preset rows use only the first sentence of the full authored
   description while the details pane continues to show the complete record.
+- Class-feature choices now use shared candidate tables with Short Description
+  summaries instead of radio-button grids. Nested choices recover an authored
+  parent feature name from evaluator/provider provenance or a shared parent
+  category—covering Avenger's Censure—while anonymous direct class rules retain
+  the generic Class Feature heading. Overview uses the same names. Starting
+  presets now follow the Class table and are collapsed by default.
 - Base ability scores now live only in the level-1 Ability Scores group, before
   racial increases, and no longer appear as an unrelated editor below the level
   workspace. The editor now mirrors the legacy 22-point-buy path: new native

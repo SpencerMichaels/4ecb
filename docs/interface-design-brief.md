@@ -126,11 +126,12 @@ application's protected visual assets.
   removed with the same compact X action used for a completed optional
   background; removing one never clears the required primary background.
 - Legacy Build records are starting presets, not persistent mechanical choices.
-  Present them after class selection as a searchable table and an explicit
-  Apply action. Each row summarizes the preset with the first sentence of its
-  authored description. The inspected preset drives the shared detail pane,
-  with the complete description followed by the suggested feature, feat, skill,
-  and power list.
+  Present them immediately after class selection in a collapsed **Starting
+  presets** disclosure containing a searchable table and explicit Apply action.
+  Each row summarizes the preset with the first sentence of its authored
+  description. The inspected preset drives the shared detail pane, with the
+  complete description followed by the suggested feature, feat, skill, and
+  power list.
   Applying it fills only matching, currently open, rules-legal level-1 choices,
   reports the result immediately, and never overwrites work already chosen. An
   imported legacy Build occurrence remains preserved internally for round-trip
@@ -165,6 +166,14 @@ application's protected visual assets.
   `Defender. ...`); the presentation model splits each into a concise first-word
   label and retained description so tables can stay compact without discarding
   the authored explanation.
+- Class-feature choices use the same table interaction rather than compact radio
+  buttons, with an authored Short Description column when present and the first
+  sentence of the full description as a fallback. A generic nested choice takes
+  the name of its authored class-feature provider (for example, **Avenger's
+  Censure**) when that relationship exists. If the legacy rule supplies no such
+  parent name, retain the conservative **Class Feature** heading rather than
+  inferring one from candidate names. Use the same authored name in Overview so
+  the history and editable section remain consistent.
 - Repeated feat or power slots in one section share a single multi-select table
   and one **X of Y chosen** count. Selected rows remain visible. To keep large
   feat corpora responsive, search always covers the complete candidate set but

@@ -622,13 +622,15 @@ selection targets as buttons and its replacement candidates as a table. The
 compact numeric current-level selector remains a dropdown because its ordered
 1–30 scalar range is familiar and space-sensitive.
 
-The shared candidate table now supports feats, powers, deities, starting
-presets, and generic large choices. Its reusable shell owns filtering, result
-counts, persistent content-ID favorites, selected-row priority, inspection, and
-commit behavior; type-specific columns are supplied by the table kind. Deities
-show Name and authored Alignment. Character details requests full candidate
-data for its owning choice levels when that tab opens, preserving the normal
-bounded evaluator request outside that workspace.
+The shared candidate table now supports feats, powers, classes, class features,
+deities, starting presets, and generic large choices. Its reusable shell owns
+filtering, result counts, persistent content-ID favorites, selected-row
+priority, inspection, and commit behavior; type-specific columns are supplied
+by the table kind. Deities show Name and authored Alignment. Class-feature rows
+use authored Short Description where available and a concise description
+fallback otherwise. Character details requests full candidate data for its
+owning choice levels when that tab opens, preserving the normal bounded
+evaluator request outside that workspace.
 
 Equipment and Diagnostics are peer workspace tabs beside Build, Overview, and
 Character details. This removes the persistent bottom disclosures and gives the
@@ -641,6 +643,13 @@ and derives separate Role and Power Source labels from the first word of those
 compound legacy fields, retaining the remainder as descriptive metadata. A
 preset row uses the first complete sentence of its authored description; its
 full text remains available in the shared detail pane.
+
+Starting presets follow the class selector and remain collapsed by default
+because applying one is optional. Generic nested Class Feature choices use the
+authored provider feature's name when the evaluator/provider graph supplies it,
+falling back through a shared parent category. If neither relationship exists,
+the UI keeps the generic Class Feature label and does not infer a heading from
+the candidate names.
 
 ## Deferred decisions and decision points
 
