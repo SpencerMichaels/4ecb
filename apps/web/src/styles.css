@@ -2252,7 +2252,7 @@ textarea {
 
 @media (min-width: 60.01rem) and (min-height: 42rem) {
   .level-choice-tab-panel .selection-table-scroll {
-    height: max(12rem, calc(100dvh - 34rem));
+    height: max(24rem, calc(100dvh - 30rem));
     max-height: none;
   }
 }

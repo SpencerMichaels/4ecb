@@ -213,6 +213,11 @@ candidate.
   Live Silaqui inspection confirmed equal 46.4px level-title/tab heights, one
   keyboard tab stop, no heading exposed as a tab, transparent zero-border and
   zero-padding outer choice chrome, and no horizontal overflow.
+- Desktop feat and power tables now use a 24rem minimum rather than the obsolete
+  12rem fallback left over from the removed overview chrome, and subtract 30rem
+  rather than 34rem when growing with a taller viewport. At the constrained
+  1280×720 browser viewport, the Silaqui feat table grew from 192px to 384px
+  while retaining its bounded row scroll and no horizontal overflow.
 - Verification on 2026-09-13 passed the complete public check (263 tests,
   workspace typechecks, production/PWA build, print checks, deterministic
   content checks, and query benchmark). Live full-corpus verification at 1280px
