@@ -457,6 +457,19 @@ stalling the editor. This changes only presentation: legality, source
 entitlement, house-rule selection, command construction, autosave, and undo all
 remain evaluator/domain responsibilities.
 
+### D034 — Content-derived runtimes live at application scope
+
+The client-side router preserves one browser document across ordinary page
+changes. Decoded packs, initialized rules workers, exact-input evaluation
+promises, and built Compendium indexes therefore belong to an application-scoped
+runtime rather than individual route components. Resources are keyed by
+immutable pack identity/revision, bounded to two recently used profiles per
+cache family, and terminated only on eviction, initialization failure, or an
+explicit content/profile change. Route unmount cancels UI delivery but does not
+discard expensive immutable state. Full refresh remains a fresh reconstruction
+from IndexedDB because dedicated workers and the document heap are destroyed;
+neither Electron nor a service worker changes that boundary automatically.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

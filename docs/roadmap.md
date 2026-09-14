@@ -385,6 +385,10 @@ available in the detail pane; power rows use accessible monochrome action/attack
 icons and authored flavor. Repeated
 slots share one multi-select surface, and large corpora use a bounded rendered
 window over full-candidate search to preserve interaction speed.
+The application shell now retains decoded packs, rules workers, memoized exact
+evaluations, and Compendium indexes across client-side route changes. The first
+full-corpus Compendium initialization still reconstructs state from IndexedDB;
+subsequent navigation reuses it rather than replaying the six-second index build.
 
 ## M6 — Local phone play mode
 

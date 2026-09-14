@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 
-import {
-  CharacterRepository,
-  ContentPackRepository,
-} from "@4ecb/browser-storage";
+import { CharacterRepository } from "@4ecb/browser-storage";
 import type { CharacterRecord, SheetSettings } from "@4ecb/character-domain";
 import type { ContentPackManifest } from "@4ecb/content-pack";
+import { appContentRuntime } from "./app-runtime";
 import {
   projectBuildForEvaluation,
   type EvaluatedCharacter,
@@ -18,10 +16,8 @@ import {
 } from "@4ecb/sheet-model";
 
 import { contentProfileMatchesRevision } from "./profile-migration";
-import { RulesWorkerClient } from "./rules-client";
 
 const characters = new CharacterRepository();
-const packs = new ContentPackRepository();
 
 function ValueList({
   values,
@@ -102,7 +98,7 @@ export function CharacterSheetPage({
 }) {
   const [character, setCharacter] = useState<CharacterRecord>();
   const [content, setContent] =
-    useState<Awaited<ReturnType<ContentPackRepository["get"]>>>();
+    useState<Awaited<ReturnType<typeof appContentRuntime.getPack>>>();
   const [error, setError] = useState<string>();
   const [evaluationError, setEvaluationError] = useState<string>();
   const [evaluation, setEvaluation] = useState<EvaluatedCharacter>();
@@ -118,7 +114,9 @@ export function CharacterSheetPage({
       .then(async (loaded) => {
         setCharacter(loaded);
         if (loaded?.profileBinding !== undefined)
-          setContent(await packs.get(loaded.profileBinding.packId));
+          setContent(
+            await appContentRuntime.getPack(loaded.profileBinding.packId),
+          );
       })
       .catch((reason: unknown) =>
         setError(reason instanceof Error ? reason.message : String(reason)),
@@ -131,17 +129,16 @@ export function CharacterSheetPage({
   useEffect(() => {
     if (character === undefined || content === undefined || !exactProfile)
       return;
-    const client = new RulesWorkerClient();
     let cancelled = false;
     setEvaluating(true);
     setEvaluation(undefined);
     setEvaluationError(undefined);
-    void client
-      .initialize(
+    void appContentRuntime
+      .getRulesClient(
         content.manifest.packId,
         character.profileBinding?.contentDigest,
       )
-      .then(() =>
+      .then((client) =>
         client.evaluate(
           projectBuildForEvaluation(character.build, content.entities),
         ),
@@ -167,7 +164,6 @@ export function CharacterSheetPage({
       });
     return () => {
       cancelled = true;
-      client.terminate();
     };
   }, [character?.build, content, exactProfile]);
   const model = useMemo(() => {

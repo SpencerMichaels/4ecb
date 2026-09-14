@@ -14,8 +14,9 @@ import {
 } from "@4ecb/query-engine";
 
 import { EntityDetailPage } from "./EntityDetailPage";
+import { appContentRuntime, type QueryRuntimeClient } from "./app-runtime";
 import { Icon } from "./Icon";
-import { QueryWorkerClient, type QueryIndexInfo } from "./query-client";
+import type { QueryIndexInfo } from "./query-client";
 import { compendiumHash } from "./routes";
 import { entityTypeIcon } from "./visual-language";
 
@@ -207,7 +208,7 @@ export function CompendiumPage({
   query,
   entityId,
 }: CompendiumPageProps) {
-  const [client, setClient] = useState<QueryWorkerClient>();
+  const [client, setClient] = useState<QueryRuntimeClient>();
   const [indexInfo, setIndexInfo] = useState<QueryIndexInfo>();
   const [result, setResult] = useState<CompendiumQueryResult>();
   const [entity, setEntity] = useState<ContentEntity>();
@@ -247,17 +248,16 @@ export function CompendiumPage({
     setError(undefined);
     setIndexInfo(undefined);
     setResult(undefined);
-    const nextClient = new QueryWorkerClient((phase, recordCount) => {
-      if (cancelled) return;
-      setStatus(
-        phase === "loading-pack"
-          ? "Loading the active pack from browser storage…"
-          : `Building the search index for ${recordCount?.toLocaleString() ?? "the"} records…`,
-      );
-    });
-    void nextClient
-      .initialize(activePackId)
-      .then((info) => {
+    void appContentRuntime
+      .getQueryClient(activePackId, (phase, recordCount) => {
+        if (cancelled) return;
+        setStatus(
+          phase === "loading-pack"
+            ? "Loading the active pack from browser storage…"
+            : `Building the search index for ${recordCount?.toLocaleString() ?? "the"} records…`,
+        );
+      })
+      .then(({ client: nextClient, info }) => {
         if (cancelled) return;
         setClient(nextClient);
         setIndexInfo(info);
@@ -271,7 +271,6 @@ export function CompendiumPage({
       });
     return () => {
       cancelled = true;
-      nextClient.terminate("Active profile changed");
     };
   }, [activePackId]);
 

@@ -20,6 +20,7 @@ import {
   parseRuntimeContentConfig,
   type AdvertisedContentPack,
 } from "./runtime-content";
+import { appContentRuntime } from "./app-runtime";
 import {
   applyThemePreference,
   parseThemePreference,
@@ -90,6 +91,11 @@ export function App() {
     setActiveProfile(profile);
     setStorageReady(true);
   }, []);
+
+  const refreshAfterContentChange = useCallback(async () => {
+    appContentRuntime.clear();
+    await refresh();
+  }, [refresh]);
 
   const installAdvertisedPack = useCallback(
     async (advertised: AdvertisedContentPack): Promise<void> => {
@@ -309,7 +315,7 @@ export function App() {
           {...(runtimeContentError === undefined
             ? {}
             : { runtimeContentError })}
-          onChanged={refresh}
+          onChanged={refreshAfterContentChange}
           onRetryAdvertised={installAdvertisedPack}
         />
       ) : route.page === "characters" ? (

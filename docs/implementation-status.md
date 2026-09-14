@@ -98,6 +98,19 @@ other same-category slots share one multi-select table, selected rows update
 optimistically, and a 150-row rendered window prevents large eligible feat sets
 from blocking the page while search still covers the complete set.
 
+The M5.5 runtime pass moves immutable content-derived state out of route
+components and into a bounded application-scoped cache. Decoded packs,
+initialized rules workers, the most recent exact evaluation inputs, and built
+Compendium indexes now survive Build/Sheet/Compendium/Characters navigation in
+the same document. Content/profile changes explicitly invalidate the cache;
+failed or least-recently-used worker entries terminate cleanly. Focused tests
+cover concurrent decode/initialization deduplication, exact evaluation
+memoization, invalidation, and worker disposal. Live Chromium verification built
+the 38,339-record index once in 6,019 ms, navigated Compendium → Characters →
+Compendium, reused the original completed index without presenting Cancel
+indexing, and logged no warnings or errors. Full browser refresh remains one
+intentional reconstruction from IndexedDB.
+
 Verification for this slice: `nix develop path:. -c pnpm --filter
 @4ecb/character-domain typecheck`, the equivalent `@4ecb/rules-engine` and
 `@4ecb/legacy-dnd4e` typechecks, and `nix develop path:. -c pnpm vitest run
@@ -428,7 +441,7 @@ candidate.
   Focused Expertise variant absent from the installed pack, plus two unverified
   legacy feat prerequisites; the importer preserves that evidence rather than
   inventing rules for it.
-- `nix develop path:. -c scripts/check.sh` passes 260 tests across 39 files,
+- `nix develop path:. -c scripts/check.sh` passes 262 tests across 40 files,
   formatting, ESLint, all TypeScript projects, the production/PWA build,
   Chromium/Firefox Letter and A4 print artifacts, deterministic content checks,
   and the query benchmark.

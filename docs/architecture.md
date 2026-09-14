@@ -543,6 +543,19 @@ assets. It does not cache user content through ordinary HTTP cache semantics.
 Application upgrade UI detects when a new shell is ready and avoids refreshing
 during an active edit without consent.
 
+The hash-routed React shell is one browser document across ordinary page
+changes. An application-scoped content runtime therefore owns decoded immutable
+packs, initialized rules workers, memoized exact evaluation inputs, and built
+Compendium indexes beyond the lifetime of any route component. Routes borrow
+these resources and cancel only their own pending UI updates when unmounted;
+they do not terminate shared workers. Entries are keyed by immutable pack ID and
+content digest, retained with a small least-recently-used bound, and explicitly
+cleared when content/profile settings change. A full browser refresh still
+destroys the document heap and dedicated workers, so it performs one new
+startup reconstruction from IndexedDB. Cross-refresh worker persistence is not
+assigned to the service worker because browser service-worker lifetime is not a
+reliable in-memory cache contract.
+
 ## Deployment
 
 ### MVP container

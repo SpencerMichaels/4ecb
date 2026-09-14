@@ -23,6 +23,12 @@ There is no account, sync service, server-side copy, or telemetry. Treat the
 native JSON library backup and your original private source files as your
 recovery copies.
 
+While the application remains open, ordinary Build, Sheet, Compendium,
+Characters, and Content navigation reuses loaded content and indexes. Refreshing
+or closing the tab destroys that temporary in-memory state, so the next page
+load reconstructs it once from IndexedDB; it does not require re-importing the
+pack.
+
 ## Install or self-host the application
 
 For a hosted deployment, open its HTTPS URL and use the browser's install

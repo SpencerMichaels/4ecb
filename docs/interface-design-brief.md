@@ -74,6 +74,11 @@ application's protected visual assets.
   count.
 - Keep important evaluation, save, and validation feedback immediate and
   comprehensible. Interaction responsiveness is a product requirement.
+- Ordinary client-side page changes reuse decoded content, rules workers,
+  memoized exact evaluations, and Compendium indexes for the active immutable
+  profile. A route must not present multi-second content initialization merely
+  because its previous component was unmounted. A full browser refresh may show
+  one truthful startup reconstruction from persistent browser storage.
 - Selecting an option updates the visible control and its detail pane
   immediately; IndexedDB persistence and rules reevaluation continue in the
   background. Every information-bearing selection surface keeps the focused or

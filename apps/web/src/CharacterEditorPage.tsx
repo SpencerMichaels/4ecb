@@ -8,10 +8,8 @@ import {
   useState,
 } from "react";
 
-import {
-  CharacterRepository,
-  ContentPackRepository,
-} from "@4ecb/browser-storage";
+import { CharacterRepository } from "@4ecb/browser-storage";
+import { appContentRuntime, type RulesRuntimeClient } from "./app-runtime";
 import {
   CharacterTransaction,
   type BuildOccurrence,
@@ -66,7 +64,6 @@ import {
 } from "./builder-ui";
 import { Icon, type IconName } from "./Icon";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
-import { RulesWorkerClient } from "./rules-client";
 import {
   entityTypeIcon,
   entityVisualTone,
@@ -77,7 +74,6 @@ import {
 } from "./visual-language";
 
 const characters = new CharacterRepository();
-const packs = new ContentPackRepository();
 const ShowAllChoicesContext = createContext(false);
 type InspectedOption = {
   readonly candidate: CandidateDecision;
@@ -3072,7 +3068,7 @@ export function CharacterEditorPage({
   const saveQueue = useRef<
     OptimisticBuildSaveQueue<CharacterRecord> | undefined
   >(undefined);
-  const rulesClient = useRef<RulesWorkerClient | undefined>(undefined);
+  const rulesClient = useRef<RulesRuntimeClient | undefined>(undefined);
   const evaluationRevision = useRef(0);
   const evaluationCache = useRef(new Map<string, EvaluatedCharacter>());
 
@@ -3126,7 +3122,9 @@ export function CharacterEditorPage({
         setSelectedLevel(loaded.build.effectiveLevel);
         setSaveState({ phase: "saved", message: "Saved locally" });
         if (loaded.profileBinding !== undefined) {
-          const pack = await packs.get(loaded.profileBinding.packId);
+          const pack = await appContentRuntime.getPack(
+            loaded.profileBinding.packId,
+          );
           if (!cancelled && pack !== undefined) setEntities(pack.entities);
         }
       })
@@ -3145,20 +3143,19 @@ export function CharacterEditorPage({
   const packId = character?.profileBinding?.packId;
   const contentDigest = character?.profileBinding?.contentDigest;
   useEffect(() => {
-    rulesClient.current?.terminate();
     rulesClient.current = undefined;
     evaluationCache.current.clear();
     setReadyPackId(undefined);
     setCurrentEvaluation(undefined);
     setPlanningEvaluation(undefined);
     if (packId === undefined) return;
-    const client = new RulesWorkerClient();
-    rulesClient.current = client;
     let cancelled = false;
-    void client
-      .initialize(packId, contentDigest)
-      .then(() => {
-        if (!cancelled) setReadyPackId(packId);
+    void appContentRuntime
+      .getRulesClient(packId, contentDigest)
+      .then((client) => {
+        if (cancelled) return;
+        rulesClient.current = client;
+        setReadyPackId(packId);
       })
       .catch((reason: unknown) => {
         if (!cancelled)
@@ -3168,8 +3165,7 @@ export function CharacterEditorPage({
       });
     return () => {
       cancelled = true;
-      client.terminate();
-      if (rulesClient.current === client) rulesClient.current = undefined;
+      rulesClient.current = undefined;
     };
   }, [contentDigest, packId]);
 

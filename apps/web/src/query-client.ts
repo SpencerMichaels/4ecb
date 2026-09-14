@@ -39,18 +39,19 @@ type QueryWorkerRequestWithoutId =
 export class QueryWorkerClient {
   readonly #worker: Worker;
   readonly #pending = new Map<number, PendingRequest>();
-  readonly #onProgress: QueryProgressHandler;
+  readonly #progressHandlers = new Set<QueryProgressHandler>();
   #nextRequestId = 1;
 
-  constructor(onProgress: QueryProgressHandler) {
-    this.#onProgress = onProgress;
+  constructor(onProgress?: QueryProgressHandler) {
+    if (onProgress !== undefined) this.#progressHandlers.add(onProgress);
     this.#worker = new Worker(new URL("./query.worker.ts", import.meta.url), {
       type: "module",
     });
     this.#worker.onmessage = (event: MessageEvent<QueryWorkerResponse>) => {
       const response = event.data;
       if (response.type === "progress") {
-        this.#onProgress(response.phase, response.recordCount);
+        for (const handler of this.#progressHandlers)
+          handler(response.phase, response.recordCount);
         return;
       }
       const pending = this.#pending.get(response.requestId);
@@ -63,6 +64,11 @@ export class QueryWorkerClient {
     this.#worker.onerror = (event) => {
       this.#rejectAll(new Error(event.message || "Compendium worker failed"));
     };
+  }
+
+  subscribeProgress(handler: QueryProgressHandler): () => void {
+    this.#progressHandlers.add(handler);
+    return () => this.#progressHandlers.delete(handler);
   }
 
   async initialize(packId: string): Promise<QueryIndexInfo> {
