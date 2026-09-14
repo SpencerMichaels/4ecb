@@ -333,8 +333,11 @@ candidate.
   mechanical pane order: Class, Race, Background, Ability Scores, Skills,
   Powers, Spellbook, and Feats. Gender, alignment, and deity live outside the
   level timeline in a sibling Character details tab, matching the legacy
-  builder's Build/Details separation, and render as compact labeled rows rather
-  than unrelated full cards.
+  builder's Build/Details separation. Gender and Alignment render as visible
+  button/radio grids; Deity uses the shared candidate table with Name and
+  Alignment columns, filtering, persistent favorites, Clear, and detail
+  inspection. Opening Character details requests full candidates for those
+  choice levels while other workspaces retain bounded candidate expansion.
   Choice controls occupy one ordered middle list and update a single sticky
   detail viewer; no per-choice detail cards remain mounted. Single decisions no
   longer inherit the numbered progressive-flow chrome reserved for genuinely
@@ -342,10 +345,21 @@ candidate.
   first-level group/row order, click-to-inspect Alignment details, one mounted
   detail viewer, no inline duplicates, and no horizontal overflow.
 - Live Silaqui verification confirmed that level 1 and its timeline contain no
-  identity choices, Character details orders Gender, Alignment, and Deity as
-  three direct label/control rows with no nested headings, switching tabs hides
-  the build workspace, and the 374 px viewport has neither horizontal overflow
-  nor browser-console errors.
+  identity choices, Character details orders Gender, Alignment, and Deity
+  without nested headings, switching tabs hides the build workspace, and the
+  374 px viewport has neither horizontal overflow nor browser-console errors.
+- Rules choices no longer use dropdowns merely to encode “Unresolved.” Sets of
+  at most eight compact candidates use visible stable button grids; larger and
+  information-rich choices use the shared searchable/favorite table. This also
+  covers retraining targets/results and one-shot starting presets, whose Apply
+  action remains explicit. The only remaining builder dropdown is the compact
+  numeric current-level control. Live Silaqui verification exposed five
+  table-backed Ranger presets, 135 deities with authored alignments, visible
+  Gender/Alignment choices, and exactly one `select` in the builder main area.
+- Equipment and Diagnostics now occupy peer workspace tabs beside Build,
+  Overview, and Character details. Their prior bottom disclosures are removed;
+  existing inventory quantities/equipped quantities and evaluator diagnostics
+  remain unchanged pending the dedicated equipment redesign.
 - Base ability scores now live only in the level-1 Ability Scores group, before
   racial increases, and no longer appear as an unrelated editor below the level
   workspace. The editor now mirrors the legacy 22-point-buy path: new native
@@ -400,7 +414,7 @@ candidate.
   without a `Rules-legal` marker.
 - Choice chrome now applies one hierarchy rule across generic, repeated,
   progressive, background, and skill controls: category bars are not echoed by
-  type eyebrows, ordinary dropdowns omit the visible **Selection** boilerplate,
+  type eyebrows, ordinary controls omit the visible **Selection** boilerplate,
   and subordinate labels remain only where they distinguish real steps or
   slots. Silaqui's level-1 repeated group and timeline now say **At-Will
   Powers**, with only **Power 1** and **Power 2** beneath it. Her background

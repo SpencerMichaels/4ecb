@@ -126,8 +126,8 @@ application's protected visual assets.
   removed with the same compact X action used for a completed optional
   background; removing one never clears the required primary background.
 - Legacy Build records are starting presets, not persistent mechanical choices.
-  Present them after class selection as one dropdown and an explicit Apply
-  action. The selected preset drives the shared detail pane, with its authored
+  Present them after class selection as a searchable table and an explicit
+  Apply action. The inspected preset drives the shared detail pane, with its authored
   description followed by the suggested feature, feat, skill, and power list.
   Applying it fills only matching, currently open, rules-legal level-1 choices,
   reports the result immediately, and never overwrites work already chosen. An
@@ -141,8 +141,10 @@ application's protected visual assets.
   the feat family first, then its weapon, implement, skill, or other parameter.
   This is presentation-only; the selected exact legacy feat remains visible in
   the timeline and is the identity stored by the character.
-- Feat and power choices use searchable tables rather than native dropdowns.
-  Feat rows show name and the authored Short Description. Printable
+- Information-rich or numerous choices use one shared searchable table system
+  rather than native dropdowns. Every such table provides consistent
+  click-to-inspect, commit, Clear, result-count, and browser-local favorite
+  behavior. Feat rows show name and the authored Short Description. Printable
   prerequisites remain searchable and appear in the focused detail pane; they
   are omitted as a standing column because legal choices already satisfy them,
   while unavailable rows state why they are blocked. Power rows show name and a
@@ -163,10 +165,20 @@ application's protected visual assets.
 - Autosave every committed character change. Show concise saving, saved, and
   failure states without interrupting ordinary work, retain transactional undo
   and redo, and never imply persistence before the storage commit succeeds.
-- An ordinary dropdown's **Unresolved** option is a real edit: it replaces that
-  exact saved slot with an unresolved placeholder, immediately updates the
-  control, autosaves, and remains undoable. It must never be a visual-only value
-  that snaps back on reevaluation.
+- Prefer visible controls over native dropdowns for rules choices. Small,
+  low-information mutually exclusive sets use stable button/radio grids; a lack
+  of selection communicates unresolved state without adding “Unresolved” as a
+  fake candidate. Larger or information-rich sets use the shared table. Clear
+  remains a real edit that restores the exact slot to an unresolved placeholder,
+  autosaves, and remains undoable. The compact current-level control may remain
+  a dropdown because it selects one scalar from a long, familiar numeric range.
+- In Character details, Gender and Alignment use visible button groups. Deity
+  uses the shared table with Deity and Alignment columns, favorites, filtering,
+  Clear, and the adjacent detail pane.
+- Equipment and Diagnostics are full workspace tabs beside Build, Overview, and
+  Character details. They do not remain as collapsed disclosures below every
+  workspace; the Equipment tab is the integration point for the forthcoming
+  equipment redesign.
 
 ## Character-sheet templates
 

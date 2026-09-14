@@ -60,7 +60,7 @@ export function isBuildPresetChoice(choice: EvaluatedChoice): boolean {
   );
 }
 
-export type ChoiceSelectionTableKind = "feat" | "power";
+export type ChoiceSelectionTableKind = "feat" | "power" | "deity" | "option";
 
 export function choiceSelectionTableKind(
   choice: EvaluatedChoice,
@@ -72,6 +72,9 @@ export function choiceSelectionTableKind(
     /^power (at-will|encounter|daily|utility)\b/.test(type)
   )
     return "power";
+  if (type === "deity") return "deity";
+  if (type !== "background choice" && (choice.candidates?.length ?? 0) > 8)
+    return "option";
   return undefined;
 }
 
@@ -91,6 +94,7 @@ export function choiceTableSummary(
   kind: ChoiceSelectionTableKind,
 ): string | undefined {
   if (kind === "feat") return contentSpecificValue(entity, "Short Description");
+  if (kind === "deity") return contentSpecificValue(entity, "Alignment");
   return entity.flavor?.trim() || entity.description.trim() || undefined;
 }
 
@@ -132,7 +136,7 @@ function tableTypeGroup(label: string): CandidateTableTypeGroup {
  */
 export function candidateTableTypeGroup(
   entity: ContentEntity,
-  kind: ChoiceSelectionTableKind,
+  kind: Extract<ChoiceSelectionTableKind, "feat" | "power">,
   resolveEntity: (reference: string) => ContentEntity | undefined,
 ): CandidateTableTypeGroup {
   if (kind === "power") {

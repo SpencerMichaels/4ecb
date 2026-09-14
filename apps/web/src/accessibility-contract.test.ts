@@ -59,7 +59,7 @@ describe("release accessibility contract", () => {
       /@media \(max-width: 60rem\)[\s\S]*?\.metadata-form,[\s\S]*?\.sheet-columns[\s\S]*?grid-template-columns: 1fr/,
     );
     expect(styles).toMatch(
-      /@media \(max-width: 60rem\)[\s\S]*?\.builder-workspace,[\s\S]*?\.builder-secondary,[\s\S]*?grid-template-columns: 1fr/,
+      /@media \(max-width: 60rem\)[\s\S]*?\.builder-workspace,[\s\S]*?\.level-choice-workspace,[\s\S]*?grid-template-columns: 1fr/,
     );
     expect(styles).toMatch(
       /@media \(max-width: 48rem\)[\s\S]*?\.choice-selection-layout[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/,
@@ -74,12 +74,15 @@ describe("release accessibility contract", () => {
   it("keeps navigation compact and ordinary detail content in document flow", () => {
     expect(characterEditor).toContain('className="level-rail"');
     expect(characterEditor).toContain('workspaceTab === "overview"');
+    expect(characterEditor).toContain('workspaceTab === "equipment"');
+    expect(characterEditor).toContain('workspaceTab === "diagnostics"');
     expect(characterEditor).toContain('className="build-overview"');
     expect(characterEditor).toContain("Show planned levels");
     expect(characterEditor).not.toContain("Stored features");
     expect(characterEditor).not.toContain("function OccurrenceTree");
     expect(characterEditor).not.toContain('aria-controls="build-timeline"');
     expect(characterEditor).not.toContain('aria-label="Close level plan"');
+    expect(characterEditor).not.toContain('className="builder-secondary"');
 
     const candidateDetailRule = styles.match(
       /\.candidate-detail\s*\{([^}]*)\}/,

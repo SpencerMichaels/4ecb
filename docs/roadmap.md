@@ -423,6 +423,13 @@ appears on the printable character sheet. The normalized source, crop, and small
 rendering travel with duplication and checksummed library backups but never alter
 legacy `.dnd4e` exports. Only the builder exposes the editor; library and sheet
 portrait displays remain read-only.
+Rules-choice dropdowns have now been reduced to the compact numeric current-level
+selector. Small sets use visible button/radio grids; larger and
+information-rich choices share the searchable, favorite-able candidate table.
+That table now covers Deity (with an Alignment column), starting presets, and
+generic large choices in addition to feats and powers. Equipment and Diagnostics
+are peer workspace tabs rather than disclosures below the builder, establishing
+the dedicated surface for the next equipment pass.
 
 ## M6 — Local phone play mode
 

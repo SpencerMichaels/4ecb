@@ -63,6 +63,7 @@ import {
   selectedDefinitionId,
   selectedChoiceHasWarning,
   unresolveEvaluatedChoiceCommand,
+  type ChoiceSelectionTableKind,
   type LegacyChoiceSection,
 } from "./builder-ui";
 import { Icon, type IconName } from "./Icon";
@@ -514,6 +515,72 @@ function retrainingCategory(type: string | undefined): string | undefined {
   return undefined;
 }
 
+function CompactChoiceButtons({
+  label,
+  options,
+  selectedId,
+  disabled,
+  onChoose,
+  onInspect,
+  onClear,
+}: {
+  readonly label: string;
+  readonly options: readonly {
+    readonly id: string;
+    readonly label: string;
+    readonly selectable: boolean;
+    readonly unavailableReason?: string;
+  }[];
+  readonly selectedId: string;
+  readonly disabled: boolean;
+  readonly onChoose: (id: string) => void;
+  readonly onInspect?: (id: string) => void;
+  readonly onClear?: () => void;
+}) {
+  return (
+    <fieldset className="compact-choice-picker">
+      <legend>{label}</legend>
+      {selectedId === "" || onClear === undefined ? null : (
+        <button
+          aria-label={`Clear ${label}`}
+          className="compact-choice-clear"
+          title={`Clear ${label}`}
+          type="button"
+          onClick={onClear}
+        >
+          <Icon name="remove" />
+        </button>
+      )}
+      <div className="compact-choice-options" role="radiogroup">
+        {options.map((option) => {
+          const blocked = disabled || !option.selectable;
+          return (
+            <button
+              aria-checked={option.id === selectedId}
+              aria-disabled={blocked}
+              className={option.id === selectedId ? "is-selected" : undefined}
+              key={option.id}
+              role="radio"
+              title={option.unavailableReason}
+              type="button"
+              onClick={() => {
+                onInspect?.(option.id);
+                if (!blocked) onChoose(option.id);
+              }}
+            >
+              {option.id === selectedId ? <Icon name="check" /> : null}
+              <span>{option.label}</span>
+              {option.unavailableReason === undefined ? null : (
+                <small>{option.unavailableReason}</small>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
 function BuildPresetPanel({
   choices,
   levelChoices,
@@ -564,32 +631,36 @@ function BuildPresetPanel({
   if (presets.length === 0) return null;
   return (
     <section className="build-presets" aria-labelledby="build-presets-heading">
-      <label htmlFor="starting-preset" id="build-presets-heading">
-        Starting preset
-      </label>
-      <div className="build-preset-control">
-        <select
-          id="starting-preset"
-          value={selectedPresetId}
-          onFocus={() => {
-            if (selectedPreset !== undefined)
-              inspectCandidate?.(selectedPreset);
-          }}
-          onChange={(event) => {
-            const selected = presets.find(
-              ({ entity }) => entity.id === event.currentTarget.value,
-            );
-            setSelectedPresetId(event.currentTarget.value);
-            setApplyStatus(undefined);
-            inspectCandidate?.(selected);
-          }}
-        >
-          {presets.map(({ entity }) => (
-            <option key={entity.id} value={entity.id}>
-              {entity.name}
-            </option>
-          ))}
-        </select>
+      <h5 id="build-presets-heading">Starting preset</h5>
+      <CandidateSelectionTable
+        kind="option"
+        nameColumnLabel="Preset"
+        candidates={presets.map(({ candidate }) => candidate)}
+        featGroups={[]}
+        selectedIds={new Set(selectedPresetId === "" ? [] : [selectedPresetId])}
+        expandedGroupKey=""
+        byId={byId}
+        disabled={false}
+        onExpandGroup={() => undefined}
+        onInspect={(candidate) => {
+          const selected = presets.find(
+            ({ candidate: option }) =>
+              option.definitionId === candidate.definitionId,
+          );
+          setSelectedPresetId(candidate.definitionId);
+          setApplyStatus(undefined);
+          inspectCandidate?.(selected);
+        }}
+        onToggle={(definitionId) => {
+          const selected = presets.find(
+            ({ candidate }) => candidate.definitionId === definitionId,
+          );
+          setSelectedPresetId(definitionId);
+          setApplyStatus(undefined);
+          inspectCandidate?.(selected);
+        }}
+      />
+      <div className="build-preset-actions">
         <button
           disabled={selectedPreset === undefined}
           type="button"
@@ -669,6 +740,8 @@ function ReplacementEditor({
   );
   const [perusedId, setPerusedId] = useState(selected?.definitionId ?? "");
   const [perusingTarget, setPerusingTarget] = useState(false);
+  const [expandedReplacementGroupKey, setExpandedReplacementGroupKey] =
+    useState("");
   const target = options.find(
     (option) => option.replacesOccurrenceId === targetId,
   );
@@ -705,6 +778,29 @@ function ReplacementEditor({
     detailCandidate === undefined
       ? undefined
       : byId.get(detailCandidate.definitionId.toLocaleLowerCase());
+  const replacementKind: ChoiceSelectionTableKind = visible.every((candidate) =>
+    byId
+      .get(candidate.definitionId.toLocaleLowerCase())
+      ?.type.toLocaleLowerCase()
+      .includes("power"),
+  )
+    ? "power"
+    : visible.every((candidate) =>
+          byId
+            .get(candidate.definitionId.toLocaleLowerCase())
+            ?.type.toLocaleLowerCase()
+            .includes("feat"),
+        )
+      ? "feat"
+      : "option";
+  const replacementFeatGroups =
+    replacementKind === "feat"
+      ? groupParameterizedCandidates(
+          visible,
+          (definitionId) =>
+            byId.get(definitionId.toLocaleLowerCase())?.name ?? definitionId,
+        )
+      : [];
 
   const inspect = (candidate: CandidateDecision | undefined): void => {
     if (candidate === undefined || inspectCandidate === undefined) return;
@@ -716,6 +812,7 @@ function ReplacementEditor({
     setOptimisticSelectedId("");
     setPerusedId("");
     setPerusingTarget(false);
+    setExpandedReplacementGroupKey("");
   }, [rollbackRevision]);
 
   useEffect(() => {
@@ -723,6 +820,7 @@ function ReplacementEditor({
     setOptimisticSelectedId(selected?.definitionId ?? "");
     setPerusedId(selected?.definitionId ?? "");
     setPerusingTarget(false);
+    setExpandedReplacementGroupKey("");
   }, [choice.id, evaluation, selected?.definitionId, selected?.replacesId]);
 
   useEffect(() => {
@@ -784,131 +882,80 @@ function ReplacementEditor({
     });
   };
 
+  const chooseTarget = (nextTargetId: string): void => {
+    setTargetId(nextTargetId);
+    setPerusingTarget(true);
+    const option = options.find(
+      (item) => item.replacesOccurrenceId === nextTargetId,
+    );
+    setPerusedId(option?.definitionId ?? "");
+    inspect(
+      option === undefined
+        ? undefined
+        : {
+            definitionId: option.definitionId,
+            eligible: true,
+            sourceEntitled: true,
+            rulesLegal: true,
+            activeDefinition: true,
+            activeOccurrenceIds: [option.replacesOccurrenceId],
+            providerOccurrenceIds: [],
+            reasons: [],
+          },
+    );
+    const nextVisible = (option?.candidates ?? []).filter((candidate) =>
+      isCandidateVisible(candidate, showAll, selected?.definitionId),
+    );
+    if (
+      option !== undefined &&
+      option.candidates.length === 1 &&
+      nextVisible.length === 1
+    )
+      selectReplacement(option, nextVisible[0]!);
+  };
+
   return (
     <div className="choice-selection-layout">
       <div className="choice-editor-fields">
-        <label>
-          Replace
-          <select
-            disabled={disabled}
-            value={targetId}
-            onFocus={() => {
-              setPerusingTarget(true);
-              const option = options.find(
-                (item) => item.replacesOccurrenceId === targetId,
-              );
-              setPerusedId(option?.definitionId ?? "");
-              inspect(
-                option === undefined
-                  ? undefined
-                  : {
-                      definitionId: option.definitionId,
-                      eligible: true,
-                      sourceEntitled: true,
-                      rulesLegal: true,
-                      activeDefinition: true,
-                      activeOccurrenceIds: [option.replacesOccurrenceId],
-                      providerOccurrenceIds: [],
-                      reasons: [],
-                    },
-              );
-            }}
-            onChange={(event) => {
-              const nextTargetId = event.currentTarget.value;
-              setTargetId(nextTargetId);
-              setPerusingTarget(true);
-              setPerusedId(
-                options.find(
-                  (option) => option.replacesOccurrenceId === nextTargetId,
-                )?.definitionId ?? "",
-              );
-              const option = options.find(
-                (item) => item.replacesOccurrenceId === nextTargetId,
-              );
-              inspect(
-                option === undefined
-                  ? undefined
-                  : {
-                      definitionId: option.definitionId,
-                      eligible: true,
-                      sourceEntitled: true,
-                      rulesLegal: true,
-                      activeDefinition: true,
-                      activeOccurrenceIds: [option.replacesOccurrenceId],
-                      providerOccurrenceIds: [],
-                      reasons: [],
-                    },
-              );
-              const nextVisible = (option?.candidates ?? []).filter(
-                (candidate) =>
-                  isCandidateVisible(
-                    candidate,
-                    showAll,
-                    selected?.definitionId,
-                  ),
-              );
-              if (
-                option !== undefined &&
-                option.candidates.length === 1 &&
-                nextVisible.length === 1
-              )
-                selectReplacement(option, nextVisible[0]!);
-            }}
-          >
-            <option value="">Choose an earlier selection</option>
-            {options.map((option) => (
-              <option
-                key={option.replacesOccurrenceId}
-                value={option.replacesOccurrenceId}
-              >
-                {byId.get(option.definitionId.toLocaleLowerCase())?.name ??
-                  option.definitionId}
-              </option>
-            ))}
-          </select>
-        </label>
+        <CompactChoiceButtons
+          label="Replace"
+          options={options.map((option) => ({
+            id: option.replacesOccurrenceId,
+            label:
+              byId.get(option.definitionId.toLocaleLowerCase())?.name ??
+              option.definitionId,
+            selectable: true,
+          }))}
+          selectedId={targetId}
+          disabled={disabled}
+          onChoose={chooseTarget}
+        />
         {target === undefined ||
         (target.candidates.length === 1 && visible.length === 1) ? null : (
-          <label>
-            With
-            <select
-              disabled={disabled}
-              value={selectedValue}
-              onFocus={() => {
-                setPerusingTarget(false);
-                setPerusedId(selectedValue || visible[0]?.definitionId || "");
-                inspect(
-                  target.candidates.find(
-                    (candidate) =>
-                      candidate.definitionId ===
-                      (selectedValue || visible[0]?.definitionId),
-                  ),
-                );
-              }}
-              onChange={(event) => {
-                const candidate = target.candidates.find(
-                  (item) => item.definitionId === event.currentTarget.value,
-                );
-                if (candidate !== undefined)
-                  selectReplacement(target, candidate);
-              }}
-            >
-              <option value="">Choose a replacement</option>
-              {visible.map((candidate) => (
-                <option
-                  disabled={!isCandidateSelectable(candidate)}
-                  key={candidate.definitionId}
-                  value={candidate.definitionId}
-                >
-                  {byId.get(candidate.definitionId.toLocaleLowerCase())?.name ??
-                    candidate.definitionId}
-                  {candidate.eligible
-                    ? ""
-                    : ` — unavailable: ${candidateReason(candidate.reasons)}`}
-                </option>
-              ))}
-            </select>
-          </label>
+          <CandidateSelectionTable
+            kind={replacementKind}
+            {...(replacementKind === "option"
+              ? { nameColumnLabel: "Replacement" }
+              : {})}
+            candidates={visible}
+            featGroups={replacementFeatGroups}
+            selectedIds={new Set(selectedValue === "" ? [] : [selectedValue])}
+            expandedGroupKey={expandedReplacementGroupKey}
+            byId={byId}
+            disabled={disabled}
+            onExpandGroup={setExpandedReplacementGroupKey}
+            onInspect={(candidate) => {
+              setPerusingTarget(false);
+              setPerusedId(candidate.definitionId);
+              inspect(candidate);
+            }}
+            onToggle={(definitionId) => {
+              const candidate = target.candidates.find(
+                (item) => item.definitionId === definitionId,
+              );
+              if (candidate !== undefined) selectReplacement(target, candidate);
+            }}
+          />
         )}
       </div>
       {inspectCandidate === undefined ? (
@@ -1123,6 +1170,9 @@ function ChoiceEditor({
         {selectionTableKind !== undefined ? (
           <CandidateSelectionTable
             kind={selectionTableKind}
+            {...(selectionTableKind === "option"
+              ? { nameColumnLabel: choiceTitle(choice) }
+              : {})}
             candidates={visibleCandidates}
             featGroups={selectionTableKind === "feat" ? presentationGroups : []}
             selectedIds={new Set(selectedValue === "" ? [] : [selectedValue])}
@@ -1143,147 +1193,103 @@ function ChoiceEditor({
           />
         ) : groupedPresentation ? (
           <>
-            <label>
-              {hideSelectionLabel
-                ? null
-                : normalizedChoiceType === "background choice"
-                  ? "Benefit type"
-                  : "Feat"}
-              <select
-                aria-label={
-                  normalizedChoiceType === "background choice"
+            <CompactChoiceButtons
+              label={
+                hideSelectionLabel
+                  ? "Options"
+                  : normalizedChoiceType === "background choice"
                     ? "Benefit type"
                     : "Feat"
+              }
+              options={presentationGroups.map((group) => ({
+                id: group.key,
+                label: `${group.label}${group.parameterLabel === undefined ? "" : "…"}`,
+                selectable: true,
+              }))}
+              selectedId={displayedGroupKey}
+              disabled={editorDisabled}
+              onClear={clearSelection}
+              onChoose={(groupKey) => {
+                const group = presentationGroups.find(
+                  (candidate) => candidate.key === groupKey,
+                );
+                setStagedGroupKey(groupKey);
+                if (group === undefined) return;
+                const exact = group.options.length === 1;
+                const definitionId = group.options[0]!.candidate.definitionId;
+                setPerusedId(definitionId);
+                const definition = byId.get(definitionId.toLocaleLowerCase());
+                if (definition !== undefined)
+                  inspectCandidate?.({
+                    candidate: group.options[0]!.candidate,
+                    entity: definition,
+                  });
+                if (exact) selectDefinition(definitionId);
+              }}
+            />
+            {displayedGroup?.parameterLabel === undefined ? null : (
+              <CompactChoiceButtons
+                label={displayedGroup.parameterLabel}
+                options={displayedGroup.options.map(({ candidate, label }) => ({
+                  id: candidate.definitionId,
+                  label,
+                  selectable: isCandidateSelectable(candidate),
+                  ...(candidate.eligible
+                    ? {}
+                    : {
+                        unavailableReason: candidateReason(candidate.reasons),
+                      }),
+                }))}
+                selectedId={
+                  displayedGroup.options.some(
+                    ({ candidate }) =>
+                      candidate.definitionId === optimisticSelectedId,
+                  )
+                    ? optimisticSelectedId
+                    : ""
                 }
                 disabled={editorDisabled}
-                value={displayedGroupKey}
-                onChange={(event) => {
-                  const group = presentationGroups.find(
-                    (candidate) => candidate.key === event.currentTarget.value,
-                  );
-                  setStagedGroupKey(event.currentTarget.value);
-                  if (group === undefined) {
-                    if (event.currentTarget.value === "") clearSelection();
-                    return;
-                  }
-                  const exact = group.options.length === 1;
-                  const definitionId = group.options[0]!.candidate.definitionId;
+                onClear={clearSelection}
+                onInspect={(definitionId) => {
                   setPerusedId(definitionId);
-                  const definition = byId.get(definitionId.toLocaleLowerCase());
-                  if (definition !== undefined)
-                    inspectCandidate?.({
-                      candidate: group.options[0]!.candidate,
-                      entity: definition,
-                    });
-                  if (exact) selectDefinition(definitionId);
+                  const candidate = displayedGroup.options.find(
+                    (option) => option.candidate.definitionId === definitionId,
+                  )?.candidate;
+                  const entity = byId.get(definitionId.toLocaleLowerCase());
+                  if (candidate !== undefined && entity !== undefined)
+                    inspectCandidate?.({ candidate, entity });
                 }}
-              >
-                <option value="">
-                  {normalizedChoiceType === "background choice"
-                    ? "Choose a benefit type"
-                    : "Choose a feat"}
-                </option>
-                {presentationGroups.map((group) => (
-                  <option key={group.key} value={group.key}>
-                    {group.label}
-                    {group.parameterLabel === undefined ? "" : "…"}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {displayedGroup?.parameterLabel === undefined ? null : (
-              <label>
-                {displayedGroup.parameterLabel}
-                <select
-                  disabled={editorDisabled}
-                  value={
-                    displayedGroup.options.some(
-                      ({ candidate }) =>
-                        candidate.definitionId === optimisticSelectedId,
-                    )
-                      ? optimisticSelectedId
-                      : ""
-                  }
-                  onFocus={() => {
-                    const definitionId =
-                      displayedGroup.options.find(
-                        ({ candidate }) =>
-                          candidate.definitionId === optimisticSelectedId,
-                      )?.candidate.definitionId ??
-                      displayedGroup.options[0]?.candidate.definitionId ??
-                      "";
-                    setPerusedId(definitionId);
-                    const candidate = displayedGroup.options.find(
-                      (option) =>
-                        option.candidate.definitionId === definitionId,
-                    )?.candidate;
-                    const entity = byId.get(definitionId.toLocaleLowerCase());
-                    if (candidate !== undefined && entity !== undefined)
-                      inspectCandidate?.({ candidate, entity });
-                  }}
-                  onChange={(event) => {
-                    const definitionId = event.currentTarget.value;
-                    if (definitionId === "") clearSelection();
-                    else selectDefinition(definitionId);
-                  }}
-                >
-                  <option value="">Choose {displayedGroup.label}</option>
-                  {displayedGroup.options.map(({ candidate, label }) => (
-                    <option
-                      disabled={!isCandidateSelectable(candidate)}
-                      key={candidate.definitionId}
-                      value={candidate.definitionId}
-                    >
-                      {label}
-                      {candidate.eligible
-                        ? ""
-                        : ` — unavailable: ${candidateReason(candidate.reasons)}`}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                onChoose={selectDefinition}
+              />
             )}
           </>
         ) : (
-          <label>
-            {hideSelectionLabel ? null : <span>{selectionLabel}</span>}
-            <select
-              aria-label={selectionLabel}
-              disabled={editorDisabled}
-              value={selectedValue}
-              onFocus={() => {
-                const definitionId =
-                  selectedValue || visibleCandidates[0]?.definitionId || "";
-                setPerusedId(definitionId);
-                const candidate = visibleCandidates.find(
-                  (item) => item.definitionId === definitionId,
-                );
-                const entity = byId.get(definitionId.toLocaleLowerCase());
-                if (candidate !== undefined && entity !== undefined)
-                  inspectCandidate?.({ candidate, entity });
-              }}
-              onChange={(event) => {
-                const definitionId = event.currentTarget.value;
-                if (definitionId === "") clearSelection();
-                else selectDefinition(definitionId);
-              }}
-            >
-              <option value="">Unresolved</option>
-              {visibleCandidates.map((candidate) => (
-                <option
-                  disabled={!isCandidateSelectable(candidate)}
-                  key={candidate.definitionId}
-                  value={candidate.definitionId}
-                >
-                  {byId.get(candidate.definitionId.toLocaleLowerCase())?.name ??
-                    candidate.definitionId}
-                  {candidate.eligible
-                    ? ""
-                    : ` — unavailable: ${candidateReason(candidate.reasons)}`}
-                </option>
-              ))}
-            </select>
-          </label>
+          <CompactChoiceButtons
+            label={hideSelectionLabel ? choiceTitle(choice) : selectionLabel}
+            options={visibleCandidates.map((candidate) => ({
+              id: candidate.definitionId,
+              label:
+                byId.get(candidate.definitionId.toLocaleLowerCase())?.name ??
+                candidate.definitionId,
+              selectable: isCandidateSelectable(candidate),
+              ...(candidate.eligible
+                ? {}
+                : { unavailableReason: candidateReason(candidate.reasons) }),
+            }))}
+            selectedId={selectedValue}
+            disabled={editorDisabled}
+            onClear={clearSelection}
+            onInspect={(definitionId) => {
+              setPerusedId(definitionId);
+              const candidate = visibleCandidates.find(
+                (item) => item.definitionId === definitionId,
+              );
+              const entity = byId.get(definitionId.toLocaleLowerCase());
+              if (candidate !== undefined && entity !== undefined)
+                inspectCandidate?.({ candidate, entity });
+            }}
+            onChoose={selectDefinition}
+          />
         )}
       </div>
       {compact || inspectCandidate !== undefined ? null : (
@@ -1339,6 +1345,21 @@ function MetadataIcon({
   );
 }
 
+function candidateTableNoun(
+  kind: ChoiceSelectionTableKind,
+  plural: boolean,
+): string {
+  const nouns: Readonly<
+    Record<ChoiceSelectionTableKind, readonly [string, string]>
+  > = {
+    feat: ["Feat", "feats"],
+    power: ["Power", "powers"],
+    deity: ["Deity", "deities"],
+    option: ["Option", "options"],
+  };
+  return nouns[kind][plural ? 1 : 0];
+}
+
 function CandidateSelectionTable({
   kind,
   candidates,
@@ -1348,12 +1369,13 @@ function CandidateSelectionTable({
   byId,
   disabled,
   selectionLimit,
+  nameColumnLabel,
   onExpandGroup,
   onInspect,
   onToggle,
   onClear,
 }: {
-  readonly kind: "feat" | "power";
+  readonly kind: ChoiceSelectionTableKind;
   readonly candidates: readonly CandidateDecision[];
   readonly featGroups: readonly FeatPresentationGroup[];
   readonly selectedIds: ReadonlySet<string>;
@@ -1361,10 +1383,11 @@ function CandidateSelectionTable({
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly disabled: boolean;
   readonly selectionLimit?: number;
+  readonly nameColumnLabel?: string;
   readonly onExpandGroup: (key: string) => void;
   readonly onInspect: (candidate: CandidateDecision) => void;
   readonly onToggle: (definitionId: string) => void;
-  readonly onClear: () => void;
+  readonly onClear?: () => void;
 }) {
   const [filter, setFilter] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
@@ -1378,7 +1401,7 @@ function CandidateSelectionTable({
   const referenceIndex = candidateReferenceIndex(byId);
   const typeGroupFor = (candidate: CandidateDecision) => {
     const entity = entityFor(candidate);
-    return entity === undefined
+    return entity === undefined || (kind !== "feat" && kind !== "power")
       ? { key: "other", label: "Other", order: 900 }
       : candidateTableTypeGroup(entity, kind, (reference) =>
           referenceIndex.get(reference.trim().toLocaleLowerCase()),
@@ -1441,7 +1464,7 @@ function CandidateSelectionTable({
   ];
   const displayedFeatGroups = prioritizedFeatGroups;
   const totalRows =
-    kind === "power" ? visibleCandidates.length : visibleFeatGroups.length;
+    kind === "feat" ? visibleFeatGroups.length : visibleCandidates.length;
 
   const typeSections = new Map<
     string,
@@ -1540,11 +1563,7 @@ function CandidateSelectionTable({
             <small>{candidateReason(candidate.reasons)}</small>
           ) : null}
         </td>
-        {kind === "feat" ? (
-          <td>
-            <span className="selection-table-summary">{summary || "—"}</span>
-          </td>
-        ) : (
+        {kind === "power" ? (
           <>
             <td>
               <MetadataIcon
@@ -1570,6 +1589,10 @@ function CandidateSelectionTable({
               <span className="selection-table-summary">{summary || "—"}</span>
             </td>
           </>
+        ) : (
+          <td>
+            <span className="selection-table-summary">{summary || "—"}</span>
+          </td>
         )}
       </tr>
     );
@@ -1580,22 +1603,24 @@ function CandidateSelectionTable({
       <div className="selection-table-toolbar">
         <label>
           <span className="visually-hidden">
-            Filter {kind === "feat" ? "feats" : "powers"}
+            Filter {candidateTableNoun(kind, true)}
           </span>
           <input
-            placeholder={`Filter ${kind === "feat" ? "feats" : "powers"}`}
+            placeholder={`Filter ${candidateTableNoun(kind, true)}`}
             type="search"
             value={filter}
             onChange={(event) => setFilter(event.currentTarget.value)}
           />
         </label>
-        <button
-          disabled={disabled || selectedIds.size === 0}
-          type="button"
-          onClick={onClear}
-        >
-          Clear
-        </button>
+        {onClear === undefined ? null : (
+          <button
+            disabled={disabled || selectedIds.size === 0}
+            type="button"
+            onClick={onClear}
+          >
+            Clear
+          </button>
+        )}
         <button
           aria-pressed={favoritesOnly}
           className="selection-favorites-filter"
@@ -1610,10 +1635,10 @@ function CandidateSelectionTable({
         <table>
           <thead>
             <tr>
-              <th scope="col">{kind === "feat" ? "Feat" : "Power"}</th>
-              {kind === "feat" ? (
-                <th scope="col">Description</th>
-              ) : (
+              <th scope="col">
+                {nameColumnLabel ?? candidateTableNoun(kind, false)}
+              </th>
+              {kind === "power" ? (
                 <>
                   <th scope="col">
                     <span
@@ -1635,6 +1660,10 @@ function CandidateSelectionTable({
                   </th>
                   <th scope="col">Description</th>
                 </>
+              ) : (
+                <th scope="col">
+                  {kind === "deity" ? "Alignment" : "Description"}
+                </th>
               )}
             </tr>
           </thead>
@@ -1654,7 +1683,7 @@ function CandidateSelectionTable({
                 (typeExpansion.get(section.key) ??
                   (selected || sectionIndex === 0));
               const rows =
-                kind === "power"
+                kind !== "feat"
                   ? section.candidates.map((candidate) =>
                       candidateRow(
                         candidate,
@@ -1714,39 +1743,41 @@ function CandidateSelectionTable({
                     });
               return (
                 <Fragment key={section.key}>
-                  <tr className="selection-type-row">
-                    <th colSpan={kind === "feat" ? 2 : 4} scope="rowgroup">
-                      <button
-                        aria-expanded={expanded}
-                        type="button"
-                        onClick={() =>
-                          setTypeExpansion((current) => {
-                            const next = new Map(current);
-                            next.set(section.key, !expanded);
-                            return next;
-                          })
-                        }
-                      >
-                        <Icon name="chevron" />
-                        <span>{section.label}</span>
-                        <small>
-                          {kind === "power"
-                            ? section.candidates.length
-                            : section.featGroups.length}
-                        </small>
-                      </button>
-                    </th>
-                  </tr>
+                  {kind === "feat" || kind === "power" ? (
+                    <tr className="selection-type-row">
+                      <th colSpan={kind === "power" ? 4 : 2} scope="rowgroup">
+                        <button
+                          aria-expanded={expanded}
+                          type="button"
+                          onClick={() =>
+                            setTypeExpansion((current) => {
+                              const next = new Map(current);
+                              next.set(section.key, !expanded);
+                              return next;
+                            })
+                          }
+                        >
+                          <Icon name="chevron" />
+                          <span>{section.label}</span>
+                          <small>
+                            {kind === "power"
+                              ? section.candidates.length
+                              : section.featGroups.length}
+                          </small>
+                        </button>
+                      </th>
+                    </tr>
+                  ) : null}
                   {expanded ? rows : null}
                 </Fragment>
               );
             })}
-            {(kind === "power"
-              ? visibleCandidates.length
-              : visibleFeatGroups.length) === 0 ? (
+            {(kind === "feat"
+              ? visibleFeatGroups.length
+              : visibleCandidates.length) === 0 ? (
               <tr>
-                <td colSpan={kind === "feat" ? 2 : 4}>
-                  No matching {kind === "feat" ? "feats" : "powers"}.
+                <td colSpan={kind === "power" ? 4 : 2}>
+                  No matching {candidateTableNoun(kind, true)}.
                 </td>
               </tr>
             ) : null}
@@ -2069,7 +2100,11 @@ function RepeatedChoiceGroup({
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
   const root = choices[0]!;
-  const tableKind = choiceSelectionTableKind(root);
+  const candidateKind = choiceSelectionTableKind(root);
+  const tableKind =
+    candidateKind === "feat" || candidateKind === "power"
+      ? candidateKind
+      : undefined;
   const chosen = choices.filter(
     (choice) => choice.selectedOccurrenceId !== undefined,
   ).length;
@@ -3245,7 +3280,7 @@ export function CharacterEditorPage({
     Readonly<Partial<Record<number, LevelChoiceTab>>>
   >({});
   const [workspaceTab, setWorkspaceTab] = useState<
-    "build" | "overview" | "details"
+    "build" | "overview" | "details" | "equipment" | "diagnostics"
   >("build");
   const [inspectedOption, setInspectedOption] = useState<InspectedOption>();
   const [rollbackRevision, setRollbackRevision] = useState(0);
@@ -3378,6 +3413,16 @@ export function CharacterEditorPage({
       ),
     [entities],
   );
+  const characterDetailLevelKey = [
+    ...new Set(
+      (planningEvaluation?.choices ?? [])
+        .filter(isCharacterDetailChoice)
+        .map((choice) => choice.level),
+    ),
+  ]
+    .sort((left, right) => left - right)
+    .join(",");
+  const characterDetailsOpen = workspaceTab === "details";
 
   useEffect(() => {
     const client = rulesClient.current;
@@ -3414,7 +3459,14 @@ export function CharacterEditorPage({
         { ...build, effectiveLevel: build.levels.length },
         entities,
       ),
-      candidateDetailLevels: [selectedLevel],
+      candidateDetailLevels: characterDetailsOpen
+        ? [
+            ...new Set([
+              selectedLevel,
+              ...characterDetailLevelKey.split(",").filter(Boolean).map(Number),
+            ]),
+          ]
+        : [selectedLevel],
       candidateDetailReplacementChoiceIds:
         expandedReplacementChoiceId === undefined
           ? []
@@ -3445,12 +3497,14 @@ export function CharacterEditorPage({
       });
   }, [
     build,
+    characterDetailLevelKey,
     contentDigest,
     entities,
     expandedReplacementChoiceId,
     packId,
     readyPackId,
     selectedLevel,
+    characterDetailsOpen,
   ]);
 
   const levelChoices = useMemo(
@@ -3986,9 +4040,28 @@ export function CharacterEditorPage({
             <span className="tab-attention">Needs attention</span>
           ) : null}
         </button>
+        <button
+          aria-selected={workspaceTab === "equipment"}
+          role="tab"
+          type="button"
+          onClick={() => setWorkspaceTab("equipment")}
+        >
+          <Icon name="item" /> Equipment
+        </button>
+        <button
+          aria-selected={workspaceTab === "diagnostics"}
+          role="tab"
+          type="button"
+          onClick={() => setWorkspaceTab("diagnostics")}
+        >
+          <Icon name="warning" /> Diagnostics
+        </button>
       </div>
 
-      <div className="builder-workspace" hidden={workspaceTab === "details"}>
+      <div
+        className="builder-workspace"
+        hidden={workspaceTab !== "build" && workspaceTab !== "overview"}
+      >
         <nav
           aria-label="Level plan"
           className="level-rail"
@@ -4596,11 +4669,14 @@ export function CharacterEditorPage({
       </div>
 
       <section
-        aria-label="Additional character editing"
-        className="builder-secondary"
+        aria-labelledby="diagnostics-heading"
+        className="choice-pane standalone-workspace-pane"
+        hidden={workspaceTab !== "diagnostics"}
       >
-        <details className="panel">
-          <summary>Diagnostics and legality</summary>
+        <header>
+          <h3 id="diagnostics-heading">Diagnostics and legality</h3>
+        </header>
+        <div className="standalone-workspace-content">
           {currentEvaluation === undefined ||
           currentEvaluation.diagnostics.length === 0 ? (
             <p>No evaluator diagnostics.</p>
@@ -4613,9 +4689,18 @@ export function CharacterEditorPage({
               ))}
             </ul>
           )}
-        </details>
-        <details className="panel inventory-editor">
-          <summary>Inventory and equipment</summary>
+        </div>
+      </section>
+
+      <section
+        aria-labelledby="equipment-heading"
+        className="choice-pane standalone-workspace-pane equipment-pane"
+        hidden={workspaceTab !== "equipment"}
+      >
+        <header>
+          <h3 id="equipment-heading">Inventory and equipment</h3>
+        </header>
+        <div className="standalone-workspace-content">
           {build.inventory.filter((entry) => entry.quantity > 0).length ===
           0 ? (
             <p>No carried inventory.</p>
@@ -4685,7 +4770,7 @@ export function CharacterEditorPage({
               </tbody>
             </table>
           )}
-        </details>
+        </div>
       </section>
     </main>
   );

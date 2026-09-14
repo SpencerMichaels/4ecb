@@ -418,7 +418,7 @@ carry structured diagnostics.
 Legacy `Build` and `Class Build` selections describe suggested packages rather
 than a durable mechanical identity. The evaluator therefore treats their select
 slots as optional. The level-1 UI removes them from required-choice and timeline
-projections and presents eligible records in a one-shot preset dropdown after a
+projections and presents eligible records in a one-shot preset table after a
 class is chosen. The selected record uses the ordinary shared detail card so its
 description and structured suggestions remain visible before application.
 Applying one batches only exact-name, currently eligible suggestions into
@@ -435,12 +435,13 @@ font metrics. An incomplete subsection gives its header a strong warning fill
 while retaining the ordinary content background; textual warnings remain for
 exceptional house-rule and evaluation states.
 
-Selecting **Unresolved** in an ordinary choice is a first-class character
-command, not transient form state. It writes an unresolved placeholder into the
-same provider/rule/index slot, clears the focused detail immediately, and uses
-the normal autosave and undo path. Dependent choices disappear through ordinary
-reevaluation of the now-unresolved provider rather than by deleting unrelated
-historical occurrences.
+Clearing an ordinary choice is a first-class character command, not transient
+form state. It writes an unresolved placeholder into the same
+provider/rule/index slot, clears the focused detail immediately, and uses the
+normal autosave and undo path. “Unresolved” is not rendered as a candidate;
+the absence of a selected visible button or table row communicates that state.
+Dependent choices disappear through ordinary reevaluation of the now-unresolved
+provider rather than by deleting unrelated historical occurrences.
 
 ### D033 — Feats and powers use metadata-backed selection tables
 
@@ -607,6 +608,32 @@ summary is navigation: activating it switches to Build, selects the owning
 level and choice, and opens the corresponding category tab. The narrow 1–30
 level rail remains Build's direct navigation surface and is hidden while the
 full history is open.
+
+### D042 — Rules choices prefer visible buttons or shared candidate tables
+
+Native dropdowns are not the default rules-choice control because they hide the
+candidate set and require a synthetic “Unresolved” option. Mutually exclusive
+sets of eight or fewer low-information candidates use stable button/radio grids;
+larger or information-rich candidate sets use the shared searchable table.
+Clearing is an explicit adjacent action and continues to write the ordinary
+unresolved placeholder through the domain command path. Starting presets use
+the table plus their existing explicit Apply action. Retraining shows its prior
+selection targets as buttons and its replacement candidates as a table. The
+compact numeric current-level selector remains a dropdown because its ordered
+1–30 scalar range is familiar and space-sensitive.
+
+The shared candidate table now supports feats, powers, deities, starting
+presets, and generic large choices. Its reusable shell owns filtering, result
+counts, persistent content-ID favorites, selected-row priority, inspection, and
+commit behavior; type-specific columns are supplied by the table kind. Deities
+show Name and authored Alignment. Character details requests full candidate
+data for its owning choice levels when that tab opens, preserving the normal
+bounded evaluator request outside that workspace.
+
+Equipment and Diagnostics are peer workspace tabs beside Build, Overview, and
+Character details. This removes the persistent bottom disclosures and gives the
+next equipment-design pass a dedicated surface without changing inventory data
+or commands.
 
 ## Deferred decisions and decision points
 

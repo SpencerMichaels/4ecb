@@ -152,7 +152,7 @@ describe("builder planning UI", () => {
     expect(
       isBuildPresetChoice({
         type: "Build",
-      } as EvaluatedCharacter["choices"][number]),
+      } as unknown as EvaluatedCharacter["choices"][number]),
     ).toBe(true);
     expect(buildPresetSuggestionNames(preset)).toEqual([
       "Expanded Spellbook",
@@ -192,24 +192,58 @@ describe("builder planning UI", () => {
         },
       ],
     };
+    const deity = {
+      ...level(0),
+      type: "Deity",
+      specifics: [
+        {
+          name: "Alignment",
+          value: "Lawful Good",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
 
     expect(
       choiceSelectionTableKind({
         type: "Feat",
-      } as EvaluatedCharacter["choices"][number]),
+      } as unknown as EvaluatedCharacter["choices"][number]),
     ).toBe("feat");
     expect(
       choiceSelectionTableKind({
         type: "Power Encounter 1",
-      } as EvaluatedCharacter["choices"][number]),
+      } as unknown as EvaluatedCharacter["choices"][number]),
     ).toBe("power");
     expect(
       choiceSelectionTableKind({
         type: "Feat Choice",
-      } as EvaluatedCharacter["choices"][number]),
+      } as unknown as EvaluatedCharacter["choices"][number]),
     ).toBe("feat");
+    expect(
+      choiceSelectionTableKind({
+        type: "Deity",
+      } as unknown as EvaluatedCharacter["choices"][number]),
+    ).toBe("deity");
+    expect(
+      choiceSelectionTableKind({
+        type: "Race",
+        candidates: Array.from({ length: 9 }, (_, index) => ({
+          definitionId: `race-${index}`,
+        })),
+      } as unknown as EvaluatedCharacter["choices"][number]),
+    ).toBe("option");
+    expect(
+      choiceSelectionTableKind({
+        type: "Alignment",
+        candidates: Array.from({ length: 5 }, (_, index) => ({
+          definitionId: `alignment-${index}`,
+        })),
+      } as unknown as EvaluatedCharacter["choices"][number]),
+    ).toBeUndefined();
     expect(choiceTableSummary(feat, "feat")).toBe("Gain a +2 feat bonus.");
     expect(choiceTableSummary(power, "power")).toBe("Move before striking.");
+    expect(choiceTableSummary(deity, "deity")).toBe("Lawful Good");
     expect(contentSpecificValue(power, "action type")).toBe("Standard action");
   });
 
