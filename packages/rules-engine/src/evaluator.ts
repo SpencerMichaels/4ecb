@@ -169,6 +169,9 @@ export interface EvaluatedCharacter {
 function key(value: string): string {
   return value.trim().toLocaleLowerCase();
 }
+
+const ANY_CLASS_CATEGORY = "ID_FMP_CLASS_0";
+
 function field(entity: ContentEntity, name: string): string | undefined {
   return entity.specifics.find((specific) => key(specific.name) === key(name))
     ?.value;
@@ -362,7 +365,10 @@ function dynamicCategories(
   index: RulesIndex,
   text: Readonly<Record<string, string>>,
 ): Readonly<Record<string, ReadonlySet<string>>> {
-  const classValues = new Set<string>();
+  // The stock builder seeds $$CLASS with its synthetic "Any Class" entry.
+  // Published racial utility powers use that category, then restrict the
+  // result to the correct race through their authored prerequisite.
+  const classValues = new Set<string>([key(ANY_CLASS_CATEGORY), "any class"]);
   const hybridValues = new Set<string>();
   const multiclassValues = new Set<string>();
   const occurrencesById = new Map(

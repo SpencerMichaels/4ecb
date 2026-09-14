@@ -37,6 +37,7 @@ import {
   applyBuildPresetCommand,
   candidateReason,
   candidateTableTypeGroup,
+  comparePowerTableEntities,
   classTableMetadata,
   contextualChoiceName,
   choiceSelectionTableKind,
@@ -63,6 +64,7 @@ import {
   isUnresolvedChoice,
   legacyChoiceSection,
   planningHorizonCommand,
+  powerTableLevel,
   selectedDefinitionId,
   selectedChoiceHasWarning,
   unresolveEvaluatedChoiceCommand,
@@ -1494,6 +1496,7 @@ function CandidateSelectionTable({
       entity === undefined
         ? undefined
         : contentSpecificValue(entity, "Attack Type"),
+      entity === undefined ? undefined : contentSpecificValue(entity, "Level"),
     ].some((value) => value?.toLocaleLowerCase().includes(normalizedFilter));
   };
   const isFavorite = (candidate: CandidateDecision) =>
@@ -1621,6 +1624,9 @@ function CandidateSelectionTable({
         {kind === "power" ? (
           <>
             <td>
+              {entity === undefined ? "—" : (powerTableLevel(entity) ?? "—")}
+            </td>
+            <td>
               <MetadataIcon
                 kind="action"
                 value={
@@ -1709,6 +1715,7 @@ function CandidateSelectionTable({
               </th>
               {kind === "power" ? (
                 <>
+                  <th scope="col">Level</th>
                   <th scope="col">
                     <span
                       className="selection-metadata-icon"
@@ -1759,7 +1766,19 @@ function CandidateSelectionTable({
                   (selected || sectionIndex === 0));
               const rows =
                 kind !== "feat"
-                  ? section.candidates.map((candidate) =>
+                  ? (kind === "power"
+                      ? [...section.candidates].sort((left, right) => {
+                          const leftEntity = entityFor(left);
+                          const rightEntity = entityFor(right);
+                          if (leftEntity === undefined) return 1;
+                          if (rightEntity === undefined) return -1;
+                          return comparePowerTableEntities(
+                            leftEntity,
+                            rightEntity,
+                          );
+                        })
+                      : section.candidates
+                    ).map((candidate) =>
                       candidateRow(
                         candidate,
                         entityFor(candidate)?.name ?? candidate.definitionId,
@@ -1819,7 +1838,7 @@ function CandidateSelectionTable({
                 <Fragment key={section.key}>
                   {kind === "feat" || kind === "power" ? (
                     <tr className="selection-type-row">
-                      <th colSpan={kind === "power" ? 4 : 2} scope="rowgroup">
+                      <th colSpan={kind === "power" ? 5 : 2} scope="rowgroup">
                         <button
                           aria-expanded={expanded}
                           type="button"
@@ -1850,7 +1869,7 @@ function CandidateSelectionTable({
               ? visibleFeatGroups.length
               : visibleCandidates.length) === 0 ? (
               <tr>
-                <td colSpan={kind === "power" || kind === "class" ? 4 : 2}>
+                <td colSpan={kind === "power" ? 5 : kind === "class" ? 4 : 2}>
                   No matching {candidateTableNoun(kind, true)}.
                 </td>
               </tr>

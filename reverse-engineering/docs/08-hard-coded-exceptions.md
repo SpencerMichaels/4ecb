@@ -152,12 +152,18 @@ unknown-revision cached totals.
 
 The native `CategoryMatch::Matches` path applies every positive category term
 and its dynamic class term; it has named exceptions for custom rules, diverse
-study, universal skills, seeker, and versatile master, but no blanket exception
-for skill powers occupying a class utility slot. The current exact pack likewise
-keeps ordinary level utility selection (`$$CLASS,utility,<level>`) separate from
-the Skill Power feat's `$$LEVEL,Skill Power` selection. Older imports that embed
-a skill power directly beneath an ordinary level therefore remain recoverable
-but category-ineligible rather than silently legalized.
+study, universal skills, seeker, and versatile master, but it does not need a
+special exception for the racial and skill utility powers shown in an ordinary
+class utility slot. Their authored data supplies the relationship. Skill powers
+carry the stock class category IDs (including Ranger) and use prerequisites such
+as `Trained in Nature` to narrow legality. Racial utility powers instead carry
+the synthetic `ID_FMP_CLASS_0` (`Any Class`) category and use a race prerequisite
+such as `Elf`. The stock builder includes `Any Class` in `$$CLASS`, so an Elf's
+level-6 class utility choice includes `Leave No Trace` while the same authored
+record remains illegal for another race. The Skill Power feat's
+`$$LEVEL,Skill Power` rule is an additional acquisition path, not evidence that
+skill powers are excluded from ordinary utility slots. Modern category expansion
+preserves these authored paths and leaves their prerequisite checks intact.
 
 The exact output is richer than `ability modifier + half level + proficiency +
 enhancement`. Use the saved `PowerStats` corpus as golden oracles and keep every

@@ -660,6 +660,12 @@ granting option. It deliberately uses rule metadata rather than names found in
 description prose. Conditional and internal grants are not presented as
 unconditional benefits.
 
+Power tables show an authored Level column and sort each ownership section by
+descending level with alphabetical ties, matching `PowerPage.SortPowers`
+without allowing selection state to reorder rows. Theme ownership headings use
+the resolved theme name, such as `Theme (Dune Trader)`, rather than an anonymous
+Theme label.
+
 ### D043 — Inactive provider rules preserve but suppress their saved children
 
 Statement-level `requires` controls whether a `select`, `grant`, or other rule

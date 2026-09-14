@@ -1442,6 +1442,94 @@ describe("character evaluator", () => {
     );
   });
 
+  it("includes Any Class racial and authored skill powers in class utility slots", () => {
+    const result = evaluateCharacter(
+      {
+        level: 6,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "ranger",
+            definitionId: "RANGER",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "elf",
+            definitionId: "ELF",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+          {
+            id: "nature",
+            definitionId: "NATURE",
+            acquiredLevel: 1,
+            kind: "grabbag",
+          },
+          {
+            id: "slot",
+            definitionId: "UTILITY_SLOT",
+            acquiredLevel: 6,
+            kind: "grabbag",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("RANGER", "Ranger", "Class"),
+        entity("ELF", "Elf", "Race"),
+        entity("NATURE", "Nature", "Skill Training"),
+        entity("DWARF", "Dwarf", "Race"),
+        entity("UTILITY_SLOT", "Level 6 utility", "Level", {
+          rules: [
+            rule("select", { type: "Power", Category: "$$CLASS,Utility,6" }, 0),
+          ],
+        }),
+        entity("RANGER_UTILITY", "Ranger utility", "Power", {
+          categories: ["RANGER", "Utility", "6"],
+          specifics: { Level: "6", Class: "RANGER" },
+        }),
+        entity("SKILL_UTILITY", "Skill utility", "Power", {
+          categories: ["RANGER", "Utility", "6"],
+          prerequisites: "Trained in Nature",
+          specifics: { Level: "6", _SkillPower: "NATURE" },
+        }),
+        entity("ELF_UTILITY", "Elf utility", "Power", {
+          categories: ["ID_FMP_CLASS_0", "Utility", "6"],
+          prerequisites: "Elf",
+          specifics: { Level: "6", Class: "ELF" },
+        }),
+        entity("DWARF_UTILITY", "Dwarf utility", "Power", {
+          categories: ["ID_FMP_CLASS_0", "Utility", "6"],
+          prerequisites: "Dwarf",
+          specifics: { Level: "6", Class: "DWARF" },
+        }),
+      ],
+    );
+
+    expect(result.choices[0]?.candidates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          definitionId: "RANGER_UTILITY",
+          eligible: true,
+        }),
+        expect.objectContaining({
+          definitionId: "SKILL_UTILITY",
+          eligible: true,
+        }),
+        expect.objectContaining({
+          definitionId: "ELF_UTILITY",
+          eligible: true,
+        }),
+        expect.objectContaining({
+          definitionId: "DWARF_UTILITY",
+          eligible: false,
+          reasons: ["prerequisite"],
+        }),
+      ]),
+    );
+  });
+
   it("uses distinct hybrid components for both hybrid and primary class categories", () => {
     const result = evaluateCharacter(
       {

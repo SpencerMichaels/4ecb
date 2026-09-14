@@ -396,6 +396,12 @@ candidate.
   communicate selection through the existing green row highlight without a
   second checkmark. Tables with six or fewer visible rows now size to their
   contents rather than inheriting the large-table viewport height.
+- Power tables now show authored levels and order entries within each ownership
+  section by descending level, then name. Resolved theme headings include their
+  theme name. Ordinary class utility slots now include the legacy `Any Class`
+  category, restoring race-qualified utility powers alongside authored class,
+  trained-skill, and theme powers; prerequisite legality still filters powers
+  for other races or untrained skills.
 - Base ability scores now live only in the level-1 Ability Scores group, before
   racial increases, and no longer appear as an unrelated editor below the level
   workspace. The editor now mirrors the legacy 22-point-buy path: new native

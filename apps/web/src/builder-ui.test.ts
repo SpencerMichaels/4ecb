@@ -17,6 +17,7 @@ import {
   buildPresetSuggestionNames,
   candidateReason,
   candidateTableTypeGroup,
+  comparePowerTableEntities,
   classTableMetadata,
   contextualChoiceName,
   choiceSelectionTableKind,
@@ -42,6 +43,7 @@ import {
   isBuildPresetChoice,
   isOptionalRetrainingChoice,
   planningHorizonCommand,
+  powerTableLevel,
   selectedChoiceHasWarning,
   splitLabeledDescription,
   unresolveEvaluatedChoiceCommand,
@@ -607,8 +609,9 @@ describe("builder planning UI", () => {
     const elf = entity("RACE_ELF", "Elf", "Race");
     const ranger = entity("CLASS_RANGER", "Ranger", "Class");
     const arcana = entity("SKILL_ARCANA", "Arcana", "Skill");
+    const theme = entity("THEME_DUNE_TRADER", "Dune Trader", "Theme");
     const byReference = new Map(
-      [elf, ranger, arcana].flatMap((definition) => [
+      [elf, ranger, arcana, theme].flatMap((definition) => [
         [definition.id.toLocaleLowerCase(), definition] as const,
         [definition.name.toLocaleLowerCase(), definition] as const,
       ]),
@@ -657,6 +660,25 @@ describe("builder planning UI", () => {
         resolve,
       ).label,
     ).toBe("Skill");
+    expect(
+      candidateTableTypeGroup(
+        entity("THEME_POWER", "Deft Avoidance", "Power", {
+          Class: "THEME_DUNE_TRADER",
+        }),
+        "power",
+        resolve,
+      ),
+    ).toMatchObject({ label: "Theme (Dune Trader)", order: 50 });
+
+    const levelTwo = entity("POWER_2", "Alpha", "Power", { Level: "2" });
+    const levelSixB = entity("POWER_6_B", "Bravo", "Power", { Level: "6" });
+    const levelSixA = entity("POWER_6_A", "Alpha", "Power", { Level: "6" });
+    expect(powerTableLevel(levelSixA)).toBe(6);
+    expect(
+      [levelTwo, levelSixB, levelSixA]
+        .sort(comparePowerTableEntities)
+        .map(({ id }) => id),
+    ).toEqual(["POWER_6_A", "POWER_6_B", "POWER_2"]);
   });
 
   it("groups background benefits without changing exact candidates", () => {

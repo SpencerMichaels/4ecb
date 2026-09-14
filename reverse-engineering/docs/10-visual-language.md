@@ -311,7 +311,11 @@ or other owner, usage, and level fields, resolves owner IDs to their displayed
 definitions, gives the current class special treatment, and then sorts the
 blocks and their powers. The modern table uses the same stable ownership signal
 for its broader Class, Race, Theme, Paragon Path, and Epic Destiny sections and
-uses `_SkillPower` for Skill; it does not infer these groups from prose.
+uses `_SkillPower` for Skill; it does not infer these groups from prose. Theme
+sections include the resolved authored owner name (for example,
+`Theme (Dune Trader)`). Power rows expose the authored numeric level as a
+separate column. Within each broad owner section they follow the native ordering
+principle: descending level, then alphabetical name for equal levels.
 
 ## Proposed modern token palette
 

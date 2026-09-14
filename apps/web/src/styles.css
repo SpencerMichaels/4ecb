@@ -2597,14 +2597,20 @@ textarea {
   opacity: 0.78;
 }
 
-.candidate-selection-power th:nth-child(2),
-.candidate-selection-power th:nth-child(3) {
+.candidate-selection-power th:nth-child(2) {
+  text-align: center;
+  width: 3rem;
+}
+
+.candidate-selection-power th:nth-child(3),
+.candidate-selection-power th:nth-child(4) {
   text-align: center;
   width: 2.75rem;
 }
 
 .candidate-selection-power td:nth-child(2),
-.candidate-selection-power td:nth-child(3) {
+.candidate-selection-power td:nth-child(3),
+.candidate-selection-power td:nth-child(4) {
   text-align: center;
 }
 

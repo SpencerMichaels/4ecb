@@ -227,13 +227,35 @@ const candidateTypeOrder: Readonly<Record<string, number>> = {
   other: 900,
 };
 
-function tableTypeGroup(label: string): CandidateTableTypeGroup {
+function tableTypeGroup(
+  label: string,
+  orderLabel: string = label,
+): CandidateTableTypeGroup {
   const normalized = label.trim().toLocaleLowerCase();
+  const normalizedOrder = orderLabel.trim().toLocaleLowerCase();
   return {
     key: normalized.replaceAll(/[^a-z0-9]+/g, "-") || "other",
     label,
-    order: candidateTypeOrder[normalized] ?? 500,
+    order: candidateTypeOrder[normalizedOrder] ?? 500,
   };
+}
+
+export function powerTableLevel(entity: ContentEntity): number | undefined {
+  const value = contentSpecificValue(entity, "Level");
+  if (value === undefined) return undefined;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+export function comparePowerTableEntities(
+  left: ContentEntity,
+  right: ContentEntity,
+): number {
+  return (
+    (powerTableLevel(right) ?? Number.NEGATIVE_INFINITY) -
+      (powerTableLevel(left) ?? Number.NEGATIVE_INFINITY) ||
+    left.name.localeCompare(right.name)
+  );
 }
 
 /**
@@ -259,7 +281,8 @@ export function candidateTableTypeGroup(
     if (ownerType === "class" || ownerType === "pseudo class")
       return tableTypeGroup("Class");
     if (ownerType === "race") return tableTypeGroup("Race");
-    if (ownerType === "theme") return tableTypeGroup("Theme");
+    if (ownerType === "theme")
+      return tableTypeGroup(`Theme (${owner!.name})`, "Theme");
     if (ownerType === "paragon path") return tableTypeGroup("Paragon Path");
     if (ownerType === "epic destiny") return tableTypeGroup("Epic Destiny");
     const display = contentSpecificValue(entity, "Display") ?? "";
