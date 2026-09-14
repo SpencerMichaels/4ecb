@@ -1044,6 +1044,11 @@ textarea {
   height: 52%;
   width: 52%;
 }
+.library-portrait {
+  flex: 0 0 auto;
+  height: 5rem;
+  width: 5rem;
+}
 .portrait-trigger {
   background: transparent;
   border: 0;

@@ -34,7 +34,7 @@ import {
 } from "./profile-migration";
 import { RulesWorkerClient } from "./rules-client";
 import { createNativeCharacter } from "./new-character";
-import { PortraitEditor } from "./PortraitEditor";
+import { PortraitImage } from "./PortraitEditor";
 
 const repository = new CharacterRepository();
 const contentRepository = new ContentPackRepository();
@@ -702,20 +702,10 @@ export function CharacterLibraryPage({
             return (
               <li key={character.id}>
                 <div className="character-card-heading">
-                  <PortraitEditor
+                  <PortraitImage
+                    className="library-portrait"
                     name={character.title}
                     portrait={character.portrait}
-                    onSave={async (portrait) => {
-                      await repository.updateMetadata(character.id, {
-                        portrait,
-                      });
-                      await refresh();
-                      setStatus(
-                        portrait === null
-                          ? `Removed ${character.title}'s portrait.`
-                          : `Saved ${character.title}'s portrait.`,
-                      );
-                    }}
                   />
                   <div>
                     <p className="eyebrow">

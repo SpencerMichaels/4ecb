@@ -115,7 +115,8 @@ source to a 1600-pixel maximum edge, and provides pointer/touch panning plus
 wheel and range-control zoom within a circular crop. It retains normalized crop
 coordinates for later adjustment and caches a 512-pixel rendering. Circular
 portraits appear on library cards, unobtrusively in the builder heading, and in
-the printable sheet header; the sheet toolbar can also reopen the editor.
+the printable sheet header. Portrait editing is intentionally confined to the
+builder; the library and sheet are read-only presentation surfaces.
 Portraits survive repository reconstruction, duplication, and checksummed JSON
 backup/restore while remaining outside legacy export. Focused validation covers
 record rejection, persistence/removal, and crop bounds. Live Chromium validation

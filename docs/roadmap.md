@@ -408,7 +408,8 @@ crop editor. A prominent portrait identifies cards in the Characters library, a
 smaller control accompanies the builder title, and the same circular rendering
 appears on the printable character sheet. The normalized source, crop, and small
 rendering travel with duplication and checksummed library backups but never alter
-legacy `.dnd4e` exports.
+legacy `.dnd4e` exports. Only the builder exposes the editor; library and sheet
+portrait displays remain read-only.
 
 ## M6 — Local phone play mode
 
