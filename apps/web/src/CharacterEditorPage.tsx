@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 
 import { CharacterRepository } from "@4ecb/browser-storage";
@@ -35,6 +36,7 @@ import {
 import {
   applyBuildPresetCommand,
   candidateReason,
+  candidateTableTypeGroup,
   choiceSelectionTableKind,
   choiceTableSummary,
   choicePresentationLabel,
@@ -75,6 +77,50 @@ import {
 
 const characters = new CharacterRepository();
 const ShowAllChoicesContext = createContext(false);
+const CANDIDATE_FAVORITES_KEY = "4ecb:candidate-favorites:v1";
+let candidateFavoritesSnapshot: ReadonlySet<string> | undefined;
+const candidateFavoriteListeners = new Set<() => void>();
+
+function storedCandidateFavorites(): ReadonlySet<string> {
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem(CANDIDATE_FAVORITES_KEY) ?? "[]",
+    );
+    return new Set(
+      Array.isArray(stored)
+        ? stored.filter((value): value is string => typeof value === "string")
+        : [],
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+function currentCandidateFavorites(): ReadonlySet<string> {
+  candidateFavoritesSnapshot ??= storedCandidateFavorites();
+  return candidateFavoritesSnapshot;
+}
+
+function useCandidateFavorites(): ReadonlySet<string> {
+  return useSyncExternalStore((listener) => {
+    candidateFavoriteListeners.add(listener);
+    return () => candidateFavoriteListeners.delete(listener);
+  }, currentCandidateFavorites);
+}
+
+function toggleCandidateFavorite(definitionId: string): void {
+  const next = new Set(currentCandidateFavorites());
+  const key = definitionId.toLocaleLowerCase();
+  if (next.has(key)) next.delete(key);
+  else next.add(key);
+  candidateFavoritesSnapshot = next;
+  localStorage.setItem(
+    CANDIDATE_FAVORITES_KEY,
+    JSON.stringify([...next].sort()),
+  );
+  for (const listener of candidateFavoriteListeners) listener();
+}
+
 type InspectedOption = {
   readonly candidate: CandidateDecision;
   readonly entity: ContentEntity;
@@ -89,6 +135,26 @@ function evaluationCacheKey(
 const InspectCandidateContext = createContext<
   ((option: InspectedOption | undefined) => void) | undefined
 >(undefined);
+
+const candidateReferenceIndexes = new WeakMap<
+  ReadonlyMap<string, ContentEntity>,
+  ReadonlyMap<string, ContentEntity>
+>();
+
+function candidateReferenceIndex(
+  byId: ReadonlyMap<string, ContentEntity>,
+): ReadonlyMap<string, ContentEntity> {
+  const existing = candidateReferenceIndexes.get(byId);
+  if (existing !== undefined) return existing;
+  const index = new Map<string, ContentEntity>();
+  for (const entity of byId.values()) {
+    index.set(entity.id.trim().toLocaleLowerCase(), entity);
+    const name = entity.name.trim().toLocaleLowerCase();
+    if (!index.has(name)) index.set(name, entity);
+  }
+  candidateReferenceIndexes.set(byId, index);
+  return index;
+}
 
 type SaveState =
   | { readonly phase: "loading"; readonly message: string }
@@ -1304,11 +1370,24 @@ function CandidateSelectionTable({
   readonly onToggle: (definitionId: string) => void;
   readonly onClear: () => void;
 }) {
-  const rowLimit = 150;
   const [filter, setFilter] = useState("");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [typeExpansion, setTypeExpansion] = useState<
+    ReadonlyMap<string, boolean>
+  >(new Map());
+  const favoriteIds = useCandidateFavorites();
   const normalizedFilter = filter.trim().toLocaleLowerCase();
   const entityFor = (candidate: CandidateDecision) =>
     byId.get(candidate.definitionId.toLocaleLowerCase());
+  const referenceIndex = candidateReferenceIndex(byId);
+  const typeGroupFor = (candidate: CandidateDecision) => {
+    const entity = entityFor(candidate);
+    return entity === undefined
+      ? { key: "other", label: "Other", order: 900 }
+      : candidateTableTypeGroup(entity, kind, (reference) =>
+          referenceIndex.get(reference.trim().toLocaleLowerCase()),
+        );
+  };
   const matchesFilter = (candidate: CandidateDecision, label?: string) => {
     if (normalizedFilter === "") return true;
     const entity = entityFor(candidate);
@@ -1325,15 +1404,22 @@ function CandidateSelectionTable({
         : contentSpecificValue(entity, "Attack Type"),
     ].some((value) => value?.toLocaleLowerCase().includes(normalizedFilter));
   };
+  const isFavorite = (candidate: CandidateDecision) =>
+    favoriteIds.has(candidate.definitionId.toLocaleLowerCase());
+  const isVisible = (candidate: CandidateDecision, label?: string) =>
+    (!favoritesOnly || isFavorite(candidate)) &&
+    matchesFilter(candidate, label);
   const visibleCandidates = candidates.filter((candidate) =>
-    matchesFilter(candidate),
+    isVisible(candidate),
   );
   const visibleFeatGroups = featGroups.filter(
     (group) =>
-      group.label.toLocaleLowerCase().includes(normalizedFilter) ||
-      group.options.some(({ candidate, label }) =>
-        matchesFilter(candidate, label),
-      ),
+      (!favoritesOnly ||
+        group.options.some(({ candidate }) => isFavorite(candidate))) &&
+      (group.label.toLocaleLowerCase().includes(normalizedFilter) ||
+        group.options.some(({ candidate, label }) =>
+          isVisible(candidate, label),
+        )),
   );
   const prioritizedCandidates = [
     ...visibleCandidates.filter((candidate) =>
@@ -1343,7 +1429,7 @@ function CandidateSelectionTable({
       (candidate) => !selectedIds.has(candidate.definitionId),
     ),
   ];
-  const displayedCandidates = prioritizedCandidates.slice(0, rowLimit);
+  const displayedCandidates = prioritizedCandidates;
   const prioritizedFeatGroups = [
     ...visibleFeatGroups.filter((group) =>
       group.options.some(({ candidate }) =>
@@ -1357,10 +1443,36 @@ function CandidateSelectionTable({
         ),
     ),
   ];
-  const displayedFeatGroups = prioritizedFeatGroups.slice(0, rowLimit);
+  const displayedFeatGroups = prioritizedFeatGroups;
   const totalRows =
     kind === "power" ? visibleCandidates.length : visibleFeatGroups.length;
-  const shownRows = Math.min(totalRows, rowLimit);
+
+  const typeSections = new Map<
+    string,
+    {
+      readonly key: string;
+      readonly label: string;
+      readonly order: number;
+      readonly candidates: CandidateDecision[];
+      readonly featGroups: FeatPresentationGroup[];
+    }
+  >();
+  const sectionFor = (candidate: CandidateDecision) => {
+    const group = typeGroupFor(candidate);
+    const existing = typeSections.get(group.key);
+    if (existing !== undefined) return existing;
+    const section = { ...group, candidates: [], featGroups: [] };
+    typeSections.set(group.key, section);
+    return section;
+  };
+  for (const candidate of displayedCandidates)
+    sectionFor(candidate).candidates.push(candidate);
+  for (const group of displayedFeatGroups)
+    sectionFor(group.options[0]!.candidate).featGroups.push(group);
+  const sortedTypeSections = [...typeSections.values()].sort(
+    (left, right) =>
+      left.order - right.order || left.label.localeCompare(right.label),
+  );
 
   const candidateRow = (
     candidate: CandidateDecision,
@@ -1382,23 +1494,36 @@ function CandidateSelectionTable({
         key={candidate.definitionId}
       >
         <td className={nested ? "selection-table-nested" : undefined}>
-          <button
-            aria-pressed={selected}
-            disabled={
-              disabled ||
-              !isCandidateSelectable(candidate) ||
-              (!selected &&
-                selectionLimit !== undefined &&
-                selectedIds.size >= selectionLimit)
-            }
-            type="button"
-            onClick={() => onToggle(candidate.definitionId)}
-            onFocus={() => onInspect(candidate)}
-            onMouseEnter={() => onInspect(candidate)}
-          >
-            {selected ? <Icon name="check" /> : null}
-            <span>{label}</span>
-          </button>
+          <div className="selection-table-name">
+            <button
+              aria-label={`${isFavorite(candidate) ? "Remove" : "Add"} ${label} ${isFavorite(candidate) ? "from" : "to"} favorites`}
+              aria-pressed={isFavorite(candidate)}
+              className="selection-favorite-toggle"
+              title={isFavorite(candidate) ? "Remove favorite" : "Add favorite"}
+              type="button"
+              onClick={() => toggleCandidateFavorite(candidate.definitionId)}
+            >
+              <Icon name="favorite" />
+            </button>
+            <button
+              aria-pressed={selected}
+              className="selection-candidate-toggle"
+              disabled={
+                disabled ||
+                !isCandidateSelectable(candidate) ||
+                (!selected &&
+                  selectionLimit !== undefined &&
+                  selectedIds.size >= selectionLimit)
+              }
+              type="button"
+              onClick={() => onToggle(candidate.definitionId)}
+              onFocus={() => onInspect(candidate)}
+              onMouseEnter={() => onInspect(candidate)}
+            >
+              {selected ? <Icon name="check" /> : null}
+              <span>{label}</span>
+            </button>
+          </div>
           {unavailable ? (
             <small>{candidateReason(candidate.reasons)}</small>
           ) : null}
@@ -1459,11 +1584,15 @@ function CandidateSelectionTable({
         >
           Clear
         </button>
-        <span className="selection-table-count">
-          {shownRows === totalRows
-            ? `${totalRows} shown`
-            : `${shownRows} of ${totalRows} shown`}
-        </span>
+        <button
+          aria-pressed={favoritesOnly}
+          className="selection-favorites-filter"
+          type="button"
+          onClick={() => setFavoritesOnly((current) => !current)}
+        >
+          <Icon name="favorite" /> Favorites
+        </button>
+        <span className="selection-table-count">{totalRows} shown</span>
       </div>
       <div className="selection-table-scroll">
         <table>
@@ -1498,67 +1627,109 @@ function CandidateSelectionTable({
             </tr>
           </thead>
           <tbody>
-            {kind === "power"
-              ? displayedCandidates.map((candidate) =>
-                  candidateRow(
-                    candidate,
-                    entityFor(candidate)?.name ?? candidate.definitionId,
-                  ),
-                )
-              : displayedFeatGroups.map((group) => {
-                  if (group.parameterLabel === undefined) {
-                    const candidate = group.options[0]!.candidate;
-                    return candidateRow(candidate, group.label);
-                  }
-                  const selected = group.options.some(({ candidate }) =>
+            {sortedTypeSections.map((section, sectionIndex) => {
+              const selected =
+                section.candidates.some((candidate) =>
+                  selectedIds.has(candidate.definitionId),
+                ) ||
+                section.featGroups.some((group) =>
+                  group.options.some(({ candidate }) =>
                     selectedIds.has(candidate.definitionId),
-                  );
-                  const expanded =
-                    expandedGroupKey === group.key ||
-                    selected ||
-                    normalizedFilter !== "";
-                  const representative =
-                    group.options.find(({ candidate }) =>
-                      selectedIds.has(candidate.definitionId),
-                    )?.candidate ?? group.options[0]!.candidate;
-                  const matchingOptions = group.options.filter(
-                    ({ candidate, label }) => matchesFilter(candidate, label),
-                  );
-                  return (
-                    <Fragment key={group.key}>
-                      <tr className="selection-family-row">
-                        <td>
-                          <button
-                            aria-expanded={expanded}
-                            type="button"
-                            onClick={() =>
-                              onExpandGroup(expanded ? "" : group.key)
-                            }
-                            onFocus={() => onInspect(representative)}
-                            onMouseEnter={() => onInspect(representative)}
-                          >
-                            {selected ? <Icon name="check" /> : null}
-                            <span>{group.label}…</span>
-                          </button>
-                        </td>
-                        <td>Choose {group.parameterLabel}</td>
-                      </tr>
-                      {expanded
-                        ? matchingOptions.map(({ candidate, label }) =>
-                            candidateRow(candidate, label, true),
-                          )
-                        : null}
-                    </Fragment>
-                  );
-                })}
-            {totalRows > shownRows ? (
-              <tr className="selection-table-more">
-                <td colSpan={kind === "feat" ? 2 : 4}>
-                  Filter the table to see the remaining {totalRows - shownRows}{" "}
-                  options.
-                </td>
-              </tr>
-            ) : null}
+                  ),
+                );
+              const expanded =
+                normalizedFilter !== "" ||
+                (typeExpansion.get(section.key) ??
+                  (selected || sectionIndex === 0));
+              const rows =
+                kind === "power"
+                  ? section.candidates.map((candidate) =>
+                      candidateRow(
+                        candidate,
+                        entityFor(candidate)?.name ?? candidate.definitionId,
+                      ),
+                    )
+                  : section.featGroups.map((group) => {
+                      if (group.parameterLabel === undefined) {
+                        const candidate = group.options[0]!.candidate;
+                        return candidateRow(candidate, group.label);
+                      }
+                      const selected = group.options.some(({ candidate }) =>
+                        selectedIds.has(candidate.definitionId),
+                      );
+                      const expanded =
+                        expandedGroupKey === group.key ||
+                        selected ||
+                        normalizedFilter !== "";
+                      const representative =
+                        group.options.find(({ candidate }) =>
+                          selectedIds.has(candidate.definitionId),
+                        )?.candidate ?? group.options[0]!.candidate;
+                      const familyLabelMatches = group.label
+                        .toLocaleLowerCase()
+                        .includes(normalizedFilter);
+                      const matchingOptions = group.options.filter(
+                        ({ candidate, label }) =>
+                          (!favoritesOnly || isFavorite(candidate)) &&
+                          (familyLabelMatches ||
+                            matchesFilter(candidate, label)),
+                      );
+                      return (
+                        <Fragment key={group.key}>
+                          <tr className="selection-family-row">
+                            <td>
+                              <button
+                                aria-expanded={expanded}
+                                type="button"
+                                onClick={() =>
+                                  onExpandGroup(expanded ? "" : group.key)
+                                }
+                                onFocus={() => onInspect(representative)}
+                                onMouseEnter={() => onInspect(representative)}
+                              >
+                                {selected ? <Icon name="check" /> : null}
+                                <span>{group.label}…</span>
+                              </button>
+                            </td>
+                            <td>Choose {group.parameterLabel}</td>
+                          </tr>
+                          {expanded
+                            ? matchingOptions.map(({ candidate, label }) =>
+                                candidateRow(candidate, label, true),
+                              )
+                            : null}
+                        </Fragment>
+                      );
+                    });
+              return (
+                <Fragment key={section.key}>
+                  <tr className="selection-type-row">
+                    <th colSpan={kind === "feat" ? 2 : 4} scope="rowgroup">
+                      <button
+                        aria-expanded={expanded}
+                        type="button"
+                        onClick={() =>
+                          setTypeExpansion((current) => {
+                            const next = new Map(current);
+                            next.set(section.key, !expanded);
+                            return next;
+                          })
+                        }
+                      >
+                        <Icon name="chevron" />
+                        <span>{section.label}</span>
+                        <small>
+                          {kind === "power"
+                            ? section.candidates.length
+                            : section.featGroups.length}
+                        </small>
+                      </button>
+                    </th>
+                  </tr>
+                  {expanded ? rows : null}
+                </Fragment>
+              );
+            })}
             {(kind === "power"
               ? visibleCandidates.length
               : visibleFeatGroups.length) === 0 ? (

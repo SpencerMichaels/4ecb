@@ -16,6 +16,7 @@ import {
   applyBuildPresetCommand,
   buildPresetSuggestionNames,
   candidateReason,
+  candidateTableTypeGroup,
   choiceSelectionTableKind,
   choiceTableSummary,
   choicePresentationLabel,
@@ -329,6 +330,90 @@ describe("builder planning UI", () => {
       "Special Training (First)",
       "Special Training (Second)",
     ]);
+  });
+
+  it("groups feat and power candidates by authored legacy type metadata", () => {
+    const entity = (
+      id: string,
+      name: string,
+      type: string,
+      specifics: Readonly<Record<string, string>> = {},
+      prerequisites?: string,
+    ): ContentEntity => ({
+      id,
+      name,
+      type,
+      source: "Public test fixture",
+      sources: ["Public test fixture"],
+      attributes: [],
+      categories: [],
+      specifics: Object.entries(specifics).map(
+        ([fieldName, value], ordinal) => ({
+          name: fieldName,
+          value,
+          extraAttributes: [],
+          ordinal,
+        }),
+      ),
+      rules: [],
+      description: "",
+      extensions: [],
+      provenance: { sourceKey: "builder-ui", sourceOrdinal: 0 },
+      ...(prerequisites === undefined ? {} : { prerequisites }),
+    });
+    const elf = entity("RACE_ELF", "Elf", "Race");
+    const ranger = entity("CLASS_RANGER", "Ranger", "Class");
+    const arcana = entity("SKILL_ARCANA", "Arcana", "Skill");
+    const byReference = new Map(
+      [elf, ranger, arcana].flatMap((definition) => [
+        [definition.id.toLocaleLowerCase(), definition] as const,
+        [definition.name.toLocaleLowerCase(), definition] as const,
+      ]),
+    );
+    const resolve = (reference: string) =>
+      byReference.get(reference.trim().toLocaleLowerCase());
+
+    expect(
+      candidateTableTypeGroup(
+        entity("MULTI", "Warrior of the Wild", "Feat", {
+          Type: "Multiclass Ranger",
+        }),
+        "feat",
+        resolve,
+      ).label,
+    ).toBe("Multiclass");
+    expect(
+      candidateTableTypeGroup(
+        entity("ELVEN", "Elven Precision", "Feat", {}, "Elf"),
+        "feat",
+        resolve,
+      ).label,
+    ).toBe("Race");
+    expect(
+      candidateTableTypeGroup(
+        entity("SKILL_FEAT", "Arcane Skill", "Feat", {}, "Trained in Arcana"),
+        "feat",
+        resolve,
+      ).label,
+    ).toBe("Skill");
+    expect(
+      candidateTableTypeGroup(
+        entity("CLASS_POWER", "Twin Strike", "Power", {
+          Class: "CLASS_RANGER",
+        }),
+        "power",
+        resolve,
+      ).label,
+    ).toBe("Class");
+    expect(
+      candidateTableTypeGroup(
+        entity("SKILL_POWER", "Agile Recovery", "Power", {
+          _SkillPower: "SKILL_ARCANA",
+        }),
+        "power",
+        resolve,
+      ).label,
+    ).toBe("Skill");
   });
 
   it("groups background benefits without changing exact candidates", () => {

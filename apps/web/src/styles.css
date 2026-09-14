@@ -2221,7 +2221,7 @@ textarea {
   vertical-align: top;
 }
 
-.selection-table-scroll th {
+.selection-table-scroll thead th {
   background: var(--legacy-neutral);
   font-size: 0.72rem;
   letter-spacing: 0.035em;
@@ -2231,8 +2231,49 @@ textarea {
   z-index: 1;
 }
 
-.selection-table-scroll th:first-child {
+.selection-table-scroll thead th:first-child {
   width: 25%;
+}
+
+.selection-table-scroll .selection-type-row {
+  background: var(--brand-navy);
+  color: white;
+}
+
+.selection-table-scroll .selection-type-row th {
+  border-bottom: 1px solid var(--border-strong);
+  padding: 0;
+}
+
+.selection-table-scroll .selection-type-row button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  display: flex;
+  font-weight: 800;
+  gap: 0.4rem;
+  padding: 0.45rem 0.55rem;
+  text-align: left;
+  width: 100%;
+}
+
+.selection-table-scroll .selection-type-row button .icon {
+  height: 0.95rem;
+  transition: transform 100ms ease;
+  width: 0.95rem;
+}
+
+.selection-table-scroll .selection-type-row button[aria-expanded="true"] .icon {
+  transform: rotate(90deg);
+}
+
+.selection-table-scroll .selection-type-row button small {
+  color: inherit;
+  font-size: 0.68rem;
+  font-weight: 600;
+  margin: 0 0 0 auto;
+  opacity: 0.78;
 }
 
 .candidate-selection-power th:nth-child(2),
@@ -2271,6 +2312,12 @@ textarea {
   border-left: 4px solid var(--tone);
 }
 
+.selection-table-name {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.38rem;
+}
+
 .selection-table-scroll td button {
   align-items: flex-start;
   background: transparent;
@@ -2289,6 +2336,52 @@ textarea {
   text-decoration: underline;
 }
 
+.selection-table-scroll td .selection-favorite-toggle {
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+.selection-table-scroll td .selection-favorite-toggle .icon {
+  height: 0.95rem;
+  width: 0.95rem;
+}
+
+.selection-table-scroll td .selection-favorite-toggle[aria-pressed="true"] {
+  color: var(--power-item);
+}
+
+.selection-table-scroll
+  td
+  .selection-favorite-toggle[aria-pressed="true"]
+  .icon {
+  fill: currentColor;
+}
+
+.selection-table-scroll td .selection-candidate-toggle {
+  flex: 1 1 auto;
+}
+
+.selection-favorites-filter {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.3rem;
+}
+
+.selection-favorites-filter .icon {
+  height: 0.95rem;
+  width: 0.95rem;
+}
+
+.selection-favorites-filter[aria-pressed="true"] {
+  background: var(--power-item-soft);
+  border-color: var(--power-item);
+  color: var(--text);
+}
+
+.selection-favorites-filter[aria-pressed="true"] .icon {
+  fill: currentColor;
+}
+
 .selection-table-scroll td small {
   display: block;
   margin-top: 0.2rem;
@@ -2296,11 +2389,6 @@ textarea {
 
 .selection-table-scroll .selection-family-row {
   background: var(--accent-soft);
-}
-
-.selection-table-scroll .selection-table-more {
-  color: var(--muted);
-  font-style: italic;
 }
 
 .selection-table-scroll .selection-table-nested {

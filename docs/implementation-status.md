@@ -93,10 +93,21 @@ The current M5.5 interaction pass replaces feat and power dropdowns with
 searchable tables backed by authored legacy metadata. Feats expose printable
 prerequisites in search/details and Short Description in the table, avoiding a
 redundant prerequisite column for already-legal rows; powers expose flavor plus
-icon-only action and attack types whose exact labels remain accessible. Repeated at-will and
-other same-category slots share one multi-select table, selected rows update
-optimistically, and a 150-row rendered window prevents large eligible feat sets
-from blocking the page while search still covers the complete set.
+icon-only action and attack types whose exact labels remain accessible. Repeated
+at-will and other same-category slots share one multi-select table, and selected
+rows update optimistically. Rows are organized into collapsible legacy-derived
+type sections: authored feat subtypes take priority before prerequisite-derived
+Race/Class/Skill/tier groups, while powers use their skill or owner metadata.
+The former 150-row cap has been removed: every matching row is available without
+changing the search. In the Silaqui/full-corpus browser check, all 335 matching
+feat groups were present and expanding the 181-row General section took about
+0.28 seconds through the browser control layer, so virtualization is not yet
+justified. Any feat or power candidate can be starred without selecting it;
+favorites persist by content ID across reloads and combine with text search and
+type filtering. The complete public check passes all 265 tests, workspace
+typechecks, the production/PWA build, both browser print suites, deterministic
+content-pack checks, and the query benchmark; a clean live reload reported no
+browser warnings or errors.
 
 The M5.5 runtime pass moves immutable content-derived state out of route
 components and into a bounded application-scoped cache. Decoded packs,

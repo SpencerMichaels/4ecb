@@ -96,6 +96,11 @@ application's protected visual assets.
   fixed-height or maximum-height scrolling regions; bounded candidate tables
   are the deliberate exception because their result sets can contain thousands
   of rows.
+- Organize feat and power tables into collapsible semantic type sections using
+  authored subtype/owner metadata and the legacy prerequisite-derived fallback.
+  Do not silently truncate matching candidates. Let players star candidates
+  without selecting them and temporarily filter the table to those persistent
+  content-ID favorites while comparing options.
 - Repeated Background slots use one primary **Choose background** section;
   already selected extras remain visible and optional empty slots appear one at
   a time through **Add another background…**. A revealed empty slot can be

@@ -505,6 +505,26 @@ prefix through that level, and are bounded to 64 recent prefixes. This preserves
 replacement and level-gated rule behavior without maintaining a second,
 approximate prerequisite formula in React.
 
+### D037 — Candidate tables expose complete, grouped, favorite-able sets
+
+Feat and power table presentation follows the legacy specialized-page boundary
+without changing rules identity or order in the engine. Feats use authored
+subtype metadata first and resolved prerequisite metadata for broad semantic
+fallback groups; powers use their authored skill/owner relationship. The UI
+renders those categories as collapsible row groups and keeps family expansion
+as a nested presentation concern.
+
+Matching candidates are not capped. The table's bounded scroll container and
+collapsed groups control ordinary DOM size, and virtualization remains a future
+optimization only if profiling demonstrates a problem. A full-corpus Silaqui
+selector exposed all 335 matching feat groups and expanded its 181-row General
+group in about 0.28 seconds through browser automation.
+
+Favorites are a browser-local, application-wide set of normalized content IDs.
+Starring never selects a rules choice; it is durable comparison metadata shared
+by feat and power tables and intended for reuse by later equipment tables. The
+Favorites toggle is temporary table state and composes with text search.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

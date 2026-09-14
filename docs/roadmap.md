@@ -383,8 +383,11 @@ Feat and power selections now use searchable metadata tables: feat rows expose
 the authored short description while prerequisite text remains searchable and
 available in the detail pane; power rows use accessible monochrome action/attack
 icons and authored flavor. Repeated
-slots share one multi-select surface, and large corpora use a bounded rendered
-window over full-candidate search to preserve interaction speed.
+slots share one multi-select surface. Candidates are grouped into collapsible
+legacy-derived type sections, the complete matching set is available without an
+artificial row cap, and persistent content-ID favorites can be filtered while
+the user compares options. Full-corpus profiling did not justify virtualization;
+the table remains a bounded scrolling region.
 The application shell now retains decoded packs, rules workers, memoized exact
 evaluations, and Compendium indexes across client-side route changes. The first
 full-corpus Compendium initialization still reconstructs state from IndexedDB;

@@ -23,6 +23,7 @@ import {
   ShieldAlert,
   Shuffle,
   Sparkles,
+  Star,
   Swords,
   TriangleAlert,
   Undo2,
@@ -58,6 +59,7 @@ export type IconName =
   | "content"
   | "details"
   | "feat"
+  | "favorite"
   | "item"
   | "level"
   | "power"
@@ -94,6 +96,7 @@ const icons: Record<IconName, LucideIcon> = {
   content: LayoutGrid,
   details: ScrollText,
   feat: Sparkles,
+  favorite: Star,
   item: Backpack,
   level: ChevronsUp,
   power: Zap,

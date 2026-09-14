@@ -94,6 +94,115 @@ export function choiceTableSummary(
   return entity.flavor?.trim() || entity.description.trim() || undefined;
 }
 
+export interface CandidateTableTypeGroup {
+  readonly key: string;
+  readonly label: string;
+  readonly order: number;
+}
+
+const candidateTypeOrder: Readonly<Record<string, number>> = {
+  class: 10,
+  race: 20,
+  skill: 30,
+  multiclass: 40,
+  theme: 50,
+  "paragon path": 60,
+  "epic destiny": 70,
+  paragon: 80,
+  epic: 90,
+  general: 100,
+  other: 900,
+};
+
+function tableTypeGroup(label: string): CandidateTableTypeGroup {
+  const normalized = label.trim().toLocaleLowerCase();
+  return {
+    key: normalized.replaceAll(/[^a-z0-9]+/g, "-") || "other",
+    label,
+    order: candidateTypeOrder[normalized] ?? 500,
+  };
+}
+
+/**
+ * Produces the player-facing category used by the feat/power browser. The
+ * legacy feat page gives an authored subtype priority, then derives its broad
+ * Race/Class/tier buckets from prerequisite references. Power categories use
+ * the type of their authored Class/owner reference, with skill powers called
+ * out by their dedicated metadata field.
+ */
+export function candidateTableTypeGroup(
+  entity: ContentEntity,
+  kind: ChoiceSelectionTableKind,
+  resolveEntity: (reference: string) => ContentEntity | undefined,
+): CandidateTableTypeGroup {
+  if (kind === "power") {
+    if (contentSpecificValue(entity, "_SkillPower") !== undefined)
+      return tableTypeGroup("Skill");
+    const owner = (contentSpecificValue(entity, "Class") ?? "")
+      .split(",")
+      .map((reference) => resolveEntity(reference.trim()))
+      .find((candidate) => candidate !== undefined);
+    const ownerType = owner?.type.trim().toLocaleLowerCase();
+    if (ownerType === "class" || ownerType === "pseudo class")
+      return tableTypeGroup("Class");
+    if (ownerType === "race") return tableTypeGroup("Race");
+    if (ownerType === "theme") return tableTypeGroup("Theme");
+    if (ownerType === "paragon path") return tableTypeGroup("Paragon Path");
+    if (ownerType === "epic destiny") return tableTypeGroup("Epic Destiny");
+    const display = contentSpecificValue(entity, "Display") ?? "";
+    if (/\bracial\b/i.test(display)) return tableTypeGroup("Race");
+    return tableTypeGroup("Other");
+  }
+
+  const subtype = contentSpecificValue(entity, "Type");
+  if (subtype !== undefined) {
+    if (/\bmulticlass\b/i.test(subtype)) return tableTypeGroup("Multiclass");
+    if (/\b(?:greater|lesser) style\b/i.test(subtype))
+      return tableTypeGroup("Style");
+    return tableTypeGroup(subtype);
+  }
+
+  const prerequisite = `${entity.prerequisites ?? ""};${entity.printPrerequisites ?? ""}`;
+  const references = prerequisite
+    .split(/[,;]|\bor\b|\band\b/i)
+    .map((reference) => reference.trim().replace(/^[!~]+/, ""))
+    .filter(Boolean);
+  const referencedTypes = new Set(
+    references.flatMap((reference) => {
+      const direct = resolveEntity(reference);
+      if (direct !== undefined) return [direct.type.trim().toLocaleLowerCase()];
+      const withoutQualifier = reference.replace(
+        /\s+(?:racial power|racial trait|class feature)$/i,
+        "",
+      );
+      const qualified = resolveEntity(withoutQualifier);
+      return qualified === undefined
+        ? []
+        : [qualified.type.trim().toLocaleLowerCase()];
+    }),
+  );
+  if (
+    referencedTypes.has("race") ||
+    referencedTypes.has("racial trait") ||
+    /\bracial (?:power|trait)\b/i.test(prerequisite)
+  )
+    return tableTypeGroup("Race");
+  if (
+    referencedTypes.has("class") ||
+    referencedTypes.has("class feature") ||
+    /\b(?:class feature|any \w+ class)\b/i.test(prerequisite)
+  )
+    return tableTypeGroup("Class");
+  if (
+    referencedTypes.has("skill") ||
+    /\btrain(?:ed|ing) in\b/i.test(prerequisite)
+  )
+    return tableTypeGroup("Skill");
+  if (/\bepic tier\b/i.test(prerequisite)) return tableTypeGroup("Epic");
+  if (/\bparagon tier\b/i.test(prerequisite)) return tableTypeGroup("Paragon");
+  return tableTypeGroup("General");
+}
+
 export function buildPresetSuggestionNames(
   preset: ContentEntity,
 ): readonly string[] {

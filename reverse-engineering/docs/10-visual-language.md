@@ -286,6 +286,16 @@ it, and revealed unavailable rows carry a concise failure reason. The selected
 feat remains an exact rules-element identity even when the modern surface
 groups a large parenthetical family.
 
+`FeatPage.CategoryForFeat` supplies the legacy tree section. It gives custom,
+suggested, parenthetical-family, Essentials, and the authored feat `type` field
+special handling before walking the internal prerequisite tree for Race, Class,
+Epic, or Paragon references and finally falling back to General. `FeatPage` then
+orders the blocks with its fixed category order and sorts entries within each
+block. The replacement UI preserves that evidence boundary: authored feat
+subtypes are authoritative, broad Race/Class/Skill/tier sections may be derived
+from resolved prerequisite metadata, and grouping never changes candidate or
+selection identity.
+
 `PowerPage` builds its grouped candidate rows as `PowerInfo(name, source, ...)`;
 the old tree itself exposes name/source and delegates the complete rules text to
 the detail view. The content records additionally carry authored `Action Type`
@@ -295,6 +305,13 @@ rules text: one monochrome glyph for action, one for attack geometry, and the
 flavor line as the summary. Exact field text remains the glyph's tooltip and
 accessible name. This is a deliberate modern extension of the legacy row, not
 evidence that the legacy tree displayed those columns.
+
+`PowerPage.DisplayPowerTree` derives each block from the power's authored class
+or other owner, usage, and level fields, resolves owner IDs to their displayed
+definitions, gives the current class special treatment, and then sorts the
+blocks and their powers. The modern table uses the same stable ownership signal
+for its broader Class, Race, Theme, Paragon Path, and Epic Destiny sections and
+uses `_SkillPower` for Skill; it does not infer these groups from prose.
 
 ## Proposed modern token palette
 
