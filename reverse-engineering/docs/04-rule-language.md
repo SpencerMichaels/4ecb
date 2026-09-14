@@ -59,7 +59,9 @@ choices exist. The whole update is repeated to a fixed point; see
 
 ## Shared `requires` expressions
 
-`requires` is a compact predicate over currently active character elements.
+`requires` is a compact predicate over currently active character elements. It
+gates the rule statement itself, including the existence/activity of a `select`
+slot; it is not merely a candidate filter.
 
 - A leading `!` negates the entire following expression.
 - If the current expression contains any `|`, it is split as OR.
@@ -259,6 +261,14 @@ Semantics:
 - `spellbook` groups learned alternatives; `Prepare` links preparation to a class;
 - `existing` selects among already owned occurrences rather than the whole DB;
 - `grant` links a companion grant behavior used by a published special case.
+
+When a `select` fails its own `requires`, its `D20Choice.IsActive` check fails.
+The serialized positional child is retained for recovery, but it is not tallied
+as an active definition and its rules do not execute. If the predicate later
+becomes true, the same saved child can become active again. The stock Ranger
+data is a direct example: the Prime Shot/Running Attack selector has
+`requires="!ID_FMP_CLASS_FEATURE_1030"`, so choosing Beast Mastery suppresses a
+stored Prime Shot without rewriting Ranger-specific state.
 
 After a choice is updated, `CheckPrevious` can clear it and restart evaluation
 when its exact definition is already active. The only pass-through equivalence

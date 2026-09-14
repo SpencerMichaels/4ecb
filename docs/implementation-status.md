@@ -89,6 +89,16 @@ topology. The native prior-level active-mask edge remains documented for a later
 temporal-membership model; it is not approximated with acquisition level.
 Optional Auto Pick and UI sorting remain outside this follow-up.
 
+The evaluator now also reconciles durable saved children with statement-level
+`requires`. An inactive provider rule suppresses its selected child and entire
+subtree from active membership and rule execution without deleting the saved
+choice; reactivation restores that choice. Missing providers in imported/custom
+data retain the existing recoverability behavior. This closes the concrete
+Ranger gap recovered from `ID_INTERNAL_GRANTS_RANGER`: Beast Mastery disables
+the Prime Shot/Running Attack selector through
+`requires="!ID_FMP_CLASS_FEATURE_1030"`, so Prime Shot can no longer remain
+active alongside Beast Mastery.
+
 The current M5.5 interaction pass replaces feat and power dropdowns with
 searchable tables backed by authored legacy metadata. Feats expose printable
 prerequisites in search/details and Short Description in the table, avoiding a
@@ -108,6 +118,17 @@ type filtering. The complete public check passes all 265 tests, workspace
 typechecks, the production/PWA build, both browser print suites, deterministic
 content-pack checks, and the query benchmark; a clean live reload reported no
 browser warnings or errors.
+
+Candidate details now follow unconditional executable `grant` metadata for
+user-facing feats and powers. The granted record appears as a second full card
+below the inspected option; for Archer Fighting Style this resolves the authored
+`ID_FMP_FEAT_127` link and shows Defensive Mobility. The UI does not parse prose
+to guess relationships, and it withholds conditional/internal grants from this
+unqualified presentation. Public synthetic coverage verifies grant-card
+resolution, inactive-select suppression/reactivation, and preservation of
+genuinely orphaned compatibility records. The complete public check passes all
+275 tests, every workspace typecheck, the production/PWA build, Chromium and
+Firefox print checks, deterministic content-pack checks, and the query benchmark.
 
 Character portraits are now browser-local, portable character metadata. The
 shared editor accepts bounded PNG/JPEG/WebP/GIF uploads, normalizes the decoded

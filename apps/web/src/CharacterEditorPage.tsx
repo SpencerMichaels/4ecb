@@ -48,8 +48,9 @@ import {
   evaluationAtHorizon,
   groupChoicesByLegacyWorkflow,
   groupBackgroundChoiceCandidates,
-  groupLevelChoices,
   groupDependentChoiceFlows,
+  grantedDetailEntities,
+  groupLevelChoices,
   groupParameterizedCandidates,
   groupRepeatedCandidateScopes,
   groupRepeatedChoiceSlots,
@@ -339,9 +340,11 @@ function choiceSectionIcon(section: string): IconName {
 function CandidateDetail({
   candidate,
   entity,
+  byId,
 }: {
   readonly candidate: CandidateDecision | undefined;
   readonly entity: ContentEntity | undefined;
+  readonly byId: ReadonlyMap<string, ContentEntity>;
 }) {
   if (candidate === undefined || entity === undefined)
     return (
@@ -355,7 +358,32 @@ function CandidateDetail({
       </aside>
     );
 
-  const headingId = `candidate-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const referenceIndex = candidateReferenceIndex(byId);
+  const grantedEntities = grantedDetailEntities(entity, referenceIndex);
+  return (
+    <div className="candidate-detail-stack">
+      <CandidateDetailCard candidate={candidate} entity={entity} />
+      {grantedEntities.map((granted) => (
+        <CandidateDetailCard
+          key={granted.id}
+          entity={granted}
+          relationship={`Granted ${granted.type.toLocaleLowerCase()}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function CandidateDetailCard({
+  candidate,
+  entity,
+  relationship,
+}: {
+  readonly candidate?: CandidateDecision;
+  readonly entity: ContentEntity;
+  readonly relationship?: string;
+}) {
+  const headingId = `candidate-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}${relationship === undefined ? "" : "-granted"}`;
   const visibleSpecifics = entity.specifics.filter(isUserFacingSpecific);
   const tone = visualToneClass(entityVisualTone(entity));
   return (
@@ -370,12 +398,15 @@ function CandidateDetail({
             <Icon name={entityTypeIcon(entity.type)} /> {entity.type}
           </p>
           <h4 id={headingId}>{entity.name}</h4>
+          {relationship === undefined ? null : (
+            <p className="candidate-relationship">{relationship}</p>
+          )}
         </div>
-        {candidate.eligible ? null : (
+        {candidate === undefined || candidate.eligible ? null : (
           <span className="candidate-unavailable">Unavailable</span>
         )}
       </header>
-      {candidate.eligible ? null : (
+      {candidate === undefined || candidate.eligible ? null : (
         <p className="candidate-reason">{candidateReason(candidate.reasons)}</p>
       )}
       <dl className="candidate-facts">
@@ -993,7 +1024,11 @@ function ReplacementEditor({
         )}
       </div>
       {inspectCandidate === undefined ? (
-        <CandidateDetail candidate={detailCandidate} entity={detailEntity} />
+        <CandidateDetail
+          candidate={detailCandidate}
+          entity={detailEntity}
+          byId={byId}
+        />
       ) : null}
     </div>
   );
@@ -1329,6 +1364,7 @@ function ChoiceEditor({
       {compact || inspectCandidate !== undefined ? null : (
         <CandidateDetail
           candidate={detailCandidate}
+          byId={byId}
           entity={
             detailCandidate === undefined
               ? undefined
@@ -3038,6 +3074,7 @@ function SkillTrainingEditor({
         </div>
         {inspectCandidate === undefined ? (
           <CandidateDetail
+            byId={byId}
             candidate={
               candidateRows.find((row) => row.definitionId === perusedId)
                 ?.candidate
@@ -3286,6 +3323,7 @@ function CharacterDetailsEditor({
         {evaluation === undefined ? null : (
           <div className="shared-choice-detail">
             <CandidateDetail
+              byId={byId}
               candidate={inspectedOption?.candidate}
               entity={inspectedOption?.entity}
             />
@@ -4714,6 +4752,7 @@ export function CharacterEditorPage({
                   </div>
                   <div className="shared-choice-detail">
                     <CandidateDetail
+                      byId={byId}
                       candidate={inspectedOption?.candidate}
                       entity={inspectedOption?.entity}
                     />

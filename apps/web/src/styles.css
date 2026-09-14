@@ -3102,6 +3102,21 @@ textarea {
   padding: 1rem;
 }
 
+.candidate-detail-stack {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.candidate-relationship {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 0;
+  margin-top: 0.25rem !important;
+  text-transform: uppercase;
+}
+
 .tone-neutral {
   --tone: #1d3d5d;
   --tone-soft: var(--surface-subtle);

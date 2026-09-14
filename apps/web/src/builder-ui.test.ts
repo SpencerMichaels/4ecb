@@ -27,6 +27,7 @@ import {
   choicesAtLevel,
   evaluationAtHorizon,
   firstSentence,
+  grantedDetailEntities,
   groupDependentChoiceFlows,
   groupLevelChoices,
   groupChoicesByLegacyWorkflow,
@@ -109,6 +110,70 @@ const build: CharacterBuild = {
 };
 
 describe("builder planning UI", () => {
+  it("resolves unconditional feat and power grants for nested details", () => {
+    const definition = (
+      id: string,
+      name: string,
+      type: string,
+      rules: readonly RuleStatement[] = [],
+    ): ContentEntity => ({ ...level(1, rules), id, name, type });
+    const defensiveMobility = definition(
+      "DEFENSIVE_MOBILITY",
+      "Defensive Mobility",
+      "Feat",
+    );
+    const rangerPower = definition("RANGER_POWER", "Ranger Power", "Power");
+    const internal = definition("INTERNAL", "Internal helper", "Internal");
+    const archer = definition(
+      "ARCHER",
+      "Archer Fighting Style",
+      "Class Feature",
+      [
+        {
+          name: "grant",
+          attributes: [
+            { name: "name", value: defensiveMobility.id },
+            { name: "type", value: defensiveMobility.type },
+          ],
+          text: "",
+          children: [],
+          ordinal: 0,
+        },
+        {
+          name: "grant",
+          attributes: [
+            { name: "name", value: rangerPower.id },
+            { name: "type", value: rangerPower.type },
+            { name: "requires", value: "CONDITIONAL" },
+          ],
+          text: "",
+          children: [],
+          ordinal: 1,
+        },
+        {
+          name: "grant",
+          attributes: [
+            { name: "name", value: internal.id },
+            { name: "type", value: internal.type },
+          ],
+          text: "",
+          children: [],
+          ordinal: 2,
+        },
+      ],
+    );
+    const references = new Map(
+      [defensiveMobility, rangerPower, internal].map((entity) => [
+        entity.id.toLocaleLowerCase(),
+        entity,
+      ]),
+    );
+
+    expect(grantedDetailEntities(archer, references)).toEqual([
+      defensiveMobility,
+    ]);
+  });
+
   it("does not present a stale current-level result as a future plan", () => {
     const current = { level: 1 } as EvaluatedCharacter;
     const planned = { level: 4 } as EvaluatedCharacter;

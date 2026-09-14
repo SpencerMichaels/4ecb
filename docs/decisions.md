@@ -654,6 +654,28 @@ falling back through a shared parent category. If neither relationship exists,
 the UI keeps the generic Class Feature label and does not infer a heading from
 the candidate names.
 
+The shared detail column also resolves unconditional `grant` statements to
+user-facing Feat and Power records and stacks their full cards beneath the
+granting option. It deliberately uses rule metadata rather than names found in
+description prose. Conditional and internal grants are not presented as
+unconditional benefits.
+
+### D043 — Inactive provider rules preserve but suppress their saved children
+
+Statement-level `requires` controls whether a `select`, `grant`, or other rule
+is active. The evaluator therefore distinguishes durable saved topology from
+the active occurrence projection: when a provider rule becomes inactive, its
+saved child and descendants stop contributing definitions, rules, stats, and
+choices without being deleted. If the provider reactivates, its preserved child
+can return.
+
+This is recovered generic behavior, not a Ranger exception. In the original
+content, `ID_INTERNAL_GRANTS_RANGER` places
+`requires="!ID_FMP_CLASS_FEATURE_1030"` on the Prime Shot/Running Attack
+selector. Selecting Beast Mastery consequently makes a saved Prime Shot dormant;
+switching away can restore it. Truly orphaned imported/custom occurrences whose
+provider is absent remain recoverable under the existing compatibility policy.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

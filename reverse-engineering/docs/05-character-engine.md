@@ -84,6 +84,15 @@ required active blank slot makes the character incomplete, not necessarily
 rules-illegal. A replacement or `existing` choice with no possible occurrence
 to lose is specially exempted from incompleteness.
 
+This differs from a `requires` predicate on the `select` statement itself. An
+inactive statement has no active choice: its stored child is preserved but does
+not contribute membership, stats, grants, or further choices until the statement
+reactivates. In the Ranger path, `ID_INTERNAL_GRANTS_RANGER` authors the Prime
+Shot/Running Attack selector with
+`requires="!ID_FMP_CLASS_FEATURE_1030"`. Beast Mastery therefore makes that
+entire selector and its saved Prime Shot child dormant; it is not a prose-derived
+mutual-exclusion special case.
+
 `Choose` itself enforces source entitlement, but it does not require the
 candidate's `Legal` bit. The legacy pages normally hide failed candidates; their
 Show Illegal/house-rule mode exposes them with `LegalExplanation` and permits a

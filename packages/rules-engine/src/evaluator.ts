@@ -686,26 +686,78 @@ function evaluateCharacterInternal(
   let converged = false;
   let iterations = 0;
 
-  for (iterations = 1; iterations <= 30; iterations += 1) {
-    const before = occurrences.map((occurrence) => occurrence.id).join("\0");
-    const definitions = occurrences.flatMap((occurrence) => {
+  const expressionContextFor = (
+    activeOccurrences: readonly CharacterOccurrence[],
+  ): ExpressionContext => {
+    const definitions = activeOccurrences.flatMap((occurrence) => {
       const entity = index.get(occurrence.definitionId);
       return entity === undefined ? [] : [entity];
     });
-    const context: ExpressionContext = {
+    return {
       owned: definitions,
       level: input.level,
       dynamicCategories: dynamicCategories(
         definitions,
-        occurrences,
+        activeOccurrences,
         index,
         input.textStrings ?? {},
       ),
       categoryAliases: index.categoryAliases,
       categoryValuesFor: (entity) => index.categoryValues(entity),
     };
+  };
+  const activeProviderRule = (
+    occurrence: CharacterOccurrence,
+    activeOccurrences: readonly CharacterOccurrence[],
+    context: ExpressionContext,
+  ): boolean => {
+    if (
+      occurrence.parentId === undefined ||
+      occurrence.ruleOrdinal === undefined
+    )
+      return true;
+    const parent = activeOccurrences.find(
+      (candidate) => candidate.id === occurrence.parentId,
+    );
+    // Preserve recoverable legacy or custom occurrences whose serialized
+    // provider is genuinely absent. A provider that is present in the saved
+    // graph but currently inactive suppresses its descendants.
+    if (parent === undefined)
+      return !saved.some((candidate) => candidate.id === occurrence.parentId);
+    const parentDefinition = index.get(parent.definitionId);
+    if (parentDefinition === undefined) return true;
+    const rule = parseRules(parentDefinition.id, parentDefinition.rules).find(
+      (candidate) => candidate.source.ordinal === occurrence.ruleOrdinal,
+    );
+    if (rule === undefined) return true;
+    return (
+      activeAt(rule, input.level) &&
+      (rule.requires === undefined ||
+        evaluateRequires(parseRequires(rule.requires), context))
+    );
+  };
+  const reactivatableSaved = saved.filter(
+    (occurrence) =>
+      !replacedIds.has(occurrence.id) &&
+      occurrence.parentId !== undefined &&
+      occurrence.ruleOrdinal !== undefined,
+  );
+
+  for (iterations = 1; iterations <= 30; iterations += 1) {
+    const before = occurrences.map((occurrence) => occurrence.id).join("\0");
+    const preliminaryContext = expressionContextFor(occurrences);
+    const restored = reactivatableSaved.filter(
+      (occurrence) =>
+        !occurrences.some((candidate) => candidate.id === occurrence.id) &&
+        activeProviderRule(occurrence, occurrences, preliminaryContext),
+    );
+    if (restored.length > 0) occurrences = [...occurrences, ...restored];
+    const context = expressionContextFor(occurrences);
     const additions: CharacterOccurrence[] = [];
     const dropped = new Set<string>();
+    for (const occurrence of occurrences)
+      if (!activeProviderRule(occurrence, occurrences, context))
+        dropped.add(occurrence.id);
     for (const occurrence of occurrences) {
       const entity = index.get(occurrence.definitionId);
       if (entity === undefined) continue;

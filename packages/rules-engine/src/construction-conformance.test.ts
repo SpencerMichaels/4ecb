@@ -72,6 +72,65 @@ function input(level: number, occurrences: readonly CharacterOccurrence[]) {
 }
 
 describe("native construction conformance", () => {
+  it("keeps a saved choice dormant while its select requirement is false", () => {
+    const content = [
+      entity("RANGER", "Ranger", "Class", [
+        statement("select", { type: "Fighting Style", number: "1" }, 0),
+        statement(
+          "select",
+          {
+            type: "Class Feature",
+            number: "1",
+            requires: "!BEAST_MASTERY",
+          },
+          1,
+        ),
+      ]),
+      entity("BEAST_MASTERY", "Beast Mastery", "Fighting Style"),
+      entity("ARCHER", "Archer Fighting Style", "Fighting Style"),
+      entity("PRIME_SHOT", "Prime Shot", "Class Feature", [
+        statement("statadd", { name: "Ranged Attack", value: "+1" }, 0),
+      ]),
+    ];
+    const ranger = occurrence("ranger", "RANGER", 1, "root");
+    const primeShot = occurrence("prime-shot", "PRIME_SHOT", 1, "choice", {
+      parentId: ranger.id,
+      ruleOrdinal: 1,
+      choiceIndex: 0,
+    });
+    const beastMastery = occurrence(
+      "beast-mastery",
+      "BEAST_MASTERY",
+      1,
+      "choice",
+      { parentId: ranger.id, ruleOrdinal: 0, choiceIndex: 0 },
+    );
+
+    const beastMaster = evaluateCharacter(
+      input(1, [ranger, beastMastery, primeShot]),
+      content,
+    );
+    expect(beastMaster.activeDefinitionIds).not.toContain("PRIME_SHOT");
+    expect(beastMaster.choices).not.toContainEqual(
+      expect.objectContaining({ selectedOccurrenceId: primeShot.id }),
+    );
+    expect(beastMaster.stats["Ranged Attack"]?.value).toBeUndefined();
+
+    const archer = evaluateCharacter(
+      input(1, [
+        ranger,
+        { ...beastMastery, definitionId: "ARCHER" },
+        primeShot,
+      ]),
+      content,
+    );
+    expect(archer.activeDefinitionIds).toContain("PRIME_SHOT");
+    expect(archer.choices).toContainEqual(
+      expect.objectContaining({ selectedOccurrenceId: primeShot.id }),
+    );
+    expect(archer.stats["Ranged Attack"]?.value).toBe(1);
+  });
+
   it("defers a future-level grant and its subtree until that level", () => {
     const content = [
       entity("LEVEL", "Level 1", "Level", [

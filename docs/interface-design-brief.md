@@ -179,6 +179,13 @@ application's protected visual assets.
   parent name, retain the conservative **Class Feature** heading rather than
   inferring one from candidate names. Use the same authored name in Overview so
   the history and editable section remain consistent.
+- The shared detail column follows explicit executable grant relationships.
+  When an inspected option unconditionally grants a user-facing feat or power,
+  render that referenced definition as another full detail card immediately
+  below the granting option. Resolve the authored content ID; do not infer a
+  relationship by parsing description prose. Conditional and internal grants
+  remain engine behavior until the interface can explain their conditions
+  without implying that they always apply.
 - Repeated feat or power slots in one section share a single multi-select table
   and one **X of Y chosen** count. Selected rows remain visible. To keep large
   feat corpora responsive, search always covers the complete candidate set but

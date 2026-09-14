@@ -7,6 +7,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import {
   commandForEvaluatedChoice,
   findBuildChildIndex,
+  parseRules,
 } from "@4ecb/rules-engine";
 import type {
   CandidateDecision,
@@ -90,6 +91,26 @@ export function contentSpecificValue(
       field.name.trim().toLocaleLowerCase() === name.trim().toLocaleLowerCase(),
   )?.value;
   return value === undefined || value.trim() === "" ? undefined : value.trim();
+}
+
+/** User-facing feats and powers directly granted by an inspected definition. */
+export function grantedDetailEntities(
+  entity: ContentEntity,
+  references: ReadonlyMap<string, ContentEntity>,
+): readonly ContentEntity[] {
+  const seen = new Set<string>();
+  return parseRules(entity.id, entity.rules).flatMap((rule) => {
+    if (rule.kind !== "grant" || rule.requires !== undefined) return [];
+    const granted = references.get(rule.name.trim().toLocaleLowerCase());
+    if (
+      granted === undefined ||
+      !["feat", "power"].includes(granted.type.trim().toLocaleLowerCase()) ||
+      seen.has(granted.id.trim().toLocaleLowerCase())
+    )
+      return [];
+    seen.add(granted.id.trim().toLocaleLowerCase());
+    return [granted];
+  });
 }
 
 export function choiceTableSummary(
