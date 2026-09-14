@@ -389,6 +389,12 @@ The application shell now retains decoded packs, rules workers, memoized exact
 evaluations, and Compendium indexes across client-side route changes. The first
 full-corpus Compendium initialization still reconstructs state from IndexedDB;
 subsequent navigation reuses it rather than replaying the six-second index build.
+The persistent level timeline has been reduced to a narrow status/navigation
+rail so the choice editor and its adjacent option detail remain the primary work
+area. The complete timeline opens as a non-resizing overlay, while ordinary
+detail cards and sections now grow naturally with the document instead of
+introducing nested scrollbars; candidate tables remain the intentional bounded
+scroll exception.
 
 ## M6 — Local phone play mode
 

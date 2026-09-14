@@ -33,13 +33,15 @@ application's protected visual assets.
 
 - Use a guided workflow by default while allowing users to inspect choices from
   later levels without first completing every earlier choice.
-- Use a hybrid structure: an always-available build/character overview, an
-  ordered per-level choice sidebar, and focused detail/selection content in the
-  main pane.
+- Use a hybrid structure: an always-available build/character overview, a
+  narrow ordered level rail, and focused detail/selection content in the main
+  pane. The complete choice timeline opens explicitly as an overlay rather than
+  permanently taking width from the primary work area.
 - Treat a level, rather than an individual slot, as the main builder workspace.
   Selecting a level shows one scrollable page with a subsection for every
-  choice at that level. The sidebar remains a compact status summary and may
-  navigate to a subsection without hiding the others.
+  choice at that level. The level rail remains a compact status summary and may
+  navigate directly between levels; the expanded timeline may navigate to a
+  subsection without hiding the others.
 - When a user selects a target level, create the complete level timeline
   immediately and present its unresolved decisions. Include every level through
   the target: unresolved items are prominent, completed levels remain visible in
@@ -84,6 +86,11 @@ application's protected visual assets.
   background. Every information-bearing selection surface keeps the focused or
   selected option's source, prerequisites, description, and mechanical fields
   in an adjacent detail pane.
+- Let choice pages and adjacent detail cards take their natural content height
+  and use ordinary document scrolling. Do not trap page content inside nested
+  fixed-height or maximum-height scrolling regions; bounded candidate tables
+  are the deliberate exception because their result sets can contain thousands
+  of rows.
 - Repeated Background slots use one primary **Choose background** section;
   already selected extras remain visible and optional empty slots appear one at
   a time through **Add another background…**. A revealed empty slot can be

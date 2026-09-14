@@ -136,6 +136,20 @@ candidate.
   prominent, completed selections stay visible in compact form, and a chosen
   target creates every intervening level in one autosaved transaction without
   advancing the current effective level.
+- The timeline now expands from a 4.5-rem level rail instead of permanently
+  occupying roughly one-third of the workspace. The rail directly navigates
+  levels and exposes stable status markers; its Plan action opens the complete
+  timeline as a dismissible overlay without shifting the choice and option
+  detail panes. On narrow layouts it collapses to the Plan trigger. Option
+  detail cards and the expanded timeline use natural content height and browser
+  scrolling; only large candidate tables retain bounded internal scrolling.
+- Verification on 2026-09-13 passed the complete public check (263 tests,
+  workspace typechecks, production/PWA build, print checks, deterministic
+  content checks, and query benchmark). Live full-corpus verification at 1280px
+  measured a 72px rail and 1129px choice pane with visible detail/timeline
+  overflow, correct Escape and backdrop focus return, and no console errors. At
+  800px the level list collapsed to the Plan trigger with no horizontal
+  overflow.
 - The builder evaluates the current character and the full saved planning
   timeline as separate projections. Future choices can be inspected and edited
   out of order without entering current calculations. Lowering **Show plan

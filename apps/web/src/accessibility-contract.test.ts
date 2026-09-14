@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const styles = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+const characterEditor = readFileSync(
+  new URL("./CharacterEditorPage.tsx", import.meta.url),
+  "utf8",
+);
 
 function channel(value: number): number {
   const normalized = value / 255;
@@ -64,6 +68,26 @@ describe("release accessibility contract", () => {
     expect(styles).toMatch(/\.level-choice-section:focus-visible/);
     expect(styles).toMatch(
       /@media \(max-width: 48rem\)[\s\S]*?\.skill-training-layout[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/,
+    );
+  });
+
+  it("keeps navigation compact and ordinary detail content in document flow", () => {
+    expect(characterEditor).toContain('className="level-rail"');
+    expect(characterEditor).toContain('aria-controls="build-timeline"');
+    expect(characterEditor).toContain('aria-label="Close level plan"');
+
+    const candidateDetailRule = styles.match(
+      /\.candidate-detail\s*\{([^}]*)\}/,
+    )?.[1];
+    const timelineRule = styles.match(/\.build-timeline\s*\{([^}]*)\}/)?.[1];
+    expect(candidateDetailRule).toBeDefined();
+    expect(candidateDetailRule).not.toContain("max-height");
+    expect(candidateDetailRule).not.toContain("overflow:");
+    expect(timelineRule).toBeDefined();
+    expect(timelineRule).not.toContain("max-height");
+    expect(timelineRule).not.toContain("overflow:");
+    expect(styles).toMatch(
+      /\.selection-table-scroll\s*\{[^}]*max-height:[^}]*overflow: auto/,
     );
   });
 

@@ -470,6 +470,23 @@ discard expensive immutable state. Full refresh remains a fresh reconstruction
 from IndexedDB because dedicated workers and the document heap are destroyed;
 neither Electron nor a service worker changes that boundary automatically.
 
+### D035 — The level timeline expands from a compact navigation rail
+
+The level plan is important navigation and status context but is not the
+builder's primary work surface. Desktop layouts therefore reserve only a narrow
+rail for the Plan action, level numbers, current-level indication, and stable
+complete/incomplete/warning/planned markers. The complete timeline opens on
+explicit request as an overlay over the builder, closes with its X action,
+Escape, backdrop selection, or successful navigation, and does not resize the
+choice and detail panes. Narrow layouts reduce the rail to the Plan trigger.
+
+Choice pages and their adjacent detail cards participate in normal document
+flow and grow to their content height. Tables retain bounded internal scrolling
+because their candidate sets can be extremely large; ordinary cards, timelines,
+and form sections do not. This keeps browser scrolling as the page's single
+primary scroll model while giving the frequent selection-and-inspection task the
+majority of horizontal space.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

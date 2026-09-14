@@ -3055,6 +3055,7 @@ export function CharacterEditorPage({
   const [readyPackId, setReadyPackId] = useState<string>();
   const [visibleHorizon, setVisibleHorizon] = useState(1);
   const [selectedLevel, setSelectedLevel] = useState(1);
+  const [timelineOpen, setTimelineOpen] = useState(false);
   const [selectedChoiceId, setSelectedChoiceId] = useState<string>();
   const [workspaceTab, setWorkspaceTab] = useState<"build" | "details">(
     "build",
@@ -3071,6 +3072,25 @@ export function CharacterEditorPage({
   const rulesClient = useRef<RulesRuntimeClient | undefined>(undefined);
   const evaluationRevision = useRef(0);
   const evaluationCache = useRef(new Map<string, EvaluatedCharacter>());
+  const timelineTrigger = useRef<HTMLButtonElement>(null);
+  const timelineClose = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!timelineOpen) return;
+    const focusFrame = requestAnimationFrame(() =>
+      timelineClose.current?.focus(),
+    );
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setTimelineOpen(false);
+      requestAnimationFrame(() => timelineTrigger.current?.focus());
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      cancelAnimationFrame(focusFrame);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [timelineOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -3752,59 +3772,19 @@ export function CharacterEditorPage({
       </div>
 
       <div className="builder-workspace" hidden={workspaceTab !== "build"}>
-        <aside aria-labelledby="timeline-heading" className="build-timeline">
-          <div className="timeline-heading">
-            <div>
-              <p className="eyebrow">Level plan</p>
-              <h3 id="timeline-heading">
-                Choices through level {visibleHorizon}
-              </h3>
-            </div>
-            <label>
-              Show plan through
-              <select
-                disabled={entities.length === 0}
-                value={visibleHorizon}
-                onChange={(event) => {
-                  const target = Number(event.currentTarget.value);
-                  setVisibleHorizon(target);
-                  if (selectedLevel > target) setSelectedLevel(target);
-                  try {
-                    const command = planningHorizonCommand(
-                      build,
-                      target,
-                      entities,
-                      (level) => `web:level:${level}:${crypto.randomUUID()}`,
-                    );
-                    if (command !== undefined) dispatch(command);
-                  } catch (reason: unknown) {
-                    setSaveState({
-                      phase: "failed",
-                      message:
-                        reason instanceof Error
-                          ? reason.message
-                          : String(reason),
-                    });
-                  }
-                }}
-              >
-                {Array.from(
-                  { length: 31 - build.effectiveLevel },
-                  (_, index) => index + build.effectiveLevel,
-                ).map((level) => (
-                  <option key={level} value={level}>
-                    {level}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <p className="field-help timeline-help">
-            Lowering this view hides future levels for this session; it never
-            deletes saved choices. Current calculations stay at level{" "}
-            {build.effectiveLevel}.
-          </p>
-          <ol className="timeline-levels">
+        <nav aria-label="Level plan" className="level-rail">
+          <button
+            aria-controls="build-timeline"
+            aria-expanded={timelineOpen}
+            className="level-rail-plan"
+            ref={timelineTrigger}
+            type="button"
+            onClick={() => setTimelineOpen(true)}
+          >
+            <Icon name="level" />
+            <span>Plan</span>
+          </button>
+          <ol>
             {build.levels.slice(0, visibleHorizon).map((frame) => {
               const choices = choicesAtLevel(frame.level, planningEvaluation);
               const timelineChoices = choices.filter(
@@ -3816,92 +3796,40 @@ export function CharacterEditorPage({
               const orderedTimelineChoices = groupChoicesByLegacyWorkflow(
                 timelineChoices,
               ).flatMap(({ choices: sectionChoices }) => sectionChoices);
-              const grouped = groupLevelChoices(timelineChoices);
-              const repeatedGroups = groupRepeatedChoiceSlots(grouped.ordinary);
-              const repeatedByChoiceId = new Map(
-                repeatedGroups.flatMap((group) =>
-                  group.map((choice) => [choice.id, group] as const),
-                ),
-              );
-              const flows = groupDependentChoiceFlows(
-                grouped.ordinary.filter(
-                  (choice) => !repeatedByChoiceId.has(choice.id),
-                ),
-              );
-              const flowByChoiceId = new Map(
-                flows.flatMap((flow) =>
-                  flow.map((choice) => [choice.id, flow] as const),
-                ),
-              );
-              const summaries = orderedTimelineChoices.flatMap((choice) => {
-                const identityLabel = identityChoiceLabel(choice.type);
-                if (grouped.backgrounds.includes(choice))
-                  return choice === grouped.backgrounds[0]
-                    ? [
-                        {
-                          label: "Backgrounds",
-                          choices: grouped.backgrounds,
-                        },
-                      ]
-                    : [];
-                if (grouped.skillTraining.includes(choice))
-                  return choice === grouped.skillTraining[0]
-                    ? [
-                        {
-                          label: "Skill Training",
-                          choices: grouped.skillTraining,
-                        },
-                      ]
-                    : [];
-                const repeated = repeatedByChoiceId.get(choice.id);
-                if (repeated !== undefined)
-                  return choice === repeated[0]
-                    ? [
-                        {
-                          label: repeatedChoiceGroupTitle(repeated, byId),
-                          choices: repeated,
-                        },
-                      ]
-                    : [];
-                const flow = flowByChoiceId.get(choice.id);
-                if (flow !== undefined)
-                  return choice === flow[0]
-                    ? [
-                        {
-                          label: identityLabel ?? timelineChoiceTitle(choice),
-                          choices: flow,
-                        },
-                      ]
-                    : [];
-                return [
-                  {
-                    label: timelineChoiceTitle(choice),
-                    choices: [choice],
-                  },
-                ];
-              });
               const unresolved =
                 frame.level > build.effectiveLevel
                   ? 0
                   : timelineChoices.filter(isUnresolvedChoice).length +
                     (frame.level === 1 && abilityScoresIncomplete ? 1 : 0);
-              const choiceWarnings =
+              const warnings =
                 timelineChoices.filter((choice) =>
                   selectedChoiceHasWarning(choice, planningEvaluation!),
                 ).length +
                 (frame.level === 1 && abilityScoresHouseRuled ? 1 : 0);
+              const status =
+                frame.level > build.effectiveLevel
+                  ? "planned"
+                  : unresolved > 0
+                    ? "incomplete"
+                    : warnings > 0
+                      ? "warning"
+                      : "complete";
+              const statusLabel =
+                status === "planned"
+                  ? "planned"
+                  : status === "incomplete"
+                    ? `${unresolved} unresolved`
+                    : status === "warning"
+                      ? `${warnings} warnings`
+                      : "complete";
               return (
-                <li
-                  className={[
-                    frame.level === selectedLevel ? "timeline-selected" : "",
-                    unresolved > 0 ? "timeline-incomplete" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  key={frame.level}
-                >
+                <li key={frame.level}>
                   <button
-                    className="timeline-level-button"
+                    aria-current={
+                      frame.level === selectedLevel ? "step" : undefined
+                    }
+                    aria-label={`Level ${frame.level}, ${statusLabel}`}
+                    className={`level-rail-button level-rail-${status}`}
                     type="button"
                     onClick={() => {
                       setSelectedLevel(frame.level);
@@ -3909,138 +3837,364 @@ export function CharacterEditorPage({
                         orderedTimelineChoices.find(isUnresolvedChoice)?.id ??
                           orderedTimelineChoices[0]?.id,
                       );
+                      setTimelineOpen(false);
                     }}
                   >
-                    <span>Level {frame.level}</span>
-                    {frame.level > build.effectiveLevel ? (
-                      <small>Planned</small>
-                    ) : unresolved > 0 ? (
-                      <span className="visually-hidden">
-                        {unresolved} unresolved
-                      </span>
-                    ) : choiceWarnings > 0 ? (
-                      <Icon name="warning" />
-                    ) : (
-                      <Icon name="check" />
-                    )}
+                    <span>{frame.level}</span>
+                    <span aria-hidden="true" className="level-rail-status" />
                   </button>
-                  {planningEvaluation === undefined && frame.level !== 1 ? (
-                    <p className="timeline-empty">Evaluating choices…</p>
-                  ) : timelineChoices.length === 0 && frame.level !== 1 ? (
-                    <p className="timeline-empty">No decisions at this level</p>
-                  ) : (
-                    <ul className="timeline-choices">
-                      {frame.level === 1 ? (
-                        <li>
-                          <button
-                            className={
-                              abilityScoresIncomplete
-                                ? "choice-unresolved"
-                                : abilityScoresHouseRuled
-                                  ? "choice-warning"
-                                  : "choice-complete"
-                            }
-                            type="button"
-                            onClick={() => {
-                              setSelectedLevel(1);
-                              requestAnimationFrame(() => {
-                                document
-                                  .getElementById("base-abilities")
-                                  ?.scrollIntoView({ block: "start" });
-                              });
-                            }}
-                          >
-                            <Icon name="ability" />
-                            <span>
-                              Ability Scores ·{" "}
-                              {abilityPointBuy.legal
-                                ? "Point buy complete"
-                                : abilityScoresHouseRuled
-                                  ? "House rule"
-                                  : `${abilityPointBuy.remaining ?? 22} ${abilityPointBuy.remaining === 1 ? "point" : "points"} left`}
-                            </span>
-                          </button>
-                        </li>
-                      ) : null}
-                      {summaries.map((summary) => {
-                        const summaryUnresolved =
-                          frame.level > build.effectiveLevel
-                            ? 0
-                            : summary.choices.filter(isUnresolvedChoice).length;
-                        const summaryWarning = summary.choices.some((choice) =>
-                          selectedChoiceHasWarning(choice, planningEvaluation!),
-                        );
-                        const selectedNames = summary.choices.flatMap(
-                          (choice) => {
-                            const selected = selectedOccurrence(
-                              choice,
-                              planningEvaluation!,
-                            );
-                            if (selected === undefined) return [];
-                            return [
-                              byId.get(
-                                selected.definitionId.toLocaleLowerCase(),
-                              )?.name ?? selected.definitionId,
-                            ];
-                          },
-                        );
-                        const targetChoice =
-                          summary.choices.find(isUnresolvedChoice) ??
-                          summary.choices[0]!;
-                        return (
-                          <li key={summary.choices[0]!.id}>
-                            <button
-                              aria-current={
-                                summary.choices.some(
-                                  (choice) => choice.id === selectedChoiceId,
-                                )
-                                  ? "true"
-                                  : undefined
-                              }
-                              className={
-                                frame.level > build.effectiveLevel
-                                  ? "choice-planned"
-                                  : summaryUnresolved > 0
-                                    ? "choice-unresolved"
-                                    : summaryWarning
-                                      ? "choice-warning"
-                                      : "choice-complete"
-                              }
-                              type="button"
-                              onClick={() => {
-                                setSelectedLevel(frame.level);
-                                setSelectedChoiceId(targetChoice.id);
-                                requestAnimationFrame(() => {
-                                  const section = document.getElementById(
-                                    choiceSectionId(summary.choices[0]!.id),
-                                  );
-                                  section?.scrollIntoView({ block: "start" });
-                                  section?.focus({ preventScroll: true });
-                                });
-                              }}
-                            >
-                              <span>
-                                <Icon
-                                  name={choiceSectionIcon(
-                                    legacyChoiceSection(summary.choices[0]!),
-                                  )}
-                                />
-                                {summary.label}
-                                {selectedNames.length === 0
-                                  ? ""
-                                  : ` · ${selectedNames.join(", ")}`}
-                              </span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
                 </li>
               );
             })}
           </ol>
-        </aside>
+        </nav>
+
+        {timelineOpen ? (
+          <div className="timeline-overlay">
+            <button
+              aria-label="Dismiss level plan"
+              className="timeline-backdrop"
+              type="button"
+              onClick={() => {
+                setTimelineOpen(false);
+                requestAnimationFrame(() => timelineTrigger.current?.focus());
+              }}
+            />
+            <aside
+              aria-labelledby="timeline-heading"
+              className="build-timeline"
+              id="build-timeline"
+            >
+              <div className="timeline-heading">
+                <div>
+                  <p className="eyebrow">Level plan</p>
+                  <h3 id="timeline-heading">
+                    Choices through level {visibleHorizon}
+                  </h3>
+                </div>
+                <div className="timeline-heading-actions">
+                  <label>
+                    Show plan through
+                    <select
+                      disabled={entities.length === 0}
+                      value={visibleHorizon}
+                      onChange={(event) => {
+                        const target = Number(event.currentTarget.value);
+                        setVisibleHorizon(target);
+                        if (selectedLevel > target) setSelectedLevel(target);
+                        try {
+                          const command = planningHorizonCommand(
+                            build,
+                            target,
+                            entities,
+                            (level) =>
+                              `web:level:${level}:${crypto.randomUUID()}`,
+                          );
+                          if (command !== undefined) dispatch(command);
+                        } catch (reason: unknown) {
+                          setSaveState({
+                            phase: "failed",
+                            message:
+                              reason instanceof Error
+                                ? reason.message
+                                : String(reason),
+                          });
+                        }
+                      }}
+                    >
+                      {Array.from(
+                        { length: 31 - build.effectiveLevel },
+                        (_, index) => index + build.effectiveLevel,
+                      ).map((level) => (
+                        <option key={level} value={level}>
+                          {level}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    aria-label="Close level plan"
+                    className="timeline-close"
+                    ref={timelineClose}
+                    type="button"
+                    onClick={() => {
+                      setTimelineOpen(false);
+                      requestAnimationFrame(() =>
+                        timelineTrigger.current?.focus(),
+                      );
+                    }}
+                  >
+                    <Icon name="remove" />
+                  </button>
+                </div>
+              </div>
+              <p className="field-help timeline-help">
+                Lowering this view hides future levels for this session; it
+                never deletes saved choices. Current calculations stay at level{" "}
+                {build.effectiveLevel}.
+              </p>
+              <ol className="timeline-levels">
+                {build.levels.slice(0, visibleHorizon).map((frame) => {
+                  const choices = choicesAtLevel(
+                    frame.level,
+                    planningEvaluation,
+                  );
+                  const timelineChoices = choices.filter(
+                    (choice) =>
+                      !isOptionalRetrainingChoice(choice) &&
+                      !isCharacterDetailChoice(choice) &&
+                      !isBuildPresetChoice(choice),
+                  );
+                  const orderedTimelineChoices = groupChoicesByLegacyWorkflow(
+                    timelineChoices,
+                  ).flatMap(({ choices: sectionChoices }) => sectionChoices);
+                  const grouped = groupLevelChoices(timelineChoices);
+                  const repeatedGroups = groupRepeatedChoiceSlots(
+                    grouped.ordinary,
+                  );
+                  const repeatedByChoiceId = new Map(
+                    repeatedGroups.flatMap((group) =>
+                      group.map((choice) => [choice.id, group] as const),
+                    ),
+                  );
+                  const flows = groupDependentChoiceFlows(
+                    grouped.ordinary.filter(
+                      (choice) => !repeatedByChoiceId.has(choice.id),
+                    ),
+                  );
+                  const flowByChoiceId = new Map(
+                    flows.flatMap((flow) =>
+                      flow.map((choice) => [choice.id, flow] as const),
+                    ),
+                  );
+                  const summaries = orderedTimelineChoices.flatMap((choice) => {
+                    const identityLabel = identityChoiceLabel(choice.type);
+                    if (grouped.backgrounds.includes(choice))
+                      return choice === grouped.backgrounds[0]
+                        ? [
+                            {
+                              label: "Backgrounds",
+                              choices: grouped.backgrounds,
+                            },
+                          ]
+                        : [];
+                    if (grouped.skillTraining.includes(choice))
+                      return choice === grouped.skillTraining[0]
+                        ? [
+                            {
+                              label: "Skill Training",
+                              choices: grouped.skillTraining,
+                            },
+                          ]
+                        : [];
+                    const repeated = repeatedByChoiceId.get(choice.id);
+                    if (repeated !== undefined)
+                      return choice === repeated[0]
+                        ? [
+                            {
+                              label: repeatedChoiceGroupTitle(repeated, byId),
+                              choices: repeated,
+                            },
+                          ]
+                        : [];
+                    const flow = flowByChoiceId.get(choice.id);
+                    if (flow !== undefined)
+                      return choice === flow[0]
+                        ? [
+                            {
+                              label:
+                                identityLabel ?? timelineChoiceTitle(choice),
+                              choices: flow,
+                            },
+                          ]
+                        : [];
+                    return [
+                      {
+                        label: timelineChoiceTitle(choice),
+                        choices: [choice],
+                      },
+                    ];
+                  });
+                  const unresolved =
+                    frame.level > build.effectiveLevel
+                      ? 0
+                      : timelineChoices.filter(isUnresolvedChoice).length +
+                        (frame.level === 1 && abilityScoresIncomplete ? 1 : 0);
+                  const choiceWarnings =
+                    timelineChoices.filter((choice) =>
+                      selectedChoiceHasWarning(choice, planningEvaluation!),
+                    ).length +
+                    (frame.level === 1 && abilityScoresHouseRuled ? 1 : 0);
+                  return (
+                    <li
+                      className={[
+                        frame.level === selectedLevel
+                          ? "timeline-selected"
+                          : "",
+                        unresolved > 0 ? "timeline-incomplete" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      key={frame.level}
+                    >
+                      <button
+                        className="timeline-level-button"
+                        type="button"
+                        onClick={() => {
+                          setSelectedLevel(frame.level);
+                          setSelectedChoiceId(
+                            orderedTimelineChoices.find(isUnresolvedChoice)
+                              ?.id ?? orderedTimelineChoices[0]?.id,
+                          );
+                          setTimelineOpen(false);
+                        }}
+                      >
+                        <span>Level {frame.level}</span>
+                        {frame.level > build.effectiveLevel ? (
+                          <small>Planned</small>
+                        ) : unresolved > 0 ? (
+                          <span className="visually-hidden">
+                            {unresolved} unresolved
+                          </span>
+                        ) : choiceWarnings > 0 ? (
+                          <Icon name="warning" />
+                        ) : (
+                          <Icon name="check" />
+                        )}
+                      </button>
+                      {planningEvaluation === undefined && frame.level !== 1 ? (
+                        <p className="timeline-empty">Evaluating choices…</p>
+                      ) : timelineChoices.length === 0 && frame.level !== 1 ? (
+                        <p className="timeline-empty">
+                          No decisions at this level
+                        </p>
+                      ) : (
+                        <ul className="timeline-choices">
+                          {frame.level === 1 ? (
+                            <li>
+                              <button
+                                className={
+                                  abilityScoresIncomplete
+                                    ? "choice-unresolved"
+                                    : abilityScoresHouseRuled
+                                      ? "choice-warning"
+                                      : "choice-complete"
+                                }
+                                type="button"
+                                onClick={() => {
+                                  setSelectedLevel(1);
+                                  setTimelineOpen(false);
+                                  requestAnimationFrame(() => {
+                                    document
+                                      .getElementById("base-abilities")
+                                      ?.scrollIntoView({ block: "start" });
+                                  });
+                                }}
+                              >
+                                <Icon name="ability" />
+                                <span>
+                                  Ability Scores ·{" "}
+                                  {abilityPointBuy.legal
+                                    ? "Point buy complete"
+                                    : abilityScoresHouseRuled
+                                      ? "House rule"
+                                      : `${abilityPointBuy.remaining ?? 22} ${abilityPointBuy.remaining === 1 ? "point" : "points"} left`}
+                                </span>
+                              </button>
+                            </li>
+                          ) : null}
+                          {summaries.map((summary) => {
+                            const summaryUnresolved =
+                              frame.level > build.effectiveLevel
+                                ? 0
+                                : summary.choices.filter(isUnresolvedChoice)
+                                    .length;
+                            const summaryWarning = summary.choices.some(
+                              (choice) =>
+                                selectedChoiceHasWarning(
+                                  choice,
+                                  planningEvaluation!,
+                                ),
+                            );
+                            const selectedNames = summary.choices.flatMap(
+                              (choice) => {
+                                const selected = selectedOccurrence(
+                                  choice,
+                                  planningEvaluation!,
+                                );
+                                if (selected === undefined) return [];
+                                return [
+                                  byId.get(
+                                    selected.definitionId.toLocaleLowerCase(),
+                                  )?.name ?? selected.definitionId,
+                                ];
+                              },
+                            );
+                            const targetChoice =
+                              summary.choices.find(isUnresolvedChoice) ??
+                              summary.choices[0]!;
+                            return (
+                              <li key={summary.choices[0]!.id}>
+                                <button
+                                  aria-current={
+                                    summary.choices.some(
+                                      (choice) =>
+                                        choice.id === selectedChoiceId,
+                                    )
+                                      ? "true"
+                                      : undefined
+                                  }
+                                  className={
+                                    frame.level > build.effectiveLevel
+                                      ? "choice-planned"
+                                      : summaryUnresolved > 0
+                                        ? "choice-unresolved"
+                                        : summaryWarning
+                                          ? "choice-warning"
+                                          : "choice-complete"
+                                  }
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedLevel(frame.level);
+                                    setSelectedChoiceId(targetChoice.id);
+                                    setTimelineOpen(false);
+                                    requestAnimationFrame(() => {
+                                      const section = document.getElementById(
+                                        choiceSectionId(summary.choices[0]!.id),
+                                      );
+                                      section?.scrollIntoView({
+                                        block: "start",
+                                      });
+                                      section?.focus({ preventScroll: true });
+                                    });
+                                  }}
+                                >
+                                  <span>
+                                    <Icon
+                                      name={choiceSectionIcon(
+                                        legacyChoiceSection(
+                                          summary.choices[0]!,
+                                        ),
+                                      )}
+                                    />
+                                    {summary.label}
+                                    {selectedNames.length === 0
+                                      ? ""
+                                      : ` · ${selectedNames.join(", ")}`}
+                                  </span>
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            </aside>
+          </div>
+        ) : null}
 
         <section
           aria-labelledby="choice-pane-heading"
