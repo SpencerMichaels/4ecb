@@ -590,12 +590,15 @@ without changing `effectiveLevel`. This supersedes D035's horizon-selection and
 narrow-layout-collapse details: there is no separate plan-horizon input, and the
 tiered rail remains directly operable on narrow layouts.
 
-### D041 — Overview is the single navigable level history
+### D041 — Overview is the single navigable build checklist
 
 The former expanded-plan overlay and bottom **Complete level history**
 disclosure are replaced by a sibling **Overview** tab beside Build and
-Character details. Overview reuses the compact icon-led choice summaries as the
-single player-facing history; it does not also expose the evaluator's raw
+Character details. Overview reorganizes the compact choice summaries into
+checklist panes for Character, Ability Scores, Skills, Powers, Spellbook,
+Feats, and Other rather than repeating a pane for every level. Each row carries
+its owning level, and choices within a pane are ordered from earliest to latest.
+It does not also expose the evaluator's raw
 occurrence tree as “Stored features,” because that duplicates selections and
 leaks an implementation-oriented representation into the interface. Completed
 optional retraining remains in this history even though an unused retraining
@@ -604,10 +607,10 @@ slot is not a required decision.
 Overview shows current levels by default. Its temporary **Show planned levels**
 control reveals only future frames containing at least one saved selection, so
 automatically created but untouched plan levels do not add noise. Every choice
-summary is navigation: activating it switches to Build, selects the owning
+row is navigation: activating it switches to Build, selects the owning
 level and choice, and opens the corresponding category tab. The narrow 1–30
 level rail remains Build's direct navigation surface and is hidden while the
-full history is open.
+checklists are open.
 
 ### D042 — Rules choices prefer visible buttons or shared candidate tables
 
@@ -624,10 +627,13 @@ compact numeric current-level selector remains a dropdown because its ordered
 
 The shared candidate table now supports feats, powers, classes, class features,
 deities, starting presets, and generic large choices. Its reusable shell owns
-filtering, result counts, persistent content-ID favorites, stable source order,
-inspection, and commit behavior; type-specific columns are supplied by the
-table kind. Selection changes only the row highlight and never promotes a row
-or adds a checkmark beside its name. Tables with six or fewer visible rows size
+filtering, result counts, persistent content-ID favorites, inspection, sorting,
+and commit behavior; type-specific columns are supplied by the table kind.
+Tables initially sort alphabetically by Name. Activating another column header
+sorts by that column with alphabetical Name as the stable tie-breaker, and
+activating the current sort header reverses its direction. Missing values remain
+last in either direction. Selection changes only the row highlight and never
+promotes a row or adds a checkmark beside its name. Tables with six or fewer visible rows size
 to their content, while larger sets consume the available viewport and scroll.
 Deities show Name and authored Alignment. Class-feature rows use authored Short
 Description where available and a concise description fallback otherwise.
@@ -660,11 +666,19 @@ granting option. It deliberately uses rule metadata rather than names found in
 description prose. Conditional and internal grants are not presented as
 unconditional benefits.
 
-Power tables show an authored Level column and sort each ownership section by
-descending level with alphabetical ties, matching `PowerPage.SortPowers`
-without allowing selection state to reorder rows. Theme ownership headings use
+Power tables show an authored Level column. They share the alphabetical Name
+default and interactive column sorting used by the other candidate tables;
+selecting Level recreates the legacy checklist's level-oriented scan when
+desired. Theme ownership headings use
 the resolved theme name, such as `Theme (Dune Trader)`, rather than an anonymous
 Theme label.
+
+Regular and companion ability-increase occurrences share the Ability Scores
+category. Each same-level pair is presented as one six-button selector that
+accepts exactly two distinct abilities. This follows the recovered
+`AbilityLeveling.LevelChoices` path, which scans both `Ability Increase` and
+`Companion Ability Increase` occurrences and consumes them two at a time into
+one level row; “companion” changes the occurrence prefix, not the interaction.
 
 ### D043 — Inactive provider rules preserve but suppress their saved children
 

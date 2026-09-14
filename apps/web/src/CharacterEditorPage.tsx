@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type ReactNode,
 } from "react";
 
 import { CharacterRepository } from "@4ecb/browser-storage";
@@ -37,7 +38,6 @@ import {
   applyBuildPresetCommand,
   candidateReason,
   candidateTableTypeGroup,
-  comparePowerTableEntities,
   classTableMetadata,
   contextualChoiceName,
   choiceSelectionTableKind,
@@ -52,6 +52,7 @@ import {
   groupDependentChoiceFlows,
   grantedDetailEntities,
   groupLevelChoices,
+  groupOverviewChoices,
   groupParameterizedCandidates,
   groupRepeatedCandidateScopes,
   groupRepeatedChoiceSlots,
@@ -60,6 +61,7 @@ import {
   isCandidateVisible,
   isCharacterDetailChoice,
   isBuildPresetChoice,
+  isAbilityIncreaseChoiceType,
   isOptionalRetrainingChoice,
   isUnresolvedChoice,
   legacyChoiceSection,
@@ -337,6 +339,191 @@ function choiceSectionIcon(section: string): IconName {
     default:
       return "content";
   }
+}
+
+const overviewPaneOrder = [
+  "Character",
+  "Ability Scores",
+  "Skills",
+  "Powers",
+  "Spellbook",
+  "Feats",
+  "Other",
+] as const;
+
+function CharacterOverview({
+  build,
+  evaluation,
+  byId,
+  selectedChoiceId,
+  showPlanned,
+  abilitySummary,
+  abilityStatus,
+  onShowPlannedChange,
+  onNavigateChoice,
+  onNavigateAbilities,
+}: {
+  readonly build: CharacterRecord["build"];
+  readonly evaluation: EvaluatedCharacter | undefined;
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly selectedChoiceId: string | undefined;
+  readonly showPlanned: boolean;
+  readonly abilitySummary: string;
+  readonly abilityStatus: "complete" | "warning" | "unresolved";
+  readonly onShowPlannedChange: (show: boolean) => void;
+  readonly onNavigateChoice: (choice: EvaluatedChoice) => void;
+  readonly onNavigateAbilities: () => void;
+}) {
+  if (evaluation === undefined)
+    return <p className="overview-empty">Evaluating choices…</p>;
+
+  const visibleChoices = build.levels.flatMap((frame) => {
+    const planned = frame.level > build.effectiveLevel;
+    return choicesAtLevel(frame.level, evaluation).filter(
+      (choice) =>
+        !isCharacterDetailChoice(choice) &&
+        !isBuildPresetChoice(choice) &&
+        (!isOptionalRetrainingChoice(choice) ||
+          choice.selectedOccurrenceId !== undefined) &&
+        (!planned ||
+          (showPlanned && choice.selectedOccurrenceId !== undefined)),
+    );
+  });
+  const grouped = new Map(
+    groupOverviewChoices(visibleChoices, (choice) => {
+      if (choice.type.trim().toLocaleLowerCase() !== "replacement")
+        return undefined;
+      const selected = selectedOccurrence(choice, evaluation);
+      const replaced = choice.replacementOptions?.find(
+        (option) => option.replacesOccurrenceId === selected?.replacesId,
+      );
+      const replacedType =
+        replaced === undefined
+          ? undefined
+          : byId
+              .get(replaced.definitionId.toLocaleLowerCase())
+              ?.type.trim()
+              .toLocaleLowerCase();
+      if (replacedType === "power") return "Powers";
+      if (replacedType === "feat") return "Feats";
+      if (replacedType === "skill" || replacedType === "skill training")
+        return "Skills";
+      return undefined;
+    }).map(({ pane, choices }) => [pane, choices]),
+  );
+
+  return (
+    <aside aria-labelledby="timeline-heading" className="build-overview">
+      <div className="timeline-heading">
+        <h3 id="timeline-heading">Character overview</h3>
+        <label className="overview-planned-toggle">
+          <input
+            checked={showPlanned}
+            type="checkbox"
+            onChange={(event) =>
+              onShowPlannedChange(event.currentTarget.checked)
+            }
+          />
+          Show planned choices
+        </label>
+      </div>
+      <div className="overview-checklists">
+        {overviewPaneOrder.map((pane) => {
+          const choices = grouped.get(pane) ?? [];
+          if (choices.length === 0 && pane !== "Ability Scores") return null;
+          return (
+            <section className="overview-checklist-pane" key={pane}>
+              <h4>{pane}</h4>
+              <div className="overview-checklist-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th scope="col">Level</th>
+                      <th scope="col">Choice</th>
+                      <th scope="col">Selected</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pane === "Ability Scores" ? (
+                      <tr className={`overview-choice-${abilityStatus}`}>
+                        <td>1</td>
+                        <td>
+                          <button type="button" onClick={onNavigateAbilities}>
+                            Base ability scores
+                          </button>
+                        </td>
+                        <td>{abilitySummary}</td>
+                      </tr>
+                    ) : null}
+                    {choices.map((choice) => {
+                      const planned = choice.level > build.effectiveLevel;
+                      const selected = selectedOccurrence(choice, evaluation);
+                      const selectedName =
+                        selected === undefined
+                          ? undefined
+                          : (byId.get(selected.definitionId.toLocaleLowerCase())
+                              ?.name ?? selected.definitionId);
+                      const warning = selectedChoiceHasWarning(
+                        choice,
+                        evaluation,
+                      );
+                      const unresolved = !planned && isUnresolvedChoice(choice);
+                      return (
+                        <tr
+                          className={
+                            planned
+                              ? "overview-choice-planned"
+                              : warning
+                                ? "overview-choice-warning"
+                                : unresolved
+                                  ? "overview-choice-unresolved"
+                                  : "overview-choice-complete"
+                          }
+                          key={choice.id}
+                        >
+                          <td>
+                            {choice.level}
+                            {planned ? (
+                              <span className="visually-hidden"> planned</span>
+                            ) : null}
+                          </td>
+                          <td>
+                            <button
+                              aria-current={
+                                choice.id === selectedChoiceId
+                                  ? "true"
+                                  : undefined
+                              }
+                              type="button"
+                              onClick={() => onNavigateChoice(choice)}
+                            >
+                              {isOptionalRetrainingChoice(choice)
+                                ? "Retraining"
+                                : contextualTimelineChoiceTitle(
+                                    choice,
+                                    evaluation,
+                                    byId,
+                                  )}
+                            </button>
+                          </td>
+                          <td>
+                            {warning ? <Icon name="warning" /> : null}
+                            {selectedName ?? (
+                              <span aria-label="Unresolved">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </aside>
+  );
 }
 
 function CandidateDetail({
@@ -1435,6 +1622,24 @@ function candidateTableNoun(
   return nouns[kind][plural ? 1 : 0];
 }
 
+type CandidateSortColumn =
+  "name" | "level" | "action" | "attack" | "summary" | "role" | "power-source";
+type CandidateSortDirection = "ascending" | "descending";
+
+function compareCandidateSortValues(
+  left: string | number | undefined,
+  right: string | number | undefined,
+): number {
+  if (left === undefined) return right === undefined ? 0 : 1;
+  if (right === undefined) return -1;
+  if (typeof left === "number" && typeof right === "number")
+    return left - right;
+  return String(left).localeCompare(String(right), undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+}
+
 function CandidateSelectionTable({
   kind,
   candidates,
@@ -1466,6 +1671,14 @@ function CandidateSelectionTable({
 }) {
   const [filter, setFilter] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [sort, setSort] = useState<{
+    readonly column: CandidateSortColumn;
+    readonly direction: CandidateSortDirection;
+  }>({ column: "name", direction: "ascending" });
+  useEffect(
+    () => setSort({ column: "name", direction: "ascending" }),
+    [kind, nameColumnLabel],
+  );
   const [typeExpansion, setTypeExpansion] = useState<
     ReadonlyMap<string, boolean>
   >(new Map());
@@ -1501,6 +1714,72 @@ function CandidateSelectionTable({
   };
   const isFavorite = (candidate: CandidateDecision) =>
     favoriteIds.has(candidate.definitionId.toLocaleLowerCase());
+  const candidateLabel = (candidate: CandidateDecision) =>
+    entityFor(candidate)?.name ?? candidate.definitionId;
+  const sortValue = (
+    candidate: CandidateDecision,
+    column: CandidateSortColumn,
+    label = candidateLabel(candidate),
+  ): string | number | undefined => {
+    const entity = entityFor(candidate);
+    if (column === "name") return label;
+    if (entity === undefined) return undefined;
+    if (column === "level") return powerTableLevel(entity);
+    if (column === "action") return contentSpecificValue(entity, "Action Type");
+    if (column === "attack") return contentSpecificValue(entity, "Attack Type");
+    if (column === "role") return classTableMetadata(entity).role.label;
+    if (column === "power-source")
+      return classTableMetadata(entity).powerSource.label;
+    return choiceTableSummary(entity, kind);
+  };
+  const compareCandidates = (
+    left: CandidateDecision,
+    right: CandidateDecision,
+    leftLabel = candidateLabel(left),
+    rightLabel = candidateLabel(right),
+  ) => {
+    const leftValue = sortValue(left, sort.column, leftLabel);
+    const rightValue = sortValue(right, sort.column, rightLabel);
+    if (leftValue === undefined && rightValue !== undefined) return 1;
+    if (rightValue === undefined && leftValue !== undefined) return -1;
+    const primary = compareCandidateSortValues(leftValue, rightValue);
+    const directed = sort.direction === "ascending" ? primary : -primary;
+    return (
+      directed ||
+      compareCandidateSortValues(
+        sortValue(left, "name", leftLabel),
+        sortValue(right, "name", rightLabel),
+      )
+    );
+  };
+  const sortableHeader = (
+    column: CandidateSortColumn,
+    label: string,
+    contents: ReactNode = label,
+  ) => {
+    const active = sort.column === column;
+    return (
+      <th aria-sort={active ? sort.direction : "none"} key={column} scope="col">
+        <button
+          aria-label={`Sort by ${label}`}
+          className="selection-sort-button"
+          type="button"
+          onClick={() =>
+            setSort((current) => ({
+              column,
+              direction:
+                current.column === column && current.direction === "ascending"
+                  ? "descending"
+                  : "ascending",
+            }))
+          }
+        >
+          {contents}
+          <Icon name="chevron" />
+        </button>
+      </th>
+    );
+  };
   const isVisible = (candidate: CandidateDecision, label?: string) =>
     (!favoritesOnly || isFavorite(candidate)) &&
     matchesFilter(candidate, label);
@@ -1710,42 +1989,48 @@ function CandidateSelectionTable({
         <table>
           <thead>
             <tr>
-              <th scope="col">
-                {nameColumnLabel ?? candidateTableNoun(kind, false)}
-              </th>
+              {sortableHeader(
+                "name",
+                nameColumnLabel ?? candidateTableNoun(kind, false),
+              )}
               {kind === "power" ? (
                 <>
-                  <th scope="col">Level</th>
-                  <th scope="col">
+                  {sortableHeader("level", "Level")}
+                  {sortableHeader(
+                    "action",
+                    "Action type",
                     <span
                       className="selection-metadata-icon"
                       aria-label="Action type"
                       title="Action type"
                     >
                       <Icon name="clock" />
-                    </span>
-                  </th>
-                  <th scope="col">
+                    </span>,
+                  )}
+                  {sortableHeader(
+                    "attack",
+                    "Attack type",
                     <span
                       className="selection-metadata-icon"
                       aria-label="Attack type"
                       title="Attack type"
                     >
                       <Icon name="attack-versatile" />
-                    </span>
-                  </th>
-                  <th scope="col">Description</th>
+                    </span>,
+                  )}
+                  {sortableHeader("summary", "Description")}
                 </>
               ) : kind === "class" ? (
                 <>
-                  <th scope="col">Role</th>
-                  <th scope="col">Power Source</th>
-                  <th scope="col">Description</th>
+                  {sortableHeader("role", "Role")}
+                  {sortableHeader("power-source", "Power Source")}
+                  {sortableHeader("summary", "Description")}
                 </>
               ) : (
-                <th scope="col">
-                  {kind === "deity" ? "Alignment" : "Description"}
-                </th>
+                sortableHeader(
+                  "summary",
+                  kind === "deity" ? "Alignment" : "Description",
+                )
               )}
             </tr>
           </thead>
@@ -1766,74 +2051,82 @@ function CandidateSelectionTable({
                   (selected || sectionIndex === 0));
               const rows =
                 kind !== "feat"
-                  ? (kind === "power"
-                      ? [...section.candidates].sort((left, right) => {
-                          const leftEntity = entityFor(left);
-                          const rightEntity = entityFor(right);
-                          if (leftEntity === undefined) return 1;
-                          if (rightEntity === undefined) return -1;
-                          return comparePowerTableEntities(
-                            leftEntity,
-                            rightEntity,
-                          );
-                        })
-                      : section.candidates
-                    ).map((candidate) =>
-                      candidateRow(
-                        candidate,
-                        entityFor(candidate)?.name ?? candidate.definitionId,
-                      ),
-                    )
-                  : section.featGroups.map((group) => {
-                      if (group.parameterLabel === undefined) {
-                        const candidate = group.options[0]!.candidate;
-                        return candidateRow(candidate, group.label);
-                      }
-                      const selected = group.options.some(({ candidate }) =>
-                        selectedIds.has(candidate.definitionId),
-                      );
-                      const expanded =
-                        expandedGroupKey === group.key ||
-                        selected ||
-                        normalizedFilter !== "";
-                      const representative =
-                        group.options.find(({ candidate }) =>
+                  ? [...section.candidates]
+                      .sort((left, right) => compareCandidates(left, right))
+                      .map((candidate) =>
+                        candidateRow(
+                          candidate,
+                          entityFor(candidate)?.name ?? candidate.definitionId,
+                        ),
+                      )
+                  : [...section.featGroups]
+                      .sort((left, right) =>
+                        compareCandidates(
+                          left.options[0]!.candidate,
+                          right.options[0]!.candidate,
+                          left.label,
+                          right.label,
+                        ),
+                      )
+                      .map((group) => {
+                        if (group.parameterLabel === undefined) {
+                          const candidate = group.options[0]!.candidate;
+                          return candidateRow(candidate, group.label);
+                        }
+                        const selected = group.options.some(({ candidate }) =>
                           selectedIds.has(candidate.definitionId),
-                        )?.candidate ?? group.options[0]!.candidate;
-                      const familyLabelMatches = group.label
-                        .toLocaleLowerCase()
-                        .includes(normalizedFilter);
-                      const matchingOptions = group.options.filter(
-                        ({ candidate, label }) =>
-                          (!favoritesOnly || isFavorite(candidate)) &&
-                          (familyLabelMatches ||
-                            matchesFilter(candidate, label)),
-                      );
-                      return (
-                        <Fragment key={group.key}>
-                          <tr className="selection-family-row">
-                            <td>
-                              <button
-                                aria-expanded={expanded}
-                                type="button"
-                                onClick={() => {
-                                  onInspect(representative);
-                                  onExpandGroup(expanded ? "" : group.key);
-                                }}
-                              >
-                                <span>{group.label}…</span>
-                              </button>
-                            </td>
-                            <td>Choose {group.parameterLabel}</td>
-                          </tr>
-                          {expanded
-                            ? matchingOptions.map(({ candidate, label }) =>
-                                candidateRow(candidate, label, true),
-                              )
-                            : null}
-                        </Fragment>
-                      );
-                    });
+                        );
+                        const expanded =
+                          expandedGroupKey === group.key ||
+                          selected ||
+                          normalizedFilter !== "";
+                        const representative =
+                          group.options.find(({ candidate }) =>
+                            selectedIds.has(candidate.definitionId),
+                          )?.candidate ?? group.options[0]!.candidate;
+                        const familyLabelMatches = group.label
+                          .toLocaleLowerCase()
+                          .includes(normalizedFilter);
+                        const matchingOptions = group.options.filter(
+                          ({ candidate, label }) =>
+                            (!favoritesOnly || isFavorite(candidate)) &&
+                            (familyLabelMatches ||
+                              matchesFilter(candidate, label)),
+                        );
+                        return (
+                          <Fragment key={group.key}>
+                            <tr className="selection-family-row">
+                              <td>
+                                <button
+                                  aria-expanded={expanded}
+                                  type="button"
+                                  onClick={() => {
+                                    onInspect(representative);
+                                    onExpandGroup(expanded ? "" : group.key);
+                                  }}
+                                >
+                                  <span>{group.label}…</span>
+                                </button>
+                              </td>
+                              <td>Choose {group.parameterLabel}</td>
+                            </tr>
+                            {expanded
+                              ? [...matchingOptions]
+                                  .sort((left, right) =>
+                                    compareCandidates(
+                                      left.candidate,
+                                      right.candidate,
+                                      left.label,
+                                      right.label,
+                                    ),
+                                  )
+                                  .map(({ candidate, label }) =>
+                                    candidateRow(candidate, label, true),
+                                  )
+                              : null}
+                          </Fragment>
+                        );
+                      });
               return (
                 <Fragment key={section.key}>
                   {kind === "feat" || kind === "power" ? (
@@ -1969,7 +2262,7 @@ function ChoiceFlowSection({
 }
 
 function repeatedSlotLabel(choice: EvaluatedChoice, index: number): string {
-  if (choice.type.startsWith("Ability Increase"))
+  if (isAbilityIncreaseChoiceType(choice.type))
     return index === 0
       ? "First ability"
       : index === 1
@@ -2249,7 +2542,7 @@ function RepeatedChoiceGroup({
                 entities={entities}
                 byId={byId}
                 disabled={false}
-                compact={choice.type.startsWith("Ability Increase")}
+                compact={isAbilityIncreaseChoiceType(choice.type)}
                 selectionLabel={repeatedSlotLabel(choice, index)}
                 rollbackRevision={rollbackRevision}
                 onDispatch={onDispatch}
@@ -3910,7 +4203,7 @@ export function CharacterEditorPage({
     const repeated = repeatedGroupByChoiceId.get(choice.id);
     if (repeated !== undefined)
       return choice !== repeated[0] ? null : repeated.every((item) =>
-          item.type.startsWith("Ability Increase"),
+          isAbilityIncreaseChoiceType(item.type),
         ) ? (
         <AbilityIncreaseEditor
           key={choice.id}
@@ -4276,315 +4569,47 @@ export function CharacterEditorPage({
         </nav>
 
         <div className="overview-pane" hidden={workspaceTab !== "overview"}>
-          <aside aria-labelledby="timeline-heading" className="build-overview">
-            <div className="timeline-heading">
-              <div>
-                <h3 id="timeline-heading">Character overview</h3>
-              </div>
-              <div className="timeline-heading-actions">
-                <label className="overview-planned-toggle">
-                  <input
-                    checked={showPlannedOverview}
-                    type="checkbox"
-                    onChange={(event) =>
-                      setShowPlannedOverview(event.currentTarget.checked)
-                    }
-                  />
-                  Show planned levels
-                </label>
-              </div>
-            </div>
-            <p className="field-help timeline-help">
-              Review choices by level. Planned levels appear only when they
-              contain a saved selection.
-            </p>
-            <ol className="timeline-levels">
-              {build.levels
-                .filter((frame) => {
-                  if (frame.level <= build.effectiveLevel) return true;
-                  if (!showPlannedOverview) return false;
-                  return choicesAtLevel(frame.level, planningEvaluation).some(
-                    (choice) => choice.selectedOccurrenceId !== undefined,
-                  );
-                })
-                .map((frame) => {
-                  const choices = choicesAtLevel(
-                    frame.level,
-                    planningEvaluation,
-                  );
-                  const timelineChoices = choices.filter(
-                    (choice) =>
-                      (!isOptionalRetrainingChoice(choice) ||
-                        choice.selectedOccurrenceId !== undefined) &&
-                      !isCharacterDetailChoice(choice) &&
-                      !isBuildPresetChoice(choice),
-                  );
-                  const orderedTimelineChoices = groupChoicesByLegacyWorkflow(
-                    timelineChoices,
-                  ).flatMap(({ choices: sectionChoices }) => sectionChoices);
-                  const grouped = groupLevelChoices(timelineChoices);
-                  const repeatedGroups = groupRepeatedChoiceSlots(
-                    grouped.ordinary,
-                  );
-                  const repeatedByChoiceId = new Map(
-                    repeatedGroups.flatMap((group) =>
-                      group.map((choice) => [choice.id, group] as const),
-                    ),
-                  );
-                  const flows = groupDependentChoiceFlows(
-                    grouped.ordinary.filter(
-                      (choice) => !repeatedByChoiceId.has(choice.id),
-                    ),
-                  );
-                  const flowByChoiceId = new Map(
-                    flows.flatMap((flow) =>
-                      flow.map((choice) => [choice.id, flow] as const),
-                    ),
-                  );
-                  const summaries = orderedTimelineChoices.flatMap((choice) => {
-                    if (isOptionalRetrainingChoice(choice))
-                      return [{ label: "Retraining", choices: [choice] }];
-                    const identityLabel = identityChoiceLabel(choice.type);
-                    if (grouped.backgrounds.includes(choice))
-                      return choice === grouped.backgrounds[0]
-                        ? [
-                            {
-                              label: "Backgrounds",
-                              choices: grouped.backgrounds,
-                            },
-                          ]
-                        : [];
-                    if (grouped.skillTraining.includes(choice))
-                      return choice === grouped.skillTraining[0]
-                        ? [
-                            {
-                              label: "Skill Training",
-                              choices: grouped.skillTraining,
-                            },
-                          ]
-                        : [];
-                    const repeated = repeatedByChoiceId.get(choice.id);
-                    if (repeated !== undefined)
-                      return choice === repeated[0]
-                        ? [
-                            {
-                              label:
-                                choiceSelectionTableKind(choice) === "feature"
-                                  ? contextualTimelineChoiceTitle(
-                                      choice,
-                                      planningEvaluation!,
-                                      byId,
-                                    )
-                                  : repeatedChoiceGroupTitle(repeated, byId),
-                              choices: repeated,
-                            },
-                          ]
-                        : [];
-                    const flow = flowByChoiceId.get(choice.id);
-                    if (flow !== undefined)
-                      return choice === flow[0]
-                        ? [
-                            {
-                              label:
-                                identityLabel ??
-                                contextualTimelineChoiceTitle(
-                                  choice,
-                                  planningEvaluation!,
-                                  byId,
-                                ),
-                              choices: flow,
-                            },
-                          ]
-                        : [];
-                    return [
-                      {
-                        label: contextualTimelineChoiceTitle(
-                          choice,
-                          planningEvaluation!,
-                          byId,
-                        ),
-                        choices: [choice],
-                      },
-                    ];
-                  });
-                  const unresolved =
-                    frame.level > build.effectiveLevel
-                      ? 0
-                      : timelineChoices.filter(isUnresolvedChoice).length +
-                        (frame.level === 1 && abilityScoresIncomplete ? 1 : 0);
-                  const choiceWarnings =
-                    timelineChoices.filter((choice) =>
-                      selectedChoiceHasWarning(choice, planningEvaluation!),
-                    ).length +
-                    (frame.level === 1 && abilityScoresHouseRuled ? 1 : 0);
-                  return (
-                    <li
-                      className={[
-                        frame.level === selectedLevel
-                          ? "timeline-selected"
-                          : "",
-                        unresolved > 0 ? "timeline-incomplete" : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      key={frame.level}
-                    >
-                      <button
-                        className="timeline-level-button"
-                        type="button"
-                        onClick={() => {
-                          setSelectedLevel(frame.level);
-                          setSelectedChoiceId(
-                            orderedTimelineChoices.find(isUnresolvedChoice)
-                              ?.id ?? orderedTimelineChoices[0]?.id,
-                          );
-                          setWorkspaceTab("build");
-                        }}
-                      >
-                        <span>Level {frame.level}</span>
-                        {frame.level > build.effectiveLevel ? (
-                          <small>Planned</small>
-                        ) : unresolved > 0 ? (
-                          <span className="visually-hidden">
-                            {unresolved} unresolved
-                          </span>
-                        ) : choiceWarnings > 0 ? (
-                          <Icon name="warning" />
-                        ) : (
-                          <Icon name="check" />
-                        )}
-                      </button>
-                      {planningEvaluation === undefined && frame.level !== 1 ? (
-                        <p className="timeline-empty">Evaluating choices…</p>
-                      ) : timelineChoices.length === 0 && frame.level !== 1 ? (
-                        <p className="timeline-empty">
-                          No decisions at this level
-                        </p>
-                      ) : (
-                        <ul className="timeline-choices">
-                          {frame.level === 1 ? (
-                            <li>
-                              <button
-                                className={
-                                  abilityScoresIncomplete
-                                    ? "choice-unresolved"
-                                    : abilityScoresHouseRuled
-                                      ? "choice-warning"
-                                      : "choice-complete"
-                                }
-                                type="button"
-                                onClick={() => {
-                                  setSelectedLevel(1);
-                                  setSelectedSectionByLevel((current) => ({
-                                    ...current,
-                                    1: "Ability Scores",
-                                  }));
-                                  setWorkspaceTab("build");
-                                }}
-                              >
-                                <Icon name="ability" />
-                                <span>
-                                  Ability Scores ·{" "}
-                                  {abilityPointBuy.legal
-                                    ? "Point buy complete"
-                                    : abilityScoresHouseRuled
-                                      ? "House rule"
-                                      : `${abilityPointBuy.remaining ?? 22} ${abilityPointBuy.remaining === 1 ? "point" : "points"} left`}
-                                </span>
-                              </button>
-                            </li>
-                          ) : null}
-                          {summaries.map((summary) => {
-                            const summaryUnresolved =
-                              frame.level > build.effectiveLevel
-                                ? 0
-                                : summary.choices.filter(isUnresolvedChoice)
-                                    .length;
-                            const summaryWarning = summary.choices.some(
-                              (choice) =>
-                                selectedChoiceHasWarning(
-                                  choice,
-                                  planningEvaluation!,
-                                ),
-                            );
-                            const selectedNames = summary.choices.flatMap(
-                              (choice) => {
-                                const selected = selectedOccurrence(
-                                  choice,
-                                  planningEvaluation!,
-                                );
-                                if (selected === undefined) return [];
-                                return [
-                                  byId.get(
-                                    selected.definitionId.toLocaleLowerCase(),
-                                  )?.name ?? selected.definitionId,
-                                ];
-                              },
-                            );
-                            const targetChoice =
-                              summary.choices.find(isUnresolvedChoice) ??
-                              summary.choices[0]!;
-                            return (
-                              <li key={summary.choices[0]!.id}>
-                                <button
-                                  aria-current={
-                                    summary.choices.some(
-                                      (choice) =>
-                                        choice.id === selectedChoiceId,
-                                    )
-                                      ? "true"
-                                      : undefined
-                                  }
-                                  className={
-                                    frame.level > build.effectiveLevel
-                                      ? "choice-planned"
-                                      : summaryUnresolved > 0
-                                        ? "choice-unresolved"
-                                        : summaryWarning
-                                          ? "choice-warning"
-                                          : "choice-complete"
-                                  }
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedLevel(frame.level);
-                                    setSelectedChoiceId(targetChoice.id);
-                                    setSelectedSectionByLevel((current) => ({
-                                      ...current,
-                                      [frame.level]: isOptionalRetrainingChoice(
-                                        summary.choices[0]!,
-                                      )
-                                        ? "Retraining"
-                                        : legacyChoiceSection(
-                                            summary.choices[0]!,
-                                          ),
-                                    }));
-                                    setWorkspaceTab("build");
-                                  }}
-                                >
-                                  <span>
-                                    <Icon
-                                      name={choiceSectionIcon(
-                                        legacyChoiceSection(
-                                          summary.choices[0]!,
-                                        ),
-                                      )}
-                                    />
-                                    {summary.label}
-                                    {selectedNames.length === 0
-                                      ? ""
-                                      : ` · ${selectedNames.join(", ")}`}
-                                  </span>
-                                </button>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                    </li>
-                  );
-                })}
-            </ol>
-          </aside>
+          <CharacterOverview
+            abilityStatus={
+              abilityScoresIncomplete
+                ? "unresolved"
+                : abilityScoresHouseRuled
+                  ? "warning"
+                  : "complete"
+            }
+            abilitySummary={
+              abilityPointBuy.legal
+                ? "Point buy complete"
+                : abilityScoresHouseRuled
+                  ? "House rule"
+                  : `${abilityPointBuy.remaining ?? 22} ${abilityPointBuy.remaining === 1 ? "point" : "points"} left`
+            }
+            build={build}
+            byId={byId}
+            evaluation={planningEvaluation}
+            selectedChoiceId={selectedChoiceId}
+            showPlanned={showPlannedOverview}
+            onNavigateAbilities={() => {
+              setSelectedLevel(1);
+              setSelectedSectionByLevel((current) => ({
+                ...current,
+                1: "Ability Scores",
+              }));
+              setWorkspaceTab("build");
+            }}
+            onNavigateChoice={(choice) => {
+              setSelectedLevel(choice.level);
+              setSelectedChoiceId(choice.id);
+              setSelectedSectionByLevel((current) => ({
+                ...current,
+                [choice.level]: isOptionalRetrainingChoice(choice)
+                  ? "Retraining"
+                  : legacyChoiceSection(choice),
+              }));
+              setWorkspaceTab("build");
+            }}
+            onShowPlannedChange={setShowPlannedOverview}
+          />
         </div>
 
         <section

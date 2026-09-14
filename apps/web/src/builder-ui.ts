@@ -247,17 +247,6 @@ export function powerTableLevel(entity: ContentEntity): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-export function comparePowerTableEntities(
-  left: ContentEntity,
-  right: ContentEntity,
-): number {
-  return (
-    (powerTableLevel(right) ?? Number.NEGATIVE_INFINITY) -
-      (powerTableLevel(left) ?? Number.NEGATIVE_INFINITY) ||
-    left.name.localeCompare(right.name)
-  );
-}
-
 /**
  * Produces the player-facing category used by the feat/power browser. The
  * legacy feat page gives an authored subtype priority, then derives its broad
@@ -448,9 +437,14 @@ export function choicePresentationLabel(label: string): string {
         : `${usage[0]!.toLocaleUpperCase()}${usage.slice(1)}`;
     return `${displayUsage} Power`;
   }
-  if (/^Ability Increase(?:\s*\(Level\s+\d+\))?$/i.test(concise))
-    return "Ability Score Increase";
+  if (isAbilityIncreaseChoiceType(concise)) return "Ability Score Increase";
   return concise.replace(/\s+Choice$/i, "");
+}
+
+export function isAbilityIncreaseChoiceType(type: string): boolean {
+  return /^(?:Companion )?Ability Increase(?:\s*\(Level\s+\d+\))?$/i.test(
+    type.trim(),
+  );
 }
 
 export function identityChoiceLabel(type: string): string | undefined {
@@ -750,7 +744,7 @@ export function legacyChoiceSection(
     return "Race";
   if (type === "background" || type === "background choice" || type === "theme")
     return "Background";
-  if (type.includes("ability score") || type.startsWith("ability increase"))
+  if (type.includes("ability score") || isAbilityIncreaseChoiceType(type))
     return "Ability Scores";
   if (type === "skill" || type === "skill training") return "Skills";
   if (type === "spellbook") return "Spellbook";
@@ -764,6 +758,72 @@ export function legacyChoiceSection(
 export interface LegacyChoiceSectionGroup {
   readonly section: LegacyChoiceSection;
   readonly choices: readonly EvaluatedChoice[];
+}
+
+export type OverviewChoicePane =
+  | "Character"
+  | "Ability Scores"
+  | "Skills"
+  | "Powers"
+  | "Spellbook"
+  | "Feats"
+  | "Other";
+
+const overviewPaneOrder: readonly OverviewChoicePane[] = [
+  "Character",
+  "Ability Scores",
+  "Skills",
+  "Powers",
+  "Spellbook",
+  "Feats",
+  "Other",
+];
+
+export function overviewChoicePane(
+  choice: EvaluatedChoice,
+): OverviewChoicePane {
+  const section = legacyChoiceSection(choice);
+  if (["Class", "Race", "Background", "Character Details"].includes(section))
+    return "Character";
+  if (
+    ["Ability Scores", "Skills", "Powers", "Spellbook", "Feats"].includes(
+      section,
+    )
+  )
+    return section as OverviewChoicePane;
+  return "Other";
+}
+
+export function groupOverviewChoices(
+  choices: readonly EvaluatedChoice[],
+  paneOverride?: (choice: EvaluatedChoice) => OverviewChoicePane | undefined,
+): readonly {
+  readonly pane: OverviewChoicePane;
+  readonly choices: readonly EvaluatedChoice[];
+}[] {
+  const groups = new Map<OverviewChoicePane, EvaluatedChoice[]>();
+  choices.forEach((choice) => {
+    const pane = paneOverride?.(choice) ?? overviewChoicePane(choice);
+    groups.set(pane, [...(groups.get(pane) ?? []), choice]);
+  });
+  return overviewPaneOrder.flatMap((pane) => {
+    const paneChoices = groups.get(pane);
+    return paneChoices === undefined
+      ? []
+      : [
+          {
+            pane,
+            choices: paneChoices
+              .map((choice, index) => ({ choice, index }))
+              .sort(
+                (left, right) =>
+                  left.choice.level - right.choice.level ||
+                  left.index - right.index,
+              )
+              .map(({ choice }) => choice),
+          },
+        ];
+  });
 }
 
 function legacyChoiceTypeRank(choice: EvaluatedChoice): number {

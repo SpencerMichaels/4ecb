@@ -314,8 +314,19 @@ for its broader Class, Race, Theme, Paragon Path, and Epic Destiny sections and
 uses `_SkillPower` for Skill; it does not infer these groups from prose. Theme
 sections include the resolved authored owner name (for example,
 `Theme (Dune Trader)`). Power rows expose the authored numeric level as a
-separate column. Within each broad owner section they follow the native ordering
-principle: descending level, then alphabetical name for equal levels.
+separate column. The native `PowerPage.SortPowers` path establishes a useful
+level-oriented ordering principle: descending level, then alphabetical name for
+equal levels. The modern shared candidate table intentionally starts in
+alphabetical Name order for consistency across all content types, but its Level
+header can reproduce ascending or descending level order with Name as the
+tie-breaker.
+
+`AbilityLeveling.GetNextAbilityIncrease` selects occurrences by either the
+`Ability Increase` or `Companion Ability Increase` prefix. Its `LevelChoices`
+loop then consumes two consecutive occurrences into the same horizontal level
+row before continuing. Companion ability increases therefore belong in the
+same Ability Scores surface and use the same exactly-two interaction as regular
+level increases; they are not two independently headed sections.
 
 ## Proposed modern token palette
 

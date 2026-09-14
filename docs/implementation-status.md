@@ -192,12 +192,14 @@ candidate.
   level in one autosaved transaction without advancing the current effective
   level.
 - The level rail no longer expands into an overlay. A sibling **Overview** tab
-  provides the complete icon-led choice history without shifting the choice and
+  provides category checklists for Character, Ability Scores, Skills, Powers,
+  Spellbook, Feats, and Other without shifting the choice and
   option detail panes, while the rail remains compact direct navigation within
   Build. Overview replaces both the former popout and bottom history disclosure,
   and deliberately omits the duplicate raw “Stored features” occurrence tree.
-  Its planned-level toggle starts off and reveals only future levels containing
-  saved selections; untouched plan frames stay absent. History rows navigate
+  Each row identifies its owning level and choices are ordered by level within
+  their pane. Its planned-level toggle starts off and reveals only future levels
+  containing saved selections; untouched plan frames stay absent. History rows navigate
   back to the owning level and category, and completed optional retraining is
   retained as history without becoming a required decision. Ordinary detail
   surfaces use natural document height; only large candidate tables retain
@@ -392,12 +394,14 @@ candidate.
   category—covering Avenger's Censure—while anonymous direct class rules retain
   the generic Class Feature heading. Overview uses the same names. Starting
   presets now follow the Class table and are collapsed by default.
-- Candidate tables preserve their source ordering when a row is selected and
+- Candidate tables default to alphabetical Name order and preserve their order
+  when a row is selected. Clicking another column heading sorts by that column
+  with Name as the tie-breaker; clicking the active heading reverses it. They
   communicate selection through the existing green row highlight without a
   second checkmark. Tables with six or fewer visible rows now size to their
   contents rather than inheriting the large-table viewport height.
-- Power tables now show authored levels and order entries within each ownership
-  section by descending level, then name. Resolved theme headings include their
+- Power tables now show authored levels and participate in the shared sortable
+  table behavior. Resolved theme headings include their
   theme name. Ordinary class utility slots now include the legacy `Any Class`
   category, restoring race-qualified utility powers alongside authored class,
   trained-skill, and theme powers; prerequisite legality still filters powers
@@ -408,7 +412,10 @@ candidate.
   characters start from `8, 10, 10, 10, 10, 10`, escalating-cost steppers show
   points remaining and next-increase cost, exact allocations complete the level
   timeline item, and invalid/custom arrays remain editable with a house-rule
-  status. Live Silaqui verification confirmed her existing standard allocation
+  status. Regular and companion level increases also share Ability Scores;
+  each same-level pair uses one six-button control accepting two distinct choices,
+  matching the recovered legacy `AbilityLeveling.LevelChoices` grouping.
+  Live Silaqui verification confirmed her existing standard allocation
   is recognized as complete, decrementing a score immediately reports the point
   difference, undo restores it, and the control has no horizontal overflow at
   374 px. A replacement choice with exactly one visible result treats that

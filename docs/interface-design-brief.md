@@ -91,8 +91,9 @@ application's protected visual assets.
   as the initial top-level information architecture. This remains subject to
   prototype review because navigation is easier to judge in context.
 - Keep a sibling **Overview** tab beside Build and Character details. It presents
-  one concise, icon-led history of mechanical choices by level; it must not
-  repeat the same selections in a second raw “stored features” tree. Current
+  concise checklist panes for Character, Ability Scores, Skills, Powers,
+  Spellbook, Feats, and Other, with choices ordered and labeled by level; it
+  must not repeat the same selections in a second raw “stored features” tree. Current
   levels appear by default. A temporary **Show planned levels** checkbox reveals
   only future levels that already contain a saved choice, omitting empty plan
   frames. Activating any history row returns to Build at that level and opens
@@ -120,6 +121,12 @@ application's protected visual assets.
   Do not silently truncate matching candidates. Let players star candidates
   without selecting them and temporarily filter the table to those persistent
   content-ID favorites while comparing options.
+- Sort every candidate table alphabetically by Name initially. Column headings
+  are interactive sort controls: a new heading sorts on that field with Name as
+  the tie-breaker, while activating the current heading reverses its direction.
+  Selection itself never changes row order.
+- Present each same-level pair of regular or companion ability increases as one
+  six-button, exactly-two selector in the Ability Scores category.
 - Repeated Background slots use one primary **Choose background** section;
   already selected extras remain visible and optional empty slots appear one at
   a time through **Add another background…**. A revealed empty slot can be

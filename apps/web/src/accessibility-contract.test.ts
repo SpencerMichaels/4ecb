@@ -77,7 +77,12 @@ describe("release accessibility contract", () => {
     expect(characterEditor).toContain('workspaceTab === "equipment"');
     expect(characterEditor).toContain('workspaceTab === "diagnostics"');
     expect(characterEditor).toContain('className="build-overview"');
-    expect(characterEditor).toContain("Show planned levels");
+    expect(characterEditor).toContain("Show planned choices");
+    expect(characterEditor).toContain('className="overview-checklist-pane"');
+    expect(characterEditor).toContain(
+      'aria-sort={active ? sort.direction : "none"}',
+    );
+    expect(characterEditor).toContain('className="selection-sort-button"');
     expect(characterEditor).not.toContain("Stored features");
     expect(characterEditor).not.toContain("function OccurrenceTree");
     expect(characterEditor).not.toContain('aria-controls="build-timeline"');

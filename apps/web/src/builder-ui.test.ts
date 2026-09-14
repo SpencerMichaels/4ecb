@@ -17,7 +17,6 @@ import {
   buildPresetSuggestionNames,
   candidateReason,
   candidateTableTypeGroup,
-  comparePowerTableEntities,
   classTableMetadata,
   contextualChoiceName,
   choiceSelectionTableKind,
@@ -31,6 +30,7 @@ import {
   grantedDetailEntities,
   groupDependentChoiceFlows,
   groupLevelChoices,
+  groupOverviewChoices,
   groupChoicesByLegacyWorkflow,
   groupBackgroundChoiceCandidates,
   groupParameterizedCandidates,
@@ -41,6 +41,7 @@ import {
   isCandidateVisible,
   isCharacterDetailChoice,
   isBuildPresetChoice,
+  isAbilityIncreaseChoiceType,
   isOptionalRetrainingChoice,
   planningHorizonCommand,
   powerTableLevel,
@@ -198,6 +199,12 @@ describe("builder planning UI", () => {
     expect(choicePresentationLabel("Choose Ability Increase (Level 8)")).toBe(
       "Ability Score Increase",
     );
+    expect(
+      choicePresentationLabel("Companion Ability Increase (Level 8)"),
+    ).toBe("Ability Score Increase");
+    expect(
+      isAbilityIncreaseChoiceType("Companion Ability Increase (Level 8)"),
+    ).toBe(true);
     expect(identityChoiceLabel("Class")).toBe("Class");
     expect(identityChoiceLabel("Race")).toBe("Race");
     expect(identityChoiceLabel("Class Feature")).toBeUndefined();
@@ -674,11 +681,8 @@ describe("builder planning UI", () => {
     const levelSixB = entity("POWER_6_B", "Bravo", "Power", { Level: "6" });
     const levelSixA = entity("POWER_6_A", "Alpha", "Power", { Level: "6" });
     expect(powerTableLevel(levelSixA)).toBe(6);
-    expect(
-      [levelTwo, levelSixB, levelSixA]
-        .sort(comparePowerTableEntities)
-        .map(({ id }) => id),
-    ).toEqual(["POWER_6_A", "POWER_6_B", "POWER_2"]);
+    expect(powerTableLevel(levelTwo)).toBe(2);
+    expect(powerTableLevel(levelSixB)).toBe(6);
   });
 
   it("groups background benefits without changing exact candidates", () => {
@@ -1049,13 +1053,58 @@ describe("builder planning UI", () => {
         ruleOrdinal: 2,
         type: "Feat",
       },
+      {
+        id: "companion-1",
+        level: 8,
+        providerOccurrenceId: "companion",
+        ruleOrdinal: 1,
+        type: "Companion Ability Increase (Level 8)",
+      },
+      {
+        id: "companion-2",
+        level: 8,
+        providerOccurrenceId: "companion",
+        ruleOrdinal: 1,
+        type: "Companion Ability Increase (Level 8)",
+      },
     ] as unknown as EvaluatedCharacter["choices"];
 
     expect(
       groupRepeatedChoiceSlots(choices).map((group) =>
         group.map(({ id }) => id),
       ),
-    ).toEqual([["ability-1", "ability-2"]]);
+    ).toEqual([
+      ["ability-1", "ability-2"],
+      ["companion-1", "companion-2"],
+    ]);
+  });
+
+  it("groups overview choices by category and then level", () => {
+    const choices = [
+      { id: "power-7", level: 7, type: "Power Encounter 7" },
+      { id: "class", level: 1, type: "Class" },
+      { id: "power-1", level: 1, type: "Power At-Will 1" },
+      { id: "skill", level: 1, type: "Skill Training" },
+      { id: "feat-4", level: 4, type: "Feat" },
+      {
+        id: "companion",
+        level: 8,
+        type: "Companion Ability Increase (Level 8)",
+      },
+    ] as unknown as EvaluatedCharacter["choices"];
+
+    expect(
+      groupOverviewChoices(choices).map(({ pane, choices }) => [
+        pane,
+        choices.map(({ id }) => id),
+      ]),
+    ).toEqual([
+      ["Character", ["class"]],
+      ["Ability Scores", ["companion"]],
+      ["Skills", ["skill"]],
+      ["Powers", ["power-1", "power-7"]],
+      ["Feats", ["feat-4"]],
+    ]);
   });
 
   it("fills the first unresolved skill slot that can accept a candidate", () => {
