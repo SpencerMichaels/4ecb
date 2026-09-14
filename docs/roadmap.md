@@ -399,7 +399,11 @@ rail so the choice editor and its adjacent option detail remain the primary work
 area. The complete timeline opens as a non-resizing overlay, while ordinary
 detail cards and sections now grow naturally with the document instead of
 introducing nested scrollbars; candidate tables remain the intentional bounded
-scroll exception.
+scroll exception. The redundant overview panel has since been folded into the
+portrait header, and the rail now exposes all 30 levels in collapsible Heroic,
+Paragon, and Epic tiers. Navigating beyond the saved horizon extends the plan
+automatically without advancing the current character, replacing the separate
+plan-horizon input.
 Planning legality now uses the projected character at each choice's acquisition
 level rather than the final plan horizon: same-level increases and features may
 satisfy prerequisites, while later selections cannot retroactively unlock an

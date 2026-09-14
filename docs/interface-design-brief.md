@@ -33,16 +33,20 @@ application's protected visual assets.
 
 - Use a guided workflow by default while allowing users to inspect choices from
   later levels without first completing every earlier choice.
-- Use a hybrid structure: an always-available build/character overview, a
-  narrow ordered level rail, and focused detail/selection content in the main
-  pane. The complete choice timeline opens explicitly as an overlay rather than
-  permanently taking width from the primary work area.
+- Use a hybrid structure: a compact portrait-and-identity header, a narrow
+  ordered level rail, and focused detail/selection content in the main pane.
+  Race, class, current level, and XP sit beside the portrait; unresolved and
+  warning totals sit with save state and actions. Do not repeat these facts in a
+  separate character-overview panel or continuously display a successful rules
+  evaluation message.
 - Treat a level, rather than an individual slot, as the main builder workspace.
   Selecting a level shows its mechanical choice categories as a horizontal tab
   list and mounts only the active category in the main pane. The level rail
-  remains a compact status summary and may navigate directly between levels;
-  the expanded timeline may navigate directly to the category containing a
-  choice. Preserve the last active category separately for each visited level.
+  always offers levels 1–30, grouped into Heroic, Paragon, and Epic tiers; the
+  current tier starts expanded and the other tiers start collapsed. Selecting a
+  level beyond the saved build extends the plan through that level without
+  advancing the current character. Preserve the last active category separately
+  for each visited level.
 - When a user selects a target level, create the complete level timeline
   immediately and present its unresolved decisions. Include every level through
   the target: unresolved items are prominent, completed levels remain visible in
@@ -56,8 +60,9 @@ application's protected visual assets.
 - Distinguish the character's current effective level from the build-planning
   horizon. Choices above the current level are preserved, visible, and editable
   so a player can plan many levels ahead, but they are inactive in current
-  calculations and compatibility exports. Lowering the planning horizon hides
-  rather than deletes preserved future choices; raising it restores them.
+  calculations and compatibility exports. Do not expose a separate plan-horizon
+  input: navigating to a later level grows the plan as needed, and the current
+  level control remains the explicit way to advance the playable character.
 - Evaluate a choice at level X against the projected build through level X.
   Same-level decisions may satisfy one another—for example, a level-4 ability
   increase may unlock a level-4 feat—but no feature from a later planned level

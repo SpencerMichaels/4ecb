@@ -80,6 +80,17 @@ import {
 const characters = new CharacterRepository();
 const ShowAllChoicesContext = createContext(false);
 type LevelChoiceTab = LegacyChoiceSection | "Retraining";
+type CharacterTierId = "heroic" | "paragon" | "epic";
+const CHARACTER_TIERS: readonly {
+  readonly id: CharacterTierId;
+  readonly label: string;
+  readonly firstLevel: number;
+  readonly lastLevel: number;
+}[] = [
+  { id: "heroic", label: "Heroic", firstLevel: 1, lastLevel: 10 },
+  { id: "paragon", label: "Paragon", firstLevel: 11, lastLevel: 20 },
+  { id: "epic", label: "Epic", firstLevel: 21, lastLevel: 30 },
+];
 const CANDIDATE_FAVORITES_KEY = "4ecb:candidate-favorites:v1";
 let candidateFavoritesSnapshot: ReadonlySet<string> | undefined;
 const candidateFavoriteListeners = new Set<() => void>();
@@ -1323,6 +1334,12 @@ function choiceSectionId(choiceId: string): string {
 
 function levelChoiceTabSlug(section: LevelChoiceTab): string {
   return section.toLocaleLowerCase().replaceAll(/[^a-z0-9]+/g, "-");
+}
+
+function characterTierAtLevel(level: number): CharacterTierId {
+  if (level >= 21) return "epic";
+  if (level >= 11) return "paragon";
+  return "heroic";
 }
 
 type FeatPresentationGroup = ReturnType<
@@ -3231,9 +3248,11 @@ export function CharacterEditorPage({
     useState<EvaluatedCharacter>();
   const [evaluationStatus, setEvaluationStatus] = useState("Loading rules…");
   const [readyPackId, setReadyPackId] = useState<string>();
-  const [visibleHorizon, setVisibleHorizon] = useState(1);
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [timelineOpen, setTimelineOpen] = useState(false);
+  const [expandedTiers, setExpandedTiers] = useState<
+    ReadonlySet<CharacterTierId>
+  >(new Set(["heroic"]));
   const [selectedChoiceId, setSelectedChoiceId] = useState<string>();
   const [selectedSectionByLevel, setSelectedSectionByLevel] = useState<
     Readonly<Partial<Record<number, LevelChoiceTab>>>
@@ -3319,8 +3338,10 @@ export function CharacterEditorPage({
             },
           },
         );
-        setVisibleHorizon(loaded.build.levels.length);
         setSelectedLevel(loaded.build.effectiveLevel);
+        setExpandedTiers(
+          new Set([characterTierAtLevel(loaded.build.effectiveLevel)]),
+        );
         setSaveState({ phase: "saved", message: "Saved locally" });
         if (loaded.profileBinding !== undefined) {
           const pack = await appContentRuntime.getPack(
@@ -3464,16 +3485,6 @@ export function CharacterEditorPage({
     readyPackId,
     selectedLevel,
   ]);
-
-  useEffect(() => {
-    if (build === undefined) return;
-    if (visibleHorizon > build.levels.length)
-      setVisibleHorizon(build.levels.length);
-    if (visibleHorizon < build.effectiveLevel)
-      setVisibleHorizon(build.effectiveLevel);
-    if (selectedLevel > Math.min(visibleHorizon, build.levels.length))
-      setSelectedLevel(Math.min(visibleHorizon, build.levels.length));
-  }, [build, selectedLevel, visibleHorizon]);
 
   const levelChoices = useMemo(
     () => choicesAtLevel(selectedLevel, planningEvaluation),
@@ -3666,9 +3677,6 @@ export function CharacterEditorPage({
       );
   const race = entityOfType("Race")?.name ?? character.snapshot.details.Race;
   const selectedClass = entityOfType("Class") ?? entityOfType("Hybrid Class");
-  const role = selectedClass?.specifics.find(
-    (specific) => specific.name.toLocaleLowerCase() === "role",
-  )?.value;
   const unresolvedCount =
     selectedLevel > build.effectiveLevel
       ? 0
@@ -3691,12 +3699,12 @@ export function CharacterEditorPage({
     planningEvaluation?.occurrences.filter(
       (occurrence) =>
         occurrence.legality === "houserule" &&
-        occurrence.acquiredLevel <= visibleHorizon,
+        occurrence.acquiredLevel <= build.levels.length,
     ).length ?? 0;
   const plannedChoiceWarningCount =
     planningEvaluation?.choices.filter(
       (choice) =>
-        choice.level <= visibleHorizon &&
+        choice.level <= build.levels.length &&
         selectedChoiceHasWarning(choice, planningEvaluation),
     ).length ?? 0;
   const warningCount = Math.max(
@@ -3726,6 +3734,37 @@ export function CharacterEditorPage({
     setSelectedChoiceId(
       sectionChoices.find(isUnresolvedChoice)?.id ?? sectionChoices[0]?.id,
     );
+  };
+
+  const selectLevel = (level: number): void => {
+    try {
+      const command = planningHorizonCommand(
+        build,
+        level,
+        entities,
+        (addedLevel) => `web:level:${addedLevel}:${crypto.randomUUID()}`,
+      );
+      if (command !== undefined) dispatch(command);
+      const choices = choicesAtLevel(level, planningEvaluation).filter(
+        (choice) =>
+          !isOptionalRetrainingChoice(choice) &&
+          !isCharacterDetailChoice(choice) &&
+          !isBuildPresetChoice(choice),
+      );
+      const ordered = groupChoicesByLegacyWorkflow(choices).flatMap(
+        ({ choices: sectionChoices }) => sectionChoices,
+      );
+      setSelectedLevel(level);
+      setSelectedChoiceId(
+        ordered.find(isUnresolvedChoice)?.id ?? ordered[0]?.id,
+      );
+      setTimelineOpen(false);
+    } catch (reason: unknown) {
+      setSaveState({
+        phase: "failed",
+        message: reason instanceof Error ? reason.message : String(reason),
+      });
+    }
   };
 
   const renderPrimaryChoice = (
@@ -3864,10 +3903,53 @@ export function CharacterEditorPage({
           <div>
             <p className="eyebrow">Build workspace</p>
             <h2>{character.title}</h2>
-            <p className="evaluation-status">{evaluationStatus}</p>
+            <div className="builder-character-facts">
+              <span>{race || "Race not chosen"}</span>
+              <span>
+                {selectedClass?.name ||
+                  character.snapshot.details.Class ||
+                  "Class not chosen"}
+              </span>
+              <label className="current-level-control">
+                <span className="visually-hidden">Current level</span>
+                Level
+                <select
+                  aria-label="Current level"
+                  value={build.effectiveLevel}
+                  onChange={(event) => {
+                    const level = Number(event.currentTarget.value);
+                    setSelectedLevel(level);
+                    setExpandedTiers(new Set([characterTierAtLevel(level)]));
+                    dispatch({ kind: "set-effective-level", level });
+                  }}
+                >
+                  {build.levels.map((frame) => (
+                    <option key={frame.level} value={frame.level}>
+                      {frame.level}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <span>
+                XP{" "}
+                {character.snapshot.details.Experience ||
+                  character.snapshot.details.XP ||
+                  "—"}
+              </span>
+            </div>
           </div>
         </div>
         <div className="builder-actions">
+          <span
+            className={`builder-health${totalUnresolved > 0 ? " builder-health-attention" : ""}`}
+          >
+            {totalUnresolved} unresolved
+          </span>
+          <span
+            className={`builder-health${warningCount > 0 ? " builder-health-warning" : ""}`}
+          >
+            {warningCount} {warningCount === 1 ? "warning" : "warnings"}
+          </span>
           <span
             aria-live="polite"
             className={`save-status save-${saveState.phase}`}
@@ -3915,72 +3997,11 @@ export function CharacterEditorPage({
         </div>
       ) : null}
 
-      <section
-        aria-labelledby="overview-heading"
-        className="character-overview"
-      >
-        <div className="overview-title">
-          <h3 id="overview-heading">Character overview</h3>
-          <label className="current-level-control">
-            Current level
-            <select
-              value={build.effectiveLevel}
-              onChange={(event) => {
-                const level = Number(event.currentTarget.value);
-                setVisibleHorizon((current) => Math.max(current, level));
-                setSelectedLevel(level);
-                dispatch({ kind: "set-effective-level", level });
-              }}
-            >
-              {build.levels.map((frame) => (
-                <option key={frame.level} value={frame.level}>
-                  {frame.level}
-                </option>
-              ))}
-            </select>
-          </label>
+      {evaluationStatus.startsWith("Rules evaluation failed") ? (
+        <div className="error" role="alert">
+          {evaluationStatus}
         </div>
-        <dl>
-          <div>
-            <dt>Race</dt>
-            <dd>{race || "Not chosen"}</dd>
-          </div>
-          <div>
-            <dt>Class</dt>
-            <dd>
-              {selectedClass?.name ||
-                character.snapshot.details.Class ||
-                "Not chosen"}
-            </dd>
-          </div>
-          <div>
-            <dt>Role</dt>
-            <dd>{role || character.snapshot.details.Role || "—"}</dd>
-          </div>
-          <div>
-            <dt>Experience</dt>
-            <dd>
-              {character.snapshot.details.Experience ||
-                character.snapshot.details.XP ||
-                "—"}
-            </dd>
-          </div>
-          <div>
-            <dt>Plan</dt>
-            <dd>Through level {build.levels.length}</dd>
-          </div>
-          <div
-            className={totalUnresolved > 0 ? "overview-attention" : undefined}
-          >
-            <dt>Unresolved</dt>
-            <dd>{totalUnresolved}</dd>
-          </div>
-          <div className={warningCount > 0 ? "overview-attention" : undefined}>
-            <dt>Warnings</dt>
-            <dd>{warningCount}</dd>
-          </div>
-        </dl>
-      </section>
+      ) : null}
 
       <div
         aria-label="Character editor sections"
@@ -4021,65 +4042,100 @@ export function CharacterEditorPage({
             <Icon name="level" />
             <span>Plan</span>
           </button>
-          <ol>
-            {build.levels.slice(0, visibleHorizon).map((frame) => {
-              const choices = choicesAtLevel(frame.level, planningEvaluation);
-              const timelineChoices = choices.filter(
-                (choice) =>
-                  !isOptionalRetrainingChoice(choice) &&
-                  !isCharacterDetailChoice(choice) &&
-                  !isBuildPresetChoice(choice),
-              );
-              const orderedTimelineChoices = groupChoicesByLegacyWorkflow(
-                timelineChoices,
-              ).flatMap(({ choices: sectionChoices }) => sectionChoices);
-              const unresolved =
-                frame.level > build.effectiveLevel
-                  ? 0
-                  : timelineChoices.filter(isUnresolvedChoice).length +
-                    (frame.level === 1 && abilityScoresIncomplete ? 1 : 0);
-              const warnings =
-                timelineChoices.filter((choice) =>
-                  selectedChoiceHasWarning(choice, planningEvaluation!),
-                ).length +
-                (frame.level === 1 && abilityScoresHouseRuled ? 1 : 0);
-              const status =
-                frame.level > build.effectiveLevel
-                  ? "planned"
-                  : unresolved > 0
-                    ? "incomplete"
-                    : warnings > 0
-                      ? "warning"
-                      : "complete";
-              const statusLabel =
-                status === "planned"
-                  ? "planned"
-                  : status === "incomplete"
-                    ? `${unresolved} unresolved`
-                    : status === "warning"
-                      ? `${warnings} warnings`
-                      : "complete";
+          <ol className="level-tier-list">
+            {CHARACTER_TIERS.map((tier) => {
+              const expanded = expandedTiers.has(tier.id);
               return (
-                <li key={frame.level}>
+                <li className="level-tier" key={tier.id}>
                   <button
-                    aria-current={
-                      frame.level === selectedLevel ? "step" : undefined
-                    }
-                    aria-label={`Level ${frame.level}, ${statusLabel}`}
-                    className={`level-rail-button level-rail-${status}`}
+                    aria-expanded={expanded}
+                    className="level-tier-toggle"
                     type="button"
-                    onClick={() => {
-                      setSelectedLevel(frame.level);
-                      setSelectedChoiceId(
-                        orderedTimelineChoices.find(isUnresolvedChoice)?.id ??
-                          orderedTimelineChoices[0]?.id,
-                      );
-                      setTimelineOpen(false);
-                    }}
+                    onClick={() =>
+                      setExpandedTiers((current) => {
+                        const next = new Set(current);
+                        if (next.has(tier.id)) next.delete(tier.id);
+                        else next.add(tier.id);
+                        return next;
+                      })
+                    }
                   >
-                    <span>{frame.level}</span>
-                    <span aria-hidden="true" className="level-rail-status" />
+                    <Icon name="chevron" />
+                    <span>{tier.label}</span>
                   </button>
+                  {expanded ? (
+                    <ol>
+                      {Array.from(
+                        { length: tier.lastLevel - tier.firstLevel + 1 },
+                        (_, index) => tier.firstLevel + index,
+                      ).map((level) => {
+                        const choices = choicesAtLevel(
+                          level,
+                          planningEvaluation,
+                        );
+                        const timelineChoices = choices.filter(
+                          (choice) =>
+                            !isOptionalRetrainingChoice(choice) &&
+                            !isCharacterDetailChoice(choice) &&
+                            !isBuildPresetChoice(choice),
+                        );
+                        const unresolved =
+                          level > build.effectiveLevel
+                            ? 0
+                            : timelineChoices.filter(isUnresolvedChoice)
+                                .length +
+                              (level === 1 && abilityScoresIncomplete ? 1 : 0);
+                        const warnings =
+                          timelineChoices.filter((choice) =>
+                            selectedChoiceHasWarning(
+                              choice,
+                              planningEvaluation!,
+                            ),
+                          ).length +
+                          (level === 1 && abilityScoresHouseRuled ? 1 : 0);
+                        const status =
+                          level > build.levels.length
+                            ? "future"
+                            : level > build.effectiveLevel
+                              ? "planned"
+                              : unresolved > 0
+                                ? "incomplete"
+                                : warnings > 0
+                                  ? "warning"
+                                  : "complete";
+                        const statusLabel =
+                          status === "future"
+                            ? "not planned"
+                            : status === "planned"
+                              ? "planned"
+                              : status === "incomplete"
+                                ? `${unresolved} unresolved`
+                                : status === "warning"
+                                  ? `${warnings} warnings`
+                                  : "complete";
+                        return (
+                          <li key={level}>
+                            <button
+                              aria-current={
+                                level === selectedLevel ? "step" : undefined
+                              }
+                              aria-label={`Level ${level}, ${statusLabel}`}
+                              className={`level-rail-button level-rail-${status}`}
+                              disabled={entities.length === 0}
+                              type="button"
+                              onClick={() => selectLevel(level)}
+                            >
+                              <span>{level}</span>
+                              <span
+                                aria-hidden="true"
+                                className="level-rail-status"
+                              />
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  ) : null}
                 </li>
               );
             })}
@@ -4106,49 +4162,10 @@ export function CharacterEditorPage({
                 <div>
                   <p className="eyebrow">Level plan</p>
                   <h3 id="timeline-heading">
-                    Choices through level {visibleHorizon}
+                    Choices through level {build.levels.length}
                   </h3>
                 </div>
                 <div className="timeline-heading-actions">
-                  <label>
-                    Show plan through
-                    <select
-                      disabled={entities.length === 0}
-                      value={visibleHorizon}
-                      onChange={(event) => {
-                        const target = Number(event.currentTarget.value);
-                        setVisibleHorizon(target);
-                        if (selectedLevel > target) setSelectedLevel(target);
-                        try {
-                          const command = planningHorizonCommand(
-                            build,
-                            target,
-                            entities,
-                            (level) =>
-                              `web:level:${level}:${crypto.randomUUID()}`,
-                          );
-                          if (command !== undefined) dispatch(command);
-                        } catch (reason: unknown) {
-                          setSaveState({
-                            phase: "failed",
-                            message:
-                              reason instanceof Error
-                                ? reason.message
-                                : String(reason),
-                          });
-                        }
-                      }}
-                    >
-                      {Array.from(
-                        { length: 31 - build.effectiveLevel },
-                        (_, index) => index + build.effectiveLevel,
-                      ).map((level) => (
-                        <option key={level} value={level}>
-                          {level}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
                   <button
                     aria-label="Close level plan"
                     className="timeline-close"
@@ -4166,12 +4183,11 @@ export function CharacterEditorPage({
                 </div>
               </div>
               <p className="field-help timeline-help">
-                Lowering this view hides future levels for this session; it
-                never deletes saved choices. Current calculations stay at level{" "}
-                {build.effectiveLevel}.
+                Selecting a later level in the level rail extends the plan.
+                Current calculations stay at level {build.effectiveLevel}.
               </p>
               <ol className="timeline-levels">
-                {build.levels.slice(0, visibleHorizon).map((frame) => {
+                {build.levels.map((frame) => {
                   const choices = choicesAtLevel(
                     frame.level,
                     planningEvaluation,

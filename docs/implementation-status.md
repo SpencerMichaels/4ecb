@@ -159,8 +159,11 @@ candidate.
 ## M5.5 first builder-interface draft
 
 - The working rules-backed editor now uses the approved hybrid structure: a
-  compact character overview, ordered per-level timeline, and a selected-level
-  workspace whose mechanical categories are horizontal tabs. Only the active
+  compact portrait-and-identity header, tiered 1–30 level rail, and a
+  selected-level workspace whose mechanical categories are horizontal tabs.
+  Race, class, current level, and XP appear beside the portrait; unresolved and
+  warning totals appear beside local save state. The redundant overview panel,
+  role/plan facts, and routine successful-evaluation prose are removed. Only the active
   Class, Race, Background, Ability Scores, Skills, Powers, Spellbook, Feats, or
   optional Retraining category is mounted, and each visited level remembers its
   active category. Unresolved decisions are prominent, completed selections
@@ -174,6 +177,20 @@ candidate.
   detail panes. On narrow layouts it collapses to the Plan trigger. Option
   detail cards and the expanded timeline use natural content height and browser
   scrolling; only large candidate tables retain bounded internal scrolling.
+- The compact rail now exposes all 30 levels under collapsible Heroic, Paragon,
+  and Epic headings. A loaded character starts with only its current tier open;
+  other tiers can be expanded independently. Selecting a not-yet-built level
+  creates every intervening frame, opens that level, and leaves the effective
+  character level unchanged. The separate plan-horizon selector is removed;
+  current level remains an explicit compact control in the identity header.
+  Live Silaqui verification selected unplanned level 9, observed the saved
+  horizon and current-level options extend through 9 while effective level
+  remained 8, and restored the test record through undo. Reopening the builder
+  restored Heroic-open/Paragon-and-Epic-closed defaults; the 1280px layout used
+  an 88px rail, left 1113px for choices, and had no header overlap or horizontal
+  overflow. The 2026-09-14 public check passed all 270 tests, typechecks,
+  production/PWA build, Chromium/Firefox print checks, deterministic content
+  checks, and query benchmark.
 - The level-category tabs use native tab semantics, stable status color and
   icons, and Left/Right/Home/End keyboard navigation without typography or
   layout shifts. Timeline links activate the category that owns their target;

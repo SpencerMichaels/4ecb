@@ -556,6 +556,22 @@ tables may consume the remaining desktop viewport and scroll internally. This
 keeps the main choice surface visually focused without splitting progressive or
 repeated rules choices that deliberately belong to one category.
 
+### D040 — Planning is level navigation, not a separate overview setting
+
+The builder header is the single compact character summary: portrait and name
+are followed by race, class, editable current level, and XP, while unresolved
+and warning totals sit beside local save state. The former overview panel,
+Role/Plan cells, and routine “Rules up to date” message are removed. Actual
+evaluation failures remain visible.
+
+The narrow level rail always exposes levels 1–30 under collapsible Heroic,
+Paragon, and Epic tier headings. Only the effective character's tier is expanded
+when a record first loads; players may open other tiers independently. Selecting
+a level above the saved build creates all intervening frames and navigates there
+without changing `effectiveLevel`. This supersedes D035's horizon-selection and
+narrow-layout-collapse details: there is no separate plan-horizon input, and the
+tiered rail remains directly operable on narrow layouts.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed
