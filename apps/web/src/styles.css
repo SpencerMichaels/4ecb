@@ -2181,11 +2181,85 @@ textarea {
   min-width: 0;
 }
 
+.level-choice-tabs-layout {
+  min-width: 0;
+}
+
+.level-choice-tabs {
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  display: flex;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.level-choice-tabs button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  border-right: 1px solid var(--border);
+  border-top: 3px solid transparent;
+  color: var(--muted);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.82rem;
+  font-weight: 800;
+  gap: 0.4rem;
+  min-height: 2.9rem;
+  padding: 0.55rem 0.8rem;
+  white-space: nowrap;
+}
+
+.level-choice-tabs button[aria-selected="true"] {
+  background: var(--surface);
+  border-top-color: var(--accent);
+  color: var(--text);
+}
+
+.level-choice-tabs button.choice-tab-incomplete:not([aria-selected="true"]) {
+  background: color-mix(in srgb, var(--warning-soft), var(--warning) 12%);
+}
+
+.level-choice-tabs button.choice-tab-incomplete > .icon:first-child,
+.choice-tab-status {
+  color: var(--warning);
+}
+
+.level-choice-tabs button.choice-tab-warning > .icon:last-child {
+  color: var(--danger);
+}
+
+.choice-tab-status {
+  background: currentColor;
+  border-radius: 50%;
+  height: 0.45rem;
+  width: 0.45rem;
+}
+
+.level-choice-tab-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+
+.level-choice-tab-panel > .retraining-section {
+  border: 0;
+}
+
 .level-choice-workspace {
   align-items: start;
   display: grid;
   gap: 1rem;
   grid-template-columns: minmax(30rem, 1.35fr) minmax(22rem, 1fr);
+}
+
+@media (min-width: 60.01rem) and (min-height: 42rem) {
+  .level-choice-tab-panel .selection-table-scroll {
+    height: max(12rem, calc(100dvh - 34rem));
+    max-height: none;
+  }
 }
 
 .shared-choice-detail {

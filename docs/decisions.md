@@ -540,6 +540,22 @@ backup/restore complete without a second image lifecycle or orphan cleanup.
 Portraits are application metadata and are deliberately omitted from both
 preserved-original and regenerated legacy exports.
 
+### D039 — A level workspace exposes one mechanical category at a time
+
+The selected level remains the builder's primary unit, but its Class, Race,
+Background, Ability Scores, Skills, Powers, Spellbook, Feats, and optional
+Retraining categories are presented as one horizontal tab list. Only the active
+category is mounted beside the shared detail pane. Expanded-timeline links open
+the owning category, and the browser session remembers the active category per
+visited level; this is transient navigation state, not character data.
+
+Tabs use the standard tab/list/panel accessibility relationship and support
+Left/Right/Home/End movement. Incomplete and warning cues do not alter text
+metrics. Ordinary form content retains natural height, while large candidate
+tables may consume the remaining desktop viewport and scroll internally. This
+keeps the main choice surface visually focused without splitting progressive or
+repeated rules choices that deliberately belong to one category.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

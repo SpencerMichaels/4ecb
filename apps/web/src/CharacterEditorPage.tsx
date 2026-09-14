@@ -63,6 +63,7 @@ import {
   selectedDefinitionId,
   selectedChoiceHasWarning,
   unresolveEvaluatedChoiceCommand,
+  type LegacyChoiceSection,
 } from "./builder-ui";
 import { Icon, type IconName } from "./Icon";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
@@ -78,6 +79,7 @@ import {
 
 const characters = new CharacterRepository();
 const ShowAllChoicesContext = createContext(false);
+type LevelChoiceTab = LegacyChoiceSection | "Retraining";
 const CANDIDATE_FAVORITES_KEY = "4ecb:candidate-favorites:v1";
 let candidateFavoritesSnapshot: ReadonlySet<string> | undefined;
 const candidateFavoriteListeners = new Set<() => void>();
@@ -1317,6 +1319,10 @@ function ChoiceEditor({
 
 function choiceSectionId(choiceId: string): string {
   return `choice-section-${choiceId.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
+}
+
+function levelChoiceTabSlug(section: LevelChoiceTab): string {
+  return section.toLocaleLowerCase().replaceAll(/[^a-z0-9]+/g, "-");
 }
 
 type FeatPresentationGroup = ReturnType<
@@ -3229,6 +3235,9 @@ export function CharacterEditorPage({
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [selectedChoiceId, setSelectedChoiceId] = useState<string>();
+  const [selectedSectionByLevel, setSelectedSectionByLevel] = useState<
+    Readonly<Partial<Record<number, LevelChoiceTab>>>
+  >({});
   const [workspaceTab, setWorkspaceTab] = useState<"build" | "details">(
     "build",
   );
@@ -3362,6 +3371,10 @@ export function CharacterEditorPage({
   }, [contentDigest, packId]);
 
   const build = transaction.current?.current;
+  const abilityPointBuy = assessAbilityPointBuy(build?.baseAbilities ?? {});
+  const abilityScoresIncomplete = !abilityPointBuy.complete;
+  const abilityScoresHouseRuled =
+    abilityPointBuy.complete && !abilityPointBuy.legal;
   const currentEvaluation = evaluationAtHorizon(
     currentEvaluationResult,
     build?.effectiveLevel,
@@ -3547,6 +3560,34 @@ export function CharacterEditorPage({
               : abilitySectionIndex,
           ),
         ];
+  const levelSectionTabs: readonly LevelChoiceTab[] = [
+    ...displayedChoiceSections.map(({ section }) => section),
+    ...(retrainingChoices.length === 0 ? [] : (["Retraining"] as const)),
+  ];
+  const selectedChoiceSection = primaryLevelChoices.find(
+    (choice) => choice.id === selectedChoiceId,
+  );
+  const preferredLevelSection =
+    displayedChoiceSections.find(
+      ({ section, choices }) =>
+        (section === "Ability Scores" &&
+          selectedLevel === 1 &&
+          abilityScoresIncomplete) ||
+        choices.some(isUnresolvedChoice),
+    )?.section ?? levelSectionTabs[0];
+  const requestedLevelSection =
+    selectedSectionByLevel[selectedLevel] ??
+    (selectedChoiceSection === undefined
+      ? undefined
+      : legacyChoiceSection(selectedChoiceSection));
+  const activeLevelSection =
+    requestedLevelSection !== undefined &&
+    levelSectionTabs.includes(requestedLevelSection)
+      ? requestedLevelSection
+      : preferredLevelSection;
+  const activeChoiceSection = displayedChoiceSections.find(
+    ({ section }) => section === activeLevelSection,
+  );
   useEffect(() => {
     if (primaryLevelChoices.some((choice) => choice.id === selectedChoiceId))
       return;
@@ -3628,10 +3669,6 @@ export function CharacterEditorPage({
   const role = selectedClass?.specifics.find(
     (specific) => specific.name.toLocaleLowerCase() === "role",
   )?.value;
-  const abilityPointBuy = assessAbilityPointBuy(build.baseAbilities);
-  const abilityScoresIncomplete = !abilityPointBuy.complete;
-  const abilityScoresHouseRuled =
-    abilityPointBuy.complete && !abilityPointBuy.legal;
   const unresolvedCount =
     selectedLevel > build.effectiveLevel
       ? 0
@@ -3674,6 +3711,22 @@ export function CharacterEditorPage({
       selectedChoiceHasWarning(choice, planningEvaluation),
     ) ||
       (selectedLevel === 1 && abilityScoresHouseRuled));
+
+  const activateLevelSection = (section: LevelChoiceTab): void => {
+    setSelectedSectionByLevel((current) => ({
+      ...current,
+      [selectedLevel]: section,
+    }));
+    setInspectedOption(undefined);
+    const sectionChoices =
+      section === "Retraining"
+        ? retrainingChoices
+        : (displayedChoiceSections.find((group) => group.section === section)
+            ?.choices ?? []);
+    setSelectedChoiceId(
+      sectionChoices.find(isUnresolvedChoice)?.id ?? sectionChoices[0]?.id,
+    );
+  };
 
   const renderPrimaryChoice = (
     choice: EvaluatedChoice,
@@ -4267,12 +4320,11 @@ export function CharacterEditorPage({
                                 type="button"
                                 onClick={() => {
                                   setSelectedLevel(1);
+                                  setSelectedSectionByLevel((current) => ({
+                                    ...current,
+                                    1: "Ability Scores",
+                                  }));
                                   setTimelineOpen(false);
-                                  requestAnimationFrame(() => {
-                                    document
-                                      .getElementById("base-abilities")
-                                      ?.scrollIntoView({ block: "start" });
-                                  });
                                 }}
                               >
                                 <Icon name="ability" />
@@ -4341,16 +4393,13 @@ export function CharacterEditorPage({
                                   onClick={() => {
                                     setSelectedLevel(frame.level);
                                     setSelectedChoiceId(targetChoice.id);
+                                    setSelectedSectionByLevel((current) => ({
+                                      ...current,
+                                      [frame.level]: legacyChoiceSection(
+                                        summary.choices[0]!,
+                                      ),
+                                    }));
                                     setTimelineOpen(false);
-                                    requestAnimationFrame(() => {
-                                      const section = document.getElementById(
-                                        choiceSectionId(summary.choices[0]!.id),
-                                      );
-                                      section?.scrollIntoView({
-                                        block: "start",
-                                      });
-                                      section?.focus({ preventScroll: true });
-                                    });
                                   }}
                                 >
                                   <span>
@@ -4423,69 +4472,167 @@ export function CharacterEditorPage({
                 </p>
               </div>
             ) : (
-              <div className="level-choice-workspace">
-                <InspectCandidateContext.Provider value={setInspectedOption}>
-                  <div className="level-choice-page">
-                    {displayedChoiceSections.map(({ section, choices }) => (
-                      <section
-                        className={`legacy-choice-group${selectedLevel <= build.effectiveLevel && (choices.some(isUnresolvedChoice) || (section === "Ability Scores" && selectedLevel === 1 && abilityScoresIncomplete)) ? " choice-group-incomplete" : ""}`}
+              <div className="level-choice-tabs-layout">
+                <div
+                  aria-label={`Level ${selectedLevel} choice sections`}
+                  className="level-choice-tabs"
+                  role="tablist"
+                >
+                  {levelSectionTabs.map((section, index) => {
+                    const sectionChoices =
+                      section === "Retraining"
+                        ? retrainingChoices
+                        : (displayedChoiceSections.find(
+                            (group) => group.section === section,
+                          )?.choices ?? []);
+                    const incomplete =
+                      selectedLevel <= build.effectiveLevel &&
+                      ((section === "Ability Scores" &&
+                        selectedLevel === 1 &&
+                        abilityScoresIncomplete) ||
+                        sectionChoices.some(isUnresolvedChoice));
+                    const warning =
+                      (section === "Ability Scores" &&
+                        selectedLevel === 1 &&
+                        abilityScoresHouseRuled) ||
+                      sectionChoices.some((choice) =>
+                        selectedChoiceHasWarning(choice, planningEvaluation),
+                      );
+                    const tabId = `level-${selectedLevel}-${levelChoiceTabSlug(section)}-tab`;
+                    const panelId = `level-${selectedLevel}-${levelChoiceTabSlug(section)}-panel`;
+                    return (
+                      <button
+                        aria-controls={panelId}
+                        aria-selected={section === activeLevelSection}
+                        className={`${incomplete ? "choice-tab-incomplete" : ""}${warning ? " choice-tab-warning" : ""}`}
+                        id={tabId}
                         key={section}
+                        role="tab"
+                        tabIndex={section === activeLevelSection ? 0 : -1}
+                        type="button"
+                        onClick={() => activateLevelSection(section)}
+                        onKeyDown={(event) => {
+                          const direction =
+                            event.key === "ArrowRight"
+                              ? 1
+                              : event.key === "ArrowLeft"
+                                ? -1
+                                : 0;
+                          const targetIndex =
+                            event.key === "Home"
+                              ? 0
+                              : event.key === "End"
+                                ? levelSectionTabs.length - 1
+                                : direction === 0
+                                  ? -1
+                                  : (index +
+                                      direction +
+                                      levelSectionTabs.length) %
+                                    levelSectionTabs.length;
+                          if (targetIndex < 0) return;
+                          event.preventDefault();
+                          const target = levelSectionTabs[targetIndex]!;
+                          activateLevelSection(target);
+                          requestAnimationFrame(() =>
+                            document
+                              .getElementById(
+                                `level-${selectedLevel}-${levelChoiceTabSlug(target)}-tab`,
+                              )
+                              ?.focus(),
+                          );
+                        }}
                       >
-                        <header>
-                          <div className="legacy-choice-title">
-                            <Icon name={choiceSectionIcon(section)} />
-                            <h4>{section}</h4>
+                        <Icon
+                          name={
+                            section === "Retraining"
+                              ? "undo"
+                              : choiceSectionIcon(section)
+                          }
+                        />
+                        <span>{section}</span>
+                        {warning ? (
+                          <>
+                            <Icon name="warning" />
+                            <span className="visually-hidden">Warning</span>
+                          </>
+                        ) : incomplete ? (
+                          <>
+                            <span
+                              aria-hidden="true"
+                              className="choice-tab-status"
+                            />
+                            <span className="visually-hidden">Incomplete</span>
+                          </>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="level-choice-workspace">
+                  <InspectCandidateContext.Provider value={setInspectedOption}>
+                    <div className="level-choice-page">
+                      {activeLevelSection === "Retraining" ? (
+                        <section
+                          aria-labelledby={`level-${selectedLevel}-retraining-tab`}
+                          className="level-choice-tab-panel"
+                          id={`level-${selectedLevel}-retraining-panel`}
+                          role="tabpanel"
+                        >
+                          <RetrainingControls
+                            choices={retrainingChoices}
+                            evaluation={planningEvaluation}
+                            build={build}
+                            entities={entities}
+                            byId={byId}
+                            rollbackRevision={rollbackRevision}
+                            onRequestDetails={setExpandedReplacementChoiceId}
+                            onDispatch={dispatch}
+                          />
+                        </section>
+                      ) : activeChoiceSection === undefined ? null : (
+                        <section
+                          aria-labelledby={`level-${selectedLevel}-${levelChoiceTabSlug(activeChoiceSection.section)}-tab`}
+                          className="level-choice-tab-panel"
+                          id={`level-${selectedLevel}-${levelChoiceTabSlug(activeChoiceSection.section)}-panel`}
+                          role="tabpanel"
+                        >
+                          <div className="legacy-choice-list">
+                            {activeChoiceSection.section === "Class" &&
+                            selectedLevel === 1 ? (
+                              <BuildPresetPanel
+                                choices={buildPresetChoices}
+                                levelChoices={mechanicalLevelChoices}
+                                evaluation={planningEvaluation}
+                                build={build}
+                                entities={entities}
+                                byId={byId}
+                                onDispatch={dispatch}
+                              />
+                            ) : null}
+                            {activeChoiceSection.section === "Ability Scores" &&
+                            selectedLevel === 1 ? (
+                              <BaseAbilityScoreEditor
+                                build={build}
+                                onDispatch={dispatch}
+                              />
+                            ) : null}
+                            {activeChoiceSection.choices.map((choice) =>
+                              renderPrimaryChoice(
+                                choice,
+                                activeChoiceSection.choices.length === 1,
+                              ),
+                            )}
                           </div>
-                          <span className="choice-count">
-                            {section === "Ability Scores" && selectedLevel === 1
-                              ? "6 scores"
-                              : `${choices.length} ${choices.length === 1 ? "choice" : "choices"}`}
-                          </span>
-                        </header>
-                        <div className="legacy-choice-list">
-                          {section === "Class" && selectedLevel === 1 ? (
-                            <BuildPresetPanel
-                              choices={buildPresetChoices}
-                              levelChoices={mechanicalLevelChoices}
-                              evaluation={planningEvaluation}
-                              build={build}
-                              entities={entities}
-                              byId={byId}
-                              onDispatch={dispatch}
-                            />
-                          ) : null}
-                          {section === "Ability Scores" &&
-                          selectedLevel === 1 ? (
-                            <BaseAbilityScoreEditor
-                              build={build}
-                              onDispatch={dispatch}
-                            />
-                          ) : null}
-                          {choices.map((choice) =>
-                            renderPrimaryChoice(choice, choices.length === 1),
-                          )}
-                        </div>
-                      </section>
-                    ))}
-                    {retrainingChoices.length === 0 ? null : (
-                      <RetrainingControls
-                        choices={retrainingChoices}
-                        evaluation={planningEvaluation}
-                        build={build}
-                        entities={entities}
-                        byId={byId}
-                        rollbackRevision={rollbackRevision}
-                        onRequestDetails={setExpandedReplacementChoiceId}
-                        onDispatch={dispatch}
+                        </section>
+                      )}
+                    </div>
+                    <div className="shared-choice-detail">
+                      <CandidateDetail
+                        candidate={inspectedOption?.candidate}
+                        entity={inspectedOption?.entity}
                       />
-                    )}
-                  </div>
-                </InspectCandidateContext.Provider>
-                <div className="shared-choice-detail">
-                  <CandidateDetail
-                    candidate={inspectedOption?.candidate}
-                    entity={inspectedOption?.entity}
-                  />
+                    </div>
+                  </InspectCandidateContext.Provider>
                 </div>
               </div>
             )}

@@ -160,10 +160,13 @@ candidate.
 
 - The working rules-backed editor now uses the approved hybrid structure: a
   compact character overview, ordered per-level timeline, and a selected-level
-  workspace containing every choice section. Unresolved decisions are
-  prominent, completed selections stay visible in compact form, and a chosen
-  target creates every intervening level in one autosaved transaction without
-  advancing the current effective level.
+  workspace whose mechanical categories are horizontal tabs. Only the active
+  Class, Race, Background, Ability Scores, Skills, Powers, Spellbook, Feats, or
+  optional Retraining category is mounted, and each visited level remembers its
+  active category. Unresolved decisions are prominent, completed selections
+  stay visible in compact form, and a chosen target creates every intervening
+  level in one autosaved transaction without advancing the current effective
+  level.
 - The timeline now expands from a 4.5-rem level rail instead of permanently
   occupying roughly one-third of the workspace. The rail directly navigates
   levels and exposes stable status markers; its Plan action opens the complete
@@ -171,6 +174,19 @@ candidate.
   detail panes. On narrow layouts it collapses to the Plan trigger. Option
   detail cards and the expanded timeline use natural content height and browser
   scrolling; only large candidate tables retain bounded internal scrolling.
+- The level-category tabs use native tab semantics, stable status color and
+  icons, and Left/Right/Home/End keyboard navigation without typography or
+  layout shifts. Timeline links activate the category that owns their target;
+  selecting level-1 ability work likewise opens Ability Scores directly.
+  Candidate tables retain the sole intentional inner scrollbar and grow with
+  taller desktop viewports, while ordinary forms keep their natural height.
+  Live full-profile verification on 2026-09-14 confirmed the complete seven-tab
+  level-1 order, one mounted tab panel and one keyboard tab stop, per-level tab
+  memory, ArrowLeft focus/content movement, no page-level horizontal overflow,
+  visible ordinary-panel overflow, and table-only automatic overflow. The same
+  checkpoint passed all 270 public tests, workspace typechecks, production/PWA
+  build, Chromium/Firefox print checks, deterministic content checks, and query
+  benchmark.
 - Verification on 2026-09-13 passed the complete public check (263 tests,
   workspace typechecks, production/PWA build, print checks, deterministic
   content checks, and query benchmark). Live full-corpus verification at 1280px

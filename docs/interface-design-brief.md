@@ -38,10 +38,11 @@ application's protected visual assets.
   pane. The complete choice timeline opens explicitly as an overlay rather than
   permanently taking width from the primary work area.
 - Treat a level, rather than an individual slot, as the main builder workspace.
-  Selecting a level shows one scrollable page with a subsection for every
-  choice at that level. The level rail remains a compact status summary and may
-  navigate directly between levels; the expanded timeline may navigate to a
-  subsection without hiding the others.
+  Selecting a level shows its mechanical choice categories as a horizontal tab
+  list and mounts only the active category in the main pane. The level rail
+  remains a compact status summary and may navigate directly between levels;
+  the expanded timeline may navigate directly to the category containing a
+  choice. Preserve the last active category separately for each visited level.
 - When a user selects a target level, create the complete level timeline
   immediately and present its unresolved decisions. Include every level through
   the target: unresolved items are prominent, completed levels remain visible in
@@ -91,11 +92,12 @@ application's protected visual assets.
   background. Every information-bearing selection surface keeps the focused or
   selected option's source, prerequisites, description, and mechanical fields
   in an adjacent detail pane.
-- Let choice pages and adjacent detail cards take their natural content height
-  and use ordinary document scrolling. Do not trap page content inside nested
-  fixed-height or maximum-height scrolling regions; bounded candidate tables
-  are the deliberate exception because their result sets can contain thousands
-  of rows.
+- Give the selected category and adjacent detail card the available main-pane
+  space without mounting every category into one tall document. Ordinary forms
+  retain their natural content height rather than acquiring nested scrollbars;
+  bounded candidate tables are the deliberate exception because their result
+  sets can contain thousands of rows, and may expand vertically with the
+  viewport before their rows scroll internally.
 - Organize feat and power tables into collapsible semantic type sections using
   authored subtype/owner metadata and the legacy prerequisite-derived fallback.
   Do not silently truncate matching candidates. Let players star candidates
