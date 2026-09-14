@@ -525,6 +525,21 @@ Starring never selects a rules choice; it is durable comparison metadata shared
 by feat and power tables and intended for reuse by later equipment tables. The
 Favorites toggle is temporary table state and composes with text search.
 
+### D038 — Character portraits are bounded, portable record metadata
+
+An optional portrait lives in `CharacterRecord` outside the legacy `.dnd4e`
+envelope. Uploads are decoded and normalized in the browser to a maximum
+1600-pixel source edge. The record retains that normalized source, its dimensions,
+and normalized square-crop coordinates so the user can reframe it later; it also
+caches a 512-pixel square rendering for inexpensive library, builder, and print
+display. Every display clips the square rendering to a circle.
+
+The image fields accept only bounded PNG, JPEG, or WebP data URLs during record
+validation. Keeping them in the record makes duplication and checksummed JSON
+backup/restore complete without a second image lifecycle or orphan cleanup.
+Portraits are application metadata and are deliberately omitted from both
+preserved-original and regenerated legacy exports.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

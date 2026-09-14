@@ -66,6 +66,7 @@ import {
 } from "./builder-ui";
 import { Icon, type IconName } from "./Icon";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
+import { PortraitEditor } from "./PortraitEditor";
 import {
   entityTypeIcon,
   entityVisualTone,
@@ -3796,10 +3797,22 @@ export function CharacterEditorPage({
       id="main-content"
     >
       <header className="builder-heading">
-        <div>
-          <p className="eyebrow">Build workspace</p>
-          <h2>{character.title}</h2>
-          <p className="evaluation-status">{evaluationStatus}</p>
+        <div className="builder-character-heading">
+          <PortraitEditor
+            compact
+            name={character.title}
+            portrait={character.portrait}
+            onSave={async (portrait) => {
+              setCharacter(
+                await characters.updateMetadata(characterId, { portrait }),
+              );
+            }}
+          />
+          <div>
+            <p className="eyebrow">Build workspace</p>
+            <h2>{character.title}</h2>
+            <p className="evaluation-status">{evaluationStatus}</p>
+          </div>
         </div>
         <div className="builder-actions">
           <span

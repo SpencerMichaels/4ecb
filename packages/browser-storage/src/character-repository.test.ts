@@ -49,6 +49,14 @@ function character(id = "character-one") {
   );
 }
 
+const portrait = {
+  sourceDataUrl: "data:image/webp;base64,c291cmNl",
+  sourceWidth: 800,
+  sourceHeight: 1200,
+  crop: { x: 0.5, y: 0.4, size: 0.5 },
+  renderedDataUrl: "data:image/webp;base64,cmVuZGVyZWQ=",
+};
+
 const emptyContentSource: ParsedContentSource = {
   gameSystem: "D&D4E",
   sourceKey: "synthetic-empty",
@@ -109,10 +117,25 @@ describe("CharacterRepository", () => {
         includePowerCards: false,
         includeItemCards: false,
       },
+      portrait,
     });
 
     const afterRestart = new CharacterRepository(name);
     await expect(afterRestart.get("restartable")).resolves.toEqual(saved);
+  });
+
+  it("can remove a portrait without disturbing other metadata", async () => {
+    const storage = repository();
+    await storage.put(character("portrait-removal"));
+    const withPortrait = await storage.updateMetadata("portrait-removal", {
+      portrait,
+    });
+    expect(withPortrait.portrait).toBeDefined();
+    const removed = await storage.updateMetadata("portrait-removal", {
+      portrait: null,
+    });
+    expect(removed.portrait).toBeUndefined();
+    expect(removed.title).toBe("Ada");
   });
 
   it("upgrades an application-v2 database without losing records or settings", async () => {
@@ -249,7 +272,7 @@ describe("CharacterRepository", () => {
 
   it("round-trips complete records through native backup", async () => {
     const source = repository();
-    await source.put(character());
+    await source.put({ ...character(), portrait });
     const backup = await source.exportBackup();
     const destination = repository();
     await expect(destination.inspectBackup(backup)).resolves.toMatchObject({
@@ -259,7 +282,10 @@ describe("CharacterRepository", () => {
       conflictingIds: [],
     });
     expect(await destination.restoreBackup(backup)).toBe(1);
-    expect(await destination.get("character-one")).toEqual(character());
+    expect(await destination.get("character-one")).toEqual({
+      ...character(),
+      portrait,
+    });
   });
 
   it("rejects a modified checksummed backup before writing", async () => {

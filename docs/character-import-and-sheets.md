@@ -26,6 +26,7 @@ id, title, notes
 createdAt, updatedAt, deletedAt?
 profileBinding? { packId, contentDigest? }
 sheetSettings { paper, monochrome, blankHitPoints, powerCards, itemCards }
+portrait? { sourceDataUrl, sourceWidth, sourceHeight, crop { x, y, size }, renderedDataUrl }
 legacy { format, origin?, version?, gameSystem?, legality?, sourceXml }
 snapshot { details, abilities, stats, selections, powers, loot, textStrings }
 build { effectiveLevel, levels { root, userEdit? }, grabbag, inventory, alternates,
@@ -37,8 +38,13 @@ selection history, occurrence IDs, acquisition levels, house-rule markers,
 replacement links, and a typed recursive representation of any native
 `UserEdit` provider and rule statements. The snapshot remains an imported legacy cache used for
 fallback display and parity checks. Existing schema-1 records migrate lazily
-when read. Library title/notes, profile binding, trash state, and sheet
-preferences are native metadata and do not modify the compatibility file. A
+when read. Library title/notes, profile binding, trash state, sheet preferences,
+and the optional portrait are native metadata and do not modify the compatibility
+file. Portrait uploads are normalized to a maximum 1600-pixel source edge before
+storage; the retained source and normalized crop allow later reframing, while a
+512-pixel square derivative keeps library and sheet rendering cheap. Both are
+stored as bounded image data URLs so ordinary character duplication and JSON
+backup/restore remain self-contained. A
 backup is a versioned JSON object containing every active and trashed record,
 including the complete envelope, build, profile references, and settings.
 

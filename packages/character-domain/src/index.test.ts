@@ -50,6 +50,14 @@ const build: CharacterBuild = {
   textStrings: {},
 };
 
+const portrait = {
+  sourceDataUrl: "data:image/webp;base64,c291cmNl",
+  sourceWidth: 800,
+  sourceHeight: 1200,
+  crop: { x: 0.5, y: 0.4, size: 0.5 },
+  renderedDataUrl: "data:image/webp;base64,cmVuZGVyZWQ=",
+};
+
 describe("character records", () => {
   it("creates versioned records and independent duplicates", () => {
     const source = newCharacterRecord(
@@ -70,6 +78,38 @@ describe("character records", () => {
       schemaVersion: 2,
     });
     expect(isCharacterRecord(source)).toBe(true);
+  });
+
+  it("validates and duplicates browser-local portrait metadata", () => {
+    const source = {
+      ...newCharacterRecord(
+        { format: "dnd4e", sourceXml: "<D20Character/>" },
+        snapshot,
+        build,
+        { id: "portrait", now: "2026-01-01T00:00:00.000Z" },
+      ),
+      portrait,
+    };
+    expect(isCharacterRecord(source)).toBe(true);
+    expect(duplicateCharacterRecord(source, "copy").portrait).toEqual(portrait);
+    expect(
+      isCharacterRecord({
+        ...source,
+        portrait: { ...portrait, crop: { ...portrait.crop, size: 2 } },
+      }),
+    ).toBe(false);
+    expect(
+      isCharacterRecord({
+        ...source,
+        portrait: { ...portrait, sourceDataUrl: "javascript:alert(1)" },
+      }),
+    ).toBe(false);
+    expect(
+      isCharacterRecord({
+        ...source,
+        portrait: { ...portrait, crop: { ...portrait.crop, x: 0.1 } },
+      }),
+    ).toBe(false);
   });
 
   it("creates an exact-profile native level-1 record without legacy cache claims", () => {

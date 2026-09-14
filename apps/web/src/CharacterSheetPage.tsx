@@ -16,6 +16,7 @@ import {
 } from "@4ecb/sheet-model";
 
 import { contentProfileMatchesRevision } from "./profile-migration";
+import { PortraitEditor, PortraitImage } from "./PortraitEditor";
 
 const characters = new CharacterRepository();
 
@@ -234,6 +235,16 @@ export function CharacterSheetPage({
     >
       <div className="sheet-toolbar">
         <a href="#/characters">← Character library</a>
+        <PortraitEditor
+          compact
+          name={character.title}
+          portrait={character.portrait}
+          onSave={async (portrait) => {
+            setCharacter(
+              await characters.updateMetadata(characterId, { portrait }),
+            );
+          }}
+        />
         <fieldset>
           <legend>Sheet options</legend>
           <label>
@@ -348,9 +359,18 @@ export function CharacterSheetPage({
       </aside>
       <article className="print-sheet summary-sheet">
         <header className="sheet-title">
-          <div>
-            <p className="eyebrow">Character sheet</p>
-            <h2>{character.snapshot.details.name || character.title}</h2>
+          <div className="sheet-title-identity">
+            {character.portrait === undefined ? null : (
+              <PortraitImage
+                className="sheet-portrait"
+                name={character.title}
+                portrait={character.portrait}
+              />
+            )}
+            <div>
+              <p className="eyebrow">Character sheet</p>
+              <h2>{character.snapshot.details.name || character.title}</h2>
+            </div>
           </div>
           <p>
             {model.identity

@@ -109,6 +109,22 @@ typechecks, the production/PWA build, both browser print suites, deterministic
 content-pack checks, and the query benchmark; a clean live reload reported no
 browser warnings or errors.
 
+Character portraits are now browser-local, portable character metadata. The
+shared editor accepts bounded PNG/JPEG/WebP/GIF uploads, normalizes the decoded
+source to a 1600-pixel maximum edge, and provides pointer/touch panning plus
+wheel and range-control zoom within a circular crop. It retains normalized crop
+coordinates for later adjustment and caches a 512-pixel rendering. Circular
+portraits appear on library cards, unobtrusively in the builder heading, and in
+the printable sheet header; the sheet toolbar can also reopen the editor.
+Portraits survive repository reconstruction, duplication, and checksummed JSON
+backup/restore while remaining outside legacy export. Focused validation covers
+record rejection, persistence/removal, and crop bounds. Live Chromium validation
+loaded a synthetic landscape PNG under the existing strict image CSP, panned and
+saved it, confirmed it survived reload and appeared on all three requested
+surfaces, and reported no console errors. The complete public check passes all
+270 tests, workspace typechecks, the production/PWA build, Chromium and Firefox
+print checks, deterministic content-pack checks, and the query benchmark.
+
 The M5.5 runtime pass moves immutable content-derived state out of route
 components and into a bounded application-scoped cache. Decoded packs,
 initialized rules workers, the most recent exact evaluation inputs, and built

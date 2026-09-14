@@ -95,6 +95,25 @@ export const DEFAULT_SHEET_SETTINGS: SheetSettings = {
   includeItemCards: true,
 };
 
+export interface CharacterPortraitCrop {
+  /** Horizontal center of the square crop, as a fraction of source width. */
+  readonly x: number;
+  /** Vertical center of the square crop, as a fraction of source height. */
+  readonly y: number;
+  /** Side length of the square crop, as a fraction of source width. */
+  readonly size: number;
+}
+
+export interface CharacterPortrait {
+  /** A browser-normalized source image retained so the crop can be adjusted. */
+  readonly sourceDataUrl: string;
+  readonly sourceWidth: number;
+  readonly sourceHeight: number;
+  readonly crop: CharacterPortraitCrop;
+  /** A small square rendering used by lists and printed sheets. */
+  readonly renderedDataUrl: string;
+}
+
 export interface CharacterRecord {
   readonly schemaVersion: typeof CHARACTER_SCHEMA_VERSION;
   readonly id: string;
@@ -108,6 +127,7 @@ export interface CharacterRecord {
   readonly snapshot: LegacyCharacterSnapshot;
   readonly build: CharacterBuild;
   readonly sheetSettings: SheetSettings;
+  readonly portrait?: CharacterPortrait;
 }
 
 export interface LegacyCharacterRecordV1 extends Omit<
@@ -413,6 +433,8 @@ function characterRecordBase(
   const legacy = object(record?.legacy);
   const profile = object(record?.profileBinding);
   const settings = object(record?.sheetSettings);
+  const portrait = object(record?.portrait);
+  const portraitCrop = object(portrait?.crop);
   if (
     record === undefined ||
     typeof record.id !== "string" ||
@@ -458,10 +480,78 @@ function characterRecordBase(
     typeof settings.monochrome !== "boolean" ||
     typeof settings.blankHitPoints !== "boolean" ||
     typeof settings.includePowerCards !== "boolean" ||
-    typeof settings.includeItemCards !== "boolean"
+    typeof settings.includeItemCards !== "boolean" ||
+    (record.portrait !== undefined &&
+      (portrait === undefined ||
+        !imageDataUrl(portrait.sourceDataUrl, 20 * 1024 * 1024) ||
+        !imageDataUrl(portrait.renderedDataUrl, 5 * 1024 * 1024) ||
+        !positiveInteger(portrait.sourceWidth, 4096) ||
+        !positiveInteger(portrait.sourceHeight, 4096) ||
+        portraitCrop === undefined ||
+        !normalizedNumber(portraitCrop.x) ||
+        !normalizedNumber(portraitCrop.y) ||
+        typeof portraitCrop.size !== "number" ||
+        !Number.isFinite(portraitCrop.size) ||
+        portraitCrop.size <= 0 ||
+        portraitCrop.size > 1 ||
+        !portraitCropFitsSource(
+          portraitCrop,
+          portrait.sourceWidth,
+          portrait.sourceHeight,
+        )))
   )
     return undefined;
   return record;
+}
+
+function imageDataUrl(value: unknown, maximumLength: number): boolean {
+  return (
+    typeof value === "string" &&
+    value.length <= maximumLength &&
+    /^data:image\/(?:png|jpeg|webp);base64,/i.test(value)
+  );
+}
+
+function positiveInteger(value: unknown, maximum: number): boolean {
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value > 0 &&
+    value <= maximum
+  );
+}
+
+function normalizedNumber(value: unknown): boolean {
+  return (
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    value >= 0 &&
+    value <= 1
+  );
+}
+
+function portraitCropFitsSource(
+  crop: Record<string, unknown>,
+  width: unknown,
+  height: unknown,
+): boolean {
+  if (
+    typeof crop.x !== "number" ||
+    typeof crop.y !== "number" ||
+    typeof crop.size !== "number" ||
+    typeof width !== "number" ||
+    typeof height !== "number"
+  )
+    return false;
+  const halfWidth = crop.size / 2;
+  const halfHeight = (crop.size * width) / height / 2;
+  return (
+    crop.size <= Math.min(1, height / width) &&
+    crop.x >= halfWidth &&
+    crop.x <= 1 - halfWidth &&
+    crop.y >= halfHeight &&
+    crop.y <= 1 - halfHeight
+  );
 }
 
 export function isCharacterRecord(value: unknown): value is CharacterRecord {

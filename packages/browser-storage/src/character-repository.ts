@@ -5,6 +5,7 @@ import {
   type CharacterBuild,
   type CharacterBackup,
   type CharacterProfileBinding,
+  type CharacterPortrait,
   type CharacterRecord,
   type LegacyCharacterRecordV1,
   type StoredCharacterRecord,
@@ -159,6 +160,7 @@ export class CharacterRepository {
       readonly notes?: string;
       readonly profileBinding?: CharacterProfileBinding | null;
       readonly sheetSettings?: Partial<SheetSettings>;
+      readonly portrait?: CharacterPortrait | null;
     },
   ): Promise<CharacterRecord> {
     const current = await this.required(id);
@@ -170,8 +172,15 @@ export class CharacterRepository {
       current;
     void _currentProfileBinding;
     const requestedTitle = changes.title?.trim();
+    const portrait =
+      changes.portrait === null
+        ? undefined
+        : (changes.portrait ?? current.portrait);
+    const { portrait: _currentPortrait, ...withoutPortrait } =
+      withoutProfileBinding;
+    void _currentPortrait;
     const updated: CharacterRecord = {
-      ...withoutProfileBinding,
+      ...withoutPortrait,
       ...(requestedTitle === undefined || requestedTitle.length === 0
         ? {}
         : {
@@ -188,6 +197,7 @@ export class CharacterRepository {
         : { title: requestedTitle || current.title }),
       ...(changes.notes === undefined ? {} : { notes: changes.notes }),
       ...(profileBinding === undefined ? {} : { profileBinding }),
+      ...(portrait === undefined ? {} : { portrait }),
       ...(changes.sheetSettings === undefined
         ? {}
         : {

@@ -34,6 +34,7 @@ import {
 } from "./profile-migration";
 import { RulesWorkerClient } from "./rules-client";
 import { createNativeCharacter } from "./new-character";
+import { PortraitEditor } from "./PortraitEditor";
 
 const repository = new CharacterRepository();
 const contentRepository = new ContentPackRepository();
@@ -700,41 +701,58 @@ export function CharacterLibraryPage({
               exportTargets[character.id] ?? exportOptions[0]!.id;
             return (
               <li key={character.id}>
-                <div>
-                  <p className="eyebrow">
-                    Level {character.build.effectiveLevel}{" "}
-                    {character.snapshot.details.Race}{" "}
-                    {character.snapshot.details.Class}
-                  </p>
-                  <h3>
-                    <a
-                      href={`#/characters/${encodeURIComponent(character.id)}`}
+                <div className="character-card-heading">
+                  <PortraitEditor
+                    name={character.title}
+                    portrait={character.portrait}
+                    onSave={async (portrait) => {
+                      await repository.updateMetadata(character.id, {
+                        portrait,
+                      });
+                      await refresh();
+                      setStatus(
+                        portrait === null
+                          ? `Removed ${character.title}'s portrait.`
+                          : `Saved ${character.title}'s portrait.`,
+                      );
+                    }}
+                  />
+                  <div>
+                    <p className="eyebrow">
+                      Level {character.build.effectiveLevel}{" "}
+                      {character.snapshot.details.Race}{" "}
+                      {character.snapshot.details.Class}
+                    </p>
+                    <h3>
+                      <a
+                        href={`#/characters/${encodeURIComponent(character.id)}`}
+                      >
+                        {character.title}
+                      </a>
+                    </h3>
+                    <p>
+                      <a
+                        href={`#/characters/${encodeURIComponent(character.id)}/edit`}
+                      >
+                        Edit build
+                      </a>
+                    </p>
+                    <p
+                      className={
+                        profileMissing || profileMismatch
+                          ? "profile-warning"
+                          : "identifier"
+                      }
                     >
-                      {character.title}
-                    </a>
-                  </h3>
-                  <p>
-                    <a
-                      href={`#/characters/${encodeURIComponent(character.id)}/edit`}
-                    >
-                      Edit build
-                    </a>
-                  </p>
-                  <p
-                    className={
-                      profileMissing || profileMismatch
-                        ? "profile-warning"
-                        : "identifier"
-                    }
-                  >
-                    {character.profileBinding === undefined
-                      ? "No content profile bound"
-                      : profileMissing
-                        ? `Missing profile: ${character.profileBinding.packId}`
-                        : profileMismatch
-                          ? `Profile changed: ${profile.name}; preview and adopt this revision below`
-                          : `Profile: ${profile?.name}`}
-                  </p>
+                      {character.profileBinding === undefined
+                        ? "No content profile bound"
+                        : profileMissing
+                          ? `Missing profile: ${character.profileBinding.packId}`
+                          : profileMismatch
+                            ? `Profile changed: ${profile.name}; preview and adopt this revision below`
+                            : `Profile: ${profile?.name}`}
+                    </p>
+                  </div>
                 </div>
                 <form
                   className="metadata-form"
