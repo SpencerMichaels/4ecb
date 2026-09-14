@@ -635,6 +635,13 @@ Character details. This removes the persistent bottom disclosures and gives the
 next equipment-design pass a dedicated surface without changing inventory data
 or commands.
 
+Class and preset tables have dedicated presentation models rather than relying
+on the generic option summary. A class row uses its authored Short Description
+and derives separate Role and Power Source labels from the first word of those
+compound legacy fields, retaining the remainder as descriptive metadata. A
+preset row uses the first complete sentence of its authored description; its
+full text remains available in the shared detail pane.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

@@ -37,6 +37,7 @@ import {
   applyBuildPresetCommand,
   candidateReason,
   candidateTableTypeGroup,
+  classTableMetadata,
   choiceSelectionTableKind,
   choiceTableSummary,
   choicePresentationLabel,
@@ -633,8 +634,7 @@ function BuildPresetPanel({
     <section className="build-presets" aria-labelledby="build-presets-heading">
       <h5 id="build-presets-heading">Starting preset</h5>
       <CandidateSelectionTable
-        kind="option"
-        nameColumnLabel="Preset"
+        kind="preset"
         candidates={presets.map(({ candidate }) => candidate)}
         featGroups={[]}
         selectedIds={new Set(selectedPresetId === "" ? [] : [selectedPresetId])}
@@ -1355,6 +1355,8 @@ function candidateTableNoun(
     feat: ["Feat", "feats"],
     power: ["Power", "powers"],
     deity: ["Deity", "deities"],
+    class: ["Class", "classes"],
+    preset: ["Preset", "presets"],
     option: ["Option", "options"],
   };
   return nouns[kind][plural ? 1 : 0];
@@ -1502,6 +1504,10 @@ function CandidateSelectionTable({
     const selected = selectedIds.has(candidate.definitionId);
     const summary =
       entity === undefined ? undefined : choiceTableSummary(entity, kind);
+    const classMetadata =
+      entity === undefined || kind !== "class"
+        ? undefined
+        : classTableMetadata(entity);
     const unavailable = !candidate.eligible;
     const selectionBlocked =
       disabled ||
@@ -1589,6 +1595,18 @@ function CandidateSelectionTable({
               <span className="selection-table-summary">{summary || "—"}</span>
             </td>
           </>
+        ) : kind === "class" ? (
+          <>
+            <td title={classMetadata?.role.description}>
+              {classMetadata?.role.label || "—"}
+            </td>
+            <td title={classMetadata?.powerSource.description}>
+              {classMetadata?.powerSource.label || "—"}
+            </td>
+            <td>
+              <span className="selection-table-summary">{summary || "—"}</span>
+            </td>
+          </>
         ) : (
           <td>
             <span className="selection-table-summary">{summary || "—"}</span>
@@ -1658,6 +1676,12 @@ function CandidateSelectionTable({
                       <Icon name="attack-versatile" />
                     </span>
                   </th>
+                  <th scope="col">Description</th>
+                </>
+              ) : kind === "class" ? (
+                <>
+                  <th scope="col">Role</th>
+                  <th scope="col">Power Source</th>
                   <th scope="col">Description</th>
                 </>
               ) : (
@@ -1776,7 +1800,7 @@ function CandidateSelectionTable({
               ? visibleFeatGroups.length
               : visibleCandidates.length) === 0 ? (
               <tr>
-                <td colSpan={kind === "power" ? 4 : 2}>
+                <td colSpan={kind === "power" || kind === "class" ? 4 : 2}>
                   No matching {candidateTableNoun(kind, true)}.
                 </td>
               </tr>

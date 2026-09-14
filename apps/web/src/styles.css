@@ -2598,6 +2598,22 @@ textarea {
   width: 55%;
 }
 
+.candidate-selection-class .selection-table-scroll table {
+  min-width: 48rem;
+}
+
+.candidate-selection-class .selection-table-scroll thead th:first-child {
+  width: 24%;
+}
+
+.candidate-selection-class .selection-table-scroll thead th:nth-child(2) {
+  width: 13%;
+}
+
+.candidate-selection-class .selection-table-scroll thead th:nth-child(3) {
+  width: 16%;
+}
+
 .selection-table-scroll tr:last-child td {
   border-bottom: 0;
 }

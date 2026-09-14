@@ -60,7 +60,8 @@ export function isBuildPresetChoice(choice: EvaluatedChoice): boolean {
   );
 }
 
-export type ChoiceSelectionTableKind = "feat" | "power" | "deity" | "option";
+export type ChoiceSelectionTableKind =
+  "feat" | "power" | "class" | "deity" | "preset" | "option";
 
 export function choiceSelectionTableKind(
   choice: EvaluatedChoice,
@@ -72,6 +73,7 @@ export function choiceSelectionTableKind(
     /^power (at-will|encounter|daily|utility)\b/.test(type)
   )
     return "power";
+  if (type === "class") return "class";
   if (type === "deity") return "deity";
   if (type !== "background choice" && (choice.candidates?.length ?? 0) > 8)
     return "option";
@@ -94,8 +96,53 @@ export function choiceTableSummary(
   kind: ChoiceSelectionTableKind,
 ): string | undefined {
   if (kind === "feat") return contentSpecificValue(entity, "Short Description");
+  if (kind === "class")
+    return contentSpecificValue(entity, "Short Description");
   if (kind === "deity") return contentSpecificValue(entity, "Alignment");
+  if (kind === "preset") return firstSentence(entity.description);
   return entity.flavor?.trim() || entity.description.trim() || undefined;
+}
+
+export interface LabeledDescription {
+  readonly label?: string;
+  readonly description?: string;
+}
+
+/** Splits legacy fields such as `Defender. You are durable...` for table use. */
+export function splitLabeledDescription(
+  value: string | undefined,
+): LabeledDescription {
+  const normalized = value?.trim();
+  if (!normalized) return {};
+  const separator = normalized.indexOf(".");
+  const lead = (separator < 0 ? normalized : normalized.slice(0, separator))
+    .trim()
+    .split(/\s+/)[0];
+  const description =
+    separator < 0 ? undefined : normalized.slice(separator + 1).trim();
+  return {
+    ...(lead ? { label: lead } : {}),
+    ...(description ? { description } : {}),
+  };
+}
+
+export function firstSentence(value: string | undefined): string | undefined {
+  const normalized = value?.trim().replaceAll(/\s+/g, " ");
+  if (!normalized) return undefined;
+  const match = normalized.match(/^.*?[.!?](?=\s|$)/);
+  return match?.[0] ?? normalized;
+}
+
+export function classTableMetadata(entity: ContentEntity): {
+  readonly role: LabeledDescription;
+  readonly powerSource: LabeledDescription;
+} {
+  return {
+    role: splitLabeledDescription(contentSpecificValue(entity, "Role")),
+    powerSource: splitLabeledDescription(
+      contentSpecificValue(entity, "Power Source"),
+    ),
+  };
 }
 
 export interface CandidateTableTypeGroup {

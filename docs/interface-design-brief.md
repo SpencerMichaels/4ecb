@@ -127,8 +127,10 @@ application's protected visual assets.
   background; removing one never clears the required primary background.
 - Legacy Build records are starting presets, not persistent mechanical choices.
   Present them after class selection as a searchable table and an explicit
-  Apply action. The inspected preset drives the shared detail pane, with its authored
-  description followed by the suggested feature, feat, skill, and power list.
+  Apply action. Each row summarizes the preset with the first sentence of its
+  authored description. The inspected preset drives the shared detail pane,
+  with the complete description followed by the suggested feature, feat, skill,
+  and power list.
   Applying it fills only matching, currently open, rules-legal level-1 choices,
   reports the result immediately, and never overwrites work already chosen. An
   imported legacy Build occurrence remains preserved internally for round-trip
@@ -157,6 +159,12 @@ application's protected visual assets.
   selection. Enter is the keyboard commit equivalent, while Space/single-click
   remains inspection-only. A committed choice still updates selection state
   immediately while reevaluation and autosave run in the background.
+- Class rows show the authored Short Description rather than the quotation-like
+  Flavor text, with separate Role and Power Source columns. Legacy Role and
+  Power Source fields combine a category with explanatory prose (for example,
+  `Defender. ...`); the presentation model splits each into a concise first-word
+  label and retained description so tables can stay compact without discarding
+  the authored explanation.
 - Repeated feat or power slots in one section share a single multi-select table
   and one **X of Y chosen** count. Selected rows remain visible. To keep large
   feat corpora responsive, search always covers the complete candidate set but

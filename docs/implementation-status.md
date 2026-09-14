@@ -360,6 +360,11 @@ candidate.
   Overview, and Character details. Their prior bottom disclosures are removed;
   existing inventory quantities/equipped quantities and evaluator diagnostics
   remain unchanged pending the dedicated equipment redesign.
+- Class selection uses its authored Short Description and adds compact Role and
+  Power Source columns. The compound legacy values are parsed into label and
+  retained-description pairs (for example, `Striker` plus its explanatory
+  prose). Starting-preset rows use only the first sentence of the full authored
+  description while the details pane continues to show the complete record.
 - Base ability scores now live only in the level-1 Ability Scores group, before
   racial increases, and no longer appear as an unrelated editor below the level
   workspace. The editor now mirrors the legacy 22-point-buy path: new native

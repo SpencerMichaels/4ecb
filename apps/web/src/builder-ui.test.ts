@@ -17,6 +17,7 @@ import {
   buildPresetSuggestionNames,
   candidateReason,
   candidateTableTypeGroup,
+  classTableMetadata,
   choiceSelectionTableKind,
   choiceTableSummary,
   choicePresentationLabel,
@@ -24,6 +25,7 @@ import {
   choiceForRepeatedCandidate,
   choicesAtLevel,
   evaluationAtHorizon,
+  firstSentence,
   groupDependentChoiceFlows,
   groupLevelChoices,
   groupChoicesByLegacyWorkflow,
@@ -39,6 +41,7 @@ import {
   isOptionalRetrainingChoice,
   planningHorizonCommand,
   selectedChoiceHasWarning,
+  splitLabeledDescription,
   unresolveEvaluatedChoiceCommand,
 } from "./builder-ui";
 
@@ -222,6 +225,11 @@ describe("builder planning UI", () => {
     ).toBe("feat");
     expect(
       choiceSelectionTableKind({
+        type: "Class",
+      } as unknown as EvaluatedCharacter["choices"][number]),
+    ).toBe("class");
+    expect(
+      choiceSelectionTableKind({
         type: "Deity",
       } as unknown as EvaluatedCharacter["choices"][number]),
     ).toBe("deity");
@@ -244,7 +252,62 @@ describe("builder planning UI", () => {
     expect(choiceTableSummary(feat, "feat")).toBe("Gain a +2 feat bonus.");
     expect(choiceTableSummary(power, "power")).toBe("Move before striking.");
     expect(choiceTableSummary(deity, "deity")).toBe("Lawful Good");
+    expect(
+      choiceTableSummary(
+        {
+          ...level(0),
+          type: "Build",
+          description: "Lead with control. Then protect your allies.",
+        },
+        "preset",
+      ),
+    ).toBe("Lead with control.");
     expect(contentSpecificValue(power, "action type")).toBe("Standard action");
+  });
+
+  it("derives compact class metadata from authored legacy fields", () => {
+    const ranger = {
+      ...level(0),
+      type: "Class",
+      specifics: [
+        {
+          name: "Role",
+          value: "Striker. You focus damage on one enemy.",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+        {
+          name: "Power Source",
+          value: "Martial. Your talents come from training.",
+          extraAttributes: [],
+          ordinal: 1,
+        },
+        {
+          name: "Short Description",
+          value: "A master of bow and blade.",
+          extraAttributes: [],
+          ordinal: 2,
+        },
+      ],
+    };
+
+    expect(classTableMetadata(ranger)).toEqual({
+      role: { label: "Striker", description: "You focus damage on one enemy." },
+      powerSource: {
+        label: "Martial",
+        description: "Your talents come from training.",
+      },
+    });
+    expect(choiceTableSummary(ranger, "class")).toBe(
+      "A master of bow and blade.",
+    );
+    expect(splitLabeledDescription("Defender. Very durable.")).toEqual({
+      label: "Defender",
+      description: "Very durable.",
+    });
+    expect(firstSentence("First sentence. Second sentence.")).toBe(
+      "First sentence.",
+    );
   });
 
   it("applies a Build preset only to matching unresolved choices", () => {
