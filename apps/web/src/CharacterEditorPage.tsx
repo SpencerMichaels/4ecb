@@ -3260,7 +3260,6 @@ export function CharacterEditorPage({
   const [workspaceTab, setWorkspaceTab] = useState<"build" | "details">(
     "build",
   );
-  const [showAllChoices, setShowAllChoices] = useState(false);
   const [inspectedOption, setInspectedOption] = useState<InspectedOption>();
   const [rollbackRevision, setRollbackRevision] = useState(0);
   const [expandedReplacementChoiceId, setExpandedReplacementChoiceId] =
@@ -3677,13 +3676,6 @@ export function CharacterEditorPage({
       );
   const race = entityOfType("Race")?.name ?? character.snapshot.details.Race;
   const selectedClass = entityOfType("Class") ?? entityOfType("Hybrid Class");
-  const unresolvedCount =
-    selectedLevel > build.effectiveLevel
-      ? 0
-      : mechanicalLevelChoices.filter(
-          (choice) =>
-            !isBuildPresetChoice(choice) && isUnresolvedChoice(choice),
-        ).length + (selectedLevel === 1 && abilityScoresIncomplete ? 1 : 0);
   const totalUnresolved =
     (planningEvaluation?.choices ?? []).filter(
       (choice) =>
@@ -3713,13 +3705,6 @@ export function CharacterEditorPage({
     plannedChoiceWarningCount,
     abilityScoresHouseRuled ? 1 : 0,
   );
-  const selectedLevelHasWarning =
-    planningEvaluation !== undefined &&
-    (mechanicalLevelChoices.some((choice) =>
-      selectedChoiceHasWarning(choice, planningEvaluation),
-    ) ||
-      (selectedLevel === 1 && abilityScoresHouseRuled));
-
   const activateLevelSection = (section: LevelChoiceTab): void => {
     setSelectedSectionByLevel((current) => ({
       ...current,
@@ -3901,7 +3886,6 @@ export function CharacterEditorPage({
             }}
           />
           <div>
-            <p className="eyebrow">Build workspace</p>
             <h2>{character.title}</h2>
             <div className="builder-character-facts">
               <span>{race || "Race not chosen"}</span>
@@ -4445,50 +4429,26 @@ export function CharacterEditorPage({
           </div>
         ) : null}
 
-        <section
-          aria-labelledby="choice-pane-heading"
-          className={`choice-pane${selectedLevel <= build.effectiveLevel && unresolvedCount > 0 ? " choice-pane-incomplete" : ""}`}
-        >
-          <header>
-            <h3 id="choice-pane-heading">Level {selectedLevel}</h3>
-            <div className="choice-pane-actions">
-              <label className="show-all-control">
-                <input
-                  checked={showAllChoices}
-                  type="checkbox"
-                  onChange={(event) =>
-                    setShowAllChoices(event.currentTarget.checked)
-                  }
-                />
-                Show unavailable options
-              </label>
-              {planningEvaluation === undefined ? (
-                <span className="attention-badge">Evaluating…</span>
-              ) : selectedLevelHasWarning ? (
-                <span className="attention-badge">
-                  <Icon name="warning" /> Review warnings
-                </span>
-              ) : null}
-            </div>
-          </header>
-          <ShowAllChoicesContext.Provider value={showAllChoices}>
-            {planningEvaluation === undefined ? (
+        <section aria-label={`Level ${selectedLevel}`} className="choice-pane">
+          {planningEvaluation === undefined ? (
+            <p>
+              {entities.length === 0
+                ? "Content is unavailable for planning."
+                : `Evaluating choices through level ${build.levels.length}…`}
+            </p>
+          ) : levelChoices.length === 0 && selectedLevel !== 1 ? (
+            <div className="choice-empty-state">
+              <Icon name="check" />
+              <h4>No choices need attention at level {selectedLevel}</h4>
               <p>
-                {entities.length === 0
-                  ? "Content is unavailable for planning."
-                  : `Evaluating choices through level ${build.levels.length}…`}
+                Select another level from the timeline or review the completed
+                history below.
               </p>
-            ) : levelChoices.length === 0 && selectedLevel !== 1 ? (
-              <div className="choice-empty-state">
-                <Icon name="check" />
-                <h4>No choices need attention at level {selectedLevel}</h4>
-                <p>
-                  Select another level from the timeline or review the completed
-                  history below.
-                </p>
-              </div>
-            ) : (
-              <div className="level-choice-tabs-layout">
+            </div>
+          ) : (
+            <div className="level-choice-tabs-layout">
+              <div className="level-choice-tab-bar">
+                <h3>Level {selectedLevel}</h3>
                 <div
                   aria-label={`Level ${selectedLevel} choice sections`}
                   className="level-choice-tabs"
@@ -4584,75 +4544,75 @@ export function CharacterEditorPage({
                     );
                   })}
                 </div>
-                <div className="level-choice-workspace">
-                  <InspectCandidateContext.Provider value={setInspectedOption}>
-                    <div className="level-choice-page">
-                      {activeLevelSection === "Retraining" ? (
-                        <section
-                          aria-labelledby={`level-${selectedLevel}-retraining-tab`}
-                          className="level-choice-tab-panel"
-                          id={`level-${selectedLevel}-retraining-panel`}
-                          role="tabpanel"
-                        >
-                          <RetrainingControls
-                            choices={retrainingChoices}
-                            evaluation={planningEvaluation}
-                            build={build}
-                            entities={entities}
-                            byId={byId}
-                            rollbackRevision={rollbackRevision}
-                            onRequestDetails={setExpandedReplacementChoiceId}
-                            onDispatch={dispatch}
-                          />
-                        </section>
-                      ) : activeChoiceSection === undefined ? null : (
-                        <section
-                          aria-labelledby={`level-${selectedLevel}-${levelChoiceTabSlug(activeChoiceSection.section)}-tab`}
-                          className="level-choice-tab-panel"
-                          id={`level-${selectedLevel}-${levelChoiceTabSlug(activeChoiceSection.section)}-panel`}
-                          role="tabpanel"
-                        >
-                          <div className="legacy-choice-list">
-                            {activeChoiceSection.section === "Class" &&
-                            selectedLevel === 1 ? (
-                              <BuildPresetPanel
-                                choices={buildPresetChoices}
-                                levelChoices={mechanicalLevelChoices}
-                                evaluation={planningEvaluation}
-                                build={build}
-                                entities={entities}
-                                byId={byId}
-                                onDispatch={dispatch}
-                              />
-                            ) : null}
-                            {activeChoiceSection.section === "Ability Scores" &&
-                            selectedLevel === 1 ? (
-                              <BaseAbilityScoreEditor
-                                build={build}
-                                onDispatch={dispatch}
-                              />
-                            ) : null}
-                            {activeChoiceSection.choices.map((choice) =>
-                              renderPrimaryChoice(
-                                choice,
-                                activeChoiceSection.choices.length === 1,
-                              ),
-                            )}
-                          </div>
-                        </section>
-                      )}
-                    </div>
-                    <div className="shared-choice-detail">
-                      <CandidateDetail
-                        candidate={inspectedOption?.candidate}
-                        entity={inspectedOption?.entity}
-                      />
-                    </div>
-                  </InspectCandidateContext.Provider>
-                </div>
               </div>
-            )}
-          </ShowAllChoicesContext.Provider>
+              <div className="level-choice-workspace">
+                <InspectCandidateContext.Provider value={setInspectedOption}>
+                  <div className="level-choice-page">
+                    {activeLevelSection === "Retraining" ? (
+                      <section
+                        aria-labelledby={`level-${selectedLevel}-retraining-tab`}
+                        className="level-choice-tab-panel"
+                        id={`level-${selectedLevel}-retraining-panel`}
+                        role="tabpanel"
+                      >
+                        <RetrainingControls
+                          choices={retrainingChoices}
+                          evaluation={planningEvaluation}
+                          build={build}
+                          entities={entities}
+                          byId={byId}
+                          rollbackRevision={rollbackRevision}
+                          onRequestDetails={setExpandedReplacementChoiceId}
+                          onDispatch={dispatch}
+                        />
+                      </section>
+                    ) : activeChoiceSection === undefined ? null : (
+                      <section
+                        aria-labelledby={`level-${selectedLevel}-${levelChoiceTabSlug(activeChoiceSection.section)}-tab`}
+                        className="level-choice-tab-panel"
+                        id={`level-${selectedLevel}-${levelChoiceTabSlug(activeChoiceSection.section)}-panel`}
+                        role="tabpanel"
+                      >
+                        <div className="legacy-choice-list">
+                          {activeChoiceSection.section === "Class" &&
+                          selectedLevel === 1 ? (
+                            <BuildPresetPanel
+                              choices={buildPresetChoices}
+                              levelChoices={mechanicalLevelChoices}
+                              evaluation={planningEvaluation}
+                              build={build}
+                              entities={entities}
+                              byId={byId}
+                              onDispatch={dispatch}
+                            />
+                          ) : null}
+                          {activeChoiceSection.section === "Ability Scores" &&
+                          selectedLevel === 1 ? (
+                            <BaseAbilityScoreEditor
+                              build={build}
+                              onDispatch={dispatch}
+                            />
+                          ) : null}
+                          {activeChoiceSection.choices.map((choice) =>
+                            renderPrimaryChoice(
+                              choice,
+                              activeChoiceSection.choices.length === 1,
+                            ),
+                          )}
+                        </div>
+                      </section>
+                    )}
+                  </div>
+                  <div className="shared-choice-detail">
+                    <CandidateDetail
+                      candidate={inspectedOption?.candidate}
+                      entity={inspectedOption?.entity}
+                    />
+                  </div>
+                </InspectCandidateContext.Provider>
+              </div>
+            </div>
+          )}
         </section>
       </div>
 

@@ -47,6 +47,12 @@ application's protected visual assets.
   level beyond the saved build extends the plan through that level without
   advancing the current character. Preserve the last active category separately
   for each visited level.
+- Integrate the selected level label into the category strip as a visually
+  distinct, non-interactive leading title: **Level 8 | Ability Scores | Feats |
+  Retraining**, for example. Do not repeat it as a large heading above the
+  strip. The outer choice workspace has no card background, border, or padding;
+  the active choice surface and adjacent detail surface sit independently on
+  the application background.
 - When a user selects a target level, create the complete level timeline
   immediately and present its unresolved decisions. Include every level through
   the target: unresolved items are prominent, completed levels remain visible in
@@ -76,6 +82,8 @@ application's protected visual assets.
   this mode on the character or automatically apply it to later choice lists.
   Selecting an illegal option remains an intentional user action rather than an
   accidental consequence of changing the filter.
+  The unavailable-options control is temporarily absent during the current
+  compact-layout prototype and will return in a later focused design pass.
 - Do not label choices as popular or recommended. The application may present
   objective legality, prerequisites, source, and mechanical consequences; it
   must not invent subjective build advice.

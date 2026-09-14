@@ -204,6 +204,15 @@ candidate.
   checkpoint passed all 270 public tests, workspace typechecks, production/PWA
   build, Chromium/Firefox print checks, deterministic content checks, and query
   benchmark.
+- The selected level is now the non-interactive leading title in the category
+  strip rather than a separate pane heading. The outer choice pane no longer
+  contributes a surface, border, inset warning, or padding: selection and detail
+  surfaces sit independently against the page background. The redundant
+  **Build workspace** eyebrow is removed, tier headings align left, and **Show
+  unavailable options** is temporarily removed pending its later redesign.
+  Live Silaqui inspection confirmed equal 46.4px level-title/tab heights, one
+  keyboard tab stop, no heading exposed as a tab, transparent zero-border and
+  zero-padding outer choice chrome, and no horizontal overflow.
 - Verification on 2026-09-13 passed the complete public check (263 tests,
   workspace typechecks, production/PWA build, print checks, deterministic
   content checks, and query benchmark). Live full-corpus verification at 1280px

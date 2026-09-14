@@ -404,6 +404,11 @@ portrait header, and the rail now exposes all 30 levels in collapsible Heroic,
 Paragon, and Epic tiers. Navigating beyond the saved horizon extends the plan
 automatically without advancing the current character, replacing the separate
 plan-horizon input.
+The latest density pass removes the remaining outer choice-pane card, integrates
+the selected level as a non-clickable leading label in the category-tab strip,
+and lets the selection and detail surfaces stand directly on the page
+background. The temporary unavailable-options control is withheld until its
+later focused redesign.
 Planning legality now uses the projected character at each choice's acquisition
 level rather than the final plan horizon: same-level increases and features may
 satisfy prerequisites, while later selections cannot retroactively unlock an

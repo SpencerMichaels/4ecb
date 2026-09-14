@@ -556,6 +556,14 @@ tables may consume the remaining desktop viewport and scroll internally. This
 keeps the main choice surface visually focused without splitting progressive or
 repeated rules choices that deliberately belong to one category.
 
+The selected level is a visually distinct, non-interactive leading title in the
+same strip, not a tab and not a separate pane heading. The outer choice pane is
+layout-only and supplies no background, border, warning inset, or padding; the
+active selection and shared detail surfaces provide the meaningful visual
+boundaries. The unavailable-options control is temporarily withheld while its
+compact placement is redesigned, without changing the engine's ability to
+classify or intentionally select unavailable candidates later.
+
 ### D040 — Planning is level navigation, not a separate overview setting
 
 The builder header is the single compact character summary: portrait and name
