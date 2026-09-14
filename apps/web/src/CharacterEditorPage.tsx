@@ -228,34 +228,6 @@ function CommitNumberInput({
   );
 }
 
-function OccurrenceTree({
-  occurrence,
-  byId,
-}: {
-  readonly occurrence: BuildOccurrence;
-  readonly byId: ReadonlyMap<string, ContentEntity>;
-}) {
-  const definition =
-    occurrence.identity.definitionId === undefined
-      ? undefined
-      : byId.get(occurrence.identity.definitionId.toLocaleLowerCase());
-  return (
-    <li>
-      <span className={occurrence.unresolved ? "profile-warning" : undefined}>
-        {definition?.name || occurrence.identity.name || "Unresolved choice"}
-      </span>{" "}
-      <small>{definition?.type || occurrence.identity.type}</small>
-      {occurrence.children.length === 0 ? null : (
-        <ul>
-          {occurrence.children.map((child) => (
-            <OccurrenceTree key={child.id} occurrence={child} byId={byId} />
-          ))}
-        </ul>
-      )}
-    </li>
-  );
-}
-
 function selectedOccurrence(
   choice: EvaluatedChoice,
   evaluation: EvaluatedCharacter,
@@ -3264,7 +3236,7 @@ export function CharacterEditorPage({
   const [evaluationStatus, setEvaluationStatus] = useState("Loading rules…");
   const [readyPackId, setReadyPackId] = useState<string>();
   const [selectedLevel, setSelectedLevel] = useState(1);
-  const [timelineOpen, setTimelineOpen] = useState(false);
+  const [showPlannedOverview, setShowPlannedOverview] = useState(false);
   const [expandedTiers, setExpandedTiers] = useState<
     ReadonlySet<CharacterTierId>
   >(new Set(["heroic"]));
@@ -3272,9 +3244,9 @@ export function CharacterEditorPage({
   const [selectedSectionByLevel, setSelectedSectionByLevel] = useState<
     Readonly<Partial<Record<number, LevelChoiceTab>>>
   >({});
-  const [workspaceTab, setWorkspaceTab] = useState<"build" | "details">(
-    "build",
-  );
+  const [workspaceTab, setWorkspaceTab] = useState<
+    "build" | "overview" | "details"
+  >("build");
   const [inspectedOption, setInspectedOption] = useState<InspectedOption>();
   const [rollbackRevision, setRollbackRevision] = useState(0);
   const [expandedReplacementChoiceId, setExpandedReplacementChoiceId] =
@@ -3286,25 +3258,6 @@ export function CharacterEditorPage({
   const rulesClient = useRef<RulesRuntimeClient | undefined>(undefined);
   const evaluationRevision = useRef(0);
   const evaluationCache = useRef(new Map<string, EvaluatedCharacter>());
-  const timelineTrigger = useRef<HTMLButtonElement>(null);
-  const timelineClose = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!timelineOpen) return;
-    const focusFrame = requestAnimationFrame(() =>
-      timelineClose.current?.focus(),
-    );
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setTimelineOpen(false);
-      requestAnimationFrame(() => timelineTrigger.current?.focus());
-    };
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      cancelAnimationFrame(focusFrame);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [timelineOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -3758,7 +3711,6 @@ export function CharacterEditorPage({
       setSelectedChoiceId(
         ordered.find(isUnresolvedChoice)?.id ?? ordered[0]?.id,
       );
-      setTimelineOpen(false);
     } catch (reason: unknown) {
       setSaveState({
         phase: "failed",
@@ -4016,6 +3968,14 @@ export function CharacterEditorPage({
           <Icon name="level" /> Build
         </button>
         <button
+          aria-selected={workspaceTab === "overview"}
+          role="tab"
+          type="button"
+          onClick={() => setWorkspaceTab("overview")}
+        >
+          <Icon name="book" /> Overview
+        </button>
+        <button
           aria-selected={workspaceTab === "details"}
           role="tab"
           type="button"
@@ -4028,19 +3988,12 @@ export function CharacterEditorPage({
         </button>
       </div>
 
-      <div className="builder-workspace" hidden={workspaceTab !== "build"}>
-        <nav aria-label="Level plan" className="level-rail">
-          <button
-            aria-controls="build-timeline"
-            aria-expanded={timelineOpen}
-            className="level-rail-plan"
-            ref={timelineTrigger}
-            type="button"
-            onClick={() => setTimelineOpen(true)}
-          >
-            <Icon name="level" />
-            <span>Plan</span>
-          </button>
+      <div className="builder-workspace" hidden={workspaceTab === "details"}>
+        <nav
+          aria-label="Level plan"
+          className="level-rail"
+          hidden={workspaceTab !== "build"}
+        >
           <ol className="level-tier-list">
             {CHARACTER_TIERS.map((tier) => {
               const expanded = expandedTiers.has(tier.id);
@@ -4141,59 +4094,47 @@ export function CharacterEditorPage({
           </ol>
         </nav>
 
-        {timelineOpen ? (
-          <div className="timeline-overlay">
-            <button
-              aria-label="Dismiss level plan"
-              className="timeline-backdrop"
-              type="button"
-              onClick={() => {
-                setTimelineOpen(false);
-                requestAnimationFrame(() => timelineTrigger.current?.focus());
-              }}
-            />
-            <aside
-              aria-labelledby="timeline-heading"
-              className="build-timeline"
-              id="build-timeline"
-            >
-              <div className="timeline-heading">
-                <div>
-                  <p className="eyebrow">Level plan</p>
-                  <h3 id="timeline-heading">
-                    Choices through level {build.levels.length}
-                  </h3>
-                </div>
-                <div className="timeline-heading-actions">
-                  <button
-                    aria-label="Close level plan"
-                    className="timeline-close"
-                    ref={timelineClose}
-                    type="button"
-                    onClick={() => {
-                      setTimelineOpen(false);
-                      requestAnimationFrame(() =>
-                        timelineTrigger.current?.focus(),
-                      );
-                    }}
-                  >
-                    <Icon name="remove" />
-                  </button>
-                </div>
+        <div className="overview-pane" hidden={workspaceTab !== "overview"}>
+          <aside aria-labelledby="timeline-heading" className="build-overview">
+            <div className="timeline-heading">
+              <div>
+                <h3 id="timeline-heading">Character overview</h3>
               </div>
-              <p className="field-help timeline-help">
-                Selecting a later level in the level rail extends the plan.
-                Current calculations stay at level {build.effectiveLevel}.
-              </p>
-              <ol className="timeline-levels">
-                {build.levels.map((frame) => {
+              <div className="timeline-heading-actions">
+                <label className="overview-planned-toggle">
+                  <input
+                    checked={showPlannedOverview}
+                    type="checkbox"
+                    onChange={(event) =>
+                      setShowPlannedOverview(event.currentTarget.checked)
+                    }
+                  />
+                  Show planned levels
+                </label>
+              </div>
+            </div>
+            <p className="field-help timeline-help">
+              Review choices by level. Planned levels appear only when they
+              contain a saved selection.
+            </p>
+            <ol className="timeline-levels">
+              {build.levels
+                .filter((frame) => {
+                  if (frame.level <= build.effectiveLevel) return true;
+                  if (!showPlannedOverview) return false;
+                  return choicesAtLevel(frame.level, planningEvaluation).some(
+                    (choice) => choice.selectedOccurrenceId !== undefined,
+                  );
+                })
+                .map((frame) => {
                   const choices = choicesAtLevel(
                     frame.level,
                     planningEvaluation,
                   );
                   const timelineChoices = choices.filter(
                     (choice) =>
-                      !isOptionalRetrainingChoice(choice) &&
+                      (!isOptionalRetrainingChoice(choice) ||
+                        choice.selectedOccurrenceId !== undefined) &&
                       !isCharacterDetailChoice(choice) &&
                       !isBuildPresetChoice(choice),
                   );
@@ -4220,6 +4161,8 @@ export function CharacterEditorPage({
                     ),
                   );
                   const summaries = orderedTimelineChoices.flatMap((choice) => {
+                    if (isOptionalRetrainingChoice(choice))
+                      return [{ label: "Retraining", choices: [choice] }];
                     const identityLabel = identityChoiceLabel(choice.type);
                     if (grouped.backgrounds.includes(choice))
                       return choice === grouped.backgrounds[0]
@@ -4298,7 +4241,7 @@ export function CharacterEditorPage({
                             orderedTimelineChoices.find(isUnresolvedChoice)
                               ?.id ?? orderedTimelineChoices[0]?.id,
                           );
-                          setTimelineOpen(false);
+                          setWorkspaceTab("build");
                         }}
                       >
                         <span>Level {frame.level}</span>
@@ -4339,7 +4282,7 @@ export function CharacterEditorPage({
                                     ...current,
                                     1: "Ability Scores",
                                   }));
-                                  setTimelineOpen(false);
+                                  setWorkspaceTab("build");
                                 }}
                               >
                                 <Icon name="ability" />
@@ -4410,11 +4353,15 @@ export function CharacterEditorPage({
                                     setSelectedChoiceId(targetChoice.id);
                                     setSelectedSectionByLevel((current) => ({
                                       ...current,
-                                      [frame.level]: legacyChoiceSection(
+                                      [frame.level]: isOptionalRetrainingChoice(
                                         summary.choices[0]!,
-                                      ),
+                                      )
+                                        ? "Retraining"
+                                        : legacyChoiceSection(
+                                            summary.choices[0]!,
+                                          ),
                                     }));
-                                    setTimelineOpen(false);
+                                    setWorkspaceTab("build");
                                   }}
                                 >
                                   <span>
@@ -4439,12 +4386,15 @@ export function CharacterEditorPage({
                     </li>
                   );
                 })}
-              </ol>
-            </aside>
-          </div>
-        ) : null}
+            </ol>
+          </aside>
+        </div>
 
-        <section aria-label={`Level ${selectedLevel}`} className="choice-pane">
+        <section
+          aria-label={`Level ${selectedLevel}`}
+          className="choice-pane"
+          hidden={workspaceTab !== "build"}
+        >
           {planningEvaluation === undefined ? (
             <p>
               {entities.length === 0
@@ -4663,20 +4613,6 @@ export function CharacterEditorPage({
               ))}
             </ul>
           )}
-        </details>
-        <details className="panel">
-          <summary>Complete level history</summary>
-          {build.levels.map((frame) => (
-            <details key={frame.level} open={frame.level === selectedLevel}>
-              <summary>
-                Level {frame.level}
-                {frame.level > build.effectiveLevel ? " (planned)" : ""}
-              </summary>
-              <ul className="occurrence-tree">
-                <OccurrenceTree occurrence={frame.root} byId={byId} />
-              </ul>
-            </details>
-          ))}
         </details>
         <details className="panel inventory-editor">
           <summary>Inventory and equipment</summary>

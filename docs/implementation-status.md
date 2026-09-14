@@ -170,13 +170,19 @@ candidate.
   stay visible in compact form, and a chosen target creates every intervening
   level in one autosaved transaction without advancing the current effective
   level.
-- The timeline now expands from a 4.5-rem level rail instead of permanently
-  occupying roughly one-third of the workspace. The rail directly navigates
-  levels and exposes stable status markers; its Plan action opens the complete
-  timeline as a dismissible overlay without shifting the choice and option
-  detail panes. On narrow layouts it collapses to the Plan trigger. Option
-  detail cards and the expanded timeline use natural content height and browser
-  scrolling; only large candidate tables retain bounded internal scrolling.
+- The level rail no longer expands into an overlay. A sibling **Overview** tab
+  provides the complete icon-led choice history without shifting the choice and
+  option detail panes, while the rail remains compact direct navigation within
+  Build. Overview replaces both the former popout and bottom history disclosure,
+  and deliberately omits the duplicate raw “Stored features” occurrence tree.
+  Its planned-level toggle starts off and reveals only future levels containing
+  saved selections; untouched plan frames stay absent. History rows navigate
+  back to the owning level and category, and completed optional retraining is
+  retained as history without becoming a required decision. Ordinary detail
+  surfaces use natural document height; only large candidate tables retain
+  bounded internal scrolling. Live Silaqui verification found one history list
+  for each displayed level, no “Stored features” subtree, no untouched level 9,
+  and a level-8 feat row that returned to Build with level 8 and Feats active.
 - The compact rail now exposes all 30 levels under collapsible Heroic, Paragon,
   and Epic headings. A loaded character starts with only its current tier open;
   other tiers can be expanded independently. Selecting a not-yet-built level
@@ -225,13 +231,12 @@ candidate.
   feat, double-clicked it to replace Archery Mastery, selected Cruel Cut Style
   with Enter, and restored Archery Mastery through the normal undo path after
   each mutation.
-- Verification on 2026-09-13 passed the complete public check (263 tests,
+- Verification on 2026-09-14 passed the complete public check (270 tests,
   workspace typechecks, production/PWA build, print checks, deterministic
   content checks, and query benchmark). Live full-corpus verification at 1280px
-  measured a 72px rail and 1129px choice pane with visible detail/timeline
-  overflow, correct Escape and backdrop focus return, and no console errors. At
-  800px the level list collapsed to the Plan trigger with no horizontal
-  overflow.
+  confirmed the Build rail and focused selection layout, then confirmed the
+  separate Overview history and its level/category navigation without a second
+  raw occurrence list.
 - The builder evaluates the current character and the full saved planning
   timeline as separate projections. Future choices can be inspected and edited
   out of order without entering current calculations. Lowering **Show plan

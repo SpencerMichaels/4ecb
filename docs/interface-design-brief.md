@@ -90,9 +90,13 @@ application's protected visual assets.
 - Use Build, Character sheet, Compendium, Characters/library, and Content/settings
   as the initial top-level information architecture. This remains subject to
   prototype review because navigation is easier to judge in context.
-- Keep a compact character overview available during building: name, optional
-  portrait/token, race, class, level, role, experience, and unresolved or warning
-  count.
+- Keep a sibling **Overview** tab beside Build and Character details. It presents
+  one concise, icon-led history of mechanical choices by level; it must not
+  repeat the same selections in a second raw “stored features” tree. Current
+  levels appear by default. A temporary **Show planned levels** checkbox reveals
+  only future levels that already contain a saved choice, omitting empty plan
+  frames. Activating any history row returns to Build at that level and opens
+  the owning category tab.
 - Keep important evaluation, save, and validation feedback immediate and
   comprehensible. Interaction responsiveness is a product requirement.
 - Ordinary client-side page changes reuse decoded content, rules workers,
@@ -201,11 +205,11 @@ pane and supporting filter prose.
 
 Ordinary optional replacement rules are presented as retraining, matching the
 player-facing game concept. An unused retraining slot is absent from the level
-timeline and initially renders only **Retrain a skill…**, **Retrain a feat…**,
+rail and Overview history and initially renders only **Retrain a skill…**, **Retrain a feat…**,
 and **Retrain a power…** actions for categories actually available. Activating
 one reveals a category-filtered editor that can be cancelled before a choice is
-made. An imported or completed retraining remains visible in the level pane as
-history, but not as a required timeline decision, and can be explicitly removed
+made. An imported or completed retraining remains visible in the level pane and
+Overview history, but not as a required decision, and can be explicitly removed
 with the same compact X affordance used for other optional additions to restore
 the replaced selection. Special replacements that
 are consequences of another choice, such as Rapid Shot Mastery, remain inside

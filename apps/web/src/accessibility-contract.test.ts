@@ -73,13 +73,18 @@ describe("release accessibility contract", () => {
 
   it("keeps navigation compact and ordinary detail content in document flow", () => {
     expect(characterEditor).toContain('className="level-rail"');
-    expect(characterEditor).toContain('aria-controls="build-timeline"');
-    expect(characterEditor).toContain('aria-label="Close level plan"');
+    expect(characterEditor).toContain('workspaceTab === "overview"');
+    expect(characterEditor).toContain('className="build-overview"');
+    expect(characterEditor).toContain("Show planned levels");
+    expect(characterEditor).not.toContain("Stored features");
+    expect(characterEditor).not.toContain("function OccurrenceTree");
+    expect(characterEditor).not.toContain('aria-controls="build-timeline"');
+    expect(characterEditor).not.toContain('aria-label="Close level plan"');
 
     const candidateDetailRule = styles.match(
       /\.candidate-detail\s*\{([^}]*)\}/,
     )?.[1];
-    const timelineRule = styles.match(/\.build-timeline\s*\{([^}]*)\}/)?.[1];
+    const timelineRule = styles.match(/\.build-overview\s*\{([^}]*)\}/)?.[1];
     expect(candidateDetailRule).toBeDefined();
     expect(candidateDetailRule).not.toContain("max-height");
     expect(candidateDetailRule).not.toContain("overflow:");

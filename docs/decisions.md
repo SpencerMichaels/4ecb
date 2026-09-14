@@ -589,6 +589,25 @@ without changing `effectiveLevel`. This supersedes D035's horizon-selection and
 narrow-layout-collapse details: there is no separate plan-horizon input, and the
 tiered rail remains directly operable on narrow layouts.
 
+### D041 — Overview is the single navigable level history
+
+The former expanded-plan overlay and bottom **Complete level history**
+disclosure are replaced by a sibling **Overview** tab beside Build and
+Character details. Overview reuses the compact icon-led choice summaries as the
+single player-facing history; it does not also expose the evaluator's raw
+occurrence tree as “Stored features,” because that duplicates selections and
+leaks an implementation-oriented representation into the interface. Completed
+optional retraining remains in this history even though an unused retraining
+slot is not a required decision.
+
+Overview shows current levels by default. Its temporary **Show planned levels**
+control reveals only future frames containing at least one saved selection, so
+automatically created but untouched plan levels do not add noise. Every choice
+summary is navigation: activating it switches to Build, selects the owning
+level and choice, and opens the corresponding category tab. The narrow 1–30
+level rail remains Build's direct navigation surface and is hidden while the
+full history is open.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed
