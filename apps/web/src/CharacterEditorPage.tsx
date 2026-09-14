@@ -1477,29 +1477,8 @@ function CandidateSelectionTable({
           isVisible(candidate, label),
         )),
   );
-  const prioritizedCandidates = [
-    ...visibleCandidates.filter((candidate) =>
-      selectedIds.has(candidate.definitionId),
-    ),
-    ...visibleCandidates.filter(
-      (candidate) => !selectedIds.has(candidate.definitionId),
-    ),
-  ];
-  const displayedCandidates = prioritizedCandidates;
-  const prioritizedFeatGroups = [
-    ...visibleFeatGroups.filter((group) =>
-      group.options.some(({ candidate }) =>
-        selectedIds.has(candidate.definitionId),
-      ),
-    ),
-    ...visibleFeatGroups.filter(
-      (group) =>
-        !group.options.some(({ candidate }) =>
-          selectedIds.has(candidate.definitionId),
-        ),
-    ),
-  ];
-  const displayedFeatGroups = prioritizedFeatGroups;
+  const displayedCandidates = visibleCandidates;
+  const displayedFeatGroups = visibleFeatGroups;
   const totalRows =
     kind === "feat" ? visibleFeatGroups.length : visibleCandidates.length;
 
@@ -1596,7 +1575,6 @@ function CandidateSelectionTable({
                 onToggle(candidate.definitionId);
               }}
             >
-              {selected ? <Icon name="check" /> : null}
               <span>{label}</span>
             </button>
           </div>
@@ -1652,7 +1630,9 @@ function CandidateSelectionTable({
   };
 
   return (
-    <div className={`candidate-selection-table candidate-selection-${kind}`}>
+    <div
+      className={`candidate-selection-table candidate-selection-${kind}${totalRows <= 6 ? " candidate-selection-short" : ""}`}
+    >
       <div className="selection-table-toolbar">
         <label>
           <span className="visually-hidden">
@@ -1786,7 +1766,6 @@ function CandidateSelectionTable({
                                   onExpandGroup(expanded ? "" : group.key);
                                 }}
                               >
-                                {selected ? <Icon name="check" /> : null}
                                 <span>{group.label}…</span>
                               </button>
                             </td>

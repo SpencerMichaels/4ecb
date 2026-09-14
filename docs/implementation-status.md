@@ -371,6 +371,10 @@ candidate.
   category—covering Avenger's Censure—while anonymous direct class rules retain
   the generic Class Feature heading. Overview uses the same names. Starting
   presets now follow the Class table and are collapsed by default.
+- Candidate tables preserve their source ordering when a row is selected and
+  communicate selection through the existing green row highlight without a
+  second checkmark. Tables with six or fewer visible rows now size to their
+  contents rather than inheriting the large-table viewport height.
 - Base ability scores now live only in the level-1 Ability Scores group, before
   racial increases, and no longer appear as an unrelated editor below the level
   workspace. The editor now mirrors the legacy 22-point-buy path: new native

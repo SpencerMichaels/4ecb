@@ -2215,6 +2215,11 @@ textarea {
     height: max(24rem, calc(100dvh - 30rem));
     max-height: none;
   }
+
+  .level-choice-tab-panel .candidate-selection-short .selection-table-scroll {
+    height: auto;
+    max-height: calc(100dvh - 30rem);
+  }
 }
 
 .shared-choice-detail {
@@ -2725,6 +2730,10 @@ textarea {
 
 .selection-table-scroll .selection-family-row {
   background: var(--accent-soft);
+}
+
+.selection-table-scroll .selection-family-row.selection-row-selected {
+  background: var(--success-soft);
 }
 
 .selection-table-scroll .selection-table-nested {

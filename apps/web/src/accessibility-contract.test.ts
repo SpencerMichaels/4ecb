@@ -99,6 +99,19 @@ describe("release accessibility contract", () => {
     );
   });
 
+  it("keeps table selection spatially stable and communicates it without checkmarks", () => {
+    const tableSource = characterEditor.slice(
+      characterEditor.indexOf("function CandidateSelectionTable"),
+      characterEditor.indexOf("function ChoiceFlowSection"),
+    );
+    expect(tableSource).not.toContain("prioritizedCandidates");
+    expect(tableSource).not.toContain('name="check"');
+    expect(tableSource).toContain("candidate-selection-short");
+    expect(styles).toMatch(
+      /\.candidate-selection-short[\s\S]*?\.selection-table-scroll\s*\{[\s\S]*?height: auto/,
+    );
+  });
+
   it("supports system color preference and explicit light or dark overrides", () => {
     expect(styles).toContain(':root[data-theme="dark"]');
     expect(styles).toContain("@media (prefers-color-scheme: dark)");

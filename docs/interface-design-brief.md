@@ -159,7 +159,12 @@ application's protected visual assets.
   focus alone do not replace the inspected record. Double-click commits the
   selection. Enter is the keyboard commit equivalent, while Space/single-click
   remains inspection-only. A committed choice still updates selection state
-  immediately while reevaluation and autosave run in the background.
+  immediately while reevaluation and autosave run in the background. Selection
+  never reorders rows: only an explicit search or Favorites filter may change
+  what is shown. The selected row's green highlight is sufficient, so tables do
+  not add a redundant checkmark beside its name. Short tables size to their
+  actual rows; only larger result sets expand into the available viewport and
+  scroll.
 - Class rows show the authored Short Description rather than the quotation-like
   Flavor text, with separate Role and Power Source columns. Legacy Role and
   Power Source fields combine a category with explanatory prose (for example,

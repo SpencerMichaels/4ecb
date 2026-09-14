@@ -624,13 +624,16 @@ compact numeric current-level selector remains a dropdown because its ordered
 
 The shared candidate table now supports feats, powers, classes, class features,
 deities, starting presets, and generic large choices. Its reusable shell owns
-filtering, result counts, persistent content-ID favorites, selected-row
-priority, inspection, and commit behavior; type-specific columns are supplied
-by the table kind. Deities show Name and authored Alignment. Class-feature rows
-use authored Short Description where available and a concise description
-fallback otherwise. Character details requests full candidate data for its
-owning choice levels when that tab opens, preserving the normal bounded
-evaluator request outside that workspace.
+filtering, result counts, persistent content-ID favorites, stable source order,
+inspection, and commit behavior; type-specific columns are supplied by the
+table kind. Selection changes only the row highlight and never promotes a row
+or adds a checkmark beside its name. Tables with six or fewer visible rows size
+to their content, while larger sets consume the available viewport and scroll.
+Deities show Name and authored Alignment. Class-feature rows use authored Short
+Description where available and a concise description fallback otherwise.
+Character details requests full candidate data for its owning choice levels
+when that tab opens, preserving the normal bounded evaluator request outside
+that workspace.
 
 Equipment and Diagnostics are peer workspace tabs beside Build, Overview, and
 Character details. This removes the persistent bottom disclosures and gives the
