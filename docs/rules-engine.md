@@ -39,10 +39,11 @@ Evaluation proceeds as follows:
 1. Resolve active build occurrences and equipped definitions for the effective
    level.
 2. Iterate automatic grants to a fixed point with stable synthetic identities.
-3. Materialize choice/replacement slots and evaluate every candidate's
-   structural constraints and internalized `Prereqs` expression.
+3. Materialize choice/replacement slots and evaluate structural constraints.
 4. Apply stat operations, typed stacking, aliases, text values, and overlays.
-5. Recheck selected elements against the final evaluated state and emit
+5. Evaluate every candidate's internalized `Prereqs` expression against the
+   projected character at that choice's acquisition level, then recheck selected
+   elements at that same historical boundary and emit
    recoverable legality diagnostics.
 6. Return values with provenance, completeness, legality, and diagnostics.
 
@@ -92,6 +93,16 @@ so its `_ADDITIONAL_USES` modification can apply, while the original level-3 or
 level-7 power remains the resolved source choice. Active-definition membership
 still collapses by definition; occurrence topology does not.
 
+Prerequisites follow the same acquisition-level boundary. A choice at level X
+sees the character projected through level X, including ability increases,
+training, and other features acquired at X, but never receives credit for a
+selection acquired at X+1 or later. Consequently a level-4 Dexterity increase
+can satisfy a level-4 feat's Dexterity prerequisite, while a level-8 increase
+cannot retroactively legalize that feat. Both candidate availability and saved
+selection diagnostics use this boundary. The evaluator caches bounded
+context-only snapshots by immutable profile and exact build prefix, so edits at
+later levels reuse unaffected earlier prerequisite contexts.
+
 Replacement gain candidates follow the replacement rule's mode. In particular,
 `powerswap` supplies the gain category used by the native
 `UpdateReplacement` path; it is not validated against the displaced power's
@@ -119,10 +130,12 @@ active candidate decisions required for legality and completeness, while the
 requested levels expand their selectable-category candidates. Optional
 replacement lists are independently requested through
 `candidateDetailReplacementChoiceIds` when their editor opens. Omitting both
-fields preserves the exhaustive compatibility/reporting result. With subsequent
-category-parser reuse, exhaustive Silaqui evaluation measures approximately 5.1
-seconds cold and 1.2 seconds warm; the ordinary level-8 builder projection is
-approximately 2.7 seconds cold and 0.45 seconds warm.
+fields preserves the exhaustive compatibility/reporting result. With
+acquisition-level prerequisite snapshots enabled, the development runner
+measures Silaqui at approximately 7.8 seconds cold and 1.6 seconds warm for the
+exhaustive diagnostic, and 4.8 seconds cold and 0.55 seconds warm for the
+ordinary level-8 builder projection. The browser's application-level exact
+evaluation cache still bypasses unchanged projections entirely.
 
 The character remains intentionally reported as illegal because its file marks
 a house-rule selection and the corpus cannot prove one custom feat

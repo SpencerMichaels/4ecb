@@ -342,6 +342,19 @@ candidate.
   `_INTERNAL_PREREQS` is an in-memory tree parsed from `Prereqs`, not a separate
   XML metadata field; `print-prereqs` remains display-only. The recovered
   `A, B, or C` grammar also eliminates Silaqui's false Archery Mastery warning.
+- Planned prerequisite checks now use each choice's effective acquisition level
+  rather than the final planning horizon. Same-level ability increases and
+  owned features can unlock a choice, while later planned levels cannot leak
+  backward; selected earlier choices retain a failed-prerequisite diagnostic if
+  they qualify only later. Bounded build-prefix snapshots reuse the ordinary
+  topology/stat pipeline. Public regression fixtures cover ability, level, and
+  owned-feature prerequisites. The full Silaqui profile remains 67/67 numeric
+  and 71/71 power-field matches with zero diagnostics; its scoped evaluation
+  measured approximately 4.8 seconds cold and 0.55 seconds warm in the
+  development runner, and a live level-1-to-8 plan expansion settled in 0.85
+  seconds. The complete public check passes all 264 tests plus workspace
+  typechecks, the production/PWA build, browser print checks, deterministic
+  content-pack checks, and the query benchmark.
 - Choice controls now recognize the same arbitrarily deep generated-grant
   ancestry that the build projection can materialize. This keeps an unresolved
   racial-trait selector enabled when its race grants an intermediate feature

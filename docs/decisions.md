@@ -487,6 +487,24 @@ and form sections do not. This keeps browser scrolling as the page's single
 primary scroll model while giving the frequent selection-and-inspection task the
 majority of horizontal space.
 
+### D036 — Planned prerequisites are scoped to choice acquisition level
+
+Candidate availability and selected-choice legality are evaluated against the
+character projected through the choice's effective acquisition level, not the
+current playable level and not the final planning horizon. Every occurrence and
+stat contribution acquired at or before that level participates, so decisions
+within one level can satisfy one another. Later choices are excluded and cannot
+retroactively legalize an earlier selection.
+
+The rules engine owns this boundary because it must apply equally to the builder
+table, diagnostics, imports, and non-UI consumers. It derives context-only
+historical snapshots through the same occurrence, grant, equipment, stat, and
+stacking pipeline as an ordinary evaluation. These snapshots omit candidate and
+power expansion, are cached by immutable content profile and the exact build
+prefix through that level, and are bounded to 64 recent prefixes. This preserves
+replacement and level-gated rule behavior without maintaining a second,
+approximate prerequisite formula in React.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

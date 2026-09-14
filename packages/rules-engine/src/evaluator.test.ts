@@ -287,6 +287,144 @@ describe("character evaluator", () => {
     ]);
   });
 
+  it("evaluates prerequisites at the choice level, including same-level selections", () => {
+    const definitions = [
+      entity("LEVEL_4", "4", "Level", {
+        rules: [rule("select", { type: "Feat" }, 0)],
+      }),
+      entity("DEX_4", "Dexterity", "Ability Increase (Level 4)", {
+        rules: [rule("statadd", { name: "Dexterity", value: "+1" }, 0)],
+      }),
+      entity("DEX_8", "Dexterity", "Ability Increase (Level 8)", {
+        rules: [rule("statadd", { name: "Dexterity", value: "+1" }, 0)],
+      }),
+      entity("DEX_FEAT", "Dexterity Feat", "Feat", {
+        prerequisites: "Dex 13",
+      }),
+      entity("LATE_LEVEL_FEAT", "Late Level Feat", "Feat", {
+        prerequisites: "8th level",
+      }),
+      entity("REQUIRED_FEATURE", "Required Feature", "Class Feature"),
+      entity("FEATURE_FEAT", "Feature Feat", "Feat", {
+        prerequisites: "Required Feature",
+      }),
+    ];
+    const input = {
+      level: 8,
+      baseAbilities: { Dexterity: 12 },
+      occurrences: [
+        {
+          id: "level-4",
+          definitionId: "LEVEL_4",
+          acquiredLevel: 4,
+          kind: "root" as const,
+        },
+      ],
+      inventory: [],
+      candidateDetailLevels: [4],
+    };
+
+    const sameLevel = evaluateCharacter(
+      {
+        ...input,
+        occurrences: [
+          ...input.occurrences,
+          {
+            id: "dex-4",
+            definitionId: "DEX_4",
+            acquiredLevel: 4,
+            kind: "choice",
+          },
+          {
+            id: "feature-4",
+            definitionId: "REQUIRED_FEATURE",
+            acquiredLevel: 4,
+            kind: "choice",
+          },
+        ],
+      },
+      definitions,
+    );
+    const laterLevel = evaluateCharacter(
+      {
+        ...input,
+        occurrences: [
+          ...input.occurrences,
+          {
+            id: "dex-8",
+            definitionId: "DEX_8",
+            acquiredLevel: 8,
+            kind: "choice",
+          },
+          {
+            id: "feature-8",
+            definitionId: "REQUIRED_FEATURE",
+            acquiredLevel: 8,
+            kind: "choice",
+          },
+        ],
+      },
+      definitions,
+    );
+
+    expect(
+      sameLevel.choices[0]?.candidates.find(
+        ({ definitionId }) => definitionId === "DEX_FEAT",
+      ),
+    ).toMatchObject({ eligible: true, reasons: [] });
+    expect(
+      laterLevel.choices[0]?.candidates.find(
+        ({ definitionId }) => definitionId === "DEX_FEAT",
+      ),
+    ).toMatchObject({ eligible: false, reasons: ["prerequisite"] });
+    expect(
+      sameLevel.choices[0]?.candidates.find(
+        ({ definitionId }) => definitionId === "LATE_LEVEL_FEAT",
+      ),
+    ).toMatchObject({ eligible: false, reasons: ["prerequisite"] });
+    expect(
+      sameLevel.choices[0]?.candidates.find(
+        ({ definitionId }) => definitionId === "FEATURE_FEAT",
+      ),
+    ).toMatchObject({ eligible: true, reasons: [] });
+    expect(
+      laterLevel.choices[0]?.candidates.find(
+        ({ definitionId }) => definitionId === "FEATURE_FEAT",
+      ),
+    ).toMatchObject({ eligible: false, reasons: ["prerequisite"] });
+
+    const selectedTooEarly = evaluateCharacter(
+      {
+        ...input,
+        occurrences: [
+          ...input.occurrences,
+          {
+            id: "selected-dex-feat",
+            definitionId: "DEX_FEAT",
+            acquiredLevel: 4,
+            parentId: "level-4",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+          {
+            id: "dex-8",
+            definitionId: "DEX_8",
+            acquiredLevel: 8,
+            kind: "choice",
+          },
+        ],
+      },
+      definitions,
+    );
+    expect(selectedTooEarly.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "prerequisite.failed",
+        occurrenceId: "selected-dex-feat",
+      }),
+    );
+  });
+
   it("expands candidates only for requested detail levels", () => {
     const definitions = [
       entity("ROOT", "1", "Level", {

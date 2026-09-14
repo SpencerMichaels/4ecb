@@ -57,6 +57,11 @@ application's protected visual assets.
   so a player can plan many levels ahead, but they are inactive in current
   calculations and compatibility exports. Lowering the planning horizon hides
   rather than deletes preserved future choices; raising it restores them.
+- Evaluate a choice at level X against the projected build through level X.
+  Same-level decisions may satisfy one another—for example, a level-4 ability
+  increase may unlock a level-4 feat—but no feature from a later planned level
+  may leak backward into its candidates or legality. The final planning horizon
+  is therefore not itself the prerequisite context for every earlier choice.
 - Show candidates belonging to the choice category and currently legal by
   default. Each selection surface provides a temporary control that also
   reveals same-category options blocked by prerequisites or another objective

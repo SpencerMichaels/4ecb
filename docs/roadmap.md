@@ -395,6 +395,11 @@ area. The complete timeline opens as a non-resizing overlay, while ordinary
 detail cards and sections now grow naturally with the document instead of
 introducing nested scrollbars; candidate tables remain the intentional bounded
 scroll exception.
+Planning legality now uses the projected character at each choice's acquisition
+level rather than the final plan horizon: same-level increases and features may
+satisfy prerequisites, while later selections cannot retroactively unlock an
+earlier feat. The rules engine applies this consistently to candidate tables and
+saved-choice diagnostics using bounded, prefix-keyed historical snapshots.
 
 ## M6 — Local phone play mode
 

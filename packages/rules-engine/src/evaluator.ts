@@ -29,7 +29,10 @@ import {
   type SelectRule,
 } from "./ir";
 import { StatAccumulator, type EvaluatedStat } from "./stats";
-import { evaluatePrerequisite } from "./prerequisites";
+import {
+  evaluatePrerequisite,
+  type PrerequisiteContext,
+} from "./prerequisites";
 import { evaluatePowers, type EvaluatedPower } from "./powers";
 
 export interface CharacterOccurrence {
@@ -331,6 +334,28 @@ function knownDefinitionTokens(
   return tokens;
 }
 
+const prerequisiteSnapshotCaches = new WeakMap<
+  readonly ContentEntity[],
+  Map<string, EvaluatedCharacter>
+>();
+
+function prerequisiteSnapshotKey(
+  input: EvaluationInput,
+  level: number,
+): string {
+  return JSON.stringify({
+    level,
+    baseAbilities: input.baseAbilities,
+    occurrences: input.occurrences.filter(
+      (occurrence) => occurrence.acquiredLevel <= level,
+    ),
+    inventory: input.inventory.filter((entry) => entry.acquiredLevel <= level),
+    textStrings: input.textStrings,
+    localEntities: input.localEntities,
+    sourceEntitlements: input.sourceEntitlements,
+  });
+}
+
 function dynamicCategories(
   owned: readonly ContentEntity[],
   occurrences: readonly CharacterOccurrence[],
@@ -551,17 +576,24 @@ function essentialsMagicArmorBonuses(
   return bonuses;
 }
 
-export function evaluateCharacter(
+function evaluateCharacterInternal(
   input: EvaluationInput,
   entities: readonly ContentEntity[],
+  prerequisiteContextOnly: boolean,
+  prepared?: {
+    readonly evaluationEntities: readonly ContentEntity[];
+    readonly index: RulesIndex;
+  },
 ): EvaluatedCharacter {
   const localEntities = input.localEntities ?? [];
   const evaluationEntities =
-    localEntities.length === 0 ? entities : [...entities, ...localEntities];
+    prepared?.evaluationEntities ??
+    (localEntities.length === 0 ? entities : [...entities, ...localEntities]);
   const index =
-    localEntities.length === 0
+    prepared?.index ??
+    (localEntities.length === 0
       ? sharedRulesIndex(entities)
-      : new RulesIndex(evaluationEntities);
+      : new RulesIndex(evaluationEntities));
   const isSourceEntitled = sourceEntitlementChecker(
     input.sourceEntitlements,
     index,
@@ -1229,6 +1261,7 @@ export function evaluateCharacter(
             text[rule.name] = rule.value;
           break;
         case "select": {
+          if (prerequisiteContextOnly) break;
           const choiceLevel = Math.max(
             occurrence.acquiredLevel,
             rule.source.level.minimum,
@@ -1339,6 +1372,7 @@ export function evaluateCharacter(
           break;
         }
         case "replace": {
+          if (prerequisiteContextOnly) break;
           const replacementChoiceId = `${occurrence.id}:replacement:${rule.source.ordinal}`;
           const replacementLevel = Math.max(
             occurrence.acquiredLevel,
@@ -1522,7 +1556,7 @@ export function evaluateCharacter(
     const masteryPowerId = archeryMasteryPowerId(entity);
     const masteryPower =
       masteryPowerId === undefined ? undefined : index.get(masteryPowerId);
-    if (masteryPower !== undefined) {
+    if (!prerequisiteContextOnly && masteryPower !== undefined) {
       const ruleOrdinal = 0;
       const directSelection = saved.find(
         (candidate) =>
@@ -1616,25 +1650,32 @@ export function evaluateCharacter(
   const evaluatedStats = Object.fromEntries(
     stats.allNames().map((name) => [name, stats.evaluate(name)]),
   );
-  const prerequisiteContext = {
-    owned: ownedDefinitions,
+  if (prerequisiteContextOnly) choices = [];
+  const abilityNames = [
+    "Strength",
+    "Constitution",
+    "Dexterity",
+    "Intelligence",
+    "Wisdom",
+    "Charisma",
+  ] as const;
+  const knownTokens = knownDefinitionTokens(evaluationEntities);
+  const prerequisiteContextFor = (
+    level: number,
+    owned: readonly ContentEntity[],
+    abilityValue: (ability: string) => number | string | undefined,
+  ): PrerequisiteContext => ({
+    owned,
     definitions: evaluationEntities,
-    level: input.level,
+    level,
     abilities: Object.fromEntries(
-      [
-        "Strength",
-        "Constitution",
-        "Dexterity",
-        "Intelligence",
-        "Wisdom",
-        "Charisma",
-      ].map((ability) => {
-        const value = stats.evaluate(ability).value;
+      abilityNames.map((ability) => {
+        const value = abilityValue(ability);
         return [ability, typeof value === "number" ? value : 0];
       }),
     ),
     ownedTokens: new Set(
-      ownedDefinitions.flatMap((entity) =>
+      owned.flatMap((entity) =>
         [
           entity.id,
           entity.name,
@@ -1643,7 +1684,83 @@ export function evaluateCharacter(
         ].map((value) => value.trim().toLocaleLowerCase().replaceAll("_", " ")),
       ),
     ),
-    knownTokens: knownDefinitionTokens(evaluationEntities),
+    knownTokens,
+  });
+  const prerequisiteScopes = new Map<
+    number,
+    {
+      readonly context: PrerequisiteContext;
+      readonly expressionContext: ExpressionContext;
+    }
+  >([
+    [
+      input.level,
+      {
+        context: prerequisiteContextFor(
+          input.level,
+          ownedDefinitions,
+          (ability) => stats.evaluate(ability).value,
+        ),
+        expressionContext,
+      },
+    ],
+  ]);
+  const prerequisiteScopeAt = (requestedLevel: number) => {
+    const level = Math.min(input.level, requestedLevel);
+    const cached = prerequisiteScopes.get(level);
+    if (cached !== undefined) return cached;
+    const snapshotCache =
+      prerequisiteSnapshotCaches.get(entities) ??
+      new Map<string, EvaluatedCharacter>();
+    if (!prerequisiteSnapshotCaches.has(entities))
+      prerequisiteSnapshotCaches.set(entities, snapshotCache);
+    const snapshotKey = prerequisiteSnapshotKey(input, level);
+    let scoped = snapshotCache.get(snapshotKey);
+    if (scoped === undefined) {
+      scoped = evaluateCharacterInternal(
+        {
+          ...input,
+          level,
+          candidateDetailLevels: [],
+          candidateDetailReplacementChoiceIds: [],
+        },
+        entities,
+        true,
+        { evaluationEntities, index },
+      );
+      snapshotCache.set(snapshotKey, scoped);
+      while (snapshotCache.size > 64)
+        snapshotCache.delete(snapshotCache.keys().next().value!);
+    } else {
+      snapshotCache.delete(snapshotKey);
+      snapshotCache.set(snapshotKey, scoped);
+    }
+    const scopedOwned = scoped.occurrences.flatMap((occurrence) => {
+      const definition = index.get(occurrence.definitionId);
+      return definition === undefined ? [] : [definition];
+    });
+    const scope = {
+      context: prerequisiteContextFor(
+        level,
+        scopedOwned,
+        (ability: string) => scoped.stats[ability]?.value,
+      ),
+      expressionContext: {
+        owned: scopedOwned,
+        level,
+        dynamicCategories: dynamicCategories(
+          scopedOwned,
+          scoped.occurrences,
+          index,
+          input.textStrings ?? {},
+        ),
+        categoryAliases: index.categoryAliases,
+        categoryValuesFor: (entity: ContentEntity) =>
+          index.categoryValues(entity),
+      },
+    };
+    prerequisiteScopes.set(level, scope);
+    return scope;
   };
   const candidatePrerequisiteStatuses = new Map<
     string,
@@ -1653,7 +1770,13 @@ export function evaluateCharacter(
     ...choice,
     candidates: choice.candidates.map((candidate) => {
       const candidateEntity = index.get(candidate.definitionId);
-      const candidateKey = key(candidate.definitionId);
+      if (
+        candidateEntity?.prerequisites === undefined ||
+        candidateEntity.prerequisites.trim().length === 0
+      )
+        return candidate;
+      const prerequisiteContext = prerequisiteScopeAt(choice.level).context;
+      const candidateKey = `${choice.level}\0${key(candidate.definitionId)}`;
       let prerequisiteStatus = candidatePrerequisiteStatuses.get(candidateKey);
       if (prerequisiteStatus === undefined) {
         prerequisiteStatus = evaluatePrerequisite(
@@ -1742,8 +1865,13 @@ export function evaluateCharacter(
       selectedDefinitionId === undefined
         ? undefined
         : index.get(selectedDefinitionId);
+    const prerequisiteScope =
+      selectedEntity?.prerequisites === undefined ||
+      selectedEntity.prerequisites.trim().length === 0
+        ? prerequisiteScopes.get(input.level)!
+        : prerequisiteScopeAt(choice.level);
     const prerequisite = evaluatePrerequisite(selectedEntity?.prerequisites, {
-      ...prerequisiteContext,
+      ...prerequisiteScope.context,
       ...(selectedEntity === undefined ? {} : { subject: selectedEntity }),
     });
     const exactOwnedPrerequisite =
@@ -1751,7 +1879,7 @@ export function evaluateCharacter(
       !/[;,]/.test(selectedEntity.prerequisites) &&
       evaluateRequires(
         parseRequires(selectedEntity.prerequisites),
-        expressionContext,
+        prerequisiteScope.expressionContext,
       );
     if (prerequisite.status === "unverified")
       diagnostics.push({
@@ -1801,15 +1929,17 @@ export function evaluateCharacter(
   const activeDefinitionIds = occurrences.map(
     (occurrence) => occurrence.definitionId,
   );
-  const powers = evaluatePowers({
-    level: input.level,
-    activeDefinitionIds,
-    inventory,
-    stats: evaluatedStats,
-    overlays,
-    textStrings: text,
-    entities: evaluationEntities,
-  });
+  const powers = prerequisiteContextOnly
+    ? []
+    : evaluatePowers({
+        level: input.level,
+        activeDefinitionIds,
+        inventory,
+        stats: evaluatedStats,
+        overlays,
+        textStrings: text,
+        entities: evaluationEntities,
+      });
   return {
     level: input.level,
     converged,
@@ -1827,6 +1957,13 @@ export function evaluateCharacter(
     suggestions,
     diagnostics,
   };
+}
+
+export function evaluateCharacter(
+  input: EvaluationInput,
+  entities: readonly ContentEntity[],
+): EvaluatedCharacter {
+  return evaluateCharacterInternal(input, entities, false);
 }
 
 function overlay(
