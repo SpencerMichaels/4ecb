@@ -767,6 +767,7 @@ export type OverviewChoicePane =
   | "Powers"
   | "Spellbook"
   | "Feats"
+  | "Retraining"
   | "Other";
 
 const overviewPaneOrder: readonly OverviewChoicePane[] = [
@@ -776,12 +777,14 @@ const overviewPaneOrder: readonly OverviewChoicePane[] = [
   "Powers",
   "Spellbook",
   "Feats",
+  "Retraining",
   "Other",
 ];
 
 export function overviewChoicePane(
   choice: EvaluatedChoice,
 ): OverviewChoicePane {
+  if (isOptionalRetrainingChoice(choice)) return "Retraining";
   const section = legacyChoiceSection(choice);
   if (["Class", "Race", "Background", "Character Details"].includes(section))
     return "Character";

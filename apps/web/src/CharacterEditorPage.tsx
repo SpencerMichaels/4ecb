@@ -72,6 +72,7 @@ import {
   unresolveEvaluatedChoiceCommand,
   type ChoiceSelectionTableKind,
   type LegacyChoiceSection,
+  type OverviewChoicePane,
 } from "./builder-ui";
 import { Icon, type IconName } from "./Icon";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
@@ -348,8 +349,58 @@ const overviewPaneOrder = [
   "Powers",
   "Spellbook",
   "Feats",
+  "Retraining",
   "Other",
 ] as const;
+
+function overviewPowerTone(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+  byId: ReadonlyMap<string, ContentEntity>,
+): LegacyVisualTone {
+  const selected = selectedOccurrence(choice, evaluation);
+  const selectedEntity =
+    selected === undefined
+      ? undefined
+      : byId.get(selected.definitionId.toLocaleLowerCase());
+  const selectedTone =
+    selectedEntity === undefined ? "neutral" : entityVisualTone(selectedEntity);
+  if (selectedTone !== "neutral") return selectedTone;
+
+  const candidateTones = new Set(
+    choice.candidates.flatMap((candidate) => {
+      if (candidate.reasons.includes("category")) return [];
+      const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
+      const tone = entity === undefined ? "neutral" : entityVisualTone(entity);
+      return tone === "neutral" ? [] : [tone];
+    }),
+  );
+  if (candidateTones.size === 1) return [...candidateTones][0]!;
+
+  const authoredLabel = `${choice.name ?? ""} ${choice.type} ${choice.spellbook ?? ""}`;
+  if (/at[ -]?will/i.test(authoredLabel)) return "at-will";
+  if (/encounter/i.test(authoredLabel)) return "encounter";
+  if (/daily/i.test(authoredLabel)) return "daily";
+  if (/utility/i.test(authoredLabel)) return "utility";
+  return "neutral";
+}
+
+function overviewPowerType(tone: LegacyVisualTone): string {
+  switch (tone) {
+    case "at-will":
+      return "At-Will";
+    case "encounter":
+      return "Encounter";
+    case "daily":
+      return "Daily";
+    case "utility":
+      return "Utility";
+    case "item":
+      return "Item";
+    default:
+      return "Power";
+  }
+}
 
 function CharacterOverview({
   build,
@@ -383,6 +434,11 @@ function CharacterOverview({
       (choice) =>
         !isCharacterDetailChoice(choice) &&
         !isBuildPresetChoice(choice) &&
+        !(
+          legacyChoiceSection(choice) === "Background" &&
+          choice.optional &&
+          choice.selectedOccurrenceId === undefined
+        ) &&
         (!isOptionalRetrainingChoice(choice) ||
           choice.selectedOccurrenceId !== undefined) &&
         (!planned ||
@@ -391,19 +447,22 @@ function CharacterOverview({
   });
   const grouped = new Map(
     groupOverviewChoices(visibleChoices, (choice) => {
-      if (choice.type.trim().toLocaleLowerCase() !== "replacement")
+      if (
+        choice.type.trim().toLocaleLowerCase() !== "replacement" ||
+        isOptionalRetrainingChoice(choice)
+      )
         return undefined;
-      const selected = selectedOccurrence(choice, evaluation);
-      const replaced = choice.replacementOptions?.find(
-        (option) => option.replacesOccurrenceId === selected?.replacesId,
+      const replacedTypes = new Set(
+        choice.replacementOptions?.flatMap((option) => {
+          const type = byId
+            .get(option.definitionId.toLocaleLowerCase())
+            ?.type.trim()
+            .toLocaleLowerCase();
+          return type === undefined ? [] : [type];
+        }) ?? [],
       );
-      const replacedType =
-        replaced === undefined
-          ? undefined
-          : byId
-              .get(replaced.definitionId.toLocaleLowerCase())
-              ?.type.trim()
-              .toLocaleLowerCase();
+      if (replacedTypes.size !== 1) return undefined;
+      const [replacedType] = replacedTypes;
       if (replacedType === "power") return "Powers";
       if (replacedType === "feat") return "Feats";
       if (replacedType === "skill" || replacedType === "skill training")
@@ -411,6 +470,60 @@ function CharacterOverview({
       return undefined;
     }).map(({ pane, choices }) => [pane, choices]),
   );
+
+  const selectedName = (choice: EvaluatedChoice) => {
+    const selected = selectedOccurrence(choice, evaluation);
+    return selected === undefined
+      ? undefined
+      : (byId.get(selected.definitionId.toLocaleLowerCase())?.name ??
+          selected.definitionId);
+  };
+  const rowClass = (
+    rowChoices: EvaluatedChoice | readonly EvaluatedChoice[],
+    tone: LegacyVisualTone = "neutral",
+  ) => {
+    const choices = Array.isArray(rowChoices) ? rowChoices : [rowChoices];
+    const planned = choices[0]!.level > build.effectiveLevel;
+    const status = planned
+      ? "planned"
+      : choices.some((choice) => selectedChoiceHasWarning(choice, evaluation))
+        ? "warning"
+        : choices.some(isUnresolvedChoice)
+          ? "unresolved"
+          : "complete";
+    return `overview-choice-${status} ${visualToneClass(tone)}`;
+  };
+  const choiceButton = (choice: EvaluatedChoice, label: string) => (
+    <button
+      aria-current={choice.id === selectedChoiceId ? "true" : undefined}
+      aria-label={
+        label === "—" ? `Open unresolved ${choiceTitle(choice)}` : undefined
+      }
+      type="button"
+      onClick={() => onNavigateChoice(choice)}
+    >
+      {label}
+    </button>
+  );
+  const selectedWithWarning = (choice: EvaluatedChoice, label: string) => (
+    <>
+      {selectedChoiceHasWarning(choice, evaluation) ? (
+        <Icon name="warning" />
+      ) : null}
+      {label}
+    </>
+  );
+
+  const abilityIncreaseGroups = new Map<string, EvaluatedChoice[]>();
+  for (const choice of grouped.get("Ability Scores") ?? []) {
+    if (!isAbilityIncreaseChoiceType(choice.type)) continue;
+    const companion = /^Companion\b/i.test(choice.type);
+    const key = `${choice.level}:${companion ? "companion" : "character"}`;
+    abilityIncreaseGroups.set(key, [
+      ...(abilityIncreaseGroups.get(key) ?? []),
+      choice,
+    ]);
+  }
 
   return (
     <aside aria-labelledby="timeline-heading" className="build-overview">
@@ -428,93 +541,153 @@ function CharacterOverview({
         </label>
       </div>
       <div className="overview-checklists">
-        {overviewPaneOrder.map((pane) => {
+        {overviewPaneOrder.map((pane: OverviewChoicePane) => {
           const choices = grouped.get(pane) ?? [];
           if (choices.length === 0 && pane !== "Ability Scores") return null;
+          const showsLevel = pane !== "Character";
+          const showsChoice = ![
+            "Ability Scores",
+            "Skills",
+            "Feats",
+            "Retraining",
+          ].includes(pane);
           return (
-            <section className="overview-checklist-pane" key={pane}>
+            <section
+              className={`overview-checklist-pane overview-pane-${pane.toLocaleLowerCase().replaceAll(" ", "-")}`}
+              key={pane}
+            >
               <h4>{pane}</h4>
               <div className="overview-checklist-scroll">
                 <table>
                   <thead>
                     <tr>
-                      <th scope="col">Level</th>
-                      <th scope="col">Choice</th>
-                      <th scope="col">Selected</th>
+                      {showsLevel ? <th scope="col">Level</th> : null}
+                      {showsChoice ? (
+                        <th scope="col">
+                          {pane === "Powers" ? "Type" : "Choice"}
+                        </th>
+                      ) : null}
+                      <th scope="col">
+                        {pane === "Feats"
+                          ? "Feat"
+                          : pane === "Skills"
+                            ? "Skill"
+                            : pane === "Powers"
+                              ? "Power"
+                              : pane === "Retraining"
+                                ? "Retraining"
+                                : "Selected"}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {pane === "Ability Scores" ? (
-                      <tr className={`overview-choice-${abilityStatus}`}>
+                      <tr
+                        className={`overview-choice-${abilityStatus} tone-neutral`}
+                      >
                         <td>1</td>
                         <td>
                           <button type="button" onClick={onNavigateAbilities}>
-                            Base ability scores
+                            {abilitySummary}
                           </button>
                         </td>
-                        <td>{abilitySummary}</td>
                       </tr>
                     ) : null}
-                    {choices.map((choice) => {
-                      const planned = choice.level > build.effectiveLevel;
-                      const selected = selectedOccurrence(choice, evaluation);
-                      const selectedName =
-                        selected === undefined
-                          ? undefined
-                          : (byId.get(selected.definitionId.toLocaleLowerCase())
-                              ?.name ?? selected.definitionId);
-                      const warning = selectedChoiceHasWarning(
-                        choice,
-                        evaluation,
-                      );
-                      const unresolved = !planned && isUnresolvedChoice(choice);
-                      return (
-                        <tr
-                          className={
-                            planned
-                              ? "overview-choice-planned"
-                              : warning
-                                ? "overview-choice-warning"
-                                : unresolved
-                                  ? "overview-choice-unresolved"
-                                  : "overview-choice-complete"
-                          }
-                          key={choice.id}
-                        >
-                          <td>
-                            {choice.level}
-                            {planned ? (
-                              <span className="visually-hidden"> planned</span>
-                            ) : null}
-                          </td>
-                          <td>
-                            <button
-                              aria-current={
-                                choice.id === selectedChoiceId
-                                  ? "true"
-                                  : undefined
-                              }
-                              type="button"
-                              onClick={() => onNavigateChoice(choice)}
-                            >
-                              {isOptionalRetrainingChoice(choice)
-                                ? "Retraining"
-                                : contextualTimelineChoiceTitle(
-                                    choice,
-                                    evaluation,
-                                    byId,
+                    {pane === "Ability Scores"
+                      ? [...abilityIncreaseGroups.values()].map(
+                          (increaseChoices) => {
+                            const first = increaseChoices[0]!;
+                            const values = increaseChoices.map(
+                              (choice) => selectedName(choice) ?? "—",
+                            );
+                            const companion = /^Companion\b/i.test(first.type);
+                            return (
+                              <tr
+                                className={rowClass(increaseChoices)}
+                                key={`ability-${first.id}`}
+                              >
+                                <td>{first.level}</td>
+                                <td>
+                                  {choiceButton(
+                                    first,
+                                    `${companion ? "Companion: " : ""}${values.join(", ")}`,
                                   )}
-                            </button>
-                          </td>
-                          <td>
-                            {warning ? <Icon name="warning" /> : null}
-                            {selectedName ?? (
-                              <span aria-label="Unresolved">—</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                                </td>
+                              </tr>
+                            );
+                          },
+                        )
+                      : null}
+                    {choices
+                      .filter(
+                        (choice) =>
+                          pane !== "Ability Scores" ||
+                          !isAbilityIncreaseChoiceType(choice.type),
+                      )
+                      .map((choice) => {
+                        const planned = choice.level > build.effectiveLevel;
+                        const value = selectedName(choice) ?? "—";
+                        const powerTone =
+                          pane === "Powers"
+                            ? overviewPowerTone(choice, evaluation, byId)
+                            : "neutral";
+                        const replacement =
+                          pane === "Retraining"
+                            ? choice.replacementOptions?.find(
+                                (option) =>
+                                  option.replacesOccurrenceId ===
+                                  selectedOccurrence(choice, evaluation)
+                                    ?.replacesId,
+                              )
+                            : undefined;
+                        const replacedName =
+                          replacement === undefined
+                            ? undefined
+                            : (byId.get(
+                                replacement.definitionId.toLocaleLowerCase(),
+                              )?.name ?? replacement.definitionId);
+                        const displayValue =
+                          pane === "Retraining" && replacedName !== undefined
+                            ? `${replacedName} → ${value}`
+                            : value;
+                        return (
+                          <tr
+                            className={rowClass(choice, powerTone)}
+                            key={choice.id}
+                          >
+                            {showsLevel ? (
+                              <td>
+                                {choice.level}
+                                {planned ? (
+                                  <span className="visually-hidden">
+                                    {" "}
+                                    planned
+                                  </span>
+                                ) : null}
+                              </td>
+                            ) : null}
+                            {showsChoice ? (
+                              <td>
+                                {choiceButton(
+                                  choice,
+                                  pane === "Powers"
+                                    ? overviewPowerType(powerTone)
+                                    : contextualTimelineChoiceTitle(
+                                        choice,
+                                        evaluation,
+                                        byId,
+                                      ),
+                                )}
+                              </td>
+                            ) : null}
+                            <td>
+                              {showsChoice
+                                ? selectedWithWarning(choice, displayValue)
+                                : choiceButton(choice, displayValue)}
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>

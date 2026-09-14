@@ -1965,14 +1965,16 @@ textarea {
 
 .overview-checklists {
   align-items: start;
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.85rem;
-  grid-template-columns: repeat(auto-fit, minmax(min(30rem, 100%), 1fr));
   padding: 0.85rem;
 }
 
 .overview-checklist-pane {
   border: 1px solid var(--border);
+  flex: 0 1 auto;
+  max-width: 100%;
   min-width: 0;
 }
 
@@ -1991,9 +1993,13 @@ textarea {
 .overview-checklist-pane table {
   border-collapse: collapse;
   font-size: 0.78rem;
-  min-width: 26rem;
-  table-layout: fixed;
-  width: 100%;
+  min-width: 18rem;
+  width: max-content;
+}
+
+.overview-pane-powers table,
+.overview-pane-retraining table {
+  min-width: 25rem;
 }
 
 .overview-checklist-pane th,
@@ -2011,12 +2017,12 @@ textarea {
   text-transform: uppercase;
 }
 
-.overview-checklist-pane th:first-child {
+.overview-checklist-pane:not(.overview-pane-character) th:first-child {
   width: 3.5rem;
 }
 
-.overview-checklist-pane th:nth-child(2) {
-  width: 42%;
+.overview-pane-powers th:nth-child(2) {
+  width: 6.5rem;
 }
 
 .overview-checklist-pane tbody tr:last-child td {
@@ -2060,6 +2066,14 @@ textarea {
 
 .overview-choice-planned {
   color: var(--muted);
+}
+
+.overview-pane-powers tr[class*="tone-"] td {
+  background: var(--tone-soft);
+}
+
+.overview-pane-powers tr[class*="tone-"] td:first-child {
+  border-left: 4px solid var(--tone);
 }
 
 .timeline-help {

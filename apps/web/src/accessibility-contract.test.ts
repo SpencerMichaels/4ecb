@@ -78,7 +78,9 @@ describe("release accessibility contract", () => {
     expect(characterEditor).toContain('workspaceTab === "diagnostics"');
     expect(characterEditor).toContain('className="build-overview"');
     expect(characterEditor).toContain("Show planned choices");
-    expect(characterEditor).toContain('className="overview-checklist-pane"');
+    expect(characterEditor).toContain("overview-checklist-pane overview-pane-");
+    expect(characterEditor).toContain('pane === "Retraining"');
+    expect(characterEditor).toContain("overviewPowerType(powerTone)");
     expect(characterEditor).toContain(
       'aria-sort={active ? sort.direction : "none"}',
     );

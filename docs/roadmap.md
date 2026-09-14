@@ -398,7 +398,7 @@ The persistent level timeline has been reduced to a narrow status/navigation
 rail so the choice editor and its adjacent option detail remain the primary work
 area. A sibling Overview tab now replaces the expanded-plan overlay and bottom
 history disclosure with navigable Character, Ability Scores, Skills, Powers,
-Spellbook, Feats, and Other checklists whose rows carry their owning levels; it
+Spellbook, Feats, Retraining, and Other checklists whose rows carry their owning levels; it
 does not duplicate the list with a raw “Stored features” tree. Planned levels are hidden
 by default and the temporary toggle reveals only future frames that contain a
 saved choice. Ordinary detail cards and sections grow naturally with the

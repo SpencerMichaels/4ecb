@@ -1091,6 +1091,12 @@ describe("builder planning UI", () => {
         level: 8,
         type: "Companion Ability Increase (Level 8)",
       },
+      {
+        id: "retraining",
+        level: 6,
+        type: "Replacement",
+        optional: true,
+      },
     ] as unknown as EvaluatedCharacter["choices"];
 
     expect(
@@ -1104,6 +1110,7 @@ describe("builder planning UI", () => {
       ["Skills", ["skill"]],
       ["Powers", ["power-1", "power-7"]],
       ["Feats", ["feat-4"]],
+      ["Retraining", ["retraining"]],
     ]);
   });
 

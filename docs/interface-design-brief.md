@@ -92,12 +92,19 @@ application's protected visual assets.
   prototype review because navigation is easier to judge in context.
 - Keep a sibling **Overview** tab beside Build and Character details. It presents
   concise checklist panes for Character, Ability Scores, Skills, Powers,
-  Spellbook, Feats, and Other, with choices ordered and labeled by level; it
+  Spellbook, Feats, Retraining, and Other, with choices ordered and labeled by level; it
   must not repeat the same selections in a second raw “stored features” tree. Current
   levels appear by default. A temporary **Show planned levels** checkbox reveals
   only future levels that already contain a saved choice, omitting empty plan
   frames. Activating any history row returns to Build at that level and opens
   the owning category tab.
+- Tailor Overview columns to each checklist: Character has no redundant Level;
+  Feats and Skills do not repeat their type in every row; optional empty
+  Background slots stay hidden; paired ability increases share one row.
+  Retraining has its own old-to-new checklist, while feature-driven power
+  replacements remain Powers. Power rows use concise usage labels and the
+  familiar green/red/gray/blue power colors even while unresolved. Let panes
+  wrap at content-sized widths rather than stretching every checklist equally.
 - Keep important evaluation, save, and validation feedback immediate and
   comprehensible. Interaction responsiveness is a product requirement.
 - Ordinary client-side page changes reuse decoded content, rules workers,

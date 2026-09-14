@@ -193,7 +193,7 @@ candidate.
   level.
 - The level rail no longer expands into an overlay. A sibling **Overview** tab
   provides category checklists for Character, Ability Scores, Skills, Powers,
-  Spellbook, Feats, and Other without shifting the choice and
+  Spellbook, Feats, Retraining, and Other without shifting the choice and
   option detail panes, while the rail remains compact direct navigation within
   Build. Overview replaces both the former popout and bottom history disclosure,
   and deliberately omits the duplicate raw “Stored features” occurrence tree.
@@ -206,6 +206,15 @@ candidate.
   bounded internal scrolling. Live Silaqui verification found one history list
   for each displayed level, no “Stored features” subtree, no untouched level 9,
   and a level-8 feat row that returned to Build with level 8 and Feats active.
+- Overview checklists now remove pane-specific redundancy: Character omits its
+  constant level, Feats and Skills omit constant choice labels, and unselected
+  optional Background slots do not render. Regular ability increases at levels
+  4 and 8 each render as one paired row. Optional retraining has a dedicated
+  old-to-new pane; feature-driven replacements remain in their actual content
+  pane. Silaqui's unresolved Rapid Shot replacement renders in Powers as
+  `8 | At-Will | —`, with the green At-Will row tone. Content-sized wrapping
+  produced approximately 290 px compact panes and 402 px Power/Retraining panes
+  in live browser verification instead of uniformly stretched panels.
 - The compact rail now exposes all 30 levels under collapsible Heroic, Paragon,
   and Epic headings. A loaded character starts with only its current tier open;
   other tiers can be expanded independently. Selecting a not-yet-built level

@@ -596,7 +596,7 @@ The former expanded-plan overlay and bottom **Complete level history**
 disclosure are replaced by a sibling **Overview** tab beside Build and
 Character details. Overview reorganizes the compact choice summaries into
 checklist panes for Character, Ability Scores, Skills, Powers, Spellbook,
-Feats, and Other rather than repeating a pane for every level. Each row carries
+Feats, Retraining, and Other rather than repeating a pane for every level. Each row carries
 its owning level, and choices within a pane are ordered from earliest to latest.
 It does not also expose the evaluator's raw
 occurrence tree as “Stored features,” because that duplicates selections and
@@ -611,6 +611,21 @@ row is navigation: activating it switches to Build, selects the owning
 level and choice, and opens the corresponding category tab. The narrow 1–30
 level rail remains Build's direct navigation surface and is hidden while the
 checklists are open.
+
+Checklist columns are pane-specific rather than mechanically repeating the
+evaluator's fields. Character omits Level because its identity choices are not
+presented as level-up decisions; Feats and Skills omit their constant choice
+type; blank optional Background slots are absent. Paired regular or companion
+ability increases collapse to one row per level and kind, such as
+`8 | Dexterity, Constitution`. Optional retraining has its own pane and shows a
+compact old-to-new result. Feature-driven replacement choices remain with the
+content they replace rather than being mislabeled as retraining.
+
+Power rows retain Level, Type, and selected Power. Type is the concise At-Will,
+Encounter, Daily, Utility, or Item usage without repeating “Power,” including
+for unresolved slots inferred from their authored candidate set. The row uses
+the corresponding legacy power color. Checklist panes wrap at their intrinsic
+content width instead of expanding every pane to a uniform large grid track.
 
 ### D042 — Rules choices prefer visible buttons or shared candidate tables
 
