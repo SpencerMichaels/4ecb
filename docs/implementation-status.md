@@ -218,6 +218,13 @@ candidate.
   rather than 34rem when growing with a taller viewport. At the constrained
   1280×720 browser viewport, the Silaqui feat table grew from 192px to 384px
   while retaining its bounded row scroll and no horizontal overflow.
+- Feat and power rows now separate browsing from commitment: single-click pins
+  details, hover/focus do nothing, and double-click selects. Enter is the
+  keyboard selection equivalent; Space remains inspection-only. Live Silaqui
+  verification single-clicked Bloodhound Style without changing the selected
+  feat, double-clicked it to replace Archery Mastery, selected Cruel Cut Style
+  with Enter, and restored Archery Mastery through the normal undo path after
+  each mutation.
 - Verification on 2026-09-13 passed the complete public check (263 tests,
   workspace typechecks, production/PWA build, print checks, deterministic
   content checks, and query benchmark). Live full-corpus verification at 1280px

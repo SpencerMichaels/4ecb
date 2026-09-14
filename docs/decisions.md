@@ -457,6 +457,15 @@ stalling the editor. This changes only presentation: legality, source
 entitlement, house-rule selection, command construction, autosave, and undo all
 remain evaluator/domain responsibilities.
 
+Table inspection and commitment are separate actions. A single click pins a row
+in the shared detail pane; pointer hover and keyboard focus never replace that
+inspection. Double-click commits the row selection, and Enter provides the
+keyboard commit equivalent. Space retains normal button-click behavior and
+therefore inspects without committing. Explicit Clear remains the consistent
+way to return slots to unresolved. Parameterized feat-family rows remain
+expanders: clicking one both inspects its representative definition and reveals
+the exact parameter rows that can be committed.
+
 ### D034 — Content-derived runtimes live at application scope
 
 The client-side router preserves one browser document across ordinary page

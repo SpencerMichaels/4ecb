@@ -1508,6 +1508,12 @@ function CandidateSelectionTable({
     const summary =
       entity === undefined ? undefined : choiceTableSummary(entity, kind);
     const unavailable = !candidate.eligible;
+    const selectionBlocked =
+      disabled ||
+      !isCandidateSelectable(candidate) ||
+      (!selected &&
+        selectionLimit !== undefined &&
+        selectedIds.size >= selectionLimit);
     const tone =
       entity === undefined
         ? "tone-neutral"
@@ -1530,19 +1536,29 @@ function CandidateSelectionTable({
               <Icon name="favorite" />
             </button>
             <button
+              aria-description={
+                selectionBlocked
+                  ? "Click to inspect. This item cannot currently be selected."
+                  : "Click to inspect. Double-click or press Enter to select."
+              }
               aria-pressed={selected}
               className="selection-candidate-toggle"
-              disabled={
-                disabled ||
-                !isCandidateSelectable(candidate) ||
-                (!selected &&
-                  selectionLimit !== undefined &&
-                  selectedIds.size >= selectionLimit)
+              title={
+                selectionBlocked
+                  ? "Click for details"
+                  : "Click for details; double-click to select"
               }
               type="button"
-              onClick={() => onToggle(candidate.definitionId)}
-              onFocus={() => onInspect(candidate)}
-              onMouseEnter={() => onInspect(candidate)}
+              onClick={() => onInspect(candidate)}
+              onDoubleClick={() => {
+                if (!selectionBlocked) onToggle(candidate.definitionId);
+              }}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" || selectionBlocked) return;
+                event.preventDefault();
+                onInspect(candidate);
+                onToggle(candidate.definitionId);
+              }}
             >
               {selected ? <Icon name="check" /> : null}
               <span>{label}</span>
@@ -1705,11 +1721,10 @@ function CandidateSelectionTable({
                               <button
                                 aria-expanded={expanded}
                                 type="button"
-                                onClick={() =>
-                                  onExpandGroup(expanded ? "" : group.key)
-                                }
-                                onFocus={() => onInspect(representative)}
-                                onMouseEnter={() => onInspect(representative)}
+                                onClick={() => {
+                                  onInspect(representative);
+                                  onExpandGroup(expanded ? "" : group.key);
+                                }}
                               >
                                 {selected ? <Icon name="check" /> : null}
                                 <span>{group.label}…</span>

@@ -146,9 +146,11 @@ application's protected visual assets.
   action type and attack type are each represented by one monochrome icon, with
   the exact source value retained as its tooltip and accessible name. Power
   usage keeps the familiar 4E at-will/encounter/daily/utility color treatment.
-  Focusing or hovering a row updates the shared detail pane, and choosing a row
-  updates selection state immediately while reevaluation and autosave run in
-  the background.
+  A single row click pins that candidate in the shared detail pane; hover and
+  focus alone do not replace the inspected record. Double-click commits the
+  selection. Enter is the keyboard commit equivalent, while Space/single-click
+  remains inspection-only. A committed choice still updates selection state
+  immediately while reevaluation and autosave run in the background.
 - Repeated feat or power slots in one section share a single multi-select table
   and one **X of Y chosen** count. Selected rows remain visible. To keep large
   feat corpora responsive, search always covers the complete candidate set but
