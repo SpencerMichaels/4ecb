@@ -2025,6 +2025,12 @@ textarea {
   width: 6.5rem;
 }
 
+.overview-pane-retraining th:nth-child(3),
+.overview-retraining-arrow {
+  text-align: center;
+  width: 2rem;
+}
+
 .overview-checklist-pane tbody tr:last-child td {
   border-bottom: 0;
 }
@@ -2066,6 +2072,22 @@ textarea {
 
 .overview-choice-planned {
   color: var(--muted);
+}
+
+.overview-retraining-marker {
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  color: var(--accent-strong);
+  cursor: help;
+  display: inline-grid;
+  font-size: 0.55rem;
+  font-weight: 800;
+  height: 1rem;
+  line-height: 1;
+  margin-left: 0.3rem;
+  place-items: center;
+  vertical-align: super;
+  width: 1rem;
 }
 
 .overview-pane-powers tr[class*="tone-"] td {

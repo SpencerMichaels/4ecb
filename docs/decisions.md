@@ -617,9 +617,15 @@ evaluator's fields. Character omits Level because its identity choices are not
 presented as level-up decisions; Feats and Skills omit their constant choice
 type; blank optional Background slots are absent. Paired regular or companion
 ability increases collapse to one row per level and kind, such as
-`8 | Dexterity, Constitution`. Optional retraining has its own pane and shows a
-compact old-to-new result. Feature-driven replacement choices remain with the
-content they replace rather than being mislabeled as retraining.
+`8 | Dexterity, Constitution`. Optional retraining has its own explicit
+`Level | From | → | To` pane. Feature-driven replacement choices remain with
+the content they replace rather than being mislabeled as retraining.
+
+The resulting row in Powers, Feats, Skills, or another applicable checklist is
+annotated by exact replacement-occurrence identity, not by matching its name.
+A compact superscript **R** keeps the table scannable; its tooltip and accessible
+label state `Retrained from X at level Y`. This exposes provenance without
+repeating the full explanation in every primary checklist row.
 
 Power rows retain Level, Type, and selected Power. Type is the concise At-Will,
 Encounter, Daily, Utility, or Item usage without repeating “Power,” including

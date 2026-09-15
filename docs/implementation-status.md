@@ -209,8 +209,8 @@ candidate.
 - Overview checklists now remove pane-specific redundancy: Character omits its
   constant level, Feats and Skills omit constant choice labels, and unselected
   optional Background slots do not render. Regular ability increases at levels
-  4 and 8 each render as one paired row. Optional retraining has a dedicated
-  old-to-new pane; feature-driven replacements remain in their actual content
+  4 and 8 each render as one paired row. Optional retraining has dedicated
+  `From → To` columns; feature-driven replacements remain in their actual content
   pane. Silaqui's unresolved Rapid Shot replacement renders in Powers as
   `8 | At-Will | —`, with the green At-Will row tone. Content-sized wrapping
   produced approximately 290 px compact panes and 402 px Power/Retraining panes
@@ -218,6 +218,12 @@ candidate.
   navigable checklist cells share the same plain-text treatment, including the
   Character Choice and Power Type columns; their controls do not render as
   raised form buttons.
+- Retraining provenance also appears on the resulting checklist item as a
+  superscript **R**, joined by exact selected occurrence rather than a name
+  heuristic. Its native tooltip and accessible label state the original item
+  and level. Live Silaqui verification showed `Nimble Strike → Fading Strike`
+  in Retraining and exactly one marker beside Fading Strike reading
+  “Retrained from Nimble Strike at level 6.”
 - The compact rail now exposes all 30 levels under collapsible Heroic, Paragon,
   and Epic headings. A loaded character starts with only its current tier open;
   other tiers can be expanded independently. Selecting a not-yet-built level

@@ -101,8 +101,10 @@ application's protected visual assets.
 - Tailor Overview columns to each checklist: Character has no redundant Level;
   Feats and Skills do not repeat their type in every row; optional empty
   Background slots stay hidden; paired ability increases share one row.
-  Retraining has its own old-to-new checklist, while feature-driven power
-  replacements remain Powers. Power rows use concise usage labels and the
+  Retraining has explicit From → To columns, while feature-driven power
+  replacements remain Powers. Mark the resulting item in its normal checklist
+  with a compact superscript **R** whose tooltip and accessible label identify
+  the original item and retraining level. Power rows use concise usage labels and the
   familiar green/red/gray/blue power colors even while unresolved. Let panes
   wrap at content-sized widths rather than stretching every checklist equally.
 - Keep important evaluation, save, and validation feedback immediate and

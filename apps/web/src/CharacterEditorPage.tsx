@@ -402,6 +402,13 @@ function overviewPowerType(tone: LegacyVisualTone): string {
   }
 }
 
+interface OverviewRetraining {
+  readonly choice: EvaluatedChoice;
+  readonly fromName: string;
+  readonly toName: string;
+  readonly selectedOccurrenceId: string;
+}
+
 function CharacterOverview({
   build,
   evaluation,
@@ -525,6 +532,54 @@ function CharacterOverview({
     ]);
   }
 
+  const retrainings = (grouped.get("Retraining") ?? []).flatMap(
+    (choice): OverviewRetraining[] => {
+      const selected = selectedOccurrence(choice, evaluation);
+      if (selected?.replacesId === undefined) return [];
+      const replacement = choice.replacementOptions?.find(
+        (option) => option.replacesOccurrenceId === selected.replacesId,
+      );
+      if (replacement === undefined) return [];
+      return [
+        {
+          choice,
+          fromName:
+            byId.get(replacement.definitionId.toLocaleLowerCase())?.name ??
+            replacement.definitionId,
+          toName:
+            byId.get(selected.definitionId.toLocaleLowerCase())?.name ??
+            selected.definitionId,
+          selectedOccurrenceId: selected.id,
+        },
+      ];
+    },
+  );
+  const retrainingByOccurrenceId = new Map<string, OverviewRetraining[]>();
+  for (const retraining of retrainings)
+    retrainingByOccurrenceId.set(retraining.selectedOccurrenceId, [
+      ...(retrainingByOccurrenceId.get(retraining.selectedOccurrenceId) ?? []),
+      retraining,
+    ]);
+  const retrainingMarkers = (choice: EvaluatedChoice) => {
+    const occurrenceId = selectedOccurrence(choice, evaluation)?.id;
+    if (occurrenceId === undefined) return null;
+    return (retrainingByOccurrenceId.get(occurrenceId) ?? []).map(
+      (retraining) => {
+        const label = `Retrained from ${retraining.fromName} at level ${retraining.choice.level}`;
+        return (
+          <sup
+            aria-label={label}
+            className="overview-retraining-marker"
+            key={retraining.choice.id}
+            title={label}
+          >
+            R
+          </sup>
+        );
+      },
+    );
+  };
+
   return (
     <aside aria-labelledby="timeline-heading" className="build-overview">
       <div className="timeline-heading">
@@ -562,22 +617,32 @@ function CharacterOverview({
                   <thead>
                     <tr>
                       {showsLevel ? <th scope="col">Level</th> : null}
-                      {showsChoice ? (
+                      {pane === "Retraining" ? (
+                        <>
+                          <th scope="col">From</th>
+                          <th aria-label="to" scope="col">
+                            →
+                          </th>
+                          <th scope="col">To</th>
+                        </>
+                      ) : showsChoice ? (
                         <th scope="col">
                           {pane === "Powers" ? "Type" : "Choice"}
                         </th>
+                      ) : (
+                        <th scope="col">
+                          {pane === "Feats"
+                            ? "Feat"
+                            : pane === "Skills"
+                              ? "Skill"
+                              : "Selected"}
+                        </th>
+                      )}
+                      {showsChoice && pane !== "Retraining" ? (
+                        <th scope="col">
+                          {pane === "Powers" ? "Power" : "Selected"}
+                        </th>
                       ) : null}
-                      <th scope="col">
-                        {pane === "Feats"
-                          ? "Feat"
-                          : pane === "Skills"
-                            ? "Skill"
-                            : pane === "Powers"
-                              ? "Power"
-                              : pane === "Retraining"
-                                ? "Retraining"
-                                : "Selected"}
-                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -631,25 +696,13 @@ function CharacterOverview({
                           pane === "Powers"
                             ? overviewPowerTone(choice, evaluation, byId)
                             : "neutral";
-                        const replacement =
+                        const displayValue = value;
+                        const retraining =
                           pane === "Retraining"
-                            ? choice.replacementOptions?.find(
-                                (option) =>
-                                  option.replacesOccurrenceId ===
-                                  selectedOccurrence(choice, evaluation)
-                                    ?.replacesId,
+                            ? retrainings.find(
+                                (item) => item.choice.id === choice.id,
                               )
                             : undefined;
-                        const replacedName =
-                          replacement === undefined
-                            ? undefined
-                            : (byId.get(
-                                replacement.definitionId.toLocaleLowerCase(),
-                              )?.name ?? replacement.definitionId);
-                        const displayValue =
-                          pane === "Retraining" && replacedName !== undefined
-                            ? `${replacedName} → ${value}`
-                            : value;
                         return (
                           <tr
                             className={rowClass(choice, powerTone)}
@@ -666,7 +719,28 @@ function CharacterOverview({
                                 ) : null}
                               </td>
                             ) : null}
-                            {showsChoice ? (
+                            {pane === "Retraining" ? (
+                              <>
+                                <td>
+                                  {choiceButton(
+                                    choice,
+                                    retraining?.fromName ?? "—",
+                                  )}
+                                </td>
+                                <td
+                                  aria-label="to"
+                                  className="overview-retraining-arrow"
+                                >
+                                  →
+                                </td>
+                                <td>
+                                  {choiceButton(
+                                    choice,
+                                    retraining?.toName ?? value,
+                                  )}
+                                </td>
+                              </>
+                            ) : showsChoice ? (
                               <td>
                                 {choiceButton(
                                   choice,
@@ -680,11 +754,16 @@ function CharacterOverview({
                                 )}
                               </td>
                             ) : null}
-                            <td>
-                              {showsChoice
-                                ? selectedWithWarning(choice, displayValue)
-                                : choiceButton(choice, displayValue)}
-                            </td>
+                            {pane === "Retraining" ? null : (
+                              <td>
+                                {showsChoice ? (
+                                  selectedWithWarning(choice, displayValue)
+                                ) : (
+                                  <>{choiceButton(choice, displayValue)}</>
+                                )}
+                                {retrainingMarkers(choice)}
+                              </td>
+                            )}
                           </tr>
                         );
                       })}

@@ -81,6 +81,10 @@ describe("release accessibility contract", () => {
     expect(characterEditor).toContain("overview-checklist-pane overview-pane-");
     expect(characterEditor).toContain('pane === "Retraining"');
     expect(characterEditor).toContain("overviewPowerType(powerTone)");
+    expect(characterEditor).toContain('className="overview-retraining-marker"');
+    expect(characterEditor).toContain(
+      "Retrained from ${retraining.fromName} at level ${retraining.choice.level}",
+    );
     expect(characterEditor).toContain(
       'aria-sort={active ? sort.direction : "none"}',
     );
