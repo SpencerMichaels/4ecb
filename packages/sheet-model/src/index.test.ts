@@ -152,6 +152,23 @@ describe("sheet model", () => {
           overrides: {},
           legality: "rules-legal",
         },
+        {
+          id: "armor-entry",
+          acquiredLevel: 1,
+          quantity: 1,
+          equippedQuantity: 1,
+          elements: [
+            { definitionId: "ARMOR_1", name: "Leather Armor", type: "Armor" },
+            {
+              definitionId: "GLOAMING_1",
+              name: "Gloaming Armor +1",
+              type: "Magic Item",
+            },
+          ],
+          showPowerCard: true,
+          overrides: {},
+          legality: "rules-legal",
+        },
       ],
       alternates: [],
       baseAbilities: { Strength: 14 },
@@ -266,6 +283,34 @@ describe("sheet model", () => {
         extensions: [],
         provenance: { sourceKey: "fixture", sourceOrdinal: 2 },
       },
+      {
+        id: "ARMOR_1",
+        name: "Leather Armor",
+        type: "Armor",
+        source: "Synthetic",
+        sources: ["Synthetic"],
+        attributes: [],
+        categories: [],
+        specifics: [],
+        rules: [],
+        description: "",
+        extensions: [],
+        provenance: { sourceKey: "fixture", sourceOrdinal: 3 },
+      },
+      {
+        id: "GLOAMING_1",
+        name: "Gloaming Armor +1",
+        type: "Magic Item",
+        source: "Synthetic",
+        sources: ["Synthetic"],
+        attributes: [],
+        categories: [],
+        specifics: [],
+        rules: [],
+        description: "",
+        extensions: [],
+        provenance: { sourceKey: "fixture", sourceOrdinal: 4 },
+      },
     ];
 
     const model = buildEvaluatedSheetModel(
@@ -286,8 +331,12 @@ describe("sheet model", () => {
       damage: "1d6+4",
     });
     expect(model.items[0]).toMatchObject({ name: "Test wand" });
+    expect(model.items).toContainEqual(
+      expect.objectContaining({ name: "+1 Gloaming Leather Armor" }),
+    );
     expect(model.equipment).toEqual([
       { label: "Test wand", value: "× 2 · 1 equipped" },
+      { label: "+1 Gloaming Leather Armor", value: "× 1 · 1 equipped" },
     ]);
     expect(model.equipment).not.toContainEqual(
       expect.objectContaining({ label: "Stale wand" }),

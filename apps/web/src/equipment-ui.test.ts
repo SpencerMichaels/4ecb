@@ -6,6 +6,7 @@ import {
   compatibleBaseItems,
   entityCurrencyCopper,
   groupMagicItemFamilies,
+  inventoryDisplayName,
   inventorySlotCandidates,
   inventoryRequiresBothHands,
   practiceKind,
@@ -77,6 +78,52 @@ describe("equipment catalog presentation", () => {
         entity("A", "Formula", "Ritual", { type: "Alchemical Formula" }),
       ),
     ).toBe("alchemical-formula");
+  });
+
+  it("formats composed magic equipment as one natural item name", () => {
+    const leather = entity("LEATHER", "Leather Armor", "Armor");
+    const gloaming = entity("GLOAMING", "Gloaming Armor +1", "Magic Item");
+    const greatbow = entity("GREATBOW", "Greatbow", "Weapon");
+    const speed = entity("SPEED", "Weapon of Speed +2", "Magic Item");
+    const magicArmor = entity("MAGIC_ARMOR", "Magic Armor +1", "Magic Item");
+    const magicWeapon = entity("MAGIC_WEAPON", "Magic Weapon +1", "Magic Item");
+    const index = new Map(
+      [leather, gloaming, greatbow, speed, magicArmor, magicWeapon].map(
+        (item) => [item.id.toLocaleLowerCase(), item],
+      ),
+    );
+    const holding = (base: ContentEntity, enchantment: ContentEntity) => ({
+      id: `${base.id}:${enchantment.id}`,
+      acquiredLevel: 1,
+      quantity: 1,
+      equippedQuantity: 0,
+      elements: [base, enchantment].map(({ id, name, type }) => ({
+        definitionId: id,
+        name,
+        type,
+      })),
+      overrides: {},
+      legality: "rules-legal" as const,
+    });
+
+    expect(inventoryDisplayName(holding(leather, gloaming), index)).toBe(
+      "+1 Gloaming Leather Armor",
+    );
+    expect(inventoryDisplayName(holding(greatbow, speed), index)).toBe(
+      "+2 Greatbow of Speed",
+    );
+    expect(inventoryDisplayName(holding(leather, magicArmor), index)).toBe(
+      "+1 Leather Armor",
+    );
+    expect(inventoryDisplayName(holding(greatbow, magicWeapon), index)).toBe(
+      "+1 Greatbow",
+    );
+    expect(
+      inventoryDisplayName(
+        { ...holding(leather, gloaming), name: "Grandmother's armor" },
+        index,
+      ),
+    ).toBe("Grandmother's armor");
   });
 
   it("pairs armor and weapon enchantments only with compatible bases", () => {

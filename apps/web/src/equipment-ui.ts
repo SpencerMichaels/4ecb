@@ -1,4 +1,7 @@
-import type { BuildInventoryEntry } from "@4ecb/character-domain";
+import {
+  formatInventoryItemName,
+  type BuildInventoryEntry,
+} from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 
 import { contentSpecificValue } from "./builder-ui";
@@ -137,18 +140,17 @@ export function inventoryDisplayName(
   entry: BuildInventoryEntry,
   byId: ReadonlyMap<string, ContentEntity>,
 ): string {
-  return (
-    entry.name?.trim() ||
-    entry.elements
-      .map(({ definitionId, name }) =>
-        definitionId === undefined
-          ? name
-          : (byId.get(definitionId.toLocaleLowerCase())?.name ?? name),
-      )
-      .filter(Boolean)
-      .join(" + ") ||
-    "Unnamed item"
-  );
+  const elements = entry.elements.map(({ definitionId, name, type }) => {
+    const definition =
+      definitionId === undefined
+        ? undefined
+        : byId.get(definitionId.toLocaleLowerCase());
+    return {
+      name: definition?.name ?? name,
+      type: definition?.type ?? type,
+    };
+  });
+  return formatInventoryItemName(elements, entry.name);
 }
 
 export function inventorySlotCandidates(

@@ -97,6 +97,57 @@ export interface BuildInventoryEntry {
   readonly legality: BuildLegality;
 }
 
+/** Formats an exact inventory holding without exposing its base/enchantment split. */
+export function formatInventoryItemName(
+  elements: readonly Pick<BuildElementIdentity, "name" | "type">[],
+  customName?: string,
+): string {
+  const preservedName = customName?.trim();
+  if (preservedName) return preservedName;
+
+  const normalized = elements.map(({ name, type }) => ({
+    name,
+    type: type.toLocaleLowerCase(),
+  }));
+  const base = normalized.find(({ type }) =>
+    ["armor", "weapon", "superior implement"].includes(type),
+  );
+  const enchantment = normalized.find(({ type }) => type === "magic item");
+  if (base !== undefined && enchantment !== undefined) {
+    const enhanced = /^(.*?)\s+\+(\d+)$/u.exec(enchantment.name.trim());
+    if (enhanced !== null) {
+      const stem = enhanced[1]!.trim();
+      const bonus = enhanced[2]!;
+      const generic =
+        base.type === "armor"
+          ? "armor"
+          : base.type === "weapon"
+            ? "weapon"
+            : "implement";
+      let composed: string;
+      if (stem.toLocaleLowerCase() === `magic ${generic}`) {
+        composed = base.name;
+      } else {
+        const replaceable =
+          base.type === "superior implement"
+            ? /\b(?:holy symbol|ki focus|implement|symbol|orb|rod|staff|tome|totem|wand)\b/iu
+            : new RegExp(`\\b${generic}\\b`, "iu");
+        composed = replaceable.test(stem)
+          ? stem.replace(replaceable, base.name)
+          : `${stem} ${base.name}`;
+      }
+      return `+${bonus} ${composed.replaceAll(/\s+/gu, " ").trim()}`;
+    }
+  }
+
+  return (
+    normalized
+      .map(({ name }) => name)
+      .filter(Boolean)
+      .join(" + ") || "Unnamed item"
+  );
+}
+
 export interface BuildAlternate {
   readonly id: string;
   readonly selectName: string;

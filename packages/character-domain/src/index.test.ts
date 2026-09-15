@@ -8,6 +8,7 @@ import {
   currencyToCopper,
   detailsWithLegacyTextStrings,
   duplicateCharacterRecord,
+  formatInventoryItemName,
   formatLegacyCurrency,
   isCharacterRecord,
   isLegacyCharacterRecordV1,
@@ -274,6 +275,27 @@ describe("character records", () => {
     });
     expect(build.levels[0]?.root.children).toEqual([]);
     expect(changed.levels[0]?.root.children[0]?.id).toBe("choice");
+  });
+
+  it("formats composed magic equipment as a single display name", () => {
+    expect(
+      formatInventoryItemName([
+        { name: "Leather Armor", type: "Armor" },
+        { name: "Gloaming Armor +1", type: "Magic Item" },
+      ]),
+    ).toBe("+1 Gloaming Leather Armor");
+    expect(
+      formatInventoryItemName([
+        { name: "Greatbow", type: "Weapon" },
+        { name: "Weapon of Speed +2", type: "Magic Item" },
+      ]),
+    ).toBe("+2 Greatbow of Speed");
+    expect(
+      formatInventoryItemName([
+        { name: "Leather Armor", type: "Armor" },
+        { name: "Magic Armor +1", type: "Magic Item" },
+      ]),
+    ).toBe("+1 Leather Armor");
   });
 
   it("parses, formats, and calculates all five currency denominations", () => {

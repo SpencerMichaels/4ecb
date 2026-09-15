@@ -1,5 +1,6 @@
 import {
   detailsWithLegacyTextStrings,
+  formatInventoryItemName,
   type CharacterBuild,
   type LegacyCharacterSnapshot,
   type LegacyPowerSnapshot,
@@ -464,6 +465,35 @@ export function buildEvaluatedSheetModel(
     })),
     evaluation.level,
   );
+  const inventoryNames = new Map(
+    inventory.map((entry) => {
+      const original = build.inventory.find(
+        (candidate) => candidate.id === entry.id,
+      );
+      const elements =
+        original?.elements.map((element) => {
+          const definition =
+            element.definitionId === undefined
+              ? undefined
+              : entities.get(element.definitionId.toLocaleLowerCase());
+          return {
+            name: definition?.name ?? element.name,
+            type: definition?.type ?? element.type,
+          };
+        }) ??
+        entry.definitionIds.map((id) => {
+          const definition = entities.get(id.toLocaleLowerCase());
+          return {
+            name: definition?.name ?? id,
+            type: definition?.type ?? "",
+          };
+        });
+      return [
+        entry.id,
+        formatInventoryItemName(elements, entry.name ?? original?.name),
+      ] as const;
+    }),
+  );
   const itemCards: SheetCard[] = inventory.flatMap((entry) => {
     const original = build.inventory.find(
       (candidate) => candidate.id === entry.id,
@@ -473,21 +503,11 @@ export function buildEvaluatedSheetModel(
       .reverse()
       .map((id) => entities.get(id.toLocaleLowerCase()))
       .find((candidate) => candidate !== undefined);
-    const preservedName = original?.elements
-      .map((element) => element.name)
-      .filter(Boolean)
-      .join(" ");
     return [
       {
         ...(entity === undefined ? {} : { id: entity.id }),
         kind: "item" as const,
-        name:
-          entry.name ??
-          original?.name ??
-          (preservedName ||
-            entry.definitionIds
-              .map((id) => entities.get(id.toLocaleLowerCase())?.name ?? id)
-              .join(" ")),
+        name: inventoryNames.get(entry.id) ?? "Unnamed item",
         fields: [
           { label: "Quantity", value: String(entry.quantity) },
           ...(entry.equippedQuantity === 0
@@ -559,21 +579,8 @@ export function buildEvaluatedSheetModel(
     senses: evaluatedValues(["Passive Insight", "Passive Perception"]),
     skills: evaluatedValues(SKILLS),
     equipment: inventory.map((entry) => {
-      const original = build.inventory.find(
-        (candidate) => candidate.id === entry.id,
-      );
-      const preservedName = original?.elements
-        .map((element) => element.name)
-        .filter(Boolean)
-        .join(" ");
       return {
-        label:
-          entry.name ??
-          original?.name ??
-          (preservedName ||
-            entry.definitionIds
-              .map((id) => entities.get(id.toLocaleLowerCase())?.name ?? id)
-              .join(" ")),
+        label: inventoryNames.get(entry.id) ?? "Unnamed item",
         value: [
           `× ${entry.quantity}`,
           entry.equippedQuantity > 0
