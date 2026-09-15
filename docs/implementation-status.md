@@ -214,7 +214,10 @@ candidate.
   pane. Silaqui's unresolved Rapid Shot replacement renders in Powers as
   `8 | At-Will | —`, with the green At-Will row tone. Content-sized wrapping
   produced approximately 290 px compact panes and 402 px Power/Retraining panes
-  in live browser verification instead of uniformly stretched panels.
+  in live browser verification instead of uniformly stretched panels. All
+  navigable checklist cells share the same plain-text treatment, including the
+  Character Choice and Power Type columns; their controls do not render as
+  raised form buttons.
 - The compact rail now exposes all 30 levels under collapsible Heroic, Paragon,
   and Epic headings. A loaded character starts with only its current tier open;
   other tiers can be expanded independently. Selecting a not-yet-built level

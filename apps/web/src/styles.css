@@ -2029,7 +2029,7 @@ textarea {
   border-bottom: 0;
 }
 
-.overview-checklist-pane td:nth-child(2) button {
+.overview-checklist-pane td button {
   background: transparent;
   border: 0;
   color: inherit;
@@ -2039,13 +2039,13 @@ textarea {
   text-align: left;
 }
 
-.overview-checklist-pane td:nth-child(2) button:hover,
-.overview-checklist-pane td:nth-child(2) button:focus-visible {
+.overview-checklist-pane td button:hover,
+.overview-checklist-pane td button:focus-visible {
   color: var(--focus);
   text-decoration: underline;
 }
 
-.overview-checklist-pane td:nth-child(2) button[aria-current="true"] {
+.overview-checklist-pane td button[aria-current="true"] {
   color: var(--focus);
 }
 
