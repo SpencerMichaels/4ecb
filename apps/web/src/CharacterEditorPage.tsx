@@ -4706,7 +4706,7 @@ export function CharacterEditorPage({
             className="button-link secondary-link"
             href={`#/characters/${encodeURIComponent(characterId)}`}
           >
-            <Icon name="sheet" /> Sheet
+            <Icon name="sheet" /> Character sheet
           </a>
           <button
             type="button"

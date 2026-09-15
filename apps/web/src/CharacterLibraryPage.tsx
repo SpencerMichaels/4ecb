@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from "react";
 import {
   CharacterRepository,
   ContentPackRepository,
-  type CharacterBackupInspection,
   type ContentProfileDefinition,
 } from "@4ecb/browser-storage";
 import {
@@ -256,11 +255,6 @@ export function CharacterLibraryPage({
   const [exportTargets, setExportTargets] = useState<
     Readonly<Record<string, Dnd4eExportTarget>>
   >({});
-  const [pendingBackup, setPendingBackup] = useState<{
-    readonly value: unknown;
-    readonly inspection: CharacterBackupInspection;
-  }>();
-  const [newCharacterName, setNewCharacterName] = useState("");
   const [creatingCharacter, setCreatingCharacter] = useState(false);
 
   const refresh = useCallback(async () => {
@@ -401,35 +395,6 @@ export function CharacterLibraryPage({
     setStatus(message);
   }
 
-  async function exportBackup(): Promise<void> {
-    const backup = await repository.exportBackup();
-    download(
-      `4ecb-characters-${new Date().toISOString().slice(0, 10)}.json`,
-      JSON.stringify(backup, null, 2),
-      "application/json",
-    );
-    setStatus(`Backed up ${backup.characters.length} character record(s).`);
-  }
-
-  async function inspectBackupFile(file: File): Promise<void> {
-    if (file.size > 100 * 1024 * 1024)
-      throw new Error("Backup exceeds the 100 MiB inspection limit");
-    const value: unknown = JSON.parse(await file.text());
-    const inspection = await repository.inspectBackup(value);
-    setPendingBackup({ value, inspection });
-    setStatus(
-      `Inspected ${inspection.characterCount} backup record(s); no data has been restored yet.`,
-    );
-  }
-
-  async function restoreInspectedBackup(): Promise<void> {
-    if (pendingBackup === undefined) return;
-    const restored = await repository.restoreBackup(pendingBackup.value);
-    setPendingBackup(undefined);
-    await refresh();
-    setStatus(`Restored ${restored} backup record(s).`);
-  }
-
   async function createCharacter(): Promise<void> {
     if (activePackId === undefined)
       throw new Error(
@@ -441,7 +406,7 @@ export function CharacterLibraryPage({
     setCreatingCharacter(true);
     try {
       const character = createNativeCharacter(
-        newCharacterName.trim(),
+        "New Character",
         pack.manifest,
         pack.entities,
         activeProfile === undefined
@@ -465,15 +430,8 @@ export function CharacterLibraryPage({
 
   return (
     <main className="characters-page" id="main-content">
-      <header className="page-heading">
-        <div>
-          <p className="eyebrow">Local library</p>
-          <h2>Characters</h2>
-          <p>
-            Import legacy characters, inspect their cached sheet, and keep
-            lossless local backups. No account or server is involved.
-          </p>
-        </div>
+      <h2 className="visually-hidden">Characters</h2>
+      <div className="library-toolbar">
         <div className="heading-actions">
           <label className="file-button">
             Import .dnd4e
@@ -494,35 +452,19 @@ export function CharacterLibraryPage({
           </label>
           <button
             type="button"
+            disabled={activePackId === undefined || creatingCharacter}
             onClick={() =>
-              void exportBackup().catch((reason: unknown) =>
+              void createCharacter().catch((reason: unknown) =>
                 setError(
                   reason instanceof Error ? reason.message : String(reason),
                 ),
               )
             }
           >
-            Back up library
+            {creatingCharacter ? "Creating…" : "New Character"}
           </button>
-          <label className="file-button">
-            Restore backup
-            <input
-              type="file"
-              accept=".json,application/json"
-              onChange={(event) => {
-                const file = event.currentTarget.files?.[0];
-                if (file !== undefined)
-                  void inspectBackupFile(file).catch((reason: unknown) =>
-                    setError(
-                      reason instanceof Error ? reason.message : String(reason),
-                    ),
-                  );
-                event.currentTarget.value = "";
-              }}
-            />
-          </label>
         </div>
-      </header>
+      </div>
       <p className="status" aria-live="polite">
         {status}
       </p>
@@ -531,109 +473,6 @@ export function CharacterLibraryPage({
           <strong>Problem</strong>
           <span>{error}</span>
         </div>
-      )}
-      <section className="panel">
-        <div>
-          <p className="eyebrow">Profile-bound level 1</p>
-          <h3>Create a new character</h3>
-          <p>
-            Start an empty authoritative build from the active profile. The
-            generic editor will present that profile&apos;s required race,
-            class, ability, and other level-1 choices.
-          </p>
-        </div>
-        <form
-          className="metadata-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setError(undefined);
-            void createCharacter().catch((reason: unknown) =>
-              setError(
-                reason instanceof Error ? reason.message : String(reason),
-              ),
-            );
-          }}
-        >
-          <label>
-            Character name
-            <input
-              value={newCharacterName}
-              maxLength={120}
-              required
-              disabled={creatingCharacter}
-              onChange={(event) =>
-                setNewCharacterName(event.currentTarget.value)
-              }
-            />
-          </label>
-          <div>
-            <p className="field-help">
-              {activePackId === undefined
-                ? "Activate a content profile in Content settings first."
-                : `New records bind to ${manifests.find((manifest) => manifest.packId === activePackId)?.name ?? activePackId} and its exact digest.`}
-            </p>
-            <button
-              type="submit"
-              disabled={activePackId === undefined || creatingCharacter}
-            >
-              {creatingCharacter ? "Creating…" : "Create and edit"}
-            </button>
-          </div>
-        </form>
-      </section>
-      {pendingBackup === undefined ? null : (
-        <section className="import-report" aria-label="Backup restore preview">
-          <h3>Backup restore preview</h3>
-          <dl className="report-facts">
-            <div>
-              <dt>Format</dt>
-              <dd>Version {pendingBackup.inspection.version}</dd>
-            </div>
-            <div>
-              <dt>Checksum</dt>
-              <dd>
-                {pendingBackup.inspection.checksumVerified
-                  ? "Verified"
-                  : "Unavailable in legacy backup"}
-              </dd>
-            </div>
-            <div>
-              <dt>Active</dt>
-              <dd>{pendingBackup.inspection.activeCount}</dd>
-            </div>
-            <div>
-              <dt>Trashed</dt>
-              <dd>{pendingBackup.inspection.trashedCount}</dd>
-            </div>
-            <div>
-              <dt>Existing IDs replaced</dt>
-              <dd>{pendingBackup.inspection.conflictingIds.length}</dd>
-            </div>
-          </dl>
-          {!pendingBackup.inspection.checksumVerified ? (
-            <p className="profile-warning">
-              This older backup has no checksum. Its records are structurally
-              valid, but payload integrity cannot be verified.
-            </p>
-          ) : null}
-          <div className="inline-actions">
-            <button
-              type="button"
-              onClick={() =>
-                void restoreInspectedBackup().catch((reason: unknown) =>
-                  setError(
-                    reason instanceof Error ? reason.message : String(reason),
-                  ),
-                )
-              }
-            >
-              Restore {pendingBackup.inspection.characterCount} record(s)
-            </button>
-            <button type="button" onClick={() => setPendingBackup(undefined)}>
-              Cancel
-            </button>
-          </div>
-        </section>
       )}
       {report === undefined ? null : (
         <section className="import-report" aria-label="Latest import report">

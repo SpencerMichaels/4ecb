@@ -359,6 +359,12 @@ candidate.
   the same commit-before-success contract. The application shell adds system/light/dark theme preference,
   simple inline monochrome icons, and semantic color tokens preserving the
   established at-will, encounter, daily, and item mappings.
+- Global navigation now occupies the branded application header and contains
+  only Characters, Compendium, and Settings. The Characters page starts or
+  imports characters without a second introductory/create panel; the builder
+  owns its Character sheet action. Settings contains browser-local display
+  preference (System Default, Light, or Dark), character-library backup and
+  restore, and the complete Content configuration surface.
 - Interactive state changes use color, icons, fills, and inset markers without
   changing typography or control geometry. Timeline entries retain identical
   font metrics and height when unresolved, selected, warned, or complete; skill

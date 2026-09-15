@@ -246,25 +246,33 @@ a {
   text-transform: uppercase;
 }
 
-.app-header-actions {
+.app-header-nav {
   align-items: center;
   display: flex;
-  gap: 1.25rem;
+  align-self: stretch;
+  gap: 0.25rem;
 }
 
-.theme-picker {
+.app-header-nav a {
   align-items: center;
-  display: flex;
-  font-size: 0.8rem;
-  font-weight: 700;
+  border-bottom: 3px solid transparent;
+  color: #dce8f2;
+  display: inline-flex;
   gap: 0.4rem;
-  white-space: nowrap;
+  font-weight: 700;
+  padding: 0.55rem 0.75rem 0.45rem;
+  text-decoration: none;
 }
 
-.theme-picker select {
-  background: #fff;
-  color: #20272a;
-  padding-block: 0.25rem;
+.app-header-nav a:hover {
+  background: rgb(255 255 255 / 8%);
+  color: #fff;
+}
+
+.app-header-nav a[aria-current="page"] {
+  background: rgb(255 255 255 / 10%);
+  border-bottom-color: #ff8c00;
+  color: #fff;
 }
 
 .eyebrow {
@@ -279,41 +287,6 @@ a {
   margin: 0;
   max-width: 32rem;
   text-align: right;
-}
-
-.primary-nav {
-  align-items: center;
-  background: #202947;
-  border-bottom: 1px solid #465574;
-  display: flex;
-  gap: 1.5rem;
-  padding: 0.7rem 2rem;
-}
-
-.primary-nav a {
-  align-items: center;
-  color: #eef2f6;
-  display: inline-flex;
-  gap: 0.35rem;
-  font-weight: 700;
-  padding: 0.2rem 0;
-  text-decoration: none;
-}
-
-.primary-nav a[aria-current="page"] {
-  border-bottom: 3px solid #ff8c00;
-  color: #fff;
-}
-
-.primary-nav span {
-  color: #aab5c5;
-}
-
-.primary-nav .nav-disabled {
-  align-items: center;
-  display: inline-flex;
-  gap: 0.35rem;
-  opacity: 0.55;
 }
 
 .icon {
@@ -361,6 +334,64 @@ a {
 .pagination {
   display: flex;
   gap: 0.6rem;
+}
+
+.library-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.settings-subheading {
+  align-items: end;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+  margin: 2rem 0 1rem;
+  padding-bottom: 0.75rem;
+}
+
+.settings-subheading p:last-child {
+  margin-bottom: 0;
+  max-width: 48rem;
+}
+
+.settings-section {
+  display: grid;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.settings-section > div:first-child > :first-child,
+.backup-preview > :first-child {
+  margin-top: 0;
+}
+
+.theme-options {
+  align-items: center;
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.theme-options legend {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.theme-options label {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.backup-preview {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
 }
 
 .file-button {
@@ -3679,9 +3710,9 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   .unofficial {
     text-align: left;
   }
-  .app-header-actions {
-    align-items: start;
-    display: grid;
+  .app-header-nav {
+    align-self: auto;
+    flex-wrap: wrap;
   }
 
   .equipment-workspace {
@@ -3695,9 +3726,9 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   .wallet-editor fieldset {
     grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
   }
-  .primary-nav {
-    flex-wrap: wrap;
-    padding-inline: 1rem;
+  .settings-subheading {
+    align-items: start;
+    display: grid;
   }
   .settings-page,
   .compendium-page,

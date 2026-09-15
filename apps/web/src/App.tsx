@@ -65,11 +65,6 @@ export function App() {
   const firstRoute = useRef(true);
   const runtimeContentStarted = useRef(false);
   const route = useMemo(() => parseHashRoute(hash), [hash]);
-  const openCharacterId =
-    route.page === "characters" ? route.characterId : undefined;
-  const openCharacterMode =
-    route.page === "characters" ? route.mode : undefined;
-
   useEffect(() => {
     applyThemePreference(document.documentElement, theme);
     try {
@@ -226,72 +221,27 @@ export function App() {
             <small>Fourth Edition</small>
           </span>
         </a>
-        <div className="app-header-actions">
-          <label className="theme-picker">
-            Theme
-            <select
-              aria-label="Color theme"
-              value={theme}
-              onChange={(event) =>
-                setTheme(event.currentTarget.value as ThemePreference)
-              }
-            >
-              <option value="system">System</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
-          </label>
-        </div>
+        <nav className="app-header-nav" aria-label="Primary navigation">
+          <a
+            aria-current={route.page === "characters" ? "page" : undefined}
+            href="#/characters"
+          >
+            <Icon name="character" /> Characters
+          </a>
+          <a
+            aria-current={route.page === "compendium" ? "page" : undefined}
+            href="#/compendium"
+          >
+            <Icon name="book" /> Compendium
+          </a>
+          <a
+            aria-current={route.page === "settings" ? "page" : undefined}
+            href="#/settings"
+          >
+            <Icon name="content" /> Settings
+          </a>
+        </nav>
       </header>
-
-      <nav className="primary-nav" aria-label="Primary navigation">
-        {openCharacterId === undefined ? (
-          <span aria-disabled="true" className="nav-disabled">
-            <Icon name="character" /> Build
-          </span>
-        ) : (
-          <a
-            aria-current={openCharacterMode === "edit" ? "page" : undefined}
-            href={`#/characters/${encodeURIComponent(openCharacterId)}/edit`}
-          >
-            <Icon name="character" /> Build
-          </a>
-        )}
-        {openCharacterId === undefined ? (
-          <span aria-disabled="true" className="nav-disabled">
-            <Icon name="sheet" /> Character sheet
-          </span>
-        ) : (
-          <a
-            aria-current={openCharacterMode !== "edit" ? "page" : undefined}
-            href={`#/characters/${encodeURIComponent(openCharacterId)}`}
-          >
-            <Icon name="sheet" /> Character sheet
-          </a>
-        )}
-        <a
-          aria-current={route.page === "compendium" ? "page" : undefined}
-          href="#/compendium"
-        >
-          <Icon name="book" /> Compendium
-        </a>
-        <a
-          aria-current={
-            route.page === "characters" && openCharacterId === undefined
-              ? "page"
-              : undefined
-          }
-          href="#/characters"
-        >
-          <Icon name="character" /> Characters
-        </a>
-        <a
-          aria-current={route.page === "settings" ? "page" : undefined}
-          href="#/settings"
-        >
-          <Icon name="content" /> Content
-        </a>
-      </nav>
 
       <PwaStatus />
 
@@ -317,6 +267,8 @@ export function App() {
             : { runtimeContentError })}
           onChanged={refreshAfterContentChange}
           onRetryAdvertised={installAdvertisedPack}
+          theme={theme}
+          onThemeChange={setTheme}
         />
       ) : route.page === "characters" ? (
         route.characterId === undefined ? (

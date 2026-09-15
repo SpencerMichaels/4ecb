@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
 import {
+  CharacterRepository,
   ContentPackRepository,
+  type CharacterBackupInspection,
   type ContentProfileDefinition,
   type ContentProfileLayer,
   type InstalledContentPack,
@@ -31,8 +33,19 @@ import {
   sameProfileLayers,
 } from "./content-profile-ui";
 import type { AdvertisedContentPack } from "./runtime-content";
+import type { ThemePreference } from "./theme";
 
 const repository = new ContentPackRepository();
+const characterRepository = new CharacterRepository();
+
+function download(name: string, contents: string, type: string): void {
+  const url = URL.createObjectURL(new Blob([contents], { type }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = name;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
 
 interface StorageStatus {
   readonly supported: boolean;
@@ -102,6 +115,8 @@ export interface SettingsPageProps {
   readonly onRetryAdvertised: (
     advertised: AdvertisedContentPack,
   ) => Promise<void>;
+  readonly theme: ThemePreference;
+  readonly onThemeChange: (theme: ThemePreference) => void;
 }
 
 export function SettingsPage({
@@ -112,11 +127,19 @@ export function SettingsPage({
   runtimeContentError,
   onChanged,
   onRetryAdvertised,
+  theme,
+  onThemeChange,
 }: SettingsPageProps) {
   const [status, setStatus] = useState(
     installedPacks.length === 0 ? "No content packs installed." : "Ready.",
   );
   const [error, setError] = useState<string>();
+  const [libraryStatus, setLibraryStatus] = useState("");
+  const [libraryError, setLibraryError] = useState<string>();
+  const [pendingBackup, setPendingBackup] = useState<{
+    readonly value: unknown;
+    readonly inspection: CharacterBackupInspection;
+  }>();
   const [importing, setImporting] = useState(false);
   const [storageStatus, setStorageStatus] = useState<StorageStatus>();
   const [requestingPersistence, setRequestingPersistence] = useState(false);
@@ -366,12 +389,184 @@ export function SettingsPage({
     setStatus("Import cancelled. No changes were saved.");
   }
 
+  async function exportBackup(): Promise<void> {
+    setLibraryError(undefined);
+    const backup = await characterRepository.exportBackup();
+    download(
+      `4ecb-characters-${new Date().toISOString().slice(0, 10)}.json`,
+      JSON.stringify(backup, null, 2),
+      "application/json",
+    );
+    setLibraryStatus(
+      `Backed up ${backup.characters.length} character record(s).`,
+    );
+  }
+
+  async function inspectBackupFile(file: File): Promise<void> {
+    setLibraryError(undefined);
+    if (file.size > 100 * 1024 * 1024)
+      throw new Error("Backup exceeds the 100 MiB inspection limit");
+    const value: unknown = JSON.parse(await file.text());
+    const inspection = await characterRepository.inspectBackup(value);
+    setPendingBackup({ value, inspection });
+    setLibraryStatus(
+      `Inspected ${inspection.characterCount} backup record(s); no data has been restored yet.`,
+    );
+  }
+
+  async function restoreInspectedBackup(): Promise<void> {
+    if (pendingBackup === undefined) return;
+    setLibraryError(undefined);
+    const restored = await characterRepository.restoreBackup(
+      pendingBackup.value,
+    );
+    setPendingBackup(undefined);
+    setLibraryStatus(`Restored ${restored} backup record(s).`);
+  }
+
   return (
     <main className="settings-page" id="main-content">
       <header className="page-heading">
         <div>
+          <h2>Settings</h2>
+        </div>
+      </header>
+
+      <section className="panel settings-section">
+        <div>
+          <h3>Display</h3>
+          <p>Choose a color theme for this browser.</p>
+        </div>
+        <fieldset className="theme-options">
+          <legend>Color theme</legend>
+          {(
+            [
+              ["system", "System Default"],
+              ["light", "Light"],
+              ["dark", "Dark"],
+            ] as const
+          ).map(([value, label]) => (
+            <label key={value}>
+              <input
+                type="radio"
+                name="theme"
+                value={value}
+                checked={theme === value}
+                onChange={() => onThemeChange(value)}
+              />
+              {label}
+            </label>
+          ))}
+        </fieldset>
+      </section>
+
+      <section className="panel settings-section">
+        <div>
+          <h3>Character library</h3>
+          <p>Back up or restore all characters stored in this browser.</p>
+        </div>
+        <div className="heading-actions">
+          <button
+            type="button"
+            onClick={() =>
+              void exportBackup().catch((reason: unknown) =>
+                setLibraryError(
+                  reason instanceof Error ? reason.message : String(reason),
+                ),
+              )
+            }
+          >
+            Back up library
+          </button>
+          <label className="file-button">
+            Restore backup
+            <input
+              type="file"
+              accept=".json,application/json"
+              onChange={(event) => {
+                const file = event.currentTarget.files?.[0];
+                if (file !== undefined)
+                  void inspectBackupFile(file).catch((reason: unknown) =>
+                    setLibraryError(
+                      reason instanceof Error ? reason.message : String(reason),
+                    ),
+                  );
+                event.currentTarget.value = "";
+              }}
+            />
+          </label>
+        </div>
+        {libraryStatus === "" ? null : (
+          <p className="status" aria-live="polite">
+            {libraryStatus}
+          </p>
+        )}
+        {libraryError === undefined ? null : (
+          <div className="error" role="alert">
+            <strong>Library problem</strong>
+            <span>{libraryError}</span>
+          </div>
+        )}
+        {pendingBackup === undefined ? null : (
+          <div className="backup-preview" aria-label="Backup restore preview">
+            <h4>Restore preview</h4>
+            <dl className="report-facts">
+              <div>
+                <dt>Format</dt>
+                <dd>Version {pendingBackup.inspection.version}</dd>
+              </div>
+              <div>
+                <dt>Checksum</dt>
+                <dd>
+                  {pendingBackup.inspection.checksumVerified
+                    ? "Verified"
+                    : "Unavailable in legacy backup"}
+                </dd>
+              </div>
+              <div>
+                <dt>Active</dt>
+                <dd>{pendingBackup.inspection.activeCount}</dd>
+              </div>
+              <div>
+                <dt>Trashed</dt>
+                <dd>{pendingBackup.inspection.trashedCount}</dd>
+              </div>
+              <div>
+                <dt>Existing IDs replaced</dt>
+                <dd>{pendingBackup.inspection.conflictingIds.length}</dd>
+              </div>
+            </dl>
+            {!pendingBackup.inspection.checksumVerified ? (
+              <p className="profile-warning">
+                This older backup has no checksum. Its records are structurally
+                valid, but payload integrity cannot be verified.
+              </p>
+            ) : null}
+            <div className="inline-actions">
+              <button
+                type="button"
+                onClick={() =>
+                  void restoreInspectedBackup().catch((reason: unknown) =>
+                    setLibraryError(
+                      reason instanceof Error ? reason.message : String(reason),
+                    ),
+                  )
+                }
+              >
+                Restore {pendingBackup.inspection.characterCount} record(s)
+              </button>
+              <button type="button" onClick={() => setPendingBackup(undefined)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <header className="settings-subheading">
+        <div>
           <p className="eyebrow">Shared baseline + personal overlays</p>
-          <h2>Content profiles</h2>
+          <h3>Content</h3>
           <p>
             This server can distribute a shared baseline. You can layer personal
             packs above it; personal files stay in this browser and are never

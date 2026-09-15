@@ -23,8 +23,8 @@ There is no account, sync service, server-side copy, or telemetry. Treat the
 native JSON library backup and your original private source files as your
 recovery copies.
 
-While the application remains open, ordinary Build, Sheet, Compendium,
-Characters, and Content navigation reuses loaded content and indexes. Refreshing
+While the application remains open, ordinary character, Compendium, and
+Settings navigation reuses loaded content and indexes. Refreshing
 or closing the tab destroys that temporary in-memory state, so the next page
 load reconstructs it once from IndexedDB; it does not require re-importing the
 pack.
@@ -82,7 +82,7 @@ limit.
 
 ## First run and content import
 
-1. Open **Content settings**.
+1. Open **Settings**, then find **Content**.
 2. Review **Persistence and quota**. Choose **Request persistent storage** if
    available. A grant reduces eviction risk but does not replace backups.
 3. Choose **Import file**, then select a `.4ecp` or decrypted/merged
@@ -113,9 +113,10 @@ until that revision is restored or a migration is previewed and adopted.
 
 ## Create, import, and manage characters
 
-1. To start without the old application, enter a name under **Create a new
-   character** and choose **Create and edit**. The record binds to the active
-   pack ID and digest and starts at level 1 with the legacy point-buy baseline
+1. To start without the old application, choose **New Character** on the
+   **Characters** page. The new record opens immediately in the builder and can
+   be named under **Character details**. It binds to the active pack ID and
+   digest and starts at level 1 with the legacy point-buy baseline
    of `8, 10, 10, 10, 10, 10`. Spend the displayed 22 points in **Ability
    Scores**; the timeline remains unresolved until the exact budget is spent.
    Direct score entry is available for rolled or custom arrays, which are kept
@@ -213,8 +214,8 @@ cross-engine raster inspection are deferred M5.5 visual-validation checks.
 
 ## Back up and restore
 
-Choose **Back up library** after imports and meaningful edits and before browser
-or application upgrades. The downloaded JSON contains active and trashed
+Open **Settings** and choose **Back up library** after imports and meaningful
+edits and before browser or application upgrades. The downloaded JSON contains active and trashed
 characters, authoritative builds, preserved compatibility XML, profile
 references, and sheet settings. It does not include content packs; retain the
 matching `.4ecp` files separately.

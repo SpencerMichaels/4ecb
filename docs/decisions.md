@@ -769,6 +769,21 @@ reconciliation, automatic equipment, custom-item editing, and item-owned choice
 placement require focused follow-up from the recovered paths rather than an
 approximation in the UI.
 
+### D045 — Global navigation names destinations, not character modes
+
+The branded application header is the only global navigation surface. It
+contains Characters, Compendium, and Settings; the former Build and Character
+sheet entries were views of one selected character rather than durable global
+destinations. The character library opens a character, and the character
+builder exposes its own Character sheet action.
+
+Settings groups browser-level concerns into Display, character-library backup
+and restore, and Content. Theme preference defaults to the browser and operating
+system through `prefers-color-scheme`; explicit Light and Dark overrides remain
+browser-local. Characters is a compact library surface with Import and New
+Character actions, and new characters open immediately with their name edited
+later under Character details.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

@@ -113,7 +113,7 @@ try {
   await navigate(client, `${origin}/#/settings`);
   await waitForExpression(
     client,
-    `document.body.textContent.includes("Content profiles")`,
+    `document.querySelector(".settings-page h2")?.textContent === "Settings" && document.body.textContent.includes("Content")`,
   );
   const character = printCharacter();
   await evaluate(
@@ -163,7 +163,7 @@ try {
           card.scrollWidth > card.clientWidth + 1
         ).map((card) => card.querySelector("h3")?.textContent ?? "unnamed");
         const hidden = [
-          ".app-header", ".primary-nav", ".public-notice", ".pwa-status",
+          ".app-header", ".public-notice", ".pwa-status",
           ".sheet-toolbar", ".cache-warning", ".sheet-page > .status"
         ].every((selector) => {
           const element = document.querySelector(selector);
@@ -257,7 +257,7 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
     await webdriverWait(
       port,
       sessionId,
-      `return document.body.textContent.includes("Content profiles")`,
+      `return document.querySelector(".settings-page h2")?.textContent === "Settings" && document.body.textContent.includes("Content")`,
     );
     await webdriverExecuteAsync(
       port,
