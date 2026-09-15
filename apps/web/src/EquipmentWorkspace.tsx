@@ -27,7 +27,6 @@ import {
   itemProficiencyStatus,
   practiceKind,
   SHOP_ITEM_TYPES,
-  type PracticeKind,
 } from "./equipment-ui";
 import { Icon } from "./Icon";
 import {
@@ -1013,13 +1012,4 @@ function walletCopper(amount: Readonly<Record<Denomination, number>>): number {
     amount.platinum * 10_000 +
     amount.astral * 1_000_000
   );
-}
-
-export function practiceLabel(kind: PracticeKind): string {
-  return {
-    ritual: "Ritual",
-    "alchemical-formula": "Alchemical formula",
-    "martial-practice": "Martial practice",
-    scroll: "Scroll",
-  }[kind];
 }
