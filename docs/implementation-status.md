@@ -41,6 +41,64 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## M5.5 equipment workspace checkpoint (2026-09-14)
+
+- Equipment is now a full peer workspace with Loadout, Inventory, Shop, and
+  Rituals & Practices tabs and one shared details column. Loadout exposes the
+  recovered Body, paired hand, Head, Neck, Arms, Hands, paired Ring, Waist,
+  Feet, Symbol, Ki Focus, and Tattoo locations; Companion, Familiar, and Mount
+  locations appear when compatible owned content requires them. Slot selectors
+  list only holdings whose authored item-slot metadata is compatible.
+- `BuildInventoryEntry` retains legacy `equippedQuantity` and adds optional
+  exact slot/copy assignments. Historical imports remain valid without guessed
+  slot identity. Domain commands enforce stable slot IDs, copy indices, global
+  slot exclusivity, and equipped-count synchronization. Regenerated `.dnd4e`
+  export retains the legacy count projection; a focused round-trip fixture
+  verifies that app-native slot identity is omitted rather than written into an
+  invented compatibility field.
+- The wallet reads inherited per-level **Carried Money** and **Stored Money**
+  from the exact legacy `_PER_LEVEL_<N>_...` keys. Copper, silver, gold,
+  platinum, and astral denominations use the recovered 10/10/100/100 exchange
+  rates. Editing writes the current effective-level key. Purchases are atomic,
+  consume carried funds before stored funds, and reject insufficient funds;
+  20%, 50%, and 100% sales remove one exact copy and credit carried money.
+- Shop and Rituals & Practices reuse the application-retained Compendium query
+  worker, deterministic name sorting, typed source/type/slot/rarity/tier facets,
+  level ranges, a character-aware known-proficiency/not-confirmed filter, and
+  200-record previous/next pages. The full corpus is never rendered as one DOM
+  table. Buy controls reject `_CannotBeBought`, unpriced, unaffordable, and
+  already-known practice records. Proficiency wording remains conservative
+  because this checkpoint does not introduce an alternate item-proficiency
+  formula outside the evaluator.
+- Terminal `+N` magic-item variants are grouped only by stripped name plus
+  magic type, slot, armor, and weapon compatibility fields. The worker applies
+  exact filters first; each displayed variant remains an exact selectable and
+  purchased content ID. Magic armor and weapon enchantments require a
+  compatible base, preserve the ordered base/enchantment IDs, honor common
+  native `Any`, melee/ranged/handed/thrown/group/name and minimum-enhancement
+  gates, and use the enchantment price as the transaction value.
+- Ritual records are split by authored subtype into rituals, alchemical
+  formulas, and martial practices. Exact Ritual ownership is unique/known;
+  exact Ritual Scroll ownership remains a separate quantity-bearing inventory
+  record and never implies knowledge. Spellbook alternates remain in Build.
+
+Focused public verification passes 29 tests across the equipment UI, character
+domain, and legacy import/export packages. The 2026-09-14 checkpoint command
+`nix develop path:. -c scripts/check.sh` passes all 287 tests across 42 files,
+all workspace TypeScript checks, the production/PWA build, Chromium and Firefox
+Letter/A4 print checks, deterministic public-pack rebuild and validation, and
+the public query benchmark. A live Equipment interaction run is not claimed:
+the in-app browser had no installed content profile and could not reach the
+local development server in this environment. The coordinator's independent
+browser review remains the next live full-profile evidence gate.
+
+Deferred recovered complexities are explicit: dependent hand/ring movement,
+versatile/staff modes, holy-symbol name storage, magic-implement and shield
+equivalence, double-weapon secondary ends, augments, package lot reconciliation,
+automatic equipment, custom item/ritual creation, and relocating item-owned
+choices into Equipment. These remain visible as ordinary holdings/evaluator
+evidence; the implementation does not discard or fabricate them.
+
 ## Legacy construction-logic audit (2026-09-02)
 
 A systematic documentation-only audit traced the original builder pages through

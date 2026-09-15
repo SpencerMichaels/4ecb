@@ -3537,6 +3537,137 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   width: 5rem;
 }
 
+.equipment-tabs {
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.equipment-tabs button {
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  color: var(--muted);
+  padding: 0.7rem 0.9rem;
+}
+
+.equipment-tabs button[aria-selected="true"] {
+  border-bottom-color: var(--selection);
+  color: var(--text);
+}
+
+.equipment-workspace {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.42fr);
+  padding: 0.9rem;
+}
+
+.equipment-primary {
+  min-width: 0;
+}
+
+.loadout-grid {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.loadout-grid label,
+.equipment-catalog-controls label,
+.wallet-editor label {
+  display: grid;
+  font-size: 0.78rem;
+  font-weight: 700;
+  gap: 0.25rem;
+}
+
+.loadout-grid select,
+.equipment-catalog-controls input,
+.equipment-catalog-controls select {
+  inline-size: 100%;
+}
+
+.equipment-catalog-controls {
+  align-items: end;
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: minmax(12rem, 2fr) repeat(4, minmax(8rem, 1fr));
+}
+
+.equipment-query-status {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.equipment-table-scroll {
+  border: 1px solid var(--border);
+  max-block-size: max(22rem, calc(100vh - 23rem));
+  overflow: auto;
+}
+
+.equipment-table-scroll thead {
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.equipment-table-scroll th:first-child {
+  min-inline-size: 14rem;
+}
+
+.table-inspect-button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  padding: 0;
+  text-align: left;
+}
+
+.equipment-table-scroll th select {
+  display: block;
+  margin-top: 0.3rem;
+  max-inline-size: 18rem;
+}
+
+.sell-actions,
+.equipment-pagination {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.sell-actions button {
+  padding: 0.3rem 0.45rem;
+}
+
+.equipment-pagination {
+  justify-content: space-between;
+  margin-top: 0.6rem;
+}
+
+.wallet-editor {
+  margin-bottom: 1rem;
+}
+
+.wallet-editor fieldset {
+  border: 1px solid var(--border);
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(5, minmax(5rem, 1fr));
+  margin-block: 0.5rem;
+}
+
+.wallet-editor input {
+  inline-size: 100%;
+}
+
 @media (max-width: 60rem) {
   .app-header,
   .page-heading,
@@ -3551,6 +3682,18 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   .app-header-actions {
     align-items: start;
     display: grid;
+  }
+
+  .equipment-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .equipment-catalog-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wallet-editor fieldset {
+    grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
   }
   .primary-nav {
     flex-wrap: wrap;

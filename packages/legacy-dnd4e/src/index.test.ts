@@ -220,6 +220,7 @@ describe("legacy .dnd4e import", () => {
         name: "Edited bag",
         quantity: 2,
         equippedQuantity: 1,
+        equippedSlots: [{ slot: "main-hand" as const, quantityIndex: 0 }],
       })),
     };
     const content = [
@@ -316,6 +317,7 @@ describe("legacy .dnd4e import", () => {
       quantity: 2,
       equippedQuantity: 1,
     });
+    expect(reimported.build.inventory[0]?.equippedSlots).toBeUndefined();
     expect(reimported.build.textStrings.NOTE).toBe("new & safe");
     expect(reimported.build.levels[0]?.root.children[1]?.replacesId).toBe(
       "legacy:4ecb-2",

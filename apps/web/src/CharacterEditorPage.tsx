@@ -14,6 +14,11 @@ import { CharacterRepository } from "@4ecb/browser-storage";
 import { appContentRuntime, type RulesRuntimeClient } from "./app-runtime";
 import {
   CharacterTransaction,
+  characterWalletTextKey,
+  formatLegacyCurrency,
+  resolveCharacterWallet,
+  type CurrencyAmount,
+  type EquipmentSlotId,
   type BuildOccurrence,
   type CharacterCommand,
   type CharacterRecord,
@@ -76,6 +81,7 @@ import {
   type OverviewChoicePane,
 } from "./builder-ui";
 import { Icon, type IconName } from "./Icon";
+import { EquipmentWorkspace } from "./EquipmentWorkspace";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
 import { PortraitEditor } from "./PortraitEditor";
 import {
@@ -4119,6 +4125,14 @@ export function CharacterEditorPage({
       ),
     [entities],
   );
+  const carriedWallet =
+    build === undefined
+      ? undefined
+      : resolveCharacterWallet(build, "carried").amount;
+  const storedWallet =
+    build === undefined
+      ? undefined
+      : resolveCharacterWallet(build, "stored").amount;
   const characterDetailLevelKey = [
     ...new Set(
       (planningEvaluation?.choices ?? [])
@@ -5162,86 +5176,114 @@ export function CharacterEditorPage({
         </div>
       </section>
 
-      <section
-        aria-labelledby="equipment-heading"
-        className="choice-pane standalone-workspace-pane equipment-pane"
-        hidden={workspaceTab !== "equipment"}
-      >
-        <header>
-          <h3 id="equipment-heading">Inventory and equipment</h3>
-        </header>
-        <div className="standalone-workspace-content">
-          {build.inventory.filter((entry) => entry.quantity > 0).length ===
-          0 ? (
-            <p>No carried inventory.</p>
-          ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Owned</th>
-                  <th>Equipped</th>
-                </tr>
-              </thead>
-              <tbody>
-                {build.inventory
-                  .filter((entry) => entry.quantity > 0)
-                  .map((entry) => (
-                    <tr key={entry.id}>
-                      <th scope="row">
-                        {entry.name ||
-                          entry.elements
-                            .map((element) =>
-                              element.definitionId === undefined
-                                ? element.name
-                                : (byId.get(
-                                    element.definitionId.toLocaleLowerCase(),
-                                  )?.name ?? element.name),
-                            )
-                            .filter(Boolean)
-                            .join(" + ")}
-                      </th>
-                      <td>
-                        <CommitNumberInput
-                          label={`Owned quantity for ${entry.name ?? entry.id}`}
-                          value={entry.quantity}
-                          min={0}
-                          onCommit={(quantity) =>
-                            dispatch({
-                              kind: "put-inventory",
-                              entry: {
-                                ...entry,
-                                quantity,
-                                equippedQuantity: Math.min(
-                                  entry.equippedQuantity,
-                                  quantity,
-                                ),
-                              },
-                            })
-                          }
-                        />
-                      </td>
-                      <td>
-                        <CommitNumberInput
-                          label={`Equipped quantity for ${entry.name ?? entry.id}`}
-                          max={entry.quantity}
-                          value={entry.equippedQuantity}
-                          min={0}
-                          onCommit={(equippedQuantity) =>
-                            dispatch({
-                              kind: "put-inventory",
-                              entry: { ...entry, equippedQuantity },
-                            })
-                          }
-                        />
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </section>
+      <div hidden={workspaceTab !== "equipment"}>
+        {carriedWallet === undefined || storedWallet === undefined ? null : (
+          <EquipmentWorkspace
+            build={build}
+            entities={entities}
+            byId={byId}
+            {...(packId === undefined ? {} : { packId })}
+            activeDefinitionIds={currentEvaluation?.activeDefinitionIds ?? []}
+            wallet={{
+              carried: {
+                copper: carriedWallet.cp,
+                silver: carriedWallet.sp,
+                gold: carriedWallet.gp,
+                platinum: carriedWallet.pp,
+                astral: carriedWallet.ad,
+              },
+              stored: {
+                copper: storedWallet.cp,
+                silver: storedWallet.sp,
+                gold: storedWallet.gp,
+                platinum: storedWallet.pp,
+                astral: storedWallet.ad,
+              },
+            }}
+            onPutInventory={(entry) =>
+              dispatch({ kind: "put-inventory", entry })
+            }
+            onPurchase={(entry, priceCopper) =>
+              dispatch({ kind: "purchase-inventory", entry, priceCopper })
+            }
+            onSell={(entry, priceCopper, percentage) =>
+              dispatch({
+                kind: "sell-inventory",
+                entryId: entry.id,
+                priceCopper,
+                percentage,
+              })
+            }
+            onEquipSlot={(entryId, slots) => {
+              const slotIds = slots as readonly EquipmentSlotId[];
+              const current = build.inventory.find((entry) =>
+                entry.equippedSlots?.some((assignment) =>
+                  slotIds.includes(assignment.slot),
+                ),
+              );
+              if (entryId === undefined) {
+                if (current === undefined) return;
+                const assignments =
+                  current.equippedSlots?.filter(
+                    (assignment) => !slotIds.includes(assignment.slot),
+                  ) ?? [];
+                dispatch({
+                  kind: "equip-inventory",
+                  entryId: current.id,
+                  assignments,
+                });
+                return;
+              }
+              const entry = build.inventory.find(({ id }) => id === entryId);
+              if (entry === undefined) return;
+              const retained =
+                entry.equippedSlots?.filter(
+                  (assignment) => !slotIds.includes(assignment.slot),
+                ) ?? [];
+              const used = new Set(
+                retained.map(({ quantityIndex }) => quantityIndex),
+              );
+              const pairedHands =
+                slotIds.includes("main-hand") && slotIds.includes("off-hand");
+              const quantityIndex = pairedHands
+                ? 0
+                : Array.from(
+                    { length: entry.quantity },
+                    (_, index) => index,
+                  ).find((index) => !used.has(index));
+              if (quantityIndex === undefined) return;
+              const assignments = [
+                ...retained,
+                ...slotIds.map((slot) => ({ slot, quantityIndex })),
+              ];
+              dispatch({
+                kind: "equip-inventory",
+                entryId,
+                assignments,
+              });
+            }}
+            onSetMoney={(location, denomination, value) => {
+              const source =
+                location === "carried" ? carriedWallet : storedWallet;
+              const short = {
+                copper: "cp",
+                silver: "sp",
+                gold: "gp",
+                platinum: "pp",
+                astral: "ad",
+              }[denomination] as keyof CurrencyAmount;
+              dispatch({
+                kind: "set-text",
+                name: characterWalletTextKey(build.effectiveLevel, location),
+                value: formatLegacyCurrency({
+                  ...source,
+                  [short]: Math.max(0, Math.trunc(value)),
+                }),
+              });
+            }}
+          />
+        )}
+      </div>
     </main>
   );
 }

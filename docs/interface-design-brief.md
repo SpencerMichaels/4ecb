@@ -287,15 +287,21 @@ Optimize the first design and prototype around this end-to-end journey:
 Import, retraining, compendium browsing, and detailed correction workflows must
 remain supported, but they are secondary when resolving early design tradeoffs.
 
-## Deferred equipment-choice presentation
+## Equipment workspace
 
 The legacy builder unusually displays item-owned selections, such as Armor of
 Resistance's damage type, in the wearer's Class pane. Preserve that underlying
 choice and its legacy export topology, but do not treat the placement as a
-modern information-architecture requirement. When the character equipment pane
-is fully designed, item configuration should be reviewed there with a clear
-link back to any character-level consequences. Until then, inventory-owned
-choices remain evaluable and recoverable without cluttering level advancement.
+modern information-architecture requirement. Equipment uses sibling Loadout,
+Inventory, Shop, and Rituals & Practices tabs with one shared detail viewer.
+The Shop is a paged query-worker view of exact records; terminal `+N` variants
+may share a presentation family, but filtering and every transaction retain
+the exact content ID. The Loadout assigns exact owned copies to explicit slots,
+while Inventory owns quantities, carried/stored wealth, and legacy-percentage
+sales. Known rituals/formulas/practices and quantity-bearing scrolls remain
+distinct. Spellbook alternates stay in Build. Item-owned configuration remains
+evaluable and recoverable; a later focused pass will move its editor into this
+workspace with a clear link to character-level consequences.
 
 ## Validation sequencing
 

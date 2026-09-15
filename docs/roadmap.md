@@ -432,6 +432,20 @@ generic large choices in addition to feats and powers. Equipment and Diagnostics
 are peer workspace tabs rather than disclosures below the builder, establishing
 the dedicated surface for the next equipment pass.
 
+The equipment pass now fills that dedicated surface with Loadout, Inventory,
+Shop, and Rituals & Practices tabs. Exact slot/copy assignments augment rather
+than replace legacy equipped counts; a five-denomination carried/stored wallet
+uses inherited per-level compatibility strings; and atomic buy/sell operations
+retain exact holding IDs. The full item and practice catalogs use the retained
+Compendium query worker, typed filters, level ranges, and 200-record pages.
+Compatible terminal `+N` magic variants share a presentation family while exact
+filtered variants, base/enchantment IDs, and transaction identity remain
+unchanged. Known rituals/formulas/practices are distinct from quantity-bearing
+scrolls, and Spellbook remains in Build. Dependent hand/ring movement,
+holy-symbol/implement exceptions, augments, package lots, automatic/custom
+equipment, and item-owned choice editing remain named follow-up work rather
+than silently approximated native parity.
+
 ## M6 — Local phone play mode
 
 ### Goal

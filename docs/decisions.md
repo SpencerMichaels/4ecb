@@ -727,6 +727,48 @@ selector. Selecting Beast Mastery consequently makes a saved Prime Shot dormant;
 switching away can restore it. Truly orphaned imported/custom occurrences whose
 provider is absent remain recoverable under the existing compatibility policy.
 
+### D044 — Equipment preserves exact holdings while adding an app-native slot projection
+
+Equipment is one peer workspace with Loadout, Inventory, Shop, and Rituals &
+Practices tabs and one focus-driven item-detail viewer. Shop and practice
+browsing reuse the retained Compendium query worker, typed facets, numeric
+ranges, deterministic name sorting, and 200-record pages; the editor does not
+mount the full 38,000-record profile or 10,000-item catalog as one DOM table.
+
+An inventory holding continues to own its exact ordered base/enchantment IDs,
+quantity, legacy equipped quantity, overrides, legality, and nested item
+choices. Optional app-native slot assignments identify both a stable slot and
+the indexed physical copy within the holding. Multiple slot assignments may
+refer to one copy for a two-handed item, while two identical rings use distinct
+copy indices. Historical imports without assignments remain valid: their
+legacy equipped count stays authoritative until the player makes the placement
+explicit. Regenerated legacy export projects assignments back to
+`equip-count`; exact modern slot identity is intentionally not invented in XML
+that did not store it.
+
+The wallet does not introduce a second wealth aggregate. The five legacy
+denominations remain authoritative in inherited
+`_PER_LEVEL_<N>_Carried Money` and `_PER_LEVEL_<N>_Stored Money` text strings.
+Edits write only the current effective-level key. Purchases atomically add one
+exact holding and spend carried funds before stored funds; sales remove one
+copy and credit carried funds at the explicit legacy 20%, 50%, or 100% rate.
+
+Terminal `+N` magic-item names are presentation families only when their
+stripped name and compatibility fields match. Filtering always selects exact
+variants first, and a family selector still commits the exact content ID.
+Magic armor and weapon purchases require a compatible mundane base and retain
+both IDs. Rituals, alchemical formulas, and martial practices remain exact
+Ritual records distinguished by their authored `type`; ritual scrolls remain
+separate quantity-bearing `Ritual Scroll` holdings, so owning a scroll never
+makes its corresponding practice known. Spellbook alternates remain in Build.
+
+This checkpoint does not claim complete native `IsValidLoot` or slot-pair
+parity. Shield/implement equivalence, double-weapon secondary ends, dependent
+hand/ring rebalancing, the holy-symbol name exception, augments, package lot
+reconciliation, automatic equipment, custom-item editing, and item-owned choice
+placement require focused follow-up from the recovered paths rather than an
+approximation in the UI.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

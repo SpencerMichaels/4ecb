@@ -50,11 +50,46 @@ export interface BuildLevelFrame {
   readonly userEdit?: BuildUserEdit;
 }
 
+/** Stable equipment locations used by the character build and equipment UI. */
+export const EQUIPMENT_SLOT_IDS = [
+  "body",
+  "main-hand",
+  "off-hand",
+  "head",
+  "neck",
+  "arms",
+  "hands",
+  "ring-1",
+  "ring-2",
+  "waist",
+  "feet",
+  "symbol",
+  "ki-focus",
+  "tattoo",
+  "companion",
+  "familiar",
+  "mount",
+] as const;
+
+export type EquipmentSlotId = (typeof EQUIPMENT_SLOT_IDS)[number];
+
+/**
+ * `quantityIndex` identifies one holding within an inventory entry. Assignments
+ * with the same index equip one holding in multiple slots (for example a
+ * two-handed weapon in both hand slots).
+ */
+export interface EquipmentSlotAssignment {
+  readonly slot: EquipmentSlotId;
+  readonly quantityIndex: number;
+}
+
 export interface BuildInventoryEntry {
   readonly id: string;
   readonly acquiredLevel: number;
   readonly quantity: number;
   readonly equippedQuantity: number;
+  /** Missing on historical builds that only recorded equippedQuantity. */
+  readonly equippedSlots?: readonly EquipmentSlotAssignment[];
   readonly elements: readonly BuildInventoryElement[];
   readonly name?: string;
   readonly showPowerCard?: boolean;
@@ -78,6 +113,170 @@ export interface CharacterBuild {
   readonly alternates: readonly BuildAlternate[];
   readonly baseAbilities: Readonly<Record<string, number>>;
   readonly textStrings: Readonly<Record<string, string>>;
+}
+
+export const CURRENCY_DENOMINATIONS = ["ad", "pp", "gp", "sp", "cp"] as const;
+
+export type CurrencyDenomination = (typeof CURRENCY_DENOMINATIONS)[number];
+export type CurrencyAmount = Readonly<Record<CurrencyDenomination, number>>;
+
+export const ZERO_CURRENCY: CurrencyAmount = {
+  ad: 0,
+  pp: 0,
+  gp: 0,
+  sp: 0,
+  cp: 0,
+};
+
+export const CURRENCY_COPPER_VALUES: Readonly<
+  Record<CurrencyDenomination, number>
+> = {
+  ad: 1_000_000,
+  pp: 10_000,
+  gp: 100,
+  sp: 10,
+  cp: 1,
+};
+
+export type CharacterWalletKind = "carried" | "stored";
+
+export interface ResolvedCharacterWallet {
+  readonly amount: CurrencyAmount;
+  /** The inherited legacy textstring level, absent when the wallet is zero. */
+  readonly sourceLevel?: number;
+}
+
+function validCurrencyCount(value: number): boolean {
+  return Number.isSafeInteger(value) && value >= 0;
+}
+
+function assertCurrencyAmount(amount: CurrencyAmount): void {
+  for (const denomination of CURRENCY_DENOMINATIONS) {
+    if (!validCurrencyCount(amount[denomination]))
+      throw new Error("Currency counts must be non-negative safe integers");
+  }
+}
+
+/** Parses legacy strings such as `1 pp; 2 gp; 5 sp`; malformed text is rejected. */
+export function parseLegacyCurrency(value: string): CurrencyAmount {
+  const trimmed = value.trim();
+  if (trimmed === "" || trimmed === "0") return ZERO_CURRENCY;
+
+  const amount: Record<CurrencyDenomination, number> = { ...ZERO_CURRENCY };
+  const token = /(\d{1,3}(?:,\d{3})*|\d+)\s*(ad|pp|gp|sp|cp)\b/giu;
+  let cursor = 0;
+  let matched = false;
+  for (const match of trimmed.matchAll(token)) {
+    const index = match.index;
+    if (index === undefined || !/^[\s;+]*$/u.test(trimmed.slice(cursor, index)))
+      throw new Error(`Invalid legacy currency: ${value}`);
+    const denomination = match[2]?.toLocaleLowerCase() as
+      CurrencyDenomination | undefined;
+    const count = Number(match[1]?.replaceAll(",", ""));
+    if (denomination === undefined || !validCurrencyCount(count))
+      throw new Error(`Invalid legacy currency: ${value}`);
+    const combined = amount[denomination] + count;
+    if (!Number.isSafeInteger(combined))
+      throw new Error("Currency exceeds the safe integer range");
+    amount[denomination] = combined;
+    cursor = index + match[0].length;
+    matched = true;
+  }
+  if (!matched || !/^[\s;+]*$/u.test(trimmed.slice(cursor)))
+    throw new Error(`Invalid legacy currency: ${value}`);
+  return amount;
+}
+
+/** Formats a canonical legacy-compatible, largest-denomination-first string. */
+export function formatLegacyCurrency(amount: CurrencyAmount): string {
+  assertCurrencyAmount(amount);
+  const parts = CURRENCY_DENOMINATIONS.flatMap((denomination) =>
+    amount[denomination] === 0
+      ? []
+      : [`${amount[denomination]} ${denomination}`],
+  );
+  return parts.length === 0 ? "0 gp" : parts.join("; ");
+}
+
+export function currencyToCopper(amount: CurrencyAmount): number {
+  assertCurrencyAmount(amount);
+  let copper = 0;
+  for (const denomination of CURRENCY_DENOMINATIONS) {
+    const contribution =
+      amount[denomination] * CURRENCY_COPPER_VALUES[denomination];
+    if (
+      !Number.isSafeInteger(contribution) ||
+      !Number.isSafeInteger(copper + contribution)
+    )
+      throw new Error("Currency exceeds the safe integer range");
+    copper += contribution;
+  }
+  return copper;
+}
+
+export function currencyFromCopper(copper: number): CurrencyAmount {
+  if (!validCurrencyCount(copper))
+    throw new Error("Copper value must be a non-negative safe integer");
+  const amount: Record<CurrencyDenomination, number> = { ...ZERO_CURRENCY };
+  let remainder = copper;
+  for (const denomination of CURRENCY_DENOMINATIONS) {
+    const value = CURRENCY_COPPER_VALUES[denomination];
+    amount[denomination] = Math.floor(remainder / value);
+    remainder %= value;
+  }
+  return amount;
+}
+
+export function addCurrency(
+  left: CurrencyAmount,
+  right: CurrencyAmount,
+): CurrencyAmount {
+  return currencyFromCopper(currencyToCopper(left) + currencyToCopper(right));
+}
+
+export function subtractCurrency(
+  amount: CurrencyAmount,
+  cost: CurrencyAmount,
+): CurrencyAmount {
+  const remainder = currencyToCopper(amount) - currencyToCopper(cost);
+  if (remainder < 0) throw new Error("Insufficient currency");
+  return currencyFromCopper(remainder);
+}
+
+export function characterWalletTextKey(
+  level: number,
+  wallet: CharacterWalletKind,
+): string {
+  if (!Number.isInteger(level) || level < 1 || level > 30)
+    throw new Error("Wallet level must be an integer from 1 through 30");
+  const name = wallet === "carried" ? "Carried Money" : "Stored Money";
+  return `_PER_LEVEL_${level}_${name}`;
+}
+
+/** Resolves the latest defined per-level value at or before the requested level. */
+export function resolveCharacterWallet(
+  build: CharacterBuild,
+  wallet: CharacterWalletKind,
+  level = build.effectiveLevel,
+): ResolvedCharacterWallet {
+  if (!Number.isInteger(level) || level < 1 || level > 30)
+    throw new Error("Wallet level must be an integer from 1 through 30");
+  for (let candidate = level; candidate >= 1; candidate -= 1) {
+    const key = characterWalletTextKey(candidate, wallet);
+    if (Object.hasOwn(build.textStrings, key)) {
+      return {
+        amount: parseLegacyCurrency(build.textStrings[key] ?? ""),
+        sourceLevel: candidate,
+      };
+    }
+  }
+  return { amount: ZERO_CURRENCY };
+}
+
+export function equippedQuantityFromSlots(
+  assignments: readonly EquipmentSlotAssignment[],
+): number {
+  return new Set(assignments.map(({ quantityIndex }) => quantityIndex)).size;
 }
 
 /** Legacy text fields that are also projected into CharacterSheet/Details. */
@@ -142,10 +341,115 @@ export type CharacterCommand =
   | { readonly kind: "put-inventory"; readonly entry: BuildInventoryEntry }
   | { readonly kind: "remove-inventory"; readonly entryId: string }
   | {
+      readonly kind: "equip-inventory";
+      readonly entryId: string;
+      readonly assignments: readonly EquipmentSlotAssignment[];
+    }
+  | {
+      readonly kind: "purchase-inventory";
+      /** A new exact holding whose quantity is the purchase count. */
+      readonly entry: BuildInventoryEntry;
+      /** Per-unit price in copper pieces. */
+      readonly priceCopper: number;
+    }
+  | {
+      readonly kind: "sell-inventory";
+      /** Sells one unit from the exact holding; entries are never matched by name. */
+      readonly entryId: string;
+      /** Per-unit list price in copper pieces. */
+      readonly priceCopper: number;
+      readonly percentage: 20 | 50 | 100;
+    }
+  | {
       readonly kind: "set-text";
       readonly name: string;
       readonly value: string;
     };
+
+function assertEquipmentAssignments(
+  quantity: number,
+  assignments: readonly EquipmentSlotAssignment[],
+): void {
+  const knownSlots = new Set<string>(EQUIPMENT_SLOT_IDS);
+  const seenSlots = new Set<EquipmentSlotId>();
+  for (const assignment of assignments) {
+    if (!knownSlots.has(assignment.slot))
+      throw new Error(`Unknown equipment slot: ${String(assignment.slot)}`);
+    if (
+      !Number.isInteger(assignment.quantityIndex) ||
+      assignment.quantityIndex < 0 ||
+      assignment.quantityIndex >= quantity
+    )
+      throw new Error("Equipment quantity index is outside the holding");
+    if (seenSlots.has(assignment.slot))
+      throw new Error(
+        `Equipment slot is assigned more than once: ${assignment.slot}`,
+      );
+    seenSlots.add(assignment.slot);
+  }
+}
+
+function assertInventoryQuantities(entry: BuildInventoryEntry): void {
+  if (
+    !Number.isSafeInteger(entry.quantity) ||
+    !Number.isSafeInteger(entry.equippedQuantity) ||
+    entry.quantity < 0 ||
+    entry.equippedQuantity < 0 ||
+    entry.equippedQuantity > entry.quantity
+  )
+    throw new Error("Inventory quantities are invalid");
+  if (entry.equippedSlots !== undefined) {
+    assertEquipmentAssignments(entry.quantity, entry.equippedSlots);
+    if (
+      entry.equippedQuantity !== equippedQuantityFromSlots(entry.equippedSlots)
+    )
+      throw new Error("Equipped quantity does not match equipment slots");
+  }
+}
+
+function assertCopperPrice(priceCopper: number): void {
+  if (!Number.isSafeInteger(priceCopper) || priceCopper < 0)
+    throw new Error("Price must be a non-negative safe integer copper value");
+}
+
+function exactInventoryEntry(
+  inventory: readonly BuildInventoryEntry[],
+  entryId: string,
+): BuildInventoryEntry {
+  const matches = inventory.filter(({ id }) => id === entryId);
+  if (matches.length !== 1)
+    throw new Error(
+      matches.length === 0
+        ? `Inventory entry not found: ${entryId}`
+        : `Inventory entry ID is not unique: ${entryId}`,
+    );
+  return matches[0]!;
+}
+
+function multipliedCopper(...factors: readonly number[]): number {
+  let result = 1;
+  for (const factor of factors) {
+    result *= factor;
+    if (!Number.isSafeInteger(result))
+      throw new Error("Currency transaction exceeds the safe integer range");
+  }
+  return result;
+}
+
+function withCurrentWalletCopper(
+  build: CharacterBuild,
+  wallet: CharacterWalletKind,
+  copper: number,
+): CharacterBuild {
+  const key = characterWalletTextKey(build.effectiveLevel, wallet);
+  return {
+    ...build,
+    textStrings: {
+      ...build.textStrings,
+      [key]: formatLegacyCurrency(currencyFromCopper(copper)),
+    },
+  };
+}
 
 function replaceInTree(
   occurrence: BuildOccurrence,
@@ -275,14 +579,7 @@ export function applyCharacterCommand(
       };
     }
     case "put-inventory": {
-      if (
-        !Number.isInteger(command.entry.quantity) ||
-        !Number.isInteger(command.entry.equippedQuantity) ||
-        command.entry.quantity < 0 ||
-        command.entry.equippedQuantity < 0 ||
-        command.entry.equippedQuantity > command.entry.quantity
-      )
-        throw new Error("Inventory quantities are invalid");
+      assertInventoryQuantities(command.entry);
       return {
         ...build,
         inventory: [
@@ -298,6 +595,122 @@ export function applyCharacterCommand(
           (entry) => entry.id !== command.entryId,
         ),
       };
+    case "equip-inventory": {
+      const target = exactInventoryEntry(build.inventory, command.entryId);
+      assertEquipmentAssignments(target.quantity, command.assignments);
+      const occupiedSlots = new Set(
+        command.assignments.map(({ slot }) => slot),
+      );
+      return {
+        ...build,
+        inventory: build.inventory.map((entry) => {
+          if (entry.id === command.entryId) {
+            return {
+              ...entry,
+              equippedQuantity: equippedQuantityFromSlots(command.assignments),
+              equippedSlots: [...command.assignments],
+            };
+          }
+          if (entry.equippedSlots === undefined) return entry;
+          const equippedSlots = entry.equippedSlots.filter(
+            ({ slot }) => !occupiedSlots.has(slot),
+          );
+          return equippedSlots.length === entry.equippedSlots.length
+            ? entry
+            : {
+                ...entry,
+                equippedQuantity: equippedQuantityFromSlots(equippedSlots),
+                equippedSlots,
+              };
+        }),
+      };
+    }
+    case "purchase-inventory": {
+      assertCopperPrice(command.priceCopper);
+      assertInventoryQuantities(command.entry);
+      if (command.entry.quantity <= 0)
+        throw new Error("Purchase count must be a positive integer");
+      if (
+        command.entry.equippedQuantity !== 0 ||
+        (command.entry.equippedSlots?.length ?? 0) !== 0
+      )
+        throw new Error("Purchased inventory must initially be unequipped");
+      if (build.inventory.some(({ id }) => id === command.entry.id))
+        throw new Error(`Inventory entry already exists: ${command.entry.id}`);
+
+      const cost = multipliedCopper(
+        command.priceCopper,
+        command.entry.quantity,
+      );
+      const carried = currencyToCopper(
+        resolveCharacterWallet(build, "carried").amount,
+      );
+      const stored = currencyToCopper(
+        resolveCharacterWallet(build, "stored").amount,
+      );
+      const available = carried + stored;
+      if (!Number.isSafeInteger(available))
+        throw new Error("Currency transaction exceeds the safe integer range");
+      if (cost > available) throw new Error("Insufficient currency");
+      const carriedAfter = Math.max(0, carried - cost);
+      const storedAfter = stored - Math.max(0, cost - carried);
+      let updated: CharacterBuild = {
+        ...build,
+        inventory: [...build.inventory, command.entry],
+      };
+      if (cost > 0) {
+        updated = withCurrentWalletCopper(updated, "carried", carriedAfter);
+        if (cost > carried)
+          updated = withCurrentWalletCopper(updated, "stored", storedAfter);
+      }
+      return updated;
+    }
+    case "sell-inventory": {
+      assertCopperPrice(command.priceCopper);
+      if (![20, 50, 100].includes(command.percentage))
+        throw new Error("Sale percentage must be 20, 50, or 100");
+      const entry = exactInventoryEntry(build.inventory, command.entryId);
+      if (!Number.isSafeInteger(entry.quantity) || entry.quantity <= 0)
+        throw new Error("Sale count must be a positive integer");
+      const proceeds = Math.floor(
+        multipliedCopper(command.priceCopper, command.percentage) / 100,
+      );
+      const carried = currencyToCopper(
+        resolveCharacterWallet(build, "carried").amount,
+      );
+      if (!Number.isSafeInteger(carried + proceeds))
+        throw new Error("Currency transaction exceeds the safe integer range");
+      const quantity = entry.quantity - 1;
+      const equippedSlots = entry.equippedSlots?.filter(
+        ({ quantityIndex }) => quantityIndex < quantity,
+      );
+      const inventory = build.inventory.flatMap((current) => {
+        if (current.id !== command.entryId) return [current];
+        if (quantity === 0) return [];
+        return [
+          {
+            ...current,
+            quantity,
+            equippedQuantity:
+              equippedSlots === undefined
+                ? Math.min(current.equippedQuantity, quantity)
+                : equippedQuantityFromSlots(equippedSlots),
+            ...(equippedSlots === undefined
+              ? {}
+              : {
+                  equippedSlots,
+                }),
+          },
+        ];
+      });
+      const updated: CharacterBuild = {
+        ...build,
+        inventory,
+      };
+      return proceeds === 0
+        ? updated
+        : withCurrentWalletCopper(updated, "carried", carried + proceeds);
+    }
     case "set-text": {
       const textStrings = { ...build.textStrings };
       if (command.value.length === 0) delete textStrings[command.name];

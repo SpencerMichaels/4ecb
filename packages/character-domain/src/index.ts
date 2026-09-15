@@ -1,5 +1,6 @@
 export * from "./build";
 
+import { EQUIPMENT_SLOT_IDS, equippedQuantityFromSlots } from "./build";
 import type { BuildElementIdentity, CharacterBuild } from "./build";
 
 export const CHARACTER_SCHEMA_VERSION = 2 as const;
@@ -354,6 +355,8 @@ function characterBuild(value: unknown): boolean {
   const build = object(value);
   if (build === undefined) return false;
   const seen = new WeakSet<object>();
+  const knownEquipmentSlots = new Set<string>(EQUIPMENT_SLOT_IDS);
+  const occupiedEquipmentSlots = new Set<string>();
   return (
     build.formatVersion === 1 &&
     Number.isInteger(build.effectiveLevel) &&
@@ -401,6 +404,44 @@ function characterBuild(value: unknown): boolean {
         typeof entry.equippedQuantity === "number" &&
         entry.equippedQuantity >= 0 &&
         entry.equippedQuantity <= entry.quantity &&
+        (entry.equippedSlots === undefined ||
+          (() => {
+            if (!Array.isArray(entry.equippedSlots)) return false;
+            if (
+              typeof entry.quantity !== "number" ||
+              typeof entry.equippedQuantity !== "number"
+            )
+              return false;
+            const quantity = entry.quantity;
+            const equippedQuantity = entry.equippedQuantity;
+            const localSlots = new Set<string>();
+            const assignments = entry.equippedSlots.flatMap((value) => {
+              const assignment = object(value);
+              if (
+                assignment === undefined ||
+                typeof assignment.slot !== "string" ||
+                !knownEquipmentSlots.has(assignment.slot) ||
+                localSlots.has(assignment.slot) ||
+                occupiedEquipmentSlots.has(assignment.slot) ||
+                !Number.isInteger(assignment.quantityIndex) ||
+                typeof assignment.quantityIndex !== "number" ||
+                assignment.quantityIndex < 0 ||
+                assignment.quantityIndex >= quantity
+              )
+                return [];
+              localSlots.add(assignment.slot);
+              return [
+                {
+                  slot: assignment.slot as (typeof EQUIPMENT_SLOT_IDS)[number],
+                  quantityIndex: assignment.quantityIndex,
+                },
+              ];
+            });
+            if (assignments.length !== entry.equippedSlots.length) return false;
+            for (const { slot } of assignments)
+              occupiedEquipmentSlots.add(slot);
+            return equippedQuantity === equippedQuantityFromSlots(assignments);
+          })()) &&
         Array.isArray(entry.elements) &&
         entry.elements.every((element) => inventoryElement(element, seen)) &&
         optionalString(entry.name) &&
