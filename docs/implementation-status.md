@@ -185,15 +185,15 @@ candidate.
   Race, class, current level, and XP appear beside the portrait; unresolved and
   warning totals appear beside local save state. The redundant overview panel,
   role/plan facts, and routine successful-evaluation prose are removed. Only the active
-  Class, Race, Background, Ability Scores, Skills, Powers, Spellbook, Feats, or
+  Class, Race, Background, Ability Scores, Companion, Skills, Powers, Spellbook, Feats, or
   optional Retraining category is mounted, and each visited level remembers its
   active category. Unresolved decisions are prominent, completed selections
   stay visible in compact form, and a chosen target creates every intervening
   level in one autosaved transaction without advancing the current effective
   level.
 - The level rail no longer expands into an overlay. A sibling **Overview** tab
-  provides category checklists for Character, Ability Scores, Skills, Powers,
-  Spellbook, Feats, Retraining, and Other without shifting the choice and
+  provides category checklists for Character, Ability Scores, Companion, Skills,
+  Powers, Spellbook, Feats, Retraining, and Other without shifting the choice and
   option detail panes, while the rail remains compact direct navigation within
   Build. Overview replaces both the former popout and bottom history disclosure,
   and deliberately omits the duplicate raw “Stored features” occurrence tree.
@@ -371,8 +371,8 @@ candidate.
   Silaqui verification confirmed the unused level-5 actions, category-filtered
   Power editor and cancellation, and her saved level-6 Power retraining.
 - The selected-level workspace now follows the legacy builder's recovered
-  mechanical pane order: Class, Race, Background, Ability Scores, Skills,
-  Powers, Spellbook, and Feats. Gender, alignment, and deity live outside the
+  mechanical pane order: Class, Race, Background, Ability Scores, Companion,
+  Skills, Powers, Spellbook, and Feats. Gender, alignment, and deity live outside the
   level timeline in a sibling Character details tab, matching the legacy
   builder's Build/Details separation. Gender and Alignment render as visible
   button/radio grids; Deity uses the shared candidate table with Name and
@@ -430,9 +430,13 @@ candidate.
   characters start from `8, 10, 10, 10, 10, 10`, escalating-cost steppers show
   points remaining and next-increase cost, exact allocations complete the level
   timeline item, and invalid/custom arrays remain editable with a house-rule
-  status. Regular and companion level increases also share Ability Scores;
-  each same-level pair uses one six-button control accepting two distinct choices,
-  matching the recovered legacy `AbilityLeveling.LevelChoices` grouping.
+  status. Regular and companion level increases share one six-button control
+  accepting two distinct choices, matching the recovered legacy
+  `AbilityLeveling.LevelChoices` grouping, but companion increases now live in
+  the separate Companion category with beast-companion, familiar, and
+  companion-owned follow-up choices. The recovered `CompanionPage` displays
+  both Companion and Familiar choices and mounts beast ability leveling there;
+  the full corpus contains no player-selectable companion feat slots.
   Live Silaqui verification confirmed her existing standard allocation
   is recognized as complete, decrementing a score immediately reports the point
   difference, undo restores it, and the control has no horizontal overflow at

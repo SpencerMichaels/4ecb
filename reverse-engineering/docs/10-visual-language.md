@@ -324,9 +324,13 @@ tie-breaker.
 `AbilityLeveling.GetNextAbilityIncrease` selects occurrences by either the
 `Ability Increase` or `Companion Ability Increase` prefix. Its `LevelChoices`
 loop then consumes two consecutive occurrences into the same horizontal level
-row before continuing. Companion ability increases therefore belong in the
-same Ability Scores surface and use the same exactly-two interaction as regular
-level increases; they are not two independently headed sections.
+row before continuing. This establishes the same exactly-two interaction for
+both kinds, not common page ownership: regular increases are mounted by the
+ability-score page, while `BeastCompanion` calls
+`LevelChoices(..., companion: true)` inside the legacy Companion page. The
+modern UI therefore uses one paired control in Ability Scores for the character
+and the same paired control in Companion for the beast; it does not create two
+independently headed selections for either pair.
 
 ## Proposed modern token palette
 

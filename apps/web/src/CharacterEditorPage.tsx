@@ -62,6 +62,7 @@ import {
   isCharacterDetailChoice,
   isBuildPresetChoice,
   isAbilityIncreaseChoiceType,
+  isCompanionChoiceType,
   isOptionalRetrainingChoice,
   isUnresolvedChoice,
   legacyChoiceSection,
@@ -327,6 +328,8 @@ function choiceSectionIcon(section: string): IconName {
       return "background";
     case "Ability Scores":
       return "ability";
+    case "Companion":
+      return "companion";
     case "Skills":
       return "skill";
     case "Powers":
@@ -345,6 +348,7 @@ function choiceSectionIcon(section: string): IconName {
 const overviewPaneOrder = [
   "Character",
   "Ability Scores",
+  "Companion",
   "Skills",
   "Powers",
   "Spellbook",
@@ -409,6 +413,32 @@ interface OverviewRetraining {
   readonly selectedOccurrenceId: string;
 }
 
+function isCompanionOwnedChoice(
+  choice: EvaluatedChoice,
+  occurrenceById: ReadonlyMap<
+    string,
+    EvaluatedCharacter["occurrences"][number]
+  >,
+  byId: ReadonlyMap<string, ContentEntity>,
+): boolean {
+  if (isCompanionChoiceType(choice.type)) return true;
+  const visited = new Set<string>();
+  let providerId: string | undefined = choice.providerOccurrenceId;
+  while (providerId !== undefined && !visited.has(providerId)) {
+    visited.add(providerId);
+    const provider = occurrenceById.get(providerId);
+    if (provider === undefined) return false;
+    const providerType = byId
+      .get(provider.definitionId.toLocaleLowerCase())
+      ?.type.trim()
+      .toLocaleLowerCase();
+    if (providerType === "companion" || providerType === "familiar")
+      return true;
+    providerId = provider.parentId;
+  }
+  return false;
+}
+
 function CharacterOverview({
   build,
   evaluation,
@@ -452,8 +482,13 @@ function CharacterOverview({
           (showPlanned && choice.selectedOccurrenceId !== undefined)),
     );
   });
+  const occurrenceById = new Map(
+    evaluation.occurrences.map((occurrence) => [occurrence.id, occurrence]),
+  );
   const grouped = new Map(
     groupOverviewChoices(visibleChoices, (choice) => {
+      if (isCompanionOwnedChoice(choice, occurrenceById, byId))
+        return "Companion";
       if (
         choice.type.trim().toLocaleLowerCase() !== "replacement" ||
         isOptionalRetrainingChoice(choice)
@@ -522,7 +557,10 @@ function CharacterOverview({
   );
 
   const abilityIncreaseGroups = new Map<string, EvaluatedChoice[]>();
-  for (const choice of grouped.get("Ability Scores") ?? []) {
+  for (const choice of [
+    ...(grouped.get("Ability Scores") ?? []),
+    ...(grouped.get("Companion") ?? []),
+  ]) {
     if (!isAbilityIncreaseChoiceType(choice.type)) continue;
     const companion = /^Companion\b/i.test(choice.type);
     const key = `${choice.level}:${companion ? "companion" : "character"}`;
@@ -659,13 +697,16 @@ function CharacterOverview({
                       </tr>
                     ) : null}
                     {pane === "Ability Scores"
-                      ? [...abilityIncreaseGroups.values()].map(
-                          (increaseChoices) => {
+                      ? [...abilityIncreaseGroups.values()]
+                          .filter(
+                            (increaseChoices) =>
+                              !/^Companion\b/i.test(increaseChoices[0]!.type),
+                          )
+                          .map((increaseChoices) => {
                             const first = increaseChoices[0]!;
                             const values = increaseChoices.map(
                               (choice) => selectedName(choice) ?? "—",
                             );
-                            const companion = /^Companion\b/i.test(first.type);
                             return (
                               <tr
                                 className={rowClass(increaseChoices)}
@@ -673,20 +714,38 @@ function CharacterOverview({
                               >
                                 <td>{first.level}</td>
                                 <td>
-                                  {choiceButton(
-                                    first,
-                                    `${companion ? "Companion: " : ""}${values.join(", ")}`,
-                                  )}
+                                  {choiceButton(first, values.join(", "))}
                                 </td>
                               </tr>
                             );
-                          },
-                        )
+                          })
+                      : null}
+                    {pane === "Companion"
+                      ? [...abilityIncreaseGroups.values()]
+                          .filter((increaseChoices) =>
+                            /^Companion\b/i.test(increaseChoices[0]!.type),
+                          )
+                          .map((increaseChoices) => {
+                            const first = increaseChoices[0]!;
+                            const values = increaseChoices.map(
+                              (choice) => selectedName(choice) ?? "—",
+                            );
+                            return (
+                              <tr
+                                className={rowClass(increaseChoices)}
+                                key={`ability-${first.id}`}
+                              >
+                                <td>{first.level}</td>
+                                <td>{choiceButton(first, "Ability Scores")}</td>
+                                <td>{values.join(", ")}</td>
+                              </tr>
+                            );
+                          })
                       : null}
                     {choices
                       .filter(
                         (choice) =>
-                          pane !== "Ability Scores" ||
+                          !["Ability Scores", "Companion"].includes(pane) ||
                           !isAbilityIncreaseChoiceType(choice.type),
                       )
                       .map((choice) => {
@@ -4217,9 +4276,14 @@ export function CharacterEditorPage({
   const legacyChoiceSections =
     groupChoicesByLegacyWorkflow(presentationChoices);
   const abilitySectionIndex = legacyChoiceSections.findIndex(({ section }) =>
-    ["Ability Scores", "Skills", "Powers", "Spellbook", "Feats"].includes(
-      section,
-    ),
+    [
+      "Ability Scores",
+      "Companion",
+      "Skills",
+      "Powers",
+      "Spellbook",
+      "Feats",
+    ].includes(section),
   );
   const displayedChoiceSections =
     selectedLevel !== 1 ||

@@ -91,8 +91,8 @@ application's protected visual assets.
   as the initial top-level information architecture. This remains subject to
   prototype review because navigation is easier to judge in context.
 - Keep a sibling **Overview** tab beside Build and Character details. It presents
-  concise checklist panes for Character, Ability Scores, Skills, Powers,
-  Spellbook, Feats, Retraining, and Other, with choices ordered and labeled by level; it
+  concise checklist panes for Character, Ability Scores, Companion, Skills,
+  Powers, Spellbook, Feats, Retraining, and Other, with choices ordered and labeled by level; it
   must not repeat the same selections in a second raw “stored features” tree. Current
   levels appear by default. A temporary **Show planned levels** checkbox reveals
   only future levels that already contain a saved choice, omitting empty plan
@@ -134,8 +134,10 @@ application's protected visual assets.
   are interactive sort controls: a new heading sorts on that field with Name as
   the tie-breaker, while activating the current heading reverses its direction.
   Selection itself never changes row order.
-- Present each same-level pair of regular or companion ability increases as one
-  six-button, exactly-two selector in the Ability Scores category.
+- Present each same-level pair of ability increases as one six-button,
+  exactly-two selector. Character increases belong to Ability Scores;
+  companion increases, companion/familiar selection, and companion-owned
+  follow-up choices belong to Companion.
 - Repeated Background slots use one primary **Choose background** section;
   already selected extras remain visible and optional empty slots appear one at
   a time through **Add another background…**. A revealed empty slot can be

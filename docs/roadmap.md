@@ -368,7 +368,7 @@ owner approval or close the keyboard, screen-reader, zoom, touch, Safari,
 physical-device, performance, or cross-engine visual-print exit criteria above.
 
 The second product-owner review makes each level the main-pane workspace. Its
-Class, Race, Background, Ability Scores, Skills, Powers, Spellbook, Feats, and
+Class, Race, Background, Ability Scores, Companion, Skills, Powers, Spellbook, Feats, and
 optional Retraining categories now appear as a horizontal tab list, with only
 the active category mounted; the timeline remains its compact status and
 navigation summary and opens the corresponding tab. Repeated background slots
@@ -397,8 +397,8 @@ subsequent navigation reuses it rather than replaying the six-second index build
 The persistent level timeline has been reduced to a narrow status/navigation
 rail so the choice editor and its adjacent option detail remain the primary work
 area. A sibling Overview tab now replaces the expanded-plan overlay and bottom
-history disclosure with navigable Character, Ability Scores, Skills, Powers,
-Spellbook, Feats, Retraining, and Other checklists whose rows carry their owning levels; it
+history disclosure with navigable Character, Ability Scores, Companion, Skills,
+Powers, Spellbook, Feats, Retraining, and Other checklists whose rows carry their owning levels; it
 does not duplicate the list with a raw “Stored features” tree. Planned levels are hidden
 by default and the temporary toggle reveals only future frames that contain a
 saved choice. Ordinary detail cards and sections grow naturally with the

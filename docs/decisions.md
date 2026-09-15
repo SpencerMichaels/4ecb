@@ -553,8 +553,8 @@ preserved-original and regenerated legacy exports.
 ### D039 — A level workspace exposes one mechanical category at a time
 
 The selected level remains the builder's primary unit, but its Class, Race,
-Background, Ability Scores, Skills, Powers, Spellbook, Feats, and optional
-Retraining categories are presented as one horizontal tab list. Only the active
+Background, Ability Scores, Companion, Skills, Powers, Spellbook, Feats, and
+optional Retraining categories are presented as one horizontal tab list. Only the active
 category is mounted beside the shared detail pane. Expanded-timeline links open
 the owning category, and the browser session remembers the active category per
 visited level; this is transient navigation state, not character data.
@@ -595,8 +595,8 @@ tiered rail remains directly operable on narrow layouts.
 The former expanded-plan overlay and bottom **Complete level history**
 disclosure are replaced by a sibling **Overview** tab beside Build and
 Character details. Overview reorganizes the compact choice summaries into
-checklist panes for Character, Ability Scores, Skills, Powers, Spellbook,
-Feats, Retraining, and Other rather than repeating a pane for every level. Each row carries
+checklist panes for Character, Ability Scores, Companion, Skills, Powers,
+Spellbook, Feats, Retraining, and Other rather than repeating a pane for every level. Each row carries
 its owning level, and choices within a pane are ordered from earliest to latest.
 It does not also expose the evaluator's raw
 occurrence tree as “Stored features,” because that duplicates selections and
@@ -615,9 +615,10 @@ checklists are open.
 Checklist columns are pane-specific rather than mechanically repeating the
 evaluator's fields. Character omits Level because its identity choices are not
 presented as level-up decisions; Feats and Skills omit their constant choice
-type; blank optional Background slots are absent. Paired regular or companion
-ability increases collapse to one row per level and kind, such as
-`8 | Dexterity, Constitution`. Optional retraining has its own explicit
+type; blank optional Background slots are absent. Paired character ability
+increases collapse to one row per level, such as
+`8 | Dexterity, Constitution`. Companion ability increases use the same compact
+row shape in the separate Companion checklist. Optional retraining has its own explicit
 `Level | From | → | To` pane. Feature-driven replacement choices remain with
 the content they replace rather than being mislabeled as retraining.
 
@@ -694,12 +695,21 @@ desired. Theme ownership headings use
 the resolved theme name, such as `Theme (Dune Trader)`, rather than an anonymous
 Theme label.
 
-Regular and companion ability-increase occurrences share the Ability Scores
-category. Each same-level pair is presented as one six-button selector that
-accepts exactly two distinct abilities. This follows the recovered
-`AbilityLeveling.LevelChoices` path, which scans both `Ability Increase` and
-`Companion Ability Increase` occurrences and consumes them two at a time into
-one level row; “companion” changes the occurrence prefix, not the interaction.
+Regular and companion ability-increase occurrences share the same exactly-two
+six-button interaction, but not the same category. Regular increases remain in
+Ability Scores; `Companion`, `Familiar`, and `Companion Ability Increase`
+choices live in Companion. This follows the recovered legacy ownership rather
+than only the common control implementation: `CompanionPage.Update` enumerates
+both companion and familiar choices, while `BeastCompanion` mounts
+`AbilityLeveling.LevelChoices(..., companion: true)` within that page. A
+familiar-owned nested choice also remains with its familiar in Companion.
+
+The full local content corpus has no Feat selection rule owned by a Companion
+or Familiar record, so the UI does not invent companion feat slots. Automatic
+records whose IDs contain `FEAT_COMPANION` are typed Companion and model beast
+stat progression; granted companion/familiar powers remain grants rather than
+new player choices. Mounts remain equipment, while shaman spirit-companion
+features and powers remain in their authored Class/Power/Feat categories.
 
 ### D043 — Inactive provider rules preserve but suppress their saved children
 

@@ -447,6 +447,16 @@ export function isAbilityIncreaseChoiceType(type: string): boolean {
   );
 }
 
+export function isCompanionChoiceType(type: string | undefined): boolean {
+  if (type === undefined) return false;
+  const normalized = type.trim().toLocaleLowerCase();
+  return (
+    normalized === "companion" ||
+    normalized === "familiar" ||
+    /^companion ability increase(?:\s*\(level\s+\d+\))?$/i.test(type.trim())
+  );
+}
+
 export function identityChoiceLabel(type: string): string | undefined {
   return ["class", "hybrid class", "race"].includes(
     type.trim().toLocaleLowerCase(),
@@ -689,6 +699,7 @@ export type LegacyChoiceSection =
   | "Race"
   | "Background"
   | "Ability Scores"
+  | "Companion"
   | "Skills"
   | "Powers"
   | "Spellbook"
@@ -701,6 +712,7 @@ const legacySectionOrder: readonly LegacyChoiceSection[] = [
   "Race",
   "Background",
   "Ability Scores",
+  "Companion",
   "Skills",
   "Powers",
   "Spellbook",
@@ -719,6 +731,7 @@ export function legacyChoiceSection(
 ): LegacyChoiceSection {
   const type = choice.type.trim().toLocaleLowerCase();
   if (choice.spellbook !== undefined) return "Spellbook";
+  if (isCompanionChoiceType(type)) return "Companion";
   if (
     [
       "class",
@@ -763,6 +776,7 @@ export interface LegacyChoiceSectionGroup {
 export type OverviewChoicePane =
   | "Character"
   | "Ability Scores"
+  | "Companion"
   | "Skills"
   | "Powers"
   | "Spellbook"
@@ -773,6 +787,7 @@ export type OverviewChoicePane =
 const overviewPaneOrder: readonly OverviewChoicePane[] = [
   "Character",
   "Ability Scores",
+  "Companion",
   "Skills",
   "Powers",
   "Spellbook",
@@ -789,9 +804,14 @@ export function overviewChoicePane(
   if (["Class", "Race", "Background", "Character Details"].includes(section))
     return "Character";
   if (
-    ["Ability Scores", "Skills", "Powers", "Spellbook", "Feats"].includes(
-      section,
-    )
+    [
+      "Ability Scores",
+      "Companion",
+      "Skills",
+      "Powers",
+      "Spellbook",
+      "Feats",
+    ].includes(section)
   )
     return section as OverviewChoicePane;
   return "Other";
@@ -914,7 +934,12 @@ export function groupDependentChoiceFlows(
   const roots: EvaluatedChoice[] = [];
   for (const choice of choices) {
     const parent = choiceBySelectedOccurrence.get(choice.providerOccurrenceId);
-    if (parent === undefined || parent.id === choice.id) roots.push(choice);
+    const startsCompanionFlow =
+      parent !== undefined &&
+      isCompanionChoiceType(choice.type) &&
+      !isCompanionChoiceType(parent.type);
+    if (parent === undefined || parent.id === choice.id || startsCompanionFlow)
+      roots.push(choice);
     else children.set(parent.id, [...(children.get(parent.id) ?? []), choice]);
   }
   const visited = new Set<string>();

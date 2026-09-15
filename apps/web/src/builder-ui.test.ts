@@ -42,6 +42,7 @@ import {
   isCharacterDetailChoice,
   isBuildPresetChoice,
   isAbilityIncreaseChoiceType,
+  isCompanionChoiceType,
   isOptionalRetrainingChoice,
   planningHorizonCommand,
   powerTableLevel,
@@ -205,6 +206,12 @@ describe("builder planning UI", () => {
     expect(
       isAbilityIncreaseChoiceType("Companion Ability Increase (Level 8)"),
     ).toBe(true);
+    expect(isCompanionChoiceType("Companion")).toBe(true);
+    expect(isCompanionChoiceType("Familiar")).toBe(true);
+    expect(isCompanionChoiceType("Companion Ability Increase (Level 8)")).toBe(
+      true,
+    );
+    expect(isCompanionChoiceType("Companion Power")).toBe(false);
     expect(identityChoiceLabel("Class")).toBe("Class");
     expect(identityChoiceLabel("Race")).toBe("Race");
     expect(identityChoiceLabel("Class Feature")).toBeUndefined();
@@ -986,6 +993,7 @@ describe("builder planning UI", () => {
       { id: "class", type: "Class" },
       { id: "alignment", type: "Alignment" },
       { id: "race-bonus", type: "Race Ability Bonus" },
+      { id: "familiar", type: "Familiar" },
     ] as unknown as EvaluatedCharacter["choices"];
 
     expect(
@@ -997,6 +1005,7 @@ describe("builder planning UI", () => {
       ["Class", ["class", "class-feature"]],
       ["Race", ["race", "race-bonus"]],
       ["Background", ["theme"]],
+      ["Companion", ["familiar"]],
       ["Skills", ["skills"]],
       ["Powers", ["daily"]],
       ["Feats", ["feat"]],
@@ -1028,6 +1037,34 @@ describe("builder planning UI", () => {
         flow.map(({ id }) => id),
       ),
     ).toEqual([["feat", "mastery", "replacement"], ["utility"]]);
+  });
+
+  it("starts companion and familiar choices as their own presentation flows", () => {
+    const choices = [
+      {
+        id: "feat",
+        type: "Feat",
+        selectedOccurrenceId: "familiar-feat",
+        providerOccurrenceId: "level-1",
+      },
+      {
+        id: "familiar",
+        type: "Familiar",
+        selectedOccurrenceId: "familiar-choice",
+        providerOccurrenceId: "familiar-feat",
+      },
+      {
+        id: "language",
+        type: "Language",
+        providerOccurrenceId: "familiar-choice",
+      },
+    ] as unknown as EvaluatedCharacter["choices"];
+
+    expect(
+      groupDependentChoiceFlows(choices).map((flow) =>
+        flow.map(({ id }) => id),
+      ),
+    ).toEqual([["feat"], ["familiar", "language"]]);
   });
 
   it("groups positional slots emitted by the same rule", () => {
@@ -1106,7 +1143,7 @@ describe("builder planning UI", () => {
       ]),
     ).toEqual([
       ["Character", ["class"]],
-      ["Ability Scores", ["companion"]],
+      ["Companion", ["companion"]],
       ["Skills", ["skill"]],
       ["Powers", ["power-1", "power-7"]],
       ["Feats", ["feat-4"]],

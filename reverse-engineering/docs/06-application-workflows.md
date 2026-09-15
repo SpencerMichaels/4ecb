@@ -78,6 +78,47 @@ known fields.
 - psionic power points, augmentable at-wills, and augment versions;
 - Essentials and non-Essentials class behavior.
 
+## Companions and familiars
+
+The legacy **Companion** finishing page is the common player-facing owner for
+beast companions and familiars. `CompanionPage.Update` separately enumerates
+all current `StockTypeCompanion()` and `StockTypeFamiliar()` choices, wrapping
+the former in `BeastCompanion` and the latter in `Familiar`. `MainWindow` also
+routes direct Companion and Familiar choices, plus the
+`Companion Ability Increase...` prefix, back to this page. The shared
+`Companion` base class builds the legal candidate list and commits the selected
+definition through the original choice occurrence.
+
+Beast advancement is part of that same surface. `BeastCompanion` calls
+`AbilityLeveling.LevelChoices(..., companion: true)`, which consumes paired
+`Companion Ability Increase (Level N)` occurrences at levels 4, 8, 14, 18, 24,
+and 28. `Familiar` does not mount ability leveling. Thus character and companion
+ability increases reuse one exactly-two control design, but legacy page
+ownership places only the former under Ability Scores and the latter under
+Companion.
+
+The full local corpus supplies 1,827 Companion records, 103 Familiar records,
+and six ability candidates at each companion-increase level. Companion choices
+are introduced by the normal and hybrid Beast Mastery paths and by Bear/Wolf
+Companion features. Familiar choices are introduced by Arcane Familiar,
+Familiar Forms, and Second Familiar. A selected familiar can itself introduce
+a nested choice, such as a language; that child remains part of the familiar's
+Companion workflow rather than moving to an unrelated top-level category.
+
+No Companion or Familiar record in that corpus owns a player-selectable Feat
+rule. Some beast definitions automatically grant per-level records with IDs
+containing `FEAT_COMPANION`, but those definitions are typed Companion and
+encode stat progression; they are not feat slots. Companion and familiar
+powers, benefits, and progression records are ordinary automatic grants unless
+their metadata contains a real nested selection.
+
+This category must not absorb every creature-adjacent mechanic. Mounts are
+owned by equipment/loot and rendered through the mount display. Shaman spirit
+companions are authored as ordinary class features, feats, and powers rather
+than `Companion` or `Familiar` choices, so they remain in those normal build
+categories. The replacement UI therefore groups exact Companion/Familiar
+choice ancestry, not names or descriptive prose.
+
 ## Equipment and wealth
 
 - browse/filter weapons, armor, gear, superior implements, magic items, item sets,

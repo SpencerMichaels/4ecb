@@ -15,6 +15,7 @@ import {
   GraduationCap,
   LayoutGrid,
   Minus,
+  PawPrint,
   Redo2,
   Reply,
   ScanLine,
@@ -53,6 +54,7 @@ export type IconName =
   | "book"
   | "class"
   | "character"
+  | "companion"
   | "check"
   | "chevron"
   | "clock"
@@ -90,6 +92,7 @@ const icons: Record<IconName, LucideIcon> = {
   book: BookOpen,
   class: Shield,
   character: UserRound,
+  companion: PawPrint,
   check: Check,
   chevron: ChevronRight,
   clock: Clock3,
