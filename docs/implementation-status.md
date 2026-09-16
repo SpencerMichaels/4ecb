@@ -492,6 +492,10 @@ candidate.
   members and direct power grants under collapsible per-level headings. Direct
   grants without authored levels appear at level 1, and duplicate grant/member
   relationships render only once.
+- Background candidate tables now show a sortable **Associated Skills** column
+  from the authored `Associated Skills` field. Empty metadata remains visibly
+  unspecified; the UI does not infer associations from benefit or description
+  prose.
 - Base ability scores now live only in the level-1 Ability Scores group, before
   racial increases, and no longer appear as an unrelated editor below the level
   workspace. The editor now mirrors the legacy 22-point-buy path: new native

@@ -41,6 +41,7 @@ import {
 
 import {
   applyBuildPresetCommand,
+  backgroundAssociatedSkills,
   candidateReason,
   candidateTableTypeGroup,
   classTableMetadata,
@@ -1407,7 +1408,15 @@ function ReplacementEditor({
             .includes("feat"),
         )
       ? "feat"
-      : "option";
+      : visible.every(
+            (candidate) =>
+              byId
+                .get(candidate.definitionId.toLocaleLowerCase())
+                ?.type.trim()
+                .toLocaleLowerCase() === "background",
+          )
+        ? "background"
+        : "option";
   const replacementFeatGroups =
     replacementKind === "feat"
       ? groupParameterizedCandidates(
@@ -1978,13 +1987,21 @@ function candidateTableNoun(
     class: ["Class", "classes"],
     feature: ["Class Feature", "class features"],
     preset: ["Preset", "presets"],
+    background: ["Background", "backgrounds"],
     option: ["Option", "options"],
   };
   return nouns[kind][plural ? 1 : 0];
 }
 
 type CandidateSortColumn =
-  "name" | "level" | "action" | "attack" | "summary" | "role" | "power-source";
+  | "name"
+  | "level"
+  | "action"
+  | "attack"
+  | "summary"
+  | "role"
+  | "power-source"
+  | "associated-skills";
 type CandidateSortDirection = "ascending" | "descending";
 
 function compareCandidateSortValues(
@@ -2071,6 +2088,7 @@ function CandidateSelectionTable({
         ? undefined
         : contentSpecificValue(entity, "Attack Type"),
       entity === undefined ? undefined : contentSpecificValue(entity, "Level"),
+      entity === undefined ? undefined : backgroundAssociatedSkills(entity),
     ].some((value) => value?.toLocaleLowerCase().includes(normalizedFilter));
   };
   const isFavorite = (candidate: CandidateDecision) =>
@@ -2091,6 +2109,8 @@ function CandidateSelectionTable({
     if (column === "role") return classTableMetadata(entity).role.label;
     if (column === "power-source")
       return classTableMetadata(entity).powerSource.label;
+    if (column === "associated-skills")
+      return backgroundAssociatedSkills(entity);
     return choiceTableSummary(entity, kind);
   };
   const compareCandidates = (
@@ -2302,6 +2322,17 @@ function CandidateSelectionTable({
               <span className="selection-table-summary">{summary || "—"}</span>
             </td>
           </>
+        ) : kind === "background" ? (
+          <>
+            <td>
+              {entity === undefined
+                ? "—"
+                : (backgroundAssociatedSkills(entity) ?? "—")}
+            </td>
+            <td>
+              <span className="selection-table-summary">{summary || "—"}</span>
+            </td>
+          </>
         ) : (
           <td>
             <span className="selection-table-summary">{summary || "—"}</span>
@@ -2385,6 +2416,11 @@ function CandidateSelectionTable({
                 <>
                   {sortableHeader("role", "Role")}
                   {sortableHeader("power-source", "Power Source")}
+                  {sortableHeader("summary", "Description")}
+                </>
+              ) : kind === "background" ? (
+                <>
+                  {sortableHeader("associated-skills", "Associated Skills")}
                   {sortableHeader("summary", "Description")}
                 </>
               ) : (
@@ -2523,7 +2559,17 @@ function CandidateSelectionTable({
               ? visibleFeatGroups.length
               : visibleCandidates.length) === 0 ? (
               <tr>
-                <td colSpan={kind === "power" ? 5 : kind === "class" ? 4 : 2}>
+                <td
+                  colSpan={
+                    kind === "power"
+                      ? 5
+                      : kind === "class"
+                        ? 4
+                        : kind === "background"
+                          ? 3
+                          : 2
+                  }
+                >
                   No matching {candidateTableNoun(kind, true)}.
                 </td>
               </tr>

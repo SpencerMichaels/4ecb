@@ -14,6 +14,7 @@ import {
 
 import {
   applyBuildPresetCommand,
+  backgroundAssociatedSkills,
   buildPresetSuggestionNames,
   candidateReason,
   candidateTableTypeGroup,
@@ -403,6 +404,14 @@ describe("builder planning UI", () => {
     ).toBe("deity");
     expect(
       choiceSelectionTableKind({
+        type: "Background",
+        candidates: Array.from({ length: 9 }, (_, index) => ({
+          definitionId: `background-${index}`,
+        })),
+      } as unknown as EvaluatedCharacter["choices"][number]),
+    ).toBe("background");
+    expect(
+      choiceSelectionTableKind({
         type: "Race",
         candidates: Array.from({ length: 9 }, (_, index) => ({
           definitionId: `race-${index}`,
@@ -431,6 +440,30 @@ describe("builder planning UI", () => {
       ),
     ).toBe("Lead with control.");
     expect(contentSpecificValue(power, "action type")).toBe("Standard action");
+  });
+
+  it("reads background-associated skills only from authored metadata", () => {
+    const background = {
+      ...level(0),
+      type: "Background",
+      description: "You learned Arcana and History while growing up.",
+      specifics: [
+        {
+          name: "Associated Skills",
+          value: "Nature, Perception",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+    const proseOnly = {
+      ...background,
+      id: "BACKGROUND_PROSE_ONLY",
+      specifics: [],
+    };
+
+    expect(backgroundAssociatedSkills(background)).toBe("Nature, Perception");
+    expect(backgroundAssociatedSkills(proseOnly)).toBeUndefined();
   });
 
   it("derives compact class metadata from authored legacy fields", () => {

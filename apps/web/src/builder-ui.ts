@@ -62,7 +62,14 @@ export function isBuildPresetChoice(choice: EvaluatedChoice): boolean {
 }
 
 export type ChoiceSelectionTableKind =
-  "feat" | "power" | "class" | "feature" | "deity" | "preset" | "option";
+  | "feat"
+  | "power"
+  | "class"
+  | "feature"
+  | "deity"
+  | "background"
+  | "preset"
+  | "option";
 
 export function choiceSelectionTableKind(
   choice: EvaluatedChoice,
@@ -77,6 +84,7 @@ export function choiceSelectionTableKind(
   if (type === "class") return "class";
   if (type === "class feature") return "feature";
   if (type === "deity") return "deity";
+  if (type === "background") return "background";
   if (type !== "background choice" && (choice.candidates?.length ?? 0) > 8)
     return "option";
   return undefined;
@@ -203,6 +211,13 @@ export function choiceTableSummary(
   if (kind === "deity") return contentSpecificValue(entity, "Alignment");
   if (kind === "preset") return firstSentence(entity.description);
   return entity.flavor?.trim() || entity.description.trim() || undefined;
+}
+
+/** Skills listed by the authored background metadata, without prose inference. */
+export function backgroundAssociatedSkills(
+  entity: ContentEntity,
+): string | undefined {
+  return contentSpecificValue(entity, "Associated Skills");
 }
 
 export interface LabeledDescription {
