@@ -7,6 +7,10 @@ or architecture decision into the established specification or decision log.
 
 ## Attack-type icon task
 
+This task is deferred by the product owner and is commented out in `tasks.txt`.
+Retain the research below for the later design pass. The separate action-type
+icon task remains active and should use the exact `tabletop-dashboard` symbols.
+
 - The range/shape vocabulary must distinguish at least Melee, Ranged, Melee or
   Ranged, Close Burst, Close Blast, Area Burst, Area Wall, Aura, and Personal.
 - Prefer a single-sword icon for Melee over crossed swords, if a suitable icon
