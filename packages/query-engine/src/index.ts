@@ -194,6 +194,21 @@ function valuesForField(
     .flatMap((field) => splitFacetValues(field.value));
 }
 
+function slotFacetValues(entity: ContentEntity): string[] {
+  const values = valuesForField(entity, FACET_FIELD_NAMES.slot);
+  const magicItemTypes = valuesForField(entity, ["magic item type"]);
+  for (const value of magicItemTypes) {
+    if (/^(holy symbol|ki focus)$/iu.test(value.trim())) values.push(value);
+  }
+  if (
+    entity.type.trim().toLocaleLowerCase() === "gear" &&
+    entity.name.trim().toLocaleLowerCase() === "holy symbol"
+  ) {
+    values.push("Holy Symbol");
+  }
+  return values;
+}
+
 function resolveFacetValues(
   values: readonly string[],
   idNames: ReadonlyMap<string, string>,
@@ -217,7 +232,10 @@ function facetsForEntity(
   for (const key of Object.keys(FACET_FIELD_NAMES) as Array<
     keyof typeof FACET_FIELD_NAMES
   >) {
-    let values = valuesForField(entity, FACET_FIELD_NAMES[key]);
+    let values =
+      key === "slot"
+        ? slotFacetValues(entity)
+        : valuesForField(entity, FACET_FIELD_NAMES[key]);
     if (key === "tier") {
       values = [
         ...values,

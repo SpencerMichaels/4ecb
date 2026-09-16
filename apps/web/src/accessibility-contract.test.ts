@@ -7,6 +7,10 @@ const characterEditor = readFileSync(
   new URL("./CharacterEditorPage.tsx", import.meta.url),
   "utf8",
 );
+const equipmentWorkspace = readFileSync(
+  new URL("./EquipmentWorkspace.tsx", import.meta.url),
+  "utf8",
+);
 
 function channel(value: number): number {
   const normalized = value / 255;
@@ -281,5 +285,17 @@ describe("release accessibility contract", () => {
     ])
       expect(styles).toContain(token);
     expect(styles).not.toContain("border-radius: 999px");
+  });
+
+  it("routes loadout shop shortcuts through the existing Slot query", () => {
+    expect(equipmentWorkspace).toContain(
+      "const shopSlot = loadoutShopSlotFilter(slotId)",
+    );
+    expect(equipmentWorkspace).toContain("setSlot(shopSlot);");
+    expect(equipmentWorkspace).toContain("setOffset(0);");
+    expect(equipmentWorkspace).toContain('setTab("shop");');
+    expect(equipmentWorkspace).not.toContain("slotFilter");
+    expect(equipmentWorkspace).not.toContain("equipment-slot-filter");
+    expect(equipmentWorkspace).not.toContain("shopItemSlotCandidates");
   });
 });

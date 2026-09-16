@@ -3768,13 +3768,24 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
 }
 
-.loadout-grid label,
+.loadout-grid .loadout-slot,
 .equipment-catalog-controls label,
 .wallet-editor label {
   display: grid;
   font-size: 0.78rem;
   font-weight: 700;
   gap: 0.25rem;
+}
+
+.loadout-slot-heading {
+  align-items: center;
+  display: flex;
+  gap: 0.35rem;
+  justify-content: space-between;
+}
+
+.loadout-slot-shop {
+  flex: none;
 }
 
 .loadout-grid select,

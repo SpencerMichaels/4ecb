@@ -25,6 +25,7 @@ import {
   inventorySlotCandidates,
   itemCanBeBought,
   itemProficiencyStatus,
+  loadoutShopSlotFilter,
   practiceKind,
   SHOP_ITEM_TYPES,
 } from "./equipment-ui";
@@ -639,10 +640,30 @@ export function EquipmentWorkspace({
                 const compatible = inventory.filter((entry) =>
                   inventorySlotCandidates(entry, byId).includes(slotId),
                 );
+                const selectId = `loadout-slot-${slotId}`;
+                const shopSlot = loadoutShopSlotFilter(slotId);
                 return (
-                  <label key={slotId}>
-                    {label}
+                  <div className="loadout-slot" key={slotId}>
+                    <span className="loadout-slot-heading">
+                      <label htmlFor={selectId}>{label}</label>
+                      {shopSlot !== undefined ? (
+                        <button
+                          type="button"
+                          className="loadout-slot-shop icon-only-button"
+                          aria-label={`Shop for ${label} items`}
+                          title={`Shop for ${label} items`}
+                          onClick={() => {
+                            setSlot(shopSlot);
+                            setOffset(0);
+                            setTab("shop");
+                          }}
+                        >
+                          <Icon name="shop" />
+                        </button>
+                      ) : null}
+                    </span>
                     <select
+                      id={selectId}
                       value={assigned?.id ?? ""}
                       onChange={(event) => {
                         const entry = inventory.find(
@@ -677,7 +698,7 @@ export function EquipmentWorkspace({
                         </option>
                       ))}
                     </select>
-                  </label>
+                  </div>
                 );
               })}
               {inventory.some(

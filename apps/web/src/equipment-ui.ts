@@ -1,6 +1,7 @@
 import {
   formatInventoryItemName,
   type BuildInventoryEntry,
+  type EquipmentSlotId,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 
@@ -12,6 +13,31 @@ export const SHOP_ITEM_TYPES = [
   "Magic Item",
   "Weapon",
 ] as const;
+
+const LOADOUT_SHOP_SLOT_FILTERS: Partial<
+  Readonly<Record<EquipmentSlotId, string>>
+> = {
+  body: "Body",
+  "main-hand": "One-hand",
+  "off-hand": "Off-hand",
+  head: "Head",
+  neck: "Neck",
+  arms: "Arms",
+  hands: "Hands",
+  "ring-1": "Ring",
+  "ring-2": "Ring",
+  waist: "Waist",
+  feet: "Feet",
+  symbol: "Holy Symbol",
+  "ki-focus": "Ki Focus",
+  tattoo: "Tattoo",
+};
+
+export function loadoutShopSlotFilter(
+  slot: EquipmentSlotId,
+): string | undefined {
+  return LOADOUT_SHOP_SLOT_FILTERS[slot];
+}
 
 export type PracticeKind =
   "ritual" | "alchemical-formula" | "martial-practice" | "scroll";

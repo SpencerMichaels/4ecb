@@ -114,6 +114,45 @@ describe("CompendiumIndex", () => {
     ).toEqual([{ value: "Daily", count: 1 }]);
   });
 
+  it("indexes legacy implement shop categories as semantic slots", () => {
+    const equipment = [
+      entity("ID_SYMBOL_MAGIC", "Consecrated Emblem +1", "Magic Item", {
+        "Magic Item Type": "Holy Symbol",
+        "Item Slot": "Off-hand",
+      }),
+      entity("ID_SYMBOL_BASE", "Holy Symbol", "Gear", {
+        "Item Slot": "Off-hand",
+      }),
+      entity("ID_FOCUS", "Centered Focus +1", "Magic Item", {
+        "Magic Item Type": "Ki Focus",
+      }),
+      entity("ID_OFF_HAND", "Parrying Dagger", "Weapon", {
+        "Item Slot": "Off-hand",
+      }),
+    ];
+    const equipmentIndex = new CompendiumIndex(equipment);
+
+    expect(
+      equipmentIndex
+        .query({
+          facets: [{ key: "slot", include: ["Holy Symbol"], exclude: [] }],
+        })
+        .items.map((item) => item.id),
+    ).toEqual(["ID_SYMBOL_MAGIC", "ID_SYMBOL_BASE"]);
+    expect(
+      equipmentIndex
+        .query({
+          facets: [{ key: "slot", include: ["Ki Focus"], exclude: [] }],
+        })
+        .items.map((item) => item.id),
+    ).toEqual(["ID_FOCUS"]);
+    expect(
+      equipmentIndex.query({
+        facets: [{ key: "slot", include: ["Off-hand"], exclude: [] }],
+      }).total,
+    ).toBe(3);
+  });
+
   it("reports self-excluding facet counts for multi-select filters", () => {
     const result = index.query({
       facets: [{ key: "type", include: ["Power"], exclude: [] }],

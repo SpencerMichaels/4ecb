@@ -1535,3 +1535,19 @@ merger; begin from `combined.dnd40.original.xml` as the script does.
 The product owner verified the complete interaction and presentation live.
 Focused verification passed 52 tests covering theme descriptions, action icons,
 and detail-card structure.
+
+## Loadout shop-shortcut checkpoint (2026-09-16)
+
+- Loadout slots offer shop shortcuts that switch to the Shop tab, populate the
+  existing Slot dropdown, reset pagination, and leave filtering, counts, and
+  paging in the ordinary query path. Ring positions share `Ring`; hand
+  positions use the nearest distinct authored values.
+- `Holy Symbol` follows the recovered legacy shop category: magic records
+  contribute it from `Magic Item Type`, while the mundane `Gear` record is
+  included by the legacy exact-name exception. Holy symbols retain their
+  physical `Off-hand` facet too. Ki Focus and Tattoo already use authored
+  `Item Slot` values.
+
+The product owner verified the shortcuts, existing-filter integration,
+pagination, and Holy Symbol results live. All 308 public tests, formatting,
+lint, TypeScript checks, and whitespace checks pass.

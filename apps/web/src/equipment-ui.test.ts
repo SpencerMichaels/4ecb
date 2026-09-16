@@ -9,6 +9,7 @@ import {
   inventoryDisplayName,
   inventorySlotCandidates,
   inventoryRequiresBothHands,
+  loadoutShopSlotFilter,
   practiceKind,
 } from "./equipment-ui";
 
@@ -225,5 +226,22 @@ describe("equipment catalog presentation", () => {
     expect(inventorySlotCandidates(entry(arms), index)).toEqual(["arms"]);
     expect(inventoryRequiresBothHands(entry(weapon), index)).toBe(true);
     expect(inventoryRequiresBothHands(entry(sword), index)).toBe(false);
+  });
+
+  it("maps loadout shop shortcuts to authored Slot facet values", () => {
+    expect(loadoutShopSlotFilter("body")).toBe("Body");
+    expect(loadoutShopSlotFilter("main-hand")).toBe("One-hand");
+    expect(loadoutShopSlotFilter("off-hand")).toBe("Off-hand");
+    expect(loadoutShopSlotFilter("head")).toBe("Head");
+    expect(loadoutShopSlotFilter("neck")).toBe("Neck");
+    expect(loadoutShopSlotFilter("arms")).toBe("Arms");
+    expect(loadoutShopSlotFilter("hands")).toBe("Hands");
+    expect(loadoutShopSlotFilter("ring-1")).toBe("Ring");
+    expect(loadoutShopSlotFilter("ring-2")).toBe("Ring");
+    expect(loadoutShopSlotFilter("waist")).toBe("Waist");
+    expect(loadoutShopSlotFilter("feet")).toBe("Feet");
+    expect(loadoutShopSlotFilter("ki-focus")).toBe("Ki Focus");
+    expect(loadoutShopSlotFilter("tattoo")).toBe("Tattoo");
+    expect(loadoutShopSlotFilter("symbol")).toBe("Holy Symbol");
   });
 });

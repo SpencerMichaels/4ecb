@@ -18,6 +18,7 @@ import {
   ScanLine,
   ScrollText,
   Shield,
+  ShoppingCart,
   Shuffle,
   Sparkles,
   Star,
@@ -60,6 +61,7 @@ export type IconName =
   | "redo"
   | "remove"
   | "sheet"
+  | "shop"
   | "skill"
   | "undo"
   | "warning";
@@ -93,6 +95,7 @@ const icons: Record<IconName, LucideIcon> = {
   redo: Redo2,
   remove: X,
   sheet: FileText,
+  shop: ShoppingCart,
   skill: GraduationCap,
   undo: Undo2,
   warning: TriangleAlert,
