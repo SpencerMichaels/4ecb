@@ -3413,42 +3413,43 @@ function RetrainingControls({
             retraining
           </h4>
         </div>
-        {selectedChoice === undefined ? (
+        <div className="optional-choice-actions">
           <button
+            aria-label={
+              selectedChoice === undefined
+                ? "Cancel retraining"
+                : "Remove retraining"
+            }
+            className="remove-optional-choice icon-only-button"
+            title={
+              selectedChoice === undefined
+                ? "Cancel retraining"
+                : "Remove retraining"
+            }
             type="button"
             onClick={() => {
-              setActive(undefined);
-              onRequestDetails(undefined);
-            }}
-          >
-            Cancel
-          </button>
-        ) : (
-          <div className="optional-choice-actions">
-            <button
-              aria-label="Remove retraining"
-              className="remove-optional-choice icon-only-button"
-              title="Remove retraining"
-              type="button"
-              onClick={() => {
-                const command = unresolveEvaluatedChoiceCommand(
-                  build,
-                  selectedChoice,
-                  evaluation,
-                  entities,
-                  `web:placeholder:retraining:${crypto.randomUUID()}`,
-                );
-                if (command === undefined) return;
+              if (selectedChoice === undefined) {
                 setActive(undefined);
                 onRequestDetails(undefined);
-                inspectCandidate?.(undefined);
-                onDispatch(command);
-              }}
-            >
-              <Icon name="remove" />
-            </button>
-          </div>
-        )}
+                return;
+              }
+              const command = unresolveEvaluatedChoiceCommand(
+                build,
+                selectedChoice,
+                evaluation,
+                entities,
+                `web:placeholder:retraining:${crypto.randomUUID()}`,
+              );
+              if (command === undefined) return;
+              setActive(undefined);
+              onRequestDetails(undefined);
+              inspectCandidate?.(undefined);
+              onDispatch(command);
+            }}
+          >
+            <Icon name="remove" />
+          </button>
+        </div>
       </header>
       <ChoiceEditor
         choice={activeChoice}

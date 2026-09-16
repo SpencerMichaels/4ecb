@@ -1551,3 +1551,11 @@ and detail-card structure.
 The product owner verified the shortcuts, existing-filter integration,
 pagination, and Holy Symbol results live. All 308 public tests, formatting,
 lint, TypeScript checks, and whitespace checks pass.
+
+## Retraining dismissal checkpoint (2026-09-16)
+
+- The Retraining pane uses the same icon-only X control before and after a
+  target is selected. It cancels an unfinished choice or removes a completed
+  retraining while retaining state-specific accessible labels.
+
+The product owner verified both states live.
