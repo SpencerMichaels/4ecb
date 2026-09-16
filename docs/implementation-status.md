@@ -81,6 +81,22 @@ Focused action-symbol and rendered-accessibility tests pass. The checkpoint
 command `nix develop path:. -c scripts/check.sh` passes all 296 tests across 44
 files, all workspace TypeScript checks, and the production build.
 
+## M5.5 level-scoped ability totals checkpoint (2026-09-16)
+
+- The level-1 Ability Scores pane shows point buy, racial/other bonus, and
+  calculated total as three numeric columns per ability, using rules-engine
+  stat contributions rather than hand-summed values.
+- The level-1 editor and later ability-increase editors consume an evaluation
+  scoped to the selected pane level. Historical and planned panes therefore
+  include choices through that level while excluding later-level increases.
+- Pending ability select/deselect clicks add only their unevaluated delta and
+  clear when the level-scoped evaluation catches up, preserving immediate
+  feedback without double application.
+
+Focused tests cover an effective-level 8 build at levels 1, 4, and 8, including
+immediate level-4 select/deselect behavior and the caught-up result. All 55
+focused builder/accessibility tests and the web TypeScript check pass.
+
 ## M5.5 equipment workspace checkpoint (2026-09-14)
 
 - Equipment is now a full peer workspace with Loadout, Inventory, Shop, and

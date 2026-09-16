@@ -41,6 +41,8 @@ import {
 
 import {
   applyBuildPresetCommand,
+  abilityScoreBonus,
+  abilityScoreWithPendingDelta,
   backgroundAssociatedSkills,
   candidateReason,
   candidateTableTypeGroup,
@@ -1082,9 +1084,11 @@ function CandidateDetailCard({
 
 function BaseAbilityScoreEditor({
   build,
+  evaluation,
   onDispatch,
 }: {
   readonly build: CharacterRecord["build"];
+  readonly evaluation: EvaluatedCharacter;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
   const assessment = assessAbilityPointBuy(build.baseAbilities);
@@ -1110,7 +1114,10 @@ function BaseAbilityScoreEditor({
       <header>
         <div>
           <h5 id="base-abilities">Point buy</h5>
-          <p className="field-help">Scores shown before racial increases</p>
+          <p className="field-help">
+            Point buy sets the base score; Bonus and Total include racial and
+            other increases
+          </p>
         </div>
         <span
           className={
@@ -1125,9 +1132,19 @@ function BaseAbilityScoreEditor({
         </span>
       </header>
       <div className="ability-editor">
+        <div
+          className="ability-point-buy-row ability-point-buy-header"
+          aria-hidden="true"
+        >
+          <span className="ability-bonus ability-column-label">Bonus</span>
+          <span className="ability-total ability-column-label">Total</span>
+        </div>
         {ABILITY_SCORE_NAMES.map((ability) => {
           const value = build.baseAbilities[ability] ?? 10;
           const raiseCost = pointBuyCostToRaise(value);
+          const stat = evaluation.stats[ability];
+          const bonus = abilityScoreBonus(stat);
+          const total = stat?.value ?? value;
           return (
             <div className="ability-point-buy-row" key={ability}>
               <span className="ability-name">{ability}</span>
@@ -1181,6 +1198,10 @@ function BaseAbilityScoreEditor({
                     : "Maximum"
                   : `Next +1: ${raiseCost} ${raiseCost === 1 ? "point" : "points"}`}
               </small>
+              <span className="ability-bonus">
+                {bonus === 0 ? "—" : bonus > 0 ? `+${bonus}` : bonus}
+              </span>
+              <span className="ability-total">{total}</span>
             </div>
           );
         })}
@@ -2895,10 +2916,6 @@ function AbilityIncreaseEditor({
               ability.toLocaleLowerCase() ===
               definition?.name.trim().toLocaleLowerCase(),
           );
-          const evaluatedScore =
-            definition === undefined
-              ? undefined
-              : evaluation.stats[definition.name]?.value;
           const scoreDelta =
             [...optimisticSlots.values()].filter(
               (selectedId) => selectedId === definitionId,
@@ -2907,12 +2924,13 @@ function AbilityIncreaseEditor({
               (selectedId) => selectedId === definitionId,
             ).length;
           const displayedScore =
-            typeof evaluatedScore === "number"
-              ? evaluatedScore + scoreDelta
-              : evaluatedScore !== undefined &&
-                  Number.isFinite(Number(evaluatedScore))
-                ? Number(evaluatedScore) + scoreDelta
-                : (evaluatedScore ?? "—");
+            definition === undefined
+              ? "—"
+              : (abilityScoreWithPendingDelta(
+                  evaluation,
+                  definition.name,
+                  scoreDelta,
+                ) ?? "—");
           return (
             <button
               aria-pressed={selectedChoice !== undefined}
@@ -4203,6 +4221,8 @@ export function CharacterEditorPage({
     useState<EvaluatedCharacter>();
   const [planningEvaluationResult, setPlanningEvaluation] =
     useState<EvaluatedCharacter>();
+  const [selectedLevelEvaluationResult, setSelectedLevelEvaluation] =
+    useState<EvaluatedCharacter>();
   const [evaluationStatus, setEvaluationStatus] = useState("Loading rules…");
   const [readyPackId, setReadyPackId] = useState<string>();
   const [selectedLevel, setSelectedLevel] = useState(1);
@@ -4307,6 +4327,7 @@ export function CharacterEditorPage({
     setReadyPackId(undefined);
     setCurrentEvaluation(undefined);
     setPlanningEvaluation(undefined);
+    setSelectedLevelEvaluation(undefined);
     if (packId === undefined) return;
     let cancelled = false;
     void appContentRuntime
@@ -4340,6 +4361,10 @@ export function CharacterEditorPage({
   const planningEvaluation = evaluationAtHorizon(
     planningEvaluationResult,
     build?.levels.length,
+  );
+  const selectedLevelEvaluation = evaluationAtHorizon(
+    selectedLevelEvaluationResult,
+    selectedLevel,
   );
   const byId = useMemo(
     () =>
@@ -4425,11 +4450,24 @@ export function CharacterEditorPage({
             ),
             candidateDetailLevels: [],
           });
-    void Promise.all([currentRequest, planningRequest])
-      .then(([current, planning]) => {
+    const selectedLevelRequest =
+      selectedLevel === build.levels.length
+        ? planningRequest
+        : selectedLevel === build.effectiveLevel
+          ? currentRequest
+          : evaluateCached({
+              ...projectBuildForEvaluation(
+                { ...build, effectiveLevel: selectedLevel },
+                entities,
+              ),
+              candidateDetailLevels: [],
+            });
+    void Promise.all([currentRequest, planningRequest, selectedLevelRequest])
+      .then(([current, planning, selected]) => {
         if (evaluationRevision.current !== revision) return;
         setCurrentEvaluation(current);
         setPlanningEvaluation(planning);
+        setSelectedLevelEvaluation(selected);
         setEvaluationStatus("Rules up to date");
       })
       .catch((reason: unknown) => {
@@ -4763,17 +4801,19 @@ export function CharacterEditorPage({
       return choice !== repeated[0] ? null : repeated.every((item) =>
           isAbilityIncreaseChoiceType(item.type),
         ) ? (
-        <AbilityIncreaseEditor
-          key={choice.id}
-          choices={repeated}
-          evaluation={planningEvaluation}
-          build={build}
-          entities={entities}
-          byId={byId}
-          keyAbilities={selectedClassKeyAbilities}
-          rollbackRevision={rollbackRevision}
-          onDispatch={dispatch}
-        />
+        selectedLevelEvaluation === undefined ? null : (
+          <AbilityIncreaseEditor
+            key={choice.id}
+            choices={repeated}
+            evaluation={selectedLevelEvaluation}
+            build={build}
+            entities={entities}
+            byId={byId}
+            keyAbilities={selectedClassKeyAbilities}
+            rollbackRevision={rollbackRevision}
+            onDispatch={dispatch}
+          />
+        )
       ) : (
         <RepeatedChoiceGroup
           key={choice.id}
@@ -5355,10 +5395,13 @@ export function CharacterEditorPage({
                           ) : null}
                           {activeChoiceSection.section === "Ability Scores" &&
                           selectedLevel === 1 ? (
-                            <BaseAbilityScoreEditor
-                              build={build}
-                              onDispatch={dispatch}
-                            />
+                            selectedLevelEvaluation === undefined ? null : (
+                              <BaseAbilityScoreEditor
+                                build={build}
+                                evaluation={selectedLevelEvaluation}
+                                onDispatch={dispatch}
+                              />
+                            )
                           ) : null}
                           {activeChoiceSection.choices.map((choice) => (
                             <Fragment key={choice.id}>

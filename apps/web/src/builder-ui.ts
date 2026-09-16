@@ -15,6 +15,7 @@ import type {
   CandidateDecision,
   EvaluatedCharacter,
   EvaluatedChoice,
+  EvaluatedStat,
 } from "@4ecb/rules-engine";
 
 import { createLevelFrame } from "./new-character";
@@ -45,6 +46,32 @@ export function evaluationAtHorizon(
   horizon: number | undefined,
 ): EvaluatedCharacter | undefined {
   return evaluation?.level === horizon ? evaluation : undefined;
+}
+
+export function abilityScoreBonus(stat: EvaluatedStat | undefined): number {
+  if (stat === undefined) return 0;
+  let bonus = 0;
+  for (const contribution of stat.contributions) {
+    if (!contribution.applied || contribution.providerId === "base-abilities")
+      continue;
+    const parsed =
+      contribution.numericValue ?? Number.parseFloat(contribution.value);
+    if (Number.isFinite(parsed)) bonus += parsed;
+  }
+  return bonus;
+}
+
+/** Applies only the unevaluated click delta to an authoritative horizon score. */
+export function abilityScoreWithPendingDelta(
+  evaluation: EvaluatedCharacter,
+  ability: string,
+  pendingDelta: number,
+): number | string | undefined {
+  const evaluatedScore = evaluation.stats[ability]?.value;
+  if (typeof evaluatedScore === "number") return evaluatedScore + pendingDelta;
+  if (evaluatedScore !== undefined && Number.isFinite(Number(evaluatedScore)))
+    return Number(evaluatedScore) + pendingDelta;
+  return evaluatedScore;
 }
 
 export function isUnresolvedChoice(choice: EvaluatedChoice): boolean {

@@ -14,6 +14,8 @@ import {
 
 import {
   applyBuildPresetCommand,
+  abilityScoreBonus,
+  abilityScoreWithPendingDelta,
   backgroundAssociatedSkills,
   buildPresetSuggestionNames,
   candidateReason,
@@ -337,6 +339,133 @@ describe("builder planning UI", () => {
 
     expect(evaluationAtHorizon(current, 4)).toBeUndefined();
     expect(evaluationAtHorizon(planned, 4)).toBe(planned);
+  });
+
+  it("projects ability totals and optimistic clicks at the selected level horizon", () => {
+    const statement = (
+      name: string,
+      attributes: Readonly<Record<string, string>>,
+      ordinal: number,
+    ): RuleStatement => ({
+      name,
+      attributes: Object.entries(attributes).map(([attribute, value]) => ({
+        name: attribute,
+        value,
+      })),
+      text: "",
+      children: [],
+      ordinal,
+    });
+    const levels = Array.from({ length: 8 }, (_, index) => {
+      const number = index + 1;
+      if (number === 1)
+        return level(1, [
+          statement("statadd", { name: "Dexterity", value: "+2" }, 0),
+        ]);
+      if (number === 4 || number === 8)
+        return level(number, [
+          statement(
+            "select",
+            { type: `Ability Increase (Level ${number})`, number: "1" },
+            0,
+          ),
+        ]);
+      return level(number);
+    });
+    const increases = [4, 8].map((number): ContentEntity => ({
+      ...level(30 + number),
+      id: `DEX_${number}`,
+      name: "Dexterity",
+      type: `Ability Increase (Level ${number})`,
+      rules: [statement("statadd", { name: "Dexterity", value: "+1" }, 0)],
+    }));
+    const planned: CharacterBuild = {
+      ...build,
+      effectiveLevel: 8,
+      baseAbilities: { Dexterity: 12 },
+      levels: levels.map((definition, index) => {
+        const number = index + 1;
+        return {
+          level: number,
+          root: {
+            id: `level-${number}`,
+            identity: {
+              definitionId: definition.id,
+              name: definition.name,
+              type: definition.type,
+            },
+            acquiredLevel: number,
+            legality: "rules-legal" as const,
+            children:
+              number === 4 || number === 8
+                ? [
+                    {
+                      id: `dex-${number}`,
+                      identity: {
+                        definitionId: `DEX_${number}`,
+                        name: "Dexterity",
+                        type: `Ability Increase (Level ${number})`,
+                      },
+                      acquiredLevel: number,
+                      legality: "rules-legal" as const,
+                      children: [],
+                      unresolved: false,
+                    },
+                  ]
+                : [],
+            unresolved: false,
+          },
+        };
+      }),
+    };
+    const entities = [...levels, ...increases];
+    const at = (horizon: number, candidate: CharacterBuild = planned) =>
+      evaluateCharacter(
+        projectBuildForEvaluation(
+          { ...candidate, effectiveLevel: horizon },
+          entities,
+        ),
+        entities,
+      );
+    const level1 = at(1);
+    const level4 = at(4);
+    const level8 = at(8);
+
+    expect([
+      level1.stats.Dexterity?.value,
+      level4.stats.Dexterity?.value,
+      level8.stats.Dexterity?.value,
+    ]).toEqual([14, 15, 16]);
+    expect(abilityScoreBonus(level1.stats.Dexterity)).toBe(2);
+    expect(evaluationAtHorizon(level4, 4)).toBe(level4);
+    expect(evaluationAtHorizon(level8, 4)).toBeUndefined();
+
+    // A deselect is immediately visible against level 4's score.
+    expect(abilityScoreWithPendingDelta(level4, "Dexterity", -1)).toBe(14);
+
+    const withoutLevel4Selection: CharacterBuild = {
+      ...planned,
+      levels: planned.levels.map((frame) =>
+        frame.level === 4
+          ? { ...frame, root: { ...frame.root, children: [] } }
+          : frame,
+      ),
+    };
+    const level4AfterDeselect = at(4, withoutLevel4Selection);
+    // Reselect is optimistic, then the caught-up evaluation is not doubled.
+    expect(
+      abilityScoreWithPendingDelta(level4AfterDeselect, "Dexterity", 1),
+    ).toBe(15);
+    expect(abilityScoreWithPendingDelta(level4, "Dexterity", 0)).toBe(15);
+
+    const level4CharacterWithLevel8Plan = {
+      ...planned,
+      effectiveLevel: 4,
+    };
+    expect(level4CharacterWithLevel8Plan.effectiveLevel).toBe(4);
+    expect(at(8, level4CharacterWithLevel8Plan).stats.Dexterity?.value).toBe(
+      16,
+    );
   });
 
   it("uses concise player-facing labels in the level timeline", () => {

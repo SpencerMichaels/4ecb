@@ -232,7 +232,7 @@ describe("release accessibility contract", () => {
       "aria-pressed={selectedChoice !== undefined}",
     );
     expect(abilityChoices).toContain("const [pendingSlots, setPendingSlots]");
-    expect(abilityChoices).toContain('typeof evaluatedScore === "number"');
+    expect(abilityChoices).toContain("abilityScoreWithPendingDelta(");
     expect(abilityChoices).toContain("[...optimisticSlots.values()].filter(");
     expect(abilityChoices).toContain("[...evaluatedSlots.values()].filter(");
     expect(abilityChoices).toContain('"ability-selected"');
@@ -246,6 +246,16 @@ describe("release accessibility contract", () => {
     expect(styles).toMatch(
       /\.legacy-choice-list > \.level-choice-section\.ability-increase-section > header\s*\{[^}]*margin: -0\.75rem -0\.8rem 0\.7rem;[^}]*padding: 0\.65rem 0\.8rem;/,
     );
+  });
+
+  it("threads the selected-level rules evaluation into ability score editors", () => {
+    expect(characterEditor).toContain("const selectedLevelRequest =");
+    expect(characterEditor).toContain(
+      "{ ...build, effectiveLevel: selectedLevel }",
+    );
+    expect(
+      characterEditor.match(/evaluation=\{selectedLevelEvaluation\}/g),
+    ).toHaveLength(2);
   });
 
   it("retains check glyphs for non-radio completion states", () => {

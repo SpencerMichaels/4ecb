@@ -1591,7 +1591,7 @@ textarea {
   border-radius: 0;
   display: grid;
   gap: 0.3rem 0.65rem;
-  grid-template-columns: minmax(7.5rem, 1fr) auto;
+  grid-template-columns: minmax(7.5rem, 1fr) auto 3rem 3rem;
   padding: 0.55rem 0.65rem;
 }
 .ability-point-buy-row .ability-name {
@@ -1600,6 +1600,32 @@ textarea {
 .ability-point-buy-row small {
   color: var(--muted, #5d554a);
   grid-column: 1;
+}
+.ability-point-buy-header {
+  border-color: transparent;
+  padding-block: 0 0.15rem;
+}
+.ability-bonus,
+.ability-total {
+  align-items: center;
+  display: grid;
+  grid-row: 1 / span 2;
+  justify-items: end;
+  text-align: right;
+}
+.ability-bonus {
+  grid-column: 3;
+}
+.ability-total {
+  font-size: 1.05rem;
+  font-weight: 700;
+  grid-column: 4;
+}
+.ability-column-label {
+  color: var(--muted, #5d554a);
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 .ability-stepper {
   align-items: center;
