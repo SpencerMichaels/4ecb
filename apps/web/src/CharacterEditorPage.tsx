@@ -73,7 +73,11 @@ import {
   isCompanionChoiceType,
   isOptionalRetrainingChoice,
   isUnresolvedChoice,
+  jumpToLevelCommand,
+  levelChoiceProgress,
+  levelRailChoiceStatus,
   legacyChoiceSection,
+  MAX_CHARACTER_LEVEL,
   planningHorizonCommand,
   powerTableLevel,
   selectedDefinitionId,
@@ -4884,14 +4888,36 @@ export function CharacterEditorPage({
                   value={build.effectiveLevel}
                   onChange={(event) => {
                     const level = Number(event.currentTarget.value);
-                    setSelectedLevel(level);
-                    setExpandedTiers(new Set([characterTierAtLevel(level)]));
-                    dispatch({ kind: "set-effective-level", level });
+                    try {
+                      if (level > build.levels.length) {
+                        dispatch(
+                          jumpToLevelCommand(
+                            build,
+                            level,
+                            entities,
+                            (addedLevel) =>
+                              `web:level:${addedLevel}:${crypto.randomUUID()}`,
+                          ),
+                        );
+                      } else {
+                        dispatch({ kind: "set-effective-level", level });
+                      }
+                      setSelectedLevel(level);
+                      setExpandedTiers(new Set([characterTierAtLevel(level)]));
+                    } catch (reason: unknown) {
+                      setSaveState({
+                        phase: "failed",
+                        message:
+                          reason instanceof Error
+                            ? reason.message
+                            : String(reason),
+                      });
+                    }
                   }}
                 >
-                  {build.levels.map((frame) => (
-                    <option key={frame.level} value={frame.level}>
-                      {frame.level}
+                  {Array.from({ length: MAX_CHARACTER_LEVEL }, (_, index) => (
+                    <option key={index + 1} value={index + 1}>
+                      {index + 1}
                     </option>
                   ))}
                 </select>
@@ -5065,12 +5091,10 @@ export function CharacterEditorPage({
                             !isCharacterDetailChoice(choice) &&
                             !isBuildPresetChoice(choice),
                         );
+                        const progress = levelChoiceProgress(timelineChoices);
                         const unresolved =
-                          level > build.effectiveLevel
-                            ? 0
-                            : timelineChoices.filter(isUnresolvedChoice)
-                                .length +
-                              (level === 1 && abilityScoresIncomplete ? 1 : 0);
+                          timelineChoices.filter(isUnresolvedChoice).length +
+                          (level === 1 && abilityScoresIncomplete ? 1 : 0);
                         const warnings =
                           timelineChoices.filter((choice) =>
                             selectedChoiceHasWarning(
@@ -5079,26 +5103,27 @@ export function CharacterEditorPage({
                             ),
                           ).length +
                           (level === 1 && abilityScoresHouseRuled ? 1 : 0);
+                        const choiceStatus = levelRailChoiceStatus(
+                          timelineChoices,
+                          level <= build.effectiveLevel,
+                          level === 1 && abilityScoresIncomplete ? 1 : 0,
+                        );
                         const status =
-                          level > build.levels.length
-                            ? "future"
-                            : level > build.effectiveLevel
-                              ? "planned"
-                              : unresolved > 0
-                                ? "incomplete"
-                                : warnings > 0
-                                  ? "warning"
-                                  : "complete";
+                          choiceStatus === "complete" && warnings > 0
+                            ? "warning"
+                            : choiceStatus;
                         const statusLabel =
                           status === "future"
-                            ? "not planned"
-                            : status === "planned"
-                              ? "planned"
-                              : status === "incomplete"
-                                ? `${unresolved} unresolved`
-                                : status === "warning"
-                                  ? `${warnings} warnings`
-                                  : "complete";
+                            ? "no choices made"
+                            : status === "planned-complete"
+                              ? `all ${progress.required} choices complete`
+                              : status === "planned-partial"
+                                ? `${progress.completed} of ${progress.required} choices complete`
+                                : status === "incomplete"
+                                  ? `${unresolved} unresolved`
+                                  : status === "warning"
+                                    ? `${warnings} warnings`
+                                    : "complete";
                         return (
                           <li key={level}>
                             <button
@@ -5106,6 +5131,7 @@ export function CharacterEditorPage({
                                 level === selectedLevel ? "step" : undefined
                               }
                               aria-label={`Level ${level}, ${statusLabel}`}
+                              title={`Level ${level}: ${statusLabel}`}
                               className={`level-rail-button level-rail-${status}`}
                               disabled={entities.length === 0}
                               type="button"

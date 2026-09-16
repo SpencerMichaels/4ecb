@@ -1559,3 +1559,17 @@ lint, TypeScript checks, and whitespace checks pass.
   retraining while retaining state-specific accessible labels.
 
 The product owner verified both states live.
+
+## Arbitrary-level planning checkpoint (2026-09-16)
+
+- The Current level control offers levels 1–30 and can jump directly to any
+  target, creating intervening frames with unresolved choices rather than
+  requiring lower levels to be completed first.
+- The level rail distinguishes untouched, partially completed, and fully
+  completed future levels with accessible labels and gray empty, half-filled,
+  and filled markers. Reached levels with unresolved choices use an orange
+  half-filled marker; reached complete levels retain the green marker.
+
+The product owner verified direct level changes and every marker state live.
+All 311 public tests, formatting, lint, TypeScript checks, and whitespace checks
+pass.

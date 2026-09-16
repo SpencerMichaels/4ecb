@@ -47,6 +47,9 @@ import {
   isAbilityIncreaseChoiceType,
   isCompanionChoiceType,
   isOptionalRetrainingChoice,
+  jumpToLevelCommand,
+  levelChoiceProgress,
+  levelRailChoiceStatus,
   planningHorizonCommand,
   powerTableLevel,
   selectedChoiceHasWarning,
@@ -1032,6 +1035,86 @@ describe("builder planning UI", () => {
     expect(
       planningHorizonCommand(build, 1, [level(1)], String),
     ).toBeUndefined();
+  });
+
+  it("jumps straight to a target level, creating intervening frames as it goes", () => {
+    const command = jumpToLevelCommand(
+      build,
+      4,
+      [level(1), level(2), level(3), level(4)],
+      (value) => `level-${value}`,
+    );
+    const planned = applyCharacterCommand(build, command);
+    expect(planned.levels.map((frame) => frame.level)).toEqual([1, 2, 3, 4]);
+    expect(planned.effectiveLevel).toBe(4);
+  });
+
+  it("jumps to an already-planned level without touching existing frames", () => {
+    const alreadyPlanned = {
+      ...build,
+      levels: [...build.levels, { ...build.levels[0]!, level: 2 }],
+    };
+    const command = jumpToLevelCommand(
+      alreadyPlanned,
+      1,
+      [level(1), level(2)],
+      (value) => `level-${value}`,
+    );
+    const planned = applyCharacterCommand(alreadyPlanned, command);
+    expect(planned.levels.map((frame) => frame.level)).toEqual([1, 2]);
+    expect(planned.effectiveLevel).toBe(1);
+  });
+
+  it("distinguishes untouched, partial, and complete future-level choices", () => {
+    const choice = (id: string, selected = false) =>
+      ({
+        id,
+        optional: false,
+        selectedOccurrenceId: selected ? `${id}-selection` : undefined,
+      }) as EvaluatedCharacter["choices"][number];
+
+    expect(levelChoiceProgress([choice("one"), choice("two")])).toEqual({
+      completed: 0,
+      required: 2,
+      state: "none",
+    });
+    expect(levelChoiceProgress([choice("one", true), choice("two")])).toEqual({
+      completed: 1,
+      required: 2,
+      state: "partial",
+    });
+    expect(
+      levelChoiceProgress([choice("one", true), choice("two", true)]),
+    ).toEqual({ completed: 2, required: 2, state: "complete" });
+  });
+
+  it("treats levels with no required choices as untouched", () => {
+    const optional = {
+      id: "optional",
+      optional: true,
+      selectedOccurrenceId: "optional-selection",
+    } as EvaluatedCharacter["choices"][number];
+    expect(levelChoiceProgress([])).toEqual({
+      completed: 0,
+      required: 0,
+      state: "none",
+    });
+    expect(levelChoiceProgress([optional])).toEqual({
+      completed: 0,
+      required: 0,
+      state: "none",
+    });
+    expect(levelRailChoiceStatus([], false)).toBe("future");
+    expect(levelRailChoiceStatus([], true)).toBe("complete");
+  });
+
+  it("marks a reached level with unresolved choices as incomplete", () => {
+    const unresolved = {
+      id: "unresolved",
+      optional: false,
+    } as EvaluatedCharacter["choices"][number];
+    expect(levelRailChoiceStatus([unresolved], true)).toBe("incomplete");
+    expect(levelRailChoiceStatus([], true, 1)).toBe("incomplete");
   });
 
   it("turns evaluator reasons into objective user-facing text", () => {

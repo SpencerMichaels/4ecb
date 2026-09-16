@@ -19,6 +19,8 @@ import type {
 
 import { createLevelFrame } from "./new-character";
 
+export const MAX_CHARACTER_LEVEL = 30;
+
 export function choiceLevel(choice: EvaluatedChoice): number {
   return choice.level;
 }
@@ -47,6 +49,52 @@ export function evaluationAtHorizon(
 
 export function isUnresolvedChoice(choice: EvaluatedChoice): boolean {
   return !choice.optional && choice.selectedOccurrenceId === undefined;
+}
+
+export interface LevelChoiceProgress {
+  readonly completed: number;
+  readonly required: number;
+  readonly state: "none" | "partial" | "complete";
+}
+
+/** Summarizes required evaluated choices for one level in the advancement rail. */
+export function levelChoiceProgress(
+  choices: readonly EvaluatedChoice[],
+): LevelChoiceProgress {
+  const requiredChoices = choices.filter((choice) => !choice.optional);
+  const completed = requiredChoices.filter(
+    (choice) => choice.selectedOccurrenceId !== undefined,
+  ).length;
+  return {
+    completed,
+    required: requiredChoices.length,
+    state:
+      completed === 0
+        ? "none"
+        : completed === requiredChoices.length
+          ? "complete"
+          : "partial",
+  };
+}
+
+export type LevelRailChoiceStatus =
+  "future" | "planned-partial" | "planned-complete" | "incomplete" | "complete";
+
+export function levelRailChoiceStatus(
+  choices: readonly EvaluatedChoice[],
+  reached: boolean,
+  additionalUnresolved = 0,
+): LevelRailChoiceStatus {
+  if (reached)
+    return additionalUnresolved > 0 || choices.some(isUnresolvedChoice)
+      ? "incomplete"
+      : "complete";
+  const progress = levelChoiceProgress(choices);
+  return progress.state === "complete"
+    ? "planned-complete"
+    : progress.state === "partial"
+      ? "planned-partial"
+      : "future";
 }
 
 export function isOptionalRetrainingChoice(choice: EvaluatedChoice): boolean {
@@ -640,29 +688,86 @@ export function selectedChoiceHasWarning(
   );
 }
 
+function interveningLevelFrameCommands(
+  build: CharacterBuild,
+  targetLevel: number,
+  entities: readonly ContentEntity[],
+  occurrenceId: (level: number) => string,
+): CharacterCommand[] {
+  return Array.from(
+    { length: targetLevel - build.levels.length },
+    (_, index) => {
+      const level = build.levels.length + index + 1;
+      return {
+        kind: "add-level" as const,
+        frame: createLevelFrame(level, entities, occurrenceId(level)),
+      };
+    },
+  );
+}
+
 export function planningHorizonCommand(
   build: CharacterBuild,
   targetLevel: number,
   entities: readonly ContentEntity[],
   occurrenceId: (level: number) => string,
 ): CharacterCommand | undefined {
-  if (!Number.isInteger(targetLevel) || targetLevel < 1 || targetLevel > 30)
-    throw new Error("Planning horizons must be integers from 1 through 30");
+  if (
+    !Number.isInteger(targetLevel) ||
+    targetLevel < 1 ||
+    targetLevel > MAX_CHARACTER_LEVEL
+  )
+    throw new Error(
+      `Planning horizons must be integers from 1 through ${MAX_CHARACTER_LEVEL}`,
+    );
   if (targetLevel <= build.levels.length) return undefined;
   return {
     kind: "batch",
     commands: [
-      ...Array.from(
-        { length: targetLevel - build.levels.length },
-        (_, index) => {
-          const level = build.levels.length + index + 1;
-          return {
-            kind: "add-level" as const,
-            frame: createLevelFrame(level, entities, occurrenceId(level)),
-          };
-        },
+      ...interveningLevelFrameCommands(
+        build,
+        targetLevel,
+        entities,
+        occurrenceId,
       ),
       { kind: "set-effective-level", level: build.effectiveLevel },
+    ],
+  };
+}
+
+/**
+ * Moves the character's current level to `targetLevel`, creating any
+ * intervening level frames (empty) along the way if needed. Unlike
+ * `planningHorizonCommand`, which restores the prior effective level so
+ * higher levels can be browsed without moving "current", this actually
+ * advances (or retreats) what level the character is on. Newly created
+ * frames start with unresolved choices, which surface as ordinary
+ * non-blocking diagnostics rather than blocking the level change.
+ */
+export function jumpToLevelCommand(
+  build: CharacterBuild,
+  targetLevel: number,
+  entities: readonly ContentEntity[],
+  occurrenceId: (level: number) => string,
+): CharacterCommand {
+  if (
+    !Number.isInteger(targetLevel) ||
+    targetLevel < 1 ||
+    targetLevel > MAX_CHARACTER_LEVEL
+  )
+    throw new Error(
+      `Character level must be an integer from 1 through ${MAX_CHARACTER_LEVEL}`,
+    );
+  return {
+    kind: "batch",
+    commands: [
+      ...interveningLevelFrameCommands(
+        build,
+        targetLevel,
+        entities,
+        occurrenceId,
+      ),
+      { kind: "set-effective-level", level: targetLevel },
     ],
   };
 }

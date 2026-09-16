@@ -1928,15 +1928,21 @@ textarea {
 }
 
 .level-rail-incomplete .level-rail-status {
-  background: var(--warning);
+  background: linear-gradient(90deg, var(--warning) 50%, transparent 50%);
+  border-color: var(--warning);
 }
 
 .level-rail-warning .level-rail-status {
   background: var(--danger);
 }
 
-.level-rail-planned .level-rail-status {
-  background: transparent;
+.level-rail-planned-complete .level-rail-status {
+  background: var(--muted);
+  border-color: var(--muted);
+}
+
+.level-rail-planned-partial .level-rail-status {
+  background: linear-gradient(90deg, var(--muted) 50%, transparent 50%);
   border-color: var(--muted);
 }
 
