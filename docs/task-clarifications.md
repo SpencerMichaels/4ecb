@@ -32,6 +32,18 @@ Selecting level N should immediately set the character to level N. Every
 unresolved choice from levels 1 through N remains visibly pending and editable
 afterward; incomplete earlier choices must not block the level change.
 
+## Class key-abilities task
+
+- Do not use green highlighting, because green already communicates selected
+  state in the ability controls.
+- Put a literal key icon on the right side of each radio-button option that
+  corresponds to one of the selected class's key abilities.
+- Preserve the authored key-ability order because it communicates relative
+  importance.
+- Add a sentence immediately above the ability controls in the form “A/An
+  {Class}'s key abilities are X, Y, and Z.” Use grammatically appropriate
+  wording and the class's authored ordered values.
+
 ## Class-detail revamp task
 
 Produce a proposal for product-owner approval before implementation. The initial
