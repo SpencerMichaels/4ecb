@@ -338,6 +338,13 @@ export function choiceTableSummary(
   return entity.flavor?.trim() || entity.description.trim() || undefined;
 }
 
+/** Presentation-only synopsis for deity selection rows. */
+export function deityTableDescription(
+  entity: ContentEntity,
+): string | undefined {
+  return firstSentence(entity.description);
+}
+
 /** Skills listed by the authored background metadata, without prose inference. */
 export function backgroundAssociatedSkills(
   entity: ContentEntity,

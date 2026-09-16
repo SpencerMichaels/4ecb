@@ -26,6 +26,7 @@ import {
   contextualChoiceName,
   choiceSelectionTableKind,
   choiceTableSummary,
+  deityTableDescription,
   choicePresentationLabel,
   contentSpecificValue,
   choiceForRepeatedCandidate,
@@ -562,6 +563,8 @@ describe("builder planning UI", () => {
     const deity = {
       ...level(0),
       type: "Deity",
+      description:
+        "  Uphold justice wherever it is threatened.\n\nProtect the innocent.  ",
       specifics: [
         {
           name: "Alignment",
@@ -629,6 +632,9 @@ describe("builder planning UI", () => {
     expect(choiceTableSummary(feat, "feat")).toBe("Gain a +2 feat bonus.");
     expect(choiceTableSummary(power, "power")).toBe("Move before striking.");
     expect(choiceTableSummary(deity, "deity")).toBe("Lawful Good");
+    expect(deityTableDescription(deity)).toBe(
+      "Uphold justice wherever it is threatened.",
+    );
     expect(
       choiceTableSummary(
         {

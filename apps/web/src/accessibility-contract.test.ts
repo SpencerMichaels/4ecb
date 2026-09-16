@@ -199,6 +199,21 @@ describe("release accessibility contract", () => {
     expect(tableSource).not.toContain('name="check"');
     expect(tableSource).toContain("candidate-selection-short");
     expect(tableSource).toContain("defaultCandidateSortFor(kind)");
+    expect(characterEditor).toContain(
+      '!["description", "short description"].includes(normalizedLabel)',
+    );
+    expect(tableSource).toContain("candidateHeaderIsSortable(label)");
+    expect(tableSource).toContain('sortableHeader("summary", "Alignment")');
+    expect(tableSource).toContain(
+      'sortableHeader("deity-description", "Description")',
+    );
+    expect(tableSource).toContain("deityTableDescription(entity)");
+    expect(styles).toMatch(
+      /\.candidate-selection-deity \.selection-table-scroll table\s*\{[\s\S]*?table-layout: auto/,
+    );
+    expect(styles).toMatch(
+      /\.candidate-selection-deity \.selection-table-scroll th:first-child,[\s\S]*?\.candidate-selection-deity \.selection-table-scroll td:nth-child\(2\)[\s\S]*?white-space: nowrap;[\s\S]*?width: 1%/,
+    );
     expect(styles).toMatch(
       /\.candidate-selection-short[\s\S]*?\.selection-table-scroll\s*\{[\s\S]*?height: auto/,
     );

@@ -105,6 +105,19 @@ focused builder/accessibility tests and the web TypeScript check pass.
 
 The focused accessibility contract test and live web-app verification pass.
 
+## M5.5 semantic description columns checkpoint (2026-09-16)
+
+- Candidate headers named Description or Short Description are non-sortable by
+  semantic label; unrelated fields such as deity Alignment use the normal
+  sortable-header path without position- or entity-specific exceptions.
+- Deity selection tables add a presentation-only Description column derived
+  from the first sentence of each deity's full description. The Deity and
+  Alignment columns size compactly to their contents while Description takes
+  the remaining width. Stored content and detail-page prose are unchanged.
+
+All 55 focused builder/accessibility tests, the web TypeScript check, and live
+web-app verification pass.
+
 ## M5.5 equipment workspace checkpoint (2026-09-14)
 
 - Equipment is now a full peer workspace with Loadout, Inventory, Shop, and

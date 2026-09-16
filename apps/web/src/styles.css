@@ -2877,8 +2877,16 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   text-align: center;
 }
 
-.candidate-selection-deity .selection-table-scroll thead th:first-child {
-  width: 55%;
+.candidate-selection-deity .selection-table-scroll table {
+  table-layout: auto;
+}
+
+.candidate-selection-deity .selection-table-scroll th:first-child,
+.candidate-selection-deity .selection-table-scroll td:first-child,
+.candidate-selection-deity .selection-table-scroll th:nth-child(2),
+.candidate-selection-deity .selection-table-scroll td:nth-child(2) {
+  white-space: nowrap;
+  width: 1%;
 }
 
 .candidate-selection-class .selection-table-scroll table {

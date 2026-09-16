@@ -52,6 +52,7 @@ import {
   contextualChoiceName,
   choiceSelectionTableKind,
   choiceTableSummary,
+  deityTableDescription,
   choicePresentationLabel,
   choiceForRepeatedCandidate,
   choicesAtLevel,
@@ -2106,7 +2107,8 @@ type CandidateSortColumn =
   | "summary"
   | "role"
   | "power-source"
-  | "associated-skills";
+  | "associated-skills"
+  | "deity-description";
 type CandidateSortDirection = "ascending" | "descending";
 
 function defaultCandidateSortFor(kind: ChoiceSelectionTableKind): {
@@ -2116,6 +2118,11 @@ function defaultCandidateSortFor(kind: ChoiceSelectionTableKind): {
   return kind === "power"
     ? { column: "level", direction: "descending" }
     : { column: "name", direction: "ascending" };
+}
+
+function candidateHeaderIsSortable(label: string): boolean {
+  const normalizedLabel = label.trim().toLocaleLowerCase();
+  return !["description", "short description"].includes(normalizedLabel);
 }
 
 function compareCandidateSortValues(
@@ -2195,6 +2202,9 @@ function CandidateSelectionTable({
       entity?.name,
       entity?.printPrerequisites,
       entity === undefined ? undefined : choiceTableSummary(entity, kind),
+      entity === undefined || kind !== "deity"
+        ? undefined
+        : deityTableDescription(entity),
       entity === undefined
         ? undefined
         : contentSpecificValue(entity, "Action Type"),
@@ -2252,6 +2262,12 @@ function CandidateSelectionTable({
     label: string,
     contents: ReactNode = label,
   ) => {
+    if (!candidateHeaderIsSortable(label))
+      return (
+        <th key={column} scope="col">
+          {contents}
+        </th>
+      );
     const active = sort.column === column;
     return (
       <th aria-sort={active ? sort.direction : "none"} key={column} scope="col">
@@ -2331,6 +2347,10 @@ function CandidateSelectionTable({
     const selected = selectedIds.has(candidate.definitionId);
     const summary =
       entity === undefined ? undefined : choiceTableSummary(entity, kind);
+    const deityDescription =
+      entity === undefined || kind !== "deity"
+        ? undefined
+        : deityTableDescription(entity);
     const classMetadata =
       entity === undefined || kind !== "class"
         ? undefined
@@ -2445,6 +2465,17 @@ function CandidateSelectionTable({
               <span className="selection-table-summary">{summary || "—"}</span>
             </td>
           </>
+        ) : kind === "deity" ? (
+          <>
+            <td>
+              <span className="selection-table-summary">{summary || "—"}</span>
+            </td>
+            <td>
+              <span className="selection-table-summary">
+                {deityDescription || "—"}
+              </span>
+            </td>
+          </>
         ) : (
           <td>
             <span className="selection-table-summary">{summary || "—"}</span>
@@ -2535,11 +2566,13 @@ function CandidateSelectionTable({
                   {sortableHeader("associated-skills", "Associated Skills")}
                   {sortableHeader("summary", "Description")}
                 </>
+              ) : kind === "deity" ? (
+                <>
+                  {sortableHeader("summary", "Alignment")}
+                  {sortableHeader("deity-description", "Description")}
+                </>
               ) : (
-                sortableHeader(
-                  "summary",
-                  kind === "deity" ? "Alignment" : "Description",
-                )
+                sortableHeader("summary", "Description")
               )}
             </tr>
           </thead>
