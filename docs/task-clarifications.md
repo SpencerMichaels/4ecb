@@ -21,8 +21,10 @@ or architecture decision into the established specification or decision log.
 - Close Blast means a cone originating from the attacker.
 - Area Burst means a radius centered on a remote point chosen by the attacker.
 - Area Wall means a line originating from a remote point chosen by the attacker.
-- Present additional burst/blast icon options to the product owner before
-  implementation; the final set still requires approval.
+- Before implementation, present a revised complete set of specific icons for
+  every action type and attack/range shape, incorporating all feedback above
+  and showing them at their intended UI size. Do not begin implementation until
+  the product owner explicitly approves the full set.
 
 ## Arbitrary current-level task
 
