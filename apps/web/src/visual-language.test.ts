@@ -5,7 +5,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import {
   entityTypeIcon,
   entityVisualTone,
-  powerActionIcon,
+  powerActionSymbol,
   powerAttackIcon,
 } from "./visual-language";
 
@@ -57,11 +57,18 @@ describe("legacy-derived visual language", () => {
     expect(entityTypeIcon("Armor")).toBe("item");
   });
 
-  it("maps power action and attack metadata to compact semantic icons", () => {
-    expect(powerActionIcon("Standard Action")).toBe("action-standard");
-    expect(powerActionIcon("Immediate Interrupt")).toBe("action-interrupt");
-    expect(powerActionIcon("Free Action")).toBe("action-free");
-    expect(powerActionIcon(undefined)).toBe("action-none");
+  it("maps every power action type to the tabletop-dashboard symbol", () => {
+    expect(powerActionSymbol("Standard Action")).toBe("●");
+    expect(powerActionSymbol("Minor Action")).toBe("◔");
+    expect(powerActionSymbol("Move Action")).toBe("≫");
+    expect(powerActionSymbol("Free Action")).toBe("○");
+    expect(powerActionSymbol("Immediate Reaction")).toBe("↻");
+    expect(powerActionSymbol("Immediate Interrupt")).toBe("↯");
+    expect(powerActionSymbol("No Action")).toBe("–");
+    expect(powerActionSymbol(undefined)).toBe("–");
+  });
+
+  it("maps power attack metadata to compact semantic icons", () => {
     expect(powerAttackIcon("Melee weapon")).toBe("attack-melee");
     expect(powerAttackIcon("Melee or Ranged weapon")).toBe("attack-versatile");
     expect(powerAttackIcon("Area burst 1 within 10")).toBe("attack-area");

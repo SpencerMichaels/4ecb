@@ -41,6 +41,22 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## M5.5 action-type icon checkpoint (2026-09-15)
+
+- Power-choice tables now use the same monochrome Unicode action symbols as
+  `tabletop-dashboard`: standard `●`, minor `◔`, move `≫`, free `○`, immediate
+  reaction `↻`, immediate interrupt `↯`, and no/unspecified action `–`.
+- Each glyph is presentational text rather than an SVG or icon-font character.
+  The exact authored Action Type value remains the tooltip and accessible name;
+  the unspecified fallback retains its existing explicit label.
+- Attack/range icons are unchanged. Their separate redesign remains deferred
+  pending product-owner approval of the complete icon set recorded in
+  [task-clarifications.md](task-clarifications.md).
+
+Focused action-symbol and rendered-accessibility tests pass. The checkpoint
+command `nix develop path:. -c scripts/check.sh` passes all 296 tests across 44
+files, all workspace TypeScript checks, and the production build.
+
 ## M5.5 equipment workspace checkpoint (2026-09-14)
 
 - Equipment is now a full peer workspace with Loadout, Inventory, Shop, and

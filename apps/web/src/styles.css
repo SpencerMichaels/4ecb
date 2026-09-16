@@ -3013,6 +3013,13 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   width: 1rem;
 }
 
+.action-type-icon {
+  font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .selection-table-summary {
   display: -webkit-box;
   -webkit-box-orient: vertical;

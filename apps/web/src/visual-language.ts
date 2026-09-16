@@ -67,16 +67,19 @@ export function entityTypeIcon(type: string): IconName {
   }
 }
 
-export function powerActionIcon(value: string | undefined): IconName {
+export type PowerActionSymbol = "●" | "◔" | "≫" | "○" | "↻" | "↯" | "–";
+
+export function powerActionSymbol(
+  value: string | undefined,
+): PowerActionSymbol {
   const normalized = value?.trim().toLocaleLowerCase() ?? "";
-  if (normalized === "" || normalized.includes("no action"))
-    return "action-none";
-  if (normalized.includes("interrupt")) return "action-interrupt";
-  if (normalized.includes("reaction")) return "action-reaction";
-  if (normalized.includes("minor")) return "action-minor";
-  if (normalized.includes("move")) return "action-move";
-  if (normalized.includes("free")) return "action-free";
-  return "action-standard";
+  if (normalized === "" || normalized.includes("no action")) return "–";
+  if (normalized.includes("interrupt")) return "↯";
+  if (normalized.includes("reaction")) return "↻";
+  if (normalized.includes("minor")) return "◔";
+  if (normalized.includes("move")) return "≫";
+  if (normalized.includes("free")) return "○";
+  return "●";
 }
 
 export function powerAttackIcon(value: string | undefined): IconName {

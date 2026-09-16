@@ -85,6 +85,7 @@ import {
   type OverviewChoicePane,
 } from "./builder-ui";
 import { Icon, type IconName } from "./Icon";
+import { ActionTypeIcon } from "./ActionTypeIcon";
 import { KeyAbilityMarker } from "./KeyAbilityMarker";
 import { EquipmentWorkspace } from "./EquipmentWorkspace";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
@@ -92,7 +93,6 @@ import { PortraitEditor } from "./PortraitEditor";
 import {
   entityTypeIcon,
   entityVisualTone,
-  powerActionIcon,
   powerAttackIcon,
   type LegacyVisualTone,
   visualToneClass,
@@ -1971,23 +1971,11 @@ type FeatPresentationGroup = ReturnType<
   typeof groupParameterizedCandidates
 >[number];
 
-function MetadataIcon({
-  kind,
-  value,
-}: {
-  readonly kind: "action" | "attack";
-  readonly value: string | undefined;
-}) {
-  const label =
-    value ||
-    (kind === "action" ? "Action not specified" : "Attack type not specified");
+function AttackMetadataIcon({ value }: { readonly value: string | undefined }) {
+  const label = value || "Attack type not specified";
   return (
     <span className="selection-metadata-icon" aria-label={label} title={label}>
-      <Icon
-        name={
-          kind === "action" ? powerActionIcon(value) : powerAttackIcon(value)
-        }
-      />
+      <Icon name={powerAttackIcon(value)} />
     </span>
   );
 }
@@ -2305,8 +2293,7 @@ function CandidateSelectionTable({
               {entity === undefined ? "—" : (powerTableLevel(entity) ?? "—")}
             </td>
             <td>
-              <MetadataIcon
-                kind="action"
+              <ActionTypeIcon
                 value={
                   entity === undefined
                     ? undefined
@@ -2315,8 +2302,7 @@ function CandidateSelectionTable({
               />
             </td>
             <td>
-              <MetadataIcon
-                kind="attack"
+              <AttackMetadataIcon
                 value={
                   entity === undefined
                     ? undefined
