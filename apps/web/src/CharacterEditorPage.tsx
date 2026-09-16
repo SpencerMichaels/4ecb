@@ -1225,45 +1225,44 @@ function CompactChoiceButtons({
   readonly onInspect?: (id: string) => void;
   readonly onClear?: () => void;
 }) {
+  const clearable = onClear !== undefined;
   return (
     <fieldset className="compact-choice-picker">
       <legend>{label}</legend>
-      {selectedId === "" || onClear === undefined ? null : (
-        <button
-          aria-label={`Clear ${label}`}
-          className="compact-choice-clear"
-          title={`Clear ${label}`}
-          type="button"
-          onClick={onClear}
-        >
-          <Icon name="remove" />
-        </button>
-      )}
-      <div className="compact-choice-options" role="radiogroup">
+      <div
+        className="compact-choice-options"
+        {...(clearable ? {} : { "aria-label": label, role: "radiogroup" })}
+      >
         {options.map((option) => {
-          const blocked = disabled || !option.selectable;
+          const selected = option.id === selectedId;
+          const blocked =
+            (disabled || !option.selectable) && !(clearable && selected);
           const keyAbility = keyAbilities.some(
             (ability) =>
               ability.toLocaleLowerCase() === option.label.toLocaleLowerCase(),
           );
           return (
             <button
-              aria-checked={option.id === selectedId}
               aria-disabled={blocked}
+              {...(clearable
+                ? { "aria-pressed": selected }
+                : { "aria-checked": selected, role: "radio" })}
               className={
-                `${option.id === selectedId ? "is-selected" : ""}${keyAbility ? " has-key-ability" : ""}`.trim() ||
+                `${selected ? "is-selected" : ""}${keyAbility ? " has-key-ability" : ""}`.trim() ||
                 undefined
               }
               key={option.id}
-              role="radio"
               title={option.unavailableReason}
               type="button"
               onClick={() => {
+                if (selected && clearable) {
+                  onClear();
+                  return;
+                }
                 onInspect?.(option.id);
                 if (!blocked) onChoose(option.id);
               }}
             >
-              {option.id === selectedId ? <Icon name="check" /> : null}
               <span className="compact-choice-label">{option.label}</span>
               {keyAbility ? <KeyAbilityMarker /> : null}
               {option.unavailableReason === undefined ? null : (
@@ -2785,28 +2784,44 @@ function AbilityIncreaseEditor({
   readonly rollbackRevision: number;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
-  const evaluatedSlots = new Map(
-    choices.map((choice) => [
-      choice.id,
-      selectedDefinitionId(choice, evaluation),
-    ]),
-  );
-  const [optimisticSlots, setOptimisticSlots] = useState(evaluatedSlots);
-  const choiceKey = choices.map((choice) => choice.id).join("\0");
-
-  useEffect(() => setOptimisticSlots(new Map()), [rollbackRevision]);
-  useEffect(
+  const evaluatedSlots = useMemo(
     () =>
-      setOptimisticSlots(
-        new Map(
-          choices.map((choice) => [
-            choice.id,
-            selectedDefinitionId(choice, evaluation),
-          ]),
-        ),
+      new Map(
+        choices.map((choice) => [
+          choice.id,
+          selectedDefinitionId(choice, evaluation),
+        ]),
       ),
-    [choiceKey, evaluation],
+    [choices, evaluation],
   );
+  const [pendingSlots, setPendingSlots] = useState<
+    Map<string, string | undefined>
+  >(new Map());
+  const choiceKey = choices.map((choice) => choice.id).join("\0");
+  const evaluatedSlotKey = choices
+    .map((choice) => `${choice.id}:${evaluatedSlots.get(choice.id) ?? ""}`)
+    .join("\0");
+  const optimisticSlots = new Map(evaluatedSlots);
+  for (const [choiceId, definitionId] of pendingSlots)
+    optimisticSlots.set(choiceId, definitionId);
+
+  useEffect(() => setPendingSlots(new Map()), [rollbackRevision]);
+  useEffect(() => {
+    setPendingSlots((current) => {
+      const next = new Map(current);
+      let changed = false;
+      for (const [choiceId, definitionId] of next) {
+        if (
+          !evaluatedSlots.has(choiceId) ||
+          evaluatedSlots.get(choiceId) === definitionId
+        ) {
+          next.delete(choiceId);
+          changed = true;
+        }
+      }
+      return changed ? next : current;
+    });
+  }, [choiceKey, evaluatedSlotKey, evaluatedSlots]);
 
   const candidateIds = [
     ...new Set(
@@ -2876,6 +2891,24 @@ function AbilityIncreaseEditor({
               ability.toLocaleLowerCase() ===
               definition?.name.trim().toLocaleLowerCase(),
           );
+          const evaluatedScore =
+            definition === undefined
+              ? undefined
+              : evaluation.stats[definition.name]?.value;
+          const scoreDelta =
+            [...optimisticSlots.values()].filter(
+              (selectedId) => selectedId === definitionId,
+            ).length -
+            [...evaluatedSlots.values()].filter(
+              (selectedId) => selectedId === definitionId,
+            ).length;
+          const displayedScore =
+            typeof evaluatedScore === "number"
+              ? evaluatedScore + scoreDelta
+              : evaluatedScore !== undefined &&
+                  Number.isFinite(Number(evaluatedScore))
+                ? Number(evaluatedScore) + scoreDelta
+                : (evaluatedScore ?? "—");
           return (
             <button
               aria-pressed={selectedChoice !== undefined}
@@ -2895,7 +2928,7 @@ function AbilityIncreaseEditor({
                     `web:placeholder:ability:${crypto.randomUUID()}`,
                   );
                   if (command === undefined) return;
-                  setOptimisticSlots((current) => {
+                  setPendingSlots((current) => {
                     const next = new Map(current);
                     next.set(selectedChoice.id, undefined);
                     return next;
@@ -2943,7 +2976,7 @@ function AbilityIncreaseEditor({
                   (index) => `web:placeholder:${index}:${crypto.randomUUID()}`,
                 );
                 if (command === undefined) return;
-                setOptimisticSlots((current) => {
+                setPendingSlots((current) => {
                   const next = new Map(current);
                   next.set(targetChoice.id, definitionId);
                   return next;
@@ -2952,12 +2985,16 @@ function AbilityIncreaseEditor({
               }}
             >
               <span>{definition?.name ?? definitionId}</span>
-              {selectedChoice === undefined && !keyAbility ? null : (
-                <span className="ability-option-markers">
-                  {keyAbility ? <KeyAbilityMarker /> : null}
-                  {selectedChoice === undefined ? null : <Icon name="check" />}
-                </span>
-              )}
+              <span className="ability-option-trailing">
+                {definition === undefined ? null : (
+                  <span className="ability-option-score">{displayedScore}</span>
+                )}
+                {keyAbility ? (
+                  <span className="ability-option-markers">
+                    <KeyAbilityMarker />
+                  </span>
+                ) : null}
+              </span>
             </button>
           );
         })}

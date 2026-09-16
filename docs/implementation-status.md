@@ -41,6 +41,30 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## M5.5 radio selection checkpoint (2026-09-15)
+
+- Custom compact choices no longer add a check glyph to the selected option.
+  Clearable sets use toggle-button semantics and clicking the selected button
+  clears it; mandatory sets retain `radiogroup`/`radio` semantics. Both retain
+  the green selected background and border treatment. The shared change covers
+  Gender, Alignment, replacement targets, parameterized choices, and other
+  compact choice sets without changing unrelated X removal actions.
+- The radio-styled paired ability-increase buttons likewise rely on their green
+  selected treatment while retaining `aria-pressed`. Their displayed scores now
+  apply pending selection deltas immediately and reconcile without double
+  application when the authoritative evaluation catches up. The paired-choice
+  header also keeps the same box layout as it moves between incomplete and
+  complete states. Native theme radio inputs are unchanged, and the check glyph
+  for the non-radio completed-level empty state remains in place.
+- Focused accessibility-contract tests protect both sides of that distinction.
+  The checkpoint command `nix develop path:. -c scripts/check.sh` passes all
+  298 tests across 44 files, all workspace TypeScript checks, the production/PWA
+  build, Chromium and Firefox print checks, deterministic public-pack checks,
+  and the public query benchmark.
+- The clear-on-repeat and immediate-score follow-up passes all 305 tests across
+  44 files, ESLint, the web TypeScript checks, formatting, and the whitespace
+  diff check in the project-local Nix environment.
+
 ## M5.5 action-type icon checkpoint (2026-09-15)
 
 - Power-choice tables now use the same monochrome Unicode action symbols as

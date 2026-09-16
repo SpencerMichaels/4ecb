@@ -199,6 +199,60 @@ describe("release accessibility contract", () => {
     );
   });
 
+  it("uses toggle semantics for clearable compact choices and radios for mandatory choices", () => {
+    const compactChoices = characterEditor.slice(
+      characterEditor.indexOf("function CompactChoiceButtons"),
+      characterEditor.indexOf("function BuildPresetPanel"),
+    );
+    expect(compactChoices).toContain(
+      '{ "aria-label": label, role: "radiogroup" }',
+    );
+    expect(compactChoices).toContain(
+      '{ "aria-checked": selected, role: "radio" }',
+    );
+    expect(compactChoices).toContain('{ "aria-pressed": selected }');
+    expect(compactChoices).toContain("if (selected && clearable)");
+    expect(compactChoices).toContain("onClear();");
+    expect(compactChoices).toContain('`${selected ? "is-selected" : ""}');
+    expect(compactChoices).not.toContain("compact-choice-clear");
+    expect(compactChoices).not.toContain('name="check"');
+    expect(styles).toMatch(
+      /\.compact-choice-options > button\.is-selected\s*\{[^}]*background: var\(--success-soft\)[^}]*border-left-color: var\(--success\)/,
+    );
+
+    const abilityChoices = characterEditor.slice(
+      characterEditor.indexOf("function AbilityIncreaseEditor"),
+      characterEditor.indexOf("function RepeatedChoiceGroup"),
+    );
+    expect(abilityChoices).toContain(
+      "aria-pressed={selectedChoice !== undefined}",
+    );
+    expect(abilityChoices).toContain("const [pendingSlots, setPendingSlots]");
+    expect(abilityChoices).toContain('typeof evaluatedScore === "number"');
+    expect(abilityChoices).toContain("[...optimisticSlots.values()].filter(");
+    expect(abilityChoices).toContain("[...evaluatedSlots.values()].filter(");
+    expect(abilityChoices).toContain('"ability-selected"');
+    expect(abilityChoices).not.toContain('name="check"');
+    expect(styles).toMatch(
+      /\.ability-increase-grid button\.ability-selected\s*\{[^}]*background: var\(--success-soft\)[^}]*border-color: var\(--success\)/,
+    );
+    expect(styles).toMatch(
+      /\.level-choice-section\.ability-increase-section > header\s*\{[^}]*margin: -1rem -1rem 1rem;[^}]*padding: 0\.75rem 1rem;/,
+    );
+    expect(styles).toMatch(
+      /\.legacy-choice-list > \.level-choice-section\.ability-increase-section > header\s*\{[^}]*margin: -0\.75rem -0\.8rem 0\.7rem;[^}]*padding: 0\.65rem 0\.8rem;/,
+    );
+  });
+
+  it("retains check glyphs for non-radio completion states", () => {
+    const emptyLevelState = characterEditor.slice(
+      characterEditor.indexOf('className="choice-empty-state"'),
+      characterEditor.indexOf('className="level-choice-tabs-layout"'),
+    );
+    expect(emptyLevelState).toContain('<Icon name="check" />');
+    expect(emptyLevelState).toContain("No choices need attention");
+  });
+
   it("supports system color preference and explicit light or dark overrides", () => {
     expect(styles).toContain(':root[data-theme="dark"]');
     expect(styles).toContain("@media (prefers-color-scheme: dark)");
