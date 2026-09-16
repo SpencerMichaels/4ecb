@@ -209,10 +209,19 @@ describe("release accessibility contract", () => {
     );
     expect(tableSource).toContain("deityTableDescription(entity)");
     expect(styles).toMatch(
-      /\.candidate-selection-deity \.selection-table-scroll table\s*\{[\s\S]*?table-layout: auto/,
+      /\.selection-table-scroll table\s*\{[^}]*table-layout: auto/,
+    );
+    expect(styles).toMatch(
+      /\.selection-table-scroll thead th:first-child,[\s\S]*?\.selection-table-scroll tbody td:first-child[\s\S]*?width: 1%/,
     );
     expect(styles).toMatch(
       /\.candidate-selection-deity \.selection-table-scroll th:first-child,[\s\S]*?\.candidate-selection-deity \.selection-table-scroll td:nth-child\(2\)[\s\S]*?white-space: nowrap;[\s\S]*?width: 1%/,
+    );
+    expect(styles).toMatch(
+      /\.candidate-selection-class \.selection-table-scroll th:nth-child\(2\),[\s\S]*?\.candidate-selection-background \.selection-table-scroll td:nth-child\(2\)[\s\S]*?width: 1%/,
+    );
+    expect(styles).toMatch(
+      /\.equipment-table-scroll th:not\(:first-child\),[\s\S]*?\.equipment-table-scroll td:not\(:first-child\)[\s\S]*?white-space: nowrap;[\s\S]*?width: 1%/,
     );
     expect(styles).toMatch(
       /\.candidate-selection-short[\s\S]*?\.selection-table-scroll\s*\{[\s\S]*?height: auto/,

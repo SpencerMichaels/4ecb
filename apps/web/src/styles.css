@@ -2746,7 +2746,7 @@ textarea {
   border-collapse: collapse;
   font-size: 0.78rem;
   min-width: 34rem;
-  table-layout: fixed;
+  table-layout: auto;
   width: 100%;
 }
 
@@ -2815,8 +2815,9 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   margin-left: 0;
 }
 
-.selection-table-scroll thead th:first-child {
-  width: 25%;
+.selection-table-scroll thead th:first-child,
+.selection-table-scroll tbody td:first-child {
+  width: 1%;
 }
 
 .selection-table-scroll .selection-type-row {
@@ -2862,23 +2863,21 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
 
 .candidate-selection-power th:nth-child(2) {
   text-align: center;
-  width: 3rem;
+  white-space: nowrap;
+  width: 1%;
 }
 
 .candidate-selection-power th:nth-child(3),
 .candidate-selection-power th:nth-child(4) {
   text-align: center;
-  width: 2.75rem;
+  white-space: nowrap;
+  width: 1%;
 }
 
 .candidate-selection-power td:nth-child(2),
 .candidate-selection-power td:nth-child(3),
 .candidate-selection-power td:nth-child(4) {
   text-align: center;
-}
-
-.candidate-selection-deity .selection-table-scroll table {
-  table-layout: auto;
 }
 
 .candidate-selection-deity .selection-table-scroll th:first-child,
@@ -2889,32 +2888,13 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   width: 1%;
 }
 
-.candidate-selection-class .selection-table-scroll table {
-  min-width: 48rem;
-}
-
-.candidate-selection-class .selection-table-scroll thead th:first-child {
-  width: 24%;
-}
-
-.candidate-selection-class .selection-table-scroll thead th:nth-child(2) {
-  width: 13%;
-}
-
-.candidate-selection-class .selection-table-scroll thead th:nth-child(3) {
-  width: 16%;
-}
-
-.candidate-selection-background .selection-table-scroll table {
-  min-width: 42rem;
-}
-
-.candidate-selection-background .selection-table-scroll thead th:first-child {
-  width: 30%;
-}
-
-.candidate-selection-background .selection-table-scroll thead th:nth-child(2) {
-  width: 24%;
+.candidate-selection-class .selection-table-scroll th:nth-child(2),
+.candidate-selection-class .selection-table-scroll td:nth-child(2),
+.candidate-selection-class .selection-table-scroll th:nth-child(3),
+.candidate-selection-class .selection-table-scroll td:nth-child(3),
+.candidate-selection-background .selection-table-scroll th:nth-child(2),
+.candidate-selection-background .selection-table-scroll td:nth-child(2) {
+  width: 1%;
 }
 
 .selection-table-scroll tr:last-child td {
@@ -3861,6 +3841,12 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
 
 .equipment-table-scroll th:first-child {
   min-inline-size: 14rem;
+}
+
+.equipment-table-scroll th:not(:first-child),
+.equipment-table-scroll td:not(:first-child) {
+  white-space: nowrap;
+  width: 1%;
 }
 
 .table-inspect-button {

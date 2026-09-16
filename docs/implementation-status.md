@@ -118,6 +118,20 @@ The focused accessibility contract test and live web-app verification pass.
 All 55 focused builder/accessibility tests, the web TypeScript check, and live
 web-app verification pass.
 
+## M5.5 content-sized table columns checkpoint (2026-09-16)
+
+- Candidate selection tables now use automatic column layout: identity and
+  short metadata columns size compactly, while prose/Description columns take
+  the remaining width and wrap normally. Oversized fixed percentages and class/
+  background minimum widths were removed.
+- Equipment inventory, shop, and ritual/practice tables give item names the
+  flexible width while quantity, type, level, price, and action columns remain
+  compact. Character-overview tables were audited and already used intrinsic
+  sizing, so they required no change.
+
+The focused accessibility contract test, web TypeScript check, and live
+web-app verification pass.
+
 ## M5.5 equipment workspace checkpoint (2026-09-14)
 
 - Equipment is now a full peer workspace with Loadout, Inventory, Shop, and
