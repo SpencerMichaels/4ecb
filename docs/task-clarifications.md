@@ -16,6 +16,8 @@ or architecture decision into the established specification or decision log.
 - Area Wall needs an immediately recognizable wall treatment, such as a castle
   wall or battlement, rather than an abstract hatched square.
 - Close Burst means a radius centered on the attacker.
+- The chosen Close Burst direction is a sun/radiance icon: one central point
+  with rays clearly indicating outward emission.
 - Close Blast means a cone originating from the attacker.
 - Area Burst means a radius centered on a remote point chosen by the attacker.
 - Area Wall means a line originating from a remote point chosen by the attacker.
