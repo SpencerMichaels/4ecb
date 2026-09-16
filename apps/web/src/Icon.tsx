@@ -13,6 +13,7 @@ import {
   FileText,
   Footprints,
   GraduationCap,
+  Key,
   LayoutGrid,
   Minus,
   PawPrint,
@@ -63,6 +64,7 @@ export type IconName =
   | "feat"
   | "favorite"
   | "item"
+  | "key"
   | "level"
   | "power"
   | "race"
@@ -101,6 +103,7 @@ const icons: Record<IconName, LucideIcon> = {
   feat: Sparkles,
   favorite: Star,
   item: Backpack,
+  key: Key,
   level: ChevronsUp,
   power: Zap,
   race: UsersRound,

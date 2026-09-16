@@ -496,6 +496,12 @@ candidate.
   from the authored `Associated Skills` field. Empty metadata remains visibly
   unspecified; the UI does not infer associations from benefit or description
   prose.
+- Ability Scores panes now read the selected class's structured `Key Abilities`
+  field and present its values in authored order in a grammatically formed
+  sentence above the controls. Matching radio and level-up button options carry
+  a right-aligned, assistively labeled key icon without adding another
+  selected-state color; missing class or key-ability metadata leaves both
+  treatments absent.
 - Base ability scores now live only in the level-1 Ability Scores group, before
   racial increases, and no longer appear as an unrelated editor below the level
   workspace. The editor now mirrors the legacy 22-point-buy path: new native

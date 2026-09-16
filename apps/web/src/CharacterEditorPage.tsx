@@ -44,6 +44,8 @@ import {
   backgroundAssociatedSkills,
   candidateReason,
   candidateTableTypeGroup,
+  classKeyAbilities,
+  classKeyAbilitiesSentence,
   classTableMetadata,
   contextualChoiceName,
   choiceSelectionTableKind,
@@ -83,6 +85,7 @@ import {
   type OverviewChoicePane,
 } from "./builder-ui";
 import { Icon, type IconName } from "./Icon";
+import { KeyAbilityMarker } from "./KeyAbilityMarker";
 import { EquipmentWorkspace } from "./EquipmentWorkspace";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
 import { PortraitEditor } from "./PortraitEditor";
@@ -1126,6 +1129,7 @@ function retrainingCategory(type: string | undefined): string | undefined {
 function CompactChoiceButtons({
   label,
   options,
+  keyAbilities = [],
   selectedId,
   disabled,
   onChoose,
@@ -1139,6 +1143,7 @@ function CompactChoiceButtons({
     readonly selectable: boolean;
     readonly unavailableReason?: string;
   }[];
+  readonly keyAbilities?: readonly string[];
   readonly selectedId: string;
   readonly disabled: boolean;
   readonly onChoose: (id: string) => void;
@@ -1162,11 +1167,18 @@ function CompactChoiceButtons({
       <div className="compact-choice-options" role="radiogroup">
         {options.map((option) => {
           const blocked = disabled || !option.selectable;
+          const keyAbility = keyAbilities.some(
+            (ability) =>
+              ability.toLocaleLowerCase() === option.label.toLocaleLowerCase(),
+          );
           return (
             <button
               aria-checked={option.id === selectedId}
               aria-disabled={blocked}
-              className={option.id === selectedId ? "is-selected" : undefined}
+              className={
+                `${option.id === selectedId ? "is-selected" : ""}${keyAbility ? " has-key-ability" : ""}`.trim() ||
+                undefined
+              }
               key={option.id}
               role="radio"
               title={option.unavailableReason}
@@ -1177,7 +1189,8 @@ function CompactChoiceButtons({
               }}
             >
               {option.id === selectedId ? <Icon name="check" /> : null}
-              <span>{option.label}</span>
+              <span className="compact-choice-label">{option.label}</span>
+              {keyAbility ? <KeyAbilityMarker /> : null}
               {option.unavailableReason === undefined ? null : (
                 <small>{option.unavailableReason}</small>
               )}
@@ -1603,6 +1616,7 @@ function ChoiceEditor({
   compact = false,
   hideSelectionLabel = false,
   selectionLabel = "Selection",
+  keyAbilities = [],
   replacementTargetType,
   rollbackRevision,
   onDispatch,
@@ -1616,6 +1630,7 @@ function ChoiceEditor({
   readonly compact?: boolean;
   readonly hideSelectionLabel?: boolean;
   readonly selectionLabel?: string;
+  readonly keyAbilities?: readonly string[];
   readonly replacementTargetType?: string;
   readonly rollbackRevision: number;
   readonly onDispatch: (command: CharacterCommand) => void;
@@ -1834,6 +1849,7 @@ function ChoiceEditor({
                 label: `${group.label}${group.parameterLabel === undefined ? "" : "…"}`,
                 selectable: true,
               }))}
+              keyAbilities={keyAbilities}
               selectedId={displayedGroupKey}
               disabled={editorDisabled}
               onClear={clearSelection}
@@ -1868,6 +1884,7 @@ function ChoiceEditor({
                         unavailableReason: candidateReason(candidate.reasons),
                       }),
                 }))}
+                keyAbilities={keyAbilities}
                 selectedId={
                   displayedGroup.options.some(
                     ({ candidate }) =>
@@ -1904,6 +1921,7 @@ function ChoiceEditor({
                 ? {}
                 : { unavailableReason: candidateReason(candidate.reasons) }),
             }))}
+            keyAbilities={keyAbilities}
             selectedId={selectedValue}
             disabled={editorDisabled}
             onClear={clearSelection}
@@ -2693,6 +2711,7 @@ function AbilityIncreaseEditor({
   build,
   entities,
   byId,
+  keyAbilities,
   rollbackRevision,
   onDispatch,
 }: {
@@ -2701,6 +2720,7 @@ function AbilityIncreaseEditor({
   readonly build: CharacterRecord["build"];
   readonly entities: readonly ContentEntity[];
   readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly keyAbilities: readonly string[];
   readonly rollbackRevision: number;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
@@ -2790,6 +2810,11 @@ function AbilityIncreaseEditor({
             (chosenCount >= choices.length ||
               targetChoice === undefined ||
               targetCandidate === undefined);
+          const keyAbility = keyAbilities.some(
+            (ability) =>
+              ability.toLocaleLowerCase() ===
+              definition?.name.trim().toLocaleLowerCase(),
+          );
           return (
             <button
               aria-pressed={selectedChoice !== undefined}
@@ -2866,7 +2891,12 @@ function AbilityIncreaseEditor({
               }}
             >
               <span>{definition?.name ?? definitionId}</span>
-              {selectedChoice === undefined ? null : <Icon name="check" />}
+              {selectedChoice === undefined && !keyAbility ? null : (
+                <span className="ability-option-markers">
+                  {keyAbility ? <KeyAbilityMarker /> : null}
+                  {selectedChoice === undefined ? null : <Icon name="check" />}
+                </span>
+              )}
             </button>
           );
         })}
@@ -4513,6 +4543,11 @@ export function CharacterEditorPage({
       );
   const race = entityOfType("Race")?.name ?? character.snapshot.details.Race;
   const selectedClass = entityOfType("Class") ?? entityOfType("Hybrid Class");
+  const selectedClassKeyAbilities = classKeyAbilities(selectedClass);
+  const keyAbilitiesSentence = classKeyAbilitiesSentence(
+    selectedClass,
+    selectedClassKeyAbilities,
+  );
   const totalUnresolved =
     (planningEvaluation?.choices ?? []).filter(
       (choice) =>
@@ -4632,6 +4667,7 @@ export function CharacterEditorPage({
           build={build}
           entities={entities}
           byId={byId}
+          keyAbilities={selectedClassKeyAbilities}
           rollbackRevision={rollbackRevision}
           onDispatch={dispatch}
         />
@@ -4702,6 +4738,11 @@ export function CharacterEditorPage({
           byId={byId}
           disabled={false}
           hideSelectionLabel
+          keyAbilities={
+            legacyChoiceSection(choice) === "Ability Scores"
+              ? selectedClassKeyAbilities
+              : []
+          }
           rollbackRevision={rollbackRevision}
           onDispatch={dispatch}
         />
@@ -5181,6 +5222,12 @@ export function CharacterEditorPage({
                         role="tabpanel"
                       >
                         <div className="legacy-choice-list">
+                          {activeChoiceSection.section === "Ability Scores" &&
+                          keyAbilitiesSentence !== undefined ? (
+                            <p className="class-key-abilities">
+                              {keyAbilitiesSentence}
+                            </p>
+                          ) : null}
                           {activeChoiceSection.section === "Ability Scores" &&
                           selectedLevel === 1 ? (
                             <BaseAbilityScoreEditor

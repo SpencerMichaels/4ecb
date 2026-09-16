@@ -18,6 +18,8 @@ import {
   buildPresetSuggestionNames,
   candidateReason,
   candidateTableTypeGroup,
+  classKeyAbilities,
+  classKeyAbilitiesSentence,
   classTableMetadata,
   contextualChoiceName,
   choiceSelectionTableKind,
@@ -116,6 +118,71 @@ const build: CharacterBuild = {
 };
 
 describe("builder planning UI", () => {
+  it("presents class key abilities from structured metadata in authored order", () => {
+    const fighter = {
+      ...level(0),
+      name: "Fighter",
+      type: "Class",
+      description: "Dexterity is useful, but this prose is not metadata.",
+      specifics: [
+        {
+          name: "Key Abilities",
+          value: "Strength, Dexterity, Wisdom, Constitution",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+    const avenger = {
+      ...fighter,
+      id: "AVENGER",
+      name: "Avenger",
+      specifics: [
+        {
+          name: "Key Abilities",
+          value: "Wisdom, Charisma",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+    const proseOnly = { ...fighter, id: "PROSE_ONLY", specifics: [] };
+    const authoredAlternatives = {
+      ...fighter,
+      id: "AUTHORED_ALTERNATIVES",
+      specifics: [
+        {
+          name: "Key Abilities",
+          value: "Cha; Dex or Int",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+
+    expect(classKeyAbilities(fighter)).toEqual([
+      "Strength",
+      "Dexterity",
+      "Wisdom",
+      "Constitution",
+    ]);
+    expect(classKeyAbilitiesSentence(fighter)).toBe(
+      "A Fighter's key abilities are Strength, Dexterity, Wisdom, and Constitution.",
+    );
+    expect(classKeyAbilitiesSentence(avenger)).toBe(
+      "An Avenger's key abilities are Wisdom and Charisma.",
+    );
+    expect(classKeyAbilities(authoredAlternatives)).toEqual([
+      "Charisma",
+      "Dexterity",
+      "Intelligence",
+    ]);
+    expect(classKeyAbilities(proseOnly)).toEqual([]);
+    expect(classKeyAbilitiesSentence(proseOnly)).toBeUndefined();
+    expect(classKeyAbilities(undefined)).toEqual([]);
+    expect(classKeyAbilitiesSentence(undefined)).toBeUndefined();
+  });
+
   it("resolves unconditional feat and power grants for nested details", () => {
     const definition = (
       id: string,

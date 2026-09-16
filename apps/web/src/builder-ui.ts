@@ -5,9 +5,11 @@ import {
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
+  ABILITY_SCORE_NAMES,
   commandForEvaluatedChoice,
   findBuildChildIndex,
   parseRules,
+  type AbilityScoreName,
 } from "@4ecb/rules-engine";
 import type {
   CandidateDecision,
@@ -99,6 +101,54 @@ export function contentSpecificValue(
       field.name.trim().toLocaleLowerCase() === name.trim().toLocaleLowerCase(),
   )?.value;
   return value === undefined || value.trim() === "" ? undefined : value.trim();
+}
+
+/** Preserves the class record's authored Key Abilities order. */
+export function classKeyAbilities(
+  selectedClass: ContentEntity | undefined,
+): readonly AbilityScoreName[] {
+  if (selectedClass === undefined) return [];
+  const authored = contentSpecificValue(selectedClass, "Key Abilities");
+  if (authored === undefined) return [];
+  const abilitiesByName = new Map<string, AbilityScoreName>([
+    ...ABILITY_SCORE_NAMES.map(
+      (ability) => [ability.toLocaleLowerCase(), ability] as const,
+    ),
+    ["str", "Strength"],
+    ["con", "Constitution"],
+    ["dex", "Dexterity"],
+    ["int", "Intelligence"],
+    ["wis", "Wisdom"],
+    ["cha", "Charisma"],
+  ]);
+  const seen = new Set<AbilityScoreName>();
+  return [
+    ...authored.matchAll(
+      /\b(?:strength|str|constitution|con|dexterity|dex|intelligence|int|wisdom|wis|charisma|cha)\b/giu,
+    ),
+  ].flatMap(([value]) => {
+    const ability = abilitiesByName.get(value.toLocaleLowerCase());
+    if (ability === undefined || seen.has(ability)) return [];
+    seen.add(ability);
+    return [ability];
+  });
+}
+
+export function classKeyAbilitiesSentence(
+  selectedClass: ContentEntity | undefined,
+  abilities: readonly AbilityScoreName[] = classKeyAbilities(selectedClass),
+): string | undefined {
+  const className = selectedClass?.name.trim();
+  if (className === undefined || className === "" || abilities.length === 0)
+    return undefined;
+  const article = /^[aeiou]/iu.test(className) ? "An" : "A";
+  const list =
+    abilities.length === 1
+      ? abilities[0]
+      : abilities.length === 2
+        ? `${abilities[0]} and ${abilities[1]}`
+        : `${abilities.slice(0, -1).join(", ")}, and ${abilities.at(-1)}`;
+  return `${article} ${className}'s key ${abilities.length === 1 ? "ability is" : "abilities are"} ${list}.`;
 }
 
 /** User-facing feats and powers directly granted by an inspected definition. */
