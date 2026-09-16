@@ -25,4 +25,18 @@ describe("ActionTypeIcon", () => {
     expect(markup).toContain('title="Action not specified"');
     expect(markup).toContain('<span aria-hidden="true">–</span>');
   });
+
+  it("can render decoratively while retaining its hover title", () => {
+    const markup = renderToStaticMarkup(
+      createElement(ActionTypeIcon, {
+        decorative: true,
+        value: "Standard Action",
+      }),
+    );
+
+    expect(markup).toContain('aria-hidden="true"');
+    expect(markup).toContain('title="Standard Action"');
+    expect(markup).not.toContain("aria-label");
+    expect(markup).toContain("●");
+  });
 });

@@ -78,6 +78,7 @@ import {
   powerTableLevel,
   selectedDefinitionId,
   selectedChoiceHasWarning,
+  themeDescriptionParagraphs,
   themePowerGroups,
   unresolveEvaluatedChoiceCommand,
   type ChoiceSelectionTableKind,
@@ -876,7 +877,6 @@ function CandidateDetail({
       themePowers.length === 0 ||
       granted.type.trim().toLocaleLowerCase() !== "power",
   );
-  const themePowerHeadingId = `theme-powers-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
   return (
     <div className="candidate-detail-stack">
       <CandidateDetailCard candidate={candidate} entity={entity} />
@@ -889,40 +889,57 @@ function CandidateDetail({
       ))}
       {themePowers.length === 0 ? null : (
         <section
-          aria-labelledby={themePowerHeadingId}
-          className="theme-power-groups"
+          aria-label={`${entity.name} powers`}
+          className="theme-power-cards"
         >
-          <h4 id={themePowerHeadingId}>Theme powers</h4>
-          {themePowers.map((group) => {
-            const label =
-              group.level === undefined
-                ? "Other powers"
-                : `Level ${group.level}`;
-            return (
-              <details
-                className="theme-power-level"
-                key={group.level ?? "other"}
-              >
-                <summary>
-                  <span>{label}</span>
-                  <span className="theme-power-count">
-                    {group.powers.length}{" "}
-                    {group.powers.length === 1 ? "power" : "powers"}
-                  </span>
-                </summary>
-                <div className="theme-power-cards">
-                  {group.powers.map((power) => (
-                    <CandidateDetailCard
-                      entity={power}
-                      key={power.id}
-                      relationship="Theme power"
-                    />
-                  ))}
-                </div>
-              </details>
-            );
-          })}
+          {themePowers.flatMap((group) =>
+            group.powers.map((power) => (
+              <CandidateDetailCard
+                entity={power}
+                key={power.id}
+                themePowerLevel={group.level ?? null}
+              />
+            )),
+          )}
         </section>
+      )}
+    </div>
+  );
+}
+
+function ThemeCandidateDescription({
+  description,
+  entityName,
+  id,
+}: {
+  readonly description: string;
+  readonly entityName: string;
+  readonly id: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const paragraphs = themeDescriptionParagraphs(description);
+  const visibleParagraphs = expanded ? paragraphs : paragraphs.slice(0, 1);
+
+  return (
+    <div className="theme-candidate-description">
+      <div id={id}>
+        {visibleParagraphs.map((paragraph, index) => (
+          <p className="preserve-lines" key={index}>
+            {paragraph}
+          </p>
+        ))}
+      </div>
+      {paragraphs.length <= 1 ? null : (
+        <button
+          aria-controls={id}
+          aria-expanded={expanded}
+          aria-label={`${expanded ? "Collapse" : "Expand"} description for ${entityName}`}
+          className="theme-description-toggle"
+          type="button"
+          onClick={() => setExpanded((current) => !current)}
+        >
+          {expanded ? "Less…" : "More…"}
+        </button>
       )}
     </div>
   );
@@ -932,43 +949,40 @@ function CandidateDetailCard({
   candidate,
   entity,
   relationship,
+  themePowerLevel,
 }: {
   readonly candidate?: CandidateDecision;
   readonly entity: ContentEntity;
   readonly relationship?: string;
+  readonly themePowerLevel?: number | null;
 }) {
   const headingId = `candidate-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}${relationship === undefined ? "" : "-granted"}`;
-  const visibleSpecifics = entity.specifics.filter(isUserFacingSpecific);
-  const tone = visualToneClass(entityVisualTone(entity));
-  return (
-    <aside
-      aria-labelledby={headingId}
-      className={`candidate-detail ${tone}`}
-      tabIndex={0}
-    >
-      <header>
-        <div>
-          <p className="eyebrow entity-kind">
-            <Icon name={entityTypeIcon(entity.type)} /> {entity.type}
-          </p>
-          <h4 id={headingId}>{entity.name}</h4>
-          {relationship === undefined ? null : (
-            <p className="candidate-relationship">{relationship}</p>
-          )}
-        </div>
-        {candidate === undefined || candidate.eligible ? null : (
-          <span className="candidate-unavailable">Unavailable</span>
-        )}
-      </header>
+  const isThemeCandidate =
+    candidate !== undefined &&
+    entity.type.trim().toLocaleLowerCase() === "theme";
+  const source =
+    entity.source ||
+    contentSpecificValue(entity, "Source")?.trim() ||
+    "Not specified";
+  const visibleSpecifics = entity.specifics.filter(
+    (field) =>
+      isUserFacingSpecific(field) &&
+      field.name.trim().toLocaleLowerCase() !== "source",
+  );
+  const entityTone = entityVisualTone(entity);
+  const tone = visualToneClass(entityTone);
+  const typeLabel =
+    entity.type.trim().toLocaleLowerCase() === "power"
+      ? overviewPowerType(entityTone)
+      : entity.type;
+  const themePowerTypeId = `${headingId}-type`;
+  const themePowerActionType = contentSpecificValue(entity, "Action Type");
+  const themePowerAttackType = contentSpecificValue(entity, "Attack Type");
+  const body = (
+    <>
       {candidate === undefined || candidate.eligible ? null : (
         <p className="candidate-reason">{candidateReason(candidate.reasons)}</p>
       )}
-      <dl className="candidate-facts">
-        <div>
-          <dt>Source</dt>
-          <dd>{entity.source || "Not specified"}</dd>
-        </div>
-      </dl>
       {entity.printPrerequisites === undefined ? null : (
         <section>
           <h5>Prerequisites</h5>
@@ -981,7 +995,16 @@ function CandidateDetailCard({
       {entity.description.length === 0 ? null : (
         <section>
           <h5>Description</h5>
-          <p className="preserve-lines">{entity.description}</p>
+          {isThemeCandidate ? (
+            <ThemeCandidateDescription
+              key={entity.id}
+              description={entity.description}
+              entityName={entity.name}
+              id={`${headingId}-description`}
+            />
+          ) : (
+            <p className="preserve-lines">{entity.description}</p>
+          )}
         </section>
       )}
       {visibleSpecifics.length === 0 ? null : (
@@ -997,6 +1020,58 @@ function CandidateDetailCard({
           </dl>
         </section>
       )}
+      <p className="detail-source-note">Source: {source}</p>
+    </>
+  );
+
+  if (themePowerLevel !== undefined) {
+    return (
+      <details
+        aria-labelledby={headingId}
+        className={`candidate-detail theme-power-card ${tone}`}
+        open
+      >
+        <summary aria-labelledby={`${headingId} ${themePowerTypeId}`}>
+          <ActionTypeIcon decorative value={themePowerActionType} />
+          <h4 id={headingId}>
+            {entity.name}
+            {themePowerAttackType === undefined ? null : (
+              <span className="theme-power-attack-type">
+                {` (${themePowerAttackType.toLocaleLowerCase()})`}
+              </span>
+            )}
+          </h4>
+          <span className="theme-power-type" id={themePowerTypeId}>
+            {typeLabel}
+            {themePowerLevel === null ? null : ` ${themePowerLevel}`}
+          </span>
+        </summary>
+        <div className="theme-power-card-body">{body}</div>
+      </details>
+    );
+  }
+
+  return (
+    <aside
+      aria-labelledby={headingId}
+      className={`candidate-detail ${tone}`}
+      tabIndex={0}
+    >
+      <header>
+        <div>
+          <p className="eyebrow entity-kind">
+            <Icon name={entityTypeIcon(entity.type)} /> {typeLabel}
+          </p>
+          <h4 id={headingId}>{entity.name}</h4>
+          {relationship === undefined ? null : (
+            <p className="candidate-relationship">{relationship}</p>
+          )}
+        </div>
+        {candidate === undefined || candidate.eligible ? null : (
+          <span className="candidate-unavailable">Unavailable</span>
+        )}
+      </header>
+      {body}
     </aside>
   );
 }

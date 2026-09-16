@@ -414,11 +414,18 @@ a {
 
 .status,
 .identifier,
+.detail-source-note,
 .result-meta,
 .search-form p,
 .results-toolbar p {
   color: var(--muted);
   font-size: 0.875rem;
+}
+
+.detail-source-note {
+  border-top: 1px solid var(--border);
+  margin-top: 1rem;
+  padding-top: 1rem;
 }
 
 .error {
@@ -3386,47 +3393,97 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   min-width: 0;
 }
 
-.theme-power-groups {
+.theme-power-cards {
   display: grid;
-  gap: 0.6rem;
-  min-width: 0;
-}
-
-.theme-power-groups > h4 {
-  margin: 0;
-}
-
-.theme-power-level {
-  border: 1px solid var(--border);
-  min-width: 0;
-}
-
-.theme-power-level > summary {
-  align-items: center;
-  background: var(--surface-subtle);
-  cursor: pointer;
-  display: flex;
-  font-weight: 800;
   gap: 0.75rem;
-  justify-content: space-between;
-  padding: 0.7rem 0.8rem;
+  min-width: 0;
 }
 
-.theme-power-level > summary:focus-visible {
+.theme-power-card {
+  padding: 0;
+}
+
+.theme-power-card > summary {
+  align-items: baseline;
+  background: var(--tone-soft);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  list-style: none;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  position: relative;
+}
+
+.theme-power-card > summary::-webkit-details-marker {
+  display: none;
+}
+
+.theme-power-card > summary::after {
+  align-self: center;
+  content: "›";
+  font-size: 1.2rem;
+  grid-column: 4;
+  line-height: 1;
+  transform: rotate(0deg);
+  transition: transform 120ms ease;
+}
+
+.theme-power-card[open] > summary::after {
+  transform: rotate(90deg);
+}
+
+.theme-power-card > summary:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 
-.theme-power-count {
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 700;
+.theme-power-card > summary h4,
+.theme-power-type {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.theme-power-cards {
-  display: grid;
-  gap: 0.75rem;
-  padding: 0.75rem;
+.theme-power-card > summary .action-type-icon {
+  align-self: baseline;
+  color: var(--tone);
+  grid-column: 1;
+  line-height: inherit;
+  min-width: 1rem;
+}
+
+.theme-power-attack-type {
+  font-weight: 400;
+}
+
+.theme-power-type {
+  color: var(--tone);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.theme-power-card-body {
+  padding: 0.85rem 1rem 1rem;
+}
+
+.theme-candidate-description p {
+  margin-bottom: 0.65rem;
+}
+
+.theme-description-toggle {
+  background: transparent;
+  border: 0;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.15rem 0;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
 }
 
 .candidate-relationship {

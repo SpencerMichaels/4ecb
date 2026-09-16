@@ -1494,3 +1494,20 @@ merger; begin from `combined.dnd40.original.xml` as the script does.
 - M6 and M7 own mobile play state and encrypted relay-linked sessions.
 - Visual theming, animation, and fine interaction polish wait for the tighter
   user feedback loop requested for later UI work.
+
+## Theme detail-card checkpoint (2026-09-16)
+
+- Theme-granted powers are listed directly in ascending level order without
+  per-level wrapper panes. Each power's one-line header shows its action symbol,
+  name, lowercase authored attack/range type, usage and level, followed by the
+  disclosure chevron. The whole header is its keyboard-operable expand/collapse
+  control, and every card starts expanded.
+- Collapsed power cards contain only their header and outer border. Theme
+  descriptions initially show their first authored paragraph with accessible
+  More…/Less… controls.
+- Source is suppressed from ordinary facts and specifics, then shown as subdued
+  text at the bottom of candidate, granted, power, and equipment detail cards.
+
+The product owner verified the complete interaction and presentation live.
+Focused verification passed 52 tests covering theme descriptions, action icons,
+and detail-card structure.

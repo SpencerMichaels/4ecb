@@ -51,6 +51,7 @@ import {
   powerTableLevel,
   selectedChoiceHasWarning,
   splitLabeledDescription,
+  themeDescriptionParagraphs,
   themePowerGroups,
   unresolveEvaluatedChoiceCommand,
 } from "./builder-ui";
@@ -576,6 +577,21 @@ describe("builder planning UI", () => {
     expect(firstSentence("First sentence. Second sentence.")).toBe(
       "First sentence.",
     );
+  });
+
+  it("splits legacy theme prose at its single-newline paragraph boundaries", () => {
+    const description = [
+      "A sudden storm carried you beyond the familiar roads.",
+      "You returned with an uncanny sense for paths that others cannot see.",
+      "",
+      "At the table, use this theme to explore travel and discovery.",
+    ].join("\n");
+
+    expect(themeDescriptionParagraphs(description)).toEqual([
+      "A sudden storm carried you beyond the familiar roads.",
+      "You returned with an uncanny sense for paths that others cannot see.",
+      "At the table, use this theme to explore travel and discovery.",
+    ]);
   });
 
   it("names a generic class-feature choice from its authored provider", () => {

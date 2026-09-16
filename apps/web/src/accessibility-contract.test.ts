@@ -110,6 +110,82 @@ describe("release accessibility contract", () => {
     );
   });
 
+  it("makes each theme power header its accessible disclosure control", () => {
+    const candidateDetails = characterEditor.slice(
+      characterEditor.indexOf("function CandidateDetail("),
+      characterEditor.indexOf("function BaseAbilityScoreEditor"),
+    );
+    expect(candidateDetails).toContain("themePowers.flatMap");
+    expect(candidateDetails).toContain("themePowerLevel={group.level ?? null}");
+    expect(candidateDetails).not.toContain("theme-power-level");
+    expect(candidateDetails).not.toContain("Theme power");
+    expect(candidateDetails).toContain("if (themePowerLevel !== undefined)");
+    expect(candidateDetails).toContain(
+      "<ActionTypeIcon decorative value={themePowerActionType} />",
+    );
+    expect(candidateDetails).toContain(
+      'contentSpecificValue(entity, "Action Type")',
+    );
+    expect(candidateDetails).toContain(
+      'contentSpecificValue(entity, "Attack Type")',
+    );
+    expect(candidateDetails).toContain('className="theme-power-attack-type"');
+    expect(candidateDetails).toContain(
+      "themePowerAttackType.toLocaleLowerCase()",
+    );
+    expect(candidateDetails).toMatch(
+      /if \(themePowerLevel !== undefined\)[\s\S]*?return \([\s\S]*?<aside[\s\S]*?tabIndex={0}/,
+    );
+    expect(styles).toMatch(
+      /\.theme-power-card > summary\s*\{[^}]*grid-template-columns: auto minmax\(0, 1fr\) auto auto[^}]*cursor: pointer|\.theme-power-card > summary\s*\{[^}]*cursor: pointer[^}]*grid-template-columns: auto minmax\(0, 1fr\) auto auto/,
+    );
+    expect(styles).toMatch(
+      /\.theme-power-card > summary:focus-visible\s*\{[^}]*outline:/,
+    );
+    expect(styles).toMatch(/\.theme-power-type\s*\{[^}]*text-align: right/);
+    expect(styles).toMatch(
+      /\.theme-power-attack-type\s*\{[^}]*font-weight: 400/,
+    );
+    expect(styles).toMatch(
+      /\.theme-power-card > summary::after\s*\{[^}]*grid-column: 4/,
+    );
+    expect(styles).toMatch(
+      /\.theme-power-card > summary \.action-type-icon\s*\{[^}]*align-self: baseline[^}]*line-height: inherit/,
+    );
+    expect(styles).toMatch(/\.theme-power-card\s*\{[^}]*padding: 0/);
+    expect(styles).toMatch(/\.theme-power-card > summary\s*\{[^}]*margin: 0/);
+    expect(styles).toMatch(
+      /\.theme-power-card-body\s*\{[^}]*padding: 0\.85rem 1rem 1rem/,
+    );
+  });
+
+  it("scopes collapsible descriptions to themes and puts every card source last", () => {
+    const candidateDetails = characterEditor.slice(
+      characterEditor.indexOf("function CandidateDetail("),
+      characterEditor.indexOf("function BaseAbilityScoreEditor"),
+    );
+    expect(candidateDetails).toContain(
+      'entity.type.trim().toLocaleLowerCase() === "theme"',
+    );
+    expect(candidateDetails).toContain("function ThemeCandidateDescription");
+    expect(candidateDetails).toContain(
+      "themeDescriptionParagraphs(description)",
+    );
+    expect(candidateDetails).toContain("paragraphs.slice(0, 1)");
+    expect(candidateDetails).toContain("aria-controls={id}");
+    expect(candidateDetails).toContain("aria-expanded={expanded}");
+    expect(candidateDetails).toContain('{expanded ? "Less…" : "More…"}');
+    expect(candidateDetails).toContain("key={entity.id}");
+    expect(candidateDetails).toContain(
+      'field.name.trim().toLocaleLowerCase() !== "source"',
+    );
+    expect(candidateDetails).toContain('className="detail-source-note"');
+    expect(
+      candidateDetails.indexOf('className="detail-source-note"'),
+    ).toBeGreaterThan(candidateDetails.indexOf('className="candidate-fields"'));
+    expect(candidateDetails).not.toContain("<dt>Source</dt>");
+  });
+
   it("keeps table selection spatially stable and communicates it without checkmarks", () => {
     const tableSource = characterEditor.slice(
       characterEditor.indexOf("function CandidateSelectionTable"),

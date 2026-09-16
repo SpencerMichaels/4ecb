@@ -124,6 +124,15 @@ function ItemDetail({
       </aside>
     );
   const price = entityCurrencyCopper(entity);
+  const source =
+    entity.source ||
+    contentSpecificValue(entity, "Source")?.trim() ||
+    "Not specified";
+  const visibleSpecifics = entity.specifics.filter(
+    (field) =>
+      isUserFacingSpecific(field) &&
+      field.name.trim().toLocaleLowerCase() !== "source",
+  );
   return (
     <aside
       className={`candidate-detail ${visualToneClass(entityVisualTone(entity))}`}
@@ -138,10 +147,6 @@ function ItemDetail({
         </div>
       </header>
       <dl className="candidate-facts">
-        <div>
-          <dt>Source</dt>
-          <dd>{entity.source || "Not specified"}</dd>
-        </div>
         <div>
           <dt>Price</dt>
           <dd>{formatCopperPrice(price)}</dd>
@@ -163,13 +168,14 @@ function ItemDetail({
         </section>
       ) : null}
       <dl className="candidate-fields">
-        {entity.specifics.filter(isUserFacingSpecific).map((field) => (
+        {visibleSpecifics.map((field) => (
           <div key={`${field.ordinal}-${field.name}`}>
             <dt>{field.name || "Detail"}</dt>
             <dd>{field.value}</dd>
           </div>
         ))}
       </dl>
+      <p className="detail-source-note">Source: {source}</p>
     </aside>
   );
 }
