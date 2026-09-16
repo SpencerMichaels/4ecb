@@ -2109,6 +2109,15 @@ type CandidateSortColumn =
   | "associated-skills";
 type CandidateSortDirection = "ascending" | "descending";
 
+function defaultCandidateSortFor(kind: ChoiceSelectionTableKind): {
+  readonly column: CandidateSortColumn;
+  readonly direction: CandidateSortDirection;
+} {
+  return kind === "power"
+    ? { column: "level", direction: "descending" }
+    : { column: "name", direction: "ascending" };
+}
+
 function compareCandidateSortValues(
   left: string | number | undefined,
   right: string | number | undefined,
@@ -2157,9 +2166,9 @@ function CandidateSelectionTable({
   const [sort, setSort] = useState<{
     readonly column: CandidateSortColumn;
     readonly direction: CandidateSortDirection;
-  }>({ column: "name", direction: "ascending" });
+  }>(() => defaultCandidateSortFor(kind));
   useEffect(
-    () => setSort({ column: "name", direction: "ascending" }),
+    () => setSort(defaultCandidateSortFor(kind)),
     [kind, nameColumnLabel],
   );
   const [typeExpansion, setTypeExpansion] = useState<

@@ -97,6 +97,14 @@ Focused tests cover an effective-level 8 build at levels 1, 4, and 8, including
 immediate level-4 select/deselect behavior and the caught-up result. All 55
 focused builder/accessibility tests and the web TypeScript check pass.
 
+## M5.5 power selector sorting checkpoint (2026-09-16)
+
+- Power selection tables default to Level descending, placing the highest-level
+  candidates first. Other selection-table kinds retain Name ascending as their
+  default, and switching table kinds restores the appropriate default sort.
+
+The focused accessibility contract test and live web-app verification pass.
+
 ## M5.5 equipment workspace checkpoint (2026-09-14)
 
 - Equipment is now a full peer workspace with Loadout, Inventory, Shop, and

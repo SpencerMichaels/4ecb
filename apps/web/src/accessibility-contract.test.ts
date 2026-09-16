@@ -198,6 +198,7 @@ describe("release accessibility contract", () => {
     expect(tableSource).not.toContain("prioritizedCandidates");
     expect(tableSource).not.toContain('name="check"');
     expect(tableSource).toContain("candidate-selection-short");
+    expect(tableSource).toContain("defaultCandidateSortFor(kind)");
     expect(styles).toMatch(
       /\.candidate-selection-short[\s\S]*?\.selection-table-scroll\s*\{[\s\S]*?height: auto/,
     );
