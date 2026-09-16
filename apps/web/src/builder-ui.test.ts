@@ -48,6 +48,7 @@ import {
   powerTableLevel,
   selectedChoiceHasWarning,
   splitLabeledDescription,
+  themePowerGroups,
   unresolveEvaluatedChoiceCommand,
 } from "./builder-ui";
 
@@ -175,6 +176,86 @@ describe("builder planning UI", () => {
 
     expect(grantedDetailEntities(archer, references)).toEqual([
       defensiveMobility,
+    ]);
+  });
+
+  it("groups a theme's authored powers by level without duplicating its grant", () => {
+    const definition = (
+      id: string,
+      name: string,
+      type: string,
+      specifics: Readonly<Record<string, string>> = {},
+      rules: readonly RuleStatement[] = [],
+    ): ContentEntity => ({
+      ...level(1, rules),
+      id,
+      name,
+      type,
+      categories: type === "Theme" ? ["Desert Theme"] : [],
+      specifics: Object.entries(specifics).map(
+        ([fieldName, value], ordinal) => ({
+          name: fieldName,
+          value,
+          extraAttributes: [],
+          ordinal,
+        }),
+      ),
+    });
+    const openingPower = definition(
+      "POWER_OPENING",
+      "Opening Gambit",
+      "Power",
+      { Class: "THEME_DUNE_TRADER", Level: "" },
+    );
+    const levelTwoPower = definition("POWER_TWO", "Desert Step", "Power", {
+      _ThemePower: "THEME_DUNE_TRADER",
+      Level: "2",
+    });
+    const levelSixBravo = definition(
+      "POWER_SIX_BRAVO",
+      "Bravo Defense",
+      "Power",
+      { Class: "Dune Trader", _ThemePower: "THEME_DUNE_TRADER", Level: "6" },
+    );
+    const levelSixAlpha = definition(
+      "POWER_SIX_ALPHA",
+      "Alpha Defense",
+      "Power",
+      { Class: "Desert Theme", Level: "6" },
+    );
+    const unrelatedPower = definition("POWER_OTHER", "Other Power", "Power", {
+      Class: "CLASS_RANGER",
+      Level: "1",
+    });
+    const theme = definition("THEME_DUNE_TRADER", "Dune Trader", "Theme", {}, [
+      {
+        name: "grant",
+        attributes: [
+          { name: "name", value: openingPower.id },
+          { name: "type", value: openingPower.type },
+        ],
+        text: "",
+        children: [],
+        ordinal: 0,
+      },
+    ]);
+
+    expect(
+      themePowerGroups(theme, [
+        unrelatedPower,
+        levelSixBravo,
+        openingPower,
+        levelTwoPower,
+        levelSixAlpha,
+        theme,
+      ]).map((group) => ({
+        level: group.level,
+        powers: group.powers.map((power) => power.name),
+      })),
+    ).toEqual([
+      { level: 1, powers: ["Opening Gambit"] },
+      { level: 2, powers: ["Desert Step"] },
+      { level: 6, powers: ["Alpha Defense", "Bravo Defense"] },
     ]);
   });
 

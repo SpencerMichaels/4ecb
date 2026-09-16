@@ -3327,6 +3327,49 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   min-width: 0;
 }
 
+.theme-power-groups {
+  display: grid;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.theme-power-groups > h4 {
+  margin: 0;
+}
+
+.theme-power-level {
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+
+.theme-power-level > summary {
+  align-items: center;
+  background: var(--surface-subtle);
+  cursor: pointer;
+  display: flex;
+  font-weight: 800;
+  gap: 0.75rem;
+  justify-content: space-between;
+  padding: 0.7rem 0.8rem;
+}
+
+.theme-power-level > summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.theme-power-count {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.theme-power-cards {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.75rem;
+}
+
 .candidate-relationship {
   color: var(--muted);
   font-size: 0.78rem;

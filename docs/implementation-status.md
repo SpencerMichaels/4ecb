@@ -488,6 +488,10 @@ candidate.
   category, restoring race-qualified utility powers alongside authored class,
   trained-skill, and theme powers; prerequisite legality still filters powers
   for other races or untrained skills.
+- Theme candidate details now list their structured `Class`/`_ThemePower`
+  members and direct power grants under collapsible per-level headings. Direct
+  grants without authored levels appear at level 1, and duplicate grant/member
+  relationships render only once.
 - Base ability scores now live only in the level-1 Ability Scores group, before
   racial increases, and no longer appear as an unrelated editor below the level
   workspace. The editor now mirrors the legacy 22-point-buy path: new native

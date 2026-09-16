@@ -113,6 +113,81 @@ export function grantedDetailEntities(
   });
 }
 
+export interface ThemePowerGroup {
+  readonly level: number | undefined;
+  readonly powers: readonly ContentEntity[];
+}
+
+/** Powers authored as direct grants or members of a theme's power list. */
+export function themePowerGroups(
+  theme: ContentEntity,
+  entities: Iterable<ContentEntity>,
+): readonly ThemePowerGroup[] {
+  if (theme.type.trim().toLocaleLowerCase() !== "theme") return [];
+
+  const allEntities = [...entities];
+  const references = new Map<string, ContentEntity>();
+  for (const entity of allEntities) {
+    references.set(entity.id.trim().toLocaleLowerCase(), entity);
+    const name = entity.name.trim().toLocaleLowerCase();
+    if (!references.has(name)) references.set(name, entity);
+  }
+  const directlyGrantedPowerIds = new Set(
+    grantedDetailEntities(theme, references)
+      .filter((entity) => entity.type.trim().toLocaleLowerCase() === "power")
+      .map((entity) => entity.id.trim().toLocaleLowerCase()),
+  );
+  const themeValues = new Set(
+    [theme.id, theme.name, ...theme.categories].map((value) =>
+      value.trim().toLocaleLowerCase(),
+    ),
+  );
+  const powers = new Map<string, ContentEntity>();
+  for (const entity of allEntities) {
+    if (entity.type.trim().toLocaleLowerCase() !== "power") continue;
+    const entityId = entity.id.trim().toLocaleLowerCase();
+    const isThemePower = entity.specifics.some(
+      (field) =>
+        ["class", "_themepower"].includes(
+          field.name.trim().toLocaleLowerCase(),
+        ) && themeValues.has(field.value.trim().toLocaleLowerCase()),
+    );
+    if (isThemePower || directlyGrantedPowerIds.has(entityId))
+      powers.set(entityId, entity);
+  }
+
+  const groups = new Map<number | undefined, ContentEntity[]>();
+  for (const power of powers.values()) {
+    const authoredLevel = contentSpecificValue(power, "Level");
+    const parsedLevel =
+      authoredLevel !== undefined && /^\d+$/.test(authoredLevel)
+        ? Number(authoredLevel)
+        : undefined;
+    const level =
+      parsedLevel !== undefined && parsedLevel > 0
+        ? parsedLevel
+        : directlyGrantedPowerIds.has(power.id.trim().toLocaleLowerCase())
+          ? 1
+          : undefined;
+    const group = groups.get(level) ?? [];
+    group.push(power);
+    groups.set(level, group);
+  }
+
+  return [...groups.entries()]
+    .sort(([left], [right]) => {
+      if (left === undefined) return right === undefined ? 0 : 1;
+      if (right === undefined) return -1;
+      return left - right;
+    })
+    .map(([level, groupedPowers]) => ({
+      level,
+      powers: groupedPowers.sort((left, right) =>
+        left.name.localeCompare(right.name, undefined, { sensitivity: "base" }),
+      ),
+    }));
+}
+
 export function choiceTableSummary(
   entity: ContentEntity,
   kind: ChoiceSelectionTableKind,

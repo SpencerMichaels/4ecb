@@ -75,6 +75,7 @@ import {
   powerTableLevel,
   selectedDefinitionId,
   selectedChoiceHasWarning,
+  themePowerGroups,
   unresolveEvaluatedChoiceCommand,
   type ChoiceSelectionTableKind,
   type LegacyChoiceSection,
@@ -865,7 +866,13 @@ function CandidateDetail({
     );
 
   const referenceIndex = candidateReferenceIndex(byId);
-  const grantedEntities = grantedDetailEntities(entity, referenceIndex);
+  const themePowers = themePowerGroups(entity, byId.values());
+  const grantedEntities = grantedDetailEntities(entity, referenceIndex).filter(
+    (granted) =>
+      themePowers.length === 0 ||
+      granted.type.trim().toLocaleLowerCase() !== "power",
+  );
+  const themePowerHeadingId = `theme-powers-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
   return (
     <div className="candidate-detail-stack">
       <CandidateDetailCard candidate={candidate} entity={entity} />
@@ -876,6 +883,43 @@ function CandidateDetail({
           relationship={`Granted ${granted.type.toLocaleLowerCase()}`}
         />
       ))}
+      {themePowers.length === 0 ? null : (
+        <section
+          aria-labelledby={themePowerHeadingId}
+          className="theme-power-groups"
+        >
+          <h4 id={themePowerHeadingId}>Theme powers</h4>
+          {themePowers.map((group) => {
+            const label =
+              group.level === undefined
+                ? "Other powers"
+                : `Level ${group.level}`;
+            return (
+              <details
+                className="theme-power-level"
+                key={group.level ?? "other"}
+              >
+                <summary>
+                  <span>{label}</span>
+                  <span className="theme-power-count">
+                    {group.powers.length}{" "}
+                    {group.powers.length === 1 ? "power" : "powers"}
+                  </span>
+                </summary>
+                <div className="theme-power-cards">
+                  {group.powers.map((power) => (
+                    <CandidateDetailCard
+                      entity={power}
+                      key={power.id}
+                      relationship="Theme power"
+                    />
+                  ))}
+                </div>
+              </details>
+            );
+          })}
+        </section>
+      )}
     </div>
   );
 }
