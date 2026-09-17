@@ -37,6 +37,18 @@ describe("hash routes", () => {
         },
       },
       {
+        navigation: {
+          workspace: "build" as const,
+          level: 1,
+          section: "theme" as const,
+        },
+        expected: {
+          workspace: "build",
+          level: 1,
+          section: "theme",
+        },
+      },
+      {
         navigation: { workspace: "overview" as const },
         expected: { workspace: "overview" },
       },

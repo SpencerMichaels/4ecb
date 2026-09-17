@@ -41,7 +41,8 @@ application's protected visual assets.
   evaluation message.
 - Treat a level, rather than an individual slot, as the main builder workspace.
   Selecting a level shows its mechanical choice categories as a horizontal tab
-  list and mounts only the active category in the main pane. The level rail
+  list, including separate Background and Theme tabs, and mounts only the active
+  category in the main pane. The level rail
   always offers levels 1–30, grouped into Heroic, Paragon, and Epic tiers; the
   current tier starts expanded and the other tiers start collapsed. Selecting a
   level beyond the saved build extends the plan through that level without

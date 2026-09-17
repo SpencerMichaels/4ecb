@@ -434,10 +434,10 @@ candidate.
   Race, class, current level, and XP appear beside the portrait; unresolved and
   warning totals appear beside local save state. The redundant overview panel,
   role/plan facts, and routine successful-evaluation prose are removed. Only the active
-  Class, Race, Background, Ability Scores, Companion, Skills, Powers, Spellbook, Feats, or
-  optional Retraining category is mounted, and each visited level remembers its
-  active category. Unresolved decisions are prominent, completed selections
-  stay visible in compact form, and a chosen target creates every intervening
+  Class, Race, Background, Theme, Ability Scores, Companion, Skills, Powers,
+  Spellbook, Feats, or optional Retraining category is mounted, and each visited
+  level remembers its active category. Unresolved decisions are prominent,
+  completed selections stay visible in compact form, and a chosen target creates every intervening
   level in one autosaved transaction without advancing the current effective
   level.
 - The level rail no longer expands into an overlay. A sibling **Overview** tab
@@ -626,9 +626,9 @@ candidate.
   Silaqui verification confirmed the unused level-5 actions, category-filtered
   Power editor and cancellation, and her saved level-6 Power retraining.
 - The selected-level workspace now follows the legacy builder's recovered
-  mechanical pane order: Class, Race, Background, Ability Scores, Companion,
-  Skills, Powers, Spellbook, and Feats. Gender, alignment, and deity live outside the
-  level timeline in a sibling Character details tab, matching the legacy
+  mechanical pane order: Class, Race, Background, Theme, Ability Scores,
+  Companion, Skills, Powers, Spellbook, and Feats. Gender, alignment, and deity
+  live outside the level timeline in a sibling Character details tab, matching the legacy
   builder's Build/Details separation. Gender and Alignment render as visible
   button/radio grids; Deity uses the shared candidate table with Name and
   Alignment columns, filtering, persistent favorites, Clear, and detail
@@ -1724,3 +1724,15 @@ The product owner verified both states live.
 The product owner verified direct level changes and every marker state live.
 All 311 public tests, formatting, lint, TypeScript checks, and whitespace checks
 pass.
+
+## M5.5 Theme tab checkpoint (2026-09-16)
+
+- The level-1 Theme selector is a peer tab immediately after Background instead
+  of sharing the Background tab. The existing exact choice, candidate table,
+  selection state, detail cards, keyboard tab behavior, and ordering within the
+  Theme section are unchanged.
+- Build navigation accepts the bookmarkable `theme` section and restores it
+  through the same canonical hash path as every other choice tab.
+- Overview continues to group Theme under Character, suppress an unselected
+  optional Theme the same way as before, and retain its concise timeline label;
+  only the Build-tab placement changes.

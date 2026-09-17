@@ -1011,6 +1011,7 @@ export type LegacyChoiceSection =
   | "Class"
   | "Race"
   | "Background"
+  | "Theme"
   | "Ability Scores"
   | "Companion"
   | "Skills"
@@ -1024,6 +1025,7 @@ const legacySectionOrder: readonly LegacyChoiceSection[] = [
   "Class",
   "Race",
   "Background",
+  "Theme",
   "Ability Scores",
   "Companion",
   "Skills",
@@ -1068,8 +1070,9 @@ export function legacyChoiceSection(
     type === "language"
   )
     return "Race";
-  if (type === "background" || type === "background choice" || type === "theme")
+  if (type === "background" || type === "background choice")
     return "Background";
+  if (type === "theme") return "Theme";
   if (type.includes("ability score") || isAbilityIncreaseChoiceType(type))
     return "Ability Scores";
   if (type === "skill" || type === "skill training") return "Skills";
@@ -1114,7 +1117,11 @@ export function overviewChoicePane(
 ): OverviewChoicePane {
   if (isOptionalRetrainingChoice(choice)) return "Retraining";
   const section = legacyChoiceSection(choice);
-  if (["Class", "Race", "Background", "Character Details"].includes(section))
+  if (
+    ["Class", "Race", "Background", "Theme", "Character Details"].includes(
+      section,
+    )
+  )
     return "Character";
   if (
     [

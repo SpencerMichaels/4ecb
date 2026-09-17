@@ -5,6 +5,7 @@ export type BuilderSectionSlug =
   | "class"
   | "race"
   | "background"
+  | "theme"
   | "ability-scores"
   | "companion"
   | "skills"
@@ -48,6 +49,7 @@ const BUILDER_SECTIONS: readonly BuilderSectionSlug[] = [
   "class",
   "race",
   "background",
+  "theme",
   "ability-scores",
   "companion",
   "skills",

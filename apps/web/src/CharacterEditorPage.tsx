@@ -302,7 +302,9 @@ function contextualChoiceTitle(
 function timelineChoiceTitle(choice: EvaluatedChoice): string {
   const identityLabel = identityChoiceLabel(choice.type);
   if (identityLabel !== undefined) return identityLabel;
-  return ["Class", "Race", "Background"].includes(legacyChoiceSection(choice))
+  return ["Class", "Race", "Background", "Theme"].includes(
+    legacyChoiceSection(choice),
+  )
     ? choicePresentationLabel(choice.type)
     : choiceTitle(choice);
 }
@@ -355,6 +357,8 @@ function choiceSectionIcon(section: string): IconName {
       return "race";
     case "Background":
       return "background";
+    case "Theme":
+      return "content";
     case "Ability Scores":
       return "ability";
     case "Companion":
@@ -501,7 +505,7 @@ function CharacterOverview({
         !isCharacterDetailChoice(choice) &&
         !isBuildPresetChoice(choice) &&
         !(
-          legacyChoiceSection(choice) === "Background" &&
+          ["Background", "Theme"].includes(legacyChoiceSection(choice)) &&
           choice.optional &&
           choice.selectedOccurrenceId === undefined
         ) &&
@@ -2022,6 +2026,8 @@ function levelChoiceTabSlug(section: LevelChoiceTab): BuilderSectionSlug {
       return "race";
     case "Background":
       return "background";
+    case "Theme":
+      return "theme";
     case "Ability Scores":
       return "ability-scores";
     case "Companion":
@@ -2052,6 +2058,8 @@ function levelChoiceTabForSlug(
       return "Race";
     case "background":
       return "Background";
+    case "theme":
+      return "Theme";
     case "ability-scores":
       return "Ability Scores";
     case "companion":

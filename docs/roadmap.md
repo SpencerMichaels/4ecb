@@ -368,15 +368,15 @@ owner approval or close the keyboard, screen-reader, zoom, touch, Safari,
 physical-device, performance, or cross-engine visual-print exit criteria above.
 
 The second product-owner review makes each level the main-pane workspace. Its
-Class, Race, Background, Ability Scores, Companion, Skills, Powers, Spellbook, Feats, and
-optional Retraining categories now appear as a horizontal tab list, with only
-the active category mounted; the timeline remains its compact status and
-navigation summary and opens the corresponding tab. Repeated background slots
-use a progressive “Add another background…” control, and skill training uses a
-single toggle list with an explicit chosen/required count. The legacy placement
-of item-owned resistance choices in the Class pane is documented for
-compatibility, but its redesigned presentation is deferred to the equipment
-workspace rather than copied into the advancement flow.
+Class, Race, Background, Theme, Ability Scores, Companion, Skills, Powers,
+Spellbook, Feats, and optional Retraining categories now appear as a horizontal
+tab list, with only the active category mounted; the timeline remains its
+compact status and navigation summary and opens the corresponding tab. Repeated
+background slots use a progressive “Add another background…” control, and skill
+training uses a single toggle list with an explicit chosen/required count. The
+legacy placement of item-owned resistance choices in the Class pane is
+documented for compatibility, but its redesigned presentation is deferred to
+the equipment workspace rather than copied into the advancement flow.
 
 The follow-up choice pass adds exact legacy support for the three Archery
 Mastery power replacements and groups large parenthetical feat families into a

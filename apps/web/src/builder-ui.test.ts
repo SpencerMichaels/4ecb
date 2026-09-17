@@ -1429,7 +1429,7 @@ describe("builder planning UI", () => {
     ).toEqual([
       ["Class", ["class", "class-feature"]],
       ["Race", ["race", "race-bonus"]],
-      ["Background", ["theme"]],
+      ["Theme", ["theme"]],
       ["Companion", ["familiar"]],
       ["Skills", ["skills"]],
       ["Powers", ["daily"]],
@@ -1545,6 +1545,7 @@ describe("builder planning UI", () => {
     const choices = [
       { id: "power-7", level: 7, type: "Power Encounter 7" },
       { id: "class", level: 1, type: "Class" },
+      { id: "theme", level: 1, type: "Theme" },
       { id: "power-1", level: 1, type: "Power At-Will 1" },
       { id: "skill", level: 1, type: "Skill Training" },
       { id: "feat-4", level: 4, type: "Feat" },
@@ -1567,7 +1568,7 @@ describe("builder planning UI", () => {
         choices.map(({ id }) => id),
       ]),
     ).toEqual([
-      ["Character", ["class"]],
+      ["Character", ["class", "theme"]],
       ["Companion", ["companion"]],
       ["Skills", ["skill"]],
       ["Powers", ["power-1", "power-7"]],

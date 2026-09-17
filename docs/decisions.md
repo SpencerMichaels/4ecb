@@ -305,8 +305,8 @@ selected level, and compact mechanical choices may omit a non-informative
 candidate detail pane.
 
 Selected-level choices use the legacy builder's mechanical creation-pane
-category order as a presentation convention: Class, Race, Background, Ability
-Scores, Skills, Powers, Spellbook, and Feats. Gender, alignment, and deity are
+category order as a presentation convention: Class, Race, Background, Theme,
+Ability Scores, Skills, Powers, Spellbook, and Feats. Gender, alignment, and deity are
 excluded from levels and the level timeline and live in a sibling Character
 details tab. This does not change provider ownership, rule order, or
 serialization. Each category contains compact controls and the workspace owns
@@ -553,11 +553,17 @@ preserved-original and regenerated legacy exports.
 ### D039 — A level workspace exposes one mechanical category at a time
 
 The selected level remains the builder's primary unit, but its Class, Race,
-Background, Ability Scores, Companion, Skills, Powers, Spellbook, Feats, and
-optional Retraining categories are presented as one horizontal tab list. Only the active
-category is mounted beside the shared detail pane. Expanded-timeline links open
-the owning category, and the browser session remembers the active category per
-visited level; this is transient navigation state, not character data.
+Background, Theme, Ability Scores, Companion, Skills, Powers, Spellbook, Feats,
+and optional Retraining categories are presented as one horizontal tab list.
+Only the active category is mounted beside the shared detail pane.
+Expanded-timeline links open the owning category, and the browser session
+remembers the active category per visited level; this is transient navigation
+state, not character data.
+
+Theme is a presentation-only category immediately after Background. Theme
+choices retain their exact evaluator ownership, selection state, candidate
+table, and shared detail rendering; separating the tab does not re-parent or
+serialize them differently.
 
 Tabs use the standard tab/list/panel accessibility relationship and support
 Left/Right/Home/End movement. Incomplete and warning cues do not alter text
