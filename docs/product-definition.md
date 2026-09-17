@@ -26,12 +26,6 @@ A player on a desktop or tablet can:
 - import and export files accepted by the original builder; and
 - view and print a useful character sheet with familiar power cards.
 
-### Compendium user
-
-A player or GM can quickly search powers, feats, items, classes, races,
-backgrounds, rituals, and other game elements using full text, typed filters,
-facets, sorting, and shareable local query state.
-
 ### Player at the table
 
 A player on a phone can:
@@ -81,7 +75,7 @@ These milestones are useful, testable releases but are not yet a replacement
 character builder:
 
 - a versioned content compiler and pack inspector;
-- a fast, advanced compendium browser;
+- a fast content-query engine for contextual builder and equipment tables;
 - read-only `.dnd4e` import, character inspection, and sheet preview;
 - loss-preserving `.dnd4e` round trips; and
 - progressively expanding rules-engine parity reports.
@@ -97,7 +91,7 @@ It includes:
 - account-free IndexedDB persistence, backups, restore, and schema migrations;
 - client-side import of legally obtained legacy game data or a locally compiled
   versioned content pack;
-- advanced compendium search and filtering across all supported element types;
+- contextual search and filtering across builder choices and equipment;
 - import and export of `.dnd4e` with unknown extensions preserved where
   possible;
 - creation and editing of level 1-30 characters through the generic choice and
@@ -214,7 +208,8 @@ references.
 
 - The application shell becomes interactive without loading the entire corpus.
 - Rules evaluation and indexing run outside the UI thread.
-- Typical filtered compendium interactions feel immediate after indexing.
+- Typical filtered builder and equipment interactions feel immediate after
+  indexing.
 - A character edit recalculates incrementally or quickly enough to preserve
   direct-manipulation feedback.
 - Large data imports expose progress and can be cancelled safely.
@@ -227,7 +222,7 @@ invented before representative content and engine workloads exist.
 - During core implementation, semantic headings, labels, basic keyboard
   operation, focus management, and text alternatives are structural acceptance
   criteria.
-- M5.5 validates complete builder and compendium workflows with keyboard and
+- M5.5 validates complete builder and equipment workflows with keyboard and
   selected screen readers after the interface is designed.
 - Color is never the only signal for power usage, legality, or status.
 - Print output remains legible in monochrome.

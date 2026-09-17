@@ -87,8 +87,8 @@ application's protected visual assets.
 - Do not label choices as popular or recommended. The application may present
   objective legality, prerequisites, source, and mechanical consequences; it
   must not invent subjective build advice.
-- Use one branded global header with three destinations: **Characters**,
-  **Compendium**, and **Settings**. Character-specific Build and sheet views are
+- Use one branded global header with two destinations: **Characters** and
+  **Settings**. Character-specific Build and sheet views are
   reached from the character library and from one another rather than repeated
   as global destinations. Settings owns Display, character-library backup and
   restore, and Content configuration.
@@ -112,7 +112,7 @@ application's protected visual assets.
 - Keep important evaluation, save, and validation feedback immediate and
   comprehensible. Interaction responsiveness is a product requirement.
 - Ordinary client-side page changes reuse decoded content, rules workers,
-  memoized exact evaluations, and Compendium indexes for the active immutable
+  memoized exact evaluations, and content-query indexes for the active immutable
   profile. A route must not present multi-second content initialization merely
   because its previous component was unmounted. A full browser refresh may show
   one truthful startup reconstruction from persistent browser storage.
@@ -286,7 +286,7 @@ Optimize the first design and prototype around this end-to-end journey:
 4. Review the completed build and its remaining warnings or illegal choices.
 5. Produce a readable printed character sheet for use in a game.
 
-Import, retraining, compendium browsing, and detailed correction workflows must
+Import, retraining, equipment browsing, and detailed correction workflows must
 remain supported, but they are secondary when resolving early design tradeoffs.
 
 ## Equipment workspace

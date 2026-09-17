@@ -1,10 +1,10 @@
-# Compendium query engine
+# Contextual content query engine
 
 ## Contract
 
 `@4ecb/query-engine` owns a versioned, serializable query AST and the current
-physical index. UI code, saved searches, future builder choice dialogs, and the
-worker protocol depend on the AST rather than index internals.
+physical index. Builder and Equipment UI code and the worker protocol depend on
+the AST rather than index internals.
 
 A version 1 query contains:
 
@@ -35,7 +35,7 @@ both directions. Page limits are confined to 1-200 records.
 ## Relationships
 
 The index resolves stable IDs found in attributes, categories, specific values,
-prerequisites, and rules. Detail pages expose sorted outbound and inbound edges.
+prerequisites, and rules. The index can expose sorted outbound and inbound edges.
 The `relatedTo` predicate returns the union of both directions. It is evidence of
 content relationships, not yet a semantic interpretation of rule execution;
 M4's rules engine will add evaluated grant and choice context.
@@ -43,14 +43,14 @@ M4's rules engine will add evaluated grant and choice context.
 ## Worker and persistence behavior
 
 The browser query worker reads the active encoded pack directly from IndexedDB,
-decompresses it, and constructs the index without blocking React. Changing page
-or active profile terminates construction safely. A tab restart reconstructs the
+decompresses it, and constructs the index without blocking React. Changing the
+active profile terminates construction safely. A tab restart reconstructs the
 rebuildable index from the immutable stored pack; no user record owns index data.
 
-Compendium routes use `#/compendium?...`, and entity pages use
-`#/compendium/entity/:id?...`. Fragment state is never sent in the HTTP request.
-Saved searches store only a label and serialized query in local storage; they do
-not copy entity text or the private pack.
+The former global Compendium and entity-detail routes were retired after all
+content became available in contextual builder and Equipment tables. Query
+state is now owned by those workspaces rather than serialized into a global
+route or saved-search store.
 
 ## M2 performance budgets and evidence
 

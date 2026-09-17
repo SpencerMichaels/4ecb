@@ -21,8 +21,8 @@ application's architecture.
    corpus representation and compatibility rules.
 6. [Implementation status](implementation-status.md) records completed work,
    verification evidence, and the next stopping boundary.
-7. [Query engine](query-engine.md) specifies compendium query semantics,
-   worker/index behavior, URL state, and measured performance budgets.
+7. [Query engine](query-engine.md) specifies contextual content-query
+   semantics, worker/index behavior, and measured performance budgets.
 8. [Character import and sheets](character-import-and-sheets.md) specifies the
    M3 character record, lossless legacy envelope, local repository, sheet model,
    and current compatibility boundary.

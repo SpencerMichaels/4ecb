@@ -23,8 +23,8 @@ There is no account, sync service, server-side copy, or telemetry. Treat the
 native JSON library backup and your original private source files as your
 recovery copies.
 
-While the application remains open, ordinary character, Compendium, and
-Settings navigation reuses loaded content and indexes. Refreshing
+While the application remains open, ordinary character and Settings navigation
+reuses loaded content and indexes. Refreshing
 or closing the tab destroys that temporary in-memory state, so the next page
 load reconstructs it once from IndexedDB; it does not require re-importing the
 pack.
@@ -93,7 +93,8 @@ limit.
    imported personal packs can be ordered above it. Collision preview identifies
    stable IDs whose later definition wins.
 6. Choose **Activate profile**. Downloads and imports alone never change the
-   Compendium or any character. New characters bind to the exact ordered
+   content available to the builder or any character. New characters bind to
+   the exact ordered
    IDs/digests and `last-pack-wins-v1` policy; existing characters keep their
    prior binding until migration is previewed and explicitly adopted.
 

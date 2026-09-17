@@ -907,10 +907,10 @@ export function SettingsPage({
         </div>
 
         <p className="profile-safety-note">
-          Activation changes the Compendium and the profile used for new
-          characters. Existing characters stay pinned to their exact profile
-          revision; preview and adopt their migrations individually in
-          Characters.
+          Activation changes the content available to the builder and the
+          profile used for new characters. Existing characters stay pinned to
+          their exact profile revision; preview and adopt their migrations
+          individually in Characters.
         </p>
         <div className="profile-activation-actions">
           <button

@@ -62,9 +62,6 @@ describe("release accessibility contract", () => {
   it("does not force a desktop viewport and stacks dense layouts for tablets", () => {
     expect(styles.match(/body\s*\{[^}]*\}/)?.[0]).not.toContain("min-width");
     expect(styles).toMatch(
-      /@media \(max-width: 60rem\)[\s\S]*?\.compendium-workspace,[\s\S]*?grid-template-columns: 1fr/,
-    );
-    expect(styles).toMatch(
       /@media \(max-width: 60rem\)[\s\S]*?\.metadata-form,[\s\S]*?\.sheet-columns[\s\S]*?grid-template-columns: 1fr/,
     );
     expect(styles).toMatch(
@@ -174,15 +171,11 @@ describe("release accessibility contract", () => {
   });
 
   it("uses one entity-card design and flavortext preference everywhere", () => {
-    const entityDetail = readFileSync(
-      new URL("./EntityDetailPage.tsx", import.meta.url),
-      "utf8",
-    );
     const candidateDetails = characterEditor.slice(
       characterEditor.indexOf("function CandidateDetail("),
       characterEditor.indexOf("function BaseAbilityScoreEditor"),
     );
-    for (const source of [candidateDetails, equipmentWorkspace, entityDetail]) {
+    for (const source of [candidateDetails, equipmentWorkspace]) {
       expect(source).toContain("EntityCardHeader");
       expect(source).toContain("EntityCardBody");
     }
@@ -211,7 +204,6 @@ describe("release accessibility contract", () => {
     );
     expect(entityCard).toContain("groupClassSpecifics(fields)");
     expect(entityCard).toContain('type === "class" || type === "hybrid class"');
-    expect(entityDetail).not.toContain("renderSpecifics");
     expect(characterEditor).not.toContain("renderSpecifics");
     expect(equipmentWorkspace).not.toContain("renderSpecifics");
   });

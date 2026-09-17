@@ -62,7 +62,9 @@ export class QueryWorkerClient {
       else pending.resolve(response);
     };
     this.#worker.onerror = (event) => {
-      this.#rejectAll(new Error(event.message || "Compendium worker failed"));
+      this.#rejectAll(
+        new Error(event.message || "Content query worker failed"),
+      );
     };
   }
 
@@ -104,7 +106,7 @@ export class QueryWorkerClient {
     return response.relationships;
   }
 
-  terminate(reason = "Compendium operation cancelled"): void {
+  terminate(reason = "Content query operation cancelled"): void {
     this.#worker.terminate();
     this.#rejectAll(new Error(reason));
   }

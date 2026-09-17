@@ -104,7 +104,6 @@ import { EquipmentWorkspace } from "./EquipmentWorkspace";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
 import { PortraitEditor } from "./PortraitEditor";
 import {
-  entityTypeIcon,
   entityVisualTone,
   powerAttackIcon,
   type LegacyVisualTone,

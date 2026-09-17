@@ -16,7 +16,8 @@ function respond(message: QueryWorkerResponse): void {
 }
 
 function requireIndex(): CompendiumIndex {
-  if (index === undefined) throw new Error("The compendium index is not ready");
+  if (index === undefined)
+    throw new Error("The content query index is not ready");
   return index;
 }
 

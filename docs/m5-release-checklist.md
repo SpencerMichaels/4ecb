@@ -32,7 +32,7 @@ gate are not relabeled as a new live session.
 
 - [x] One named primary navigation, one main landmark, a skip link, and a single
       application `h1`; live Chromium found no duplicate IDs or unnamed native
-      controls on the empty-state Compendium, Characters, or Content settings pages.
+      controls on the empty-state Characters or Content settings pages.
 - [x] Hash-route navigation moves programmatic focus to the new main landmark
       after the initial page load; the initial load does not steal focus.
 - [x] Status and failure updates use polite live regions or alerts.
@@ -40,8 +40,8 @@ gate are not relabeled as a new live session.
       power-usage, and PWA states include text rather than color alone.
 - [x] Normal-text palette pairs used by the shell and card headers meet the WCAG
       AA 4.5:1 contrast threshold. Item-card orange was darkened to meet it.
-- [x] The shell no longer forces a 720 px viewport; dense compendium, library,
-      editor, sheet, card, facts, and diagnostics layouts stack at tablet/narrow
+- [x] The shell no longer forces a 720 px viewport; dense library, editor,
+      Equipment, sheet, card, facts, and diagnostics layouts stack at tablet/narrow
       breakpoints without changing print rules.
 
 These checks establish a low-cost implementation baseline. Full workflow

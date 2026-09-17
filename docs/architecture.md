@@ -29,14 +29,17 @@ The core architectural invariant is:
 
 ### Web application
 
-A React, TypeScript, and Vite PWA supplies route-level, code-split experiences:
+A React, TypeScript, and Vite PWA supplies route-level experiences:
 
 - `/characters` for the local character library and read-only sheets;
-- `/compendium` for global search and entity detail;
-- `/builder/:characterId` for desktop/tablet character construction;
-- `/sheet/:characterId` for browser reference and print preview;
+- `/characters/:characterId/edit` for desktop/tablet character construction;
+- `/characters/:characterId` for browser reference and print preview;
 - `/play/:characterId` for phone-first table state; and
 - `/settings` for imports, packs, backups, diagnostics, and relay configuration.
+
+The former `/compendium` and `/compendium/entity/:id` debugging surfaces are
+retired. Their content is available in contextual builder and Equipment tables;
+stale hashes are replaced with `/characters`.
 
 The UI communicates with rules, content-query, and import workers through typed
 request/response messages. UI components do not access rules XML or implement
@@ -51,7 +54,7 @@ effects or animation timing for correctness.
 
 Hash-route changes move focus to the newly rendered main landmark after the
 initial load. Narrow/tablet breakpoints remove desktop minimum widths and stack
-dense compendium, library, editor, and sheet layouts; print keeps its separate
+dense library, editor, and sheet layouts; print keeps its separate
 fixed Letter/A4 rules. Functional tests retain basic contrast and semantics.
 M5.5 owns complete keyboard, zoom, screen-reader, touch, device, and visual-print
 validation after product-owner UI design.
@@ -380,9 +383,10 @@ The UI supports incomplete and temporarily invalid drafts. It distinguishes
 blocking errors, warnings, unresolved required choices, and legal-but-unusual
 states. Undo/redo is command-based within an editing session.
 
-## Compendium and query engine
+## Contextual content query engine
 
-The compendium operates on normalized typed fields plus full rule text. Queries
+Contextual builder and Equipment tables operate on normalized typed fields plus
+full rule text. Queries
 are represented as a serializable AST supporting:
 
 - full-text terms and phrases;
@@ -396,10 +400,10 @@ are represented as a serializable AST supporting:
 
 Indexing and querying run in a Worker. The first implementation should benchmark
 the real corpus before selecting a third-party search implementation. The query
-AST and typed facet contract insulate UI and saved searches from that choice.
+AST and typed facet contract insulate UI code from that choice.
 
-The same query primitives power compendium pages and builder choice dialogs, with
-the builder adding engine-provided legality and recommendation context.
+The same query primitives power builder choice dialogs and Equipment catalogs,
+with the builder adding engine-provided legality and recommendation context.
 
 ## Sheet and card rendering
 
@@ -546,7 +550,7 @@ during an active edit without consent.
 The hash-routed React shell is one browser document across ordinary page
 changes. An application-scoped content runtime therefore owns decoded immutable
 packs, initialized rules workers, memoized exact evaluation inputs, and built
-Compendium indexes beyond the lifetime of any route component. Routes borrow
+content-query indexes beyond the lifetime of any route component. Routes borrow
 these resources and cancel only their own pending UI updates when unmounted;
 they do not terminate shared workers. Entries are keyed by immutable pack ID and
 content digest, retained with a small least-recently-used bound, and explicitly

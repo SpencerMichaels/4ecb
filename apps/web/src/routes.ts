@@ -1,25 +1,34 @@
-import {
-  deserializeCompendiumQuery,
-  serializeCompendiumQuery,
-  type CompendiumQuery,
-} from "@4ecb/query-engine";
-
 export type AppRoute =
   | { readonly page: "settings" }
   | {
       readonly page: "characters";
       readonly characterId?: string;
       readonly mode?: "sheet" | "edit";
-    }
-  | {
-      readonly page: "compendium";
-      readonly query: CompendiumQuery;
-      readonly entityId?: string;
     };
 
+export function canonicalHashRedirect(hash: string): string | undefined {
+  const path = hash.replace(/^#/, "").split("?", 1)[0] ?? "";
+  if (
+    hash.length === 0 ||
+    (path !== "/settings" &&
+      path !== "/characters" &&
+      !path.startsWith("/characters/"))
+  )
+    return "#/characters";
+  return undefined;
+}
+
+function decodedPathSegment(value: string): string | undefined {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return undefined;
+  }
+}
+
 export function parseHashRoute(hash: string): AppRoute {
-  const route = hash.replace(/^#/, "") || "/compendium";
-  const [path = "/compendium", search = ""] = route.split("?", 2);
+  const route = hash.replace(/^#/, "") || "/characters";
+  const [path = "/characters"] = route.split("?", 2);
   if (path === "/settings") return { page: "settings" };
   if (path === "/characters") return { page: "characters" };
   const characterPrefix = "/characters/";
@@ -27,7 +36,8 @@ export function parseHashRoute(hash: string): AppRoute {
     const suffix = path.slice(characterPrefix.length);
     const editing = suffix.endsWith("/edit");
     const encodedId = editing ? suffix.slice(0, -5) : suffix;
-    const characterId = decodeURIComponent(encodedId);
+    const characterId = decodedPathSegment(encodedId);
+    if (characterId === undefined) return { page: "characters" };
     return {
       page: "characters",
       ...(characterId.length === 0 ? {} : { characterId }),
@@ -36,25 +46,5 @@ export function parseHashRoute(hash: string): AppRoute {
         : { mode: "edit" as const }),
     };
   }
-  const entityPrefix = "/compendium/entity/";
-  if (path.startsWith(entityPrefix)) {
-    const entityId = decodeURIComponent(path.slice(entityPrefix.length));
-    return {
-      page: "compendium",
-      query: deserializeCompendiumQuery(search),
-      ...(entityId.length === 0 ? {} : { entityId }),
-    };
-  }
-  return { page: "compendium", query: deserializeCompendiumQuery(search) };
-}
-
-export function compendiumHash(
-  query: Partial<CompendiumQuery>,
-  entityId?: string,
-): string {
-  const path =
-    entityId === undefined
-      ? "/compendium"
-      : `/compendium/entity/${encodeURIComponent(entityId)}`;
-  return `#${path}?${serializeCompendiumQuery(query)}`;
+  return { page: "characters" };
 }

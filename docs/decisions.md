@@ -784,6 +784,19 @@ browser-local. Characters is a compact library surface with Import and New
 Character actions, and new characters open immediately with their name edited
 later under Character details.
 
+### D046 — Content browsing is contextual, not a global destination
+
+The standalone Compendium was useful while query and entity-detail rendering
+were being developed, but duplicated the tables and shared entity cards now
+available in the character builder and Equipment workspace. Global navigation
+therefore contains only Characters and Settings. The Compendium page, saved
+queries, and entity-detail routes are removed; stale `#/compendium` hashes
+canonicalize to `#/characters`.
+
+The worker-backed query engine and shared entity-card renderer remain product
+infrastructure. Builder choice tables and Equipment catalogs continue to use
+them, so removing the global page does not narrow contextual content access.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

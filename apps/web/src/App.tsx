@@ -6,13 +6,12 @@ import {
   type InstalledContentPack,
 } from "@4ecb/browser-storage";
 
-import { CompendiumPage } from "./CompendiumPage";
 import { CharacterLibraryPage } from "./CharacterLibraryPage";
 import { CharacterEditorPage } from "./CharacterEditorPage";
 import { CharacterSheetPage } from "./CharacterSheetPage";
 import { HideFlavortextContext } from "./EntityCard";
 import { Icon } from "./Icon";
-import { parseHashRoute } from "./routes";
+import { canonicalHashRedirect, parseHashRoute } from "./routes";
 import { focusMainContent } from "./route-focus";
 import { PwaStatus } from "./PwaStatus";
 import { SettingsPage } from "./SettingsPage";
@@ -209,6 +208,13 @@ export function App() {
     return () => window.removeEventListener("hashchange", onHashChange);
   }, [loadRuntimeContent, refresh]);
 
+  useEffect(() => {
+    const redirect = canonicalHashRedirect(hash);
+    if (redirect === undefined) return;
+    window.history.replaceState(null, "", redirect);
+    setHash(redirect);
+  }, [hash]);
+
   const manifests = useMemo(
     () => installedPacks.map(({ manifest }) => manifest),
     [installedPacks],
@@ -246,12 +252,6 @@ export function App() {
             href="#/characters"
           >
             <Icon name="character" /> Characters
-          </a>
-          <a
-            aria-current={route.page === "compendium" ? "page" : undefined}
-            href="#/compendium"
-          >
-            <Icon name="book" /> Compendium
           </a>
           <a
             aria-current={route.page === "settings" ? "page" : undefined}
@@ -292,29 +292,18 @@ export function App() {
             hideFlavortext={hideFlavortext}
             onHideFlavortextChange={setHideFlavortext}
           />
-        ) : route.page === "characters" ? (
-          route.characterId === undefined ? (
-            <CharacterLibraryPage
-              manifests={manifests}
-              {...(activePackId === undefined ? {} : { activePackId })}
-              {...(activeProfile === undefined ? {} : { activeProfile })}
-            />
-          ) : route.mode === "edit" ? (
-            <CharacterEditorPage characterId={route.characterId} />
-          ) : (
-            <CharacterSheetPage
-              characterId={route.characterId}
-              manifests={manifests}
-            />
-          )
-        ) : (
-          <CompendiumPage
+        ) : route.characterId === undefined ? (
+          <CharacterLibraryPage
+            manifests={manifests}
             {...(activePackId === undefined ? {} : { activePackId })}
-            query={route.query}
-            {...(route.entityId === undefined
-              ? {}
-              : { entityId: route.entityId })}
-            hideFlavortext={hideFlavortext}
+            {...(activeProfile === undefined ? {} : { activeProfile })}
+          />
+        ) : route.mode === "edit" ? (
+          <CharacterEditorPage characterId={route.characterId} />
+        ) : (
+          <CharacterSheetPage
+            characterId={route.characterId}
+            manifests={manifests}
           />
         )}
       </HideFlavortextContext.Provider>

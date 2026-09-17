@@ -41,6 +41,18 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## M5.5 contextual content surface checkpoint (2026-09-16)
+
+- The standalone Compendium navigation item, search/detail routes, saved-query
+  UI, and page-only renderers are removed. Powers, feats, classes, equipment,
+  and other entities remain available through their contextual builder and
+  Equipment tables using the shared entity-card presentation.
+- Empty, unknown, and retired `#/compendium` hashes resolve to Characters; the
+  application replaces legacy Compendium hashes with `#/characters` so stale
+  bookmarks recover to a coherent supported destination.
+- The shared query worker, typed query engine, application-scoped index cache,
+  and entity-card helpers remain because builder and Equipment flows use them.
+
 ## M5.5 radio selection checkpoint (2026-09-15)
 
 - Custom compact choices no longer add a check glyph to the selected option.

@@ -167,14 +167,14 @@ export class AppContentRuntime {
           .then(() => client.initialize(packId))
           .catch((error: unknown) => {
             this.#queries.delete(packId);
-            client.terminate("Compendium initialization failed");
+            client.terminate("Content query initialization failed");
             throw error;
           }),
         used: ++this.#clock,
       };
       this.#queries.set(packId, entry);
       this.#evictOldest(this.#queries, (discarded) =>
-        discarded.client.terminate("Cached compendium profile evicted"),
+        discarded.client.terminate("Cached content query profile evicted"),
       );
     } else {
       entry.used = ++this.#clock;

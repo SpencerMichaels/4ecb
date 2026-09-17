@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { compendiumHash, parseHashRoute } from "./routes";
+import { canonicalHashRedirect, parseHashRoute } from "./routes";
 
 describe("hash routes", () => {
   it("parses character library and sheet routes", () => {
@@ -16,25 +16,29 @@ describe("hash routes", () => {
     });
   });
 
-  it("keeps compendium query state in a fragment route", () => {
-    const hash = compendiumHash({
-      text: "stone step",
-      facets: [{ key: "type", include: ["Power"], exclude: [] }],
+  it("falls back to Characters for empty, retired, and unknown routes", () => {
+    expect(parseHashRoute("")).toEqual({ page: "characters" });
+    expect(parseHashRoute("#/compendium?text=stone")).toEqual({
+      page: "characters",
     });
-    expect(hash.startsWith("#/compendium?")).toBe(true);
-    const route = parseHashRoute(hash);
-    expect(route.page).toBe("compendium");
-    if (route.page === "compendium") {
-      expect(route.query.text).toBe("stone step");
-      expect(route.query.facets[0]?.include).toEqual(["Power"]);
-    }
+    expect(parseHashRoute("#/compendium/entity/ID%3ATEST%2FONE")).toEqual({
+      page: "characters",
+    });
+    expect(parseHashRoute("#/not-a-page")).toEqual({ page: "characters" });
+    expect(parseHashRoute("#/characters/%E0%A4%A")).toEqual({
+      page: "characters",
+    });
   });
 
-  it("round-trips opaque entity IDs", () => {
-    const route = parseHashRoute(compendiumHash({}, "ID:TEST/ONE"));
-    expect(route).toMatchObject({
-      page: "compendium",
-      entityId: "ID:TEST/ONE",
-    });
+  it("canonicalizes unsupported hashes without rewriting supported routes", () => {
+    expect(canonicalHashRedirect("")).toBe("#/characters");
+    expect(canonicalHashRedirect("#/compendium/entity/old-id")).toBe(
+      "#/characters",
+    );
+    expect(canonicalHashRedirect("#/not-a-page")).toBe("#/characters");
+    expect(canonicalHashRedirect("#/characters/character%201/edit")).toBe(
+      undefined,
+    );
+    expect(canonicalHashRedirect("#/settings")).toBe(undefined);
   });
 });
