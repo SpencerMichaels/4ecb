@@ -1745,3 +1745,6 @@ pass.
 - This is presentation-only: evaluator ownership, occurrence identity,
   serialization, selection commands, level ordering, existing tab-navigation
   mechanisms, and calculated ability-score values are unchanged.
+- The level-1 Race tab omits the redundant outer `Racial Trait` subsection
+  heading while retaining the selector's own heading. Race, Language, and all
+  other multi-choice subsection headings remain unchanged.

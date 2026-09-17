@@ -85,6 +85,7 @@ import {
   powerTableLevel,
   selectedDefinitionId,
   selectedChoiceHasWarning,
+  shouldOmitIndividualChoiceHeading,
   themeDescriptionParagraphs,
   themePowerGroups,
   unresolveEvaluatedChoiceCommand,
@@ -5570,7 +5571,11 @@ export function CharacterEditorPage({
                             <Fragment key={choice.id}>
                               {renderPrimaryChoice(
                                 choice,
-                                activeChoiceSection.choices.length === 1,
+                                shouldOmitIndividualChoiceHeading(
+                                  choice,
+                                  activeChoiceSection.choices.length,
+                                  selectedLevel,
+                                ),
                               )}
                               {activeChoiceSection.section === "Class" &&
                               selectedLevel === 1 &&

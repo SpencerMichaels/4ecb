@@ -57,6 +57,7 @@ import {
   powerTableLevel,
   primaryDetailTypeLabel,
   selectedChoiceHasWarning,
+  shouldOmitIndividualChoiceHeading,
   splitLabeledDescription,
   themeDescriptionParagraphs,
   themePowerGroups,
@@ -1439,6 +1440,27 @@ describe("builder planning UI", () => {
       ["Feats", ["feat"]],
       ["Character Details", ["gender", "alignment"]],
     ]);
+  });
+
+  it("omits only the redundant racial-trait heading in a populated Race tab", () => {
+    const choice = (type: string) =>
+      ({ type }) as EvaluatedCharacter["choices"][number];
+
+    expect(
+      shouldOmitIndividualChoiceHeading(choice("Racial Trait"), 3, 1),
+    ).toBe(true);
+    expect(
+      shouldOmitIndividualChoiceHeading(choice("Racial Trait"), 3, 2),
+    ).toBe(false);
+    expect(shouldOmitIndividualChoiceHeading(choice("Race"), 3, 1)).toBe(
+      false,
+    );
+    expect(shouldOmitIndividualChoiceHeading(choice("Language"), 3, 1)).toBe(
+      false,
+    );
+    expect(shouldOmitIndividualChoiceHeading(choice("Feat"), 1, 2)).toBe(
+      true,
+    );
   });
 
   it("presents nested selections and their replacement as one choice flow", () => {

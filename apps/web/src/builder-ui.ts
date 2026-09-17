@@ -697,6 +697,18 @@ export function choicePresentationLabel(label: string): string {
   return concise.replace(/\s+Choice$/i, "");
 }
 
+export function shouldOmitIndividualChoiceHeading(
+  choice: EvaluatedChoice,
+  sectionChoiceCount: number,
+  selectedLevel: number,
+): boolean {
+  return (
+    sectionChoiceCount === 1 ||
+    (selectedLevel === 1 &&
+      choice.type.trim().toLocaleLowerCase() === "racial trait")
+  );
+}
+
 export function isAbilityIncreaseChoiceType(type: string): boolean {
   return /^(?:Companion )?Ability Increase(?:\s*\(Level\s+\d+\))?$/i.test(
     type.trim(),
