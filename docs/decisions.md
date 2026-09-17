@@ -893,6 +893,28 @@ it to preserve unknown legacy fields, but the untouched original is no longer a
 user export target. PDF remains browser print output rather than a stored or
 server-generated artifact.
 
+### D051 — Builder header is identity-first; level editing belongs to details
+
+The builder header retains the character portrait and operational status, but
+its identity treatment is deliberately simpler than D040. The portrait is
+visually prominent relative to the adjacent text. Character name is a labeled,
+directly editable text field backed by the existing `set-text` command,
+optimistic save queue, and repository title synchronization. Its unfocused
+resting state retains plain heading typography with no visible textbox border
+or background; pointer hover supplies a subtle underline and keyboard focus
+replaces it with a thicker accent-colored underline rather than a rectangular
+outline. The name text and subtitle text begin at the same horizontal edge. The
+subtitle is the available race, class, and effective-level number joined by
+ordinary spaces only; it contains no labels, separators, placeholders, or XP.
+
+The header no longer owns any level-changing control. Character details owns
+the explicit 1–30 current-level selector and dispatches the same canonical
+level-frame creation and `set-effective-level` commands previously used by the
+header. The level rail remains navigation for viewing and authoring planned
+levels, not a substitute for changing the playable character's effective
+level. This supersedes only D040's header content and current-level-control
+placement; its planning-horizon and level-rail decisions remain in force.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

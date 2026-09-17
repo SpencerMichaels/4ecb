@@ -77,6 +77,24 @@ describe("release accessibility contract", () => {
     );
   });
 
+  it("uses one builder gutter between the rail, tabs, choices, and detail pane", () => {
+    expect(styles).toMatch(
+      /\.builder-workspace\s*\{[^}]*--builder-workspace-gutter: 1rem;[^}]*gap: var\(--builder-workspace-gutter\)/,
+    );
+    expect(styles).toMatch(
+      /\.level-choice-tabs-layout\s*\{[^}]*display: grid;[^}]*gap: var\(--builder-workspace-gutter\)/,
+    );
+    expect(styles).toMatch(
+      /\.level-choice-workspace\s*\{[^}]*gap: var\(--builder-workspace-gutter\)/,
+    );
+    expect(styles).toMatch(
+      /\.level-choice-tab-bar\s*\{[^}]*border: 1px solid var\(--border\)/,
+    );
+    expect(styles).not.toMatch(
+      /\.level-choice-tab-bar\s*\{[^}]*border-bottom: 0/,
+    );
+  });
+
   it("keeps navigation compact and ordinary detail content in document flow", () => {
     expect(characterEditor).toContain('className="level-rail"');
     expect(characterEditor).toContain('workspaceTab === "overview"');
@@ -114,6 +132,49 @@ describe("release accessibility contract", () => {
     expect(styles).toMatch(
       /\.selection-table-scroll\s*\{[^}]*max-height:[^}]*overflow: auto/,
     );
+  });
+
+  it("keeps header identity editable and moves level changes into Character details", () => {
+    const header = characterEditor.slice(
+      characterEditor.indexOf('<header className="builder-heading">'),
+      characterEditor.indexOf("{entities.length === 0"),
+    );
+    const details = characterEditor.slice(
+      characterEditor.indexOf("function CharacterDetailsEditor("),
+      characterEditor.indexOf("export function CharacterEditorPage("),
+    );
+
+    expect(header).toContain('className="builder-character-name"');
+    expect(header).toContain('label="Character name"');
+    expect(header).toContain('name="Name"');
+    expect(header).toContain("characterHeaderSubtitle(");
+    expect(header).not.toContain('aria-label="Current level"');
+    expect(header).not.toContain("Experience");
+    expect(header).not.toContain("snapshot.details.XP");
+    expect(details).toContain('aria-label="Current level"');
+    expect(details).toContain(
+      "onLevelChange(Number(event.currentTarget.value))",
+    );
+    expect(styles).toMatch(
+      /\.portrait-trigger-compact\s*\{[^}]*height: 4\.5rem;[^}]*width: 4\.5rem;/,
+    );
+    expect(styles).toMatch(/\.builder-character-facts\s*\{[^}]*margin: 0;/);
+    expect(styles).toMatch(
+      /\.builder-character-name input\s*\{[^}]*background: transparent;[^}]*border: 0;[^}]*border-bottom: 1px solid transparent;[^}]*font-size: 1\.5rem;/,
+    );
+    expect(styles).toMatch(
+      /\.builder-character-name input:hover:not\(:focus-visible\)\s*\{[^}]*box-shadow: inset 0 -1px var\(--border-strong\)/,
+    );
+    expect(styles).toMatch(
+      /\.builder-character-name input:focus-visible\s*\{[^}]*box-shadow: inset 0 -3px var\(--focus\)[^}]*outline: none/,
+    );
+    expect(styles).toMatch(
+      /\.builder-heading\s*\{[^}]*gap: 1\.5rem;[^}]*justify-content: space-between;/,
+    );
+    expect(styles).not.toMatch(
+      /\.builder-heading\s*\{[^}]*(?:border-bottom|margin-bottom|padding-bottom):/,
+    );
+    expect(styles).toMatch(/\.builder-tabs\s*\{[^}]*overflow-x: auto/);
   });
 
   it("makes each theme power header its accessible disclosure control", () => {
@@ -154,6 +215,15 @@ describe("release accessibility contract", () => {
     expect(styles).not.toMatch(
       /\.candidate-detail:is\([^)]*tone-at-will[^)]*\)\s*> header/,
     );
+  });
+
+  it("balances entity headers without dropping meaningful status labels", () => {
+    expect(characterEditor).toContain(
+      "relationship === undefined && !isUnavailable ? undefined",
+    );
+    expect(characterEditor).toContain('className="candidate-relationship"');
+    expect(characterEditor).toContain('className="candidate-unavailable"');
+    expect(styles).toMatch(/\.entity-kind\s*\{[^}]*margin-bottom: 0;/);
   });
 
   it("scopes collapsible descriptions to themes and puts every card source last", () => {

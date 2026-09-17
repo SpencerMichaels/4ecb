@@ -135,6 +135,27 @@ describe("shared power and item cards", () => {
     ).toBe("utility");
   });
 
+  it("omits empty header subheading space but retains meaningful indicators", () => {
+    const feat = entity("Feat", []);
+    const ordinaryMarkup = renderToStaticMarkup(
+      createElement(EntityCardHeader, { entity: feat }),
+    );
+    const unavailableMarkup = renderToStaticMarkup(
+      createElement(EntityCardHeader, {
+        entity: feat,
+        subheading: createElement(
+          "span",
+          { className: "candidate-unavailable" },
+          "Unavailable",
+        ),
+      }),
+    );
+
+    expect(ordinaryMarkup).not.toContain("primary-detail-subheading");
+    expect(unavailableMarkup).toContain("primary-detail-subheading");
+    expect(unavailableMarkup).toContain("Unavailable");
+  });
+
   it("resolves compact item labels and the approved corpus icon families", () => {
     const magic = entity("Magic Item", [
       field("Magic Item Type", "Weapon", 0),

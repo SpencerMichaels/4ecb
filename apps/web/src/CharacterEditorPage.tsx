@@ -55,6 +55,7 @@ import {
   backgroundAssociatedSkills,
   candidateReason,
   candidateTableTypeGroup,
+  characterHeaderSubtitle,
   classKeyAbilities,
   classKeyAbilitiesSentence,
   classTableMetadata,
@@ -999,6 +1000,7 @@ function CandidateDetailCard({
   const isEmbeddedPower =
     entity.type.trim().toLocaleLowerCase() === "power" &&
     (relationship !== undefined || themePowerLevel !== undefined);
+  const isUnavailable = candidate !== undefined && !candidate.eligible;
   if (isEmbeddedPower)
     return (
       <EmbeddedPowerCard entity={entity} hideFlavortext={hideFlavortext} />
@@ -1040,14 +1042,16 @@ function CandidateDetailCard({
           entity={entity}
           headingId={headingId}
           subheading={
-            <>
-              {relationship === undefined ? null : (
-                <p className="candidate-relationship">{relationship}</p>
-              )}
-              {candidate === undefined || candidate.eligible ? null : (
-                <span className="candidate-unavailable">Unavailable</span>
-              )}
-            </>
+            relationship === undefined && !isUnavailable ? undefined : (
+              <>
+                {relationship === undefined ? null : (
+                  <p className="candidate-relationship">{relationship}</p>
+                )}
+                {isUnavailable ? (
+                  <span className="candidate-unavailable">Unavailable</span>
+                ) : null}
+              </>
+            )
           }
         />
       </header>
@@ -4098,12 +4102,16 @@ function CharacterTextField({
   label,
   value,
   multiline = false,
+  className,
+  visuallyHideLabel = false,
   onDispatch,
 }: {
   readonly name: string;
   readonly label: string;
   readonly value: string;
   readonly multiline?: boolean;
+  readonly className?: string;
+  readonly visuallyHideLabel?: boolean;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
   const [draft, setDraft] = useState(value);
@@ -4142,8 +4150,10 @@ function CharacterTextField({
   };
 
   return (
-    <label>
-      {label}
+    <label className={className}>
+      <span className={visuallyHideLabel ? "visually-hidden" : undefined}>
+        {label}
+      </span>
       {multiline ? (
         <textarea
           rows={5}
@@ -4172,6 +4182,8 @@ function CharacterDetailsEditor({
   entities,
   byId,
   rollbackRevision,
+  effectiveLevel,
+  onLevelChange,
   onDispatch,
 }: {
   readonly choices: readonly EvaluatedChoice[];
@@ -4182,6 +4194,8 @@ function CharacterDetailsEditor({
   readonly entities: readonly ContentEntity[];
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly rollbackRevision: number;
+  readonly effectiveLevel: number;
+  readonly onLevelChange: (level: number) => void;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
   const [inspectedOption, setInspectedOption] = useState<InspectedOption>();
@@ -4263,6 +4277,22 @@ function CharacterDetailsEditor({
           <section className="character-detail-group">
             <h4>Identity</h4>
             <div className="character-detail-fields character-detail-fields-compact">
+              <label>
+                Current level
+                <select
+                  aria-label="Current level"
+                  value={effectiveLevel}
+                  onChange={(event) =>
+                    onLevelChange(Number(event.currentTarget.value))
+                  }
+                >
+                  {Array.from({ length: MAX_CHARACTER_LEVEL }, (_, index) => (
+                    <option key={index + 1} value={index + 1}>
+                      {index + 1}
+                    </option>
+                  ))}
+                </select>
+              </label>
               {textFields.map((field) => (
                 <CharacterTextField
                   key={field.name}
@@ -5171,6 +5201,32 @@ export function CharacterEditorPage({
     }
   };
 
+  const changeCurrentLevel = (level: number): void => {
+    try {
+      if (level > build.levels.length) {
+        dispatch(
+          jumpToLevelCommand(
+            build,
+            level,
+            entities,
+            (addedLevel) => `web:level:${addedLevel}:${crypto.randomUUID()}`,
+          ),
+        );
+      } else {
+        dispatch({ kind: "set-effective-level", level });
+      }
+      setSelectedLevel(level);
+      setExpandedTiers(new Set([characterTierAtLevel(level)]));
+      if (workspaceTab === "build")
+        onNavigate(characterId, { workspace: "build", level }, true);
+    } catch (reason: unknown) {
+      setSaveState({
+        phase: "failed",
+        message: reason instanceof Error ? reason.message : String(reason),
+      });
+    }
+  };
+
   const renderPrimaryChoice = (
     choice: EvaluatedChoice,
     omitIndividualHeading = false,
@@ -5331,69 +5387,23 @@ export function CharacterEditorPage({
             }}
           />
           <div>
-            <h2>{character.title}</h2>
-            <div className="builder-character-facts">
-              <span>{race || "Race not chosen"}</span>
-              <span>
-                {selectedClass?.name ||
-                  character.snapshot.details.Class ||
-                  "Class not chosen"}
-              </span>
-              <label className="current-level-control">
-                <span className="visually-hidden">Current level</span>
-                Level
-                <select
-                  aria-label="Current level"
-                  value={build.effectiveLevel}
-                  onChange={(event) => {
-                    const level = Number(event.currentTarget.value);
-                    try {
-                      if (level > build.levels.length) {
-                        dispatch(
-                          jumpToLevelCommand(
-                            build,
-                            level,
-                            entities,
-                            (addedLevel) =>
-                              `web:level:${addedLevel}:${crypto.randomUUID()}`,
-                          ),
-                        );
-                      } else {
-                        dispatch({ kind: "set-effective-level", level });
-                      }
-                      setSelectedLevel(level);
-                      setExpandedTiers(new Set([characterTierAtLevel(level)]));
-                      if (workspaceTab === "build")
-                        onNavigate(
-                          characterId,
-                          { workspace: "build", level },
-                          true,
-                        );
-                    } catch (reason: unknown) {
-                      setSaveState({
-                        phase: "failed",
-                        message:
-                          reason instanceof Error
-                            ? reason.message
-                            : String(reason),
-                      });
-                    }
-                  }}
-                >
-                  {Array.from({ length: MAX_CHARACTER_LEVEL }, (_, index) => (
-                    <option key={index + 1} value={index + 1}>
-                      {index + 1}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <span>
-                XP{" "}
-                {character.snapshot.details.Experience ||
-                  character.snapshot.details.XP ||
-                  "—"}
-              </span>
-            </div>
+            <h2 className="builder-character-name-heading">
+              <CharacterTextField
+                className="builder-character-name"
+                label="Character name"
+                name="Name"
+                value={build.textStrings.Name || character.title}
+                visuallyHideLabel
+                onDispatch={dispatch}
+              />
+            </h2>
+            <p className="builder-character-facts">
+              {characterHeaderSubtitle(
+                race,
+                selectedClass?.name || character.snapshot.details.Class,
+                build.effectiveLevel,
+              )}
+            </p>
           </div>
         </div>
         <div className="builder-actions">
@@ -5919,6 +5929,8 @@ export function CharacterEditorPage({
           entities={entities}
           byId={byId}
           rollbackRevision={rollbackRevision}
+          effectiveLevel={build.effectiveLevel}
+          onLevelChange={changeCurrentLevel}
           onDispatch={dispatch}
         />
       </div>

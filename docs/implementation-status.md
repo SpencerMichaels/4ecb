@@ -41,6 +41,33 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## M5.5 builder identity-header checkpoint (2026-09-17)
+
+- The Build header now gives its portrait more visual weight and presents the
+  character name as a directly editable, accessible field. Name edits use the
+  established `set-text` command, optimistic autosave queue, and repository
+  title synchronization, so the header and Character details share one durable
+  update path. The unfocused field preserves the former plain-heading look with
+  no visible textbox border or fill; pointer hover adds a subtle underline and
+  keyboard focus replaces it with a thicker accent-colored underline rather
+  than a rectangular outline. The name and subtitle visible text share the same
+  horizontal start edge.
+- The subtitle is limited to the available race, class, and current level in
+  natural space-separated form such as `Dwarf Paladin 7`; XP, placeholder
+  labels, and visual separators are absent.
+- Current-level editing has moved from the header to the Character details
+  Identity group. It retains the full 1–30 range, canonical intervening-frame
+  creation, effective-level command, autosave behavior, and responsive native
+  select semantics.
+- Focused tests pass 74/74, and the full public suite passes 354/354 alongside
+  lint, workspace typechecks, the production/PWA build, built-PWA validation,
+  and Chromium/Firefox Letter/A4 print checks. Live desktop and 375 px checks
+  verified name persistence across reload, a restored test record, no header
+  level control or XP, the Character details level selector, no page-level
+  horizontal overflow, and no browser console errors. `scripts/check.sh` still
+  stops at its initial formatting gate on the unrelated pre-existing
+  `apps/web/src/equipment-ui.test.ts`; this change leaves that file untouched.
+
 ## M5.5 compact character library checkpoint (2026-09-17)
 
 - Character cards present only the portrait, character name, level/race/class

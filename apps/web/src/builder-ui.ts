@@ -25,6 +25,16 @@ import { entityVisualTone } from "./visual-language";
 
 export const MAX_CHARACTER_LEVEL = 30;
 
+export function characterHeaderSubtitle(
+  race: string | undefined,
+  characterClass: string | undefined,
+  level: number,
+): string {
+  return [race?.trim(), characterClass?.trim(), String(level)]
+    .filter((value): value is string => Boolean(value))
+    .join(" ");
+}
+
 export function choiceLevel(choice: EvaluatedChoice): number {
   return choice.level;
 }

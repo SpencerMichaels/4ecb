@@ -35,8 +35,16 @@ application's protected visual assets.
   later levels without first completing every earlier choice.
 - Use a hybrid structure: a compact portrait-and-identity header, a narrow
   ordered level rail, and focused detail/selection content in the main pane.
-  Race, class, current level, and XP sit beside the portrait; unresolved and
-  warning totals sit with save state and actions. Do not repeat these facts in a
+  A prominent portrait and directly editable character-name field lead the
+  header. Its subtitle contains only the available race, class, and current
+  level as natural space-separated text (for example, **Dwarf Paladin 7**),
+  without separators or XP. Unresolved and warning totals sit with save state
+  and actions. At rest the name field retains the previous plain heading
+  appearance without a textbox border or fill; pointer hover adds only a subtle
+  underline, while keyboard focus replaces it with a thicker accent-colored
+  underline rather than a rectangular outline. Its visible text shares the exact
+  left edge of the race/class/level subtitle. Current-level editing belongs to
+  Character details rather than the header. Do not repeat these facts in a
   separate character-overview panel or continuously display a successful rules
   evaluation message.
 - Treat a level, rather than an individual slot, as the main builder workspace.
@@ -224,9 +232,10 @@ application's protected visual assets.
   remains a real edit that restores the exact slot to an unresolved placeholder,
   autosaves, and remains undoable. The compact current-level control may remain
   a dropdown because it selects one scalar from a long, familiar numeric range.
-- In Character details, Gender and Alignment use visible button groups. Deity
-  uses the shared table with Deity and Alignment columns, favorites, filtering,
-  Clear, and the adjacent detail pane.
+- In Character details, current level remains an explicit numeric selector.
+  Gender and Alignment use visible button groups. Deity uses the shared table
+  with Deity and Alignment columns, favorites, filtering, Clear, and the
+  adjacent detail pane.
 - Equipment and Diagnostics are full workspace tabs beside Build, Overview, and
   Character details. They do not remain as collapsed disclosures below every
   workspace; the Equipment tab is the integration point for the forthcoming

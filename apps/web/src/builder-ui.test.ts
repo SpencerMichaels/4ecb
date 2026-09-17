@@ -22,6 +22,7 @@ import {
   buildPresetSuggestionNames,
   candidateReason,
   candidateTableTypeGroup,
+  characterHeaderSubtitle,
   classKeyAbilities,
   classKeyAbilitiesSentence,
   classTableMetadata,
@@ -131,6 +132,14 @@ const build: CharacterBuild = {
 };
 
 describe("builder planning UI", () => {
+  it("summarizes only available race, class, and current level", () => {
+    expect(characterHeaderSubtitle("Dwarf", "Paladin", 7)).toBe(
+      "Dwarf Paladin 7",
+    );
+    expect(characterHeaderSubtitle(undefined, "Paladin", 7)).toBe("Paladin 7");
+    expect(characterHeaderSubtitle("  Dwarf  ", "", 7)).toBe("Dwarf 7");
+  });
+
   it("presents class key abilities from structured metadata in authored order", () => {
     const fighter = {
       ...level(0),

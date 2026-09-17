@@ -928,8 +928,8 @@ textarea {
   box-shadow: 0 0 0 3px var(--focus);
 }
 .portrait-trigger-compact {
-  height: 2.75rem;
-  width: 2.75rem;
+  height: 4.5rem;
+  width: 4.5rem;
 }
 .portrait-camera {
   align-items: center;
@@ -1511,11 +1511,8 @@ textarea {
 }
 
 .builder-heading {
-  border-bottom: 1px solid var(--border);
   gap: 1.5rem;
   justify-content: space-between;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
 }
 
 .builder-heading p,
@@ -1524,33 +1521,43 @@ textarea {
 }
 
 .builder-character-facts {
-  align-items: center;
   color: var(--muted);
-  display: flex;
   font-size: 0.85rem;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.75rem;
+  margin: 0;
 }
 
-.builder-character-facts > span,
-.builder-character-facts > label {
-  align-items: center;
-  display: inline-flex;
-  gap: 0.3rem;
+.builder-character-heading > div {
+  min-width: 0;
 }
 
-.builder-character-facts > :not(:first-child) {
-  border-left: 1px solid var(--border-strong);
-  padding-left: 0.75rem;
+.builder-character-name-heading {
+  margin-bottom: 0.15rem;
 }
 
-.current-level-control {
-  font-weight: 700;
+.builder-character-name {
+  display: block;
 }
 
-.current-level-control select {
-  min-height: 1.8rem;
-  padding: 0.1rem 1.65rem 0.1rem 0.35rem;
+.builder-character-name input {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  inline-size: clamp(12rem, 30vw, 28rem);
+  max-inline-size: 100%;
+  padding: 0.1rem 0;
+}
+
+.builder-character-name input:hover:not(:focus-visible) {
+  box-shadow: inset 0 -1px var(--border-strong);
+}
+
+.builder-character-name input:focus-visible {
+  box-shadow: inset 0 -3px var(--focus);
+  outline: none;
 }
 
 .builder-actions {
@@ -1626,6 +1633,7 @@ textarea {
   display: flex;
   gap: 0.25rem;
   margin-bottom: 1rem;
+  overflow-x: auto;
 }
 
 .builder-tabs button {
@@ -1654,9 +1662,10 @@ textarea {
 }
 
 .builder-workspace {
+  --builder-workspace-gutter: 1rem;
   align-items: start;
   display: grid;
-  gap: 1rem;
+  gap: var(--builder-workspace-gutter);
   grid-template-columns: 5.5rem minmax(0, 1fr);
   position: relative;
 }
@@ -2127,6 +2136,8 @@ textarea {
 }
 
 .level-choice-tabs-layout {
+  display: grid;
+  gap: var(--builder-workspace-gutter);
   min-width: 0;
 }
 
@@ -2134,7 +2145,6 @@ textarea {
   align-items: stretch;
   background: var(--surface-subtle);
   border: 1px solid var(--border);
-  border-bottom: 0;
   display: flex;
   min-width: 0;
 }
@@ -2216,7 +2226,7 @@ textarea {
 .level-choice-workspace {
   align-items: start;
   display: grid;
-  gap: 1rem;
+  gap: var(--builder-workspace-gutter);
   grid-template-columns: minmax(30rem, 1.35fr) minmax(22rem, 1fr);
 }
 
@@ -3387,6 +3397,7 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   gap: 0.35rem;
   letter-spacing: normal;
   line-height: 1.15;
+  margin-bottom: 0;
   min-width: 0;
   text-transform: none;
 }
