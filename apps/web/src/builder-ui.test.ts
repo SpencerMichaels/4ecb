@@ -53,6 +53,7 @@ import {
   jumpToLevelCommand,
   levelChoiceProgress,
   levelRailChoiceStatus,
+  planningEvaluationHorizon,
   planningHorizonCommand,
   powerTableLevel,
   primaryDetailTypeLabel,
@@ -1121,6 +1122,79 @@ describe("builder planning UI", () => {
     const planned = applyCharacterCommand(build, command!);
     expect(planned.levels.map((frame) => frame.level)).toEqual([1, 2, 3, 4]);
     expect(planned.effectiveLevel).toBe(1);
+  });
+
+  it("does not treat untouched browse-ahead frames as authored plans", () => {
+    const command = planningHorizonCommand(
+      build,
+      12,
+      Array.from({ length: 12 }, (_, index) => level(index + 1)),
+      (value) => `level-${value}`,
+    );
+    const planned = applyCharacterCommand(build, command!);
+    const browsed: CharacterBuild = {
+      ...planned,
+      effectiveLevel: 8,
+      levels: planned.levels.map((frame) =>
+        frame.level <= 8
+          ? {
+              ...frame,
+              root: {
+                ...frame.root,
+                children: [
+                  {
+                    id: `imported-choice-${frame.level}`,
+                    identity: {
+                      definitionId: `IMPORTED_CHOICE_${frame.level}`,
+                      name: `Imported choice ${frame.level}`,
+                      type: "Feat",
+                    },
+                    acquiredLevel: frame.level,
+                    legality: "rules-legal" as const,
+                    children: [],
+                    unresolved: false,
+                  },
+                ],
+              },
+            }
+          : frame,
+      ),
+    };
+
+    expect(browsed.levels).toHaveLength(12);
+    expect(planningEvaluationHorizon(browsed, 8)).toBe(8);
+    expect(planningEvaluationHorizon(browsed, 12)).toBe(12);
+
+    const withSavedAbilityIncrease: CharacterBuild = {
+      ...browsed,
+      levels: browsed.levels.map((frame) =>
+        frame.level === 12
+          ? {
+              ...frame,
+              root: {
+                ...frame.root,
+                children: [
+                  {
+                    id: "planned-ability-increase",
+                    identity: {
+                      definitionId: "ABILITY_INCREASE_12",
+                      name: "Strength",
+                      type: "Ability Increase (Level 12)",
+                    },
+                    acquiredLevel: 12,
+                    legality: "rules-legal" as const,
+                    children: [],
+                    unresolved: false,
+                  },
+                ],
+              },
+            }
+          : frame,
+      ),
+    };
+    expect(planningEvaluationHorizon(withSavedAbilityIncrease, 8)).toBe(12);
+    expect(withSavedAbilityIncrease.effectiveLevel).toBe(8);
+    expect(withSavedAbilityIncrease.levels).toHaveLength(12);
   });
 
   it("shows future choices without applying future stats to the current character", () => {

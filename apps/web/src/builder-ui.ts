@@ -2,6 +2,7 @@ import {
   applyCharacterCommand,
   type CharacterBuild,
   type CharacterCommand,
+  type BuildOccurrence,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
@@ -47,6 +48,48 @@ export function evaluationAtHorizon(
   horizon: number | undefined,
 ): EvaluatedCharacter | undefined {
   return evaluation?.level === horizon ? evaluation : undefined;
+}
+
+/**
+ * Empty future frames make levels browseable but do not by themselves extend
+ * the saved plan. Keep evaluating any level that is current, visible, or owns
+ * authored character state.
+ */
+export function planningEvaluationHorizon(
+  build: CharacterBuild,
+  selectedLevel: number,
+): number {
+  const authoredOccurrenceLevel = (occurrence: BuildOccurrence): number =>
+    occurrence.children.reduce(
+      (level, child) => Math.max(level, authoredOccurrenceLevel(child)),
+      occurrence.acquiredLevel,
+    );
+  let horizon = Math.max(build.effectiveLevel, selectedLevel);
+  for (const frame of build.levels) {
+    if (frame.root.children.length > 0)
+      horizon = Math.max(
+        horizon,
+        frame.level,
+        ...frame.root.children.map(authoredOccurrenceLevel),
+      );
+    if (frame.userEdit !== undefined)
+      horizon = Math.max(
+        horizon,
+        frame.level,
+        authoredOccurrenceLevel(frame.userEdit.root),
+      );
+  }
+  for (const occurrence of build.grabbag)
+    horizon = Math.max(horizon, authoredOccurrenceLevel(occurrence));
+  for (const entry of build.inventory) {
+    horizon = Math.max(horizon, entry.acquiredLevel);
+    for (const element of entry.elements)
+      for (const child of element.children ?? [])
+        horizon = Math.max(horizon, authoredOccurrenceLevel(child));
+  }
+  for (const alternate of build.alternates)
+    horizon = Math.max(horizon, authoredOccurrenceLevel(alternate.choice));
+  return horizon;
 }
 
 export function abilityScoreBonus(stat: EvaluatedStat | undefined): number {

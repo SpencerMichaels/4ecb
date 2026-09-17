@@ -81,6 +81,7 @@ import {
   levelRailChoiceStatus,
   legacyChoiceSection,
   MAX_CHARACTER_LEVEL,
+  planningEvaluationHorizon,
   planningHorizonCommand,
   powerTableLevel,
   selectedDefinitionId,
@@ -4441,6 +4442,10 @@ export function CharacterEditorPage({
   }, [contentDigest, packId]);
 
   const build = transaction.current?.current;
+  const planningHorizon =
+    build === undefined
+      ? selectedLevel
+      : planningEvaluationHorizon(build, selectedLevel);
   const abilityPointBuy = assessAbilityPointBuy(build?.baseAbilities ?? {});
   const abilityScoresIncomplete = !abilityPointBuy.complete;
   const abilityScoresHouseRuled =
@@ -4451,7 +4456,7 @@ export function CharacterEditorPage({
   );
   const planningEvaluation = evaluationAtHorizon(
     planningEvaluationResult,
-    build?.levels.length,
+    planningHorizon,
   );
   const selectedLevelEvaluation = evaluationAtHorizon(
     selectedLevelEvaluationResult,
@@ -4515,7 +4520,7 @@ export function CharacterEditorPage({
     };
     const planningRequest = evaluateCached({
       ...projectBuildForEvaluation(
-        { ...build, effectiveLevel: build.levels.length },
+        { ...build, effectiveLevel: planningHorizon },
         entities,
       ),
       candidateDetailLevels: characterDetailsOpen
@@ -4532,7 +4537,7 @@ export function CharacterEditorPage({
           : [expandedReplacementChoiceId],
     });
     const currentRequest =
-      build.effectiveLevel === build.levels.length
+      build.effectiveLevel === planningHorizon
         ? planningRequest
         : evaluateCached({
             ...projectBuildForEvaluation(
@@ -4542,7 +4547,7 @@ export function CharacterEditorPage({
             candidateDetailLevels: [],
           });
     const selectedLevelRequest =
-      selectedLevel === build.levels.length
+      selectedLevel === planningHorizon
         ? planningRequest
         : selectedLevel === build.effectiveLevel
           ? currentRequest
@@ -4574,6 +4579,7 @@ export function CharacterEditorPage({
     entities,
     expandedReplacementChoiceId,
     packId,
+    planningHorizon,
     readyPackId,
     selectedLevel,
     characterDetailsOpen,
@@ -4824,12 +4830,12 @@ export function CharacterEditorPage({
     planningEvaluation?.occurrences.filter(
       (occurrence) =>
         occurrence.legality === "houserule" &&
-        occurrence.acquiredLevel <= build.levels.length,
+        occurrence.acquiredLevel <= planningHorizon,
     ).length ?? 0;
   const plannedChoiceWarningCount =
     planningEvaluation?.choices.filter(
       (choice) =>
-        choice.level <= build.levels.length &&
+        choice.level <= planningHorizon &&
         selectedChoiceHasWarning(choice, planningEvaluation),
     ).length ?? 0;
   const warningCount = Math.max(
@@ -5411,7 +5417,7 @@ export function CharacterEditorPage({
             <p>
               {entities.length === 0
                 ? "Content is unavailable for planning."
-                : `Evaluating choices through level ${build.levels.length}…`}
+                : `Evaluating choices through level ${planningHorizon}…`}
             </p>
           ) : levelChoices.length === 0 && selectedLevel !== 1 ? (
             <div className="choice-empty-state">

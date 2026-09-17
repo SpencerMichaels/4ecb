@@ -1759,3 +1759,18 @@ pass.
 - The level-1 Race tab omits the redundant outer `Racial Trait` subsection
   heading while retaining the selector's own heading. Race, Language, and all
   other multi-choice subsection headings remain unchanged.
+
+## Authored planning-horizon checkpoint (2026-09-17)
+
+- Future-level browsing still retains intervening empty frames through level
+  30, but those frames no longer extend evaluation after the builder is
+  reopened. The planning horizon is now the highest of the current level, the
+  visible level, and durable authored state such as saved/imported choices,
+  user edits, inventory, grabbag entries, or alternates.
+- The ignored Alysa fixture imports truthfully at level 8 with eight populated
+  frames; the erroneous level-12 progress came from four later persisted empty
+  browse-ahead frames being counted as authored plan depth. A public synthetic
+  regression preserves all 12 frames while requiring a reopen horizon of 8,
+  future browsing at 12, and restoration of horizon 12 when an ability increase
+  is saved there.
+- Focused verification passed 44 builder UI tests and the web TypeScript check.
