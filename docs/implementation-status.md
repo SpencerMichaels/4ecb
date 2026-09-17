@@ -41,6 +41,29 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## M5.5 implement-proficiency prerequisite parity correction (2026-09-17)
+
+- Recovered native prerequisite grammar `Can use the X implement` now resolves
+  to the exact typed `Implement Proficiency (X)` definition. The resulting
+  element prerequisite passes only when that definition is owned; a known but
+  unowned proficiency fails instead of remaining unverified.
+- The private full-content audit found 41 records using the exact grammar across
+  nine implement spellings. Every spelling, including plural `Ki focuses`, maps
+  uniquely to an existing Proficiency definition. Devout Protector Expertise's
+  authored machine prerequisite remains unchanged.
+- A focused synthetic regression follows the original Paladin -> Paladin
+  Implements -> Implement Proficiency (Holy Symbol) fixed-point grant chain into
+  a selected level-2 Devout Protector-style feat. The candidate is rules-legal
+  and no prerequisite warning or failure is emitted.
+- The same read-only scenario against `tmp/content/full-local.4ecp` activates the
+  exact holy-symbol proficiency and returns Devout Protector Expertise eligible
+  and rules-legal with no prerequisite diagnostics.
+- `RULES_EVALUATION_CACHE_VERSION` advanced to
+  `evaluated-character-v2-2026-09-17`, invalidating persisted browser evaluation
+  snapshots created before the prerequisite semantics changed.
+- Verification: the focused prerequisite and evaluator suites pass 47/47 via
+  `nix develop path:. -c pnpm exec vitest run packages/rules-engine/src/prerequisites.test.ts packages/rules-engine/src/evaluator.test.ts`.
+
 ## M5.5 builder identity-header checkpoint (2026-09-17)
 
 - The Build header now gives its portrait more visual weight and presents the

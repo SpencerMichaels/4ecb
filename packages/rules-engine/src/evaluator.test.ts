@@ -287,6 +287,88 @@ describe("character evaluator", () => {
     ]);
   });
 
+  it("satisfies implement prerequisites through nested class grants", () => {
+    const result = evaluateCharacter(
+      {
+        level: 2,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "paladin",
+            definitionId: "PALADIN",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "level-2",
+            definitionId: "LEVEL_2",
+            acquiredLevel: 2,
+            kind: "root",
+          },
+          {
+            id: "devout-protector-expertise",
+            definitionId: "DEVOUT_PROTECTOR_EXPERTISE",
+            acquiredLevel: 2,
+            parentId: "level-2",
+            ruleOrdinal: 3,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("PALADIN", "Paladin", "Class", {
+          rules: [rule("grant", { name: "PALADIN_GRANTS", type: "Grants" }, 0)],
+        }),
+        entity("PALADIN_GRANTS", "Paladin", "Grants", {
+          rules: [
+            rule("grant", { name: "PALADIN_IMPLEMENTS", type: "Grants" }, 17),
+          ],
+        }),
+        entity("PALADIN_IMPLEMENTS", "Paladin Implements", "Grants", {
+          rules: [
+            rule(
+              "grant",
+              { name: "HOLY_SYMBOL_PROFICIENCY", type: "Proficiency" },
+              0,
+            ),
+          ],
+        }),
+        entity(
+          "HOLY_SYMBOL_PROFICIENCY",
+          "Implement Proficiency (Holy Symbol)",
+          "Proficiency",
+        ),
+        entity("LEVEL_2", "2", "Level", {
+          rules: [rule("select", { type: "Feat" }, 3)],
+        }),
+        entity(
+          "DEVOUT_PROTECTOR_EXPERTISE",
+          "Devout Protector Expertise",
+          "Feat",
+          { prerequisites: "Can use the Holy Symbol implement" },
+        ),
+      ],
+    );
+
+    expect(result.activeDefinitionIds).toContain("HOLY_SYMBOL_PROFICIENCY");
+    expect(result.choices[0]?.candidates).toContainEqual(
+      expect.objectContaining({
+        definitionId: "DEVOUT_PROTECTOR_EXPERTISE",
+        eligible: true,
+        rulesLegal: true,
+        reasons: [],
+      }),
+    );
+    expect(result.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "prerequisite.unverified" }),
+    );
+    expect(result.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "prerequisite.failed" }),
+    );
+  });
+
   it("evaluates prerequisites at the choice level, including same-level selections", () => {
     const definitions = [
       entity("LEVEL_4", "4", "Level", {

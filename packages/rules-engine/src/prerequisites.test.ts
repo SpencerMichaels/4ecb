@@ -45,6 +45,17 @@ const context = {
   abilities: { Strength: 13, Wisdom: 16 },
 };
 
+const holySymbolProficiency = {
+  id: "HOLY_SYMBOL_PROFICIENCY",
+  name: "Implement Proficiency (Holy Symbol)",
+  type: "Proficiency",
+} as ContentEntity;
+const kiFocusProficiency = {
+  id: "KI_FOCUS_PROFICIENCY",
+  name: "Implement Proficiency (Ki Focuses)",
+  type: "Proficiency",
+} as ContentEntity;
+
 describe("legacy prerequisites", () => {
   it("evaluates ability, level, training, source, identity, and boolean clauses", () => {
     expect(
@@ -109,6 +120,49 @@ describe("legacy prerequisites", () => {
         .status,
     ).toBe("satisfied");
     expect(evaluatePrerequisite("Unselectable", context).status).toBe("failed");
+  });
+
+  it("resolves implement-use prose to exact proficiency definitions", () => {
+    const implementDefinitions = [
+      ...definitions,
+      holySymbolProficiency,
+      kiFocusProficiency,
+    ];
+    const holySymbolContext = {
+      ...context,
+      definitions: implementDefinitions,
+      owned: [...owned, holySymbolProficiency],
+    };
+
+    expect(
+      internalizePrerequisite(
+        "Can use the Holy Symbol implement",
+        holySymbolContext,
+      ),
+    ).toEqual({
+      kind: "element",
+      text: "Can use the Holy Symbol implement",
+      definitionIds: ["HOLY_SYMBOL_PROFICIENCY"],
+      negated: false,
+    });
+    expect(
+      evaluatePrerequisite(
+        "Can use the Holy Symbol implement",
+        holySymbolContext,
+      ).status,
+    ).toBe("satisfied");
+    expect(
+      evaluatePrerequisite("Can use the Holy Symbol implement", {
+        ...holySymbolContext,
+        owned,
+      }).status,
+    ).toBe("failed");
+    expect(
+      evaluatePrerequisite("Can use the Ki focuses implement", {
+        ...holySymbolContext,
+        owned: [...owned, kiFocusProficiency],
+      }).status,
+    ).toBe("satisfied");
   });
 
   it("evaluates bracketed feat references by their definition name", () => {

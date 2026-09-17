@@ -318,6 +318,22 @@ function internalizeLeaf(
   const worship = /^must worship (.+)$/i.exec(canonical);
   if (worship?.[1] !== undefined)
     return { kind: "worship", text, value: worship[1] };
+  const implementUse = /^can use the (.+?) implement$/i.exec(canonical);
+  if (implementUse?.[1] !== undefined) {
+    const matches = resolveDefinitions(
+      `Implement Proficiency (${implementUse[1]})`,
+      context,
+      "Proficiency",
+    );
+    if (matches.length > 0)
+      return {
+        kind: "element",
+        text,
+        definitionIds: matches.map((definition) => definition.id),
+        negated: false,
+      };
+    return { kind: "unverified", text };
+  }
   const proficiency = /^(?:proficient|proficiency)\s+(?:with|in)\s+(.+)$/i.exec(
     canonical,
   );

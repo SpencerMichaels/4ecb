@@ -51,6 +51,16 @@ The full local corpus contains 54,012 statements across 38,339 entities. The
 audit recognizes every observed opcode and attribute with no unexplained
 required field. Public tests use synthetic content; private files remain ignored.
 
+The recovered proficiency grammar includes `Can use the X implement`. The
+prerequisite internalizer resolves that form to the concrete `Proficiency`
+definition named `Implement Proficiency (X)` and emits an element prerequisite,
+so ownership satisfies it while a known but unowned proficiency fails normally.
+This also preserves corpus spellings such as `Ki focuses`: case-insensitive exact
+definition resolution maps all nine observed implement names across 41 records
+to one existing proficiency definition each. The original executable `Prereqs`
+text remains authoritative; parallel `print-prereqs` display prose is not used
+as an evaluator substitute.
+
 ## Authoritative character history
 
 `CharacterBuild` stores effective level, one nested root per acquired level,
