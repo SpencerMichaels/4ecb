@@ -4,7 +4,7 @@ import type {
   BuildInventoryEntry,
   CharacterBuild,
 } from "@4ecb/character-domain";
-import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
+import type { ContentEntity } from "@4ecb/content-domain";
 import {
   normalizeCompendiumQuery,
   type CompendiumQueryResult,
@@ -13,6 +13,7 @@ import {
 
 import { appContentRuntime, type QueryRuntimeClient } from "./app-runtime";
 import { contentSpecificValue } from "./builder-ui";
+import { EntityCardBody, EntityCardHeader } from "./EntityCard";
 import {
   compatibleBaseItems,
   entityCurrencyCopper,
@@ -29,12 +30,8 @@ import {
   practiceKind,
   SHOP_ITEM_TYPES,
 } from "./equipment-ui";
+import { entityVisualTone, visualToneClass } from "./visual-language";
 import { Icon } from "./Icon";
-import {
-  entityTypeIcon,
-  entityVisualTone,
-  visualToneClass,
-} from "./visual-language";
 
 type EquipmentTab = "loadout" | "inventory" | "shop" | "practices";
 type MoneyLocation = "carried" | "stored";
@@ -111,8 +108,10 @@ function FacetSelect({
 
 function ItemDetail({
   entity,
+  hideFlavortext,
 }: {
   readonly entity: ContentEntity | undefined;
+  readonly hideFlavortext: boolean;
 }) {
   if (entity === undefined)
     return (
@@ -125,58 +124,26 @@ function ItemDetail({
       </aside>
     );
   const price = entityCurrencyCopper(entity);
-  const source =
-    entity.source ||
-    contentSpecificValue(entity, "Source")?.trim() ||
-    "Not specified";
-  const visibleSpecifics = entity.specifics.filter(
-    (field) =>
-      isUserFacingSpecific(field) &&
-      field.name.trim().toLocaleLowerCase() !== "source",
-  );
   return (
     <aside
       className={`candidate-detail ${visualToneClass(entityVisualTone(entity))}`}
       tabIndex={0}
     >
-      <header>
-        <div>
-          <p className="eyebrow entity-kind">
-            <Icon name={entityTypeIcon(entity.type)} /> {entity.type}
-          </p>
-          <h4>{entity.name}</h4>
-        </div>
+      <header className="primary-detail-heading">
+        <EntityCardHeader entity={entity} />
       </header>
-      <dl className="candidate-facts">
-        <div>
-          <dt>Price</dt>
-          <dd>{formatCopperPrice(price)}</dd>
-        </div>
-      </dl>
-      {entity.printPrerequisites ? (
-        <section>
-          <h5>Prerequisites</h5>
-          <p>{entity.printPrerequisites}</p>
-        </section>
-      ) : null}
-      {entity.flavor ? (
-        <p className="candidate-flavor">{entity.flavor}</p>
-      ) : null}
-      {entity.description ? (
-        <section>
-          <h5>Description</h5>
-          <p className="preserve-lines">{entity.description}</p>
-        </section>
-      ) : null}
-      <dl className="candidate-fields">
-        {visibleSpecifics.map((field) => (
-          <div key={`${field.ordinal}-${field.name}`}>
-            <dt>{field.name || "Detail"}</dt>
-            <dd>{field.value}</dd>
-          </div>
-        ))}
-      </dl>
-      <p className="detail-source-note">Source: {source}</p>
+      <EntityCardBody
+        entity={entity}
+        hideFlavortext={hideFlavortext}
+        afterNarrative={
+          <dl className="candidate-facts">
+            <div>
+              <dt>Price</dt>
+              <dd>{formatCopperPrice(price)}</dd>
+            </div>
+          </dl>
+        }
+      />
     </aside>
   );
 }
@@ -316,6 +283,7 @@ export function EquipmentWorkspace({
   packId,
   wallet,
   activeDefinitionIds,
+  hideFlavortext,
   onPutInventory,
   onPurchase,
   onSell,
@@ -328,6 +296,7 @@ export function EquipmentWorkspace({
   readonly packId?: string;
   readonly wallet: EquipmentWalletView;
   readonly activeDefinitionIds: readonly string[];
+  readonly hideFlavortext: boolean;
   readonly onPutInventory: (entry: BuildInventoryEntry) => void;
   readonly onPurchase: (
     entry: BuildInventoryEntry,
@@ -1024,7 +993,7 @@ export function EquipmentWorkspace({
           )}
         </div>
         <div className="shared-choice-detail">
-          <ItemDetail entity={inspected} />
+          <ItemDetail entity={inspected} hideFlavortext={hideFlavortext} />
         </div>
       </div>
     </section>

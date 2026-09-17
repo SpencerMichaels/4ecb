@@ -10,6 +10,7 @@ import { CompendiumPage } from "./CompendiumPage";
 import { CharacterLibraryPage } from "./CharacterLibraryPage";
 import { CharacterEditorPage } from "./CharacterEditorPage";
 import { CharacterSheetPage } from "./CharacterSheetPage";
+import { HideFlavortextContext } from "./EntityCard";
 import { Icon } from "./Icon";
 import { parseHashRoute } from "./routes";
 import { focusMainContent } from "./route-focus";
@@ -29,6 +30,8 @@ import {
 } from "./theme";
 
 const repository = new ContentPackRepository();
+
+const HIDE_FLAVORTEXT_STORAGE_KEY = "4ecb.hideFlavortext.v1";
 
 export interface ContentDownloadState {
   readonly phase:
@@ -62,6 +65,13 @@ export function App() {
       return "system";
     }
   });
+  const [hideFlavortext, setHideFlavortext] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(HIDE_FLAVORTEXT_STORAGE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
   const firstRoute = useRef(true);
   const runtimeContentStarted = useRef(false);
   const route = useMemo(() => parseHashRoute(hash), [hash]);
@@ -74,6 +84,15 @@ export function App() {
       // The visual preference still applies for this session.
     }
   }, [theme]);
+  useEffect(() => {
+    try {
+      if (hideFlavortext)
+        localStorage.setItem(HIDE_FLAVORTEXT_STORAGE_KEY, "1");
+      else localStorage.removeItem(HIDE_FLAVORTEXT_STORAGE_KEY);
+    } catch {
+      // The visual preference still applies for this session.
+    }
+  }, [hideFlavortext]);
 
   const refresh = useCallback(async () => {
     const [installed, active, profile] = await Promise.all([
@@ -252,48 +271,53 @@ export function App() {
         </div>
       )}
 
-      {!storageReady ? (
-        <main className="loading-state" id="main-content">
-          Loading local content profiles…
-        </main>
-      ) : route.page === "settings" ? (
-        <SettingsPage
-          installedPacks={installedPacks}
-          advertisedPacks={advertisedPacks}
-          contentDownloads={contentDownloads}
-          {...(activeProfile === undefined ? {} : { activeProfile })}
-          {...(runtimeContentError === undefined
-            ? {}
-            : { runtimeContentError })}
-          onChanged={refreshAfterContentChange}
-          onRetryAdvertised={installAdvertisedPack}
-          theme={theme}
-          onThemeChange={setTheme}
-        />
-      ) : route.page === "characters" ? (
-        route.characterId === undefined ? (
-          <CharacterLibraryPage
-            manifests={manifests}
-            {...(activePackId === undefined ? {} : { activePackId })}
+      <HideFlavortextContext.Provider value={hideFlavortext}>
+        {!storageReady ? (
+          <main className="loading-state" id="main-content">
+            Loading local content profiles…
+          </main>
+        ) : route.page === "settings" ? (
+          <SettingsPage
+            installedPacks={installedPacks}
+            advertisedPacks={advertisedPacks}
+            contentDownloads={contentDownloads}
             {...(activeProfile === undefined ? {} : { activeProfile })}
+            {...(runtimeContentError === undefined
+              ? {}
+              : { runtimeContentError })}
+            onChanged={refreshAfterContentChange}
+            onRetryAdvertised={installAdvertisedPack}
+            theme={theme}
+            onThemeChange={setTheme}
+            hideFlavortext={hideFlavortext}
+            onHideFlavortextChange={setHideFlavortext}
           />
-        ) : route.mode === "edit" ? (
-          <CharacterEditorPage characterId={route.characterId} />
+        ) : route.page === "characters" ? (
+          route.characterId === undefined ? (
+            <CharacterLibraryPage
+              manifests={manifests}
+              {...(activePackId === undefined ? {} : { activePackId })}
+              {...(activeProfile === undefined ? {} : { activeProfile })}
+            />
+          ) : route.mode === "edit" ? (
+            <CharacterEditorPage characterId={route.characterId} />
+          ) : (
+            <CharacterSheetPage
+              characterId={route.characterId}
+              manifests={manifests}
+            />
+          )
         ) : (
-          <CharacterSheetPage
-            characterId={route.characterId}
-            manifests={manifests}
+          <CompendiumPage
+            {...(activePackId === undefined ? {} : { activePackId })}
+            query={route.query}
+            {...(route.entityId === undefined
+              ? {}
+              : { entityId: route.entityId })}
+            hideFlavortext={hideFlavortext}
           />
-        )
-      ) : (
-        <CompendiumPage
-          {...(activePackId === undefined ? {} : { activePackId })}
-          query={route.query}
-          {...(route.entityId === undefined
-            ? {}
-            : { entityId: route.entityId })}
-        />
-      )}
+        )}
+      </HideFlavortextContext.Provider>
       <footer className="public-notice">
         <strong>Unofficial, local-first software.</strong> This project is not
         affiliated with or endorsed by Wizards of the Coast. Public builds do

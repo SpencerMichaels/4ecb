@@ -117,6 +117,8 @@ export interface SettingsPageProps {
   ) => Promise<void>;
   readonly theme: ThemePreference;
   readonly onThemeChange: (theme: ThemePreference) => void;
+  readonly hideFlavortext: boolean;
+  readonly onHideFlavortextChange: (hideFlavortext: boolean) => void;
 }
 
 export function SettingsPage({
@@ -129,6 +131,8 @@ export function SettingsPage({
   onRetryAdvertised,
   theme,
   onThemeChange,
+  hideFlavortext,
+  onHideFlavortextChange,
 }: SettingsPageProps) {
   const [status, setStatus] = useState(
     installedPacks.length === 0 ? "No content packs installed." : "Ready.",
@@ -458,6 +462,16 @@ export function SettingsPage({
             </label>
           ))}
         </fieldset>
+        <label>
+          <input
+            type="checkbox"
+            checked={hideFlavortext}
+            onChange={(event) =>
+              onHideFlavortextChange(event.currentTarget.checked)
+            }
+          />{" "}
+          Hide flavortext
+        </label>
       </section>
 
       <section className="panel settings-section">

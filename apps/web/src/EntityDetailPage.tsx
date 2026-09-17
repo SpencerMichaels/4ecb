@@ -1,13 +1,9 @@
-import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
+import type { ContentEntity } from "@4ecb/content-domain";
 import type { CompendiumQuery, EntityRelationships } from "@4ecb/query-engine";
 
-import { Icon } from "./Icon";
+import { EntityCardBody, EntityCardHeader } from "./EntityCard";
 import { compendiumHash } from "./routes";
-import {
-  entityTypeIcon,
-  entityVisualTone,
-  visualToneClass,
-} from "./visual-language";
+import { entityVisualTone, visualToneClass } from "./visual-language";
 
 export interface EntityDetailPageProps {
   readonly entityId: string;
@@ -15,6 +11,7 @@ export interface EntityDetailPageProps {
   readonly relationships: EntityRelationships | undefined;
   readonly query: CompendiumQuery;
   readonly loading: boolean;
+  readonly hideFlavortext: boolean;
 }
 
 export function EntityDetailPage({
@@ -23,6 +20,7 @@ export function EntityDetailPage({
   relationships,
   query,
   loading,
+  hideFlavortext,
 }: EntityDetailPageProps) {
   if (loading) {
     return <p className="loading-state">Loading compendium entry…</p>;
@@ -39,8 +37,6 @@ export function EntityDetailPage({
     );
   }
 
-  const visibleSpecifics = entity.specifics.filter(isUserFacingSpecific);
-
   return (
     <article
       className={`compendium-detail ${visualToneClass(entityVisualTone(entity))}`}
@@ -50,132 +46,109 @@ export function EntityDetailPage({
         ← Back to results
       </a>
       <header className="detail-heading">
-        <div>
-          <p className="eyebrow entity-kind">
-            <Icon name={entityTypeIcon(entity.type)} /> {entity.type}
-          </p>
-          <h2 id="entity-heading">{entity.name}</h2>
-          <p className="identifier">{entity.id}</p>
-        </div>
+        <EntityCardHeader
+          entity={entity}
+          headingId="entity-heading"
+          headingLevel={2}
+          subheading={<p className="identifier">{entity.id}</p>}
+        />
       </header>
-
-      <dl className="facts">
-        <div>
-          <dt>Source</dt>
-          <dd>{entity.source || "Not specified"}</dd>
-        </div>
-        <div>
-          <dt>Revision</dt>
-          <dd>{entity.revisionDate ?? "Not specified"}</dd>
-        </div>
-        <div>
-          <dt>Rules</dt>
-          <dd>{entity.rules.length.toLocaleString()}</dd>
-        </div>
-      </dl>
-
-      {entity.flavor === undefined ? null : (
-        <section>
-          <h3>Flavor</h3>
-          <p>{entity.flavor}</p>
-        </section>
-      )}
-      {entity.printPrerequisites === undefined ? null : (
-        <section>
-          <h3>Prerequisites</h3>
-          <p className="preserve-lines">{entity.printPrerequisites}</p>
-        </section>
-      )}
-      {entity.description.length === 0 ? null : (
-        <section>
-          <h3>Description</h3>
-          <p className="preserve-lines">{entity.description}</p>
-        </section>
-      )}
-      {visibleSpecifics.length === 0 ? null : (
-        <section>
-          <h3>Fields</h3>
-          <dl className="field-list">
-            {visibleSpecifics.map((field) => (
-              <div key={`${field.ordinal}-${field.name}`}>
-                <dt>{field.name || "Unnamed field"}</dt>
-                <dd className="preserve-lines">{field.value}</dd>
+      <EntityCardBody
+        entity={entity}
+        hideFlavortext={hideFlavortext}
+        afterNarrative={
+          <>
+            <dl className="facts">
+              <div>
+                <dt>Revision</dt>
+                <dd>{entity.revisionDate ?? "Not specified"}</dd>
               </div>
-            ))}
-          </dl>
-        </section>
-      )}
-      {entity.rules.length === 0 ? null : (
-        <details className="rule-details">
-          <summary>Rule statements ({entity.rules.length})</summary>
-          <ol>
-            {entity.rules.map((rule) => (
-              <li key={`${rule.ordinal}-${rule.name}`}>
-                <strong>{rule.name}</strong>
-                {rule.attributes.length === 0 ? null : (
-                  <dl className="rule-attributes">
-                    {rule.attributes.map((attribute, index) => (
-                      <div key={`${index}-${attribute.name}`}>
-                        <dt>{attribute.name}</dt>
-                        <dd>{attribute.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
+              <div>
+                <dt>Rules</dt>
+                <dd>{entity.rules.length.toLocaleString()}</dd>
+              </div>
+            </dl>
+          </>
+        }
+        afterFields={
+          <>
+            {entity.rules.length === 0 ? null : (
+              <details className="rule-details">
+                <summary>Rule statements ({entity.rules.length})</summary>
+                <ol>
+                  {entity.rules.map((rule) => (
+                    <li key={`${rule.ordinal}-${rule.name}`}>
+                      <strong>{rule.name}</strong>
+                      {rule.attributes.length === 0 ? null : (
+                        <dl className="rule-attributes">
+                          {rule.attributes.map((attribute, index) => (
+                            <div key={`${index}-${attribute.name}`}>
+                              <dt>{attribute.name}</dt>
+                              <dd>{attribute.value}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      )}
+                      {rule.text.length === 0 ? null : <p>{rule.text}</p>}
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            )}
+            {relationships === undefined ||
+            (relationships.references.length === 0 &&
+              relationships.referencedBy.length === 0) ? null : (
+              <section className="relationships">
+                <div className="relationship-heading">
+                  <h3>Related entries</h3>
+                  <a
+                    href={compendiumHash({
+                      ...query,
+                      text: "",
+                      facets: [],
+                      ranges: [],
+                      relatedTo: entity.id,
+                      page: { ...query.page, offset: 0 },
+                    })}
+                  >
+                    Search all related entries
+                  </a>
+                </div>
+                {relationships.references.length === 0 ? null : (
+                  <div>
+                    <h4>This entry references</h4>
+                    <ul>
+                      {relationships.references.map((item) => (
+                        <li key={item.id}>
+                          <a href={compendiumHash(query, item.id)}>
+                            {item.name}
+                          </a>{" "}
+                          <span>({item.type})</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
-                {rule.text.length === 0 ? null : <p>{rule.text}</p>}
-              </li>
-            ))}
-          </ol>
-        </details>
-      )}
-
-      {relationships === undefined ||
-      (relationships.references.length === 0 &&
-        relationships.referencedBy.length === 0) ? null : (
-        <section className="relationships">
-          <div className="relationship-heading">
-            <h3>Related entries</h3>
-            <a
-              href={compendiumHash({
-                ...query,
-                text: "",
-                facets: [],
-                ranges: [],
-                relatedTo: entity.id,
-                page: { ...query.page, offset: 0 },
-              })}
-            >
-              Search all related entries
-            </a>
-          </div>
-          {relationships.references.length === 0 ? null : (
-            <div>
-              <h4>This entry references</h4>
-              <ul>
-                {relationships.references.map((item) => (
-                  <li key={item.id}>
-                    <a href={compendiumHash(query, item.id)}>{item.name}</a>{" "}
-                    <span>({item.type})</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {relationships.referencedBy.length === 0 ? null : (
-            <div>
-              <h4>Referenced by</h4>
-              <ul>
-                {relationships.referencedBy.map((item) => (
-                  <li key={item.id}>
-                    <a href={compendiumHash(query, item.id)}>{item.name}</a>{" "}
-                    <span>({item.type})</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </section>
-      )}
+                {relationships.referencedBy.length === 0 ? null : (
+                  <div>
+                    <h4>Referenced by</h4>
+                    <ul>
+                      {relationships.referencedBy.map((item) => (
+                        <li key={item.id}>
+                          <a href={compendiumHash(query, item.id)}>
+                            {item.name}
+                          </a>{" "}
+                          <span>({item.type})</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </section>
+            )}
+          </>
+        }
+      />
     </article>
   );
 }

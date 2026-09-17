@@ -23,7 +23,7 @@ import {
   type CharacterCommand,
   type CharacterRecord,
 } from "@4ecb/character-domain";
-import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
+import type { ContentEntity } from "@4ecb/content-domain";
 import { projectBuildForLegacyExport } from "@4ecb/legacy-dnd4e";
 import {
   ABILITY_SCORE_NAMES,
@@ -94,6 +94,11 @@ import {
 } from "./builder-ui";
 import { Icon, type IconName } from "./Icon";
 import { ActionTypeIcon } from "./ActionTypeIcon";
+import {
+  EntityCardBody,
+  EntityCardHeader,
+  HideFlavortextContext,
+} from "./EntityCard";
 import { KeyAbilityMarker } from "./KeyAbilityMarker";
 import { EquipmentWorkspace } from "./EquipmentWorkspace";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
@@ -963,72 +968,37 @@ function CandidateDetailCard({
   readonly relationship?: string;
   readonly themePowerLevel?: number | null;
 }) {
+  const hideFlavortext = useContext(HideFlavortextContext);
   const headingId = `candidate-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}${relationship === undefined ? "" : "-granted"}`;
   const isThemeCandidate =
     candidate !== undefined &&
     entity.type.trim().toLocaleLowerCase() === "theme";
-  const source =
-    entity.source ||
-    contentSpecificValue(entity, "Source")?.trim() ||
-    "Not specified";
-  const visibleSpecifics = entity.specifics.filter(
-    (field) =>
-      isUserFacingSpecific(field) &&
-      field.name.trim().toLocaleLowerCase() !== "source",
-  );
   const entityTone = entityVisualTone(entity);
   const tone = visualToneClass(entityTone);
-  const typeLabel =
-    entity.type.trim().toLocaleLowerCase() === "power"
-      ? overviewPowerType(entityTone)
-      : entity.type;
-  const themePowerTypeId = `${headingId}-type`;
-  const themePowerActionType = contentSpecificValue(entity, "Action Type");
-  const themePowerAttackType = contentSpecificValue(entity, "Attack Type");
   const body = (
-    <>
-      {candidate === undefined || candidate.eligible ? null : (
-        <p className="candidate-reason">{candidateReason(candidate.reasons)}</p>
-      )}
-      {entity.printPrerequisites === undefined ? null : (
-        <section>
-          <h5>Prerequisites</h5>
-          <p className="preserve-lines">{entity.printPrerequisites}</p>
-        </section>
-      )}
-      {entity.flavor === undefined ? null : (
-        <p className="candidate-flavor">{entity.flavor}</p>
-      )}
-      {entity.description.length === 0 ? null : (
-        <section>
-          <h5>Description</h5>
-          {isThemeCandidate ? (
-            <ThemeCandidateDescription
-              key={entity.id}
-              description={entity.description}
-              entityName={entity.name}
-              id={`${headingId}-description`}
-            />
-          ) : (
-            <p className="preserve-lines">{entity.description}</p>
-          )}
-        </section>
-      )}
-      {visibleSpecifics.length === 0 ? null : (
-        <section>
-          <h5>Details</h5>
-          <dl className="candidate-fields">
-            {visibleSpecifics.map((field) => (
-              <div key={`${field.ordinal}-${field.name}`}>
-                <dt>{field.name || "Detail"}</dt>
-                <dd className="preserve-lines">{field.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-      )}
-      <p className="detail-source-note">Source: {source}</p>
-    </>
+    <EntityCardBody
+      entity={entity}
+      hideFlavortext={hideFlavortext}
+      beforeNarrative={
+        candidate === undefined || candidate.eligible ? null : (
+          <p className="candidate-reason">
+            {candidateReason(candidate.reasons)}
+          </p>
+        )
+      }
+      {...(isThemeCandidate
+        ? {
+            renderDescription: (description: string) => (
+              <ThemeCandidateDescription
+                key={entity.id}
+                description={description}
+                entityName={entity.name}
+                id={`${headingId}-description`}
+              />
+            ),
+          }
+        : {})}
+    />
   );
 
   if (themePowerLevel !== undefined) {
@@ -1038,20 +1008,12 @@ function CandidateDetailCard({
         className={`candidate-detail theme-power-card ${tone}`}
         open
       >
-        <summary aria-labelledby={`${headingId} ${themePowerTypeId}`}>
-          <ActionTypeIcon decorative value={themePowerActionType} />
-          <h4 id={headingId}>
-            {entity.name}
-            {themePowerAttackType === undefined ? null : (
-              <span className="theme-power-attack-type">
-                {` (${themePowerAttackType.toLocaleLowerCase()})`}
-              </span>
-            )}
-          </h4>
-          <span className="theme-power-type" id={themePowerTypeId}>
-            {typeLabel}
-            {themePowerLevel === null ? null : ` ${themePowerLevel}`}
-          </span>
+        <summary>
+          <EntityCardHeader
+            entity={entity}
+            headingId={headingId}
+            headingLevel={4}
+          />
         </summary>
         <div className="theme-power-card-body">{body}</div>
       </details>
@@ -1064,19 +1026,21 @@ function CandidateDetailCard({
       className={`candidate-detail ${tone}`}
       tabIndex={0}
     >
-      <header>
-        <div>
-          <p className="eyebrow entity-kind">
-            <Icon name={entityTypeIcon(entity.type)} /> {typeLabel}
-          </p>
-          <h4 id={headingId}>{entity.name}</h4>
-          {relationship === undefined ? null : (
-            <p className="candidate-relationship">{relationship}</p>
-          )}
-        </div>
-        {candidate === undefined || candidate.eligible ? null : (
-          <span className="candidate-unavailable">Unavailable</span>
-        )}
+      <header className="primary-detail-heading">
+        <EntityCardHeader
+          entity={entity}
+          headingId={headingId}
+          subheading={
+            <>
+              {relationship === undefined ? null : (
+                <p className="candidate-relationship">{relationship}</p>
+              )}
+              {candidate === undefined || candidate.eligible ? null : (
+                <span className="candidate-unavailable">Unavailable</span>
+              )}
+            </>
+          }
+        />
       </header>
       {body}
     </aside>
@@ -4251,6 +4215,7 @@ export function CharacterEditorPage({
 }: {
   readonly characterId: string;
 }) {
+  const hideFlavortext = useContext(HideFlavortextContext);
   const [character, setCharacter] = useState<CharacterRecord>();
   const [entities, setEntities] = useState<readonly ContentEntity[]>([]);
   const [, setRevision] = useState(0);
@@ -5531,6 +5496,7 @@ export function CharacterEditorPage({
             byId={byId}
             {...(packId === undefined ? {} : { packId })}
             activeDefinitionIds={currentEvaluation?.activeDefinitionIds ?? []}
+            hideFlavortext={hideFlavortext}
             wallet={{
               carried: {
                 copper: carriedWallet.cp,

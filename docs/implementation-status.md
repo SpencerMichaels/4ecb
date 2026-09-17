@@ -132,6 +132,23 @@ web-app verification pass.
 The focused accessibility contract test, web TypeScript check, and live
 web-app verification pass.
 
+## M5.5 unified entity cards checkpoint (2026-09-16)
+
+- Compendium, builder selection details, Equipment details, granted entities,
+  and embedded theme powers now share one entity-card header/body renderer.
+  Context wrappers add only controls and contextual metadata such as
+  collapsibility, selection state, price, navigation, or relationships.
+- Shared power headers retain the approved action icon, normal-weight lowercase
+  attack type, and right-aligned usage/level in every context. Flavor,
+  description, prerequisites, specifics, and subdued Source ordering are also
+  shared; Short Description is omitted everywhere.
+- The global Hide flavortext preference is persisted and applies to every
+  entity-card surface.
+
+All 55 focused builder/accessibility tests and the web TypeScript check pass.
+The shared card presentation was verified live across Compendium, builder,
+Equipment, and embedded/collapsible cards.
+
 ## M5.5 equipment workspace checkpoint (2026-09-14)
 
 - Equipment is now a full peer workspace with Loadout, Inventory, Shop, and

@@ -942,6 +942,37 @@ a {
   padding-bottom: 0.75rem;
 }
 
+.detail-heading-row {
+  align-items: baseline;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.detail-heading-row .entity-kind {
+  flex: 0 0 auto;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.entity-card-heading-main {
+  align-items: baseline;
+  display: flex;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.entity-card-heading-main .action-type-icon {
+  align-self: baseline;
+  color: var(--tone, var(--accent-strong));
+  flex: 0 0 auto;
+  line-height: inherit;
+}
+
+.entity-card-attack-type {
+  font-weight: 400;
+}
+
 .facts,
 .field-list,
 .rule-attributes {
@@ -3431,9 +3462,8 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   background: var(--tone-soft);
   border-bottom: 1px solid var(--border);
   cursor: pointer;
-  display: grid;
+  display: flex;
   gap: 0.75rem;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
   list-style: none;
   margin: 0;
   padding: 0.75rem 1rem;
@@ -3447,8 +3477,8 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
 .theme-power-card > summary::after {
   align-self: center;
   content: "›";
+  flex: 0 0 auto;
   font-size: 1.2rem;
-  grid-column: 4;
   line-height: 1;
   transform: rotate(0deg);
   transition: transform 120ms ease;
@@ -3463,30 +3493,16 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   outline-offset: 2px;
 }
 
+.theme-power-card > summary .detail-heading-row {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .theme-power-card > summary h4,
-.theme-power-type {
+.theme-power-card > summary .entity-kind {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.theme-power-card > summary .action-type-icon {
-  align-self: baseline;
-  color: var(--tone);
-  grid-column: 1;
-  line-height: inherit;
-  min-width: 1rem;
-}
-
-.theme-power-attack-type {
-  font-weight: 400;
-}
-
-.theme-power-type {
-  color: var(--tone);
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-align: right;
 }
 
 .theme-power-card-body {
@@ -3622,6 +3638,18 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   justify-content: space-between;
   margin-bottom: 0.85rem;
   padding-bottom: 0.75rem;
+}
+
+.candidate-detail > header.primary-detail-heading {
+  display: block;
+}
+
+.primary-detail-subheading {
+  align-items: start;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-top: 0.35rem;
 }
 
 .candidate-detail h4,

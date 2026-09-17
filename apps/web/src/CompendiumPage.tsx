@@ -201,12 +201,14 @@ export interface CompendiumPageProps {
   readonly activePackId?: string;
   readonly query: CompendiumQuery;
   readonly entityId?: string;
+  readonly hideFlavortext: boolean;
 }
 
 export function CompendiumPage({
   activePackId,
   query,
   entityId,
+  hideFlavortext,
 }: CompendiumPageProps) {
   const [client, setClient] = useState<QueryRuntimeClient>();
   const [indexInfo, setIndexInfo] = useState<QueryIndexInfo>();
@@ -433,6 +435,7 @@ export function CompendiumPage({
           relationships={relationships}
           query={query}
           loading={detailLoading}
+          hideFlavortext={hideFlavortext}
         />
       ) : (
         <>

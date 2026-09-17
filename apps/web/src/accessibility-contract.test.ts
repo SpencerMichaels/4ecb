@@ -11,6 +11,11 @@ const equipmentWorkspace = readFileSync(
   new URL("./EquipmentWorkspace.tsx", import.meta.url),
   "utf8",
 );
+const entityCard = readFileSync(
+  new URL("./EntityCard.tsx", import.meta.url),
+  "utf8",
+);
+const app = readFileSync(new URL("./App.tsx", import.meta.url), "utf8");
 
 function channel(value: number): number {
   const normalized = value / 255;
@@ -124,37 +129,18 @@ describe("release accessibility contract", () => {
     expect(candidateDetails).not.toContain("theme-power-level");
     expect(candidateDetails).not.toContain("Theme power");
     expect(candidateDetails).toContain("if (themePowerLevel !== undefined)");
-    expect(candidateDetails).toContain(
-      "<ActionTypeIcon decorative value={themePowerActionType} />",
+    expect(candidateDetails).toMatch(
+      /<summary>\s*<EntityCardHeader[\s\S]*?<\/summary>/,
     );
-    expect(candidateDetails).toContain(
-      'contentSpecificValue(entity, "Action Type")',
-    );
-    expect(candidateDetails).toContain(
-      'contentSpecificValue(entity, "Attack Type")',
-    );
-    expect(candidateDetails).toContain('className="theme-power-attack-type"');
-    expect(candidateDetails).toContain(
-      "themePowerAttackType.toLocaleLowerCase()",
-    );
+    expect(candidateDetails).toContain("<EntityCardBody");
     expect(candidateDetails).toMatch(
       /if \(themePowerLevel !== undefined\)[\s\S]*?return \([\s\S]*?<aside[\s\S]*?tabIndex={0}/,
     );
     expect(styles).toMatch(
-      /\.theme-power-card > summary\s*\{[^}]*grid-template-columns: auto minmax\(0, 1fr\) auto auto[^}]*cursor: pointer|\.theme-power-card > summary\s*\{[^}]*cursor: pointer[^}]*grid-template-columns: auto minmax\(0, 1fr\) auto auto/,
+      /\.theme-power-card > summary\s*\{[^}]*cursor: pointer/,
     );
     expect(styles).toMatch(
       /\.theme-power-card > summary:focus-visible\s*\{[^}]*outline:/,
-    );
-    expect(styles).toMatch(/\.theme-power-type\s*\{[^}]*text-align: right/);
-    expect(styles).toMatch(
-      /\.theme-power-attack-type\s*\{[^}]*font-weight: 400/,
-    );
-    expect(styles).toMatch(
-      /\.theme-power-card > summary::after\s*\{[^}]*grid-column: 4/,
-    );
-    expect(styles).toMatch(
-      /\.theme-power-card > summary \.action-type-icon\s*\{[^}]*align-self: baseline[^}]*line-height: inherit/,
     );
     expect(styles).toMatch(/\.theme-power-card\s*\{[^}]*padding: 0/);
     expect(styles).toMatch(/\.theme-power-card > summary\s*\{[^}]*margin: 0/);
@@ -180,14 +166,49 @@ describe("release accessibility contract", () => {
     expect(candidateDetails).toContain("aria-expanded={expanded}");
     expect(candidateDetails).toContain('{expanded ? "Less…" : "More…"}');
     expect(candidateDetails).toContain("key={entity.id}");
-    expect(candidateDetails).toContain(
-      'field.name.trim().toLocaleLowerCase() !== "source"',
-    );
-    expect(candidateDetails).toContain('className="detail-source-note"');
+    expect(entityCard).toContain('["short description", "source"].includes(');
+    expect(entityCard).toContain('className="detail-source-note"');
     expect(
-      candidateDetails.indexOf('className="detail-source-note"'),
-    ).toBeGreaterThan(candidateDetails.indexOf('className="candidate-fields"'));
-    expect(candidateDetails).not.toContain("<dt>Source</dt>");
+      entityCard.indexOf('className="detail-source-note"'),
+    ).toBeGreaterThan(entityCard.indexOf("{afterFields}"));
+  });
+
+  it("uses one entity-card design and flavortext preference everywhere", () => {
+    const entityDetail = readFileSync(
+      new URL("./EntityDetailPage.tsx", import.meta.url),
+      "utf8",
+    );
+    const candidateDetails = characterEditor.slice(
+      characterEditor.indexOf("function CandidateDetail("),
+      characterEditor.indexOf("function BaseAbilityScoreEditor"),
+    );
+    for (const source of [candidateDetails, equipmentWorkspace, entityDetail]) {
+      expect(source).toContain("EntityCardHeader");
+      expect(source).toContain("EntityCardBody");
+    }
+    expect(entityCard).toContain('className="detail-heading-row"');
+    expect(entityCard).toContain("primaryDetailTypeLabel(entity)");
+    expect(entityCard).toContain(
+      "<ActionTypeIcon decorative value={actionType} />",
+    );
+    expect(entityCard).toContain('contentSpecificValue(entity, "Action Type")');
+    expect(entityCard).toContain('contentSpecificValue(entity, "Attack Type")');
+    expect(entityCard).toContain('className="entity-card-attack-type"');
+    expect(entityCard).toContain("attackType.toLocaleLowerCase()");
+    expect(styles).toMatch(
+      /\.entity-card-heading-main \.action-type-icon\s*\{[^}]*align-self: baseline[^}]*line-height: inherit/,
+    );
+    expect(styles).toMatch(
+      /\.entity-card-attack-type\s*\{[^}]*font-weight: 400/,
+    );
+    expect(entityCard).not.toContain("<h5>Description</h5>");
+    expect(characterEditor).toContain("useContext(HideFlavortextContext)");
+    expect(entityCard).toContain(
+      "entity.flavor === undefined || hideFlavortext",
+    );
+    expect(app).toContain(
+      "<HideFlavortextContext.Provider value={hideFlavortext}>",
+    );
   });
 
   it("keeps table selection spatially stable and communicates it without checkmarks", () => {

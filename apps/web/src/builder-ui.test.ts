@@ -55,6 +55,7 @@ import {
   levelRailChoiceStatus,
   planningHorizonCommand,
   powerTableLevel,
+  primaryDetailTypeLabel,
   selectedChoiceHasWarning,
   splitLabeledDescription,
   themeDescriptionParagraphs,
@@ -1025,6 +1026,15 @@ describe("builder planning UI", () => {
     expect(powerTableLevel(levelSixA)).toBe(6);
     expect(powerTableLevel(levelTwo)).toBe(2);
     expect(powerTableLevel(levelSixB)).toBe(6);
+    expect(
+      primaryDetailTypeLabel(
+        entity("POWER_ENCOUNTER", "Takedown Attack", "Power", {
+          Level: "6",
+          "Power Usage": "Encounter",
+        }),
+      ),
+    ).toBe("Encounter 6");
+    expect(primaryDetailTypeLabel(ranger)).toBe("Class");
   });
 
   it("groups background benefits without changing exact candidates", () => {

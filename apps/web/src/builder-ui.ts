@@ -19,6 +19,7 @@ import type {
 } from "@4ecb/rules-engine";
 
 import { createLevelFrame } from "./new-character";
+import { entityVisualTone } from "./visual-language";
 
 export const MAX_CHARACTER_LEVEL = 30;
 
@@ -478,6 +479,28 @@ export function powerTableLevel(entity: ContentEntity): number | undefined {
   if (value === undefined) return undefined;
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+/** The compact type shown opposite an entity name in primary detail panes. */
+export function primaryDetailTypeLabel(entity: ContentEntity): string {
+  if (entity.type.trim().toLocaleLowerCase() !== "power") return entity.type;
+
+  const usage = (() => {
+    switch (entityVisualTone(entity)) {
+      case "at-will":
+        return "At-Will";
+      case "encounter":
+        return "Encounter";
+      case "daily":
+        return "Daily";
+      case "utility":
+        return "Utility";
+      default:
+        return "Power";
+    }
+  })();
+  const level = powerTableLevel(entity);
+  return level === undefined ? usage : `${usage} ${level}`;
 }
 
 /**
