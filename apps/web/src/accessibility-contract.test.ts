@@ -370,4 +370,27 @@ describe("release accessibility contract", () => {
     expect(equipmentWorkspace).not.toContain("equipment-slot-filter");
     expect(equipmentWorkspace).not.toContain("shopItemSlotCandidates");
   });
+
+  it("submits catalog text search without querying on each keystroke", () => {
+    expect(equipmentWorkspace).toContain(
+      'const [draftText, setDraftText] = useState("")',
+    );
+    expect(equipmentWorkspace).toContain(
+      'const [submittedText, setSubmittedText] = useState("")',
+    );
+    expect(equipmentWorkspace).toContain('className="equipment-text-search"');
+    expect(equipmentWorkspace).toContain("setSubmittedText(draftText);");
+    expect(equipmentWorkspace).toContain("setOffset(0);");
+    expect(equipmentWorkspace).toContain("value={draftText}");
+    expect(equipmentWorkspace).toContain(
+      "onChange={(event) => setDraftText(event.currentTarget.value)}",
+    );
+    expect(equipmentWorkspace).toContain(
+      '<button type="submit">Search</button>',
+    );
+    expect(equipmentWorkspace).toContain("mode,\n    submittedText,");
+    expect(equipmentWorkspace).not.toContain(
+      "setText(event.currentTarget.value)",
+    );
+  });
 });

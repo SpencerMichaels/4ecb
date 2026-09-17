@@ -335,7 +335,8 @@ export function EquipmentWorkspace({
 }) {
   const tab = activeTab;
   const [inspected, setInspected] = useState<ContentEntity>();
-  const [text, setText] = useState("");
+  const [draftText, setDraftText] = useState("");
+  const [submittedText, setSubmittedText] = useState("");
   const [type, setType] = useState("");
   const [source, setSource] = useState("");
   const [slot, setSlot] = useState("");
@@ -352,7 +353,7 @@ export function EquipmentWorkspace({
     packId,
     tab === "shop" || tab === "practices",
     mode,
-    text,
+    submittedText,
     type,
     source,
     slot,
@@ -430,17 +431,24 @@ export function EquipmentWorkspace({
 
   const catalogControls = (
     <div className="equipment-catalog-controls">
-      <label>
-        Search
-        <input
-          type="search"
-          value={text}
-          onChange={(event) => {
-            setText(event.currentTarget.value);
-            setOffset(0);
-          }}
-        />
-      </label>
+      <form
+        className="equipment-text-search"
+        onSubmit={(event) => {
+          event.preventDefault();
+          setSubmittedText(draftText);
+          setOffset(0);
+        }}
+      >
+        <label>
+          Search
+          <input
+            type="search"
+            value={draftText}
+            onChange={(event) => setDraftText(event.currentTarget.value)}
+          />
+        </label>
+        <button type="submit">Search</button>
+      </form>
       {mode === "shop" ? (
         <label>
           Type

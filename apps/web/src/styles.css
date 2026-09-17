@@ -3654,6 +3654,13 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   grid-template-columns: minmax(12rem, 2fr) repeat(4, minmax(8rem, 1fr));
 }
 
+.equipment-text-search {
+  align-items: end;
+  display: grid;
+  gap: 0.35rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .equipment-query-status {
   color: var(--muted);
   font-size: 0.8rem;

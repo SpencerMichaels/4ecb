@@ -1714,6 +1714,15 @@ The product owner verified the shortcuts, existing-filter integration,
 pagination, and Holy Symbol results live. All 308 public tests, formatting,
 lint, TypeScript checks, and whitespace checks pass.
 
+## Shop text-search submission checkpoint (2026-09-17)
+
+- Shop text entry is held as a draft and reaches the existing catalog query only
+  when its accessible form is submitted. Enter and the visible Search button
+  both apply the value; submitting an empty value clears the text filter.
+- Submission resets the 200-record page offset. Facets still apply immediately,
+  and tab switches and loadout slot shortcuts retain their existing filtering
+  and pagination behavior.
+
 ## Retraining dismissal checkpoint (2026-09-16)
 
 - The Retraining pane uses the same icon-only X control before and after a
