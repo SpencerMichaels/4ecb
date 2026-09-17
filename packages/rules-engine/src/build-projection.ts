@@ -348,6 +348,23 @@ export function canMaterializeEvaluatedChoiceProvider(
   return false;
 }
 
+const sharedEntityIndexCache = new WeakMap<
+  readonly ContentEntity[],
+  ReadonlyMap<string, ContentEntity>
+>();
+
+function sharedEntityIndex(
+  entities: readonly ContentEntity[],
+): ReadonlyMap<string, ContentEntity> {
+  const cached = sharedEntityIndexCache.get(entities);
+  if (cached !== undefined) return cached;
+  const created = new Map(
+    entities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
+  );
+  sharedEntityIndexCache.set(entities, created);
+  return created;
+}
+
 export function projectBuildForEvaluation(
   build: CharacterBuild,
   entities: readonly ContentEntity[],
@@ -399,10 +416,13 @@ export function projectBuildForEvaluation(
       ];
     },
   );
-  const evaluationEntities = [...entities, ...localEntities];
-  const byId = new Map(
-    evaluationEntities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
+  const sharedById = sharedEntityIndex(entities);
+  const localById = new Map(
+    localEntities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
   );
+  const entityById = (id: string): ContentEntity | undefined =>
+    localById.get(id.toLocaleLowerCase()) ??
+    sharedById.get(id.toLocaleLowerCase());
   const occurrences: CharacterOccurrence[] = [];
 
   const visit = (
@@ -441,7 +461,7 @@ export function projectBuildForEvaluation(
     const entity =
       occurrence.identity.definitionId === undefined
         ? undefined
-        : byId.get(occurrence.identity.definitionId.toLocaleLowerCase());
+        : entityById(occurrence.identity.definitionId);
     const slots = childSlots(occurrence, entity);
     occurrence.children.forEach((child, index) => {
       const childSlot = slots[index] ?? {
@@ -485,9 +505,7 @@ export function projectBuildForEvaluation(
   // grabbag evidence rather than being discarded.
   for (const alternate of build.alternates) {
     const provider = occurrences.find((occurrence) => {
-      const providerEntity = byId.get(
-        occurrence.definitionId.toLocaleLowerCase(),
-      );
+      const providerEntity = entityById(occurrence.definitionId);
       const identityMatches =
         alternate.provider.definitionId !== undefined
           ? occurrence.definitionId.toLocaleLowerCase() ===
@@ -508,9 +526,7 @@ export function projectBuildForEvaluation(
       );
     });
     const providerEntity =
-      provider === undefined
-        ? undefined
-        : byId.get(provider.definitionId.toLocaleLowerCase());
+      provider === undefined ? undefined : entityById(provider.definitionId);
     const selectRule =
       providerEntity === undefined
         ? undefined
@@ -557,7 +573,7 @@ export function projectBuildForEvaluation(
       const entity =
         element.definitionId === undefined
           ? undefined
-          : byId.get(element.definitionId.toLocaleLowerCase());
+          : entityById(element.definitionId);
       const slots = childSlots(provider, entity);
       children.forEach((child, index) => {
         const slot = slots[index] ?? {
@@ -577,7 +593,7 @@ export function projectBuildForEvaluation(
   // single matching descendant; ambiguous or unfamiliar layouts remain
   // unresolved for the normal evaluator diagnostic.
   for (const provider of [...occurrences]) {
-    const providerEntity = byId.get(provider.definitionId.toLocaleLowerCase());
+    const providerEntity = entityById(provider.definitionId);
     if (providerEntity === undefined) continue;
     for (const rule of parseRules(providerEntity.id, providerEntity.rules)) {
       if (
@@ -614,7 +630,7 @@ export function projectBuildForEvaluation(
       };
       const matches = occurrences.filter((candidate) => {
         if (!isDescendant(candidate)) return false;
-        const definition = byId.get(candidate.definitionId.toLocaleLowerCase());
+        const definition = entityById(candidate.definitionId);
         return (
           definition?.type.toLocaleLowerCase() === "race ability bonus" &&
           categoryNames.has(definition.name.toLocaleLowerCase())

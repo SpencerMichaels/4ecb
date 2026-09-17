@@ -68,6 +68,7 @@ describe("ContentPackRepository", () => {
     const pack = await makePack();
     await storage.install(pack);
     expect(await storage.list()).toEqual([pack.manifest]);
+    expect(await storage.manifest(pack.manifest.packId)).toEqual(pack.manifest);
     expect((await storage.get(pack.manifest.packId))?.entities[0]?.name).toBe(
       "Test",
     );

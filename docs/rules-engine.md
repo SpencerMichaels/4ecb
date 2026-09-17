@@ -137,6 +137,33 @@ exhaustive diagnostic, and 4.8 seconds cold and 0.55 seconds warm for the
 ordinary level-8 builder projection. The browser's application-level exact
 evaluation cache still bypasses unchanged projections entirely.
 
+That exact cache now survives a document restart. Its SHA-256 key covers the
+rules-cache semantic version, exact pack ID/content digest, and canonical
+`EvaluationInput`, including candidate and power-output projections. Entries
+are disposable, shape-checked, bounded by least-recent use, and isolated from
+durable character/backup storage; any read, validation, deletion, or quota
+failure falls through to the worker. Exhaustive candidate evaluations are not
+persisted. The worker validates only the pack manifest during initialization,
+then shares one lazy full-pack decode across concurrent misses, so a persistent
+hit does not pay the former duplicate worker decode.
+
+Builder routes explicitly request full candidates only where a selectable UI is
+visible: the chosen Build level or the Character details choice levels.
+Overview, Equipment, and Diagnostics retain topology, selected candidates, and
+legality without expanding catalogs. A distinct selected/current Build horizon
+still requests its visible level so level-local ability controls remain
+complete. The editor does not consume `EvaluatedCharacter.powers`—its power
+detail cards use content entities—so editor requests omit attack/loadout
+materialization. Authoritative sheets continue to request powers while omitting
+unused choice catalogs, and omission of `includePowers` remains compatibility
+equivalent to `true` for every other caller.
+
+Browser performance entries named `4ecb:*` cover character-record readiness,
+main-thread content readiness, build projection, worker readiness, worker
+content load/evaluation/round-trip, evaluation source (worker or persistent
+cache), and the first returned character evaluation. These diagnostics are
+best-effort and never affect loading behavior.
+
 The character remains intentionally reported as illegal because its file marks
 a house-rule selection and the corpus cannot prove one custom feat
 prerequisite. Those are evidence-preserving diagnostics rather than parity

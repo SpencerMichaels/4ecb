@@ -523,6 +523,47 @@ describe("character evaluator", () => {
     ).toEqual(["ALLOWED"]);
   });
 
+  it("can omit power/loadout materialization without changing rules results", () => {
+    const definitions = [
+      entity("ROOT", "1", "Level"),
+      entity("POWER", "Test power", "Power", {
+        specifics: {
+          "Power Usage": "At-Will",
+          "Action Type": "Standard Action",
+        },
+      }),
+    ];
+    const input = {
+      level: 1,
+      baseAbilities: {},
+      occurrences: [
+        rootOccurrence,
+        {
+          id: "power",
+          definitionId: "POWER",
+          acquiredLevel: 1,
+          kind: "grabbag" as const,
+        },
+      ],
+      inventory: [],
+    };
+
+    const full = evaluateCharacter(input, definitions);
+    const withoutPowers = evaluateCharacter(
+      { ...input, includePowers: false },
+      definitions,
+    );
+    const explicitPowers = evaluateCharacter(
+      { ...input, includePowers: true },
+      definitions,
+    );
+
+    expect(full.powers).toHaveLength(1);
+    expect(explicitPowers).toEqual(full);
+    expect(withoutPowers.powers).toEqual([]);
+    expect({ ...withoutPowers, powers: full.powers }).toEqual(full);
+  });
+
   it("passes the full definition index and candidate subject to resolved prerequisites", () => {
     const result = evaluateCharacter(
       {

@@ -12,16 +12,48 @@ import { contentProfileMatchesRevision } from "./profile-migration";
 
 const worker = self as DedicatedWorkerGlobalScope;
 let entities: readonly ContentEntity[] | undefined;
+let entitiesReady: Promise<readonly ContentEntity[]> | undefined;
+let initializedProfile:
+  { readonly packId: string; readonly contentDigest: string } | undefined;
 
 function respond(message: RulesWorkerResponse): void {
   worker.postMessage(message);
 }
 
+async function evaluationEntities(): Promise<readonly ContentEntity[]> {
+  if (entities !== undefined) return entities;
+  if (entitiesReady !== undefined) return entitiesReady;
+  if (initializedProfile === undefined)
+    throw new Error("The rules worker is not ready");
+  const profile = initializedProfile;
+  entitiesReady = new ContentPackRepository()
+    .get(profile.packId)
+    .then((pack) => {
+      if (pack === undefined)
+        throw new Error(
+          `Installed content pack ${profile.packId} was not found`,
+        );
+      if (pack.manifest.contentDigest !== profile.contentDigest)
+        throw new Error(
+          `Installed content pack ${profile.packId} no longer matches the bound revision`,
+        );
+      entities = pack.entities;
+      return entities;
+    })
+    .catch((error: unknown) => {
+      entitiesReady = undefined;
+      throw error;
+    });
+  return entitiesReady;
+}
+
 async function handle(request: RulesWorkerRequest): Promise<void> {
   switch (request.type) {
     case "initialize": {
-      const pack = await new ContentPackRepository().get(request.packId);
-      if (pack === undefined)
+      const manifest = await new ContentPackRepository().manifest(
+        request.packId,
+      );
+      if (manifest === undefined)
         throw new Error(
           `Installed content pack ${request.packId} was not found`,
         );
@@ -33,32 +65,40 @@ async function handle(request: RulesWorkerRequest): Promise<void> {
               ? {}
               : { contentDigest: request.contentDigest }),
           },
-          pack.manifest,
+          manifest,
         )
       )
         throw new Error(
           `Installed content pack ${request.packId} no longer matches the bound revision`,
         );
-      entities = pack.entities;
+      initializedProfile = {
+        packId: request.packId,
+        contentDigest: manifest.contentDigest,
+      };
+      entities = undefined;
+      entitiesReady = undefined;
       respond({
         type: "initialized",
         requestId: request.requestId,
         packId: request.packId,
-        contentDigest: pack.manifest.contentDigest,
-        recordCount: entities.length,
+        contentDigest: manifest.contentDigest,
+        recordCount: manifest.recordCount,
       });
       break;
     }
     case "evaluate": {
-      if (entities === undefined)
-        throw new Error("The rules worker is not ready");
       const started = performance.now();
-      const result = evaluateCharacter(request.input, entities);
+      const evaluationContent = await evaluationEntities();
+      const evaluationStarted = performance.now();
+      const result = evaluateCharacter(request.input, evaluationContent);
+      const completed = performance.now();
       respond({
         type: "evaluation",
         requestId: request.requestId,
         result,
-        elapsedMilliseconds: performance.now() - started,
+        elapsedMilliseconds: completed - started,
+        contentLoadMilliseconds: evaluationStarted - started,
+        evaluationMilliseconds: completed - evaluationStarted,
       });
       break;
     }

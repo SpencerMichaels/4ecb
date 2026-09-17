@@ -12,3 +12,4 @@ export {
   CharacterRepository,
   type CharacterBackupInspection,
 } from "./character-repository";
+export { EvaluationCacheRepository } from "./evaluation-cache-repository";

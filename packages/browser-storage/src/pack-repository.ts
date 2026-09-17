@@ -232,6 +232,15 @@ export class ContentPackRepository {
     }
   }
 
+  async manifest(packId: string): Promise<ContentPackManifest | undefined> {
+    const database = await openContentDatabase(this.#databaseName);
+    try {
+      return (await database.get("contentPacks", packId))?.manifest;
+    } finally {
+      database.close();
+    }
+  }
+
   async remove(packId: string): Promise<void> {
     const database = await openContentDatabase(this.#databaseName);
     try {

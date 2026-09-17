@@ -35,6 +35,10 @@ import {
 } from "./prerequisites";
 import { evaluatePowers, type EvaluatedPower } from "./powers";
 
+/** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
+export const RULES_EVALUATION_CACHE_VERSION =
+  "evaluated-character-v1-2026-09-17";
+
 export interface CharacterOccurrence {
   readonly id: string;
   readonly definitionId: string;
@@ -81,6 +85,11 @@ export interface EvaluationInput {
   readonly candidateDetailLevels?: readonly number[];
   /** Optional replacement choices whose nested replacement lists are open. */
   readonly candidateDetailReplacementChoiceIds?: readonly string[];
+  /**
+   * Whether to materialize attack/loadout variants. Defaults to true for
+   * compatibility reports, sheets, exports, and callers that need them.
+   */
+  readonly includePowers?: boolean;
 }
 
 export interface CandidateDecision {
@@ -1987,17 +1996,18 @@ function evaluateCharacterInternal(
   const activeDefinitionIds = occurrences.map(
     (occurrence) => occurrence.definitionId,
   );
-  const powers = prerequisiteContextOnly
-    ? []
-    : evaluatePowers({
-        level: input.level,
-        activeDefinitionIds,
-        inventory,
-        stats: evaluatedStats,
-        overlays,
-        textStrings: text,
-        entities: evaluationEntities,
-      });
+  const powers =
+    prerequisiteContextOnly || input.includePowers === false
+      ? []
+      : evaluatePowers({
+          level: input.level,
+          activeDefinitionIds,
+          inventory,
+          stats: evaluatedStats,
+          overlays,
+          textStrings: text,
+          entities: evaluationEntities,
+        });
   return {
     level: input.level,
     converged,

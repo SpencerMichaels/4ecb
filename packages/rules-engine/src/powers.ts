@@ -128,10 +128,9 @@ function equipmentName(parts: readonly ContentEntity[]): string {
 
 function loadouts(
   inventory: readonly CharacterInventoryEntry[],
-  entities: readonly ContentEntity[],
+  byId: ReadonlyMap<string, ContentEntity>,
   textStrings: Readonly<Record<string, string>>,
 ): readonly Loadout[] {
-  const byId = new Map(entities.map((entity) => [key(entity.id), entity]));
   const result: Loadout[] = [];
   for (const entry of inventory.filter((item) => item.quantity > 0)) {
     const parts = entry.definitionIds.flatMap((id) => {
@@ -670,11 +669,7 @@ export function evaluatePowers(input: {
   const byId = new Map(
     input.entities.map((entity) => [key(entity.id), entity]),
   );
-  const equipped = loadouts(
-    input.inventory,
-    input.entities,
-    input.textStrings ?? {},
-  );
+  const equipped = loadouts(input.inventory, byId, input.textStrings ?? {});
   const versatileUsedTwoHanded =
     Number(
       textValue(input.textStrings ?? {}, "_INTERNAL_VersatileUsedTwoHanded"),

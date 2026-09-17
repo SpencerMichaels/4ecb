@@ -1808,3 +1808,48 @@ pass.
   and alternates continue to extend the horizon normally.
 - The temporary foreground/background scheduling workaround was removed; the
   bogus level-26 evaluation is no longer requested.
+
+## Character initial-load performance checkpoint (2026-09-17)
+
+- Candidate-scoped evaluated snapshots persist in a separate 24-entry LRU
+  IndexedDB cache. Keys include an explicit rules semantic version, exact pack
+  ID/content digest, canonical projected build input, candidate/replacement
+  detail scopes, and power-output mode. Input, profile, version, level, or
+  projection changes miss safely; malformed entries are deleted, and every
+  storage/hash/quota failure falls back to canonical worker evaluation.
+- Rules workers now validate the small stored manifest at initialization and
+  defer full pack decoding until a cache miss. Concurrent current/planning/
+  selected-level misses share one decode. An unchanged repeat open can use the
+  persistent result without decoding the corpus a second time in the worker.
+- Build requests expand candidates only for the visible level; Character
+  details expands its own choice levels; Overview, Equipment, and Diagnostics
+  request no presentation-only catalogs. Distinct historical/current Build
+  evaluations still expand the visible level required by ability and choice
+  controls. Results publish independently as each horizon completes.
+- The editor's detail surfaces use content entities and do not consume
+  evaluated attack/loadout variants, so editor evaluations use
+  `includePowers: false`. Sheet evaluations retain the compatibility-default
+  power output while omitting unused choice catalogs. Public evaluator tests
+  prove that explicit/default power output is unchanged and that omitting power
+  materialization changes no other evaluated field.
+- Immutable content-ID indexes are reused by build projections, including
+  character-local user-edit overlays without cloning the 38,339-record map.
+  Power evaluation also shares one lookup map between loadout and power phases.
+- Best-effort `4ecb:*` Performance Timeline entries expose character storage,
+  content readiness, projection, worker initialization/content/evaluation,
+  round-trip, persistent-versus-worker source, and first-result timings.
+- A local 38,339-record Silaqui level-8 scoped benchmark measured approximately
+  5.03 s cold / 0.49 s warm without power materialization versus 5.31 s cold /
+  0.58 s warm with powers on this host. The no-powers result was about 917 KB
+  serialized versus 946 KB. These are development-runner evidence, not browser
+  budgets; the larger repeat-open gain comes from bypassing worker decode and
+  evaluation on an exact persistent hit.
+- Focused verification passes 103 tests covering cache hit/miss/version/profile/
+  input behavior, malformed recovery, read/write failure fallback, LRU storage,
+  route scoping, independent publication, power compatibility, pack manifests,
+  the planning-horizon regression, and the evaluator. Web, browser-storage, and
+  rules-engine TypeScript checks plus targeted lint pass. The full 347-test
+  suite, workspace typechecks, production/PWA build, and Chromium/Firefox print
+  checks also pass. The `scripts/check.sh` wrapper stops at its initial formatting
+  gate because the unrelated, otherwise clean `apps/web/src/equipment-ui.test.ts`
+  is not Prettier-clean; this checkpoint leaves that pre-existing file untouched.

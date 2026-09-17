@@ -39,6 +39,8 @@ export type RulesWorkerResponse =
       readonly requestId: number;
       readonly result: EvaluatedCharacter;
       readonly elapsedMilliseconds: number;
+      readonly contentLoadMilliseconds: number;
+      readonly evaluationMilliseconds: number;
     }
   | {
       readonly type: "profile-migration-preview";

@@ -13,6 +13,13 @@ import {
 import { CharacterRepository } from "@4ecb/browser-storage";
 import { appContentRuntime, type RulesRuntimeClient } from "./app-runtime";
 import {
+  currentCandidateDetailLevels,
+  planningCandidateDetailLevels,
+  publishEvaluationResult,
+  selectedCandidateDetailLevels,
+} from "./builder-evaluation-plan";
+import { recordLoadDuration } from "./load-performance";
+import {
   CharacterTransaction,
   characterWalletTextKey,
   formatLegacyCurrency,
@@ -20,6 +27,7 @@ import {
   type CurrencyAmount,
   type EquipmentSlotId,
   type BuildOccurrence,
+  type CharacterBuild,
   type CharacterCommand,
   type CharacterRecord,
 } from "@4ecb/character-domain";
@@ -4390,12 +4398,20 @@ export function CharacterEditorPage({
   const rulesClient = useRef<RulesRuntimeClient | undefined>(undefined);
   const evaluationRevision = useRef(0);
   const evaluationCache = useRef(new Map<string, EvaluatedCharacter>());
+  const characterLoadStartedAt = useRef(performance.now());
+  const firstEvaluationRecorded = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
+    const startedAt = performance.now();
+    characterLoadStartedAt.current = startedAt;
+    firstEvaluationRecorded.current = false;
     void characters
       .get(characterId)
       .then(async (loaded) => {
+        recordLoadDuration("character-record-ready", startedAt, {
+          characterId,
+        });
         if (loaded === undefined) throw new Error("Character not found");
         if (cancelled) return;
         setCharacter(loaded);
@@ -4551,7 +4567,6 @@ export function CharacterEditorPage({
   ]
     .sort((left, right) => left - right)
     .join(",");
-  const characterDetailsOpen = workspaceTab === "details";
 
   useEffect(() => {
     const client = rulesClient.current;
@@ -4583,33 +4598,42 @@ export function CharacterEditorPage({
       while (cache.size > 3) cache.delete(cache.keys().next().value!);
       return evaluated;
     };
+    const project = (
+      projectedBuild: CharacterBuild,
+      role: "planning" | "current" | "selected",
+    ): EvaluationInput => {
+      const startedAt = performance.now();
+      const input = projectBuildForEvaluation(projectedBuild, entities);
+      recordLoadDuration("build-projection", startedAt, {
+        role,
+        level: projectedBuild.effectiveLevel,
+      });
+      return input;
+    };
     const planningRequest = evaluateCached({
-      ...projectBuildForEvaluation(
-        { ...build, effectiveLevel: planningHorizon },
-        entities,
+      ...project({ ...build, effectiveLevel: planningHorizon }, "planning"),
+      candidateDetailLevels: planningCandidateDetailLevels(
+        workspaceTab,
+        selectedLevel,
+        characterDetailLevelKey.split(",").filter(Boolean).map(Number),
       ),
-      candidateDetailLevels: characterDetailsOpen
-        ? [
-            ...new Set([
-              selectedLevel,
-              ...characterDetailLevelKey.split(",").filter(Boolean).map(Number),
-            ]),
-          ]
-        : [selectedLevel],
       candidateDetailReplacementChoiceIds:
         expandedReplacementChoiceId === undefined
           ? []
           : [expandedReplacementChoiceId],
+      includePowers: false,
     });
     const currentRequest =
       build.effectiveLevel === planningHorizon
         ? planningRequest
         : evaluateCached({
-            ...projectBuildForEvaluation(
-              projectBuildForLegacyExport(build),
-              entities,
+            ...project(projectBuildForLegacyExport(build), "current"),
+            candidateDetailLevels: currentCandidateDetailLevels(
+              workspaceTab,
+              build.effectiveLevel,
+              selectedLevel,
             ),
-            candidateDetailLevels: [],
+            includePowers: false,
           });
     const selectedLevelRequest =
       selectedLevel === planningHorizon
@@ -4617,19 +4641,44 @@ export function CharacterEditorPage({
         : selectedLevel === build.effectiveLevel
           ? currentRequest
           : evaluateCached({
-              ...projectBuildForEvaluation(
+              ...project(
                 { ...build, effectiveLevel: selectedLevel },
-                entities,
+                "selected",
               ),
-              candidateDetailLevels: [],
+              candidateDetailLevels: selectedCandidateDetailLevels(
+                workspaceTab,
+                selectedLevel,
+              ),
+              includePowers: false,
             });
-    void Promise.all([currentRequest, planningRequest, selectedLevelRequest])
-      .then(([current, planning, selected]) => {
-        if (evaluationRevision.current !== revision) return;
-        setCurrentEvaluation(current);
-        setPlanningEvaluation(planning);
-        setSelectedLevelEvaluation(selected);
-        setEvaluationStatus("Rules up to date");
+    const publish = (
+      request: Promise<EvaluatedCharacter>,
+      setter: (evaluation: EvaluatedCharacter) => void,
+    ) =>
+      publishEvaluationResult(
+        request,
+        () => evaluationRevision.current === revision,
+        setter,
+        (evaluation) => {
+          if (firstEvaluationRecorded.current) return;
+          firstEvaluationRecorded.current = true;
+          recordLoadDuration(
+            "character-first-evaluation",
+            characterLoadStartedAt.current,
+            { characterId, level: evaluation.level },
+          );
+        },
+      );
+    const currentPublished = publish(currentRequest, setCurrentEvaluation);
+    const planningPublished = publish(planningRequest, setPlanningEvaluation);
+    const selectedPublished = publish(
+      selectedLevelRequest,
+      setSelectedLevelEvaluation,
+    );
+    void Promise.all([currentPublished, planningPublished, selectedPublished])
+      .then(() => {
+        if (evaluationRevision.current === revision)
+          setEvaluationStatus("Rules up to date");
       })
       .catch((reason: unknown) => {
         if (evaluationRevision.current !== revision) return;
@@ -4639,6 +4688,7 @@ export function CharacterEditorPage({
       });
   }, [
     build,
+    characterId,
     characterDetailLevelKey,
     contentDigest,
     entities,
@@ -4647,7 +4697,7 @@ export function CharacterEditorPage({
     planningHorizon,
     readyPackId,
     selectedLevel,
-    characterDetailsOpen,
+    workspaceTab,
   ]);
 
   const levelChoices = useMemo(

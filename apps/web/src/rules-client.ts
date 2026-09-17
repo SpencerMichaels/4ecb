@@ -9,6 +9,7 @@ import type {
   RulesWorkerRequest,
   RulesWorkerResponse,
 } from "./rules-worker-messages";
+import { recordLoadDuration } from "./load-performance";
 
 interface PendingRequest {
   readonly resolve: (response: RulesWorkerResponse) => void;
@@ -57,9 +58,16 @@ export class RulesWorkerClient {
   }
 
   async evaluate(input: EvaluationInput): Promise<EvaluatedCharacter> {
+    const startedAt = performance.now();
     const response = await this.#request({ type: "evaluate", input });
     if (response.type !== "evaluation")
       throw new Error("Unexpected rules-worker evaluation response");
+    recordLoadDuration("rules-worker-round-trip", startedAt, {
+      level: input.level,
+      workerMilliseconds: response.elapsedMilliseconds,
+      contentLoadMilliseconds: response.contentLoadMilliseconds,
+      evaluationMilliseconds: response.evaluationMilliseconds,
+    });
     return response.result;
   }
 

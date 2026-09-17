@@ -854,6 +854,30 @@ Wondrous/Special/Any/blank fallback. Artifact or Dragonshard identity takes
 precedence over another compatible type. The temporary card-proposal files are
 visual evidence only and are not a production dependency.
 
+### D049 — Evaluated-character caches are exact, versioned, and disposable
+
+Rules evaluation remains authoritative and deterministic from the durable
+character build plus its immutable content-profile revision. Product screens
+may persist an evaluated snapshot only when its key includes the rules-cache
+semantic version, exact pack ID and content digest, canonical projected input,
+candidate-detail projection, replacement-detail projection, and power-output
+mode. Any build, equipment, entitlement, profile, horizon, output, or engine
+semantic change is therefore a cache miss rather than an incremental guess.
+
+The cache lives in a separate bounded IndexedDB database and is never part of a
+character record or backup. Missing, malformed, unreadable, or unwritable cache
+state falls back to canonical worker evaluation; product correctness cannot
+depend on derived storage. Only candidate-scoped product evaluations are
+persisted. Exhaustive compatibility/reporting evaluations are intentionally
+excluded because their complete candidate catalogs can be much larger.
+
+Rules-worker initialization validates the requested manifest revision without
+decoding the full pack. The first genuine cache miss loads the pack lazily, and
+concurrent requests share that one load. An exact persistent hit can therefore
+avoid both worker-side pack decoding and rules evaluation after a document
+restart. This does not replace normal invalidation after edits and does not make
+the imported legacy calculated cache authoritative.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

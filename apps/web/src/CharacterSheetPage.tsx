@@ -140,9 +140,12 @@ export function CharacterSheetPage({
         character.profileBinding?.contentDigest,
       )
       .then((client) =>
-        client.evaluate(
-          projectBuildForEvaluation(character.build, content.entities),
-        ),
+        client.evaluate({
+          ...projectBuildForEvaluation(character.build, content.entities),
+          // Sheets consume calculated powers, but never selectable choice
+          // catalogs. Keep powers at their compatibility-default `true`.
+          candidateDetailLevels: [],
+        }),
       )
       .then((result) => {
         if (cancelled) return;
