@@ -149,6 +149,21 @@ All 55 focused builder/accessibility tests and the web TypeScript check pass.
 The shared card presentation was verified live across Compendium, builder,
 Equipment, and embedded/collapsible cards.
 
+## M5.5 shared class-card organization checkpoint (2026-09-16)
+
+- Class and Hybrid Class specifics are organized by the shared entity-card
+  renderer into Role & Power Source, Starting Statistics, Proficiencies &
+  Training, Class Features & Build, Flavor, and an Other fallback.
+- The organization applies identically in Compendium, builder selection
+  details, and every other entity-card context. Context wrappers retain only
+  controls and contextual metadata.
+- Every authored user-facing field is retained exactly once; duplicate fields
+  remain visible, while legacy Implements and Implement values share one
+  labeled row. Non-class cards retain the standard Details presentation.
+
+Focused grouping, rendered-card, shared-context contract, formatting, web
+TypeScript checks, and live product-owner verification pass.
+
 ## M5.5 equipment workspace checkpoint (2026-09-14)
 
 - Equipment is now a full peer workspace with Loadout, Inventory, Shop, and

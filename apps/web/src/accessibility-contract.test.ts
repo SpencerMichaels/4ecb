@@ -209,6 +209,11 @@ describe("release accessibility contract", () => {
     expect(app).toContain(
       "<HideFlavortextContext.Provider value={hideFlavortext}>",
     );
+    expect(entityCard).toContain("groupClassSpecifics(fields)");
+    expect(entityCard).toContain('type === "class" || type === "hybrid class"');
+    expect(entityDetail).not.toContain("renderSpecifics");
+    expect(characterEditor).not.toContain("renderSpecifics");
+    expect(equipmentWorkspace).not.toContain("renderSpecifics");
   });
 
   it("keeps table selection spatially stable and communicates it without checkmarks", () => {
