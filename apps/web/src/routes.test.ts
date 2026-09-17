@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { canonicalHashRedirect, parseHashRoute } from "./routes";
+import {
+  canonicalHashRedirect,
+  characterEditorHash,
+  commitHashNavigation,
+  parseHashRoute,
+} from "./routes";
 
 describe("hash routes", () => {
   it("parses character library and sheet routes", () => {
@@ -13,7 +18,127 @@ describe("hash routes", () => {
       page: "characters",
       characterId: "character 1",
       mode: "edit",
+      builder: { workspace: "build" },
     });
+  });
+
+  it("round-trips every editor workspace and only its applicable nested state", () => {
+    const routes = [
+      {
+        navigation: {
+          workspace: "build" as const,
+          level: 8,
+          section: "powers" as const,
+        },
+        expected: {
+          workspace: "build",
+          level: 8,
+          section: "powers",
+        },
+      },
+      {
+        navigation: { workspace: "overview" as const },
+        expected: { workspace: "overview" },
+      },
+      {
+        navigation: { workspace: "details" as const },
+        expected: { workspace: "details" },
+      },
+      {
+        navigation: {
+          workspace: "equipment" as const,
+          section: "practices" as const,
+        },
+        expected: { workspace: "equipment", section: "practices" },
+      },
+      {
+        navigation: { workspace: "diagnostics" as const },
+        expected: { workspace: "diagnostics" },
+      },
+    ];
+    for (const { navigation, expected } of routes) {
+      const hash = characterEditorHash("character / one", navigation);
+      expect(parseHashRoute(hash)).toMatchObject({
+        characterId: "character / one",
+        mode: "edit",
+        builder: expected,
+      });
+    }
+    expect(
+      characterEditorHash("one", {
+        workspace: "overview",
+      }),
+    ).toBe("#/characters/one/edit?tab=overview");
+  });
+
+  it("falls back safely from invalid and inapplicable editor values", () => {
+    expect(
+      parseHashRoute(
+        "#/characters/one/edit?tab=build&level=99&section=missing&filter=axe",
+      ),
+    ).toMatchObject({ builder: { workspace: "build" } });
+    expect(
+      canonicalHashRedirect(
+        "#/characters/one/edit?tab=overview&level=8&section=powers",
+      ),
+    ).toBe("#/characters/one/edit?tab=overview");
+    expect(
+      canonicalHashRedirect(
+        "#/characters/one/edit?tab=equipment&section=unknown",
+      ),
+    ).toBe("#/characters/one/edit?tab=equipment&section=loadout");
+  });
+
+  it("pushes major destinations, restores them Back/Forward, and deduplicates synchronization", () => {
+    const entries = ["#/characters"];
+    let index = 0;
+    const target = {
+      location: {
+        get hash() {
+          return entries[index]!;
+        },
+      },
+      history: {
+        pushState: (_data: null, _unused: string, url: string) => {
+          entries.splice(index + 1, entries.length, url);
+          index += 1;
+        },
+        replaceState: (_data: null, _unused: string, url: string) => {
+          entries[index] = url;
+        },
+      },
+    };
+    const build = characterEditorHash("one", {
+      workspace: "build",
+      level: 4,
+      section: "feats",
+    });
+    const overview = characterEditorHash("one", { workspace: "overview" });
+    const inventory = characterEditorHash("one", {
+      workspace: "equipment",
+      section: "inventory",
+    });
+    expect(commitHashNavigation(target, build)).toBe(true);
+    expect(commitHashNavigation(target, overview)).toBe(true);
+    expect(commitHashNavigation(target, inventory)).toBe(true);
+    expect(commitHashNavigation(target, inventory)).toBe(false);
+    expect(entries).toHaveLength(4);
+
+    index -= 1;
+    expect(parseHashRoute(target.location.hash)).toMatchObject({
+      builder: { workspace: "overview" },
+    });
+    index -= 1;
+    expect(parseHashRoute(target.location.hash)).toMatchObject({
+      builder: { workspace: "build", level: 4, section: "feats" },
+    });
+    index += 1;
+    expect(parseHashRoute(target.location.hash)).toMatchObject({
+      builder: { workspace: "overview" },
+    });
+
+    expect(commitHashNavigation(target, overview, true)).toBe(false);
+    expect(entries).toHaveLength(4);
   });
 
   it("falls back to Characters for empty, retired, and unknown routes", () => {
@@ -37,8 +162,11 @@ describe("hash routes", () => {
     );
     expect(canonicalHashRedirect("#/not-a-page")).toBe("#/characters");
     expect(canonicalHashRedirect("#/characters/character%201/edit")).toBe(
-      undefined,
+      "#/characters/character%201/edit?tab=build",
     );
+    expect(
+      canonicalHashRedirect("#/characters/character%201/edit?tab=build"),
+    ).toBeUndefined();
     expect(canonicalHashRedirect("#/settings")).toBe(undefined);
   });
 });

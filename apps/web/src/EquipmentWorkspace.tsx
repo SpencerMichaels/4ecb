@@ -33,7 +33,7 @@ import {
 import { entityVisualTone, visualToneClass } from "./visual-language";
 import { Icon } from "./Icon";
 
-type EquipmentTab = "loadout" | "inventory" | "shop" | "practices";
+export type EquipmentTab = "loadout" | "inventory" | "shop" | "practices";
 type MoneyLocation = "carried" | "stored";
 type Denomination = "copper" | "silver" | "gold" | "platinum" | "astral";
 
@@ -284,6 +284,8 @@ export function EquipmentWorkspace({
   wallet,
   activeDefinitionIds,
   hideFlavortext,
+  activeTab,
+  onTabChange,
   onPutInventory,
   onPurchase,
   onSell,
@@ -297,6 +299,8 @@ export function EquipmentWorkspace({
   readonly wallet: EquipmentWalletView;
   readonly activeDefinitionIds: readonly string[];
   readonly hideFlavortext: boolean;
+  readonly activeTab: EquipmentTab;
+  readonly onTabChange: (tab: EquipmentTab) => void;
   readonly onPutInventory: (entry: BuildInventoryEntry) => void;
   readonly onPurchase: (
     entry: BuildInventoryEntry,
@@ -317,7 +321,7 @@ export function EquipmentWorkspace({
     value: number,
   ) => void;
 }) {
-  const [tab, setTab] = useState<EquipmentTab>("loadout");
+  const tab = activeTab;
   const [inspected, setInspected] = useState<ContentEntity>();
   const [text, setText] = useState("");
   const [type, setType] = useState("");
@@ -568,7 +572,7 @@ export function EquipmentWorkspace({
             aria-selected={tab === item.id}
             type="button"
             onClick={() => {
-              setTab(item.id);
+              onTabChange(item.id);
               setOffset(0);
               setType("");
             }}
@@ -624,7 +628,7 @@ export function EquipmentWorkspace({
                           onClick={() => {
                             setSlot(shopSlot);
                             setOffset(0);
-                            setTab("shop");
+                            onTabChange("shop");
                           }}
                         >
                           <Icon name="shop" />

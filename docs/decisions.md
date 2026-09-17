@@ -797,6 +797,22 @@ The worker-backed query engine and shared entity-card renderer remain product
 infrastructure. Builder choice tables and Equipment catalogs continue to use
 them, so removing the global page does not narrow contextual content access.
 
+### D047 — Builder page navigation is canonical hash state
+
+The character editor stores page-like navigation in its bookmarkable hash. The
+five workspace tabs are stable `tab` values; Build additionally owns `level`
+and choice-section `section`, while Equipment owns only its section. Level-rail,
+workspace-tab, choice-section, and Equipment-section activation push history.
+An Overview checklist jump writes its final Build level/section as one entry.
+
+Filters, inspected records, favorites, disclosures, form values, and character
+commands remain component or character state and never enter browser history.
+Back/Forward therefore restores navigation without undoing edits. Parsing drops
+inapplicable parameters, invalid values fall back to the relevant default, and
+post-evaluation section fallback canonicalizes with `replaceState`; identical
+targets are ignored so synchronization cannot create duplicate entries. The
+library, sheet, and settings hashes retain their existing identities.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

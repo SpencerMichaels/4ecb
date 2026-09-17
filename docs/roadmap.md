@@ -446,6 +446,13 @@ holy-symbol/implement exceptions, augments, package lots, automatic/custom
 equipment, and item-owned choice editing remain named follow-up work rather
 than silently approximated native parity.
 
+Builder navigation now participates in browser Back/Forward at the page-like
+boundary: all five workspace tabs, Build levels and choice sections, and the
+four Equipment sections have bookmarkable canonical hashes. Overview jumps
+directly to one final Build destination; in-page filters, disclosures, choices,
+and edits do not add history entries. Invalid or unavailable nested values
+recover by replacement without disturbing library or character-sheet routes.
+
 ## M6 — Local phone play mode
 
 ### Goal

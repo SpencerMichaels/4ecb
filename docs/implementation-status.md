@@ -41,6 +41,28 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## M5.5 builder browser-history checkpoint (2026-09-16)
+
+- Build, Overview, Character details, Equipment, and Diagnostics now have
+  bookmarkable editor hashes and push browser history. Build includes the
+  selected level and available choice-section tab; Equipment includes Loadout,
+  Inventory, Shop, or Rituals & Practices. Level-rail and nested-tab changes are
+  therefore restored by Back/Forward before the edit route returns to the
+  character library.
+- Overview choice links create one final Build level/section destination.
+  Invalid, retired, inapplicable, and currently unavailable nested values fall
+  back and canonicalize by replacement. Same-route activation and route/state
+  synchronization do not duplicate entries. Filters, accordions, inspected
+  rows, choice edits, and other form state remain outside history.
+- Focused route tests cover every workspace, nested-state scoping, invalid
+  values, push/replace deduplication, and modeled Back/Forward restoration.
+  Live browser verification opened a real level-8 character and observed the
+  canonical Build/Feats, Overview, Equipment/Loadout, and Equipment/Inventory
+  hashes. `nix develop path:. -c scripts/check.sh` passes all 319 tests across
+  45 files, all workspace TypeScript checks, the production/PWA build,
+  Chromium and Firefox print checks, deterministic public-pack checks, and the
+  public query benchmark.
+
 ## M5.5 contextual content surface checkpoint (2026-09-16)
 
 - The standalone Compendium navigation item, search/detail routes, saved-query

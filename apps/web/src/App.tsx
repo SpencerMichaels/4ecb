@@ -11,7 +11,13 @@ import { CharacterEditorPage } from "./CharacterEditorPage";
 import { CharacterSheetPage } from "./CharacterSheetPage";
 import { HideFlavortextContext } from "./EntityCard";
 import { Icon } from "./Icon";
-import { canonicalHashRedirect, parseHashRoute } from "./routes";
+import {
+  canonicalHashRedirect,
+  characterEditorHash,
+  commitHashNavigation,
+  parseHashRoute,
+  type BuilderNavigation,
+} from "./routes";
 import { focusMainContent } from "./route-focus";
 import { PwaStatus } from "./PwaStatus";
 import { SettingsPage } from "./SettingsPage";
@@ -74,6 +80,13 @@ export function App() {
   const firstRoute = useRef(true);
   const runtimeContentStarted = useRef(false);
   const route = useMemo(() => parseHashRoute(hash), [hash]);
+  const navigateBuilder = useCallback(
+    (characterId: string, navigation: BuilderNavigation, replace = false) => {
+      const next = characterEditorHash(characterId, navigation);
+      if (commitHashNavigation(window, next, replace)) setHash(next);
+    },
+    [],
+  );
   useEffect(() => {
     applyThemePreference(document.documentElement, theme);
     try {
@@ -299,7 +312,11 @@ export function App() {
             {...(activeProfile === undefined ? {} : { activeProfile })}
           />
         ) : route.mode === "edit" ? (
-          <CharacterEditorPage characterId={route.characterId} />
+          <CharacterEditorPage
+            characterId={route.characterId}
+            navigation={route.builder ?? { workspace: "build" }}
+            onNavigate={navigateBuilder}
+          />
         ) : (
           <CharacterSheetPage
             characterId={route.characterId}

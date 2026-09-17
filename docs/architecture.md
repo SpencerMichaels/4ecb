@@ -560,6 +560,17 @@ startup reconstruction from IndexedDB. Cross-refresh worker persistence is not
 assigned to the service worker because browser service-worker lifetime is not a
 reliable in-memory cache contract.
 
+Editor navigation is a typed projection of the character edit hash. Workspace
+tabs push one browser-history entry; Build routes may also encode level and the
+active choice section, and Equipment routes may encode its active section.
+Overview deep links construct the final Build destination atomically. Route
+parsing removes state that does not apply to the selected workspace, while
+runtime availability checks replace an unavailable Build section with its
+deterministic current fallback. Replacement canonicalization and same-hash
+deduplication keep reload synchronization from growing the history stack.
+Character edits, filters, table inspection, and disclosures are deliberately
+outside this route model.
+
 ## Deployment
 
 ### MVP container

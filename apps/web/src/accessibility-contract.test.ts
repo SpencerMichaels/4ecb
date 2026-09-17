@@ -346,7 +346,7 @@ describe("release accessibility contract", () => {
     );
     expect(equipmentWorkspace).toContain("setSlot(shopSlot);");
     expect(equipmentWorkspace).toContain("setOffset(0);");
-    expect(equipmentWorkspace).toContain('setTab("shop");');
+    expect(equipmentWorkspace).toContain('onTabChange("shop");');
     expect(equipmentWorkspace).not.toContain("slotFilter");
     expect(equipmentWorkspace).not.toContain("equipment-slot-filter");
     expect(equipmentWorkspace).not.toContain("shopItemSlotCandidates");

@@ -103,6 +103,11 @@ import { KeyAbilityMarker } from "./KeyAbilityMarker";
 import { EquipmentWorkspace } from "./EquipmentWorkspace";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
 import { PortraitEditor } from "./PortraitEditor";
+import type {
+  BuilderNavigation,
+  BuilderSectionSlug,
+  BuilderWorkspaceTab,
+} from "./routes";
 import {
   entityVisualTone,
   powerAttackIcon,
@@ -2020,8 +2025,63 @@ function choiceSectionId(choiceId: string): string {
   return `choice-section-${choiceId.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
 }
 
-function levelChoiceTabSlug(section: LevelChoiceTab): string {
-  return section.toLocaleLowerCase().replaceAll(/[^a-z0-9]+/g, "-");
+function levelChoiceTabSlug(section: LevelChoiceTab): BuilderSectionSlug {
+  switch (section) {
+    case "Class":
+      return "class";
+    case "Race":
+      return "race";
+    case "Background":
+      return "background";
+    case "Ability Scores":
+      return "ability-scores";
+    case "Companion":
+      return "companion";
+    case "Skills":
+      return "skills";
+    case "Powers":
+      return "powers";
+    case "Spellbook":
+      return "spellbook";
+    case "Feats":
+      return "feats";
+    case "Retraining":
+      return "retraining";
+    case "Character Details":
+    case "Other":
+      return "other";
+  }
+}
+
+function levelChoiceTabForSlug(
+  section: BuilderSectionSlug | undefined,
+): LevelChoiceTab | undefined {
+  switch (section) {
+    case "class":
+      return "Class";
+    case "race":
+      return "Race";
+    case "background":
+      return "Background";
+    case "ability-scores":
+      return "Ability Scores";
+    case "companion":
+      return "Companion";
+    case "skills":
+      return "Skills";
+    case "powers":
+      return "Powers";
+    case "spellbook":
+      return "Spellbook";
+    case "feats":
+      return "Feats";
+    case "retraining":
+      return "Retraining";
+    case "other":
+      return "Other";
+    case undefined:
+      return undefined;
+  }
 }
 
 function characterTierAtLevel(level: number): CharacterTierId {
@@ -4211,8 +4271,16 @@ function CharacterDetailsEditor({
 
 export function CharacterEditorPage({
   characterId,
+  navigation,
+  onNavigate,
 }: {
   readonly characterId: string;
+  readonly navigation: BuilderNavigation;
+  readonly onNavigate: (
+    characterId: string,
+    navigation: BuilderNavigation,
+    replace?: boolean,
+  ) => void;
 }) {
   const hideFlavortext = useContext(HideFlavortextContext);
   const [character, setCharacter] = useState<CharacterRecord>();
@@ -4231,7 +4299,9 @@ export function CharacterEditorPage({
     useState<EvaluatedCharacter>();
   const [evaluationStatus, setEvaluationStatus] = useState("Loading rules…");
   const [readyPackId, setReadyPackId] = useState<string>();
-  const [selectedLevel, setSelectedLevel] = useState(1);
+  const [selectedLevel, setSelectedLevel] = useState(
+    navigation.workspace === "build" ? (navigation.level ?? 1) : 1,
+  );
   const [showPlannedOverview, setShowPlannedOverview] = useState(false);
   const [expandedTiers, setExpandedTiers] = useState<
     ReadonlySet<CharacterTierId>
@@ -4240,9 +4310,11 @@ export function CharacterEditorPage({
   const [selectedSectionByLevel, setSelectedSectionByLevel] = useState<
     Readonly<Partial<Record<number, LevelChoiceTab>>>
   >({});
-  const [workspaceTab, setWorkspaceTab] = useState<
-    "build" | "overview" | "details" | "equipment" | "diagnostics"
-  >("build");
+  const workspaceTab: BuilderWorkspaceTab = navigation.workspace;
+  const navigationLevel =
+    navigation.workspace === "build" ? navigation.level : undefined;
+  const navigationSection =
+    navigation.workspace === "build" ? navigation.section : undefined;
   const [inspectedOption, setInspectedOption] = useState<InspectedOption>();
   const [rollbackRevision, setRollbackRevision] = useState(0);
   const [expandedReplacementChoiceId, setExpandedReplacementChoiceId] =
@@ -4324,6 +4396,21 @@ export function CharacterEditorPage({
       saveQueue.current = undefined;
     };
   }, [characterId]);
+
+  useEffect(() => {
+    if (navigation.workspace !== "build" || character === undefined) return;
+    const level = navigationLevel ?? character.build.effectiveLevel;
+    setSelectedLevel(level);
+    setExpandedTiers((current) => {
+      const tier = characterTierAtLevel(level);
+      return current.has(tier) ? current : new Set([...current, tier]);
+    });
+    const section = levelChoiceTabForSlug(navigationSection);
+    if (section !== undefined)
+      setSelectedSectionByLevel((current) =>
+        current[level] === section ? current : { ...current, [level]: section },
+      );
+  }, [character, navigationLevel, navigationSection, navigation.workspace]);
 
   const packId = character?.profileBinding?.packId;
   const contentDigest = character?.profileBinding?.contentDigest;
@@ -4612,14 +4699,43 @@ export function CharacterEditorPage({
   const activeChoiceSection = displayedChoiceSections.find(
     ({ section }) => section === activeLevelSection,
   );
+  const activeSectionChoices =
+    activeLevelSection === "Retraining"
+      ? retrainingChoices
+      : (activeChoiceSection?.choices ?? []);
   useEffect(() => {
-    if (primaryLevelChoices.some((choice) => choice.id === selectedChoiceId))
+    if (activeSectionChoices.some((choice) => choice.id === selectedChoiceId))
       return;
     setSelectedChoiceId(
-      primaryLevelChoices.find(isUnresolvedChoice)?.id ??
-        primaryLevelChoices[0]?.id,
+      activeSectionChoices.find(isUnresolvedChoice)?.id ??
+        activeSectionChoices[0]?.id,
     );
-  }, [primaryLevelChoices, selectedChoiceId]);
+  }, [activeSectionChoices, selectedChoiceId]);
+
+  useEffect(() => {
+    if (
+      character === undefined ||
+      navigation.workspace !== "build" ||
+      (navigationLevel !== undefined && navigationLevel !== selectedLevel)
+    )
+      return;
+    const canonical: BuilderNavigation = {
+      workspace: "build",
+      level: selectedLevel,
+      ...(activeLevelSection === undefined
+        ? {}
+        : { section: levelChoiceTabSlug(activeLevelSection) }),
+    };
+    onNavigate(characterId, canonical, true);
+  }, [
+    activeLevelSection,
+    character,
+    characterId,
+    navigationLevel,
+    navigation.workspace,
+    onNavigate,
+    selectedLevel,
+  ]);
 
   useEffect(() => {
     setInspectedOption(undefined);
@@ -4738,6 +4854,11 @@ export function CharacterEditorPage({
     setSelectedChoiceId(
       sectionChoices.find(isUnresolvedChoice)?.id ?? sectionChoices[0]?.id,
     );
+    onNavigate(characterId, {
+      workspace: "build",
+      level: selectedLevel,
+      section: levelChoiceTabSlug(section),
+    });
   };
 
   const selectLevel = (level: number): void => {
@@ -4762,6 +4883,14 @@ export function CharacterEditorPage({
       setSelectedChoiceId(
         ordered.find(isUnresolvedChoice)?.id ?? ordered[0]?.id,
       );
+      const rememberedSection = selectedSectionByLevel[level];
+      onNavigate(characterId, {
+        workspace: "build",
+        level,
+        ...(rememberedSection === undefined
+          ? {}
+          : { section: levelChoiceTabSlug(rememberedSection) }),
+      });
     } catch (reason: unknown) {
       setSaveState({
         phase: "failed",
@@ -4950,6 +5079,12 @@ export function CharacterEditorPage({
                       }
                       setSelectedLevel(level);
                       setExpandedTiers(new Set([characterTierAtLevel(level)]));
+                      if (workspaceTab === "build")
+                        onNavigate(
+                          characterId,
+                          { workspace: "build", level },
+                          true,
+                        );
                     } catch (reason: unknown) {
                       setSaveState({
                         phase: "failed",
@@ -5050,7 +5185,15 @@ export function CharacterEditorPage({
           aria-selected={workspaceTab === "build"}
           role="tab"
           type="button"
-          onClick={() => setWorkspaceTab("build")}
+          onClick={() =>
+            onNavigate(characterId, {
+              workspace: "build",
+              level: selectedLevel,
+              ...(activeLevelSection === undefined
+                ? {}
+                : { section: levelChoiceTabSlug(activeLevelSection) }),
+            })
+          }
         >
           <Icon name="level" /> Build
         </button>
@@ -5058,7 +5201,7 @@ export function CharacterEditorPage({
           aria-selected={workspaceTab === "overview"}
           role="tab"
           type="button"
-          onClick={() => setWorkspaceTab("overview")}
+          onClick={() => onNavigate(characterId, { workspace: "overview" })}
         >
           <Icon name="book" /> Overview
         </button>
@@ -5066,7 +5209,7 @@ export function CharacterEditorPage({
           aria-selected={workspaceTab === "details"}
           role="tab"
           type="button"
-          onClick={() => setWorkspaceTab("details")}
+          onClick={() => onNavigate(characterId, { workspace: "details" })}
         >
           <Icon name="details" /> Character details
           {characterDetailChoices.some(isUnresolvedChoice) ? (
@@ -5077,7 +5220,12 @@ export function CharacterEditorPage({
           aria-selected={workspaceTab === "equipment"}
           role="tab"
           type="button"
-          onClick={() => setWorkspaceTab("equipment")}
+          onClick={() =>
+            onNavigate(characterId, {
+              workspace: "equipment",
+              section: "loadout",
+            })
+          }
         >
           <Icon name="item" /> Equipment
         </button>
@@ -5085,7 +5233,7 @@ export function CharacterEditorPage({
           aria-selected={workspaceTab === "diagnostics"}
           role="tab"
           type="button"
-          onClick={() => setWorkspaceTab("diagnostics")}
+          onClick={() => onNavigate(characterId, { workspace: "diagnostics" })}
         >
           <Icon name="warning" /> Diagnostics
         </button>
@@ -5227,7 +5375,11 @@ export function CharacterEditorPage({
                 ...current,
                 1: "Ability Scores",
               }));
-              setWorkspaceTab("build");
+              onNavigate(characterId, {
+                workspace: "build",
+                level: 1,
+                section: "ability-scores",
+              });
             }}
             onNavigateChoice={(choice) => {
               setSelectedLevel(choice.level);
@@ -5238,7 +5390,15 @@ export function CharacterEditorPage({
                   ? "Retraining"
                   : legacyChoiceSection(choice),
               }));
-              setWorkspaceTab("build");
+              onNavigate(characterId, {
+                workspace: "build",
+                level: choice.level,
+                section: levelChoiceTabSlug(
+                  isOptionalRetrainingChoice(choice)
+                    ? "Retraining"
+                    : legacyChoiceSection(choice),
+                ),
+              });
             }}
             onShowPlannedChange={setShowPlannedOverview}
           />
@@ -5496,6 +5656,14 @@ export function CharacterEditorPage({
             {...(packId === undefined ? {} : { packId })}
             activeDefinitionIds={currentEvaluation?.activeDefinitionIds ?? []}
             hideFlavortext={hideFlavortext}
+            activeTab={
+              navigation.workspace === "equipment"
+                ? navigation.section
+                : "loadout"
+            }
+            onTabChange={(section) =>
+              onNavigate(characterId, { workspace: "equipment", section })
+            }
             wallet={{
               carried: {
                 copper: carriedWallet.cp,
