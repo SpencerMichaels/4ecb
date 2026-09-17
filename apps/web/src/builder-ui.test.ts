@@ -14,7 +14,9 @@ import {
 
 import {
   applyBuildPresetCommand,
+  abilityScoreAdjustment,
   abilityScoreBonus,
+  abilityScoreDisplay,
   abilityScoreWithPendingDelta,
   backgroundAssociatedSkills,
   buildPresetSuggestionNames,
@@ -42,6 +44,7 @@ import {
   groupParameterizedCandidates,
   groupRepeatedCandidateScopes,
   groupRepeatedChoiceSlots,
+  raceAbilityScoreCells,
   identityChoiceLabel,
   isCandidateSelectable,
   isCandidateVisible,
@@ -1526,15 +1529,11 @@ describe("builder planning UI", () => {
     expect(
       shouldOmitIndividualChoiceHeading(choice("Racial Trait"), 3, 2),
     ).toBe(false);
-    expect(shouldOmitIndividualChoiceHeading(choice("Race"), 3, 1)).toBe(
-      false,
-    );
+    expect(shouldOmitIndividualChoiceHeading(choice("Race"), 3, 1)).toBe(false);
     expect(shouldOmitIndividualChoiceHeading(choice("Language"), 3, 1)).toBe(
       false,
     );
-    expect(shouldOmitIndividualChoiceHeading(choice("Feat"), 1, 2)).toBe(
-      true,
-    );
+    expect(shouldOmitIndividualChoiceHeading(choice("Feat"), 1, 2)).toBe(true);
   });
 
   it("presents nested selections and their replacement as one choice flow", () => {
@@ -1561,6 +1560,287 @@ describe("builder planning UI", () => {
         flow.map(({ id }) => id),
       ),
     ).toEqual([["feat", "mastery", "replacement"], ["utility"]]);
+  });
+
+  it("presents a selected race's evaluated ability bonus after point buy", () => {
+    const statement = (
+      name: string,
+      attributes: Readonly<Record<string, string>>,
+      ordinal: number,
+    ): RuleStatement => ({
+      name,
+      attributes: Object.entries(attributes).map(([attribute, value]) => ({
+        name: attribute,
+        value,
+      })),
+      text: "",
+      children: [],
+      ordinal,
+    });
+    const race = {
+      ...level(0, [
+        statement("grant", { name: "GRANTS_CLIFFKIN", type: "Grants" }, 0),
+        statement(
+          "select",
+          {
+            type: "Race Ability Bonus",
+            number: "1",
+            Category: "Dexterity|Wisdom",
+          },
+          1,
+        ),
+      ]),
+      id: "RACE_CLIFFKIN",
+      name: "Cliffkin",
+      type: "Race",
+    };
+    const grants = {
+      ...level(0, [
+        statement(
+          "grant",
+          { name: "RACE_BONUS_CONSTITUTION", type: "Race Ability Bonus" },
+          0,
+        ),
+      ]),
+      id: "GRANTS_CLIFFKIN",
+      name: "Cliffkin Grants",
+      type: "Grants",
+    };
+    const constitution = {
+      ...level(0, [
+        statement("statadd", { name: "Constitution", value: "+2" }, 0),
+      ]),
+      id: "RACE_BONUS_CONSTITUTION",
+      name: "Constitution",
+      type: "Race Ability Bonus",
+      categories: ["Constitution"],
+    };
+    const dexterity = {
+      ...level(0, [
+        statement("statadd", { name: "Dexterity", value: "+2" }, 0),
+      ]),
+      id: "RACE_BONUS_DEXTERITY",
+      name: "Dexterity",
+      type: "Race Ability Bonus",
+      categories: ["Dexterity"],
+    };
+    const wisdom = {
+      ...level(0, [statement("statadd", { name: "Wisdom", value: "+2" }, 0)]),
+      id: "RACE_BONUS_WISDOM",
+      name: "Wisdom",
+      type: "Race Ability Bonus",
+      categories: ["Wisdom"],
+    };
+    const levelOne = level(1, [
+      statement("select", { type: "Race", number: "1" }, 0),
+    ]);
+    const selectedBuild: CharacterBuild = {
+      ...build,
+      baseAbilities: { Constitution: 10, Dexterity: 10, Wisdom: 10 },
+      levels: [
+        {
+          level: 1,
+          root: {
+            ...build.levels[0]!.root,
+            children: [
+              {
+                id: "selected-race",
+                identity: {
+                  definitionId: race.id,
+                  name: race.name,
+                  type: race.type,
+                },
+                acquiredLevel: 1,
+                legality: "rules-legal",
+                children: [
+                  {
+                    id: "selected-race-bonus",
+                    identity: {
+                      definitionId: dexterity.id,
+                      name: dexterity.name,
+                      type: dexterity.type,
+                    },
+                    acquiredLevel: 1,
+                    legality: "rules-legal",
+                    children: [],
+                    unresolved: false,
+                  },
+                ],
+                unresolved: false,
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const entities = [levelOne, race, grants, constitution, dexterity, wisdom];
+    const evaluation = evaluateCharacter(
+      projectBuildForEvaluation(selectedBuild, entities),
+      entities,
+    );
+    const ordinary = groupLevelChoices(choicesAtLevel(1, evaluation)).ordinary;
+    const dependentFlows = groupDependentChoiceFlows(ordinary).filter(
+      (flow) => flow.length > 1,
+    );
+    const dependentFlowByChoiceId = new Map(
+      dependentFlows.flatMap((flow) =>
+        flow.map((choice) => [choice.id, flow] as const),
+      ),
+    );
+    const presentationChoices = ordinary.filter((choice) => {
+      const flow = dependentFlowByChoiceId.get(choice.id);
+      return flow === undefined || choice === flow[0];
+    });
+    const sections = groupChoicesByLegacyWorkflow(presentationChoices);
+    const abilityChoice = sections.find(
+      ({ section }) => section === "Ability Scores",
+    )?.choices[0];
+
+    expect(sections.map(({ section }) => section)).toEqual([
+      "Race",
+      "Ability Scores",
+    ]);
+    expect(abilityChoice).toMatchObject({
+      type: "Race Ability Bonus",
+      providerOccurrenceId: "selected-race",
+      selectedOccurrenceId: "selected-race-bonus",
+    });
+    expect(abilityChoice?.candidates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ definitionId: dexterity.id }),
+        expect.objectContaining({ definitionId: wisdom.id }),
+      ]),
+    );
+    const raceCells = raceAbilityScoreCells(
+      race,
+      abilityChoice === undefined
+        ? undefined
+        : {
+            ...abilityChoice,
+            candidates: abilityChoice.candidates.filter(
+              (candidate) => candidate.definitionId === dexterity.id,
+            ),
+          },
+      new Map(
+        entities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
+      ),
+    );
+    expect(raceCells.Strength).toEqual({ kind: "none" });
+    expect(raceCells.Constitution).toEqual({ kind: "static", value: 2 });
+    expect(raceCells.Dexterity).toEqual({
+      kind: "choice",
+      definitionId: dexterity.id,
+      value: 2,
+      selectable: true,
+    });
+    expect(raceCells.Wisdom).toEqual({
+      kind: "choice",
+      definitionId: wisdom.id,
+      value: 2,
+      selectable: true,
+    });
+    const unrestrictedBonuses = ["Strength", "Intelligence", "Charisma"].map(
+      (ability) => ({
+        ...level(0, [statement("statadd", { name: ability, value: "+2" }, 0)]),
+        id: `RACE_BONUS_${ability.toLocaleUpperCase()}`,
+        name: ability,
+        type: "Race Ability Bonus",
+        categories: [ability],
+      }),
+    );
+    const human = {
+      ...level(0, [
+        statement("select", { type: "Race Ability Bonus", number: "1" }, 0),
+      ]),
+      id: "RACE_HUMAN",
+      name: "Human",
+      type: "Race",
+    };
+    const unrestrictedEntities = [
+      human,
+      constitution,
+      dexterity,
+      wisdom,
+      ...unrestrictedBonuses,
+    ];
+    const humanCells = raceAbilityScoreCells(
+      human,
+      abilityChoice === undefined
+        ? undefined
+        : {
+            ...abilityChoice,
+            candidates: abilityChoice.candidates.filter(
+              (candidate) => candidate.definitionId === dexterity.id,
+            ),
+          },
+      new Map(
+        unrestrictedEntities.map((entity) => [
+          entity.id.toLocaleLowerCase(),
+          entity,
+        ]),
+      ),
+    );
+    expect(Object.values(humanCells).map((cell) => cell.kind)).toEqual([
+      "choice",
+      "choice",
+      "choice",
+      "choice",
+      "choice",
+      "choice",
+    ]);
+    expect(evaluation.stats.Constitution?.value).toBe(12);
+    expect(evaluation.stats.Dexterity?.value).toBe(12);
+    expect(abilityScoreBonus(evaluation.stats.Dexterity)).toBe(2);
+
+    const unresolvedBuild: CharacterBuild = {
+      ...selectedBuild,
+      levels: selectedBuild.levels.map((frame) => ({
+        ...frame,
+        root: {
+          ...frame.root,
+          children: frame.root.children.map((child) => ({
+            ...child,
+            children: [],
+          })),
+        },
+      })),
+    };
+    const beforeSelection = evaluateCharacter(
+      projectBuildForEvaluation(unresolvedBuild, entities),
+      entities,
+    );
+    const pendingRacialBonus = abilityScoreAdjustment(dexterity, "Dexterity");
+
+    expect(
+      abilityScoreDisplay(beforeSelection, "Dexterity", 10, pendingRacialBonus),
+    ).toEqual({ bonus: 2, total: 12 });
+    expect(
+      abilityScoreDisplay(evaluation, "Dexterity", 10, -pendingRacialBonus),
+    ).toEqual({ bonus: 0, total: 10 });
+    expect(abilityScoreDisplay(evaluation, "Dexterity", 11)).toEqual({
+      bonus: 2,
+      total: 13,
+    });
+    expect(abilityScoreDisplay(evaluation, "Dexterity", 9)).toEqual({
+      bonus: 2,
+      total: 11,
+    });
+
+    const caughtUp = evaluateCharacter(
+      projectBuildForEvaluation(
+        { ...selectedBuild, baseAbilities: { Dexterity: 11, Wisdom: 10 } },
+        entities,
+      ),
+      entities,
+    );
+    expect(abilityScoreDisplay(caughtUp, "Dexterity", 11)).toEqual({
+      bonus: 2,
+      total: 13,
+    });
+    expect(abilityScoreDisplay(evaluation, "Dexterity", 10)).toEqual({
+      bonus: 2,
+      total: 12,
+    });
   });
 
   it("starts companion and familiar choices as their own presentation flows", () => {

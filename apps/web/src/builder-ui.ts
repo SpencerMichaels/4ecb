@@ -11,6 +11,7 @@ import {
   findBuildChildIndex,
   parseRules,
   type AbilityScoreName,
+  type SelectRule,
 } from "@4ecb/rules-engine";
 import type {
   CandidateDecision,
@@ -103,6 +104,168 @@ export function abilityScoreBonus(stat: EvaluatedStat | undefined): number {
     if (Number.isFinite(parsed)) bonus += parsed;
   }
   return bonus;
+}
+
+export function abilityScoreAdjustment(
+  entity: ContentEntity | undefined,
+  ability: string,
+): number {
+  if (entity === undefined) return 0;
+  return parseRules(entity.id, entity.rules).reduce((total, rule) => {
+    if (
+      rule.kind !== "statadd" ||
+      rule.name.trim().toLocaleLowerCase() !==
+        ability.trim().toLocaleLowerCase() ||
+      rule.requires !== undefined ||
+      rule.condition !== undefined ||
+      rule.wearing !== undefined ||
+      rule.notWearing !== undefined
+    )
+      return total;
+    const value = Number(rule.value);
+    return Number.isFinite(value) ? total + value : total;
+  }, 0);
+}
+
+export type RaceAbilityScoreCell =
+  | { readonly kind: "none" }
+  | { readonly kind: "static"; readonly value: number }
+  | {
+      readonly kind: "choice";
+      readonly definitionId: string;
+      readonly value: number;
+      readonly selectable: boolean;
+    };
+
+function contentReferenceIndex(
+  byId: ReadonlyMap<string, ContentEntity>,
+): ReadonlyMap<string, ContentEntity> {
+  const index = new Map<string, ContentEntity>();
+  for (const entity of byId.values()) {
+    index.set(entity.id.trim().toLocaleLowerCase(), entity);
+    const name = entity.name.trim().toLocaleLowerCase();
+    if (!index.has(name)) index.set(name, entity);
+  }
+  return index;
+}
+
+/** Includes the root and every definition reached through authored grants. */
+function grantedDefinitionClosure(
+  root: ContentEntity | undefined,
+  byId: ReadonlyMap<string, ContentEntity>,
+): readonly ContentEntity[] {
+  if (root === undefined) return [];
+  const references = contentReferenceIndex(byId);
+  const visited = new Set<string>();
+  const result: ContentEntity[] = [];
+  const visit = (entity: ContentEntity): void => {
+    const key = entity.id.trim().toLocaleLowerCase();
+    if (visited.has(key)) return;
+    visited.add(key);
+    result.push(entity);
+    for (const rule of parseRules(entity.id, entity.rules)) {
+      if (rule.kind !== "grant") continue;
+      const granted = references.get(rule.name.trim().toLocaleLowerCase());
+      if (granted !== undefined) visit(granted);
+    }
+  };
+  visit(root);
+  return result;
+}
+
+/** Builds the compact racial-bonus presentation used by the level-1 table. */
+export function raceAbilityScoreCells(
+  race: ContentEntity | undefined,
+  choice: EvaluatedChoice | undefined,
+  byId: ReadonlyMap<string, ContentEntity>,
+): Readonly<Record<AbilityScoreName, RaceAbilityScoreCell>> {
+  const fixedDefinitions = grantedDefinitionClosure(race, byId);
+  const flexibleRule =
+    race === undefined
+      ? undefined
+      : parseRules(race.id, race.rules).find(
+          (rule): rule is SelectRule =>
+            rule.kind === "select" &&
+            rule.type.trim().toLocaleLowerCase() === "race ability bonus",
+        );
+  const flexibleCategories = flexibleRule?.category
+    ?.split("|")
+    .map((category) => category.trim().toLocaleLowerCase())
+    .filter(Boolean);
+  const flexibleDefinitions =
+    flexibleRule === undefined
+      ? []
+      : [...byId.values()].filter((entity) => {
+          if (entity.type.trim().toLocaleLowerCase() !== "race ability bonus")
+            return false;
+          if (flexibleCategories === undefined) return true;
+          const identities = new Set(
+            [entity.id, entity.name, ...entity.categories].map((value) =>
+              value.trim().toLocaleLowerCase(),
+            ),
+          );
+          return flexibleCategories.some((category) =>
+            identities.has(category),
+          );
+        });
+  return Object.fromEntries(
+    ABILITY_SCORE_NAMES.map((ability) => {
+      const flexibleDefinition = flexibleDefinitions.find(
+        (entity) => abilityScoreAdjustment(entity, ability) !== 0,
+      );
+      if (flexibleDefinition !== undefined) {
+        const candidate = choice?.candidates.find(
+          (item) => item.definitionId === flexibleDefinition.id,
+        );
+        return [
+          ability,
+          {
+            kind: "choice",
+            definitionId: flexibleDefinition.id,
+            value: abilityScoreAdjustment(flexibleDefinition, ability),
+            selectable:
+              candidate === undefined || isCandidateSelectable(candidate),
+          },
+        ] as const;
+      }
+      const value = fixedDefinitions.reduce(
+        (total, entity) => total + abilityScoreAdjustment(entity, ability),
+        0,
+      );
+      return [
+        ability,
+        value === 0
+          ? ({ kind: "none" } as const)
+          : ({ kind: "static", value } as const),
+      ] as const;
+    }),
+  ) as Record<AbilityScoreName, RaceAbilityScoreCell>;
+}
+
+export function abilityScoreDisplay(
+  evaluation: EvaluatedCharacter,
+  ability: string,
+  baseScore: number,
+  pendingBonusDelta = 0,
+): { readonly bonus: number; readonly total: number | string } {
+  const stat = evaluation.stats[ability];
+  const evaluatedBase = stat?.contributions.reduce((total, contribution) => {
+    if (!contribution.applied || contribution.providerId !== "base-abilities")
+      return total;
+    const value =
+      contribution.numericValue ?? Number.parseFloat(contribution.value);
+    return Number.isFinite(value) ? total + value : total;
+  }, 0);
+  const baseDelta = evaluatedBase === undefined ? 0 : baseScore - evaluatedBase;
+  const total = abilityScoreWithPendingDelta(
+    evaluation,
+    ability,
+    baseDelta + pendingBonusDelta,
+  );
+  return {
+    bonus: abilityScoreBonus(stat) + pendingBonusDelta,
+    total: total ?? baseScore + pendingBonusDelta,
+  };
 }
 
 /** Applies only the unevaluated click delta to an authoritative horizon score. */
@@ -1312,7 +1475,15 @@ export function groupDependentChoiceFlows(
       parent !== undefined &&
       isCompanionChoiceType(choice.type) &&
       !isCompanionChoiceType(parent.type);
-    if (parent === undefined || parent.id === choice.id || startsCompanionFlow)
+    const startsRacialAbilityFlow =
+      parent !== undefined &&
+      choice.type?.trim().toLocaleLowerCase() === "race ability bonus";
+    if (
+      parent === undefined ||
+      parent.id === choice.id ||
+      startsCompanionFlow ||
+      startsRacialAbilityFlow
+    )
       roots.push(choice);
     else children.set(parent.id, [...(children.get(parent.id) ?? []), choice]);
   }

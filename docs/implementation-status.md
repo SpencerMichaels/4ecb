@@ -1757,11 +1757,22 @@ pass.
   optional Theme the same way as before, and retain its concise timeline label;
   only the Build-tab placement changes.
 
-## M5.5 racial ability bonus placement checkpoint (2026-09-16)
+## M5.5 racial ability bonus placement checkpoint (2026-09-17)
 
-- The exact level-1 `Race Ability Bonus` choice is presented in Ability Scores,
-  after the point-buy editor, instead of in Race. Race, Racial Trait, and
-  Language choices remain in Race.
+- The exact level-1 `Race Ability Bonus` choice is presented inside the
+  point-buy table's `Race` column instead of as a separate selector. Each score
+  shows a dash, a fixed racial modifier, or a compact ability-choice button
+  when it is one of the selected race's flexible bonus options. Clicking the
+  selected button again clears the choice.
+- Fixed modifiers follow the selected race's complete authored grant closure,
+  including `Race -> Grants -> Race Ability Bonus` chains. Flexible options
+  come from the race's authored select rule: its `Category` list when present,
+  or every ability-bonus definition when omitted. Presentation therefore stays
+  complete even when an imported character's evaluated choice reports only its
+  currently selected candidate.
+- Race, Racial Trait, and Language choices remain in Race. The table preserves
+  immediate optimistic totals for both point-buy edits and flexible racial
+  bonus selection while the rules worker catches up.
 - This is presentation-only: evaluator ownership, occurrence identity,
   serialization, selection commands, level ordering, existing tab-navigation
   mechanisms, and calculated ability-score values are unchanged.

@@ -41,7 +41,8 @@ import {
 
 import {
   applyBuildPresetCommand,
-  abilityScoreBonus,
+  abilityScoreAdjustment,
+  abilityScoreDisplay,
   abilityScoreWithPendingDelta,
   backgroundAssociatedSkills,
   candidateReason,
@@ -84,6 +85,7 @@ import {
   planningEvaluationHorizon,
   planningHorizonCommand,
   powerTableLevel,
+  raceAbilityScoreCells,
   selectedDefinitionId,
   selectedChoiceHasWarning,
   shouldOmitIndividualChoiceHeading,
@@ -1049,13 +1051,29 @@ function CandidateDetailCard({
 function BaseAbilityScoreEditor({
   build,
   evaluation,
+  pendingBonusDeltas,
+  race,
+  raceAbilityChoice,
+  raceAbilitySelectionId,
+  byId,
+  onRaceAbilitySelection,
   onDispatch,
 }: {
   readonly build: CharacterRecord["build"];
   readonly evaluation: EvaluatedCharacter;
+  readonly pendingBonusDeltas: Readonly<Record<string, number>>;
+  readonly race: ContentEntity | undefined;
+  readonly raceAbilityChoice: EvaluatedChoice | undefined;
+  readonly raceAbilitySelectionId: string | undefined;
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly onRaceAbilitySelection: (
+    choice: EvaluatedChoice,
+    definitionId: string | undefined,
+  ) => void;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
   const assessment = assessAbilityPointBuy(build.baseAbilities);
+  const raceCells = raceAbilityScoreCells(race, raceAbilityChoice, byId);
   const pointStatus =
     assessment.reason === "missing"
       ? "Ability scores incomplete"
@@ -1079,8 +1097,8 @@ function BaseAbilityScoreEditor({
         <div>
           <h5 id="base-abilities">Point buy</h5>
           <p className="field-help">
-            Point buy sets the base score; Bonus and Total include racial and
-            other increases
+            Point buy sets the base score; Race shows racial bonuses and Total
+            includes all increases
           </p>
         </div>
         <span
@@ -1100,15 +1118,19 @@ function BaseAbilityScoreEditor({
           className="ability-point-buy-row ability-point-buy-header"
           aria-hidden="true"
         >
-          <span className="ability-bonus ability-column-label">Bonus</span>
+          <span className="ability-race ability-column-label">Race</span>
           <span className="ability-total ability-column-label">Total</span>
         </div>
         {ABILITY_SCORE_NAMES.map((ability) => {
           const value = build.baseAbilities[ability] ?? 10;
           const raiseCost = pointBuyCostToRaise(value);
-          const stat = evaluation.stats[ability];
-          const bonus = abilityScoreBonus(stat);
-          const total = stat?.value ?? value;
+          const { total } = abilityScoreDisplay(
+            evaluation,
+            ability,
+            value,
+            pendingBonusDeltas[ability] ?? 0,
+          );
+          const raceCell = raceCells[ability];
           return (
             <div className="ability-point-buy-row" key={ability}>
               <span className="ability-name">{ability}</span>
@@ -1162,8 +1184,39 @@ function BaseAbilityScoreEditor({
                     : "Maximum"
                   : `Next +1: ${raiseCost} ${raiseCost === 1 ? "point" : "points"}`}
               </small>
-              <span className="ability-bonus">
-                {bonus === 0 ? "—" : bonus > 0 ? `+${bonus}` : bonus}
+              <span className="ability-race">
+                {raceCell.kind === "none" ? (
+                  "—"
+                ) : raceCell.kind === "static" ? (
+                  raceCell.value > 0 ? (
+                    `+${raceCell.value}`
+                  ) : (
+                    raceCell.value
+                  )
+                ) : (
+                  <button
+                    aria-label={`${ability} racial bonus (${raceCell.value > 0 ? "+" : ""}${raceCell.value})`}
+                    aria-pressed={
+                      raceAbilitySelectionId === raceCell.definitionId
+                    }
+                    className={`race-ability-choice${raceAbilitySelectionId === raceCell.definitionId ? " is-selected" : ""}`}
+                    disabled={
+                      raceAbilityChoice === undefined || !raceCell.selectable
+                    }
+                    type="button"
+                    onClick={() => {
+                      if (raceAbilityChoice === undefined) return;
+                      onRaceAbilitySelection(
+                        raceAbilityChoice,
+                        raceAbilitySelectionId === raceCell.definitionId
+                          ? undefined
+                          : raceCell.definitionId,
+                      );
+                    }}
+                  >
+                    {raceCell.value > 0 ? `+${raceCell.value}` : raceCell.value}
+                  </button>
+                )}
               </span>
               <span className="ability-total">{total}</span>
             </div>
@@ -1682,6 +1735,7 @@ function ChoiceEditor({
   keyAbilities = [],
   replacementTargetType,
   rollbackRevision,
+  onOptimisticSelectionChange,
   onDispatch,
 }: {
   readonly choice: EvaluatedChoice;
@@ -1696,6 +1750,9 @@ function ChoiceEditor({
   readonly keyAbilities?: readonly string[];
   readonly replacementTargetType?: string;
   readonly rollbackRevision: number;
+  readonly onOptimisticSelectionChange?: (
+    definitionId: string | undefined,
+  ) => void;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
   const provider = evaluation.occurrences.find(
@@ -1848,7 +1905,10 @@ function ChoiceEditor({
       occurrence,
       (index) => `web:placeholder:${index}:${crypto.randomUUID()}`,
     );
-    if (command !== undefined) onDispatch(command);
+    if (command !== undefined) {
+      onOptimisticSelectionChange?.(definitionId);
+      onDispatch(command);
+    }
   };
 
   const clearSelection = (): void => {
@@ -1865,6 +1925,7 @@ function ChoiceEditor({
     setPerusedId("");
     setStagedGroupKey(undefined);
     inspectCandidate?.(undefined);
+    onOptimisticSelectionChange?.(undefined);
     onDispatch(command);
   };
 
@@ -4316,6 +4377,10 @@ export function CharacterEditorPage({
     navigation.workspace === "build" ? navigation.section : undefined;
   const [inspectedOption, setInspectedOption] = useState<InspectedOption>();
   const [rollbackRevision, setRollbackRevision] = useState(0);
+  const [
+    pendingLevelOneAbilitySelections,
+    setPendingLevelOneAbilitySelections,
+  ] = useState<ReadonlyMap<string, string | undefined>>(new Map());
   const [expandedReplacementChoiceId, setExpandedReplacementChoiceId] =
     useState<string>();
   const transaction = useRef<CharacterTransaction | undefined>(undefined);
@@ -4616,6 +4681,96 @@ export function CharacterEditorPage({
       ),
     [mechanicalLevelChoices],
   );
+  const evaluatedLevelOneAbilityChoices = useMemo(
+    () =>
+      choicesAtLevel(1, selectedLevelEvaluation).filter(
+        (choice) =>
+          choice.type.trim().toLocaleLowerCase() === "race ability bonus",
+      ),
+    [selectedLevelEvaluation],
+  );
+  const raceAbilityChoice = evaluatedLevelOneAbilityChoices[0];
+  const evaluatedRaceAbilitySelectionId =
+    raceAbilityChoice === undefined || selectedLevelEvaluation === undefined
+      ? undefined
+      : selectedDefinitionId(raceAbilityChoice, selectedLevelEvaluation);
+  const raceAbilitySelectionId =
+    raceAbilityChoice !== undefined &&
+    pendingLevelOneAbilitySelections.has(raceAbilityChoice.id)
+      ? pendingLevelOneAbilitySelections.get(raceAbilityChoice.id)
+      : evaluatedRaceAbilitySelectionId;
+  const selectedRaceEntity = (() => {
+    if (selectedLevelEvaluation === undefined) return undefined;
+    const providerOccurrence =
+      raceAbilityChoice === undefined
+        ? undefined
+        : selectedLevelEvaluation.occurrences.find(
+            (occurrence) =>
+              occurrence.id === raceAbilityChoice.providerOccurrenceId,
+          );
+    if (providerOccurrence !== undefined)
+      return byId.get(providerOccurrence.definitionId.toLocaleLowerCase());
+    for (const occurrence of selectedLevelEvaluation.occurrences) {
+      const entity = byId.get(occurrence.definitionId.toLocaleLowerCase());
+      if (entity?.type.trim().toLocaleLowerCase() === "race") return entity;
+    }
+    return undefined;
+  })();
+  useEffect(() => {
+    setPendingLevelOneAbilitySelections((current) => {
+      const next = new Map(current);
+      let changed = false;
+      for (const [choiceId, definitionId] of next) {
+        const choice = evaluatedLevelOneAbilityChoices.find(
+          (candidate) => candidate.id === choiceId,
+        );
+        if (
+          choice === undefined ||
+          selectedDefinitionId(choice, selectedLevelEvaluation!) ===
+            definitionId
+        ) {
+          next.delete(choiceId);
+          changed = true;
+        }
+      }
+      return changed ? next : current;
+    });
+  }, [
+    evaluatedLevelOneAbilityChoices,
+    rollbackRevision,
+    selectedLevelEvaluation,
+  ]);
+  const pendingLevelOneAbilityDeltas = Object.fromEntries(
+    ABILITY_SCORE_NAMES.map((ability) => {
+      let delta = 0;
+      for (const [
+        choiceId,
+        optimisticDefinitionId,
+      ] of pendingLevelOneAbilitySelections) {
+        const choice = evaluatedLevelOneAbilityChoices.find(
+          (candidate) => candidate.id === choiceId,
+        );
+        const evaluatedDefinitionId =
+          choice === undefined || selectedLevelEvaluation === undefined
+            ? undefined
+            : selectedDefinitionId(choice, selectedLevelEvaluation);
+        delta +=
+          abilityScoreAdjustment(
+            optimisticDefinitionId === undefined
+              ? undefined
+              : byId.get(optimisticDefinitionId.toLocaleLowerCase()),
+            ability,
+          ) -
+          abilityScoreAdjustment(
+            evaluatedDefinitionId === undefined
+              ? undefined
+              : byId.get(evaluatedDefinitionId.toLocaleLowerCase()),
+            ability,
+          );
+      }
+      return [ability, delta] as const;
+    }),
+  );
   const groupedLevelChoices = groupLevelChoices(primaryLevelChoices);
   const repeatedChoiceGroups = groupRepeatedChoiceSlots(
     groupedLevelChoices.ordinary,
@@ -4761,6 +4916,69 @@ export function CharacterEditorPage({
         message: `Change rejected: ${reason instanceof Error ? reason.message : String(reason)}`,
       });
     }
+  }
+
+  function selectRaceAbilityBonus(
+    choice: EvaluatedChoice,
+    definitionId: string | undefined,
+  ): void {
+    if (selectedLevelEvaluation === undefined || build === undefined) return;
+    let command: CharacterCommand | undefined;
+    if (definitionId === undefined) {
+      command = unresolveEvaluatedChoiceCommand(
+        build,
+        choice,
+        selectedLevelEvaluation,
+        entities,
+        `web:placeholder:${crypto.randomUUID()}`,
+      );
+    } else {
+      const candidate = choice.candidates.find(
+        (item) => item.definitionId === definitionId,
+      );
+      const definition = byId.get(definitionId.toLocaleLowerCase());
+      const provider = selectedLevelEvaluation.occurrences.find(
+        (occurrence) => occurrence.id === choice.providerOccurrenceId,
+      );
+      const buildProvider = findOccurrence(build, choice.providerOccurrenceId);
+      if (
+        definition === undefined ||
+        (candidate !== undefined && !isCandidateSelectable(candidate))
+      )
+        return;
+      command = commandForEvaluatedChoice(
+        build,
+        choice,
+        selectedLevelEvaluation.occurrences,
+        entities,
+        {
+          id: `web:${crypto.randomUUID()}`,
+          identity: {
+            definitionId: definition.id,
+            name: definition.name,
+            type: definition.type,
+          },
+          acquiredLevel:
+            buildProvider?.acquiredLevel ??
+            provider?.acquiredLevel ??
+            selectedLevelEvaluation.level,
+          legality:
+            candidate === undefined || candidate.eligible
+              ? "rules-legal"
+              : "houserule",
+          children: [],
+          unresolved: false,
+        },
+        (index) => `web:placeholder:${index}:${crypto.randomUUID()}`,
+      );
+    }
+    if (command === undefined) return;
+    setPendingLevelOneAbilitySelections((current) => {
+      const next = new Map(current);
+      next.set(choice.id, definitionId);
+      return next;
+    });
+    dispatch(command);
   }
 
   function undo(): void {
@@ -5026,6 +5244,18 @@ export function CharacterEditorPage({
               : []
           }
           rollbackRevision={rollbackRevision}
+          {...(choice.type.trim().toLocaleLowerCase() === "race ability bonus"
+            ? {
+                onOptimisticSelectionChange: (
+                  definitionId: string | undefined,
+                ) =>
+                  setPendingLevelOneAbilitySelections((current) => {
+                    const next = new Map(current);
+                    next.set(choice.id, definitionId);
+                    return next;
+                  }),
+              }
+            : {})}
           onDispatch={dispatch}
         />
       </section>
@@ -5569,36 +5799,48 @@ export function CharacterEditorPage({
                               <BaseAbilityScoreEditor
                                 build={build}
                                 evaluation={selectedLevelEvaluation}
+                                pendingBonusDeltas={
+                                  pendingLevelOneAbilityDeltas
+                                }
+                                race={selectedRaceEntity}
+                                raceAbilityChoice={raceAbilityChoice}
+                                raceAbilitySelectionId={raceAbilitySelectionId}
+                                byId={byId}
+                                onRaceAbilitySelection={selectRaceAbilityBonus}
                                 onDispatch={dispatch}
                               />
                             )
                           ) : null}
-                          {activeChoiceSection.choices.map((choice) => (
-                            <Fragment key={choice.id}>
-                              {renderPrimaryChoice(
-                                choice,
-                                shouldOmitIndividualChoiceHeading(
+                          {activeChoiceSection.choices.map((choice) =>
+                            selectedLevel === 1 &&
+                            choice.type.trim().toLocaleLowerCase() ===
+                              "race ability bonus" ? null : (
+                              <Fragment key={choice.id}>
+                                {renderPrimaryChoice(
                                   choice,
-                                  activeChoiceSection.choices.length,
-                                  selectedLevel,
-                                ),
-                              )}
-                              {activeChoiceSection.section === "Class" &&
-                              selectedLevel === 1 &&
-                              choice.type.trim().toLocaleLowerCase() ===
-                                "class" ? (
-                                <BuildPresetPanel
-                                  choices={buildPresetChoices}
-                                  levelChoices={mechanicalLevelChoices}
-                                  evaluation={planningEvaluation}
-                                  build={build}
-                                  entities={entities}
-                                  byId={byId}
-                                  onDispatch={dispatch}
-                                />
-                              ) : null}
-                            </Fragment>
-                          ))}
+                                  shouldOmitIndividualChoiceHeading(
+                                    choice,
+                                    activeChoiceSection.choices.length,
+                                    selectedLevel,
+                                  ),
+                                )}
+                                {activeChoiceSection.section === "Class" &&
+                                selectedLevel === 1 &&
+                                choice.type.trim().toLocaleLowerCase() ===
+                                  "class" ? (
+                                  <BuildPresetPanel
+                                    choices={buildPresetChoices}
+                                    levelChoices={mechanicalLevelChoices}
+                                    evaluation={planningEvaluation}
+                                    build={build}
+                                    entities={entities}
+                                    byId={byId}
+                                    onDispatch={dispatch}
+                                  />
+                                ) : null}
+                              </Fragment>
+                            ),
+                          )}
                         </div>
                       </section>
                     )}

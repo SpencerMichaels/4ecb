@@ -1344,7 +1344,7 @@ textarea {
   border-color: transparent;
   padding-block: 0 0.15rem;
 }
-.ability-bonus,
+.ability-race,
 .ability-total {
   align-items: center;
   display: grid;
@@ -1352,7 +1352,7 @@ textarea {
   justify-items: end;
   text-align: right;
 }
-.ability-bonus {
+.ability-race {
   grid-column: 3;
 }
 .ability-total {
@@ -2273,7 +2273,8 @@ textarea {
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
 }
 
-.compact-choice-options > button {
+.compact-choice-options > button,
+.race-ability-choice {
   align-items: center;
   background: var(--surface);
   border: 1px solid var(--border-strong);
@@ -2309,6 +2310,23 @@ textarea {
 .compact-choice-options > button.is-selected {
   background: var(--success-soft);
   border-left-color: var(--success);
+}
+
+.race-ability-choice.is-selected {
+  background: var(--success-soft);
+  border-left-color: var(--success);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.race-ability-choice {
+  color: color-mix(in srgb, var(--muted) 65%, transparent);
+  font-weight: 400;
+  justify-content: center;
+  min-height: 2rem;
+  min-width: 2.65rem;
+  padding: 0.3rem 0.45rem;
+  text-align: center;
 }
 
 .compact-choice-options > button[aria-disabled="true"] {

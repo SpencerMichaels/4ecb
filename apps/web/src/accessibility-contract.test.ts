@@ -265,7 +265,7 @@ describe("release accessibility contract", () => {
     );
   });
 
-  it("uses toggle semantics for clearable compact choices and radios for mandatory choices", () => {
+  it("uses toggle semantics for clearable compact and ability choices", () => {
     const compactChoices = characterEditor.slice(
       characterEditor.indexOf("function CompactChoiceButtons"),
       characterEditor.indexOf("function BuildPresetPanel"),
@@ -284,6 +284,23 @@ describe("release accessibility contract", () => {
     expect(compactChoices).not.toContain('name="check"');
     expect(styles).toMatch(
       /\.compact-choice-options > button\.is-selected\s*\{[^}]*background: var\(--success-soft\)[^}]*border-left-color: var\(--success\)/,
+    );
+
+    const baseAbilities = characterEditor.slice(
+      characterEditor.indexOf("function BaseAbilityScoreEditor"),
+      characterEditor.indexOf("function retrainingCategory"),
+    );
+    expect(baseAbilities).toContain("className={`race-ability-choice");
+    expect(baseAbilities).toContain("aria-pressed={");
+    expect(baseAbilities).not.toContain('type="radio"');
+    expect(characterEditor).toContain(
+      "(candidate !== undefined && !isCandidateSelectable(candidate))",
+    );
+    expect(characterEditor).toContain(
+      "candidate === undefined || candidate.eligible",
+    );
+    expect(styles).toMatch(
+      /\.race-ability-choice\.is-selected\s*\{[^}]*background: var\(--success-soft\)[^}]*border-left-color: var\(--success\)/,
     );
 
     const abilityChoices = characterEditor.slice(
