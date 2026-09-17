@@ -1198,6 +1198,42 @@ describe("builder planning UI", () => {
     expect(planningEvaluationHorizon(withSavedAbilityIncrease, 8)).toBe(12);
     expect(withSavedAbilityIncrease.effectiveLevel).toBe(8);
     expect(withSavedAbilityIncrease.levels).toHaveLength(12);
+
+    const withLevel26EquipmentMetadata: CharacterBuild = {
+      ...browsed,
+      inventory: [
+        {
+          id: "legacy:loot:26:0",
+          acquiredLevel: 26,
+          quantity: 1,
+          equippedQuantity: 1,
+          elements: [
+            {
+              definitionId: "ID_LEVEL_26_MAGIC_ITEM",
+              name: "Level 26 magic item",
+              type: "Magic Item",
+              children: [
+                {
+                  id: "legacy:loot:26:0:property",
+                  identity: {
+                    definitionId: "ID_LEVEL_26_ITEM_PROPERTY",
+                    name: "Level 26 item property",
+                    type: "Class Feature",
+                  },
+                  acquiredLevel: 26,
+                  legality: "rules-legal",
+                  children: [],
+                  unresolved: false,
+                },
+              ],
+            },
+          ],
+          overrides: {},
+          legality: "rules-legal",
+        },
+      ],
+    };
+    expect(planningEvaluationHorizon(withLevel26EquipmentMetadata, 8)).toBe(8);
   });
 
   it("shows future choices without applying future stats to the current character", () => {

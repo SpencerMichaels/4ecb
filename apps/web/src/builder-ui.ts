@@ -82,12 +82,6 @@ export function planningEvaluationHorizon(
   }
   for (const occurrence of build.grabbag)
     horizon = Math.max(horizon, authoredOccurrenceLevel(occurrence));
-  for (const entry of build.inventory) {
-    horizon = Math.max(horizon, entry.acquiredLevel);
-    for (const element of entry.elements)
-      for (const child of element.children ?? [])
-        horizon = Math.max(horizon, authoredOccurrenceLevel(child));
-  }
   for (const alternate of build.alternates)
     horizon = Math.max(horizon, authoredOccurrenceLevel(alternate.choice));
   return horizon;

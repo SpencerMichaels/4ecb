@@ -1786,7 +1786,9 @@ pass.
   30, but those frames no longer extend evaluation after the builder is
   reopened. The planning horizon is now the highest of the current level, the
   visible level, and durable authored state such as saved/imported choices,
-  user edits, inventory, grabbag entries, or alternates.
+  user edits, grabbag entries, or alternates. Inventory metadata is excluded:
+  an item's acquisition/item level does not represent a character-planning
+  level and must not force unrelated future choice evaluation.
 - The ignored Alysa fixture imports truthfully at level 8 with eight populated
   frames; the erroneous level-12 progress came from four later persisted empty
   browse-ahead frames being counted as authored plan depth. A public synthetic
@@ -1794,3 +1796,15 @@ pass.
   future browsing at 12, and restoration of horizon 12 when an ability increase
   is saved there.
 - Focused verification passed 44 builder UI tests and the web TypeScript check.
+
+## Inventory horizon provenance checkpoint (2026-09-17)
+
+- Inventory entry and nested item-property acquisition levels no longer extend
+  the choice-planning horizon. They control equipment availability during an
+  evaluation, but are not evidence that the character has authored choices at
+  that level.
+- A level-8 build carrying level-26 equipment metadata now evaluates choices
+  through level 8. Saved level-frame choices, user edits, grabbag selections,
+  and alternates continue to extend the horizon normally.
+- The temporary foreground/background scheduling workaround was removed; the
+  bogus level-26 evaluation is no longer requested.
