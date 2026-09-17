@@ -17,21 +17,23 @@ function normalizedField(entity: ContentEntity, name: string): string {
 
 export function entityVisualTone(entity: ContentEntity): LegacyVisualTone {
   const type = entity.type.trim().toLocaleLowerCase();
-  if (["magic item", "item set", "weapon", "armor", "gear"].includes(type))
+  if (
+    [
+      "magic item",
+      "item set",
+      "weapon",
+      "armor",
+      "gear",
+      "ritual",
+      "ritual scroll",
+    ].includes(type)
+  )
     return "item";
   if (type !== "power") return "neutral";
-
-  const categories = entity.categories.map((value) =>
-    value.trim().toLocaleLowerCase(),
-  );
-  const powerType = normalizedField(entity, "power type");
   const usage = normalizedField(entity, "power usage");
-  if (powerType === "utility" || categories.includes("utility"))
-    return "utility";
-  if (usage === "at-will" || categories.includes("at-will")) return "at-will";
-  if (usage === "encounter" || categories.includes("encounter"))
-    return "encounter";
-  if (usage === "daily" || categories.includes("daily")) return "daily";
+  if (usage.startsWith("at-will")) return "at-will";
+  if (usage.startsWith("encounter")) return "encounter";
+  if (usage.startsWith("daily")) return "daily";
   return "neutral";
 }
 

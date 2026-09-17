@@ -7,12 +7,15 @@ import {
 } from "@4ecb/content-domain";
 
 import { ActionTypeIcon } from "./ActionTypeIcon";
+import { entityCurrencyCopper, formatCopperPrice } from "./equipment-ui";
+import { Icon, type IconName } from "./Icon";
 import {
   classKeyAbilitiesSentence,
   contentSpecificValue,
   primaryDetailTypeLabel,
   splitLabeledDescription,
 } from "./builder-ui";
+import { entityVisualTone, visualToneClass } from "./visual-language";
 
 export const HideFlavortextContext = createContext(false);
 
@@ -36,6 +39,95 @@ export function entityCardSource(entity: ContentEntity): string {
   );
 }
 
+const ITEM_TYPES = new Set([
+  "armor",
+  "gear",
+  "item set",
+  "magic item",
+  "ritual",
+  "ritual scroll",
+  "weapon",
+]);
+
+export function isItemEntity(entity: ContentEntity): boolean {
+  return ITEM_TYPES.has(normalizedFieldName(entity.type));
+}
+
+function itemKind(entity: ContentEntity): string {
+  const type = normalizedFieldName(entity.type);
+  if (type === "magic item")
+    return (
+      contentSpecificValue(entity, "Magic Item Type")?.trim() || "Magic Item"
+    );
+  if (type === "ritual")
+    return contentSpecificValue(entity, "type")?.trim() || "Ritual";
+  return entity.type.trim() || "Item";
+}
+
+export function itemCardLabel(entity: ContentEntity): string {
+  const kind = itemKind(entity);
+  const level = contentSpecificValue(entity, "Level")?.trim();
+  const rarity = contentSpecificValue(entity, "Rarity")?.trim();
+  return [level ? `${kind} ${level}` : kind, rarity]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+export function powerCardLabel(entity: ContentEntity): string {
+  const usage = contentSpecificValue(entity, "Power Usage")?.trim();
+  const powerType = contentSpecificValue(entity, "Power Type")
+    ?.trim()
+    .toLocaleLowerCase();
+  const level = contentSpecificValue(entity, "Level")?.trim();
+  return [usage, powerType, level].filter(Boolean).join(" ") || "Power";
+}
+
+export function itemCardIcon(entity: ContentEntity): IconName {
+  const type = normalizedFieldName(entity.type);
+  const kind = normalizedFieldName(itemKind(entity));
+  const slot = normalizedFieldName(
+    contentSpecificValue(entity, "Item Slot") ?? "",
+  );
+  const value = `${kind} ${slot}`;
+  if (value.includes("artifact") || value.includes("dragonshard")) return "gem";
+  if (type === "weapon" || kind === "weapon") return "sword";
+  if (type === "armor" || kind === "armor") return "shield";
+  if (type === "gear") return "item";
+  if (type === "item set") return "layers";
+  if (type === "ritual scroll") return "details";
+  if (kind.includes("martial practice")) return "dumbbell";
+  if (kind.includes("alchemical") || kind.includes("formula"))
+    return "flask-conical";
+  if (type === "ritual") return "book";
+  if (kind.includes("alternative reward")) return "award";
+  if (/boon|gift|blessing/u.test(kind)) return "gift";
+  if (kind.includes("echo of power")) return "waves";
+  if (kind.includes("grandmaster training")) return "skill";
+  if (/secret|mystery/u.test(kind)) return "key-round";
+  if (kind.includes("soulfang")) return "bone";
+  if (kind.includes("templar brand")) return "stamp";
+  if (kind.includes("ammunition")) return "target";
+  if (kind.includes("arms slot")) return "arms";
+  if (kind.includes("feet")) return "footprints";
+  if (kind.includes("hands")) return "hand";
+  if (kind.includes("head")) return "crown";
+  if (kind.includes("neck")) return "medal";
+  if (kind.includes("waist")) return "badge";
+  if (kind === "ring" || slot.includes("ring")) return "circle";
+  if (/companion|familiar|mount/u.test(value)) return "paw-print";
+  if (kind.includes("holy symbol")) return "sun";
+  if (kind.includes("ki focus")) return "focus";
+  if (kind === "orb") return "orbit";
+  if (/rod|staff|totem|wand/u.test(kind)) return "wand-sparkles";
+  if (kind === "tome") return "book-marked";
+  if (/consumable/u.test(kind)) return "package-open";
+  if (/elixir|potion/u.test(kind)) return "flask-round";
+  if (kind.includes("reagent")) return "test-tube";
+  if (kind.includes("whetstone")) return "anvil";
+  if (/intelligent item|psionic talent/u.test(kind)) return "brain";
+  return "feat";
+}
+
 export function EntityCardHeader({
   entity,
   headingId,
@@ -48,22 +140,11 @@ export function EntityCardHeader({
   readonly subheading?: ReactNode;
 }) {
   const isPower = entity.type.trim().toLocaleLowerCase() === "power";
+  const isItem = isItemEntity(entity);
   const actionType = isPower
     ? contentSpecificValue(entity, "Action Type")
     : undefined;
-  const attackType = isPower
-    ? contentSpecificValue(entity, "Attack Type")
-    : undefined;
-  const headingContent = (
-    <>
-      {entity.name}
-      {attackType === undefined ? null : (
-        <span className="entity-card-attack-type">
-          {` (${attackType.toLocaleLowerCase()})`}
-        </span>
-      )}
-    </>
-  );
+  const headingContent = entity.name;
   const heading =
     headingLevel === 2 ? (
       <h2 id={headingId}>{headingContent}</h2>
@@ -79,10 +160,15 @@ export function EntityCardHeader({
       <div className="detail-heading-row">
         <div className="entity-card-heading-main">
           {isPower ? <ActionTypeIcon decorative value={actionType} /> : null}
+          {isItem ? <Icon name={itemCardIcon(entity)} /> : null}
           {heading}
         </div>
         <span className="eyebrow entity-kind">
-          {primaryDetailTypeLabel(entity)}
+          {isItem
+            ? itemCardLabel(entity)
+            : isPower
+              ? powerCardLabel(entity)
+              : primaryDetailTypeLabel(entity)}
         </span>
       </div>
       {subheading === undefined ? null : (
@@ -290,6 +376,127 @@ function DefaultSpecifics({
   );
 }
 
+const POWER_DESCRIPTOR_FIELDS = new Set([
+  "action type",
+  "attack type",
+  "keywords",
+  "target",
+]);
+const POWER_HEADER_FIELDS = new Set(["level", "power type", "power usage"]);
+const ITEM_DESCRIPTOR_FIELDS = new Set([
+  "armor",
+  "critical",
+  "damage",
+  "enhancement",
+  "proficiency bonus",
+  "weapon",
+  "weight",
+]);
+const ITEM_HEADER_FIELDS = new Set([
+  "level",
+  "magic item type",
+  "rarity",
+  "type",
+]);
+const ITEM_PRICE_FIELDS = new Set(["copper", "gold", "market price", "silver"]);
+
+const POWER_COMBAT_CLAUSE =
+  /^(?:(?:primary|secondary|tertiary)\s+)?(?:targets?|attacks?|hit|miss|effect)(?:\s+\([^)]*\))?$/u;
+
+function powerRulePriority(field: SpecificField): number {
+  const name = normalizedFieldName(field.name);
+  if (/^(?:requirements?|prerequisites?)\b/u.test(name)) return 0;
+  if (/^triggers?\b/u.test(name)) return 1;
+  if (POWER_COMBAT_CLAUSE.test(name)) return 2;
+  if (/^sustain(?:\s|$)/u.test(name)) return 4;
+  if (/\baftereffect\b/u.test(name)) return 5;
+  if (name === "special") return 6;
+  return 3;
+}
+
+/**
+ * Adapts the legacy card's explicit core fields and authored-order fallback.
+ * Multiattack phases and duplicate outcomes stay in authored order; custom
+ * clauses remain stable before the canonical Sustain/Aftereffect/Special tail.
+ */
+export function orderPowerRuleFields(
+  fields: readonly SpecificField[],
+): readonly SpecificField[] {
+  return fields
+    .map((field, index) => ({ field, index }))
+    .sort(
+      (left, right) =>
+        powerRulePriority(left.field) - powerRulePriority(right.field) ||
+        left.index - right.index,
+    )
+    .map(({ field }) => field);
+}
+
+function StructuredSpecifics({
+  entity,
+  fields,
+}: {
+  readonly entity: ContentEntity;
+  readonly fields: readonly SpecificField[];
+}) {
+  const descriptors =
+    entity.type.trim().toLocaleLowerCase() === "power"
+      ? POWER_DESCRIPTOR_FIELDS
+      : ITEM_DESCRIPTOR_FIELDS;
+  const isPower = entity.type.trim().toLocaleLowerCase() === "power";
+  const visibleFields = fields.filter((field) => {
+    const name = normalizedFieldName(field.name);
+    if (isPower) return !POWER_HEADER_FIELDS.has(name);
+    if (isItemEntity(entity))
+      return !ITEM_HEADER_FIELDS.has(name) && !ITEM_PRICE_FIELDS.has(name);
+    return true;
+  });
+  const authoredFacts = visibleFields.filter((field) =>
+    descriptors.has(normalizedFieldName(field.name)),
+  );
+  const price = isItemEntity(entity) ? entityCurrencyCopper(entity) : undefined;
+  const facts = [
+    ...(price === undefined
+      ? []
+      : [{ key: "price", label: "Price", value: formatCopperPrice(price) }]),
+    ...authoredFacts.map((field) => ({
+      key: `${field.ordinal}-${field.name}`,
+      label: field.name || "Detail",
+      value: field.value,
+    })),
+  ];
+  const authoredClauses = visibleFields.filter(
+    (field) => !descriptors.has(normalizedFieldName(field.name)),
+  );
+  const clauses = isPower
+    ? orderPowerRuleFields(authoredClauses)
+    : authoredClauses;
+  return (
+    <>
+      {facts.length === 0 ? null : (
+        <dl className="entity-card-descriptors">
+          {facts.map((fact) => (
+            <div key={fact.key}>
+              <dt>{fact.label}</dt>
+              <dd className="preserve-lines">{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {clauses.length === 0 ? null : (
+        <dl className="entity-card-rules">
+          {clauses.map((field) => (
+            <div key={`${field.ordinal}-${field.name}`}>
+              <dt>{field.name || "Detail"}</dt>
+              <dd className="preserve-lines">{field.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </>
+  );
+}
+
 export function EntityCardBody({
   entity,
   hideFlavortext,
@@ -297,6 +504,7 @@ export function EntityCardBody({
   afterNarrative,
   afterFields,
   renderDescription,
+  showSource = true,
 }: {
   readonly entity: ContentEntity;
   readonly hideFlavortext: boolean;
@@ -304,14 +512,21 @@ export function EntityCardBody({
   readonly afterNarrative?: ReactNode;
   readonly afterFields?: ReactNode;
   readonly renderDescription?: (description: string) => ReactNode;
+  readonly showSource?: boolean;
 }) {
   const fields = entityCardSpecifics(entity);
+  const structured =
+    entity.type.trim().toLocaleLowerCase() === "power" || isItemEntity(entity);
   return (
     <>
-      {beforeNarrative}
+      {structured ? null : beforeNarrative}
       {entity.flavor === undefined || hideFlavortext ? null : (
         <p className="candidate-flavor">{entity.flavor}</p>
       )}
+      {structured ? (
+        <StructuredSpecifics entity={entity} fields={fields} />
+      ) : null}
+      {structured ? beforeNarrative : null}
       {entity.description.length === 0
         ? null
         : (renderDescription?.(entity.description) ?? (
@@ -324,9 +539,43 @@ export function EntityCardBody({
         </section>
       )}
       {afterNarrative}
-      <DefaultSpecifics entity={entity} fields={fields} />
+      {structured ? null : <DefaultSpecifics entity={entity} fields={fields} />}
       {afterFields}
-      <p className="detail-source-note">Source: {entityCardSource(entity)}</p>
+      {showSource ? (
+        <p className="detail-source-note">Source: {entityCardSource(entity)}</p>
+      ) : null}
     </>
+  );
+}
+
+export function EmbeddedPowerCard({
+  entity,
+  hideFlavortext,
+}: {
+  readonly entity: ContentEntity;
+  readonly hideFlavortext: boolean;
+}) {
+  const headingId = `embedded-power-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
+  return (
+    <details
+      aria-labelledby={headingId}
+      className={`candidate-detail theme-power-card ${visualToneClass(entityVisualTone(entity))}`}
+      open
+    >
+      <summary>
+        <EntityCardHeader
+          entity={entity}
+          headingId={headingId}
+          headingLevel={4}
+        />
+      </summary>
+      <div className="theme-power-card-body">
+        <EntityCardBody
+          entity={entity}
+          hideFlavortext={hideFlavortext}
+          showSource={false}
+        />
+      </div>
+    </details>
   );
 }

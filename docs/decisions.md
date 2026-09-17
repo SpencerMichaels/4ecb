@@ -813,6 +813,41 @@ post-evaluation section fallback canonicalizes with `replaceState`; identical
 targets are ignored so synchronization cannot create duplicate entries. The
 library, sheet, and settings hashes retain their existing identities.
 
+### D048 — Production detail cards share one semantic power/item structure
+
+Power and equipment details use the shared production `EntityCard` renderer in
+builder, Equipment, and granted/theme contexts. A power header contains only its
+action symbol and name on the left and authored usage, lower-case power type,
+and level on the right; attack type remains a body descriptor. Power Type,
+Power Usage, and Level are header-only. Header tone follows actual `Power Usage`
+only—at-will green, encounter red, daily gray—so Utility is not a fourth usage
+color. Power and item headers use the approved tinted treatment: the soft tone
+is the background, normal text remains readable, and the full tone is retained
+as border accent. Flavor precedes a text-only descriptor strip and
+fixed-label-column rules rows. Source appears only on the top-level detail card.
+A resolvable granted Power entity is an initially expanded nested card whose one
+real power header is also its disclosure control; authored item `Power` prose is
+not promoted into a synthetic power entity.
+
+Recovered `PowerDisplay.BuildSpecificFields` explicitly emits Action Type plus
+Attack Type, Target or Targets, and Attack. Its `standards` exclusions are power
+type, power usage, class, level, keywords, action type, attack type, attack,
+target, targets, and display. `CheckerSpecifics` does not sort everything else:
+it walks those remaining visible fields in authored order and preserves
+duplicate values. The production order adapts that evidence rather than
+claiming literal legacy sorting: Requirement/Prerequisite and Trigger lead;
+ordinary and Primary/Secondary/Tertiary Target, Attack, Hit, Miss, and Effect
+clauses retain authored order as coherent combat phases; unknown/custom clauses
+remain stable; Sustain and Aftereffect form the tail; and exact Special is last.
+
+Item headers use user-facing type, level, and rarity rather than weapon/armor
+subtype. Their monochrome Lucide icon is resolved from the finite imported-corpus
+vocabulary: Sword for Weapon, Shield for Armor, Backpack for Gear, the approved
+slot/implement/consumable/reward icons for their exact families, and Sparkles for
+Wondrous/Special/Any/blank fallback. Artifact or Dragonshard identity takes
+precedence over another compatible type. The temporary card-proposal files are
+visual evidence only and are not a production dependency.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

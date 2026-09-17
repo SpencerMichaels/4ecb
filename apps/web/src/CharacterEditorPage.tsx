@@ -95,6 +95,7 @@ import {
 import { Icon, type IconName } from "./Icon";
 import { ActionTypeIcon } from "./ActionTypeIcon";
 import {
+  EmbeddedPowerCard,
   EntityCardBody,
   EntityCardHeader,
   HideFlavortextContext,
@@ -979,6 +980,13 @@ function CandidateDetailCard({
     entity.type.trim().toLocaleLowerCase() === "theme";
   const entityTone = entityVisualTone(entity);
   const tone = visualToneClass(entityTone);
+  const isEmbeddedPower =
+    entity.type.trim().toLocaleLowerCase() === "power" &&
+    (relationship !== undefined || themePowerLevel !== undefined);
+  if (isEmbeddedPower)
+    return (
+      <EmbeddedPowerCard entity={entity} hideFlavortext={hideFlavortext} />
+    );
   const body = (
     <EntityCardBody
       entity={entity}
@@ -1004,25 +1012,6 @@ function CandidateDetailCard({
         : {})}
     />
   );
-
-  if (themePowerLevel !== undefined) {
-    return (
-      <details
-        aria-labelledby={headingId}
-        className={`candidate-detail theme-power-card ${tone}`}
-        open
-      >
-        <summary>
-          <EntityCardHeader
-            entity={entity}
-            headingId={headingId}
-            headingLevel={4}
-          />
-        </summary>
-        <div className="theme-power-card-body">{body}</div>
-      </details>
-    );
-  }
 
   return (
     <aside

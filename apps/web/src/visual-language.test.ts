@@ -36,17 +36,22 @@ function entity(
 }
 
 describe("legacy-derived visual language", () => {
-  it("uses utility before usage and maps every legacy card color", () => {
+  it("uses authored Power Usage for tone and never treats Utility as a color", () => {
     expect(
       entityVisualTone(
         entity("Power", ["Utility"], { "Power Usage": "Encounter" }),
       ),
-    ).toBe("utility");
-    expect(entityVisualTone(entity("Power", ["At-Will"]))).toBe("at-will");
+    ).toBe("encounter");
+    expect(entityVisualTone(entity("Power", ["At-Will"]))).toBe("neutral");
+    expect(
+      entityVisualTone(entity("Power", [], { "Power Usage": "At-Will" })),
+    ).toBe("at-will");
     expect(
       entityVisualTone(entity("Power", [], { "Power Usage": "Encounter" })),
     ).toBe("encounter");
-    expect(entityVisualTone(entity("Power", ["Daily"]))).toBe("daily");
+    expect(
+      entityVisualTone(entity("Power", [], { "Power Usage": "Daily" })),
+    ).toBe("daily");
     expect(entityVisualTone(entity("Magic Item"))).toBe("item");
   });
 

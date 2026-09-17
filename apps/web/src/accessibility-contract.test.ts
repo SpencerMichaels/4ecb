@@ -125,13 +125,14 @@ describe("release accessibility contract", () => {
     expect(candidateDetails).toContain("themePowerLevel={group.level ?? null}");
     expect(candidateDetails).not.toContain("theme-power-level");
     expect(candidateDetails).not.toContain("Theme power");
-    expect(candidateDetails).toContain("if (themePowerLevel !== undefined)");
-    expect(candidateDetails).toMatch(
-      /<summary>\s*<EntityCardHeader[\s\S]*?<\/summary>/,
+    expect(candidateDetails).toContain("isEmbeddedPower");
+    expect(candidateDetails).toContain("<EmbeddedPowerCard");
+    expect(entityCard).toMatch(
+      /<details[\s\S]*?open[\s\S]*?<summary>\s*<EntityCardHeader[\s\S]*?<\/summary>/,
     );
-    expect(candidateDetails).toContain("<EntityCardBody");
+    expect(entityCard).toContain("showSource={false}");
     expect(candidateDetails).toMatch(
-      /if \(themePowerLevel !== undefined\)[\s\S]*?return \([\s\S]*?<aside[\s\S]*?tabIndex={0}/,
+      /if \(isEmbeddedPower\)[\s\S]*?return \([\s\S]*?<aside[\s\S]*?tabIndex={0}/,
     );
     expect(styles).toMatch(
       /\.theme-power-card > summary\s*\{[^}]*cursor: pointer/,
@@ -142,7 +143,16 @@ describe("release accessibility contract", () => {
     expect(styles).toMatch(/\.theme-power-card\s*\{[^}]*padding: 0/);
     expect(styles).toMatch(/\.theme-power-card > summary\s*\{[^}]*margin: 0/);
     expect(styles).toMatch(
-      /\.theme-power-card-body\s*\{[^}]*padding: 0\.85rem 1rem 1rem/,
+      /\.theme-power-card-body\s*\{[^}]*padding: 0 1rem 0\.85rem/,
+    );
+    expect(styles).toMatch(
+      /\.theme-power-card > summary\s*\{[^}]*background: var\(--tone-soft\)[^}]*border-bottom: 1px solid var\(--tone\)[^}]*color: var\(--text\)/,
+    );
+    expect(styles).toMatch(
+      /\.candidate-detail\[class\*="tone-"\] > header\s*\{[^}]*background: var\(--tone-soft\)[^}]*border-bottom: 1px solid var\(--tone\)[^}]*color: var\(--text\)/,
+    );
+    expect(styles).not.toMatch(
+      /\.candidate-detail:is\([^)]*tone-at-will[^)]*\)\s*> header/,
     );
   });
 
@@ -185,15 +195,16 @@ describe("release accessibility contract", () => {
       "<ActionTypeIcon decorative value={actionType} />",
     );
     expect(entityCard).toContain('contentSpecificValue(entity, "Action Type")');
-    expect(entityCard).toContain('contentSpecificValue(entity, "Attack Type")');
-    expect(entityCard).toContain('className="entity-card-attack-type"');
-    expect(entityCard).toContain("attackType.toLocaleLowerCase()");
+    expect(entityCard).not.toContain('className="entity-card-attack-type"');
+    expect(entityCard).toContain("itemCardLabel(entity)");
+    expect(entityCard).toContain("itemCardIcon(entity)");
+    expect(entityCard).toContain('className="entity-card-descriptors"');
+    expect(entityCard).toContain('className="entity-card-rules"');
+    expect(styles).toContain(".entity-card-heading-main .action-type-icon,");
     expect(styles).toMatch(
-      /\.entity-card-heading-main \.action-type-icon\s*\{[^}]*align-self: baseline[^}]*line-height: inherit/,
+      /\.entity-card-heading-main > \.icon\s*\{[^}]*align-self: baseline[^}]*line-height: inherit/,
     );
-    expect(styles).toMatch(
-      /\.entity-card-attack-type\s*\{[^}]*font-weight: 400/,
-    );
+    expect(styles).toMatch(/grid-template-columns: 4\.75rem minmax\(0, 1fr\)/);
     expect(entityCard).not.toContain("<h5>Description</h5>");
     expect(characterEditor).toContain("useContext(HideFlavortextContext)");
     expect(entityCard).toContain(
@@ -240,6 +251,14 @@ describe("release accessibility contract", () => {
     );
     expect(styles).toMatch(
       /\.equipment-table-scroll th:not\(:first-child\),[\s\S]*?\.equipment-table-scroll td:not\(:first-child\)[\s\S]*?white-space: nowrap;[\s\S]*?width: 1%/,
+    );
+    const equipmentWorkspaceRule = styles.match(
+      /\.equipment-workspace\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(equipmentWorkspaceRule).toContain("minmax(0, 1fr)");
+    expect(equipmentWorkspaceRule).toContain("clamp(28rem, 41vw, 32rem)");
+    expect(styles).toMatch(
+      /@media \(max-width: 60rem\)[\s\S]*?\.equipment-workspace\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\)/,
     );
     expect(styles).toMatch(
       /\.candidate-selection-short[\s\S]*?\.selection-table-scroll\s*\{[\s\S]*?height: auto/,

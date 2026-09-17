@@ -41,6 +41,40 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## M5.5 unified production detail-card implementation (accepted 2026-09-16)
+
+- The approved temporary power/equipment study is implemented in the shared
+  production `EntityCard` path; production does not import or depend on the
+  prototype files. Power headers contain the action symbol and name on the left
+  and authored usage, lower-case power type, and level on the right. Attack type
+  is a text-only body descriptor; Level, Power Type, and Power Usage do not
+  repeat in the body. Utility no longer overrides the authored at-will,
+  encounter, or daily usage color. Power and item headers use the approved soft
+  tinted background with normal text and a full-tone border accent.
+- Power and item bodies now place flavor before a text-only descriptor strip and
+  aligned rules rows with a fixed 4.75rem label column. Top-level cards retain a
+  small Source footer. Resolvable granted powers use the same actual power
+  header as an initially open disclosure and omit the embedded Source footer;
+  an authored item `Power` field remains an inline rules clause.
+- Recovered `PowerDisplay.BuildSpecificFields` explicitly renders Action Type
+  plus Attack Type, Target/Targets, and Attack; its standard exclusion list is
+  power type, power usage, class, level, keywords, action type, attack type,
+  attack, target, targets, and display. `CheckerSpecifics` then retains authored
+  order for every other visible field and preserves duplicate values. The modern
+  stable adaptation puts Requirement/Prerequisite and Trigger first, preserves
+  authored Primary/Secondary/Tertiary combat phases and unknown/custom clauses,
+  moves Sustain and Aftereffect near the end, and guarantees exact Special last.
+- Item headers resolve a compact user-facing type/level/rarity label and the
+  approved corpus-backed Lucide family, including one `Sword` for mundane and
+  magic weapons and artifact/dragonshard precedence. Focused tests cover usage
+  tone, item labels/icons, structured rendering, default-open embedding, Source
+  suppression, and inline item-power text.
+- Verification passes all 117 web tests across 22 files, the web TypeScript
+  checks, affected-file ESLint, formatting, and the production PWA build.
+  Product-owner visual verification accepted the unified cards and the widened,
+  responsive Shop detail column; focused follow-up checks passed after the final
+  width adjustment.
+
 ## M5.5 builder browser-history checkpoint (2026-09-16)
 
 - Build, Overview, Character details, Equipment, and Diagnostics now have

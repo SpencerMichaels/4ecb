@@ -12,8 +12,12 @@ import {
 } from "@4ecb/query-engine";
 
 import { appContentRuntime, type QueryRuntimeClient } from "./app-runtime";
-import { contentSpecificValue } from "./builder-ui";
-import { EntityCardBody, EntityCardHeader } from "./EntityCard";
+import { contentSpecificValue, grantedDetailEntities } from "./builder-ui";
+import {
+  EmbeddedPowerCard,
+  EntityCardBody,
+  EntityCardHeader,
+} from "./EntityCard";
 import {
   compatibleBaseItems,
   entityCurrencyCopper,
@@ -109,9 +113,11 @@ function FacetSelect({
 function ItemDetail({
   entity,
   hideFlavortext,
+  byId,
 }: {
   readonly entity: ContentEntity | undefined;
   readonly hideFlavortext: boolean;
+  readonly byId: ReadonlyMap<string, ContentEntity>;
 }) {
   if (entity === undefined)
     return (
@@ -123,7 +129,14 @@ function ItemDetail({
         </p>
       </aside>
     );
-  const price = entityCurrencyCopper(entity);
+  const references = new Map(byId);
+  for (const candidate of byId.values()) {
+    const name = candidate.name.trim().toLocaleLowerCase();
+    if (!references.has(name)) references.set(name, candidate);
+  }
+  const grantedPowers = grantedDetailEntities(entity, references).filter(
+    (granted) => granted.type.trim().toLocaleLowerCase() === "power",
+  );
   return (
     <aside
       className={`candidate-detail ${visualToneClass(entityVisualTone(entity))}`}
@@ -135,14 +148,13 @@ function ItemDetail({
       <EntityCardBody
         entity={entity}
         hideFlavortext={hideFlavortext}
-        afterNarrative={
-          <dl className="candidate-facts">
-            <div>
-              <dt>Price</dt>
-              <dd>{formatCopperPrice(price)}</dd>
-            </div>
-          </dl>
-        }
+        afterFields={grantedPowers.map((power) => (
+          <EmbeddedPowerCard
+            entity={power}
+            hideFlavortext={hideFlavortext}
+            key={power.id}
+          />
+        ))}
       />
     </aside>
   );
@@ -997,7 +1009,11 @@ export function EquipmentWorkspace({
           )}
         </div>
         <div className="shared-choice-detail">
-          <ItemDetail entity={inspected} hideFlavortext={hideFlavortext} />
+          <ItemDetail
+            byId={byId}
+            entity={inspected}
+            hideFlavortext={hideFlavortext}
+          />
         </div>
       </div>
     </section>
