@@ -883,6 +883,57 @@ the imported legacy calculated cache authoritative.
 These are deliberately deferred until a milestone produces the evidence needed
 to choose well.
 
+### Source-independent `.dnd4e` writer and storage
+
+`LegacyEnvelope.sourceXml` is transitional compatibility debt, not the intended
+permanent native character model. The current edited writer still parses that
+complete imported document to copy campaign, journal, companion-presentation,
+unknown root, unknown sheet, and unknown root-attribute payloads. Its semantic
+re-import gate proves parity only for the normalized `CharacterBuild`; it does
+not prove that every meaningful part of the `.dnd4e` document is understood.
+
+A read-only 2026-09-17 audit covered the eight supplied correction characters
+and nine bundled sample heroes. All 17 use the same known root and
+`CharacterSheet` vocabulary, none has an unknown root element, all 17 embedded
+campaign blocks are empty, and all sheet-level companion blocks are empty. One
+bundled hero contains a structured journal entry. The public structural fixture
+continues to exercise synthetic unknown root and sheet extensions. The static
+official corpus therefore makes the preservation tail small, but not empty.
+
+Generated `StatBlock`, `RulesElementTally`, `LootTally`, and `PowerStats` data is
+disposable cache or compatibility output and must be regenerated from an exact
+build/profile evaluation. It must not justify retaining a source document as
+authoritative state. Campaign policy, journal entries, meaningful companion
+presentation, historical wrappers, and extension data are different: until
+normalized, they are authoritative or user-authored payloads that would be lost
+if `sourceXml` were removed. The current preservation envelope also does not
+fully protect unknown attributes or children nested inside recognized structures
+that the edited writer replaces wholesale.
+
+The deferred migration is staged: define the supported official/historical
+format boundary; normalize the remaining campaign, journal, companion, wrapper,
+attribute, and extension payloads; make the writer consume only authoritative
+build state, normalized compatibility data, an exact evaluation, and the bound
+content profile; expand semantic comparison to the complete normalized document;
+then introduce a character-record schema migration that makes `sourceXml`
+optional before removing it. Unknown third-party extensions may remain as a
+typed generic element tree at explicit document anchors; preserving an entire
+opaque source file is not required.
+
+The decisive exit criterion is:
+
+```text
+import .dnd4e -> discard source XML -> export -> re-import
+-> compare complete normalized semantics
+```
+
+The comparison must cover campaign, journal, companion/extension payloads,
+container attributes, and user content in addition to levels, choices,
+replacement topology, inventory, alternates, abilities, and text strings.
+Original-builder open/save/reopen and representative sheet comparison remain
+separate compatibility evidence. This migration is deferred and has not been
+implemented; `sourceXml` remains required until the complete gate passes.
+
 ### Content-pack physical encoding
 
 Start with a deterministic, inspectable representation. Adopt compression,

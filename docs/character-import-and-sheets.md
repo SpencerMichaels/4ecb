@@ -155,6 +155,81 @@ open contract, CBLoader merged-cache path, deterministic regenerated candidate
 commands, and the actual 2026-09-01 runtime blocker. Semantic re-import remains
 separate from an observed original-application open.
 
+## Deferred source-envelope retirement
+
+The complete `LegacyEnvelope.sourceXml` is now classified as transitional debt.
+It was the correct loss-preserving boundary before engine-backed editing and
+cache regeneration existed, but it is not the intended permanent source of
+native character semantics. Removing it immediately is unsafe because edited
+export still extracts campaign, journal, companion-presentation, unknown root,
+unknown sheet, and unknown root-attribute fragments from the imported document.
+The existing round-trip comparison covers the authoritative `CharacterBuild`,
+not those copied fragments or every regenerated cache field.
+
+The 2026-09-17 read-only corpus audit examined the eight supplied correction
+characters and nine bundled sample heroes:
+
+- all 17 files use the same known root and `CharacterSheet` element vocabulary;
+- none contains an unknown root element;
+- every embedded `D20CampaignSetting` is empty;
+- every sheet-level `Companions` block is empty; companion rules remain in the
+  level tree and companion prose is already represented through character
+  detail text; and
+- one bundled hero contains one structured journal entry.
+
+The public structural fixture deliberately retains synthetic unknown root and
+sheet elements so the extension boundary remains tested. The audit establishes
+that the official observed preservation tail is narrow; it does not authorize
+discarding journal data, future imported campaign policy, historical wrappers,
+or third-party extensions.
+
+The remaining data is classified as follows:
+
+- Level trees, choices, replacement links, grabbag, inventory, alternates, base
+  abilities, text strings, and typed `UserEdit` rules are authoritative native
+  build state and are regenerated.
+- `StatBlock`, `RulesElementTally`, `LootTally`, and `PowerStats` are disposable
+  generated caches. The normalized legacy snapshot remains useful for fallback
+  display and parity diagnostics, but is not editable authority.
+- Campaign policy, structured journal entries, meaningful companion
+  presentation, historical wrapper forms, and extra attributes or children in
+  recognized authoritative containers are meaningful data not yet completely
+  normalized.
+- Unknown root/sheet extensions and unknown root attributes are currently
+  preservation data rather than understood semantics. A future normalized
+  compatibility model may retain them as typed generic element trees at explicit
+  document anchors instead of retaining the whole source document.
+- Comments, whitespace, BOM, original formatting/order, and document-local
+  `charelem` token spellings are non-semantic and need not survive byte-for-byte
+  once the untouched-original export target is gone.
+
+Retirement is deferred and will proceed in stages:
+
+1. Define the supported official 0.07a and observed historical input boundary,
+   including wrapper and duplicate/order behavior.
+2. Normalize campaign, journal, companion-presentation, container attributes,
+   and extension payloads without consulting the original file at export time.
+3. Make edited export source-independent: the writer consumes only the build,
+   normalized compatibility data, exact evaluation, and bound content profile.
+4. Expand comparison from `CharacterBuild` parity to complete normalized
+   document semantics and improve generated-cache fidelity where legacy or
+   third-party consumers require it.
+5. Add a record-schema migration that first makes `sourceXml` optional, retains
+   a rollback-safe transition, and removes it only after corpus and original-
+   builder compatibility verification passes.
+
+The decisive automated exit criterion is:
+
+```text
+import .dnd4e -> discard source XML -> export -> re-import
+-> compare complete normalized semantics
+```
+
+That comparison must include campaign, journal, companion/extension payloads,
+container attributes, and user content as well as the existing build topology.
+Until this criterion passes, the source-independent writer and storage migration
+are explicitly deferred and `sourceXml` remains required preservation input.
+
 ## Content-profile behavior
 
 Import binds the active immutable content pack when one exists. The binding pins
