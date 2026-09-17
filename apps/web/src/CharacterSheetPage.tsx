@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { CharacterRepository } from "@4ecb/browser-storage";
 import type { CharacterRecord, SheetSettings } from "@4ecb/character-domain";
@@ -93,9 +93,11 @@ function Card({ card }: { readonly card: SheetCard }) {
 export function CharacterSheetPage({
   characterId,
   manifests,
+  printOnReady = false,
 }: {
   readonly characterId: string;
   readonly manifests: readonly ContentPackManifest[];
+  readonly printOnReady?: boolean;
 }) {
   const [character, setCharacter] = useState<CharacterRecord>();
   const [content, setContent] =
@@ -104,25 +106,33 @@ export function CharacterSheetPage({
   const [evaluationError, setEvaluationError] = useState<string>();
   const [evaluation, setEvaluation] = useState<EvaluatedCharacter>();
   const [evaluating, setEvaluating] = useState(false);
+  const [contentLoaded, setContentLoaded] = useState(false);
+  const printRequested = useRef(false);
   useEffect(() => {
     setError(undefined);
     setCharacter(undefined);
     setContent(undefined);
     setEvaluation(undefined);
     setEvaluationError(undefined);
-    void characters
-      .get(characterId)
-      .then(async (loaded) => {
+    setContentLoaded(false);
+    void (async () => {
+      try {
+        const loaded = await characters.get(characterId);
         setCharacter(loaded);
         if (loaded?.profileBinding !== undefined)
           setContent(
             await appContentRuntime.getPack(loaded.profileBinding.packId),
           );
-      })
-      .catch((reason: unknown) =>
-        setError(reason instanceof Error ? reason.message : String(reason)),
-      );
+      } catch (reason: unknown) {
+        setError(reason instanceof Error ? reason.message : String(reason));
+      } finally {
+        setContentLoaded(true);
+      }
+    })();
   }, [characterId]);
+  useEffect(() => {
+    printRequested.current = false;
+  }, [characterId, printOnReady]);
   const exactProfile = contentProfileMatchesRevision(
     character?.profileBinding,
     content?.manifest,
@@ -184,6 +194,34 @@ export function CharacterSheetPage({
           exactProfile ? content?.entities : undefined,
         );
   }, [character, content, evaluation, exactProfile]);
+  const evaluatedSheetReady =
+    !exactProfile || evaluation !== undefined || evaluationError !== undefined;
+  useEffect(() => {
+    if (
+      !printOnReady ||
+      printRequested.current ||
+      model === undefined ||
+      error !== undefined ||
+      !contentLoaded ||
+      !evaluatedSheetReady
+    )
+      return;
+    printRequested.current = true;
+    if (window.location.hash.endsWith("?print=1"))
+      window.history.replaceState(
+        null,
+        "",
+        window.location.hash.slice(0, -"?print=1".length),
+      );
+    let finalFrame: number | undefined;
+    const initialFrame = window.requestAnimationFrame(() => {
+      finalFrame = window.requestAnimationFrame(() => window.print());
+    });
+    return () => {
+      window.cancelAnimationFrame(initialFrame);
+      if (finalFrame !== undefined) window.cancelAnimationFrame(finalFrame);
+    };
+  }, [contentLoaded, error, evaluatedSheetReady, model, printOnReady]);
   const printPaper = character?.sheetSettings.paper;
   useEffect(() => {
     if (printPaper === undefined) return;

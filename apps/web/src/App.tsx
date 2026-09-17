@@ -321,6 +321,7 @@ export function App() {
           <CharacterSheetPage
             characterId={route.characterId}
             manifests={manifests}
+            printOnReady={route.print === true}
           />
         )}
       </HideFlavortextContext.Provider>

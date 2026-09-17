@@ -107,9 +107,10 @@ present. The UI immediately re-imports the result and requires an identical
 preservation comparison before offering the download. Thus an imported file that
 opened in the original builder remains the same compatibility file.
 
-The library now makes that behavior an explicit **Original imported file (no
-edits)** target. A separate **Legacy Character Builder 0.07a** target evaluates
-the authoritative build against its exact bound pack revision, allocates fresh
+The original imported envelope remains embedded as internal preservation input,
+but is no longer exposed as an untouched-file download. The user-facing
+`.dnd4e` export always evaluates the authoritative current build against its
+exact bound pack revision, allocates fresh
 document-local occurrence tokens, repairs representable replacement links,
 serializes level history (including typed `UserEdit` payloads), grabbag,
 inventory, alternates, and text values, and
@@ -121,8 +122,8 @@ Spellbook edits update the existing alternate envelope—or create one for a
 native character—rather than inserting the extra known spell into ordinary
 level children.
 
-Native-created records omit the no-edit target because no imported original
-exists. Recovered `SaveCharacter`/`WriteCharacterSheet` behavior writes the
+Native-created records use the same regenerated export path. Recovered
+`SaveCharacter`/`WriteCharacterSheet` behavior writes the
 single base-allocation `AbilityScores` block inside the leading
 `CharacterSheet`; final adjusted scores belong in `StatBlock`. Edited export
 follows that native order before campaign data, level history, grabbag, and text

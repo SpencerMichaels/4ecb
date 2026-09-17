@@ -12,220 +12,21 @@ import {
 import type { ContentPackManifest } from "@4ecb/content-pack";
 import {
   compareEditedDnd4eRoundTrip,
-  comparePreservation,
-  DND4E_EXPORT_TARGETS,
-  exportDnd4e,
   exportEditedDnd4e,
   importDnd4e,
   projectBuildForLegacyExport,
-  type Dnd4eExportTarget,
   type Dnd4eImportReport,
 } from "@4ecb/legacy-dnd4e";
-import {
-  projectBuildForEvaluation,
-  type ProfileMigrationPreview,
-} from "@4ecb/rules-engine";
+import { projectBuildForEvaluation } from "@4ecb/rules-engine";
 
-import {
-  contentProfileMatchesRevision,
-  contentProfileRevisionKey,
-  previewMatchesTargetRevision,
-} from "./profile-migration";
+import { contentProfileMatchesRevision } from "./profile-migration";
+import { Icon } from "./Icon";
 import { RulesWorkerClient } from "./rules-client";
 import { createNativeCharacter } from "./new-character";
 import { PortraitImage } from "./PortraitEditor";
 
 const repository = new CharacterRepository();
 const contentRepository = new ContentPackRepository();
-
-function ProfileMigrationControl({
-  character,
-  manifests,
-  onAdopted,
-  onError,
-}: {
-  readonly character: CharacterRecord;
-  readonly manifests: readonly ContentPackManifest[];
-  readonly onAdopted: (message: string) => Promise<void>;
-  readonly onError: (message: string) => void;
-}) {
-  const [targetPackId, setTargetPackId] = useState(
-    character.profileBinding?.packId ?? "",
-  );
-  const [preview, setPreview] = useState<ProfileMigrationPreview>();
-  const [previewRevision, setPreviewRevision] = useState<string>();
-  const [previewing, setPreviewing] = useState(false);
-  const target = manifests.find((manifest) => manifest.packId === targetPackId);
-
-  async function loadPreview(): Promise<void> {
-    if (target === undefined) return;
-    const client = new RulesWorkerClient();
-    setPreviewing(true);
-    setPreview(undefined);
-    try {
-      const result = await client.previewProfileMigration(
-        character.build,
-        target.packId,
-        character.profileBinding?.packId,
-        character.profileBinding?.contentDigest,
-      );
-      setPreview(result);
-      setPreviewRevision(contentProfileRevisionKey(target));
-    } finally {
-      client.terminate();
-      setPreviewing(false);
-    }
-  }
-
-  async function adopt(): Promise<void> {
-    if (
-      target === undefined ||
-      !previewMatchesTargetRevision(previewRevision, target)
-    )
-      return;
-    await repository.updateMetadata(character.id, {
-      profileBinding: {
-        packId: target.packId,
-        contentDigest: target.contentDigest,
-      },
-    });
-    setPreview(undefined);
-    await onAdopted(`Adopted ${target.name} after migration preview.`);
-  }
-
-  return (
-    <section
-      className="profile-migration"
-      aria-label="Content profile migration"
-    >
-      <h4>Content profile</h4>
-      <label>
-        Migration target
-        <select
-          value={targetPackId}
-          onChange={(event) => {
-            setTargetPackId(event.currentTarget.value);
-            setPreview(undefined);
-            setPreviewRevision(undefined);
-          }}
-        >
-          <option value="">Choose an installed profile</option>
-          {manifests.map((manifest) => (
-            <option key={manifest.packId} value={manifest.packId}>
-              {manifest.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <button
-        type="button"
-        disabled={target === undefined || previewing}
-        onClick={() =>
-          void loadPreview().catch((reason: unknown) =>
-            onError(reason instanceof Error ? reason.message : String(reason)),
-          )
-        }
-      >
-        {previewing ? "Evaluating migration…" : "Preview migration"}
-      </button>
-      {preview === undefined ||
-      !previewMatchesTargetRevision(previewRevision, target) ? null : (
-        <div className="migration-preview" aria-live="polite">
-          {!preview.sourceAvailable ? (
-            <p className="profile-warning">
-              The exact source profile revision is not installed. Target checks
-              are complete, but value changes from the old revision cannot be
-              calculated.
-            </p>
-          ) : null}
-          <dl className="report-facts">
-            <div>
-              <dt>Referenced records</dt>
-              <dd>{preview.referencedDefinitionCount}</dd>
-            </div>
-            <div>
-              <dt>Missing in target</dt>
-              <dd>{preview.missingDefinitionIds.length}</dd>
-            </div>
-            <div>
-              <dt>Changed definitions</dt>
-              <dd>{preview.changedDefinitionIds.length}</dd>
-            </div>
-            <div>
-              <dt>Calculated stats changed</dt>
-              <dd>{preview.statChanges.length}</dd>
-            </div>
-            <div>
-              <dt>Powers changed</dt>
-              <dd>{preview.powerChanges.length}</dd>
-            </div>
-            <div>
-              <dt>Target state</dt>
-              <dd>
-                {preview.target.complete ? "Complete" : "Incomplete"};{" "}
-                {preview.target.legal ? "rules legal" : "has legality findings"}
-              </dd>
-            </div>
-          </dl>
-          {preview.missingDefinitionIds.length === 0 ? null : (
-            <p>
-              <strong>Missing IDs:</strong>{" "}
-              {preview.missingDefinitionIds.slice(0, 8).join(", ")}
-              {preview.missingDefinitionIds.length > 8 ? "…" : ""}
-            </p>
-          )}
-          {preview.statChanges.length === 0 ? null : (
-            <details>
-              <summary>Calculated stat differences</summary>
-              <ul>
-                {preview.statChanges.slice(0, 20).map((change) => (
-                  <li key={change.name}>
-                    {change.name}: {change.before ?? "missing"} →{" "}
-                    {change.after ?? "missing"}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
-          {preview.targetDiagnostics.length === 0 ? null : (
-            <details>
-              <summary>
-                Target diagnostics ({preview.targetDiagnostics.length})
-              </summary>
-              <ul>
-                {preview.targetDiagnostics
-                  .slice(0, 20)
-                  .map((diagnostic, index) => (
-                    <li key={`${diagnostic.code}-${index}`}>
-                      <strong>{diagnostic.code}</strong>: {diagnostic.message}
-                    </li>
-                  ))}
-              </ul>
-            </details>
-          )}
-          <button
-            type="button"
-            disabled={!preview.target.converged}
-            onClick={() =>
-              void adopt().catch((reason: unknown) =>
-                onError(
-                  reason instanceof Error ? reason.message : String(reason),
-                ),
-              )
-            }
-          >
-            Adopt this profile revision
-          </button>
-          {!preview.target.converged ? (
-            <p className="profile-warning">
-              Adoption is disabled because target evaluation did not converge.
-            </p>
-          ) : null}
-        </div>
-      )}
-    </section>
-  );
-}
 
 function download(name: string, contents: string, type: string): void {
   const url = URL.createObjectURL(new Blob([contents], { type }));
@@ -234,6 +35,10 @@ function download(name: string, contents: string, type: string): void {
   anchor.download = name;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+function fileBase(character: CharacterRecord): string {
+  return character.title.replace(/[^a-z0-9_-]+/gi, "-");
 }
 
 export interface CharacterLibraryPageProps {
@@ -252,10 +57,8 @@ export function CharacterLibraryPage({
   const [status, setStatus] = useState("Loading character library…");
   const [error, setError] = useState<string>();
   const [report, setReport] = useState<Dnd4eImportReport>();
-  const [exportTargets, setExportTargets] = useState<
-    Readonly<Record<string, Dnd4eExportTarget>>
-  >({});
   const [creatingCharacter, setCreatingCharacter] = useState(false);
+  const [openExportId, setOpenExportId] = useState<string>();
 
   const refresh = useCallback(async () => {
     const [active, deleted] = await Promise.all([
@@ -311,88 +114,64 @@ export function CharacterLibraryPage({
     setStatus(`Imported ${character.title}.`);
   }
 
-  async function saveMetadata(
+  async function exportNativeCharacter(
     character: CharacterRecord,
-    form: HTMLFormElement,
   ): Promise<void> {
-    const data = new FormData(form);
-    await repository.updateMetadata(character.id, {
-      title: String(data.get("title") ?? ""),
-      notes: String(data.get("notes") ?? ""),
-    });
-    await refresh();
-    setStatus("Library details saved.");
+    const backup = await repository.exportCharacter(character.id);
+    download(
+      `${fileBase(character)}.4ecb`,
+      JSON.stringify(backup, null, 2),
+      "application/json",
+    );
+    setStatus(`Exported ${character.title} as a native .4ecb character.`);
   }
 
-  async function exportCharacter(
-    character: CharacterRecord,
-    target: Dnd4eExportTarget,
-  ): Promise<void> {
-    let xml: string;
-    let message: string;
-    if (target === "preserve-original") {
-      xml = exportDnd4e(character.legacy);
-      const reimported = importDnd4e(xml);
-      const preservation = comparePreservation(
-        character.legacy.sourceXml,
-        reimported.envelope.sourceXml,
+  async function exportCharacter(character: CharacterRecord): Promise<void> {
+    const binding = character.profileBinding;
+    if (binding?.contentDigest === undefined)
+      throw new Error(
+        "Regenerated .dnd4e export requires an exact content profile revision bound to this character.",
       );
-      if (!preservation.identical)
+    const pack = await contentRepository.get(binding.packId);
+    if (
+      pack === undefined ||
+      !contentProfileMatchesRevision(binding, pack.manifest)
+    )
+      throw new Error(
+        "Regenerated .dnd4e export requires the exact content profile revision bound to this character.",
+      );
+    const client = new RulesWorkerClient();
+    try {
+      await client.initialize(binding.packId, binding.contentDigest);
+      const evaluation = await client.evaluate(
+        projectBuildForEvaluation(character.build, pack.entities),
+      );
+      const xml = exportEditedDnd4e({
+        target: "legacy-builder-0.07a",
+        envelope: character.legacy,
+        snapshot: character.snapshot,
+        build: character.build,
+        evaluation,
+        content: pack.entities,
+      });
+      const reimported = importDnd4e(xml);
+      const comparison = compareEditedDnd4eRoundTrip(
+        projectBuildForLegacyExport(character.build),
+        reimported.build,
+      );
+      if (!comparison.equivalent)
         throw new Error(
-          `Preservation check failed at character ${preservation.firstDifference ?? 0}`,
+          `Edited export re-import check failed: ${comparison.differences.join(" ")}`,
         );
-      message =
-        "Exported the original imported file byte-for-byte. Local build edits are intentionally excluded.";
-    } else {
-      const binding = character.profileBinding;
-      if (binding?.contentDigest === undefined)
-        throw new Error(
-          "Edited export requires an adopted content profile revision. Preview and adopt an installed revision first.",
-        );
-      const pack = await contentRepository.get(binding.packId);
-      if (
-        pack === undefined ||
-        !contentProfileMatchesRevision(binding, pack.manifest)
-      )
-        throw new Error(
-          "Edited export requires the exact content profile revision bound to this character.",
-        );
-      const client = new RulesWorkerClient();
-      try {
-        await client.initialize(binding.packId, binding.contentDigest);
-        const evaluation = await client.evaluate(
-          projectBuildForEvaluation(character.build, pack.entities),
-        );
-        xml = exportEditedDnd4e({
-          target,
-          envelope: character.legacy,
-          snapshot: character.snapshot,
-          build: character.build,
-          evaluation,
-          content: pack.entities,
-        });
-        const reimported = importDnd4e(xml);
-        const comparison = compareEditedDnd4eRoundTrip(
-          projectBuildForLegacyExport(character.build),
-          reimported.build,
-        );
-        if (!comparison.equivalent)
-          throw new Error(
-            `Edited export re-import check failed: ${comparison.differences.join(" ")}`,
-          );
-        message = evaluation.complete
-          ? "Exported edited state for Legacy Character Builder 0.07a; semantic re-import check passed."
-          : "Exported incomplete edited state for Legacy Character Builder 0.07a; semantic re-import check passed.";
-      } finally {
-        client.terminate();
-      }
+      download(`${fileBase(character)}.dnd4e`, xml, "application/xml");
+      setStatus(
+        evaluation.complete
+          ? "Exported current edited state for Legacy Character Builder 0.07a; semantic re-import check passed."
+          : "Exported current incomplete edited state for Legacy Character Builder 0.07a; semantic re-import check passed.",
+      );
+    } finally {
+      client.terminate();
     }
-    download(
-      `${character.title.replace(/[^a-z0-9_-]+/gi, "-")}.dnd4e`,
-      xml,
-      "application/xml",
-    );
-    setStatus(message);
   }
 
   async function createCharacter(): Promise<void> {
@@ -511,33 +290,20 @@ export function CharacterLibraryPage({
           <p>
             Create a level-1 character from the active profile above, or choose
             a `.dnd4e` file exported by the legacy Character Builder. Imported
-            original XML remains embedded for compatible export.
+            original XML remains embedded so regenerated exports preserve
+            unknown legacy fields.
           </p>
         </div>
       ) : (
         <ul className="character-grid">
           {characters.map((character) => {
-            const profile =
-              character.profileBinding === undefined
-                ? undefined
-                : manifests.find(
-                    (manifest) =>
-                      manifest.packId === character.profileBinding?.packId,
-                  );
-            const profileMissing =
-              character.profileBinding !== undefined && profile === undefined;
-            const profileMismatch =
-              profile !== undefined &&
-              character.profileBinding?.contentDigest !== undefined &&
-              character.profileBinding.contentDigest !== profile.contentDigest;
-            const exportOptions =
-              character.legacy.origin === "native"
-                ? DND4E_EXPORT_TARGETS.filter(
-                    (option) => option.id === "legacy-builder-0.07a",
-                  )
-                : DND4E_EXPORT_TARGETS;
-            const exportTarget =
-              exportTargets[character.id] ?? exportOptions[0]!.id;
+            const identity = [
+              `Level ${character.build.effectiveLevel}`,
+              character.snapshot.details.Race,
+              character.snapshot.details.Class,
+            ]
+              .filter(Boolean)
+              .join(" ");
             return (
               <li key={character.id}>
                 <div className="character-card-heading">
@@ -547,129 +313,135 @@ export function CharacterLibraryPage({
                     portrait={character.portrait}
                   />
                   <div>
-                    <p className="eyebrow">
-                      Level {character.build.effectiveLevel}{" "}
-                      {character.snapshot.details.Race}{" "}
-                      {character.snapshot.details.Class}
-                    </p>
-                    <h3>
-                      <a
-                        href={`#/characters/${encodeURIComponent(character.id)}`}
-                      >
-                        {character.title}
-                      </a>
-                    </h3>
-                    <p>
-                      <a
-                        href={`#/characters/${encodeURIComponent(character.id)}/edit`}
-                      >
-                        Edit build
-                      </a>
-                    </p>
-                    <p
-                      className={
-                        profileMissing || profileMismatch
-                          ? "profile-warning"
-                          : "identifier"
-                      }
-                    >
-                      {character.profileBinding === undefined
-                        ? "No content profile bound"
-                        : profileMissing
-                          ? `Missing profile: ${character.profileBinding.packId}`
-                          : profileMismatch
-                            ? `Profile changed: ${profile.name}; preview and adopt this revision below`
-                            : `Profile: ${profile?.name}`}
-                    </p>
+                    <h3>{character.title}</h3>
+                    <p className="character-summary">{identity}</p>
                   </div>
                 </div>
-                <form
-                  className="metadata-form"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void saveMetadata(character, event.currentTarget);
-                  }}
-                >
-                  <label>
-                    Library name
-                    <input name="title" defaultValue={character.title} />
-                  </label>
-                  <label>
-                    Library notes
-                    <textarea
-                      name="notes"
-                      defaultValue={character.notes}
-                      rows={2}
-                    />
-                  </label>
-                  <button type="submit">Save library details</button>
-                </form>
-                <ProfileMigrationControl
-                  character={character}
-                  manifests={manifests}
-                  onAdopted={async (message) => {
-                    await refresh();
-                    setStatus(message);
-                  }}
-                  onError={setError}
-                />
-                <div className="character-actions">
+                <div className="character-card-actions">
                   <a
-                    className="button-link"
-                    href={`#/characters/${encodeURIComponent(character.id)}`}
+                    className="character-card-action"
+                    href={`#/characters/${encodeURIComponent(character.id)}/edit`}
+                    aria-label={`Edit ${character.title} build`}
+                    title="Edit build"
                   >
-                    View sheet
+                    <Icon name="edit" />
                   </a>
-                  <label>
-                    Export target
-                    <select
-                      value={exportTarget}
-                      onChange={(event) => {
-                        const target = event.currentTarget
-                          .value as Dnd4eExportTarget;
-                        setExportTargets((current) => ({
-                          ...current,
-                          [character.id]: target,
-                        }));
-                      }}
+                  <a
+                    className="character-card-action"
+                    href={`#/characters/${encodeURIComponent(character.id)}`}
+                    aria-label={`View ${character.title} character sheet`}
+                    title="View character sheet"
+                  >
+                    <Icon name="sheet" />
+                  </a>
+                  <div className="character-export-menu">
+                    <button
+                      type="button"
+                      className="character-card-action"
+                      aria-label={`Export ${character.title}`}
+                      aria-expanded={openExportId === character.id}
+                      aria-controls={`export-${character.id}`}
+                      title="Export"
+                      onClick={() =>
+                        setOpenExportId((current) =>
+                          current === character.id ? undefined : character.id,
+                        )
+                      }
                     >
-                      {exportOptions.map((option) => (
-                        <option key={option.id} value={option.id}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                      <Icon name="download" />
+                    </button>
+                    {openExportId === character.id ? (
+                      <div
+                        id={`export-${character.id}`}
+                        className="character-export-options"
+                        aria-label={`Export ${character.title} as`}
+                        onKeyDown={(event) => {
+                          if (event.key !== "Escape") return;
+                          setOpenExportId(undefined);
+                          const trigger =
+                            event.currentTarget.previousElementSibling;
+                          if (trigger instanceof HTMLElement) trigger.focus();
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpenExportId(undefined);
+                            void exportNativeCharacter(character).catch(
+                              (reason: unknown) =>
+                                setError(
+                                  reason instanceof Error
+                                    ? reason.message
+                                    : String(reason),
+                                ),
+                            );
+                          }}
+                        >
+                          .4ecb
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpenExportId(undefined);
+                            void exportCharacter(character).catch(
+                              (reason: unknown) =>
+                                setError(
+                                  reason instanceof Error
+                                    ? reason.message
+                                    : String(reason),
+                                ),
+                            );
+                          }}
+                        >
+                          .dnd4e
+                        </button>
+                        <a
+                          href={`#/characters/${encodeURIComponent(character.id)}?print=1`}
+                        >
+                          PDF
+                        </a>
+                      </div>
+                    ) : null}
+                  </div>
                   <button
+                    className="character-card-action"
                     type="button"
+                    aria-label={`Duplicate ${character.title}`}
+                    title="Duplicate"
                     onClick={() =>
-                      void exportCharacter(character, exportTarget).catch(
-                        (reason: unknown) =>
+                      void repository
+                        .duplicate(character.id)
+                        .then(refresh)
+                        .catch((reason: unknown) =>
                           setError(
                             reason instanceof Error
                               ? reason.message
                               : String(reason),
                           ),
-                      )
+                        )
                     }
                   >
-                    Export .dnd4e
+                    <Icon name="duplicate" />
                   </button>
                   <button
+                    className="character-card-action danger-action"
                     type="button"
+                    aria-label={`Move ${character.title} to trash`}
+                    title="Move to trash"
                     onClick={() =>
-                      void repository.duplicate(character.id).then(refresh)
+                      void repository
+                        .moveToTrash(character.id)
+                        .then(refresh)
+                        .catch((reason: unknown) =>
+                          setError(
+                            reason instanceof Error
+                              ? reason.message
+                              : String(reason),
+                          ),
+                        )
                     }
                   >
-                    Duplicate
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void repository.moveToTrash(character.id).then(refresh)
-                    }
-                  >
-                    Move to trash
+                    <Icon name="trash" />
                   </button>
                 </div>
               </li>

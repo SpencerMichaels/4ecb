@@ -62,7 +62,7 @@ describe("release accessibility contract", () => {
   it("does not force a desktop viewport and stacks dense layouts for tablets", () => {
     expect(styles.match(/body\s*\{[^}]*\}/)?.[0]).not.toContain("min-width");
     expect(styles).toMatch(
-      /@media \(max-width: 60rem\)[\s\S]*?\.metadata-form,[\s\S]*?\.sheet-columns[\s\S]*?grid-template-columns: 1fr/,
+      /@media \(max-width: 60rem\)[\s\S]*?\.sheet-columns[\s\S]*?grid-template-columns: 1fr/,
     );
     expect(styles).toMatch(
       /@media \(max-width: 60rem\)[\s\S]*?\.builder-workspace,[\s\S]*?\.level-choice-workspace,[\s\S]*?grid-template-columns: 1fr/,

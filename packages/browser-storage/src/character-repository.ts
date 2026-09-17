@@ -283,6 +283,19 @@ export class CharacterRepository {
     }
   }
 
+  async exportCharacter(id: string): Promise<CharacterBackup> {
+    const character = await this.required(id);
+    const characters = [character];
+    return {
+      format: "4ecb-character-backup",
+      version: 2,
+      exportedAt: new Date().toISOString(),
+      characterCount: 1,
+      payloadDigest: await characterPayloadDigest(characters),
+      characters,
+    };
+  }
+
   async inspectBackup(backup: unknown): Promise<CharacterBackupInspection> {
     const supported = await validateBackup(backup);
     const current = await this.listAll();

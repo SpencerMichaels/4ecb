@@ -41,6 +41,25 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## M5.5 compact character library checkpoint (2026-09-17)
+
+- Character cards present only the portrait, character name, level/race/class
+  summary, and top-right actions for editing the build, opening the sheet,
+  exporting, duplicating, and moving the character to recoverable trash.
+- Profile diagnostics, migration controls, and editable library-only title and
+  notes no longer compete with character identity on the library surface. Their
+  stored data and the underlying migration and recovery infrastructure remain
+  intact.
+- The export icon opens an on-demand menu with exactly three user formats:
+  checksummed single-character `.4ecb`, regenerated current-state `.dnd4e`, and
+  the character-sheet PDF print flow. The untouched imported XML is no longer a
+  user export option, but remains embedded as preservation input when regenerated
+  `.dnd4e` retains unknown legacy fields.
+- Every icon action has an accessible name, tooltip, keyboard focus treatment,
+  and a distinct danger treatment for trash. The export button exposes expanded
+  state and its controlled panel, supports Escape-to-close with focus return,
+  and keeps its three choices out of the tab order until opened.
+
 ## M5.5 composed shield naming checkpoint (2026-09-16)
 
 - The shared inventory-name formatter now composes mundane shield bases with
@@ -1099,10 +1118,11 @@ Censure`: its conditional movement prose yields `1d10`, or `2d10` at level
   imported builds. The editor's shared canonical-level constructor advances the
   same build through level 30.
 - Native records carry a minimal 0.07a compatibility envelope explicitly marked
-  as native. The library omits the meaningless no-edit target and offers only
-  regenerated 0.07a export. Root-level authoritative ability input is written
-  separately from the derived sheet cache so a rule-derived bonus cannot become
-  a compounded base score after re-import.
+  as native. Their `.dnd4e` compatibility export uses the same regenerated 0.07a
+  path as imported records; native `.4ecb` and sheet PDF are also available.
+  Root-level authoritative ability input is written separately from the derived
+  sheet cache so a rule-derived bonus cannot become a compounded base score
+  after re-import.
 - The public synthetic profile now includes level 1, Class, Race, Feat, and
   nested Race Ability Bonus candidates. Unit/integration smoke coverage resolves
   all required identity choices, advances level 1 through 30, rejects missing

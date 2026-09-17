@@ -496,7 +496,7 @@ export function SettingsPage({
             Restore backup
             <input
               type="file"
-              accept=".json,application/json"
+              accept=".json,.4ecb,application/json"
               onChange={(event) => {
                 const file = event.currentTarget.files?.[0];
                 if (file !== undefined)
@@ -909,8 +909,7 @@ export function SettingsPage({
         <p className="profile-safety-note">
           Activation changes the content available to the builder and the
           profile used for new characters. Existing characters stay pinned to
-          their exact profile revision; preview and adopt their migrations
-          individually in Characters.
+          their exact profile revision and are not altered by activation.
         </p>
         <div className="profile-activation-actions">
           <button

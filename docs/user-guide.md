@@ -136,8 +136,8 @@ until that revision is restored or a migration is previewed and adopted.
 5. **Duplicate** makes an independent browser record. **Move to trash** is
    recoverable from the Trash section; **Delete permanently** is not.
 
-Title and notes are library metadata. They do not rewrite either `.dnd4e`
-export target.
+Title and notes remain native record metadata and do not directly rewrite the
+compatibility document.
 
 ## Manage equipment, money, and practices
 
@@ -180,22 +180,25 @@ Adoption is disabled when the target does not converge. The preview is bound to
 the target pack ID and digest; replacing that pack under the same ID requires a
 new preview.
 
-## Export compatibility characters
+## Export characters
 
-An imported character has two explicit `.dnd4e` targets:
+Open the export icon on a character card and choose one of three formats:
 
-- **Original imported file (no edits)** downloads the preserved XML
-  byte-for-byte. Browser build edits and library metadata are intentionally
-  excluded.
-- **Legacy Character Builder 0.07a** evaluates the authoritative build against
-  its adopted exact pack revision, regenerates the representable build and
-  sheet caches, re-imports the result, and blocks download if the semantic
-  round trip differs.
+- **.4ecb** creates a checksummed, versioned native package containing the
+  complete current character record. Restore it from **Settings → Character
+  library** just like a full-library JSON backup.
+- **.dnd4e** always evaluates and regenerates the current edited state for
+  Legacy Character Builder 0.07a. It re-imports the result and blocks download
+  if the semantic round trip differs. The imported original XML remains
+  embedded internally so unknown legacy fields can be retained, but the
+  untouched original file is not a separate export choice.
+- **PDF** opens the evaluated character sheet and starts the browser print/save
+  PDF flow when the sheet is ready. Sheet paper, card, hit-point, and monochrome
+  preferences still apply.
 
-Native-created characters have no imported original, so they expose only the
-regenerated 0.07a target. That target writes authoritative base ability input
-separately from the final regenerated ability cache so rule-derived bonuses do
-not become new base scores when the file is re-imported.
+Regenerated `.dnd4e` writes authoritative base ability input separately from
+the final regenerated ability cache so rule-derived bonuses do not become new
+base scores when the file is re-imported.
 
 Edited export also blocks on a missing/mismatched profile, nonconvergent
 evaluation, an evaluation horizon behind the latest saved level, or invalid XML
@@ -245,8 +248,8 @@ backups remain accepted with an explicit no-checksum warning.
   application restores the untouched schema-1 record or finishes the schema-2
   conversion before removing the journal.
 - If a character reports a missing profile, reinstall the `.4ecp` with the same
-  pack ID and digest. If only a newer revision is available, use migration
-  preview/adoption.
+  pack ID and digest. Activating a different profile does not silently change
+  the character's pinned revision.
 - If site data was cleared, the browser profile was lost, or storage was
   evicted, restore the character backup and reinstall the matching private
   packs. The server or container has no recovery copy.

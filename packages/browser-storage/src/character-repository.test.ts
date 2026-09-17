@@ -288,6 +288,31 @@ describe("CharacterRepository", () => {
     });
   });
 
+  it("exports one current record as a restorable native character package", async () => {
+    const source = repository();
+    await source.put(character("first"));
+    await source.put(character("second"));
+
+    const exported = await source.exportCharacter("second");
+
+    expect(exported).toMatchObject({
+      format: "4ecb-character-backup",
+      version: 2,
+      characterCount: 1,
+      characters: [{ id: "second" }],
+    });
+    const destination = repository();
+    await expect(destination.inspectBackup(exported)).resolves.toMatchObject({
+      checksumVerified: true,
+      characterCount: 1,
+    });
+    await expect(destination.restoreBackup(exported)).resolves.toBe(1);
+    await expect(destination.get("second")).resolves.toEqual(
+      character("second"),
+    );
+    await expect(destination.get("first")).resolves.toBeUndefined();
+  });
+
   it("rejects a modified checksummed backup before writing", async () => {
     const source = repository();
     await source.put(character());

@@ -14,12 +14,26 @@ describe("hash routes", () => {
       page: "characters",
       characterId: "character 1",
     });
+    expect(parseHashRoute("#/characters/character%201?print=1")).toEqual({
+      page: "characters",
+      characterId: "character 1",
+      print: true,
+    });
     expect(parseHashRoute("#/characters/character%201/edit")).toEqual({
       page: "characters",
       characterId: "character 1",
       mode: "edit",
       builder: { workspace: "build" },
     });
+  });
+
+  it("canonicalizes sheet print intent without retaining unrelated state", () => {
+    expect(
+      canonicalHashRedirect("#/characters/one?print=1&filter=ignored"),
+    ).toBe("#/characters/one?print=1");
+    expect(canonicalHashRedirect("#/characters/one?print=0")).toBe(
+      "#/characters/one",
+    );
   });
 
   it("round-trips every editor workspace and only its applicable nested state", () => {

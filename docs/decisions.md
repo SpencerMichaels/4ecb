@@ -878,6 +878,21 @@ avoid both worker-side pack decoding and rules evaluation after a document
 restart. This does not replace normal invalidation after edits and does not make
 the imported legacy calculated cache authoritative.
 
+### D050 — Character export is current-state and format-oriented
+
+The compact character-card export disclosure offers exactly three destinations:
+a versioned checksummed single-record `.4ecb` package, a regenerated `.dnd4e`
+compatibility document, and the browser character-sheet print/PDF flow. The
+`.4ecb` package reuses the native backup schema and restore validation rather
+than introducing an unversioned raw-record format.
+
+Every user-visible `.dnd4e` export represents current edited state and passes
+the existing exact-profile evaluation and semantic re-import gates. Imported
+source XML remains embedded inside the native record because regeneration uses
+it to preserve unknown legacy fields, but the untouched original is no longer a
+user export target. PDF remains browser print output rather than a stored or
+server-generated artifact.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

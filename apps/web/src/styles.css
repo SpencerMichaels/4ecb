@@ -788,6 +788,12 @@ textarea {
   border: 1px solid var(--border);
   padding: 1rem;
 }
+.character-grid > li {
+  align-items: start;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
 .character-card-heading,
 .builder-character-heading,
 .sheet-title-identity {
@@ -795,12 +801,89 @@ textarea {
   display: flex;
   gap: 0.85rem;
 }
+.character-grid .character-card-heading {
+  grid-column: 1;
+  grid-row: 1;
+}
 .character-card-heading > div {
   min-width: 0;
 }
 .character-card-heading h3,
 .character-card-heading p {
   margin-bottom: 0.25rem;
+}
+.character-card-heading h3 {
+  margin-top: 0;
+}
+.character-summary {
+  color: var(--muted);
+}
+.character-card-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.3rem;
+  grid-column: 2;
+  grid-row: 1;
+}
+.character-card-action {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--text);
+  display: inline-flex;
+  height: 2rem;
+  justify-content: center;
+  padding: 0;
+  text-decoration: none;
+  width: 2rem;
+}
+.character-card-action:hover {
+  background: var(--surface-subtle);
+  border-color: var(--border);
+}
+.character-card-action:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.character-card-action.danger-action {
+  color: var(--danger);
+}
+.character-export-menu {
+  position: relative;
+}
+.character-export-menu > .character-card-action[aria-expanded="true"] {
+  background: var(--surface-subtle);
+  border-color: var(--border);
+}
+.character-export-options {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 0.35rem 0.8rem rgb(0 0 0 / 20%);
+  display: grid;
+  min-width: 8rem;
+  padding: 0.25rem;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.25rem);
+  z-index: 5;
+}
+.character-export-options :is(a, button) {
+  background: transparent;
+  border: 0;
+  border-radius: 2px;
+  color: var(--text);
+  padding: 0.45rem 0.65rem;
+  text-align: left;
+  text-decoration: none;
+}
+.character-export-options :is(a, button):hover {
+  background: var(--surface-subtle);
+  box-shadow: none;
+}
+.character-export-options :is(a, button):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -1px;
 }
 .character-portrait,
 .portrait-placeholder {
@@ -1002,23 +1085,6 @@ textarea {
 .portrait-dialog .danger-button {
   border-color: var(--danger);
   color: var(--danger);
-}
-.metadata-form {
-  border-block: 1px solid var(--border);
-  display: grid;
-  gap: 0.6rem;
-  grid-template-columns: minmax(12rem, 1fr) minmax(16rem, 2fr) auto;
-  margin: 0.8rem 0;
-  padding: 0.8rem 0;
-}
-.metadata-form label {
-  display: grid;
-  font-size: 0.8rem;
-  font-weight: 700;
-  gap: 0.2rem;
-}
-.metadata-form button {
-  align-self: end;
 }
 .character-actions,
 .trash li,
@@ -3817,7 +3883,6 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   .character-grid {
     grid-template-columns: minmax(0, 1fr);
   }
-  .metadata-form,
   .sheet-columns {
     grid-template-columns: 1fr;
   }
@@ -3831,6 +3896,20 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   .add-overlay-control,
   .server-pack-list .profile-facts {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 36rem) {
+  .character-grid > li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .character-card-actions {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: end;
+  }
+  .character-grid .character-card-heading {
+    grid-row: 2;
   }
 }
 

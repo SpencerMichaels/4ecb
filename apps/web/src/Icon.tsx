@@ -15,9 +15,11 @@ import {
   Circle,
   CircleDashed,
   Clock3,
+  Copy,
   Crosshair,
   Crown,
   Dumbbell,
+  Download,
   FileText,
   FlaskConical,
   FlaskRound,
@@ -36,6 +38,7 @@ import {
   Orbit,
   PackageOpen,
   PawPrint,
+  Pencil,
   Redo2,
   ScanLine,
   ScrollText,
@@ -50,6 +53,7 @@ import {
   Swords,
   Target,
   TestTube,
+  Trash2,
   TriangleAlert,
   Undo2,
   UserRound,
@@ -89,7 +93,10 @@ export type IconName =
   | "content"
   | "crown"
   | "details"
+  | "download"
+  | "duplicate"
   | "dumbbell"
+  | "edit"
   | "favorite"
   | "feat"
   | "flask-conical"
@@ -121,6 +128,7 @@ export type IconName =
   | "sword"
   | "target"
   | "test-tube"
+  | "trash"
   | "undo"
   | "wand-sparkles"
   | "warning"
@@ -154,7 +162,10 @@ const icons: Record<IconName, LucideIcon> = {
   content: LayoutGrid,
   crown: Crown,
   details: ScrollText,
+  download: Download,
+  duplicate: Copy,
   dumbbell: Dumbbell,
+  edit: Pencil,
   favorite: Star,
   feat: Sparkles,
   "flask-conical": FlaskConical,
@@ -186,6 +197,7 @@ const icons: Record<IconName, LucideIcon> = {
   sword: Sword,
   target: Target,
   "test-tube": TestTube,
+  trash: Trash2,
   undo: Undo2,
   "wand-sparkles": WandSparkles,
   warning: TriangleAlert,

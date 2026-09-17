@@ -35,6 +35,7 @@ export type AppRoute =
       readonly page: "characters";
       readonly characterId?: string;
       readonly mode?: "sheet" | "edit";
+      readonly print?: boolean;
       readonly builder?: BuilderNavigation;
     };
 
@@ -126,7 +127,9 @@ export function parseHashRoute(hash: string): AppRoute {
             mode: "edit" as const,
             builder: parseBuilderNavigation(query),
           }
-        : {}),
+        : new URLSearchParams(query).get("print") === "1"
+          ? { print: true }
+          : {}),
     };
   }
   return { page: "characters" };
@@ -175,7 +178,7 @@ function hashForRoute(route: AppRoute): string {
       route.characterId,
       route.builder ?? { workspace: "build" },
     );
-  return `#/characters/${encodeURIComponent(route.characterId)}`;
+  return `#/characters/${encodeURIComponent(route.characterId)}${route.print === true ? "?print=1" : ""}`;
 }
 
 export function canonicalHashRedirect(hash: string): string | undefined {
