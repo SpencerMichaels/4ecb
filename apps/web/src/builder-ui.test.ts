@@ -1406,12 +1406,14 @@ describe("builder planning UI", () => {
     ).toBe(false);
   });
 
-  it("presents first-level choices in the legacy builder workflow order", () => {
+  it("presents first-level choices in the requested workflow order", () => {
     const choices = [
       { id: "gender", type: "Gender" },
       { id: "feat", type: "Feat" },
       { id: "daily", type: "Power Daily 1" },
       { id: "race", type: "Race" },
+      { id: "racial-trait", type: "Racial Trait" },
+      { id: "language", type: "Language" },
       { id: "skills", type: "Skill Training" },
       { id: "theme", type: "Theme" },
       { id: "class-feature", type: "Class Feature" },
@@ -1428,8 +1430,9 @@ describe("builder planning UI", () => {
       ]),
     ).toEqual([
       ["Class", ["class", "class-feature"]],
-      ["Race", ["race", "race-bonus"]],
+      ["Race", ["race", "racial-trait", "language"]],
       ["Theme", ["theme"]],
+      ["Ability Scores", ["race-bonus"]],
       ["Companion", ["familiar"]],
       ["Skills", ["skills"]],
       ["Powers", ["daily"]],
@@ -1546,6 +1549,7 @@ describe("builder planning UI", () => {
       { id: "power-7", level: 7, type: "Power Encounter 7" },
       { id: "class", level: 1, type: "Class" },
       { id: "theme", level: 1, type: "Theme" },
+      { id: "race-bonus", level: 1, type: "Race Ability Bonus" },
       { id: "power-1", level: 1, type: "Power At-Will 1" },
       { id: "skill", level: 1, type: "Skill Training" },
       { id: "feat-4", level: 4, type: "Feat" },
@@ -1569,6 +1573,7 @@ describe("builder planning UI", () => {
       ]),
     ).toEqual([
       ["Character", ["class", "theme"]],
+      ["Ability Scores", ["race-bonus"]],
       ["Companion", ["companion"]],
       ["Skills", ["skill"]],
       ["Powers", ["power-1", "power-7"]],

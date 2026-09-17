@@ -1736,3 +1736,12 @@ pass.
 - Overview continues to group Theme under Character, suppress an unselected
   optional Theme the same way as before, and retain its concise timeline label;
   only the Build-tab placement changes.
+
+## M5.5 racial ability bonus placement checkpoint (2026-09-16)
+
+- The exact level-1 `Race Ability Bonus` choice is presented in Ability Scores,
+  after the point-buy editor, instead of in Race. Race, Racial Trait, and
+  Language choices remain in Race.
+- This is presentation-only: evaluator ownership, occurrence identity,
+  serialization, selection commands, level ordering, existing tab-navigation
+  mechanisms, and calculated ability-score values are unchanged.

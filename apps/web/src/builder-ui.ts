@@ -1063,17 +1063,16 @@ export function legacyChoiceSection(
     ].includes(type)
   )
     return "Class";
-  if (
-    type === "race" ||
-    type === "racial trait" ||
-    type === "race ability bonus" ||
-    type === "language"
-  )
+  if (type === "race" || type === "racial trait" || type === "language")
     return "Race";
   if (type === "background" || type === "background choice")
     return "Background";
   if (type === "theme") return "Theme";
-  if (type.includes("ability score") || isAbilityIncreaseChoiceType(type))
+  if (
+    type === "race ability bonus" ||
+    type.includes("ability score") ||
+    isAbilityIncreaseChoiceType(type)
+  )
     return "Ability Scores";
   if (type === "skill" || type === "skill training") return "Skills";
   if (type === "spellbook") return "Spellbook";

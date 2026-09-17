@@ -140,7 +140,9 @@ application's protected visual assets.
 - Present each same-level pair of ability increases as one six-button,
   exactly-two selector. Character increases belong to Ability Scores;
   companion increases, companion/familiar selection, and companion-owned
-  follow-up choices belong to Companion.
+  follow-up choices belong to Companion. The level-1 racial ability bonus
+  selector also belongs to Ability Scores, after the base-score controls,
+  while the exact evaluator choice remains unchanged.
 - Repeated Background slots use one primary **Choose background** section;
   already selected extras remain visible and optional empty slots appear one at
   a time through **Add another background…**. A revealed empty slot can be
