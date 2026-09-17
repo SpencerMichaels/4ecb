@@ -41,6 +41,17 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## M5.5 composed shield naming checkpoint (2026-09-16)
+
+- The shared inventory-name formatter now composes mundane shield bases with
+  non-`+N` magic shield templates, so `Heavy Shield` plus
+  `Storm Shield (heroic tier)` displays as `Storm Heavy Shield`. Exact holding
+  IDs, saved elements, pricing, compatibility, and non-shield names are
+  unchanged.
+- The two focused character-domain and Equipment UI test files pass all 21
+  tests, and the affected character-domain and web TypeScript checks pass in
+  the project Nix environment.
+
 ## M5.5 unified production detail-card implementation (accepted 2026-09-16)
 
 - The approved temporary power/equipment study is implemented in the shared

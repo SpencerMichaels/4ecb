@@ -114,6 +114,26 @@ export function formatInventoryItemName(
   );
   const enchantment = normalized.find(({ type }) => type === "magic item");
   if (base !== undefined && enchantment !== undefined) {
+    if (
+      base.type === "armor" &&
+      /\bshield\b/iu.test(base.name) &&
+      /shield/iu.test(enchantment.name)
+    ) {
+      const baseName = base.name.replace(/\b[a-z]/gu, (letter) =>
+        letter.toLocaleUpperCase(),
+      );
+      const stem = enchantment.name
+        .trim()
+        .replace(/\s+\((?:heroic|paragon|epic) tier\)$/iu, "");
+      const composed = /\bshield\b/iu.test(stem)
+        ? stem.replace(/\bshield\b/iu, baseName)
+        : `${stem} ${baseName}`;
+      return composed
+        .replaceAll(/\s+/gu, " ")
+        .trim()
+        .replace(/^[a-z]/u, (letter) => letter.toLocaleUpperCase());
+    }
+
     const enhanced = /^(.*?)\s+\+(\d+)$/u.exec(enchantment.name.trim());
     if (enhanced !== null) {
       const stem = enhanced[1]!.trim();

@@ -296,6 +296,45 @@ describe("character records", () => {
         { name: "Magic Armor +1", type: "Magic Item" },
       ]),
     ).toBe("+1 Leather Armor");
+    expect(
+      formatInventoryItemName([
+        { name: "Heavy Shield", type: "Armor" },
+        { name: "Storm Shield (heroic tier)", type: "Magic Item" },
+      ]),
+    ).toBe("Storm Heavy Shield");
+    expect(
+      formatInventoryItemName([
+        { name: "heavy shield", type: "Armor" },
+        { name: "storm shield", type: "Magic Item" },
+      ]),
+    ).toBe("Storm Heavy Shield");
+    expect(
+      formatInventoryItemName([
+        { name: "leather armor", type: "Armor" },
+        { name: "gloaming armor +1", type: "Magic Item" },
+      ]),
+    ).toBe("+1 gloaming leather armor");
+    expect(
+      formatInventoryItemName([
+        { name: "Light Shield", type: "Armor" },
+        {
+          name: "Shield of Deflection (paragon tier)",
+          type: "Magic Item",
+        },
+      ]),
+    ).toBe("Light Shield of Deflection");
+    expect(
+      formatInventoryItemName([
+        { name: "Spiked Shield", type: "Armor" },
+        { name: "Spellshield (paragon tier)", type: "Magic Item" },
+      ]),
+    ).toBe("Spellshield Spiked Shield");
+    expect(
+      formatInventoryItemName([
+        { name: "Barbed Shield", type: "Armor" },
+        { name: "Tusk Shield", type: "Magic Item" },
+      ]),
+    ).toBe("Tusk Barbed Shield");
   });
 
   it("parses, formats, and calculates all five currency denominations", () => {

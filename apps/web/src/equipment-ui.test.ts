@@ -88,10 +88,23 @@ describe("equipment catalog presentation", () => {
     const speed = entity("SPEED", "Weapon of Speed +2", "Magic Item");
     const magicArmor = entity("MAGIC_ARMOR", "Magic Armor +1", "Magic Item");
     const magicWeapon = entity("MAGIC_WEAPON", "Magic Weapon +1", "Magic Item");
+    const heavyShield = entity("HEAVY_SHIELD", "Heavy Shield", "Armor");
+    const stormShield = entity(
+      "STORM_SHIELD",
+      "Storm Shield (heroic tier)",
+      "Magic Item",
+    );
     const index = new Map(
-      [leather, gloaming, greatbow, speed, magicArmor, magicWeapon].map(
-        (item) => [item.id.toLocaleLowerCase(), item],
-      ),
+      [
+        leather,
+        gloaming,
+        greatbow,
+        speed,
+        magicArmor,
+        magicWeapon,
+        heavyShield,
+        stormShield,
+      ].map((item) => [item.id.toLocaleLowerCase(), item]),
     );
     const holding = (base: ContentEntity, enchantment: ContentEntity) => ({
       id: `${base.id}:${enchantment.id}`,
@@ -119,6 +132,9 @@ describe("equipment catalog presentation", () => {
     expect(inventoryDisplayName(holding(greatbow, magicWeapon), index)).toBe(
       "+1 Greatbow",
     );
+    expect(
+      inventoryDisplayName(holding(heavyShield, stormShield), index),
+    ).toBe("Storm Heavy Shield");
     expect(
       inventoryDisplayName(
         { ...holding(leather, gloaming), name: "Grandmother's armor" },
