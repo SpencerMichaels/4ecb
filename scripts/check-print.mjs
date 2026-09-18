@@ -163,7 +163,7 @@ try {
           card.scrollWidth > card.clientWidth + 1
         ).map((card) => card.querySelector("h3")?.textContent ?? "unnamed");
         const hidden = [
-          ".app-header", ".public-notice", ".pwa-status",
+          ".app-header", ".pwa-status",
           ".sheet-toolbar", ".cache-warning", ".sheet-page > .status"
         ].every((selector) => {
           const element = document.querySelector(selector);

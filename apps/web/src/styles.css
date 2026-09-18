@@ -451,14 +451,6 @@ a {
   margin: 0;
 }
 
-.public-notice {
-  border-top: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 0.875rem;
-  margin: 2rem;
-  padding-top: 1rem;
-}
-
 .empty-state,
 .loading-state {
   background: var(--surface);
@@ -4164,7 +4156,6 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   }
   .app-header,
   .primary-nav,
-  .public-notice,
   .pwa-status,
   .sheet-toolbar,
   .cache-warning,

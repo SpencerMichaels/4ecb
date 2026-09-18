@@ -325,12 +325,6 @@ export function App() {
           />
         )}
       </HideFlavortextContext.Provider>
-      <footer className="public-notice">
-        <strong>Unofficial, local-first software.</strong> This project is not
-        affiliated with or endorsed by Wizards of the Coast. Public builds do
-        not include the official rules corpus; imported packs and characters
-        remain in this browser unless you explicitly export them.
-      </footer>
     </div>
   );
 }
