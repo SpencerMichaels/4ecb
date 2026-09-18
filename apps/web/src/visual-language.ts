@@ -75,7 +75,8 @@ export function powerActionSymbol(
   value: string | undefined,
 ): PowerActionSymbol {
   const normalized = value?.trim().toLocaleLowerCase() ?? "";
-  if (normalized === "" || normalized.includes("no action")) return "–";
+  if (normalized.includes("no action")) return "○";
+  if (normalized === "") return "–";
   if (normalized.includes("interrupt")) return "↯";
   if (normalized.includes("reaction")) return "↻";
   if (normalized.includes("minor")) return "◔";

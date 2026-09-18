@@ -16,14 +16,24 @@ describe("ActionTypeIcon", () => {
     expect(markup).not.toContain("<svg");
   });
 
-  it("labels an absent action type without exposing the fallback glyph", () => {
-    const markup = renderToStaticMarkup(
-      createElement(ActionTypeIcon, { value: undefined }),
-    );
+  it("renders no element for missing or blank action types", () => {
+    for (const value of [undefined, "", " \t\n "]) {
+      const markup = renderToStaticMarkup(
+        createElement(ActionTypeIcon, { value }),
+      );
+      expect(markup).toBe("");
+    }
+  });
 
-    expect(markup).toContain('aria-label="Action not specified"');
-    expect(markup).toContain('title="Action not specified"');
-    expect(markup).toContain('<span aria-hidden="true">–</span>');
+  it("presents authored No Action like Free Action", () => {
+    for (const value of ["No Action", "Free Action"]) {
+      const markup = renderToStaticMarkup(
+        createElement(ActionTypeIcon, { value }),
+      );
+      expect(markup).toContain(`<span aria-hidden="true">○</span>`);
+      expect(markup).toContain(`aria-label="${value}"`);
+      expect(markup).toContain(`title="${value}"`);
+    }
   });
 
   it("can render decoratively while retaining its hover title", () => {

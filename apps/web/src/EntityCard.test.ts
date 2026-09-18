@@ -146,6 +146,20 @@ describe("shared entity-card class details", () => {
 });
 
 describe("shared power and item cards", () => {
+  it("omits the action icon element when a power action is missing or blank", () => {
+    for (const specifics of [
+      [field("Power Usage", "Daily", 0)],
+      [field("Action Type", " \t\n ", 0)],
+    ]) {
+      const markup = renderToStaticMarkup(
+        createElement(EntityCardHeader, { entity: entity("Power", specifics) }),
+      );
+      expect(markup).not.toContain("action-type-icon");
+      expect(markup).not.toContain("Action not specified");
+      expect(markup).toContain("<h4>Ardent</h4>");
+    }
+  });
+
   it("renders one compact power header with usage, power type, and level", () => {
     const power = entity("Power", [
       field("Power Usage", "Encounter", 0),
@@ -244,6 +258,9 @@ describe("shared power and item cards", () => {
       markup.indexOf("entity-card-descriptors"),
     );
     expect(markup).toContain('class="entity-card-rules"');
+    expect(markup).toContain(
+      '<dt>Attack Type</dt><dd class="preserve-lines">Melee weapon</dd>',
+    );
     expect(markup).toContain("<dt>Hit</dt>");
     expect(markup).not.toContain("<dt>Power Usage</dt>");
     expect(markup).not.toContain("<dt>Level</dt>");

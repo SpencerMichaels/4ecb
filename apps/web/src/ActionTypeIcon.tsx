@@ -7,7 +7,8 @@ export function ActionTypeIcon({
   readonly decorative?: boolean;
   readonly value: string | undefined;
 }) {
-  const label = value || "Action not specified";
+  const label = value?.trim();
+  if (!label) return null;
 
   return (
     <span

@@ -179,9 +179,13 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   prototype files. Power headers contain the action symbol and name on the left
   and authored usage, lower-case power type, and level on the right. Attack type
   is a text-only body descriptor; Level, Power Type, and Power Usage do not
-  repeat in the body. Utility no longer overrides the authored at-will,
-  encounter, or daily usage color. Power and item headers use the approved soft
-  tinted background with normal text and a full-tone border accent.
+  repeat in the body. The exact `Attack Type: Personal` case displays as
+  **Range: Personal** without mutating imported data; ordinary attack geometries
+  retain **Attack Type**. This avoids colliding with the independent authored
+  Power Type already shown in the header. Utility no longer overrides the
+  authored at-will, encounter, or daily usage color. Power and item headers use
+  the approved soft tinted background with normal text and a full-tone border
+  accent.
 - Power and item bodies now place flavor before a text-only descriptor strip and
   aligned rules rows with a fixed 4.75rem label column. Top-level cards retain a
   small Source footer. Resolvable granted powers use the same actual power

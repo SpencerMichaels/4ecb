@@ -853,8 +853,20 @@ library, sheet, and settings hashes retain their existing identities.
 Power and equipment details use the shared production `EntityCard` renderer in
 builder, Equipment, and granted/theme contexts. A power header contains only its
 action symbol and name on the left and authored usage, lower-case power type,
-and level on the right; attack type remains a body descriptor. Power Type,
-Power Usage, and Level are header-only. Header tone follows actual `Power Usage`
+and level on the right; attack type remains a body descriptor. A missing or
+blank Action Type renders no icon element or reserved space. Authored `No
+Action` uses the Free Action symbol, and both values appear as **Free** in power
+selection tables. Power Type, Power Usage, and Level are header-only. The exact
+authored descriptor `Attack Type: Personal` displays as **Range: Personal**
+because Personal describes the power's range, while the separate authored Power
+Type (such as Attack or Utility) remains in the header. Other Attack Type values
+retain their authored label, so Melee, Ranged, Close, Area, and custom
+geometries are not reclassified. This is a display-only rule; imported
+specifics remain unchanged. A read-only audit of the merged local corpus found
+2,350 exact Personal values among 10,679 powers with Attack Type; their separate
+Power Type values span Utility (1,826), Attack (268), Feature (16), Pact Boon
+(4), and missing (236), confirming that Power Type is not an interchangeable
+label. Header tone follows actual `Power Usage`
 only—at-will green, encounter red, daily gray—so Utility is not a fourth usage
 color. Power and item headers use the approved tinted treatment: the soft tone
 is the background, normal text remains readable, and the full tone is retained
