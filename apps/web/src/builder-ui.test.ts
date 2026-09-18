@@ -23,6 +23,7 @@ import {
   candidateReason,
   candidateTableTypeGroup,
   characterHeaderSubtitle,
+  choiceSectionComplete,
   classKeyAbilities,
   classKeyAbilitiesSentence,
   classTableMetadata,
@@ -57,6 +58,7 @@ import {
   jumpToLevelCommand,
   levelChoiceProgress,
   levelRailChoiceStatus,
+  nextLevelChoiceDestination,
   planningEvaluationHorizon,
   planningHorizonCommand,
   pointBuyStepControl,
@@ -1429,6 +1431,65 @@ describe("builder planning UI", () => {
     } as EvaluatedCharacter["choices"][number];
     expect(levelRailChoiceStatus([unresolved], true)).toBe("incomplete");
     expect(levelRailChoiceStatus([], true, 1)).toBe("incomplete");
+  });
+
+  it("gates section advancement on unresolved required choices only", () => {
+    const required = {
+      id: "required",
+      optional: false,
+    } as EvaluatedCharacter["choices"][number];
+    expect(choiceSectionComplete([required])).toBe(false);
+    expect(
+      choiceSectionComplete([
+        { ...required, selectedOccurrenceId: "selected-with-warning" },
+      ]),
+    ).toBe(true);
+    expect(choiceSectionComplete([], 1)).toBe(false);
+  });
+
+  it("allows sections containing only optional choices to advance", () => {
+    const optional = {
+      id: "optional",
+      optional: true,
+    } as EvaluatedCharacter["choices"][number];
+    expect(choiceSectionComplete([])).toBe(true);
+    expect(choiceSectionComplete([optional])).toBe(true);
+  });
+
+  it("advances to the next section within a level", () => {
+    expect(
+      nextLevelChoiceDestination(
+        4,
+        "Skills",
+        ["Ability Scores", "Skills", "Feats"],
+        ["Class"],
+        8,
+      ),
+    ).toEqual({ level: 4, section: "Feats" });
+  });
+
+  it("advances from the last section to the first section of the next current level", () => {
+    expect(
+      nextLevelChoiceDestination(
+        4,
+        "Feats",
+        ["Ability Scores", "Feats"],
+        ["Class", "Powers"],
+        8,
+      ),
+    ).toEqual({ level: 5, section: "Class" });
+  });
+
+  it("does not advance beyond the character's current level", () => {
+    expect(
+      nextLevelChoiceDestination(
+        8,
+        "Feats",
+        ["Ability Scores", "Feats"],
+        ["Class", "Powers"],
+        8,
+      ),
+    ).toBeUndefined();
   });
 
   it("turns evaluator reasons into objective user-facing text", () => {

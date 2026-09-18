@@ -41,6 +41,28 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## M5.5 per-level Next navigation checkpoint (2026-09-17)
+
+- Every mounted per-level category pane now ends with a bottom-right **Next**
+  button in the choice surface. Required unresolved evaluator choices disable
+  it; optional-only/empty categories and warning-only states do not. Level-1
+  point buy participates as the required non-evaluator Ability Scores state.
+- Next uses the established category and level activation paths, updates the
+  canonical builder URL, and focuses the newly active tab. It advances to the
+  next category in the selected level, then to the first category of the next
+  level only when that level is no higher than the character's current
+  effective level. The last category at the current-level boundary keeps a
+  visible disabled button and never creates future planning levels.
+- Focused builder tests cover required-choice gating, optional categories,
+  intra-level navigation, cross-level navigation, and the current-level
+  boundary. The accessibility contract also fixes the control to the choice
+  column rather than the shared detail pane. The focused suites pass 71/71;
+  the full public test suite passes 369/369 alongside lint, every workspace
+  typecheck, the production/PWA build, built-PWA validation, and Chromium and
+  Firefox Letter/A4 print checks. `scripts/check.sh` still stops at its initial
+  formatting gate on the unrelated pre-existing
+  `apps/web/src/equipment-ui.test.ts`; this change leaves that file untouched.
+
 ## M5.5 implement-proficiency prerequisite parity correction (2026-09-17)
 
 - Recovered native prerequisite grammar `Can use the X implement` now resolves

@@ -58,6 +58,7 @@ import {
   classKeyAbilities,
   classKeyAbilitiesSentence,
   classTableMetadata,
+  choiceSectionComplete,
   contextualChoiceName,
   choiceSelectionTableKind,
   choiceTableSummary,
@@ -90,6 +91,7 @@ import {
   levelRailChoiceStatus,
   legacyChoiceSection,
   MAX_CHARACTER_LEVEL,
+  nextLevelChoiceDestination,
   planningEvaluationHorizon,
   planningHorizonCommand,
   pointBuyStepControl,
@@ -4959,6 +4961,48 @@ export function CharacterEditorPage({
     activeLevelSection === "Retraining"
       ? retrainingChoices
       : (activeChoiceSection?.choices ?? []);
+  const activeSectionRequiredChoices =
+    activeLevelSection === "Retraining"
+      ? retrainingChoices
+      : primaryLevelChoices.filter(
+          (choice) => legacyChoiceSection(choice) === activeLevelSection,
+        );
+  const activeSectionComplete = choiceSectionComplete(
+    activeSectionRequiredChoices,
+    activeLevelSection === "Ability Scores" &&
+      selectedLevel === 1 &&
+      abilityScoresIncomplete
+      ? 1
+      : 0,
+  );
+  const nextLevelMechanicalChoices = choicesAtLevel(
+    selectedLevel + 1,
+    planningEvaluation,
+  ).filter(
+    (choice) =>
+      !isCharacterDetailChoice(choice) && !isBuildPresetChoice(choice),
+  );
+  const nextLevelPrimaryChoices = nextLevelMechanicalChoices.filter(
+    (choice) => !isOptionalRetrainingChoice(choice),
+  );
+  const nextLevelSectionTabs: readonly LevelChoiceTab[] = [
+    ...groupChoicesByLegacyWorkflow(nextLevelPrimaryChoices).map(
+      ({ section }) => section,
+    ),
+    ...(nextLevelMechanicalChoices.some(isOptionalRetrainingChoice)
+      ? (["Retraining"] as const)
+      : []),
+  ];
+  const nextChoiceDestination =
+    activeLevelSection === undefined
+      ? undefined
+      : nextLevelChoiceDestination(
+          selectedLevel,
+          activeLevelSection,
+          levelSectionTabs,
+          nextLevelSectionTabs,
+          build?.effectiveLevel ?? 0,
+        );
   useEffect(() => {
     if (activeSectionChoices.some((choice) => choice.id === selectedChoiceId))
       return;
@@ -5180,7 +5224,10 @@ export function CharacterEditorPage({
     });
   };
 
-  const selectLevel = (level: number): void => {
+  const selectLevel = (
+    level: number,
+    requestedSection?: LevelChoiceTab,
+  ): void => {
     try {
       const command = planningHorizonCommand(
         build,
@@ -5191,18 +5238,35 @@ export function CharacterEditorPage({
       if (command !== undefined) dispatch(command);
       const choices = choicesAtLevel(level, planningEvaluation).filter(
         (choice) =>
-          !isOptionalRetrainingChoice(choice) &&
-          !isCharacterDetailChoice(choice) &&
-          !isBuildPresetChoice(choice),
+          !isCharacterDetailChoice(choice) && !isBuildPresetChoice(choice),
       );
-      const ordered = groupChoicesByLegacyWorkflow(choices).flatMap(
+      const retraining = choices.filter(isOptionalRetrainingChoice);
+      const primary = choices.filter(
+        (choice) => !isOptionalRetrainingChoice(choice),
+      );
+      const ordered = groupChoicesByLegacyWorkflow(primary).flatMap(
         ({ choices: sectionChoices }) => sectionChoices,
       );
+      const rememberedSection =
+        requestedSection ?? selectedSectionByLevel[level];
+      const destinationChoices =
+        rememberedSection === "Retraining"
+          ? retraining
+          : rememberedSection === undefined
+            ? ordered
+            : ordered.filter(
+                (choice) => legacyChoiceSection(choice) === rememberedSection,
+              );
       setSelectedLevel(level);
       setSelectedChoiceId(
-        ordered.find(isUnresolvedChoice)?.id ?? ordered[0]?.id,
+        destinationChoices.find(isUnresolvedChoice)?.id ??
+          destinationChoices[0]?.id,
       );
-      const rememberedSection = selectedSectionByLevel[level];
+      if (requestedSection !== undefined)
+        setSelectedSectionByLevel((current) => ({
+          ...current,
+          [level]: requestedSection,
+        }));
       onNavigate(characterId, {
         workspace: "build",
         level,
@@ -5216,6 +5280,21 @@ export function CharacterEditorPage({
         message: reason instanceof Error ? reason.message : String(reason),
       });
     }
+  };
+
+  const advanceToNextChoiceSection = (): void => {
+    if (!activeSectionComplete || nextChoiceDestination === undefined) return;
+    if (nextChoiceDestination.level === selectedLevel)
+      activateLevelSection(nextChoiceDestination.section);
+    else
+      selectLevel(nextChoiceDestination.level, nextChoiceDestination.section);
+    requestAnimationFrame(() =>
+      document
+        .getElementById(
+          `level-${nextChoiceDestination.level}-${levelChoiceTabSlug(nextChoiceDestination.section)}-tab`,
+        )
+        ?.focus(),
+    );
   };
 
   const changeCurrentLevel = (level: number): void => {
@@ -5856,6 +5935,25 @@ export function CharacterEditorPage({
                           onRequestDetails={setExpandedReplacementChoiceId}
                           onDispatch={dispatch}
                         />
+                        <footer className="level-choice-navigation">
+                          <button
+                            disabled={
+                              !activeSectionComplete ||
+                              nextChoiceDestination === undefined
+                            }
+                            title={
+                              !activeSectionComplete
+                                ? "Complete the required choices in this section to continue"
+                                : nextChoiceDestination === undefined
+                                  ? "No next section at the character's current level"
+                                  : undefined
+                            }
+                            type="button"
+                            onClick={advanceToNextChoiceSection}
+                          >
+                            Next
+                          </button>
+                        </footer>
                       </section>
                     ) : activeChoiceSection === undefined ? null : (
                       <section
@@ -5916,6 +6014,25 @@ export function CharacterEditorPage({
                             ),
                           )}
                         </div>
+                        <footer className="level-choice-navigation">
+                          <button
+                            disabled={
+                              !activeSectionComplete ||
+                              nextChoiceDestination === undefined
+                            }
+                            title={
+                              !activeSectionComplete
+                                ? "Complete the required choices in this section to continue"
+                                : nextChoiceDestination === undefined
+                                  ? "No next section at the character's current level"
+                                  : undefined
+                            }
+                            type="button"
+                            onClick={advanceToNextChoiceSection}
+                          >
+                            Next
+                          </button>
+                        </footer>
                       </section>
                     )}
                   </div>

@@ -350,6 +350,45 @@ export function isUnresolvedChoice(choice: EvaluatedChoice): boolean {
   return !choice.optional && choice.selectedOccurrenceId === undefined;
 }
 
+/**
+ * A category may advance when every required choice it owns is resolved.
+ * Optional choices and legality warnings do not participate in this gate.
+ */
+export function choiceSectionComplete(
+  choices: readonly EvaluatedChoice[],
+  additionalUnresolvedRequired = 0,
+): boolean {
+  return (
+    additionalUnresolvedRequired === 0 && !choices.some(isUnresolvedChoice)
+  );
+}
+
+export interface NextLevelChoiceDestination<Section extends string> {
+  readonly level: number;
+  readonly section: Section;
+}
+
+/**
+ * Advances within the selected level, then crosses into the immediately next
+ * level only while that level is part of the current playable character.
+ */
+export function nextLevelChoiceDestination<Section extends string>(
+  selectedLevel: number,
+  activeSection: Section,
+  currentLevelSections: readonly Section[],
+  nextLevelSections: readonly Section[],
+  effectiveLevel: number,
+): NextLevelChoiceDestination<Section> | undefined {
+  const activeIndex = currentLevelSections.indexOf(activeSection);
+  if (activeIndex < 0) return undefined;
+  const nextSection = currentLevelSections[activeIndex + 1];
+  if (nextSection !== undefined)
+    return { level: selectedLevel, section: nextSection };
+  if (selectedLevel >= effectiveLevel || nextLevelSections.length === 0)
+    return undefined;
+  return { level: selectedLevel + 1, section: nextLevelSections[0]! };
+}
+
 export interface LevelChoiceProgress {
   readonly completed: number;
   readonly required: number;

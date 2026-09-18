@@ -580,6 +580,18 @@ boundaries. The unavailable-options control is temporarily withheld while its
 compact placement is redesigned, without changing the engine's ability to
 classify or intentionally select unavailable candidates later.
 
+Each mounted category pane ends with a right-aligned **Next** action in the
+choice surface, never the shared detail surface. It enables only when every
+required evaluator choice represented by that category is resolved; optional
+choices and warning/house-rule state do not block it, while the level-1 base
+ability allocation counts as a required Ability Scores decision. Next follows
+the same category and level activation paths as direct tab/rail navigation and
+moves focus to the newly active tab. It advances through categories, then to the
+first category of the immediately following level only while that level is at
+or below `effectiveLevel`. At the final category of the effective level it
+remains visible but disabled, making the current-character boundary explicit
+without growing the planning horizon.
+
 ### D040 — Planning is level navigation, not a separate overview setting
 
 The builder header is the single compact character summary: portrait and name

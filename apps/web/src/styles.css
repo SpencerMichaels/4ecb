@@ -2231,6 +2231,13 @@ textarea {
   border: 0;
 }
 
+.level-choice-navigation {
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem 1rem;
+}
+
 .level-choice-workspace {
   align-items: start;
   display: grid;

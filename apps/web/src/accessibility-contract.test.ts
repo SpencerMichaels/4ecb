@@ -134,6 +134,26 @@ describe("release accessibility contract", () => {
     );
   });
 
+  it("keeps per-level Next navigation in the choice pane", () => {
+    const workspaceStart = characterEditor.indexOf(
+      'className="level-choice-workspace"',
+    );
+    const choiceWorkspace = characterEditor.slice(
+      workspaceStart,
+      characterEditor.indexOf(
+        'className="shared-choice-detail"',
+        workspaceStart,
+      ),
+    );
+    expect(choiceWorkspace).toContain('className="level-choice-navigation"');
+    expect(choiceWorkspace).toContain("activeSectionComplete");
+    expect(choiceWorkspace).toContain("nextChoiceDestination === undefined");
+    expect(choiceWorkspace).toContain("advanceToNextChoiceSection");
+    expect(styles).toMatch(
+      /\.level-choice-navigation\s*\{[^}]*display: flex;[^}]*justify-content: flex-end/,
+    );
+  });
+
   it("keeps header identity editable and moves level changes into Character details", () => {
     const header = characterEditor.slice(
       characterEditor.indexOf('<header className="builder-heading">'),
