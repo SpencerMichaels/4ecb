@@ -2,6 +2,7 @@
   "name": "4ecb",
   "version": "0.0.0",
   "private": true,
+  "license": "GPL-3.0-or-later",
   "type": "module",
   "description": "Offline-first modern D&D 4E character builder",
   "packageManager": "pnpm@11.22.0",

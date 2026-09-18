@@ -15,6 +15,9 @@
 # Local agent/editor state and scratch output
 /.agents/
 /.codex/
+/CLAUDE.md
+/DEPLOYMENT.md
+/tasks.txt
 /tmp/
 /sample-chars/
 .direnv/

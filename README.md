@@ -1,8 +1,10 @@
 # Modern D&D 4E Character Builder workspace
 
-This workspace contains the supplied legacy Character Builder application and
-data, the compatibility research, and the working compendium alpha for its
-modern web replacement.
+This repository contains the compatibility research, durable product and
+architecture record, and working web replacement for the legacy Character
+Builder. A local checkout can also contain the supplied legacy application and
+rules data under ignored paths for compatibility testing; they are not part of
+the public source tree.
 
 - Start with [`docs/README.md`](docs/README.md) for the product definition,
   architecture, MVP boundary, milestones, and architectural decisions.
@@ -42,9 +44,9 @@ merge and pack build with:
 nix develop path:. --command bash scripts/build-private-content.sh
 ```
 
-Import `tmp/content/full-local.4ecp`, activate it under Content settings, and
-open the Compendium to search the complete local corpus. Query state is kept in
-the URL fragment and saved searches remain in browser-local storage.
+Import `tmp/content/full-local.4ecp` and activate it under Content settings.
+The builder's contextual race, class, power, feat, equipment, and shop tables
+then query that local corpus without uploading it.
 
 Measure the query engine against a private pack with:
 
@@ -61,6 +63,16 @@ operation, runtime configuration, HTTPS, health checks, PWA updates, and the
 proprietary-content boundary. The repository-wide
 [public distribution notice](NOTICE.md) applies to every hosted build and image.
 
-Milestones M1 through M4 are complete, and M5 is in progress. See
+Milestones M1 through M5 are complete, and M5.5 interface stabilization is in
+progress. See
 [`docs/implementation-status.md`](docs/implementation-status.md) for verified
 evidence and [`docs/roadmap.md`](docs/roadmap.md) for the current milestone.
+
+## License
+
+The original source code in this repository is licensed under the GNU General
+Public License, version 3 or any later version. See [`LICENSE`](LICENSE).
+
+The license does not grant rights to the excluded official D&D 4E rules corpus,
+legacy application, or other third-party material. See [`NOTICE.md`](NOTICE.md)
+for the project's public distribution boundary.

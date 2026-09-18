@@ -1,5 +1,8 @@
 # Public distribution notice
 
+The original source code in this repository is licensed under the GNU General
+Public License, version 3 or any later version. See `LICENSE`.
+
 4E Character Builder is an unofficial fan-made compatibility project. It is not
 affiliated with, authorized by, sponsored by, or endorsed by Wizards of the
 Coast. Dungeons & Dragons and related names belong to their respective owners.
