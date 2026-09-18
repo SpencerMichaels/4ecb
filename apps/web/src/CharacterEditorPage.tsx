@@ -97,6 +97,9 @@ import {
   planningEvaluationHorizon,
   planningHorizonCommand,
   pointBuyStepControl,
+  powerTableActionLabel,
+  powerTableAttackLabel,
+  powerTableAttackTitle,
   powerTableLevel,
   raceAbilityScoreCells,
   selectedDefinitionId,
@@ -110,7 +113,6 @@ import {
 } from "./builder-ui";
 import { Icon, type IconName } from "./Icon";
 import { SelectionSummary } from "./SelectionSummary";
-import { ActionTypeIcon } from "./ActionTypeIcon";
 import {
   EmbeddedPowerCard,
   EntityCardBody,
@@ -130,7 +132,6 @@ import type {
 } from "./routes";
 import {
   entityVisualTone,
-  powerAttackIcon,
   type LegacyVisualTone,
   visualToneClass,
 } from "./visual-language";
@@ -2195,15 +2196,6 @@ type FeatPresentationGroup = ReturnType<
   typeof groupParameterizedCandidates
 >[number];
 
-function AttackMetadataIcon({ value }: { readonly value: string | undefined }) {
-  const label = value || "Attack type not specified";
-  return (
-    <span className="selection-metadata-icon" aria-label={label} title={label}>
-      <Icon name={powerAttackIcon(value)} />
-    </span>
-  );
-}
-
 function candidateTableNoun(
   kind: ChoiceSelectionTableKind,
   plural: boolean,
@@ -2601,23 +2593,25 @@ function CandidateSelectionTable({
             <td>
               {entity === undefined ? "—" : (powerTableLevel(entity) ?? "—")}
             </td>
-            <td>
-              <ActionTypeIcon
-                value={
-                  entity === undefined
-                    ? undefined
-                    : contentSpecificValue(entity, "Action Type")
-                }
-              />
+            <td
+              title={
+                entity === undefined
+                  ? undefined
+                  : contentSpecificValue(entity, "Action Type")
+              }
+            >
+              {entity === undefined
+                ? "—"
+                : (powerTableActionLabel(entity) ?? "—")}
             </td>
-            <td>
-              <AttackMetadataIcon
-                value={
-                  entity === undefined
-                    ? undefined
-                    : contentSpecificValue(entity, "Attack Type")
-                }
-              />
+            <td
+              title={
+                entity === undefined ? undefined : powerTableAttackTitle(entity)
+              }
+            >
+              {entity === undefined
+                ? "—"
+                : (powerTableAttackLabel(entity) ?? "—")}
             </td>
             <td>
               <span className="selection-table-summary">{summary || "—"}</span>
@@ -2726,28 +2720,8 @@ function CandidateSelectionTable({
               {kind === "power" ? (
                 <>
                   {sortableHeader("level", "Level")}
-                  {sortableHeader(
-                    "action",
-                    "Action type",
-                    <span
-                      className="selection-metadata-icon"
-                      aria-label="Action type"
-                      title="Action type"
-                    >
-                      <Icon name="clock" />
-                    </span>,
-                  )}
-                  {sortableHeader(
-                    "attack",
-                    "Attack type",
-                    <span
-                      className="selection-metadata-icon"
-                      aria-label="Attack type"
-                      title="Attack type"
-                    >
-                      <Icon name="attack-versatile" />
-                    </span>,
-                  )}
+                  {sortableHeader("action", "Action")}
+                  {sortableHeader("attack", "Type")}
                   {sortableHeader("summary", "Description")}
                 </>
               ) : kind === "class" ? (

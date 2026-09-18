@@ -2843,10 +2843,13 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   width: 1%;
 }
 
-.candidate-selection-power td:nth-child(2),
+.candidate-selection-power td:nth-child(2) {
+  text-align: center;
+}
+
 .candidate-selection-power td:nth-child(3),
 .candidate-selection-power td:nth-child(4) {
-  text-align: center;
+  text-align: left;
 }
 
 .candidate-selection-deity .selection-table-scroll th:first-child,

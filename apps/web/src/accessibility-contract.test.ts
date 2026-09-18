@@ -389,6 +389,13 @@ describe("release accessibility contract", () => {
       /\.selection-summary\s*\{[^}]*background:[^}]*border:[^}]*padding:/,
     );
     expect(tableSource).toContain('sortableHeader("power-source", "Power")');
+    expect(tableSource).toContain('sortableHeader("action", "Action")');
+    expect(tableSource).toContain('sortableHeader("attack", "Type")');
+    expect(tableSource).toContain("powerTableActionLabel(entity)");
+    expect(tableSource).toContain("powerTableAttackLabel(entity)");
+    expect(tableSource).toContain("powerTableAttackTitle(entity)");
+    expect(tableSource).not.toContain("<ActionTypeIcon");
+    expect(tableSource).not.toContain("<AttackMetadataIcon");
     expect(styles).toMatch(
       /\.selection-table-scroll thead\s*\{[^}]*background: var\(--legacy-neutral\)[^}]*position: sticky[^}]*top: 0/,
     );
@@ -406,6 +413,9 @@ describe("release accessibility contract", () => {
     expect(tableSource).toContain("deityTableDescription(entity)");
     expect(styles).toMatch(
       /\.selection-table-scroll table\s*\{[^}]*table-layout: auto/,
+    );
+    expect(styles).toMatch(
+      /\.candidate-selection-power td:nth-child\(3\),[\s\S]*?\.candidate-selection-power td:nth-child\(4\)\s*\{[^}]*text-align: left/,
     );
     expect(styles).toMatch(
       /\.selection-table-scroll thead th:first-child,[\s\S]*?\.selection-table-scroll tbody td:first-child[\s\S]*?width: 1%/,

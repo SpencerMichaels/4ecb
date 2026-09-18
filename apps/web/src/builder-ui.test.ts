@@ -64,6 +64,9 @@ import {
   planningEvaluationHorizon,
   planningHorizonCommand,
   pointBuyStepControl,
+  powerTableActionLabel,
+  powerTableAttackLabel,
+  powerTableAttackTitle,
   powerTableLevel,
   primaryDetailTypeLabel,
   selectedChoiceHasWarning,
@@ -710,6 +713,106 @@ describe("builder planning UI", () => {
       ),
     ).toBe("Lead with control.");
     expect(contentSpecificValue(power, "action type")).toBe("Standard action");
+  });
+
+  it("formats normalized power action and attack metadata for table text", () => {
+    const power = {
+      ...level(0),
+      type: "Power",
+      specifics: [
+        {
+          name: " action TYPE ",
+          value: "Immediate Interrupt",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+        {
+          name: "ATTACK type",
+          value: "Area burst 2 within 20 squares",
+          extraAttributes: [],
+          ordinal: 1,
+        },
+        {
+          name: "Targets",
+          value: "All creatures in burst",
+          extraAttributes: [],
+          ordinal: 2,
+        },
+      ],
+    };
+
+    expect(powerTableActionLabel(power)).toBe("Immediate Interrupt");
+    expect(powerTableAttackLabel(power)).toBe("Area burst");
+    expect(powerTableAttackTitle(power)).toBe(
+      "Area burst 2 within 20 squares (All creatures in burst)",
+    );
+    expect(
+      powerTableActionLabel({
+        ...power,
+        specifics: [{ ...power.specifics[0]!, value: "Minor Action" }],
+      }),
+    ).toBe("Minor");
+    for (const authored of ["No Action", "Free Action"]) {
+      expect(
+        powerTableActionLabel({
+          ...power,
+          specifics: [{ ...power.specifics[0]!, value: authored }],
+        }),
+      ).toBe("Free");
+    }
+    for (const authored of ["", " \t\n "]) {
+      expect(
+        powerTableActionLabel({
+          ...power,
+          specifics: [{ ...power.specifics[0]!, value: authored }],
+        }),
+      ).toBeUndefined();
+    }
+    expect(powerTableActionLabel({ ...power, specifics: [] })).toBeUndefined();
+    expect(
+      powerTableAttackLabel({
+        ...power,
+        specifics: [{ ...power.specifics[1]!, value: "Melee weapon" }],
+      }),
+    ).toBe("Melee weapon");
+    expect(
+      powerTableAttackLabel({
+        ...power,
+        specifics: [{ ...power.specifics[1]!, value: "Personal" }],
+      }),
+    ).toBe("Personal");
+    expect(
+      powerTableAttackLabel({
+        ...power,
+        specifics: [
+          { ...power.specifics[1]!, value: "Melee weapon (beast 1)" },
+        ],
+      }),
+    ).toBe("Melee weapon (beast)");
+    for (const [authored, label] of [
+      ["Close burst 3", "Close burst"],
+      ["Ranged 10/20", "Ranged"],
+      ["Melee weapon + 1 reach", "Melee weapon"],
+      ["Close burst 5 (10 at 21st level)", "Close burst"],
+      ["Melee spirit 1 (or 2 if the spirit is Large)", "Melee spirit"],
+    ] as const) {
+      expect(
+        powerTableAttackLabel({
+          ...power,
+          specifics: [{ ...power.specifics[1]!, value: authored }],
+        }),
+      ).toBe(label);
+    }
+    expect(
+      powerTableAttackTitle({
+        ...power,
+        specifics: [
+          { ...power.specifics[1]!, value: "Close burst 3" },
+          { ...power.specifics[2]!, name: "Target", value: "Each enemy" },
+        ],
+      }),
+    ).toBe("Close burst 3 (Each enemy)");
+    expect(powerTableAttackLabel({ ...power, specifics: [] })).toBeUndefined();
   });
 
   it("reads background-associated skills only from authored metadata", () => {

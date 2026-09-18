@@ -781,6 +781,52 @@ export function powerTableLevel(entity: ContentEntity): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+export function powerTableActionLabel(
+  entity: ContentEntity,
+): string | undefined {
+  const authored = contentSpecificValue(entity, "Action Type")?.trim();
+  if (!authored) return undefined;
+  if (authored.toLocaleLowerCase() === "no action") return "Free";
+  const label = authored.replace(/\s+action$/iu, "").trim();
+  return label || undefined;
+}
+
+export function powerTableAttackLabel(
+  entity: ContentEntity,
+): string | undefined {
+  const attackType = contentSpecificValue(entity, "Attack Type");
+  if (attackType === undefined) return undefined;
+
+  const label = attackType
+    .replaceAll(/\s+/gu, " ")
+    .replaceAll(/\(\s*beast\s+\d+\s*\)/giu, "(beast)")
+    .replaceAll(/\s*\((?!\s*beast\s*\))[^)]*\)/giu, "")
+    .replace(/\s*,?\s+(?:centered|within|w\/in|with|from)\b.*$/iu, "")
+    .replaceAll(/\s*\+\s*\d+(?:\s*reach)?\b/giu, "")
+    .replaceAll(/\breach\s+\d+\b/giu, "")
+    .replaceAll(/\b(ranged)(?=\d)/giu, "$1 ")
+    .replaceAll(
+      /\b\d+(?:(?:d|\/)\d+)?(?:st|nd|rd|th)?\b(?:\s+(?:squares?|miles?))?/giu,
+      "",
+    )
+    .replaceAll(/\s+/gu, " ")
+    .replace(/\s+([.,])/gu, "$1")
+    .replace(/[.,]+$/gu, "")
+    .trim();
+  return label || undefined;
+}
+
+export function powerTableAttackTitle(
+  entity: ContentEntity,
+): string | undefined {
+  const attackType = contentSpecificValue(entity, "Attack Type");
+  if (attackType === undefined) return undefined;
+  const target =
+    contentSpecificValue(entity, "Target") ??
+    contentSpecificValue(entity, "Targets");
+  return target === undefined ? attackType : `${attackType} (${target})`;
+}
+
 /** The compact type shown opposite an entity name in primary detail panes. */
 export function primaryDetailTypeLabel(entity: ContentEntity): string {
   if (entity.type.trim().toLocaleLowerCase() !== "power") return entity.type;
