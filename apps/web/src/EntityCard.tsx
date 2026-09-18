@@ -9,6 +9,7 @@ import {
 import { ActionTypeIcon } from "./ActionTypeIcon";
 import { entityCurrencyCopper, formatCopperPrice } from "./equipment-ui";
 import { Icon, type IconName } from "./Icon";
+import { canonicalItemIcon } from "./item-icons";
 import { Prose } from "./Prose";
 import {
   classKeyAbilitiesSentence,
@@ -16,7 +17,11 @@ import {
   primaryDetailTypeLabel,
   splitLabeledDescription,
 } from "./builder-ui";
-import { entityVisualTone, visualToneClass } from "./visual-language";
+import {
+  entityTypeIcon,
+  entityVisualTone,
+  visualToneClass,
+} from "./visual-language";
 
 export const HideFlavortextContext = createContext(false);
 
@@ -65,13 +70,15 @@ function itemKind(entity: ContentEntity): string {
   return entity.type.trim() || "Item";
 }
 
-export function itemCardLabel(entity: ContentEntity): string {
-  const kind = itemKind(entity);
+export function itemCardLabel(
+  entity: ContentEntity,
+  physicalBase?: ContentEntity,
+): string {
+  const authoredKind =
+    physicalBase === undefined ? itemKind(entity) : itemKind(physicalBase);
+  const kind = /\bslot item\s*$/iu.test(authoredKind) ? "Item" : authoredKind;
   const level = contentSpecificValue(entity, "Level")?.trim();
-  const rarity = contentSpecificValue(entity, "Rarity")?.trim();
-  return [level ? `${kind} ${level}` : kind, rarity]
-    .filter(Boolean)
-    .join(" · ");
+  return level ? `${kind} ${level}` : kind;
 }
 
 export function powerCardLabel(entity: ContentEntity): string {
@@ -83,68 +90,55 @@ export function powerCardLabel(entity: ContentEntity): string {
   return [usage, powerType, level].filter(Boolean).join(" ") || "Power";
 }
 
-export function itemCardIcon(entity: ContentEntity): IconName {
-  const type = normalizedFieldName(entity.type);
-  const kind = normalizedFieldName(itemKind(entity));
-  const slot = normalizedFieldName(
-    contentSpecificValue(entity, "Item Slot") ?? "",
+export function itemCardIcon(
+  entity: ContentEntity,
+  physicalBase?: ContentEntity,
+): IconName {
+  return canonicalItemIcon(entity, physicalBase);
+}
+
+export function EntityCardLeadingIcon({
+  entity,
+  physicalBase,
+}: {
+  readonly entity: ContentEntity | undefined;
+  readonly physicalBase?: ContentEntity | undefined;
+}) {
+  if (entity === undefined) return <Icon name="content" />;
+  const isPower = entity.type.trim().toLocaleLowerCase() === "power";
+  if (isPower)
+    return (
+      <ActionTypeIcon
+        decorative
+        value={contentSpecificValue(entity, "Action Type")}
+      />
+    );
+  return (
+    <Icon
+      name={
+        isItemEntity(entity)
+          ? itemCardIcon(entity, physicalBase)
+          : entityTypeIcon(entity.type)
+      }
+    />
   );
-  const value = `${kind} ${slot}`;
-  if (value.includes("artifact") || value.includes("dragonshard")) return "gem";
-  if (type === "weapon" || kind === "weapon") return "sword";
-  if (type === "armor" || kind === "armor") return "shield";
-  if (type === "gear") return "item";
-  if (type === "item set") return "layers";
-  if (type === "ritual scroll") return "details";
-  if (kind.includes("martial practice")) return "dumbbell";
-  if (kind.includes("alchemical") || kind.includes("formula"))
-    return "flask-conical";
-  if (type === "ritual") return "book";
-  if (kind.includes("alternative reward")) return "award";
-  if (/boon|gift|blessing/u.test(kind)) return "gift";
-  if (kind.includes("echo of power")) return "waves";
-  if (kind.includes("grandmaster training")) return "skill";
-  if (/secret|mystery/u.test(kind)) return "key-round";
-  if (kind.includes("soulfang")) return "bone";
-  if (kind.includes("templar brand")) return "stamp";
-  if (kind.includes("ammunition")) return "target";
-  if (kind.includes("arms slot")) return "arms";
-  if (kind.includes("feet")) return "footprints";
-  if (kind.includes("hands")) return "hand";
-  if (kind.includes("head")) return "crown";
-  if (kind.includes("neck")) return "medal";
-  if (kind.includes("waist")) return "badge";
-  if (kind === "ring" || slot.includes("ring")) return "circle";
-  if (/companion|familiar|mount/u.test(value)) return "paw-print";
-  if (kind.includes("holy symbol")) return "sun";
-  if (kind.includes("ki focus")) return "focus";
-  if (kind === "orb") return "orbit";
-  if (/rod|staff|totem|wand/u.test(kind)) return "wand-sparkles";
-  if (kind === "tome") return "book-marked";
-  if (/consumable/u.test(kind)) return "package-open";
-  if (/elixir|potion/u.test(kind)) return "flask-round";
-  if (kind.includes("reagent")) return "test-tube";
-  if (kind.includes("whetstone")) return "anvil";
-  if (/intelligent item|psionic talent/u.test(kind)) return "brain";
-  return "feat";
 }
 
 export function EntityCardHeader({
   entity,
   headingId,
   headingLevel = 4,
+  physicalBase,
   subheading,
 }: {
   readonly entity: ContentEntity;
   readonly headingId?: string;
   readonly headingLevel?: 2 | 3 | 4 | 5;
+  readonly physicalBase?: ContentEntity | undefined;
   readonly subheading?: ReactNode;
 }) {
   const isPower = entity.type.trim().toLocaleLowerCase() === "power";
   const isItem = isItemEntity(entity);
-  const actionType = isPower
-    ? contentSpecificValue(entity, "Action Type")
-    : undefined;
   const headingContent = entity.name;
   const heading =
     headingLevel === 2 ? (
@@ -160,13 +154,12 @@ export function EntityCardHeader({
     <>
       <div className="detail-heading-row">
         <div className="entity-card-heading-main">
-          {isPower ? <ActionTypeIcon decorative value={actionType} /> : null}
-          {isItem ? <Icon name={itemCardIcon(entity)} /> : null}
+          <EntityCardLeadingIcon entity={entity} physicalBase={physicalBase} />
           {heading}
         </div>
         <span className="eyebrow entity-kind">
           {isItem
-            ? itemCardLabel(entity)
+            ? itemCardLabel(entity, physicalBase)
             : isPower
               ? powerCardLabel(entity)
               : primaryDetailTypeLabel(entity)}
@@ -436,17 +429,490 @@ const ITEM_DESCRIPTOR_FIELDS = new Set([
   "critical",
   "damage",
   "enhancement",
+  "group",
+  "hands required",
+  "item slot",
   "proficiency bonus",
+  "properties",
+  "rarity",
   "weapon",
+  "weapon category",
   "weight",
 ]);
-const ITEM_HEADER_FIELDS = new Set([
+const ITEM_HEADER_FIELDS = new Set(["level", "magic item type", "type"]);
+const ITEM_PRICE_FIELDS = new Set(["copper", "gold", "market price", "silver"]);
+
+export interface ItemDescriptorFact {
+  readonly key: string;
+  readonly label: string;
+  readonly values: readonly string[];
+}
+
+function itemDescriptorLabel(name: string): string {
+  switch (normalizedFieldName(name)) {
+    case "proficiency bonus":
+      return "Proficiency";
+    case "weapon category":
+      return "Category";
+    case "hands required":
+      return "Hands";
+    case "properties":
+      return "Properties";
+    case "item slot":
+      return "Slot";
+    default:
+      return name || "Detail";
+  }
+}
+
+function itemDescriptorValue(field: SpecificField): string {
+  switch (normalizedFieldName(field.name)) {
+    case "proficiency bonus":
+      return signedBonus(field.value);
+    case "critical":
+      return withoutRedundantCriticalDamage(field.value);
+    case "weapon category":
+    case "hands required":
+      return sentenceCaseValue(field.value);
+    case "weight":
+      return weaponWeight(field.value);
+    default:
+      return field.value;
+  }
+}
+
+function specificValues(
+  entity: ContentEntity,
+  name: string,
+): readonly string[] {
+  const normalizedName = normalizedFieldName(name);
+  return entity.specifics
+    .filter((field) => normalizedFieldName(field.name) === normalizedName)
+    .map((field) => field.value.trim())
+    .filter(Boolean);
+}
+
+function withoutRedundantCriticalDamage(value: string): string {
+  return value.replace(/\s+damage\s*$/iu, "").trim();
+}
+
+function signedBonus(value: string): string {
+  const trimmed = value.trim();
+  return /^\d+(?:\.\d+)?$/u.test(trimmed) ? `+${trimmed}` : trimmed;
+}
+
+function sentenceCaseValue(value: string): string {
+  const trimmed = value.trim();
+  return trimmed.length === 0
+    ? trimmed
+    : `${trimmed[0]!.toLocaleUpperCase()}${trimmed.slice(1).toLocaleLowerCase()}`;
+}
+
+function weaponWeight(value: string): string {
+  const trimmed = value.trim();
+  return /^\d+(?:\.\d+)?$/u.test(trimmed) ? `${trimmed} lb.` : trimmed;
+}
+
+function descriptorFact(
+  key: string,
+  label: string,
+  values: readonly string[],
+): ItemDescriptorFact | undefined {
+  const present = values.map((value) => value.trim()).filter(Boolean);
+  return present.length === 0 ? undefined : { key, label, values: present };
+}
+
+function itemPriceLabel(entity: ContentEntity): string | undefined {
+  for (const [name, suffix] of [
+    ["Gold", "gp"],
+    ["Silver", "sp"],
+    ["Copper", "cp"],
+  ] as const) {
+    const authored = contentSpecificValue(entity, name)?.trim();
+    if (authored === undefined || authored.length === 0) continue;
+    const numeric = Number.parseFloat(authored.replaceAll(",", ""));
+    return Number.isFinite(numeric)
+      ? `${numeric.toLocaleString("en-US")} ${suffix}`
+      : `${authored} ${suffix}`;
+  }
+  const market = contentSpecificValue(entity, "Market Price")?.trim();
+  if (market) return market;
+  const copper = entityCurrencyCopper(entity);
+  return copper === undefined ? undefined : formatCopperPrice(copper);
+}
+
+function compactFacts(
+  facts: readonly (ItemDescriptorFact | undefined)[],
+): readonly ItemDescriptorFact[] {
+  return facts.filter((fact): fact is ItemDescriptorFact => fact !== undefined);
+}
+
+function itemDescriptorRows(
+  entity: ContentEntity,
+  facts: readonly { key: string; label: string; value: string }[],
+): readonly (readonly ItemDescriptorFact[])[] {
+  const merged = new Map<string, ItemDescriptorFact>();
+  for (const fact of facts) {
+    const identity = normalizedFieldName(fact.label);
+    const existing = merged.get(identity);
+    merged.set(
+      identity,
+      existing === undefined
+        ? { key: fact.key, label: fact.label, values: [fact.value] }
+        : { ...existing, values: [...existing.values, fact.value] },
+    );
+  }
+  const all = [...merged.values()];
+  const take = (labels: readonly string[]) =>
+    labels.flatMap((label) => {
+      const found = merged.get(label);
+      return found === undefined ? [] : [found];
+    });
+  const isWeapon = normalizedFieldName(itemKind(entity)) === "weapon";
+  const claimed = new Set([
+    "enhancement",
+    "proficiency",
+    "damage",
+    "critical",
+    "category",
+    "hands",
+    "group",
+    "weight",
+    "price",
+    "rarity",
+    "properties",
+    "slot",
+  ]);
+  if (!isWeapon)
+    return [
+      take(["enhancement"]),
+      take(["price", "slot", "rarity"]),
+      all.filter((fact) => !claimed.has(normalizedFieldName(fact.label))),
+    ].filter((row) => row.length > 0);
+  return [
+    take(["enhancement"]),
+    take(["proficiency", "damage", "critical"]),
+    take(["category", "hands", "group"]),
+    take(["weight", "price", "rarity"]),
+    take(["properties"]),
+    all.filter((fact) => !claimed.has(normalizedFieldName(fact.label))),
+  ].filter((row) => row.length > 0);
+}
+
+export function composedWeaponDescriptorRows(
+  base: ContentEntity,
+  enchantment: ContentEntity,
+): readonly (readonly ItemDescriptorFact[])[] {
+  const price = itemPriceLabel(enchantment);
+  return [
+    compactFacts([
+      descriptorFact(
+        "enhancement",
+        "Enhancement",
+        specificValues(enchantment, "Enhancement"),
+      ),
+    ]),
+    compactFacts([
+      descriptorFact(
+        "proficiency",
+        "Proficiency",
+        specificValues(base, "Proficiency Bonus").map(signedBonus),
+      ),
+      descriptorFact("damage", "Damage", specificValues(base, "Damage")),
+      descriptorFact(
+        "critical",
+        "Critical",
+        specificValues(enchantment, "Critical").map(
+          withoutRedundantCriticalDamage,
+        ),
+      ),
+    ]),
+    compactFacts([
+      descriptorFact(
+        "category",
+        "Category",
+        specificValues(base, "Weapon Category").map(sentenceCaseValue),
+      ),
+      descriptorFact(
+        "hands",
+        "Hands",
+        specificValues(base, "Hands Required").map(sentenceCaseValue),
+      ),
+      descriptorFact("group", "Group", specificValues(base, "Group")),
+    ]),
+    compactFacts([
+      descriptorFact(
+        "weight",
+        "Weight",
+        specificValues(base, "Weight").map(weaponWeight),
+      ),
+      descriptorFact("price", "Price", price === undefined ? [] : [price]),
+      descriptorFact("rarity", "Rarity", specificValues(enchantment, "Rarity")),
+    ]),
+    compactFacts([
+      descriptorFact(
+        "properties",
+        "Properties",
+        specificValues(base, "Properties"),
+      ),
+    ]),
+  ].filter((row) => row.length > 0);
+}
+
+function displayItemSlot(value: string): string {
+  return value.trim().replace(/^off[- ]hand$/iu, "Off hand");
+}
+
+function meaningfulArmorModifiers(
+  values: readonly string[],
+): readonly string[] {
+  return values.filter(
+    (value) => !new Set(["-", "—", "0", "+0"]).has(value.trim()),
+  );
+}
+
+export function composedArmorDescriptorRows(
+  base: ContentEntity,
+  enchantment: ContentEntity,
+): readonly (readonly ItemDescriptorFact[])[] {
+  const price = itemPriceLabel(enchantment);
+  return [
+    compactFacts([
+      descriptorFact(
+        "enhancement",
+        "Enhancement",
+        specificValues(enchantment, "Enhancement"),
+      ),
+    ]),
+    compactFacts([
+      descriptorFact(
+        "armor-bonus",
+        "Armor bonus",
+        specificValues(base, "Armor Bonus").map(signedBonus),
+      ),
+      descriptorFact(
+        "check",
+        "Check",
+        meaningfulArmorModifiers(specificValues(base, "Check")),
+      ),
+      descriptorFact(
+        "speed",
+        "Speed",
+        meaningfulArmorModifiers(specificValues(base, "Speed")),
+      ),
+    ]),
+    compactFacts([
+      descriptorFact(
+        "category",
+        "Category",
+        specificValues(base, "Armor Category").map(sentenceCaseValue),
+      ),
+      descriptorFact(
+        "type",
+        "Type",
+        specificValues(base, "Armor Type").map(sentenceCaseValue),
+      ),
+      descriptorFact(
+        "slot",
+        "Slot",
+        specificValues(base, "Item Slot").map(displayItemSlot),
+      ),
+    ]),
+    compactFacts([
+      descriptorFact("price", "Price", price === undefined ? [] : [price]),
+      descriptorFact(
+        "weight",
+        "Weight",
+        specificValues(base, "Weight").map(weaponWeight),
+      ),
+      descriptorFact("rarity", "Rarity", specificValues(enchantment, "Rarity")),
+    ]),
+  ].filter((row) => row.length > 0);
+}
+
+function ItemDescriptorRows({
+  rows,
+}: {
+  readonly rows: readonly (readonly ItemDescriptorFact[])[];
+}) {
+  if (rows.length === 0) return null;
+  return (
+    <dl className="item-card-descriptors">
+      {rows.map((row, rowIndex) => (
+        <div className="item-card-descriptor-row" key={rowIndex}>
+          {row.map((fact) => (
+            <div key={fact.key}>
+              <dt>{fact.label}</dt>
+              <dd>
+                {fact.values.map((value, valueIndex) => (
+                  <span key={`${valueIndex}-${value}`}>{value}</span>
+                ))}
+              </dd>
+            </div>
+          ))}
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+const COMPOSED_WEAPON_HIDDEN_FIELDS = new Set([
+  "copper",
+  "critical",
+  "enhancement",
+  "full text",
+  "gold",
+  "item slot",
   "level",
   "magic item type",
+  "market price",
   "rarity",
-  "type",
+  "silver",
+  "weapon",
 ]);
-const ITEM_PRICE_FIELDS = new Set(["copper", "gold", "market price", "silver"]);
+
+const COMPOSED_ARMOR_HIDDEN_FIELDS = new Set([
+  "armor",
+  "copper",
+  "enhancement",
+  "full text",
+  "gold",
+  "item slot",
+  "level",
+  "magic item type",
+  "market price",
+  "rarity",
+  "silver",
+]);
+
+function ComposedItemNarrative({
+  enchantment,
+  hideFlavortext,
+  hiddenFields,
+  descriptorRows,
+  afterFields,
+}: {
+  readonly enchantment: ContentEntity;
+  readonly hideFlavortext: boolean;
+  readonly hiddenFields: ReadonlySet<string>;
+  readonly descriptorRows: readonly (readonly ItemDescriptorFact[])[];
+  readonly afterFields?: ReactNode;
+}) {
+  const clauses = enchantment.specifics.filter(
+    (field) =>
+      isUserFacingSpecific(field) &&
+      !hiddenFields.has(normalizedFieldName(field.name)) &&
+      normalizedFieldName(field.name) !== "source",
+  );
+  return (
+    <>
+      {enchantment.flavor === undefined || hideFlavortext ? null : (
+        <p className="candidate-flavor composed-item-flavor">
+          {enchantment.flavor}
+        </p>
+      )}
+      <ItemDescriptorRows rows={descriptorRows} />
+      {enchantment.description.length === 0 ? null : (
+        <Prose value={enchantment.description} />
+      )}
+      {clauses.length === 0 ? null : (
+        <dl className="entity-card-rules">
+          {clauses.map((field) => (
+            <div key={`${field.ordinal}-${field.name}`}>
+              <dt>{field.name || "Detail"}</dt>
+              <dd
+                className={
+                  isStructuredProseSpecific(field)
+                    ? undefined
+                    : "preserve-lines"
+                }
+              >
+                {isStructuredProseSpecific(field) ? (
+                  <Prose value={field.value} />
+                ) : (
+                  field.value
+                )}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {afterFields}
+    </>
+  );
+}
+
+export function ComposedWeaponCardBody({
+  base,
+  enchantment,
+  hideFlavortext,
+  afterFields,
+}: {
+  readonly base: ContentEntity;
+  readonly enchantment: ContentEntity;
+  readonly hideFlavortext: boolean;
+  readonly afterFields?: ReactNode;
+}) {
+  return (
+    <ComposedItemNarrative
+      afterFields={afterFields}
+      descriptorRows={composedWeaponDescriptorRows(base, enchantment)}
+      enchantment={enchantment}
+      hiddenFields={COMPOSED_WEAPON_HIDDEN_FIELDS}
+      hideFlavortext={hideFlavortext}
+    />
+  );
+}
+
+export function ComposedArmorCardBody({
+  base,
+  enchantment,
+  hideFlavortext,
+  afterFields,
+}: {
+  readonly base: ContentEntity;
+  readonly enchantment: ContentEntity;
+  readonly hideFlavortext: boolean;
+  readonly afterFields?: ReactNode;
+}) {
+  return (
+    <ComposedItemNarrative
+      afterFields={afterFields}
+      descriptorRows={composedArmorDescriptorRows(base, enchantment)}
+      enchantment={enchantment}
+      hiddenFields={COMPOSED_ARMOR_HIDDEN_FIELDS}
+      hideFlavortext={hideFlavortext}
+    />
+  );
+}
+
+function normalizedComparisonText(value: string): string {
+  return value
+    .toLocaleLowerCase()
+    .replace(/\s+/gu, " ")
+    .replace(/[^\p{L}\p{N}+\- ]/gu, "")
+    .trim();
+}
+
+export function itemFullTextDuplicatesStructuredFields(
+  fullText: SpecificField,
+  fields: readonly SpecificField[],
+): boolean {
+  const haystack = normalizedComparisonText(fullText.value);
+  const matches = fields.filter((field) => {
+    const name = normalizedFieldName(field.name);
+    if (
+      field === fullText ||
+      ITEM_HEADER_FIELDS.has(name) ||
+      ITEM_PRICE_FIELDS.has(name) ||
+      name === "source"
+    )
+      return false;
+    const needle = normalizedComparisonText(field.value);
+    return needle.length >= 2 && haystack.includes(needle);
+  });
+  return matches.length >= 2;
+}
 
 const POWER_COMBAT_CLAUSE =
   /^(?:(?:primary|secondary|tertiary)\s+)?(?:targets?|attacks?|hit|miss|effect)(?:\s+\([^)]*\))?$/u;
@@ -504,22 +970,36 @@ function StructuredSpecifics({
   const visibleFields = fields.filter((field) => {
     const name = normalizedFieldName(field.name);
     if (isPower) return !POWER_HEADER_FIELDS.has(name);
-    if (isItemEntity(entity))
-      return !ITEM_HEADER_FIELDS.has(name) && !ITEM_PRICE_FIELDS.has(name);
+    if (isItemEntity(entity)) {
+      if (ITEM_HEADER_FIELDS.has(name) || ITEM_PRICE_FIELDS.has(name))
+        return false;
+      if (
+        name === "item slot" &&
+        normalizedFieldName(itemKind(entity)) === "weapon"
+      )
+        return false;
+      if (
+        name === "full text" &&
+        itemFullTextDuplicatesStructuredFields(field, fields)
+      )
+        return false;
+    }
     return true;
   });
   const authoredFacts = visibleFields.filter((field) =>
     descriptors.has(normalizedFieldName(field.name)),
   );
-  const price = isItemEntity(entity) ? entityCurrencyCopper(entity) : undefined;
+  const price = isItemEntity(entity) ? itemPriceLabel(entity) : undefined;
   const facts = [
     ...(price === undefined
       ? []
-      : [{ key: "price", label: "Price", value: formatCopperPrice(price) }]),
+      : [{ key: "price", label: "Price", value: price }]),
     ...authoredFacts.map((field) => ({
       key: `${field.ordinal}-${field.name}`,
-      label: isPower ? powerDescriptorLabel(field) : field.name || "Detail",
-      value: field.value,
+      label: isPower
+        ? powerDescriptorLabel(field)
+        : itemDescriptorLabel(field.name),
+      value: isPower ? field.value : itemDescriptorValue(field),
     })),
   ];
   const authoredClauses = visibleFields.filter(
@@ -530,7 +1010,7 @@ function StructuredSpecifics({
     : authoredClauses;
   return (
     <>
-      {facts.length === 0 ? null : (
+      {facts.length === 0 ? null : isPower ? (
         <dl className="entity-card-descriptors">
           {facts.map((fact) => (
             <div key={fact.key}>
@@ -539,6 +1019,8 @@ function StructuredSpecifics({
             </div>
           ))}
         </dl>
+      ) : (
+        <ItemDescriptorRows rows={itemDescriptorRows(entity, facts)} />
       )}
       {clauses.length === 0 ? null : (
         <dl className="entity-card-rules">

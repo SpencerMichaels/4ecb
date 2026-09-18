@@ -130,6 +130,29 @@ choice ancestry, not names or descriptive prose.
 - custom items and rituals, auto-equip, automatic magic-item selection, money and
   cost accounting.
 
+Owned-item inspection is explicitly compositional in the recovered UI. A
+`CharacterLootItem` exposes `CharLootBase` through `IRulesElementWrapper.Element`
+and, when present, `CharLootEnchant` through `ExtraInfoElement`
+(`RulesEngineCommon/CharacterLootItem.cs`). The shared
+`DDIUIHelpers.UpdateInfoViewer` first calls `InfoViewer(Element)`, then calls
+`ConcatViewer(ExtraInfoElement)`. `Character_Builder.App.ConcatViewer` appends a
+second `ElementControl` to the existing viewer. The resulting authored order is
+therefore mundane base first and enchantment second; inspecting a magic weapon
+or armor holding is not equivalent to inspecting only its terminal Magic Item
+record.
+
+That recovered ordering is a data-provenance rule, not a requirement to expose
+two visual subcards. The replacement UI may project the physical fields from
+`Element` and the magical fields from `ExtraInfoElement` into one composed item
+card, provided both source identities remain intact for evaluation, export, and
+diagnostics.
+
+For armor and shields, the physical definition remains authoritative for
+defensive statistics, weight, slot, and icon, while the appended enchantment is
+authoritative for level, magical price, rarity, flavor, properties, and granted
+powers. In particular, an appended Arms-family shield enchantment does not
+replace the base shield's Off-hand equipment identity.
+
 The legacy UI routes existing item-owned selections through its **Class** pane:
 `ClassPage.CreateExpanderList` registers `StockTypeMagicItem()` in
 `ClassChoiceList`, then appends other existing choices to the same panel. Thus an

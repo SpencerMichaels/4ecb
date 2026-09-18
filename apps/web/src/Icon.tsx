@@ -12,6 +12,7 @@ import {
   Check,
   ChevronRight,
   ChevronsUp,
+  Church,
   Circle,
   CircleDashed,
   Clock3,
@@ -29,6 +30,7 @@ import {
   Gift,
   GraduationCap,
   Hand,
+  HardHat,
   Key,
   KeyRound,
   Layers3,
@@ -45,8 +47,10 @@ import {
   ScrollText,
   Shield,
   ShoppingCart,
+  Shirt,
   Shuffle,
   Sparkles,
+  SquareStar,
   Stamp,
   Star,
   Sun,
@@ -87,6 +91,7 @@ export type IconName =
   | "character"
   | "check"
   | "chevron"
+  | "church"
   | "circle"
   | "class"
   | "clock"
@@ -107,6 +112,7 @@ export type IconName =
   | "gem"
   | "gift"
   | "hand"
+  | "hard-hat"
   | "item"
   | "key"
   | "key-round"
@@ -124,7 +130,9 @@ export type IconName =
   | "sheet"
   | "shield"
   | "shop"
+  | "shirt"
   | "skill"
+  | "square-star"
   | "stamp"
   | "sun"
   | "sword"
@@ -157,6 +165,7 @@ const icons: Record<IconName, LucideIcon> = {
   character: UserRound,
   check: Check,
   chevron: ChevronRight,
+  church: Church,
   circle: Circle,
   class: Shield,
   clock: Clock3,
@@ -177,6 +186,7 @@ const icons: Record<IconName, LucideIcon> = {
   gem: Gem,
   gift: Gift,
   hand: Hand,
+  "hard-hat": HardHat,
   item: Backpack,
   key: Key,
   "key-round": KeyRound,
@@ -194,7 +204,9 @@ const icons: Record<IconName, LucideIcon> = {
   sheet: FileText,
   shield: Shield,
   shop: ShoppingCart,
+  shirt: Shirt,
   skill: GraduationCap,
+  "square-star": SquareStar,
   stamp: Stamp,
   sun: Sun,
   sword: Sword,

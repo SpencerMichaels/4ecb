@@ -6,6 +6,8 @@ import {
 import type { ContentEntity } from "@4ecb/content-domain";
 
 import { contentSpecificValue } from "./builder-ui";
+import type { IconName } from "./Icon";
+import { isAuthoredShield, LOADOUT_SLOT_ICONS } from "./item-icons";
 
 export const SHOP_ITEM_TYPES = [
   "Armor",
@@ -14,29 +16,101 @@ export const SHOP_ITEM_TYPES = [
   "Weapon",
 ] as const;
 
-const LOADOUT_SHOP_SLOT_FILTERS: Partial<
-  Readonly<Record<EquipmentSlotId, string>>
-> = {
-  body: "Body",
-  "main-hand": "One-hand",
-  "off-hand": "Off-hand",
-  head: "Head",
-  neck: "Neck",
-  arms: "Arms",
-  hands: "Hands",
-  "ring-1": "Ring",
-  "ring-2": "Ring",
-  waist: "Waist",
-  feet: "Feet",
-  symbol: "Holy Symbol",
-  "ki-focus": "Ki Focus",
-  tattoo: "Tattoo",
-};
+export const IMPLEMENT_LOADOUT_PROFICIENCY_IDS = {
+  symbol: "ID_INTERNAL_PROFICIENCY_IMPLEMENT_PROFICIENCY_(HOLY_SYMBOL)",
+  "ki-focus": "ID_INTERNAL_PROFICIENCY_IMPLEMENT_PROFICIENCY_(KI_FOCUSES)",
+} as const;
 
-export function loadoutShopSlotFilter(
-  slot: EquipmentSlotId,
-): string | undefined {
-  return LOADOUT_SHOP_SLOT_FILTERS[slot];
+export interface LoadoutSlotPresentation {
+  readonly id: EquipmentSlotId;
+  readonly label: string;
+  readonly icon: IconName;
+  readonly requiredActiveDefinitionId?: string;
+}
+
+export interface LoadoutSlotColumn {
+  readonly id: "body" | "held";
+  readonly label: string;
+  readonly slots: readonly LoadoutSlotPresentation[];
+}
+
+export const LOADOUT_SLOT_COLUMNS: readonly LoadoutSlotColumn[] = [
+  {
+    id: "body",
+    label: "Body slots",
+    slots: [
+      { id: "head", label: "Head", icon: LOADOUT_SLOT_ICONS.head },
+      { id: "neck", label: "Neck", icon: LOADOUT_SLOT_ICONS.neck },
+      { id: "body", label: "Body", icon: LOADOUT_SLOT_ICONS.body },
+      { id: "arms", label: "Arms", icon: LOADOUT_SLOT_ICONS.arms },
+      { id: "hands", label: "Hands", icon: LOADOUT_SLOT_ICONS.hands },
+      { id: "waist", label: "Waist", icon: LOADOUT_SLOT_ICONS.waist },
+      { id: "feet", label: "Feet", icon: LOADOUT_SLOT_ICONS.feet },
+    ],
+  },
+  {
+    id: "held",
+    label: "Held and other slots",
+    slots: [
+      {
+        id: "main-hand",
+        label: "Main hand",
+        icon: LOADOUT_SLOT_ICONS["main-hand"],
+      },
+      {
+        id: "off-hand",
+        label: "Off hand",
+        icon: LOADOUT_SLOT_ICONS["off-hand"],
+      },
+      {
+        id: "symbol",
+        label: "Holy symbol",
+        icon: LOADOUT_SLOT_ICONS.symbol,
+        requiredActiveDefinitionId: IMPLEMENT_LOADOUT_PROFICIENCY_IDS.symbol,
+      },
+      {
+        id: "ki-focus",
+        label: "Ki focus",
+        icon: LOADOUT_SLOT_ICONS["ki-focus"],
+        requiredActiveDefinitionId:
+          IMPLEMENT_LOADOUT_PROFICIENCY_IDS["ki-focus"],
+      },
+      { id: "ring-1", label: "Ring 1", icon: LOADOUT_SLOT_ICONS["ring-1"] },
+      { id: "ring-2", label: "Ring 2", icon: LOADOUT_SLOT_ICONS["ring-2"] },
+      { id: "tattoo", label: "Tattoo", icon: LOADOUT_SLOT_ICONS.tattoo },
+    ],
+  },
+];
+
+const CONDITIONAL_LOADOUT_SLOTS: readonly LoadoutSlotPresentation[] = [
+  { id: "companion", label: "Companion", icon: LOADOUT_SLOT_ICONS.companion },
+  { id: "familiar", label: "Familiar", icon: LOADOUT_SLOT_ICONS.familiar },
+  { id: "mount", label: "Mount", icon: LOADOUT_SLOT_ICONS.mount },
+];
+
+export function visibleLoadoutSlotColumns(
+  activeDefinitionIds: readonly string[],
+  inventory: readonly BuildInventoryEntry[],
+  byId: ReadonlyMap<string, ContentEntity>,
+): readonly LoadoutSlotColumn[] {
+  const activeDefinitions = new Set(activeDefinitionIds);
+  return LOADOUT_SLOT_COLUMNS.map((column) => {
+    const slots: LoadoutSlotPresentation[] = column.slots.filter(
+      ({ requiredActiveDefinitionId }) =>
+        requiredActiveDefinitionId === undefined ||
+        activeDefinitions.has(requiredActiveDefinitionId),
+    );
+    if (column.id === "held") {
+      slots.push(
+        ...CONDITIONAL_LOADOUT_SLOTS.filter(({ id }) =>
+          inventory.some((entry) =>
+            inventorySlotCandidates(entry, byId).includes(id),
+          ),
+        ),
+      );
+    }
+    return { ...column, slots };
+  });
 }
 
 export type PracticeKind =
@@ -188,23 +262,28 @@ export function inventorySlotCandidates(
     return entity === undefined ? [] : [entity];
   });
   const item = definitions[0];
-  const magic = definitions.at(-1);
-  const authored =
-    (item === undefined
-      ? undefined
-      : contentSpecificValue(item, "Item Slot")) ??
-    (magic === undefined
-      ? undefined
-      : contentSpecificValue(magic, "Item Slot")) ??
-    (magic === undefined
-      ? undefined
-      : contentSpecificValue(magic, "Magic Item Type")) ??
-    "";
-  const slots = authored.toLocaleLowerCase();
-  if (slots.includes("two-hand")) return ["main-hand", "off-hand"];
-  if (slots.includes("off-hand")) return ["main-hand", "off-hand"];
-  if (slots.includes("one-hand")) return ["main-hand", "off-hand"];
-  if (slots.includes("head and neck")) return ["head", "neck"];
+  const armor = definitions.find(
+    (definition) => definition.type.toLocaleLowerCase() === "armor",
+  );
+  const slots = definitions
+    .flatMap((definition) => [
+      contentSpecificValue(definition, "Item Slot") ?? "",
+      contentSpecificValue(definition, "Magic Item Type") ?? "",
+    ])
+    .join("\n")
+    .toLocaleLowerCase();
+  const candidates: EquipmentSlotId[] = [];
+  if (armor !== undefined && isAuthoredShield(armor)) {
+    return ["off-hand"];
+  }
+  if (
+    slots.includes("two-hand") ||
+    slots.includes("off-hand") ||
+    slots.includes("one-hand")
+  ) {
+    candidates.push("main-hand", "off-hand");
+  }
+  if (slots.includes("head and neck")) candidates.push("head", "neck");
   if (item?.type.toLocaleLowerCase() === "weapon") {
     const hands =
       contentSpecificValue(item, "Hands Required")?.toLocaleLowerCase() ?? "";
@@ -217,10 +296,7 @@ export function inventorySlotCandidates(
       return ["main-hand", "off-hand"];
     return ["main-hand", "off-hand"];
   }
-  if (item?.type.toLocaleLowerCase() === "armor") {
-    if (item.name.toLocaleLowerCase().includes("shield")) return ["arms"];
-    return ["body"];
-  }
+  if (armor !== undefined) return ["body"];
   const mappings = [
     ["body", "body"],
     ["head", "head"],
@@ -241,9 +317,11 @@ export function inventorySlotCandidates(
   ] as const;
   return [
     ...new Set(
-      mappings
-        .filter(([needle]) => slots.includes(needle))
-        .map(([, slot]) => slot),
+      candidates.concat(
+        mappings
+          .filter(([needle]) => slots.includes(needle))
+          .map(([, slot]) => slot),
+      ),
     ),
   ];
 }
@@ -311,14 +389,24 @@ export function compatibleBaseItems(
   enchantment: ContentEntity,
   catalog: readonly ContentEntity[],
 ): readonly ContentEntity[] {
-  const kind = contentSpecificValue(
+  const authoredKind = contentSpecificValue(
     enchantment,
     "Magic Item Type",
   )?.toLocaleLowerCase();
+  const enchantmentTarget = contentSpecificValue(
+    enchantment,
+    "_IsEnchant",
+  )?.toLocaleLowerCase();
+  const kind =
+    authoredKind === "armor" || authoredKind === "weapon"
+      ? authoredKind
+      : enchantmentTarget === "shield"
+        ? "armor"
+        : undefined;
   if (kind !== "armor" && kind !== "weapon") return [];
   const allowedText = (
     contentSpecificValue(enchantment, kind === "armor" ? "Armor" : "Weapon") ??
-    ""
+    (enchantmentTarget === "shield" ? "Shield" : "")
   ).replace(/\s+\(.*$/, "");
   const allowed = allowedText
     .split(",")
@@ -345,7 +433,14 @@ export function compatibleBaseItems(
           entity,
           "Armor Category",
         )?.toLocaleLowerCase();
-        return allowed.some((value) => value === category || value === name);
+        const armorType = contentSpecificValue(
+          entity,
+          "Armor Type",
+        )?.toLocaleLowerCase();
+        return allowed.some(
+          (value) =>
+            value === category || value === armorType || value === name,
+        );
       }
       const category =
         contentSpecificValue(entity, "Weapon Category")?.toLocaleLowerCase() ??

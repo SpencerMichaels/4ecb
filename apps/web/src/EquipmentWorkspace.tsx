@@ -14,9 +14,12 @@ import {
 import { appContentRuntime, type QueryRuntimeClient } from "./app-runtime";
 import { contentSpecificValue, grantedDetailEntities } from "./builder-ui";
 import {
+  ComposedArmorCardBody,
+  ComposedWeaponCardBody,
   EmbeddedPowerCard,
   EntityCardBody,
   EntityCardHeader,
+  entityCardSource,
 } from "./EntityCard";
 import {
   compatibleBaseItems,
@@ -30,12 +33,13 @@ import {
   inventorySlotCandidates,
   itemCanBeBought,
   itemProficiencyStatus,
-  loadoutShopSlotFilter,
   practiceKind,
   SHOP_ITEM_TYPES,
+  visibleLoadoutSlotColumns,
 } from "./equipment-ui";
 import { entityVisualTone, visualToneClass } from "./visual-language";
 import { Icon } from "./Icon";
+import { isAuthoredShield } from "./item-icons";
 
 export type EquipmentTab = "loadout" | "inventory" | "shop" | "practices";
 type MoneyLocation = "carried" | "stored";
@@ -52,23 +56,6 @@ const EQUIPMENT_TABS: readonly { id: EquipmentTab; label: string }[] = [
   { id: "shop", label: "Shop" },
   { id: "practices", label: "Rituals & Practices" },
 ];
-
-const LOADOUT_SLOTS = [
-  ["body", "Body"],
-  ["main-hand", "Main hand"],
-  ["off-hand", "Off hand"],
-  ["head", "Head"],
-  ["neck", "Neck"],
-  ["arms", "Arms"],
-  ["hands", "Hands"],
-  ["ring-1", "Ring 1"],
-  ["ring-2", "Ring 2"],
-  ["waist", "Waist"],
-  ["feet", "Feet"],
-  ["symbol", "Holy symbol"],
-  ["ki-focus", "Ki focus"],
-  ["tattoo", "Tattoo"],
-] as const;
 
 const DENOMINATIONS: readonly { id: Denomination; label: string }[] = [
   { id: "copper", label: "Copper" },
@@ -110,16 +97,55 @@ function FacetSelect({
   );
 }
 
-function ItemDetail({
-  entity,
+export interface InspectedItemDetail {
+  readonly entities: readonly ContentEntity[];
+  readonly displayName: string;
+}
+
+export function inventoryItemDetail(
+  entry: BuildInventoryEntry,
+  byId: ReadonlyMap<string, ContentEntity>,
+): InspectedItemDetail | undefined {
+  const entities = inventoryDefinitionIds(entry).flatMap((id) => {
+    const definition = byId.get(id);
+    return definition === undefined ? [] : [definition];
+  });
+  return entities.length === 0
+    ? undefined
+    : {
+        entities,
+        displayName: inventoryDisplayName(entry, byId),
+      };
+}
+
+export function catalogItemDetail(
+  entity: ContentEntity,
+  base: ContentEntity | undefined,
+  effectiveLevel: number,
+  byId: ReadonlyMap<string, ContentEntity>,
+): InspectedItemDetail {
+  return base === undefined
+    ? { entities: [entity], displayName: entity.name }
+    : {
+        entities: [base, entity],
+        displayName: inventoryDisplayName(
+          inventoryEntryForEntity(entity, effectiveLevel, base),
+          byId,
+        ),
+      };
+}
+
+export function ItemDetail({
+  item,
   hideFlavortext,
   byId,
 }: {
-  readonly entity: ContentEntity | undefined;
+  readonly item: InspectedItemDetail | undefined;
   readonly hideFlavortext: boolean;
   readonly byId: ReadonlyMap<string, ContentEntity>;
 }) {
-  if (entity === undefined)
+  const entity = item?.entities.at(-1);
+  if (item === undefined || entity === undefined)
     return (
       <aside className="candidate-detail candidate-detail-empty">
         <p className="eyebrow">Item details</p>
@@ -134,20 +160,56 @@ function ItemDetail({
     const name = candidate.name.trim().toLocaleLowerCase();
     if (!references.has(name)) references.set(name, candidate);
   }
-  const grantedPowers = grantedDetailEntities(entity, references).filter(
-    (granted) => granted.type.trim().toLocaleLowerCase() === "power",
+  const cardEntity =
+    item.displayName === entity.name
+      ? entity
+      : { ...entity, name: item.displayName };
+  const sources = [
+    ...new Set(item.entities.map((component) => entityCardSource(component))),
+  ];
+  const base = item.entities[0];
+  const isComposedWeapon =
+    item.entities.length > 1 &&
+    base?.type.trim().toLocaleLowerCase() === "weapon";
+  const isComposedArmor =
+    item.entities.length > 1 &&
+    base?.type.trim().toLocaleLowerCase() === "armor";
+  const isUnifiedComposedItem = isComposedWeapon || isComposedArmor;
+  const composedGrantedPowers = item.entities.flatMap((component) =>
+    grantedDetailEntities(component, references).filter(
+      (granted) => granted.type.trim().toLocaleLowerCase() === "power",
+    ),
   );
-  return (
-    <aside
-      className={`candidate-detail ${visualToneClass(entityVisualTone(entity))}`}
-      tabIndex={0}
-    >
-      <header className="primary-detail-heading">
-        <EntityCardHeader entity={entity} />
-      </header>
+  const grantedPowerCards = composedGrantedPowers.map((power) => (
+    <EmbeddedPowerCard
+      entity={power}
+      hideFlavortext={hideFlavortext}
+      key={power.id}
+    />
+  ));
+  const componentBody = (component: ContentEntity) => {
+    const displayComponent =
+      item.entities.length > 1 &&
+      base !== undefined &&
+      isAuthoredShield(base) &&
+      component.id === entity.id
+        ? {
+            ...component,
+            specifics: component.specifics.map((field) =>
+              field.name.trim().toLocaleLowerCase() === "item slot"
+                ? { ...field, value: "Off hand" }
+                : field,
+            ),
+          }
+        : component;
+    const grantedPowers = grantedDetailEntities(component, references).filter(
+      (granted) => granted.type.trim().toLocaleLowerCase() === "power",
+    );
+    return (
       <EntityCardBody
-        entity={entity}
+        entity={displayComponent}
         hideFlavortext={hideFlavortext}
+        showSource={false}
         afterFields={grantedPowers.map((power) => (
           <EmbeddedPowerCard
             entity={power}
@@ -156,6 +218,48 @@ function ItemDetail({
           />
         ))}
       />
+    );
+  };
+  return (
+    <aside
+      className={`candidate-detail ${visualToneClass(entityVisualTone(entity))}${isUnifiedComposedItem ? " composed-item-card" : ""}${isComposedWeapon ? " composed-weapon-card" : ""}${isComposedArmor ? " composed-armor-card" : ""}`}
+      tabIndex={0}
+    >
+      <header className="primary-detail-heading">
+        <EntityCardHeader
+          entity={cardEntity}
+          physicalBase={item.entities.length > 1 ? base : undefined}
+        />
+      </header>
+      {isComposedWeapon && base !== undefined ? (
+        <ComposedWeaponCardBody
+          afterFields={grantedPowerCards}
+          base={base}
+          enchantment={entity}
+          hideFlavortext={hideFlavortext}
+        />
+      ) : isComposedArmor && base !== undefined ? (
+        <ComposedArmorCardBody
+          afterFields={grantedPowerCards}
+          base={base}
+          enchantment={entity}
+          hideFlavortext={hideFlavortext}
+        />
+      ) : item.entities.length > 1 ? (
+        <div className="composed-item-details">
+          {item.entities.map((component) => (
+            <section className="composed-item-component" key={component.id}>
+              <h5>{component.name}</h5>
+              {componentBody(component)}
+            </section>
+          ))}
+        </div>
+      ) : (
+        componentBody(entity)
+      )}
+      <p className="detail-source-note">
+        {sources.length === 1 ? "Source" : "Sources"}: {sources.join("; ")}
+      </p>
     </aside>
   );
 }
@@ -334,7 +438,7 @@ export function EquipmentWorkspace({
   ) => void;
 }) {
   const tab = activeTab;
-  const [inspected, setInspected] = useState<ContentEntity>();
+  const [inspected, setInspected] = useState<InspectedItemDetail>();
   const [draftText, setDraftText] = useState("");
   const [submittedText, setSubmittedText] = useState("");
   const [type, setType] = useState("");
@@ -411,11 +515,22 @@ export function EquipmentWorkspace({
     [pageEntities, practiceSubtype],
   );
   const inventory = build.inventory.filter(({ quantity }) => quantity > 0);
+  const loadoutSlotColumns = visibleLoadoutSlotColumns(
+    activeDefinitionIds,
+    inventory,
+    byId,
+  );
 
   const inspectInventory = (entry: BuildInventoryEntry) => {
-    const id = inventoryDefinitionIds(entry).at(-1);
-    setInspected(id === undefined ? undefined : byId.get(id));
+    setInspected(inventoryItemDetail(entry, byId));
   };
+  const inspectEntity = (entity: ContentEntity | undefined) =>
+    setInspected(
+      entity === undefined
+        ? undefined
+        : { entities: [entity], displayName: entity.name },
+    );
+  const inspectedEntity = inspected?.entities.at(-1);
   const buy = (entity: ContentEntity) => {
     const price = entityCurrencyCopper(entity);
     if (price === undefined) return;
@@ -609,96 +724,80 @@ export function EquipmentWorkspace({
         >
           {tab === "loadout" ? (
             <div className="loadout-grid">
-              {[
-                ...LOADOUT_SLOTS,
-                ...(["companion", "familiar", "mount"] as const)
-                  .filter((slotId) =>
-                    inventory.some((entry) =>
+              {loadoutSlotColumns.map((column) => (
+                <div
+                  className="loadout-stack"
+                  role="group"
+                  aria-label={column.label}
+                  key={column.id}
+                >
+                  {column.slots.map(({ id: slotId, label, icon }) => {
+                    const compatible = inventory.filter((entry) =>
                       inventorySlotCandidates(entry, byId).includes(slotId),
-                    ),
-                  )
-                  .map(
-                    (slotId) =>
-                      [
-                        slotId,
-                        `${slotId[0]!.toLocaleUpperCase()}${slotId.slice(1)}`,
-                      ] as const,
-                  ),
-              ].map(([slotId, label]) => {
-                const assigned = inventory.find((entry) =>
-                  entry.equippedSlots?.some(
-                    (assignment) => assignment.slot === slotId,
-                  ),
-                );
-                const compatible = inventory.filter((entry) =>
-                  inventorySlotCandidates(entry, byId).includes(slotId),
-                );
-                const selectId = `loadout-slot-${slotId}`;
-                const shopSlot = loadoutShopSlotFilter(slotId);
-                return (
-                  <div className="loadout-slot" key={slotId}>
-                    <span className="loadout-slot-heading">
-                      <label htmlFor={selectId}>{label}</label>
-                      {shopSlot !== undefined ? (
-                        <button
-                          type="button"
-                          className="loadout-slot-shop icon-only-button"
-                          aria-label={`Shop for ${label} items`}
-                          title={`Shop for ${label} items`}
-                          onClick={() => {
-                            setSlot(shopSlot);
-                            setOffset(0);
-                            onTabChange("shop");
+                    );
+                    const assigned = compatible.find((entry) =>
+                      entry.equippedSlots?.some(
+                        (assignment) => assignment.slot === slotId,
+                      ),
+                    );
+                    const selectId = `loadout-slot-${slotId}`;
+                    return (
+                      <div className="loadout-slot" key={slotId}>
+                        <span className="loadout-slot-label">
+                          <Icon name={icon} />
+                          <label htmlFor={selectId}>{label}</label>
+                        </span>
+                        <select
+                          id={selectId}
+                          value={assigned?.id ?? ""}
+                          onFocus={() => {
+                            if (assigned !== undefined)
+                              inspectInventory(assigned);
+                          }}
+                          onChange={(event) => {
+                            const entry = inventory.find(
+                              ({ id }) => id === event.currentTarget.value,
+                            );
+                            if (entry !== undefined) inspectInventory(entry);
+                            const pairedHandSlots = [
+                              "main-hand",
+                              "off-hand",
+                            ] as const;
+                            const entryUsesBothHands =
+                              entry !== undefined &&
+                              inventoryRequiresBothHands(entry, byId);
+                            const assignedUsesBothHands =
+                              assigned !== undefined &&
+                              inventoryRequiresBothHands(assigned, byId);
+                            if (assignedUsesBothHands && !entryUsesBothHands) {
+                              onEquipSlot(undefined, pairedHandSlots);
+                              if (entry !== undefined)
+                                onEquipSlot(entry.id, [slotId]);
+                              return;
+                            }
+                            onEquipSlot(
+                              event.currentTarget.value || undefined,
+                              entryUsesBothHands ? pairedHandSlots : [slotId],
+                            );
                           }}
                         >
-                          <Icon name="shop" />
-                        </button>
-                      ) : null}
-                    </span>
-                    <select
-                      id={selectId}
-                      value={assigned?.id ?? ""}
-                      onChange={(event) => {
-                        const entry = inventory.find(
-                          ({ id }) => id === event.currentTarget.value,
-                        );
-                        const pairedHandSlots = [
-                          "main-hand",
-                          "off-hand",
-                        ] as const;
-                        const entryUsesBothHands =
-                          entry !== undefined &&
-                          inventoryRequiresBothHands(entry, byId);
-                        const assignedUsesBothHands =
-                          assigned !== undefined &&
-                          inventoryRequiresBothHands(assigned, byId);
-                        if (assignedUsesBothHands && !entryUsesBothHands) {
-                          onEquipSlot(undefined, pairedHandSlots);
-                          if (entry !== undefined)
-                            onEquipSlot(entry.id, [slotId]);
-                          return;
-                        }
-                        onEquipSlot(
-                          event.currentTarget.value || undefined,
-                          entryUsesBothHands ? pairedHandSlots : [slotId],
-                        );
-                      }}
-                    >
-                      <option value="">Empty</option>
-                      {compatible.map((entry) => (
-                        <option key={entry.id} value={entry.id}>
-                          {inventoryDisplayName(entry, byId)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                );
-              })}
+                          <option value="">Empty</option>
+                          {compatible.map((entry) => (
+                            <option key={entry.id} value={entry.id}>
+                              {inventoryDisplayName(entry, byId)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
               {inventory.some(
                 (entry) =>
                   entry.equippedQuantity > 0 && !entry.equippedSlots?.length,
               ) ? (
-                <p className="field-help">
+                <p className="field-help loadout-help">
                   Imported equipped counts remain active. Assign those holdings
                   to slots to make their loadout explicit.
                 </p>
@@ -870,11 +969,11 @@ export function EquipmentWorkspace({
                       const entity =
                         group.entities.length === 1
                           ? group.entities[0]!
-                          : inspected &&
+                          : inspectedEntity &&
                               group.entities.some(
-                                ({ id }) => id === inspected.id,
+                                ({ id }) => id === inspectedEntity.id,
                               )
-                            ? inspected
+                            ? inspectedEntity
                             : group.entities[0]!;
                       const bases = compatibleBaseItems(entity, entities);
                       const known =
@@ -897,7 +996,7 @@ export function EquipmentWorkspace({
                               type="button"
                               className="table-inspect-button"
                               onClick={() => {
-                                setInspected(entity);
+                                inspectEntity(entity);
                                 setBaseId("");
                               }}
                             >
@@ -911,7 +1010,7 @@ export function EquipmentWorkspace({
                                   const exact = byId.get(
                                     event.currentTarget.value.toLocaleLowerCase(),
                                   );
-                                  setInspected(exact);
+                                  inspectEntity(exact);
                                   setBaseId("");
                                 }}
                               >
@@ -923,13 +1022,26 @@ export function EquipmentWorkspace({
                                 ))}
                               </select>
                             ) : null}
-                            {bases.length > 0 && inspected?.id === entity.id ? (
+                            {bases.length > 0 &&
+                            inspectedEntity?.id === entity.id ? (
                               <select
                                 aria-label={`Base item for ${entity.name}`}
                                 value={baseId}
-                                onChange={(event) =>
-                                  setBaseId(event.currentTarget.value)
-                                }
+                                onChange={(event) => {
+                                  const nextBaseId = event.currentTarget.value;
+                                  setBaseId(nextBaseId);
+                                  const base = byId.get(
+                                    nextBaseId.toLocaleLowerCase(),
+                                  );
+                                  setInspected(
+                                    catalogItemDetail(
+                                      entity,
+                                      base,
+                                      build.effectiveLevel,
+                                      byId,
+                                    ),
+                                  );
+                                }}
                               >
                                 <option value="">
                                   Choose compatible base…
@@ -971,7 +1083,8 @@ export function EquipmentWorkspace({
                                 !affordable ||
                                 known ||
                                 (bases.length > 0 &&
-                                  (!baseId || inspected?.id !== entity.id))
+                                  (!baseId ||
+                                    inspectedEntity?.id !== entity.id))
                               }
                               onClick={() => buy(entity)}
                             >
@@ -1019,7 +1132,7 @@ export function EquipmentWorkspace({
         <div className="shared-choice-detail">
           <ItemDetail
             byId={byId}
-            entity={inspected}
+            item={inspected}
             hideFlavortext={hideFlavortext}
           />
         </div>

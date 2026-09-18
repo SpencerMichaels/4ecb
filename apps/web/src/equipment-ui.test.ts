@@ -6,11 +6,13 @@ import {
   compatibleBaseItems,
   entityCurrencyCopper,
   groupMagicItemFamilies,
+  IMPLEMENT_LOADOUT_PROFICIENCY_IDS,
   inventoryDisplayName,
   inventorySlotCandidates,
   inventoryRequiresBothHands,
-  loadoutShopSlotFilter,
+  LOADOUT_SLOT_COLUMNS,
   practiceKind,
+  visibleLoadoutSlotColumns,
 } from "./equipment-ui";
 
 function entity(
@@ -132,9 +134,9 @@ describe("equipment catalog presentation", () => {
     expect(inventoryDisplayName(holding(greatbow, magicWeapon), index)).toBe(
       "+1 Greatbow",
     );
-    expect(
-      inventoryDisplayName(holding(heavyShield, stormShield), index),
-    ).toBe("Storm Heavy Shield");
+    expect(inventoryDisplayName(holding(heavyShield, stormShield), index)).toBe(
+      "Storm Heavy Shield",
+    );
     expect(
       inventoryDisplayName(
         { ...holding(leather, gloaming), name: "Grandmother's armor" },
@@ -155,6 +157,23 @@ describe("equipment catalog presentation", () => {
       "Armor Category": "Cloth",
     });
     expect(compatibleBaseItems(enchantment, [cloth, scale])).toEqual([scale]);
+
+    const shieldEnchantment = entity(
+      "SHIELD_MAGIC",
+      "Hammer Shield (heroic tier)",
+      "Magic Item",
+      {
+        "Magic Item Type": "Arms Slot Item",
+        _IsEnchant: "Shield",
+      },
+    );
+    const heavyShield = entity("HEAVY_SHIELD", "Heavy Shield", "Armor", {
+      "Armor Category": "Heavy Shields",
+      "Armor Type": "Shield",
+    });
+    expect(
+      compatibleBaseItems(shieldEnchantment, [cloth, scale, heavyShield]),
+    ).toEqual([heavyShield]);
 
     const anyWeapon = entity("ANY", "Magic Weapon +1", "Magic Item", {
       "Magic Item Type": "Weapon",
@@ -216,48 +235,193 @@ describe("equipment catalog presentation", () => {
       "Hands Required": "One-Handed",
     });
     const armor = entity("ARMOR", "Leather armor", "Armor");
-    const shield = entity("SHIELD", "Heavy shield", "Armor");
+    const shield = entity("SHIELD", "Guardian slab", "Armor", {
+      "Armor Type": "Shield",
+      "Item Slot": "Off-hand",
+    });
+    const shieldEnchantment = entity(
+      "SHIELD_ENCHANTMENT",
+      "Protective ward",
+      "Magic Item",
+      {
+        "Magic Item Type": "Arms Slot Item",
+        "Item Slot": "Arms",
+      },
+    );
     const headNeck = entity("HN", "Paired crown", "Magic Item", {
       "Item Slot": "Head and Neck",
     });
     const arms = entity("ARMS", "Iron armbands", "Magic Item", {
       "Magic Item Type": "Arms Slot Item",
     });
+    const holySymbol = entity(
+      "HOLY_SYMBOL",
+      "Magic Holy Symbol +1",
+      "Magic Item",
+      {
+        "Magic Item Type": "Holy Symbol",
+        "Item Slot": "Off-hand",
+      },
+    );
     const index = new Map(
-      [weapon, sword, armor, shield, headNeck, arms].map((item) => [
-        item.id.toLocaleLowerCase(),
-        item,
-      ]),
+      [
+        weapon,
+        sword,
+        armor,
+        shield,
+        shieldEnchantment,
+        headNeck,
+        arms,
+        holySymbol,
+      ].map((item) => [item.id.toLocaleLowerCase(), item]),
     );
     expect(inventorySlotCandidates(entry(sword), index)).toEqual([
       "main-hand",
       "off-hand",
     ]);
     expect(inventorySlotCandidates(entry(armor), index)).toEqual(["body"]);
-    expect(inventorySlotCandidates(entry(shield), index)).toEqual(["arms"]);
+    expect(inventorySlotCandidates(entry(shield), index)).toEqual(["off-hand"]);
+    expect(
+      inventorySlotCandidates(
+        {
+          ...entry(shield),
+          elements: [
+            ...entry(shield).elements,
+            ...entry(shieldEnchantment).elements,
+          ],
+        },
+        index,
+      ),
+    ).toEqual(["off-hand"]);
+    expect(
+      inventorySlotCandidates(
+        {
+          ...entry(shield),
+          elements: [
+            ...entry(shieldEnchantment).elements,
+            ...entry(shield).elements,
+          ],
+        },
+        index,
+      ),
+    ).toEqual(["off-hand"]);
     expect(inventorySlotCandidates(entry(headNeck), index)).toEqual([
       "head",
       "neck",
     ]);
     expect(inventorySlotCandidates(entry(arms), index)).toEqual(["arms"]);
+    expect(inventorySlotCandidates(entry(holySymbol), index)).toEqual([
+      "main-hand",
+      "off-hand",
+      "symbol",
+    ]);
     expect(inventoryRequiresBothHands(entry(weapon), index)).toBe(true);
     expect(inventoryRequiresBothHands(entry(sword), index)).toBe(false);
   });
 
-  it("maps loadout shop shortcuts to authored Slot facet values", () => {
-    expect(loadoutShopSlotFilter("body")).toBe("Body");
-    expect(loadoutShopSlotFilter("main-hand")).toBe("One-hand");
-    expect(loadoutShopSlotFilter("off-hand")).toBe("Off-hand");
-    expect(loadoutShopSlotFilter("head")).toBe("Head");
-    expect(loadoutShopSlotFilter("neck")).toBe("Neck");
-    expect(loadoutShopSlotFilter("arms")).toBe("Arms");
-    expect(loadoutShopSlotFilter("hands")).toBe("Hands");
-    expect(loadoutShopSlotFilter("ring-1")).toBe("Ring");
-    expect(loadoutShopSlotFilter("ring-2")).toBe("Ring");
-    expect(loadoutShopSlotFilter("waist")).toBe("Waist");
-    expect(loadoutShopSlotFilter("feet")).toBe("Feet");
-    expect(loadoutShopSlotFilter("ki-focus")).toBe("Ki Focus");
-    expect(loadoutShopSlotFilter("tattoo")).toBe("Tattoo");
-    expect(loadoutShopSlotFilter("symbol")).toBe("Holy Symbol");
+  it("orders the two loadout stacks with the approved monochrome icons", () => {
+    expect(
+      LOADOUT_SLOT_COLUMNS.map(({ id, slots }) => ({
+        id,
+        slots: slots.map(({ id: slotId, icon }) => [slotId, icon]),
+      })),
+    ).toEqual([
+      {
+        id: "body",
+        slots: [
+          ["head", "hard-hat"],
+          ["neck", "medal"],
+          ["body", "shirt"],
+          ["arms", "arms"],
+          ["hands", "hand"],
+          ["waist", "square-star"],
+          ["feet", "footprints"],
+        ],
+      },
+      {
+        id: "held",
+        slots: [
+          ["main-hand", "sword"],
+          ["off-hand", "shield"],
+          ["symbol", "church"],
+          ["ki-focus", "focus"],
+          ["ring-1", "gem"],
+          ["ring-2", "gem"],
+          ["tattoo", "stamp"],
+        ],
+      },
+    ]);
+  });
+
+  it("shows implement slots only for their exact active proficiency IDs", () => {
+    const visibleIds = (activeDefinitionIds: readonly string[]) =>
+      visibleLoadoutSlotColumns(activeDefinitionIds, [], new Map())
+        .flatMap(({ slots }) => slots)
+        .map(({ id }) => id);
+
+    expect(IMPLEMENT_LOADOUT_PROFICIENCY_IDS).toEqual({
+      symbol: "ID_INTERNAL_PROFICIENCY_IMPLEMENT_PROFICIENCY_(HOLY_SYMBOL)",
+      "ki-focus": "ID_INTERNAL_PROFICIENCY_IMPLEMENT_PROFICIENCY_(KI_FOCUSES)",
+    });
+    expect(visibleIds([])).not.toContain("symbol");
+    expect(visibleIds([])).not.toContain("ki-focus");
+    expect(visibleIds(["HOLY_SYMBOL_PROFICIENCY"])).not.toContain("symbol");
+    expect(
+      visibleIds([
+        IMPLEMENT_LOADOUT_PROFICIENCY_IDS.symbol.toLocaleLowerCase(),
+      ]),
+    ).not.toContain("symbol");
+    expect(visibleIds([IMPLEMENT_LOADOUT_PROFICIENCY_IDS.symbol])).toContain(
+      "symbol",
+    );
+    expect(
+      visibleIds([IMPLEMENT_LOADOUT_PROFICIENCY_IDS["ki-focus"]]),
+    ).toContain("ki-focus");
+  });
+
+  it("keeps companion, familiar, and mount slots inventory-conditional", () => {
+    const conditionalSlots = ["companion", "familiar", "mount"] as const;
+    const emptyIds = visibleLoadoutSlotColumns([], [], new Map())
+      .flatMap(({ slots }) => slots)
+      .map(({ id }) => id);
+    expect(emptyIds).toEqual(expect.not.arrayContaining([...conditionalSlots]));
+
+    for (const slot of conditionalSlots) {
+      const definition = entity(
+        slot.toLocaleUpperCase(),
+        `${slot} item`,
+        "Magic Item",
+        { "Item Slot": slot },
+      );
+      const entry = {
+        id: definition.id,
+        acquiredLevel: 1,
+        quantity: 1,
+        equippedQuantity: 0,
+        elements: [
+          {
+            definitionId: definition.id,
+            name: definition.name,
+            type: definition.type,
+          },
+        ],
+        overrides: {},
+        legality: "rules-legal" as const,
+      };
+      const visibleIds = visibleLoadoutSlotColumns(
+        [],
+        [entry],
+        new Map([[definition.id.toLocaleLowerCase(), definition]]),
+      )
+        .flatMap(({ slots }) => slots)
+        .map(({ id }) => id);
+
+      expect(visibleIds).toContain(slot);
+      expect(visibleIds).toEqual(
+        expect.not.arrayContaining(
+          conditionalSlots.filter((candidate) => candidate !== slot),
+        ),
+      );
+    }
   });
 });

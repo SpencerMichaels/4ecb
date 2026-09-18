@@ -8,11 +8,15 @@ import {
   EmbeddedPowerCard,
   EntityCardBody,
   EntityCardHeader,
+  EntityCardLeadingIcon,
+  composedArmorDescriptorRows,
+  composedWeaponDescriptorRows,
   groupClassSpecifics,
   isClassEntity,
   isProseSpecific,
   itemCardIcon,
   itemCardLabel,
+  itemFullTextDuplicatesStructuredFields,
   orderPowerRuleFields,
   powerCardLabel,
 } from "./EntityCard";
@@ -146,6 +150,19 @@ describe("shared entity-card class details", () => {
 });
 
 describe("shared power and item cards", () => {
+  it("shares the established entity-family icon with neutral card headers", () => {
+    const feat = entity("Feat", []);
+    const iconMarkup = renderToStaticMarkup(
+      createElement(EntityCardLeadingIcon, { entity: feat }),
+    );
+    const headerMarkup = renderToStaticMarkup(
+      createElement(EntityCardHeader, { entity: feat }),
+    );
+
+    expect(iconMarkup).toContain("lucide-sparkles");
+    expect(headerMarkup).toContain(iconMarkup);
+  });
+
   it("omits the action icon element when a power action is missing or blank", () => {
     for (const specifics of [
       [field("Power Usage", "Daily", 0)],
@@ -207,14 +224,22 @@ describe("shared power and item cards", () => {
       field("Level", "9", 1),
       field("Rarity", "Uncommon", 2),
     ]);
-    expect(itemCardLabel(magic)).toBe("Weapon 9 · Uncommon");
+    expect(itemCardLabel(magic)).toBe("Weapon 9");
+    expect(
+      itemCardLabel(
+        entity("Magic Item", [
+          field("Magic Item Type", "Neck Slot Item", 0),
+          field("Level", "6", 1),
+        ]),
+      ),
+    ).toBe("Item 6");
     expect(itemCardIcon(magic)).toBe("sword");
     expect(itemCardLabel(entity("Weapon", []))).toBe("Weapon");
     const expected = [
-      ["Armor", "shield"],
+      ["Armor", "shirt"],
       ["Ammunition", "target"],
       ["Arms Slot Item", "arms"],
-      ["Holy Symbol", "sun"],
+      ["Holy Symbol", "church"],
       ["Ki Focus", "focus"],
       ["Orb", "orbit"],
       ["Staff", "wand-sparkles"],
@@ -234,6 +259,240 @@ describe("shared power and item cards", () => {
         itemCardIcon(entity("Magic Item", [field("Magic Item Type", kind, 0)])),
       ).toBe(icon);
     }
+    expect(
+      itemCardIcon(
+        entity("Magic Item", [field("Magic Item Type", "Waist Slot Item", 0)]),
+      ),
+    ).toBe("square-star");
+    expect(
+      itemCardIcon(
+        entity("Magic Item", [field("Magic Item Type", "Arms Slot Item", 0)]),
+        entity("Armor", [field("Armor Type", "Shield", 0)]),
+      ),
+    ).toBe("shield");
+    expect(itemCardIcon(entity("Armor", []))).toBe("shirt");
+    expect(
+      itemCardIcon(entity("Armor", [field("Armor Type", "Shield", 0)])),
+    ).toBe("shield");
+  });
+
+  it("builds approved composed-weapon rows from physical and magical fields", () => {
+    const base = entity("Weapon", [
+      field("Proficiency Bonus", "+2", 0),
+      field("Damage", "1d10", 1),
+      field("Weapon Category", "Military melee", 2),
+      field("Hands Required", "One-handed", 3),
+      field("Group", "Hammer", 4),
+      field("Weight", "5 lb.", 5),
+      field("Properties", "Versatile", 6),
+      field("Properties", "Brutal 1", 7),
+    ]);
+    const enchantment = entity("Magic Item", [
+      field("Enhancement", "+2 attack rolls and damage rolls", 0),
+      field("Critical", "+2d6 damage", 1),
+      field("Gold", "2600", 2),
+      field("Rarity", "Common", 3),
+    ]);
+
+    expect(composedWeaponDescriptorRows(base, enchantment)).toEqual([
+      [
+        {
+          key: "enhancement",
+          label: "Enhancement",
+          values: ["+2 attack rolls and damage rolls"],
+        },
+      ],
+      [
+        { key: "proficiency", label: "Proficiency", values: ["+2"] },
+        { key: "damage", label: "Damage", values: ["1d10"] },
+        { key: "critical", label: "Critical", values: ["+2d6"] },
+      ],
+      [
+        {
+          key: "category",
+          label: "Category",
+          values: ["Military melee"],
+        },
+        { key: "hands", label: "Hands", values: ["One-handed"] },
+        { key: "group", label: "Group", values: ["Hammer"] },
+      ],
+      [
+        { key: "weight", label: "Weight", values: ["5 lb."] },
+        { key: "price", label: "Price", values: ["2,600 gp"] },
+        { key: "rarity", label: "Rarity", values: ["Common"] },
+      ],
+      [
+        {
+          key: "properties",
+          label: "Properties",
+          values: ["Versatile", "Brutal 1"],
+        },
+      ],
+    ]);
+  });
+
+  it("builds approved composed-armor rows with physical slot and weight in their final positions", () => {
+    const base = entity("Armor", [
+      field("Armor Bonus", "8", 0),
+      field("Check", "-2", 1),
+      field("Speed", "-1", 2),
+      field("Armor Category", "Plate", 3),
+      field("Armor Type", "Heavy", 4),
+      field("Item Slot", "Body", 5),
+      field("Weight", "50", 6),
+    ]);
+    const enchantment = entity("Magic Item", [
+      field("Enhancement", "+2 AC", 0),
+      field("Gold", "3400", 1),
+      field("Rarity", "Uncommon", 2),
+    ]);
+
+    expect(composedArmorDescriptorRows(base, enchantment)).toEqual([
+      [{ key: "enhancement", label: "Enhancement", values: ["+2 AC"] }],
+      [
+        { key: "armor-bonus", label: "Armor bonus", values: ["+8"] },
+        { key: "check", label: "Check", values: ["-2"] },
+        { key: "speed", label: "Speed", values: ["-1"] },
+      ],
+      [
+        { key: "category", label: "Category", values: ["Plate"] },
+        { key: "type", label: "Type", values: ["Heavy"] },
+        { key: "slot", label: "Slot", values: ["Body"] },
+      ],
+      [
+        { key: "price", label: "Price", values: ["3,400 gp"] },
+        { key: "weight", label: "Weight", values: ["50 lb."] },
+        { key: "rarity", label: "Rarity", values: ["Uncommon"] },
+      ],
+    ]);
+  });
+
+  it("normalizes a composed shield's authored physical slot", () => {
+    const base = entity("Armor", [
+      field("Armor Bonus", "2", 0),
+      field("Armor Category", "Heavy Shields", 1),
+      field("Armor Type", "Shield", 2),
+      field("Item Slot", "Off-hand", 3),
+      field("Weight", "15", 4),
+      field("Speed", "-", 5),
+    ]);
+    const enchantment = entity("Magic Item", [
+      field("Gold", "3400", 0),
+      field("Item Slot", "Arms", 1),
+      field("Rarity", "Uncommon", 2),
+    ]);
+
+    expect(composedArmorDescriptorRows(base, enchantment)).toEqual([
+      [{ key: "armor-bonus", label: "Armor bonus", values: ["+2"] }],
+      [
+        {
+          key: "category",
+          label: "Category",
+          values: ["Heavy shields"],
+        },
+        { key: "type", label: "Type", values: ["Shield"] },
+        { key: "slot", label: "Slot", values: ["Off hand"] },
+      ],
+      [
+        { key: "price", label: "Price", values: ["3,400 gp"] },
+        { key: "weight", label: "Weight", values: ["15 lb."] },
+        { key: "rarity", label: "Rarity", values: ["Uncommon"] },
+      ],
+    ]);
+  });
+
+  it("suppresses Full Text only when it duplicates multiple structured fields", () => {
+    const damage = field("Damage", "1d10", 0);
+    const group = field("Group", "Hammer", 1);
+    const duplicate = field(
+      "Full Text",
+      "Damage: 1d10\nGroup: Hammer\nThis is the complete entry.",
+      2,
+    );
+    const unique = field("Full Text", "A unique rules explanation.", 3);
+
+    expect(
+      itemFullTextDuplicatesStructuredFields(duplicate, [
+        damage,
+        group,
+        duplicate,
+      ]),
+    ).toBe(true);
+    expect(
+      itemFullTextDuplicatesStructuredFields(unique, [damage, group, unique]),
+    ).toBe(false);
+  });
+
+  it("uses the compact semantic rows and normalized values for standalone weapons", () => {
+    const weapon = entity("Weapon", [
+      field("Weight", "5", 0),
+      field("Damage", "1d10", 1),
+      field("Proficiency Bonus", "2", 2),
+      field("Weapon Category", "Military Melee", 3),
+      field("Hands Required", "One-Handed", 4),
+      field("Item Slot", "One-hand", 5),
+      field("Group", "Hammer", 6),
+      field("Properties", "Versatile", 7),
+    ]);
+    const markup = renderToStaticMarkup(
+      createElement(EntityCardBody, {
+        entity: weapon,
+        hideFlavortext: false,
+      }),
+    );
+
+    expect(markup).toContain("<span>+2</span>");
+    expect(markup).toContain("<span>5 lb.</span>");
+    expect(markup).toContain("<span>Military melee</span>");
+    expect(markup).toContain("<span>One-handed</span>");
+    expect(markup).not.toContain("Item Slot");
+    expect(markup.match(/item-card-descriptor-row/g)).toHaveLength(4);
+  });
+
+  it("keeps Enhancement as the first descriptor row for magic weapons", () => {
+    const numbered = {
+      ...entity("Magic Item", [
+        field("Magic Item Type", "Weapon", 0),
+        field("Enhancement", "+2 attack rolls and damage rolls", 1),
+        field("Gold", "2600", 2),
+      ]),
+      name: "Defensive Weapon +2",
+    };
+    const markup = renderToStaticMarkup(
+      createElement(EntityCardBody, {
+        entity: numbered,
+        hideFlavortext: false,
+      }),
+    );
+
+    expect(markup).toContain("<dt>Enhancement</dt>");
+    expect(markup.indexOf("<dt>Enhancement</dt>")).toBeLessThan(
+      markup.indexOf("<dt>Price</dt>"),
+    );
+  });
+
+  it("groups ordinary slotted item descriptors into the approved two rows", () => {
+    const neckItem = entity("Magic Item", [
+      field("Magic Item Type", "Neck Slot Item", 0),
+      field("Level", "6", 1),
+      field("Enhancement", "+1 Fortitude, Reflex, and Will", 2),
+      field("Gold", "1800", 3),
+      field("Item Slot", "Neck", 4),
+      field("Rarity", "Uncommon", 5),
+    ]);
+    const markup = renderToStaticMarkup(
+      createElement(EntityCardBody, {
+        entity: neckItem,
+        hideFlavortext: false,
+      }),
+    );
+
+    expect(markup.match(/item-card-descriptor-row/g)).toHaveLength(2);
+    expect(markup).toContain("<dt>Enhancement</dt>");
+    expect(markup).toContain("<dt>Price</dt>");
+    expect(markup).toContain("<dt>Slot</dt>");
+    expect(markup).not.toContain("<dt>Item Slot</dt>");
+    expect(markup).toContain("<dt>Rarity</dt>");
   });
 
   it("renders flavor, text-only descriptors, aligned clauses, and top-level source", () => {
