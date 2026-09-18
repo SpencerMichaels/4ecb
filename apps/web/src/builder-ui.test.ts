@@ -1536,13 +1536,21 @@ describe("builder planning UI", () => {
     expect(choiceSectionComplete([], 1)).toBe(false);
   });
 
-  it("allows sections containing only optional choices to advance", () => {
-    const optional = {
-      id: "optional",
-      optional: true,
-    } as EvaluatedCharacter["choices"][number];
+  it("allows optional Background, Theme, and Retraining sections to advance", () => {
     expect(choiceSectionComplete([])).toBe(true);
-    expect(choiceSectionComplete([optional])).toBe(true);
+    for (const section of ["Background", "Theme", "Retraining"] as const) {
+      const optional = {
+        id: `optional-${section.toLocaleLowerCase()}`,
+        type: section === "Retraining" ? "Replacement" : section,
+        optional: true,
+      } as EvaluatedCharacter["choices"][number];
+      expect(choiceSectionComplete([optional])).toBe(true);
+      expect(
+        nextLevelChoiceDestination(1, section, [section, "Feats"], [], 1),
+      ).toEqual({ level: 1, section: "Feats" });
+      if (section === "Retraining")
+        expect(isOptionalRetrainingChoice(optional)).toBe(true);
+    }
   });
 
   it("promotes only a required level-1 deity into the Class tab gate", () => {
