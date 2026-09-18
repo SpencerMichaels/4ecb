@@ -19,14 +19,18 @@ export function selectionSummaryLabel(
 export function SelectionSummary({
   items,
   selectionLimit,
+  visible = true,
   onInspect,
   onLocate,
 }: {
   readonly items: readonly SelectionSummaryItem[];
   readonly selectionLimit?: number;
+  readonly visible?: boolean;
   readonly onInspect: (id: string) => void;
   readonly onLocate: (id: string) => void;
 }) {
+  if (!visible) return null;
+
   if (items.length === 0)
     return (
       <div
@@ -40,10 +44,12 @@ export function SelectionSummary({
 
   return (
     <div className="selection-summary" aria-live="polite">
-      <span className="selection-summary-label">Current selection</span>
+      <span className="selection-summary-label">
+        {items.length === 2 ? "Current selections" : "Current selection"}
+      </span>
       {items.map((item, index) => (
         <span className="selection-summary-item" key={item.id}>
-          {index > 0 ? " and " : null}
+          {index > 0 ? <span>and{"\u00a0"}</span> : null}
           <button
             className="selection-summary-name"
             type="button"

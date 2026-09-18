@@ -944,6 +944,22 @@ levels, not a substitute for changing the playable character's effective
 level. This supersedes only D040's header content and current-level-control
 placement; its planning-horizon and level-rail decisions remain in force.
 
+### D052 — Detail prose normalization is presentation-only
+
+Imported descriptions and prose-like specifics remain byte-for-byte content
+data; neither corpus compilation nor character import rewrites their whitespace
+or inferred structure. The shared detail-card renderer normalizes presentation
+at render time instead. It discards indentation at the start and end of each
+source line, treats every non-empty source line as a paragraph boundary whether
+or not blank lines intervene, and collapses repeated blank lines.
+
+Recognizable authored headings and contiguous bulleted or numbered lines render
+as semantic headings and lists. Ordinary prose paragraphs receive one uniform
+CSS first-line indent after source indentation is removed; headings and list
+items remain unindented. Text remains React text content rather than interpreted
+HTML. Power/item rule rows and tabular or otherwise genuinely preformatted
+specifics retain their established `preserve-lines` path.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

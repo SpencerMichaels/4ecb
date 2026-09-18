@@ -44,9 +44,13 @@ criterion; future character-specific failures remain tracked compatibility bugs.
 ## M5.5 candidate-selection locator checkpoint (2026-09-17)
 
 - The shared large-candidate table now keeps a sticky, tinted **Current
-  selection** banner directly between its filter controls and column headers.
-  It renders **No selection**, the selected name, **X (1 of 2)**, or **X and Y**
-  from the existing selected IDs; compact radio/button choices are unchanged.
+  selection** banner directly between its filter controls and column headers
+  only while the candidate rows have vertical overflow. A shared DOM measurement
+  observes both the scroll viewport and table content, so filtering, disclosure,
+  container/viewport resizing, and candidate changes update its visibility;
+  horizontal overflow alone does not show it. The banner renders **No
+  selection**, the selected name, **X (1 of 2)**, or **X and Y** from the existing
+  selected IDs; compact radio/button choices are unchanged.
 - Each selected item name opens its detail card, while a neighboring focus icon
   is the locate control. Locating preserves the current column sort, clears
   temporary text and favorites filters, expands the selected type section and

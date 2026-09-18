@@ -9,6 +9,7 @@ import {
 import { ActionTypeIcon } from "./ActionTypeIcon";
 import { entityCurrencyCopper, formatCopperPrice } from "./equipment-ui";
 import { Icon, type IconName } from "./Icon";
+import { Prose } from "./Prose";
 import {
   classKeyAbilitiesSentence,
   contentSpecificValue,
@@ -182,6 +183,43 @@ function normalizedFieldName(name: string): string {
   return name.trim().toLocaleLowerCase();
 }
 
+const PROSE_FIELD_NAMES = new Set([
+  "benefit",
+  "class features",
+  "common knowledge",
+  "creating",
+  "description",
+  "full text",
+  "physical qualities",
+  "playing",
+  "rules item",
+  "supplemental",
+]);
+
+export function isProseSpecific(field: SpecificField): boolean {
+  const value = field.value.replace(/\r\n?/gu, "\n");
+  const hasTabularColumns = value
+    .split("\n")
+    .some((line) => /\S[^\n]*\t[^\n]*\S/u.test(line.trimStart()));
+  if (hasTabularColumns || /<\/?table>/iu.test(value)) return false;
+  return (
+    PROSE_FIELD_NAMES.has(normalizedFieldName(field.name)) ||
+    value.includes("\n") ||
+    (value.trim().length >= 160 && /[.!?](?:\s|$)/u.test(value))
+  );
+}
+
+function isStructuredProseSpecific(field: SpecificField): boolean {
+  return (
+    PROSE_FIELD_NAMES.has(normalizedFieldName(field.name)) &&
+    isProseSpecific(field)
+  );
+}
+
+function SpecificValue({ field }: { readonly field: SpecificField }) {
+  return isProseSpecific(field) ? <Prose value={field.value} /> : field.value;
+}
+
 const CLASS_FIELD_GROUPS: readonly {
   readonly heading: string;
   readonly fieldNames: readonly string[];
@@ -284,10 +322,10 @@ function ClassFieldEntries({
           <dt>Implements</dt>
           {mergedImplementFields.map((field) => (
             <dd
-              className="preserve-lines"
+              className={isProseSpecific(field) ? undefined : "preserve-lines"}
               key={`${field.ordinal}-${field.name}`}
             >
-              {field.value}
+              <SpecificValue field={field} />
             </dd>
           ))}
         </div>
@@ -307,9 +345,15 @@ function ClassFieldEntries({
         return (
           <div key={`${field.ordinal}-${field.name}`}>
             <dt>{field.name || "Unnamed field"}</dt>
-            <dd className="preserve-lines">
+            <dd
+              className={isProseSpecific(field) ? undefined : "preserve-lines"}
+            >
               {labeled === undefined ? (
-                (keyAbilities ?? field.value)
+                keyAbilities === undefined ? (
+                  <SpecificValue field={field} />
+                ) : (
+                  keyAbilities
+                )
               ) : (
                 <>
                   {labeled.label === undefined ? null : (
@@ -368,7 +412,11 @@ function DefaultSpecifics({
         {fields.map((field) => (
           <div key={`${field.ordinal}-${field.name}`}>
             <dt>{field.name || "Detail"}</dt>
-            <dd className="preserve-lines">{field.value}</dd>
+            <dd
+              className={isProseSpecific(field) ? undefined : "preserve-lines"}
+            >
+              <SpecificValue field={field} />
+            </dd>
           </div>
         ))}
       </dl>
@@ -412,6 +460,15 @@ function powerRulePriority(field: SpecificField): number {
   if (/\baftereffect\b/u.test(name)) return 5;
   if (name === "special") return 6;
   return 3;
+}
+
+function powerDescriptorLabel(field: SpecificField): string {
+  if (
+    normalizedFieldName(field.name) === "attack type" &&
+    normalizedFieldName(field.value) === "personal"
+  )
+    return "Range";
+  return field.name || "Detail";
 }
 
 /**
@@ -461,7 +518,7 @@ function StructuredSpecifics({
       : [{ key: "price", label: "Price", value: formatCopperPrice(price) }]),
     ...authoredFacts.map((field) => ({
       key: `${field.ordinal}-${field.name}`,
-      label: field.name || "Detail",
+      label: isPower ? powerDescriptorLabel(field) : field.name || "Detail",
       value: field.value,
     })),
   ];
@@ -488,7 +545,19 @@ function StructuredSpecifics({
           {clauses.map((field) => (
             <div key={`${field.ordinal}-${field.name}`}>
               <dt>{field.name || "Detail"}</dt>
-              <dd className="preserve-lines">{field.value}</dd>
+              <dd
+                className={
+                  isStructuredProseSpecific(field)
+                    ? undefined
+                    : "preserve-lines"
+                }
+              >
+                {isStructuredProseSpecific(field) ? (
+                  <Prose value={field.value} />
+                ) : (
+                  field.value
+                )}
+              </dd>
             </div>
           ))}
         </dl>
@@ -530,12 +599,12 @@ export function EntityCardBody({
       {entity.description.length === 0
         ? null
         : (renderDescription?.(entity.description) ?? (
-            <p className="preserve-lines">{entity.description}</p>
+            <Prose value={entity.description} />
           ))}
       {entity.printPrerequisites === undefined ? null : (
         <section>
           <h5>Prerequisites</h5>
-          <p className="preserve-lines">{entity.printPrerequisites}</p>
+          <Prose value={entity.printPrerequisites} />
         </section>
       )}
       {afterNarrative}

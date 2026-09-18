@@ -126,6 +126,7 @@ describe("release accessibility contract", () => {
     expect(candidateDetailRule).toBeDefined();
     expect(candidateDetailRule).not.toContain("max-height");
     expect(candidateDetailRule).not.toContain("overflow:");
+    expect(styles).not.toMatch(/\.candidate-flavor\s*\{[^}]*border-bottom:/);
     expect(timelineRule).toBeDefined();
     expect(timelineRule).not.toContain("max-height");
     expect(timelineRule).not.toContain("overflow:");
@@ -271,6 +272,16 @@ describe("release accessibility contract", () => {
     expect(styles).toMatch(
       /\.candidate-detail\[class\*="tone-"\] > header\s*\{[^}]*background: var\(--tone-soft\)[^}]*border-bottom: 1px solid var\(--tone\)[^}]*color: var\(--text\)/,
     );
+    expect(candidateDetails).toContain(
+      'isPower ? " top-level-power-card" : ""',
+    );
+    expect(styles).toMatch(
+      /\.candidate-detail\.top-level-power-card > header\s*\{[^}]*margin-bottom: 0/,
+    );
+    expect(styles).toMatch(
+      /\.candidate-detail\.top-level-power-card > \.candidate-flavor\s*\{[^}]*padding-bottom: 0\.65rem/,
+    );
+    expect(entityCard).not.toContain("top-level-power-card");
     expect(styles).not.toMatch(
       /\.candidate-detail:is\([^)]*tone-at-will[^)]*\)\s*> header/,
     );
@@ -294,10 +305,8 @@ describe("release accessibility contract", () => {
       'entity.type.trim().toLocaleLowerCase() === "theme"',
     );
     expect(candidateDetails).toContain("function ThemeCandidateDescription");
-    expect(candidateDetails).toContain(
-      "themeDescriptionParagraphs(description)",
-    );
-    expect(candidateDetails).toContain("paragraphs.slice(0, 1)");
+    expect(candidateDetails).toContain("proseBlocks(description)");
+    expect(candidateDetails).toContain("blocks.slice(0, 1)");
     expect(candidateDetails).toContain("aria-controls={id}");
     expect(candidateDetails).toContain("aria-expanded={expanded}");
     expect(candidateDetails).toContain('{expanded ? "Less…" : "More…"}');
@@ -307,6 +316,13 @@ describe("release accessibility contract", () => {
     expect(
       entityCard.indexOf('className="detail-source-note"'),
     ).toBeGreaterThan(entityCard.indexOf("{afterFields}"));
+    expect(styles).toMatch(
+      /\.prose-blocks > \.prose-paragraph\s*\{[^}]*text-indent: 1\.5em/,
+    );
+    expect(styles).toMatch(/\.prose-blocks > h6\s*\{[^}]*text-indent: 0/);
+    expect(styles).toMatch(
+      /\.prose-blocks > :is\(ol, ul\)\s*\{[^}]*text-indent: 0/,
+    );
   });
 
   it("uses one entity-card design and flavortext preference everywhere", () => {

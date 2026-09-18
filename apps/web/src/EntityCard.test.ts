@@ -10,6 +10,7 @@ import {
   EntityCardHeader,
   groupClassSpecifics,
   isClassEntity,
+  isProseSpecific,
   itemCardIcon,
   itemCardLabel,
   orderPowerRuleFields,
@@ -111,6 +112,36 @@ describe("shared entity-card class details", () => {
     expect(markup).toContain("<h5>Details</h5>");
     expect(markup).toContain("<dt>Benefit</dt>");
     expect(markup).not.toContain("Role &amp; Power Source");
+  });
+
+  it("uses semantic prose for long specifics while preserving scalar and tabular fields", () => {
+    const rulesItem = field(
+      "Rules Item",
+      "    DIVINE SANCTION\n    First paragraph.\n\n\tSecond paragraph.",
+      0,
+    );
+    const alignment = field("Alignment", "Lawful Good", 1);
+    const table = field("Supplemental", "Deity\tAlignment\nAvandra\tGood", 2);
+    const longExplanation = field(
+      "Implements",
+      "A paladin can use a holy symbol to channel divine power. This deliberately long explanation continues with enough authored sentence text to be prose even when the source stores it on one line.",
+      3,
+    );
+    const markup = renderToStaticMarkup(
+      createElement(EntityCardBody, {
+        entity: entity("Class Feature", [rulesItem, alignment, table]),
+        hideFlavortext: false,
+      }),
+    );
+
+    expect(isProseSpecific(rulesItem)).toBe(true);
+    expect(isProseSpecific(alignment)).toBe(false);
+    expect(isProseSpecific(table)).toBe(false);
+    expect(isProseSpecific(longExplanation)).toBe(true);
+    expect(markup).toContain("<h6>DIVINE SANCTION</h6>");
+    expect(markup.match(/class="prose-paragraph"/g)).toHaveLength(3);
+    expect(markup).toContain('<dd class="preserve-lines">Lawful Good</dd>');
+    expect(markup).toContain("Deity\tAlignment\nAvandra\tGood");
   });
 });
 
@@ -219,6 +250,54 @@ describe("shared power and item cards", () => {
     expect(markup).not.toContain("<dt>Power Type</dt>");
     expect(markup).not.toContain("<h5>Details</h5>");
     expect(markup).toContain("Source: Player&#x27;s Handbook Test");
+  });
+
+  it("labels exact Personal attack types as Range without reusing authored Power Type", () => {
+    const power = entity("Power", [
+      field("Power Usage", "Encounter", 0),
+      field("Power Type", "Utility", 1),
+      field("Attack Type", "Personal", 2),
+    ]);
+    const headerMarkup = renderToStaticMarkup(
+      createElement(EntityCardHeader, { entity: power }),
+    );
+    const bodyMarkup = renderToStaticMarkup(
+      createElement(EntityCardBody, {
+        entity: power,
+        hideFlavortext: false,
+      }),
+    );
+
+    expect(headerMarkup).toContain("Encounter utility");
+    expect(bodyMarkup).toContain(
+      '<dt>Range</dt><dd class="preserve-lines">Personal</dd>',
+    );
+    expect(bodyMarkup).not.toContain("<dt>Attack Type</dt>");
+    expect(bodyMarkup).not.toContain("<dt>Power Type</dt>");
+  });
+
+  it("renders a power Rules Item as prose without changing ordinary power rule rows", () => {
+    const power = entity("Power", [
+      field(
+        "Rules Item",
+        "  DIVINE SANCTION\n    First paragraph.\nSecond paragraph.",
+        0,
+      ),
+      field("Effect", "Line one.\n  Line two stays in the rule row.", 1),
+    ]);
+    const markup = renderToStaticMarkup(
+      createElement(EntityCardBody, {
+        entity: power,
+        hideFlavortext: false,
+      }),
+    );
+
+    expect(markup).toContain(
+      '<dt>Rules Item</dt><dd><div class="prose-blocks"><h6>DIVINE SANCTION</h6>',
+    );
+    expect(markup).toContain(
+      '<dt>Effect</dt><dd class="preserve-lines">Line one.\n  Line two',
+    );
   });
 
   it("orders common power clauses canonically and preserves custom duplicates", () => {
@@ -331,5 +410,9 @@ describe("shared power and item cards", () => {
     expect(markup).not.toContain("<dt>Gold</dt>");
     expect(markup.match(/840 gp/g)).toHaveLength(1);
     expect(markup).not.toContain("<details");
+    expect(markup).toContain('<dd class="preserve-lines">Power (Daily)');
+    expect(markup).not.toContain(
+      '<dt>Power</dt><dd><div class="prose-blocks">',
+    );
   });
 });

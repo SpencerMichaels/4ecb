@@ -24,8 +24,8 @@ describe("SelectionSummary", () => {
     ).toBe("Selected: Cleave and Reaping Strike");
   });
 
-  it("uses selected names for details and neighboring icons for location", () => {
-    const markup = renderToStaticMarkup(
+  it("uses a plural heading and visible conjunction spacing for two selections", () => {
+    const twoSelectionMarkup = renderToStaticMarkup(
       createElement(SelectionSummary, {
         items: [
           { id: "one", label: "Cleave" },
@@ -37,14 +37,29 @@ describe("SelectionSummary", () => {
       }),
     );
 
+    expect(twoSelectionMarkup).toContain("Current selections");
+    expect(twoSelectionMarkup).toContain("<span>and\u00a0</span>");
+    expect(twoSelectionMarkup).toContain('class="selection-summary-name"');
+    expect(twoSelectionMarkup).toContain(">Cleave</button>");
+    expect(twoSelectionMarkup).toContain("Reaping Strike</button>");
+    expect(twoSelectionMarkup).toContain(
+      'aria-label="Locate Cleave in the table"',
+    );
+    expect(twoSelectionMarkup).toContain('class="selection-summary-locate"');
+    expect(twoSelectionMarkup).not.toContain("Locate</button>");
+  });
+
+  it("retains the singular heading for one selection", () => {
+    const markup = renderToStaticMarkup(
+      createElement(SelectionSummary, {
+        items: [{ id: "one", label: "Cleave" }],
+        onInspect: () => undefined,
+        onLocate: () => undefined,
+      }),
+    );
+
     expect(markup).toContain("Current selection");
-    expect(markup).toContain('class="selection-summary-name"');
-    expect(markup).toContain(">Cleave</button>");
-    expect(markup).toContain(" and ");
-    expect(markup).toContain("Reaping Strike</button>");
-    expect(markup).toContain('aria-label="Locate Cleave in the table"');
-    expect(markup).toContain('class="selection-summary-locate"');
-    expect(markup).not.toContain("Locate</button>");
+    expect(markup).not.toContain("Current selections");
   });
 
   it("renders an attached neutral empty state", () => {
@@ -58,6 +73,20 @@ describe("SelectionSummary", () => {
 
     expect(markup).toContain("selection-summary-empty");
     expect(markup).toContain("Current selection");
+    expect(markup).not.toContain("Current selections");
     expect(markup).toContain("No selection");
+  });
+
+  it("does not render when its candidate table has no vertical overflow", () => {
+    const markup = renderToStaticMarkup(
+      createElement(SelectionSummary, {
+        items: [{ id: "one", label: "Cleave" }],
+        visible: false,
+        onInspect: () => undefined,
+        onLocate: () => undefined,
+      }),
+    );
+
+    expect(markup).toBe("");
   });
 });

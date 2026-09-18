@@ -694,17 +694,6 @@ export function firstSentence(value: string | undefined): string | undefined {
   return match?.[0] ?? normalized;
 }
 
-/** Theme prose in legacy rules content stores each authored paragraph on its own line. */
-export function themeDescriptionParagraphs(
-  description: string,
-): readonly string[] {
-  return description
-    .replace(/\r\n?/g, "\n")
-    .split("\n")
-    .map((paragraph) => paragraph.trim())
-    .filter((paragraph) => paragraph.length > 0);
-}
-
 export function classTableMetadata(entity: ContentEntity): {
   readonly role: LabeledDescription;
   readonly powerSource: LabeledDescription;

@@ -772,6 +772,31 @@ dd {
   white-space: pre-wrap;
 }
 
+.prose-blocks {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.prose-blocks > * {
+  margin: 0;
+}
+
+.prose-blocks > .prose-paragraph {
+  text-indent: 1.5em;
+}
+
+.prose-blocks > h6 {
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-indent: 0;
+  text-transform: uppercase;
+}
+
+.prose-blocks > :is(ol, ul) {
+  padding-left: 1.4rem;
+  text-indent: 0;
+}
+
 textarea {
   font: inherit;
   resize: vertical;
@@ -3482,6 +3507,10 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   padding: 0.75rem 1rem;
 }
 
+.candidate-detail.top-level-power-card > header {
+  margin-bottom: 0;
+}
+
 .entity-kind {
   align-items: center;
   color: inherit;
@@ -3711,7 +3740,6 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
 }
 
 .candidate-flavor {
-  border-bottom: 1px solid var(--border);
   color: var(--muted);
   font-family: var(--font-display);
   font-size: 1.02rem;
@@ -3719,6 +3747,10 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   line-height: 1.4;
   margin: 0 -1rem !important;
   padding: 0.8rem 1rem;
+}
+
+.candidate-detail.top-level-power-card > .candidate-flavor {
+  padding-bottom: 0.65rem;
 }
 
 .candidate-detail-empty {

@@ -102,7 +102,6 @@ import {
   selectedDefinitionId,
   selectedChoiceHasWarning,
   shouldOmitIndividualChoiceHeading,
-  themeDescriptionParagraphs,
   themePowerGroups,
   unresolveEvaluatedChoiceCommand,
   type ChoiceSelectionTableKind,
@@ -122,6 +121,8 @@ import { KeyAbilitiesSummary, KeyAbilityName } from "./KeyAbilityMarker";
 import { EquipmentWorkspace } from "./EquipmentWorkspace";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
 import { PortraitEditor } from "./PortraitEditor";
+import { ProseBlocks, proseBlocks } from "./Prose";
+import { useVerticalOverflow } from "./useVerticalOverflow";
 import type {
   BuilderNavigation,
   BuilderSectionSlug,
@@ -956,19 +957,15 @@ function ThemeCandidateDescription({
   readonly id: string;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const paragraphs = themeDescriptionParagraphs(description);
-  const visibleParagraphs = expanded ? paragraphs : paragraphs.slice(0, 1);
+  const blocks = proseBlocks(description);
+  const visibleBlocks = expanded ? blocks : blocks.slice(0, 1);
 
   return (
     <div className="theme-candidate-description">
       <div id={id}>
-        {visibleParagraphs.map((paragraph, index) => (
-          <p className="preserve-lines" key={index}>
-            {paragraph}
-          </p>
-        ))}
+        <ProseBlocks blocks={visibleBlocks} />
       </div>
-      {paragraphs.length <= 1 ? null : (
+      {blocks.length <= 1 ? null : (
         <button
           aria-controls={id}
           aria-expanded={expanded}
@@ -1002,9 +999,9 @@ function CandidateDetailCard({
     entity.type.trim().toLocaleLowerCase() === "theme";
   const entityTone = entityVisualTone(entity);
   const tone = visualToneClass(entityTone);
+  const isPower = entity.type.trim().toLocaleLowerCase() === "power";
   const isEmbeddedPower =
-    entity.type.trim().toLocaleLowerCase() === "power" &&
-    (relationship !== undefined || themePowerLevel !== undefined);
+    isPower && (relationship !== undefined || themePowerLevel !== undefined);
   const isUnavailable = candidate !== undefined && !candidate.eligible;
   if (isEmbeddedPower)
     return (
@@ -1039,7 +1036,7 @@ function CandidateDetailCard({
   return (
     <aside
       aria-labelledby={headingId}
-      className={`candidate-detail ${tone}`}
+      className={`candidate-detail ${tone}${isPower ? " top-level-power-card" : ""}`}
       tabIndex={0}
     >
       <header className="primary-detail-heading">
@@ -2309,6 +2306,12 @@ function CandidateSelectionTable({
     ReadonlyMap<string, boolean>
   >(new Map());
   const candidateControls = useRef(new Map<string, HTMLButtonElement>());
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const tableContentRef = useRef<HTMLTableElement>(null);
+  const tableHasVerticalOverflow = useVerticalOverflow(
+    tableScrollRef,
+    tableContentRef,
+  );
   const [locateRequest, setLocateRequest] = useState<{
     readonly definitionId: string;
     readonly request: number;
@@ -2702,6 +2705,7 @@ function CandidateSelectionTable({
         <SelectionSummary
           items={selectedItems}
           {...(selectionLimit === undefined ? {} : { selectionLimit })}
+          visible={tableHasVerticalOverflow}
           onInspect={(definitionId) => {
             const candidate = candidates.find(
               (item) => item.definitionId === definitionId,
@@ -2711,8 +2715,8 @@ function CandidateSelectionTable({
           onLocate={locateCandidate}
         />
       </div>
-      <div className="selection-table-scroll">
-        <table>
+      <div className="selection-table-scroll" ref={tableScrollRef}>
+        <table ref={tableContentRef}>
           <thead>
             <tr>
               {sortableHeader(
