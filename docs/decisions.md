@@ -230,16 +230,28 @@ suffix back to the last durable build.
 
 The main builder pane presents the selected level as one scrollable page with a
 subsection for every choice; the timeline summarizes status and navigates into
-that page instead of replacing it with a one-dropdown screen. Repeated
-Background slots retain their evaluator order but progressively disclose
-optional empty slots behind **Add another background…**. Skill Training slots
-render as category-bounded toggle lists with an `X out of Y` count. A filled
+that page instead of replacing it with a one-dropdown screen. Up to six
+repeated Background slots share one candidate table while retaining their exact
+evaluator order and per-slot compatibility. Skill Training slots render as
+category-bounded toggle lists with an `X out of Y` count. A filled
 single-slot scope behaves like a radio group: clicking another eligible skill
 replaces the current selection immediately. These are presentation groupings
 only: every background and skill still maps to its exact provider, rule ordinal,
 and choice index. Clearing a trained skill writes a blank unresolved placeholder
 at the same position, and filling chooses the first compatible unresolved
 position, so history and legacy serialization do not compact or reorder.
+
+Every shared large-table selection summary uses one chip per selected item,
+including repeated Backgrounds. Activating the chip name opens that item's
+detail card; its trailing X unresolves the exact backing slot. A chip derives
+its leading entity/action/item icon and visual tone from the same shared
+EntityCard and visual-language helpers as that selected entity's detail-card
+header. Its soft tone fill, heavy full-tone top edge, thin full-tone bottom
+divider, and thin neutral side edges are a compact projection of that header;
+the icon is centered with the bold name on the header line. Power usage, item,
+and neutral semantics therefore require no second mapping. The former
+locate-in-table control and the prose **Current selection(s)** treatment are not
+part of this interaction. Existing table selection limits remain authoritative.
 
 Background-benefit records use a presentation-only two-stage control grouped
 by their legacy names: language, +2 to one skill, add a class skill, background
@@ -683,15 +695,24 @@ activating the current sort header reverses its direction. Missing values remain
 last in either direction. Selection changes only the row highlight and never
 promotes a row or adds a checkmark beside its name. Tables with six or fewer visible rows size
 to their content, while larger sets consume the available viewport and scroll.
-Every shared candidate table keeps a sticky, tinted **Current selection** banner
-between its controls and column headers. Empty tables say **No selection**;
-single-slot tables show the selected name; and two-slot tables show **X (1 of 2)** or **X and Y**.
-Each selected name opens that option's detail card. A neighboring focus icon is
-the locate control: it preserves the current sort, clears temporary
-text/favorites filters that hide the row, expands its type and parameter-family
-sections, centers the actual highlighted candidate row, and moves keyboard
-focus there. This behavior belongs to the shared table shell and does not apply
-to compact radio/button choices.
+Every shared candidate table keeps a sticky selection summary between its
+controls and column headers. Empty tables say **No selection**; otherwise the
+summary renders one chip per selected item. Each chip name opens that option's
+detail card and its trailing X unresolves the exact backing choice. There is no
+separate locate-in-table control. This behavior belongs to the shared table
+shell and does not apply to compact radio/button choices.
+When a candidate-table pane opens, the first mounted table exclusively
+initializes the shared detail card from its first existing selection; if that
+table is unselected, later tables do not claim the card. Independently, every
+mounted candidate table with an existing selection positions its first selected
+row beneath the sticky header at the top of its own scroll viewport when space
+allows, with the browser's scroll bound providing the ensure-visible fallback
+near the end of the table. Selection order follows the existing choice-backed
+`Set` insertion order, so repeated selections retain evaluator slot order.
+Initialization is scoped to that pane opening and never reruns for selection,
+filter, sort, or evaluation rerenders. Explicit inspection wins permanently
+within the open pane. This changes neither row order nor filtering and does not
+restore the removed user-triggered locator.
 Deities show Name and authored Alignment. Class-feature rows use authored Short
 Description where available and a concise description fallback otherwise.
 Character details requests full candidate data for its owning choice levels
@@ -799,10 +820,84 @@ makes its corresponding practice known. Spellbook alternates remain in Build.
 
 This checkpoint does not claim complete native `IsValidLoot` or slot-pair
 parity. Shield/implement equivalence, double-weapon secondary ends, dependent
-hand/ring rebalancing, the holy-symbol name exception, augments, package lot
+hand/ring rebalancing, holy-symbol name storage, augments, package lot
 reconciliation, automatic equipment, custom-item editing, and item-owned choice
 placement require focused follow-up from the recovered paths rather than an
 approximation in the UI.
+
+A focused follow-up establishes that loadout eligibility accumulates every
+authored slot-bearing classification on every definition in a holding. The two
+fields, `Item Slot` and `Magic Item Type`, are independent evidence rather than
+fallbacks. A magic holy symbol authored as both `Off-hand` and `Holy Symbol`
+therefore remains eligible for hand placement and also appears in the dedicated
+Holy symbol slot. This is the same metadata rule used by catalog slot facets and
+does not infer eligibility from an item's display name.
+
+Physical base-item classification takes precedence when those accumulated
+classifications describe different aspects of a composed holding. An `Armor`
+definition with authored `Armor Type: Shield` is a held shield and occupies only
+Off hand. Its authored `Item Slot: Off-hand` corroborates that rule. A paired
+magic shield definition may independently say `Arms Slot Item`/`Arms`, but that
+is the enchantment's magic-item category and does not move the composed shield
+from the hand to the Arms loadout slot. Ordinary non-shield `Armor` continues to
+occupy Body. This rule uses domain fields across the holding and never searches
+its display name for “shield.”
+
+That same physical-identity precedence now governs item imagery. Loadout slot
+icons are the canonical item-slot vocabulary for detail-card headers and
+selection chips: notably Waist uses `SquareStar`, Head uses `HardHat`, Holy
+symbol uses `Church`, rings use `Gem`, and Tattoo uses `Stamp`. A composed magic
+shield therefore uses the Off-hand `Shield` icon even when its enchantment is
+authored as an Arms Slot Item. Shared presentation code receives the physical
+base definition explicitly; it does not infer a shield or belt from the display
+name. Stale saved slot assignments are not displayed in a slot whose current
+authored eligibility rejects the holding.
+
+The same exact holding boundary is authoritative for item inspection. The
+recovered builder presents a `CharacterLootItem` by rendering its base element
+first and concatenating its enchantment element second. Accordingly, every
+owned-item and loadout inspection resolves all ordered holding definition IDs
+and uses the existing composed inventory name for the card title. Catalog
+inspection remains a single-record view until the player chooses a compatible
+base; that selection immediately uses the same composed detail path.
+
+The modern weapon card projects those two records as one usable object rather
+than exposing their storage boundary. Physical descriptors come from the base;
+level, authored price denomination, rarity, enhancement, critical effect,
+flavor, and magic rules come from the enchantment. Enhancement occupies its own
+first descriptor line even when the title contains `+N`, matching the approved
+scan order for composed and standalone magic weapons. Generic applicability
+(`Weapon: Any`), item slot, and duplicative Full Text are omitted once a
+concrete weapon base is present. Sources remain ordered and deduplicated in one
+final footer. This is a presentation projection only: no synthetic content
+record is stored, and purchase, evaluation, and export continue to preserve the
+exact two IDs.
+
+Ordinary slot-category magic items do not repeat their slot classification in
+the header: authored labels such as `Neck Slot Item` collapse to `Item`, while
+the level remains (`Item 6`). Their compact descriptor band places Enhancement
+on its own first line, then Price, Slot, and Rarity on the second; authored
+`Item Slot` is presented as `Slot`. Weapon and armor identity labels remain
+`Weapon N` and `Armor N`. If a composed shield's enchantment carries the corpus'
+distinct Arms classification, presentation follows the physical shield and
+shows Off hand rather than Arms.
+
+Unified composed weapon and armor cards remove the ordinary tinted detail
+header's trailing margin. Their flavor band owns the entire
+header-to-descriptor spacing, including the small asymmetric padding needed to
+compensate the italic font's line box. This exception is scoped to unified
+composed-item cards so it cannot alter power cards or ordinary detail-card
+rhythm.
+
+Composed magic armor follows the same projection boundary. The physical armor
+or shield supplies armor bonus, check and speed modifiers, category, type,
+slot, weight, icon, and source. The enchantment supplies level, enhancement,
+price, rarity, flavor, properties, granted powers, and source. The approved
+descriptor scan order is Enhancement; Armor bonus, Check, Speed; Category,
+Type, Slot; then Price, Weight, Rarity. Generic armor applicability, duplicate
+Full Text, and the two source-record headings are omitted after a concrete base
+is chosen. Shields retain their physical Off hand identity even when the magic
+definition belongs to the Arms item family.
 
 ### D045 — Global navigation names destinations, not character modes
 
@@ -889,7 +984,8 @@ remain stable; Sustain and Aftereffect form the tail; and exact Special is last.
 
 Item headers use user-facing type, level, and rarity rather than weapon/armor
 subtype. Their monochrome Lucide icon is resolved from the finite imported-corpus
-vocabulary: Sword for Weapon, Shield for Armor, Backpack for Gear, the approved
+vocabulary: Sword for Weapon, Shirt for body Armor, Shield only for armor with
+authored `Armor Type: Shield`, Backpack for Gear, the approved
 slot/implement/consumable/reward icons for their exact families, and Sparkles for
 Wondrous/Special/Any/blank fallback. Artifact or Dragonshard identity takes
 precedence over another compatible type. The temporary card-proposal files are
@@ -971,6 +1067,49 @@ CSS first-line indent after source indentation is removed; headings and list
 items remain unindented. Text remains React text content rather than interpreted
 HTML. Power/item rule rows and tabular or otherwise genuinely preformatted
 specifics retain their established `preserve-lines` path.
+
+### D053 — Loadout is two ordered icon stacks with rules-backed implement visibility
+
+The Equipment Loadout pane presents two equal columns. The left column follows
+body position from head to feet: Head, Neck, Body, Arms, Hands, Waist, and Feet.
+The right column starts with Main hand and Off hand, then Holy symbol, Ki focus,
+Ring 1, Ring 2, and Tattoo. Each slot is one compact horizontal row containing
+its monochrome icon and name beside the select control. Loadout does not carry
+per-slot Shop buttons; purchasing remains available through the existing Shop
+tab and its ordinary filters. This presentation decision supersedes the earlier
+loadout shop-shortcut checkpoint without changing the Shop workspace itself.
+Both columns use the same `7.5rem` icon-and-label track, `0.625rem` inter-track
+gap, and a dropdown track that shrinks with available space and caps at `18rem`.
+The two stacks collapse to one responsive column at `48rem` while retaining the
+same row geometry.
+
+The installed Lucide 1.39.0 set determines the exact glyphs. The ordered left
+column uses HardHat, Medal, Shirt, BicepsFlexed, Hand, SquareStar, and Footprints;
+the ordered right column uses Sword, Shield, Church, Focus, Gem, Gem, and Stamp.
+Lucide supplies no Helmet, Belt, Pants, or standalone Latin-cross/crucifix
+alternative. HardHat is therefore the closest head-protection glyph, the product
+owner selected the existing SquareStar glyph for Waist instead of a custom belt
+glyph, Church replaces the plus-like Cross for an unambiguous Christian
+association, and the existing Stamp glyph represents Tattoo.
+
+Holy symbol and Ki focus are shown only when the current evaluator result
+contains, respectively, the exact active definition IDs
+`ID_INTERNAL_PROFICIENCY_IMPLEMENT_PROFICIENCY_(HOLY_SYMBOL)` and
+`ID_INTERNAL_PROFICIENCY_IMPLEMENT_PROFICIENCY_(KI_FOCUSES)`. Names, aliases,
+partial IDs, and case-folded matches do not grant visibility. Companion,
+Familiar, and Mount remain appended to the right column only when owned
+inventory has matching authored slot metadata; all three use PawPrint.
+
+Every committed non-empty Loadout selection updates the shared equipment detail
+viewer to that holding's resolved item definition. Focusing a populated native
+select likewise restores its currently equipped item to the viewer, so keyboard
+and pointer users can recover context without changing equipment. Native select
+popup highlighting is intentionally not treated as inspection: browsers and
+platform controls do not expose transient, not-yet-committed option highlights
+with portable event semantics, and a popup can be cancelled. Loadout therefore
+uses reliable `focus` and committed `change` behavior only; it does not add an
+`input` or key-event preview and does not replace the native select with a custom
+combobox.
 
 ## Deferred decisions and decision points
 

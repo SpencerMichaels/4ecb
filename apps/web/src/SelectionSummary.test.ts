@@ -2,64 +2,131 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { SelectionSummary, selectionSummaryLabel } from "./SelectionSummary";
+import type { ContentEntity } from "@4ecb/content-domain";
+
+import { SelectionSummary } from "./SelectionSummary";
+
+function entity(
+  type: string,
+  specifics: Readonly<Record<string, string>> = {},
+): ContentEntity {
+  return {
+    id: `${type}-fixture`,
+    name: `${type} fixture`,
+    type,
+    source: "Test",
+    sources: ["Test"],
+    attributes: [],
+    categories: [],
+    specifics: Object.entries(specifics).map(([name, value], ordinal) => ({
+      name,
+      value,
+      ordinal,
+      extraAttributes: [],
+    })),
+    rules: [],
+    description: "",
+    extensions: [],
+    provenance: { sourceKey: "test", sourceOrdinal: 0 },
+  };
+}
 
 describe("SelectionSummary", () => {
-  it("formats empty, single, and two-slot selection states", () => {
-    expect(selectionSummaryLabel([])).toBe("No selection");
-    expect(selectionSummaryLabel([{ id: "one", label: "Cleave" }])).toBe(
-      "Selected: Cleave",
-    );
-    expect(selectionSummaryLabel([{ id: "one", label: "Cleave" }], 2)).toBe(
-      "Selected: Cleave (1 of 2)",
-    );
-    expect(
-      selectionSummaryLabel(
-        [
-          { id: "one", label: "Cleave" },
-          { id: "two", label: "Reaping Strike" },
-        ],
-        2,
-      ),
-    ).toBe("Selected: Cleave and Reaping Strike");
-  });
-
-  it("uses a plural heading and visible conjunction spacing for two selections", () => {
+  it("renders one removable chip per selection", () => {
     const twoSelectionMarkup = renderToStaticMarkup(
       createElement(SelectionSummary, {
         items: [
           { id: "one", label: "Cleave" },
           { id: "two", label: "Reaping Strike" },
         ],
-        selectionLimit: 2,
         onInspect: () => undefined,
-        onLocate: () => undefined,
+        onRemove: () => undefined,
       }),
     );
 
-    expect(twoSelectionMarkup).toContain("Current selections");
-    expect(twoSelectionMarkup).toContain("<span>and\u00a0</span>");
+    expect(twoSelectionMarkup).toContain('aria-label="Selected options"');
+    expect(twoSelectionMarkup).not.toContain("Current selection");
+    expect(twoSelectionMarkup).toContain(
+      'class="selection-summary-item tone-neutral"',
+    );
     expect(twoSelectionMarkup).toContain('class="selection-summary-name"');
     expect(twoSelectionMarkup).toContain(">Cleave</button>");
     expect(twoSelectionMarkup).toContain("Reaping Strike</button>");
-    expect(twoSelectionMarkup).toContain(
-      'aria-label="Locate Cleave in the table"',
+    expect(twoSelectionMarkup).toContain('aria-label="Remove Cleave"');
+    expect(twoSelectionMarkup).toContain('class="selection-summary-remove"');
+    expect(twoSelectionMarkup).not.toContain("Locate");
+    expect(twoSelectionMarkup.indexOf("selection-summary-icon")).toBeLessThan(
+      twoSelectionMarkup.indexOf(
+        'class="selection-summary-name" type="button">Cleave',
+      ),
     );
-    expect(twoSelectionMarkup).toContain('class="selection-summary-locate"');
-    expect(twoSelectionMarkup).not.toContain("Locate</button>");
+    expect(
+      twoSelectionMarkup.indexOf(
+        'class="selection-summary-name" type="button">Cleave',
+      ),
+    ).toBeLessThan(twoSelectionMarkup.indexOf('aria-label="Remove Cleave"'));
   });
 
-  it("retains the singular heading for one selection", () => {
+  it("reuses detail-card icons and tones for every selected entity family", () => {
+    const shieldBase = entity("Armor", { "Armor Type": "Shield" });
     const markup = renderToStaticMarkup(
       createElement(SelectionSummary, {
-        items: [{ id: "one", label: "Cleave" }],
+        items: [
+          { id: "feat", label: "Durable", entity: entity("Feat") },
+          {
+            id: "power",
+            label: "Cleave",
+            entity: entity("Power", {
+              "Power Usage": "Encounter",
+              "Action Type": "Standard Action",
+            }),
+          },
+          {
+            id: "item",
+            label: "Frost Weapon",
+            entity: entity("Magic Item", {
+              "Magic Item Type": "Weapon",
+            }),
+          },
+          {
+            id: "belt",
+            label: "Belt",
+            entity: entity("Magic Item", {
+              "Magic Item Type": "Waist Slot Item",
+            }),
+          },
+          {
+            id: "shield",
+            label: "Hammer Heavy Shield",
+            entity: entity("Magic Item", {
+              "Magic Item Type": "Arms Slot Item",
+              "Item Slot": "Arms",
+            }),
+            physicalBase: shieldBase,
+          },
+          {
+            id: "armor",
+            label: "Plate Armor",
+            entity: entity("Armor", { "Armor Type": "Heavy" }),
+          },
+        ],
         onInspect: () => undefined,
-        onLocate: () => undefined,
+        onRemove: () => undefined,
       }),
     );
 
-    expect(markup).toContain("Current selection");
-    expect(markup).not.toContain("Current selections");
+    expect(markup).toContain("selection-summary-item tone-neutral");
+    expect(markup).toContain("selection-summary-item tone-encounter");
+    expect(markup).toContain("selection-summary-item tone-item");
+    expect(markup).toContain("lucide-sparkles");
+    expect(markup).toContain('title="Standard Action"');
+    expect(markup).toContain("lucide-sword");
+    expect(markup).toContain("lucide-square-star");
+    expect(markup).toContain("lucide-shield");
+    expect(markup).toContain("lucide-shirt");
+    expect(markup).toContain(
+      'aria-hidden="true" class="selection-summary-icon"',
+    );
   });
 
   it("renders an attached neutral empty state", () => {
@@ -67,13 +134,11 @@ describe("SelectionSummary", () => {
       createElement(SelectionSummary, {
         items: [],
         onInspect: () => undefined,
-        onLocate: () => undefined,
+        onRemove: () => undefined,
       }),
     );
 
     expect(markup).toContain("selection-summary-empty");
-    expect(markup).toContain("Current selection");
-    expect(markup).not.toContain("Current selections");
     expect(markup).toContain("No selection");
   });
 
@@ -83,7 +148,7 @@ describe("SelectionSummary", () => {
         items: [{ id: "one", label: "Cleave" }],
         visible: false,
         onInspect: () => undefined,
-        onLocate: () => undefined,
+        onRemove: () => undefined,
       }),
     );
 

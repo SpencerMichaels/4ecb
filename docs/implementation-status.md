@@ -41,34 +41,210 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
-## M5.5 candidate-selection locator checkpoint (2026-09-17)
+## M5.5 candidate-table initialization checkpoint (2026-09-18)
 
-- The shared large-candidate table now keeps a sticky, tinted **Current
-  selection** banner directly between its filter controls and column headers
-  only while the candidate rows have vertical overflow. A shared DOM measurement
+- Opening a Build category or Character details pane now gives its first shared
+  candidate table sole responsibility for initializing the adjacent detail card.
+  Its first existing selection is inspected in established choice order; an
+  unselected first table leaves the card blank rather than allowing a later table
+  to claim it. A scope gate prevents subsequent mounts or rerenders from
+  overwriting explicit user inspection.
+- Every shared candidate table independently captures its first existing
+  selection at mount and positions that row directly beneath the sticky header
+  in its own scroll viewport. Native scroll bounds keep rows near the table end
+  visible when they cannot reach the top. Selection changes, evaluation
+  rerenders, filters, and sorting do not repeat the positioning, clear filters,
+  or alter established row order.
+- Focused unit coverage fixes first-selection order, first-table ownership,
+  explicit-inspection precedence, sticky-header scroll geometry, and the
+  non-negative top bound. The existing shared-table accessibility contract
+  continues to reject the removed user-triggered locator and `scrollIntoView`.
+  The focused initialization/selection suites pass 30/30. The full
+  `scripts/check.sh` gate passes formatting, lint, all 406 public tests, every
+  workspace typecheck, the production/PWA build, Chromium and Firefox Letter/A4
+  print checks, deterministic synthetic content-pack checks, and the query
+  benchmark.
+
+## M5.5 two-column loadout checkpoint (2026-09-18)
+
+- Loadout is split into two ordered stacks. Body-location slots run Head through
+  Feet in the left column; hands, implements, rings, and Tattoo occupy the right
+  column. Every slot is one horizontal icon/name-and-select row, and the pane no
+  longer renders per-slot Shop buttons. The Shop tab and its filters are
+  unchanged; this intentionally supersedes the earlier shortcut presentation.
+- The final Lucide glyph sequence is HardHat, Medal, Shirt, BicepsFlexed, Hand,
+  SquareStar, Footprints and Sword, Shield, Church, Focus, Gem, Gem, Stamp. The
+  installed Lucide 1.39.0 set has no Helmet, Belt, Pants, or standalone
+  Latin-cross/crucifix alternative. The product owner approved the existing
+  SquareStar for Waist instead of a custom belt glyph; HardHat and Church remain
+  the approved fallbacks, and Tattoo reuses the existing Stamp glyph.
+- Holy symbol and Ki focus visibility is gated by their exact evaluator-active
+  Proficiency definition IDs. Companion, Familiar, and Mount remain strictly
+  conditional on compatible owned inventory and retain PawPrint.
+- Focused verification passes all 28 Equipment UI and accessibility-contract
+  tests, the web TypeScript check, affected-file ESLint and Prettier checks, and
+  whitespace validation. A read-only search of the local full content pack
+  confirms both exact proficiency IDs used by the visibility gates.
+
+## M5.5 loadout slot-metadata checkpoint (2026-09-18)
+
+- Loadout eligibility now accumulates `Item Slot` and `Magic Item Type` across
+  every resolved definition in a holding instead of treating those authored
+  classifications as fallbacks. The full-corpus `Magic Holy Symbol +1` record
+  consequently retains its `Off-hand` hand choices and also appears in the
+  dedicated Holy symbol dropdown because it is explicitly typed `Holy Symbol`.
+  No display-name inference is involved.
+- A focused public fixture covers an item carrying both classifications and
+  verifies all three resulting loadout choices.
+- Focused verification passes all 6 Equipment UI tests, both web TypeScript
+  projects, affected-file ESLint, and whitespace checks.
+
+## M5.5 loadout correction checkpoint (2026-09-18)
+
+- Mundane shield definitions carry authored `Armor Type` value `Shield` and
+  `Item Slot` value `Off-hand`. Loadout now uses that base-item domain identity to place any such
+  shield only in Off hand. A composed magic shield's `Arms Slot Item`/`Arms`
+  metadata remains valid magic-item classification but no longer relocates the
+  physical shield to Arms. The former display-name check and Arms result are
+  removed; a name-neutral composed public fixture fixes the precedence rule.
+- Both Loadout stacks now share a `7.5rem` icon-and-label track and `0.625rem`
+  label-to-dropdown gap. Dropdowns shrink with their column, cap at `18rem`, and
+  the two stacks still collapse to one column at the existing `48rem` responsive
+  boundary.
+- Committing any non-empty slot selection immediately shows that holding in the
+  shared equipment detail viewer. Focusing a populated slot restores its current
+  item to the viewer. Transient native-select popup highlights are not previewed:
+  supported browser/platform controls do not expose a reliable pre-commit event,
+  and cancellation could otherwise leave the viewer out of sync. The native
+  selects remain unchanged and use only reliable focus/committed-change events.
+- The product owner approved Lucide SquareStar for Waist and explicitly rejected
+  a custom glyph. One shared slot-icon map now supplies Loadout, item-card, and
+  selection-chip item imagery, eliminating the former detail-card `badge`,
+  `crown`, `sun`, and plain-circle variants. A composed shield explicitly passes
+  its physical base identity to shared presentation, so an Arms-classified magic
+  enchantment cannot replace the shield icon with the strong-arm icon. Ordinary
+  armor uses the canonical Body `Shirt` icon; only an armor definition with
+  authored `Armor Type: Shield` uses the Off-hand `Shield` icon.
+- Loadout now derives both compatible options and the displayed assignment from
+  current authored slot eligibility. A stale Arms assignment for a composed
+  shield is therefore not presented as an Arms-slot item; the base armor's
+  authored `Armor Type: Shield` still makes Off hand its sole candidate.
+- A read-only full-profile audit found four `Armor Type: Shield` base records,
+  all four authored `Item Slot: Off-hand`, plus 15 shield-compatible magic
+  definitions carrying the distinct `Arms Slot Item`/`Arms` classification.
+  Focused Equipment/Loadout/accessibility coverage passes 31/31. The full
+  `scripts/check.sh` gate passes formatting, lint, all 411 public tests across 57
+  files, every workspace typecheck, the production/PWA build, Chromium and
+  Firefox Letter/A4 print checks, deterministic synthetic content-pack checks,
+  and the query benchmark. The build retains the existing large-chunk advisory.
+
+## M5.5 composed item-detail checkpoint (2026-09-18)
+
+- Equipment inspection now retains the inspected holding rather than reducing
+  it to the last definition ID. Inventory rows and loadout dropdowns therefore
+  present a composed weapon or armor under its natural inventory name. Composed
+  weapons render as one card: the base supplies physical statistics while the
+  enchantment supplies flavor, level, price, rarity, critical effect, magic
+  rules, and granted powers. Storage-only or redundant fields are suppressed;
+  ordered, deduplicated sources share one final footer.
+- Shop enchantments continue to render independently before a base is chosen.
+  Selecting a compatible base immediately switches the same detail pane to the
+  composed projection, so shop preview, Inventory, and Loadout cannot diverge.
+- This reproduces the recovered `CharacterLootItem.Element` plus
+  `ExtraInfoElement` flow through `DDIUIHelpers.UpdateInfoViewer` and
+  `App.ConcatViewer`. Public regression coverage uses synthetic base and
+  enchantment records; no proprietary corpus fixture is committed.
+- The approved production projection for **+2 Defensive Warhammer** uses an
+  Enhancement line followed by four compact semantic descriptor lines,
+  content-sized separators, an unbroken
+  rules-label column, and optically compensated flavor spacing. Synthetic tests
+  cover composition, field ownership and order, multiple base properties,
+  duplicate Full Text suppression, source deduplication, and the shared
+  Inventory/Loadout/Shop inspection inputs. Live verification against the local
+  complete corpus confirms the composed card at 512 px and 307 px widths with
+  no horizontal overflow and a measured flavor-spacing difference under 0.04
+  px. A production Loadout follow-up removed the shared tinted-header's 0.85 rem
+  trailing margin from unified composed-item cards; direct DOM
+  measurement now records 13.195 px above and 13.156 px below the rendered
+  flavor line at both 480 px and 288 px card widths. Standalone Warhammer
+  remains complete and compact. `scripts/check.sh`
+  passes formatting, lint, all 424 public tests across 62 files, every workspace
+  typecheck, the production/PWA build, Chromium and Firefox Letter/A4 print
+  checks, deterministic synthetic content-pack checks, and the query benchmark.
+  The build retains the existing large-chunk advisory.
+- Shared item headers and descriptors now keep slot location out of ordinary
+  magic-item type labels (`Neck Slot Item 6` becomes `Item 6`). Such cards use
+  an Enhancement line followed by Price, Slot, and Rarity; the user-facing
+  descriptor is `Slot`, not `Item Slot`. Standalone and composed magic weapons
+  likewise restore Enhancement as the first descriptor line. Composed shield
+  details project the physical base's Off hand slot instead of the paired
+  enchantment's Arms category. Composed magic armor and shields now use the
+  same unified projection as weapons: physical defensive statistics, category,
+  type, slot, weight, icon, and source are combined with the enchantment's
+  level, enhancement, magical price, rarity, flavor, properties, granted
+  powers, and source. Its compact descriptor rows are Enhancement; Armor bonus,
+  Check, Speed; Category, Type, Slot; and Price, Weight, Rarity. Generic Armor
+  applicability, duplicate Full Text, and storage-boundary subheadings are
+  suppressed. Live corpus checks cover Absence Amulet +3, Acidic Weapon +1,
+  +2 Bloodiron Plate Armor, and Hammer Heavy Shield. The latter two were
+  exercised through the production Shop composition path, and Hammer Heavy
+  Shield was then verified unchanged in Inventory and Loadout. Desktop and
+  327 px mobile measurements have no horizontal overflow. Shield enchantments
+  whose magic-item family is Arms use authored `_IsEnchant: Shield` metadata to
+  offer compatible physical shields in Shop; no display-name inference is
+  involved. The complete public gate passes all 430 tests, typechecks, build,
+  Chromium/Firefox print checks, deterministic content-pack checks, and query
+  benchmark.
+
+## M5.5 selection-chip and background-table checkpoint (2026-09-18)
+
+- The shared large-candidate table keeps a sticky selection summary directly
+  between its filter controls and column headers only while the candidate rows
+  have vertical overflow. A shared DOM measurement
   observes both the scroll viewport and table content, so filtering, disclosure,
   container/viewport resizing, and candidate changes update its visibility;
-  horizontal overflow alone does not show it. The banner renders **No
-  selection**, the selected name, **X (1 of 2)**, or **X and Y** from the existing
-  selected IDs; compact radio/button choices are unchanged.
-- Each selected item name opens its detail card, while a neighboring focus icon
-  is the locate control. Locating preserves the current column sort, clears
-  temporary text and favorites filters, expands the selected type section and
-  any parameterized feat family, then centers and moves keyboard focus to the
-  actual highlighted candidate row. The behavior is implemented once in
-  `CandidateSelectionTable`, so it covers feats, powers, classes,
-  race/background/generic choices, deities, class features, and starting
-  presets wherever they use that shared table.
+  horizontal overflow alone does not show it. It renders **No selection** or one
+  chip per selected item; compact radio/button choices are unchanged.
+- Each chip name opens its detail card and its trailing X unresolves the exact
+  backing choice. The former locate-in-table action and prose **Current
+  selection(s)** wording are removed everywhere `CandidateSelectionTable` is
+  used. Chips now reuse the detail-card leading-icon renderer and visual-language
+  tone helpers: entity-family, authored power-action, and corpus-specific item
+  icons match the associated detail header. Their compact header treatment uses
+  the same soft tone fill and shared card tokens: a 3px full-tone top edge scales
+  the card's 5px accent, the 1px full-tone bottom divider is retained, and 1px
+  neutral side edges replace the former uniform tone box. The centered icon and
+  bold name share the card header's `1.15` line-height with compact padding and
+  gap tokens. The icons are decorative; inspect/remove labels, contrast-safe
+  hover/focus treatment, existing selection limits, and table ordering remain
+  unchanged.
+- Up to six repeated Background choices now share one candidate table. The
+  presentation retains exact evaluator-slot assignment, candidate legality,
+  autosave, undo, and the established selection limit.
 - Column headers remain visible as one sticky, opaque, full-width header group
   rather than independently floating cells. Separate zero-spacing table borders
   remove the top and left compositing seams while preserving shared column
   sizing. The Class table also labels its compact power-source column **Power**.
-- Focused component coverage verifies the empty, single, partial two-slot, and
-  full two-slot wording plus selected-name button semantics. The accessibility
-  contract verifies filter clearing, section expansion, scroll/focus behavior,
+- Focused component coverage verifies empty and multi-chip rendering, shared
+  neutral/power/item icons and tones, detail buttons, removal buttons, and the
+  absence of the locator. The accessibility
+  contract verifies the shared chip treatment, one-table Background structure,
   sticky placement, and preservation of the existing no-checkmark row model.
-  The focused tests and web TypeScript check pass; the full repository check was
-  intentionally not run for this bounded first pass.
+- Focused verification passes all 41 selection-summary render, shared-header
+  style, EntityCard, and accessibility-contract tests. Live browser inspection
+  confirms the 14.40px entity SVG and power-action icon slots remain centered
+  within 0.01px of the bold chip name. The power-action slot now contains an
+  11.20px glyph line box instead of the inherited 16px line box, with a 0.64px
+  logical-block optical correction for the symbol font; its rasterized visual
+  center is within 0.26px of the bold text across three antialiasing thresholds.
+  Ordinary Lucide chip icons and 16.80px detail-header action icons are
+  unchanged. The same check confirms visible 3px keyboard focus outlines and
+  per-tone top and bottom accents with neutral side borders in the dark theme.
+- Verification: `nix develop path:. -c scripts/check.sh` passes formatting,
+  lint, all 413 public tests across 58 files, every workspace TypeScript check,
+  the production/PWA build, Chromium and Firefox Letter/A4 print checks,
+  deterministic synthetic content-pack checks, and the query benchmark. The
+  build retains the existing large-chunk advisory.
 
 ## M5.5 per-level Next navigation checkpoint (2026-09-17)
 
@@ -725,6 +901,8 @@ candidate.
   visible under one primary section while further optional slots reveal through
   **Add another background…**. Her five Skill Training slots render as one
   eight-skill toggle list with a live `5 out of 5` count and adjacent details.
+  The later selection-chip checkpoint above supersedes that progressive
+  Background presentation with one shared table.
   Browser verification exercised optimistic untrain/train, restored the original
   skills through undo, and found no fresh console errors or horizontal overflow
   at 1200 px or 375 px.
@@ -1823,30 +2001,33 @@ The product owner verified the complete interaction and presentation live.
 Focused verification passed 52 tests covering theme descriptions, action icons,
 and detail-card structure.
 
-## Loadout shop-shortcut checkpoint (2026-09-16)
+## Historical loadout shop-shortcut checkpoint (2026-09-16; superseded 2026-09-18)
 
-- Loadout slots offer shop shortcuts that switch to the Shop tab, populate the
-  existing Slot dropdown, reset pagination, and leave filtering, counts, and
-  paging in the ordinary query path. Ring positions share `Ring`; hand
-  positions use the nearest distinct authored values.
+- At this checkpoint, Loadout slots offered shop shortcuts that switched to the
+  Shop tab, populated the existing Slot dropdown, reset pagination, and left
+  filtering, counts, and paging in the ordinary query path. Ring positions
+  shared `Ring`; hand positions used the nearest distinct authored values.
 - `Holy Symbol` follows the recovered legacy shop category: magic records
   contribute it from `Magic Item Type`, while the mundane `Gear` record is
   included by the legacy exact-name exception. Holy symbols retain their
   physical `Off-hand` facet too. Ki Focus and Tattoo already use authored
   `Item Slot` values.
 
-The product owner verified the shortcuts, existing-filter integration,
-pagination, and Holy Symbol results live. All 308 public tests, formatting,
-lint, TypeScript checks, and whitespace checks pass.
+The product owner verified those shortcuts, existing-filter integration,
+pagination, and Holy Symbol results live at that checkpoint. D053 subsequently
+removed the per-slot buttons; the current Loadout leaves shopping to the Shop
+tab. All 308 public tests, formatting, lint, TypeScript checks, and whitespace
+checks passed at the historical checkpoint.
 
 ## Shop text-search submission checkpoint (2026-09-17)
 
 - Shop text entry is held as a draft and reaches the existing catalog query only
   when its accessible form is submitted. Enter and the visible Search button
   both apply the value; submitting an empty value clears the text filter.
-- Submission resets the 200-record page offset. Facets still apply immediately,
-  and tab switches and loadout slot shortcuts retain their existing filtering
-  and pagination behavior.
+- At this checkpoint, submission reset the 200-record page offset. Facets still
+  applied immediately, and tab switches plus the then-present loadout slot
+  shortcuts retained their existing filtering and pagination behavior. D053
+  subsequently removed those shortcuts.
 
 ## Retraining dismissal checkpoint (2026-09-16)
 

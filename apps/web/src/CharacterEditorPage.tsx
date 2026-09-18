@@ -1,8 +1,10 @@
 import {
   createContext,
   Fragment,
+  useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -18,6 +20,13 @@ import {
   publishEvaluationResult,
   selectedCandidateDetailLevels,
 } from "./builder-evaluation-plan";
+import {
+  explicitlyInspectCandidate,
+  firstSelectedCandidateId,
+  initializeCandidateInspection,
+  initialCandidateScrollTop,
+  type CandidateInspectionInitializationState,
+} from "./candidate-table-initialization";
 import { recordLoadDuration } from "./load-performance";
 import {
   CharacterTransaction,
@@ -208,6 +217,48 @@ function evaluationCacheKey(
 const InspectCandidateContext = createContext<
   ((option: InspectedOption | undefined) => void) | undefined
 >(undefined);
+const InitializeCandidateInspectionContext = createContext<
+  ((option: InspectedOption | undefined) => void) | undefined
+>(undefined);
+
+function CandidateInspectionScope({
+  children,
+  onInspect,
+}: {
+  readonly children: ReactNode;
+  readonly onInspect: (option: InspectedOption | undefined) => void;
+}) {
+  const initializationState = useRef<CandidateInspectionInitializationState>({
+    initializationClaimed: false,
+    explicitlyInspected: false,
+  });
+  const inspect = useCallback(
+    (option: InspectedOption | undefined) =>
+      explicitlyInspectCandidate(
+        initializationState.current,
+        option,
+        onInspect,
+      ),
+    [onInspect],
+  );
+  const initialize = useCallback(
+    (option: InspectedOption | undefined) =>
+      initializeCandidateInspection(
+        initializationState.current,
+        option,
+        onInspect,
+      ),
+    [onInspect],
+  );
+
+  return (
+    <InitializeCandidateInspectionContext.Provider value={initialize}>
+      <InspectCandidateContext.Provider value={inspect}>
+        {children}
+      </InspectCandidateContext.Provider>
+    </InitializeCandidateInspectionContext.Provider>
+  );
+}
 
 const candidateReferenceIndexes = new WeakMap<
   ReadonlyMap<string, ContentEntity>,
@@ -901,13 +952,14 @@ function CandidateDetail({
 }) {
   if (candidate === undefined || entity === undefined)
     return (
-      <aside className="candidate-detail candidate-detail-empty">
-        <p className="eyebrow">Option details</p>
-        <h4>Choose an option to inspect it</h4>
-        <p>
-          Move through the selection control with the keyboard or pointer to
-          review normalized content before choosing.
-        </p>
+      <aside
+        aria-labelledby="option-details-heading"
+        className="candidate-detail candidate-detail-empty tone-neutral"
+      >
+        <header>
+          <h4 id="option-details-heading">Option Details</h4>
+        </header>
+        <p>Click an option to inspect it here</p>
       </aside>
     );
 
@@ -1413,6 +1465,7 @@ function BuildPresetPanel({
       <summary>Starting presets</summary>
       <div className="build-presets-content">
         <CandidateSelectionTable
+          key={open ? "open" : "closed"}
           kind="preset"
           candidates={presets.map(({ candidate }) => candidate)}
           featGroups={[]}
@@ -1439,6 +1492,11 @@ function BuildPresetPanel({
             setSelectedPresetId(definitionId);
             setApplyStatus(undefined);
             inspectCandidate?.(selected);
+          }}
+          onRemove={() => {
+            setSelectedPresetId("");
+            setApplyStatus(undefined);
+            inspectCandidate?.(undefined);
           }}
         />
         <div className="build-preset-actions">
@@ -1484,6 +1542,8 @@ function BuildPresetPanel({
 function ReplacementEditor({
   choice,
   evaluation,
+  build,
+  entities,
   buildProvider,
   providerEntity,
   byId,
@@ -1494,6 +1554,8 @@ function ReplacementEditor({
 }: {
   readonly choice: EvaluatedChoice;
   readonly evaluation: EvaluatedCharacter;
+  readonly build: CharacterRecord["build"];
+  readonly entities: readonly ContentEntity[];
   readonly buildProvider: BuildOccurrence;
   readonly providerEntity: ContentEntity | undefined;
   readonly byId: ReadonlyMap<string, ContentEntity>;
@@ -1704,6 +1766,22 @@ function ReplacementEditor({
       selectReplacement(option, nextVisible[0]!);
   };
 
+  const clearReplacement = (): void => {
+    if (selected === undefined) return;
+    const command = unresolveEvaluatedChoiceCommand(
+      build,
+      choice,
+      evaluation,
+      entities,
+      `web:placeholder:${crypto.randomUUID()}`,
+    );
+    if (command === undefined) return;
+    setOptimisticSelectedId("");
+    setPerusedId("");
+    inspectCandidate?.(undefined);
+    onDispatch(command);
+  };
+
   return (
     <div className="choice-selection-layout">
       <div className="choice-editor-fields">
@@ -1745,6 +1823,7 @@ function ReplacementEditor({
               );
               if (candidate !== undefined) selectReplacement(target, candidate);
             }}
+            onRemove={clearReplacement}
           />
         )}
       </div>
@@ -1891,6 +1970,8 @@ function ChoiceEditor({
       <ReplacementEditor
         choice={choice}
         evaluation={evaluation}
+        build={build}
+        entities={entities}
         buildProvider={buildProvider}
         providerEntity={
           provider === undefined
@@ -1995,6 +2076,7 @@ function ChoiceEditor({
                 inspectCandidate?.({ candidate, entity });
             }}
             onToggle={selectDefinition}
+            onRemove={clearSelection}
             onClear={clearSelection}
           />
         ) : groupedPresentation ? (
@@ -2268,6 +2350,7 @@ function CandidateSelectionTable({
   onExpandGroup,
   onInspect,
   onToggle,
+  onRemove,
   onClear,
 }: {
   readonly kind: ChoiceSelectionTableKind;
@@ -2282,8 +2365,10 @@ function CandidateSelectionTable({
   readonly onExpandGroup: (key: string) => void;
   readonly onInspect: (candidate: CandidateDecision) => void;
   readonly onToggle: (definitionId: string) => void;
+  readonly onRemove: (definitionId: string) => void;
   readonly onClear?: () => void;
 }) {
+  const initializeInspection = useContext(InitializeCandidateInspectionContext);
   const [filter, setFilter] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [sort, setSort] = useState<{
@@ -2297,17 +2382,15 @@ function CandidateSelectionTable({
   const [typeExpansion, setTypeExpansion] = useState<
     ReadonlyMap<string, boolean>
   >(new Map());
-  const candidateControls = useRef(new Map<string, HTMLButtonElement>());
   const tableScrollRef = useRef<HTMLDivElement>(null);
   const tableContentRef = useRef<HTMLTableElement>(null);
+  const initialSelectedIdRef = useRef(firstSelectedCandidateId(selectedIds));
+  const initialSelectedRowRef = useRef<HTMLTableRowElement>(null);
+  const initializedRef = useRef(false);
   const tableHasVerticalOverflow = useVerticalOverflow(
     tableScrollRef,
     tableContentRef,
   );
-  const [locateRequest, setLocateRequest] = useState<{
-    readonly definitionId: string;
-    readonly request: number;
-  }>();
   const favoriteIds = useCandidateFavorites();
   const normalizedFilter = filter.trim().toLocaleLowerCase();
   const entityFor = (candidate: CandidateDecision) =>
@@ -2346,10 +2429,43 @@ function CandidateSelectionTable({
     favoriteIds.has(candidate.definitionId.toLocaleLowerCase());
   const candidateLabel = (candidate: CandidateDecision) =>
     entityFor(candidate)?.name ?? candidate.definitionId;
-  const selectedItems = [...selectedIds].map((definitionId) => ({
-    id: definitionId,
-    label: byId.get(definitionId.toLocaleLowerCase())?.name ?? definitionId,
-  }));
+  const selectedItems = [...selectedIds].map((definitionId) => {
+    const entity = byId.get(definitionId.toLocaleLowerCase());
+    return {
+      id: definitionId,
+      label: entity?.name ?? definitionId,
+      ...(entity === undefined ? {} : { entity }),
+    };
+  });
+  useLayoutEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    const initialSelectedId = initialSelectedIdRef.current;
+    const initialCandidate = candidates.find(
+      (candidate) => candidate.definitionId === initialSelectedId,
+    );
+    const initialEntity =
+      initialCandidate === undefined
+        ? undefined
+        : byId.get(initialCandidate.definitionId.toLocaleLowerCase());
+    initializeInspection?.(
+      initialCandidate === undefined || initialEntity === undefined
+        ? undefined
+        : { candidate: initialCandidate, entity: initialEntity },
+    );
+
+    const viewport = tableScrollRef.current;
+    const row = initialSelectedRowRef.current;
+    if (viewport === null || row === null) return;
+    const header = tableContentRef.current?.tHead;
+    viewport.scrollTop = initialCandidateScrollTop({
+      currentScrollTop: viewport.scrollTop,
+      viewportTop: viewport.getBoundingClientRect().top,
+      rowTop: row.getBoundingClientRect().top,
+      stickyHeaderHeight: header?.getBoundingClientRect().height ?? 0,
+    });
+  }, [byId, candidates, initializeInspection]);
   const sortValue = (
     candidate: CandidateDecision,
     column: CandidateSortColumn,
@@ -2468,44 +2584,6 @@ function CandidateSelectionTable({
     (left, right) =>
       left.order - right.order || left.label.localeCompare(right.label),
   );
-  const locateCandidate = (definitionId: string) => {
-    const candidate = candidates.find(
-      (item) => item.definitionId === definitionId,
-    );
-    setFilter("");
-    setFavoritesOnly(false);
-    if (candidate !== undefined) {
-      const section = typeGroupFor(candidate);
-      setTypeExpansion((current) => {
-        const next = new Map(current);
-        next.set(section.key, true);
-        return next;
-      });
-      if (kind === "feat") {
-        const group = featGroups.find((item) =>
-          item.options.some(
-            ({ candidate: option }) => option.definitionId === definitionId,
-          ),
-        );
-        if (group?.parameterLabel !== undefined) onExpandGroup(group.key);
-      }
-    }
-    setLocateRequest((current) => ({
-      definitionId,
-      request: (current?.request ?? 0) + 1,
-    }));
-  };
-  useEffect(() => {
-    if (locateRequest === undefined) return;
-    const control = candidateControls.current.get(
-      locateRequest.definitionId.toLocaleLowerCase(),
-    );
-    if (control === undefined) return;
-    control.scrollIntoView({ block: "center", inline: "nearest" });
-    control.focus({ preventScroll: true });
-    setLocateRequest(undefined);
-  }, [expandedGroupKey, favoritesOnly, filter, locateRequest, typeExpansion]);
-
   const candidateRow = (
     candidate: CandidateDecision,
     label: string,
@@ -2538,6 +2616,11 @@ function CandidateSelectionTable({
       <tr
         className={`${tone}${selected ? " selection-row-selected" : ""}${unavailable ? " selection-row-unavailable" : ""}`}
         key={candidate.definitionId}
+        ref={
+          candidate.definitionId === initialSelectedIdRef.current
+            ? initialSelectedRowRef
+            : undefined
+        }
       >
         <td className={nested ? "selection-table-nested" : undefined}>
           <div className="selection-table-name">
@@ -2559,11 +2642,6 @@ function CandidateSelectionTable({
               }
               aria-pressed={selected}
               className="selection-candidate-toggle"
-              ref={(control) => {
-                const key = candidate.definitionId.toLocaleLowerCase();
-                if (control === null) candidateControls.current.delete(key);
-                else candidateControls.current.set(key, control);
-              }}
               title={
                 selectionBlocked
                   ? "Click for details"
@@ -2698,7 +2776,6 @@ function CandidateSelectionTable({
         </div>
         <SelectionSummary
           items={selectedItems}
-          {...(selectionLimit === undefined ? {} : { selectionLimit })}
           visible={tableHasVerticalOverflow}
           onInspect={(definitionId) => {
             const candidate = candidates.find(
@@ -2706,7 +2783,7 @@ function CandidateSelectionTable({
             );
             if (candidate !== undefined) onInspect(candidate);
           }}
-          onLocate={locateCandidate}
+          onRemove={onRemove}
         />
       </div>
       <div className="selection-table-scroll" ref={tableScrollRef}>
@@ -3344,7 +3421,7 @@ function RepeatedCandidateTableEditor({
   rollbackRevision,
   onDispatch,
 }: {
-  readonly kind: "feat" | "power" | "feature";
+  readonly kind: "feat" | "power" | "feature" | "background";
   readonly choices: readonly EvaluatedChoice[];
   readonly evaluation: EvaluatedCharacter;
   readonly build: CharacterRecord["build"];
@@ -3543,6 +3620,7 @@ function RepeatedCandidateTableEditor({
         if (entity !== undefined) inspectCandidate?.({ candidate, entity });
       }}
       onToggle={toggle}
+      onRemove={toggle}
       onClear={clear}
     />
   );
@@ -3706,7 +3784,6 @@ function BackgroundChoiceGroup({
   entities,
   byId,
   rollbackRevision,
-  requestedChoiceId,
   onDispatch,
 }: {
   readonly choices: readonly EvaluatedChoice[];
@@ -3715,49 +3792,11 @@ function BackgroundChoiceGroup({
   readonly entities: readonly ContentEntity[];
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly rollbackRevision: number;
-  readonly requestedChoiceId: string | undefined;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
-  const inspectCandidate = useContext(InspectCandidateContext);
-  const [pendingRemovalIds, setPendingRemovalIds] = useState<
-    ReadonlySet<string>
-  >(new Set());
   const chosenCount = choices.filter(
-    (choice) =>
-      choice.selectedOccurrenceId !== undefined &&
-      !pendingRemovalIds.has(choice.id),
+    (choice) => choice.selectedOccurrenceId !== undefined,
   ).length;
-  const selectedCount = choices.reduce(
-    (highest, choice, index) =>
-      choice.selectedOccurrenceId === undefined ||
-      pendingRemovalIds.has(choice.id)
-        ? highest
-        : index + 1,
-    1,
-  );
-  const [revealedCount, setRevealedCount] = useState(selectedCount);
-
-  useEffect(() => {
-    const requestedIndex = choices.findIndex(
-      (choice) =>
-        choice.id === requestedChoiceId && !pendingRemovalIds.has(choice.id),
-    );
-    setRevealedCount((current) =>
-      Math.max(current, selectedCount, requestedIndex + 1),
-    );
-  }, [choices, pendingRemovalIds, requestedChoiceId, selectedCount]);
-
-  useEffect(() => {
-    setPendingRemovalIds((current) => {
-      const pending = [...current].filter((choiceId) =>
-        choices.some(
-          (choice) =>
-            choice.id === choiceId && choice.selectedOccurrenceId !== undefined,
-        ),
-      );
-      return pending.length === current.size ? current : new Set(pending);
-    });
-  }, [choices]);
 
   return (
     <section
@@ -3770,72 +3809,17 @@ function BackgroundChoiceGroup({
         <span className="choice-count">{chosenCount} chosen</span>
       </header>
       <div className="grouped-choice-list">
-        {choices.slice(0, revealedCount).map((choice, index) => (
-          <section
-            className="grouped-choice-item"
-            id={index === 0 ? undefined : choiceSectionId(choice.id)}
-            key={choice.id}
-          >
-            <ChoiceEditor
-              choice={choice}
-              evaluation={evaluation}
-              build={build}
-              entities={entities}
-              byId={byId}
-              disabled={false}
-              selectionLabel={
-                index === 0
-                  ? "Background"
-                  : `Additional background ${index + 1}`
-              }
-              rollbackRevision={rollbackRevision}
-              onDispatch={onDispatch}
-            />
-            {index === 0 || !choice.optional ? null : (
-              <button
-                aria-label="Remove background"
-                className="remove-optional-choice icon-only-button"
-                disabled={pendingRemovalIds.has(choice.id)}
-                title="Remove background"
-                type="button"
-                onClick={() => {
-                  if (choice.selectedOccurrenceId !== undefined) {
-                    const command = unresolveEvaluatedChoiceCommand(
-                      build,
-                      choice,
-                      evaluation,
-                      entities,
-                      `web:placeholder:background:${crypto.randomUUID()}`,
-                    );
-                    if (command === undefined) return;
-                    setPendingRemovalIds(
-                      (current) => new Set([...current, choice.id]),
-                    );
-                    inspectCandidate?.(undefined);
-                    onDispatch(command);
-                  }
-                  setRevealedCount((current) =>
-                    index === current - 1 ? Math.max(1, current - 1) : current,
-                  );
-                }}
-              >
-                <Icon name="remove" />
-              </button>
-            )}
-          </section>
-        ))}
+        <RepeatedCandidateTableEditor
+          kind="background"
+          choices={choices}
+          evaluation={evaluation}
+          build={build}
+          entities={entities}
+          byId={byId}
+          rollbackRevision={rollbackRevision}
+          onDispatch={onDispatch}
+        />
       </div>
-      {revealedCount >= choices.length ? null : (
-        <button
-          className="progressive-choice-button"
-          type="button"
-          onClick={() =>
-            setRevealedCount((current) => Math.min(choices.length, current + 1))
-          }
-        >
-          Add another background…
-        </button>
-      )}
     </section>
   );
 }
@@ -4248,6 +4232,7 @@ function CharacterTextField({
 }
 
 function CharacterDetailsEditor({
+  active,
   choices,
   evaluation,
   build,
@@ -4261,6 +4246,7 @@ function CharacterDetailsEditor({
   onLevelChange,
   onDispatch,
 }: {
+  readonly active: boolean;
   readonly choices: readonly EvaluatedChoice[];
   readonly evaluation: EvaluatedCharacter | undefined;
   readonly build: CharacterRecord["build"];
@@ -4391,7 +4377,10 @@ function CharacterDetailsEditor({
                 Rules content is unavailable for gender, alignment, and deity.
               </p>
             ) : (
-              <InspectCandidateContext.Provider value={setInspectedOption}>
+              <CandidateInspectionScope
+                key={active ? "open" : "closed"}
+                onInspect={setInspectedOption}
+              >
                 <div className="compact-detail-list">
                   {choices.map((choice) => {
                     const alignmentLocked =
@@ -4425,7 +4414,7 @@ function CharacterDetailsEditor({
                     );
                   })}
                 </div>
-              </InspectCandidateContext.Provider>
+              </CandidateInspectionScope>
             )}
             <div className="character-detail-fields character-physical-fields">
               {physicalFields.map((field) => (
@@ -5516,7 +5505,6 @@ export function CharacterEditorPage({
           entities={entities}
           byId={byId}
           rollbackRevision={rollbackRevision}
-          requestedChoiceId={selectedChoiceId}
           onDispatch={dispatch}
         />
       ) : null;
@@ -6095,7 +6083,10 @@ export function CharacterEditorPage({
                 </div>
               </div>
               <div className="level-choice-workspace">
-                <InspectCandidateContext.Provider value={setInspectedOption}>
+                <CandidateInspectionScope
+                  key={`${workspaceTab === "build" ? "open" : "closed"}:${selectedLevel}:${activeLevelSection ?? "empty"}`}
+                  onInspect={setInspectedOption}
+                >
                   <div className="level-choice-page">
                     {activeLevelSection === "Retraining" ? (
                       <section
@@ -6240,7 +6231,7 @@ export function CharacterEditorPage({
                       entity={inspectedOption?.entity}
                     />
                   </div>
-                </InspectCandidateContext.Provider>
+                </CandidateInspectionScope>
               </div>
             </div>
           )}
@@ -6249,6 +6240,7 @@ export function CharacterEditorPage({
 
       <div hidden={workspaceTab !== "details"}>
         <CharacterDetailsEditor
+          active={workspaceTab === "details"}
           choices={characterDetailChoices}
           evaluation={planningEvaluation}
           build={build}

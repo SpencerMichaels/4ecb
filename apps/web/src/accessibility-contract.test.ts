@@ -15,6 +15,10 @@ const entityCard = readFileSync(
   new URL("./EntityCard.tsx", import.meta.url),
   "utf8",
 );
+const selectionSummary = readFileSync(
+  new URL("./SelectionSummary.tsx", import.meta.url),
+  "utf8",
+);
 const app = readFileSync(new URL("./App.tsx", import.meta.url), "utf8");
 
 function channel(value: number): number {
@@ -119,10 +123,16 @@ describe("release accessibility contract", () => {
     expect(characterEditor).not.toContain('aria-label="Close level plan"');
     expect(characterEditor).not.toContain('className="builder-secondary"');
 
+    const levelRailButtonRule = styles.match(
+      /\.level-rail-button\s*\{([^}]*)\}/,
+    )?.[1];
     const candidateDetailRule = styles.match(
       /\.candidate-detail\s*\{([^}]*)\}/,
     )?.[1];
     const timelineRule = styles.match(/\.build-overview\s*\{([^}]*)\}/)?.[1];
+    expect(levelRailButtonRule).toContain("display: flex");
+    expect(levelRailButtonRule).not.toContain("flex-direction: column");
+    expect(levelRailButtonRule).toContain("min-height: 1.425rem");
     expect(candidateDetailRule).toBeDefined();
     expect(candidateDetailRule).not.toContain("max-height");
     expect(candidateDetailRule).not.toContain("overflow:");
@@ -267,10 +277,10 @@ describe("release accessibility contract", () => {
       /\.theme-power-card-body\s*\{[^}]*padding: 0 1rem 0\.85rem/,
     );
     expect(styles).toMatch(
-      /\.theme-power-card > summary\s*\{[^}]*background: var\(--tone-soft\)[^}]*border-bottom: 1px solid var\(--tone\)[^}]*color: var\(--text\)/,
+      /\.theme-power-card > summary\s*\{[^}]*background: var\(--tone-soft\)[^}]*border-block-end: var\(--detail-card-header-border-block-end-width\)[^}]*var\(--tone\)[^}]*color: var\(--text\)/,
     );
     expect(styles).toMatch(
-      /\.candidate-detail\[class\*="tone-"\] > header\s*\{[^}]*background: var\(--tone-soft\)[^}]*border-bottom: 1px solid var\(--tone\)[^}]*color: var\(--text\)/,
+      /\.candidate-detail\[class\*="tone-"\] > header\s*\{[^}]*background: var\(--tone-soft\)[^}]*border-block-end: var\(--detail-card-header-border-block-end-width\)[^}]*var\(--tone\)[^}]*color: var\(--text\)/,
     );
     expect(candidateDetails).toContain(
       'isPower ? " top-level-power-card" : ""',
@@ -337,19 +347,24 @@ describe("release accessibility contract", () => {
     expect(entityCard).toContain('className="detail-heading-row"');
     expect(entityCard).toContain("primaryDetailTypeLabel(entity)");
     expect(entityCard).toContain(
-      "<ActionTypeIcon decorative value={actionType} />",
+      "<EntityCardLeadingIcon entity={entity} physicalBase={physicalBase} />",
     );
     expect(entityCard).toContain('contentSpecificValue(entity, "Action Type")');
     expect(entityCard).not.toContain('className="entity-card-attack-type"');
-    expect(entityCard).toContain("itemCardLabel(entity)");
-    expect(entityCard).toContain("itemCardIcon(entity)");
+    expect(entityCard).toContain("itemCardLabel(entity, physicalBase)");
+    expect(entityCard).toContain("itemCardIcon(entity, physicalBase)");
     expect(entityCard).toContain('className="entity-card-descriptors"');
     expect(entityCard).toContain('className="entity-card-rules"');
     expect(styles).toContain(".entity-card-heading-main .action-type-icon,");
     expect(styles).toMatch(
       /\.entity-card-heading-main > \.icon\s*\{[^}]*align-self: baseline[^}]*line-height: inherit/,
     );
-    expect(styles).toMatch(/grid-template-columns: 4\.75rem minmax\(0, 1fr\)/);
+    expect(styles).toMatch(
+      /\.entity-card-rules > div\s*\{[^}]*grid-template-columns: max-content minmax\(0, 1fr\)/s,
+    );
+    expect(styles).toMatch(
+      /\.entity-card-rules dt\s*\{[^}]*overflow-wrap: normal;[^}]*white-space: nowrap;/s,
+    );
     expect(entityCard).not.toContain("<h5>Description</h5>");
     expect(characterEditor).toContain("useContext(HideFlavortextContext)");
     expect(entityCard).toContain(
@@ -364,7 +379,7 @@ describe("release accessibility contract", () => {
     expect(equipmentWorkspace).not.toContain("renderSpecifics");
   });
 
-  it("keeps table selection spatially stable and communicates it without checkmarks", () => {
+  it("keeps table selection spatially stable and exposes removable selection chips", () => {
     const tableSource = characterEditor.slice(
       characterEditor.indexOf("function CandidateSelectionTable"),
       characterEditor.indexOf("function ChoiceFlowSection"),
@@ -374,20 +389,31 @@ describe("release accessibility contract", () => {
     expect(tableSource).toContain("candidate-selection-short");
     expect(tableSource).toContain("defaultCandidateSortFor(kind)");
     expect(tableSource).toContain("<SelectionSummary");
-    expect(tableSource).toContain('setFilter("")');
-    expect(tableSource).toContain("setFavoritesOnly(false)");
-    expect(tableSource).toContain("next.set(section.key, true)");
-    expect(tableSource).toContain("onExpandGroup(group.key)");
-    expect(tableSource).toContain(
-      'control.scrollIntoView({ block: "center", inline: "nearest" })',
-    );
-    expect(tableSource).toContain("control.focus({ preventScroll: true })");
+    expect(tableSource).toContain("onRemove={onRemove}");
+    expect(tableSource).not.toContain("locateCandidate");
+    expect(tableSource).not.toContain("scrollIntoView");
     expect(styles).toMatch(
       /\.selection-table-controls\s*\{[^}]*position: sticky[^}]*top: 0/,
     );
     expect(styles).toMatch(
       /\.selection-summary\s*\{[^}]*background:[^}]*border:[^}]*padding:/,
     );
+    expect(styles).toMatch(
+      /\.selection-summary-item\s*\{[^}]*border-block-end:[^}]*border-block-start:[^}]*border-inline:[^}]*border-radius: 0/,
+    );
+    expect(styles).toMatch(
+      /\.selection-summary-item\s*\{[^}]*background: var\(--tone-soft\)[^}]*border-block-end: var\(--detail-card-header-border-block-end-width\)[^}]*var\(--tone\)[^}]*border-block-start: var\(--detail-card-header-compact-border-block-start-width\)[^}]*var\(--tone\)[^}]*border-inline: var\(--detail-card-header-border-inline\)/,
+    );
+    expect(styles).toMatch(
+      /\.selection-summary-name\s*\{[^}]*font-weight: 700[^}]*line-height: var\(--detail-card-header-line-height\)[^}]*text-decoration: none/,
+    );
+    expect(styles).toMatch(
+      /\.selection-summary-icon\s*\{[^}]*align-items: center[^}]*align-self: center/,
+    );
+    expect(selectionSummary).toContain("EntityCardLeadingIcon");
+    expect(selectionSummary).toContain("entityVisualTone(item.entity)");
+    expect(selectionSummary).toContain('aria-hidden="true"');
+    expect(selectionSummary).toContain("aria-label={`Remove ${item.label}`}");
     expect(tableSource).toContain('sortableHeader("power-source", "Power")');
     expect(tableSource).toContain('sortableHeader("action", "Action")');
     expect(tableSource).toContain('sortableHeader("attack", "Type")');
@@ -440,6 +466,16 @@ describe("release accessibility contract", () => {
     expect(styles).toMatch(
       /\.candidate-selection-short[\s\S]*?\.selection-table-scroll\s*\{[\s\S]*?height: auto/,
     );
+
+    const backgroundSource = characterEditor.slice(
+      characterEditor.indexOf("function BackgroundChoiceGroup"),
+      characterEditor.indexOf("function SkillTrainingEditor"),
+    );
+    expect(backgroundSource).toContain("<RepeatedCandidateTableEditor");
+    expect(backgroundSource).toContain('kind="background"');
+    expect(backgroundSource).not.toContain("<ChoiceEditor");
+    expect(backgroundSource).not.toContain("Add another background");
+    expect(characterEditor).toContain("selectionLimit={choices.length}");
   });
 
   it("uses toggle semantics for clearable compact and ability choices", () => {
@@ -613,16 +649,13 @@ describe("release accessibility contract", () => {
     expect(styles).not.toContain("border-radius: 999px");
   });
 
-  it("routes loadout shop shortcuts through the existing Slot query", () => {
-    expect(equipmentWorkspace).toContain(
-      "const shopSlot = loadoutShopSlotFilter(slotId)",
-    );
-    expect(equipmentWorkspace).toContain("setSlot(shopSlot);");
-    expect(equipmentWorkspace).toContain("setOffset(0);");
-    expect(equipmentWorkspace).toContain('onTabChange("shop");');
-    expect(equipmentWorkspace).not.toContain("slotFilter");
-    expect(equipmentWorkspace).not.toContain("equipment-slot-filter");
-    expect(equipmentWorkspace).not.toContain("shopItemSlotCandidates");
+  it("keeps loadout slots compact and leaves shopping to the Shop tab", () => {
+    expect(equipmentWorkspace).toContain('className="loadout-slot-label"');
+    expect(equipmentWorkspace).not.toContain("loadoutShopSlotFilter");
+    expect(equipmentWorkspace).not.toContain("loadout-slot-shop");
+    expect(equipmentWorkspace).not.toContain("Shop for ${label} items");
+    expect(styles).toContain("grid-template-columns: 7.5rem minmax(0, 18rem)");
+    expect(styles).toContain("max-inline-size: 18rem");
   });
 
   it("submits catalog text search without querying on each keystroke", () => {

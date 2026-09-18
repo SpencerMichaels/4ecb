@@ -151,11 +151,10 @@ application's protected visual assets.
   follow-up choices belong to Companion. The level-1 racial ability bonus
   selector also belongs to Ability Scores, after the base-score controls,
   while the exact evaluator choice remains unchanged.
-- Repeated Background slots use one primary **Choose background** section;
-  already selected extras remain visible and optional empty slots appear one at
-  a time through **Add another background…**. A revealed empty slot can be
-  removed with the same compact X action used for a completed optional
-  background; removing one never clears the required primary background.
+- Repeated Background slots use one **Backgrounds** candidate table for up to
+  six choices. The shared table preserves each exact evaluator slot and its
+  legality while presenting the full selection limit as one multi-select
+  surface.
 - Legacy Build records are starting presets, not persistent mechanical choices.
   Present them immediately after class selection in a collapsed **Starting
   presets** disclosure containing a searchable table and explicit Apply action.
@@ -195,7 +194,26 @@ application's protected visual assets.
   what is shown. The selected row's green highlight is sufficient, so tables do
   not add a redundant checkmark beside its name. Short tables size to their
   actual rows; only larger result sets expand into the available viewport and
-  scroll.
+  scroll. When a tab or pane first opens, its first shared candidate table uses
+  its first existing selection to initialize the adjacent detail pane. Every
+  mounted candidate table independently positions its first selected row at the
+  top of its own viewport when possible, or at least keeps it visible. This is
+  one-time opening behavior: later selections, filters, sorting, and rerenders do
+  not trigger automatic repositioning or replace an option the user explicitly
+  inspected.
+- When a large table scrolls, its sticky selection summary uses one chip per
+  selected item instead of a prose **Current selection(s)** sentence. Clicking
+  the chip name opens the detail card, and its trailing X unselects the exact
+  backing choice. Each chip mirrors that entity's detail-card header: the same
+  shared entity-family, power-action, or item icon leads the bold header-style
+  name. At compact scale, the chip keeps the header's soft tone background,
+  heavier full-tone top edge, thin full-tone bottom divider, and thin neutral
+  side edges rather than a uniform badge border. Its icon and text share one
+  vertically centered line with compact versions of the header padding,
+  line-height, and rhythm. Ordinary entities use the established neutral tone.
+  Icons are decorative; the name and trailing X remain separate labeled
+  controls. There is no locate-in-table action.
+  Selection limits and row order remain unchanged.
 - Class rows show the authored Short Description rather than the quotation-like
   Flavor text, with separate Role and Power Source columns. Legacy Role and
   Power Source fields combine a category with explanatory prose (for example,
@@ -217,6 +235,12 @@ application's protected visual assets.
   relationship by parsing description prose. Conditional and internal grants
   remain engine behavior until the interface can explain their conditions
   without implying that they always apply.
+- A magic weapon owned as a base plus enchantment appears as one item card, not
+  two nested definition cards. Its compact fact band uses deliberate semantic
+  lines with naturally sized inline facts and vertical separators: combat
+  values; construction values; physical/economic values; then properties.
+  Rarity belongs in that band rather than the header. Reserve full-width rule
+  rows for prose, and keep their labels whole.
 - Repeated feat or power slots in one section share a single multi-select table
   and one **X of Y chosen** count. Selected rows remain visible. To keep large
   feat corpora responsive, search always covers the complete candidate set but
@@ -311,11 +335,18 @@ Inventory, Shop, and Rituals & Practices tabs with one shared detail viewer.
 The Shop is a paged query-worker view of exact records; terminal `+N` variants
 may share a presentation family, but filtering and every transaction retain
 the exact content ID. The Loadout assigns exact owned copies to explicit slots,
-while Inventory owns quantities, carried/stored wealth, and legacy-percentage
-sales. Known rituals/formulas/practices and quantity-bearing scrolls remain
-distinct. Spellbook alternates stay in Build. Item-owned configuration remains
-evaluable and recoverable; a later focused pass will move its editor into this
-workspace with a clear link to character-level consequences.
+using two responsive slot stacks with one shared label/dropdown geometry and
+compact dropdown width. Shields use their authored shield/base-item identity to
+occupy Off hand even when a paired magic definition has an Arms magic-item
+classification. Committing a non-empty slot selection inspects that item in the
+shared detail viewer; focusing a populated slot restores its current item. The
+native select remains intact, and transient popup highlighting does not preview
+details because it has no reliable cross-browser event contract. Inventory owns
+quantities, carried/stored wealth, and legacy-percentage sales. Known
+rituals/formulas/practices and quantity-bearing scrolls remain distinct.
+Spellbook alternates stay in Build. Item-owned configuration remains evaluable
+and recoverable; a later focused pass will move its editor into this workspace
+with a clear link to character-level consequences.
 
 ## Validation sequencing
 
