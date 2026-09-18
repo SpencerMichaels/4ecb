@@ -110,6 +110,7 @@ import {
   type OverviewChoicePane,
 } from "./builder-ui";
 import { Icon, type IconName } from "./Icon";
+import { SelectionSummary } from "./SelectionSummary";
 import { ActionTypeIcon } from "./ActionTypeIcon";
 import {
   EmbeddedPowerCard,
@@ -2307,6 +2308,11 @@ function CandidateSelectionTable({
   const [typeExpansion, setTypeExpansion] = useState<
     ReadonlyMap<string, boolean>
   >(new Map());
+  const candidateControls = useRef(new Map<string, HTMLButtonElement>());
+  const [locateRequest, setLocateRequest] = useState<{
+    readonly definitionId: string;
+    readonly request: number;
+  }>();
   const favoriteIds = useCandidateFavorites();
   const normalizedFilter = filter.trim().toLocaleLowerCase();
   const entityFor = (candidate: CandidateDecision) =>
@@ -2345,6 +2351,10 @@ function CandidateSelectionTable({
     favoriteIds.has(candidate.definitionId.toLocaleLowerCase());
   const candidateLabel = (candidate: CandidateDecision) =>
     entityFor(candidate)?.name ?? candidate.definitionId;
+  const selectedItems = [...selectedIds].map((definitionId) => ({
+    id: definitionId,
+    label: byId.get(definitionId.toLocaleLowerCase())?.name ?? definitionId,
+  }));
   const sortValue = (
     candidate: CandidateDecision,
     column: CandidateSortColumn,
@@ -2463,6 +2473,43 @@ function CandidateSelectionTable({
     (left, right) =>
       left.order - right.order || left.label.localeCompare(right.label),
   );
+  const locateCandidate = (definitionId: string) => {
+    const candidate = candidates.find(
+      (item) => item.definitionId === definitionId,
+    );
+    setFilter("");
+    setFavoritesOnly(false);
+    if (candidate !== undefined) {
+      const section = typeGroupFor(candidate);
+      setTypeExpansion((current) => {
+        const next = new Map(current);
+        next.set(section.key, true);
+        return next;
+      });
+      if (kind === "feat") {
+        const group = featGroups.find((item) =>
+          item.options.some(
+            ({ candidate: option }) => option.definitionId === definitionId,
+          ),
+        );
+        if (group?.parameterLabel !== undefined) onExpandGroup(group.key);
+      }
+    }
+    setLocateRequest((current) => ({
+      definitionId,
+      request: (current?.request ?? 0) + 1,
+    }));
+  };
+  useEffect(() => {
+    if (locateRequest === undefined) return;
+    const control = candidateControls.current.get(
+      locateRequest.definitionId.toLocaleLowerCase(),
+    );
+    if (control === undefined) return;
+    control.scrollIntoView({ block: "center", inline: "nearest" });
+    control.focus({ preventScroll: true });
+    setLocateRequest(undefined);
+  }, [expandedGroupKey, favoritesOnly, filter, locateRequest, typeExpansion]);
 
   const candidateRow = (
     candidate: CandidateDecision,
@@ -2517,6 +2564,11 @@ function CandidateSelectionTable({
               }
               aria-pressed={selected}
               className="selection-candidate-toggle"
+              ref={(control) => {
+                const key = candidate.definitionId.toLocaleLowerCase();
+                if (control === null) candidateControls.current.delete(key);
+                else candidateControls.current.set(key, control);
+              }}
               title={
                 selectionBlocked
                   ? "Click for details"
@@ -2615,36 +2667,49 @@ function CandidateSelectionTable({
     <div
       className={`candidate-selection-table candidate-selection-${kind}${totalRows <= 6 ? " candidate-selection-short" : ""}`}
     >
-      <div className="selection-table-toolbar">
-        <label>
-          <span className="visually-hidden">
-            Filter {candidateTableNoun(kind, true)}
-          </span>
-          <input
-            placeholder={`Filter ${candidateTableNoun(kind, true)}`}
-            type="search"
-            value={filter}
-            onChange={(event) => setFilter(event.currentTarget.value)}
-          />
-        </label>
-        {onClear === undefined ? null : (
+      <div className="selection-table-controls">
+        <div className="selection-table-toolbar">
+          <label>
+            <span className="visually-hidden">
+              Filter {candidateTableNoun(kind, true)}
+            </span>
+            <input
+              placeholder={`Filter ${candidateTableNoun(kind, true)}`}
+              type="search"
+              value={filter}
+              onChange={(event) => setFilter(event.currentTarget.value)}
+            />
+          </label>
+          {onClear === undefined ? null : (
+            <button
+              disabled={disabled || selectedIds.size === 0}
+              type="button"
+              onClick={onClear}
+            >
+              Clear
+            </button>
+          )}
           <button
-            disabled={disabled || selectedIds.size === 0}
+            aria-pressed={favoritesOnly}
+            className="selection-favorites-filter"
             type="button"
-            onClick={onClear}
+            onClick={() => setFavoritesOnly((current) => !current)}
           >
-            Clear
+            <Icon name="favorite" /> Favorites
           </button>
-        )}
-        <button
-          aria-pressed={favoritesOnly}
-          className="selection-favorites-filter"
-          type="button"
-          onClick={() => setFavoritesOnly((current) => !current)}
-        >
-          <Icon name="favorite" /> Favorites
-        </button>
-        <span className="selection-table-count">{totalRows} shown</span>
+          <span className="selection-table-count">{totalRows} shown</span>
+        </div>
+        <SelectionSummary
+          items={selectedItems}
+          {...(selectionLimit === undefined ? {} : { selectionLimit })}
+          onInspect={(definitionId) => {
+            const candidate = candidates.find(
+              (item) => item.definitionId === definitionId,
+            );
+            if (candidate !== undefined) onInspect(candidate);
+          }}
+          onLocate={locateCandidate}
+        />
       </div>
       <div className="selection-table-scroll">
         <table>
@@ -2684,7 +2749,7 @@ function CandidateSelectionTable({
               ) : kind === "class" ? (
                 <>
                   {sortableHeader("role", "Role")}
-                  {sortableHeader("power-source", "Power Source")}
+                  {sortableHeader("power-source", "Power")}
                   {sortableHeader("summary", "Description")}
                 </>
               ) : kind === "background" ? (

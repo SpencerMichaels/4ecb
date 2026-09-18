@@ -2576,6 +2576,82 @@ textarea {
   min-width: 0;
 }
 
+.selection-table-controls {
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.selection-summary {
+  align-items: baseline;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  border: 1px solid var(--border-strong);
+  border-bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  gap: 0 0.25rem;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.65rem;
+}
+
+.selection-summary-empty {
+  background: var(--surface-raised);
+  color: var(--muted);
+}
+
+.selection-summary-label {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  margin-right: 0.35rem;
+  text-transform: uppercase;
+}
+
+.selection-summary button {
+  background: transparent;
+  border: 0;
+  color: var(--accent);
+  font: inherit;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+}
+
+.selection-summary-item {
+  align-items: baseline;
+  display: inline-flex;
+}
+
+.selection-summary-name {
+  text-underline-offset: 0.16em;
+}
+
+.selection-summary-locate {
+  align-items: center;
+  align-self: center;
+  display: inline-flex;
+  margin-left: 0.4rem;
+  text-decoration: none !important;
+}
+
+.selection-summary-locate .icon {
+  height: 0.85rem;
+  width: 0.85rem;
+}
+
+.selection-summary button:hover,
+.selection-summary button:focus-visible {
+  color: var(--accent-strong);
+}
+
+.selection-summary button:not(:disabled):hover {
+  border-color: transparent;
+  box-shadow: none;
+}
+
 .selection-table-toolbar {
   align-items: center;
   display: flex;
@@ -2600,16 +2676,25 @@ textarea {
 
 .selection-table-scroll {
   border: 1px solid var(--border);
+  border-top: 0;
   max-height: 30rem;
   overflow: auto;
 }
 
 .selection-table-scroll table {
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 0.78rem;
   min-width: 34rem;
   table-layout: auto;
   width: 100%;
+}
+
+.selection-table-scroll thead {
+  background: var(--legacy-neutral);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .selection-table-scroll th,
@@ -2621,13 +2706,10 @@ textarea {
 }
 
 .selection-table-scroll thead th {
-  background: var(--legacy-neutral);
+  background: inherit;
   font-size: 0.72rem;
   letter-spacing: 0.035em;
-  position: sticky;
   text-transform: uppercase;
-  top: 0;
-  z-index: 1;
 }
 
 .selection-sort-button {

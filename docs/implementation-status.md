@@ -41,6 +41,31 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## M5.5 candidate-selection locator checkpoint (2026-09-17)
+
+- The shared large-candidate table now keeps a sticky, tinted **Current
+  selection** banner directly between its filter controls and column headers.
+  It renders **No selection**, the selected name, **X (1 of 2)**, or **X and Y**
+  from the existing selected IDs; compact radio/button choices are unchanged.
+- Each selected item name opens its detail card, while a neighboring focus icon
+  is the locate control. Locating preserves the current column sort, clears
+  temporary text and favorites filters, expands the selected type section and
+  any parameterized feat family, then centers and moves keyboard focus to the
+  actual highlighted candidate row. The behavior is implemented once in
+  `CandidateSelectionTable`, so it covers feats, powers, classes,
+  race/background/generic choices, deities, class features, and starting
+  presets wherever they use that shared table.
+- Column headers remain visible as one sticky, opaque, full-width header group
+  rather than independently floating cells. Separate zero-spacing table borders
+  remove the top and left compositing seams while preserving shared column
+  sizing. The Class table also labels its compact power-source column **Power**.
+- Focused component coverage verifies the empty, single, partial two-slot, and
+  full two-slot wording plus selected-name button semantics. The accessibility
+  contract verifies filter clearing, section expansion, scroll/focus behavior,
+  sticky placement, and preservation of the existing no-checkmark row model.
+  The focused tests and web TypeScript check pass; the full repository check was
+  intentionally not run for this bounded first pass.
+
 ## M5.5 per-level Next navigation checkpoint (2026-09-17)
 
 - Every mounted per-level category pane now ends with a bottom-right **Next**

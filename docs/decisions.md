@@ -683,6 +683,15 @@ activating the current sort header reverses its direction. Missing values remain
 last in either direction. Selection changes only the row highlight and never
 promotes a row or adds a checkmark beside its name. Tables with six or fewer visible rows size
 to their content, while larger sets consume the available viewport and scroll.
+Every shared candidate table keeps a sticky, tinted **Current selection** banner
+between its controls and column headers. Empty tables say **No selection**;
+single-slot tables show the selected name; and two-slot tables show **X (1 of 2)** or **X and Y**.
+Each selected name opens that option's detail card. A neighboring focus icon is
+the locate control: it preserves the current sort, clears temporary
+text/favorites filters that hide the row, expands its type and parameter-family
+sections, centers the actual highlighted candidate row, and moves keyboard
+focus there. This behavior belongs to the shared table shell and does not apply
+to compact radio/button choices.
 Deities show Name and authored Alignment. Class-feature rows use authored Short
 Description where available and a concise description fallback otherwise.
 Character details requests full candidate data for its owning choice levels

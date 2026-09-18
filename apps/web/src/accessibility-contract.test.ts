@@ -357,6 +357,28 @@ describe("release accessibility contract", () => {
     expect(tableSource).not.toContain('name="check"');
     expect(tableSource).toContain("candidate-selection-short");
     expect(tableSource).toContain("defaultCandidateSortFor(kind)");
+    expect(tableSource).toContain("<SelectionSummary");
+    expect(tableSource).toContain('setFilter("")');
+    expect(tableSource).toContain("setFavoritesOnly(false)");
+    expect(tableSource).toContain("next.set(section.key, true)");
+    expect(tableSource).toContain("onExpandGroup(group.key)");
+    expect(tableSource).toContain(
+      'control.scrollIntoView({ block: "center", inline: "nearest" })',
+    );
+    expect(tableSource).toContain("control.focus({ preventScroll: true })");
+    expect(styles).toMatch(
+      /\.selection-table-controls\s*\{[^}]*position: sticky[^}]*top: 0/,
+    );
+    expect(styles).toMatch(
+      /\.selection-summary\s*\{[^}]*background:[^}]*border:[^}]*padding:/,
+    );
+    expect(tableSource).toContain('sortableHeader("power-source", "Power")');
+    expect(styles).toMatch(
+      /\.selection-table-scroll thead\s*\{[^}]*background: var\(--legacy-neutral\)[^}]*position: sticky[^}]*top: 0/,
+    );
+    expect(styles).toMatch(
+      /\.selection-table-scroll table\s*\{[^}]*border-collapse: separate[^}]*border-spacing: 0/,
+    );
     expect(characterEditor).toContain(
       '!["description", "short description"].includes(normalizedLabel)',
     );
