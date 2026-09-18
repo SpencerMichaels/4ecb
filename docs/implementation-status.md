@@ -1986,3 +1986,40 @@ pass.
   refinement. The `scripts/check.sh` wrapper still stops at its initial gate on
   the pre-existing `apps/web/src/equipment-ui.test.ts` formatting issue recorded
   above; every file changed by this checkpoint is Prettier-clean.
+
+## Class deity-choice parity checkpoint (2026-09-17)
+
+- The evaluator now reproduces the recovered native `ShouldChooseDeity`
+  predicate from selected Class and Hybrid Class metadata. A deity is required
+  when `_PARSED_CLASS_FEATURE` or `Hybrid Talent Options` contains `Channel
+Divinity`, except for the native function's explicit, case-insensitive
+  `Warpriest` exclusion.
+- In the complete local corpus this covers Cleric, Paladin, Invoker, Avenger,
+  Hybrid Cleric, Hybrid Paladin, Hybrid Invoker, and Hybrid Avenger. The rule is
+  metadata-driven rather than hard-coded to those eight names, preserving the
+  recovered behavior.
+- Covered builds reuse the existing level-1 Deity choice below Starting Presets
+  in the Class pane. The same occurrence remains editable in Character details;
+  Class completion, Next-button gating, unresolved counts, and level-rail state
+  treat it as required. Changing to an uncovered class makes the choice optional
+  without deleting an existing deity selection.
+- The ignored merged corpus distinguishes deity compatibility from identity.
+  Cleric says the deity must be compatible with the character alignment and
+  Avenger has no exact-alignment rule. Paladin says the alignment must be
+  identical to the patron deity's, while Invoker says it must match. The
+  `_BaseClass` links carry only the latter two rules to Hybrid Paladin and
+  Hybrid Invoker. Therefore the exact synchronization set is Paladin, Invoker,
+  Hybrid Paladin, and Hybrid Invoker; Cleric, Avenger, and their hybrids remain
+  editable, and Warpriest remains excluded from `ShouldChooseDeity` entirely.
+- For that exact set, choosing or changing a deity automatically saves the
+  matching Alignment occurrence. Character details disables the Alignment
+  control, places a lock icon before the selected alignment, suppresses its
+  normal hover affordance, and explains the active class, deity, and alignment.
+  Moving to a nonmatching class removes the constraint without deleting the
+  saved choice, so the ordinary Alignment control becomes editable again.
+- Focused rules-engine and builder tests pass 121 tests, and the full workspace
+  TypeScript check passes. Live browser verification with a Paladin confirms
+  the Deity table follows Starting Presets, selecting there updates Character
+  details, Avandra saves and locks Good with the explanatory note, and changing
+  to Fighter hides the Class copy and unlocks Alignment without clearing either
+  saved selection.

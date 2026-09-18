@@ -72,6 +72,138 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it("makes the shared deity choice required for covered classes and hybrids", () => {
+    const deityRule = rule("select", { type: "Deity", optional: "true" }, 0);
+    const evaluateFor = (selectedClass: ContentEntity) =>
+      evaluateCharacter(
+        {
+          level: 1,
+          baseAbilities: {},
+          occurrences: [
+            rootOccurrence,
+            {
+              id: "selected-class",
+              definitionId: selectedClass.id,
+              acquiredLevel: 1,
+              kind: "choice",
+            },
+          ],
+          inventory: [],
+        },
+        [
+          entity("ROOT", "1", "Level", { rules: [deityRule] }),
+          entity("DEITY", "Synthetic Deity", "Deity"),
+          selectedClass,
+        ],
+      );
+
+    const covered = evaluateFor(
+      entity("COVERED", "Synthetic Divine Class", "Class", {
+        specifics: { _PARSED_CLASS_FEATURE: "Channel Divinity, Healing" },
+      }),
+    );
+    const hybrid = evaluateFor(
+      entity("HYBRID", "Synthetic Divine Hybrid", "Hybrid Class", {
+        specifics: {
+          "Hybrid Talent Options": "Armor, Channel Divinity (Hybrid).",
+        },
+      }),
+    );
+
+    expect(covered.choices[0]).toMatchObject({
+      type: "Deity",
+      optional: false,
+    });
+    expect(hybrid.choices[0]).toMatchObject({
+      type: "Deity",
+      optional: false,
+    });
+    expect(covered.complete).toBe(false);
+    expect(covered.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "choice.required" }),
+    );
+  });
+
+  it("keeps deity optional for uncovered and excluded classes", () => {
+    const evaluateFor = (selectedClass: ContentEntity) =>
+      evaluateCharacter(
+        {
+          level: 1,
+          baseAbilities: {},
+          occurrences: [
+            rootOccurrence,
+            {
+              id: "selected-class",
+              definitionId: selectedClass.id,
+              acquiredLevel: 1,
+              kind: "choice",
+            },
+          ],
+          inventory: [],
+        },
+        [
+          entity("ROOT", "1", "Level", {
+            rules: [rule("select", { type: "Deity", optional: "true" }, 0)],
+          }),
+          entity("DEITY", "Synthetic Deity", "Deity"),
+          selectedClass,
+        ],
+      );
+
+    expect(
+      evaluateFor(entity("ORDINARY", "Ordinary Class", "Class")).choices[0],
+    ).toMatchObject({ optional: true });
+    expect(
+      evaluateFor(
+        entity("WARPRIEST", "Warpriest", "Class", {
+          specifics: { _PARSED_CLASS_FEATURE: "Channel Divinity Powers" },
+        }),
+      ).choices[0],
+    ).toMatchObject({ optional: true });
+  });
+
+  it("does not clear a selected deity when class coverage becomes optional", () => {
+    const definitions = [
+      entity("ROOT", "1", "Level", {
+        rules: [rule("select", { type: "Deity", optional: "true" }, 0)],
+      }),
+      entity("DEITY", "Synthetic Deity", "Deity"),
+      entity("ORDINARY", "Ordinary Class", "Class"),
+    ];
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "selected-class",
+            definitionId: "ORDINARY",
+            acquiredLevel: 1,
+            kind: "choice",
+          },
+          {
+            id: "selected-deity",
+            definitionId: "DEITY",
+            acquiredLevel: 1,
+            parentId: "root",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+        ],
+        inventory: [],
+      },
+      definitions,
+    );
+
+    expect(result.choices[0]).toMatchObject({
+      optional: true,
+      selectedOccurrenceId: "selected-deity",
+    });
+    expect(result.occurrences.map(({ id }) => id)).toContain("selected-deity");
+  });
+
   it("separates source entitlement, rules legality, active membership, and provider ownership", () => {
     const result = evaluateCharacter(
       {

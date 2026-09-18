@@ -30,6 +30,7 @@ import {
   contextualChoiceName,
   choiceSelectionTableKind,
   choiceTableSummary,
+  deityAlignmentConstraint,
   deityTableDescription,
   choicePresentationLabel,
   contentSpecificValue,
@@ -51,6 +52,7 @@ import {
   isCandidateSelectable,
   isCandidateVisible,
   isCharacterDetailChoice,
+  isRequiredClassDeityChoice,
   isBuildPresetChoice,
   isAbilityIncreaseChoiceType,
   isCompanionChoiceType,
@@ -1454,6 +1456,93 @@ describe("builder planning UI", () => {
     } as EvaluatedCharacter["choices"][number];
     expect(choiceSectionComplete([])).toBe(true);
     expect(choiceSectionComplete([optional])).toBe(true);
+  });
+
+  it("promotes only a required level-1 deity into the Class tab gate", () => {
+    const deity = {
+      id: "deity",
+      level: 1,
+      type: "Deity",
+      optional: false,
+    } as EvaluatedCharacter["choices"][number];
+    expect(isRequiredClassDeityChoice(deity)).toBe(true);
+    expect(choiceSectionComplete([deity])).toBe(false);
+    expect(isRequiredClassDeityChoice({ ...deity, optional: true })).toBe(
+      false,
+    );
+    expect(isRequiredClassDeityChoice({ ...deity, level: 2 })).toBe(false);
+    expect(isRequiredClassDeityChoice({ ...deity, type: "Alignment" })).toBe(
+      false,
+    );
+  });
+
+  it("constrains only exact-match divine classes to the selected deity alignment", () => {
+    const definition = (
+      id: string,
+      name: string,
+      type: string,
+      specifics: Readonly<Record<string, string>> = {},
+    ): ContentEntity => ({
+      ...level(1),
+      id,
+      name,
+      type,
+      specifics: Object.entries(specifics).map(([field, value], ordinal) => ({
+        name: field,
+        value,
+        extraAttributes: [],
+        ordinal,
+      })),
+    });
+    const paladin = definition("PALADIN", "Paladin", "Class", {
+      _PARSED_CLASS_FEATURE: "Channel Divinity",
+      Supplemental:
+        "You must choose an alignment identical to the alignment of your patron deity.",
+    });
+    const cleric = definition("CLERIC", "Cleric", "Class", {
+      _PARSED_CLASS_FEATURE: "Channel Divinity",
+      Supplemental: "You must choose a deity compatible with your alignment.",
+    });
+    const deity = definition("PELOR", "Pelor", "Deity", {
+      Alignment: "Good",
+    });
+    const good = definition("GOOD", "Good", "Alignment");
+    const unaligned = definition("UNALIGNED", "Unaligned", "Alignment");
+    const evaluationFor = (selectedClass: ContentEntity) =>
+      ({
+        level: 1,
+        occurrences: [
+          { id: "class", definitionId: selectedClass.id },
+          { id: "deity", definitionId: deity.id },
+          { id: "alignment", definitionId: unaligned.id },
+        ],
+        choices: [
+          {
+            id: "deity-choice",
+            type: "Deity",
+            selectedOccurrenceId: "deity",
+          },
+          {
+            id: "alignment-choice",
+            type: "Alignment",
+            selectedOccurrenceId: "alignment",
+            candidates: [candidate(good.id), candidate(unaligned.id)],
+          },
+        ],
+      }) as unknown as EvaluatedCharacter;
+    const entities = [paladin, cleric, deity, good, unaligned];
+
+    expect(
+      deityAlignmentConstraint(evaluationFor(paladin), entities),
+    ).toMatchObject({
+      classNames: ["Paladin"],
+      deityName: "Pelor",
+      alignmentName: "Good",
+      alignmentCandidate: { definitionId: "GOOD" },
+    });
+    expect(
+      deityAlignmentConstraint(evaluationFor(cleric), entities),
+    ).toBeUndefined();
   });
 
   it("advances to the next section within a level", () => {

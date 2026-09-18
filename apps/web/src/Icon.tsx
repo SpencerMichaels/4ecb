@@ -33,6 +33,7 @@ import {
   KeyRound,
   Layers3,
   LayoutGrid,
+  Lock,
   Medal,
   Minus,
   Orbit,
@@ -111,6 +112,7 @@ export type IconName =
   | "key-round"
   | "layers"
   | "level"
+  | "lock"
   | "medal"
   | "orbit"
   | "package-open"
@@ -180,6 +182,7 @@ const icons: Record<IconName, LucideIcon> = {
   "key-round": KeyRound,
   layers: Layers3,
   level: ChevronsUp,
+  lock: Lock,
   medal: Medal,
   orbit: Orbit,
   "package-open": PackageOpen,

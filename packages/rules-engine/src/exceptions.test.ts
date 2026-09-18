@@ -7,7 +7,9 @@ import {
   EXCEPTION_IDS,
   isCustomChoiceException,
   isUniversalSkill,
+  matchingDeityAlignmentClasses,
   seekerException,
+  shouldChooseDeity,
   versatileMasterException,
 } from "./exceptions";
 
@@ -76,4 +78,115 @@ describe("named compatibility exceptions", () => {
   });
   it("does not treat ordinary official choices as custom bypasses", () =>
     expect(isCustomChoiceException(power)).toBe(false));
+
+  it("requires a deity from either recovered class metadata field", () => {
+    const ordinary = entity("ORDINARY", "Ordinary", "Class");
+    const parsedClass = entity("DIVINE", "Divine", "Class", [
+      ["_PARSED_CLASS_FEATURE", "Armor, CHANNEL DIVINITY, Healing"],
+    ]);
+    const hybridClass = entity("HYBRID", "Hybrid Divine", "Hybrid Class", [
+      ["Hybrid Talent Options", "Armor, Channel Divinity (Hybrid Divine)."],
+    ]);
+
+    expect(shouldChooseDeity([ordinary])).toBe(false);
+    expect(shouldChooseDeity([ordinary, parsedClass])).toBe(true);
+    expect(shouldChooseDeity([hybridClass])).toBe(true);
+  });
+
+  it("preserves the exact case-insensitive Warpriest exclusion", () => {
+    expect(
+      shouldChooseDeity([
+        entity("EXCLUDED", "wArPrIeSt", "Class", [
+          ["_PARSED_CLASS_FEATURE", "Channel Divinity Powers"],
+        ]),
+      ]),
+    ).toBe(false);
+  });
+
+  it("finds exact deity-alignment classes and follows hybrid base-class links", () => {
+    const paladin = entity("PALADIN", "Paladin", "Class", [
+      ["_PARSED_CLASS_FEATURE", "Channel Divinity"],
+      [
+        "Supplemental",
+        "You must choose an alignment identical to the alignment of your patron deity.",
+      ],
+    ]);
+    const invoker = entity("INVOKER", "Invoker", "Class", [
+      ["_PARSED_CLASS_FEATURE", "Channel Divinity"],
+      [
+        "Supplemental",
+        "Because of your divine bond, your alignment must match your deity’s.",
+      ],
+    ]);
+    const cleric = entity("CLERIC", "Cleric", "Class", [
+      ["_PARSED_CLASS_FEATURE", "Channel Divinity"],
+      [
+        "Supplemental",
+        "You must choose a deity compatible with your alignment.",
+      ],
+    ]);
+    const avenger = entity("AVENGER", "Avenger", "Class", [
+      ["_PARSED_CLASS_FEATURE", "Channel Divinity"],
+      ["Supplemental", "An avenger might serve any deity."],
+    ]);
+    const hybridPaladin = entity(
+      "HYBRID-PALADIN",
+      "Hybrid Paladin",
+      "Hybrid Class",
+      [
+        ["Hybrid Talent Options", "Channel Divinity (Hybrid Paladin)"],
+        ["_BaseClass", paladin.id],
+      ],
+    );
+    const hybridInvoker = entity(
+      "HYBRID-INVOKER",
+      "Hybrid Invoker",
+      "Hybrid Class",
+      [
+        ["Hybrid Talent Options", "Channel Divinity (Hybrid Invoker)"],
+        ["_BaseClass", invoker.id],
+      ],
+    );
+    const hybridCleric = entity(
+      "HYBRID-CLERIC",
+      "Hybrid Cleric",
+      "Hybrid Class",
+      [
+        ["Hybrid Talent Options", "Channel Divinity (Hybrid Cleric)"],
+        ["_BaseClass", cleric.id],
+      ],
+    );
+    const hybridAvenger = entity(
+      "HYBRID-AVENGER",
+      "Hybrid Avenger",
+      "Hybrid Class",
+      [
+        ["Hybrid Talent Options", "Channel Divinity (Hybrid Avenger)"],
+        ["_BaseClass", avenger.id],
+      ],
+    );
+    const definitions = [
+      paladin,
+      invoker,
+      cleric,
+      avenger,
+      hybridPaladin,
+      hybridInvoker,
+      hybridCleric,
+      hybridAvenger,
+    ];
+
+    expect(
+      matchingDeityAlignmentClasses(definitions, definitions).map(
+        ({ name }) => name,
+      ),
+    ).toEqual(["Paladin", "Invoker", "Hybrid Paladin", "Hybrid Invoker"]);
+  });
+
+  it("does not infer a hybrid alignment rule without an authored base link", () => {
+    const hybrid = entity("HYBRID", "Hybrid Paladin", "Hybrid Class", [
+      ["Hybrid Talent Options", "Channel Divinity (Hybrid Paladin)"],
+    ]);
+    expect(matchingDeityAlignmentClasses([hybrid], [hybrid])).toEqual([]);
+  });
 });

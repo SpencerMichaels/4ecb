@@ -63,6 +63,7 @@ import {
   choiceSelectionTableKind,
   choiceTableSummary,
   deityTableDescription,
+  deityAlignmentConstraint,
   choicePresentationLabel,
   choiceForRepeatedCandidate,
   choicesAtLevel,
@@ -85,6 +86,7 @@ import {
   isAbilityIncreaseChoiceType,
   isCompanionChoiceType,
   isOptionalRetrainingChoice,
+  isRequiredClassDeityChoice,
   isUnresolvedChoice,
   jumpToLevelCommand,
   levelChoiceProgress,
@@ -1274,6 +1276,7 @@ function CompactChoiceButtons({
   label,
   options,
   keyAbilities = [],
+  selectedIcon,
   selectedId,
   disabled,
   onChoose,
@@ -1288,6 +1291,7 @@ function CompactChoiceButtons({
     readonly unavailableReason?: string;
   }[];
   readonly keyAbilities?: readonly string[];
+  readonly selectedIcon?: IconName;
   readonly selectedId: string;
   readonly disabled: boolean;
   readonly onChoose: (id: string) => void;
@@ -1305,7 +1309,7 @@ function CompactChoiceButtons({
         {options.map((option) => {
           const selected = option.id === selectedId;
           const blocked =
-            (disabled || !option.selectable) && !(clearable && selected);
+            disabled || (!option.selectable && !(clearable && selected));
           const keyAbility = keyAbilities.some(
             (ability) =>
               ability.toLocaleLowerCase() === option.label.toLocaleLowerCase(),
@@ -1324,7 +1328,7 @@ function CompactChoiceButtons({
               title={option.unavailableReason}
               type="button"
               onClick={() => {
-                if (selected && clearable) {
+                if (selected && clearable && !disabled) {
                   onClear();
                   return;
                 }
@@ -1336,6 +1340,9 @@ function CompactChoiceButtons({
                 className="compact-choice-label"
                 marked={keyAbility}
               >
+                {selected && selectedIcon !== undefined ? (
+                  <Icon name={selectedIcon} />
+                ) : null}
                 {option.label}
               </KeyAbilityName>
               {option.unavailableReason === undefined ? null : (
@@ -1764,6 +1771,7 @@ function ChoiceEditor({
   hideSelectionLabel = false,
   selectionLabel = "Selection",
   keyAbilities = [],
+  selectedIcon,
   replacementTargetType,
   rollbackRevision,
   onOptimisticSelectionChange,
@@ -1779,6 +1787,7 @@ function ChoiceEditor({
   readonly hideSelectionLabel?: boolean;
   readonly selectionLabel?: string;
   readonly keyAbilities?: readonly string[];
+  readonly selectedIcon?: IconName;
   readonly replacementTargetType?: string;
   readonly rollbackRevision: number;
   readonly onOptimisticSelectionChange?: (
@@ -2005,6 +2014,7 @@ function ChoiceEditor({
                 selectable: true,
               }))}
               keyAbilities={keyAbilities}
+              {...(selectedIcon === undefined ? {} : { selectedIcon })}
               selectedId={displayedGroupKey}
               disabled={editorDisabled}
               onClear={clearSelection}
@@ -2040,6 +2050,7 @@ function ChoiceEditor({
                       }),
                 }))}
                 keyAbilities={keyAbilities}
+                {...(selectedIcon === undefined ? {} : { selectedIcon })}
                 selectedId={
                   displayedGroup.options.some(
                     ({ candidate }) =>
@@ -2077,6 +2088,7 @@ function ChoiceEditor({
                 : { unavailableReason: candidateReason(candidate.reasons) }),
             }))}
             keyAbilities={keyAbilities}
+            {...(selectedIcon === undefined ? {} : { selectedIcon })}
             selectedId={selectedValue}
             disabled={editorDisabled}
             onClear={clearSelection}
@@ -4202,6 +4214,7 @@ function CharacterDetailsEditor({
   byId,
   rollbackRevision,
   effectiveLevel,
+  forcedAlignment,
   onLevelChange,
   onDispatch,
 }: {
@@ -4214,6 +4227,13 @@ function CharacterDetailsEditor({
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly rollbackRevision: number;
   readonly effectiveLevel: number;
+  readonly forcedAlignment:
+    | {
+        readonly classNames: readonly string[];
+        readonly deityName: string;
+        readonly alignmentName: string;
+      }
+    | undefined;
   readonly onLevelChange: (level: number) => void;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
@@ -4330,21 +4350,37 @@ function CharacterDetailsEditor({
             ) : (
               <InspectCandidateContext.Provider value={setInspectedOption}>
                 <div className="compact-detail-list">
-                  {choices.map((choice) => (
-                    <div className="compact-detail-row" key={choice.id}>
-                      <ChoiceEditor
-                        choice={choice}
-                        evaluation={evaluation}
-                        build={build}
-                        entities={entities}
-                        byId={byId}
-                        disabled={false}
-                        selectionLabel={choice.type}
-                        rollbackRevision={rollbackRevision}
-                        onDispatch={onDispatch}
-                      />
-                    </div>
-                  ))}
+                  {choices.map((choice) => {
+                    const alignmentLocked =
+                      forcedAlignment !== undefined &&
+                      choice.type.trim().toLocaleLowerCase() === "alignment";
+                    return (
+                      <div className="compact-detail-row" key={choice.id}>
+                        <ChoiceEditor
+                          choice={choice}
+                          evaluation={evaluation}
+                          build={build}
+                          entities={entities}
+                          byId={byId}
+                          disabled={alignmentLocked}
+                          {...(alignmentLocked
+                            ? { selectedIcon: "lock" as const }
+                            : {})}
+                          selectionLabel={choice.type}
+                          rollbackRevision={rollbackRevision}
+                          onDispatch={onDispatch}
+                        />
+                        {alignmentLocked ? (
+                          <p className="field-help deity-alignment-note">
+                            As a {forcedAlignment.classNames.join(" and ")},
+                            your alignment must match your deity's.{" "}
+                            {forcedAlignment.deityName} is{" "}
+                            {forcedAlignment.alignmentName}.
+                          </p>
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </div>
               </InspectCandidateContext.Provider>
             )}
@@ -4449,6 +4485,7 @@ export function CharacterEditorPage({
   const evaluationCache = useRef(new Map<string, EvaluatedCharacter>());
   const characterLoadStartedAt = useRef(performance.now());
   const firstEvaluationRecorded = useRef(false);
+  const pendingForcedAlignmentKey = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
@@ -4760,6 +4797,17 @@ export function CharacterEditorPage({
       ).flatMap(({ choices }) => choices),
     [planningEvaluation],
   );
+  const requiredClassDeityChoices = useMemo(
+    () => levelChoices.filter(isRequiredClassDeityChoice),
+    [levelChoices],
+  );
+  const forcedAlignment = useMemo(
+    () =>
+      planningEvaluation === undefined
+        ? undefined
+        : deityAlignmentConstraint(planningEvaluation, entities),
+    [entities, planningEvaluation],
+  );
   const mechanicalLevelChoices = useMemo(
     () => levelChoices.filter((choice) => !isCharacterDetailChoice(choice)),
     [levelChoices],
@@ -4899,8 +4947,24 @@ export function CharacterEditorPage({
     const flow = dependentFlowByChoiceId.get(choice.id);
     return flow === undefined || choice === flow[0];
   });
-  const legacyChoiceSections =
-    groupChoicesByLegacyWorkflow(presentationChoices);
+  const legacyChoiceSections = (() => {
+    const sections = groupChoicesByLegacyWorkflow(presentationChoices);
+    if (requiredClassDeityChoices.length === 0) return sections;
+    const hasClassSection = sections.some(({ section }) => section === "Class");
+    if (!hasClassSection)
+      return [
+        { section: "Class" as const, choices: requiredClassDeityChoices },
+        ...sections,
+      ];
+    return sections.map((group) =>
+      group.section === "Class"
+        ? {
+            ...group,
+            choices: [...group.choices, ...requiredClassDeityChoices],
+          }
+        : group,
+    );
+  })();
   const abilitySectionIndex = legacyChoiceSections.findIndex(({ section }) =>
     [
       "Ability Scores",
@@ -4933,9 +4997,9 @@ export function CharacterEditorPage({
     ...displayedChoiceSections.map(({ section }) => section),
     ...(retrainingChoices.length === 0 ? [] : (["Retraining"] as const)),
   ];
-  const selectedChoiceSection = primaryLevelChoices.find(
-    (choice) => choice.id === selectedChoiceId,
-  );
+  const selectedChoiceSection = displayedChoiceSections.find(({ choices }) =>
+    choices.some((choice) => choice.id === selectedChoiceId),
+  )?.section;
   const preferredLevelSection =
     displayedChoiceSections.find(
       ({ section, choices }) =>
@@ -4946,9 +5010,7 @@ export function CharacterEditorPage({
     )?.section ?? levelSectionTabs[0];
   const requestedLevelSection =
     selectedSectionByLevel[selectedLevel] ??
-    (selectedChoiceSection === undefined
-      ? undefined
-      : legacyChoiceSection(selectedChoiceSection));
+    (selectedChoiceSection === undefined ? undefined : selectedChoiceSection);
   const activeLevelSection =
     requestedLevelSection !== undefined &&
     levelSectionTabs.includes(requestedLevelSection)
@@ -4964,9 +5026,12 @@ export function CharacterEditorPage({
   const activeSectionRequiredChoices =
     activeLevelSection === "Retraining"
       ? retrainingChoices
-      : primaryLevelChoices.filter(
-          (choice) => legacyChoiceSection(choice) === activeLevelSection,
-        );
+      : [
+          ...primaryLevelChoices.filter(
+            (choice) => legacyChoiceSection(choice) === activeLevelSection,
+          ),
+          ...(activeLevelSection === "Class" ? requiredClassDeityChoices : []),
+        ];
   const activeSectionComplete = choiceSectionComplete(
     activeSectionRequiredChoices,
     activeLevelSection === "Ability Scores" &&
@@ -5003,6 +5068,9 @@ export function CharacterEditorPage({
           nextLevelSectionTabs,
           build?.effectiveLevel ?? 0,
         );
+  const classChoicePlacementId = activeChoiceSection?.choices.find((choice) =>
+    ["class", "hybrid class"].includes(choice.type.trim().toLocaleLowerCase()),
+  )?.id;
   useEffect(() => {
     if (activeSectionChoices.some((choice) => choice.id === selectedChoiceId))
       return;
@@ -5058,6 +5126,68 @@ export function CharacterEditorPage({
       });
     }
   }
+
+  useEffect(() => {
+    if (forcedAlignment === undefined || planningEvaluation === undefined) {
+      pendingForcedAlignmentKey.current = undefined;
+      return;
+    }
+    const dispatchKey = `${forcedAlignment.alignmentChoice.id}\0${forcedAlignment.deityName}\0${forcedAlignment.alignmentCandidate.definitionId}`;
+    if (
+      selectedDefinitionId(
+        forcedAlignment.alignmentChoice,
+        planningEvaluation,
+      ) === forcedAlignment.alignmentCandidate.definitionId
+    ) {
+      pendingForcedAlignmentKey.current = undefined;
+      return;
+    }
+    if (
+      build === undefined ||
+      pendingForcedAlignmentKey.current === dispatchKey
+    )
+      return;
+    const definition = byId.get(
+      forcedAlignment.alignmentCandidate.definitionId.toLocaleLowerCase(),
+    );
+    const provider = planningEvaluation.occurrences.find(
+      (occurrence) =>
+        occurrence.id === forcedAlignment.alignmentChoice.providerOccurrenceId,
+    );
+    const buildProvider = findOccurrence(
+      build,
+      forcedAlignment.alignmentChoice.providerOccurrenceId,
+    );
+    if (definition === undefined) return;
+    const command = commandForEvaluatedChoice(
+      build,
+      forcedAlignment.alignmentChoice,
+      planningEvaluation.occurrences,
+      entities,
+      {
+        id: `web:${crypto.randomUUID()}`,
+        identity: {
+          definitionId: definition.id,
+          name: definition.name,
+          type: definition.type,
+        },
+        acquiredLevel:
+          buildProvider?.acquiredLevel ??
+          provider?.acquiredLevel ??
+          planningEvaluation.level,
+        legality: forcedAlignment.alignmentCandidate.eligible
+          ? "rules-legal"
+          : "houserule",
+        children: [],
+        unresolved: false,
+      },
+      (index) => `web:placeholder:${index}:${crypto.randomUUID()}`,
+    );
+    if (command !== undefined) {
+      pendingForcedAlignmentKey.current = dispatchKey;
+      dispatch(command);
+    }
+  }, [build, byId, entities, forcedAlignment, planningEvaluation]);
 
   function selectRaceAbilityBonus(
     choice: EvaluatedChoice,
@@ -5238,7 +5368,9 @@ export function CharacterEditorPage({
       if (command !== undefined) dispatch(command);
       const choices = choicesAtLevel(level, planningEvaluation).filter(
         (choice) =>
-          !isCharacterDetailChoice(choice) && !isBuildPresetChoice(choice),
+          (!isCharacterDetailChoice(choice) ||
+            isRequiredClassDeityChoice(choice)) &&
+          !isBuildPresetChoice(choice),
       );
       const retraining = choices.filter(isOptionalRetrainingChoice);
       const primary = choices.filter(
@@ -5255,7 +5387,10 @@ export function CharacterEditorPage({
           : rememberedSection === undefined
             ? ordered
             : ordered.filter(
-                (choice) => legacyChoiceSection(choice) === rememberedSection,
+                (choice) =>
+                  (isRequiredClassDeityChoice(choice)
+                    ? "Class"
+                    : legacyChoiceSection(choice)) === rememberedSection,
               );
       setSelectedLevel(level);
       setSelectedChoiceId(
@@ -5673,7 +5808,8 @@ export function CharacterEditorPage({
                         const timelineChoices = choices.filter(
                           (choice) =>
                             !isOptionalRetrainingChoice(choice) &&
-                            !isCharacterDetailChoice(choice) &&
+                            (!isCharacterDetailChoice(choice) ||
+                              isRequiredClassDeityChoice(choice)) &&
                             !isBuildPresetChoice(choice),
                         );
                         const progress = levelChoiceProgress(timelineChoices);
@@ -5988,27 +6124,45 @@ export function CharacterEditorPage({
                             choice.type.trim().toLocaleLowerCase() ===
                               "race ability bonus" ? null : (
                               <Fragment key={choice.id}>
-                                {renderPrimaryChoice(
-                                  choice,
-                                  shouldOmitIndividualChoiceHeading(
-                                    choice,
-                                    activeChoiceSection.choices.length,
-                                    selectedLevel,
-                                  ),
-                                )}
+                                {isRequiredClassDeityChoice(choice)
+                                  ? null
+                                  : renderPrimaryChoice(
+                                      choice,
+                                      shouldOmitIndividualChoiceHeading(
+                                        choice,
+                                        activeChoiceSection.choices.length,
+                                        selectedLevel,
+                                      ),
+                                    )}
                                 {activeChoiceSection.section === "Class" &&
                                 selectedLevel === 1 &&
-                                choice.type.trim().toLocaleLowerCase() ===
-                                  "class" ? (
-                                  <BuildPresetPanel
-                                    choices={buildPresetChoices}
-                                    levelChoices={mechanicalLevelChoices}
-                                    evaluation={planningEvaluation}
-                                    build={build}
-                                    entities={entities}
-                                    byId={byId}
-                                    onDispatch={dispatch}
-                                  />
+                                choice.id === classChoicePlacementId ? (
+                                  <>
+                                    <BuildPresetPanel
+                                      choices={buildPresetChoices}
+                                      levelChoices={mechanicalLevelChoices}
+                                      evaluation={planningEvaluation}
+                                      build={build}
+                                      entities={entities}
+                                      byId={byId}
+                                      onDispatch={dispatch}
+                                    />
+                                    {requiredClassDeityChoices.length ===
+                                    0 ? null : (
+                                      <div className="class-deity-choice">
+                                        {requiredClassDeityChoices.map(
+                                          (deityChoice) => (
+                                            <Fragment key={deityChoice.id}>
+                                              {renderPrimaryChoice(
+                                                deityChoice,
+                                                false,
+                                              )}
+                                            </Fragment>
+                                          ),
+                                        )}
+                                      </div>
+                                    )}
+                                  </>
                                 ) : null}
                               </Fragment>
                             ),
@@ -6061,6 +6215,7 @@ export function CharacterEditorPage({
           byId={byId}
           rollbackRevision={rollbackRevision}
           effectiveLevel={build.effectiveLevel}
+          forcedAlignment={forcedAlignment}
           onLevelChange={changeCurrentLevel}
           onDispatch={dispatch}
         />

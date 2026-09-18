@@ -154,6 +154,45 @@ describe("release accessibility contract", () => {
     );
   });
 
+  it("reuses the required deity choice below Class starting presets", () => {
+    expect(characterEditor).toContain(
+      "levelChoices.filter(isRequiredClassDeityChoice)",
+    );
+    const classPanel = characterEditor.slice(
+      characterEditor.indexOf("activeChoiceSection.choices.map"),
+      characterEditor.indexOf(
+        'className="level-choice-navigation"',
+        characterEditor.indexOf("activeChoiceSection.choices.map"),
+      ),
+    );
+    expect(classPanel.indexOf("<BuildPresetPanel")).toBeGreaterThan(-1);
+    expect(
+      classPanel.indexOf('className="class-deity-choice"'),
+    ).toBeGreaterThan(classPanel.indexOf("<BuildPresetPanel"));
+    expect(classPanel).toContain("renderPrimaryChoice(");
+    expect(classPanel).toContain("deityChoice");
+    expect(characterEditor).toContain("choices={characterDetailChoices}");
+    expect(characterEditor).toContain(
+      'activeLevelSection === "Class" ? requiredClassDeityChoices : []',
+    );
+  });
+
+  it("locks and explains alignment while exact deity alignment applies", () => {
+    expect(characterEditor).toContain("deityAlignmentConstraint(");
+    expect(characterEditor).toContain("pendingForcedAlignmentKey");
+    expect(characterEditor).toContain("disabled={alignmentLocked}");
+    expect(characterEditor).toContain('{ selectedIcon: "lock" as const }');
+    expect(characterEditor).toContain("<Icon name={selectedIcon} />");
+    expect(characterEditor).toContain("alignment must match your deity's.");
+    expect(characterEditor).toContain("dispatch(command)");
+    expect(styles).toContain(
+      'button:not(:disabled):not([aria-disabled="true"]):hover',
+    );
+    expect(styles).toMatch(
+      /button\[aria-disabled="true"\]\s*\{[^}]*cursor:\s*not-allowed/,
+    );
+  });
+
   it("keeps header identity editable and moves level changes into Character details", () => {
     const header = characterEditor.slice(
       characterEditor.indexOf('<header className="builder-heading">'),
@@ -367,7 +406,7 @@ describe("release accessibility contract", () => {
       '{ "aria-checked": selected, role: "radio" }',
     );
     expect(compactChoices).toContain('{ "aria-pressed": selected }');
-    expect(compactChoices).toContain("if (selected && clearable)");
+    expect(compactChoices).toContain("if (selected && clearable && !disabled)");
     expect(compactChoices).toContain("onClear();");
     expect(compactChoices).toContain('`${selected ? "is-selected" : ""}');
     expect(compactChoices).not.toContain("compact-choice-clear");

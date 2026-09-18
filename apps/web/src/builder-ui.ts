@@ -9,6 +9,7 @@ import {
   ABILITY_SCORE_NAMES,
   commandForEvaluatedChoice,
   findBuildChildIndex,
+  matchingDeityAlignmentClasses,
   parseRules,
   pointBuyCostToRaise,
   type AbilityScoreName,
@@ -987,6 +988,80 @@ export function applyBuildPresetCommand(
 export function isCharacterDetailChoice(choice: EvaluatedChoice): boolean {
   return ["gender", "alignment", "deity"].includes(
     choice.type.trim().toLocaleLowerCase(),
+  );
+}
+
+export interface DeityAlignmentConstraint {
+  readonly classNames: readonly string[];
+  readonly deityName: string;
+  readonly alignmentName: string;
+  readonly alignmentChoice: EvaluatedChoice;
+  readonly alignmentCandidate: CandidateDecision;
+}
+
+/** Resolves an enforceable exact deity/alignment rule from authored content. */
+export function deityAlignmentConstraint(
+  evaluation: EvaluatedCharacter,
+  entities: readonly ContentEntity[],
+): DeityAlignmentConstraint | undefined {
+  const byId = new Map(
+    entities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
+  );
+  const activeDefinitions = evaluation.occurrences.flatMap((occurrence) => {
+    const definition = byId.get(occurrence.definitionId.toLocaleLowerCase());
+    return definition === undefined ? [] : [definition];
+  });
+  const enforcingClasses = matchingDeityAlignmentClasses(
+    activeDefinitions,
+    entities,
+  );
+  if (enforcingClasses.length === 0) return undefined;
+  const deityChoice = evaluation.choices.find(
+    (choice) => choice.type.trim().toLocaleLowerCase() === "deity",
+  );
+  const deityDefinitionId =
+    deityChoice === undefined
+      ? undefined
+      : selectedDefinitionId(deityChoice, evaluation);
+  const deity =
+    deityDefinitionId === undefined
+      ? undefined
+      : byId.get(deityDefinitionId.toLocaleLowerCase());
+  const alignmentName =
+    deity === undefined ? undefined : contentSpecificValue(deity, "Alignment");
+  const alignmentChoice = evaluation.choices.find(
+    (choice) => choice.type.trim().toLocaleLowerCase() === "alignment",
+  );
+  const alignmentCandidate = alignmentChoice?.candidates.find((candidate) => {
+    const definition = byId.get(candidate.definitionId.toLocaleLowerCase());
+    return (
+      alignmentName !== undefined &&
+      definition?.name.trim().toLocaleLowerCase() ===
+        alignmentName.trim().toLocaleLowerCase()
+    );
+  });
+  if (
+    deity === undefined ||
+    alignmentName === undefined ||
+    alignmentChoice === undefined ||
+    alignmentCandidate === undefined
+  )
+    return undefined;
+  return {
+    classNames: [...new Set(enforcingClasses.map(({ name }) => name))],
+    deityName: deity.name,
+    alignmentName,
+    alignmentChoice,
+    alignmentCandidate,
+  };
+}
+
+/** A deity promoted by the evaluator's legacy class predicate also appears in Class. */
+export function isRequiredClassDeityChoice(choice: EvaluatedChoice): boolean {
+  return (
+    choice.level === 1 &&
+    choice.type.trim().toLocaleLowerCase() === "deity" &&
+    !choice.optional
   );
 }
 

@@ -13,6 +13,7 @@ import {
   isCustomChoiceException,
   isUniversalSkill,
   seekerException,
+  shouldChooseDeity,
   versatileMasterException,
 } from "./exceptions";
 import {
@@ -37,7 +38,7 @@ import { evaluatePowers, type EvaluatedPower } from "./powers";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v2-2026-09-17";
+  "evaluated-character-v3-2026-09-17";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -1876,6 +1877,10 @@ function evaluateCharacterInternal(
       };
     }),
   }));
+  if (shouldChooseDeity(ownedDefinitions))
+    choices = choices.map((choice) =>
+      key(choice.type) === "deity" ? { ...choice, optional: false } : choice,
+    );
   for (const choice of choices)
     if (
       !choice.optional &&

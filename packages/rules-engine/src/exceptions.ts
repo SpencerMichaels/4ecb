@@ -13,6 +13,9 @@ export const EXCEPTION_IDS = {
   aimedShotMastery: "ID_CDJ_CLASS_FEATURE_34503",
 } as const;
 
+/** Exact class name excluded by the recovered native deity-choice predicate. */
+export const DEITY_CHOICE_EXCLUDED_CLASS_NAME = "Warpriest";
+
 const archeryMasteryPowers = new Map([
   [EXCEPTION_IDS.cleverShotMastery.toLocaleLowerCase(), "ID_FMP_POWER_13586"],
   [EXCEPTION_IDS.rapidShotMastery.toLocaleLowerCase(), "ID_FMP_POWER_13587"],
@@ -27,6 +30,71 @@ function field(entity: ContentEntity, name: string): string | undefined {
     (specific) =>
       specific.name.toLocaleLowerCase() === name.toLocaleLowerCase(),
   )?.value;
+}
+
+function containsChannelDivinity(value: string | undefined): boolean {
+  return value?.toLocaleLowerCase().includes("channel divinity") ?? false;
+}
+
+/**
+ * Reproduces D20Workspace.ShouldChooseDeity for the active Class and Hybrid
+ * Class definitions. The native implementation is metadata-driven except for
+ * its case-insensitive Warpriest name exclusion.
+ */
+export function shouldChooseDeity(
+  activeDefinitions: readonly ContentEntity[],
+): boolean {
+  return activeDefinitions.some(
+    (definition) =>
+      ["class", "hybrid class"].includes(
+        definition.type.trim().toLocaleLowerCase(),
+      ) &&
+      definition.name.trim().toLocaleLowerCase() !==
+        DEITY_CHOICE_EXCLUDED_CLASS_NAME.toLocaleLowerCase() &&
+      (containsChannelDivinity(field(definition, "_PARSED_CLASS_FEATURE")) ||
+        containsChannelDivinity(field(definition, "Hybrid Talent Options"))),
+  );
+}
+
+function requiresMatchingDeityAlignment(definition: ContentEntity): boolean {
+  const supplemental = field(definition, "Supplemental")
+    ?.replace(/[’‘]/g, "'")
+    .toLocaleLowerCase();
+  return (
+    supplemental?.includes(
+      "alignment identical to the alignment of your patron deity",
+    ) === true ||
+    supplemental?.includes("alignment must match your deity's") === true
+  );
+}
+
+/**
+ * Finds active deity-choosing classes whose authored rule requires the
+ * character's alignment to equal the deity's. Hybrid classes inherit this
+ * requirement through their authored `_BaseClass` link.
+ */
+export function matchingDeityAlignmentClasses(
+  activeDefinitions: readonly ContentEntity[],
+  definitions: readonly ContentEntity[],
+): readonly ContentEntity[] {
+  const byId = new Map(
+    definitions.map((definition) => [
+      definition.id.trim().toLocaleLowerCase(),
+      definition,
+    ]),
+  );
+  return activeDefinitions.filter((definition) => {
+    if (!shouldChooseDeity([definition])) return false;
+    if (requiresMatchingDeityAlignment(definition)) return true;
+    if (definition.type.trim().toLocaleLowerCase() !== "hybrid class")
+      return false;
+    const baseClassId = field(definition, "_BaseClass");
+    const baseClass =
+      baseClassId === undefined
+        ? undefined
+        : byId.get(baseClassId.trim().toLocaleLowerCase());
+    return baseClass !== undefined && requiresMatchingDeityAlignment(baseClass);
+  });
 }
 
 export function archeryMasteryPowerId(
