@@ -59,6 +59,7 @@ import {
   levelRailChoiceStatus,
   planningEvaluationHorizon,
   planningHorizonCommand,
+  pointBuyStepControl,
   powerTableLevel,
   primaryDetailTypeLabel,
   selectedChoiceHasWarning,
@@ -132,6 +133,51 @@ const build: CharacterBuild = {
 };
 
 describe("builder planning UI", () => {
+  it("describes exact point-buy costs and refunds on step controls", () => {
+    expect(pointBuyStepControl("Strength", 10, "decrement")).toEqual({
+      ariaLabel: "Lower Strength to 9; refund 1 point",
+      disabled: false,
+      title: "Refunds 1 point",
+    });
+    expect(pointBuyStepControl("Strength", 10, "increment")).toEqual({
+      ariaLabel: "Raise Strength to 11; costs 1 point",
+      disabled: false,
+      title: "Costs 1 point",
+    });
+    expect(pointBuyStepControl("Strength", 14, "increment")).toMatchObject({
+      ariaLabel: "Raise Strength to 15; costs 2 points",
+      title: "Costs 2 points",
+    });
+    expect(pointBuyStepControl("Strength", 18, "decrement")).toMatchObject({
+      ariaLabel: "Lower Strength to 17; refund 4 points",
+      title: "Refunds 4 points",
+    });
+  });
+
+  it("describes disabled and custom-range point-buy steps accurately", () => {
+    expect(pointBuyStepControl("Wisdom", 8, "decrement")).toEqual({
+      ariaLabel: "Cannot lower Wisdom; already at point-buy minimum of 8",
+      disabled: true,
+      title: "Minimum 8",
+    });
+    expect(pointBuyStepControl("Wisdom", 18, "increment")).toEqual({
+      ariaLabel: "Cannot raise Wisdom; already at point-buy maximum of 18",
+      disabled: true,
+      title: "Maximum 18",
+    });
+    expect(pointBuyStepControl("Wisdom", 7, "increment")).toEqual({
+      ariaLabel: "Raise Wisdom to 8; cost unavailable outside point-buy range",
+      disabled: false,
+      title: "Cost unavailable",
+    });
+    expect(pointBuyStepControl("Wisdom", 19, "decrement")).toEqual({
+      ariaLabel:
+        "Lower Wisdom to 18; refund unavailable outside point-buy range",
+      disabled: false,
+      title: "Refund unavailable",
+    });
+  });
+
   it("summarizes only available race, class, and current level", () => {
     expect(characterHeaderSubtitle("Dwarf", "Paladin", 7)).toBe(
       "Dwarf Paladin 7",

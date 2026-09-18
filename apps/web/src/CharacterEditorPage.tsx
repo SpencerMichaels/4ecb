@@ -39,7 +39,6 @@ import {
   canMaterializeEvaluatedChoiceProvider,
   commandForEvaluatedChoice,
   findBuildChildIndex,
-  pointBuyCostToRaise,
   projectBuildForEvaluation,
   type CandidateDecision,
   type EvaluatedCharacter,
@@ -93,6 +92,7 @@ import {
   MAX_CHARACTER_LEVEL,
   planningEvaluationHorizon,
   planningHorizonCommand,
+  pointBuyStepControl,
   powerTableLevel,
   raceAbilityScoreCells,
   selectedDefinitionId,
@@ -113,7 +113,7 @@ import {
   EntityCardHeader,
   HideFlavortextContext,
 } from "./EntityCard";
-import { KeyAbilityMarker } from "./KeyAbilityMarker";
+import { KeyAbilitiesSummary, KeyAbilityName } from "./KeyAbilityMarker";
 import { EquipmentWorkspace } from "./EquipmentWorkspace";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
 import { PortraitEditor } from "./PortraitEditor";
@@ -1064,6 +1064,8 @@ function BaseAbilityScoreEditor({
   build,
   evaluation,
   pendingBonusDeltas,
+  keyAbilities,
+  keyAbilitiesSentence,
   race,
   raceAbilityChoice,
   raceAbilitySelectionId,
@@ -1074,6 +1076,8 @@ function BaseAbilityScoreEditor({
   readonly build: CharacterRecord["build"];
   readonly evaluation: EvaluatedCharacter;
   readonly pendingBonusDeltas: Readonly<Record<string, number>>;
+  readonly keyAbilities: readonly string[];
+  readonly keyAbilitiesSentence: string | undefined;
   readonly race: ContentEntity | undefined;
   readonly raceAbilityChoice: EvaluatedChoice | undefined;
   readonly raceAbilitySelectionId: string | undefined;
@@ -1107,11 +1111,10 @@ function BaseAbilityScoreEditor({
     >
       <header>
         <div>
-          <h5 id="base-abilities">Point buy</h5>
-          <p className="field-help">
-            Point buy sets the base score; Race shows racial bonuses and Total
-            includes all increases
-          </p>
+          <h5 className="visually-hidden" id="base-abilities">
+            Ability score point buy
+          </h5>
+          <KeyAbilitiesSummary sentence={keyAbilitiesSentence} />
         </div>
         <span
           className={
@@ -1130,12 +1133,14 @@ function BaseAbilityScoreEditor({
           className="ability-point-buy-row ability-point-buy-header"
           aria-hidden="true"
         >
+          <span className="ability-base ability-column-label">Base</span>
           <span className="ability-race ability-column-label">Race</span>
           <span className="ability-total ability-column-label">Total</span>
         </div>
         {ABILITY_SCORE_NAMES.map((ability) => {
           const value = build.baseAbilities[ability] ?? 10;
-          const raiseCost = pointBuyCostToRaise(value);
+          const decrement = pointBuyStepControl(ability, value, "decrement");
+          const increment = pointBuyStepControl(ability, value, "increment");
           const { total } = abilityScoreDisplay(
             evaluation,
             ability,
@@ -1145,11 +1150,21 @@ function BaseAbilityScoreEditor({
           const raceCell = raceCells[ability];
           return (
             <div className="ability-point-buy-row" key={ability}>
-              <span className="ability-name">{ability}</span>
+              <KeyAbilityName
+                className="ability-name"
+                marked={keyAbilities.some(
+                  (keyAbility) =>
+                    keyAbility.toLocaleLowerCase() ===
+                    ability.toLocaleLowerCase(),
+                )}
+              >
+                {ability}
+              </KeyAbilityName>
               <div className="ability-stepper">
                 <button
-                  aria-label={`Decrease ${ability}`}
-                  disabled={value <= 8}
+                  aria-label={decrement.ariaLabel}
+                  disabled={decrement.disabled}
+                  title={decrement.title}
                   type="button"
                   onClick={() =>
                     onDispatch({
@@ -1175,8 +1190,9 @@ function BaseAbilityScoreEditor({
                   }
                 />
                 <button
-                  aria-label={`Increase ${ability}`}
-                  disabled={value >= 18}
+                  aria-label={increment.ariaLabel}
+                  disabled={increment.disabled}
+                  title={increment.title}
                   type="button"
                   onClick={() =>
                     onDispatch({
@@ -1189,13 +1205,6 @@ function BaseAbilityScoreEditor({
                   +
                 </button>
               </div>
-              <small>
-                {raiseCost === undefined
-                  ? value > 18
-                    ? "Outside point-buy range"
-                    : "Maximum"
-                  : `Next +1: ${raiseCost} ${raiseCost === 1 ? "point" : "points"}`}
-              </small>
               <span className="ability-race">
                 {raceCell.kind === "none" ? (
                   "—"
@@ -1240,8 +1249,12 @@ function BaseAbilityScoreEditor({
           Raising 8–12 costs 1 point; 13–15 costs 2; 16 costs 3; and 17 costs 4.
           Only one score may start below 10.
         </p>
-        <button type="button" onClick={() => onDispatch(resetCommands)}>
-          Reset point buy
+        <button
+          aria-label="Reset ability scores to the default point-buy allocation"
+          type="button"
+          onClick={() => onDispatch(resetCommands)}
+        >
+          Reset
         </button>
       </footer>
     </section>
@@ -1317,8 +1330,12 @@ function CompactChoiceButtons({
                 if (!blocked) onChoose(option.id);
               }}
             >
-              <span className="compact-choice-label">{option.label}</span>
-              {keyAbility ? <KeyAbilityMarker /> : null}
+              <KeyAbilityName
+                className="compact-choice-label"
+                marked={keyAbility}
+              >
+                {option.label}
+              </KeyAbilityName>
               {option.unavailableReason === undefined ? null : (
                 <small>{option.unavailableReason}</small>
               )}
@@ -2934,6 +2951,7 @@ function AbilityIncreaseEditor({
   entities,
   byId,
   keyAbilities,
+  keyAbilitiesSentence,
   rollbackRevision,
   onDispatch,
 }: {
@@ -2943,6 +2961,7 @@ function AbilityIncreaseEditor({
   readonly entities: readonly ContentEntity[];
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly keyAbilities: readonly string[];
+  readonly keyAbilitiesSentence: string | undefined;
   readonly rollbackRevision: number;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
@@ -3021,9 +3040,12 @@ function AbilityIncreaseEditor({
       tabIndex={-1}
     >
       <header>
-        <h4 id={`${choiceSectionId(choices[0]!.id)}-heading`}>
-          Choose {choices.length} ability scores
-        </h4>
+        <div>
+          <h4 id={`${choiceSectionId(choices[0]!.id)}-heading`}>
+            Choose {choices.length} ability scores
+          </h4>
+          <KeyAbilitiesSummary sentence={keyAbilitiesSentence} />
+        </div>
         <strong className="ability-choice-count" aria-live="polite">
           {chosenCount} of {choices.length} chosen
         </strong>
@@ -3143,17 +3165,12 @@ function AbilityIncreaseEditor({
                 onDispatch(command);
               }}
             >
-              <span>{definition?.name ?? definitionId}</span>
-              <span className="ability-option-trailing">
-                {definition === undefined ? null : (
-                  <span className="ability-option-score">{displayedScore}</span>
-                )}
-                {keyAbility ? (
-                  <span className="ability-option-markers">
-                    <KeyAbilityMarker />
-                  </span>
-                ) : null}
-              </span>
+              <KeyAbilityName marked={keyAbility}>
+                {definition?.name ?? definitionId}
+              </KeyAbilityName>
+              {definition === undefined ? null : (
+                <span className="ability-option-score">{displayedScore}</span>
+              )}
             </button>
           );
         })}
@@ -5273,6 +5290,7 @@ export function CharacterEditorPage({
             entities={entities}
             byId={byId}
             keyAbilities={selectedClassKeyAbilities}
+            keyAbilitiesSentence={keyAbilitiesSentence}
             rollbackRevision={rollbackRevision}
             onDispatch={dispatch}
           />
@@ -5848,12 +5866,6 @@ export function CharacterEditorPage({
                       >
                         <div className="legacy-choice-list">
                           {activeChoiceSection.section === "Ability Scores" &&
-                          keyAbilitiesSentence !== undefined ? (
-                            <p className="class-key-abilities">
-                              {keyAbilitiesSentence}
-                            </p>
-                          ) : null}
-                          {activeChoiceSection.section === "Ability Scores" &&
                           selectedLevel === 1 ? (
                             selectedLevelEvaluation === undefined ? null : (
                               <BaseAbilityScoreEditor
@@ -5862,6 +5874,8 @@ export function CharacterEditorPage({
                                 pendingBonusDeltas={
                                   pendingLevelOneAbilityDeltas
                                 }
+                                keyAbilities={selectedClassKeyAbilities}
+                                keyAbilitiesSentence={keyAbilitiesSentence}
                                 race={selectedRaceEntity}
                                 raceAbilityChoice={raceAbilityChoice}
                                 raceAbilitySelectionId={raceAbilitySelectionId}

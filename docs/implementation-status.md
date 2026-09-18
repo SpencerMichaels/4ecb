@@ -1923,3 +1923,44 @@ pass.
   checks also pass. The `scripts/check.sh` wrapper stops at its initial formatting
   gate because the unrelated, otherwise clean `apps/web/src/equipment-ui.test.ts`
   is not Prettier-clean; this checkpoint leaves that pre-existing file untouched.
+
+## Key-ability presentation checkpoint (2026-09-17)
+
+- Every ability-selection treatment now places the assistively labeled key icon
+  immediately after the authored ability name. The level-up score remains a
+  separate trailing value, and level-1 point-buy rows use the same shared
+  name-and-marker presentation.
+- The selected class's grammatically formed key-ability sentence now occupies
+  the heading area in both the level-1 point-buy pane and later ability-increase
+  panes. In point buy it sits above compact **Base**, **Race**, and **Total**
+  column labels rather than a verbose explanation of those columns.
+- This remains presentation-only: authored key-ability order, score evaluation,
+  choice occurrence identity, selection commands, and serialization are
+  unchanged.
+- Point-buy numeric fields suppress browser-native spinner chrome because the
+  pane already supplies explicit minus and plus controls. They remain native
+  number inputs with manual entry, keyboard stepping, min/max constraints,
+  Enter commit, and Escape rollback. Key markers use the app's muted monochrome
+  Lucide outline treatment rather than an accent-colored glyph.
+- The level-1 pane no longer repeats a visible **Point buy** title: its hidden
+  heading still names the region for assistive technology, while the class
+  key-abilities sentence remains left-aligned opposite the point-spend status.
+  The ability-name, **Base**, **Race**, and **Total** columns are aligned and
+  content-sized as one compact group with moderate fixed spacing. **Race** and
+  **Total** headers and values are centered, so fixed and selectable racial
+  bonuses share one centerline. Each ability-row border ends after **Total**;
+  any spare pane width remains empty outside the row to its right.
+  Per-row `Next +1` copy has also been removed. Each explicit minus/plus control
+  retains a full accessible name with the ability, destination, and exact
+  refund/cost, while its visible tooltip is limited to concise economics such
+  as `Refunds 1 point` or `Costs 2 points`. Minimum, maximum, and recoverable
+  custom-range states use similarly concise titles. The reset action is visibly
+  **Reset** and retains a fuller accessible name.
+- Focused key-ability/accessibility coverage passes 68 tests, the full public
+  suite passes all 363 tests, and web TypeScript checking plus targeted lint
+  pass. The broader workspace typecheck, production/PWA build, Chromium and
+  Firefox print checks, deterministic synthetic-pack checks, and query
+  benchmark recorded for the underlying checkpoint were not rerun for this UI
+  refinement. The `scripts/check.sh` wrapper still stops at its initial gate on
+  the pre-existing `apps/web/src/equipment-ui.test.ts` formatting issue recorded
+  above; every file changed by this checkpoint is Prettier-clean.

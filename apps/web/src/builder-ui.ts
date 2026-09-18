@@ -10,6 +10,7 @@ import {
   commandForEvaluatedChoice,
   findBuildChildIndex,
   parseRules,
+  pointBuyCostToRaise,
   type AbilityScoreName,
   type SelectRule,
 } from "@4ecb/rules-engine";
@@ -24,6 +25,66 @@ import { createLevelFrame } from "./new-character";
 import { entityVisualTone } from "./visual-language";
 
 export const MAX_CHARACTER_LEVEL = 30;
+
+export interface PointBuyStepControl {
+  readonly ariaLabel: string;
+  readonly disabled: boolean;
+  readonly title: string;
+}
+
+export function pointBuyStepControl(
+  ability: string,
+  score: number,
+  direction: "decrement" | "increment",
+): PointBuyStepControl {
+  if (direction === "decrement") {
+    if (score <= 8) {
+      return {
+        ariaLabel:
+          score === 8
+            ? `Cannot lower ${ability}; already at point-buy minimum of 8`
+            : `Cannot lower ${ability}; below point-buy minimum of 8`,
+        disabled: true,
+        title: score === 8 ? "Minimum 8" : "Below point-buy range",
+      };
+    }
+    const refund = pointBuyCostToRaise(score - 1);
+    return {
+      ariaLabel:
+        refund === undefined
+          ? `Lower ${ability} to ${score - 1}; refund unavailable outside point-buy range`
+          : `Lower ${ability} to ${score - 1}; refund ${refund} ${refund === 1 ? "point" : "points"}`,
+      disabled: false,
+      title:
+        refund === undefined
+          ? "Refund unavailable"
+          : `Refunds ${refund} ${refund === 1 ? "point" : "points"}`,
+    };
+  }
+
+  if (score >= 18) {
+    return {
+      ariaLabel:
+        score === 18
+          ? `Cannot raise ${ability}; already at point-buy maximum of 18`
+          : `Cannot raise ${ability}; above point-buy maximum of 18`,
+      disabled: true,
+      title: score === 18 ? "Maximum 18" : "Above point-buy range",
+    };
+  }
+  const cost = pointBuyCostToRaise(score);
+  return {
+    ariaLabel:
+      cost === undefined
+        ? `Raise ${ability} to ${score + 1}; cost unavailable outside point-buy range`
+        : `Raise ${ability} to ${score + 1}; costs ${cost} ${cost === 1 ? "point" : "points"}`,
+    disabled: false,
+    title:
+      cost === undefined
+        ? "Cost unavailable"
+        : `Costs ${cost} ${cost === 1 ? "point" : "points"}`,
+  };
+}
 
 export function characterHeaderSubtitle(
   race: string | undefined,

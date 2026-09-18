@@ -360,6 +360,38 @@ describe("release accessibility contract", () => {
       characterEditor.indexOf("function BaseAbilityScoreEditor"),
       characterEditor.indexOf("function retrainingCategory"),
     );
+    expect(baseAbilities).toContain(
+      "<KeyAbilitiesSummary sentence={keyAbilitiesSentence} />",
+    );
+    expect(baseAbilities).toContain(
+      '<h5 className="visually-hidden" id="base-abilities">',
+    );
+    expect(baseAbilities).toContain("Ability score point buy");
+    expect(baseAbilities).not.toContain(">Point buy</h5>");
+    expect(baseAbilities).toContain(
+      '<span className="ability-base ability-column-label">Base</span>',
+    );
+    expect(baseAbilities).toContain(
+      'className="ability-point-buy-row ability-point-buy-header"',
+    );
+    expect(baseAbilities).toContain('aria-hidden="true"');
+    expect(baseAbilities).toContain('className="ability-name"');
+    expect(baseAbilities).toContain("<KeyAbilityName");
+    expect(baseAbilities).toContain("aria-label={decrement.ariaLabel}");
+    expect(baseAbilities).toContain("title={decrement.title}");
+    expect(baseAbilities).toContain("disabled={decrement.disabled}");
+    expect(baseAbilities).toContain("aria-label={increment.ariaLabel}");
+    expect(baseAbilities).toContain("title={increment.title}");
+    expect(baseAbilities).toContain("disabled={increment.disabled}");
+    expect(baseAbilities).not.toContain("Next +1:");
+    expect(baseAbilities).toContain(
+      'aria-label="Reset ability scores to the default point-buy allocation"',
+    );
+    expect(baseAbilities).toMatch(/>\s*Reset\s*<\/button>/);
+    expect(baseAbilities).not.toContain("Reset point buy");
+    expect(characterEditor).toContain('type="number"');
+    expect(characterEditor).toContain('event.key === "Enter"');
+    expect(characterEditor).toContain('event.key === "Escape"');
     expect(baseAbilities).toContain("className={`race-ability-choice");
     expect(baseAbilities).toContain("aria-pressed={");
     expect(baseAbilities).not.toContain('type="radio"');
@@ -372,6 +404,28 @@ describe("release accessibility contract", () => {
     expect(styles).toMatch(
       /\.race-ability-choice\.is-selected\s*\{[^}]*background: var\(--success-soft\)[^}]*border-left-color: var\(--success\)/,
     );
+    expect(styles).toMatch(
+      /\.ability-stepper input\s*\{[^}]*appearance: textfield/,
+    );
+    expect(styles).toMatch(
+      /\.ability-editor\s*\{[^}]*grid-template-columns: max-content auto max-content max-content minmax\(0, 1fr\)/,
+    );
+    expect(styles).toMatch(/\.ability-editor\s*\{[^}]*gap: 0\.65rem 0\.9rem/);
+    expect(styles).toMatch(
+      /\.ability-point-buy-row\s*\{[^}]*grid-column: 1 \/ 5[^}]*grid-template-columns: subgrid/,
+    );
+    expect(styles).toMatch(/\.ability-base\s*\{[^}]*grid-column: 2/);
+    expect(styles).toMatch(/\.ability-race\s*\{[^}]*grid-column: 3/);
+    expect(styles).toMatch(/\.ability-total\s*\{[^}]*grid-column: 4/);
+    expect(styles).toMatch(
+      /\.ability-race,[\s\S]*?\.ability-total\s*\{[^}]*justify-items: center[^}]*text-align: center/,
+    );
+    expect(styles).toMatch(
+      /\.ability-stepper input::-webkit-inner-spin-button,[\s\S]*?\.ability-stepper input::-webkit-outer-spin-button\s*\{[^}]*appearance: none[^}]*margin: 0/,
+    );
+    expect(styles).toMatch(
+      /\.key-ability-marker\s*\{[^}]*color: var\(--muted\)/,
+    );
 
     const abilityChoices = characterEditor.slice(
       characterEditor.indexOf("function AbilityIncreaseEditor"),
@@ -379,6 +433,12 @@ describe("release accessibility contract", () => {
     );
     expect(abilityChoices).toContain(
       "aria-pressed={selectedChoice !== undefined}",
+    );
+    expect(abilityChoices).toContain(
+      "<KeyAbilitiesSummary sentence={keyAbilitiesSentence} />",
+    );
+    expect(abilityChoices).toMatch(
+      /<KeyAbilityName marked=\{keyAbility\}>[\s\S]*?definition\?\.name[\s\S]*?<\/KeyAbilityName>[\s\S]*?className="ability-option-score"/,
     );
     expect(abilityChoices).toContain("const [pendingSlots, setPendingSlots]");
     expect(abilityChoices).toContain("abilityScoreWithPendingDelta(");
