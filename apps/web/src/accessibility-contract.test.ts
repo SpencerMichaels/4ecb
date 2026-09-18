@@ -239,10 +239,13 @@ describe("release accessibility contract", () => {
       /\.builder-character-name input:focus-visible\s*\{[^}]*box-shadow: inset 0 -3px var\(--focus\)[^}]*outline: none/,
     );
     expect(styles).toMatch(
-      /\.builder-heading\s*\{[^}]*gap: 1\.5rem;[^}]*justify-content: space-between;/,
+      /\.builder-heading\s*\{[^}]*display: grid;[^}]*gap: 0\.65rem 1\.35rem;[^}]*grid-template-columns: minmax\(17rem, auto\) minmax\(34rem, 1fr\);/,
     );
     expect(styles).not.toMatch(
-      /\.builder-heading\s*\{[^}]*(?:border-bottom|margin-bottom|padding-bottom):/,
+      /\.builder-heading\s*\{[^}]*(?:border-bottom|margin-bottom):/,
+    );
+    expect(styles).toMatch(
+      /\.builder-heading\s*\{[^}]*padding-bottom: 0\.8rem/,
     );
     expect(styles).toMatch(/\.builder-tabs\s*\{[^}]*overflow-x: auto/);
   });

@@ -44,9 +44,20 @@ application's protected visual assets.
   underline, while keyboard focus replaces it with a thicker accent-colored
   underline rather than a rectangular outline. Its visible text shares the exact
   left edge of the race/class/level subtitle. Current-level editing belongs to
-  Character details rather than the header. Do not repeat these facts in a
-  separate character-overview panel or continuously display a successful rules
-  evaluation message.
+  Character details rather than the header. A wide, shallow statistics strip to
+  the identity block's right shows the effective character level's evaluated
+  maximum HP, Speed, Initiative, AC/Fortitude/Reflex/Will, and six ability
+  scores. Four visually distinct clusters communicate hit points, movement,
+  defenses, and abilities without visible group headings; ability pairs use
+  fixed internal columns so their two rows remain aligned while each pair stays
+  centered. Hovering any numeric total opens a native multiline tooltip with a
+  player-facing breakdown of only the evaluator contributions that actually
+  apply; this display preserves evaluator provenance rather than reconstructing
+  formulas in the interface. Planning or selected-level evaluations never alter
+  this strip, and unavailable current values appear as em dashes without a
+  tooltip. Do not repeat these facts in
+  a separate character-overview panel or continuously display a successful
+  rules evaluation message.
 - Treat a level, rather than an individual slot, as the main builder workspace.
   Selecting a level shows its mechanical choice categories as a horizontal tab
   list, including separate Background and Theme tabs, and mounts only the active
@@ -119,7 +130,10 @@ application's protected visual assets.
   familiar green/red/gray/blue power colors even while unresolved. Let panes
   wrap at content-sized widths rather than stretching every checklist equally.
 - Keep important evaluation, save, and validation feedback immediate and
-  comprehensible. Interaction responsiveness is a product requirement.
+  comprehensible. In the builder, Character sheet is a peer top-level tab.
+  Unresolved and warning counts and save state occupy the tab bar's trailing
+  status area, followed by icon-only Undo and Redo controls with accessible
+  names and tooltips. Interaction responsiveness is a product requirement.
 - Ordinary client-side page changes reuse decoded content, rules workers,
   memoized exact evaluations, and content-query indexes for the active immutable
   profile. A route must not present multi-second content initialization merely

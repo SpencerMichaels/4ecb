@@ -121,6 +121,7 @@ import {
   type OverviewChoicePane,
 } from "./builder-ui";
 import { Icon, type IconName } from "./Icon";
+import { BuilderHeaderStats } from "./BuilderHeaderStats";
 import { SelectionSummary } from "./SelectionSummary";
 import {
   EmbeddedPowerCard,
@@ -5669,7 +5670,97 @@ export function CharacterEditorPage({
             </p>
           </div>
         </div>
-        <div className="builder-actions">
+        <BuilderHeaderStats evaluation={currentEvaluation} />
+      </header>
+
+      {entities.length === 0 ? (
+        <div className="profile-warning panel-warning">
+          <Icon name="warning" /> Install or restore this character&apos;s bound
+          content profile to evaluate choices. Its authoritative history remains
+          editable.
+        </div>
+      ) : null}
+
+      {evaluationStatus.startsWith("Rules evaluation failed") ? (
+        <div className="error" role="alert">
+          {evaluationStatus}
+        </div>
+      ) : null}
+
+      <div className="builder-tabs-bar">
+        <div
+          aria-label="Character editor sections"
+          className="builder-tabs"
+          role="tablist"
+        >
+          <button
+            aria-selected={workspaceTab === "build"}
+            role="tab"
+            type="button"
+            onClick={() =>
+              onNavigate(characterId, {
+                workspace: "build",
+                level: selectedLevel,
+                ...(activeLevelSection === undefined
+                  ? {}
+                  : { section: levelChoiceTabSlug(activeLevelSection) }),
+              })
+            }
+          >
+            <Icon name="level" /> Build
+          </button>
+          <button
+            aria-selected={workspaceTab === "overview"}
+            role="tab"
+            type="button"
+            onClick={() => onNavigate(characterId, { workspace: "overview" })}
+          >
+            <Icon name="book" /> Overview
+          </button>
+          <button
+            aria-selected={workspaceTab === "details"}
+            role="tab"
+            type="button"
+            onClick={() => onNavigate(characterId, { workspace: "details" })}
+          >
+            <Icon name="details" /> Character details
+            {characterDetailChoices.some(isUnresolvedChoice) ? (
+              <span className="tab-attention">Needs attention</span>
+            ) : null}
+          </button>
+          <button
+            aria-selected={workspaceTab === "equipment"}
+            role="tab"
+            type="button"
+            onClick={() =>
+              onNavigate(characterId, {
+                workspace: "equipment",
+                section: "loadout",
+              })
+            }
+          >
+            <Icon name="item" /> Equipment
+          </button>
+          <a
+            aria-selected="false"
+            className="builder-tab"
+            href={`#/characters/${encodeURIComponent(characterId)}`}
+            role="tab"
+          >
+            <Icon name="sheet" /> Character sheet
+          </a>
+          <button
+            aria-selected={workspaceTab === "diagnostics"}
+            role="tab"
+            type="button"
+            onClick={() =>
+              onNavigate(characterId, { workspace: "diagnostics" })
+            }
+          >
+            <Icon name="warning" /> Diagnostics
+          </button>
+        </div>
+        <div aria-label="Builder status" className="builder-status">
           <span
             className={`builder-health${totalUnresolved > 0 ? " builder-health-attention" : ""}`}
           >
@@ -5696,104 +5787,27 @@ export function CharacterEditorPage({
             />
             {saveState.message}
           </span>
-          <a
-            className="button-link secondary-link"
-            href={`#/characters/${encodeURIComponent(characterId)}`}
-          >
-            <Icon name="sheet" /> Character sheet
-          </a>
           <button
+            aria-label="Undo"
+            className="icon-only-button"
             type="button"
             disabled={!transaction.current?.canUndo}
+            title="Undo"
             onClick={undo}
           >
-            <Icon name="undo" /> Undo
+            <Icon name="undo" />
           </button>
           <button
+            aria-label="Redo"
+            className="icon-only-button"
             type="button"
             disabled={!transaction.current?.canRedo}
+            title="Redo"
             onClick={redo}
           >
-            <Icon name="redo" /> Redo
+            <Icon name="redo" />
           </button>
         </div>
-      </header>
-
-      {entities.length === 0 ? (
-        <div className="profile-warning panel-warning">
-          <Icon name="warning" /> Install or restore this character&apos;s bound
-          content profile to evaluate choices. Its authoritative history remains
-          editable.
-        </div>
-      ) : null}
-
-      {evaluationStatus.startsWith("Rules evaluation failed") ? (
-        <div className="error" role="alert">
-          {evaluationStatus}
-        </div>
-      ) : null}
-
-      <div
-        aria-label="Character editor sections"
-        className="builder-tabs"
-        role="tablist"
-      >
-        <button
-          aria-selected={workspaceTab === "build"}
-          role="tab"
-          type="button"
-          onClick={() =>
-            onNavigate(characterId, {
-              workspace: "build",
-              level: selectedLevel,
-              ...(activeLevelSection === undefined
-                ? {}
-                : { section: levelChoiceTabSlug(activeLevelSection) }),
-            })
-          }
-        >
-          <Icon name="level" /> Build
-        </button>
-        <button
-          aria-selected={workspaceTab === "overview"}
-          role="tab"
-          type="button"
-          onClick={() => onNavigate(characterId, { workspace: "overview" })}
-        >
-          <Icon name="book" /> Overview
-        </button>
-        <button
-          aria-selected={workspaceTab === "details"}
-          role="tab"
-          type="button"
-          onClick={() => onNavigate(characterId, { workspace: "details" })}
-        >
-          <Icon name="details" /> Character details
-          {characterDetailChoices.some(isUnresolvedChoice) ? (
-            <span className="tab-attention">Needs attention</span>
-          ) : null}
-        </button>
-        <button
-          aria-selected={workspaceTab === "equipment"}
-          role="tab"
-          type="button"
-          onClick={() =>
-            onNavigate(characterId, {
-              workspace: "equipment",
-              section: "loadout",
-            })
-          }
-        >
-          <Icon name="item" /> Equipment
-        </button>
-        <button
-          aria-selected={workspaceTab === "diagnostics"}
-          role="tab"
-          type="button"
-          onClick={() => onNavigate(characterId, { workspace: "diagnostics" })}
-        >
-          <Icon name="warning" /> Diagnostics
-        </button>
       </div>
 
       <div

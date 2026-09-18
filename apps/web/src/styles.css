@@ -1547,16 +1547,17 @@ textarea {
   gap: 0.5rem;
   margin-top: 0.75rem;
 }
-.builder-heading,
-.builder-actions,
 .timeline-level-button {
   align-items: center;
   display: flex;
 }
 
 .builder-heading {
-  gap: 1.5rem;
-  justify-content: space-between;
+  align-items: center;
+  display: grid;
+  gap: 0.65rem 1.35rem;
+  grid-template-columns: minmax(17rem, auto) minmax(34rem, 1fr);
+  padding-bottom: 0.8rem;
 }
 
 .builder-heading p,
@@ -1604,18 +1605,118 @@ textarea {
   outline: none;
 }
 
-.builder-actions {
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: flex-end;
+.builder-header-stats {
+  min-width: 0;
 }
 
-.builder-actions button,
-.builder-actions a,
+.builder-header-stats dl,
+.builder-header-stats dd {
+  margin: 0;
+}
+
+.builder-header-stat-groups {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns:
+    minmax(4.5rem, 0.6fr) minmax(8rem, 1fr) minmax(17rem, 2.2fr)
+    minmax(13rem, 1.7fr);
+}
+
+.builder-header-stat-cluster {
+  align-items: center;
+  background: color-mix(in srgb, var(--surface-subtle) 72%, var(--surface));
+  border: 1px solid var(--border);
+  border-top: 3px solid
+    color-mix(in srgb, var(--tone-neutral) 72%, var(--border));
+  display: grid;
+  min-width: 0;
+}
+
+.builder-header-vitals {
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  grid-template-columns: 1fr;
+}
+
+.builder-header-movement {
+  grid-template-columns: repeat(2, minmax(3.8rem, 1fr));
+}
+
+.builder-header-defenses {
+  background: color-mix(in srgb, var(--tone-neutral) 7%, var(--surface));
+  grid-template-columns: repeat(4, minmax(3.8rem, 1fr));
+}
+
+.builder-header-abilities {
+  align-content: center;
+  grid-template-columns: repeat(3, minmax(3.6rem, 1fr));
+}
+
+.builder-header-stat {
+  align-items: center;
+  display: grid;
+  gap: 0.12rem;
+  justify-content: center;
+  justify-items: center;
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+  position: relative;
+}
+
+.builder-header-stat dt {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+}
+
+.builder-header-stat dd {
+  color: var(--text);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.builder-header-stat dd[title] {
+  cursor: help;
+}
+
+.builder-header-defenses .builder-header-stat:not(:first-child),
+.builder-header-movement .builder-header-stat + .builder-header-stat {
+  border-left: 1px solid var(--border);
+}
+
+.builder-header-abilities .builder-header-stat {
+  align-items: baseline;
+  gap: 0.32rem;
+  grid-template-columns: 1.7rem 1.25rem;
+  justify-items: start;
+  padding-block: 0.22rem;
+  padding-inline: 0.35rem;
+}
+
+.builder-header-abilities .builder-header-stat dd {
+  font-size: 0.95rem;
+}
+
+.builder-tabs-bar {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.builder-status,
 .save-status {
   align-items: center;
   display: inline-flex;
   gap: 0.35rem;
+}
+
+.builder-status {
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  gap: 0.6rem;
+  padding-right: 0.15rem;
 }
 
 .builder-health {
@@ -1631,12 +1732,6 @@ textarea {
 
 .builder-health-warning {
   color: var(--danger);
-}
-
-.secondary-link {
-  background: var(--surface-raised);
-  border-color: var(--border-strong);
-  color: var(--text);
 }
 
 .save-status {
@@ -1675,29 +1770,50 @@ textarea {
 .builder-tabs {
   border-bottom: 1px solid var(--border);
   display: flex;
+  flex: 1 1 auto;
   gap: 0.25rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
+  min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
 }
 
-.builder-tabs button {
+.builder-tabs :is(button, .builder-tab) {
+  align-items: center;
   background: transparent;
   border: 0;
   border-bottom: 3px solid transparent;
   border-radius: 0;
   color: var(--muted);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font: inherit;
   margin-bottom: -1px;
-  padding: 0.65rem 0.9rem;
+  padding: 0.65rem;
+  text-decoration: none;
 }
 
-.builder-tabs button .icon {
+.builder-tabs :is(button, .builder-tab) .icon {
   margin-right: 0.35rem;
 }
 
-.builder-tabs button[aria-selected="true"] {
+.builder-tabs :is(button, .builder-tab)[aria-selected="true"] {
   border-bottom-color: var(--accent);
   color: var(--text);
+}
+
+.builder-status .save-status {
+  padding: 0.2rem 0.4rem;
+}
+
+.builder-status .icon {
+  height: 0.8rem;
+  width: 0.8rem;
+}
+
+.builder-status .icon-only-button {
+  height: 1.8rem;
+  width: 1.8rem;
 }
 
 .tab-attention {
@@ -4116,10 +4232,19 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   inline-size: 100%;
 }
 
+@media (max-width: 70rem) {
+  .builder-heading {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .builder-header-stats {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 60rem) {
   .app-header,
-  .page-heading,
-  .builder-heading {
+  .page-heading {
     align-items: start;
     display: grid;
     gap: 0.75rem;
@@ -4208,6 +4333,31 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
 }
 
 @media (max-width: 48rem) {
+  .builder-header-stat-groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .builder-header-defenses,
+  .builder-header-abilities {
+    grid-column: 1 / -1;
+  }
+
+  .builder-header-abilities {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .builder-tabs-bar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .builder-status {
+    border-bottom: 1px solid var(--border);
+    justify-content: flex-end;
+    padding: 0.35rem 0;
+  }
+
   .loadout-grid,
   .choice-selection-layout,
   .skill-training-layout {
@@ -4224,6 +4374,10 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
 }
 
 @media (max-width: 34rem) {
+  .builder-status {
+    justify-content: flex-start;
+  }
+
   .character-detail-fields-compact,
   .character-physical-fields {
     grid-template-columns: 1fr;
@@ -4256,15 +4410,6 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
 
   .editor-page {
     padding-inline: 0.75rem;
-  }
-
-  .builder-actions {
-    justify-content: flex-start;
-  }
-
-  .save-status {
-    flex-basis: 100%;
-    width: fit-content;
   }
 
   .timeline-heading {
