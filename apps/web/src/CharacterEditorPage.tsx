@@ -122,6 +122,7 @@ import {
 } from "./builder-ui";
 import { Icon, type IconName } from "./Icon";
 import { BuilderHeaderStats } from "./BuilderHeaderStats";
+import { loadoutChangeCommand } from "./equipment-ui";
 import { SelectionSummary } from "./SelectionSummary";
 import {
   EmbeddedPowerCard,
@@ -6341,53 +6342,19 @@ export function CharacterEditorPage({
                 percentage,
               })
             }
-            onEquipSlot={(entryId, slots) => {
+            onEquipSlot={(entryId, slots, currentEntryId, currentSlots) => {
               const slotIds = slots as readonly EquipmentSlotId[];
-              const current = build.inventory.find((entry) =>
-                entry.equippedSlots?.some((assignment) =>
-                  slotIds.includes(assignment.slot),
-                ),
-              );
-              if (entryId === undefined) {
-                if (current === undefined) return;
-                const assignments =
-                  current.equippedSlots?.filter(
-                    (assignment) => !slotIds.includes(assignment.slot),
-                  ) ?? [];
-                dispatch({
-                  kind: "equip-inventory",
-                  entryId: current.id,
-                  assignments,
-                });
-                return;
-              }
-              const entry = build.inventory.find(({ id }) => id === entryId);
-              if (entry === undefined) return;
-              const retained =
-                entry.equippedSlots?.filter(
-                  (assignment) => !slotIds.includes(assignment.slot),
-                ) ?? [];
-              const used = new Set(
-                retained.map(({ quantityIndex }) => quantityIndex),
-              );
-              const pairedHands =
-                slotIds.includes("main-hand") && slotIds.includes("off-hand");
-              const quantityIndex = pairedHands
-                ? 0
-                : Array.from(
-                    { length: entry.quantity },
-                    (_, index) => index,
-                  ).find((index) => !used.has(index));
-              if (quantityIndex === undefined) return;
-              const assignments = [
-                ...retained,
-                ...slotIds.map((slot) => ({ slot, quantityIndex })),
-              ];
-              dispatch({
-                kind: "equip-inventory",
+              const displacedSlotIds = (currentSlots ??
+                slots) as readonly EquipmentSlotId[];
+              const command = loadoutChangeCommand(
+                build.inventory.filter(({ quantity }) => quantity > 0),
+                byId,
                 entryId,
-                assignments,
-              });
+                slotIds,
+                currentEntryId,
+                displacedSlotIds,
+              );
+              if (command !== undefined) dispatch(command);
             }}
             onSetMoney={(location, denomination, value) => {
               const source =

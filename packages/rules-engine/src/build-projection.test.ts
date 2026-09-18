@@ -641,4 +641,89 @@ describe("build projection", () => {
     });
     expect(evaluated.complete).toBe(true);
   });
+
+  it("projects modern loadout assignments into equipment-backed defenses", () => {
+    const content = [
+      entity("ROOT", "Root", "Test", [
+        statement("statadd", { name: "AC", value: "10" }, 0),
+        statement("statadd", { name: "Fortitude Defense", value: "10" }, 1),
+        statement("statadd", { name: "Reflex Defense", value: "10" }, 2),
+        statement("statadd", { name: "Will Defense", value: "10" }, 3),
+      ]),
+      entity("ARMOR", "Synthetic Flowform Cloth Armor", "Armor", [
+        statement("statadd", { name: "AC", value: "+1" }, 0),
+      ]),
+      entity("CAPE", "Synthetic Cape", "Magic Item", [
+        statement("statadd", { name: "Fortitude Defense", value: "+1" }, 0),
+        statement("statadd", { name: "Reflex Defense", value: "+1" }, 1),
+        statement("statadd", { name: "Will Defense", value: "+1" }, 2),
+      ]),
+    ];
+    const inventoryEntry = (
+      id: string,
+      definitionId: string,
+      name: string,
+      type: string,
+    ) => ({
+      id,
+      acquiredLevel: 1,
+      quantity: 1,
+      equippedQuantity: 0,
+      equippedSlots: [],
+      elements: [{ definitionId, name, type }],
+      overrides: {},
+      legality: "rules-legal" as const,
+    });
+    const build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 1,
+      levels: [],
+      grabbag: [
+        {
+          id: "root",
+          identity: { definitionId: "ROOT", name: "Root", type: "Test" },
+          acquiredLevel: 1,
+          legality: "rules-legal",
+          children: [],
+          unresolved: false,
+        },
+      ],
+      inventory: [
+        inventoryEntry("armor", "ARMOR", "Flowform", "Armor"),
+        inventoryEntry("cape", "CAPE", "Cape", "Magic Item"),
+      ],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    const equipped = applyCharacterCommand(build, {
+      kind: "batch",
+      commands: [
+        {
+          kind: "equip-inventory",
+          entryId: "armor",
+          assignments: [{ slot: "body", quantityIndex: 0 }],
+        },
+        {
+          kind: "equip-inventory",
+          entryId: "cape",
+          assignments: [{ slot: "neck", quantityIndex: 0 }],
+        },
+      ],
+    });
+    const unequippedEvaluation = evaluateCharacter(
+      projectBuildForEvaluation(build, content),
+      content,
+    );
+    const equippedEvaluation = evaluateCharacter(
+      projectBuildForEvaluation(equipped, content),
+      content,
+    );
+
+    expect(unequippedEvaluation.stats.AC?.value).toBe(10);
+    expect(equippedEvaluation.stats.AC?.value).toBe(11);
+    expect(equippedEvaluation.stats["Fortitude Defense"]?.value).toBe(11);
+    expect(equippedEvaluation.stats["Reflex Defense"]?.value).toBe(11);
+    expect(equippedEvaluation.stats["Will Defense"]?.value).toBe(11);
+  });
 });

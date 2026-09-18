@@ -1,6 +1,8 @@
 import {
   formatInventoryItemName,
   type BuildInventoryEntry,
+  type CharacterCommand,
+  type EquipmentSlotAssignment,
   type EquipmentSlotId,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
@@ -342,6 +344,179 @@ export function inventoryRequiresBothHands(
       .toLocaleLowerCase()
       .includes("two-handed")
   );
+}
+
+export interface ResolvedLoadoutAssignments {
+  readonly assignmentsByEntry: ReadonlyMap<
+    string,
+    readonly EquipmentSlotAssignment[]
+  >;
+}
+
+const inferredSlotPriority: readonly EquipmentSlotId[] = [
+  "body",
+  "head",
+  "neck",
+  "arms",
+  "hands",
+  "waist",
+  "feet",
+  "symbol",
+  "ki-focus",
+  "tattoo",
+  "companion",
+  "familiar",
+  "mount",
+  "ring-1",
+  "ring-2",
+  "main-hand",
+  "off-hand",
+];
+
+/**
+ * Projects legacy `equip-count` holdings into the modern slot model for
+ * presentation and the next loadout edit. The legacy format records how many
+ * copies are equipped but not which hand/ring slot they occupy. Explicit
+ * modern assignments always win; unambiguous remaining positions are filled
+ * deterministically without changing the durable build until the user edits
+ * the loadout.
+ */
+export function resolveLoadoutAssignments(
+  inventory: readonly BuildInventoryEntry[],
+  byId: ReadonlyMap<string, ContentEntity>,
+): ResolvedLoadoutAssignments {
+  const assignmentsByEntry = new Map<
+    string,
+    readonly EquipmentSlotAssignment[]
+  >();
+  const occupied = new Set<EquipmentSlotId>();
+
+  for (const entry of inventory) {
+    if (entry.equippedSlots === undefined) continue;
+    const assignments = [...entry.equippedSlots];
+    assignmentsByEntry.set(entry.id, assignments);
+    assignments.forEach(({ slot }) => occupied.add(slot));
+  }
+
+  for (const entry of inventory) {
+    if (
+      entry.equippedSlots !== undefined ||
+      entry.equippedQuantity <= 0 ||
+      entry.quantity <= 0
+    )
+      continue;
+    const candidates = new Set(
+      inventorySlotCandidates(entry, byId) as readonly EquipmentSlotId[],
+    );
+    const tentative: EquipmentSlotAssignment[] = [];
+    const tentativelyOccupied = new Set(occupied);
+    let complete = true;
+
+    for (
+      let quantityIndex = 0;
+      quantityIndex < entry.equippedQuantity;
+      quantityIndex += 1
+    ) {
+      if (inventoryRequiresBothHands(entry, byId)) {
+        if (
+          !candidates.has("main-hand") ||
+          !candidates.has("off-hand") ||
+          tentativelyOccupied.has("main-hand") ||
+          tentativelyOccupied.has("off-hand")
+        ) {
+          complete = false;
+          break;
+        }
+        tentative.push(
+          { slot: "main-hand", quantityIndex },
+          { slot: "off-hand", quantityIndex },
+        );
+        tentativelyOccupied.add("main-hand");
+        tentativelyOccupied.add("off-hand");
+        continue;
+      }
+      const slot = inferredSlotPriority.find(
+        (candidate) =>
+          candidates.has(candidate) && !tentativelyOccupied.has(candidate),
+      );
+      if (slot === undefined) {
+        complete = false;
+        break;
+      }
+      tentative.push({ slot, quantityIndex });
+      tentativelyOccupied.add(slot);
+    }
+
+    if (!complete) continue;
+    assignmentsByEntry.set(entry.id, tentative);
+    tentative.forEach(({ slot }) => occupied.add(slot));
+  }
+
+  return { assignmentsByEntry };
+}
+
+export function loadoutChangeCommand(
+  inventory: readonly BuildInventoryEntry[],
+  byId: ReadonlyMap<string, ContentEntity>,
+  entryId: string | undefined,
+  slots: readonly EquipmentSlotId[],
+  currentEntryId?: string,
+  currentSlots: readonly EquipmentSlotId[] = slots,
+): CharacterCommand | undefined {
+  const loadout = resolveLoadoutAssignments(inventory, byId);
+  const assignmentsFor = (
+    candidateEntryId: string,
+  ): readonly EquipmentSlotAssignment[] =>
+    loadout.assignmentsByEntry.get(candidateEntryId) ??
+    inventory.find(({ id }) => id === candidateEntryId)?.equippedSlots ??
+    [];
+  const current =
+    currentEntryId === undefined
+      ? inventory.find((entry) =>
+          assignmentsFor(entry.id).some((assignment) =>
+            currentSlots.includes(assignment.slot),
+          ),
+        )
+      : inventory.find(({ id }) => id === currentEntryId);
+  const withoutCurrentSlots = (candidateEntryId: string) =>
+    assignmentsFor(candidateEntryId).filter(
+      (assignment) => !currentSlots.includes(assignment.slot),
+    );
+
+  if (entryId === undefined) {
+    if (current === undefined) return undefined;
+    return {
+      kind: "equip-inventory",
+      entryId: current.id,
+      assignments: withoutCurrentSlots(current.id),
+    };
+  }
+  const entry = inventory.find(({ id }) => id === entryId);
+  if (entry === undefined) return undefined;
+  const retained = assignmentsFor(entry.id).filter(
+    (assignment) => !slots.includes(assignment.slot),
+  );
+  const used = new Set(retained.map(({ quantityIndex }) => quantityIndex));
+  const pairedHands = slots.includes("main-hand") && slots.includes("off-hand");
+  const quantityIndex = pairedHands
+    ? 0
+    : Array.from({ length: entry.quantity }, (_, index) => index).find(
+        (index) => !used.has(index),
+      );
+  if (quantityIndex === undefined) return undefined;
+  const assignments = [
+    ...retained,
+    ...slots.map((slot) => ({ slot, quantityIndex })),
+  ];
+  const commands: CharacterCommand[] = [];
+  if (current !== undefined && current.id !== entryId)
+    commands.push({
+      kind: "equip-inventory",
+      entryId: current.id,
+      assignments: withoutCurrentSlots(current.id),
+    });
+  commands.push({ kind: "equip-inventory", entryId, assignments });
+  return commands.length === 1 ? commands[0] : { kind: "batch", commands };
 }
 
 export function itemProficiencyStatus(

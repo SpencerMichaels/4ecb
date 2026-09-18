@@ -41,6 +41,38 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## M5.5 builder-header statistics checkpoint (2026-09-18)
+
+- The compact builder identity header now includes a wide, shallow statistics
+  strip sourced exclusively from the evaluation at the character's current
+  effective level. It shows evaluated maximum HP, Speed, signed Initiative,
+  AC/Fortitude/Reflex/Will, and Strength through Charisma; navigating to an
+  earlier choice or a future planning level cannot change these totals.
+- HP, movement, defenses, and abilities use four visually distinct clusters
+  without visible group headings. Ability scores occupy a centered three-column,
+  two-row arrangement with fixed label/value tracks so each top and bottom pair
+  shares its left edges. Missing current evaluation values remain stable em
+  dashes rather than falling back to imported snapshot caches.
+- Every available numeric total exposes the evaluator's applied contribution
+  provenance in a native multiline tooltip on the value itself. The tooltip
+  presents a player-facing total and signed breakdown, translates opaque legacy
+  level-node labels from their rule metadata, and never recomputes a stat in the
+  web UI.
+- Character sheet is now a peer top-level navigation tab. Unresolved choices,
+  warnings, and save state sit at the tab bar's trailing edge, followed by
+  icon-only Undo and Redo controls with accessible labels and native tooltips.
+  The identity/stat row and the tab/status row progressively stack at narrower
+  widths without introducing a vertical tab scrollbar.
+- Imported legacy equipment records only `equip-count`, not modern hand, ring,
+  or body-slot assignments. Loadout now projects those active counts into
+  deterministic compatible open slots after preserving every explicit modern
+  assignment. This keeps the visible loadout consistent with the evaluator:
+  selecting an already-active imported item is no longer a no-op disguised as
+  equipping it, and clearing the inferred slot atomically materializes the
+  modern assignment change so equipment-backed header defenses update. Entries
+  that cannot be placed without ambiguity remain rules-active and visibly
+  explained rather than being silently unequipped.
+
 ## M5.5 candidate-table initialization checkpoint (2026-09-18)
 
 - Opening a Build category or Character details pane now gives its first shared

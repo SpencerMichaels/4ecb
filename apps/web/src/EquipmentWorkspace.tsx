@@ -34,6 +34,7 @@ import {
   itemCanBeBought,
   itemProficiencyStatus,
   practiceKind,
+  resolveLoadoutAssignments,
   SHOP_ITEM_TYPES,
   visibleLoadoutSlotColumns,
 } from "./equipment-ui";
@@ -430,6 +431,8 @@ export function EquipmentWorkspace({
   readonly onEquipSlot: (
     entryId: string | undefined,
     slots: readonly string[],
+    currentEntryId?: string,
+    currentSlots?: readonly string[],
   ) => void;
   readonly onSetMoney: (
     location: MoneyLocation,
@@ -520,6 +523,7 @@ export function EquipmentWorkspace({
     inventory,
     byId,
   );
+  const loadoutAssignments = resolveLoadoutAssignments(inventory, byId);
 
   const inspectInventory = (entry: BuildInventoryEntry) => {
     setInspected(inventoryItemDetail(entry, byId));
@@ -736,9 +740,9 @@ export function EquipmentWorkspace({
                       inventorySlotCandidates(entry, byId).includes(slotId),
                     );
                     const assigned = compatible.find((entry) =>
-                      entry.equippedSlots?.some(
-                        (assignment) => assignment.slot === slotId,
-                      ),
+                      loadoutAssignments.assignmentsByEntry
+                        .get(entry.id)
+                        ?.some((assignment) => assignment.slot === slotId),
                     );
                     const selectId = `loadout-slot-${slotId}`;
                     return (
@@ -770,14 +774,18 @@ export function EquipmentWorkspace({
                               assigned !== undefined &&
                               inventoryRequiresBothHands(assigned, byId);
                             if (assignedUsesBothHands && !entryUsesBothHands) {
-                              onEquipSlot(undefined, pairedHandSlots);
-                              if (entry !== undefined)
-                                onEquipSlot(entry.id, [slotId]);
+                              onEquipSlot(
+                                entry?.id,
+                                [slotId],
+                                assigned.id,
+                                pairedHandSlots,
+                              );
                               return;
                             }
                             onEquipSlot(
                               event.currentTarget.value || undefined,
                               entryUsesBothHands ? pairedHandSlots : [slotId],
+                              assigned?.id,
                             );
                           }}
                         >
@@ -795,11 +803,14 @@ export function EquipmentWorkspace({
               ))}
               {inventory.some(
                 (entry) =>
-                  entry.equippedQuantity > 0 && !entry.equippedSlots?.length,
+                  entry.equippedQuantity > 0 &&
+                  entry.equippedSlots === undefined &&
+                  !loadoutAssignments.assignmentsByEntry.has(entry.id),
               ) ? (
                 <p className="field-help loadout-help">
-                  Imported equipped counts remain active. Assign those holdings
-                  to slots to make their loadout explicit.
+                  Some imported equipped counts cannot be matched to a unique
+                  open slot. They remain rules-active until you revise those
+                  holdings.
                 </p>
               ) : null}
             </div>

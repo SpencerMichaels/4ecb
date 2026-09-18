@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import {
+  applyCharacterCommand,
+  type BuildInventoryEntry,
+  type CharacterBuild,
+} from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 
 import {
@@ -11,7 +16,9 @@ import {
   inventorySlotCandidates,
   inventoryRequiresBothHands,
   LOADOUT_SLOT_COLUMNS,
+  loadoutChangeCommand,
   practiceKind,
+  resolveLoadoutAssignments,
   visibleLoadoutSlotColumns,
 } from "./equipment-ui";
 
@@ -351,6 +358,77 @@ describe("equipment catalog presentation", () => {
         ],
       },
     ]);
+  });
+
+  it("shows legacy equipped counts in deterministic modern slots", () => {
+    const cloth = entity("CLOTH", "Cloth Armor", "Armor", {
+      "Armor Type": "Light",
+      "Item Slot": "Body",
+    });
+    const flowform = entity("FLOWFORM", "Flowform Armor +1", "Magic Item", {
+      "Magic Item Type": "Armor",
+    });
+    const cape = entity("CAPE", "Cape of the Mountebank +1", "Magic Item", {
+      "Magic Item Type": "Neck Slot Item",
+      "Item Slot": "Neck",
+    });
+    const index = new Map(
+      [cloth, flowform, cape].map((item) => [
+        item.id.toLocaleLowerCase(),
+        item,
+      ]),
+    );
+    const holding = (
+      id: string,
+      definitions: readonly ContentEntity[],
+    ): BuildInventoryEntry => ({
+      id,
+      acquiredLevel: 1,
+      quantity: 1,
+      equippedQuantity: 1,
+      elements: definitions.map(({ id: definitionId, name, type }) => ({
+        definitionId,
+        name,
+        type,
+      })),
+      overrides: {},
+      legality: "rules-legal",
+    });
+
+    const armorHolding = holding("armor", [cloth, flowform]);
+    const capeHolding = holding("cape", [cape]);
+    const inventory = [armorHolding, capeHolding];
+    const resolved = resolveLoadoutAssignments(inventory, index);
+
+    expect(resolved.assignmentsByEntry.get("armor")).toEqual([
+      { slot: "body", quantityIndex: 0 },
+    ]);
+    expect(resolved.assignmentsByEntry.get("cape")).toEqual([
+      { slot: "neck", quantityIndex: 0 },
+    ]);
+
+    const command = loadoutChangeCommand(
+      inventory,
+      index,
+      undefined,
+      ["body"],
+      "armor",
+    );
+    const build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 1,
+      levels: [],
+      grabbag: [],
+      inventory,
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    expect(command).toBeDefined();
+    expect(applyCharacterCommand(build, command!).inventory[0]).toMatchObject({
+      equippedQuantity: 0,
+      equippedSlots: [],
+    });
   });
 
   it("shows implement slots only for their exact active proficiency IDs", () => {
