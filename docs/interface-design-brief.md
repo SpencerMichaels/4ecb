@@ -1,9 +1,10 @@
 # Interface design brief
 
-This brief records the product-owner direction for M5.5. It governs the durable
-builder interface and supplies the interaction language that later phone play
-mode should extend. It is a product direction, not permission to copy another
-application's protected visual assets.
+This brief records the product-owner direction for M5.5 and the M5.6 sheet/play
+foundation. It governs the durable builder and Equipment interfaces, then the
+shared interaction language that the later phone play surface should adapt. It
+is a product direction, not permission to copy another application's protected
+visual assets.
 
 ## Product character
 
@@ -296,6 +297,21 @@ application's protected visual assets.
   exports; adding a template must not change existing saved characters' rules
   interpretation.
 
+### Browser View and Play modes
+
+- **View** is the authoritative read-only desktop/tablet character reference. It
+  prioritizes quick scanning, navigation among major sections, complete reference
+  cards, equipment, rituals, notes, and an obvious path to print preview.
+- **Play** is a separate desktop/tablet, character-sheet-shaped interface. It may
+  share visual components with View, but mutable HP, resources, power usage,
+  effects, and temporary equipment state are backed by `PlayState` commands,
+  history, and undo rather than changes to calculated sheet values.
+- View, Play, and print consume the same semantic `SheetDocument` and card models
+  while retaining layouts appropriate to reading, interaction, and paper.
+- The M6 phone application reuses PlayState and command semantics but reorganizes
+  them into Dashboard, Powers, Effects, Equipment, and Journal tasks. It is not a
+  narrow breakpoint of the desktop Play sheet.
+
 Rules choices created by the immediately preceding selection are presented as
 one progressive choice flow, not as independent level cards. The first chosen
 entity names the flow when available, and numbered steps keep the initiating
@@ -375,12 +391,28 @@ Spellbook alternates stay in Build. Item-owned configuration remains evaluable
 and recoverable; a later focused pass will move its editor into this workspace
 with a clear link to character-level consequences.
 
+M5.5 closure applies the same focused review standard to the under-refined tabs:
+
+- **Inventory** makes current holdings, quantities, carried/stored state, sale
+  outcomes, inspection, item configuration, and recovery states easy to follow.
+- **Shop** makes filters, exact magic/base variants, affordability and blocked
+  purchases, price changes, purchasing, and resulting inventory state explicit.
+- **Rituals & Practices** clearly separates discoverable records, known
+  rituals/formulas/practices, and quantity-bearing scrolls, with complete learn,
+  buy, inspect, and manage workflows.
+- Each tab receives a live full-profile workflow pass and product-owner approval;
+  item-owned choices move here without changing their rules occurrence or legacy
+  export topology.
+
 ## Validation sequencing
 
-M5.5 first establishes and receives product-owner approval for the principal
-interaction design. Comprehensive accessibility certification and the broad
-browser, operating-system, assistive-technology, and physical-device matrix may
-be scheduled closer to 1.0. Semantic HTML, labeled controls, keyboard-operable
+M5.5 establishes and receives product-owner approval for the principal builder,
+library, and Equipment interaction design. M5.6 then establishes the shared
+browser View and desktop/tablet Play sheet model before phone-specific work.
+Comprehensive accessibility certification across the selected browser,
+operating-system, assistive-technology, zoom, and input matrix is post-1.0 work.
+Supported-client functional smoke remains a 1.0 hardening responsibility.
+Semantic HTML, labeled controls, keyboard-operable
 native primitives, reduced-motion behavior, readable contrast, and non-forced
 responsive sizing remain continuous engineering constraints so later validation
 does not require a wholesale rewrite.

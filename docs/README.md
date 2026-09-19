@@ -39,7 +39,7 @@ application's architecture.
     configuration, offline/update behavior, and remaining release checks.
 13. [M5 functional closure checklist](m5-release-checklist.md) maps security,
     compatibility, durability, and functional browser/print evidence to M5, and
-    records comprehensive UI/device validation under M5.5.
+    records the later M9 supported-client and post-1.0 M10 accessibility work.
 14. [User guide and recovery handbook](user-guide.md) covers installation,
     private content, character/profile workflows, compatibility export, sheets,
     backup/restore, updates, recovery, and current limitations.
@@ -63,7 +63,7 @@ application's architecture.
 ## Status
 
 The reverse-engineering specification remains the compatibility evidence base.
-Milestones M1 through M4 are implemented and verified. M4 is a builder beta;
-the compatibility ledger names the native exception and cross-profile findings
-that must close before M5 can be called the public MVP.
+Milestones M1 through M5 are implemented and verified. M5 is the functional
+builder MVP. M5.5 is closing the builder and Equipment interfaces; M5.6 will
+solidify browser View and desktop/tablet Play before M6 adapts play to phones.
 See the [roadmap](roadmap.md) and [implementation status](implementation-status.md).

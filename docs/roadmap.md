@@ -201,8 +201,8 @@ prompts, a hardened public Docker boundary, public-distribution notices, and
 exact-profile authoritative browser sheets with a visible legacy-cache fallback.
 Edited export now has explicit byte-preserving and 0.07a regenerated targets
 with a semantic re-import gate. Automated Chromium and Firefox Letter/A4 PDF
-matrices pass as functional regression evidence; cross-browser visual print
-review belongs to M5.5 after the real interface is designed. The
+matrices pass as functional regression evidence; broad cross-browser visual
+print review belongs to 1.0 hardening after the real interface is designed. The
 Representative original-application open/save/reopen compatibility is therefore
 accepted at the M5 boundary; later character-specific findings remain ordinary
 compatibility bugs rather than reopening the milestone. Content onboarding now provides bounded read-only
@@ -212,9 +212,10 @@ same-origin baseline; verified downloads cache offline without activation, and
 users explicitly compose/adopt personal overlays above it. Materialized profile
 digests and ordered layer bindings preserve existing character behavior.
 The public import/rendering security pass, automated storage durability matrix,
-and route-focus/contrast/responsive structural baseline are complete. Full
-keyboard, screen-reader, zoom, touch, Safari, and physical-device execution is
-deliberately assigned to M5.5, after UI design with the product owner. The user
+and route-focus/contrast/responsive structural baseline are complete.
+Comprehensive keyboard-only, screen-reader, zoom/reflow, and touch-target
+execution is deliberately post-1.0 work. Supported-client release smoke remains
+part of 1.0 hardening. The user
 and recovery handbook now covers installation,
 private content, profile migration, import/export, sheets, storage, updates,
 recovery, and the known release limitations required by exit criterion 10.
@@ -301,59 +302,61 @@ All of the following must be true:
 9. Core workflows pass automated and live functional checks in the primary
    development browser, while semantic structure, labeled controls, basic
    keyboard operation, and non-forced viewport sizing remain intact. Exhaustive
-   cross-browser, assistive-technology, touch, zoom, and visual validation is an
-   M5.5 release-readiness gate after UI design.
+   cross-browser visual validation is a 1.0 hardening concern, and the
+   comprehensive assistive-technology, keyboard-only, touch, and zoom matrix is
+   a post-1.0 certification concern.
 10. Installation, content import, backup, recovery, upgrade, and known
     compatibility limitations are documented.
 
 **Release characterization:** functional MVP / core builder release; designed
-UI stabilization and its support matrix follow in M5.5.
+Builder/Equipment design closure follows in M5.5; sheet/play design follows in
+M5.6; broad support testing is staged in M9 and M10.
 
-## M5.5 — Builder UI design and release-readiness validation
+## M5.5 — Builder and Equipment interface closure
 
 The product-owner direction for this milestone is recorded in
 [`interface-design-brief.md`](interface-design-brief.md). Product design and
-prototype approval precede M6; comprehensive accessibility and broad client
-certification may be deferred closer to 1.0 while structural accessibility
-remains a continuous constraint.
+prototype approval precede the sheet/play foundation milestone. Comprehensive
+assistive-technology, keyboard-only, zoom/reflow, and touch-target certification
+is post-1.0 work; structural accessibility and ordinary keyboard operation
+remain continuous constraints. Broad supported-client release testing remains
+part of 1.0 hardening.
 
 ### Goal
 
-Design the durable builder interface with the product owner, then validate that
-interface across supported desktop and tablet clients. This work intentionally
-follows core builder parity so visual and interaction evidence is not invalidated
-by a subsequent redesign.
+Close the durable builder, library, and Equipment interfaces with the product
+owner. This work intentionally follows core builder parity so the accepted
+interaction model can become the stable input to sheet and play-mode design.
 
 ### Deliverables
 
 - Short UI prototype/review cycles covering information hierarchy, density,
-  navigation, forms, choice resolution, sheets, typography, color, and restrained
-  motion.
-- Complete keyboard traversal and screen-reader announcement/validation review.
-- 200% zoom, reflow, and touch-target review on supported desktop/tablet layouts.
-- Critical-workflow smoke runs in desktop Chromium, Firefox, and Safari, plus
-  iPadOS Safari and Android Chromium tablet where hardware is available.
-- Cross-engine and device print/PDF review, including raster inspection where
-  engine output differs.
-- Representative interaction, initial-load, full-corpus import, evaluation, and
-  print-preview timings on supported hardware.
+  navigation, forms, choice resolution, typography, color, and restrained motion.
+- Complete Loadout, Inventory, Shop, and Rituals & Practices workflows with one
+  coherent Equipment information architecture and shared detail presentation.
+- A redesigned unavailable-options workflow and Equipment-owned editing for
+  choices granted by items.
+- Focused functional smoke runs in the primary development browsers, preserving
+  semantic structure, labeled controls, ordinary keyboard use, responsive
+  layouts, and the existing automated print regression gate.
+- Reconciled product and implementation documentation for the interface that
+  actually ships, including removal of the former standalone Compendium.
 
 ### Exit criteria
 
-- The product owner approves the principal builder, compendium, library, and
-  sheet interaction designs through the agreed feedback loop.
-- Every supported client passes the final critical-workflow matrix for the
-  interface being shipped.
-- Complete workflows are operable with a keyboard, validation and status changes
-  are usable with the selected screen-reader matrix, and 200% zoom/reflow does
-  not hide functionality.
-- Supported tablet layouts meet the approved touch and responsive behavior.
-- Letter/A4 print output is visually reviewed in supported engines with known
-  engine-specific limitations documented.
-- Representative hardware meets the release performance budgets fixed during
-  this milestone.
+- The product owner approves the principal builder, library, and Equipment
+  interactions through the agreed feedback loop.
+- Loadout, Inventory, Shop, and Rituals & Practices support their principal
+  inspect, acquire/manage, and edit workflows without relying on the retired
+  Compendium page.
+- Unavailable candidate browsing and item-owned choices have approved homes in
+  the interface and retain exact rules/serialization identity.
+- The public functional gate and focused Chromium/Firefox workflows pass, with
+  structural accessibility and responsive-layout safeguards intact.
+- The roadmap, design brief, status record, and user-facing documentation agree
+  on the shipped interface and on work deliberately deferred.
 
-**Release characterization:** first supported builder release candidate.
+**Release characterization:** designed builder and Equipment release candidate.
 
 **Current M5.5 checkpoint (2026-09-02):** The first working builder-interface
 draft is implemented over the real rules/storage commands. It establishes the
@@ -363,9 +366,9 @@ foundation, system/light/dark themes, monochrome interface icons, and existing
 4E power-color semantics. Current level and saved future frames now operate as
 separate evaluation/export projections; lowering the visible horizon is a
 non-destructive session view until a dedicated persisted preference is added.
-This checkpoint begins the prototype feedback loop; it does not claim product
-owner approval or close the keyboard, screen-reader, zoom, touch, Safari,
-physical-device, performance, or cross-engine visual-print exit criteria above.
+This checkpoint began the prototype feedback loop. Subsequent accepted passes
+substantially revised the interface; the final milestone reconciliation and the
+remaining Equipment/unavailable-choice work are still required before closure.
 
 The second product-owner review makes each level the main-pane workspace. Its
 Class, Race, Background, Theme, Ability Scores, Companion, Skills, Powers,
@@ -453,26 +456,75 @@ directly to one final Build destination; in-page filters, disclosures, choices,
 and edits do not add history entries. Invalid or unavailable nested values
 recover by replacement without disturbing library or character-sheet routes.
 
+**M5.5 closure status (2026-09-18):** The builder, library, Loadout, shared
+detail-card system, navigation, candidate tables, and header statistics have all
+received accepted product-owner passes. Inventory, Shop, and Rituals & Practices
+still require focused workflow refinement; unavailable-option browsing and
+item-owned Equipment choices still require their final interfaces. Closing those
+items, reconciling the final documentation, and recording live product-owner
+approval completes M5.5. Broad release-client testing belongs to M9 and the
+comprehensive accessibility matrix to post-1.0 M10.
+
+## M5.6 — Character sheet and local-play foundation
+
+### Goal
+
+Solidify the character's at-a-glance reference and at-table interaction model
+before adapting it to a phone. Browser **View** and **Play** are distinct modes
+over the same semantic sheet/card models; print remains a third presentation of
+that same authoritative data.
+
+### Deliverables
+
+- A refined browser View sheet with approved information hierarchy, navigation,
+  reference cards, equipment, rituals, notes, and print entry points.
+- A desktop/tablet Play sheet backed by first-class `PlayState`, deterministic
+  play commands, operation history, and undo rather than edits to calculated
+  character snapshots.
+- Interactive HP, temporary HP, surges, action points, death saves, power usage,
+  recharge/rest, and structured effect workflows using shared card models.
+- Clear switching and state ownership between View, Play, Build, and print
+  preview, including recovery after reload and explicit reconciliation of
+  durable character changes.
+- Product-owner prototypes and approval for both View and Play modes, including
+  the information grouping that the later phone surface will adapt.
+
+### Exit criteria
+
+- The product owner approves the principal browser View and desktop/tablet Play
+  interfaces.
+- Derived rules values remain reproducible from the character and profile;
+  mutable table state is isolated in versioned `PlayState` with provenance.
+- Damage, healing, temporary HP, surges, action points, death saves, power use,
+  recharge, rest, effect expiry, and undo have deterministic transition tests.
+- Reloading preserves an in-progress local play session without silently
+  changing the durable build.
+- View, Play, and print consume the shared semantic sheet/card model without
+  presentation logic entering the rules engine.
+
+**Release characterization:** approved sheet and local-play interaction
+foundation; phone adaptation follows in M6.
+
 ## M6 — Local phone play mode
 
 ### Goal
 
-Add the at-table player experience without requiring networking.
+Adapt the approved local-play experience to a purpose-built phone interface
+without requiring networking.
 
 ### Deliverables
 
-- `play-domain`, structured effects, deterministic play commands, operation
-  history, and reconciliation into the durable character.
 - Phone-first dashboard, powers, effects, equipment, and journal views.
-- Interactive power cards and resource reset/rest workflows.
+- Phone interaction patterns for the shared PlayState commands, cards, effects,
+  resource adjustment, undo, and rest workflows established in M5.6.
 - Portable play-bundle import/export containing only character-relevant content.
 - PWA installation and offline behavior tested on supported iOS and Android.
 
 ### Exit criteria
 
 - A player can run a full encounter and extended-rest cycle in airplane mode.
-- Damage, healing, temporary HP, surges, action points, death saves, power use,
-  recharge, and effect expiry have transition and undo tests.
+- Every M5.6 play transition remains available and understandable on the phone
+  surface without compressing the desktop sheet layout.
 - Derived values visibly respond to structured play effects with provenance.
 - A portable play bundle provides all referenced powers/items without requiring
   the complete corpus on the phone.
@@ -552,8 +604,8 @@ Declare the complete character-builder product stable and supportable.
 
 - Compatibility backlog triage and documented support matrix.
 - Schema/protocol stability commitments and migration policy.
-- Recovery and diagnostics UI, security review, accessibility audit, and
-  production performance pass.
+- Recovery and diagnostics UI, security review, structural accessibility review,
+  supported-client workflow checks, and production performance pass.
 - Relay abuse controls and operational runbook.
 - Complete player, content-author, self-hoster, and integration documentation.
 - Release/upgrade/rollback process and signed artifacts where infrastructure
@@ -574,6 +626,33 @@ Declare the complete character-builder product stable and supportable.
 - Public and self-hosted deployment paths have repeatable release checks and
   recovery procedures.
 
+## M10 — Post-1.0 comprehensive accessibility certification
+
+### Goal
+
+Measure and improve the stable product against a comprehensive accessibility
+matrix without making that matrix a prerequisite for the 1.0 release.
+
+### Deliverables
+
+- End-to-end keyboard-only workflow audits across builder, Equipment, View,
+  Play, custom-content, and recovery surfaces.
+- Screen-reader announcement, status, validation, table, dialog, and dynamic
+  update testing against a documented browser/assistive-technology matrix.
+- 200% zoom/reflow, touch-target, reduced-motion, contrast, and non-color-state
+  review on representative desktop, tablet, and phone layouts.
+- Prioritized remediation records, regression coverage, and an explicit support
+  statement for combinations that were actually tested.
+
+### Exit criteria
+
+- Every principal workflow has recorded keyboard-only, screen-reader, and
+  zoom/reflow evidence for the selected matrix.
+- Discovered blockers are fixed or documented with a concrete remediation plan
+  and an accessible fallback.
+- The public accessibility statement accurately distinguishes continuous
+  structural safeguards from combinations verified by this certification pass.
+
 ## Cross-cutting workstreams
 
 The following are continuous rather than deferred to a cleanup milestone:
@@ -590,13 +669,14 @@ The following are continuous rather than deferred to a cleanup milestone:
 
 Visual polish and exhaustive interface validation are intentionally not
 continuous speculative workstreams during early implementation. Each milestone
-must preserve sound semantic structure and usable functional controls, while
-substantial design, assistive-technology, device, and visual-validation work
-waits for M5.5, when representative workflows can be reviewed interactively.
+must preserve sound semantic structure and usable functional controls. Product
+design is closed through focused owner review; broad supported-client checks
+belong to 1.0 hardening, and the comprehensive accessibility matrix belongs to
+the post-1.0 M10 certification pass.
 
-## Recommended first implementation slice
+## Historical first implementation slice
 
-Begin M1 with one end-to-end vertical slice:
+M1 began with this end-to-end vertical slice:
 
 1. define a minimal normalized `RulesElement` and pack manifest;
 2. compile a tiny synthetic pack with the CLI;

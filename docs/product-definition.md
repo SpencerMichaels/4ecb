@@ -55,9 +55,11 @@ back up portable user-owned files without maintaining user accounts.
    change when content or engine behavior changes.
 5. **Progressive capability.** The application remains useful without a relay,
    without a full content corpus, and while offline.
-6. **Different devices, purpose-built interfaces.** Building targets desktop and
-   tablet; play targets phones; printing targets paper. They share domain logic,
-   not a compromised universal layout.
+6. **Different contexts, purpose-built interfaces.** Building and sheet View
+   target desktop and tablet; a character-sheet-shaped Play view establishes the
+   shared at-table model there; phone play is a separate task-oriented surface;
+   printing targets paper. They share domain logic, not a compromised universal
+   layout.
 7. **User data remains portable.** Every local document has an export path and a
    documented migration strategy.
 8. **Public distribution does not imply content redistribution.** Application
@@ -125,7 +127,7 @@ The MVP does **not** require:
 
 The final product includes the MVP plus:
 
-- an installable, phone-first play mode;
+- a persistent local Play sheet plus an installable, phone-first play surface;
 - structured play state for HP, resources, power use, conditions, durations,
   equipment overrides, treasure, and session notes;
 - encrypted one-time desktop-to-phone transfer using QR pairing, with manual file
@@ -139,7 +141,8 @@ The final product includes the MVP plus:
   graphical editor for commonly authored content;
 - polished campaign-profile management and campaign restrictions;
 - install/update/offline UX, recovery tools, performance budgets, security
-  review, accessibility review, localization-ready text boundaries, and complete
+  review, structural accessibility review, localization-ready text boundaries,
+  and complete
   operator documentation; and
 - stable, documented public extension formats for content packs, characters,
   portable play bundles, and session messages; and
@@ -158,7 +161,10 @@ The sheet has three modes generated from the same semantic sheet model:
    values.
 2. **Print preview:** page-aware layout with controls for paper size, included
    sections, card orientation, color, and which mutable fields are blank.
-3. **Play view:** interactive cards and mutable values backed by `PlayState`.
+3. **Play view:** a desktop/tablet character-sheet-shaped interface with
+   interactive cards and mutable values backed by `PlayState`. The phone play
+   surface adapts the same state and commands to task-oriented mobile navigation
+   rather than shrinking this layout.
 
 Printing defaults to leaving current HP, temporary HP, current surge use,
 conditions, death-save failures, and limited-power usage blank while retaining
@@ -222,8 +228,10 @@ invented before representative content and engine workloads exist.
 - During core implementation, semantic headings, labels, basic keyboard
   operation, focus management, and text alternatives are structural acceptance
   criteria.
-- M5.5 validates complete builder and equipment workflows with keyboard and
-  selected screen readers after the interface is designed.
+- Structural semantics, labels, focus management, and ordinary keyboard
+  operation remain continuous requirements. A comprehensive assistive-technology,
+  zoom/reflow, touch-target, and accessibility matrix is scheduled after 1.0 so
+  it validates the stable product rather than blocking interface construction.
 - Color is never the only signal for power usage, legality, or status.
 - Print output remains legible in monochrome.
 
@@ -231,8 +239,9 @@ invented before representative content and engine workloads exist.
 
 - M5 functional builder: current stable desktop Chromium and Firefox, with
   ordinary-file fallbacks for progressive APIs.
-- M5.5 designed builder: current desktop Safari plus iPadOS Safari and
-  Chromium-based Android tablet validation where hardware is available.
+- The designed builder retains responsive and browser-neutral implementation
+  constraints. Broad Safari/tablet release checks belong to 1.0 hardening;
+  comprehensive assistive-technology certification follows 1.0.
 - Phone play mode: current iOS Safari and Android Chromium when M6 ships.
 - Progressive APIs such as directory selection always have ordinary file-input
   and portable-pack fallbacks.

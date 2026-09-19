@@ -12,9 +12,9 @@ Legacy .dnd4e  -----> compatibility adapters ----> character record
 character record + content profile + play state ---> rules engine
                                                     |
                                            evaluated snapshot
-                                            /       |       \
-                                      builder   sheet/print   phone play
-                                                               |
+                                            /       |        \
+                                      builder   sheet modes   phone play
+                                               view/play/print   |
                                                    encrypted session protocol
                                                                |
                                                     optional relay <--> DM app
@@ -33,7 +33,8 @@ A React, TypeScript, and Vite PWA supplies route-level experiences:
 
 - `/characters` for the local character library and read-only sheets;
 - `/characters/:characterId/edit` for desktop/tablet character construction;
-- `/characters/:characterId` for browser reference and print preview;
+- `/characters/:characterId` for browser View and print preview;
+- `/characters/:characterId/play` for the desktop/tablet Play sheet;
 - `/play/:characterId` for phone-first table state; and
 - `/settings` for imports, packs, backups, diagnostics, and relay configuration.
 
@@ -56,8 +57,11 @@ Hash-route changes move focus to the newly rendered main landmark after the
 initial load. Narrow/tablet breakpoints remove desktop minimum widths and stack
 dense library, editor, and sheet layouts; print keeps its separate
 fixed Letter/A4 rules. Functional tests retain basic contrast and semantics.
-M5.5 owns complete keyboard, zoom, screen-reader, touch, device, and visual-print
-validation after product-owner UI design.
+Comprehensive keyboard-only, zoom/reflow, screen-reader, and touch-target
+certification is post-1.0 work. Semantic structure, labels, focus behavior,
+ordinary keyboard operation, responsive sizing, and automated print regression
+remain continuous safeguards; supported-client release smoke and visual-print
+review belong to 1.0 hardening.
 
 ### Content tool
 
@@ -215,6 +219,11 @@ game events such as “start of source's next turn,” not wall-clock timers.
 
 Temporary equipment and treasure can be explicitly reconciled into the durable
 character record after play. They are not silently committed by session traffic.
+
+M5.6 establishes this renderer-independent state, command, history, persistence,
+and reconciliation foundation together with the desktop/tablet Play sheet. M6
+adds the purpose-built phone renderer and portable play-bundle workflow; it does
+not redefine play semantics inside phone UI components.
 
 ### EvaluatedCharacterSnapshot
 
@@ -686,7 +695,7 @@ by the project Nix shell.
 It seeds only a synthetic character into an ephemeral browser profile, prints
 the real production sheet route through the browser debugging protocol, verifies
 all-page geometry/text/tags/overflow, and deletes the generated PDFs. Safari,
-physical devices, and cross-engine raster review remain explicit M5.5 evidence
+physical devices, and cross-engine raster review remain explicit M9 evidence
 rather than being silently represented by desktop Chromium/Firefox output.
 
 ### Compatibility reporting

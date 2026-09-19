@@ -122,7 +122,7 @@ a reachable local daemon and is recorded separately from the Nix build.
 The public suite's `check:print` stage uses the Nix-pinned Chromium/Poppler pair
 and Firefox/geckodriver to produce and inspect ephemeral Letter/A4
 color/monochrome PDFs. Safari/device execution and cross-engine raster
-inspection are M5.5 checks against the designed interface.
+inspection are 1.0-hardening checks against the designed interface.
 
 User-facing installation, content import, backup, recovery, update, and known
 compatibility guidance is maintained in the

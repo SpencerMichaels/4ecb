@@ -251,6 +251,13 @@ senses, skills, feature groups, notes, inventory, powers, and cards. The browser
 renderer supplies a conservative desktop/tablet layout modeled on the legacy
 sheet's familiar hierarchy, not its proprietary artwork.
 
+M5.6 refines that browser renderer into an authoritative read-only **View** mode
+and adds a distinct desktop/tablet **Play** mode over the same `SheetDocument`
+and card models. Play mutations belong exclusively to persisted `PlayState` and
+its deterministic commands; they do not rewrite evaluated snapshots or the
+durable character build. M6 adapts those commands and models to a task-oriented
+phone interface rather than shrinking the desktop Play sheet.
+
 When the exact content pack ID and digest bound to the character are installed,
 the sheet runs the authoritative build through the rules worker and projects
 current stats, selections, inventory, field overlays, and every calculated power
@@ -305,4 +312,4 @@ current browser/variant combination.
 - Exact pagination varies with card prose and browser print engines. The current
   Chromium and Firefox functional fixtures have no card overflow and complete
   extracted text; Safari/device execution and cross-engine raster inspection
-  belong to the post-design M5.5 validation matrix.
+  belong to 1.0 hardening.

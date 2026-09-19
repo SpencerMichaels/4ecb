@@ -79,5 +79,5 @@ construction was roughly 4.0-4.5 seconds and common filtered searches reported
 The 10-second construction and 150/750-millisecond interaction limits are the
 conservative development-host alpha budgets. Crossing them blocks the relevant
 functional milestone and requires a persisted or precompiled index evaluation.
-M5.5 will measure and fix final interaction budgets on representative supported
+M9 will measure and fix release interaction budgets on representative supported
 desktop/tablet hardware after the UI design stabilizes.

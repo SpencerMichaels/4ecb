@@ -164,6 +164,9 @@ attack surface.
 
 ### D022 — Comprehensive UI validation follows UI design
 
+**Status:** superseded in milestone ownership by D054. The distinction between
+continuous structural safeguards and later comprehensive validation remains.
+
 M5 retains inexpensive structural safeguards: semantic landmarks and labels,
 basic keyboard operation, non-forced viewport sizing, readable functional
 layouts, and automated Letter/A4 print correctness. It does not require full
@@ -171,12 +174,9 @@ keyboard traversal, screen-reader audits, touch/zoom approval, physical-device
 matrices, Safari coverage, raster print review, or subjective visual
 accessibility sign-off while the interface is intentionally provisional.
 
-Those checks apply to the interface that will actually ship, so M5.5 owns a
-product-owner design pass followed by comprehensive desktop/tablet,
-assistive-technology, performance, and visual-print validation. Existing
-Chromium/Firefox functional print automation remains in the public gate as
-valuable regression coverage; moving final UI validation does not discard it or
-relax rules, storage, security, compatibility, or data-integrity requirements.
+Those checks were originally assigned to M5.5 after the product-owner design
+pass. D054 records the later decision to move the comprehensive accessibility
+matrix after 1.0 while retaining focused release and continuous safeguards.
 
 ### D023 — Layered local content profiles with advertised baselines
 
@@ -1078,10 +1078,10 @@ its monochrome icon and name beside the select control. Loadout does not carry
 per-slot Shop buttons; purchasing remains available through the existing Shop
 tab and its ordinary filters. This presentation decision supersedes the earlier
 loadout shop-shortcut checkpoint without changing the Shop workspace itself.
-Both columns use the same `7.5rem` icon-and-label track, `0.625rem` inter-track
-gap, and a dropdown track that shrinks with available space and caps at `18rem`.
-The two stacks collapse to one responsive column at `48rem` while retaining the
-same row geometry.
+Each stack sizes its own icon-and-label track to that stack's longest label, then
+uses a compact consistent gap before a dropdown track that shrinks with available
+space and caps at `18rem`. The two stacks collapse to one responsive column at
+`48rem` while retaining their independent alignment.
 
 The installed Lucide 1.39.0 set determines the exact glyphs. The ordered left
 column uses HardHat, Medal, Shirt, BicepsFlexed, Hand, SquareStar, and Footprints;
@@ -1110,6 +1110,33 @@ with portable event semantics, and a popup can be cancelled. Loadout therefore
 uses reliable `focus` and committed `change` behavior only; it does not add an
 `input` or key-event preview and does not replace the native select with a custom
 combobox.
+
+### D054 — Sheet/play foundation precedes phone adaptation; comprehensive accessibility certification follows 1.0
+
+**Status:** accepted
+
+**Date:** 2026-09-18
+
+M5.5 closes the builder, library, and complete Equipment workspace through the
+product-owner feedback loop. Inventory, Shop, and Rituals & Practices require the
+same focused workflow refinement already applied to Loadout; unavailable-option
+browsing and item-owned choices also require approved homes before closure.
+
+M5.6 then establishes two screen modes over the shared semantic sheet and card
+models. **View** is an authoritative read-only desktop/tablet reference. **Play**
+is a character-sheet-shaped desktop/tablet interface backed by a separately
+persisted, versioned `PlayState`, deterministic commands, provenance, history,
+and undo. Print remains its own page-oriented rendering. M6 consumes that settled
+state and interaction vocabulary in a purpose-built, task-oriented phone surface;
+it does not compress the desktop Play sheet to phone width.
+
+Comprehensive keyboard-only, screen-reader, zoom/reflow, and touch-target testing
+across the selected browser, operating-system, assistive-technology, and input
+matrix is explicitly post-1.0 work. Continuous semantic structure, labels, focus
+behavior, ordinary keyboard operation, contrast, reduced motion, responsive
+sizing, and automated regression tests remain required. M9 retains supported-
+client workflow, print, security, structural accessibility, and performance
+checks needed for a responsible 1.0 release.
 
 ### D055 — Inventory foregrounds holdings and total funds without flattening legacy state
 

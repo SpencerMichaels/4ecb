@@ -8,9 +8,10 @@ native parity risks. M5 is the functional MVP/core builder release. Profile
 migration preview and explicit adoption are implemented, and the product owner
 successfully opened, saved, and reopened several regenerated real level-8
 characters in the original builder. Functional print regression coverage is complete in
-Chromium and Firefox. Exhaustive cross-browser, keyboard, screen-reader, zoom,
-touch, device, and visual-print validation is intentionally owned by M5.5 after
-the interface is designed with the product owner. The installable PWA, update/offline
+Chromium and Firefox. M5.5 now owns builder and Equipment design closure;
+M5.6 owns the browser View and desktop/tablet Play foundation; supported-client
+release checks belong to M9; and the comprehensive accessibility matrix belongs
+to post-1.0 M10. The installable PWA, update/offline
 UX, content onboarding, public-distribution boundary, production Docker guide,
 and authoritative exact-profile browser sheet are verified checkpoints.
 The content model now supports an administrator-advertised immutable baseline
@@ -40,6 +41,28 @@ records are visually identical under manual comparison. Subsequent product-owner
 testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
+
+## M5.5/M5.6 roadmap reconciliation checkpoint (2026-09-18)
+
+- M5.5 now closes the builder, library, and complete Equipment interface rather
+  than owning comprehensive release certification. Loadout has received its
+  focused pass; Inventory, Shop, and Rituals & Practices still require equivalent
+  workflow refinement and live product-owner approval. Redesigned unavailable-
+  option browsing and Equipment-owned editing for item-granted choices are also
+  explicit closure work.
+- New M5.6 establishes the shared sheet/local-play foundation before phone work:
+  an authoritative desktop/tablet View sheet, a distinct Play sheet backed by
+  versioned `PlayState`, deterministic commands/history/undo, and approved shared
+  sheet/card interaction semantics. M6 is narrowed to the purpose-built phone
+  adaptation and portable/offline mobile workflow.
+- M9 retains supported-client workflow, visual-print, security, structural
+  accessibility, and release-performance checks. The comprehensive keyboard-only,
+  screen-reader, zoom/reflow, and touch-target matrix is explicitly post-1.0 M10.
+  Continuous semantic structure, labels, focus behavior, ordinary keyboard use,
+  contrast, reduced motion, and responsive sizing remain required throughout.
+- D054 records this product-owner decision. The roadmap, product definition,
+  architecture, interface brief, sheet specification, M5 checklist, deployment
+  notes, and user guide now use the same ownership boundaries.
 
 ## M5.5 builder-header statistics checkpoint (2026-09-18)
 
@@ -139,10 +162,10 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   metadata remains valid magic-item classification but no longer relocates the
   physical shield to Arms. The former display-name check and Arms result are
   removed; a name-neutral composed public fixture fixes the precedence rule.
-- Both Loadout stacks now share a `7.5rem` icon-and-label track and `0.625rem`
-  label-to-dropdown gap. Dropdowns shrink with their column, cap at `18rem`, and
-  the two stacks still collapse to one column at the existing `48rem` responsive
-  boundary.
+- Each Loadout stack now sizes its own icon-and-label track to its longest label
+  and uses a compact consistent gap before the dropdown. Dropdowns shrink with
+  their column, cap at `18rem`, and the two stacks still collapse to one column
+  at the existing `48rem` responsive boundary.
 - Committing any non-empty slot selection immediately shows that holding in the
   shared equipment detail viewer. Focusing a populated slot restores its current
   item to the viewer. Transient native-select popup highlights are not previewed:
@@ -1297,8 +1320,10 @@ candidate.
   and the query benchmark.
 
 This is a coherent prototype checkpoint, not M5.5 completion. Product-owner
-review and the milestone's comprehensive keyboard, screen-reader, 200% zoom,
-touch, Safari/tablet hardware, performance, and visual-print matrices remain.
+closure of Inventory, Shop, Rituals & Practices, unavailable-option browsing,
+and item-owned Equipment choices remains. The later milestone ownership for
+sheet/play design, supported-client release checks, and comprehensive
+accessibility certification is recorded in the roadmap and D054.
 
 ## M5 checkpoints
 
@@ -1488,8 +1513,8 @@ complete legal build, reloaded with every selection persisted, exposed only the
 edited export target, and passed its semantic re-import gate without console
 warnings or errors. This closes the old-application dependency for starting a
 character; the remaining M4 compatibility and legacy-application matrices still
-block complete M5 closure. Comprehensive UI validation belongs to M5.5 and does
-not block this functional milestone.
+block complete M5 closure. Comprehensive accessibility certification is now
+post-1.0 M10 work and does not block this functional milestone.
 The complete public gate passes 143 tests across 30 files plus formatting,
 ESLint, every TypeScript project, the production/PWA build, Chromium/Firefox
 print artifacts, deterministic content checks, and the query benchmark.
@@ -1610,8 +1635,8 @@ migration recovery. Live
 browser verification displayed the persistence/quota facts against the public
 synthetic profile; backup export reported one complete record. The automated
 restart, application-upgrade, restore, and interrupted-migration matrix covers
-the four durability cases in M5 exit criterion 5. Exhaustive supported-client UI
-traversal is deferred to M5.5. The original
+the four durability cases in M5 exit criterion 5. Exhaustive accessibility
+traversal is deferred to post-1.0 M10. The original
 checkpoint public suite passed 98 tests
 across 23 files plus formatting, ESLint, every TypeScript project, the
 production/PWA build, deterministic content checks, and the query benchmark.
@@ -1651,8 +1676,8 @@ built successfully, returned `ok` from `/healthz`, served the external runtime
 configuration, contained its service worker, manifest, and notice, and contained
 no `.4ecp` or `.dnd4e` artifacts. It passed the same checks while running
 read-only with a bounded temporary filesystem. Core security review remains an
-M5 concern; exhaustive supported-client accessibility and device-performance
-matrices are M5.5 work. The checkpoint public suite passes 102 tests across 24 files plus
+M5 concern; supported-client performance belongs to M9 and the exhaustive
+accessibility matrix to post-1.0 M10. The checkpoint public suite passes 102 tests across 24 files plus
 formatting, ESLint, every TypeScript project, the production/PWA build,
 deterministic content checks, and the query benchmark.
 
@@ -1790,7 +1815,7 @@ filesystem; application, immutable-asset, runtime-configuration, and health
 routes all returned the required security policy while retaining their distinct
 cache behavior. The complete public gate passes 123 tests across 27 files. This
 checkpoint is a structural and security baseline, not the comprehensive
-interface validation owned by M5.5.
+post-1.0 accessibility certification.
 
 ### Structural accessibility and responsive-shell baseline
 
@@ -1805,17 +1830,17 @@ interface validation owned by M5.5.
   foreground/background pair at the WCAG AA 4.5:1 threshold. The item-card
   orange was darkened because its prior white-text contrast did not pass.
 - The durable checklist distinguishes this low-cost structural baseline from
-  the comprehensive Firefox/Safari/tablet/keyboard/screen-reader/zoom/touch and
-  visual-print evidence owned by M5.5.
+  M9 supported-client/visual-print evidence and the post-1.0 M10
+  keyboard/screen-reader/zoom/touch certification matrix.
 
 Live production Chromium found one `h1`, one `main`, no duplicate IDs, and no
 unnamed native interactive controls on the top-level empty-state Settings,
 Characters, and Compendium routes. Clicking between routes placed focus on the
 new `main` with `tabIndex=-1`; the fresh initial load kept body focus and the
 updated shell had no forced minimum width or console warnings/errors. The full
-public gate passes 127 tests across 29 files. Full keyboard, assistive-
-technology, device, and visual validation waits for the designed interface in
-M5.5.
+public gate passes 127 tests across 29 files. Comprehensive keyboard-only and
+assistive-technology certification waits for post-1.0 M10; supported-client
+visual validation belongs to M9.
 
 ### Chromium and Firefox Letter/A4 functional PDF regression gate
 
@@ -1842,7 +1867,7 @@ M5.5.
 The harness deletes its browser profile and PDFs and uses only public synthetic
 data. `scripts/check.sh` includes this real-browser print gate after the
 production build. It closes M5's functional Letter/A4 boundary. Safari/device
-execution and cross-engine raster inspection are M5.5 visual-validation work.
+execution and cross-engine raster inspection are M9 visual-validation work.
 
 ### User and recovery documentation
 
@@ -1852,10 +1877,10 @@ character import, storage persistence, exact-revision profile migration, both
 compatibility export targets, sheet/PDF controls, checksummed backup inspection
 and restore, application updates, offline and migration recovery, destructive
 actions, and troubleshooting. It also names the current blank-character,
-compatibility, legacy-launch, current browser evidence, deferred M5.5 UI
+compatibility, legacy-launch, current browser evidence, deferred M9/M10
 validation, Firefox tagging, and reserved-runtime-configuration limitations.
 This closes the documentation boundary in M5 exit criterion 10; it does not
-claim that the later M5.5 design and release-readiness matrix has run.
+claim that the later supported-client or accessibility matrices have run.
 
 ## M4 delivered
 

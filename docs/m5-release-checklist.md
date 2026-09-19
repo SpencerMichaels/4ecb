@@ -2,9 +2,9 @@
 
 This is the durable functional closure matrix for the first offline builder MVP.
 It deliberately does not make exhaustive UI, device, assistive-technology, or
-cross-engine visual validation an M5 blocker: those checks apply to the designed
-interface and are owned by M5.5. A green automated test is evidence only for its
-stated boundary.
+cross-engine visual validation an M5 blocker. Supported-client release checks
+belong to M9 and the comprehensive accessibility matrix to post-1.0 M10. A green
+automated test is evidence only for its stated boundary.
 
 ## Public automated gate
 
@@ -45,8 +45,8 @@ gate are not relabeled as a new live session.
       breakpoints without changing print rules.
 
 These checks establish a low-cost implementation baseline. Full workflow
-keyboard traversal, screen-reader testing, zoom/reflow review, and touch-target
-approval are M5.5 checks against the designed interface.
+keyboard-only, screen-reader, zoom/reflow, and touch-target certification is a
+post-1.0 matrix against the stable interface.
 
 ## Security and privacy checklist
 
@@ -78,8 +78,8 @@ approval are M5.5 checks against the designed interface.
       import worker with progress and cancellation.
 
 Representative desktop/tablet interaction and rendering timings are fixed and
-measured in M5.5 after the UI design stabilizes. Development-host engine/query
-budgets remain active during M5.
+measured during 1.0 hardening after the UI design stabilizes. Development-host
+engine/query budgets remain active during M5.
 
 ## User documentation checklist
 
@@ -87,7 +87,7 @@ budgets remain active during M5.
       persistence, exact-revision migration, both `.dnd4e` targets, sheets/PDF,
       backup inspection/restore, PWA updates/offline recovery, and destructive
       actions are documented in the user guide.
-- [x] Known product, compatibility, current browser evidence, deferred M5.5 UI
+- [x] Known product, compatibility, current browser evidence, deferred M9/M10
       validation, Firefox tagging, and reserved runtime-configuration limitations
       are stated without an MVP completion claim.
 
@@ -159,25 +159,24 @@ budgets remain active during M5.
 - [x] Repeat the automated Letter/A4 color/monochrome PDF matrix in supported
       Firefox.
 
-Safari/device print execution and cross-engine raster inspection are M5.5
-visual-validation work. They do not block the functional M5 boundary.
+Safari/device print execution and cross-engine raster inspection belong to 1.0
+hardening. They do not block the functional M5 boundary.
 
-## Deferred UI stabilization and release-readiness matrix (M5.5)
+## Deferred comprehensive accessibility and release-client matrices
 
 The following work is intentionally recorded here for continuity but does not
 block M5:
 
-- complete keyboard traversal in Chromium and Firefox;
-- screen-reader announcement and validation-summary testing;
-- 200% zoom, reflow, and touch-target review;
-- full desktop Safari, iPadOS Safari, and Android Chromium tablet workflows;
-- Safari/device print and Firefox/Safari raster inspection;
-- representative supported-device interaction and rendering timings; and
-- final visual accessibility review after the product-owner design pass.
+- Post-1.0 M10: complete keyboard-only traversal, screen-reader announcement and
+  validation-summary testing, 200% zoom/reflow, touch-target review, and final
+  accessibility review across the selected matrix.
+- M9: full supported-client workflows, Safari/device print and cross-engine
+  raster inspection, and representative supported-device interaction/rendering
+  timings.
 
 M5 is not complete while an unchecked item in its functional, security,
 compatibility, or durability sections maps to an M5 exit criterion. Items in
-this deferred section are owned by M5.5.
+this deferred section are owned by M9 and M10 as stated.
 
 ## M5 exit-criterion evidence map
 
