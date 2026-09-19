@@ -289,6 +289,12 @@ type SaveState =
   | { readonly phase: "saving"; readonly message: string }
   | { readonly phase: "failed"; readonly message: string };
 
+function saveStateIconName(phase: SaveState["phase"]): IconName {
+  if (phase === "saved") return "save-check";
+  if (phase === "failed") return "save-off";
+  return "save-pen";
+}
+
 function CommitNumberInput({
   value,
   min,
@@ -5774,20 +5780,13 @@ export function CharacterEditorPage({
             {warningCount} {warningCount === 1 ? "warning" : "warnings"}
           </span>
           <span
-            aria-live="polite"
+            aria-live={saveState.phase === "failed" ? "assertive" : "polite"}
             className={`save-status save-${saveState.phase}`}
             role={saveState.phase === "failed" ? "alert" : "status"}
+            title={saveState.message}
           >
-            <Icon
-              name={
-                saveState.phase === "failed"
-                  ? "warning"
-                  : saveState.phase === "saving"
-                    ? "clock"
-                    : "check"
-              }
-            />
-            {saveState.message}
+            <Icon name={saveStateIconName(saveState.phase)} />
+            <span className="visually-hidden">{saveState.message}</span>
           </span>
           <button
             aria-label="Undo"

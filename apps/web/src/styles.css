@@ -1735,25 +1735,19 @@ textarea {
 }
 
 .save-status {
-  border-left: 3px solid currentColor;
-  font-size: 0.82rem;
-  font-weight: 700;
-  padding: 0.35rem 0.6rem;
+  justify-content: center;
 }
 
 .save-saved {
-  background: var(--success-soft);
   color: var(--success);
 }
 
+.save-loading,
 .save-saving {
-  background: var(--accent-soft);
   color: var(--accent);
 }
 
 .save-failed {
-  background: var(--danger-soft);
-  border-color: var(--danger);
   color: var(--danger);
 }
 
@@ -1803,12 +1797,12 @@ textarea {
 }
 
 .builder-status .save-status {
-  padding: 0.2rem 0.4rem;
+  padding: 0.2rem;
 }
 
-.builder-status .icon {
-  height: 0.8rem;
-  width: 0.8rem;
+.builder-status .save-status .icon {
+  height: 1.15rem;
+  width: 1.15rem;
 }
 
 .builder-status .icon-only-button {

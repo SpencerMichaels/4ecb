@@ -45,6 +45,9 @@ import {
   PawPrint,
   Pencil,
   Redo2,
+  SaveCheck,
+  SaveOff,
+  SavePen,
   ScanLine,
   ScrollText,
   Shield,
@@ -131,6 +134,9 @@ export type IconName =
   | "race"
   | "redo"
   | "remove"
+  | "save-check"
+  | "save-off"
+  | "save-pen"
   | "sheet"
   | "shield"
   | "shop"
@@ -209,6 +215,9 @@ const icons: Record<IconName, LucideIcon> = {
   race: UsersRound,
   redo: Redo2,
   remove: X,
+  "save-check": SaveCheck,
+  "save-off": SaveOff,
+  "save-pen": SavePen,
   sheet: FileText,
   shield: Shield,
   shop: ShoppingCart,
