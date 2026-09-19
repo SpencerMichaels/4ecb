@@ -68,4 +68,36 @@ describe("loadout interaction and geometry", () => {
     expect(loadout).not.toContain("onInput=");
     expect(loadout).not.toContain("onKeyDown=");
   });
+
+  it("mutes only loadout selects whose current value is Empty", () => {
+    expect(workspace).toMatch(
+      /className=\{[\s\S]*?assigned === undefined \? "is-empty" : undefined[\s\S]*?\}/,
+    );
+    const emptySelectRule = styles.match(
+      /\.loadout-grid select\.is-empty\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(emptySelectRule).toContain(
+      "background: color-mix(in srgb, var(--surface-subtle) 82%, var(--surface))",
+    );
+    expect(emptySelectRule).toContain("border-color: var(--border)");
+    expect(emptySelectRule).toContain("color: var(--muted)");
+    expect(styles).toMatch(
+      /\.loadout-grid select\.is-empty option:not\(\[value=""\]\)\s*\{[^}]*color: var\(--text\)/,
+    );
+  });
+
+  it("keeps Inventory name decoration scoped and sale menus dismissible", () => {
+    expect(styles).toMatch(
+      /\.inventory-item-button:hover[^,]*\.inventory-item-name,[\s\S]*?text-decoration: underline/,
+    );
+    expect(styles).toMatch(
+      /\.inventory-item-button:hover[\s\S]*?text-decoration: none/,
+    );
+    expect(workspace).toContain('placeholder="20pp, -15 gp, ..."');
+    expect(workspace).toContain(
+      'document.addEventListener("pointerdown", dismissOutside)',
+    );
+    expect(workspace).toContain('if (event.key !== "Escape") return');
+    expect(workspace).toContain("aria-expanded={openSaleId === entry.id}");
+  });
 });

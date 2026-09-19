@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   addCurrency,
+  adjustWalletCurrency,
   applyCharacterCommand,
   CharacterTransaction,
   currencyFromCopper,
@@ -10,11 +11,13 @@ import {
   duplicateCharacterRecord,
   formatInventoryItemName,
   formatLegacyCurrency,
+  inventoryEntryWithQuantity,
   isCharacterRecord,
   isLegacyCharacterRecordV1,
   newCharacterRecord,
   newNativeCharacterRecord,
   parseLegacyCurrency,
+  parseCurrencyAdjustment,
   resolveCharacterWallet,
   subtractCurrency,
   type CharacterBuild,
@@ -359,6 +362,37 @@ describe("character records", () => {
     ).toThrow("Insufficient currency");
   });
 
+  it("parses one compact signed wallet adjustment exactly", () => {
+    expect(parseCurrencyAdjustment("20pp")).toBe(200_000);
+    expect(parseCurrencyAdjustment(" -15 gp ")).toBe(-1_500);
+    expect(parseCurrencyAdjustment("+73 SP")).toBe(730);
+    expect(parseCurrencyAdjustment("0 ad")).toBe(0);
+    expect(() => parseCurrencyAdjustment("15")).toThrow("such as");
+    expect(() => parseCurrencyAdjustment("1 gp; 2 sp")).toThrow("such as");
+    expect(() => parseCurrencyAdjustment("9007199254740991 ad")).toThrow(
+      "too large",
+    );
+  });
+
+  it("credits carried funds and deducts carried before stored atomically", () => {
+    const carried = currencyFromCopper(1_000);
+    const stored = currencyFromCopper(2_000);
+    expect(adjustWalletCurrency(carried, stored, 500)).toEqual({
+      carried: currencyFromCopper(1_500),
+      stored,
+    });
+    expect(adjustWalletCurrency(carried, stored, -1_500)).toEqual({
+      carried: currencyFromCopper(0),
+      stored: currencyFromCopper(1_500),
+    });
+    expect(() => adjustWalletCurrency(carried, stored, -3_001)).toThrow(
+      "Not enough funds",
+    );
+    expect(() =>
+      adjustWalletCurrency(carried, stored, Number.MAX_SAFE_INTEGER),
+    ).toThrow("too large");
+  });
+
   it("inherits the latest legacy wallet text at or below the requested level", () => {
     const leveled: CharacterBuild = {
       ...build,
@@ -431,6 +465,39 @@ describe("character records", () => {
       equippedQuantity: 1,
       equippedSlots: [{ slot: "ring-1", quantityIndex: 0 }],
     });
+  });
+
+  it("retains equipped copies first and preserves inventory row order", () => {
+    const first = inventoryEntry("first");
+    const rings = {
+      ...inventoryEntry("rings", 3),
+      equippedQuantity: 1,
+      equippedSlots: [{ slot: "ring-1" as const, quantityIndex: 2 }],
+    };
+    const last = inventoryEntry("last");
+    const updated = applyCharacterCommand(
+      { ...build, inventory: [first, rings, last] },
+      {
+        kind: "put-inventory",
+        entry: inventoryEntryWithQuantity(rings, 2),
+      },
+    );
+    expect(updated.inventory.map(({ id }) => id)).toEqual([
+      "first",
+      "rings",
+      "last",
+    ]);
+    expect(updated.inventory[1]).toMatchObject({
+      quantity: 2,
+      equippedQuantity: 1,
+      equippedSlots: [{ slot: "ring-1", quantityIndex: 1 }],
+    });
+
+    const removed = applyCharacterCommand(updated, {
+      kind: "put-inventory",
+      entry: inventoryEntryWithQuantity(updated.inventory[1]!, 0),
+    });
+    expect(removed.inventory.map(({ id }) => id)).toEqual(["first", "last"]);
   });
 
   it("purchases from carried then stored money and sells the exact holding", () => {

@@ -168,6 +168,41 @@ export function formatCopperPrice(copper: number | undefined): string {
   return `${copper} cp`;
 }
 
+const SALE_UNITS = [
+  { value: 1_000_000, label: "ad" },
+  { value: 10_000, label: "pp" },
+  { value: 100, label: "gp" },
+  { value: 10, label: "sp" },
+  { value: 1, label: "cp" },
+] as const;
+
+function decimalInUnit(copper: number, unit: number): string {
+  const whole = Math.floor(copper / unit);
+  const remainder = copper % unit;
+  if (remainder === 0) return String(whole);
+  const decimals = String(unit).length - 1;
+  return `${whole}.${String(remainder).padStart(decimals, "0").replace(/0+$/u, "")}`;
+}
+
+/** Formats all legacy sale choices in the largest unit exact at the 20% baseline. */
+export function comparableSaleProceeds(
+  priceCopper: number,
+): readonly { readonly percentage: 20 | 50 | 100; readonly label: string }[] {
+  const percentages = [100, 50, 20] as const;
+  const proceeds = percentages.map((percentage) =>
+    Math.floor((priceCopper * percentage) / 100),
+  );
+  const baseline = Math.floor((priceCopper * 20) / 100);
+  const unit =
+    SALE_UNITS.find(
+      ({ value }) => baseline >= value && baseline % value === 0,
+    ) ?? SALE_UNITS.at(-1)!;
+  return percentages.map((percentage, index) => ({
+    percentage,
+    label: `${decimalInUnit(proceeds[index]!, unit.value)} ${unit.label}`,
+  }));
+}
+
 function familyCompatibility(entity: ContentEntity): string {
   return ["Magic Item Type", "Item Slot", "Armor", "Weapon"]
     .map(
@@ -517,6 +552,74 @@ export function loadoutChangeCommand(
     });
   commands.push({ kind: "equip-inventory", entryId, assignments });
   return commands.length === 1 ? commands[0] : { kind: "batch", commands };
+}
+
+export type InventoryLoadoutToggle =
+  | {
+      readonly kind: "equip";
+      readonly slots: readonly EquipmentSlotId[];
+      readonly displaces: boolean;
+    }
+  | {
+      readonly kind: "unequip";
+      readonly slots: readonly EquipmentSlotId[];
+    }
+  | { readonly kind: "ambiguous" }
+  | { readonly kind: "unavailable" };
+
+/** Resolves the deterministic Loadout action behind an Inventory double-click. */
+export function inventoryLoadoutToggle(
+  inventory: readonly BuildInventoryEntry[],
+  byId: ReadonlyMap<string, ContentEntity>,
+  entryId: string,
+  visibleSlots: readonly EquipmentSlotId[],
+): InventoryLoadoutToggle {
+  const entry = inventory.find(({ id }) => id === entryId);
+  if (entry === undefined) return { kind: "unavailable" };
+  const loadout = resolveLoadoutAssignments(inventory, byId);
+  const assignments = loadout.assignmentsByEntry.get(entryId);
+  if (assignments !== undefined && assignments.length > 0)
+    return {
+      kind: "unequip",
+      slots: [...new Set(assignments.map(({ slot }) => slot))],
+    };
+  if (entry.equippedQuantity > 0) return { kind: "ambiguous" };
+
+  const candidates = new Set(
+    inventorySlotCandidates(entry, byId) as readonly EquipmentSlotId[],
+  );
+  const occupied = new Set(
+    [...loadout.assignmentsByEntry.entries()]
+      .filter(([candidateId]) => candidateId !== entryId)
+      .flatMap(([, candidateAssignments]) =>
+        candidateAssignments.map(({ slot }) => slot),
+      ),
+  );
+  if (inventoryRequiresBothHands(entry, byId)) {
+    const slots = ["main-hand", "off-hand"] as const;
+    if (
+      !slots.every(
+        (slot) => candidates.has(slot) && visibleSlots.includes(slot),
+      )
+    )
+      return { kind: "unavailable" };
+    return {
+      kind: "equip",
+      slots,
+      displaces: slots.some((slot) => occupied.has(slot)),
+    };
+  }
+
+  const suitable = visibleSlots.filter((slot) => candidates.has(slot));
+  const slot = suitable.find((candidate) => !occupied.has(candidate));
+  const chosen = slot ?? suitable[0];
+  return chosen === undefined
+    ? { kind: "unavailable" }
+    : {
+        kind: "equip",
+        slots: [chosen],
+        displaces: slot === undefined,
+      };
 }
 
 export function itemProficiencyStatus(

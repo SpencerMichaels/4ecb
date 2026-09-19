@@ -15,6 +15,7 @@ import {
   Church,
   Circle,
   CircleDashed,
+  CircleDollarSign,
   Clock3,
   Copy,
   Crosshair,
@@ -94,6 +95,7 @@ export type IconName =
   | "chevron"
   | "church"
   | "circle"
+  | "circle-dollar-sign"
   | "class"
   | "clock"
   | "companion"
@@ -171,6 +173,7 @@ const icons: Record<IconName, LucideIcon> = {
   chevron: ChevronRight,
   church: Church,
   circle: Circle,
+  "circle-dollar-sign": CircleDollarSign,
   class: Shield,
   clock: Clock3,
   companion: PawPrint,

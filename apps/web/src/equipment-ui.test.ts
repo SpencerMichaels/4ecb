@@ -9,10 +9,12 @@ import type { ContentEntity } from "@4ecb/content-domain";
 
 import {
   compatibleBaseItems,
+  comparableSaleProceeds,
   entityCurrencyCopper,
   groupMagicItemFamilies,
   IMPLEMENT_LOADOUT_PROFICIENCY_IDS,
   inventoryDisplayName,
+  inventoryLoadoutToggle,
   inventorySlotCandidates,
   inventoryRequiresBothHands,
   LOADOUT_SLOT_COLUMNS,
@@ -88,6 +90,24 @@ describe("equipment catalog presentation", () => {
         entity("A", "Formula", "Ritual", { type: "Alchemical Formula" }),
       ),
     ).toBe("alchemical-formula");
+  });
+
+  it("formats every sale option in the exact unit selected by the 20% baseline", () => {
+    expect(comparableSaleProceeds(340_000)).toEqual([
+      { percentage: 100, label: "3400 gp" },
+      { percentage: 50, label: "1700 gp" },
+      { percentage: 20, label: "680 gp" },
+    ]);
+    expect(comparableSaleProceeds(50_000)).toEqual([
+      { percentage: 100, label: "5 pp" },
+      { percentage: 50, label: "2.5 pp" },
+      { percentage: 20, label: "1 pp" },
+    ]);
+    expect(comparableSaleProceeds(123)).toEqual([
+      { percentage: 100, label: "123 cp" },
+      { percentage: 50, label: "61 cp" },
+      { percentage: 20, label: "24 cp" },
+    ]);
   });
 
   it("formats composed magic equipment as one natural item name", () => {
@@ -429,6 +449,87 @@ describe("equipment catalog presentation", () => {
       equippedQuantity: 0,
       equippedSlots: [],
     });
+  });
+
+  it("resolves Inventory equip toggles in visible slot order without flattening ambiguity", () => {
+    const crown = entity("CROWN", "Flexible crown", "Magic Item", {
+      "Item Slot": "Head and Neck",
+    });
+    const helmet = entity("HELMET", "Helmet", "Magic Item", {
+      "Item Slot": "Head",
+    });
+    const collar = entity("COLLAR", "Collar", "Magic Item", {
+      "Item Slot": "Neck",
+    });
+    const greatsword = entity("GREATSWORD", "Greatsword", "Weapon", {
+      "Item Slot": "Two-hand",
+      "Hands Required": "Two-handed",
+    });
+    const index = new Map(
+      [crown, helmet, collar, greatsword].map((item) => [
+        item.id.toLocaleLowerCase(),
+        item,
+      ]),
+    );
+    const holding = (
+      item: ContentEntity,
+      equippedSlots?: BuildInventoryEntry["equippedSlots"],
+    ): BuildInventoryEntry => ({
+      id: item.id,
+      acquiredLevel: 1,
+      quantity: 1,
+      equippedQuantity: equippedSlots === undefined ? 0 : 1,
+      ...(equippedSlots === undefined ? {} : { equippedSlots }),
+      elements: [{ definitionId: item.id, name: item.name, type: item.type }],
+      overrides: {},
+      legality: "rules-legal",
+    });
+    const helmetHolding = holding(helmet, [{ slot: "head", quantityIndex: 0 }]);
+    const collarHolding = holding(collar, [{ slot: "neck", quantityIndex: 0 }]);
+    const crownHolding = holding(crown);
+
+    expect(
+      inventoryLoadoutToggle(
+        [helmetHolding, crownHolding],
+        index,
+        crownHolding.id,
+        ["head", "neck"],
+      ),
+    ).toEqual({ kind: "equip", slots: ["neck"], displaces: false });
+    expect(
+      inventoryLoadoutToggle(
+        [helmetHolding, collarHolding, crownHolding],
+        index,
+        crownHolding.id,
+        ["head", "neck"],
+      ),
+    ).toEqual({ kind: "equip", slots: ["head"], displaces: true });
+    expect(
+      inventoryLoadoutToggle([holding(greatsword)], index, greatsword.id, [
+        "main-hand",
+        "off-hand",
+      ]),
+    ).toEqual({
+      kind: "equip",
+      slots: ["main-hand", "off-hand"],
+      displaces: false,
+    });
+    expect(
+      inventoryLoadoutToggle([helmetHolding], index, helmetHolding.id, [
+        "head",
+        "neck",
+      ]),
+    ).toEqual({ kind: "unequip", slots: ["head"] });
+
+    const ambiguous = { ...crownHolding, equippedQuantity: 1 };
+    expect(
+      inventoryLoadoutToggle(
+        [helmetHolding, collarHolding, ambiguous],
+        index,
+        ambiguous.id,
+        ["head", "neck"],
+      ),
+    ).toEqual({ kind: "ambiguous" });
   });
 
   it("shows implement slots only for their exact active proficiency IDs", () => {

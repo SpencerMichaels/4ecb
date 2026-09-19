@@ -314,6 +314,56 @@ export function subtractCurrency(
   return currencyFromCopper(remainder);
 }
 
+/** Parses one signed denomination amount used by compact wallet adjustments. */
+export function parseCurrencyAdjustment(value: string): number {
+  const match = /^\s*([+-]?)\s*(\d+)\s*(ad|pp|gp|sp|cp)\s*$/iu.exec(value);
+  if (match === null) throw new Error("Enter an amount such as 20pp or -15 gp");
+  const count = Number(match[2]);
+  const denomination = match[3]?.toLocaleLowerCase() as
+    CurrencyDenomination | undefined;
+  if (denomination === undefined || !Number.isSafeInteger(count))
+    throw new Error("Currency adjustment is too large");
+  const copper = count * CURRENCY_COPPER_VALUES[denomination];
+  if (!Number.isSafeInteger(copper))
+    throw new Error("Currency adjustment is too large");
+  return match[1] === "-" && copper !== 0 ? -copper : copper;
+}
+
+/** Applies one delta using the recovered carried-first wallet transaction order. */
+export function adjustWalletCurrency(
+  carried: CurrencyAmount,
+  stored: CurrencyAmount,
+  deltaCopper: number,
+): { readonly carried: CurrencyAmount; readonly stored: CurrencyAmount } {
+  if (!Number.isSafeInteger(deltaCopper))
+    throw new Error("Currency adjustment is too large");
+  const carriedCopper = currencyToCopper(carried);
+  const storedCopper = currencyToCopper(stored);
+  const totalCopper = carriedCopper + storedCopper;
+  if (!Number.isSafeInteger(totalCopper))
+    throw new Error("Current funds are too large to adjust safely");
+  if (deltaCopper >= 0) {
+    const carriedAfter = carriedCopper + deltaCopper;
+    if (!Number.isSafeInteger(carriedAfter))
+      throw new Error("Currency adjustment is too large");
+    return {
+      carried: currencyFromCopper(carriedAfter),
+      stored: currencyFromCopper(storedCopper),
+    };
+  }
+  const cost = -deltaCopper;
+  if (!Number.isSafeInteger(cost))
+    throw new Error("Currency adjustment is too large");
+  if (cost > totalCopper)
+    throw new Error("Not enough funds for that adjustment");
+  return {
+    carried: currencyFromCopper(Math.max(0, carriedCopper - cost)),
+    stored: currencyFromCopper(
+      storedCopper - Math.max(0, cost - carriedCopper),
+    ),
+  };
+}
+
 export function characterWalletTextKey(
   level: number,
   wallet: CharacterWalletKind,
@@ -348,6 +398,66 @@ export function equippedQuantityFromSlots(
   assignments: readonly EquipmentSlotAssignment[],
 ): number {
   return new Set(assignments.map(({ quantityIndex }) => quantityIndex)).size;
+}
+
+/**
+ * Changes a holding's copy count while retaining equipped copies ahead of
+ * unequipped copies. Exact slot assignments are reindexed to the remaining
+ * contiguous copy indices.
+ */
+export function inventoryEntryWithQuantity(
+  entry: BuildInventoryEntry,
+  quantity: number,
+): BuildInventoryEntry {
+  if (!Number.isSafeInteger(quantity) || quantity < 0)
+    throw new Error("Inventory quantity must be a non-negative safe integer");
+  if (quantity >= entry.quantity)
+    return {
+      ...entry,
+      quantity,
+    };
+  if (entry.equippedSlots === undefined)
+    return {
+      ...entry,
+      quantity,
+      equippedQuantity: Math.min(entry.equippedQuantity, quantity),
+    };
+
+  const equippedIndices = [
+    ...new Set(entry.equippedSlots.map(({ quantityIndex }) => quantityIndex)),
+  ].sort((left, right) => left - right);
+  const equippedSet = new Set(equippedIndices);
+  const unequippedIndices = Array.from(
+    { length: entry.quantity },
+    (_, index) => index,
+  ).filter((index) => !equippedSet.has(index));
+  const retainedIndices = [
+    ...equippedIndices.slice(0, quantity),
+    ...unequippedIndices.slice(
+      0,
+      Math.max(0, quantity - equippedIndices.length),
+    ),
+  ]
+    .sort((left, right) => left - right)
+    .slice(0, quantity);
+  const reindexed = new Map(
+    retainedIndices.map((originalIndex, nextIndex) => [
+      originalIndex,
+      nextIndex,
+    ]),
+  );
+  const equippedSlots = entry.equippedSlots.flatMap((assignment) => {
+    const quantityIndex = reindexed.get(assignment.quantityIndex);
+    return quantityIndex === undefined
+      ? []
+      : [{ ...assignment, quantityIndex }];
+  });
+  return {
+    ...entry,
+    quantity,
+    equippedQuantity: equippedQuantityFromSlots(equippedSlots),
+    equippedSlots,
+  };
 }
 
 /** Legacy text fields that are also projected into CharacterSheet/Details. */
@@ -651,12 +761,26 @@ export function applyCharacterCommand(
     }
     case "put-inventory": {
       assertInventoryQuantities(command.entry);
+      if (command.entry.quantity === 0)
+        return {
+          ...build,
+          inventory: build.inventory.filter(
+            (entry) => entry.id !== command.entry.id,
+          ),
+        };
+      const index = build.inventory.findIndex(
+        (entry) => entry.id === command.entry.id,
+      );
+      if (index < 0)
+        return {
+          ...build,
+          inventory: [...build.inventory, command.entry],
+        };
+      const inventory = [...build.inventory];
+      inventory[index] = command.entry;
       return {
         ...build,
-        inventory: [
-          ...build.inventory.filter((entry) => entry.id !== command.entry.id),
-          command.entry,
-        ],
+        inventory,
       };
     }
     case "remove-inventory":
@@ -751,28 +875,13 @@ export function applyCharacterCommand(
       );
       if (!Number.isSafeInteger(carried + proceeds))
         throw new Error("Currency transaction exceeds the safe integer range");
-      const quantity = entry.quantity - 1;
-      const equippedSlots = entry.equippedSlots?.filter(
-        ({ quantityIndex }) => quantityIndex < quantity,
+      const updatedEntry = inventoryEntryWithQuantity(
+        entry,
+        entry.quantity - 1,
       );
       const inventory = build.inventory.flatMap((current) => {
         if (current.id !== command.entryId) return [current];
-        if (quantity === 0) return [];
-        return [
-          {
-            ...current,
-            quantity,
-            equippedQuantity:
-              equippedSlots === undefined
-                ? Math.min(current.equippedQuantity, quantity)
-                : equippedQuantityFromSlots(equippedSlots),
-            ...(equippedSlots === undefined
-              ? {}
-              : {
-                  equippedSlots,
-                }),
-          },
-        ];
+        return updatedEntry.quantity === 0 ? [] : [updatedEntry];
       });
       const updated: CharacterBuild = {
         ...build,

@@ -170,6 +170,43 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   Firefox Letter/A4 print checks, deterministic synthetic content-pack checks,
   and the query benchmark. The build retains the existing large-chunk advisory.
 
+## M5.5 inventory-interface candidate (2026-09-18)
+
+- Inventory now foregrounds a compact combined Funds total in stable
+  AD/PP/GP/SP/CP stat cells, including zero values. Quick adjust accepts one
+  signed or unsigned integer denomination amount, credits positives to carried,
+  and deducts negatives from carried before stored. Validation and safe wallet
+  arithmetic precede one batch of canonical per-level text updates. Its Edit
+  disclosure retains separate carried and stored CP/SP/GP/PP/AD inputs and shows
+  a read-only normalized total, preserving the recovered per-level text-string
+  model and existing carried-first purchase/stored-fallback/sale-to-carried
+  behavior. Success briefly emphasizes only changed total cells; errors retain
+  the input and use a non-layout-shifting red flash. Both states are announced
+  accessibly and honor reduced motion.
+- Each holding is a stable row with the shared canonical item icon (including the
+  physical base for composed equipment), an icon-mounted check or compact
+  equipped ratio, compact quantity controls, and trailing sell/remove icons.
+  Unknown-slot historical counts use a question marker plus accessible text. The
+  sale menu exposes 20%, 50%, and 100% one-copy proceeds in one directly
+  comparable unit selected from the exact 20% baseline; unpriced items explain
+  their disabled sale action and remain removable without proceeds after
+  confirmation. One controlled menu is open at a time and dismisses on outside
+  pointer interaction or Escape.
+- Inventory row double-clicks reuse the existing Loadout resolution and command
+  callback. They unequip exact current assignments or select the first open
+  compatible slot in visible Loadout order, including the paired-hand bundle;
+  occupied fallback requires confirmation. Unresolved historical equipped counts
+  remain untouched and point to Loadout instead of receiving invented slots.
+- Reductions retain equipped copies before unequipped copies, warn before they
+  must unequip, and reindex exact slot assignments. In-place domain replacement
+  prevents quantity edits from reordering rows, and zero-quantity holdings are
+  removed. Historical equipped counts with unknown slots remain visible rather
+  than receiving invented assignments.
+- Focused character-domain, Equipment, Loadout, and accessibility tests pass
+  62/62, both web TypeScript projects pass, changed files are Prettier-clean, and
+  whitespace validation passes. Live product-owner review approved this
+  Inventory candidate.
+
 ## M5.5 composed item-detail checkpoint (2026-09-18)
 
 - Equipment inspection now retains the inspected holding rather than reducing

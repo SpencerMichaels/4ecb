@@ -8,6 +8,7 @@ import type { BuildInventoryEntry } from "@4ecb/character-domain";
 import {
   ItemDetail,
   catalogItemDetail,
+  inventoryEquippedStatus,
   inventoryItemDetail,
 } from "./EquipmentWorkspace";
 
@@ -41,6 +42,34 @@ function entity(
 }
 
 describe("equipment item details", () => {
+  it("shows equipped state without turning ordinary single copies into counts", () => {
+    const entry: BuildInventoryEntry = {
+      id: "item",
+      acquiredLevel: 1,
+      quantity: 1,
+      equippedQuantity: 1,
+      equippedSlots: [{ slot: "body", quantityIndex: 0 }],
+      elements: [],
+      overrides: {},
+      legality: "rules-legal",
+    };
+    expect(inventoryEquippedStatus(entry)).toBe("Equipped");
+    expect(
+      inventoryEquippedStatus({
+        id: "historical-item",
+        acquiredLevel: 1,
+        quantity: 3,
+        equippedQuantity: 2,
+        elements: [],
+        overrides: {},
+        legality: "rules-legal",
+      }),
+    ).toBe("2/3 equipped · slots unknown");
+    expect(
+      inventoryEquippedStatus({ ...entry, equippedQuantity: 0 }),
+    ).toBeUndefined();
+  });
+
   it("uses the physical shield identity for a composed magic shield header", () => {
     const base = entity("SHIELD", "Heavy Shield", "Armor", "A", {
       "Armor Type": "Shield",

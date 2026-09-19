@@ -1111,6 +1111,60 @@ uses reliable `focus` and committed `change` behavior only; it does not add an
 `input` or key-event preview and does not replace the native select with a custom
 combobox.
 
+### D055 — Inventory foregrounds holdings and total funds without flattening legacy state
+
+**Status:** accepted
+
+**Date:** 2026-09-18
+
+Inventory presents one compact total-funds summary in its normal state. Stable
+AD/PP/GP/SP/CP stat cells include zero values rather than collapsing the balance
+into variable-length prose. Editing reveals the authoritative carried and stored
+CP/SP/GP/PP/AD values plus a read-only normalized total. This is presentation
+only: inherited per-level
+`Carried Money` and `Stored Money` strings remain separate, purchases still spend
+carried before stored, and sales still credit carried funds.
+
+The summary's Quick adjust field accepts exactly one signed or unsigned integer
+amount in CP, SP, GP, PP, or AD, case-insensitively and with optional whitespace.
+Unsigned input is positive. A positive delta credits carried funds; a negative
+delta deducts carried first and stored second, matching purchase order. Parsing,
+safe-integer checks, insufficient-funds rejection, and wallet arithmetic complete
+before one batch writes canonical current-level carried and stored text strings,
+so partial or stale denomination callbacks cannot expose an intermediate wallet.
+Successful adjustments announce through the live region and briefly emphasize
+only denomination cells whose displayed totals changed; failures retain and
+focus the input, announce the error, and use a non-layout-shifting error flash.
+Both effects respect reduced-motion preferences.
+
+Each holding is one stable row with its canonical physical-item icon, name,
+compact icon-mounted equipped marker, quantity stepper, and trailing actions. A
+single equipped copy uses a check rather than redundant visible prose; multiple
+copies retain a compact exact equipped/owned ratio, and a question marker plus
+accessible text keeps historical unknown-slot counts unresolved and perceivable.
+Sell is an icon-triggered menu that shows 20%, 50%, and 100% choices with actual
+one-copy proceeds. All three use the largest denomination that exactly expresses
+the 20% baseline, allowing exact decimals for the other rates only when needed,
+so their values remain directly comparable. Unpriced holdings cannot be sold but
+remain removable without proceeds after confirmation.
+Only one sale menu is open at a time; outside pointer interaction and Escape
+dismiss it, and Escape or a completed sale restores focus to its trigger.
+
+Double-clicking a holding is a shortcut into the existing Loadout resolution
+and command path, not a second equipment algorithm. An assigned holding removes
+all of its exact assignments. An unassigned holding chooses the first compatible
+open slot in current visible Loadout order, or the required Main hand/Off hand
+bundle for a two-handed item. Only when no compatible slot is open may it target
+the first occupied compatible slot, and that displacement requires confirmation.
+Holdings with unresolved legacy equipped counts and no deterministic inferred
+slots remain unchanged and direct the player to Loadout.
+
+Quantity reduction and sale retain equipped copies ahead of unequipped copies.
+When an equipped copy must be removed, the interface warns first, and known slot
+assignments are reindexed to the remaining contiguous copy identities. Quantity
+updates replace the holding in place instead of moving its row, and zero-quantity
+holdings are removed rather than retained invisibly.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

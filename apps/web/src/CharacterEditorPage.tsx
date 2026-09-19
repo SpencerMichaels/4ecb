@@ -30,6 +30,7 @@ import {
 import { recordLoadDuration } from "./load-performance";
 import {
   CharacterTransaction,
+  adjustWalletCurrency,
   characterWalletTextKey,
   formatLegacyCurrency,
   resolveCharacterWallet,
@@ -6374,6 +6375,45 @@ export function CharacterEditorPage({
                   [short]: Math.max(0, Math.trunc(value)),
                 }),
               });
+            }}
+            onAdjustMoney={(deltaCopper) => {
+              const activeBuild = transaction.current?.current;
+              if (activeBuild === undefined)
+                return "Character funds are not available";
+              let adjusted: ReturnType<typeof adjustWalletCurrency>;
+              try {
+                adjusted = adjustWalletCurrency(
+                  resolveCharacterWallet(activeBuild, "carried").amount,
+                  resolveCharacterWallet(activeBuild, "stored").amount,
+                  deltaCopper,
+                );
+              } catch (reason: unknown) {
+                return reason instanceof Error
+                  ? reason.message
+                  : "Currency adjustment was rejected";
+              }
+              dispatch({
+                kind: "batch",
+                commands: [
+                  {
+                    kind: "set-text",
+                    name: characterWalletTextKey(
+                      activeBuild.effectiveLevel,
+                      "carried",
+                    ),
+                    value: formatLegacyCurrency(adjusted.carried),
+                  },
+                  {
+                    kind: "set-text",
+                    name: characterWalletTextKey(
+                      activeBuild.effectiveLevel,
+                      "stored",
+                    ),
+                    value: formatLegacyCurrency(adjusted.stored),
+                  },
+                ],
+              });
+              return undefined;
             }}
           />
         )}

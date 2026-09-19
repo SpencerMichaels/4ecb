@@ -351,14 +351,25 @@ Inventory, Shop, and Rituals & Practices tabs with one shared detail viewer.
 The Shop is a paged query-worker view of exact records; terminal `+N` variants
 may share a presentation family, but filtering and every transaction retain
 the exact content ID. The Loadout assigns exact owned copies to explicit slots,
-using two responsive slot stacks with one shared label/dropdown geometry and
-compact dropdown width. Shields use their authored shield/base-item identity to
+using two responsive slot stacks whose dropdowns align after the longest label
+within that stack and retain a compact maximum width. Shields use their authored shield/base-item identity to
 occupy Off hand even when a paired magic definition has an Arms magic-item
 classification. Committing a non-empty slot selection inspects that item in the
 shared detail viewer; focusing a populated slot restores its current item. The
 native select remains intact, and transient popup highlighting does not preview
-details because it has no reliable cross-browser event contract. Inventory owns
-quantities, carried/stored wealth, and legacy-percentage sales. Known
+details because it has no reliable cross-browser event contract. Inventory leads
+with one compact total-funds summary whose stable AD/PP/GP/SP/CP columns include
+zero values. A Quick adjust field accepts one signed denomination amount;
+positive adjustments credit carried funds and negative adjustments spend carried
+before stored in one transaction. The Edit disclosure retains direct
+carried/stored denomination editing for legacy compatibility. Holdings use canonical item icons, concise
+equipped state, compact quantity controls, and trailing sell/remove actions.
+Sales disclose their actual proceeds at the recovered percentage choices;
+reductions remove unequipped copies first and warn before unequipping. Inventory
+row double-clicks use the same Loadout assignment path: an assigned holding
+unequips, while an unassigned holding chooses the first open compatible slot in
+visible Loadout order. A necessary displacement requires confirmation, and
+unresolved historical slot identity remains untouched. Known
 rituals/formulas/practices and quantity-bearing scrolls remain distinct.
 Spellbook alternates stay in Build. Item-owned configuration remains evaluable
 and recoverable; a later focused pass will move its editor into this workspace
