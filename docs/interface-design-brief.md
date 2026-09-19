@@ -215,8 +215,10 @@ application's protected visual assets.
   one-time opening behavior: later selections, filters, sorting, and rerenders do
   not trigger automatic repositioning or replace an option the user explicitly
   inspected.
-- When a large table scrolls, its sticky selection summary uses one chip per
-  selected item instead of a prose **Current selection(s)** sentence. Clicking
+- When a large table has overflow, its static selection summary uses one chip
+  per selected item instead of a prose **Current selection(s)** sentence. The
+  chips and column headings remain in ordinary document flow rather than
+  floating over the page or rows. Clicking
   the chip name opens the detail card, and its trailing X unselects the exact
   backing choice. Each chip mirrors that entity's detail-card header: the same
   shared entity-family, power-action, or item icon leads the bold header-style

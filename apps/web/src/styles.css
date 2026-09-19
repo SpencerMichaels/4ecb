@@ -2727,9 +2727,6 @@ textarea {
 
 .selection-table-controls {
   background: var(--surface);
-  position: sticky;
-  top: 0;
-  z-index: 2;
 }
 
 .selection-summary {
@@ -2884,9 +2881,6 @@ textarea {
 
 .selection-table-scroll thead {
   background: var(--legacy-neutral);
-  position: sticky;
-  top: 0;
-  z-index: 1;
 }
 
 .selection-table-scroll th,

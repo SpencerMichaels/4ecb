@@ -395,8 +395,8 @@ describe("release accessibility contract", () => {
     expect(tableSource).toContain("onRemove={onRemove}");
     expect(tableSource).not.toContain("locateCandidate");
     expect(tableSource).not.toContain("scrollIntoView");
-    expect(styles).toMatch(
-      /\.selection-table-controls\s*\{[^}]*position: sticky[^}]*top: 0/,
+    expect(styles).not.toMatch(
+      /\.selection-table-controls\s*\{[^}]*position:\s*sticky/,
     );
     expect(styles).toMatch(
       /\.selection-summary\s*\{[^}]*background:[^}]*border:[^}]*padding:/,
@@ -426,7 +426,10 @@ describe("release accessibility contract", () => {
     expect(tableSource).not.toContain("<ActionTypeIcon");
     expect(tableSource).not.toContain("<AttackMetadataIcon");
     expect(styles).toMatch(
-      /\.selection-table-scroll thead\s*\{[^}]*background: var\(--legacy-neutral\)[^}]*position: sticky[^}]*top: 0/,
+      /\.selection-table-scroll thead\s*\{[^}]*background: var\(--legacy-neutral\)/,
+    );
+    expect(styles).not.toMatch(
+      /\.selection-table-scroll thead\s*\{[^}]*position:\s*sticky/,
     );
     expect(styles).toMatch(
       /\.selection-table-scroll table\s*\{[^}]*border-collapse: separate[^}]*border-spacing: 0/,

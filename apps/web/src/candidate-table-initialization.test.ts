@@ -51,7 +51,7 @@ describe("candidate table initialization", () => {
     expect(inspections).toEqual(["user-choice"]);
   });
 
-  it("positions the selected row beneath the sticky header", () => {
+  it("positions the selected row beneath the column header", () => {
     expect(
       initialCandidateScrollTop({
         currentScrollTop: 120,
