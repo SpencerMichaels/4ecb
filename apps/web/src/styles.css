@@ -3053,6 +3053,13 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   background: var(--success-soft);
 }
 
+.candidate-selection-power
+  .selection-table-scroll
+  tbody
+  tr.selection-row-selected {
+  background: var(--tone-soft);
+}
+
 .selection-table-scroll tbody tr.selection-row-unavailable {
   color: var(--muted);
 }
