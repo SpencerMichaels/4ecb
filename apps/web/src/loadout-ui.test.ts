@@ -9,20 +9,40 @@ const workspace = readFileSync(
 );
 
 describe("loadout interaction and geometry", () => {
-  it("uses the same compact label and select tracks in both columns", () => {
+  it("sizes the label track independently within each loadout stack", () => {
+    const stackRule = styles.match(/\.loadout-stack\s*\{([^}]*)\}/)?.[1];
     const slotRule = styles.match(
       /\.loadout-grid \.loadout-slot\s*\{([^}]*)\}/,
     )?.[1];
     const selectRule = styles.match(/\.loadout-grid select\s*\{([^}]*)\}/)?.[1];
 
-    expect(slotRule).toContain("column-gap: 0.625rem");
-    expect(slotRule).toContain(
-      "grid-template-columns: 7.5rem minmax(0, 18rem)",
+    expect(stackRule).toContain("column-gap: 0.5rem");
+    expect(stackRule).toContain(
+      "grid-template-columns: max-content minmax(0, 18rem)",
     );
+    expect(slotRule).toContain("grid-column: 1 / -1");
+    expect(slotRule).toContain("grid-template-columns: subgrid");
+    expect(slotRule).not.toMatch(/grid-template-columns:\s*[\d.]+rem/u);
     expect(selectRule).toContain("max-inline-size: 18rem");
     expect(styles).toMatch(
       /@media \(max-width: 48rem\)[\s\S]*?\.loadout-grid,[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/,
     );
+  });
+
+  it("pairs every equipment tab label with its requested icon", () => {
+    for (const [id, label, icon] of [
+      ["loadout", "Loadout", "sword"],
+      ["inventory", "Inventory", "handbag"],
+      ["shop", "Shop", "shopping-cart"],
+      ["practices", "Rituals & Practices", "scroll-text"],
+    ] as const)
+      expect(workspace).toMatch(
+        new RegExp(
+          `id: "${id}",[\\s\\S]*?label: "${label}",[\\s\\S]*?icon: "${icon}"`,
+          "u",
+        ),
+      );
+    expect(workspace).toContain("<Icon name={item.icon} />");
   });
 
   it("inspects committed and currently focused loadout items", () => {

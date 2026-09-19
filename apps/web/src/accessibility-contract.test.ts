@@ -19,6 +19,7 @@ const selectionSummary = readFileSync(
   new URL("./SelectionSummary.tsx", import.meta.url),
   "utf8",
 );
+const icon = readFileSync(new URL("./Icon.tsx", import.meta.url), "utf8");
 const app = readFileSync(new URL("./App.tsx", import.meta.url), "utf8");
 
 function channel(value: number): number {
@@ -656,12 +657,26 @@ describe("release accessibility contract", () => {
   });
 
   it("keeps loadout slots compact and leaves shopping to the Shop tab", () => {
+    expect(equipmentWorkspace).toContain('aria-label="Equipment"');
+    expect(equipmentWorkspace).not.toContain('id="equipment-heading"');
     expect(equipmentWorkspace).toContain('className="loadout-slot-label"');
     expect(equipmentWorkspace).not.toContain("loadoutShopSlotFilter");
     expect(equipmentWorkspace).not.toContain("loadout-slot-shop");
     expect(equipmentWorkspace).not.toContain("Shop for ${label} items");
-    expect(styles).toContain("grid-template-columns: 7.5rem minmax(0, 18rem)");
+    expect(styles).toContain(
+      "grid-template-columns: max-content minmax(0, 18rem)",
+    );
+    expect(styles).toContain("grid-template-columns: subgrid");
     expect(styles).toContain("max-inline-size: 18rem");
+  });
+
+  it("keeps equipment tab icons decorative while retaining text labels", () => {
+    expect(icon).toContain("handbag: Handbag");
+    expect(icon).toContain('"shopping-cart": ShoppingCart');
+    expect(icon).toContain('"scroll-text": ScrollText');
+    expect(icon).toContain('aria-hidden="true"');
+    expect(equipmentWorkspace).toContain("<Icon name={item.icon} />");
+    expect(equipmentWorkspace).toContain("{item.label}");
   });
 
   it("submits catalog text search without querying on each keystroke", () => {

@@ -39,7 +39,7 @@ import {
   visibleLoadoutSlotColumns,
 } from "./equipment-ui";
 import { entityVisualTone, visualToneClass } from "./visual-language";
-import { Icon } from "./Icon";
+import { Icon, type IconName } from "./Icon";
 import { isAuthoredShield } from "./item-icons";
 
 export type EquipmentTab = "loadout" | "inventory" | "shop" | "practices";
@@ -51,11 +51,19 @@ export interface EquipmentWalletView {
   readonly stored: Readonly<Record<Denomination, number>>;
 }
 
-const EQUIPMENT_TABS: readonly { id: EquipmentTab; label: string }[] = [
-  { id: "loadout", label: "Loadout" },
-  { id: "inventory", label: "Inventory" },
-  { id: "shop", label: "Shop" },
-  { id: "practices", label: "Rituals & Practices" },
+const EQUIPMENT_TABS: readonly {
+  id: EquipmentTab;
+  label: string;
+  icon: IconName;
+}[] = [
+  { id: "loadout", label: "Loadout", icon: "sword" },
+  { id: "inventory", label: "Inventory", icon: "handbag" },
+  { id: "shop", label: "Shop", icon: "shopping-cart" },
+  {
+    id: "practices",
+    label: "Rituals & Practices",
+    icon: "scroll-text",
+  },
 ];
 
 const DENOMINATIONS: readonly { id: Denomination; label: string }[] = [
@@ -693,12 +701,9 @@ export function EquipmentWorkspace({
 
   return (
     <section
-      aria-labelledby="equipment-heading"
+      aria-label="Equipment"
       className="choice-pane standalone-workspace-pane equipment-pane"
     >
-      <header>
-        <h3 id="equipment-heading">Equipment</h3>
-      </header>
       <div
         className="equipment-tabs"
         role="tablist"
@@ -716,6 +721,7 @@ export function EquipmentWorkspace({
               setType("");
             }}
           >
+            <Icon name={item.icon} />
             {item.label}
           </button>
         ))}

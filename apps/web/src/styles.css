@@ -4064,11 +4064,14 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
 }
 
 .equipment-tabs button {
+  align-items: center;
   background: transparent;
   border: 0;
   border-bottom: 3px solid transparent;
   border-radius: 0;
   color: var(--muted);
+  display: inline-flex;
+  gap: 0.4rem;
   padding: 0.7rem 0.9rem;
 }
 
@@ -4096,8 +4099,10 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
 
 .loadout-stack {
   align-content: start;
+  column-gap: 0.5rem;
   display: grid;
-  gap: 0.65rem;
+  grid-template-columns: max-content minmax(0, 18rem);
+  row-gap: 0.65rem;
 }
 
 .loadout-grid .loadout-slot,
@@ -4111,8 +4116,9 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
 
 .loadout-grid .loadout-slot {
   align-items: center;
-  column-gap: 0.625rem;
-  grid-template-columns: 7.5rem minmax(0, 18rem);
+  column-gap: inherit;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
 }
 
 .loadout-slot-label {

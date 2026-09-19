@@ -30,6 +30,7 @@ import {
   Gift,
   GraduationCap,
   Hand,
+  Handbag,
   HardHat,
   Key,
   KeyRound,
@@ -112,6 +113,7 @@ export type IconName =
   | "gem"
   | "gift"
   | "hand"
+  | "handbag"
   | "hard-hat"
   | "item"
   | "key"
@@ -130,10 +132,12 @@ export type IconName =
   | "sheet"
   | "shield"
   | "shop"
+  | "shopping-cart"
   | "shirt"
   | "skill"
   | "square-star"
   | "stamp"
+  | "scroll-text"
   | "sun"
   | "sword"
   | "target"
@@ -186,6 +190,7 @@ const icons: Record<IconName, LucideIcon> = {
   gem: Gem,
   gift: Gift,
   hand: Hand,
+  handbag: Handbag,
   "hard-hat": HardHat,
   item: Backpack,
   key: Key,
@@ -204,10 +209,12 @@ const icons: Record<IconName, LucideIcon> = {
   sheet: FileText,
   shield: Shield,
   shop: ShoppingCart,
+  "shopping-cart": ShoppingCart,
   shirt: Shirt,
   skill: GraduationCap,
   "square-star": SquareStar,
   stamp: Stamp,
+  "scroll-text": ScrollText,
   sun: Sun,
   sword: Sword,
   target: Target,
