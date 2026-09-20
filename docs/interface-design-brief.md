@@ -362,9 +362,14 @@ remain supported, but they are secondary when resolving early design tradeoffs.
 The legacy builder unusually displays item-owned selections, such as Armor of
 Resistance's damage type, in the wearer's Class pane. Preserve that underlying
 choice and its legacy export topology, but do not treat the placement as a
-modern information-architecture requirement. Equipment uses sibling Loadout,
-Inventory, Shop, and Rituals & Practices tabs with one shared detail viewer.
-The Shop is a paged query-worker view of exact records; terminal `+N` variants
+modern information-architecture requirement. **Equipment** is the Inventory
+workspace rather than a container for another tab bar. Its Loadout button swaps
+the main pane from Inventory to the two responsive slot stacks; the inverse
+Inventory button swaps it back. The shared item inspector remains fixed in the
+right pane across both views. **Shop** is a peer character-editor tab. Items, rituals,
+alchemical formulas, martial practices, and ritual scrolls are ordinary values
+of its Browse control rather than nested tabs. The Shop is a paged query-worker
+view of exact records; terminal `+N` variants
 may share a presentation family, but filtering and every transaction retain
 the exact content ID. The Loadout assigns exact owned copies to explicit slots,
 using two responsive slot stacks whose dropdowns align after the longest label
@@ -378,8 +383,20 @@ with one compact total-funds summary whose stable AD/PP/GP/SP/CP columns include
 zero values. A Quick adjust field accepts one signed denomination amount;
 positive adjustments credit carried funds and negative adjustments spend carried
 before stored in one transaction. The Edit disclosure retains direct
-carried/stored denomination editing for legacy compatibility. Holdings use canonical item icons, concise
-equipped state, compact quantity controls, and trailing sell/remove actions.
+carried/stored denomination editing for legacy compatibility. Holdings use
+canonical item icons, concise equipped state, compact quantity controls, and
+trailing sell/remove actions. The holdings table is divided into collapsible
+role sections in this order: Armor, Wearables, Weapons, Shields, Implements,
+Consumables, Ammunition, Utility, Boons & Rewards, and Miscellaneous. Empty
+sections are omitted, the heading count means holding rows rather than total
+owned quantity, and all populated sections begin expanded except Miscellaneous.
+Expansion choices last for the current editor session. Classification is a
+presentation projection of authored metadata across every resolved component
+and repeated specific; it does not sort or mutate durable Inventory order.
+Utility means a carried item with structured mechanical evidence such as an
+authored power, property, rule, or Power reference. Ordinary reusable gear and
+unresolved/custom holdings stay recoverable under Miscellaneous rather than
+being guessed from their names.
 Sales disclose their actual proceeds at the recovered percentage choices;
 reductions remove unequipped copies first and warn before unequipping. Inventory
 row double-clicks use the same Loadout assignment path: an assigned holding
@@ -395,12 +412,11 @@ M5.5 closure applies the same focused review standard to the under-refined tabs:
 
 - **Inventory** makes current holdings, quantities, carried/stored state, sale
   outcomes, inspection, item configuration, and recovery states easy to follow.
-- **Shop** makes filters, exact magic/base variants, affordability and blocked
-  purchases, price changes, purchasing, and resulting inventory state explicit.
-- **Rituals & Practices** clearly separates discoverable records, known
-  rituals/formulas/practices, and quantity-bearing scrolls, with complete learn,
-  buy, inspect, and manage workflows.
-- Each tab receives a live full-profile workflow pass and product-owner approval;
+- **Shop** makes its Items, Rituals, Alchemical formulas, Martial practices, and
+  Ritual scrolls browse categories; exact magic/base variants; affordability and
+  blocked purchases; price changes; purchasing; known state; and resulting
+  inventory state explicit.
+- Each workspace receives a live full-profile workflow pass and product-owner approval;
   item-owned choices move here without changing their rules occurrence or legacy
   export topology.
 

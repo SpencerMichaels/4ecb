@@ -18,7 +18,10 @@ import {
   parseHashRoute,
   type BuilderNavigation,
 } from "./routes";
-import { focusMainContent } from "./route-focus";
+import {
+  focusMainContent,
+  shouldFocusMainContentAfterRouteChange,
+} from "./route-focus";
 import { PwaStatus } from "./PwaStatus";
 import { SettingsPage } from "./SettingsPage";
 import {
@@ -80,6 +83,7 @@ export function App() {
   const firstRoute = useRef(true);
   const runtimeContentStarted = useRef(false);
   const route = useMemo(() => parseHashRoute(hash), [hash]);
+  const previousRoute = useRef(route);
   const navigateBuilder = useCallback(
     (characterId: string, navigation: BuilderNavigation, replace = false) => {
       const next = characterEditorHash(characterId, navigation);
@@ -234,13 +238,16 @@ export function App() {
   );
 
   useEffect(() => {
+    const priorRoute = previousRoute.current;
+    previousRoute.current = route;
     if (firstRoute.current) {
       firstRoute.current = false;
       return;
     }
+    if (!shouldFocusMainContentAfterRouteChange(priorRoute, route)) return;
     const frame = requestAnimationFrame(() => focusMainContent(document));
     return () => cancelAnimationFrame(frame);
-  }, [hash]);
+  }, [route]);
 
   return (
     <div className="app-shell">

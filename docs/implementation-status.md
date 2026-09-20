@@ -195,6 +195,27 @@ criterion; future character-specific failures remain tracked compatibility bugs.
 
 ## M5.5 inventory-interface candidate (2026-09-18)
 
+### Role-based Inventory sections (2026-09-19)
+
+- Inventory holdings now project into collapsible Armor, Wearables, Weapons,
+  Shields, Implements, Consumables, Ammunition, Utility, Boons & Rewards, and
+  Miscellaneous sections. Empty groups are omitted, counts describe holding
+  rows, category order is fixed, and the original order within each group is
+  retained. All populated groups initially expand except Miscellaneous, and
+  subsequent expansion state survives Inventory edits for the component
+  lifetime.
+- Classification uses all resolved holding components and all repeated authored
+  specifics, with consumable/ammunition and physical shield/weapon precedence.
+  Missing definitions and ordinary Gear fall back to Miscellaneous; Utility
+  requires a structured power/property field, executable rule statement, or
+  exact authored reference to a Power. Display names, flavor, descriptions, and
+  vague activation prose do not decide a category.
+- A read-only audit of the 11,315 item definitions in the private 38,339-record
+  profile produced: Armor 1,635; Wearables 1,770; Weapons 2,393; Shields 159;
+  Implements 2,983; Consumables 1,059 (including 353 Ritual Scrolls);
+  Ammunition 150; Utility 552; Boons & Rewards 398; and Miscellaneous 216.
+  Public coverage uses synthetic definitions only.
+
 - Inventory now foregrounds a compact combined Funds total in stable
   AD/PP/GP/SP/CP stat cells, including zero values. Quick adjust accepts one
   signed or unsigned integer denomination amount, credits positives to carried,
@@ -619,6 +640,24 @@ web-app verification pass.
 All 55 focused builder/accessibility tests and the web TypeScript check pass.
 The shared card presentation was verified live across Compendium, builder,
 Equipment, and embedded/collapsible cards.
+
+## M5.5 Equipment/Shop navigation candidate (2026-09-19)
+
+- Equipment now opens directly on Inventory with no nested tab strip. Loadout is
+  a route-backed alternate main pane with responsive slot stacks. Inventory and
+  Loadout buttons swap that left pane in place while the shared item detail
+  viewer remains fixed on the right.
+- Shop is a peer top-level character-editor tab. Its Browse select covers Items,
+  Rituals, Alchemical formulas, Martial practices, and Ritual scrolls while
+  retaining the existing exact query, Buy/Learn/Known, affordability, pagination,
+  and inventory semantics.
+- Canonical hashes use `tab=equipment` with optional `loadout=1`, or `tab=shop`
+  with an optional category. Legacy Equipment section hashes still resolve:
+  Inventory opens Equipment, Loadout opens its pane, Shop opens Shop/Items, and
+  Rituals & Practices opens Shop/Rituals.
+- This candidate passes the web TypeScript check and 67 focused route, Equipment,
+  Loadout, builder-header, and accessibility-contract tests. It remains subject
+  to live product-owner review.
 
 ## M5.5 shared class-card organization checkpoint (2026-09-16)
 

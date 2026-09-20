@@ -1192,6 +1192,57 @@ assignments are reindexed to the remaining contiguous copy identities. Quantity
 updates replace the holding in place instead of moving its row, and zero-quantity
 holdings are removed rather than retained invisibly.
 
+### D056 — Inventory categories describe item roles without changing holdings
+
+**Status:** accepted
+
+**Date:** 2026-09-19
+
+Inventory uses a presentation-only taxonomy, in display order: Armor,
+Wearables, Weapons, Shields, Implements, Consumables, Ammunition, Utility,
+Boons & Rewards, and Miscellaneous. The categories are deliberately broader
+than equipment slots. Utility is reserved for carried items with structured
+mechanical evidence—an authored power/property field, executable rule statement,
+or exact Power reference—while ordinary reusable Gear belongs in Miscellaneous.
+Ritual Scroll holdings remain Consumables; learned rituals are not holdings.
+
+The classifier reads every resolved component and repeated authored specific,
+never display names, flavor, or descriptive prose. Consumables and Ammunition
+take precedence over equipment roles. A composed physical shield or weapon base
+then preserves its physical identity; explicit implements, armor, worn slots,
+and audited nonphysical reward families follow. Missing, custom, or ambiguous
+content falls back to Miscellaneous and remains visible. Grouping never changes
+holding IDs, equipped assignments, choices, durable order, rules behavior, or
+legacy export topology.
+
+Sections omit empty categories and count holding rows rather than owned copies.
+All populated categories initially expand except Miscellaneous; the current
+editor component retains later expansion choices. Semantic toggle buttons and
+ordinary table structure provide the interaction without making collapse state
+part of the character document.
+
+### D057 — Equipment is Inventory-first; Shop is a peer workspace
+
+**Status:** accepted
+
+**Date:** 2026-09-19
+
+Equipment opens directly on Inventory and does not add a second tab bar inside
+the character editor. Its route-backed Loadout control swaps only the main pane
+between Inventory and the existing rules-backed slot projection; the shared
+item detail viewer remains fixed in the right pane. Shop is a peer
+top-level character-editor workspace. Items, rituals, alchemical formulas,
+martial practices, and ritual scrolls are values of one ordinary Browse control
+inside Shop; this presentation change does not merge their Buy, Learn, Known,
+quantity, or exact content-ID semantics.
+
+Canonical navigation represents Equipment, its optional Loadout pane,
+Shop, and the active Shop category. Existing Equipment deep links remain
+compatible: Inventory maps to Equipment, Loadout maps to Equipment with the
+Loadout pane visible, Shop maps to Shop/Items, and Rituals & Practices maps to
+Shop/Rituals. Pane switches update the route, and browser Back/Forward therefore
+restores the same visible state rather than retaining component-only navigation.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

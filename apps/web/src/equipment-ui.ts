@@ -124,6 +124,365 @@ export interface MagicItemFamily {
   readonly entities: readonly ContentEntity[];
 }
 
+export type InventoryCategoryId =
+  | "armor"
+  | "wearables"
+  | "weapons"
+  | "shields"
+  | "implements"
+  | "consumables"
+  | "ammunition"
+  | "utility"
+  | "boons-rewards"
+  | "miscellaneous";
+
+export interface InventoryCategoryPresentation {
+  readonly id: InventoryCategoryId;
+  readonly label: string;
+  readonly initiallyExpanded: boolean;
+}
+
+export const INVENTORY_CATEGORIES: readonly InventoryCategoryPresentation[] = [
+  { id: "armor", label: "Armor", initiallyExpanded: true },
+  { id: "wearables", label: "Wearables", initiallyExpanded: true },
+  { id: "weapons", label: "Weapons", initiallyExpanded: true },
+  { id: "shields", label: "Shields", initiallyExpanded: true },
+  { id: "implements", label: "Implements", initiallyExpanded: true },
+  { id: "consumables", label: "Consumables", initiallyExpanded: true },
+  { id: "ammunition", label: "Ammunition", initiallyExpanded: true },
+  { id: "utility", label: "Utility", initiallyExpanded: true },
+  {
+    id: "boons-rewards",
+    label: "Boons & Rewards",
+    initiallyExpanded: true,
+  },
+  { id: "miscellaneous", label: "Miscellaneous", initiallyExpanded: false },
+];
+
+export interface InventoryCategoryGroup {
+  readonly category: InventoryCategoryPresentation;
+  readonly entries: readonly BuildInventoryEntry[];
+}
+
+function normalized(value: string | undefined): string {
+  return value?.trim().toLocaleLowerCase() ?? "";
+}
+
+function normalizedSpecifics(entity: ContentEntity): readonly {
+  readonly name: string;
+  readonly value: string;
+}[] {
+  return entity.specifics
+    .filter(({ value }) => value.trim() !== "")
+    .map(({ name, value }) => ({
+      name: normalized(name),
+      value: normalized(value),
+    }));
+}
+
+function specificMatches(
+  entities: readonly ContentEntity[],
+  names: readonly string[],
+  matches: (value: string) => boolean,
+): boolean {
+  const expected = new Set(names.map(normalized));
+  return entities.some((entity) =>
+    normalizedSpecifics(entity).some(
+      ({ name, value }) => expected.has(name) && matches(value),
+    ),
+  );
+}
+
+function valuesInclude(
+  entities: readonly ContentEntity[],
+  names: readonly string[],
+  values: readonly string[],
+): boolean {
+  const expected = new Set(values.map(normalized));
+  return specificMatches(entities, names, (value) =>
+    value.split(/\s*[,;]\s*/u).some((part) => expected.has(part.trim())),
+  );
+}
+
+const IMPLEMENT_KINDS = [
+  "staff",
+  "rod",
+  "orb",
+  "wand",
+  "totem",
+  "holy symbol",
+  "ki focus",
+  "tome",
+  "superior implement",
+] as const;
+
+const WEARABLE_SLOTS = [
+  "body",
+  "head",
+  "head and neck",
+  "head slot item",
+  "neck",
+  "arms",
+  "hands",
+  "feet",
+  "ring",
+  "waist",
+  "tattoo",
+  "companion",
+  "familiar",
+  "mount",
+] as const;
+
+const CONSUMABLE_KINDS = [
+  "alchemical",
+  "alchemical item",
+  "potion",
+  "elixir",
+  "consumable",
+  "other consumable",
+  "reagent",
+  "soulfang",
+  "whetstone",
+  "whetstones",
+  "component",
+  "food",
+  "drink",
+] as const;
+
+const REWARD_KINDS = [
+  "alternative reward",
+  "divine boon",
+  "legendary boon",
+  "other boon",
+  "boon",
+  "gift",
+  "blessing",
+  "grandmaster training",
+  "training",
+  "talent",
+  "secret",
+  "mystery",
+  "templar brand",
+  "brand",
+  "elemental gift",
+  "sorcerer-king's boon",
+  "primal blessing",
+  "psionic talent",
+  "fey magic gift (boon)",
+  "glory boon",
+  "veiled alliance mystery",
+  "secret of the way",
+  "wanderer's secret",
+  "echo of power",
+  "iggwilv's boon",
+] as const;
+
+const MUNDANE_IMPLEMENT_IDS = new Set([
+  "id_fmp_gear_3",
+  "id_fmp_gear_12",
+  "id_fmp_gear_13",
+  "id_fmp_gear_14",
+  "id_fmp_gear_27",
+  "id_fmp_gear_87",
+  "id_fmp_gear_101",
+  "id_fmp_gear_115",
+]);
+
+function hasType(
+  entities: readonly ContentEntity[],
+  ...types: readonly string[]
+): boolean {
+  const expected = new Set(types.map(normalized));
+  return entities.some((entity) => expected.has(normalized(entity.type)));
+}
+
+function authoredShield(entities: readonly ContentEntity[]): boolean {
+  const shieldCompatibleOnly = entities.some((entity) => {
+    const specifics = normalizedSpecifics(entity);
+    if (
+      specifics.some(
+        ({ name, value }) => name === "item slot" && value.includes("neck"),
+      )
+    )
+      return false;
+    return specifics.some(
+      ({ name, value }) =>
+        name === "armor" &&
+        value
+          .split(/\s*,\s*/u)
+          .filter(Boolean)
+          .every((part) => part.includes("shield")),
+    );
+  });
+  return (
+    entities.some(isAuthoredShield) ||
+    specificMatches(entities, ["_IsEnchant"], (value) => value === "shield") ||
+    valuesInclude(entities, ["Magic Item Type"], ["Shield"]) ||
+    shieldCompatibleOnly
+  );
+}
+
+function hasStructuredMechanicalUse(
+  entities: readonly ContentEntity[],
+  byId: ReadonlyMap<string, ContentEntity>,
+): boolean {
+  const executableRules = new Set([
+    "grant",
+    "statadd",
+    "modify",
+    "select",
+    "textstring",
+  ]);
+  for (const entity of entities) {
+    if (
+      normalizedSpecifics(entity).some(({ name }) => {
+        const tokens = name.split(/[^a-z0-9]+/u).filter(Boolean);
+        return (
+          tokens.includes("power") ||
+          tokens.includes("powers") ||
+          tokens.includes("displaypower") ||
+          tokens.includes("displaypowers") ||
+          name === "property" ||
+          name === "properties"
+        );
+      }) ||
+      entity.rules.some(({ name }) => executableRules.has(normalized(name)))
+    )
+      return true;
+
+    const authoredValues = [
+      ...entity.attributes.map(({ value }) => value),
+      ...entity.specifics.map(({ value }) => value),
+      ...entity.rules.flatMap(({ attributes }) =>
+        attributes.map(({ value }) => value),
+      ),
+    ];
+    if (
+      authoredValues.some((value) => {
+        const authoredId = value.trim();
+        const reference =
+          byId.get(authoredId) ?? byId.get(authoredId.toLocaleLowerCase());
+        return (
+          reference !== undefined && normalized(reference.type) === "power"
+        );
+      })
+    )
+      return true;
+  }
+  return false;
+}
+
+/**
+ * Classifies one durable holding by authored role evidence. Every repeated
+ * specific and every resolved component participates; names and flavor never
+ * do. A composed physical base wins over a generic enchantment category.
+ */
+export function inventoryCategory(
+  entry: BuildInventoryEntry,
+  byId: ReadonlyMap<string, ContentEntity>,
+): InventoryCategoryId | undefined {
+  const definitions = inventoryDefinitionIds(entry).flatMap((id) => {
+    const definition = byId.get(id);
+    return definition === undefined ? [] : [definition];
+  });
+  const physicalBase = definitions[0];
+  const savedTypes = entry.elements.map(({ type }) => normalized(type));
+
+  // Learned Ritual records belong to the Practices model, never physical
+  // Inventory. Quantity-bearing Ritual Scroll definitions remain consumables.
+  if (hasType(definitions, "ritual") || savedTypes.includes("ritual"))
+    return undefined;
+
+  if (
+    hasType(definitions, "ritual scroll") ||
+    savedTypes.includes("ritual scroll")
+  )
+    return "consumables";
+  if (
+    hasType(definitions, "ammunition") ||
+    valuesInclude(
+      definitions,
+      ["Magic Item Type", "Gear Category", "Category"],
+      ["Ammunition"],
+    )
+  )
+    return "ammunition";
+  if (
+    hasType(definitions, ...CONSUMABLE_KINDS) ||
+    valuesInclude(
+      definitions,
+      ["Magic Item Type", "Gear Category", "Category", "Type"],
+      CONSUMABLE_KINDS,
+    )
+  )
+    return "consumables";
+
+  if (physicalBase !== undefined && isAuthoredShield(physicalBase))
+    return "shields";
+  if (physicalBase !== undefined && normalized(physicalBase.type) === "weapon")
+    return "weapons";
+  if (authoredShield(definitions)) return "shields";
+  if (
+    valuesInclude(definitions, ["Magic Item Type"], ["Weapon"]) ||
+    hasType(definitions, "weapon") ||
+    savedTypes.includes("weapon")
+  )
+    return "weapons";
+  if (
+    definitions.some(({ id }) =>
+      MUNDANE_IMPLEMENT_IDS.has(id.toLocaleLowerCase()),
+    ) ||
+    hasType(definitions, "superior implement") ||
+    valuesInclude(
+      definitions,
+      ["Magic Item Type", "Item Slot", "Implement Type", "Type"],
+      IMPLEMENT_KINDS,
+    ) ||
+    (definitions.length === 0 && savedTypes.includes("superior implement"))
+  )
+    return "implements";
+  if (
+    valuesInclude(definitions, ["Magic Item Type"], ["Armor"]) ||
+    hasType(definitions, "armor") ||
+    savedTypes.includes("armor")
+  )
+    return "armor";
+  if (
+    valuesInclude(definitions, ["Magic Item Type", "Item Slot"], WEARABLE_SLOTS)
+  )
+    return "wearables";
+  if (
+    hasType(definitions, ...REWARD_KINDS) ||
+    valuesInclude(
+      definitions,
+      ["Magic Item Type", "Alternative Reward Type", "Type"],
+      REWARD_KINDS,
+    )
+  )
+    return "boons-rewards";
+  if (hasStructuredMechanicalUse(definitions, byId)) return "utility";
+  return "miscellaneous";
+}
+
+/** Groups without sorting so each category retains durable Inventory order. */
+export function groupInventoryByCategory(
+  inventory: readonly BuildInventoryEntry[],
+  byId: ReadonlyMap<string, ContentEntity>,
+): readonly InventoryCategoryGroup[] {
+  const entries = new Map<InventoryCategoryId, BuildInventoryEntry[]>();
+  for (const entry of inventory) {
+    const category = inventoryCategory(entry, byId);
+    if (category === undefined) continue;
+    const group = entries.get(category) ?? [];
+    group.push(entry);
+    entries.set(category, group);
+  }
+  return INVENTORY_CATEGORIES.flatMap((category) => {
+    const grouped = entries.get(category.id);
+    return grouped === undefined ? [] : [{ category, entries: grouped }];
+  });
+}
+
 export function practiceKind(entity: ContentEntity): PracticeKind | undefined {
   if (entity.type.trim().toLocaleLowerCase() === "ritual scroll")
     return "scroll";

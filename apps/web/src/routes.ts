@@ -1,5 +1,5 @@
 export type BuilderWorkspaceTab =
-  "build" | "overview" | "details" | "equipment" | "diagnostics";
+  "build" | "overview" | "details" | "equipment" | "shop" | "diagnostics";
 
 export type BuilderSectionSlug =
   | "class"
@@ -15,7 +15,8 @@ export type BuilderSectionSlug =
   | "retraining"
   | "other";
 
-export type EquipmentSection = "loadout" | "inventory" | "shop" | "practices";
+export type ShopCategory =
+  "items" | "rituals" | "alchemical-formulas" | "martial-practices" | "scrolls";
 
 export type BuilderNavigation =
   | {
@@ -24,10 +25,8 @@ export type BuilderNavigation =
       readonly section?: BuilderSectionSlug;
     }
   | { readonly workspace: "overview" | "details" | "diagnostics" }
-  | {
-      readonly workspace: "equipment";
-      readonly section: EquipmentSection;
-    };
+  | { readonly workspace: "equipment"; readonly loadout?: boolean }
+  | { readonly workspace: "shop"; readonly category?: ShopCategory };
 
 export type AppRoute =
   | { readonly page: "settings" }
@@ -44,6 +43,7 @@ const BUILDER_WORKSPACES: readonly BuilderWorkspaceTab[] = [
   "overview",
   "details",
   "equipment",
+  "shop",
   "diagnostics",
 ];
 const BUILDER_SECTIONS: readonly BuilderSectionSlug[] = [
@@ -60,11 +60,12 @@ const BUILDER_SECTIONS: readonly BuilderSectionSlug[] = [
   "retraining",
   "other",
 ];
-const EQUIPMENT_SECTIONS: readonly EquipmentSection[] = [
-  "loadout",
-  "inventory",
-  "shop",
-  "practices",
+const SHOP_CATEGORIES: readonly ShopCategory[] = [
+  "items",
+  "rituals",
+  "alchemical-formulas",
+  "martial-practices",
+  "scrolls",
 ];
 
 function includesValue<T extends string>(
@@ -82,9 +83,21 @@ function parseBuilderNavigation(query: string): BuilderNavigation {
     : "build";
   if (workspace === "equipment") {
     const section = parameters.get("section");
+    if (section === "shop") return { workspace: "shop", category: "items" };
+    if (section === "practices")
+      return { workspace: "shop", category: "rituals" };
     return {
       workspace,
-      section: includesValue(EQUIPMENT_SECTIONS, section) ? section : "loadout",
+      ...(section === "loadout" || parameters.get("loadout") === "1"
+        ? { loadout: true }
+        : {}),
+    };
+  }
+  if (workspace === "shop") {
+    const category = parameters.get("category");
+    return {
+      workspace,
+      ...(includesValue(SHOP_CATEGORIES, category) ? { category } : {}),
     };
   }
   if (workspace !== "build") return { workspace };
@@ -146,7 +159,10 @@ export function characterEditorHash(
     if (navigation.section !== undefined)
       parameters.set("section", navigation.section);
   } else if (navigation.workspace === "equipment") {
-    parameters.set("section", navigation.section);
+    if (navigation.loadout === true) parameters.set("loadout", "1");
+  } else if (navigation.workspace === "shop") {
+    if (navigation.category !== undefined)
+      parameters.set("category", navigation.category);
   }
   return `#/characters/${encodeURIComponent(characterId)}/edit?${parameters.toString()}`;
 }

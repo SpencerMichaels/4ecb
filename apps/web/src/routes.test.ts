@@ -73,9 +73,16 @@ describe("hash routes", () => {
       {
         navigation: {
           workspace: "equipment" as const,
-          section: "practices" as const,
+          loadout: true,
         },
-        expected: { workspace: "equipment", section: "practices" },
+        expected: { workspace: "equipment", loadout: true },
+      },
+      {
+        navigation: {
+          workspace: "shop" as const,
+          category: "martial-practices" as const,
+        },
+        expected: { workspace: "shop", category: "martial-practices" },
       },
       {
         navigation: { workspace: "diagnostics" as const },
@@ -112,7 +119,27 @@ describe("hash routes", () => {
       canonicalHashRedirect(
         "#/characters/one/edit?tab=equipment&section=unknown",
       ),
-    ).toBe("#/characters/one/edit?tab=equipment&section=loadout");
+    ).toBe("#/characters/one/edit?tab=equipment");
+    expect(
+      parseHashRoute("#/characters/one/edit?tab=equipment&section=practices"),
+    ).toMatchObject({
+      builder: { workspace: "shop", category: "rituals" },
+    });
+    expect(
+      parseHashRoute("#/characters/one/edit?tab=equipment&section=shop"),
+    ).toMatchObject({
+      builder: { workspace: "shop", category: "items" },
+    });
+    expect(
+      canonicalHashRedirect(
+        "#/characters/one/edit?tab=equipment&section=inventory",
+      ),
+    ).toBe("#/characters/one/edit?tab=equipment");
+    expect(
+      canonicalHashRedirect(
+        "#/characters/one/edit?tab=equipment&section=loadout",
+      ),
+    ).toBe("#/characters/one/edit?tab=equipment&loadout=1");
   });
 
   it("pushes major destinations, restores them Back/Forward, and deduplicates synchronization", () => {
@@ -142,7 +169,6 @@ describe("hash routes", () => {
     const overview = characterEditorHash("one", { workspace: "overview" });
     const inventory = characterEditorHash("one", {
       workspace: "equipment",
-      section: "inventory",
     });
     expect(commitHashNavigation(target, build)).toBe(true);
     expect(commitHashNavigation(target, overview)).toBe(true);

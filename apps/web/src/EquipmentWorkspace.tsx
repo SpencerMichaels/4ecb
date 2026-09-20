@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   CURRENCY_DENOMINATIONS,
@@ -32,7 +32,10 @@ import {
   comparableSaleProceeds,
   entityCurrencyCopper,
   formatCopperPrice,
+  groupInventoryByCategory,
   groupMagicItemFamilies,
+  INVENTORY_CATEGORIES,
+  type InventoryCategoryId,
   inventoryDefinitionIds,
   inventoryDisplayName,
   inventoryEntryForEntity,
@@ -47,10 +50,10 @@ import {
   visibleLoadoutSlotColumns,
 } from "./equipment-ui";
 import { entityVisualTone, visualToneClass } from "./visual-language";
-import { Icon, type IconName } from "./Icon";
+import { Icon } from "./Icon";
 import { canonicalItemIcon, isAuthoredShield } from "./item-icons";
+import type { ShopCategory } from "./routes";
 
-export type EquipmentTab = "loadout" | "inventory" | "shop" | "practices";
 type MoneyLocation = "carried" | "stored";
 type Denomination = "copper" | "silver" | "gold" | "platinum" | "astral";
 
@@ -58,21 +61,6 @@ export interface EquipmentWalletView {
   readonly carried: Readonly<Record<Denomination, number>>;
   readonly stored: Readonly<Record<Denomination, number>>;
 }
-
-const EQUIPMENT_TABS: readonly {
-  id: EquipmentTab;
-  label: string;
-  icon: IconName;
-}[] = [
-  { id: "loadout", label: "Loadout", icon: "sword" },
-  { id: "inventory", label: "Inventory", icon: "handbag" },
-  { id: "shop", label: "Shop", icon: "shopping-cart" },
-  {
-    id: "practices",
-    label: "Rituals & Practices",
-    icon: "scroll-text",
-  },
-];
 
 const DENOMINATIONS: readonly {
   id: Denomination;
@@ -202,7 +190,8 @@ export function ItemDetail({
         <p className="eyebrow">Item details</p>
         <h4>Choose an item to inspect it</h4>
         <p>
-          The same detail viewer follows selections across every equipment tab.
+          The same detail viewer follows selections across Inventory, Loadout,
+          and Shop.
         </p>
       </aside>
     );
@@ -443,6 +432,117 @@ function useCatalogQuery(
   return { result, status };
 }
 
+function LoadoutGrid({
+  inventory,
+  byId,
+  activeDefinitionIds,
+  onInspect,
+  onEquipSlot,
+}: {
+  readonly inventory: readonly BuildInventoryEntry[];
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly activeDefinitionIds: readonly string[];
+  readonly onInspect: (entry: BuildInventoryEntry) => void;
+  readonly onEquipSlot: (
+    entryId: string | undefined,
+    slots: readonly string[],
+    currentEntryId?: string,
+    currentSlots?: readonly string[],
+  ) => void;
+}) {
+  const slotColumns = visibleLoadoutSlotColumns(
+    activeDefinitionIds,
+    inventory,
+    byId,
+  );
+  const assignments = resolveLoadoutAssignments(inventory, byId);
+  return (
+    <div className="loadout-grid">
+      {slotColumns.map((column) => (
+        <div
+          className="loadout-stack"
+          role="group"
+          aria-label={column.label}
+          key={column.id}
+        >
+          {column.slots.map(({ id: slotId, label, icon }) => {
+            const compatible = inventory.filter((entry) =>
+              inventorySlotCandidates(entry, byId).includes(slotId),
+            );
+            const assigned = compatible.find((entry) =>
+              assignments.assignmentsByEntry
+                .get(entry.id)
+                ?.some((assignment) => assignment.slot === slotId),
+            );
+            const selectId = `loadout-slot-${slotId}`;
+            return (
+              <div className="loadout-slot" key={slotId}>
+                <span className="loadout-slot-label">
+                  <Icon name={icon} />
+                  <label htmlFor={selectId}>{label}</label>
+                </span>
+                <select
+                  id={selectId}
+                  className={assigned === undefined ? "is-empty" : undefined}
+                  value={assigned?.id ?? ""}
+                  onFocus={() => {
+                    if (assigned !== undefined) onInspect(assigned);
+                  }}
+                  onChange={(event) => {
+                    const entry = inventory.find(
+                      ({ id }) => id === event.currentTarget.value,
+                    );
+                    if (entry !== undefined) onInspect(entry);
+                    const pairedHandSlots = ["main-hand", "off-hand"] as const;
+                    const entryUsesBothHands =
+                      entry !== undefined &&
+                      inventoryRequiresBothHands(entry, byId);
+                    const assignedUsesBothHands =
+                      assigned !== undefined &&
+                      inventoryRequiresBothHands(assigned, byId);
+                    if (assignedUsesBothHands && !entryUsesBothHands) {
+                      onEquipSlot(
+                        entry?.id,
+                        [slotId],
+                        assigned.id,
+                        pairedHandSlots,
+                      );
+                      return;
+                    }
+                    onEquipSlot(
+                      event.currentTarget.value || undefined,
+                      entryUsesBothHands ? pairedHandSlots : [slotId],
+                      assigned?.id,
+                    );
+                  }}
+                >
+                  <option value="">Empty</option>
+                  {compatible.map((entry) => (
+                    <option key={entry.id} value={entry.id}>
+                      {inventoryDisplayName(entry, byId)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+      {inventory.some(
+        (entry) =>
+          entry.equippedQuantity > 0 &&
+          entry.equippedSlots === undefined &&
+          !assignments.assignmentsByEntry.has(entry.id),
+      ) ? (
+        <p className="field-help loadout-help">
+          Some imported equipped counts cannot be matched to a unique open slot.
+          They remain rules-active until you revise those holdings.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function EquipmentWorkspace({
   build,
   entities,
@@ -451,8 +551,11 @@ export function EquipmentWorkspace({
   wallet,
   activeDefinitionIds,
   hideFlavortext,
-  activeTab,
-  onTabChange,
+  workspace,
+  loadoutView,
+  shopCategory,
+  onLoadoutViewChange,
+  onShopCategoryChange,
   onPutInventory,
   onPurchase,
   onSell,
@@ -467,8 +570,11 @@ export function EquipmentWorkspace({
   readonly wallet: EquipmentWalletView;
   readonly activeDefinitionIds: readonly string[];
   readonly hideFlavortext: boolean;
-  readonly activeTab: EquipmentTab;
-  readonly onTabChange: (tab: EquipmentTab) => void;
+  readonly workspace: "equipment" | "shop";
+  readonly loadoutView: boolean;
+  readonly shopCategory: ShopCategory;
+  readonly onLoadoutViewChange: (loadout: boolean) => void;
+  readonly onShopCategoryChange: (category: ShopCategory) => void;
   readonly onPutInventory: (entry: BuildInventoryEntry) => void;
   readonly onPurchase: (
     entry: BuildInventoryEntry,
@@ -492,7 +598,6 @@ export function EquipmentWorkspace({
   ) => void;
   readonly onAdjustMoney: (deltaCopper: number) => string | undefined;
 }) {
-  const tab = activeTab;
   const [inspected, setInspected] = useState<InspectedItemDetail>();
   const [draftText, setDraftText] = useState("");
   const [submittedText, setSubmittedText] = useState("");
@@ -504,7 +609,6 @@ export function EquipmentWorkspace({
   const [minimumLevel, setMinimumLevel] = useState("");
   const [maximumLevel, setMaximumLevel] = useState("");
   const [proficiency, setProficiency] = useState("");
-  const [practiceSubtype, setPracticeSubtype] = useState("");
   const [offset, setOffset] = useState(0);
   const [baseId, setBaseId] = useState("");
   const [walletOpen, setWalletOpen] = useState(false);
@@ -519,11 +623,32 @@ export function EquipmentWorkspace({
     readonly denominations: readonly (keyof CurrencyAmount)[];
   }>({ generation: 0, denominations: [] });
   const [openSaleId, setOpenSaleId] = useState<string>();
+  const [inventoryCategoryExpansion, setInventoryCategoryExpansion] = useState<
+    ReadonlyMap<InventoryCategoryId, boolean>
+  >(
+    () =>
+      new Map(
+        INVENTORY_CATEGORIES.map(({ id, initiallyExpanded }) => [
+          id,
+          initiallyExpanded,
+        ]),
+      ),
+  );
   const walletAdjustmentInput = useRef<HTMLInputElement>(null);
-  const mode = tab === "practices" ? "practices" : "shop";
+  const practiceSubtype =
+    shopCategory === "rituals"
+      ? "ritual"
+      : shopCategory === "alchemical-formulas"
+        ? "alchemical-formula"
+        : shopCategory === "martial-practices"
+          ? "martial-practice"
+          : shopCategory === "scrolls"
+            ? "scroll"
+            : "";
+  const mode = shopCategory === "items" ? "shop" : "practices";
   const { result, status } = useCatalogQuery(
     packId,
-    tab === "shop" || tab === "practices",
+    workspace === "shop",
     mode,
     submittedText,
     type,
@@ -583,12 +708,15 @@ export function EquipmentWorkspace({
     [pageEntities, practiceSubtype],
   );
   const inventory = build.inventory.filter(({ quantity }) => quantity > 0);
+  const inventoryGroups = useMemo(
+    () => groupInventoryByCategory(inventory, byId),
+    [inventory, byId],
+  );
   const loadoutSlotColumns = visibleLoadoutSlotColumns(
     activeDefinitionIds,
     inventory,
     byId,
   );
-  const loadoutAssignments = resolveLoadoutAssignments(inventory, byId);
   const visibleLoadoutSlots = loadoutSlotColumns.flatMap(({ slots }) =>
     slots.map(({ id }) => id),
   );
@@ -671,6 +799,23 @@ export function EquipmentWorkspace({
 
   const catalogControls = (
     <div className="equipment-catalog-controls">
+      <label>
+        Browse
+        <select
+          value={shopCategory}
+          onChange={(event) => {
+            onShopCategoryChange(event.currentTarget.value as ShopCategory);
+            setOffset(0);
+            setType("");
+          }}
+        >
+          <option value="items">Items</option>
+          <option value="rituals">Rituals</option>
+          <option value="alchemical-formulas">Alchemical formulas</option>
+          <option value="martial-practices">Martial practices</option>
+          <option value="scrolls">Ritual scrolls</option>
+        </select>
+      </label>
       <form
         className="equipment-text-search"
         onSubmit={(event) => {
@@ -755,24 +900,7 @@ export function EquipmentWorkspace({
             </select>
           </label>
         </>
-      ) : (
-        <label>
-          Kind
-          <select
-            value={practiceSubtype}
-            onChange={(event) => {
-              setPracticeSubtype(event.currentTarget.value);
-              setOffset(0);
-            }}
-          >
-            <option value="">All</option>
-            <option value="ritual">Ritual</option>
-            <option value="alchemical-formula">Alchemical formula</option>
-            <option value="martial-practice">Martial practice</option>
-            <option value="scroll">Scroll</option>
-          </select>
-        </label>
-      )}
+      ) : null}
       <FacetSelect
         label="Tier"
         facet="tier"
@@ -814,628 +942,642 @@ export function EquipmentWorkspace({
 
   return (
     <section
-      aria-label="Equipment"
+      aria-label={workspace === "equipment" ? "Equipment" : "Shop"}
       className="choice-pane standalone-workspace-pane equipment-pane"
     >
-      <div
-        className="equipment-tabs"
-        role="tablist"
-        aria-label="Equipment sections"
-      >
-        {EQUIPMENT_TABS.map((item) => (
-          <button
-            key={item.id}
-            role="tab"
-            aria-selected={tab === item.id}
-            type="button"
-            onClick={() => {
-              onTabChange(item.id);
-              setOffset(0);
-              setType("");
-            }}
-          >
-            <Icon name={item.icon} />
-            {item.label}
-          </button>
-        ))}
-      </div>
       <div className="equipment-workspace">
         <div
           className="equipment-primary"
-          role="tabpanel"
-          aria-label={EQUIPMENT_TABS.find(({ id }) => id === tab)?.label}
+          aria-label={
+            workspace === "shop"
+              ? "Shop catalog"
+              : loadoutView
+                ? "Loadout"
+                : "Inventory"
+          }
         >
-          {tab === "loadout" ? (
-            <div className="loadout-grid">
-              {loadoutSlotColumns.map((column) => (
-                <div
-                  className="loadout-stack"
-                  role="group"
-                  aria-label={column.label}
-                  key={column.id}
-                >
-                  {column.slots.map(({ id: slotId, label, icon }) => {
-                    const compatible = inventory.filter((entry) =>
-                      inventorySlotCandidates(entry, byId).includes(slotId),
-                    );
-                    const assigned = compatible.find((entry) =>
-                      loadoutAssignments.assignmentsByEntry
-                        .get(entry.id)
-                        ?.some((assignment) => assignment.slot === slotId),
-                    );
-                    const selectId = `loadout-slot-${slotId}`;
-                    return (
-                      <div className="loadout-slot" key={slotId}>
-                        <span className="loadout-slot-label">
-                          <Icon name={icon} />
-                          <label htmlFor={selectId}>{label}</label>
-                        </span>
-                        <select
-                          id={selectId}
-                          className={
-                            assigned === undefined ? "is-empty" : undefined
-                          }
-                          value={assigned?.id ?? ""}
-                          onFocus={() => {
-                            if (assigned !== undefined)
-                              inspectInventory(assigned);
-                          }}
-                          onChange={(event) => {
-                            const entry = inventory.find(
-                              ({ id }) => id === event.currentTarget.value,
-                            );
-                            if (entry !== undefined) inspectInventory(entry);
-                            const pairedHandSlots = [
-                              "main-hand",
-                              "off-hand",
-                            ] as const;
-                            const entryUsesBothHands =
-                              entry !== undefined &&
-                              inventoryRequiresBothHands(entry, byId);
-                            const assignedUsesBothHands =
-                              assigned !== undefined &&
-                              inventoryRequiresBothHands(assigned, byId);
-                            if (assignedUsesBothHands && !entryUsesBothHands) {
-                              onEquipSlot(
-                                entry?.id,
-                                [slotId],
-                                assigned.id,
-                                pairedHandSlots,
-                              );
-                              return;
-                            }
-                            onEquipSlot(
-                              event.currentTarget.value || undefined,
-                              entryUsesBothHands ? pairedHandSlots : [slotId],
-                              assigned?.id,
-                            );
-                          }}
-                        >
-                          <option value="">Empty</option>
-                          {compatible.map((entry) => (
-                            <option key={entry.id} value={entry.id}>
-                              {inventoryDisplayName(entry, byId)}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-              {inventory.some(
-                (entry) =>
-                  entry.equippedQuantity > 0 &&
-                  entry.equippedSlots === undefined &&
-                  !loadoutAssignments.assignmentsByEntry.has(entry.id),
-              ) ? (
-                <p className="field-help loadout-help">
-                  Some imported equipped counts cannot be matched to a unique
-                  open slot. They remain rules-active until you revise those
-                  holdings.
-                </p>
-              ) : null}
-            </div>
-          ) : tab === "inventory" ? (
+          {workspace === "equipment" ? (
             <>
-              <section className="inventory-wallet" aria-label="Funds">
-                <div className="inventory-wallet-summary">
-                  <Icon name="circle-dollar-sign" />
-                  <div className="inventory-wallet-balance">
-                    <span className="inventory-wallet-label">Funds</span>
-                    <dl className="inventory-wallet-denominations">
-                      {CURRENCY_DENOMINATIONS.map((denomination) => (
-                        <div
-                          key={`${denomination}-${walletPulse.denominations.includes(denomination) ? walletPulse.generation : 0}`}
-                          className={
-                            walletPulse.denominations.includes(denomination)
-                              ? "is-adjusted"
-                              : undefined
-                          }
-                        >
-                          <dt>{denomination.toLocaleUpperCase()}</dt>
-                          <dd>{totalWallet[denomination]}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </div>
-                  <form
-                    className="inventory-wallet-adjust"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      let deltaCopper: number;
-                      try {
-                        deltaCopper = parseCurrencyAdjustment(walletAdjustment);
-                      } catch (reason: unknown) {
-                        showWalletAdjustmentError(
-                          reason instanceof Error
-                            ? reason.message
-                            : "Enter a valid currency adjustment",
-                        );
-                        return;
-                      }
-                      const error = onAdjustMoney(deltaCopper);
-                      if (error !== undefined) {
-                        showWalletAdjustmentError(error);
-                        return;
-                      }
-                      const adjustedCopper =
-                        carriedCopper + storedCopper + deltaCopper;
-                      const adjustedTotal =
-                        Number.isSafeInteger(adjustedCopper) &&
-                        adjustedCopper >= 0
-                          ? currencyFromCopper(adjustedCopper)
-                          : totalWallet;
-                      setWalletPulse((current) => ({
-                        generation: current.generation + 1,
-                        denominations: CURRENCY_DENOMINATIONS.filter(
-                          (denomination) =>
-                            adjustedTotal[denomination] !==
-                            totalWallet[denomination],
-                        ),
-                      }));
-                      setWalletAdjustment("");
-                      setWalletAdjustmentMessage((current) => ({
-                        kind: "success",
-                        text: "Funds adjusted.",
-                        generation: (current?.generation ?? 0) + 1,
-                      }));
-                    }}
-                  >
-                    <label
-                      className="visually-hidden"
-                      htmlFor="inventory-wallet-adjustment"
-                    >
-                      Quick adjust funds
-                    </label>
-                    <input
-                      id="inventory-wallet-adjustment"
-                      ref={walletAdjustmentInput}
-                      type="text"
-                      inputMode="text"
-                      className={
-                        walletAdjustmentMessage?.kind === "error"
-                          ? "is-error"
-                          : undefined
-                      }
-                      placeholder="20pp, -15 gp, ..."
-                      value={walletAdjustment}
-                      aria-describedby="inventory-wallet-adjustment-message"
-                      aria-invalid={
-                        walletAdjustmentMessage?.kind === "error" || undefined
-                      }
-                      onChange={(event) => {
-                        setWalletAdjustment(event.currentTarget.value);
-                        setWalletAdjustmentMessage(undefined);
-                      }}
-                    />
-                  </form>
-                  <button
-                    type="button"
-                    className="inventory-wallet-edit"
-                    aria-expanded={walletOpen}
-                    aria-controls="inventory-wallet-editor"
-                    onClick={() => setWalletOpen((current) => !current)}
-                  >
-                    <Icon name="edit" />
-                    {walletOpen ? "Done" : "Edit"}
-                  </button>
-                </div>
-                <p
-                  key={`wallet-adjustment-${walletAdjustmentMessage?.generation ?? 0}`}
-                  className="visually-hidden"
-                  id="inventory-wallet-adjustment-message"
-                  role={
-                    walletAdjustmentMessage?.kind === "error"
-                      ? "alert"
-                      : "status"
-                  }
+              <div className="equipment-summary-row">
+                <button
+                  className="equipment-view-toggle"
+                  type="button"
+                  onClick={() => onLoadoutViewChange(!loadoutView)}
                 >
-                  {walletAdjustmentMessage?.text ?? ""}
-                </p>
-                {walletOpen ? (
-                  <div
-                    className="inventory-wallet-editor"
-                    id="inventory-wallet-editor"
-                  >
-                    <table>
-                      <thead>
-                        <tr>
-                          <th scope="col">Location</th>
-                          {DENOMINATIONS.map(({ id, label, abbreviation }) => (
-                            <th scope="col" key={id}>
-                              <abbr title={label}>{abbreviation}</abbr>
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(["carried", "stored"] as const).map((location) => (
-                          <tr
+                  <Icon name={loadoutView ? "handbag" : "sword"} />
+                  {loadoutView ? "Inventory" : "Loadout"}
+                </button>
+                <section className="inventory-wallet" aria-label="Funds">
+                  <div className="inventory-wallet-summary">
+                    <Icon name="circle-dollar-sign" />
+                    <div className="inventory-wallet-balance">
+                      <span className="inventory-wallet-label">Funds</span>
+                      <dl className="inventory-wallet-denominations">
+                        {CURRENCY_DENOMINATIONS.map((denomination) => (
+                          <div
+                            key={`${denomination}-${walletPulse.denominations.includes(denomination) ? walletPulse.generation : 0}`}
                             className={
-                              location === "stored"
-                                ? "inventory-wallet-stored"
+                              walletPulse.denominations.includes(denomination)
+                                ? "is-adjusted"
                                 : undefined
                             }
-                            key={location}
                           >
-                            <th scope="row">
-                              {location === "carried" ? "Carried" : "Stored"}
-                            </th>
-                            {DENOMINATIONS.map(({ id, label }) => (
+                            <dt>{denomination.toLocaleUpperCase()}</dt>
+                            <dd>{totalWallet[denomination]}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                    <form
+                      className="inventory-wallet-adjust"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        let deltaCopper: number;
+                        try {
+                          deltaCopper =
+                            parseCurrencyAdjustment(walletAdjustment);
+                        } catch (reason: unknown) {
+                          showWalletAdjustmentError(
+                            reason instanceof Error
+                              ? reason.message
+                              : "Enter a valid currency adjustment",
+                          );
+                          return;
+                        }
+                        const error = onAdjustMoney(deltaCopper);
+                        if (error !== undefined) {
+                          showWalletAdjustmentError(error);
+                          return;
+                        }
+                        const adjustedCopper =
+                          carriedCopper + storedCopper + deltaCopper;
+                        const adjustedTotal =
+                          Number.isSafeInteger(adjustedCopper) &&
+                          adjustedCopper >= 0
+                            ? currencyFromCopper(adjustedCopper)
+                            : totalWallet;
+                        setWalletPulse((current) => ({
+                          generation: current.generation + 1,
+                          denominations: CURRENCY_DENOMINATIONS.filter(
+                            (denomination) =>
+                              adjustedTotal[denomination] !==
+                              totalWallet[denomination],
+                          ),
+                        }));
+                        setWalletAdjustment("");
+                        setWalletAdjustmentMessage((current) => ({
+                          kind: "success",
+                          text: "Funds adjusted.",
+                          generation: (current?.generation ?? 0) + 1,
+                        }));
+                      }}
+                    >
+                      <label
+                        className="visually-hidden"
+                        htmlFor="inventory-wallet-adjustment"
+                      >
+                        Quick adjust funds
+                      </label>
+                      <input
+                        id="inventory-wallet-adjustment"
+                        ref={walletAdjustmentInput}
+                        type="text"
+                        inputMode="text"
+                        className={
+                          walletAdjustmentMessage?.kind === "error"
+                            ? "is-error"
+                            : undefined
+                        }
+                        placeholder="20pp, -15 gp, ..."
+                        value={walletAdjustment}
+                        aria-describedby="inventory-wallet-adjustment-message"
+                        aria-invalid={
+                          walletAdjustmentMessage?.kind === "error" || undefined
+                        }
+                        onChange={(event) => {
+                          setWalletAdjustment(event.currentTarget.value);
+                          setWalletAdjustmentMessage(undefined);
+                        }}
+                      />
+                    </form>
+                    <button
+                      type="button"
+                      className="inventory-wallet-edit"
+                      aria-expanded={walletOpen}
+                      aria-controls="inventory-wallet-editor"
+                      onClick={() => setWalletOpen((current) => !current)}
+                    >
+                      <Icon name="edit" />
+                      {walletOpen ? "Done" : "Edit"}
+                    </button>
+                  </div>
+                  <p
+                    key={`wallet-adjustment-${walletAdjustmentMessage?.generation ?? 0}`}
+                    className="visually-hidden"
+                    id="inventory-wallet-adjustment-message"
+                    role={
+                      walletAdjustmentMessage?.kind === "error"
+                        ? "alert"
+                        : "status"
+                    }
+                  >
+                    {walletAdjustmentMessage?.text ?? ""}
+                  </p>
+                  {walletOpen ? (
+                    <div
+                      className="inventory-wallet-editor"
+                      id="inventory-wallet-editor"
+                    >
+                      <table>
+                        <thead>
+                          <tr>
+                            <th scope="col">Location</th>
+                            {DENOMINATIONS.map(
+                              ({ id, label, abbreviation }) => (
+                                <th scope="col" key={id}>
+                                  <abbr title={label}>{abbreviation}</abbr>
+                                </th>
+                              ),
+                            )}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(["carried", "stored"] as const).map((location) => (
+                            <tr
+                              className={
+                                location === "stored"
+                                  ? "inventory-wallet-stored"
+                                  : undefined
+                              }
+                              key={location}
+                            >
+                              <th scope="row">
+                                {location === "carried" ? "Carried" : "Stored"}
+                              </th>
+                              {DENOMINATIONS.map(({ id, label }) => (
+                                <td key={id}>
+                                  <label
+                                    className="visually-hidden"
+                                    htmlFor={`wallet-${location}-${id}`}
+                                  >
+                                    {location === "carried"
+                                      ? "Carried"
+                                      : "Stored"}{" "}
+                                    {label.toLocaleLowerCase()}
+                                  </label>
+                                  <input
+                                    id={`wallet-${location}-${id}`}
+                                    type="number"
+                                    min={0}
+                                    step={1}
+                                    value={wallet[location][id]}
+                                    onChange={(event) =>
+                                      onSetMoney(
+                                        location,
+                                        id,
+                                        Number(event.currentTarget.value),
+                                      )
+                                    }
+                                  />
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                          <tr className="inventory-wallet-total">
+                            <th scope="row">Total</th>
+                            {DENOMINATIONS.map(({ id }) => (
                               <td key={id}>
-                                <label
-                                  className="visually-hidden"
-                                  htmlFor={`wallet-${location}-${id}`}
-                                >
-                                  {location === "carried"
-                                    ? "Carried"
-                                    : "Stored"}{" "}
-                                  {label.toLocaleLowerCase()}
-                                </label>
-                                <input
-                                  id={`wallet-${location}-${id}`}
-                                  type="number"
-                                  min={0}
-                                  step={1}
-                                  value={wallet[location][id]}
-                                  onChange={(event) =>
-                                    onSetMoney(
-                                      location,
-                                      id,
-                                      Number(event.currentTarget.value),
-                                    )
-                                  }
-                                />
+                                {totalWallet[DENOMINATION_KEYS[id]]}
                               </td>
                             ))}
                           </tr>
-                        ))}
-                        <tr className="inventory-wallet-total">
-                          <th scope="row">Total</th>
-                          {DENOMINATIONS.map(({ id }) => (
-                            <td key={id}>
-                              {totalWallet[DENOMINATION_KEYS[id]]}
-                            </td>
-                          ))}
-                        </tr>
-                      </tbody>
-                    </table>
-                    <p className="field-help">
-                      Purchases use carried funds first, then stored funds.
-                      Sales add their proceeds to carried funds.
-                    </p>
-                  </div>
-                ) : null}
-              </section>
-              {inventory.length === 0 ? (
-                <p>No carried inventory.</p>
-              ) : (
-                <div className="equipment-table-scroll inventory-table-scroll">
-                  <table className="inventory-table">
-                    <thead>
-                      <tr>
-                        <th>Item</th>
-                        <th>Quantity</th>
-                        <th>
-                          <span className="visually-hidden">Actions</span>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {inventory.map((entry, inventoryIndex) => {
-                        const definitionIds = inventoryDefinitionIds(entry);
-                        const entity = definitionIds.at(-1);
-                        const definition =
-                          entity === undefined ? undefined : byId.get(entity);
-                        const physicalBase =
-                          definitionIds.length > 1
-                            ? byId.get(definitionIds[0]!)
-                            : undefined;
-                        const price =
-                          definition === undefined
-                            ? undefined
-                            : entityCurrencyCopper(definition);
-                        const displayName = inventoryDisplayName(entry, byId);
-                        const saleTriggerId = `inventory-sale-trigger-${inventoryIndex}`;
-                        const saleOptionsId = `inventory-sale-options-${inventoryIndex}`;
-                        const equippedStatus = inventoryEquippedStatus(entry);
-                        const loadoutToggle = inventoryLoadoutToggle(
-                          inventory,
-                          byId,
-                          entry.id,
-                          visibleLoadoutSlots,
-                        );
-                        const loadoutToggleDescription =
-                          loadoutToggle.kind === "unequip"
-                            ? "Double-click to unequip."
-                            : loadoutToggle.kind === "equip"
-                              ? loadoutToggle.displaces
-                                ? "Double-click to equip; the occupied compatible slot will be replaced after confirmation."
-                                : "Double-click to equip."
-                              : loadoutToggle.kind === "ambiguous"
-                                ? "Equipped slots are unknown; use Loadout to revise this holding."
-                                : "This holding has no compatible visible Loadout slot.";
-                        const equippedBadge =
-                          equippedStatus === undefined
-                            ? undefined
-                            : entry.equippedSlots === undefined
-                              ? entry.quantity > 1
-                                ? `${entry.equippedQuantity}/${entry.quantity}?`
-                                : "?"
-                              : entry.quantity > 1
-                                ? `${entry.equippedQuantity}/${entry.quantity}`
-                                : undefined;
-                        const reductionUnequips =
-                          entry.quantity <= entry.equippedQuantity;
-                        const confirmReduction = (action: string) =>
-                          !reductionUnequips ||
-                          window.confirm(
-                            `${displayName} has no unequipped copies. ${action} will also unequip one copy. Continue?`,
-                          );
-                        return (
-                          <tr
-                            key={entry.id}
-                            title={loadoutToggleDescription}
-                            onClick={() => inspectInventory(entry)}
-                            onDoubleClick={() => {
-                              if (
-                                loadoutToggle.kind === "ambiguous" ||
-                                loadoutToggle.kind === "unavailable"
-                              )
-                                return;
-                              if (
-                                loadoutToggle.kind === "equip" &&
-                                loadoutToggle.displaces &&
-                                !window.confirm(
-                                  `Equip ${displayName}? This will replace an item in the first compatible occupied Loadout slot.`,
-                                )
-                              )
-                                return;
-                              if (loadoutToggle.kind === "unequip") {
-                                onEquipSlot(
-                                  undefined,
-                                  loadoutToggle.slots,
-                                  entry.id,
-                                  loadoutToggle.slots,
-                                );
-                                return;
-                              }
-                              onEquipSlot(entry.id, loadoutToggle.slots);
-                            }}
-                          >
-                            <th scope="row">
-                              <button
-                                type="button"
-                                className="table-inspect-button inventory-item-button"
-                                aria-label={`${displayName}. ${equippedStatus ?? "Not equipped"}. ${loadoutToggleDescription}`}
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  inspectInventory(entry);
-                                }}
-                              >
-                                <span
-                                  className={`inventory-item-icon${equippedStatus === undefined ? "" : " is-equipped"}`}
-                                  title={equippedStatus}
-                                >
-                                  <Icon
-                                    name={
-                                      definition === undefined
-                                        ? "item"
-                                        : canonicalItemIcon(
-                                            definition,
-                                            physicalBase,
+                        </tbody>
+                      </table>
+                      <p className="field-help">
+                        Purchases use carried funds first, then stored funds.
+                        Sales add their proceeds to carried funds.
+                      </p>
+                    </div>
+                  ) : null}
+                </section>
+              </div>
+              <div className="equipment-mode-content">
+                {loadoutView ? (
+                  <LoadoutGrid
+                    inventory={inventory}
+                    byId={byId}
+                    activeDefinitionIds={activeDefinitionIds}
+                    onInspect={inspectInventory}
+                    onEquipSlot={onEquipSlot}
+                  />
+                ) : (
+                  <>
+                    {inventoryGroups.length === 0 ? (
+                      <p>No carried inventory.</p>
+                    ) : (
+                      <div className="equipment-table-scroll inventory-table-scroll">
+                        <table className="inventory-table">
+                          <thead>
+                            <tr>
+                              <th>Item</th>
+                              <th>Quantity</th>
+                              <th>
+                                <span className="visually-hidden">Actions</span>
+                              </th>
+                            </tr>
+                          </thead>
+                          {inventoryGroups.map(({ category, entries }) => {
+                            const expanded =
+                              inventoryCategoryExpansion.get(category.id) ??
+                              category.initiallyExpanded;
+                            const sectionId = `inventory-category-${category.id}`;
+                            return (
+                              <Fragment key={category.id}>
+                                <tbody>
+                                  <tr className="inventory-category-row">
+                                    <th colSpan={3} scope="rowgroup">
+                                      <button
+                                        type="button"
+                                        aria-expanded={expanded}
+                                        aria-controls={sectionId}
+                                        onClick={() =>
+                                          setInventoryCategoryExpansion(
+                                            (current) => {
+                                              const next = new Map(current);
+                                              next.set(category.id, !expanded);
+                                              return next;
+                                            },
                                           )
-                                    }
-                                  />
-                                  {equippedStatus === undefined ? null : (
-                                    <span
-                                      className="inventory-equipped-badge"
-                                      aria-hidden="true"
-                                    >
-                                      {equippedBadge === undefined ? (
-                                        <Icon name="check" />
-                                      ) : (
-                                        equippedBadge
-                                      )}
-                                    </span>
-                                  )}
-                                </span>
-                                <span className="inventory-item-copy">
-                                  <span className="inventory-item-name">
-                                    {displayName}
-                                  </span>
-                                  {equippedStatus === undefined ? null : (
-                                    <span className="visually-hidden">
-                                      {equippedStatus}
-                                    </span>
-                                  )}
-                                </span>
-                              </button>
-                            </th>
-                            <td>
-                              <div
-                                className="inventory-quantity"
-                                onClick={(event) => event.stopPropagation()}
-                                onDoubleClick={(event) =>
-                                  event.stopPropagation()
-                                }
-                              >
-                                <button
-                                  type="button"
-                                  aria-label={`Decrease quantity of ${displayName}`}
-                                  disabled={entry.quantity <= 1}
-                                  onClick={() => {
-                                    if (
-                                      !confirmReduction("Reducing the quantity")
-                                    )
-                                      return;
-                                    onPutInventory(
-                                      inventoryEntryWithQuantity(
-                                        entry,
-                                        entry.quantity - 1,
-                                      ),
-                                    );
-                                  }}
-                                >
-                                  −
-                                </button>
-                                <output
-                                  aria-label={`Quantity of ${displayName}`}
-                                >
-                                  {entry.quantity}
-                                </output>
-                                <button
-                                  type="button"
-                                  aria-label={`Increase quantity of ${displayName}`}
-                                  onClick={() =>
-                                    onPutInventory(
-                                      inventoryEntryWithQuantity(
-                                        entry,
-                                        entry.quantity + 1,
-                                      ),
-                                    )
-                                  }
-                                >
-                                  +
-                                </button>
-                              </div>
-                            </td>
-                            <td className="inventory-actions-cell">
-                              <div
-                                className="inventory-row-actions"
-                                onClick={(event) => event.stopPropagation()}
-                                onDoubleClick={(event) =>
-                                  event.stopPropagation()
-                                }
-                              >
-                                {price === undefined ? (
-                                  <button
-                                    type="button"
-                                    className="inventory-icon-action"
-                                    aria-label={`Sell ${displayName}`}
-                                    title="This item has no price and cannot be sold"
-                                    disabled
-                                  >
-                                    <Icon name="circle-dollar-sign" />
-                                  </button>
-                                ) : (
-                                  <div
-                                    className="inventory-sale-menu"
-                                    data-inventory-sale-menu={entry.id}
-                                  >
-                                    <button
-                                      type="button"
-                                      id={saleTriggerId}
-                                      className="inventory-icon-action"
-                                      aria-label={`Sell one ${displayName}`}
-                                      aria-expanded={openSaleId === entry.id}
-                                      aria-controls={saleOptionsId}
-                                      title="Sell one"
-                                      onClick={() =>
-                                        setOpenSaleId((current) =>
-                                          current === entry.id
-                                            ? undefined
-                                            : entry.id,
-                                        )
-                                      }
-                                    >
-                                      <Icon name="circle-dollar-sign" />
-                                    </button>
-                                    {openSaleId === entry.id ? (
-                                      <div
-                                        className="inventory-sale-options"
-                                        id={saleOptionsId}
-                                        aria-label={`Sell one ${displayName} for`}
+                                        }
                                       >
-                                        {comparableSaleProceeds(price).map(
-                                          ({ percentage, label }) => (
-                                            <button
-                                              key={percentage}
-                                              type="button"
-                                              onClick={() => {
-                                                if (
-                                                  !confirmReduction(
-                                                    "Selling it",
-                                                  )
+                                        <Icon name="chevron" />
+                                        <span className="inventory-category-label">
+                                          <span>{category.label}</span>
+                                          <small
+                                            aria-label={`${entries.length} holding${entries.length === 1 ? "" : "s"}`}
+                                          >
+                                            {entries.length}
+                                          </small>
+                                        </span>
+                                      </button>
+                                    </th>
+                                  </tr>
+                                </tbody>
+                                <tbody id={sectionId} hidden={!expanded}>
+                                  {expanded
+                                    ? entries.map((entry) => {
+                                        const inventoryIndex =
+                                          inventory.indexOf(entry);
+                                        const definitionIds =
+                                          inventoryDefinitionIds(entry);
+                                        const entity = definitionIds.at(-1);
+                                        const definition =
+                                          entity === undefined
+                                            ? undefined
+                                            : byId.get(entity);
+                                        const physicalBase =
+                                          definitionIds.length > 1
+                                            ? byId.get(definitionIds[0]!)
+                                            : undefined;
+                                        const price =
+                                          definition === undefined
+                                            ? undefined
+                                            : entityCurrencyCopper(definition);
+                                        const displayName =
+                                          inventoryDisplayName(entry, byId);
+                                        const saleTriggerId = `inventory-sale-trigger-${inventoryIndex}`;
+                                        const saleOptionsId = `inventory-sale-options-${inventoryIndex}`;
+                                        const equippedStatus =
+                                          inventoryEquippedStatus(entry);
+                                        const loadoutToggle =
+                                          inventoryLoadoutToggle(
+                                            inventory,
+                                            byId,
+                                            entry.id,
+                                            visibleLoadoutSlots,
+                                          );
+                                        const loadoutToggleDescription =
+                                          loadoutToggle.kind === "unequip"
+                                            ? "Double-click to unequip."
+                                            : loadoutToggle.kind === "equip"
+                                              ? loadoutToggle.displaces
+                                                ? "Double-click to equip; the occupied compatible slot will be replaced after confirmation."
+                                                : "Double-click to equip."
+                                              : loadoutToggle.kind ===
+                                                  "ambiguous"
+                                                ? "Equipped slots are unknown; use Loadout to revise this holding."
+                                                : "This holding has no compatible visible Loadout slot.";
+                                        const equippedBadge =
+                                          equippedStatus === undefined
+                                            ? undefined
+                                            : entry.equippedSlots === undefined
+                                              ? entry.quantity > 1
+                                                ? `${entry.equippedQuantity}/${entry.quantity}?`
+                                                : "?"
+                                              : entry.quantity > 1
+                                                ? `${entry.equippedQuantity}/${entry.quantity}`
+                                                : undefined;
+                                        const reductionUnequips =
+                                          entry.quantity <=
+                                          entry.equippedQuantity;
+                                        const confirmReduction = (
+                                          action: string,
+                                        ) =>
+                                          !reductionUnequips ||
+                                          window.confirm(
+                                            `${displayName} has no unequipped copies. ${action} will also unequip one copy. Continue?`,
+                                          );
+                                        return (
+                                          <tr
+                                            key={entry.id}
+                                            title={loadoutToggleDescription}
+                                            onClick={() =>
+                                              inspectInventory(entry)
+                                            }
+                                            onDoubleClick={() => {
+                                              if (
+                                                loadoutToggle.kind ===
+                                                  "ambiguous" ||
+                                                loadoutToggle.kind ===
+                                                  "unavailable"
+                                              )
+                                                return;
+                                              if (
+                                                loadoutToggle.kind ===
+                                                  "equip" &&
+                                                loadoutToggle.displaces &&
+                                                !window.confirm(
+                                                  `Equip ${displayName}? This will replace an item in the first compatible occupied Loadout slot.`,
                                                 )
-                                                  return;
-                                                onSell(
-                                                  entry,
-                                                  price,
-                                                  percentage,
+                                              )
+                                                return;
+                                              if (
+                                                loadoutToggle.kind === "unequip"
+                                              ) {
+                                                onEquipSlot(
+                                                  undefined,
+                                                  loadoutToggle.slots,
+                                                  entry.id,
+                                                  loadoutToggle.slots,
                                                 );
-                                                setOpenSaleId(undefined);
-                                                requestAnimationFrame(() =>
-                                                  document
-                                                    .getElementById(
-                                                      saleTriggerId,
+                                                return;
+                                              }
+                                              onEquipSlot(
+                                                entry.id,
+                                                loadoutToggle.slots,
+                                              );
+                                            }}
+                                          >
+                                            <th scope="row">
+                                              <button
+                                                type="button"
+                                                className="table-inspect-button inventory-item-button"
+                                                aria-label={`${displayName}. ${equippedStatus ?? "Not equipped"}. ${loadoutToggleDescription}`}
+                                                onClick={(event) => {
+                                                  event.stopPropagation();
+                                                  inspectInventory(entry);
+                                                }}
+                                              >
+                                                <span
+                                                  className={`inventory-item-icon${equippedStatus === undefined ? "" : " is-equipped"}`}
+                                                  title={equippedStatus}
+                                                >
+                                                  <Icon
+                                                    name={
+                                                      definition === undefined
+                                                        ? "item"
+                                                        : canonicalItemIcon(
+                                                            definition,
+                                                            physicalBase,
+                                                          )
+                                                    }
+                                                  />
+                                                  {equippedStatus ===
+                                                  undefined ? null : (
+                                                    <span
+                                                      className="inventory-equipped-badge"
+                                                      aria-hidden="true"
+                                                    >
+                                                      {equippedBadge ===
+                                                      undefined ? (
+                                                        <Icon name="check" />
+                                                      ) : (
+                                                        equippedBadge
+                                                      )}
+                                                    </span>
+                                                  )}
+                                                </span>
+                                                <span className="inventory-item-copy">
+                                                  <span className="inventory-item-name">
+                                                    {displayName}
+                                                  </span>
+                                                  {equippedStatus ===
+                                                  undefined ? null : (
+                                                    <span className="visually-hidden">
+                                                      {equippedStatus}
+                                                    </span>
+                                                  )}
+                                                </span>
+                                              </button>
+                                            </th>
+                                            <td>
+                                              <div
+                                                className="inventory-quantity"
+                                                onClick={(event) =>
+                                                  event.stopPropagation()
+                                                }
+                                                onDoubleClick={(event) =>
+                                                  event.stopPropagation()
+                                                }
+                                              >
+                                                <button
+                                                  type="button"
+                                                  aria-label={`Decrease quantity of ${displayName}`}
+                                                  disabled={entry.quantity <= 1}
+                                                  onClick={() => {
+                                                    if (
+                                                      !confirmReduction(
+                                                        "Reducing the quantity",
+                                                      )
                                                     )
-                                                    ?.focus(),
-                                                );
-                                              }}
-                                            >
-                                              <span>{percentage}%</span>
-                                              <strong>{label}</strong>
-                                            </button>
-                                          ),
-                                        )}
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                )}
-                                <button
-                                  type="button"
-                                  className="inventory-icon-action inventory-remove-action"
-                                  aria-label={`Remove ${displayName}`}
-                                  title="Remove without proceeds"
-                                  onClick={() => {
-                                    const equippedWarning =
-                                      entry.equippedQuantity > 0
-                                        ? " This will also unequip it."
-                                        : "";
-                                    if (
-                                      !window.confirm(
-                                        `Remove all ${entry.quantity} copies of ${displayName} without receiving proceeds?${equippedWarning}`,
-                                      )
-                                    )
-                                      return;
-                                    onPutInventory(
-                                      inventoryEntryWithQuantity(entry, 0),
-                                    );
-                                  }}
-                                >
-                                  <Icon name="trash" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                                                      return;
+                                                    onPutInventory(
+                                                      inventoryEntryWithQuantity(
+                                                        entry,
+                                                        entry.quantity - 1,
+                                                      ),
+                                                    );
+                                                  }}
+                                                >
+                                                  −
+                                                </button>
+                                                <output
+                                                  aria-label={`Quantity of ${displayName}`}
+                                                >
+                                                  {entry.quantity}
+                                                </output>
+                                                <button
+                                                  type="button"
+                                                  aria-label={`Increase quantity of ${displayName}`}
+                                                  onClick={() =>
+                                                    onPutInventory(
+                                                      inventoryEntryWithQuantity(
+                                                        entry,
+                                                        entry.quantity + 1,
+                                                      ),
+                                                    )
+                                                  }
+                                                >
+                                                  +
+                                                </button>
+                                              </div>
+                                            </td>
+                                            <td className="inventory-actions-cell">
+                                              <div
+                                                className="inventory-row-actions"
+                                                onClick={(event) =>
+                                                  event.stopPropagation()
+                                                }
+                                                onDoubleClick={(event) =>
+                                                  event.stopPropagation()
+                                                }
+                                              >
+                                                {price === undefined ? (
+                                                  <button
+                                                    type="button"
+                                                    className="inventory-icon-action"
+                                                    aria-label={`Sell ${displayName}`}
+                                                    title="This item has no price and cannot be sold"
+                                                    disabled
+                                                  >
+                                                    <Icon name="circle-dollar-sign" />
+                                                  </button>
+                                                ) : (
+                                                  <div
+                                                    className="inventory-sale-menu"
+                                                    data-inventory-sale-menu={
+                                                      entry.id
+                                                    }
+                                                  >
+                                                    <button
+                                                      type="button"
+                                                      id={saleTriggerId}
+                                                      className="inventory-icon-action"
+                                                      aria-label={`Sell one ${displayName}`}
+                                                      aria-expanded={
+                                                        openSaleId === entry.id
+                                                      }
+                                                      aria-controls={
+                                                        saleOptionsId
+                                                      }
+                                                      title="Sell one"
+                                                      onClick={() =>
+                                                        setOpenSaleId(
+                                                          (current) =>
+                                                            current === entry.id
+                                                              ? undefined
+                                                              : entry.id,
+                                                        )
+                                                      }
+                                                    >
+                                                      <Icon name="circle-dollar-sign" />
+                                                    </button>
+                                                    {openSaleId === entry.id ? (
+                                                      <div
+                                                        className="inventory-sale-options"
+                                                        id={saleOptionsId}
+                                                        aria-label={`Sell one ${displayName} for`}
+                                                      >
+                                                        {comparableSaleProceeds(
+                                                          price,
+                                                        ).map(
+                                                          ({
+                                                            percentage,
+                                                            label,
+                                                          }) => (
+                                                            <button
+                                                              key={percentage}
+                                                              type="button"
+                                                              onClick={() => {
+                                                                if (
+                                                                  !confirmReduction(
+                                                                    "Selling it",
+                                                                  )
+                                                                )
+                                                                  return;
+                                                                onSell(
+                                                                  entry,
+                                                                  price,
+                                                                  percentage,
+                                                                );
+                                                                setOpenSaleId(
+                                                                  undefined,
+                                                                );
+                                                                requestAnimationFrame(
+                                                                  () =>
+                                                                    document
+                                                                      .getElementById(
+                                                                        saleTriggerId,
+                                                                      )
+                                                                      ?.focus(),
+                                                                );
+                                                              }}
+                                                            >
+                                                              <span>
+                                                                {percentage}%
+                                                              </span>
+                                                              <strong>
+                                                                {label}
+                                                              </strong>
+                                                            </button>
+                                                          ),
+                                                        )}
+                                                      </div>
+                                                    ) : null}
+                                                  </div>
+                                                )}
+                                                <button
+                                                  type="button"
+                                                  className="inventory-icon-action inventory-remove-action"
+                                                  aria-label={`Remove ${displayName}`}
+                                                  title="Remove without proceeds"
+                                                  onClick={() => {
+                                                    const equippedWarning =
+                                                      entry.equippedQuantity > 0
+                                                        ? " This will also unequip it."
+                                                        : "";
+                                                    if (
+                                                      !window.confirm(
+                                                        `Remove all ${entry.quantity} copies of ${displayName} without receiving proceeds?${equippedWarning}`,
+                                                      )
+                                                    )
+                                                      return;
+                                                    onPutInventory(
+                                                      inventoryEntryWithQuantity(
+                                                        entry,
+                                                        0,
+                                                      ),
+                                                    );
+                                                  }}
+                                                >
+                                                  <Icon name="trash" />
+                                                </button>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })
+                                    : null}
+                                </tbody>
+                              </Fragment>
+                            );
+                          })}
+                        </table>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </>
           ) : (
             <>
@@ -1447,7 +1589,7 @@ export function EquipmentWorkspace({
                 <table>
                   <thead>
                     <tr>
-                      <th>{tab === "shop" ? "Item" : "Ritual or practice"}</th>
+                      <th>{mode === "shop" ? "Item" : "Ritual or practice"}</th>
                       <th>Type</th>
                       <th>Level</th>
                       <th>Price</th>
@@ -1455,7 +1597,7 @@ export function EquipmentWorkspace({
                     </tr>
                   </thead>
                   <tbody>
-                    {(tab === "shop"
+                    {(mode === "shop"
                       ? groupedShop
                       : practices.map((entity) => ({
                           key: entity.id,

@@ -12,7 +12,10 @@ import {
   comparableSaleProceeds,
   entityCurrencyCopper,
   groupMagicItemFamilies,
+  groupInventoryByCategory,
   IMPLEMENT_LOADOUT_PROFICIENCY_IDS,
+  INVENTORY_CATEGORIES,
+  inventoryCategory,
   inventoryDisplayName,
   inventoryLoadoutToggle,
   inventorySlotCandidates,
@@ -51,6 +54,255 @@ function entity(
     provenance: { sourceKey: "equipment-ui", sourceOrdinal: 0 },
   };
 }
+
+function holding(...entities: readonly ContentEntity[]): BuildInventoryEntry {
+  return {
+    id: entities.map(({ id }) => id).join(":"),
+    acquiredLevel: 1,
+    quantity: 1,
+    equippedQuantity: 0,
+    elements: entities.map(({ id, name, type }) => ({
+      definitionId: id,
+      name,
+      type,
+    })),
+    overrides: {},
+    legality: "rules-legal",
+  };
+}
+
+function entityIndex(
+  ...entities: readonly ContentEntity[]
+): ReadonlyMap<string, ContentEntity> {
+  return new Map(
+    entities.map((item) => [item.id.toLocaleLowerCase(), item] as const),
+  );
+}
+
+describe("Inventory role taxonomy", () => {
+  it("defines the approved display order and initial expansion policy", () => {
+    expect(
+      INVENTORY_CATEGORIES.map(({ label, initiallyExpanded }) => [
+        label,
+        initiallyExpanded,
+      ]),
+    ).toEqual([
+      ["Armor", true],
+      ["Wearables", true],
+      ["Weapons", true],
+      ["Shields", true],
+      ["Implements", true],
+      ["Consumables", true],
+      ["Ammunition", true],
+      ["Utility", true],
+      ["Boons & Rewards", true],
+      ["Miscellaneous", false],
+    ]);
+  });
+
+  it("classifies every approved role from authored metadata", () => {
+    const fixtures: readonly [ContentEntity, string][] = [
+      [
+        entity("ARMOR", "Fixture", "Magic Item", {
+          "Magic Item Type": "Armor",
+        }),
+        "armor",
+      ],
+      [
+        entity("WORN", "Fixture", "Magic Item", { "Item Slot": "Ring" }),
+        "wearables",
+      ],
+      [
+        entity("WEAPON", "Fixture", "Magic Item", {
+          "Magic Item Type": "Weapon",
+        }),
+        "weapons",
+      ],
+      [
+        entity("SHIELD", "Fixture", "Armor", { "Armor Type": "Shield" }),
+        "shields",
+      ],
+      [
+        entity("IMPLEMENT", "Fixture", "Magic Item", {
+          "Magic Item Type": "Orb",
+        }),
+        "implements",
+      ],
+      [
+        entity("POTION", "Fixture", "Magic Item", {
+          "Magic Item Type": "Potion",
+        }),
+        "consumables",
+      ],
+      [
+        entity("AMMO", "Fixture", "Gear", { Category: "Ammunition" }),
+        "ammunition",
+      ],
+      [
+        entity("UTILITY", "Fixture", "Magic Item", {
+          Property: "Structured effect",
+        }),
+        "utility",
+      ],
+      [
+        entity("BOON", "Fixture", "Magic Item", {
+          "Magic Item Type": "Divine Boon",
+        }),
+        "boons-rewards",
+      ],
+      [
+        entity("GEAR", "Fixture", "Gear", { Category: "Gear" }),
+        "miscellaneous",
+      ],
+    ];
+    const index = entityIndex(...fixtures.map(([definition]) => definition));
+    for (const [definition, expected] of fixtures) {
+      expect(inventoryCategory(holding(definition), index)).toBe(expected);
+    }
+  });
+
+  it("uses all repeated specifics while preserving precedence", () => {
+    const repeated: ContentEntity = {
+      ...entity("REPEATED", "Fixture", "Magic Item"),
+      specifics: [
+        {
+          name: "Magic Item Type",
+          value: "Wondrous Item",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+        {
+          name: "Magic Item Type",
+          value: "Potion",
+          extraAttributes: [],
+          ordinal: 1,
+        },
+      ],
+    };
+    const ammunition = entity("AMMO", "Fixture", "Magic Item", {
+      "Magic Item Type": "Ammunition",
+      Property: "A passive bonus",
+    });
+    const scroll = entity("SCROLL", "Fixture", "Ritual Scroll", {
+      "Magic Item Type": "Wondrous Item",
+    });
+    const index = entityIndex(repeated, ammunition, scroll);
+    expect(inventoryCategory(holding(repeated), index)).toBe("consumables");
+    expect(inventoryCategory(holding(ammunition), index)).toBe("ammunition");
+    expect(inventoryCategory(holding(scroll), index)).toBe("consumables");
+  });
+
+  it("lets composed physical shields and weapons win over enchantments", () => {
+    const shield = entity("SHIELD", "Fixture", "Armor", {
+      "Armor Type": "Shield",
+    });
+    const armorEnchantment = entity("ARMS", "Fixture", "Magic Item", {
+      "Magic Item Type": "Arms Slot Item",
+    });
+    const weapon = entity("WEAPON", "Fixture", "Weapon");
+    const implementEnchantment = entity("IMPLEMENT", "Fixture", "Magic Item", {
+      "Magic Item Type": "Rod",
+    });
+    const index = entityIndex(
+      shield,
+      armorEnchantment,
+      weapon,
+      implementEnchantment,
+    );
+    expect(inventoryCategory(holding(shield, armorEnchantment), index)).toBe(
+      "shields",
+    );
+    expect(
+      inventoryCategory(holding(weapon, implementEnchantment), index),
+    ).toBe("weapons");
+  });
+
+  it("recognizes structured Utility evidence but not ordinary reusable Gear", () => {
+    const passive = entity("PASSIVE", "Fixture", "Magic Item", {
+      Properties: "A passive mechanical effect",
+    });
+    const displayPower = entity("DISPLAY", "Fixture", "Magic Item", {
+      _DisplayPowers: "ID_POWER",
+    });
+    const rule = {
+      ...entity("RULE", "Fixture", "Magic Item"),
+      rules: [
+        { name: "Grant", attributes: [], text: "", children: [], ordinal: 0 },
+      ],
+    };
+    const referencedPower = entity("ID_POWER", "Fixture", "Power");
+    const referenced = entity("REFERENCE", "Fixture", "Magic Item", {
+      LinkedElement: "ID_POWER",
+    });
+    const ordinary = entity("ORDINARY", "Fixture", "Gear", {
+      Description: "Can be lit and carried.",
+    });
+    const index = entityIndex(
+      passive,
+      displayPower,
+      rule,
+      referencedPower,
+      referenced,
+      ordinary,
+    );
+    expect(inventoryCategory(holding(passive), index)).toBe("utility");
+    expect(inventoryCategory(holding(displayPower), index)).toBe("utility");
+    expect(inventoryCategory(holding(rule), index)).toBe("utility");
+    expect(inventoryCategory(holding(referenced), index)).toBe("utility");
+    expect(inventoryCategory(holding(ordinary), index)).toBe("miscellaneous");
+    expect(
+      inventoryCategory(
+        holding(referenced),
+        new Map([
+          [referencedPower.id, referencedPower],
+          [referenced.id.toLocaleLowerCase(), referenced],
+        ]),
+      ),
+    ).toBe("utility");
+  });
+
+  it("excludes learned Ritual records while keeping Ritual Scroll holdings", () => {
+    const ritual = entity("RITUAL", "Fixture", "Ritual");
+    const scroll = entity("SCROLL", "Fixture", "Ritual Scroll");
+    const index = entityIndex(ritual, scroll);
+    expect(inventoryCategory(holding(ritual), index)).toBeUndefined();
+    expect(
+      groupInventoryByCategory([holding(ritual), holding(scroll)], index).map(
+        ({ category, entries }) => [category.id, entries.length],
+      ),
+    ).toEqual([["consumables", 1]]);
+  });
+
+  it("keeps unresolved holdings recoverable and groups in stable domain order", () => {
+    const unresolved: BuildInventoryEntry = {
+      id: "unresolved",
+      acquiredLevel: 1,
+      quantity: 1,
+      equippedQuantity: 0,
+      elements: [{ name: "Custom holding", type: "Gear" }],
+      overrides: {},
+      legality: "rules-legal",
+    };
+    const armorOne = entity("A1", "Fixture", "Armor");
+    const weapon = entity("W", "Fixture", "Weapon");
+    const armorTwo = entity("A2", "Fixture", "Armor");
+    const index = entityIndex(armorOne, weapon, armorTwo);
+    const grouped = groupInventoryByCategory(
+      [holding(armorOne), holding(weapon), unresolved, holding(armorTwo)],
+      index,
+    );
+    expect(
+      grouped.map(({ category, entries }) => [
+        category.id,
+        entries.map(({ id }) => id),
+      ]),
+    ).toEqual([
+      ["armor", ["A1", "A2"]],
+      ["weapons", ["W"]],
+      ["miscellaneous", ["unresolved"]],
+    ]);
+  });
+});
 
 describe("equipment catalog presentation", () => {
   it("groups only complete compatible terminal enhancement families", () => {

@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { focusMainContent } from "./route-focus";
+import {
+  focusMainContent,
+  shouldFocusMainContentAfterRouteChange,
+} from "./route-focus";
 
 describe("route focus management", () => {
   it("moves programmatic focus to the main landmark", () => {
@@ -17,5 +20,49 @@ describe("route focus management", () => {
 
   it("does nothing while a route has no main landmark", () => {
     expect(focusMainContent({ getElementById: () => null })).toBe(false);
+  });
+});
+
+describe("route focus policy", () => {
+  it("preserves focus and scroll when swapping Equipment views", () => {
+    const inventory = {
+      page: "characters" as const,
+      characterId: "one",
+      mode: "edit" as const,
+      builder: { workspace: "equipment" as const },
+    };
+    const loadout = {
+      ...inventory,
+      builder: { workspace: "equipment" as const, loadout: true },
+    };
+
+    expect(shouldFocusMainContentAfterRouteChange(inventory, loadout)).toBe(
+      false,
+    );
+    expect(shouldFocusMainContentAfterRouteChange(loadout, inventory)).toBe(
+      false,
+    );
+  });
+
+  it("retains main-landmark focus for major navigation", () => {
+    const equipment = {
+      page: "characters" as const,
+      characterId: "one",
+      mode: "edit" as const,
+      builder: { workspace: "equipment" as const },
+    };
+
+    expect(
+      shouldFocusMainContentAfterRouteChange(equipment, {
+        ...equipment,
+        builder: { workspace: "shop" },
+      }),
+    ).toBe(true);
+    expect(
+      shouldFocusMainContentAfterRouteChange(equipment, {
+        ...equipment,
+        characterId: "two",
+      }),
+    ).toBe(true);
   });
 });

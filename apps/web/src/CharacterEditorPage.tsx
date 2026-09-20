@@ -5743,11 +5743,18 @@ export function CharacterEditorPage({
             onClick={() =>
               onNavigate(characterId, {
                 workspace: "equipment",
-                section: "loadout",
               })
             }
           >
             <Icon name="item" /> Equipment
+          </button>
+          <button
+            aria-selected={workspaceTab === "shop"}
+            role="tab"
+            type="button"
+            onClick={() => onNavigate(characterId, { workspace: "shop" })}
+          >
+            <Icon name="shopping-cart" /> Shop
           </button>
           <a
             aria-selected="false"
@@ -6295,7 +6302,7 @@ export function CharacterEditorPage({
         </div>
       </section>
 
-      <div hidden={workspaceTab !== "equipment"}>
+      <div hidden={workspaceTab !== "equipment" && workspaceTab !== "shop"}>
         {carriedWallet === undefined || storedWallet === undefined ? null : (
           <EquipmentWorkspace
             build={build}
@@ -6304,13 +6311,24 @@ export function CharacterEditorPage({
             {...(packId === undefined ? {} : { packId })}
             activeDefinitionIds={currentEvaluation?.activeDefinitionIds ?? []}
             hideFlavortext={hideFlavortext}
-            activeTab={
-              navigation.workspace === "equipment"
-                ? navigation.section
-                : "loadout"
+            workspace={workspaceTab === "shop" ? "shop" : "equipment"}
+            loadoutView={
+              navigation.workspace === "equipment" &&
+              navigation.loadout === true
             }
-            onTabChange={(section) =>
-              onNavigate(characterId, { workspace: "equipment", section })
+            shopCategory={
+              navigation.workspace === "shop"
+                ? (navigation.category ?? "items")
+                : "items"
+            }
+            onLoadoutViewChange={(loadout) =>
+              onNavigate(characterId, {
+                workspace: "equipment",
+                ...(loadout ? { loadout: true } : {}),
+              })
+            }
+            onShopCategoryChange={(category) =>
+              onNavigate(characterId, { workspace: "shop", category })
             }
             wallet={{
               carried: {

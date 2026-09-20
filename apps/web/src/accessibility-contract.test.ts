@@ -657,7 +657,9 @@ describe("release accessibility contract", () => {
   });
 
   it("keeps loadout slots compact and leaves shopping to the Shop tab", () => {
-    expect(equipmentWorkspace).toContain('aria-label="Equipment"');
+    expect(equipmentWorkspace).toContain(
+      'aria-label={workspace === "equipment" ? "Equipment" : "Shop"}',
+    );
     expect(equipmentWorkspace).not.toContain('id="equipment-heading"');
     expect(equipmentWorkspace).toContain('className="loadout-slot-label"');
     expect(equipmentWorkspace).not.toContain("loadoutShopSlotFilter");
@@ -670,13 +672,19 @@ describe("release accessibility contract", () => {
     expect(styles).toContain("max-inline-size: 18rem");
   });
 
-  it("keeps equipment tab icons decorative while retaining text labels", () => {
+  it("keeps Equipment and Shop icons decorative while retaining text labels", () => {
     expect(icon).toContain("handbag: Handbag");
     expect(icon).toContain('"shopping-cart": ShoppingCart');
     expect(icon).toContain('"scroll-text": ScrollText');
     expect(icon).toContain('aria-hidden="true"');
-    expect(equipmentWorkspace).toContain("<Icon name={item.icon} />");
-    expect(equipmentWorkspace).toContain("{item.label}");
+    expect(characterEditor).toContain('<Icon name="item" /> Equipment');
+    expect(characterEditor).toContain('<Icon name="shopping-cart" /> Shop');
+    expect(equipmentWorkspace).toContain(
+      '<Icon name={loadoutView ? "handbag" : "sword"} />',
+    );
+    expect(equipmentWorkspace).toContain(
+      '{loadoutView ? "Inventory" : "Loadout"}',
+    );
   });
 
   it("submits catalog text search without querying on each keystroke", () => {

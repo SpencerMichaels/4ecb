@@ -9,6 +9,11 @@ const workspace = readFileSync(
 );
 
 describe("loadout interaction and geometry", () => {
+  it("shares the route-owned Shop category vocabulary", () => {
+    expect(workspace).toContain('import type { ShopCategory } from "./routes"');
+    expect(workspace).not.toContain("export type ShopCategory");
+  });
+
   it("sizes the label track independently within each loadout stack", () => {
     const stackRule = styles.match(/\.loadout-stack\s*\{([^}]*)\}/)?.[1];
     const slotRule = styles.match(
@@ -29,40 +34,44 @@ describe("loadout interaction and geometry", () => {
     );
   });
 
-  it("pairs every equipment tab label with its requested icon", () => {
-    for (const [id, label, icon] of [
-      ["loadout", "Loadout", "sword"],
-      ["inventory", "Inventory", "handbag"],
-      ["shop", "Shop", "shopping-cart"],
-      ["practices", "Rituals & Practices", "scroll-text"],
-    ] as const)
-      expect(workspace).toMatch(
-        new RegExp(
-          `id: "${id}",[\\s\\S]*?label: "${label}",[\\s\\S]*?icon: "${icon}"`,
-          "u",
-        ),
-      );
-    expect(workspace).toContain("<Icon name={item.icon} />");
+  it("swaps Inventory and Loadout in the main pane", () => {
+    expect(workspace).toContain(
+      "onClick={() => onLoadoutViewChange(!loadoutView)}",
+    );
+    expect(workspace).toContain(
+      '<Icon name={loadoutView ? "handbag" : "sword"} />',
+    );
+    expect(workspace).toContain('{loadoutView ? "Inventory" : "Loadout"}');
+    expect(workspace).toMatch(
+      /<div className="equipment-summary-row">[\s\S]*?<button[\s\S]*?className="equipment-view-toggle"[\s\S]*?<section className="inventory-wallet"[\s\S]*?\{loadoutView \? \([\s\S]*?<LoadoutGrid/,
+    );
+    expect(styles).not.toContain(".equipment-toolbar");
+    expect(workspace).toMatch(
+      /<\/div>\s*<div className="shared-choice-detail">\s*<ItemDetail/,
+    );
+    expect(workspace).not.toContain("<dialog");
+    expect(workspace).not.toContain("loadoutDialog");
+    expect(workspace).not.toContain("showModal()");
   });
 
   it("inspects committed and currently focused loadout items", () => {
     const loadout = workspace.slice(
-      workspace.indexOf('{tab === "loadout"'),
-      workspace.indexOf(': tab === "inventory"'),
+      workspace.indexOf("function LoadoutGrid"),
+      workspace.indexOf("export function EquipmentWorkspace"),
     );
 
     expect(loadout).toMatch(
-      /onFocus=\{\(\) => \{[\s\S]*?if \(assigned !== undefined\)[\s\S]*?inspectInventory\(assigned\)/,
+      /onFocus=\{\(\) => \{[\s\S]*?if \(assigned !== undefined\)[\s\S]*?onInspect\(assigned\)/,
     );
     expect(loadout).toMatch(
-      /onChange=\{\(event\) => \{[\s\S]*?const entry = inventory\.find[\s\S]*?if \(entry !== undefined\) inspectInventory\(entry\)/,
+      /onChange=\{\(event\) => \{[\s\S]*?const entry = inventory\.find[\s\S]*?if \(entry !== undefined\) onInspect\(entry\)/,
     );
   });
 
   it("does not pretend native popup highlighting is a portable selection event", () => {
     const loadout = workspace.slice(
-      workspace.indexOf('{tab === "loadout"'),
-      workspace.indexOf(': tab === "inventory"'),
+      workspace.indexOf("function LoadoutGrid"),
+      workspace.indexOf("export function EquipmentWorkspace"),
     );
 
     expect(loadout).not.toContain("onInput=");
@@ -98,6 +107,46 @@ describe("loadout interaction and geometry", () => {
       'document.addEventListener("pointerdown", dismissOutside)',
     );
     expect(workspace).toContain('if (event.key !== "Escape") return');
-    expect(workspace).toContain("aria-expanded={openSaleId === entry.id}");
+    expect(workspace).toMatch(
+      /aria-expanded=\{\s*openSaleId === entry\.id\s*\}/,
+    );
+  });
+
+  it("renders accessible collapsible Inventory role sections", () => {
+    expect(workspace).toContain("groupInventoryByCategory(inventory, byId)");
+    expect(workspace).toContain('className="inventory-category-row"');
+    expect(workspace).toContain("aria-expanded={expanded}");
+    expect(workspace).toContain("aria-controls={sectionId}");
+    expect(workspace).toContain("{entries.length} holding");
+    expect(workspace).toContain("{entries.length}");
+    expect(styles).toMatch(
+      /\.inventory-table \.inventory-category-row[\s\S]*?background: var\(--brand-navy\)/,
+    );
+    expect(styles).toContain("--brand-navy: #1d3d5d");
+    expect(styles).toMatch(
+      /\.equipment-primary\s*\{[^}]*--equipment-mode-block-size: max\(44rem, calc\(200vh - 46rem\)\)/,
+    );
+    expect(styles).toMatch(
+      /\.equipment-mode-content\s*\{[^}]*min-block-size: var\(--equipment-mode-block-size\)/,
+    );
+    expect(styles).toMatch(
+      /\.inventory-table-scroll\s*\{[^}]*max-block-size: var\(--equipment-mode-block-size\)[^}]*overflow: auto/,
+    );
+    expect(styles).toMatch(/\.inventory-table\s*\{[^}]*font-size: 0\.78rem/);
+    expect(styles).toMatch(
+      /\.inventory-item-icon\s*\{[^}]*height: 1\.5rem;[^}]*width: 1\.5rem/,
+    );
+    expect(styles).toMatch(
+      /\.inventory-item-icon \.icon\s*\{[^}]*height: 0\.9rem;[^}]*width: 0\.9rem/,
+    );
+    expect(styles).toMatch(
+      /\.inventory-equipped-badge\s*\{[^}]*min-height: 0\.8rem;[^}]*min-width: 0\.8rem/,
+    );
+    expect(styles).toMatch(
+      /\.inventory-equipped-badge \.icon\s*\{[^}]*height: 0\.5rem;[^}]*width: 0\.5rem/,
+    );
+    expect(styles).toMatch(
+      /\.inventory-category-row[\s\S]*?button\[aria-expanded="true"\][\s\S]*?transform: rotate\(90deg\)/,
+    );
   });
 });
