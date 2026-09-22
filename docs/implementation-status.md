@@ -197,24 +197,22 @@ criterion; future character-specific failures remain tracked compatibility bugs.
 
 ### Role-based Inventory sections (2026-09-19)
 
-- Inventory holdings now project into collapsible Armor, Wearables, Weapons,
-  Shields, Implements, Consumables, Ammunition, Utility, Boons & Rewards, and
-  Miscellaneous sections. Empty groups are omitted, counts describe holding
+- Inventory holdings now project into collapsible Adventuring gear, Ammunition,
+  Armor & shields, Companion, familiar & mount, Consumables, Implements,
+  Special items, Weapons, Wondrous items, Worn items, and Miscellaneous
+  sections. Empty groups are omitted, counts describe holding
   rows, category order is fixed, and the original order within each group is
   retained. All populated groups initially expand except Miscellaneous, and
   subsequent expansion state survives Inventory edits for the component
   lifetime.
 - Classification uses all resolved holding components and all repeated authored
-  specifics, with consumable/ammunition and physical shield/weapon precedence.
-  Missing definitions and ordinary Gear fall back to Miscellaneous; Utility
-  requires a structured power/property field, executable rule statement, or
-  exact authored reference to a Power. Display names, flavor, descriptions, and
-  vague activation prose do not decide a category.
-- A read-only audit of the 11,315 item definitions in the private 38,339-record
-  profile produced: Armor 1,635; Wearables 1,770; Weapons 2,393; Shields 159;
-  Implements 2,983; Consumables 1,059 (including 353 Ritual Scrolls);
-  Ammunition 150; Utility 552; Boons & Rewards 398; and Miscellaneous 216.
-  Public coverage uses synthetic definitions only.
+  specifics, with consumable/ammunition and physical-base precedence. It now
+  shares the accepted modern Browse role projection: ordinary Gear is
+  Adventuring gear, mechanically active carried magic is Wondrous items, and
+  nonphysical rewards are Special items. Missing/custom definitions still fall
+  back to Miscellaneous. Display names, flavor, and descriptions do not decide
+  a category. Public coverage uses synthetic definitions only; the earlier
+  private-corpus counts used the superseded Inventory-specific taxonomy.
 
 - Inventory now foregrounds a compact combined Funds total in stable
   AD/PP/GP/SP/CP stat cells, including zero values. Quick adjust accepts one
@@ -640,6 +638,52 @@ web-app verification pass.
 All 55 focused builder/accessibility tests and the web TypeScript check pass.
 The shared card presentation was verified live across Compendium, builder,
 Equipment, and embedded/collapsible cards.
+
+## M5.5 Shop redesign implementation checkpoint (2026-09-22)
+
+- The accepted Shop prototype is now implemented against production content,
+  holdings, wallet commands, and shared item cards. One alphabetical Browse
+  control covers the modern role taxonomy plus rituals, formulas, and martial
+  practices; ritual scrolls are Consumables. Dynamic Slot and Subtype filters,
+  optional legacy categories, Source/Rarity/Tier filters, reversible Name/Level/
+  Price/Owned sorting, and session-persistent preferences replace the former
+  one-table query form. Affordable and Proficient start enabled; learning
+  categories substitute the Known toggle while retaining disabled Slot/Subtype
+  controls for layout stability.
+- All Items uses the same high-level headings as Browse. Dense rows use canonical
+  item icons, fixed right-aligned numeric/action columns, independent Buy and
+  Give controls, and a bottom-right not-proficient cue. Give records an exact
+  holding at zero cost. Nonpurchaseable or unpriced records keep a disabled Buy
+  icon with the approved tooltip and remain giveable; proficiency never blocks
+  acquisition. Transaction feedback relies on the existing save-state and
+  changed inventory/funds rather than verbose messages.
+- Exact terminal `+N` families collapse to the highest eligible level not above
+  the character, display `N+` when higher matching variants exist, remember an
+  explicit session choice, and expand deterministically low-to-high. Shop-only
+  aliases remove Weapon/Armor/Shield/implement carrier words from table and
+  detail headings without changing canonical IDs or names.
+- The descriptive detail card no longer contains acquisition controls. Funds are
+  sticky above it and use the same denomination summary and Edit modal as
+  Equipment; Funds and Details move as one sticky rail. The shared modal retains
+  Quick adjust with draft-only feedback until Apply, while Cancel discards the
+  draft. Compatible physical-item selection is a separate dialog using
+  authored compatibility. Standard magic implements create the standalone
+  `[Magic Item]` legacy shape; superior implements create the exact ordered
+  `[Superior Implement, Magic Item]` shape. A one-choice case bypasses the
+  dialog. Single-type implement cards use a qualifier such as
+  `Implement Enchantment (Staff)` and omit a redundant compatibility row.
+- Focused verification passes 68 Shop, Equipment, routing, helper, and
+  accessibility tests. The complete public gate passes all 475 tests across 66 files, every
+  workspace TypeScript check, the production/PWA build, Chromium and Firefox
+  Letter/A4 print matrices, deterministic public-pack rebuild/validation, and
+  the public query benchmark. An ignored private-pack diagnostic confirms that
+  the authored Group compatibility returns exactly four superior staffs for
+  Staff of Ruin and four superior holy symbols for Symbol of Victory.
+  The product owner completed the production live-review pass on 2026-09-22
+  after an element-for-element visual reconciliation with the accepted
+  prototype. The production denomination-cell treatment was retained by
+  explicit preference. This accepts the combined Shop and ritual/practice
+  interface without declaring the remaining M5.5 closure work complete.
 
 ## M5.5 Equipment/Shop navigation candidate (2026-09-19)
 

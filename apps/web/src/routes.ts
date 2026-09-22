@@ -16,7 +16,25 @@ export type BuilderSectionSlug =
   | "other";
 
 export type ShopCategory =
-  "items" | "rituals" | "alchemical-formulas" | "martial-practices" | "scrolls";
+  | "items"
+  | "scrolls"
+  | "all"
+  | "adventuring-gear"
+  | "ammunition"
+  | "armor-shields"
+  | "armor-enchantments"
+  | "companions-mounts"
+  | "consumables"
+  | "implement-enchantments"
+  | "implements"
+  | "special-items"
+  | "weapons"
+  | "weapon-enchantments"
+  | "wondrous-items"
+  | "worn-items"
+  | "rituals"
+  | "alchemical-formulas"
+  | "martial-practices";
 
 export type BuilderNavigation =
   | {
@@ -62,6 +80,20 @@ const BUILDER_SECTIONS: readonly BuilderSectionSlug[] = [
 ];
 const SHOP_CATEGORIES: readonly ShopCategory[] = [
   "items",
+  "all",
+  "adventuring-gear",
+  "ammunition",
+  "armor-shields",
+  "armor-enchantments",
+  "companions-mounts",
+  "consumables",
+  "implement-enchantments",
+  "implements",
+  "special-items",
+  "weapons",
+  "weapon-enchantments",
+  "wondrous-items",
+  "worn-items",
   "rituals",
   "alchemical-formulas",
   "martial-practices",

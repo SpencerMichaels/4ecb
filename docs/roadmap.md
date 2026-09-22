@@ -456,14 +456,16 @@ directly to one final Build destination; in-page filters, disclosures, choices,
 and edits do not add history entries. Invalid or unavailable nested values
 recover by replacement without disturbing library or character-sheet routes.
 
-**M5.5 closure status (2026-09-18):** The builder, library, Loadout, shared
+**M5.5 closure status (2026-09-22):** The builder, library, Loadout, Inventory,
+shared
 detail-card system, navigation, candidate tables, and header statistics have all
-received accepted product-owner passes. Inventory, Shop, and Rituals & Practices
-still require focused workflow refinement; unavailable-option browsing and
-item-owned Equipment choices still require their final interfaces. Closing those
-items, reconciling the final documentation, and recording live product-owner
-approval completes M5.5. Broad release-client testing belongs to M9 and the
-comprehensive accessibility matrix to post-1.0 M10.
+received accepted product-owner passes. The combined Shop and ritual/practice
+interface received its production live-review approval on 2026-09-22 after
+visual reconciliation with the accepted prototype. Unavailable-option browsing
+and item-owned Equipment choices still require their final interfaces. Closing
+those items and reconciling the final documentation completes M5.5. Broad
+release-client testing belongs to M9 and the comprehensive accessibility matrix
+to post-1.0 M10.
 
 ## M5.6 — Character sheet and local-play foundation
 

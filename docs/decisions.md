@@ -1198,20 +1198,21 @@ holdings are removed rather than retained invisibly.
 
 **Date:** 2026-09-19
 
-Inventory uses a presentation-only taxonomy, in display order: Armor,
-Wearables, Weapons, Shields, Implements, Consumables, Ammunition, Utility,
-Boons & Rewards, and Miscellaneous. The categories are deliberately broader
-than equipment slots. Utility is reserved for carried items with structured
-mechanical evidence—an authored power/property field, executable rule statement,
-or exact Power reference—while ordinary reusable Gear belongs in Miscellaneous.
-Ritual Scroll holdings remain Consumables; learned rituals are not holdings.
+Inventory uses the same presentation-only physical-role taxonomy as modern
+Shop Browse, in display order: Adventuring gear, Ammunition, Armor & shields,
+Companion, familiar & mount, Consumables, Implements, Special items, Weapons,
+Wondrous items, Worn items, and Miscellaneous. Shop-only enchantment acquisition
+categories project to their resulting physical role. Ordinary reusable Gear is
+Adventuring gear; mechanically active carried magic such as onyx figurines is
+Wondrous items. Ritual Scroll holdings remain Consumables; learned rituals are
+not holdings.
 
 The classifier reads every resolved component and repeated authored specific,
 never display names, flavor, or descriptive prose. Consumables and Ammunition
-take precedence over equipment roles. A composed physical shield or weapon base
-then preserves its physical identity; explicit implements, armor, worn slots,
-and audited nonphysical reward families follow. Missing, custom, or ambiguous
-content falls back to Miscellaneous and remains visible. Grouping never changes
+take precedence over equipment roles. A composed physical base then preserves
+its physical identity; the remaining categories follow authored Browse-role
+evidence. Missing, custom, or ambiguous content falls back to Miscellaneous and
+remains visible. Grouping never changes
 holding IDs, equipped assignments, choices, durable order, rules behavior, or
 legacy export topology.
 
@@ -1230,11 +1231,12 @@ part of the character document.
 Equipment opens directly on Inventory and does not add a second tab bar inside
 the character editor. Its route-backed Loadout control swaps only the main pane
 between Inventory and the existing rules-backed slot projection; the shared
-item detail viewer remains fixed in the right pane. Shop is a peer
-top-level character-editor workspace. Items, rituals, alchemical formulas,
-martial practices, and ritual scrolls are values of one ordinary Browse control
-inside Shop; this presentation change does not merge their Buy, Learn, Known,
-quantity, or exact content-ID semantics.
+item detail viewer remains fixed in the right pane. Shop is a peer top-level
+character-editor workspace. Its ordinary Browse control exposes the modern
+role-based item taxonomy alongside rituals, alchemical formulas, and martial
+practices; ritual scrolls appear with other Consumables. This presentation
+change does not merge learnable-record Known state, quantity-bearing holdings,
+or exact content-ID semantics.
 
 Canonical navigation represents Equipment, its optional Loadout pane,
 Shop, and the active Shop category. Existing Equipment deep links remain
@@ -1242,6 +1244,37 @@ compatible: Inventory maps to Equipment, Loadout maps to Equipment with the
 Loadout pane visible, Shop maps to Shop/Items, and Rituals & Practices maps to
 Shop/Rituals. Pane switches update the route, and browser Back/Forward therefore
 restores the same visible state rather than retaining component-only navigation.
+
+### D058 — Shop uses a derived acquisition view over exact holding topology
+
+**Status:** accepted
+
+**Date:** 2026-09-21
+
+Shop presents a modern role-based Browse taxonomy with the original builder's
+categories available only as an advanced filter. Rituals, alchemical formulas,
+and martial practices share this catalog and its Buy/Give actions; ritual
+scrolls remain quantity-bearing Consumables. Slot, subtype, affordability,
+proficiency, known state, sorting, and magic-item family folding are presentation
+projections over exact content records and never replace their stable IDs.
+
+Enchantments are inspected independently and choose a compatible physical item
+only at acquisition time. Compatibility is derived from authored type,
+compatibility, and minimum-enhancement fields rather than display-name guesses.
+Weapon, armor, and shield enchantments compose with an exact compatible physical
+record. A standard magic implement retains the legacy standalone `[Magic Item]`
+shape; a superior implement retains `[Superior Implement, Magic Item]` in that
+order. The UI may interpret both as one semantic implement/enchantment pair, but
+that interpretation is derived and is not a second persisted model. Imported,
+unknown, custom, or ambiguous element sequences remain exact and recoverable.
+
+Buy and Give are separate commands over the same exact item choice. Give spends
+zero currency. `_CannotBeBought` and missing-price records retain a disabled Buy
+control with an explanatory tooltip but remain eligible for Give. Proficiency is
+a filter and visual cue, never an acquisition gate. A compatible-item chooser is
+independent of the descriptive detail card; a single eligible choice bypasses
+the chooser. Enchantment aliases remove carrier words only for Shop display and
+search, while canonical names and IDs remain authoritative.
 
 ## Deferred decisions and decision points
 

@@ -366,12 +366,21 @@ modern information-architecture requirement. **Equipment** is the Inventory
 workspace rather than a container for another tab bar. Its Loadout button swaps
 the main pane from Inventory to the two responsive slot stacks; the inverse
 Inventory button swaps it back. The shared item inspector remains fixed in the
-right pane across both views. **Shop** is a peer character-editor tab. Items, rituals,
-alchemical formulas, martial practices, and ritual scrolls are ordinary values
-of its Browse control rather than nested tabs. The Shop is a paged query-worker
-view of exact records; terminal `+N` variants
-may share a presentation family, but filtering and every transaction retain
-the exact content ID. The Loadout assigns exact owned copies to explicit slots,
+right pane across both views. **Shop** is a peer character-editor tab. Its
+alphabetical Browse taxonomy covers physical equipment roles, enchantment
+families, rituals, alchemical formulas, and martial practices without another
+tab strip. Ritual scrolls are Consumables rather than a parallel ritual
+category. An advanced Legacy category filter retains the original builder's
+names without making that long mixed taxonomy the primary navigation. Slot and
+subtype filters show only values present in the current result set; unavailable
+filters stay in place, disabled with a dash, so the toolbar does not jump.
+Affordable and Proficient begin enabled, and filter/sort choices survive Browse
+changes for the editor session. Shop renders bounded pages of exact records;
+terminal `+N` variants may share a presentation family, but filtering and every
+transaction retain the exact content ID. A collapsed family selects the highest
+exact level not above the character level, falls back to its lowest member,
+shows `N+` when higher members exist, and expands in deterministic low-to-high
+order. The Loadout assigns exact owned copies to explicit slots,
 using two responsive slot stacks whose dropdowns align after the longest label
 within that stack and retain a compact maximum width. Shields use their authored shield/base-item identity to
 occupy Off hand even when a paired magic definition has an Arms magic-item
@@ -382,21 +391,22 @@ details because it has no reliable cross-browser event contract. Inventory leads
 with one compact total-funds summary whose stable AD/PP/GP/SP/CP columns include
 zero values. A Quick adjust field accepts one signed denomination amount;
 positive adjustments credit carried funds and negative adjustments spend carried
-before stored in one transaction. The Edit disclosure retains direct
-carried/stored denomination editing for legacy compatibility. Holdings use
+before stored in one transaction. A shared Edit action opens the same modal for
+direct carried/stored denomination editing from Equipment and Shop. Shop keeps
+the compact Funds summary above its sticky detail rail. Holdings use
 canonical item icons, concise equipped state, compact quantity controls, and
 trailing sell/remove actions. The holdings table is divided into collapsible
-role sections in this order: Armor, Wearables, Weapons, Shields, Implements,
-Consumables, Ammunition, Utility, Boons & Rewards, and Miscellaneous. Empty
+role sections aligned with modern Shop Browse: Adventuring gear, Ammunition,
+Armor & shields, Companion, familiar & mount, Consumables, Implements, Special
+items, Weapons, Wondrous items, Worn items, and Miscellaneous. Empty
 sections are omitted, the heading count means holding rows rather than total
 owned quantity, and all populated sections begin expanded except Miscellaneous.
 Expansion choices last for the current editor session. Classification is a
 presentation projection of authored metadata across every resolved component
 and repeated specific; it does not sort or mutate durable Inventory order.
-Utility means a carried item with structured mechanical evidence such as an
-authored power, property, rule, or Power reference. Ordinary reusable gear and
-unresolved/custom holdings stay recoverable under Miscellaneous rather than
-being guessed from their names.
+Ordinary reusable gear appears under Adventuring gear; mechanically active
+carried magic appears under Wondrous items. Unresolved/custom holdings stay
+recoverable under Miscellaneous rather than being guessed from their names.
 Sales disclose their actual proceeds at the recovered percentage choices;
 reductions remove unequipped copies first and warn before unequipping. Inventory
 row double-clicks use the same Loadout assignment path: an assigned holding
@@ -412,10 +422,11 @@ M5.5 closure applies the same focused review standard to the under-refined tabs:
 
 - **Inventory** makes current holdings, quantities, carried/stored state, sale
   outcomes, inspection, item configuration, and recovery states easy to follow.
-- **Shop** makes its Items, Rituals, Alchemical formulas, Martial practices, and
-  Ritual scrolls browse categories; exact magic/base variants; affordability and
-  blocked purchases; price changes; purchasing; known state; and resulting
-  inventory state explicit.
+- **Shop** makes its modern and optional legacy Browse taxonomies, dynamic
+  slot/subtype filters, exact magic variants, affordability/proficiency/known
+  filters, purchasing, free acquisition, and resulting inventory state explicit.
+  Buy and Give are independent row actions; nonpurchaseable records keep a
+  disabled Buy control and an active Give control.
 - Each workspace receives a live full-profile workflow pass and product-owner approval;
   item-owned choices move here without changing their rules occurrence or legacy
   export topology.

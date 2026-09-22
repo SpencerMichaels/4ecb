@@ -141,28 +141,33 @@ compatibility document.
 
 ## Manage equipment, money, and practices
 
-Open **Equipment** while editing a character. Its four tabs share one item
-detail viewer:
+Open **Equipment** while editing a character. Inventory is the main view;
+**Loadout** swaps the left pane without moving the shared detail viewer.
 
-1. **Loadout** assigns owned compatible items to explicit body, hand, ring, and
-   other equipment slots. Imported characters may initially show a legacy
-   equipped count without a known slot; assigning the item makes that placement
-   explicit without discarding the imported count first.
-2. **Inventory** edits quantities and the five copper, silver, gold, platinum,
-   and astral denominations in carried or stored money. Sales remove one copy
-   and credit carried money at the selected 20%, 50%, or 100% rate.
-3. **Shop** searches the complete active-profile catalog in bounded pages.
-   Filter by type, source, slot, rarity, tier, level, or known proficiency.
-   Magic weapon and armor enchantments ask for a compatible mundane base.
-   Buying spends carried money first and then stored money; unavailable,
-   unpriced, and unaffordable records cannot be bought.
-4. **Rituals & Practices** distinguishes known rituals, alchemical formulas,
-   and martial practices from quantity-bearing scrolls. Owning a scroll does
-   not mark the associated practice known. Spellbook alternates remain under
-   **Build → Spellbook**.
+- **Loadout** assigns owned compatible items to explicit body, hand, ring, and
+  other equipment slots. Imported characters may initially show a legacy
+  equipped count without a known slot; assigning the item makes that placement
+  explicit without discarding the imported count first.
+- **Inventory** edits quantities and the five copper, silver, gold, platinum,
+  and astral denominations in carried or stored money. Sales remove one copy
+  and credit carried money at the selected 20%, 50%, or 100% rate. Its
+  collapsible headings use the same physical-role names as modern Shop Browse.
+- **Shop** is a peer editor tab. Browse by modern role, slot, subtype, source,
+  rarity, or tier; the Filters disclosure also exposes the original builder's
+  category names. Rituals, alchemical formulas, and martial practices are Browse
+  categories, while ritual scrolls appear under Consumables. Affordable and
+  Proficient filters start enabled; proficiency never prevents acquisition.
+  **Buy** spends carried money first and then stored money. **Give** adds the
+  exact item without spending money and remains available for items that cannot
+  be purchased. The Funds Edit button opens the same carried/stored editor and
+  Quick adjust workflow used by Equipment.
 
-Magic-item family rows are only a browsing convenience. Choose the exact `+N`
-variant before buying; the character stores that exact content record.
+Magic-item family rows are only a browsing convenience. The collapsed row picks
+the closest level not above the character; expand it to choose another exact
+`+N` variant. Weapon, armor, shield, and superior-implement enchantments then ask
+for an exact compatible physical item. Choosing the standard implement option
+stores the standalone magic item required by legacy `.dnd4e`; choosing a
+superior implement stores its exact ordered composition.
 
 ## Adopt a different content revision
 

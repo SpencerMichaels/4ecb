@@ -27,6 +27,7 @@ import {
   FlaskRound,
   Focus,
   Footprints,
+  Funnel,
   Gem,
   Gift,
   GraduationCap,
@@ -49,6 +50,7 @@ import {
   SaveOff,
   SavePen,
   ScanLine,
+  Search,
   ScrollText,
   Shield,
   ShoppingCart,
@@ -115,6 +117,7 @@ export type IconName =
   | "flask-round"
   | "focus"
   | "footprints"
+  | "filter"
   | "gem"
   | "gift"
   | "hand"
@@ -137,6 +140,7 @@ export type IconName =
   | "save-check"
   | "save-off"
   | "save-pen"
+  | "search"
   | "sheet"
   | "shield"
   | "shop"
@@ -196,6 +200,7 @@ const icons: Record<IconName, LucideIcon> = {
   "flask-round": FlaskRound,
   focus: Focus,
   footprints: Footprints,
+  filter: Funnel,
   gem: Gem,
   gift: Gift,
   hand: Hand,
@@ -218,6 +223,7 @@ const icons: Record<IconName, LucideIcon> = {
   "save-check": SaveCheck,
   "save-off": SaveOff,
   "save-pen": SavePen,
+  search: Search,
   sheet: FileText,
   shield: Shield,
   shop: ShoppingCart,

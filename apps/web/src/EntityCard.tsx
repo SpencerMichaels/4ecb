@@ -126,12 +126,14 @@ export function EntityCardLeadingIcon({
 
 export function EntityCardHeader({
   entity,
+  kindLabel,
   headingId,
   headingLevel = 4,
   physicalBase,
   subheading,
 }: {
   readonly entity: ContentEntity;
+  readonly kindLabel?: string;
   readonly headingId?: string;
   readonly headingLevel?: 2 | 3 | 4 | 5;
   readonly physicalBase?: ContentEntity | undefined;
@@ -158,11 +160,12 @@ export function EntityCardHeader({
           {heading}
         </div>
         <span className="eyebrow entity-kind">
-          {isItem
-            ? itemCardLabel(entity, physicalBase)
-            : isPower
-              ? powerCardLabel(entity)
-              : primaryDetailTypeLabel(entity)}
+          {kindLabel ??
+            (isItem
+              ? itemCardLabel(entity, physicalBase)
+              : isPower
+                ? powerCardLabel(entity)
+                : primaryDetailTypeLabel(entity))}
         </span>
       </div>
       {subheading === undefined ? null : (

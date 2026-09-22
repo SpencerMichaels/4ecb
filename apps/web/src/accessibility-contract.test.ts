@@ -11,6 +11,10 @@ const equipmentWorkspace = readFileSync(
   new URL("./EquipmentWorkspace.tsx", import.meta.url),
   "utf8",
 );
+const shopWorkspace = readFileSync(
+  new URL("./ShopWorkspace.tsx", import.meta.url),
+  "utf8",
+);
 const entityCard = readFileSync(
   new URL("./EntityCard.tsx", import.meta.url),
   "utf8",
@@ -118,6 +122,19 @@ describe("release accessibility contract", () => {
       'aria-sort={active ? sort.direction : "none"}',
     );
     expect(characterEditor).toContain('className="selection-sort-button"');
+    const sortButtonRule = styles.match(
+      /\.selection-sort-button\s*\{([^}]*)\}/,
+    )?.[1];
+    const sortIconRule = styles.match(
+      /\.selection-sort-button\s*>\s*\.icon\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(sortButtonRule).toContain("display: inline-flex");
+    expect(sortButtonRule).toContain("gap: 0.3rem");
+    expect(sortButtonRule).not.toContain("width: 100%");
+    expect(sortIconRule).toContain("block-size: 0.7rem");
+    expect(sortIconRule).toContain("inline-size: 0.7rem");
+    expect(sortIconRule).toContain("flex: none");
+    expect(sortIconRule).not.toContain("margin-left: auto");
     expect(characterEditor).not.toContain("Stored features");
     expect(characterEditor).not.toContain("function OccurrenceTree");
     expect(characterEditor).not.toContain('aria-controls="build-timeline"');
@@ -644,7 +661,7 @@ describe("release accessibility contract", () => {
       ).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("keeps the legacy semantic palette and avoids pill-shaped chrome", () => {
+  it("keeps the legacy semantic palette and scopes pill chrome to Shop filters", () => {
     for (const token of [
       "--power-at-will: #006400",
       "--power-encounter: #8b0000",
@@ -653,7 +670,10 @@ describe("release accessibility contract", () => {
       "--power-item: #ff8c00",
     ])
       expect(styles).toContain(token);
-    expect(styles).not.toContain("border-radius: 999px");
+    expect(styles).toMatch(
+      /\.shop-filter-chip,[\s\S]*?\.shop-filter-button\s*\{[^}]*border-radius: 999px;/,
+    );
+    expect(styles.match(/border-radius: 999px/g)).toHaveLength(1);
   });
 
   it("keeps loadout slots compact and leaves shopping to the Shop tab", () => {
@@ -687,26 +707,36 @@ describe("release accessibility contract", () => {
     );
   });
 
-  it("submits catalog text search without querying on each keystroke", () => {
-    expect(equipmentWorkspace).toContain(
-      'const [draftText, setDraftText] = useState("")',
+  it("keeps Shop filtering local, labeled, and independent of acquisition", () => {
+    expect(shopWorkspace).toContain('type="search"');
+    expect(shopWorkspace).toContain('placeholder="Search all items…"');
+    expect(shopWorkspace).toContain("aria-pressed={affordable}");
+    expect(shopWorkspace).toContain("aria-pressed={proficient}");
+    expect(shopWorkspace).toContain("aria-label={`Buy ${displayName}`}");
+    expect(shopWorkspace).toContain("aria-label={`Give ${displayName}`}");
+    expect(shopWorkspace).toContain('role="radiogroup"');
+    expect(shopWorkspace).toContain('className="shop-result-tools"');
+    expect(shopWorkspace).toContain('className="shop-physical-choice"');
+    expect(shopWorkspace).toContain('aria-label="Not proficient"');
+    expect(shopWorkspace).toContain("setInspectedEntityId(entity.id)");
+    expect(shopWorkspace).toContain('"is-selected"');
+    expect(equipmentWorkspace).toContain('id="wallet-dialog-adjustment"');
+    expect(equipmentWorkspace).toContain("parseCurrencyAdjustment(adjustment)");
+    expect(equipmentWorkspace).toContain("adjustWalletCurrency(");
+    expect(styles).toMatch(
+      /\.shared-choice-detail\.shop-rail\s*\{[^}]*display: grid;[^}]*position: sticky;[^}]*top: 0\.75rem;/s,
     );
-    expect(equipmentWorkspace).toContain(
-      'const [submittedText, setSubmittedText] = useState("")',
+    expect(styles).toMatch(
+      /\.shop-toolbar\s*\{[^}]*grid-template-columns: minmax\(8rem, 11rem\) minmax\(6rem, 1fr\)/s,
     );
-    expect(equipmentWorkspace).toContain('className="equipment-text-search"');
-    expect(equipmentWorkspace).toContain("setSubmittedText(draftText);");
-    expect(equipmentWorkspace).toContain("setOffset(0);");
-    expect(equipmentWorkspace).toContain("value={draftText}");
-    expect(equipmentWorkspace).toContain(
-      "onChange={(event) => setDraftText(event.currentTarget.value)}",
+    expect(styles).toMatch(
+      /\.shop-result-tools\s*\{[^}]*display: flex;[^}]*flex-wrap: wrap;/s,
     );
-    expect(equipmentWorkspace).toContain(
-      '<button type="submit">Search</button>',
+    expect(styles).toMatch(
+      /\.shop-table tbody tr\.is-selected\s*\{[^}]*box-shadow: inset 3px 0 var\(--accent\)/s,
     );
-    expect(equipmentWorkspace).toContain("mode,\n    submittedText,");
-    expect(equipmentWorkspace).not.toContain(
-      "setText(event.currentTarget.value)",
+    expect(styles).toMatch(
+      /\.shop-toolbar > label,[\s\S]*?\.shop-physical-tools label\s*\{[^}]*color: var\(--muted\);[^}]*font-size: 0\.6875rem;[^}]*font-weight: 800;[^}]*letter-spacing: 0\.05em;[^}]*text-transform: uppercase;/s,
     );
   });
 });

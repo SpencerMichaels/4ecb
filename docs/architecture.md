@@ -414,6 +414,17 @@ AST and typed facet contract insulate UI code from that choice.
 The same query primitives power builder choice dialogs and Equipment catalogs,
 with the builder adding engine-provided legality and recommendation context.
 
+Shop presentation adds a deterministic client projection over the active
+profile's normalized entities: modern and legacy category labels, dynamic slot
+and subtype sets, exact magic-item families, and display-only enchantment aliases.
+Acquisition always resolves back to exact stable IDs. The authoritative holding
+remains its ordered `elements` sequence; a semantic physical-item/enchantment
+view is derived as needed and is never persisted in parallel. In particular,
+standard magic implements remain standalone magic-item elements for legacy
+export, while superior implements retain the exact superior-implement element
+followed by the magic-item element. Unknown or ambiguous imported sequences pass
+through unchanged.
+
 ## Sheet and card rendering
 
 `sheet-model` converts an evaluated snapshot into a layout-neutral `SheetDocument`:

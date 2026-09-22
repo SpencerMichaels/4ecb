@@ -24,6 +24,11 @@ import {
   loadoutChangeCommand,
   practiceKind,
   resolveLoadoutAssignments,
+  recommendedMagicItemVariant,
+  shopBrowseCategory,
+  shopDisplayName,
+  shopSlot,
+  shopSubtype,
   visibleLoadoutSlotColumns,
 } from "./equipment-ui";
 
@@ -79,6 +84,69 @@ function entityIndex(
   );
 }
 
+describe("Shop presentation model", () => {
+  it("uses authored fields for the modern taxonomy, slots, and subtypes", () => {
+    const weapon = entity("WEAPON", "Public Longsword", "Weapon", {
+      Group: "Heavy blade",
+      "Weapon Category": "Military melee",
+    });
+    const enchantment = entity(
+      "ENCHANTMENT",
+      "Weapon of Testing +2",
+      "Magic Item",
+      {
+        "Magic Item Type": "Weapon",
+        Weapon: "Heavy blade",
+        Level: "8",
+      },
+    );
+    const scroll = entity("SCROLL", "Scroll of Testing", "Ritual Scroll");
+    expect(shopBrowseCategory(weapon)).toBe("weapons");
+    expect(shopBrowseCategory(enchantment)).toBe("weapon-enchantments");
+    expect(shopBrowseCategory(scroll)).toBe("consumables");
+    expect(shopSlot(weapon)).toBe("Held");
+    expect(shopSubtype(weapon)).toBe("Heavy blade");
+    expect(shopDisplayName(enchantment)).toBe("Testing +2");
+  });
+
+  it("chooses the highest exact family variant not above character level", () => {
+    const variants = [3, 8, 13].map((level, index) =>
+      entity(`FROST_${index}`, `Frost Weapon +${index + 1}`, "Magic Item", {
+        "Magic Item Type": "Weapon",
+        Weapon: "Any",
+        Level: String(level),
+      }),
+    );
+    const family = groupMagicItemFamilies(variants, variants)[0]!;
+    expect(recommendedMagicItemVariant(family, 8).name).toBe("Frost Weapon +2");
+    expect(recommendedMagicItemVariant(family, 1).name).toBe("Frost Weapon +1");
+  });
+
+  it("offers exact superior implements only when their authored type matches", () => {
+    const ruin = entity("RUIN", "Staff of Ruin +2", "Magic Item", {
+      "Magic Item Type": "Staff",
+      Level: "8",
+    });
+    const accurateStaff = entity(
+      "ACCURATE_STAFF",
+      "Accurate Staff",
+      "Superior Implement",
+      { Group: "Staff" },
+    );
+    const accurateSymbol = entity(
+      "ACCURATE_SYMBOL",
+      "Accurate Symbol",
+      "Superior Implement",
+      { Group: "Holy Symbol" },
+    );
+    expect(
+      compatibleBaseItems(ruin, [accurateSymbol, accurateStaff]).map(
+        ({ id }) => id,
+      ),
+    ).toEqual(["ACCURATE_STAFF"]);
+  });
+});
+
 describe("Inventory role taxonomy", () => {
   it("defines the approved display order and initial expansion policy", () => {
     expect(
@@ -87,15 +155,16 @@ describe("Inventory role taxonomy", () => {
         initiallyExpanded,
       ]),
     ).toEqual([
-      ["Armor", true],
-      ["Wearables", true],
-      ["Weapons", true],
-      ["Shields", true],
-      ["Implements", true],
-      ["Consumables", true],
+      ["Adventuring gear", true],
       ["Ammunition", true],
-      ["Utility", true],
-      ["Boons & Rewards", true],
+      ["Armor & shields", true],
+      ["Companion, familiar & mount", true],
+      ["Consumables", true],
+      ["Implements", true],
+      ["Special items", true],
+      ["Weapons", true],
+      ["Wondrous items", true],
+      ["Worn items", true],
       ["Miscellaneous", false],
     ]);
   });
@@ -106,11 +175,13 @@ describe("Inventory role taxonomy", () => {
         entity("ARMOR", "Fixture", "Magic Item", {
           "Magic Item Type": "Armor",
         }),
-        "armor",
+        "armor-shields",
       ],
       [
-        entity("WORN", "Fixture", "Magic Item", { "Item Slot": "Ring" }),
-        "wearables",
+        entity("WORN", "Fixture", "Magic Item", {
+          "Magic Item Type": "Ring",
+        }),
+        "worn-items",
       ],
       [
         entity("WEAPON", "Fixture", "Magic Item", {
@@ -120,7 +191,7 @@ describe("Inventory role taxonomy", () => {
       ],
       [
         entity("SHIELD", "Fixture", "Armor", { "Armor Type": "Shield" }),
-        "shields",
+        "armor-shields",
       ],
       [
         entity("IMPLEMENT", "Fixture", "Magic Item", {
@@ -139,20 +210,20 @@ describe("Inventory role taxonomy", () => {
         "ammunition",
       ],
       [
-        entity("UTILITY", "Fixture", "Magic Item", {
-          Property: "Structured effect",
+        entity("WONDROUS", "Fixture", "Magic Item", {
+          "Magic Item Type": "Wondrous Item",
         }),
-        "utility",
+        "wondrous-items",
       ],
       [
         entity("BOON", "Fixture", "Magic Item", {
           "Magic Item Type": "Divine Boon",
         }),
-        "boons-rewards",
+        "special-items",
       ],
       [
         entity("GEAR", "Fixture", "Gear", { Category: "Gear" }),
-        "miscellaneous",
+        "adventuring-gear",
       ],
     ];
     const index = entityIndex(...fixtures.map(([definition]) => definition));
@@ -210,55 +281,26 @@ describe("Inventory role taxonomy", () => {
       implementEnchantment,
     );
     expect(inventoryCategory(holding(shield, armorEnchantment), index)).toBe(
-      "shields",
+      "armor-shields",
     );
     expect(
       inventoryCategory(holding(weapon, implementEnchantment), index),
     ).toBe("weapons");
   });
 
-  it("recognizes structured Utility evidence but not ordinary reusable Gear", () => {
-    const passive = entity("PASSIVE", "Fixture", "Magic Item", {
-      Properties: "A passive mechanical effect",
-    });
-    const displayPower = entity("DISPLAY", "Fixture", "Magic Item", {
+  it("aligns reusable gear and mechanically active wondrous items with Browse", () => {
+    const wondrous = entity("WONDROUS", "Fixture", "Magic Item", {
+      "Magic Item Type": "Wondrous Item",
       _DisplayPowers: "ID_POWER",
-    });
-    const rule = {
-      ...entity("RULE", "Fixture", "Magic Item"),
-      rules: [
-        { name: "Grant", attributes: [], text: "", children: [], ordinal: 0 },
-      ],
-    };
-    const referencedPower = entity("ID_POWER", "Fixture", "Power");
-    const referenced = entity("REFERENCE", "Fixture", "Magic Item", {
-      LinkedElement: "ID_POWER",
     });
     const ordinary = entity("ORDINARY", "Fixture", "Gear", {
       Description: "Can be lit and carried.",
     });
-    const index = entityIndex(
-      passive,
-      displayPower,
-      rule,
-      referencedPower,
-      referenced,
-      ordinary,
+    const index = entityIndex(wondrous, ordinary);
+    expect(inventoryCategory(holding(wondrous), index)).toBe("wondrous-items");
+    expect(inventoryCategory(holding(ordinary), index)).toBe(
+      "adventuring-gear",
     );
-    expect(inventoryCategory(holding(passive), index)).toBe("utility");
-    expect(inventoryCategory(holding(displayPower), index)).toBe("utility");
-    expect(inventoryCategory(holding(rule), index)).toBe("utility");
-    expect(inventoryCategory(holding(referenced), index)).toBe("utility");
-    expect(inventoryCategory(holding(ordinary), index)).toBe("miscellaneous");
-    expect(
-      inventoryCategory(
-        holding(referenced),
-        new Map([
-          [referencedPower.id, referencedPower],
-          [referenced.id.toLocaleLowerCase(), referenced],
-        ]),
-      ),
-    ).toBe("utility");
   });
 
   it("excludes learned Ritual records while keeping Ritual Scroll holdings", () => {
@@ -297,7 +339,7 @@ describe("Inventory role taxonomy", () => {
         entries.map(({ id }) => id),
       ]),
     ).toEqual([
-      ["armor", ["A1", "A2"]],
+      ["armor-shields", ["A1", "A2"]],
       ["weapons", ["W"]],
       ["miscellaneous", ["unresolved"]],
     ]);

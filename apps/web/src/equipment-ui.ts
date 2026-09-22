@@ -124,16 +124,59 @@ export interface MagicItemFamily {
   readonly entities: readonly ContentEntity[];
 }
 
-export type InventoryCategoryId =
-  | "armor"
-  | "wearables"
-  | "weapons"
-  | "shields"
-  | "implements"
-  | "consumables"
+export type ShopBrowseId =
+  | "all"
+  | "adventuring-gear"
   | "ammunition"
-  | "utility"
-  | "boons-rewards"
+  | "armor-shields"
+  | "armor-enchantments"
+  | "companions-mounts"
+  | "consumables"
+  | "implement-enchantments"
+  | "implements"
+  | "special-items"
+  | "weapons"
+  | "weapon-enchantments"
+  | "wondrous-items"
+  | "worn-items"
+  | "rituals"
+  | "alchemical-formulas"
+  | "martial-practices";
+
+export const SHOP_BROWSE_CATEGORIES: readonly {
+  readonly id: ShopBrowseId;
+  readonly label: string;
+}[] = [
+  { id: "all", label: "All items" },
+  { id: "adventuring-gear", label: "Adventuring gear" },
+  { id: "alchemical-formulas", label: "Alchemical formulas" },
+  { id: "ammunition", label: "Ammunition" },
+  { id: "armor-shields", label: "Armor & shields" },
+  { id: "armor-enchantments", label: "Armor & shield enchantments" },
+  { id: "companions-mounts", label: "Companion, familiar & mount" },
+  { id: "consumables", label: "Consumables" },
+  { id: "implement-enchantments", label: "Implement enchantments" },
+  { id: "implements", label: "Implements" },
+  { id: "martial-practices", label: "Martial practices" },
+  { id: "rituals", label: "Rituals" },
+  { id: "special-items", label: "Special items" },
+  { id: "weapons", label: "Weapons" },
+  { id: "weapon-enchantments", label: "Weapon enchantments" },
+  { id: "wondrous-items", label: "Wondrous items" },
+  { id: "worn-items", label: "Worn items" },
+];
+
+export type InventoryCategoryId =
+  | "adventuring-gear"
+  | "ammunition"
+  | "armor-shields"
+  | "companions-mounts"
+  | "consumables"
+  | "implements"
+  | "special-items"
+  | "weapons"
+  | "wondrous-items"
+  | "worn-items"
   | "miscellaneous";
 
 export interface InventoryCategoryPresentation {
@@ -143,19 +186,28 @@ export interface InventoryCategoryPresentation {
 }
 
 export const INVENTORY_CATEGORIES: readonly InventoryCategoryPresentation[] = [
-  { id: "armor", label: "Armor", initiallyExpanded: true },
-  { id: "wearables", label: "Wearables", initiallyExpanded: true },
-  { id: "weapons", label: "Weapons", initiallyExpanded: true },
-  { id: "shields", label: "Shields", initiallyExpanded: true },
-  { id: "implements", label: "Implements", initiallyExpanded: true },
-  { id: "consumables", label: "Consumables", initiallyExpanded: true },
-  { id: "ammunition", label: "Ammunition", initiallyExpanded: true },
-  { id: "utility", label: "Utility", initiallyExpanded: true },
   {
-    id: "boons-rewards",
-    label: "Boons & Rewards",
+    id: "adventuring-gear",
+    label: "Adventuring gear",
     initiallyExpanded: true,
   },
+  { id: "ammunition", label: "Ammunition", initiallyExpanded: true },
+  {
+    id: "armor-shields",
+    label: "Armor & shields",
+    initiallyExpanded: true,
+  },
+  {
+    id: "companions-mounts",
+    label: "Companion, familiar & mount",
+    initiallyExpanded: true,
+  },
+  { id: "consumables", label: "Consumables", initiallyExpanded: true },
+  { id: "implements", label: "Implements", initiallyExpanded: true },
+  { id: "special-items", label: "Special items", initiallyExpanded: true },
+  { id: "weapons", label: "Weapons", initiallyExpanded: true },
+  { id: "wondrous-items", label: "Wondrous items", initiallyExpanded: true },
+  { id: "worn-items", label: "Worn items", initiallyExpanded: true },
   { id: "miscellaneous", label: "Miscellaneous", initiallyExpanded: false },
 ];
 
@@ -168,42 +220,6 @@ function normalized(value: string | undefined): string {
   return value?.trim().toLocaleLowerCase() ?? "";
 }
 
-function normalizedSpecifics(entity: ContentEntity): readonly {
-  readonly name: string;
-  readonly value: string;
-}[] {
-  return entity.specifics
-    .filter(({ value }) => value.trim() !== "")
-    .map(({ name, value }) => ({
-      name: normalized(name),
-      value: normalized(value),
-    }));
-}
-
-function specificMatches(
-  entities: readonly ContentEntity[],
-  names: readonly string[],
-  matches: (value: string) => boolean,
-): boolean {
-  const expected = new Set(names.map(normalized));
-  return entities.some((entity) =>
-    normalizedSpecifics(entity).some(
-      ({ name, value }) => expected.has(name) && matches(value),
-    ),
-  );
-}
-
-function valuesInclude(
-  entities: readonly ContentEntity[],
-  names: readonly string[],
-  values: readonly string[],
-): boolean {
-  const expected = new Set(values.map(normalized));
-  return specificMatches(entities, names, (value) =>
-    value.split(/\s*[,;]\s*/u).some((part) => expected.has(part.trim())),
-  );
-}
-
 const IMPLEMENT_KINDS = [
   "staff",
   "rod",
@@ -214,23 +230,6 @@ const IMPLEMENT_KINDS = [
   "ki focus",
   "tome",
   "superior implement",
-] as const;
-
-const WEARABLE_SLOTS = [
-  "body",
-  "head",
-  "head and neck",
-  "head slot item",
-  "neck",
-  "arms",
-  "hands",
-  "feet",
-  "ring",
-  "waist",
-  "tattoo",
-  "companion",
-  "familiar",
-  "mount",
 ] as const;
 
 const CONSUMABLE_KINDS = [
@@ -288,90 +287,6 @@ const MUNDANE_IMPLEMENT_IDS = new Set([
   "id_fmp_gear_115",
 ]);
 
-function hasType(
-  entities: readonly ContentEntity[],
-  ...types: readonly string[]
-): boolean {
-  const expected = new Set(types.map(normalized));
-  return entities.some((entity) => expected.has(normalized(entity.type)));
-}
-
-function authoredShield(entities: readonly ContentEntity[]): boolean {
-  const shieldCompatibleOnly = entities.some((entity) => {
-    const specifics = normalizedSpecifics(entity);
-    if (
-      specifics.some(
-        ({ name, value }) => name === "item slot" && value.includes("neck"),
-      )
-    )
-      return false;
-    return specifics.some(
-      ({ name, value }) =>
-        name === "armor" &&
-        value
-          .split(/\s*,\s*/u)
-          .filter(Boolean)
-          .every((part) => part.includes("shield")),
-    );
-  });
-  return (
-    entities.some(isAuthoredShield) ||
-    specificMatches(entities, ["_IsEnchant"], (value) => value === "shield") ||
-    valuesInclude(entities, ["Magic Item Type"], ["Shield"]) ||
-    shieldCompatibleOnly
-  );
-}
-
-function hasStructuredMechanicalUse(
-  entities: readonly ContentEntity[],
-  byId: ReadonlyMap<string, ContentEntity>,
-): boolean {
-  const executableRules = new Set([
-    "grant",
-    "statadd",
-    "modify",
-    "select",
-    "textstring",
-  ]);
-  for (const entity of entities) {
-    if (
-      normalizedSpecifics(entity).some(({ name }) => {
-        const tokens = name.split(/[^a-z0-9]+/u).filter(Boolean);
-        return (
-          tokens.includes("power") ||
-          tokens.includes("powers") ||
-          tokens.includes("displaypower") ||
-          tokens.includes("displaypowers") ||
-          name === "property" ||
-          name === "properties"
-        );
-      }) ||
-      entity.rules.some(({ name }) => executableRules.has(normalized(name)))
-    )
-      return true;
-
-    const authoredValues = [
-      ...entity.attributes.map(({ value }) => value),
-      ...entity.specifics.map(({ value }) => value),
-      ...entity.rules.flatMap(({ attributes }) =>
-        attributes.map(({ value }) => value),
-      ),
-    ];
-    if (
-      authoredValues.some((value) => {
-        const authoredId = value.trim();
-        const reference =
-          byId.get(authoredId) ?? byId.get(authoredId.toLocaleLowerCase());
-        return (
-          reference !== undefined && normalized(reference.type) === "power"
-        );
-      })
-    )
-      return true;
-  }
-  return false;
-}
-
 /**
  * Classifies one durable holding by authored role evidence. Every repeated
  * specific and every resolved component participates; names and flavor never
@@ -388,79 +303,69 @@ export function inventoryCategory(
   const physicalBase = definitions[0];
   const savedTypes = entry.elements.map(({ type }) => normalized(type));
 
+  const inventoryRole = (
+    entity: ContentEntity,
+  ): InventoryCategoryId | undefined => {
+    if (isAuthoredShield(entity)) return "armor-shields";
+    switch (shopBrowseCategory(entity)) {
+      case "adventuring-gear":
+      case "ammunition":
+      case "armor-shields":
+      case "companions-mounts":
+      case "consumables":
+      case "implements":
+      case "special-items":
+      case "weapons":
+      case "wondrous-items":
+      case "worn-items":
+        return shopBrowseCategory(entity) as InventoryCategoryId;
+      case "armor-enchantments":
+        return "armor-shields";
+      case "implement-enchantments":
+        return "implements";
+      case "weapon-enchantments":
+        return "weapons";
+      default:
+        return undefined;
+    }
+  };
+  const inventoryRoles = (
+    entity: ContentEntity,
+  ): readonly InventoryCategoryId[] =>
+    [
+      inventoryRole(entity),
+      ...entity.specifics.map((specific) =>
+        inventoryRole({ ...entity, specifics: [specific] }),
+      ),
+    ].filter((role): role is InventoryCategoryId => role !== undefined);
+
   // Learned Ritual records belong to the Practices model, never physical
   // Inventory. Quantity-bearing Ritual Scroll definitions remain consumables.
-  if (hasType(definitions, "ritual") || savedTypes.includes("ritual"))
+  if (
+    definitions.some(({ type }) => normalized(type) === "ritual") ||
+    savedTypes.includes("ritual")
+  )
     return undefined;
 
-  if (
-    hasType(definitions, "ritual scroll") ||
-    savedTypes.includes("ritual scroll")
-  )
-    return "consumables";
-  if (
-    hasType(definitions, "ammunition") ||
-    valuesInclude(
-      definitions,
-      ["Magic Item Type", "Gear Category", "Category"],
-      ["Ammunition"],
-    )
-  )
-    return "ammunition";
-  if (
-    hasType(definitions, ...CONSUMABLE_KINDS) ||
-    valuesInclude(
-      definitions,
-      ["Magic Item Type", "Gear Category", "Category", "Type"],
-      CONSUMABLE_KINDS,
-    )
-  )
-    return "consumables";
+  const priorityRole = definitions
+    .flatMap(inventoryRoles)
+    .find((role) => role === "consumables" || role === "ammunition");
+  if (priorityRole !== undefined) return priorityRole;
 
-  if (physicalBase !== undefined && isAuthoredShield(physicalBase))
-    return "shields";
-  if (physicalBase !== undefined && normalized(physicalBase.type) === "weapon")
-    return "weapons";
-  if (authoredShield(definitions)) return "shields";
-  if (
-    valuesInclude(definitions, ["Magic Item Type"], ["Weapon"]) ||
-    hasType(definitions, "weapon") ||
-    savedTypes.includes("weapon")
-  )
-    return "weapons";
-  if (
-    definitions.some(({ id }) =>
-      MUNDANE_IMPLEMENT_IDS.has(id.toLocaleLowerCase()),
-    ) ||
-    hasType(definitions, "superior implement") ||
-    valuesInclude(
-      definitions,
-      ["Magic Item Type", "Item Slot", "Implement Type", "Type"],
-      IMPLEMENT_KINDS,
-    ) ||
-    (definitions.length === 0 && savedTypes.includes("superior implement"))
-  )
-    return "implements";
-  if (
-    valuesInclude(definitions, ["Magic Item Type"], ["Armor"]) ||
-    hasType(definitions, "armor") ||
-    savedTypes.includes("armor")
-  )
-    return "armor";
-  if (
-    valuesInclude(definitions, ["Magic Item Type", "Item Slot"], WEARABLE_SLOTS)
-  )
-    return "wearables";
-  if (
-    hasType(definitions, ...REWARD_KINDS) ||
-    valuesInclude(
-      definitions,
-      ["Magic Item Type", "Alternative Reward Type", "Type"],
-      REWARD_KINDS,
-    )
-  )
-    return "boons-rewards";
-  if (hasStructuredMechanicalUse(definitions, byId)) return "utility";
+  const physicalRole =
+    physicalBase === undefined ? undefined : inventoryRole(physicalBase);
+  if (physicalRole !== undefined) return physicalRole;
+
+  const resolvedRole = definitions
+    .flatMap(inventoryRoles)
+    .find((role) => role !== undefined);
+  if (resolvedRole !== undefined) return resolvedRole;
+
+  if (savedTypes.includes("ritual scroll")) return "consumables";
+  if (savedTypes.includes("ammunition")) return "ammunition";
+  if (savedTypes.includes("weapon")) return "weapons";
+  if (savedTypes.includes("armor")) return "armor-shields";
+  if (savedTypes.includes("superior implement")) return "implements";
   return "miscellaneous";
 }
 
@@ -563,11 +468,180 @@ export function comparableSaleProceeds(
 }
 
 function familyCompatibility(entity: ContentEntity): string {
-  return ["Magic Item Type", "Item Slot", "Armor", "Weapon"]
+  return ["Magic Item Type", "Item Slot", "Armor", "Weapon", "Implement Type"]
     .map(
       (name) => contentSpecificValue(entity, name)?.toLocaleLowerCase() ?? "",
     )
     .join("\0");
+}
+
+const SHOP_WORN_TYPES = new Set([
+  "arms slot item",
+  "feet slot item",
+  "hands slot item",
+  "head slot item",
+  "neck slot item",
+  "ring",
+  "tattoo",
+  "waist slot item",
+]);
+
+/** Classifies catalog records from authored fields, never name fragments. */
+export function shopBrowseCategory(
+  entity: ContentEntity,
+): ShopBrowseId | undefined {
+  const practice = practiceKind(entity);
+  if (practice === "ritual") return "rituals";
+  if (practice === "alchemical-formula") return "alchemical-formulas";
+  if (practice === "martial-practice") return "martial-practices";
+  if (practice === "scroll") return "consumables";
+
+  const type = normalized(entity.type);
+  const magicType = normalized(contentSpecificValue(entity, "Magic Item Type"));
+  const gearCategory = normalized(
+    contentSpecificValue(entity, "Gear Category") ??
+      contentSpecificValue(entity, "Category"),
+  );
+  const enchant = normalized(contentSpecificValue(entity, "_IsEnchant"));
+  if (type === "weapon") return "weapons";
+  if (type === "armor") return "armor-shields";
+  if (type === "superior implement") return "implements";
+  if (
+    type === "ammunition" ||
+    magicType === "ammunition" ||
+    gearCategory === "ammunition"
+  )
+    return "ammunition";
+  if (CONSUMABLE_KINDS.some((kind) => gearCategory === kind))
+    return "consumables";
+  if (type === "magic item") {
+    if (magicType === "weapon") return "weapon-enchantments";
+    if (magicType === "armor" || enchant === "shield")
+      return "armor-enchantments";
+    if (IMPLEMENT_KINDS.some((kind) => magicType === kind))
+      return "implement-enchantments";
+    if (SHOP_WORN_TYPES.has(magicType)) return "worn-items";
+    if (magicType.includes("wondrous")) return "wondrous-items";
+    if (
+      REWARD_KINDS.some((kind) => magicType === kind) ||
+      ["artifact", "intelligent item", "item set", "augment"].some((kind) =>
+        magicType.includes(kind),
+      )
+    )
+      return "special-items";
+    if (
+      CONSUMABLE_KINDS.some((kind) => magicType === kind) ||
+      ["potion", "scroll"].some((kind) => magicType.includes(kind))
+    )
+      return "consumables";
+  }
+  if (
+    ["mount", "barding", "companion", "familiar"].some(
+      (kind) => type.includes(kind) || magicType.includes(kind),
+    )
+  )
+    return "companions-mounts";
+  if (MUNDANE_IMPLEMENT_IDS.has(entity.id.toLocaleLowerCase()))
+    return "implements";
+  if (type === "gear" || gearCategory !== "") return "adventuring-gear";
+  return undefined;
+}
+
+export function shopDisplayName(entity: ContentEntity): string {
+  const category = shopBrowseCategory(entity);
+  if (category === "weapon-enchantments")
+    return entity.name
+      .replace(/^Weapon of /iu, "")
+      .replace(/ Weapon(?= \+\d+$|$)/iu, "");
+  if (category === "armor-enchantments")
+    return entity.name
+      .replace(/^(?:Armor|Shield) of /iu, "")
+      .replace(/ (?:Armor|Shield)(?= \+\d+$|$)/iu, "");
+  if (category === "implement-enchantments")
+    return entity.name
+      .replace(
+        /^(?:Implement|Orb|Rod|Staff|Wand|Tome|Totem|Symbol|Ki Focus) of /iu,
+        "",
+      )
+      .replace(
+        / (?:Implement|Orb|Rod|Staff|Wand|Tome|Totem|Symbol|Ki Focus)(?= \+\d+$|$)/iu,
+        "",
+      );
+  return entity.name;
+}
+
+export function shopItemLevel(entity: ContentEntity): number {
+  const level = Number(contentSpecificValue(entity, "Level") ?? 0);
+  return Number.isFinite(level) ? level : 0;
+}
+
+export function recommendedMagicItemVariant(
+  family: MagicItemFamily,
+  characterLevel: number,
+): ContentEntity {
+  const ordered = [...family.entities].sort(
+    (left, right) =>
+      shopItemLevel(left) - shopItemLevel(right) ||
+      Number(left.name.match(/\+(\d+)$/u)?.[1] ?? 0) -
+        Number(right.name.match(/\+(\d+)$/u)?.[1] ?? 0) ||
+      left.name.localeCompare(right.name) ||
+      left.id.localeCompare(right.id),
+  );
+  return (
+    ordered
+      .filter((entity) => shopItemLevel(entity) <= characterLevel)
+      .at(-1) ?? ordered[0]!
+  );
+}
+
+export function shopSlot(entity: ContentEntity): string | undefined {
+  const category = shopBrowseCategory(entity);
+  if (
+    category === "weapons" ||
+    category === "weapon-enchantments" ||
+    category === "implements" ||
+    category === "implement-enchantments"
+  )
+    return "Held";
+  if (category === "armor-shields" || category === "armor-enchantments") {
+    if (
+      isAuthoredShield(entity) ||
+      normalized(contentSpecificValue(entity, "_IsEnchant")) === "shield"
+    )
+      return "Held";
+    return "Body";
+  }
+  const slot = contentSpecificValue(entity, "Item Slot")?.trim();
+  if (slot === undefined || slot === "") return undefined;
+  const normalizedSlot = normalized(slot);
+  const mapped = [
+    "Head",
+    "Neck",
+    "Arms",
+    "Hands",
+    "Waist",
+    "Feet",
+    "Tattoo",
+    "Companion",
+    "Familiar",
+    "Mount",
+  ].find((candidate) => normalizedSlot.includes(candidate.toLocaleLowerCase()));
+  return mapped ?? (normalizedSlot.includes("ring") ? "Ring" : undefined);
+}
+
+export function shopSubtype(entity: ContentEntity): string | undefined {
+  const category = shopBrowseCategory(entity);
+  const candidates =
+    category === "weapons" || category === "weapon-enchantments"
+      ? ["Group", "Weapon Category", "Weapon"]
+      : category === "armor-shields" || category === "armor-enchantments"
+        ? ["Armor Type", "Armor Category", "Armor"]
+        : category === "implements" || category === "implement-enchantments"
+          ? ["Implement Type", "Group", "Magic Item Type"]
+          : ["Magic Item Type", "Gear Category", "Type"];
+  return candidates
+    .map((name) => contentSpecificValue(entity, name)?.split(",")[0]?.trim())
+    .find((value) => value !== undefined && value !== "");
 }
 
 export function magicItemFamilyKey(entity: ContentEntity): string | undefined {
@@ -1026,24 +1100,34 @@ export function compatibleBaseItems(
   enchantment: ContentEntity,
   catalog: readonly ContentEntity[],
 ): readonly ContentEntity[] {
-  const authoredKind = contentSpecificValue(
-    enchantment,
-    "Magic Item Type",
-  )?.toLocaleLowerCase();
+  const authoredKind =
+    contentSpecificValue(enchantment, "Magic Item Type")?.toLocaleLowerCase() ??
+    "";
   const enchantmentTarget = contentSpecificValue(
     enchantment,
     "_IsEnchant",
   )?.toLocaleLowerCase();
+  const implementTypes = IMPLEMENT_KINDS.filter(
+    (implement) =>
+      authoredKind === implement ||
+      authoredKind.split(/\s*[,;]\s*/u).includes(implement),
+  );
   const kind =
     authoredKind === "armor" || authoredKind === "weapon"
       ? authoredKind
       : enchantmentTarget === "shield"
         ? "armor"
-        : undefined;
-  if (kind !== "armor" && kind !== "weapon") return [];
+        : implementTypes.length > 0
+          ? "superior implement"
+          : undefined;
+  if (kind === undefined) return [];
   const allowedText = (
-    contentSpecificValue(enchantment, kind === "armor" ? "Armor" : "Weapon") ??
-    (enchantmentTarget === "shield" ? "Shield" : "")
+    kind === "superior implement"
+      ? (contentSpecificValue(enchantment, "Implement Type") ?? authoredKind)
+      : (contentSpecificValue(
+          enchantment,
+          kind === "armor" ? "Armor" : "Weapon",
+        ) ?? (enchantmentTarget === "shield" ? "Shield" : ""))
   ).replace(/\s+\(.*$/, "");
   const allowed = allowedText
     .split(",")
@@ -1065,6 +1149,21 @@ export function compatibleBaseItems(
       if (Number.isFinite(minimum) && minimum > enhancement) return false;
       if (allowed.length === 0 || allowed.includes("any")) return true;
       const name = entity.name.toLocaleLowerCase();
+      if (kind === "superior implement") {
+        const implementType = normalized(
+          contentSpecificValue(entity, "Implement Type") ??
+            contentSpecificValue(entity, "Group") ??
+            contentSpecificValue(entity, "Type"),
+        );
+        return allowed.some(
+          (value) =>
+            value === "implement" ||
+            value === "any" ||
+            implementType === value ||
+            name === value ||
+            name.endsWith(` ${value}`),
+        );
+      }
       if (kind === "armor") {
         const category = contentSpecificValue(
           entity,
