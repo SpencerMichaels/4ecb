@@ -40,6 +40,8 @@ import {
 const repository = new ContentPackRepository();
 
 const HIDE_FLAVORTEXT_STORAGE_KEY = "4ecb.hideFlavortext.v1";
+export const KEEP_LARGE_AMOUNTS_IN_GOLD_STORAGE_KEY =
+  "4ecb.keepLargeAmountsInGold.v1";
 
 export interface ContentDownloadState {
   readonly phase:
@@ -80,6 +82,15 @@ export function App() {
       return false;
     }
   });
+  const [keepLargeAmountsInGold, setKeepLargeAmountsInGold] = useState(() => {
+    try {
+      return (
+        localStorage.getItem(KEEP_LARGE_AMOUNTS_IN_GOLD_STORAGE_KEY) === "1"
+      );
+    } catch {
+      return false;
+    }
+  });
   const firstRoute = useRef(true);
   const runtimeContentStarted = useRef(false);
   const route = useMemo(() => parseHashRoute(hash), [hash]);
@@ -109,6 +120,15 @@ export function App() {
       // The visual preference still applies for this session.
     }
   }, [hideFlavortext]);
+  useEffect(() => {
+    try {
+      if (keepLargeAmountsInGold)
+        localStorage.setItem(KEEP_LARGE_AMOUNTS_IN_GOLD_STORAGE_KEY, "1");
+      else localStorage.removeItem(KEEP_LARGE_AMOUNTS_IN_GOLD_STORAGE_KEY);
+    } catch {
+      // The wallet preference still applies for this session.
+    }
+  }, [keepLargeAmountsInGold]);
 
   const refresh = useCallback(async () => {
     const [installed, active, profile] = await Promise.all([
@@ -311,6 +331,8 @@ export function App() {
             onThemeChange={setTheme}
             hideFlavortext={hideFlavortext}
             onHideFlavortextChange={setHideFlavortext}
+            keepLargeAmountsInGold={keepLargeAmountsInGold}
+            onKeepLargeAmountsInGoldChange={setKeepLargeAmountsInGold}
           />
         ) : route.characterId === undefined ? (
           <CharacterLibraryPage
@@ -323,6 +345,7 @@ export function App() {
             characterId={route.characterId}
             navigation={route.builder ?? { workspace: "build" }}
             onNavigate={navigateBuilder}
+            keepLargeAmountsInGold={keepLargeAmountsInGold}
           />
         ) : (
           <CharacterSheetPage

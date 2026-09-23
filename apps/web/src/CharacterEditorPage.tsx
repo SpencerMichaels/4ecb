@@ -15,11 +15,17 @@ import {
 import { CharacterRepository } from "@4ecb/browser-storage";
 import { appContentRuntime, type RulesRuntimeClient } from "./app-runtime";
 import {
+  resolvedBoundProfile,
+  shouldShowBoundProfileWarning,
+  type BoundProfileResolution,
+} from "./bound-profile-resolution";
+import {
   currentCandidateDetailLevels,
   planningCandidateDetailLevels,
   publishEvaluationResult,
   selectedCandidateDetailLevels,
 } from "./builder-evaluation-plan";
+import { builderIssueGroups, type BuilderIssue } from "./builder-diagnostics";
 import {
   explicitlyInspectCandidate,
   firstSelectedCandidateId,
@@ -34,7 +40,6 @@ import {
   characterWalletTextKey,
   formatLegacyCurrency,
   resolveCharacterWallet,
-  type CurrencyAmount,
   type EquipmentSlotId,
   type BuildOccurrence,
   type CharacterBuild,
@@ -114,6 +119,7 @@ import {
   raceAbilityScoreCells,
   selectedDefinitionId,
   selectedChoiceHasWarning,
+  selectedChoiceIsHouseRule,
   shouldOmitIndividualChoiceHeading,
   themePowerGroups,
   unresolveEvaluatedChoiceCommand,
@@ -762,7 +768,7 @@ function CharacterOverview({
               className={`overview-checklist-pane overview-pane-${pane.toLocaleLowerCase().replaceAll(" ", "-")}`}
               key={pane}
             >
-              <h4>{pane}</h4>
+              <h4 className="selection-section-heading">{pane}</h4>
               <div className="overview-checklist-scroll">
                 <table>
                   <thead>
@@ -1361,7 +1367,7 @@ function CompactChoiceButtons({
   const clearable = onClear !== undefined;
   return (
     <fieldset className="compact-choice-picker">
-      <legend>{label}</legend>
+      <legend className="selection-subsection-heading">{label}</legend>
       <div
         className="compact-choice-options"
         {...(clearable ? {} : { "aria-label": label, role: "radiogroup" })}
@@ -3005,8 +3011,8 @@ function ChoiceFlowSection({
       ? undefined
       : byId.get(selectedRoot.definitionId.toLocaleLowerCase());
   const unresolved = choices.some(isUnresolvedChoice);
-  const warning = choices.some((choice) =>
-    selectedChoiceHasWarning(choice, evaluation),
+  const houseRule = choices.some((choice) =>
+    selectedChoiceIsHouseRule(choice, evaluation),
   );
   return (
     <section
@@ -3017,7 +3023,10 @@ function ChoiceFlowSection({
     >
       <header>
         <div>
-          <h4 id={`${choiceSectionId(root.id)}-heading`}>
+          <h4
+            className="selection-section-heading"
+            id={`${choiceSectionId(root.id)}-heading`}
+          >
             {contextualChoiceName(root, evaluation, (reference) =>
               byId.get(reference.trim().toLocaleLowerCase()),
             ) ??
@@ -3026,9 +3035,9 @@ function ChoiceFlowSection({
                 : choiceTitle(root))}
           </h4>
         </div>
-        {warning ? (
+        {houseRule ? (
           <span className="attention-badge">
-            <Icon name="warning" /> House rule
+            <Icon name="house" /> House rule
           </span>
         ) : unresolved ? (
           <span className="visually-hidden">Incomplete</span>
@@ -3044,7 +3053,10 @@ function ChoiceFlowSection({
           >
             <div className="choice-flow-step-heading">
               <span aria-hidden="true">{index + 1}</span>
-              <h5 id={`${choiceSectionId(choice.id)}-step-heading`}>
+              <h5
+                className="selection-subsection-heading"
+                id={`${choiceSectionId(choice.id)}-step-heading`}
+              >
                 {index === 0
                   ? choicePresentationLabel(choice.type)
                   : contextualChoiceTitle(choice, evaluation, byId)}
@@ -3184,7 +3196,10 @@ function AbilityIncreaseEditor({
     >
       <header>
         <div>
-          <h4 id={`${choiceSectionId(choices[0]!.id)}-heading`}>
+          <h4
+            className="selection-section-heading"
+            id={`${choiceSectionId(choices[0]!.id)}-heading`}
+          >
             Choose {choices.length} ability scores
           </h4>
           <KeyAbilitiesSummary sentence={keyAbilitiesSentence} />
@@ -3353,8 +3368,8 @@ function RepeatedChoiceGroup({
   const chosen = choices.filter(
     (choice) => choice.selectedOccurrenceId !== undefined,
   ).length;
-  const warning = choices.some((choice) =>
-    selectedChoiceHasWarning(choice, evaluation),
+  const houseRule = choices.some((choice) =>
+    selectedChoiceIsHouseRule(choice, evaluation),
   );
   return (
     <section
@@ -3365,15 +3380,18 @@ function RepeatedChoiceGroup({
     >
       <header>
         <div>
-          <h4 id={`${choiceSectionId(root.id)}-heading`}>
+          <h4
+            className="selection-section-heading"
+            id={`${choiceSectionId(root.id)}-heading`}
+          >
             {candidateKind === "feature"
               ? contextualChoiceTitle(root, evaluation, byId)
               : repeatedChoiceGroupTitle(choices, byId)}
           </h4>
         </div>
-        {warning ? (
+        {houseRule ? (
           <span className="attention-badge">
-            <Icon name="warning" /> House rule
+            <Icon name="house" /> House rule
           </span>
         ) : (
           <span className="choice-count">
@@ -3728,7 +3746,10 @@ function RetrainingControls({
       <header>
         <div>
           <p className="eyebrow">Optional retraining</p>
-          <h4 id={`${choiceSectionId(activeChoice.id)}-heading`}>
+          <h4
+            className="selection-section-heading"
+            id={`${choiceSectionId(activeChoice.id)}-heading`}
+          >
             {active.category[0]!.toLocaleUpperCase() + active.category.slice(1)}{" "}
             retraining
           </h4>
@@ -3814,7 +3835,7 @@ function BackgroundChoiceGroup({
       tabIndex={-1}
     >
       <header>
-        <h4>Backgrounds</h4>
+        <h4 className="selection-section-heading">Backgrounds</h4>
         <span className="choice-count">{chosenCount} chosen</span>
       </header>
       <div className="grouped-choice-list">
@@ -3966,7 +3987,7 @@ function SkillTrainingEditor({
       tabIndex={-1}
     >
       <header>
-        <h4>Skill Training</h4>
+        <h4 className="selection-section-heading">Skill Training</h4>
         <strong className="skill-choice-count" aria-live="polite">
           {chosenCount} out of {choices.length} skills chosen
         </strong>
@@ -3980,7 +4001,9 @@ function SkillTrainingEditor({
             return (
               <section className="skill-scope" key={scope.key}>
                 <header>
-                  <h5>{scopeTitle(scope)}</h5>
+                  <h5 className="selection-subsection-heading">
+                    {scopeTitle(scope)}
+                  </h5>
                   <span>
                     {scopeChosen} of {scope.choices.length} chosen
                   </span>
@@ -4352,7 +4375,7 @@ function CharacterDetailsEditor({
       <div className="character-details-workspace">
         <div className="character-details-form">
           <section className="character-detail-group">
-            <h4>Identity</h4>
+            <h4 className="selection-section-heading">Identity</h4>
             <div className="character-detail-fields character-detail-fields-compact">
               <label>
                 Current level
@@ -4380,7 +4403,7 @@ function CharacterDetailsEditor({
             </div>
           </section>
           <section className="character-detail-group">
-            <h4>Personal details</h4>
+            <h4 className="selection-section-heading">Personal details</h4>
             {evaluation === undefined ? (
               <p className="field-help">
                 Rules content is unavailable for gender, alignment, and deity.
@@ -4395,8 +4418,41 @@ function CharacterDetailsEditor({
                     const alignmentLocked =
                       forcedAlignment !== undefined &&
                       choice.type.trim().toLocaleLowerCase() === "alignment";
+                    const tableChoice =
+                      choiceSelectionTableKind(choice) !== undefined;
+                    const unresolved =
+                      choice.level <= effectiveLevel &&
+                      isUnresolvedChoice(choice);
+                    const unresolvedLabel = `${choice.type} requires a selection`;
                     return (
-                      <div className="compact-detail-row" key={choice.id}>
+                      <div
+                        className={`compact-detail-row${tableChoice ? " has-choice-heading" : ""}${unresolved ? " is-unresolved" : ""}`}
+                        key={choice.id}
+                      >
+                        {tableChoice ? (
+                          <div className="character-detail-choice-heading">
+                            <h5 className="selection-subsection-heading">
+                              {choice.type}
+                            </h5>
+                            {unresolved ? (
+                              <span
+                                aria-label={unresolvedLabel}
+                                className="detail-choice-attention"
+                                title={unresolvedLabel}
+                              >
+                                <Icon name="circle-help" />
+                              </span>
+                            ) : null}
+                          </div>
+                        ) : unresolved ? (
+                          <span
+                            aria-label={unresolvedLabel}
+                            className="detail-choice-attention"
+                            title={unresolvedLabel}
+                          >
+                            <Icon name="circle-help" />
+                          </span>
+                        ) : null}
                         <ChoiceEditor
                           choice={choice}
                           evaluation={evaluation}
@@ -4436,7 +4492,7 @@ function CharacterDetailsEditor({
             </div>
           </section>
           <section className="character-detail-group">
-            <h4>Character information</h4>
+            <h4 className="selection-section-heading">Character information</h4>
             <div className="character-detail-fields character-note-fields">
               {noteFields.map((field) => (
                 <CharacterTextField
@@ -4467,6 +4523,7 @@ export function CharacterEditorPage({
   characterId,
   navigation,
   onNavigate,
+  keepLargeAmountsInGold,
 }: {
   readonly characterId: string;
   readonly navigation: BuilderNavigation;
@@ -4475,10 +4532,13 @@ export function CharacterEditorPage({
     navigation: BuilderNavigation,
     replace?: boolean,
   ) => void;
+  readonly keepLargeAmountsInGold: boolean;
 }) {
   const hideFlavortext = useContext(HideFlavortextContext);
   const [character, setCharacter] = useState<CharacterRecord>();
   const [entities, setEntities] = useState<readonly ContentEntity[]>([]);
+  const [boundProfileResolution, setBoundProfileResolution] =
+    useState<BoundProfileResolution>("pending");
   const [, setRevision] = useState(0);
   const [saveState, setSaveState] = useState<SaveState>({
     phase: "loading",
@@ -4531,6 +4591,10 @@ export function CharacterEditorPage({
   useEffect(() => {
     let cancelled = false;
     const startedAt = performance.now();
+    setCharacter(undefined);
+    setEntities([]);
+    setBoundProfileResolution("pending");
+    setLoadError(undefined);
     characterLoadStartedAt.current = startedAt;
     firstEvaluationRecorded.current = false;
     void characters
@@ -4585,12 +4649,20 @@ export function CharacterEditorPage({
           new Set([characterTierAtLevel(loaded.build.effectiveLevel)]),
         );
         setSaveState({ phase: "saved", message: "Saved locally" });
-        if (loaded.profileBinding !== undefined) {
-          const pack = await appContentRuntime.getPack(
-            loaded.profileBinding.packId,
-          );
-          if (!cancelled && pack !== undefined) setEntities(pack.entities);
+        if (loaded.profileBinding === undefined) {
+          setBoundProfileResolution(resolvedBoundProfile(undefined, undefined));
+          return;
         }
+        const pack = await appContentRuntime.getPack(
+          loaded.profileBinding.packId,
+        );
+        if (cancelled) return;
+        const resolution = resolvedBoundProfile(
+          loaded.profileBinding,
+          pack?.manifest.contentDigest,
+        );
+        if (resolution === "available") setEntities(pack?.entities ?? []);
+        setBoundProfileResolution(resolution);
       })
       .catch((reason: unknown) => {
         if (!cancelled)
@@ -4628,7 +4700,7 @@ export function CharacterEditorPage({
     setCurrentEvaluation(undefined);
     setPlanningEvaluation(undefined);
     setSelectedLevelEvaluation(undefined);
-    if (packId === undefined) return;
+    if (packId === undefined || boundProfileResolution !== "available") return;
     let cancelled = false;
     void appContentRuntime
       .getRulesClient(packId, contentDigest)
@@ -4647,7 +4719,7 @@ export function CharacterEditorPage({
       cancelled = true;
       rulesClient.current = undefined;
     };
-  }, [contentDigest, packId]);
+  }, [boundProfileResolution, contentDigest, packId]);
 
   const build = transaction.current?.current;
   const planningHorizon =
@@ -4837,6 +4909,15 @@ export function CharacterEditorPage({
         (planningEvaluation?.choices ?? []).filter(isCharacterDetailChoice),
       ).flatMap(({ choices }) => choices),
     [planningEvaluation],
+  );
+  const unresolvedCharacterDetailChoices = useMemo(
+    () =>
+      characterDetailChoices.filter(
+        (choice) =>
+          choice.level <= (build?.effectiveLevel ?? selectedLevel) &&
+          isUnresolvedChoice(choice),
+      ),
+    [build?.effectiveLevel, characterDetailChoices, selectedLevel],
   );
   const requiredClassDeityChoices = useMemo(
     () => levelChoices.filter(isRequiredClassDeityChoice),
@@ -5345,35 +5426,58 @@ export function CharacterEditorPage({
     selectedClass,
     selectedClassKeyAbilities,
   );
-  const totalUnresolved =
-    (planningEvaluation?.choices ?? []).filter(
-      (choice) =>
-        isUnresolvedChoice(choice) &&
-        !isBuildPresetChoice(choice) &&
-        choice.level <= build.effectiveLevel,
-    ).length + (build.effectiveLevel >= 1 && abilityScoresIncomplete ? 1 : 0);
-  const diagnosticWarningCount =
-    planningEvaluation?.diagnostics.filter(
-      (diagnostic) => diagnostic.severity !== "info",
-    ).length ?? 0;
-  const plannedHouseRuleCount =
-    planningEvaluation?.occurrences.filter(
-      (occurrence) =>
-        occurrence.legality === "houserule" &&
-        occurrence.acquiredLevel <= planningHorizon,
-    ).length ?? 0;
-  const plannedChoiceWarningCount =
-    planningEvaluation?.choices.filter(
-      (choice) =>
-        choice.level <= planningHorizon &&
-        selectedChoiceHasWarning(choice, planningEvaluation),
-    ).length ?? 0;
-  const warningCount = Math.max(
-    diagnosticWarningCount,
-    plannedHouseRuleCount,
-    plannedChoiceWarningCount,
-    abilityScoresHouseRuled ? 1 : 0,
-  );
+  const builderIssues = builderIssueGroups({
+    evaluation: planningEvaluation,
+    byId,
+    effectiveLevel: build.effectiveLevel,
+    planningHorizon,
+    abilityScoresIncomplete,
+    abilityScoresHouseRuled,
+  });
+  const totalUnresolved = builderIssues.unresolved.length;
+  const warningCount = builderIssues.warnings.length;
+  const errorCount = builderIssues.errors.length;
+  const houseRuleCount = builderIssues.houseRules.length;
+  const navigateToDiagnosticIssue = (issue: BuilderIssue): void => {
+    if (issue.target?.kind === "abilities") {
+      setSelectedLevel(1);
+      setSelectedSectionByLevel((current) => ({
+        ...current,
+        1: "Ability Scores",
+      }));
+      onNavigate(characterId, {
+        workspace: "build",
+        level: 1,
+        section: "ability-scores",
+      });
+      return;
+    }
+    const target = issue.target;
+    if (target?.kind !== "choice") return;
+    const choice = planningEvaluation?.choices.find(
+      (candidate) => candidate.id === target.choiceId,
+    );
+    if (choice === undefined) return;
+    if (isCharacterDetailChoice(choice)) {
+      setSelectedChoiceId(choice.id);
+      onNavigate(characterId, { workspace: "details" });
+      return;
+    }
+    const section = isOptionalRetrainingChoice(choice)
+      ? "Retraining"
+      : legacyChoiceSection(choice);
+    setSelectedLevel(choice.level);
+    setSelectedChoiceId(choice.id);
+    setSelectedSectionByLevel((current) => ({
+      ...current,
+      [choice.level]: section,
+    }));
+    onNavigate(characterId, {
+      workspace: "build",
+      level: choice.level,
+      section: levelChoiceTabSlug(section),
+    });
+  };
   const activateLevelSection = (section: LevelChoiceTab): void => {
     setSelectedSectionByLevel((current) => ({
       ...current,
@@ -5575,7 +5679,7 @@ export function CharacterEditorPage({
           onDispatch={dispatch}
         />
       ) : null;
-    const warning = selectedChoiceHasWarning(choice, planningEvaluation);
+    const houseRule = selectedChoiceIsHouseRule(choice, planningEvaluation);
     return (
       <section
         {...(omitIndividualHeading
@@ -5595,13 +5699,16 @@ export function CharacterEditorPage({
         {omitIndividualHeading ? null : (
           <header>
             <div>
-              <h4 id={`${choiceSectionId(choice.id)}-heading`}>
+              <h4
+                className="selection-section-heading"
+                id={`${choiceSectionId(choice.id)}-heading`}
+              >
                 {contextualChoiceTitle(choice, planningEvaluation, byId)}
               </h4>
             </div>
-            {warning ? (
+            {houseRule ? (
               <span className="attention-badge">
-                <Icon name="warning" /> House rule
+                <Icon name="house" /> House rule
               </span>
             ) : isUnresolvedChoice(choice) ? (
               <span className="visually-hidden">Incomplete</span>
@@ -5639,6 +5746,36 @@ export function CharacterEditorPage({
       </section>
     );
   };
+
+  const diagnosticGroups: readonly {
+    title: string;
+    description: string;
+    issues: readonly BuilderIssue[];
+  }[] = [
+    {
+      title: "Unresolved choices",
+      description:
+        "Required choices that must be completed for the character's current level.",
+      issues: builderIssues.unresolved,
+    },
+    {
+      title: "Errors",
+      description: "Problems that prevent reliable rules evaluation.",
+      issues: builderIssues.errors,
+    },
+    {
+      title: "Warnings",
+      description:
+        "Rules the evaluator preserved but cannot fully verify or calculate.",
+      issues: builderIssues.warnings,
+    },
+    {
+      title: "House rules",
+      description:
+        "Intentional departures from standard character-building rules.",
+      issues: builderIssues.houseRules,
+    },
+  ];
 
   return (
     <main
@@ -5681,7 +5818,7 @@ export function CharacterEditorPage({
         <BuilderHeaderStats evaluation={currentEvaluation} />
       </header>
 
-      {entities.length === 0 ? (
+      {shouldShowBoundProfileWarning(boundProfileResolution) ? (
         <div className="profile-warning panel-warning">
           <Icon name="warning" /> Install or restore this character&apos;s bound
           content profile to evaluate choices. Its authoritative history remains
@@ -5732,8 +5869,14 @@ export function CharacterEditorPage({
             onClick={() => onNavigate(characterId, { workspace: "details" })}
           >
             <Icon name="details" /> Character details
-            {characterDetailChoices.some(isUnresolvedChoice) ? (
-              <span className="tab-attention">Needs attention</span>
+            {unresolvedCharacterDetailChoices.length > 0 ? (
+              <span
+                aria-label="Character details has unresolved required choices"
+                className="tab-attention"
+                title="Character details has unresolved required choices"
+              >
+                <Icon name="circle-help" />
+              </span>
             ) : null}
           </button>
           <button
@@ -5776,16 +5919,46 @@ export function CharacterEditorPage({
           </button>
         </div>
         <div aria-label="Builder status" className="builder-status">
-          <span
-            className={`builder-health${totalUnresolved > 0 ? " builder-health-attention" : ""}`}
-          >
-            {totalUnresolved} unresolved
-          </span>
-          <span
-            className={`builder-health${warningCount > 0 ? " builder-health-warning" : ""}`}
-          >
-            {warningCount} {warningCount === 1 ? "warning" : "warnings"}
-          </span>
+          {totalUnresolved > 0 ? (
+            <span
+              aria-label={`${totalUnresolved} unresolved ${totalUnresolved === 1 ? "choice" : "choices"}`}
+              className="builder-health builder-health-attention"
+              title={`${totalUnresolved} unresolved ${totalUnresolved === 1 ? "choice" : "choices"}`}
+            >
+              <Icon name="circle-help" />
+              <span aria-hidden="true">{totalUnresolved}</span>
+            </span>
+          ) : null}
+          {warningCount > 0 ? (
+            <span
+              aria-label={`${warningCount} ${warningCount === 1 ? "warning" : "warnings"}`}
+              className="builder-health builder-health-warning"
+              title={`${warningCount} ${warningCount === 1 ? "warning" : "warnings"}`}
+            >
+              <Icon name="warning" />
+              <span aria-hidden="true">{warningCount}</span>
+            </span>
+          ) : null}
+          {errorCount > 0 ? (
+            <span
+              aria-label={`${errorCount} ${errorCount === 1 ? "error" : "errors"}`}
+              className="builder-health builder-health-error"
+              title={`${errorCount} ${errorCount === 1 ? "evaluation error" : "evaluation errors"}`}
+            >
+              <Icon name="circle-x" />
+              <span aria-hidden="true">{errorCount}</span>
+            </span>
+          ) : null}
+          {houseRuleCount > 0 ? (
+            <span
+              aria-label={`${houseRuleCount} ${houseRuleCount === 1 ? "house rule" : "house rules"}`}
+              className="builder-health builder-health-house-rule"
+              title={`${houseRuleCount} ${houseRuleCount === 1 ? "house rule" : "house rules"}`}
+            >
+              <Icon name="house" />
+              <span aria-hidden="true">{houseRuleCount}</span>
+            </span>
+          ) : null}
           <span
             aria-live={saveState.phase === "failed" ? "assertive" : "polite"}
             className={`save-status save-${saveState.phase}`}
@@ -6284,20 +6457,48 @@ export function CharacterEditorPage({
         hidden={workspaceTab !== "diagnostics"}
       >
         <header>
-          <h3 id="diagnostics-heading">Diagnostics and legality</h3>
+          <h3 id="diagnostics-heading">Diagnostics</h3>
         </header>
-        <div className="standalone-workspace-content">
-          {currentEvaluation === undefined ||
-          currentEvaluation.diagnostics.length === 0 ? (
-            <p>No evaluator diagnostics.</p>
+        <div className="standalone-workspace-content diagnostics-workspace">
+          {planningEvaluation === undefined ? (
+            <p>Evaluating character…</p>
+          ) : diagnosticGroups.every(({ issues }) => issues.length === 0) ? (
+            <p>No build issues.</p>
           ) : (
-            <ul className="diagnostic-list">
-              {currentEvaluation.diagnostics.map((diagnostic, index) => (
-                <li key={`${diagnostic.code}-${index}`}>
-                  <strong>{diagnostic.code}</strong>: {diagnostic.message}
-                </li>
-              ))}
-            </ul>
+            diagnosticGroups.map(({ title, description, issues }) =>
+              issues.length === 0 ? null : (
+                <section className="diagnostic-group" key={title}>
+                  <header>
+                    <h4>
+                      {title} <span>{issues.length}</span>
+                    </h4>
+                    <p>{description}</p>
+                  </header>
+                  <ul className="diagnostic-list">
+                    {issues.map((issue) => (
+                      <li key={issue.key}>
+                        <div>
+                          <strong>{issue.title}</strong>
+                          <p>{issue.detail}</p>
+                          <p className="diagnostic-effect">
+                            <strong>Effect:</strong> {issue.effect}
+                          </p>
+                        </div>
+                        {issue.target === undefined ? null : (
+                          <button
+                            className="secondary-button"
+                            type="button"
+                            onClick={() => navigateToDiagnosticIssue(issue)}
+                          >
+                            Review
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ),
+            )
           )}
         </div>
       </section>
@@ -6311,6 +6512,7 @@ export function CharacterEditorPage({
             {...(packId === undefined ? {} : { packId })}
             activeDefinitionIds={currentEvaluation?.activeDefinitionIds ?? []}
             hideFlavortext={hideFlavortext}
+            keepLargeAmountsInGold={keepLargeAmountsInGold}
             workspace={workspaceTab === "shop" ? "shop" : "equipment"}
             loadoutView={
               navigation.workspace === "equipment" &&
@@ -6350,7 +6552,12 @@ export function CharacterEditorPage({
               dispatch({ kind: "put-inventory", entry })
             }
             onPurchase={(entry, priceCopper) =>
-              dispatch({ kind: "purchase-inventory", entry, priceCopper })
+              dispatch({
+                kind: "purchase-inventory",
+                entry,
+                priceCopper,
+                keepLargeAmountsInGold,
+              })
             }
             onSell={(entry, priceCopper, percentage) =>
               dispatch({
@@ -6358,6 +6565,7 @@ export function CharacterEditorPage({
                 entryId: entry.id,
                 priceCopper,
                 percentage,
+                keepLargeAmountsInGold,
               })
             }
             onEquipSlot={(entryId, slots, currentEntryId, currentSlots) => {
@@ -6374,23 +6582,21 @@ export function CharacterEditorPage({
               );
               if (command !== undefined) dispatch(command);
             }}
-            onSetMoney={(location, denomination, value) => {
-              const source =
-                location === "carried" ? carriedWallet : storedWallet;
-              const short = {
-                copper: "cp",
-                silver: "sp",
-                gold: "gp",
-                platinum: "pp",
-                astral: "ad",
-              }[denomination] as keyof CurrencyAmount;
+            onSetWallet={(nextWallet) => {
+              const amount = (location: "carried" | "stored") => ({
+                cp: Math.max(0, Math.trunc(nextWallet[location].copper)),
+                sp: Math.max(0, Math.trunc(nextWallet[location].silver)),
+                gp: Math.max(0, Math.trunc(nextWallet[location].gold)),
+                pp: Math.max(0, Math.trunc(nextWallet[location].platinum)),
+                ad: Math.max(0, Math.trunc(nextWallet[location].astral)),
+              });
               dispatch({
-                kind: "set-text",
-                name: characterWalletTextKey(build.effectiveLevel, location),
-                value: formatLegacyCurrency({
-                  ...source,
-                  [short]: Math.max(0, Math.trunc(value)),
-                }),
+                kind: "batch",
+                commands: (["carried", "stored"] as const).map((location) => ({
+                  kind: "set-text" as const,
+                  name: characterWalletTextKey(build.effectiveLevel, location),
+                  value: formatLegacyCurrency(amount(location)),
+                })),
               });
             }}
             onAdjustMoney={(deltaCopper) => {
@@ -6403,6 +6609,7 @@ export function CharacterEditorPage({
                   resolveCharacterWallet(activeBuild, "carried").amount,
                   resolveCharacterWallet(activeBuild, "stored").amount,
                   deltaCopper,
+                  keepLargeAmountsInGold,
                 );
               } catch (reason: unknown) {
                 return reason instanceof Error

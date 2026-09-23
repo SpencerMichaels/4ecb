@@ -8,6 +8,7 @@ import {
   BookMarked,
   BookOpen,
   Brain,
+  Calculator,
   ChartNoAxesColumnIncreasing,
   Check,
   ChevronRight,
@@ -16,6 +17,8 @@ import {
   Circle,
   CircleDashed,
   CircleDollarSign,
+  CircleHelp,
+  CircleX,
   Clock3,
   Copy,
   Crosshair,
@@ -34,6 +37,7 @@ import {
   Hand,
   Handbag,
   HardHat,
+  House,
   Key,
   KeyRound,
   Layers3,
@@ -95,12 +99,15 @@ export type IconName =
   | "book"
   | "book-marked"
   | "brain"
+  | "calculator"
   | "character"
   | "check"
   | "chevron"
   | "church"
   | "circle"
   | "circle-dollar-sign"
+  | "circle-help"
+  | "circle-x"
   | "class"
   | "clock"
   | "companion"
@@ -123,6 +130,7 @@ export type IconName =
   | "hand"
   | "handbag"
   | "hard-hat"
+  | "house"
   | "item"
   | "key"
   | "key-round"
@@ -178,12 +186,15 @@ const icons: Record<IconName, LucideIcon> = {
   book: BookOpen,
   "book-marked": BookMarked,
   brain: Brain,
+  calculator: Calculator,
   character: UserRound,
   check: Check,
   chevron: ChevronRight,
   church: Church,
   circle: Circle,
   "circle-dollar-sign": CircleDollarSign,
+  "circle-help": CircleHelp,
+  "circle-x": CircleX,
   class: Shield,
   clock: Clock3,
   companion: PawPrint,
@@ -206,6 +217,7 @@ const icons: Record<IconName, LucideIcon> = {
   hand: Hand,
   handbag: Handbag,
   "hard-hat": HardHat,
+  house: House,
   item: Backpack,
   key: Key,
   "key-round": KeyRound,

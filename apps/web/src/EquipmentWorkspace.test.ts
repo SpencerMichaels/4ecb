@@ -10,6 +10,7 @@ import {
   catalogItemDetail,
   inventoryEquippedStatus,
   inventoryItemDetail,
+  walletDisplayCurrency,
 } from "./EquipmentWorkspace";
 
 function entity(
@@ -42,6 +43,39 @@ function entity(
 }
 
 describe("equipment item details", () => {
+  it("keeps explicit large coins while showing lower overflow as gold", () => {
+    const wallet = {
+      carried: {
+        copper: 0,
+        silver: 0,
+        gold: 10_000,
+        platinum: 2,
+        astral: 1,
+      },
+      stored: {
+        copper: 0,
+        silver: 0,
+        gold: 5_000,
+        platinum: 3,
+        astral: 0,
+      },
+    };
+    expect(walletDisplayCurrency(wallet, true)).toEqual({
+      ad: 1,
+      pp: 5,
+      gp: 15_000,
+      sp: 0,
+      cp: 0,
+    });
+    expect(walletDisplayCurrency(wallet, false)).toEqual({
+      ad: 2,
+      pp: 55,
+      gp: 0,
+      sp: 0,
+      cp: 0,
+    });
+  });
+
   it("shows equipped state without turning ordinary single copies into counts", () => {
     const entry: BuildInventoryEntry = {
       id: "item",
@@ -325,5 +359,48 @@ describe("equipment item details", () => {
     expect(markup).not.toContain("composed-weapon-card");
     expect(markup).not.toContain("composed-item-details");
     expect(markup).toContain("Source: Public gear source");
+  });
+
+  it("shows the highest usable item created by an alchemical formula", () => {
+    const formula = entity(
+      "PUBLIC_FORMULA",
+      "Public Formula",
+      "Ritual",
+      "Public formula source",
+      {
+        type: "Alchemical Formula",
+        Level: "1",
+        _RELATED_ITEMS: "PUBLIC_ITEM_1,PUBLIC_ITEM_6,PUBLIC_ITEM_11",
+      },
+    );
+    const related = [1, 6, 11].map((level) =>
+      entity(
+        `PUBLIC_ITEM_${level}`,
+        `Public Alchemical Item (level ${level})`,
+        "Magic Item",
+        "Public item source",
+        { "Magic Item Type": "Alchemical", Level: String(level) },
+      ),
+    );
+    const byId = new Map(
+      [formula, ...related].map((item) => [item.id.toLocaleLowerCase(), item]),
+    );
+    const markup = renderToStaticMarkup(
+      createElement(ItemDetail, {
+        item: {
+          entities: [formula],
+          displayName: formula.name,
+          effectiveLevel: 8,
+        },
+        hideFlavortext: false,
+        byId,
+      }),
+    );
+
+    expect(markup).toContain("Public Formula");
+    expect(markup).toContain("Public Alchemical Item (level 6)");
+    expect(markup).not.toContain("Public Alchemical Item (level 11)");
+    expect(markup).not.toContain("Creates");
+    expect(markup.match(/candidate-detail tone-/g)).toHaveLength(2);
   });
 });

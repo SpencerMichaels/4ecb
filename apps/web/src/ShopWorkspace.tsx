@@ -31,6 +31,122 @@ type SortColumn = "name" | "level" | "price" | "owned";
 type SortDirection = "ascending" | "descending";
 type AcquireMode = "buy" | "give";
 
+const SHOP_SESSION_KEY = "4ecb.shopPreferences.v1";
+
+interface ShopSessionPreferences {
+  readonly browse: ShopBrowseId;
+  readonly search: string;
+  readonly slot: string;
+  readonly subtype: string;
+  readonly affordable: boolean;
+  readonly proficient: boolean;
+  readonly knownOnly: boolean;
+  readonly advancedOpen: boolean;
+  readonly legacy: string;
+  readonly source: string;
+  readonly rarity: string;
+  readonly tier: string;
+  readonly sort: {
+    readonly column: SortColumn;
+    readonly direction: SortDirection;
+  };
+}
+
+const DEFAULT_SHOP_SESSION_PREFERENCES: ShopSessionPreferences = {
+  browse: "adventuring-gear",
+  search: "",
+  slot: "",
+  subtype: "",
+  affordable: true,
+  proficient: true,
+  knownOnly: false,
+  advancedOpen: false,
+  legacy: "",
+  source: "",
+  rarity: "",
+  tier: "",
+  sort: { column: "name", direction: "ascending" },
+};
+
+function isShopBrowseId(value: unknown): value is ShopBrowseId {
+  return SHOP_BROWSE_CATEGORIES.some(({ id }) => id === value);
+}
+
+function isSortColumn(value: unknown): value is SortColumn {
+  return ["name", "level", "price", "owned"].includes(String(value));
+}
+
+function isSortDirection(value: unknown): value is SortDirection {
+  return value === "ascending" || value === "descending";
+}
+
+export function readShopSessionPreferences(
+  storage: Pick<Storage, "getItem"> | undefined = typeof window === "undefined"
+    ? undefined
+    : window.sessionStorage,
+): ShopSessionPreferences {
+  if (storage === undefined) return DEFAULT_SHOP_SESSION_PREFERENCES;
+  try {
+    const raw = storage.getItem(SHOP_SESSION_KEY);
+    if (raw === null) return DEFAULT_SHOP_SESSION_PREFERENCES;
+    const saved = JSON.parse(raw) as Record<string, unknown>;
+    const savedSort =
+      typeof saved.sort === "object" && saved.sort !== null
+        ? (saved.sort as Record<string, unknown>)
+        : {};
+    return {
+      browse: isShopBrowseId(saved.browse)
+        ? saved.browse
+        : DEFAULT_SHOP_SESSION_PREFERENCES.browse,
+      search: typeof saved.search === "string" ? saved.search : "",
+      slot: typeof saved.slot === "string" ? saved.slot : "",
+      subtype: typeof saved.subtype === "string" ? saved.subtype : "",
+      affordable:
+        typeof saved.affordable === "boolean" ? saved.affordable : true,
+      proficient:
+        typeof saved.proficient === "boolean" ? saved.proficient : true,
+      knownOnly: typeof saved.knownOnly === "boolean" ? saved.knownOnly : false,
+      advancedOpen:
+        typeof saved.advancedOpen === "boolean" ? saved.advancedOpen : false,
+      legacy: typeof saved.legacy === "string" ? saved.legacy : "",
+      source: typeof saved.source === "string" ? saved.source : "",
+      rarity: typeof saved.rarity === "string" ? saved.rarity : "",
+      tier: typeof saved.tier === "string" ? saved.tier : "",
+      sort: {
+        column: isSortColumn(savedSort.column) ? savedSort.column : "name",
+        direction: isSortDirection(savedSort.direction)
+          ? savedSort.direction
+          : "ascending",
+      },
+    };
+  } catch {
+    return DEFAULT_SHOP_SESSION_PREFERENCES;
+  }
+}
+
+export function writeShopSessionPreferences(
+  preferences: ShopSessionPreferences,
+  storage: Pick<Storage, "setItem"> | undefined = typeof window === "undefined"
+    ? undefined
+    : window.sessionStorage,
+): void {
+  if (storage === undefined) return;
+  try {
+    storage.setItem(SHOP_SESSION_KEY, JSON.stringify(preferences));
+  } catch {
+    // Shop preferences are deliberately best-effort session UI state.
+  }
+}
+
+export function preferredShopBrowse(
+  routeCategory: ShopBrowseId | "items" | "scrolls",
+  storage?: Pick<Storage, "getItem">,
+): ShopBrowseId {
+  if (routeCategory === "scrolls") return "consumables";
+  if (routeCategory !== "items") return routeCategory;
+  return readShopSessionPreferences(storage).browse;
+}
+
 interface AcquisitionRequest {
   readonly entity: ContentEntity;
   readonly mode: AcquireMode;
@@ -185,22 +301,25 @@ export function ShopWorkspace({
   onAcquire,
   onBrowseChange,
 }: ShopWorkspaceProps) {
-  const [search, setSearch] = useState("");
-  const [slot, setSlot] = useState("");
-  const [subtype, setSubtype] = useState("");
-  const [affordable, setAffordable] = useState(true);
-  const [proficient, setProficient] = useState(true);
-  const [knownOnly, setKnownOnly] = useState(false);
+  const initialPreferences = useMemo(readShopSessionPreferences, []);
+  const [search, setSearch] = useState(initialPreferences.search);
+  const [slot, setSlot] = useState(initialPreferences.slot);
+  const [subtype, setSubtype] = useState(initialPreferences.subtype);
+  const [affordable, setAffordable] = useState(initialPreferences.affordable);
+  const [proficient, setProficient] = useState(initialPreferences.proficient);
+  const [knownOnly, setKnownOnly] = useState(initialPreferences.knownOnly);
   const [inspectedEntityId, setInspectedEntityId] = useState<string>();
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [legacy, setLegacy] = useState("");
-  const [source, setSource] = useState("");
-  const [rarity, setRarity] = useState("");
-  const [tier, setTier] = useState("");
+  const [advancedOpen, setAdvancedOpen] = useState(
+    initialPreferences.advancedOpen,
+  );
+  const [legacy, setLegacy] = useState(initialPreferences.legacy);
+  const [source, setSource] = useState(initialPreferences.source);
+  const [rarity, setRarity] = useState(initialPreferences.rarity);
+  const [tier, setTier] = useState(initialPreferences.tier);
   const [sort, setSort] = useState<{
     readonly column: SortColumn;
     readonly direction: SortDirection;
-  }>({ column: "name", direction: "ascending" });
+  }>(initialPreferences.sort);
   const [offset, setOffset] = useState(0);
   const [expandedFamilies, setExpandedFamilies] = useState<ReadonlySet<string>>(
     () => new Set(),
@@ -216,6 +335,38 @@ export function ShopWorkspace({
   const [physicalSubtype, setPhysicalSubtype] = useState("");
   const [selectedPhysicalId, setSelectedPhysicalId] = useState("");
   const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    writeShopSessionPreferences({
+      browse,
+      search,
+      slot,
+      subtype,
+      affordable,
+      proficient,
+      knownOnly,
+      advancedOpen,
+      legacy,
+      source,
+      rarity,
+      tier,
+      sort,
+    });
+  }, [
+    advancedOpen,
+    affordable,
+    browse,
+    knownOnly,
+    legacy,
+    proficient,
+    rarity,
+    search,
+    slot,
+    sort,
+    source,
+    subtype,
+    tier,
+  ]);
 
   const catalog = useMemo(
     () => entities.filter((entity) => shopBrowseCategory(entity) !== undefined),
@@ -326,11 +477,7 @@ export function ShopWorkspace({
   );
 
   useEffect(() => {
-    const next = retainedShopFilter(
-      slot,
-      slots,
-      learning || slots.length === 0,
-    );
+    const next = retainedShopFilter(slot, slots, learning || slots.length <= 1);
     if (next !== slot) {
       setSlot(next);
       setSubtype("");
@@ -342,7 +489,7 @@ export function ShopWorkspace({
     const next = retainedShopFilter(
       subtype,
       subtypes,
-      learning || subtypes.length === 0,
+      learning || subtypes.length <= 1,
     );
     if (next !== subtype) {
       setSubtype(next);
@@ -540,7 +687,7 @@ export function ShopWorkspace({
                 );
               }}
             >
-              {displayName}
+              <span>{displayName}</span>
             </button>
           </div>
         </th>
@@ -614,64 +761,64 @@ export function ShopWorkspace({
             ))}
           </select>
         </label>
-        <label className="shop-search">
-          Search
-          <Icon name="search" />
-          <input
-            type="search"
-            value={search}
-            placeholder="Search all items…"
+        <label>
+          Slot
+          <select
+            disabled={learning || slots.length <= 1}
+            value={slot}
             onChange={(event) => {
-              setSearch(event.currentTarget.value);
+              setSlot(event.currentTarget.value);
+              setSubtype("");
               setOffset(0);
             }}
-          />
+          >
+            {learning || slots.length <= 1 ? (
+              <option>—</option>
+            ) : (
+              <>
+                <option value="">All slots</option>
+                {slots.map((value) => (
+                  <option key={value}>{value}</option>
+                ))}
+              </>
+            )}
+          </select>
+        </label>
+        <label>
+          Subtype
+          <select
+            disabled={learning || subtypes.length <= 1}
+            value={subtype}
+            onChange={(event) => {
+              setSubtype(event.currentTarget.value);
+              setOffset(0);
+            }}
+          >
+            {learning || subtypes.length <= 1 ? (
+              <option>—</option>
+            ) : (
+              <>
+                <option value="">All subtypes</option>
+                {subtypes.map((value) => (
+                  <option key={value}>{value}</option>
+                ))}
+              </>
+            )}
+          </select>
         </label>
         <div className="shop-result-tools">
-          <label>
-            Slot
-            <select
-              disabled={learning || slots.length === 0}
-              value={slot}
+          <label className="shop-search">
+            Search
+            <Icon name="search" />
+            <input
+              type="search"
+              value={search}
+              placeholder="Search all items…"
               onChange={(event) => {
-                setSlot(event.currentTarget.value);
-                setSubtype("");
+                setSearch(event.currentTarget.value);
                 setOffset(0);
               }}
-            >
-              {learning || slots.length === 0 ? (
-                <option>—</option>
-              ) : (
-                <>
-                  <option value="">All slots</option>
-                  {slots.map((value) => (
-                    <option key={value}>{value}</option>
-                  ))}
-                </>
-              )}
-            </select>
-          </label>
-          <label>
-            Subtype
-            <select
-              disabled={learning || subtypes.length === 0}
-              value={subtype}
-              onChange={(event) => {
-                setSubtype(event.currentTarget.value);
-                setOffset(0);
-              }}
-            >
-              {learning || subtypes.length === 0 ? (
-                <option>—</option>
-              ) : (
-                <>
-                  <option value="">All subtypes</option>
-                  {subtypes.map((value) => (
-                    <option key={value}>{value}</option>
-                  ))}
-                </>
-              )}
-            </select>
+            />
           </label>
           <button
             className="shop-filter-chip"

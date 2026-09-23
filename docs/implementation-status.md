@@ -96,6 +96,21 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   that cannot be placed without ambiguity remain rules-active and visibly
   explained rather than being silently unequipped.
 
+### Builder diagnostics refinement (2026-09-22)
+
+- Builder status now keeps four compact, nonzero icon counts for unresolved
+  choices, evaluator warnings, evaluator errors, and explicit house rules.
+  House-ruledness is no longer folded into warning totals, and required-choice
+  engine diagnostics are represented only by the corresponding unresolved item.
+- The header and Diagnostics workspace consume the same deduplicated structured
+  issue groups. Diagnostics now explains what each issue is and what it affects,
+  and provides a Review action to the exact choice or level-1 ability-score pane
+  where the evaluator exposes a stable target.
+- Unknown rules explicitly state that their source representation is preserved
+  while their mechanical effect is not calculated. Intentional house-rule
+  selections remain active and exportable while being reported separately from
+  actual evaluation failures.
+
 ## M5.5 candidate-table initialization checkpoint (2026-09-18)
 
 - Opening a Build category or Character details pane now gives its first shared
@@ -649,7 +664,9 @@ Equipment, and embedded/collapsible cards.
   Price/Owned sorting, and session-persistent preferences replace the former
   one-table query form. Affordable and Proficient start enabled; learning
   categories substitute the Known toggle while retaining disabled Slot/Subtype
-  controls for layout stability.
+  controls for layout stability. First-time Shop visits open Adventuring gear
+  rather than the expensive All Items view; returning during the same browser
+  session restores the last Browse, search, filter, and sort configuration.
 - All Items uses the same high-level headings as Browse. Dense rows use canonical
   item icons, fixed right-aligned numeric/action columns, independent Buy and
   Give controls, and a bottom-right not-proficient cue. Give records an exact
@@ -663,15 +680,32 @@ Equipment, and embedded/collapsible cards.
   aliases remove Weapon/Armor/Shield/implement carrier words from table and
   detail headings without changing canonical IDs or names.
 - The descriptive detail card no longer contains acquisition controls. Funds are
-  sticky above it and use the same denomination summary and Edit modal as
-  Equipment; Funds and Details move as one sticky rail. The shared modal retains
-  Quick adjust with draft-only feedback until Apply, while Cancel discards the
-  draft. Compatible physical-item selection is a separate dialog using
+  independently sticky above the normally scrolling detail cards and use the
+  same denomination summary and Edit modal as Equipment. Shop exposes Quick
+  adjust directly as an icon-triggered popover whose preselected field submits
+  with Enter; the shared modal is reserved for explicit denomination editing.
+  Both compact summaries omit the redundant visible Funds label while retaining
+  their accessible section name. Compatible physical-item selection is a separate dialog using
   authored compatibility. Standard magic implements create the standalone
   `[Magic Item]` legacy shape; superior implements create the exact ordered
   `[Superior Implement, Magic Item]` shape. A one-choice case bypasses the
   dialog. Single-type implement cards use a qualifier such as
   `Implement Enchantment (Staff)` and omit a redundant compatibility row.
+- The follow-up full-corpus taxonomy audit normalizes every `Ritual Scroll`
+  record to the player-facing **Scrolls** subtype instead of leaking the type of
+  the supported practice, collapses generic consumable labels to **Other**, and
+  disables Slot or Subtype controls that have only one represented choice.
+  Authored mount, worn/tattoo, universal-implement, and special-item evidence
+  now closes previously unclassified or misplaced edge cases, while internal
+  companion-advancement and workaround definitions remain outside the catalog.
+  Inspecting an alchemical formula follows its exact `_RELATED_ITEMS` IDs and
+  renders the highest created-item variant not above character level as a
+  regular secondary detail card, falling back to the lowest variant.
+- Follow-up verification passes 62 focused Shop, Equipment, helper,
+  profile-resolution, and accessibility tests plus all 484 public tests across
+  67 files. Web TypeScript, affected lint, formatting, and diff checks pass.
+  The earlier production/PWA, print, deterministic-pack, and benchmark checks
+  were not rerun for this follow-up.
 - Focused verification passes 68 Shop, Equipment, routing, helper, and
   accessibility tests. The complete public gate passes all 475 tests across 66 files, every
   workspace TypeScript check, the production/PWA build, Chromium and Firefox
@@ -684,6 +718,13 @@ Equipment, and embedded/collapsible cards.
   prototype. The production denomination-cell treatment was retained by
   explicit preference. This accepts the combined Shop and ritual/practice
   interface without declaring the remaining M5.5 closure work complete.
+
+- Display settings now offer **Keep large amounts in gold**. When enabled,
+  automatic adjustments, purchases, and sales normalize CP/SP overflow through
+  GP without promoting it to PP or AD. Explicitly entered PP and AD remain
+  visible and persisted until spending requires a larger coin to be broken;
+  exact total value, carried/stored order, and legacy currency export are
+  unchanged.
 
 ## M5.5 Equipment/Shop navigation candidate (2026-09-19)
 

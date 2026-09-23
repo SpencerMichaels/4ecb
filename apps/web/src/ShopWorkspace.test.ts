@@ -7,9 +7,12 @@ import type { ContentEntity } from "@4ecb/content-domain";
 
 import {
   compatibleChoiceType,
+  preferredShopBrowse,
+  readShopSessionPreferences,
   retainedShopFilter,
   shopKnownFilterMatches,
   ShopWorkspace,
+  writeShopSessionPreferences,
 } from "./ShopWorkspace";
 
 const potion: ContentEntity = {
@@ -54,6 +57,63 @@ const ownedPotion: BuildInventoryEntry = {
 };
 
 describe("Shop workspace", () => {
+  it("defaults first-time Shop browsing to Adventuring gear", () => {
+    const emptyStorage = { getItem: () => null };
+    expect(preferredShopBrowse("items", emptyStorage)).toBe("adventuring-gear");
+    expect(preferredShopBrowse("armor-shields", emptyStorage)).toBe(
+      "armor-shields",
+    );
+  });
+
+  it("round-trips the complete filter and sort configuration for the session", () => {
+    let stored: string | null = null;
+    const storage = {
+      getItem: () => stored,
+      setItem: (_key: string, value: string) => {
+        stored = value;
+      },
+    };
+    const preferences = {
+      browse: "weapons" as const,
+      search: "axe",
+      slot: "Held",
+      subtype: "Axe",
+      affordable: false,
+      proficient: false,
+      knownOnly: true,
+      advancedOpen: true,
+      legacy: "Magic Weapons",
+      source: "Public fixture",
+      rarity: "Common",
+      tier: "Heroic",
+      sort: { column: "price" as const, direction: "descending" as const },
+    };
+
+    writeShopSessionPreferences(preferences, storage);
+
+    expect(readShopSessionPreferences(storage)).toEqual(preferences);
+    expect(preferredShopBrowse("items", storage)).toBe("weapons");
+  });
+
+  it("falls back safely when saved Shop preferences are invalid", () => {
+    const storage = {
+      getItem: () =>
+        JSON.stringify({
+          browse: "not-a-category",
+          search: 42,
+          affordable: "yes",
+          sort: { column: "damage", direction: "sideways" },
+        }),
+    };
+
+    expect(readShopSessionPreferences(storage)).toMatchObject({
+      browse: "adventuring-gear",
+      search: "",
+      affordable: true,
+      sort: { column: "name", direction: "ascending" },
+    });
+  });
+
   it("retains only filter values represented by the current Browse result", () => {
     expect(retainedShopFilter("Head", ["Head", "Neck"], false)).toBe("Head");
     expect(retainedShopFilter("Head", ["Neck"], false)).toBe("");
@@ -128,5 +188,39 @@ describe("Shop workspace", () => {
     expect(markup).not.toContain(">Known<");
     expect(markup).not.toMatch(/aria-label="Buy Public Potion"[^>]*disabled/);
     expect(markup).not.toMatch(/aria-label="Give Public Potion"[^>]*disabled/);
+  });
+
+  it("disables a subtype filter that has only one represented value", () => {
+    const ammunition = {
+      ...potion,
+      id: "PUBLIC_AMMUNITION",
+      name: "Public Ammunition",
+      specifics: [
+        {
+          name: "Magic Item Type",
+          value: "Ammunition",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+    const markup = renderToStaticMarkup(
+      createElement(ShopWorkspace, {
+        browse: "ammunition",
+        characterLevel: 1,
+        entities: [ammunition],
+        inventory: [],
+        ownedDefinitions: [],
+        walletCopper: 100_000,
+        onInspect: vi.fn(),
+        onAcquire: vi.fn(),
+        onBrowseChange: vi.fn(),
+      }),
+    );
+
+    expect(markup).toMatch(
+      /Subtype<select disabled=""[^>]*><option>—<\/option>/,
+    );
+    expect(markup).not.toContain("All subtypes");
   });
 });

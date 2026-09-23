@@ -1177,6 +1177,17 @@ export function selectedChoiceHasWarning(
   );
 }
 
+export function selectedChoiceIsHouseRule(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+): boolean {
+  return evaluation.occurrences.some(
+    (occurrence) =>
+      occurrence.id === choice.selectedOccurrenceId &&
+      occurrence.legality === "houserule",
+  );
+}
+
 function interveningLevelFrameCommands(
   build: CharacterBuild,
   targetLevel: number,

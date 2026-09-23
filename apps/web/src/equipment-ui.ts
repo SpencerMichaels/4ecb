@@ -476,6 +476,7 @@ function familyCompatibility(entity: ContentEntity): string {
 }
 
 const SHOP_WORN_TYPES = new Set([
+  "arms slot",
   "arms slot item",
   "feet slot item",
   "hands slot item",
@@ -484,6 +485,16 @@ const SHOP_WORN_TYPES = new Set([
   "ring",
   "tattoo",
   "waist slot item",
+]);
+
+const CANONICAL_SHOP_SUBTYPES = new Map([
+  ["any melee", "Any melee"],
+  ["any ranged", "Any ranged"],
+  ["axes", "Axe"],
+  ["hand crossbow", "Hand crossbow"],
+  ["heavy blade", "Heavy blade"],
+  ["heavy shields", "Heavy shield"],
+  ["light blade", "Light blade"],
 ]);
 
 /** Classifies catalog records from authored fields, never name fragments. */
@@ -498,11 +509,15 @@ export function shopBrowseCategory(
 
   const type = normalized(entity.type);
   const magicType = normalized(contentSpecificValue(entity, "Magic Item Type"));
+  const itemSlot = normalized(contentSpecificValue(entity, "Item Slot"));
   const gearCategory = normalized(
     contentSpecificValue(entity, "Gear Category") ??
       contentSpecificValue(entity, "Category"),
   );
   const enchant = normalized(contentSpecificValue(entity, "_IsEnchant"));
+  const universalImplement =
+    normalized(contentSpecificValue(entity, "_UniversalImplement")) === "true";
+  if (type.startsWith("companion ability increase")) return undefined;
   if (type === "weapon") return "weapons";
   if (type === "armor") return "armor-shields";
   if (type === "superior implement") return "implements";
@@ -518,11 +533,20 @@ export function shopBrowseCategory(
     if (magicType === "weapon") return "weapon-enchantments";
     if (magicType === "armor" || enchant === "shield")
       return "armor-enchantments";
+    if (universalImplement) return "implement-enchantments";
     if (IMPLEMENT_KINDS.some((kind) => magicType === kind))
       return "implement-enchantments";
     if (SHOP_WORN_TYPES.has(magicType)) return "worn-items";
+    if (
+      magicType.includes("wondrous") &&
+      ["arms", "feet", "hands", "head", "neck", "ring", "tattoo", "waist"].some(
+        (slot) => itemSlot.includes(slot),
+      )
+    )
+      return "worn-items";
     if (magicType.includes("wondrous")) return "wondrous-items";
     if (
+      magicType === "special" ||
       REWARD_KINDS.some((kind) => magicType === kind) ||
       ["artifact", "intelligent item", "item set", "augment"].some((kind) =>
         magicType.includes(kind),
@@ -537,7 +561,10 @@ export function shopBrowseCategory(
   }
   if (
     ["mount", "barding", "companion", "familiar"].some(
-      (kind) => type.includes(kind) || magicType.includes(kind),
+      (kind) =>
+        type.includes(kind) ||
+        magicType.includes(kind) ||
+        gearCategory === kind,
     )
   )
     return "companions-mounts";
@@ -612,8 +639,11 @@ export function shopSlot(entity: ContentEntity): string | undefined {
     return "Body";
   }
   const slot = contentSpecificValue(entity, "Item Slot")?.trim();
-  if (slot === undefined || slot === "") return undefined;
-  const normalizedSlot = normalized(slot);
+  const magicType = contentSpecificValue(entity, "Magic Item Type")?.trim();
+  const normalizedSlot = normalized(
+    slot === undefined || slot === "" ? magicType : slot,
+  );
+  if (normalizedSlot === "") return undefined;
   const mapped = [
     "Head",
     "Neck",
@@ -631,6 +661,21 @@ export function shopSlot(entity: ContentEntity): string | undefined {
 
 export function shopSubtype(entity: ContentEntity): string | undefined {
   const category = shopBrowseCategory(entity);
+  if (entity.type.trim().toLocaleLowerCase() === "ritual scroll")
+    return "Scrolls";
+  if (category === "ammunition") return "Ammunition";
+  if (category === "wondrous-items" || category === "worn-items")
+    return undefined;
+  if (category === "companions-mounts") {
+    const type = normalized(entity.type);
+    if (type === "companion") return "Companion";
+    if (type === "familiar") return "Familiar";
+  }
+  if (
+    category === "implement-enchantments" &&
+    normalized(contentSpecificValue(entity, "_UniversalImplement")) === "true"
+  )
+    return "Any implement";
   const candidates =
     category === "weapons" || category === "weapon-enchantments"
       ? ["Group", "Weapon Category", "Weapon"]
@@ -638,10 +683,42 @@ export function shopSubtype(entity: ContentEntity): string | undefined {
         ? ["Armor Type", "Armor Category", "Armor"]
         : category === "implements" || category === "implement-enchantments"
           ? ["Implement Type", "Group", "Magic Item Type"]
-          : ["Magic Item Type", "Gear Category", "Type"];
-  return candidates
+          : ["Magic Item Type", "Gear Category", "Category", "Type"];
+  const subtype = candidates
     .map((name) => contentSpecificValue(entity, name)?.split(",")[0]?.trim())
     .find((value) => value !== undefined && value !== "");
+  if (subtype === undefined) return undefined;
+  const normalizedSubtype = normalized(subtype);
+  if (category === "implement-enchantments" && normalizedSubtype === "any")
+    return "Any implement";
+  if (["consumable", "other consumable"].includes(normalizedSubtype))
+    return "Other";
+  if (normalizedSubtype === "whetstones") return "Whetstone";
+  if (normalizedSubtype === "companion slot item") return "Companion item";
+  if (normalizedSubtype === "familiar slot item") return "Familiar item";
+  if (normalizedSubtype === "mount slot item") return "Mount item";
+  const canonicalSubtype = CANONICAL_SHOP_SUBTYPES.get(normalizedSubtype);
+  if (canonicalSubtype !== undefined) return canonicalSubtype;
+  if (normalizedSubtype === "gear") return "Other";
+  return subtype;
+}
+
+/** Exact authored item definitions produced by an alchemical formula. */
+export function alchemicalFormulaItems(
+  entity: ContentEntity,
+  byId: ReadonlyMap<string, ContentEntity>,
+): readonly ContentEntity[] {
+  if (practiceKind(entity) !== "alchemical-formula") return [];
+  return (contentSpecificValue(entity, "_RELATED_ITEMS") ?? "")
+    .split(",")
+    .map((id) => byId.get(id.trim().toLocaleLowerCase()))
+    .filter((item): item is ContentEntity => item !== undefined)
+    .sort(
+      (left, right) =>
+        shopItemLevel(left) - shopItemLevel(right) ||
+        left.name.localeCompare(right.name) ||
+        left.id.localeCompare(right.id),
+    );
 }
 
 export function magicItemFamilyKey(entity: ContentEntity): string | undefined {

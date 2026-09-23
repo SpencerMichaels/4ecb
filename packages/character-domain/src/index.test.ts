@@ -6,6 +6,7 @@ import {
   applyCharacterCommand,
   CharacterTransaction,
   currencyFromCopper,
+  currencyFromCopperKeepingLargeCoins,
   currencyToCopper,
   detailsWithLegacyTextStrings,
   duplicateCharacterRecord,
@@ -362,6 +363,27 @@ describe("character records", () => {
     ).toThrow("Insufficient currency");
   });
 
+  it("keeps explicit large coins while normalizing automatic change through gold", () => {
+    expect(
+      currencyFromCopperKeepingLargeCoins(1_250_000, {
+        ad: 1,
+        pp: 5,
+        gp: 0,
+        sp: 0,
+        cp: 0,
+      }),
+    ).toEqual({ ad: 1, pp: 5, gp: 2000, sp: 0, cp: 0 });
+    expect(
+      currencyFromCopperKeepingLargeCoins(990_000, {
+        ad: 1,
+        pp: 5,
+        gp: 0,
+        sp: 0,
+        cp: 0,
+      }),
+    ).toEqual({ ad: 0, pp: 5, gp: 9400, sp: 0, cp: 0 });
+  });
+
   it("parses one compact signed wallet adjustment exactly", () => {
     expect(parseCurrencyAdjustment("20pp")).toBe(200_000);
     expect(parseCurrencyAdjustment(" -15 gp ")).toBe(-1_500);
@@ -543,6 +565,31 @@ describe("character records", () => {
     });
     expect(soldAgain.inventory).toEqual([]);
     expect(soldAgain.textStrings["_PER_LEVEL_4_Carried Money"]).toBe("1 gp");
+  });
+
+  it("can keep automatic purchase and sale normalization in gold", () => {
+    const wealthy: CharacterBuild = {
+      ...build,
+      textStrings: { "_PER_LEVEL_1_Carried Money": "1 ad; 10000 gp" },
+      inventory: [inventoryEntry("gem")],
+    };
+    const sold = applyCharacterCommand(wealthy, {
+      kind: "sell-inventory",
+      entryId: "gem",
+      priceCopper: 20_000,
+      percentage: 100,
+      keepLargeAmountsInGold: true,
+    });
+    expect(sold.textStrings["_PER_LEVEL_1_Carried Money"]).toBe(
+      "1 ad; 10200 gp",
+    );
+    const purchased = applyCharacterCommand(sold, {
+      kind: "purchase-inventory",
+      entry: inventoryEntry("purchase"),
+      priceCopper: 1_110_000,
+      keepLargeAmountsInGold: true,
+    });
+    expect(purchased.textStrings["_PER_LEVEL_1_Carried Money"]).toBe("9100 gp");
   });
 
   it("rejects invalid inventory transactions before changing a build", () => {

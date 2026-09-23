@@ -25,6 +25,10 @@ const selectionSummary = readFileSync(
 );
 const icon = readFileSync(new URL("./Icon.tsx", import.meta.url), "utf8");
 const app = readFileSync(new URL("./App.tsx", import.meta.url), "utf8");
+const settingsPage = readFileSync(
+  new URL("./SettingsPage.tsx", import.meta.url),
+  "utf8",
+);
 
 function channel(value: number): number {
   const normalized = value / 255;
@@ -49,6 +53,16 @@ function contrast(foreground: string, background: string): number {
 }
 
 describe("release accessibility contract", () => {
+  it("persists the gold normalization preference under Display", () => {
+    expect(settingsPage).toContain("Keep large amounts in gold");
+    expect(settingsPage).toContain("checked={keepLargeAmountsInGold}");
+    expect(app).toContain("KEEP_LARGE_AMOUNTS_IN_GOLD_STORAGE_KEY");
+    expect(app).toContain(
+      'localStorage.setItem(KEEP_LARGE_AMOUNTS_IN_GOLD_STORAGE_KEY, "1")',
+    );
+    expect(characterEditor).toContain("keepLargeAmountsInGold,");
+  });
+
   it("keeps every normal-text palette pair above WCAG AA contrast", () => {
     const pairs = [
       ["#1e2933", "#eef2f6"],
@@ -225,7 +239,9 @@ describe("release accessibility contract", () => {
   it("keeps header identity editable and moves level changes into Character details", () => {
     const header = characterEditor.slice(
       characterEditor.indexOf('<header className="builder-heading">'),
-      characterEditor.indexOf("{entities.length === 0"),
+      characterEditor.indexOf(
+        "{shouldShowBoundProfileWarning(boundProfileResolution)",
+      ),
     );
     const details = characterEditor.slice(
       characterEditor.indexOf("function CharacterDetailsEditor("),
@@ -257,7 +273,7 @@ describe("release accessibility contract", () => {
       /\.builder-character-name input:focus-visible\s*\{[^}]*box-shadow: inset 0 -3px var\(--focus\)[^}]*outline: none/,
     );
     expect(styles).toMatch(
-      /\.builder-heading\s*\{[^}]*display: grid;[^}]*gap: 0\.65rem 1\.35rem;[^}]*grid-template-columns: minmax\(17rem, auto\) minmax\(34rem, 1fr\);/,
+      /\.builder-heading\s*\{[^}]*display: grid;[^}]*gap: 0\.65rem 1\.35rem;[^}]*grid-template-columns: minmax\(0, 19rem\) minmax\(0, 1fr\);/,
     );
     expect(styles).not.toMatch(
       /\.builder-heading\s*\{[^}]*(?:border-bottom|margin-bottom):/,
@@ -720,18 +736,69 @@ describe("release accessibility contract", () => {
     expect(shopWorkspace).toContain('aria-label="Not proficient"');
     expect(shopWorkspace).toContain("setInspectedEntityId(entity.id)");
     expect(shopWorkspace).toContain('"is-selected"');
-    expect(equipmentWorkspace).toContain('id="wallet-dialog-adjustment"');
+    expect(equipmentWorkspace).toContain('id="funds-wallet-adjustment"');
     expect(equipmentWorkspace).toContain("parseCurrencyAdjustment(adjustment)");
-    expect(equipmentWorkspace).toContain("adjustWalletCurrency(");
-    expect(styles).toMatch(
-      /\.shared-choice-detail\.shop-rail\s*\{[^}]*display: grid;[^}]*position: sticky;[^}]*top: 0\.75rem;/s,
+    expect(equipmentWorkspace).toContain("onAdjustMoney(deltaCopper)");
+    expect(equipmentWorkspace).toContain(
+      'aria-controls="funds-wallet-adjust-options"',
+    );
+    expect(equipmentWorkspace).toContain('data-wallet-adjust=""');
+    expect(equipmentWorkspace).toContain("adjustmentInput.current?.select()");
+    expect(equipmentWorkspace).toContain(
+      'document.addEventListener("pointerdown", dismissOutside)',
+    );
+    expect(equipmentWorkspace).toContain(
+      'document.addEventListener("keydown", dismissWithEscape)',
+    );
+    expect(equipmentWorkspace).toContain("applyAdjustment()");
+    expect(equipmentWorkspace.match(/<FundsPane/g)).toHaveLength(2);
+    expect(equipmentWorkspace).toContain('aria-label="Quick adjust funds"');
+    expect(equipmentWorkspace).toContain('title="Quick adjust funds"');
+    expect(equipmentWorkspace).toContain('aria-label="Edit funds"');
+    expect(equipmentWorkspace).toContain("onSetWallet(draft)");
+    expect(characterEditor).toContain("onSetWallet={(nextWallet) =>");
+    expect(equipmentWorkspace).not.toContain(
+      'className="inventory-wallet-label"',
     );
     expect(styles).toMatch(
-      /\.shop-toolbar\s*\{[^}]*grid-template-columns: minmax\(8rem, 11rem\) minmax\(6rem, 1fr\)/s,
+      /\.funds-wallet-adjust-menu\s*\{[^}]*position: relative;/s,
+    );
+    expect(styles).toMatch(
+      /\.inventory-sale-options\.funds-wallet-adjust-options\s*\{[^}]*min-width: min\(18rem, calc\(100vw - 2rem\)\);/s,
+    );
+    expect(styles).toMatch(
+      /\.shop-rail \.shop-funds\s*\{[^}]*background: var\(--surface\);[^}]*position: sticky;[^}]*top: 0\.75rem;/s,
+    );
+    expect(styles).not.toMatch(
+      /\.shared-choice-detail\.shop-rail\s*\{[^}]*position: sticky;/s,
+    );
+    expect(equipmentWorkspace).toContain(
+      "`is-adjusted is-${walletPulse.direction}`",
+    );
+    expect(styles).toContain(
+      ".inventory-wallet-denominations > div.is-adjusted.is-decrease",
+    );
+    expect(styles).toContain("animation: wallet-denomination-decreased");
+    expect(styles).toMatch(
+      /\.shop-toolbar\s*\{[^}]*grid-template-columns:[^;]*minmax\(8rem, 11rem\) minmax\(6rem, 1fr\)[^;]*minmax\(8rem, 1\.35fr\)/s,
     );
     expect(styles).toMatch(
       /\.shop-result-tools\s*\{[^}]*display: flex;[^}]*flex-wrap: wrap;/s,
     );
+    const browseIndex = shopWorkspace.indexOf("Browse\n          <select");
+    const slotIndex = shopWorkspace.indexOf("Slot\n          <select");
+    const subtypeIndex = shopWorkspace.indexOf("Subtype\n          <select");
+    const resultToolsIndex = shopWorkspace.indexOf(
+      '<div className="shop-result-tools">',
+    );
+    const searchIndex = shopWorkspace.indexOf(
+      '<label className="shop-search">',
+    );
+    expect(browseIndex).toBeGreaterThan(-1);
+    expect(slotIndex).toBeGreaterThan(browseIndex);
+    expect(subtypeIndex).toBeGreaterThan(slotIndex);
+    expect(resultToolsIndex).toBeGreaterThan(subtypeIndex);
+    expect(searchIndex).toBeGreaterThan(resultToolsIndex);
     expect(styles).toMatch(
       /\.shop-table tbody tr\.is-selected\s*\{[^}]*box-shadow: inset 3px 0 var\(--accent\)/s,
     );

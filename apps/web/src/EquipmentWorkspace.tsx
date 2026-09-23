@@ -2,8 +2,8 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   CURRENCY_DENOMINATIONS,
-  adjustWalletCurrency,
   currencyFromCopper,
+  currencyFromCopperKeepingLargeCoins,
   currencyToCopper,
   inventoryEntryWithQuantity,
   parseCurrencyAdjustment,
@@ -22,6 +22,7 @@ import {
   entityCardSource,
 } from "./EntityCard";
 import {
+  alchemicalFormulaItems,
   comparableSaleProceeds,
   entityCurrencyCopper,
   groupInventoryByCategory,
@@ -34,6 +35,7 @@ import {
   inventoryRequiresBothHands,
   inventorySlotCandidates,
   resolveLoadoutAssignments,
+  shopItemLevel,
   type ShopBrowseId,
   visibleLoadoutSlotColumns,
 } from "./equipment-ui";
@@ -41,7 +43,7 @@ import { entityVisualTone, visualToneClass } from "./visual-language";
 import { Icon } from "./Icon";
 import { canonicalItemIcon, isAuthoredShield } from "./item-icons";
 import type { ShopCategory } from "./routes";
-import { ShopWorkspace } from "./ShopWorkspace";
+import { preferredShopBrowse, ShopWorkspace } from "./ShopWorkspace";
 
 type MoneyLocation = "carried" | "stored";
 type Denomination = "copper" | "silver" | "gold" | "platinum" | "astral";
@@ -82,16 +84,28 @@ function walletCopper(wallet: EquipmentWalletView[MoneyLocation]): number {
   });
 }
 
-function walletLocationFromCurrency(
-  amount: CurrencyAmount,
-): EquipmentWalletView[MoneyLocation] {
+function combinedWalletCurrency(wallet: EquipmentWalletView): CurrencyAmount {
   return {
-    copper: amount.cp,
-    silver: amount.sp,
-    gold: amount.gp,
-    platinum: amount.pp,
-    astral: amount.ad,
+    cp: wallet.carried.copper + wallet.stored.copper,
+    sp: wallet.carried.silver + wallet.stored.silver,
+    gp: wallet.carried.gold + wallet.stored.gold,
+    pp: wallet.carried.platinum + wallet.stored.platinum,
+    ad: wallet.carried.astral + wallet.stored.astral,
   };
+}
+
+export function walletDisplayCurrency(
+  wallet: EquipmentWalletView,
+  keepLargeAmountsInGold: boolean,
+): CurrencyAmount {
+  const totalCopper =
+    walletCopper(wallet.carried) + walletCopper(wallet.stored);
+  return keepLargeAmountsInGold
+    ? currencyFromCopperKeepingLargeCoins(
+        totalCopper,
+        combinedWalletCurrency(wallet),
+      )
+    : currencyFromCopper(totalCopper);
 }
 
 export function inventoryEquippedStatus(
@@ -108,6 +122,7 @@ export function inventoryEquippedStatus(
 export interface InspectedItemDetail {
   readonly entities: readonly ContentEntity[];
   readonly displayName: string;
+  readonly effectiveLevel?: number;
   readonly kindLabel?: string;
   readonly compatibility?: {
     readonly label: string;
@@ -138,13 +153,14 @@ export function catalogItemDetail(
   byId: ReadonlyMap<string, ContentEntity>,
 ): InspectedItemDetail {
   return base === undefined
-    ? { entities: [entity], displayName: entity.name }
+    ? { entities: [entity], displayName: entity.name, effectiveLevel }
     : {
         entities: [base, entity],
         displayName: inventoryDisplayName(
           inventoryEntryForEntity(entity, effectiveLevel, base),
           byId,
         ),
+        effectiveLevel,
       };
 }
 
@@ -234,7 +250,16 @@ export function ItemDetail({
       />
     );
   };
-  return (
+  const formulaItems = alchemicalFormulaItems(entity, byId);
+  const formulaItem =
+    formulaItems
+      .filter(
+        (candidate) =>
+          shopItemLevel(candidate) <=
+          (item.effectiveLevel ?? shopItemLevel(entity)),
+      )
+      .at(-1) ?? formulaItems[0];
+  const primaryCard = (
     <aside
       className={`candidate-detail ${visualToneClass(entityVisualTone(entity))}${isUnifiedComposedItem ? " composed-item-card" : ""}${isComposedWeapon ? " composed-weapon-card" : ""}${isComposedArmor ? " composed-armor-card" : ""}`}
       tabIndex={0}
@@ -286,6 +311,24 @@ export function ItemDetail({
         {sources.length === 1 ? "Source" : "Sources"}: {sources.join("; ")}
       </p>
     </aside>
+  );
+  if (formulaItem === undefined) return primaryCard;
+  return (
+    <div className="candidate-detail-stack">
+      {primaryCard}
+      <aside
+        className={`candidate-detail ${visualToneClass(entityVisualTone(formulaItem))}`}
+        tabIndex={0}
+      >
+        <header className="primary-detail-heading">
+          <EntityCardHeader entity={formulaItem} />
+        </header>
+        {componentBody(formulaItem)}
+        <p className="detail-source-note">
+          Source: {entityCardSource(formulaItem)}
+        </p>
+      </aside>
+    </div>
   );
 }
 
@@ -403,95 +446,29 @@ function LoadoutGrid({
 function WalletDialog({
   open,
   wallet,
+  keepLargeAmountsInGold,
   onClose,
-  onSetMoney,
+  onSetWallet,
 }: {
   readonly open: boolean;
   readonly wallet: EquipmentWalletView;
+  readonly keepLargeAmountsInGold: boolean;
   readonly onClose: () => void;
-  readonly onSetMoney: (
-    location: MoneyLocation,
-    denomination: Denomination,
-    value: number,
-  ) => void;
+  readonly onSetWallet: (wallet: EquipmentWalletView) => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const adjustmentInput = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState(wallet);
-  const [adjustment, setAdjustment] = useState("");
-  const [adjustmentMessage, setAdjustmentMessage] = useState<{
-    readonly kind: "error" | "success";
-    readonly text: string;
-    readonly generation: number;
-  }>();
-  const [adjustmentPulse, setAdjustmentPulse] = useState<{
-    readonly generation: number;
-    readonly denominations: readonly (keyof CurrencyAmount)[];
-  }>({ generation: 0, denominations: [] });
   useEffect(() => {
     const element = dialog.current;
     if (element === null) return;
     if (open && !element.open) {
       setDraft(wallet);
-      setAdjustment("");
-      setAdjustmentMessage(undefined);
-      setAdjustmentPulse({ generation: 0, denominations: [] });
       element.showModal();
     } else if (!open && element.open) {
       element.close();
     }
   }, [open, wallet]);
-  const total = currencyFromCopper(
-    walletCopper(draft.carried) + walletCopper(draft.stored),
-  );
-  const showAdjustmentError = (text: string) => {
-    setAdjustmentMessage((current) => ({
-      kind: "error",
-      text,
-      generation: (current?.generation ?? 0) + 1,
-    }));
-    const input = adjustmentInput.current;
-    if (input !== null) {
-      input.classList.remove("is-error");
-      void input.offsetWidth;
-      input.classList.add("is-error");
-      input.focus();
-    }
-  };
-  const adjustDraft = () => {
-    try {
-      const next = adjustWalletCurrency(
-        currencyFromCopper(walletCopper(draft.carried)),
-        currencyFromCopper(walletCopper(draft.stored)),
-        parseCurrencyAdjustment(adjustment),
-      );
-      const nextTotal = currencyFromCopper(
-        currencyToCopper(next.carried) + currencyToCopper(next.stored),
-      );
-      setDraft({
-        carried: walletLocationFromCurrency(next.carried),
-        stored: walletLocationFromCurrency(next.stored),
-      });
-      setAdjustmentPulse((current) => ({
-        generation: current.generation + 1,
-        denominations: CURRENCY_DENOMINATIONS.filter(
-          (denomination) => nextTotal[denomination] !== total[denomination],
-        ),
-      }));
-      setAdjustment("");
-      setAdjustmentMessage((current) => ({
-        kind: "success",
-        text: "Funds adjusted in the editor.",
-        generation: (current?.generation ?? 0) + 1,
-      }));
-    } catch (reason: unknown) {
-      showAdjustmentError(
-        reason instanceof Error
-          ? reason.message
-          : "Enter a valid currency adjustment",
-      );
-    }
-  };
+  const total = walletDisplayCurrency(draft, keepLargeAmountsInGold);
   return (
     <dialog
       id="wallet-dialog"
@@ -504,17 +481,12 @@ function WalletDialog({
         method="dialog"
         onSubmit={(event) => {
           event.preventDefault();
-          for (const location of ["carried", "stored"] as const)
-            for (const { id } of DENOMINATIONS)
-              onSetMoney(location, id, draft[location][id]);
+          onSetWallet(draft);
           dialog.current?.close();
         }}
       >
         <header>
-          <div>
-            <p className="eyebrow">Funds</p>
-            <h2 id="wallet-dialog-title">Edit funds</h2>
-          </div>
+          <h2 id="wallet-dialog-title">Edit funds</h2>
           <button
             type="button"
             aria-label="Close funds editor"
@@ -524,48 +496,6 @@ function WalletDialog({
           </button>
         </header>
         <div className="wallet-dialog-body">
-          <p>
-            Update the character’s carried and stored currency. Equipment and
-            Shop use their combined total.
-          </p>
-          <div className="wallet-quick-adjust">
-            <label htmlFor="wallet-dialog-adjustment">
-              Quick adjust
-              <input
-                id="wallet-dialog-adjustment"
-                ref={adjustmentInput}
-                type="text"
-                inputMode="text"
-                className={
-                  adjustmentMessage?.kind === "error" ? "is-error" : undefined
-                }
-                placeholder="20pp, -15 gp, ..."
-                value={adjustment}
-                aria-describedby="wallet-dialog-adjustment-message"
-                aria-invalid={adjustmentMessage?.kind === "error" || undefined}
-                onChange={(event) => {
-                  setAdjustment(event.currentTarget.value);
-                  setAdjustmentMessage(undefined);
-                }}
-                onKeyDown={(event) => {
-                  if (event.key !== "Enter") return;
-                  event.preventDefault();
-                  adjustDraft();
-                }}
-              />
-            </label>
-            <button type="button" onClick={adjustDraft}>
-              Adjust
-            </button>
-            <span
-              key={`wallet-dialog-adjustment-${adjustmentMessage?.generation ?? 0}`}
-              className="visually-hidden"
-              id="wallet-dialog-adjustment-message"
-              role={adjustmentMessage?.kind === "error" ? "alert" : "status"}
-            >
-              {adjustmentMessage?.text ?? ""}
-            </span>
-          </div>
           <div className="inventory-wallet-editor">
             <table>
               <thead>
@@ -625,27 +555,12 @@ function WalletDialog({
                 <tr className="inventory-wallet-total">
                   <th scope="row">Total</th>
                   {DENOMINATIONS.map(({ id }) => (
-                    <td
-                      key={`${id}-${adjustmentPulse.generation}`}
-                      className={
-                        adjustmentPulse.denominations.includes(
-                          DENOMINATION_KEYS[id],
-                        )
-                          ? "is-adjusted"
-                          : undefined
-                      }
-                    >
-                      {total[DENOMINATION_KEYS[id]]}
-                    </td>
+                    <td key={id}>{total[DENOMINATION_KEYS[id]]}</td>
                   ))}
                 </tr>
               </tbody>
             </table>
           </div>
-          <p className="field-help">
-            Purchases use carried funds first, then stored funds. Sales add
-            proceeds to carried funds.
-          </p>
         </div>
         <footer>
           <button type="button" onClick={() => dialog.current?.close()}>
@@ -660,6 +575,242 @@ function WalletDialog({
   );
 }
 
+function FundsPane({
+  wallet,
+  keepLargeAmountsInGold,
+  editOpen,
+  sticky = false,
+  onEdit,
+  onAdjustMoney,
+}: {
+  readonly wallet: EquipmentWalletView;
+  readonly keepLargeAmountsInGold: boolean;
+  readonly editOpen: boolean;
+  readonly sticky?: boolean;
+  readonly onEdit: () => void;
+  readonly onAdjustMoney: (deltaCopper: number) => string | undefined;
+}) {
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [adjustment, setAdjustment] = useState("");
+  const [adjustmentMessage, setAdjustmentMessage] = useState<{
+    readonly kind: "error" | "success";
+    readonly text: string;
+    readonly generation: number;
+  }>();
+  const [walletPulse, setWalletPulse] = useState<{
+    readonly generation: number;
+    readonly denominations: readonly (keyof CurrencyAmount)[];
+    readonly direction: "increase" | "decrease";
+  }>({ generation: 0, denominations: [], direction: "increase" });
+  const adjustmentInput = useRef<HTMLInputElement>(null);
+  const adjustTrigger = useRef<HTMLButtonElement>(null);
+  const totalWalletCopper =
+    walletCopper(wallet.carried) + walletCopper(wallet.stored);
+  const totalWallet = useMemo(
+    () => walletDisplayCurrency(wallet, keepLargeAmountsInGold),
+    [keepLargeAmountsInGold, wallet],
+  );
+  const previousWalletCopper = useRef(totalWalletCopper);
+  const previousWallet = useRef(wallet);
+
+  useEffect(() => {
+    const previousCopper = previousWalletCopper.current;
+    previousWalletCopper.current = totalWalletCopper;
+    if (previousCopper === totalWalletCopper) return;
+    const previousTotal = walletDisplayCurrency(
+      previousWallet.current,
+      keepLargeAmountsInGold,
+    );
+    previousWallet.current = wallet;
+    setWalletPulse((current) => ({
+      generation: current.generation + 1,
+      denominations: CURRENCY_DENOMINATIONS.filter(
+        (denomination) =>
+          totalWallet[denomination] !== previousTotal[denomination],
+      ),
+      direction: totalWalletCopper < previousCopper ? "decrease" : "increase",
+    }));
+  }, [keepLargeAmountsInGold, totalWallet, totalWalletCopper, wallet]);
+
+  useEffect(() => {
+    if (!adjustOpen) return;
+    const focusFrame = requestAnimationFrame(() => {
+      adjustmentInput.current?.focus();
+      adjustmentInput.current?.select();
+    });
+    const dismissOutside = (event: PointerEvent) => {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest("[data-wallet-adjust]") !== null
+      )
+        return;
+      setAdjustOpen(false);
+      setAdjustmentMessage(undefined);
+    };
+    const dismissWithEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setAdjustOpen(false);
+      setAdjustmentMessage(undefined);
+      requestAnimationFrame(() => adjustTrigger.current?.focus());
+    };
+    document.addEventListener("pointerdown", dismissOutside);
+    document.addEventListener("keydown", dismissWithEscape);
+    return () => {
+      cancelAnimationFrame(focusFrame);
+      document.removeEventListener("pointerdown", dismissOutside);
+      document.removeEventListener("keydown", dismissWithEscape);
+    };
+  }, [adjustOpen]);
+
+  const showAdjustmentError = (text: string) => {
+    setAdjustmentMessage((current) => ({
+      kind: "error",
+      text,
+      generation: (current?.generation ?? 0) + 1,
+    }));
+    const input = adjustmentInput.current;
+    if (input !== null) {
+      input.classList.remove("is-error");
+      void input.offsetWidth;
+      input.classList.add("is-error");
+      input.focus();
+    }
+  };
+
+  const applyAdjustment = () => {
+    let deltaCopper: number;
+    try {
+      deltaCopper = parseCurrencyAdjustment(adjustment);
+    } catch (reason: unknown) {
+      showAdjustmentError(
+        reason instanceof Error
+          ? reason.message
+          : "Enter a valid currency adjustment",
+      );
+      return;
+    }
+    const error = onAdjustMoney(deltaCopper);
+    if (error !== undefined) {
+      showAdjustmentError(error);
+      return;
+    }
+    setAdjustment("");
+    setAdjustmentMessage((current) => ({
+      kind: "success",
+      text: "Funds adjusted.",
+      generation: (current?.generation ?? 0) + 1,
+    }));
+    setAdjustOpen(false);
+    requestAnimationFrame(() => adjustTrigger.current?.focus());
+  };
+
+  return (
+    <section
+      className={`inventory-wallet funds-pane${sticky ? " shop-funds" : ""}`}
+      aria-label="Funds"
+    >
+      <div className="inventory-wallet-summary">
+        <Icon name="circle-dollar-sign" />
+        <div className="inventory-wallet-balance">
+          <dl className="inventory-wallet-denominations">
+            {CURRENCY_DENOMINATIONS.map((denomination) => (
+              <div
+                key={`${denomination}-${walletPulse.denominations.includes(denomination) ? walletPulse.generation : 0}`}
+                className={
+                  walletPulse.denominations.includes(denomination)
+                    ? `is-adjusted is-${walletPulse.direction}`
+                    : undefined
+                }
+              >
+                <dt>{denomination.toLocaleUpperCase()}</dt>
+                <dd>{totalWallet[denomination]}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+        <div className="funds-pane-actions">
+          <div className="funds-wallet-adjust-menu" data-wallet-adjust="">
+            <button
+              ref={adjustTrigger}
+              type="button"
+              className="inventory-wallet-edit"
+              aria-label="Quick adjust funds"
+              title="Quick adjust funds"
+              aria-expanded={adjustOpen}
+              aria-controls="funds-wallet-adjust-options"
+              onClick={() => {
+                setAdjustOpen((current) => !current);
+                setAdjustmentMessage(undefined);
+              }}
+            >
+              <Icon name="calculator" />
+            </button>
+            {adjustOpen ? (
+              <form
+                id="funds-wallet-adjust-options"
+                className="inventory-sale-options funds-wallet-adjust-options"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  applyAdjustment();
+                }}
+              >
+                <label
+                  className="visually-hidden"
+                  htmlFor="funds-wallet-adjustment"
+                >
+                  Adjust funds
+                </label>
+                <input
+                  id="funds-wallet-adjustment"
+                  ref={adjustmentInput}
+                  type="text"
+                  inputMode="text"
+                  className={
+                    adjustmentMessage?.kind === "error" ? "is-error" : undefined
+                  }
+                  placeholder="20pp, -15 gp, ..."
+                  value={adjustment}
+                  aria-describedby="funds-wallet-adjustment-message"
+                  aria-invalid={
+                    adjustmentMessage?.kind === "error" || undefined
+                  }
+                  onChange={(event) => {
+                    setAdjustment(event.currentTarget.value);
+                    setAdjustmentMessage(undefined);
+                  }}
+                />
+                <span
+                  key={`funds-wallet-adjustment-${adjustmentMessage?.generation ?? 0}`}
+                  className="visually-hidden"
+                  id="funds-wallet-adjustment-message"
+                  role={
+                    adjustmentMessage?.kind === "error" ? "alert" : "status"
+                  }
+                >
+                  {adjustmentMessage?.text ?? ""}
+                </span>
+              </form>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            className="inventory-wallet-edit"
+            aria-label="Edit funds"
+            title="Edit funds"
+            aria-expanded={editOpen}
+            aria-controls="wallet-dialog"
+            onClick={onEdit}
+          >
+            <Icon name="edit" />
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function EquipmentWorkspace({
   build,
   entities,
@@ -667,6 +818,7 @@ export function EquipmentWorkspace({
   wallet,
   activeDefinitionIds,
   hideFlavortext,
+  keepLargeAmountsInGold,
   workspace,
   loadoutView,
   shopCategory,
@@ -676,7 +828,7 @@ export function EquipmentWorkspace({
   onPurchase,
   onSell,
   onEquipSlot,
-  onSetMoney,
+  onSetWallet,
   onAdjustMoney,
 }: {
   readonly build: CharacterBuild;
@@ -686,6 +838,7 @@ export function EquipmentWorkspace({
   readonly wallet: EquipmentWalletView;
   readonly activeDefinitionIds: readonly string[];
   readonly hideFlavortext: boolean;
+  readonly keepLargeAmountsInGold: boolean;
   readonly workspace: "equipment" | "shop";
   readonly loadoutView: boolean;
   readonly shopCategory: ShopCategory;
@@ -707,25 +860,11 @@ export function EquipmentWorkspace({
     currentEntryId?: string,
     currentSlots?: readonly string[],
   ) => void;
-  readonly onSetMoney: (
-    location: MoneyLocation,
-    denomination: Denomination,
-    value: number,
-  ) => void;
+  readonly onSetWallet: (wallet: EquipmentWalletView) => void;
   readonly onAdjustMoney: (deltaCopper: number) => string | undefined;
 }) {
   const [inspected, setInspected] = useState<InspectedItemDetail>();
   const [walletOpen, setWalletOpen] = useState(false);
-  const [walletAdjustment, setWalletAdjustment] = useState("");
-  const [walletAdjustmentMessage, setWalletAdjustmentMessage] = useState<{
-    readonly kind: "error" | "success";
-    readonly text: string;
-    readonly generation: number;
-  }>();
-  const [walletPulse, setWalletPulse] = useState<{
-    readonly generation: number;
-    readonly denominations: readonly (keyof CurrencyAmount)[];
-  }>({ generation: 0, denominations: [] });
   const [openSaleId, setOpenSaleId] = useState<string>();
   const [inventoryCategoryExpansion, setInventoryCategoryExpansion] = useState<
     ReadonlyMap<InventoryCategoryId, boolean>
@@ -738,7 +877,6 @@ export function EquipmentWorkspace({
         ]),
       ),
   );
-  const walletAdjustmentInput = useRef<HTMLInputElement>(null);
   const ownedDefinitions = useMemo(
     () =>
       activeDefinitionIds.flatMap((id) => {
@@ -762,7 +900,6 @@ export function EquipmentWorkspace({
   );
   const carriedCopper = walletCopper(wallet.carried);
   const storedCopper = walletCopper(wallet.stored);
-  const totalWallet = currencyFromCopper(carriedCopper + storedCopper);
 
   useEffect(() => {
     if (openSaleId === undefined) return;
@@ -799,21 +936,6 @@ export function EquipmentWorkspace({
     };
   }, [openSaleId]);
 
-  const showWalletAdjustmentError = (text: string) => {
-    setWalletAdjustmentMessage((current) => ({
-      kind: "error",
-      text,
-      generation: (current?.generation ?? 0) + 1,
-    }));
-    const input = walletAdjustmentInput.current;
-    if (input !== null) {
-      input.classList.remove("is-error");
-      void input.offsetWidth;
-      input.classList.add("is-error");
-      input.focus();
-    }
-  };
-
   const inspectInventory = (entry: BuildInventoryEntry) => {
     setInspected(inventoryItemDetail(entry, byId));
   };
@@ -844,123 +966,13 @@ export function EquipmentWorkspace({
                   <Icon name={loadoutView ? "handbag" : "sword"} />
                   {loadoutView ? "Inventory" : "Loadout"}
                 </button>
-                <section className="inventory-wallet" aria-label="Funds">
-                  <div className="inventory-wallet-summary">
-                    <Icon name="circle-dollar-sign" />
-                    <div className="inventory-wallet-balance">
-                      <span className="inventory-wallet-label">Funds</span>
-                      <dl className="inventory-wallet-denominations">
-                        {CURRENCY_DENOMINATIONS.map((denomination) => (
-                          <div
-                            key={`${denomination}-${walletPulse.denominations.includes(denomination) ? walletPulse.generation : 0}`}
-                            className={
-                              walletPulse.denominations.includes(denomination)
-                                ? "is-adjusted"
-                                : undefined
-                            }
-                          >
-                            <dt>{denomination.toLocaleUpperCase()}</dt>
-                            <dd>{totalWallet[denomination]}</dd>
-                          </div>
-                        ))}
-                      </dl>
-                    </div>
-                    <form
-                      className="inventory-wallet-adjust"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        let deltaCopper: number;
-                        try {
-                          deltaCopper =
-                            parseCurrencyAdjustment(walletAdjustment);
-                        } catch (reason: unknown) {
-                          showWalletAdjustmentError(
-                            reason instanceof Error
-                              ? reason.message
-                              : "Enter a valid currency adjustment",
-                          );
-                          return;
-                        }
-                        const error = onAdjustMoney(deltaCopper);
-                        if (error !== undefined) {
-                          showWalletAdjustmentError(error);
-                          return;
-                        }
-                        const adjustedCopper =
-                          carriedCopper + storedCopper + deltaCopper;
-                        const adjustedTotal =
-                          Number.isSafeInteger(adjustedCopper) &&
-                          adjustedCopper >= 0
-                            ? currencyFromCopper(adjustedCopper)
-                            : totalWallet;
-                        setWalletPulse((current) => ({
-                          generation: current.generation + 1,
-                          denominations: CURRENCY_DENOMINATIONS.filter(
-                            (denomination) =>
-                              adjustedTotal[denomination] !==
-                              totalWallet[denomination],
-                          ),
-                        }));
-                        setWalletAdjustment("");
-                        setWalletAdjustmentMessage((current) => ({
-                          kind: "success",
-                          text: "Funds adjusted.",
-                          generation: (current?.generation ?? 0) + 1,
-                        }));
-                      }}
-                    >
-                      <label
-                        className="visually-hidden"
-                        htmlFor="inventory-wallet-adjustment"
-                      >
-                        Quick adjust funds
-                      </label>
-                      <input
-                        id="inventory-wallet-adjustment"
-                        ref={walletAdjustmentInput}
-                        type="text"
-                        inputMode="text"
-                        className={
-                          walletAdjustmentMessage?.kind === "error"
-                            ? "is-error"
-                            : undefined
-                        }
-                        placeholder="20pp, -15 gp, ..."
-                        value={walletAdjustment}
-                        aria-describedby="inventory-wallet-adjustment-message"
-                        aria-invalid={
-                          walletAdjustmentMessage?.kind === "error" || undefined
-                        }
-                        onChange={(event) => {
-                          setWalletAdjustment(event.currentTarget.value);
-                          setWalletAdjustmentMessage(undefined);
-                        }}
-                      />
-                    </form>
-                    <button
-                      type="button"
-                      className="inventory-wallet-edit"
-                      aria-expanded={walletOpen}
-                      aria-controls="wallet-dialog"
-                      onClick={() => setWalletOpen(true)}
-                    >
-                      <Icon name="edit" />
-                      Edit
-                    </button>
-                  </div>
-                  <p
-                    key={`wallet-adjustment-${walletAdjustmentMessage?.generation ?? 0}`}
-                    className="visually-hidden"
-                    id="inventory-wallet-adjustment-message"
-                    role={
-                      walletAdjustmentMessage?.kind === "error"
-                        ? "alert"
-                        : "status"
-                    }
-                  >
-                    {walletAdjustmentMessage?.text ?? ""}
-                  </p>
-                </section>
+                <FundsPane
+                  wallet={wallet}
+                  keepLargeAmountsInGold={keepLargeAmountsInGold}
+                  editOpen={walletOpen}
+                  onEdit={() => setWalletOpen(true)}
+                  onAdjustMoney={onAdjustMoney}
+                />
               </div>
               <div className="equipment-mode-content">
                 {loadoutView ? (
@@ -1382,13 +1394,9 @@ export function EquipmentWorkspace({
             </>
           ) : (
             <ShopWorkspace
-              browse={
-                shopCategory === "items"
-                  ? "all"
-                  : shopCategory === "scrolls"
-                    ? "consumables"
-                    : (shopCategory as ShopBrowseId)
-              }
+              browse={preferredShopBrowse(
+                shopCategory as ShopBrowseId | "items" | "scrolls",
+              )}
               characterLevel={build.effectiveLevel}
               entities={entities}
               inventory={inventory}
@@ -1398,6 +1406,7 @@ export function EquipmentWorkspace({
                 setInspected({
                   entities: [entity],
                   displayName,
+                  effectiveLevel: build.effectiveLevel,
                   ...(kindLabel === undefined ? {} : { kindLabel }),
                   ...(compatibility === undefined ? {} : { compatibility }),
                 })
@@ -1411,31 +1420,14 @@ export function EquipmentWorkspace({
           className={`shared-choice-detail${workspace === "shop" ? " shop-rail" : ""}`}
         >
           {workspace === "shop" ? (
-            <section className="inventory-wallet shop-funds" aria-label="Funds">
-              <div className="inventory-wallet-summary">
-                <Icon name="circle-dollar-sign" />
-                <div className="inventory-wallet-balance">
-                  <span className="inventory-wallet-label">Funds</span>
-                  <dl className="inventory-wallet-denominations">
-                    {CURRENCY_DENOMINATIONS.map((denomination) => (
-                      <div key={denomination}>
-                        <dt>{denomination.toLocaleUpperCase()}</dt>
-                        <dd>{totalWallet[denomination]}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
-                <button
-                  type="button"
-                  className="inventory-wallet-edit"
-                  aria-expanded={walletOpen}
-                  aria-controls="wallet-dialog"
-                  onClick={() => setWalletOpen(true)}
-                >
-                  <Icon name="edit" /> Edit
-                </button>
-              </div>
-            </section>
+            <FundsPane
+              wallet={wallet}
+              keepLargeAmountsInGold={keepLargeAmountsInGold}
+              editOpen={walletOpen}
+              sticky
+              onEdit={() => setWalletOpen(true)}
+              onAdjustMoney={onAdjustMoney}
+            />
           ) : null}
           <ItemDetail
             byId={byId}
@@ -1447,8 +1439,9 @@ export function EquipmentWorkspace({
       <WalletDialog
         open={walletOpen}
         wallet={wallet}
+        keepLargeAmountsInGold={keepLargeAmountsInGold}
         onClose={() => setWalletOpen(false)}
-        onSetMoney={onSetMoney}
+        onSetWallet={onSetWallet}
       />
     </section>
   );

@@ -17,10 +17,16 @@ function declarationsFor(selector: string): string {
 describe("builder header layout", () => {
   it("keeps the desktop header wide and shallow with distinct clusters", () => {
     expect(declarationsFor(".builder-heading")).toContain(
-      "grid-template-columns: minmax(17rem, auto) minmax(34rem, 1fr)",
+      "grid-template-columns: minmax(0, 19rem) minmax(0, 1fr)",
     );
     expect(declarationsFor(".builder-header-stat-groups")).toContain(
-      "minmax(4.5rem, 0.6fr)",
+      "minmax(4.5rem, 0.6fr) minmax(7.6rem, 1fr) minmax(15.2rem, 2.2fr)",
+    );
+    expect(declarationsFor(".builder-character-heading")).toContain(
+      "min-width: 0",
+    );
+    expect(declarationsFor(".builder-character-name input")).toContain(
+      "inline-size: 100%",
     );
     expect(declarationsFor(".builder-header-stat-cluster")).toContain(
       "border-top: 3px solid",
@@ -45,8 +51,9 @@ describe("builder header layout", () => {
 
   it("stacks the identity and status surfaces at responsive breakpoints", () => {
     expect(styles).toMatch(
-      /@media \(max-width: 70rem\)[\s\S]*?\.builder-heading\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\)/,
+      /@media \(max-width: 63rem\)[\s\S]*?\.builder-heading\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\)/,
     );
+    expect(styles).not.toContain("@media (max-width: 70rem)");
     expect(styles).toMatch(
       /@media \(max-width: 48rem\)[\s\S]*?\.builder-tabs-bar\s*\{[^}]*flex-direction: column/,
     );

@@ -8,6 +8,7 @@ import {
 import type { ContentEntity } from "@4ecb/content-domain";
 
 import {
+  alchemicalFormulaItems,
   compatibleBaseItems,
   comparableSaleProceeds,
   entityCurrencyCopper,
@@ -106,7 +107,83 @@ describe("Shop presentation model", () => {
     expect(shopBrowseCategory(scroll)).toBe("consumables");
     expect(shopSlot(weapon)).toBe("Held");
     expect(shopSubtype(weapon)).toBe("Heavy blade");
+    expect(shopSubtype(scroll)).toBe("Scrolls");
     expect(shopDisplayName(enchantment)).toBe("Testing +2");
+  });
+
+  it("normalizes player-facing subtypes and classifies corpus edge cases", () => {
+    const formulaScroll = entity(
+      "SCROLL",
+      "Scroll of Public Formula",
+      "Ritual Scroll",
+      { type: "Alchemical Formula" },
+    );
+    const genericConsumable = entity(
+      "CONSUMABLE",
+      "Public Consumable",
+      "Magic Item",
+      { "Magic Item Type": "Other Consumable" },
+    );
+    const ammunition = entity("AMMO", "Public Ammunition", "Magic Item", {
+      "Magic Item Type": "Ammunition",
+    });
+    const mount = entity("MOUNT", "Public Mount", "Gear", {
+      Category: "Mount",
+    });
+    const internalCompanionChoice = entity(
+      "INTERNAL",
+      "Public Companion Increase",
+      "Companion Ability Increase (Level 4)",
+    );
+    const arms = entity("ARMS", "Public Bracers", "Magic Item", {
+      "Magic Item Type": "Arms Slot",
+    });
+    const universalImplement = entity(
+      "IMPLEMENT",
+      "Public Implement +1",
+      "Magic Item",
+      { "Magic Item Type": "Any", _UniversalImplement: "true" },
+    );
+    const special = entity("SPECIAL", "Public Special Item", "Magic Item", {
+      "Magic Item Type": "Special",
+    });
+    const tattoo = entity("TATTOO", "Public Tattoo", "Magic Item", {
+      "Magic Item Type": "Wondrous Item",
+      "Item Slot": "Tattoo",
+    });
+
+    expect(shopSubtype(formulaScroll)).toBe("Scrolls");
+    expect(shopSubtype(genericConsumable)).toBe("Other");
+    expect(shopSubtype(ammunition)).toBe("Ammunition");
+    expect(shopBrowseCategory(mount)).toBe("companions-mounts");
+    expect(shopBrowseCategory(internalCompanionChoice)).toBeUndefined();
+    expect(shopBrowseCategory(arms)).toBe("worn-items");
+    expect(shopSlot(arms)).toBe("Arms");
+    expect(shopBrowseCategory(universalImplement)).toBe(
+      "implement-enchantments",
+    );
+    expect(shopSubtype(universalImplement)).toBe("Any implement");
+    expect(shopBrowseCategory(special)).toBe("special-items");
+    expect(shopBrowseCategory(tattoo)).toBe("worn-items");
+    expect(shopSlot(tattoo)).toBe("Tattoo");
+  });
+
+  it("resolves and orders exact alchemical-formula item references", () => {
+    const formula = entity("FORMULA", "Public Formula", "Ritual", {
+      type: "Alchemical Formula",
+      _RELATED_ITEMS: "ITEM_6, ITEM_1, MISSING",
+    });
+    const levelOne = entity("ITEM_1", "Public Item (level 1)", "Magic Item", {
+      "Magic Item Type": "Alchemical",
+      Level: "1",
+    });
+    const levelSix = entity("ITEM_6", "Public Item (level 6)", "Magic Item", {
+      "Magic Item Type": "Alchemical",
+      Level: "6",
+    });
+    expect(
+      alchemicalFormulaItems(formula, entityIndex(formula, levelOne, levelSix)),
+    ).toEqual([levelOne, levelSix]);
   });
 
   it("chooses the highest exact family variant not above character level", () => {

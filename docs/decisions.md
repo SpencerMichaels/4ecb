@@ -1164,6 +1164,14 @@ only denomination cells whose displayed totals changed; failures retain and
 focus the input, announce the error, and use a non-layout-shifting error flash.
 Both effects respect reduced-motion preferences.
 
+The browser-persisted **Keep large amounts in gold** display preference caps
+automatic normalization at GP for Quick adjust, purchases, sales, and compact
+totals. It does not prohibit PP or AD: explicitly entered larger coins remain
+exact wallet denominations while affordable, and only a spend that must break
+one converts its change to GP. This changes neither copper-equivalent wealth nor
+the carried-first/stored-second transaction order, and legacy export continues
+to serialize the resulting exact denomination records.
+
 Each holding is one stable row with its canonical physical-item icon, name,
 compact icon-mounted equipped marker, quantity stepper, and trailing actions. A
 single equipped copy uses a check rather than redundant visible prose; multiple
@@ -1275,6 +1283,31 @@ a filter and visual cue, never an acquisition gate. A compatible-item chooser is
 independent of the descriptive detail card; a single eligible choice bypasses
 the chooser. Enchantment aliases remove carrier words only for Shop display and
 search, while canonical names and IDs remain authoritative.
+
+### D059 — Builder status counts and Diagnostics share one issue projection
+
+**Status:** accepted
+
+**Date:** 2026-09-22
+
+The builder header remains a compact status surface: it shows only nonzero
+icon-and-count indicators, with accessible labels and concise tooltips. Detailed
+explanations and repair actions belong to the existing Diagnostics workspace.
+
+Unresolved required choices, evaluator warnings, evaluator errors, and explicit
+house rules are four separate categories. A required-choice diagnostic appears
+only as unresolved; an explicitly house-ruled occurrence appears only as a house
+rule and is not promoted to a warning or error merely because it is
+rules-ineligible. Actual evaluator limitations remain warnings or errors
+according to their engine severity. Ability-score incompleteness and
+out-of-bounds completed point buys follow the same unresolved and house-rule
+split.
+
+One deduplicated structured issue projection supplies both the status counts and
+the Diagnostics lists. Diagnostics explains the issue and its mechanical or
+legality effect, and links back to the exact builder choice or ability-score
+surface when that target is known. This prevents a header count from disagreeing
+with the detailed issues intended to explain it.
 
 ## Deferred decisions and decision points
 

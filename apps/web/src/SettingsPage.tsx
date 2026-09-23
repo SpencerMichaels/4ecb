@@ -119,6 +119,8 @@ export interface SettingsPageProps {
   readonly onThemeChange: (theme: ThemePreference) => void;
   readonly hideFlavortext: boolean;
   readonly onHideFlavortextChange: (hideFlavortext: boolean) => void;
+  readonly keepLargeAmountsInGold: boolean;
+  readonly onKeepLargeAmountsInGoldChange: (value: boolean) => void;
 }
 
 export function SettingsPage({
@@ -133,6 +135,8 @@ export function SettingsPage({
   onThemeChange,
   hideFlavortext,
   onHideFlavortextChange,
+  keepLargeAmountsInGold,
+  onKeepLargeAmountsInGoldChange,
 }: SettingsPageProps) {
   const [status, setStatus] = useState(
     installedPacks.length === 0 ? "No content packs installed." : "Ready.",
@@ -471,6 +475,16 @@ export function SettingsPage({
             }
           />{" "}
           Hide flavortext
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={keepLargeAmountsInGold}
+            onChange={(event) =>
+              onKeepLargeAmountsInGoldChange(event.currentTarget.checked)
+            }
+          />{" "}
+          Keep large amounts in gold
         </label>
       </section>
 

@@ -43,7 +43,11 @@ describe("loadout interaction and geometry", () => {
     );
     expect(workspace).toContain('{loadoutView ? "Inventory" : "Loadout"}');
     expect(workspace).toMatch(
-      /<div className="equipment-summary-row">[\s\S]*?<button[\s\S]*?className="equipment-view-toggle"[\s\S]*?<section className="inventory-wallet"[\s\S]*?\{loadoutView \? \([\s\S]*?<LoadoutGrid/,
+      /<div className="equipment-summary-row">[\s\S]*?<button[\s\S]*?className="equipment-view-toggle"[\s\S]*?<FundsPane[\s\S]*?\{loadoutView \? \([\s\S]*?<LoadoutGrid/,
+    );
+    expect(workspace.match(/<FundsPane/g)).toHaveLength(2);
+    expect(workspace).toContain(
+      'className={`inventory-wallet funds-pane${sticky ? " shop-funds" : ""}`}',
     );
     expect(styles).not.toContain(".equipment-toolbar");
     expect(workspace).toMatch(

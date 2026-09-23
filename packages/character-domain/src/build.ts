@@ -298,6 +298,37 @@ export function currencyFromCopper(copper: number): CurrencyAmount {
   return amount;
 }
 
+/**
+ * Normalizes through gold while retaining explicitly held platinum and astral
+ * coins whenever the new total can still cover them. If a larger coin must be
+ * broken to pay a cost, its change remains in gold and smaller denominations.
+ */
+export function currencyFromCopperKeepingLargeCoins(
+  copper: number,
+  previous: CurrencyAmount,
+): CurrencyAmount {
+  if (!validCurrencyCount(copper))
+    throw new Error("Copper value must be a non-negative safe integer");
+  assertCurrencyAmount(previous);
+  const amount: Record<CurrencyDenomination, number> = { ...ZERO_CURRENCY };
+  let remainder = copper;
+  for (const denomination of ["ad", "pp"] as const) {
+    const value = CURRENCY_COPPER_VALUES[denomination];
+    const retained = Math.min(
+      previous[denomination],
+      Math.floor(remainder / value),
+    );
+    amount[denomination] = retained;
+    remainder -= retained * value;
+  }
+  for (const denomination of ["gp", "sp", "cp"] as const) {
+    const value = CURRENCY_COPPER_VALUES[denomination];
+    amount[denomination] = Math.floor(remainder / value);
+    remainder %= value;
+  }
+  return amount;
+}
+
 export function addCurrency(
   left: CurrencyAmount,
   right: CurrencyAmount,
@@ -334,6 +365,7 @@ export function adjustWalletCurrency(
   carried: CurrencyAmount,
   stored: CurrencyAmount,
   deltaCopper: number,
+  keepLargeAmountsInGold = false,
 ): { readonly carried: CurrencyAmount; readonly stored: CurrencyAmount } {
   if (!Number.isSafeInteger(deltaCopper))
     throw new Error("Currency adjustment is too large");
@@ -347,8 +379,12 @@ export function adjustWalletCurrency(
     if (!Number.isSafeInteger(carriedAfter))
       throw new Error("Currency adjustment is too large");
     return {
-      carried: currencyFromCopper(carriedAfter),
-      stored: currencyFromCopper(storedCopper),
+      carried: keepLargeAmountsInGold
+        ? currencyFromCopperKeepingLargeCoins(carriedAfter, carried)
+        : currencyFromCopper(carriedAfter),
+      stored: keepLargeAmountsInGold
+        ? currencyFromCopperKeepingLargeCoins(storedCopper, stored)
+        : currencyFromCopper(storedCopper),
     };
   }
   const cost = -deltaCopper;
@@ -357,10 +393,18 @@ export function adjustWalletCurrency(
   if (cost > totalCopper)
     throw new Error("Not enough funds for that adjustment");
   return {
-    carried: currencyFromCopper(Math.max(0, carriedCopper - cost)),
-    stored: currencyFromCopper(
-      storedCopper - Math.max(0, cost - carriedCopper),
-    ),
+    carried: keepLargeAmountsInGold
+      ? currencyFromCopperKeepingLargeCoins(
+          Math.max(0, carriedCopper - cost),
+          carried,
+        )
+      : currencyFromCopper(Math.max(0, carriedCopper - cost)),
+    stored: keepLargeAmountsInGold
+      ? currencyFromCopperKeepingLargeCoins(
+          storedCopper - Math.max(0, cost - carriedCopper),
+          stored,
+        )
+      : currencyFromCopper(storedCopper - Math.max(0, cost - carriedCopper)),
   };
 }
 
@@ -532,6 +576,8 @@ export type CharacterCommand =
       readonly entry: BuildInventoryEntry;
       /** Per-unit price in copper pieces. */
       readonly priceCopper: number;
+      /** Prevent automatic promotion of gold into larger denominations. */
+      readonly keepLargeAmountsInGold?: boolean;
     }
   | {
       readonly kind: "sell-inventory";
@@ -540,6 +586,8 @@ export type CharacterCommand =
       /** Per-unit list price in copper pieces. */
       readonly priceCopper: number;
       readonly percentage: 20 | 50 | 100;
+      /** Prevent automatic promotion of gold into larger denominations. */
+      readonly keepLargeAmountsInGold?: boolean;
     }
   | {
       readonly kind: "set-text";
@@ -621,13 +669,18 @@ function withCurrentWalletCopper(
   build: CharacterBuild,
   wallet: CharacterWalletKind,
   copper: number,
+  keepLargeAmountsInGold = false,
 ): CharacterBuild {
   const key = characterWalletTextKey(build.effectiveLevel, wallet);
+  const previous = resolveCharacterWallet(build, wallet).amount;
+  const amount = keepLargeAmountsInGold
+    ? currencyFromCopperKeepingLargeCoins(copper, previous)
+    : currencyFromCopper(copper);
   return {
     ...build,
     textStrings: {
       ...build.textStrings,
-      [key]: formatLegacyCurrency(currencyFromCopper(copper)),
+      [key]: formatLegacyCurrency(amount),
     },
   };
 }
@@ -854,9 +907,19 @@ export function applyCharacterCommand(
         inventory: [...build.inventory, command.entry],
       };
       if (cost > 0) {
-        updated = withCurrentWalletCopper(updated, "carried", carriedAfter);
+        updated = withCurrentWalletCopper(
+          updated,
+          "carried",
+          carriedAfter,
+          command.keepLargeAmountsInGold,
+        );
         if (cost > carried)
-          updated = withCurrentWalletCopper(updated, "stored", storedAfter);
+          updated = withCurrentWalletCopper(
+            updated,
+            "stored",
+            storedAfter,
+            command.keepLargeAmountsInGold,
+          );
       }
       return updated;
     }
@@ -889,7 +952,12 @@ export function applyCharacterCommand(
       };
       return proceeds === 0
         ? updated
-        : withCurrentWalletCopper(updated, "carried", carried + proceeds);
+        : withCurrentWalletCopper(
+            updated,
+            "carried",
+            carried + proceeds,
+            command.keepLargeAmountsInGold,
+          );
     }
     case "set-text": {
       const textStrings = { ...build.textStrings };
