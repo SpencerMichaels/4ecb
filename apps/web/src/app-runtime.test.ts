@@ -402,4 +402,38 @@ describe("application content runtime", () => {
     expect(cache.get).not.toHaveBeenCalled();
     expect(cache.put).not.toHaveBeenCalled();
   });
+
+  it("refreshes in-memory evaluation recency on a cache hit", async () => {
+    const evaluate = vi.fn(async (input: EvaluationInput) =>
+      evaluation(input.level),
+    );
+    const runtime = new AppContentRuntime({
+      createRulesClient: () =>
+        rulesClient(
+          vi.fn(async () => undefined),
+          evaluate,
+        ),
+    });
+    const client = await runtime.getRulesClient("core", "digest-core");
+    const input = (level: number): EvaluationInput => ({
+      level,
+      baseAbilities: {},
+      occurrences: [],
+      inventory: [],
+    });
+    for (let level = 1; level <= 32; level += 1)
+      await client.evaluate(input(level));
+    await client.evaluate(input(1));
+    await client.evaluate(input(33));
+    await client.evaluate(input(1));
+    await client.evaluate(input(2));
+
+    expect(evaluate).toHaveBeenCalledTimes(34);
+    expect(
+      evaluate.mock.calls.filter(([request]) => request.level === 1),
+    ).toHaveLength(1);
+    expect(
+      evaluate.mock.calls.filter(([request]) => request.level === 2),
+    ).toHaveLength(2);
+  });
 });

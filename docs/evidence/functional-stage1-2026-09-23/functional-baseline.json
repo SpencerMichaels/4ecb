@@ -1,0 +1,1065 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-23T21:26:51.290Z",
+  "fixture": { "feats": 420, "shopItems": 260, "entities": 681 },
+  "environment": {
+    "platform": "linux",
+    "release": "6.18.48",
+    "cpu": "AMD Ryzen 7 PRO 5850U with Radeon Graphics",
+    "logicalCpuCount": 16,
+    "totalMemoryBytes": 23953190912,
+    "freeMemoryBytesAtReport": 15914610688,
+    "chromium": "Chrome/152.0.7977.64",
+    "viewport": { "width": 1440, "height": 1000, "deviceScaleFactor": 1 },
+    "buildMode": "Vite production preview"
+  },
+  "protocol": {
+    "runs": 3,
+    "aggregation": "median, minimum, maximum, sample standard deviation",
+    "timingAssertions": "Recorded as evidence; ordinary CI asserts behavior and instrumentation shape, not host timing.",
+    "indexedDbBytes": "Approximate structured-clone payload bytes: JSON UTF-8 plus ArrayBuffer/view byte lengths.",
+    "queryToPaint": "Input event start through two requestAnimationFrame callbacks and the resulting DOM read.",
+    "longTasks": "PerformanceObserver longtask entries attributed between the interaction start and second animation frame."
+  },
+  "bundle": {
+    "assets": [
+      {
+        "file": "assets/index-DXEea5te.js",
+        "bytes": 604750,
+        "gzipBytes": 173277
+      },
+      {
+        "file": "assets/rules.worker-kYwNazp5.js",
+        "bytes": 116453,
+        "gzipBytes": 33407
+      },
+      {
+        "file": "assets/index-CNKgvpws.css",
+        "bytes": 83226,
+        "gzipBytes": 15602
+      },
+      {
+        "file": "assets/query.worker-CQ9Nh9Q_.js",
+        "bytes": 57075,
+        "gzipBytes": 16582
+      },
+      {
+        "file": "assets/content.worker-B7cpRPeU.js",
+        "bytes": 47054,
+        "gzipBytes": 13661
+      },
+      { "file": "workbox-98f7a950.js", "bytes": 15421, "gzipBytes": 5307 },
+      {
+        "file": "assets/workbox-window.prod.es5-Bd17z0YL.js",
+        "bytes": 5653,
+        "gzipBytes": 2214
+      },
+      { "file": "sw.js", "bytes": 1639, "gzipBytes": 929 },
+      { "file": "print-letter.css", "bytes": 44, "gzipBytes": 62 },
+      { "file": "print-a4.css", "bytes": 37, "gzipBytes": 55 }
+    ],
+    "javascript": { "bytes": 848045, "gzipBytes": 245377 },
+    "css": { "bytes": 83307, "gzipBytes": 15719 },
+    "javascriptChunkCount": 7
+  },
+  "runs": [
+    {
+      "run": 1,
+      "coldLibrary": {
+        "workers": [],
+        "indexedDb": {
+          "calls": 9,
+          "records": 6,
+          "bytes": 1829,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 124 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [],
+        "measures": [],
+        "navigation": [
+          {
+            "duration": 12.799999982118607,
+            "domContentLoaded": 12.299999982118607,
+            "loadEvent": 12.799999982118607,
+            "transferSize": 1170,
+            "decodedBodySize": 870
+          }
+        ]
+      },
+      "directEditorMilliseconds": 205.26326300000005,
+      "directEditor": {
+        "workers": ["http://127.0.0.1:40239/assets/rules.worker-kYwNazp5.js"],
+        "indexedDb": {
+          "calls": 10,
+          "records": 7,
+          "bytes": 400152,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characters": { "calls": 1, "records": 1, "bytes": 1338 },
+            "contentPacks": { "calls": 1, "records": 1, "bytes": 397109 },
+            "evaluations": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 1.899999976158142,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 109.59999999403954,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:content-pack-ready",
+            "duration": 52.69999998807907,
+            "detail": {
+              "packId": "public-functional-baseline",
+              "source": "storage",
+              "recordCount": 681
+            }
+          },
+          {
+            "name": "4ecb:rules-worker-ready",
+            "duration": 12.5,
+            "detail": { "packId": "public-functional-baseline" }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 1.0999999940395355,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 34.099999994039536,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 15.299999982118607,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 14.200000017881393,
+              "contentLoadMilliseconds": 5.800000011920929,
+              "evaluationMilliseconds": 8.400000005960464
+            }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 28.69999998807907,
+            "domContentLoaded": 28.69999998807907,
+            "loadEvent": 28.69999998807907,
+            "transferSize": 0,
+            "decodedBodySize": 870
+          }
+        ]
+      },
+      "warmReopenMilliseconds": 57.72393099999999,
+      "candidateSearches": [
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 22.799999982118607,
+          "mountedRows": 420,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat 0",
+          "milliseconds": 22.099999994039536,
+          "mountedRows": 420,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 32.19999998807907,
+          "mountedRows": 420,
+          "longTasks": []
+        }
+      ],
+      "candidateMountedRows": 420,
+      "shopSearches": [
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 29.200000017881393,
+          "mountedRows": 200,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear 00",
+          "milliseconds": 25.099999994039536,
+          "mountedRows": 99,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 57.599999994039536,
+          "mountedRows": 200,
+          "longTasks": []
+        }
+      ],
+      "shopMountedRows": 200,
+      "warmTabAdditionalWorkers": 0,
+      "maximumInteractionLongTask": 0,
+      "journey": ["build", "overview", "equipment", "shop", "sheet"],
+      "saveUndoRedo": "pass",
+      "browserBackForward": "pass",
+      "finalInstrumentation": {
+        "workers": ["http://127.0.0.1:40239/assets/rules.worker-kYwNazp5.js"],
+        "indexedDb": {
+          "calls": 26,
+          "records": 13,
+          "bytes": 406978,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 7, "records": 0, "bytes": 0 },
+            "characters": { "calls": 6, "records": 6, "bytes": 8040 },
+            "contentPacks": { "calls": 1, "records": 1, "bytes": 397109 },
+            "evaluations": { "calls": 4, "records": 0, "bytes": 0 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 124 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [
+          { "startTime": 209.09999999403954, "duration": 109 },
+          { "startTime": 861.0999999940395, "duration": 63 },
+          { "startTime": 924.6999999880791, "duration": 69 }
+        ],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 1,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 7.299999982118607,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 8.200000017881393,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 2.300000011920929,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 0.30000001192092896,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 0.30000001192092896
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000002384185791,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000002384185791,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000002384185791,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 2.4000000059604645,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 1.699999988079071,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 1.5999999940395355,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 1.5999999940395355
+            }
+          },
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 1,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 7,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000002384185791,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.20000001788139343,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 4.300000011920929,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 2.899999976158142,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 1.0999999940395355,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 1.0999999940395355
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 28.69999998807907,
+            "domContentLoaded": 28.69999998807907,
+            "loadEvent": 28.69999998807907,
+            "transferSize": 0,
+            "decodedBodySize": 870
+          }
+        ]
+      }
+    },
+    {
+      "run": 2,
+      "coldLibrary": {
+        "workers": [],
+        "indexedDb": {
+          "calls": 9,
+          "records": 6,
+          "bytes": 1822,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 117 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [],
+        "measures": [],
+        "navigation": [
+          {
+            "duration": 29.099999994039536,
+            "domContentLoaded": 29,
+            "loadEvent": 29.099999994039536,
+            "transferSize": 0,
+            "decodedBodySize": 870
+          }
+        ]
+      },
+      "directEditorMilliseconds": 118.29043999999976,
+      "directEditor": {
+        "workers": ["http://127.0.0.1:40239/assets/rules.worker-kYwNazp5.js"],
+        "indexedDb": {
+          "calls": 10,
+          "records": 8,
+          "bytes": 469440,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characters": { "calls": 1, "records": 1, "bytes": 1350 },
+            "contentPacks": { "calls": 1, "records": 1, "bytes": 397109 },
+            "evaluations": { "calls": 1, "records": 1, "bytes": 69276 }
+          }
+        },
+        "longTasks": [],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 1.5,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 47.69999998807907,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:content-pack-ready",
+            "duration": 19.900000005960464,
+            "detail": {
+              "packId": "public-functional-baseline",
+              "source": "storage",
+              "recordCount": 681
+            }
+          },
+          {
+            "name": "4ecb:rules-worker-ready",
+            "duration": 12.300000011920929,
+            "detail": { "packId": "public-functional-baseline" }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.29999998211860657,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 7.699999988079071,
+            "detail": { "source": "persistent-cache", "level": 1 }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 27.099999994039536,
+            "domContentLoaded": 27,
+            "loadEvent": 27.099999994039536,
+            "transferSize": 0,
+            "decodedBodySize": 870
+          }
+        ]
+      },
+      "warmReopenMilliseconds": 64.35750800000005,
+      "candidateSearches": [
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 21,
+          "mountedRows": 420,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat 0",
+          "milliseconds": 23.099999994039536,
+          "mountedRows": 420,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 31.700000017881393,
+          "mountedRows": 420,
+          "longTasks": []
+        }
+      ],
+      "candidateMountedRows": 420,
+      "shopSearches": [
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 13.599999994039536,
+          "mountedRows": 200,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear 00",
+          "milliseconds": 28.5,
+          "mountedRows": 99,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 52.599999994039536,
+          "mountedRows": 200,
+          "longTasks": []
+        }
+      ],
+      "shopMountedRows": 200,
+      "warmTabAdditionalWorkers": 0,
+      "maximumInteractionLongTask": 0,
+      "journey": ["build", "overview", "equipment", "shop", "sheet"],
+      "saveUndoRedo": "pass",
+      "browserBackForward": "pass",
+      "finalInstrumentation": {
+        "workers": ["http://127.0.0.1:40239/assets/rules.worker-kYwNazp5.js"],
+        "indexedDb": {
+          "calls": 25,
+          "records": 14,
+          "bytes": 476307,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 7, "records": 0, "bytes": 0 },
+            "characters": { "calls": 6, "records": 6, "bytes": 8100 },
+            "contentPacks": { "calls": 1, "records": 1, "bytes": 397109 },
+            "evaluations": { "calls": 3, "records": 1, "bytes": 69276 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 117 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [
+          { "startTime": 120, "duration": 79 },
+          { "startTime": 469.59999999403954, "duration": 66 }
+        ],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 1,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 9.599999994039536,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000002384185791,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 114.40000000596046,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 109.5,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 16.5,
+              "contentLoadMilliseconds": 6.4000000059604645,
+              "evaluationMilliseconds": 10.099999994039536
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 0.8999999761581421,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 9.599999994039536,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 4,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 3,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 1.2999999821186066,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 1.2999999821186066
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 27.099999994039536,
+            "domContentLoaded": 27,
+            "loadEvent": 27.099999994039536,
+            "transferSize": 0,
+            "decodedBodySize": 870
+          }
+        ]
+      }
+    },
+    {
+      "run": 3,
+      "coldLibrary": {
+        "workers": [],
+        "indexedDb": {
+          "calls": 9,
+          "records": 6,
+          "bytes": 1822,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 117 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [],
+        "measures": [],
+        "navigation": [
+          {
+            "duration": 33.099999994039536,
+            "domContentLoaded": 33,
+            "loadEvent": 33.099999994039536,
+            "transferSize": 0,
+            "decodedBodySize": 870
+          }
+        ]
+      },
+      "directEditorMilliseconds": 121.29761599999983,
+      "directEditor": {
+        "workers": ["http://127.0.0.1:40239/assets/rules.worker-kYwNazp5.js"],
+        "indexedDb": {
+          "calls": 10,
+          "records": 8,
+          "bytes": 469440,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characters": { "calls": 1, "records": 1, "bytes": 1350 },
+            "contentPacks": { "calls": 1, "records": 1, "bytes": 397109 },
+            "evaluations": { "calls": 1, "records": 1, "bytes": 69276 }
+          }
+        },
+        "longTasks": [],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 1.600000023841858,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 54.80000001192093,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:content-pack-ready",
+            "duration": 20.799999982118607,
+            "detail": {
+              "packId": "public-functional-baseline",
+              "source": "storage",
+              "recordCount": 681
+            }
+          },
+          {
+            "name": "4ecb:rules-worker-ready",
+            "duration": 17.700000017881393,
+            "detail": { "packId": "public-functional-baseline" }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.5,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 8.800000011920929,
+            "detail": { "source": "persistent-cache", "level": 1 }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 29.5,
+            "domContentLoaded": 29.400000005960464,
+            "loadEvent": 29.5,
+            "transferSize": 0,
+            "decodedBodySize": 870
+          }
+        ]
+      },
+      "warmReopenMilliseconds": 60.05645800000002,
+      "candidateSearches": [
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 23.100000023841858,
+          "mountedRows": 420,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat 0",
+          "milliseconds": 30.5,
+          "mountedRows": 420,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 31.799999982118607,
+          "mountedRows": 420,
+          "longTasks": []
+        }
+      ],
+      "candidateMountedRows": 420,
+      "shopSearches": [
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 5.0999999940395355,
+          "mountedRows": 200,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear 00",
+          "milliseconds": 32.20000001788139,
+          "mountedRows": 99,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 56.099999994039536,
+          "mountedRows": 200,
+          "longTasks": []
+        }
+      ],
+      "shopMountedRows": 200,
+      "warmTabAdditionalWorkers": 0,
+      "maximumInteractionLongTask": 0,
+      "journey": ["build", "overview", "equipment", "shop", "sheet"],
+      "saveUndoRedo": "pass",
+      "browserBackForward": "pass",
+      "finalInstrumentation": {
+        "workers": ["http://127.0.0.1:40239/assets/rules.worker-kYwNazp5.js"],
+        "indexedDb": {
+          "calls": 26,
+          "records": 14,
+          "bytes": 476307,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 7, "records": 0, "bytes": 0 },
+            "characters": { "calls": 6, "records": 6, "bytes": 8100 },
+            "contentPacks": { "calls": 1, "records": 1, "bytes": 397109 },
+            "evaluations": { "calls": 4, "records": 1, "bytes": 69276 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 117 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [
+          { "startTime": 123.10000002384186, "duration": 81 },
+          { "startTime": 492.60000002384186, "duration": 63 }
+        ],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 1.2000000178813934,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 9.600000023841858,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 58.900000005960464,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 51.80000001192093,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 16.400000005960464,
+              "contentLoadMilliseconds": 5.9000000059604645,
+              "evaluationMilliseconds": 10.5
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000002384185791,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 5.0999999940395355,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 1.2999999821186066,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 7.0999999940395355,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 3.7000000178813934,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 1.600000023841858,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 1.600000023841858
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.20000001788139343,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000002384185791,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 3.4000000059604645,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 2.4000000059604645,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 1.300000011920929,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 1.300000011920929
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 29.5,
+            "domContentLoaded": 29.400000005960464,
+            "loadEvent": 29.5,
+            "transferSize": 0,
+            "decodedBodySize": 870
+          }
+        ]
+      }
+    }
+  ],
+  "summary": {
+    "directEditorMilliseconds": {
+      "count": 3,
+      "minimum": 118.29043999999976,
+      "median": 121.29761599999983,
+      "maximum": 205.26326300000005,
+      "sampleStandardDeviation": 49.368588063350906
+    },
+    "warmReopenMilliseconds": {
+      "count": 3,
+      "minimum": 57.72393099999999,
+      "median": 60.05645800000002,
+      "maximum": 64.35750800000005,
+      "sampleStandardDeviation": 3.3651165686386753
+    },
+    "candidateQueryToPaintMilliseconds": {
+      "count": 9,
+      "minimum": 21,
+      "median": 23.100000023841858,
+      "maximum": 32.19999998807907,
+      "sampleStandardDeviation": 4.87385314046375
+    },
+    "shopQueryToPaintMilliseconds": {
+      "count": 9,
+      "minimum": 5.0999999940395355,
+      "median": 29.200000017881393,
+      "maximum": 57.599999994039536,
+      "sampleStandardDeviation": 18.622701199380447
+    },
+    "candidateMountedRows": {
+      "count": 3,
+      "minimum": 420,
+      "median": 420,
+      "maximum": 420,
+      "sampleStandardDeviation": 0
+    },
+    "shopMountedRows": {
+      "count": 3,
+      "minimum": 200,
+      "median": 200,
+      "maximum": 200,
+      "sampleStandardDeviation": 0
+    },
+    "maximumInteractionLongTask": {
+      "count": 3,
+      "minimum": 0,
+      "median": 0,
+      "maximum": 0,
+      "sampleStandardDeviation": 0
+    },
+    "warmTabAdditionalWorkers": {
+      "count": 3,
+      "minimum": 0,
+      "median": 0,
+      "maximum": 0,
+      "sampleStandardDeviation": 0
+    }
+  },
+  "guardrails": {
+    "candidateMountedRowsAtMost200": {
+      "limit": 200,
+      "observed": 420,
+      "pass": false
+    },
+    "shopMountedRowsAtMost200": { "limit": 200, "observed": 200, "pass": true },
+    "interactionLongTaskAtMost50Milliseconds": {
+      "limit": 50,
+      "observed": 0,
+      "pass": true
+    },
+    "cachedEvaluationVisibleWithin100Milliseconds": {
+      "limit": 100,
+      "observed": 64.35750800000005,
+      "pass": true
+    },
+    "warmTabsDoNotCreateWorkers": {
+      "observedAdditionalWorkers": 0,
+      "pass": true
+    }
+  },
+  "browserMessages": []
+}

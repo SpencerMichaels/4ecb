@@ -557,15 +557,34 @@ async function seedDatabase(client, fixture) {
       });
       const encoded = new TextEncoder().encode(${JSON.stringify(fixture.encodedPack)}).buffer;
       await new Promise((resolve, reject) => {
-        const transaction = database.transaction(["contentPacks", "settings", "characters"], "readwrite");
+        const transaction = database.transaction(["contentPacks", "contentPackMetadata", "settings", "characters", "characterMetadata", "characterPortraits"], "readwrite");
         transaction.objectStore("contentPacks").put({
           packId: ${JSON.stringify(fixture.manifest.packId)},
           manifest: ${JSON.stringify(fixture.manifest)},
           encodedPack: encoded,
           origin: "personal",
         });
+        transaction.objectStore("contentPackMetadata").put({
+          packId: ${JSON.stringify(fixture.manifest.packId)},
+          manifest: ${JSON.stringify(fixture.manifest)},
+          origin: "personal",
+        });
         transaction.objectStore("settings").put({ key: "active-content-pack", value: ${JSON.stringify(fixture.manifest.packId)} });
-        transaction.objectStore("characters").put(${JSON.stringify(fixture.character)});
+        const character = ${JSON.stringify(fixture.character)};
+        transaction.objectStore("characters").put(character);
+        transaction.objectStore("characterMetadata").put({
+          id: character.id,
+          title: character.title,
+          updatedAt: character.updatedAt,
+          effectiveLevel: character.build.effectiveLevel,
+          race: character.snapshot.details.Race,
+          className: character.snapshot.details.Class,
+        });
+        if (character.portrait !== undefined)
+          transaction.objectStore("characterPortraits").put({
+            id: character.id,
+            renderedDataUrl: character.portrait.renderedDataUrl,
+          });
         transaction.oncomplete = () => resolve();
         transaction.onerror = () => reject(transaction.error);
         transaction.onabort = () => reject(transaction.error);

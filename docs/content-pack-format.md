@@ -102,6 +102,16 @@ provenance field before digest validation or IndexedDB storage. It accepts at
 most 100,000 records and 100 preserved-node nesting levels; the known corpus has
 38,339 records.
 
+IndexedDB schema 5 stores encoded pack payloads separately from a small
+manifest/origin projection used by settings and startup listings. Public
+decoded-object and encoded-byte installation APIs always validate before their
+atomic payload/projection write. Import workers and same-origin advertised-pack
+downloads may use the internal storage seam only through an artifact created by
+decoding and validating those exact bytes (and, for advertised packs,
+configured ID/digest comparison); the seam is not exported from the root
+storage API. Generated legacy packs encode first and then decode/validate that
+exact artifact once.
+
 On browsers with the File System Access directory picker, a user may choose a
 legacy-data or pack directory. Discovery is read-only, limited to four nested
 directory levels and 2,000 entries, and considers only `.4ecp` and recognized

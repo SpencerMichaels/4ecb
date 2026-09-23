@@ -106,3 +106,32 @@ specific interaction without trace evidence.
 The screenshots were reviewed at their captured resolution. They contain only
 the public fixture and show the expected selector, Inventory, dialog, Shop,
 sheet, and print-media surfaces without clipping in the captured viewport.
+
+## Stage 1 comparable run (2026-09-23)
+
+The unchanged fixture, host, Chromium version, viewport, production-preview
+build, three-run protocol, and metric definitions produced the raw report at
+[Stage 1 evidence](evidence/functional-stage1-2026-09-23/functional-baseline.json).
+
+| Metric                                       |       Stage 0 |       Stage 1 |        Change |
+| -------------------------------------------- | ------------: | ------------: | ------------: |
+| Cold-library records / median payload bytes  |  6 / ~797,000 |     6 / 1,822 | bytes -99.77% |
+| Direct-editor records / median payload bytes | 6 / 1,192,771 |   8 / 469,440 | bytes -60.64% |
+| Direct-editor median                         |      118.9 ms |      121.3 ms |         +2.0% |
+| Warm-reopen median                           |       58.0 ms |       60.1 ms |         +3.6% |
+| Main JavaScript gzip-9                       | 172,260 bytes | 173,277 bytes |         +0.6% |
+
+The two additional direct-editor records are small pack metadata and a
+disposable persisted evaluation; the payload reduction is the relevant clone
+cost. Cold library reads only the character and pack metadata sidecars, the
+separate rendered-thumbnail store, settings, and an empty migration journal.
+The public fixture has no portrait, so that targeted store adds one call and
+zero records/bytes. Portrait-bearing libraries read each rendered thumbnail
+from that store; a thumbnail can still be as large as the domain's 5 MiB
+accepted rendered-data-URL limit, but the retained source image (accepted up to
+20 MiB) remains in the authoritative character record and is not cloned by a
+library listing. Direct editor still reads its one full character and one full
+encoded pack because both are authoritative inputs. The warm maximum was 64.36
+ms, no interaction-attributed Long Task appeared, and warm tab changes created
+no worker. The known 420-row candidate failure remains assigned to Stage 3;
+Shop remains bounded at 200.

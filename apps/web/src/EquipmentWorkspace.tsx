@@ -835,7 +835,6 @@ export function EquipmentWorkspace({
   readonly build: CharacterBuild;
   readonly entities: readonly ContentEntity[];
   readonly byId: ReadonlyMap<string, ContentEntity>;
-  readonly packId?: string;
   readonly wallet: EquipmentWalletView;
   readonly activeDefinitionIds: readonly string[];
   readonly hideFlavortext: boolean;

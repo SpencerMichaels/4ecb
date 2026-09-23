@@ -71,6 +71,37 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   its honest 420-row failure and full verification evidence. Stage 0 is complete;
   Stage 1 — Storage and cache mechanics is the next stopping point.
 
+## Functional refactor Stage 1 implementation checkpoint (2026-09-23)
+
+- IndexedDB schema 5 adds transactionally maintained character/pack metadata
+  sidecars plus a distinct rendered-thumbnail store. Upgrades backfill schemas
+  1–4 without replacing payload stores or migration journals; lazy character
+  migration, backup restore, trash/restore, purge, install, and removal keep
+  projection writes atomic. Metadata never carries the retained portrait source.
+- The character library reads and partitions summaries once. Pack list,
+  manifest, and activation checks no longer clone encoded packs. Public decoded
+  and encoded install APIs still validate. The internal seam can store only a
+  runtime proof created by decoding and validating the exact stored bytes;
+  corrupt, mismatched, and forged artifacts are rejected.
+- Exact evaluation promise caching now has one application-runtime owner. Hits
+  refresh the 32-entry LRU recency, while persistent cache version/profile/input
+  isolation and malformed/read/write failure recovery remain unchanged.
+- The comparable public three-run baseline records 1,822 median cold-library
+  payload bytes (-99.77%) and 469,440 direct-editor bytes (-60.64%). Direct
+  editor, warm reopen, and main-bundle gzip changed +2.0%, +3.6%, and +0.6%,
+  within the approved 10% guardrail. No interaction Long Task or warm-tab worker
+  appeared; the known candidate-row failure remains Stage 3 work.
+- Portrait list reads fetch only the rendered thumbnail sidecar, which is still
+  bounded by the domain's 5 MiB accepted data-URL limit. Tests prove that a
+  large retained source image and legacy source XML remain only in the
+  authoritative character record and are absent from both listing stores.
+- Focused Stage 1 suites pass 46 tests. The full public gate passes formatting,
+  lint, 69 files / 512 tests, all workspace typechecks, the production/PWA
+  build, Chromium and Firefox print matrices, deterministic content checks, and
+  the query benchmark. The coordinator independently reran the full gate on the
+  final tree and accepted every Stage 1 exit criterion. Stage 1 is complete;
+  Stage 2 — Route-level lazy loading is the next stopping point.
+
 ## M5.5 shared visual-contract consolidation checkpoint (2026-09-23)
 
 - Cross-workspace selection headings now use authoritative named typography

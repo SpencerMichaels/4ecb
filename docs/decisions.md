@@ -1331,6 +1331,32 @@ detail-card rhythm in addition to the existing structural tests. Refactoring a
 shared primitive therefore requires both component-contract verification and
 visual comparison across the representative responsive/theme matrix.
 
+### D061 — IndexedDB listings use transactional metadata sidecars
+
+**Status:** accepted
+
+**Date:** 2026-09-23
+
+Schema 5 adds `characterMetadata`, `characterPortraits`, and
+`contentPackMetadata` sidecar stores. Text/numeric metadata remains separate
+from the domain-validated rendered thumbnail (bounded to 5 MiB); the retained
+portrait source, accepted up to 20 MiB, remains only in the authoritative
+character record. The stores are backfilled while upgrading schema generations
+1–4. Historical character, pack, settings, and migration-journal stores remain
+untouched and authoritative. Every later payload mutation updates or removes
+its projections in the same IndexedDB transaction, including backup restore,
+trash/restore, purge, lazy character migration, pack install, and pack removal.
+
+Public content installation continues to decode and validate untrusted objects
+or bytes. A separate internal package subpath can produce a storage artifact
+only by decoding and validating the exact encoded bytes that artifact contains;
+forged artifacts are rejected at runtime. Imported, advertised, and newly
+generated legacy packs therefore cannot pair a valid decoded object with
+corrupt or mismatched stored bytes. Digest collision checks and atomic payload/
+metadata writes still occur at the storage seam. Exact evaluation promise
+caching belongs only to the application runtime, whose 32-entry bound now
+refreshes recency on hits; the editor no longer maintains a second cache.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

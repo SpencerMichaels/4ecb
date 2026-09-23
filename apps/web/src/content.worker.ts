@@ -1,10 +1,9 @@
 /// <reference lib="webworker" />
 
-import { ContentPackRepository } from "@4ecb/browser-storage";
 import {
-  decodeContentPackBytes,
-  validateContentPack,
-} from "@4ecb/content-pack";
+  decodeAndValidateContentPackForStorage,
+  storeAlreadyValidatedContentPack,
+} from "@4ecb/browser-storage/validated-pack-storage";
 
 import {
   buildPackFromLegacyRules,
@@ -31,16 +30,13 @@ worker.onmessage = (event: MessageEvent<ContentImportRequest>) => {
 async function importPack(buffer: ArrayBuffer): Promise<void> {
   try {
     respond({ type: "progress", phase: "decoding" });
-    const pack = await decodeContentPackBytes(buffer);
-    respond({ type: "progress", phase: "validating" });
-    const validation = await validateContentPack(pack);
-    if (!validation.valid) {
-      throw new Error(
-        `Pack validation failed: ${validation.errors.join("; ")}`,
-      );
-    }
+    const validated = await decodeAndValidateContentPackForStorage(
+      buffer,
+      "Pack validation failed",
+      () => respond({ type: "progress", phase: "validating" }),
+    );
     respond({ type: "progress", phase: "storing" });
-    const manifest = await new ContentPackRepository().installEncoded(buffer);
+    const manifest = await storeAlreadyValidatedContentPack(validated);
     respond({ type: "complete", manifest });
   } catch (error: unknown) {
     respond({
@@ -64,15 +60,14 @@ async function importLegacyRules(
       },
       () => respond({ type: "progress", phase: "building-pack" }),
     );
-    respond({ type: "progress", phase: "validating" });
-    const validation = await validateContentPack(pack);
-    if (!validation.valid)
-      throw new Error(
-        `Generated pack validation failed: ${validation.errors.join("; ")}`,
-      );
     const encoded = await encodeCompressedPack(pack);
+    const validated = await decodeAndValidateContentPackForStorage(
+      encoded,
+      "Generated pack validation failed",
+      () => respond({ type: "progress", phase: "validating" }),
+    );
     respond({ type: "progress", phase: "storing" });
-    const manifest = await new ContentPackRepository().installEncoded(encoded);
+    const manifest = await storeAlreadyValidatedContentPack(validated);
     respond({ type: "complete", manifest });
   } catch (error: unknown) {
     respond({

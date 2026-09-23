@@ -11,5 +11,8 @@ export type { ContentProfileLayer } from "@4ecb/content-pack";
 export {
   CharacterRepository,
   type CharacterBackupInspection,
+  type CharacterLibraryEntry,
+  type CharacterMetadata,
+  type PartitionedCharacterMetadata,
 } from "./character-repository";
 export { EvaluationCacheRepository } from "./evaluation-cache-repository";

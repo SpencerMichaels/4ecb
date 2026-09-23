@@ -552,6 +552,10 @@ Storage rules:
 - application database upgrades create missing current stores without replacing
   historical character, pack, or settings stores; lazy record migration follows
   after the schema transaction completes;
+- schema 5 maintains transactional sidecar projections for character-library
+  summaries, rendered portrait thumbnails, and content-pack manifest/origin
+  listings, so ordinary metadata operations do not structured-clone full
+  character envelopes, retained portrait sources, or encoded pack bytes;
 - content packs are verified by digest before activation;
 - progressive directory onboarding keeps handles ephemeral, bounds name-only
   discovery, and reads only the candidate the user explicitly installs;
@@ -579,6 +583,12 @@ destroys the document heap and dedicated workers, so it performs one new
 startup reconstruction from IndexedDB. Cross-refresh worker persistence is not
 assigned to the service worker because browser service-worker lifetime is not a
 reliable in-memory cache contract.
+
+Exact evaluation promise memoization has one owner: the application-scoped
+rules runtime. Its canonical key includes every evaluator input field and is
+isolated by the rules client for the exact pack ID/content digest. Hits refresh
+recency before the 32-entry LRU bound is enforced. The separate bounded
+IndexedDB evaluation cache remains disposable and version/profile keyed.
 
 Editor navigation is a typed projection of the character edit hash. Workspace
 tabs push one browser-history entry; Build routes may also encode level and the

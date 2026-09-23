@@ -1,6 +1,7 @@
 import "fake-indexeddb/auto";
 
 import { afterEach, describe, expect, it } from "vitest";
+import { openDB } from "idb";
 
 import { buildContentPack, type ContentPack } from "@4ecb/content-pack";
 import type { ParsedContentSource } from "@4ecb/content-domain";
@@ -9,6 +10,10 @@ import {
   ContentPackRepository,
   deleteContentDatabase,
 } from "./pack-repository";
+import {
+  decodeAndValidateContentPackForStorage,
+  storeAlreadyValidatedContentPack,
+} from "./validated-pack-storage";
 
 const databases: string[] = [];
 
@@ -166,5 +171,130 @@ describe("ContentPackRepository", () => {
       "Cannot install invalid content pack",
     );
     await expect(storage.list()).resolves.toEqual([]);
+  });
+
+  it("rejects invalid decoded objects at the public storage boundary", async () => {
+    const storage = repository();
+    const pack = await makePack("decoded-safe");
+    const unsafe = {
+      ...pack,
+      manifest: { ...pack.manifest, packId: "../unsafe-decoded" },
+    };
+    await expect(storage.install(unsafe)).rejects.toThrow(
+      "Cannot install invalid content pack",
+    );
+    await expect(storage.listInstalled()).resolves.toEqual([]);
+  });
+
+  it("rejects a forged artifact that mismatches valid decoded content and bytes", async () => {
+    const pack = await makePack("forged-proof");
+    const differentPack = await makePack("forged-proof-bytes");
+    await expect(
+      storeAlreadyValidatedContentPack({
+        pack,
+        encodedPack: new TextEncoder().encode(JSON.stringify(differentPack))
+          .buffer,
+      }),
+    ).rejects.toThrow("validation proof is missing");
+  });
+
+  it("binds internal validation proof to the exact decoded bytes", async () => {
+    const first = await makePack("proof-first");
+    const second = await makePack("proof-second");
+    const secondBytes = new TextEncoder().encode(JSON.stringify(second)).buffer;
+    const artifact = await decodeAndValidateContentPackForStorage(secondBytes);
+    expect(artifact.pack.manifest.packId).toBe("proof-second");
+    expect(artifact.pack.manifest.packId).not.toBe(first.manifest.packId);
+    expect(artifact.encodedPack).toBe(secondBytes);
+    await expect(
+      decodeAndValidateContentPackForStorage(
+        new Uint8Array([0, 1, 2, 3]).buffer,
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("backfills metadata for schema-3 encoded and legacy object-form packs", async () => {
+    const name = `4ecb-pack-v3-${crypto.randomUUID()}`;
+    databases.push(name);
+    const encoded = await makePack("encoded-v3");
+    const legacy = await makePack("legacy-v3");
+    const encodedBytes = new TextEncoder().encode(JSON.stringify(encoded));
+    const old = await openDB(name, 3, {
+      upgrade(database) {
+        const packs = database.createObjectStore("contentPacks", {
+          keyPath: "packId",
+        });
+        packs.createIndex("by-name", "manifest.name");
+        database.createObjectStore("settings", { keyPath: "key" });
+        const characters = database.createObjectStore("characters", {
+          keyPath: "id",
+        });
+        characters.createIndex("by-updated", "updatedAt");
+        characters.createIndex("by-deleted", "deletedAt");
+        database.createObjectStore("characterMigrations", { keyPath: "id" });
+      },
+    });
+    await old.put("contentPacks", {
+      packId: encoded.manifest.packId,
+      manifest: encoded.manifest,
+      encodedPack: encodedBytes.buffer,
+      origin: "server",
+      advertised: {
+        url: "/encoded-v3.4ecp",
+        contentDigest: encoded.manifest.contentDigest,
+      },
+    });
+    await old.put("contentPacks", {
+      packId: legacy.manifest.packId,
+      manifest: legacy.manifest,
+      pack: legacy,
+    });
+    old.close();
+
+    const storage = new ContentPackRepository(name);
+    await expect(storage.listInstalled()).resolves.toEqual([
+      {
+        manifest: encoded.manifest,
+        origin: "server",
+        advertised: {
+          url: "/encoded-v3.4ecp",
+          contentDigest: encoded.manifest.contentDigest,
+        },
+      },
+      { manifest: legacy.manifest, origin: "personal" },
+    ]);
+    await expect(storage.get("legacy-v3")).resolves.toEqual(legacy);
+  });
+
+  it("upgrades the schema-1 content-only database without losing its pack", async () => {
+    const name = `4ecb-pack-v1-${crypto.randomUUID()}`;
+    databases.push(name);
+    const legacy = await makePack("legacy-v1");
+    const old = await openDB(name, 1, {
+      upgrade(database) {
+        const packs = database.createObjectStore("contentPacks", {
+          keyPath: "packId",
+        });
+        packs.createIndex("by-name", "manifest.name");
+        database.createObjectStore("settings", { keyPath: "key" });
+      },
+    });
+    await old.put("contentPacks", {
+      packId: legacy.manifest.packId,
+      manifest: legacy.manifest,
+      pack: legacy,
+    });
+    await old.put("settings", {
+      key: "active-content-pack",
+      value: legacy.manifest.packId,
+    });
+    old.close();
+
+    const storage = new ContentPackRepository(name);
+    await expect(storage.listInstalled()).resolves.toEqual([
+      { manifest: legacy.manifest, origin: "personal" },
+    ]);
+    await expect(storage.activePackId()).resolves.toBe("legacy-v1");
+    await expect(storage.get("legacy-v1")).resolves.toEqual(legacy);
   });
 });

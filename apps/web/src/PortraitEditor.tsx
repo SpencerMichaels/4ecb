@@ -25,7 +25,7 @@ export function PortraitImage({
   name,
   className = "",
 }: {
-  readonly portrait: CharacterPortrait | undefined;
+  readonly portrait: Pick<CharacterPortrait, "renderedDataUrl"> | undefined;
   readonly name: string;
   readonly className?: string;
 }) {

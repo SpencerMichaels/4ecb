@@ -163,7 +163,11 @@ class MemoizedRulesClient implements RulesRuntimeClient {
   evaluate(input: EvaluationInput): Promise<EvaluatedCharacter> {
     const serializedInput = serializeEvaluationInput(input);
     const existing = this.#evaluations.get(serializedInput);
-    if (existing !== undefined) return existing;
+    if (existing !== undefined) {
+      this.#evaluations.delete(serializedInput);
+      this.#evaluations.set(serializedInput, existing);
+      return existing;
+    }
     const result = this.#evaluatePersistent(input, serializedInput).catch(
       (error: unknown) => {
         this.#evaluations.delete(serializedInput);

@@ -1,9 +1,11 @@
 import {
-  decodeContentPackBytes,
   MAX_CONTENT_PACK_ENCODED_BYTES,
-  validateContentPack,
   type ContentPack,
 } from "@4ecb/content-pack";
+import {
+  decodeAndValidateContentPackForStorage,
+  type ValidatedContentPackArtifact,
+} from "@4ecb/browser-storage/validated-pack-storage";
 
 export interface AdvertisedContentPack {
   readonly packId: string;
@@ -64,7 +66,11 @@ export async function downloadAdvertisedPack(
   onProgress: (receivedBytes: number, totalBytes?: number) => void = () =>
     undefined,
   fetcher: typeof fetch = fetch,
-): Promise<{ readonly bytes: ArrayBuffer; readonly pack: ContentPack }> {
+): Promise<{
+  readonly bytes: ArrayBuffer;
+  readonly pack: ContentPack;
+  readonly validated: ValidatedContentPackArtifact;
+}> {
   const response = await fetcher(advertised.url, {
     credentials: "same-origin",
     cache: "no-store",
@@ -100,12 +106,11 @@ export async function downloadAdvertisedPack(
     bytes.set(chunk, offset);
     offset += chunk.byteLength;
   }
-  const pack = await decodeContentPackBytes(bytes.buffer);
-  const validation = await validateContentPack(pack);
-  if (!validation.valid)
-    throw new Error(
-      `Downloaded content pack is invalid: ${validation.errors.join("; ")}`,
-    );
+  const validated = await decodeAndValidateContentPackForStorage(
+    bytes.buffer,
+    "Downloaded content pack is invalid",
+  );
+  const { pack } = validated;
   if (
     pack.manifest.packId !== advertised.packId ||
     pack.manifest.contentDigest !== advertised.contentDigest
@@ -113,5 +118,5 @@ export async function downloadAdvertisedPack(
     throw new Error(
       "Downloaded content pack identity or digest does not match runtime configuration",
     );
-  return { bytes: bytes.buffer, pack };
+  return { bytes: bytes.buffer, pack, validated };
 }

@@ -14,7 +14,7 @@ import {
 } from "@4ecb/character-domain";
 import type { ContentPack } from "@4ecb/content-pack";
 import { importDnd4e } from "@4ecb/legacy-dnd4e";
-import { openDB, type DBSchema } from "idb";
+import { openDB, unwrap, type DBSchema, type IDBPTransaction } from "idb";
 
 interface CharacterDatabase extends DBSchema {
   contentPacks: {
@@ -24,12 +24,35 @@ interface CharacterDatabase extends DBSchema {
           readonly packId: string;
           readonly manifest: ContentPack["manifest"];
           readonly encodedPack: ArrayBuffer;
+          readonly origin?: "personal" | "server" | "profile";
+          readonly advertised?: {
+            readonly url: string;
+            readonly contentDigest: string;
+          };
         }
       | {
           readonly packId: string;
           readonly manifest: ContentPack["manifest"];
           readonly pack: ContentPack;
+          readonly origin?: "personal" | "server" | "profile";
+          readonly advertised?: {
+            readonly url: string;
+            readonly contentDigest: string;
+          };
         };
+    indexes: { "by-name": string };
+  };
+  contentPackMetadata: {
+    key: string;
+    value: {
+      readonly packId: string;
+      readonly manifest: ContentPack["manifest"];
+      readonly origin: "personal" | "server" | "profile";
+      readonly advertised?: {
+        readonly url: string;
+        readonly contentDigest: string;
+      };
+    };
     indexes: { "by-name": string };
   };
   settings: {
@@ -40,6 +63,15 @@ interface CharacterDatabase extends DBSchema {
     key: string;
     value: StoredCharacterRecord;
     indexes: { "by-updated": string; "by-deleted": string };
+  };
+  characterMetadata: {
+    key: string;
+    value: CharacterMetadata;
+    indexes: { "by-updated": string; "by-deleted": string };
+  };
+  characterPortraits: {
+    key: string;
+    value: CharacterPortraitThumbnail;
   };
   characterMigrations: {
     key: string;
@@ -54,6 +86,30 @@ interface CharacterMigrationJournal {
 }
 
 const DEFAULT_DATABASE_NAME = "4ecb";
+
+export interface CharacterMetadata {
+  readonly id: string;
+  readonly title: string;
+  readonly updatedAt: string;
+  readonly deletedAt?: string;
+  readonly effectiveLevel: number;
+  readonly race?: string;
+  readonly className?: string;
+}
+
+export interface CharacterLibraryEntry extends CharacterMetadata {
+  readonly renderedPortraitDataUrl?: string;
+}
+
+interface CharacterPortraitThumbnail {
+  readonly id: string;
+  readonly renderedDataUrl: string;
+}
+
+export interface PartitionedCharacterMetadata {
+  readonly active: readonly CharacterLibraryEntry[];
+  readonly deleted: readonly CharacterLibraryEntry[];
+}
 
 export interface CharacterBackupInspection {
   readonly version: 1 | 2;
@@ -80,8 +136,8 @@ async function characterPayloadDigest(
 }
 
 async function database(name: string) {
-  return openDB<CharacterDatabase>(name, 3, {
-    upgrade(db) {
+  return openDB<CharacterDatabase>(name, 5, {
+    upgrade(db, _oldVersion, _newVersion, transaction) {
       if (!db.objectStoreNames.contains("contentPacks")) {
         const packs = db.createObjectStore("contentPacks", {
           keyPath: "packId",
@@ -99,8 +155,107 @@ async function database(name: string) {
       if (!db.objectStoreNames.contains("characterMigrations")) {
         db.createObjectStore("characterMigrations", { keyPath: "id" });
       }
+      if (!db.objectStoreNames.contains("characterMetadata")) {
+        const metadata = db.createObjectStore("characterMetadata", {
+          keyPath: "id",
+        });
+        metadata.createIndex("by-updated", "updatedAt");
+        metadata.createIndex("by-deleted", "deletedAt");
+      }
+      if (!db.objectStoreNames.contains("contentPackMetadata")) {
+        const metadata = db.createObjectStore("contentPackMetadata", {
+          keyPath: "packId",
+        });
+        metadata.createIndex("by-name", "manifest.name");
+        const request = unwrap(
+          transaction.objectStore("contentPacks"),
+        ).openCursor();
+        request.onsuccess = () => {
+          const cursor = request.result;
+          if (cursor === null) return;
+          const stored = cursor.value;
+          unwrap(metadata).put({
+            packId: stored.packId,
+            manifest: stored.manifest,
+            origin: stored.origin ?? "personal",
+            ...(stored.advertised === undefined
+              ? {}
+              : { advertised: stored.advertised }),
+          });
+          cursor.continue();
+        };
+      }
+      if (!db.objectStoreNames.contains("characterPortraits")) {
+        db.createObjectStore("characterPortraits", {
+          keyPath: "id",
+        });
+      }
+      if (_oldVersion < 5) {
+        const metadata = unwrap(transaction.objectStore("characterMetadata"));
+        const portraits = unwrap(transaction.objectStore("characterPortraits"));
+        const request = unwrap(
+          transaction.objectStore("characters"),
+        ).openCursor();
+        request.onsuccess = () => {
+          const cursor = request.result;
+          if (cursor === null) return;
+          metadata.put(characterMetadata(cursor.value));
+          const thumbnail = characterPortraitThumbnail(cursor.value);
+          if (thumbnail !== undefined) portraits.put(thumbnail);
+          cursor.continue();
+        };
+      }
     },
   });
+}
+
+function characterMetadata(record: StoredCharacterRecord): CharacterMetadata {
+  const current = record.schemaVersion === 2 ? record : undefined;
+  return {
+    id: record.id,
+    title: record.title,
+    updatedAt: record.updatedAt,
+    ...(record.deletedAt === undefined ? {} : { deletedAt: record.deletedAt }),
+    effectiveLevel:
+      current?.build.effectiveLevel ?? record.snapshot.levelCount ?? 1,
+    ...(record.snapshot.details.Race === undefined
+      ? {}
+      : { race: record.snapshot.details.Race }),
+    ...(record.snapshot.details.Class === undefined
+      ? {}
+      : { className: record.snapshot.details.Class }),
+  };
+}
+
+function characterPortraitThumbnail(
+  record: StoredCharacterRecord,
+): CharacterPortraitThumbnail | undefined {
+  return record.portrait === undefined
+    ? undefined
+    : { id: record.id, renderedDataUrl: record.portrait.renderedDataUrl };
+}
+
+async function writeStoredCharacter(
+  transaction: IDBPTransaction<
+    CharacterDatabase,
+    (
+      | "characters"
+      | "characterMetadata"
+      | "characterPortraits"
+      | "characterMigrations"
+    )[],
+    "readwrite"
+  >,
+  character: StoredCharacterRecord,
+): Promise<void> {
+  await transaction.objectStore("characters").put(character);
+  await transaction
+    .objectStore("characterMetadata")
+    .put(characterMetadata(character));
+  const thumbnail = characterPortraitThumbnail(character);
+  if (thumbnail === undefined)
+    await transaction.objectStore("characterPortraits").delete(character.id);
+  else await transaction.objectStore("characterPortraits").put(thumbnail);
 }
 
 export class CharacterRepository {
@@ -113,7 +268,12 @@ export class CharacterRepository {
   async put(character: CharacterRecord): Promise<void> {
     const db = await database(this.#databaseName);
     try {
-      await db.put("characters", character);
+      const transaction = db.transaction(
+        ["characters", "characterMetadata", "characterPortraits"],
+        "readwrite",
+      );
+      await writeStoredCharacter(transaction, character);
+      await transaction.done;
     } finally {
       db.close();
     }
@@ -148,6 +308,43 @@ export class CharacterRepository {
             : record.deletedAt === undefined,
         )
         .reverse();
+    } finally {
+      db.close();
+    }
+  }
+
+  async listMetadataPartitioned(): Promise<PartitionedCharacterMetadata> {
+    const db = await database(this.#databaseName);
+    try {
+      await recoverCharacterMigrations(db);
+      const transaction = db.transaction(
+        ["characterMetadata", "characterPortraits"],
+        "readonly",
+      );
+      const [records, thumbnails] = await Promise.all([
+        transaction
+          .objectStore("characterMetadata")
+          .index("by-updated")
+          .getAll(),
+        transaction.objectStore("characterPortraits").getAll(),
+      ]);
+      await transaction.done;
+      const portraitById = new Map(
+        thumbnails.map(({ id, renderedDataUrl }) => [id, renderedDataUrl]),
+      );
+      const active: CharacterLibraryEntry[] = [];
+      const deleted: CharacterLibraryEntry[] = [];
+      for (const record of records.reverse()) {
+        const renderedPortraitDataUrl = portraitById.get(record.id);
+        const entry = {
+          ...record,
+          ...(renderedPortraitDataUrl === undefined
+            ? {}
+            : { renderedPortraitDataUrl }),
+        };
+        (record.deletedAt === undefined ? active : deleted).push(entry);
+      }
+      return { active, deleted };
     } finally {
       db.close();
     }
@@ -255,7 +452,14 @@ export class CharacterRepository {
   async purge(id: string): Promise<void> {
     const db = await database(this.#databaseName);
     try {
-      await db.delete("characters", id);
+      const transaction = db.transaction(
+        ["characters", "characterMetadata", "characterPortraits"],
+        "readwrite",
+      );
+      await transaction.objectStore("characters").delete(id);
+      await transaction.objectStore("characterMetadata").delete(id);
+      await transaction.objectStore("characterPortraits").delete(id);
+      await transaction.done;
     } finally {
       db.close();
     }
@@ -298,8 +502,10 @@ export class CharacterRepository {
 
   async inspectBackup(backup: unknown): Promise<CharacterBackupInspection> {
     const supported = await validateBackup(backup);
-    const current = await this.listAll();
-    const currentIds = new Set(current.map((character) => character.id));
+    const current = await this.listMetadataPartitioned();
+    const currentIds = new Set(
+      [...current.active, ...current.deleted].map((character) => character.id),
+    );
     return {
       version: supported.version,
       checksumVerified: supported.version === 2,
@@ -321,9 +527,14 @@ export class CharacterRepository {
     const characters = supported.characters.map(upgradeRecord);
     const db = await database(this.#databaseName);
     try {
-      const transaction = db.transaction("characters", "readwrite");
+      const transaction = db.transaction(
+        ["characters", "characterMetadata", "characterPortraits"],
+        "readwrite",
+      );
       await Promise.all(
-        characters.map((character) => transaction.store.put(character)),
+        characters.map((character) =>
+          writeStoredCharacter(transaction, character),
+        ),
       );
       await transaction.done;
       return characters.length;
@@ -336,20 +547,6 @@ export class CharacterRepository {
     const character = await this.get(id);
     if (character === undefined) throw new Error(`Character not found: ${id}`);
     return character;
-  }
-
-  private async listAll(): Promise<CharacterRecord[]> {
-    const db = await database(this.#databaseName);
-    try {
-      await recoverCharacterMigrations(db);
-      return await Promise.all(
-        (await db.getAll("characters")).map((record) =>
-          migrateStoredRecord(db, record),
-        ),
-      );
-    } finally {
-      db.close();
-    }
   }
 }
 
@@ -407,10 +604,15 @@ async function migrateStoredRecord(
   });
   const migrated = upgradeRecord(stored);
   const transaction = db.transaction(
-    ["characters", "characterMigrations"],
+    [
+      "characters",
+      "characterMetadata",
+      "characterPortraits",
+      "characterMigrations",
+    ],
     "readwrite",
   );
-  await transaction.objectStore("characters").put(migrated);
+  await writeStoredCharacter(transaction, migrated);
   await transaction.objectStore("characterMigrations").delete(stored.id);
   await transaction.done;
   return migrated;
@@ -431,10 +633,15 @@ async function recoverCharacterMigrations(
     }
     if (current === undefined) {
       const transaction = db.transaction(
-        ["characters", "characterMigrations"],
+        [
+          "characters",
+          "characterMetadata",
+          "characterPortraits",
+          "characterMigrations",
+        ],
         "readwrite",
       );
-      await transaction.objectStore("characters").put(journal.previous);
+      await writeStoredCharacter(transaction, journal.previous);
       await transaction.objectStore("characterMigrations").delete(journal.id);
       await transaction.done;
     }

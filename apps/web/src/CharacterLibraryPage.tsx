@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   CharacterRepository,
   ContentPackRepository,
+  type CharacterLibraryEntry,
   type ContentProfileDefinition,
 } from "@4ecb/browser-storage";
 import {
@@ -52,8 +53,10 @@ export function CharacterLibraryPage({
   activePackId,
   activeProfile,
 }: CharacterLibraryPageProps) {
-  const [characters, setCharacters] = useState<CharacterRecord[]>([]);
-  const [trash, setTrash] = useState<CharacterRecord[]>([]);
+  const [characters, setCharacters] = useState<
+    readonly CharacterLibraryEntry[]
+  >([]);
+  const [trash, setTrash] = useState<readonly CharacterLibraryEntry[]>([]);
   const [status, setStatus] = useState("Loading character library…");
   const [error, setError] = useState<string>();
   const [report, setReport] = useState<Dnd4eImportReport>();
@@ -61,10 +64,7 @@ export function CharacterLibraryPage({
   const [openExportId, setOpenExportId] = useState<string>();
 
   const refresh = useCallback(async () => {
-    const [active, deleted] = await Promise.all([
-      repository.list(),
-      repository.list({ deleted: true }),
-    ]);
+    const { active, deleted } = await repository.listMetadataPartitioned();
     setCharacters(active);
     setTrash(deleted);
     setStatus(
@@ -115,8 +115,9 @@ export function CharacterLibraryPage({
   }
 
   async function exportNativeCharacter(
-    character: CharacterRecord,
+    summary: CharacterLibraryEntry,
   ): Promise<void> {
+    const character = await repository.required(summary.id);
     const backup = await repository.exportCharacter(character.id);
     download(
       `${fileBase(character)}.4ecb`,
@@ -126,7 +127,10 @@ export function CharacterLibraryPage({
     setStatus(`Exported ${character.title} as a native .4ecb character.`);
   }
 
-  async function exportCharacter(character: CharacterRecord): Promise<void> {
+  async function exportCharacter(
+    summary: CharacterLibraryEntry,
+  ): Promise<void> {
+    const character = await repository.required(summary.id);
     const binding = character.profileBinding;
     if (binding?.contentDigest === undefined)
       throw new Error(
@@ -298,9 +302,9 @@ export function CharacterLibraryPage({
         <ul className="character-grid">
           {characters.map((character) => {
             const identity = [
-              `Level ${character.build.effectiveLevel}`,
-              character.snapshot.details.Race,
-              character.snapshot.details.Class,
+              `Level ${character.effectiveLevel}`,
+              character.race,
+              character.className,
             ]
               .filter(Boolean)
               .join(" ");
@@ -310,7 +314,13 @@ export function CharacterLibraryPage({
                   <PortraitImage
                     className="library-portrait"
                     name={character.title}
-                    portrait={character.portrait}
+                    portrait={
+                      character.renderedPortraitDataUrl === undefined
+                        ? undefined
+                        : {
+                            renderedDataUrl: character.renderedPortraitDataUrl,
+                          }
+                    }
                   />
                   <div>
                     <h3>{character.title}</h3>

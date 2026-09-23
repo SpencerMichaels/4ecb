@@ -136,6 +136,12 @@ describe("CharacterRepository", () => {
     });
     expect(removed.portrait).toBeUndefined();
     expect(removed.title).toBe("Ada");
+    await expect(storage.listMetadataPartitioned()).resolves.toMatchObject({
+      active: [{ id: "portrait-removal" }],
+    });
+    expect(
+      (await storage.listMetadataPartitioned()).active[0],
+    ).not.toHaveProperty("renderedPortraitDataUrl");
   });
 
   it("upgrades an application-v2 database without losing records or settings", async () => {
@@ -192,10 +198,13 @@ describe("CharacterRepository", () => {
     await expect(upgradedContent.get("v2-profile")).resolves.toEqual(pack);
 
     const inspected = await openDB(name);
-    expect(inspected.version).toBe(3);
+    expect(inspected.version).toBe(5);
     expect([...inspected.objectStoreNames]).toEqual([
+      "characterMetadata",
       "characterMigrations",
+      "characterPortraits",
       "characters",
+      "contentPackMetadata",
       "contentPacks",
       "settings",
     ]);
@@ -235,6 +244,72 @@ describe("CharacterRepository", () => {
     const recovered = await new CharacterRepository(name).get(legacy.id);
     expect(recovered).toMatchObject({ id: legacy.id, schemaVersion: 2 });
     expect(recovered?.build.formatVersion).toBe(1);
+    await expect(
+      new CharacterRepository(name).listMetadataPartitioned(),
+    ).resolves.toMatchObject({
+      active: [{ id: legacy.id, effectiveLevel: 1 }],
+      deleted: [],
+    });
+  });
+
+  it("moves schema-4 rendered portraits out of metadata during upgrade", async () => {
+    const name = `4ecb-portrait-v4-${crypto.randomUUID()}`;
+    databases.push(name);
+    const current = { ...character("portrait-v4"), portrait };
+    const old = await openDB(name, 4, {
+      upgrade(database) {
+        const packs = database.createObjectStore("contentPacks", {
+          keyPath: "packId",
+        });
+        packs.createIndex("by-name", "manifest.name");
+        const packMetadata = database.createObjectStore("contentPackMetadata", {
+          keyPath: "packId",
+        });
+        packMetadata.createIndex("by-name", "manifest.name");
+        database.createObjectStore("settings", { keyPath: "key" });
+        const characters = database.createObjectStore("characters", {
+          keyPath: "id",
+        });
+        characters.createIndex("by-updated", "updatedAt");
+        characters.createIndex("by-deleted", "deletedAt");
+        const metadata = database.createObjectStore("characterMetadata", {
+          keyPath: "id",
+        });
+        metadata.createIndex("by-updated", "updatedAt");
+        metadata.createIndex("by-deleted", "deletedAt");
+        database.createObjectStore("characterMigrations", { keyPath: "id" });
+      },
+    });
+    await old.put("characters", current);
+    await old.put("characterMetadata", {
+      id: current.id,
+      title: current.title,
+      updatedAt: current.updatedAt,
+      effectiveLevel: 1,
+      renderedPortraitDataUrl: portrait.renderedDataUrl,
+    });
+    old.close();
+
+    const storage = new CharacterRepository(name);
+    await expect(storage.listMetadataPartitioned()).resolves.toMatchObject({
+      active: [
+        {
+          id: current.id,
+          renderedPortraitDataUrl: portrait.renderedDataUrl,
+        },
+      ],
+    });
+    const upgraded = await openDB(name);
+    expect(
+      await upgraded.get("characterMetadata", current.id),
+    ).not.toHaveProperty("renderedPortraitDataUrl");
+    await expect(
+      upgraded.get("characterPortraits", current.id),
+    ).resolves.toEqual({
+      id: current.id,
+      renderedDataUrl: portrait.renderedDataUrl,
+    });
+    upgraded.close();
   });
 
   it("updates, duplicates, trashes, and restores characters", async () => {
@@ -257,6 +332,54 @@ describe("CharacterRepository", () => {
     expect(await storage.list({ deleted: true })).toHaveLength(1);
     await storage.restore("character-one");
     expect(await storage.list()).toHaveLength(2);
+  });
+
+  it("lists lightweight metadata once and partitions active and trashed records", async () => {
+    const name = `4ecb-character-summary-${crypto.randomUUID()}`;
+    databases.push(name);
+    const storage = new CharacterRepository(name);
+    const active = character("active-summary");
+    const retainedSourceMarker = "retained-source-payload";
+    const portraitWithLargeRetainedSource = {
+      ...portrait,
+      sourceDataUrl: `data:image/webp;base64,${retainedSourceMarker}${"A".repeat(1024 * 1024)}`,
+    };
+    await storage.put({
+      ...active,
+      portrait: portraitWithLargeRetainedSource,
+      legacy: {
+        ...active.legacy,
+        sourceXml: `<D20Character>${"payload".repeat(10_000)}</D20Character>`,
+      },
+    });
+    await storage.put(character("trashed-summary"));
+    await storage.moveToTrash("trashed-summary");
+
+    await expect(storage.listMetadataPartitioned()).resolves.toEqual({
+      active: [
+        expect.objectContaining({
+          id: "active-summary",
+          title: "Ada",
+          effectiveLevel: 1,
+          renderedPortraitDataUrl: portrait.renderedDataUrl,
+        }),
+      ],
+      deleted: [
+        expect.objectContaining({ id: "trashed-summary", title: "Ada" }),
+      ],
+    });
+    const db = await openDB(name);
+    const storedMetadata = await db.get("characterMetadata", "active-summary");
+    const storedPortrait = await db.get("characterPortraits", "active-summary");
+    expect(storedMetadata).not.toHaveProperty("renderedPortraitDataUrl");
+    expect(JSON.stringify(storedMetadata)).not.toContain("payload");
+    expect(JSON.stringify(storedMetadata)).not.toContain(retainedSourceMarker);
+    expect(storedPortrait).toEqual({
+      id: "active-summary",
+      renderedDataUrl: portrait.renderedDataUrl,
+    });
+    expect(JSON.stringify(storedPortrait)).not.toContain(retainedSourceMarker);
+    db.close();
   });
 
   it("keeps the library title synchronized with the legacy character name", async () => {

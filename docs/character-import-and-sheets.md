@@ -60,7 +60,13 @@ interrupted before commit. Automated durability fixtures reconstruct a
 repository over the same database, and upgrade the historical database version
 2 while preserving its schema-1 character, legacy object-form content pack, and
 active-profile setting. Opening the current repository upgrades the database to
-version 3, migrates the character, and removes the completed journal entry.
+version 5, backfills small character/content-pack metadata sidecars and a
+separate rendered-portrait-thumbnail store, migrates the character, and removes
+the completed journal entry. Payload stores remain authoritative. Character
+writes, restores, trash changes, and lazy migrations update their summary and
+thumbnail in the same transaction. Library listing reads summaries and the
+bounded rendered thumbnails in one transaction without cloning source XML,
+build history, or the retained portrait source (which may be much larger).
 
 ## Import semantics
 

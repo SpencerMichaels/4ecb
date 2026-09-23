@@ -5,6 +5,7 @@ import {
   type ContentProfileDefinition,
   type InstalledContentPack,
 } from "@4ecb/browser-storage";
+import { storeAlreadyValidatedContentPack } from "@4ecb/browser-storage/validated-pack-storage";
 
 import { CharacterLibraryPage } from "./CharacterLibraryPage";
 import { CharacterEditorPage } from "./CharacterEditorPage";
@@ -148,20 +149,30 @@ export function App() {
   }, [refresh]);
 
   const installAdvertisedPack = useCallback(
-    async (advertised: AdvertisedContentPack): Promise<void> => {
+    async (
+      advertised: AdvertisedContentPack,
+      knownInstalled?: Map<string, InstalledContentPack>,
+    ): Promise<void> => {
       setContentDownloads((current) => ({
         ...current,
         [advertised.packId]: { phase: "queued" },
       }));
       try {
-        const current = await repository.listInstalled();
-        const exact = current.find(
+        const current =
+          knownInstalled ??
+          new Map(
+            (await repository.listInstalled()).map((entry) => [
+              entry.manifest.packId,
+              entry,
+            ]),
+          );
+        const exact = [...current.values()].find(
           ({ manifest }) =>
             manifest.packId === advertised.packId &&
             manifest.contentDigest === advertised.contentDigest,
         );
         if (exact?.origin !== "server") {
-          const conflicting = current.find(
+          const conflicting = [...current.values()].find(
             ({ manifest }) =>
               manifest.packId === advertised.packId &&
               manifest.contentDigest !== advertised.contentDigest,
@@ -170,7 +181,7 @@ export function App() {
             throw new Error(
               `Pack ID ${advertised.packId} is already installed with digest ${conflicting.manifest.contentDigest}. The administrator must publish a revision-qualified pack ID to preserve pinned characters.`,
             );
-          const { bytes } = await downloadAdvertisedPack(
+          const { pack, validated } = await downloadAdvertisedPack(
             advertised,
             (receivedBytes, totalBytes) =>
               setContentDownloads((downloads) => ({
@@ -186,7 +197,12 @@ export function App() {
             ...downloads,
             [advertised.packId]: { phase: "installing" },
           }));
-          await repository.installEncoded(bytes, {
+          await storeAlreadyValidatedContentPack(validated, {
+            origin: "server",
+            advertised,
+          });
+          current.set(advertised.packId, {
+            manifest: pack.manifest,
             origin: "server",
             advertised,
           });
@@ -222,8 +238,14 @@ export function App() {
       const configured = parseRuntimeContentConfig(await response.json());
       setAdvertisedPacks(configured.contentPacks);
       setRuntimeContentError(undefined);
+      const installed = new Map(
+        (await repository.listInstalled()).map((entry) => [
+          entry.manifest.packId,
+          entry,
+        ]),
+      );
       for (const advertised of configured.contentPacks)
-        await installAdvertisedPack(advertised);
+        await installAdvertisedPack(advertised, installed);
     } catch (reason: unknown) {
       setRuntimeContentError(
         reason instanceof Error ? reason.message : String(reason),

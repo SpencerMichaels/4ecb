@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./validated-pack-storage": "./src/validated-pack-storage.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

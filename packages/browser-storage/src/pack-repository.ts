@@ -9,7 +9,13 @@ import {
   type ContentPackManifest,
 } from "@4ecb/content-pack";
 import type { StoredCharacterRecord } from "@4ecb/character-domain";
-import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from "idb";
+import {
+  deleteDB,
+  openDB,
+  unwrap,
+  type DBSchema,
+  type IDBPDatabase,
+} from "idb";
 
 interface StoredContentPackBase {
   readonly packId: string;
@@ -39,6 +45,11 @@ interface CharacterBuilderDatabase extends DBSchema {
     value: StoredContentPack;
     indexes: { "by-name": string };
   };
+  contentPackMetadata: {
+    key: string;
+    value: InstalledContentPackMetadata;
+    indexes: { "by-name": string };
+  };
   settings: {
     key: string;
     value: Setting<unknown>;
@@ -48,6 +59,15 @@ interface CharacterBuilderDatabase extends DBSchema {
     value: StoredCharacterRecord;
     indexes: { "by-updated": string; "by-deleted": string };
   };
+  characterMetadata: {
+    key: string;
+    value: StoredCharacterMetadata;
+    indexes: { "by-updated": string; "by-deleted": string };
+  };
+  characterPortraits: {
+    key: string;
+    value: StoredCharacterPortraitThumbnail;
+  };
   characterMigrations: {
     key: string;
     value: {
@@ -56,6 +76,28 @@ interface CharacterBuilderDatabase extends DBSchema {
       readonly startedAt: string;
     };
   };
+}
+
+interface StoredCharacterMetadata {
+  readonly id: string;
+  readonly title: string;
+  readonly updatedAt: string;
+  readonly deletedAt?: string;
+  readonly effectiveLevel: number;
+  readonly race?: string;
+  readonly className?: string;
+}
+
+interface StoredCharacterPortraitThumbnail {
+  readonly id: string;
+  readonly renderedDataUrl: string;
+}
+
+interface InstalledContentPackMetadata {
+  readonly packId: string;
+  readonly manifest: ContentPackManifest;
+  readonly origin: InstalledPackOrigin;
+  readonly advertised?: AdvertisedPackSource;
 }
 
 const DEFAULT_DATABASE_NAME = "4ecb";
@@ -102,11 +144,16 @@ export interface ContentProfilePreview {
   readonly collisions: readonly string[];
 }
 
+export interface ValidatedPackStorageMetadata {
+  readonly origin?: InstalledPackOrigin;
+  readonly advertised?: AdvertisedPackSource;
+}
+
 async function openContentDatabase(
   databaseName: string,
 ): Promise<IDBPDatabase<CharacterBuilderDatabase>> {
-  return openDB<CharacterBuilderDatabase>(databaseName, 3, {
-    upgrade(database) {
+  return openDB<CharacterBuilderDatabase>(databaseName, 5, {
+    upgrade(database, _oldVersion, _newVersion, transaction) {
       if (!database.objectStoreNames.contains("contentPacks")) {
         const packs = database.createObjectStore("contentPacks", {
           keyPath: "packId",
@@ -126,8 +173,86 @@ async function openContentDatabase(
       if (!database.objectStoreNames.contains("characterMigrations")) {
         database.createObjectStore("characterMigrations", { keyPath: "id" });
       }
+      if (!database.objectStoreNames.contains("contentPackMetadata")) {
+        const metadata = database.createObjectStore("contentPackMetadata", {
+          keyPath: "packId",
+        });
+        metadata.createIndex("by-name", "manifest.name");
+        const request = unwrap(
+          transaction.objectStore("contentPacks"),
+        ).openCursor();
+        request.onsuccess = () => {
+          const cursor = request.result;
+          if (cursor === null) return;
+          unwrap(metadata).put(contentPackMetadata(cursor.value));
+          cursor.continue();
+        };
+      }
+      if (!database.objectStoreNames.contains("characterMetadata")) {
+        const metadata = database.createObjectStore("characterMetadata", {
+          keyPath: "id",
+        });
+        metadata.createIndex("by-updated", "updatedAt");
+        metadata.createIndex("by-deleted", "deletedAt");
+      }
+      if (!database.objectStoreNames.contains("characterPortraits")) {
+        database.createObjectStore("characterPortraits", {
+          keyPath: "id",
+        });
+      }
+      if (_oldVersion < 5) {
+        const metadata = unwrap(transaction.objectStore("characterMetadata"));
+        const portraits = unwrap(transaction.objectStore("characterPortraits"));
+        const request = unwrap(
+          transaction.objectStore("characters"),
+        ).openCursor();
+        request.onsuccess = () => {
+          const cursor = request.result;
+          if (cursor === null) return;
+          metadata.put(storedCharacterMetadata(cursor.value));
+          if (cursor.value.portrait !== undefined)
+            portraits.put({
+              id: cursor.value.id,
+              renderedDataUrl: cursor.value.portrait.renderedDataUrl,
+            });
+          cursor.continue();
+        };
+      }
     },
   });
+}
+
+function storedCharacterMetadata(
+  record: StoredCharacterRecord,
+): StoredCharacterMetadata {
+  const current = record.schemaVersion === 2 ? record : undefined;
+  return {
+    id: record.id,
+    title: record.title,
+    updatedAt: record.updatedAt,
+    ...(record.deletedAt === undefined ? {} : { deletedAt: record.deletedAt }),
+    effectiveLevel:
+      current?.build.effectiveLevel ?? record.snapshot.levelCount ?? 1,
+    ...(record.snapshot.details.Race === undefined
+      ? {}
+      : { race: record.snapshot.details.Race }),
+    ...(record.snapshot.details.Class === undefined
+      ? {}
+      : { className: record.snapshot.details.Class }),
+  };
+}
+
+function contentPackMetadata(
+  stored: StoredContentPack,
+): InstalledContentPackMetadata {
+  return {
+    packId: stored.packId,
+    manifest: stored.manifest,
+    origin: stored.origin ?? "personal",
+    ...(stored.advertised === undefined
+      ? {}
+      : { advertised: stored.advertised }),
+  };
 }
 
 export class ContentPackRepository {
@@ -138,8 +263,11 @@ export class ContentPackRepository {
   }
 
   async install(pack: ContentPack): Promise<ContentPackManifest> {
+    await assertValidPack(pack);
     const bytes = new TextEncoder().encode(encodeContentPack(pack));
-    return this.#store(pack, bytes.buffer, { origin: "personal" });
+    return storeValidatedContentPack(this.#databaseName, pack, bytes.buffer, {
+      origin: "personal",
+    });
   }
 
   async installEncoded(
@@ -150,54 +278,22 @@ export class ContentPackRepository {
     } = {},
   ): Promise<ContentPackManifest> {
     const pack = await decodeContentPackBytes(encodedPack);
-    return this.#store(pack, encodedPack, metadata);
-  }
-
-  async #store(
-    pack: ContentPack,
-    encodedPack: ArrayBuffer,
-    metadata: {
-      readonly origin?: InstalledPackOrigin;
-      readonly advertised?: AdvertisedPackSource;
-    },
-  ): Promise<ContentPackManifest> {
-    const validation = await validateContentPack(pack);
-    if (!validation.valid) {
-      throw new Error(
-        `Cannot install invalid content pack: ${validation.errors.join("; ")}`,
-      );
-    }
-
-    const database = await openContentDatabase(this.#databaseName);
-    try {
-      const existing = await database.get("contentPacks", pack.manifest.packId);
-      if (
-        existing !== undefined &&
-        existing.manifest.contentDigest !== pack.manifest.contentDigest
-      ) {
-        throw new Error(
-          `Pack ID ${pack.manifest.packId} is already installed with a different digest`,
-        );
-      }
-      await database.put("contentPacks", {
-        packId: pack.manifest.packId,
-        manifest: pack.manifest,
-        encodedPack,
-        origin: metadata.origin ?? "personal",
-        ...(metadata.advertised === undefined
-          ? {}
-          : { advertised: metadata.advertised }),
-      });
-      return pack.manifest;
-    } finally {
-      database.close();
-    }
+    await assertValidPack(pack);
+    return storeValidatedContentPack(
+      this.#databaseName,
+      pack,
+      encodedPack,
+      metadata,
+    );
   }
 
   async list(): Promise<ContentPackManifest[]> {
     const database = await openContentDatabase(this.#databaseName);
     try {
-      const stored = await database.getAllFromIndex("contentPacks", "by-name");
+      const stored = await database.getAllFromIndex(
+        "contentPackMetadata",
+        "by-name",
+      );
       return stored.map((entry) => entry.manifest);
     } finally {
       database.close();
@@ -207,7 +303,10 @@ export class ContentPackRepository {
   async listInstalled(): Promise<InstalledContentPack[]> {
     const database = await openContentDatabase(this.#databaseName);
     try {
-      const stored = await database.getAllFromIndex("contentPacks", "by-name");
+      const stored = await database.getAllFromIndex(
+        "contentPackMetadata",
+        "by-name",
+      );
       return stored.map((entry) => ({
         manifest: entry.manifest,
         origin: entry.origin ?? "personal",
@@ -235,7 +334,7 @@ export class ContentPackRepository {
   async manifest(packId: string): Promise<ContentPackManifest | undefined> {
     const database = await openContentDatabase(this.#databaseName);
     try {
-      return (await database.get("contentPacks", packId))?.manifest;
+      return (await database.get("contentPackMetadata", packId))?.manifest;
     } finally {
       database.close();
     }
@@ -255,10 +354,11 @@ export class ContentPackRepository {
           `Cannot remove ${packId} while the active profile uses it`,
         );
       const transaction = database.transaction(
-        ["contentPacks", "settings"],
+        ["contentPacks", "contentPackMetadata", "settings"],
         "readwrite",
       );
       await transaction.objectStore("contentPacks").delete(packId);
+      await transaction.objectStore("contentPackMetadata").delete(packId);
       const active = await transaction
         .objectStore("settings")
         .get(ACTIVE_PACK_KEY);
@@ -275,10 +375,12 @@ export class ContentPackRepository {
     const database = await openContentDatabase(this.#databaseName);
     try {
       const transaction = database.transaction(
-        ["contentPacks", "settings"],
+        ["contentPackMetadata", "settings"],
         "readwrite",
       );
-      const pack = await transaction.objectStore("contentPacks").get(packId);
+      const pack = await transaction
+        .objectStore("contentPackMetadata")
+        .get(packId);
       if (pack === undefined)
         throw new Error(`Cannot activate missing content pack ${packId}`);
       await transaction
@@ -401,7 +503,9 @@ export class ContentPackRepository {
       packId: materializedPackId,
       name,
     });
-    await this.#store(
+    await assertValidPack(composed.pack);
+    await storeValidatedContentPack(
+      this.#databaseName,
       composed.pack,
       new TextEncoder().encode(encodeContentPack(composed.pack)).buffer,
       { origin: "profile" },
@@ -440,7 +544,7 @@ export class ContentPackRepository {
         return setting.value as ContentProfileDefinition;
       const legacy = await database.get("settings", ACTIVE_PACK_KEY);
       if (typeof legacy?.value !== "string") return undefined;
-      const stored = await database.get("contentPacks", legacy.value);
+      const stored = await database.get("contentPackMetadata", legacy.value);
       if (stored === undefined) return undefined;
       return {
         profileId: `legacy:${stored.packId}`,
@@ -461,8 +565,57 @@ export class ContentPackRepository {
   }
 }
 
+/** @internal The caller must establish the decode-and-validation trust boundary. */
+export async function storeValidatedContentPack(
+  databaseName: string,
+  pack: ContentPack,
+  encodedPack: ArrayBuffer,
+  metadata: ValidatedPackStorageMetadata = {},
+): Promise<ContentPackManifest> {
+  const database = await openContentDatabase(databaseName);
+  try {
+    const existing = await database.get("contentPacks", pack.manifest.packId);
+    if (
+      existing !== undefined &&
+      existing.manifest.contentDigest !== pack.manifest.contentDigest
+    )
+      throw new Error(
+        `Pack ID ${pack.manifest.packId} is already installed with a different digest`,
+      );
+    const stored: EncodedStoredContentPack = {
+      packId: pack.manifest.packId,
+      manifest: pack.manifest,
+      encodedPack,
+      origin: metadata.origin ?? "personal",
+      ...(metadata.advertised === undefined
+        ? {}
+        : { advertised: metadata.advertised }),
+    };
+    const transaction = database.transaction(
+      ["contentPacks", "contentPackMetadata"],
+      "readwrite",
+    );
+    await transaction.objectStore("contentPacks").put(stored);
+    await transaction
+      .objectStore("contentPackMetadata")
+      .put(contentPackMetadata(stored));
+    await transaction.done;
+    return pack.manifest;
+  } finally {
+    database.close();
+  }
+}
+
 async function decodeStoredPack(encoded: ArrayBuffer): Promise<ContentPack> {
   return decodeContentPackBytes(encoded);
+}
+
+async function assertValidPack(pack: ContentPack): Promise<void> {
+  const validation = await validateContentPack(pack);
+  if (!validation.valid)
+    throw new Error(
+      `Cannot install invalid content pack: ${validation.errors.join("; ")}`,
+    );
 }
 
 export async function deleteContentDatabase(

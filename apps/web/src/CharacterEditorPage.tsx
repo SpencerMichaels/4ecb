@@ -217,12 +217,6 @@ type InspectedOption = {
   readonly entity: ContentEntity;
 };
 
-function evaluationCacheKey(
-  profileRevision: string,
-  input: EvaluationInput,
-): string {
-  return `${profileRevision}\0${JSON.stringify(input)}`;
-}
 const InspectCandidateContext = createContext<
   ((option: InspectedOption | undefined) => void) | undefined
 >(undefined);
@@ -4592,7 +4586,6 @@ export function CharacterEditorPage({
   >(undefined);
   const rulesClient = useRef<RulesRuntimeClient | undefined>(undefined);
   const evaluationRevision = useRef(0);
-  const evaluationCache = useRef(new Map<string, EvaluatedCharacter>());
   const characterLoadStartedAt = useRef(performance.now());
   const firstEvaluationRecorded = useRef(false);
   const pendingForcedAlignmentKey = useRef<string | undefined>(undefined);
@@ -4704,7 +4697,6 @@ export function CharacterEditorPage({
   const contentDigest = character?.profileBinding?.contentDigest;
   useEffect(() => {
     rulesClient.current = undefined;
-    evaluationCache.current.clear();
     setReadyPackId(undefined);
     setCurrentEvaluation(undefined);
     setPlanningEvaluation(undefined);
@@ -4789,23 +4781,6 @@ export function CharacterEditorPage({
     const revision = evaluationRevision.current + 1;
     evaluationRevision.current = revision;
     setEvaluationStatus("Evaluating current build and plan…");
-    const evaluateCached = async (
-      input: EvaluationInput,
-    ): Promise<EvaluatedCharacter> => {
-      const cache = evaluationCache.current;
-      const profileRevision = `${packId}\0${contentDigest ?? ""}`;
-      const cacheKey = evaluationCacheKey(profileRevision, input);
-      const cached = cache.get(cacheKey);
-      if (cached !== undefined) {
-        cache.delete(cacheKey);
-        cache.set(cacheKey, cached);
-        return cached;
-      }
-      const evaluated = await client.evaluate(input);
-      cache.set(cacheKey, evaluated);
-      while (cache.size > 3) cache.delete(cache.keys().next().value!);
-      return evaluated;
-    };
     const project = (
       projectedBuild: CharacterBuild,
       role: "planning" | "current" | "selected",
@@ -4818,7 +4793,7 @@ export function CharacterEditorPage({
       });
       return input;
     };
-    const planningRequest = evaluateCached({
+    const planningRequest = client.evaluate({
       ...project({ ...build, effectiveLevel: planningHorizon }, "planning"),
       candidateDetailLevels: planningCandidateDetailLevels(
         workspaceTab,
@@ -4834,7 +4809,7 @@ export function CharacterEditorPage({
     const currentRequest =
       build.effectiveLevel === planningHorizon
         ? planningRequest
-        : evaluateCached({
+        : client.evaluate({
             ...project(projectBuildForLegacyExport(build), "current"),
             candidateDetailLevels: currentCandidateDetailLevels(
               workspaceTab,
@@ -4848,7 +4823,7 @@ export function CharacterEditorPage({
         ? planningRequest
         : selectedLevel === build.effectiveLevel
           ? currentRequest
-          : evaluateCached({
+          : client.evaluate({
               ...project(
                 { ...build, effectiveLevel: selectedLevel },
                 "selected",
@@ -6518,7 +6493,6 @@ export function CharacterEditorPage({
             build={build}
             entities={entities}
             byId={byId}
-            {...(packId === undefined ? {} : { packId })}
             activeDefinitionIds={currentEvaluation?.activeDefinitionIds ?? []}
             hideFlavortext={hideFlavortext}
             keepLargeAmountsInGold={keepLargeAmountsInGold}
