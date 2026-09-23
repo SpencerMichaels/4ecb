@@ -46,6 +46,13 @@ application's architecture.
 15. [Original Character Builder launch matrix](legacy-builder-launch-matrix.md)
     records the recovered executable/data contract, curated regenerated
     candidates, repeatable execution procedure, and observed runtime results.
+16. [Functional refactor and performance plan](functional-refactor-plan.md)
+    records the approved staged audit follow-up, measurable performance and
+    regression gates, architecture decision point, and per-stage evidence log.
+17. [Functional and performance baseline](functional-performance-baseline.md)
+    defines the public synthetic browser workload, metric collection protocol,
+    current measurements, guardrail results, and visual evidence used by that
+    refactor program.
 
 ## Definition hierarchy
 

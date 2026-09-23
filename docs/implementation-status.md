@@ -42,6 +42,35 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## Functional refactor Stage 0 baseline accepted (2026-09-23)
+
+- A deterministic public fixture now supplies 420 feat candidates and 260 Shop
+  records without depending on the ignored private corpus. Its normal unit test
+  verifies stable encoding, content-pack validity, profile binding, and the
+  expected high-cardinality shape.
+- The production-preview Chromium harness covers cold library, direct editor,
+  warm reopen, Build → Overview → Equipment → Shop → Sheet, broad candidate and
+  Shop filtering, save/undo/redo, browser back/forward, and deep links. It
+  records raw/gzip bundle sizes, worker construction, approximate IndexedDB
+  records/bytes read, Long Tasks, mounted rows, query-to-paint, environment,
+  run count, and variance. Timing remains evidence rather than a brittle CI
+  assertion; broken behavior and browser errors are hard failures.
+- The three-run public evidence records a 600,058-byte / 172,260-byte-gzip main
+  bundle, 118.9 ms median direct-editor readiness, 58.0 ms median warm reopen,
+  28.6 ms median candidate query-to-paint, and 31.2 ms median Shop query-to-
+  paint. Warm tab changes created no worker, and interaction-attributed Long
+  Tasks remained absent.
+- The candidate table fails the approved DOM guardrail honestly with 420
+  mounted rows; Shop passes at exactly 200. Cold library reads approximately
+  797,000 payload bytes, dominated by two content-pack reads, while the first
+  direct editor reads approximately 1,192,771 bytes, dominated by three pack
+  reads. These remain owned by Stages 3 and 1 respectively.
+- Candidate, Inventory, funds-dialog, Shop, sheet, and print-media screenshots
+  were reviewed. Existing Chromium/Firefox PDF checks remain authoritative for
+  cross-engine print output. The coordinator accepted the baseline, including
+  its honest 420-row failure and full verification evidence. Stage 0 is complete;
+  Stage 1 — Storage and cache mechanics is the next stopping point.
+
 ## M5.5 shared visual-contract consolidation checkpoint (2026-09-23)
 
 - Cross-workspace selection headings now use authoritative named typography

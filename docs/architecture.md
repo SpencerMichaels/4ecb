@@ -709,6 +709,15 @@ all-page geometry/text/tags/overflow, and deletes the generated PDFs. Safari,
 physical devices, and cross-engine raster review remain explicit M9 evidence
 rather than being silently represented by desktop Chromium/Firefox output.
 
+The cross-cutting functional-refactor baseline uses a separate deterministic
+public high-cardinality fixture in a fresh production-preview Chromium profile.
+It records bundle sizes, worker creation, approximate IndexedDB payload reads,
+Long Tasks, mounted result rows, query-to-paint timing, and complete editor
+journeys without turning noisy host timings into ordinary CI assertions. Its
+metric definitions and current evidence are maintained in
+`docs/functional-performance-baseline.md`; the existing Chromium/Firefox print
+gate remains the cross-engine print authority.
+
 ### Compatibility reporting
 
 Engine parity is reported by feature and corpus coverage rather than one vague

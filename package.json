@@ -29,6 +29,7 @@
     "content-tool": "tsx apps/content-tool/src/main.ts",
     "dev": "pnpm --filter @4ecb/web dev",
     "check:print": "node scripts/check-print.mjs",
+    "check:functional-baseline": "node scripts/check-functional-baseline.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
