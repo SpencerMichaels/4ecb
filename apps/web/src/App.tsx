@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 import {
   ContentPackRepository,
@@ -8,9 +17,7 @@ import {
 import { storeAlreadyValidatedContentPack } from "@4ecb/browser-storage/validated-pack-storage";
 
 import { CharacterLibraryPage } from "./CharacterLibraryPage";
-import { CharacterEditorPage } from "./CharacterEditorPage";
-import { CharacterSheetPage } from "./CharacterSheetPage";
-import { HideFlavortextContext } from "./EntityCard";
+import { HideFlavortextContext } from "./HideFlavortextContext";
 import { Icon } from "./Icon";
 import {
   canonicalHashRedirect,
@@ -24,7 +31,6 @@ import {
   shouldFocusMainContentAfterRouteChange,
 } from "./route-focus";
 import { PwaStatus } from "./PwaStatus";
-import { SettingsPage } from "./SettingsPage";
 import {
   downloadAdvertisedPack,
   parseRuntimeContentConfig,
@@ -40,9 +46,78 @@ import {
 
 const repository = new ContentPackRepository();
 
+const loadCharacterEditorPage = () =>
+  import("./CharacterEditorPage").then((module) => ({
+    default: module.CharacterEditorPage,
+  }));
+const loadCharacterSheetPage = () =>
+  import("./CharacterSheetPage").then((module) => ({
+    default: module.CharacterSheetPage,
+  }));
+const loadSettingsPage = () =>
+  import("./SettingsPage").then((module) => ({
+    default: module.SettingsPage,
+  }));
+
+const initialRoute = parseHashRoute(window.location.hash);
+const initialEditorPage =
+  initialRoute.page === "characters" && initialRoute.mode === "edit"
+    ? loadCharacterEditorPage()
+    : undefined;
+const initialSheetPage =
+  initialRoute.page === "characters" &&
+  initialRoute.characterId !== undefined &&
+  initialRoute.mode !== "edit"
+    ? loadCharacterSheetPage()
+    : undefined;
+const initialSettingsPage =
+  initialRoute.page === "settings" ? loadSettingsPage() : undefined;
+
+let initialEditorPageComponent:
+  Awaited<ReturnType<typeof loadCharacterEditorPage>>["default"] | undefined;
+let initialSheetPageComponent:
+  Awaited<ReturnType<typeof loadCharacterSheetPage>>["default"] | undefined;
+let initialSettingsPageComponent:
+  Awaited<ReturnType<typeof loadSettingsPage>>["default"] | undefined;
+
+export const initialRouteReady = Promise.all([
+  initialEditorPage?.then(({ default: component }) => {
+    initialEditorPageComponent = component;
+  }),
+  initialSheetPage?.then(({ default: component }) => {
+    initialSheetPageComponent = component;
+  }),
+  initialSettingsPage?.then(({ default: component }) => {
+    initialSettingsPageComponent = component;
+  }),
+]);
+
+const CharacterEditorPage = lazy(
+  () => initialEditorPage ?? loadCharacterEditorPage(),
+);
+const CharacterSheetPage = lazy(
+  () => initialSheetPage ?? loadCharacterSheetPage(),
+);
+const SettingsPage = lazy(() => initialSettingsPage ?? loadSettingsPage());
+
 const HIDE_FLAVORTEXT_STORAGE_KEY = "4ecb.hideFlavortext.v1";
 export const KEEP_LARGE_AMOUNTS_IN_GOLD_STORAGE_KEY =
   "4ecb.keepLargeAmountsInGold.v1";
+
+function RouteFocusOnMount({
+  children,
+  enabled,
+  focusKey,
+}: {
+  readonly children: ReactNode;
+  readonly enabled: boolean;
+  readonly focusKey: string;
+}) {
+  useEffect(() => {
+    if (enabled) focusMainContent(document);
+  }, [enabled, focusKey]);
+  return children;
+}
 
 export interface ContentDownloadState {
   readonly phase:
@@ -96,6 +171,12 @@ export function App() {
   const runtimeContentStarted = useRef(false);
   const route = useMemo(() => parseHashRoute(hash), [hash]);
   const previousRoute = useRef(route);
+  const focusRouteOnMount =
+    !firstRoute.current &&
+    shouldFocusMainContentAfterRouteChange(previousRoute.current, route);
+  const EditorRoute = initialEditorPageComponent ?? CharacterEditorPage;
+  const SheetRoute = initialSheetPageComponent ?? CharacterSheetPage;
+  const SettingsRoute = initialSettingsPageComponent ?? SettingsPage;
   const navigateBuilder = useCallback(
     (characterId: string, navigation: BuilderNavigation, replace = false) => {
       const next = characterEditorHash(characterId, navigation);
@@ -280,15 +361,10 @@ export function App() {
   );
 
   useEffect(() => {
-    const priorRoute = previousRoute.current;
     previousRoute.current = route;
     if (firstRoute.current) {
       firstRoute.current = false;
-      return;
     }
-    if (!shouldFocusMainContentAfterRouteChange(priorRoute, route)) return;
-    const frame = requestAnimationFrame(() => focusMainContent(document));
-    return () => cancelAnimationFrame(frame);
   }, [route]);
 
   return (
@@ -338,43 +414,60 @@ export function App() {
           <main className="loading-state" id="main-content">
             Loading local content profiles…
           </main>
-        ) : route.page === "settings" ? (
-          <SettingsPage
-            installedPacks={installedPacks}
-            advertisedPacks={advertisedPacks}
-            contentDownloads={contentDownloads}
-            {...(activeProfile === undefined ? {} : { activeProfile })}
-            {...(runtimeContentError === undefined
-              ? {}
-              : { runtimeContentError })}
-            onChanged={refreshAfterContentChange}
-            onRetryAdvertised={installAdvertisedPack}
-            theme={theme}
-            onThemeChange={setTheme}
-            hideFlavortext={hideFlavortext}
-            onHideFlavortextChange={setHideFlavortext}
-            keepLargeAmountsInGold={keepLargeAmountsInGold}
-            onKeepLargeAmountsInGoldChange={setKeepLargeAmountsInGold}
-          />
-        ) : route.characterId === undefined ? (
-          <CharacterLibraryPage
-            manifests={manifests}
-            {...(activePackId === undefined ? {} : { activePackId })}
-            {...(activeProfile === undefined ? {} : { activeProfile })}
-          />
-        ) : route.mode === "edit" ? (
-          <CharacterEditorPage
-            characterId={route.characterId}
-            navigation={route.builder ?? { workspace: "build" }}
-            onNavigate={navigateBuilder}
-            keepLargeAmountsInGold={keepLargeAmountsInGold}
-          />
         ) : (
-          <CharacterSheetPage
-            characterId={route.characterId}
-            manifests={manifests}
-            printOnReady={route.print === true}
-          />
+          <Suspense
+            fallback={
+              <main
+                aria-busy="true"
+                className="loading-state route-loading-state"
+                data-route-loading="true"
+                id="main-content"
+              >
+                Loading workspace…
+              </main>
+            }
+          >
+            <RouteFocusOnMount enabled={focusRouteOnMount} focusKey={hash}>
+              {route.page === "settings" ? (
+                <SettingsRoute
+                  installedPacks={installedPacks}
+                  advertisedPacks={advertisedPacks}
+                  contentDownloads={contentDownloads}
+                  {...(activeProfile === undefined ? {} : { activeProfile })}
+                  {...(runtimeContentError === undefined
+                    ? {}
+                    : { runtimeContentError })}
+                  onChanged={refreshAfterContentChange}
+                  onRetryAdvertised={installAdvertisedPack}
+                  theme={theme}
+                  onThemeChange={setTheme}
+                  hideFlavortext={hideFlavortext}
+                  onHideFlavortextChange={setHideFlavortext}
+                  keepLargeAmountsInGold={keepLargeAmountsInGold}
+                  onKeepLargeAmountsInGoldChange={setKeepLargeAmountsInGold}
+                />
+              ) : route.characterId === undefined ? (
+                <CharacterLibraryPage
+                  manifests={manifests}
+                  {...(activePackId === undefined ? {} : { activePackId })}
+                  {...(activeProfile === undefined ? {} : { activeProfile })}
+                />
+              ) : route.mode === "edit" ? (
+                <EditorRoute
+                  characterId={route.characterId}
+                  navigation={route.builder ?? { workspace: "build" }}
+                  onNavigate={navigateBuilder}
+                  keepLargeAmountsInGold={keepLargeAmountsInGold}
+                />
+              ) : (
+                <SheetRoute
+                  characterId={route.characterId}
+                  manifests={manifests}
+                  printOnReady={route.print === true}
+                />
+              )}
+            </RouteFocusOnMount>
+          </Suspense>
         )}
       </HideFlavortextContext.Provider>
     </div>

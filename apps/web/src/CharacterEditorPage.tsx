@@ -135,8 +135,8 @@ import {
   EmbeddedPowerCard,
   EntityCardBody,
   EntityCardHeader,
-  HideFlavortextContext,
 } from "./EntityCard";
+import { HideFlavortextContext } from "./HideFlavortextContext";
 import { KeyAbilitiesSummary, KeyAbilityName } from "./KeyAbilityMarker";
 import { EquipmentWorkspace } from "./EquipmentWorkspace";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";

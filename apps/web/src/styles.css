@@ -861,12 +861,14 @@ textarea {
   grid-row: 1;
 }
 .character-card-action {
+  align-items: center;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 3px;
   color: var(--text);
   display: inline-flex;
   height: 2rem;
+  justify-content: center;
   padding: 0;
   text-decoration: none;
   width: 2rem;

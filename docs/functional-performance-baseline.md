@@ -34,7 +34,9 @@ text, tags, overflow, paper size, color, and monochrome.
 ## Metric definitions
 
 - **Bundle bytes:** each production JavaScript and CSS asset's file size and
-  deterministic gzip-9 size. Main-route and aggregate assets remain distinct.
+  deterministic gzip-9 size. The initial route is the entry script plus every
+  JavaScript module preload referenced by `index.html`; independently requested
+  route chunks and aggregate shipped assets remain distinct.
 - **Worker requests:** intercepted `Worker` constructions, including their
   resolved production asset URL. Counts are compared before and after warm
   workspace navigation.
@@ -135,3 +137,50 @@ encoded pack because both are authoritative inputs. The warm maximum was 64.36
 ms, no interaction-attributed Long Task appeared, and warm tab changes created
 no worker. The known 420-row candidate failure remains assigned to Stage 3;
 Shop remains bounded at 200.
+
+## Stage 2 comparable run (2026-09-23)
+
+The unchanged fixture, host, Chromium version, viewport, production-preview
+build, three-run protocol, and metric definitions produced the raw report at
+[Stage 2 evidence](evidence/functional-stage2-2026-09-23/functional-baseline.json).
+The Stage 2 harness derives the initial graph from the built `index.html`
+instead of treating the largest JavaScript file as the entry after code
+splitting.
+
+| Metric                              | Comparison baseline |       Stage 2 | Change |
+| ----------------------------------- | ------------------: | ------------: | -----: |
+| Initial-route JavaScript gzip-9     |  173,277 bytes (S1) | 113,334 bytes | -34.6% |
+| Direct-editor median                |       118.9 ms (S0) |      122.9 ms |  +3.4% |
+| Warm-reopen median                  |        58.0 ms (S0) |       57.6 ms |  -0.6% |
+| Candidate query-to-paint median     |        28.6 ms (S0) |       29.0 ms |  +1.4% |
+| Shop query-to-paint median          |        31.2 ms (S0) |       31.3 ms |  +0.3% |
+| Aggregate shipped JavaScript gzip-9 |  245,377 bytes (S1) | 251,314 bytes |  +2.4% |
+
+The 113,334-byte initial graph comprises the entry, JSX runtime, application
+runtime, and 87-byte chunk runtime. The independently loaded editor, Settings,
+and sheet chunks are respectively 52,388, 7,447, and 5,362 gzip bytes. A direct
+route begins only its requested import before mounting the React shell, which
+keeps direct editor readiness comparable while avoiding any route download on
+the default library route.
+
+The service-worker manifest contains all three route chunks. The production
+harness passed an offline direct-sheet reload after installation, exercised
+back/forward and route focus after lazy resolution, and proved that a blocked
+sheet chunk reaches the reloadable application error boundary. Candidate and
+Shop interactions introduced no attributed Long Task, warm workspace changes
+created no worker, and the cached-evaluation maximum was 59.7 ms. The Stage 3
+candidate limit remains the only intentional guardrail failure at 420 mounted
+rows; Shop remains bounded at 200.
+
+Additional reviewed evidence:
+
+- [Firefox Settings](evidence/functional-stage2-2026-09-23/firefox-settings.png)
+- [Firefox character library](evidence/functional-stage2-2026-09-23/firefox-characters.png)
+- [Route loading state](evidence/functional-stage2-2026-09-23/route-loading.png)
+- [Route error recovery](evidence/functional-stage2-2026-09-23/route-error.png)
+- [Candidate table](evidence/functional-stage2-2026-09-23/candidate-table.png)
+- [Inventory](evidence/functional-stage2-2026-09-23/inventory.png)
+- [Funds dialog](evidence/functional-stage2-2026-09-23/funds-dialog.png)
+- [Shop](evidence/functional-stage2-2026-09-23/shop.png)
+- [Sheet View](evidence/functional-stage2-2026-09-23/sheet-view.png)
+- [Print-media preview](evidence/functional-stage2-2026-09-23/print-preview.png)

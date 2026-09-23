@@ -1,6 +1,6 @@
 import "fake-indexeddb/auto";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { openDB } from "idb";
 
 import { buildContentPack, type ContentPack } from "@4ecb/content-pack";
@@ -59,6 +59,45 @@ function repository(): ContentPackRepository {
   const name = `4ecb-test-${crypto.randomUUID()}`;
   databases.push(name);
   return new ContentPackRepository(name);
+}
+
+async function createSchema5Database(
+  name: string,
+  packs: readonly ContentPack[],
+): Promise<void> {
+  const database = await openDB(name, 5, {
+    upgrade(current) {
+      const contentPacks = current.createObjectStore("contentPacks", {
+        keyPath: "packId",
+      });
+      contentPacks.createIndex("by-name", "manifest.name");
+      const packMetadata = current.createObjectStore("contentPackMetadata", {
+        keyPath: "packId",
+      });
+      packMetadata.createIndex("by-name", "manifest.name");
+      current.createObjectStore("settings", { keyPath: "key" });
+      const characters = current.createObjectStore("characters", {
+        keyPath: "id",
+      });
+      characters.createIndex("by-updated", "updatedAt");
+      characters.createIndex("by-deleted", "deletedAt");
+      const characterMetadata = current.createObjectStore("characterMetadata", {
+        keyPath: "id",
+      });
+      characterMetadata.createIndex("by-updated", "updatedAt");
+      characterMetadata.createIndex("by-deleted", "deletedAt");
+      current.createObjectStore("characterPortraits", { keyPath: "id" });
+      current.createObjectStore("characterMigrations", { keyPath: "id" });
+    },
+  });
+  for (const pack of packs)
+    await database.put("contentPacks", {
+      packId: pack.manifest.packId,
+      manifest: pack.manifest,
+      encodedPack: new TextEncoder().encode(JSON.stringify(pack)).buffer,
+      origin: "personal",
+    });
+  database.close();
 }
 
 afterEach(async () => {
@@ -264,6 +303,82 @@ describe("ContentPackRepository", () => {
       { manifest: legacy.manifest, origin: "personal" },
     ]);
     await expect(storage.get("legacy-v3")).resolves.toEqual(legacy);
+  });
+
+  it("reconciles stale schema-5 metadata keys when listing installed packs", async () => {
+    const name = `4ecb-pack-v5-stale-metadata-${crypto.randomUUID()}`;
+    databases.push(name);
+    const pack = await makePack("v5-list-recovery");
+    await createSchema5Database(name, [pack]);
+    const stale = await openDB(name, 5);
+    await stale.put("contentPackMetadata", {
+      packId: "removed-pack",
+      manifest: { ...pack.manifest, packId: "removed-pack" },
+      origin: "personal",
+    });
+    stale.close();
+
+    const storage = new ContentPackRepository(name);
+    await expect(storage.listInstalled()).resolves.toEqual([
+      { manifest: pack.manifest, origin: "personal" },
+    ]);
+
+    const database = await openDB(name, 5);
+    await expect(
+      database.get("contentPackMetadata", pack.manifest.packId),
+    ).resolves.toEqual({
+      packId: pack.manifest.packId,
+      manifest: pack.manifest,
+      origin: "personal",
+    });
+    await expect(
+      database.get("contentPackMetadata", "removed-pack"),
+    ).resolves.toBeUndefined();
+    database.close();
+  });
+
+  it("repairs a missing schema-5 manifest projection on direct lookup", async () => {
+    const name = `4ecb-pack-v5-manifest-recovery-${crypto.randomUUID()}`;
+    databases.push(name);
+    const pack = await makePack("v5-manifest-recovery");
+    await createSchema5Database(name, [pack]);
+
+    const storage = new ContentPackRepository(name);
+    await expect(storage.manifest(pack.manifest.packId)).resolves.toEqual(
+      pack.manifest,
+    );
+    const database = await openDB(name, 5);
+    await database.delete("contentPackMetadata", pack.manifest.packId);
+    database.close();
+    await expect(
+      storage.activate(pack.manifest.packId),
+    ).resolves.toBeUndefined();
+    await expect(storage.activePackId()).resolves.toBe(pack.manifest.packId);
+  });
+
+  it("does not read encoded pack values during a healthy metadata listing", async () => {
+    const storage = repository();
+    const pack = await makePack("healthy-listing");
+    await storage.install(pack);
+    const get = vi.spyOn(IDBObjectStore.prototype, "get");
+    const getAll = vi.spyOn(IDBObjectStore.prototype, "getAll");
+    const openCursor = vi.spyOn(IDBObjectStore.prototype, "openCursor");
+    try {
+      await expect(storage.listInstalled()).resolves.toEqual([
+        { manifest: pack.manifest, origin: "personal" },
+      ]);
+      for (const read of [get, getAll, openCursor])
+        expect(
+          read.mock.contexts.some(
+            (context) =>
+              (context as IDBObjectStore | undefined)?.name === "contentPacks",
+          ),
+        ).toBe(false);
+    } finally {
+      get.mockRestore();
+      getAll.mockRestore();
+      openCursor.mockRestore();
+    }
   });
 
   it("upgrades the schema-1 content-only database without losing its pack", async () => {

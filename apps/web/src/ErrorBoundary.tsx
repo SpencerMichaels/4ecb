@@ -25,7 +25,7 @@ export class ErrorBoundary extends Component<
   public override render(): ReactNode {
     if (this.state.error !== undefined) {
       return (
-        <main className="fatal-error" role="alert">
+        <main className="fatal-error" id="main-content" role="alert">
           <h1>The application could not continue</h1>
           <p>{this.state.error.message}</p>
           <button type="button" onClick={() => window.location.reload()}>

@@ -255,6 +255,85 @@ function contentPackMetadata(
   };
 }
 
+async function listContentPackMetadata(
+  database: IDBPDatabase<CharacterBuilderDatabase>,
+): Promise<InstalledContentPackMetadata[]> {
+  const transaction = database.transaction(
+    ["contentPacks", "contentPackMetadata"],
+    "readonly",
+  );
+  const [stored, packIds] = await Promise.all([
+    transaction.objectStore("contentPackMetadata").index("by-name").getAll(),
+    transaction.objectStore("contentPacks").getAllKeys(),
+  ]);
+  await transaction.done;
+  const metadataIds = new Set(stored.map(({ packId }) => packId));
+  if (
+    stored.length === packIds.length &&
+    packIds.every((packId) => metadataIds.has(packId))
+  )
+    return stored;
+
+  const repair = database.transaction(
+    ["contentPacks", "contentPackMetadata"],
+    "readwrite",
+  );
+  const packs = repair.objectStore("contentPacks");
+  const metadata = repair.objectStore("contentPackMetadata");
+  const [currentPackIds, currentMetadata] = await Promise.all([
+    packs.getAllKeys(),
+    metadata.getAll(),
+  ]);
+  const currentPackIdSet = new Set(currentPackIds);
+  const currentMetadataIds = new Set(
+    currentMetadata.map(({ packId }) => packId),
+  );
+  for (const { packId } of currentMetadata)
+    if (!currentPackIdSet.has(packId)) await metadata.delete(packId);
+  for (const packId of currentPackIds) {
+    if (currentMetadataIds.has(packId)) continue;
+    const storedPack = await packs.get(packId);
+    if (storedPack !== undefined)
+      await metadata.put(contentPackMetadata(storedPack));
+  }
+  await repair.done;
+  return database.getAllFromIndex("contentPackMetadata", "by-name");
+}
+
+async function getContentPackManifest(
+  database: IDBPDatabase<CharacterBuilderDatabase>,
+  packId: string,
+): Promise<ContentPackManifest | undefined> {
+  const transaction = database.transaction(
+    ["contentPacks", "contentPackMetadata"],
+    "readwrite",
+  );
+  const packs = transaction.objectStore("contentPacks");
+  const metadata = transaction.objectStore("contentPackMetadata");
+  const [storedMetadata, storedPackKey] = await Promise.all([
+    metadata.get(packId),
+    packs.getKey(packId),
+  ]);
+  if (storedPackKey === undefined) {
+    if (storedMetadata !== undefined) await metadata.delete(packId);
+    await transaction.done;
+    return undefined;
+  }
+  if (storedMetadata !== undefined) {
+    await transaction.done;
+    return storedMetadata.manifest;
+  }
+  const storedPack = await packs.get(packId);
+  if (storedPack === undefined) {
+    await transaction.done;
+    return undefined;
+  }
+  const repaired = contentPackMetadata(storedPack);
+  await metadata.put(repaired);
+  await transaction.done;
+  return repaired.manifest;
+}
+
 export class ContentPackRepository {
   readonly #databaseName: string;
 
@@ -290,10 +369,7 @@ export class ContentPackRepository {
   async list(): Promise<ContentPackManifest[]> {
     const database = await openContentDatabase(this.#databaseName);
     try {
-      const stored = await database.getAllFromIndex(
-        "contentPackMetadata",
-        "by-name",
-      );
+      const stored = await listContentPackMetadata(database);
       return stored.map((entry) => entry.manifest);
     } finally {
       database.close();
@@ -303,10 +379,7 @@ export class ContentPackRepository {
   async listInstalled(): Promise<InstalledContentPack[]> {
     const database = await openContentDatabase(this.#databaseName);
     try {
-      const stored = await database.getAllFromIndex(
-        "contentPackMetadata",
-        "by-name",
-      );
+      const stored = await listContentPackMetadata(database);
       return stored.map((entry) => ({
         manifest: entry.manifest,
         origin: entry.origin ?? "personal",
@@ -334,7 +407,7 @@ export class ContentPackRepository {
   async manifest(packId: string): Promise<ContentPackManifest | undefined> {
     const database = await openContentDatabase(this.#databaseName);
     try {
-      return (await database.get("contentPackMetadata", packId))?.manifest;
+      return getContentPackManifest(database, packId);
     } finally {
       database.close();
     }
@@ -375,14 +448,25 @@ export class ContentPackRepository {
     const database = await openContentDatabase(this.#databaseName);
     try {
       const transaction = database.transaction(
-        ["contentPackMetadata", "settings"],
+        ["contentPacks", "contentPackMetadata", "settings"],
         "readwrite",
       );
-      const pack = await transaction
-        .objectStore("contentPackMetadata")
-        .get(packId);
-      if (pack === undefined)
+      const packs = transaction.objectStore("contentPacks");
+      const metadata = transaction.objectStore("contentPackMetadata");
+      const [storedMetadata, storedPackKey] = await Promise.all([
+        metadata.get(packId),
+        packs.getKey(packId),
+      ]);
+      if (storedPackKey === undefined) {
+        if (storedMetadata !== undefined) await metadata.delete(packId);
         throw new Error(`Cannot activate missing content pack ${packId}`);
+      }
+      if (storedMetadata === undefined) {
+        const storedPack = await packs.get(packId);
+        if (storedPack === undefined)
+          throw new Error(`Cannot activate missing content pack ${packId}`);
+        await metadata.put(contentPackMetadata(storedPack));
+      }
       await transaction
         .objectStore("settings")
         .put({ key: ACTIVE_PACK_KEY, value: packId });
@@ -544,20 +628,20 @@ export class ContentPackRepository {
         return setting.value as ContentProfileDefinition;
       const legacy = await database.get("settings", ACTIVE_PACK_KEY);
       if (typeof legacy?.value !== "string") return undefined;
-      const stored = await database.get("contentPackMetadata", legacy.value);
-      if (stored === undefined) return undefined;
+      const manifest = await getContentPackManifest(database, legacy.value);
+      if (manifest === undefined) return undefined;
       return {
-        profileId: `legacy:${stored.packId}`,
-        name: stored.manifest.name,
+        profileId: `legacy:${manifest.packId}`,
+        name: manifest.name,
         layers: [
           {
-            packId: stored.packId,
-            contentDigest: stored.manifest.contentDigest,
+            packId: manifest.packId,
+            contentDigest: manifest.contentDigest,
           },
         ],
         resolutionPolicy: CONTENT_PROFILE_RESOLUTION_POLICY,
-        materializedPackId: stored.packId,
-        contentDigest: stored.manifest.contentDigest,
+        materializedPackId: manifest.packId,
+        contentDigest: manifest.contentDigest,
       };
     } finally {
       database.close();

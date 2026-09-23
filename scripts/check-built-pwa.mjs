@@ -23,4 +23,17 @@ if (
   throw new Error("runtime-config.json must have a NetworkOnly Workbox route");
 }
 
-console.log("PWA runtime configuration stays outside the precache.");
+for (const routeChunk of [
+  "CharacterEditorPage-",
+  "CharacterSheetPage-",
+  "SettingsPage-",
+]) {
+  if (!precacheManifest.includes(routeChunk))
+    throw new Error(
+      `${routeChunk} route chunk must be precached for offline use`,
+    );
+}
+
+console.log(
+  "PWA runtime configuration stays outside the precache; lazy route chunks stay available offline.",
+);

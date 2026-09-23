@@ -40,6 +40,9 @@ describe("compact character library", () => {
     expect(library).toContain("PDF");
     expect(library).not.toContain("preserve-original");
     expect(library).not.toContain("exportDnd4e");
+    const actionRule = styles.match(/\.character-card-action \{([^}]*)\}/)?.[1];
+    expect(actionRule).toContain("align-items: center");
+    expect(actionRule).toContain("justify-content: center");
     expect(styles).toContain(".character-card-action:focus-visible");
     expect(styles).toContain(".character-export-options");
   });

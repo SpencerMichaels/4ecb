@@ -123,6 +123,7 @@ try {
   client = new CdpClient(target.webSocketDebuggerUrl);
   await client.ready;
   await client.send("Page.enable");
+  await client.send("Network.enable");
   await client.send("Runtime.enable");
   await client.send("Log.enable");
   await client.send("Emulation.setDeviceMetricsOverride", {
@@ -159,6 +160,61 @@ try {
     );
   }
   const bundle = await bundleMetrics(join(projectRoot, "apps/web/dist"));
+  assert(
+    bundle.initialRouteJavascript.gzipBytes <= 120 * 1024,
+    `Initial route JavaScript is ${bundle.initialRouteJavascript.gzipBytes} gzip bytes; expected at most ${120 * 1024}`,
+  );
+  for (const route of [
+    "CharacterEditorPage",
+    "CharacterSheetPage",
+    "SettingsPage",
+  ])
+    assert(
+      bundle.routeJavascript[route] !== undefined,
+      `${route} was not emitted as an independent production chunk`,
+    );
+  await client.send("Network.emulateNetworkConditions", {
+    offline: true,
+    latency: 0,
+    downloadThroughput: 0,
+    uploadThroughput: 0,
+  });
+  await navigate(
+    client,
+    `${origin}/?offline-route=1#/characters/${fixture.character.id}`,
+  );
+  await waitForExpression(client, `document.querySelector(".sheet-page")`);
+  const offlineDirectSheet = "pass";
+  await client.send("Network.emulateNetworkConditions", {
+    offline: false,
+    latency: 0,
+    downloadThroughput: -1,
+    uploadThroughput: -1,
+  });
+  const routeErrorMessageStart = browserMessages.length;
+  const sheetChunk = bundle.routeJavascript.CharacterSheetPage.file;
+  await client.send("Network.setBypassServiceWorker", { bypass: true });
+  await client.send("Network.setBlockedURLs", { urls: [`*${sheetChunk}`] });
+  await navigate(
+    client,
+    `${origin}/?route-error=1#/characters/${fixture.character.id}`,
+  );
+  await waitForExpression(client, `document.querySelector(".fatal-error")`);
+  const routeErrorMessage = await evaluate(
+    client,
+    `document.querySelector(".fatal-error")?.textContent`,
+  );
+  await screenshot(client, join(outputDirectory, "route-error.png"));
+  const routeErrorBrowserMessages = browserMessages.splice(
+    routeErrorMessageStart,
+    browserMessages.length - routeErrorMessageStart,
+  );
+  assert(
+    routeErrorMessage?.includes("The application could not continue"),
+    "Blocked route chunk did not reach the application error boundary",
+  );
+  await client.send("Network.setBlockedURLs", { urls: [] });
+  await client.send("Network.setBypassServiceWorker", { bypass: false });
   const chromiumVersion = await browserVersion(debugPort);
   const metrics = summarizeRuns(runs);
   const report = {
@@ -192,6 +248,11 @@ try {
     runs,
     summary: metrics,
     guardrails: {
+      initialRouteJavascriptAtMost120KiBGzip: {
+        limit: 120 * 1024,
+        observed: bundle.initialRouteJavascript.gzipBytes,
+        pass: bundle.initialRouteJavascript.gzipBytes <= 120 * 1024,
+      },
       candidateMountedRowsAtMost200: {
         limit: 200,
         observed: metrics.candidateMountedRows.maximum,
@@ -218,6 +279,9 @@ try {
       },
     },
     browserMessages,
+    routeErrorMessage,
+    routeErrorBrowserMessages,
+    offlineDirectSheet,
   };
   await writeFile(
     join(outputDirectory, "functional-baseline.json"),
@@ -370,8 +434,33 @@ async function runScenario(client, origin, fixture, outputDirectory, runIndex) {
     `location.hash.includes("tab=equipment") && document.querySelector('.builder-tabs [role="tab"][aria-selected="true"]')?.textContent.includes("Equipment")`,
   );
 
+  if (runIndex === 0) {
+    await client.send("Network.emulateNetworkConditions", {
+      offline: false,
+      latency: 750,
+      downloadThroughput: -1,
+      uploadThroughput: -1,
+    });
+  }
   await setHash(client, `#/characters/${id}`);
+  if (runIndex === 0) {
+    await waitForExpression(
+      client,
+      `document.querySelector(".route-loading-state[aria-busy=true]")`,
+    );
+    await screenshot(client, join(outputDirectory, "route-loading.png"));
+    await client.send("Network.emulateNetworkConditions", {
+      offline: false,
+      latency: 0,
+      downloadThroughput: -1,
+      uploadThroughput: -1,
+    });
+  }
   await waitForExpression(client, `document.querySelector(".sheet-page")`);
+  await waitForExpression(
+    client,
+    `document.activeElement?.id === "main-content"`,
+  );
   if (runIndex === 0) {
     await screenshot(client, join(outputDirectory, "sheet-view.png"));
     await client.send("Emulation.setEmulatedMedia", { media: "print" });
@@ -479,6 +568,15 @@ async function snapshotInstrumentation(client) {
         transferSize: entry.transferSize,
         decodedBodySize: entry.decodedBodySize,
       })),
+      javascriptResources: performance.getEntriesByType("resource")
+        .filter((entry) => new URL(entry.name).pathname.endsWith(".js"))
+        .map((entry) => ({
+          file: new URL(entry.name).pathname,
+          startTime: entry.startTime,
+          duration: entry.duration,
+          transferSize: entry.transferSize,
+          decodedBodySize: entry.decodedBodySize,
+        })),
     })`,
   );
 }
@@ -656,8 +754,33 @@ async function bundleMetrics(directory) {
     });
   }
   assets.sort((left, right) => right.bytes - left.bytes);
+  const indexHtml = await readFile(join(directory, "index.html"), "utf8");
+  const initialJavascriptFiles = new Set(
+    [
+      ...indexHtml.matchAll(/(?:src|href)="\/?([^"?]+\.js)(?:\?[^" ]*)?"/gu),
+    ].map((match) => match[1]),
+  );
+  const initialJavascriptAssets = assets.filter(({ file }) =>
+    initialJavascriptFiles.has(file),
+  );
+  const routeJavascript = Object.fromEntries(
+    ["CharacterEditorPage", "CharacterSheetPage", "SettingsPage"].flatMap(
+      (route) => {
+        const asset = assets.find(
+          ({ file }) =>
+            file.startsWith(`assets/${route}-`) && file.endsWith(".js"),
+        );
+        return asset === undefined ? [] : [[route, asset]];
+      },
+    ),
+  );
   return {
     assets,
+    initialRouteJavascript: {
+      ...totals(initialJavascriptAssets),
+      files: [...initialJavascriptFiles].sort(),
+    },
+    routeJavascript,
     javascript: totals(assets.filter(({ file }) => file.endsWith(".js"))),
     css: totals(assets.filter(({ file }) => file.endsWith(".css"))),
     javascriptChunkCount: assets.filter(({ file }) => file.endsWith(".js"))

@@ -77,7 +77,10 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   sidecars plus a distinct rendered-thumbnail store. Upgrades backfill schemas
   1–4 without replacing payload stores or migration journals; lazy character
   migration, backup restore, trash/restore, purge, install, and removal keep
-  projection writes atomic. Metadata never carries the retained portrait source.
+  projection writes atomic. Already-version-5 development databases with an
+  incomplete pack sidecar now self-repair missing or orphaned projections from
+  the authoritative store; healthy listings inspect keys only and do not clone
+  encoded pack values. Metadata never carries the retained portrait source.
 - The character library reads and partitions summaries once. Pack list,
   manifest, and activation checks no longer clone encoded packs. Public decoded
   and encoded install APIs still validate. The internal seam can store only a
@@ -101,6 +104,39 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   the query benchmark. The coordinator independently reran the full gate on the
   final tree and accepted every Stage 1 exit criterion. Stage 1 is complete;
   Stage 2 — Route-level lazy loading is the next stopping point.
+
+## Functional refactor Stage 2 complete (2026-09-23)
+
+- Settings, the character editor, and the character sheet now ship as
+  independent route chunks; the library remains in the initial shell.
+  `HideFlavortextContext` lives in its own dependency-light module so the shell
+  no longer imports the shared card implementation solely to provide display
+  state.
+- Direct Settings/editor/sheet hashes begin only their requested chunk before
+  mounting the shell. This preserves direct-link readiness without loading any
+  workspace chunk on the default library route. Later navigation uses an
+  accessible Suspense landmark, focuses the resolved main landmark, and sends a
+  failed chunk to the reloadable application error boundary.
+- The final-tree comparable three-run production baseline records a 113,334-byte
+  gzip initial graph, 34.6% below Stage 1 and below the 120 KiB target. Against
+  Stage 0, direct editor (122.9 ms), warm reopen (57.6 ms), candidate interaction
+  (29.0 ms), and Shop interaction (31.3 ms) remain within the 10% guardrail. No interaction Long
+  Task or warm-tab worker was observed.
+- All route chunks and workers remain in the service-worker precache. A direct
+  sheet reload passed with network emulation offline, the production journey
+  retained back/forward behavior and session state, and blocked-chunk recovery
+  reached the captured error UI. The existing Chromium/Firefox print matrix
+  remains the authoritative print gate.
+- Raw measurements and reviewed screenshots are in
+  `docs/evidence/functional-stage2-2026-09-23/`, including representative
+  Firefox Settings/library routes and Chromium loading/recovery states. The
+  known 420-row candidate failure remains Stage 3 work. The full public gate
+  passes formatting, lint,
+  70 files / 518 tests, workspace typechecks, production/PWA build,
+  Chromium/Firefox print matrices, content determinism/validation, and the query
+  benchmark. The coordinator and product owner accepted every Stage 2 exit
+  criterion with no deferred incompatibility. Stage 2 is complete; Stage 3 —
+  Bound Builder candidate rendering is next.
 
 ## M5.5 shared visual-contract consolidation checkpoint (2026-09-23)
 

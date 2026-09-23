@@ -556,6 +556,9 @@ Storage rules:
   summaries, rendered portrait thumbnails, and content-pack manifest/origin
   listings, so ordinary metadata operations do not structured-clone full
   character envelopes, retained portrait sources, or encoded pack bytes;
+  content-pack metadata reads reconcile sidecar and authoritative keys and
+  rebuild only missing projections, recovering incomplete schema-5 development
+  databases without cloning encoded pack bytes during healthy listings;
 - content packs are verified by digest before activation;
 - progressive directory onboarding keeps handles ephemeral, bounds name-only
   discovery, and reads only the candidate the user explicitly installs;
@@ -583,6 +586,18 @@ destroys the document heap and dedicated workers, so it performs one new
 startup reconstruction from IndexedDB. Cross-refresh worker persistence is not
 assigned to the service worker because browser service-worker lifetime is not a
 reliable in-memory cache contract.
+
+The character library remains part of the initial shell, while Settings, the
+character editor, and the character sheet are independent lazy route chunks.
+A direct hash starts only its requested route import before the shell mounts so
+the route does not incur React's delayed Suspense reveal; ordinary in-document
+navigation uses the same cached import behind an accessible loading landmark.
+Focus moves only after the resolved route's main landmark mounts. Chunk-load
+failure is caught by the application error boundary, and every route chunk is
+part of the versioned service-worker precache so direct hashes continue to work
+offline after installation. Route components borrow application-scoped pack,
+evaluation, and worker resources; splitting or unmounting a route does not
+change worker ownership or session state.
 
 Exact evaluation promise memoization has one owner: the application-scoped
 rules runtime. Its canonical key includes every evaluator input field and is

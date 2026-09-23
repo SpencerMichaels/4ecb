@@ -1,4 +1,4 @@
-import { createContext, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import {
   isUserFacingSpecific,
@@ -22,8 +22,6 @@ import {
   entityVisualTone,
   visualToneClass,
 } from "./visual-language";
-
-export const HideFlavortextContext = createContext(false);
 
 export function entityCardSpecifics(
   entity: ContentEntity,

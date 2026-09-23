@@ -21,6 +21,10 @@ const entityCard = readFileSync(
   new URL("./EntityCard.tsx", import.meta.url),
   "utf8",
 );
+const hideFlavortextContext = readFileSync(
+  new URL("./HideFlavortextContext.ts", import.meta.url),
+  "utf8",
+);
 const selectionSummary = readFileSync(
   new URL("./SelectionSummary.tsx", import.meta.url),
   "utf8",
@@ -409,6 +413,10 @@ describe("release accessibility contract", () => {
     expect(entityCard).toContain(
       "entity.flavor === undefined || hideFlavortext",
     );
+    expect(hideFlavortextContext).toContain(
+      "export const HideFlavortextContext = createContext(false)",
+    );
+    expect(entityCard).not.toContain("createContext(false)");
     expect(app).toContain(
       "<HideFlavortextContext.Provider value={hideFlavortext}>",
     );

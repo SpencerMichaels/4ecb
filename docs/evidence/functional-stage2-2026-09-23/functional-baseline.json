@@ -1,0 +1,1585 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-23T23:46:05.468Z",
+  "fixture": { "feats": 420, "shopItems": 260, "entities": 681 },
+  "environment": {
+    "platform": "linux",
+    "release": "6.18.48",
+    "cpu": "AMD Ryzen 7 PRO 5850U with Radeon Graphics",
+    "logicalCpuCount": 16,
+    "totalMemoryBytes": 23953190912,
+    "freeMemoryBytesAtReport": 15908478976,
+    "chromium": "Chrome/152.0.7977.64",
+    "viewport": { "width": 1440, "height": 1000, "deviceScaleFactor": 1 },
+    "buildMode": "Vite production preview"
+  },
+  "protocol": {
+    "runs": 3,
+    "aggregation": "median, minimum, maximum, sample standard deviation",
+    "timingAssertions": "Recorded as evidence; ordinary CI asserts behavior and instrumentation shape, not host timing.",
+    "indexedDbBytes": "Approximate structured-clone payload bytes: JSON UTF-8 plus ArrayBuffer/view byte lengths.",
+    "queryToPaint": "Input event start through two requestAnimationFrame callbacks and the resulting DOM read.",
+    "longTasks": "PerformanceObserver longtask entries attributed between the interaction start and second animation frame."
+  },
+  "bundle": {
+    "assets": [
+      {
+        "file": "assets/index-Cj7Ipfht.js",
+        "bytes": 230308,
+        "gzipBytes": 73100
+      },
+      {
+        "file": "assets/CharacterEditorPage-CPoLBEy-.js",
+        "bytes": 197399,
+        "gzipBytes": 52388
+      },
+      {
+        "file": "assets/jsx-runtime-B0LAi-NN.js",
+        "bytes": 119705,
+        "gzipBytes": 34519
+      },
+      {
+        "file": "assets/rules.worker-CC3CLrtM.js",
+        "bytes": 117734,
+        "gzipBytes": 33693
+      },
+      {
+        "file": "assets/index-5CXNn2lr.css",
+        "bytes": 83268,
+        "gzipBytes": 15602
+      },
+      {
+        "file": "assets/query.worker-BDBrJK5s.js",
+        "bytes": 58354,
+        "gzipBytes": 16878
+      },
+      {
+        "file": "assets/content.worker-B7cpRPeU.js",
+        "bytes": 47054,
+        "gzipBytes": 13661
+      },
+      {
+        "file": "assets/SettingsPage-DXSVYFuj.js",
+        "bytes": 26241,
+        "gzipBytes": 7447
+      },
+      {
+        "file": "assets/CharacterSheetPage-UTAJJRcd.js",
+        "bytes": 18055,
+        "gzipBytes": 5362
+      },
+      {
+        "file": "assets/app-runtime-DP7i-Xrr.js",
+        "bytes": 16158,
+        "gzipBytes": 5628
+      },
+      { "file": "workbox-98f7a950.js", "bytes": 15421, "gzipBytes": 5307 },
+      {
+        "file": "assets/workbox-window.prod.es5-Bd17z0YL.js",
+        "bytes": 5653,
+        "gzipBytes": 2214
+      },
+      { "file": "sw.js", "bytes": 1978, "gzipBytes": 1030 },
+      {
+        "file": "assets/rolldown-runtime-D9-fqq9M.js",
+        "bytes": 86,
+        "gzipBytes": 87
+      },
+      { "file": "print-letter.css", "bytes": 44, "gzipBytes": 62 },
+      { "file": "print-a4.css", "bytes": 37, "gzipBytes": 55 }
+    ],
+    "initialRouteJavascript": {
+      "bytes": 366257,
+      "gzipBytes": 113334,
+      "files": [
+        "assets/app-runtime-DP7i-Xrr.js",
+        "assets/index-Cj7Ipfht.js",
+        "assets/jsx-runtime-B0LAi-NN.js",
+        "assets/rolldown-runtime-D9-fqq9M.js"
+      ]
+    },
+    "routeJavascript": {
+      "CharacterEditorPage": {
+        "file": "assets/CharacterEditorPage-CPoLBEy-.js",
+        "bytes": 197399,
+        "gzipBytes": 52388
+      },
+      "CharacterSheetPage": {
+        "file": "assets/CharacterSheetPage-UTAJJRcd.js",
+        "bytes": 18055,
+        "gzipBytes": 5362
+      },
+      "SettingsPage": {
+        "file": "assets/SettingsPage-DXSVYFuj.js",
+        "bytes": 26241,
+        "gzipBytes": 7447
+      }
+    },
+    "javascript": { "bytes": 854146, "gzipBytes": 251314 },
+    "css": { "bytes": 83349, "gzipBytes": 15719 },
+    "javascriptChunkCount": 13
+  },
+  "runs": [
+    {
+      "run": 1,
+      "coldLibrary": {
+        "workers": [],
+        "indexedDb": {
+          "calls": 11,
+          "records": 8,
+          "bytes": 1881,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 2, "records": 2, "bytes": 52 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 124 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [],
+        "measures": [],
+        "navigation": [
+          {
+            "duration": 23.599999994039536,
+            "domContentLoaded": 22.80000001192093,
+            "loadEvent": 23.599999994039536,
+            "transferSize": 827,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-Cj7Ipfht.js",
+            "startTime": 14.099999994039536,
+            "duration": 3.5,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 14.400000005960464,
+            "duration": 3.699999988079071,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 14.5,
+            "duration": 4.0999999940395355,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 14.700000017881393,
+            "duration": 4.299999982118607,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 39.20000001788139,
+            "duration": 2.199999988079071,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          }
+        ]
+      },
+      "directEditorMilliseconds": 219.27872799999977,
+      "directEditor": {
+        "workers": ["http://127.0.0.1:38695/assets/rules.worker-CC3CLrtM.js"],
+        "indexedDb": {
+          "calls": 12,
+          "records": 9,
+          "bytes": 400204,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 3, "records": 3, "bytes": 397161 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characters": { "calls": 1, "records": 1, "bytes": 1338 },
+            "evaluations": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 3,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 124.60000002384186,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:content-pack-ready",
+            "duration": 69.19999998807907,
+            "detail": {
+              "packId": "public-functional-baseline",
+              "source": "storage",
+              "recordCount": 681
+            }
+          },
+          {
+            "name": "4ecb:rules-worker-ready",
+            "duration": 14.600000023841858,
+            "detail": { "packId": "public-functional-baseline" }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 1.4000000059604645,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 26.69999998807907,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 16.5,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 15.5,
+              "contentLoadMilliseconds": 6,
+              "evaluationMilliseconds": 9.5
+            }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 19.700000017881393,
+            "domContentLoaded": 19.5,
+            "loadEvent": 19.700000017881393,
+            "transferSize": 827,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-Cj7Ipfht.js",
+            "startTime": 10.099999994039536,
+            "duration": 2.5,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 10.300000011920929,
+            "duration": 3.199999988079071,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 10.5,
+            "duration": 3.4000000059604645,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 10.5,
+            "duration": 3.800000011920929,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/CharacterEditorPage-CPoLBEy-.js",
+            "startTime": 19.099999994039536,
+            "duration": 2.4000000059604645,
+            "transferSize": 300,
+            "decodedBodySize": 197399
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 32.900000005960464,
+            "duration": 1.5,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/rules.worker-CC3CLrtM.js",
+            "startTime": 133.2000000178814,
+            "duration": -4.5,
+            "transferSize": 0,
+            "decodedBodySize": 0
+          }
+        ]
+      },
+      "warmReopenMilliseconds": 59.7057520000003,
+      "candidateSearches": [
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 23.80000001192093,
+          "mountedRows": 420,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat 0",
+          "milliseconds": 27.399999976158142,
+          "mountedRows": 420,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 31.900000005960464,
+          "mountedRows": 420,
+          "longTasks": []
+        }
+      ],
+      "candidateMountedRows": 420,
+      "shopSearches": [
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 28.30000001192093,
+          "mountedRows": 200,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear 00",
+          "milliseconds": 25.30000001192093,
+          "mountedRows": 99,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 60.400000005960464,
+          "mountedRows": 200,
+          "longTasks": []
+        }
+      ],
+      "shopMountedRows": 200,
+      "warmTabAdditionalWorkers": 0,
+      "maximumInteractionLongTask": 0,
+      "journey": ["build", "overview", "equipment", "shop", "sheet"],
+      "saveUndoRedo": "pass",
+      "browserBackForward": "pass",
+      "finalInstrumentation": {
+        "workers": ["http://127.0.0.1:38695/assets/rules.worker-CC3CLrtM.js"],
+        "indexedDb": {
+          "calls": 28,
+          "records": 15,
+          "bytes": 407030,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 3, "records": 3, "bytes": 397161 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 7, "records": 0, "bytes": 0 },
+            "characters": { "calls": 6, "records": 6, "bytes": 8040 },
+            "evaluations": { "calls": 4, "records": 0, "bytes": 0 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 124 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [
+          { "startTime": 221.40000000596046, "duration": 118 },
+          { "startTime": 928.5, "duration": 88 }
+        ],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 1.699999988079071,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 13.199999988079071,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000002384185791,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 11.099999994039536,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 4.5,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 0.5,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 0.5
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000002384185791,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.20000001788139343,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.20000001788139343,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 3.5999999940395355,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 2.0999999940395355,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 1.800000011920929,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 1.800000011920929
+            }
+          },
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 1.5,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 9.299999982118607,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 5.300000011920929,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 3.2999999821186066,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 1,
+              "contentLoadMilliseconds": 0.09999999403953552,
+              "evaluationMilliseconds": 0.9000000059604645
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.20000001788139343,
+            "detail": { "role": "planning", "level": 1 }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 19.700000017881393,
+            "domContentLoaded": 19.5,
+            "loadEvent": 19.700000017881393,
+            "transferSize": 827,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-Cj7Ipfht.js",
+            "startTime": 10.099999994039536,
+            "duration": 2.5,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 10.300000011920929,
+            "duration": 3.199999988079071,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 10.5,
+            "duration": 3.4000000059604645,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 10.5,
+            "duration": 3.800000011920929,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/CharacterEditorPage-CPoLBEy-.js",
+            "startTime": 19.099999994039536,
+            "duration": 2.4000000059604645,
+            "transferSize": 300,
+            "decodedBodySize": 197399
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 32.900000005960464,
+            "duration": 1.5,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/rules.worker-CC3CLrtM.js",
+            "startTime": 133.2000000178814,
+            "duration": -4.5,
+            "transferSize": 0,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/CharacterSheetPage-UTAJJRcd.js",
+            "startTime": 1317.7000000178814,
+            "duration": 54.19999998807907,
+            "transferSize": 300,
+            "decodedBodySize": 18055
+          }
+        ]
+      }
+    },
+    {
+      "run": 2,
+      "coldLibrary": {
+        "workers": [],
+        "indexedDb": {
+          "calls": 11,
+          "records": 8,
+          "bytes": 1874,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 2, "records": 2, "bytes": 52 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 117 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [],
+        "measures": [],
+        "navigation": [
+          {
+            "duration": 21.900000005960464,
+            "domContentLoaded": 21.80000001192093,
+            "loadEvent": 21.900000005960464,
+            "transferSize": 0,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-Cj7Ipfht.js",
+            "startTime": 8.599999994039536,
+            "duration": 3.300000011920929,
+            "transferSize": 0,
+            "decodedBodySize": 230308
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 8.900000005960464,
+            "duration": 2.5,
+            "transferSize": 0,
+            "decodedBodySize": 86
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 9,
+            "duration": 2.9000000059604645,
+            "transferSize": 0,
+            "decodedBodySize": 119705
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 9.099999994039536,
+            "duration": 2.800000011920929,
+            "transferSize": 0,
+            "decodedBodySize": 16158
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 28.5,
+            "duration": 1.300000011920929,
+            "transferSize": 0,
+            "decodedBodySize": 5653
+          }
+        ]
+      },
+      "directEditorMilliseconds": 122.90580099999988,
+      "directEditor": {
+        "workers": ["http://127.0.0.1:38695/assets/rules.worker-CC3CLrtM.js"],
+        "indexedDb": {
+          "calls": 12,
+          "records": 10,
+          "bytes": 469492,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 3, "records": 3, "bytes": 397161 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characters": { "calls": 1, "records": 1, "bytes": 1350 },
+            "evaluations": { "calls": 1, "records": 1, "bytes": 69276 }
+          }
+        },
+        "longTasks": [],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 2.7999999821186066,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 49.5,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:content-pack-ready",
+            "duration": 20.400000005960464,
+            "detail": {
+              "packId": "public-functional-baseline",
+              "source": "storage",
+              "recordCount": 681
+            }
+          },
+          {
+            "name": "4ecb:rules-worker-ready",
+            "duration": 12.300000011920929,
+            "detail": { "packId": "public-functional-baseline" }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.4000000059604645,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 8.900000005960464,
+            "detail": { "source": "persistent-cache", "level": 1 }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 23.200000017881393,
+            "domContentLoaded": 23.200000017881393,
+            "loadEvent": 23.200000017881393,
+            "transferSize": 0,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-Cj7Ipfht.js",
+            "startTime": 7,
+            "duration": 5.600000023841858,
+            "transferSize": 0,
+            "decodedBodySize": 230308
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 7.200000017881393,
+            "duration": 4.9000000059604645,
+            "transferSize": 0,
+            "decodedBodySize": 86
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 7.300000011920929,
+            "duration": 6.800000011920929,
+            "transferSize": 0,
+            "decodedBodySize": 119705
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 7.4000000059604645,
+            "duration": 6,
+            "transferSize": 0,
+            "decodedBodySize": 16158
+          },
+          {
+            "file": "/assets/CharacterEditorPage-CPoLBEy-.js",
+            "startTime": 22.900000005960464,
+            "duration": 1.5999999940395355,
+            "transferSize": 0,
+            "decodedBodySize": 197399
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 36.10000002384186,
+            "duration": 1.5999999940395355,
+            "transferSize": 0,
+            "decodedBodySize": 5653
+          },
+          {
+            "file": "/assets/rules.worker-CC3CLrtM.js",
+            "startTime": 75.5,
+            "duration": -3.5,
+            "transferSize": 0,
+            "decodedBodySize": 0
+          }
+        ]
+      },
+      "warmReopenMilliseconds": 55.53993100000025,
+      "candidateSearches": [
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 22.19999998807907,
+          "mountedRows": 420,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat 0",
+          "milliseconds": 29,
+          "mountedRows": 420,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 32.19999998807907,
+          "mountedRows": 420,
+          "longTasks": []
+        }
+      ],
+      "candidateMountedRows": 420,
+      "shopSearches": [
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 23.100000023841858,
+          "mountedRows": 200,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear 00",
+          "milliseconds": 26.099999994039536,
+          "mountedRows": 99,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 59.5,
+          "mountedRows": 200,
+          "longTasks": []
+        }
+      ],
+      "shopMountedRows": 200,
+      "warmTabAdditionalWorkers": 0,
+      "maximumInteractionLongTask": 0,
+      "journey": ["build", "overview", "equipment", "shop", "sheet"],
+      "saveUndoRedo": "pass",
+      "browserBackForward": "pass",
+      "finalInstrumentation": {
+        "workers": ["http://127.0.0.1:38695/assets/rules.worker-CC3CLrtM.js"],
+        "indexedDb": {
+          "calls": 28,
+          "records": 16,
+          "bytes": 476359,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 3, "records": 3, "bytes": 397161 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 7, "records": 0, "bytes": 0 },
+            "characters": { "calls": 6, "records": 6, "bytes": 8100 },
+            "evaluations": { "calls": 4, "records": 1, "bytes": 69276 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 117 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [
+          { "startTime": 124.5, "duration": 80 },
+          { "startTime": 445.2000000178814, "duration": 57 }
+        ],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 3.199999988079071,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 9.199999988079071,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 118.19999998807907,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 112.5,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 21,
+              "contentLoadMilliseconds": 7.600000023841858,
+              "evaluationMilliseconds": 13.399999976158142
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000002384185791,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 5.300000011920929,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 3.300000011920929,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 2.399999976158142,
+              "contentLoadMilliseconds": 0.09999999403953552,
+              "evaluationMilliseconds": 2.2999999821186066
+            }
+          },
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 1.9000000059604645,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 13.400000005960464,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000002384185791,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 4.0999999940395355,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 2.9000000059604645,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 1.2000000178813934,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 1.2000000178813934
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 23.200000017881393,
+            "domContentLoaded": 23.200000017881393,
+            "loadEvent": 23.200000017881393,
+            "transferSize": 0,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-Cj7Ipfht.js",
+            "startTime": 7,
+            "duration": 5.600000023841858,
+            "transferSize": 0,
+            "decodedBodySize": 230308
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 7.200000017881393,
+            "duration": 4.9000000059604645,
+            "transferSize": 0,
+            "decodedBodySize": 86
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 7.300000011920929,
+            "duration": 6.800000011920929,
+            "transferSize": 0,
+            "decodedBodySize": 119705
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 7.4000000059604645,
+            "duration": 6,
+            "transferSize": 0,
+            "decodedBodySize": 16158
+          },
+          {
+            "file": "/assets/CharacterEditorPage-CPoLBEy-.js",
+            "startTime": 22.900000005960464,
+            "duration": 1.5999999940395355,
+            "transferSize": 0,
+            "decodedBodySize": 197399
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 36.10000002384186,
+            "duration": 1.5999999940395355,
+            "transferSize": 0,
+            "decodedBodySize": 5653
+          },
+          {
+            "file": "/assets/rules.worker-CC3CLrtM.js",
+            "startTime": 75.5,
+            "duration": -3.5,
+            "transferSize": 0,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/CharacterSheetPage-UTAJJRcd.js",
+            "startTime": 785.4000000059605,
+            "duration": 1.2000000178813934,
+            "transferSize": 0,
+            "decodedBodySize": 18055
+          }
+        ]
+      }
+    },
+    {
+      "run": 3,
+      "coldLibrary": {
+        "workers": [],
+        "indexedDb": {
+          "calls": 11,
+          "records": 8,
+          "bytes": 1874,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 2, "records": 2, "bytes": 52 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 117 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [],
+        "measures": [],
+        "navigation": [
+          {
+            "duration": 23.899999976158142,
+            "domContentLoaded": 23.899999976158142,
+            "loadEvent": 23.899999976158142,
+            "transferSize": 0,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-Cj7Ipfht.js",
+            "startTime": 9.599999994039536,
+            "duration": 3.5999999940395355,
+            "transferSize": 0,
+            "decodedBodySize": 230308
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 9.799999982118607,
+            "duration": 2.300000011920929,
+            "transferSize": 0,
+            "decodedBodySize": 86
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 9.899999976158142,
+            "duration": 4,
+            "transferSize": 0,
+            "decodedBodySize": 119705
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 10,
+            "duration": 3.199999988079071,
+            "transferSize": 0,
+            "decodedBodySize": 16158
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 26.19999998807907,
+            "duration": 1.4000000059604645,
+            "transferSize": 0,
+            "decodedBodySize": 5653
+          }
+        ]
+      },
+      "directEditorMilliseconds": 118.07682400000067,
+      "directEditor": {
+        "workers": ["http://127.0.0.1:38695/assets/rules.worker-CC3CLrtM.js"],
+        "indexedDb": {
+          "calls": 12,
+          "records": 10,
+          "bytes": 469492,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 3, "records": 3, "bytes": 397161 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characters": { "calls": 1, "records": 1, "bytes": 1350 },
+            "evaluations": { "calls": 1, "records": 1, "bytes": 69276 }
+          }
+        },
+        "longTasks": [],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 2.899999976158142,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 51.89999997615814,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:content-pack-ready",
+            "duration": 18.799999982118607,
+            "detail": {
+              "packId": "public-functional-baseline",
+              "source": "storage",
+              "recordCount": 681
+            }
+          },
+          {
+            "name": "4ecb:rules-worker-ready",
+            "duration": 13.900000005960464,
+            "detail": { "packId": "public-functional-baseline" }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.4000000059604645,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 9,
+            "detail": { "source": "persistent-cache", "level": 1 }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 21.30000001192093,
+            "domContentLoaded": 21.200000017881393,
+            "loadEvent": 21.30000001192093,
+            "transferSize": 0,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-Cj7Ipfht.js",
+            "startTime": 7.5,
+            "duration": 3.4000000059604645,
+            "transferSize": 0,
+            "decodedBodySize": 230308
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 7.700000017881393,
+            "duration": 2,
+            "transferSize": 0,
+            "decodedBodySize": 86
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 7.800000011920929,
+            "duration": 3.199999988079071,
+            "transferSize": 0,
+            "decodedBodySize": 119705
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 7.9000000059604645,
+            "duration": 2.9000000059604645,
+            "transferSize": 0,
+            "decodedBodySize": 16158
+          },
+          {
+            "file": "/assets/CharacterEditorPage-CPoLBEy-.js",
+            "startTime": 21,
+            "duration": 1.800000011920929,
+            "transferSize": 0,
+            "decodedBodySize": 197399
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 30.599999994039536,
+            "duration": 1.7000000178813934,
+            "transferSize": 0,
+            "decodedBodySize": 5653
+          },
+          {
+            "file": "/assets/rules.worker-CC3CLrtM.js",
+            "startTime": 70.7000000178814,
+            "duration": -3.300000011920929,
+            "transferSize": 0,
+            "decodedBodySize": 0
+          }
+        ]
+      },
+      "warmReopenMilliseconds": 57.6288169999998,
+      "candidateSearches": [
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 26.5,
+          "mountedRows": 420,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat 0",
+          "milliseconds": 30.5,
+          "mountedRows": 420,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 31.799999982118607,
+          "mountedRows": 420,
+          "longTasks": []
+        }
+      ],
+      "candidateMountedRows": 420,
+      "shopSearches": [
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 33.29999998211861,
+          "mountedRows": 200,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear 00",
+          "milliseconds": 31.299999982118607,
+          "mountedRows": 99,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 62.099999994039536,
+          "mountedRows": 200,
+          "longTasks": []
+        }
+      ],
+      "shopMountedRows": 200,
+      "warmTabAdditionalWorkers": 0,
+      "maximumInteractionLongTask": 0,
+      "journey": ["build", "overview", "equipment", "shop", "sheet"],
+      "saveUndoRedo": "pass",
+      "browserBackForward": "pass",
+      "finalInstrumentation": {
+        "workers": ["http://127.0.0.1:38695/assets/rules.worker-CC3CLrtM.js"],
+        "indexedDb": {
+          "calls": 28,
+          "records": 16,
+          "bytes": 476359,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 3, "records": 3, "bytes": 397161 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 7, "records": 0, "bytes": 0 },
+            "characters": { "calls": 6, "records": 6, "bytes": 8100 },
+            "evaluations": { "calls": 4, "records": 1, "bytes": 69276 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 117 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [
+          { "startTime": 120.2000000178814, "duration": 80 },
+          { "startTime": 446.90000000596046, "duration": 66 }
+        ],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 1.800000011920929,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 8,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.19999998807907104,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 127.30000001192093,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 122,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 20.400000005960464,
+              "contentLoadMilliseconds": 7,
+              "evaluationMilliseconds": 13.400000005960464
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000002384185791,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 2.5,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 1.699999988079071,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 1.5999999940395355,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 1.5999999940395355
+            }
+          },
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 2,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 8.800000011920929,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000002384185791,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 3.5999999940395355,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 2.4000000059604645,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 1.300000011920929,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 1.300000011920929
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999403953552,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 21.30000001192093,
+            "domContentLoaded": 21.200000017881393,
+            "loadEvent": 21.30000001192093,
+            "transferSize": 0,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-Cj7Ipfht.js",
+            "startTime": 7.5,
+            "duration": 3.4000000059604645,
+            "transferSize": 0,
+            "decodedBodySize": 230308
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 7.700000017881393,
+            "duration": 2,
+            "transferSize": 0,
+            "decodedBodySize": 86
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 7.800000011920929,
+            "duration": 3.199999988079071,
+            "transferSize": 0,
+            "decodedBodySize": 119705
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 7.9000000059604645,
+            "duration": 2.9000000059604645,
+            "transferSize": 0,
+            "decodedBodySize": 16158
+          },
+          {
+            "file": "/assets/CharacterEditorPage-CPoLBEy-.js",
+            "startTime": 21,
+            "duration": 1.800000011920929,
+            "transferSize": 0,
+            "decodedBodySize": 197399
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 30.599999994039536,
+            "duration": 1.7000000178813934,
+            "transferSize": 0,
+            "decodedBodySize": 5653
+          },
+          {
+            "file": "/assets/rules.worker-CC3CLrtM.js",
+            "startTime": 70.7000000178814,
+            "duration": -3.300000011920929,
+            "transferSize": 0,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/CharacterSheetPage-UTAJJRcd.js",
+            "startTime": 768.5,
+            "duration": 1.7000000178813934,
+            "transferSize": 0,
+            "decodedBodySize": 18055
+          }
+        ]
+      }
+    }
+  ],
+  "summary": {
+    "directEditorMilliseconds": {
+      "count": 3,
+      "minimum": 118.07682400000067,
+      "median": 122.90580099999988,
+      "maximum": 219.27872799999977,
+      "sampleStandardDeviation": 57.08602492531026
+    },
+    "warmReopenMilliseconds": {
+      "count": 3,
+      "minimum": 55.53993100000025,
+      "median": 57.6288169999998,
+      "maximum": 59.7057520000003,
+      "sampleStandardDeviation": 2.082913357105964
+    },
+    "candidateQueryToPaintMilliseconds": {
+      "count": 9,
+      "minimum": 22.19999998807907,
+      "median": 29,
+      "maximum": 32.19999998807907,
+      "sampleStandardDeviation": 3.6609425000978653
+    },
+    "shopQueryToPaintMilliseconds": {
+      "count": 9,
+      "minimum": 23.100000023841858,
+      "median": 31.299999982118607,
+      "maximum": 62.099999994039536,
+      "sampleStandardDeviation": 16.676014042744516
+    },
+    "candidateMountedRows": {
+      "count": 3,
+      "minimum": 420,
+      "median": 420,
+      "maximum": 420,
+      "sampleStandardDeviation": 0
+    },
+    "shopMountedRows": {
+      "count": 3,
+      "minimum": 200,
+      "median": 200,
+      "maximum": 200,
+      "sampleStandardDeviation": 0
+    },
+    "maximumInteractionLongTask": {
+      "count": 3,
+      "minimum": 0,
+      "median": 0,
+      "maximum": 0,
+      "sampleStandardDeviation": 0
+    },
+    "warmTabAdditionalWorkers": {
+      "count": 3,
+      "minimum": 0,
+      "median": 0,
+      "maximum": 0,
+      "sampleStandardDeviation": 0
+    }
+  },
+  "guardrails": {
+    "initialRouteJavascriptAtMost120KiBGzip": {
+      "limit": 122880,
+      "observed": 113334,
+      "pass": true
+    },
+    "candidateMountedRowsAtMost200": {
+      "limit": 200,
+      "observed": 420,
+      "pass": false
+    },
+    "shopMountedRowsAtMost200": { "limit": 200, "observed": 200, "pass": true },
+    "interactionLongTaskAtMost50Milliseconds": {
+      "limit": 50,
+      "observed": 0,
+      "pass": true
+    },
+    "cachedEvaluationVisibleWithin100Milliseconds": {
+      "limit": 100,
+      "observed": 59.7057520000003,
+      "pass": true
+    },
+    "warmTabsDoNotCreateWorkers": {
+      "observedAdditionalWorkers": 0,
+      "pass": true
+    }
+  },
+  "browserMessages": [],
+  "routeErrorMessage": "The application could not continueFailed to fetch dynamically imported module: http://127.0.0.1:38695/assets/CharacterSheetPage-UTAJJRcd.jsReload application",
+  "routeErrorBrowserMessages": [],
+  "offlineDirectSheet": "pass"
+}

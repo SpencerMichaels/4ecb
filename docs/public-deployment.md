@@ -113,6 +113,13 @@ update** keeps IndexedDB data and replaces only the versioned application shell.
 The application also announces when its shell is ready for offline use and when
 the browser is currently offline.
 
+The production shell loads the character library initially and requests
+Settings, editor, and sheet workspaces as separate content-hashed chunks. All
+three route chunks remain in the Workbox precache; only
+`runtime-config.json` stays network-only. Consequently an installed version can
+reload a direct editor or sheet hash offline, and an accepted update replaces
+the entry and its mutually compatible route chunks as one versioned precache.
+
 ## Release checks still required
 
 Before an M5 tag, run the public suite, inspect the built image contents, verify

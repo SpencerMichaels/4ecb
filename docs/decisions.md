@@ -1342,10 +1342,14 @@ Schema 5 adds `characterMetadata`, `characterPortraits`, and
 from the domain-validated rendered thumbnail (bounded to 5 MiB); the retained
 portrait source, accepted up to 20 MiB, remains only in the authoritative
 character record. The stores are backfilled while upgrading schema generations
-1–4. Historical character, pack, settings, and migration-journal stores remain
-untouched and authoritative. Every later payload mutation updates or removes
-its projections in the same IndexedDB transaction, including backup restore,
-trash/restore, purge, lazy character migration, pack install, and pack removal.
+1–4. A schema-5 database whose content-pack projection is incomplete from an
+interrupted development build repairs missing and orphaned rows from the
+authoritative pack store. Healthy listings compare keys without cloning encoded
+pack values. Historical character, pack, settings, and migration-journal stores
+remain untouched and authoritative. Every later payload mutation updates or
+removes its projections in the same IndexedDB transaction, including backup
+restore, trash/restore, purge, lazy character migration, pack install, and pack
+removal.
 
 Public content installation continues to decode and validate untrusted objects
 or bytes. A separate internal package subpath can produce a storage artifact
