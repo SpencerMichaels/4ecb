@@ -169,7 +169,9 @@ export function EntityCardHeader({
         </span>
       </div>
       {subheading === undefined ? null : (
-        <div className="primary-detail-subheading">{subheading}</div>
+        <div className="primary-detail-subheading entity-card-subheading">
+          {subheading}
+        </div>
       )}
     </>
   );
@@ -810,7 +812,7 @@ function ComposedItemNarrative({
   return (
     <>
       {enchantment.flavor === undefined || hideFlavortext ? null : (
-        <p className="candidate-flavor composed-item-flavor">
+        <p className="candidate-flavor entity-card-flavor composed-item-flavor">
           {enchantment.flavor}
         </p>
       )}
@@ -1075,7 +1077,7 @@ export function EntityCardBody({
     <>
       {structured ? null : beforeNarrative}
       {entity.flavor === undefined || hideFlavortext ? null : (
-        <p className="candidate-flavor">{entity.flavor}</p>
+        <p className="candidate-flavor entity-card-flavor">{entity.flavor}</p>
       )}
       {structured ? (
         <StructuredSpecifics entity={entity} fields={fields} />

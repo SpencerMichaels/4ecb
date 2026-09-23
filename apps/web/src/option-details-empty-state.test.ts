@@ -6,7 +6,9 @@ const characterEditor = readFileSync(
   new URL("./CharacterEditorPage.tsx", import.meta.url),
   "utf8",
 );
-const styles = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+const styles = ["./styles/primitives.css", "./styles.css"]
+  .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
+  .join("\\n");
 
 describe("empty option details card", () => {
   it("uses one neutral card header and the click-to-inspect guidance", () => {

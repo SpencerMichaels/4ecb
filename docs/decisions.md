@@ -1309,6 +1309,28 @@ legality effect, and links back to the exact builder choice or ability-score
 surface when that target is known. This prevents a header count from disagreeing
 with the detailed issues intended to explain it.
 
+### D060 — Shared CSS primitives own cross-workspace visual contracts
+
+**Status:** accepted
+
+**Date:** 2026-09-23
+
+Cross-workspace heading roles, collapsible table-section rows, item icons,
+dialog shells, and primary/icon button anatomy are named shared primitives.
+Feature styles retain only their deliberate surface-specific differences, such
+as Shop density, Inventory equipped state, or the branded portrait-dialog
+header. Detail cards likewise expose named header, subheading, flavor,
+descriptor, and rules anatomy; tone and composition variants adjust that
+anatomy through variables rather than repeating structural spacing rules.
+
+`apps/web/src/styles/primitives.css` loads before the existing surface
+stylesheet so feature rules can continue to specialize primitives without
+increasing specificity. Tests that inspect CSS concatenate the stylesheets in
+runtime order. Chromium computed-style checks lock the shared heading roles and
+detail-card rhythm in addition to the existing structural tests. Refactoring a
+shared primitive therefore requires both component-contract verification and
+visual comparison across the representative responsive/theme matrix.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

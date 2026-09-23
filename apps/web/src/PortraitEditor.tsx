@@ -189,7 +189,7 @@ export function PortraitEditor({
       </button>
       {!open ? null : (
         <dialog
-          className="portrait-dialog"
+          className="portrait-dialog dialog-shell dialog-shell--branded"
           ref={dialog}
           onCancel={(event) => {
             event.preventDefault();
@@ -206,6 +206,7 @@ export function PortraitEditor({
             </div>
             <button
               aria-label="Close portrait editor"
+              className="button-icon dialog-close"
               type="button"
               onClick={close}
             >

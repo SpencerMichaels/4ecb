@@ -768,7 +768,9 @@ function CharacterOverview({
               className={`overview-checklist-pane overview-pane-${pane.toLocaleLowerCase().replaceAll(" ", "-")}`}
               key={pane}
             >
-              <h4 className="selection-section-heading">{pane}</h4>
+              <h4 className="selection-section-heading selection-section-heading--compact">
+                {pane}
+              </h4>
               <div className="overview-checklist-scroll">
                 <table>
                   <thead>
@@ -1107,7 +1109,7 @@ function CandidateDetailCard({
       className={`candidate-detail ${tone}${isPower ? " top-level-power-card" : ""}`}
       tabIndex={0}
     >
-      <header className="primary-detail-heading">
+      <header className="primary-detail-heading entity-card-header">
         <EntityCardHeader
           entity={entity}
           headingId={headingId}
@@ -2933,9 +2935,10 @@ function CandidateSelectionTable({
               return (
                 <Fragment key={section.key}>
                   {kind === "feat" || kind === "power" ? (
-                    <tr className="selection-type-row">
+                    <tr className="selection-type-row table-section-row">
                       <th colSpan={kind === "power" ? 5 : 2} scope="rowgroup">
                         <button
+                          className="table-section-toggle"
                           aria-expanded={expanded}
                           type="button"
                           onClick={() =>
@@ -2948,7 +2951,7 @@ function CandidateSelectionTable({
                         >
                           <Icon name="chevron" />
                           <span>{section.label}</span>
-                          <small>
+                          <small className="table-section-count">
                             {kind === "power"
                               ? section.candidates.length
                               : section.featGroups.length}
@@ -4375,7 +4378,9 @@ function CharacterDetailsEditor({
       <div className="character-details-workspace">
         <div className="character-details-form">
           <section className="character-detail-group">
-            <h4 className="selection-section-heading">Identity</h4>
+            <h4 className="selection-section-heading selection-section-heading--panel">
+              Identity
+            </h4>
             <div className="character-detail-fields character-detail-fields-compact">
               <label>
                 Current level
@@ -4403,7 +4408,9 @@ function CharacterDetailsEditor({
             </div>
           </section>
           <section className="character-detail-group">
-            <h4 className="selection-section-heading">Personal details</h4>
+            <h4 className="selection-section-heading selection-section-heading--panel">
+              Personal details
+            </h4>
             {evaluation === undefined ? (
               <p className="field-help">
                 Rules content is unavailable for gender, alignment, and deity.
@@ -4492,7 +4499,9 @@ function CharacterDetailsEditor({
             </div>
           </section>
           <section className="character-detail-group">
-            <h4 className="selection-section-heading">Character information</h4>
+            <h4 className="selection-section-heading selection-section-heading--panel">
+              Character information
+            </h4>
             <div className="character-detail-fields character-note-fields">
               {noteFields.map((field) => (
                 <CharacterTextField
@@ -5970,7 +5979,7 @@ export function CharacterEditorPage({
           </span>
           <button
             aria-label="Undo"
-            className="icon-only-button"
+            className="icon-only-button button-icon"
             type="button"
             disabled={!transaction.current?.canUndo}
             title="Undo"
@@ -5980,7 +5989,7 @@ export function CharacterEditorPage({
           </button>
           <button
             aria-label="Redo"
-            className="icon-only-button"
+            className="icon-only-button button-icon"
             type="button"
             disabled={!transaction.current?.canRedo}
             title="Redo"

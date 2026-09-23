@@ -6,7 +6,9 @@ const library = readFileSync(
   new URL("./CharacterLibraryPage.tsx", import.meta.url),
   "utf8",
 );
-const styles = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+const styles = ["./styles/primitives.css", "./styles.css"]
+  .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
+  .join("\\n");
 const sheet = readFileSync(
   new URL("./CharacterSheetPage.tsx", import.meta.url),
   "utf8",

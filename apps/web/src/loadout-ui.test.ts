@@ -2,7 +2,9 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-const styles = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+const styles = ["./styles/primitives.css", "./styles.css"]
+  .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
+  .join("\\n");
 const workspace = readFileSync(
   new URL("./EquipmentWorkspace.tsx", import.meta.url),
   "utf8",
@@ -54,7 +56,7 @@ describe("loadout interaction and geometry", () => {
       /className=\{`shared-choice-detail[\s\S]*?<ItemDetail/,
     );
     expect(workspace).not.toContain("loadoutDialog");
-    expect(workspace).toContain('className="wallet-dialog"');
+    expect(workspace).toContain('className="wallet-dialog dialog-shell"');
   });
 
   it("inspects committed and currently focused loadout items", () => {
@@ -117,13 +119,15 @@ describe("loadout interaction and geometry", () => {
 
   it("renders accessible collapsible Inventory role sections", () => {
     expect(workspace).toContain("groupInventoryByCategory(inventory, byId)");
-    expect(workspace).toContain('className="inventory-category-row"');
+    expect(workspace).toContain(
+      'className="inventory-category-row table-section-row"',
+    );
     expect(workspace).toContain("aria-expanded={expanded}");
     expect(workspace).toContain("aria-controls={sectionId}");
     expect(workspace).toContain("{entries.length} holding");
     expect(workspace).toContain("{entries.length}");
     expect(styles).toMatch(
-      /\.inventory-table \.inventory-category-row[\s\S]*?background: var\(--brand-navy\)/,
+      /\.inventory-table \.table-section-row[\s\S]*?background: var\(--brand-navy\)/,
     );
     expect(styles).toContain("--brand-navy: #1d3d5d");
     expect(styles).toMatch(
@@ -136,11 +140,9 @@ describe("loadout interaction and geometry", () => {
       /\.inventory-table-scroll\s*\{[^}]*max-block-size: var\(--equipment-mode-block-size\)[^}]*overflow: auto/,
     );
     expect(styles).toMatch(/\.inventory-table\s*\{[^}]*font-size: 0\.78rem/);
+    expect(styles).toMatch(/\.item-icon\s*\{[^}]*--item-icon-size: 1\.5rem/);
     expect(styles).toMatch(
-      /\.inventory-item-icon\s*\{[^}]*height: 1\.5rem;[^}]*width: 1\.5rem/,
-    );
-    expect(styles).toMatch(
-      /\.inventory-item-icon \.icon\s*\{[^}]*height: 0\.9rem;[^}]*width: 0\.9rem/,
+      /\.item-icon > \.icon\s*\{[^}]*height: var\(--item-icon-glyph-size\);[^}]*width: var\(--item-icon-glyph-size\)/,
     );
     expect(styles).toMatch(
       /\.inventory-equipped-badge\s*\{[^}]*min-height: 0\.8rem;[^}]*min-width: 0\.8rem/,
@@ -149,7 +151,7 @@ describe("loadout interaction and geometry", () => {
       /\.inventory-equipped-badge \.icon\s*\{[^}]*height: 0\.5rem;[^}]*width: 0\.5rem/,
     );
     expect(styles).toMatch(
-      /\.inventory-category-row[\s\S]*?button\[aria-expanded="true"\][\s\S]*?transform: rotate\(90deg\)/,
+      /\.table-section-toggle\[aria-expanded="true"\] \.icon\s*\{[^}]*transform: rotate\(90deg\)/,
     );
   });
 });

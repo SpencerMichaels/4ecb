@@ -264,7 +264,7 @@ export function ItemDetail({
       className={`candidate-detail ${visualToneClass(entityVisualTone(entity))}${isUnifiedComposedItem ? " composed-item-card" : ""}${isComposedWeapon ? " composed-weapon-card" : ""}${isComposedArmor ? " composed-armor-card" : ""}`}
       tabIndex={0}
     >
-      <header className="primary-detail-heading">
+      <header className="primary-detail-heading entity-card-header">
         <EntityCardHeader
           entity={cardEntity}
           {...(item.kindLabel === undefined
@@ -320,7 +320,7 @@ export function ItemDetail({
         className={`candidate-detail ${visualToneClass(entityVisualTone(formulaItem))}`}
         tabIndex={0}
       >
-        <header className="primary-detail-heading">
+        <header className="primary-detail-heading entity-card-header">
           <EntityCardHeader entity={formulaItem} />
         </header>
         {componentBody(formulaItem)}
@@ -472,7 +472,7 @@ function WalletDialog({
   return (
     <dialog
       id="wallet-dialog"
-      className="wallet-dialog"
+      className="wallet-dialog dialog-shell"
       ref={dialog}
       aria-labelledby="wallet-dialog-title"
       onClose={onClose}
@@ -488,6 +488,7 @@ function WalletDialog({
         <header>
           <h2 id="wallet-dialog-title">Edit funds</h2>
           <button
+            className="button-icon dialog-close"
             type="button"
             aria-label="Close funds editor"
             onClick={() => dialog.current?.close()}
@@ -566,7 +567,7 @@ function WalletDialog({
           <button type="button" onClick={() => dialog.current?.close()}>
             Cancel
           </button>
-          <button className="dialog-primary" type="submit">
+          <button className="dialog-primary button-primary" type="submit">
             Apply
           </button>
         </footer>
@@ -735,7 +736,7 @@ function FundsPane({
             <button
               ref={adjustTrigger}
               type="button"
-              className="inventory-wallet-edit"
+              className="inventory-wallet-edit button-icon"
               aria-label="Quick adjust funds"
               title="Quick adjust funds"
               aria-expanded={adjustOpen}
@@ -796,7 +797,7 @@ function FundsPane({
           </div>
           <button
             type="button"
-            className="inventory-wallet-edit"
+            className="inventory-wallet-edit button-icon"
             aria-label="Edit funds"
             title="Edit funds"
             aria-expanded={editOpen}
@@ -1007,9 +1008,10 @@ export function EquipmentWorkspace({
                             return (
                               <Fragment key={category.id}>
                                 <tbody>
-                                  <tr className="inventory-category-row">
+                                  <tr className="inventory-category-row table-section-row">
                                     <th colSpan={3} scope="rowgroup">
                                       <button
+                                        className="table-section-toggle"
                                         type="button"
                                         aria-expanded={expanded}
                                         aria-controls={sectionId}
@@ -1027,6 +1029,7 @@ export function EquipmentWorkspace({
                                         <span className="inventory-category-label">
                                           <span>{category.label}</span>
                                           <small
+                                            className="table-section-count"
                                             aria-label={`${entries.length} holding${entries.length === 1 ? "" : "s"}`}
                                           >
                                             {entries.length}
@@ -1152,7 +1155,7 @@ export function EquipmentWorkspace({
                                                 }}
                                               >
                                                 <span
-                                                  className={`inventory-item-icon${equippedStatus === undefined ? "" : " is-equipped"}`}
+                                                  className={`inventory-item-icon item-icon${equippedStatus === undefined ? "" : " is-equipped"}`}
                                                   title={equippedStatus}
                                                 >
                                                   <Icon
@@ -1258,7 +1261,7 @@ export function EquipmentWorkspace({
                                                 {price === undefined ? (
                                                   <button
                                                     type="button"
-                                                    className="inventory-icon-action"
+                                                    className="inventory-icon-action button-icon"
                                                     aria-label={`Sell ${displayName}`}
                                                     title="This item has no price and cannot be sold"
                                                     disabled
@@ -1275,7 +1278,7 @@ export function EquipmentWorkspace({
                                                     <button
                                                       type="button"
                                                       id={saleTriggerId}
-                                                      className="inventory-icon-action"
+                                                      className="inventory-icon-action button-icon"
                                                       aria-label={`Sell one ${displayName}`}
                                                       aria-expanded={
                                                         openSaleId === entry.id
@@ -1351,7 +1354,7 @@ export function EquipmentWorkspace({
                                                 )}
                                                 <button
                                                   type="button"
-                                                  className="inventory-icon-action inventory-remove-action"
+                                                  className="inventory-icon-action inventory-remove-action button-icon"
                                                   aria-label={`Remove ${displayName}`}
                                                   title="Remove without proceeds"
                                                   onClick={() => {

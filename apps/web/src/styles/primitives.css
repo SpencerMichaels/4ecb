@@ -1,0 +1,121 @@
+/* Shared visual contracts. Surface-specific styles belong to their owning stylesheet. */
+
+.selection-section-heading {
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.selection-section-heading--compact {
+  font-size: 0.82rem;
+}
+
+.selection-section-heading--panel {
+  font-size: 0.9rem;
+}
+
+.selection-subsection-heading {
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+button.button-icon {
+  align-items: center;
+  justify-content: center;
+}
+
+button.button-primary {
+  background: var(--accent);
+  border-color: var(--focus);
+  color: var(--surface);
+  font-weight: 800;
+}
+
+.dialog-shell {
+  background: var(--surface);
+  color: var(--text);
+  padding: 0;
+}
+
+.dialog-shell > header,
+.dialog-shell > footer,
+.dialog-shell > form > header,
+.dialog-shell > form > footer {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+button.dialog-close {
+  background: transparent;
+}
+
+.selection-table-scroll .table-section-row,
+.inventory-table .table-section-row,
+.shop-table .table-section-row {
+  background: var(--brand-navy);
+  color: white;
+}
+
+.selection-table-scroll .table-section-row th,
+.inventory-table .table-section-row th,
+.shop-table .table-section-row th {
+  border-bottom: 1px solid var(--border-strong);
+  padding: 0;
+}
+
+.table-section-toggle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  display: flex;
+  font-weight: 800;
+  gap: 0.4rem;
+  padding: 0.45rem 0.55rem;
+  text-align: left;
+  width: 100%;
+}
+
+.table-section-toggle .icon {
+  height: 0.95rem;
+  transition: transform 100ms ease;
+  width: 0.95rem;
+}
+
+.table-section-toggle[aria-expanded="true"] .icon {
+  transform: rotate(90deg);
+}
+
+.table-section-count {
+  color: inherit;
+  font-size: 0.68rem;
+  font-weight: 600;
+  opacity: 0.78;
+}
+
+.item-icon {
+  --item-icon-glyph-size: 0.9rem;
+  --item-icon-size: 1.5rem;
+
+  align-items: center;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  display: inline-flex;
+  height: var(--item-icon-size);
+  justify-content: center;
+  position: relative;
+  width: var(--item-icon-size);
+}
+
+.item-icon > .icon {
+  height: var(--item-icon-glyph-size);
+  width: var(--item-icon-glyph-size);
+}
+
+.item-icon--dense {
+  --item-icon-glyph-size: 0.95rem;
+  --item-icon-size: 1.55rem;
+}

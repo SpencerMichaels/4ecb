@@ -7,7 +7,9 @@ const source = readFileSync(
   "utf8",
 );
 const iconSource = readFileSync(new URL("./Icon.tsx", import.meta.url), "utf8");
-const styles = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+const styles = ["./styles/primitives.css", "./styles.css"]
+  .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
+  .join("\\n");
 
 describe("builder header integration", () => {
   it("renders key statistics from the effective-level evaluation", () => {

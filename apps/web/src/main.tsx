@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 
 import { App } from "./App";
 import { ErrorBoundary } from "./ErrorBoundary";
+import "./styles/primitives.css";
 import "./styles.css";
 
 const root = document.getElementById("root");

@@ -2,7 +2,9 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-const styles = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
+const styles = ["./styles/primitives.css", "./styles.css"]
+  .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
+  .join("\\n");
 const characterEditor = readFileSync(
   new URL("./CharacterEditorPage.tsx", import.meta.url),
   "utf8",
@@ -326,7 +328,7 @@ describe("release accessibility contract", () => {
       /\.candidate-detail\.top-level-power-card > header\s*\{[^}]*margin-bottom: 0/,
     );
     expect(styles).toMatch(
-      /\.candidate-detail\.top-level-power-card > \.candidate-flavor\s*\{[^}]*padding-bottom: 0\.65rem/,
+      /\.candidate-detail\.top-level-power-card > \.candidate-flavor\s*\{[^}]*--entity-card-flavor-padding: 0\.8rem 1rem 0\.65rem/,
     );
     expect(entityCard).not.toContain("top-level-power-card");
     expect(styles).not.toMatch(

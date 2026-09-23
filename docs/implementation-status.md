@@ -42,6 +42,28 @@ testing successfully saved and reopened several regenerated real level-8
 characters. That representative evidence closes the M5 legacy-application
 criterion; future character-specific failures remain tracked compatibility bugs.
 
+## M5.5 shared visual-contract consolidation checkpoint (2026-09-23)
+
+- Cross-workspace selection headings now use authoritative named typography
+  roles, with explicit compact Overview and panel variants instead of
+  feature-selector overrides.
+- Candidate, Inventory, and Shop category rows share one collapsible
+  table-section primitive. Inventory and Shop item glyphs share one item-icon
+  primitive, while density, equipped state, and proficiency badges remain
+  deliberate surface variants. Dialog shells and primary/icon button anatomy
+  are likewise shared without merging Shop filter toggles into action buttons.
+- Detail-card header and flavor rhythm is expressed through the shared card
+  anatomy and variant variables. The previous Shop-only header correction is no
+  longer necessary; composed-item and top-level-power values remain unchanged.
+- Verified unused timeline, legacy choice-container, old Equipment-catalog, and
+  superseded editor selectors were removed. Adjacent duplicate rules were
+  merged, and stable brand colors now use the existing tokens where doing so
+  does not alter theme behavior.
+- Shared primitives have moved to `styles/primitives.css`, imported before the
+  feature stylesheet. CSS-reading tests concatenate both sources in runtime
+  order, and the Chromium print/layout gate now also asserts computed heading
+  typography and detail-card spacing.
+
 ## M5.5/M5.6 roadmap reconciliation checkpoint (2026-09-18)
 
 - M5.5 now closes the builder, library, and complete Equipment interface rather

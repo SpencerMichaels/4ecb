@@ -115,6 +115,117 @@ try {
     client,
     `document.querySelector(".settings-page h2")?.textContent === "Settings" && document.body.textContent.includes("Content")`,
   );
+  const styleContract = await evaluate(
+    client,
+    `(() => {
+      const fixture = document.createElement("div");
+      fixture.id = "computed-style-contract";
+      fixture.innerHTML = \`
+        <h4 class="selection-section-heading" data-style="section-a">Section</h4>
+        <h5 class="selection-section-heading" data-style="section-b">Section</h5>
+        <h4 class="selection-section-heading selection-section-heading--panel" data-style="panel">Panel</h4>
+        <h4 class="selection-section-heading selection-section-heading--compact" data-style="compact">Compact</h4>
+        <h5 class="selection-subsection-heading" data-style="subsection-a">Subsection</h5>
+        <legend class="selection-subsection-heading" data-style="subsection-b">Subsection</legend>
+        <div class="selection-table-scroll"><table><tbody><tr class="selection-type-row table-section-row" data-style="table-section-row"><th colspan="2" data-style="table-section-cell"><button class="table-section-toggle" data-style="table-section-toggle" type="button"><span>Category</span><small class="table-section-count">1</small></button></th></tr></tbody></table></div>
+        <button class="button-primary" data-style="primary-button" type="button">Primary</button>
+        <button class="dialog-close" data-style="dialog-close" type="button">Close</button>
+        <aside class="candidate-detail tone-item"><header class="primary-detail-heading entity-card-header" data-style="ordinary-header">Header</header><p class="candidate-flavor entity-card-flavor">Flavor</p></aside>
+        <aside class="candidate-detail tone-item top-level-power-card"><header class="primary-detail-heading entity-card-header" data-style="power-header">Header</header><p class="candidate-flavor entity-card-flavor" data-style="power-flavor">Flavor</p></aside>
+        <aside class="candidate-detail tone-item composed-item-card"><header class="primary-detail-heading entity-card-header" data-style="item-header">Header</header><p class="candidate-flavor entity-card-flavor composed-item-flavor" data-style="item-flavor">Flavor</p></aside>
+      \`;
+      document.body.append(fixture);
+      const metrics = (name) => {
+        const element = fixture.querySelector(\`[data-style="\${name}"]\`);
+        const style = getComputedStyle(element);
+        return {
+          fontSize: style.fontSize,
+          fontWeight: style.fontWeight,
+          lineHeight: style.lineHeight,
+          marginBottom: style.marginBottom,
+          paddingTop: style.paddingTop,
+          paddingBottom: style.paddingBottom,
+          backgroundColor: style.backgroundColor,
+          borderTopWidth: style.borderTopWidth,
+          borderRightColor: style.borderRightColor,
+          color: style.color,
+          height: element.getBoundingClientRect().height,
+        };
+      };
+      const result = Object.fromEntries([
+        "section-a", "section-b", "panel", "compact",
+        "subsection-a", "subsection-b", "table-section-row", "table-section-cell",
+        "table-section-toggle", "primary-button", "dialog-close", "ordinary-header",
+        "power-header", "power-flavor", "item-header", "item-flavor"
+      ].map((name) => [name, metrics(name)]));
+      fixture.remove();
+      return result;
+    })()`,
+  );
+  assert(
+    styleContract["section-a"].fontSize ===
+      styleContract["section-b"].fontSize &&
+      styleContract["section-a"].fontWeight ===
+        styleContract["section-b"].fontWeight &&
+      styleContract["section-a"].lineHeight ===
+        styleContract["section-b"].lineHeight,
+    "section heading elements do not share one computed typography contract",
+  );
+  assert(
+    styleContract["section-a"].fontSize === "15.2px" &&
+      styleContract["section-a"].fontWeight === "800" &&
+      styleContract["section-a"].lineHeight === "20.52px",
+    `section heading contract changed: ${JSON.stringify(styleContract["section-a"])}`,
+  );
+  assert(
+    styleContract.panel.fontSize === "14.4px" &&
+      styleContract.compact.fontSize === "13.12px",
+    `named heading variants changed: ${JSON.stringify(styleContract)}`,
+  );
+  assert(
+    styleContract["subsection-a"].fontSize ===
+      styleContract["subsection-b"].fontSize &&
+      styleContract["subsection-a"].fontWeight ===
+        styleContract["subsection-b"].fontWeight &&
+      styleContract["subsection-a"].lineHeight ===
+        styleContract["subsection-b"].lineHeight,
+    "subsection heading elements do not share one computed typography contract",
+  );
+  assert(
+    styleContract["subsection-a"].fontSize === "13.6px" &&
+      styleContract["subsection-a"].fontWeight === "800" &&
+      styleContract["subsection-a"].lineHeight === "20.4px",
+    `subsection heading contract changed: ${JSON.stringify(styleContract["subsection-a"])}`,
+  );
+  assert(
+    styleContract["table-section-cell"].paddingTop === "0px" &&
+      styleContract["table-section-cell"].paddingBottom === "0px" &&
+      styleContract["table-section-toggle"].paddingTop === "7.2px" &&
+      styleContract["table-section-toggle"].paddingBottom === "7.2px" &&
+      styleContract["table-section-row"].height >= 34 &&
+      styleContract["table-section-row"].height < 34.2,
+    `table-section row rhythm changed: ${JSON.stringify(styleContract)}`,
+  );
+  assert(
+    styleContract["primary-button"].backgroundColor === "rgb(126, 174, 210)" &&
+      styleContract["primary-button"].borderRightColor ===
+        "rgb(114, 193, 240)" &&
+      styleContract["primary-button"].color === "rgb(24, 34, 57)" &&
+      styleContract["dialog-close"].backgroundColor === "rgba(0, 0, 0, 0)",
+    `shared button contracts changed: ${JSON.stringify(styleContract)}`,
+  );
+  assert(
+    styleContract["ordinary-header"].marginBottom === "13.6px" &&
+      styleContract["power-header"].marginBottom === "0px" &&
+      styleContract["item-header"].marginBottom === "0px",
+    `detail-card header rhythm changed: ${JSON.stringify(styleContract)}`,
+  );
+  assert(
+    styleContract["power-flavor"].paddingBottom === "10.4px" &&
+      styleContract["item-flavor"].paddingTop === "11.2px" &&
+      styleContract["item-flavor"].paddingBottom === "10.32px",
+    `detail-card flavor rhythm changed: ${JSON.stringify(styleContract)}`,
+  );
   const character = printCharacter();
   await evaluate(
     client,

@@ -639,7 +639,7 @@ export function ShopWorkspace({
             ) : (
               <span className="shop-family-indent" />
             )}
-            <span className="shop-item-icon">
+            <span className="shop-item-icon item-icon item-icon--dense">
               <Icon name={canonicalItemIcon(entity)} />
               {proficiency === "unverified" ? (
                 <span
@@ -710,6 +710,7 @@ export function ShopWorkspace({
               }
             >
               <button
+                className="button-icon"
                 type="button"
                 aria-label={`Buy ${displayName}`}
                 title={!purchased ? "This item cannot be purchased." : "Buy"}
@@ -720,6 +721,7 @@ export function ShopWorkspace({
               </button>
             </span>
             <button
+              className="button-icon"
               type="button"
               aria-label={`Give ${displayName}`}
               title="Give"
@@ -963,9 +965,10 @@ export function ShopWorkspace({
                 <Fragment key={category.id}>
                   {browse === "all" ? (
                     <tbody>
-                      <tr className="shop-category-row">
+                      <tr className="shop-category-row table-section-row table-section-row--dense">
                         <th colSpan={5}>
                           <button
+                            className="table-section-toggle"
                             type="button"
                             aria-expanded={
                               !collapsedCategories.has(category.id)
@@ -982,7 +985,9 @@ export function ShopWorkspace({
                           >
                             <Icon name="chevron" />
                             <span>{category.label}</span>
-                            <small>{categoryRows.length}</small>
+                            <small className="table-section-count">
+                              {categoryRows.length}
+                            </small>
                           </button>
                         </th>
                       </tr>
@@ -1046,7 +1051,7 @@ export function ShopWorkspace({
       </div>
 
       <dialog
-        className="shop-physical-dialog"
+        className="shop-physical-dialog dialog-shell dialog-shell--wide"
         ref={dialogRef}
         onClose={() => setAcquisition(undefined)}
       >
@@ -1083,6 +1088,7 @@ export function ShopWorkspace({
                 </h2>
               </div>
               <button
+                className="button-icon dialog-close"
                 type="button"
                 aria-label="Close item picker"
                 onClick={() => dialogRef.current?.close()}
@@ -1139,7 +1145,7 @@ export function ShopWorkspace({
                     onChange={() => setSelectedPhysicalId("standard")}
                   />
                   <span className="shop-physical-choice">
-                    <span className="shop-item-icon">
+                    <span className="shop-item-icon item-icon item-icon--dense">
                       <Icon name={canonicalItemIcon(acquisition.entity)} />
                     </span>
                     <strong>
@@ -1160,7 +1166,7 @@ export function ShopWorkspace({
                     onChange={() => setSelectedPhysicalId(entity.id)}
                   />
                   <span className="shop-physical-choice">
-                    <span className="shop-item-icon">
+                    <span className="shop-item-icon item-icon item-icon--dense">
                       <Icon name={canonicalItemIcon(entity)} />
                       {itemProficiencyStatus(entity, ownedDefinitions) ===
                       "unverified" ? (
@@ -1209,7 +1215,7 @@ export function ShopWorkspace({
                 Cancel
               </button>
               <button
-                className="dialog-primary"
+                className="dialog-primary button-primary"
                 type="submit"
                 disabled={selectedPhysicalId === ""}
               >
