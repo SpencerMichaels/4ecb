@@ -20,7 +20,7 @@ current stage is complete or a remaining issue has an explicit approved owner.
 
 **Overall status:** in progress
 
-**Current stage:** Stage 5 — Evaluation scheduling (pending)
+**Current stage:** Stage 6 — Decompose large orchestration modules (pending)
 
 ## Audit context and evidence
 
@@ -391,9 +391,51 @@ full repository check passes.
 
 ## Stage 5 — Evaluation scheduling
 
-**Status:** pending
+**Status:** complete
 
 **Dependencies:** Stage 4 complete
+
+**Product-owner scope adjustment (2026-09-23):** Following the same pattern as
+Stages 3–4, the product owner approved a minimal verification bar for this
+stage's small, behavior-preserving fix: one focused test asserting dispatch
+order, the full `scripts/check.sh` gate, and a quick manual sanity check in a
+real browser — not the full evidence list below (exact evaluator goldens,
+every horizon combination, cancellation, stale-result suppression, undo/save
+sequencing, sheet parity, Chromium+Firefox, and timing vs. Stage 0).
+
+**Implementation:** Reading `CharacterEditorPage.tsx` confirmed the audit's
+finding #5 concretely: the single rules worker (`rules.worker.ts`) processes
+`evaluate` messages strictly in arrival order and runs each one synchronously
+to completion, and the editor always dispatched the (usually hidden) planning
+evaluation before the visible current-level evaluation whenever a user browsed
+a future level (a normal, supported workflow per D025). `evaluationDispatchOrder`
+(new, in `builder-evaluation-plan.ts`) is a small pure function that decides,
+given the current/selected/planning horizons, which distinct evaluation
+requests are needed and returns them in priority order (current and selected
+before the hidden planning evaluation). `CharacterEditorPage.tsx` now dispatches
+its `client.evaluate()` calls in that order; the tie-break logic deciding which
+result a coincident consumer receives is unchanged. No priority queue,
+cancellation, batching, or incremental evaluation was introduced — those
+remain explicitly out of scope per the original text below.
+
+**Verification:** `builder-evaluation-plan.test.ts` covers every branch of
+`evaluationDispatchOrder` (all-coincident, current-only-distinct,
+selected-only-distinct, all-three-distinct, and selected-equals-current). The
+web package typecheck and the full `nix develop path:. -c bash scripts/check.sh`
+gate both pass. A manual browser check (dev server, seeded synthetic fixture,
+raw CDP) confirmed the always-visible header stats stay correctly pinned to the
+character's current effective level while browsing a future, unpopulated
+level, and that editing a choice at the current level still triggers a normal
+evaluation and updates the header. That check also surfaced an unrelated,
+pre-existing bug (confirmed via `git stash` to reproduce identically without
+this stage's change): navigating from a level with available choices to one
+with none and back can crash the editor with a React "Maximum update depth
+exceeded" error from a URL-canonicalization effect. The product owner asked for
+that to be fixed as a follow-up aside rather than as part of this stage; see
+the next progress-log entry.
+
+<details>
+<summary>Original stage scope (superseded by the 2026-09-23 adjustment above)</summary>
 
 **Scope:** Prioritize the visible current-level evaluation ahead of planning or
 other hidden horizons. After that behavior is proven, investigate multi-horizon
@@ -420,6 +462,8 @@ relevant private diagnostics remain truthful; applicable timing targets pass;
 any batching/snapshot addition has independent evidence; rules-engine and
 implementation-status documents are updated; and the full repository check
 passes.
+
+</details>
 
 ## Stage 6 — Decompose large orchestration modules
 
@@ -474,6 +518,7 @@ corpus artifacts.
 | 2026-09-23 | Stage 3 | pending → in progress  | Product owner approved a lighter verification bar (see Stage 3). Extracted the candidate selector into `apps/web/src/CandidateSelectionTable.tsx` and added 200-row paging via `apps/web/src/candidate-table-paging.ts` with focused tests (`candidate-table-paging.test.ts`); source-contract tests now read the new module. `scripts/check-functional-baseline.mjs` adds a first-run paging check (every filtered row reachable across pages, ≤200 mounted per page, scroll reset, sort/filter return to page 1) and a `candidate-table-page-2.png` screenshot. Remaining: run `nix develop path:. -c bash scripts/check.sh` and `nix develop path:. -c pnpm check:functional-baseline --output=docs/evidence/functional-stage3-2026-09-23`, compare screenshots with Stage 2, then mark complete.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | 2026-09-23 | Stage 3 | in progress → complete | Coordinator ran a full `nix develop path:. -c bash scripts/check.sh` on the final tree with no failures (formatting, lint, workspace typechecks, all tests, production/PWA build, Chromium/Firefox print matrices, content determinism/validation, and the query benchmark), then reran `nix develop path:. -c pnpm check:functional-baseline --output=docs/evidence/functional-stage3-2026-09-23` against that build. The candidate DOM guardrail now passes at exactly 200 mounted rows (was 420 at Stage 0). `checkCandidatePaging()` passed every assertion with no thrown failure: first-page pager math, every one of the 420 candidate rows reachable via Next, scroll reset to top on each page change, sort and filter both returning to page 1, and no page exceeding 200 mounted rows. Interaction metrics stayed within guardrails: 63.1 ms warm reopen, 28.4 ms median candidate query-to-paint, 33.9 ms median Shop query-to-paint, no interaction Long Task, no warm-tab worker. Reviewed `candidate-table.png` and `candidate-table-page-2.png` against Stage 2's `candidate-table.png`: identical layout above the fold, with only the added Previous/Next pager row below the table; at the 1440x1000 desktop viewport the pager does not crowd the visible rows. Independently reviewed the diff: `CharacterEditorPage.tsx`'s removed block is the same code now in `CandidateSelectionTable.tsx` except for the added paging state/window/pager UI, and the two contract test files were updated only to read the new module/file boundary. No evaluator or persistence semantics changed. Stage 3 is complete with no deferred exit criterion; Stage 4 — Decide Shop's indexing architecture is next and requires the product decision gate before implementation.                                                                                                                |
 | 2026-09-23 | Stage 4 | pending → complete     | Product owner rejected the stage's original dual-prototype/parallel-worktree-agent plan as disproportionate for this personal-use app and approved a direct code-reading audit instead (see the Stage 4 scope-adjustment note). The audit found `ShopWorkspace.tsx`'s filtering pipeline is linear per stage and correctly memoized, with no exponential/geometric complexity and no unnecessary reload; no new Shop index is adopted. It also confirmed by exhaustive grep and the production bundle report that the M2 general query worker (`query.worker.ts`, `QueryWorkerClient`, `AppContentRuntime.getQueryClient`) had zero production callers yet was still built, shipped (~58 KB / ~17 KB gzip), and precached — that dead code was removed from `apps/web` (`@4ecb/query-engine` and `scripts/benchmark-query.ts` are unaffected). Recorded as `decisions.md` D062 with a superseding note on D017; `query-engine.md`'s worker/persistence and contract sections were updated to match. The web package typecheck passes, focused `app-runtime.test.ts` passes 10/10, the production build no longer emits a `query.worker` chunk, and the full `nix develop path:. -c bash scripts/check.sh` gate passes. Stage 4 is complete with no deferred exit criterion; Stage 5 — Evaluation scheduling is next.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 2026-09-23 | Stage 5 | pending → complete     | Product owner approved a minimal bar (see Stage 5): one focused test, full `scripts/check.sh`, and a manual browser check, not the plan's full evaluator-goldens/cancellation/Chromium+Firefox matrix. Added `evaluationDispatchOrder` (`builder-evaluation-plan.ts`) and used it in `CharacterEditorPage.tsx` so the visible current- and selected-level `client.evaluate()` requests are always dispatched before the hidden planning request, since the single rules worker processes requests strictly FIFO; the tie-break logic for which result a coincident consumer receives is unchanged. `builder-evaluation-plan.test.ts` covers every branch (all-coincident, current-only-distinct, selected-only-distinct, all-three-distinct, selected-equals-current). Web typecheck and the full `nix develop path:. -c bash scripts/check.sh` gate pass. A manual dev-server/CDP browser check confirmed the header stays pinned to the character's current effective level while browsing an unpopulated future level, and that editing at the current level still evaluates and updates the header. That check also found an unrelated pre-existing bug (confirmed via `git stash` to reproduce without this change): a URL-canonicalization effect around `CharacterEditorPage.tsx:4417` can crash the editor with "Maximum update depth exceeded" when navigating from a level with choices to one without and back. The product owner asked for it to be fixed as a follow-up aside; see the next entry. Stage 5 is complete with no deferred exit criterion; Stage 6 — Decompose large orchestration modules is next.                                                                                                                                                                                                                                                                          |
 
 ## Coordinator checklist for each handoff
 

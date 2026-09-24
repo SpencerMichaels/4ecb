@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   currentCandidateDetailLevels,
+  evaluationDispatchOrder,
   planningCandidateDetailLevels,
   publishEvaluationResult,
   selectedCandidateDetailLevels,
@@ -70,5 +71,29 @@ describe("builder evaluation planning", () => {
       (value) => published.push(value),
     );
     expect(published).toEqual([]);
+  });
+
+  it("dispatches only the shared planning request when every horizon coincides", () => {
+    expect(evaluationDispatchOrder(8, 8, 8)).toEqual(["planning"]);
+  });
+
+  it("dispatches the visible current level before the hidden planning horizon", () => {
+    expect(evaluationDispatchOrder(4, 4, 8)).toEqual(["current", "planning"]);
+  });
+
+  it("dispatches the visible selected level before the hidden planning horizon", () => {
+    expect(evaluationDispatchOrder(8, 4, 8)).toEqual(["selected", "planning"]);
+  });
+
+  it("dispatches both visible horizons before planning when all three differ", () => {
+    expect(evaluationDispatchOrder(3, 5, 10)).toEqual([
+      "current",
+      "selected",
+      "planning",
+    ]);
+  });
+
+  it("does not duplicate the selected horizon when it matches current", () => {
+    expect(evaluationDispatchOrder(4, 4, 10)).toEqual(["current", "planning"]);
   });
 });

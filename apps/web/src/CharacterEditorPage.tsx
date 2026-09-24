@@ -19,6 +19,7 @@ import {
 } from "./bound-profile-resolution";
 import {
   currentCandidateDetailLevels,
+  evaluationDispatchOrder,
   planningCandidateDetailLevels,
   publishEvaluationResult,
   selectedCandidateDetailLevels,
@@ -4013,6 +4014,35 @@ export function CharacterEditorPage({
       });
       return input;
     };
+    // Dispatch order determines which evaluation the single rules worker
+    // finishes first; see evaluationDispatchOrder. Reuse (which result a tied
+    // consumer receives) is unchanged from before this reordering.
+    const dispatchOrder = evaluationDispatchOrder(
+      build.effectiveLevel,
+      selectedLevel,
+      planningHorizon,
+    );
+    const distinctCurrentRequest = dispatchOrder.includes("current")
+      ? client.evaluate({
+          ...project(projectBuildForLegacyExport(build), "current"),
+          candidateDetailLevels: currentCandidateDetailLevels(
+            workspaceTab,
+            build.effectiveLevel,
+            selectedLevel,
+          ),
+          includePowers: false,
+        })
+      : undefined;
+    const distinctSelectedRequest = dispatchOrder.includes("selected")
+      ? client.evaluate({
+          ...project({ ...build, effectiveLevel: selectedLevel }, "selected"),
+          candidateDetailLevels: selectedCandidateDetailLevels(
+            workspaceTab,
+            selectedLevel,
+          ),
+          includePowers: false,
+        })
+      : undefined;
     const planningRequest = client.evaluate({
       ...project({ ...build, effectiveLevel: planningHorizon }, "planning"),
       candidateDetailLevels: planningCandidateDetailLevels(
@@ -4026,34 +4056,12 @@ export function CharacterEditorPage({
           : [expandedReplacementChoiceId],
       includePowers: false,
     });
-    const currentRequest =
-      build.effectiveLevel === planningHorizon
-        ? planningRequest
-        : client.evaluate({
-            ...project(projectBuildForLegacyExport(build), "current"),
-            candidateDetailLevels: currentCandidateDetailLevels(
-              workspaceTab,
-              build.effectiveLevel,
-              selectedLevel,
-            ),
-            includePowers: false,
-          });
+    const currentRequest = distinctCurrentRequest ?? planningRequest;
     const selectedLevelRequest =
-      selectedLevel === planningHorizon
-        ? planningRequest
-        : selectedLevel === build.effectiveLevel
-          ? currentRequest
-          : client.evaluate({
-              ...project(
-                { ...build, effectiveLevel: selectedLevel },
-                "selected",
-              ),
-              candidateDetailLevels: selectedCandidateDetailLevels(
-                workspaceTab,
-                selectedLevel,
-              ),
-              includePowers: false,
-            });
+      distinctSelectedRequest ??
+      (selectedLevel === build.effectiveLevel
+        ? currentRequest
+        : planningRequest);
     const publish = (
       request: Promise<EvaluatedCharacter>,
       setter: (evaluation: EvaluatedCharacter) => void,

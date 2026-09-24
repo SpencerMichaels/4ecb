@@ -182,6 +182,37 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   indexing architecture — is next and requires the plan's product decision gate
   before any implementation begins.
 
+## Functional refactor Stage 5 complete (2026-09-23)
+
+- Following the Stage 3/4 precedent, the product owner approved a minimal
+  verification bar for this stage's small, behavior-preserving fix: one
+  focused test, the full `scripts/check.sh` gate, and a manual browser check,
+  rather than the plan's full evaluator-goldens/cancellation/Chromium+Firefox
+  matrix.
+- The single rules worker processes `evaluate` requests strictly FIFO and runs
+  each one synchronously to completion. The editor previously always
+  dispatched the (usually hidden) planning evaluation before the visible
+  current-level evaluation whenever a user browsed a future level — a normal,
+  supported workflow. `evaluationDispatchOrder` (new, in
+  `builder-evaluation-plan.ts`) decides which distinct evaluation requests are
+  needed given the current/selected/planning horizons and returns them in
+  priority order, so `CharacterEditorPage.tsx` now dispatches any distinct
+  current- or selected-level request before the planning request. Which result
+  a coincident consumer receives is unchanged; no priority queue,
+  cancellation, batching, or incremental evaluation was introduced.
+- `builder-evaluation-plan.test.ts` covers every branch of
+  `evaluationDispatchOrder`. Web typecheck and the full
+  `nix develop path:. -c bash scripts/check.sh` gate pass. A manual dev-server
+  browser check confirmed the header stays pinned to the current effective
+  level while browsing an unpopulated future level, and that editing at the
+  current level still evaluates and updates the header.
+- That manual check also surfaced an unrelated, pre-existing bug (confirmed via
+  `git stash` to reproduce identically without this change): a URL-
+  canonicalization effect around `CharacterEditorPage.tsx:4417` can crash the
+  editor with a React "Maximum update depth exceeded" error when navigating
+  from a level with available choices to one with none and back. The product
+  owner asked for this to be fixed as a follow-up aside; see the next entry.
+
 ## Functional refactor Stage 4 complete (2026-09-23)
 
 - Stage 4's original scope called for prototyping and measuring two competing

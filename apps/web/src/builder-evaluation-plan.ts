@@ -38,6 +38,28 @@ export function currentCandidateDetailLevels(
     : [];
 }
 
+export type EvaluationHorizonRole = "current" | "selected" | "planning";
+
+/**
+ * The rules worker processes requests in arrival order and evaluates each one
+ * synchronously to completion, so a request dispatched first finishes first.
+ * Lists which horizons need their own distinct evaluation request, ordered so
+ * the visible current- and selected-level results are always dispatched
+ * before the hidden planning evaluation the user is not looking at.
+ */
+export function evaluationDispatchOrder(
+  currentLevel: number,
+  selectedLevel: number,
+  planningHorizon: number,
+): readonly EvaluationHorizonRole[] {
+  const roles: EvaluationHorizonRole[] = [];
+  if (currentLevel !== planningHorizon) roles.push("current");
+  if (selectedLevel !== planningHorizon && selectedLevel !== currentLevel)
+    roles.push("selected");
+  roles.push("planning");
+  return roles;
+}
+
 /** Publish each completed horizon without waiting for sibling evaluations. */
 export async function publishEvaluationResult<Result>(
   request: Promise<Result>,
