@@ -673,6 +673,70 @@ describe("character records", () => {
     ).toThrow("Sale percentage");
   });
 
+  it("sets an item-owned choice on an already-owned holding", () => {
+    const owned: CharacterBuild = {
+      ...build,
+      inventory: [inventoryEntry("resistance")],
+    };
+    const chosen = {
+      id: "poison-choice",
+      identity: {
+        definitionId: "POISON",
+        name: "Poison",
+        type: "Class Feature",
+      },
+      acquiredLevel: 1,
+      legality: "rules-legal" as const,
+      children: [],
+      unresolved: false,
+    };
+    const updated = applyCharacterCommand(owned, {
+      kind: "choose-inventory-child",
+      entryId: "resistance",
+      elementIndex: 0,
+      index: 0,
+      occurrence: chosen,
+    });
+    expect(updated.inventory[0]?.elements[0]?.children).toEqual([chosen]);
+    // Unrelated holdings and fields are untouched.
+    expect(updated.inventory[0]).toMatchObject({
+      id: "resistance",
+      quantity: 1,
+      equippedQuantity: 0,
+    });
+
+    const replaced = applyCharacterCommand(updated, {
+      kind: "choose-inventory-child",
+      entryId: "resistance",
+      elementIndex: 0,
+      index: 0,
+      occurrence: { ...chosen, identity: { ...chosen.identity, name: "Fire" } },
+    });
+    expect(replaced.inventory[0]?.elements[0]?.children).toHaveLength(1);
+    expect(
+      replaced.inventory[0]?.elements[0]?.children?.[0]?.identity.name,
+    ).toBe("Fire");
+
+    expect(() =>
+      applyCharacterCommand(owned, {
+        kind: "choose-inventory-child",
+        entryId: "missing",
+        elementIndex: 0,
+        index: 0,
+        occurrence: chosen,
+      }),
+    ).toThrow("Inventory entry not found");
+    expect(() =>
+      applyCharacterCommand(owned, {
+        kind: "choose-inventory-child",
+        entryId: "resistance",
+        elementIndex: 5,
+        index: 0,
+        occurrence: chosen,
+      }),
+    ).toThrow("Inventory element not found");
+  });
+
   it("keeps the historical occurrence when retraining into a later frame", () => {
     const oldChoice = {
       id: "old-feat",

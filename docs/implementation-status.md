@@ -1,5 +1,41 @@
 # Implementation status
 
+## Item-owned choice domain foundation checkpoint (2026-09-24)
+
+- `packages/rules-engine/src/build-projection.ts` gains `itemChoiceSlots(entity)`,
+  a pure content-only helper (parses `select` rules via the existing `parseRules`)
+  that reports the item-owned choice slots an item's own rules require (for
+  example Armor of Resistance's damage type), independent of any character —
+  safe to call before the item is ever owned, at Shop purchase time.
+  `unresolvedInventoryItemChoices(inventory, entities)` scans every owned
+  holding and reports which item-owned choice slots are still unfilled,
+  regardless of equip state.
+- This closes a real evaluation gap found while investigating: the existing
+  evaluator already surfaces a pending item-owned choice as an
+  `EvaluatedChoice` when the item is equipped (confirmed by probing), but
+  never when it is carried unequipped — so a freshly purchased item produced
+  no prompt at all. Rather than changing the core per-occurrence evaluation
+  loop (risking leaking an unequipped item's other rules, like stat bonuses,
+  into the character), the new functions are a separate, read-only surface
+  that Shop and the Equipment workspace call directly; they do not touch
+  `projectBuildForEvaluation`'s existing occurrence-materialization path at
+  all, so no evaluated numeric output changes.
+- `packages/character-domain/src/build.ts` gains the `choose-inventory-child`
+  `CharacterCommand`: sets one child occurrence at `(entryId, elementIndex,
+index)` under `BuildInventoryElement.children`. Distinct from `choose`
+  because item-owned children live under inventory elements, not the
+  level/grabbag occurrence tree `updateOccurrence` walks — `choose` cannot
+  reach them today.
+- New unit tests: 4 in `build-projection.test.ts` for the two rules-engine
+  functions, 1 in `character-domain/src/index.test.ts` (sets, replaces, and
+  rejects an unknown entry/element) for the new command. Full public suite:
+  538/538 tests, workspace typechecks, lint, production/PWA build, and
+  Chromium/Firefox print checks all pass (`scripts/check.sh`).
+- Not yet wired to any UI: the Shop acquisition flow does not yet prompt for
+  item-owned choices at purchase, and no Equipment-workspace surface yet lists
+  or edits holdings with an unresolved item-owned choice. Both are the next
+  checkpoint.
+
 ## Illegal-options toggle checkpoint (2026-09-24)
 
 - Every `CandidateSelectionTable` now exposes a small icon-only toggle button

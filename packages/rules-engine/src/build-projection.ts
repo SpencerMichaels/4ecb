@@ -1,6 +1,7 @@
 import {
   isFreeformCharacterDetailTextKey,
   isWalletTextKey,
+  type BuildInventoryEntry,
   type BuildOccurrence,
   type BuildUserRule,
   type CharacterBuild,
@@ -67,6 +68,76 @@ function childSlots(
       ];
     return [];
   });
+}
+
+/**
+ * A choice an item's own rules require of its owner (for example Armor of
+ * Resistance's damage type), independent of character state. Purely
+ * content-derived: no equip state, level, or evaluated legality is involved,
+ * so it is safe to call before the item is ever owned (at purchase time).
+ */
+export interface ItemChoiceSlot {
+  readonly ruleOrdinal: number;
+  readonly choiceIndex: number;
+  readonly type: string;
+  readonly category?: string;
+  readonly label?: string;
+}
+
+/** The item-owned choice slots `entity`'s own rules require, in slot order. */
+export function itemChoiceSlots(
+  entity: ContentEntity,
+): readonly ItemChoiceSlot[] {
+  return parseRules(entity.id, entity.rules).flatMap((rule) => {
+    if (rule.kind !== "select") return [];
+    return Array.from({ length: Math.max(1, rule.number) }, (_, index) => ({
+      ruleOrdinal: rule.source.ordinal,
+      choiceIndex: index,
+      type: rule.type,
+      ...(rule.category === undefined ? {} : { category: rule.category }),
+      ...(rule.label === undefined ? {} : { label: rule.label }),
+    }));
+  });
+}
+
+export interface UnresolvedInventoryChoice {
+  readonly entryId: string;
+  readonly elementIndex: number;
+  readonly definitionId: string;
+  readonly slot: ItemChoiceSlot;
+}
+
+/**
+ * Item-owned choices that are missing a stored selection across every owned
+ * holding, regardless of equip state — a freshly purchased or imported item
+ * still needs its choice made even before it is worn or wielded.
+ */
+export function unresolvedInventoryItemChoices(
+  inventory: readonly BuildInventoryEntry[],
+  entities: readonly ContentEntity[],
+): readonly UnresolvedInventoryChoice[] {
+  const byId = sharedEntityIndex(entities);
+  return inventory.flatMap((entry) =>
+    entry.elements.flatMap((element, elementIndex) => {
+      if (element.definitionId === undefined) return [];
+      const entity = byId.get(element.definitionId.toLocaleLowerCase());
+      if (entity === undefined) return [];
+      const children = element.children ?? [];
+      return itemChoiceSlots(entity).flatMap((slot, index) => {
+        const child = children[index];
+        return child === undefined || child.unresolved
+          ? [
+              {
+                entryId: entry.id,
+                elementIndex,
+                definitionId: element.definitionId!,
+                slot,
+              },
+            ]
+          : [];
+      });
+    }),
+  );
 }
 
 export function findBuildChildIndex(
