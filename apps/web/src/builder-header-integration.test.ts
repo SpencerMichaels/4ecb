@@ -6,6 +6,14 @@ const source = readFileSync(
   new URL("./CharacterEditorPage.tsx", import.meta.url),
   "utf8",
 );
+const characterDetailsEditor = readFileSync(
+  new URL("./CharacterDetailsEditor.tsx", import.meta.url),
+  "utf8",
+);
+const choiceEditors = readFileSync(
+  new URL("./ChoiceEditors.tsx", import.meta.url),
+  "utf8",
+);
 const iconSource = readFileSync(new URL("./Icon.tsx", import.meta.url), "utf8");
 const styles = ["./styles/primitives.css", "./styles.css"]
   .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
@@ -132,15 +140,21 @@ describe("builder header integration", () => {
     expect(tabsBar).not.toContain(
       "{unresolvedCharacterDetailChoices.length}</span>",
     );
-    expect(source).toContain('className="character-detail-choice-heading"');
-    expect(source).toContain('className="detail-choice-attention"');
+    expect(characterDetailsEditor).toContain(
+      'className="character-detail-choice-heading"',
+    );
+    expect(characterDetailsEditor).toContain(
+      'className="detail-choice-attention"',
+    );
   });
 
   it("uses shared typography classes for selection-pane heading levels", () => {
-    expect(source).toContain(
+    expect(choiceEditors).toContain(
       '<legend className="selection-subsection-heading">{label}</legend>',
     );
-    expect(source).toContain('<h5 className="selection-subsection-heading">');
+    expect(characterDetailsEditor).toContain(
+      '<h5 className="selection-subsection-heading">',
+    );
     expect(source).toContain('className="selection-section-heading"');
     expect(styles).toMatch(
       /\.selection-section-heading\s*\{[^}]*font-size: 0\.95rem;[^}]*font-weight: 800;[^}]*line-height: 1\.35;/,

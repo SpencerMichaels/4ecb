@@ -9,6 +9,26 @@ const characterEditor = readFileSync(
   new URL("./CharacterEditorPage.tsx", import.meta.url),
   "utf8",
 );
+const characterOverview = readFileSync(
+  new URL("./CharacterOverview.tsx", import.meta.url),
+  "utf8",
+);
+const candidateDetail = readFileSync(
+  new URL("./CandidateDetail.tsx", import.meta.url),
+  "utf8",
+);
+const baseAbilityScoreEditor = readFileSync(
+  new URL("./BaseAbilityScoreEditor.tsx", import.meta.url),
+  "utf8",
+);
+const choiceEditors = readFileSync(
+  new URL("./ChoiceEditors.tsx", import.meta.url),
+  "utf8",
+);
+const characterDetailsEditor = readFileSync(
+  new URL("./CharacterDetailsEditor.tsx", import.meta.url),
+  "utf8",
+);
 const candidateSelectionTable = readFileSync(
   new URL("./CandidateSelectionTable.tsx", import.meta.url),
   "utf8",
@@ -133,13 +153,17 @@ describe("release accessibility contract", () => {
     expect(characterEditor).toContain('workspaceTab === "overview"');
     expect(characterEditor).toContain('workspaceTab === "equipment"');
     expect(characterEditor).toContain('workspaceTab === "diagnostics"');
-    expect(characterEditor).toContain('className="build-overview"');
-    expect(characterEditor).toContain("Show planned choices");
-    expect(characterEditor).toContain("overview-checklist-pane overview-pane-");
-    expect(characterEditor).toContain('pane === "Retraining"');
-    expect(characterEditor).toContain("overviewPowerType(powerTone)");
-    expect(characterEditor).toContain('className="overview-retraining-marker"');
-    expect(characterEditor).toContain(
+    expect(characterOverview).toContain('className="build-overview"');
+    expect(characterOverview).toContain("Show planned choices");
+    expect(characterOverview).toContain(
+      "overview-checklist-pane overview-pane-",
+    );
+    expect(characterOverview).toContain('pane === "Retraining"');
+    expect(characterOverview).toContain("overviewPowerType(powerTone)");
+    expect(characterOverview).toContain(
+      'className="overview-retraining-marker"',
+    );
+    expect(characterOverview).toContain(
       "Retrained from ${retraining.fromName} at level ${retraining.choice.level}",
     );
     expect(candidateSelectionTable).toContain(
@@ -235,10 +259,14 @@ describe("release accessibility contract", () => {
   it("locks and explains alignment while exact deity alignment applies", () => {
     expect(characterEditor).toContain("deityAlignmentConstraint(");
     expect(characterEditor).toContain("pendingForcedAlignmentKey");
-    expect(characterEditor).toContain("disabled={alignmentLocked}");
-    expect(characterEditor).toContain('{ selectedIcon: "lock" as const }');
-    expect(characterEditor).toContain("<Icon name={selectedIcon} />");
-    expect(characterEditor).toContain("alignment must match your deity's.");
+    expect(characterDetailsEditor).toContain("disabled={alignmentLocked}");
+    expect(characterDetailsEditor).toContain(
+      '{ selectedIcon: "lock" as const }',
+    );
+    expect(choiceEditors).toContain("<Icon name={selectedIcon} />");
+    expect(characterDetailsEditor).toContain(
+      "alignment must match your deity's.",
+    );
     expect(characterEditor).toContain("dispatch(command)");
     expect(styles).toContain(
       'button:not(:disabled):not([aria-disabled="true"]):hover',
@@ -255,9 +283,8 @@ describe("release accessibility contract", () => {
         "{shouldShowBoundProfileWarning(boundProfileResolution)",
       ),
     );
-    const details = characterEditor.slice(
-      characterEditor.indexOf("function CharacterDetailsEditor("),
-      characterEditor.indexOf("export function CharacterEditorPage("),
+    const details = characterDetailsEditor.slice(
+      characterDetailsEditor.indexOf("export function CharacterDetailsEditor("),
     );
 
     expect(header).toContain('className="builder-character-name"');
@@ -297,9 +324,8 @@ describe("release accessibility contract", () => {
   });
 
   it("makes each theme power header its accessible disclosure control", () => {
-    const candidateDetails = characterEditor.slice(
-      characterEditor.indexOf("function CandidateDetail("),
-      characterEditor.indexOf("function BaseAbilityScoreEditor"),
+    const candidateDetails = candidateDetail.slice(
+      candidateDetail.indexOf("export function CandidateDetail("),
     );
     expect(candidateDetails).toContain("themePowers.flatMap");
     expect(candidateDetails).toContain("themePowerLevel={group.level ?? null}");
@@ -347,18 +373,17 @@ describe("release accessibility contract", () => {
   });
 
   it("balances entity headers without dropping meaningful status labels", () => {
-    expect(characterEditor).toContain(
+    expect(candidateDetail).toContain(
       "relationship === undefined && !isUnavailable ? undefined",
     );
-    expect(characterEditor).toContain('className="candidate-relationship"');
-    expect(characterEditor).toContain('className="candidate-unavailable"');
+    expect(candidateDetail).toContain('className="candidate-relationship"');
+    expect(candidateDetail).toContain('className="candidate-unavailable"');
     expect(styles).toMatch(/\.entity-kind\s*\{[^}]*margin-bottom: 0;/);
   });
 
   it("scopes collapsible descriptions to themes and puts every card source last", () => {
-    const candidateDetails = characterEditor.slice(
-      characterEditor.indexOf("function CandidateDetail("),
-      characterEditor.indexOf("function BaseAbilityScoreEditor"),
+    const candidateDetails = candidateDetail.slice(
+      candidateDetail.indexOf("export function CandidateDetail("),
     );
     expect(candidateDetails).toContain(
       'entity.type.trim().toLocaleLowerCase() === "theme"',
@@ -385,9 +410,8 @@ describe("release accessibility contract", () => {
   });
 
   it("uses one entity-card design and flavortext preference everywhere", () => {
-    const candidateDetails = characterEditor.slice(
-      characterEditor.indexOf("function CandidateDetail("),
-      characterEditor.indexOf("function BaseAbilityScoreEditor"),
+    const candidateDetails = candidateDetail.slice(
+      candidateDetail.indexOf("export function CandidateDetail("),
     );
     for (const source of [candidateDetails, equipmentWorkspace]) {
       expect(source).toContain("EntityCardHeader");
@@ -524,21 +548,21 @@ describe("release accessibility contract", () => {
       /\.candidate-selection-short[\s\S]*?\.selection-table-scroll\s*\{[\s\S]*?height: auto/,
     );
 
-    const backgroundSource = characterEditor.slice(
-      characterEditor.indexOf("function BackgroundChoiceGroup"),
-      characterEditor.indexOf("function SkillTrainingEditor"),
+    const backgroundSource = choiceEditors.slice(
+      choiceEditors.indexOf("export function BackgroundChoiceGroup"),
+      choiceEditors.indexOf("export function SkillTrainingEditor"),
     );
     expect(backgroundSource).toContain("<RepeatedCandidateTableEditor");
     expect(backgroundSource).toContain('kind="background"');
     expect(backgroundSource).not.toContain("<ChoiceEditor");
     expect(backgroundSource).not.toContain("Add another background");
-    expect(characterEditor).toContain("selectionLimit={choices.length}");
+    expect(choiceEditors).toContain("selectionLimit={choices.length}");
   });
 
   it("uses toggle semantics for clearable compact and ability choices", () => {
-    const compactChoices = characterEditor.slice(
-      characterEditor.indexOf("function CompactChoiceButtons"),
-      characterEditor.indexOf("function BuildPresetPanel"),
+    const compactChoices = choiceEditors.slice(
+      choiceEditors.indexOf("function CompactChoiceButtons"),
+      choiceEditors.indexOf("export function BuildPresetPanel"),
     );
     expect(compactChoices).toContain(
       '{ "aria-label": label, role: "radiogroup" }',
@@ -556,9 +580,8 @@ describe("release accessibility contract", () => {
       /\.compact-choice-options > button\.is-selected\s*\{[^}]*background: var\(--success-soft\)[^}]*border-left-color: var\(--success\)/,
     );
 
-    const baseAbilities = characterEditor.slice(
-      characterEditor.indexOf("function BaseAbilityScoreEditor"),
-      characterEditor.indexOf("function retrainingCategory"),
+    const baseAbilities = baseAbilityScoreEditor.slice(
+      baseAbilityScoreEditor.indexOf("export function BaseAbilityScoreEditor"),
     );
     expect(baseAbilities).toContain(
       "<KeyAbilitiesSummary sentence={keyAbilitiesSentence} />",
@@ -589,9 +612,9 @@ describe("release accessibility contract", () => {
     );
     expect(baseAbilities).toMatch(/>\s*Reset\s*<\/button>/);
     expect(baseAbilities).not.toContain("Reset point buy");
-    expect(characterEditor).toContain('type="number"');
-    expect(characterEditor).toContain('event.key === "Enter"');
-    expect(characterEditor).toContain('event.key === "Escape"');
+    expect(baseAbilityScoreEditor).toContain('type="number"');
+    expect(baseAbilityScoreEditor).toContain('event.key === "Enter"');
+    expect(baseAbilityScoreEditor).toContain('event.key === "Escape"');
     expect(baseAbilities).toContain("className={`race-ability-choice");
     expect(baseAbilities).toContain("aria-pressed={");
     expect(baseAbilities).not.toContain('type="radio"');
@@ -627,9 +650,9 @@ describe("release accessibility contract", () => {
       /\.key-ability-marker\s*\{[^}]*color: var\(--muted\)/,
     );
 
-    const abilityChoices = characterEditor.slice(
-      characterEditor.indexOf("function AbilityIncreaseEditor"),
-      characterEditor.indexOf("function RepeatedChoiceGroup"),
+    const abilityChoices = choiceEditors.slice(
+      choiceEditors.indexOf("export function AbilityIncreaseEditor"),
+      choiceEditors.indexOf("export function RepeatedChoiceGroup"),
     );
     expect(abilityChoices).toContain(
       "aria-pressed={selectedChoice !== undefined}",

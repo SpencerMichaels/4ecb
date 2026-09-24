@@ -18,9 +18,10 @@ and decides whether the exit criteria are met. A stage may be split into
 coherent checkpoint commits, but the next stage does not begin until the
 current stage is complete or a remaining issue has an explicit approved owner.
 
-**Overall status:** in progress
+**Overall status:** complete
 
-**Current stage:** Stage 6 — Decompose large orchestration modules (pending)
+**Current stage:** none — Stages 0–6 are all complete (see each stage's scope
+adjustments and the progress log below for what was and was not approved)
 
 ## Audit context and evidence
 
@@ -467,36 +468,66 @@ passes.
 
 ## Stage 6 — Decompose large orchestration modules
 
-**Status:** pending
+**Status:** complete
 
 **Dependencies:** Stage 5 complete and behavioral coverage from Stages 0–5
 
-**Scope:** Extract editor controller/state hooks, separate candidate-selection
-behavior, extract dialog lifecycle and small sortable-header behavior, and
-replace source-text implementation tests with rendered behavioral tests where
-appropriate. Retain source scanning where it enforces a security boundary or a
-deliberate structural contract. Avoid a universal table abstraction and avoid
-moving evaluator-owned logic into UI helpers.
+**Product-owner scope adjustment (2026-09-23):** Following the Stage 3–5
+pattern, the product owner rejected the plan's full scope (extracting
+controller/state hooks out of the orchestration component itself, dialog
+lifecycle, sortable-header behavior, and replacing source-text tests with
+rendered behavioral tests) as disproportionate risk for a personal-use
+application with no concrete driving problem — finding #9 was only "this file
+is long," not a measured defect. Approved scope: low-risk file splits only.
+Move the already-distinct helper components already living in
+`CharacterEditorPage.tsx` into their own files verbatim (pure relocation, no
+logic changes), and leave the 2,100-line `CharacterEditorPage` orchestration
+component itself untouched, since disentangling its internal state/effects is
+the genuinely risky part for no functional benefit.
 
-**Risk:** Large mechanical moves can conceal behavioral changes, create cyclic
-dependencies, or turn meaningful domain differences into brittle generic APIs.
-Source-text tests must not be removed until equivalent behavior or structural
-protection exists.
+**Implementation:** Extracted `CharacterOverview.tsx`, `CandidateDetail.tsx`,
+`BaseAbilityScoreEditor.tsx`, `ChoiceEditors.tsx` (the cohesive
+`ChoiceEditor`/`ChoiceFlowSection`/`RepeatedChoiceGroup`/
+`RepeatedCandidateTableEditor`/`RetrainingControls`/`BackgroundChoiceGroup`/
+`SkillTrainingEditor`/`AbilityIncreaseEditor`/`BuildPresetPanel`/
+`CompactChoiceButtons`/`ReplacementEditor` cluster), `CharacterDetailsEditor.tsx`,
+and a small shared `builder-choice-context.tsx` (the `InspectCandidateContext`/
+`ShowAllChoicesContext` contexts and `CandidateInspectionScope`, needed by more
+than one extracted file). Small pure helpers used across the new file
+boundaries (`selectedOccurrence`, `choiceTitle`, `contextualChoiceTitle`,
+`contextualTimelineChoiceTitle`, `repeatedChoiceGroupTitle`, `choiceSectionIcon`,
+`overviewPowerTone`, `overviewPowerType`, `isCompanionOwnedChoice`,
+`choiceSectionId`, `findOccurrence`) moved to the existing `builder-ui.ts`
+shared-helpers module rather than each new file re-implementing them. Exact
+line ranges were relocated with `sed` (not retyped) to eliminate transcription
+risk; only import/export statements and a handful of newly-shared helper call
+sites changed. `CharacterEditorPage.tsx` shrank from 5,882 to 2,337 lines
+(-60%); the moved content plus the new shared module total 5,452 lines across
+six focused files.
 
-**Required regression and visual evidence:** Map every moved state machine and
-existing contract to focused tests before extraction. Exercise complete builder,
-Equipment, Shop, View, and print journeys; save/undo/redo; deep links; error and
-recovery states; accessibility interactions; and exact evaluator/sheet parity.
-Compare Stage 0–5 metrics to ensure module boundaries did not regress runtime
-behavior. Run representative Chromium/Firefox desktop/tablet visual regression,
-including dialogs and selector/detail-card surfaces.
+**Verification:** The existing source-text contract tests
+(`accessibility-contract.test.ts`, `candidate-table-initialization-contract.test.ts`,
+`builder-header-integration.test.ts`, `option-details-empty-state.test.ts`)
+were updated to read from each assertion's new file location — the same
+style of check, redirected, not replaced with a different test approach (that
+replacement was explicitly out of this stage's approved scope). Full workspace
+typecheck and lint pass; the complete 71-file / 529-test suite passes with no
+regressions; `nix develop path:. -c bash scripts/check.sh` passes. A live
+dev-server smoke test (seeded synthetic fixture, raw CDP, no browser
+extension) exercised every extracted file's real render path — Build/Ability
+Scores (`BaseAbilityScoreEditor.tsx`), Build/Feats candidate table
+(`ChoiceEditors.tsx`), Overview (`CharacterOverview.tsx`), Character details
+(`CharacterDetailsEditor.tsx`), and clicking a feat to populate the detail
+pane (`CandidateDetail.tsx`) — with zero browser console errors or exceptions.
 
-**Exit criteria:** The large orchestration modules have smaller cohesive
-responsibilities with documented ownership; shared behavior is extracted only
-where semantics agree; redundant source-text tests are replaced without losing
-security/structural assertions; no rules, persistence, accessibility, visual,
-or performance regression remains; durable architecture and implementation
-status are current; and the full repository check passes.
+**Exit criteria (as adjusted):** The extracted files have smaller, cohesive,
+already-distinct responsibilities; no behavior changed (verified by the full
+existing test suite plus a live smoke test, not just by pure code review);
+the source-text contract tests still protect the same assertions from their
+new locations; and the full repository check passes. Extracting hooks from the
+orchestration component itself, dialog-lifecycle/sortable-header extraction,
+and replacing source-text tests with rendered behavioral tests remain
+unapproved and are not claimed as done.
 
 ## Progress and evidence log
 
@@ -520,6 +551,7 @@ corpus artifacts.
 | 2026-09-23 | Stage 4 | pending → complete     | Product owner rejected the stage's original dual-prototype/parallel-worktree-agent plan as disproportionate for this personal-use app and approved a direct code-reading audit instead (see the Stage 4 scope-adjustment note). The audit found `ShopWorkspace.tsx`'s filtering pipeline is linear per stage and correctly memoized, with no exponential/geometric complexity and no unnecessary reload; no new Shop index is adopted. It also confirmed by exhaustive grep and the production bundle report that the M2 general query worker (`query.worker.ts`, `QueryWorkerClient`, `AppContentRuntime.getQueryClient`) had zero production callers yet was still built, shipped (~58 KB / ~17 KB gzip), and precached — that dead code was removed from `apps/web` (`@4ecb/query-engine` and `scripts/benchmark-query.ts` are unaffected). Recorded as `decisions.md` D062 with a superseding note on D017; `query-engine.md`'s worker/persistence and contract sections were updated to match. The web package typecheck passes, focused `app-runtime.test.ts` passes 10/10, the production build no longer emits a `query.worker` chunk, and the full `nix develop path:. -c bash scripts/check.sh` gate passes. Stage 4 is complete with no deferred exit criterion; Stage 5 — Evaluation scheduling is next.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | 2026-09-23 | Stage 5 | pending → complete     | Product owner approved a minimal bar (see Stage 5): one focused test, full `scripts/check.sh`, and a manual browser check, not the plan's full evaluator-goldens/cancellation/Chromium+Firefox matrix. Added `evaluationDispatchOrder` (`builder-evaluation-plan.ts`) and used it in `CharacterEditorPage.tsx` so the visible current- and selected-level `client.evaluate()` requests are always dispatched before the hidden planning request, since the single rules worker processes requests strictly FIFO; the tie-break logic for which result a coincident consumer receives is unchanged. `builder-evaluation-plan.test.ts` covers every branch (all-coincident, current-only-distinct, selected-only-distinct, all-three-distinct, selected-equals-current). Web typecheck and the full `nix develop path:. -c bash scripts/check.sh` gate pass. A manual dev-server/CDP browser check confirmed the header stays pinned to the character's current effective level while browsing an unpopulated future level, and that editing at the current level still evaluates and updates the header. That check also found an unrelated pre-existing bug (confirmed via `git stash` to reproduce without this change): a URL-canonicalization effect around `CharacterEditorPage.tsx:4417` can crash the editor with "Maximum update depth exceeded" when navigating from a level with choices to one without and back. The product owner asked for it to be fixed as a follow-up aside; see the next entry.                                                                                                                                                                                                                                                                                                                                                                                        |
 | 2026-09-23 | Aside   | — → complete           | Fixed the level-navigation crash found during Stage 5 verification: the canonicalization effect at `CharacterEditorPage.tsx` (syncing derived `activeLevelSection` to the URL) unconditionally called `onNavigate` even when the target navigation already matched the current one, which could oscillate against the companion effect that reads the URL's section back into `selectedSectionByLevel` and exceed React's update-depth limit. Added a guard so the effect is a no-op once the URL already matches the canonical level/section. Verified by reproducing the exact original crash sequence (level 1 → level 2 → level 1, `section=feats` throughout) against a dev server with the fix: no crash, no console errors, and the URL settles at the correct preferred section. Full `nix develop path:. -c bash scripts/check.sh` passes. Not covered by a new automated test (the guard sits inline in tightly-coupled render-time derived state; extracting it would be a larger refactor than this aside's scope), so the manual browser reproduction is the regression evidence. Stage 5 is complete with no deferred exit criterion; Stage 6 — Decompose large orchestration modules is next.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| 2026-09-23 | Stage 6 | pending → complete     | Product owner approved low-risk file splits only (see Stage 6), rejecting the plan's full scope of extracting hooks from the orchestration component itself, dialog-lifecycle/sortable-header extraction, and replacing source-text tests with rendered behavioral tests as disproportionate risk with no concrete driving problem. Extracted `CharacterOverview.tsx`, `CandidateDetail.tsx`, `BaseAbilityScoreEditor.tsx`, `ChoiceEditors.tsx`, `CharacterDetailsEditor.tsx`, and a shared `builder-choice-context.tsx` from `CharacterEditorPage.tsx` verbatim (relocated with `sed`, not retyped, to avoid transcription risk); shared pure helpers moved to the existing `builder-ui.ts`. `CharacterEditorPage.tsx` shrank from 5,882 to 2,337 lines (-60%); the 2,100-line orchestration component itself was left untouched. Updated the four affected source-text contract tests (`accessibility-contract.test.ts`, `candidate-table-initialization-contract.test.ts`, `builder-header-integration.test.ts`, `option-details-empty-state.test.ts`) to read from each assertion's new file location, same style of check, not replaced. Full workspace typecheck, lint, the complete 71-file/529-test suite, and `nix develop path:. -c bash scripts/check.sh` all pass. A live dev-server smoke test (seeded synthetic fixture, raw CDP) exercised every extracted file's real render path — Ability Scores, Feats candidate table, Overview, Character details, and clicking a feat to populate the detail pane — with zero browser console errors. Stage 6 is complete under the approved reduced scope; this closes the functional refactor and performance program (Stages 0–6).                                                                                                                                                                                                            |
 
 ## Coordinator checklist for each handoff
 

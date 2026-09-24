@@ -2,6 +2,7 @@ import {
   applyCharacterCommand,
   type CharacterBuild,
   type CharacterCommand,
+  type CharacterRecord,
   type BuildOccurrence,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
@@ -22,8 +23,9 @@ import type {
   EvaluatedStat,
 } from "@4ecb/rules-engine";
 
+import type { IconName } from "./Icon";
 import { createLevelFrame } from "./new-character";
-import { entityVisualTone } from "./visual-language";
+import { entityVisualTone, type LegacyVisualTone } from "./visual-language";
 
 export const MAX_CHARACTER_LEVEL = 30;
 
@@ -1878,4 +1880,207 @@ export function unresolveEvaluatedChoiceCommand(
       unresolved: true,
     },
   };
+}
+
+export function selectedOccurrence(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+) {
+  return choice.selectedOccurrenceId === undefined
+    ? undefined
+    : evaluation.occurrences.find(
+        (occurrence) => occurrence.id === choice.selectedOccurrenceId,
+      );
+}
+
+export function choiceTitle(choice: EvaluatedChoice): string {
+  const spellbook = /^Power\s+(Daily|Utility)\s+(\d+)$/i.exec(
+    choice.spellbook ?? "",
+  );
+  if (spellbook !== null)
+    return `${spellbook[1]![0]!.toLocaleUpperCase()}${spellbook[1]!.slice(1).toLocaleLowerCase()} Spell`;
+  return choicePresentationLabel(choice.name || choice.type);
+}
+
+export function contextualChoiceTitle(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+  byId: ReadonlyMap<string, ContentEntity>,
+): string {
+  return (
+    contextualChoiceName(choice, evaluation, (reference) =>
+      byId.get(reference.trim().toLocaleLowerCase()),
+    ) ?? choiceTitle(choice)
+  );
+}
+
+function timelineChoiceTitle(choice: EvaluatedChoice): string {
+  const identityLabel = identityChoiceLabel(choice.type);
+  if (identityLabel !== undefined) return identityLabel;
+  return ["Class", "Race", "Background", "Theme"].includes(
+    legacyChoiceSection(choice),
+  )
+    ? choicePresentationLabel(choice.type)
+    : choiceTitle(choice);
+}
+
+export function contextualTimelineChoiceTitle(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+  byId: ReadonlyMap<string, ContentEntity>,
+): string {
+  return (
+    contextualChoiceName(choice, evaluation, (reference) =>
+      byId.get(reference.trim().toLocaleLowerCase()),
+    ) ?? timelineChoiceTitle(choice)
+  );
+}
+
+const powerGroupLabels: Readonly<Record<LegacyVisualTone, string>> = {
+  "at-will": "At-Will Powers",
+  encounter: "Encounter Powers",
+  daily: "Daily Powers",
+  utility: "Utility Powers",
+  item: "Item Powers",
+  neutral: "Powers",
+};
+
+export function repeatedChoiceGroupTitle(
+  choices: readonly EvaluatedChoice[],
+  byId: ReadonlyMap<string, ContentEntity>,
+): string {
+  if (!choices.every((choice) => choice.type.trim().toLowerCase() === "power"))
+    return choiceTitle(choices[0]!);
+  const tones = new Set(
+    choices.flatMap((choice) =>
+      choice.candidates.flatMap((candidate) => {
+        if (candidate.reasons.includes("category")) return [];
+        const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
+        return entity === undefined ? [] : [entityVisualTone(entity)];
+      }),
+    ),
+  );
+  tones.delete("neutral");
+  return tones.size === 1 ? powerGroupLabels[[...tones][0]!] : "Powers";
+}
+
+export function choiceSectionIcon(section: string): IconName {
+  switch (section) {
+    case "Class":
+      return "class";
+    case "Race":
+      return "race";
+    case "Background":
+      return "background";
+    case "Theme":
+      return "content";
+    case "Ability Scores":
+      return "ability";
+    case "Companion":
+      return "companion";
+    case "Skills":
+      return "skill";
+    case "Powers":
+      return "power";
+    case "Spellbook":
+      return "book";
+    case "Feats":
+      return "feat";
+    case "Character Details":
+      return "details";
+    default:
+      return "content";
+  }
+}
+
+export function overviewPowerTone(
+  choice: EvaluatedChoice,
+  evaluation: EvaluatedCharacter,
+  byId: ReadonlyMap<string, ContentEntity>,
+): LegacyVisualTone {
+  const selected = selectedOccurrence(choice, evaluation);
+  const selectedEntity =
+    selected === undefined
+      ? undefined
+      : byId.get(selected.definitionId.toLocaleLowerCase());
+  const selectedTone =
+    selectedEntity === undefined ? "neutral" : entityVisualTone(selectedEntity);
+  if (selectedTone !== "neutral") return selectedTone;
+
+  const candidateTones = new Set(
+    choice.candidates.flatMap((candidate) => {
+      if (candidate.reasons.includes("category")) return [];
+      const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
+      const tone = entity === undefined ? "neutral" : entityVisualTone(entity);
+      return tone === "neutral" ? [] : [tone];
+    }),
+  );
+  if (candidateTones.size === 1) return [...candidateTones][0]!;
+
+  const authoredLabel = `${choice.name ?? ""} ${choice.type} ${choice.spellbook ?? ""}`;
+  if (/at[ -]?will/i.test(authoredLabel)) return "at-will";
+  if (/encounter/i.test(authoredLabel)) return "encounter";
+  if (/daily/i.test(authoredLabel)) return "daily";
+  if (/utility/i.test(authoredLabel)) return "utility";
+  return "neutral";
+}
+
+export function overviewPowerType(tone: LegacyVisualTone): string {
+  switch (tone) {
+    case "at-will":
+      return "At-Will";
+    case "encounter":
+      return "Encounter";
+    case "daily":
+      return "Daily";
+    case "utility":
+      return "Utility";
+    case "item":
+      return "Item";
+    default:
+      return "Power";
+  }
+}
+
+export function isCompanionOwnedChoice(
+  choice: EvaluatedChoice,
+  occurrenceById: ReadonlyMap<
+    string,
+    EvaluatedCharacter["occurrences"][number]
+  >,
+  byId: ReadonlyMap<string, ContentEntity>,
+): boolean {
+  if (isCompanionChoiceType(choice.type)) return true;
+  const visited = new Set<string>();
+  let providerId: string | undefined = choice.providerOccurrenceId;
+  while (providerId !== undefined && !visited.has(providerId)) {
+    visited.add(providerId);
+    const provider = occurrenceById.get(providerId);
+    if (provider === undefined) return false;
+    const providerType = byId
+      .get(provider.definitionId.toLocaleLowerCase())
+      ?.type.trim()
+      .toLocaleLowerCase();
+    if (providerType === "companion" || providerType === "familiar")
+      return true;
+    providerId = provider.parentId;
+  }
+  return false;
+}
+
+export function choiceSectionId(choiceId: string): string {
+  return `choice-section-${choiceId.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
+}
+
+export function findOccurrence(
+  build: CharacterRecord["build"],
+  id: string,
+): BuildOccurrence | undefined {
+  const visit = (occurrence: BuildOccurrence): BuildOccurrence | undefined =>
+    occurrence.id === id
+      ? occurrence
+      : occurrence.children.map(visit).find((value) => value !== undefined);
+  return [...build.levels.map((frame) => frame.root), ...build.grabbag]
+    .map(visit)
+    .find((value) => value !== undefined);
 }

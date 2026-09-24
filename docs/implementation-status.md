@@ -213,6 +213,47 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   from a level with available choices to one with none and back. The product
   owner asked for this to be fixed as a follow-up aside; see the next entry.
 
+## Functional refactor Stage 6 complete — program closed (2026-09-23)
+
+- Following the Stage 3–5 pattern, the product owner rejected Stage 6's full
+  planned scope (extracting controller/state hooks out of the orchestration
+  component itself, dialog-lifecycle/sortable-header extraction, and replacing
+  source-text tests with rendered behavioral tests) as disproportionate risk
+  for a personal-use application with no concrete driving problem — the audit
+  finding behind this stage was only that `CharacterEditorPage.tsx` is long,
+  not a measured defect. Approved scope: low-risk file splits only, moving
+  already-distinct helper components verbatim and leaving the orchestration
+  component's internals untouched.
+- Extracted `CharacterOverview.tsx`, `CandidateDetail.tsx`,
+  `BaseAbilityScoreEditor.tsx`, `ChoiceEditors.tsx` (the cohesive
+  `ChoiceEditor`/`ChoiceFlowSection`/`RepeatedChoiceGroup`/
+  `RepeatedCandidateTableEditor`/`RetrainingControls`/`BackgroundChoiceGroup`/
+  `SkillTrainingEditor`/`AbilityIncreaseEditor`/`BuildPresetPanel`/
+  `CompactChoiceButtons`/`ReplacementEditor` cluster), `CharacterDetailsEditor.tsx`,
+  and a small shared `builder-choice-context.tsx` from `CharacterEditorPage.tsx`.
+  Exact line ranges were relocated with `sed`, not retyped, eliminating
+  transcription risk; small pure helpers shared across the new file boundaries
+  moved to the existing `builder-ui.ts`. `CharacterEditorPage.tsx` shrank from
+  5,882 to 2,337 lines (-60%); the 2,100-line orchestration component itself
+  was left unchanged.
+- The four affected source-text contract tests
+  (`accessibility-contract.test.ts`, `candidate-table-initialization-contract.test.ts`,
+  `builder-header-integration.test.ts`, `option-details-empty-state.test.ts`)
+  were updated to read each assertion from its new file location — the same
+  style of check, redirected, not replaced with a different test approach.
+- Full workspace typecheck, lint, the complete 71-file/529-test suite, and
+  `nix develop path:. -c bash scripts/check.sh` all pass with no regressions.
+  A live dev-server smoke test (seeded synthetic fixture, raw CDP, no browser
+  extension available) exercised every extracted file's real render path —
+  Ability Scores, the Feats candidate table, Overview, Character details, and
+  clicking a feat to populate the detail pane — with zero browser console
+  errors or exceptions.
+- Stage 6 is complete under the approved reduced scope. This closes the
+  functional refactor and performance program: Stages 0–6 are all complete or
+  complete-as-adjusted, each with an explicit product-owner scope decision
+  recorded in `docs/functional-refactor-plan.md` where the approved scope
+  differed from the original audit-driven plan.
+
 ## Level-navigation crash fix (2026-09-23)
 
 - Manual browser verification during Stage 5 found that navigating from a

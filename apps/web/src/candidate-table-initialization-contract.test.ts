@@ -6,6 +6,14 @@ const characterEditor = readFileSync(
   new URL("./CharacterEditorPage.tsx", import.meta.url),
   "utf8",
 );
+const characterDetailsEditor = readFileSync(
+  new URL("./CharacterDetailsEditor.tsx", import.meta.url),
+  "utf8",
+);
+const builderChoiceContext = readFileSync(
+  new URL("./builder-choice-context.tsx", import.meta.url),
+  "utf8",
+);
 const candidateSelectionTable = readFileSync(
   new URL("./CandidateSelectionTable.tsx", import.meta.url),
   "utf8",
@@ -13,14 +21,15 @@ const candidateSelectionTable = readFileSync(
 
 describe("candidate table initialization integration", () => {
   it("gates shared details initialization to the first table in an open pane", () => {
-    const scope = characterEditor.slice(
-      characterEditor.indexOf("function CandidateInspectionScope"),
-      characterEditor.indexOf("type SaveState"),
+    const scope = builderChoiceContext.slice(
+      builderChoiceContext.indexOf("export function CandidateInspectionScope"),
     );
 
     expect(scope).toContain("initializeCandidateInspection(");
     expect(scope).toContain("explicitlyInspectCandidate(");
-    expect(characterEditor).toContain('key={active ? "open" : "closed"}');
+    expect(characterDetailsEditor).toContain(
+      'key={active ? "open" : "closed"}',
+    );
     expect(characterEditor).toContain(
       'key={`${workspaceTab === "build" ? "open" : "closed"}:${selectedLevel}:${activeLevelSection ?? "empty"}`}',
     );

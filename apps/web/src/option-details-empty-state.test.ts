@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-const characterEditor = readFileSync(
-  new URL("./CharacterEditorPage.tsx", import.meta.url),
+const candidateDetail = readFileSync(
+  new URL("./CandidateDetail.tsx", import.meta.url),
   "utf8",
 );
 const styles = ["./styles/primitives.css", "./styles.css"]
@@ -12,9 +12,9 @@ const styles = ["./styles/primitives.css", "./styles.css"]
 
 describe("empty option details card", () => {
   it("uses one neutral card header and the click-to-inspect guidance", () => {
-    const emptyState = characterEditor.slice(
-      characterEditor.indexOf('aria-labelledby="option-details-heading"'),
-      characterEditor.indexOf("const referenceIndex = candidateReferenceIndex"),
+    const emptyState = candidateDetail.slice(
+      candidateDetail.indexOf('aria-labelledby="option-details-heading"'),
+      candidateDetail.indexOf("const referenceIndex = candidateReferenceIndex"),
     );
 
     expect(emptyState).toContain(
