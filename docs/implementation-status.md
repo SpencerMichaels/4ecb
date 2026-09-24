@@ -182,6 +182,41 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   indexing architecture — is next and requires the plan's product decision gate
   before any implementation begins.
 
+## Functional refactor Stage 4 complete (2026-09-23)
+
+- Stage 4's original scope called for prototyping and measuring two competing
+  Shop indexing architectures. The product owner rejected that as
+  disproportionate for this personal-use application and approved a direct
+  code-reading audit instead, clarifying that "unnecessary resource (re)loads"
+  and "exponential/geometric complexity" were illustrative examples of the
+  magnitude worth fixing, not an exhaustive checklist.
+- The audit found `ShopWorkspace.tsx`'s filtering pipeline (category → advanced
+  filters → search → slot/subtype → family grouping → sort) is a chain of
+  `useMemo`s, each linear in record count and memoized on its real
+  dependencies, with `entities`/`byId` loaded once per character session
+  rather than reconstructed per render. No exponential/geometric complexity or
+  unnecessary reload was found, so no new Shop indexing architecture is
+  adopted; Shop's existing main-thread approach is unchanged.
+- Separately, the audit confirmed by exhaustive grep and the production bundle
+  report that the M2 general query worker (`query.worker.ts`,
+  `QueryWorkerClient`, `AppContentRuntime.getQueryClient`) had zero production
+  callers — Shop never adopted it after its 2026-09-22 redesign — yet it was
+  still built, shipped (~58 KB / ~17 KB gzip as `query.worker-BDBrJK5s.js`),
+  and precached by the service worker. That dead code was removed from
+  `apps/web`; `@4ecb/query-engine` and `scripts/benchmark-query.ts` (still
+  exercised by `scripts/check.sh`) are unaffected.
+- This is recorded as `decisions.md` D062, with a superseding status note added
+  to D017, and `docs/query-engine.md`'s contract and worker/persistence
+  sections updated to describe the current state.
+- Verification: updating `app-runtime.ts` (dropped `QueryRuntimeClient`,
+  `QueryEntry`, `getQueryClient`, and the `createQueryClient` option) and its
+  focused test file, then deleting `query.worker.ts`, `query-client.ts`, and
+  `query-worker-messages.ts`. The web package typecheck passes, the focused
+  `app-runtime.test.ts` suite passes 10/10, the production build no longer
+  emits a `query.worker` chunk, and the full
+  `nix develop path:. -c bash scripts/check.sh` gate passes. Stage 5 —
+  Evaluation scheduling is next.
+
 ## M5.5 shared visual-contract consolidation checkpoint (2026-09-23)
 
 - Cross-workspace selection headings now use authoritative named typography

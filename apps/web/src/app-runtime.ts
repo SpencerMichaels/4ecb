@@ -4,12 +4,6 @@ import {
 } from "@4ecb/browser-storage";
 import type { ContentPack } from "@4ecb/content-pack";
 import type { CharacterBuild } from "@4ecb/character-domain";
-import type { ContentEntity } from "@4ecb/content-domain";
-import type {
-  CompendiumQuery,
-  CompendiumQueryResult,
-  EntityRelationships,
-} from "@4ecb/query-engine";
 import type {
   EvaluatedCharacter,
   EvaluationInput,
@@ -17,22 +11,8 @@ import type {
 } from "@4ecb/rules-engine";
 import { RULES_EVALUATION_CACHE_VERSION } from "@4ecb/rules-engine";
 
-import {
-  QueryWorkerClient,
-  type QueryIndexInfo,
-  type QueryProgressHandler,
-} from "./query-client";
 import { RulesWorkerClient } from "./rules-client";
 import { recordLoadDuration } from "./load-performance";
-
-export interface QueryRuntimeClient {
-  initialize(packId: string): Promise<QueryIndexInfo>;
-  query(query: CompendiumQuery): Promise<CompendiumQueryResult>;
-  getEntity(entityId: string): Promise<ContentEntity | undefined>;
-  relationships(entityId: string): Promise<EntityRelationships | undefined>;
-  subscribeProgress(handler: QueryProgressHandler): () => void;
-  terminate(reason?: string): void;
-}
 
 export interface RulesRuntimeClient {
   initialize(packId: string, contentDigest?: string): Promise<void>;
@@ -44,12 +24,6 @@ export interface RulesRuntimeClient {
     sourceContentDigest?: string,
   ): Promise<ProfileMigrationPreview>;
   terminate(reason?: string): void;
-}
-
-interface QueryEntry {
-  readonly client: QueryRuntimeClient;
-  readonly ready: Promise<QueryIndexInfo>;
-  used: number;
 }
 
 interface RulesEntry {
@@ -258,7 +232,6 @@ class MemoizedRulesClient implements RulesRuntimeClient {
 
 export interface AppContentRuntimeOptions {
   readonly loadPack?: (packId: string) => Promise<ContentPack | undefined>;
-  readonly createQueryClient?: () => QueryRuntimeClient;
   readonly createRulesClient?: () => RulesRuntimeClient;
   readonly evaluationCache?: EvaluationCacheStore;
   readonly retainedPackCount?: number;
@@ -270,7 +243,6 @@ export interface AppContentRuntimeOptions {
  */
 export class AppContentRuntime {
   readonly #loadPack: (packId: string) => Promise<ContentPack | undefined>;
-  readonly #createQueryClient: () => QueryRuntimeClient;
   readonly #createRulesClient: () => RulesRuntimeClient;
   readonly #retainedPackCount: number;
   readonly #evaluationCache: EvaluationCacheStore;
@@ -278,15 +250,12 @@ export class AppContentRuntime {
     string,
     { ready: Promise<ContentPack | undefined>; used: number }
   >();
-  readonly #queries = new Map<string, QueryEntry>();
   readonly #rules = new Map<string, RulesEntry>();
   #clock = 0;
 
   constructor(options: AppContentRuntimeOptions = {}) {
     const repository = new ContentPackRepository();
     this.#loadPack = options.loadPack ?? ((packId) => repository.get(packId));
-    this.#createQueryClient =
-      options.createQueryClient ?? (() => new QueryWorkerClient());
     this.#createRulesClient =
       options.createRulesClient ?? (() => new RulesWorkerClient());
     this.#evaluationCache =
@@ -320,45 +289,6 @@ export class AppContentRuntime {
     this.#packs.set(packId, entry);
     this.#evictOldest(this.#packs);
     return entry.ready;
-  }
-
-  async getQueryClient(
-    packId: string,
-    onProgress?: QueryProgressHandler,
-  ): Promise<{
-    readonly client: QueryRuntimeClient;
-    readonly info: QueryIndexInfo;
-  }> {
-    let entry = this.#queries.get(packId);
-    if (entry === undefined) {
-      const client = this.#createQueryClient();
-      entry = {
-        client,
-        ready: Promise.resolve()
-          .then(() => client.initialize(packId))
-          .catch((error: unknown) => {
-            this.#queries.delete(packId);
-            client.terminate("Content query initialization failed");
-            throw error;
-          }),
-        used: ++this.#clock,
-      };
-      this.#queries.set(packId, entry);
-      this.#evictOldest(this.#queries, (discarded) =>
-        discarded.client.terminate("Cached content query profile evicted"),
-      );
-    } else {
-      entry.used = ++this.#clock;
-    }
-    const unsubscribe =
-      onProgress === undefined
-        ? undefined
-        : entry.client.subscribeProgress(onProgress);
-    try {
-      return { client: entry.client, info: await entry.ready };
-    } finally {
-      unsubscribe?.();
-    }
   }
 
   async getRulesClient(
@@ -401,12 +331,9 @@ export class AppContentRuntime {
   }
 
   clear(): void {
-    for (const entry of this.#queries.values())
-      entry.client.terminate("Content runtime cleared");
     for (const entry of this.#rules.values())
       entry.client.terminate("Content runtime cleared");
     this.#packs.clear();
-    this.#queries.clear();
     this.#rules.clear();
   }
 

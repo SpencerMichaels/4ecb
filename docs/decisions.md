@@ -109,6 +109,12 @@ correctness.
 
 ### D017 — M2 uses a purpose-built in-memory query index
 
+**Status:** the index and its typed AST remain the compendium query
+architecture; the browser worker built around it for M2 was never adopted by
+a production route and was retired by D062. A future consumer would build a
+new worker client against the same package rather than reviving the removed
+one.
+
 The first physical compendium index is a dependency-free, worker-hosted inverted
 token index over normalized entities. It precomputes normalized facets and
 numeric sort/filter values, resolves ID-valued facets to display names, and
@@ -1360,6 +1366,33 @@ corrupt or mismatched stored bytes. Digest collision checks and atomic payload/
 metadata writes still occur at the storage seam. Exact evaluation promise
 caching belongs only to the application runtime, whose 32-entry bound now
 refreshes recency on hits; the editor no longer maintains a second cache.
+
+### D062 — Shop keeps its main-thread filtering; the unused general query worker is retired
+
+**Status:** accepted
+
+**Date:** 2026-09-23
+
+Functional refactor Stage 4 was scoped to decide whether Shop should adopt the
+general query-engine worker (D017) or a new Shop-specific index. Reading
+`ShopWorkspace.tsx`'s filtering pipeline (category → advanced filters → search
+→ slot/subtype → family grouping → sort) found only linear per-record work,
+each stage memoized on its real dependencies; `entities`/`byId` are loaded
+once per character session rather than reconstructed per render. No
+exponential/geometric complexity or unnecessary reload was found, so no new
+indexing architecture is adopted and Shop's existing main-thread approach is
+kept as-is.
+
+The audited general query worker (`query.worker.ts`, `QueryWorkerClient`, and
+`AppContentRuntime.getQueryClient`) had zero production callers — Shop never
+adopted it after its M2 introduction (D017) — yet it was still built, shipped
+(~58 KB / ~17 KB gzip), and precached by the service worker. That dead code
+path is removed from the web app. `packages/query-engine` itself, its typed
+AST, and `scripts/benchmark-query.ts`'s budgets/evidence (still exercised by
+`scripts/check.sh`) are unaffected; this decision only retires the unused
+browser worker wiring around it. A future feature that needs full-text/facet
+query over the compendium can still build a new worker client against the
+existing package.
 
 ## Deferred decisions and decision points
 

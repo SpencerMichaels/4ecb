@@ -3,8 +3,9 @@
 ## Contract
 
 `@4ecb/query-engine` owns a versioned, serializable query AST and the current
-physical index. Builder and Equipment UI code and the worker protocol depend on
-the AST rather than index internals.
+physical index. `pnpm content-tool` and `scripts/benchmark-query.ts` depend on
+the AST rather than index internals; no browser route currently depends on it
+(see "Worker and persistence behavior" below).
 
 A version 1 query contains:
 
@@ -42,15 +43,25 @@ M4's rules engine will add evaluated grant and choice context.
 
 ## Worker and persistence behavior
 
-The browser query worker reads the active encoded pack directly from IndexedDB,
-decompresses it, and constructs the index without blocking React. Changing the
-active profile terminates construction safely. A tab restart reconstructs the
-rebuildable index from the immutable stored pack; no user record owns index data.
-
 The former global Compendium and entity-detail routes were retired after all
 content became available in contextual builder and Equipment tables. Query
 state is now owned by those workspaces rather than serialized into a global
 route or saved-search store.
+
+The M2 browser worker built around `CompendiumIndex` (`query.worker.ts`,
+`QueryWorkerClient`, `AppContentRuntime.getQueryClient`) was never adopted by
+a production route: Shop's 2026-09-22 redesign filters the catalog directly
+over the decoded pack instead. The functional refactor's Stage 4 audit (see
+`decisions.md` D062) found that filtering path to be linear and adequately
+fast, so no route reconnects the worker; it was removed from the web app as
+dead weight that was still being built, shipped, and precached with zero
+callers. `CompendiumIndex` and the versioned AST described above remain in
+`@4ecb/query-engine` and are still exercised directly (not through a browser
+worker) by `pnpm content-tool` and `scripts/benchmark-query.ts`, which is how
+the M2 performance budgets below continue to be measured. A future feature
+that needs full-text/facet query over the compendium in the browser would
+build a new worker client against this package rather than reviving the
+removed one.
 
 ## M2 performance budgets and evidence
 

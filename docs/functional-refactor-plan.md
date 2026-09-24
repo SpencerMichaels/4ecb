@@ -20,7 +20,7 @@ current stage is complete or a remaining issue has an explicit approved owner.
 
 **Overall status:** in progress
 
-**Current stage:** Stage 4 — Decide Shop's indexing architecture (pending)
+**Current stage:** Stage 5 — Evaluation scheduling (pending)
 
 ## Audit context and evidence
 
@@ -298,9 +298,51 @@ check passes.
 
 ## Stage 4 — Decide Shop's indexing architecture
 
-**Status:** pending
+**Status:** complete
 
 **Dependencies:** Stage 3 complete
+
+**Product-owner scope adjustment (2026-09-23):** The product owner rejected the
+original dual-prototype plan below as disproportionate for a personal-use
+application: "the app is not _that_ performance bound... Not squeezing every
+last millisecond from ... a webapp." The examples in the original scope
+(reconnect the general query worker vs. build a Shop-specific index) were
+illustrative of the _magnitude_ of issue worth fixing, not a mandatory
+checklist or an instruction to build competing implementations. The revised
+approach was a direct code-reading audit of `ShopWorkspace.tsx` and its
+`equipment-ui.ts` helpers for actual unnecessary resource reloads or
+exponential/geometric complexity, with no dual prototypes, no parallel
+worktree agents, and no comparative benchmark matrix.
+
+**Outcome:** The audit found Shop's filtering pipeline (category → advanced
+filters → search → slot/subtype → family grouping → sort) is a chain of
+`useMemo`s, each linear in record count and memoized on its real dependencies;
+`entities`/`byId` are loaded once per character session rather than
+reconstructed per render. No exponential/geometric complexity or unnecessary
+reload was found, so **no new indexing architecture is adopted** and Shop's
+existing main-thread approach is unchanged. Separately, the audit confirmed
+(by exhaustive grep and the production bundle report) that the general query
+worker from D017/M2 (`query.worker.ts`, `QueryWorkerClient`,
+`AppContentRuntime.getQueryClient`) had zero production callers — Shop never
+adopted it after its 2026-09-22 redesign — yet it was still built, shipped
+(~58 KB / ~17 KB gzip as `query.worker-BDBrJK5s.js`), and precached by the
+service worker. That dead code was removed from `apps/web`; `@4ecb/query-engine`
+and `scripts/benchmark-query.ts` are unaffected. This decision is recorded as
+`decisions.md` D062, with `query-engine.md` updated to match.
+
+**Verification:** Removing the worker path required updating `app-runtime.ts`
+(dropped `QueryRuntimeClient`, `QueryEntry`, `getQueryClient`, and the
+`createQueryClient` option) and its focused test file, then deleting
+`query.worker.ts`, `query-client.ts`, and `query-worker-messages.ts`. The web
+package typecheck passes, the focused `app-runtime.test.ts` suite passes
+10/10, the production build no longer emits a `query.worker` chunk, and the
+full `nix develop path:. -c bash scripts/check.sh` gate passes (formatting,
+lint, workspace typechecks, full test suite, production/PWA build,
+Chromium/Firefox print matrices, content determinism/validation, and the query
+benchmark, which still exercises `CompendiumIndex` directly).
+
+<details>
+<summary>Original stage scope (superseded by the 2026-09-23 adjustment above)</summary>
 
 **Product decision gate:** This stage must stop after both prototypes have
 comparable evidence and before either architecture is adopted. Present the
@@ -344,6 +386,8 @@ product decision is explicitly approved and durably recorded; the selected
 implementation meets all targets and behavioral tests; obsolete shipped assets
 are removed; query-engine and interface documentation match production; and the
 full repository check passes.
+
+</details>
 
 ## Stage 5 — Evaluation scheduling
 
@@ -429,6 +473,7 @@ corpus artifacts.
 | 2026-09-23 | Stage 2 | in progress → complete | The coordinator and product owner accepted the independent route chunks, direct-link preload boundary, route focus/error recovery, offline precache behavior, unchanged worker/session ownership, reviewed Chromium/Firefox visuals, final-tree performance evidence, and full public gate. Every Stage 2 exit criterion is accepted with no deferred incompatibility; Stage 3 — Bound Builder candidate rendering is next.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | 2026-09-23 | Stage 3 | pending → in progress  | Product owner approved a lighter verification bar (see Stage 3). Extracted the candidate selector into `apps/web/src/CandidateSelectionTable.tsx` and added 200-row paging via `apps/web/src/candidate-table-paging.ts` with focused tests (`candidate-table-paging.test.ts`); source-contract tests now read the new module. `scripts/check-functional-baseline.mjs` adds a first-run paging check (every filtered row reachable across pages, ≤200 mounted per page, scroll reset, sort/filter return to page 1) and a `candidate-table-page-2.png` screenshot. Remaining: run `nix develop path:. -c bash scripts/check.sh` and `nix develop path:. -c pnpm check:functional-baseline --output=docs/evidence/functional-stage3-2026-09-23`, compare screenshots with Stage 2, then mark complete.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | 2026-09-23 | Stage 3 | in progress → complete | Coordinator ran a full `nix develop path:. -c bash scripts/check.sh` on the final tree with no failures (formatting, lint, workspace typechecks, all tests, production/PWA build, Chromium/Firefox print matrices, content determinism/validation, and the query benchmark), then reran `nix develop path:. -c pnpm check:functional-baseline --output=docs/evidence/functional-stage3-2026-09-23` against that build. The candidate DOM guardrail now passes at exactly 200 mounted rows (was 420 at Stage 0). `checkCandidatePaging()` passed every assertion with no thrown failure: first-page pager math, every one of the 420 candidate rows reachable via Next, scroll reset to top on each page change, sort and filter both returning to page 1, and no page exceeding 200 mounted rows. Interaction metrics stayed within guardrails: 63.1 ms warm reopen, 28.4 ms median candidate query-to-paint, 33.9 ms median Shop query-to-paint, no interaction Long Task, no warm-tab worker. Reviewed `candidate-table.png` and `candidate-table-page-2.png` against Stage 2's `candidate-table.png`: identical layout above the fold, with only the added Previous/Next pager row below the table; at the 1440x1000 desktop viewport the pager does not crowd the visible rows. Independently reviewed the diff: `CharacterEditorPage.tsx`'s removed block is the same code now in `CandidateSelectionTable.tsx` except for the added paging state/window/pager UI, and the two contract test files were updated only to read the new module/file boundary. No evaluator or persistence semantics changed. Stage 3 is complete with no deferred exit criterion; Stage 4 — Decide Shop's indexing architecture is next and requires the product decision gate before implementation.                                                                                                                |
+| 2026-09-23 | Stage 4 | pending → complete     | Product owner rejected the stage's original dual-prototype/parallel-worktree-agent plan as disproportionate for this personal-use app and approved a direct code-reading audit instead (see the Stage 4 scope-adjustment note). The audit found `ShopWorkspace.tsx`'s filtering pipeline is linear per stage and correctly memoized, with no exponential/geometric complexity and no unnecessary reload; no new Shop index is adopted. It also confirmed by exhaustive grep and the production bundle report that the M2 general query worker (`query.worker.ts`, `QueryWorkerClient`, `AppContentRuntime.getQueryClient`) had zero production callers yet was still built, shipped (~58 KB / ~17 KB gzip), and precached — that dead code was removed from `apps/web` (`@4ecb/query-engine` and `scripts/benchmark-query.ts` are unaffected). Recorded as `decisions.md` D062 with a superseding note on D017; `query-engine.md`'s worker/persistence and contract sections were updated to match. The web package typecheck passes, focused `app-runtime.test.ts` passes 10/10, the production build no longer emits a `query.worker` chunk, and the full `nix develop path:. -c bash scripts/check.sh` gate passes. Stage 4 is complete with no deferred exit criterion; Stage 5 — Evaluation scheduling is next.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
 ## Coordinator checklist for each handoff
 
