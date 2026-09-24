@@ -1,8 +1,10 @@
-import type {
-  BuildOccurrence,
-  BuildUserRule,
-  CharacterBuild,
-  CharacterCommand,
+import {
+  isFreeformCharacterDetailTextKey,
+  isWalletTextKey,
+  type BuildOccurrence,
+  type BuildUserRule,
+  type CharacterBuild,
+  type CharacterCommand,
 } from "@4ecb/character-domain";
 import type {
   ContentElementNode,
@@ -662,12 +664,22 @@ export function projectBuildForEvaluation(
     acquiredLevel: entry.acquiredLevel,
     overrides: entry.overrides,
   }));
+  // Wallet edits and free-text character details/notes change
+  // build.textStrings but never affect rules evaluation. Excluding them keeps
+  // otherwise-identical builds hashing to the same EvaluationInput, so
+  // MemoizedRulesClient's caches reuse the prior result instead of forcing a
+  // full re-evaluation for edits that can't change it.
+  const textStrings = Object.fromEntries(
+    Object.entries(build.textStrings).filter(
+      ([key]) => !isWalletTextKey(key) && !isFreeformCharacterDetailTextKey(key),
+    ),
+  );
   return {
     level: build.effectiveLevel,
     baseAbilities: build.baseAbilities,
     occurrences,
     inventory,
-    textStrings: build.textStrings,
+    textStrings,
     localEntities,
   };
 }

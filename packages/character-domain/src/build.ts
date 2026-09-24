@@ -418,6 +418,58 @@ export function characterWalletTextKey(
   return `_PER_LEVEL_${level}_${name}`;
 }
 
+const WALLET_TEXT_KEY_PATTERN = /^_PER_LEVEL_\d+_(Carried|Stored) Money$/;
+
+/**
+ * True for the per-level wallet keys `characterWalletTextKey` produces. The
+ * rules engine never reads currency, so evaluation input can ignore these
+ * keys when deciding whether a character's rules-relevant state changed -
+ * see `projectBuildForEvaluation`. Kept as an explicit allowlist (rather than
+ * excluding "bookkeeping" text keys generically) so a future key that the
+ * engine does read can't be silently dropped from evaluation by mistake.
+ */
+export function isWalletTextKey(key: string): boolean {
+  return WALLET_TEXT_KEY_PATTERN.test(key);
+}
+
+/**
+ * The free-text identity/physical-description/roleplaying-note keys
+ * `CharacterDetailsEditor` edits via generic `set-text` commands. Kept in
+ * sync with that component by hand, not imported from it - a name added
+ * there but missed here only loses the evaluation-skip optimization below,
+ * it never causes a wrong rules result, so the duplication fails safe.
+ */
+const FREEFORM_CHARACTER_DETAIL_TEXT_KEYS = new Set<string>([
+  "Name",
+  "Player",
+  "Company",
+  "RPGA",
+  "Age",
+  "Height",
+  "Weight",
+  "NOTE_Personality Traits",
+  "NOTE_Mannerisms and Appearance",
+  "NOTE_Character Background",
+  "NOTE_Companions And Allies",
+  "NOTE_Session and Campaign Notes",
+  "NOTE_RPGA Notes",
+]);
+
+/**
+ * True for the free-text character detail/note keys above. Confirmed against
+ * every `textStrings` read in `rules-engine` (fixed literal keys and
+ * `${feature.name} Die`/`_INTERNAL_*`-shaped computed keys, none of which can
+ * collide with these) and against the recovered rule corpus's `select`
+ * `default="[...]"` references (none name a key in this set) that these
+ * fields never feed rules evaluation - see `projectBuildForEvaluation`. The
+ * modern sheet model also reads these from the character build directly
+ * (`build.textStrings`), not from the evaluated snapshot, so excluding them
+ * from evaluation input doesn't affect what's displayed.
+ */
+export function isFreeformCharacterDetailTextKey(key: string): boolean {
+  return FREEFORM_CHARACTER_DETAIL_TEXT_KEYS.has(key);
+}
+
 /** Resolves the latest defined per-level value at or before the requested level. */
 export function resolveCharacterWallet(
   build: CharacterBuild,

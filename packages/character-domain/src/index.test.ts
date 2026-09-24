@@ -11,10 +11,13 @@ import {
   detailsWithLegacyTextStrings,
   duplicateCharacterRecord,
   formatInventoryItemName,
+  characterWalletTextKey,
   formatLegacyCurrency,
   inventoryEntryWithQuantity,
   isCharacterRecord,
+  isFreeformCharacterDetailTextKey,
   isLegacyCharacterRecordV1,
+  isWalletTextKey,
   newCharacterRecord,
   newNativeCharacterRecord,
   parseLegacyCurrency,
@@ -435,6 +438,30 @@ describe("character records", () => {
       sourceLevel: 1,
     });
     expect(resolveCharacterWallet(leveled, "carried", 2).sourceLevel).toBe(1);
+  });
+
+  it("recognizes wallet text keys and nothing else", () => {
+    expect(isWalletTextKey(characterWalletTextKey(1, "carried"))).toBe(true);
+    expect(isWalletTextKey(characterWalletTextKey(30, "stored"))).toBe(true);
+    expect(isWalletTextKey("_PER_LEVEL_1_Sneak Attack Die")).toBe(false);
+    expect(isWalletTextKey("Name")).toBe(false);
+    expect(isWalletTextKey("_PER_LEVEL_1_Carried Money Extra")).toBe(false);
+  });
+
+  it("recognizes freeform character detail/note keys and nothing else", () => {
+    expect(isFreeformCharacterDetailTextKey("Name")).toBe(true);
+    expect(isFreeformCharacterDetailTextKey("Player")).toBe(true);
+    expect(isFreeformCharacterDetailTextKey("Age")).toBe(true);
+    expect(
+      isFreeformCharacterDetailTextKey("NOTE_Session and Campaign Notes"),
+    ).toBe(true);
+    expect(isFreeformCharacterDetailTextKey("_INTERNAL_MainHandWeapon")).toBe(
+      false,
+    );
+    expect(isFreeformCharacterDetailTextKey("Sneak Attack Die")).toBe(false);
+    expect(
+      isFreeformCharacterDetailTextKey(characterWalletTextKey(1, "carried")),
+    ).toBe(false);
   });
 
   it("equips exact holdings across slots and synchronizes equipped counts", () => {

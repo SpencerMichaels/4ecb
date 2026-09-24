@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   applyCharacterCommand,
+  characterWalletTextKey,
   type CharacterBuild,
 } from "@4ecb/character-domain";
 import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
@@ -725,5 +726,39 @@ describe("build projection", () => {
     expect(equippedEvaluation.stats["Fortitude Defense"]?.value).toBe(11);
     expect(equippedEvaluation.stats["Reflex Defense"]?.value).toBe(11);
     expect(equippedEvaluation.stats["Will Defense"]?.value).toBe(11);
+  });
+
+  it("excludes wallet and freeform detail text keys from evaluation input so those edits reuse cached results", () => {
+    const build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 1,
+      levels: [],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {
+        _internal_mainhandweapon: "Longsword",
+        Name: "Ada",
+        "NOTE_Character Background": "Raised by wolves",
+        [characterWalletTextKey(1, "carried")]: "5 gp",
+        [characterWalletTextKey(1, "stored")]: "20 gp",
+      },
+    };
+    const afterEdits: CharacterBuild = {
+      ...build,
+      textStrings: {
+        ...build.textStrings,
+        [characterWalletTextKey(1, "carried")]: "2 gp; 5 sp",
+        Name: "Adalyn",
+        "NOTE_Character Background": "Raised by dragons",
+      },
+    };
+    const projected = projectBuildForEvaluation(build, []);
+    const projectedAfterEdits = projectBuildForEvaluation(afterEdits, []);
+    expect(projected.textStrings).toEqual({
+      _internal_mainhandweapon: "Longsword",
+    });
+    expect(projectedAfterEdits.textStrings).toEqual(projected.textStrings);
   });
 });
