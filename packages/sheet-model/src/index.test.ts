@@ -332,11 +332,11 @@ describe("sheet model", () => {
     });
     expect(model.items[0]).toMatchObject({ name: "Test wand" });
     expect(model.items).toContainEqual(
-      expect.objectContaining({ name: "+1 Gloaming Leather Armor" }),
+      expect.objectContaining({ name: "Gloaming Leather Armor +1" }),
     );
     expect(model.equipment).toEqual([
       { label: "Test wand", value: "× 2 · 1 equipped" },
-      { label: "+1 Gloaming Leather Armor", value: "× 1 · 1 equipped" },
+      { label: "Gloaming Leather Armor +1", value: "× 1 · 1 equipped" },
     ]);
     expect(model.equipment).not.toContainEqual(
       expect.objectContaining({ label: "Stale wand" }),

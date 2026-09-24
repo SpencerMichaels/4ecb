@@ -3,10 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
-import type {
-  BuildInventoryEntry,
-  BuildOccurrence,
-} from "@4ecb/character-domain";
+import type { BuildInventoryEntry } from "@4ecb/character-domain";
 
 import {
   ItemDetail,
@@ -191,7 +188,7 @@ describe("equipment item details", () => {
       createElement(ItemDetail, {
         item: {
           entities: [base, enchantment],
-          displayName: "+2 Bloodiron Plate Armor",
+          displayName: "Bloodiron Plate Armor +2",
         },
         hideFlavortext: false,
         byId: new Map(
@@ -206,7 +203,7 @@ describe("equipment item details", () => {
     expect(markup).toContain(
       "candidate-detail tone-item composed-item-card composed-armor-card",
     );
-    expect(markup).toContain("+2 Bloodiron Plate Armor");
+    expect(markup).toContain("Bloodiron Plate Armor +2");
     expect(markup).toContain("Armor 8");
     expect(markup).toContain("lucide-shirt");
     expect(markup.indexOf("<dt>Enhancement</dt>")).toBeLessThan(
@@ -269,7 +266,7 @@ describe("equipment item details", () => {
       createElement(ItemDetail, {
         item: {
           entities: [base, enchantment],
-          displayName: "+2 Protective Public Warhammer",
+          displayName: "Protective Public Warhammer +2",
         },
         hideFlavortext: false,
         byId,
@@ -279,7 +276,7 @@ describe("equipment item details", () => {
     expect(markup).toContain(
       "candidate-detail tone-item composed-item-card composed-weapon-card",
     );
-    expect(markup).toContain("+2 Protective Public Warhammer");
+    expect(markup).toContain("Protective Public Warhammer +2");
     expect(markup).toContain("Weapon 7");
     expect(markup).not.toContain("Weapon 7 · Common");
     expect(markup).not.toContain("<h5>Public Warhammer</h5>");
@@ -338,9 +335,9 @@ describe("equipment item details", () => {
     expect(inventoryOrLoadout?.entities).toEqual([base, enchantment]);
     expect(shop.entities).toEqual([base, enchantment]);
     expect(inventoryOrLoadout?.displayName).toBe(
-      "+2 Protective Public Warhammer",
+      "Protective Public Warhammer +2",
     );
-    expect(shop.displayName).toBe("+2 Protective Public Warhammer");
+    expect(shop.displayName).toBe("Protective Public Warhammer +2");
   });
 
   it("keeps an ordinary one-record item on the same shared detail path", () => {
@@ -438,213 +435,5 @@ describe("equipment item details", () => {
     expect(weaponFieldIndex).toBeGreaterThan(-1);
     expect(rarityFieldIndex).toBeGreaterThan(-1);
     expect(weaponFieldIndex).toBeLessThan(rarityFieldIndex);
-  });
-
-  describe("item-owned choice editing", () => {
-    const armor = entity(
-      "PUBLIC_ARMOR_OF_RESISTANCE",
-      "Armor of Resistance",
-      "Magic Item",
-      "Public item source",
-      {},
-      [
-        {
-          name: "select",
-          attributes: [
-            { name: "type", value: "Class Feature" },
-            { name: "number", value: "1" },
-          ],
-          text: "",
-          children: [],
-          ordinal: 0,
-        },
-      ],
-    );
-    const poison = entity(
-      "PUBLIC_RESIST_POISON",
-      "Resist Poison",
-      "Class Feature",
-      "Public item source",
-      {},
-    );
-    const fire = entity(
-      "PUBLIC_RESIST_FIRE",
-      "Resist Fire",
-      "Class Feature",
-      "Public item source",
-      {},
-    );
-    const byId = new Map(
-      [armor, poison, fire].map((item) => [item.id.toLocaleLowerCase(), item]),
-    );
-
-    it("offers every candidate when the item-owned choice is unresolved", () => {
-      const entry: BuildInventoryEntry = {
-        id: "owned-armor",
-        acquiredLevel: 1,
-        quantity: 1,
-        equippedQuantity: 0,
-        elements: [
-          { definitionId: armor.id, name: armor.name, type: armor.type },
-        ],
-        overrides: {},
-        legality: "rules-legal",
-      };
-      const markup = renderToStaticMarkup(
-        createElement(ItemDetail, {
-          item: inventoryItemDetail(entry, byId),
-          hideFlavortext: false,
-          byId,
-          entities: [armor, poison, fire],
-          entry,
-          onChooseInventoryChild: () => undefined,
-        }),
-      );
-      expect(markup).toContain("Properties");
-      expect(markup).toContain("Choose class feature");
-      expect(markup).toContain("Resist Poison");
-      expect(markup).toContain("Resist Fire");
-      expect(markup).not.toContain("item-choice-locked");
-    });
-
-    it("shows an already-made item-owned choice as locked, not re-editable", () => {
-      const resolvedChild: BuildOccurrence = {
-        id: "web:choice",
-        identity: {
-          definitionId: poison.id,
-          name: poison.name,
-          type: poison.type,
-        },
-        acquiredLevel: 1,
-        legality: "rules-legal",
-        children: [],
-        unresolved: false,
-      };
-      const entry: BuildInventoryEntry = {
-        id: "owned-armor",
-        acquiredLevel: 1,
-        quantity: 1,
-        equippedQuantity: 0,
-        elements: [
-          {
-            definitionId: armor.id,
-            name: armor.name,
-            type: armor.type,
-            children: [resolvedChild],
-          },
-        ],
-        overrides: {},
-        legality: "rules-legal",
-      };
-      const markup = renderToStaticMarkup(
-        createElement(ItemDetail, {
-          item: inventoryItemDetail(entry, byId),
-          hideFlavortext: false,
-          byId,
-          entities: [armor, poison, fire],
-          entry,
-          onChooseInventoryChild: () => undefined,
-        }),
-      );
-      expect(markup).toContain("item-choice-locked");
-      expect(markup).toContain("Resist Poison");
-      expect(markup).not.toContain('type="radio"');
-    });
-
-    it("omits the properties panel when inspecting a catalog entity, not an owned holding", () => {
-      const markup = renderToStaticMarkup(
-        createElement(ItemDetail, {
-          item: catalogItemDetail(armor, undefined, 1, byId),
-          hideFlavortext: false,
-          byId,
-          entities: [armor, poison, fire],
-          onChooseInventoryChild: () => undefined,
-        }),
-      );
-      expect(markup).not.toContain("item-choice-panel");
-    });
-
-    it("shows just the bracketed variant, not the repeated item name, for parenthetical candidates", () => {
-      const parenthesizedFire = entity(
-        "PUBLIC_ARMOR_FIRE",
-        "Armor of Resistance +2 (Fire)",
-        "Class Feature",
-        "Public item source",
-        {},
-      );
-      const parenthesizedPoison = entity(
-        "PUBLIC_ARMOR_POISON",
-        "Armor of Resistance +2 (Poison)",
-        "Class Feature",
-        "Public item source",
-        {},
-      );
-      const entities = [armor, parenthesizedFire, parenthesizedPoison];
-      const parenById = new Map(
-        entities.map((item) => [item.id.toLocaleLowerCase(), item]),
-      );
-
-      const unresolvedEntry: BuildInventoryEntry = {
-        id: "owned-armor",
-        acquiredLevel: 1,
-        quantity: 1,
-        equippedQuantity: 0,
-        elements: [
-          { definitionId: armor.id, name: armor.name, type: armor.type },
-        ],
-        overrides: {},
-        legality: "rules-legal",
-      };
-      const unresolvedMarkup = renderToStaticMarkup(
-        createElement(ItemDetail, {
-          item: inventoryItemDetail(unresolvedEntry, parenById),
-          hideFlavortext: false,
-          byId: parenById,
-          entities,
-          entry: unresolvedEntry,
-          onChooseInventoryChild: () => undefined,
-        }),
-      );
-      expect(unresolvedMarkup).toContain(">Fire<");
-      expect(unresolvedMarkup).toContain(">Poison<");
-      expect(unresolvedMarkup).not.toContain("Armor of Resistance +2");
-
-      const resolvedEntry: BuildInventoryEntry = {
-        ...unresolvedEntry,
-        elements: [
-          {
-            definitionId: armor.id,
-            name: armor.name,
-            type: armor.type,
-            children: [
-              {
-                id: "web:choice",
-                identity: {
-                  definitionId: parenthesizedFire.id,
-                  name: parenthesizedFire.name,
-                  type: parenthesizedFire.type,
-                },
-                acquiredLevel: 1,
-                legality: "rules-legal",
-                children: [],
-                unresolved: false,
-              },
-            ],
-          },
-        ],
-      };
-      const resolvedMarkup = renderToStaticMarkup(
-        createElement(ItemDetail, {
-          item: inventoryItemDetail(resolvedEntry, parenById),
-          hideFlavortext: false,
-          byId: parenById,
-          entities,
-          entry: resolvedEntry,
-          onChooseInventoryChild: () => undefined,
-        }),
-      );
-      expect(resolvedMarkup).toContain("Class Feature: Fire");
-      expect(resolvedMarkup).not.toContain("Armor of Resistance +2");
-    });
   });
 });

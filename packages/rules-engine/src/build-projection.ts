@@ -1,7 +1,6 @@
 import {
   isFreeformCharacterDetailTextKey,
   isWalletTextKey,
-  type BuildInventoryEntry,
   type BuildOccurrence,
   type BuildUserRule,
   type CharacterBuild,
@@ -98,46 +97,6 @@ export function itemChoiceSlots(
       ...(rule.label === undefined ? {} : { label: rule.label }),
     }));
   });
-}
-
-export interface UnresolvedInventoryChoice {
-  readonly entryId: string;
-  readonly elementIndex: number;
-  readonly definitionId: string;
-  readonly slot: ItemChoiceSlot;
-}
-
-/**
- * Item-owned choices that are missing a stored selection across every owned
- * holding, regardless of equip state — a freshly purchased or imported item
- * still needs its choice made even before it is worn or wielded.
- */
-export function unresolvedInventoryItemChoices(
-  inventory: readonly BuildInventoryEntry[],
-  entities: readonly ContentEntity[],
-): readonly UnresolvedInventoryChoice[] {
-  const byId = sharedEntityIndex(entities);
-  return inventory.flatMap((entry) =>
-    entry.elements.flatMap((element, elementIndex) => {
-      if (element.definitionId === undefined) return [];
-      const entity = byId.get(element.definitionId.toLocaleLowerCase());
-      if (entity === undefined) return [];
-      const children = element.children ?? [];
-      return itemChoiceSlots(entity).flatMap((slot, index) => {
-        const child = children[index];
-        return child === undefined || child.unresolved
-          ? [
-              {
-                entryId: entry.id,
-                elementIndex,
-                definitionId: element.definitionId!,
-                slot,
-              },
-            ]
-          : [];
-      });
-    }),
-  );
 }
 
 export function findBuildChildIndex(

@@ -447,14 +447,18 @@ unchanged. Known rituals/formulas/practices are distinct from quantity-bearing
 scrolls, and Spellbook remains in Build. Dependent hand/ring movement,
 holy-symbol/implement exceptions, augments, package lots, automatic/custom
 equipment remain named follow-up work rather than silently approximated
-native parity. Item-owned choice editing (for example an Armor of
-Resistance damage type) is implemented (2026-09-24): a Shop purchase whose
-item grants its own choice prompts for it at purchase time using the same
-picker pattern as the base-item modal, and any owned holding with a
-still-unresolved item-owned choice surfaces an inline chooser in the shared
-Equipment/Loadout/Shop detail card; once made, the choice displays locked
-and is not re-editable, matching the product owner's stated real-world
-model that these are fixed for the life of the item.
+native parity. Item-owned choice handling (for example an Armor of
+Resistance damage type) is implemented (2026-09-24, simplified 2026-09-24): a
+Shop purchase whose item grants its own choice prompts for it at purchase
+time using a paginated dialog (the item's own choice first, then any
+compatible-base-item pairing), and a resolved choice shows as a parenthesized
+suffix on the item's own name everywhere it is displayed — `Banded Mail of
+Resistance +2 (Fire)` — rather than a separate editor surface; the choice is
+fixed for the life of the item, matching the product owner's stated
+real-world model. There is deliberately no in-app editor for an
+already-owned holding whose choice was never resolved (not observed in
+practice; every purchase resolves it, and legacy imports either already
+carry the recovered choice or didn't have one in the original game either).
 
 Builder navigation now participates in browser Back/Forward at the page-like
 boundary: all five workspace tabs, Build levels and choice sections, and the
@@ -469,9 +473,10 @@ detail-card system, navigation, candidate tables, and header statistics have all
 received accepted product-owner passes. The combined Shop and ritual/practice
 interface received its production live-review approval on 2026-09-22 after
 visual reconciliation with the accepted prototype. Every candidate table now
-carries a focused, per-choice illegal-option toggle, and item-owned Equipment
-choices now have their purchase-time prompt and Equipment-workspace editor
-(both 2026-09-24); see [implementation-status.md](implementation-status.md)
+carries a focused, per-choice illegal-option toggle, and item-owned choices
+now have their purchase-time prompt and a resolved choice shows as part of
+the item's own name (2026-09-24, simplified from an initial separate-editor
+design the same day); see [implementation-status.md](implementation-status.md)
 for the checkpoints. Both named M5.5 closure items are therefore implemented
 and verified; product-owner review of the shipped interaction and
 reconciling the final documentation completes M5.5. A

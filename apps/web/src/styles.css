@@ -3636,26 +3636,6 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   padding-top: 0.85rem;
 }
 
-.item-choice-panel {
-  border-bottom: 1px solid var(--border);
-  display: grid;
-  gap: 0.5rem;
-  padding-bottom: 0.85rem;
-}
-
-.item-choice-locked {
-  align-items: center;
-  display: flex;
-  gap: 0.4rem;
-}
-
-.item-choice-locked .icon {
-  color: var(--muted);
-  flex: 0 0 auto;
-  height: 0.9rem;
-  width: 0.9rem;
-}
-
 .candidate-unavailable {
   background: var(--warning-soft);
   border-left: 3px solid currentColor;

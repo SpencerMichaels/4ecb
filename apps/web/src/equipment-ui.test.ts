@@ -614,16 +614,16 @@ describe("equipment catalog presentation", () => {
     });
 
     expect(inventoryDisplayName(holding(leather, gloaming), index)).toBe(
-      "+1 Gloaming Leather Armor",
+      "Gloaming Leather Armor +1",
     );
     expect(inventoryDisplayName(holding(greatbow, speed), index)).toBe(
-      "+2 Greatbow of Speed",
+      "Greatbow of Speed +2",
     );
     expect(inventoryDisplayName(holding(leather, magicArmor), index)).toBe(
-      "+1 Leather Armor",
+      "Leather Armor +1",
     );
     expect(inventoryDisplayName(holding(greatbow, magicWeapon), index)).toBe(
-      "+1 Greatbow",
+      "Greatbow +1",
     );
     expect(inventoryDisplayName(holding(heavyShield, stormShield), index)).toBe(
       "Storm Heavy Shield",
@@ -634,6 +634,65 @@ describe("equipment catalog presentation", () => {
         index,
       ),
     ).toBe("Grandmother's armor");
+  });
+
+  it("appends a resolved item-owned choice in parentheses, after the +N bonus", () => {
+    const base = entity("BANDED", "Banded Mail", "Armor");
+    const enchantment = entity(
+      "RESISTANCE",
+      "Armor of Resistance +2",
+      "Magic Item",
+    );
+    const fire = entity(
+      "FIRE",
+      "Armor of Resistance +2 (Fire)",
+      "Class Feature",
+    );
+    const byId = new Map(
+      [base, enchantment, fire].map((item) => [
+        item.id.toLocaleLowerCase(),
+        item,
+      ]),
+    );
+    const resolvedChild = {
+      id: "web:choice",
+      identity: { definitionId: fire.id, name: fire.name, type: fire.type },
+      acquiredLevel: 1,
+      legality: "rules-legal" as const,
+      children: [],
+      unresolved: false,
+    };
+    const resolvedEntry: BuildInventoryEntry = {
+      id: "owned",
+      acquiredLevel: 1,
+      quantity: 1,
+      equippedQuantity: 0,
+      elements: [
+        { definitionId: base.id, name: base.name, type: base.type },
+        {
+          definitionId: enchantment.id,
+          name: enchantment.name,
+          type: enchantment.type,
+          children: [resolvedChild],
+        },
+      ],
+      overrides: {},
+      legality: "rules-legal",
+    };
+    expect(inventoryDisplayName(resolvedEntry, byId)).toBe(
+      "Banded Mail of Resistance +2 (Fire)",
+    );
+
+    const { children: _children, ...enchantmentWithoutChoice } =
+      resolvedEntry.elements[1]!;
+    void _children;
+    const unresolvedEntry: BuildInventoryEntry = {
+      ...resolvedEntry,
+      elements: [resolvedEntry.elements[0]!, enchantmentWithoutChoice],
+    };
+    expect(inventoryDisplayName(unresolvedEntry, byId)).toBe(
+      "Banded Mail of Resistance +2",
+    );
   });
 
   it("pairs armor and weapon enchantments only with compatible bases", () => {

@@ -156,7 +156,7 @@ export function formatInventoryItemName(
           ? stem.replace(replaceable, base.name)
           : `${stem} ${base.name}`;
       }
-      return `+${bonus} ${composed.replaceAll(/\s+/gu, " ").trim()}`;
+      return `${composed.replaceAll(/\s+/gu, " ").trim()} +${bonus}`;
     }
   }
 
@@ -642,19 +642,6 @@ export type CharacterCommand =
       readonly keepLargeAmountsInGold?: boolean;
     }
   | {
-      /**
-       * Sets one item-owned choice slot (for example Armor of Resistance's
-       * damage type) on an already-owned holding. Distinct from "choose"
-       * because item-owned children live under BuildInventoryElement, not the
-       * level/grabbag occurrence tree that updateOccurrence walks.
-       */
-      readonly kind: "choose-inventory-child";
-      readonly entryId: string;
-      readonly elementIndex: number;
-      readonly index: number;
-      readonly occurrence: BuildOccurrence;
-    }
-  | {
       readonly kind: "set-text";
       readonly name: string;
       readonly value: string;
@@ -987,28 +974,6 @@ export function applyCharacterCommand(
           );
       }
       return updated;
-    }
-    case "choose-inventory-child": {
-      if (!Number.isInteger(command.elementIndex) || command.elementIndex < 0)
-        throw new Error("Element index must be a non-negative integer");
-      if (!Number.isInteger(command.index) || command.index < 0)
-        throw new Error("Choice index must be a non-negative integer");
-      const entry = exactInventoryEntry(build.inventory, command.entryId);
-      const element = entry.elements[command.elementIndex];
-      if (element === undefined)
-        throw new Error(
-          `Inventory element not found: ${command.entryId}:${command.elementIndex}`,
-        );
-      const children = [...(element.children ?? [])];
-      children[command.index] = command.occurrence;
-      const elements = [...entry.elements];
-      elements[command.elementIndex] = { ...element, children };
-      return {
-        ...build,
-        inventory: build.inventory.map((current) =>
-          current.id === command.entryId ? { ...current, elements } : current,
-        ),
-      };
     }
     case "sell-inventory": {
       assertCopperPrice(command.priceCopper);

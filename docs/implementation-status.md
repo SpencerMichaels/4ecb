@@ -1,5 +1,65 @@
 # Implementation status
 
+## Item-owned choice design simplification, round 3 (2026-09-24)
+
+Further product-owner review simplified the design rather than continuing to
+patch it:
+
+- **A resolved item-owned choice now shows in the item's own display name**,
+  as a parenthesized suffix — `Banded Mail of Resistance +2 (Fire)` — instead
+  of a separate "Properties" line in the detail card. `inventoryDisplayName`
+  (`equipment-ui.ts`) appends every resolved (non-`unresolved`) child on the
+  holding's last element, stripped to its bracketed variant via the same
+  `parentheticalName` helper the pickers use, comma-joined if an item ever has
+  more than one such choice. An item with no resolved choice is unaffected.
+  This is the single shared naming path already used by Inventory, Loadout,
+  Shop, and the detail card header (`inventoryItemDetail`/`catalogItemDetail`
+  both route through it), so the change is visible everywhere consistently.
+- **The Equipment-workspace item-choice editor (previous two checkpoints) is
+  removed entirely** — the product owner judged it redundant now that the
+  name itself carries the information, given every purchase already resolves
+  its choice through the Shop wizard (mandatory before Buy/Give completes)
+  and legacy `.dnd4e` imports either already carry the recovered choice or
+  didn't in the original game either. Removed as dead code, not just hidden:
+  the `item-choice-panel` JSX and its CSS; the `onChooseInventoryChild` prop
+  threaded from `CharacterEditorPage.tsx` through `EquipmentWorkspace`/
+  `ItemDetail`; the `entry`/`entities` props `ItemDetail` only needed for
+  this; the `choose-inventory-child` `CharacterCommand` (character-domain)
+  and its reducer case; and `unresolvedInventoryItemChoices` (rules-engine),
+  which in fact had no other caller even before this round. The Shop
+  purchase-time wizard (page 1 of the acquisition dialog) is unaffected and
+  remains the only way a choice is made — this is a real, acknowledged scope
+  reduction: an already-owned holding whose choice was never resolved (never
+  actually observed, but theoretically possible from an unusual import) now
+  has no in-app editor. `itemChoiceSlots`/`itemChoiceCandidates`/
+  `CompactChoiceButtons` remain in Shop's own dialog, which still needs them.
+- **The composed bonus prefix is now a suffix, matching the legacy builder's
+  "Item +X" convention, for every item type.** `formatInventoryItemName`
+  (character-domain) previously special-cased armor/weapon/implement
+  composition to read `+2 Banded Mail of Resistance`; other item types
+  already displayed correctly because they fall through to using the raw
+  (already suffix-authored) entity name unchanged. Changed the one line
+  constructing the composed name so armor/weapon/implement items match
+  everything else: `Banded Mail of Resistance +2`. Confirmed this is
+  display-only — `formatInventoryItemName` has exactly three callers
+  (`equipment-ui.ts`'s `inventoryDisplayName`, `sheet-model`'s card/equipment
+  labels, and its own tests); `legacy-dnd4e`'s byte-preserving export does
+  not call it, so the legacy-compatibility export contract is untouched.
+- Verification: updated/added unit tests across `character-domain`,
+  `equipment-ui.test.ts`, `sheet-model`, and `EquipmentWorkspace.test.ts` for
+  the suffix ordering and the parenthesized-choice suffix (including the
+  ordering between them: bonus before choice). Full public suite: 539/539
+  tests (down from 546 — 8 removed with the deleted editor, all replaced or
+  superseded by the naming tests), typechecks, lint, production/PWA build,
+  and the print/style-contract gate all pass (`scripts/check.sh`). Manual
+  end-to-end verification through a production build via raw CDP: buying an
+  item needing only its own choice (no base pairing) now shows
+  "Armor of Probing (Fire)" in Inventory; buying one needing both a
+  choice and a base-item pairing (through the two-page wizard, unaffected)
+  shows the full composed form, "Public Bastard Sword of Probing +2 (Fire)";
+  clicking either item in Equipment confirms no Properties panel renders. No
+  console errors.
+
 ## Item-owned choice product-owner review fixes, round 2 (2026-09-24)
 
 Four more issues from continued product-owner review, all fixed and verified:

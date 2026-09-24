@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   applyCharacterCommand,
   characterWalletTextKey,
-  type BuildInventoryEntry,
   type CharacterBuild,
 } from "@4ecb/character-domain";
 import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
@@ -13,7 +12,6 @@ import {
   commandForEvaluatedChoice,
   itemChoiceSlots,
   projectBuildForEvaluation,
-  unresolvedInventoryItemChoices,
 } from "./build-projection";
 import { evaluateCharacter } from "./evaluator";
 
@@ -770,93 +768,12 @@ describe("build projection", () => {
       statement("select", { type: "Class Feature", number: "1" }, 0),
     ]);
     const plainItem = entity("PLAIN", "Plain Armor", "Magic Item");
-    const content = [resistanceItem, plainItem];
 
     it("reads an item's own choice slots purely from content, independent of any character", () => {
       expect(itemChoiceSlots(resistanceItem)).toEqual([
         { ruleOrdinal: 0, choiceIndex: 0, type: "Class Feature" },
       ]);
       expect(itemChoiceSlots(plainItem)).toEqual([]);
-    });
-
-    it("finds an owned holding whose item-owned choice was never made", () => {
-      const inventory: BuildInventoryEntry[] = [
-        {
-          id: "loot",
-          acquiredLevel: 1,
-          quantity: 1,
-          equippedQuantity: 0,
-          elements: [
-            {
-              definitionId: "ITEM",
-              name: "Armor of Resistance",
-              type: "Magic Item",
-            },
-          ],
-          overrides: {},
-          legality: "rules-legal",
-        },
-      ];
-      expect(unresolvedInventoryItemChoices(inventory, content)).toEqual([
-        {
-          entryId: "loot",
-          elementIndex: 0,
-          definitionId: "ITEM",
-          slot: { ruleOrdinal: 0, choiceIndex: 0, type: "Class Feature" },
-        },
-      ]);
-    });
-
-    it("does not flag a holding whose item-owned choice is already stored", () => {
-      const inventory: BuildInventoryEntry[] = [
-        {
-          id: "loot",
-          acquiredLevel: 1,
-          quantity: 1,
-          equippedQuantity: 0,
-          elements: [
-            {
-              definitionId: "ITEM",
-              name: "Armor of Resistance",
-              type: "Magic Item",
-              children: [
-                {
-                  id: "poison",
-                  identity: {
-                    definitionId: "POISON",
-                    name: "Poison",
-                    type: "Class Feature",
-                  },
-                  acquiredLevel: 1,
-                  legality: "rules-legal",
-                  children: [],
-                  unresolved: false,
-                },
-              ],
-            },
-          ],
-          overrides: {},
-          legality: "rules-legal",
-        },
-      ];
-      expect(unresolvedInventoryItemChoices(inventory, content)).toEqual([]);
-    });
-
-    it("does not flag an item with no choice-granting rules", () => {
-      const inventory: BuildInventoryEntry[] = [
-        {
-          id: "loot",
-          acquiredLevel: 1,
-          quantity: 1,
-          equippedQuantity: 0,
-          elements: [
-            { definitionId: "PLAIN", name: "Plain Armor", type: "Magic Item" },
-          ],
-          overrides: {},
-          legality: "rules-legal",
-        },
-      ];
-      expect(unresolvedInventoryItemChoices(inventory, content)).toEqual([]);
     });
   });
 });

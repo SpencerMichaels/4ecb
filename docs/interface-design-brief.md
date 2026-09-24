@@ -420,14 +420,16 @@ visible Loadout order. A necessary displacement requires confirmation, and
 unresolved historical slot identity remains untouched. Known
 rituals/formulas/practices and quantity-bearing scrolls remain distinct.
 Spellbook alternates stay in Build. Item-owned configuration (for example an
-Armor of Resistance damage type) is evaluable, recoverable, and now editable
-in this workspace (2026-09-24): the shared item inspector shows an
-unresolved item-owned choice as a small chooser and a resolved one as a
-locked row, without changing its rules occurrence or legacy export topology.
-A Shop purchase whose item grants its own choice prompts for it at purchase
-time instead, using the same base-item picker pattern; once made, a choice
-is fixed for the life of the item and is not re-editable through either
-surface.
+Armor of Resistance damage type) is evaluable and recoverable without
+changing its rules occurrence or legacy export topology. A Shop purchase
+whose item grants its own choice prompts for it at purchase time, as the
+first page of the acquisition dialog, before any compatible-base-item
+pairing; once made, a choice is fixed for the life of the item. A resolved
+choice displays as a parenthesized suffix on the item's own name — `Banded
+Mail of Resistance +2 (Fire)` — everywhere that name is shown (Inventory,
+Loadout, Shop, the shared item inspector), rather than as a separate editor
+surface in this workspace (2026-09-24: an initial separate-editor design was
+replaced with this simpler one the same day).
 
 M5.5 closure applies the same focused review standard to the under-refined tabs:
 
@@ -439,9 +441,9 @@ M5.5 closure applies the same focused review standard to the under-refined tabs:
   Buy and Give are independent row actions; nonpurchaseable records keep a
   disabled Buy control and an active Give control.
 - Each workspace receives a live full-profile workflow pass and product-owner
-  approval; item-owned choices now live here (both the purchase-time Shop
-  prompt and the Equipment-workspace editor for already-owned holdings) without
-  changing their rules occurrence or legacy export topology.
+  approval; item-owned choices are resolved at Shop purchase time and shown as
+  part of the item's own name everywhere it is displayed, without changing
+  their rules occurrence or legacy export topology.
 
 ## Validation sequencing
 

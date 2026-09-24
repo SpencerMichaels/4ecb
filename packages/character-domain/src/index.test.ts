@@ -285,24 +285,26 @@ describe("character records", () => {
   });
 
   it("formats composed magic equipment as a single display name", () => {
+    // The +N bonus is a suffix, matching the legacy builder's "Item +X"
+    // convention, not a prefix — see docs/implementation-status.md.
     expect(
       formatInventoryItemName([
         { name: "Leather Armor", type: "Armor" },
         { name: "Gloaming Armor +1", type: "Magic Item" },
       ]),
-    ).toBe("+1 Gloaming Leather Armor");
+    ).toBe("Gloaming Leather Armor +1");
     expect(
       formatInventoryItemName([
         { name: "Greatbow", type: "Weapon" },
         { name: "Weapon of Speed +2", type: "Magic Item" },
       ]),
-    ).toBe("+2 Greatbow of Speed");
+    ).toBe("Greatbow of Speed +2");
     expect(
       formatInventoryItemName([
         { name: "Leather Armor", type: "Armor" },
         { name: "Magic Armor +1", type: "Magic Item" },
       ]),
-    ).toBe("+1 Leather Armor");
+    ).toBe("Leather Armor +1");
     expect(
       formatInventoryItemName([
         { name: "Heavy Shield", type: "Armor" },
@@ -320,7 +322,7 @@ describe("character records", () => {
         { name: "leather armor", type: "Armor" },
         { name: "gloaming armor +1", type: "Magic Item" },
       ]),
-    ).toBe("+1 gloaming leather armor");
+    ).toBe("gloaming leather armor +1");
     expect(
       formatInventoryItemName([
         { name: "Light Shield", type: "Armor" },
@@ -671,70 +673,6 @@ describe("character records", () => {
         },
       ),
     ).toThrow("Sale percentage");
-  });
-
-  it("sets an item-owned choice on an already-owned holding", () => {
-    const owned: CharacterBuild = {
-      ...build,
-      inventory: [inventoryEntry("resistance")],
-    };
-    const chosen = {
-      id: "poison-choice",
-      identity: {
-        definitionId: "POISON",
-        name: "Poison",
-        type: "Class Feature",
-      },
-      acquiredLevel: 1,
-      legality: "rules-legal" as const,
-      children: [],
-      unresolved: false,
-    };
-    const updated = applyCharacterCommand(owned, {
-      kind: "choose-inventory-child",
-      entryId: "resistance",
-      elementIndex: 0,
-      index: 0,
-      occurrence: chosen,
-    });
-    expect(updated.inventory[0]?.elements[0]?.children).toEqual([chosen]);
-    // Unrelated holdings and fields are untouched.
-    expect(updated.inventory[0]).toMatchObject({
-      id: "resistance",
-      quantity: 1,
-      equippedQuantity: 0,
-    });
-
-    const replaced = applyCharacterCommand(updated, {
-      kind: "choose-inventory-child",
-      entryId: "resistance",
-      elementIndex: 0,
-      index: 0,
-      occurrence: { ...chosen, identity: { ...chosen.identity, name: "Fire" } },
-    });
-    expect(replaced.inventory[0]?.elements[0]?.children).toHaveLength(1);
-    expect(
-      replaced.inventory[0]?.elements[0]?.children?.[0]?.identity.name,
-    ).toBe("Fire");
-
-    expect(() =>
-      applyCharacterCommand(owned, {
-        kind: "choose-inventory-child",
-        entryId: "missing",
-        elementIndex: 0,
-        index: 0,
-        occurrence: chosen,
-      }),
-    ).toThrow("Inventory entry not found");
-    expect(() =>
-      applyCharacterCommand(owned, {
-        kind: "choose-inventory-child",
-        entryId: "resistance",
-        elementIndex: 5,
-        index: 0,
-        occurrence: chosen,
-      }),
-    ).toThrow("Inventory element not found");
   });
 
   it("keeps the historical occurrence when retraining into a later frame", () => {

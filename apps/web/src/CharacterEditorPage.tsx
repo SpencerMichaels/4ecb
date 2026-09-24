@@ -2329,20 +2329,6 @@ export function CharacterEditorPage({
               });
               return undefined;
             }}
-            onChooseInventoryChild={(
-              entryId,
-              elementIndex,
-              index,
-              occurrence,
-            ) =>
-              dispatch({
-                kind: "choose-inventory-child",
-                entryId,
-                elementIndex,
-                index,
-                occurrence,
-              })
-            }
           />
         )}
       </div>

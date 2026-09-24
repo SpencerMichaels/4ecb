@@ -14,7 +14,7 @@ import {
   type ItemChoiceSlot,
 } from "@4ecb/rules-engine";
 
-import { contentSpecificValue } from "./builder-ui";
+import { contentSpecificValue, parentheticalName } from "./builder-ui";
 import type { IconName } from "./Icon";
 import { isAuthoredShield, LOADOUT_SLOT_ICONS } from "./item-icons";
 
@@ -804,7 +804,27 @@ export function inventoryDisplayName(
       type: definition?.type ?? type,
     };
   });
-  return formatInventoryItemName(elements, entry.name);
+  const base = formatInventoryItemName(elements, entry.name);
+  // An item-owned choice (e.g. an Armor of Resistance damage type) is fixed
+  // for the life of the item once made; show it as a parenthesized suffix
+  // rather than a separate editor, matching "Name +X (Choice)".
+  const resolvedChoices = (entry.elements.at(-1)?.children ?? []).flatMap(
+    (child) => {
+      if (child.unresolved) return [];
+      const definitionId = child.identity.definitionId;
+      const resolvedEntity =
+        definitionId === undefined
+          ? undefined
+          : byId.get(definitionId.toLocaleLowerCase());
+      const name = resolvedEntity?.name ?? child.identity.name;
+      return name.length === 0
+        ? []
+        : [parentheticalName(name)?.variant ?? name];
+    },
+  );
+  return resolvedChoices.length === 0
+    ? base
+    : `${base} (${resolvedChoices.join(", ")})`;
 }
 
 export function inventorySlotCandidates(
