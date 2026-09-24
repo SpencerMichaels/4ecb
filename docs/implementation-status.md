@@ -9,9 +9,11 @@ migration preview and explicit adoption are implemented, and the product owner
 successfully opened, saved, and reopened several regenerated real level-8
 characters in the original builder. Functional print regression coverage is complete in
 Chromium and Firefox. M5.5 now owns builder and Equipment design closure;
-M5.6 owns the browser View and desktop/tablet Play foundation; supported-client
-release checks belong to M9; and the comprehensive accessibility matrix belongs
-to post-1.0 M10. The installable PWA, update/offline
+M5.6 owns the browser View and desktop/tablet Play foundation; a lightweight
+best-effort browser check belongs to M9. This project does not run a formal
+cross-browser/device support matrix or an accessibility-certification program
+(decision D063); continuous structural safeguards remain required throughout.
+The installable PWA, update/offline
 UX, content onboarding, public-distribution boundary, production Docker guide,
 and authoritative exact-profile browser sheet are verified checkpoints.
 The content model now supports an administrator-advertised immutable baseline

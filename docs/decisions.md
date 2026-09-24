@@ -1119,7 +1119,9 @@ combobox.
 
 ### D054 — Sheet/play foundation precedes phone adaptation; comprehensive accessibility certification follows 1.0
 
-**Status:** accepted
+**Status:** the sheet/play-before-phone sequencing remains accepted; the
+"comprehensive accessibility certification follows 1.0" scope is superseded by
+D063 — there is no such certification pass at all, not even post-1.0.
 
 **Date:** 2026-09-18
 
@@ -1393,6 +1395,50 @@ AST, and `scripts/benchmark-query.ts`'s budgets/evidence (still exercised by
 browser worker wiring around it. A future feature that needs full-text/facet
 query over the compendium can still build a new worker client against the
 existing package.
+
+### D063 — No formal accessibility-certification or cross-client support-matrix program
+
+**Status:** accepted
+
+**Date:** 2026-09-23
+
+**Supersedes:** the certification scope of D054 and M10 as originally written
+in `roadmap.md`.
+
+This project's actual audience is the product owner and a small group of
+hobbyist players who mostly interact with the product owner directly — not a
+public commercial release with compliance obligations. The roadmap previously
+carried a dedicated post-1.0 milestone (M10) for formal accessibility
+certification (end-to-end keyboard-only audits, screen-reader testing against
+a documented browser/assistive-technology matrix, 200% zoom/reflow across
+desktop/tablet/phone, and a public accessibility statement), plus matching
+formal-support-matrix, release-signing, and relay-abuse-control-runbook
+deliverables in M9, and public-relay-operator documentation in M7. That level
+of ceremony matches a vendor with compliance or support obligations to
+strangers, not this project.
+
+M10 is removed from the roadmap. Continuous structural safeguards continue
+unchanged: semantic structure, labeled controls, ordinary keyboard operation,
+contrast, reduced motion, and responsive sizing remain required throughout
+implementation, exactly as before. What changes is that there is no dedicated
+certification pass, formal matrix, or public statement layered on top of that
+baseline — real accessibility or cross-browser complaints from actual users
+are fixed as ordinary bugs against the continuous baseline, at whatever
+priority the product owner judges appropriate, not staged into a compliance
+program.
+
+M9 keeps a security review, data-migration reliability, a lightweight
+best-effort check in whatever browsers the actual users run, and player-facing
+documentation (install, import, backup/recovery, known limitations). It drops
+release signing, a published support matrix, formal self-hoster/integration
+documentation, and a relay abuse-control runbook as separate deliverables.
+
+M7's linked-session/device-handoff feature is kept — it's genuinely useful for
+running a session with the product owner's own table — but its scope stops at
+working reliably for that group. Public-relay-operator documentation, abuse
+controls, and a self-hosted configuration guide for third parties are dropped;
+if someone outside the group ever wants to operate this themselves, that is a
+new, separately scoped ask, not something built speculatively now.
 
 ## Deferred decisions and decision points
 

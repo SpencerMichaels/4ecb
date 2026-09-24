@@ -39,7 +39,9 @@ application's architecture.
     configuration, offline/update behavior, and remaining release checks.
 13. [M5 functional closure checklist](m5-release-checklist.md) maps security,
     compatibility, durability, and functional browser/print evidence to M5, and
-    records the later M9 supported-client and post-1.0 M10 accessibility work.
+    records the later lightweight M9 browser check (this project runs no
+    formal accessibility-certification or cross-client support matrix; see
+    decision D063).
 14. [User guide and recovery handbook](user-guide.md) covers installation,
     private content, character/profile workflows, compatibility export, sheets,
     backup/restore, updates, recovery, and current limitations.

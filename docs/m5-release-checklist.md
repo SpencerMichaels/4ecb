@@ -2,9 +2,10 @@
 
 This is the durable functional closure matrix for the first offline builder MVP.
 It deliberately does not make exhaustive UI, device, assistive-technology, or
-cross-engine visual validation an M5 blocker. Supported-client release checks
-belong to M9 and the comprehensive accessibility matrix to post-1.0 M10. A green
-automated test is evidence only for its stated boundary.
+cross-engine visual validation an M5 blocker. A lightweight best-effort browser
+check belongs to M9; this project does not run a formal cross-browser/device or
+accessibility-certification matrix (see decision D063). A green automated test
+is evidence only for its stated boundary.
 
 ## Public automated gate
 
@@ -162,21 +163,23 @@ engine/query budgets remain active during M5.
 Safari/device print execution and cross-engine raster inspection belong to 1.0
 hardening. They do not block the functional M5 boundary.
 
-## Deferred comprehensive accessibility and release-client matrices
+## Deferred release-client checks
 
 The following work is intentionally recorded here for continuity but does not
 block M5:
 
-- Post-1.0 M10: complete keyboard-only traversal, screen-reader announcement and
-  validation-summary testing, 200% zoom/reflow, touch-target review, and final
-  accessibility review across the selected matrix.
-- M9: full supported-client workflows, Safari/device print and cross-engine
-  raster inspection, and representative supported-device interaction/rendering
-  timings.
+- M9: a lightweight best-effort check in whatever browsers the actual users
+  run, Safari/device print and cross-engine raster inspection, and
+  representative supported-device interaction/rendering timings.
+
+This project does not run a formal keyboard-only/screen-reader/zoom/
+touch-target accessibility-certification matrix at any point, post-1.0 or
+otherwise (see decision D063); continuous structural safeguards remain
+required throughout, and real reported problems are fixed as ordinary bugs.
 
 M5 is not complete while an unchecked item in its functional, security,
-compatibility, or durability sections maps to an M5 exit criterion. Items in
-this deferred section are owned by M9 and M10 as stated.
+compatibility, or durability sections maps to an M5 exit criterion. The item
+in this deferred section is owned by M9 as stated.
 
 ## M5 exit-criterion evidence map
 

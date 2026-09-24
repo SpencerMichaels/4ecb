@@ -213,9 +213,10 @@ users explicitly compose/adopt personal overlays above it. Materialized profile
 digests and ordered layer bindings preserve existing character behavior.
 The public import/rendering security pass, automated storage durability matrix,
 and route-focus/contrast/responsive structural baseline are complete.
-Comprehensive keyboard-only, screen-reader, zoom/reflow, and touch-target
-execution is deliberately post-1.0 work. Supported-client release smoke remains
-part of 1.0 hardening. The user
+Exhaustive keyboard-only, screen-reader, zoom/reflow, and touch-target testing
+across a formal matrix is not part of this project's plan (see decision D063);
+continuous structural safeguards remain, and real reported problems are fixed
+as ordinary bugs. The user
 and recovery handbook now covers installation,
 private content, profile migration, import/export, sheets, storage, updates,
 recovery, and the known release limitations required by exit criterion 10.
@@ -301,26 +302,25 @@ All of the following must be true:
    corpus.
 9. Core workflows pass automated and live functional checks in the primary
    development browser, while semantic structure, labeled controls, basic
-   keyboard operation, and non-forced viewport sizing remain intact. Exhaustive
-   cross-browser visual validation is a 1.0 hardening concern, and the
-   comprehensive assistive-technology, keyboard-only, touch, and zoom matrix is
-   a post-1.0 certification concern.
+   keyboard operation, and non-forced viewport sizing remain intact. This
+   project does not run a formal cross-browser/device or
+   assistive-technology-matrix certification (see decision D063).
 10. Installation, content import, backup, recovery, upgrade, and known
     compatibility limitations are documented.
 
 **Release characterization:** functional MVP / core builder release; designed
 Builder/Equipment design closure follows in M5.5; sheet/play design follows in
-M5.6; broad support testing is staged in M9 and M10.
+M5.6; a lightweight stabilization pass is staged in M9.
 
 ## M5.5 — Builder and Equipment interface closure
 
 The product-owner direction for this milestone is recorded in
 [`interface-design-brief.md`](interface-design-brief.md). Product design and
-prototype approval precede the sheet/play foundation milestone. Comprehensive
-assistive-technology, keyboard-only, zoom/reflow, and touch-target certification
-is post-1.0 work; structural accessibility and ordinary keyboard operation
-remain continuous constraints. Broad supported-client release testing remains
-part of 1.0 hardening.
+prototype approval precede the sheet/play foundation milestone. This project
+does not run a formal assistive-technology/keyboard/zoom/touch-target
+certification matrix (see decision D063); structural accessibility and
+ordinary keyboard operation remain continuous constraints, and a lightweight
+best-effort browser check remains part of M9.
 
 ### Goal
 
@@ -463,9 +463,10 @@ received accepted product-owner passes. The combined Shop and ritual/practice
 interface received its production live-review approval on 2026-09-22 after
 visual reconciliation with the accepted prototype. Unavailable-option browsing
 and item-owned Equipment choices still require their final interfaces. Closing
-those items and reconciling the final documentation completes M5.5. Broad
-release-client testing belongs to M9 and the comprehensive accessibility matrix
-to post-1.0 M10.
+those items and reconciling the final documentation completes M5.5. A
+lightweight best-effort browser check belongs to M9; this project does not run
+a formal release-client or accessibility-certification matrix (see decision
+D063).
 
 ## M5.6 — Character sheet and local-play foundation
 
@@ -540,19 +541,26 @@ without requiring networking.
 ### Goal
 
 Connect desktop, phone, and future DM clients without adding accounts or central
-character storage.
+character storage. This is for the product owner's own table, not a public
+relay service, so the deliverables below stop at "works reliably for that
+group," not a hosted-service operator's product.
 
 ### Deliverables
 
 - Versioned `session-protocol` and capability model.
 - QR-based encrypted one-time device handoff.
-- WebSocket relay with opaque envelopes, TTL, limits, health checks, and Docker
-  deployment.
+- WebSocket relay with opaque envelopes, TTL, limits, and Docker deployment
+  for self-hosting by the product owner.
 - Player, DM, and read-only session capabilities.
 - Command ordering, acknowledgement, retry, encrypted snapshots, late join,
   disconnect, and resynchronization behavior.
 - Player-visible remote-operation audit history.
-- Public-relay operator documentation and self-hosted configuration.
+
+Formal public-relay-operator documentation, abuse controls, and a self-hosted
+configuration guide for third parties are not part of this milestone — a brief
+note on running the provided Docker image is enough. If someone else ever
+wants to operate this for their own table, that's a later, separately scoped
+ask.
 
 ### Exit criteria
 
@@ -596,64 +604,45 @@ Make supported customization convenient rather than file-format-only.
 - A custom pack and campaign profile can be backed up, shared, imported, and
   upgraded independently of characters.
 
-## M9 — 1.0 product hardening
+## M9 — 1.0 stabilization
 
 ### Goal
 
-Declare the complete character-builder product stable and supportable.
+Declare the character-builder product stable for its actual audience: the
+product owner and a small group of hobbyist players who mostly interact with
+the product owner directly. This is not a public commercial release, so this
+milestone is not a formal compliance/support-matrix exercise; it closes out
+reliability and the things that would actually hurt a friend's saved
+character.
 
 ### Deliverables
 
-- Compatibility backlog triage and documented support matrix.
-- Schema/protocol stability commitments and migration policy.
-- Recovery and diagnostics UI, security review, structural accessibility review,
-  supported-client workflow checks, and production performance pass.
-- Relay abuse controls and operational runbook.
-- Complete player, content-author, self-hoster, and integration documentation.
-- Release/upgrade/rollback process and signed artifacts where infrastructure
-  permits.
-- A dedicated visual-refinement pass conducted through short prototype and
-  review cycles with the product owner, covering typography, color, density,
-  iconography, character sheets, responsive details, and restrained motion.
+- Recovery and diagnostics UI, a security review (untrusted content/import
+  handling), and a production performance spot-check.
+- Schema/protocol migration policy: content packs, play bundles, and the
+  session protocol keep working across updates without silent data loss.
+- Player-facing documentation: installation, content import, backup/recovery,
+  and known limitations, written for people who actually use the tool.
+- A dedicated visual-refinement pass with the product owner (typography,
+  color, density, iconography, character sheets, responsive details, motion).
+- A best-effort pass in whatever browsers the actual users run, fixing real
+  reported problems rather than auditing a formal client matrix.
 
-### Final-product exit criteria
-
-- All capabilities in the final-product definition are shipped and documented.
-- No known issue risks silent character-data loss or silent rules corruption.
-- Native data, content packs, play bundles, and session protocol have documented
-  versions and tested forward migration.
-- The application remains fully useful for building and local play with the
-  relay disabled.
-- The future DM application has a stable, tested integration contract.
-- Public and self-hosted deployment paths have repeatable release checks and
-  recovery procedures.
-
-## M10 — Post-1.0 comprehensive accessibility certification
-
-### Goal
-
-Measure and improve the stable product against a comprehensive accessibility
-matrix without making that matrix a prerequisite for the 1.0 release.
-
-### Deliverables
-
-- End-to-end keyboard-only workflow audits across builder, Equipment, View,
-  Play, custom-content, and recovery surfaces.
-- Screen-reader announcement, status, validation, table, dialog, and dynamic
-  update testing against a documented browser/assistive-technology matrix.
-- 200% zoom/reflow, touch-target, reduced-motion, contrast, and non-color-state
-  review on representative desktop, tablet, and phone layouts.
-- Prioritized remediation records, regression coverage, and an explicit support
-  statement for combinations that were actually tested.
+Formal self-hoster/integration documentation, release signing, a published
+support matrix, and a relay abuse-control runbook are not part of this
+milestone — they're vendor-facing ceremony this project doesn't need. If a
+future DM client is actually built, its integration contract gets whatever
+documentation that work needs at the time, not speculatively here.
 
 ### Exit criteria
 
-- Every principal workflow has recorded keyboard-only, screen-reader, and
-  zoom/reflow evidence for the selected matrix.
-- Discovered blockers are fixed or documented with a concrete remediation plan
-  and an accessible fallback.
-- The public accessibility statement accurately distinguishes continuous
-  structural safeguards from combinations verified by this certification pass.
+- No known issue risks silent character-data loss or silent rules corruption.
+- Content packs, play bundles, and the session protocol survive an update
+  without breaking existing saved data.
+- The application remains fully useful for building and local play with the
+  relay disabled.
+- Player-facing documentation covers install, import, backup/recovery, and
+  known limitations.
 
 ## Cross-cutting workstreams
 
@@ -672,9 +661,11 @@ The following are continuous rather than deferred to a cleanup milestone:
 Visual polish and exhaustive interface validation are intentionally not
 continuous speculative workstreams during early implementation. Each milestone
 must preserve sound semantic structure and usable functional controls. Product
-design is closed through focused owner review; broad supported-client checks
-belong to 1.0 hardening, and the comprehensive accessibility matrix belongs to
-the post-1.0 M10 certification pass.
+design is closed through focused owner review. This project does not run a
+formal cross-browser/device support matrix or an accessibility certification
+program (see decision D063): real accessibility or compatibility complaints
+from actual users get fixed as ordinary bugs against the continuous structural
+baseline above, not staged into a dedicated audit milestone.
 
 ## Historical first implementation slice
 
