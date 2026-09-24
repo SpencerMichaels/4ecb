@@ -446,8 +446,15 @@ filtered variants, base/enchantment IDs, and transaction identity remain
 unchanged. Known rituals/formulas/practices are distinct from quantity-bearing
 scrolls, and Spellbook remains in Build. Dependent hand/ring movement,
 holy-symbol/implement exceptions, augments, package lots, automatic/custom
-equipment, and item-owned choice editing remain named follow-up work rather
-than silently approximated native parity.
+equipment remain named follow-up work rather than silently approximated
+native parity. Item-owned choice editing (for example an Armor of
+Resistance damage type) is implemented (2026-09-24): a Shop purchase whose
+item grants its own choice prompts for it at purchase time using the same
+picker pattern as the base-item modal, and any owned holding with a
+still-unresolved item-owned choice surfaces an inline chooser in the shared
+Equipment/Loadout/Shop detail card; once made, the choice displays locked
+and is not re-editable, matching the product owner's stated real-world
+model that these are fixed for the life of the item.
 
 Builder navigation now participates in browser Back/Forward at the page-like
 boundary: all five workspace tabs, Build levels and choice sections, and the
@@ -462,10 +469,12 @@ detail-card system, navigation, candidate tables, and header statistics have all
 received accepted product-owner passes. The combined Shop and ritual/practice
 interface received its production live-review approval on 2026-09-22 after
 visual reconciliation with the accepted prototype. Every candidate table now
-carries a focused, per-choice illegal-option toggle (2026-09-24); see
-[implementation-status.md](implementation-status.md) for the checkpoint.
-Item-owned Equipment choices still require their final interface. Closing that
-item and reconciling the final documentation completes M5.5. A
+carries a focused, per-choice illegal-option toggle, and item-owned Equipment
+choices now have their purchase-time prompt and Equipment-workspace editor
+(both 2026-09-24); see [implementation-status.md](implementation-status.md)
+for the checkpoints. Both named M5.5 closure items are therefore implemented
+and verified; product-owner review of the shipped interaction and
+reconciling the final documentation completes M5.5. A
 lightweight best-effort browser check belongs to M9; this project does not run
 a formal release-client or accessibility-certification matrix (see decision
 D063).

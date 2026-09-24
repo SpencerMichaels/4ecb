@@ -1,5 +1,45 @@
 # Implementation status
 
+## Equipment-workspace item-owned choice editor checkpoint (2026-09-24)
+
+- Closes the M5.5 item-owned-choice deliverable's second half. The shared
+  `ItemDetail` card (used identically by Inventory, Loadout, and Shop) now
+  accepts an optional owned `entry` plus `entities`/`onChooseInventoryChild`.
+  When the inspected holding's own element has unresolved `itemChoiceSlots`,
+  it renders a "Properties" panel: one radiogroup per unresolved slot
+  (candidates via the same `itemChoiceCandidates` helper the Shop dialog
+  uses, now shared in `equipment-ui.ts`), or, once a slot has a resolved
+  child, a locked read-only row (lock icon + slot label + chosen name) that
+  is not re-editable — matching the product owner's "fixed at purchase,
+  forever" model. Selecting a candidate dispatches the new
+  `choose-inventory-child` command directly.
+- `EquipmentWorkspace` tracks the inspected holding by `entryId` (not just
+  the earlier detail snapshot) and re-derives the live `BuildInventoryEntry`
+  from `build.inventory` on every render, so a choice made in the panel
+  flips to locked immediately without needing to re-click the row. Shop
+  catalog inspection (not an owned holding) continues to clear this and
+  shows no properties panel, matching that a not-yet-purchased item has
+  nothing to edit here — its own prompt is the purchase-time modal from the
+  previous checkpoint.
+- Verification: three new `EquipmentWorkspace.test.ts` cases (unresolved
+  slot offers every candidate, a resolved slot renders locked and not as a
+  radio input, catalog inspection omits the panel entirely) plus the
+  existing `equipment-ui.test.ts`/`ShopWorkspace.test.ts` suites, all
+  passing. Full public suite: 542/542 tests, workspace typechecks, lint,
+  production/PWA build, and Chromium/Firefox print checks all pass
+  (`scripts/check.sh`). Manual end-to-end verification extended the prior
+  checkpoint's public probe fixture with a second, pre-owned holding that
+  has the item's `select` rule but no stored child (simulating an import or
+  a purchase made before this existed), driven through a production preview
+  build via raw CDP: opening it in Equipment shows the properties panel with
+  both candidates and no lock; clicking "Resist Poison" flips it to
+  "🔒 Class Feature: Resist Poison" in the same render pass, with no
+  options remaining and no console errors.
+- This closes both named M5.5 item-owned-choice deliverables (purchase-time
+  prompt and Equipment-workspace editor). What remains for M5.5 overall is
+  product-owner review of the shipped interaction and reconciling the final
+  milestone documentation — see `docs/roadmap.md`'s M5.5 closure status.
+
 ## Shop purchase-time item-owned choice checkpoint (2026-09-24)
 
 - The Shop acquisition flow now prompts for an item's own choices (for

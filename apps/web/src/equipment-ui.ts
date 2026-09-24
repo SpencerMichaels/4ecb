@@ -7,6 +7,7 @@ import {
   type EquipmentSlotId,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
+import type { ItemChoiceSlot } from "@4ecb/rules-engine";
 
 import { contentSpecificValue } from "./builder-ui";
 import type { IconName } from "./Icon";
@@ -1288,6 +1289,22 @@ export function compatibleBaseItems(
           (value === "two-handed" && hands.includes("two-handed")),
       );
     })
+    .sort((left, right) => left.name.localeCompare(right.name));
+}
+
+/** Entities eligible to fill an item-owned choice slot (for example an
+ * Armor of Resistance damage type), filtered purely by matching content
+ * type — these choices carry no prerequisite/legality gate of their own. */
+export function itemChoiceCandidates(
+  slot: ItemChoiceSlot,
+  entities: readonly ContentEntity[],
+): readonly ContentEntity[] {
+  return entities
+    .filter(
+      (candidate) =>
+        candidate.type.trim().toLocaleLowerCase() ===
+        slot.type.trim().toLocaleLowerCase(),
+    )
     .sort((left, right) => left.name.localeCompare(right.name));
 }
 

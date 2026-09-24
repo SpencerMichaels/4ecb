@@ -9,9 +9,11 @@ import {
   parseCurrencyAdjustment,
   type CurrencyAmount,
   type BuildInventoryEntry,
+  type BuildOccurrence,
   type CharacterBuild,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
+import { itemChoiceSlots } from "@4ecb/rules-engine";
 import { grantedDetailEntities } from "./builder-ui";
 import {
   ComposedArmorCardBody,
@@ -32,6 +34,7 @@ import {
   inventoryDisplayName,
   inventoryEntryForEntity,
   inventoryLoadoutToggle,
+  itemChoiceCandidates,
   inventoryRequiresBothHands,
   inventorySlotCandidates,
   resolveLoadoutAssignments,
@@ -168,10 +171,24 @@ export function ItemDetail({
   item,
   hideFlavortext,
   byId,
+  entities,
+  entry,
+  onChooseInventoryChild,
 }: {
   readonly item: InspectedItemDetail | undefined;
   readonly hideFlavortext: boolean;
   readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly entities?: readonly ContentEntity[];
+  /** The owned holding currently inspected, if any — item-owned choices
+   * (e.g. an Armor of Resistance damage type) are read live from here rather
+   * than from `item`'s snapshot, so a choice made here appears immediately. */
+  readonly entry?: BuildInventoryEntry;
+  readonly onChooseInventoryChild?: (
+    entryId: string,
+    elementIndex: number,
+    index: number,
+    occurrence: BuildOccurrence,
+  ) => void;
 }) {
   const entity = item?.entities.at(-1);
   if (item === undefined || entity === undefined)
@@ -190,6 +207,18 @@ export function ItemDetail({
     const name = candidate.name.trim().toLocaleLowerCase();
     if (!references.has(name)) references.set(name, candidate);
   }
+  const itemChoiceElementIndex =
+    entry === undefined ? undefined : entry.elements.length - 1;
+  const itemChoiceElement =
+    itemChoiceElementIndex === undefined
+      ? undefined
+      : entry?.elements[itemChoiceElementIndex];
+  const itemChoiceEntity =
+    itemChoiceElement?.definitionId === undefined
+      ? undefined
+      : byId.get(itemChoiceElement.definitionId.toLocaleLowerCase());
+  const requiredItemChoices =
+    itemChoiceEntity === undefined ? [] : itemChoiceSlots(itemChoiceEntity);
   const cardEntity =
     item.displayName === entity.name
       ? entity
@@ -281,6 +310,74 @@ export function ItemDetail({
           }
         />
       </header>
+      {requiredItemChoices.length === 0 ||
+      entry === undefined ||
+      itemChoiceElementIndex === undefined ? null : (
+        <section className="item-choice-panel">
+          <p className="eyebrow">Properties</p>
+          {requiredItemChoices.map((slot, index) => {
+            const resolved = itemChoiceElement?.children?.[index];
+            const resolvedEntity =
+              resolved?.identity.definitionId === undefined
+                ? undefined
+                : byId.get(resolved.identity.definitionId.toLocaleLowerCase());
+            const slotLabel = slot.label ?? slot.type;
+            return resolved !== undefined && !resolved.unresolved ? (
+              <p
+                className="item-choice-locked"
+                key={`${slot.ruleOrdinal}:${slot.choiceIndex}`}
+              >
+                <Icon name="lock" />
+                <span>
+                  {slotLabel}: {resolvedEntity?.name ?? resolved.identity.name}
+                </span>
+              </p>
+            ) : (
+              <div
+                className="item-choice-options"
+                key={`${slot.ruleOrdinal}:${slot.choiceIndex}`}
+                role="radiogroup"
+                aria-label={slotLabel}
+              >
+                <p>{slot.label ?? `Choose ${slot.type.toLocaleLowerCase()}`}</p>
+                {(entities === undefined
+                  ? []
+                  : itemChoiceCandidates(slot, entities)
+                ).map((candidate) => (
+                  <label key={candidate.id}>
+                    <input
+                      type="radio"
+                      name={`inventory-item-choice-${entry.id}-${index}`}
+                      value={candidate.id}
+                      checked={false}
+                      onChange={() =>
+                        onChooseInventoryChild?.(
+                          entry.id,
+                          itemChoiceElementIndex,
+                          index,
+                          {
+                            id: `web:${crypto.randomUUID()}`,
+                            identity: {
+                              definitionId: candidate.id,
+                              name: candidate.name,
+                              type: candidate.type,
+                            },
+                            acquiredLevel: entry.acquiredLevel,
+                            legality: "rules-legal",
+                            children: [],
+                            unresolved: false,
+                          },
+                        )
+                      }
+                    />
+                    {candidate.name}
+                  </label>
+                ))}
+              </div>
+            );
+          })}
+        </section>
+      )}
       {isComposedWeapon && base !== undefined ? (
         <ComposedWeaponCardBody
           afterFields={grantedPowerCards}
@@ -831,6 +928,7 @@ export function EquipmentWorkspace({
   onEquipSlot,
   onSetWallet,
   onAdjustMoney,
+  onChooseInventoryChild,
 }: {
   readonly build: CharacterBuild;
   readonly entities: readonly ContentEntity[];
@@ -862,8 +960,15 @@ export function EquipmentWorkspace({
   ) => void;
   readonly onSetWallet: (wallet: EquipmentWalletView) => void;
   readonly onAdjustMoney: (deltaCopper: number) => string | undefined;
+  readonly onChooseInventoryChild: (
+    entryId: string,
+    elementIndex: number,
+    index: number,
+    occurrence: BuildOccurrence,
+  ) => void;
 }) {
   const [inspected, setInspected] = useState<InspectedItemDetail>();
+  const [inspectedEntryId, setInspectedEntryId] = useState<string>();
   const [walletOpen, setWalletOpen] = useState(false);
   const [openSaleId, setOpenSaleId] = useState<string>();
   const [inventoryCategoryExpansion, setInventoryCategoryExpansion] = useState<
@@ -938,7 +1043,12 @@ export function EquipmentWorkspace({
 
   const inspectInventory = (entry: BuildInventoryEntry) => {
     setInspected(inventoryItemDetail(entry, byId));
+    setInspectedEntryId(entry.id);
   };
+  const inspectedEntry =
+    inspectedEntryId === undefined
+      ? undefined
+      : build.inventory.find((entry) => entry.id === inspectedEntryId);
   return (
     <section
       aria-label={workspace === "equipment" ? "Equipment" : "Shop"}
@@ -1404,15 +1514,16 @@ export function EquipmentWorkspace({
               inventory={inventory}
               ownedDefinitions={ownedDefinitions}
               walletCopper={carriedCopper + storedCopper}
-              onInspect={(entity, displayName, kindLabel, compatibility) =>
+              onInspect={(entity, displayName, kindLabel, compatibility) => {
                 setInspected({
                   entities: [entity],
                   displayName,
                   effectiveLevel: build.effectiveLevel,
                   ...(kindLabel === undefined ? {} : { kindLabel }),
                   ...(compatibility === undefined ? {} : { compatibility }),
-                })
-              }
+                });
+                setInspectedEntryId(undefined);
+              }}
               onAcquire={onPurchase}
               onBrowseChange={(category) => onShopCategoryChange(category)}
             />
@@ -1433,8 +1544,11 @@ export function EquipmentWorkspace({
           ) : null}
           <ItemDetail
             byId={byId}
+            entities={entities}
             item={inspected}
             hideFlavortext={hideFlavortext}
+            onChooseInventoryChild={onChooseInventoryChild}
+            {...(inspectedEntry === undefined ? {} : { entry: inspectedEntry })}
           />
         </div>
       </div>

@@ -5,7 +5,7 @@ import type {
   BuildOccurrence,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import { itemChoiceSlots, type ItemChoiceSlot } from "@4ecb/rules-engine";
+import { itemChoiceSlots } from "@4ecb/rules-engine";
 
 import { contentSpecificValue } from "./builder-ui";
 import {
@@ -16,6 +16,7 @@ import {
   inventoryDefinitionIds,
   inventoryEntryForEntity,
   itemCanBeBought,
+  itemChoiceCandidates,
   itemProficiencyStatus,
   practiceKind,
   recommendedMagicItemVariant,
@@ -594,14 +595,6 @@ export function ShopWorkspace({
   const requiredItemChoices = acquisition
     ? itemChoiceSlots(acquisition.entity)
     : [];
-  const itemChoiceCandidates = (slot: ItemChoiceSlot) =>
-    entities
-      .filter(
-        (candidate) =>
-          candidate.type.trim().toLocaleLowerCase() ===
-          slot.type.trim().toLocaleLowerCase(),
-      )
-      .sort((left, right) => left.name.localeCompare(right.name));
   const physicalNeeded = physicalChoices.length + (standardImplement ? 1 : 0);
 
   const renderRow = (
@@ -1104,7 +1097,7 @@ export function ShopWorkspace({
                   const chosen =
                     definitionId === undefined
                       ? undefined
-                      : itemChoiceCandidates(slot).find(
+                      : itemChoiceCandidates(slot, entities).find(
                           ({ id }) => id === definitionId,
                         );
                   return chosen === undefined
@@ -1275,7 +1268,7 @@ export function ShopWorkspace({
                 <p className="shop-item-choice-label">
                   {slot.label ?? `Choose ${slot.type.toLocaleLowerCase()}`}
                 </p>
-                {itemChoiceCandidates(slot).map((candidate) => (
+                {itemChoiceCandidates(slot, entities).map((candidate) => (
                   <label key={candidate.id}>
                     <input
                       type="radio"

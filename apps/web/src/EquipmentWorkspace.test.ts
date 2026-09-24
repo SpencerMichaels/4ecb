@@ -2,8 +2,11 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import type { ContentEntity } from "@4ecb/content-domain";
-import type { BuildInventoryEntry } from "@4ecb/character-domain";
+import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
+import type {
+  BuildInventoryEntry,
+  BuildOccurrence,
+} from "@4ecb/character-domain";
 
 import {
   ItemDetail,
@@ -19,6 +22,7 @@ function entity(
   type: string,
   source: string,
   specifics: Readonly<Record<string, string>>,
+  rules: readonly RuleStatement[] = [],
 ): ContentEntity {
   return {
     id,
@@ -36,7 +40,7 @@ function entity(
       extraAttributes: [],
       ordinal,
     })),
-    rules: [],
+    rules,
     extensions: [],
     provenance: { sourceKey: "public-composed-item", sourceOrdinal: 0 },
   };
@@ -402,5 +406,130 @@ describe("equipment item details", () => {
     expect(markup).not.toContain("Public Alchemical Item (level 11)");
     expect(markup).not.toContain("Creates");
     expect(markup.match(/candidate-detail tone-/g)).toHaveLength(2);
+  });
+
+  describe("item-owned choice editing", () => {
+    const armor = entity(
+      "PUBLIC_ARMOR_OF_RESISTANCE",
+      "Armor of Resistance",
+      "Magic Item",
+      "Public item source",
+      {},
+      [
+        {
+          name: "select",
+          attributes: [
+            { name: "type", value: "Class Feature" },
+            { name: "number", value: "1" },
+          ],
+          text: "",
+          children: [],
+          ordinal: 0,
+        },
+      ],
+    );
+    const poison = entity(
+      "PUBLIC_RESIST_POISON",
+      "Resist Poison",
+      "Class Feature",
+      "Public item source",
+      {},
+    );
+    const fire = entity(
+      "PUBLIC_RESIST_FIRE",
+      "Resist Fire",
+      "Class Feature",
+      "Public item source",
+      {},
+    );
+    const byId = new Map(
+      [armor, poison, fire].map((item) => [item.id.toLocaleLowerCase(), item]),
+    );
+
+    it("offers every candidate when the item-owned choice is unresolved", () => {
+      const entry: BuildInventoryEntry = {
+        id: "owned-armor",
+        acquiredLevel: 1,
+        quantity: 1,
+        equippedQuantity: 0,
+        elements: [
+          { definitionId: armor.id, name: armor.name, type: armor.type },
+        ],
+        overrides: {},
+        legality: "rules-legal",
+      };
+      const markup = renderToStaticMarkup(
+        createElement(ItemDetail, {
+          item: inventoryItemDetail(entry, byId),
+          hideFlavortext: false,
+          byId,
+          entities: [armor, poison, fire],
+          entry,
+          onChooseInventoryChild: () => undefined,
+        }),
+      );
+      expect(markup).toContain("Properties");
+      expect(markup).toContain("Choose class feature");
+      expect(markup).toContain("Resist Poison");
+      expect(markup).toContain("Resist Fire");
+      expect(markup).not.toContain("item-choice-locked");
+    });
+
+    it("shows an already-made item-owned choice as locked, not re-editable", () => {
+      const resolvedChild: BuildOccurrence = {
+        id: "web:choice",
+        identity: {
+          definitionId: poison.id,
+          name: poison.name,
+          type: poison.type,
+        },
+        acquiredLevel: 1,
+        legality: "rules-legal",
+        children: [],
+        unresolved: false,
+      };
+      const entry: BuildInventoryEntry = {
+        id: "owned-armor",
+        acquiredLevel: 1,
+        quantity: 1,
+        equippedQuantity: 0,
+        elements: [
+          {
+            definitionId: armor.id,
+            name: armor.name,
+            type: armor.type,
+            children: [resolvedChild],
+          },
+        ],
+        overrides: {},
+        legality: "rules-legal",
+      };
+      const markup = renderToStaticMarkup(
+        createElement(ItemDetail, {
+          item: inventoryItemDetail(entry, byId),
+          hideFlavortext: false,
+          byId,
+          entities: [armor, poison, fire],
+          entry,
+          onChooseInventoryChild: () => undefined,
+        }),
+      );
+      expect(markup).toContain("item-choice-locked");
+      expect(markup).toContain("Resist Poison");
+      expect(markup).not.toContain('type="radio"');
+    });
+
+    it("omits the properties panel when inspecting a catalog entity, not an owned holding", () => {
+      const markup = renderToStaticMarkup(
+        createElement(ItemDetail, {
+          item: catalogItemDetail(armor, undefined, 1, byId),
+          hideFlavortext: false,
+          byId,
+          entities: [armor, poison, fire],
+          onChooseInventoryChild: () => undefined,
+        }),
+      );
+      expect(markup).not.toContain("item-choice-panel");
+    });
   });
 });

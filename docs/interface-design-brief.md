@@ -419,9 +419,15 @@ unequips, while an unassigned holding chooses the first open compatible slot in
 visible Loadout order. A necessary displacement requires confirmation, and
 unresolved historical slot identity remains untouched. Known
 rituals/formulas/practices and quantity-bearing scrolls remain distinct.
-Spellbook alternates stay in Build. Item-owned configuration remains evaluable
-and recoverable; a later focused pass will move its editor into this workspace
-with a clear link to character-level consequences.
+Spellbook alternates stay in Build. Item-owned configuration (for example an
+Armor of Resistance damage type) is evaluable, recoverable, and now editable
+in this workspace (2026-09-24): the shared item inspector shows an
+unresolved item-owned choice as a small chooser and a resolved one as a
+locked row, without changing its rules occurrence or legacy export topology.
+A Shop purchase whose item grants its own choice prompts for it at purchase
+time instead, using the same base-item picker pattern; once made, a choice
+is fixed for the life of the item and is not re-editable through either
+surface.
 
 M5.5 closure applies the same focused review standard to the under-refined tabs:
 
@@ -432,9 +438,10 @@ M5.5 closure applies the same focused review standard to the under-refined tabs:
   filters, purchasing, free acquisition, and resulting inventory state explicit.
   Buy and Give are independent row actions; nonpurchaseable records keep a
   disabled Buy control and an active Give control.
-- Each workspace receives a live full-profile workflow pass and product-owner approval;
-  item-owned choices move here without changing their rules occurrence or legacy
-  export topology.
+- Each workspace receives a live full-profile workflow pass and product-owner
+  approval; item-owned choices now live here (both the purchase-time Shop
+  prompt and the Equipment-workspace editor for already-owned holdings) without
+  changing their rules occurrence or legacy export topology.
 
 ## Validation sequencing
 
