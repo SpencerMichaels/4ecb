@@ -1,0 +1,1587 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-24T03:24:33.063Z",
+  "fixture": { "feats": 420, "shopItems": 260, "entities": 681 },
+  "environment": {
+    "platform": "linux",
+    "release": "6.18.52",
+    "cpu": "AMD Ryzen 7 PRO 5850U with Radeon Graphics",
+    "logicalCpuCount": 16,
+    "totalMemoryBytes": 23953125376,
+    "freeMemoryBytesAtReport": 16821276672,
+    "chromium": "Chrome/152.0.7977.64",
+    "viewport": { "width": 1440, "height": 1000, "deviceScaleFactor": 1 },
+    "buildMode": "Vite production preview"
+  },
+  "protocol": {
+    "runs": 3,
+    "aggregation": "median, minimum, maximum, sample standard deviation",
+    "timingAssertions": "Recorded as evidence; ordinary CI asserts behavior and instrumentation shape, not host timing.",
+    "indexedDbBytes": "Approximate structured-clone payload bytes: JSON UTF-8 plus ArrayBuffer/view byte lengths.",
+    "queryToPaint": "Input event start through two requestAnimationFrame callbacks and the resulting DOM read.",
+    "longTasks": "PerformanceObserver longtask entries attributed between the interaction start and second animation frame."
+  },
+  "bundle": {
+    "assets": [
+      {
+        "file": "assets/index-BNnkk5Xr.js",
+        "bytes": 230308,
+        "gzipBytes": 73097
+      },
+      {
+        "file": "assets/CharacterEditorPage-BHqx4f89.js",
+        "bytes": 198846,
+        "gzipBytes": 52983
+      },
+      {
+        "file": "assets/jsx-runtime-B0LAi-NN.js",
+        "bytes": 119705,
+        "gzipBytes": 34519
+      },
+      {
+        "file": "assets/rules.worker-CC3CLrtM.js",
+        "bytes": 117734,
+        "gzipBytes": 33693
+      },
+      {
+        "file": "assets/index-5CXNn2lr.css",
+        "bytes": 83268,
+        "gzipBytes": 15602
+      },
+      {
+        "file": "assets/query.worker-BDBrJK5s.js",
+        "bytes": 58354,
+        "gzipBytes": 16878
+      },
+      {
+        "file": "assets/content.worker-B7cpRPeU.js",
+        "bytes": 47054,
+        "gzipBytes": 13661
+      },
+      {
+        "file": "assets/SettingsPage-DXSVYFuj.js",
+        "bytes": 26241,
+        "gzipBytes": 7447
+      },
+      {
+        "file": "assets/CharacterSheetPage-CokIMZz7.js",
+        "bytes": 18055,
+        "gzipBytes": 5362
+      },
+      {
+        "file": "assets/app-runtime-DP7i-Xrr.js",
+        "bytes": 16158,
+        "gzipBytes": 5628
+      },
+      { "file": "workbox-98f7a950.js", "bytes": 15421, "gzipBytes": 5307 },
+      {
+        "file": "assets/workbox-window.prod.es5-Bd17z0YL.js",
+        "bytes": 5653,
+        "gzipBytes": 2214
+      },
+      { "file": "sw.js", "bytes": 1978, "gzipBytes": 1031 },
+      {
+        "file": "assets/rolldown-runtime-D9-fqq9M.js",
+        "bytes": 86,
+        "gzipBytes": 87
+      },
+      { "file": "print-letter.css", "bytes": 44, "gzipBytes": 62 },
+      { "file": "print-a4.css", "bytes": 37, "gzipBytes": 55 }
+    ],
+    "initialRouteJavascript": {
+      "bytes": 366257,
+      "gzipBytes": 113331,
+      "files": [
+        "assets/app-runtime-DP7i-Xrr.js",
+        "assets/index-BNnkk5Xr.js",
+        "assets/jsx-runtime-B0LAi-NN.js",
+        "assets/rolldown-runtime-D9-fqq9M.js"
+      ]
+    },
+    "routeJavascript": {
+      "CharacterEditorPage": {
+        "file": "assets/CharacterEditorPage-BHqx4f89.js",
+        "bytes": 198846,
+        "gzipBytes": 52983
+      },
+      "CharacterSheetPage": {
+        "file": "assets/CharacterSheetPage-CokIMZz7.js",
+        "bytes": 18055,
+        "gzipBytes": 5362
+      },
+      "SettingsPage": {
+        "file": "assets/SettingsPage-DXSVYFuj.js",
+        "bytes": 26241,
+        "gzipBytes": 7447
+      }
+    },
+    "javascript": { "bytes": 855593, "gzipBytes": 251907 },
+    "css": { "bytes": 83349, "gzipBytes": 15719 },
+    "javascriptChunkCount": 13
+  },
+  "runs": [
+    {
+      "run": 1,
+      "coldLibrary": {
+        "workers": [],
+        "indexedDb": {
+          "calls": 11,
+          "records": 8,
+          "bytes": 1881,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 2, "records": 2, "bytes": 52 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 124 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [],
+        "measures": [],
+        "navigation": [
+          {
+            "duration": 27.90000000037253,
+            "domContentLoaded": 26.90000000037253,
+            "loadEvent": 27.90000000037253,
+            "transferSize": 825,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-BNnkk5Xr.js",
+            "startTime": 13.599999999627471,
+            "duration": 5.300000000745058,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 14,
+            "duration": 5.5,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 14.300000000745058,
+            "duration": 5.799999998882413,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 14.400000000372529,
+            "duration": 6.199999999254942,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 41.90000000037253,
+            "duration": 1.699999999254942,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          }
+        ]
+      },
+      "directEditorMilliseconds": 259.63811799999985,
+      "directEditor": {
+        "workers": ["http://127.0.0.1:33803/assets/rules.worker-CC3CLrtM.js"],
+        "indexedDb": {
+          "calls": 12,
+          "records": 9,
+          "bytes": 400204,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 3, "records": 3, "bytes": 397161 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characters": { "calls": 1, "records": 1, "bytes": 1338 },
+            "evaluations": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 3.899999998509884,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 165,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:content-pack-ready",
+            "duration": 89.90000000037253,
+            "detail": {
+              "packId": "public-functional-baseline",
+              "source": "storage",
+              "recordCount": 681
+            }
+          },
+          {
+            "name": "4ecb:rules-worker-ready",
+            "duration": 20.299999998882413,
+            "detail": { "packId": "public-functional-baseline" }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 1.599999999627471,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 37.5,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 25.09999999962747,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 23.09999999962747,
+              "contentLoadMilliseconds": 10.300000000745058,
+              "evaluationMilliseconds": 12.799999998882413
+            }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 32.600000001490116,
+            "domContentLoaded": 32.40000000037253,
+            "loadEvent": 32.600000001490116,
+            "transferSize": 825,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-BNnkk5Xr.js",
+            "startTime": 15,
+            "duration": 2.900000000372529,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 15.300000000745058,
+            "duration": 3.099999999627471,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 15.5,
+            "duration": 3.300000000745058,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 15.700000001117587,
+            "duration": 3.599999999627471,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/CharacterEditorPage-BHqx4f89.js",
+            "startTime": 31.700000001117587,
+            "duration": 4,
+            "transferSize": 300,
+            "decodedBodySize": 198846
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 48.20000000111759,
+            "duration": 3.599999999627471,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/rules.worker-CC3CLrtM.js",
+            "startTime": 170.80000000074506,
+            "duration": -4.599999999627471,
+            "transferSize": 0,
+            "decodedBodySize": 0
+          }
+        ]
+      },
+      "warmReopenMilliseconds": 64.42236899999989,
+      "candidateSearches": [
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 27.899999998509884,
+          "mountedRows": 200,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat 0",
+          "milliseconds": 28.600000001490116,
+          "mountedRows": 200,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 30.59999999962747,
+          "mountedRows": 200,
+          "longTasks": []
+        }
+      ],
+      "candidateMountedRows": 200,
+      "shopSearches": [
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 47.29999999888241,
+          "mountedRows": 200,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear 00",
+          "milliseconds": 31.799999998882413,
+          "mountedRows": 99,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 74.90000000037253,
+          "mountedRows": 200,
+          "longTasks": []
+        }
+      ],
+      "shopMountedRows": 200,
+      "warmTabAdditionalWorkers": 0,
+      "maximumInteractionLongTask": 0,
+      "journey": ["build", "overview", "equipment", "shop", "sheet"],
+      "saveUndoRedo": "pass",
+      "browserBackForward": "pass",
+      "finalInstrumentation": {
+        "workers": ["http://127.0.0.1:33803/assets/rules.worker-CC3CLrtM.js"],
+        "indexedDb": {
+          "calls": 28,
+          "records": 15,
+          "bytes": 407030,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 3, "records": 3, "bytes": 397161 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 7, "records": 0, "bytes": 0 },
+            "characters": { "calls": 6, "records": 6, "bytes": 8040 },
+            "evaluations": { "calls": 4, "records": 0, "bytes": 0 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 124 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [
+          { "startTime": 266.2000000011176, "duration": 119 },
+          { "startTime": 598.4000000003725, "duration": 57 },
+          { "startTime": 1436.9000000003725, "duration": 124 }
+        ],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 3.200000001117587,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 12.5,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 14.900000000372529,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 7.300000000745058,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 0.7999999988824129,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 0.7999999988824129
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.19999999925494194,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.30000000074505806,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.2000000011175871,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.2000000011175871,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 4.300000000745058,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 2.599999999627471,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 2.300000000745058,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 2.300000000745058
+            }
+          },
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 2.199999999254942,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 17.799999998882413,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 7.599999999627471,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 4.5,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 1.400000000372529,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 1.400000000372529
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.19999999925494194,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.19999999925494194,
+            "detail": { "role": "planning", "level": 1 }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 32.600000001490116,
+            "domContentLoaded": 32.40000000037253,
+            "loadEvent": 32.600000001490116,
+            "transferSize": 825,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-BNnkk5Xr.js",
+            "startTime": 15,
+            "duration": 2.900000000372529,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 15.300000000745058,
+            "duration": 3.099999999627471,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 15.5,
+            "duration": 3.300000000745058,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 15.700000001117587,
+            "duration": 3.599999999627471,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/CharacterEditorPage-BHqx4f89.js",
+            "startTime": 31.700000001117587,
+            "duration": 4,
+            "transferSize": 300,
+            "decodedBodySize": 198846
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 48.20000000111759,
+            "duration": 3.599999999627471,
+            "transferSize": 300,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/rules.worker-CC3CLrtM.js",
+            "startTime": 170.80000000074506,
+            "duration": -4.599999999627471,
+            "transferSize": 0,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/CharacterSheetPage-CokIMZz7.js",
+            "startTime": 1987.1000000014901,
+            "duration": 96.39999999850988,
+            "transferSize": 300,
+            "decodedBodySize": 18055
+          }
+        ]
+      }
+    },
+    {
+      "run": 2,
+      "coldLibrary": {
+        "workers": [],
+        "indexedDb": {
+          "calls": 11,
+          "records": 8,
+          "bytes": 1874,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 2, "records": 2, "bytes": 52 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 117 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [],
+        "measures": [],
+        "navigation": [
+          {
+            "duration": 33.5,
+            "domContentLoaded": 33.40000000037253,
+            "loadEvent": 33.5,
+            "transferSize": 0,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-BNnkk5Xr.js",
+            "startTime": 16.300000000745058,
+            "duration": 4.400000000372529,
+            "transferSize": 0,
+            "decodedBodySize": 230308
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 16.700000001117587,
+            "duration": 3.299999998882413,
+            "transferSize": 0,
+            "decodedBodySize": 86
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 16.800000000745058,
+            "duration": 3.900000000372529,
+            "transferSize": 0,
+            "decodedBodySize": 119705
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 17,
+            "duration": 3.700000001117587,
+            "transferSize": 0,
+            "decodedBodySize": 16158
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 44.5,
+            "duration": 1.900000000372529,
+            "transferSize": 0,
+            "decodedBodySize": 5653
+          }
+        ]
+      },
+      "directEditorMilliseconds": 154.4736839999996,
+      "directEditor": {
+        "workers": ["http://127.0.0.1:33803/assets/rules.worker-CC3CLrtM.js"],
+        "indexedDb": {
+          "calls": 12,
+          "records": 10,
+          "bytes": 469492,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 3, "records": 3, "bytes": 397161 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characters": { "calls": 1, "records": 1, "bytes": 1350 },
+            "evaluations": { "calls": 1, "records": 1, "bytes": 69276 }
+          }
+        },
+        "longTasks": [],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 2.900000000372529,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 79.69999999925494,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:content-pack-ready",
+            "duration": 31.699999999254942,
+            "detail": {
+              "packId": "public-functional-baseline",
+              "source": "storage",
+              "recordCount": 681
+            }
+          },
+          {
+            "name": "4ecb:rules-worker-ready",
+            "duration": 18.699999999254942,
+            "detail": { "packId": "public-functional-baseline" }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.8000000007450581,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 15.799999998882413,
+            "detail": { "source": "persistent-cache", "level": 1 }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 33.59999999962747,
+            "domContentLoaded": 32.40000000037253,
+            "loadEvent": 33.59999999962747,
+            "transferSize": 0,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-BNnkk5Xr.js",
+            "startTime": 11.5,
+            "duration": 6.700000001117587,
+            "transferSize": 0,
+            "decodedBodySize": 230308
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 12.099999999627471,
+            "duration": 5.700000001117587,
+            "transferSize": 0,
+            "decodedBodySize": 86
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 12.200000001117587,
+            "duration": 6.799999998882413,
+            "transferSize": 0,
+            "decodedBodySize": 119705
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 12.300000000745058,
+            "duration": 6.699999999254942,
+            "transferSize": 0,
+            "decodedBodySize": 16158
+          },
+          {
+            "file": "/assets/CharacterEditorPage-BHqx4f89.js",
+            "startTime": 32.09999999962747,
+            "duration": 2.300000000745058,
+            "transferSize": 0,
+            "decodedBodySize": 198846
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 52.20000000111759,
+            "duration": 2.399999998509884,
+            "transferSize": 0,
+            "decodedBodySize": 5653
+          },
+          {
+            "file": "/assets/rules.worker-CC3CLrtM.js",
+            "startTime": 115,
+            "duration": -4.199999999254942,
+            "transferSize": 0,
+            "decodedBodySize": 0
+          }
+        ]
+      },
+      "warmReopenMilliseconds": 63.118053999999574,
+      "candidateSearches": [
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 22,
+          "mountedRows": 200,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat 0",
+          "milliseconds": 27.699999999254942,
+          "mountedRows": 200,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 30.40000000037253,
+          "mountedRows": 200,
+          "longTasks": []
+        }
+      ],
+      "candidateMountedRows": 200,
+      "shopSearches": [
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 26.90000000037253,
+          "mountedRows": 200,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear 00",
+          "milliseconds": 30.199999999254942,
+          "mountedRows": 99,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 90.70000000111759,
+          "mountedRows": 200,
+          "longTasks": []
+        }
+      ],
+      "shopMountedRows": 200,
+      "warmTabAdditionalWorkers": 0,
+      "maximumInteractionLongTask": 0,
+      "journey": ["build", "overview", "equipment", "shop", "sheet"],
+      "saveUndoRedo": "pass",
+      "browserBackForward": "pass",
+      "finalInstrumentation": {
+        "workers": ["http://127.0.0.1:33803/assets/rules.worker-CC3CLrtM.js"],
+        "indexedDb": {
+          "calls": 28,
+          "records": 16,
+          "bytes": 476359,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 3, "records": 3, "bytes": 397161 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 7, "records": 0, "bytes": 0 },
+            "characters": { "calls": 6, "records": 6, "bytes": 8100 },
+            "evaluations": { "calls": 4, "records": 1, "bytes": 69276 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 117 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [
+          { "startTime": 164.40000000037253, "duration": 77 },
+          { "startTime": 502.59999999962747, "duration": 79 },
+          { "startTime": 772.8000000007451, "duration": 57 }
+        ],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 1.900000000372529,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 16,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000000149011612,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 101.5,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 94.69999999925494,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 24.09999999962747,
+              "contentLoadMilliseconds": 9,
+              "evaluationMilliseconds": 15.099999999627471
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.2999999988824129,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 6.5,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 5.200000001117587,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 2.900000000372529,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 2.900000000372529
+            }
+          },
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 2,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 17.699999999254942,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 6.300000000745058,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 4.600000001490116,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 2.099999999627471,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 2.099999999627471
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000000149011612,
+            "detail": { "role": "planning", "level": 1 }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 33.59999999962747,
+            "domContentLoaded": 32.40000000037253,
+            "loadEvent": 33.59999999962747,
+            "transferSize": 0,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-BNnkk5Xr.js",
+            "startTime": 11.5,
+            "duration": 6.700000001117587,
+            "transferSize": 0,
+            "decodedBodySize": 230308
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 12.099999999627471,
+            "duration": 5.700000001117587,
+            "transferSize": 0,
+            "decodedBodySize": 86
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 12.200000001117587,
+            "duration": 6.799999998882413,
+            "transferSize": 0,
+            "decodedBodySize": 119705
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 12.300000000745058,
+            "duration": 6.699999999254942,
+            "transferSize": 0,
+            "decodedBodySize": 16158
+          },
+          {
+            "file": "/assets/CharacterEditorPage-BHqx4f89.js",
+            "startTime": 32.09999999962747,
+            "duration": 2.300000000745058,
+            "transferSize": 0,
+            "decodedBodySize": 198846
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 52.20000000111759,
+            "duration": 2.399999998509884,
+            "transferSize": 0,
+            "decodedBodySize": 5653
+          },
+          {
+            "file": "/assets/rules.worker-CC3CLrtM.js",
+            "startTime": 115,
+            "duration": -4.199999999254942,
+            "transferSize": 0,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/CharacterSheetPage-CokIMZz7.js",
+            "startTime": 977.3000000007451,
+            "duration": 2.199999999254942,
+            "transferSize": 0,
+            "decodedBodySize": 18055
+          }
+        ]
+      }
+    },
+    {
+      "run": 3,
+      "coldLibrary": {
+        "workers": [],
+        "indexedDb": {
+          "calls": 11,
+          "records": 8,
+          "bytes": 1874,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 2, "records": 2, "bytes": 52 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 117 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [],
+        "measures": [],
+        "navigation": [
+          {
+            "duration": 32.80000000074506,
+            "domContentLoaded": 32.70000000111759,
+            "loadEvent": 32.80000000074506,
+            "transferSize": 0,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-BNnkk5Xr.js",
+            "startTime": 14.800000000745058,
+            "duration": 4.599999999627471,
+            "transferSize": 0,
+            "decodedBodySize": 230308
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 15.400000000372529,
+            "duration": 2.900000000372529,
+            "transferSize": 0,
+            "decodedBodySize": 86
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 15.400000000372529,
+            "duration": 3.700000001117587,
+            "transferSize": 0,
+            "decodedBodySize": 119705
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 15.600000001490116,
+            "duration": 3.799999998882413,
+            "transferSize": 0,
+            "decodedBodySize": 16158
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 35.70000000111759,
+            "duration": 2.299999998882413,
+            "transferSize": 0,
+            "decodedBodySize": 5653
+          }
+        ]
+      },
+      "directEditorMilliseconds": 138.24096999999983,
+      "directEditor": {
+        "workers": ["http://127.0.0.1:33803/assets/rules.worker-CC3CLrtM.js"],
+        "indexedDb": {
+          "calls": 12,
+          "records": 10,
+          "bytes": 469492,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 3, "records": 3, "bytes": 397161 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 1, "records": 0, "bytes": 0 },
+            "characters": { "calls": 1, "records": 1, "bytes": 1350 },
+            "evaluations": { "calls": 1, "records": 1, "bytes": 69276 }
+          }
+        },
+        "longTasks": [],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 4,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 69.30000000074506,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:content-pack-ready",
+            "duration": 28.5,
+            "detail": {
+              "packId": "public-functional-baseline",
+              "source": "storage",
+              "recordCount": 681
+            }
+          },
+          {
+            "name": "4ecb:rules-worker-ready",
+            "duration": 17.199999999254942,
+            "detail": { "packId": "public-functional-baseline" }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.599999999627471,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 11.400000000372529,
+            "detail": { "source": "persistent-cache", "level": 1 }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 31.40000000037253,
+            "domContentLoaded": 31.100000001490116,
+            "loadEvent": 31.40000000037253,
+            "transferSize": 0,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-BNnkk5Xr.js",
+            "startTime": 11.700000001117587,
+            "duration": 4.599999999627471,
+            "transferSize": 0,
+            "decodedBodySize": 230308
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 12.300000000745058,
+            "duration": 3.199999999254942,
+            "transferSize": 0,
+            "decodedBodySize": 86
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 12.5,
+            "duration": 3.700000001117587,
+            "transferSize": 0,
+            "decodedBodySize": 119705
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 12.700000001117587,
+            "duration": 4,
+            "transferSize": 0,
+            "decodedBodySize": 16158
+          },
+          {
+            "file": "/assets/CharacterEditorPage-BHqx4f89.js",
+            "startTime": 30.600000001490116,
+            "duration": 3.199999999254942,
+            "transferSize": 0,
+            "decodedBodySize": 198846
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 46.600000001490116,
+            "duration": 2.899999998509884,
+            "transferSize": 0,
+            "decodedBodySize": 5653
+          },
+          {
+            "file": "/assets/rules.worker-CC3CLrtM.js",
+            "startTime": 100.10000000149012,
+            "duration": -4.700000001117587,
+            "transferSize": 0,
+            "decodedBodySize": 0
+          }
+        ]
+      },
+      "warmReopenMilliseconds": 63.05836500000078,
+      "candidateSearches": [
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 28.40000000037253,
+          "mountedRows": 200,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat 0",
+          "milliseconds": 23,
+          "mountedRows": 200,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Feat",
+          "milliseconds": 31.40000000037253,
+          "mountedRows": 200,
+          "longTasks": []
+        }
+      ],
+      "candidateMountedRows": 200,
+      "shopSearches": [
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 33.90000000037253,
+          "mountedRows": 200,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear 00",
+          "milliseconds": 33.40000000037253,
+          "mountedRows": 99,
+          "longTasks": []
+        },
+        {
+          "value": "Baseline Gear",
+          "milliseconds": 80.5,
+          "mountedRows": 200,
+          "longTasks": []
+        }
+      ],
+      "shopMountedRows": 200,
+      "warmTabAdditionalWorkers": 0,
+      "maximumInteractionLongTask": 0,
+      "journey": ["build", "overview", "equipment", "shop", "sheet"],
+      "saveUndoRedo": "pass",
+      "browserBackForward": "pass",
+      "finalInstrumentation": {
+        "workers": ["http://127.0.0.1:33803/assets/rules.worker-CC3CLrtM.js"],
+        "indexedDb": {
+          "calls": 28,
+          "records": 16,
+          "bytes": 476359,
+          "byStore": {
+            "contentPackMetadata": { "calls": 3, "records": 3, "bytes": 1599 },
+            "contentPacks": { "calls": 3, "records": 3, "bytes": 397161 },
+            "settings": { "calls": 3, "records": 2, "bytes": 106 },
+            "characterMigrations": { "calls": 7, "records": 0, "bytes": 0 },
+            "characters": { "calls": 6, "records": 6, "bytes": 8100 },
+            "evaluations": { "calls": 4, "records": 1, "bytes": 69276 },
+            "characterMetadata": { "calls": 1, "records": 1, "bytes": 117 },
+            "characterPortraits": { "calls": 1, "records": 0, "bytes": 0 }
+          }
+        },
+        "longTasks": [
+          { "startTime": 142.10000000149012, "duration": 69 },
+          { "startTime": 459.2000000011176, "duration": 76 }
+        ],
+        "measures": [
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 2.900000000372529,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 12,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 150.10000000149012,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 143.09999999962747,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 23.799999998882413,
+              "contentLoadMilliseconds": 9.699999999254942,
+              "evaluationMilliseconds": 14.099999999627471
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000000149011612,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 4,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 2.599999999627471,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 2.200000001117587,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 2.200000001117587
+            }
+          },
+          {
+            "name": "4ecb:character-record-ready",
+            "duration": 2.099999999627471,
+            "detail": { "characterId": "public-functional-baseline-character" }
+          },
+          {
+            "name": "4ecb:character-first-evaluation",
+            "duration": 16.899999998509884,
+            "detail": {
+              "characterId": "public-functional-baseline-character",
+              "level": 1
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.19999999925494194,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-evaluation",
+            "duration": 6.5,
+            "detail": { "source": "worker", "level": 1 }
+          },
+          {
+            "name": "4ecb:rules-worker-round-trip",
+            "duration": 4.699999999254942,
+            "detail": {
+              "level": 1,
+              "workerMilliseconds": 1.800000000745058,
+              "contentLoadMilliseconds": 0,
+              "evaluationMilliseconds": 1.800000000745058
+            }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.10000000149011612,
+            "detail": { "role": "planning", "level": 1 }
+          },
+          {
+            "name": "4ecb:build-projection",
+            "duration": 0.09999999962747097,
+            "detail": { "role": "planning", "level": 1 }
+          }
+        ],
+        "navigation": [
+          {
+            "duration": 31.40000000037253,
+            "domContentLoaded": 31.100000001490116,
+            "loadEvent": 31.40000000037253,
+            "transferSize": 0,
+            "decodedBodySize": 1121
+          }
+        ],
+        "javascriptResources": [
+          {
+            "file": "/assets/index-BNnkk5Xr.js",
+            "startTime": 11.700000001117587,
+            "duration": 4.599999999627471,
+            "transferSize": 0,
+            "decodedBodySize": 230308
+          },
+          {
+            "file": "/assets/rolldown-runtime-D9-fqq9M.js",
+            "startTime": 12.300000000745058,
+            "duration": 3.199999999254942,
+            "transferSize": 0,
+            "decodedBodySize": 86
+          },
+          {
+            "file": "/assets/jsx-runtime-B0LAi-NN.js",
+            "startTime": 12.5,
+            "duration": 3.700000001117587,
+            "transferSize": 0,
+            "decodedBodySize": 119705
+          },
+          {
+            "file": "/assets/app-runtime-DP7i-Xrr.js",
+            "startTime": 12.700000001117587,
+            "duration": 4,
+            "transferSize": 0,
+            "decodedBodySize": 16158
+          },
+          {
+            "file": "/assets/CharacterEditorPage-BHqx4f89.js",
+            "startTime": 30.600000001490116,
+            "duration": 3.199999999254942,
+            "transferSize": 0,
+            "decodedBodySize": 198846
+          },
+          {
+            "file": "/assets/workbox-window.prod.es5-Bd17z0YL.js",
+            "startTime": 46.600000001490116,
+            "duration": 2.899999998509884,
+            "transferSize": 0,
+            "decodedBodySize": 5653
+          },
+          {
+            "file": "/assets/rules.worker-CC3CLrtM.js",
+            "startTime": 100.10000000149012,
+            "duration": -4.700000001117587,
+            "transferSize": 0,
+            "decodedBodySize": 0
+          },
+          {
+            "file": "/assets/CharacterSheetPage-CokIMZz7.js",
+            "startTime": 841.3000000007451,
+            "duration": 2.800000000745058,
+            "transferSize": 0,
+            "decodedBodySize": 18055
+          }
+        ]
+      }
+    }
+  ],
+  "summary": {
+    "directEditorMilliseconds": {
+      "count": 3,
+      "minimum": 138.24096999999983,
+      "median": 154.4736839999996,
+      "maximum": 259.63811799999985,
+      "sampleStandardDeviation": 65.90438367422928
+    },
+    "warmReopenMilliseconds": {
+      "count": 3,
+      "minimum": 63.05836500000078,
+      "median": 63.118053999999574,
+      "maximum": 64.42236899999989,
+      "sampleStandardDeviation": 0.7708552942414311
+    },
+    "candidateQueryToPaintMilliseconds": {
+      "count": 9,
+      "minimum": 22,
+      "median": 28.40000000037253,
+      "maximum": 31.40000000037253,
+      "sampleStandardDeviation": 3.264497579275618
+    },
+    "shopQueryToPaintMilliseconds": {
+      "count": 9,
+      "minimum": 26.90000000037253,
+      "median": 33.90000000037253,
+      "maximum": 90.70000000111759,
+      "sampleStandardDeviation": 25.014201522251213
+    },
+    "candidateMountedRows": {
+      "count": 3,
+      "minimum": 200,
+      "median": 200,
+      "maximum": 200,
+      "sampleStandardDeviation": 0
+    },
+    "shopMountedRows": {
+      "count": 3,
+      "minimum": 200,
+      "median": 200,
+      "maximum": 200,
+      "sampleStandardDeviation": 0
+    },
+    "maximumInteractionLongTask": {
+      "count": 3,
+      "minimum": 0,
+      "median": 0,
+      "maximum": 0,
+      "sampleStandardDeviation": 0
+    },
+    "warmTabAdditionalWorkers": {
+      "count": 3,
+      "minimum": 0,
+      "median": 0,
+      "maximum": 0,
+      "sampleStandardDeviation": 0
+    }
+  },
+  "guardrails": {
+    "initialRouteJavascriptAtMost120KiBGzip": {
+      "limit": 122880,
+      "observed": 113331,
+      "pass": true
+    },
+    "candidateMountedRowsAtMost200": {
+      "limit": 200,
+      "observed": 200,
+      "pass": true
+    },
+    "shopMountedRowsAtMost200": { "limit": 200, "observed": 200, "pass": true },
+    "interactionLongTaskAtMost50Milliseconds": {
+      "limit": 50,
+      "observed": 0,
+      "pass": true
+    },
+    "cachedEvaluationVisibleWithin100Milliseconds": {
+      "limit": 100,
+      "observed": 64.42236899999989,
+      "pass": true
+    },
+    "warmTabsDoNotCreateWorkers": {
+      "observedAdditionalWorkers": 0,
+      "pass": true
+    }
+  },
+  "browserMessages": [],
+  "routeErrorMessage": "The application could not continueFailed to fetch dynamically imported module: http://127.0.0.1:33803/assets/CharacterSheetPage-CokIMZz7.jsReload application",
+  "routeErrorBrowserMessages": [],
+  "offlineDirectSheet": "pass"
+}

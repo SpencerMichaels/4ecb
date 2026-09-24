@@ -339,8 +339,10 @@ async function runScenario(client, origin, fixture, outputDirectory, runIndex) {
     client,
     `document.querySelectorAll(".candidate-selection-table tbody tr:not(.selection-type-row)").length`,
   );
-  if (runIndex === 0)
+  if (runIndex === 0) {
     await screenshot(client, join(outputDirectory, "candidate-table.png"));
+    await checkCandidatePaging(client, outputDirectory);
+  }
 
   await setHash(client, `#/characters`);
   await waitForExpression(
@@ -822,6 +824,91 @@ async function click(client, selector) {
       element.click();
     })()`,
   );
+}
+
+// Stage 3: the candidate table mounts at most 200 result rows, but paging must
+// still reach every filtered row, reset on sort/filter, and return the scroll
+// viewport to the top.
+async function checkCandidatePaging(client, outputDirectory) {
+  const rows = `.candidate-selection-table tbody tr:not(.selection-type-row)`;
+  const pager = `.candidate-selection-table .selection-table-pagination`;
+  const state = () =>
+    evaluate(
+      client,
+      `(() => {
+        const pager = document.querySelector(${JSON.stringify(pager)});
+        const firstRow = document.querySelector(${JSON.stringify(rows)});
+        return {
+          label: pager?.querySelector("span")?.textContent ?? null,
+          previousDisabled: pager?.querySelector("button:first-of-type")?.disabled ?? null,
+          nextDisabled: pager?.querySelector("button:last-of-type")?.disabled ?? null,
+          mountedRows: document.querySelectorAll(${JSON.stringify(rows)}).length,
+          firstRowText: firstRow?.textContent ?? null,
+          scrollTop: document.querySelector(".candidate-selection-table .selection-table-scroll")?.scrollTop ?? null,
+        };
+      })()`,
+    );
+  const first = await state();
+  const match = /^Rows 1–200 of ([\d,]+)$/.exec(first.label ?? "");
+  assert(match, `Expected a first-page candidate pager, got ${first.label}`);
+  const total = Number(match[1].replaceAll(",", ""));
+  assert(total > 200, `Expected more than 200 candidate rows, got ${total}`);
+  assert(first.mountedRows === 200, `First page mounted ${first.mountedRows}`);
+  assert(first.previousDisabled === true, "Previous should start disabled");
+
+  await evaluate(
+    client,
+    `document.querySelector(".candidate-selection-table .selection-table-scroll").scrollTop = 500`,
+  );
+  let reached = first.mountedRows;
+  let page = first;
+  let pageCount = 1;
+  while (page.nextDisabled === false) {
+    const previousLabel = page.label;
+    await click(client, `${pager} button:last-of-type`);
+    await waitForExpression(
+      client,
+      `document.querySelector(${JSON.stringify(`${pager} span`)})?.textContent !== ${JSON.stringify(previousLabel)}`,
+    );
+    page = await state();
+    pageCount += 1;
+    assert(page.mountedRows <= 200, `Page mounted ${page.mountedRows} rows`);
+    assert(page.scrollTop === 0, "Paging should scroll the table to the top");
+    assert(page.firstRowText !== first.firstRowText, "Page did not change");
+    reached += page.mountedRows;
+    if (pageCount === 2)
+      await screenshot(
+        client,
+        join(outputDirectory, "candidate-table-page-2.png"),
+      );
+  }
+  assert(
+    reached === total,
+    `Paging reached ${reached} of ${total} candidate rows`,
+  );
+
+  await click(client, `.candidate-selection-table th[aria-sort] button`);
+  await waitForExpression(
+    client,
+    `document.querySelector(${JSON.stringify(`${pager} span`)})?.textContent?.startsWith("Rows 1–")`,
+  );
+  const sorted = await state();
+  assert(sorted.previousDisabled === true, "Sorting should return to page 1");
+
+  await click(client, `${pager} button:last-of-type`);
+  const narrowed = await measuredInput(
+    client,
+    `.candidate-selection-table input[type="search"]`,
+    "Baseline Feat 0",
+    rows,
+  );
+  const afterFilter = await state();
+  assert(
+    afterFilter.label === null || afterFilter.label.startsWith("Rows 1–"),
+    `Filtering should return to page 1, got ${afterFilter.label}`,
+  );
+  assert(narrowed.mountedRows <= 200, "Filtered rows exceeded 200");
+  return { total, pageCount };
 }
 
 async function setHash(client, hash) {

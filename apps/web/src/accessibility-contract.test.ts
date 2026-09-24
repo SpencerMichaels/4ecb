@@ -9,6 +9,10 @@ const characterEditor = readFileSync(
   new URL("./CharacterEditorPage.tsx", import.meta.url),
   "utf8",
 );
+const candidateSelectionTable = readFileSync(
+  new URL("./CandidateSelectionTable.tsx", import.meta.url),
+  "utf8",
+);
 const equipmentWorkspace = readFileSync(
   new URL("./EquipmentWorkspace.tsx", import.meta.url),
   "utf8",
@@ -138,10 +142,12 @@ describe("release accessibility contract", () => {
     expect(characterEditor).toContain(
       "Retrained from ${retraining.fromName} at level ${retraining.choice.level}",
     );
-    expect(characterEditor).toContain(
+    expect(candidateSelectionTable).toContain(
       'aria-sort={active ? sort.direction : "none"}',
     );
-    expect(characterEditor).toContain('className="selection-sort-button"');
+    expect(candidateSelectionTable).toContain(
+      'className="selection-sort-button"',
+    );
     const sortButtonRule = styles.match(
       /\.selection-sort-button\s*\{([^}]*)\}/,
     )?.[1];
@@ -427,9 +433,10 @@ describe("release accessibility contract", () => {
   });
 
   it("keeps table selection spatially stable and exposes removable selection chips", () => {
-    const tableSource = characterEditor.slice(
-      characterEditor.indexOf("function CandidateSelectionTable"),
-      characterEditor.indexOf("function ChoiceFlowSection"),
+    const tableSource = candidateSelectionTable.slice(
+      candidateSelectionTable.indexOf(
+        "export function CandidateSelectionTable",
+      ),
     );
     expect(tableSource).not.toContain("prioritizedCandidates");
     expect(tableSource).not.toContain('name="check"');
@@ -478,7 +485,7 @@ describe("release accessibility contract", () => {
     expect(styles).toMatch(
       /\.selection-table-scroll table\s*\{[^}]*border-collapse: separate[^}]*border-spacing: 0/,
     );
-    expect(characterEditor).toContain(
+    expect(candidateSelectionTable).toContain(
       '!["description", "short description"].includes(normalizedLabel)',
     );
     expect(tableSource).toContain("candidateHeaderIsSortable(label)");

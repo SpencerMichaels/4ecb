@@ -138,6 +138,50 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   criterion with no deferred incompatibility. Stage 2 is complete; Stage 3 —
   Bound Builder candidate rendering is next.
 
+## Functional refactor Stage 3 complete (2026-09-23)
+
+- The Builder candidate selector, its favorites store, and its inspection-
+  initialization context moved from `CharacterEditorPage.tsx` into
+  `apps/web/src/CandidateSelectionTable.tsx` with no behavioral change beyond
+  the paging added in this stage. Filtering, favorites, type grouping, feat-
+  family folding, and sorting still run over the whole candidate corpus;
+  `apps/web/src/candidate-table-paging.ts` then bounds the mounted rows to 200
+  per page (candidate and feat-family rows), repeating a section header on
+  every page it spans and placing a collapsed or trailing section on the page
+  where its rows would begin.
+- The table opens on the page containing the initially selected row and pins
+  that page against later selection or expansion changes; filtering, the
+  Favorites toggle, and any sort change return to page 1; changing page scrolls
+  the table's own viewport to the top. Selection never reorders rows. Paging
+  reuses the Shop's `.equipment-pagination` control markup and only appears
+  when more than one page exists.
+- The product owner approved a lighter Stage 3 verification bar for this
+  personal-use application: focused regression tests, the full public
+  `scripts/check.sh` gate, and one desktop Chromium pass with before/after
+  screenshots, rather than the plan's full cross-browser/tablet/dark-mode
+  matrix.
+- `apps/web/src/candidate-table-paging.test.ts` covers empty/short/exactly-200/
+  thousands-row totals, stale-page clamping after the result set shrinks, the
+  page containing an out-of-window selected row, and section-header repetition
+  across pages and at collapse boundaries. `scripts/check-functional-baseline.mjs`
+  adds a first-run `checkCandidatePaging()` browser check that walks every page
+  via Next, asserting the pager label, a scroll reset to the top on each page
+  change, that sorting and filtering both return to page 1, and that no page
+  ever exceeds 200 mounted rows.
+- The final-tree public gate and functional-baseline harness both pass: the
+  candidate DOM guardrail that failed at 420 rows in the Stage 0 baseline now
+  passes at exactly 200; every `checkCandidatePaging()` assertion passed
+  against the full 420-row synthetic fixture; interaction metrics (63.1 ms warm
+  reopen, 28.4 ms median candidate query-to-paint, 33.9 ms median Shop query-
+  to-paint, no interaction Long Task, no warm-tab worker) remain within the
+  Stage 0 guardrails. Raw evidence and reviewed screenshots (including
+  `candidate-table-page-2.png`) are in
+  `docs/evidence/functional-stage3-2026-09-23/`; the added pager does not crowd
+  the table at the established 1440x1000 desktop viewport.
+- No evaluator or persistence semantics changed. Stage 4 — deciding Shop's
+  indexing architecture — is next and requires the plan's product decision gate
+  before any implementation begins.
+
 ## M5.5 shared visual-contract consolidation checkpoint (2026-09-23)
 
 - Cross-workspace selection headings now use authoritative named typography

@@ -6,12 +6,16 @@ const characterEditor = readFileSync(
   new URL("./CharacterEditorPage.tsx", import.meta.url),
   "utf8",
 );
+const candidateSelectionTable = readFileSync(
+  new URL("./CandidateSelectionTable.tsx", import.meta.url),
+  "utf8",
+);
 
 describe("candidate table initialization integration", () => {
   it("gates shared details initialization to the first table in an open pane", () => {
     const scope = characterEditor.slice(
       characterEditor.indexOf("function CandidateInspectionScope"),
-      characterEditor.indexOf("const candidateReferenceIndexes"),
+      characterEditor.indexOf("type SaveState"),
     );
 
     expect(scope).toContain("initializeCandidateInspection(");
@@ -23,9 +27,10 @@ describe("candidate table initialization integration", () => {
   });
 
   it("positions each table once without restoring the removed locator", () => {
-    const table = characterEditor.slice(
-      characterEditor.indexOf("function CandidateSelectionTable"),
-      characterEditor.indexOf("function ChoiceFlowSection"),
+    const table = candidateSelectionTable.slice(
+      candidateSelectionTable.indexOf(
+        "export function CandidateSelectionTable",
+      ),
     );
 
     expect(table).toContain("useRef(firstSelectedCandidateId(selectedIds))");
