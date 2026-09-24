@@ -604,6 +604,7 @@ export function ShopWorkspace({
     const canAfford = price !== undefined && price <= walletCopper;
     const isKnown = known(entity);
     const proficiency = itemProficiencyStatus(entity, ownedDefinitions);
+    const showIndent = options.disclosure || browse === "all";
     return (
       <tr
         className={
@@ -618,7 +619,13 @@ export function ShopWorkspace({
         key={entity.id}
       >
         <th scope="row">
-          <div className="shop-item-identity">
+          <div
+            className={
+              showIndent
+                ? "shop-item-identity"
+                : "shop-item-identity shop-item-identity--flush"
+            }
+          >
             {options.disclosure ? (
               <button
                 type="button"
@@ -636,9 +643,9 @@ export function ShopWorkspace({
               >
                 <Icon name="chevron" />
               </button>
-            ) : (
+            ) : showIndent ? (
               <span className="shop-family-indent" />
-            )}
+            ) : null}
             <span className="shop-item-icon item-icon item-icon--dense">
               <Icon name={canonicalItemIcon(entity)} />
               {proficiency === "unverified" ? (

@@ -4233,6 +4233,10 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   grid-template-columns: 1rem 1.6rem minmax(0, 1fr);
 }
 
+.shop-item-identity--flush {
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+}
+
 .shop-family-toggle {
   background: transparent;
   border: 0;
