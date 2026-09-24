@@ -4511,6 +4511,13 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   color: var(--muted);
 }
 
+.shop-item-choice-label {
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+  margin: 0;
+  padding: 0.45rem 0.7rem;
+}
+
 .shop-physical-summary {
   display: grid;
   gap: 0.35rem;

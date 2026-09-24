@@ -1,7 +1,11 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
-import type { BuildInventoryEntry } from "@4ecb/character-domain";
+import type {
+  BuildInventoryEntry,
+  BuildOccurrence,
+} from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
+import { itemChoiceSlots, type ItemChoiceSlot } from "@4ecb/rules-engine";
 
 import { contentSpecificValue } from "./builder-ui";
 import {
@@ -334,6 +338,9 @@ export function ShopWorkspace({
   const [physicalSearch, setPhysicalSearch] = useState("");
   const [physicalSubtype, setPhysicalSubtype] = useState("");
   const [selectedPhysicalId, setSelectedPhysicalId] = useState("");
+  const [itemChoiceSelections, setItemChoiceSelections] = useState<
+    ReadonlyMap<number, string>
+  >(new Map());
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -542,15 +549,10 @@ export function ShopWorkspace({
   const beginAcquire = (entity: ContentEntity, mode: AcquireMode) => {
     const compatible = compatibleBaseItems(entity, catalog);
     const hasStandardImplement = isImplementEnchantment(entity);
-    const choices = compatible.length + (hasStandardImplement ? 1 : 0);
-    if (choices === 0) {
-      onAcquire(
-        inventoryEntryForEntity(entity, characterLevel),
-        mode === "buy" ? (entityCurrencyCopper(entity) ?? 0) : 0,
-      );
-      return;
-    }
-    if (choices === 1) {
+    const physicalChoiceCount =
+      compatible.length + (hasStandardImplement ? 1 : 0);
+    const requiredItemChoices = itemChoiceSlots(entity);
+    if (physicalChoiceCount <= 1 && requiredItemChoices.length === 0) {
       const physical = compatible[0];
       onAcquire(
         inventoryEntryForEntity(entity, characterLevel, physical),
@@ -564,6 +566,7 @@ export function ShopWorkspace({
     setSelectedPhysicalId(
       hasStandardImplement ? "standard" : (compatible[0]?.id ?? ""),
     );
+    setItemChoiceSelections(new Map());
     requestAnimationFrame(() => dialogRef.current?.showModal());
   };
 
@@ -588,6 +591,18 @@ export function ShopWorkspace({
         .filter((value): value is string => value !== undefined),
     ),
   ].sort();
+  const requiredItemChoices = acquisition
+    ? itemChoiceSlots(acquisition.entity)
+    : [];
+  const itemChoiceCandidates = (slot: ItemChoiceSlot) =>
+    entities
+      .filter(
+        (candidate) =>
+          candidate.type.trim().toLocaleLowerCase() ===
+          slot.type.trim().toLocaleLowerCase(),
+      )
+      .sort((left, right) => left.name.localeCompare(right.name));
+  const physicalNeeded = physicalChoices.length + (standardImplement ? 1 : 0);
 
   const renderRow = (
     entity: ContentEntity,
@@ -1068,16 +1083,55 @@ export function ShopWorkspace({
             onSubmit={(event) => {
               event.preventDefault();
               const physical =
-                selectedPhysicalId === "standard"
+                physicalNeeded === 0 || selectedPhysicalId === "standard"
                   ? undefined
                   : physicalChoices.find(({ id }) => id === selectedPhysicalId);
-              if (selectedPhysicalId !== "standard" && physical === undefined)
+              if (
+                physicalNeeded > 0 &&
+                selectedPhysicalId !== "standard" &&
+                physical === undefined
+              )
+                return;
+              if (
+                requiredItemChoices.some(
+                  (_, index) => !itemChoiceSelections.has(index),
+                )
+              )
+                return;
+              const itemChoiceChildren: BuildOccurrence[] =
+                requiredItemChoices.flatMap((slot, index) => {
+                  const definitionId = itemChoiceSelections.get(index);
+                  const chosen =
+                    definitionId === undefined
+                      ? undefined
+                      : itemChoiceCandidates(slot).find(
+                          ({ id }) => id === definitionId,
+                        );
+                  return chosen === undefined
+                    ? []
+                    : [
+                        {
+                          id: `web:${crypto.randomUUID()}`,
+                          identity: {
+                            definitionId: chosen.id,
+                            name: chosen.name,
+                            type: chosen.type,
+                          },
+                          acquiredLevel: characterLevel,
+                          legality: "rules-legal" as const,
+                          children: [],
+                          unresolved: false,
+                        },
+                      ];
+                });
+              if (itemChoiceChildren.length !== requiredItemChoices.length)
                 return;
               onAcquire(
                 inventoryEntryForEntity(
                   acquisition.entity,
                   characterLevel,
                   physical,
+                  itemChoiceChildren,
                 ),
                 acquisition.mode === "buy"
                   ? (entityCurrencyCopper(acquisition.entity) ?? 0)
@@ -1088,7 +1142,13 @@ export function ShopWorkspace({
           >
             <header>
               <div>
-                <p className="eyebrow">Choose a compatible {nouns.singular}</p>
+                <p className="eyebrow">
+                  {physicalNeeded > 0 && requiredItemChoices.length > 0
+                    ? `Choose a compatible ${nouns.singular} and its properties`
+                    : physicalNeeded > 0
+                      ? `Choose a compatible ${nouns.singular}`
+                      : "Choose its properties"}
+                </p>
                 <h2>
                   {acquisition.mode === "buy" ? "Buy" : "Give"}{" "}
                   {shopDisplayName(acquisition.entity)}
@@ -1103,103 +1163,143 @@ export function ShopWorkspace({
                 ×
               </button>
             </header>
-            <div className="shop-physical-tools">
-              <label>
-                Search
-                <input
-                  type="search"
-                  placeholder={`Search compatible ${nouns.plural}…`}
-                  value={physicalSearch}
-                  onChange={(event) =>
-                    setPhysicalSearch(event.currentTarget.value)
-                  }
-                />
-              </label>
-              <label>
-                Subtype
-                <select
-                  value={physicalSubtype}
-                  onChange={(event) =>
-                    setPhysicalSubtype(event.currentTarget.value)
-                  }
+            {physicalNeeded === 0 ? null : (
+              <>
+                <div className="shop-physical-tools">
+                  <label>
+                    Search
+                    <input
+                      type="search"
+                      placeholder={`Search compatible ${nouns.plural}…`}
+                      value={physicalSearch}
+                      onChange={(event) =>
+                        setPhysicalSearch(event.currentTarget.value)
+                      }
+                    />
+                  </label>
+                  <label>
+                    Subtype
+                    <select
+                      value={physicalSubtype}
+                      onChange={(event) =>
+                        setPhysicalSubtype(event.currentTarget.value)
+                      }
+                    >
+                      <option value="">All subtypes</option>
+                      {physicalSubtypes.map((value) => (
+                        <option key={value}>{value}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div
+                  className="shop-physical-list"
+                  role="radiogroup"
+                  aria-label={`Compatible ${nouns.plural}`}
                 >
-                  <option value="">All subtypes</option>
-                  {physicalSubtypes.map((value) => (
-                    <option key={value}>{value}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <div
-              className="shop-physical-list"
-              role="radiogroup"
-              aria-label={`Compatible ${nouns.plural}`}
-            >
-              <div className="shop-physical-list-heading" aria-hidden="true">
-                <strong>
-                  {nouns.singular[0]!.toLocaleUpperCase() +
-                    nouns.singular.slice(1)}
-                </strong>
-                <strong>Type</strong>
-              </div>
-              {standardImplement ? (
-                <label>
-                  <input
-                    type="radio"
-                    name="physical-item"
-                    value="standard"
-                    checked={selectedPhysicalId === "standard"}
-                    onChange={() => setSelectedPhysicalId("standard")}
-                  />
-                  <span className="shop-physical-choice">
-                    <span className="shop-item-icon item-icon item-icon--dense">
-                      <Icon name={canonicalItemIcon(acquisition.entity)} />
-                    </span>
+                  <div
+                    className="shop-physical-list-heading"
+                    aria-hidden="true"
+                  >
                     <strong>
-                      {implementKind(acquisition.entity) ??
-                        "Standard implement"}
+                      {nouns.singular[0]!.toLocaleUpperCase() +
+                        nouns.singular.slice(1)}
                     </strong>
-                    <small>Standard</small>
-                  </span>
-                </label>
-              ) : null}
-              {visiblePhysicalChoices.map((entity) => (
-                <label key={entity.id}>
-                  <input
-                    type="radio"
-                    name="physical-item"
-                    value={entity.id}
-                    checked={selectedPhysicalId === entity.id}
-                    onChange={() => setSelectedPhysicalId(entity.id)}
-                  />
-                  <span className="shop-physical-choice">
-                    <span className="shop-item-icon item-icon item-icon--dense">
-                      <Icon name={canonicalItemIcon(entity)} />
-                      {itemProficiencyStatus(entity, ownedDefinitions) ===
-                      "unverified" ? (
-                        <span
-                          className="shop-proficiency-badge"
-                          role="img"
-                          aria-label="Not proficient"
-                          title="Not proficient"
-                        >
-                          <Icon name="warning" />
+                    <strong>Type</strong>
+                  </div>
+                  {standardImplement ? (
+                    <label>
+                      <input
+                        type="radio"
+                        name="physical-item"
+                        value="standard"
+                        checked={selectedPhysicalId === "standard"}
+                        onChange={() => setSelectedPhysicalId("standard")}
+                      />
+                      <span className="shop-physical-choice">
+                        <span className="shop-item-icon item-icon item-icon--dense">
+                          <Icon name={canonicalItemIcon(acquisition.entity)} />
                         </span>
-                      ) : null}
-                    </span>
-                    <strong>{entity.name}</strong>
-                    <small>
-                      {compatibleChoiceType(entity, standardImplement === true)}
-                    </small>
-                  </span>
-                </label>
-              ))}
-            </div>
+                        <strong>
+                          {implementKind(acquisition.entity) ??
+                            "Standard implement"}
+                        </strong>
+                        <small>Standard</small>
+                      </span>
+                    </label>
+                  ) : null}
+                  {visiblePhysicalChoices.map((entity) => (
+                    <label key={entity.id}>
+                      <input
+                        type="radio"
+                        name="physical-item"
+                        value={entity.id}
+                        checked={selectedPhysicalId === entity.id}
+                        onChange={() => setSelectedPhysicalId(entity.id)}
+                      />
+                      <span className="shop-physical-choice">
+                        <span className="shop-item-icon item-icon item-icon--dense">
+                          <Icon name={canonicalItemIcon(entity)} />
+                          {itemProficiencyStatus(entity, ownedDefinitions) ===
+                          "unverified" ? (
+                            <span
+                              className="shop-proficiency-badge"
+                              role="img"
+                              aria-label="Not proficient"
+                              title="Not proficient"
+                            >
+                              <Icon name="warning" />
+                            </span>
+                          ) : null}
+                        </span>
+                        <strong>{entity.name}</strong>
+                        <small>
+                          {compatibleChoiceType(
+                            entity,
+                            standardImplement === true,
+                          )}
+                        </small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </>
+            )}
+            {requiredItemChoices.map((slot, index) => (
+              <div
+                className="shop-physical-list shop-item-choice-list"
+                key={`${slot.ruleOrdinal}:${slot.choiceIndex}`}
+                role="radiogroup"
+                aria-label={slot.label ?? slot.type}
+              >
+                <p className="shop-item-choice-label">
+                  {slot.label ?? `Choose ${slot.type.toLocaleLowerCase()}`}
+                </p>
+                {itemChoiceCandidates(slot).map((candidate) => (
+                  <label key={candidate.id}>
+                    <input
+                      type="radio"
+                      name={`item-choice-${index}`}
+                      value={candidate.id}
+                      checked={itemChoiceSelections.get(index) === candidate.id}
+                      onChange={() =>
+                        setItemChoiceSelections((current) => {
+                          const next = new Map(current);
+                          next.set(index, candidate.id);
+                          return next;
+                        })
+                      }
+                    />
+                    <strong>{candidate.name}</strong>
+                  </label>
+                ))}
+              </div>
+            ))}
             <dl className="shop-physical-summary">
               <div>
                 <dt>Resulting item</dt>
                 <dd>
-                  {selectedPhysicalId === "standard"
+                  {physicalNeeded === 0 || selectedPhysicalId === "standard"
                     ? shopDisplayName(acquisition.entity)
                     : selectedPhysicalId
                       ? `${shopDisplayName(acquisition.entity)} · ${physicalChoices.find(({ id }) => id === selectedPhysicalId)?.name ?? ""}`
@@ -1224,7 +1324,12 @@ export function ShopWorkspace({
               <button
                 className="dialog-primary button-primary"
                 type="submit"
-                disabled={selectedPhysicalId === ""}
+                disabled={
+                  (physicalNeeded > 0 && selectedPhysicalId === "") ||
+                  requiredItemChoices.some(
+                    (_, index) => !itemChoiceSelections.has(index),
+                  )
+                }
               >
                 {acquisition.mode === "buy" ? "Buy" : "Give"}
               </button>

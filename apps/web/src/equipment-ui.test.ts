@@ -18,6 +18,7 @@ import {
   INVENTORY_CATEGORIES,
   inventoryCategory,
   inventoryDisplayName,
+  inventoryEntryForEntity,
   inventoryLoadoutToggle,
   inventorySlotCandidates,
   inventoryRequiresBothHands,
@@ -221,6 +222,56 @@ describe("Shop presentation model", () => {
         ({ id }) => id,
       ),
     ).toEqual(["ACCURATE_STAFF"]);
+  });
+
+  it("stores item-owned choice children beneath the composed entry's final element", () => {
+    const resistanceType = entity("POISON", "Poison", "Class Feature");
+    const resistanceChoice = {
+      id: "web:choice",
+      identity: {
+        definitionId: resistanceType.id,
+        name: resistanceType.name,
+        type: resistanceType.type,
+      },
+      acquiredLevel: 1,
+      legality: "rules-legal" as const,
+      children: [],
+      unresolved: false,
+    };
+    const armor = entity("ARMOR", "Armor of Resistance", "Magic Item");
+    const withoutBase = inventoryEntryForEntity(armor, 1, undefined, [
+      resistanceChoice,
+    ]);
+    expect(withoutBase.elements).toEqual([
+      {
+        definitionId: "ARMOR",
+        name: "Armor of Resistance",
+        type: "Magic Item",
+        children: [resistanceChoice],
+      },
+    ]);
+
+    const base = entity("BASE_ARMOR", "Chainmail", "Armor");
+    const withBase = inventoryEntryForEntity(armor, 1, base, [
+      resistanceChoice,
+    ]);
+    expect(withBase.elements).toEqual([
+      { definitionId: "BASE_ARMOR", name: "Chainmail", type: "Armor" },
+      {
+        definitionId: "ARMOR",
+        name: "Armor of Resistance",
+        type: "Magic Item",
+        children: [resistanceChoice],
+      },
+    ]);
+
+    expect(inventoryEntryForEntity(armor, 1).elements).toEqual([
+      {
+        definitionId: "ARMOR",
+        name: "Armor of Resistance",
+        type: "Magic Item",
+      },
+    ]);
   });
 });
 

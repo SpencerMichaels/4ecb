@@ -1,6 +1,7 @@
 import {
   formatInventoryItemName,
   type BuildInventoryEntry,
+  type BuildOccurrence,
   type CharacterCommand,
   type EquipmentSlotAssignment,
   type EquipmentSlotId,
@@ -1294,6 +1295,9 @@ export function inventoryEntryForEntity(
   entity: ContentEntity,
   acquiredLevel: number,
   base?: ContentEntity,
+  /** Item-owned choice children (for example a chosen damage type) resolved
+   * at purchase time and stored beneath `entity`'s own element. */
+  itemChoiceChildren?: readonly BuildOccurrence[],
 ): BuildInventoryEntry {
   return {
     id: `web:loot:${crypto.randomUUID()}`,
@@ -1302,7 +1306,14 @@ export function inventoryEntryForEntity(
     equippedQuantity: 0,
     elements: [base, entity]
       .filter((value): value is ContentEntity => value !== undefined)
-      .map(({ id, name, type }) => ({ definitionId: id, name, type })),
+      .map(({ id, name, type }) => ({ definitionId: id, name, type }))
+      .map((element, index, all) =>
+        index === all.length - 1 &&
+        itemChoiceChildren !== undefined &&
+        itemChoiceChildren.length > 0
+          ? { ...element, children: itemChoiceChildren }
+          : element,
+      ),
     overrides: {},
     legality: "rules-legal",
   };

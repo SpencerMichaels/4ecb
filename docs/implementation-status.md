@@ -1,5 +1,43 @@
 # Implementation status
 
+## Shop purchase-time item-owned choice checkpoint (2026-09-24)
+
+- The Shop acquisition flow now prompts for an item's own choices (for
+  example Armor of Resistance's damage type) at purchase time, using the same
+  dialog and state machine as the existing enchantment-to-base-item picker
+  rather than a separate flow. `beginAcquire` now also computes
+  `itemChoiceSlots(entity)` (content-only, no character context needed) and
+  opens the modal whenever either a base-item pairing or an item-owned choice
+  is required; the previous instant-commit fast path is unchanged when
+  neither is needed.
+- The dialog renders the compatible-base-item radiogroup only when more than
+  one physical option exists (unchanged), and one additional radiogroup per
+  required item-owned choice slot, each listing every entity whose `type`
+  matches the slot's required category. The eyebrow copy adapts to which
+  sections are present ("Choose a compatible weapon", "Choose its
+  properties", or both combined). Submission is blocked until every required
+  slot has a selection; the resolved choices are built into
+  `BuildOccurrence` children and passed through `inventoryEntryForEntity`'s
+  new fourth parameter, which attaches them beneath the purchased item's own
+  element (not the base item's, when both are present).
+- Verification: new unit test in `equipment-ui.test.ts` covers
+  `inventoryEntryForEntity`'s new parameter (with and without a base item,
+  and the unchanged no-choice case). Full public suite: 539/539 tests,
+  workspace typechecks, lint, production/PWA build, and Chromium/Firefox
+  print checks all pass (`scripts/check.sh`). Manual end-to-end verification
+  used a purpose-built public fixture (one Magic Item with a `select
+Class Feature` rule and two candidate class features, no base-item pairing
+  needed) driven through a production preview build via raw CDP: the Shop
+  listed the item, Buy opened the dialog with eyebrow "Choose its
+  properties", no physical-item section, one "Choose class feature"
+  radiogroup listing both candidates, Buy disabled until a candidate was
+  selected; after selecting and submitting, the item appeared in Inventory
+  with no console errors.
+- Not yet built: an Equipment-workspace surface for holdings whose
+  item-owned choice is still unresolved (covers `.dnd4e` imports and any
+  future edge cases where a purchase produced no prompt). That is the next
+  checkpoint and closes out this M5.5 item.
+
 ## Item-owned choice domain foundation checkpoint (2026-09-24)
 
 - `packages/rules-engine/src/build-projection.ts` gains `itemChoiceSlots(entity)`,
