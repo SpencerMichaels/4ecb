@@ -851,10 +851,10 @@ describe("release accessibility contract", () => {
     );
   });
 
-  it("gives every candidate table a focused, per-choice unavailable-options toggle", () => {
+  it("gives every candidate table a focused, per-choice illegal-options toggle", () => {
     expect(builderChoiceContext).not.toContain("ShowAllChoicesContext");
     expect(candidateSelectionTable).toContain(
-      "readonly onToggleShowUnavailable?: () => void;",
+      "readonly onToggleShowIllegal?: () => void;",
     );
     const toggleButton = candidateSelectionTable.slice(
       candidateSelectionTable.indexOf(
@@ -868,12 +868,16 @@ describe("release accessibility contract", () => {
       ),
     );
     expect(toggleButton).toContain(
-      'className="icon-only-button button-icon selection-unavailable-toggle"',
+      'className="icon-only-button button-icon selection-illegal-toggle"',
     );
-    expect(toggleButton).toContain("aria-pressed={showUnavailable === true}");
-    expect(toggleButton).toContain('<Icon name="eye" />');
+    expect(toggleButton).toContain("aria-pressed={showIllegal === true}");
+    expect(toggleButton).toContain("Show illegal options");
+    expect(toggleButton).toContain(
+      "options the rules do not allow you to pick",
+    );
+    expect(toggleButton).toContain('<Icon name="scale" />');
     expect(styles).toMatch(
-      /\.selection-unavailable-toggle\[aria-pressed="true"\]\s*\{[^}]*background: var\(--power-item-soft\);/,
+      /\.selection-illegal-toggle\[aria-pressed="true"\]\s*\{[^}]*background: var\(--power-item-soft\);/,
     );
     for (const factory of [
       "ReplacementEditor",
@@ -884,7 +888,7 @@ describe("release accessibility contract", () => {
       expect(start).toBeGreaterThan(-1);
       const body = choiceEditors.slice(start);
       expect(body).toContain("const [showAll, setShowAll] = useState(false);");
-      expect(body).toContain("onToggleShowUnavailable={() => setShowAll");
+      expect(body).toContain("onToggleShowIllegal={() => setShowAll");
     }
   });
 });

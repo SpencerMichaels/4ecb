@@ -25,7 +25,6 @@ import {
   Crown,
   Dumbbell,
   Download,
-  Eye,
   FileText,
   FlaskConical,
   FlaskRound,
@@ -54,6 +53,7 @@ import {
   SaveCheck,
   SaveOff,
   SavePen,
+  Scale,
   ScanLine,
   Search,
   ScrollText,
@@ -119,7 +119,6 @@ export type IconName =
   | "duplicate"
   | "dumbbell"
   | "edit"
-  | "eye"
   | "favorite"
   | "feat"
   | "flask-conical"
@@ -150,6 +149,7 @@ export type IconName =
   | "save-check"
   | "save-off"
   | "save-pen"
+  | "scale"
   | "search"
   | "sheet"
   | "shield"
@@ -207,7 +207,6 @@ const icons: Record<IconName, LucideIcon> = {
   duplicate: Copy,
   dumbbell: Dumbbell,
   edit: Pencil,
-  eye: Eye,
   favorite: Star,
   feat: Sparkles,
   "flask-conical": FlaskConical,
@@ -238,6 +237,7 @@ const icons: Record<IconName, LucideIcon> = {
   "save-check": SaveCheck,
   "save-off": SaveOff,
   "save-pen": SavePen,
+  scale: Scale,
   search: Search,
   sheet: FileText,
   shield: Shield,

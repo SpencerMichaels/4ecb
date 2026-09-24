@@ -105,8 +105,10 @@ visual assets.
   accidental consequence of changing the filter.
   Each candidate table carries this as a small icon-only toggle at its
   top-right corner (after the result count), matching the legacy builder's
-  placement; its accessible name, tooltip, and pressed state reflect the
-  current boolean mode (2026-09-24).
+  placement. It uses lucide's scale-of-justice glyph, and its accessible name
+  and tooltip say "illegal options" — not merely "unavailable" — so the reason
+  for exclusion (the rules would not allow the character to pick them) stays
+  explicit (2026-09-24).
 - Do not label choices as popular or recommended. The application may present
   objective legality, prerequisites, source, and mechanical consequences; it
   must not invent subjective build advice.
@@ -329,11 +331,11 @@ selectable and stored. This covers the paired ability increases at levels 4,
 class slots of a hybrid character. Slot-specific controls such as Background
 and Skill Training retain their more specialized grouped presentations.
 
-The unavailable-options toggle is local to each candidate table (see above),
-not one level-wide control. Compact choices whose candidate records add no
-useful player-facing explanation, notably ability increases, omit the empty
-detail pane and supporting filter prose; they also have no candidate table and
-so carry no unavailable-options toggle.
+The illegal-options toggle is local to each candidate table (see above), not
+one level-wide control. Compact choices whose candidate records add no useful
+player-facing explanation, notably ability increases, omit the empty detail
+pane and supporting filter prose; they also have no candidate table and so
+carry no illegal-options toggle.
 
 Ordinary optional replacement rules are presented as retraining, matching the
 player-facing game concept. An unused retraining slot is absent from the level

@@ -189,13 +189,13 @@ export function CandidateSelectionTable({
   disabled,
   selectionLimit,
   nameColumnLabel,
-  showUnavailable,
+  showIllegal,
   onExpandGroup,
   onInspect,
   onToggle,
   onRemove,
   onClear,
-  onToggleShowUnavailable,
+  onToggleShowIllegal,
 }: {
   readonly kind: ChoiceSelectionTableKind;
   readonly candidates: readonly CandidateDecision[];
@@ -206,13 +206,13 @@ export function CandidateSelectionTable({
   readonly disabled: boolean;
   readonly selectionLimit?: number;
   readonly nameColumnLabel?: string;
-  readonly showUnavailable?: boolean;
+  readonly showIllegal?: boolean;
   readonly onExpandGroup: (key: string) => void;
   readonly onInspect: (candidate: CandidateDecision) => void;
   readonly onToggle: (definitionId: string) => void;
   readonly onRemove: (definitionId: string) => void;
   readonly onClear?: () => void;
-  readonly onToggleShowUnavailable?: () => void;
+  readonly onToggleShowIllegal?: () => void;
 }) {
   const initializeInspection = useContext(InitializeCandidateInspectionContext);
   const [filter, setFilter] = useState("");
@@ -765,24 +765,24 @@ export function CandidateSelectionTable({
             <Icon name="favorite" /> Favorites
           </button>
           <span className="selection-table-count">{totalRows} shown</span>
-          {onToggleShowUnavailable === undefined ? null : (
+          {onToggleShowIllegal === undefined ? null : (
             <button
               aria-label={
-                showUnavailable === true
-                  ? "Hide unavailable options"
-                  : "Show unavailable options"
+                showIllegal === true
+                  ? "Hide illegal options"
+                  : "Show illegal options"
               }
-              aria-pressed={showUnavailable === true}
-              className="icon-only-button button-icon selection-unavailable-toggle"
+              aria-pressed={showIllegal === true}
+              className="icon-only-button button-icon selection-illegal-toggle"
               title={
-                showUnavailable === true
-                  ? "Showing unavailable options"
-                  : "Show unavailable options"
+                showIllegal === true
+                  ? "Showing options the rules do not allow you to pick"
+                  : "Show options the rules do not allow you to pick"
               }
               type="button"
-              onClick={onToggleShowUnavailable}
+              onClick={onToggleShowIllegal}
             >
-              <Icon name="eye" />
+              <Icon name="scale" />
             </button>
           )}
         </div>

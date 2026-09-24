@@ -1,14 +1,16 @@
 # Implementation status
 
-## Unavailable-options toggle checkpoint (2026-09-24)
+## Illegal-options toggle checkpoint (2026-09-24)
 
 - Every `CandidateSelectionTable` now exposes a small icon-only toggle button
   at the top-right of its toolbar (after the result count), matching the
-  legacy builder's placement. It is icon-only (`Icon name="eye"`), carries
-  `aria-pressed`, `aria-label`, and a native `title` tooltip that both flip
-  with the boolean state ("Show unavailable options" / "Hide unavailable
-  options"), and its pressed state reuses the existing Favorites-toggle
-  visual treatment.
+  legacy builder's placement. It uses lucide's `Scale` glyph (`Icon
+name="scale"`) to signal a rules-legality filter, carries `aria-pressed`,
+  `aria-label`, and a native `title` tooltip that both flip with the boolean
+  state ("Show illegal options" / "Hide illegal options", with the tooltip
+  spelling out "options the rules do not allow you to pick" so the exclusion
+  reason — not general unavailability — is explicit), and its pressed state
+  reuses the existing Favorites-toggle visual treatment.
 - The underlying filtering mechanism (`isCandidateVisible` in `builder-ui.ts`,
   and the `visible`/`visibleCandidates` derivations in `ChoiceEditors.tsx`)
   was already implemented and unit-tested; it had been headless since the
@@ -26,15 +28,17 @@
   anywhere in the app and always evaluated to `false`.
 - A new `accessibility-contract.test.ts` case source-verifies the toggle
   button's wiring, styling, and that each of the three choice editors owns
-  local `showAll` state. Full public suite: 533/533 tests, workspace
-  typechecks, lint, production/PWA build, and Chromium/Firefox print checks
-  all pass (`scripts/check.sh`). Manual verification used a production preview
-  build against the existing public 420-feat synthetic fixture (raw CDP, no
-  extension available): the button renders at the table's top-right corner,
-  toggling it flips `aria-pressed`/label/title with no console errors; that
-  fixture has no ineligible candidates, so it does not exercise row reveal —
-  the reveal logic itself is covered by the pre-existing `isCandidateVisible`
-  unit tests, which are unchanged.
+  local `showAll` state (component prop names are `showIllegal` /
+  `onToggleShowIllegal`, matching the user-facing wording). Full public suite:
+  533/533 tests, workspace typechecks, lint, production/PWA build, and
+  Chromium/Firefox print checks all pass (`scripts/check.sh`). Manual
+  verification used a production preview build against the existing public
+  420-feat synthetic fixture (raw CDP, no extension available): the button
+  renders at the table's top-right corner, toggling it flips
+  `aria-pressed`/label/title with no console errors; that fixture has no
+  ineligible candidates, so it does not exercise row reveal — the reveal logic
+  itself is covered by the pre-existing `isCandidateVisible` unit tests, which
+  are unchanged.
 - Unrelated pre-existing Prettier drift in
   `packages/rules-engine/src/build-projection.ts` (present before this
   checkpoint, blocking `scripts/check.sh`'s formatting gate for anyone) was

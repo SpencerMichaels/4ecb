@@ -542,7 +542,7 @@ function ReplacementEditor({
             expandedGroupKey={expandedReplacementGroupKey}
             byId={byId}
             disabled={disabled}
-            showUnavailable={showAll}
+            showIllegal={showAll}
             onExpandGroup={setExpandedReplacementGroupKey}
             onInspect={(candidate) => {
               setPerusingTarget(false);
@@ -556,7 +556,7 @@ function ReplacementEditor({
               if (candidate !== undefined) selectReplacement(target, candidate);
             }}
             onRemove={clearReplacement}
-            onToggleShowUnavailable={() => setShowAll((current) => !current)}
+            onToggleShowIllegal={() => setShowAll((current) => !current)}
           />
         )}
       </div>
@@ -799,7 +799,7 @@ export function ChoiceEditor({
             expandedGroupKey={displayedGroupKey}
             byId={byId}
             disabled={editorDisabled}
-            showUnavailable={showAll}
+            showIllegal={showAll}
             onExpandGroup={setStagedGroupKey}
             onInspect={(candidate) => {
               setPerusedId(candidate.definitionId);
@@ -812,7 +812,7 @@ export function ChoiceEditor({
             onToggle={selectDefinition}
             onRemove={clearSelection}
             onClear={clearSelection}
-            onToggleShowUnavailable={() => setShowAll((current) => !current)}
+            onToggleShowIllegal={() => setShowAll((current) => !current)}
           />
         ) : groupedPresentation ? (
           <>
@@ -1590,7 +1590,7 @@ function RepeatedCandidateTableEditor({
       byId={byId}
       disabled={false}
       selectionLimit={choices.length}
-      showUnavailable={showAll}
+      showIllegal={showAll}
       onExpandGroup={setExpandedGroupKey}
       onInspect={(candidate) => {
         const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
@@ -1599,7 +1599,7 @@ function RepeatedCandidateTableEditor({
       onToggle={toggle}
       onRemove={toggle}
       onClear={clear}
-      onToggleShowUnavailable={() => setShowAll((current) => !current)}
+      onToggleShowIllegal={() => setShowAll((current) => !current)}
     />
   );
 }
