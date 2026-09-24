@@ -213,6 +213,29 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   from a level with available choices to one with none and back. The product
   owner asked for this to be fixed as a follow-up aside; see the next entry.
 
+## Level-navigation crash fix (2026-09-23)
+
+- Manual browser verification during Stage 5 found that navigating from a
+  level with available choices to one with none and back (e.g. level 1 to
+  level 2 in the synthetic fixture) could crash the character editor with a
+  React "Maximum update depth exceeded" error.
+- Root cause: `CharacterEditorPage.tsx`'s canonicalization effect (which syncs
+  derived `activeLevelSection` to the URL via `onNavigate`) called `onNavigate`
+  unconditionally on every dependency change, even when the target navigation
+  already matched the current URL. This could oscillate against the companion
+  effect that reads the URL's section back into `selectedSectionByLevel`.
+  Fixed by adding a guard so the effect is a no-op once the URL already
+  matches the canonical level/section.
+- Verified by reproducing the exact original crash sequence against a dev
+  server both before the fix (crash reproduced, and confirmed via `git stash`
+  to be present without the unrelated Stage 5 change too) and after (no
+  crash, no console errors, URL settles at the correct preferred section).
+  Full `nix develop path:. -c bash scripts/check.sh` passes. No new automated
+  test was added — the guard sits inline in tightly-coupled render-time
+  derived state, and extracting it would be a larger refactor than this
+  quick-aside fix's scope — so the manual browser reproduction is the
+  regression evidence.
+
 ## Functional refactor Stage 4 complete (2026-09-23)
 
 - Stage 4's original scope called for prototyping and measuring two competing

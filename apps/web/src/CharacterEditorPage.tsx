@@ -4421,12 +4421,22 @@ export function CharacterEditorPage({
       (navigationLevel !== undefined && navigationLevel !== selectedLevel)
     )
       return;
+    const canonicalSection =
+      activeLevelSection === undefined
+        ? undefined
+        : levelChoiceTabSlug(activeLevelSection);
+    // Skip when the URL already matches: replacing history with an identical
+    // target can otherwise oscillate against the effect that reads the URL's
+    // section back into selectedSectionByLevel, looping the two indefinitely.
+    if (
+      navigationLevel === selectedLevel &&
+      navigationSection === canonicalSection
+    )
+      return;
     const canonical: BuilderNavigation = {
       workspace: "build",
       level: selectedLevel,
-      ...(activeLevelSection === undefined
-        ? {}
-        : { section: levelChoiceTabSlug(activeLevelSection) }),
+      ...(canonicalSection === undefined ? {} : { section: canonicalSection }),
     };
     onNavigate(characterId, canonical, true);
   }, [
@@ -4434,6 +4444,7 @@ export function CharacterEditorPage({
     character,
     characterId,
     navigationLevel,
+    navigationSection,
     navigation.workspace,
     onNavigate,
     selectedLevel,
