@@ -14,7 +14,8 @@ import {
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import { itemChoiceSlots } from "@4ecb/rules-engine";
-import { grantedDetailEntities } from "./builder-ui";
+import { grantedDetailEntities, parentheticalName } from "./builder-ui";
+import { CompactChoiceButtons } from "./ChoiceEditors";
 import {
   ComposedArmorCardBody,
   ComposedWeaponCardBody,
@@ -127,10 +128,6 @@ export interface InspectedItemDetail {
   readonly displayName: string;
   readonly effectiveLevel?: number;
   readonly kindLabel?: string;
-  readonly compatibility?: {
-    readonly label: string;
-    readonly value: string;
-  };
 }
 
 export function inventoryItemDetail(
@@ -302,14 +299,6 @@ export function ItemDetail({
           physicalBase={item.entities.length > 1 ? base : undefined}
         />
       </header>
-      {item.compatibility === undefined ? null : (
-        <dl className="entity-card-rules shop-detail-compatibility">
-          <div>
-            <dt>{item.compatibility.label}</dt>
-            <dd>{item.compatibility.value}</dd>
-          </div>
-        </dl>
-      )}
       {requiredItemChoices.length === 0 ||
       entry === undefined ||
       itemChoiceElementIndex === undefined ? null : (
@@ -321,6 +310,8 @@ export function ItemDetail({
               resolved?.identity.definitionId === undefined
                 ? undefined
                 : byId.get(resolved.identity.definitionId.toLocaleLowerCase());
+            const resolvedName =
+              resolvedEntity?.name ?? resolved?.identity.name;
             const slotLabel = slot.label ?? slot.type;
             return resolved !== undefined && !resolved.unresolved ? (
               <p
@@ -329,51 +320,58 @@ export function ItemDetail({
               >
                 <Icon name="lock" />
                 <span>
-                  {slotLabel}: {resolvedEntity?.name ?? resolved.identity.name}
+                  {slotLabel}:{" "}
+                  {(resolvedName === undefined
+                    ? undefined
+                    : parentheticalName(resolvedName)?.variant) ?? resolvedName}
                 </span>
               </p>
             ) : (
-              <div
-                className="item-choice-options"
+              <CompactChoiceButtons
                 key={`${slot.ruleOrdinal}:${slot.choiceIndex}`}
-                role="radiogroup"
-                aria-label={slotLabel}
-              >
-                <p>{slot.label ?? `Choose ${slot.type.toLocaleLowerCase()}`}</p>
-                {(entities === undefined
+                label={slot.label ?? `Choose ${slot.type.toLocaleLowerCase()}`}
+                options={(entities === undefined
                   ? []
                   : itemChoiceCandidates(slot, entities, entry.acquiredLevel)
-                ).map((candidate) => (
-                  <label key={candidate.id}>
-                    <input
-                      type="radio"
-                      name={`inventory-item-choice-${entry.id}-${index}`}
-                      value={candidate.id}
-                      checked={false}
-                      onChange={() =>
-                        onChooseInventoryChild?.(
-                          entry.id,
-                          itemChoiceElementIndex,
-                          index,
-                          {
-                            id: `web:${crypto.randomUUID()}`,
-                            identity: {
-                              definitionId: candidate.id,
-                              name: candidate.name,
-                              type: candidate.type,
-                            },
-                            acquiredLevel: entry.acquiredLevel,
-                            legality: "rules-legal",
-                            children: [],
-                            unresolved: false,
-                          },
+                ).map((candidate) => ({
+                  id: candidate.id,
+                  label:
+                    parentheticalName(candidate.name)?.variant ??
+                    candidate.name,
+                  selectable: true,
+                }))}
+                selectedId=""
+                disabled={false}
+                onChoose={(candidateId) => {
+                  const candidate = (
+                    entities === undefined
+                      ? []
+                      : itemChoiceCandidates(
+                          slot,
+                          entities,
+                          entry.acquiredLevel,
                         )
-                      }
-                    />
-                    {candidate.name}
-                  </label>
-                ))}
-              </div>
+                  ).find(({ id }) => id === candidateId);
+                  if (candidate === undefined) return;
+                  onChooseInventoryChild?.(
+                    entry.id,
+                    itemChoiceElementIndex,
+                    index,
+                    {
+                      id: `web:${crypto.randomUUID()}`,
+                      identity: {
+                        definitionId: candidate.id,
+                        name: candidate.name,
+                        type: candidate.type,
+                      },
+                      acquiredLevel: entry.acquiredLevel,
+                      legality: "rules-legal",
+                      children: [],
+                      unresolved: false,
+                    },
+                  );
+                }}
+              />
             );
           })}
         </section>
@@ -1514,13 +1512,12 @@ export function EquipmentWorkspace({
               inventory={inventory}
               ownedDefinitions={ownedDefinitions}
               walletCopper={carriedCopper + storedCopper}
-              onInspect={(entity, displayName, kindLabel, compatibility) => {
+              onInspect={(entity, displayName, kindLabel) => {
                 setInspected({
                   entities: [entity],
                   displayName,
                   effectiveLevel: build.effectiveLevel,
                   ...(kindLabel === undefined ? {} : { kindLabel }),
-                  ...(compatibility === undefined ? {} : { compatibility }),
                 });
                 setInspectedEntryId(undefined);
               }}

@@ -7,7 +7,8 @@ import type {
 import type { ContentEntity } from "@4ecb/content-domain";
 import { itemChoiceSlots } from "@4ecb/rules-engine";
 
-import { contentSpecificValue } from "./builder-ui";
+import { contentSpecificValue, parentheticalName } from "./builder-ui";
+import { CompactChoiceButtons } from "./ChoiceEditors";
 import {
   compatibleBaseItems,
   entityCurrencyCopper,
@@ -212,7 +213,6 @@ interface ShopWorkspaceProps {
     entity: ContentEntity,
     displayName: string,
     kindLabel?: string,
-    compatibility?: { readonly label: string; readonly value: string },
   ) => void;
   readonly onAcquire: (entry: BuildInventoryEntry, priceCopper: number) => void;
   readonly onBrowseChange: (browse: ShopBrowseId) => void;
@@ -704,29 +704,12 @@ export function ShopWorkspace({
               onClick={() => {
                 setInspectedEntityId(entity.id);
                 const kind = implementKind(entity);
-                const compatible = compatibleBaseItems(entity, catalog);
-                const nouns = physicalNouns(entity);
-                const compatibleTypes = [
-                  ...new Set(
-                    compatible
-                      .map(shopSubtype)
-                      .filter((value): value is string => value !== undefined),
-                  ),
-                ];
                 onInspect(
                   entity,
                   displayName,
                   kind === undefined
                     ? undefined
                     : `Implement Enchantment (${kind})`,
-                  kind !== undefined && compatibleTypes.length <= 1
-                    ? undefined
-                    : compatibleTypes.length > 0
-                      ? {
-                          label: `Compatible ${nouns.plural}`,
-                          value: compatibleTypes.join(", "),
-                        }
-                      : undefined,
                 );
                 setPreferredVariants((current) =>
                   new Map(current).set(family.key, entity.id),
@@ -1307,38 +1290,32 @@ export function ShopWorkspace({
             {currentDialogPage !== "item-choices"
               ? null
               : requiredItemChoices.map((slot, index) => (
-                  <div
-                    className="shop-physical-list shop-item-choice-list"
+                  <CompactChoiceButtons
                     key={`${slot.ruleOrdinal}:${slot.choiceIndex}`}
-                    role="radiogroup"
-                    aria-label={slot.label ?? slot.type}
-                  >
-                    <p className="shop-item-choice-label">
-                      {slot.label ?? `Choose ${slot.type.toLocaleLowerCase()}`}
-                    </p>
-                    {itemChoiceCandidates(slot, entities, characterLevel).map(
-                      (candidate) => (
-                        <label key={candidate.id}>
-                          <input
-                            type="radio"
-                            name={`item-choice-${index}`}
-                            value={candidate.id}
-                            checked={
-                              itemChoiceSelections.get(index) === candidate.id
-                            }
-                            onChange={() =>
-                              setItemChoiceSelections((current) => {
-                                const next = new Map(current);
-                                next.set(index, candidate.id);
-                                return next;
-                              })
-                            }
-                          />
-                          <strong>{candidate.name}</strong>
-                        </label>
-                      ),
-                    )}
-                  </div>
+                    label={
+                      slot.label ?? `Choose ${slot.type.toLocaleLowerCase()}`
+                    }
+                    options={itemChoiceCandidates(
+                      slot,
+                      entities,
+                      characterLevel,
+                    ).map((candidate) => ({
+                      id: candidate.id,
+                      label:
+                        parentheticalName(candidate.name)?.variant ??
+                        candidate.name,
+                      selectable: true,
+                    }))}
+                    selectedId={itemChoiceSelections.get(index) ?? ""}
+                    disabled={false}
+                    onChoose={(candidateId) =>
+                      setItemChoiceSelections((current) => {
+                        const next = new Map(current);
+                        next.set(index, candidateId);
+                        return next;
+                      })
+                    }
+                  />
                 ))}
             <dl className="shop-physical-summary">
               <div>

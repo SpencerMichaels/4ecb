@@ -54,7 +54,7 @@ function retrainingCategory(type: string | undefined): string | undefined {
   return undefined;
 }
 
-function CompactChoiceButtons({
+export function CompactChoiceButtons({
   label,
   options,
   keyAbilities = [],

@@ -215,7 +215,11 @@ try {
     `shared button contracts changed: ${JSON.stringify(styleContract)}`,
   );
   assert(
-    styleContract["ordinary-header"].marginBottom === "13.6px" &&
+    // An ordinary header immediately followed by flavor text now also
+    // zeroes its own bottom margin (matching the power/composed-item
+    // cases below), since the flavor element supplies its own top padding
+    // and the two used to stack into a doubled, uneven gap.
+    styleContract["ordinary-header"].marginBottom === "0px" &&
       styleContract["power-header"].marginBottom === "0px" &&
       styleContract["item-header"].marginBottom === "0px",
     `detail-card header rhythm changed: ${JSON.stringify(styleContract)}`,

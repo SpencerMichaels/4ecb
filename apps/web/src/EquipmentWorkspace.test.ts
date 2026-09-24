@@ -408,34 +408,36 @@ describe("equipment item details", () => {
     expect(markup.match(/candidate-detail tone-/g)).toHaveLength(2);
   });
 
-  it("renders Shop's compatibility note as ordinary body content, not inside the tone-colored header", () => {
+  it("leads an uncomposed enchantment's descriptors with its own compatible-type field", () => {
     const enchantment = entity(
       "PUBLIC_ENCHANT",
       "Public Weapon of Testing +1",
       "Magic Item",
       "Public source",
-      { "Magic Item Type": "Weapon", Level: "1" },
+      {
+        "Magic Item Type": "Weapon",
+        Level: "1",
+        Weapon: "Heavy blade",
+        Rarity: "Common",
+      },
     );
     const markup = renderToStaticMarkup(
       createElement(ItemDetail, {
         item: {
           entities: [enchantment],
           displayName: enchantment.name,
-          compatibility: { label: "Compatible weapons", value: "Heavy blade" },
         },
         hideFlavortext: false,
         byId: new Map([[enchantment.id.toLocaleLowerCase(), enchantment]]),
       }),
     );
 
-    expect(markup).toContain("entity-card-rules shop-detail-compatibility");
-    expect(markup).toContain("Compatible weapons");
-    // The compatibility note must sit after the header closes, not as part
-    // of its subheading slot, so it doesn't inherit the header's tone color.
-    const headerEnd = markup.indexOf("</header>");
-    const compatibilityStart = markup.indexOf("shop-detail-compatibility");
-    expect(headerEnd).toBeGreaterThan(-1);
-    expect(compatibilityStart).toBeGreaterThan(headerEnd);
+    expect(markup).not.toContain("shop-detail-compatibility");
+    const weaponFieldIndex = markup.indexOf("<dt>Weapon</dt>");
+    const rarityFieldIndex = markup.indexOf("<dt>Rarity</dt>");
+    expect(weaponFieldIndex).toBeGreaterThan(-1);
+    expect(rarityFieldIndex).toBeGreaterThan(-1);
+    expect(weaponFieldIndex).toBeLessThan(rarityFieldIndex);
   });
 
   describe("item-owned choice editing", () => {
@@ -560,6 +562,89 @@ describe("equipment item details", () => {
         }),
       );
       expect(markup).not.toContain("item-choice-panel");
+    });
+
+    it("shows just the bracketed variant, not the repeated item name, for parenthetical candidates", () => {
+      const parenthesizedFire = entity(
+        "PUBLIC_ARMOR_FIRE",
+        "Armor of Resistance +2 (Fire)",
+        "Class Feature",
+        "Public item source",
+        {},
+      );
+      const parenthesizedPoison = entity(
+        "PUBLIC_ARMOR_POISON",
+        "Armor of Resistance +2 (Poison)",
+        "Class Feature",
+        "Public item source",
+        {},
+      );
+      const entities = [armor, parenthesizedFire, parenthesizedPoison];
+      const parenById = new Map(
+        entities.map((item) => [item.id.toLocaleLowerCase(), item]),
+      );
+
+      const unresolvedEntry: BuildInventoryEntry = {
+        id: "owned-armor",
+        acquiredLevel: 1,
+        quantity: 1,
+        equippedQuantity: 0,
+        elements: [
+          { definitionId: armor.id, name: armor.name, type: armor.type },
+        ],
+        overrides: {},
+        legality: "rules-legal",
+      };
+      const unresolvedMarkup = renderToStaticMarkup(
+        createElement(ItemDetail, {
+          item: inventoryItemDetail(unresolvedEntry, parenById),
+          hideFlavortext: false,
+          byId: parenById,
+          entities,
+          entry: unresolvedEntry,
+          onChooseInventoryChild: () => undefined,
+        }),
+      );
+      expect(unresolvedMarkup).toContain(">Fire<");
+      expect(unresolvedMarkup).toContain(">Poison<");
+      expect(unresolvedMarkup).not.toContain("Armor of Resistance +2");
+
+      const resolvedEntry: BuildInventoryEntry = {
+        ...unresolvedEntry,
+        elements: [
+          {
+            definitionId: armor.id,
+            name: armor.name,
+            type: armor.type,
+            children: [
+              {
+                id: "web:choice",
+                identity: {
+                  definitionId: parenthesizedFire.id,
+                  name: parenthesizedFire.name,
+                  type: parenthesizedFire.type,
+                },
+                acquiredLevel: 1,
+                legality: "rules-legal",
+                children: [],
+                unresolved: false,
+              },
+            ],
+          },
+        ],
+      };
+      const resolvedMarkup = renderToStaticMarkup(
+        createElement(ItemDetail, {
+          item: inventoryItemDetail(resolvedEntry, parenById),
+          hideFlavortext: false,
+          byId: parenById,
+          entities,
+          entry: resolvedEntry,
+          onChooseInventoryChild: () => undefined,
+        }),
+      );
+      expect(resolvedMarkup).toContain("Class Feature: Fire");
+      expect(resolvedMarkup).not.toContain("Armor of Resistance +2");
     });
   });
 });

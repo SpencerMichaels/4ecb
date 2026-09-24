@@ -572,7 +572,13 @@ function itemDescriptorRows(
       return found === undefined ? [] : [found];
     });
   const isWeapon = normalizedFieldName(itemKind(entity)) === "weapon";
+  // An enchantment not yet paired with a base item names its compatible base
+  // type(s) in its own "Armor"/"Weapon" field (see compatibleBaseItems in
+  // equipment-ui.ts). Lead with it: it is the single most decision-relevant
+  // fact about an item still being chosen.
   const claimed = new Set([
+    "armor",
+    "weapon",
     "enhancement",
     "proficiency",
     "damage",
@@ -588,11 +594,13 @@ function itemDescriptorRows(
   ]);
   if (!isWeapon)
     return [
+      take(["armor"]),
       take(["enhancement"]),
       take(["price", "slot", "rarity"]),
       all.filter((fact) => !claimed.has(normalizedFieldName(fact.label))),
     ].filter((row) => row.length > 0);
   return [
+    take(["weapon"]),
     take(["enhancement"]),
     take(["proficiency", "damage", "critical"]),
     take(["category", "hands", "group"]),

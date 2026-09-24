@@ -3596,6 +3596,12 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   --entity-card-header-margin-bottom: 0;
 }
 
+/* Flavor text supplies its own top padding; without this the header's own
+   bottom margin stacked on top of it, doubling the visible gap. */
+.candidate-detail > header.primary-detail-heading:has(+ .candidate-flavor) {
+  --entity-card-header-margin-bottom: 0;
+}
+
 .primary-detail-subheading {
   align-items: start;
   display: flex;
@@ -3648,17 +3654,6 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   flex: 0 0 auto;
   height: 0.9rem;
   width: 0.9rem;
-}
-
-.item-choice-options {
-  display: grid;
-  gap: 0.3rem;
-}
-
-.item-choice-options label {
-  align-items: center;
-  display: flex;
-  gap: 0.4rem;
 }
 
 .candidate-unavailable {
@@ -4540,13 +4535,6 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
 
 .shop-physical-list small {
   color: var(--muted);
-}
-
-.shop-item-choice-label {
-  border-bottom: 1px solid var(--border);
-  font-weight: 700;
-  margin: 0;
-  padding: 0.45rem 0.7rem;
 }
 
 .shop-physical-summary {

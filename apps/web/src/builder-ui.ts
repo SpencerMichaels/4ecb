@@ -1316,7 +1316,7 @@ export interface CandidatePresentationGroup {
   readonly options: readonly CandidatePresentationOption[];
 }
 
-function parentheticalName(
+export function parentheticalName(
   name: string,
 ): { readonly base: string; readonly variant: string } | undefined {
   const open = name.indexOf(" (");

@@ -1,5 +1,74 @@
 # Implementation status
 
+## Item-owned choice product-owner review fixes, round 2 (2026-09-24)
+
+Four more issues from continued product-owner review, all fixed and verified:
+
+- **Compatibility header removed; its info was already available and more
+  precise elsewhere.** The product owner pointed out that an enchantment's
+  own "Armor"/"Weapon" specific field (already surfaced in
+  `.item-card-descriptors` — the same field `compatibleBaseItems` in
+  `equipment-ui.ts` reads) already names the exact compatible base types,
+  making the separate compatibility header from the prior checkpoint
+  redundant. Removed it entirely (`ItemDetail`'s use of `item.compatibility`,
+  the `InspectedItemDetail.compatibility` field, and the `onInspect`
+  4th argument in both `ShopWorkspace.tsx` and `EquipmentWorkspace.tsx`).
+  `EntityCard.tsx`'s `itemDescriptorRows` now leads with the "Armor"/"Weapon"
+  field instead of leaving it in the unordered tail group, so the same
+  information is emphasized where it already lived.
+- **Header/flavor-text spacing, found via the same investigation.** The
+  `.candidate-detail > header.primary-detail-heading` box contributes its own
+  bottom margin (`--entity-card-header-margin-bottom`, 0.85rem) _and_ flavor
+  text (`.candidate-flavor`) supplies its own top padding (0.8rem); composed
+  and top-level-power cards already zeroed the header's margin to avoid
+  stacking both, but an ordinary single-entity card (e.g. an uncomposed Shop
+  enchantment) never got the same treatment. Added
+  `header.primary-detail-heading:has(+ .candidate-flavor) { --entity-card-header-margin-bottom: 0; }`
+  so any card immediately followed by flavor text gets the same tight,
+  single-source spacing. `scripts/check-print.mjs`'s computed-style contract
+  gate had a hardcoded `"13.6px"` expectation for exactly this "ordinary
+  header, then flavor" case — updated to `"0px"` to match the corrected,
+  intentional rhythm (not a regression: the gate is what caught that this
+  spacing is now shared code, verifying the fix rather than blocking it).
+- **Item-owned choice candidates showed the full redundant name.** Real
+  corpus candidates are named like `Armor of Resistance +2 (Fire)`, not just
+  `Fire` — every option in a picker repeated the item's own name. Reused the
+  existing `parentheticalName` helper (until now module-private in
+  `builder-ui.ts`, already used by `groupParameterizedCandidates` for the
+  established "Name (Parameter)" family/variant split, e.g. `Weapon
+Proficiency (Greatbow)`) to display just the bracketed variant
+  (`.variant`) wherever a candidate or an already-resolved choice is shown,
+  falling back to the full name for any candidate that isn't
+  parenthetically shaped. The stored `BuildOccurrence`/`ContentEntity` name
+  is unchanged — only the display label is stripped.
+- **Picker styling didn't distinguish header from choices.** Both item-choice
+  pickers (the Shop dialog's page 1 and the Equipment-workspace editor) used
+  ad hoc `<input type="radio">` markup with no dedicated styling, so the
+  heading and the options read as the same weight. Exported the existing
+  `CompactChoiceButtons` component (previously module-private in
+  `ChoiceEditors.tsx`; already the established pattern for Gender/Alignment/
+  retraining-target pickers elsewhere in the builder — a `<fieldset>` legend
+  heading plus a button grid with a clear selected/bordered state) and reused
+  it in both surfaces instead of hand-rolled markup, deleting the
+  now-dead `.shop-item-choice-label`/`.item-choice-options` CSS.
+- Verification: `EntityCard.test.ts` and `EquipmentWorkspace.test.ts` cover
+  the descriptor-row promotion and the parenthetical-name stripping
+  (unresolved picker and locked display) with a real "Armor of Resistance +2
+  (Fire)"-shaped fixture, not just plain names. Full public suite: 546/546
+  tests, workspace typechecks, lint, production/PWA build, and the updated
+  Chromium/Firefox print/style-contract gate all pass (`scripts/check.sh`).
+  Manual end-to-end verification extended the probe fixture with a `flavor`
+  field and a realistic parenthetical candidate-name pattern, driven through
+  a production build via raw CDP: the Shop dialog and the Equipment editor
+  both now show plain "Fire"/"Poison" as clearly bordered `CompactChoiceButtons`
+  options (selected state highlighted, matching the app's established
+  choice-picker look) instead of full-name radio rows; the resolved/locked
+  display also shows the stripped name; inspecting the weapon enchantment
+  in Shop shows "Weapon" as the first descriptor row with no compatibility
+  header, and the measured gap between the header and its flavor text
+  dropped from a doubled margin to exactly the flavor element's own padding
+  (0px extra). No console errors.
+
 ## Item-owned choice product-owner review fixes (2026-09-24)
 
 Three issues the product owner found testing the prior two checkpoints against
