@@ -4791,6 +4791,7 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
 
 .inventory-quantity button,
 .inventory-icon-action {
+  align-items: center;
   background: var(--surface-raised);
   border: 1px solid var(--border);
   border-radius: 0.3rem;
@@ -4798,6 +4799,7 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   cursor: pointer;
   display: inline-flex;
   height: 2rem;
+  justify-content: center;
   min-width: 2rem;
   padding: 0.25rem;
 }
