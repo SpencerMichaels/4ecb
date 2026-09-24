@@ -41,10 +41,7 @@ import {
   unresolveEvaluatedChoiceCommand,
   type ChoiceSelectionTableKind,
 } from "./builder-ui";
-import {
-  InspectCandidateContext,
-  ShowAllChoicesContext,
-} from "./builder-choice-context";
+import { InspectCandidateContext } from "./builder-choice-context";
 import { CandidateDetail } from "./CandidateDetail";
 import { CandidateSelectionTable } from "./CandidateSelectionTable";
 import { Icon, type IconName } from "./Icon";
@@ -311,7 +308,7 @@ function ReplacementEditor({
             ) === targetType,
         );
   const [targetId, setTargetId] = useState(selected?.replacesId ?? "");
-  const showAll = useContext(ShowAllChoicesContext);
+  const [showAll, setShowAll] = useState(false);
   const inspectCandidate = useContext(InspectCandidateContext);
   const [optimisticSelectedId, setOptimisticSelectedId] = useState(
     selected?.definitionId ?? "",
@@ -545,6 +542,7 @@ function ReplacementEditor({
             expandedGroupKey={expandedReplacementGroupKey}
             byId={byId}
             disabled={disabled}
+            showUnavailable={showAll}
             onExpandGroup={setExpandedReplacementGroupKey}
             onInspect={(candidate) => {
               setPerusingTarget(false);
@@ -558,6 +556,7 @@ function ReplacementEditor({
               if (candidate !== undefined) selectReplacement(target, candidate);
             }}
             onRemove={clearReplacement}
+            onToggleShowUnavailable={() => setShowAll((current) => !current)}
           />
         )}
       </div>
@@ -618,7 +617,7 @@ export function ChoiceEditor({
     entities,
   );
   const selected = selectedOccurrence(choice, evaluation);
-  const showAll = useContext(ShowAllChoicesContext);
+  const [showAll, setShowAll] = useState(false);
   const inspectCandidate = useContext(InspectCandidateContext);
   const [optimisticSelectedId, setOptimisticSelectedId] = useState(
     selected?.definitionId ?? "",
@@ -800,6 +799,7 @@ export function ChoiceEditor({
             expandedGroupKey={displayedGroupKey}
             byId={byId}
             disabled={editorDisabled}
+            showUnavailable={showAll}
             onExpandGroup={setStagedGroupKey}
             onInspect={(candidate) => {
               setPerusedId(candidate.definitionId);
@@ -812,6 +812,7 @@ export function ChoiceEditor({
             onToggle={selectDefinition}
             onRemove={clearSelection}
             onClear={clearSelection}
+            onToggleShowUnavailable={() => setShowAll((current) => !current)}
           />
         ) : groupedPresentation ? (
           <>
@@ -1405,7 +1406,7 @@ function RepeatedCandidateTableEditor({
   readonly rollbackRevision: number;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
-  const showAll = useContext(ShowAllChoicesContext);
+  const [showAll, setShowAll] = useState(false);
   const inspectCandidate = useContext(InspectCandidateContext);
   const evaluatedSlots = new Map(
     choices.map((choice) => [
@@ -1589,6 +1590,7 @@ function RepeatedCandidateTableEditor({
       byId={byId}
       disabled={false}
       selectionLimit={choices.length}
+      showUnavailable={showAll}
       onExpandGroup={setExpandedGroupKey}
       onInspect={(candidate) => {
         const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
@@ -1597,6 +1599,7 @@ function RepeatedCandidateTableEditor({
       onToggle={toggle}
       onRemove={toggle}
       onClear={clear}
+      onToggleShowUnavailable={() => setShowAll((current) => !current)}
     />
   );
 }
@@ -1825,7 +1828,7 @@ export function SkillTrainingEditor({
       selectedDefinitionId(choice, evaluation),
     ]),
   );
-  const showAll = useContext(ShowAllChoicesContext);
+  const showAll = false;
   const inspectCandidate = useContext(InspectCandidateContext);
   const [optimisticSlots, setOptimisticSlots] = useState(evaluatedSlots);
   const choiceKey = choices.map((choice) => choice.id).join("\0");

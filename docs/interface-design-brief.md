@@ -103,8 +103,10 @@ visual assets.
   this mode on the character or automatically apply it to later choice lists.
   Selecting an illegal option remains an intentional user action rather than an
   accidental consequence of changing the filter.
-  The unavailable-options control is temporarily absent during the current
-  compact-layout prototype and will return in a later focused design pass.
+  Each candidate table carries this as a small icon-only toggle at its
+  top-right corner (after the result count), matching the legacy builder's
+  placement; its accessible name, tooltip, and pressed state reflect the
+  current boolean mode (2026-09-24).
 - Do not label choices as popular or recommended. The application may present
   objective legality, prerequisites, source, and mechanical consequences; it
   must not invent subjective build advice.
@@ -327,10 +329,11 @@ selectable and stored. This covers the paired ability increases at levels 4,
 class slots of a hybrid character. Slot-specific controls such as Background
 and Skill Training retain their more specialized grouped presentations.
 
-The temporary **Show unavailable options** control is level-wide rather than
-repeated in every choice. Compact choices whose candidate records add no useful
-player-facing explanation, notably ability increases, omit the empty detail
-pane and supporting filter prose.
+The unavailable-options toggle is local to each candidate table (see above),
+not one level-wide control. Compact choices whose candidate records add no
+useful player-facing explanation, notably ability increases, omit the empty
+detail pane and supporting filter prose; they also have no candidate table and
+so carry no unavailable-options toggle.
 
 Ordinary optional replacement rules are presented as retraining, matching the
 player-facing game concept. An unused retraining slot is absent from the level

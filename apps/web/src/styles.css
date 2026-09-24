@@ -2955,6 +2955,12 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   fill: currentColor;
 }
 
+.selection-unavailable-toggle[aria-pressed="true"] {
+  background: var(--power-item-soft);
+  border-color: var(--power-item);
+  color: var(--text);
+}
+
 .selection-table-scroll td small {
   display: block;
   margin-top: 0.2rem;

@@ -54,6 +54,10 @@ const selectionSummary = readFileSync(
   "utf8",
 );
 const icon = readFileSync(new URL("./Icon.tsx", import.meta.url), "utf8");
+const builderChoiceContext = readFileSync(
+  new URL("./builder-choice-context.tsx", import.meta.url),
+  "utf8",
+);
 const app = readFileSync(new URL("./App.tsx", import.meta.url), "utf8");
 const settingsPage = readFileSync(
   new URL("./SettingsPage.tsx", import.meta.url),
@@ -845,5 +849,42 @@ describe("release accessibility contract", () => {
     expect(styles).toMatch(
       /\.shop-toolbar > label,[\s\S]*?\.shop-physical-tools label\s*\{[^}]*color: var\(--muted\);[^}]*font-size: 0\.6875rem;[^}]*font-weight: 800;[^}]*letter-spacing: 0\.05em;[^}]*text-transform: uppercase;/s,
     );
+  });
+
+  it("gives every candidate table a focused, per-choice unavailable-options toggle", () => {
+    expect(builderChoiceContext).not.toContain("ShowAllChoicesContext");
+    expect(candidateSelectionTable).toContain(
+      "readonly onToggleShowUnavailable?: () => void;",
+    );
+    const toggleButton = candidateSelectionTable.slice(
+      candidateSelectionTable.indexOf(
+        '<span className="selection-table-count">',
+      ),
+      candidateSelectionTable.indexOf(
+        "</div>",
+        candidateSelectionTable.indexOf(
+          '<span className="selection-table-count">',
+        ),
+      ),
+    );
+    expect(toggleButton).toContain(
+      'className="icon-only-button button-icon selection-unavailable-toggle"',
+    );
+    expect(toggleButton).toContain("aria-pressed={showUnavailable === true}");
+    expect(toggleButton).toContain('<Icon name="eye" />');
+    expect(styles).toMatch(
+      /\.selection-unavailable-toggle\[aria-pressed="true"\]\s*\{[^}]*background: var\(--power-item-soft\);/,
+    );
+    for (const factory of [
+      "ReplacementEditor",
+      "ChoiceEditor",
+      "RepeatedCandidateTableEditor",
+    ] as const) {
+      const start = choiceEditors.indexOf(`function ${factory}(`);
+      expect(start).toBeGreaterThan(-1);
+      const body = choiceEditors.slice(start);
+      expect(body).toContain("const [showAll, setShowAll] = useState(false);");
+      expect(body).toContain("onToggleShowUnavailable={() => setShowAll");
+    }
   });
 });

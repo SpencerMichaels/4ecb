@@ -25,6 +25,7 @@ import {
   Crown,
   Dumbbell,
   Download,
+  Eye,
   FileText,
   FlaskConical,
   FlaskRound,
@@ -118,6 +119,7 @@ export type IconName =
   | "duplicate"
   | "dumbbell"
   | "edit"
+  | "eye"
   | "favorite"
   | "feat"
   | "flask-conical"
@@ -205,6 +207,7 @@ const icons: Record<IconName, LucideIcon> = {
   duplicate: Copy,
   dumbbell: Dumbbell,
   edit: Pencil,
+  eye: Eye,
   favorite: Star,
   feat: Sparkles,
   "flask-conical": FlaskConical,

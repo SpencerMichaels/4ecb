@@ -10,8 +10,6 @@ import {
   type InspectedOption,
 } from "./CandidateSelectionTable";
 
-export const ShowAllChoicesContext = createContext(false);
-
 export const InspectCandidateContext = createContext<
   ((option: InspectedOption | undefined) => void) | undefined
 >(undefined);

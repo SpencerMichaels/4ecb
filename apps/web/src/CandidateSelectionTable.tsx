@@ -189,11 +189,13 @@ export function CandidateSelectionTable({
   disabled,
   selectionLimit,
   nameColumnLabel,
+  showUnavailable,
   onExpandGroup,
   onInspect,
   onToggle,
   onRemove,
   onClear,
+  onToggleShowUnavailable,
 }: {
   readonly kind: ChoiceSelectionTableKind;
   readonly candidates: readonly CandidateDecision[];
@@ -204,11 +206,13 @@ export function CandidateSelectionTable({
   readonly disabled: boolean;
   readonly selectionLimit?: number;
   readonly nameColumnLabel?: string;
+  readonly showUnavailable?: boolean;
   readonly onExpandGroup: (key: string) => void;
   readonly onInspect: (candidate: CandidateDecision) => void;
   readonly onToggle: (definitionId: string) => void;
   readonly onRemove: (definitionId: string) => void;
   readonly onClear?: () => void;
+  readonly onToggleShowUnavailable?: () => void;
 }) {
   const initializeInspection = useContext(InitializeCandidateInspectionContext);
   const [filter, setFilter] = useState("");
@@ -761,6 +765,26 @@ export function CandidateSelectionTable({
             <Icon name="favorite" /> Favorites
           </button>
           <span className="selection-table-count">{totalRows} shown</span>
+          {onToggleShowUnavailable === undefined ? null : (
+            <button
+              aria-label={
+                showUnavailable === true
+                  ? "Hide unavailable options"
+                  : "Show unavailable options"
+              }
+              aria-pressed={showUnavailable === true}
+              className="icon-only-button button-icon selection-unavailable-toggle"
+              title={
+                showUnavailable === true
+                  ? "Showing unavailable options"
+                  : "Show unavailable options"
+              }
+              type="button"
+              onClick={onToggleShowUnavailable}
+            >
+              <Icon name="eye" />
+            </button>
+          )}
         </div>
         <SelectionSummary
           items={selectedItems}

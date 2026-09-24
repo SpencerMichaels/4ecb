@@ -1,5 +1,45 @@
 # Implementation status
 
+## Unavailable-options toggle checkpoint (2026-09-24)
+
+- Every `CandidateSelectionTable` now exposes a small icon-only toggle button
+  at the top-right of its toolbar (after the result count), matching the
+  legacy builder's placement. It is icon-only (`Icon name="eye"`), carries
+  `aria-pressed`, `aria-label`, and a native `title` tooltip that both flip
+  with the boolean state ("Show unavailable options" / "Hide unavailable
+  options"), and its pressed state reuses the existing Favorites-toggle
+  visual treatment.
+- The underlying filtering mechanism (`isCandidateVisible` in `builder-ui.ts`,
+  and the `visible`/`visibleCandidates` derivations in `ChoiceEditors.tsx`)
+  was already implemented and unit-tested; it had been headless since the
+  compact-layout density pass removed its control pending this redesign. This
+  checkpoint only adds the control.
+- `ReplacementEditor`, `ChoiceEditor`, and `RepeatedCandidateTableEditor` each
+  now own local `showAll` state (`useState`, not a shared context) rather than
+  reading the removed `ShowAllChoicesContext`. Because each is mounted keyed
+  by `choice.id` at its call site, the toggle naturally resets to off when the
+  focused choice changes, matching the documented "local to the focused
+  choice, resets when focus changes" behavior with no extra reset code.
+  `SkillTrainingEditor` has no candidate table (it uses a toggle-list
+  presentation) and keeps its existing always-filtered behavior unchanged.
+- `ShowAllChoicesContext` is removed as dead code: it had no `Provider`
+  anywhere in the app and always evaluated to `false`.
+- A new `accessibility-contract.test.ts` case source-verifies the toggle
+  button's wiring, styling, and that each of the three choice editors owns
+  local `showAll` state. Full public suite: 533/533 tests, workspace
+  typechecks, lint, production/PWA build, and Chromium/Firefox print checks
+  all pass (`scripts/check.sh`). Manual verification used a production preview
+  build against the existing public 420-feat synthetic fixture (raw CDP, no
+  extension available): the button renders at the table's top-right corner,
+  toggling it flips `aria-pressed`/label/title with no console errors; that
+  fixture has no ineligible candidates, so it does not exercise row reveal —
+  the reveal logic itself is covered by the pre-existing `isCandidateVisible`
+  unit tests, which are unchanged.
+- Unrelated pre-existing Prettier drift in
+  `packages/rules-engine/src/build-projection.ts` (present before this
+  checkpoint, blocking `scripts/check.sh`'s formatting gate for anyone) was
+  fixed as a small aside; the change is whitespace-only.
+
 ## Current stopping point
 
 Milestones M1 through M5 are complete at their stated release boundaries. M4 is

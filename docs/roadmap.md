@@ -461,9 +461,11 @@ shared
 detail-card system, navigation, candidate tables, and header statistics have all
 received accepted product-owner passes. The combined Shop and ritual/practice
 interface received its production live-review approval on 2026-09-22 after
-visual reconciliation with the accepted prototype. Unavailable-option browsing
-and item-owned Equipment choices still require their final interfaces. Closing
-those items and reconciling the final documentation completes M5.5. A
+visual reconciliation with the accepted prototype. Every candidate table now
+carries a focused, per-choice unavailable-option toggle (2026-09-24); see
+[implementation-status.md](implementation-status.md) for the checkpoint.
+Item-owned Equipment choices still require their final interface. Closing that
+item and reconciling the final documentation completes M5.5. A
 lightweight best-effort browser check belongs to M9; this project does not run
 a formal release-client or accessibility-certification matrix (see decision
 D063).
