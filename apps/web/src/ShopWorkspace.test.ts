@@ -6,6 +6,7 @@ import type { BuildInventoryEntry } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 
 import {
+  acquisitionDialogPages,
   compatibleChoiceType,
   preferredShopBrowse,
   readShopSessionPreferences,
@@ -124,6 +125,16 @@ describe("Shop workspace", () => {
     expect(shopKnownFilterMatches(true, true, false)).toBe(false);
     expect(shopKnownFilterMatches(false, true, false)).toBe(true);
     expect(shopKnownFilterMatches(true, false, false)).toBe(true);
+  });
+
+  it("orders the acquisition dialog's pages with item-owned choices before a physical pairing", () => {
+    expect(acquisitionDialogPages(0, 0)).toEqual([]);
+    expect(acquisitionDialogPages(1, 0)).toEqual(["item-choices"]);
+    expect(acquisitionDialogPages(0, 2)).toEqual(["physical"]);
+    expect(acquisitionDialogPages(1, 2)).toEqual(["item-choices", "physical"]);
+    // A single unambiguous physical option still gets its own page today —
+    // beginAcquire only skips the dialog outright when nothing needs asking.
+    expect(acquisitionDialogPages(1, 1)).toEqual(["item-choices", "physical"]);
   });
 
   it("uses physical subtypes outside implement Standard/Superior choices", () => {

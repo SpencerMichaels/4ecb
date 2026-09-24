@@ -35,6 +35,7 @@ import { canonicalItemIcon } from "./item-icons";
 type SortColumn = "name" | "level" | "price" | "owned";
 type SortDirection = "ascending" | "descending";
 type AcquireMode = "buy" | "give";
+type AcquisitionDialogPage = "item-choices" | "physical";
 
 const SHOP_SESSION_KEY = "4ecb.shopPreferences.v1";
 
@@ -181,6 +182,23 @@ export function shopKnownFilterMatches(
   isKnown: boolean,
 ): boolean {
   return !learning || !knownOnly || isKnown;
+}
+
+/**
+ * The acquisition dialog's page sequence: item-owned choices (e.g. an Armor
+ * of Resistance damage type) always come before a compatible-base-item
+ * choice, so the property that defines what the character is buying is
+ * settled before picking its physical form. A page is included only when it
+ * has a genuine choice to make; either or both may be absent.
+ */
+export function acquisitionDialogPages(
+  itemChoiceCount: number,
+  physicalChoiceCount: number,
+): readonly AcquisitionDialogPage[] {
+  return [
+    ...(itemChoiceCount > 0 ? (["item-choices"] as const) : []),
+    ...(physicalChoiceCount > 0 ? (["physical"] as const) : []),
+  ];
 }
 
 interface ShopWorkspaceProps {
@@ -342,6 +360,7 @@ export function ShopWorkspace({
   const [itemChoiceSelections, setItemChoiceSelections] = useState<
     ReadonlyMap<number, string>
   >(new Map());
+  const [dialogPageIndex, setDialogPageIndex] = useState(0);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -568,6 +587,7 @@ export function ShopWorkspace({
       hasStandardImplement ? "standard" : (compatible[0]?.id ?? ""),
     );
     setItemChoiceSelections(new Map());
+    setDialogPageIndex(0);
     requestAnimationFrame(() => dialogRef.current?.showModal());
   };
 
@@ -596,6 +616,17 @@ export function ShopWorkspace({
     ? itemChoiceSlots(acquisition.entity)
     : [];
   const physicalNeeded = physicalChoices.length + (standardImplement ? 1 : 0);
+  const dialogPages = acquisitionDialogPages(
+    requiredItemChoices.length,
+    physicalNeeded,
+  );
+  const currentDialogPage = dialogPages[dialogPageIndex] ?? dialogPages[0];
+  const itemChoicesComplete = requiredItemChoices.every((_, index) =>
+    itemChoiceSelections.has(index),
+  );
+  const physicalChoiceComplete =
+    physicalNeeded === 0 || selectedPhysicalId !== "";
+  const onLastDialogPage = dialogPageIndex >= dialogPages.length - 1;
 
   const renderRow = (
     entity: ContentEntity,
@@ -1075,6 +1106,15 @@ export function ShopWorkspace({
             method="dialog"
             onSubmit={(event) => {
               event.preventDefault();
+              if (!onLastDialogPage) {
+                if (
+                  (currentDialogPage === "item-choices" &&
+                    itemChoicesComplete) ||
+                  (currentDialogPage === "physical" && physicalChoiceComplete)
+                )
+                  setDialogPageIndex((index) => index + 1);
+                return;
+              }
               const physical =
                 physicalNeeded === 0 || selectedPhysicalId === "standard"
                   ? undefined
@@ -1097,9 +1137,11 @@ export function ShopWorkspace({
                   const chosen =
                     definitionId === undefined
                       ? undefined
-                      : itemChoiceCandidates(slot, entities).find(
-                          ({ id }) => id === definitionId,
-                        );
+                      : itemChoiceCandidates(
+                          slot,
+                          entities,
+                          characterLevel,
+                        ).find(({ id }) => id === definitionId);
                   return chosen === undefined
                     ? []
                     : [
@@ -1136,9 +1178,13 @@ export function ShopWorkspace({
             <header>
               <div>
                 <p className="eyebrow">
-                  {physicalNeeded > 0 && requiredItemChoices.length > 0
-                    ? `Choose a compatible ${nouns.singular} and its properties`
-                    : physicalNeeded > 0
+                  {dialogPages.length > 1
+                    ? `Step ${dialogPageIndex + 1} of ${dialogPages.length}: ${
+                        currentDialogPage === "item-choices"
+                          ? "Choose its properties"
+                          : `Choose a compatible ${nouns.singular}`
+                      }`
+                    : currentDialogPage === "physical"
                       ? `Choose a compatible ${nouns.singular}`
                       : "Choose its properties"}
                 </p>
@@ -1156,7 +1202,7 @@ export function ShopWorkspace({
                 ×
               </button>
             </header>
-            {physicalNeeded === 0 ? null : (
+            {physicalNeeded === 0 || currentDialogPage !== "physical" ? null : (
               <>
                 <div className="shop-physical-tools">
                   <label>
@@ -1258,36 +1304,42 @@ export function ShopWorkspace({
                 </div>
               </>
             )}
-            {requiredItemChoices.map((slot, index) => (
-              <div
-                className="shop-physical-list shop-item-choice-list"
-                key={`${slot.ruleOrdinal}:${slot.choiceIndex}`}
-                role="radiogroup"
-                aria-label={slot.label ?? slot.type}
-              >
-                <p className="shop-item-choice-label">
-                  {slot.label ?? `Choose ${slot.type.toLocaleLowerCase()}`}
-                </p>
-                {itemChoiceCandidates(slot, entities).map((candidate) => (
-                  <label key={candidate.id}>
-                    <input
-                      type="radio"
-                      name={`item-choice-${index}`}
-                      value={candidate.id}
-                      checked={itemChoiceSelections.get(index) === candidate.id}
-                      onChange={() =>
-                        setItemChoiceSelections((current) => {
-                          const next = new Map(current);
-                          next.set(index, candidate.id);
-                          return next;
-                        })
-                      }
-                    />
-                    <strong>{candidate.name}</strong>
-                  </label>
+            {currentDialogPage !== "item-choices"
+              ? null
+              : requiredItemChoices.map((slot, index) => (
+                  <div
+                    className="shop-physical-list shop-item-choice-list"
+                    key={`${slot.ruleOrdinal}:${slot.choiceIndex}`}
+                    role="radiogroup"
+                    aria-label={slot.label ?? slot.type}
+                  >
+                    <p className="shop-item-choice-label">
+                      {slot.label ?? `Choose ${slot.type.toLocaleLowerCase()}`}
+                    </p>
+                    {itemChoiceCandidates(slot, entities, characterLevel).map(
+                      (candidate) => (
+                        <label key={candidate.id}>
+                          <input
+                            type="radio"
+                            name={`item-choice-${index}`}
+                            value={candidate.id}
+                            checked={
+                              itemChoiceSelections.get(index) === candidate.id
+                            }
+                            onChange={() =>
+                              setItemChoiceSelections((current) => {
+                                const next = new Map(current);
+                                next.set(index, candidate.id);
+                                return next;
+                              })
+                            }
+                          />
+                          <strong>{candidate.name}</strong>
+                        </label>
+                      ),
+                    )}
+                  </div>
                 ))}
-              </div>
-            ))}
             <dl className="shop-physical-summary">
               <div>
                 <dt>Resulting item</dt>
@@ -1314,17 +1366,36 @@ export function ShopWorkspace({
               <button type="button" onClick={() => dialogRef.current?.close()}>
                 Cancel
               </button>
+              {dialogPageIndex === 0 ? null : (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDialogPageIndex((index) => Math.max(0, index - 1))
+                  }
+                >
+                  Back
+                </button>
+              )}
               <button
                 className="dialog-primary button-primary"
                 type="submit"
                 disabled={
-                  (physicalNeeded > 0 && selectedPhysicalId === "") ||
-                  requiredItemChoices.some(
-                    (_, index) => !itemChoiceSelections.has(index),
-                  )
+                  onLastDialogPage
+                    ? (physicalNeeded > 0 && selectedPhysicalId === "") ||
+                      requiredItemChoices.some(
+                        (_, index) => !itemChoiceSelections.has(index),
+                      )
+                    : (currentDialogPage === "item-choices" &&
+                        !itemChoicesComplete) ||
+                      (currentDialogPage === "physical" &&
+                        !physicalChoiceComplete)
                 }
               >
-                {acquisition.mode === "buy" ? "Buy" : "Give"}
+                {onLastDialogPage
+                  ? acquisition.mode === "buy"
+                    ? "Buy"
+                    : "Give"
+                  : "Next"}
               </button>
             </footer>
           </form>

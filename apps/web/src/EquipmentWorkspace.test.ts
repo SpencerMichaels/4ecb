@@ -408,6 +408,36 @@ describe("equipment item details", () => {
     expect(markup.match(/candidate-detail tone-/g)).toHaveLength(2);
   });
 
+  it("renders Shop's compatibility note as ordinary body content, not inside the tone-colored header", () => {
+    const enchantment = entity(
+      "PUBLIC_ENCHANT",
+      "Public Weapon of Testing +1",
+      "Magic Item",
+      "Public source",
+      { "Magic Item Type": "Weapon", Level: "1" },
+    );
+    const markup = renderToStaticMarkup(
+      createElement(ItemDetail, {
+        item: {
+          entities: [enchantment],
+          displayName: enchantment.name,
+          compatibility: { label: "Compatible weapons", value: "Heavy blade" },
+        },
+        hideFlavortext: false,
+        byId: new Map([[enchantment.id.toLocaleLowerCase(), enchantment]]),
+      }),
+    );
+
+    expect(markup).toContain("entity-card-rules shop-detail-compatibility");
+    expect(markup).toContain("Compatible weapons");
+    // The compatibility note must sit after the header closes, not as part
+    // of its subheading slot, so it doesn't inherit the header's tone color.
+    const headerEnd = markup.indexOf("</header>");
+    const compatibilityStart = markup.indexOf("shop-detail-compatibility");
+    expect(headerEnd).toBeGreaterThan(-1);
+    expect(compatibilityStart).toBeGreaterThan(headerEnd);
+  });
+
   describe("item-owned choice editing", () => {
     const armor = entity(
       "PUBLIC_ARMOR_OF_RESISTANCE",

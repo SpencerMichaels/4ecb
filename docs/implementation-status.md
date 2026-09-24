@@ -1,5 +1,83 @@
 # Implementation status
 
+## Item-owned choice product-owner review fixes (2026-09-24)
+
+Three issues the product owner found testing the prior two checkpoints against
+the real corpus's Armor of Resistance, all now fixed and verified:
+
+- **Candidate list was wrong, not just noisy.** `itemChoiceCandidates`
+  (`equipment-ui.ts`) filtered only by content `type`, ignoring the select
+  rule's `Category` expression entirely (`ItemChoiceSlot.category` was
+  captured but never read). Real corpus "Class Feature"-typed records include
+  many unrelated entities (ability scores, other features) narrowed only by
+  Category, so every one of them offered as a "resistance type." Fixed by
+  reusing the rules engine's own production matching — `RulesIndex.type`,
+  `RulesIndex.categoryValues`/`categoryAliases`, and
+  `matchesCategory`/`parseCategoryExpression` from `expressions.ts` — rather
+  than reimplementing category logic; a small `WeakMap`-cached `RulesIndex`
+  per `entities` array avoids rebuilding it per slot/render. `level` is now an
+  optional third parameter (Shop passes `characterLevel`, the Equipment
+  editor passes the holding's `acquiredLevel`) for the rare numeric/`$$LEVEL`
+  category term; `$$`-dynamic prefixes and the five class/power-specific
+  exceptions layered onto ordinary category matching do not apply to item
+  properties and were deliberately not ported.
+- **Shop dialog crammed both choices into one crowded page.** Restructured
+  into a paginated wizard: item-owned choices are page 1, a compatible-base
+  pairing is page 2 (only when both are actually needed — either alone still
+  shows as a single page with no Back/Next, matching prior behavior). Footer
+  shows Back (not on page 1) and Next/Buy·Give (Next advances when the
+  current page is answered; the last page keeps the existing Buy/Give
+  submit). The eyebrow reads "Step X of Y: …" only when there are multiple
+  pages. Page sequencing is an extracted pure function,
+  `acquisitionDialogPages(itemChoiceCount, physicalChoiceCount)`, directly
+  unit-tested — the interactive paging itself isn't, since this codebase's
+  React component tests are `renderToStaticMarkup`-only and cannot reach a
+  dialog's post-click state; manual end-to-end verification (below) covers
+  that gap.
+- **Compatibility note visually inside the header, unstyled since it was
+  first written.** Investigated via full git archaeology
+  (`git log -p --follow` / `git log -S` across `EntityCard.tsx`/
+  `styles.css`): this was never a regression from the M5.5 CSS-primitives
+  consolidation or from this feature's own commits — `.shop-detail-compatibility`
+  has had zero dedicated CSS since its introduction on 2026-09-22, always
+  rendered through `EntityCardHeader`'s shared `subheading` slot (which is
+  correctly still used for other header-level notes like "Unavailable"/
+  "Replaces X" in `CandidateDetail.tsx` — untouched). It only became visible
+  as a real issue once the new Properties panel started sitting directly
+  below it. Fixed by moving Shop's compatibility note out of the header
+  subheading and rendering it as an ordinary body row reusing the existing
+  `.entity-card-rules` treatment (the same visual language as "PRICE"/
+  "WEAPON" specific-field rows), so it now sits in the card's normal
+  dark-background body, not the tone-colored header band.
+- Verification: new unit tests — `equipment-ui.test.ts` (Category narrows a
+  shared-type candidate pool to the correct subset, decoys excluded),
+  `ShopWorkspace.test.ts` (`acquisitionDialogPages` page-sequencing table),
+  `EquipmentWorkspace.test.ts` (compatibility markup sits after `</header>`).
+  Full public suite: 545/545 tests, workspace typechecks, lint,
+  production/PWA build, and Chromium/Firefox print checks all pass
+  (`scripts/check.sh`). Manual end-to-end verification used an extended
+  version of the prior checkpoints' public probe fixture — a `select`
+  rule with an explicit `Category: Resistance` plus two matching candidates
+  and two same-type decoys ("Dexterity", "Unrelated Class Feature") that must
+  not appear — driven through a production preview build via raw CDP:
+  - Purchasing an item needing only its own choice (no base pairing) still
+    shows the correct two-candidate list (decoys excluded) with the earlier
+    single-page flow intact.
+  - Purchasing an item needing both an item-owned choice and a base-item
+    pairing (a weapon enchantment) shows the wizard: page 1 "Step 1 of 2:
+    Choose its properties" with Next disabled until a candidate is picked, a
+    "Back" button appearing only from page 2 onward, page 2 "Step 2 of 2:
+    Choose a compatible weapon" with the physical radiogroup and a "Buy"
+    submit, Back correctly returning to page 1 with the earlier selection
+    retained, and the finished purchase landing in Inventory correctly
+    composed.
+  - The Equipment-workspace editor (previous checkpoint) still offers only
+    the correctly filtered candidates and still locks live on selection.
+  - Inspecting a Shop weapon enchantment shows its "Compatible weapons"
+    note as a normal body row beneath the header, not inside the
+    tone-colored title band.
+  - No browser console errors in any of the above.
+
 ## Equipment-workspace item-owned choice editor checkpoint (2026-09-24)
 
 - Closes the M5.5 item-owned-choice deliverable's second half. The shared

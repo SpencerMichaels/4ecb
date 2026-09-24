@@ -22,6 +22,7 @@ import {
   inventoryLoadoutToggle,
   inventorySlotCandidates,
   inventoryRequiresBothHands,
+  itemChoiceCandidates,
   LOADOUT_SLOT_COLUMNS,
   loadoutChangeCommand,
   practiceKind,
@@ -272,6 +273,47 @@ describe("Shop presentation model", () => {
         type: "Magic Item",
       },
     ]);
+  });
+
+  it("narrows an item-owned choice slot by Category, not just type", () => {
+    // Reproduces a real-corpus bug: many unrelated "Class Feature" records
+    // (an ability score, an unrelated feature) share a type with the actual
+    // resistance-type candidates and must be excluded by the select rule's
+    // Category expression.
+    const poison = {
+      ...entity("POISON", "Resist Poison", "Class Feature"),
+      categories: ["Resistance"],
+    };
+    const fire = {
+      ...entity("FIRE", "Resist Fire", "Class Feature"),
+      categories: ["Resistance"],
+    };
+    const dexterity = entity("DEX", "Dexterity", "Class Feature");
+    const unrelated = entity(
+      "UNRELATED",
+      "Unrelated Class Feature",
+      "Class Feature",
+    );
+    const entities = [poison, fire, dexterity, unrelated];
+
+    expect(
+      itemChoiceCandidates(
+        { ruleOrdinal: 0, choiceIndex: 0, type: "Class Feature" },
+        entities,
+      ).map(({ id }) => id),
+    ).toEqual(["DEX", "FIRE", "POISON", "UNRELATED"]);
+
+    expect(
+      itemChoiceCandidates(
+        {
+          ruleOrdinal: 0,
+          choiceIndex: 0,
+          type: "Class Feature",
+          category: "Resistance",
+        },
+        entities,
+      ).map(({ id }) => id),
+    ).toEqual(["FIRE", "POISON"]);
   });
 });
 

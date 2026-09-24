@@ -300,16 +300,16 @@ export function ItemDetail({
             ? {}
             : { kindLabel: item.kindLabel })}
           physicalBase={item.entities.length > 1 ? base : undefined}
-          subheading={
-            item.compatibility === undefined ? undefined : (
-              <dl className="shop-detail-compatibility">
-                <dt>{item.compatibility.label}</dt>
-                <dd>{item.compatibility.value}</dd>
-              </dl>
-            )
-          }
         />
       </header>
+      {item.compatibility === undefined ? null : (
+        <dl className="entity-card-rules shop-detail-compatibility">
+          <div>
+            <dt>{item.compatibility.label}</dt>
+            <dd>{item.compatibility.value}</dd>
+          </div>
+        </dl>
+      )}
       {requiredItemChoices.length === 0 ||
       entry === undefined ||
       itemChoiceElementIndex === undefined ? null : (
@@ -342,7 +342,7 @@ export function ItemDetail({
                 <p>{slot.label ?? `Choose ${slot.type.toLocaleLowerCase()}`}</p>
                 {(entities === undefined
                   ? []
-                  : itemChoiceCandidates(slot, entities)
+                  : itemChoiceCandidates(slot, entities, entry.acquiredLevel)
                 ).map((candidate) => (
                   <label key={candidate.id}>
                     <input

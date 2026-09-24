@@ -7,7 +7,12 @@ import {
   type EquipmentSlotId,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import type { ItemChoiceSlot } from "@4ecb/rules-engine";
+import {
+  matchesCategory,
+  parseCategoryExpression,
+  RulesIndex,
+  type ItemChoiceSlot,
+} from "@4ecb/rules-engine";
 
 import { contentSpecificValue } from "./builder-ui";
 import type { IconName } from "./Icon";
@@ -1292,20 +1297,47 @@ export function compatibleBaseItems(
     .sort((left, right) => left.name.localeCompare(right.name));
 }
 
+const itemChoiceIndexCache = new WeakMap<
+  readonly ContentEntity[],
+  RulesIndex
+>();
+
+function itemChoiceIndex(entities: readonly ContentEntity[]): RulesIndex {
+  const cached = itemChoiceIndexCache.get(entities);
+  if (cached !== undefined) return cached;
+  const created = new RulesIndex(entities);
+  itemChoiceIndexCache.set(entities, created);
+  return created;
+}
+
 /** Entities eligible to fill an item-owned choice slot (for example an
- * Armor of Resistance damage type), filtered purely by matching content
- * type — these choices carry no prerequisite/legality gate of their own. */
+ * Armor of Resistance damage type). Matches the same type + Category
+ * expression the rules engine uses for an ordinary select rule's
+ * candidates, so a broad type bucket (many corpus "Class Feature" records
+ * share a type with only a Category expression narrowing them) does not
+ * offer unrelated entities. These choices carry no prerequisite/legality
+ * gate beyond that expression. */
 export function itemChoiceCandidates(
   slot: ItemChoiceSlot,
   entities: readonly ContentEntity[],
+  level = Number.POSITIVE_INFINITY,
 ): readonly ContentEntity[] {
-  return entities
-    .filter(
-      (candidate) =>
-        candidate.type.trim().toLocaleLowerCase() ===
-        slot.type.trim().toLocaleLowerCase(),
-    )
-    .sort((left, right) => left.name.localeCompare(right.name));
+  const index = itemChoiceIndex(entities);
+  const typed = index.type(slot.type);
+  const filtered =
+    slot.category === undefined
+      ? typed
+      : typed.filter((candidate) =>
+          matchesCategory(candidate, parseCategoryExpression(slot.category!), {
+            owned: [],
+            level,
+            categoryAliases: index.categoryAliases,
+            categoryValuesFor: (entity) => index.categoryValues(entity),
+          }),
+        );
+  return [...filtered].sort((left, right) =>
+    left.name.localeCompare(right.name),
+  );
 }
 
 export function inventoryEntryForEntity(
