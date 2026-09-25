@@ -2,7 +2,7 @@
 
 ## Shop acquisition dialog follow-up fixes (2026-09-24)
 
-Three more product-owner review items on the same dialog, after using it hands-on:
+Four more product-owner review items on the same dialog, after using it hands-on:
 
 - **Restored the "Resulting item"/"Price" summary on page 1**, but page 1's
   "Resulting item" always uses the generic form (e.g. "Armor of Resistance +2
@@ -50,8 +50,18 @@ overflow-y: auto`) — the one legitimate scroll container. Removed the
   both a typical (1000px) and a short (800px) viewport height, scrolling the
   body to its true end and confirming the last row, summary, and footer sit
   flush with no gap.
+- **The base-item list's rows didn't highlight on hover**, unlike every row
+  in the main Shop browse table (`.shop-table tbody tr:hover`), which was
+  jarring since both look and behave like item tables. `.shop-physical-list
+label` previously only styled `:has(input:checked)` (selected) and
+  `:has(input:focus-visible)`; added a matching `:hover` background
+  (`var(--surface-subtle)`, the same token and `100ms` transition as the
+  main table) plus `cursor: pointer`, ordered before the `:checked` rule so
+  a selected row's accent background still wins over hover.
 - Verification: full public web suite (297/297), typecheck, lint, and
-  `scripts/check.sh` all pass; manual CDP verification as above.
+  `scripts/check.sh` all pass; manual CDP verification as above, plus a
+  synthetic mouse-move check confirming the hovered row's computed
+  `background-color` changes.
 
 ## Shop acquisition dialog simplification (2026-09-24)
 

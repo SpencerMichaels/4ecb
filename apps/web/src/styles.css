@@ -4500,9 +4500,15 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 .shop-physical-list label {
   align-items: center;
   border-bottom: 1px solid var(--border);
+  cursor: pointer;
   display: flex;
   gap: 0.6rem;
   padding: 0.55rem 0.7rem;
+  transition: background 100ms ease;
+}
+
+.shop-physical-list label:hover {
+  background: var(--surface-subtle);
 }
 
 .shop-physical-list label:has(input:checked) {
