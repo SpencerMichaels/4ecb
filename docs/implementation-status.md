@@ -20,10 +20,17 @@ removed elements used to convey:
   same text as their own heading. Page 1's "Resulting item"/"Price" summary
   (`dl.shop-physical-summary`) is removed entirely; a single item-owned choice
   with no base-item pairing doesn't need a preview.
-- **Page 2's `<h2>` is now "Choose base {noun} type"** (generic across
-  weapon/armor/implement via the existing `nouns.singular` value), and its
-  "Resulting item" line is reformatted to the same composed name
-  `inventoryDisplayName` produces elsewhere (base + enchantment + bonus
+- **Page 2's `<h2>` is now "Choose base {kind} type"**, where `{kind}` is the
+  same item-kind text the detail card's `entity-kind` eyebrow shows (e.g.
+  "Armor", "Weapon") rather than the dialog's own `nouns.singular` value —
+  those two disagreed in edge cases (the noun helper adds shield/holy-symbol
+  special cases the card label doesn't have). Extracted the shared kind
+  computation out of `EntityCard.tsx`'s `itemCardLabel` into a new exported
+  `itemKindLabel(entity, physicalBase?)` (same logic, just without the
+  trailing level `itemCardLabel` appends), and `itemCardLabel` now calls it
+  instead of duplicating the logic. Corrected same day after initial review
+  used `nouns.singular` instead. "Resulting item" is reformatted to the same
+  composed name `inventoryDisplayName` produces elsewhere (base + enchantment + bonus
   suffix + parenthesized choice), computed from a live preview
   `BuildInventoryEntry` built from the current page-1/page-2 selections
   (`inventoryEntryForEntity`, already existed for the commit path) instead of

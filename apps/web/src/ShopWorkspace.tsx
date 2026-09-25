@@ -9,6 +9,7 @@ import { itemChoiceSlots } from "@4ecb/rules-engine";
 
 import { contentSpecificValue, parentheticalName } from "./builder-ui";
 import { CompactChoiceButtons } from "./ChoiceEditors";
+import { itemKindLabel } from "./EntityCard";
 import {
   compatibleBaseItems,
   entityCurrencyCopper,
@@ -1188,7 +1189,7 @@ export function ShopWorkspace({
                 <h2>
                   {currentDialogPage === "item-choices"
                     ? (itemChoiceHeading ?? "Choose its properties")
-                    : `Choose base ${nouns.singular} type`}
+                    : `Choose base ${itemKindLabel(acquisition.entity).toLocaleLowerCase()} type`}
                 </h2>
               </div>
               <button

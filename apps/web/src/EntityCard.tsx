@@ -68,13 +68,23 @@ function itemKind(entity: ContentEntity): string {
   return entity.type.trim() || "Item";
 }
 
-export function itemCardLabel(
+/** The item-kind portion of `itemCardLabel`, without the trailing level —
+ * for callers (like the Shop acquisition dialog's base-item page heading)
+ * that want to name the kind of thing being chosen, not a specific level. */
+export function itemKindLabel(
   entity: ContentEntity,
   physicalBase?: ContentEntity,
 ): string {
   const authoredKind =
     physicalBase === undefined ? itemKind(entity) : itemKind(physicalBase);
-  const kind = /\bslot item\s*$/iu.test(authoredKind) ? "Item" : authoredKind;
+  return /\bslot item\s*$/iu.test(authoredKind) ? "Item" : authoredKind;
+}
+
+export function itemCardLabel(
+  entity: ContentEntity,
+  physicalBase?: ContentEntity,
+): string {
+  const kind = itemKindLabel(entity, physicalBase);
   const level = contentSpecificValue(entity, "Level")?.trim();
   return level ? `${kind} ${level}` : kind;
 }
