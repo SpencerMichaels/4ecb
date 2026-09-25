@@ -1,5 +1,39 @@
 # Implementation status
 
+## Fix: resolved-choice Power card was nested, not a sibling (2026-09-25)
+
+Product-owner correction on the same-day secondary-detail-card checkpoint:
+the resolved-choice Power card was placed _inside_ the item's own primary
+card (via `EntityCardBody`'s `afterFields`, the same slot `ItemDetail`
+already used for an item's own unconditionally-granted powers) rather than
+as a sibling card immediately after it — unlike how a granted power is
+shown in the Build choice inspector (`CandidateDetail.tsx`), where a
+granted entity is a true sibling `CandidateDetailCard` in
+`.candidate-detail-stack`, never nested inside the entity that grants it.
+
+- `ItemDetail` (`EquipmentWorkspace.tsx`) no longer merges
+  `resolvedChoicePowers` into `grantedPowerCards`/any component's
+  `afterFields`. It now builds a separate `resolvedChoicePowerCards` list
+  and renders it as a sibling of `primaryCard`, reusing the existing
+  `formulaItem` sibling-wrapping branch (`.candidate-detail-stack`) that
+  previously only fired for alchemical formula items — both a resolved
+  Power choice and a formula item can now cause that wrapper, independently
+  or together.
+- An item's own unconditionally-granted powers (`composedGrantedPowers`,
+  entirely unrelated to item-owned choices) are unchanged — still nested
+  via `afterFields`, since the correction only concerns resolved item-owned
+  choices.
+- Strengthened the regression test (`EquipmentWorkspace.test.ts`) to assert
+  structure, not just presence: the resolved Power's card must render after
+  the primary card's own `</aside>` closes, confirmed via string-index
+  comparison on the rendered markup (the SSR-only test convention this
+  codebase uses for interactive component coverage).
+- Verification: full workspace suite (544/544), typecheck, lint,
+  `scripts/check.sh` all pass. Manual CDP verification confirms the
+  rendered DOM: the Power card element is a direct child of
+  `.candidate-detail-stack` and `.contains()` from the primary `<aside>`
+  returns false for it.
+
 ## Shop acquisition dialog: per-choice pages and a detail card for complex choices (2026-09-25)
 
 Follow-up to the same-day secondary-detail-card checkpoint: the product

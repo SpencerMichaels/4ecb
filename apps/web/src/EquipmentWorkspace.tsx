@@ -217,10 +217,17 @@ export function ItemDetail({
   const resolvedChoicePowers = (item.resolvedChoiceEntities ?? []).filter(
     (chosen) => chosen.type.trim().toLocaleLowerCase() === "power",
   );
-  const grantedPowerCards = [
-    ...composedGrantedPowers,
-    ...resolvedChoicePowers,
-  ].map((power) => (
+  const grantedPowerCards = composedGrantedPowers.map((power) => (
+    <EmbeddedPowerCard
+      entity={power}
+      hideFlavortext={hideFlavortext}
+      key={power.id}
+    />
+  ));
+  // A resolved item-owned choice (e.g. the Power picked for a Genasi Soul
+  // Armor) gets its own sibling card, matching how a granted power is shown
+  // in the Build choice inspector — never nested inside the item's own card.
+  const resolvedChoicePowerCards = resolvedChoicePowers.map((power) => (
     <EmbeddedPowerCard
       entity={power}
       hideFlavortext={hideFlavortext}
@@ -242,12 +249,9 @@ export function ItemDetail({
             ),
           }
         : component;
-    const grantedPowers = [
-      ...grantedDetailEntities(component, references).filter(
-        (granted) => granted.type.trim().toLocaleLowerCase() === "power",
-      ),
-      ...(component.id === entity.id ? resolvedChoicePowers : []),
-    ];
+    const grantedPowers = grantedDetailEntities(component, references).filter(
+      (granted) => granted.type.trim().toLocaleLowerCase() === "power",
+    );
     return (
       <EntityCardBody
         entity={displayComponent}
@@ -317,22 +321,26 @@ export function ItemDetail({
       </p>
     </aside>
   );
-  if (formulaItem === undefined) return primaryCard;
+  if (formulaItem === undefined && resolvedChoicePowerCards.length === 0)
+    return primaryCard;
   return (
     <div className="candidate-detail-stack">
       {primaryCard}
-      <aside
-        className={`candidate-detail ${visualToneClass(entityVisualTone(formulaItem))}`}
-        tabIndex={0}
-      >
-        <header className="primary-detail-heading entity-card-header">
-          <EntityCardHeader entity={formulaItem} />
-        </header>
-        {componentBody(formulaItem)}
-        <p className="detail-source-note">
-          Source: {entityCardSource(formulaItem)}
-        </p>
-      </aside>
+      {resolvedChoicePowerCards}
+      {formulaItem === undefined ? null : (
+        <aside
+          className={`candidate-detail ${visualToneClass(entityVisualTone(formulaItem))}`}
+          tabIndex={0}
+        >
+          <header className="primary-detail-heading entity-card-header">
+            <EntityCardHeader entity={formulaItem} />
+          </header>
+          {componentBody(formulaItem)}
+          <p className="detail-source-note">
+            Source: {entityCardSource(formulaItem)}
+          </p>
+        </aside>
+      )}
     </div>
   );
 }

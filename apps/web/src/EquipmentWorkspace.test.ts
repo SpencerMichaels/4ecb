@@ -501,7 +501,7 @@ describe("equipment item details", () => {
     expect(detail?.resolvedChoiceEntities).toEqual([power]);
   });
 
-  it("shows an item-owned choice's chosen Power as a nested embedded card", () => {
+  it("shows an item-owned choice's chosen Power as a sibling card, not nested inside the item's own card", () => {
     const base = entity(
       "PUBLIC_PLATE",
       "Public Plate",
@@ -542,7 +542,16 @@ describe("equipment item details", () => {
     );
 
     expect(markup).toContain("Fireheart Blast");
+    expect(markup).toContain("candidate-detail-stack");
     expect(markup).toContain("theme-power-card");
+    // The Power's card must come after the primary card's own </aside> —
+    // a sibling in .candidate-detail-stack, the same way a granted power
+    // shown in the Build choice inspector is a sibling of the entity that
+    // grants it, never nested inside that entity's own card.
+    const primaryCardCloseIndex = markup.indexOf("</aside>");
+    const powerCardIndex = markup.indexOf("theme-power-card");
+    expect(primaryCardCloseIndex).toBeGreaterThan(-1);
+    expect(powerCardIndex).toBeGreaterThan(primaryCardCloseIndex);
   });
 
   it("does not show a nested card for a simple (non-power) resolved choice", () => {
