@@ -422,14 +422,21 @@ rituals/formulas/practices and quantity-bearing scrolls remain distinct.
 Spellbook alternates stay in Build. Item-owned configuration (for example an
 Armor of Resistance damage type) is evaluable and recoverable without
 changing its rules occurrence or legacy export topology. A Shop purchase
-whose item grants its own choice prompts for it at purchase time, as the
-first page of the acquisition dialog, before any compatible-base-item
-pairing; once made, a choice is fixed for the life of the item. A resolved
-choice displays as a parenthesized suffix on the item's own name — `Banded
-Mail of Resistance +2 (Fire)` — everywhere that name is shown (Inventory,
-Loadout, Shop, the shared item inspector), rather than as a separate editor
-surface in this workspace (2026-09-24: an initial separate-editor design was
-replaced with this simpler one the same day).
+whose item grants its own choice (one or more) prompts for each on its own
+acquisition-dialog page, in order, before any compatible-base-item pairing;
+once made, a choice is fixed for the life of the item. A choice whose
+candidates are Powers shows a two-column picker-plus-detail-card page (the
+same layout Build's choice editors use) so the player can see what each
+option actually does before picking; a simpler choice (a resistance type, a
+language) stays a plain compact picker. A resolved choice displays as a
+parenthesized suffix on the item's own name — `Banded Mail of Resistance +2
+(Fire)` — everywhere that name is shown (Inventory, Loadout, Shop, the
+shared item inspector), and a resolved Power choice also gets its own
+nested detail card wherever the item's full card is shown, the same way a
+granted power does, rather than as a separate editor surface in this
+workspace (2026-09-24: an initial separate-editor design was replaced with
+this simpler one the same day; 2026-09-25: per-choice pages and the Power
+detail card added).
 
 M5.5 closure applies the same focused review standard to the under-refined tabs:
 

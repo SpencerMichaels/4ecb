@@ -1,5 +1,56 @@
 # Implementation status
 
+## Shop acquisition dialog: per-choice pages and a detail card for complex choices (2026-09-25)
+
+Follow-up to the same-day secondary-detail-card checkpoint: the product
+owner approved a proposed design and asked for it, plus one refinement —
+give each item-owned choice its own dialog page instead of stacking
+multiple choices on one page.
+
+- **`AcquisitionDialogPage` is now a discriminated union**
+  (`{kind: "item-choice", slotIndex} | {kind: "physical"}`) instead of a
+  flat `"item-choices" | "physical"` string. `acquisitionDialogPages`
+  produces one `item-choice` page per slot, in slot order, before the
+  physical page — so an item like Book of Undeniable Fire (two Power
+  choices) now gets three pages total instead of one crowded page. Every
+  page-comparison call site in `ShopWorkspace.tsx` (the header, the Next/
+  disabled guards, the Resulting-item text, the Confirm/Buy/Give label)
+  switched from string equality to `.kind`/`.slotIndex` checks.
+- **A choice whose candidates are Powers now shows a two-column picker +
+  detail-card layout**, reusing `.choice-selection-layout`/
+  `.choice-editor-fields` — the exact same primitive Build's choice editors
+  already use for "pick from a list, see the full card for whatever's
+  selected." Left column: the existing `CompactChoiceButtons`. Right column:
+  a full detail card for whichever candidate is currently selected
+  (defaulting to the first, so something's visible immediately), built by
+  exporting the previously-private `CandidateDetailCard` from
+  `CandidateDetail.tsx` and calling it with just `entity` — it already
+  handles a missing `candidate`/`relationship`/`themePowerLevel` and reads
+  `hideFlavortext` from context itself, so no new card-rendering code was
+  needed. A simple choice (resistance type, language) keeps the original
+  single-column, no-detail-card layout — decided by a new exported pure
+  predicate, `isComplexItemChoice(candidates)`, checking for a `"power"`
+  candidate type (the same threshold `ItemDetail`'s granted-power filter and
+  the resolved-choice secondary card both already use).
+- **The dialog widens for a complex-choice page and narrows back down for
+  every other page** (`shop-physical-dialog--detail`, 58rem vs. the normal
+  45rem) — `.choice-selection-layout`'s two columns want more room than a
+  single compact button list does, and confirmed via CDP that this resizing
+  is clean (no layout jank, no reintroduction of the earlier scroll-gap bug
+  — the detail card has no nested `overflow:auto` of its own, so it doesn't
+  trigger the same `<dialog>` sizing quirk that a previous checkpoint fixed
+  for the base-item list).
+- Verification: two new `acquisitionDialogPages` cases (multi-slot
+  pagination) plus a new `isComplexItemChoice` unit test; full workspace
+  suite (544/544, +3), typecheck, lint, `scripts/check.sh` all pass. Manual
+  CDP verification against a new three-page synthetic fixture (Power choice
+  → resistance-type choice → base-armor pairing): page 1 renders the wide
+  two-column layout with "Fireheart Blast" previewed by default and swaps to
+  "Iceheart Blast" on click; page 2 renders the narrow single-column layout
+  for the resistance-type pick; Back from page 3 to page 1 preserves both
+  earlier selections; the final inventory entry composes both choices
+  correctly ("Dual-Soul Public Plate of Probing +2 (Fireheart Blast, Fire)").
+
 ## Item-owned choice: show the chosen Power as a secondary detail card (2026-09-25)
 
 Product-owner report: buying an item like Genasi Soul Armor (armor with an

@@ -448,17 +448,21 @@ scrolls, and Spellbook remains in Build. Dependent hand/ring movement,
 holy-symbol/implement exceptions, augments, package lots, automatic/custom
 equipment remain named follow-up work rather than silently approximated
 native parity. Item-owned choice handling (for example an Armor of
-Resistance damage type) is implemented (2026-09-24, simplified 2026-09-24): a
-Shop purchase whose item grants its own choice prompts for it at purchase
-time using a paginated dialog (the item's own choice first, then any
-compatible-base-item pairing), and a resolved choice shows as a parenthesized
-suffix on the item's own name everywhere it is displayed — `Banded Mail of
-Resistance +2 (Fire)` — rather than a separate editor surface; the choice is
-fixed for the life of the item, matching the product owner's stated
-real-world model. There is deliberately no in-app editor for an
-already-owned holding whose choice was never resolved (not observed in
-practice; every purchase resolves it, and legacy imports either already
-carry the recovered choice or didn't have one in the original game either).
+Resistance damage type) is implemented (2026-09-24, simplified 2026-09-24,
+paginated per-choice with a Power detail card 2026-09-25): a Shop purchase
+whose item grants its own choice (one or more) prompts for each on its own
+paginated dialog page, in order, before any compatible-base-item pairing —
+a Power choice gets a two-column picker-plus-detail-card page so the player
+can see what each option does, a simpler choice stays a plain picker. A
+resolved choice shows as a parenthesized suffix on the item's own name
+everywhere it is displayed — `Banded Mail of Resistance +2 (Fire)` — and a
+resolved Power choice also gets a nested detail card wherever the item's
+full card is shown, the same way a granted power does; the choice is fixed
+for the life of the item, matching the product owner's stated real-world
+model. There is deliberately no in-app editor for an already-owned holding
+whose choice was never resolved (not observed in practice; every purchase
+resolves it, and legacy imports either already carry the recovered choice
+or didn't have one in the original game either).
 
 Builder navigation now participates in browser Back/Forward at the page-like
 boundary: all five workspace tabs, Build levels and choice sections, and the

@@ -4408,6 +4408,14 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   width: 45rem;
 }
 
+/* A power (or other complex-entity) choice shows its candidate list beside
+ * a full detail card (.choice-selection-layout), which wants more width
+ * than the dialog's other pages. */
+.shop-physical-dialog--detail {
+  max-inline-size: min(92vw, 58rem);
+  width: 58rem;
+}
+
 .shop-physical-dialog > form {
   display: flex;
   flex: 1;

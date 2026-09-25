@@ -8,6 +8,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import {
   acquisitionDialogPages,
   compatibleChoiceType,
+  isComplexItemChoice,
   preferredShopBrowse,
   readShopSessionPreferences,
   retainedShopFilter,
@@ -129,12 +130,44 @@ describe("Shop workspace", () => {
 
   it("orders the acquisition dialog's pages with item-owned choices before a physical pairing", () => {
     expect(acquisitionDialogPages(0, 0)).toEqual([]);
-    expect(acquisitionDialogPages(1, 0)).toEqual(["item-choices"]);
-    expect(acquisitionDialogPages(0, 2)).toEqual(["physical"]);
-    expect(acquisitionDialogPages(1, 2)).toEqual(["item-choices", "physical"]);
+    expect(acquisitionDialogPages(1, 0)).toEqual([
+      { kind: "item-choice", slotIndex: 0 },
+    ]);
+    expect(acquisitionDialogPages(0, 2)).toEqual([{ kind: "physical" }]);
+    expect(acquisitionDialogPages(1, 2)).toEqual([
+      { kind: "item-choice", slotIndex: 0 },
+      { kind: "physical" },
+    ]);
     // A single unambiguous physical option still gets its own page today —
     // beginAcquire only skips the dialog outright when nothing needs asking.
-    expect(acquisitionDialogPages(1, 1)).toEqual(["item-choices", "physical"]);
+    expect(acquisitionDialogPages(1, 1)).toEqual([
+      { kind: "item-choice", slotIndex: 0 },
+      { kind: "physical" },
+    ]);
+  });
+
+  it("gives each item-owned choice slot its own page, in slot order", () => {
+    expect(acquisitionDialogPages(2, 0)).toEqual([
+      { kind: "item-choice", slotIndex: 0 },
+      { kind: "item-choice", slotIndex: 1 },
+    ]);
+    expect(acquisitionDialogPages(3, 1)).toEqual([
+      { kind: "item-choice", slotIndex: 0 },
+      { kind: "item-choice", slotIndex: 1 },
+      { kind: "item-choice", slotIndex: 2 },
+      { kind: "physical" },
+    ]);
+  });
+
+  it("treats only Power candidates as complex enough for the detail-card layout", () => {
+    expect(isComplexItemChoice([{ type: "Power" }])).toBe(true);
+    expect(isComplexItemChoice([{ type: "power" }])).toBe(true);
+    expect(
+      isComplexItemChoice([{ type: "Class Feature" }, { type: "Power" }]),
+    ).toBe(true);
+    expect(isComplexItemChoice([{ type: "Class Feature" }])).toBe(false);
+    expect(isComplexItemChoice([{ type: "Language" }])).toBe(false);
+    expect(isComplexItemChoice([])).toBe(false);
   });
 
   it("uses physical subtypes outside implement Standard/Superior choices", () => {

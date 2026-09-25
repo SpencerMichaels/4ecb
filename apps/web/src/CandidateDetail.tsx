@@ -111,7 +111,7 @@ function ThemeCandidateDescription({
   );
 }
 
-function CandidateDetailCard({
+export function CandidateDetailCard({
   candidate,
   entity,
   relationship,

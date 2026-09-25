@@ -8,6 +8,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import { itemChoiceSlots } from "@4ecb/rules-engine";
 
 import { contentSpecificValue, parentheticalName } from "./builder-ui";
+import { CandidateDetailCard } from "./CandidateDetail";
 import { CompactChoiceButtons } from "./ChoiceEditors";
 import { itemKindLabel } from "./EntityCard";
 import {
@@ -38,7 +39,9 @@ import { canonicalItemIcon } from "./item-icons";
 type SortColumn = "name" | "level" | "price" | "owned";
 type SortDirection = "ascending" | "descending";
 type AcquireMode = "buy" | "give";
-type AcquisitionDialogPage = "item-choices" | "physical";
+export type AcquisitionDialogPage =
+  | { readonly kind: "item-choice"; readonly slotIndex: number }
+  | { readonly kind: "physical" };
 type PhysicalSortColumn = "name" | "type";
 
 const SHOP_SESSION_KEY = "4ecb.shopPreferences.v1";
@@ -189,20 +192,44 @@ export function shopKnownFilterMatches(
 }
 
 /**
- * The acquisition dialog's page sequence: item-owned choices (e.g. an Armor
- * of Resistance damage type) always come before a compatible-base-item
- * choice, so the property that defines what the character is buying is
- * settled before picking its physical form. A page is included only when it
- * has a genuine choice to make; either or both may be absent.
+ * The acquisition dialog's page sequence: each item-owned choice (e.g. an
+ * Armor of Resistance damage type) gets its own page, in slot order, before
+ * a compatible-base-item choice — so the properties that define what the
+ * character is buying are each settled one at a time, before picking its
+ * physical form. A page is included only when it has a genuine choice to
+ * make; any number of item-choice pages, and the physical page, may be
+ * absent.
  */
 export function acquisitionDialogPages(
   itemChoiceCount: number,
   physicalChoiceCount: number,
 ): readonly AcquisitionDialogPage[] {
   return [
-    ...(itemChoiceCount > 0 ? (["item-choices"] as const) : []),
-    ...(physicalChoiceCount > 0 ? (["physical"] as const) : []),
+    ...Array.from(
+      { length: itemChoiceCount },
+      (_, slotIndex): AcquisitionDialogPage => ({
+        kind: "item-choice",
+        slotIndex,
+      }),
+    ),
+    ...(physicalChoiceCount > 0
+      ? [{ kind: "physical" } as const satisfies AcquisitionDialogPage]
+      : []),
   ];
+}
+
+/**
+ * Whether an item-owned choice's candidates are complex enough (e.g. a
+ * Power, with its own attack/effect text worth previewing) to warrant the
+ * two-column picker + detail-card layout, rather than the plain compact
+ * button list used for a simple choice like a resistance type or language.
+ */
+export function isComplexItemChoice(
+  candidates: readonly Pick<ContentEntity, "type">[],
+): boolean {
+  return candidates.some(
+    (candidate) => candidate.type.trim().toLocaleLowerCase() === "power",
+  );
 }
 
 interface ShopWorkspaceProps {
@@ -655,9 +682,20 @@ export function ShopWorkspace({
     physicalNeeded,
   );
   const currentDialogPage = dialogPages[dialogPageIndex] ?? dialogPages[0];
-  const itemChoicesComplete = requiredItemChoices.every((_, index) =>
-    itemChoiceSelections.has(index),
+  const currentItemChoiceSlot =
+    currentDialogPage?.kind === "item-choice"
+      ? requiredItemChoices[currentDialogPage.slotIndex]
+      : undefined;
+  const currentItemChoiceCandidates =
+    currentItemChoiceSlot === undefined
+      ? []
+      : itemChoiceCandidates(currentItemChoiceSlot, entities, characterLevel);
+  const currentItemChoiceIsComplex = isComplexItemChoice(
+    currentItemChoiceCandidates,
   );
+  const currentItemChoiceComplete =
+    currentDialogPage?.kind === "item-choice" &&
+    itemChoiceSelections.has(currentDialogPage.slotIndex);
   const physicalChoiceComplete =
     physicalNeeded === 0 || selectedPhysicalId !== "";
   const onLastDialogPage = dialogPageIndex >= dialogPages.length - 1;
@@ -716,10 +754,10 @@ export function ShopWorkspace({
           byId,
         );
   const itemChoiceHeading =
-    requiredItemChoices[0] === undefined
+    currentItemChoiceSlot === undefined
       ? undefined
-      : (requiredItemChoices[0].label ??
-        `Choose ${requiredItemChoices[0].type.toLocaleLowerCase()}`);
+      : (currentItemChoiceSlot.label ??
+        `Choose ${currentItemChoiceSlot.type.toLocaleLowerCase()}`);
 
   const renderRow = (
     entity: ContentEntity,
@@ -1173,7 +1211,12 @@ export function ShopWorkspace({
       </div>
 
       <dialog
-        className="shop-physical-dialog dialog-shell dialog-shell--wide"
+        className={`shop-physical-dialog dialog-shell dialog-shell--wide${
+          currentDialogPage?.kind === "item-choice" &&
+          currentItemChoiceIsComplex
+            ? " shop-physical-dialog--detail"
+            : ""
+        }`}
         ref={dialogRef}
         onClose={() => setAcquisition(undefined)}
       >
@@ -1184,9 +1227,10 @@ export function ShopWorkspace({
               event.preventDefault();
               if (!onLastDialogPage) {
                 if (
-                  (currentDialogPage === "item-choices" &&
-                    itemChoicesComplete) ||
-                  (currentDialogPage === "physical" && physicalChoiceComplete)
+                  (currentDialogPage?.kind === "item-choice" &&
+                    currentItemChoiceComplete) ||
+                  (currentDialogPage?.kind === "physical" &&
+                    physicalChoiceComplete)
                 )
                   setDialogPageIndex((index) => index + 1);
                 return;
@@ -1224,7 +1268,7 @@ export function ShopWorkspace({
             <header>
               <div>
                 <h2>
-                  {currentDialogPage === "item-choices"
+                  {currentDialogPage?.kind === "item-choice"
                     ? (itemChoiceHeading ?? "Choose its properties")
                     : `Choose base ${itemKindLabel(acquisition.entity).toLocaleLowerCase()} type`}
                 </h2>
@@ -1240,7 +1284,7 @@ export function ShopWorkspace({
             </header>
             <div className="shop-physical-dialog-body">
               {physicalNeeded === 0 ||
-              currentDialogPage !== "physical" ? null : (
+              currentDialogPage?.kind !== "physical" ? null : (
                 <>
                   <div className="shop-physical-tools">
                     <label>
@@ -1369,42 +1413,60 @@ export function ShopWorkspace({
                   </div>
                 </>
               )}
-              {currentDialogPage !== "item-choices"
+              {currentDialogPage?.kind !== "item-choice" ||
+              currentItemChoiceSlot === undefined
                 ? null
-                : requiredItemChoices.map((slot, index) => (
-                    <CompactChoiceButtons
-                      key={`${slot.ruleOrdinal}:${slot.choiceIndex}`}
-                      label={
-                        slot.label ?? `Choose ${slot.type.toLocaleLowerCase()}`
-                      }
-                      hideLabel
-                      options={itemChoiceCandidates(
-                        slot,
-                        entities,
-                        characterLevel,
-                      ).map((candidate) => ({
-                        id: candidate.id,
-                        label:
-                          parentheticalName(candidate.name)?.variant ??
-                          candidate.name,
-                        selectable: true,
-                      }))}
-                      selectedId={itemChoiceSelections.get(index) ?? ""}
-                      disabled={false}
-                      onChoose={(candidateId) =>
-                        setItemChoiceSelections((current) => {
-                          const next = new Map(current);
-                          next.set(index, candidateId);
-                          return next;
-                        })
-                      }
-                    />
-                  ))}
+                : (() => {
+                    const slot = currentItemChoiceSlot;
+                    const slotIndex = currentDialogPage.slotIndex;
+                    const picker = (
+                      <CompactChoiceButtons
+                        label={
+                          slot.label ??
+                          `Choose ${slot.type.toLocaleLowerCase()}`
+                        }
+                        hideLabel
+                        options={currentItemChoiceCandidates.map(
+                          (candidate) => ({
+                            id: candidate.id,
+                            label:
+                              parentheticalName(candidate.name)?.variant ??
+                              candidate.name,
+                            selectable: true,
+                          }),
+                        )}
+                        selectedId={itemChoiceSelections.get(slotIndex) ?? ""}
+                        disabled={false}
+                        onChoose={(candidateId) =>
+                          setItemChoiceSelections((current) => {
+                            const next = new Map(current);
+                            next.set(slotIndex, candidateId);
+                            return next;
+                          })
+                        }
+                      />
+                    );
+                    if (!currentItemChoiceIsComplex) return picker;
+                    const selectedCandidateId =
+                      itemChoiceSelections.get(slotIndex) ?? "";
+                    const previewedCandidate =
+                      currentItemChoiceCandidates.find(
+                        (candidate) => candidate.id === selectedCandidateId,
+                      ) ?? currentItemChoiceCandidates[0];
+                    return (
+                      <div className="choice-selection-layout">
+                        <div className="choice-editor-fields">{picker}</div>
+                        {previewedCandidate === undefined ? null : (
+                          <CandidateDetailCard entity={previewedCandidate} />
+                        )}
+                      </div>
+                    );
+                  })()}
               <dl className="shop-physical-summary">
                 <div>
                   <dt>Resulting item</dt>
                   <dd>
-                    {currentDialogPage === "item-choices"
+                    {currentDialogPage?.kind === "item-choice"
                       ? genericPreviewName
                       : physicalNeeded > 0 && selectedPhysicalId === ""
                         ? `Choose a ${nouns.singular}`
@@ -1446,14 +1508,14 @@ export function ShopWorkspace({
                       requiredItemChoices.some(
                         (_, index) => !itemChoiceSelections.has(index),
                       )
-                    : (currentDialogPage === "item-choices" &&
-                        !itemChoicesComplete) ||
-                      (currentDialogPage === "physical" &&
+                    : (currentDialogPage?.kind === "item-choice" &&
+                        !currentItemChoiceComplete) ||
+                      (currentDialogPage?.kind === "physical" &&
                         !physicalChoiceComplete)
                 }
               >
                 {onLastDialogPage
-                  ? currentDialogPage === "physical"
+                  ? currentDialogPage?.kind === "physical"
                     ? "Confirm"
                     : acquisition.mode === "buy"
                       ? "Buy"
