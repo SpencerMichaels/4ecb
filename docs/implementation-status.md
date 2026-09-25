@@ -57,7 +57,12 @@ label` previously only styled `:has(input:checked)` (selected) and
   `:has(input:focus-visible)`; added a matching `:hover` background
   (`var(--surface-subtle)`, the same token and `100ms` transition as the
   main table) plus `cursor: pointer`, ordered before the `:checked` rule so
-  a selected row's accent background still wins over hover.
+  a selected row's accent background still wins over hover. The row
+  background alone didn't match the main table's full hover treatment
+  though — there, hovering also turns the item _name_ the focus color and
+  underlines it (`.table-inspect-button:hover`); added the equivalent
+  `label:hover .shop-physical-choice > strong` rule so the name itself
+  reacts the same way.
 - Verification: full public web suite (297/297), typecheck, lint, and
   `scripts/check.sh` all pass; manual CDP verification as above, plus a
   synthetic mouse-move check confirming the hovered row's computed

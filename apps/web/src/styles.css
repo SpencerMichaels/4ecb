@@ -4511,6 +4511,12 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   background: var(--surface-subtle);
 }
 
+.shop-physical-list label:hover .shop-physical-choice > strong {
+  color: var(--focus);
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+
 .shop-physical-list label:has(input:checked) {
   background: color-mix(in srgb, var(--accent) 16%, var(--surface));
   box-shadow: inset 3px 0 var(--accent);
