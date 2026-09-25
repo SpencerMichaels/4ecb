@@ -1462,6 +1462,8 @@ export function ShopWorkspace({
                       </div>
                     );
                   })()}
+            </div>
+            <footer>
               <dl className="shop-physical-summary">
                 <div>
                   <dt>Resulting item</dt>
@@ -1484,44 +1486,47 @@ export function ShopWorkspace({
                   </dd>
                 </div>
               </dl>
-            </div>
-            <footer>
-              <button type="button" onClick={() => dialogRef.current?.close()}>
-                Cancel
-              </button>
-              {dialogPageIndex === 0 ? null : (
+              <div className="shop-physical-dialog-actions">
                 <button
                   type="button"
-                  onClick={() =>
-                    setDialogPageIndex((index) => Math.max(0, index - 1))
+                  onClick={() => dialogRef.current?.close()}
+                >
+                  Cancel
+                </button>
+                {dialogPageIndex === 0 ? null : (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDialogPageIndex((index) => Math.max(0, index - 1))
+                    }
+                  >
+                    Back
+                  </button>
+                )}
+                <button
+                  className="dialog-primary button-primary"
+                  type="submit"
+                  disabled={
+                    onLastDialogPage
+                      ? (physicalNeeded > 0 && selectedPhysicalId === "") ||
+                        requiredItemChoices.some(
+                          (_, index) => !itemChoiceSelections.has(index),
+                        )
+                      : (currentDialogPage?.kind === "item-choice" &&
+                          !currentItemChoiceComplete) ||
+                        (currentDialogPage?.kind === "physical" &&
+                          !physicalChoiceComplete)
                   }
                 >
-                  Back
+                  {onLastDialogPage
+                    ? currentDialogPage?.kind === "physical"
+                      ? "Confirm"
+                      : acquisition.mode === "buy"
+                        ? "Buy"
+                        : "Give"
+                    : "Next"}
                 </button>
-              )}
-              <button
-                className="dialog-primary button-primary"
-                type="submit"
-                disabled={
-                  onLastDialogPage
-                    ? (physicalNeeded > 0 && selectedPhysicalId === "") ||
-                      requiredItemChoices.some(
-                        (_, index) => !itemChoiceSelections.has(index),
-                      )
-                    : (currentDialogPage?.kind === "item-choice" &&
-                        !currentItemChoiceComplete) ||
-                      (currentDialogPage?.kind === "physical" &&
-                        !physicalChoiceComplete)
-                }
-              >
-                {onLastDialogPage
-                  ? currentDialogPage?.kind === "physical"
-                    ? "Confirm"
-                    : acquisition.mode === "buy"
-                      ? "Buy"
-                      : "Give"
-                  : "Next"}
-              </button>
+              </div>
             </footer>
           </form>
         ) : null}

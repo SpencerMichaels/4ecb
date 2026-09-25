@@ -1,5 +1,34 @@
 # Implementation status
 
+## Move the Shop dialog's Resulting item/Price into the footer (2026-09-25)
+
+Product-owner correction: "Resulting item"/"Price" lived in the dialog's
+scrollable body, alongside the candidate list — on a page with a long list
+(28 compatible base items, say), they could scroll out of view along with
+everything else, even though the earlier scroll-gap fix already guaranteed
+the _footer_ stays pinned.
+
+- Moved `<dl className="shop-physical-summary">` out of
+  `.shop-physical-dialog-body` and into `<footer>`, as its first child; the
+  Cancel/Back/Next-or-Confirm buttons now live in a new sibling
+  `.shop-physical-dialog-actions` wrapper. The footer already never scrolls
+  (it's outside the flex-column body's `overflow-y: auto` region), so this
+  makes the summary permanently visible regardless of list length or scroll
+  position.
+- Redesigned `.shop-physical-summary` for its new home: a compact two-row
+  block (`font-size: 0.8rem`) that takes the remaining footer width
+  (`flex: 1; min-inline-size: 0`) and truncates a long resulting name with
+  an ellipsis rather than wrapping or pushing the action buttons
+  (`flex: none` on the actions wrapper) off-screen. `.shop-physical-dialog
+  > form > footer`changed from`justify-content: flex-end`to`space-between`to place the summary on the left and actions on the
+right; split that rule out from the one shared with`.wallet-dialog`,
+which keeps its own unrelated footer unchanged (`flex-end`, no summary).
+- Verification: full web suite (302/302), typecheck, lint,
+  `scripts/check.sh` all pass. Manual CDP verification: scrolled a 28-item
+  candidate list to its true bottom and confirmed the footer — including
+  "Resulting item"/"Price" — stays visible the entire time, on both the
+  normal (45rem) and complex-choice-widened (58rem) dialog states.
+
 ## Fix: resolved-choice Power card was nested, not a sibling (2026-09-25)
 
 Product-owner correction on the same-day secondary-detail-card checkpoint:

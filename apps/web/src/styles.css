@@ -4447,7 +4447,20 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 .shop-physical-dialog > form > footer {
   border-top: 1px solid var(--border);
   gap: 0.5rem;
+}
+
+.wallet-dialog > form > footer {
   justify-content: flex-end;
+}
+
+.shop-physical-dialog > form > footer {
+  justify-content: space-between;
+}
+
+.shop-physical-dialog-actions {
+  display: flex;
+  flex: none;
+  gap: 0.5rem;
 }
 
 .wallet-dialog h2,
@@ -4565,17 +4578,29 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 
 .shop-physical-summary {
   display: grid;
-  gap: 0.35rem;
+  flex: 1;
+  font-size: 0.8rem;
+  gap: 0.15rem;
+  min-inline-size: 0;
 }
 
 .shop-physical-summary div {
+  align-items: baseline;
   display: flex;
-  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.shop-physical-summary dt {
+  color: var(--muted);
+  flex: none;
 }
 
 .shop-physical-summary dd {
   font-weight: 700;
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .inventory-wallet {
