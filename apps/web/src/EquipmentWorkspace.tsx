@@ -35,6 +35,7 @@ import {
   inventoryRequiresBothHands,
   inventorySlotCandidates,
   resolveLoadoutAssignments,
+  resolvedItemChoices,
   shopItemLevel,
   type ShopBrowseId,
   visibleLoadoutSlotColumns,
@@ -124,6 +125,10 @@ export interface InspectedItemDetail {
   readonly displayName: string;
   readonly effectiveLevel?: number;
   readonly kindLabel?: string;
+  /** Entities resolved for the item's own choices (e.g. the specific Power
+   * chosen for a Genasi Soul Armor), when the chosen candidate's definition
+   * ID resolves to a known entity — shown as a secondary detail card. */
+  readonly resolvedChoiceEntities?: readonly ContentEntity[];
 }
 
 export function inventoryItemDetail(
@@ -134,12 +139,15 @@ export function inventoryItemDetail(
     const definition = byId.get(id);
     return definition === undefined ? [] : [definition];
   });
-  return entities.length === 0
-    ? undefined
-    : {
-        entities,
-        displayName: inventoryDisplayName(entry, byId),
-      };
+  if (entities.length === 0) return undefined;
+  const resolvedChoiceEntities = resolvedItemChoices(entry, byId).flatMap(
+    ({ entity }) => (entity === undefined ? [] : [entity]),
+  );
+  return {
+    entities,
+    displayName: inventoryDisplayName(entry, byId),
+    ...(resolvedChoiceEntities.length === 0 ? {} : { resolvedChoiceEntities }),
+  };
 }
 
 export function catalogItemDetail(
@@ -206,7 +214,13 @@ export function ItemDetail({
       (granted) => granted.type.trim().toLocaleLowerCase() === "power",
     ),
   );
-  const grantedPowerCards = composedGrantedPowers.map((power) => (
+  const resolvedChoicePowers = (item.resolvedChoiceEntities ?? []).filter(
+    (chosen) => chosen.type.trim().toLocaleLowerCase() === "power",
+  );
+  const grantedPowerCards = [
+    ...composedGrantedPowers,
+    ...resolvedChoicePowers,
+  ].map((power) => (
     <EmbeddedPowerCard
       entity={power}
       hideFlavortext={hideFlavortext}
@@ -228,9 +242,12 @@ export function ItemDetail({
             ),
           }
         : component;
-    const grantedPowers = grantedDetailEntities(component, references).filter(
-      (granted) => granted.type.trim().toLocaleLowerCase() === "power",
-    );
+    const grantedPowers = [
+      ...grantedDetailEntities(component, references).filter(
+        (granted) => granted.type.trim().toLocaleLowerCase() === "power",
+      ),
+      ...(component.id === entity.id ? resolvedChoicePowers : []),
+    ];
     return (
       <EntityCardBody
         entity={displayComponent}

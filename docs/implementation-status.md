@@ -1,5 +1,51 @@
 # Implementation status
 
+## Item-owned choice: show the chosen Power as a secondary detail card (2026-09-25)
+
+Product-owner report: buying an item like Genasi Soul Armor (armor with an
+item-owned choice resolving to a specific Power) showed no secondary detail
+card for the chosen Power in Equipment's item detail pane, unlike how a
+power such as Valorous Smite shows a granted power (e.g. Divine Challenge)
+as a nested card beneath it. Traced the gap: `grantedDetailEntities`
+(`builder-ui.ts`) — the existing mechanism behind that nested-card pattern —
+only reads an entity's own unconditional `grant` rules; an item-owned choice
+is a `select` rule resolved at purchase time and stored as a
+`BuildOccurrence` child on the inventory entry's last element, which nothing
+before this change ever resolved into a `ContentEntity` for card rendering
+(`inventoryDisplayName` resolved it only far enough to read its `.name` for
+the parenthesized-suffix string, then discarded the entity).
+
+- Extracted `resolvedItemChoices(entry, byId)` (`equipment-ui.ts`) out of
+  `inventoryDisplayName`'s inline logic — same resolution, now returning
+  `{name, entity}` per resolved (non-`unresolved`) child instead of just a
+  joined string, so both the display name and any future consumer share one
+  source of truth. `inventoryDisplayName` itself is unchanged in behavior.
+- `InspectedItemDetail` (`EquipmentWorkspace.tsx`) gained an optional
+  `resolvedChoiceEntities` field; `inventoryItemDetail` populates it via
+  `resolvedItemChoices`. `catalogItemDetail` (pre-purchase Shop browsing)
+  doesn't set it — there's no resolved choice before a purchase exists.
+- `ItemDetail` now merges `resolvedChoiceEntities` (filtered to
+  `type === "power"`, matching the exact filter already used for granted
+  powers — feats and other granted types don't get their own card there
+  either) into the same `EmbeddedPowerCard` list as granted powers, attached
+  to the item's last (enchantment) component — the same one the resolved
+  child actually lives under. Reuses the existing primitive exactly as-is;
+  no new card component needed.
+- A resolved choice that ISN'T a power (a resistance type, a language) still
+  shows only in the parenthesized name suffix, unchanged — those aren't
+  card-worthy entities and getting one would just be noise.
+- Verification: three new unit tests (`EquipmentWorkspace.test.ts`) —
+  `inventoryItemDetail` resolves the chosen entity; `ItemDetail` renders a
+  nested `theme-power-card` for a resolved Power; a resolved non-Power choice
+  renders no such card. Full workspace suite (542/542, +3), typecheck, lint,
+  `scripts/check.sh` all pass. Manual CDP verification against a synthetic
+  fixture modeled on Genasi Soul Armor (armor enchantment with its own
+  `select type="Power"` choice, paired with a base armor): after purchase,
+  Equipment's detail pane for "Soul Public Plate of Probing +2 (Fireheart
+  Blast)" shows a nested "Fireheart Blast" power card with its own
+  usage/type/level line and flavor text, matching the Valorous
+  Smite/Divine Challenge pattern.
+
 ## Shop acquisition dialog follow-up fixes (2026-09-24)
 
 Four more product-owner review items on the same dialog, after using it hands-on:

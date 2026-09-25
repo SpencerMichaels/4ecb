@@ -436,4 +436,145 @@ describe("equipment item details", () => {
     expect(rarityFieldIndex).toBeGreaterThan(-1);
     expect(weaponFieldIndex).toBeLessThan(rarityFieldIndex);
   });
+
+  it("resolves an item-owned choice's chosen entity for the detail view", () => {
+    const base = entity(
+      "PUBLIC_PLATE",
+      "Public Plate",
+      "Armor",
+      "Public source",
+      {},
+    );
+    const enchantment = entity(
+      "SOUL_ARMOR",
+      "Soul Armor of Probing +2",
+      "Magic Item",
+      "Public source",
+      { "Magic Item Type": "Armor", Level: "1" },
+    );
+    const power = entity(
+      "FIREHEART",
+      "Fireheart Blast",
+      "Power",
+      "Public source",
+      { "Power Usage": "Encounter", "Power Type": "Standard", Level: "1" },
+    );
+    const byId = new Map(
+      [base, enchantment, power].map((item) => [
+        item.id.toLocaleLowerCase(),
+        item,
+      ]),
+    );
+    const entry: BuildInventoryEntry = {
+      id: "owned",
+      acquiredLevel: 1,
+      quantity: 1,
+      equippedQuantity: 0,
+      elements: [
+        { definitionId: base.id, name: base.name, type: base.type },
+        {
+          definitionId: enchantment.id,
+          name: enchantment.name,
+          type: enchantment.type,
+          children: [
+            {
+              id: "web:choice",
+              identity: {
+                definitionId: power.id,
+                name: power.name,
+                type: power.type,
+              },
+              acquiredLevel: 1,
+              legality: "rules-legal" as const,
+              children: [],
+              unresolved: false,
+            },
+          ],
+        },
+      ],
+      overrides: {},
+      legality: "rules-legal",
+    };
+
+    const detail = inventoryItemDetail(entry, byId);
+
+    expect(detail?.resolvedChoiceEntities).toEqual([power]);
+  });
+
+  it("shows an item-owned choice's chosen Power as a nested embedded card", () => {
+    const base = entity(
+      "PUBLIC_PLATE",
+      "Public Plate",
+      "Armor",
+      "Public source",
+      {},
+    );
+    const enchantment = entity(
+      "SOUL_ARMOR",
+      "Soul Armor of Probing +2",
+      "Magic Item",
+      "Public source",
+      { "Magic Item Type": "Armor", Level: "1" },
+    );
+    const power = entity(
+      "FIREHEART",
+      "Fireheart Blast",
+      "Power",
+      "Public source",
+      { "Power Usage": "Encounter", "Power Type": "Standard", Level: "1" },
+    );
+    const byId = new Map(
+      [base, enchantment, power].map((item) => [
+        item.id.toLocaleLowerCase(),
+        item,
+      ]),
+    );
+    const markup = renderToStaticMarkup(
+      createElement(ItemDetail, {
+        item: {
+          entities: [base, enchantment],
+          displayName: "Soul Public Plate of Probing +2 (Fireheart Blast)",
+          resolvedChoiceEntities: [power],
+        },
+        hideFlavortext: false,
+        byId,
+      }),
+    );
+
+    expect(markup).toContain("Fireheart Blast");
+    expect(markup).toContain("theme-power-card");
+  });
+
+  it("does not show a nested card for a simple (non-power) resolved choice", () => {
+    const enchantment = entity(
+      "PROBING_ARMOR",
+      "Armor of Probing +2",
+      "Magic Item",
+      "Public source",
+      { "Magic Item Type": "Armor", Level: "1" },
+    );
+    const fire = entity(
+      "FIRE",
+      "Armor of Probing +2 (Fire)",
+      "Class Feature",
+      "Public source",
+      {},
+    );
+    const byId = new Map(
+      [enchantment, fire].map((item) => [item.id.toLocaleLowerCase(), item]),
+    );
+    const markup = renderToStaticMarkup(
+      createElement(ItemDetail, {
+        item: {
+          entities: [enchantment],
+          displayName: "Armor of Probing +2 (Fire)",
+          resolvedChoiceEntities: [fire],
+        },
+        hideFlavortext: false,
+        byId,
+      }),
+    );
+
+    expect(markup).not.toContain("theme-power-card");
+  });
 });

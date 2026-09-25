@@ -790,6 +790,32 @@ export function inventoryDefinitionIds(
   );
 }
 
+export interface ResolvedItemChoice {
+  readonly name: string;
+  /** The chosen candidate's own content entity, when its definition ID
+   * resolves against `byId` — undefined for a name-only legacy import. */
+  readonly entity: ContentEntity | undefined;
+}
+
+/** The item-owned choices resolved on `entry`'s last element (e.g. the Fire
+ * damage type chosen for an Armor of Resistance), each with the chosen
+ * entity looked up by definition ID when available. */
+export function resolvedItemChoices(
+  entry: BuildInventoryEntry,
+  byId: ReadonlyMap<string, ContentEntity>,
+): readonly ResolvedItemChoice[] {
+  return (entry.elements.at(-1)?.children ?? []).flatMap((child) => {
+    if (child.unresolved) return [];
+    const definitionId = child.identity.definitionId;
+    const entity =
+      definitionId === undefined
+        ? undefined
+        : byId.get(definitionId.toLocaleLowerCase());
+    const name = entity?.name ?? child.identity.name;
+    return name.length === 0 ? [] : [{ name, entity }];
+  });
+}
+
 export function inventoryDisplayName(
   entry: BuildInventoryEntry,
   byId: ReadonlyMap<string, ContentEntity>,
@@ -808,19 +834,8 @@ export function inventoryDisplayName(
   // An item-owned choice (e.g. an Armor of Resistance damage type) is fixed
   // for the life of the item once made; show it as a parenthesized suffix
   // rather than a separate editor, matching "Name +X (Choice)".
-  const resolvedChoices = (entry.elements.at(-1)?.children ?? []).flatMap(
-    (child) => {
-      if (child.unresolved) return [];
-      const definitionId = child.identity.definitionId;
-      const resolvedEntity =
-        definitionId === undefined
-          ? undefined
-          : byId.get(definitionId.toLocaleLowerCase());
-      const name = resolvedEntity?.name ?? child.identity.name;
-      return name.length === 0
-        ? []
-        : [parentheticalName(name)?.variant ?? name];
-    },
+  const resolvedChoices = resolvedItemChoices(entry, byId).map(
+    ({ name }) => parentheticalName(name)?.variant ?? name,
   );
   return resolvedChoices.length === 0
     ? base
