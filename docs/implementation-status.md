@@ -1,5 +1,58 @@
 # Implementation status
 
+## Shop acquisition dialog follow-up fixes (2026-09-24)
+
+Three more product-owner review items on the same dialog, after using it hands-on:
+
+- **Restored the "Resulting item"/"Price" summary on page 1**, but page 1's
+  "Resulting item" always uses the generic form (e.g. "Armor of Resistance +2
+  (Fire)") regardless of any base-item already picked on page 2 (persisted in
+  `selectedPhysicalId` if the user went Back), while page 2 still shows the
+  fully composed specific name (e.g. "Banded Mail of Resistance +2 (Fire)").
+  Added `genericPreviewName`, computed identically to the existing
+  `previewName` but always passing `undefined` for the physical base to
+  `inventoryEntryForEntity`, so it can't pick up a stale page-2 selection.
+- **The physical-item list's Name and Type columns are both now sortable**,
+  matching the sort-button convention used by every other selector table in
+  the app (`selection-sort-button` + chevron, toggling ascending/descending
+  on repeat clicks). Added `physicalSort` state (defaulting to name/
+  ascending, matching `compatibleBaseItems`'s existing name-sorted return
+  order) and a `selectPhysicalSort` toggler mirroring the existing
+  `sort`/`selectSort` pattern, scoped to this dialog only. The list isn't a
+  real `<table>` (it's a radiogroup of `<label>` rows), so `aria-sort` —
+  which the spec ties to `columnheader`/`row header` roles — isn't
+  appropriate here; used a `data-sort-active` attribute instead and extended
+  the shared chevron opacity/rotation CSS to match on it as an alternative to
+  `th[aria-sort]`.
+- **Fixed a real bug: page 2 left a large blank scrollable area below the
+  footer.** Root cause, found via `scrollHeight`/`clientHeight` diagnostics
+  in a raw-CDP repro with a 28-item candidate list: `.shop-physical-list` had
+  its own `max-block-size: 20rem; overflow: auto` to keep long lists from
+  growing the dialog, but `<dialog>` elements are `overflow: auto` and
+  `height: fit-content` by UA default — nesting one auto-sizing scroll
+  container inside another made Chromium compute the _outer_ `<dialog>`'s
+  `scrollHeight` from the _inner_ list's unclamped content height (nearly
+  1400px) while its rendered `clientHeight` stayed correctly clamped
+  (~650px), so the dialog itself became independently, spuriously
+  scrollable — revealing a gap of pure phantom overflow below the footer.
+  Fixed by giving `.shop-physical-dialog` an explicit `max-block-size:
+min(88vh, 42rem)` and `overflow: hidden` (so it can never itself scroll),
+  making `form` a `flex: 1` column with its own `overflow: hidden`, and
+  wrapping everything between `<header>` and `<footer>` in a single new
+  `.shop-physical-dialog-body` (`flex: 1 1 auto; min-block-size: 0;
+overflow-y: auto`) — the one legitimate scroll container. Removed the
+  now-redundant per-child `max-block-size`/`overflow` from
+  `.shop-physical-list` itself. Result: header and footer (Cancel/Back/
+  Confirm) are always pinned and reachable; the body scrolls as one region
+  only when content genuinely exceeds the dialog's height cap, with no
+  phantom trailing space. Verified via the same CDP repro (a 28-item
+  synthetic list, matching the real "Armor of Resistance" candidate count) at
+  both a typical (1000px) and a short (800px) viewport height, scrolling the
+  body to its true end and confirming the last row, summary, and footer sit
+  flush with no gap.
+- Verification: full public web suite (297/297), typecheck, lint, and
+  `scripts/check.sh` all pass; manual CDP verification as above.
+
 ## Shop acquisition dialog simplification (2026-09-24)
 
 Product-owner review of the two-page acquisition dialog (`.shop-physical-dialog`

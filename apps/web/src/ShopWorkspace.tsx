@@ -39,6 +39,7 @@ type SortColumn = "name" | "level" | "price" | "owned";
 type SortDirection = "ascending" | "descending";
 type AcquireMode = "buy" | "give";
 type AcquisitionDialogPage = "item-choices" | "physical";
+type PhysicalSortColumn = "name" | "type";
 
 const SHOP_SESSION_KEY = "4ecb.shopPreferences.v1";
 
@@ -358,6 +359,10 @@ export function ShopWorkspace({
   const [acquisition, setAcquisition] = useState<AcquisitionRequest>();
   const [physicalSearch, setPhysicalSearch] = useState("");
   const [physicalSubtype, setPhysicalSubtype] = useState("");
+  const [physicalSort, setPhysicalSort] = useState<{
+    readonly column: PhysicalSortColumn;
+    readonly direction: SortDirection;
+  }>({ column: "name", direction: "ascending" });
   const [selectedPhysicalId, setSelectedPhysicalId] = useState("");
   const [itemChoiceSelections, setItemChoiceSelections] = useState<
     ReadonlyMap<number, string>
@@ -575,6 +580,16 @@ export function ShopWorkspace({
     setOffset(0);
   };
 
+  const selectPhysicalSort = (column: PhysicalSortColumn) => {
+    setPhysicalSort((current) => ({
+      column,
+      direction:
+        current.column === column && current.direction === "ascending"
+          ? "descending"
+          : "ascending",
+    }));
+  };
+
   const beginAcquire = (entity: ContentEntity, mode: AcquireMode) => {
     const compatible = compatibleBaseItems(entity, catalog);
     const hasStandardImplement = isImplementEnchantment(entity);
@@ -592,6 +607,7 @@ export function ShopWorkspace({
     setAcquisition({ entity, mode });
     setPhysicalSearch("");
     setPhysicalSubtype("");
+    setPhysicalSort({ column: "name", direction: "ascending" });
     setSelectedPhysicalId(
       hasStandardImplement ? "standard" : (compatible[0]?.id ?? ""),
     );
@@ -606,14 +622,23 @@ export function ShopWorkspace({
   const nouns = acquisition ? physicalNouns(acquisition.entity) : undefined;
   const standardImplement =
     acquisition && isImplementEnchantment(acquisition.entity);
-  const visiblePhysicalChoices = physicalChoices.filter(
-    (entity) =>
-      (physicalSearch === "" ||
-        entity.name
-          .toLocaleLowerCase()
-          .includes(physicalSearch.toLocaleLowerCase())) &&
-      (physicalSubtype === "" || shopSubtype(entity) === physicalSubtype),
-  );
+  const visiblePhysicalChoices = physicalChoices
+    .filter(
+      (entity) =>
+        (physicalSearch === "" ||
+          entity.name
+            .toLocaleLowerCase()
+            .includes(physicalSearch.toLocaleLowerCase())) &&
+        (physicalSubtype === "" || shopSubtype(entity) === physicalSubtype),
+    )
+    .sort((left, right) => {
+      const key = (entity: ContentEntity) =>
+        physicalSort.column === "name"
+          ? entity.name
+          : compatibleChoiceType(entity, standardImplement === true);
+      const order = key(left).localeCompare(key(right));
+      return physicalSort.direction === "ascending" ? order : -order;
+    });
   const physicalSubtypes = [
     ...new Set(
       physicalChoices
@@ -674,6 +699,18 @@ export function ShopWorkspace({
             acquisition.entity,
             characterLevel,
             previewPhysical,
+            resolvedItemChoiceChildren,
+          ),
+          byId,
+        );
+  const genericPreviewName =
+    acquisition === undefined
+      ? ""
+      : inventoryDisplayName(
+          inventoryEntryForEntity(
+            acquisition.entity,
+            characterLevel,
+            undefined,
             resolvedItemChoiceChildren,
           ),
           byId,
@@ -1201,147 +1238,177 @@ export function ShopWorkspace({
                 ×
               </button>
             </header>
-            {physicalNeeded === 0 || currentDialogPage !== "physical" ? null : (
-              <>
-                <div className="shop-physical-tools">
-                  <label>
-                    Search
-                    <input
-                      type="search"
-                      placeholder={`Search compatible ${nouns.plural}…`}
-                      value={physicalSearch}
-                      onChange={(event) =>
-                        setPhysicalSearch(event.currentTarget.value)
+            <div className="shop-physical-dialog-body">
+              {physicalNeeded === 0 ||
+              currentDialogPage !== "physical" ? null : (
+                <>
+                  <div className="shop-physical-tools">
+                    <label>
+                      Search
+                      <input
+                        type="search"
+                        placeholder={`Search compatible ${nouns.plural}…`}
+                        value={physicalSearch}
+                        onChange={(event) =>
+                          setPhysicalSearch(event.currentTarget.value)
+                        }
+                      />
+                    </label>
+                    <label>
+                      Subtype
+                      <select
+                        value={physicalSubtype}
+                        onChange={(event) =>
+                          setPhysicalSubtype(event.currentTarget.value)
+                        }
+                      >
+                        <option value="">All subtypes</option>
+                        {physicalSubtypes.map((value) => (
+                          <option key={value}>{value}</option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <div
+                    className="shop-physical-list"
+                    role="radiogroup"
+                    aria-label={`Compatible ${nouns.plural}`}
+                  >
+                    <div className="shop-physical-list-heading">
+                      <span
+                        data-sort-active={
+                          physicalSort.column === "name"
+                            ? physicalSort.direction
+                            : undefined
+                        }
+                      >
+                        <button
+                          type="button"
+                          className="selection-sort-button"
+                          onClick={() => selectPhysicalSort("name")}
+                        >
+                          {nouns.singular[0]!.toLocaleUpperCase() +
+                            nouns.singular.slice(1)}
+                          <Icon name="chevron" />
+                        </button>
+                      </span>
+                      <span
+                        data-sort-active={
+                          physicalSort.column === "type"
+                            ? physicalSort.direction
+                            : undefined
+                        }
+                      >
+                        <button
+                          type="button"
+                          className="selection-sort-button"
+                          onClick={() => selectPhysicalSort("type")}
+                        >
+                          Type
+                          <Icon name="chevron" />
+                        </button>
+                      </span>
+                    </div>
+                    {standardImplement ? (
+                      <label>
+                        <input
+                          type="radio"
+                          name="physical-item"
+                          value="standard"
+                          checked={selectedPhysicalId === "standard"}
+                          onChange={() => setSelectedPhysicalId("standard")}
+                        />
+                        <span className="shop-physical-choice">
+                          <span className="shop-item-icon item-icon item-icon--dense">
+                            <Icon
+                              name={canonicalItemIcon(acquisition.entity)}
+                            />
+                          </span>
+                          <strong>
+                            {implementKind(acquisition.entity) ??
+                              "Standard implement"}
+                          </strong>
+                          <small>Standard</small>
+                        </span>
+                      </label>
+                    ) : null}
+                    {visiblePhysicalChoices.map((entity) => (
+                      <label key={entity.id}>
+                        <input
+                          type="radio"
+                          name="physical-item"
+                          value={entity.id}
+                          checked={selectedPhysicalId === entity.id}
+                          onChange={() => setSelectedPhysicalId(entity.id)}
+                        />
+                        <span className="shop-physical-choice">
+                          <span className="shop-item-icon item-icon item-icon--dense">
+                            <Icon name={canonicalItemIcon(entity)} />
+                            {itemProficiencyStatus(entity, ownedDefinitions) ===
+                            "unverified" ? (
+                              <span
+                                className="shop-proficiency-badge"
+                                role="img"
+                                aria-label="Not proficient"
+                                title="Not proficient"
+                              >
+                                <Icon name="warning" />
+                              </span>
+                            ) : null}
+                          </span>
+                          <strong>{entity.name}</strong>
+                          <small>
+                            {compatibleChoiceType(
+                              entity,
+                              standardImplement === true,
+                            )}
+                          </small>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </>
+              )}
+              {currentDialogPage !== "item-choices"
+                ? null
+                : requiredItemChoices.map((slot, index) => (
+                    <CompactChoiceButtons
+                      key={`${slot.ruleOrdinal}:${slot.choiceIndex}`}
+                      label={
+                        slot.label ?? `Choose ${slot.type.toLocaleLowerCase()}`
+                      }
+                      hideLabel
+                      options={itemChoiceCandidates(
+                        slot,
+                        entities,
+                        characterLevel,
+                      ).map((candidate) => ({
+                        id: candidate.id,
+                        label:
+                          parentheticalName(candidate.name)?.variant ??
+                          candidate.name,
+                        selectable: true,
+                      }))}
+                      selectedId={itemChoiceSelections.get(index) ?? ""}
+                      disabled={false}
+                      onChoose={(candidateId) =>
+                        setItemChoiceSelections((current) => {
+                          const next = new Map(current);
+                          next.set(index, candidateId);
+                          return next;
+                        })
                       }
                     />
-                  </label>
-                  <label>
-                    Subtype
-                    <select
-                      value={physicalSubtype}
-                      onChange={(event) =>
-                        setPhysicalSubtype(event.currentTarget.value)
-                      }
-                    >
-                      <option value="">All subtypes</option>
-                      {physicalSubtypes.map((value) => (
-                        <option key={value}>{value}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-                <div
-                  className="shop-physical-list"
-                  role="radiogroup"
-                  aria-label={`Compatible ${nouns.plural}`}
-                >
-                  <div
-                    className="shop-physical-list-heading"
-                    aria-hidden="true"
-                  >
-                    <strong>
-                      {nouns.singular[0]!.toLocaleUpperCase() +
-                        nouns.singular.slice(1)}
-                    </strong>
-                    <strong>Type</strong>
-                  </div>
-                  {standardImplement ? (
-                    <label>
-                      <input
-                        type="radio"
-                        name="physical-item"
-                        value="standard"
-                        checked={selectedPhysicalId === "standard"}
-                        onChange={() => setSelectedPhysicalId("standard")}
-                      />
-                      <span className="shop-physical-choice">
-                        <span className="shop-item-icon item-icon item-icon--dense">
-                          <Icon name={canonicalItemIcon(acquisition.entity)} />
-                        </span>
-                        <strong>
-                          {implementKind(acquisition.entity) ??
-                            "Standard implement"}
-                        </strong>
-                        <small>Standard</small>
-                      </span>
-                    </label>
-                  ) : null}
-                  {visiblePhysicalChoices.map((entity) => (
-                    <label key={entity.id}>
-                      <input
-                        type="radio"
-                        name="physical-item"
-                        value={entity.id}
-                        checked={selectedPhysicalId === entity.id}
-                        onChange={() => setSelectedPhysicalId(entity.id)}
-                      />
-                      <span className="shop-physical-choice">
-                        <span className="shop-item-icon item-icon item-icon--dense">
-                          <Icon name={canonicalItemIcon(entity)} />
-                          {itemProficiencyStatus(entity, ownedDefinitions) ===
-                          "unverified" ? (
-                            <span
-                              className="shop-proficiency-badge"
-                              role="img"
-                              aria-label="Not proficient"
-                              title="Not proficient"
-                            >
-                              <Icon name="warning" />
-                            </span>
-                          ) : null}
-                        </span>
-                        <strong>{entity.name}</strong>
-                        <small>
-                          {compatibleChoiceType(
-                            entity,
-                            standardImplement === true,
-                          )}
-                        </small>
-                      </span>
-                    </label>
                   ))}
-                </div>
-              </>
-            )}
-            {currentDialogPage !== "item-choices"
-              ? null
-              : requiredItemChoices.map((slot, index) => (
-                  <CompactChoiceButtons
-                    key={`${slot.ruleOrdinal}:${slot.choiceIndex}`}
-                    label={
-                      slot.label ?? `Choose ${slot.type.toLocaleLowerCase()}`
-                    }
-                    hideLabel
-                    options={itemChoiceCandidates(
-                      slot,
-                      entities,
-                      characterLevel,
-                    ).map((candidate) => ({
-                      id: candidate.id,
-                      label:
-                        parentheticalName(candidate.name)?.variant ??
-                        candidate.name,
-                      selectable: true,
-                    }))}
-                    selectedId={itemChoiceSelections.get(index) ?? ""}
-                    disabled={false}
-                    onChoose={(candidateId) =>
-                      setItemChoiceSelections((current) => {
-                        const next = new Map(current);
-                        next.set(index, candidateId);
-                        return next;
-                      })
-                    }
-                  />
-                ))}
-            {currentDialogPage !== "physical" ? null : (
               <dl className="shop-physical-summary">
                 <div>
                   <dt>Resulting item</dt>
                   <dd>
-                    {physicalNeeded > 0 && selectedPhysicalId === ""
-                      ? `Choose a ${nouns.singular}`
-                      : previewName}
+                    {currentDialogPage === "item-choices"
+                      ? genericPreviewName
+                      : physicalNeeded > 0 && selectedPhysicalId === ""
+                        ? `Choose a ${nouns.singular}`
+                        : previewName}
                   </dd>
                 </div>
                 <div>
@@ -1355,7 +1422,7 @@ export function ShopWorkspace({
                   </dd>
                 </div>
               </dl>
-            )}
+            </div>
             <footer>
               <button type="button" onClick={() => dialogRef.current?.close()}>
                 Cancel

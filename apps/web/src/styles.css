@@ -2788,15 +2788,18 @@ textarea {
 }
 
 th[aria-sort="ascending"] .selection-sort-button > .icon,
-th[aria-sort="descending"] .selection-sort-button > .icon {
+th[aria-sort="descending"] .selection-sort-button > .icon,
+[data-sort-active] .selection-sort-button > .icon {
   opacity: 0.8;
 }
 
-th[aria-sort="ascending"] .selection-sort-button > .icon {
+th[aria-sort="ascending"] .selection-sort-button > .icon,
+[data-sort-active="ascending"] .selection-sort-button > .icon {
   transform: rotate(-90deg);
 }
 
-th[aria-sort="descending"] .selection-sort-button > .icon {
+th[aria-sort="descending"] .selection-sort-button > .icon,
+[data-sort-active="descending"] .selection-sort-button > .icon {
   transform: rotate(90deg);
 }
 
@@ -4398,7 +4401,19 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
 }
 
 .shop-physical-dialog {
+  display: flex;
+  flex-direction: column;
+  max-block-size: min(88vh, 42rem);
+  overflow: hidden;
   width: 45rem;
+}
+
+.shop-physical-dialog > form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+  overflow: hidden;
 }
 
 .wallet-dialog::backdrop,
@@ -4411,6 +4426,7 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
 .shop-physical-dialog > form > header,
 .wallet-dialog > form > footer,
 .shop-physical-dialog > form > footer {
+  flex: none;
   padding: 0.75rem 1rem;
 }
 
@@ -4442,29 +4458,39 @@ th[aria-sort="descending"] .selection-sort-button > .icon {
   padding: 0.25rem 0.45rem;
 }
 
-.wallet-dialog-body,
-.shop-physical-dialog > form > :not(header, footer) {
+.wallet-dialog-body {
+  padding: 0.8rem 1rem;
+}
+
+.shop-physical-dialog-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-block-size: 0;
+  overflow-y: auto;
   padding: 0.8rem 1rem;
 }
 
 .shop-physical-tools {
   display: grid;
+  flex: none;
   gap: 0.6rem;
   grid-template-columns: minmax(0, 1fr) minmax(9rem, 0.5fr);
 }
 
 .shop-physical-list {
   border: 1px solid var(--border);
-  max-block-size: 20rem;
-  overflow: auto;
   padding: 0;
 }
 
 .shop-physical-list-heading {
+  align-items: center;
   background: var(--surface-subtle);
   border-bottom: 1px solid var(--border);
   display: grid;
   font-size: 0.72rem;
+  font-weight: 700;
   grid-template-columns: minmax(0, 1fr) auto;
   letter-spacing: 0.035em;
   padding: 0.45rem 0.7rem;
