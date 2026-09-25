@@ -1,5 +1,50 @@
 # Implementation status
 
+## Shop acquisition dialog simplification (2026-09-24)
+
+Product-owner review of the two-page acquisition dialog (`.shop-physical-dialog`
+in `ShopWorkspace.tsx`) asked for less chrome now that the item-owned-choice
+naming design (previous checkpoint) carries most of the information the
+removed elements used to convey:
+
+- **Removed the "Step X of Y: ..." eyebrow line from both pages.** The dialog
+  header is now just the `<h2>` and the close button.
+- **Page 1's `<h2>` now shows the choice's own label** (the same text
+  previously passed as `CompactChoiceButtons`'s `label` prop, e.g. "Choose
+  damage type") instead of a generic "Buy/Give {item}" heading, and the
+  redundant `selection-subsection-heading` legend inside
+  `CompactChoiceButtons` is gone for this caller. Added a `hideLabel` prop to
+  `CompactChoiceButtons` (`ChoiceEditors.tsx`) that keeps `label` as the
+  fieldset's accessible name (via a `visually-hidden` legend) without
+  rendering it visibly, for callers — like this one — that already show the
+  same text as their own heading. Page 1's "Resulting item"/"Price" summary
+  (`dl.shop-physical-summary`) is removed entirely; a single item-owned choice
+  with no base-item pairing doesn't need a preview.
+- **Page 2's `<h2>` is now "Choose base {noun} type"** (generic across
+  weapon/armor/implement via the existing `nouns.singular` value), and its
+  "Resulting item" line is reformatted to the same composed name
+  `inventoryDisplayName` produces elsewhere (base + enchantment + bonus
+  suffix + parenthesized choice), computed from a live preview
+  `BuildInventoryEntry` built from the current page-1/page-2 selections
+  (`inventoryEntryForEntity`, already existed for the commit path) instead of
+  the previous ad hoc `"{item} · {base}"` string. "Price" is unchanged.
+- **The final submit button reads "Confirm" whenever page 2 (the physical/
+  base-item page) is the last page**, replacing "Buy"/"Give" there; the
+  single-page item-choices-only case (no base-item pairing needed) still
+  reads "Buy"/"Give", since the product owner's request was scoped to "the
+  2nd page".
+- Deduplicated the `itemChoiceChildren`-construction logic that used to be
+  inline in the submit handler only — it's now a single `useMemo`-free
+  `resolvedItemChoiceChildren` computed value shared by both the live preview
+  and the actual commit, so they can't drift.
+- Verification: updated the one test (`builder-header-integration.test.ts`)
+  that asserted on `CompactChoiceButtons`'s legend source text literally;
+  full public web suite (297/297) and `scripts/check.sh` pass. Manual
+  end-to-end verification through a production build via raw CDP confirms
+  both pages render as described, the Back/Next/Confirm flow preserves
+  selections, and the final inventory entry is unaffected
+  ("Public Bastard Sword of Probing +2 (Fire)").
+
 ## Item-owned choice design simplification, round 3 (2026-09-24)
 
 Further product-owner review simplified the design rather than continuing to

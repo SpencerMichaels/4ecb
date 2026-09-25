@@ -15,6 +15,7 @@ import {
   formatCopperPrice,
   groupMagicItemFamilies,
   inventoryDefinitionIds,
+  inventoryDisplayName,
   inventoryEntryForEntity,
   itemCanBeBought,
   itemChoiceCandidates,
@@ -399,6 +400,13 @@ export function ShopWorkspace({
     () => entities.filter((entity) => shopBrowseCategory(entity) !== undefined),
     [entities],
   );
+  const byId = useMemo(
+    () =>
+      new Map(
+        entities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
+      ),
+    [entities],
+  );
   const learning = LEARNING_CATEGORIES.has(browse);
   const known = (entity: ContentEntity) => {
     const kind = practiceKind(entity);
@@ -627,6 +635,53 @@ export function ShopWorkspace({
   const physicalChoiceComplete =
     physicalNeeded === 0 || selectedPhysicalId !== "";
   const onLastDialogPage = dialogPageIndex >= dialogPages.length - 1;
+  const resolvedItemChoiceChildren: readonly BuildOccurrence[] =
+    requiredItemChoices.flatMap((slot, index) => {
+      const definitionId = itemChoiceSelections.get(index);
+      const chosen =
+        definitionId === undefined
+          ? undefined
+          : itemChoiceCandidates(slot, entities, characterLevel).find(
+              ({ id }) => id === definitionId,
+            );
+      return chosen === undefined
+        ? []
+        : [
+            {
+              id: `web:${crypto.randomUUID()}`,
+              identity: {
+                definitionId: chosen.id,
+                name: chosen.name,
+                type: chosen.type,
+              },
+              acquiredLevel: characterLevel,
+              legality: "rules-legal" as const,
+              children: [],
+              unresolved: false,
+            },
+          ];
+    });
+  const previewPhysical =
+    physicalNeeded === 0 || selectedPhysicalId === "standard"
+      ? undefined
+      : physicalChoices.find(({ id }) => id === selectedPhysicalId);
+  const previewName =
+    acquisition === undefined
+      ? ""
+      : inventoryDisplayName(
+          inventoryEntryForEntity(
+            acquisition.entity,
+            characterLevel,
+            previewPhysical,
+            resolvedItemChoiceChildren,
+          ),
+          byId,
+        );
+  const itemChoiceHeading =
+    requiredItemChoices[0] === undefined
+      ? undefined
+      : (requiredItemChoices[0].label ??
+        `Choose ${requiredItemChoices[0].type.toLocaleLowerCase()}`);
 
   const renderRow = (
     entity: ContentEntity,
@@ -1098,14 +1153,10 @@ export function ShopWorkspace({
                   setDialogPageIndex((index) => index + 1);
                 return;
               }
-              const physical =
-                physicalNeeded === 0 || selectedPhysicalId === "standard"
-                  ? undefined
-                  : physicalChoices.find(({ id }) => id === selectedPhysicalId);
               if (
                 physicalNeeded > 0 &&
                 selectedPhysicalId !== "standard" &&
-                physical === undefined
+                previewPhysical === undefined
               )
                 return;
               if (
@@ -1114,42 +1165,16 @@ export function ShopWorkspace({
                 )
               )
                 return;
-              const itemChoiceChildren: BuildOccurrence[] =
-                requiredItemChoices.flatMap((slot, index) => {
-                  const definitionId = itemChoiceSelections.get(index);
-                  const chosen =
-                    definitionId === undefined
-                      ? undefined
-                      : itemChoiceCandidates(
-                          slot,
-                          entities,
-                          characterLevel,
-                        ).find(({ id }) => id === definitionId);
-                  return chosen === undefined
-                    ? []
-                    : [
-                        {
-                          id: `web:${crypto.randomUUID()}`,
-                          identity: {
-                            definitionId: chosen.id,
-                            name: chosen.name,
-                            type: chosen.type,
-                          },
-                          acquiredLevel: characterLevel,
-                          legality: "rules-legal" as const,
-                          children: [],
-                          unresolved: false,
-                        },
-                      ];
-                });
-              if (itemChoiceChildren.length !== requiredItemChoices.length)
+              if (
+                resolvedItemChoiceChildren.length !== requiredItemChoices.length
+              )
                 return;
               onAcquire(
                 inventoryEntryForEntity(
                   acquisition.entity,
                   characterLevel,
-                  physical,
-                  itemChoiceChildren,
+                  previewPhysical,
+                  resolvedItemChoiceChildren,
                 ),
                 acquisition.mode === "buy"
                   ? (entityCurrencyCopper(acquisition.entity) ?? 0)
@@ -1160,20 +1185,10 @@ export function ShopWorkspace({
           >
             <header>
               <div>
-                <p className="eyebrow">
-                  {dialogPages.length > 1
-                    ? `Step ${dialogPageIndex + 1} of ${dialogPages.length}: ${
-                        currentDialogPage === "item-choices"
-                          ? "Choose its properties"
-                          : `Choose a compatible ${nouns.singular}`
-                      }`
-                    : currentDialogPage === "physical"
-                      ? `Choose a compatible ${nouns.singular}`
-                      : "Choose its properties"}
-                </p>
                 <h2>
-                  {acquisition.mode === "buy" ? "Buy" : "Give"}{" "}
-                  {shopDisplayName(acquisition.entity)}
+                  {currentDialogPage === "item-choices"
+                    ? (itemChoiceHeading ?? "Choose its properties")
+                    : `Choose base ${nouns.singular} type`}
                 </h2>
               </div>
               <button
@@ -1295,6 +1310,7 @@ export function ShopWorkspace({
                     label={
                       slot.label ?? `Choose ${slot.type.toLocaleLowerCase()}`
                     }
+                    hideLabel
                     options={itemChoiceCandidates(
                       slot,
                       entities,
@@ -1317,28 +1333,28 @@ export function ShopWorkspace({
                     }
                   />
                 ))}
-            <dl className="shop-physical-summary">
-              <div>
-                <dt>Resulting item</dt>
-                <dd>
-                  {physicalNeeded === 0 || selectedPhysicalId === "standard"
-                    ? shopDisplayName(acquisition.entity)
-                    : selectedPhysicalId
-                      ? `${shopDisplayName(acquisition.entity)} · ${physicalChoices.find(({ id }) => id === selectedPhysicalId)?.name ?? ""}`
-                      : `Choose a ${nouns.singular}`}
-                </dd>
-              </div>
-              <div>
-                <dt>Price</dt>
-                <dd>
-                  {acquisition.mode === "give"
-                    ? "Free"
-                    : formatCopperPrice(
-                        entityCurrencyCopper(acquisition.entity),
-                      )}
-                </dd>
-              </div>
-            </dl>
+            {currentDialogPage !== "physical" ? null : (
+              <dl className="shop-physical-summary">
+                <div>
+                  <dt>Resulting item</dt>
+                  <dd>
+                    {physicalNeeded > 0 && selectedPhysicalId === ""
+                      ? `Choose a ${nouns.singular}`
+                      : previewName}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Price</dt>
+                  <dd>
+                    {acquisition.mode === "give"
+                      ? "Free"
+                      : formatCopperPrice(
+                          entityCurrencyCopper(acquisition.entity),
+                        )}
+                  </dd>
+                </div>
+              </dl>
+            )}
             <footer>
               <button type="button" onClick={() => dialogRef.current?.close()}>
                 Cancel
@@ -1369,9 +1385,11 @@ export function ShopWorkspace({
                 }
               >
                 {onLastDialogPage
-                  ? acquisition.mode === "buy"
-                    ? "Buy"
-                    : "Give"
+                  ? currentDialogPage === "physical"
+                    ? "Confirm"
+                    : acquisition.mode === "buy"
+                      ? "Buy"
+                      : "Give"
                   : "Next"}
               </button>
             </footer>

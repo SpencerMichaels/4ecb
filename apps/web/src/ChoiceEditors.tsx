@@ -56,6 +56,7 @@ function retrainingCategory(type: string | undefined): string | undefined {
 
 export function CompactChoiceButtons({
   label,
+  hideLabel = false,
   options,
   keyAbilities = [],
   selectedIcon,
@@ -66,6 +67,9 @@ export function CompactChoiceButtons({
   onClear,
 }: {
   readonly label: string;
+  /** Keeps `label` as the accessible name without rendering a visible
+   * legend — for callers that already show it as their own heading. */
+  readonly hideLabel?: boolean;
   readonly options: readonly {
     readonly id: string;
     readonly label: string;
@@ -83,7 +87,13 @@ export function CompactChoiceButtons({
   const clearable = onClear !== undefined;
   return (
     <fieldset className="compact-choice-picker">
-      <legend className="selection-subsection-heading">{label}</legend>
+      <legend
+        className={
+          hideLabel ? "visually-hidden" : "selection-subsection-heading"
+        }
+      >
+        {label}
+      </legend>
       <div
         className="compact-choice-options"
         {...(clearable ? {} : { "aria-label": label, role: "radiogroup" })}

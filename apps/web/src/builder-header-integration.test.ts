@@ -150,7 +150,7 @@ describe("builder header integration", () => {
 
   it("uses shared typography classes for selection-pane heading levels", () => {
     expect(choiceEditors).toContain(
-      '<legend className="selection-subsection-heading">{label}</legend>',
+      'hideLabel ? "visually-hidden" : "selection-subsection-heading"',
     );
     expect(characterDetailsEditor).toContain(
       '<h5 className="selection-subsection-heading">',
