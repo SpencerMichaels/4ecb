@@ -1497,10 +1497,12 @@ content-profile, exact-revision, or browser-local storage contracts.
 Power-card presentation may resolve an authored list of alternative abilities
 to the character's highest corresponding ability modifier. This browser-local
 Display preference is enabled by default and can be disabled to retain the
-authored alternatives. Ties preserve authored order. Resolution occurs only
-when every listed modifier is available; otherwise the prose remains unchanged.
-It affects the shared browser/print sheet model without changing content,
-character selections, attack calculations, or serialized data.
+authored alternatives. Equal modifiers prefer the higher underlying score,
+then abilities marked as key abilities in the class record's authored order,
+then the power's authored order. Resolution occurs only when every listed
+modifier is available; otherwise the prose remains unchanged. It affects the
+shared browser/print sheet model without changing content, character
+selections, attack calculations, or serialized data.
 
 ## Deferred decisions and decision points
 

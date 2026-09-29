@@ -132,6 +132,46 @@ function field(entity: ContentEntity | undefined, name: string): string {
   );
 }
 
+function classKeyAbilities(
+  entity: ContentEntity | undefined,
+): readonly string[] {
+  const authored = field(entity, "Key Abilities");
+  if (authored.length === 0) return [];
+  const aliases = new Map<string, string>([
+    ...ABILITIES.map(
+      (ability) => [ability.toLocaleLowerCase(), ability] as const,
+    ),
+    ["str", "Strength"],
+    ["con", "Constitution"],
+    ["dex", "Dexterity"],
+    ["int", "Intelligence"],
+    ["wis", "Wisdom"],
+    ["cha", "Charisma"],
+  ]);
+  const seen = new Set<string>();
+  return [
+    ...authored.matchAll(
+      /\b(?:strength|str|constitution|con|dexterity|dex|intelligence|int|wisdom|wis|charisma|cha)\b/giu,
+    ),
+  ].flatMap(([value]) => {
+    const ability = aliases.get(value.toLocaleLowerCase());
+    if (ability === undefined || seen.has(ability)) return [];
+    seen.add(ability);
+    return [ability];
+  });
+}
+
+function preferredClassEntity(
+  entities: readonly ContentEntity[],
+): ContentEntity | undefined {
+  return (
+    entities.find((entity) => entity.type.toLocaleLowerCase() === "class") ??
+    entities.find(
+      (entity) => entity.type.toLocaleLowerCase() === "hybrid class",
+    )
+  );
+}
+
 function evaluatedStat(
   evaluation: EvaluatedCharacter,
   name: string,
@@ -152,6 +192,12 @@ function signed(value: number): string {
 }
 
 type NumericStat = (name: string) => number | undefined;
+
+interface AbilityPresentationContext {
+  readonly modifier: NumericStat;
+  readonly score: NumericStat;
+  readonly keyAbilities: readonly string[];
+}
 
 const ABILITY_PATTERN = ABILITIES.join("|");
 const ABILITY_CHOICE_LIST_PATTERN = `(?:your\\s+)?(?:${ABILITY_PATTERN})(?:(?:\\s*,\\s*(?:(?:or|and)\\s+)?|\\s+(?:or|and)\\s+|\\s*\\/\\s*)(?:your\\s+)?(?:${ABILITY_PATTERN}))+`;
@@ -188,7 +234,7 @@ function isAbilityChoice(text: string, start: number, length: number): boolean {
 function personalizePowerText(
   text: string,
   level: number,
-  stat: NumericStat,
+  abilities: AbilityPresentationContext,
   resolveAbilityChoices: boolean,
 ): string {
   const chooseAbility = (
@@ -203,20 +249,40 @@ function personalizePowerText(
       ),
     );
     if (mentions.some((ability) => ability === undefined)) return undefined;
-    const choices = mentions.map((name) => ({
+    const choices = mentions.map((name, authoredIndex) => ({
       name: name ?? "",
-      value: stat(`${name} modifier`),
+      value: abilities.modifier(`${name} modifier`),
+      score: abilities.score(name ?? ""),
+      keyIndex: abilities.keyAbilities.findIndex(
+        (ability) => ability.toLocaleLowerCase() === name?.toLocaleLowerCase(),
+      ),
+      authoredIndex,
     }));
     if (choices.some(({ value }) => value === undefined)) return undefined;
-    return choices.reduce<{ name: string; value: number } | undefined>(
+    const best = choices.reduce<(typeof choices)[number] | undefined>(
       (best, choice) => {
-        const available = { name: choice.name, value: choice.value ?? 0 };
-        return best === undefined || available.value > best.value
-          ? available
-          : best;
+        if (best === undefined) return choice;
+        if (choice.value !== best.value)
+          return (choice.value ?? 0) > (best.value ?? 0) ? choice : best;
+        if (
+          best.score !== undefined &&
+          choice.score !== undefined &&
+          choice.score !== best.score
+        )
+          return choice.score > best.score ? choice : best;
+        const currentKeyIndex =
+          best.keyIndex < 0 ? Number.POSITIVE_INFINITY : best.keyIndex;
+        const choiceKeyIndex =
+          choice.keyIndex < 0 ? Number.POSITIVE_INFINITY : choice.keyIndex;
+        if (choiceKeyIndex !== currentKeyIndex)
+          return choiceKeyIndex < currentKeyIndex ? choice : best;
+        return choice.authoredIndex < best.authoredIndex ? choice : best;
       },
       undefined,
     );
+    return best === undefined
+      ? undefined
+      : { name: best.name, value: best.value ?? 0 };
   };
   const resolvedChoices = resolveAbilityChoices
     ? text
@@ -237,7 +303,7 @@ function personalizePowerText(
     ABILITY_MODIFIER_PATTERN,
     (match: string, ability: string, offset: number) => {
       if (isAbilityChoice(resolvedChoices, offset, match.length)) return match;
-      const value = stat(`${ability} modifier`);
+      const value = abilities.modifier(`${ability} modifier`);
       return value === undefined ? match : `${match} (${signed(value)})`;
     },
   );
@@ -251,6 +317,7 @@ function evaluatedPowerCards(
   power: EvaluatedPower,
   entity: ContentEntity | undefined,
   evaluation: EvaluatedCharacter,
+  keyAbilities: readonly string[],
   options: SheetModelOptions,
 ): SheetCard[] {
   const fields =
@@ -269,11 +336,20 @@ function evaluatedPowerCards(
         value: personalizePowerText(
           value,
           evaluation.level,
-          (name) => {
-            const raw = evaluatedStat(evaluation, name);
-            if (raw === undefined) return undefined;
-            const parsed = Number(raw);
-            return Number.isFinite(parsed) ? parsed : undefined;
+          {
+            modifier: (name) => {
+              const raw = evaluatedStat(evaluation, name);
+              if (raw === undefined) return undefined;
+              const parsed = Number(raw);
+              return Number.isFinite(parsed) ? parsed : undefined;
+            },
+            score: (name) => {
+              const raw = evaluatedStat(evaluation, name);
+              if (raw === undefined) return undefined;
+              const parsed = Number(raw);
+              return Number.isFinite(parsed) ? parsed : undefined;
+            },
+            keyAbilities,
           },
           options.resolveAbilityChoices === true,
         ),
@@ -333,6 +409,7 @@ function powerCard(
   power: LegacyPowerSnapshot,
   entities: Map<string, ContentEntity>,
   snapshot: LegacyCharacterSnapshot,
+  keyAbilities: readonly string[],
   options: SheetModelOptions,
 ): SheetCard {
   const entity =
@@ -372,26 +449,47 @@ function powerCard(
         value: personalizePowerText(
           value,
           snapshot.levelCount,
-          (name) => {
-            const found = Object.entries(snapshot.stats).find(
-              ([candidate]) =>
-                candidate.trim().toLocaleLowerCase() ===
-                name.trim().toLocaleLowerCase(),
-            )?.[1];
-            if (found !== undefined) {
-              const parsed = Number(found);
-              if (Number.isFinite(parsed)) return parsed;
-            }
-            const ability = ABILITIES.find(
-              (candidate) =>
-                `${candidate} modifier`.toLocaleLowerCase() ===
-                name.toLocaleLowerCase(),
-            );
-            const score =
-              ability === undefined ? undefined : snapshot.abilities[ability];
-            return score === undefined
-              ? undefined
-              : Math.floor((score - 10) / 2);
+          {
+            modifier: (name) => {
+              const found = Object.entries(snapshot.stats).find(
+                ([candidate]) =>
+                  candidate.trim().toLocaleLowerCase() ===
+                  name.trim().toLocaleLowerCase(),
+              )?.[1];
+              if (found !== undefined) {
+                const parsed = Number(found);
+                if (Number.isFinite(parsed)) return parsed;
+              }
+              const ability = ABILITIES.find(
+                (candidate) =>
+                  `${candidate} modifier`.toLocaleLowerCase() ===
+                  name.toLocaleLowerCase(),
+              );
+              const score =
+                ability === undefined ? undefined : snapshot.abilities[ability];
+              return score === undefined
+                ? undefined
+                : Math.floor((score - 10) / 2);
+            },
+            score: (name) => {
+              const found = Object.entries(snapshot.stats).find(
+                ([candidate]) =>
+                  candidate.trim().toLocaleLowerCase() ===
+                  name.trim().toLocaleLowerCase(),
+              )?.[1];
+              const ability = ABILITIES.find(
+                (candidate) =>
+                  candidate.toLocaleLowerCase() === name.toLocaleLowerCase(),
+              );
+              const raw =
+                found ??
+                (ability === undefined
+                  ? undefined
+                  : snapshot.abilities[ability]);
+              const parsed = Number(raw);
+              return Number.isFinite(parsed) ? parsed : undefined;
+            },
+            keyAbilities,
           },
           options.resolveAbilityChoices === true,
         ),
@@ -415,6 +513,26 @@ export function buildSheetModel(
   options: SheetModelOptions = {},
 ): CharacterSheetModel {
   const entities = entityMap(content);
+  const selectedClassRule =
+    snapshot.selectedRules.find(
+      (rule) => rule.type.toLocaleLowerCase() === "class",
+    ) ??
+    snapshot.selectedRules.find(
+      (rule) => rule.type.toLocaleLowerCase() === "hybrid class",
+    );
+  const selectedClass =
+    selectedClassRule === undefined
+      ? undefined
+      : selectedClassRule.id === undefined
+        ? preferredClassEntity(
+            [...entities.values()].filter(
+              (entity) =>
+                entity.name.toLocaleLowerCase() ===
+                selectedClassRule.name.toLocaleLowerCase(),
+            ),
+          )
+        : entities.get(selectedClassRule.id.toLocaleLowerCase());
+  const keyAbilities = classKeyAbilities(selectedClass);
   const ruleGroups = new Map<string, SheetValue[]>();
   for (const rule of snapshot.selectedRules) {
     if (
@@ -513,7 +631,7 @@ export function buildSheetModel(
     })),
     features: [...ruleGroups].map(([group, entries]) => ({ group, entries })),
     powers: snapshot.powers.map((power) =>
-      powerCard(power, entities, snapshot, options),
+      powerCard(power, entities, snapshot, keyAbilities, options),
     ),
     items: itemCards,
     notes: [
@@ -550,6 +668,9 @@ export function buildEvaluatedSheetModel(
     const entity = entities.get(occurrence.definitionId.toLocaleLowerCase());
     return entity === undefined ? [] : [{ occurrence, entity }];
   });
+  const keyAbilities = classKeyAbilities(
+    preferredClassEntity(active.map(({ entity }) => entity)),
+  );
   const identityDetails: Record<string, string> = {
     ...detailsWithLegacyTextStrings(snapshot.details, build.textStrings),
     Level: String(evaluation.level),
@@ -685,6 +806,7 @@ export function buildEvaluatedSheetModel(
       power,
       entities.get(power.definitionId.toLocaleLowerCase()),
       evaluation,
+      keyAbilities,
       options,
     ),
   );

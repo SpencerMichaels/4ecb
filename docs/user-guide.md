@@ -245,10 +245,12 @@ or save PDF** and confirm the same paper size in the browser print dialog.
 
 The browser-level **Settings → Display** option **Use the best ability in power
 descriptions** is enabled by default. When power prose offers several abilities,
-View and print show only the highest available modifier and its value; ties keep
-the first authored ability. Turn the option off to retain the complete authored
-list. Named single-ability modifiers and half-level expressions continue to
-show their current values either way.
+View and print show only the highest available modifier and its value. Equal
+modifiers prefer the higher underlying ability score, then the class's key
+abilities in their authored order, then the power's first listed option. Turn
+the setting off to retain the complete authored list. Named single-ability
+modifiers and half-level expressions continue to show their current values
+either way.
 
 The automated production-artifact matrix covers current Chromium and Firefox,
 Letter/A4, and color/monochrome with long and short card prose. Chromium output

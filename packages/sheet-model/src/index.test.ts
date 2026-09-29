@@ -134,6 +134,14 @@ describe("sheet model", () => {
       children: [],
       unresolved: false,
     };
+    const classOccurrence = {
+      id: "class-occurrence",
+      identity: { definitionId: "CLASS_1", name: "Ardent", type: "Class" },
+      acquiredLevel: 1,
+      legality: "rules-legal" as const,
+      children: [],
+      unresolved: false,
+    };
     const build: CharacterBuild = {
       formatVersion: 1,
       effectiveLevel: 3,
@@ -189,17 +197,29 @@ describe("sheet model", () => {
           legality: "rules-legal",
         },
         {
+          id: classOccurrence.id,
+          definitionId: "CLASS_1",
+          acquiredLevel: 1,
+          kind: "grant",
+          legality: "rules-legal",
+        },
+        {
           id: "power-occurrence",
           definitionId: "POWER_1",
           acquiredLevel: 1,
           kind: "grant",
         },
       ],
-      activeDefinitionIds: ["RACE_1", "POWER_1"],
+      activeDefinitionIds: ["RACE_1", "CLASS_1", "POWER_1"],
       activeDefinitions: [
         {
           definitionId: "RACE_1",
           occurrenceIds: [occurrence.id],
+          providerOccurrenceIds: [],
+        },
+        {
+          definitionId: "CLASS_1",
+          occurrenceIds: [classOccurrence.id],
           providerOccurrenceIds: [],
         },
         {
@@ -210,7 +230,20 @@ describe("sheet model", () => {
       ],
       choices: [],
       stats: {
-        Strength: { name: "Strength", value: 16, contributions: [] },
+        Strength: { name: "Strength", value: 20, contributions: [] },
+        Constitution: {
+          name: "Constitution",
+          value: 21,
+          contributions: [],
+        },
+        Dexterity: { name: "Dexterity", value: 20, contributions: [] },
+        Intelligence: {
+          name: "Intelligence",
+          value: 20,
+          contributions: [],
+        },
+        Wisdom: { name: "Wisdom", value: 20, contributions: [] },
+        Charisma: { name: "Charisma", value: 20, contributions: [] },
         "Wisdom modifier": {
           name: "Wisdom modifier",
           value: 5,
@@ -218,21 +251,26 @@ describe("sheet model", () => {
         },
         "Strength modifier": {
           name: "Strength modifier",
-          value: 3,
+          value: 5,
           contributions: [],
         },
         "Constitution modifier": {
           name: "Constitution modifier",
-          value: 4,
+          value: 5,
           contributions: [],
         },
         "Intelligence modifier": {
           name: "Intelligence modifier",
-          value: 2,
+          value: 5,
           contributions: [],
         },
         "Charisma modifier": {
           name: "Charisma modifier",
+          value: 5,
+          contributions: [],
+        },
+        "Dexterity modifier": {
+          name: "Dexterity modifier",
           value: 5,
           contributions: [],
         },
@@ -279,6 +317,27 @@ describe("sheet model", () => {
         description: "",
         extensions: [],
         provenance: { sourceKey: "fixture", sourceOrdinal: 0 },
+      },
+      {
+        id: "CLASS_1",
+        name: "Ardent",
+        type: "Class",
+        source: "Synthetic",
+        sources: ["Synthetic"],
+        attributes: [],
+        categories: [],
+        specifics: [
+          {
+            name: "Key Abilities",
+            value: "Charisma, Wisdom, Intelligence",
+            extraAttributes: [],
+            ordinal: 0,
+          },
+        ],
+        rules: [],
+        description: "",
+        extensions: [],
+        provenance: { sourceKey: "fixture", sourceOrdinal: 1 },
       },
       {
         id: "POWER_1",
@@ -330,7 +389,7 @@ describe("sheet model", () => {
         rules: [],
         description: "A modern evaluated spark.",
         extensions: [],
-        provenance: { sourceKey: "fixture", sourceOrdinal: 1 },
+        provenance: { sourceKey: "fixture", sourceOrdinal: 2 },
       },
       {
         id: "ITEM_1",
@@ -344,7 +403,7 @@ describe("sheet model", () => {
         rules: [],
         description: "An implement.",
         extensions: [],
-        provenance: { sourceKey: "fixture", sourceOrdinal: 2 },
+        provenance: { sourceKey: "fixture", sourceOrdinal: 3 },
       },
       {
         id: "ARMOR_1",
@@ -358,7 +417,7 @@ describe("sheet model", () => {
         rules: [],
         description: "",
         extensions: [],
-        provenance: { sourceKey: "fixture", sourceOrdinal: 3 },
+        provenance: { sourceKey: "fixture", sourceOrdinal: 4 },
       },
       {
         id: "GLOAMING_1",
@@ -372,7 +431,7 @@ describe("sheet model", () => {
         rules: [],
         description: "",
         extensions: [],
-        provenance: { sourceKey: "fixture", sourceOrdinal: 4 },
+        provenance: { sourceKey: "fixture", sourceOrdinal: 5 },
       },
     ];
 
@@ -387,7 +446,7 @@ describe("sheet model", () => {
     expect(model.source).toBe("authoritative-evaluation");
     expect(model.identity).toContainEqual({ label: "Level", value: "3" });
     expect(model.identity).toContainEqual({ label: "Race", value: "Cliffkin" });
-    expect(model.abilities).toContainEqual({ label: "Strength", value: "16" });
+    expect(model.abilities).toContainEqual({ label: "Strength", value: "20" });
     expect(model.defenses).toContainEqual({ label: "AC", value: "19" });
     expect(model.powers[0]).toMatchObject({
       name: "Arc Flash — Test wand",
@@ -403,16 +462,16 @@ describe("sheet model", () => {
       {
         label: "Special",
         value:
-          "Use Wisdom modifier (+5); Wisdom modifier (+5) is already shown.",
+          "Use Constitution modifier (+5); Wisdom modifier (+5) is already shown.",
       },
       {
         label: "Secondary Effect",
         value: "You gain resist 5 + 1/2 level (+1).",
       },
-      { label: "Attack", value: "Wisdom (+5) vs AC" },
+      { label: "Attack", value: "Charisma (+5) vs AC" },
       {
         label: "Requirement",
-        value: "Use your Strength or Dexterity modifier.",
+        value: "Use Strength modifier (+5).",
       },
     ]);
     const authoredChoices = buildEvaluatedSheetModel(
@@ -426,6 +485,19 @@ describe("sheet model", () => {
       label: "Special",
       value:
         "Use your Strength, Constitution, or Wisdom modifier; Wisdom modifier (+5) is already shown.",
+    });
+    const incompleteStats = { ...evaluation.stats };
+    delete incompleteStats["Dexterity modifier"];
+    const incompleteChoices = buildEvaluatedSheetModel(
+      snapshot,
+      build,
+      { ...evaluation, stats: incompleteStats },
+      content,
+      { resolveAbilityChoices: true },
+    );
+    expect(incompleteChoices.powers[0]?.fields).toContainEqual({
+      label: "Requirement",
+      value: "Use your Strength or Dexterity modifier.",
     });
     expect(model.items[0]).toMatchObject({ name: "Test wand" });
     expect(model.items).toContainEqual(

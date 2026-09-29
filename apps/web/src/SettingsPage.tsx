@@ -546,7 +546,8 @@ export function SettingsPage({
         </label>
         <p className="field-help">
           When a power offers several abilities, show only the one with the
-          highest modifier. Ties keep the first ability listed by the power.
+          highest modifier. Ties prefer the higher score, then the class's key
+          abilities in their listed order, then the power's first option.
         </p>
       </section>
 

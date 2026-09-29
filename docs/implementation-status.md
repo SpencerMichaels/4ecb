@@ -3630,11 +3630,12 @@ Divinity`, except for the native function's explicit, case-insensitive
   removal, and quota diagnostics remain recoverable under collapsed Advanced
   content management.
 - A browser-local, default-on Display preference resolves multi-ability modifier
-  and attack phrases to the highest available modifier. Ties preserve authored
-  order, missing values leave the prose untouched, and disabling the preference
-  retains the authored alternatives. The setting feeds the shared sheet model,
-  so browser View and print agree without altering stored characters or rules
-  calculations.
+  and attack phrases to the highest available modifier. Equal modifiers prefer
+  the higher underlying score, then the selected class's authored key-ability
+  order, then the power's authored order. Missing values leave the prose
+  untouched, and disabling the preference retains the authored alternatives.
+  The setting feeds the shared sheet model, so browser View and print agree
+  without altering stored characters or rules calculations.
 - Focused power-text, Settings contract, and route tests pass 31 tests. Web and
   sheet-model TypeScript checks pass. The full 549-test suite, workspace
   typechecks, targeted lint, production/PWA build, and Chromium/Firefox
