@@ -258,11 +258,14 @@ renderer supplies a conservative desktop/tablet layout modeled on the legacy
 sheet's familiar hierarchy, not its proprietary artwork.
 
 M5.6 refines that browser renderer into an authoritative read-only **View** mode
-and adds a distinct desktop/tablet **Play** mode over the same `SheetDocument`
-and card models. Play mutations belong exclusively to persisted `PlayState` and
-its deterministic commands; they do not rewrite evaluated snapshots or the
-durable character build. M6 adapts those commands and models to a task-oriented
-phone interface rather than shrinking the desktop Play sheet.
+as the final major original-Character-Builder-parity surface. M5.7 cleans up the
+parity UI and prepares the existing PWA/container foundation for invited beta.
+M5.8, explicitly beyond parity, adds a distinct desktop/tablet **Play** mode over
+the same `SheetDocument` and card models. Play mutations belong exclusively to
+persisted `PlayState` and its deterministic commands; they do not rewrite
+evaluated snapshots or the durable character build. M6 depends on M5.8 and
+adapts those commands and models to a task-oriented phone interface rather than
+shrinking the desktop Play sheet.
 
 When the exact content pack ID and digest bound to the character are installed,
 the sheet runs the authoritative build through the rules worker and projects

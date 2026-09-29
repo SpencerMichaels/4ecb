@@ -34,8 +34,9 @@ A React, TypeScript, and Vite PWA supplies route-level experiences:
 - `/characters` for the local character library and read-only sheets;
 - `/characters/:characterId/edit` for desktop/tablet character construction;
 - `/characters/:characterId` for browser View and print preview;
-- `/characters/:characterId/play` for the desktop/tablet Play sheet;
-- `/play/:characterId` for phone-first table state; and
+- `/characters/:characterId/play` for the planned M5.8 desktop/tablet Play
+  sheet;
+- `/play/:characterId` for the M6 phone-first table state after M5.8; and
 - `/settings` for imports, packs, backups, diagnostics, and relay configuration.
 
 The former `/compendium` and `/compendium/entity/:id` debugging surfaces are
@@ -220,10 +221,12 @@ game events such as “start of source's next turn,” not wall-clock timers.
 Temporary equipment and treasure can be explicitly reconciled into the durable
 character record after play. They are not silently committed by session traffic.
 
-M5.6 establishes this renderer-independent state, command, history, persistence,
-and reconciliation foundation together with the desktop/tablet Play sheet. M6
-adds the purpose-built phone renderer and portable play-bundle workflow; it does
-not redefine play semantics inside phone UI components.
+M5.6 does not establish mutable play state; it is limited to the refined
+read-only browser View parity surface. M5.8 establishes this renderer-independent
+state, command, history, persistence, and reconciliation foundation together
+with the desktop/tablet Play sheet. M6 depends on M5.8 and adds the purpose-built
+phone renderer and portable play-bundle workflow; it does not redefine play
+semantics inside phone UI components.
 
 ### EvaluatedCharacterSnapshot
 
@@ -446,11 +449,12 @@ nonconvergent inputs use the preserved legacy snapshot as a clearly labeled
 recovery view; they never mix cached and newly calculated values silently.
 
 Reference-card models contain semantic labeled fields, not preformatted HTML.
-One visual card component supports:
+One visual card component supports, across staged milestones:
 
 - static browser reference;
 - print layout; and
-- interactive play mode, where activation dispatches a `PlayState` command.
+- the M5.8 interactive play mode, where activation dispatches a `PlayState`
+  command.
 
 Print settings form a persisted `SheetRenderProfile` with paper size, orientation,
 included sections, card options, color mode, font scale, and blank-field policy.
@@ -472,8 +476,9 @@ separation while replacing WPF/XPS and the legacy visual assets.
 ## Phone play mode
 
 Play mode is a dedicated responsive application surface, not the desktop builder
-compressed to phone width. It is installable as part of the same PWA and is
-code-split from builder-heavy UI.
+compressed to phone width. M6 implements it only after M5.8 has settled the
+versioned PlayState and deterministic command semantics. It is installable as
+part of the same PWA and is code-split from builder-heavy UI.
 
 Primary navigation:
 
@@ -636,6 +641,14 @@ service-worker precache and is network-only so later operator overrides cannot
 be shadowed by the build-time default. The image has a health endpoint,
 read-only root filesystem support, no bundled proprietary corpus, and documented
 reverse-proxy/HTTPS configuration.
+
+This container foundation was implemented and verified before M5.7. M5.7 does
+not redesign it: that milestone makes the existing image and PWA easy to run,
+configure, update, recover, and explain for the product owner's small invited
+beta group. Character and pack ownership remains browser-local, and neither an
+account service nor the optional M7 relay is introduced by beta hosting. M9
+retains the separate lightweight browser/visual-print, security, migration,
+representative-device, and release-performance hardening pass.
 
 ### Post-MVP Compose deployment
 

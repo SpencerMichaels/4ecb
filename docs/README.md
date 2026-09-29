@@ -35,8 +35,9 @@ application's architecture.
     ownership, fresh-context handoffs, coordinator review, verification layers,
     commits, and completion rules.
 12. [Public PWA and Docker deployment](public-deployment.md) defines the
-    proprietary-content boundary, hardened container operation, runtime
-    configuration, offline/update behavior, and remaining release checks.
+    proprietary-content boundary, existing container foundation, M5.7 invited-
+    beta hostability work, runtime configuration, offline/update behavior, and
+    later hardening boundary.
 13. [M5 functional closure checklist](m5-release-checklist.md) maps security,
     compatibility, durability, and functional browser/print evidence to M5, and
     records the later lightweight M9 browser check (this project runs no
@@ -74,6 +75,9 @@ application's architecture.
 The reverse-engineering specification remains the compatibility evidence base.
 Milestones M1 through M5.5 are implemented and verified. M5 is the functional
 builder MVP, and M5.5 closes the designed builder, library, and Equipment
-interfaces. M5.6 is the current milestone; it solidifies browser View and
-desktop/tablet Play before M6 adapts play to phones.
+interfaces. M5.6 is the current milestone and focuses only on the refined
+browser View sheet, bringing the application mostly to original Character
+Builder parity. M5.7 performs final UI cleanup and invited-beta hosting
+preparation. The beyond-parity desktop/tablet Play foundation moves to M5.8;
+M6 depends on it before adapting play to phones.
 See the [roadmap](roadmap.md) and [implementation status](implementation-status.md).

@@ -56,10 +56,10 @@ back up portable user-owned files without maintaining user accounts.
 5. **Progressive capability.** The application remains useful without a relay,
    without a full content corpus, and while offline.
 6. **Different contexts, purpose-built interfaces.** Building and sheet View
-   target desktop and tablet; a character-sheet-shaped Play view establishes the
-   shared at-table model there; phone play is a separate task-oriented surface;
-   printing targets paper. They share domain logic, not a compromised universal
-   layout.
+   target desktop and tablet. After parity and invited-beta preparation, a
+   character-sheet-shaped Play view establishes the shared at-table model there;
+   phone play is a separate task-oriented surface; printing targets paper. They
+   share domain logic, not a compromised universal layout.
 7. **User data remains portable.** Every local document has an export path and a
    documented migration strategy.
 8. **Public distribution does not imply content redistribution.** Application
@@ -155,16 +155,18 @@ compatible protocol and player projection, not that entire UI.
 
 ## Character-sheet requirements
 
-The sheet has three modes generated from the same semantic sheet model:
+The long-term sheet architecture has three modes generated from the same
+semantic sheet model, delivered in stages:
 
 1. **Browser view:** readable, accessible character reference with live derived
    values.
 2. **Print preview:** page-aware layout with controls for paper size, included
    sections, card orientation, color, and which mutable fields are blank.
-3. **Play view:** a desktop/tablet character-sheet-shaped interface with
-   interactive cards and mutable values backed by `PlayState`. The phone play
-   surface adapts the same state and commands to task-oriented mobile navigation
-   rather than shrinking this layout.
+3. **Play view (M5.8, beyond parity):** a desktop/tablet character-sheet-shaped
+   interface with interactive cards and mutable values backed by `PlayState`.
+   The M6 phone play surface depends on that foundation and adapts the same state
+   and commands to task-oriented mobile navigation rather than shrinking this
+   layout.
 
 Printing defaults to leaving current HP, temporary HP, current surge use,
 conditions, death-save failures, and limited-power usage blank while retaining
@@ -240,9 +242,11 @@ invented before representative content and engine workloads exist.
 - M5 functional builder: current stable desktop Chromium and Firefox, with
   ordinary-file fallbacks for progressive APIs.
 - The designed builder retains responsive and browser-neutral implementation
-  constraints. Broad Safari/tablet release checks belong to 1.0 hardening;
-  comprehensive assistive-technology certification follows 1.0.
-- Phone play mode: current iOS Safari and Android Chromium when M6 ships.
+  constraints. Broad Safari/tablet release checks belong to 1.0 hardening; this
+  project does not run a formal assistive-technology certification program
+  (D063).
+- Phone play mode: current iOS Safari and Android Chromium when M6 ships after
+  its M5.8 Play dependency.
 - Progressive APIs such as directory selection always have ordinary file-input
   and portable-pack fallbacks.
 

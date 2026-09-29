@@ -309,8 +309,9 @@ All of the following must be true:
     compatibility limitations are documented.
 
 **Release characterization:** functional MVP / core builder release; designed
-Builder/Equipment design closure follows in M5.5; sheet/play design follows in
-M5.6; a lightweight stabilization pass is staged in M9.
+Builder/Equipment closure follows in M5.5, browser View parity in M5.6, and
+invited-beta UI/deployment preparation in M5.7. Local play begins beyond parity
+in M5.8; a lightweight stabilization pass remains staged in M9.
 
 ## M5.5 — Builder and Equipment interface closure
 
@@ -322,7 +323,7 @@ The exit-criterion evidence map is in
 
 The product-owner direction for this milestone is recorded in
 [`interface-design-brief.md`](interface-design-brief.md). Product design and
-prototype approval precede the sheet/play foundation milestone. This project
+prototype approval precede the View refinement and later Play milestones. This project
 does not run a formal assistive-technology/keyboard/zoom/touch-target
 certification matrix (see decision D063); structural accessibility and
 ordinary keyboard operation remain continuous constraints, and a lightweight
@@ -499,73 +500,150 @@ approval to the resulting shipped interaction on 2026-09-28. All exit criteria
 pass; the evidence map and latest verification totals are recorded in
 [implementation-status.md](implementation-status.md).
 
-This closure deliberately leaves browser View and desktop/tablet Play to M5.6,
-phone adaptation to M6, and the lightweight best-effort browser/visual-print,
+This closure deliberately leaves browser View to M5.6, final UI cleanup and
+invited-beta hostability to M5.7, local desktop/tablet Play to M5.8, phone
+adaptation to M6, and the lightweight best-effort browser/visual-print,
 security, migration, and representative-device hardening pass to M9. The
 project does not run a formal release-client or accessibility-certification
 matrix (D063). Remaining native equipment edge cases named in D044 are visible
 compatibility limitations under the existing support contract, not hidden
 M5.5 interface blockers.
 
-## M5.6 — Character sheet and local-play foundation
+## M5.6 — Refined browser View sheet
 
 ### Goal
 
-Solidify the character's at-a-glance reference and at-table interaction model
-before adapting it to a phone. Browser **View** and **Play** are distinct modes
-over the same semantic sheet/card models; print remains a third presentation of
-that same authoritative data.
+Bring the authoritative browser **View** sheet to a refined, product-owner-
+approved state so the web application is mostly at parity with the original
+Character Builder. This milestone is read-only sheet/reference work: print
+remains its existing page-oriented presentation, while mutable at-table play is
+explicitly deferred beyond parity.
 
 ### Deliverables
 
 - A refined browser View sheet with approved information hierarchy, navigation,
   reference cards, equipment, rituals, notes, and print entry points.
-- A desktop/tablet Play sheet backed by first-class `PlayState`, deterministic
-  play commands, operation history, and undo rather than edits to calculated
-  character snapshots.
-- Interactive HP, temporary HP, surges, action points, death saves, power usage,
-  recharge/rest, and structured effect workflows using shared card models.
-- Clear switching and state ownership between View, Play, Build, and print
-  preview, including recovery after reload and explicit reconciliation of
-  durable character changes.
-- Product-owner prototypes and approval for both View and Play modes, including
-  the information grouping that the later phone surface will adapt.
+- Browser reference coverage and familiar information geography sufficient to
+  replace the original Character Builder's normal character-viewing workflow.
+- Clear View, Build, and print entry points over the shared semantic
+  `SheetDocument` and card models, without introducing mutable play state.
+- Focused product-owner prototype/review cycles for the View hierarchy,
+  density, reference-card treatment, navigation, and recovery states.
 
 ### Exit criteria
 
-- The product owner approves the principal browser View and desktop/tablet Play
-  interfaces.
+- The product owner approves the principal browser View interface as the
+  refined character-reference experience.
+- A representative character can be inspected through all major sheet sections,
+  cards, equipment, rituals, and notes with an obvious path to existing print
+  preview.
+- Exact-profile values remain rules-derived and reproducible; missing-profile,
+  nonconvergent, and legacy-cache recovery states remain explicit.
+- View and print consume the shared semantic sheet/card model without
+  presentation logic entering the rules engine.
+- Browser View has focused automated coverage and a live representative
+  workflow pass, with no mutable `PlayState` feature required for completion.
+
+**Release characterization:** refined browser character reference; mostly at
+original Character Builder parity.
+
+## M5.7 — Invited-beta UI and hostability preparation
+
+### Goal
+
+Complete the final UI cleanup around the parity product and make the existing
+static PWA/container foundation easy for the product owner to host for a small,
+known beta group: friends in their D&D group. This is beta preparation, not a
+new server-owned data architecture and not the later M9 release-hardening pass.
+
+### Deliverables
+
+- A final coherent cleanup pass across the shipped builder, library, Equipment,
+  browser View, print entry, settings, onboarding, empty/error/recovery states,
+  and cross-workspace navigation.
+- A reproducible beta image and straightforward small-group run/update procedure
+  built on the already implemented unprivileged static-PWA Docker image, health
+  endpoint, runtime configuration, and private-content boundary.
+- Operator guidance for HTTPS/reverse proxy setup, private pack advertisement,
+  browser-local data ownership, backup expectations, upgrades, rollback, and
+  beta feedback/known-limit reporting.
+- A focused end-to-end invited-beta rehearsal: clean-browser onboarding,
+  install/offline reload, content setup, character workflow, backup/restore,
+  image restart/update, and recovery guidance.
+
+### Exit criteria
+
+- The product owner approves the final parity-surface cleanup for invited beta.
+- A clean host can build and run the documented production image, expose the
+  health check, apply non-secret runtime configuration, and serve the PWA behind
+  HTTPS without bundling proprietary content.
+- A beta tester can follow the documented onboarding path, use the builder/View
+  workflow, install and reload offline, and create and restore a portable backup
+  without operator access to browser-owned character data.
+- The beta rehearsal records exact commands, observed results, known limits, and
+  a rollback/update path suitable for the product owner's small D&D group.
+- The milestone does not claim M9's broader browser/visual-print, security,
+  migration, representative-device, or release-performance hardening.
+
+**Release characterization:** easily hostable invited beta of the parity
+builder; the container foundation predates this milestone and broader 1.0
+hardening remains in M9.
+
+## M5.8 — Desktop/tablet local-play foundation
+
+### Goal
+
+Add the first mutable at-table experience beyond original Character Builder
+parity. Establish renderer-independent play state and a desktop/tablet Play
+sheet before any phone-specific adaptation.
+
+### Deliverables
+
+- A desktop/tablet Play sheet backed by first-class, separately persisted,
+  versioned `PlayState`, deterministic commands, operation history, and undo.
+- Interactive HP, temporary HP, surges, action points, death saves, power usage,
+  recharge/rest, and structured effect workflows using shared card models.
+- Clear state ownership and switching among View, Play, Build, and print,
+  including persistence after reload and explicit reconciliation of durable
+  character changes, temporary equipment, and treasure.
+- Product-owner prototypes and approval for the desktop/tablet Play interaction
+  and the shared state/command vocabulary that the later phone surface adapts.
+
+### Exit criteria
+
+- The product owner approves the principal desktop/tablet Play interface.
 - Derived rules values remain reproducible from the character and profile;
   mutable table state is isolated in versioned `PlayState` with provenance.
 - Damage, healing, temporary HP, surges, action points, death saves, power use,
-  recharge, rest, effect expiry, and undo have deterministic transition tests.
+  recharge, rest, effect expiry, reconciliation, and undo have deterministic
+  transition tests.
 - Reloading preserves an in-progress local play session without silently
   changing the durable build.
 - View, Play, and print consume the shared semantic sheet/card model without
   presentation logic entering the rules engine.
 
-**Release characterization:** approved sheet and local-play interaction
-foundation; phone adaptation follows in M6.
+**Release characterization:** beyond-parity local-play interaction foundation;
+phone adaptation follows only after this milestone in M6.
 
 ## M6 — Local phone play mode
 
 ### Goal
 
-Adapt the approved local-play experience to a purpose-built phone interface
-without requiring networking.
+After M5.8 is complete, adapt its approved local-play experience to a
+purpose-built phone interface without requiring networking.
 
 ### Deliverables
 
 - Phone-first dashboard, powers, effects, equipment, and journal views.
 - Phone interaction patterns for the shared PlayState commands, cards, effects,
-  resource adjustment, undo, and rest workflows established in M5.6.
+  resource adjustment, undo, and rest workflows established in M5.8.
 - Portable play-bundle import/export containing only character-relevant content.
 - PWA installation and offline behavior tested on supported iOS and Android.
 
 ### Exit criteria
 
 - A player can run a full encounter and extended-rest cycle in airplane mode.
-- Every M5.6 play transition remains available and understandable on the phone
+- Every M5.8 play transition remains available and understandable on the phone
   surface without compressing the desktop sheet layout.
 - Derived values visibly respond to structured play effects with provenance.
 - A portable play bundle provides all referenced powers/items without requiring
@@ -662,8 +740,9 @@ character.
   session protocol keep working across updates without silent data loss.
 - Player-facing documentation: installation, content import, backup/recovery,
   and known limitations, written for people who actually use the tool.
-- A dedicated visual-refinement pass with the product owner (typography,
-  color, density, iconography, character sheets, responsive details, motion).
+- Post-beta visual corrections with the product owner where M5.7's final parity-
+  UI cleanup or real tester feedback reveals a concrete issue; this is not a
+  second speculative redesign pass.
 - A best-effort pass in whatever browsers the actual users run, fixing real
   reported problems rather than auditing a formal client matrix.
 

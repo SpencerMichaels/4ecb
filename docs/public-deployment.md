@@ -140,3 +140,25 @@ profile adoption, backup/recovery, and regenerated export add no server upload
 or new network trust boundary. Operators remain responsible for preserving the
 reference response headers and protecting the browser profile that stores local
 private data.
+
+## M5.7 invited-beta boundary
+
+The unprivileged static image, health endpoint, runtime-configuration path,
+offline PWA behavior, and proprietary-content separation above are already
+implemented foundations. M5.7 prepares them for straightforward use by the
+product owner's invited beta group; it is not the milestone that first creates
+Docker support.
+
+That preparation must provide and rehearse one small-group path for building and
+running the image, terminating HTTPS, advertising an immutable private pack,
+onboarding a clean browser, installing/reloading offline, backing up and
+restoring browser-owned data, updating or rolling back the image, and reporting
+known limitations. Hosting does not give the operator a copy of character data,
+and M5.7 adds neither accounts, server-side character storage, nor the optional
+relay.
+
+M5.7 acceptance is operational beta readiness for known friends in the product
+owner's D&D group. M9 remains responsible for the distinct lightweight
+best-effort browser and visual-print check, security review, migration
+reliability, representative-device testing, and release-performance hardening;
+the beta milestone must not claim those broader checks.

@@ -1,15 +1,17 @@
 # Interface design brief
 
-This brief records the product-owner direction for M5.5 and the M5.6 sheet/play
-foundation. It governs the durable builder and Equipment interfaces, then the
-shared interaction language that the later phone play surface should adapt. It
-is a product direction, not permission to copy another application's protected
-visual assets.
+This brief records the product-owner direction for M5.5 and the M5.6 browser
+View sheet, plus the deferred desktop/tablet Play direction now owned by M5.8.
+It governs the durable builder, Equipment, and parity View interfaces, then the
+beyond-parity interaction language that the later phone play surface should
+adapt. It is a product direction, not permission to copy another application's
+protected visual assets.
 
 **Status (2026-09-28):** M5.5 is complete. After the recorded prototype and
 production review passes, the product owner gave final approval to the shipped
 builder, library, Inventory/Loadout, Shop, and item-acquisition interactions.
-M5.6 now owns the browser View and desktop/tablet Play foundation.
+M5.6 now owns only the refined browser View sheet. M5.7 owns final UI cleanup
+and invited-beta hostability preparation; desktop/tablet Play moves to M5.8.
 
 ## Product character
 
@@ -306,20 +308,22 @@ M5.6 now owns the browser View and desktop/tablet Play foundation.
   exports; adding a template must not change existing saved characters' rules
   interpretation.
 
-### Browser View and Play modes
+### Browser View and deferred Play modes
 
-- **View** is the authoritative read-only desktop/tablet character reference. It
+- **View (M5.6)** is the authoritative read-only desktop/tablet character
+  reference. It
   prioritizes quick scanning, navigation among major sections, complete reference
   cards, equipment, rituals, notes, and an obvious path to print preview.
-- **Play** is a separate desktop/tablet, character-sheet-shaped interface. It may
-  share visual components with View, but mutable HP, resources, power usage,
-  effects, and temporary equipment state are backed by `PlayState` commands,
-  history, and undo rather than changes to calculated sheet values.
+- **Play (M5.8, beyond parity)** is a separate desktop/tablet,
+  character-sheet-shaped interface. It may share visual components with View,
+  but mutable HP, resources, power usage, effects, and temporary equipment state
+  are backed by `PlayState` commands, history, and undo rather than changes to
+  calculated sheet values.
 - View, Play, and print consume the same semantic `SheetDocument` and card models
   while retaining layouts appropriate to reading, interaction, and paper.
-- The M6 phone application reuses PlayState and command semantics but reorganizes
-  them into Dashboard, Powers, Effects, Equipment, and Journal tasks. It is not a
-  narrow breakpoint of the desktop Play sheet.
+- The M6 phone application depends on M5.8, then reuses its PlayState and command
+  semantics while reorganizing them into Dashboard, Powers, Effects, Equipment,
+  and Journal tasks. It is not a narrow breakpoint of the desktop Play sheet.
 
 Rules choices created by the immediately preceding selection are presented as
 one progressive choice flow, not as independent level cards. The first chosen
@@ -469,8 +473,11 @@ under-refined tabs:
 ## Validation sequencing
 
 M5.5 established and received product-owner approval for the principal builder,
-library, and Equipment interaction design. M5.6 now establishes the shared
-browser View and desktop/tablet Play sheet model before phone-specific work.
+library, and Equipment interaction design. M5.6 now refines and approves the
+browser View sheet as the final major parity surface. M5.7 then performs final
+UI cleanup and prepares the existing container/PWA foundation for an invited
+beta. M5.8 establishes desktop/tablet Play state and interaction before the M6
+phone adaptation.
 The project does not run a formal accessibility-certification or cross-client
 support matrix (D063). A lightweight best-effort browser workflow and visual
 print check remain an M9 hardening responsibility.

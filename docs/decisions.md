@@ -16,7 +16,9 @@ Portable export, backup, and cross-device transfer are explicit features.
 
 The browser application uses React, TypeScript, and Vite, with service-worker
 offline support and Web Workers for rules, indexing, and heavy imports. Builder
-and compendium target desktop/tablet; play mode is a purpose-built phone surface.
+and browser View target desktop/tablet. Beyond parity, Play first establishes a
+desktop/tablet sheet-shaped interaction before a separate purpose-built phone
+surface adapts the same state and commands.
 
 ### D003 — Normalized native model with legacy adapters
 
@@ -1123,9 +1125,9 @@ combobox.
 
 ### D054 — Sheet/play foundation precedes phone adaptation; comprehensive accessibility certification follows 1.0
 
-**Status:** the sheet/play-before-phone sequencing remains accepted; the
-"comprehensive accessibility certification follows 1.0" scope is superseded by
-D063 — there is no such certification pass at all, not even post-1.0.
+**Status:** superseded by D064 for milestone ownership and by D063 for
+accessibility scope. The architectural requirement that desktop/tablet Play
+settle before phone adaptation remains accepted.
 
 **Date:** 2026-09-18
 
@@ -1134,13 +1136,14 @@ product-owner feedback loop. Inventory, Shop, and Rituals & Practices require th
 same focused workflow refinement already applied to Loadout; unavailable-option
 browsing and item-owned choices also require approved homes before closure.
 
-M5.6 then establishes two screen modes over the shared semantic sheet and card
-models. **View** is an authoritative read-only desktop/tablet reference. **Play**
-is a character-sheet-shaped desktop/tablet interface backed by a separately
-persisted, versioned `PlayState`, deterministic commands, provenance, history,
-and undo. Print remains its own page-oriented rendering. M6 consumes that settled
-state and interaction vocabulary in a purpose-built, task-oriented phone surface;
-it does not compress the desktop Play sheet to phone width.
+This decision originally assigned both screen modes to M5.6. D064 now splits
+them: M5.6 owns the authoritative read-only desktop/tablet **View**, and M5.8
+owns the character-sheet-shaped desktop/tablet **Play** interface plus its
+separately persisted, versioned `PlayState`, deterministic commands,
+provenance, history, and undo. Print remains its own page-oriented rendering.
+M6 depends on M5.8 and consumes that settled state and interaction vocabulary in
+a purpose-built, task-oriented phone surface; it does not compress the desktop
+Play sheet to phone width.
 
 There is no formal keyboard-only, screen-reader, zoom/reflow, touch-target, or
 cross-client certification matrix at any point; D063 supersedes that part of
@@ -1446,6 +1449,35 @@ working reliably for that group. Public-relay-operator documentation, abuse
 controls, and a self-hosted configuration guide for third parties are dropped;
 if someone outside the group ever wants to operate this themselves, that is a
 new, separately scoped ask, not something built speculatively now.
+
+### D064 — View parity, invited beta, and local Play are separate milestones
+
+**Status:** accepted
+
+**Date:** 2026-09-28
+
+The post-M5.5 sequence is split around a clear compatibility boundary. M5.6 is
+only the refined, authoritative browser View sheet. Its goal is to bring the web
+application mostly to original Character Builder parity through a complete,
+approved read-only character reference; it does not create mutable table state.
+
+M5.7 performs final cleanup of the parity UI and prepares an easily hostable
+invited beta for the product owner's D&D group. The production image,
+unprivileged static server, runtime-configuration path, health endpoint,
+offline PWA, and proprietary-content separation already exist; M5.7 packages,
+documents, and rehearses that foundation for a small known group. It does not
+move browser-owned characters into a server, add accounts or a relay, or claim
+the later M9 browser/visual-print, security, migration, representative-device,
+and release-performance hardening.
+
+M5.8 owns everything formerly assigned to the Play portion of M5.6: the
+desktop/tablet Play sheet; separately persisted, versioned `PlayState`;
+deterministic play commands, history, provenance, and undo; mutable HP and
+resources; power use and rest/recharge; structured effects; persistence and
+mode switching; and explicit reconciliation with durable character changes.
+This capability is explicitly beyond legacy-builder parity. M6 may begin its
+phone adaptation only after M5.8 establishes and verifies the shared play-state
+and command vocabulary.
 
 ## Deferred decisions and decision points
 

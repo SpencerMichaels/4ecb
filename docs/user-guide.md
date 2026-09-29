@@ -303,7 +303,10 @@ backups remain accepted with an explicit no-checksum warning.
   current application. It cannot currently enable features or change URLs.
 
 M5 and M5.5 are complete at the accepted functional and designed-interface
-boundaries. The compatibility limits above remain explicit and recoverable;
-M5.6 owns browser View and desktop/tablet Play, while the lightweight browser,
-visual-print, security, migration, and representative-device hardening pass is
-owned by M9.
+boundaries. The compatibility limits above remain explicit and recoverable.
+M5.6 owns only the refined browser View parity surface; M5.7 owns final UI
+cleanup and preparation of the existing Docker/PWA foundation for the product
+owner's invited beta group. Desktop/tablet Play state and interaction move to
+the beyond-parity M5.8 milestone, which M6 phone play depends on. The lightweight
+browser, visual-print, security, migration, representative-device, and
+release-performance hardening pass remains owned by M9.

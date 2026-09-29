@@ -47,9 +47,12 @@ Every M5.5 exit criterion has direct evidence:
 | Functional/browser and structural safeguards                          | The current gate passes 548/548 tests, formatting, lint, every TypeScript project, production/PWA build, Chromium/Firefox Letter/A4 print checks, deterministic content checks, and the query benchmark. Focused live Chromium passes cover the production Shop and final Equipment interactions; automated Firefox print/layout coverage remains green. Semantic labels, ordinary keyboard controls, responsive sizing, and reduced-motion behavior remain continuous contracts. | Pass   |
 | Reconciled durable and user-facing documentation                      | `roadmap.md`, `interface-design-brief.md`, `decisions.md`, this status record, the repository summaries, architecture/checklist boundary, and `user-guide.md` now describe the shipped topology and the same deliberate deferrals.                                                                                                                                                                                                                                                | Pass   |
 
-M5.5 is therefore complete. M5.6 owns browser View and desktop/tablet Play; M6
-owns phone adaptation; M9 owns the lightweight best-effort browser/visual-print,
-security, migration, and representative-device hardening pass. D063 explicitly
+M5.5 is therefore complete. M5.6 owns only the refined browser View parity
+surface. M5.7 owns final UI cleanup and invited-beta hostability preparation;
+M5.8 owns the beyond-parity desktop/tablet Play foundation, and M6 depends on
+M5.8 before phone adaptation. M9 owns the lightweight best-effort
+browser/visual-print, security, migration, representative-device, and
+release-performance hardening pass. D063 explicitly
 removes a formal accessibility-certification or cross-client support-matrix
 program. The native equipment edge cases retained in D044 and exact rules
 limitations retained by the M5 support contract remain visible compatibility
@@ -843,8 +846,10 @@ migration preview and explicit adoption are implemented, and the product owner
 successfully opened, saved, and reopened several regenerated real level-8
 characters in the original builder. Functional print regression coverage is complete in
 Chromium and Firefox. M5.5 closes the approved builder, library, and Equipment
-interfaces; M5.6 now owns the browser View and desktop/tablet Play foundation; a lightweight
-best-effort browser check belongs to M9. This project does not run a formal
+interfaces. M5.6 now owns only the refined browser View parity surface; M5.7
+owns final UI cleanup and invited-beta hostability preparation; M5.8 owns the
+beyond-parity desktop/tablet Play foundation, which M6 phone adaptation depends
+on. A lightweight best-effort browser check belongs to M9. This project does not run a formal
 cross-browser/device support matrix or an accessibility-certification program
 (decision D063); continuous structural safeguards remain required throughout.
 The installable PWA, update/offline
@@ -1171,6 +1176,13 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   typography and detail-card spacing.
 
 ## M5.5/M5.6 roadmap reconciliation checkpoint (2026-09-18)
+
+**Superseded milestone assignment (2026-09-28):** D064 retains the architectural
+Play-before-phone sequence but splits the work differently. M5.6 now owns only
+browser View parity, M5.7 owns final UI cleanup and invited-beta hostability,
+M5.8 owns the complete desktop/tablet Play/PlayState foundation described below,
+and M6 depends on M5.8. The bullets that follow record the earlier assignment
+for historical context rather than the current roadmap boundary.
 
 - M5.5 now closes the builder, library, and complete Equipment interface rather
   than owning comprehensive release certification. Loadout has received its
@@ -3329,7 +3341,8 @@ merger; begin from `combined.dnd40.original.xml` as the script does.
 - M5 owns the explicitly recorded native exception blockers, regenerated
   `.dnd4e` snapshots, exhaustive cross-browser print goldens, profile adoption,
   and MVP parity closure.
-- M6 and M7 own mobile play state and encrypted relay-linked sessions.
+- M5.8 owns desktop/tablet play state, M6 adapts it to phones, and M7 owns
+  encrypted relay-linked sessions.
 - Visual theming, animation, and fine interaction polish wait for the tighter
   user feedback loop requested for later UI work.
 
