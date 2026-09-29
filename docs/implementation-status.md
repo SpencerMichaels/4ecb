@@ -1,5 +1,62 @@
 # Implementation status
 
+## Resolve a chosen item power's own further choice at purchase time (2026-09-28)
+
+Product-owner bug report: buying Genasi Soul Armor and picking its Ashfall
+Evasion power caused a new "Ashfall Evasion Wisdom/Charisma/Intelligence"
+choice to appear in the Build tab, grouped under "Race" — and locked
+(unselectable). Root cause: item-owned choices are projected into the
+rules evaluator so a chosen power's own effects apply, but Ashfall Evasion
+itself has its own embedded choice (which ability governs it — an ordinary
+part of how that power is authored, unrelated to genasi-ness). Once active,
+the evaluator's generic per-occurrence scan found that embedded choice and
+surfaced it as a real build-level choice: bucketed under "Race" because the
+Build tab groups purely by the select rule's raw content-authoring type
+label ("Racial Trait"), with no awareness of the actual grantor; locked
+because resolving a choice requires locating its provider in the
+character's normal level-by-level history, which the lookup never searches
+inside inventory items for.
+
+Rather than teaching that machinery to also reach into inventory items,
+resolve it entirely within the Shop dialog, the same way as everything
+else — as another page in the same purchase flow, using the exact
+recursive occurrence-nesting the evaluator's projection step already
+understands, so the evaluator sees it as already answered and never
+surfaces it as an open build-level choice at all:
+
+- `AcquisitionDialogPage`'s item-choice variant now carries a `slotPath:
+readonly number[]` instead of a flat `slotIndex: number`, so a page can
+  represent an arbitrarily nested choice (`[0]` = the item's own first
+  choice; `[0, 0]` = that choice's chosen candidate's own first choice).
+- New `itemChoicePages(entity, entities, characterLevel, selections)`
+  (`ShopWorkspace.tsx`) depth-first-discovers every currently-needed page:
+  each of `entity`'s own slots, and — once a slot has an answer — that
+  candidate's own further choices, recursively. A candidate's choices only
+  become visible once it's picked, so the page list grows as `selections`
+  fills in; nothing guesses ahead at what an unpicked candidate might need.
+  `acquisitionDialogPages` now takes the resulting path list directly
+  (signature change, existing tests updated) instead of a bare count.
+- New `resolveItemChoiceOccurrences(...)` mirrors that same recursion but
+  builds the actual `BuildOccurrence` tree to store — each resolved
+  sub-choice nested under its parent candidate's own occurrence, matching
+  exactly where `build-projection.ts`'s existing projection step already
+  looks for one. Confirmed this needs no evaluator-side changes at all: the
+  projection's `visit` is already recursive over `occurrence.children`.
+- `itemChoiceSelections` changed from `Map<number, string>` to `Map<string,
+string>`, keyed by dot-joined path (`"0"`, `"0.0"`). Changing a choice now
+  prunes any selections nested under it (`onChoose` deletes keys with that
+  prefix) so switching to a candidate without a sub-choice doesn't leave a
+  stale, harmless-but-confusing leftover answer for a different candidate's
+  slot shape.
+- Verification: 4 new unit tests covering nested-page discovery, nested
+  occurrence resolution, and the stale-selection-pruning edge case, plus 2
+  new `acquisitionDialogPages` cases for the new signature — full web suite
+  548/548, typecheck, lint, `scripts/check.sh` all pass. Product-owner
+  manually verified end-to-end: picking the power with its own further
+  choice now presents it as a second page in the same dialog, and after
+  the purchase completes, nothing related to it appears anywhere else in
+  the Build tab.
+
 ## Move the Shop dialog's Resulting item/Price into the footer (2026-09-25)
 
 Product-owner correction: "Resulting item"/"Price" lived in the dialog's

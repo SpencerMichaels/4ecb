@@ -5,7 +5,7 @@ import type {
   BuildOccurrence,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import { itemChoiceSlots } from "@4ecb/rules-engine";
+import { itemChoiceSlots, type ItemChoiceSlot } from "@4ecb/rules-engine";
 
 import { contentSpecificValue, parentheticalName } from "./builder-ui";
 import { CandidateDetailCard } from "./CandidateDetail";
@@ -40,7 +40,7 @@ type SortColumn = "name" | "level" | "price" | "owned";
 type SortDirection = "ascending" | "descending";
 type AcquireMode = "buy" | "give";
 export type AcquisitionDialogPage =
-  | { readonly kind: "item-choice"; readonly slotIndex: number }
+  | { readonly kind: "item-choice"; readonly slotPath: readonly number[] }
   | { readonly kind: "physical" };
 type PhysicalSortColumn = "name" | "type";
 
@@ -191,31 +191,118 @@ export function shopKnownFilterMatches(
   return !learning || !knownOnly || isKnown;
 }
 
+/** A dot-joined `slotPath` — the map key `itemChoiceSelections` uses. */
+function itemChoicePathKey(path: readonly number[]): string {
+  return path.join(".");
+}
+
+export interface ItemChoicePageInfo {
+  readonly path: readonly number[];
+  readonly slot: ItemChoiceSlot;
+  readonly candidates: readonly ContentEntity[];
+}
+
 /**
- * The acquisition dialog's page sequence: each item-owned choice (e.g. an
- * Armor of Resistance damage type) gets its own page, in slot order, before
- * a compatible-base-item choice — so the properties that define what the
- * character is buying are each settled one at a time, before picking its
- * physical form. A page is included only when it has a genuine choice to
- * make; any number of item-choice pages, and the physical page, may be
- * absent.
+ * Every item-owned choice page `entity` currently needs, depth-first: each
+ * of the entity's own choice slots, and — for a slot that's already been
+ * answered — any further choices the chosen candidate itself requires (for
+ * example a granted power that itself asks "which ability governs this"),
+ * recursively. A candidate's own choices only become visible once it's been
+ * picked, so this list grows as `selections` fills in; nothing needs to
+ * guess ahead at what a not-yet-chosen candidate might require.
+ */
+export function itemChoicePages(
+  entity: ContentEntity,
+  entities: readonly ContentEntity[],
+  characterLevel: number,
+  selections: ReadonlyMap<string, string>,
+  pathPrefix: readonly number[] = [],
+): readonly ItemChoicePageInfo[] {
+  return itemChoiceSlots(entity).flatMap((slot, index) => {
+    const path = [...pathPrefix, index];
+    const candidates = itemChoiceCandidates(slot, entities, characterLevel);
+    const chosenId = selections.get(itemChoicePathKey(path));
+    const chosen =
+      chosenId === undefined
+        ? undefined
+        : candidates.find((candidate) => candidate.id === chosenId);
+    return [
+      { path, slot, candidates },
+      ...(chosen === undefined
+        ? []
+        : itemChoicePages(chosen, entities, characterLevel, selections, path)),
+    ];
+  });
+}
+
+/**
+ * The acquisition dialog's page sequence: each item-owned choice page (see
+ * `itemChoicePages`) comes before a compatible-base-item choice — so the
+ * properties that define what the character is buying are each settled one
+ * at a time, before picking its physical form. A page is included only when
+ * it has a genuine choice to make; any number of item-choice pages, and the
+ * physical page, may be absent.
  */
 export function acquisitionDialogPages(
-  itemChoiceCount: number,
+  itemChoicePaths: readonly (readonly number[])[],
   physicalChoiceCount: number,
 ): readonly AcquisitionDialogPage[] {
   return [
-    ...Array.from(
-      { length: itemChoiceCount },
-      (_, slotIndex): AcquisitionDialogPage => ({
-        kind: "item-choice",
-        slotIndex,
-      }),
-    ),
+    ...itemChoicePaths.map((slotPath): AcquisitionDialogPage => ({
+      kind: "item-choice",
+      slotPath,
+    })),
     ...(physicalChoiceCount > 0
       ? [{ kind: "physical" } as const satisfies AcquisitionDialogPage]
       : []),
   ];
+}
+
+/**
+ * Builds the resolved `BuildOccurrence` tree for `entity`'s own choices —
+ * mirroring `itemChoicePages`, but producing the actual occurrences to
+ * store (each with its own resolved sub-choices nested beneath it, not a
+ * flat list), so a candidate's further choice is stored right where the
+ * evaluator already looks for it: as that candidate's own child.
+ */
+export function resolveItemChoiceOccurrences(
+  entity: ContentEntity,
+  entities: readonly ContentEntity[],
+  characterLevel: number,
+  selections: ReadonlyMap<string, string>,
+  pathPrefix: readonly number[] = [],
+): readonly BuildOccurrence[] {
+  return itemChoiceSlots(entity).flatMap((slot, index) => {
+    const path = [...pathPrefix, index];
+    const chosenId = selections.get(itemChoicePathKey(path));
+    const chosen =
+      chosenId === undefined
+        ? undefined
+        : itemChoiceCandidates(slot, entities, characterLevel).find(
+            (candidate) => candidate.id === chosenId,
+          );
+    if (chosen === undefined) return [];
+    return [
+      {
+        id: `web:${crypto.randomUUID()}`,
+        identity: {
+          definitionId: chosen.id,
+          name: chosen.name,
+          type: chosen.type,
+        },
+        acquiredLevel: characterLevel,
+        legality: "rules-legal" as const,
+        children: resolveItemChoiceOccurrences(
+          chosen,
+          entities,
+          characterLevel,
+          selections,
+          path,
+        ),
+        unresolved: false,
+      },
+    ];
+  });
 }
 
 /**
@@ -392,7 +479,7 @@ export function ShopWorkspace({
   }>({ column: "name", direction: "ascending" });
   const [selectedPhysicalId, setSelectedPhysicalId] = useState("");
   const [itemChoiceSelections, setItemChoiceSelections] = useState<
-    ReadonlyMap<number, string>
+    ReadonlyMap<string, string>
   >(new Map());
   const [dialogPageIndex, setDialogPageIndex] = useState(0);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -673,58 +760,50 @@ export function ShopWorkspace({
         .filter((value): value is string => value !== undefined),
     ),
   ].sort();
-  const requiredItemChoices = acquisition
-    ? itemChoiceSlots(acquisition.entity)
+  const itemChoicePageInfos = acquisition
+    ? itemChoicePages(
+        acquisition.entity,
+        entities,
+        characterLevel,
+        itemChoiceSelections,
+      )
     : [];
   const physicalNeeded = physicalChoices.length + (standardImplement ? 1 : 0);
   const dialogPages = acquisitionDialogPages(
-    requiredItemChoices.length,
+    itemChoicePageInfos.map((info) => info.path),
     physicalNeeded,
   );
   const currentDialogPage = dialogPages[dialogPageIndex] ?? dialogPages[0];
-  const currentItemChoiceSlot =
+  const currentItemChoicePage =
     currentDialogPage?.kind === "item-choice"
-      ? requiredItemChoices[currentDialogPage.slotIndex]
+      ? itemChoicePageInfos.find(
+          (info) =>
+            itemChoicePathKey(info.path) ===
+            itemChoicePathKey(currentDialogPage.slotPath),
+        )
       : undefined;
-  const currentItemChoiceCandidates =
-    currentItemChoiceSlot === undefined
-      ? []
-      : itemChoiceCandidates(currentItemChoiceSlot, entities, characterLevel);
+  const currentItemChoiceCandidates = currentItemChoicePage?.candidates ?? [];
   const currentItemChoiceIsComplex = isComplexItemChoice(
     currentItemChoiceCandidates,
   );
   const currentItemChoiceComplete =
     currentDialogPage?.kind === "item-choice" &&
-    itemChoiceSelections.has(currentDialogPage.slotIndex);
+    itemChoiceSelections.has(itemChoicePathKey(currentDialogPage.slotPath));
+  const allItemChoicesComplete = itemChoicePageInfos.every((info) =>
+    itemChoiceSelections.has(itemChoicePathKey(info.path)),
+  );
   const physicalChoiceComplete =
     physicalNeeded === 0 || selectedPhysicalId !== "";
   const onLastDialogPage = dialogPageIndex >= dialogPages.length - 1;
   const resolvedItemChoiceChildren: readonly BuildOccurrence[] =
-    requiredItemChoices.flatMap((slot, index) => {
-      const definitionId = itemChoiceSelections.get(index);
-      const chosen =
-        definitionId === undefined
-          ? undefined
-          : itemChoiceCandidates(slot, entities, characterLevel).find(
-              ({ id }) => id === definitionId,
-            );
-      return chosen === undefined
-        ? []
-        : [
-            {
-              id: `web:${crypto.randomUUID()}`,
-              identity: {
-                definitionId: chosen.id,
-                name: chosen.name,
-                type: chosen.type,
-              },
-              acquiredLevel: characterLevel,
-              legality: "rules-legal" as const,
-              children: [],
-              unresolved: false,
-            },
-          ];
-    });
+    acquisition === undefined
+      ? []
+      : resolveItemChoiceOccurrences(
+          acquisition.entity,
+          entities,
+          characterLevel,
+          itemChoiceSelections,
+        );
   const previewPhysical =
     physicalNeeded === 0 || selectedPhysicalId === "standard"
       ? undefined
@@ -754,10 +833,10 @@ export function ShopWorkspace({
           byId,
         );
   const itemChoiceHeading =
-    currentItemChoiceSlot === undefined
+    currentItemChoicePage === undefined
       ? undefined
-      : (currentItemChoiceSlot.label ??
-        `Choose ${currentItemChoiceSlot.type.toLocaleLowerCase()}`);
+      : (currentItemChoicePage.slot.label ??
+        `Choose ${currentItemChoicePage.slot.type.toLocaleLowerCase()}`);
 
   const renderRow = (
     entity: ContentEntity,
@@ -1241,16 +1320,7 @@ export function ShopWorkspace({
                 previewPhysical === undefined
               )
                 return;
-              if (
-                requiredItemChoices.some(
-                  (_, index) => !itemChoiceSelections.has(index),
-                )
-              )
-                return;
-              if (
-                resolvedItemChoiceChildren.length !== requiredItemChoices.length
-              )
-                return;
+              if (!allItemChoicesComplete) return;
               onAcquire(
                 inventoryEntryForEntity(
                   acquisition.entity,
@@ -1414,11 +1484,13 @@ export function ShopWorkspace({
                 </>
               )}
               {currentDialogPage?.kind !== "item-choice" ||
-              currentItemChoiceSlot === undefined
+              currentItemChoicePage === undefined
                 ? null
                 : (() => {
-                    const slot = currentItemChoiceSlot;
-                    const slotIndex = currentDialogPage.slotIndex;
+                    const slot = currentItemChoicePage.slot;
+                    const pathKey = itemChoicePathKey(
+                      currentDialogPage.slotPath,
+                    );
                     const picker = (
                       <CompactChoiceButtons
                         label={
@@ -1435,12 +1507,19 @@ export function ShopWorkspace({
                             selectable: true,
                           }),
                         )}
-                        selectedId={itemChoiceSelections.get(slotIndex) ?? ""}
+                        selectedId={itemChoiceSelections.get(pathKey) ?? ""}
                         disabled={false}
                         onChoose={(candidateId) =>
                           setItemChoiceSelections((current) => {
                             const next = new Map(current);
-                            next.set(slotIndex, candidateId);
+                            // Changing this choice invalidates any further
+                            // choices made for the candidate it previously
+                            // held (for example a granted power's own
+                            // "which ability governs this" sub-choice).
+                            for (const key of next.keys())
+                              if (key.startsWith(`${pathKey}.`))
+                                next.delete(key);
+                            next.set(pathKey, candidateId);
                             return next;
                           })
                         }
@@ -1448,7 +1527,7 @@ export function ShopWorkspace({
                     );
                     if (!currentItemChoiceIsComplex) return picker;
                     const selectedCandidateId =
-                      itemChoiceSelections.get(slotIndex) ?? "";
+                      itemChoiceSelections.get(pathKey) ?? "";
                     const previewedCandidate =
                       currentItemChoiceCandidates.find(
                         (candidate) => candidate.id === selectedCandidateId,
@@ -1509,9 +1588,7 @@ export function ShopWorkspace({
                   disabled={
                     onLastDialogPage
                       ? (physicalNeeded > 0 && selectedPhysicalId === "") ||
-                        requiredItemChoices.some(
-                          (_, index) => !itemChoiceSelections.has(index),
-                        )
+                        !allItemChoicesComplete
                       : (currentDialogPage?.kind === "item-choice" &&
                           !currentItemChoiceComplete) ||
                         (currentDialogPage?.kind === "physical" &&

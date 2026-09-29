@@ -3,14 +3,16 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import type { BuildInventoryEntry } from "@4ecb/character-domain";
-import type { ContentEntity } from "@4ecb/content-domain";
+import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
 
 import {
   acquisitionDialogPages,
   compatibleChoiceType,
   isComplexItemChoice,
+  itemChoicePages,
   preferredShopBrowse,
   readShopSessionPreferences,
+  resolveItemChoiceOccurrences,
   retainedShopFilter,
   shopKnownFilterMatches,
   ShopWorkspace,
@@ -57,6 +59,93 @@ const ownedPotion: BuildInventoryEntry = {
   overrides: {},
   legality: "rules-legal",
 };
+
+function selectRule(type: string, category?: string): RuleStatement {
+  return {
+    name: "select",
+    attributes: [
+      { name: "type", value: type },
+      { name: "number", value: "1" },
+      ...(category === undefined
+        ? []
+        : [{ name: "Category", value: category }]),
+    ],
+    text: "",
+    children: [],
+    ordinal: 0,
+  };
+}
+
+function nestedChoiceEntity(
+  id: string,
+  name: string,
+  type: string,
+  options: {
+    readonly categories?: readonly string[];
+    readonly rules?: readonly RuleStatement[];
+  } = {},
+): ContentEntity {
+  return {
+    id,
+    name,
+    type,
+    source: "Public fixture",
+    sources: ["Public fixture"],
+    attributes: [],
+    categories: [...(options.categories ?? [])],
+    flavor: "",
+    description: "A public synthetic record.",
+    specifics: [],
+    rules: [...(options.rules ?? [])],
+    extensions: [],
+    provenance: { sourceKey: "public-shop", sourceOrdinal: 0 },
+  };
+}
+
+// Mirrors the real "Genasi Soul Armor -> Ashfall Evasion -> key ability"
+// case: an item-owned Power choice whose chosen candidate has its own
+// further choice (which ability governs it), rather than a fully-simple
+// choice like a resistance type.
+const soulArmor = nestedChoiceEntity(
+  "PUBLIC_SOUL_ARMOR",
+  "Public Soul Armor",
+  "Magic Item",
+  { rules: [selectRule("Power", "Soul Power")] },
+);
+const ashfallEvasion = nestedChoiceEntity(
+  "PUBLIC_ASHFALL_EVASION",
+  "Ashfall Evasion",
+  "Power",
+  {
+    categories: ["Soul Power"],
+    rules: [selectRule("Racial Trait", "Key Ability")],
+  },
+);
+const simplePower = nestedChoiceEntity(
+  "PUBLIC_SIMPLE_POWER",
+  "Public Simple Power",
+  "Power",
+  { categories: ["Soul Power"] },
+);
+const ashfallWisdom = nestedChoiceEntity(
+  "PUBLIC_ASHFALL_WISDOM",
+  "Ashfall Evasion (Wisdom)",
+  "Racial Trait",
+  { categories: ["Key Ability"] },
+);
+const ashfallCharisma = nestedChoiceEntity(
+  "PUBLIC_ASHFALL_CHARISMA",
+  "Ashfall Evasion (Charisma)",
+  "Racial Trait",
+  { categories: ["Key Ability"] },
+);
+const nestedChoiceEntities = [
+  soulArmor,
+  ashfallEvasion,
+  simplePower,
+  ashfallWisdom,
+  ashfallCharisma,
+];
 
 describe("Shop workspace", () => {
   it("defaults first-time Shop browsing to Adventuring gear", () => {
@@ -129,34 +218,110 @@ describe("Shop workspace", () => {
   });
 
   it("orders the acquisition dialog's pages with item-owned choices before a physical pairing", () => {
-    expect(acquisitionDialogPages(0, 0)).toEqual([]);
-    expect(acquisitionDialogPages(1, 0)).toEqual([
-      { kind: "item-choice", slotIndex: 0 },
+    expect(acquisitionDialogPages([], 0)).toEqual([]);
+    expect(acquisitionDialogPages([[0]], 0)).toEqual([
+      { kind: "item-choice", slotPath: [0] },
     ]);
-    expect(acquisitionDialogPages(0, 2)).toEqual([{ kind: "physical" }]);
-    expect(acquisitionDialogPages(1, 2)).toEqual([
-      { kind: "item-choice", slotIndex: 0 },
+    expect(acquisitionDialogPages([], 2)).toEqual([{ kind: "physical" }]);
+    expect(acquisitionDialogPages([[0]], 2)).toEqual([
+      { kind: "item-choice", slotPath: [0] },
       { kind: "physical" },
     ]);
     // A single unambiguous physical option still gets its own page today —
     // beginAcquire only skips the dialog outright when nothing needs asking.
-    expect(acquisitionDialogPages(1, 1)).toEqual([
-      { kind: "item-choice", slotIndex: 0 },
+    expect(acquisitionDialogPages([[0]], 1)).toEqual([
+      { kind: "item-choice", slotPath: [0] },
       { kind: "physical" },
     ]);
   });
 
   it("gives each item-owned choice slot its own page, in slot order", () => {
-    expect(acquisitionDialogPages(2, 0)).toEqual([
-      { kind: "item-choice", slotIndex: 0 },
-      { kind: "item-choice", slotIndex: 1 },
+    expect(acquisitionDialogPages([[0], [1]], 0)).toEqual([
+      { kind: "item-choice", slotPath: [0] },
+      { kind: "item-choice", slotPath: [1] },
     ]);
-    expect(acquisitionDialogPages(3, 1)).toEqual([
-      { kind: "item-choice", slotIndex: 0 },
-      { kind: "item-choice", slotIndex: 1 },
-      { kind: "item-choice", slotIndex: 2 },
+    expect(acquisitionDialogPages([[0], [1], [2]], 1)).toEqual([
+      { kind: "item-choice", slotPath: [0] },
+      { kind: "item-choice", slotPath: [1] },
+      { kind: "item-choice", slotPath: [2] },
       { kind: "physical" },
     ]);
+  });
+
+  it("adds a page for a chosen candidate's own further choice, nested beneath it", () => {
+    expect(acquisitionDialogPages([[0], [0, 0]], 1)).toEqual([
+      { kind: "item-choice", slotPath: [0] },
+      { kind: "item-choice", slotPath: [0, 0] },
+      { kind: "physical" },
+    ]);
+  });
+
+  it("only shows a nested item-choice page once its parent choice picks a candidate that needs one", () => {
+    // Nothing chosen yet: just the top-level Power slot.
+    expect(
+      itemChoicePages(soulArmor, nestedChoiceEntities, 1, new Map()).map(
+        (info) => info.path,
+      ),
+    ).toEqual([[0]]);
+
+    // Chose a power with no further choice of its own: still just one page.
+    expect(
+      itemChoicePages(
+        soulArmor,
+        nestedChoiceEntities,
+        1,
+        new Map([["0", simplePower.id]]),
+      ).map((info) => info.path),
+    ).toEqual([[0]]);
+
+    // Chose Ashfall Evasion, which has its own key-ability choice: a second,
+    // nested page appears for it.
+    const withAshfallEvasion = itemChoicePages(
+      soulArmor,
+      nestedChoiceEntities,
+      1,
+      new Map([["0", ashfallEvasion.id]]),
+    );
+    expect(withAshfallEvasion.map((info) => info.path)).toEqual([[0], [0, 0]]);
+    expect(
+      withAshfallEvasion[1]?.candidates.map((candidate) => candidate.id),
+    ).toEqual(expect.arrayContaining([ashfallWisdom.id, ashfallCharisma.id]));
+  });
+
+  it("stores a candidate's own resolved choice nested under it, not flat", () => {
+    const resolved = resolveItemChoiceOccurrences(
+      soulArmor,
+      nestedChoiceEntities,
+      1,
+      new Map([
+        ["0", ashfallEvasion.id],
+        ["0.0", ashfallWisdom.id],
+      ]),
+    );
+    expect(resolved).toHaveLength(1);
+    expect(resolved[0]?.identity.definitionId).toBe(ashfallEvasion.id);
+    expect(resolved[0]?.children).toHaveLength(1);
+    expect(resolved[0]?.children[0]?.identity.definitionId).toBe(
+      ashfallWisdom.id,
+    );
+    expect(resolved[0]?.children[0]?.children).toEqual([]);
+  });
+
+  it("ignores a stale nested selection left over from a since-changed parent choice", () => {
+    const resolved = resolveItemChoiceOccurrences(
+      soulArmor,
+      nestedChoiceEntities,
+      1,
+      new Map([
+        ["0", simplePower.id],
+        // Leftover from when Ashfall Evasion was chosen at this slot; simplePower
+        // has no choices of its own, so this must not resurface as an answer.
+        ["0.0", ashfallWisdom.id],
+      ]),
+    );
+    expect(resolved).toHaveLength(1);
+    expect(resolved[0]?.identity.definitionId).toBe(simplePower.id);
+    expect(resolved[0]?.children).toEqual([]);
   });
 
   it("treats only Power candidates as complex enough for the detail-card layout", () => {

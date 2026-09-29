@@ -423,8 +423,12 @@ Spellbook alternates stay in Build. Item-owned configuration (for example an
 Armor of Resistance damage type) is evaluable and recoverable without
 changing its rules occurrence or legacy export topology. A Shop purchase
 whose item grants its own choice (one or more) prompts for each on its own
-acquisition-dialog page, in order, before any compatible-base-item pairing;
-once made, a choice is fixed for the life of the item. A choice whose
+acquisition-dialog page, in order, before any compatible-base-item pairing —
+including a further choice the chosen candidate itself requires (for
+example a granted power that itself asks which ability governs it), which
+gets its own page too rather than ever surfacing later as a separate,
+mis-attributed Build-tab choice; once made, a choice is fixed for the life
+of the item. A choice whose
 candidates are Powers shows a two-column picker-plus-detail-card page (the
 same layout Build's choice editors use) so the player can see what each
 option actually does before picking; a simpler choice (a resistance type, a
