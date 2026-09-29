@@ -884,6 +884,14 @@ textarea {
 .character-card-action.danger-action {
   color: var(--danger);
 }
+
+/* Click-to-arm, click-again-to-confirm: replaces a native confirm() dialog
+ * for moving a character to trash. */
+.character-card-action.danger-action[data-armed="true"] {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--surface);
+}
 .character-export-menu {
   position: relative;
 }

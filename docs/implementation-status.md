@@ -1,5 +1,31 @@
 # Implementation status
 
+## Extend two-click confirmation to the character library page (2026-09-28)
+
+Follow-up to the same-day native-confirm() removal: the product owner asked
+for the same click-to-arm, click-again-to-confirm pattern on the character
+library page's (`/characters`) "Move to trash" button, alongside the
+"Delete permanently" button already converted there.
+
+- Extracted the pattern into a shared `useArmedAction(triggerAttribute)`
+  hook (`useArmedAction.ts`) — only one id armed at a time, with the same
+  outside-click/Escape dismissal both existing implementations already used
+  independently. Refactored `EquipmentWorkspace.tsx`'s Remove button and
+  `CharacterLibraryPage.tsx`'s "Delete permanently" button onto it (now
+  three call sites; duplicating the dismissal listener a third time crossed
+  the threshold worth generalizing).
+- Applied the same hook to the active character card's "Move to trash"
+  button: first click arms it (icon `trash` → `warning`, filled
+  `var(--danger)` background, title "Click again to move to trash"),
+  second click moves it to trash. Added the matching
+  `.character-card-action.danger-action[data-armed="true"]` CSS rule.
+- Verification: full web suite (548/548), typecheck, lint,
+  `scripts/check.sh` all pass. Manual CDP verification of the trash
+  button's full state machine (unarmed → armed → Escape-disarmed →
+  re-armed → confirmed-and-moved-to-trash) confirms the exact
+  title/aria-label/icon/`data-armed` transitions and that
+  `Page.javascriptDialogOpening` never fires.
+
 ## M5.5 complete — builder and Equipment interface closure (2026-09-28)
 
 The product owner gave final approval to the shipped builder, library,

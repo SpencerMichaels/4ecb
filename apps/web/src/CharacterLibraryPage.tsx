@@ -25,6 +25,7 @@ import { Icon } from "./Icon";
 import { RulesWorkerClient } from "./rules-client";
 import { createNativeCharacter } from "./new-character";
 import { PortraitImage } from "./PortraitEditor";
+import { useArmedAction } from "./useArmedAction";
 
 const repository = new CharacterRepository();
 const contentRepository = new ContentPackRepository();
@@ -62,35 +63,11 @@ export function CharacterLibraryPage({
   const [report, setReport] = useState<Dnd4eImportReport>();
   const [creatingCharacter, setCreatingCharacter] = useState(false);
   const [openExportId, setOpenExportId] = useState<string>();
-  const [armedPurgeId, setArmedPurgeId] = useState<string>();
-
-  // A "Delete permanently" click arms the button (a second click confirms)
-  // instead of a native confirm() dialog; clicking elsewhere or pressing
-  // Escape disarms it.
-  useEffect(() => {
-    if (armedPurgeId === undefined) return;
-    const dismissOutside = (event: PointerEvent) => {
-      const target = event.target;
-      if (
-        target instanceof Element &&
-        target
-          .closest("[data-trash-purge-trigger]")
-          ?.getAttribute("data-trash-purge-trigger") === armedPurgeId
-      )
-        return;
-      setArmedPurgeId(undefined);
-    };
-    const dismissWithEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setArmedPurgeId(undefined);
-    };
-    document.addEventListener("pointerdown", dismissOutside);
-    document.addEventListener("keydown", dismissWithEscape);
-    return () => {
-      document.removeEventListener("pointerdown", dismissOutside);
-      document.removeEventListener("keydown", dismissWithEscape);
-    };
-  }, [armedPurgeId]);
+  // A "Move to trash"/"Delete permanently" click arms the button (a second
+  // click confirms) instead of a native confirm() dialog; clicking
+  // elsewhere or pressing Escape disarms it.
+  const trashAction = useArmedAction("character-trash-trigger");
+  const purgeAction = useArmedAction("trash-purge-trigger");
 
   const refresh = useCallback(async () => {
     const { active, deleted } = await repository.listMetadataPartitioned();
@@ -465,9 +442,24 @@ export function CharacterLibraryPage({
                   <button
                     className="character-card-action danger-action"
                     type="button"
-                    aria-label={`Move ${character.title} to trash`}
-                    title="Move to trash"
-                    onClick={() =>
+                    data-character-trash-trigger={character.id}
+                    data-armed={trashAction.isArmed(character.id) || undefined}
+                    aria-label={
+                      trashAction.isArmed(character.id)
+                        ? `Confirm moving ${character.title} to trash`
+                        : `Move ${character.title} to trash`
+                    }
+                    title={
+                      trashAction.isArmed(character.id)
+                        ? "Click again to move to trash"
+                        : "Move to trash"
+                    }
+                    onClick={() => {
+                      if (!trashAction.isArmed(character.id)) {
+                        trashAction.arm(character.id);
+                        return;
+                      }
+                      trashAction.disarm();
                       void repository
                         .moveToTrash(character.id)
                         .then(refresh)
@@ -477,10 +469,14 @@ export function CharacterLibraryPage({
                               ? reason.message
                               : String(reason),
                           ),
-                        )
-                    }
+                        );
+                    }}
                   >
-                    <Icon name="trash" />
+                    <Icon
+                      name={
+                        trashAction.isArmed(character.id) ? "warning" : "trash"
+                      }
+                    />
                   </button>
                 </div>
               </li>
@@ -493,14 +489,14 @@ export function CharacterLibraryPage({
           <summary>Trash ({trash.length})</summary>
           <ul>
             {trash.map((character) => {
-              const purgeArmed = armedPurgeId === character.id;
+              const purgeArmed = purgeAction.isArmed(character.id);
               return (
                 <li key={character.id}>
                   <span>{character.title}</span>
                   <button
                     type="button"
                     onClick={() => {
-                      setArmedPurgeId(undefined);
+                      purgeAction.disarm();
                       void repository.restore(character.id).then(refresh);
                     }}
                   >
@@ -512,10 +508,10 @@ export function CharacterLibraryPage({
                     data-armed={purgeArmed || undefined}
                     onClick={() => {
                       if (!purgeArmed) {
-                        setArmedPurgeId(character.id);
+                        purgeAction.arm(character.id);
                         return;
                       }
-                      setArmedPurgeId(undefined);
+                      purgeAction.disarm();
                       void repository.purge(character.id).then(refresh);
                     }}
                   >

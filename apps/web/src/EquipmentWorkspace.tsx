@@ -45,6 +45,7 @@ import { Icon } from "./Icon";
 import { canonicalItemIcon, isAuthoredShield } from "./item-icons";
 import type { ShopCategory } from "./routes";
 import { preferredShopBrowse, ShopWorkspace } from "./ShopWorkspace";
+import { useArmedAction } from "./useArmedAction";
 
 type MoneyLocation = "carried" | "stored";
 type Denomination = "copper" | "silver" | "gold" | "platinum" | "astral";
@@ -879,7 +880,9 @@ export function EquipmentWorkspace({
   const [inspected, setInspected] = useState<InspectedItemDetail>();
   const [walletOpen, setWalletOpen] = useState(false);
   const [openSaleId, setOpenSaleId] = useState<string>();
-  const [armedRemovalId, setArmedRemovalId] = useState<string>();
+  // A "Remove" click arms the button (a second click confirms) instead of a
+  // native confirm() dialog.
+  const removeAction = useArmedAction("inventory-remove-trigger");
   const [inventoryCategoryExpansion, setInventoryCategoryExpansion] = useState<
     ReadonlyMap<InventoryCategoryId, boolean>
   >(
@@ -949,34 +952,6 @@ export function EquipmentWorkspace({
       document.removeEventListener("keydown", dismissWithEscape);
     };
   }, [openSaleId]);
-
-  // A "Remove" click arms the button (a second click confirms) instead of a
-  // native confirm() dialog; clicking elsewhere or pressing Escape disarms
-  // it, the same dismissal convention the sale menu above uses.
-  useEffect(() => {
-    if (armedRemovalId === undefined) return;
-    const dismissOutside = (event: PointerEvent) => {
-      const target = event.target;
-      if (
-        target instanceof Element &&
-        target
-          .closest("[data-inventory-remove-trigger]")
-          ?.getAttribute("data-inventory-remove-trigger") === armedRemovalId
-      )
-        return;
-      setArmedRemovalId(undefined);
-    };
-    const dismissWithEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setArmedRemovalId(undefined);
-    };
-    document.addEventListener("pointerdown", dismissOutside);
-    document.addEventListener("keydown", dismissWithEscape);
-    return () => {
-      document.removeEventListener("pointerdown", dismissOutside);
-      document.removeEventListener("keydown", dismissWithEscape);
-    };
-  }, [armedRemovalId]);
 
   const inspectInventory = (entry: BuildInventoryEntry) => {
     setInspected(inventoryItemDetail(entry, byId));
@@ -1135,7 +1110,7 @@ export function EquipmentWorkspace({
                                                 ? `${entry.equippedQuantity}/${entry.quantity}`
                                                 : undefined;
                                         const removalArmed =
-                                          armedRemovalId === entry.id;
+                                          removeAction.isArmed(entry.id);
                                         return (
                                           <tr
                                             key={entry.id}
@@ -1388,14 +1363,12 @@ export function EquipmentWorkspace({
                                                   }
                                                   onClick={() => {
                                                     if (!removalArmed) {
-                                                      setArmedRemovalId(
+                                                      removeAction.arm(
                                                         entry.id,
                                                       );
                                                       return;
                                                     }
-                                                    setArmedRemovalId(
-                                                      undefined,
-                                                    );
+                                                    removeAction.disarm();
                                                     onPutInventory(
                                                       inventoryEntryWithQuantity(
                                                         entry,
