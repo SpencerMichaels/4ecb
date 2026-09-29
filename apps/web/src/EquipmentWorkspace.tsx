@@ -173,10 +173,12 @@ export function ItemDetail({
   item,
   hideFlavortext,
   byId,
+  personalizePowerText,
 }: {
   readonly item: InspectedItemDetail | undefined;
   readonly hideFlavortext: boolean;
   readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly personalizePowerText?: ((text: string) => string) | undefined;
 }) {
   const entity = item?.entities.at(-1);
   if (item === undefined || entity === undefined)
@@ -223,6 +225,7 @@ export function ItemDetail({
       entity={power}
       hideFlavortext={hideFlavortext}
       key={power.id}
+      personalizePowerText={personalizePowerText}
     />
   ));
   // A resolved item-owned choice (e.g. the Power picked for a Genasi Soul
@@ -233,6 +236,7 @@ export function ItemDetail({
       entity={power}
       hideFlavortext={hideFlavortext}
       key={power.id}
+      personalizePowerText={personalizePowerText}
     />
   ));
   const componentBody = (component: ContentEntity) => {
@@ -263,6 +267,7 @@ export function ItemDetail({
             entity={power}
             hideFlavortext={hideFlavortext}
             key={power.id}
+            personalizePowerText={personalizePowerText}
           />
         ))}
       />
@@ -834,6 +839,7 @@ export function EquipmentWorkspace({
   activeDefinitionIds,
   hideFlavortext,
   keepLargeAmountsInGold,
+  personalizePowerText,
   workspace,
   loadoutView,
   shopCategory,
@@ -853,6 +859,7 @@ export function EquipmentWorkspace({
   readonly activeDefinitionIds: readonly string[];
   readonly hideFlavortext: boolean;
   readonly keepLargeAmountsInGold: boolean;
+  readonly personalizePowerText?: ((text: string) => string) | undefined;
   readonly workspace: "equipment" | "shop";
   readonly loadoutView: boolean;
   readonly shopCategory: ShopCategory;
@@ -1442,6 +1449,7 @@ export function EquipmentWorkspace({
             byId={byId}
             item={inspected}
             hideFlavortext={hideFlavortext}
+            personalizePowerText={personalizePowerText}
           />
         </div>
       </div>

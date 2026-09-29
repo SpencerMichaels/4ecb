@@ -528,6 +528,30 @@ describe("shared power and item cards", () => {
     expect(markup).toContain("Source: Player&#x27;s Handbook Test");
   });
 
+  it("applies character-aware text to power descriptors and rules", () => {
+    const power = entity("Power", [
+      field("Attack Type", "Wisdom vs. AC", 0),
+      field("Hit", "2[W] + Wisdom modifier damage.", 1),
+      field("Effect", "Gain 5 + half your level temporary hit points.", 2),
+    ]);
+    const personalizePowerText = (value: string) =>
+      value
+        .replace("Wisdom vs. AC", "Wisdom (+5) vs. AC")
+        .replace("Wisdom modifier", "Wisdom modifier (+5)")
+        .replace("half your level", "half your level (+3)");
+    const markup = renderToStaticMarkup(
+      createElement(EntityCardBody, {
+        entity: power,
+        hideFlavortext: false,
+        personalizePowerText,
+      }),
+    );
+
+    expect(markup).toContain("Wisdom (+5) vs. AC");
+    expect(markup).toContain("Wisdom modifier (+5) damage.");
+    expect(markup).toContain("half your level (+3) temporary hit points.");
+  });
+
   it("labels exact Personal attack types as Range without reusing authored Power Type", () => {
     const power = entity("Power", [
       field("Power Usage", "Encounter", 0),

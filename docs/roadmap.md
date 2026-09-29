@@ -561,9 +561,10 @@ new server-owned data architecture and not the later M9 release-hardening pass.
 - A final coherent cleanup pass across the shipped builder, library, Equipment,
   browser View, print entry, settings, onboarding, empty/error/recovery states,
   and cross-workspace navigation.
-- Character-specific power-card prose shows known named ability modifiers and
-  half-level values inline, with a display preference that resolves authored
-  ability alternatives to the character's best available option.
+- Character-specific power-card prose in in-app detail cards, browser View, and
+  print shows known named ability modifiers and half-level values inline, with
+  a display preference that resolves authored ability alternatives to the
+  character's best available option.
 - Settings presents ordinary appearance, content, backup, and storage jobs in
   plain language, with content layering identities and diagnostics behind
   deliberate advanced disclosure.

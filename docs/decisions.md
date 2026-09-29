@@ -1500,9 +1500,10 @@ Display preference is enabled by default and can be disabled to retain the
 authored alternatives. Equal modifiers prefer the higher underlying score,
 then abilities marked as key abilities in the class record's authored order,
 then the power's authored order. Resolution occurs only when every listed
-modifier is available; otherwise the prose remains unchanged. It affects the
-shared browser/print sheet model without changing content, character
-selections, attack calculations, or serialized data.
+modifier is available; otherwise the prose remains unchanged. The same
+character-aware formatter supplies in-app power detail cards, the browser View,
+and print without changing content, character selections, attack calculations,
+or serialized data.
 
 ## Deferred decisions and decision points
 

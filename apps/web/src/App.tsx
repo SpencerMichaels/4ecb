@@ -478,6 +478,7 @@ export function App() {
                   navigation={route.builder ?? { workspace: "build" }}
                   onNavigate={navigateBuilder}
                   keepLargeAmountsInGold={keepLargeAmountsInGold}
+                  resolveAbilityChoices={resolveAbilityChoices}
                 />
               ) : (
                 <SheetRoute

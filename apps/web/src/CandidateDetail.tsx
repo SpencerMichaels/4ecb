@@ -22,10 +22,12 @@ export function CandidateDetail({
   candidate,
   entity,
   byId,
+  personalizePowerText,
 }: {
   readonly candidate: CandidateDecision | undefined;
   readonly entity: ContentEntity | undefined;
   readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly personalizePowerText?: ((text: string) => string) | undefined;
 }) {
   if (candidate === undefined || entity === undefined)
     return (
@@ -49,11 +51,16 @@ export function CandidateDetail({
   );
   return (
     <div className="candidate-detail-stack">
-      <CandidateDetailCard candidate={candidate} entity={entity} />
+      <CandidateDetailCard
+        candidate={candidate}
+        entity={entity}
+        personalizePowerText={personalizePowerText}
+      />
       {grantedEntities.map((granted) => (
         <CandidateDetailCard
           key={granted.id}
           entity={granted}
+          personalizePowerText={personalizePowerText}
           relationship={`Granted ${granted.type.toLocaleLowerCase()}`}
         />
       ))}
@@ -67,6 +74,7 @@ export function CandidateDetail({
               <CandidateDetailCard
                 entity={power}
                 key={power.id}
+                personalizePowerText={personalizePowerText}
                 themePowerLevel={group.level ?? null}
               />
             )),
@@ -116,11 +124,13 @@ export function CandidateDetailCard({
   entity,
   relationship,
   themePowerLevel,
+  personalizePowerText,
 }: {
   readonly candidate?: CandidateDecision;
   readonly entity: ContentEntity;
   readonly relationship?: string;
   readonly themePowerLevel?: number | null;
+  readonly personalizePowerText?: ((text: string) => string) | undefined;
 }) {
   const hideFlavortext = useContext(HideFlavortextContext);
   const headingId = `candidate-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}${relationship === undefined ? "" : "-granted"}`;
@@ -135,12 +145,17 @@ export function CandidateDetailCard({
   const isUnavailable = candidate !== undefined && !candidate.eligible;
   if (isEmbeddedPower)
     return (
-      <EmbeddedPowerCard entity={entity} hideFlavortext={hideFlavortext} />
+      <EmbeddedPowerCard
+        entity={entity}
+        hideFlavortext={hideFlavortext}
+        personalizePowerText={personalizePowerText}
+      />
     );
   const body = (
     <EntityCardBody
       entity={entity}
       hideFlavortext={hideFlavortext}
+      personalizePowerText={personalizePowerText}
       beforeNarrative={
         candidate === undefined || candidate.eligible ? null : (
           <p className="candidate-reason">

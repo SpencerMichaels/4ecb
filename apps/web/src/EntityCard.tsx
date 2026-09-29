@@ -979,9 +979,11 @@ export function orderPowerRuleFields(
 function StructuredSpecifics({
   entity,
   fields,
+  personalizePowerText,
 }: {
   readonly entity: ContentEntity;
   readonly fields: readonly SpecificField[];
+  readonly personalizePowerText?: ((text: string) => string) | undefined;
 }) {
   const descriptors =
     entity.type.trim().toLocaleLowerCase() === "power"
@@ -1022,7 +1024,13 @@ function StructuredSpecifics({
         : itemDescriptorLabel(field.name),
       value: isPower ? field.value : itemDescriptorValue(field),
     })),
-  ];
+  ].map((fact) => ({
+    ...fact,
+    value:
+      isPower && personalizePowerText !== undefined
+        ? personalizePowerText(fact.value)
+        : fact.value,
+  }));
   const authoredClauses = visibleFields.filter(
     (field) => !descriptors.has(normalizedFieldName(field.name)),
   );
@@ -1045,24 +1053,30 @@ function StructuredSpecifics({
       )}
       {clauses.length === 0 ? null : (
         <dl className="entity-card-rules">
-          {clauses.map((field) => (
-            <div key={`${field.ordinal}-${field.name}`}>
-              <dt>{field.name || "Detail"}</dt>
-              <dd
-                className={
-                  isStructuredProseSpecific(field)
-                    ? undefined
-                    : "preserve-lines"
-                }
-              >
-                {isStructuredProseSpecific(field) ? (
-                  <Prose value={field.value} />
-                ) : (
-                  field.value
-                )}
-              </dd>
-            </div>
-          ))}
+          {clauses.map((field) => {
+            const value =
+              isPower && personalizePowerText !== undefined
+                ? personalizePowerText(field.value)
+                : field.value;
+            return (
+              <div key={`${field.ordinal}-${field.name}`}>
+                <dt>{field.name || "Detail"}</dt>
+                <dd
+                  className={
+                    isStructuredProseSpecific(field)
+                      ? undefined
+                      : "preserve-lines"
+                  }
+                >
+                  {isStructuredProseSpecific(field) ? (
+                    <Prose value={value} />
+                  ) : (
+                    value
+                  )}
+                </dd>
+              </div>
+            );
+          })}
         </dl>
       )}
     </>
@@ -1077,6 +1091,7 @@ export function EntityCardBody({
   afterFields,
   renderDescription,
   showSource = true,
+  personalizePowerText,
 }: {
   readonly entity: ContentEntity;
   readonly hideFlavortext: boolean;
@@ -1085,6 +1100,7 @@ export function EntityCardBody({
   readonly afterFields?: ReactNode;
   readonly renderDescription?: (description: string) => ReactNode;
   readonly showSource?: boolean;
+  readonly personalizePowerText?: ((text: string) => string) | undefined;
 }) {
   const fields = entityCardSpecifics(entity);
   const structured =
@@ -1096,7 +1112,11 @@ export function EntityCardBody({
         <p className="candidate-flavor entity-card-flavor">{entity.flavor}</p>
       )}
       {structured ? (
-        <StructuredSpecifics entity={entity} fields={fields} />
+        <StructuredSpecifics
+          entity={entity}
+          fields={fields}
+          personalizePowerText={personalizePowerText}
+        />
       ) : null}
       {structured ? beforeNarrative : null}
       {entity.description.length === 0
@@ -1123,9 +1143,11 @@ export function EntityCardBody({
 export function EmbeddedPowerCard({
   entity,
   hideFlavortext,
+  personalizePowerText,
 }: {
   readonly entity: ContentEntity;
   readonly hideFlavortext: boolean;
+  readonly personalizePowerText?: ((text: string) => string) | undefined;
 }) {
   const headingId = `embedded-power-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
   return (
@@ -1145,6 +1167,7 @@ export function EmbeddedPowerCard({
         <EntityCardBody
           entity={entity}
           hideFlavortext={hideFlavortext}
+          personalizePowerText={personalizePowerText}
           showSource={false}
         />
       </div>

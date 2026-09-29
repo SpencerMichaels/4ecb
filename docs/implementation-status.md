@@ -3612,7 +3612,9 @@ Divinity`, except for the native function's explicit, case-insensitive
   `1/2 level` variants. It does not double-annotate existing parentheticals or
   guess among multiple abilities unless the explicit best-ability preference
   described below is enabled. Browser View and print therefore receive the same
-  personalized card prose without changing source content or rules math.
+  personalized card prose without changing source content or rules math. Build
+  option details and powers shown inside Equipment now use that same formatter,
+  so in-app detail cards, browser View, and print cannot diverge.
 - Hu's legacy PDF confirms `Wisdom modifier (+5)` alongside its separate weapon
   calculation line. Fei Zhu's image-only legacy PDF confirms named modifiers
   such as `Wisdom modifier (+4)`, an unexpanded generic `ability modifier`, and
@@ -3634,10 +3636,11 @@ Divinity`, except for the native function's explicit, case-insensitive
   the higher underlying score, then the selected class's authored key-ability
   order, then the power's authored order. Missing values leave the prose
   untouched, and disabling the preference retains the authored alternatives.
-  The setting feeds the shared sheet model, so browser View and print agree
-  without altering stored characters or rules calculations.
-- Focused power-text, Settings contract, and route tests pass 31 tests. Web and
-  sheet-model TypeScript checks pass. The full 549-test suite, workspace
+  The setting feeds the shared formatter used by in-app power detail cards and
+  the sheet model, so Build, Equipment, browser View, and print agree without
+  altering stored characters or rules calculations.
+- Focused power-card, Settings contract, and sheet-model tests pass 51 tests.
+  Web and sheet-model TypeScript checks pass. The full 550-test suite, workspace
   typechecks, targeted lint, production/PWA build, and Chromium/Firefox
   Letter/A4 color/monochrome print matrix also pass. A live narrow-width browser
   pass confirms the three primary cards, default checked preference,

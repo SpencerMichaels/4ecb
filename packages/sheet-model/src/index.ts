@@ -313,12 +313,45 @@ function personalizePowerText(
   );
 }
 
+/**
+ * Creates the character-aware power-text formatter shared by the browser
+ * detail cards and the printable character sheet.
+ */
+export function createEvaluatedPowerTextPersonalizer(
+  evaluation: EvaluatedCharacter,
+  content: readonly ContentEntity[],
+  resolveAbilityChoices: boolean,
+): (text: string) => string {
+  const entities = entityMap(content);
+  const activeEntities = evaluation.occurrences.flatMap((occurrence) => {
+    const entity = entities.get(occurrence.definitionId.toLocaleLowerCase());
+    return entity === undefined ? [] : [entity];
+  });
+  const numericStat = (name: string): number | undefined => {
+    const raw = evaluatedStat(evaluation, name);
+    if (raw === undefined) return undefined;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  };
+  const abilities: AbilityPresentationContext = {
+    modifier: numericStat,
+    score: numericStat,
+    keyAbilities: classKeyAbilities(preferredClassEntity(activeEntities)),
+  };
+  return (text) =>
+    personalizePowerText(
+      text,
+      evaluation.level,
+      abilities,
+      resolveAbilityChoices,
+    );
+}
+
 function evaluatedPowerCards(
   power: EvaluatedPower,
   entity: ContentEntity | undefined,
   evaluation: EvaluatedCharacter,
-  keyAbilities: readonly string[],
-  options: SheetModelOptions,
+  personalize: (text: string) => string,
 ): SheetCard[] {
   const fields =
     entity === undefined ? {} : applyFieldOverlays(entity, evaluation.overlays);
@@ -333,26 +366,7 @@ function evaluatedPowerCards(
       )
       .map(([label, value]) => ({
         label,
-        value: personalizePowerText(
-          value,
-          evaluation.level,
-          {
-            modifier: (name) => {
-              const raw = evaluatedStat(evaluation, name);
-              if (raw === undefined) return undefined;
-              const parsed = Number(raw);
-              return Number.isFinite(parsed) ? parsed : undefined;
-            },
-            score: (name) => {
-              const raw = evaluatedStat(evaluation, name);
-              if (raw === undefined) return undefined;
-              const parsed = Number(raw);
-              return Number.isFinite(parsed) ? parsed : undefined;
-            },
-            keyAbilities,
-          },
-          options.resolveAbilityChoices === true,
-        ),
+        value: personalize(value),
       })),
     ...power.recoveries.map((recovery) => ({
       label: "Recovery",
@@ -668,8 +682,10 @@ export function buildEvaluatedSheetModel(
     const entity = entities.get(occurrence.definitionId.toLocaleLowerCase());
     return entity === undefined ? [] : [{ occurrence, entity }];
   });
-  const keyAbilities = classKeyAbilities(
-    preferredClassEntity(active.map(({ entity }) => entity)),
+  const personalizePowerText = createEvaluatedPowerTextPersonalizer(
+    evaluation,
+    content,
+    options.resolveAbilityChoices === true,
   );
   const identityDetails: Record<string, string> = {
     ...detailsWithLegacyTextStrings(snapshot.details, build.textStrings),
@@ -806,8 +822,7 @@ export function buildEvaluatedSheetModel(
       power,
       entities.get(power.definitionId.toLocaleLowerCase()),
       evaluation,
-      keyAbilities,
-      options,
+      personalizePowerText,
     ),
   );
   const evaluatedValues = (names: readonly string[]) =>

@@ -45,6 +45,7 @@ import {
   type EvaluatedChoice,
   type EvaluationInput,
 } from "@4ecb/rules-engine";
+import { createEvaluatedPowerTextPersonalizer } from "@4ecb/sheet-model";
 
 import {
   abilityScoreAdjustment,
@@ -216,6 +217,7 @@ export function CharacterEditorPage({
   navigation,
   onNavigate,
   keepLargeAmountsInGold,
+  resolveAbilityChoices,
 }: {
   readonly characterId: string;
   readonly navigation: BuilderNavigation;
@@ -225,6 +227,7 @@ export function CharacterEditorPage({
     replace?: boolean,
   ) => void;
   readonly keepLargeAmountsInGold: boolean;
+  readonly resolveAbilityChoices: boolean;
 }) {
   const hideFlavortext = useContext(HideFlavortextContext);
   const [character, setCharacter] = useState<CharacterRecord>();
@@ -438,6 +441,28 @@ export function CharacterEditorPage({
         entities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
       ),
     [entities],
+  );
+  const planningPowerText = useMemo(
+    () =>
+      planningEvaluation === undefined
+        ? undefined
+        : createEvaluatedPowerTextPersonalizer(
+            planningEvaluation,
+            entities,
+            resolveAbilityChoices,
+          ),
+    [entities, planningEvaluation, resolveAbilityChoices],
+  );
+  const currentPowerText = useMemo(
+    () =>
+      currentEvaluation === undefined
+        ? undefined
+        : createEvaluatedPowerTextPersonalizer(
+            currentEvaluation,
+            entities,
+            resolveAbilityChoices,
+          ),
+    [currentEvaluation, entities, resolveAbilityChoices],
   );
   const carriedWallet =
     build === undefined
@@ -2115,6 +2140,7 @@ export function CharacterEditorPage({
                       byId={byId}
                       candidate={inspectedOption?.candidate}
                       entity={inspectedOption?.entity}
+                      personalizePowerText={planningPowerText}
                     />
                   </div>
                 </CandidateInspectionScope>
@@ -2203,6 +2229,7 @@ export function CharacterEditorPage({
             activeDefinitionIds={currentEvaluation?.activeDefinitionIds ?? []}
             hideFlavortext={hideFlavortext}
             keepLargeAmountsInGold={keepLargeAmountsInGold}
+            personalizePowerText={currentPowerText}
             workspace={workspaceTab === "shop" ? "shop" : "equipment"}
             loadoutView={
               navigation.workspace === "equipment" &&

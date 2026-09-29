@@ -107,6 +107,16 @@ describe("release accessibility contract", () => {
       'localStorage.setItem(RESOLVE_ABILITY_CHOICES_STORAGE_KEY, "0")',
     );
     expect(app).toContain("resolveAbilityChoices={resolveAbilityChoices}");
+    expect(characterEditor).toContain("createEvaluatedPowerTextPersonalizer");
+    expect(characterEditor).toContain(
+      "personalizePowerText={planningPowerText}",
+    );
+    expect(characterEditor).toContain(
+      "personalizePowerText={currentPowerText}",
+    );
+    expect(candidateDetail).toContain(
+      "personalizePowerText={personalizePowerText}",
+    );
   });
 
   it("keeps every normal-text palette pair above WCAG AA contrast", () => {
