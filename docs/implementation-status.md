@@ -1,5 +1,28 @@
 # Implementation status
 
+## Give the Equipment tab's wallet the same fixed width as Shop's (2026-09-28)
+
+Product-owner report: on the Equipment tab, the wallet summary sat in a
+`minmax(0, 1fr)` grid cell next to the Loadout/Inventory toggle and
+stretched to fill it — expanding leftward across most of the pane instead
+of staying a compact, fixed-size pill the way it appears in the Shop tab's
+right rail (where its width comes for free from the rail's own
+`clamp(28rem, 41vw, 32rem)` column).
+
+- Added a `.funds-pane` rule giving it that identical `clamp(28rem, 41vw,
+32rem)` width (plus `max-width: 100%` so it can still shrink on a narrow
+  Equipment row rather than overflow) and `justify-self: end`, so within its
+  still-flexible grid cell it hugs the right edge instead of stretching.
+  Applies to both `FundsPane` usages (Equipment's inline placement and
+  Shop's sticky rail placement) — harmless in the Shop rail, where the
+  computed width already matched exactly (same `vw`-based expression,
+  context-independent), confirmed via CDP (`getBoundingClientRect().width`
+  512px in both tabs, and the Equipment wallet's right edge flush with its
+  row's right edge — no leftover stretch space).
+- Verification: full web suite (548/548 — no existing test covers this
+  layout), typecheck, lint, `scripts/check.sh` (including the print
+  computed-style contract, which didn't need updating) all pass.
+
 ## Replace native confirm() dialogs with in-place two-click confirmation (2026-09-28)
 
 Product-owner request: the browser's native `confirm()` popup is clunky and

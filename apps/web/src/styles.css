@@ -4328,6 +4328,12 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   min-width: 0;
 }
 
+.funds-pane {
+  justify-self: end;
+  max-width: 100%;
+  width: clamp(28rem, 41vw, 32rem);
+}
+
 .funds-pane .inventory-wallet-summary {
   grid-template-columns: auto minmax(0, 1fr) auto;
 }
