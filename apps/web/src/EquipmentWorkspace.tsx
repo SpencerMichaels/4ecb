@@ -879,6 +879,7 @@ export function EquipmentWorkspace({
   const [inspected, setInspected] = useState<InspectedItemDetail>();
   const [walletOpen, setWalletOpen] = useState(false);
   const [openSaleId, setOpenSaleId] = useState<string>();
+  const [armedRemovalId, setArmedRemovalId] = useState<string>();
   const [inventoryCategoryExpansion, setInventoryCategoryExpansion] = useState<
     ReadonlyMap<InventoryCategoryId, boolean>
   >(
@@ -948,6 +949,34 @@ export function EquipmentWorkspace({
       document.removeEventListener("keydown", dismissWithEscape);
     };
   }, [openSaleId]);
+
+  // A "Remove" click arms the button (a second click confirms) instead of a
+  // native confirm() dialog; clicking elsewhere or pressing Escape disarms
+  // it, the same dismissal convention the sale menu above uses.
+  useEffect(() => {
+    if (armedRemovalId === undefined) return;
+    const dismissOutside = (event: PointerEvent) => {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target
+          .closest("[data-inventory-remove-trigger]")
+          ?.getAttribute("data-inventory-remove-trigger") === armedRemovalId
+      )
+        return;
+      setArmedRemovalId(undefined);
+    };
+    const dismissWithEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setArmedRemovalId(undefined);
+    };
+    document.addEventListener("pointerdown", dismissOutside);
+    document.addEventListener("keydown", dismissWithEscape);
+    return () => {
+      document.removeEventListener("pointerdown", dismissOutside);
+      document.removeEventListener("keydown", dismissWithEscape);
+    };
+  }, [armedRemovalId]);
 
   const inspectInventory = (entry: BuildInventoryEntry) => {
     setInspected(inventoryItemDetail(entry, byId));
@@ -1089,7 +1118,7 @@ export function EquipmentWorkspace({
                                             ? "Double-click to unequip."
                                             : loadoutToggle.kind === "equip"
                                               ? loadoutToggle.displaces
-                                                ? "Double-click to equip; the occupied compatible slot will be replaced after confirmation."
+                                                ? "Double-click to equip; this will replace the item in the occupied compatible slot."
                                                 : "Double-click to equip."
                                               : loadoutToggle.kind ===
                                                   "ambiguous"
@@ -1105,16 +1134,8 @@ export function EquipmentWorkspace({
                                               : entry.quantity > 1
                                                 ? `${entry.equippedQuantity}/${entry.quantity}`
                                                 : undefined;
-                                        const reductionUnequips =
-                                          entry.quantity <=
-                                          entry.equippedQuantity;
-                                        const confirmReduction = (
-                                          action: string,
-                                        ) =>
-                                          !reductionUnequips ||
-                                          window.confirm(
-                                            `${displayName} has no unequipped copies. ${action} will also unequip one copy. Continue?`,
-                                          );
+                                        const removalArmed =
+                                          armedRemovalId === entry.id;
                                         return (
                                           <tr
                                             key={entry.id}
@@ -1128,15 +1149,6 @@ export function EquipmentWorkspace({
                                                   "ambiguous" ||
                                                 loadoutToggle.kind ===
                                                   "unavailable"
-                                              )
-                                                return;
-                                              if (
-                                                loadoutToggle.kind ===
-                                                  "equip" &&
-                                                loadoutToggle.displaces &&
-                                                !window.confirm(
-                                                  `Equip ${displayName}? This will replace an item in the first compatible occupied Loadout slot.`,
-                                                )
                                               )
                                                 return;
                                               if (
@@ -1223,12 +1235,6 @@ export function EquipmentWorkspace({
                                                   aria-label={`Decrease quantity of ${displayName}`}
                                                   disabled={entry.quantity <= 1}
                                                   onClick={() => {
-                                                    if (
-                                                      !confirmReduction(
-                                                        "Reducing the quantity",
-                                                      )
-                                                    )
-                                                      return;
                                                     onPutInventory(
                                                       inventoryEntryWithQuantity(
                                                         entry,
@@ -1327,12 +1333,6 @@ export function EquipmentWorkspace({
                                                               key={percentage}
                                                               type="button"
                                                               onClick={() => {
-                                                                if (
-                                                                  !confirmReduction(
-                                                                    "Selling it",
-                                                                  )
-                                                                )
-                                                                  return;
                                                                 onSell(
                                                                   entry,
                                                                   price,
@@ -1367,19 +1367,35 @@ export function EquipmentWorkspace({
                                                 <button
                                                   type="button"
                                                   className="inventory-icon-action inventory-remove-action button-icon"
-                                                  aria-label={`Remove ${displayName}`}
-                                                  title="Remove without proceeds"
+                                                  data-inventory-remove-trigger={
+                                                    entry.id
+                                                  }
+                                                  data-armed={
+                                                    removalArmed || undefined
+                                                  }
+                                                  aria-label={
+                                                    removalArmed
+                                                      ? `Confirm removing ${displayName}`
+                                                      : `Remove ${displayName}`
+                                                  }
+                                                  title={
+                                                    removalArmed
+                                                      ? entry.equippedQuantity >
+                                                        0
+                                                        ? "Click again to remove and unequip"
+                                                        : "Click again to remove"
+                                                      : "Remove"
+                                                  }
                                                   onClick={() => {
-                                                    const equippedWarning =
-                                                      entry.equippedQuantity > 0
-                                                        ? " This will also unequip it."
-                                                        : "";
-                                                    if (
-                                                      !window.confirm(
-                                                        `Remove all ${entry.quantity} copies of ${displayName} without receiving proceeds?${equippedWarning}`,
-                                                      )
-                                                    )
+                                                    if (!removalArmed) {
+                                                      setArmedRemovalId(
+                                                        entry.id,
+                                                      );
                                                       return;
+                                                    }
+                                                    setArmedRemovalId(
+                                                      undefined,
+                                                    );
                                                     onPutInventory(
                                                       inventoryEntryWithQuantity(
                                                         entry,
@@ -1388,7 +1404,13 @@ export function EquipmentWorkspace({
                                                     );
                                                   }}
                                                 >
-                                                  <Icon name="trash" />
+                                                  <Icon
+                                                    name={
+                                                      removalArmed
+                                                        ? "warning"
+                                                        : "trash"
+                                                    }
+                                                  />
                                                 </button>
                                               </div>
                                             </td>

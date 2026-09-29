@@ -1162,6 +1162,14 @@ textarea {
   margin-right: auto;
 }
 
+/* Click-to-arm, click-again-to-confirm: replaces a native confirm() dialog
+ * for the one destructive, irreversible action here (permanent deletion). */
+.trash li button[data-armed="true"] {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--surface);
+}
+
 .sheet-page {
   max-width: none;
 }
@@ -4939,6 +4947,14 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 
 .inventory-remove-action {
   color: var(--danger);
+}
+
+/* Click-to-arm, click-again-to-confirm: replaces a native confirm() dialog
+ * for the one destructive action here (losing the item with no proceeds). */
+.inventory-remove-action[data-armed="true"] {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--surface);
 }
 
 button.inventory-icon-action:disabled {

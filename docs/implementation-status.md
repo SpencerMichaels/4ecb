@@ -1,5 +1,55 @@
 # Implementation status
 
+## Replace native confirm() dialogs with in-place two-click confirmation (2026-09-28)
+
+Product-owner request: the browser's native `confirm()` popup is clunky and
+inconsistent with the rest of the UI. Audited every use in the app (4 total,
+all in `EquipmentWorkspace.tsx`/`CharacterLibraryPage.tsx`) against the
+stated principle — only confirm an action that's destructive or
+irreversible — and handled each accordingly:
+
+- **Equipment inventory "Remove" button** (destructive: loses the item with
+  no proceeds) — replaced the native confirm with click-to-arm,
+  click-again-to-confirm on the button itself. First click sets
+  `data-armed="true"`: the icon swaps from `trash` to `warning`
+  (`TriangleAlert`) and the button fills solid `var(--danger)` (its baseline
+  is already the danger _text_ color, so the armed state needed a stronger,
+  distinct signal — a filled background plus an icon change, not relying on
+  color alone). The tooltip/aria-label switch to "Click again to remove"
+  (and note the unequip side effect when relevant). Clicking elsewhere or
+  pressing Escape disarms it, reusing the same dismiss-on-outside-click
+  convention `openSaleId`'s sale menu already established in this file
+  (`pointerdown` + `Escape` listeners keyed by a `data-*-trigger` attribute).
+  Tooltip text also changed from "Remove without proceeds" to "Remove".
+- **Equip-displace confirm** ("This will replace an item in the first
+  compatible occupied Loadout slot.") — removed outright, no replacement.
+  Displacing a Loadout occupant is reversible (re-equip it), so per the
+  stated principle it doesn't warrant confirmation at all. The double-click
+  equip/unequip toggle now always proceeds immediately; the row's tooltip
+  wording was adjusted to state the replacement as fact rather than
+  "after confirmation."
+- **Quantity-reduction/sell-forces-unequip confirm** ("has no unequipped
+  copies... will also unequip one copy") — also removed outright, same
+  reasoning: unequipping is reversible, not data loss. The `−` quantity
+  button and each sell-percentage option now act immediately.
+- **Character library "Delete permanently" button** (genuinely destructive
+  _and_ irreversible — purges from the trash) — this one does warrant
+  confirmation, so it got the same two-click armed-button treatment as
+  Remove rather than losing confirmation entirely: first click arms it
+  (`data-armed="true"`, filled danger background, label changes to "Click
+  again to delete permanently"), second click purges. Same outside-click/
+  Escape dismissal convention as the Equipment button.
+- Zero `window.confirm`/`window.alert`/`window.prompt` calls remain anywhere
+  in `apps/web/src` (verified by grep).
+- Verification: full web suite (548/548 — no existing tests referenced the
+  removed confirm text or covered this interactive flow, so none needed
+  updating), typecheck, lint, `scripts/check.sh` all pass. Manual CDP
+  verification of the Remove button's full state machine (unarmed → armed →
+  Escape-disarmed → re-armed → confirmed-and-removed) confirms the exact
+  title/aria-label/icon/`data-armed` transitions at each step and that
+  `Page.javascriptDialogOpening` never fires. Product-owner manually
+  verified the interaction end-to-end.
+
 ## Resolve a chosen item power's own further choice at purchase time (2026-09-28)
 
 Product-owner bug report: buying Genasi Soul Armor and picking its Ashfall

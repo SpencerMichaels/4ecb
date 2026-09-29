@@ -62,6 +62,35 @@ export function CharacterLibraryPage({
   const [report, setReport] = useState<Dnd4eImportReport>();
   const [creatingCharacter, setCreatingCharacter] = useState(false);
   const [openExportId, setOpenExportId] = useState<string>();
+  const [armedPurgeId, setArmedPurgeId] = useState<string>();
+
+  // A "Delete permanently" click arms the button (a second click confirms)
+  // instead of a native confirm() dialog; clicking elsewhere or pressing
+  // Escape disarms it.
+  useEffect(() => {
+    if (armedPurgeId === undefined) return;
+    const dismissOutside = (event: PointerEvent) => {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target
+          .closest("[data-trash-purge-trigger]")
+          ?.getAttribute("data-trash-purge-trigger") === armedPurgeId
+      )
+        return;
+      setArmedPurgeId(undefined);
+    };
+    const dismissWithEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setArmedPurgeId(undefined);
+    };
+    document.addEventListener("pointerdown", dismissOutside);
+    document.addEventListener("keydown", dismissWithEscape);
+    return () => {
+      document.removeEventListener("pointerdown", dismissOutside);
+      document.removeEventListener("keydown", dismissWithEscape);
+    };
+  }, [armedPurgeId]);
 
   const refresh = useCallback(async () => {
     const { active, deleted } = await repository.listMetadataPartitioned();
@@ -463,33 +492,40 @@ export function CharacterLibraryPage({
         <details className="trash">
           <summary>Trash ({trash.length})</summary>
           <ul>
-            {trash.map((character) => (
-              <li key={character.id}>
-                <span>{character.title}</span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    void repository.restore(character.id).then(refresh)
-                  }
-                >
-                  Restore
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        `Permanently delete ${character.title}? This cannot be undone.`,
-                      )
-                    ) {
+            {trash.map((character) => {
+              const purgeArmed = armedPurgeId === character.id;
+              return (
+                <li key={character.id}>
+                  <span>{character.title}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setArmedPurgeId(undefined);
+                      void repository.restore(character.id).then(refresh);
+                    }}
+                  >
+                    Restore
+                  </button>
+                  <button
+                    type="button"
+                    data-trash-purge-trigger={character.id}
+                    data-armed={purgeArmed || undefined}
+                    onClick={() => {
+                      if (!purgeArmed) {
+                        setArmedPurgeId(character.id);
+                        return;
+                      }
+                      setArmedPurgeId(undefined);
                       void repository.purge(character.id).then(refresh);
-                    }
-                  }}
-                >
-                  Delete permanently
-                </button>
-              </li>
-            ))}
+                    }}
+                  >
+                    {purgeArmed
+                      ? "Click again to delete permanently"
+                      : "Delete permanently"}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </details>
       )}
