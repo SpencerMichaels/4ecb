@@ -6,6 +6,11 @@ shared interaction language that the later phone play surface should adapt. It
 is a product direction, not permission to copy another application's protected
 visual assets.
 
+**Status (2026-09-28):** M5.5 is complete. After the recorded prototype and
+production review passes, the product owner gave final approval to the shipped
+builder, library, Inventory/Loadout, Shop, and item-acquisition interactions.
+M5.6 now owns the browser View and desktop/tablet Play foundation.
+
 ## Product character
 
 - Present as a modern web application rather than a recreation of the legacy
@@ -394,7 +399,8 @@ shared detail viewer; focusing a populated slot restores its current item. The
 native select remains intact, and transient popup highlighting does not preview
 details because it has no reliable cross-browser event contract. Inventory leads
 with one compact total-funds summary whose stable AD/PP/GP/SP/CP columns include
-zero values. A Quick adjust field accepts one signed denomination amount;
+zero values. Its compact width matches the Shop rail's wallet while shrinking
+safely at narrow breakpoints. A Quick adjust field accepts one signed denomination amount;
 positive adjustments credit carried funds and negative adjustments spend carried
 before stored in one transaction. A shared Edit action opens the same modal for
 direct carried/stored denomination editing from Equipment and Shop. Shop keeps
@@ -413,11 +419,14 @@ Ordinary reusable gear appears under Adventuring gear; mechanically active
 carried magic appears under Wondrous items. Unresolved/custom holdings stay
 recoverable under Miscellaneous rather than being guessed from their names.
 Sales disclose their actual proceeds at the recovered percentage choices;
-reductions remove unequipped copies first and warn before unequipping. Inventory
+reductions remove unequipped copies first and immediately unequip only when no
+unequipped copy remains. Inventory
 row double-clicks use the same Loadout assignment path: an assigned holding
 unequips, while an unassigned holding chooses the first open compatible slot in
-visible Loadout order. A necessary displacement requires confirmation, and
-unresolved historical slot identity remains untouched. Known
+visible Loadout order. A necessary but reversible displacement proceeds
+immediately; unresolved historical slot identity remains untouched. Removing a
+holding without proceeds is destructive and therefore uses an in-place
+two-click confirmation that can be disarmed with Escape or outside interaction. Known
 rituals/formulas/practices and quantity-bearing scrolls remain distinct.
 Spellbook alternates stay in Build. Item-owned configuration (for example an
 Armor of Resistance damage type) is evaluable and recoverable without
@@ -436,13 +445,14 @@ language) stays a plain compact picker. A resolved choice displays as a
 parenthesized suffix on the item's own name — `Banded Mail of Resistance +2
 (Fire)` — everywhere that name is shown (Inventory, Loadout, Shop, the
 shared item inspector), and a resolved Power choice also gets its own
-nested detail card wherever the item's full card is shown, the same way a
-granted power does, rather than as a separate editor surface in this
+adjacent sibling detail card after the item's full card, the same way a
+granted power is presented, rather than as a separate editor surface in this
 workspace (2026-09-24: an initial separate-editor design was replaced with
 this simpler one the same day; 2026-09-25: per-choice pages and the Power
 detail card added).
 
-M5.5 closure applies the same focused review standard to the under-refined tabs:
+M5.5 closure applied the same focused review standard to the formerly
+under-refined tabs:
 
 - **Inventory** makes current holdings, quantities, carried/stored state, sale
   outcomes, inspection, item configuration, and recovery states easy to follow.
@@ -451,19 +461,19 @@ M5.5 closure applies the same focused review standard to the under-refined tabs:
   filters, purchasing, free acquisition, and resulting inventory state explicit.
   Buy and Give are independent row actions; nonpurchaseable records keep a
   disabled Buy control and an active Give control.
-- Each workspace receives a live full-profile workflow pass and product-owner
+- Each workspace received a live full-profile workflow pass and product-owner
   approval; item-owned choices are resolved at Shop purchase time and shown as
   part of the item's own name everywhere it is displayed, without changing
   their rules occurrence or legacy export topology.
 
 ## Validation sequencing
 
-M5.5 establishes and receives product-owner approval for the principal builder,
-library, and Equipment interaction design. M5.6 then establishes the shared
+M5.5 established and received product-owner approval for the principal builder,
+library, and Equipment interaction design. M5.6 now establishes the shared
 browser View and desktop/tablet Play sheet model before phone-specific work.
-Comprehensive accessibility certification across the selected browser,
-operating-system, assistive-technology, zoom, and input matrix is post-1.0 work.
-Supported-client functional smoke remains a 1.0 hardening responsibility.
+The project does not run a formal accessibility-certification or cross-client
+support matrix (D063). A lightweight best-effort browser workflow and visual
+print check remain an M9 hardening responsibility.
 Semantic HTML, labeled controls, keyboard-operable
 native primitives, reduced-motion behavior, readable contrast, and non-forced
 responsive sizing remain continuous engineering constraints so later validation

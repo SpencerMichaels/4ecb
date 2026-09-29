@@ -72,7 +72,8 @@ application's architecture.
 ## Status
 
 The reverse-engineering specification remains the compatibility evidence base.
-Milestones M1 through M5 are implemented and verified. M5 is the functional
-builder MVP. M5.5 is closing the builder and Equipment interfaces; M5.6 will
-solidify browser View and desktop/tablet Play before M6 adapts play to phones.
+Milestones M1 through M5.5 are implemented and verified. M5 is the functional
+builder MVP, and M5.5 closes the designed builder, library, and Equipment
+interfaces. M5.6 is the current milestone; it solidifies browser View and
+desktop/tablet Play before M6 adapts play to phones.
 See the [roadmap](roadmap.md) and [implementation status](implementation-status.md).

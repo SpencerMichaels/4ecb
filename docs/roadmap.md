@@ -314,6 +314,12 @@ M5.6; a lightweight stabilization pass is staged in M9.
 
 ## M5.5 — Builder and Equipment interface closure
 
+**Status (2026-09-28): complete.** The product owner approved the shipped
+builder, library, Inventory/Loadout, Shop, unavailable-option, and item-owned
+choice interactions after the recorded prototype and production review loop.
+The exit-criterion evidence map is in
+[`implementation-status.md`](implementation-status.md).
+
 The product-owner direction for this milestone is recorded in
 [`interface-design-brief.md`](interface-design-brief.md). Product design and
 prototype approval precede the sheet/play foundation milestone. This project
@@ -334,8 +340,8 @@ interaction model can become the stable input to sheet and play-mode design.
   navigation, forms, choice resolution, typography, color, and restrained motion.
 - Complete Loadout, Inventory, Shop, and Rituals & Practices workflows with one
   coherent Equipment information architecture and shared detail presentation.
-- A redesigned unavailable-options workflow and Equipment-owned editing for
-  choices granted by items.
+- A redesigned unavailable-options workflow and an approved acquisition/display
+  home for choices granted by items, preserving their exact occurrence identity.
 - Focused functional smoke runs in the primary development browsers, preserving
   semantic structure, labeled controls, ordinary keyboard use, responsive
   layouts, and the existing automated print regression gate.
@@ -358,7 +364,7 @@ interaction model can become the stable input to sheet and play-mode design.
 
 **Release characterization:** designed builder and Equipment release candidate.
 
-**Current M5.5 checkpoint (2026-09-02):** The first working builder-interface
+**Initial M5.5 checkpoint (2026-09-02):** The first working builder-interface
 draft is implemented over the real rules/storage commands. It establishes the
 compact overview, complete level timeline, focused choice pane, temporary
 show-all legality filter, truthful autosave states, responsive desktop/tablet
@@ -366,9 +372,10 @@ foundation, system/light/dark themes, monochrome interface icons, and existing
 4E power-color semantics. Current level and saved future frames now operate as
 separate evaluation/export projections; lowering the visible horizon is a
 non-destructive session view until a dedicated persisted preference is added.
-This checkpoint began the prototype feedback loop. Subsequent accepted passes
-substantially revised the interface; the final milestone reconciliation and the
-remaining Equipment/unavailable-choice work are still required before closure.
+This checkpoint began the prototype feedback loop. At that point, the final
+milestone reconciliation and the remaining Equipment/unavailable-choice work
+were still required; the later checkpoints and closure record below supersede
+that open-work statement.
 
 The second product-owner review makes each level the main-pane workspace. Its
 Class, Race, Background, Theme, Ability Scores, Companion, Skills, Powers,
@@ -378,8 +385,9 @@ compact status and navigation summary and opens the corresponding tab. Up to six
 repeated background slots share one candidate table, and skill training uses a
 single toggle list with an explicit chosen/required count. The
 legacy placement of item-owned resistance choices in the Class pane is
-documented for compatibility, but its redesigned presentation is deferred to
-the equipment workspace rather than copied into the advancement flow.
+documented for compatibility. The later accepted design resolves those choices
+during Shop acquisition and presents their results with the owned item rather
+than copying them into the advancement flow.
 
 The follow-up choice pass adds exact legacy support for the three Archery
 Mastery power replacements and groups large parenthetical feat families into a
@@ -393,10 +401,11 @@ legacy-derived type sections, the complete matching set is available without an
 artificial row cap, and persistent content-ID favorites can be filtered while
 the user compares options. Full-corpus profiling did not justify virtualization;
 the table remains a bounded scrolling region.
-The application shell now retains decoded packs, rules workers, memoized exact
-evaluations, and Compendium indexes across client-side route changes. The first
-full-corpus Compendium initialization still reconstructs state from IndexedDB;
-subsequent navigation reuses it rather than replaying the six-second index build.
+The application shell retains decoded packs, rules workers, and memoized exact
+evaluations across client-side route changes. The former general Compendium
+worker and its browser index were later retired as unused (D062); Shop's
+memoized main-thread filtering operates over content loaded once per character
+session.
 The persistent level timeline has been reduced to a narrow status/navigation
 rail so the choice editor and its adjacent option detail remain the primary work
 area. A sibling Overview tab now replaces the expanded-plan overlay and bottom
@@ -435,12 +444,14 @@ generic large choices in addition to feats and powers. Equipment and Diagnostics
 are peer workspace tabs rather than disclosures below the builder, establishing
 the dedicated surface for the next equipment pass.
 
-The equipment pass now fills that dedicated surface with Loadout, Inventory,
-Shop, and Rituals & Practices tabs. Exact slot/copy assignments augment rather
-than replace legacy equipped counts; a five-denomination carried/stored wallet
+The equipment pass now provides an Inventory-first Equipment workspace whose
+Loadout control swaps the main pane while retaining the shared inspector, plus
+a peer Shop workspace whose Browse taxonomy includes rituals, formulas, and
+practices. Exact slot/copy assignments augment rather than replace legacy
+equipped counts; a five-denomination carried/stored wallet
 uses inherited per-level compatibility strings; and atomic buy/sell operations
-retain exact holding IDs. The full item and practice catalogs use the retained
-Compendium query worker, typed filters, level ranges, and 200-record pages.
+retain exact holding IDs. The full item and practice catalogs use memoized
+main-thread filters, level ranges, and bounded pages.
 Compatible terminal `+N` magic variants share a presentation family while exact
 filtered variants, base/enchantment IDs, and transaction identity remain
 unchanged. Known rituals/formulas/practices are distinct from quantity-bearing
@@ -461,8 +472,8 @@ recursively, rather than ever surfacing later as a locked, mis-categorized
 Build-tab choice. A resolved choice shows as a parenthesized suffix on the
 item's own name
 everywhere it is displayed — `Banded Mail of Resistance +2 (Fire)` — and a
-resolved Power choice also gets a nested detail card wherever the item's
-full card is shown, the same way a granted power does; the choice is fixed
+resolved Power choice also gets an adjacent sibling detail card after the item's
+full card, the same way a granted power is presented; the choice is fixed
 for the life of the item, matching the product owner's stated real-world
 model. There is deliberately no in-app editor for an already-owned holding
 whose choice was never resolved (not observed in practice; every purchase
@@ -470,28 +481,31 @@ resolves it, and legacy imports either already carry the recovered choice
 or didn't have one in the original game either).
 
 Builder navigation now participates in browser Back/Forward at the page-like
-boundary: all five workspace tabs, Build levels and choice sections, and the
-four Equipment sections have bookmarkable canonical hashes. Overview jumps
+boundary: workspace tabs, Build levels and choice sections, Equipment's
+Inventory/Loadout state, and Shop Browse state have bookmarkable canonical
+hashes. Overview jumps
 directly to one final Build destination; in-page filters, disclosures, choices,
 and edits do not add history entries. Invalid or unavailable nested values
 recover by replacement without disturbing library or character-sheet routes.
 
-**M5.5 closure status (2026-09-22):** The builder, library, Loadout, Inventory,
-shared
-detail-card system, navigation, candidate tables, and header statistics have all
-received accepted product-owner passes. The combined Shop and ritual/practice
-interface received its production live-review approval on 2026-09-22 after
-visual reconciliation with the accepted prototype. Every candidate table now
-carries a focused, per-choice illegal-option toggle, and item-owned choices
-now have their purchase-time prompt and a resolved choice shows as part of
-the item's own name (2026-09-24, simplified from an initial separate-editor
-design the same day); see [implementation-status.md](implementation-status.md)
-for the checkpoints. Both named M5.5 closure items are therefore implemented
-and verified; product-owner review of the shipped interaction and
-reconciling the final documentation completes M5.5. A
-lightweight best-effort browser check belongs to M9; this project does not run
-a formal release-client or accessibility-certification matrix (see decision
-D063).
+**M5.5 closure (2026-09-28):** The builder, library, Loadout, Inventory, shared
+detail cards, navigation, candidate tables, header statistics, Shop, and
+ritual/practice browsing all received accepted product-owner passes. The final
+review also approved the shipped per-table illegal-option control; recursive,
+purchase-time item-owned choice flow; resolved-name suffix and sibling Power
+card; destructive-only two-click confirmation; immediate reversible equipment
+changes; and matched compact wallet sizing. The product owner gave final
+approval to the resulting shipped interaction on 2026-09-28. All exit criteria
+pass; the evidence map and latest verification totals are recorded in
+[implementation-status.md](implementation-status.md).
+
+This closure deliberately leaves browser View and desktop/tablet Play to M5.6,
+phone adaptation to M6, and the lightweight best-effort browser/visual-print,
+security, migration, and representative-device hardening pass to M9. The
+project does not run a formal release-client or accessibility-certification
+matrix (D063). Remaining native equipment edge cases named in D044 are visible
+compatibility limitations under the existing support contract, not hidden
+M5.5 interface blockers.
 
 ## M5.6 — Character sheet and local-play foundation
 

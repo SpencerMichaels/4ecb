@@ -45,9 +45,10 @@ gate are not relabeled as a new live session.
       Equipment, sheet, card, facts, and diagnostics layouts stack at tablet/narrow
       breakpoints without changing print rules.
 
-These checks establish a low-cost implementation baseline. Full workflow
-keyboard-only, screen-reader, zoom/reflow, and touch-target certification is a
-post-1.0 matrix against the stable interface.
+These checks establish the project's continuous structural baseline. The
+project does not run a formal keyboard-only, screen-reader, zoom/reflow,
+touch-target, or cross-client certification matrix (D063); reported problems
+remain ordinary bugs, and M9 retains a lightweight best-effort browser check.
 
 ## Security and privacy checklist
 

@@ -229,9 +229,9 @@ invented before representative content and engine workloads exist.
   operation, focus management, and text alternatives are structural acceptance
   criteria.
 - Structural semantics, labels, focus management, and ordinary keyboard
-  operation remain continuous requirements. A comprehensive assistive-technology,
-  zoom/reflow, touch-target, and accessibility matrix is scheduled after 1.0 so
-  it validates the stable product rather than blocking interface construction.
+  operation remain continuous requirements. The project does not run a formal
+  assistive-technology, zoom/reflow, touch-target, accessibility, or cross-client
+  certification matrix (D063); actual reported problems remain ordinary bugs.
 - Color is never the only signal for power usage, legality, or status.
 - Print output remains legible in monochrome.
 

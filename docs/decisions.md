@@ -170,8 +170,8 @@ attack surface.
 
 ### D022 — Comprehensive UI validation follows UI design
 
-**Status:** superseded in milestone ownership by D054. The distinction between
-continuous structural safeguards and later comprehensive validation remains.
+**Status:** superseded by D054 and then D063. Continuous structural safeguards
+remain, but there is no later formal certification program.
 
 M5 retains inexpensive structural safeguards: semantic landmarks and labels,
 basic keyboard operation, non-forced viewport sizing, readable functional
@@ -181,8 +181,9 @@ matrices, Safari coverage, raster print review, or subjective visual
 accessibility sign-off while the interface is intentionally provisional.
 
 Those checks were originally assigned to M5.5 after the product-owner design
-pass. D054 records the later decision to move the comprehensive accessibility
-matrix after 1.0 while retaining focused release and continuous safeguards.
+pass, then moved after 1.0 by D054. D063 later removed the formal matrix
+entirely while retaining a lightweight M9 browser check and continuous
+safeguards.
 
 ### D023 — Layered local content profiles with advertised baselines
 
@@ -496,9 +497,9 @@ the exact parameter rows that can be committed.
 ### D034 — Content-derived runtimes live at application scope
 
 The client-side router preserves one browser document across ordinary page
-changes. Decoded packs, initialized rules workers, exact-input evaluation
-promises, and built Compendium indexes therefore belong to an application-scoped
-runtime rather than individual route components. Resources are keyed by
+changes. Decoded packs, initialized rules workers, and exact-input evaluation
+promises therefore belong to an application-scoped runtime rather than
+individual route components. Resources are keyed by
 immutable pack identity/revision, bounded to two recently used profiles per
 cache family, and terminated only on eviction, initialization failure, or an
 explicit content/profile change. Route unmount cancels UI delivery but does not
@@ -791,11 +792,12 @@ provider is absent remain recoverable under the existing compatibility policy.
 
 ### D044 — Equipment preserves exact holdings while adding an app-native slot projection
 
-Equipment is one peer workspace with Loadout, Inventory, Shop, and Rituals &
-Practices tabs and one focus-driven item-detail viewer. Shop and practice
-browsing reuse the retained Compendium query worker, typed facets, numeric
-ranges, deterministic name sorting, and 200-record pages; the editor does not
-mount the full 38,000-record profile or 10,000-item catalog as one DOM table.
+Equipment is an Inventory-first peer workspace whose Loadout control swaps its
+left pane while retaining one focus-driven item-detail viewer. Shop is a peer
+editor workspace whose Browse taxonomy also contains rituals, formulas, and
+practices. Shop filtering is the memoized main-thread pipeline accepted in D062;
+bounded pages prevent the editor from mounting the full 38,000-record profile
+or 10,000-item catalog as one DOM table.
 
 An inventory holding continues to own its exact ordered base/enchantment IDs,
 quantity, legacy equipped quantity, overrides, legality, and nested item
@@ -827,9 +829,11 @@ makes its corresponding practice known. Spellbook alternates remain in Build.
 This checkpoint does not claim complete native `IsValidLoot` or slot-pair
 parity. Shield/implement equivalence, double-weapon secondary ends, dependent
 hand/ring rebalancing, holy-symbol name storage, augments, package lot
-reconciliation, automatic equipment, custom-item editing, and item-owned choice
-placement require focused follow-up from the recovered paths rather than an
-approximation in the UI.
+reconciliation, automatic equipment, and custom-item editing require focused
+follow-up from recovered paths rather than approximation in the UI. Item-owned
+choices are no longer in this tail: Shop resolves them, including recursively
+required choices on a selected candidate, before acquisition and stores their
+exact occurrence tree for evaluation and legacy export.
 
 A focused follow-up establishes that loadout eligibility accumulates every
 authored slot-bearing classification on every definition in a holding. The two
@@ -1138,13 +1142,12 @@ and undo. Print remains its own page-oriented rendering. M6 consumes that settle
 state and interaction vocabulary in a purpose-built, task-oriented phone surface;
 it does not compress the desktop Play sheet to phone width.
 
-Comprehensive keyboard-only, screen-reader, zoom/reflow, and touch-target testing
-across the selected browser, operating-system, assistive-technology, and input
-matrix is explicitly post-1.0 work. Continuous semantic structure, labels, focus
-behavior, ordinary keyboard operation, contrast, reduced motion, responsive
-sizing, and automated regression tests remain required. M9 retains supported-
-client workflow, print, security, structural accessibility, and performance
-checks needed for a responsible 1.0 release.
+There is no formal keyboard-only, screen-reader, zoom/reflow, touch-target, or
+cross-client certification matrix at any point; D063 supersedes that part of
+this decision. Continuous semantic structure, labels, focus behavior, ordinary
+keyboard operation, contrast, reduced motion, responsive sizing, and automated
+regression tests remain required. M9 retains a lightweight best-effort browser
+workflow check plus print, security, data-migration, and performance hardening.
 
 ### D055 — Inventory foregrounds holdings and total funds without flattening legacy state
 
@@ -1188,8 +1191,10 @@ accessible text keeps historical unknown-slot counts unresolved and perceivable.
 Sell is an icon-triggered menu that shows 20%, 50%, and 100% choices with actual
 one-copy proceeds. All three use the largest denomination that exactly expresses
 the 20% baseline, allowing exact decimals for the other rates only when needed,
-so their values remain directly comparable. Unpriced holdings cannot be sold but
-remain removable without proceeds after confirmation.
+so their values remain directly comparable. Unpriced holdings cannot be sold
+but remain removable without proceeds through an in-place two-click destructive
+action. The first click arms the button and the second removes the holding;
+outside interaction or Escape disarms it.
 Only one sale menu is open at a time; outside pointer interaction and Escape
 dismiss it, and Escape or a completed sale restores focus to its trigger.
 
@@ -1198,13 +1203,15 @@ and command path, not a second equipment algorithm. An assigned holding removes
 all of its exact assignments. An unassigned holding chooses the first compatible
 open slot in current visible Loadout order, or the required Main hand/Off hand
 bundle for a two-handed item. Only when no compatible slot is open may it target
-the first occupied compatible slot, and that displacement requires confirmation.
+the first occupied compatible slot. That reversible displacement happens
+immediately and does not receive a destructive-action confirmation.
 Holdings with unresolved legacy equipped counts and no deterministic inferred
 slots remain unchanged and direct the player to Loadout.
 
 Quantity reduction and sale retain equipped copies ahead of unequipped copies.
-When an equipped copy must be removed, the interface warns first, and known slot
-assignments are reindexed to the remaining contiguous copy identities. Quantity
+When an equipped copy must be removed, the reversible unequip happens
+immediately, and known slot assignments are reindexed to the remaining
+contiguous copy identities. Quantity
 updates replace the holding in place instead of moving its row, and zero-quantity
 holdings are removed rather than retained invisibly.
 

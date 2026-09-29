@@ -1,5 +1,38 @@
 # Implementation status
 
+## M5.5 complete — builder and Equipment interface closure (2026-09-28)
+
+The product owner gave final approval to the shipped builder, library,
+Inventory/Loadout, Shop, unavailable-option, and item-acquisition interactions
+on 2026-09-28. That approval follows the recorded prototype and production
+review passes rather than replacing them: the combined Shop/ritual/practice
+surface was accepted live on 2026-09-22, and the final review covered the
+subsequent per-choice purchase pages, recursively nested item choices, sibling
+Power detail card, destructive-only two-click confirmation, immediate
+reversible equipment changes, and matched Equipment/Shop wallet sizing.
+
+Every M5.5 exit criterion has direct evidence:
+
+| Exit criterion                                                        | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Result |
+| --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Product-owner approval                                                | Recorded accepted passes for the library, builder, navigation, candidate tables, Loadout, Inventory, shared cards, Shop, and rituals/practices, followed by the 2026-09-28 final approval of the shipped interaction.                                                                                                                                                                                                                                                             | Pass   |
+| Complete principal Equipment workflows without the retired Compendium | Inventory-first Equipment and its Loadout swap share one inspector; peer Shop Browse covers items, rituals, formulas, and practices with exact acquire/manage/learn semantics. Stale Compendium routes recover to Characters, and D062 records that Shop uses its own memoized main-thread filter rather than the retired general query worker.                                                                                                                                   | Pass   |
+| Approved unavailable candidates and item-owned choices                | Every candidate table owns its focused rules-illegal toggle. Shop resolves each item-owned choice, including a selected candidate's recursively required choices, before acquisition; the stored occurrence tree retains exact evaluator and legacy-export identity. Resolved names and sibling Power cards keep the result attached to the item.                                                                                                                                 | Pass   |
+| Functional/browser and structural safeguards                          | The current gate passes 548/548 tests, formatting, lint, every TypeScript project, production/PWA build, Chromium/Firefox Letter/A4 print checks, deterministic content checks, and the query benchmark. Focused live Chromium passes cover the production Shop and final Equipment interactions; automated Firefox print/layout coverage remains green. Semantic labels, ordinary keyboard controls, responsive sizing, and reduced-motion behavior remain continuous contracts. | Pass   |
+| Reconciled durable and user-facing documentation                      | `roadmap.md`, `interface-design-brief.md`, `decisions.md`, this status record, the repository summaries, architecture/checklist boundary, and `user-guide.md` now describe the shipped topology and the same deliberate deferrals.                                                                                                                                                                                                                                                | Pass   |
+
+M5.5 is therefore complete. M5.6 owns browser View and desktop/tablet Play; M6
+owns phone adaptation; M9 owns the lightweight best-effort browser/visual-print,
+security, migration, and representative-device hardening pass. D063 explicitly
+removes a formal accessibility-certification or cross-client support-matrix
+program. The native equipment edge cases retained in D044 and exact rules
+limitations retained by the M5 support contract remain visible compatibility
+work, not hidden M5.5 blockers. The coordinator reran
+`nix develop path:. -c bash scripts/check.sh` on the exact documentation-closure
+tree: all 548 tests, formatting, lint, workspace typechecks, production/PWA
+build, Chromium/Firefox Letter/A4 print checks, deterministic public-pack checks,
+and the query benchmark pass.
+
 ## Give the Equipment tab's wallet the same fixed width as Shop's (2026-09-28)
 
 Product-owner report: on the Equipment tab, the wallet summary sat in a
@@ -777,14 +810,14 @@ name="scale"`) to signal a rules-legality filter, carries `aria-pressed`,
 
 ## Current stopping point
 
-Milestones M1 through M5 are complete at their stated release boundaries. M4 is
+Milestones M1 through M5.5 are complete at their stated release boundaries. M4 is
 the builder beta: it delivers the authoritative rules-backed editor and records
 native parity risks. M5 is the functional MVP/core builder release. Profile
 migration preview and explicit adoption are implemented, and the product owner
 successfully opened, saved, and reopened several regenerated real level-8
 characters in the original builder. Functional print regression coverage is complete in
-Chromium and Firefox. M5.5 now owns builder and Equipment design closure;
-M5.6 owns the browser View and desktop/tablet Play foundation; a lightweight
+Chromium and Firefox. M5.5 closes the approved builder, library, and Equipment
+interfaces; M5.6 now owns the browser View and desktop/tablet Play foundation; a lightweight
 best-effort browser check belongs to M9. This project does not run a formal
 cross-browser/device support matrix or an accessibility-certification program
 (decision D063); continuous structural safeguards remain required throughout.
@@ -1124,12 +1157,14 @@ criterion; future character-specific failures remain tracked compatibility bugs.
   versioned `PlayState`, deterministic commands/history/undo, and approved shared
   sheet/card interaction semantics. M6 is narrowed to the purpose-built phone
   adaptation and portable/offline mobile workflow.
-- M9 retains supported-client workflow, visual-print, security, structural
-  accessibility, and release-performance checks. The comprehensive keyboard-only,
-  screen-reader, zoom/reflow, and touch-target matrix is explicitly post-1.0 M10.
-  Continuous semantic structure, labels, focus behavior, ordinary keyboard use,
-  contrast, reduced motion, and responsive sizing remain required throughout.
-- D054 records this product-owner decision. The roadmap, product definition,
+- M9 retains a lightweight browser workflow, visual-print, security,
+  data-migration, and release-performance check. D063 later removed the formal
+  keyboard-only, screen-reader, zoom/reflow, touch-target, and cross-client
+  certification matrix. Continuous semantic structure, labels, focus behavior,
+  ordinary keyboard use, contrast, reduced motion, and responsive sizing remain
+  required throughout.
+- D054 records the sequencing decision as superseded in this respect by D063.
+  The roadmap, product definition,
   architecture, interface brief, sheet specification, M5 checklist, deployment
   notes, and user guide now use the same ownership boundaries.
 
@@ -2706,8 +2741,9 @@ complete legal build, reloaded with every selection persisted, exposed only the
 edited export target, and passed its semantic re-import gate without console
 warnings or errors. This closes the old-application dependency for starting a
 character; the remaining M4 compatibility and legacy-application matrices still
-block complete M5 closure. Comprehensive accessibility certification is now
-post-1.0 M10 work and does not block this functional milestone.
+blocked complete M5 closure at this checkpoint. D063 later removed the formal
+accessibility-certification program; continuous safeguards do not block this
+functional milestone.
 The complete public gate passes 143 tests across 30 files plus formatting,
 ESLint, every TypeScript project, the production/PWA build, Chromium/Firefox
 print artifacts, deterministic content checks, and the query benchmark.
@@ -2828,8 +2864,8 @@ migration recovery. Live
 browser verification displayed the persistence/quota facts against the public
 synthetic profile; backup export reported one complete record. The automated
 restart, application-upgrade, restore, and interrupted-migration matrix covers
-the four durability cases in M5 exit criterion 5. Exhaustive accessibility
-traversal is deferred to post-1.0 M10. The original
+the four durability cases in M5 exit criterion 5. D063 later removed the formal
+accessibility traversal program while retaining continuous safeguards. The original
 checkpoint public suite passed 98 tests
 across 23 files plus formatting, ESLint, every TypeScript project, the
 production/PWA build, deterministic content checks, and the query benchmark.
@@ -2869,8 +2905,8 @@ built successfully, returned `ok` from `/healthz`, served the external runtime
 configuration, contained its service worker, manifest, and notice, and contained
 no `.4ecp` or `.dnd4e` artifacts. It passed the same checks while running
 read-only with a bounded temporary filesystem. Core security review remains an
-M5 concern; supported-client performance belongs to M9 and the exhaustive
-accessibility matrix to post-1.0 M10. The checkpoint public suite passes 102 tests across 24 files plus
+M5 concern; supported-client performance belongs to M9. D063 later removed the
+formal accessibility matrix. The checkpoint public suite passes 102 tests across 24 files plus
 formatting, ESLint, every TypeScript project, the production/PWA build,
 deterministic content checks, and the query benchmark.
 
@@ -3007,8 +3043,8 @@ or error. The rebuilt image ran with a read-only root and bounded temporary
 filesystem; application, immutable-asset, runtime-configuration, and health
 routes all returned the required security policy while retaining their distinct
 cache behavior. The complete public gate passes 123 tests across 27 files. This
-checkpoint is a structural and security baseline, not the comprehensive
-post-1.0 accessibility certification.
+checkpoint is a structural and security baseline, not a formal accessibility
+certification; D063 removes such a program from the roadmap.
 
 ### Structural accessibility and responsive-shell baseline
 
@@ -3023,7 +3059,7 @@ post-1.0 accessibility certification.
   foreground/background pair at the WCAG AA 4.5:1 threshold. The item-card
   orange was darkened because its prior white-text contrast did not pass.
 - The durable checklist distinguishes this low-cost structural baseline from
-  M9 supported-client/visual-print evidence and the post-1.0 M10
+  M9's lightweight browser/visual-print hardening. D063 later removed the formal
   keyboard/screen-reader/zoom/touch certification matrix.
 
 Live production Chromium found one `h1`, one `main`, no duplicate IDs, and no
@@ -3031,9 +3067,9 @@ unnamed native interactive controls on the top-level empty-state Settings,
 Characters, and Compendium routes. Clicking between routes placed focus on the
 new `main` with `tabIndex=-1`; the fresh initial load kept body focus and the
 updated shell had no forced minimum width or console warnings/errors. The full
-public gate passes 127 tests across 29 files. Comprehensive keyboard-only and
-assistive-technology certification waits for post-1.0 M10; supported-client
-visual validation belongs to M9.
+public gate passes 127 tests across 29 files. D063 later removed formal
+keyboard-only and assistive-technology certification; lightweight browser and
+visual-print validation belongs to M9.
 
 ### Chromium and Firefox Letter/A4 functional PDF regression gate
 

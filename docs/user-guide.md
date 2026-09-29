@@ -1,9 +1,10 @@
 # User guide and recovery handbook
 
-This guide covers the current M5 offline builder beta. It explains the data
-boundary and every shipped installation, import, migration, backup, recovery,
-update, sheet, and export workflow. The remaining release limitations are
-listed explicitly at the end.
+This guide covers the current offline builder and its M5.5-designed builder,
+library, and Equipment interfaces. It explains the data boundary and every
+shipped installation, import, migration, backup, recovery, update, sheet, and
+export workflow. The remaining release limitations are listed explicitly at
+the end.
 
 ## Before you begin
 
@@ -128,9 +129,10 @@ until that revision is restored or a migration is previewed and adopted.
    extensions remain preserved and warnings are not silently discarded.
 3. Use **Edit build** for level history, ability inputs, choices, inventory,
    retraining, undo, and redo. The bound exact profile supplies candidates and
-   rules evaluation. **Add level** uses that profile's canonical
-   `ID_INTERNAL_LEVEL_n` definitions through level 30.
-4. Use **View sheet** for the evaluated sheet and print controls. If the exact
+   rules evaluation. **Current level** under **Character details** can jump to
+   levels 1–30 and uses the profile's canonical `ID_INTERNAL_LEVEL_n`
+   definitions for each intervening frame.
+4. Use **Character sheet** for the evaluated sheet and print controls. If the exact
    profile or evaluation is unavailable, the application shows a labeled
    legacy cached fallback instead of mixing calculated revisions.
 5. **Duplicate** makes an independent browser record. **Move to trash** is
@@ -152,6 +154,10 @@ Open **Equipment** while editing a character. Inventory is the main view;
   and astral denominations in carried or stored money. Sales remove one copy
   and credit carried money at the selected 20%, 50%, or 100% rate. Its
   collapsible headings use the same physical-role names as modern Shop Browse.
+  Quantity reduction, sale, and loadout displacement immediately apply their
+  reversible unequip effects. **Remove** discards a holding without proceeds
+  and therefore requires two clicks on the same armed button; Escape or an
+  outside click cancels the armed state.
 - **Shop** is a peer editor tab. Browse by modern role, slot, subtype, source,
   rarity, or tier; the Filters disclosure also exposes the original builder's
   category names. Rituals, alchemical formulas, and martial practices are Browse
@@ -168,6 +174,21 @@ the closest level not above the character; expand it to choose another exact
 for an exact compatible physical item. Choosing the standard implement option
 stores the standalone magic item required by legacy `.dnd4e`; choosing a
 superior implement stores its exact ordered composition.
+
+If the selected item grants one or more choices, Shop presents one acquisition
+page for each choice before the compatible-base page. Choosing a candidate that
+has its own required choice adds that nested page to the same flow. Power
+choices include a full adjacent detail card; simpler choices use a compact
+picker. The completed holding keeps the exact nested occurrence tree, displays
+resolved choices as parenthesized suffixes everywhere its name appears, and
+shows a resolved Power as a sibling detail card after the item card. These
+choices are fixed for that acquired copy rather than appearing later as Build
+tasks.
+
+Each rules candidate table has its own control for showing rules-illegal
+options. Those rows remain inspectable and explain why they cannot ordinarily
+be selected; enabling one as a house rule does not change its exact content
+identity.
 
 ## Adopt a different content revision
 
@@ -207,8 +228,10 @@ base scores when the file is re-imported.
 
 Edited export also blocks on a missing/mismatched profile, nonconvergent
 evaluation, an evaluation horizon behind the latest saved level, or invalid XML
-characters. The public structural round-trip gate passes, but the curated
-original Windows Character Builder launch matrix is still a release blocker.
+characters. The public structural round-trip gate and the accepted
+representative original Windows Character Builder open/save/reopen matrix pass.
+That evidence does not promise that every future character-specific export is
+free of an ordinary compatibility bug.
 
 ## Sheets and PDF printing
 
@@ -270,16 +293,17 @@ backups remain accepted with an explicit no-checksum warning.
   content and cached sheets stay recoverable. Item-set/inherent behavior requires
   an explicit imported or serialized activation and is not inferred from an
   absent campaign setting. See the [compatibility ledger](m4-compatibility-ledger.md).
-- Edited exports have not completed the curated original Windows application
-  launch matrix.
 - Broad supported-client workflows, Safari printing, cross-engine raster review,
   and representative-device performance timings are deferred to 1.0 hardening.
-  The comprehensive keyboard-only, screen-reader, 200% zoom/reflow, and
-  touch-target matrix is post-1.0 work; structural safeguards remain continuous.
+  This project does not run a formal keyboard-only, screen-reader, 200%
+  zoom/reflow, touch-target, or cross-client certification matrix (D063);
+  structural safeguards remain continuous, and reported problems are ordinary
+  bugs.
 - Runtime configuration is reserved and network-only but not consumed by the
   current application. It cannot currently enable features or change URLs.
 
-Only the original-application matrix prevents the final M5 completion claim.
-The compatibility limits above are the explicit, explainable automated support
-boundary. UI/device items are later release-readiness work and do not block the
-functional M5 boundary.
+M5 and M5.5 are complete at the accepted functional and designed-interface
+boundaries. The compatibility limits above remain explicit and recoverable;
+M5.6 owns browser View and desktop/tablet Play, while the lightweight browser,
+visual-print, security, migration, and representative-device hardening pass is
+owned by M9.

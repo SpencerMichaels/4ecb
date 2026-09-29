@@ -57,11 +57,11 @@ Hash-route changes move focus to the newly rendered main landmark after the
 initial load. Narrow/tablet breakpoints remove desktop minimum widths and stack
 dense library, editor, and sheet layouts; print keeps its separate
 fixed Letter/A4 rules. Functional tests retain basic contrast and semantics.
-Comprehensive keyboard-only, zoom/reflow, screen-reader, and touch-target
-certification is post-1.0 work. Semantic structure, labels, focus behavior,
-ordinary keyboard operation, responsive sizing, and automated print regression
-remain continuous safeguards; supported-client release smoke and visual-print
-review belong to 1.0 hardening.
+The project does not run a formal keyboard-only, zoom/reflow, screen-reader,
+touch-target, or cross-client certification matrix (D063). Semantic structure,
+labels, focus behavior, ordinary keyboard operation, responsive sizing, and
+automated print regression remain continuous safeguards; a lightweight
+best-effort browser check and visual-print review belong to M9 hardening.
 
 ### Content tool
 

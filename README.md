@@ -63,8 +63,9 @@ operation, runtime configuration, HTTPS, health checks, PWA updates, and the
 proprietary-content boundary. The repository-wide
 [public distribution notice](NOTICE.md) applies to every hosted build and image.
 
-Milestones M1 through M5 are complete, and M5.5 interface stabilization is in
-progress. See
+Milestones M1 through M5.5 are complete. M5.5 closes the designed builder,
+library, and Equipment interfaces; M5.6 is the current sheet/local-play
+foundation milestone. See
 [`docs/implementation-status.md`](docs/implementation-status.md) for verified
 evidence and [`docs/roadmap.md`](docs/roadmap.md) for the current milestone.
 
