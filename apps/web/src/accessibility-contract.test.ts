@@ -97,6 +97,18 @@ describe("release accessibility contract", () => {
     expect(characterEditor).toContain("keepLargeAmountsInGold,");
   });
 
+  it("keeps best-ability power text optional and enabled by default", () => {
+    expect(settingsPage).toContain(
+      "Use the best ability in power descriptions",
+    );
+    expect(settingsPage).toContain("checked={resolveAbilityChoices}");
+    expect(app).toContain("RESOLVE_ABILITY_CHOICES_STORAGE_KEY");
+    expect(app).toContain(
+      'localStorage.setItem(RESOLVE_ABILITY_CHOICES_STORAGE_KEY, "0")',
+    );
+    expect(app).toContain("resolveAbilityChoices={resolveAbilityChoices}");
+  });
+
   it("keeps every normal-text palette pair above WCAG AA contrast", () => {
     const pairs = [
       ["#1e2933", "#eef2f6"],

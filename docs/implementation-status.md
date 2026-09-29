@@ -3610,8 +3610,9 @@ Divinity`, except for the native function's explicit, case-insensitive
 - The shared sheet model now appends authoritative signed values to unambiguous
   named ability modifiers and to `half your level`, `one-half your level`, and
   `1/2 level` variants. It does not double-annotate existing parentheticals or
-  guess among multiple abilities. Browser View and print therefore receive the
-  same personalized card prose without changing source content or rules math.
+  guess among multiple abilities unless the explicit best-ability preference
+  described below is enabled. Browser View and print therefore receive the same
+  personalized card prose without changing source content or rules math.
 - Hu's legacy PDF confirms `Wisdom modifier (+5)` alongside its separate weapon
   calculation line. Fei Zhu's image-only legacy PDF confirms named modifiers
   such as `Wisdom modifier (+4)`, an unexpanded generic `ability modifier`, and
@@ -3619,3 +3620,24 @@ Divinity`, except for the native function's explicit, case-insensitive
 - Focused sheet-model coverage passes four tests, including named modifiers,
   ambiguous choices, existing annotations, and both textual and fractional
   half-level forms. Package TypeScript checking also passes.
+
+## M5.7 Settings simplification and best-ability checkpoint (2026-09-28)
+
+- Settings now foregrounds Display, Backups & storage, and Game content. The
+  ordinary content card reports readiness and recognizable content names,
+  accepts portable packs, and provides a short review/use flow. Exact layer
+  ordering, digests, collision IDs, raw XML import, directory discovery, pack
+  removal, and quota diagnostics remain recoverable under collapsed Advanced
+  content management.
+- A browser-local, default-on Display preference resolves multi-ability modifier
+  and attack phrases to the highest available modifier. Ties preserve authored
+  order, missing values leave the prose untouched, and disabling the preference
+  retains the authored alternatives. The setting feeds the shared sheet model,
+  so browser View and print agree without altering stored characters or rules
+  calculations.
+- Focused power-text, Settings contract, and route tests pass 31 tests. Web and
+  sheet-model TypeScript checks pass. The full 549-test suite, workspace
+  typechecks, targeted lint, production/PWA build, and Chromium/Firefox
+  Letter/A4 color/monochrome print matrix also pass. A live narrow-width browser
+  pass confirms the three primary cards, default checked preference,
+  persistence after toggling/reload, and collapsed Advanced content management.

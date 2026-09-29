@@ -1479,6 +1479,29 @@ This capability is explicitly beyond legacy-builder parity. M6 may begin its
 phone adaptation only after M5.8 establishes and verifies the shared play-state
 and command vocabulary.
 
+### D065 — Settings favors ordinary jobs; ability alternatives are presentation choices
+
+**Status:** accepted
+
+**Date:** 2026-09-28
+
+Settings presents three ordinary browser-level jobs directly: **Display**,
+**Backups & storage**, and **Game content**. The default Game content surface
+shows readiness, content in use, host-provided content, browser-added content,
+and the ordinary add/review/use flow. Pack identities, digests, ordered
+composition, collision IDs, raw rules-XML import, directory discovery, and
+quota diagnostics remain available under a collapsed **Advanced content
+management** disclosure. This changes presentation and terminology, not the
+content-profile, exact-revision, or browser-local storage contracts.
+
+Power-card presentation may resolve an authored list of alternative abilities
+to the character's highest corresponding ability modifier. This browser-local
+Display preference is enabled by default and can be disabled to retain the
+authored alternatives. Ties preserve authored order. Resolution occurs only
+when every listed modifier is available; otherwise the prose remains unchanged.
+It affects the shared browser/print sheet model without changing content,
+character selections, attack calculations, or serialized data.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

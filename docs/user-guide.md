@@ -83,21 +83,25 @@ limit.
 
 ## First run and content import
 
-1. Open **Settings**, then find **Content**.
-2. Review **Persistence and quota**. Choose **Request persistent storage** if
-   available. A grant reduces eviction risk but does not replace backups.
-3. Choose **Import file**, then select a `.4ecp` or decrypted/merged
-   `.dnd40.xml`. For rules XML, set the local profile ID and name first.
-4. Wait for decoding, parsing, validation, and storage to complete. Cancelling
-   the worker before completion saves no partial pack.
-5. Review the ordered profile. A deployment-provided baseline stays first;
-   imported personal packs can be ordered above it. Collision preview identifies
-   stable IDs whose later definition wins.
-6. Choose **Activate profile**. Downloads and imports alone never change the
-   content available to the builder or any character. New characters bind to
-   the exact ordered
+1. Open **Settings**, then find **Game content**.
+2. Choose **Add content pack** and select a `.4ecp` file. Wait for decoding,
+   validation, and storage to complete. Cancelling before completion saves no
+   partial pack.
+3. Choose **Review content changes**, inspect the short replacement summary,
+   then choose **Use this content**. New characters bind to the exact ordered
    IDs/digests and `last-pack-wins-v1` policy; existing characters keep their
    prior binding until migration is previewed and explicitly adopted.
+
+Open **Advanced content management** to reorder several added packs, inspect
+exact identities and overridden record IDs, import decrypted/merged
+`.dnd40.xml` rules data, scan a local content directory, or review exact browser
+quota details. Set the local profile ID and name before importing rules XML. A
+deployment-provided group-content layer stays first. Downloads and imports
+alone never change the content available to the builder or any character.
+
+Under **Backups & storage**, request persistent storage if the Advanced browser
+storage details offer it. A grant reduces eviction risk but does not replace
+backups.
 
 Server-advertised packs download into the same offline IndexedDB cache. Their
 URLs are not private merely because they appear in runtime configuration:
@@ -238,6 +242,13 @@ free of an ordinary compatibility bug.
 On **View sheet**, select Letter or A4, optional blank hit points, power/item
 cards, and color or monochrome. Settings persist per character. Choose **Print
 or save PDF** and confirm the same paper size in the browser print dialog.
+
+The browser-level **Settings → Display** option **Use the best ability in power
+descriptions** is enabled by default. When power prose offers several abilities,
+View and print show only the highest available modifier and its value; ties keep
+the first authored ability. Turn the option off to retain the complete authored
+list. Named single-ability modifiers and half-level expressions continue to
+show their current values either way.
 
 The automated production-artifact matrix covers current Chromium and Firefox,
 Letter/A4, and color/monochrome with long and short card prose. Chromium output

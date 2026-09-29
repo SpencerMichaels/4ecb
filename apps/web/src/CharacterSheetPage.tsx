@@ -94,10 +94,12 @@ export function CharacterSheetPage({
   characterId,
   manifests,
   printOnReady = false,
+  resolveAbilityChoices = true,
 }: {
   readonly characterId: string;
   readonly manifests: readonly ContentPackManifest[];
   readonly printOnReady?: boolean;
+  readonly resolveAbilityChoices?: boolean;
 }) {
   const [character, setCharacter] = useState<CharacterRecord>();
   const [content, setContent] =
@@ -188,12 +190,14 @@ export function CharacterSheetPage({
           character.build,
           evaluation,
           content.entities,
+          { resolveAbilityChoices },
         )
       : buildSheetModel(
           character.snapshot,
           exactProfile ? content?.entities : undefined,
+          { resolveAbilityChoices },
         );
-  }, [character, content, evaluation, exactProfile]);
+  }, [character, content, evaluation, exactProfile, resolveAbilityChoices]);
   const evaluatedSheetReady =
     !exactProfile || evaluation !== undefined || evaluationError !== undefined;
   useEffect(() => {

@@ -380,6 +380,47 @@ a {
   margin-bottom: 1rem;
 }
 
+.game-content-summary {
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.settings-advanced {
+  border: 1px solid var(--border);
+  margin: 1rem 0;
+}
+
+.settings-advanced > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 1rem;
+}
+
+.settings-advanced[open] > summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-advanced-body {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.settings-advanced-body > :last-child {
+  margin-bottom: 0;
+}
+
+.content-change-review {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.8rem;
+}
+
+.content-change-review p {
+  margin: 0;
+}
+
 .settings-section > div:first-child > :first-child,
 .backup-preview > :first-child {
   margin-top: 0;

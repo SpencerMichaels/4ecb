@@ -216,6 +216,26 @@ describe("sheet model", () => {
           value: 5,
           contributions: [],
         },
+        "Strength modifier": {
+          name: "Strength modifier",
+          value: 3,
+          contributions: [],
+        },
+        "Constitution modifier": {
+          name: "Constitution modifier",
+          value: 4,
+          contributions: [],
+        },
+        "Intelligence modifier": {
+          name: "Intelligence modifier",
+          value: 2,
+          contributions: [],
+        },
+        "Charisma modifier": {
+          name: "Charisma modifier",
+          value: 5,
+          contributions: [],
+        },
         AC: { name: "AC", value: 19, contributions: [] },
       },
       textStrings: {},
@@ -294,6 +314,18 @@ describe("sheet model", () => {
             extraAttributes: [],
             ordinal: 3,
           },
+          {
+            name: "Attack",
+            value: "Intelligence, Wisdom, or Charisma vs AC",
+            extraAttributes: [],
+            ordinal: 4,
+          },
+          {
+            name: "Requirement",
+            value: "Use your Strength or Dexterity modifier.",
+            extraAttributes: [],
+            ordinal: 5,
+          },
         ],
         rules: [],
         description: "A modern evaluated spark.",
@@ -349,6 +381,7 @@ describe("sheet model", () => {
       build,
       evaluation,
       content,
+      { resolveAbilityChoices: true },
     );
 
     expect(model.source).toBe("authoritative-evaluation");
@@ -370,13 +403,30 @@ describe("sheet model", () => {
       {
         label: "Special",
         value:
-          "Use your Strength, Constitution, or Wisdom modifier; Wisdom modifier (+5) is already shown.",
+          "Use Wisdom modifier (+5); Wisdom modifier (+5) is already shown.",
       },
       {
         label: "Secondary Effect",
         value: "You gain resist 5 + 1/2 level (+1).",
       },
+      { label: "Attack", value: "Wisdom (+5) vs AC" },
+      {
+        label: "Requirement",
+        value: "Use your Strength or Dexterity modifier.",
+      },
     ]);
+    const authoredChoices = buildEvaluatedSheetModel(
+      snapshot,
+      build,
+      evaluation,
+      content,
+      { resolveAbilityChoices: false },
+    );
+    expect(authoredChoices.powers[0]?.fields).toContainEqual({
+      label: "Special",
+      value:
+        "Use your Strength, Constitution, or Wisdom modifier; Wisdom modifier (+5) is already shown.",
+    });
     expect(model.items[0]).toMatchObject({ name: "Test wand" });
     expect(model.items).toContainEqual(
       expect.objectContaining({ name: "Gloaming Leather Armor +1" }),

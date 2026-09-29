@@ -50,6 +50,10 @@ export interface CharacterSheetModel {
   readonly notes: readonly SheetValue[];
 }
 
+export interface SheetModelOptions {
+  readonly resolveAbilityChoices?: boolean;
+}
+
 function extendedLegacyNotes(
   textStrings: Readonly<Record<string, string>>,
 ): SheetValue[] {
@@ -150,6 +154,15 @@ function signed(value: number): string {
 type NumericStat = (name: string) => number | undefined;
 
 const ABILITY_PATTERN = ABILITIES.join("|");
+const ABILITY_CHOICE_LIST_PATTERN = `(?:your\\s+)?(?:${ABILITY_PATTERN})(?:(?:\\s*,\\s*(?:(?:or|and)\\s+)?|\\s+(?:or|and)\\s+|\\s*\\/\\s*)(?:your\\s+)?(?:${ABILITY_PATTERN}))+`;
+const ABILITY_CHOICE_MODIFIER_PATTERN = new RegExp(
+  `\\b(${ABILITY_CHOICE_LIST_PATTERN})\\s+modifier\\b`,
+  "gi",
+);
+const ABILITY_CHOICE_ATTACK_PATTERN = new RegExp(
+  `\\b(${ABILITY_CHOICE_LIST_PATTERN})(?=\\s+vs\\.?\\s)`,
+  "gi",
+);
 const ABILITY_MODIFIER_PATTERN = new RegExp(
   `\\b(${ABILITY_PATTERN})\\s+modifier\\b(?!\\s*\\([+-]?\\d+\\))`,
   "gi",
@@ -176,11 +189,54 @@ function personalizePowerText(
   text: string,
   level: number,
   stat: NumericStat,
+  resolveAbilityChoices: boolean,
 ): string {
-  const withAbilities = text.replace(
+  const chooseAbility = (
+    list: string,
+  ): { name: string; value: number } | undefined => {
+    const mentions = [
+      ...list.matchAll(new RegExp(`\\b(${ABILITY_PATTERN})\\b`, "gi")),
+    ].map((match) =>
+      ABILITIES.find(
+        (ability) =>
+          ability.toLocaleLowerCase() === match[1]?.toLocaleLowerCase(),
+      ),
+    );
+    if (mentions.some((ability) => ability === undefined)) return undefined;
+    const choices = mentions.map((name) => ({
+      name: name ?? "",
+      value: stat(`${name} modifier`),
+    }));
+    if (choices.some(({ value }) => value === undefined)) return undefined;
+    return choices.reduce<{ name: string; value: number } | undefined>(
+      (best, choice) => {
+        const available = { name: choice.name, value: choice.value ?? 0 };
+        return best === undefined || available.value > best.value
+          ? available
+          : best;
+      },
+      undefined,
+    );
+  };
+  const resolvedChoices = resolveAbilityChoices
+    ? text
+        .replace(ABILITY_CHOICE_MODIFIER_PATTERN, (match, list: string) => {
+          const chosen = chooseAbility(list);
+          return chosen === undefined
+            ? match
+            : `${chosen.name} modifier (${signed(chosen.value)})`;
+        })
+        .replace(ABILITY_CHOICE_ATTACK_PATTERN, (match, list: string) => {
+          const chosen = chooseAbility(list);
+          return chosen === undefined
+            ? match
+            : `${chosen.name} (${signed(chosen.value)})`;
+        })
+    : text;
+  const withAbilities = resolvedChoices.replace(
     ABILITY_MODIFIER_PATTERN,
     (match: string, ability: string, offset: number) => {
-      if (isAbilityChoice(text, offset, match.length)) return match;
+      if (isAbilityChoice(resolvedChoices, offset, match.length)) return match;
       const value = stat(`${ability} modifier`);
       return value === undefined ? match : `${match} (${signed(value)})`;
     },
@@ -195,6 +251,7 @@ function evaluatedPowerCards(
   power: EvaluatedPower,
   entity: ContentEntity | undefined,
   evaluation: EvaluatedCharacter,
+  options: SheetModelOptions,
 ): SheetCard[] {
   const fields =
     entity === undefined ? {} : applyFieldOverlays(entity, evaluation.overlays);
@@ -209,12 +266,17 @@ function evaluatedPowerCards(
       )
       .map(([label, value]) => ({
         label,
-        value: personalizePowerText(value, evaluation.level, (name) => {
-          const raw = evaluatedStat(evaluation, name);
-          if (raw === undefined) return undefined;
-          const parsed = Number(raw);
-          return Number.isFinite(parsed) ? parsed : undefined;
-        }),
+        value: personalizePowerText(
+          value,
+          evaluation.level,
+          (name) => {
+            const raw = evaluatedStat(evaluation, name);
+            if (raw === undefined) return undefined;
+            const parsed = Number(raw);
+            return Number.isFinite(parsed) ? parsed : undefined;
+          },
+          options.resolveAbilityChoices === true,
+        ),
       })),
     ...power.recoveries.map((recovery) => ({
       label: "Recovery",
@@ -271,6 +333,7 @@ function powerCard(
   power: LegacyPowerSnapshot,
   entities: Map<string, ContentEntity>,
   snapshot: LegacyCharacterSnapshot,
+  options: SheetModelOptions,
 ): SheetCard {
   const entity =
     power.id === undefined
@@ -306,16 +369,32 @@ function powerCard(
       )
       .map(({ label, value }) => ({
         label,
-        value: personalizePowerText(value, snapshot.levelCount, (name) => {
-          const found = Object.entries(snapshot.stats).find(
-            ([candidate]) =>
-              candidate.trim().toLocaleLowerCase() ===
-              name.trim().toLocaleLowerCase(),
-          )?.[1];
-          if (found === undefined) return undefined;
-          const parsed = Number(found);
-          return Number.isFinite(parsed) ? parsed : undefined;
-        }),
+        value: personalizePowerText(
+          value,
+          snapshot.levelCount,
+          (name) => {
+            const found = Object.entries(snapshot.stats).find(
+              ([candidate]) =>
+                candidate.trim().toLocaleLowerCase() ===
+                name.trim().toLocaleLowerCase(),
+            )?.[1];
+            if (found !== undefined) {
+              const parsed = Number(found);
+              if (Number.isFinite(parsed)) return parsed;
+            }
+            const ability = ABILITIES.find(
+              (candidate) =>
+                `${candidate} modifier`.toLocaleLowerCase() ===
+                name.toLocaleLowerCase(),
+            );
+            const score =
+              ability === undefined ? undefined : snapshot.abilities[ability];
+            return score === undefined
+              ? undefined
+              : Math.floor((score - 10) / 2);
+          },
+          options.resolveAbilityChoices === true,
+        ),
       })),
     ...(entity?.description === undefined || entity.description.length === 0
       ? power.description === undefined
@@ -333,6 +412,7 @@ function powerCard(
 export function buildSheetModel(
   snapshot: LegacyCharacterSnapshot,
   content: readonly ContentEntity[] = [],
+  options: SheetModelOptions = {},
 ): CharacterSheetModel {
   const entities = entityMap(content);
   const ruleGroups = new Map<string, SheetValue[]>();
@@ -433,7 +513,7 @@ export function buildSheetModel(
     })),
     features: [...ruleGroups].map(([group, entries]) => ({ group, entries })),
     powers: snapshot.powers.map((power) =>
-      powerCard(power, entities, snapshot),
+      powerCard(power, entities, snapshot, options),
     ),
     items: itemCards,
     notes: [
@@ -460,6 +540,7 @@ export function buildEvaluatedSheetModel(
   build: CharacterBuild,
   evaluation: EvaluatedCharacter,
   content: readonly ContentEntity[],
+  options: SheetModelOptions = {},
 ): CharacterSheetModel {
   if (!evaluation.converged)
     throw new Error("A nonconvergent evaluation cannot produce a sheet");
@@ -604,6 +685,7 @@ export function buildEvaluatedSheetModel(
       power,
       entities.get(power.definitionId.toLocaleLowerCase()),
       evaluation,
+      options,
     ),
   );
   const evaluatedValues = (names: readonly string[]) =>

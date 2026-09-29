@@ -122,8 +122,10 @@ and invited-beta hostability preparation; desktop/tablet Play moves to M5.8.
 - Use one branded global header with two destinations: **Characters** and
   **Settings**. Character-specific Build and sheet views are
   reached from the character library and from one another rather than repeated
-  as global destinations. Settings owns Display, character-library backup and
-  restore, and Content configuration.
+  as global destinations. Settings owns Display, Backups & storage, and Game
+  content. Ordinary content status and add/review/use actions stay visible;
+  pack composition, exact identities, raw XML import, and diagnostics live
+  under deliberate advanced disclosure.
 - Keep a sibling **Overview** tab beside Build and Character details. It presents
   concise checklist panes for Character, Ability Scores, Companion, Skills,
   Powers, Spellbook, Feats, Retraining, and Other, with choices ordered and labeled by level; it

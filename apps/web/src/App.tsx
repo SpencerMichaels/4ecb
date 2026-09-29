@@ -103,6 +103,8 @@ const SettingsPage = lazy(() => initialSettingsPage ?? loadSettingsPage());
 const HIDE_FLAVORTEXT_STORAGE_KEY = "4ecb.hideFlavortext.v1";
 export const KEEP_LARGE_AMOUNTS_IN_GOLD_STORAGE_KEY =
   "4ecb.keepLargeAmountsInGold.v1";
+export const RESOLVE_ABILITY_CHOICES_STORAGE_KEY =
+  "4ecb.resolveAbilityChoices.v1";
 
 function RouteFocusOnMount({
   children,
@@ -167,6 +169,13 @@ export function App() {
       return false;
     }
   });
+  const [resolveAbilityChoices, setResolveAbilityChoices] = useState(() => {
+    try {
+      return localStorage.getItem(RESOLVE_ABILITY_CHOICES_STORAGE_KEY) !== "0";
+    } catch {
+      return true;
+    }
+  });
   const firstRoute = useRef(true);
   const runtimeContentStarted = useRef(false);
   const route = useMemo(() => parseHashRoute(hash), [hash]);
@@ -211,6 +220,15 @@ export function App() {
       // The wallet preference still applies for this session.
     }
   }, [keepLargeAmountsInGold]);
+  useEffect(() => {
+    try {
+      if (resolveAbilityChoices)
+        localStorage.removeItem(RESOLVE_ABILITY_CHOICES_STORAGE_KEY);
+      else localStorage.setItem(RESOLVE_ABILITY_CHOICES_STORAGE_KEY, "0");
+    } catch {
+      // The power-card display preference still applies for this session.
+    }
+  }, [resolveAbilityChoices]);
 
   const refresh = useCallback(async () => {
     const [installed, active, profile] = await Promise.all([
@@ -445,6 +463,8 @@ export function App() {
                   onHideFlavortextChange={setHideFlavortext}
                   keepLargeAmountsInGold={keepLargeAmountsInGold}
                   onKeepLargeAmountsInGoldChange={setKeepLargeAmountsInGold}
+                  resolveAbilityChoices={resolveAbilityChoices}
+                  onResolveAbilityChoicesChange={setResolveAbilityChoices}
                 />
               ) : route.characterId === undefined ? (
                 <CharacterLibraryPage
@@ -464,6 +484,7 @@ export function App() {
                   characterId={route.characterId}
                   manifests={manifests}
                   printOnReady={route.print === true}
+                  resolveAbilityChoices={resolveAbilityChoices}
                 />
               )}
             </RouteFocusOnMount>

@@ -121,6 +121,8 @@ export interface SettingsPageProps {
   readonly onHideFlavortextChange: (hideFlavortext: boolean) => void;
   readonly keepLargeAmountsInGold: boolean;
   readonly onKeepLargeAmountsInGoldChange: (value: boolean) => void;
+  readonly resolveAbilityChoices: boolean;
+  readonly onResolveAbilityChoicesChange: (value: boolean) => void;
 }
 
 export function SettingsPage({
@@ -137,6 +139,8 @@ export function SettingsPage({
   onHideFlavortextChange,
   keepLargeAmountsInGold,
   onKeepLargeAmountsInGoldChange,
+  resolveAbilityChoices,
+  onResolveAbilityChoicesChange,
 }: SettingsPageProps) {
   const [status, setStatus] = useState(
     installedPacks.length === 0 ? "No content packs installed." : "Ready.",
@@ -182,6 +186,19 @@ export function SettingsPage({
       !draftLayers.some(({ packId }) => packId === manifest.packId),
   );
   const activeLayers = activeProfile?.layers ?? [];
+  const contentBaseLayers =
+    activeLayers.length === 0 ? serverLayers : activeLayers;
+  const activeContentNames = activeLayers.map(({ packId, contentDigest }) => {
+    const installed = installedPacks.find(
+      ({ manifest }) =>
+        manifest.packId === packId && manifest.contentDigest === contentDigest,
+    );
+    return (
+      installed?.manifest.name ??
+      advertisedPacks.find((pack) => pack.packId === packId)?.name ??
+      packId
+    );
+  });
   const draftViews = buildProfileLayerViews(
     draftLayers,
     installedPacks,
@@ -227,15 +244,18 @@ export function SettingsPage({
     setPreview(undefined);
   }
 
-  async function previewDraft(): Promise<void> {
+  async function previewLayers(
+    layers: readonly ContentProfileLayer[],
+  ): Promise<void> {
     setPreviewing(true);
     setError(undefined);
     try {
       const result = await repository.previewProfile(
         "browser-active-profile",
         "Active browser content profile",
-        draftLayers.map(({ packId }) => packId),
+        layers.map(({ packId }) => packId),
       );
+      setDraftLayers([...layers]);
       setPreview(result);
       setStatus(
         `Preview ready: ${result.collisions.length.toLocaleString()} overridden record${result.collisions.length === 1 ? "" : "s"}. Review it before activation.`,
@@ -246,6 +266,10 @@ export function SettingsPage({
     } finally {
       setPreviewing(false);
     }
+  }
+
+  async function previewDraft(): Promise<void> {
+    await previewLayers(draftLayers);
   }
 
   async function activatePreview(): Promise<void> {
@@ -324,10 +348,20 @@ export function SettingsPage({
       worker.terminate();
       workerRef.current = undefined;
       if (response.type === "complete") {
+        setDraftLayers((current) => [
+          ...current.filter(
+            ({ packId }) => packId !== response.manifest.packId,
+          ),
+          {
+            packId: response.manifest.packId,
+            contentDigest: response.manifest.contentDigest,
+          },
+        ]);
+        setPreview(undefined);
         void onChanged().then(() => {
           const elapsedSeconds = (performance.now() - started) / 1000;
           setStatus(
-            `Installed ${response.manifest.name} in ${elapsedSeconds.toFixed(1)} seconds.`,
+            `Added ${response.manifest.name} in ${elapsedSeconds.toFixed(1)} seconds. Review the content change before using it.`,
           );
         });
       } else {
@@ -395,6 +429,20 @@ export function SettingsPage({
     workerRef.current = undefined;
     setImporting(false);
     setStatus("Import cancelled. No changes were saved.");
+  }
+
+  function startFileImport(file: File): void {
+    const kind = classifyContentSource(file.name);
+    if (kind === undefined) {
+      setError("Choose a .4ecp pack or a decrypted/merged .dnd40 XML file.");
+      setStatus("Import not started.");
+      return;
+    }
+    void importFile(file, kind).catch((reason: unknown) => {
+      setError(reason instanceof Error ? reason.message : String(reason));
+      setStatus("Import failed.");
+      setImporting(false);
+    });
   }
 
   async function exportBackup(): Promise<void> {
@@ -486,13 +534,38 @@ export function SettingsPage({
           />{" "}
           Keep large amounts in gold
         </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={resolveAbilityChoices}
+            onChange={(event) =>
+              onResolveAbilityChoicesChange(event.currentTarget.checked)
+            }
+          />{" "}
+          Use the best ability in power descriptions
+        </label>
+        <p className="field-help">
+          When a power offers several abilities, show only the one with the
+          highest modifier. Ties keep the first ability listed by the power.
+        </p>
       </section>
 
       <section className="panel settings-section">
         <div>
-          <h3>Character library</h3>
-          <p>Back up or restore all characters stored in this browser.</p>
+          <h3>Backups &amp; storage</h3>
+          <p>
+            Your characters and added content stay in this browser. Back up
+            characters here, and keep copies of any added content-pack files
+            separately.
+          </p>
         </div>
+        <p className="field-help">
+          {storageStatus === undefined
+            ? "Checking browser storage…"
+            : storageStatus.persisted === true
+              ? "This browser has granted persistent storage. Backups are still recommended."
+              : "Browser storage may be cleared automatically. Backups are the reliable recovery path."}
+        </p>
         <div className="heading-actions">
           <button
             type="button"
@@ -591,44 +664,94 @@ export function SettingsPage({
         )}
       </section>
 
-      <header className="settings-subheading">
+      <section className="panel settings-section game-content-settings">
         <div>
-          <p className="eyebrow">Shared baseline + personal overlays</p>
-          <h3>Content</h3>
+          <h3>Game content</h3>
           <p>
-            This server can distribute a shared baseline. You can layer personal
-            packs above it; personal files stay in this browser and are never
-            uploaded.
+            Choose the rules and character options available when building
+            characters. Added content stays in this browser.
           </p>
         </div>
+        <dl className="report-facts game-content-summary">
+          <div>
+            <dt>Status</dt>
+            <dd>
+              {runtimeContentError !== undefined ||
+              Object.values(contentDownloads).some(
+                (download) => download.phase === "error",
+              )
+                ? "Needs attention"
+                : activeProfile === undefined
+                  ? "Content setup needed"
+                  : "Ready"}
+            </dd>
+          </div>
+          <div>
+            <dt>Content in use</dt>
+            <dd>
+              {activeContentNames.length === 0
+                ? "None"
+                : activeContentNames.join(", ")}
+            </dd>
+          </div>
+          <div>
+            <dt>Group content</dt>
+            <dd>
+              {advertisedPacks.length === 0
+                ? "Not provided by this host"
+                : advertisedPacks
+                    .map((pack) => pack.name ?? pack.packId)
+                    .join(", ")}
+            </dd>
+          </div>
+          <div>
+            <dt>Added content</dt>
+            <dd>
+              {personalPacks.length === 0
+                ? "None"
+                : personalPacks.map(({ manifest }) => manifest.name).join(", ")}
+            </dd>
+          </div>
+        </dl>
+        {personalPacks
+          .filter(
+            ({ manifest }) =>
+              !activeLayers.some(
+                ({ packId, contentDigest }) =>
+                  packId === manifest.packId &&
+                  contentDigest === manifest.contentDigest,
+              ),
+          )
+          .map(({ manifest }) => (
+            <button
+              key={`${manifest.packId}:${manifest.contentDigest}`}
+              type="button"
+              disabled={previewing}
+              onClick={() =>
+                void previewLayers([
+                  ...contentBaseLayers.filter(
+                    ({ packId }) => packId !== manifest.packId,
+                  ),
+                  {
+                    packId: manifest.packId,
+                    contentDigest: manifest.contentDigest,
+                  },
+                ])
+              }
+            >
+              Review adding {manifest.name}
+            </button>
+          ))}
         <div className="heading-actions">
           <label className="file-button">
-            Import file
+            Add content pack
             <input
-              accept=".4ecp,.xml,application/json,application/xml,text/xml"
+              accept=".4ecp,application/json"
               type="file"
               disabled={importing}
               onChange={(event) => {
                 const file = event.currentTarget.files?.[0];
-                if (file !== undefined) {
-                  const kind = classifyContentSource(file.name);
-                  if (kind === undefined) {
-                    setError(
-                      "Choose a .4ecp pack or a decrypted/merged .dnd40 XML file.",
-                    );
-                    setStatus("Import not started.");
-                  } else {
-                    void importFile(file, kind).catch((reason: unknown) => {
-                      setError(
-                        reason instanceof Error
-                          ? reason.message
-                          : String(reason),
-                      );
-                      setStatus("Import failed.");
-                      setImporting(false);
-                    });
-                  }
-                }
+                if (file !== undefined) startFileImport(file);
                 event.currentTarget.value = "";
               }}
             />
@@ -639,11 +762,48 @@ export function SettingsPage({
             </button>
           ) : null}
         </div>
-      </header>
+        <p className="field-help">
+          Need to combine several packs, inspect exact versions, or import raw
+          legacy rules? Open Advanced content management below.
+        </p>
+        {!draftMatchesActive && preview === undefined ? (
+          <button
+            type="button"
+            disabled={!draftAvailable || previewing}
+            onClick={() => void previewDraft()}
+          >
+            {previewing ? "Reviewing changes…" : "Review content changes"}
+          </button>
+        ) : null}
+        {preview === undefined || draftMatchesActive ? null : (
+          <div className="content-change-review" aria-live="polite">
+            <p>
+              This will use {preview.definition.layers.length} content pack
+              {preview.definition.layers.length === 1 ? "" : "s"}.
+              {preview.collisions.length === 0
+                ? " No records are replaced."
+                : ` ${preview.collisions.length.toLocaleString()} record${preview.collisions.length === 1 ? " is" : "s are"} replaced by later content.`}
+            </p>
+            <p className="field-help">
+              Existing characters keep their current content until explicitly
+              migrated.
+            </p>
+            <button
+              type="button"
+              disabled={activating}
+              onClick={() => void activatePreview()}
+            >
+              {activating ? "Applying…" : "Use this content"}
+            </button>
+          </div>
+        )}
+      </section>
 
-      <p className="status" aria-live="polite">
-        {status}
-      </p>
+      {status === "Ready." ? null : (
+        <p className="status" aria-live="polite">
+          {status}
+        </p>
+      )}
       {error === undefined ? null : (
         <div className="error" role="alert">
           <strong>Problem</strong>
@@ -651,649 +811,698 @@ export function SettingsPage({
         </div>
       )}
 
-      <section className="panel administrator-content">
-        <div>
-          <p className="eyebrow">Shared by this server</p>
-          <h3>Administrator-provided baseline</h3>
-          <p>
-            These packs are published by the server administrator and are
-            available to everyone who can access this deployment. They form a
-            fixed base in the order shown; personal content can be layered above
-            them.
-          </p>
-        </div>
-        {runtimeContentError === undefined ? null : (
-          <div className="error" role="alert">
-            <strong>Administrator content is unavailable</strong>
-            <span>{runtimeContentError}</span>
-          </div>
-        )}
-        {advertisedPacks.length === 0 ? (
-          <p className="profile-warning">
-            This server does not advertise a shared content baseline. You can
-            still import and activate a personal pack below.
-          </p>
-        ) : (
-          <ol className="server-pack-list" aria-live="polite">
-            {advertisedPacks.map((advertised, index) => {
-              const installed = installedPacks.some(
-                ({ manifest }) =>
-                  manifest.packId === advertised.packId &&
-                  manifest.contentDigest === advertised.contentDigest,
-              );
-              const download = contentDownloads[advertised.packId];
-              const failed = download?.phase === "error";
-              return (
-                <li key={`${advertised.packId}:${advertised.contentDigest}`}>
+      <details className="settings-advanced">
+        <summary>Advanced content management</summary>
+        <div className="settings-advanced-body">
+          <section className="panel administrator-content">
+            <div>
+              <p className="eyebrow">Shared by this server</p>
+              <h3>Administrator-provided baseline</h3>
+              <p>
+                These packs are published by the server administrator and are
+                available to everyone who can access this deployment. They form
+                a fixed base in the order shown; personal content can be layered
+                above them.
+              </p>
+            </div>
+            {runtimeContentError === undefined ? null : (
+              <div className="error" role="alert">
+                <strong>Administrator content is unavailable</strong>
+                <span>{runtimeContentError}</span>
+              </div>
+            )}
+            {advertisedPacks.length === 0 ? (
+              <p className="profile-warning">
+                This server does not advertise a shared content baseline. You
+                can still import and activate a personal pack below.
+              </p>
+            ) : (
+              <ol className="server-pack-list" aria-live="polite">
+                {advertisedPacks.map((advertised, index) => {
+                  const installed = installedPacks.some(
+                    ({ manifest }) =>
+                      manifest.packId === advertised.packId &&
+                      manifest.contentDigest === advertised.contentDigest,
+                  );
+                  const download = contentDownloads[advertised.packId];
+                  const failed = download?.phase === "error";
+                  return (
+                    <li
+                      key={`${advertised.packId}:${advertised.contentDigest}`}
+                    >
+                      <div>
+                        <p className="eyebrow">Baseline layer {index + 1}</p>
+                        <h4>{advertised.name ?? advertised.packId}</h4>
+                        <p className="identifier">{advertised.packId}</p>
+                      </div>
+                      <dl className="profile-facts">
+                        <div>
+                          <dt>Availability</dt>
+                          <dd>
+                            {installed
+                              ? "Installed"
+                              : download?.phase === "downloading"
+                                ? "Downloading"
+                                : download?.phase === "installing"
+                                  ? "Verifying and installing"
+                                  : failed
+                                    ? "Unavailable"
+                                    : "Waiting to download"}
+                          </dd>
+                        </div>
+                        <div className="digest-fact">
+                          <dt>Expected digest</dt>
+                          <dd>
+                            <code>{advertised.contentDigest}</code>
+                          </dd>
+                        </div>
+                      </dl>
+                      {download?.phase === "downloading" ? (
+                        <div className="download-progress">
+                          {download.totalBytes === undefined ? null : (
+                            <progress
+                              aria-label={`Downloading ${advertised.name ?? advertised.packId}`}
+                              max={download.totalBytes}
+                              value={download.receivedBytes ?? 0}
+                            />
+                          )}
+                          <span>
+                            {formatBytes(download.receivedBytes)}
+                            {download.totalBytes === undefined
+                              ? " downloaded"
+                              : ` of ${formatBytes(download.totalBytes)}`}
+                          </span>
+                        </div>
+                      ) : null}
+                      {failed ? (
+                        <div
+                          className="profile-availability-error"
+                          role="alert"
+                        >
+                          <strong>Pack unavailable</strong>
+                          <span>{download.error}</span>
+                        </div>
+                      ) : null}
+                      {failed ? (
+                        <button
+                          type="button"
+                          onClick={() => void onRetryAdvertised(advertised)}
+                        >
+                          Retry download
+                        </button>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </section>
+
+          <section className="panel profile-composer">
+            <div className="profile-composer-heading">
+              <div>
+                <p className="eyebrow">Ordered resolution</p>
+                <h3>Active profile composition</h3>
+                <p>
+                  Later personal layers override earlier records. Administrator
+                  layers stay first and cannot be reordered. Changing this draft
+                  does nothing until you preview and activate it.
+                </p>
+              </div>
+              {activeProfile === undefined ? (
+                <p className="profile-state">No layered profile is active.</p>
+              ) : (
+                <dl className="active-profile-summary">
                   <div>
-                    <p className="eyebrow">Baseline layer {index + 1}</p>
-                    <h4>{advertised.name ?? advertised.packId}</h4>
-                    <p className="identifier">{advertised.packId}</p>
+                    <dt>Active resolved digest</dt>
+                    <dd>
+                      <code>{activeProfile.contentDigest}</code>
+                    </dd>
                   </div>
+                  <div>
+                    <dt>Resolution</dt>
+                    <dd>{activeProfile.resolutionPolicy}</dd>
+                  </div>
+                </dl>
+              )}
+            </div>
+
+            {draftViews.length === 0 ? (
+              <div className="empty-state">
+                <h4>This profile has no layers</h4>
+                <p>
+                  Import a personal pack, then add it here to keep using the
+                  single-pack workflow on a server without a shared baseline.
+                </p>
+              </div>
+            ) : (
+              <ol className="profile-layer-list">
+                {draftViews.map((layer, index) => {
+                  const personal = layer.origin === "personal";
+                  const personalIndex = index - serverLayers.length;
+                  return (
+                    <li
+                      key={`${layer.packId}:${layer.contentDigest}`}
+                      className={layer.available ? undefined : "missing-layer"}
+                    >
+                      <div className="layer-order" aria-hidden="true">
+                        {index + 1}
+                      </div>
+                      <div className="layer-description">
+                        <p className="eyebrow">
+                          {personal
+                            ? "Personal overlay"
+                            : "Administrator baseline"}
+                        </p>
+                        <h4>{layer.name}</h4>
+                        <p className="identifier">{layer.packId}</p>
+                        <p className="layer-digest">
+                          Digest <code>{layer.contentDigest}</code>
+                        </p>
+                        {!layer.available ? (
+                          <p
+                            className="profile-availability-error"
+                            role="alert"
+                          >
+                            This exact pack revision is not available in browser
+                            storage.
+                          </p>
+                        ) : null}
+                      </div>
+                      {personal ? (
+                        <div
+                          className="layer-actions"
+                          role="group"
+                          aria-label={`Reorder ${layer.name}`}
+                        >
+                          <button
+                            type="button"
+                            disabled={personalIndex === 0}
+                            onClick={() =>
+                              updateDraft(
+                                movePersonalLayer(
+                                  draftLayers,
+                                  index,
+                                  -1,
+                                  serverLayers.length,
+                                ),
+                              )
+                            }
+                          >
+                            Move up
+                          </button>
+                          <button
+                            type="button"
+                            disabled={index === draftLayers.length - 1}
+                            onClick={() =>
+                              updateDraft(
+                                movePersonalLayer(
+                                  draftLayers,
+                                  index,
+                                  1,
+                                  serverLayers.length,
+                                ),
+                              )
+                            }
+                          >
+                            Move down
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateDraft(
+                                draftLayers.filter(
+                                  (_, layerIndex) => layerIndex !== index,
+                                ),
+                              )
+                            }
+                          >
+                            Remove from draft
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="fixed-layer">Fixed by administrator</p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+
+            <div className="add-overlay-control">
+              <label>
+                Add a personal overlay
+                <select
+                  value={selectedPersonalPackId}
+                  disabled={selectablePersonalPacks.length === 0}
+                  onChange={(event) =>
+                    setSelectedPersonalPackId(event.currentTarget.value)
+                  }
+                >
+                  <option value="">
+                    {selectablePersonalPacks.length === 0
+                      ? "No additional personal packs installed"
+                      : "Choose a personal pack"}
+                  </option>
+                  {selectablePersonalPacks.map(({ manifest }) => (
+                    <option key={manifest.packId} value={manifest.packId}>
+                      {manifest.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                disabled={selectedPersonalPackId.length === 0}
+                onClick={() => {
+                  const selected = personalPacks.find(
+                    ({ manifest }) =>
+                      manifest.packId === selectedPersonalPackId,
+                  );
+                  if (selected === undefined) return;
+                  updateDraft([
+                    ...draftLayers,
+                    {
+                      packId: selected.manifest.packId,
+                      contentDigest: selected.manifest.contentDigest,
+                    },
+                  ]);
+                  setSelectedPersonalPackId("");
+                }}
+              >
+                Add overlay
+              </button>
+            </div>
+
+            <p className="profile-safety-note">
+              Activation changes the content available to the builder and the
+              profile used for new characters. Existing characters stay pinned
+              to their exact profile revision and are not altered by activation.
+            </p>
+            <div className="profile-activation-actions">
+              <button
+                type="button"
+                disabled={
+                  draftLayers.length === 0 || !draftAvailable || previewing
+                }
+                onClick={() => void previewDraft()}
+              >
+                {previewing ? "Preparing preview…" : "Preview profile"}
+              </button>
+              {activeProfile === undefined ? null : (
+                <button
+                  type="button"
+                  onClick={() =>
+                    void repository
+                      .deactivate()
+                      .then(onChanged)
+                      .then(() => setStatus("Content profile deactivated."))
+                      .catch((reason: unknown) => {
+                        setError(
+                          reason instanceof Error
+                            ? reason.message
+                            : String(reason),
+                        );
+                        setStatus("Profile deactivation failed.");
+                      })
+                  }
+                >
+                  Deactivate
+                </button>
+              )}
+            </div>
+
+            {preview === undefined ? null : (
+              <div className="profile-preview" aria-live="polite">
+                <div>
+                  <p className="eyebrow">Activation preview</p>
+                  <h4>Resolved profile is ready</h4>
                   <dl className="profile-facts">
                     <div>
-                      <dt>Availability</dt>
-                      <dd>
-                        {installed
-                          ? "Installed"
-                          : download?.phase === "downloading"
-                            ? "Downloading"
-                            : download?.phase === "installing"
-                              ? "Verifying and installing"
-                              : failed
-                                ? "Unavailable"
-                                : "Waiting to download"}
-                      </dd>
+                      <dt>Layers</dt>
+                      <dd>{preview.definition.layers.length}</dd>
+                    </div>
+                    <div>
+                      <dt>Overridden records</dt>
+                      <dd>{preview.collisions.length.toLocaleString()}</dd>
                     </div>
                     <div className="digest-fact">
-                      <dt>Expected digest</dt>
+                      <dt>Resolved digest</dt>
                       <dd>
-                        <code>{advertised.contentDigest}</code>
+                        <code>{preview.definition.contentDigest}</code>
                       </dd>
                     </div>
                   </dl>
-                  {download?.phase === "downloading" ? (
-                    <div className="download-progress">
-                      {download.totalBytes === undefined ? null : (
-                        <progress
-                          aria-label={`Downloading ${advertised.name ?? advertised.packId}`}
-                          max={download.totalBytes}
-                          value={download.receivedBytes ?? 0}
-                        />
-                      )}
-                      <span>
-                        {formatBytes(download.receivedBytes)}
-                        {download.totalBytes === undefined
-                          ? " downloaded"
-                          : ` of ${formatBytes(download.totalBytes)}`}
-                      </span>
-                    </div>
-                  ) : null}
-                  {failed ? (
-                    <div className="profile-availability-error" role="alert">
-                      <strong>Pack unavailable</strong>
-                      <span>{download.error}</span>
-                    </div>
-                  ) : null}
-                  {failed ? (
-                    <button
-                      type="button"
-                      onClick={() => void onRetryAdvertised(advertised)}
-                    >
-                      Retry download
-                    </button>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ol>
-        )}
-      </section>
-
-      <section className="panel profile-composer">
-        <div className="profile-composer-heading">
-          <div>
-            <p className="eyebrow">Ordered resolution</p>
-            <h3>Active profile composition</h3>
-            <p>
-              Later personal layers override earlier records. Administrator
-              layers stay first and cannot be reordered. Changing this draft
-              does nothing until you preview and activate it.
-            </p>
-          </div>
-          {activeProfile === undefined ? (
-            <p className="profile-state">No layered profile is active.</p>
-          ) : (
-            <dl className="active-profile-summary">
-              <div>
-                <dt>Active resolved digest</dt>
-                <dd>
-                  <code>{activeProfile.contentDigest}</code>
-                </dd>
-              </div>
-              <div>
-                <dt>Resolution</dt>
-                <dd>{activeProfile.resolutionPolicy}</dd>
-              </div>
-            </dl>
-          )}
-        </div>
-
-        {draftViews.length === 0 ? (
-          <div className="empty-state">
-            <h4>This profile has no layers</h4>
-            <p>
-              Import a personal pack, then add it here to keep using the
-              single-pack workflow on a server without a shared baseline.
-            </p>
-          </div>
-        ) : (
-          <ol className="profile-layer-list">
-            {draftViews.map((layer, index) => {
-              const personal = layer.origin === "personal";
-              const personalIndex = index - serverLayers.length;
-              return (
-                <li
-                  key={`${layer.packId}:${layer.contentDigest}`}
-                  className={layer.available ? undefined : "missing-layer"}
-                >
-                  <div className="layer-order" aria-hidden="true">
-                    {index + 1}
-                  </div>
-                  <div className="layer-description">
-                    <p className="eyebrow">
-                      {personal ? "Personal overlay" : "Administrator baseline"}
-                    </p>
-                    <h4>{layer.name}</h4>
-                    <p className="identifier">{layer.packId}</p>
-                    <p className="layer-digest">
-                      Digest <code>{layer.contentDigest}</code>
-                    </p>
-                    {!layer.available ? (
-                      <p className="profile-availability-error" role="alert">
-                        This exact pack revision is not available in browser
-                        storage.
-                      </p>
-                    ) : null}
-                  </div>
-                  {personal ? (
-                    <div
-                      className="layer-actions"
-                      role="group"
-                      aria-label={`Reorder ${layer.name}`}
-                    >
-                      <button
-                        type="button"
-                        disabled={personalIndex === 0}
-                        onClick={() =>
-                          updateDraft(
-                            movePersonalLayer(
-                              draftLayers,
-                              index,
-                              -1,
-                              serverLayers.length,
-                            ),
-                          )
-                        }
-                      >
-                        Move up
-                      </button>
-                      <button
-                        type="button"
-                        disabled={index === draftLayers.length - 1}
-                        onClick={() =>
-                          updateDraft(
-                            movePersonalLayer(
-                              draftLayers,
-                              index,
-                              1,
-                              serverLayers.length,
-                            ),
-                          )
-                        }
-                      >
-                        Move down
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateDraft(
-                            draftLayers.filter(
-                              (_, layerIndex) => layerIndex !== index,
-                            ),
-                          )
-                        }
-                      >
-                        Remove from draft
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="fixed-layer">Fixed by administrator</p>
+                  {preview.collisions.length === 0 ? null : (
+                    <details>
+                      <summary>Review overridden record IDs</summary>
+                      <ul className="collision-list">
+                        {preview.collisions.slice(0, 50).map((entityId) => (
+                          <li key={entityId}>
+                            <code>{entityId}</code>
+                          </li>
+                        ))}
+                      </ul>
+                      {preview.collisions.length > 50 ? (
+                        <p>
+                          Showing the first 50 of{" "}
+                          {preview.collisions.length.toLocaleString()}.
+                        </p>
+                      ) : null}
+                    </details>
                   )}
-                </li>
-              );
-            })}
-          </ol>
-        )}
+                </div>
+                <button
+                  type="button"
+                  disabled={activating}
+                  onClick={() => void activatePreview()}
+                >
+                  {activating ? "Activating…" : "Activate this profile"}
+                </button>
+              </div>
+            )}
+            {draftMatchesActive && preview === undefined ? (
+              <p className="field-help">
+                This draft matches the active ordered profile. You may still
+                preview it to review its resolved digest and overrides.
+              </p>
+            ) : null}
+          </section>
 
-        <div className="add-overlay-control">
-          <label>
-            Add a personal overlay
-            <select
-              value={selectedPersonalPackId}
-              disabled={selectablePersonalPacks.length === 0}
-              onChange={(event) =>
-                setSelectedPersonalPackId(event.currentTarget.value)
-              }
-            >
-              <option value="">
-                {selectablePersonalPacks.length === 0
-                  ? "No additional personal packs installed"
-                  : "Choose a personal pack"}
-              </option>
-              {selectablePersonalPacks.map(({ manifest }) => (
-                <option key={manifest.packId} value={manifest.packId}>
-                  {manifest.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            disabled={selectedPersonalPackId.length === 0}
-            onClick={() => {
-              const selected = personalPacks.find(
-                ({ manifest }) => manifest.packId === selectedPersonalPackId,
-              );
-              if (selected === undefined) return;
-              updateDraft([
-                ...draftLayers,
-                {
-                  packId: selected.manifest.packId,
-                  contentDigest: selected.manifest.contentDigest,
-                },
-              ]);
-              setSelectedPersonalPackId("");
-            }}
-          >
-            Add overlay
-          </button>
-        </div>
-
-        <p className="profile-safety-note">
-          Activation changes the content available to the builder and the
-          profile used for new characters. Existing characters stay pinned to
-          their exact profile revision and are not altered by activation.
-        </p>
-        <div className="profile-activation-actions">
-          <button
-            type="button"
-            disabled={draftLayers.length === 0 || !draftAvailable || previewing}
-            onClick={() => void previewDraft()}
-          >
-            {previewing ? "Preparing preview…" : "Preview profile"}
-          </button>
-          {activeProfile === undefined ? null : (
-            <button
-              type="button"
-              onClick={() =>
-                void repository
-                  .deactivate()
-                  .then(onChanged)
-                  .then(() => setStatus("Content profile deactivated."))
-                  .catch((reason: unknown) => {
+          <section className="panel content-onboarding">
+            <div>
+              <p className="eyebrow">Bring your own data</p>
+              <h3>Install a content source</h3>
+              <p>
+                Import a portable `.4ecp` pack, or compile a decrypted/merged
+                `.dnd40.xml` rules file locally in this browser. Source files
+                are read only after you choose them. Personal packs stay in this
+                browser and are never uploaded or shared with other users.
+              </p>
+            </div>
+            <div className="onboarding-fields">
+              <label>
+                Local profile ID for rules XML
+                <input
+                  value={localPackId}
+                  disabled={importing}
+                  onChange={(event) =>
+                    setLocalPackId(event.currentTarget.value)
+                  }
+                />
+              </label>
+              <label>
+                Local profile name for rules XML
+                <input
+                  value={localPackName}
+                  disabled={importing}
+                  onChange={(event) =>
+                    setLocalPackName(event.currentTarget.value)
+                  }
+                />
+              </label>
+            </div>
+            <label className="file-button">
+              Import rules XML
+              <input
+                accept=".xml,application/xml,text/xml"
+                type="file"
+                disabled={importing}
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  if (file !== undefined) startFileImport(file);
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
+            {directoryPickerSupported ? (
+              <button
+                type="button"
+                disabled={importing || scanningDirectory}
+                onClick={() =>
+                  void scanDirectory().catch((reason: unknown) => {
                     setError(
                       reason instanceof Error ? reason.message : String(reason),
                     );
-                    setStatus("Profile deactivation failed.");
+                    setStatus("Directory scan failed.");
+                    setScanningDirectory(false);
                   })
-              }
-            >
-              Deactivate
-            </button>
-          )}
-        </div>
-
-        {preview === undefined ? null : (
-          <div className="profile-preview" aria-live="polite">
-            <div>
-              <p className="eyebrow">Activation preview</p>
-              <h4>Resolved profile is ready</h4>
-              <dl className="profile-facts">
-                <div>
-                  <dt>Layers</dt>
-                  <dd>{preview.definition.layers.length}</dd>
-                </div>
-                <div>
-                  <dt>Overridden records</dt>
-                  <dd>{preview.collisions.length.toLocaleString()}</dd>
-                </div>
-                <div className="digest-fact">
-                  <dt>Resolved digest</dt>
-                  <dd>
-                    <code>{preview.definition.contentDigest}</code>
-                  </dd>
-                </div>
-              </dl>
-              {preview.collisions.length === 0 ? null : (
-                <details>
-                  <summary>Review overridden record IDs</summary>
-                  <ul className="collision-list">
-                    {preview.collisions.slice(0, 50).map((entityId) => (
-                      <li key={entityId}>
-                        <code>{entityId}</code>
-                      </li>
-                    ))}
-                  </ul>
-                  {preview.collisions.length > 50 ? (
-                    <p>
-                      Showing the first 50 of{" "}
-                      {preview.collisions.length.toLocaleString()}.
-                    </p>
-                  ) : null}
-                </details>
-              )}
-            </div>
-            <button
-              type="button"
-              disabled={activating}
-              onClick={() => void activatePreview()}
-            >
-              {activating ? "Activating…" : "Activate this profile"}
-            </button>
-          </div>
-        )}
-        {draftMatchesActive && preview === undefined ? (
-          <p className="field-help">
-            This draft matches the active ordered profile. You may still preview
-            it to review its resolved digest and overrides.
-          </p>
-        ) : null}
-      </section>
-
-      <section className="panel content-onboarding">
-        <div>
-          <p className="eyebrow">Bring your own data</p>
-          <h3>Install a content source</h3>
-          <p>
-            Import a portable `.4ecp` pack, or compile a decrypted/merged
-            `.dnd40.xml` rules file locally in this browser. Source files are
-            read only after you choose them. Personal packs stay in this browser
-            and are never uploaded or shared with other users.
-          </p>
-        </div>
-        <div className="onboarding-fields">
-          <label>
-            Local profile ID for rules XML
-            <input
-              value={localPackId}
-              disabled={importing}
-              onChange={(event) => setLocalPackId(event.currentTarget.value)}
-            />
-          </label>
-          <label>
-            Local profile name for rules XML
-            <input
-              value={localPackName}
-              disabled={importing}
-              onChange={(event) => setLocalPackName(event.currentTarget.value)}
-            />
-          </label>
-        </div>
-        {directoryPickerSupported ? (
-          <button
-            type="button"
-            disabled={importing || scanningDirectory}
-            onClick={() =>
-              void scanDirectory().catch((reason: unknown) => {
-                setError(
-                  reason instanceof Error ? reason.message : String(reason),
-                );
-                setStatus("Directory scan failed.");
-                setScanningDirectory(false);
-              })
-            }
-          >
-            {scanningDirectory
-              ? "Scanning selected directory…"
-              : "Choose legacy data or pack directory"}
-          </button>
-        ) : (
-          <p className="profile-warning">
-            Directory selection is unavailable in this browser. Use the Import
-            file control above; it supports the same portable pack and rules XML
-            formats.
-          </p>
-        )}
-        {directorySources.length === 0 ? null : (
-          <div className="directory-source-picker">
-            <label>
-              Discovered source
-              <select
-                value={selectedSourcePath}
-                disabled={importing}
-                onChange={(event) =>
-                  setSelectedSourcePath(event.currentTarget.value)
                 }
               >
-                {directorySources.map((source) => (
-                  <option key={source.relativePath} value={source.relativePath}>
-                    {source.relativePath} — {source.kind}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="button"
-              disabled={importing || selectedSourcePath.length === 0}
-              onClick={() =>
-                void importDiscoveredSource().catch((reason: unknown) => {
-                  setError(
-                    reason instanceof Error ? reason.message : String(reason),
-                  );
-                  setStatus("Import failed.");
-                  setImporting(false);
-                })
-              }
-            >
-              Install selected source
-            </button>
-          </div>
-        )}
-        <p className="field-help">
-          Legacy encrypted containers and loose `.part` files are not decrypted
-          or merged by the public web app. Use the project-local content tool to
-          create a private `.4ecp` first; this avoids persisting decryption keys
-          or update metadata in the browser.
-        </p>
-      </section>
-
-      <section className="panel storage-diagnostics">
-        <div>
-          <p className="eyebrow">Browser storage</p>
-          <h3>Persistence and quota</h3>
-          <p>
-            Characters, cached administrator packs, and personal packs live in
-            this browser profile. Personal packs are never uploaded. Persistent
-            storage reduces automatic eviction risk; backups remain the recovery
-            path for device or browser loss.
-          </p>
-        </div>
-        {storageStatus === undefined ? (
-          <p>Checking browser storage…</p>
-        ) : !storageStatus.supported ? (
-          <p className="profile-warning">
-            This browser does not expose storage quota diagnostics.
-          </p>
-        ) : (
-          <>
-            <dl className="report-facts">
-              <div>
-                <dt>Persistence</dt>
-                <dd>
-                  {storageStatus.persisted === true
-                    ? "Granted"
-                    : storageStatus.persisted === false
-                      ? "Not granted"
-                      : "Unavailable"}
-                </dd>
-              </div>
-              <div>
-                <dt>Used</dt>
-                <dd>{formatBytes(storageStatus.usage)}</dd>
-              </div>
-              <div>
-                <dt>Quota</dt>
-                <dd>{formatBytes(storageStatus.quota)}</dd>
-              </div>
-              <div>
-                <dt>Quota used</dt>
-                <dd>
-                  {storageStatus.usage === undefined ||
-                  storageStatus.quota === undefined ||
-                  storageStatus.quota === 0
-                    ? "Unavailable"
-                    : `${((storageStatus.usage / storageStatus.quota) * 100).toFixed(1)}%`}
-                </dd>
-              </div>
-            </dl>
-            <button
-              type="button"
-              disabled={
-                !storageStatus.persistenceSupported ||
-                storageStatus.persisted === true ||
-                requestingPersistence
-              }
-              onClick={() =>
-                void requestPersistence().catch((reason: unknown) =>
-                  setError(
-                    reason instanceof Error ? reason.message : String(reason),
-                  ),
-                )
-              }
-            >
-              {storageStatus.persisted === true
-                ? "Persistent storage granted"
-                : requestingPersistence
-                  ? "Requesting…"
-                  : "Request persistent storage"}
-            </button>
-          </>
-        )}
-      </section>
-
-      {personalPacks.length === 0 ? (
-        <div className="empty-state">
-          <h3>No personal content installed</h3>
-          <p>
-            Import a `.4ecp` or merged rules XML file to add personal content on
-            top of the administrator baseline. On a server without a baseline,
-            one personal pack can be the complete profile.
-          </p>
-        </div>
-      ) : (
-        <section aria-labelledby="personal-content-heading">
-          <div className="section-heading">
-            <p className="eyebrow">Stored in this browser</p>
-            <h3 id="personal-content-heading">Personal packs</h3>
-            <p>
-              Personal packs are never uploaded to the server and are not shared
-              with other users. Add them to the ordered draft above before
-              previewing and activating.
-            </p>
-          </div>
-          <ul className="profile-grid">
-            {personalPacks.map(({ manifest }) => {
-              const inActiveProfile = activeLayers.some(
-                ({ packId, contentDigest }) =>
-                  packId === manifest.packId &&
-                  contentDigest === manifest.contentDigest,
-              );
-              const inDraft = draftLayers.some(
-                ({ packId }) => packId === manifest.packId,
-              );
-              return (
-                <li
-                  key={manifest.packId}
-                  className={inActiveProfile ? "active-profile" : undefined}
+                {scanningDirectory
+                  ? "Scanning selected directory…"
+                  : "Choose legacy data or pack directory"}
+              </button>
+            ) : (
+              <p className="profile-warning">
+                Directory selection is unavailable in this browser. Use the
+                Import file control above; it supports the same portable pack
+                and rules XML formats.
+              </p>
+            )}
+            {directorySources.length === 0 ? null : (
+              <div className="directory-source-picker">
+                <label>
+                  Discovered source
+                  <select
+                    value={selectedSourcePath}
+                    disabled={importing}
+                    onChange={(event) =>
+                      setSelectedSourcePath(event.currentTarget.value)
+                    }
+                  >
+                    {directorySources.map((source) => (
+                      <option
+                        key={source.relativePath}
+                        value={source.relativePath}
+                      >
+                        {source.relativePath} — {source.kind}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  disabled={importing || selectedSourcePath.length === 0}
+                  onClick={() =>
+                    void importDiscoveredSource().catch((reason: unknown) => {
+                      setError(
+                        reason instanceof Error
+                          ? reason.message
+                          : String(reason),
+                      );
+                      setStatus("Import failed.");
+                      setImporting(false);
+                    })
+                  }
                 >
+                  Install selected source
+                </button>
+              </div>
+            )}
+            <p className="field-help">
+              Legacy encrypted containers and loose `.part` files are not
+              decrypted or merged by the public web app. Use the project-local
+              content tool to create a private `.4ecp` first; this avoids
+              persisting decryption keys or update metadata in the browser.
+            </p>
+          </section>
+
+          <section className="panel storage-diagnostics">
+            <div>
+              <p className="eyebrow">Browser storage</p>
+              <h3>Persistence and quota</h3>
+              <p>
+                Characters, cached administrator packs, and personal packs live
+                in this browser profile. Personal packs are never uploaded.
+                Persistent storage reduces automatic eviction risk; backups
+                remain the recovery path for device or browser loss.
+              </p>
+            </div>
+            {storageStatus === undefined ? (
+              <p>Checking browser storage…</p>
+            ) : !storageStatus.supported ? (
+              <p className="profile-warning">
+                This browser does not expose storage quota diagnostics.
+              </p>
+            ) : (
+              <>
+                <dl className="report-facts">
                   <div>
-                    <p className="eyebrow">
-                      {inActiveProfile ? "In active profile" : "Personal pack"}
-                    </p>
-                    <h3>{manifest.name}</h3>
-                    <p className="identifier">{manifest.packId}</p>
+                    <dt>Persistence</dt>
+                    <dd>
+                      {storageStatus.persisted === true
+                        ? "Granted"
+                        : storageStatus.persisted === false
+                          ? "Not granted"
+                          : "Unavailable"}
+                    </dd>
                   </div>
-                  <dl className="profile-facts">
-                    <div>
-                      <dt>Records</dt>
-                      <dd>{manifest.recordCount.toLocaleString()}</dd>
-                    </div>
-                    <div>
-                      <dt>Warnings</dt>
-                      <dd>
-                        {manifest.diagnosticCounts.warning.toLocaleString()}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Digest</dt>
-                      <dd>
-                        <code>{manifest.contentDigest}</code>
-                      </dd>
-                    </div>
-                  </dl>
-                  <div className="profile-actions">
-                    <button
-                      type="button"
-                      disabled={inDraft}
-                      onClick={() =>
-                        updateDraft([
-                          ...draftLayers,
-                          {
-                            packId: manifest.packId,
-                            contentDigest: manifest.contentDigest,
-                          },
-                        ])
-                      }
-                    >
-                      {inDraft ? "In profile draft" : "Add to profile draft"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setError(undefined);
-                        void repository
-                          .remove(manifest.packId)
-                          .then(onChanged)
-                          .then(() => {
-                            updateDraft(
-                              draftLayers.filter(
-                                ({ packId }) => packId !== manifest.packId,
-                              ),
-                            );
-                            setStatus(
-                              `Removed ${manifest.name} from this browser.`,
-                            );
-                          })
-                          .catch((reason: unknown) => {
-                            setError(
-                              reason instanceof Error
-                                ? reason.message
-                                : String(reason),
-                            );
-                            setStatus("Pack removal failed.");
-                          });
-                      }}
-                    >
-                      Remove from browser
-                    </button>
+                  <div>
+                    <dt>Used</dt>
+                    <dd>{formatBytes(storageStatus.usage)}</dd>
                   </div>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
+                  <div>
+                    <dt>Quota</dt>
+                    <dd>{formatBytes(storageStatus.quota)}</dd>
+                  </div>
+                  <div>
+                    <dt>Quota used</dt>
+                    <dd>
+                      {storageStatus.usage === undefined ||
+                      storageStatus.quota === undefined ||
+                      storageStatus.quota === 0
+                        ? "Unavailable"
+                        : `${((storageStatus.usage / storageStatus.quota) * 100).toFixed(1)}%`}
+                    </dd>
+                  </div>
+                </dl>
+                <button
+                  type="button"
+                  disabled={
+                    !storageStatus.persistenceSupported ||
+                    storageStatus.persisted === true ||
+                    requestingPersistence
+                  }
+                  onClick={() =>
+                    void requestPersistence().catch((reason: unknown) =>
+                      setError(
+                        reason instanceof Error
+                          ? reason.message
+                          : String(reason),
+                      ),
+                    )
+                  }
+                >
+                  {storageStatus.persisted === true
+                    ? "Persistent storage granted"
+                    : requestingPersistence
+                      ? "Requesting…"
+                      : "Request persistent storage"}
+                </button>
+              </>
+            )}
+          </section>
+
+          {personalPacks.length === 0 ? (
+            <div className="empty-state">
+              <h3>No personal content installed</h3>
+              <p>
+                Import a `.4ecp` or merged rules XML file to add personal
+                content on top of the administrator baseline. On a server
+                without a baseline, one personal pack can be the complete
+                profile.
+              </p>
+            </div>
+          ) : (
+            <section aria-labelledby="personal-content-heading">
+              <div className="section-heading">
+                <p className="eyebrow">Stored in this browser</p>
+                <h3 id="personal-content-heading">Personal packs</h3>
+                <p>
+                  Personal packs are never uploaded to the server and are not
+                  shared with other users. Add them to the ordered draft above
+                  before previewing and activating.
+                </p>
+              </div>
+              <ul className="profile-grid">
+                {personalPacks.map(({ manifest }) => {
+                  const inActiveProfile = activeLayers.some(
+                    ({ packId, contentDigest }) =>
+                      packId === manifest.packId &&
+                      contentDigest === manifest.contentDigest,
+                  );
+                  const inDraft = draftLayers.some(
+                    ({ packId }) => packId === manifest.packId,
+                  );
+                  return (
+                    <li
+                      key={manifest.packId}
+                      className={inActiveProfile ? "active-profile" : undefined}
+                    >
+                      <div>
+                        <p className="eyebrow">
+                          {inActiveProfile
+                            ? "In active profile"
+                            : "Personal pack"}
+                        </p>
+                        <h3>{manifest.name}</h3>
+                        <p className="identifier">{manifest.packId}</p>
+                      </div>
+                      <dl className="profile-facts">
+                        <div>
+                          <dt>Records</dt>
+                          <dd>{manifest.recordCount.toLocaleString()}</dd>
+                        </div>
+                        <div>
+                          <dt>Warnings</dt>
+                          <dd>
+                            {manifest.diagnosticCounts.warning.toLocaleString()}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Digest</dt>
+                          <dd>
+                            <code>{manifest.contentDigest}</code>
+                          </dd>
+                        </div>
+                      </dl>
+                      <div className="profile-actions">
+                        <button
+                          type="button"
+                          disabled={inDraft}
+                          onClick={() =>
+                            updateDraft([
+                              ...draftLayers,
+                              {
+                                packId: manifest.packId,
+                                contentDigest: manifest.contentDigest,
+                              },
+                            ])
+                          }
+                        >
+                          {inDraft
+                            ? "In profile draft"
+                            : "Add to profile draft"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setError(undefined);
+                            void repository
+                              .remove(manifest.packId)
+                              .then(onChanged)
+                              .then(() => {
+                                updateDraft(
+                                  draftLayers.filter(
+                                    ({ packId }) => packId !== manifest.packId,
+                                  ),
+                                );
+                                setStatus(
+                                  `Removed ${manifest.name} from this browser.`,
+                                );
+                              })
+                              .catch((reason: unknown) => {
+                                setError(
+                                  reason instanceof Error
+                                    ? reason.message
+                                    : String(reason),
+                                );
+                                setStatus("Pack removal failed.");
+                              });
+                          }}
+                        >
+                          Remove from browser
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
+        </div>
+      </details>
     </main>
   );
 }
