@@ -211,6 +211,11 @@ describe("sheet model", () => {
       choices: [],
       stats: {
         Strength: { name: "Strength", value: 16, contributions: [] },
+        "Wisdom modifier": {
+          name: "Wisdom modifier",
+          value: 5,
+          contributions: [],
+        },
         AC: { name: "AC", value: 19, contributions: [] },
       },
       textStrings: {},
@@ -263,7 +268,33 @@ describe("sheet model", () => {
         sources: ["Synthetic"],
         attributes: [],
         categories: [],
-        specifics: [],
+        specifics: [
+          {
+            name: "Hit",
+            value: "2[W] + Your Wisdom modifier damage.",
+            extraAttributes: [],
+            ordinal: 0,
+          },
+          {
+            name: "Effect",
+            value: "Gain 5 + half your level temporary hit points.",
+            extraAttributes: [],
+            ordinal: 1,
+          },
+          {
+            name: "Special",
+            value:
+              "Use your Strength, Constitution, or Wisdom modifier; Wisdom modifier (+5) is already shown.",
+            extraAttributes: [],
+            ordinal: 2,
+          },
+          {
+            name: "Secondary Effect",
+            value: "You gain resist 5 + 1/2 level.",
+            extraAttributes: [],
+            ordinal: 3,
+          },
+        ],
         rules: [],
         description: "A modern evaluated spark.",
         extensions: [],
@@ -330,6 +361,22 @@ describe("sheet model", () => {
       attack: "+7 vs Reflex",
       damage: "1d6+4",
     });
+    expect(model.powers[0]?.fields).toEqual([
+      { label: "Hit", value: "2[W] + Your Wisdom modifier (+5) damage." },
+      {
+        label: "Effect",
+        value: "Gain 5 + half your level (+1) temporary hit points.",
+      },
+      {
+        label: "Special",
+        value:
+          "Use your Strength, Constitution, or Wisdom modifier; Wisdom modifier (+5) is already shown.",
+      },
+      {
+        label: "Secondary Effect",
+        value: "You gain resist 5 + 1/2 level (+1).",
+      },
+    ]);
     expect(model.items[0]).toMatchObject({ name: "Test wand" });
     expect(model.items).toContainEqual(
       expect.objectContaining({ name: "Gloaming Leather Armor +1" }),

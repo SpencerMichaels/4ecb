@@ -3599,3 +3599,23 @@ Divinity`, except for the native function's explicit, case-insensitive
   details, Avandra saves and locks Good with the explanatory note, and changing
   to Fighter hides the Class copy and unlocks Alignment without clearing either
   saved selection.
+
+## M5.7 inline power-value checkpoint (2026-09-28)
+
+- Recovered native behavior confirms that `RulesElementField` passes authored
+  prose through a word-based named-ability replacement step. It is not encoded
+  as structured substitution tokens in the content. The original formatter
+  appends signed values to named modifiers, leaves generic/choice-based
+  `ability modifier` text alone, and does not expand half-level expressions.
+- The shared sheet model now appends authoritative signed values to unambiguous
+  named ability modifiers and to `half your level`, `one-half your level`, and
+  `1/2 level` variants. It does not double-annotate existing parentheticals or
+  guess among multiple abilities. Browser View and print therefore receive the
+  same personalized card prose without changing source content or rules math.
+- Hu's legacy PDF confirms `Wisdom modifier (+5)` alongside its separate weapon
+  calculation line. Fei Zhu's image-only legacy PDF confirms named modifiers
+  such as `Wisdom modifier (+4)`, an unexpanded generic `ability modifier`, and
+  the unexpanded `5 + 1/2 level` form that this cleanup intentionally improves.
+- Focused sheet-model coverage passes four tests, including named modifiers,
+  ambiguous choices, existing annotations, and both textual and fractional
+  half-level forms. Package TypeScript checking also passes.

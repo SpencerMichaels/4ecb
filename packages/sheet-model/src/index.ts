@@ -147,6 +147,50 @@ function signed(value: number): string {
   return value >= 0 ? `+${value}` : String(value);
 }
 
+type NumericStat = (name: string) => number | undefined;
+
+const ABILITY_PATTERN = ABILITIES.join("|");
+const ABILITY_MODIFIER_PATTERN = new RegExp(
+  `\\b(${ABILITY_PATTERN})\\s+modifier\\b(?!\\s*\\([+-]?\\d+\\))`,
+  "gi",
+);
+const HALF_LEVEL_PATTERN =
+  /\b(?:one[- ]half|half)(?:\s+your)?\s+level\b(?!\s*\([+-]?\d+\))|\b1\/2(?:\s+your)?\s+level\b(?!\s*\([+-]?\d+\))/gi;
+
+function isAbilityChoice(text: string, start: number, length: number): boolean {
+  const neighboringAbility = new RegExp(
+    `(?:${ABILITY_PATTERN})(?:\\s+modifier)?(?:\\s*[,/]\\s*(?:(?:or|and)\\s*)?|\\s+(?:or|and)\\s+)$`,
+    "i",
+  );
+  const followingAbility = new RegExp(
+    `^\\s*(?:[,/]\\s*(?:(?:or|and)\\s*)?|(?:or|and)\\s+)(?:your\\s+)?(?:${ABILITY_PATTERN})\\b`,
+    "i",
+  );
+  return (
+    neighboringAbility.test(text.slice(0, start)) ||
+    followingAbility.test(text.slice(start + length))
+  );
+}
+
+function personalizePowerText(
+  text: string,
+  level: number,
+  stat: NumericStat,
+): string {
+  const withAbilities = text.replace(
+    ABILITY_MODIFIER_PATTERN,
+    (match: string, ability: string, offset: number) => {
+      if (isAbilityChoice(text, offset, match.length)) return match;
+      const value = stat(`${ability} modifier`);
+      return value === undefined ? match : `${match} (${signed(value)})`;
+    },
+  );
+  return withAbilities.replace(
+    HALF_LEVEL_PATTERN,
+    (match) => `${match} (${signed(Math.floor(level / 2))})`,
+  );
+}
+
 function evaluatedPowerCards(
   power: EvaluatedPower,
   entity: ContentEntity | undefined,
@@ -163,7 +207,15 @@ function evaluatedPowerCards(
             name.toLocaleLowerCase(),
           ),
       )
-      .map(([label, value]) => ({ label, value })),
+      .map(([label, value]) => ({
+        label,
+        value: personalizePowerText(value, evaluation.level, (name) => {
+          const raw = evaluatedStat(evaluation, name);
+          if (raw === undefined) return undefined;
+          const parsed = Number(raw);
+          return Number.isFinite(parsed) ? parsed : undefined;
+        }),
+      })),
     ...power.recoveries.map((recovery) => ({
       label: "Recovery",
       value: recovery.expression,
@@ -218,6 +270,7 @@ function evaluatedPowerCards(
 function powerCard(
   power: LegacyPowerSnapshot,
   entities: Map<string, ContentEntity>,
+  snapshot: LegacyCharacterSnapshot,
 ): SheetCard {
   const entity =
     power.id === undefined
@@ -246,10 +299,24 @@ function powerCard(
         }),
     ...(attack === undefined ? {} : { attack }),
     ...(weapon?.damage === undefined ? {} : { damage: weapon.damage }),
-    fields: entityFields(entity).filter(
-      (field) =>
-        !["Power Usage", "Action Type", "Keywords"].includes(field.label),
-    ),
+    fields: entityFields(entity)
+      .filter(
+        (field) =>
+          !["Power Usage", "Action Type", "Keywords"].includes(field.label),
+      )
+      .map(({ label, value }) => ({
+        label,
+        value: personalizePowerText(value, snapshot.levelCount, (name) => {
+          const found = Object.entries(snapshot.stats).find(
+            ([candidate]) =>
+              candidate.trim().toLocaleLowerCase() ===
+              name.trim().toLocaleLowerCase(),
+          )?.[1];
+          if (found === undefined) return undefined;
+          const parsed = Number(found);
+          return Number.isFinite(parsed) ? parsed : undefined;
+        }),
+      })),
     ...(entity?.description === undefined || entity.description.length === 0
       ? power.description === undefined
         ? {}
@@ -365,7 +432,9 @@ export function buildSheetModel(
         .join(" · "),
     })),
     features: [...ruleGroups].map(([group, entries]) => ({ group, entries })),
-    powers: snapshot.powers.map((power) => powerCard(power, entities)),
+    powers: snapshot.powers.map((power) =>
+      powerCard(power, entities, snapshot),
+    ),
     items: itemCards,
     notes: [
       ...[
