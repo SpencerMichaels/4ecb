@@ -2804,6 +2804,7 @@ textarea {
 }
 
 .selection-table-scroll {
+  --selection-table-header-height: 2rem;
   border: 1px solid var(--border);
   border-top: 0;
   max-height: 30rem;
@@ -2834,11 +2835,19 @@ textarea {
 .selection-table-scroll thead th {
   background: var(--legacy-neutral);
   font-size: 0.72rem;
+  height: var(--selection-table-header-height);
   letter-spacing: 0.035em;
   position: sticky;
   top: 0;
   text-transform: uppercase;
   z-index: 2;
+}
+
+.selection-table-scroll tbody .table-section-row th {
+  background: var(--brand-navy);
+  position: sticky;
+  top: var(--selection-table-header-height);
+  z-index: 1;
 }
 
 .selection-sort-button {

@@ -3709,4 +3709,6 @@ Divinity`, except for the native function's explicit, case-insensitive
 - Builder candidate tables keep their column headings pinned to the top of the
   table's own scrolling viewport, including powers, feats, classes, races,
   backgrounds, themes, deities, and other shared choice lists. Horizontal
-  scrolling remains unchanged.
+  scrolling remains unchanged. Power and feat subcategory rows form a second
+  sticky tier beneath the column headings; the current category remains named
+  and collapsible until the next category replaces it.
