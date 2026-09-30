@@ -1560,7 +1560,9 @@ rule.
 
 Internal descriptor, rule, and Source dividers use a deliberately lower-contrast
 version of the shared border color. The card outline and header boundary remain
-the stronger visual hierarchy.
+the stronger visual hierarchy. Undivided rows inside one combat group use half
+the normal inter-row spacing while retaining the normal outer group padding, so
+the sequence reads as one unit without crowding its neighboring blocks.
 
 Requirement/Prerequisite and Trigger still lead. All other combat clauses retain
 their authored order, including Effects before an Attack, Effects after a Hit,

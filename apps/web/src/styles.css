@@ -3971,7 +3971,17 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 
 .power-combat-group > dt,
 .power-combat-group > dd {
-  padding-block: 0.72rem;
+  padding-block: 0.36rem;
+}
+
+.power-combat-group > dt:first-child,
+.power-combat-group > dt:first-child + dd {
+  padding-top: 0.72rem;
+}
+
+.power-combat-group > dt:nth-last-child(2),
+.power-combat-group > dd:last-child {
+  padding-bottom: 0.72rem;
 }
 
 .power-combat-group > dt {
