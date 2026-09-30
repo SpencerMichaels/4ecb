@@ -1233,6 +1233,75 @@ textarea {
   display: none;
 }
 
+.print-preview-toolbar {
+  display: none;
+}
+
+.sheet-page.is-print-preview {
+  background: var(--surface-subtle);
+  max-width: none;
+}
+
+.sheet-page.is-print-preview .screen-sheet-view {
+  display: none;
+}
+
+.sheet-page.is-print-preview .print-only:not(.print-excluded) {
+  display: block;
+}
+
+.sheet-page.is-print-preview .screen-power-text,
+.sheet-page.is-print-preview .screen-power-variants {
+  display: none;
+}
+
+.sheet-page.is-print-preview .print-power-text {
+  display: inline;
+}
+
+.sheet-page.is-print-preview .print-power-variants {
+  display: block;
+  margin: 0 0 0.35rem;
+  padding-left: 1rem;
+}
+
+.sheet-page.is-print-preview .print-preview-toolbar {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin: 0 auto 1rem;
+  max-width: 88rem;
+  padding: 0.75rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.print-preview-toolbar > div {
+  display: grid;
+  text-align: center;
+}
+
+.print-preview-toolbar span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.sheet-page.is-print-preview .print-sheet,
+.sheet-page.is-print-preview .card-section {
+  box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 18%);
+  color: #111;
+  max-width: 8.5in;
+}
+
+.sheet-page.paper-a4.is-print-preview .print-sheet,
+.sheet-page.paper-a4.is-print-preview .card-section {
+  max-width: 210mm;
+}
+
 .screen-sheet-view {
   margin: 0 auto;
   max-width: 96rem;

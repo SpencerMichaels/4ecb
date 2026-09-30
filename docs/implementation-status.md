@@ -9,8 +9,12 @@ separate projection over the same semantic model.
 - View now provides an at-a-glance summary, sticky section navigation, powers,
   equipment/item references, learned rituals/formulas/practices, features,
   notes, explicit recovery guidance, and direct Characters, Build, and
-  Print/save-PDF actions. Screen references remain available regardless of
-  which optional card groups the user includes on paper.
+  Print/save-PDF actions. The print action first opens an explicit in-app
+  preview of the actual print projection, with paper/color context, a return to
+  View, and a second action that invokes the browser's print/save dialog; it no
+  longer depends on a browser exposing print-media changes clearly. Screen
+  references remain available regardless of which optional card groups the user
+  includes on paper.
 - The printed summary keeps compact abilities, resources, defenses, senses, and
   skills together. Long feature, equipment, learned-reference, and note prose
   now uses wide layouts instead of being crushed into the former narrow

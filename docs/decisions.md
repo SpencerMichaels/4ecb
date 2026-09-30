@@ -1580,7 +1580,10 @@ weapon switching supports play rather than power selection.
 Browser View and print are distinct presentations over one semantic sheet/card
 model. View is a navigable desktop/tablet reference with an at-a-glance summary,
 complete interactive cards, equipment, learned references, features, notes,
-recovery guidance, and direct Build/print actions. Print remains page-oriented:
+recovery guidance, and direct Build/print actions. The print action first shows
+the actual print projection in an explicit in-app preview, then invokes the
+browser print/save dialog from that preview; native print UI is not treated as a
+reliable preview surface. Print remains page-oriented:
 compact statistics may use columns, but narrative features, learned references,
 equipment, and notes use wide readable blocks; the established card grid remains
 separate. Print inclusion preferences never hide the corresponding browser View

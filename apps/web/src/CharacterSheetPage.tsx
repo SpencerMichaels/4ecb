@@ -265,6 +265,7 @@ export function CharacterSheetPage({
   readonly abbreviateAbilityValues?: boolean;
   readonly expandWeaponDice?: boolean;
 }) {
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [character, setCharacter] = useState<CharacterRecord>();
   const [content, setContent] =
     useState<Awaited<ReturnType<typeof appContentRuntime.getPack>>>();
@@ -492,9 +493,28 @@ export function CharacterSheetPage({
     );
   return (
     <main
-      className={`sheet-page paper-${character.sheetSettings.paper} ${character.sheetSettings.monochrome ? "sheet-monochrome" : ""}`}
+      className={`sheet-page paper-${character.sheetSettings.paper} ${character.sheetSettings.monochrome ? "sheet-monochrome" : ""} ${showPrintPreview ? "is-print-preview" : ""}`}
       id="main-content"
     >
+      {showPrintPreview ? (
+        <div className="print-preview-toolbar">
+          <button type="button" onClick={() => setShowPrintPreview(false)}>
+            ← Back to character view
+          </button>
+          <div>
+            <strong>Print preview</strong>
+            <span>
+              {character.sheetSettings.paper === "a4" ? "A4" : "US Letter"}
+              {character.sheetSettings.monochrome
+                ? " · Monochrome"
+                : " · Color"}
+            </span>
+          </div>
+          <button type="button" onClick={() => window.print()}>
+            Print / save PDF
+          </button>
+        </div>
+      ) : null}
       <div className="screen-sheet-view">
         <header className="view-sheet-header">
           <div className="view-sheet-identity">
@@ -519,7 +539,7 @@ export function CharacterSheetPage({
             >
               Build
             </a>
-            <button type="button" onClick={() => window.print()}>
+            <button type="button" onClick={() => setShowPrintPreview(true)}>
               Print / save PDF
             </button>
           </div>

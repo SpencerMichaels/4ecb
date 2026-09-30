@@ -279,7 +279,7 @@ try {
         ).map((card) => card.querySelector("h3")?.textContent ?? "unnamed");
         const hidden = [
           ".app-header", ".pwa-status",
-          ".screen-sheet-view", ".sheet-toolbar", ".cache-warning", ".sheet-page > .status"
+          ".screen-sheet-view", ".print-preview-toolbar", ".sheet-toolbar", ".cache-warning", ".sheet-page > .status"
         ].every((selector) => {
           const element = document.querySelector(selector);
           return element === null || getComputedStyle(element).display === "none";

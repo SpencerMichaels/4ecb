@@ -148,6 +148,8 @@ describe("release accessibility contract", () => {
       expect(characterSheet).toContain(section);
     expect(characterSheet).toContain("/edit?tab=overview");
     expect(characterSheet).toContain("Print / save PDF");
+    expect(characterSheet).toContain("setShowPrintPreview(true)");
+    expect(characterSheet).toContain('className="print-preview-toolbar"');
     expect(characterSheet).toContain("model.learnedReferences.map");
     expect(characterSheet).toContain("print-summary-columns");
     expect(characterSheet).toContain("print-wide-section");
@@ -156,6 +158,12 @@ describe("release accessibility contract", () => {
     );
     expect(styles).toMatch(
       /@media print[\s\S]*\.print-only\s*\{[^}]*display: block/,
+    );
+    expect(styles).toMatch(
+      /\.sheet-page\.is-print-preview \.screen-sheet-view\s*\{[^}]*display: none/,
+    );
+    expect(styles).toMatch(
+      /\.sheet-page\.is-print-preview \.print-only:not\(\.print-excluded\)\s*\{[^}]*display: block/,
     );
   });
 
