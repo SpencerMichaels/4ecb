@@ -572,7 +572,8 @@ new server-owned data architecture and not the later M9 release-hardening pass.
   equipped variants. Build selection cards instead retain general formulas,
   complete authored Hit clauses, and authored combat order in one consistent
   rules layout, with compact numbered labels for primary and subsequent attack
-  phases and uninterrupted Attack/Hit/following-Effect groups.
+  phases and uninterrupted Attack/Hit/following-Effect groups. Damage-only Hit
+  rows collapse to a concise Damage formula; any rider retains the full Hit row.
 - Settings presents ordinary appearance, content, backup, and storage jobs in
   plain language, with content layering identities and diagnostics behind
   deliberate advanced disclosure.

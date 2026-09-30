@@ -1551,6 +1551,13 @@ An Attack, its adjacent Hit rows, and following Effect rows form one visual grou
 with a shared label column and no internal separators. A before-attack Effect is
 unconditional setup and remains a separate row above that group.
 
+A clearly damage-only Hit row is labeled `DAMAGE`, and its displayed formula
+omits the redundant word “damage.” Typed damage, weapon alternatives, and level
+scaling remain eligible. Any condition, movement, ongoing damage, target-based
+clause, additional attack, or other rider keeps the authored `HIT` label and
+complete prose; the presentation must prefer a false negative over hiding a
+rule.
+
 Requirement/Prerequisite and Trigger still lead. All other combat clauses retain
 their authored order, including Effects before an Attack, Effects after a Hit,
 and Effects that bridge primary and secondary phases. This relies on explicit

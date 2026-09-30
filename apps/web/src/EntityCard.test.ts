@@ -655,6 +655,44 @@ describe("shared power and item cards", () => {
     );
   });
 
+  it("labels a damage-only Hit as Damage without hiding combat riders", () => {
+    const damageOnly = renderToStaticMarkup(
+      createElement(EntityCardBody, {
+        entity: entity("Power", [
+          field("Primary Attack", "Strength vs. AC", 0),
+          field(
+            "Primary Hit",
+            "1[W] + Strength modifier fire damage. Increase damage to 2[W] + Strength modifier fire damage at 21st level.",
+            1,
+          ),
+        ]),
+        hideFlavortext: false,
+        powerPresentation: createBuildPowerCardPresentationFinder()("fixture"),
+      }),
+    );
+    const withRider = renderToStaticMarkup(
+      createElement(EntityCardBody, {
+        entity: entity("Power", [
+          field("Attack", "Strength vs. AC", 0),
+          field(
+            "Hit",
+            "1[W] + Strength modifier damage, and the target is dazed.",
+            1,
+          ),
+        ]),
+        hideFlavortext: false,
+        powerPresentation: createBuildPowerCardPresentationFinder()("fixture"),
+      }),
+    );
+
+    expect(damageOnly).toContain("<dt>damage 1</dt>");
+    expect(damageOnly).toContain("1[W] + STR fire");
+    expect(damageOnly).toContain("Level 21: 2[W] + STR fire");
+    expect(damageOnly).not.toContain("fire damage");
+    expect(withRider).toContain("<dt>Hit</dt>");
+    expect(withRider).toContain("damage, and the target is dazed.");
+  });
+
   it("labels exact Personal attack types as Range without reusing authored Power Type", () => {
     const power = entity("Power", [
       field("Power Usage", "Encounter", 0),

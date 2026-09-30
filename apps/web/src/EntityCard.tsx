@@ -984,6 +984,46 @@ function buildPowerRuleLabel(field: SpecificField): string {
   return `${match[2] ?? field.name} ${BUILD_POWER_PHASE_NUMBER[match[1]!]}`;
 }
 
+const DAMAGE_ONLY_RIDER =
+  /\b(?:target|creature|enemy|ally|ongoing|save|shift|push|pull|slide|teleport|move|prone|dazed|slowed|immobilized|stunned|weakened|blinded|marked|regain|temporary hit points?|make (?:a|an|the) attack|attack roll|defen[cs]e)\b/iu;
+const DAMAGE_SCALING_SENTENCE =
+  /^increase damage to (.+?) at (\d+)(?:st|nd|rd|th) level\.?$/iu;
+const DAMAGE_VALUE_SENTENCE =
+  /^(?:level \d+:\s*)?.+\bdamage(?:\s+(?:\([^)]*\)|per attack))*\.?$/iu;
+
+function damageOnlyHitValue(value: string): string | undefined {
+  const sentences = value
+    .trim()
+    .split(/\n+|(?<=\.)\s+(?=(?:level \d+:|increase damage to))/giu)
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 0);
+  if (
+    sentences.length === 0 ||
+    sentences.some(
+      (sentence) =>
+        DAMAGE_ONLY_RIDER.test(sentence) ||
+        (!DAMAGE_VALUE_SENTENCE.test(sentence) &&
+          !DAMAGE_SCALING_SENTENCE.test(sentence)),
+    )
+  )
+    return undefined;
+  return sentences
+    .map((sentence) => {
+      const scaling = sentence.match(DAMAGE_SCALING_SENTENCE);
+      if (scaling !== null)
+        return `Level ${scaling[2]}: ${scaling[1]!.replace(/\s+damage\b/giu, "")}`;
+      return sentence.replace(/\s+damage\b/giu, "").replace(/\.$/u, "");
+    })
+    .join("\n");
+}
+
+function buildPowerDamageLabel(field: SpecificField): string {
+  const phase = normalizedFieldName(field.name).match(BUILD_POWER_PHASE_FIELD);
+  return phase === null
+    ? "Damage"
+    : `damage ${BUILD_POWER_PHASE_NUMBER[phase[1]!]}`;
+}
+
 function isPowerAttackField(field: SpecificField): boolean {
   return POWER_ATTACK_FIELD.test(normalizedFieldName(field.name));
 }
@@ -1070,11 +1110,17 @@ function StructuredSpecifics({
     ? orderPowerRuleFields(authoredClauses)
     : authoredClauses;
   const presentedClauses = clauses.map((field) => {
+    const damageValue =
+      isPower && powerPresentation?.mode === "build" && isPowerHitField(field)
+        ? damageOnlyHitValue(field.value)
+        : undefined;
     const label =
       isPower && powerPresentation?.mode === "build"
-        ? buildPowerRuleLabel(field)
+        ? damageValue === undefined
+          ? buildPowerRuleLabel(field)
+          : buildPowerDamageLabel(field)
         : field.name || "Detail";
-    return { field, label };
+    return { field, label, value: damageValue ?? field.value };
   });
   const clauseGroups: (typeof presentedClauses)[] = [];
   for (let index = 0; index < presentedClauses.length; index += 1) {
@@ -1141,7 +1187,7 @@ function StructuredSpecifics({
                 }
                 key={`${first.field.ordinal}-${first.field.name}`}
               >
-                {group.map(({ field, label }) => (
+                {group.map(({ field, label, value }) => (
                   <Fragment key={`${field.ordinal}-${field.name}`}>
                     <dt>{label}</dt>
                     <dd
@@ -1153,13 +1199,13 @@ function StructuredSpecifics({
                     >
                       {isStructuredProseSpecific(field) ? (
                         <PowerTextProse
-                          value={field.value}
+                          value={value}
                           presentation={powerPresentation}
                           variant={selectedVariant}
                         />
                       ) : (
                         <PowerTextInline
-                          value={field.value}
+                          value={value}
                           presentation={powerPresentation}
                           variant={selectedVariant}
                         />

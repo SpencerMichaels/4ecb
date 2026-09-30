@@ -3695,5 +3695,8 @@ Divinity`, except for the native function's explicit, case-insensitive
   View, where they support using the finished character. The Source divider now
   spans the same full card width as the preceding rule dividers. Focused
   coverage includes complete Hit prose, explicit before-attack Effect ordering,
-  phase transitions, and compact numbered labels; the full 557-test suite and
-  all public checks pass.
+  phase transitions, and compact numbered labels. Clearly damage-only Hit rows
+  display as `DAMAGE` with the redundant word “damage” removed from their
+  formula; conditions, movement, ongoing damage, and other riders retain the
+  complete `HIT` label and prose. The full 558-test suite and all public checks
+  pass.
