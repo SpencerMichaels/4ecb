@@ -469,27 +469,71 @@ export function CharacterEditorPage({
       }),
     };
   }, [build, currentEvaluation, entities]);
-  const currentPowerPresentationFor = useMemo(
-    () =>
+  const currentPowerPresentationFor = useMemo(() => {
+    if (
+      build === undefined ||
+      currentEvaluation === undefined ||
       currentEvaluationWithPowers === undefined
-        ? undefined
-        : createPowerCardPresentationFinder(
-            currentEvaluationWithPowers,
-            entities,
-            {
-              resolveAbilityChoices,
-              abbreviateAbilityValues,
-              expandWeaponDice,
-            },
-          ),
-    [
-      abbreviateAbilityValues,
+    )
+      return undefined;
+    const input = projectBuildForEvaluation(
+      projectBuildForLegacyExport(build),
+      entities,
+    );
+    const evaluationEntities = [...entities, ...(input.localEntities ?? [])];
+    const evaluationEntitiesById = new Map(
+      evaluationEntities.map((entity) => [
+        entity.id.toLocaleLowerCase(),
+        entity,
+      ]),
+    );
+    return createPowerCardPresentationFinder(
       currentEvaluationWithPowers,
       entities,
-      expandWeaponDice,
-      resolveAbilityChoices,
-    ],
-  );
+      {
+        resolveAbilityChoices,
+        abbreviateAbilityValues,
+        expandWeaponDice,
+      },
+      (definitionId, name) => {
+        if (
+          evaluationEntitiesById
+            .get(definitionId.toLocaleLowerCase())
+            ?.type.trim()
+            .toLocaleLowerCase() !== "power"
+        )
+          return undefined;
+        return evaluatePowers({
+          level: currentEvaluation.level,
+          activeDefinitionIds: [
+            ...currentEvaluation.activeDefinitionIds,
+            definitionId,
+          ],
+          inventory: input.inventory,
+          stats: currentEvaluation.stats,
+          overlays: currentEvaluation.overlays,
+          ...(input.textStrings === undefined
+            ? {}
+            : { textStrings: input.textStrings }),
+          entities: evaluationEntities,
+        }).find(
+          (power) =>
+            power.definitionId.toLocaleLowerCase() ===
+              definitionId.toLocaleLowerCase() ||
+            (name !== undefined &&
+              power.name.toLocaleLowerCase() === name.toLocaleLowerCase()),
+        );
+      },
+    );
+  }, [
+    abbreviateAbilityValues,
+    build,
+    currentEvaluation,
+    currentEvaluationWithPowers,
+    entities,
+    expandWeaponDice,
+    resolveAbilityChoices,
+  ]);
   const carriedWallet =
     build === undefined
       ? undefined

@@ -3667,11 +3667,19 @@ Divinity`, except for the native function's explicit, case-insensitive
   lines for compatible equipped variants, including damage type, critical, and
   brutal notes. If no equipped evaluated variant exists, it retains the default
   calculation rather than dropping it.
-- Focused rules-engine, sheet-model, and web coverage passes 98 tests. The full
-  553-test suite, workspace TypeScript checks, lint, production/PWA build, and
+- Focused rules-engine, sheet-model, and web coverage passes 99 tests. The full
+  554-test suite, workspace TypeScript checks, lint, production/PWA build, and
   Chromium/Firefox Letter/A4 color/monochrome print matrix pass with all 24
   synthetic cards present and unclipped. Live validation against an imported
   character confirms equipped-first ordering, inventory comparisons, selection
   without equipment mutation, `1d12 + 5` and `1d4 + 5` prose expansion, compact
   Dexterity tooltips, and the balanced operator spacing required for forms such
   as `2[W] + 4`.
+- A follow-up Build review against Ingi exposed that the first implementation
+  only attached calculations to powers already selected in the build. Build
+  option details now evaluate and cache the currently inspected power candidate
+  against the character's actual inventory and active rules, so weapon choices,
+  attack/damage calculations, and `[W]` expansion are available before the
+  player selects the power. Ingi's weapon powers resolve Defensive Warhammer +2
+  and Unarmed; live verification also confirms an unselected Careful Attack
+  candidate exposes the full equipped/inventory selector.

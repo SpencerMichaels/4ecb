@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import {
+  createPowerCardPresentationFinder,
   defaultPowerVariant,
   expandWeaponDice,
   PowerTextInline,
@@ -42,6 +43,57 @@ const variants = [
 ];
 
 describe("interactive power-card presentation", () => {
+  it("can evaluate a Build candidate that is not yet selected", () => {
+    let resolutions = 0;
+    const presentationFor = createPowerCardPresentationFinder(
+      {
+        level: 1,
+        converged: true,
+        iterations: 1,
+        complete: true,
+        legal: true,
+        occurrences: [],
+        activeDefinitionIds: [],
+        activeDefinitions: [],
+        choices: [],
+        stats: {},
+        textStrings: {},
+        overlays: [],
+        powers: [],
+        suggestions: [],
+        diagnostics: [],
+      },
+      [],
+      {
+        resolveAbilityChoices: true,
+        abbreviateAbilityValues: true,
+        expandWeaponDice: true,
+      },
+      (definitionId) => {
+        resolutions += 1;
+        return {
+          definitionId,
+          name: "Candidate strike",
+          keywords: ["Weapon"],
+          variants: variants.map((variant) => ({
+            ...variant,
+            attackComponents: [],
+            damageComponents: [],
+            conditionalDamage: [],
+          })),
+          recoveries: [],
+          unsupported: [],
+        };
+      },
+    );
+
+    expect(
+      presentationFor("candidate").variants.map((variant) => variant.id),
+    ).toEqual(variants.map((variant) => variant.id));
+    expect(presentationFor("candidate").variants).toHaveLength(3);
+    expect(resolutions).toBe(1);
+  });
+
   it("defaults to the equipped main hand, then expands its weapon dice", () => {
     expect(defaultPowerVariant(variants)?.id).toBe("main-sword");
     expect(expandWeaponDice("Hit: 2[W] + 1[W].", "1d8")).toBe(

@@ -39,6 +39,10 @@ export function createPowerCardPresentationFinder(
   evaluation: EvaluatedCharacter,
   content: readonly ContentEntity[],
   options: PowerCardDisplayOptions,
+  resolveMissingPower?: (
+    definitionId: string,
+    name?: string,
+  ) => EvaluatedCharacter["powers"][number] | undefined,
 ): (definitionId: string, name?: string) => PowerCardPresentation {
   const personalizePowerText = createEvaluatedPowerTextPersonalizer(
     evaluation,
@@ -54,18 +58,32 @@ export function createPowerCardPresentationFinder(
   const powersByName = new Map(
     evaluation.powers.map((power) => [power.name.toLocaleLowerCase(), power]),
   );
-  return (definitionId, name) => ({
-    personalizePowerText,
-    abbreviateAbilityValues: options.abbreviateAbilityValues,
-    expandWeaponDice: options.expandWeaponDice,
-    variants:
-      (
-        powers.get(definitionId.toLocaleLowerCase()) ??
-        (name === undefined
-          ? undefined
-          : powersByName.get(name.toLocaleLowerCase()))
-      )?.variants ?? [],
-  });
+  const resolvedPowers = new Map<
+    string,
+    EvaluatedCharacter["powers"][number] | undefined
+  >();
+  return (definitionId, name) => {
+    const definitionKey = definitionId.toLocaleLowerCase();
+    let power =
+      powers.get(definitionKey) ??
+      (name === undefined
+        ? undefined
+        : powersByName.get(name.toLocaleLowerCase()));
+    if (power === undefined && resolveMissingPower !== undefined) {
+      if (!resolvedPowers.has(definitionKey))
+        resolvedPowers.set(
+          definitionKey,
+          resolveMissingPower(definitionId, name),
+        );
+      power = resolvedPowers.get(definitionKey);
+    }
+    return {
+      personalizePowerText,
+      abbreviateAbilityValues: options.abbreviateAbilityValues,
+      expandWeaponDice: options.expandWeaponDice,
+      variants: power?.variants ?? [],
+    };
+  };
 }
 
 export function defaultPowerVariant(
