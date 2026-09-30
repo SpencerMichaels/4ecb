@@ -1541,13 +1541,22 @@ one, so they retain authored formulas such as `2[W] + STR` and abbreviate named
 abilities to `STR`, `CON`, `DEX`, `INT`, `WIS`, and `CHA` without substituting
 character values.
 
-Each Build power card promotes its authored Attack and Hit fields into a single
-prominent `ATTACK` / `HIT` block. A Hit clause remains whole: damage and its
-associated conditions, movement, or other effects are never split into separate
-summary and rule rows. Primary, secondary, tertiary, and qualified field labels
-remain visible. Other authored clauses follow the combat block. D066 continues
-to govern calculated Equipment and browser View cards, where weapon switching
-supports play rather than power selection.
+Build power cards use one consistent aligned rules layout rather than a separate
+colored Attack/Hit section. A Hit clause remains whole: damage and its associated
+conditions, movement, or other effects are never split into separate summary
+and rule rows. Multiattack cards replace long combined labels such as
+`PRIMARY ATTACK` with compact numbered row labels such as `TARGET 1`,
+`ATTACK 1`, `TARGET 2`, and `ATTACK 2`; they do not add separate phase rows.
+An Attack, its adjacent Hit rows, and following Effect rows form one visual group
+with a shared label column and no internal separators. A before-attack Effect is
+unconditional setup and remains a separate row above that group.
+
+Requirement/Prerequisite and Trigger still lead. All other combat clauses retain
+their authored order, including Effects before an Attack, Effects after a Hit,
+and Effects that bridge primary and secondary phases. This relies on explicit
+corpus timing and ordering rather than guessing from the generic `Effect` label.
+D066 continues to govern calculated Equipment and browser View cards, where
+weapon switching supports play rather than power selection.
 
 ## Deferred decisions and decision points
 

@@ -3678,9 +3678,22 @@ Divinity`, except for the native function's explicit, case-insensitive
 - A follow-up Build review against Ingi first exposed that candidate powers were
   not evaluated, but live product review established that weapon-specific
   calculations made selection dialogs harder to scan. Build power details now
-  intentionally keep authored formulas, abbreviate ability names (`STR`, `DEX`,
-  and so on), and promote authored Attack and complete Hit clauses into a single
-  prominent `ATTACK` / `HIT` block. Damage remains beside every associated hit
-  effect, including conditions and movement, and multiattack phase labels remain
-  intact. Weapon selection and calculated variants remain available in
-  Equipment and browser View, where they support using the finished character.
+  intentionally keep authored formulas and abbreviate ability names (`STR`,
+  `DEX`, and so on). Attack and complete Hit clauses use the same aligned rule
+  rows as Requirement, Effect, and other fields rather than introducing a
+  second colored card section. Damage remains beside every associated hit
+  effect, including conditions and movement. Compact numbered labels such as
+  `TARGET 1`, `ATTACK 1`, `TARGET 2`, and `ATTACK 2` distinguish multiattack
+  phases without adding vertical divider rows. Each Attack shares one aligned
+  visual group with its adjacent Hit rows and following Effect rows, so their
+  descriptions start on the same horizontal line and no divider breaks a single
+  combat sequence. A before-attack Effect remains a separate unconditional
+  setup row above that group. Requirements and Triggers lead;
+  otherwise Target, Effect, Attack, Hit, and bridging Effect clauses retain
+  authored order, which preserves explicit before/after-attack timing. Weapon
+  selection and calculated variants remain available in Equipment and browser
+  View, where they support using the finished character. The Source divider now
+  spans the same full card width as the preceding rule dividers. Focused
+  coverage includes complete Hit prose, explicit before-attack Effect ordering,
+  phase transitions, and compact numbered labels; the full 557-test suite and
+  all public checks pass.

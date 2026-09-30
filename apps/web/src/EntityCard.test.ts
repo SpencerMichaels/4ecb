@@ -20,6 +20,7 @@ import {
   orderPowerRuleFields,
   powerCardLabel,
 } from "./EntityCard";
+import { createBuildPowerCardPresentationFinder } from "./PowerCardPresentation";
 
 function field(name: string, value: string, ordinal: number): SpecificField {
   return { name, value, ordinal, extraAttributes: [] };
@@ -572,45 +573,86 @@ describe("shared power and item cards", () => {
     expect(markup).toContain("2d8+5");
   });
 
-  it("keeps authored attack and complete hit effects together in the Build combat block", () => {
+  it("keeps timed effects and complete hits together in the unified Build rules", () => {
     const power = entity("Power", [
       field("Attack Type", "Melee weapon", 0),
-      field("Attack", "Strength + 1 vs. AC", 1),
+      field("Requirement", "You must be wielding a weapon.", 1),
+      field("Effect", "Before the attack, you shift 1 square.", 2),
+      field("Attack", "Strength + 1 vs. AC", 3),
       field(
         "Hit",
         "2[W] + Strength modifier damage, and the target is dazed until the end of your next turn.",
-        2,
+        4,
       ),
-      field("Effect", "You gain a bonus equal to your Wisdom modifier.", 3),
+      field("Effect", "You gain a bonus equal to your Wisdom modifier.", 5),
     ]);
     const markup = renderToStaticMarkup(
       createElement(EntityCardBody, {
         entity: power,
         hideFlavortext: false,
-        powerPresentation: {
-          personalizePowerText: (value: string) =>
-            value
-              .replaceAll(/(?:your\s+)?Strength(?:\s+modifier)?/giu, "STR")
-              .replaceAll(/(?:your\s+)?Wisdom(?:\s+modifier)?/giu, "WIS"),
-          abbreviateAbilityValues: false,
-          expandWeaponDice: false,
-          variants: [],
-          mode: "build",
-        },
+        powerPresentation: createBuildPowerCardPresentationFinder()("fixture"),
       }),
     );
 
-    expect(markup).toContain('aria-label="Attack and hit"');
-    expect(markup).toContain("<dt>ATTACK</dt>");
+    expect(markup).toContain('<dl class="entity-card-rules">');
+    expect(markup).toContain("<dt>Attack</dt>");
     expect(markup).toContain("STR + 1 vs. AC");
-    expect(markup).toContain("<dt>HIT</dt>");
+    expect(markup).toContain("<dt>Hit</dt>");
     expect(markup).toContain(
       "2[W] + STR damage, and the target is dazed until the end of your next turn.",
     );
     expect(markup).toContain("You gain a bonus equal to WIS.");
-    expect(markup).not.toContain("<dt>Attack</dt>");
-    expect(markup).not.toContain("<dt>Hit</dt>");
+    expect(markup.indexOf("Requirement")).toBeLessThan(
+      markup.indexOf("Before the attack"),
+    );
+    expect(markup.indexOf("Before the attack")).toBeLessThan(
+      markup.indexOf("<dt>Attack</dt>"),
+    );
+    expect(markup.indexOf("<dt>Attack</dt>")).toBeLessThan(
+      markup.indexOf("<dt>Hit</dt>"),
+    );
+    expect(markup).toMatch(
+      /<div class="power-combat-group"><dt>Attack<\/dt>.*<dt>Hit<\/dt>.*<dt>Effect<\/dt>.*<\/div>/su,
+    );
+    expect(markup).not.toMatch(
+      /<div class="power-combat-group"><dt>Effect<\/dt>.*Before the attack/su,
+    );
+    expect(markup).not.toContain("power-build-combat");
     expect(markup).not.toContain("power-variant-panel");
+  });
+
+  it("uses compact numbered labels while preserving authored combat order", () => {
+    const power = entity("Power", [
+      field("Requirement", "You must wield two weapons.", 0),
+      field("Primary Target", "One creature.", 1),
+      field("Effect", "Before the attack, shift 1 square.", 2),
+      field("Primary Attack", "Strength vs. AC", 3),
+      field("Hit", "1[W] + Strength modifier damage.", 4),
+      field("Effect", "Make the secondary attack.", 5),
+      field("Secondary Target", "A second creature.", 6),
+      field("Secondary Attack", "Dexterity vs. Reflex", 7),
+      field("Hit", "1[W] + Dexterity modifier damage.", 8),
+    ]);
+    const markup = renderToStaticMarkup(
+      createElement(EntityCardBody, {
+        entity: power,
+        hideFlavortext: false,
+        powerPresentation: createBuildPowerCardPresentationFinder()("fixture"),
+      }),
+    );
+
+    expect(markup).toContain("<dt>target 1</dt>");
+    expect(markup).toContain("<dt>attack 1</dt>");
+    expect(markup).toContain("<dt>target 2</dt>");
+    expect(markup).toContain("<dt>attack 2</dt>");
+    expect(markup).not.toContain("power-rule-phase");
+    expect(markup.match(/power-combat-group/g)).toHaveLength(2);
+    expect(markup.indexOf("Before the attack")).toBeLessThan(
+      markup.indexOf("STR vs. AC"),
+    );
+    expect(markup.indexOf("Make the secondary attack")).toBeLessThan(
+      markup.indexOf("<dt>target 2</dt>"),
+    );
   });
 
   it("labels exact Personal attack types as Range without reusing authored Power Type", () => {
