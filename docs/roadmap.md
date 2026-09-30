@@ -565,10 +565,12 @@ new server-owned data architecture and not the later M9 release-hardening pass.
   print shows known named ability modifiers and half-level values inline, with
   a display preference that resolves authored ability alternatives to the
   character's best available option.
-- Interactive power cards offer an equipped-first selector and compact
-  comparison of every compatible owned weapon. Optional tooltip abbreviations
-  and selected-weapon `[W]` expansion remain browser-only; print keeps authored
-  prose and lists concise calculated lines for compatible equipped variants.
+- Calculated power cards in Equipment and browser View offer an equipped-first
+  selector and compact comparison of every compatible owned weapon. Optional
+  tooltip abbreviations and selected-weapon `[W]` expansion remain browser-only;
+  print keeps authored prose and lists concise calculated lines for compatible
+  equipped variants. Build selection cards instead retain general formulas and
+  present complete authored `ATTACK` / `HIT` clauses together for fast scanning.
 - Settings presents ordinary appearance, content, backup, and storage jobs in
   plain language, with content layering identities and diagnostics behind
   deliberate advanced disclosure.

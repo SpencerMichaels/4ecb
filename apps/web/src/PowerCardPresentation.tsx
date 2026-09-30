@@ -11,6 +11,7 @@ export interface PowerCardPresentation {
   readonly abbreviateAbilityValues: boolean;
   readonly expandWeaponDice: boolean;
   readonly variants: readonly PowerVariantPresentation[];
+  readonly mode?: "build" | "interactive";
 }
 
 export interface PowerVariantPresentation {
@@ -33,6 +34,40 @@ export interface PowerCardDisplayOptions {
   readonly resolveAbilityChoices: boolean;
   readonly abbreviateAbilityValues: boolean;
   readonly expandWeaponDice: boolean;
+}
+
+const ABILITY_ABBREVIATIONS = [
+  ["Strength", "STR"],
+  ["Constitution", "CON"],
+  ["Dexterity", "DEX"],
+  ["Intelligence", "INT"],
+  ["Wisdom", "WIS"],
+  ["Charisma", "CHA"],
+] as const;
+
+export function abbreviatePowerAbilities(value: string): string {
+  return ABILITY_ABBREVIATIONS.reduce(
+    (result, [ability, abbreviation]) =>
+      result.replace(
+        new RegExp(`\\b(?:your\\s+)?${ability}(?:\\s+modifier)?\\b`, "giu"),
+        abbreviation,
+      ),
+    value,
+  );
+}
+
+export function createBuildPowerCardPresentationFinder(): (
+  definitionId: string,
+  name?: string,
+) => PowerCardPresentation {
+  const presentation: PowerCardPresentation = {
+    personalizePowerText: abbreviatePowerAbilities,
+    abbreviateAbilityValues: false,
+    expandWeaponDice: false,
+    variants: [],
+    mode: "build",
+  };
+  return () => presentation;
 }
 
 export function createPowerCardPresentationFinder(
@@ -82,6 +117,7 @@ export function createPowerCardPresentationFinder(
       abbreviateAbilityValues: options.abbreviateAbilityValues,
       expandWeaponDice: options.expandWeaponDice,
       variants: power?.variants ?? [],
+      mode: "interactive",
     };
   };
 }

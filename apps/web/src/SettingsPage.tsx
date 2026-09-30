@@ -565,12 +565,12 @@ export function SettingsPage({
               onAbbreviateAbilityValuesChange(event.currentTarget.checked)
             }
           />{" "}
-          Show ability values compactly in interactive power details
+          Show ability values compactly in calculated power details
         </label>
         <p className="field-help">
           Replace phrases such as “Charisma modifier (+4)” with an underlined
-          “+4” whose tooltip identifies the ability. Printed cards always keep
-          the full wording.
+          “+4” whose tooltip identifies the ability in Equipment and character
+          View. Build and printed cards keep general formulas.
         </p>
         <label>
           <input
@@ -580,7 +580,7 @@ export function SettingsPage({
               onExpandWeaponDiceChange(event.currentTarget.checked)
             }
           />{" "}
-          Replace [W] with the selected weapon's dice in interactive power
+          Replace [W] with the selected weapon's dice in calculated power
           details
         </label>
         <p className="field-help">

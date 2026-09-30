@@ -112,7 +112,7 @@ describe("release accessibility contract", () => {
     );
     expect(app).toContain("resolveAbilityChoices={resolveAbilityChoices}");
     expect(settingsPage).toContain(
-      "Show ability values compactly in interactive power details",
+      "Show ability values compactly in calculated power details",
     );
     expect(settingsPage).toContain(
       "Replace [W] with the selected weapon's dice",

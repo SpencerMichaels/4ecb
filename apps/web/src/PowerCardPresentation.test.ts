@@ -3,6 +3,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import {
+  abbreviatePowerAbilities,
+  createBuildPowerCardPresentationFinder,
   createPowerCardPresentationFinder,
   defaultPowerVariant,
   expandWeaponDice,
@@ -43,7 +45,7 @@ const variants = [
 ];
 
 describe("interactive power-card presentation", () => {
-  it("can evaluate a Build candidate that is not yet selected", () => {
+  it("can resolve a power outside the base evaluation and caches it", () => {
     let resolutions = 0;
     const presentationFor = createPowerCardPresentationFinder(
       {
@@ -92,6 +94,20 @@ describe("interactive power-card presentation", () => {
     ).toEqual(variants.map((variant) => variant.id));
     expect(presentationFor("candidate").variants).toHaveLength(3);
     expect(resolutions).toBe(1);
+  });
+
+  it("keeps Build formulas authored while abbreviating ability names", () => {
+    expect(
+      abbreviatePowerAbilities(
+        "Strength + 1 vs. AC; 2[W] + your Strength modifier damage, and gain your Wisdom modifier temporary hit points.",
+      ),
+    ).toBe(
+      "STR + 1 vs. AC; 2[W] + STR damage, and gain WIS temporary hit points.",
+    );
+    const presentation = createBuildPowerCardPresentationFinder()("candidate");
+    expect(presentation.mode).toBe("build");
+    expect(presentation.expandWeaponDice).toBe(false);
+    expect(presentation.variants).toEqual([]);
   });
 
   it("defaults to the equipped main hand, then expands its weapon dice", () => {

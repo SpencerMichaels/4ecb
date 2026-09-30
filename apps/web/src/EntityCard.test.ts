@@ -572,6 +572,47 @@ describe("shared power and item cards", () => {
     expect(markup).toContain("2d8+5");
   });
 
+  it("keeps authored attack and complete hit effects together in the Build combat block", () => {
+    const power = entity("Power", [
+      field("Attack Type", "Melee weapon", 0),
+      field("Attack", "Strength + 1 vs. AC", 1),
+      field(
+        "Hit",
+        "2[W] + Strength modifier damage, and the target is dazed until the end of your next turn.",
+        2,
+      ),
+      field("Effect", "You gain a bonus equal to your Wisdom modifier.", 3),
+    ]);
+    const markup = renderToStaticMarkup(
+      createElement(EntityCardBody, {
+        entity: power,
+        hideFlavortext: false,
+        powerPresentation: {
+          personalizePowerText: (value: string) =>
+            value
+              .replaceAll(/(?:your\s+)?Strength(?:\s+modifier)?/giu, "STR")
+              .replaceAll(/(?:your\s+)?Wisdom(?:\s+modifier)?/giu, "WIS"),
+          abbreviateAbilityValues: false,
+          expandWeaponDice: false,
+          variants: [],
+          mode: "build",
+        },
+      }),
+    );
+
+    expect(markup).toContain('aria-label="Attack and hit"');
+    expect(markup).toContain("<dt>ATTACK</dt>");
+    expect(markup).toContain("STR + 1 vs. AC");
+    expect(markup).toContain("<dt>HIT</dt>");
+    expect(markup).toContain(
+      "2[W] + STR damage, and the target is dazed until the end of your next turn.",
+    );
+    expect(markup).toContain("You gain a bonus equal to WIS.");
+    expect(markup).not.toContain("<dt>Attack</dt>");
+    expect(markup).not.toContain("<dt>Hit</dt>");
+    expect(markup).not.toContain("power-variant-panel");
+  });
+
   it("labels exact Personal attack types as Range without reusing authored Power Type", () => {
     const power = entity("Power", [
       field("Power Usage", "Encounter", 0),

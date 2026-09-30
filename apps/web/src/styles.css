@@ -3773,6 +3773,39 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   overflow-wrap: anywhere;
 }
 
+.power-build-combat {
+  background: color-mix(in srgb, var(--tone) 7%, var(--surface));
+  border-bottom: 1px solid var(--border);
+  margin: 0 -1rem !important;
+}
+
+.power-build-combat > div {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: minmax(4rem, max-content) minmax(0, 1fr);
+  padding: 0.68rem 1rem;
+}
+
+.power-build-combat > div + div {
+  border-top: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+}
+
+.power-build-combat dt {
+  color: color-mix(in srgb, var(--tone) 82%, var(--text));
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.055em;
+  white-space: nowrap;
+}
+
+.power-build-combat dd {
+  font-size: 0.86rem;
+  font-weight: 750;
+  line-height: 1.42;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .power-value-abbreviation {
   cursor: help;
   text-decoration: underline dotted;

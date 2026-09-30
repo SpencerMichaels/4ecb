@@ -1529,6 +1529,26 @@ variant, preserving variant damage type, critical, and brutal notes without
 duplicating the full card. When no evaluated equipped variant exists, print
 retains the default variant so the calculation is not silently discarded.
 
+### D067 — Build power cards preserve complete authored combat clauses
+
+**Status:** accepted
+
+**Date:** 2026-09-29
+
+Build selection dialogs do not show weapon-specific calculations or a weapon
+selector. Their purpose is comparing general power choices before committing to
+one, so they retain authored formulas such as `2[W] + STR` and abbreviate named
+abilities to `STR`, `CON`, `DEX`, `INT`, `WIS`, and `CHA` without substituting
+character values.
+
+Each Build power card promotes its authored Attack and Hit fields into a single
+prominent `ATTACK` / `HIT` block. A Hit clause remains whole: damage and its
+associated conditions, movement, or other effects are never split into separate
+summary and rule rows. Primary, secondary, tertiary, and qualified field labels
+remain visible. Other authored clauses follow the combat block. D066 continues
+to govern calculated Equipment and browser View cards, where weapon switching
+supports play rather than power selection.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

@@ -965,6 +965,18 @@ function powerDescriptorLabel(field: SpecificField): string {
   return field.name || "Detail";
 }
 
+const BUILD_POWER_COMBAT_FIELD =
+  /^(?:(primary|secondary|tertiary)\s+)?(attack|hit)(\s+\([^)]*\))?$/u;
+
+function buildPowerCombatLabel(field: SpecificField): string | undefined {
+  const match = normalizedFieldName(field.name).match(BUILD_POWER_COMBAT_FIELD);
+  if (match === null) return undefined;
+  const phase = match[1];
+  const kind = match[2] === "attack" ? "ATTACK" : "HIT";
+  const qualifier = match[3]?.trim() ?? "";
+  return `${phase === undefined ? "" : `${phase.toLocaleUpperCase()} `}${kind}${qualifier === "" ? "" : ` ${qualifier.toLocaleUpperCase()}`}`;
+}
+
 /**
  * Adapts the legacy card's explicit core fields and authored-order fallback.
  * Multiattack phases and duplicate outcomes stay in authored order; custom
@@ -1035,9 +1047,22 @@ function StructuredSpecifics({
   const authoredClauses = visibleFields.filter(
     (field) => !descriptors.has(normalizedFieldName(field.name)),
   );
+  const buildCombatFields =
+    isPower && powerPresentation?.mode === "build"
+      ? authoredClauses.flatMap((field) => {
+          const label = buildPowerCombatLabel(field);
+          return label === undefined ? [] : [{ field, label }];
+        })
+      : [];
+  const nonCombatClauses =
+    buildCombatFields.length === 0
+      ? authoredClauses
+      : authoredClauses.filter(
+          (field) => buildPowerCombatLabel(field) === undefined,
+        );
   const clauses = isPower
-    ? orderPowerRuleFields(authoredClauses)
-    : authoredClauses;
+    ? orderPowerRuleFields(nonCombatClauses)
+    : nonCombatClauses;
   const variants = powerPresentation?.variants ?? [];
   const [selectedVariantId, setSelectedVariantId] = useState(
     () => defaultPowerVariant(variants)?.id,
@@ -1064,6 +1089,21 @@ function StructuredSpecifics({
         </dl>
       ) : (
         <ItemDescriptorRows rows={itemDescriptorRows(entity, facts)} />
+      )}
+      {buildCombatFields.length === 0 ? null : (
+        <dl className="power-build-combat" aria-label="Attack and hit">
+          {buildCombatFields.map(({ field, label }) => (
+            <div key={`${field.ordinal}-${field.name}`}>
+              <dt>{label}</dt>
+              <dd className="preserve-lines">
+                <PowerTextInline
+                  value={field.value}
+                  presentation={powerPresentation}
+                />
+              </dd>
+            </div>
+          ))}
+        </dl>
       )}
       {!isPower || selectedVariant === undefined ? null : (
         <PowerVariantPanel

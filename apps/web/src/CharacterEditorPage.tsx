@@ -111,7 +111,10 @@ import { HideFlavortextContext } from "./HideFlavortextContext";
 import { EquipmentWorkspace } from "./EquipmentWorkspace";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
 import { PortraitEditor } from "./PortraitEditor";
-import { createPowerCardPresentationFinder } from "./PowerCardPresentation";
+import {
+  createBuildPowerCardPresentationFinder,
+  createPowerCardPresentationFinder,
+} from "./PowerCardPresentation";
 import type {
   BuilderNavigation,
   BuilderSectionSlug,
@@ -119,6 +122,7 @@ import type {
 } from "./routes";
 
 const characters = new CharacterRepository();
+const buildPowerPresentationFor = createBuildPowerCardPresentationFinder();
 type LevelChoiceTab = LegacyChoiceSection | "Retraining";
 type CharacterTierId = "heroic" | "paragon" | "epic";
 const CHARACTER_TIERS: readonly {
@@ -2210,7 +2214,7 @@ export function CharacterEditorPage({
                       byId={byId}
                       candidate={inspectedOption?.candidate}
                       entity={inspectedOption?.entity}
-                      powerPresentationFor={currentPowerPresentationFor}
+                      powerPresentationFor={buildPowerPresentationFor}
                     />
                   </div>
                 </CandidateInspectionScope>
