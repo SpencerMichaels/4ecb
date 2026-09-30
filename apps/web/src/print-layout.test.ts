@@ -37,6 +37,16 @@ describe("print layout contract", () => {
       /\.paper-a4 \.print-reference-card\s*\{[\s\S]*?height:\s*86\.8mm;[\s\S]*?width:\s*63mm;/,
     );
     expect(sheetSource).toContain("chunks(printableCards, 9)");
+    expect(sheetSource).toContain('.replace(/\\s+action\\b/i, "")');
+    expect(sheetSource).toContain(
+      "powerTextAtLevel(field.value, characterLevel)",
+    );
+    expect(styles).toMatch(
+      /\.print-card-combat-band\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1\.25fr\)/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-combat-band dd\s*\{[\s\S]*?overflow-wrap:\s*anywhere/,
+    );
     expect(sheetSource).not.toMatch(
       /function Print(?:Power|Item)Card[\s\S]*?card\.flavor/,
     );

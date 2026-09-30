@@ -1883,15 +1883,16 @@ textarea {
   background: color-mix(in srgb, var(--card-color) 20%, white);
   display: grid;
   font-weight: 700;
-  grid-template-columns: 0.8fr 1.2fr;
+  grid-template-columns: max-content minmax(0, 1fr);
 }
 .print-card-action-band > span {
   align-items: center;
   border-right: 1px solid var(--card-color);
   display: flex;
-  gap: 0.04in;
+  gap: 0.025in;
   min-width: 0;
   padding: 0.025in 0.04in;
+  white-space: nowrap;
 }
 .print-card-action-band > span:last-child {
   border-right: 0;
@@ -1902,41 +1903,37 @@ textarea {
 }
 .print-card-action-band .action-type-icon {
   font-size: 8pt;
+  min-width: 0;
+  width: 0.12in;
 }
 .print-card-combat-band {
   display: grid;
-  grid-template-columns: 0.8fr 0.55fr 1.35fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
   margin: 0;
 }
 .print-card-combat-band > div {
+  align-items: center;
   border-bottom: 1px solid var(--card-color);
   border-right: 1px solid var(--card-color);
+  display: flex;
+  gap: 0.025in;
   min-width: 0;
-  text-align: center;
+  padding: 0.025in 0.035in;
+  text-align: left;
 }
 .print-card-combat-band > div:last-child {
   border-right: 0;
 }
 .print-card-combat-band dd {
-  font-size: 7.5pt;
+  font-size: 6.7pt;
   font-weight: 800;
   margin: 0;
-  min-height: 0.13in;
-  overflow: hidden;
-  padding: 0.02in;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
-.print-card-combat-band dt {
-  background: color-mix(in srgb, var(--card-color) 28%, white);
-  font-size: 5.5pt;
-  font-weight: 800;
-  padding: 0.015in;
-  text-transform: uppercase;
-}
-.print-card-combat-band dt .icon {
-  height: 0.09in;
-  width: 0.09in;
+.print-card-combat-band .icon {
+  height: 0.1in;
+  width: 0.1in;
 }
 .print-card-body {
   min-height: 0;
@@ -2319,7 +2316,6 @@ textarea {
   --card-color: #000;
 }
 .sheet-monochrome .print-card-action-band,
-.sheet-monochrome .print-card-combat-band dt,
 .sheet-monochrome .print-item-stats dt {
   background: #eee;
 }

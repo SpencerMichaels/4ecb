@@ -30,6 +30,7 @@ import {
   type PowerCardPresentation,
 } from "./PowerCardPresentation";
 import { Prose } from "./Prose";
+import { powerTextAtLevel } from "./power-level-text";
 import { powerAttackIcon } from "./visual-language";
 
 const characters = new CharacterRepository();
@@ -261,7 +262,13 @@ function printCardDensity(card: SheetCard): string {
   return length > 1_350 ? "is-condensed" : length > 850 ? "is-compact" : "";
 }
 
-function PrintPowerCard({ card }: { readonly card: SheetCard }) {
+function PrintPowerCard({
+  card,
+  characterLevel,
+}: {
+  readonly card: SheetCard;
+  readonly characterLevel: number;
+}) {
   const attackType = cardField(card, "Attack Type") ?? "";
   const target = cardField(card, "Target", "Targets", "Primary Target");
   const level = cardField(card, "Level");
@@ -269,7 +276,7 @@ function PrintPowerCard({ card }: { readonly card: SheetCard }) {
   const powerType = cardField(card, "Power Type");
   const authoredAttackField = cardField(card, "Attack");
   const authoredAttack = authoredAttackField ?? card.attack;
-  const attackMatch = authoredAttack?.match(/^(.+?)\s+vs\.?\s+(.+)$/i);
+  const displayActionType = card.actionType?.replace(/\s+action\b/i, "").trim();
   const isUtility =
     powerType?.trim().toLocaleLowerCase() === "utility" ||
     (authoredAttackField === undefined &&
@@ -307,7 +314,7 @@ function PrintPowerCard({ card }: { readonly card: SheetCard }) {
       <div className="print-card-action-band">
         <span>
           <ActionTypeIcon decorative value={card.actionType} />
-          {card.actionType}
+          {displayActionType}
         </span>
         <span>
           <Icon name={powerAttackIcon(attackType)} />
@@ -326,22 +333,12 @@ function PrintPowerCard({ card }: { readonly card: SheetCard }) {
       ) : (
         <dl className="print-card-combat-band">
           <div>
-            <dd>{attackMatch?.[1] ?? authoredAttack ?? "—"}</dd>
-            <dt title="Attack">
-              <Icon name="sword" />
-            </dt>
+            <Icon name="sword" />
+            <dd>{authoredAttack ?? "—"}</dd>
           </div>
           <div>
-            <dd>{attackMatch?.[2] ?? "—"}</dd>
-            <dt title="Defense">
-              <Icon name="shield" />
-            </dt>
-          </div>
-          <div>
+            <Icon name="target" />
             <dd>{target ?? "—"}</dd>
-            <dt title="Target">
-              <Icon name="target" />
-            </dt>
           </div>
         </dl>
       )}
@@ -353,7 +350,8 @@ function PrintPowerCard({ card }: { readonly card: SheetCard }) {
         )}
         {rules.map((field, index) => (
           <div key={`${field.label}-${index}`}>
-            <strong>{field.label}:</strong> <Prose value={field.value} />
+            <strong>{field.label}:</strong>{" "}
+            <Prose value={powerTextAtLevel(field.value, characterLevel)} />
           </div>
         ))}
         {rules.length === 0 && card.description !== undefined ? (
@@ -463,9 +461,15 @@ function PrintItemCard({ card }: { readonly card: SheetCard }) {
   );
 }
 
-function PrintCard({ card }: { readonly card: SheetCard }) {
+function PrintCard({
+  card,
+  characterLevel,
+}: {
+  readonly card: SheetCard;
+  readonly characterLevel: number;
+}) {
   return card.kind === "power" ? (
-    <PrintPowerCard card={card} />
+    <PrintPowerCard card={card} characterLevel={characterLevel} />
   ) : (
     <PrintItemCard card={card} />
   );
@@ -783,6 +787,11 @@ export function CharacterSheetPage({
     ...(character.sheetSettings.includeItemCards ? model.items : []),
   ];
   const printCardPages = chunks(printableCards, 9);
+  const characterLevel =
+    Number(
+      model.identity.find((entry) => entry.label === "Level")?.value ??
+        character.snapshot.levelCount,
+    ) || 1;
   return (
     <main
       className={`sheet-page paper-${character.sheetSettings.paper} ${character.sheetSettings.monochrome ? "sheet-monochrome" : ""} ${showPrintPreview ? "is-print-preview" : ""}`}
@@ -1197,6 +1206,7 @@ export function CharacterSheetPage({
             {page.map((card, index) => (
               <PrintCard
                 card={card}
+                characterLevel={characterLevel}
                 key={`${card.kind}-${card.id ?? card.name}-${index}`}
               />
             ))}

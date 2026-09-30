@@ -32,6 +32,14 @@ separate projection over the same semantic model.
   its richer interactive cards. Composed magic-item cards now merge public base
   and enchantment fields so weapon/armor statistics are not lost behind the
   enchantment record.
+- The compact power header now removes the redundant word `Action`, uses the
+  same icon-left rhythm for action/range and attack/target, combines the authored
+  attack stat and defense into one cell, and lets the target cell grow vertically
+  inside the fixed card so target text is never ellipsized. Printed rule text
+  reduces the corpus's two established tier forms (`Level N:` alternatives and
+  `Increase damage to ... at Nth level`) to the highest tier applicable to the
+  character. Damage replacement preserves the rest of a Hit effect; prose that
+  does not match those forms remains untouched.
 - Evaluated cards now apply the canonical user-facing-field predicate after
   overlays, suppress machine metadata and ID tokens, preserve repeated authored
   combat clauses in ordinal order, and expose supported flavor and printable

@@ -277,6 +277,18 @@ try {
           card.scrollHeight > card.clientHeight + 1 ||
           card.scrollWidth > card.clientWidth + 1
         ).map((card) => card.querySelector("h3")?.textContent ?? "unnamed");
+        const bandOverflow = [...document.querySelectorAll(".print-card-action-band")]
+          .flatMap((band) => [...band.children])
+          .filter((cell) =>
+            cell.scrollHeight > cell.clientHeight + 1 ||
+            cell.scrollWidth > cell.clientWidth + 1
+          ).map((cell) => cell.textContent?.trim() ?? "unnamed");
+        const targetOverflow = [...document.querySelectorAll(".print-card-combat-band")]
+          .flatMap((band) => band.children[1]?.querySelector("dd") ?? [])
+          .filter((target) =>
+            target.scrollHeight > target.clientHeight + 1 ||
+            target.scrollWidth > target.clientWidth + 1
+          ).map((target) => target.textContent?.trim() ?? "unnamed");
         const hidden = [
           ".app-header", ".pwa-status",
           ".screen-sheet-view", ".print-preview-toolbar", ".sheet-toolbar", ".cache-warning", ".sheet-page > .status"
@@ -289,6 +301,8 @@ try {
         return {
           cardCount: cards.length,
           overflowing,
+          bandOverflow,
+          targetOverflow,
           applicationChromeHidden: hidden,
           itemHeaderBackground: style?.backgroundColor,
           itemHeaderColor: style?.color,
@@ -303,6 +317,10 @@ try {
     assert(
       layout.overflowing.length === 0,
       `${variant.name} clips cards: ${layout.overflowing.join(", ")}`,
+    );
+    assert(
+      layout.bandOverflow.length === 0 && layout.targetOverflow.length === 0,
+      `${variant.name} clips card bands: ${[...layout.bandOverflow, ...layout.targetOverflow].join(", ")}`,
     );
     if (variant.monochrome) {
       assert(
@@ -457,11 +475,25 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
            card.scrollHeight > card.clientHeight + 1 ||
            card.scrollWidth > card.clientWidth + 1
          ).map((card) => card.querySelector("h3")?.textContent ?? "unnamed");
+         const bandOverflow = [...document.querySelectorAll(".print-card-action-band")]
+           .flatMap((band) => [...band.children])
+           .filter((cell) =>
+             cell.scrollHeight > cell.clientHeight + 1 ||
+             cell.scrollWidth > cell.clientWidth + 1
+           ).map((cell) => cell.textContent?.trim() ?? "unnamed");
+         const targetOverflow = [...document.querySelectorAll(".print-card-combat-band")]
+           .flatMap((band) => band.children[1]?.querySelector("dd") ?? [])
+           .filter((target) =>
+             target.scrollHeight > target.clientHeight + 1 ||
+             target.scrollWidth > target.clientWidth + 1
+           ).map((target) => target.textContent?.trim() ?? "unnamed");
          const header = document.querySelector(".print-item-card > header");
          const style = header === null ? undefined : getComputedStyle(header);
          return {
            cardCount: cards.length,
            overflowing,
+           bandOverflow,
+           targetOverflow,
            itemHeaderBackground: style?.backgroundColor,
            itemHeaderColor: style?.color,
          };`,
@@ -473,6 +505,10 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
       assert(
         layout.overflowing.length === 0,
         `Firefox ${variant.name} clips cards: ${layout.overflowing.join(", ")}`,
+      );
+      assert(
+        layout.bandOverflow.length === 0 && layout.targetOverflow.length === 0,
+        `Firefox ${variant.name} clips card bands: ${[...layout.bandOverflow, ...layout.targetOverflow].join(", ")}`,
       );
       if (variant.monochrome)
         assert(

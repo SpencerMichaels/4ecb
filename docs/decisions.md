@@ -1633,6 +1633,20 @@ Composed-item cards merge the ordered public fields of every inventory element,
 so a magic weapon or armor card keeps the base item's physical statistics as
 well as its enchantment's enhancement, level, critical, properties, and powers.
 
+Within a power card, action labels omit the redundant word `Action`. Both compact
+combat bands use an icon-left layout: action plus range on the first row, then a
+combined authored attack/defense cell plus a wrapping target cell. Target text
+must be complete even when the row becomes taller; the fixed card body yields
+space rather than truncating the target.
+
+Printed rules select current-level text only for the two level-scaling grammars
+confirmed in the corpus: newline `Level N:` alternatives and inline `Increase
+damage to ... at Nth level` clauses. The highest threshold not exceeding the
+character level applies. A damage tier replaces only the damage phrase so that
+conditions and movement in the same Hit clause survive. Unrecognized prose is
+not rewritten; this boundary prevents a density optimization from silently
+changing a power's meaning.
+
 The pre-card pages likewise use bounded, named panels rather than a generic
 multi-column dump: a character dashboard followed by indexes and note/portrait
 panels. This is a print compatibility boundary, not a requirement that browser
