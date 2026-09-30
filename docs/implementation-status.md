@@ -35,7 +35,9 @@ separate projection over the same semantic model.
 - The compact power header now removes the redundant word `Action`, uses the
   same icon-left rhythm for action/range and attack/target, combines the authored
   attack stat and defense into one cell, and lets the target cell grow vertically
-  inside the fixed card so target text is never ellipsized. Printed rule text
+  inside the fixed card so target text is never ellipsized. Both combat-band
+  icons stay aligned to the top-left of their cells when either value wraps.
+  Printed rule text
   reduces the corpus's established tier forms (`Level N:` alternatives,
   `Increase damage to ... at Nth level`, and Dragon Breath-style `Increase to
 +N bonus and ... damage at Nth level` chains) to the highest tier applicable

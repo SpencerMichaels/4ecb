@@ -45,6 +45,9 @@ describe("print layout contract", () => {
       /\.print-card-combat-band\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1\.25fr\)/,
     );
     expect(styles).toMatch(
+      /\.print-card-combat-band > div\s*\{[\s\S]*?align-items:\s*flex-start/,
+    );
+    expect(styles).toMatch(
       /\.print-card-combat-band dd\s*\{[\s\S]*?overflow-wrap:\s*anywhere/,
     );
     expect(sheetSource).not.toMatch(

@@ -1912,7 +1912,7 @@ textarea {
   margin: 0;
 }
 .print-card-combat-band > div {
-  align-items: center;
+  align-items: flex-start;
   border-bottom: 1px solid var(--card-color);
   border-right: 1px solid var(--card-color);
   display: flex;
