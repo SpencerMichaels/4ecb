@@ -7,6 +7,10 @@ interface LevelVariant {
 const LEVEL_LINE = /^\s*Level\s+(\d+):\s*(.+?)\s*$/gim;
 const DAMAGE_INCREASE =
   /\bIncrease damage to\s+(.+?)\s+at\s+(\d+)(?:st|nd|rd|th)\s+level\.?/gi;
+const BONUS_DAMAGE_INCREASE =
+  /(?:\bIncrease\s+)?to\s+[+-]?\d+\s+bonus\s+and\s+(.+?\bdamage)\s+at\s+(\d+)(?:st|nd|rd|th)\s+level/gi;
+const BONUS_DAMAGE_INCREASE_CHAIN =
+  /\bIncrease\s+to\s+[+-]?\d+\s+bonus\s+and\s+.+?\bdamage\s+at\s+\d+(?:st|nd|rd|th)\s+level(?:\s*,?\s*and\s+to\s+[+-]?\d+\s+bonus\s+and\s+.+?\bdamage\s+at\s+\d+(?:st|nd|rd|th)\s+level)*\.?/gi;
 const DAMAGE_EXPRESSION =
   /\b(?:\d+\s*\[W\]|\d+d\d+)(?:\s*\+\s*[^,.;]+?)?\s+damage\b/i;
 
@@ -20,12 +24,13 @@ function cleanRemovedVariants(value: string): string {
 
 /**
  * Select the authored tier that applies at the character's current level.
- * Unknown prose stays intact; only the two conventions used by the legacy
+ * Unknown prose stays intact; only confirmed conventions used by the legacy
  * corpus are reduced.
  */
 export function powerTextAtLevel(value: string, level: number): string {
   if (!Number.isFinite(level) || level < 1) return value;
 
+  const bonusDamageChains = [...value.matchAll(BONUS_DAMAGE_INCREASE_CHAIN)];
   const variants: LevelVariant[] = [
     ...[...value.matchAll(LEVEL_LINE)].flatMap((match) =>
       match[1] === undefined || match[2] === undefined
@@ -49,18 +54,38 @@ export function powerTextAtLevel(value: string, level: number): string {
             },
           ],
     ),
+    ...bonusDamageChains.flatMap((chain) =>
+      [...chain[0].matchAll(BONUS_DAMAGE_INCREASE)].flatMap((match) =>
+        match[1] === undefined || match[2] === undefined
+          ? []
+          : [
+              {
+                level: Number(match[2]),
+                text: match[1].trim(),
+                kind: "damage-increase" as const,
+              },
+            ],
+      ),
+    ),
   ];
   if (variants.length === 0) return value;
 
   const base = cleanRemovedVariants(
-    value.replace(LEVEL_LINE, "").replace(DAMAGE_INCREASE, ""),
+    value
+      .replace(LEVEL_LINE, "")
+      .replace(DAMAGE_INCREASE, "")
+      .replace(BONUS_DAMAGE_INCREASE_CHAIN, ""),
   );
   const selected = variants
     .filter((variant) => variant.level <= level)
     .sort((left, right) => right.level - left.level)[0];
   if (selected === undefined) return base;
 
-  const selectedDamage = selected.text.match(/^(.+?\bdamage\b)/i)?.[1];
+  const selectedDamage =
+    selected.text.match(/^(.+?\bdamage\b)/i)?.[1] ??
+    (selected.kind === "damage-increase"
+      ? `${selected.text.replace(/[.]+$/, "")} damage`
+      : undefined);
   if (selectedDamage !== undefined && DAMAGE_EXPRESSION.test(base))
     return cleanRemovedVariants(
       base.replace(DAMAGE_EXPRESSION, selectedDamage),

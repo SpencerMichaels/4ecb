@@ -56,10 +56,12 @@ function ValueList({
 
 function Card({
   card,
+  characterLevel,
   abbreviateAbilityValues,
   expandWeaponDice,
 }: {
   readonly card: SheetCard;
+  readonly characterLevel: number;
   readonly abbreviateAbilityValues: boolean;
   readonly expandWeaponDice: boolean;
 }) {
@@ -162,29 +164,35 @@ function Card({
       )}
       {card.fields.length === 0 ? null : (
         <dl className="sheet-card-rules">
-          {card.fields.map((field, index) => (
-            <div key={`${field.label}-${field.value}-${index}`}>
-              <dt>{field.label}</dt>
-              <dd>
-                {presentation === undefined ? (
-                  <Prose value={field.value} />
-                ) : (
-                  <>
-                    <span className="screen-power-text">
-                      <PowerTextProse
-                        value={field.value}
-                        presentation={presentation}
-                        variant={selectedVariant}
-                      />
-                    </span>
-                    <span className="print-power-text">
-                      <Prose value={field.value} />
-                    </span>
-                  </>
-                )}
-              </dd>
-            </div>
-          ))}
+          {card.fields.map((field, index) => {
+            const value =
+              card.kind === "power"
+                ? powerTextAtLevel(field.value, characterLevel)
+                : field.value;
+            return (
+              <div key={`${field.label}-${field.value}-${index}`}>
+                <dt>{field.label}</dt>
+                <dd>
+                  {presentation === undefined ? (
+                    <Prose value={value} />
+                  ) : (
+                    <>
+                      <span className="screen-power-text">
+                        <PowerTextProse
+                          value={value}
+                          presentation={presentation}
+                          variant={selectedVariant}
+                        />
+                      </span>
+                      <span className="print-power-text">
+                        <Prose value={value} />
+                      </span>
+                    </>
+                  )}
+                </dd>
+              </div>
+            );
+          })}
         </dl>
       )}
       {card.description === undefined ? null : (
@@ -977,6 +985,7 @@ export function CharacterSheetPage({
                 <Card
                   key={`${card.name}-${index}`}
                   card={card}
+                  characterLevel={characterLevel}
                   abbreviateAbilityValues={abbreviateAbilityValues}
                   expandWeaponDice={expandWeaponDice}
                 />
@@ -1010,6 +1019,7 @@ export function CharacterSheetPage({
                   <Card
                     key={`${card.name}-${index}`}
                     card={card}
+                    characterLevel={characterLevel}
                     abbreviateAbilityValues={false}
                     expandWeaponDice={false}
                   />

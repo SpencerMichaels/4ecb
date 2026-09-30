@@ -420,6 +420,11 @@ const ABILITY_CHOICE_ATTACK_PATTERN = new RegExp(
   `\\b(${ABILITY_CHOICE_LIST_PATTERN})(?=\\s+vs\\.?\\s)`,
   "gi",
 );
+const ABILITY_ATTACK_OPTION_PATTERN = `(?:${ABILITY_PATTERN})(?:\\s*[+-]\\s*\\d+)?\\s+vs\\.?\\s+[A-Za-z]+`;
+const ABILITY_ATTACK_OPTION_LIST_PATTERN = new RegExp(
+  `\\b(${ABILITY_ATTACK_OPTION_PATTERN}(?:(?:\\s*,\\s*(?:(?:or|and)\\s+)?|\\s+(?:or|and)\\s+)${ABILITY_ATTACK_OPTION_PATTERN})+)`,
+  "gi",
+);
 const ABILITY_MODIFIER_PATTERN = new RegExp(
   `\\b(${ABILITY_PATTERN})\\s+modifier\\b(?!\\s*\\([+-]?\\d+\\))`,
   "gi",
@@ -497,6 +502,18 @@ function personalizePowerText(
   };
   const resolvedChoices = resolveAbilityChoices
     ? text
+        .replace(ABILITY_ATTACK_OPTION_LIST_PATTERN, (match) => {
+          const chosen = chooseAbility(match);
+          if (chosen === undefined) return match;
+          const options = [
+            ...match.matchAll(new RegExp(ABILITY_ATTACK_OPTION_PATTERN, "gi")),
+          ];
+          return (
+            options.find(([option]) =>
+              new RegExp(`^${chosen.name}\\b`, "i").test(option),
+            )?.[0] ?? match
+          );
+        })
         .replace(ABILITY_CHOICE_MODIFIER_PATTERN, (match, list: string) => {
           const chosen = chooseAbility(list);
           return chosen === undefined

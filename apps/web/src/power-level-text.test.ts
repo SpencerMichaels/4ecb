@@ -5,8 +5,8 @@ import { powerTextAtLevel } from "./power-level-text";
 describe("powerTextAtLevel", () => {
   const tieredHit =
     "1[W] + ability modifier damage, and either you shift 4 squares, or each ally can shift 2 squares. " +
-    "Increase damage to 2[W] + ability modifier damage at 11th level. " +
-    "Increase damage to 3[W] + ability modifier damage at 21st level.";
+    "Increase damage to 2[W] + ability modifier at 11th level. " +
+    "Increase damage to 3[W] + ability modifier at 21st level.";
 
   it("removes future damage tiers while preserving the rest of the hit effect", () => {
     expect(powerTextAtLevel(tieredHit, 8)).toBe(
@@ -27,6 +27,22 @@ describe("powerTextAtLevel", () => {
       "Level 21: 3d8 + Wisdom modifier damage.";
     expect(powerTextAtLevel(value, 18)).toBe(
       "2d8 + Wisdom modifier damage, and the target is slowed.",
+    );
+  });
+
+  it("reduces Dragon Breath-style bonus and damage progressions", () => {
+    const value =
+      "1d6 + Constitution modifier (+2) damage. " +
+      "Increase to +4 bonus and 2d6 + Constitution modifier (+2) damage at 11th level, " +
+      "and to +6 bonus and 3d6 + Constitution modifier (+2) damage at 21st level.";
+    expect(powerTextAtLevel(value, 8)).toBe(
+      "1d6 + Constitution modifier (+2) damage.",
+    );
+    expect(powerTextAtLevel(value, 11)).toBe(
+      "2d6 + Constitution modifier (+2) damage.",
+    );
+    expect(powerTextAtLevel(value, 24)).toBe(
+      "3d6 + Constitution modifier (+2) damage.",
     );
   });
 

@@ -407,7 +407,8 @@ describe("sheet model", () => {
           },
           {
             name: "Attack",
-            value: "Intelligence, Wisdom, or Charisma vs AC",
+            value:
+              "Strength +2 vs. Reflex, Constitution +2 vs. Reflex, or Dexterity +2 vs. Reflex",
             extraAttributes: [],
             ordinal: 5,
           },
@@ -579,7 +580,7 @@ describe("sheet model", () => {
         label: "Secondary Effect",
         value: "You gain resist 5 + 1/2 level (+1).",
       },
-      { label: "Attack", value: "Charisma (+5) vs AC" },
+      { label: "Attack", value: "Constitution +2 vs. Reflex" },
       {
         label: "Requirement",
         value: "Use Strength modifier (+5).",

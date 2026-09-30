@@ -1639,11 +1639,15 @@ combined authored attack/defense cell plus a wrapping target cell. Target text
 must be complete even when the row becomes taller; the fixed card body yields
 space rather than truncating the target.
 
-Printed rules select current-level text only for the two level-scaling grammars
-confirmed in the corpus: newline `Level N:` alternatives and inline `Increase
-damage to ... at Nth level` clauses. The highest threshold not exceeding the
-character level applies. A damage tier replaces only the damage phrase so that
-conditions and movement in the same Hit clause survive. Unrecognized prose is
+Character-view and printed rules select current-level text only for the
+level-scaling grammars confirmed in the corpus: newline `Level N:` alternatives,
+inline `Increase damage to ... at Nth level` clauses, and Dragon Breath-style
+`Increase to +N bonus and ... damage at Nth level` chains. The highest threshold
+not exceeding the character level applies. A damage tier replaces only the
+damage phrase so that conditions and movement in the same Hit clause survive.
+Repeated complete ability/bonus/defense alternatives are candidates for the
+existing modifier, raw-score, class-key-order, then authored-order selection;
+the selected clause remains otherwise verbatim. Unrecognized prose is
 not rewritten; this boundary prevents a density optimization from silently
 changing a power's meaning.
 

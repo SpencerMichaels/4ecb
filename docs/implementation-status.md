@@ -36,10 +36,15 @@ separate projection over the same semantic model.
   same icon-left rhythm for action/range and attack/target, combines the authored
   attack stat and defense into one cell, and lets the target cell grow vertically
   inside the fixed card so target text is never ellipsized. Printed rule text
-  reduces the corpus's two established tier forms (`Level N:` alternatives and
-  `Increase damage to ... at Nth level`) to the highest tier applicable to the
-  character. Damage replacement preserves the rest of a Hit effect; prose that
-  does not match those forms remains untouched.
+  reduces the corpus's established tier forms (`Level N:` alternatives,
+  `Increase damage to ... at Nth level`, and Dragon Breath-style `Increase to
++N bonus and ... damage at Nth level` chains) to the highest tier applicable
+  to the character. The same reduction now applies to character-view power
+  cards. Damage replacement preserves the rest of a Hit effect; prose that does
+  not match those forms remains untouched. Repeated full attack alternatives
+  such as `Strength +2 vs. Reflex, Constitution +2 vs. Reflex, or Dexterity +2
+vs. Reflex` use the configured highest-ability selection and established
+  tie-break rules.
 - Evaluated cards now apply the canonical user-facing-field predicate after
   overlays, suppress machine metadata and ID tokens, preserve repeated authored
   combat clauses in ordinal order, and expose supported flavor and printable
