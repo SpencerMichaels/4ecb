@@ -544,8 +544,8 @@ describe("release accessibility contract", () => {
     expect(styles).toMatch(
       /\.selection-table-scroll thead\s*\{[^}]*background: var\(--legacy-neutral\)/,
     );
-    expect(styles).not.toMatch(
-      /\.selection-table-scroll thead\s*\{[^}]*position:\s*sticky/,
+    expect(styles).toMatch(
+      /\.selection-table-scroll thead th\s*\{[^}]*background: var\(--legacy-neutral\)[^}]*position:\s*sticky[^}]*top:\s*0[^}]*z-index:\s*2/,
     );
     expect(styles).toMatch(
       /\.selection-table-scroll table\s*\{[^}]*border-collapse: separate[^}]*border-spacing: 0/,

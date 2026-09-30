@@ -2832,10 +2832,13 @@ textarea {
 }
 
 .selection-table-scroll thead th {
-  background: inherit;
+  background: var(--legacy-neutral);
   font-size: 0.72rem;
   letter-spacing: 0.035em;
+  position: sticky;
+  top: 0;
   text-transform: uppercase;
+  z-index: 2;
 }
 
 .selection-sort-button {

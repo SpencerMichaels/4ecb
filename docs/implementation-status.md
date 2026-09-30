@@ -3703,3 +3703,10 @@ Divinity`, except for the native function's explicit, case-insensitive
   divider than the card outline so row structure does not compete with the card
   boundary. Undivided Attack, Hit/Damage, and associated Effect rows use half
   the normal inter-row spacing while preserving the group's outer padding.
+
+## M5.7 sticky builder-table headers (2026-09-29)
+
+- Builder candidate tables keep their column headings pinned to the top of the
+  table's own scrolling viewport, including powers, feats, classes, races,
+  backgrounds, themes, deities, and other shared choice lists. Horizontal
+  scrolling remains unchanged.
