@@ -28,8 +28,29 @@ const HEADING_CONNECTORS = new Set([
   "with",
 ]);
 
+/**
+ * Some legacy compendium fields contain presentation-only table or paragraph
+ * tags. Convert only that small, known-safe vocabulary to plain-text structure;
+ * unfamiliar markup remains literal text and is escaped by React.
+ */
+function normalizeLegacyStructure(value: string): string {
+  return value
+    .replace(/<br\s*\/?>/giu, "\n")
+    .replace(/<\/?(?:table|thead|tbody|tfoot|tr|p|div)(?:\s[^>]*)?>/giu, "\n")
+    .replace(/<(?:td|th)(?:\s[^>]*)?>/giu, "")
+    .replace(/<\/(?:td|th)>/giu, " · ")
+    .replace(/\s*·\s*\n/gu, "\n")
+    .replaceAll("&nbsp;", " ")
+    .replaceAll("&amp;", "&")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'");
+}
+
 function isRecognizableHeading(line: string): boolean {
-  if (line.length > 120 || !/\p{L}/u.test(line)) return false;
+  if (line.length > 120 || !/\p{L}/u.test(line) || line.includes(" · "))
+    return false;
   if (line.endsWith(":")) return true;
 
   const letters = line.match(/\p{L}/gu) ?? [];
@@ -75,7 +96,9 @@ export function proseBlocks(value: string): readonly ProseBlock[] {
     list = undefined;
   };
 
-  for (const sourceLine of value.replace(/\r\n?/gu, "\n").split("\n")) {
+  for (const sourceLine of normalizeLegacyStructure(value)
+    .replace(/\r\n?/gu, "\n")
+    .split("\n")) {
     const line = sourceLine.trim();
     if (!line) {
       flushList();

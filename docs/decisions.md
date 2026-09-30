@@ -1571,6 +1571,38 @@ corpus timing and ordering rather than guessing from the generic `Effect` label.
 D066 continues to govern calculated Equipment and browser View cards, where
 weapon switching supports play rather than power selection.
 
+### D068 — View and print use distinct layouts over a sanitized semantic sheet
+
+**Status:** accepted
+
+**Date:** 2026-09-30
+
+Browser View and print are distinct presentations over one semantic sheet/card
+model. View is a navigable desktop/tablet reference with an at-a-glance summary,
+complete interactive cards, equipment, learned references, features, notes,
+recovery guidance, and direct Build/print actions. Print remains page-oriented:
+compact statistics may use columns, but narrative features, learned references,
+equipment, and notes use wide readable blocks; the established card grid remains
+separate. Print inclusion preferences never hide the corresponding browser View
+reference.
+
+The semantic model owns content classification and card sanitation rather than
+either renderer. Post-overlay power fields pass the canonical user-facing-field
+predicate; machine labels, identifiers, and presentation metadata do not reach
+cards. Repeated authored clauses retain ordinal order. Supported flavor and
+printable prerequisites are first-class card data. Rituals, alchemical formulas,
+and martial practices are learned references rather than physical equipment;
+Ritual Scroll remains an item. Missing/custom inventory stays recoverable and
+visible. Legacy presentation-only table/paragraph tags may be normalized into
+safe plain-text structure, but arbitrary imported markup is never interpreted as
+HTML.
+
+This separation allows View hierarchy and print pagination to evolve without
+forking rules calculations or character data. A legacy cache without matching
+content may identify a generic Ritual but cannot reliably recover whether it was
+an alchemical formula or martial practice; the model keeps that limitation
+explicit instead of guessing.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

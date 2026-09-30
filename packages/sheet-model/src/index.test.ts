@@ -49,6 +49,7 @@ describe("sheet model", () => {
           sources: ["Synthetic"],
           attributes: [],
           categories: [],
+          prerequisites: "ID_FMP_THEME_643",
           specifics: [
             {
               name: "Effect",
@@ -80,6 +81,7 @@ describe("sheet model", () => {
     expect(model.powers[0]?.fields).toEqual([
       { label: "Effect", value: "A test spark." },
     ]);
+    expect(model.powers[0]?.prerequisites).toBeUndefined();
     expect(model.notes).toContainEqual({ label: "Traits", value: "Observant" });
     expect(model.notes).toContainEqual({
       label: "Character Background",
@@ -275,9 +277,33 @@ describe("sheet model", () => {
           contributions: [],
         },
         AC: { name: "AC", value: 19, contributions: [] },
+        "Fortitude Defense": {
+          name: "Fortitude Defense",
+          value: 17,
+          contributions: [],
+        },
       },
       textStrings: {},
-      overlays: [],
+      overlays: [
+        {
+          providerOccurrenceId: "power-occurrence",
+          targetDefinitionIds: ["POWER_1"],
+          field: "Effect",
+          value: "Then teleport 3 squares.",
+        },
+        {
+          providerOccurrenceId: "power-occurrence",
+          targetDefinitionIds: ["POWER_1"],
+          field: "Display",
+          value: "Overlaid internal display metadata",
+        },
+        {
+          providerOccurrenceId: "power-occurrence",
+          targetDefinitionIds: ["POWER_1"],
+          field: "_GENERATEDID",
+          value: "ID_INTERNAL_OVERLAY",
+        },
+      ],
       powers: [
         {
           definitionId: "POWER_1",
@@ -361,32 +387,71 @@ describe("sheet model", () => {
             ordinal: 1,
           },
           {
+            name: "Effect",
+            value: "Then teleport 2 squares.",
+            extraAttributes: [],
+            ordinal: 2,
+          },
+          {
             name: "Special",
             value:
               "Use your Strength, Constitution, or Wisdom modifier; Wisdom modifier (+5) is already shown.",
             extraAttributes: [],
-            ordinal: 2,
+            ordinal: 3,
           },
           {
             name: "Secondary Effect",
             value: "You gain resist 5 + 1/2 level.",
             extraAttributes: [],
-            ordinal: 3,
+            ordinal: 4,
           },
           {
             name: "Attack",
             value: "Intelligence, Wisdom, or Charisma vs AC",
             extraAttributes: [],
-            ordinal: 4,
+            ordinal: 5,
           },
           {
             name: "Requirement",
             value: "Use your Strength or Dexterity modifier.",
             extraAttributes: [],
-            ordinal: 5,
+            ordinal: 6,
+          },
+          {
+            name: "Display",
+            value: "Wizard Attack 1",
+            extraAttributes: [],
+            ordinal: 7,
+          },
+          {
+            name: "_CLASS",
+            value: "ID_FMP_CLASS_123",
+            extraAttributes: [],
+            ordinal: 8,
+          },
+          {
+            name: "Class ID",
+            value: "ID_FMP_CLASS_123",
+            extraAttributes: [],
+            ordinal: 9,
+          },
+          {
+            name: "Associated Feat",
+            value: "ID_FMP_FEAT_456",
+            extraAttributes: [],
+            ordinal: 10,
+          },
+          {
+            name: "Associated Theme",
+            value: "ID_FMP_THEME_789",
+            extraAttributes: [],
+            ordinal: 11,
           },
         ],
         rules: [],
+        flavor: "Lightning gathers around your implement.",
+        prerequisites: "Wizard",
+        printPrerequisites: "Wizard class",
         description: "A modern evaluated spark.",
         extensions: [],
         provenance: { sourceKey: "fixture", sourceOrdinal: 2 },
@@ -448,10 +513,16 @@ describe("sheet model", () => {
     expect(model.identity).toContainEqual({ label: "Race", value: "Cliffkin" });
     expect(model.abilities).toContainEqual({ label: "Strength", value: "20" });
     expect(model.defenses).toContainEqual({ label: "AC", value: "19" });
+    expect(model.defenses).toContainEqual({
+      label: "Fortitude",
+      value: "17",
+    });
     expect(model.powers[0]).toMatchObject({
       name: "Arc Flash",
       attack: "+7 vs Reflex",
       damage: "1d6+4",
+      flavor: "Lightning gathers around your implement.",
+      prerequisites: "Wizard class",
       variants: [
         expect.objectContaining({
           equipmentName: "Test wand",
@@ -466,6 +537,7 @@ describe("sheet model", () => {
         label: "Effect",
         value: "Gain 5 + half your level (+1) temporary hit points.",
       },
+      { label: "Effect", value: "Then teleport 3 squares." },
       {
         label: "Special",
         value:
@@ -517,6 +589,195 @@ describe("sheet model", () => {
     expect(model.equipment).not.toContainEqual(
       expect.objectContaining({ label: "Stale wand" }),
     );
+  });
+
+  it("separates learned references from physical and unresolved inventory", () => {
+    const reference = (
+      id: string,
+      name: string,
+      subtype: string,
+    ): ContentEntity => ({
+      id,
+      name,
+      type: "Ritual",
+      source: "Synthetic source",
+      sources: ["Synthetic source"],
+      attributes: [],
+      categories: [],
+      flavor: `${name} flavor.`,
+      prerequisites: "Trained in Arcana",
+      specifics: [
+        {
+          name: "Type",
+          value: subtype,
+          extraAttributes: [],
+          ordinal: 0,
+        },
+        {
+          name: "Key Skill",
+          value: "Arcana",
+          extraAttributes: [],
+          ordinal: 1,
+        },
+        {
+          name: "_ASSOCIATEDID",
+          value: "ID_INTERNAL_REFERENCE",
+          extraAttributes: [],
+          ordinal: 2,
+        },
+      ],
+      rules: [],
+      description: `${name} rules text.`,
+      extensions: [],
+      provenance: { sourceKey: "fixture", sourceOrdinal: 0 },
+    });
+    const ritual = reference("RITUAL_1", "Traveler's Chant", "Ritual");
+    const formula = reference(
+      "FORMULA_1",
+      "Alchemist's Frost",
+      "Alchemical Formula",
+    );
+    const practice = reference(
+      "PRACTICE_1",
+      "Forced March",
+      "Martial Practice",
+    );
+    const scroll: ContentEntity = {
+      ...reference("SCROLL_1", "Traveler's Chant Scroll", "Ritual"),
+      type: "Ritual Scroll",
+    };
+    const content = [ritual, formula, practice, scroll];
+    const legacySnapshot: LegacyCharacterSnapshot = {
+      details: { name: "Sage" },
+      abilities: {},
+      stats: {},
+      selectedRules: [],
+      powers: [],
+      loot: [
+        {
+          name: ritual.name,
+          count: 1,
+          equippedCount: 0,
+          showPowerCard: true,
+          elements: [{ id: ritual.id, name: ritual.name, type: "Ritual" }],
+        },
+        {
+          name: scroll.name,
+          count: 2,
+          equippedCount: 0,
+          showPowerCard: true,
+          elements: [
+            { id: scroll.id, name: scroll.name, type: "Ritual Scroll" },
+          ],
+        },
+        {
+          name: "Unresolved custom keepsake",
+          count: 1,
+          equippedCount: 0,
+          showPowerCard: false,
+          elements: [
+            { name: "Unresolved custom keepsake", type: "Custom Treasure" },
+          ],
+        },
+      ],
+      textStrings: {},
+      levelCount: 1,
+      source: "legacy-cache",
+    };
+    const legacy = buildSheetModel(legacySnapshot, content);
+    expect(legacy.learnedReferences).toEqual([
+      expect.objectContaining({
+        id: ritual.id,
+        kind: "ritual",
+        name: ritual.name,
+        quantity: 1,
+        flavor: `${ritual.name} flavor.`,
+        prerequisites: "Trained in Arcana",
+        description: `${ritual.name} rules text.`,
+        source: "Synthetic source",
+        fields: [
+          { label: "Type", value: "Ritual" },
+          { label: "Key Skill", value: "Arcana" },
+        ],
+      }),
+    ]);
+    expect(legacy.equipment.map(({ label }) => label)).toEqual([
+      scroll.name,
+      "Unresolved custom keepsake",
+    ]);
+    expect(legacy.items.map(({ name }) => name)).toEqual([scroll.name]);
+
+    const inventory = [
+      ...content.map((entity, index) => ({
+        id: `entry-${index}`,
+        acquiredLevel: 1,
+        quantity: entity === scroll ? 2 : 1,
+        equippedQuantity: 0,
+        elements: [
+          { definitionId: entity.id, name: entity.name, type: entity.type },
+        ],
+        showPowerCard: true,
+        overrides: {},
+        legality: "rules-legal" as const,
+      })),
+      {
+        id: "custom-entry",
+        acquiredLevel: 1,
+        quantity: 3,
+        equippedQuantity: 0,
+        elements: [
+          { name: "Unresolved custom keepsake", type: "Custom Treasure" },
+        ],
+        showPowerCard: false,
+        overrides: {},
+        legality: "houserule" as const,
+      },
+    ];
+    const build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 1,
+      levels: [],
+      grabbag: [],
+      inventory,
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    const evaluation: EvaluatedCharacter = {
+      level: 1,
+      converged: true,
+      iterations: 1,
+      complete: true,
+      legal: true,
+      occurrences: [],
+      activeDefinitionIds: [],
+      activeDefinitions: [],
+      choices: [],
+      stats: {},
+      textStrings: {},
+      overlays: [],
+      powers: [],
+      suggestions: [],
+      diagnostics: [],
+    };
+    const evaluated = buildEvaluatedSheetModel(
+      legacySnapshot,
+      build,
+      evaluation,
+      content,
+    );
+    expect(
+      evaluated.learnedReferences.map(({ name, kind }) => ({ name, kind })),
+    ).toEqual([
+      { name: ritual.name, kind: "ritual" },
+      { name: formula.name, kind: "alchemical-formula" },
+      { name: practice.name, kind: "martial-practice" },
+    ]);
+    expect(evaluated.equipment.map(({ label }) => label)).toEqual([
+      scroll.name,
+      "Unresolved custom keepsake",
+    ]);
+    expect(evaluated.items.map(({ name }) => name)).toEqual([scroll.name]);
   });
 
   it("rejects nonconvergent evaluations and never fabricates missing abilities", () => {

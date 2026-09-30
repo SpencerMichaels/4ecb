@@ -266,20 +266,20 @@ try {
     );
     await waitForExpression(
       client,
-      `document.body.textContent.includes("${character.title}") && document.querySelectorAll(".sheet-card").length === 24`,
+      `document.body.textContent.includes("${character.title}") && document.querySelectorAll(".print-only .sheet-card").length === 24`,
     );
     await client.send("Emulation.setEmulatedMedia", { media: "print" });
     const layout = await evaluate(
       client,
       `(() => {
-        const cards = [...document.querySelectorAll(".sheet-card")];
+        const cards = [...document.querySelectorAll(".print-only .sheet-card")];
         const overflowing = cards.filter((card) =>
           card.scrollHeight > card.clientHeight + 1 ||
           card.scrollWidth > card.clientWidth + 1
         ).map((card) => card.querySelector("h3")?.textContent ?? "unnamed");
         const hidden = [
           ".app-header", ".pwa-status",
-          ".sheet-toolbar", ".cache-warning", ".sheet-page > .status"
+          ".screen-sheet-view", ".sheet-toolbar", ".cache-warning", ".sheet-page > .status"
         ].every((selector) => {
           const element = document.querySelector(selector);
           return element === null || getComputedStyle(element).display === "none";
@@ -444,7 +444,7 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
         sessionId,
         `const sheet = document.querySelector(".sheet-page");
          return document.body.textContent.includes("${character.title}") &&
-           document.querySelectorAll(".sheet-card").length === 24 &&
+           document.querySelectorAll(".print-only .sheet-card").length === 24 &&
            sheet?.classList.contains("paper-${variant.paper}") === true &&
            sheet?.classList.contains("sheet-monochrome") === ${variant.monochrome} &&
            document.querySelector('link[data-print-paper="${variant.paper}"]') !== null;`,
@@ -452,7 +452,7 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
       const layout = await webdriverExecute(
         port,
         sessionId,
-        `const cards = [...document.querySelectorAll(".sheet-card")];
+        `const cards = [...document.querySelectorAll(".print-only .sheet-card")];
          const overflowing = cards.filter((card) =>
            card.scrollHeight > card.clientHeight + 1 ||
            card.scrollWidth > card.clientWidth + 1

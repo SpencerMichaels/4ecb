@@ -12,6 +12,7 @@ import {
   buildEvaluatedSheetModel,
   buildSheetModel,
   type SheetCard,
+  type SheetLearnedReference,
   type SheetValue,
 } from "@4ecb/sheet-model";
 
@@ -19,13 +20,14 @@ import { contentProfileMatchesRevision } from "./profile-migration";
 import { PortraitImage } from "./PortraitEditor";
 import {
   defaultPowerVariant,
-  PowerTextInline,
+  PowerTextProse,
   PowerVariantPanel,
   powerVariantAttack,
   powerVariantLabel,
   powerVariantNotes,
   type PowerCardPresentation,
 } from "./PowerCardPresentation";
+import { Prose } from "./Prose";
 
 const characters = new CharacterRepository();
 
@@ -139,29 +141,111 @@ function Card({
           ))}
         </ul>
       )}
-      {card.fields.map((field) => (
-        <p key={`${field.label}-${field.value}`}>
-          <strong>{field.label}:</strong>{" "}
-          {presentation === undefined ? (
-            field.value
-          ) : (
-            <>
-              <span className="screen-power-text">
-                <PowerTextInline
-                  value={field.value}
-                  presentation={presentation}
-                  variant={selectedVariant}
-                />
-              </span>
-              <span className="print-power-text">{field.value}</span>
-            </>
-          )}
-        </p>
-      ))}
+      {card.flavor === undefined ? null : (
+        <div className="sheet-card-flavor">
+          <Prose value={card.flavor} />
+        </div>
+      )}
+      {card.prerequisites === undefined ? null : (
+        <dl className="sheet-card-rules">
+          <div>
+            <dt>Prerequisite</dt>
+            <dd>
+              <Prose value={card.prerequisites} />
+            </dd>
+          </div>
+        </dl>
+      )}
+      {card.fields.length === 0 ? null : (
+        <dl className="sheet-card-rules">
+          {card.fields.map((field, index) => (
+            <div key={`${field.label}-${field.value}-${index}`}>
+              <dt>{field.label}</dt>
+              <dd>
+                {presentation === undefined ? (
+                  <Prose value={field.value} />
+                ) : (
+                  <>
+                    <span className="screen-power-text">
+                      <PowerTextProse
+                        value={field.value}
+                        presentation={presentation}
+                        variant={selectedVariant}
+                      />
+                    </span>
+                    <span className="print-power-text">
+                      <Prose value={field.value} />
+                    </span>
+                  </>
+                )}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
       {card.description === undefined ? null : (
-        <p className="preserve-lines">{card.description}</p>
+        <Prose value={card.description} />
       )}
       {card.source === undefined ? null : <footer>{card.source}</footer>}
+    </article>
+  );
+}
+
+const learnedReferenceLabels: Readonly<
+  Record<SheetLearnedReference["kind"], string>
+> = {
+  ritual: "Ritual",
+  "alchemical-formula": "Alchemical formula",
+  "martial-practice": "Martial practice",
+};
+
+function LearnedReference({
+  reference,
+}: {
+  readonly reference: SheetLearnedReference;
+}) {
+  return (
+    <article className="learned-reference-card">
+      <header>
+        <div>
+          <p className="eyebrow">{learnedReferenceLabels[reference.kind]}</p>
+          <h3>{reference.name}</h3>
+        </div>
+        {reference.quantity > 1 ? <span>×{reference.quantity}</span> : null}
+      </header>
+      {reference.flavor === undefined ? null : (
+        <div className="learned-reference-flavor">
+          <Prose value={reference.flavor} />
+        </div>
+      )}
+      {reference.prerequisites === undefined ? null : (
+        <dl className="sheet-card-rules">
+          <div>
+            <dt>Prerequisite</dt>
+            <dd>
+              <Prose value={reference.prerequisites} />
+            </dd>
+          </div>
+        </dl>
+      )}
+      {reference.fields.length === 0 ? null : (
+        <dl className="sheet-card-rules">
+          {reference.fields.map((field, index) => (
+            <div key={`${field.label}-${field.value}-${index}`}>
+              <dt>{field.label}</dt>
+              <dd>
+                <Prose value={field.value} />
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {reference.description === undefined ? null : (
+        <Prose value={reference.description} />
+      )}
+      {reference.source === undefined ? null : (
+        <footer>{reference.source}</footer>
+      )}
     </article>
   );
 }
@@ -353,153 +437,340 @@ export function CharacterSheetPage({
         value.label === "Hit Points" ? { ...value, value: "" } : value,
       )
     : model.resources;
+  const characterName =
+    character.snapshot.details.name || character.title || "Unnamed character";
+  const identitySummary = model.identity
+    .filter((entry) => ["Level", "Race", "Class"].includes(entry.label))
+    .map((entry) => entry.value)
+    .join(" · ");
+  const recoveryHref =
+    character.profileBinding === undefined ? "#/settings" : "#/characters";
+  const recoveryLabel =
+    character.profileBinding === undefined
+      ? "Open game content settings"
+      : "Review the character library";
+  const sourceNotice =
+    model.source === "authoritative-evaluation" && evaluation !== undefined ? (
+      <>
+        <strong>Authoritative rules evaluation.</strong> Values, selections,
+        inventory, and power variants were regenerated from the exact bound
+        profile. The character is{" "}
+        {evaluation.complete ? "complete" : "incomplete"}
+        {" and "}
+        {evaluation.legal ? "rules legal" : "has legality findings"}.
+      </>
+    ) : model.source === "native-empty" ? (
+      <>
+        <strong>No cached calculation snapshot.</strong> This character was
+        created in the web builder and needs its exact content profile for an
+        authoritative sheet.{" "}
+        {boundManifest === undefined
+          ? `The bound content profile (${character.profileBinding?.packId ?? "unknown"}) is missing; re-import it to restore evaluation.`
+          : profileMismatch
+            ? `The installed ${boundManifest.name} revision differs from the one bound to this character; preview and adopt it in the library before evaluation.`
+            : evaluating
+              ? "The rules engine is evaluating the bound profile…"
+              : (evaluationError ??
+                `The exact ${boundManifest.name} profile is installed, but evaluation is not available.`)}
+      </>
+    ) : (
+      <>
+        <strong>Legacy cached calculations.</strong> Values shown here were
+        computed by the original builder because an exact modern evaluation is
+        not available.{" "}
+        {character.profileBinding === undefined
+          ? "No content profile is bound, so card rules text may be limited."
+          : boundManifest === undefined
+            ? `The bound content profile (${character.profileBinding.packId}) is missing; re-import it to restore evaluation and full card text.`
+            : profileMismatch
+              ? `The installed ${boundManifest.name} revision differs from the one bound to this character; preview and adopt it in the library before evaluation.`
+              : evaluating
+                ? "The rules engine is evaluating the bound profile…"
+                : (evaluationError ??
+                  `The exact ${boundManifest.name} profile is installed, but evaluation is not available.`)}
+      </>
+    );
   return (
     <main
       className={`sheet-page paper-${character.sheetSettings.paper} ${character.sheetSettings.monochrome ? "sheet-monochrome" : ""}`}
       id="main-content"
     >
-      <div className="sheet-toolbar">
-        <a href="#/characters">← Character library</a>
-        <fieldset>
-          <legend>Sheet options</legend>
-          <label>
-            Paper{" "}
-            <select
-              value={character.sheetSettings.paper}
-              onChange={(event) =>
-                void setting(
-                  "paper",
-                  event.currentTarget.value as "letter" | "a4",
-                )
-              }
+      <div className="screen-sheet-view">
+        <header className="view-sheet-header">
+          <div className="view-sheet-identity">
+            {character.portrait === undefined ? null : (
+              <PortraitImage
+                className="view-sheet-portrait"
+                name={characterName}
+                portrait={character.portrait}
+              />
+            )}
+            <div>
+              <p className="eyebrow">Character view</p>
+              <h1>{characterName}</h1>
+              <p>{identitySummary}</p>
+            </div>
+          </div>
+          <div className="view-sheet-actions">
+            <a href="#/characters">Characters</a>
+            <a
+              className="button-link"
+              href={`#/characters/${encodeURIComponent(characterId)}/edit?tab=overview`}
             >
-              <option value="letter">US Letter</option>
-              <option value="a4">A4</option>
-            </select>
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={character.sheetSettings.blankHitPoints}
-              onChange={(event) =>
-                void setting("blankHitPoints", event.currentTarget.checked)
-              }
-            />{" "}
-            Blank hit points
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={character.sheetSettings.includePowerCards}
-              onChange={(event) =>
-                void setting("includePowerCards", event.currentTarget.checked)
-              }
-            />{" "}
-            Power cards
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={character.sheetSettings.includeItemCards}
-              onChange={(event) =>
-                void setting("includeItemCards", event.currentTarget.checked)
-              }
-            />{" "}
-            Item cards
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={character.sheetSettings.monochrome}
-              onChange={(event) =>
-                void setting("monochrome", event.currentTarget.checked)
-              }
-            />{" "}
-            Monochrome
-          </label>
-          <button type="button" onClick={() => window.print()}>
-            Print / save PDF
-          </button>
-        </fieldset>
-      </div>
-      <aside
-        className={
-          model.source === "authoritative-evaluation"
-            ? "status"
-            : "cache-warning"
-        }
-        aria-live="polite"
-      >
-        {model.source === "authoritative-evaluation" &&
-        evaluation !== undefined ? (
-          <>
-            <strong>Authoritative rules evaluation.</strong> Values, selections,
-            inventory, and power variants were regenerated from the exact bound
-            profile. The character is{" "}
-            {evaluation.complete ? "complete" : "incomplete"}
-            {" and "}
-            {evaluation.legal ? "rules legal" : "has legality findings"}.
-          </>
-        ) : model.source === "native-empty" ? (
-          <>
-            <strong>No cached calculation snapshot.</strong> This character was
-            created in the web builder and needs its exact content profile for
-            an authoritative sheet.{" "}
-            {boundManifest === undefined
-              ? `The bound content profile (${character.profileBinding?.packId ?? "unknown"}) is missing; re-import it to restore evaluation.`
-              : profileMismatch
-                ? `The installed ${boundManifest.name} revision differs from the one bound to this character; preview and adopt it in the library before evaluation.`
-                : evaluating
-                  ? "The rules engine is evaluating the bound profile…"
-                  : (evaluationError ??
-                    `The exact ${boundManifest.name} profile is installed, but evaluation is not available.`)}
-          </>
-        ) : (
-          <>
-            <strong>Legacy cached calculations.</strong> Values shown here were
-            computed by the original builder because an exact modern evaluation
-            is not available.{" "}
-            {character.profileBinding === undefined
-              ? "No content profile is bound, so card rules text may be limited."
-              : boundManifest === undefined
-                ? `The bound content profile (${character.profileBinding.packId}) is missing; re-import it to restore evaluation and full card text.`
-                : profileMismatch
-                  ? `The installed ${boundManifest.name} revision differs from the one bound to this character; preview and adopt it in the library before evaluation.`
-                  : evaluating
-                    ? "The rules engine is evaluating the bound profile…"
-                    : (evaluationError ??
-                      `The exact ${boundManifest.name} profile is installed, but evaluation is not available.`)}
-          </>
+              Build
+            </a>
+            <button type="button" onClick={() => window.print()}>
+              Print / save PDF
+            </button>
+          </div>
+        </header>
+
+        <details className="view-print-options">
+          <summary>Print options</summary>
+          <fieldset>
+            <legend>Printed sheet</legend>
+            <label>
+              Paper{" "}
+              <select
+                value={character.sheetSettings.paper}
+                onChange={(event) =>
+                  void setting(
+                    "paper",
+                    event.currentTarget.value as "letter" | "a4",
+                  )
+                }
+              >
+                <option value="letter">US Letter</option>
+                <option value="a4">A4</option>
+              </select>
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={character.sheetSettings.blankHitPoints}
+                onChange={(event) =>
+                  void setting("blankHitPoints", event.currentTarget.checked)
+                }
+              />{" "}
+              Blank hit points
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={character.sheetSettings.includePowerCards}
+                onChange={(event) =>
+                  void setting("includePowerCards", event.currentTarget.checked)
+                }
+              />{" "}
+              Power cards
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={character.sheetSettings.includeItemCards}
+                onChange={(event) =>
+                  void setting("includeItemCards", event.currentTarget.checked)
+                }
+              />{" "}
+              Item cards
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={character.sheetSettings.monochrome}
+                onChange={(event) =>
+                  void setting("monochrome", event.currentTarget.checked)
+                }
+              />{" "}
+              Monochrome
+            </label>
+          </fieldset>
+        </details>
+
+        <aside
+          className={
+            model.source === "authoritative-evaluation"
+              ? "view-source-status status"
+              : "view-source-status cache-warning"
+          }
+          aria-live="polite"
+        >
+          <span>{sourceNotice}</span>
+          {model.source === "authoritative-evaluation" ? null : (
+            <a href={recoveryHref}>{recoveryLabel}</a>
+          )}
+        </aside>
+
+        <nav aria-label="Character view sections" className="view-section-nav">
+          <a href="#view-summary">Summary</a>
+          <a href="#view-powers">Powers</a>
+          <a href="#view-equipment">Equipment</a>
+          {model.learnedReferences.length === 0 ? null : (
+            <a href="#view-learned-references">Rituals &amp; practices</a>
+          )}
+          <a href="#view-features">Features</a>
+          <a href="#view-notes">Notes</a>
+        </nav>
+
+        <section className="view-sheet-section" id="view-summary">
+          <header>
+            <p className="eyebrow">At a glance</p>
+            <h2>Summary</h2>
+          </header>
+          <div className="view-summary-grid">
+            <section>
+              <h3>Defenses</h3>
+              <ValueList values={model.defenses} className="large-values" />
+            </section>
+            <section>
+              <h3>Abilities</h3>
+              <ValueList values={model.abilities} />
+            </section>
+            <section>
+              <h3>Resources</h3>
+              <ValueList values={model.resources} />
+            </section>
+            <section>
+              <h3>Senses</h3>
+              <ValueList values={model.senses} />
+            </section>
+            <section className="view-summary-skills">
+              <h3>Skills</h3>
+              <ValueList values={model.skills} />
+            </section>
+            <section className="view-summary-identity">
+              <h3>Character</h3>
+              <ValueList values={model.identity} />
+            </section>
+          </div>
+        </section>
+
+        {model.powers.length === 0 ? null : (
+          <section className="view-sheet-section" id="view-powers">
+            <header>
+              <p className="eyebrow">Complete reference</p>
+              <h2>Powers</h2>
+            </header>
+            <div className="view-card-grid">
+              {model.powers.map((card, index) => (
+                <Card
+                  key={`${card.name}-${index}`}
+                  card={card}
+                  abbreviateAbilityValues={abbreviateAbilityValues}
+                  expandWeaponDice={expandWeaponDice}
+                />
+              ))}
+            </div>
+          </section>
         )}
-      </aside>
-      <article className="print-sheet summary-sheet">
+
+        <section className="view-sheet-section" id="view-equipment">
+          <header>
+            <p className="eyebrow">Owned and equipped</p>
+            <h2>Equipment</h2>
+          </header>
+          {model.equipment.length === 0 ? (
+            <p className="view-empty-state">No equipment is recorded.</p>
+          ) : (
+            <ul className="view-equipment-list">
+              {model.equipment.map((item) => (
+                <li key={`${item.label}-${item.value}`}>
+                  <strong>{item.label}</strong>
+                  <span>{item.value}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {model.items.length === 0 ? null : (
+            <div className="view-item-reference">
+              <h3>Item reference</h3>
+              <div className="view-card-grid">
+                {model.items.map((card, index) => (
+                  <Card
+                    key={`${card.name}-${index}`}
+                    card={card}
+                    abbreviateAbilityValues={false}
+                    expandWeaponDice={false}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+
+        {model.learnedReferences.length === 0 ? null : (
+          <section className="view-sheet-section" id="view-learned-references">
+            <header>
+              <p className="eyebrow">Learned references</p>
+              <h2>Rituals &amp; practices</h2>
+            </header>
+            <div className="view-reference-grid">
+              {model.learnedReferences.map((reference, index) => (
+                <LearnedReference
+                  key={`${reference.kind}-${reference.id ?? reference.name}-${index}`}
+                  reference={reference}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section className="view-sheet-section" id="view-features">
+          <header>
+            <p className="eyebrow">Build reference</p>
+            <h2>Features</h2>
+          </header>
+          <div className="view-feature-grid">
+            {model.features.map((group) => (
+              <section key={group.group}>
+                <h3>{group.group}</h3>
+                <ValueList values={group.entries} />
+              </section>
+            ))}
+          </div>
+        </section>
+
+        <section className="view-sheet-section" id="view-notes">
+          <header>
+            <p className="eyebrow">Character record</p>
+            <h2>Notes</h2>
+          </header>
+          {model.notes.length === 0 ? (
+            <p className="view-empty-state">No notes are recorded.</p>
+          ) : (
+            <dl className="view-notes-list">
+              {model.notes.map((note) => (
+                <div key={`${note.label}-${note.value}`}>
+                  <dt>{note.label}</dt>
+                  <dd>{note.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </section>
+      </div>
+
+      <article className="print-sheet summary-sheet print-only">
         <header className="sheet-title">
           <div className="sheet-title-identity">
             {character.portrait === undefined ? null : (
               <PortraitImage
                 className="sheet-portrait"
-                name={character.title}
+                name={characterName}
                 portrait={character.portrait}
               />
             )}
             <div>
               <p className="eyebrow">Character sheet</p>
-              <h2>{character.snapshot.details.name || character.title}</h2>
+              <h2>{characterName}</h2>
             </div>
           </div>
-          <p>
-            {model.identity
-              .filter((entry) =>
-                ["Level", "Race", "Class"].includes(entry.label),
-              )
-              .map((entry) => entry.value)
-              .join(" · ")}
-          </p>
+          <p>{identitySummary}</p>
         </header>
         <section className="identity-block">
           <ValueList values={model.identity} />
         </section>
-        <div className="sheet-columns">
+        <div className="print-summary-columns">
           <div>
             <section>
               <h3>Ability scores</h3>
@@ -508,10 +779,6 @@ export function CharacterSheetPage({
             <section>
               <h3>Resources</h3>
               <ValueList values={hp} />
-            </section>
-            <section>
-              <h3>Skills</h3>
-              <ValueList values={model.skills} />
             </section>
           </div>
           <div>
@@ -523,33 +790,67 @@ export function CharacterSheetPage({
               <h3>Senses</h3>
               <ValueList values={model.senses} />
             </section>
+          </div>
+          <div>
+            <section>
+              <h3>Skills</h3>
+              <ValueList values={model.skills} />
+            </section>
+          </div>
+        </div>
+        <section className="print-wide-section">
+          <h3>Features</h3>
+          <div className="print-feature-grid">
             {model.features.map((group) => (
               <section key={group.group}>
-                <h3>{group.group}</h3>
+                <h4>{group.group}</h4>
                 <ValueList values={group.entries} />
               </section>
             ))}
           </div>
-          <div>
-            <section>
-              <h3>Equipment</h3>
-              <ul>
-                {model.equipment.map((item) => (
-                  <li key={`${item.label}-${item.value}`}>
-                    {item.label} {item.value}
-                  </li>
-                ))}
-              </ul>
-            </section>
-            <section>
-              <h3>Notes</h3>
-              <ValueList values={model.notes} />
-            </section>
-          </div>
-        </div>
+        </section>
+        <section className="print-wide-section">
+          <h3>Equipment</h3>
+          <ul className="print-equipment-list">
+            {model.equipment.map((item) => (
+              <li key={`${item.label}-${item.value}`}>
+                <strong>{item.label}</strong> {item.value}
+              </li>
+            ))}
+          </ul>
+        </section>
+        {model.learnedReferences.length === 0 ? null : (
+          <section className="print-wide-section">
+            <h3>Rituals &amp; practices</h3>
+            <div className="print-reference-grid">
+              {model.learnedReferences.map((reference, index) => (
+                <LearnedReference
+                  key={`${reference.kind}-${reference.id ?? reference.name}-${index}`}
+                  reference={reference}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+        {model.notes.length === 0 ? null : (
+          <section className="print-wide-section print-notes-section">
+            <h3>Notes</h3>
+            <dl>
+              {model.notes.map((note) => (
+                <div key={`${note.label}-${note.value}`}>
+                  <dt>{note.label}</dt>
+                  <dd>{note.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        )}
       </article>
-      {character.sheetSettings.includePowerCards && model.powers.length > 0 ? (
-        <section className="card-section">
+
+      {model.powers.length > 0 ? (
+        <section
+          className={`card-section print-only ${character.sheetSettings.includePowerCards ? "" : "print-excluded"}`}
+        >
           <h2>Power cards</h2>
           <div className="card-grid">
             {model.powers.map((card, index) => (
@@ -563,8 +864,10 @@ export function CharacterSheetPage({
           </div>
         </section>
       ) : null}
-      {character.sheetSettings.includeItemCards && model.items.length > 0 ? (
-        <section className="card-section item-section">
+      {model.items.length > 0 ? (
+        <section
+          className={`card-section item-section print-only ${character.sheetSettings.includeItemCards ? "" : "print-excluded"}`}
+        >
           <h2>Item cards</h2>
           <div className="card-grid">
             {model.items.map((card, index) => (

@@ -64,4 +64,24 @@ describe("shared prose renderer", () => {
     expect(markup).not.toContain("<img");
     expect(markup).not.toContain("<script>");
   });
+
+  it("turns known legacy layout tags into readable plain-text blocks", () => {
+    expect(
+      proseBlocks(
+        "<table><tr><th>Level</th><th>Hunter's Quarry</th></tr><tr><td>1</td><td>1d6</td></tr></table>",
+      ),
+    ).toEqual([
+      { kind: "paragraph", text: "Level · Hunter's Quarry" },
+      { kind: "paragraph", text: "1 · 1d6" },
+    ]);
+
+    const markup = renderToStaticMarkup(
+      createElement(Prose, {
+        value: "Use one option.<br>Then continue &amp; resolve it.",
+      }),
+    );
+    expect(markup).toContain("Use one option.");
+    expect(markup).toContain("Then continue &amp; resolve it.");
+    expect(markup).not.toContain("&lt;br&gt;");
+  });
 });

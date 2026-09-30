@@ -3,9 +3,14 @@ import {
   formatInventoryItemName,
   type CharacterBuild,
   type LegacyCharacterSnapshot,
+  type LegacyLootSnapshot,
   type LegacyPowerSnapshot,
 } from "@4ecb/character-domain";
-import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
+import {
+  isUserFacingSpecific,
+  type ContentEntity,
+  type SpecificField,
+} from "@4ecb/content-domain";
 import {
   aggregateInventory,
   applyFieldOverlays,
@@ -31,9 +36,27 @@ export interface SheetCard {
   readonly critical?: string;
   readonly brutal?: number;
   readonly fields: readonly SheetValue[];
+  readonly flavor?: string;
+  readonly prerequisites?: string;
   readonly description?: string;
   readonly source?: string;
   readonly variants?: readonly SheetPowerVariant[];
+}
+
+export type SheetLearnedReferenceKind =
+  "ritual" | "alchemical-formula" | "martial-practice";
+
+/** A learned rules reference, distinct from quantity-bearing physical gear. */
+export interface SheetLearnedReference {
+  readonly id?: string;
+  readonly kind: SheetLearnedReferenceKind;
+  readonly name: string;
+  readonly quantity: number;
+  readonly fields: readonly SheetValue[];
+  readonly flavor?: string;
+  readonly prerequisites?: string;
+  readonly description?: string;
+  readonly source?: string;
 }
 
 export interface SheetPowerVariant {
@@ -62,6 +85,7 @@ export interface CharacterSheetModel {
   }[];
   readonly powers: readonly SheetCard[];
   readonly items: readonly SheetCard[];
+  readonly learnedReferences: readonly SheetLearnedReference[];
   readonly notes: readonly SheetValue[];
 }
 
@@ -135,6 +159,178 @@ function entityFields(entity: ContentEntity | undefined): SheetValue[] {
         : [{ label: field.name, value: field.value }],
     ) ?? []
   );
+}
+
+function fieldFromOverlay(
+  entity: ContentEntity,
+  name: string,
+  value: string,
+  ordinal: number,
+): SpecificField {
+  const authored = entity.specifics.find(
+    (specific) =>
+      specific.name.trim().toLocaleLowerCase() ===
+      name.trim().toLocaleLowerCase(),
+  );
+  return {
+    name,
+    value,
+    extraAttributes: authored?.extraAttributes ?? [],
+    ordinal: authored?.ordinal ?? entity.specifics.length + ordinal,
+  };
+}
+
+const INTERNAL_POWER_FIELD_NAMES = new Set([
+  "class",
+  "class id",
+  "associated feat",
+  "associated feat id",
+  "associated theme",
+  "associated theme id",
+]);
+
+function isUserFacingPowerField(field: SpecificField): boolean {
+  return (
+    isUserFacingSpecific(field) &&
+    !INTERNAL_POWER_FIELD_NAMES.has(field.name.trim().toLocaleLowerCase())
+  );
+}
+
+/**
+ * Field overlays are returned as a name/value record, so rebuild the minimum
+ * SpecificField shape before applying the canonical public-field predicate.
+ * Object insertion order retains the entity's authored order; newly introduced
+ * overlay fields follow the authored fields.
+ */
+function evaluatedEntityFields(
+  entity: ContentEntity,
+  evaluation: EvaluatedCharacter,
+): SheetValue[] {
+  const applied = applyFieldOverlays(entity, evaluation.overlays);
+  const appliedByName = new Map(
+    Object.entries(applied).map(([name, value]) => [
+      name.trim().toLocaleLowerCase(),
+      { name, value },
+    ]),
+  );
+  const matchingOverlays = evaluation.overlays.filter((overlay) =>
+    overlay.targetDefinitionIds.some(
+      (id) => id.toLocaleLowerCase() === entity.id.toLocaleLowerCase(),
+    ),
+  );
+  const overlaidNames = new Set(
+    matchingOverlays.map((overlay) => overlay.field.trim().toLocaleLowerCase()),
+  );
+  const authored = [...entity.specifics].sort(
+    (left, right) => left.ordinal - right.ordinal,
+  );
+  const lastAuthoredIndex = new Map<string, number>();
+  authored.forEach((specific, index) =>
+    lastAuthoredIndex.set(specific.name.trim().toLocaleLowerCase(), index),
+  );
+  const authoredFields = authored.flatMap((specific, index) => {
+    const normalizedName = specific.name.trim().toLocaleLowerCase();
+    const overlaid = appliedByName.get(normalizedName);
+    const resolved =
+      overlaidNames.has(normalizedName) &&
+      lastAuthoredIndex.get(normalizedName) === index &&
+      overlaid !== undefined
+        ? { ...specific, name: overlaid.name, value: overlaid.value }
+        : specific;
+    return isUserFacingPowerField(resolved)
+      ? [{ label: resolved.name, value: resolved.value }]
+      : [];
+  });
+  const introducedFields = Object.entries(applied).flatMap(
+    ([label, value], ordinal) => {
+      if (lastAuthoredIndex.has(label.trim().toLocaleLowerCase())) return [];
+      const specific = fieldFromOverlay(entity, label, value, ordinal);
+      return isUserFacingPowerField(specific)
+        ? [{ label: specific.name, value: specific.value }]
+        : [];
+    },
+  );
+  return [...authoredFields, ...introducedFields];
+}
+
+function entityPresentation(
+  entity: ContentEntity | undefined,
+): Pick<SheetCard, "flavor" | "prerequisites" | "description" | "source"> {
+  if (entity === undefined) return {};
+  const candidatePrerequisites =
+    entity.printPrerequisites?.trim() || entity.prerequisites?.trim();
+  const prerequisites =
+    candidatePrerequisites !== undefined &&
+    candidatePrerequisites.toLocaleLowerCase() !== "unselectable" &&
+    isUserFacingSpecific({
+      name: "Prerequisite",
+      value: candidatePrerequisites,
+      extraAttributes: [],
+      ordinal: 0,
+    })
+      ? candidatePrerequisites
+      : undefined;
+  return {
+    ...(entity.flavor === undefined || entity.flavor.trim().length === 0
+      ? {}
+      : { flavor: entity.flavor }),
+    ...(prerequisites === undefined || prerequisites.length === 0
+      ? {}
+      : { prerequisites }),
+    ...(entity.description.length === 0
+      ? {}
+      : { description: entity.description }),
+    ...(entity.source.length === 0 ? {} : { source: entity.source }),
+  };
+}
+
+function learnedReferenceKind(
+  entity: ContentEntity | undefined,
+  elementTypes: readonly string[],
+): SheetLearnedReferenceKind | undefined {
+  const type = entity?.type.trim().toLocaleLowerCase();
+  if (type === "ritual scroll") return undefined;
+  if (
+    type !== "ritual" &&
+    !elementTypes.some(
+      (candidate) => candidate.trim().toLocaleLowerCase() === "ritual",
+    )
+  )
+    return undefined;
+  const subtype = field(entity, "Type").trim().toLocaleLowerCase();
+  if (subtype === "alchemical formula") return "alchemical-formula";
+  if (subtype === "martial practice") return "martial-practice";
+  return "ritual";
+}
+
+function learnedReference(
+  kind: SheetLearnedReferenceKind,
+  name: string,
+  quantity: number,
+  entity: ContentEntity | undefined,
+): SheetLearnedReference {
+  return {
+    ...(entity === undefined ? {} : { id: entity.id }),
+    kind,
+    name,
+    quantity,
+    fields: entityFields(entity),
+    ...entityPresentation(entity),
+  };
+}
+
+function legacyLootEntity(
+  loot: LegacyLootSnapshot,
+  entities: ReadonlyMap<string, ContentEntity>,
+): ContentEntity | undefined {
+  return [...loot.elements]
+    .reverse()
+    .flatMap((element) =>
+      element.id === undefined
+        ? []
+        : [entities.get(element.id.toLocaleLowerCase())],
+    )
+    .find((entity) => entity !== undefined);
 }
 
 function field(entity: ContentEntity | undefined, name: string): string {
@@ -368,18 +564,15 @@ function evaluatedPowerCards(
   evaluation: EvaluatedCharacter,
   personalize: (text: string) => string,
 ): SheetCard[] {
-  const fields =
-    entity === undefined ? {} : applyFieldOverlays(entity, evaluation.overlays);
   const commonFields: SheetValue[] = [
-    ...Object.entries(fields)
+    ...(entity === undefined ? [] : evaluatedEntityFields(entity, evaluation))
       .filter(
-        ([name, value]) =>
-          value.length > 0 &&
+        ({ label }) =>
           !["power usage", "action type", "keywords"].includes(
-            name.toLocaleLowerCase(),
+            label.toLocaleLowerCase(),
           ),
       )
-      .map(([label, value]) => ({
+      .map(({ label, value }) => ({
         label,
         value: personalize(value),
       })),
@@ -440,12 +633,7 @@ function evaluatedPowerCards(
         : { damage: defaultVariant.damage }),
       ...(variants.length === 0 ? {} : { variants }),
       fields: commonFields,
-      ...(entity?.description === undefined || entity.description.length === 0
-        ? {}
-        : { description: entity.description }),
-      ...(entity?.source === undefined || entity.source.length === 0
-        ? {}
-        : { source: entity.source }),
+      ...entityPresentation(entity),
     },
   ];
 }
@@ -539,16 +727,17 @@ function powerCard(
           options.resolveAbilityChoices === true,
         ),
       })),
+    ...entityPresentation(entity),
     ...(entity?.description === undefined || entity.description.length === 0
       ? power.description === undefined
         ? {}
         : { description: power.description }
-      : { description: entity.description }),
-    ...(entity?.source === undefined
+      : {}),
+    ...(entity?.source === undefined || entity.source.length === 0
       ? power.source === undefined
         ? {}
         : { source: power.source }
-      : { source: entity.source }),
+      : {}),
   };
 }
 
@@ -604,17 +793,27 @@ export function buildSheetModel(
     };
     ruleGroups.set(rule.type, [...(ruleGroups.get(rule.type) ?? []), entry]);
   }
-  const itemCards: SheetCard[] = snapshot.loot
-    .filter((loot) => loot.showPowerCard)
-    .map((loot) => {
-      const element =
-        [...loot.elements]
-          .reverse()
-          .find((candidate) => candidate.id !== undefined) ?? loot.elements[0];
-      const entity =
-        element?.id === undefined
-          ? undefined
-          : entities.get(element.id.toLocaleLowerCase());
+  const lootPresentations = snapshot.loot.map((loot) => {
+    const element =
+      [...loot.elements]
+        .reverse()
+        .find((candidate) => candidate.id !== undefined) ?? loot.elements[0];
+    const entity = legacyLootEntity(loot, entities);
+    return {
+      loot,
+      element,
+      entity,
+      referenceKind: learnedReferenceKind(
+        entity,
+        loot.elements.map((candidate) => candidate.type),
+      ),
+    };
+  });
+  const itemCards: SheetCard[] = lootPresentations
+    .filter(({ loot, referenceKind }) =>
+      Boolean(loot.showPowerCard && referenceKind === undefined),
+    )
+    .map(({ loot, element, entity }) => {
       return {
         ...(element?.id === undefined ? {} : { id: element.id }),
         kind: "item" as const,
@@ -623,12 +822,15 @@ export function buildSheetModel(
           { label: "Quantity", value: String(loot.count) },
           ...entityFields(entity),
         ],
-        ...(entity?.description === undefined || entity.description.length === 0
-          ? {}
-          : { description: entity.description }),
-        ...(entity?.source === undefined ? {} : { source: entity.source }),
+        ...entityPresentation(entity),
       };
     });
+  const learnedReferences = lootPresentations.flatMap(
+    ({ loot, entity, referenceKind }) =>
+      referenceKind === undefined
+        ? []
+        : [learnedReference(referenceKind, loot.name, loot.count, entity)],
+  );
   const detail = detailsWithLegacyTextStrings(
     snapshot.details,
     snapshot.textStrings,
@@ -665,20 +867,27 @@ export function buildSheetModel(
     ]),
     senses: values(snapshot.stats, ["Passive Insight", "Passive Perception"]),
     skills: values(snapshot.stats, SKILLS),
-    equipment: snapshot.loot.map((loot) => ({
-      label: loot.name,
-      value: [
-        `× ${loot.count}`,
-        loot.equippedCount > 0 ? `${loot.equippedCount} equipped` : "",
-      ]
-        .filter(Boolean)
-        .join(" · "),
-    })),
+    equipment: lootPresentations.flatMap(({ loot, referenceKind }) =>
+      referenceKind === undefined
+        ? [
+            {
+              label: loot.name,
+              value: [
+                `× ${loot.count}`,
+                loot.equippedCount > 0 ? `${loot.equippedCount} equipped` : "",
+              ]
+                .filter(Boolean)
+                .join(" · "),
+            },
+          ]
+        : [],
+    ),
     features: [...ruleGroups].map(([group, entries]) => ({ group, entries })),
     powers: snapshot.powers.map((power) =>
       powerCard(power, entities, snapshot, keyAbilities, options),
     ),
     items: itemCards,
+    learnedReferences,
     notes: [
       ...[
         "Traits",
@@ -812,41 +1021,57 @@ export function buildEvaluatedSheetModel(
       ] as const;
     }),
   );
-  const itemCards: SheetCard[] = inventory.flatMap((entry) => {
+  const inventoryPresentations = inventory.map((entry) => {
     const original = build.inventory.find(
       (candidate) => candidate.id === entry.id,
     );
-    if (original?.showPowerCard === false) return [];
     const entity = [...entry.definitionIds]
       .reverse()
       .map((id) => entities.get(id.toLocaleLowerCase()))
       .find((candidate) => candidate !== undefined);
-    return [
-      {
-        ...(entity === undefined ? {} : { id: entity.id }),
-        kind: "item" as const,
-        name: inventoryNames.get(entry.id) ?? "Unnamed item",
-        fields: [
-          { label: "Quantity", value: String(entry.quantity) },
-          ...(entry.equippedQuantity === 0
-            ? []
-            : [
-                {
-                  label: "Equipped",
-                  value: String(entry.equippedQuantity),
-                },
-              ]),
-          ...entityFields(entity),
-        ],
-        ...(entity?.description === undefined || entity.description.length === 0
-          ? {}
-          : { description: entity.description }),
-        ...(entity?.source === undefined || entity.source.length === 0
-          ? {}
-          : { source: entity.source }),
-      },
-    ];
+    return {
+      entry,
+      original,
+      entity,
+      name: inventoryNames.get(entry.id) ?? "Unnamed item",
+      referenceKind: learnedReferenceKind(
+        entity,
+        original?.elements.map((element) => element.type) ?? [],
+      ),
+    };
   });
+  const itemCards: SheetCard[] = inventoryPresentations.flatMap(
+    ({ entry, original, entity, name, referenceKind }) => {
+      if (original?.showPowerCard === false || referenceKind !== undefined)
+        return [];
+      return [
+        {
+          ...(entity === undefined ? {} : { id: entity.id }),
+          kind: "item" as const,
+          name,
+          fields: [
+            { label: "Quantity", value: String(entry.quantity) },
+            ...(entry.equippedQuantity === 0
+              ? []
+              : [
+                  {
+                    label: "Equipped",
+                    value: String(entry.equippedQuantity),
+                  },
+                ]),
+            ...entityFields(entity),
+          ],
+          ...entityPresentation(entity),
+        },
+      ];
+    },
+  );
+  const learnedReferences = inventoryPresentations.flatMap(
+    ({ entry, entity, name, referenceKind }) =>
+      referenceKind === undefined
+        ? []
+        : [learnedReference(referenceKind, name, entry.quantity, entity)],
+  );
 
   const powerCards = evaluation.powers.flatMap((power) =>
     evaluatedPowerCards(
@@ -860,6 +1085,15 @@ export function buildEvaluatedSheetModel(
     names.flatMap((name) => {
       const value = evaluatedStat(evaluation, name);
       return value === undefined ? [] : [{ label: name, value }];
+    });
+  const evaluatedAliasedValues = (
+    definitions: readonly (readonly [label: string, ...names: string[]])[],
+  ) =>
+    definitions.flatMap(([label, ...names]) => {
+      const value = names
+        .map((name) => evaluatedStat(evaluation, name))
+        .find((candidate) => candidate !== undefined);
+      return value === undefined ? [] : [{ label, value }];
     });
 
   return {
@@ -886,7 +1120,12 @@ export function buildEvaluatedSheetModel(
         snapshot.abilities[name];
       return value === undefined ? [] : [{ label: name, value: String(value) }];
     }),
-    defenses: evaluatedValues(["AC", "Fortitude", "Reflex", "Will"]),
+    defenses: evaluatedAliasedValues([
+      ["AC", "AC", "Armor Class"],
+      ["Fortitude", "Fortitude Defense", "Fortitude"],
+      ["Reflex", "Reflex Defense", "Reflex"],
+      ["Will", "Will Defense", "Will"],
+    ]),
     resources: evaluatedValues([
       "Hit Points",
       "Healing Surges",
@@ -897,22 +1136,28 @@ export function buildEvaluatedSheetModel(
     ]),
     senses: evaluatedValues(["Passive Insight", "Passive Perception"]),
     skills: evaluatedValues(SKILLS),
-    equipment: inventory.map((entry) => {
-      return {
-        label: inventoryNames.get(entry.id) ?? "Unnamed item",
-        value: [
-          `× ${entry.quantity}`,
-          entry.equippedQuantity > 0
-            ? `${entry.equippedQuantity} equipped`
-            : "",
-        ]
-          .filter(Boolean)
-          .join(" · "),
-      };
-    }),
+    equipment: inventoryPresentations.flatMap(
+      ({ entry, name, referenceKind }) =>
+        referenceKind === undefined
+          ? [
+              {
+                label: name,
+                value: [
+                  `× ${entry.quantity}`,
+                  entry.equippedQuantity > 0
+                    ? `${entry.equippedQuantity} equipped`
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join(" · "),
+              },
+            ]
+          : [],
+    ),
     features: [...features].map(([group, entries]) => ({ group, entries })),
     powers: powerCards,
     items: itemCards,
+    learnedReferences,
     notes: [
       ...[
         "Traits",

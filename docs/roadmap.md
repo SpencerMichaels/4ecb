@@ -547,6 +547,19 @@ explicitly deferred beyond parity.
 **Release characterization:** refined browser character reference; mostly at
 original Character Builder parity.
 
+**Initial M5.6 checkpoint (2026-09-30):** The first reviewable View now separates
+the screen reference from the page-oriented print template while both consume
+the same semantic sheet model. Screen View has an at-a-glance summary, sticky
+section navigation, complete interactive power references, equipment and item
+references, learned rituals/formulas/practices, features, notes, recovery
+guidance, and direct Build/print entry points. Print retains the established
+three-column card grid but moves long features, equipment, learned references,
+and notes out of narrow summary columns. Card projection filters machine-only
+metadata, preserves repeated authored clauses in order, exposes flavor and
+prerequisites, and normalizes the small legacy table-markup vocabulary without
+interpreting arbitrary HTML. Product-owner review and any resulting hierarchy
+or density revisions remain required before milestone closure.
+
 ## M5.7 — Invited-beta UI and hostability preparation
 
 ### Goal

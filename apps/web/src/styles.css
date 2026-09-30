@@ -1228,6 +1228,327 @@ textarea {
 .sheet-page {
   max-width: none;
 }
+
+.print-only {
+  display: none;
+}
+
+.screen-sheet-view {
+  margin: 0 auto;
+  max-width: 96rem;
+}
+
+.view-sheet-header {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--accent);
+  display: flex;
+  gap: 1.5rem;
+  justify-content: space-between;
+  padding: 1rem 1.2rem;
+}
+
+.view-sheet-identity {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.view-sheet-identity h1,
+.view-sheet-identity p {
+  margin: 0;
+}
+
+.view-sheet-portrait {
+  border: 2px solid var(--border-strong);
+  height: 5rem;
+  width: 5rem;
+}
+
+.view-sheet-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+}
+
+.view-sheet-actions > a,
+.view-sheet-actions > button {
+  min-height: 2.5rem;
+}
+
+.view-sheet-actions > a {
+  align-items: center;
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  display: inline-flex;
+  padding: 0.45rem 0.7rem;
+  text-decoration: none;
+}
+
+.view-sheet-actions > a:hover,
+.view-sheet-actions > a:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.view-print-options {
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-top: 0;
+  padding: 0.65rem 0.85rem;
+}
+
+.view-print-options summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.view-print-options fieldset {
+  align-items: center;
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin: 0.65rem 0 0;
+  padding: 0;
+}
+
+.view-print-options legend {
+  font-weight: 700;
+}
+
+.view-print-options label {
+  align-items: center;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.view-source-status {
+  align-items: start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin: 1rem 0;
+  max-width: none;
+}
+
+.view-source-status > a {
+  flex: 0 0 auto;
+  font-weight: 700;
+}
+
+.view-section-nav {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.view-section-nav a {
+  border-right: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 800;
+  padding: 0.65rem 0.85rem;
+  text-decoration: none;
+}
+
+.view-section-nav a:hover,
+.view-section-nav a:focus-visible {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.view-sheet-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  margin-top: 1rem;
+  scroll-margin-top: 4rem;
+}
+
+.view-sheet-section > header {
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+}
+
+.view-sheet-section > header h2,
+.view-sheet-section > header p {
+  margin: 0;
+}
+
+.view-summary-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0.8rem;
+}
+
+.view-summary-grid > section,
+.view-feature-grid > section {
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+
+.view-summary-grid h3,
+.view-feature-grid h3,
+.view-item-reference > h3 {
+  background: var(--brand-navy);
+  color: white;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  margin: 0;
+  padding: 0.45rem 0.65rem;
+  text-transform: uppercase;
+}
+
+.view-summary-skills .sheet-values {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.view-card-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0.8rem;
+}
+
+.view-reference-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
+  padding: 0.8rem;
+}
+
+.learned-reference-card {
+  border: 1px solid var(--border);
+  min-width: 0;
+  padding: 0.65rem;
+}
+
+.learned-reference-card > header {
+  align-items: start;
+  border-bottom: 2px solid var(--brand-navy);
+  display: flex;
+  justify-content: space-between;
+  margin: -0.65rem -0.65rem 0.55rem;
+  padding: 0.55rem 0.65rem;
+}
+
+.learned-reference-card > header h3,
+.learned-reference-card > header p,
+.learned-reference-card .prose-blocks {
+  margin: 0;
+}
+
+.learned-reference-flavor {
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 0.5rem;
+}
+
+.learned-reference-card footer {
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.72rem;
+  margin-top: 0.55rem;
+  padding-top: 0.35rem;
+}
+
+.view-card-grid .sheet-card {
+  background: var(--surface);
+  display: block;
+  margin: 0;
+  min-height: 0;
+}
+
+.view-equipment-list {
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0.8rem;
+}
+
+.view-equipment-list > li {
+  align-items: baseline;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 0.7rem;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+}
+
+.view-equipment-list > li:nth-child(odd) {
+  border-right: 1px solid var(--border);
+}
+
+.view-equipment-list span {
+  color: var(--muted);
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+}
+
+.view-item-reference {
+  border-top: 1px solid var(--border);
+}
+
+.view-feature-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
+  padding: 0.8rem;
+}
+
+.view-feature-grid .sheet-values > div {
+  display: block;
+  padding: 0.55rem 0.65rem;
+}
+
+.view-feature-grid .sheet-values dt {
+  font-weight: 800;
+  margin-bottom: 0.2rem;
+}
+
+.view-feature-grid .sheet-values dd {
+  margin: 0;
+}
+
+.view-notes-list {
+  margin: 0;
+  padding: 0.8rem;
+}
+
+.view-notes-list > div {
+  border-bottom: 1px solid var(--border);
+  padding: 0.65rem;
+}
+
+.view-notes-list dt {
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+.view-notes-list dd {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.view-empty-state {
+  color: var(--muted);
+  margin: 0;
+  padding: 1rem;
+}
+
 .sheet-toolbar {
   background: var(--surface-subtle);
   justify-content: space-between;
@@ -1285,16 +1606,20 @@ textarea {
 .identity-block .sheet-values {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
-.sheet-columns {
+.sheet-columns,
+.print-summary-columns {
   display: grid;
   gap: 0.75rem;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
-.sheet-columns section {
+.sheet-columns section,
+.print-summary-columns section {
   break-inside: avoid;
   margin-bottom: 0.75rem;
 }
 .sheet-columns section > h3,
+.print-summary-columns section > h3,
+.print-wide-section > h3,
 .card-section > h2 {
   background: #20272a;
   color: #fff;
@@ -1303,6 +1628,71 @@ textarea {
   margin: 0;
   padding: 0.2rem 0.45rem;
   text-transform: uppercase;
+}
+.print-wide-section {
+  break-inside: auto;
+  margin-top: 0.75rem;
+}
+.print-feature-grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-top: 0.5rem;
+}
+.print-reference-grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-top: 0.5rem;
+}
+.print-reference-grid .learned-reference-card {
+  break-inside: avoid;
+  color: #111;
+}
+.print-feature-grid > section {
+  break-inside: avoid;
+  border: 1px solid #ccc;
+}
+.print-feature-grid h4 {
+  background: #eee;
+  color: #111;
+  margin: 0;
+  padding: 0.25rem 0.35rem;
+}
+.print-feature-grid .sheet-values > div {
+  display: block;
+}
+.print-feature-grid .sheet-values dt {
+  font-weight: 800;
+}
+.print-feature-grid .sheet-values dd {
+  margin: 0.1rem 0 0;
+}
+.print-equipment-list {
+  columns: 2;
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0;
+}
+.print-equipment-list > li {
+  break-inside: avoid;
+  border-bottom: 1px solid #ccc;
+  padding: 0.2rem 0.35rem;
+}
+.print-notes-section > dl {
+  margin: 0;
+}
+.print-notes-section > dl > div {
+  break-inside: avoid;
+  border-bottom: 1px solid #ccc;
+  padding: 0.4rem 0.35rem;
+}
+.print-notes-section dt {
+  font-weight: 800;
+}
+.print-notes-section dd {
+  margin: 0.15rem 0 0;
+  white-space: pre-wrap;
 }
 .sheet-values {
   display: grid;
@@ -1361,6 +1751,36 @@ textarea {
 }
 .sheet-card p {
   margin-bottom: 0.35rem;
+}
+.sheet-card-flavor {
+  font-style: italic;
+  margin-bottom: 0.35rem;
+}
+.sheet-card-flavor .prose-blocks,
+.sheet-card-flavor .prose-paragraph {
+  margin: 0;
+}
+.sheet-card-rules {
+  margin: 0;
+}
+.sheet-card-rules > div {
+  border-top: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  display: grid;
+  gap: 0.35rem;
+  grid-template-columns: minmax(4.7rem, auto) minmax(0, 1fr);
+  padding: 0.3rem 0;
+}
+.sheet-card-rules dt {
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.sheet-card-rules dd {
+  margin: 0;
+  min-width: 0;
+}
+.sheet-card-rules .prose-blocks,
+.sheet-card-rules .prose-paragraph {
+  margin: 0;
 }
 .sheet-card footer {
   border-top: 1px solid currentColor;
@@ -1423,6 +1843,8 @@ textarea {
 .sheet-monochrome .sheet-card,
 .sheet-monochrome .sheet-card > header,
 .sheet-monochrome .sheet-columns section > h3,
+.sheet-monochrome .print-summary-columns section > h3,
+.sheet-monochrome .print-wide-section > h3,
 .sheet-monochrome .card-section > h2 {
   background: #fff;
   border-color: #000;
@@ -5265,8 +5687,27 @@ button.inventory-icon-action:disabled {
   .character-grid {
     grid-template-columns: minmax(0, 1fr);
   }
-  .sheet-columns {
+  .sheet-columns,
+  .print-summary-columns {
     grid-template-columns: 1fr;
+  }
+  .view-sheet-header {
+    align-items: start;
+    flex-direction: column;
+  }
+  .view-summary-grid,
+  .view-card-grid,
+  .view-equipment-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .view-equipment-list > li:nth-child(odd) {
+    border-right: 0;
+  }
+  .view-feature-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .view-reference-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
   .identity-block .sheet-values,
   .card-grid,
@@ -5433,10 +5874,17 @@ button.inventory-icon-action:disabled {
   }
   .app-header,
   .pwa-status,
+  .screen-sheet-view,
   .sheet-toolbar,
   .cache-warning,
   .sheet-page > .status,
   .skip-link {
+    display: none !important;
+  }
+  .print-only {
+    display: block;
+  }
+  .print-excluded {
     display: none !important;
   }
   .sheet-page {
@@ -5457,6 +5905,7 @@ button.inventory-icon-action:disabled {
   .print-sheet,
   .card-section {
     border: 0;
+    color: #111;
     margin: 0;
     max-width: none;
     padding: 0;

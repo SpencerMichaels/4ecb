@@ -134,6 +134,31 @@ describe("release accessibility contract", () => {
     );
   });
 
+  it("keeps browser View navigation and print presentation distinct", () => {
+    expect(characterSheet).toContain('className="screen-sheet-view"');
+    expect(characterSheet).toContain('aria-label="Character view sections"');
+    for (const section of [
+      "view-summary",
+      "view-powers",
+      "view-equipment",
+      "view-learned-references",
+      "view-features",
+      "view-notes",
+    ])
+      expect(characterSheet).toContain(section);
+    expect(characterSheet).toContain("/edit?tab=overview");
+    expect(characterSheet).toContain("Print / save PDF");
+    expect(characterSheet).toContain("model.learnedReferences.map");
+    expect(characterSheet).toContain("print-summary-columns");
+    expect(characterSheet).toContain("print-wide-section");
+    expect(styles).toMatch(
+      /@media print[\s\S]*\.screen-sheet-view,[\s\S]*display: none !important/,
+    );
+    expect(styles).toMatch(
+      /@media print[\s\S]*\.print-only\s*\{[^}]*display: block/,
+    );
+  });
+
   it("keeps every normal-text palette pair above WCAG AA contrast", () => {
     const pairs = [
       ["#1e2933", "#eef2f6"],

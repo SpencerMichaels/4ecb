@@ -1,5 +1,37 @@
 # Implementation status
 
+## M5.6 initial View and print-structure checkpoint (2026-09-30)
+
+The first reviewable M5.6 slice replaces the browser's print-preview-like
+character route with a dedicated read-only View while retaining print as a
+separate projection over the same semantic model.
+
+- View now provides an at-a-glance summary, sticky section navigation, powers,
+  equipment/item references, learned rituals/formulas/practices, features,
+  notes, explicit recovery guidance, and direct Characters, Build, and
+  Print/save-PDF actions. Screen references remain available regardless of
+  which optional card groups the user includes on paper.
+- The printed summary keeps compact abilities, resources, defenses, senses, and
+  skills together. Long feature, equipment, learned-reference, and note prose
+  now uses wide layouts instead of being crushed into the former narrow
+  three-column flow. The established three-column power/item card grid remains
+  intact.
+- Evaluated cards now apply the canonical user-facing-field predicate after
+  overlays, suppress machine metadata and ID tokens, preserve repeated authored
+  combat clauses in ordinal order, and expose supported flavor and printable
+  prerequisites. Known legacy table/paragraph layout tags become safe readable
+  prose; unfamiliar markup is still escaped rather than interpreted.
+- Rituals, alchemical formulas, and martial practices are semantic learned
+  references rather than physical equipment or item cards. Ritual Scrolls
+  remain physical equipment. Custom and unresolved inventory remains visible;
+  it is not discarded to make the partition appear cleaner.
+- Focused sheet-model/prose/structural tests, workspace typechecks, the
+  production PWA build, and the Chromium/Firefox Letter/A4 print matrix are the
+  checkpoint gate. A live exact-profile Silaqui pass confirmed all four defense
+  aliases, 42 interactive and 42 print reference cards, no underscore metadata
+  labels, and the screen/print visibility boundary. Product-owner review is
+  still required; this checkpoint does not close M5.6.
+
 ## Extend two-click confirmation to the character library page (2026-09-28)
 
 Follow-up to the same-day native-confirm() removal: the product owner asked
