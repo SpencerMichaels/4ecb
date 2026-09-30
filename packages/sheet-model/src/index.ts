@@ -27,9 +27,24 @@ export interface SheetCard {
   readonly keywords?: string;
   readonly attack?: string;
   readonly damage?: string;
+  readonly damageType?: string;
+  readonly critical?: string;
+  readonly brutal?: number;
   readonly fields: readonly SheetValue[];
   readonly description?: string;
   readonly source?: string;
+  readonly variants?: readonly SheetPowerVariant[];
+}
+
+export interface SheetPowerVariant {
+  readonly id: string;
+  readonly equipmentName: string;
+  readonly equipped: boolean;
+  readonly weaponDamage?: string;
+  readonly hand?: "main" | "off";
+  readonly pairedEquipmentName?: string;
+  readonly attack?: string;
+  readonly damage?: string;
 }
 
 export interface CharacterSheetModel {
@@ -376,47 +391,63 @@ function evaluatedPowerCards(
       ? []
       : [{ label: "Compatibility", value: power.unsupported.join("; ") }]),
   ];
-  const variants = power.variants.length === 0 ? [undefined] : power.variants;
-  return variants.map((variant) => ({
-    id:
-      variant === undefined
-        ? power.definitionId
-        : `${power.definitionId}:${variant.id}`,
-    kind: "power",
-    name:
-      variant === undefined
-        ? power.name
-        : `${power.name} — ${variant.equipmentName}`,
-    ...(power.usage === undefined ? {} : { usage: power.usage }),
-    ...(power.actionType === undefined ? {} : { actionType: power.actionType }),
-    ...(power.keywords.length === 0
-      ? {}
-      : { keywords: power.keywords.join(", ") }),
-    ...(variant?.attackBonus === undefined
-      ? {}
-      : {
-          attack: `${signed(variant.attackBonus)} vs ${variant.defense ?? "defense"}`,
-        }),
-    ...(variant?.damage === undefined ? {} : { damage: variant.damage }),
-    fields: [
-      ...commonFields,
-      ...(variant?.damageType === undefined
-        ? []
-        : [{ label: "Damage type", value: variant.damageType }]),
-      ...(variant?.critical === undefined
-        ? []
-        : [{ label: "Critical", value: variant.critical }]),
-      ...(variant?.brutal === undefined
-        ? []
-        : [{ label: "Brutal", value: String(variant.brutal) }]),
-    ],
-    ...(entity?.description === undefined || entity.description.length === 0
-      ? {}
-      : { description: entity.description }),
-    ...(entity?.source === undefined || entity.source.length === 0
-      ? {}
-      : { source: entity.source }),
-  }));
+  const variants: readonly SheetPowerVariant[] = power.variants.map(
+    (variant) => ({
+      id: variant.id,
+      equipmentName: variant.equipmentName,
+      equipped: variant.equipped === true,
+      ...(variant.weaponDamage === undefined
+        ? {}
+        : { weaponDamage: variant.weaponDamage }),
+      ...(variant.hand === undefined ? {} : { hand: variant.hand }),
+      ...(variant.pairedEquipmentName === undefined
+        ? {}
+        : { pairedEquipmentName: variant.pairedEquipmentName }),
+      ...(variant.attackBonus === undefined
+        ? {}
+        : {
+            attack: `${signed(variant.attackBonus)} vs ${variant.defense ?? "defense"}`,
+          }),
+      ...(variant.damage === undefined ? {} : { damage: variant.damage }),
+      ...(variant.damageType === undefined
+        ? {}
+        : { damageType: variant.damageType }),
+      ...(variant.critical === undefined ? {} : { critical: variant.critical }),
+      ...(variant.brutal === undefined ? {} : { brutal: variant.brutal }),
+    }),
+  );
+  const defaultVariant =
+    variants.find((variant) => variant.equipped && variant.hand === "main") ??
+    variants.find((variant) => variant.equipped) ??
+    variants[0];
+  return [
+    {
+      id: power.definitionId,
+      kind: "power",
+      name: power.name,
+      ...(power.usage === undefined ? {} : { usage: power.usage }),
+      ...(power.actionType === undefined
+        ? {}
+        : { actionType: power.actionType }),
+      ...(power.keywords.length === 0
+        ? {}
+        : { keywords: power.keywords.join(", ") }),
+      ...(defaultVariant?.attack === undefined
+        ? {}
+        : { attack: defaultVariant.attack }),
+      ...(defaultVariant?.damage === undefined
+        ? {}
+        : { damage: defaultVariant.damage }),
+      ...(variants.length === 0 ? {} : { variants }),
+      fields: commonFields,
+      ...(entity?.description === undefined || entity.description.length === 0
+        ? {}
+        : { description: entity.description }),
+      ...(entity?.source === undefined || entity.source.length === 0
+        ? {}
+        : { source: entity.source }),
+    },
+  ];
 }
 
 function powerCard(

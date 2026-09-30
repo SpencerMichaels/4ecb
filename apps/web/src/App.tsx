@@ -105,6 +105,9 @@ export const KEEP_LARGE_AMOUNTS_IN_GOLD_STORAGE_KEY =
   "4ecb.keepLargeAmountsInGold.v1";
 export const RESOLVE_ABILITY_CHOICES_STORAGE_KEY =
   "4ecb.resolveAbilityChoices.v1";
+export const ABBREVIATE_ABILITY_VALUES_STORAGE_KEY =
+  "4ecb.abbreviateAbilityValues.v1";
+export const EXPAND_WEAPON_DICE_STORAGE_KEY = "4ecb.expandWeaponDice.v1";
 
 function RouteFocusOnMount({
   children,
@@ -176,6 +179,22 @@ export function App() {
       return true;
     }
   });
+  const [abbreviateAbilityValues, setAbbreviateAbilityValues] = useState(() => {
+    try {
+      return (
+        localStorage.getItem(ABBREVIATE_ABILITY_VALUES_STORAGE_KEY) !== "0"
+      );
+    } catch {
+      return true;
+    }
+  });
+  const [expandWeaponDice, setExpandWeaponDice] = useState(() => {
+    try {
+      return localStorage.getItem(EXPAND_WEAPON_DICE_STORAGE_KEY) !== "0";
+    } catch {
+      return true;
+    }
+  });
   const firstRoute = useRef(true);
   const runtimeContentStarted = useRef(false);
   const route = useMemo(() => parseHashRoute(hash), [hash]);
@@ -229,6 +248,24 @@ export function App() {
       // The power-card display preference still applies for this session.
     }
   }, [resolveAbilityChoices]);
+  useEffect(() => {
+    try {
+      if (abbreviateAbilityValues)
+        localStorage.removeItem(ABBREVIATE_ABILITY_VALUES_STORAGE_KEY);
+      else localStorage.setItem(ABBREVIATE_ABILITY_VALUES_STORAGE_KEY, "0");
+    } catch {
+      // The power-card display preference still applies for this session.
+    }
+  }, [abbreviateAbilityValues]);
+  useEffect(() => {
+    try {
+      if (expandWeaponDice)
+        localStorage.removeItem(EXPAND_WEAPON_DICE_STORAGE_KEY);
+      else localStorage.setItem(EXPAND_WEAPON_DICE_STORAGE_KEY, "0");
+    } catch {
+      // The power-card display preference still applies for this session.
+    }
+  }, [expandWeaponDice]);
 
   const refresh = useCallback(async () => {
     const [installed, active, profile] = await Promise.all([
@@ -465,6 +502,10 @@ export function App() {
                   onKeepLargeAmountsInGoldChange={setKeepLargeAmountsInGold}
                   resolveAbilityChoices={resolveAbilityChoices}
                   onResolveAbilityChoicesChange={setResolveAbilityChoices}
+                  abbreviateAbilityValues={abbreviateAbilityValues}
+                  onAbbreviateAbilityValuesChange={setAbbreviateAbilityValues}
+                  expandWeaponDice={expandWeaponDice}
+                  onExpandWeaponDiceChange={setExpandWeaponDice}
                 />
               ) : route.characterId === undefined ? (
                 <CharacterLibraryPage
@@ -479,6 +520,8 @@ export function App() {
                   onNavigate={navigateBuilder}
                   keepLargeAmountsInGold={keepLargeAmountsInGold}
                   resolveAbilityChoices={resolveAbilityChoices}
+                  abbreviateAbilityValues={abbreviateAbilityValues}
+                  expandWeaponDice={expandWeaponDice}
                 />
               ) : (
                 <SheetRoute
@@ -486,6 +529,8 @@ export function App() {
                   manifests={manifests}
                   printOnReady={route.print === true}
                   resolveAbilityChoices={resolveAbilityChoices}
+                  abbreviateAbilityValues={abbreviateAbilityValues}
+                  expandWeaponDice={expandWeaponDice}
                 />
               )}
             </RouteFocusOnMount>

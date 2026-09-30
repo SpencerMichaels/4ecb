@@ -449,9 +449,16 @@ describe("sheet model", () => {
     expect(model.abilities).toContainEqual({ label: "Strength", value: "20" });
     expect(model.defenses).toContainEqual({ label: "AC", value: "19" });
     expect(model.powers[0]).toMatchObject({
-      name: "Arc Flash — Test wand",
+      name: "Arc Flash",
       attack: "+7 vs Reflex",
       damage: "1d6+4",
+      variants: [
+        expect.objectContaining({
+          equipmentName: "Test wand",
+          attack: "+7 vs Reflex",
+          damage: "1d6+4",
+        }),
+      ],
     });
     expect(model.powers[0]?.fields).toEqual([
       { label: "Hit", value: "2[W] + Your Wisdom modifier (+5) damage." },

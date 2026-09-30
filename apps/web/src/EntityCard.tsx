@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import {
   isUserFacingSpecific,
@@ -11,6 +11,13 @@ import { entityCurrencyCopper, formatCopperPrice } from "./equipment-ui";
 import { Icon, type IconName } from "./Icon";
 import { canonicalItemIcon } from "./item-icons";
 import { Prose } from "./Prose";
+import {
+  defaultPowerVariant,
+  PowerTextInline,
+  PowerTextProse,
+  PowerVariantPanel,
+  type PowerCardPresentation,
+} from "./PowerCardPresentation";
 import {
   classKeyAbilitiesSentence,
   contentSpecificValue,
@@ -979,11 +986,11 @@ export function orderPowerRuleFields(
 function StructuredSpecifics({
   entity,
   fields,
-  personalizePowerText,
+  powerPresentation,
 }: {
   readonly entity: ContentEntity;
   readonly fields: readonly SpecificField[];
-  readonly personalizePowerText?: ((text: string) => string) | undefined;
+  readonly powerPresentation?: PowerCardPresentation | undefined;
 }) {
   const descriptors =
     entity.type.trim().toLocaleLowerCase() === "power"
@@ -1024,19 +1031,20 @@ function StructuredSpecifics({
         : itemDescriptorLabel(field.name),
       value: isPower ? field.value : itemDescriptorValue(field),
     })),
-  ].map((fact) => ({
-    ...fact,
-    value:
-      isPower && personalizePowerText !== undefined
-        ? personalizePowerText(fact.value)
-        : fact.value,
-  }));
+  ];
   const authoredClauses = visibleFields.filter(
     (field) => !descriptors.has(normalizedFieldName(field.name)),
   );
   const clauses = isPower
     ? orderPowerRuleFields(authoredClauses)
     : authoredClauses;
+  const variants = powerPresentation?.variants ?? [];
+  const [selectedVariantId, setSelectedVariantId] = useState(
+    () => defaultPowerVariant(variants)?.id,
+  );
+  const selectedVariant =
+    variants.find((variant) => variant.id === selectedVariantId) ??
+    defaultPowerVariant(variants);
   return (
     <>
       {facts.length === 0 ? null : isPower ? (
@@ -1044,20 +1052,29 @@ function StructuredSpecifics({
           {facts.map((fact) => (
             <div key={fact.key}>
               <dt>{fact.label}</dt>
-              <dd className="preserve-lines">{fact.value}</dd>
+              <dd className="preserve-lines">
+                <PowerTextInline
+                  value={fact.value}
+                  presentation={powerPresentation}
+                  variant={selectedVariant}
+                />
+              </dd>
             </div>
           ))}
         </dl>
       ) : (
         <ItemDescriptorRows rows={itemDescriptorRows(entity, facts)} />
       )}
+      {!isPower || selectedVariant === undefined ? null : (
+        <PowerVariantPanel
+          variants={variants}
+          selected={selectedVariant}
+          onSelect={setSelectedVariantId}
+        />
+      )}
       {clauses.length === 0 ? null : (
         <dl className="entity-card-rules">
           {clauses.map((field) => {
-            const value =
-              isPower && personalizePowerText !== undefined
-                ? personalizePowerText(field.value)
-                : field.value;
             return (
               <div key={`${field.ordinal}-${field.name}`}>
                 <dt>{field.name || "Detail"}</dt>
@@ -1069,9 +1086,17 @@ function StructuredSpecifics({
                   }
                 >
                   {isStructuredProseSpecific(field) ? (
-                    <Prose value={value} />
+                    <PowerTextProse
+                      value={field.value}
+                      presentation={powerPresentation}
+                      variant={selectedVariant}
+                    />
                   ) : (
-                    value
+                    <PowerTextInline
+                      value={field.value}
+                      presentation={powerPresentation}
+                      variant={selectedVariant}
+                    />
                   )}
                 </dd>
               </div>
@@ -1091,7 +1116,7 @@ export function EntityCardBody({
   afterFields,
   renderDescription,
   showSource = true,
-  personalizePowerText,
+  powerPresentation,
 }: {
   readonly entity: ContentEntity;
   readonly hideFlavortext: boolean;
@@ -1100,7 +1125,7 @@ export function EntityCardBody({
   readonly afterFields?: ReactNode;
   readonly renderDescription?: (description: string) => ReactNode;
   readonly showSource?: boolean;
-  readonly personalizePowerText?: ((text: string) => string) | undefined;
+  readonly powerPresentation?: PowerCardPresentation | undefined;
 }) {
   const fields = entityCardSpecifics(entity);
   const structured =
@@ -1115,7 +1140,7 @@ export function EntityCardBody({
         <StructuredSpecifics
           entity={entity}
           fields={fields}
-          personalizePowerText={personalizePowerText}
+          powerPresentation={powerPresentation}
         />
       ) : null}
       {structured ? beforeNarrative : null}
@@ -1143,11 +1168,11 @@ export function EntityCardBody({
 export function EmbeddedPowerCard({
   entity,
   hideFlavortext,
-  personalizePowerText,
+  powerPresentation,
 }: {
   readonly entity: ContentEntity;
   readonly hideFlavortext: boolean;
-  readonly personalizePowerText?: ((text: string) => string) | undefined;
+  readonly powerPresentation?: PowerCardPresentation | undefined;
 }) {
   const headingId = `embedded-power-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
   return (
@@ -1167,7 +1192,7 @@ export function EmbeddedPowerCard({
         <EntityCardBody
           entity={entity}
           hideFlavortext={hideFlavortext}
-          personalizePowerText={personalizePowerText}
+          powerPresentation={powerPresentation}
           showSource={false}
         />
       </div>

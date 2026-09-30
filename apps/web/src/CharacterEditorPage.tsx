@@ -40,12 +40,12 @@ import {
   ABILITY_SCORE_NAMES,
   assessAbilityPointBuy,
   commandForEvaluatedChoice,
+  evaluatePowers,
   projectBuildForEvaluation,
   type EvaluatedCharacter,
   type EvaluatedChoice,
   type EvaluationInput,
 } from "@4ecb/rules-engine";
-import { createEvaluatedPowerTextPersonalizer } from "@4ecb/sheet-model";
 
 import {
   abilityScoreAdjustment,
@@ -111,6 +111,7 @@ import { HideFlavortextContext } from "./HideFlavortextContext";
 import { EquipmentWorkspace } from "./EquipmentWorkspace";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
 import { PortraitEditor } from "./PortraitEditor";
+import { createPowerCardPresentationFinder } from "./PowerCardPresentation";
 import type {
   BuilderNavigation,
   BuilderSectionSlug,
@@ -218,6 +219,8 @@ export function CharacterEditorPage({
   onNavigate,
   keepLargeAmountsInGold,
   resolveAbilityChoices,
+  abbreviateAbilityValues,
+  expandWeaponDice,
 }: {
   readonly characterId: string;
   readonly navigation: BuilderNavigation;
@@ -228,6 +231,8 @@ export function CharacterEditorPage({
   ) => void;
   readonly keepLargeAmountsInGold: boolean;
   readonly resolveAbilityChoices: boolean;
+  readonly abbreviateAbilityValues: boolean;
+  readonly expandWeaponDice: boolean;
 }) {
   const hideFlavortext = useContext(HideFlavortextContext);
   const [character, setCharacter] = useState<CharacterRecord>();
@@ -442,27 +447,48 @@ export function CharacterEditorPage({
       ),
     [entities],
   );
-  const planningPowerText = useMemo(
+  const currentEvaluationWithPowers = useMemo(() => {
+    if (build === undefined || currentEvaluation === undefined)
+      return undefined;
+    const input = projectBuildForEvaluation(
+      projectBuildForLegacyExport(build),
+      entities,
+    );
+    return {
+      ...currentEvaluation,
+      powers: evaluatePowers({
+        level: currentEvaluation.level,
+        activeDefinitionIds: currentEvaluation.activeDefinitionIds,
+        inventory: input.inventory,
+        stats: currentEvaluation.stats,
+        overlays: currentEvaluation.overlays,
+        ...(input.textStrings === undefined
+          ? {}
+          : { textStrings: input.textStrings }),
+        entities: [...entities, ...(input.localEntities ?? [])],
+      }),
+    };
+  }, [build, currentEvaluation, entities]);
+  const currentPowerPresentationFor = useMemo(
     () =>
-      planningEvaluation === undefined
+      currentEvaluationWithPowers === undefined
         ? undefined
-        : createEvaluatedPowerTextPersonalizer(
-            planningEvaluation,
+        : createPowerCardPresentationFinder(
+            currentEvaluationWithPowers,
             entities,
-            resolveAbilityChoices,
+            {
+              resolveAbilityChoices,
+              abbreviateAbilityValues,
+              expandWeaponDice,
+            },
           ),
-    [entities, planningEvaluation, resolveAbilityChoices],
-  );
-  const currentPowerText = useMemo(
-    () =>
-      currentEvaluation === undefined
-        ? undefined
-        : createEvaluatedPowerTextPersonalizer(
-            currentEvaluation,
-            entities,
-            resolveAbilityChoices,
-          ),
-    [currentEvaluation, entities, resolveAbilityChoices],
+    [
+      abbreviateAbilityValues,
+      currentEvaluationWithPowers,
+      entities,
+      expandWeaponDice,
+      resolveAbilityChoices,
+    ],
   );
   const carriedWallet =
     build === undefined
@@ -2140,7 +2166,7 @@ export function CharacterEditorPage({
                       byId={byId}
                       candidate={inspectedOption?.candidate}
                       entity={inspectedOption?.entity}
-                      personalizePowerText={planningPowerText}
+                      powerPresentationFor={currentPowerPresentationFor}
                     />
                   </div>
                 </CandidateInspectionScope>
@@ -2229,7 +2255,7 @@ export function CharacterEditorPage({
             activeDefinitionIds={currentEvaluation?.activeDefinitionIds ?? []}
             hideFlavortext={hideFlavortext}
             keepLargeAmountsInGold={keepLargeAmountsInGold}
-            personalizePowerText={currentPowerText}
+            powerPresentationFor={currentPowerPresentationFor}
             workspace={workspaceTab === "shop" ? "shop" : "equipment"}
             loadoutView={
               navigation.workspace === "equipment" &&

@@ -46,6 +46,7 @@ import { canonicalItemIcon, isAuthoredShield } from "./item-icons";
 import type { ShopCategory } from "./routes";
 import { preferredShopBrowse, ShopWorkspace } from "./ShopWorkspace";
 import { useArmedAction } from "./useArmedAction";
+import type { PowerCardPresentation } from "./PowerCardPresentation";
 
 type MoneyLocation = "carried" | "stored";
 type Denomination = "copper" | "silver" | "gold" | "platinum" | "astral";
@@ -173,12 +174,14 @@ export function ItemDetail({
   item,
   hideFlavortext,
   byId,
-  personalizePowerText,
+  powerPresentationFor,
 }: {
   readonly item: InspectedItemDetail | undefined;
   readonly hideFlavortext: boolean;
   readonly byId: ReadonlyMap<string, ContentEntity>;
-  readonly personalizePowerText?: ((text: string) => string) | undefined;
+  readonly powerPresentationFor?:
+    | ((definitionId: string, name?: string) => PowerCardPresentation)
+    | undefined;
 }) {
   const entity = item?.entities.at(-1);
   if (item === undefined || entity === undefined)
@@ -225,7 +228,7 @@ export function ItemDetail({
       entity={power}
       hideFlavortext={hideFlavortext}
       key={power.id}
-      personalizePowerText={personalizePowerText}
+      powerPresentation={powerPresentationFor?.(power.id, power.name)}
     />
   ));
   // A resolved item-owned choice (e.g. the Power picked for a Genasi Soul
@@ -236,7 +239,7 @@ export function ItemDetail({
       entity={power}
       hideFlavortext={hideFlavortext}
       key={power.id}
-      personalizePowerText={personalizePowerText}
+      powerPresentation={powerPresentationFor?.(power.id, power.name)}
     />
   ));
   const componentBody = (component: ContentEntity) => {
@@ -267,7 +270,7 @@ export function ItemDetail({
             entity={power}
             hideFlavortext={hideFlavortext}
             key={power.id}
-            personalizePowerText={personalizePowerText}
+            powerPresentation={powerPresentationFor?.(power.id, power.name)}
           />
         ))}
       />
@@ -839,7 +842,7 @@ export function EquipmentWorkspace({
   activeDefinitionIds,
   hideFlavortext,
   keepLargeAmountsInGold,
-  personalizePowerText,
+  powerPresentationFor,
   workspace,
   loadoutView,
   shopCategory,
@@ -859,7 +862,9 @@ export function EquipmentWorkspace({
   readonly activeDefinitionIds: readonly string[];
   readonly hideFlavortext: boolean;
   readonly keepLargeAmountsInGold: boolean;
-  readonly personalizePowerText?: ((text: string) => string) | undefined;
+  readonly powerPresentationFor?:
+    | ((definitionId: string, name?: string) => PowerCardPresentation)
+    | undefined;
   readonly workspace: "equipment" | "shop";
   readonly loadoutView: boolean;
   readonly shopCategory: ShopCategory;
@@ -1449,7 +1454,7 @@ export function EquipmentWorkspace({
             byId={byId}
             item={inspected}
             hideFlavortext={hideFlavortext}
-            personalizePowerText={personalizePowerText}
+            powerPresentationFor={powerPresentationFor}
           />
         </div>
       </div>

@@ -3645,3 +3645,33 @@ Divinity`, except for the native function's explicit, case-insensitive
   Letter/A4 color/monochrome print matrix also pass. A live narrow-width browser
   pass confirms the three primary cards, default checked preference,
   persistence after toggling/reload, and collapsed Advanced content management.
+
+## M5.7 interactive weapon-variant checkpoint (2026-09-29)
+
+- Evaluated power variants now retain their authoritative weapon-damage die,
+  equipped state, main/off-hand role, and existing paired-weapon identity. The
+  rules engine continues to retain every compatible owned variant rather than
+  filtering calculations to the currently equipped weapon.
+- In-app power details and browser View default to the equipped main hand, then
+  another equipped variant, then the first compatible inventory option. A
+  selector updates the displayed attack, damage, and optional `[W]` expansion;
+  a collapsed comparison table keeps every compatible weapon visible and
+  selectable without changing the character's equipment.
+- Two default-on Display preferences independently control compact interactive
+  ability values and selected-weapon dice expansion. Compact values use native
+  tooltip markup such as an underlined `+4` titled `Charisma modifier`. Neither
+  abbreviation is used in print.
+- The evaluated sheet model now represents one power card with attached weapon
+  variants instead of duplicating the full card per weapon. Print retains full
+  ability phrases and authored `[W]` text, then lists concise attack/damage
+  lines for compatible equipped variants, including damage type, critical, and
+  brutal notes. If no equipped evaluated variant exists, it retains the default
+  calculation rather than dropping it.
+- Focused rules-engine, sheet-model, and web coverage passes 98 tests. The full
+  553-test suite, workspace TypeScript checks, lint, production/PWA build, and
+  Chromium/Firefox Letter/A4 color/monochrome print matrix pass with all 24
+  synthetic cards present and unclipped. Live validation against an imported
+  character confirms equipped-first ordering, inventory comparisons, selection
+  without equipment mutation, `1d12 + 5` and `1d4 + 5` prose expansion, compact
+  Dexterity tooltips, and the balanced operator spacing required for forms such
+  as `2[W] + 4`.

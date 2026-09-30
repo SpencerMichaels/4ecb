@@ -543,13 +543,33 @@ describe("shared power and item cards", () => {
       createElement(EntityCardBody, {
         entity: power,
         hideFlavortext: false,
-        personalizePowerText,
+        powerPresentation: {
+          personalizePowerText,
+          abbreviateAbilityValues: true,
+          expandWeaponDice: true,
+          variants: [
+            {
+              id: "blade",
+              equipmentName: "Test blade",
+              equipped: true,
+              weaponDamage: "1d8",
+              attackBonus: 9,
+              defense: "AC",
+              damage: "2d8+5",
+            },
+          ],
+        },
       }),
     );
 
-    expect(markup).toContain("Wisdom (+5) vs. AC");
-    expect(markup).toContain("Wisdom modifier (+5) damage.");
+    expect(markup).toContain('title="Wisdom modifier">+5</abbr> vs. AC');
+    expect(markup).toContain("2d8 + ");
+    expect(markup).toContain(
+      '2d8 + <abbr class="power-value-abbreviation" title="Wisdom modifier">5</abbr> damage.',
+    );
     expect(markup).toContain("half your level (+3) temporary hit points.");
+    expect(markup).toContain("+9 vs AC");
+    expect(markup).toContain("2d8+5");
   });
 
   it("labels exact Personal attack types as Range without reusing authored Power Type", () => {

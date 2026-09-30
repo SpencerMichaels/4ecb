@@ -113,20 +113,23 @@ export function proseBlocks(value: string): readonly ProseBlock[] {
 export function ProseBlocks({
   blocks,
   className,
+  renderText = (text) => text,
 }: {
   readonly blocks: readonly ProseBlock[];
   readonly className?: string;
+  readonly renderText?: (text: string) => ReactNode;
 }) {
   const content: ReactNode[] = blocks.map((block, index) => {
-    if (block.kind === "heading") return <h6 key={index}>{block.text}</h6>;
+    if (block.kind === "heading")
+      return <h6 key={index}>{renderText(block.text)}</h6>;
     if (block.kind === "paragraph")
       return (
         <p className="prose-paragraph" key={index}>
-          {block.text}
+          {renderText(block.text)}
         </p>
       );
     const items = block.items.map((item, itemIndex) => (
-      <li key={itemIndex}>{item}</li>
+      <li key={itemIndex}>{renderText(item)}</li>
     ));
     return block.ordered ? (
       <ol key={index} start={block.start}>
@@ -147,14 +150,17 @@ export function ProseBlocks({
 export function Prose({
   value,
   className,
+  renderText,
 }: {
   readonly value: string;
   readonly className?: string;
+  readonly renderText?: (text: string) => ReactNode;
 }) {
   return (
     <ProseBlocks
       blocks={proseBlocks(value)}
       {...(className === undefined ? {} : { className })}
+      {...(renderText === undefined ? {} : { renderText })}
     />
   );
 }

@@ -123,6 +123,10 @@ export interface SettingsPageProps {
   readonly onKeepLargeAmountsInGoldChange: (value: boolean) => void;
   readonly resolveAbilityChoices: boolean;
   readonly onResolveAbilityChoicesChange: (value: boolean) => void;
+  readonly abbreviateAbilityValues: boolean;
+  readonly onAbbreviateAbilityValuesChange: (value: boolean) => void;
+  readonly expandWeaponDice: boolean;
+  readonly onExpandWeaponDiceChange: (value: boolean) => void;
 }
 
 export function SettingsPage({
@@ -141,6 +145,10 @@ export function SettingsPage({
   onKeepLargeAmountsInGoldChange,
   resolveAbilityChoices,
   onResolveAbilityChoicesChange,
+  abbreviateAbilityValues,
+  onAbbreviateAbilityValuesChange,
+  expandWeaponDice,
+  onExpandWeaponDiceChange,
 }: SettingsPageProps) {
   const [status, setStatus] = useState(
     installedPacks.length === 0 ? "No content packs installed." : "Ready.",
@@ -548,6 +556,36 @@ export function SettingsPage({
           When a power offers several abilities, show only the one with the
           highest modifier. Ties prefer the higher score, then the class's key
           abilities in their listed order, then the power's first option.
+        </p>
+        <label>
+          <input
+            type="checkbox"
+            checked={abbreviateAbilityValues}
+            onChange={(event) =>
+              onAbbreviateAbilityValuesChange(event.currentTarget.checked)
+            }
+          />{" "}
+          Show ability values compactly in interactive power details
+        </label>
+        <p className="field-help">
+          Replace phrases such as “Charisma modifier (+4)” with an underlined
+          “+4” whose tooltip identifies the ability. Printed cards always keep
+          the full wording.
+        </p>
+        <label>
+          <input
+            type="checkbox"
+            checked={expandWeaponDice}
+            onChange={(event) =>
+              onExpandWeaponDiceChange(event.currentTarget.checked)
+            }
+          />{" "}
+          Replace [W] with the selected weapon's dice in interactive power
+          details
+        </label>
+        <p className="field-help">
+          Use the card's weapon selector to change the calculation or compare
+          every compatible weapon in the character's inventory.
         </p>
       </section>
 

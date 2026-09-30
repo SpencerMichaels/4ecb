@@ -17,6 +17,15 @@ import {
 
 import { contentProfileMatchesRevision } from "./profile-migration";
 import { PortraitImage } from "./PortraitEditor";
+import {
+  defaultPowerVariant,
+  PowerTextInline,
+  PowerVariantPanel,
+  powerVariantAttack,
+  powerVariantLabel,
+  powerVariantNotes,
+  type PowerCardPresentation,
+} from "./PowerCardPresentation";
 
 const characters = new CharacterRepository();
 
@@ -39,7 +48,15 @@ function ValueList({
   );
 }
 
-function Card({ card }: { readonly card: SheetCard }) {
+function Card({
+  card,
+  abbreviateAbilityValues,
+  expandWeaponDice,
+}: {
+  readonly card: SheetCard;
+  readonly abbreviateAbilityValues: boolean;
+  readonly expandWeaponDice: boolean;
+}) {
   const powerType = card.fields.find(
     (field) => field.label.trim().toLocaleLowerCase() === "power type",
   )?.value;
@@ -51,6 +68,28 @@ function Card({ card }: { readonly card: SheetCard }) {
     .trim()
     .toLocaleLowerCase()
     .replace(/[^a-z]+/g, "-");
+  const variants = card.variants ?? [];
+  const [selectedVariantId, setSelectedVariantId] = useState(
+    () => defaultPowerVariant(variants)?.id,
+  );
+  const selectedVariant =
+    variants.find((variant) => variant.id === selectedVariantId) ??
+    defaultPowerVariant(variants);
+  const presentation: PowerCardPresentation | undefined =
+    card.kind !== "power"
+      ? undefined
+      : {
+          personalizePowerText: (value) => value,
+          abbreviateAbilityValues,
+          expandWeaponDice,
+          variants,
+        };
+  const printVariants =
+    variants.filter((variant) => variant.equipped).length > 0
+      ? variants.filter((variant) => variant.equipped)
+      : selectedVariant === undefined
+        ? []
+        : [selectedVariant];
   return (
     <article className={`sheet-card ${card.kind}-card usage-${usage}`}>
       <header>
@@ -65,7 +104,8 @@ function Card({ card }: { readonly card: SheetCard }) {
           {card.keywords === undefined ? null : ` · ${card.keywords}`}
         </p>
       )}
-      {(card.attack ?? card.damage) === undefined ? null : (
+      {selectedVariant === undefined &&
+      (card.attack ?? card.damage) !== undefined ? (
         <dl className="card-combat">
           <div>
             <dt>Attack</dt>
@@ -76,10 +116,46 @@ function Card({ card }: { readonly card: SheetCard }) {
             <dd>{card.damage ?? "—"}</dd>
           </div>
         </dl>
+      ) : null}
+      {selectedVariant === undefined ? null : (
+        <div className="screen-power-variants">
+          <PowerVariantPanel
+            variants={variants}
+            selected={selectedVariant}
+            onSelect={setSelectedVariantId}
+          />
+        </div>
+      )}
+      {printVariants.length === 0 ? null : (
+        <ul className="print-power-variants">
+          {printVariants.map((variant) => (
+            <li key={variant.id}>
+              <strong>{powerVariantLabel(variant)}:</strong>{" "}
+              {powerVariantAttack(variant)}; {variant.damage ?? "—"} damage
+              {powerVariantNotes(variant) === undefined
+                ? null
+                : `; ${powerVariantNotes(variant)}`}
+            </li>
+          ))}
+        </ul>
       )}
       {card.fields.map((field) => (
         <p key={`${field.label}-${field.value}`}>
-          <strong>{field.label}:</strong> {field.value}
+          <strong>{field.label}:</strong>{" "}
+          {presentation === undefined ? (
+            field.value
+          ) : (
+            <>
+              <span className="screen-power-text">
+                <PowerTextInline
+                  value={field.value}
+                  presentation={presentation}
+                  variant={selectedVariant}
+                />
+              </span>
+              <span className="print-power-text">{field.value}</span>
+            </>
+          )}
         </p>
       ))}
       {card.description === undefined ? null : (
@@ -95,11 +171,15 @@ export function CharacterSheetPage({
   manifests,
   printOnReady = false,
   resolveAbilityChoices = true,
+  abbreviateAbilityValues = true,
+  expandWeaponDice = true,
 }: {
   readonly characterId: string;
   readonly manifests: readonly ContentPackManifest[];
   readonly printOnReady?: boolean;
   readonly resolveAbilityChoices?: boolean;
+  readonly abbreviateAbilityValues?: boolean;
+  readonly expandWeaponDice?: boolean;
 }) {
   const [character, setCharacter] = useState<CharacterRecord>();
   const [content, setContent] =
@@ -473,7 +553,12 @@ export function CharacterSheetPage({
           <h2>Power cards</h2>
           <div className="card-grid">
             {model.powers.map((card, index) => (
-              <Card key={`${card.name}-${index}`} card={card} />
+              <Card
+                key={`${card.name}-${index}`}
+                card={card}
+                abbreviateAbilityValues={abbreviateAbilityValues}
+                expandWeaponDice={expandWeaponDice}
+              />
             ))}
           </div>
         </section>
@@ -483,7 +568,12 @@ export function CharacterSheetPage({
           <h2>Item cards</h2>
           <div className="card-grid">
             {model.items.map((card, index) => (
-              <Card key={`${card.name}-${index}`} card={card} />
+              <Card
+                key={`${card.name}-${index}`}
+                card={card}
+                abbreviateAbilityValues={false}
+                expandWeaponDice={false}
+              />
             ))}
           </div>
         </section>

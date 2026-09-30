@@ -1307,6 +1307,8 @@ describe("power evaluation", () => {
       expect.arrayContaining([
         expect.objectContaining({
           equipmentName: "Left dagger",
+          equipped: true,
+          weaponDamage: "1d4",
           hand: "off",
           pairedEquipmentName: "Main blade",
           damage: "1d4+4",
@@ -1317,6 +1319,8 @@ describe("power evaluation", () => {
       expect.arrayContaining([
         expect.objectContaining({
           equipmentName: "Main blade",
+          equipped: true,
+          weaponDamage: "1d8",
           hand: "main",
           pairedEquipmentName: "Left dagger",
         }),

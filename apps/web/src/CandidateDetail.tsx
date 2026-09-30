@@ -16,18 +16,21 @@ import {
 } from "./EntityCard";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { ProseBlocks, proseBlocks } from "./Prose";
+import type { PowerCardPresentation } from "./PowerCardPresentation";
 import { entityVisualTone, visualToneClass } from "./visual-language";
 
 export function CandidateDetail({
   candidate,
   entity,
   byId,
-  personalizePowerText,
+  powerPresentationFor,
 }: {
   readonly candidate: CandidateDecision | undefined;
   readonly entity: ContentEntity | undefined;
   readonly byId: ReadonlyMap<string, ContentEntity>;
-  readonly personalizePowerText?: ((text: string) => string) | undefined;
+  readonly powerPresentationFor?:
+    | ((definitionId: string, name?: string) => PowerCardPresentation)
+    | undefined;
 }) {
   if (candidate === undefined || entity === undefined)
     return (
@@ -54,13 +57,13 @@ export function CandidateDetail({
       <CandidateDetailCard
         candidate={candidate}
         entity={entity}
-        personalizePowerText={personalizePowerText}
+        powerPresentation={powerPresentationFor?.(entity.id, entity.name)}
       />
       {grantedEntities.map((granted) => (
         <CandidateDetailCard
           key={granted.id}
           entity={granted}
-          personalizePowerText={personalizePowerText}
+          powerPresentation={powerPresentationFor?.(granted.id, granted.name)}
           relationship={`Granted ${granted.type.toLocaleLowerCase()}`}
         />
       ))}
@@ -74,7 +77,7 @@ export function CandidateDetail({
               <CandidateDetailCard
                 entity={power}
                 key={power.id}
-                personalizePowerText={personalizePowerText}
+                powerPresentation={powerPresentationFor?.(power.id, power.name)}
                 themePowerLevel={group.level ?? null}
               />
             )),
@@ -124,13 +127,13 @@ export function CandidateDetailCard({
   entity,
   relationship,
   themePowerLevel,
-  personalizePowerText,
+  powerPresentation,
 }: {
   readonly candidate?: CandidateDecision;
   readonly entity: ContentEntity;
   readonly relationship?: string;
   readonly themePowerLevel?: number | null;
-  readonly personalizePowerText?: ((text: string) => string) | undefined;
+  readonly powerPresentation?: PowerCardPresentation | undefined;
 }) {
   const hideFlavortext = useContext(HideFlavortextContext);
   const headingId = `candidate-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}${relationship === undefined ? "" : "-granted"}`;
@@ -148,14 +151,14 @@ export function CandidateDetailCard({
       <EmbeddedPowerCard
         entity={entity}
         hideFlavortext={hideFlavortext}
-        personalizePowerText={personalizePowerText}
+        powerPresentation={powerPresentation}
       />
     );
   const body = (
     <EntityCardBody
       entity={entity}
       hideFlavortext={hideFlavortext}
-      personalizePowerText={personalizePowerText}
+      powerPresentation={powerPresentation}
       beforeNarrative={
         candidate === undefined || candidate.eligible ? null : (
           <p className="candidate-reason">

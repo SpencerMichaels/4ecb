@@ -1375,6 +1375,19 @@ textarea {
   padding: 0.15rem;
   text-align: center;
 }
+.print-power-text,
+.print-power-variants {
+  display: none;
+}
+.sheet-card .power-variant-panel {
+  margin: 0 0 0.35rem;
+}
+.sheet-card .power-variant-selector {
+  font-size: 0.7rem;
+}
+.sheet-card .power-variant-comparison table {
+  font-size: 0.68rem;
+}
 .usage-encounter {
   border-color: var(--power-encounter);
 }
@@ -3760,6 +3773,116 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   overflow-wrap: anywhere;
 }
 
+.power-value-abbreviation {
+  cursor: help;
+  text-decoration: underline dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.power-variant-panel {
+  background: color-mix(in srgb, var(--tone) 5%, var(--surface));
+  border-bottom: 1px solid var(--border);
+  margin: 0 -1rem;
+  padding: 0.65rem 1rem;
+}
+
+.power-variant-selector {
+  align-items: center;
+  display: grid;
+  font-size: 0.76rem;
+  font-weight: 800;
+  gap: 0.45rem;
+  grid-template-columns: max-content minmax(0, 1fr);
+  margin-bottom: 0.5rem;
+}
+
+.power-variant-selector select {
+  min-width: 0;
+  width: 100%;
+}
+
+.power-variant-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.power-variant-summary > div {
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.5rem;
+  text-align: center;
+}
+
+.power-variant-summary > div + div {
+  border-left: 0;
+}
+
+.power-variant-summary dt {
+  color: var(--muted);
+  font-size: 0.63rem;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.power-variant-summary dd {
+  font-size: 0.8rem;
+  font-weight: 800;
+  margin-top: 0.12rem;
+}
+
+.power-variant-notes {
+  color: var(--muted);
+  font-size: 0.7rem;
+  margin: 0.3rem 0 0;
+}
+
+.power-variant-comparison {
+  margin-top: 0.45rem;
+}
+
+.power-variant-comparison summary {
+  color: var(--accent-strong);
+  cursor: pointer;
+  font-size: 0.73rem;
+  font-weight: 800;
+}
+
+.power-variant-comparison table {
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  margin-top: 0.4rem;
+  width: 100%;
+}
+
+.power-variant-comparison .detail-table-scroll {
+  overflow-x: auto;
+}
+
+.power-variant-comparison th,
+.power-variant-comparison td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.35rem 0.45rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.power-variant-choice {
+  color: var(--accent-strong);
+  font: inherit;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.power-variant-choice[aria-pressed="true"] {
+  color: var(--text);
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .item-card-descriptors {
   background: var(--surface-subtle);
   border-block: 1px solid var(--border);
@@ -5271,6 +5394,18 @@ button.inventory-icon-action:disabled {
   }
   .sheet-page {
     padding: 0;
+  }
+  .screen-power-text,
+  .screen-power-variants {
+    display: none !important;
+  }
+  .print-power-text {
+    display: inline;
+  }
+  .print-power-variants {
+    display: block;
+    margin: 0 0 0.35rem;
+    padding-left: 1rem;
   }
   .print-sheet,
   .card-section {

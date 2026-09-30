@@ -14,6 +14,8 @@ export interface PowerVariant {
   readonly id: string;
   readonly equipmentName: string;
   readonly definitionIds?: readonly string[];
+  readonly equipped?: boolean;
+  readonly weaponDamage?: string;
   readonly hand?: "main" | "off";
   readonly pairedEquipmentName?: string;
   readonly attackStat?: string;
@@ -1020,6 +1022,10 @@ export function evaluatePowers(input: {
         id: `${power.id}:${equipment.id}`,
         equipmentName: equipment.name,
         definitionIds: equipment.definitionIds,
+        equipped: equipment.equipped,
+        ...(equipment.weaponDamage === undefined
+          ? {}
+          : { weaponDamage: equipment.weaponDamage }),
         ...(equipment.hand === undefined ? {} : { hand: equipment.hand }),
         ...(equipment.pairedEquipmentName === undefined
           ? {}

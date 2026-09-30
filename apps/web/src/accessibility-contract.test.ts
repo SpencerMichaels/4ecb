@@ -9,6 +9,10 @@ const characterEditor = readFileSync(
   new URL("./CharacterEditorPage.tsx", import.meta.url),
   "utf8",
 );
+const characterSheet = readFileSync(
+  new URL("./CharacterSheetPage.tsx", import.meta.url),
+  "utf8",
+);
 const characterOverview = readFileSync(
   new URL("./CharacterOverview.tsx", import.meta.url),
   "utf8",
@@ -97,7 +101,7 @@ describe("release accessibility contract", () => {
     expect(characterEditor).toContain("keepLargeAmountsInGold,");
   });
 
-  it("keeps best-ability power text optional and enabled by default", () => {
+  it("keeps interactive power-card presentation options enabled by default", () => {
     expect(settingsPage).toContain(
       "Use the best ability in power descriptions",
     );
@@ -107,15 +111,26 @@ describe("release accessibility contract", () => {
       'localStorage.setItem(RESOLVE_ABILITY_CHOICES_STORAGE_KEY, "0")',
     );
     expect(app).toContain("resolveAbilityChoices={resolveAbilityChoices}");
-    expect(characterEditor).toContain("createEvaluatedPowerTextPersonalizer");
-    expect(characterEditor).toContain(
-      "personalizePowerText={planningPowerText}",
+    expect(settingsPage).toContain(
+      "Show ability values compactly in interactive power details",
     );
+    expect(settingsPage).toContain(
+      "Replace [W] with the selected weapon's dice",
+    );
+    expect(app).toContain("ABBREVIATE_ABILITY_VALUES_STORAGE_KEY");
+    expect(app).toContain("EXPAND_WEAPON_DICE_STORAGE_KEY");
+    expect(characterEditor).toContain("createPowerCardPresentationFinder");
     expect(characterEditor).toContain(
-      "personalizePowerText={currentPowerText}",
+      "powerPresentationFor={currentPowerPresentationFor}",
     );
     expect(candidateDetail).toContain(
-      "personalizePowerText={personalizePowerText}",
+      "powerPresentation={powerPresentationFor?.(entity.id, entity.name)}",
+    );
+    expect(characterSheet).toContain('className="screen-power-text"');
+    expect(characterSheet).toContain('className="print-power-text"');
+    expect(characterSheet).toContain('className="print-power-variants"');
+    expect(styles).toMatch(
+      /@media print[\s\S]*\.screen-power-text,[\s\S]*\.screen-power-variants\s*\{[^}]*display: none !important/,
     );
   });
 

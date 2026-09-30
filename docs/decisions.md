@@ -1505,6 +1505,30 @@ character-aware formatter supplies in-app power detail cards, the browser View,
 and print without changing content, character selections, attack calculations,
 or serialized data.
 
+### D066 — Power weapon variants use selection plus comparison, not duplicated cards
+
+**Status:** accepted
+
+**Date:** 2026-09-29
+
+Interactive power details show one compatible weapon variant at a time. They
+default to the equipped main-hand variant, then another equipped variant, then
+the first compatible owned variant. A compact selector and collapsed comparison
+table retain every compatible evaluated variant, with equipped main/off-hand
+status and pairings visible. Selecting a variant changes presentation only; it
+does not equip an item or mutate the character.
+
+Two default-on browser Display preferences control interactive prose only. One
+replaces a fully annotated ability phrase with its underlined signed value and
+an identifying tooltip. The other replaces `[W]` expressions with the selected
+variant's authoritative weapon dice. Browser View uses the same interaction.
+Print keeps full ability wording and authored `[W]` prose because tooltips and a
+single interactive selection do not survive on paper. Instead, one printed
+power card lists a concise attack/damage line for each compatible equipped
+variant, preserving variant damage type, critical, and brutal notes without
+duplicating the full card. When no evaluated equipped variant exists, print
+retains the default variant so the calculation is not silently discarded.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed
