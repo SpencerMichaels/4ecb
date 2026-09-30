@@ -478,7 +478,20 @@ describe("sheet model", () => {
         sources: ["Synthetic"],
         attributes: [],
         categories: [],
-        specifics: [],
+        specifics: [
+          {
+            name: "AC Bonus",
+            value: "2",
+            extraAttributes: [],
+            ordinal: 0,
+          },
+          {
+            name: "Check",
+            value: "0",
+            extraAttributes: [],
+            ordinal: 1,
+          },
+        ],
         rules: [],
         description: "",
         extensions: [],
@@ -492,7 +505,26 @@ describe("sheet model", () => {
         sources: ["Synthetic"],
         attributes: [],
         categories: [],
-        specifics: [],
+        specifics: [
+          {
+            name: "Enhancement",
+            value: "+1 AC",
+            extraAttributes: [],
+            ordinal: 0,
+          },
+          {
+            name: "Level",
+            value: "4",
+            extraAttributes: [],
+            ordinal: 1,
+          },
+          {
+            name: "Property",
+            value: "You gain concealment in dim light.",
+            extraAttributes: [],
+            ordinal: 2,
+          },
+        ],
         rules: [],
         description: "",
         extensions: [],
@@ -581,6 +613,18 @@ describe("sheet model", () => {
     expect(model.items[0]).toMatchObject({ name: "Test wand" });
     expect(model.items).toContainEqual(
       expect.objectContaining({ name: "Gloaming Leather Armor +1" }),
+    );
+    expect(
+      model.items.find(({ name }) => name === "Gloaming Leather Armor +1")
+        ?.fields,
+    ).toEqual(
+      expect.arrayContaining([
+        { label: "AC Bonus", value: "2" },
+        { label: "Check", value: "0" },
+        { label: "Enhancement", value: "+1 AC" },
+        { label: "Level", value: "4" },
+        { label: "Property", value: "You gain concealment in dim light." },
+      ]),
     );
     expect(model.equipment).toEqual([
       { label: "Test wand", value: "× 2 · 1 equipped" },

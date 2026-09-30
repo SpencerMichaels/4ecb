@@ -17,6 +17,8 @@ import {
 } from "@4ecb/sheet-model";
 
 import { contentProfileMatchesRevision } from "./profile-migration";
+import { ActionTypeIcon } from "./ActionTypeIcon";
+import { Icon } from "./Icon";
 import { PortraitImage } from "./PortraitEditor";
 import {
   defaultPowerVariant,
@@ -28,6 +30,7 @@ import {
   type PowerCardPresentation,
 } from "./PowerCardPresentation";
 import { Prose } from "./Prose";
+import { powerAttackIcon } from "./visual-language";
 
 const characters = new CharacterRepository();
 
@@ -189,6 +192,290 @@ function Card({
       {card.source === undefined ? null : <footer>{card.source}</footer>}
     </article>
   );
+}
+
+const LEGACY_POWER_BODY_EXCLUDES = new Set([
+  "power type",
+  "power usage",
+  "class",
+  "level",
+  "keywords",
+  "action type",
+  "attack type",
+  "target",
+  "targets",
+  "display",
+  "primary target",
+]);
+
+const LEGACY_ITEM_BODY_EXCLUDES = new Set([
+  "level",
+  "gold",
+  "enhancement",
+  "magic item type",
+  "critical",
+  "weapon",
+  "armor",
+  "property",
+  "key ability",
+  "internalonly",
+  "weaponequiv",
+  "enchantequiv",
+  "granted powers",
+  "item slot",
+  "full text",
+  "description",
+  "equipped",
+  "count",
+  "weight",
+  "range",
+  "damage",
+  "proficiency bonus",
+  "weapon category",
+  "hands required",
+  "group",
+]);
+
+function cardField(card: SheetCard, ...labels: string[]): string | undefined {
+  const wanted = new Set(labels.map((label) => label.toLocaleLowerCase()));
+  return card.fields.find((field) =>
+    wanted.has(field.label.trim().toLocaleLowerCase()),
+  )?.value;
+}
+
+function lastCardField(
+  card: SheetCard,
+  ...labels: string[]
+): string | undefined {
+  const wanted = new Set(labels.map((label) => label.toLocaleLowerCase()));
+  return [...card.fields]
+    .reverse()
+    .find((field) => wanted.has(field.label.trim().toLocaleLowerCase()))?.value;
+}
+
+function printCardDensity(card: SheetCard): string {
+  const length = card.fields.reduce(
+    (total, field) => total + field.label.length + field.value.length,
+    0,
+  );
+  return length > 1_350 ? "is-condensed" : length > 850 ? "is-compact" : "";
+}
+
+function PrintPowerCard({ card }: { readonly card: SheetCard }) {
+  const attackType = cardField(card, "Attack Type") ?? "";
+  const target = cardField(card, "Target", "Targets", "Primary Target");
+  const level = cardField(card, "Level");
+  const className = cardField(card, "Class");
+  const powerType = cardField(card, "Power Type");
+  const authoredAttackField = cardField(card, "Attack");
+  const authoredAttack = authoredAttackField ?? card.attack;
+  const attackMatch = authoredAttack?.match(/^(.+?)\s+vs\.?\s+(.+)$/i);
+  const isUtility =
+    powerType?.trim().toLocaleLowerCase() === "utility" ||
+    (authoredAttackField === undefined &&
+      (card.attack === undefined || card.attack.includes("Unknown")));
+  const variants = card.variants ?? [];
+  const candidateVariants =
+    variants.filter((variant) => variant.equipped).length > 0
+      ? variants.filter((variant) => variant.equipped)
+      : variants.slice(0, 1);
+  const printVariants = candidateVariants.filter(
+    (variant) =>
+      variant.damage !== undefined ||
+      (variant.attack !== undefined && !variant.attack.includes("Unknown")),
+  );
+  const rules = card.fields.filter(
+    (field) =>
+      !LEGACY_POWER_BODY_EXCLUDES.has(field.label.trim().toLocaleLowerCase()),
+  );
+  const usage = (card.usage ?? "utility")
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/[^a-z]+/g, "-");
+  return (
+    <article
+      className={`print-reference-card print-power-card usage-${usage} ${printCardDensity(card)}`}
+    >
+      <header>
+        <h3>{card.name}</h3>
+        <span aria-label="Used" className="print-card-used" />
+      </header>
+      <div className="print-card-keywords">
+        <span>Keywords</span>
+        <strong>{card.keywords}</strong>
+      </div>
+      <div className="print-card-action-band">
+        <span>
+          <ActionTypeIcon decorative value={card.actionType} />
+          {card.actionType}
+        </span>
+        <span>
+          <Icon name={powerAttackIcon(attackType)} />
+          {attackType}
+        </span>
+      </div>
+      {isUtility ? (
+        <div className="print-power-frequency" aria-label="Power frequency">
+          {(["At-Will", "Encounter", "Daily"] as const).map((frequency) => (
+            <span key={frequency}>
+              <i>{card.usage === frequency ? "✓" : ""}</i>
+              {frequency}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <dl className="print-card-combat-band">
+          <div>
+            <dd>{attackMatch?.[1] ?? authoredAttack ?? "—"}</dd>
+            <dt title="Attack">
+              <Icon name="sword" />
+            </dt>
+          </div>
+          <div>
+            <dd>{attackMatch?.[2] ?? "—"}</dd>
+            <dt title="Defense">
+              <Icon name="shield" />
+            </dt>
+          </div>
+          <div>
+            <dd>{target ?? "—"}</dd>
+            <dt title="Target">
+              <Icon name="target" />
+            </dt>
+          </div>
+        </dl>
+      )}
+      <div className="print-card-body">
+        {card.prerequisites === undefined ? null : (
+          <p>
+            <strong>Prerequisite:</strong> {card.prerequisites}
+          </p>
+        )}
+        {rules.map((field, index) => (
+          <div key={`${field.label}-${index}`}>
+            <strong>{field.label}:</strong> <Prose value={field.value} />
+          </div>
+        ))}
+        {rules.length === 0 && card.description !== undefined ? (
+          <Prose value={card.description} />
+        ) : null}
+        {printVariants.map((variant) => (
+          <p className="print-card-variant" key={variant.id}>
+            <strong>{powerVariantLabel(variant)}:</strong>{" "}
+            {powerVariantAttack(variant)}
+            {variant.damage === undefined ? null : `, ${variant.damage} damage`}
+          </p>
+        ))}
+      </div>
+      <div className="print-card-additional">Additional effects</div>
+      <footer>
+        <span>{className}</span>
+        <span>{level === undefined ? "" : `Level ${level}`}</span>
+        <span>{card.source}</span>
+      </footer>
+      <div className="print-card-type">
+        {isUtility ? "Utility" : (card.usage ?? "At-Will")} power
+      </div>
+    </article>
+  );
+}
+
+function PrintItemCard({ card }: { readonly card: SheetCard }) {
+  const physicalStats = [
+    ["Damage", cardField(card, "Damage")],
+    ["Proficient", cardField(card, "Proficiency Bonus", "Proficient")],
+    ["Group", cardField(card, "Group")],
+    ["Range", cardField(card, "Range")],
+    ["AC bonus", cardField(card, "AC Bonus")],
+    ["Check", cardField(card, "Check")],
+    ["Speed", cardField(card, "Speed")],
+  ].filter((entry): entry is [string, string] => Boolean(entry[1]));
+  const quantity = cardField(card, "Quantity");
+  const magicStats = [
+    ["Enhancement", lastCardField(card, "Enhancement")],
+    ["Level", lastCardField(card, "Level")],
+    ["Critical", lastCardField(card, "Critical")],
+    ["Type", lastCardField(card, "Magic Item Type", "Type")],
+  ].filter((entry): entry is [string, string] => Boolean(entry[1]));
+  const stats: [string, string][] = [
+    ...physicalStats.slice(0, 4),
+    ...(physicalStats.length >= 4 || quantity === undefined
+      ? []
+      : [["Quantity", quantity] as [string, string]]),
+    ...magicStats,
+  ].slice(0, 8);
+  const properties = card.fields.filter(
+    (field) => field.label.trim().toLocaleLowerCase() === "property",
+  );
+  const rules = card.fields.filter((field) => {
+    const label = field.label.trim().toLocaleLowerCase();
+    return !LEGACY_ITEM_BODY_EXCLUDES.has(label) && label !== "quantity";
+  });
+  const frequencyText = rules.map((field) => field.value).join(" ");
+  return (
+    <article
+      className={`print-reference-card print-item-card ${printCardDensity(card)}`}
+    >
+      <header>
+        <h3>{card.name}</h3>
+      </header>
+      <dl className="print-item-stats">
+        {stats.slice(0, 8).map(([label, value]) => (
+          <div key={label}>
+            <dd>{value}</dd>
+            <dt>{label}</dt>
+          </div>
+        ))}
+      </dl>
+      <div className="print-card-body print-item-body">
+        {properties.length === 0 ? null : (
+          <section>
+            <span>Properties</span>
+            {properties.map((field, index) => (
+              <Prose key={`${field.value}-${index}`} value={field.value} />
+            ))}
+          </section>
+        )}
+        {rules.map((field, index) => (
+          <div key={`${field.label}-${index}`}>
+            <strong>{field.label}:</strong> <Prose value={field.value} />
+          </div>
+        ))}
+        {rules.length === 0 && card.description !== undefined ? (
+          <Prose value={card.description} />
+        ) : null}
+      </div>
+      <div className="print-item-frequency" aria-label="Power frequency">
+        {(["At-Will", "Encounter", "Daily"] as const).map((frequency) => (
+          <span key={frequency}>
+            <i>{frequencyText.includes(frequency) ? "✓" : ""}</i>
+            {frequency}
+          </span>
+        ))}
+      </div>
+      <footer>
+        <span>{cardField(card, "Item Slot")}</span>
+        <span>{cardField(card, "Weight")}</span>
+        <span>{lastCardField(card, "Gold") ?? card.source}</span>
+      </footer>
+      <div className="print-card-type">Magic item</div>
+    </article>
+  );
+}
+
+function PrintCard({ card }: { readonly card: SheetCard }) {
+  return card.kind === "power" ? (
+    <PrintPowerCard card={card} />
+  ) : (
+    <PrintItemCard card={card} />
+  );
+}
+
+function chunks<Value>(values: readonly Value[], size: number): Value[][] {
+  const result: Value[][] = [];
+  for (let index = 0; index < values.length; index += size)
+    result.push(values.slice(index, index + size));
+  return result;
 }
 
 const learnedReferenceLabels: Readonly<
@@ -491,6 +778,11 @@ export function CharacterSheetPage({
                   `The exact ${boundManifest.name} profile is installed, but evaluation is not available.`)}
       </>
     );
+  const printableCards = [
+    ...(character.sheetSettings.includePowerCards ? model.powers : []),
+    ...(character.sheetSettings.includeItemCards ? model.items : []),
+  ];
+  const printCardPages = chunks(printableCards, 9);
   return (
     <main
       className={`sheet-page paper-${character.sheetSettings.paper} ${character.sheetSettings.monochrome ? "sheet-monochrome" : ""} ${showPrintPreview ? "is-print-preview" : ""}`}
@@ -770,7 +1062,7 @@ export function CharacterSheetPage({
         </section>
       </div>
 
-      <article className="print-sheet summary-sheet print-only">
+      <article className="print-sheet print-page summary-sheet print-only">
         <header className="sheet-title">
           <div className="sheet-title-identity">
             {character.portrait === undefined ? null : (
@@ -790,117 +1082,127 @@ export function CharacterSheetPage({
         <section className="identity-block">
           <ValueList values={model.identity} />
         </section>
-        <div className="print-summary-columns">
-          <div>
-            <section>
+        <div className="print-dashboard">
+          <div className="print-dashboard-column">
+            <section className="print-panel print-abilities-panel">
               <h3>Ability scores</h3>
               <ValueList values={model.abilities} />
             </section>
-            <section>
-              <h3>Resources</h3>
+            <section className="print-panel print-resources-panel">
+              <h3>Health &amp; resources</h3>
               <ValueList values={hp} />
             </section>
           </div>
-          <div>
-            <section>
+          <div className="print-dashboard-column">
+            <section className="print-panel print-defenses-panel">
               <h3>Defenses</h3>
               <ValueList values={model.defenses} className="large-values" />
             </section>
-            <section>
-              <h3>Senses</h3>
+            <section className="print-panel print-senses-panel">
+              <h3>Movement &amp; senses</h3>
               <ValueList values={model.senses} />
             </section>
           </div>
-          <div>
-            <section>
-              <h3>Skills</h3>
-              <ValueList values={model.skills} />
-            </section>
-          </div>
-        </div>
-        <section className="print-wide-section">
-          <h3>Features</h3>
-          <div className="print-feature-grid">
+          <section className="print-panel print-skills-panel">
+            <h3>Skills</h3>
+            <ValueList values={model.skills} />
+          </section>
+          <section className="print-panel print-features-panel">
+            <h3>Features &amp; feats</h3>
             {model.features.map((group) => (
-              <section key={group.group}>
+              <div className="print-feature-index" key={group.group}>
                 <h4>{group.group}</h4>
-                <ValueList values={group.entries} />
+                <p>{group.entries.map((entry) => entry.label).join(" · ")}</p>
+              </div>
+            ))}
+          </section>
+        </div>
+      </article>
+
+      <article className="print-sheet print-page reference-sheet print-only">
+        <header className="sheet-title compact-sheet-title">
+          <div>
+            <p className="eyebrow">Character reference</p>
+            <h2>{characterName}</h2>
+          </div>
+          <p>{identitySummary}</p>
+        </header>
+        <div className="print-reference-columns">
+          <div>
+            <section className="print-panel">
+              <h3>Power index</h3>
+              <ul className="print-index-list">
+                {model.powers.map((power) => (
+                  <li key={power.id ?? power.name}>
+                    <strong>{power.name}</strong>
+                    <span>{power.usage ?? power.actionType}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+            <section className="print-panel">
+              <h3>Equipment</h3>
+              <ul className="print-index-list">
+                {model.equipment.map((item) => (
+                  <li key={`${item.label}-${item.value}`}>
+                    <strong>{item.label}</strong>
+                    <span>{item.value}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+            {model.learnedReferences.length === 0 ? null : (
+              <section className="print-panel">
+                <h3>Rituals &amp; practices</h3>
+                <ul className="print-index-list">
+                  {model.learnedReferences.map((reference) => (
+                    <li
+                      key={`${reference.kind}-${reference.id ?? reference.name}`}
+                    >
+                      <strong>{reference.name}</strong>
+                      <span>{reference.fields[0]?.value}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </div>
+          <div className="print-notes-column">
+            {character.portrait === undefined ? null : (
+              <PortraitImage
+                className="print-reference-portrait"
+                name={characterName}
+                portrait={character.portrait}
+              />
+            )}
+            {model.notes.map((note) => (
+              <section
+                className="print-panel print-note-panel"
+                key={note.label}
+              >
+                <h3>{note.label}</h3>
+                <p>{note.value}</p>
               </section>
             ))}
           </div>
-        </section>
-        <section className="print-wide-section">
-          <h3>Equipment</h3>
-          <ul className="print-equipment-list">
-            {model.equipment.map((item) => (
-              <li key={`${item.label}-${item.value}`}>
-                <strong>{item.label}</strong> {item.value}
-              </li>
-            ))}
-          </ul>
-        </section>
-        {model.learnedReferences.length === 0 ? null : (
-          <section className="print-wide-section">
-            <h3>Rituals &amp; practices</h3>
-            <div className="print-reference-grid">
-              {model.learnedReferences.map((reference, index) => (
-                <LearnedReference
-                  key={`${reference.kind}-${reference.id ?? reference.name}-${index}`}
-                  reference={reference}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-        {model.notes.length === 0 ? null : (
-          <section className="print-wide-section print-notes-section">
-            <h3>Notes</h3>
-            <dl>
-              {model.notes.map((note) => (
-                <div key={`${note.label}-${note.value}`}>
-                  <dt>{note.label}</dt>
-                  <dd>{note.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-        )}
+        </div>
       </article>
 
-      {model.powers.length > 0 ? (
+      {printCardPages.map((page, pageIndex) => (
         <section
-          className={`card-section print-only ${character.sheetSettings.includePowerCards ? "" : "print-excluded"}`}
+          className="print-card-page print-page print-only"
+          key={`print-card-page-${pageIndex}`}
         >
-          <h2>Power cards</h2>
-          <div className="card-grid">
-            {model.powers.map((card, index) => (
-              <Card
-                key={`${card.name}-${index}`}
+          <div className="print-card-grid">
+            {page.map((card, index) => (
+              <PrintCard
                 card={card}
-                abbreviateAbilityValues={abbreviateAbilityValues}
-                expandWeaponDice={expandWeaponDice}
+                key={`${card.kind}-${card.id ?? card.name}-${index}`}
               />
             ))}
           </div>
         </section>
-      ) : null}
-      {model.items.length > 0 ? (
-        <section
-          className={`card-section item-section print-only ${character.sheetSettings.includeItemCards ? "" : "print-excluded"}`}
-        >
-          <h2>Item cards</h2>
-          <div className="card-grid">
-            {model.items.map((card, index) => (
-              <Card
-                key={`${card.name}-${index}`}
-                card={card}
-                abbreviateAbilityValues={false}
-                expandWeaponDice={false}
-              />
-            ))}
-          </div>
-        </section>
-      ) : null}
+      ))}
     </main>
   );
 }

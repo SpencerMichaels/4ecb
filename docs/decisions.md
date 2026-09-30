@@ -1583,11 +1583,11 @@ complete interactive cards, equipment, learned references, features, notes,
 recovery guidance, and direct Build/print actions. The print action first shows
 the actual print projection in an explicit in-app preview, then invokes the
 browser print/save dialog from that preview; native print UI is not treated as a
-reliable preview surface. Print remains page-oriented:
-compact statistics may use columns, but narrative features, learned references,
-equipment, and notes use wide readable blocks; the established card grid remains
-separate. Print inclusion preferences never hide the corresponding browser View
-reference.
+reliable preview surface. Print remains page-oriented: compact statistics use
+purpose-built panels, narrative data is either placed in bounded readable note
+panels or represented by a compact index, and the fixed physical-card grid
+remains separate. Print inclusion preferences never hide the corresponding
+browser View reference. D069 defines the physical-card projection in detail.
 
 The semantic model owns content classification and card sanitation rather than
 either renderer. Post-overlay power fields pass the canonical user-facing-field
@@ -1605,6 +1605,38 @@ forking rules calculations or character data. A legacy cache without matching
 content may identify a generic Ritual but cannot reliably recover whether it was
 an alchemical formula or martial practice; the model keeps that limitation
 explicit instead of guessing.
+
+### D069 — Physical print cards use a fixed legacy-derived projection
+
+**Status:** accepted
+
+**Date:** 2026-09-30
+
+The physical power/item cards are a separate, minimal projection from browser
+View cards. The supplied Hu and Fei Zhu PDFs and recovered
+`CharacterSheetViewer` implementation establish a fixed 233 by 321 device-pixel
+card contract, three cards across by three cards down, with text reduced or
+trimmed inside the boundary. Web print therefore chunks selected cards into
+explicit nine-card pages and uses a fixed 233:321 aspect at paper-specific
+physical dimensions. Content must never increase a card's height.
+
+Power cards project the title, keywords, action/range icon band, compact
+attack/defense/target band when applicable, authored rules clauses in order,
+calculated equipped-weapon lines, additional-effects writing area, and compact
+footer/type metadata. Attackless utility powers use the frequency strip instead
+of invented attack values. Item cards use their own legacy-derived stat grid,
+properties/power region, frequency strip, and footer. Flavor text, verbose full
+text already represented by structured fields, internal identifiers, and other
+presentation-only metadata do not appear on physical cards. The interactive
+browser cards remain free to expose richer context and weapon switching.
+Composed-item cards merge the ordered public fields of every inventory element,
+so a magic weapon or armor card keeps the base item's physical statistics as
+well as its enchantment's enhancement, level, critical, properties, and powers.
+
+The pre-card pages likewise use bounded, named panels rather than a generic
+multi-column dump: a character dashboard followed by indexes and note/portrait
+panels. This is a print compatibility boundary, not a requirement that browser
+View imitate the legacy sheet visually.
 
 ## Deferred decisions and decision points
 

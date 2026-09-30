@@ -1290,16 +1290,14 @@ textarea {
   font-size: 0.75rem;
 }
 
-.sheet-page.is-print-preview .print-sheet,
-.sheet-page.is-print-preview .card-section {
+.sheet-page.is-print-preview .print-page {
   box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 18%);
   color: #111;
-  max-width: 8.5in;
+  width: 8.5in;
 }
 
-.sheet-page.paper-a4.is-print-preview .print-sheet,
-.sheet-page.paper-a4.is-print-preview .card-section {
-  max-width: 210mm;
+.sheet-page.paper-a4.is-print-preview .print-page {
+  width: 210mm;
 }
 
 .screen-sheet-view {
@@ -1645,13 +1643,30 @@ textarea {
   max-width: 88rem;
   padding: 0.75rem;
 }
-.print-sheet,
-.card-section {
+.print-page {
   background: #fff;
   border: 1px solid #999;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+  font-size: 8pt;
+  line-height: 1.2;
   margin: 0 auto 1.25rem;
-  max-width: 88rem;
-  padding: 1rem;
+  height: 11in;
+  overflow: hidden;
+  padding: 0.35in;
+}
+.paper-a4 .print-page {
+  height: 297mm;
+  padding: 9mm;
+}
+.paper-a4 .print-card-grid {
+  gap: 1mm;
+  grid-template-columns: repeat(3, 63mm);
+  grid-template-rows: repeat(3, 86.8mm);
+}
+.paper-a4 .print-reference-card {
+  height: 86.8mm;
+  width: 63mm;
 }
 .sheet-title {
   align-items: end;
@@ -1673,7 +1688,388 @@ textarea {
   margin-bottom: 0.8rem;
 }
 .identity-block .sheet-values {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.identity-block .sheet-values > div {
+  display: block;
+  min-width: 0;
+}
+.identity-block .sheet-values dt {
+  font-size: 6pt;
+  text-transform: uppercase;
+}
+.identity-block .sheet-values dd {
+  font-size: 8pt;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.print-dashboard {
+  display: grid;
+  gap: 0.1in;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.print-dashboard-column {
+  display: grid;
+  gap: 0.1in;
+  min-width: 0;
+}
+.print-panel {
+  border: 1px solid #777;
+  min-width: 0;
+  overflow: hidden;
+}
+.print-panel > h3 {
+  background: #20272a;
+  color: #fff;
+  font-size: 9pt;
+  letter-spacing: 0.03em;
+  margin: 0;
+  padding: 0.05in 0.07in;
+  text-transform: uppercase;
+}
+.print-panel .sheet-values > div {
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 0.035in 0.05in;
+}
+.print-skills-panel .sheet-values {
+  grid-template-columns: 1fr;
+}
+.print-features-panel {
+  grid-column: 1 / -1;
+}
+.print-feature-index {
+  border-bottom: 1px solid #ccc;
+  display: grid;
+  gap: 0.08in;
+  grid-template-columns: 1.15in minmax(0, 1fr);
+  padding: 0.04in 0.07in;
+}
+.print-feature-index h4,
+.print-feature-index p {
+  font-size: 7.5pt;
+  margin: 0;
+}
+.print-feature-index p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.compact-sheet-title {
+  align-items: center;
+}
+.compact-sheet-title h2,
+.compact-sheet-title p {
+  margin: 0;
+}
+.print-reference-columns {
+  display: grid;
+  gap: 0.12in;
+  grid-template-columns: 1fr 1fr;
+}
+.print-reference-columns > div {
+  display: grid;
+  gap: 0.12in;
+  min-width: 0;
+}
+.print-index-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.print-index-list li {
+  align-items: baseline;
+  border-bottom: 1px solid #ccc;
+  display: flex;
+  font-size: 6.5pt;
+  gap: 0.1in;
+  justify-content: space-between;
+  padding: 0.02in 0.05in;
+}
+.print-index-list span {
+  color: #444;
+  flex: 0 0 auto;
+}
+.print-notes-column {
+  align-content: start;
+}
+.print-reference-portrait {
+  border: 1px solid #777;
+  height: 2.4in;
+  object-fit: contain;
+  width: 100%;
+}
+.print-note-panel {
+  max-height: 1.6in;
+}
+.print-note-panel p {
+  display: -webkit-box;
+  font-size: 7.5pt;
+  line-height: 1.25;
+  margin: 0;
+  overflow: hidden;
+  padding: 0.06in;
+  white-space: pre-wrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 9;
+}
+.print-card-grid {
+  align-content: start;
+  display: grid;
+  gap: 0.04in;
+  grid-template-columns: repeat(3, 2.47in);
+  grid-template-rows: repeat(3, 3.405in);
+  justify-content: center;
+}
+.print-reference-card {
+  --card-color: #006b2e;
+  border: 1.5px solid var(--card-color);
+  box-sizing: border-box;
+  display: grid;
+  font-family: Arial, sans-serif;
+  font-size: 6.7pt;
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto auto;
+  height: 3.405in;
+  line-height: 1.08;
+  min-width: 0;
+  overflow: hidden;
+  width: 2.47in;
+}
+.print-reference-card.is-compact {
+  font-size: 5.9pt;
+}
+.print-reference-card.is-condensed {
+  font-size: 4.8pt;
+}
+.print-reference-card > header {
+  align-items: center;
+  background: #fff;
+  color: #111;
+  display: flex;
+  gap: 0.04in;
+  justify-content: space-between;
+  min-height: 0.23in;
+  padding: 0.025in 0.035in;
+}
+.print-reference-card > header h3 {
+  font-size: 9.5pt;
+  font-weight: 500;
+  line-height: 1;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.print-card-used {
+  border: 1px solid currentColor;
+  height: 0.09in;
+  width: 0.09in;
+}
+.print-card-keywords {
+  border-bottom: 1px solid var(--card-color);
+  border-top: 1px solid var(--card-color);
+  display: grid;
+  gap: 0.03in;
+  grid-template-columns: auto 1fr;
+  min-height: 0.17in;
+  padding: 0.025in 0.03in;
+}
+.print-card-keywords > span,
+.print-item-body section > span {
+  font-size: 4.7pt;
+  text-transform: uppercase;
+}
+.print-card-action-band {
+  background: color-mix(in srgb, var(--card-color) 20%, white);
+  display: grid;
+  font-weight: 700;
+  grid-template-columns: 0.8fr 1.2fr;
+}
+.print-card-action-band > span {
+  align-items: center;
+  border-right: 1px solid var(--card-color);
+  display: flex;
+  gap: 0.04in;
+  min-width: 0;
+  padding: 0.025in 0.04in;
+}
+.print-card-action-band > span:last-child {
+  border-right: 0;
+}
+.print-card-action-band .icon {
+  height: 0.12in;
+  width: 0.12in;
+}
+.print-card-action-band .action-type-icon {
+  font-size: 8pt;
+}
+.print-card-combat-band {
+  display: grid;
+  grid-template-columns: 0.8fr 0.55fr 1.35fr;
+  margin: 0;
+}
+.print-card-combat-band > div {
+  border-bottom: 1px solid var(--card-color);
+  border-right: 1px solid var(--card-color);
+  min-width: 0;
+  text-align: center;
+}
+.print-card-combat-band > div:last-child {
+  border-right: 0;
+}
+.print-card-combat-band dd {
+  font-size: 7.5pt;
+  font-weight: 800;
+  margin: 0;
+  min-height: 0.13in;
+  overflow: hidden;
+  padding: 0.02in;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.print-card-combat-band dt {
+  background: color-mix(in srgb, var(--card-color) 28%, white);
+  font-size: 5.5pt;
+  font-weight: 800;
+  padding: 0.015in;
+  text-transform: uppercase;
+}
+.print-card-combat-band dt .icon {
+  height: 0.09in;
+  width: 0.09in;
+}
+.print-card-body {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0.035in;
+}
+.print-card-body > div,
+.print-card-body > p,
+.print-card-body .prose-blocks,
+.print-card-body .prose-paragraph {
+  display: inline;
+  margin: 0;
+}
+.print-card-body > div::after,
+.print-card-body > p::after {
+  content: "\A";
+  white-space: pre;
+}
+.print-card-body .prose-blocks {
+  gap: 0;
+}
+.print-card-body .prose-blocks > h6 {
+  display: inline;
+  font-size: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.print-card-body .prose-blocks > h6::after {
+  content: ": ";
+}
+.print-card-variant {
+  display: block !important;
+  margin-top: 0.05in !important;
+}
+.print-card-additional {
+  border-top: 1px solid var(--card-color);
+  font-size: 4.5pt;
+  height: 0.34in;
+  padding: 0.02in 0.03in;
+  text-transform: uppercase;
+}
+.print-reference-card > footer {
+  border-top: 1px solid var(--card-color);
+  display: grid;
+  font-size: 4.7pt;
+  gap: 0.03in;
+  grid-template-columns: 1fr auto auto;
+  min-height: 0.16in;
+  padding: 0.025in 0.03in;
+}
+.print-card-type {
+  background: var(--card-color);
+  color: #fff;
+  font-size: 7pt;
+  font-weight: 800;
+  min-height: 0.17in;
+  padding: 0.025in 0.035in;
+  text-transform: uppercase;
+}
+.print-power-card.usage-encounter {
+  --card-color: #8b0000;
+}
+.print-power-card.usage-daily {
+  --card-color: #777;
+}
+.print-power-card.usage-utility {
+  --card-color: #000080;
+}
+.print-item-card {
+  --card-color: #ff8c00;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+}
+.print-item-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 0;
+}
+.print-item-stats > div {
+  border-bottom: 1px solid var(--card-color);
+  border-right: 1px solid var(--card-color);
+  min-width: 0;
+  text-align: center;
+}
+.print-item-stats dd {
+  font-size: 6.5pt;
+  height: 0.14in;
+  margin: 0;
+  overflow: hidden;
+  padding: 0.015in;
+  white-space: nowrap;
+}
+.print-item-stats dt {
+  background: color-mix(in srgb, var(--card-color) 18%, white);
+  font-size: 4.7pt;
+  font-weight: 800;
+  padding: 0.015in;
+  text-transform: uppercase;
+}
+.print-item-body section {
+  border-bottom: 1px solid var(--card-color);
+  margin-bottom: 0.035in;
+  padding-bottom: 0.035in;
+}
+.print-item-body section > span {
+  display: block;
+  margin-bottom: 0.015in;
+}
+.print-item-frequency,
+.print-power-frequency {
+  background: #111;
+  color: #fff;
+  display: grid;
+  font-size: 5.5pt;
+  font-weight: 800;
+  grid-template-columns: repeat(3, 1fr);
+  text-transform: uppercase;
+}
+.print-item-frequency span,
+.print-power-frequency span {
+  align-items: center;
+  display: flex;
+  gap: 0.02in;
+  padding: 0.02in;
+}
+.print-item-frequency i,
+.print-power-frequency i {
+  background: #fff;
+  border: 1px solid var(--card-color);
+  color: #111;
+  font-style: normal;
+  height: 0.08in;
+  line-height: 0.07in;
+  width: 0.08in;
 }
 .sheet-columns,
 .print-summary-columns {
@@ -1918,6 +2314,17 @@ textarea {
   background: #fff;
   border-color: #000;
   color: #000;
+}
+.sheet-monochrome .print-reference-card {
+  --card-color: #000;
+}
+.sheet-monochrome .print-card-action-band,
+.sheet-monochrome .print-card-combat-band dt,
+.sheet-monochrome .print-item-stats dt {
+  background: #eee;
+}
+.sheet-monochrome .print-card-type {
+  background: #000;
 }
 
 .editor-page {
@@ -5971,40 +6378,38 @@ button.inventory-icon-action:disabled {
     margin: 0 0 0.35rem;
     padding-left: 1rem;
   }
-  .print-sheet,
-  .card-section {
+  .print-page {
     border: 0;
     color: #111;
+    height: 10.3in;
     margin: 0;
-    max-width: none;
+    min-height: 0;
+    overflow: hidden;
     padding: 0;
+    width: 7.8in;
   }
-  .summary-sheet {
+  .print-page {
     break-after: page;
+    break-inside: avoid;
   }
-  .card-section > h2 {
-    margin: 0 0 0.1in;
-  }
-  .card-grid {
-    gap: 0.08in;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .sheet-card {
-    font-size: 7.5pt;
-    margin-bottom: 0.08in;
-    min-height: 3.05in;
-  }
-  .sheet-card h3 {
-    font-size: 10pt;
-  }
-  .item-section {
-    break-before: page;
+  .print-page:last-child {
+    break-after: auto;
   }
   .paper-a4 {
     page: a4sheet;
   }
-  .paper-a4 .print-sheet,
-  .paper-a4 .card-section {
+  .paper-a4 .print-page {
+    height: 279mm;
     page: a4sheet;
+    width: 192mm;
+  }
+  .paper-a4 .print-card-grid {
+    gap: 1mm;
+    grid-template-columns: repeat(3, 63mm);
+    grid-template-rows: repeat(3, 86.8mm);
+  }
+  .paper-a4 .print-reference-card {
+    height: 86.8mm;
+    width: 63mm;
   }
 }

@@ -151,8 +151,9 @@ describe("release accessibility contract", () => {
     expect(characterSheet).toContain("setShowPrintPreview(true)");
     expect(characterSheet).toContain('className="print-preview-toolbar"');
     expect(characterSheet).toContain("model.learnedReferences.map");
-    expect(characterSheet).toContain("print-summary-columns");
-    expect(characterSheet).toContain("print-wide-section");
+    expect(characterSheet).toContain("print-dashboard");
+    expect(characterSheet).toContain("print-reference-columns");
+    expect(characterSheet).toContain("print-card-grid");
     expect(styles).toMatch(
       /@media print[\s\S]*\.screen-sheet-view,[\s\S]*display: none !important/,
     );

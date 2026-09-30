@@ -798,11 +798,19 @@ export function buildSheetModel(
       [...loot.elements]
         .reverse()
         .find((candidate) => candidate.id !== undefined) ?? loot.elements[0];
-    const entity = legacyLootEntity(loot, entities);
+    const itemEntities = loot.elements.flatMap((candidate) => {
+      const entity =
+        candidate.id === undefined
+          ? undefined
+          : entities.get(candidate.id.toLocaleLowerCase());
+      return entity === undefined ? [] : [entity];
+    });
+    const entity = itemEntities.at(-1) ?? legacyLootEntity(loot, entities);
     return {
       loot,
       element,
       entity,
+      itemEntities,
       referenceKind: learnedReferenceKind(
         entity,
         loot.elements.map((candidate) => candidate.type),
@@ -813,14 +821,14 @@ export function buildSheetModel(
     .filter(({ loot, referenceKind }) =>
       Boolean(loot.showPowerCard && referenceKind === undefined),
     )
-    .map(({ loot, element, entity }) => {
+    .map(({ loot, element, entity, itemEntities }) => {
       return {
         ...(element?.id === undefined ? {} : { id: element.id }),
         kind: "item" as const,
         name: loot.name,
         fields: [
           { label: "Quantity", value: String(loot.count) },
-          ...entityFields(entity),
+          ...itemEntities.flatMap((candidate) => entityFields(candidate)),
         ],
         ...entityPresentation(entity),
       };
@@ -1025,14 +1033,26 @@ export function buildEvaluatedSheetModel(
     const original = build.inventory.find(
       (candidate) => candidate.id === entry.id,
     );
-    const entity = [...entry.definitionIds]
-      .reverse()
-      .map((id) => entities.get(id.toLocaleLowerCase()))
-      .find((candidate) => candidate !== undefined);
+    const itemEntities =
+      original?.elements.flatMap((element) => {
+        const entity =
+          element.definitionId === undefined
+            ? undefined
+            : entities.get(element.definitionId.toLocaleLowerCase());
+        return entity === undefined ? [] : [entity];
+      }) ?? [];
+    const fallbackEntities = entry.definitionIds.flatMap((id) => {
+      const entity = entities.get(id.toLocaleLowerCase());
+      return entity === undefined ? [] : [entity];
+    });
+    const composedEntities =
+      itemEntities.length === 0 ? fallbackEntities : itemEntities;
+    const entity = composedEntities.at(-1);
     return {
       entry,
       original,
       entity,
+      itemEntities: composedEntities,
       name: inventoryNames.get(entry.id) ?? "Unnamed item",
       referenceKind: learnedReferenceKind(
         entity,
@@ -1041,7 +1061,7 @@ export function buildEvaluatedSheetModel(
     };
   });
   const itemCards: SheetCard[] = inventoryPresentations.flatMap(
-    ({ entry, original, entity, name, referenceKind }) => {
+    ({ entry, original, entity, itemEntities, name, referenceKind }) => {
       if (original?.showPowerCard === false || referenceKind !== undefined)
         return [];
       return [
@@ -1059,7 +1079,7 @@ export function buildEvaluatedSheetModel(
                     value: String(entry.equippedQuantity),
                   },
                 ]),
-            ...entityFields(entity),
+            ...itemEntities.flatMap((candidate) => entityFields(candidate)),
           ],
           ...entityPresentation(entity),
         },

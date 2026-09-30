@@ -15,11 +15,23 @@ separate projection over the same semantic model.
   longer depends on a browser exposing print-media changes clearly. Screen
   references remain available regardless of which optional card groups the user
   includes on paper.
-- The printed summary keeps compact abilities, resources, defenses, senses, and
-  skills together. Long feature, equipment, learned-reference, and note prose
-  now uses wide layouts instead of being crushed into the former narrow
-  three-column flow. The established three-column power/item card grid remains
-  intact.
+- The print projection now follows the recovered legacy sheet's purpose-built
+  page grammar rather than flowing the whole semantic model through generic
+  columns. Page one is a bounded character dashboard; page two is a bounded
+  power/equipment/learned-reference index plus portrait and note panels. Feature
+  groups are compact name indexes, so long descriptions can no longer collide,
+  overlap, or force narrow columns off the physical page.
+- Print cards have a dedicated renderer and the recovered fixed 233:321 aspect
+  contract. They paginate explicitly in three-by-three pages (nine cards), use
+  fixed physical dimensions for Letter and A4, and trim or reduce type inside
+  the boundary rather than growing. Power cards project compact action/range and
+  attack/defense/target bands, authored rules clauses, calculated equipped
+  variants, and footer metadata. Item cards project their legacy stat grid,
+  properties/powers, frequency strip, and footer. Flavor and presentation-only
+  metadata are deliberately absent from physical cards; browser View retains
+  its richer interactive cards. Composed magic-item cards now merge public base
+  and enchantment fields so weapon/armor statistics are not lost behind the
+  enchantment record.
 - Evaluated cards now apply the canonical user-facing-field predicate after
   overlays, suppress machine metadata and ID tokens, preserve repeated authored
   combat clauses in ordinal order, and expose supported flavor and printable
@@ -31,10 +43,13 @@ separate projection over the same semantic model.
   it is not discarded to make the partition appear cleaner.
 - Focused sheet-model/prose/structural tests, workspace typechecks, the
   production PWA build, and the Chromium/Firefox Letter/A4 print matrix are the
-  checkpoint gate. A live exact-profile Silaqui pass confirmed all four defense
-  aliases, 42 interactive and 42 print reference cards, no underscore metadata
-  labels, and the screen/print visibility boundary. Product-owner review is
-  still required; this checkpoint does not close M5.6.
+  checkpoint gate. The print matrix now asserts exactly two reference pages plus
+  one page per nine-card chunk, fixed non-overflowing card boxes, all expected
+  card content, hidden application chrome, paper dimensions, and color and
+  monochrome modes. A live exact-profile Silaqui pass confirmed bounded summary
+  pages, fixed card geometry, compact utility handling, and the absence of
+  flavor on physical cards. Product-owner review is still required; this
+  checkpoint does not close M5.6.
 
 ## Extend two-click confirmation to the character library page (2026-09-28)
 

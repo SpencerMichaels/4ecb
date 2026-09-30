@@ -266,13 +266,13 @@ try {
     );
     await waitForExpression(
       client,
-      `document.body.textContent.includes("${character.title}") && document.querySelectorAll(".print-only .sheet-card").length === 24`,
+      `document.body.textContent.includes("${character.title}") && document.querySelectorAll(".print-only .print-reference-card").length === 24`,
     );
     await client.send("Emulation.setEmulatedMedia", { media: "print" });
     const layout = await evaluate(
       client,
       `(() => {
-        const cards = [...document.querySelectorAll(".print-only .sheet-card")];
+        const cards = [...document.querySelectorAll(".print-only .print-reference-card")];
         const overflowing = cards.filter((card) =>
           card.scrollHeight > card.clientHeight + 1 ||
           card.scrollWidth > card.clientWidth + 1
@@ -284,7 +284,7 @@ try {
           const element = document.querySelector(selector);
           return element === null || getComputedStyle(element).display === "none";
         });
-        const header = document.querySelector(".item-card > header");
+        const header = document.querySelector(".print-item-card > header");
         const style = header === null ? undefined : getComputedStyle(header);
         return {
           cardCount: cards.length,
@@ -307,7 +307,7 @@ try {
     if (variant.monochrome) {
       assert(
         layout.itemHeaderBackground === "rgb(255, 255, 255)" &&
-          layout.itemHeaderColor === "rgb(0, 0, 0)",
+          layout.itemHeaderColor === "rgb(17, 17, 17)",
         `${variant.name} did not apply monochrome card colors: ${layout.itemHeaderBackground} / ${layout.itemHeaderColor}`,
       );
     }
@@ -444,7 +444,7 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
         sessionId,
         `const sheet = document.querySelector(".sheet-page");
          return document.body.textContent.includes("${character.title}") &&
-           document.querySelectorAll(".print-only .sheet-card").length === 24 &&
+           document.querySelectorAll(".print-only .print-reference-card").length === 24 &&
            sheet?.classList.contains("paper-${variant.paper}") === true &&
            sheet?.classList.contains("sheet-monochrome") === ${variant.monochrome} &&
            document.querySelector('link[data-print-paper="${variant.paper}"]') !== null;`,
@@ -452,12 +452,12 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
       const layout = await webdriverExecute(
         port,
         sessionId,
-        `const cards = [...document.querySelectorAll(".print-only .sheet-card")];
+        `const cards = [...document.querySelectorAll(".print-only .print-reference-card")];
          const overflowing = cards.filter((card) =>
            card.scrollHeight > card.clientHeight + 1 ||
            card.scrollWidth > card.clientWidth + 1
          ).map((card) => card.querySelector("h3")?.textContent ?? "unnamed");
-         const header = document.querySelector(".item-card > header");
+         const header = document.querySelector(".print-item-card > header");
          const style = header === null ? undefined : getComputedStyle(header);
          return {
            cardCount: cards.length,
@@ -477,7 +477,7 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
       if (variant.monochrome)
         assert(
           layout.itemHeaderBackground === "rgb(255, 255, 255)" &&
-            layout.itemHeaderColor === "rgb(0, 0, 0)",
+            layout.itemHeaderColor === "rgb(17, 17, 17)",
           `Firefox ${variant.name} did not apply monochrome colors`,
         );
       const printed = await webdriverRequest(
@@ -683,7 +683,10 @@ async function inspectPdf(path, paper, requireTagged = true) {
   const expected = paper === "letter" ? [612, 792] : [595.28, 841.89];
   assert(Math.abs(width - expected[0]) < 1, `${path} has width ${width}`);
   assert(Math.abs(height - expected[1]) < 1, `${path} has height ${height}`);
-  assert(pages >= 3 && pages <= 15, `${path} has implausible ${pages} pages`);
+  assert(
+    pages === 5,
+    `${path} should contain two reference pages and three nine-card pages, got ${pages}`,
+  );
   const tagged = /^Tagged:\s+yes$/m.test(info);
   if (requireTagged) assert(tagged, `${path} is not a tagged PDF`);
   const { stdout: pageInfo } = await execute("pdfinfo", [
@@ -712,10 +715,9 @@ async function inspectPdf(path, paper, requireTagged = true) {
   const compactText = text.replace(/\s+/g, " ");
   for (const required of [
     "Synthetic print fixture hero",
-    "Power cards",
+    "Character reference",
     "Synthetic power 01",
     "Synthetic power 18",
-    "Item cards",
     "Synthetic item 01",
     "Synthetic item 06",
   ])

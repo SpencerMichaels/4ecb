@@ -560,6 +560,16 @@ prerequisites, and normalizes the small legacy table-markup vocabulary without
 interpreting arbitrary HTML. Product-owner review and any resulting hierarchy
 or density revisions remain required before milestone closure.
 
+**Print parity revision (2026-09-30):** Product-owner review rejected the first
+generic print flow. The replacement follows the supplied Hu and Fei Zhu sheets
+and recovered CharacterSheetViewer layout: two bounded, purpose-built reference
+pages precede fixed-aspect physical cards; cards are explicitly chunked nine per
+page in a three-by-three grid, never expand with content, omit flavor and
+presentation metadata, and use compact legacy-style power and item projections.
+Chromium and Firefox now verify the resulting five-page synthetic Letter/A4
+matrix in both color modes. Further product-owner visual review remains part of
+M5.6.
+
 ## M5.7 — Invited-beta UI and hostability preparation
 
 ### Goal
