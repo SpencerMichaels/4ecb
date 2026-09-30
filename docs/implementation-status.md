@@ -3699,4 +3699,6 @@ Divinity`, except for the native function's explicit, case-insensitive
   display as `DAMAGE` with the redundant word “damage” removed from their
   formula; conditions, movement, ongoing damage, and other riders retain the
   complete `HIT` label and prose. The full 558-test suite and all public checks
-  pass.
+  pass. Internal descriptor, rule, and Source separators use a lower-contrast
+  divider than the card outline so row structure does not compete with the card
+  boundary.

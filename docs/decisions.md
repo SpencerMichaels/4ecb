@@ -1558,6 +1558,10 @@ clause, additional attack, or other rider keeps the authored `HIT` label and
 complete prose; the presentation must prefer a false negative over hiding a
 rule.
 
+Internal descriptor, rule, and Source dividers use a deliberately lower-contrast
+version of the shared border color. The card outline and header boundary remain
+the stronger visual hierarchy.
+
 Requirement/Prerequisite and Trigger still lead. All other combat clauses retain
 their authored order, including Effects before an Attack, Effects after a Hit,
 and Effects that bridge primary and secondary phases. This relies on explicit

@@ -486,6 +486,7 @@ a {
 }
 
 .candidate-detail > .detail-source-note {
+  border-top-color: var(--entity-card-divider);
   margin-inline: -1rem;
   padding-inline: 1rem;
 }
@@ -3436,6 +3437,7 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 .candidate-detail {
   --entity-card-flavor-padding: 0.8rem 1rem;
   --entity-card-header-margin-bottom: 0.85rem;
+  --entity-card-divider: color-mix(in srgb, var(--border) 52%, transparent);
 
   background: var(--parchment);
   border-block-end: var(--detail-card-header-border-inline);
@@ -3739,8 +3741,8 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 
 .entity-card-descriptors {
   background: var(--surface-subtle);
-  border-bottom: 1px solid var(--border);
-  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--entity-card-divider);
+  border-top: 1px solid var(--entity-card-divider);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
   margin: 0 -1rem 0.15rem !important;
@@ -3748,7 +3750,7 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 }
 
 .entity-card-descriptors > div {
-  border-right: 1px solid var(--border);
+  border-right: 1px solid var(--entity-card-divider);
   min-width: 0;
   padding: 0 0.65rem;
 }
@@ -3890,7 +3892,7 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 
 .item-card-descriptors {
   background: var(--surface-subtle);
-  border-block: 1px solid var(--border);
+  border-block: 1px solid var(--entity-card-divider);
   margin: 0 -1rem 0 !important;
   padding: 0.22rem 1rem;
 }
@@ -3914,7 +3916,7 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 }
 
 .item-card-descriptor-row > div + div {
-  border-left: 1px solid var(--border);
+  border-left: 1px solid var(--entity-card-divider);
 }
 
 .item-card-descriptor-row > div:last-child {
@@ -3952,7 +3954,7 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 }
 
 .entity-card-rules > div {
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--entity-card-divider);
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   padding: 0.72rem 1rem;

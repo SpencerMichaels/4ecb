@@ -14,7 +14,9 @@ describe("production item-card presentation", () => {
     const row = styles.match(
       /\.item-card-descriptor-row\s*\{(?<body>[\s\S]*?)\n\}/u,
     )?.groups?.body;
-    expect(band).toContain("border-block: 1px solid var(--border)");
+    expect(band).toContain(
+      "border-block: 1px solid var(--entity-card-divider)",
+    );
     expect(band).not.toContain("grid-template-columns");
     expect(row).toContain("display: flex");
     expect(row).toContain("flex-wrap: wrap");
