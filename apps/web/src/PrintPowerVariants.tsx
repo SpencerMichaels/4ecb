@@ -2,7 +2,7 @@ import type { SheetPowerAttack, SheetPowerVariant } from "@4ecb/sheet-model";
 
 type AttackCell = Pick<
   SheetPowerAttack,
-  "attack" | "ability" | "powerBonus" | "damage" | "weaponRole" | "eligible"
+  "attack" | "ability" | "damage" | "eligible"
 >;
 
 function variantCell(
@@ -15,7 +15,6 @@ function variantCell(
   return {
     attack: variant.attack,
     ability: variant.ability ?? "Ability",
-    powerBonus: variant.powerBonus ?? 0,
     ...(variant.damage === undefined ? {} : { damage: variant.damage }),
   };
 }
@@ -26,11 +25,10 @@ function sameCalculation(
 ): boolean {
   if (left === undefined || right === undefined) return left === right;
   return (
-    left.attack === right.attack &&
-    left.ability === right.ability &&
-    left.powerBonus === right.powerBonus &&
-    left.damage === right.damage &&
-    left.weaponRole === right.weaponRole &&
+    attackBonus(left) === attackBonus(right) &&
+    left.ability.trim().toLocaleLowerCase() ===
+      right.ability.trim().toLocaleLowerCase() &&
+    left.damage?.replace(/\s+/g, "") === right.damage?.replace(/\s+/g, "") &&
     (left.eligible !== false) === (right.eligible !== false)
   );
 }

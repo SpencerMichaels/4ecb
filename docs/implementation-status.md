@@ -110,8 +110,10 @@ Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   types separately for each ordered attack phase using the existing recovered
   component path. Explicit main/off-hand roles constrain equipped phase cells,
   while inventory alternatives remain hypothetical loadouts. Collapse compares
-  table calculations including damage expression and weapon role, rather than ability
-  alone. Unavailable companion phases show a dash and retain the compatibility
+  resolved ability, numerical to-hit, damage expression, and availability rather
+  than defense, intrinsic-bonus, or hand-role labels. Distinct columns retain
+  simple Attack 1/Attack 2 titles; abilities are already in the body headers.
+  Unavailable companion phases show a dash and retain the compatibility
   diagnostic; legacy snapshots without per-phase data keep their recorded
   primary summary and do not invent secondary values. Ongoing damage and riders
   remain in the full authored Hit text.

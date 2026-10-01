@@ -76,8 +76,9 @@ describe("printed weapon calculation summaries", () => {
   });
   it.each([
     { ability: "Charisma", attack: "+10 vs Will" },
+    { ability: "Dexterity" },
+    { attack: "+10 vs AC" },
     { damage: "1d8+5" },
-    { weaponRole: "off" as const },
   ])("keeps different phase calculations in distinct columns: %j", (change) => {
     const markup = render([
       attack(1, { damageType: "fire" }),
@@ -88,6 +89,18 @@ describe("printed weapon calculation summaries", () => {
     expect((text(markup).match(/Longsword/g) ?? []).length).toBe(1);
     expect(text(markup)).toContain("+12 → 2d8 + 5");
     expect(text(markup)).not.toContain("fire");
+  });
+  it("collapses equal visible calculations despite defense, intrinsic bonus, or hand-role differences", () => {
+    const markup = render([
+      attack(1, { weaponRole: "off" }),
+      attack(2, {
+        attack: "+12 vs Reflex",
+        powerBonus: 2,
+        weaponRole: "main",
+        damage: "2d8 + 5",
+      }),
+    ]);
+    expect(text(markup)).toBe("WeaponAttackDamageLongsword+122d8 + 5");
   });
   it("omits damage types and collapses phases differing only by type", () => {
     const markup = render([

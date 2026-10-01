@@ -295,8 +295,9 @@ explicit hand role. Printed summaries use a compact `+bonus → expression`
 form without repeating the defense or word `damage`. Distinct phases form a
 bottom table with one weapon row and numbered attack columns; single attacks
 and identical phase calculations use separate weapon, to-hit, and damage
-columns labeled Weapon, Attack, and Damage. Equality includes the damage
-expression and hand role, not merely the attack ability. Damage types remain
+columns labeled Weapon, Attack, and Damage. Equality compares resolved ability,
+numerical to-hit, damage expression, and availability, not defense or hand-role
+labels. Distinct columns stay labeled Attack 1, Attack 2, etc. Damage types remain
 in the data and authored rules rather than being repeated in the table. Authored Hit text retains conditions,
 ongoing damage, and other riders. Legacy caches with only one attack/damage
 summary cannot supply missing secondary calculations; unavailable phase cells
