@@ -1525,6 +1525,9 @@ variant's authoritative weapon dice. Browser View uses the same interaction.
 Print keeps full ability wording and authored `[W]` prose because tooltips and a
 single interactive selection do not survive on paper. Instead, one printed
 power card lists each compatible owned weapon once near the bottom of its body.
+Every table form orders equipped main hand first, then equipped off hand,
+then other equipped weapons/implements, then inventory alternatives. Sorting
+preserves the original order within each group and does not mutate the model.
 Every printed weapon summary uses a compact table with a weapon column and
 calculation cells containing `+bonus → expression`. Single attacks and
 identical repeated calculations use a three-column table labeled Weapon,

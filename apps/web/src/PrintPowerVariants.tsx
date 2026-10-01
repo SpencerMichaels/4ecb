@@ -40,6 +40,11 @@ function attackBonus(cell: AttackCell | undefined): string {
     : (cell.attack.match(/^[+-]?\d+/)?.[0] ?? "—");
 }
 
+function equipmentOrder(variant: SheetPowerVariant): number {
+  if (!variant.equipped) return 3;
+  return variant.hand === "main" ? 0 : variant.hand === "off" ? 1 : 2;
+}
+
 function DamageSummary({ cell }: { readonly cell: AttackCell | undefined }) {
   if (
     cell === undefined ||
@@ -85,10 +90,15 @@ export function PrintPowerVariants({
       ),
     ]),
   ].sort((a, b) => a - b);
-  const rows = variants.map((variant) => ({
-    variant,
-    cells: ordinals.map((ordinal) => variantCell(variant, ordinal)),
-  }));
+  const rows = variants
+    .map((variant) => ({
+      variant,
+      cells: ordinals.map((ordinal) => variantCell(variant, ordinal)),
+    }))
+    .sort(
+      (left, right) =>
+        equipmentOrder(left.variant) - equipmentOrder(right.variant),
+    );
   const shared = rows.every(({ cells }) =>
     cells.slice(1).every((cell) => sameCalculation(cells[0], cell)),
   );

@@ -88,6 +88,9 @@ Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   cells and add numbered attack-column headers.
   When all of each weapon's phase bonuses match but damage differs, the table
   instead uses one shared Attacks column and Dmg 1/Dmg 2/etc. columns.
+  All table forms sort equipped main/off-hand variants first, followed by other
+  equipped implements/weapons and then inventory alternatives; within-group
+  order and the underlying model are preserved.
   This consistent-layout follow-up passes eight focused print tests, the web
   build, focused lint, and all eight print-matrix cases; the harness checks every
   weapon table for cell overflow, not just the first table.

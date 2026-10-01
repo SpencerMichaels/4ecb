@@ -41,6 +41,74 @@ function text(markup: string) {
 }
 
 describe("printed weapon calculation summaries", () => {
+  it.each([
+    [attack(1)],
+    [attack(1), attack(2, { damage: "1d8+5" })],
+    [attack(1), attack(2, { attack: "+10 vs AC" })],
+  ])(
+    "orders equipped main/off hands first in every table form: %j",
+    (...phases) => {
+      const variants: SheetPowerVariant[] = [
+        {
+          id: "a",
+          equipmentName: "Inventory A",
+          equipped: false,
+          hand: "main",
+          attacks: phases,
+        },
+        {
+          id: "off",
+          equipmentName: "Off weapon",
+          equipped: true,
+          hand: "off",
+          attacks: phases,
+        },
+        {
+          id: "b",
+          equipmentName: "Inventory B",
+          equipped: false,
+          attacks: phases,
+        },
+        {
+          id: "implement",
+          equipmentName: "Equipped implement",
+          equipped: true,
+          attacks: phases,
+        },
+        {
+          id: "main",
+          equipmentName: "Main weapon",
+          equipped: true,
+          hand: "main",
+          attacks: phases,
+        },
+      ];
+      const markup = renderToStaticMarkup(
+        <PrintPowerVariants
+          variants={variants}
+          attackOrdinals={phases.map((phase) => phase.ordinal)}
+        />,
+      );
+      expect(
+        [...markup.matchAll(/<th scope="row">([^<]+)<\/th>/g)].map(
+          (match) => match[1],
+        ),
+      ).toEqual([
+        "Main weapon",
+        "Off weapon",
+        "Equipped implement",
+        "Inventory A",
+        "Inventory B",
+      ]);
+      expect(variants.map((variant) => variant.id)).toEqual([
+        "a",
+        "off",
+        "b",
+        "implement",
+        "main",
+      ]);
+    },
+  );
   it("labels Attack and Damage for one attack or identical repeated attacks", () => {
     for (const phases of [[attack(1)], [attack(1), attack(2)]]) {
       const markup = render(phases);
@@ -96,7 +164,9 @@ describe("printed weapon calculation summaries", () => {
         attack(1),
         attack(2, { ability, damage: "1d8+5" }),
       ]);
-      expect(text(markup)).toBe("WeaponAttacksDmg 1Dmg 2Longsword+122d8+51d8+5");
+      expect(text(markup)).toBe(
+        "WeaponAttacksDmg 1Dmg 2Longsword+122d8+51d8+5",
+      );
       expect(text(markup)).not.toMatch(/Attack 1|Attack 2|→/);
       expect(markup).toContain('aria-label="Damage 2"');
     },
