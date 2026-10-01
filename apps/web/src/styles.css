@@ -1867,6 +1867,10 @@ textarea {
   background: var(--card-color);
   color: #fff;
 }
+.print-power-card > header h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+}
 .print-card-keywords {
   border-bottom: 1px solid var(--card-color);
   border-top: 1px solid var(--card-color);
