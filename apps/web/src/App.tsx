@@ -110,6 +110,8 @@ export const ABBREVIATE_ABILITY_VALUES_STORAGE_KEY =
 export const EXPAND_WEAPON_DICE_STORAGE_KEY = "4ecb.expandWeaponDice.v1";
 export const COLOR_UTILITY_POWERS_BLUE_STORAGE_KEY =
   "4ecb.colorUtilityPowersBlue.v1";
+export const SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY =
+  "4ecb.showEquippedAttackBonus.v1";
 
 function RouteFocusOnMount({
   children,
@@ -207,6 +209,15 @@ export function App() {
     }
   });
   const firstRoute = useRef(true);
+  const [showEquippedAttackBonus, setShowEquippedAttackBonus] = useState(() => {
+    try {
+      return (
+        localStorage.getItem(SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY) !== "0"
+      );
+    } catch {
+      return true;
+    }
+  });
   const runtimeContentStarted = useRef(false);
   const route = useMemo(() => parseHashRoute(hash), [hash]);
   const previousRoute = useRef(route);
@@ -286,6 +297,15 @@ export function App() {
       // The printed-card display preference still applies for this session.
     }
   }, [colorUtilityPowersBlue]);
+  useEffect(() => {
+    try {
+      if (showEquippedAttackBonus)
+        localStorage.removeItem(SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY);
+      else localStorage.setItem(SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY, "0");
+    } catch {
+      // The printed-card preference still applies for this session.
+    }
+  }, [showEquippedAttackBonus]);
 
   const refresh = useCallback(async () => {
     const [installed, active, profile] = await Promise.all([
@@ -528,6 +548,8 @@ export function App() {
                   onExpandWeaponDiceChange={setExpandWeaponDice}
                   colorUtilityPowersBlue={colorUtilityPowersBlue}
                   onColorUtilityPowersBlueChange={setColorUtilityPowersBlue}
+                  showEquippedAttackBonus={showEquippedAttackBonus}
+                  onShowEquippedAttackBonusChange={setShowEquippedAttackBonus}
                 />
               ) : route.characterId === undefined ? (
                 <CharacterLibraryPage
@@ -554,6 +576,7 @@ export function App() {
                   abbreviateAbilityValues={abbreviateAbilityValues}
                   expandWeaponDice={expandWeaponDice}
                   colorUtilityPowersBlue={colorUtilityPowersBlue}
+                  showEquippedAttackBonus={showEquippedAttackBonus}
                 />
               )}
             </RouteFocusOnMount>

@@ -14,6 +14,29 @@ function namedOrdinal(label: string): number | undefined {
   ]).get(label.trim().toLocaleLowerCase());
 }
 
+export function printAttackHeader(
+  attack: SheetPowerAttack,
+  showEquippedAttackBonus: boolean,
+): string {
+  const ability =
+    new Map([
+      ["strength", "STR"],
+      ["constitution", "CON"],
+      ["dexterity", "DEX"],
+      ["intelligence", "INT"],
+      ["wisdom", "WIS"],
+      ["charisma", "CHA"],
+    ]).get(attack.ability.trim().toLocaleLowerCase()) ??
+    attack.ability.toLocaleUpperCase();
+  const formula = `${ability}${attack.powerBonus === 0 ? "" : attack.powerBonus > 0 ? `+${attack.powerBonus}` : attack.powerBonus}`;
+  const total = attack.attack
+    .replace(/\bFortitude\b/gi, "Fort")
+    .replace(/\bReflex\b/gi, "Ref");
+  return showEquippedAttackBonus
+    ? total.replace(/^(.+?)\s+vs\s+(.+)$/i, `$1 · ${formula} vs $2`)
+    : `${formula} vs ${total.match(/\bvs\s+(.+)$/i)?.[1] ?? "defense"}`;
+}
+
 export function groupedPrintRules(fields: readonly SheetValue[]) {
   const leading: SheetValue[] = [];
   const attacks = new Map<number, SheetValue[]>();

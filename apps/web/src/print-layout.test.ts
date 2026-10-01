@@ -13,10 +13,9 @@ const a4Styles = readFileSync(
   new URL("../public/print-a4.css", import.meta.url),
   "utf8",
 );
-const sheetSource = readFileSync(
-  new URL("./CharacterSheetPage.tsx", import.meta.url),
-  "utf8",
-);
+const sheetSource = ["./CharacterSheetPage.tsx", "./print-power-attacks.ts"]
+  .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
+  .join("\n");
 
 describe("print layout contract", () => {
   it("keeps table text the same dark color as the card body", () => {

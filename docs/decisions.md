@@ -1744,6 +1744,12 @@ dot separates the authored formula and preserves an intrinsic power bonus
 without confusing it with the total. Multiattack bands have no ordinal prefixes:
 their top-to-bottom order identifies each phase, while weapon-table columns
 retain their numbered labels. The same cell
+uses a default-on browser Display preference, “Show equipped weapon to-hit bonus
+in attack headers.” Disabling it removes the equipped total and center-dot
+prefix, leaving the abbreviated authored formula and defense (for example
+`STR+2 vs Ref`). Weapon-table calculations and interactive cards do not change.
+The preference is browser-local and persistent; intrinsic power bonuses remain
+visible because they are part of the power, not the equipped weapon. The cell
 abbreviates only the long defense names `Fortitude` and `Reflex` to `Fort` and
 `Ref`; underlying calculations and authored rules text retain the full names.
 The combined attack cell sizes to its content and the target receives the

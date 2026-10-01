@@ -129,6 +129,8 @@ export interface SettingsPageProps {
   readonly onExpandWeaponDiceChange: (value: boolean) => void;
   readonly colorUtilityPowersBlue: boolean;
   readonly onColorUtilityPowersBlueChange: (value: boolean) => void;
+  readonly showEquippedAttackBonus: boolean;
+  readonly onShowEquippedAttackBonusChange: (value: boolean) => void;
 }
 
 export function SettingsPage({
@@ -153,6 +155,8 @@ export function SettingsPage({
   onExpandWeaponDiceChange,
   colorUtilityPowersBlue,
   onColorUtilityPowersBlueChange,
+  showEquippedAttackBonus,
+  onShowEquippedAttackBonusChange,
 }: SettingsPageProps) {
   const [status, setStatus] = useState(
     installedPacks.length === 0 ? "No content packs installed." : "Ready.",
@@ -605,6 +609,21 @@ export function SettingsPage({
           Reproduce the original builder's all-blue Utility card style.
           Otherwise, only the footer stays Utility blue while the rest of the
           card shows how often the power can be used.
+        </p>
+        <label>
+          <input
+            type="checkbox"
+            checked={showEquippedAttackBonus}
+            onChange={(event) =>
+              onShowEquippedAttackBonusChange(event.currentTarget.checked)
+            }
+          />{" "}
+          Show equipped weapon to-hit bonus in attack headers
+        </label>
+        <p className="field-help">
+          On printable character sheets, include the equipped weapon's bonus in
+          each attack header. Turn this off if you frequently switch weapons;
+          the weapon table always shows each weapon's calculated bonus.
         </p>
       </section>
 

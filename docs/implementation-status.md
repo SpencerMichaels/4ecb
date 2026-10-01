@@ -167,7 +167,12 @@ apps/web/src/print-layout.test.ts`, the web typecheck/build, focused ESLint,
   as compact `⚔ +12 · STR+2 vs AC | target` rows, followed immediately by that
   phase's Hit and associated Effect clauses. Multiattack bands use their
   top-to-bottom order without ordinal prefixes; the weapon table retains
-  numbered columns. Putting the complete to-hit first and separating the
+  numbered columns. A browser-local default-on Display
+  toggle now hides equipped totals from printed attack bands when requested,
+  leaving `STR vs AC` / `STR+2 vs Ref` while preserving all weapon-table totals
+  and interactive cards, independently of weapon-table layout. This preference
+  slice passes 47 focused header/layout/variant/accessibility tests, the web
+  typecheck, and focused lint. Putting the complete to-hit first and separating the
   authored formula with a centered dot preserves a power's intrinsic `+2` without
   mistaking it for the total. Header-only defense abbreviations use `Fort` and
   `Ref`. The combined attack cell fits its content while long targets wrap in

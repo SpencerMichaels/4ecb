@@ -22,7 +22,11 @@ import { ActionTypeIcon } from "./ActionTypeIcon";
 import { Icon } from "./Icon";
 import { PortraitImage } from "./PortraitEditor";
 import { PrintPowerVariants } from "./PrintPowerVariants";
-import { fallbackPrintAttacks, groupedPrintRules } from "./print-power-attacks";
+import {
+  fallbackPrintAttacks,
+  groupedPrintRules,
+  printAttackHeader,
+} from "./print-power-attacks";
 import {
   defaultPowerVariant,
   PowerTextProse,
@@ -301,24 +305,6 @@ function usePrintCardFit() {
   return cardRef;
 }
 
-function abbreviatedAbility(ability: string): string {
-  const abbreviation = new Map([
-    ["strength", "STR"],
-    ["constitution", "CON"],
-    ["dexterity", "DEX"],
-    ["intelligence", "INT"],
-    ["wisdom", "WIS"],
-    ["charisma", "CHA"],
-  ]).get(ability.trim().toLocaleLowerCase());
-  return abbreviation ?? ability.toLocaleUpperCase();
-}
-
-function abbreviatedAttackTotal(value: string): string {
-  return value
-    .replace(/\bFortitude\b/gi, "Fort")
-    .replace(/\bReflex\b/gi, "Ref");
-}
-
 function PrintRuleLines({
   fields,
   characterLevel,
@@ -348,12 +334,14 @@ function PrintRuleLines({
   ));
 }
 
-function PrintAttackBand({ attack }: { readonly attack: SheetPowerAttack }) {
-  const formula = `${abbreviatedAbility(attack.ability)}${attack.powerBonus === 0 ? "" : attack.powerBonus > 0 ? `+${attack.powerBonus}` : attack.powerBonus}`;
-  const total = abbreviatedAttackTotal(attack.attack).replace(
-    /^(.+?)\s+vs\s+(.+)$/i,
-    `$1 · ${formula} vs $2`,
-  );
+function PrintAttackBand({
+  attack,
+  showEquippedAttackBonus,
+}: {
+  readonly attack: SheetPowerAttack;
+  readonly showEquippedAttackBonus: boolean;
+}) {
+  const total = printAttackHeader(attack, showEquippedAttackBonus);
   return (
     <dl className="print-card-combat-band">
       <div className="print-card-attack-total">
@@ -372,10 +360,12 @@ function PrintPowerCard({
   card,
   characterLevel,
   colorUtilityPowersBlue,
+  showEquippedAttackBonus,
 }: {
   readonly card: SheetCard;
   readonly characterLevel: number;
   readonly colorUtilityPowersBlue: boolean;
+  readonly showEquippedAttackBonus: boolean;
 }) {
   const cardRef = usePrintCardFit();
   const attackType = cardField(card, "Attack Type") ?? "";
@@ -463,7 +453,10 @@ function PrintPowerCard({
         ) : null}
         {attacks.map((attack, attackIndex) => (
           <section className="print-card-attack-section" key={attack.id}>
-            <PrintAttackBand attack={attack} />
+            <PrintAttackBand
+              attack={attack}
+              showEquippedAttackBonus={showEquippedAttackBonus}
+            />
             <div className="print-card-attack-rules">
               {attackIndex === 0 ? (
                 <>
@@ -585,16 +578,19 @@ function PrintCard({
   card,
   characterLevel,
   colorUtilityPowersBlue,
+  showEquippedAttackBonus,
 }: {
   readonly card: SheetCard;
   readonly characterLevel: number;
   readonly colorUtilityPowersBlue: boolean;
+  readonly showEquippedAttackBonus: boolean;
 }) {
   return card.kind === "power" ? (
     <PrintPowerCard
       card={card}
       characterLevel={characterLevel}
       colorUtilityPowersBlue={colorUtilityPowersBlue}
+      showEquippedAttackBonus={showEquippedAttackBonus}
     />
   ) : (
     <PrintItemCard card={card} />
@@ -675,6 +671,7 @@ export function CharacterSheetPage({
   abbreviateAbilityValues = true,
   expandWeaponDice = true,
   colorUtilityPowersBlue = false,
+  showEquippedAttackBonus = true,
 }: {
   readonly characterId: string;
   readonly manifests: readonly ContentPackManifest[];
@@ -683,6 +680,7 @@ export function CharacterSheetPage({
   readonly abbreviateAbilityValues?: boolean;
   readonly expandWeaponDice?: boolean;
   readonly colorUtilityPowersBlue?: boolean;
+  readonly showEquippedAttackBonus?: boolean;
 }) {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [character, setCharacter] = useState<CharacterRecord>();
@@ -1338,6 +1336,7 @@ export function CharacterSheetPage({
                 card={card}
                 characterLevel={characterLevel}
                 colorUtilityPowersBlue={colorUtilityPowersBlue}
+                showEquippedAttackBonus={showEquippedAttackBonus}
                 key={`${card.kind}-${card.id ?? card.name}-${index}`}
               />
             ))}

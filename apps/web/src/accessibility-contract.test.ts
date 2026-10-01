@@ -128,6 +128,17 @@ describe("release accessibility contract", () => {
       'localStorage.setItem(COLOR_UTILITY_POWERS_BLUE_STORAGE_KEY, "1")',
     );
     expect(app).toContain("colorUtilityPowersBlue={colorUtilityPowersBlue}");
+    expect(settingsPage).toContain(
+      "Show equipped weapon to-hit bonus in attack headers",
+    );
+    expect(settingsPage).toContain("checked={showEquippedAttackBonus}");
+    expect(app).toContain(
+      'localStorage.getItem(SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY) !== "0"',
+    );
+    expect(app).toContain(
+      'localStorage.setItem(SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY, "0")',
+    );
+    expect(app).toContain("showEquippedAttackBonus={showEquippedAttackBonus}");
     expect(characterEditor).toContain("createPowerCardPresentationFinder");
     expect(characterEditor).toContain(
       "powerPresentationFor={currentPowerPresentationFor}",
