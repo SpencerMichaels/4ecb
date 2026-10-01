@@ -2016,6 +2016,37 @@ textarea {
 .print-reference-card.is-condensed .print-card-variant + .print-card-variant {
   margin-top: 0 !important;
 }
+.print-card-variant-table {
+  border-collapse: collapse;
+  font-size: inherit;
+  line-height: inherit;
+  table-layout: fixed;
+  width: 100%;
+}
+.print-card-variant-table th,
+.print-card-variant-table td {
+  border: 0;
+  padding: 0.0125in 0.02in;
+  text-align: left;
+  vertical-align: top;
+}
+.print-card-variant-table thead th {
+  border-bottom: 0.5px solid color-mix(in srgb, var(--card-color) 30%, white);
+}
+.print-card-variant-table th:first-child {
+  width: 30%;
+}
+.print-card-variant-table tbody th {
+  overflow-wrap: anywhere;
+}
+.print-variant-bonus,
+.print-variant-expression {
+  white-space: nowrap;
+}
+.print-variant-damage {
+  display: inline-block;
+  max-width: 100%;
+}
 .print-card-additional {
   border-top: 1px solid var(--card-color);
   font-size: 4.5pt;
@@ -6377,6 +6408,7 @@ button.inventory-icon-action:disabled {
   .app-header,
   .pwa-status,
   .screen-sheet-view,
+  .print-preview-toolbar,
   .sheet-toolbar,
   .cache-warning,
   .sheet-page > .status,
@@ -6404,8 +6436,10 @@ button.inventory-icon-action:disabled {
     margin: 0 0 0.35rem;
     padding-left: 1rem;
   }
-  .print-page {
+  .print-page,
+  .sheet-page.is-print-preview .print-page {
     border: 0;
+    box-shadow: none;
     color: #111;
     height: 10.3in;
     margin: 0;
@@ -6424,7 +6458,8 @@ button.inventory-icon-action:disabled {
   .paper-a4 {
     page: a4sheet;
   }
-  .paper-a4 .print-page {
+  .paper-a4 .print-page,
+  .sheet-page.paper-a4.is-print-preview .print-page {
     height: 279mm;
     page: a4sheet;
     width: 192mm;

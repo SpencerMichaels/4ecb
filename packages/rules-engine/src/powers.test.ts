@@ -893,6 +893,168 @@ describe("power evaluation", () => {
     ]);
   });
 
+  it.each([8, 11])(
+    "keeps each attack's ability, hit dice, damage type, and bonus independent at level %i",
+    (level) => {
+      const [power] = evaluatePowers({
+        level,
+        activeDefinitionIds: ["POWER"],
+        inventory: [
+          {
+            id: "blade",
+            definitionIds: ["BLADE"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+        stats: {
+          "Strength modifier": stat("Strength modifier", 5),
+          "Charisma modifier": stat("Charisma modifier", 2),
+        },
+        overlays: [],
+        entities: [
+          entity("BLADE", "Test blade", "Weapon", {
+            Damage: "1d8",
+            "Proficiency Bonus": "3",
+          }),
+          entity("POWER", "Synthetic changing strike", "Power", {
+            Keywords: "Weapon, Fire, Thunder",
+            "Attack Type": "Melee weapon",
+            "Primary Attack": "Strength vs. AC",
+            Hit: "2[W] + Strength modifier fire damage, and the target is dazed.",
+            "Secondary Attack": "Charisma +2 vs. Reflex",
+            " Hit":
+              "1[W] + Charisma modifier thunder damage.\nLevel 11: 3[W] + Charisma modifier thunder damage.",
+          }),
+        ],
+      });
+      expect(power?.variants[0]).toMatchObject({
+        damage: "2d8+5",
+        damageType: "fire",
+      });
+      expect(power?.variants[0]?.attacks).toMatchObject([
+        {
+          ordinal: 1,
+          attackStat: "Strength",
+          attackBonus: 8 + Math.floor(level / 2),
+          damage: "2d8+5",
+          damageType: "fire",
+        },
+        {
+          ordinal: 2,
+          attackStat: "Charisma",
+          attackBonus: 7 + Math.floor(level / 2),
+          damage: level < 11 ? "1d8+2" : "3d8+2",
+          damageType: "thunder",
+        },
+      ]);
+    },
+  );
+
+  it("binds distinct attack phases to the saved main/off-hand roles without dropping inventory alternatives", () => {
+    const [power] = evaluatePowers({
+      level: 4,
+      activeDefinitionIds: ["POWER"],
+      inventory: [
+        {
+          id: "main",
+          name: "Main blade",
+          definitionIds: ["SWORD"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+        {
+          id: "off",
+          name: "Off dagger",
+          definitionIds: ["DAGGER"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+        {
+          id: "spare",
+          name: "Spare dagger",
+          definitionIds: ["DAGGER"],
+          quantity: 1,
+          equippedQuantity: 0,
+          acquiredLevel: 1,
+        },
+      ],
+      textStrings: { _INTERNAL_MainHandWeapon: "Main blade" },
+      stats: { "Strength modifier": stat("Strength modifier", 4) },
+      overlays: [],
+      entities: [
+        entity("SWORD", "Sword", "Weapon", {
+          Damage: "1d8",
+          "Proficiency Bonus": "3",
+        }),
+        entity("DAGGER", "Dagger", "Weapon", {
+          Damage: "1d4",
+          "Proficiency Bonus": "3",
+          Properties: "Off-hand",
+        }),
+        entity("POWER", "Synthetic hand sequence", "Power", {
+          Keywords: "Weapon",
+          "Attack Type": "Melee weapon",
+          "Primary Attack": "Strength vs. AC (off-hand weapon)",
+          Hit: "1[W] damage.",
+          "Secondary Attack": "Strength vs. AC (main weapon)",
+          " Hit": "2[W] + Strength modifier damage.",
+        }),
+      ],
+    });
+    expect(
+      power?.variants.find((variant) => variant.equipmentName === "Main blade")
+        ?.attacks,
+    ).toMatchObject([
+      { ordinal: 1, eligible: false, weaponRole: "off", damage: "1d8" },
+      { ordinal: 2, weaponRole: "main", damage: "2d8+4" },
+    ]);
+    expect(
+      power?.variants.find((variant) => variant.equipmentName === "Off dagger")
+        ?.attacks,
+    ).toMatchObject([
+      { ordinal: 1, weaponRole: "off", damage: "1d4" },
+      { ordinal: 2, eligible: false, weaponRole: "main", damage: "2d4+4" },
+    ]);
+    expect(
+      power?.variants
+        .find((variant) => variant.equipmentName === "Spare dagger")
+        ?.attacks?.every((attack) => attack.eligible !== false),
+    ).toBe(true);
+  });
+
+  it("keeps compound damage types and secondary-only companion damage out of character math", () => {
+    const [power] = evaluatePowers({
+      level: 2,
+      activeDefinitionIds: ["POWER"],
+      inventory: [],
+      stats: {
+        "Charisma modifier": stat("Charisma modifier", 3),
+        "Strength modifier": stat("Strength modifier", 5),
+      },
+      overlays: [],
+      entities: [
+        entity("POWER", "Synthetic companion sequence", "Power", {
+          "Attack Type": "Ranged 10",
+          "Primary Attack": "Charisma vs. Reflex",
+          Hit: "2d6 + Charisma modifier cold and lightning damage, and ongoing 5 acid damage.",
+          "Secondary Attack": "Beast's attack bonus vs. AC",
+          " Hit": "1[B] + beast's Strength modifier damage.",
+        }),
+      ],
+    });
+    expect(power?.variants[0]?.attacks?.[0]).toMatchObject({
+      damage: "2d6+3",
+      damageType: "cold and lightning",
+    });
+    expect(power?.variants[0]?.attacks?.[1]).toMatchObject({ eligible: false });
+    expect(power?.variants[0]?.attacks?.[1]?.damage).toBeUndefined();
+    expect(power?.unsupported).toContain("companion-ability:POWER");
+  });
+
   it("retains a legacy calculation variant for effect-only utilities", () => {
     const [power] = evaluatePowers({
       level: 3,

@@ -1524,15 +1524,22 @@ an identifying tooltip. The other replaces `[W]` expressions with the selected
 variant's authoritative weapon dice. Browser View uses the same interaction.
 Print keeps full ability wording and authored `[W]` prose because tooltips and a
 single interactive selection do not survive on paper. Instead, one printed
-power card lists a concise attack/damage line for every compatible owned
-variant. Each line contains only the weapon name, total attack bonus, and damage
-expression; it omits equipment-state labels, repeats no defense already present
-in the attack header, and does not duplicate the full card. The equipped-first
-default still supplies the compact attack header, while the list itself keeps
-inventory alternatives visible. Multiattack headers remain independently
-calculated per phase, but the current variant model has only one power-wide
-damage expression, so the weapon line is a primary/default summary rather than
-a claim of phase-specific multiattack damage parity.
+power card lists each compatible owned weapon once near the bottom of its body.
+Single attacks and identical repeated calculations use
+`Weapon: +12 → 2d8 + 5 fire`. Distinct phases use a compact table with a weapon
+column and numbered attack columns, each containing `+bonus → expression type`.
+The word `damage`, equipment-state labels, and defenses already shown in the
+attack bands are omitted. Cells wrap at the arrow when needed; compound damage
+types remain visible. Collapse requires the same ability/formula, bonus,
+defense, damage expression/type, and weapon role/eligibility across phases,
+rather than merely matching the ability name. A missing or ineligible phase
+shows a dash. The equipped-first default supplies each attack header, using the
+eligible equipped hand for a phase that explicitly requires it. Inventory
+alternatives remain visible as hypothetical loadouts without equipping them.
+Phase damage uses the same recovered parser and component rules as the
+existing primary summary; the single primary cache remains the compatibility
+export boundary. Unavailable companion values and unstructured legacy caches
+do not acquire invented per-phase totals.
 
 ### D067 — Build power cards preserve complete authored combat clauses
 
@@ -1686,6 +1693,16 @@ phase that actually offers that ability or names `Primary ability`. Generic
 `Primary ability` resolves from the selected class's authored key-ability order,
 using modifier, raw score, and authored-order tie breaks already established by
 D065.
+
+Each phase also retains its own ordered Hit clause, level-relevant damage
+expression and type (including compound types), damage component provenance,
+and explicit main/off-hand role. Repeated whitespace-prefixed Hit fields bind
+to their surrounding attack ordinal. Secondary attack-type overrides drive
+their own contextual contributions. The first damage clause supplies the
+immediate type; ongoing and other rider damage remains in authored prose.
+Equipped hand restrictions affect the phase's table-cell eligibility while
+owned inventory alternatives remain available for comparison. Companion
+attack/damage stays explicitly unsupported until its stat block is modeled.
 
 The physical card renders one compact band per phase:
 `⚔ +12 · STR+2 vs AC | target`. The calculated total leads, while a centered

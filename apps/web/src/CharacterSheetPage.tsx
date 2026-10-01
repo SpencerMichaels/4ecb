@@ -14,7 +14,6 @@ import {
   type SheetCard,
   type SheetLearnedReference,
   type SheetPowerAttack,
-  type SheetPowerVariant,
   type SheetValue,
 } from "@4ecb/sheet-model";
 
@@ -22,6 +21,7 @@ import { contentProfileMatchesRevision } from "./profile-migration";
 import { ActionTypeIcon } from "./ActionTypeIcon";
 import { Icon } from "./Icon";
 import { PortraitImage } from "./PortraitEditor";
+import { PrintPowerVariants } from "./PrintPowerVariants";
 import {
   defaultPowerVariant,
   PowerTextProse,
@@ -264,11 +264,6 @@ function lastCardField(
     .find((field) => wanted.has(field.label.trim().toLocaleLowerCase()))?.value;
 }
 
-function printVariantAttackBonus(variant: SheetPowerVariant): string {
-  const attack = variant.attack ?? variant.attacks?.[0]?.attack;
-  return attack?.match(/^[+-]?\d+/)?.[0] ?? "—";
-}
-
 function usePrintCardFit() {
   const cardRef = useRef<HTMLElement>(null);
   useLayoutEffect(() => {
@@ -280,9 +275,17 @@ function usePrintCardFit() {
       // this when the preview or print media makes them visible.
       if (body.clientHeight === 0) return;
       element.classList.remove("is-compact", "is-condensed");
-      if (body.scrollHeight <= body.clientHeight + 1) return;
+      if (
+        body.scrollHeight <= body.clientHeight + 1 &&
+        body.scrollWidth <= body.clientWidth + 1
+      )
+        return;
       element.classList.add("is-compact");
-      if (body.scrollHeight <= body.clientHeight + 1) return;
+      if (
+        body.scrollHeight <= body.clientHeight + 1 &&
+        body.scrollWidth <= body.clientWidth + 1
+      )
+        return;
       element.classList.replace("is-compact", "is-condensed");
     };
     const observer = new ResizeObserver(fit);
@@ -450,7 +453,19 @@ function PrintPowerCard({
     authoredAttackField !== undefined ||
     (fallbackAttack !== undefined && !fallbackAttack.includes("Unknown"));
   const attacks: readonly SheetPowerAttack[] =
-    selectedPrintVariant?.attacks ??
+    selectedPrintVariant?.attacks?.map((attack) =>
+      attack.eligible !== false
+        ? attack
+        : (variants
+            .flatMap((variant) =>
+              variant.equipped ? (variant.attacks ?? []) : [],
+            )
+            .find(
+              (candidate) =>
+                candidate.ordinal === attack.ordinal &&
+                candidate.eligible !== false,
+            ) ?? attack),
+    ) ??
     (hasFallbackAttack
       ? [
           {
@@ -550,17 +565,10 @@ function PrintPowerCard({
         {rules.length === 0 && card.description !== undefined ? (
           <Prose value={card.description} />
         ) : null}
-        {printVariants.length === 0 ? null : (
-          <div className="print-card-weapon-variants">
-            {printVariants.map((variant) => (
-              <p className="print-card-variant" key={variant.id}>
-                <strong>{variant.equipmentName}:</strong>{" "}
-                {printVariantAttackBonus(variant)}; {variant.damage ?? "—"}{" "}
-                damage
-              </p>
-            ))}
-          </div>
-        )}
+        <PrintPowerVariants
+          variants={printVariants}
+          attackOrdinals={attacks.map((attack) => attack.ordinal)}
+        />
       </div>
       <div className="print-card-additional">Additional effects</div>
       <div className="print-card-type">

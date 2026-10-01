@@ -602,13 +602,15 @@ for compact or condensed fixed-size cards. Each weapon-compatible power lists a
 compact weapon-name, total-bonus, and damage line for every compatible owned
 weapon after its authored rules, without repeating equipment state or the
 defense already visible in the header; the equipped-first variant continues to
-drive the header calculation. Multiattack headers are phase-aware, while
-per-phase variant damage remains follow-up work because the current variant
-model stores one shared damage expression.
+drive the header calculation. Attack and damage calculations are phase-aware:
+single attacks or identical repeated calculations use `Weapon: +bonus → dice`
+lines; distinct phases use a bottom table with one row per weapon and numbered
+attack columns. Immediate damage types, including compound types, are retained.
 Cards measure their rendered body to choose the largest fitting text size;
-weapon summaries share that size. Multiattack weapon summaries still need
-phase-specific damage and weapon-role binding, including powers with different
-abilities or different main/off-hand damage formulas; this remains M5.6 work.
+weapon summaries share that size. Explicit main/off-hand roles constrain the
+equipped phases; inventory alternatives remain hypothetical loadouts. Missing
+legacy phase data and unsupported companion calculations remain visible as
+dashes and authored rules rather than acquiring inferred totals.
 
 ## M5.7 — Invited-beta UI and hostability preparation
 

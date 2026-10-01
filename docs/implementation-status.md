@@ -80,21 +80,37 @@ Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   body against the available height, using compact/condensed text only when it
   actually overflows; hidden metadata, removed level variants, and omitted
   flavor no longer cause premature shrinking (including Divine Sanction).
-  Multiattack
-  headers are phase-aware, but variant damage remains power-wide, so these
-  weapon lines are currently primary/default summaries rather than per-phase
-  damage rows.
-- Multiattack investigation confirms the weapon-list limitation also affects
+  Summaries now use `Weapon: +12 → 2d8 + 5 fire`, omitting the word `damage`.
+  Distinct attack calculations appear in a compact bottom table: one row per
+  weapon, with numbered attack columns containing bonus, arrow, damage, and
+  type. Identical repeated calculations retain the compact line form.
+- Multiattack investigation confirmed the weapon-list limitation also affects
   attacks with the same ability but different damage or weapon roles. The local
   merged corpus's Ranger Sudden Strike uses Strength for both phases but has
   separate off-hand and main-hand Hit formulas; Driving Offensive likewise has
   different damage per phase. Prayer of Two Paths (Paladin) changes from
-  Strength vs AC to Charisma vs Will. A follow-up needs calculated damage and
-  weapon-role binding per attack phase before weapon rows can be placed within
-  the corresponding attack sections. Identical repeated attacks can retain
-  one shared list. This work remains open in M5.6.
+  Strength vs AC to Charisma vs Will. The evaluator now calculates damage and
+  types separately for each ordered attack phase using the existing recovered
+  component path. Explicit main/off-hand roles constrain equipped phase cells,
+  while inventory alternatives remain hypothetical loadouts. Collapse compares
+  full calculations including damage type and weapon role, rather than ability
+  alone. Unavailable companion phases show a dash and retain the compatibility
+  diagnostic; legacy snapshots without per-phase data keep their recorded
+  primary summary and do not invent secondary values. Ongoing damage and riders
+  remain in the full authored Hit text.
+- Per-attack weapon-table checkpoint (2026-10-01): the focused rules-engine,
+  sheet-model, printed-variant, and print-layout suites pass 50 tests. Workspace
+  typechecks, focused lint, and the web build pass. `pnpm check:print` exercises
+  the actual table component with public synthetic multiattack data in all eight
+  Chromium/Firefox Letter/A4 color/monochrome cases: 24 cards, five pages, no
+  body/band/target or table-cell overflow, and matching weapon/body text sizes.
+  The harness now enters Firefox's in-app print preview before measuring; print
+  media hides the preview controls and restores the physical page width in both
+  browsers. The private Silaqui level-8 diagnostic retains 71/71 comparable
+  cached power-field matches with no unsupported fields or mismatches. This is
+  a cache comparison, not an exact same-profile multiattack golden.
 - Rendered-fit checkpoint (2026-10-01): `pnpm exec vitest run
-  apps/web/src/print-layout.test.ts`, the web typecheck/build, focused ESLint,
+apps/web/src/print-layout.test.ts`, the web typecheck/build, focused ESLint,
   and `pnpm check:print` pass through `nix develop path:. -c`. The print fixture
   now includes deliberately crowded prose and checks body overflow, matching
   weapon/body font sizes, and preservation of normal size on a short card.

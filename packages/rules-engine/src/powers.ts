@@ -39,6 +39,12 @@ export interface PowerAttack {
   readonly defense: string;
   readonly attackBonus: number;
   readonly target?: string;
+  readonly attackType?: string;
+  readonly damage?: string;
+  readonly damageType?: string;
+  readonly damageComponents?: readonly PowerComponent[];
+  readonly weaponRole?: "main" | "off";
+  readonly eligible?: boolean;
   readonly attackComponents: readonly PowerComponent[];
 }
 
@@ -571,6 +577,8 @@ interface AuthoredAttack {
   readonly ordinal: number;
   readonly line: string;
   readonly target?: string;
+  readonly hit?: string;
+  readonly attackType?: string;
 }
 
 const attackOrdinals = new Map([
@@ -595,6 +603,8 @@ function authoredAttacks(
 ): readonly AuthoredAttack[] {
   const attacks = new Map<number, string>();
   const targets = new Map<number, string>();
+  const hits = new Map<number, string>();
+  const attackTypes = new Map<number, string>();
   let activeOrdinal = 1;
   for (const specific of [...power.specifics].sort(
     (left, right) => left.ordinal - right.ordinal,
@@ -617,15 +627,23 @@ function authoredAttacks(
       targets.set(namedOrdinal ?? activeOrdinal, value.trim());
     if (/attack$/i.test(name) && /\bvs\.?\s+[A-Za-z]+/i.test(value))
       attacks.set(namedOrdinal ?? activeOrdinal, value.trim());
+    if (/^(?:(?:primary|secondary|tertiary|quaternary)\s+)?hit$/i.test(name))
+      hits.set(namedOrdinal ?? activeOrdinal, value.trim());
+    if (/attack type$/i.test(name))
+      attackTypes.set(namedOrdinal ?? activeOrdinal, value.trim());
   }
   return [...attacks.entries()]
     .sort(([left], [right]) => left - right)
     .map(([ordinal, line]) => {
       const target = targets.get(ordinal);
+      const hit = hits.get(ordinal);
+      const attackType = attackTypes.get(ordinal);
       return {
         ordinal,
         line,
         ...(target === undefined ? {} : { target }),
+        ...(hit === undefined ? {} : { hit }),
+        ...(attackType === undefined ? {} : { attackType }),
       };
     });
 }
@@ -823,15 +841,12 @@ export function evaluatePowers(input: {
     const attackDefinitions = authoredAttacks(power, input.overlays);
     const attackLine = attackDefinitions[0]?.line;
     const hitLine = lineAtLevel(
-      effectiveField(power, "Hit", input.overlays),
+      attackDefinitions[0]?.hit ?? effectiveField(power, "Hit", input.overlays),
       input.level,
     );
     const effectLine = effectiveField(power, "Effect", input.overlays);
     const hasAttack = /\bvs\.?\s+[A-Za-z]+/i.test(attackLine ?? "");
     const recoveries = recoveryExpressions(hitLine, effectLine);
-    const dualAttack = /\(melee[^]*\sor\s[^]*\(ranged/i.test(attackLine ?? "")
-      ? attackLine?.split(/\s+or\s+/i)
-      : undefined;
     const weaponPower = keywords.some((value) => key(value) === "weapon");
     const implementPower = keywords.some((value) => key(value) === "implement");
     const effectOnlyCalculation = !hasAttack && effectLine !== undefined;
@@ -881,15 +896,20 @@ export function evaluatePowers(input: {
       );
       const calculatedAttacks = (
         attackDefinitions.length === 0
-          ? [{ ordinal: 1, line: "" }]
+          ? [{ ordinal: 1, line: "" } as AuthoredAttack]
           : attackDefinitions
       ).map((definition): PowerAttack => {
+        const phaseAttackType = definition.attackType ?? attackType;
+        const phaseAlternatives = /\(melee[^]*\sor\s[^]*\(ranged/i.test(
+          definition.line,
+        )
+          ? definition.line.split(/\s+or\s+/i)
+          : undefined;
         const authoredLine =
-          definition.ordinal === 1 &&
-          dualAttack !== undefined &&
-          dualAttack.length > 1
-            ? ((equipment.rangedWeapon ? dualAttack.at(-1) : dualAttack[0]) ??
-              definition.line)
+          phaseAlternatives !== undefined && phaseAlternatives.length > 1
+            ? ((equipment.rangedWeapon
+                ? phaseAlternatives.at(-1)
+                : phaseAlternatives[0]) ?? definition.line)
             : definition.line;
         const attack = authoredLine.match(/^(.*?)\s+vs\.?\s+([A-Za-z]+)/i);
         const attackLeft = attack?.[1] ?? "";
@@ -913,7 +933,7 @@ export function evaluatePowers(input: {
               : "Unknown");
         if (
           weaponPower &&
-          /^ranged\b/i.test(attackType ?? "") &&
+          /^ranged\b/i.test(phaseAttackType ?? "") &&
           attackStat === "Dexterity" &&
           equipment.properties.includes("heavy thrown")
         )
@@ -943,7 +963,7 @@ export function evaluatePowers(input: {
             power.name,
             weaponPower ? "weapon" : "implement",
             "attack",
-            attackType,
+            phaseAttackType,
           ),
         );
         if (implementPower && equipment.weaponDefinition)
@@ -954,7 +974,7 @@ export function evaluatePowers(input: {
               power.name,
               "weapon",
               "attack",
-              attackType,
+              phaseAttackType,
             ).filter(({ provenanceId }) =>
               provenanceId?.endsWith(":legacy-focused-expertise"),
             ),
@@ -979,200 +999,284 @@ export function evaluatePowers(input: {
           ...(definition.target === undefined
             ? {}
             : { target: definition.target }),
+          ...(phaseAttackType === undefined
+            ? {}
+            : { attackType: phaseAttackType }),
           attackComponents,
         };
       });
-      const attacks = attackDefinitions.length === 0 ? [] : calculatedAttacks;
       const primaryAttack = calculatedAttacks[0];
       const attackStat = primaryAttack?.attackStat ?? "Unknown";
       const defense = primaryAttack?.defense ?? "Unknown";
       const attackComponents = primaryAttack?.attackComponents ?? [];
 
-      const damageComponents: PowerComponent[] = [];
-      const specialDamage = nativeSpecialDamage(power, hitLine, input.level);
-      const weaponMatch = hitLine?.match(/(\d+)\[W\]/i);
-      const fixedMatch = hitLine?.match(/(\d+d\d+)/i);
-      const dice =
-        specialDamage?.dice ??
-        (weaponMatch !== null && weaponMatch !== undefined
-          ? [
-              diceTimes(
-                equipment.weaponDamage ?? "1d4",
-                Number(weaponMatch[1]),
-              ),
-              key(power.name) === "howling strike"
-                ? fixedMatch?.[1]
-                : undefined,
-            ]
-              .filter(Boolean)
-              .join("+")
-          : fixedMatch?.[1]);
-      const ongoing = /\bongoing\b/i.test(hitLine ?? "");
-      const hitClauses = /\(melee[^]*\sor\s[^]*\(ranged/i.test(hitLine ?? "")
-        ? (hitLine ?? "").split(/\s+or\s+/i)
-        : [hitLine ?? ""];
-      const selectedHitClause =
-        hitClauses.length > 1
-          ? equipment.rangedWeapon
-            ? hitClauses.at(-1)
-            : hitClauses[0]
-          : hitLine;
-      const primaryDamageClause = withoutCompanionAbilityDamage(
-        (selectedHitClause ?? "").split(/\bdamage\b/i)[0] ?? "",
-      );
-      let damageAbilities: readonly string[] = abilityNames.filter((ability) =>
-        new RegExp(`\\b${ability} modifier\\b`, "i").test(primaryDamageClause),
-      );
-      if (
-        damageAbilities.length === 0 &&
-        /\bability modifier\b/i.test(primaryDamageClause)
-      )
-        damageAbilities = [attackStat];
-      const listedAbilities = abilityNames.filter((ability) =>
-        new RegExp(`\\b${ability}\\b`, "i").test(primaryDamageClause),
-      );
-      if (damageAbilities.length === 0 && listedAbilities.length > 1)
-        damageAbilities = [attackStat];
-      if (
-        equipment.properties.includes("heavy thrown") &&
-        attackStat === "Strength" &&
-        damageAbilities.length === 1 &&
-        damageAbilities[0] === "Dexterity"
-      )
-        damageAbilities = ["Strength"];
-      const additiveAbilities = specialDamage?.ability
-        ? [specialDamage.ability]
-        : specialDamage?.suppressAbility
+      const calculateDamage = (
+        hitLine: string | undefined,
+        attackStat: string,
+        attackType: string | undefined,
+      ): Pick<
+        PowerVariant,
+        "damage" | "damageType" | "damageComponents" | "conditionalDamage"
+      > => {
+        const hitClauses = /\(melee[^]*\sor\s[^]*\(ranged/i.test(hitLine ?? "")
+          ? (hitLine ?? "").split(/\s+or\s+/i)
+          : [hitLine ?? ""];
+        const selectedHitClause =
+          hitClauses.length > 1
+            ? equipment.rangedWeapon
+              ? hitClauses.at(-1)
+              : hitClauses[0]
+            : hitLine;
+        const damageComponents: PowerComponent[] = [];
+        const specialDamage = nativeSpecialDamage(power, hitLine, input.level);
+        const weaponMatch = selectedHitClause?.match(/(\d+)\[W\]/i);
+        const fixedMatch = selectedHitClause?.match(/(\d+d\d+)/i);
+        const dice =
+          specialDamage?.dice ??
+          (weaponMatch !== null && weaponMatch !== undefined
+            ? [
+                diceTimes(
+                  equipment.weaponDamage ?? "1d4",
+                  Number(weaponMatch[1]),
+                ),
+                key(power.name) === "howling strike"
+                  ? fixedMatch?.[1]
+                  : undefined,
+              ]
+                .filter(Boolean)
+                .join("+")
+            : fixedMatch?.[1]);
+        const ongoing = /\bongoing\b/i.test(hitLine ?? "");
+        const primaryDamageClause = withoutCompanionAbilityDamage(
+          (selectedHitClause ?? "").split(/\bdamage\b/i)[0] ?? "",
+        );
+        let damageAbilities: readonly string[] = abilityNames.filter(
+          (ability) =>
+            new RegExp(`\\b${ability} modifier\\b`, "i").test(
+              primaryDamageClause,
+            ),
+        );
+        if (
+          damageAbilities.length === 0 &&
+          /\bability modifier\b/i.test(primaryDamageClause)
+        )
+          damageAbilities = [attackStat];
+        const listedAbilities = abilityNames.filter((ability) =>
+          new RegExp(`\\b${ability}\\b`, "i").test(primaryDamageClause),
+        );
+        if (damageAbilities.length === 0 && listedAbilities.length > 1)
+          damageAbilities = [attackStat];
+        if (
+          equipment.properties.includes("heavy thrown") &&
+          attackStat === "Strength" &&
+          damageAbilities.length === 1 &&
+          damageAbilities[0] === "Dexterity"
+        )
+          damageAbilities = ["Strength"];
+        const additiveAbilities = specialDamage?.ability
+          ? [specialDamage.ability]
+          : specialDamage?.suppressAbility
+            ? []
+            : /\bor\b/i.test(primaryDamageClause)
+              ? listedAbilities.includes(
+                  attackStat as (typeof abilityNames)[number],
+                )
+                ? [attackStat]
+                : damageAbilities.slice(0, 1)
+              : damageAbilities;
+        if (dice !== undefined)
+          damageComponents.push(
+            ...additiveAbilities.map((ability) => ({
+              label: `${ability} modifier`,
+              value: numericStat(input.stats, `${ability} modifier`),
+            })),
+          );
+        if (
+          dice !== undefined &&
+          !specialDamage?.abilityOnly &&
+          equipment.enhancement !== 0
+        )
+          damageComponents.push({
+            label: "enhancement bonus",
+            value: equipment.enhancement,
+          });
+        if (dice !== undefined) damageComponents.push(...weaponSpecific.damage);
+        const offHandImplements = handCandidates.filter(
+          (candidate) =>
+            candidate.hand === "off" &&
+            candidate.equipped &&
+            candidate.implementDefinition,
+        );
+        const pairedImplement =
+          implementPower &&
+          hasDualImplementSpellcaster &&
+          equipment.hand === "main" &&
+          offHandImplements.length === 1
+            ? offHandImplements[0]
+            : undefined;
+        if (
+          dice !== undefined &&
+          !specialDamage?.abilityOnly &&
+          (pairedImplement?.enhancement ?? 0) !== 0
+        )
+          damageComponents.push({
+            label: "off-hand implement enhancement bonus",
+            value: pairedImplement?.enhancement ?? 0,
+            source: "Dual Implement Spellcaster",
+          });
+        if (dice !== undefined && !specialDamage?.abilityOnly)
+          damageComponents.push(
+            ...combatStatComponents(
+              input.stats,
+              equipment,
+              power.name,
+              weaponPower ? "weapon" : "implement",
+              "damage",
+              attackType,
+            ),
+          );
+        if (
+          dice !== undefined &&
+          weaponPower &&
+          equipment.properties.includes("versatile") &&
+          versatileUsedTwoHanded
+        )
+          damageComponents.push({
+            label: "versatile weapon used two-handed",
+            value: 1,
+          });
+        if (
+          dice !== undefined &&
+          !specialDamage?.abilityOnly &&
+          implementPower &&
+          equipment.weaponDefinition
+        )
+          damageComponents.push(
+            ...combatStatComponents(
+              input.stats,
+              equipment,
+              power.name,
+              "weapon",
+              "damage",
+              attackType,
+            ),
+          );
+        const powerDamageBonus = Number(
+          selectedHitClause?.match(
+            /\+\s*(\d+)\s+(?:[a-z]+\s+)*damage\b/i,
+          )?.[1] ?? 0,
+        );
+        if (
+          dice !== undefined &&
+          !specialDamage?.abilityOnly &&
+          powerDamageBonus !== 0
+        )
+          damageComponents.push({
+            label: "power damage bonus",
+            value: powerDamageBonus,
+          });
+        const uniqueDamageComponents = uniquePowerComponents(damageComponents);
+        const damageBonus = uniqueDamageComponents.reduce(
+          (sum, component) => sum + component.value,
+          0,
+        );
+        const conditionalDamage: readonly PowerConditionalDamage[] = [
+          ...(key(power.name) === "call of the beast"
+            ? [
+                {
+                  source: power.name,
+                  expression: String(
+                    (input.level >= 21 ? 10 : 5) +
+                      numericStat(input.stats, "Wisdom modifier"),
+                  ),
+                  condition:
+                    "on its next turn when the target attacks without including your ally nearest to it",
+                },
+              ]
+            : []),
+          ...(dice === undefined
+            ? []
+            : conditionalStrikerDamage({
+                activeDefinitionIds: input.activeDefinitionIds,
+                stats: input.stats,
+                textStrings: input.textStrings ?? {},
+                power,
+                equipment,
+              })),
+        ];
+        const primaryDamageText =
+          (selectedHitClause ?? "").split(/\bdamage\b/i)[0] ?? "";
+        const damageType = primaryDamageText.match(
+          /\b(?:acid|cold|fire|force|lightning|necrotic|poison|psychic|radiant|thunder)(?:\s*(?:,|and|or)\s*(?:acid|cold|fire|force|lightning|necrotic|poison|psychic|radiant|thunder))*\b/i,
+        )?.[0];
+        return {
+          ...(specialDamage?.expression !== undefined
+            ? { damage: specialDamage.expression }
+            : dice === undefined
+              ? ongoing
+                ? { damage: "Ongoing" }
+                : {}
+              : {
+                  damage: specialDamage?.abilityOnly
+                    ? String(damageBonus)
+                    : formatDamage(dice, damageBonus),
+                }),
+          ...(damageType === undefined ? {} : { damageType: key(damageType) }),
+          damageComponents: uniqueDamageComponents,
+          conditionalDamage,
+        };
+      };
+      const damage = calculateDamage(hitLine, attackStat, attackType);
+      const attacks =
+        attackDefinitions.length === 0
           ? []
-          : /\bor\b/i.test(primaryDamageClause)
-            ? listedAbilities.includes(
-                attackStat as (typeof abilityNames)[number],
-              )
-              ? [attackStat]
-              : damageAbilities.slice(0, 1)
-            : damageAbilities;
-      if (dice !== undefined)
-        damageComponents.push(
-          ...additiveAbilities.map((ability) => ({
-            label: `${ability} modifier`,
-            value: numericStat(input.stats, `${ability} modifier`),
-          })),
-        );
-      if (
-        dice !== undefined &&
-        !specialDamage?.abilityOnly &&
-        equipment.enhancement !== 0
-      )
-        damageComponents.push({
-          label: "enhancement bonus",
-          value: equipment.enhancement,
-        });
-      if (dice !== undefined) damageComponents.push(...weaponSpecific.damage);
-      const offHandImplements = handCandidates.filter(
-        (candidate) =>
-          candidate.hand === "off" &&
-          candidate.equipped &&
-          candidate.implementDefinition,
-      );
-      const pairedImplement =
-        implementPower &&
-        hasDualImplementSpellcaster &&
-        equipment.hand === "main" &&
-        offHandImplements.length === 1
-          ? offHandImplements[0]
-          : undefined;
-      if (
-        dice !== undefined &&
-        !specialDamage?.abilityOnly &&
-        (pairedImplement?.enhancement ?? 0) !== 0
-      )
-        damageComponents.push({
-          label: "off-hand implement enhancement bonus",
-          value: pairedImplement?.enhancement ?? 0,
-          source: "Dual Implement Spellcaster",
-        });
-      if (dice !== undefined && !specialDamage?.abilityOnly)
-        damageComponents.push(
-          ...combatStatComponents(
-            input.stats,
-            equipment,
-            power.name,
-            weaponPower ? "weapon" : "implement",
-            "damage",
-            attackType,
-          ),
-        );
-      if (
-        dice !== undefined &&
-        weaponPower &&
-        equipment.properties.includes("versatile") &&
-        versatileUsedTwoHanded
-      )
-        damageComponents.push({
-          label: "versatile weapon used two-handed",
-          value: 1,
-        });
-      if (
-        dice !== undefined &&
-        !specialDamage?.abilityOnly &&
-        implementPower &&
-        equipment.weaponDefinition
-      )
-        damageComponents.push(
-          ...combatStatComponents(
-            input.stats,
-            equipment,
-            power.name,
-            "weapon",
-            "damage",
-            attackType,
-          ),
-        );
-      const powerDamageBonus = Number(
-        hitLine?.match(/\+\s*(\d+)\s+(?:[a-z]+\s+)*damage\b/i)?.[1] ?? 0,
-      );
-      if (
-        dice !== undefined &&
-        !specialDamage?.abilityOnly &&
-        powerDamageBonus !== 0
-      )
-        damageComponents.push({
-          label: "power damage bonus",
-          value: powerDamageBonus,
-        });
-      const uniqueDamageComponents = uniquePowerComponents(damageComponents);
-      const damageBonus = uniqueDamageComponents.reduce(
-        (sum, component) => sum + component.value,
-        0,
-      );
+          : calculatedAttacks.map((attack): PowerAttack => {
+              const definition = attackDefinitions.find(
+                (candidate) => candidate.ordinal === attack.ordinal,
+              );
+              const phaseHit = lineAtLevel(definition?.hit, input.level);
+              const phaseDamage =
+                attack.ordinal === 1 &&
+                phaseHit === hitLine &&
+                attack.attackType === attackType
+                  ? damage
+                  : calculateDamage(
+                      phaseHit,
+                      attack.attackStat,
+                      attack.attackType,
+                    );
+              const roleText = `${definition?.line ?? ""} ${phaseHit ?? ""}`;
+              const usesOff = /\boff[- ]hand(?: weapon)?\b/i.test(roleText);
+              const usesMain = /\bmain(?:[- ]hand)? weapon\b/i.test(roleText);
+              const weaponRole =
+                usesOff === usesMain ? undefined : usesOff ? "off" : "main";
+              const companion =
+                /\bbeast(?:'s)?\b/i.test(definition?.line ?? "") ||
+                hasCompanionAbilityDamage(phaseHit);
+              const eligible =
+                !companion &&
+                (weaponRole === undefined ||
+                  equipment.hand === undefined ||
+                  equipment.hand === weaponRole);
+              return {
+                ...attack,
+                ...(companion || phaseDamage.damage === undefined
+                  ? {}
+                  : { damage: phaseDamage.damage }),
+                ...(companion || phaseDamage.damageType === undefined
+                  ? {}
+                  : { damageType: phaseDamage.damageType }),
+                ...(companion
+                  ? {}
+                  : { damageComponents: phaseDamage.damageComponents }),
+                ...(weaponRole === undefined ? {} : { weaponRole }),
+                ...(eligible ? {} : { eligible: false }),
+              };
+            });
       const critical = criticalExpression(equipment, input.level);
       const brutal = equipment.properties
         .map((property) => /^brutal\s+(\d+)$/i.exec(property)?.[1])
         .find((value) => value !== undefined);
-      const conditionalDamage: readonly PowerConditionalDamage[] = [
-        ...(key(power.name) === "call of the beast"
-          ? [
-              {
-                source: power.name,
-                expression: String(
-                  (input.level >= 21 ? 10 : 5) +
-                    numericStat(input.stats, "Wisdom modifier"),
-                ),
-                condition:
-                  "on its next turn when the target attacks without including your ally nearest to it",
-              },
-            ]
-          : []),
-        ...(dice === undefined
-          ? []
-          : conditionalStrikerDamage({
-              activeDefinitionIds: input.activeDefinitionIds,
-              stats: input.stats,
-              textStrings: input.textStrings ?? {},
-              power,
-              equipment,
-            })),
-      ];
       return {
         id: `${power.id}:${equipment.id}`,
         equipmentName: equipment.name,
@@ -1190,23 +1294,11 @@ export function evaluatePowers(input: {
         ...(primaryAttack === undefined
           ? {}
           : { attackBonus: primaryAttack.attackBonus }),
-        ...(specialDamage?.expression !== undefined
-          ? { damage: specialDamage.expression }
-          : dice === undefined
-            ? ongoing
-              ? { damage: "Ongoing" }
-              : {}
-            : {
-                damage: specialDamage?.abilityOnly
-                  ? String(damageBonus)
-                  : formatDamage(dice, damageBonus),
-              }),
+        ...damage,
         ...(critical === undefined ? {} : { critical }),
         ...(brutal === undefined ? {} : { brutal: Number(brutal) }),
         attackComponents,
         attacks,
-        damageComponents: uniqueDamageComponents,
-        conditionalDamage,
       };
     });
     const unsupported: string[] = [];
@@ -1239,7 +1331,14 @@ export function evaluatePowers(input: {
       unsupported.push("unparsed-hit");
     if (unresolvedNativeSpecialCase(hitLine))
       unsupported.push(`native-special-case:${power.id}`);
-    if (hasCompanionAbilityDamage(hitLine))
+    if (
+      hasCompanionAbilityDamage(hitLine) ||
+      attackDefinitions.some(
+        (attack) =>
+          hasCompanionAbilityDamage(attack.hit) ||
+          /\bbeast(?:'s)?\b/i.test(attack.line),
+      )
+    )
       unsupported.push(`companion-ability:${power.id}`);
     const usage = effectiveField(power, "Power Usage", input.overlays);
     const actionType = effectiveField(power, "Action Type", input.overlays);

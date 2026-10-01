@@ -308,6 +308,18 @@ enhancements and require the bonus to follow the hand selection exactly. The
 ignored nine-character historical matrix remains cross-profile diagnostic
 evidence; it is not used to define these calculations.
 
+Attack phases now retain their own ordered Hit field, optional attack-type
+override, evaluated damage components/expression, immediate damage type, and
+explicit main/off-hand role. The same damage parser and recovered exception,
+enhancement, typed contribution, and dual-implement rules are reused per phase;
+the existing power-wide primary cache remains the legacy export projection.
+Compound types preserve authored `and`/`or` connectors. Ongoing and other rider
+damage stays in authored prose rather than being added to the immediate-hit
+summary. Companion phases are unavailable and retain `companion-ability:*`
+diagnostics, including when the companion appears only in a secondary attack.
+Equipped roles determine phase eligibility for the sheet's comparison table;
+inventory alternatives remain available as hypothetical loadouts.
+
 Recovered striker features are projected separately from unconditional hit
 damage. `Hunter's Quarry`, `Warlock's Curse`, and `Sneak Attack` consume their
 evaluated `... Dice` stat, optional flat stat, and generated `... Die` text

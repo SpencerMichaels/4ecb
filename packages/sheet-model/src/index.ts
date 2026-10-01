@@ -71,6 +71,7 @@ export interface SheetPowerVariant {
   readonly attack?: string;
   readonly attacks?: readonly SheetPowerAttack[];
   readonly damage?: string;
+  readonly damageType?: string;
 }
 
 export interface SheetPowerAttack {
@@ -80,6 +81,10 @@ export interface SheetPowerAttack {
   readonly powerBonus: number;
   readonly attack: string;
   readonly target?: string;
+  readonly damage?: string;
+  readonly damageType?: string;
+  readonly weaponRole?: "main" | "off";
+  readonly eligible?: boolean;
 }
 
 export interface CharacterSheetModel {
@@ -644,6 +649,16 @@ function evaluatedPowerCards(
               powerBonus: attack.powerBonus,
               attack: `${signed(attack.attackBonus)} vs ${attack.defense}`,
               ...(attack.target === undefined ? {} : { target: attack.target }),
+              ...(attack.damage === undefined ? {} : { damage: attack.damage }),
+              ...(attack.damageType === undefined
+                ? {}
+                : { damageType: attack.damageType }),
+              ...(attack.weaponRole === undefined
+                ? {}
+                : { weaponRole: attack.weaponRole }),
+              ...(attack.eligible === undefined
+                ? {}
+                : { eligible: attack.eligible }),
             })),
           }),
       ...(variant.damage === undefined ? {} : { damage: variant.damage }),

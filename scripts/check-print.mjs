@@ -54,6 +54,19 @@ class CdpClient {
 
 const execute = promisify(execFile);
 const projectRoot = process.cwd();
+const { stdout: variantTableMarkup } = await execute("pnpm", [
+  "exec",
+  "tsx",
+  "--tsconfig",
+  "apps/web/tsconfig.app.json",
+  "apps/web/scripts/print-power-variant-fixture.tsx",
+]);
+const installVariantTable = `
+  const card = [...document.querySelectorAll(".print-power-card")]
+    .find((element) => element.querySelector("h3")?.textContent === "Synthetic power 03");
+  card.querySelector(".print-card-weapon-variants").outerHTML = ${JSON.stringify(variantTableMarkup)};
+  window.dispatchEvent(new Event("beforeprint"));
+`;
 const scratch = await mkdtemp(join(tmpdir(), "4ecb-print-check-"));
 const browserProfile = join(scratch, "chromium-profile");
 const previewPort = await availablePort();
@@ -269,6 +282,7 @@ try {
       `document.body.textContent.includes("${character.title}") && document.querySelectorAll(".print-only .print-reference-card").length === 24`,
     );
     await client.send("Emulation.setEmulatedMedia", { media: "print" });
+    await evaluate(client, `(() => { ${installVariantTable} return true; })()`);
     await evaluate(
       client,
       "new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))))",
@@ -287,9 +301,12 @@ try {
         ).map((card) => (card.querySelector("h3")?.textContent ?? "unnamed") +
           " (" + card.className + "; body " + card.querySelector(".print-card-body")?.scrollHeight +
           "/" + card.querySelector(".print-card-body")?.clientHeight + "px)");
-        const weaponFontMismatch = [...document.querySelectorAll(".print-card-variant")]
+        const weaponFontMismatch = [...document.querySelectorAll(".print-card-variant, .print-card-variant-table")]
           .some((line) => getComputedStyle(line).fontSize !==
             getComputedStyle(line.closest(".print-card-body")).fontSize);
+        const table = document.querySelector(".print-card-variant-table");
+        const tableFits = table !== null && table.clientWidth > 0 && [...table.querySelectorAll("th, td")].every((cell) =>
+          cell.scrollWidth <= cell.clientWidth + 1);
         const shortCard = cards.find((card) => card.querySelector("h3")?.textContent === "Synthetic power 02");
         const bandOverflow = [...document.querySelectorAll(".print-card-action-band")]
           .flatMap((band) => [...band.children])
@@ -318,6 +335,7 @@ try {
           cardCount: cards.length,
           overflowing,
           weaponFontMismatch,
+          tableFits,
           shortCardFont: shortCard && getComputedStyle(shortCard).fontSize,
           bandOverflow,
           targetOverflow,
@@ -340,6 +358,7 @@ try {
       !layout.weaponFontMismatch,
       `${variant.name} uses smaller weapon text`,
     );
+    assert(layout.tableFits, `${variant.name} overflows the multiattack table`);
     assert(
       Math.abs(parseFloat(layout.shortCardFont) - (6.7 * 96) / 72) < 0.01,
       `${variant.name} unnecessarily shrinks a short card: ${layout.shortCardFont}`,
@@ -493,6 +512,17 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
            sheet?.classList.contains("sheet-monochrome") === ${variant.monochrome} &&
            document.querySelector('link[data-print-paper="${variant.paper}"]') !== null;`,
       );
+      await webdriverExecute(
+        port,
+        sessionId,
+        `[...document.querySelectorAll("button")].find((button) => button.textContent.trim() === "Print / save PDF").click();`,
+      );
+      await webdriverWait(
+        port,
+        sessionId,
+        `return document.querySelector(".sheet-page")?.classList.contains("is-print-preview") && document.querySelector(".print-card-body")?.clientHeight > 0;`,
+      );
+      await webdriverExecute(port, sessionId, installVariantTable);
       const layout = await webdriverExecute(
         port,
         sessionId,
@@ -504,9 +534,12 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
              body.scrollHeight > body.clientHeight + 1
            )
          ).map((card) => card.querySelector("h3")?.textContent ?? "unnamed");
-         const weaponFontMismatch = [...document.querySelectorAll(".print-card-variant")]
+         const weaponFontMismatch = [...document.querySelectorAll(".print-card-variant, .print-card-variant-table")]
            .some((line) => getComputedStyle(line).fontSize !==
              getComputedStyle(line.closest(".print-card-body")).fontSize);
+         const table = document.querySelector(".print-card-variant-table");
+         const tableFits = table !== null && table.clientWidth > 0 && [...table.querySelectorAll("th, td")].every((cell) =>
+           cell.scrollWidth <= cell.clientWidth + 1);
          const shortCard = cards.find((card) => card.querySelector("h3")?.textContent === "Synthetic power 02");
          const bandOverflow = [...document.querySelectorAll(".print-card-action-band")]
            .flatMap((band) => [...band.children])
@@ -526,6 +559,7 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
            cardCount: cards.length,
            overflowing,
            weaponFontMismatch,
+           tableFits,
            shortCardFont: shortCard && getComputedStyle(shortCard).fontSize,
            bandOverflow,
            targetOverflow,
@@ -544,6 +578,10 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
       assert(
         !layout.weaponFontMismatch,
         `Firefox ${variant.name} uses smaller weapon text`,
+      );
+      assert(
+        layout.tableFits,
+        `Firefox ${variant.name} overflows the multiattack table`,
       );
       assert(
         Math.abs(parseFloat(layout.shortCardFont) - (6.7 * 96) / 72) < 0.01,

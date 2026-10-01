@@ -290,6 +290,16 @@ affects fitting; omitted fields and inactive level variants do not shrink the
 text. Weapon summaries inherit body typography, and card fitting runs when
 print preview or print media makes the otherwise hidden cards measurable.
 
+Power variants retain per-attack bonus, damage expression, damage type, and
+explicit hand role. Printed summaries use a compact `+bonus → expression type`
+form without repeating the defense or word `damage`. Distinct phases form a
+bottom table with one weapon row and numbered attack columns; identical phase
+calculations share one compact line. Equality includes damage type and hand
+role, not merely the attack ability. Authored Hit text retains conditions,
+ongoing damage, and other riders. Legacy caches with only one attack/damage
+summary cannot supply missing secondary calculations; unavailable phase cells
+show a dash, and companion math remains explicitly unsupported.
+
 The public release harness drives the production sheet route in pinned headless
 Chromium and Firefox with a synthetic long/short-prose character. It generates
 Letter and A4 PDFs in color and monochrome, checks every page dimension, all card

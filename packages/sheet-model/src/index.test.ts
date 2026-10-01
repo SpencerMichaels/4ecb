@@ -400,6 +400,32 @@ describe("sheet model", () => {
               defense: "Reflex",
               damage: "1d6+4",
               attackComponents: [],
+              attacks: [
+                {
+                  id: "phase-1",
+                  ordinal: 1,
+                  attackStat: "Intelligence",
+                  powerBonus: 0,
+                  defense: "Reflex",
+                  attackBonus: 7,
+                  damage: "1d6+4",
+                  damageType: "fire",
+                  attackComponents: [],
+                },
+                {
+                  id: "phase-2",
+                  ordinal: 2,
+                  attackStat: "Wisdom",
+                  powerBonus: 2,
+                  defense: "Fortitude",
+                  attackBonus: 9,
+                  damage: "2d6+2",
+                  damageType: "cold and lightning",
+                  weaponRole: "off",
+                  eligible: false,
+                  attackComponents: [],
+                },
+              ],
               damageComponents: [],
               conditionalDamage: [],
             },
@@ -646,6 +672,25 @@ describe("sheet model", () => {
         }),
       ],
     });
+    expect(model.powers[0]?.variants?.[0]?.attacks).toMatchObject([
+      {
+        ordinal: 1,
+        ability: "Intelligence",
+        attack: "+7 vs Reflex",
+        damage: "1d6+4",
+        damageType: "fire",
+      },
+      {
+        ordinal: 2,
+        ability: "Wisdom",
+        powerBonus: 2,
+        attack: "+9 vs Fortitude",
+        damage: "2d6+2",
+        damageType: "cold and lightning",
+        weaponRole: "off",
+        eligible: false,
+      },
+    ]);
     expect(model.powers[0]?.fields).toEqual([
       { label: "Hit", value: "2[W] + Your Wisdom modifier (+5) damage." },
       {
