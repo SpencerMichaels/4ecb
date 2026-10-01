@@ -2005,27 +2005,25 @@ textarea {
   margin-top: var(--print-card-section-gap);
 }
 .print-card-variant-table {
+  --weapon-table-rule: color-mix(in srgb, #111 18%, white);
   border-collapse: collapse;
   font-size: inherit;
   line-height: inherit;
-  table-layout: fixed;
+  table-layout: auto;
   width: 100%;
 }
 .print-card-variant-table th,
 .print-card-variant-table td {
-  border: 0;
+  border: 0.5px solid var(--weapon-table-rule);
   padding: 0.0125in 0.02in;
   text-align: left;
   vertical-align: top;
 }
 .print-card-variant-table thead th {
-  border-bottom: 0.5px solid color-mix(in srgb, var(--card-color) 30%, white);
-}
-.print-card-variant-table th:first-child {
-  width: 30%;
+  background: color-mix(in srgb, var(--card-color) 5%, white);
 }
 .print-card-variant-table tbody th {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .print-variant-bonus,
 .print-variant-expression {
