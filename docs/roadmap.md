@@ -605,8 +605,8 @@ defense already visible in the header; the equipped-first variant continues to
 drive the header calculation. Attack and damage calculations are phase-aware:
 all summaries use a bottom table with one row per weapon. Single attacks or
 identical repeated calculations have separate Attack and Damage columns;
-distinct phases add numbered attack columns. Immediate damage types, including
-compound types, are retained.
+distinct phases add numbered attack columns. Damage types remain in the
+calculation data and authored rules, but are not repeated in the table.
 Cards measure their rendered body to choose the largest fitting text size;
 weapon summaries share that size. Explicit main/off-hand roles constrain the
 equipped phases; inventory alternatives remain hypothetical loadouts. Missing

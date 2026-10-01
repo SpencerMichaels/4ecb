@@ -77,7 +77,6 @@ describe("printed weapon calculation summaries", () => {
   it.each([
     { ability: "Charisma", attack: "+10 vs Will" },
     { damage: "1d8+5" },
-    { damageType: "thunder" },
     { weaponRole: "off" as const },
   ])("keeps different phase calculations in distinct columns: %j", (change) => {
     const markup = render([
@@ -87,14 +86,24 @@ describe("printed weapon calculation summaries", () => {
     expect(markup).toContain("<table");
     expect(text(markup)).toContain("WeaponAttack 1Attack 2Longsword");
     expect((text(markup).match(/Longsword/g) ?? []).length).toBe(1);
-    expect(text(markup)).toContain("+12 → 2d8 + 5 fire");
+    expect(text(markup)).toContain("+12 → 2d8 + 5");
+    expect(text(markup)).not.toContain("fire");
   });
-  it("preserves compound types and shows a dash for ineligible or missing phases", () => {
+  it("omits damage types and collapses phases differing only by type", () => {
+    const markup = render([
+      attack(1, { damageType: "fire" }),
+      attack(2, { damageType: "cold and lightning" }),
+    ]);
+    expect(text(markup)).toBe("WeaponAttackDamageLongsword+122d8 + 5");
+    expect(text(markup)).not.toMatch(/fire|cold|lightning|Attack 1/);
+  });
+  it("shows a dash for ineligible or missing phases without repeating types", () => {
     const markup = render([
       attack(1, { damageType: "cold and lightning" }),
       attack(2, { eligible: false }),
     ]);
-    expect(text(markup)).toContain("+12 → 2d8 + 5 cold and lightning—");
+    expect(text(markup)).toContain("+12 → 2d8 + 5—");
+    expect(text(markup)).not.toMatch(/cold|lightning/);
     expect(markup).toContain("<wbr/>");
     const missing = renderToStaticMarkup(
       <PrintPowerVariants

@@ -81,8 +81,9 @@ Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   actually overflows; hidden metadata, removed level variants, and omitted
   flavor no longer cause premature shrinking (including Divine Sanction).
   Summaries now consistently use a compact bottom table with one row per
-  weapon and calculation cells such as `+12 → 2d8 + 5 fire`, omitting the word
-  `damage`. Single attacks and identical repeated calculations use a labeled
+  weapon and calculation cells such as `+12 → 2d8 + 5`, omitting the word
+  `damage` and damage types already available in authored Hit/item rules.
+  Single attacks and identical repeated calculations use a labeled
   three-column weapon/to-hit/damage table; distinct calculations retain combined
   cells and add numbered attack-column headers.
   This consistent-layout follow-up passes eight focused print tests, the web
@@ -102,7 +103,7 @@ Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   types separately for each ordered attack phase using the existing recovered
   component path. Explicit main/off-hand roles constrain equipped phase cells,
   while inventory alternatives remain hypothetical loadouts. Collapse compares
-  full calculations including damage type and weapon role, rather than ability
+  table calculations including damage expression and weapon role, rather than ability
   alone. Unavailable companion phases show a dash and retain the compatibility
   diagnostic; legacy snapshots without per-phase data keep their recorded
   primary summary and do not invent secondary values. Ongoing damage and riders

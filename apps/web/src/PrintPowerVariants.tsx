@@ -2,13 +2,7 @@ import type { SheetPowerAttack, SheetPowerVariant } from "@4ecb/sheet-model";
 
 type AttackCell = Pick<
   SheetPowerAttack,
-  | "attack"
-  | "ability"
-  | "powerBonus"
-  | "damage"
-  | "damageType"
-  | "weaponRole"
-  | "eligible"
+  "attack" | "ability" | "powerBonus" | "damage" | "weaponRole" | "eligible"
 >;
 
 function variantCell(
@@ -23,9 +17,6 @@ function variantCell(
     ability: variant.ability ?? "Ability",
     powerBonus: variant.powerBonus ?? 0,
     ...(variant.damage === undefined ? {} : { damage: variant.damage }),
-    ...(variant.damageType === undefined
-      ? {}
-      : { damageType: variant.damageType }),
   };
 }
 
@@ -39,7 +30,6 @@ function sameCalculation(
     left.ability === right.ability &&
     left.powerBonus === right.powerBonus &&
     left.damage === right.damage &&
-    left.damageType === right.damageType &&
     left.weaponRole === right.weaponRole &&
     (left.eligible !== false) === (right.eligible !== false)
   );
@@ -60,12 +50,7 @@ function DamageSummary({ cell }: { readonly cell: AttackCell | undefined }) {
   )
     return <>—</>;
   const damage = cell.damage?.replace(/\s*([+-])\s*/g, " $1 ");
-  return (
-    <>
-      <span className="print-variant-expression">{damage}</span>
-      {cell.damageType === undefined ? "" : ` ${cell.damageType}`}
-    </>
-  );
+  return <span className="print-variant-expression">{damage}</span>;
 }
 
 function AttackSummary({ cell }: { readonly cell: AttackCell | undefined }) {

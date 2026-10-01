@@ -1526,7 +1526,7 @@ Print keeps full ability wording and authored `[W]` prose because tooltips and a
 single interactive selection do not survive on paper. Instead, one printed
 power card lists each compatible owned weapon once near the bottom of its body.
 Every printed weapon summary uses a compact table with a weapon column and
-calculation cells containing `+bonus → expression type`. Single attacks and
+calculation cells containing `+bonus → expression`. Single attacks and
 identical repeated calculations use a three-column table labeled Weapon,
 Attack, and Damage for like-for-like alignment. Distinct
 phases add numbered attack-column headers.
@@ -1536,9 +1536,10 @@ headers use a slightly stronger tint. Columns size to their contents across the 
 available width rather than reserving a fixed percentage for weapon names;
 names wrap at word boundaries only when space requires it.
 The word `damage`, equipment-state labels, and defenses already shown in the
-attack bands are omitted. Cells wrap at the arrow when needed; compound damage
-types remain visible. Collapse requires the same ability/formula, bonus,
-defense, damage expression/type, and weapon role/eligibility across phases,
+attack bands are omitted. Damage types are not repeated in the table; authored
+Hit rules and item descriptions supply that context. Cells wrap at the arrow
+when needed. Collapse requires the same ability/formula, bonus,
+defense, damage expression, and weapon role/eligibility across phases,
 rather than merely matching the ability name. A missing or ineligible phase
 shows a dash. The equipped-first default supplies each attack header, using the
 eligible equipped hand for a phase that explicitly requires it. Inventory
