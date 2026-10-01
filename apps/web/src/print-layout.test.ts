@@ -81,11 +81,13 @@ describe("print layout contract", () => {
       /\.print-card-combat-band\s*\{[\s\S]*?grid-template-columns:\s*max-content minmax\(0, 1fr\)/,
     );
     expect(sheetSource).toContain("`$1 · ${formula} vs $2`");
-    expect(sheetSource).toContain('{numbered ? `${attack.ordinal} · ` : ""}');
+    expect(sheetSource).not.toContain("`${attack.ordinal} · `");
     expect(sheetSource).toContain(
       'const isUtility = powerType?.trim().toLocaleLowerCase() === "utility"',
     );
-    expect(sheetSource).toContain("const hasFallbackAttack =");
+    expect(sheetSource).toContain(
+      "fallbackPrintAttacks(card, selectedPrintVariant)",
+    );
     expect(styles).toMatch(
       /\.print-card-combat-band > div\s*\{[\s\S]*?align-items:\s*flex-start/,
     );

@@ -1554,6 +1554,11 @@ Phase damage uses the same recovered parser and component rules as the
 existing primary summary; the single primary cache remains the compatibility
 export boundary. Unavailable companion values and unstructured legacy caches
 do not acquire invented per-phase totals.
+The print fallback preserves every ordered authored attack header and its Hit
+block even when a cached export supplies only the primary calculation. Missing
+secondary totals show a dash rather than removing the phase or reusing the
+primary total. A generic Attack field following an explicit secondary-section
+marker stays in that secondary section.
 
 ### D067 — Build power cards preserve complete authored combat clauses
 
@@ -1721,8 +1726,9 @@ attack/damage stays explicitly unsupported until its stat block is modeled.
 The physical card renders one compact band per phase:
 `⚔ +12 · STR+2 vs AC | target`. The calculated total leads, while a centered
 dot separates the authored formula and preserves an intrinsic power bonus
-without confusing it with the total; numbered multiattacks prepend only their
-ordinal (`1 ·`) rather than the redundant word `Attack`. The same cell
+without confusing it with the total. Multiattack bands have no ordinal prefixes:
+their top-to-bottom order identifies each phase, while weapon-table columns
+retain their numbered labels. The same cell
 abbreviates only the long defense names `Fortitude` and `Reflex` to `Fort` and
 `Ref`; underlying calculations and authored rules text retain the full names.
 The combined attack cell sizes to its content and the target receives the

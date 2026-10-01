@@ -115,6 +115,16 @@ Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   diagnostic; legacy snapshots without per-phase data keep their recorded
   primary summary and do not invent secondary values. Ongoing damage and riders
   remain in the full authored Hit text.
+  A printed legacy-cache fallback now also retains every authored phase header
+  and Hit block, showing a dash for secondary totals unavailable in the cache.
+  Generic Attack fields after a secondary-section marker remain in that phase
+  rather than being regrouped with the primary attack.
+  Verification: 14 focused print/phase tests, the web typecheck, and focused lint
+  pass. A read-only private diagnostic using Silaqui's imported inputs and the
+  local Assess and Strike definition emits both calculated phases (Reflex
+  off-hand and AC main-hand). The precise reported live card was not available
+  in the inspected saved Silaqui views, so this verifies the fallback defect and
+  calculation path, not a reproduction of the product owner's missing card.
 - Per-attack weapon-table checkpoint (2026-10-01): the focused rules-engine,
   sheet-model, printed-variant, and print-layout suites pass 50 tests. Workspace
   typechecks, focused lint, and the web build pass. `pnpm check:print` exercises
@@ -140,8 +150,9 @@ apps/web/src/print-layout.test.ts`, the web typecheck/build, focused ESLint,
   bonus, defense, target, final total, and component provenance; primary and
   subsequent attacks are calculated independently. Printed cards render these
   as compact `⚔ +12 · STR+2 vs AC | target` rows, followed immediately by that
-  phase's Hit and associated Effect clauses. Numbered multiattacks prepend a
-  compact ordinal. Putting the complete to-hit first and separating the
+  phase's Hit and associated Effect clauses. Multiattack bands use their
+  top-to-bottom order without ordinal prefixes; the weapon table retains
+  numbered columns. Putting the complete to-hit first and separating the
   authored formula with a centered dot preserves a power's intrinsic `+2` without
   mistaking it for the total. Header-only defense abbreviations use `Fort` and
   `Ref`. The combined attack cell fits its content while long targets wrap in

@@ -22,6 +22,7 @@ import { ActionTypeIcon } from "./ActionTypeIcon";
 import { Icon } from "./Icon";
 import { PortraitImage } from "./PortraitEditor";
 import { PrintPowerVariants } from "./PrintPowerVariants";
+import { fallbackPrintAttacks, groupedPrintRules } from "./print-power-attacks";
 import {
   defaultPowerVariant,
   PowerTextProse,
@@ -318,43 +319,6 @@ function abbreviatedAttackTotal(value: string): string {
     .replace(/\bReflex\b/gi, "Ref");
 }
 
-function authoredPowerBonus(value: string | undefined): number {
-  return Number(
-    value?.match(
-      /\b(?:Strength|Constitution|Dexterity|Intelligence|Wisdom|Charisma|Primary ability|ability)\s*\+\s*(\d+)/i,
-    )?.[1] ?? 0,
-  );
-}
-
-function authoredAttackOrdinal(label: string): number | undefined {
-  const normalized = label.trim().toLocaleLowerCase();
-  if (normalized === "attack" || normalized === "primary attack") return 1;
-  if (normalized === "secondary attack") return 2;
-  if (normalized === "tertiary attack") return 3;
-  if (normalized === "quaternary attack") return 4;
-  return undefined;
-}
-
-function groupedPrintRules(fields: readonly SheetValue[]): {
-  readonly leading: readonly SheetValue[];
-  readonly attacks: ReadonlyMap<number, readonly SheetValue[]>;
-} {
-  const leading: SheetValue[] = [];
-  const attacks = new Map<number, SheetValue[]>();
-  let currentAttack: number | undefined;
-  for (const field of fields) {
-    const ordinal = authoredAttackOrdinal(field.label);
-    if (ordinal !== undefined) {
-      currentAttack = ordinal;
-      if (!attacks.has(ordinal)) attacks.set(ordinal, []);
-      continue;
-    }
-    if (currentAttack === undefined) leading.push(field);
-    else attacks.get(currentAttack)?.push(field);
-  }
-  return { leading, attacks };
-}
-
 function PrintRuleLines({
   fields,
   characterLevel,
@@ -384,13 +348,7 @@ function PrintRuleLines({
   ));
 }
 
-function PrintAttackBand({
-  attack,
-  numbered,
-}: {
-  readonly attack: SheetPowerAttack;
-  readonly numbered: boolean;
-}) {
+function PrintAttackBand({ attack }: { readonly attack: SheetPowerAttack }) {
   const formula = `${abbreviatedAbility(attack.ability)}${attack.powerBonus === 0 ? "" : attack.powerBonus > 0 ? `+${attack.powerBonus}` : attack.powerBonus}`;
   const total = abbreviatedAttackTotal(attack.attack).replace(
     /^(.+?)\s+vs\s+(.+)$/i,
@@ -400,10 +358,7 @@ function PrintAttackBand({
     <dl className="print-card-combat-band">
       <div className="print-card-attack-total">
         <Icon name="sword" />
-        <dd>
-          {numbered ? `${attack.ordinal} · ` : ""}
-          {total}
-        </dd>
+        <dd>{total}</dd>
       </div>
       <div className="print-card-attack-target">
         <Icon name="target" />
@@ -424,10 +379,8 @@ function PrintPowerCard({
 }) {
   const cardRef = usePrintCardFit();
   const attackType = cardField(card, "Attack Type") ?? "";
-  const target = cardField(card, "Target", "Targets", "Primary Target");
   const level = cardField(card, "Level");
   const powerType = cardField(card, "Power Type");
-  const authoredAttackField = cardField(card, "Attack", "Primary Attack");
   const displayActionType = card.actionType?.replace(/\s+action\b/i, "").trim();
   const isUtility = powerType?.trim().toLocaleLowerCase() === "utility";
   const variants = card.variants ?? [];
@@ -440,18 +393,6 @@ function PrintPowerCard({
     variants.find((variant) => variant.equipped && variant.hand === "main") ??
     variants.find((variant) => variant.equipped) ??
     variants[0];
-  const fallbackAbility =
-    selectedPrintVariant?.ability ??
-    authoredAttackField?.match(
-      /\b(Strength|Constitution|Dexterity|Intelligence|Wisdom|Charisma)\b/i,
-    )?.[1] ??
-    "Ability";
-  const fallbackPowerBonus =
-    selectedPrintVariant?.powerBonus ?? authoredPowerBonus(authoredAttackField);
-  const fallbackAttack = selectedPrintVariant?.attack ?? card.attack;
-  const hasFallbackAttack =
-    authoredAttackField !== undefined ||
-    (fallbackAttack !== undefined && !fallbackAttack.includes("Unknown"));
   const attacks: readonly SheetPowerAttack[] =
     selectedPrintVariant?.attacks?.map((attack) =>
       attack.eligible !== false
@@ -465,19 +406,7 @@ function PrintPowerCard({
                 candidate.ordinal === attack.ordinal &&
                 candidate.eligible !== false,
             ) ?? attack),
-    ) ??
-    (hasFallbackAttack
-      ? [
-          {
-            id: `${card.id ?? card.name}:attack-1`,
-            ordinal: 1,
-            ability: fallbackAbility,
-            powerBonus: fallbackPowerBonus,
-            attack: fallbackAttack ?? "— vs defense",
-            ...(target === undefined ? {} : { target }),
-          },
-        ]
-      : []);
+    ) ?? fallbackPrintAttacks(card, selectedPrintVariant);
   const rules = card.fields.filter(
     (field) =>
       !LEGACY_POWER_BODY_EXCLUDES.has(field.label.trim().toLocaleLowerCase()),
@@ -534,7 +463,7 @@ function PrintPowerCard({
         ) : null}
         {attacks.map((attack, attackIndex) => (
           <section className="print-card-attack-section" key={attack.id}>
-            <PrintAttackBand attack={attack} numbered={attacks.length > 1} />
+            <PrintAttackBand attack={attack} />
             <div className="print-card-attack-rules">
               {attackIndex === 0 ? (
                 <>
