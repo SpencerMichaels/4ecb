@@ -108,6 +108,8 @@ export const RESOLVE_ABILITY_CHOICES_STORAGE_KEY =
 export const ABBREVIATE_ABILITY_VALUES_STORAGE_KEY =
   "4ecb.abbreviateAbilityValues.v1";
 export const EXPAND_WEAPON_DICE_STORAGE_KEY = "4ecb.expandWeaponDice.v1";
+export const COLOR_UTILITY_POWERS_BLUE_STORAGE_KEY =
+  "4ecb.colorUtilityPowersBlue.v1";
 
 function RouteFocusOnMount({
   children,
@@ -195,6 +197,15 @@ export function App() {
       return true;
     }
   });
+  const [colorUtilityPowersBlue, setColorUtilityPowersBlue] = useState(() => {
+    try {
+      return (
+        localStorage.getItem(COLOR_UTILITY_POWERS_BLUE_STORAGE_KEY) === "1"
+      );
+    } catch {
+      return false;
+    }
+  });
   const firstRoute = useRef(true);
   const runtimeContentStarted = useRef(false);
   const route = useMemo(() => parseHashRoute(hash), [hash]);
@@ -266,6 +277,15 @@ export function App() {
       // The power-card display preference still applies for this session.
     }
   }, [expandWeaponDice]);
+  useEffect(() => {
+    try {
+      if (colorUtilityPowersBlue)
+        localStorage.setItem(COLOR_UTILITY_POWERS_BLUE_STORAGE_KEY, "1");
+      else localStorage.removeItem(COLOR_UTILITY_POWERS_BLUE_STORAGE_KEY);
+    } catch {
+      // The printed-card display preference still applies for this session.
+    }
+  }, [colorUtilityPowersBlue]);
 
   const refresh = useCallback(async () => {
     const [installed, active, profile] = await Promise.all([
@@ -506,6 +526,8 @@ export function App() {
                   onAbbreviateAbilityValuesChange={setAbbreviateAbilityValues}
                   expandWeaponDice={expandWeaponDice}
                   onExpandWeaponDiceChange={setExpandWeaponDice}
+                  colorUtilityPowersBlue={colorUtilityPowersBlue}
+                  onColorUtilityPowersBlueChange={setColorUtilityPowersBlue}
                 />
               ) : route.characterId === undefined ? (
                 <CharacterLibraryPage
@@ -531,6 +553,7 @@ export function App() {
                   resolveAbilityChoices={resolveAbilityChoices}
                   abbreviateAbilityValues={abbreviateAbilityValues}
                   expandWeaponDice={expandWeaponDice}
+                  colorUtilityPowersBlue={colorUtilityPowersBlue}
                 />
               )}
             </RouteFocusOnMount>

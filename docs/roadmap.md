@@ -582,6 +582,15 @@ block at left. The action/range and attack header bands remain contiguous;
 requirements and other setup rules follow the first attack band before its Hit
 text.
 
+**Usage-first card revision (2026-10-01):** Physical power cards now emphasize
+the At-Will, Encounter, or Daily limit players most often need during play.
+Usage drives the default green/red/gray treatment, Utility is an additional word
+in the bottom type bar, and numeric level shares that same bar at the right. The
+legacy three-checkbox matrix and separate class/level/source footer are gone.
+An off-by-default Display setting can color Utility cards blue for users who
+prefer the original builder's convention without hiding the actual usage text.
+Live review confirmed both the default and legacy-blue projections.
+
 ## M5.7 — Invited-beta UI and hostability preparation
 
 ### Goal

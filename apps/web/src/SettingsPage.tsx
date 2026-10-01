@@ -127,6 +127,8 @@ export interface SettingsPageProps {
   readonly onAbbreviateAbilityValuesChange: (value: boolean) => void;
   readonly expandWeaponDice: boolean;
   readonly onExpandWeaponDiceChange: (value: boolean) => void;
+  readonly colorUtilityPowersBlue: boolean;
+  readonly onColorUtilityPowersBlueChange: (value: boolean) => void;
 }
 
 export function SettingsPage({
@@ -149,6 +151,8 @@ export function SettingsPage({
   onAbbreviateAbilityValuesChange,
   expandWeaponDice,
   onExpandWeaponDiceChange,
+  colorUtilityPowersBlue,
+  onColorUtilityPowersBlueChange,
 }: SettingsPageProps) {
   const [status, setStatus] = useState(
     installedPacks.length === 0 ? "No content packs installed." : "Ready.",
@@ -586,6 +590,20 @@ export function SettingsPage({
         <p className="field-help">
           Use the card's weapon selector to change the calculation or compare
           every compatible weapon in the character's inventory.
+        </p>
+        <label>
+          <input
+            type="checkbox"
+            checked={colorUtilityPowersBlue}
+            onChange={(event) =>
+              onColorUtilityPowersBlueChange(event.currentTarget.checked)
+            }
+          />{" "}
+          Color utility powers blue on printed cards
+        </label>
+        <p className="field-help">
+          Reproduce the original builder's blue Utility card style. Otherwise,
+          printed power colors emphasize how often each power can be used.
         </p>
       </section>
 

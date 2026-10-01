@@ -1622,13 +1622,14 @@ physical dimensions. Content must never increase a card's height.
 
 Power cards project the title, keywords, action/range icon band, compact
 attack/defense/target band when applicable, authored rules clauses in order,
-calculated equipped-weapon lines, additional-effects writing area, and compact
-footer/type metadata. Attackless utility powers use the frequency strip instead
-of invented attack values. Item cards use their own legacy-derived stat grid,
-properties/power region, frequency strip, and footer. Flavor text, verbose full
-text already represented by structured fields, internal identifiers, and other
-presentation-only metadata do not appear on physical cards. The interactive
-browser cards remain free to expose richer context and weapon switching.
+calculated equipped-weapon lines, additional-effects writing area, and the
+usage-first type bar defined by D071. Attackless utility powers do not receive
+invented attack values. Item cards use their own legacy-derived stat grid,
+properties/power region, and compact footer. Flavor text, source citations,
+verbose full text already represented by structured fields, internal
+identifiers, and other presentation-only metadata do not appear on physical
+cards. The interactive browser cards remain free to expose richer context and
+weapon switching.
 Composed-item cards merge the ordered public fields of every inventory element,
 so a magic weapon or armor card keeps the base item's physical statistics as
 well as its enchantment's enhancement, level, critical, properties, and powers.
@@ -1692,6 +1693,29 @@ sheet model. Legacy snapshots also expose their cached weapon attack stat and
 total as presentation variants so a known `DEX`, `WIS`, and similar value is not
 degraded to an `ABILITY` placeholder. Unsupported legacy multi-phase caches
 remain recoverable as authored prose rather than inventing independent totals.
+
+### D071 — Printed power identity prioritizes usage over Utility classification
+
+**Status:** accepted
+
+**Date:** 2026-10-01
+
+At-Will, Encounter, and Daily are the mechanically important identities players
+scan for during play, while Utility is an additional power classification rather
+than a fourth usage frequency. Printed power cards therefore use usage for their
+default border and header color: green for At-Will, red for Encounter, and gray
+for Daily. The three-checkbox frequency matrix is omitted. Utility remains
+explicit in the bottom type bar, which reads forms such as `AT-WILL UTILITY
+POWER`; the numeric power level, when present, is right-aligned in the same bar.
+The separate class/level/source footer is removed because class origin is not
+needed during play, keywords already carry Arcane, Divine, Martial, and similar
+descriptors, and physical cards do not need source citations.
+
+An off-by-default browser Display preference may reproduce the original
+builder's blue Utility card color for users who prefer that visual convention.
+This option changes color only: the bottom bar continues to name the actual
+At-Will, Encounter, or Daily frequency so legacy styling cannot obscure the
+mechanical usage limit. Monochrome print continues to override all usage colors.
 
 ## Deferred decisions and decision points
 

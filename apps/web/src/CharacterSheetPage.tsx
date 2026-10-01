@@ -374,14 +374,15 @@ function PrintAttackBand({
 function PrintPowerCard({
   card,
   characterLevel,
+  colorUtilityPowersBlue,
 }: {
   readonly card: SheetCard;
   readonly characterLevel: number;
+  readonly colorUtilityPowersBlue: boolean;
 }) {
   const attackType = cardField(card, "Attack Type") ?? "";
   const target = cardField(card, "Target", "Targets", "Primary Target");
   const level = cardField(card, "Level");
-  const className = cardField(card, "Class");
   const powerType = cardField(card, "Power Type");
   const authoredAttackField = cardField(card, "Attack", "Primary Attack");
   const displayActionType = card.actionType?.replace(/\s+action\b/i, "").trim();
@@ -428,13 +429,21 @@ function PrintPowerCard({
       !LEGACY_POWER_BODY_EXCLUDES.has(field.label.trim().toLocaleLowerCase()),
   );
   const groupedRules = groupedPrintRules(rules);
-  const usage = (card.usage ?? "utility")
-    .trim()
-    .toLocaleLowerCase()
-    .replace(/[^a-z]+/g, "-");
+  const usageTone = /^encounter/i.test(card.usage ?? "")
+    ? "encounter"
+    : /^daily/i.test(card.usage ?? "")
+      ? "daily"
+      : "at-will";
+  const displayUsage =
+    usageTone === "encounter"
+      ? "Encounter"
+      : usageTone === "daily"
+        ? "Daily"
+        : "At-Will";
+  const typeLabel = `${displayUsage}${isUtility ? " Utility" : ""} power`;
   return (
     <article
-      className={`print-reference-card print-power-card usage-${usage} ${printCardDensity(card)}`}
+      className={`print-reference-card print-power-card usage-${usageTone}${isUtility && colorUtilityPowersBlue ? " legacy-utility-color" : ""} ${printCardDensity(card)}`}
     >
       <header>
         <h3>{card.name}</h3>
@@ -455,16 +464,6 @@ function PrintPowerCard({
         </span>
       </div>
       <div className="print-card-body">
-        {isUtility ? (
-          <div className="print-power-frequency" aria-label="Power frequency">
-            {(["At-Will", "Encounter", "Daily"] as const).map((frequency) => (
-              <span key={frequency}>
-                <i>{card.usage === frequency ? "✓" : ""}</i>
-                {frequency}
-              </span>
-            ))}
-          </div>
-        ) : null}
         {attacks.length === 0 ? (
           <div className="print-card-leading-rules">
             {card.prerequisites === undefined ? null : (
@@ -517,13 +516,9 @@ function PrintPowerCard({
           ))}
       </div>
       <div className="print-card-additional">Additional effects</div>
-      <footer>
-        <span>{className}</span>
-        <span>{level === undefined ? "" : `Level ${level}`}</span>
-        <span>{card.source}</span>
-      </footer>
       <div className="print-card-type">
-        {isUtility ? "Utility" : (card.usage ?? "At-Will")} power
+        <span>{typeLabel}</span>
+        {level === undefined ? null : <span>Level {level}</span>}
       </div>
     </article>
   );
@@ -560,7 +555,6 @@ function PrintItemCard({ card }: { readonly card: SheetCard }) {
     const label = field.label.trim().toLocaleLowerCase();
     return !LEGACY_ITEM_BODY_EXCLUDES.has(label) && label !== "quantity";
   });
-  const frequencyText = rules.map((field) => field.value).join(" ");
   return (
     <article
       className={`print-reference-card print-item-card ${printCardDensity(card)}`}
@@ -594,18 +588,10 @@ function PrintItemCard({ card }: { readonly card: SheetCard }) {
           <Prose value={card.description} />
         ) : null}
       </div>
-      <div className="print-item-frequency" aria-label="Power frequency">
-        {(["At-Will", "Encounter", "Daily"] as const).map((frequency) => (
-          <span key={frequency}>
-            <i>{frequencyText.includes(frequency) ? "✓" : ""}</i>
-            {frequency}
-          </span>
-        ))}
-      </div>
       <footer>
         <span>{cardField(card, "Item Slot")}</span>
         <span>{cardField(card, "Weight")}</span>
-        <span>{lastCardField(card, "Gold") ?? card.source}</span>
+        <span>{lastCardField(card, "Gold")}</span>
       </footer>
       <div className="print-card-type">Magic item</div>
     </article>
@@ -615,12 +601,18 @@ function PrintItemCard({ card }: { readonly card: SheetCard }) {
 function PrintCard({
   card,
   characterLevel,
+  colorUtilityPowersBlue,
 }: {
   readonly card: SheetCard;
   readonly characterLevel: number;
+  readonly colorUtilityPowersBlue: boolean;
 }) {
   return card.kind === "power" ? (
-    <PrintPowerCard card={card} characterLevel={characterLevel} />
+    <PrintPowerCard
+      card={card}
+      characterLevel={characterLevel}
+      colorUtilityPowersBlue={colorUtilityPowersBlue}
+    />
   ) : (
     <PrintItemCard card={card} />
   );
@@ -699,6 +691,7 @@ export function CharacterSheetPage({
   resolveAbilityChoices = true,
   abbreviateAbilityValues = true,
   expandWeaponDice = true,
+  colorUtilityPowersBlue = false,
 }: {
   readonly characterId: string;
   readonly manifests: readonly ContentPackManifest[];
@@ -706,6 +699,7 @@ export function CharacterSheetPage({
   readonly resolveAbilityChoices?: boolean;
   readonly abbreviateAbilityValues?: boolean;
   readonly expandWeaponDice?: boolean;
+  readonly colorUtilityPowersBlue?: boolean;
 }) {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [character, setCharacter] = useState<CharacterRecord>();
@@ -1360,6 +1354,7 @@ export function CharacterSheetPage({
               <PrintCard
                 card={card}
                 characterLevel={characterLevel}
+                colorUtilityPowersBlue={colorUtilityPowersBlue}
                 key={`${card.kind}-${card.id ?? card.name}-${index}`}
               />
             ))}

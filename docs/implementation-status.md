@@ -26,12 +26,12 @@ separate projection over the same semantic model.
   fixed physical dimensions for Letter and A4, and trim or reduce type inside
   the boundary rather than growing. Power cards project compact action/range and
   attack/defense/target bands, authored rules clauses, calculated equipped
-  variants, and footer metadata. Item cards project their legacy stat grid,
-  properties/powers, frequency strip, and footer. Flavor and presentation-only
-  metadata are deliberately absent from physical cards; browser View retains
-  its richer interactive cards. Composed magic-item cards now merge public base
-  and enchantment fields so weapon/armor statistics are not lost behind the
-  enchantment record.
+  variants, and a compact usage-first type bar. Item cards project their legacy
+  stat grid, properties/powers, and footer. Flavor, source citations, and
+  presentation-only metadata are deliberately absent from physical cards;
+  browser View retains its richer interactive cards. Composed magic-item cards
+  now merge public base and enchantment fields so weapon/armor statistics are
+  not lost behind the enchantment record.
 - The compact power header now removes the redundant word `Action`, uses the
   same icon-left rhythm for action/range and attack/target, combines the authored
   attack stat and defense into one cell, and lets the target cell grow vertically
@@ -48,6 +48,18 @@ separate projection over the same semantic model.
   such as `Strength +2 vs. Reflex, Constitution +2 vs. Reflex, or Dexterity +2
 vs. Reflex` use the configured highest-ability selection and established
   tie-break rules.
+- Printed power identity is now usage-first. At-Will, Encounter, and Daily
+  choose the default green, red, or gray treatment; Utility is retained as an
+  explicit qualifier in the bottom type bar rather than replacing frequency or
+  requiring a three-checkbox matrix. Numeric level shares that bottom bar, and
+  the redundant class/source footer is omitted. An off-by-default Display
+  preference restores the legacy blue Utility treatment while leaving the
+  actual usage text visible. Item cards likewise omit the paper-oriented
+  frequency matrix and source fallback while retaining authored item-power
+  usage in their rules text. Focused print-layout/accessibility contracts, the
+  web typecheck, and the Chromium/Firefox Letter/A4 color/monochrome print
+  matrix pass with 24 fixed cards, five pages, and no card, band, or target
+  overflow. Live Silaqui review covered both preference states.
 - Attack calculation and print projection are now phase-aware. The rules engine
   retains every authored attack's ordinal, resolved ability, intrinsic power
   bonus, defense, target, final total, and component provenance; primary and

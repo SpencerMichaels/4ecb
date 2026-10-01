@@ -67,6 +67,14 @@ describe("print layout contract", () => {
     expect(styles).toMatch(
       /\.print-card-combat-band dd\s*\{[\s\S]*?overflow-wrap:\s*anywhere/,
     );
+    expect(styles).toMatch(
+      /\.print-power-card\.legacy-utility-color\s*\{[\s\S]*?--card-color:\s*#000080/,
+    );
+    expect(sheetSource).toContain(
+      'const typeLabel = `${displayUsage}${isUtility ? " Utility" : ""} power`',
+    );
+    expect(sheetSource).not.toContain("print-power-frequency");
+    expect(sheetSource).not.toContain("print-item-frequency");
     expect(sheetSource).not.toMatch(
       /function Print(?:Power|Item)Card[\s\S]*?card\.flavor/,
     );
