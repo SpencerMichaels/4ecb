@@ -1912,7 +1912,7 @@ textarea {
 }
 .print-card-combat-band {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr) minmax(0, 1fr);
+  grid-template-columns: max-content max-content minmax(0, 1fr);
   margin: 0 -0.035in;
 }
 .print-card-combat-band > div {
@@ -1946,6 +1946,22 @@ textarea {
 .print-card-attack-target dd {
   font-weight: 700;
 }
+.print-card-combat-band.is-long-target {
+  grid-template-columns: max-content minmax(0, 1fr);
+  grid-template-rows: auto auto;
+}
+.print-card-combat-band.is-long-target .print-card-attack-formula {
+  grid-column: 1;
+  grid-row: 1;
+}
+.print-card-combat-band.is-long-target .print-card-attack-total {
+  grid-column: 1;
+  grid-row: 2;
+}
+.print-card-combat-band.is-long-target .print-card-attack-target {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
 .print-card-combat-band .icon {
   height: 0.1in;
   width: 0.1in;
@@ -1967,17 +1983,20 @@ textarea {
 .print-card-leading-rules:not(:empty) {
   padding-bottom: 0.025in;
 }
+.print-card-leading-rules:empty:first-child + .print-card-attack-section {
+  margin-top: -0.035in;
+}
 .print-power-card .print-power-frequency {
   margin: -0.035in -0.035in 0.035in;
 }
-.print-card-body > div,
+.print-card-body > div:not(.print-card-leading-rules),
 .print-card-body > p,
 .print-card-body .prose-blocks,
 .print-card-body .prose-paragraph {
   display: inline;
   margin: 0;
 }
-.print-card-body > div::after,
+.print-card-body > div:not(.print-card-leading-rules)::after,
 .print-card-body > p::after {
   content: "\A";
   white-space: pre;

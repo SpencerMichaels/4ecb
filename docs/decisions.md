@@ -1673,15 +1673,17 @@ using modifier, raw score, and authored-order tie breaks already established by
 D065.
 
 The physical card renders one compact band per phase:
-`ATTACK 1 · STR+2 | +12 vs AC | target`. A single phase omits the number. The
+`Attack 1 · STR+2 | +12 vs AC | target`. A single phase omits the number. The
 first cell communicates the resolved authored formula, so a power's intrinsic
 `+2` cannot be confused with the final calculated total in the second cell.
 The second cell abbreviates only the long defense names `Fortitude` and `Reflex`
 to `Fort` and `Ref`; underlying calculations and authored rules text retain the
-full names. Requirement, trigger, and other unconditional setup remain above
-the first attack. Hit and following phase-bound effects remain directly below
-their attack band, preserving scan order and avoiding detached damage/effect
-summaries.
+full names. The first two columns size to their content and the target receives
+the remaining width. When a target cannot fit on one line, the formula and
+total stack in the left column while the target spans both rows on the right.
+Requirement, trigger, and other unconditional setup remain above the first
+attack. Hit and following phase-bound effects remain directly below their
+attack band, preserving scan order and avoiding detached damage/effect summaries.
 
 Authoritative evaluations project the structured attacks through the shared
 sheet model. Legacy snapshots also expose their cached weapon attack stat and

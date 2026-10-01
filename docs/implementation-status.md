@@ -52,13 +52,16 @@ vs. Reflex` use the configured highest-ability selection and established
   retains every authored attack's ordinal, resolved ability, intrinsic power
   bonus, defense, target, final total, and component provenance; primary and
   subsequent attacks are calculated independently. Printed cards render these
-  as compact `ATTACK 1 · STR+2 | +12 vs AC | target` rows (or unnumbered
-  `ATTACK` for a single phase), followed immediately by that phase's Hit and
+  as compact `Attack 1 · STR+2 | +12 vs AC | target` rows (or unnumbered
+  `Attack` for a single phase), followed immediately by that phase's Hit and
   associated Effect clauses. The split formula/total presentation removes the
   ambiguity between a power's authored `+2` and the complete to-hit value.
-  Header-only defense abbreviations use `Fort` and `Ref`. Legacy cached weapon
-  variants now carry their recorded attack stat into the shared sheet model so
-  known abilities do not regress to a generic `ABILITY` label.
+  Header-only defense abbreviations use `Fort` and `Ref`. The first two columns
+  fit their contents and long targets switch to a two-row form with formula and
+  total stacked at left. Legacy cached weapon variants carry their recorded
+  attack stat and an explicit zero intrinsic bonus into the shared sheet model,
+  preventing a personalized `Charisma (+4)` annotation from being mistaken for
+  an authored `Charisma +4` power formula.
 - Evaluated cards now apply the canonical user-facing-field predicate after
   overlays, suppress machine metadata and ID tokens, preserve repeated authored
   combat clauses in ordinal order, and expose supported flavor and printable

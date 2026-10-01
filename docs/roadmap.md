@@ -573,11 +573,13 @@ M5.6.
 **Per-attack card revision (2026-09-30):** Printed power cards now treat each
 authored attack phase independently. A compact row pairs the resolved authored
 formula with its unambiguous calculated total and target—for example,
-`ATTACK 1 · STR+2 | +12 vs AC | One creature`—while the associated Hit and
+`Attack 1 · STR+2 | +12 vs AC | One creature`—while the associated Hit and
 following phase-bound effects remain immediately beneath it. Single attacks
 omit the number; `Fortitude` and `Reflex` shorten to `Fort` and `Ref` only in the
-calculated header cell. Requirements, triggers, and unconditional pre-attack
-effects retain their authored position above the attack sequence.
+calculated header cell. Formula and total columns fit their content; long targets
+receive a two-row layout with the formula and total stacked at left. Requirements,
+triggers, and unconditional pre-attack effects retain their authored position
+above the attack sequence.
 
 ## M5.7 — Invited-beta UI and hostability preparation
 

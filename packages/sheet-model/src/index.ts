@@ -633,6 +633,7 @@ function evaluatedPowerCards(
       ...(variant.attackStat === undefined
         ? {}
         : { ability: variant.attackStat }),
+      powerBonus: variant.attacks?.[0]?.powerBonus ?? 0,
       ...((variant.attacks ?? []).length === 0
         ? {}
         : {
@@ -709,7 +710,7 @@ function powerCard(
       ...(candidate.attackStat === undefined
         ? {}
         : { ability: candidate.attackStat }),
-      ...(powerBonus === 0 ? {} : { powerBonus }),
+      powerBonus,
       ...(candidate.attackBonus === undefined
         ? {}
         : {

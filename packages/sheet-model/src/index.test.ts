@@ -108,6 +108,69 @@ describe("sheet model", () => {
     });
   });
 
+  it("keeps an annotated ability modifier separate from an authored power bonus", () => {
+    const model = buildSheetModel(
+      {
+        details: { name: "Ada", Level: "1" },
+        abilities: { Strength: 12, Charisma: 18 },
+        stats: { "Strength modifier": "1", "Charisma modifier": "4" },
+        selectedRules: [],
+        powers: [
+          {
+            id: "POWER_1",
+            name: "Ardent Strike",
+            weapons: [
+              {
+                name: "Longsword",
+                attackBonus: "9",
+                attackStat: "Charisma",
+                defense: "AC",
+              },
+            ],
+          },
+        ],
+        loot: [],
+        textStrings: {},
+        levelCount: 1,
+        source: "legacy-cache",
+      },
+      [
+        {
+          id: "POWER_1",
+          name: "Ardent Strike",
+          type: "Power",
+          source: "Synthetic",
+          sources: ["Synthetic"],
+          attributes: [],
+          categories: [],
+          specifics: [
+            {
+              name: "Attack",
+              value: "Strength or Charisma vs. AC",
+              extraAttributes: [],
+              ordinal: 0,
+            },
+          ],
+          rules: [],
+          description: "",
+          extensions: [],
+          provenance: { sourceKey: "fixture", sourceOrdinal: 0 },
+        },
+      ],
+      { resolveAbilityChoices: true },
+    );
+
+    expect(model.powers[0]?.fields).toContainEqual({
+      label: "Attack",
+      value: "Charisma (+4) vs. AC",
+    });
+    expect(model.powers[0]?.variants?.[0]).toMatchObject({
+      ability: "Charisma",
+      powerBonus: 0,
+      attack: "+9 vs AC",
+    });
+  });
+
   it("preserves an empty native snapshot source without relabeling it as legacy", () => {
     const model = buildSheetModel({
       details: { name: "New Hero", Level: "1" },

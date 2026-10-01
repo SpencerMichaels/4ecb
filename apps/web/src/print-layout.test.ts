@@ -44,10 +44,16 @@ describe("print layout contract", () => {
     expect(sheetSource).toContain('.replace(/\\bFortitude\\b/gi, "Fort")');
     expect(sheetSource).toContain('.replace(/\\bReflex\\b/gi, "Ref")');
     expect(styles).toMatch(
-      /\.print-card-combat-band\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1\.25fr\) minmax\(0, 0\.75fr\) minmax\(0, 1fr\)/,
+      /\.print-card-combat-band\s*\{[\s\S]*?grid-template-columns:\s*max-content max-content minmax\(0, 1fr\)/,
     );
     expect(styles).toMatch(
       /\.print-card-attack-formula dd\s*\{[\s\S]*?white-space:\s*nowrap/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-combat-band\.is-long-target\s*\{[\s\S]*?grid-template-columns:\s*max-content minmax\(0, 1fr\);[\s\S]*?grid-template-rows:\s*auto auto/,
+    );
+    expect(sheetSource).toContain(
+      'Attack{numbered ? ` ${attack.ordinal}` : ""} · {formula}',
     );
     expect(styles).toMatch(
       /\.print-card-combat-band > div\s*\{[\s\S]*?align-items:\s*flex-start/,

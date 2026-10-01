@@ -289,6 +289,14 @@ function abbreviatedAttackTotal(value: string): string {
     .replace(/\bReflex\b/gi, "Ref");
 }
 
+function authoredPowerBonus(value: string | undefined): number {
+  return Number(
+    value?.match(
+      /\b(?:Strength|Constitution|Dexterity|Intelligence|Wisdom|Charisma|Primary ability|ability)\s*\+\s*(\d+)/i,
+    )?.[1] ?? 0,
+  );
+}
+
 function authoredAttackOrdinal(label: string): number | undefined {
   const normalized = label.trim().toLocaleLowerCase();
   if (normalized === "attack" || normalized === "primary attack") return 1;
@@ -341,12 +349,15 @@ function PrintAttackBand({
   readonly numbered: boolean;
 }) {
   const formula = `${abbreviatedAbility(attack.ability)}${attack.powerBonus === 0 ? "" : attack.powerBonus > 0 ? `+${attack.powerBonus}` : attack.powerBonus}`;
+  const longTarget = (attack.target?.trim().length ?? 0) > 24;
   return (
-    <dl className="print-card-combat-band">
+    <dl
+      className={`print-card-combat-band${longTarget ? " is-long-target" : ""}`}
+    >
       <div className="print-card-attack-formula">
         <Icon name="sword" />
         <dd>
-          ATTACK{numbered ? ` ${attack.ordinal}` : ""} · {formula}
+          Attack{numbered ? ` ${attack.ordinal}` : ""} · {formula}
         </dd>
       </div>
       <div className="print-card-attack-total">
@@ -396,8 +407,7 @@ function PrintPowerCard({
     )?.[1] ??
     "Ability";
   const fallbackPowerBonus =
-    selectedPrintVariant?.powerBonus ??
-    Number(authoredAttackField?.match(/\+\s*(\d+)/)?.[1] ?? 0);
+    selectedPrintVariant?.powerBonus ?? authoredPowerBonus(authoredAttackField);
   const attacks: readonly SheetPowerAttack[] =
     selectedPrintVariant?.attacks ??
     (isUtility
