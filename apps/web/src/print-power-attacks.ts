@@ -37,11 +37,35 @@ export function printAttackHeader(
     : `${formula} vs ${total.match(/\bvs\s+(.+)$/i)?.[1] ?? "defense"}`;
 }
 
-export function groupedPrintRules(fields: readonly SheetValue[]) {
+export function groupedPrintRules(
+  fields: readonly SheetValue[],
+  headers: readonly SheetPowerAttack[] = [],
+) {
   const leading: SheetValue[] = [];
   const attacks = new Map<number, SheetValue[]>();
   let currentAttack: number | undefined;
   for (const field of fields) {
+    const targetLabel = field.label.trim().toLocaleLowerCase();
+    if (
+      /^(?:(?:primary|secondary|tertiary|quaternary) )?targets?$/.test(
+        targetLabel,
+      )
+    ) {
+      const targetOrdinal =
+        namedOrdinal(targetLabel.replace(/targets?$/, "attack")) ??
+        currentAttack ??
+        1;
+      const headerTarget = headers.find(
+        (header) => header.ordinal === targetOrdinal,
+      )?.target;
+      const normalized = (value: string) =>
+        value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+      if (
+        headerTarget !== undefined &&
+        normalized(headerTarget) === normalized(field.value)
+      )
+        continue;
+    }
     const ordinal =
       namedOrdinal(field.label) ??
       (field.label.trim().toLocaleLowerCase() === "attack"

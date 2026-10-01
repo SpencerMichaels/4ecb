@@ -401,7 +401,7 @@ function PrintPowerCard({
     (field) =>
       !LEGACY_POWER_BODY_EXCLUDES.has(field.label.trim().toLocaleLowerCase()),
   );
-  const groupedRules = groupedPrintRules(rules);
+  const groupedRules = groupedPrintRules(rules, attacks);
   const usageTone = /^encounter/i.test(card.usage ?? "")
     ? "encounter"
     : /^daily/i.test(card.usage ?? "")

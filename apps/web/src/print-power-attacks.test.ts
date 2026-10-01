@@ -85,4 +85,30 @@ describe("printed authored attack phases", () => {
       ),
     ).toEqual([]);
   });
+  it("omits target prose only when the matching phase header displays it", () => {
+    const target = "One creature other than the primary target";
+    const fields = [
+      ...card.fields.slice(0, 3),
+      { label: "Secondary Target", value: target },
+      ...card.fields.slice(3),
+    ];
+    const headers = fallbackPrintAttacks({ ...card, fields }, undefined);
+    const grouped = groupedPrintRules(fields, headers);
+    expect(grouped.leading).toEqual([]);
+    expect(grouped.attacks.get(1)).toEqual([card.fields[2]]);
+    expect(grouped.attacks.get(2)).toEqual([card.fields[4]]);
+    for (const secondary of [undefined, "A different target description"]) {
+      const changed = headers.map((header) => {
+        const updated = { ...header };
+        if (header.ordinal === 2) {
+          if (secondary === undefined) delete updated.target;
+          else updated.target = secondary;
+        }
+        return updated;
+      });
+      expect(groupedPrintRules(fields, changed).attacks.get(1)).toContainEqual(
+        fields[3],
+      );
+    }
+  });
 });
