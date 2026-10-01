@@ -299,7 +299,7 @@ columns labeled Weapon, Attack, and Damage. Equality compares resolved ability,
 numerical to-hit, damage expression, and availability, not defense or hand-role
 labels. Distinct columns stay labeled Attack 1, Attack 2, etc. Matching
 known bonuses across phases for every weapon, but differing damage, use one
-shared Attack column and numbered Dmg columns instead. Damage types remain
+shared Attacks column and numbered Dmg columns instead. Damage types remain
 in the data and authored rules rather than being repeated in the table. Authored Hit text retains conditions,
 ongoing damage, and other riders. Legacy caches with only one attack/damage
 summary cannot supply missing secondary calculations; unavailable phase cells

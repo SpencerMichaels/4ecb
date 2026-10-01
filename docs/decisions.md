@@ -1552,7 +1552,7 @@ and weapon-role labels alone do not split identical table values. Distinct
 columns use Attack 1, Attack 2, etc.; the body attack
 bands already identify abilities. A power with matching known to-hit values
 across phases for every weapon, but differing
-damage expressions, instead uses one shared Attack column and Dmg 1/Dmg 2/etc.
+damage expressions, instead uses one shared Attacks column and Dmg 1/Dmg 2/etc.
 columns. Ability labels remain in the body headers, even if the abilities differ
 but the resulting bonuses match. A missing or ineligible phase
 shows a dash. The equipped-first default supplies each attack header, using the

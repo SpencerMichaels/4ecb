@@ -96,7 +96,7 @@ describe("printed weapon calculation summaries", () => {
         attack(1),
         attack(2, { ability, damage: "1d8+5" }),
       ]);
-      expect(text(markup)).toBe("WeaponAttackDmg 1Dmg 2Longsword+122d8+51d8+5");
+      expect(text(markup)).toBe("WeaponAttacksDmg 1Dmg 2Longsword+122d8+51d8+5");
       expect(text(markup)).not.toMatch(/Attack 1|Attack 2|→/);
       expect(markup).toContain('aria-label="Damage 2"');
     },

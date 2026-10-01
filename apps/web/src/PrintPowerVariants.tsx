@@ -121,7 +121,7 @@ export function PrintPowerVariants({
             <th scope="col">Weapon</th>
             {shared || splitDamage ? (
               <>
-                <th scope="col">Attack</th>
+                <th scope="col">{splitDamage ? "Attacks" : "Attack"}</th>
                 {displayedOrdinals.map((ordinal) => (
                   <th scope="col" key={ordinal}>
                     {shared ? "Damage" : `Dmg ${ordinal}`}
