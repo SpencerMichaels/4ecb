@@ -32,6 +32,20 @@ separate projection over the same semantic model.
   browser View retains its richer interactive cards. Composed magic-item cards
   now merge public base and enchantment fields so weapon/armor statistics are
   not lost behind the enchantment record.
+- Item-card audit (2026-10-01; proposed follow-up, not implemented): the print
+  renderer still clips stat values into fixed-height nowrap cells and silently
+  caps the physical/magic stat lists at four/eight entries. It recognizes
+  `AC Bonus` but not the recovered builder's `Armor Bonus` field, always labels
+  equipment `Magic item`, prints bare weight/price numbers, and falls back to
+  descriptions that can include flavor. Body rules are an inline field dump
+  rather than grouped item-power clauses. Follow-up should preserve orange item
+  identity and fixed card geometry while using readable wrapping stat bands,
+  accurate item classifications, a combined labeled footer, grouped properties
+  and activated powers, and synthetic weapon/armor/implement/consumable/custom
+  fixtures. Compare recovered `PowerCardItem.UpdatePowerCardItem` base versus
+  enchantment field ownership before changing item projections. Existing print
+  matrix fixtures cover generic synthetic item descriptions, not that full
+  range of structured item data; M5.6 item-card acceptance remains open.
 - Printed title line boxes use a 1.2 line-height to preserve descenders inside
   the clipped single-line header; usage bars and item footers vertically center
   their text. Power titles use bold Arial, matching the sans-serif body. The
