@@ -1544,7 +1544,9 @@ names wrap at word boundaries only when space requires it.
 The word `damage`, equipment-state labels, and defenses already shown in the
 attack bands are omitted. Damage types are not repeated in the table; authored
 Hit rules and item descriptions supply that context. Cells wrap at the arrow
-when needed. Collapse requires the same resolved ability, numerical to-hit,
+when needed. Table damage expressions omit spaces around `+` (for example
+`2d10+5`), independently of body prose formatting. Collapse requires the same
+resolved ability, numerical to-hit,
 damage expression, and availability across phases. Defense, intrinsic-bonus,
 and weapon-role labels alone do not split identical table values. Distinct
 columns remain universally labeled Attack 1, Attack 2, etc.; the body attack

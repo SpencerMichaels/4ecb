@@ -47,7 +47,7 @@ function DamageSummary({ cell }: { readonly cell: AttackCell | undefined }) {
     cell.damage === undefined
   )
     return <>—</>;
-  const damage = cell.damage?.replace(/\s*([+-])\s*/g, " $1 ");
+  const damage = cell.damage.replace(/\s*\+\s*/g, "+");
   return <span className="print-variant-expression">{damage}</span>;
 }
 

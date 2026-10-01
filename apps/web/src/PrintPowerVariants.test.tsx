@@ -49,7 +49,7 @@ describe("printed weapon calculation summaries", () => {
       expect(markup).toContain('<th scope="col">Damage</th>');
       expect(text(markup)).not.toContain("Attack 1");
       expect(markup).toContain('<th scope="row">Longsword</th>');
-      expect(text(markup)).toBe("WeaponAttackDamageLongsword+122d8 + 5");
+      expect(text(markup)).toBe("WeaponAttackDamageLongsword+122d8+5");
       expect(markup).toContain('aria-label="To hit">+12</td>');
       expect(markup).toContain('aria-label="Damage">');
       expect(text(markup)).not.toMatch(/equipped|vs AC|;/i);
@@ -87,7 +87,7 @@ describe("printed weapon calculation summaries", () => {
     expect(markup).toContain("<table");
     expect(text(markup)).toContain("WeaponAttack 1Attack 2Longsword");
     expect((text(markup).match(/Longsword/g) ?? []).length).toBe(1);
-    expect(text(markup)).toContain("+12 → 2d8 + 5");
+    expect(text(markup)).toContain("+12 → 2d8+5");
     expect(text(markup)).not.toContain("fire");
   });
   it("collapses equal visible calculations despite defense, intrinsic bonus, or hand-role differences", () => {
@@ -100,14 +100,14 @@ describe("printed weapon calculation summaries", () => {
         damage: "2d8 + 5",
       }),
     ]);
-    expect(text(markup)).toBe("WeaponAttackDamageLongsword+122d8 + 5");
+    expect(text(markup)).toBe("WeaponAttackDamageLongsword+122d8+5");
   });
   it("omits damage types and collapses phases differing only by type", () => {
     const markup = render([
       attack(1, { damageType: "fire" }),
       attack(2, { damageType: "cold and lightning" }),
     ]);
-    expect(text(markup)).toBe("WeaponAttackDamageLongsword+122d8 + 5");
+    expect(text(markup)).toBe("WeaponAttackDamageLongsword+122d8+5");
     expect(text(markup)).not.toMatch(/fire|cold|lightning|Attack 1/);
   });
   it("shows a dash for ineligible or missing phases without repeating types", () => {
@@ -115,7 +115,7 @@ describe("printed weapon calculation summaries", () => {
       attack(1, { damageType: "cold and lightning" }),
       attack(2, { eligible: false }),
     ]);
-    expect(text(markup)).toContain("+12 → 2d8 + 5—");
+    expect(text(markup)).toContain("+12 → 2d8+5—");
     expect(text(markup)).not.toMatch(/cold|lightning/);
     expect(markup).toContain("<wbr/>");
     const missing = renderToStaticMarkup(
@@ -132,6 +132,6 @@ describe("printed weapon calculation summaries", () => {
         ]}
       />,
     );
-    expect(text(missing)).toContain("+7 → 1d6 + 2—");
+    expect(text(missing)).toContain("+7 → 1d6+2—");
   });
 });
