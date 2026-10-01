@@ -361,11 +361,13 @@ function PrintPowerCard({
   characterLevel,
   colorUtilityPowersBlue,
   showEquippedAttackBonus,
+  showPrintTitleActionIcon,
 }: {
   readonly card: SheetCard;
   readonly characterLevel: number;
   readonly colorUtilityPowersBlue: boolean;
   readonly showEquippedAttackBonus: boolean;
+  readonly showPrintTitleActionIcon: boolean;
 }) {
   const cardRef = usePrintCardFit();
   const attackType = cardField(card, "Attack Type") ?? "";
@@ -420,7 +422,12 @@ function PrintPowerCard({
       className={`print-reference-card print-power-card usage-${usageTone}${isUtility ? " utility-power" : ""}${isUtility && colorUtilityPowersBlue ? " legacy-utility-color" : ""}`}
     >
       <header>
-        <h3>{card.name}</h3>
+        <h3>
+          {showPrintTitleActionIcon && card.actionType?.trim() ? (
+            <ActionTypeIcon decorative value={card.actionType} />
+          ) : null}
+          <span>{card.name}</span>
+        </h3>
       </header>
       <div className="print-card-keywords">
         <span>Keywords</span>
@@ -428,7 +435,11 @@ function PrintPowerCard({
       </div>
       <div className="print-card-action-band">
         <span>
-          <ActionTypeIcon decorative value={card.actionType} />
+          {showPrintTitleActionIcon && card.actionType?.trim() ? (
+            <Icon name="timer" />
+          ) : (
+            <ActionTypeIcon decorative value={card.actionType} />
+          )}
           {displayActionType}
         </span>
         <span>
@@ -579,11 +590,13 @@ function PrintCard({
   characterLevel,
   colorUtilityPowersBlue,
   showEquippedAttackBonus,
+  showPrintTitleActionIcon,
 }: {
   readonly card: SheetCard;
   readonly characterLevel: number;
   readonly colorUtilityPowersBlue: boolean;
   readonly showEquippedAttackBonus: boolean;
+  readonly showPrintTitleActionIcon: boolean;
 }) {
   return card.kind === "power" ? (
     <PrintPowerCard
@@ -591,6 +604,7 @@ function PrintCard({
       characterLevel={characterLevel}
       colorUtilityPowersBlue={colorUtilityPowersBlue}
       showEquippedAttackBonus={showEquippedAttackBonus}
+      showPrintTitleActionIcon={showPrintTitleActionIcon}
     />
   ) : (
     <PrintItemCard card={card} />
@@ -672,6 +686,7 @@ export function CharacterSheetPage({
   expandWeaponDice = true,
   colorUtilityPowersBlue = false,
   showEquippedAttackBonus = true,
+  showPrintTitleActionIcon = true,
 }: {
   readonly characterId: string;
   readonly manifests: readonly ContentPackManifest[];
@@ -681,6 +696,7 @@ export function CharacterSheetPage({
   readonly expandWeaponDice?: boolean;
   readonly colorUtilityPowersBlue?: boolean;
   readonly showEquippedAttackBonus?: boolean;
+  readonly showPrintTitleActionIcon?: boolean;
 }) {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [character, setCharacter] = useState<CharacterRecord>();
@@ -1337,6 +1353,7 @@ export function CharacterSheetPage({
                 characterLevel={characterLevel}
                 colorUtilityPowersBlue={colorUtilityPowersBlue}
                 showEquippedAttackBonus={showEquippedAttackBonus}
+                showPrintTitleActionIcon={showPrintTitleActionIcon}
                 key={`${card.kind}-${card.id ?? card.name}-${index}`}
               />
             ))}

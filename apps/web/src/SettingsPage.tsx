@@ -131,6 +131,8 @@ export interface SettingsPageProps {
   readonly onColorUtilityPowersBlueChange: (value: boolean) => void;
   readonly showEquippedAttackBonus: boolean;
   readonly onShowEquippedAttackBonusChange: (value: boolean) => void;
+  readonly showPrintTitleActionIcon: boolean;
+  readonly onShowPrintTitleActionIconChange: (value: boolean) => void;
 }
 
 export function SettingsPage({
@@ -157,6 +159,8 @@ export function SettingsPage({
   onColorUtilityPowersBlueChange,
   showEquippedAttackBonus,
   onShowEquippedAttackBonusChange,
+  showPrintTitleActionIcon,
+  onShowPrintTitleActionIconChange,
 }: SettingsPageProps) {
   const [status, setStatus] = useState(
     installedPacks.length === 0 ? "No content packs installed." : "Ready.",
@@ -624,6 +628,21 @@ export function SettingsPage({
           On printable character sheets, include the equipped weapon's bonus in
           each attack header. Turn this off if you frequently switch weapons;
           the weapon table always shows each weapon's calculated bonus.
+        </p>
+        <label>
+          <input
+            type="checkbox"
+            checked={showPrintTitleActionIcon}
+            onChange={(event) =>
+              onShowPrintTitleActionIconChange(event.currentTarget.checked)
+            }
+          />{" "}
+          Show action icons in printed power titles
+        </label>
+        <p className="field-help">
+          Put the action symbol beside the power name, with a timer beside the
+          action description below. Turn this off to keep the action symbol only
+          beside its description.
         </p>
       </section>
 

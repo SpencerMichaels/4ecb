@@ -40,6 +40,10 @@ separate projection over the same semantic model.
   Subsequent attack bands have a matching top border to enclose each header.
   Authored target fields are omitted from the printed body only when the same
   target text is already displayed in that specific attack's header.
+  A browser-local Display setting (on by default) moves action symbols into
+  printed power titles and uses a generic timer beside the action description.
+  Turning it off restores the symbol beside that description; actionless powers,
+  item cards, and interactive cards are unchanged.
 - The compact power header now removes the redundant word `Action`, uses the
   same icon-left rhythm for action/range and attack/target, combines the authored
   attack stat and defense into one cell, and lets the target cell grow vertically

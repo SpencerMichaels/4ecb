@@ -20,6 +20,7 @@ import {
   CircleHelp,
   CircleX,
   Clock3,
+  Timer,
   Copy,
   Crosshair,
   Crown,
@@ -111,6 +112,7 @@ export type IconName =
   | "circle-x"
   | "class"
   | "clock"
+  | "timer"
   | "companion"
   | "content"
   | "crown"
@@ -199,6 +201,7 @@ const icons: Record<IconName, LucideIcon> = {
   "circle-x": CircleX,
   class: Shield,
   clock: Clock3,
+  timer: Timer,
   companion: PawPrint,
   content: LayoutGrid,
   crown: Crown,

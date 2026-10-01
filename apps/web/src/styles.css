@@ -1868,7 +1868,23 @@ textarea {
   color: #fff;
 }
 .print-power-card > header h3 {
+  align-items: center;
+  display: flex;
+  gap: 0.035in;
   font-weight: 700;
+  min-width: 0;
+}
+.print-power-card > header h3 > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.print-power-card > header .action-type-icon {
+  flex-shrink: 0;
+  font-size: 9.5pt;
+  height: 0.15in;
+  min-width: 0;
+  width: 0.15in;
 }
 .print-card-keywords {
   border-bottom: 1px solid var(--card-color);
@@ -1975,7 +1991,9 @@ textarea {
 .print-card-attack-section + .print-card-attack-section {
   margin-top: 0.025in;
 }
-.print-card-attack-section + .print-card-attack-section > .print-card-combat-band {
+.print-card-attack-section
+  + .print-card-attack-section
+  > .print-card-combat-band {
   border-top: 1px solid var(--card-color);
 }
 .print-card-attack-rules {

@@ -112,6 +112,8 @@ export const COLOR_UTILITY_POWERS_BLUE_STORAGE_KEY =
   "4ecb.colorUtilityPowersBlue.v1";
 export const SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY =
   "4ecb.showEquippedAttackBonus.v1";
+export const SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY =
+  "4ecb.showPrintTitleActionIcon.v1";
 
 function RouteFocusOnMount({
   children,
@@ -219,6 +221,17 @@ export function App() {
     }
   });
   const runtimeContentStarted = useRef(false);
+  const [showPrintTitleActionIcon, setShowPrintTitleActionIcon] = useState(
+    () => {
+      try {
+        return (
+          localStorage.getItem(SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY) !== "0"
+        );
+      } catch {
+        return true;
+      }
+    },
+  );
   const route = useMemo(() => parseHashRoute(hash), [hash]);
   const previousRoute = useRef(route);
   const focusRouteOnMount =
@@ -306,6 +319,15 @@ export function App() {
       // The printed-card preference still applies for this session.
     }
   }, [showEquippedAttackBonus]);
+  useEffect(() => {
+    try {
+      if (showPrintTitleActionIcon)
+        localStorage.removeItem(SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY);
+      else localStorage.setItem(SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY, "0");
+    } catch {
+      // The printed-card preference still applies for this session.
+    }
+  }, [showPrintTitleActionIcon]);
 
   const refresh = useCallback(async () => {
     const [installed, active, profile] = await Promise.all([
@@ -550,6 +572,8 @@ export function App() {
                   onColorUtilityPowersBlueChange={setColorUtilityPowersBlue}
                   showEquippedAttackBonus={showEquippedAttackBonus}
                   onShowEquippedAttackBonusChange={setShowEquippedAttackBonus}
+                  showPrintTitleActionIcon={showPrintTitleActionIcon}
+                  onShowPrintTitleActionIconChange={setShowPrintTitleActionIcon}
                 />
               ) : route.characterId === undefined ? (
                 <CharacterLibraryPage
@@ -577,6 +601,7 @@ export function App() {
                   expandWeaponDice={expandWeaponDice}
                   colorUtilityPowersBlue={colorUtilityPowersBlue}
                   showEquippedAttackBonus={showEquippedAttackBonus}
+                  showPrintTitleActionIcon={showPrintTitleActionIcon}
                 />
               )}
             </RouteFocusOnMount>
