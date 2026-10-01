@@ -573,7 +573,7 @@ M5.6.
 **Per-attack card revision (2026-09-30, refined 2026-10-01):** Printed power
 cards treat each authored attack phase independently. A compact row now combines
 the calculated total, resolved authored formula, and defense—for example,
-`⚔ +12 (STR+2 vs AC) | One creature`—while the associated Hit and following
+`⚔ +12 · STR+2 vs AC | One creature`—while the associated Hit and following
 phase-bound effects remain immediately beneath it. Numbered multiattacks use a
 compact ordinal; `Fortitude` and `Reflex` shorten to `Fort` and `Ref` only in the
 calculated header cell. The attack cell fits its content and long targets wrap
@@ -590,6 +590,10 @@ three-checkbox matrix and separate class/level/source footer are gone.
 An off-by-default Display setting can color Utility cards blue for users who
 prefer the original builder's convention without hiding the actual usage text.
 Live review confirmed both the default and legacy-blue projections.
+Utility classification now follows explicit `Power Type: Utility` metadata
+rather than treating every attackless card as Utility; non-Utility delegated
+attacks and feature/rules-item cards retain their actual identity without an
+invented attack row.
 
 ## M5.7 — Invited-beta UI and hostability preparation
 

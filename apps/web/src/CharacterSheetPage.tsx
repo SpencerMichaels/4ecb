@@ -351,7 +351,7 @@ function PrintAttackBand({
   const formula = `${abbreviatedAbility(attack.ability)}${attack.powerBonus === 0 ? "" : attack.powerBonus > 0 ? `+${attack.powerBonus}` : attack.powerBonus}`;
   const total = abbreviatedAttackTotal(attack.attack).replace(
     /^(.+?)\s+vs\s+(.+)$/i,
-    `$1 (${formula} vs $2)`,
+    `$1 · ${formula} vs $2`,
   );
   return (
     <dl className="print-card-combat-band">
@@ -385,10 +385,7 @@ function PrintPowerCard({
   const powerType = cardField(card, "Power Type");
   const authoredAttackField = cardField(card, "Attack", "Primary Attack");
   const displayActionType = card.actionType?.replace(/\s+action\b/i, "").trim();
-  const isUtility =
-    powerType?.trim().toLocaleLowerCase() === "utility" ||
-    (authoredAttackField === undefined &&
-      (card.attack === undefined || card.attack.includes("Unknown")));
+  const isUtility = powerType?.trim().toLocaleLowerCase() === "utility";
   const variants = card.variants ?? [];
   const candidateVariants =
     variants.filter((variant) => variant.equipped).length > 0
@@ -408,21 +405,24 @@ function PrintPowerCard({
     "Ability";
   const fallbackPowerBonus =
     selectedPrintVariant?.powerBonus ?? authoredPowerBonus(authoredAttackField);
+  const fallbackAttack = selectedPrintVariant?.attack ?? card.attack;
+  const hasFallbackAttack =
+    authoredAttackField !== undefined ||
+    (fallbackAttack !== undefined && !fallbackAttack.includes("Unknown"));
   const attacks: readonly SheetPowerAttack[] =
     selectedPrintVariant?.attacks ??
-    (isUtility
-      ? []
-      : [
+    (hasFallbackAttack
+      ? [
           {
             id: `${card.id ?? card.name}:attack-1`,
             ordinal: 1,
             ability: fallbackAbility,
             powerBonus: fallbackPowerBonus,
-            attack:
-              selectedPrintVariant?.attack ?? card.attack ?? "— vs defense",
+            attack: fallbackAttack ?? "— vs defense",
             ...(target === undefined ? {} : { target }),
           },
-        ]);
+        ]
+      : []);
   const rules = card.fields.filter(
     (field) =>
       !LEGACY_POWER_BODY_EXCLUDES.has(field.label.trim().toLocaleLowerCase()),

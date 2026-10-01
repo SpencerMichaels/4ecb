@@ -1674,15 +1674,15 @@ using modifier, raw score, and authored-order tie breaks already established by
 D065.
 
 The physical card renders one compact band per phase:
-`⚔ +12 (STR+2 vs AC) | target`. The calculated total leads, while the
-parenthesized authored formula preserves an intrinsic power bonus without
-confusing it with the total; numbered multiattacks prepend only their ordinal
-(`1 ·`) rather than the redundant word `Attack`. The same cell abbreviates only
-the long defense names `Fortitude` and `Reflex` to `Fort` and `Ref`; underlying
-calculations and authored rules text retain the full names. The combined attack
-cell sizes to its content and the target receives the remaining width, wrapping
-vertically when needed. The action/range and first attack bands remain visually
-contiguous;
+`⚔ +12 · STR+2 vs AC | target`. The calculated total leads, while a centered
+dot separates the authored formula and preserves an intrinsic power bonus
+without confusing it with the total; numbered multiattacks prepend only their
+ordinal (`1 ·`) rather than the redundant word `Attack`. The same cell
+abbreviates only the long defense names `Fortitude` and `Reflex` to `Fort` and
+`Ref`; underlying calculations and authored rules text retain the full names.
+The combined attack cell sizes to its content and the target receives the
+remaining width, wrapping vertically when needed. The action/range and first
+attack bands remain visually contiguous;
 Requirement, trigger, and other unconditional setup follow the first attack
 band but precede Hit. Hit and following phase-bound effects remain directly
 below their attack band, preserving scan order and avoiding detached
@@ -1711,6 +1711,12 @@ POWER`; the numeric power level, when present, is right-aligned in the same bar.
 The separate class/level/source footer is removed because class origin is not
 needed during play, keywords already carry Arcane, Divine, Martial, and similar
 descriptors, and physical cards do not need source citations.
+
+Utility classification comes only from the authored `Power Type: Utility`
+metadata. An attackless power is not inferred to be Utility: feature/rules-item
+powers such as Divine Challenge and Divine Sanction, and delegated attacks such
+as Opportunity Attack, retain their authored non-Utility identity and simply
+omit a calculated attack band when none exists.
 
 An off-by-default browser Display preference may reproduce the original
 builder's blue Utility card color for users who prefer that visual convention.

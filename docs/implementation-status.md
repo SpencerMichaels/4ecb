@@ -61,15 +61,18 @@ vs. Reflex` use the configured highest-ability selection and established
   web typecheck, and the Chromium/Firefox Letter/A4 color/monochrome print
   matrix pass with 24 fixed cards, five pages, and no card, band, or target
   overflow. Live Silaqui review covered both preference states and the compact
-  parenthesized attack form.
+  attack form. Utility classification now relies only on explicit `Power Type:
+Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
+  Divine Challenge, Divine Sanction, and other feature/rules-item powers keep
+  their actual identity and omit a fabricated attack band.
 - Attack calculation and print projection are now phase-aware. The rules engine
   retains every authored attack's ordinal, resolved ability, intrinsic power
   bonus, defense, target, final total, and component provenance; primary and
   subsequent attacks are calculated independently. Printed cards render these
-  as compact `⚔ +12 (STR+2 vs AC) | target` rows, followed immediately by that
+  as compact `⚔ +12 · STR+2 vs AC | target` rows, followed immediately by that
   phase's Hit and associated Effect clauses. Numbered multiattacks prepend a
-  compact ordinal. Putting the complete to-hit first and the parenthesized
-  authored formula beside it preserves a power's intrinsic `+2` without
+  compact ordinal. Putting the complete to-hit first and separating the
+  authored formula with a centered dot preserves a power's intrinsic `+2` without
   mistaking it for the total. Header-only defense abbreviations use `Fort` and
   `Ref`. The combined attack cell fits its content while long targets wrap in
   the remaining width.
