@@ -22,6 +22,7 @@ import { ActionTypeIcon } from "./ActionTypeIcon";
 import { Icon } from "./Icon";
 import { PortraitImage } from "./PortraitEditor";
 import { PrintPowerVariants } from "./PrintPowerVariants";
+import { readyPrintFonts, printWithFonts } from "./print-fonts";
 import {
   fallbackPrintAttacks,
   groupedPrintRules,
@@ -293,10 +294,15 @@ function usePrintCardFit() {
       element.classList.replace("is-compact", "is-condensed");
     };
     const observer = new ResizeObserver(fit);
+    let disposed = false;
     observer.observe(body);
     window.addEventListener("beforeprint", fit);
     fit();
+    void readyPrintFonts().then(() => {
+      if (!disposed) fit();
+    });
     return () => {
+      disposed = true;
       observer.disconnect();
       window.removeEventListener("beforeprint", fit);
     };
@@ -344,7 +350,7 @@ function PrintAttackBand({
   return (
     <dl className="print-card-combat-band">
       <div className="print-card-attack-total">
-        <Icon name="dices" />
+        <Icon name="nf-fa-dice_d20" />
         <dd>{total}</dd>
       </div>
       <div className="print-card-attack-target">
@@ -815,11 +821,17 @@ export function CharacterSheetPage({
         window.location.hash.slice(0, -"?print=1".length),
       );
     let finalFrame: number | undefined;
-    const initialFrame = window.requestAnimationFrame(() => {
-      finalFrame = window.requestAnimationFrame(() => window.print());
+    let disposed = false;
+    let initialFrame: number | undefined;
+    void readyPrintFonts().then(() => {
+      if (disposed) return;
+      initialFrame = window.requestAnimationFrame(() => {
+        finalFrame = window.requestAnimationFrame(() => window.print());
+      });
     });
     return () => {
-      window.cancelAnimationFrame(initialFrame);
+      disposed = true;
+      if (initialFrame !== undefined) window.cancelAnimationFrame(initialFrame);
       if (finalFrame !== undefined) window.cancelAnimationFrame(finalFrame);
     };
   }, [contentLoaded, error, evaluatedSheetReady, model, printOnReady]);
@@ -952,7 +964,7 @@ export function CharacterSheetPage({
                 : " · Color"}
             </span>
           </div>
-          <button type="button" onClick={() => window.print()}>
+          <button type="button" onClick={() => void printWithFonts()}>
             Print / save PDF
           </button>
         </div>

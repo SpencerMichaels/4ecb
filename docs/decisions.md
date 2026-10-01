@@ -1801,6 +1801,27 @@ bands from the usage color to Utility blue; the already-blue bottom bar remains
 unchanged and continues to name the actual At-Will, Encounter, or Daily
 frequency. Monochrome print overrides both color treatments.
 
+### D072 — Selected Nerd Fonts symbols supplement Lucide locally
+
+Status: accepted. Date: 2026-10-01.
+
+Keep Lucide as the general SVG icon source and extend the shared `Icon` component
+with explicitly named Nerd Fonts glyphs. The first selected glyph is
+`nf-fa-dice_d20` (U+EEF5), used for printed attack rolls. Text fonts are unchanged.
+Bundle a WOFF2 subset of the pinned v3.4.0 Symbols-only font, its MIT notice and
+the original Font Awesome license/attribution. The font and notices are included
+in the offline precache; no CDN or user font installation is required.
+
+`scripts/build-icon-font.sh` regenerates the selected glyph subset with the
+project-local FontTools/Brotli toolchain. New icons must update the shared
+registry, subset list, and attribution as appropriate rather than embedding
+arbitrary private-use characters throughout components. Card fitting reruns
+after font readiness, and application print requests wait for loading before
+opening the print dialog. Decorative font failure must not block readable text.
+
+This avoids adopting a terminal text font or loading the full mixed-library
+symbol collection while leaving the product owner free to choose beyond Lucide.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

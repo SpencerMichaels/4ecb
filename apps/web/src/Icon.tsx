@@ -84,7 +84,15 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type IconName =
+type NerdIconName = "nf-fa-dice_d20";
+
+const nerdIcons: Record<NerdIconName, string> = {
+  "nf-fa-dice_d20": "\uEEF5",
+};
+
+export type IconName = NerdIconName | LucideIconName;
+
+type LucideIconName =
   | "ability"
   | "action-none"
   | "anvil"
@@ -175,7 +183,7 @@ export type IconName =
   | "warning"
   | "waves";
 
-const icons: Record<IconName, LucideIcon> = {
+const icons: Record<LucideIconName, LucideIcon> = {
   ability: ChartNoAxesColumnIncreasing,
   "action-none": Minus,
   anvil: Anvil,
@@ -268,6 +276,12 @@ const icons: Record<IconName, LucideIcon> = {
 };
 
 export function Icon({ name }: { readonly name: IconName }) {
-  const Glyph = icons[name];
+  if (name in nerdIcons)
+    return (
+      <span aria-hidden="true" className="icon nerd-icon">
+        {nerdIcons[name as NerdIconName]}
+      </span>
+    );
+  const Glyph = icons[name as LucideIconName];
   return <Glyph aria-hidden="true" className="icon" focusable="false" />;
 }

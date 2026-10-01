@@ -20,7 +20,10 @@
           nodejs_24
           pnpm
           poppler-utils
-          python313
+          (python313.withPackages (pythonPackages: [
+            pythonPackages.fonttools
+            pythonPackages.brotli
+          ]))
           ripgrep
           xmlstarlet
         ];
