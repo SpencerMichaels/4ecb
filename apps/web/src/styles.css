@@ -1864,11 +1864,6 @@ textarea {
   background: var(--card-color);
   color: #fff;
 }
-.print-card-used {
-  border: 1px solid currentColor;
-  height: 0.09in;
-  width: 0.09in;
-}
 .print-card-keywords {
   border-bottom: 1px solid var(--card-color);
   border-top: 1px solid var(--card-color);
@@ -1913,6 +1908,9 @@ textarea {
   font-size: 8pt;
   min-width: 0;
   width: 0.12in;
+}
+.print-card-action-band .action-type-icon > span {
+  transform: translateY(0.01in);
 }
 .print-card-combat-band {
   display: grid;

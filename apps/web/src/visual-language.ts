@@ -79,6 +79,7 @@ export function powerActionSymbol(
   if (normalized === "") return "–";
   if (normalized.includes("interrupt")) return "↯";
   if (normalized.includes("reaction")) return "↻";
+  if (normalized.includes("opportunity")) return "↻";
   if (normalized.includes("minor")) return "◔";
   if (normalized.includes("move")) return "≫";
   if (normalized.includes("free")) return "○";

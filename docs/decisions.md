@@ -1638,7 +1638,11 @@ Within a power card, action labels omit the redundant word `Action`. Both compac
 combat bands use an icon-left layout: action plus range on the first row, then
 the per-attack formula, calculated total/defense, and wrapping target defined by
 D070. Target text must be complete even when the row becomes taller; the fixed
-card body yields space rather than truncating the target.
+card body yields space rather than truncating the target. Action symbols are
+optically centered; Opportunity Action shares the reaction symbol because it is
+a triggered response rather than a standard action. The title bar has no
+paper-used checkbox: physical-card state is left to table practices such as
+flipping or turning a card.
 
 Character-view and printed rules select current-level text only for the
 level-scaling grammars confirmed in the corpus: newline `Level N:` alternatives,

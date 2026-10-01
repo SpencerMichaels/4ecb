@@ -594,7 +594,8 @@ Live review confirmed both the default and legacy-blue projections.
 Utility classification now follows explicit `Power Type: Utility` metadata
 rather than treating every attackless card as Utility; non-Utility delegated
 attacks and feature/rules-item cards retain their actual identity without an
-invented attack row.
+invented attack row. Printed title bars omit a used-state checkbox, action icons
+are optically centered, and Opportunity Action uses the reaction symbol.
 
 ## M5.7 — Invited-beta UI and hostability preparation
 

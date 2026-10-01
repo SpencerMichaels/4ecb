@@ -64,7 +64,10 @@ vs. Reflex` use the configured highest-ability selection and established
   attack form. Utility classification now relies only on explicit `Power Type:
 Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   Divine Challenge, Divine Sanction, and other feature/rules-item powers keep
-  their actual identity and omit a fabricated attack band.
+  their actual identity and omit a fabricated attack band. The paper title no
+  longer includes a used-state checkbox; action symbols are optically centered,
+  and Opportunity Action uses the reaction symbol instead of the standard-action
+  dot.
 - Attack calculation and print projection are now phase-aware. The rules engine
   retains every authored attack's ordinal, resolved ability, intrinsic power
   bonus, defense, target, final total, and component provenance; primary and

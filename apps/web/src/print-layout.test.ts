@@ -76,6 +76,11 @@ describe("print layout contract", () => {
     expect(styles).toContain(".sheet-card.usage-encounter > header");
     expect(styles).toContain(".sheet-card.usage-daily > header");
     expect(styles).not.toMatch(/\n\.usage-(?:encounter|daily) > header/);
+    expect(sheetSource).not.toContain("print-card-used");
+    expect(styles).not.toContain(".print-card-used");
+    expect(styles).toMatch(
+      /\.print-card-action-band \.action-type-icon > span\s*\{[\s\S]*?transform:\s*translateY\(0\.01in\)/,
+    );
     expect(sheetSource).toContain(
       'const typeLabel = `${displayUsage}${isUtility ? " Utility" : ""} power`',
     );

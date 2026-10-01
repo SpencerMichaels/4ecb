@@ -69,6 +69,7 @@ describe("legacy-derived visual language", () => {
     expect(powerActionSymbol("Free Action")).toBe("○");
     expect(powerActionSymbol("No Action")).toBe("○");
     expect(powerActionSymbol("Immediate Reaction")).toBe("↻");
+    expect(powerActionSymbol("Opportunity Action")).toBe("↻");
     expect(powerActionSymbol("Immediate Interrupt")).toBe("↯");
     expect(powerActionSymbol(undefined)).toBe("–");
   });

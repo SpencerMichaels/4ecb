@@ -446,7 +446,6 @@ function PrintPowerCard({
     >
       <header>
         <h3>{card.name}</h3>
-        <span aria-label="Used" className="print-card-used" />
       </header>
       <div className="print-card-keywords">
         <span>Keywords</span>
