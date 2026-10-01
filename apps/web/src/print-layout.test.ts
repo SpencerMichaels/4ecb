@@ -100,6 +100,15 @@ describe("print layout contract", () => {
       /\.print-power-card > header\s*\{[\s\S]*?background:\s*var\(--card-color\);[\s\S]*?color:\s*#fff/,
     );
     expect(styles).toMatch(
+      /\.print-reference-card > header h3\s*\{[^}]*line-height:\s*1\.2;/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-type\s*\{[^}]*align-items:\s*center;[^}]*display:\s*flex;/,
+    );
+    expect(styles).toMatch(
+      /\.print-reference-card > footer\s*\{[^}]*align-items:\s*center;/,
+    );
+    expect(styles).toMatch(
       /\.print-power-card\.legacy-utility-color\s*\{[\s\S]*?--card-color:\s*#000080/,
     );
     expect(styles).toMatch(

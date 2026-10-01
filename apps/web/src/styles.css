@@ -1857,7 +1857,7 @@ textarea {
 .print-reference-card > header h3 {
   font-size: 9.5pt;
   font-weight: 500;
-  line-height: 1;
+  line-height: 1.2;
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2058,6 +2058,7 @@ textarea {
   text-transform: uppercase;
 }
 .print-reference-card > footer {
+  align-items: center;
   border-top: 1px solid var(--card-color);
   display: grid;
   font-size: 4.7pt;
@@ -2067,8 +2068,10 @@ textarea {
   padding: 0.025in 0.03in;
 }
 .print-card-type {
+  align-items: center;
   background: var(--card-footer-color, var(--card-color));
   color: #fff;
+  display: flex;
   font-size: 7pt;
   font-weight: 800;
   min-height: 0.17in;

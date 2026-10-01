@@ -32,6 +32,9 @@ separate projection over the same semantic model.
   browser View retains its richer interactive cards. Composed magic-item cards
   now merge public base and enchantment fields so weapon/armor statistics are
   not lost behind the enchantment record.
+- Printed title line boxes use a 1.2 line-height to preserve descenders inside
+  the clipped single-line header; usage bars and item footers vertically center
+  their text. Title typography remains unchanged pending visual feedback.
 - The compact power header now removes the redundant word `Action`, uses the
   same icon-left rhythm for action/range and attack/target, combines the authored
   attack stat and defense into one cell, and lets the target cell grow vertically
