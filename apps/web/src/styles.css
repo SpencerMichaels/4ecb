@@ -1909,6 +1909,7 @@ textarea {
 }
 .print-card-action-band .action-type-icon {
   font-size: 8pt;
+  height: 0.16in;
   min-width: 0;
   width: 0.12in;
 }
@@ -2005,8 +2006,8 @@ textarea {
 }
 .print-card-variant {
   display: block !important;
-  font-size: 5.7pt;
-  line-height: 1.05;
+  font-size: inherit;
+  line-height: inherit;
   margin: 0 !important;
 }
 .print-card-variant + .print-card-variant {

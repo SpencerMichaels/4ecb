@@ -284,6 +284,12 @@ provides Letter and A4 page rules. Blank hit points, card inclusion, and
 monochrome preferences persist with the character. Browser printing is the PDF
 workflow; no PDF bytes are stored in the character.
 
+Fixed print cards use their measured body height to select normal, compact, or
+condensed typography, starting with the largest size. Only rendered content
+affects fitting; omitted fields and inactive level variants do not shrink the
+text. Weapon summaries inherit body typography, and card fitting runs when
+print preview or print media makes the otherwise hidden cards measurable.
+
 The public release harness drives the production sheet route in pinned headless
 Chromium and Firefox with a synthetic long/short-prose character. It generates
 Letter and A4 PDFs in color and monochrome, checks every page dimension, all card

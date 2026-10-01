@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { CharacterRepository } from "@4ecb/browser-storage";
 import type { CharacterRecord, SheetSettings } from "@4ecb/character-domain";
@@ -269,21 +269,32 @@ function printVariantAttackBonus(variant: SheetPowerVariant): string {
   return attack?.match(/^[+-]?\d+/)?.[0] ?? "—";
 }
 
-function printCardDensity(card: SheetCard): string {
-  const length =
-    card.fields.reduce(
-      (total, field) => total + field.label.length + field.value.length,
-      0,
-    ) +
-    (card.variants ?? []).reduce(
-      (total, variant) =>
-        total +
-        variant.equipmentName.length +
-        printVariantAttackBonus(variant).length +
-        (variant.damage?.length ?? 0),
-      0,
-    );
-  return length > 1_350 ? "is-condensed" : length > 850 ? "is-compact" : "";
+function usePrintCardFit() {
+  const cardRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const element = cardRef.current;
+    const body = element?.querySelector<HTMLElement>(".print-card-body");
+    if (element === null || body === undefined || body === null) return;
+    const fit = () => {
+      // Hidden print cards have no measurable geometry. ResizeObserver reruns
+      // this when the preview or print media makes them visible.
+      if (body.clientHeight === 0) return;
+      element.classList.remove("is-compact", "is-condensed");
+      if (body.scrollHeight <= body.clientHeight + 1) return;
+      element.classList.add("is-compact");
+      if (body.scrollHeight <= body.clientHeight + 1) return;
+      element.classList.replace("is-compact", "is-condensed");
+    };
+    const observer = new ResizeObserver(fit);
+    observer.observe(body);
+    window.addEventListener("beforeprint", fit);
+    fit();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("beforeprint", fit);
+    };
+  });
+  return cardRef;
 }
 
 function abbreviatedAbility(ability: string): string {
@@ -408,6 +419,7 @@ function PrintPowerCard({
   readonly characterLevel: number;
   readonly colorUtilityPowersBlue: boolean;
 }) {
+  const cardRef = usePrintCardFit();
   const attackType = cardField(card, "Attack Type") ?? "";
   const target = cardField(card, "Target", "Targets", "Primary Target");
   const level = cardField(card, "Level");
@@ -470,7 +482,8 @@ function PrintPowerCard({
   const typeLabel = `${displayUsage}${isUtility ? " Utility" : ""} power`;
   return (
     <article
-      className={`print-reference-card print-power-card usage-${usageTone}${isUtility ? " utility-power" : ""}${isUtility && colorUtilityPowersBlue ? " legacy-utility-color" : ""} ${printCardDensity(card)}`}
+      ref={cardRef}
+      className={`print-reference-card print-power-card usage-${usageTone}${isUtility ? " utility-power" : ""}${isUtility && colorUtilityPowersBlue ? " legacy-utility-color" : ""}`}
     >
       <header>
         <h3>{card.name}</h3>
@@ -559,6 +572,7 @@ function PrintPowerCard({
 }
 
 function PrintItemCard({ card }: { readonly card: SheetCard }) {
+  const cardRef = usePrintCardFit();
   const physicalStats = [
     ["Damage", cardField(card, "Damage")],
     ["Proficient", cardField(card, "Proficiency Bonus", "Proficient")],
@@ -590,9 +604,7 @@ function PrintItemCard({ card }: { readonly card: SheetCard }) {
     return !LEGACY_ITEM_BODY_EXCLUDES.has(label) && label !== "quantity";
   });
   return (
-    <article
-      className={`print-reference-card print-item-card ${printCardDensity(card)}`}
-    >
+    <article ref={cardRef} className="print-reference-card print-item-card">
       <header>
         <h3>{card.name}</h3>
       </header>

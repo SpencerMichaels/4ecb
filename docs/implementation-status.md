@@ -75,11 +75,33 @@ Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   line contains only weapon name, total bonus, and damage; equipment-state
   labels and the defense already shown in the header are omitted. Inventory
   alternatives remain visible, and the equipped-first variant still drives the
-  compact attack header. Variant text participates in density selection so
-  weapon-heavy cards tighten before reaching the fixed boundary. Multiattack
+  compact attack header. Weapon lines inherit the same size and line height as
+  other body text. Print cards now start at normal size and measure the rendered
+  body against the available height, using compact/condensed text only when it
+  actually overflows; hidden metadata, removed level variants, and omitted
+  flavor no longer cause premature shrinking (including Divine Sanction).
+  Multiattack
   headers are phase-aware, but variant damage remains power-wide, so these
   weapon lines are currently primary/default summaries rather than per-phase
   damage rows.
+- Multiattack investigation confirms the weapon-list limitation also affects
+  attacks with the same ability but different damage or weapon roles. The local
+  merged corpus's Ranger Sudden Strike uses Strength for both phases but has
+  separate off-hand and main-hand Hit formulas; Driving Offensive likewise has
+  different damage per phase. Prayer of Two Paths (Paladin) changes from
+  Strength vs AC to Charisma vs Will. A follow-up needs calculated damage and
+  weapon-role binding per attack phase before weapon rows can be placed within
+  the corresponding attack sections. Identical repeated attacks can retain
+  one shared list. This work remains open in M5.6.
+- Rendered-fit checkpoint (2026-10-01): `pnpm exec vitest run
+  apps/web/src/print-layout.test.ts`, the web typecheck/build, focused ESLint,
+  and `pnpm check:print` pass through `nix develop path:. -c`. The print fixture
+  now includes deliberately crowded prose and checks body overflow, matching
+  weapon/body font sizes, and preservation of normal size on a short card.
+  Chromium 152 and Firefox 154 pass all eight Letter/A4 color/monochrome cases:
+  24 cards, five pages, no body/band/target overflow, and short-card body size
+  6.7pt (8.93333px/8.9375px respectively). The action-symbol box now reserves
+  enough height for the glyph without overflowing its header cell.
 - Attack calculation and print projection are now phase-aware. The rules engine
   retains every authored attack's ordinal, resolved ability, intrinsic power
   bonus, defense, target, final total, and component provenance; primary and

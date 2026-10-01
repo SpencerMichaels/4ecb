@@ -605,6 +605,10 @@ defense already visible in the header; the equipped-first variant continues to
 drive the header calculation. Multiattack headers are phase-aware, while
 per-phase variant damage remains follow-up work because the current variant
 model stores one shared damage expression.
+Cards measure their rendered body to choose the largest fitting text size;
+weapon summaries share that size. Multiattack weapon summaries still need
+phase-specific damage and weapon-role binding, including powers with different
+abilities or different main/off-hand damage formulas; this remains M5.6 work.
 
 ## M5.7 — Invited-beta UI and hostability preparation
 

@@ -269,20 +269,36 @@ try {
       `document.body.textContent.includes("${character.title}") && document.querySelectorAll(".print-only .print-reference-card").length === 24`,
     );
     await client.send("Emulation.setEmulatedMedia", { media: "print" });
+    await evaluate(
+      client,
+      "new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))))",
+      true,
+    );
     const layout = await evaluate(
       client,
       `(() => {
         const cards = [...document.querySelectorAll(".print-only .print-reference-card")];
         const overflowing = cards.filter((card) =>
           card.scrollHeight > card.clientHeight + 1 ||
-          card.scrollWidth > card.clientWidth + 1
-        ).map((card) => card.querySelector("h3")?.textContent ?? "unnamed");
+          card.scrollWidth > card.clientWidth + 1 ||
+          [...card.querySelectorAll(".print-card-body")].some((body) =>
+            body.scrollHeight > body.clientHeight + 1
+          )
+        ).map((card) => (card.querySelector("h3")?.textContent ?? "unnamed") +
+          " (" + card.className + "; body " + card.querySelector(".print-card-body")?.scrollHeight +
+          "/" + card.querySelector(".print-card-body")?.clientHeight + "px)");
+        const weaponFontMismatch = [...document.querySelectorAll(".print-card-variant")]
+          .some((line) => getComputedStyle(line).fontSize !==
+            getComputedStyle(line.closest(".print-card-body")).fontSize);
+        const shortCard = cards.find((card) => card.querySelector("h3")?.textContent === "Synthetic power 02");
         const bandOverflow = [...document.querySelectorAll(".print-card-action-band")]
           .flatMap((band) => [...band.children])
           .filter((cell) =>
             cell.scrollHeight > cell.clientHeight + 1 ||
             cell.scrollWidth > cell.clientWidth + 1
-          ).map((cell) => cell.textContent?.trim() ?? "unnamed");
+          ).map((cell) => (cell.textContent?.trim() ?? "unnamed") +
+            " (" + cell.scrollWidth + "/" + cell.clientWidth + "px wide, " +
+            cell.scrollHeight + "/" + cell.clientHeight + "px tall)");
         const targetOverflow = [...document.querySelectorAll(".print-card-combat-band")]
           .flatMap((band) => band.children[1]?.querySelector("dd") ?? [])
           .filter((target) =>
@@ -301,6 +317,8 @@ try {
         return {
           cardCount: cards.length,
           overflowing,
+          weaponFontMismatch,
+          shortCardFont: shortCard && getComputedStyle(shortCard).fontSize,
           bandOverflow,
           targetOverflow,
           applicationChromeHidden: hidden,
@@ -317,6 +335,14 @@ try {
     assert(
       layout.overflowing.length === 0,
       `${variant.name} clips cards: ${layout.overflowing.join(", ")}`,
+    );
+    assert(
+      !layout.weaponFontMismatch,
+      `${variant.name} uses smaller weapon text`,
+    );
+    assert(
+      Math.abs(parseFloat(layout.shortCardFont) - (6.7 * 96) / 72) < 0.01,
+      `${variant.name} unnecessarily shrinks a short card: ${layout.shortCardFont}`,
     );
     assert(
       layout.bandOverflow.length === 0 && layout.targetOverflow.length === 0,
@@ -473,8 +499,15 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
         `const cards = [...document.querySelectorAll(".print-only .print-reference-card")];
          const overflowing = cards.filter((card) =>
            card.scrollHeight > card.clientHeight + 1 ||
-           card.scrollWidth > card.clientWidth + 1
+           card.scrollWidth > card.clientWidth + 1 ||
+           [...card.querySelectorAll(".print-card-body")].some((body) =>
+             body.scrollHeight > body.clientHeight + 1
+           )
          ).map((card) => card.querySelector("h3")?.textContent ?? "unnamed");
+         const weaponFontMismatch = [...document.querySelectorAll(".print-card-variant")]
+           .some((line) => getComputedStyle(line).fontSize !==
+             getComputedStyle(line.closest(".print-card-body")).fontSize);
+         const shortCard = cards.find((card) => card.querySelector("h3")?.textContent === "Synthetic power 02");
          const bandOverflow = [...document.querySelectorAll(".print-card-action-band")]
            .flatMap((band) => [...band.children])
            .filter((cell) =>
@@ -492,6 +525,8 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
          return {
            cardCount: cards.length,
            overflowing,
+           weaponFontMismatch,
+           shortCardFont: shortCard && getComputedStyle(shortCard).fontSize,
            bandOverflow,
            targetOverflow,
            itemHeaderBackground: style?.backgroundColor,
@@ -505,6 +540,14 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
       assert(
         layout.overflowing.length === 0,
         `Firefox ${variant.name} clips cards: ${layout.overflowing.join(", ")}`,
+      );
+      assert(
+        !layout.weaponFontMismatch,
+        `Firefox ${variant.name} uses smaller weapon text`,
+      );
+      assert(
+        Math.abs(parseFloat(layout.shortCardFont) - (6.7 * 96) / 72) < 0.01,
+        `Firefox ${variant.name} unnecessarily shrinks a short card: ${layout.shortCardFont}`,
       );
       assert(
         layout.bandOverflow.length === 0 && layout.targetOverflow.length === 0,
@@ -557,7 +600,12 @@ function printCharacter() {
     keywords: "Martial, Weapon",
     attackType: "Melee weapon",
     target: "One creature",
-    description: index % 2 === 0 ? longText : "Move one square, then attack.",
+    description:
+      index === 0
+        ? longText.repeat(7)
+        : index % 2 === 0
+          ? longText
+          : "Move one square, then attack.",
     source: "Synthetic print fixture",
     level: String((index % 30) + 1),
     weapons: [
