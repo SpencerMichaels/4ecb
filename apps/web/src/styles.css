@@ -1886,6 +1886,9 @@ textarea {
   min-width: 0;
   width: 0.15in;
 }
+.print-power-card > header .action-type-icon > span {
+  transform: translateY(0.01in);
+}
 .print-card-keywords {
   border-bottom: 1px solid var(--card-color);
   border-top: 1px solid var(--card-color);
