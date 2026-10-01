@@ -595,7 +595,10 @@ Utility classification now follows explicit `Power Type: Utility` metadata
 rather than treating every attackless card as Utility; non-Utility delegated
 attacks and feature/rules-item cards retain their actual identity without an
 invented attack row. Printed title bars omit a used-state checkbox, action icons
-are optically centered, and Opportunity Action uses the reaction symbol.
+are optically centered, and Opportunity Action uses the reaction symbol. Rule
+clauses use semantic inter-section spacing: attack-resolution and trigger/effect
+groups stay tight, while independent clauses separate; the gap tightens only
+for compact or condensed fixed-size cards.
 
 ## M5.7 — Invited-beta UI and hostability preparation
 

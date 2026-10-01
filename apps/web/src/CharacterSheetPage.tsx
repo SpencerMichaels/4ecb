@@ -329,12 +329,26 @@ function groupedPrintRules(fields: readonly SheetValue[]): {
 function PrintRuleLines({
   fields,
   characterLevel,
+  separateFirst = false,
 }: {
   readonly fields: readonly SheetValue[];
   readonly characterLevel: number;
+  readonly separateFirst?: boolean;
 }) {
+  const sameLogicalGroup = (previous: string, current: string): boolean => {
+    const before = previous.trim().toLocaleLowerCase();
+    const after = current.trim().toLocaleLowerCase();
+    const attackResolution = new Set(["hit", "miss", "effect", "aftereffect"]);
+    return (
+      (before === "trigger" && after === "effect") ||
+      (attackResolution.has(before) && attackResolution.has(after))
+    );
+  };
   return fields.map((field, index) => (
-    <div key={`${field.label}-${index}`}>
+    <div
+      className={`print-card-rule-line${(index === 0 ? separateFirst : !sameLogicalGroup(fields[index - 1]?.label ?? "", field.label)) ? " starts-section" : ""}`}
+      key={`${field.label}-${index}`}
+    >
       <strong>{field.label.trim()}:</strong>{" "}
       <Prose value={powerTextAtLevel(field.value, characterLevel)} />
     </div>
@@ -465,13 +479,14 @@ function PrintPowerCard({
         {attacks.length === 0 ? (
           <div className="print-card-leading-rules">
             {card.prerequisites === undefined ? null : (
-              <p>
+              <p className="print-card-rule-line">
                 <strong>Prerequisite:</strong> {card.prerequisites}
               </p>
             )}
             <PrintRuleLines
               fields={groupedRules.leading}
               characterLevel={characterLevel}
+              separateFirst={card.prerequisites !== undefined}
             />
           </div>
         ) : null}
@@ -482,19 +497,25 @@ function PrintPowerCard({
               {attackIndex === 0 ? (
                 <>
                   {card.prerequisites === undefined ? null : (
-                    <p>
+                    <p className="print-card-rule-line">
                       <strong>Prerequisite:</strong> {card.prerequisites}
                     </p>
                   )}
                   <PrintRuleLines
                     fields={groupedRules.leading}
                     characterLevel={characterLevel}
+                    separateFirst={card.prerequisites !== undefined}
                   />
                 </>
               ) : null}
               <PrintRuleLines
                 fields={groupedRules.attacks.get(attack.ordinal) ?? []}
                 characterLevel={characterLevel}
+                separateFirst={
+                  attackIndex === 0 &&
+                  (card.prerequisites !== undefined ||
+                    groupedRules.leading.length > 0)
+                }
               />
             </div>
           </section>

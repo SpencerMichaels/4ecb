@@ -81,6 +81,24 @@ describe("print layout contract", () => {
     expect(styles).toMatch(
       /\.print-card-action-band \.action-type-icon > span\s*\{[\s\S]*?transform:\s*translateY\(0\.01in\)/,
     );
+    expect(styles).toMatch(
+      /\.print-reference-card\s*\{[\s\S]*?--print-card-section-gap:\s*0\.025in/,
+    );
+    expect(styles).toMatch(
+      /\.print-reference-card\.is-compact\s*\{[\s\S]*?--print-card-section-gap:\s*0\.0125in/,
+    );
+    expect(styles).toMatch(
+      /\.print-reference-card\.is-condensed\s*\{[\s\S]*?--print-card-section-gap:\s*0/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-rule-line\.starts-section\s*\{[\s\S]*?margin-top:\s*var\(--print-card-section-gap\)/,
+    );
+    expect(sheetSource).toContain(
+      '(before === "trigger" && after === "effect")',
+    );
+    expect(sheetSource).toContain(
+      "attackResolution.has(before) && attackResolution.has(after)",
+    );
     expect(sheetSource).toContain(
       'const typeLabel = `${displayUsage}${isUtility ? " Utility" : ""} power`',
     );

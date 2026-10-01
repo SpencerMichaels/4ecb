@@ -1642,7 +1642,12 @@ card body yields space rather than truncating the target. Action symbols are
 optically centered; Opportunity Action shares the reaction symbol because it is
 a triggered response rather than a standard action. The title bar has no
 paper-used checkbox: physical-card state is left to table practices such as
-flipping or turning a card.
+flipping or turning a card. Spacing follows authored rule structure rather than
+every row uniformly: Hit, Miss, and associated Effect clauses remain a tight
+attack-resolution group, and Trigger stays tight with its Effect; Special,
+Sustain, prerequisites, requirements, and other independent clauses begin a
+visibly separated section. Compact cards reduce that section gap and condensed
+cards remove it before sacrificing text or fixed card geometry.
 
 Character-view and printed rules select current-level text only for the
 level-scaling grammars confirmed in the corpus: newline `Level N:` alternatives,

@@ -67,7 +67,10 @@ Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   their actual identity and omit a fabricated attack band. The paper title no
   longer includes a used-state checkbox; action symbols are optically centered,
   and Opportunity Action uses the reaction symbol instead of the standard-action
-  dot.
+  dot. Authored body spacing now preserves logical groups: Hit/Miss/Effect and
+  Trigger/Effect stay tight, while independent clauses start a separated
+  section. Compact cards halve that section gap and condensed cards remove it to
+  preserve fixed geometry.
 - Attack calculation and print projection are now phase-aware. The rules engine
   retains every authored attack's ordinal, resolved ability, intrinsic power
   bonus, defense, target, final total, and component provenance; primary and

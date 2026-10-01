@@ -1823,6 +1823,7 @@ textarea {
 }
 .print-reference-card {
   --card-color: #006b2e;
+  --print-card-section-gap: 0.025in;
   border: 1.5px solid var(--card-color);
   box-sizing: border-box;
   display: grid;
@@ -1836,9 +1837,11 @@ textarea {
   width: 2.47in;
 }
 .print-reference-card.is-compact {
+  --print-card-section-gap: 0.0125in;
   font-size: 5.9pt;
 }
 .print-reference-card.is-condensed {
+  --print-card-section-gap: 0;
   font-size: 4.8pt;
 }
 .print-reference-card > header {
@@ -1960,6 +1963,13 @@ textarea {
 }
 .print-card-attack-rules {
   padding-top: 0.025in;
+}
+.print-card-rule-line {
+  display: block;
+  margin: 0;
+}
+.print-card-rule-line.starts-section {
+  margin-top: var(--print-card-section-gap);
 }
 .print-card-body > .print-card-attack-section:first-child {
   margin-top: -0.035in;
