@@ -344,7 +344,7 @@ function PrintAttackBand({
   return (
     <dl className="print-card-combat-band">
       <div className="print-card-attack-total">
-        <Icon name="sword" />
+        <Icon name="dices" />
         <dd>{total}</dd>
       </div>
       <div className="print-card-attack-target">

@@ -50,6 +50,7 @@ separate projection over the same semantic model.
   Printed attack targets use the crosshair icon rather than the bullseye.
   The printed attack-type cell uses a fixed sword icon to identify the field,
   independent of its melee/ranged/area text.
+  Printed to-hit cells use dices to distinguish the attack roll from attack type.
 - The compact power header now removes the redundant word `Action`, uses the
   same icon-left rhythm for action/range and attack/target, combines the authored
   attack stat and defense into one cell, and lets the target cell grow vertically

@@ -25,6 +25,7 @@ import {
   Crosshair,
   Crown,
   Dumbbell,
+  Dices,
   Download,
   FileText,
   FlaskConical,
@@ -113,6 +114,7 @@ export type IconName =
   | "class"
   | "clock"
   | "timer"
+  | "dices"
   | "octagon-minus"
   | "companion"
   | "content"
@@ -203,6 +205,7 @@ const icons: Record<IconName, LucideIcon> = {
   class: Shield,
   clock: Clock3,
   timer: Timer,
+  dices: Dices,
   "octagon-minus": OctagonMinus,
   companion: PawPrint,
   content: LayoutGrid,
