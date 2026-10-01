@@ -1,4 +1,5 @@
 import { powerActionSymbol } from "./visual-language";
+import { Icon } from "./Icon";
 
 export function ActionTypeIcon({
   decorative = false,
@@ -17,7 +18,11 @@ export function ActionTypeIcon({
       aria-label={decorative ? undefined : label}
       title={label}
     >
-      <span aria-hidden="true">{powerActionSymbol(value)}</span>
+      {label.toLocaleLowerCase().includes("interrupt") ? (
+        <Icon name="octagon-minus" />
+      ) : (
+        <span aria-hidden="true">{powerActionSymbol(value)}</span>
+      )}
     </span>
   );
 }

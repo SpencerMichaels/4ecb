@@ -47,6 +47,7 @@ import {
   Medal,
   Minus,
   Orbit,
+  OctagonMinus,
   PackageOpen,
   PawPrint,
   Pencil,
@@ -113,6 +114,7 @@ export type IconName =
   | "class"
   | "clock"
   | "timer"
+  | "octagon-minus"
   | "companion"
   | "content"
   | "crown"
@@ -202,6 +204,7 @@ const icons: Record<IconName, LucideIcon> = {
   class: Shield,
   clock: Clock3,
   timer: Timer,
+  "octagon-minus": OctagonMinus,
   companion: PawPrint,
   content: LayoutGrid,
   crown: Crown,

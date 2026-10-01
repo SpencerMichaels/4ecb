@@ -5,15 +5,15 @@ import { describe, expect, it } from "vitest";
 import { ActionTypeIcon } from "./ActionTypeIcon";
 
 describe("ActionTypeIcon", () => {
-  it("renders the Unicode symbol while preserving the exact authored label", () => {
+  it("renders octagon-minus for interrupts while preserving the authored label", () => {
     const markup = renderToStaticMarkup(
       createElement(ActionTypeIcon, { value: "Immediate Interrupt" }),
     );
 
     expect(markup).toContain('aria-label="Immediate Interrupt"');
     expect(markup).toContain('title="Immediate Interrupt"');
-    expect(markup).toContain('<span aria-hidden="true">↯</span>');
-    expect(markup).not.toContain("<svg");
+    expect(markup).toContain("lucide-octagon-minus");
+    expect(markup).not.toContain("↯");
   });
 
   it("renders no element for missing or blank action types", () => {

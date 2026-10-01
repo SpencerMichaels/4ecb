@@ -45,6 +45,8 @@ separate projection over the same semantic model.
   Turning it off restores the symbol beside that description; actionless powers,
   item cards, and interactive cards are unchanged.
   Title action glyphs receive a small downward optical alignment adjustment.
+  Immediate Interrupt uses the octagon-minus icon across print and interactive
+  action displays; other action symbols are unchanged.
 - The compact power header now removes the redundant word `Action`, uses the
   same icon-left rhythm for action/range and attack/target, combines the authored
   attack stat and defense into one cell, and lets the target cell grow vertically
