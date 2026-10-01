@@ -1525,10 +1525,14 @@ variant's authoritative weapon dice. Browser View uses the same interaction.
 Print keeps full ability wording and authored `[W]` prose because tooltips and a
 single interactive selection do not survive on paper. Instead, one printed
 power card lists a concise attack/damage line for every compatible owned
-variant, preserving variant damage type, critical, and brutal notes without
-duplicating the full card. The equipped-first default still supplies the compact
-attack header; the list itself keeps inventory alternatives visible, matching
-the information available from legacy physical cards.
+variant. Each line contains only the weapon name, total attack bonus, and damage
+expression; it omits equipment-state labels, repeats no defense already present
+in the attack header, and does not duplicate the full card. The equipped-first
+default still supplies the compact attack header, while the list itself keeps
+inventory alternatives visible. Multiattack headers remain independently
+calculated per phase, but the current variant model has only one power-wide
+damage expression, so the weapon line is a primary/default summary rather than
+a claim of phase-specific multiattack damage parity.
 
 ### D067 — Build power cards preserve complete authored combat clauses
 

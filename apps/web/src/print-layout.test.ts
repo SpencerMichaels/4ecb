@@ -105,7 +105,11 @@ describe("print layout contract", () => {
     expect(sheetSource).toContain(
       '<div className="print-card-weapon-variants">',
     );
-    expect(sheetSource).toContain("powerVariantNotes(variant)");
+    expect(sheetSource).toContain("<strong>{variant.equipmentName}:</strong>");
+    expect(sheetSource).toContain("printVariantAttackBonus(variant)");
+    expect(sheetSource).toContain(
+      "const attack = variant.attack ?? variant.attacks?.[0]?.attack",
+    );
     expect(sheetSource).not.toContain(
       "attacks.length === 0 &&\n          printVariants.map",
     );

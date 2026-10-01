@@ -14,6 +14,7 @@ import {
   type SheetCard,
   type SheetLearnedReference,
   type SheetPowerAttack,
+  type SheetPowerVariant,
   type SheetValue,
 } from "@4ecb/sheet-model";
 
@@ -263,6 +264,11 @@ function lastCardField(
     .find((field) => wanted.has(field.label.trim().toLocaleLowerCase()))?.value;
 }
 
+function printVariantAttackBonus(variant: SheetPowerVariant): string {
+  const attack = variant.attack ?? variant.attacks?.[0]?.attack;
+  return attack?.match(/^[+-]?\d+/)?.[0] ?? "—";
+}
+
 function printCardDensity(card: SheetCard): string {
   const length =
     card.fields.reduce(
@@ -273,9 +279,8 @@ function printCardDensity(card: SheetCard): string {
       (total, variant) =>
         total +
         variant.equipmentName.length +
-        (variant.attack?.length ?? 0) +
-        (variant.damage?.length ?? 0) +
-        (powerVariantNotes(variant)?.length ?? 0),
+        printVariantAttackBonus(variant).length +
+        (variant.damage?.length ?? 0),
       0,
     );
   return length > 1_350 ? "is-condensed" : length > 850 ? "is-compact" : "";
@@ -534,19 +539,13 @@ function PrintPowerCard({
         ) : null}
         {printVariants.length === 0 ? null : (
           <div className="print-card-weapon-variants">
-            {printVariants.map((variant) => {
-              const notes = powerVariantNotes(variant);
-              return (
-                <p className="print-card-variant" key={variant.id}>
-                  <strong>{powerVariantLabel(variant)}:</strong>{" "}
-                  {powerVariantAttack(variant)}
-                  {variant.damage === undefined
-                    ? null
-                    : `; ${variant.damage} damage`}
-                  {notes === undefined ? null : `; ${notes}`}
-                </p>
-              );
-            })}
+            {printVariants.map((variant) => (
+              <p className="print-card-variant" key={variant.id}>
+                <strong>{variant.equipmentName}:</strong>{" "}
+                {printVariantAttackBonus(variant)}; {variant.damage ?? "—"}{" "}
+                damage
+              </p>
+            ))}
           </div>
         )}
       </div>

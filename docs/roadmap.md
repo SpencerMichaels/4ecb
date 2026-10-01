@@ -599,8 +599,12 @@ are optically centered, and Opportunity Action uses the reaction symbol. Rule
 clauses use semantic inter-section spacing: attack-resolution and trigger/effect
 groups stay tight, while independent clauses separate; the gap tightens only
 for compact or condensed fixed-size cards. Each weapon-compatible power lists a
-compact attack/damage line for every compatible owned weapon after its authored
-rules; the equipped-first variant continues to drive the header calculation.
+compact weapon-name, total-bonus, and damage line for every compatible owned
+weapon after its authored rules, without repeating equipment state or the
+defense already visible in the header; the equipped-first variant continues to
+drive the header calculation. Multiattack headers are phase-aware, while
+per-phase variant damage remains follow-up work because the current variant
+model stores one shared damage expression.
 
 ## M5.7 — Invited-beta UI and hostability preparation
 
