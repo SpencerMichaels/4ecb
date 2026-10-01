@@ -1826,7 +1826,9 @@ Physical stats wrap and are not silently capped. Enhancement and Critical live
 with properties and activated rules in the body. Recognized usage/action prefixes
 become per-power headings; unfamiliar prose is never rewritten speculatively.
 Combine category and level in the bottom bar and label numeric weight/price with
-units. Honor both legacy Armor Bonus and AC Bonus. Omit identified flavor and
+units. Inventory quantity is not an inherent item property and is omitted from
+physical cards. Honor both legacy Armor Bonus and AC Bonus. Omit identified flavor
+and
 retain unstructured custom instructions when structured rules are unavailable.
 Keep fixed card dimensions and adaptive fitting rather than growing cards.
 

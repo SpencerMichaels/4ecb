@@ -43,7 +43,9 @@ describe("printed item presentation", () => {
     );
     expect(view.icon).toBe("sword");
     expect(view.kind).toBe("Weapon");
-    expect(view.stats).toHaveLength(5);
+    expect(view.stats).toHaveLength(4);
+    expect(view.stats.some(({ label }) => label === "Quantity")).toBe(false);
+    expect(view.rules.some(({ label }) => label === "Quantity")).toBe(false);
     expect(view.rules.map(({ label }) => label)).toEqual([
       "Enhancement",
       "Critical",

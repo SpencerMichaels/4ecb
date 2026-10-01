@@ -19,7 +19,6 @@ export function printItemPresentation(card: SheetCard) {
     ["AC bonus", field("Armor Bonus", "AC Bonus")],
     ["Check penalty", field("Check")],
     ["Speed penalty", field("Speed")],
-    ["Quantity", field("Quantity") === "1" ? undefined : field("Quantity")],
   ].flatMap(([label, value]) => (label && value ? [{ label, value }] : []));
   const magicType = lastField("Magic Item Type");
   const baseType = card.baseItemType ?? card.itemType;
@@ -78,7 +77,7 @@ export function printItemPresentation(card: SheetCard) {
     // replacement, but never repeat an explicitly identified flavor passage.
     description:
       rules.length === 0 &&
-      stats.every((stat) => stat.label === "Quantity") &&
+      stats.length === 0 &&
       card.description !== card.flavor
         ? card.description
         : undefined,

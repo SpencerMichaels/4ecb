@@ -41,7 +41,8 @@ separate projection over the same semantic model.
   remains intact. Category and level share the orange bottom bar, with slot,
   weight, and price in a compact footer; numeric weights/prices receive units.
   Ordinary weapons, armor, and gear are no longer universally labeled magic
-  items. Explicit flavor is omitted; unstructured custom instructions are
+  items. Inventory quantity is omitted from physical cards. Explicit flavor is
+  omitted; unstructured custom instructions are
   preserved when no structured rules replace them. Shared category mapping
   uses neutral item/base-type metadata in the sheet model, not UI icons there.
   Recovered `PowerCardItem.UpdatePowerCardItem` informed base/enchantment field
