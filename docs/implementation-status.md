@@ -37,7 +37,8 @@ separate projection over the same semantic model.
   attack stat and defense into one cell, and lets the target cell grow vertically
   inside the fixed card so target text is never ellipsized. Both combat-band
   icons stay aligned to the top-left of their cells when either value wraps.
-  Printed rule text
+  The action/range and attack/target rows share one continuous header-band
+  background in both color and monochrome output. Printed rule text
   reduces the corpus's established tier forms (`Level N:` alternatives,
   `Increase damage to ... at Nth level`, and Dragon Breath-style `Increase to
 +N bonus and ... damage at Nth level` chains) to the highest tier applicable

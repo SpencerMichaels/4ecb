@@ -1879,8 +1879,11 @@ textarea {
   font-size: 4.7pt;
   text-transform: uppercase;
 }
-.print-card-action-band {
+.print-card-action-band,
+.print-card-combat-band {
   background: color-mix(in srgb, var(--card-color) 20%, white);
+}
+.print-card-action-band {
   display: grid;
   font-weight: 700;
   grid-template-columns: max-content minmax(0, 1fr);
@@ -2316,6 +2319,7 @@ textarea {
   --card-color: #000;
 }
 .sheet-monochrome .print-card-action-band,
+.sheet-monochrome .print-card-combat-band,
 .sheet-monochrome .print-item-stats dt {
   background: #eee;
 }

@@ -48,6 +48,9 @@ describe("print layout contract", () => {
       /\.print-card-combat-band > div\s*\{[\s\S]*?align-items:\s*flex-start/,
     );
     expect(styles).toMatch(
+      /\.print-card-action-band,\s*\.print-card-combat-band\s*\{[\s\S]*?background:\s*color-mix/,
+    );
+    expect(styles).toMatch(
       /\.print-card-combat-band dd\s*\{[\s\S]*?overflow-wrap:\s*anywhere/,
     );
     expect(sheetSource).not.toMatch(
