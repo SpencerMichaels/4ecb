@@ -1808,7 +1808,8 @@ Status: accepted (supersedes the brief Nerd Fonts integration). Date: 2026-10-01
 The product owner rejected the selected Nerd Fonts `nf-fa-dice_d20` glyph as
 too detailed for the small printed attack-header space. Revert the local font
 subset, loading/print-readiness paths, font-generation tooling and notices;
-retain Lucide as the icon source and use `dice-5` for the attack-roll field.
+retain Lucide as the icon source. After evaluating `dice-5` as well, the product
+owner chose `dices` for the attack-roll field.
 All earlier power-card presentation changes remain intact.
 
 ## Deferred decisions and decision points

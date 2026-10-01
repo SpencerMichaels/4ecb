@@ -50,7 +50,7 @@ separate projection over the same semantic model.
   Printed attack targets use the crosshair icon rather than the bullseye.
   The printed attack-type cell uses a fixed sword icon to identify the field,
   independent of its melee/ranged/area text.
-  Printed to-hit cells use Lucide's dice-5 to distinguish the attack roll from
+  Printed to-hit cells use Lucide's dices to distinguish the attack roll from
   attack type. The brief Nerd Fonts integration was reverted after visual
   feedback: its d20 glyph was too detailed at card-header size. No icon font,
   font preload, font-readiness print path, or font-generation tooling remains.
