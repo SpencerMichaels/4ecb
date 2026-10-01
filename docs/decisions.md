@@ -1527,7 +1527,8 @@ single interactive selection do not survive on paper. Instead, one printed
 power card lists each compatible owned weapon once near the bottom of its body.
 Every printed weapon summary uses a compact table with a weapon column and
 calculation cells containing `+bonus → expression type`. Single attacks and
-identical repeated calculations use a headerless two-column table. Distinct
+identical repeated calculations use a headerless three-column table with
+separate weapon, to-hit, and damage cells for like-for-like alignment. Distinct
 phases add numbered attack-column headers.
 Soft alternating row backgrounds, without cell borders, make both forms
 recognizable as tables without competing with the card border. Multiattack

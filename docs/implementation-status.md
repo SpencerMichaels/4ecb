@@ -83,7 +83,8 @@ Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   Summaries now consistently use a compact bottom table with one row per
   weapon and calculation cells such as `+12 → 2d8 + 5 fire`, omitting the word
   `damage`. Single attacks and identical repeated calculations use a headerless
-  two-column table; distinct calculations add numbered attack-column headers.
+  three-column weapon/to-hit/damage table; distinct calculations retain combined
+  cells and add numbered attack-column headers.
   This consistent-layout follow-up passes eight focused print tests, the web
   build, focused lint, and all eight print-matrix cases; the harness checks every
   weapon table for cell overflow, not just the first table.

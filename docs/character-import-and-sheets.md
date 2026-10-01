@@ -294,8 +294,8 @@ Power variants retain per-attack bonus, damage expression, damage type, and
 explicit hand role. Printed summaries use a compact `+bonus → expression type`
 form without repeating the defense or word `damage`. Distinct phases form a
 bottom table with one weapon row and numbered attack columns; single attacks
-and identical phase calculations use the same table layout with one calculation
-column and no header row. Equality includes damage type and hand
+and identical phase calculations use separate weapon, to-hit, and damage
+columns with no header row. Equality includes damage type and hand
 role, not merely the attack ability. Authored Hit text retains conditions,
 ongoing damage, and other riders. Legacy caches with only one attack/damage
 summary cannot supply missing secondary calculations; unavailable phase cells

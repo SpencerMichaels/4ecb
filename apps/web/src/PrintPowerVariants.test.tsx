@@ -47,11 +47,13 @@ describe("printed weapon calculation summaries", () => {
       expect(markup).toContain("<table");
       expect(markup).not.toContain("<thead");
       expect(markup).toContain('<th scope="row">Longsword</th>');
-      expect(text(markup)).toBe("Longsword+12 → 2d8 + 5");
+      expect(text(markup)).toBe("Longsword+122d8 + 5");
+      expect(markup).toContain('aria-label="To hit">+12</td>');
+      expect(markup).toContain('aria-label="Damage">');
       expect(text(markup)).not.toMatch(/damage|equipped|vs AC|;/i);
     }
   });
-  it("aligns multiple weapons in the same headerless two-column table", () => {
+  it("aligns multiple weapons in separate to-hit and damage columns", () => {
     const markup = renderToStaticMarkup(
       <PrintPowerVariants
         attackOrdinals={[1]}
@@ -65,7 +67,9 @@ describe("printed weapon calculation summaries", () => {
     );
     expect(markup.match(/<table/g)).toHaveLength(1);
     expect(markup.match(/<tr>/g)).toHaveLength(2);
-    expect(markup.match(/<td>/g)).toHaveLength(2);
+    expect(markup.match(/<td /g)).toHaveLength(4);
+    expect(markup.match(/aria-label="To hit"/g)).toHaveLength(2);
+    expect(markup.match(/aria-label="Damage"/g)).toHaveLength(2);
     expect(markup).not.toContain("<thead");
   });
   it.each([

@@ -45,22 +45,40 @@ function sameCalculation(
   );
 }
 
-function AttackSummary({ cell }: { readonly cell: AttackCell | undefined }) {
-  if (cell === undefined || cell.eligible === false) return <>—</>;
-  const bonus = cell.attack.includes("Unknown")
+function attackBonus(cell: AttackCell | undefined): string {
+  if (cell === undefined || cell.eligible === false) return "—";
+  return cell.attack.includes("Unknown")
     ? "—"
     : (cell.attack.match(/^[+-]?\d+/)?.[0] ?? "—");
+}
+
+function DamageSummary({ cell }: { readonly cell: AttackCell | undefined }) {
+  if (
+    cell === undefined ||
+    cell.eligible === false ||
+    cell.damage === undefined
+  )
+    return <>—</>;
   const damage = cell.damage?.replace(/\s*([+-])\s*/g, " $1 ");
   return (
     <>
-      <span className="print-variant-bonus">{bonus}</span>
-      {damage === undefined ? null : (
+      <span className="print-variant-expression">{damage}</span>
+      {cell.damageType === undefined ? "" : ` ${cell.damageType}`}
+    </>
+  );
+}
+
+function AttackSummary({ cell }: { readonly cell: AttackCell | undefined }) {
+  if (cell === undefined || cell.eligible === false) return <>—</>;
+  return (
+    <>
+      <span className="print-variant-bonus">{attackBonus(cell)}</span>
+      {cell.damage === undefined ? null : (
         <>
           {" "}
           <wbr />
           <span className="print-variant-damage">
-            → <span className="print-variant-expression">{damage}</span>
-            {cell.damageType === undefined ? "" : ` ${cell.damageType}`}
+            → <DamageSummary cell={cell} />
           </span>
         </>
       )}
@@ -114,11 +132,22 @@ export function PrintPowerVariants({
           {rows.map(({ variant, cells }) => (
             <tr key={variant.id}>
               <th scope="row">{variant.equipmentName}</th>
-              {displayedOrdinals.map((ordinal, index) => (
-                <td key={ordinal}>
-                  <AttackSummary cell={cells[index]} />
-                </td>
-              ))}
+              {shared ? (
+                <>
+                  <td className="print-variant-bonus" aria-label="To hit">
+                    {attackBonus(cells[0])}
+                  </td>
+                  <td aria-label="Damage">
+                    <DamageSummary cell={cells[0]} />
+                  </td>
+                </>
+              ) : (
+                displayedOrdinals.map((ordinal, index) => (
+                  <td key={ordinal}>
+                    <AttackSummary cell={cells[index]} />
+                  </td>
+                ))
+              )}
             </tr>
           ))}
         </tbody>
