@@ -23,6 +23,10 @@ import { Icon } from "./Icon";
 import { PortraitImage } from "./PortraitEditor";
 import { PrintPowerVariants } from "./PrintPowerVariants";
 import {
+  printItemPresentation,
+  printItemPower,
+} from "./print-item-presentation";
+import {
   fallbackPrintAttacks,
   groupedPrintRules,
   printAttackHeader,
@@ -223,49 +227,11 @@ const LEGACY_POWER_BODY_EXCLUDES = new Set([
   "primary target",
 ]);
 
-const LEGACY_ITEM_BODY_EXCLUDES = new Set([
-  "level",
-  "gold",
-  "enhancement",
-  "magic item type",
-  "critical",
-  "weapon",
-  "armor",
-  "property",
-  "key ability",
-  "internalonly",
-  "weaponequiv",
-  "enchantequiv",
-  "granted powers",
-  "item slot",
-  "full text",
-  "description",
-  "equipped",
-  "count",
-  "weight",
-  "range",
-  "damage",
-  "proficiency bonus",
-  "weapon category",
-  "hands required",
-  "group",
-]);
-
 function cardField(card: SheetCard, ...labels: string[]): string | undefined {
   const wanted = new Set(labels.map((label) => label.toLocaleLowerCase()));
   return card.fields.find((field) =>
     wanted.has(field.label.trim().toLocaleLowerCase()),
   )?.value;
-}
-
-function lastCardField(
-  card: SheetCard,
-  ...labels: string[]
-): string | undefined {
-  const wanted = new Set(labels.map((label) => label.toLocaleLowerCase()));
-  return [...card.fields]
-    .reverse()
-    .find((field) => wanted.has(field.label.trim().toLocaleLowerCase()))?.value;
 }
 
 function usePrintCardFit() {
@@ -513,73 +479,52 @@ function PrintPowerCard({
 
 function PrintItemCard({ card }: { readonly card: SheetCard }) {
   const cardRef = usePrintCardFit();
-  const physicalStats = [
-    ["Damage", cardField(card, "Damage")],
-    ["Proficient", cardField(card, "Proficiency Bonus", "Proficient")],
-    ["Group", cardField(card, "Group")],
-    ["Range", cardField(card, "Range")],
-    ["AC bonus", cardField(card, "AC Bonus")],
-    ["Check", cardField(card, "Check")],
-    ["Speed", cardField(card, "Speed")],
-  ].filter((entry): entry is [string, string] => Boolean(entry[1]));
-  const quantity = cardField(card, "Quantity");
-  const magicStats = [
-    ["Enhancement", lastCardField(card, "Enhancement")],
-    ["Level", lastCardField(card, "Level")],
-    ["Critical", lastCardField(card, "Critical")],
-    ["Type", lastCardField(card, "Magic Item Type", "Type")],
-  ].filter((entry): entry is [string, string] => Boolean(entry[1]));
-  const stats: [string, string][] = [
-    ...physicalStats.slice(0, 4),
-    ...(physicalStats.length >= 4 || quantity === undefined
-      ? []
-      : [["Quantity", quantity] as [string, string]]),
-    ...magicStats,
-  ].slice(0, 8);
-  const properties = card.fields.filter(
-    (field) => field.label.trim().toLocaleLowerCase() === "property",
-  );
-  const rules = card.fields.filter((field) => {
-    const label = field.label.trim().toLocaleLowerCase();
-    return !LEGACY_ITEM_BODY_EXCLUDES.has(label) && label !== "quantity";
-  });
+  const item = printItemPresentation(card);
   return (
     <article ref={cardRef} className="print-reference-card print-item-card">
       <header>
-        <h3>{card.name}</h3>
+        <h3>
+          <Icon name={item.icon} />
+          <span>{card.name}</span>
+        </h3>
       </header>
       <dl className="print-item-stats">
-        {stats.slice(0, 8).map(([label, value]) => (
+        {item.stats.map(({ label, value }) => (
           <div key={label}>
-            <dd>{value}</dd>
             <dt>{label}</dt>
+            <dd>{value}</dd>
           </div>
         ))}
       </dl>
       <div className="print-card-body print-item-body">
-        {properties.length === 0 ? null : (
-          <section>
-            <span>Properties</span>
-            {properties.map((field, index) => (
-              <Prose key={`${field.value}-${index}`} value={field.value} />
-            ))}
-          </section>
-        )}
-        {rules.map((field, index) => (
-          <div key={`${field.label}-${index}`}>
-            <strong>{field.label}:</strong> <Prose value={field.value} />
-          </div>
-        ))}
-        {rules.length === 0 && card.description !== undefined ? (
-          <Prose value={card.description} />
-        ) : null}
+        {item.description ? <Prose value={item.description} /> : null}
+        {item.rules.map((field, index) => {
+          const power = printItemPower(field);
+          return (
+            <section
+              className={power ? "print-item-power" : "print-item-rule"}
+              key={`${field.label}-${index}`}
+            >
+              {power ? (
+                <div className="print-item-power-heading">{power.title}</div>
+              ) : null}
+              <div className="print-item-rule-text">
+                <strong>{power ? null : `${field.label}: `}</strong>
+                <Prose value={power?.text ?? field.value} />
+              </div>
+            </section>
+          );
+        })}
       </div>
       <footer>
-        <span>{cardField(card, "Item Slot")}</span>
-        <span>{cardField(card, "Weight")}</span>
-        <span>{lastCardField(card, "Gold")}</span>
+        <span>{item.slot}</span>
+        <span>{item.weight}</span>
+        <span>{item.price}</span>
       </footer>
-      <div className="print-card-type">Magic item</div>
+      <div className="print-card-type">
+        <span>{item.kind}</span>
+        <span>{item.level ? `Level ${item.level}` : ""}</span>
+      </div>
     </article>
   );
 }

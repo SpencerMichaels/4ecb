@@ -1812,6 +1812,28 @@ retain Lucide as the icon source. After evaluating `dice-5` as well, the product
 owner chose `dices` for the attack-roll field.
 All earlier power-card presentation changes remain intact.
 
+### D073 — Item cards retain item identity with structured, wrapping rules
+
+Status: accepted. Date: 2026-10-01.
+
+Bring printed items into the fixed-size power-card presentation language without
+assigning an overall power frequency to an item that may have several powers.
+Keep orange item identity, add the existing shop/equipment category icon to the
+title, and reuse its canonical category mapping. The sheet model exposes neutral
+item/base-type metadata; icon selection remains a web presentation concern.
+
+Physical stats wrap and are not silently capped. Enhancement and Critical live
+with properties and activated rules in the body. Recognized usage/action prefixes
+become per-power headings; unfamiliar prose is never rewritten speculatively.
+Combine category and level in the bottom bar and label numeric weight/price with
+units. Honor both legacy Armor Bonus and AC Bonus. Omit identified flavor and
+retain unstructured custom instructions when structured rules are unavailable.
+Keep fixed card dimensions and adaptive fitting rather than growing cards.
+
+Evidence: recovered `PowerCardItem.UpdatePowerCardItem` field composition,
+product-owner item-card audit approval, and synthetic presentation fixtures.
+This checkpoint does not close M5.6 or replace its broader acceptance gates.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

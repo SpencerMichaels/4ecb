@@ -740,7 +740,7 @@ describe("sheet model", () => {
     });
     expect(model.items[0]).toMatchObject({ name: "Test wand" });
     expect(model.items).toContainEqual(
-      expect.objectContaining({ name: "Gloaming Leather Armor +1" }),
+      expect.objectContaining({ name: "Gloaming Leather Armor +1", itemType: "Magic Item", baseItemType: "Armor" }),
     );
     expect(
       model.items.find(({ name }) => name === "Gloaming Leather Armor +1")

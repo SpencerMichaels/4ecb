@@ -63,7 +63,7 @@ const { stdout: variantTableMarkup } = await execute("pnpm", [
 ]);
 const installVariantTable = `
   const card = [...document.querySelectorAll(".print-power-card")]
-    .find((element) => element.querySelector("h3")?.textContent === "Synthetic power 03");
+    .find((element) => element.querySelector("h3 > span:last-child")?.textContent === "Synthetic power 03");
   card.querySelector(".print-card-weapon-variants").outerHTML = ${JSON.stringify(variantTableMarkup)};
   window.dispatchEvent(new Event("beforeprint"));
 `;
@@ -296,7 +296,8 @@ try {
           card.scrollHeight > card.clientHeight + 1 ||
           card.scrollWidth > card.clientWidth + 1 ||
           [...card.querySelectorAll(".print-card-body")].some((body) =>
-            body.scrollHeight > body.clientHeight + 1
+            body.scrollHeight > body.clientHeight + 1 ||
+            body.getBoundingClientRect().right > card.getBoundingClientRect().right + 1
           )
         ).map((card) => (card.querySelector("h3")?.textContent ?? "unnamed") +
           " (" + card.className + "; body " + card.querySelector(".print-card-body")?.scrollHeight +
@@ -307,7 +308,7 @@ try {
         const tables = [...document.querySelectorAll(".print-card-variant-table")];
         const tableFits = tables.length > 0 && tables.every((table) => table.clientWidth > 0 && [...table.querySelectorAll("th, td")].every((cell) =>
           cell.scrollWidth <= cell.clientWidth + 1));
-        const shortCard = cards.find((card) => card.querySelector("h3")?.textContent === "Synthetic power 02");
+        const shortCard = cards.find((card) => card.querySelector("h3 > span:last-child")?.textContent === "Synthetic power 02");
         const bandOverflow = [...document.querySelectorAll(".print-card-action-band")]
           .flatMap((band) => [...band.children])
           .filter((cell) =>
@@ -531,7 +532,8 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
            card.scrollHeight > card.clientHeight + 1 ||
            card.scrollWidth > card.clientWidth + 1 ||
            [...card.querySelectorAll(".print-card-body")].some((body) =>
-             body.scrollHeight > body.clientHeight + 1
+             body.scrollHeight > body.clientHeight + 1 ||
+             body.getBoundingClientRect().right > card.getBoundingClientRect().right + 1
            )
          ).map((card) => card.querySelector("h3")?.textContent ?? "unnamed");
          const weaponFontMismatch = [...document.querySelectorAll(".print-card-variant-table")]
@@ -540,7 +542,7 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
          const tables = [...document.querySelectorAll(".print-card-variant-table")];
          const tableFits = tables.length > 0 && tables.every((table) => table.clientWidth > 0 && [...table.querySelectorAll("th, td")].every((cell) =>
            cell.scrollWidth <= cell.clientWidth + 1));
-         const shortCard = cards.find((card) => card.querySelector("h3")?.textContent === "Synthetic power 02");
+         const shortCard = cards.find((card) => card.querySelector("h3 > span:last-child")?.textContent === "Synthetic power 02");
          const bandOverflow = [...document.querySelectorAll(".print-card-action-band")]
            .flatMap((band) => [...band.children])
            .filter((cell) =>
@@ -656,7 +658,7 @@ function printCharacter() {
     ],
   }));
   const loot = Array.from({ length: 6 }, (_, index) => ({
-    name: `Synthetic item ${String(index + 1).padStart(2, "0")}`,
+    name: `Synthetic item ${String(index + 1).padStart(2, "0")}${index === 5 ? " with a deliberately long category title" : ""}`,
     count: index + 1,
     equippedCount: index < 2 ? 1 : 0,
     showPowerCard: true,

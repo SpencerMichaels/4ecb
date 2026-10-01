@@ -2133,38 +2133,71 @@ textarea {
 }
 .print-item-card {
   --card-color: #ff8c00;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto minmax(0, 1fr) auto auto;
 }
+.print-item-card > header {
+  background: var(--card-color);
+  color: #111;
+}
+.print-item-card > header h3 {
+  align-items: center;
+  display: flex;
+  font-weight: 700;
+  gap: 0.035in;
+  min-width: 0;
+}
+.print-item-card > header h3 > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.print-item-card > header .icon {
+  flex-shrink: 0;
+  height: 0.15in;
+  width: 0.15in;
+}
+.print-item-card .print-card-type {
+  color: #111;
+  justify-content: space-between;
+}
 .print-item-stats {
+  background: color-mix(in srgb, var(--card-color) 18%, white);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 0;
 }
 .print-item-stats > div {
   border-bottom: 1px solid var(--card-color);
   border-right: 1px solid var(--card-color);
   min-width: 0;
-  text-align: center;
+  padding: 0.025in 0.035in;
+  text-align: left;
 }
 .print-item-stats dd {
-  font-size: 6.5pt;
-  height: 0.14in;
+  font-size: 0.97em;
   margin: 0;
-  overflow: hidden;
-  padding: 0.015in;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .print-item-stats dt {
-  background: color-mix(in srgb, var(--card-color) 18%, white);
   font-size: 4.7pt;
   font-weight: 800;
-  padding: 0.015in;
   text-transform: uppercase;
 }
 .print-item-body section {
-  border-bottom: 1px solid var(--card-color);
-  margin-bottom: 0.035in;
-  padding-bottom: 0.035in;
+  margin: 0;
+}
+.print-item-body section + section {
+  margin-top: var(--print-card-section-gap);
+}
+.print-item-body p {
+  margin: 0;
+}
+.print-item-power-heading {
+  background: color-mix(in srgb, var(--card-color) 18%, white);
+  font-weight: 700;
+  margin-bottom: 0.0125in;
+  padding: 0.015in 0.025in;
 }
 .print-item-body section > span {
   display: block;
@@ -2425,6 +2458,15 @@ textarea {
 }
 .sheet-monochrome .print-card-type {
   background: #000;
+  color: #fff;
+}
+.sheet-monochrome .print-item-card > header {
+  background: #fff;
+  color: #111;
+}
+.sheet-monochrome .print-item-stats,
+.sheet-monochrome .print-item-power-heading {
+  background: #eee;
 }
 
 .editor-page {

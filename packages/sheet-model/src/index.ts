@@ -27,6 +27,8 @@ export interface SheetCard {
   readonly id?: string;
   readonly kind: "power" | "item";
   readonly name: string;
+  readonly itemType?: string;
+  readonly baseItemType?: string;
   readonly usage?: string;
   readonly actionType?: string;
   readonly keywords?: string;
@@ -907,6 +909,8 @@ export function buildSheetModel(
         ...(element?.id === undefined ? {} : { id: element.id }),
         kind: "item" as const,
         name: loot.name,
+        itemType: entity?.type ?? element?.type ?? "Item",
+        baseItemType: itemEntities[0]?.type ?? loot.elements[0]?.type ?? "Item",
         fields: [
           { label: "Quantity", value: String(loot.count) },
           ...itemEntities.flatMap((candidate) => entityFields(candidate)),
@@ -1150,6 +1154,9 @@ export function buildEvaluatedSheetModel(
           ...(entity === undefined ? {} : { id: entity.id }),
           kind: "item" as const,
           name,
+          itemType: entity?.type ?? original?.elements.at(-1)?.type ?? "Item",
+          baseItemType:
+            itemEntities[0]?.type ?? original?.elements[0]?.type ?? "Item",
           fields: [
             { label: "Quantity", value: String(entry.quantity) },
             ...(entry.equippedQuantity === 0

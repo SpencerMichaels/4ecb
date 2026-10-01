@@ -45,20 +45,42 @@ export function canonicalItemIcon(
   physicalBase?: ContentEntity,
 ): IconName {
   const identity = physicalBase ?? entity;
-  const identityType = normalized(identity.type);
-  if (isAuthoredShield(identity)) return LOADOUT_SLOT_ICONS["off-hand"];
+  return itemCategoryIcon({
+    type: entity.type,
+    identityType: identity.type,
+    armorType: contentSpecificValue(identity, "Armor Type"),
+    magicItemType: contentSpecificValue(entity, "Magic Item Type"),
+    itemSlot: contentSpecificValue(entity, "Item Slot"),
+    ritualType: contentSpecificValue(entity, "type"),
+  });
+}
+
+/** Shared metadata mapping for content entities and renderer-neutral sheet cards. */
+export function itemCategoryIcon(metadata: {
+  readonly type?: string | undefined;
+  readonly identityType?: string | undefined;
+  readonly armorType?: string | undefined;
+  readonly magicItemType?: string | undefined;
+  readonly itemSlot?: string | undefined;
+  readonly ritualType?: string | undefined;
+}): IconName {
+  const identityType = normalized(metadata.identityType ?? metadata.type);
+  if (
+    identityType === "armor" &&
+    normalized(metadata.armorType).includes("shield")
+  )
+    return LOADOUT_SLOT_ICONS["off-hand"];
   if (identityType === "weapon") return LOADOUT_SLOT_ICONS["main-hand"];
   if (identityType === "armor") return LOADOUT_SLOT_ICONS.body;
 
-  const type = normalized(entity.type);
+  const type = normalized(metadata.type);
   const kind =
     type === "magic item"
-      ? normalized(contentSpecificValue(entity, "Magic Item Type")) ||
-        "magic item"
+      ? normalized(metadata.magicItemType) || "magic item"
       : type === "ritual"
-        ? normalized(contentSpecificValue(entity, "type")) || "ritual"
+        ? normalized(metadata.ritualType) || "ritual"
         : type;
-  const slot = normalized(contentSpecificValue(entity, "Item Slot"));
+  const slot = normalized(metadata.itemSlot);
   const value = `${kind} ${slot}`;
 
   if (value.includes("artifact") || value.includes("dragonshard")) return "gem";

@@ -32,20 +32,34 @@ separate projection over the same semantic model.
   browser View retains its richer interactive cards. Composed magic-item cards
   now merge public base and enchantment fields so weapon/armor statistics are
   not lost behind the enchantment record.
-- Item-card audit (2026-10-01; proposed follow-up, not implemented): the print
-  renderer still clips stat values into fixed-height nowrap cells and silently
-  caps the physical/magic stat lists at four/eight entries. It recognizes
-  `AC Bonus` but not the recovered builder's `Armor Bonus` field, always labels
-  equipment `Magic item`, prints bare weight/price numbers, and falls back to
-  descriptions that can include flavor. Body rules are an inline field dump
-  rather than grouped item-power clauses. Follow-up should preserve orange item
-  identity and fixed card geometry while using readable wrapping stat bands,
-  accurate item classifications, a combined labeled footer, grouped properties
-  and activated powers, and synthetic weapon/armor/implement/consumable/custom
-  fixtures. Compare recovered `PowerCardItem.UpdatePowerCardItem` base versus
-  enchantment field ownership before changing item projections. Existing print
-  matrix fixtures cover generic synthetic item descriptions, not that full
-  range of structured item data; M5.6 item-card acceptance remains open.
+- Item-card follow-up (2026-10-01): title bars now use the equipment/shop's
+  category icons and readable bold sans-serif type. Physical statistics wrap
+  without four/eight-entry caps; both recovered `Armor Bonus` and `AC Bonus`
+  are supported. Enhancement, Critical, properties, and activated powers stay
+  in the body rather than clipped stat cells. Recognized item-power and
+  consumable prefixes become compact usage/action headings; unknown wording
+  remains intact. Category and level share the orange bottom bar, with slot,
+  weight, and price in a compact footer; numeric weights/prices receive units.
+  Ordinary weapons, armor, and gear are no longer universally labeled magic
+  items. Explicit flavor is omitted; unstructured custom instructions are
+  preserved when no structured rules replace them. Shared category mapping
+  uses neutral item/base-type metadata in the sheet model, not UI icons there.
+  Recovered `PowerCardItem.UpdatePowerCardItem` informed base/enchantment field
+  ownership. Public focused fixtures cover weapon, armor, implement,
+  consumable, passive, and custom projections; the print matrix still uses
+  generic synthetic item descriptions rather than every structured category.
+  Product-owner review and M5.6's broader acceptance remain open.
+  Verification: `nix develop path:. -c pnpm exec vitest run
+  apps/web/src/print-item-presentation.test.ts apps/web/src/EntityCard.test.ts
+  apps/web/src/print-layout.test.ts packages/sheet-model/src/index.test.ts`
+  passes 45 tests across four files. Web typecheck, focused ESLint, and production
+  build pass. Visual review on the supplied character confirmed category icons,
+  wrapping stat bands, grouped powers, and bounded long-title body layout.
+  `nix develop path:. -c pnpm check:print` passes all eight Chromium/Firefox
+  Letter/A4 color/monochrome variants: 24 cards, five pages, no measured card,
+  header-band, target, or table overflow. The matrix now covers a long item title
+  and checks body boundaries as well as internal scroll overflow. Full milestone
+  validation is deferred until the M5.6 acceptance checkpoint.
 - Printed title line boxes use a 1.2 line-height to preserve descenders inside
   the clipped single-line header; usage bars and item footers vertically center
   their text. Power titles use bold Arial, matching the sans-serif body. The
