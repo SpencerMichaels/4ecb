@@ -1868,7 +1868,6 @@ textarea {
   color: #fff;
 }
 .print-power-card > header h3 {
-  font-family: Georgia, "Times New Roman", serif;
   font-weight: 700;
 }
 .print-card-keywords {
@@ -1888,6 +1887,8 @@ textarea {
 .print-card-action-band,
 .print-card-combat-band {
   background: color-mix(in srgb, var(--card-color) 20%, white);
+  font-size: 6.7pt;
+  line-height: 1.08;
 }
 .print-card-action-band {
   border-bottom: 1px solid var(--card-color);
@@ -1908,14 +1909,14 @@ textarea {
   border-right: 0;
 }
 .print-card-action-band .icon {
-  height: 0.12in;
-  width: 0.12in;
+  height: 0.1in;
+  width: 0.1in;
 }
 .print-card-action-band .action-type-icon {
-  font-size: 8pt;
-  height: 0.16in;
+  font-size: 6.7pt;
+  height: 0.1in;
   min-width: 0;
-  width: 0.12in;
+  width: 0.1in;
 }
 .print-card-action-band .action-type-icon > span {
   transform: translateY(0.01in);

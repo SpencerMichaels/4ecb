@@ -34,8 +34,9 @@ separate projection over the same semantic model.
   not lost behind the enchantment record.
 - Printed title line boxes use a 1.2 line-height to preserve descenders inside
   the clipped single-line header; usage bars and item footers vertically center
-  their text. Power titles use bold Georgia (with serif fallbacks) for a more
-  distinct heading; body text retains Arial.
+  their text. Power titles use bold Arial, matching the sans-serif body. The
+  action/range and attack/target bands share text sizing and 0.1-inch icon boxes
+  for equal single-line heights; long targets can still expand without clipping.
 - The compact power header now removes the redundant word `Action`, uses the
   same icon-left rhythm for action/range and attack/target, combines the authored
   attack stat and defense into one cell, and lets the target cell grow vertically
