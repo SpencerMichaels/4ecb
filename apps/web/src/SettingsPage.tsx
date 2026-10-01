@@ -599,11 +599,12 @@ export function SettingsPage({
               onColorUtilityPowersBlueChange(event.currentTarget.checked)
             }
           />{" "}
-          Color utility powers blue on printed cards
+          Color utility powers entirely blue on printed cards
         </label>
         <p className="field-help">
-          Reproduce the original builder's blue Utility card style. Otherwise,
-          printed power colors emphasize how often each power can be used.
+          Reproduce the original builder's all-blue Utility card style.
+          Otherwise, only the footer stays Utility blue while the rest of the
+          card shows how often the power can be used.
         </p>
       </section>
 

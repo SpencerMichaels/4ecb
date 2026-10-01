@@ -2011,7 +2011,7 @@ textarea {
   padding: 0.025in 0.03in;
 }
 .print-card-type {
-  background: var(--card-color);
+  background: var(--card-footer-color, var(--card-color));
   color: #fff;
   font-size: 7pt;
   font-weight: 800;
@@ -2028,6 +2028,9 @@ textarea {
 }
 .print-power-card.usage-daily {
   --card-color: #777;
+}
+.print-power-card.utility-power {
+  --card-footer-color: #000080;
 }
 .print-power-card.legacy-utility-color {
   --card-color: #000080;
@@ -2279,20 +2282,20 @@ textarea {
 .sheet-card .power-variant-comparison table {
   font-size: 0.68rem;
 }
-.usage-encounter {
+.sheet-card.usage-encounter {
   border-color: var(--power-encounter);
 }
-.usage-encounter > header {
+.sheet-card.usage-encounter > header {
   background: var(--power-encounter);
 }
-.usage-daily {
+.sheet-card.usage-daily {
   border-color: var(--power-daily);
 }
-.usage-daily > header {
+.sheet-card.usage-daily > header {
   background: var(--power-daily);
   color: #111;
 }
-.usage-utility {
+.sheet-card.usage-utility {
   border-color: var(--power-utility);
 }
 .usage-utility > header {
@@ -2317,6 +2320,7 @@ textarea {
 }
 .sheet-monochrome .print-reference-card {
   --card-color: #000;
+  --card-footer-color: #000;
 }
 .sheet-monochrome .print-card-action-band,
 .sheet-monochrome .print-card-combat-band,

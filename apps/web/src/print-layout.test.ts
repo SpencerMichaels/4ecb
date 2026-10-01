@@ -67,6 +67,15 @@ describe("print layout contract", () => {
     expect(styles).toMatch(
       /\.print-power-card\.legacy-utility-color\s*\{[\s\S]*?--card-color:\s*#000080/,
     );
+    expect(styles).toMatch(
+      /\.print-power-card\.utility-power\s*\{[\s\S]*?--card-footer-color:\s*#000080/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-type\s*\{[\s\S]*?background:\s*var\(--card-footer-color, var\(--card-color\)\)/,
+    );
+    expect(styles).toContain(".sheet-card.usage-encounter > header");
+    expect(styles).toContain(".sheet-card.usage-daily > header");
+    expect(styles).not.toMatch(/\n\.usage-(?:encounter|daily) > header/);
     expect(sheetSource).toContain(
       'const typeLabel = `${displayUsage}${isUtility ? " Utility" : ""} power`',
     );

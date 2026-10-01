@@ -1704,10 +1704,11 @@ At-Will, Encounter, and Daily are the mechanically important identities players
 scan for during play, while Utility is an additional power classification rather
 than a fourth usage frequency. Printed power cards therefore use usage for their
 default border and header color: green for At-Will, red for Encounter, and gray
-for Daily. The title bar and bottom type bar use the same solid usage color with
-white text. The three-checkbox frequency matrix is omitted. Utility remains
-explicit in the bottom type bar, which reads forms such as `AT-WILL UTILITY
+for Daily. Non-Utility title and bottom bars use the same solid usage color with
+white text. A Utility card keeps its usage color everywhere except the bottom
+type bar, which is always Utility blue and reads forms such as `AT-WILL UTILITY
 POWER`; the numeric power level, when present, is right-aligned in the same bar.
+The three-checkbox frequency matrix is omitted.
 The separate class/level/source footer is removed because class origin is not
 needed during play, keywords already carry Arcane, Divine, Martial, and similar
 descriptors, and physical cards do not need source citations.
@@ -1719,10 +1720,11 @@ as Opportunity Attack, retain their authored non-Utility identity and simply
 omit a calculated attack band when none exists.
 
 An off-by-default browser Display preference may reproduce the original
-builder's blue Utility card color for users who prefer that visual convention.
-This option changes color only: the bottom bar continues to name the actual
-At-Will, Encounter, or Daily frequency so legacy styling cannot obscure the
-mechanical usage limit. Monochrome print continues to override all usage colors.
+builder's all-blue Utility card style for users who prefer that visual
+convention. It changes the Utility card's title, borders, dividers, and tinted
+bands from the usage color to Utility blue; the already-blue bottom bar remains
+unchanged and continues to name the actual At-Will, Encounter, or Daily
+frequency. Monochrome print overrides both color treatments.
 
 ## Deferred decisions and decision points
 

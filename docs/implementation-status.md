@@ -51,11 +51,11 @@ vs. Reflex` use the configured highest-ability selection and established
 - Printed power identity is now usage-first. At-Will, Encounter, and Daily
   choose the default green, red, or gray treatment; Utility is retained as an
   explicit qualifier in the bottom type bar rather than replacing frequency or
-  requiring a three-checkbox matrix. Title and bottom bars share the same solid
-  usage color with white text. Numeric level shares the bottom bar, and the
-  redundant class/source footer is omitted. An off-by-default Display
-  preference restores the legacy blue Utility treatment while leaving the
-  actual usage text visible. Item cards likewise omit the paper-oriented
+  requiring a three-checkbox matrix. A Utility card's footer is always blue,
+  while its other accents use the usage color by default. The off-by-default
+  Display preference extends Utility blue to the entire card treatment. Numeric
+  level shares the bottom bar, and the redundant class/source footer is omitted.
+  Both modes leave the actual usage text visible. Item cards likewise omit the paper-oriented
   frequency matrix and source fallback while retaining authored item-power
   usage in their rules text. Focused print-layout/accessibility contracts, the
   web typecheck, and the Chromium/Firefox Letter/A4 color/monochrome print

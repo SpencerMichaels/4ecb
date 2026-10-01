@@ -442,7 +442,7 @@ function PrintPowerCard({
   const typeLabel = `${displayUsage}${isUtility ? " Utility" : ""} power`;
   return (
     <article
-      className={`print-reference-card print-power-card usage-${usageTone}${isUtility && colorUtilityPowersBlue ? " legacy-utility-color" : ""} ${printCardDensity(card)}`}
+      className={`print-reference-card print-power-card usage-${usageTone}${isUtility ? " utility-power" : ""}${isUtility && colorUtilityPowersBlue ? " legacy-utility-color" : ""} ${printCardDensity(card)}`}
     >
       <header>
         <h3>{card.name}</h3>

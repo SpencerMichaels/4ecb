@@ -585,10 +585,11 @@ before its Hit text.
 the At-Will, Encounter, or Daily limit players most often need during play.
 Usage drives the default green/red/gray treatment, Utility is an additional word
 in the bottom type bar, and numeric level shares that same bar at the right. The
-title and bottom bars share the solid usage color and white text. The legacy
-three-checkbox matrix and separate class/level/source footer are gone.
-An off-by-default Display setting can color Utility cards blue for users who
-prefer the original builder's convention without hiding the actual usage text.
+Utility bottom bar remains blue while the rest of the card uses its usage color.
+The legacy three-checkbox matrix and separate class/level/source footer are
+gone. An off-by-default Display setting can switch every Utility card accent to
+blue for users who prefer the original builder's convention without hiding the
+actual usage text.
 Live review confirmed both the default and legacy-blue projections.
 Utility classification now follows explicit `Power Type: Utility` metadata
 rather than treating every attackless card as Utility; non-Utility delegated
