@@ -1951,12 +1951,15 @@ textarea {
   grid-template-rows: auto auto;
 }
 .print-card-combat-band.is-long-target .print-card-attack-formula {
+  border-bottom: 0;
   grid-column: 1;
   grid-row: 1;
+  padding-bottom: 0.0125in;
 }
 .print-card-combat-band.is-long-target .print-card-attack-total {
   grid-column: 1;
   grid-row: 2;
+  padding-top: 0.0125in;
 }
 .print-card-combat-band.is-long-target .print-card-attack-target {
   grid-column: 2;
@@ -1980,10 +1983,7 @@ textarea {
 .print-card-attack-rules {
   padding-top: 0.025in;
 }
-.print-card-leading-rules:not(:empty) {
-  padding-bottom: 0.025in;
-}
-.print-card-leading-rules:empty:first-child + .print-card-attack-section {
+.print-card-body > .print-card-attack-section:first-child {
   margin-top: -0.035in;
 }
 .print-power-card .print-power-frequency {

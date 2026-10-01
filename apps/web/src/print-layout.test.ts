@@ -52,6 +52,9 @@ describe("print layout contract", () => {
     expect(styles).toMatch(
       /\.print-card-combat-band\.is-long-target\s*\{[\s\S]*?grid-template-columns:\s*max-content minmax\(0, 1fr\);[\s\S]*?grid-template-rows:\s*auto auto/,
     );
+    expect(styles).toMatch(
+      /\.print-card-combat-band\.is-long-target \.print-card-attack-formula\s*\{[\s\S]*?border-bottom:\s*0/,
+    );
     expect(sheetSource).toContain(
       'Attack{numbered ? ` ${attack.ordinal}` : ""} · {formula}',
     );

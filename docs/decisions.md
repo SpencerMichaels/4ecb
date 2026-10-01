@@ -1680,10 +1680,12 @@ The second cell abbreviates only the long defense names `Fortitude` and `Reflex`
 to `Fort` and `Ref`; underlying calculations and authored rules text retain the
 full names. The first two columns size to their content and the target receives
 the remaining width. When a target cannot fit on one line, the formula and
-total stack in the left column while the target spans both rows on the right.
-Requirement, trigger, and other unconditional setup remain above the first
-attack. Hit and following phase-bound effects remain directly below their
-attack band, preserving scan order and avoiding detached damage/effect summaries.
+total stack as one undivided block in the left column while the target spans
+both rows on the right. The action/range and first attack bands remain visually
+contiguous; Requirement, trigger, and other unconditional setup follow the
+first attack band but precede Hit. Hit and following phase-bound effects remain
+directly below their attack band, preserving scan order and avoiding detached
+damage/effect summaries.
 
 Authoritative evaluations project the structured attacks through the shared
 sheet model. Legacy snapshots also expose their cached weapon attack stat and

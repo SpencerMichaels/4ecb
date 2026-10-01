@@ -577,9 +577,10 @@ formula with its unambiguous calculated total and target—for example,
 following phase-bound effects remain immediately beneath it. Single attacks
 omit the number; `Fortitude` and `Reflex` shorten to `Fort` and `Ref` only in the
 calculated header cell. Formula and total columns fit their content; long targets
-receive a two-row layout with the formula and total stacked at left. Requirements,
-triggers, and unconditional pre-attack effects retain their authored position
-above the attack sequence.
+receive a two-row layout with the formula and total stacked as one undivided
+block at left. The action/range and attack header bands remain contiguous;
+requirements and other setup rules follow the first attack band before its Hit
+text.
 
 ## M5.7 — Invited-beta UI and hostability preparation
 

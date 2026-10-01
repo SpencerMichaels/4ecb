@@ -465,21 +465,36 @@ function PrintPowerCard({
             ))}
           </div>
         ) : null}
-        {card.prerequisites === undefined ? null : (
-          <p>
-            <strong>Prerequisite:</strong> {card.prerequisites}
-          </p>
-        )}
-        <div className="print-card-leading-rules">
-          <PrintRuleLines
-            fields={groupedRules.leading}
-            characterLevel={characterLevel}
-          />
-        </div>
-        {attacks.map((attack) => (
+        {attacks.length === 0 ? (
+          <div className="print-card-leading-rules">
+            {card.prerequisites === undefined ? null : (
+              <p>
+                <strong>Prerequisite:</strong> {card.prerequisites}
+              </p>
+            )}
+            <PrintRuleLines
+              fields={groupedRules.leading}
+              characterLevel={characterLevel}
+            />
+          </div>
+        ) : null}
+        {attacks.map((attack, attackIndex) => (
           <section className="print-card-attack-section" key={attack.id}>
             <PrintAttackBand attack={attack} numbered={attacks.length > 1} />
             <div className="print-card-attack-rules">
+              {attackIndex === 0 ? (
+                <>
+                  {card.prerequisites === undefined ? null : (
+                    <p>
+                      <strong>Prerequisite:</strong> {card.prerequisites}
+                    </p>
+                  )}
+                  <PrintRuleLines
+                    fields={groupedRules.leading}
+                    characterLevel={characterLevel}
+                  />
+                </>
+              ) : null}
               <PrintRuleLines
                 fields={groupedRules.attacks.get(attack.ordinal) ?? []}
                 characterLevel={characterLevel}
