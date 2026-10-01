@@ -264,10 +264,20 @@ function lastCardField(
 }
 
 function printCardDensity(card: SheetCard): string {
-  const length = card.fields.reduce(
-    (total, field) => total + field.label.length + field.value.length,
-    0,
-  );
+  const length =
+    card.fields.reduce(
+      (total, field) => total + field.label.length + field.value.length,
+      0,
+    ) +
+    (card.variants ?? []).reduce(
+      (total, variant) =>
+        total +
+        variant.equipmentName.length +
+        (variant.attack?.length ?? 0) +
+        (variant.damage?.length ?? 0) +
+        (powerVariantNotes(variant)?.length ?? 0),
+      0,
+    );
   return length > 1_350 ? "is-condensed" : length > 850 ? "is-compact" : "";
 }
 
@@ -401,16 +411,15 @@ function PrintPowerCard({
   const displayActionType = card.actionType?.replace(/\s+action\b/i, "").trim();
   const isUtility = powerType?.trim().toLocaleLowerCase() === "utility";
   const variants = card.variants ?? [];
-  const candidateVariants =
-    variants.filter((variant) => variant.equipped).length > 0
-      ? variants.filter((variant) => variant.equipped)
-      : variants.slice(0, 1);
-  const printVariants = candidateVariants.filter(
+  const printVariants = variants.filter(
     (variant) =>
       variant.damage !== undefined ||
       (variant.attack !== undefined && !variant.attack.includes("Unknown")),
   );
-  const selectedPrintVariant = candidateVariants[0];
+  const selectedPrintVariant =
+    variants.find((variant) => variant.equipped && variant.hand === "main") ??
+    variants.find((variant) => variant.equipped) ??
+    variants[0];
   const fallbackAbility =
     selectedPrintVariant?.ability ??
     authoredAttackField?.match(
@@ -523,16 +532,23 @@ function PrintPowerCard({
         {rules.length === 0 && card.description !== undefined ? (
           <Prose value={card.description} />
         ) : null}
-        {attacks.length === 0 &&
-          printVariants.map((variant) => (
-            <p className="print-card-variant" key={variant.id}>
-              <strong>{powerVariantLabel(variant)}:</strong>{" "}
-              {powerVariantAttack(variant)}
-              {variant.damage === undefined
-                ? null
-                : `, ${variant.damage} damage`}
-            </p>
-          ))}
+        {printVariants.length === 0 ? null : (
+          <div className="print-card-weapon-variants">
+            {printVariants.map((variant) => {
+              const notes = powerVariantNotes(variant);
+              return (
+                <p className="print-card-variant" key={variant.id}>
+                  <strong>{powerVariantLabel(variant)}:</strong>{" "}
+                  {powerVariantAttack(variant)}
+                  {variant.damage === undefined
+                    ? null
+                    : `; ${variant.damage} damage`}
+                  {notes === undefined ? null : `; ${notes}`}
+                </p>
+              );
+            })}
+          </div>
+        )}
       </div>
       <div className="print-card-additional">Additional effects</div>
       <div className="print-card-type">

@@ -1974,14 +1974,16 @@ textarea {
 .print-card-body > .print-card-attack-section:first-child {
   margin-top: -0.035in;
 }
-.print-card-body > div:not(.print-card-leading-rules),
+.print-card-body
+  > div:not(.print-card-leading-rules):not(.print-card-weapon-variants),
 .print-card-body > p,
 .print-card-body .prose-blocks,
 .print-card-body .prose-paragraph {
   display: inline;
   margin: 0;
 }
-.print-card-body > div:not(.print-card-leading-rules)::after,
+.print-card-body
+  > div:not(.print-card-leading-rules):not(.print-card-weapon-variants)::after,
 .print-card-body > p::after {
   content: "\A";
   white-space: pre;
@@ -1998,9 +2000,20 @@ textarea {
 .print-card-body .prose-blocks > h6::after {
   content: ": ";
 }
+.print-card-weapon-variants {
+  margin-top: var(--print-card-section-gap);
+}
 .print-card-variant {
   display: block !important;
-  margin-top: 0.05in !important;
+  font-size: 5.7pt;
+  line-height: 1.05;
+  margin: 0 !important;
+}
+.print-card-variant + .print-card-variant {
+  margin-top: 0.0125in !important;
+}
+.print-reference-card.is-condensed .print-card-variant + .print-card-variant {
+  margin-top: 0 !important;
 }
 .print-card-additional {
   border-top: 1px solid var(--card-color);

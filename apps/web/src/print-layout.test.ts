@@ -100,6 +100,19 @@ describe("print layout contract", () => {
       "attackResolution.has(before) && attackResolution.has(after)",
     );
     expect(sheetSource).toContain(
+      'variant.equipped && variant.hand === "main"',
+    );
+    expect(sheetSource).toContain(
+      '<div className="print-card-weapon-variants">',
+    );
+    expect(sheetSource).toContain("powerVariantNotes(variant)");
+    expect(sheetSource).not.toContain(
+      "attacks.length === 0 &&\n          printVariants.map",
+    );
+    expect(styles).toMatch(
+      /\.print-card-weapon-variants\s*\{[\s\S]*?margin-top:\s*var\(--print-card-section-gap\)/,
+    );
+    expect(sheetSource).toContain(
       'const typeLabel = `${displayUsage}${isUtility ? " Utility" : ""} power`',
     );
     expect(sheetSource).not.toContain("print-power-frequency");

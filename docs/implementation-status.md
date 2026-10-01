@@ -70,7 +70,11 @@ Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   dot. Authored body spacing now preserves logical groups: Hit/Miss/Effect and
   Trigger/Effect stay tight, while independent clauses start a separated
   section. Compact cards halve that section gap and condensed cards remove it to
-  preserve fixed geometry.
+  preserve fixed geometry. Weapon-compatible powers now place one concise
+  attack/damage line per compatible owned weapon after the authored rules,
+  including inventory alternatives; the equipped-first variant still drives
+  the compact attack header. Variant text participates in density selection so
+  weapon-heavy cards tighten before reaching the fixed boundary.
 - Attack calculation and print projection are now phase-aware. The rules engine
   retains every authored attack's ordinal, resolved ability, intrinsic power
   bonus, defense, target, final total, and component provenance; primary and
@@ -3778,9 +3782,10 @@ Divinity`, except for the native function's explicit, case-insensitive
 - The evaluated sheet model now represents one power card with attached weapon
   variants instead of duplicating the full card per weapon. Print retains full
   ability phrases and authored `[W]` text, then lists concise attack/damage
-  lines for compatible equipped variants, including damage type, critical, and
-  brutal notes. If no equipped evaluated variant exists, it retains the default
-  calculation rather than dropping it.
+  lines for every compatible owned variant, including damage type, critical,
+  and brutal notes. The equipped-first default remains the compact header
+  calculation while inventory alternatives remain visible near the bottom of
+  the card body.
 - Focused rules-engine, sheet-model, and web coverage passes 99 tests. The full
   554-test suite, workspace TypeScript checks, lint, production/PWA build, and
   Chromium/Firefox Letter/A4 color/monochrome print matrix pass with all 24

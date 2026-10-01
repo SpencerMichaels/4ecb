@@ -598,7 +598,9 @@ invented attack row. Printed title bars omit a used-state checkbox, action icons
 are optically centered, and Opportunity Action uses the reaction symbol. Rule
 clauses use semantic inter-section spacing: attack-resolution and trigger/effect
 groups stay tight, while independent clauses separate; the gap tightens only
-for compact or condensed fixed-size cards.
+for compact or condensed fixed-size cards. Each weapon-compatible power lists a
+compact attack/damage line for every compatible owned weapon after its authored
+rules; the equipped-first variant continues to drive the header calculation.
 
 ## M5.7 — Invited-beta UI and hostability preparation
 

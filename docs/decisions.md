@@ -1524,10 +1524,11 @@ an identifying tooltip. The other replaces `[W]` expressions with the selected
 variant's authoritative weapon dice. Browser View uses the same interaction.
 Print keeps full ability wording and authored `[W]` prose because tooltips and a
 single interactive selection do not survive on paper. Instead, one printed
-power card lists a concise attack/damage line for each compatible equipped
+power card lists a concise attack/damage line for every compatible owned
 variant, preserving variant damage type, critical, and brutal notes without
-duplicating the full card. When no evaluated equipped variant exists, print
-retains the default variant so the calculation is not silently discarded.
+duplicating the full card. The equipped-first default still supplies the compact
+attack header; the list itself keeps inventory alternatives visible, matching
+the information available from legacy physical cards.
 
 ### D067 — Build power cards preserve complete authored combat clauses
 
@@ -1622,7 +1623,7 @@ physical dimensions. Content must never increase a card's height.
 
 Power cards project the title, keywords, action/range icon band, compact
 attack/defense/target band when applicable, authored rules clauses in order,
-calculated equipped-weapon lines, additional-effects writing area, and the
+calculated compatible-weapon lines, additional-effects writing area, and the
 usage-first type bar defined by D071. Attackless utility powers do not receive
 invented attack values. Item cards use their own legacy-derived stat grid,
 properties/power region, and compact footer. Flavor text, source citations,
