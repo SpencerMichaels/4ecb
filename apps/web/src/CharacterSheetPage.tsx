@@ -13,6 +13,7 @@ import {
   buildSheetModel,
   type SheetCard,
   type SheetLearnedReference,
+  type SheetPowerAttack,
   type SheetValue,
 } from "@4ecb/sheet-model";
 
@@ -270,6 +271,95 @@ function printCardDensity(card: SheetCard): string {
   return length > 1_350 ? "is-condensed" : length > 850 ? "is-compact" : "";
 }
 
+function abbreviatedAbility(ability: string): string {
+  const abbreviation = new Map([
+    ["strength", "STR"],
+    ["constitution", "CON"],
+    ["dexterity", "DEX"],
+    ["intelligence", "INT"],
+    ["wisdom", "WIS"],
+    ["charisma", "CHA"],
+  ]).get(ability.trim().toLocaleLowerCase());
+  return abbreviation ?? ability.toLocaleUpperCase();
+}
+
+function abbreviatedAttackTotal(value: string): string {
+  return value
+    .replace(/\bFortitude\b/gi, "Fort")
+    .replace(/\bReflex\b/gi, "Ref");
+}
+
+function authoredAttackOrdinal(label: string): number | undefined {
+  const normalized = label.trim().toLocaleLowerCase();
+  if (normalized === "attack" || normalized === "primary attack") return 1;
+  if (normalized === "secondary attack") return 2;
+  if (normalized === "tertiary attack") return 3;
+  if (normalized === "quaternary attack") return 4;
+  return undefined;
+}
+
+function groupedPrintRules(fields: readonly SheetValue[]): {
+  readonly leading: readonly SheetValue[];
+  readonly attacks: ReadonlyMap<number, readonly SheetValue[]>;
+} {
+  const leading: SheetValue[] = [];
+  const attacks = new Map<number, SheetValue[]>();
+  let currentAttack: number | undefined;
+  for (const field of fields) {
+    const ordinal = authoredAttackOrdinal(field.label);
+    if (ordinal !== undefined) {
+      currentAttack = ordinal;
+      if (!attacks.has(ordinal)) attacks.set(ordinal, []);
+      continue;
+    }
+    if (currentAttack === undefined) leading.push(field);
+    else attacks.get(currentAttack)?.push(field);
+  }
+  return { leading, attacks };
+}
+
+function PrintRuleLines({
+  fields,
+  characterLevel,
+}: {
+  readonly fields: readonly SheetValue[];
+  readonly characterLevel: number;
+}) {
+  return fields.map((field, index) => (
+    <div key={`${field.label}-${index}`}>
+      <strong>{field.label.trim()}:</strong>{" "}
+      <Prose value={powerTextAtLevel(field.value, characterLevel)} />
+    </div>
+  ));
+}
+
+function PrintAttackBand({
+  attack,
+  numbered,
+}: {
+  readonly attack: SheetPowerAttack;
+  readonly numbered: boolean;
+}) {
+  const formula = `${abbreviatedAbility(attack.ability)}${attack.powerBonus === 0 ? "" : attack.powerBonus > 0 ? `+${attack.powerBonus}` : attack.powerBonus}`;
+  return (
+    <dl className="print-card-combat-band">
+      <div className="print-card-attack-formula">
+        <Icon name="sword" />
+        <dd>
+          ATTACK{numbered ? ` ${attack.ordinal}` : ""} · {formula}
+        </dd>
+      </div>
+      <div className="print-card-attack-total">
+        <dd>{abbreviatedAttackTotal(attack.attack)}</dd>
+      </div>
+      <div className="print-card-attack-target">
+        <Icon name="target" />
+        <dd>{attack.target ?? "—"}</dd>
+      </div>
+    </dl>
+  );
+}
+
 function PrintPowerCard({
   card,
   characterLevel,
@@ -282,8 +372,7 @@ function PrintPowerCard({
   const level = cardField(card, "Level");
   const className = cardField(card, "Class");
   const powerType = cardField(card, "Power Type");
-  const authoredAttackField = cardField(card, "Attack");
-  const authoredAttack = authoredAttackField ?? card.attack;
+  const authoredAttackField = cardField(card, "Attack", "Primary Attack");
   const displayActionType = card.actionType?.replace(/\s+action\b/i, "").trim();
   const isUtility =
     powerType?.trim().toLocaleLowerCase() === "utility" ||
@@ -299,10 +388,36 @@ function PrintPowerCard({
       variant.damage !== undefined ||
       (variant.attack !== undefined && !variant.attack.includes("Unknown")),
   );
+  const selectedPrintVariant = candidateVariants[0];
+  const fallbackAbility =
+    selectedPrintVariant?.ability ??
+    authoredAttackField?.match(
+      /\b(Strength|Constitution|Dexterity|Intelligence|Wisdom|Charisma)\b/i,
+    )?.[1] ??
+    "Ability";
+  const fallbackPowerBonus =
+    selectedPrintVariant?.powerBonus ??
+    Number(authoredAttackField?.match(/\+\s*(\d+)/)?.[1] ?? 0);
+  const attacks: readonly SheetPowerAttack[] =
+    selectedPrintVariant?.attacks ??
+    (isUtility
+      ? []
+      : [
+          {
+            id: `${card.id ?? card.name}:attack-1`,
+            ordinal: 1,
+            ability: fallbackAbility,
+            powerBonus: fallbackPowerBonus,
+            attack:
+              selectedPrintVariant?.attack ?? card.attack ?? "— vs defense",
+            ...(target === undefined ? {} : { target }),
+          },
+        ]);
   const rules = card.fields.filter(
     (field) =>
       !LEGACY_POWER_BODY_EXCLUDES.has(field.label.trim().toLocaleLowerCase()),
   );
+  const groupedRules = groupedPrintRules(rules);
   const usage = (card.usage ?? "utility")
     .trim()
     .toLocaleLowerCase()
@@ -329,49 +444,52 @@ function PrintPowerCard({
           {attackType}
         </span>
       </div>
-      {isUtility ? (
-        <div className="print-power-frequency" aria-label="Power frequency">
-          {(["At-Will", "Encounter", "Daily"] as const).map((frequency) => (
-            <span key={frequency}>
-              <i>{card.usage === frequency ? "✓" : ""}</i>
-              {frequency}
-            </span>
-          ))}
-        </div>
-      ) : (
-        <dl className="print-card-combat-band">
-          <div>
-            <Icon name="sword" />
-            <dd>{authoredAttack ?? "—"}</dd>
-          </div>
-          <div>
-            <Icon name="target" />
-            <dd>{target ?? "—"}</dd>
-          </div>
-        </dl>
-      )}
       <div className="print-card-body">
+        {isUtility ? (
+          <div className="print-power-frequency" aria-label="Power frequency">
+            {(["At-Will", "Encounter", "Daily"] as const).map((frequency) => (
+              <span key={frequency}>
+                <i>{card.usage === frequency ? "✓" : ""}</i>
+                {frequency}
+              </span>
+            ))}
+          </div>
+        ) : null}
         {card.prerequisites === undefined ? null : (
           <p>
             <strong>Prerequisite:</strong> {card.prerequisites}
           </p>
         )}
-        {rules.map((field, index) => (
-          <div key={`${field.label}-${index}`}>
-            <strong>{field.label}:</strong>{" "}
-            <Prose value={powerTextAtLevel(field.value, characterLevel)} />
-          </div>
+        <div className="print-card-leading-rules">
+          <PrintRuleLines
+            fields={groupedRules.leading}
+            characterLevel={characterLevel}
+          />
+        </div>
+        {attacks.map((attack) => (
+          <section className="print-card-attack-section" key={attack.id}>
+            <PrintAttackBand attack={attack} numbered={attacks.length > 1} />
+            <div className="print-card-attack-rules">
+              <PrintRuleLines
+                fields={groupedRules.attacks.get(attack.ordinal) ?? []}
+                characterLevel={characterLevel}
+              />
+            </div>
+          </section>
         ))}
         {rules.length === 0 && card.description !== undefined ? (
           <Prose value={card.description} />
         ) : null}
-        {printVariants.map((variant) => (
-          <p className="print-card-variant" key={variant.id}>
-            <strong>{powerVariantLabel(variant)}:</strong>{" "}
-            {powerVariantAttack(variant)}
-            {variant.damage === undefined ? null : `, ${variant.damage} damage`}
-          </p>
-        ))}
+        {attacks.length === 0 &&
+          printVariants.map((variant) => (
+            <p className="print-card-variant" key={variant.id}>
+              <strong>{powerVariantLabel(variant)}:</strong>{" "}
+              {powerVariantAttack(variant)}
+              {variant.damage === undefined
+                ? null
+                : `, ${variant.damage} damage`}
+            </p>
+          ))}
       </div>
       <div className="print-card-additional">Additional effects</div>
       <footer>

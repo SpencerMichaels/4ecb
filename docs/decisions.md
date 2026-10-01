@@ -1634,10 +1634,10 @@ so a magic weapon or armor card keeps the base item's physical statistics as
 well as its enchantment's enhancement, level, critical, properties, and powers.
 
 Within a power card, action labels omit the redundant word `Action`. Both compact
-combat bands use an icon-left layout: action plus range on the first row, then a
-combined authored attack/defense cell plus a wrapping target cell. Target text
-must be complete even when the row becomes taller; the fixed card body yields
-space rather than truncating the target.
+combat bands use an icon-left layout: action plus range on the first row, then
+the per-attack formula, calculated total/defense, and wrapping target defined by
+D070. Target text must be complete even when the row becomes taller; the fixed
+card body yields space rather than truncating the target.
 
 Character-view and printed rules select current-level text only for the
 level-scaling grammars confirmed in the corpus: newline `Level N:` alternatives,
@@ -1655,6 +1655,39 @@ The pre-card pages likewise use bounded, named panels rather than a generic
 multi-column dump: a character dashboard followed by indexes and note/portrait
 panels. This is a print compatibility boundary, not a requirement that browser
 View imitate the legacy sheet visually.
+
+### D070 — Printed attacks pair authored formulas with unambiguous totals
+
+**Status:** accepted
+
+**Date:** 2026-09-30
+
+Each authored attack phase is a first-class evaluated value rather than a
+single power-wide attack cache. The rules engine preserves its ordinal, resolved
+ability, intrinsic power bonus, defense, target, final attack bonus, and the
+components that produced that bonus. Multiattack powers therefore calculate
+each phase independently; an explicit power ability choice applies only to a
+phase that actually offers that ability or names `Primary ability`. Generic
+`Primary ability` resolves from the selected class's authored key-ability order,
+using modifier, raw score, and authored-order tie breaks already established by
+D065.
+
+The physical card renders one compact band per phase:
+`ATTACK 1 · STR+2 | +12 vs AC | target`. A single phase omits the number. The
+first cell communicates the resolved authored formula, so a power's intrinsic
+`+2` cannot be confused with the final calculated total in the second cell.
+The second cell abbreviates only the long defense names `Fortitude` and `Reflex`
+to `Fort` and `Ref`; underlying calculations and authored rules text retain the
+full names. Requirement, trigger, and other unconditional setup remain above
+the first attack. Hit and following phase-bound effects remain directly below
+their attack band, preserving scan order and avoiding detached damage/effect
+summaries.
+
+Authoritative evaluations project the structured attacks through the shared
+sheet model. Legacy snapshots also expose their cached weapon attack stat and
+total as presentation variants so a known `DEX`, `WIS`, and similar value is not
+degraded to an `ABILITY` placeholder. Unsupported legacy multi-phase caches
+remain recoverable as authored prose rather than inventing independent totals.
 
 ## Deferred decisions and decision points
 

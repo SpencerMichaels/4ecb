@@ -26,8 +26,20 @@ export interface PowerVariant {
   readonly critical?: string;
   readonly brutal?: number;
   readonly attackComponents: readonly PowerComponent[];
+  readonly attacks?: readonly PowerAttack[];
   readonly damageComponents: readonly PowerComponent[];
   readonly conditionalDamage: readonly PowerConditionalDamage[];
+}
+
+export interface PowerAttack {
+  readonly id: string;
+  readonly ordinal: number;
+  readonly attackStat: string;
+  readonly powerBonus: number;
+  readonly defense: string;
+  readonly attackBonus: number;
+  readonly target?: string;
+  readonly attackComponents: readonly PowerComponent[];
 }
 
 export interface PowerConditionalDamage {
@@ -537,13 +549,123 @@ const abilityNames = [
 
 function highestAbility(
   stats: Readonly<Record<string, EvaluatedStat>>,
+  preferred: readonly string[] = abilityNames,
 ): string {
-  return abilityNames.reduce((best, candidate) =>
-    numericStat(stats, `${candidate} modifier`) >
-    numericStat(stats, `${best} modifier`)
-      ? candidate
-      : best,
+  const candidates = preferred.filter((candidate) =>
+    abilityNames.some((ability) => key(ability) === key(candidate)),
   );
+  return (candidates.length === 0 ? abilityNames : candidates).reduce(
+    (best, candidate) => {
+      const candidateModifier = numericStat(stats, `${candidate} modifier`);
+      const bestModifier = numericStat(stats, `${best} modifier`);
+      if (candidateModifier !== bestModifier)
+        return candidateModifier > bestModifier ? candidate : best;
+      const candidateScore = numericStat(stats, candidate);
+      const bestScore = numericStat(stats, best);
+      return candidateScore > bestScore ? candidate : best;
+    },
+  );
+}
+
+interface AuthoredAttack {
+  readonly ordinal: number;
+  readonly line: string;
+  readonly target?: string;
+}
+
+const attackOrdinals = new Map([
+  ["primary", 1],
+  ["secondary", 2],
+  ["tertiary", 3],
+  ["quaternary", 4],
+]);
+
+function attackOrdinal(name: string): number | undefined {
+  const match = name
+    .trim()
+    .match(/^(primary|secondary|tertiary|quaternary)\s+/i);
+  return match?.[1] === undefined
+    ? undefined
+    : attackOrdinals.get(key(match[1]));
+}
+
+function authoredAttacks(
+  power: ContentEntity,
+  overlays: readonly FieldOverlay[],
+): readonly AuthoredAttack[] {
+  const attacks = new Map<number, string>();
+  const targets = new Map<number, string>();
+  let activeOrdinal = 1;
+  for (const specific of [...power.specifics].sort(
+    (left, right) => left.ordinal - right.ordinal,
+  )) {
+    const name = specific.name.trim();
+    let value = specific.value;
+    for (const overlay of overlays) {
+      if (
+        overlay.targetDefinitionIds.includes(power.id) &&
+        key(overlay.field) === key(name)
+      ) {
+        if (overlay.value !== undefined) value = overlay.value;
+        if (overlay.listAddition !== undefined)
+          value = [value, overlay.listAddition].filter(Boolean).join(", ");
+      }
+    }
+    const namedOrdinal = attackOrdinal(name);
+    if (namedOrdinal !== undefined) activeOrdinal = namedOrdinal;
+    if (/target$/i.test(name) && value.trim().length > 0)
+      targets.set(namedOrdinal ?? activeOrdinal, value.trim());
+    if (/attack$/i.test(name) && /\bvs\.?\s+[A-Za-z]+/i.test(value))
+      attacks.set(namedOrdinal ?? activeOrdinal, value.trim());
+  }
+  return [...attacks.entries()]
+    .sort(([left], [right]) => left - right)
+    .map(([ordinal, line]) => {
+      const target = targets.get(ordinal);
+      return {
+        ordinal,
+        line,
+        ...(target === undefined ? {} : { target }),
+      };
+    });
+}
+
+function classKeyAbilities(
+  activeDefinitionIds: readonly string[],
+  byId: ReadonlyMap<string, ContentEntity>,
+): readonly string[] {
+  const selectedClass = activeDefinitionIds
+    .map((id) => byId.get(key(id)))
+    .find((entity) => /^(?:hybrid )?class$/i.test(entity?.type ?? ""));
+  const authored = field(selectedClass ?? emptyEntity, "Key Abilities") ?? "";
+  const seen = new Set<string>();
+  return [
+    ...authored.matchAll(new RegExp(`\\b(${abilityNames.join("|")})\\b`, "gi")),
+  ].flatMap((match) => {
+    const ability = abilityNames.find(
+      (candidate) => key(candidate) === key(match[1] ?? ""),
+    );
+    if (ability === undefined || seen.has(ability)) return [];
+    seen.add(ability);
+    return [ability];
+  });
+}
+
+function powerBonusAtLevel(line: string, level: number): number {
+  const firstLine = line.split("\n")[0] ?? line;
+  let bonus = Number(
+    firstLine.match(
+      /(?:ability|strength|constitution|dexterity|intelligence|wisdom|charisma)\s*\+\s*(\d+)/i,
+    )?.[1] ?? 0,
+  );
+  for (const match of line.matchAll(
+    /(?:Level\s+)?(\d+)(?:st|nd|rd|th)?(?:\s+level)?\s*:\s*[^\n]*?\+\s*(\d+)|Increase\s+to\s+\+(\d+)\s+bonus\s+at\s+(\d+)(?:st|nd|rd|th)\s+level/gi,
+  )) {
+    const threshold = Number(match[1] ?? match[4]);
+    const candidate = Number(match[2] ?? match[3]);
+    if (threshold <= level && Number.isFinite(candidate)) bonus = candidate;
+  }
+  return bonus;
 }
 
 function lineAtLevel(
@@ -698,9 +820,8 @@ export function evaluatePowers(input: {
       .map((value) => value.trim())
       .filter(Boolean);
     const attackType = effectiveField(power, "Attack Type", input.overlays);
-    const attackLine =
-      effectiveField(power, "Attack", input.overlays) ??
-      effectiveField(power, "Primary Attack", input.overlays);
+    const attackDefinitions = authoredAttacks(power, input.overlays);
+    const attackLine = attackDefinitions[0]?.line;
     const hitLine = lineAtLevel(
       effectiveField(power, "Hit", input.overlays),
       input.level,
@@ -742,22 +863,15 @@ export function evaluatePowers(input: {
         key(entity?.name ?? "") === "dual implement spellcaster"
       );
     });
+    const preferredAbilities = classKeyAbilities(
+      input.activeDefinitionIds,
+      byId,
+    );
     const variants = handCandidates.map((equipment): PowerVariant => {
       const weaponSpecific = powerWeaponSpecificBonuses(
         power,
         equipment,
         input.stats,
-      );
-      const selectedAttackLine =
-        dualAttack !== undefined && dualAttack.length > 1
-          ? equipment.rangedWeapon
-            ? dualAttack.at(-1)
-            : dualAttack[0]
-          : attackLine;
-      const attack = selectedAttackLine?.match(/^(.*?)\s+vs\.?\s+([A-Za-z]+)/i);
-      const attackLeft = attack?.[1] ?? "";
-      const availableAbilities = abilityNames.filter((ability) =>
-        new RegExp(`\\b${ability}\\b`, "i").test(attackLeft),
       );
       const explicitAbilityChoice = abilityNames.find((ability) =>
         input.activeDefinitionIds.some((definitionId) => {
@@ -765,73 +879,114 @@ export function evaluatePowers(input: {
           return key(choice?.name ?? "") === key(`${power.name} ${ability}`);
         }),
       );
-      let attackStat =
-        explicitAbilityChoice ??
-        (availableAbilities.length > 0
-          ? availableAbilities.reduce((best, candidate) =>
-              numericStat(input.stats, `${candidate} modifier`) >
-              numericStat(input.stats, `${best} modifier`)
-                ? candidate
-                : best,
-            )
-          : /primary ability/i.test(attackLeft)
-            ? highestAbility(input.stats)
-            : "Unknown");
-      if (
-        weaponPower &&
-        /^ranged\b/i.test(attackType ?? "") &&
-        attackStat === "Dexterity" &&
-        equipment.properties.includes("heavy thrown")
-      )
-        attackStat = "Strength";
-      const defense = attack?.[2] ?? "Unknown";
-      const attackComponents: PowerComponent[] = [
-        {
-          label: `${attackStat} modifier`,
-          value: numericStat(input.stats, `${attackStat} modifier`),
-        },
-        { label: "half your level", value: Math.floor(input.level / 2) },
-      ];
-      if (weaponPower && equipment.proficiency !== 0)
-        attackComponents.push({
-          label: "proficiency bonus",
-          value: equipment.proficiency,
-        });
-      if (equipment.enhancement !== 0)
-        attackComponents.push({
-          label: "enhancement bonus",
-          value: equipment.enhancement,
-        });
-      attackComponents.push(
-        ...combatStatComponents(
-          input.stats,
-          equipment,
-          power.name,
-          weaponPower ? "weapon" : "implement",
-          "attack",
-          attackType,
-        ),
-      );
-      if (implementPower && equipment.weaponDefinition)
+      const calculatedAttacks = (
+        attackDefinitions.length === 0
+          ? [{ ordinal: 1, line: "" }]
+          : attackDefinitions
+      ).map((definition): PowerAttack => {
+        const authoredLine =
+          definition.ordinal === 1 &&
+          dualAttack !== undefined &&
+          dualAttack.length > 1
+            ? ((equipment.rangedWeapon ? dualAttack.at(-1) : dualAttack[0]) ??
+              definition.line)
+            : definition.line;
+        const attack = authoredLine.match(/^(.*?)\s+vs\.?\s+([A-Za-z]+)/i);
+        const attackLeft = attack?.[1] ?? "";
+        const availableAbilities = abilityNames.filter((ability) =>
+          new RegExp(`\\b${ability}\\b`, "i").test(authoredLine),
+        );
+        const selectedAbilityForAttack =
+          explicitAbilityChoice !== undefined &&
+          (new RegExp(`\\b${explicitAbilityChoice}\\b`, "i").test(
+            authoredLine,
+          ) ||
+            /primary ability/i.test(attackLeft))
+            ? explicitAbilityChoice
+            : undefined;
+        let attackStat =
+          selectedAbilityForAttack ??
+          (availableAbilities.length > 0
+            ? highestAbility(input.stats, availableAbilities)
+            : /primary ability/i.test(attackLeft)
+              ? highestAbility(input.stats, preferredAbilities)
+              : "Unknown");
+        if (
+          weaponPower &&
+          /^ranged\b/i.test(attackType ?? "") &&
+          attackStat === "Dexterity" &&
+          equipment.properties.includes("heavy thrown")
+        )
+          attackStat = "Strength";
+        const defense = attack?.[2] ?? "Unknown";
+        const attackComponents: PowerComponent[] = [
+          {
+            label: `${attackStat} modifier`,
+            value: numericStat(input.stats, `${attackStat} modifier`),
+          },
+          { label: "half your level", value: Math.floor(input.level / 2) },
+        ];
+        if (weaponPower && equipment.proficiency !== 0)
+          attackComponents.push({
+            label: "proficiency bonus",
+            value: equipment.proficiency,
+          });
+        if (equipment.enhancement !== 0)
+          attackComponents.push({
+            label: "enhancement bonus",
+            value: equipment.enhancement,
+          });
         attackComponents.push(
           ...combatStatComponents(
             input.stats,
             equipment,
             power.name,
-            "weapon",
+            weaponPower ? "weapon" : "implement",
             "attack",
             attackType,
-          ).filter(({ provenanceId }) =>
-            provenanceId?.endsWith(":legacy-focused-expertise"),
           ),
         );
-      const powerAttackBonus = Number(attackLeft.match(/\+\s*(\d+)/)?.[1] ?? 0);
-      if (powerAttackBonus !== 0)
-        attackComponents.push({
-          label: "power attack bonus",
-          value: powerAttackBonus,
-        });
-      attackComponents.push(...weaponSpecific.attack);
+        if (implementPower && equipment.weaponDefinition)
+          attackComponents.push(
+            ...combatStatComponents(
+              input.stats,
+              equipment,
+              power.name,
+              "weapon",
+              "attack",
+              attackType,
+            ).filter(({ provenanceId }) =>
+              provenanceId?.endsWith(":legacy-focused-expertise"),
+            ),
+          );
+        const powerBonus = powerBonusAtLevel(authoredLine, input.level);
+        if (powerBonus !== 0)
+          attackComponents.push({
+            label: "power attack bonus",
+            value: powerBonus,
+          });
+        attackComponents.push(...weaponSpecific.attack);
+        return {
+          id: `${power.id}:attack-${definition.ordinal}`,
+          ordinal: definition.ordinal,
+          attackStat,
+          powerBonus,
+          defense,
+          attackBonus: attackComponents.reduce(
+            (sum, component) => sum + component.value,
+            0,
+          ),
+          ...(definition.target === undefined
+            ? {}
+            : { target: definition.target }),
+          attackComponents,
+        };
+      });
+      const attacks = attackDefinitions.length === 0 ? [] : calculatedAttacks;
+      const primaryAttack = calculatedAttacks[0];
+      const attackStat = primaryAttack?.attackStat ?? "Unknown";
+      const defense = primaryAttack?.defense ?? "Unknown";
+      const attackComponents = primaryAttack?.attackComponents ?? [];
 
       const damageComponents: PowerComponent[] = [];
       const specialDamage = nativeSpecialDamage(power, hitLine, input.level);
@@ -1032,10 +1187,9 @@ export function evaluatePowers(input: {
           : { pairedEquipmentName: equipment.pairedEquipmentName }),
         attackStat,
         defense,
-        attackBonus: attackComponents.reduce(
-          (sum, component) => sum + component.value,
-          0,
-        ),
+        ...(primaryAttack === undefined
+          ? {}
+          : { attackBonus: primaryAttack.attackBonus }),
         ...(specialDamage?.expression !== undefined
           ? { damage: specialDamage.expression }
           : dice === undefined
@@ -1050,6 +1204,7 @@ export function evaluatePowers(input: {
         ...(critical === undefined ? {} : { critical }),
         ...(brutal === undefined ? {} : { brutal: Number(brutal) }),
         attackComponents,
+        attacks,
         damageComponents: uniqueDamageComponents,
         conditionalDamage,
       };

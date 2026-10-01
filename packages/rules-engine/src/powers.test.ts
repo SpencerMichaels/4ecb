@@ -663,7 +663,7 @@ describe("power evaluation", () => {
 
     expect(power?.variants[0]).toMatchObject({
       attackStat: "Wisdom",
-      attackBonus: 14,
+      attackBonus: 16,
     });
   });
 
@@ -834,7 +834,63 @@ describe("power evaluation", () => {
       attackStat: "Strength",
       attackBonus: 16,
       damage: "2d4+6",
+      attacks: [
+        expect.objectContaining({
+          ordinal: 1,
+          attackStat: "Strength",
+          attackBonus: 16,
+          defense: "AC",
+        }),
+      ],
     });
+  });
+
+  it("calculates each authored attack independently", () => {
+    const [power] = evaluatePowers({
+      level: 8,
+      activeDefinitionIds: ["POWER", "CLASS"],
+      inventory: [],
+      stats: {
+        Strength: stat("Strength", 18),
+        Wisdom: stat("Wisdom", 19),
+        "Strength modifier": stat("Strength modifier", 4),
+        "Wisdom modifier": stat("Wisdom modifier", 4),
+      },
+      overlays: [],
+      entities: [
+        entity("CLASS", "Synthetic Warden", "Class", {
+          "Key Abilities": "Wisdom, Strength",
+        }),
+        entity("POWER", "Twofold Test", "Power", {
+          "Attack Type": "Melee 1",
+          "Primary Target": "One creature",
+          "Primary Attack": "Primary ability vs. AC",
+          "Secondary Attack": ".",
+          "Secondary Target": "A second creature",
+          Attack: "Strength +2 vs. Reflex",
+          Hit: "The target falls prone.",
+        }),
+      ],
+    });
+
+    expect(power?.variants[0]?.attacks).toMatchObject([
+      {
+        ordinal: 1,
+        attackStat: "Wisdom",
+        powerBonus: 0,
+        defense: "AC",
+        attackBonus: 8,
+        target: "One creature",
+      },
+      {
+        ordinal: 2,
+        attackStat: "Strength",
+        powerBonus: 2,
+        defense: "Reflex",
+        attackBonus: 10,
+        target: "A second creature",
+      },
+    ]);
   });
 
   it("retains a legacy calculation variant for effect-only utilities", () => {

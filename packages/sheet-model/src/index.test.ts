@@ -26,6 +26,7 @@ describe("sheet model", () => {
               {
                 name: "Wand",
                 attackBonus: "7",
+                attackStat: "Intelligence",
                 defense: "Reflex",
                 damage: "1d6+4",
               },
@@ -52,16 +53,22 @@ describe("sheet model", () => {
           prerequisites: "ID_FMP_THEME_643",
           specifics: [
             {
+              name: "Attack",
+              value: "Intelligence + 2 vs. Reflex",
+              extraAttributes: [],
+              ordinal: 0,
+            },
+            {
               name: "Effect",
               value: "A test spark.",
               extraAttributes: [],
-              ordinal: 0,
+              ordinal: 1,
             },
             {
               name: "_REQUIRESID",
               value: "ID_INTERNAL_REQUIREMENT",
               extraAttributes: [],
-              ordinal: 1,
+              ordinal: 2,
             },
           ],
           rules: [],
@@ -77,8 +84,20 @@ describe("sheet model", () => {
       attack: "+7 vs Reflex",
       damage: "1d6+4",
       description: "Description",
+      variants: [
+        {
+          ability: "Intelligence",
+          attack: "+7 vs Reflex",
+          damage: "1d6+4",
+          powerBonus: 2,
+        },
+      ],
     });
     expect(model.powers[0]?.fields).toEqual([
+      {
+        label: "Attack",
+        value: "Intelligence + 2 vs. Reflex",
+      },
       { label: "Effect", value: "A test spark." },
     ]);
     expect(model.powers[0]?.prerequisites).toBeUndefined();

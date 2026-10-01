@@ -1828,7 +1828,7 @@ textarea {
   display: grid;
   font-family: Arial, sans-serif;
   font-size: 6.7pt;
-  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto auto;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto auto;
   height: 3.405in;
   line-height: 1.08;
   min-width: 0;
@@ -1884,6 +1884,7 @@ textarea {
   background: color-mix(in srgb, var(--card-color) 20%, white);
 }
 .print-card-action-band {
+  border-bottom: 1px solid var(--card-color);
   display: grid;
   font-weight: 700;
   grid-template-columns: max-content minmax(0, 1fr);
@@ -1911,8 +1912,8 @@ textarea {
 }
 .print-card-combat-band {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
-  margin: 0;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr) minmax(0, 1fr);
+  margin: 0 -0.035in;
 }
 .print-card-combat-band > div {
   align-items: flex-start;
@@ -1934,6 +1935,17 @@ textarea {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.print-card-attack-total {
+  justify-content: center;
+  white-space: nowrap;
+}
+.print-card-attack-formula dd {
+  font-size: 6.2pt;
+  white-space: nowrap;
+}
+.print-card-attack-target dd {
+  font-weight: 700;
+}
 .print-card-combat-band .icon {
   height: 0.1in;
   width: 0.1in;
@@ -1942,6 +1954,21 @@ textarea {
   min-height: 0;
   overflow: hidden;
   padding: 0.035in;
+}
+.print-card-attack-section {
+  margin: 0;
+}
+.print-card-attack-section + .print-card-attack-section {
+  margin-top: 0.025in;
+}
+.print-card-attack-rules {
+  padding-top: 0.025in;
+}
+.print-card-leading-rules:not(:empty) {
+  padding-bottom: 0.025in;
+}
+.print-power-card .print-power-frequency {
+  margin: -0.035in -0.035in 0.035in;
 }
 .print-card-body > div,
 .print-card-body > p,

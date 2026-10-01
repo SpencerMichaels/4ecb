@@ -66,8 +66,20 @@ export interface SheetPowerVariant {
   readonly weaponDamage?: string;
   readonly hand?: "main" | "off";
   readonly pairedEquipmentName?: string;
+  readonly ability?: string;
+  readonly powerBonus?: number;
   readonly attack?: string;
+  readonly attacks?: readonly SheetPowerAttack[];
   readonly damage?: string;
+}
+
+export interface SheetPowerAttack {
+  readonly id: string;
+  readonly ordinal: number;
+  readonly ability: string;
+  readonly powerBonus: number;
+  readonly attack: string;
+  readonly target?: string;
 }
 
 export interface CharacterSheetModel {
@@ -618,6 +630,21 @@ function evaluatedPowerCards(
         : {
             attack: `${signed(variant.attackBonus)} vs ${variant.defense ?? "defense"}`,
           }),
+      ...(variant.attackStat === undefined
+        ? {}
+        : { ability: variant.attackStat }),
+      ...((variant.attacks ?? []).length === 0
+        ? {}
+        : {
+            attacks: (variant.attacks ?? []).map((attack) => ({
+              id: attack.id,
+              ordinal: attack.ordinal,
+              ability: attack.attackStat,
+              powerBonus: attack.powerBonus,
+              attack: `${signed(attack.attackBonus)} vs ${attack.defense}`,
+              ...(attack.target === undefined ? {} : { target: attack.target }),
+            })),
+          }),
       ...(variant.damage === undefined ? {} : { damage: variant.damage }),
       ...(variant.damageType === undefined
         ? {}
@@ -671,6 +698,26 @@ function powerCard(
     weapon?.attackBonus === undefined
       ? undefined
       : `+${weapon.attackBonus} vs ${weapon.defense ?? "defense"}`;
+  const authoredAttack =
+    field(entity, "Attack") || field(entity, "Primary Attack");
+  const powerBonus = Number(authoredAttack.match(/\+\s*(\d+)/)?.[1] ?? 0);
+  const variants: readonly SheetPowerVariant[] = power.weapons.map(
+    (candidate, index) => ({
+      id: `${power.id ?? power.name}:weapon-${index}`,
+      equipmentName: candidate.name,
+      equipped: index === 0,
+      ...(candidate.attackStat === undefined
+        ? {}
+        : { ability: candidate.attackStat }),
+      ...(powerBonus === 0 ? {} : { powerBonus }),
+      ...(candidate.attackBonus === undefined
+        ? {}
+        : {
+            attack: `+${candidate.attackBonus} vs ${candidate.defense ?? "defense"}`,
+          }),
+      ...(candidate.damage === undefined ? {} : { damage: candidate.damage }),
+    }),
+  );
   return {
     ...(power.id === undefined ? {} : { id: power.id }),
     kind: "power",
@@ -689,6 +736,7 @@ function powerCard(
         }),
     ...(attack === undefined ? {} : { attack }),
     ...(weapon?.damage === undefined ? {} : { damage: weapon.damage }),
+    ...(variants.length === 0 ? {} : { variants }),
     fields: entityFields(entity)
       .filter(
         (field) =>

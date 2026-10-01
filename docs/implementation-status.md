@@ -48,6 +48,17 @@ separate projection over the same semantic model.
   such as `Strength +2 vs. Reflex, Constitution +2 vs. Reflex, or Dexterity +2
 vs. Reflex` use the configured highest-ability selection and established
   tie-break rules.
+- Attack calculation and print projection are now phase-aware. The rules engine
+  retains every authored attack's ordinal, resolved ability, intrinsic power
+  bonus, defense, target, final total, and component provenance; primary and
+  subsequent attacks are calculated independently. Printed cards render these
+  as compact `ATTACK 1 · STR+2 | +12 vs AC | target` rows (or unnumbered
+  `ATTACK` for a single phase), followed immediately by that phase's Hit and
+  associated Effect clauses. The split formula/total presentation removes the
+  ambiguity between a power's authored `+2` and the complete to-hit value.
+  Header-only defense abbreviations use `Fort` and `Ref`. Legacy cached weapon
+  variants now carry their recorded attack stat into the shared sheet model so
+  known abilities do not regress to a generic `ABILITY` label.
 - Evaluated cards now apply the canonical user-facing-field predicate after
   overlays, suppress machine metadata and ID tokens, preserve repeated authored
   combat clauses in ordinal order, and expose supported flavor and printable
@@ -66,6 +77,13 @@ vs. Reflex` use the configured highest-ability selection and established
   pages, fixed card geometry, compact utility handling, and the absence of
   flavor on physical cards. Product-owner review is still required; this
   checkpoint does not close M5.6.
+- The per-attack checkpoint passes the full repository gate: formatting, lint,
+  566 tests, every workspace typecheck, production/PWA build, Chromium and
+  Firefox Letter/A4 color/monochrome print checks with 24 fixed cards and no
+  card/header/target overflow, deterministic public-pack checks, and the query
+  benchmark. Live Silaqui review confirms the compact formula/total/target row,
+  complete long Grab Attack target, recorded `DEX` fallback for legacy cached
+  Quick Formation, and `Fort`/`Ref` header abbreviations.
 
 ## Extend two-click confirmation to the character library page (2026-09-28)
 
