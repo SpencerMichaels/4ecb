@@ -19,6 +19,17 @@ const sheetSource = readFileSync(
 );
 
 describe("print layout contract", () => {
+  it("anchors weapon tables at the body bottom with normal-weight weapon names", () => {
+    expect(styles).toMatch(
+      /\.print-power-card \.print-card-body\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-weapon-variants\s*\{[^}]*margin-top:\s*auto;[^}]*padding-top:\s*var\(--print-card-section-gap\)/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-variant-table tbody th\s*\{[^}]*font-weight:\s*normal/,
+    );
+  });
   it("uses soft row backgrounds without borders and content-sized weapon columns", () => {
     expect(styles).toMatch(
       /\.print-card-variant-table\s*\{[^}]*table-layout:\s*auto/,
@@ -121,7 +132,7 @@ describe("print layout contract", () => {
       "attacks.length === 0 &&\n          printVariants.map",
     );
     expect(styles).toMatch(
-      /\.print-card-weapon-variants\s*\{[\s\S]*?margin-top:\s*var\(--print-card-section-gap\)/,
+      /\.print-card-weapon-variants\s*\{[\s\S]*?padding-top:\s*var\(--print-card-section-gap\)/,
     );
     expect(sheetSource).toContain(
       'const typeLabel = `${displayUsage}${isUtility ? " Utility" : ""} power`',

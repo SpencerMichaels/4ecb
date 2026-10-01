@@ -94,6 +94,13 @@ Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   Automatic column sizing replaces the fixed 30%
   weapon column to reduce unnecessary name wrapping; focused print contracts
   cover the style and sizing boundary.
+  Weapon names now use normal body weight, and the table sits at the bottom of
+  the available body area rather than immediately following short prose. The
+  minimum section gap and non-shrinking content preserve separation while the
+  existing adaptive fit still measures the complete rules-plus-table body.
+  This bottom-alignment refinement passes ten focused print tests, the web
+  build, and all eight Chromium/Firefox print cases without body or table-cell
+  overflow.
 - Multiattack investigation confirmed the weapon-list limitation also affects
   attacks with the same ability but different damage or weapon roles. The local
   merged corpus's Ranger Sudden Strike uses Strength for both phases but has

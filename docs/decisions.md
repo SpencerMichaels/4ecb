@@ -1530,6 +1530,10 @@ calculation cells containing `+bonus → expression`. Single attacks and
 identical repeated calculations use a three-column table labeled Weapon,
 Attack, and Damage for like-for-like alignment. Distinct
 phases add numbered attack-column headers.
+Weapon names use normal body weight rather than subsection-heading bold.
+The table is anchored at the bottom of the available card body, with a minimum
+section gap above it; rules remain in normal order above the table, and adaptive
+card fitting continues to account for both rules and table height.
 Soft alternating row backgrounds, without cell borders, make both forms
 recognizable as tables without competing with the card border. Multiattack
 headers use a slightly stronger tint. Columns size to their contents across the full

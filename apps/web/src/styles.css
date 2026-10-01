@@ -1956,6 +1956,13 @@ textarea {
   overflow: hidden;
   padding: 0.035in;
 }
+.print-power-card .print-card-body {
+  display: flex;
+  flex-direction: column;
+}
+.print-power-card .print-card-body > * {
+  flex-shrink: 0;
+}
 .print-card-attack-section {
   margin: 0;
 }
@@ -2002,7 +2009,8 @@ textarea {
   content: ": ";
 }
 .print-card-weapon-variants {
-  margin-top: var(--print-card-section-gap);
+  margin-top: auto;
+  padding-top: var(--print-card-section-gap);
 }
 .print-card-variant-table {
   border-collapse: collapse;
@@ -2028,6 +2036,7 @@ textarea {
   background: white;
 }
 .print-card-variant-table tbody th {
+  font-weight: normal;
   overflow-wrap: break-word;
 }
 .print-variant-bonus,
