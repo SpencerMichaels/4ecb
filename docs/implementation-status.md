@@ -48,6 +48,8 @@ separate projection over the same semantic model.
   Immediate Interrupt uses the octagon-minus icon across print and interactive
   action displays; other action symbols are unchanged.
   Printed attack targets use the crosshair icon rather than the bullseye.
+  The printed attack-type cell uses a fixed sword icon to identify the field,
+  independent of its melee/ranged/area text.
 - The compact power header now removes the redundant word `Action`, uses the
   same icon-left rhythm for action/range and attack/target, combines the authored
   attack stat and defense into one cell, and lets the target cell grow vertically

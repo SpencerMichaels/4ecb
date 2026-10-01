@@ -38,7 +38,6 @@ import {
 } from "./PowerCardPresentation";
 import { Prose } from "./Prose";
 import { powerTextAtLevel } from "./power-level-text";
-import { powerAttackIcon } from "./visual-language";
 
 const characters = new CharacterRepository();
 
@@ -443,7 +442,7 @@ function PrintPowerCard({
           {displayActionType}
         </span>
         <span>
-          <Icon name={powerAttackIcon(attackType)} />
+          <Icon name="sword" />
           {attackType}
         </span>
       </div>
