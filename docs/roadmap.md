@@ -570,23 +570,23 @@ Chromium and Firefox now verify the resulting five-page synthetic Letter/A4
 matrix in both color modes. Further product-owner visual review remains part of
 M5.6.
 
-**Per-attack card revision (2026-09-30):** Printed power cards now treat each
-authored attack phase independently. A compact row pairs the resolved authored
-formula with its unambiguous calculated total and target—for example,
-`Attack 1 · STR+2 | +12 vs AC | One creature`—while the associated Hit and
-following phase-bound effects remain immediately beneath it. Single attacks
-omit the number; `Fortitude` and `Reflex` shorten to `Fort` and `Ref` only in the
-calculated header cell. Formula and total columns fit their content; long targets
-receive a two-row layout with the formula and total stacked as one undivided
-block at left. The action/range and attack header bands remain contiguous;
-requirements and other setup rules follow the first attack band before its Hit
-text.
+**Per-attack card revision (2026-09-30, refined 2026-10-01):** Printed power
+cards treat each authored attack phase independently. A compact row now combines
+the calculated total, resolved authored formula, and defense—for example,
+`⚔ +12 (STR+2 vs AC) | One creature`—while the associated Hit and following
+phase-bound effects remain immediately beneath it. Numbered multiattacks use a
+compact ordinal; `Fortitude` and `Reflex` shorten to `Fort` and `Ref` only in the
+calculated header cell. The attack cell fits its content and long targets wrap
+in the remaining width. The action/range and attack header bands remain
+contiguous; requirements and other setup rules follow the first attack band
+before its Hit text.
 
 **Usage-first card revision (2026-10-01):** Physical power cards now emphasize
 the At-Will, Encounter, or Daily limit players most often need during play.
 Usage drives the default green/red/gray treatment, Utility is an additional word
 in the bottom type bar, and numeric level shares that same bar at the right. The
-legacy three-checkbox matrix and separate class/level/source footer are gone.
+title and bottom bars share the solid usage color and white text. The legacy
+three-checkbox matrix and separate class/level/source footer are gone.
 An off-by-default Display setting can color Utility cards blue for users who
 prefer the original builder's convention without hiding the actual usage text.
 Live review confirmed both the default and legacy-blue projections.

@@ -1674,18 +1674,18 @@ using modifier, raw score, and authored-order tie breaks already established by
 D065.
 
 The physical card renders one compact band per phase:
-`Attack 1 · STR+2 | +12 vs AC | target`. A single phase omits the number. The
-first cell communicates the resolved authored formula, so a power's intrinsic
-`+2` cannot be confused with the final calculated total in the second cell.
-The second cell abbreviates only the long defense names `Fortitude` and `Reflex`
-to `Fort` and `Ref`; underlying calculations and authored rules text retain the
-full names. The first two columns size to their content and the target receives
-the remaining width. When a target cannot fit on one line, the formula and
-total stack as one undivided block in the left column while the target spans
-both rows on the right. The action/range and first attack bands remain visually
-contiguous; Requirement, trigger, and other unconditional setup follow the
-first attack band but precede Hit. Hit and following phase-bound effects remain
-directly below their attack band, preserving scan order and avoiding detached
+`⚔ +12 (STR+2 vs AC) | target`. The calculated total leads, while the
+parenthesized authored formula preserves an intrinsic power bonus without
+confusing it with the total; numbered multiattacks prepend only their ordinal
+(`1 ·`) rather than the redundant word `Attack`. The same cell abbreviates only
+the long defense names `Fortitude` and `Reflex` to `Fort` and `Ref`; underlying
+calculations and authored rules text retain the full names. The combined attack
+cell sizes to its content and the target receives the remaining width, wrapping
+vertically when needed. The action/range and first attack bands remain visually
+contiguous;
+Requirement, trigger, and other unconditional setup follow the first attack
+band but precede Hit. Hit and following phase-bound effects remain directly
+below their attack band, preserving scan order and avoiding detached
 damage/effect summaries.
 
 Authoritative evaluations project the structured attacks through the shared
@@ -1704,7 +1704,8 @@ At-Will, Encounter, and Daily are the mechanically important identities players
 scan for during play, while Utility is an additional power classification rather
 than a fourth usage frequency. Printed power cards therefore use usage for their
 default border and header color: green for At-Will, red for Encounter, and gray
-for Daily. The three-checkbox frequency matrix is omitted. Utility remains
+for Daily. The title bar and bottom type bar use the same solid usage color with
+white text. The three-checkbox frequency matrix is omitted. Utility remains
 explicit in the bottom type bar, which reads forms such as `AT-WILL UTILITY
 POWER`; the numeric power level, when present, is right-aligned in the same bar.
 The separate class/level/source footer is removed because class origin is not

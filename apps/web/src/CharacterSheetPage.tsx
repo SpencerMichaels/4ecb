@@ -349,19 +349,18 @@ function PrintAttackBand({
   readonly numbered: boolean;
 }) {
   const formula = `${abbreviatedAbility(attack.ability)}${attack.powerBonus === 0 ? "" : attack.powerBonus > 0 ? `+${attack.powerBonus}` : attack.powerBonus}`;
-  const longTarget = (attack.target?.trim().length ?? 0) > 24;
+  const total = abbreviatedAttackTotal(attack.attack).replace(
+    /^(.+?)\s+vs\s+(.+)$/i,
+    `$1 (${formula} vs $2)`,
+  );
   return (
-    <dl
-      className={`print-card-combat-band${longTarget ? " is-long-target" : ""}`}
-    >
-      <div className="print-card-attack-formula">
+    <dl className="print-card-combat-band">
+      <div className="print-card-attack-total">
         <Icon name="sword" />
         <dd>
-          Attack{numbered ? ` ${attack.ordinal}` : ""} · {formula}
+          {numbered ? `${attack.ordinal} · ` : ""}
+          {total}
         </dd>
-      </div>
-      <div className="print-card-attack-total">
-        <dd>{abbreviatedAttackTotal(attack.attack)}</dd>
       </div>
       <div className="print-card-attack-target">
         <Icon name="target" />

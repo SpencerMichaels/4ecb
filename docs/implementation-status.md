@@ -51,28 +51,31 @@ vs. Reflex` use the configured highest-ability selection and established
 - Printed power identity is now usage-first. At-Will, Encounter, and Daily
   choose the default green, red, or gray treatment; Utility is retained as an
   explicit qualifier in the bottom type bar rather than replacing frequency or
-  requiring a three-checkbox matrix. Numeric level shares that bottom bar, and
-  the redundant class/source footer is omitted. An off-by-default Display
+  requiring a three-checkbox matrix. Title and bottom bars share the same solid
+  usage color with white text. Numeric level shares the bottom bar, and the
+  redundant class/source footer is omitted. An off-by-default Display
   preference restores the legacy blue Utility treatment while leaving the
   actual usage text visible. Item cards likewise omit the paper-oriented
   frequency matrix and source fallback while retaining authored item-power
   usage in their rules text. Focused print-layout/accessibility contracts, the
   web typecheck, and the Chromium/Firefox Letter/A4 color/monochrome print
   matrix pass with 24 fixed cards, five pages, and no card, band, or target
-  overflow. Live Silaqui review covered both preference states.
+  overflow. Live Silaqui review covered both preference states and the compact
+  parenthesized attack form.
 - Attack calculation and print projection are now phase-aware. The rules engine
   retains every authored attack's ordinal, resolved ability, intrinsic power
   bonus, defense, target, final total, and component provenance; primary and
   subsequent attacks are calculated independently. Printed cards render these
-  as compact `Attack 1 · STR+2 | +12 vs AC | target` rows (or unnumbered
-  `Attack` for a single phase), followed immediately by that phase's Hit and
-  associated Effect clauses. The split formula/total presentation removes the
-  ambiguity between a power's authored `+2` and the complete to-hit value.
-  Header-only defense abbreviations use `Fort` and `Ref`. The first two columns
-  fit their contents and long targets switch to a two-row form with formula and
-  total stacked as one undivided block at left. Requirements and other setup
-  rules now follow the first attack band rather than splitting the two compact
-  header bands, while still preceding Hit. Legacy cached weapon variants carry
+  as compact `⚔ +12 (STR+2 vs AC) | target` rows, followed immediately by that
+  phase's Hit and associated Effect clauses. Numbered multiattacks prepend a
+  compact ordinal. Putting the complete to-hit first and the parenthesized
+  authored formula beside it preserves a power's intrinsic `+2` without
+  mistaking it for the total. Header-only defense abbreviations use `Fort` and
+  `Ref`. The combined attack cell fits its content while long targets wrap in
+  the remaining width.
+  Requirements and other setup rules now follow the first attack band rather
+  than splitting the two compact header bands, while still preceding Hit.
+  Legacy cached weapon variants carry
   their recorded attack stat and an explicit zero intrinsic bonus into the
   shared sheet model, preventing a personalized `Charisma (+4)` annotation from
   being mistaken for an authored `Charisma +4` power formula.
