@@ -2005,7 +2005,6 @@ textarea {
   margin-top: var(--print-card-section-gap);
 }
 .print-card-variant-table {
-  --weapon-table-rule: color-mix(in srgb, #111 18%, white);
   border-collapse: collapse;
   font-size: inherit;
   line-height: inherit;
@@ -2014,13 +2013,19 @@ textarea {
 }
 .print-card-variant-table th,
 .print-card-variant-table td {
-  border: 0.5px solid var(--weapon-table-rule);
+  border: 0;
   padding: 0.0125in 0.02in;
   text-align: left;
   vertical-align: top;
 }
 .print-card-variant-table thead th {
+  background: color-mix(in srgb, var(--card-color) 10%, white);
+}
+.print-card-variant-table tbody tr:nth-child(odd) {
   background: color-mix(in srgb, var(--card-color) 5%, white);
+}
+.print-card-variant-table tbody tr:nth-child(even) {
+  background: white;
 }
 .print-card-variant-table tbody th {
   overflow-wrap: break-word;

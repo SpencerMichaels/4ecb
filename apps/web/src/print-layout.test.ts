@@ -19,12 +19,15 @@ const sheetSource = readFileSync(
 );
 
 describe("print layout contract", () => {
-  it("uses subtle table rules and content-sized weapon columns", () => {
+  it("uses soft row backgrounds without borders and content-sized weapon columns", () => {
     expect(styles).toMatch(
       /\.print-card-variant-table\s*\{[^}]*table-layout:\s*auto/,
     );
     expect(styles).toMatch(
-      /\.print-card-variant-table td\s*\{[^}]*border:\s*0\.5px solid var\(--weapon-table-rule\)/,
+      /\.print-card-variant-table td\s*\{[^}]*border:\s*0;/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-variant-table tbody tr:nth-child\(odd\)\s*\{[^}]*background:\s*color-mix/,
     );
     expect(styles).not.toMatch(
       /\.print-card-variant-table th:first-child\s*\{[^}]*width:/,

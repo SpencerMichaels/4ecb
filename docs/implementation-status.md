@@ -87,8 +87,9 @@ Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   This consistent-layout follow-up passes eight focused print tests, the web
   build, focused lint, and all eight print-matrix cases; the harness checks every
   weapon table for cell overflow, not just the first table.
-  The subsequent styling refinement adds light neutral cell rules and subtle
-  multiattack-header shading. Automatic column sizing replaces the fixed 30%
+  The subsequent styling refinement uses soft alternating row backgrounds
+  rather than cell borders, with slightly stronger multiattack-header shading.
+  Automatic column sizing replaces the fixed 30%
   weapon column to reduce unnecessary name wrapping; focused print contracts
   cover the style and sizing boundary.
 - Multiattack investigation confirmed the weapon-list limitation also affects

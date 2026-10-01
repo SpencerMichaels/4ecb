@@ -1529,8 +1529,9 @@ Every printed weapon summary uses a compact table with a weapon column and
 calculation cells containing `+bonus → expression type`. Single attacks and
 identical repeated calculations use a headerless two-column table. Distinct
 phases add numbered attack-column headers.
-Light neutral cell rules make both forms recognizable as tables without
-competing with the card border. Columns size to their contents across the full
+Soft alternating row backgrounds, without cell borders, make both forms
+recognizable as tables without competing with the card border. Multiattack
+headers use a slightly stronger tint. Columns size to their contents across the full
 available width rather than reserving a fixed percentage for weapon names;
 names wrap at word boundaries only when space requires it.
 The word `damage`, equipment-state labels, and defenses already shown in the
