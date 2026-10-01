@@ -604,7 +604,7 @@ weapon after its authored rules, without repeating equipment state or the
 defense already visible in the header; the equipped-first variant continues to
 drive the header calculation. Attack and damage calculations are phase-aware:
 all summaries use a bottom table with one row per weapon. Single attacks or
-identical repeated calculations have separate headerless to-hit and damage columns;
+identical repeated calculations have separate Attack and Damage columns;
 distinct phases add numbered attack columns. Immediate damage types, including
 compound types, are retained.
 Cards measure their rendered body to choose the largest fitting text size;

@@ -116,18 +116,23 @@ export function PrintPowerVariants({
         className="print-card-variant-table"
         aria-label="Weapon calculations by attack"
       >
-        {shared ? null : (
-          <thead>
-            <tr>
-              <th scope="col">Weapon</th>
-              {displayedOrdinals.map((ordinal) => (
+        <thead>
+          <tr>
+            <th scope="col">Weapon</th>
+            {shared ? (
+              <>
+                <th scope="col">Attack</th>
+                <th scope="col">Damage</th>
+              </>
+            ) : (
+              displayedOrdinals.map((ordinal) => (
                 <th scope="col" key={ordinal}>
                   Attack {ordinal}
                 </th>
-              ))}
-            </tr>
-          </thead>
-        )}
+              ))
+            )}
+          </tr>
+        </thead>
         <tbody>
           {rows.map(({ variant, cells }) => (
             <tr key={variant.id}>

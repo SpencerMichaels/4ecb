@@ -41,16 +41,18 @@ function text(markup: string) {
 }
 
 describe("printed weapon calculation summaries", () => {
-  it("uses a headerless table for one attack or identical repeated attacks", () => {
+  it("labels Attack and Damage for one attack or identical repeated attacks", () => {
     for (const phases of [[attack(1)], [attack(1), attack(2)]]) {
       const markup = render(phases);
       expect(markup).toContain("<table");
-      expect(markup).not.toContain("<thead");
+      expect(markup).toContain('<th scope="col">Attack</th>');
+      expect(markup).toContain('<th scope="col">Damage</th>');
+      expect(text(markup)).not.toContain("Attack 1");
       expect(markup).toContain('<th scope="row">Longsword</th>');
-      expect(text(markup)).toBe("Longsword+122d8 + 5");
+      expect(text(markup)).toBe("WeaponAttackDamageLongsword+122d8 + 5");
       expect(markup).toContain('aria-label="To hit">+12</td>');
       expect(markup).toContain('aria-label="Damage">');
-      expect(text(markup)).not.toMatch(/damage|equipped|vs AC|;/i);
+      expect(text(markup)).not.toMatch(/equipped|vs AC|;/i);
     }
   });
   it("aligns multiple weapons in separate to-hit and damage columns", () => {
@@ -66,11 +68,11 @@ describe("printed weapon calculation summaries", () => {
       />,
     );
     expect(markup.match(/<table/g)).toHaveLength(1);
-    expect(markup.match(/<tr>/g)).toHaveLength(2);
+    expect(markup.match(/<tr>/g)).toHaveLength(3);
     expect(markup.match(/<td /g)).toHaveLength(4);
     expect(markup.match(/aria-label="To hit"/g)).toHaveLength(2);
     expect(markup.match(/aria-label="Damage"/g)).toHaveLength(2);
-    expect(markup).not.toContain("<thead");
+    expect(markup).toContain("<thead");
   });
   it.each([
     { ability: "Charisma", attack: "+10 vs Will" },
