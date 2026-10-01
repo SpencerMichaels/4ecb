@@ -623,7 +623,7 @@ function authoredAttacks(
     }
     const namedOrdinal = attackOrdinal(name);
     if (namedOrdinal !== undefined) activeOrdinal = namedOrdinal;
-    if (/target$/i.test(name) && value.trim().length > 0)
+    if (/targets?$/i.test(name) && value.trim().length > 0)
       targets.set(namedOrdinal ?? activeOrdinal, value.trim());
     if (/attack$/i.test(name) && /\bvs\.?\s+[A-Za-z]+/i.test(value))
       attacks.set(namedOrdinal ?? activeOrdinal, value.trim());

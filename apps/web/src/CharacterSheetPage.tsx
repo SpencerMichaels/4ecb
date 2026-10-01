@@ -361,8 +361,8 @@ function PrintAttackBand({ attack }: { readonly attack: SheetPowerAttack }) {
         <dd>{total}</dd>
       </div>
       <div className="print-card-attack-target">
-        <Icon name="target" />
-        <dd>{attack.target ?? "—"}</dd>
+        {attack.target === undefined ? null : <Icon name="target" />}
+        <dd>{attack.target ?? ""}</dd>
       </div>
     </dl>
   );

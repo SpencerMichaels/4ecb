@@ -34,6 +34,7 @@ describe("printed authored attack phases", () => {
       },
       { ordinal: 2, ability: "Dexterity", powerBonus: 2, attack: "— vs AC" },
     ]);
+    expect(attacks[1]?.target).toBeUndefined();
     const grouped = groupedPrintRules(card.fields);
     expect(grouped.attacks.get(1)).toEqual([card.fields[2]]);
     expect(grouped.attacks.get(2)).toEqual([card.fields[4]]);

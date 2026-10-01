@@ -812,6 +812,40 @@ describe("power evaluation", () => {
     });
   });
 
+  it.each([false, true])(
+    "does not infer a secondary target without phase metadata: %s",
+    (override) => {
+      const [power] = evaluatePowers({
+        level: 8,
+        activeDefinitionIds: ["POWER"],
+        inventory: [],
+        overlays: [],
+        stats: {
+          "Strength modifier": stat("Strength modifier", 2),
+          "Dexterity modifier": stat("Dexterity modifier", 5),
+        },
+        entities: [
+          entity("POWER", "Synthetic targeted sequence", "Power", {
+            "Attack Type": "Melee 1",
+            Target: "One creature",
+            "Primary Attack": "Strength vs. Reflex",
+            Hit: "1d6 damage.",
+            " Secondary Attack": "Dexterity vs. AC",
+            ...(override ? { "Secondary Targets": "A different creature" } : {}),
+            " Hit": "2d6 + Dexterity modifier damage.",
+          }),
+        ],
+      });
+      expect(power?.variants[0]?.attacks).toMatchObject([
+        { ordinal: 1, attackBonus: 6, target: "One creature", damage: "1d6" },
+        { ordinal: 2, attackBonus: 9, damage: "2d6+5" },
+      ]);
+      expect(power?.variants[0]?.attacks?.[1]?.target).toBe(
+        override ? "A different creature" : undefined,
+      );
+    },
+  );
+
   it("handles primary attacks and prose level scaling", () => {
     const entities = [
       entity("POWER", "Primary strike", "Power", {

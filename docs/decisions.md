@@ -1559,6 +1559,13 @@ block even when a cached export supplies only the primary calculation. Missing
 secondary totals show a dash rather than removing the phase or reusing the
 primary total. A generic Attack field following an explicit secondary-section
 marker stays in that secondary section.
+Secondary target cells are blank unless that phase supplies explicit target
+metadata. General primary target wording is not automatically copied: a
+secondary attack may be constrained to the same creature by the first Hit's
+prose, and repeating `one creature` could imply a new choice. Adding phase-aware calculations requires a rules cache
+revision bump: older derived evaluations must not pass the top-level shape
+check and silently omit phase data. Version v4 invalidates the pre-phase v3
+cache without modifying character builds or legacy snapshots.
 
 ### D067 — Build power cards preserve complete authored combat clauses
 

@@ -125,6 +125,17 @@ Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   off-hand and AC main-hand). The precise reported live card was not available
   in the inspected saved Silaqui views, so this verifies the fallback defect and
   calculation path, not a reproduction of the product owner's missing card.
+  Follow-up: the engine cache revision is now v4 to invalidate persisted v3
+  evaluations created before phase-aware calculations. The earlier renderer
+  fallback preserved the secondary header but could not populate absent totals;
+  fresh evaluation supplies the actual phase totals and damage. Secondary
+  target cells remain blank without explicit phase-specific target metadata:
+  copying the primary's `one creature` could imply a new choice when the first
+  Hit instead requires attacking that same creature.
+  Cache/target regression verification passes 64 focused tests across powers,
+  runtime caching, printed phases, variants, and layout, plus the web typecheck
+  and focused lint. Refreshing an already open app starts the new cache revision;
+  character builds and serialized legacy snapshots are unchanged.
 - Per-attack weapon-table checkpoint (2026-10-01): the focused rules-engine,
   sheet-model, printed-variant, and print-layout suites pass 50 tests. Workspace
   typechecks, focused lint, and the web build pass. `pnpm check:print` exercises
