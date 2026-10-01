@@ -92,6 +92,23 @@ export function PrintPowerVariants({
   const shared = rows.every(({ cells }) =>
     cells.slice(1).every((cell) => sameCalculation(cells[0], cell)),
   );
+  const splitDamage =
+    !shared &&
+    rows.every(({ cells }) => {
+      const bonus = attackBonus(cells[0]);
+      return (
+        bonus !== "—" && cells.every((cell) => attackBonus(cell) === bonus)
+      );
+    }) &&
+    rows.some(({ cells }) =>
+      cells
+        .slice(1)
+        .some(
+          (cell) =>
+            cell?.damage?.replace(/\s+/g, "") !==
+            cells[0]?.damage?.replace(/\s+/g, ""),
+        ),
+    );
   const displayedOrdinals = shared ? ordinals.slice(0, 1) : ordinals;
   return (
     <div className="print-card-weapon-variants">
@@ -102,10 +119,14 @@ export function PrintPowerVariants({
         <thead>
           <tr>
             <th scope="col">Weapon</th>
-            {shared ? (
+            {shared || splitDamage ? (
               <>
                 <th scope="col">Attack</th>
-                <th scope="col">Damage</th>
+                {displayedOrdinals.map((ordinal) => (
+                  <th scope="col" key={ordinal}>
+                    {shared ? "Damage" : `Dmg ${ordinal}`}
+                  </th>
+                ))}
               </>
             ) : (
               displayedOrdinals.map((ordinal) => (
@@ -120,14 +141,19 @@ export function PrintPowerVariants({
           {rows.map(({ variant, cells }) => (
             <tr key={variant.id}>
               <th scope="row">{variant.equipmentName}</th>
-              {shared ? (
+              {shared || splitDamage ? (
                 <>
                   <td className="print-variant-bonus" aria-label="To hit">
                     {attackBonus(cells[0])}
                   </td>
-                  <td aria-label="Damage">
-                    <DamageSummary cell={cells[0]} />
-                  </td>
+                  {displayedOrdinals.map((ordinal, index) => (
+                    <td
+                      key={ordinal}
+                      aria-label={shared ? "Damage" : `Damage ${ordinal}`}
+                    >
+                      <DamageSummary cell={cells[index]} />
+                    </td>
+                  ))}
                 </>
               ) : (
                 displayedOrdinals.map((ordinal, index) => (

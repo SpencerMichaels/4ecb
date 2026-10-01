@@ -78,7 +78,6 @@ describe("printed weapon calculation summaries", () => {
     { ability: "Charisma", attack: "+10 vs Will" },
     { ability: "Dexterity" },
     { attack: "+10 vs AC" },
-    { damage: "1d8+5" },
   ])("keeps different phase calculations in distinct columns: %j", (change) => {
     const markup = render([
       attack(1, { damageType: "fire" }),
@@ -89,6 +88,44 @@ describe("printed weapon calculation summaries", () => {
     expect((text(markup).match(/Longsword/g) ?? []).length).toBe(1);
     expect(text(markup)).toContain("+12 → 2d8+5");
     expect(text(markup)).not.toContain("fire");
+  });
+  it.each(["Strength", "Dexterity"])(
+    "shares matching bonuses but separates differing damage with %s secondary ability",
+    (ability) => {
+      const markup = render([
+        attack(1),
+        attack(2, { ability, damage: "1d8+5" }),
+      ]);
+      expect(text(markup)).toBe("WeaponAttackDmg 1Dmg 2Longsword+122d8+51d8+5");
+      expect(text(markup)).not.toMatch(/Attack 1|Attack 2|→/);
+      expect(markup).toContain('aria-label="Damage 2"');
+    },
+  );
+  it("only shares the bonus column if every weapon's phase bonuses match", () => {
+    const markup = renderToStaticMarkup(
+      <PrintPowerVariants
+        attackOrdinals={[1, 2]}
+        variants={[
+          {
+            id: "blade",
+            equipmentName: "Blade",
+            equipped: true,
+            attacks: [attack(1), attack(2, { damage: "1d8+5" })],
+          },
+          {
+            id: "bow",
+            equipmentName: "Bow",
+            equipped: false,
+            attacks: [
+              attack(1),
+              attack(2, { attack: "+10 vs AC", damage: "1d8+5" }),
+            ],
+          },
+        ]}
+      />,
+    );
+    expect(text(markup)).toContain("WeaponAttack 1Attack 2");
+    expect(text(markup)).not.toContain("Dmg 1");
   });
   it("collapses equal visible calculations despite defense, intrinsic bonus, or hand-role differences", () => {
     const markup = render([

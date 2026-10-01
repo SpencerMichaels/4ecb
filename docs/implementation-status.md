@@ -86,6 +86,8 @@ Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   Single attacks and identical repeated calculations use a labeled
   three-column weapon/to-hit/damage table; distinct calculations retain combined
   cells and add numbered attack-column headers.
+  When all of each weapon's phase bonuses match but damage differs, the table
+  instead uses one shared Attack column and Dmg 1/Dmg 2/etc. columns.
   This consistent-layout follow-up passes eight focused print tests, the web
   build, focused lint, and all eight print-matrix cases; the harness checks every
   weapon table for cell overflow, not just the first table.
