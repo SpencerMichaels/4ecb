@@ -35,7 +35,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{css,html,js,json,svg,woff2,txt}"],
+        globPatterns: ["**/*.{css,html,js,json,svg}"],
         globIgnores: ["runtime-config.json"],
         runtimeCaching: [
           {

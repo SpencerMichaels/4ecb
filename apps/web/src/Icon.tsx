@@ -26,6 +26,7 @@ import {
   Crown,
   Dumbbell,
   Dices,
+  Dice5,
   Download,
   FileText,
   FlaskConical,
@@ -84,15 +85,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-type NerdIconName = "nf-fa-dice_d20";
-
-const nerdIcons: Record<NerdIconName, string> = {
-  "nf-fa-dice_d20": "\uEEF5",
-};
-
-export type IconName = NerdIconName | LucideIconName;
-
-type LucideIconName =
+export type IconName =
   | "ability"
   | "action-none"
   | "anvil"
@@ -123,6 +116,7 @@ type LucideIconName =
   | "clock"
   | "timer"
   | "dices"
+  | "dice-5"
   | "octagon-minus"
   | "companion"
   | "content"
@@ -183,7 +177,7 @@ type LucideIconName =
   | "warning"
   | "waves";
 
-const icons: Record<LucideIconName, LucideIcon> = {
+const icons: Record<IconName, LucideIcon> = {
   ability: ChartNoAxesColumnIncreasing,
   "action-none": Minus,
   anvil: Anvil,
@@ -214,6 +208,7 @@ const icons: Record<LucideIconName, LucideIcon> = {
   clock: Clock3,
   timer: Timer,
   dices: Dices,
+  "dice-5": Dice5,
   "octagon-minus": OctagonMinus,
   companion: PawPrint,
   content: LayoutGrid,
@@ -276,12 +271,6 @@ const icons: Record<LucideIconName, LucideIcon> = {
 };
 
 export function Icon({ name }: { readonly name: IconName }) {
-  if (name in nerdIcons)
-    return (
-      <span aria-hidden="true" className="icon nerd-icon">
-        {nerdIcons[name as NerdIconName]}
-      </span>
-    );
-  const Glyph = icons[name as LucideIconName];
+  const Glyph = icons[name];
   return <Glyph aria-hidden="true" className="icon" focusable="false" />;
 }

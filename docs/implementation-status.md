@@ -50,18 +50,10 @@ separate projection over the same semantic model.
   Printed attack targets use the crosshair icon rather than the bullseye.
   The printed attack-type cell uses a fixed sword icon to identify the field,
   independent of its melee/ranged/area text.
-  Printed to-hit cells use Nerd Fonts' number-free `nf-fa-dice_d20` to distinguish
-  the attack roll from attack type. A local WOFF2 subset of the pinned v3.4.0
-  Symbols-only font extends the shared icon component alongside Lucide, without
-  changing text fonts or requiring a network connection/user-installed fonts.
-  Print requests wait for font loading and card fitting reruns afterward;
-  decorative font failures do not block printing. Notices and a reproducible
-  subset-generation script are included with the asset.
-  Verification: 38 focused icon/font/print/accessibility tests, web typecheck,
-  focused ESLint and production build pass. The generated service worker
-  precaches the 764-byte font and both notices; Silaqui's browser print preview
-  visibly renders the number-free d20 with the font reported loaded. This is
-  not a new full Letter/A4 print-matrix or milestone-exit validation.
+  Printed to-hit cells use Lucide's dice-5 to distinguish the attack roll from
+  attack type. The brief Nerd Fonts integration was reverted after visual
+  feedback: its d20 glyph was too detailed at card-header size. No icon font,
+  font preload, font-readiness print path, or font-generation tooling remains.
 - The compact power header now removes the redundant word `Action`, uses the
   same icon-left rhythm for action/range and attack/target, combines the authored
   attack stat and defense into one cell, and lets the target cell grow vertically
