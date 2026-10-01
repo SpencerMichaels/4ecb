@@ -19,6 +19,15 @@ const sheetSource = readFileSync(
 );
 
 describe("print layout contract", () => {
+  it("keeps table text the same dark color as the card body", () => {
+    expect(styles).toMatch(/\.print-card-body\s*\{[^}]*color:\s*#111;/);
+    expect(styles).toMatch(
+      /\.print-card-variant-table\s*\{[^}]*color:\s*inherit;/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-variant-table td\s*\{[^}]*color:\s*inherit;/,
+    );
+  });
   it("anchors weapon tables at the body bottom with normal-weight weapon names", () => {
     expect(styles).toMatch(
       /\.print-power-card \.print-card-body\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column/,

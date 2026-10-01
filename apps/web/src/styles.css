@@ -1952,6 +1952,7 @@ textarea {
   width: 0.1in;
 }
 .print-card-body {
+  color: #111;
   min-height: 0;
   overflow: hidden;
   padding: 0.035in;
@@ -2014,6 +2015,7 @@ textarea {
 }
 .print-card-variant-table {
   border-collapse: collapse;
+  color: inherit;
   font-size: inherit;
   line-height: inherit;
   table-layout: auto;
@@ -2022,6 +2024,7 @@ textarea {
 .print-card-variant-table th,
 .print-card-variant-table td {
   border: 0;
+  color: inherit;
   padding: 0.0125in 0.02in;
   text-align: left;
   vertical-align: top;

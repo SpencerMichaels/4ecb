@@ -1531,6 +1531,8 @@ identical repeated calculations use a three-column table labeled Weapon,
 Attack, and Damage for like-for-like alignment. Distinct
 phases add numbered attack-column headers.
 Weapon names use normal body weight rather than subsection-heading bold.
+Table and cell text explicitly inherit the card body's dark ink color; row
+tints do not change text color.
 The table is anchored at the bottom of the available card body, with a minimum
 section gap above it; rules remain in normal order above the table, and adaptive
 card fitting continues to account for both rules and table height.
