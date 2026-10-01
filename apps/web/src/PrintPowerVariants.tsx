@@ -91,44 +91,38 @@ export function PrintPowerVariants({
   const shared = rows.every(({ cells }) =>
     cells.slice(1).every((cell) => sameCalculation(cells[0], cell)),
   );
+  const displayedOrdinals = shared ? ordinals.slice(0, 1) : ordinals;
   return (
     <div className="print-card-weapon-variants">
-      {shared ? (
-        rows.map(({ variant, cells }) => (
-          <p className="print-card-variant" key={variant.id}>
-            <strong>{variant.equipmentName}:</strong>{" "}
-            <AttackSummary cell={cells[0]} />
-          </p>
-        ))
-      ) : (
-        <table
-          className="print-card-variant-table"
-          aria-label="Weapon calculations by attack"
-        >
+      <table
+        className="print-card-variant-table"
+        aria-label="Weapon calculations by attack"
+      >
+        {shared ? null : (
           <thead>
             <tr>
               <th scope="col">Weapon</th>
-              {ordinals.map((ordinal) => (
+              {displayedOrdinals.map((ordinal) => (
                 <th scope="col" key={ordinal}>
                   Attack {ordinal}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody>
-            {rows.map(({ variant, cells }) => (
-              <tr key={variant.id}>
-                <th scope="row">{variant.equipmentName}</th>
-                {cells.map((cell, index) => (
-                  <td key={ordinals[index]}>
-                    <AttackSummary cell={cell} />
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+        )}
+        <tbody>
+          {rows.map(({ variant, cells }) => (
+            <tr key={variant.id}>
+              <th scope="row">{variant.equipmentName}</th>
+              {displayedOrdinals.map((ordinal, index) => (
+                <td key={ordinal}>
+                  <AttackSummary cell={cells[index]} />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

@@ -1525,9 +1525,10 @@ variant's authoritative weapon dice. Browser View uses the same interaction.
 Print keeps full ability wording and authored `[W]` prose because tooltips and a
 single interactive selection do not survive on paper. Instead, one printed
 power card lists each compatible owned weapon once near the bottom of its body.
-Single attacks and identical repeated calculations use
-`Weapon: +12 → 2d8 + 5 fire`. Distinct phases use a compact table with a weapon
-column and numbered attack columns, each containing `+bonus → expression type`.
+Every printed weapon summary uses a compact table with a weapon column and
+calculation cells containing `+bonus → expression type`. Single attacks and
+identical repeated calculations use a headerless two-column table. Distinct
+phases add numbered attack-column headers.
 The word `damage`, equipment-state labels, and defenses already shown in the
 attack bands are omitted. Cells wrap at the arrow when needed; compound damage
 types remain visible. Collapse requires the same ability/formula, bonus,

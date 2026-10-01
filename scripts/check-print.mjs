@@ -301,12 +301,12 @@ try {
         ).map((card) => (card.querySelector("h3")?.textContent ?? "unnamed") +
           " (" + card.className + "; body " + card.querySelector(".print-card-body")?.scrollHeight +
           "/" + card.querySelector(".print-card-body")?.clientHeight + "px)");
-        const weaponFontMismatch = [...document.querySelectorAll(".print-card-variant, .print-card-variant-table")]
+        const weaponFontMismatch = [...document.querySelectorAll(".print-card-variant-table")]
           .some((line) => getComputedStyle(line).fontSize !==
             getComputedStyle(line.closest(".print-card-body")).fontSize);
-        const table = document.querySelector(".print-card-variant-table");
-        const tableFits = table !== null && table.clientWidth > 0 && [...table.querySelectorAll("th, td")].every((cell) =>
-          cell.scrollWidth <= cell.clientWidth + 1);
+        const tables = [...document.querySelectorAll(".print-card-variant-table")];
+        const tableFits = tables.length > 0 && tables.every((table) => table.clientWidth > 0 && [...table.querySelectorAll("th, td")].every((cell) =>
+          cell.scrollWidth <= cell.clientWidth + 1));
         const shortCard = cards.find((card) => card.querySelector("h3")?.textContent === "Synthetic power 02");
         const bandOverflow = [...document.querySelectorAll(".print-card-action-band")]
           .flatMap((band) => [...band.children])
@@ -534,12 +534,12 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
              body.scrollHeight > body.clientHeight + 1
            )
          ).map((card) => card.querySelector("h3")?.textContent ?? "unnamed");
-         const weaponFontMismatch = [...document.querySelectorAll(".print-card-variant, .print-card-variant-table")]
+         const weaponFontMismatch = [...document.querySelectorAll(".print-card-variant-table")]
            .some((line) => getComputedStyle(line).fontSize !==
              getComputedStyle(line.closest(".print-card-body")).fontSize);
-         const table = document.querySelector(".print-card-variant-table");
-         const tableFits = table !== null && table.clientWidth > 0 && [...table.querySelectorAll("th, td")].every((cell) =>
-           cell.scrollWidth <= cell.clientWidth + 1);
+         const tables = [...document.querySelectorAll(".print-card-variant-table")];
+         const tableFits = tables.length > 0 && tables.every((table) => table.clientWidth > 0 && [...table.querySelectorAll("th, td")].every((cell) =>
+           cell.scrollWidth <= cell.clientWidth + 1));
          const shortCard = cards.find((card) => card.querySelector("h3")?.textContent === "Synthetic power 02");
          const bandOverflow = [...document.querySelectorAll(".print-card-action-band")]
            .flatMap((band) => [...band.children])

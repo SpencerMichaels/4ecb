@@ -2004,18 +2004,6 @@ textarea {
 .print-card-weapon-variants {
   margin-top: var(--print-card-section-gap);
 }
-.print-card-variant {
-  display: block !important;
-  font-size: inherit;
-  line-height: inherit;
-  margin: 0 !important;
-}
-.print-card-variant + .print-card-variant {
-  margin-top: 0.0125in !important;
-}
-.print-reference-card.is-condensed .print-card-variant + .print-card-variant {
-  margin-top: 0 !important;
-}
 .print-card-variant-table {
   border-collapse: collapse;
   font-size: inherit;

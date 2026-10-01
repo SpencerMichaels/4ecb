@@ -80,10 +80,13 @@ Utility` metadata: attackless non-Utility cards such as Opportunity Attack,
   body against the available height, using compact/condensed text only when it
   actually overflows; hidden metadata, removed level variants, and omitted
   flavor no longer cause premature shrinking (including Divine Sanction).
-  Summaries now use `Weapon: +12 → 2d8 + 5 fire`, omitting the word `damage`.
-  Distinct attack calculations appear in a compact bottom table: one row per
-  weapon, with numbered attack columns containing bonus, arrow, damage, and
-  type. Identical repeated calculations retain the compact line form.
+  Summaries now consistently use a compact bottom table with one row per
+  weapon and calculation cells such as `+12 → 2d8 + 5 fire`, omitting the word
+  `damage`. Single attacks and identical repeated calculations use a headerless
+  two-column table; distinct calculations add numbered attack-column headers.
+  This consistent-layout follow-up passes eight focused print tests, the web
+  build, focused lint, and all eight print-matrix cases; the harness checks every
+  weapon table for cell overflow, not just the first table.
 - Multiattack investigation confirmed the weapon-list limitation also affects
   attacks with the same ability but different damage or weapon roles. The local
   merged corpus's Ranger Sudden Strike uses Strength for both phases but has

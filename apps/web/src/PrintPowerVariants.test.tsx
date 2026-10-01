@@ -41,13 +41,32 @@ function text(markup: string) {
 }
 
 describe("printed weapon calculation summaries", () => {
-  it("uses a compact arrow line for one attack or identical repeated attacks", () => {
+  it("uses a headerless table for one attack or identical repeated attacks", () => {
     for (const phases of [[attack(1)], [attack(1), attack(2)]]) {
       const markup = render(phases);
-      expect(markup).not.toContain("<table");
-      expect(text(markup)).toBe("Longsword: +12 → 2d8 + 5");
+      expect(markup).toContain("<table");
+      expect(markup).not.toContain("<thead");
+      expect(markup).toContain('<th scope="row">Longsword</th>');
+      expect(text(markup)).toBe("Longsword+12 → 2d8 + 5");
       expect(text(markup)).not.toMatch(/damage|equipped|vs AC|;/i);
     }
+  });
+  it("aligns multiple weapons in the same headerless two-column table", () => {
+    const markup = renderToStaticMarkup(
+      <PrintPowerVariants
+        attackOrdinals={[1]}
+        variants={["Longsword", "Dagger"].map((equipmentName) => ({
+          id: equipmentName,
+          equipmentName,
+          equipped: false,
+          attacks: [attack(1)],
+        }))}
+      />,
+    );
+    expect(markup.match(/<table/g)).toHaveLength(1);
+    expect(markup.match(/<tr>/g)).toHaveLength(2);
+    expect(markup.match(/<td>/g)).toHaveLength(2);
+    expect(markup).not.toContain("<thead");
   });
   it.each([
     { ability: "Charisma", attack: "+10 vs Will" },

@@ -599,13 +599,14 @@ are optically centered, and Opportunity Action uses the reaction symbol. Rule
 clauses use semantic inter-section spacing: attack-resolution and trigger/effect
 groups stay tight, while independent clauses separate; the gap tightens only
 for compact or condensed fixed-size cards. Each weapon-compatible power lists a
-compact weapon-name, total-bonus, and damage line for every compatible owned
+compact weapon-name, total-bonus, and damage row for every compatible owned
 weapon after its authored rules, without repeating equipment state or the
 defense already visible in the header; the equipped-first variant continues to
 drive the header calculation. Attack and damage calculations are phase-aware:
-single attacks or identical repeated calculations use `Weapon: +bonus → dice`
-lines; distinct phases use a bottom table with one row per weapon and numbered
-attack columns. Immediate damage types, including compound types, are retained.
+all summaries use a bottom table with one row per weapon. Single attacks or
+identical repeated calculations have one headerless calculation column;
+distinct phases add numbered attack columns. Immediate damage types, including
+compound types, are retained.
 Cards measure their rendered body to choose the largest fitting text size;
 weapon summaries share that size. Explicit main/off-hand roles constrain the
 equipped phases; inventory alternatives remain hypothetical loadouts. Missing
