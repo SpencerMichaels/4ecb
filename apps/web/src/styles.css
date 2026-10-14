@@ -1828,7 +1828,7 @@ textarea {
   box-sizing: border-box;
   display: grid;
   font-family: Arial, sans-serif;
-  font-size: 6.7pt;
+  font-size: var(--print-card-text-size, 8pt);
   grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
   height: 3.405in;
   line-height: 1.08;
@@ -1838,11 +1838,9 @@ textarea {
 }
 .print-reference-card.is-compact {
   --print-card-section-gap: 0.0125in;
-  font-size: 5.9pt;
 }
 .print-reference-card.is-condensed {
   --print-card-section-gap: 0;
-  font-size: 4.8pt;
 }
 .print-reference-card > header {
   align-items: center;
@@ -1855,7 +1853,7 @@ textarea {
   padding: 0.025in 0.035in;
 }
 .print-reference-card > header h3 {
-  font-size: 9.5pt;
+  font-size: max(8pt, 1.1875em);
   font-weight: 500;
   line-height: 1.2;
   margin: 0;
@@ -1881,7 +1879,7 @@ textarea {
 }
 .print-power-card > header .action-type-icon {
   flex-shrink: 0;
-  font-size: 9.5pt;
+  font-size: inherit;
   height: 0.15in;
   min-width: 0;
   width: 0.15in;
@@ -1898,19 +1896,19 @@ textarea {
   border-top: 1px solid var(--card-color);
   display: grid;
   gap: 0.03in;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr);
   min-height: 0.17in;
   padding: 0.025in 0.03in;
 }
 .print-card-keywords > span,
 .print-item-body section > span {
-  font-size: 4.7pt;
+  font-size: max(4.7pt, 0.7em);
   text-transform: uppercase;
 }
 .print-card-action-band,
 .print-card-combat-band {
   background: color-mix(in srgb, var(--card-color) 20%, white);
-  font-size: 6.7pt;
+  font-size: inherit;
   line-height: 1.08;
 }
 .print-card-action-band {
@@ -1942,7 +1940,7 @@ textarea {
   width: 0.1in;
 }
 .print-card-action-band .action-type-icon {
-  font-size: 6.7pt;
+  font-size: inherit;
   height: 0.1in;
   min-width: 0;
   width: 0.1in;
@@ -1973,7 +1971,7 @@ textarea {
   border-right: 0;
 }
 .print-card-combat-band dd {
-  font-size: 6.7pt;
+  font-size: inherit;
   font-weight: 800;
   margin: 0;
   min-width: 0;
@@ -1991,6 +1989,7 @@ textarea {
 }
 .print-card-body {
   color: #111;
+  font-size: inherit;
   min-height: 0;
   overflow: hidden;
   padding: 0.035in;
@@ -2095,7 +2094,7 @@ textarea {
 }
 .print-card-additional {
   border-top: 1px solid var(--card-color);
-  font-size: 4.5pt;
+  font-size: 0.5625em;
   height: 0.34in;
   padding: 0.02in 0.03in;
   text-transform: uppercase;
@@ -2104,7 +2103,7 @@ textarea {
   align-items: center;
   border-top: 1px solid var(--card-color);
   display: grid;
-  font-size: 4.7pt;
+  font-size: max(4.7pt, 0.7em);
   gap: 0.03in;
   grid-template-columns: 1fr auto auto;
   min-height: 0.16in;
@@ -2115,7 +2114,7 @@ textarea {
   background: var(--card-footer-color, var(--card-color));
   color: #fff;
   display: flex;
-  font-size: 7pt;
+  font-size: max(5.5pt, 0.875em);
   font-weight: 800;
   min-height: 0.17in;
   padding: 0.025in 0.035in;
@@ -2172,11 +2171,10 @@ textarea {
   margin: 0;
 }
 .print-item-properties {
-  border-top: 0;
   grid-template-columns: auto minmax(0, 1fr);
 }
 .print-item-properties > div {
-  font-weight: 400;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 .print-item-properties .prose-blocks,
@@ -2220,8 +2218,9 @@ textarea {
 }
 .print-item-stats dt {
   flex-shrink: 0;
-  font-size: 4.7pt;
-  font-weight: 400;
+  font-size: max(4.7pt, 0.7em);
+  font-weight: 800;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 .print-item-card > .print-item-footer {
@@ -2237,32 +2236,26 @@ textarea {
 .print-item-body section + section {
   margin-top: var(--print-card-section-gap);
 }
+.print-item-body section + .print-item-power,
+.print-item-body .print-item-power + .print-item-rule {
+  margin-top: calc(var(--print-card-section-gap) * 2);
+}
 .print-item-body p {
   margin: 0;
 }
 .print-item-power-heading {
-  background: color-mix(in srgb, var(--card-color) 18%, white);
-  border-top: 1px solid var(--card-color);
-  border-bottom: 1px solid var(--card-color);
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  font-weight: 700;
-  margin-bottom: 0.0125in;
-  margin-left: -0.035in;
-  margin-right: -0.035in;
-}
-.print-item-power-heading > span {
   align-items: center;
+  background: color-mix(in srgb, var(--card-color) 35%, white);
+  border-radius: 0.025in;
   display: flex;
   gap: 0.025in;
+  font-weight: 700;
+  margin-bottom: 0.0125in;
+  padding: 0.02in 0.035in;
+}
+.print-item-power-heading > span {
   min-width: 0;
-  padding: 0.025in 0.035in;
-}
-.print-item-power-heading > span + span {
-  border-left: 1px solid var(--card-color);
-}
-.print-item-power-heading > span:only-child {
-  grid-column: 1 / -1;
+  overflow-wrap: anywhere;
 }
 .print-item-power-heading .action-type-icon {
   flex-shrink: 0;
@@ -2543,9 +2536,11 @@ textarea {
   background: #fff;
   color: #111;
 }
-.sheet-monochrome .print-item-stats,
-.sheet-monochrome .print-item-power-heading {
+.sheet-monochrome .print-item-stats {
   background: #eee;
+}
+.sheet-monochrome .print-item-power-heading {
+  background: #ddd;
 }
 
 .editor-page {

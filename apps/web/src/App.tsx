@@ -17,6 +17,7 @@ import {
 import { storeAlreadyValidatedContentPack } from "@4ecb/browser-storage/validated-pack-storage";
 
 import { CharacterLibraryPage } from "./CharacterLibraryPage";
+import { preferredPrintCardTextSize } from "./print-card-fit";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { Icon } from "./Icon";
 import {
@@ -114,6 +115,7 @@ export const SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY =
   "4ecb.showEquippedAttackBonus.v1";
 export const SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY =
   "4ecb.showPrintTitleActionIcon.v1";
+export const PRINT_CARD_TEXT_SIZE_STORAGE_KEY = "4ecb.printCardTextSize.v1";
 
 function RouteFocusOnMount({
   children,
@@ -232,6 +234,15 @@ export function App() {
       }
     },
   );
+  const [printCardTextSize, setPrintCardTextSize] = useState(() => {
+    try {
+      return preferredPrintCardTextSize(
+        localStorage.getItem(PRINT_CARD_TEXT_SIZE_STORAGE_KEY),
+      );
+    } catch {
+      return 8;
+    }
+  });
   const route = useMemo(() => parseHashRoute(hash), [hash]);
   const previousRoute = useRef(route);
   const focusRouteOnMount =
@@ -328,6 +339,17 @@ export function App() {
       // The printed-card preference still applies for this session.
     }
   }, [showPrintTitleActionIcon]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        PRINT_CARD_TEXT_SIZE_STORAGE_KEY,
+        String(printCardTextSize),
+      );
+    } catch {
+      // The print-card preference still applies for this session.
+    }
+  }, [printCardTextSize]);
 
   const refresh = useCallback(async () => {
     const [installed, active, profile] = await Promise.all([
@@ -574,6 +596,8 @@ export function App() {
                   onShowEquippedAttackBonusChange={setShowEquippedAttackBonus}
                   showPrintTitleActionIcon={showPrintTitleActionIcon}
                   onShowPrintTitleActionIconChange={setShowPrintTitleActionIcon}
+                  printCardTextSize={printCardTextSize}
+                  onPrintCardTextSizeChange={setPrintCardTextSize}
                 />
               ) : route.characterId === undefined ? (
                 <CharacterLibraryPage
@@ -602,6 +626,7 @@ export function App() {
                   colorUtilityPowersBlue={colorUtilityPowersBlue}
                   showEquippedAttackBonus={showEquippedAttackBonus}
                   showPrintTitleActionIcon={showPrintTitleActionIcon}
+                  printCardTextSize={printCardTextSize}
                 />
               )}
             </RouteFocusOnMount>

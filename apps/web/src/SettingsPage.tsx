@@ -133,6 +133,8 @@ export interface SettingsPageProps {
   readonly onShowEquippedAttackBonusChange: (value: boolean) => void;
   readonly showPrintTitleActionIcon: boolean;
   readonly onShowPrintTitleActionIconChange: (value: boolean) => void;
+  readonly printCardTextSize: number;
+  readonly onPrintCardTextSizeChange: (value: number) => void;
 }
 
 export function SettingsPage({
@@ -161,6 +163,8 @@ export function SettingsPage({
   onShowEquippedAttackBonusChange,
   showPrintTitleActionIcon,
   onShowPrintTitleActionIconChange,
+  printCardTextSize,
+  onPrintCardTextSizeChange,
 }: SettingsPageProps) {
   const [status, setStatus] = useState(
     installedPacks.length === 0 ? "No content packs installed." : "Ready.",
@@ -644,6 +648,28 @@ export function SettingsPage({
           action description below, and show action symbols in item-power
           headers. Turn this off to keep power symbols only beside their
           descriptions and omit item-action symbols.
+        </p>
+        <label>
+          Preferred printed card text size
+          <select
+            value={printCardTextSize}
+            onChange={(event) =>
+              onPrintCardTextSizeChange(Number(event.currentTarget.value))
+            }
+          >
+            {Array.from({ length: 9 }, (_, index) => 6 + index * 0.5).map(
+              (size) => (
+                <option key={size} value={size}>
+                  {size} pt{size === 8 ? " (default)" : ""}
+                </option>
+              ),
+            )}
+          </select>
+        </label>
+        <p className="field-help">
+          Cards use this size when space permits. Dense cards automatically use
+          smaller text to fit. Subheaders, keywords, labels, and footer text
+          scale with the card, keeping their relative sizes.
         </p>
       </section>
 

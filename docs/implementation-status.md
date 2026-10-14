@@ -2,6 +2,21 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Printed-card text-size checkpoint (2026-10-14): Display now offers a persistent,
+browser-local preferred size of 6–10 pt in half-point steps, default 8 pt.
+Power/item body text, weapon tables, keywords, subheaders, and proportional
+titles/labels/footers scale together, with readable floors for compact text.
+Cards independently start at the preferred size and shrink gradually only on
+overflow, retaining fixed physical dimensions and the 4.8 pt minimum.
+Focused card-fit/layout/settings/item/sheet-model tests pass (62 tests in five
+files), web typecheck and production build pass, and `nix develop path:. -c pnpm
+check:print` passes all eight Chromium/Firefox Letter/A4 color/monochrome variants
+with 24 cards, five pages, no measured overflow, and short cards retaining 8 pt.
+Local UI review confirms persistence of a 10 pt preference across reload,
+individual fitting on Silaqui with no measured overflow at 8 or 10 pt, and
+restoration of the default 8 pt preference afterward. Full milestone acceptance
+remains separate.
+
 The first reviewable M5.6 slice replaces the browser's print-preview-like
 character route with a dedicated read-only View while retaining print as a
 separate projection over the same semantic model.
@@ -37,10 +52,12 @@ separate projection over the same semantic model.
   without four/eight-entry caps; both recovered `Armor Bonus` and `AC Bonus`
   are supported. The revised combat-focused subheader groups melee weapons as
   Proficiency / Damage / Critical; ranged-capable weapons as Range / Proficiency
-  then Damage / Critical; implements as Enhancement / Critical; armor/shields
+  / Damage / Critical on one wrapping row; implements as Enhancement / Critical; armor/shields
   as AC bonus / Enhancement then nonzero Check / Speed penalties. Missing fields
   and empty rows disappear. Weapon enhancement is omitted because it is already
-  in the title. Combat rows use mixed-case text and dot separators without boxed
+  in the title. Other item types also omit Enhancement when the same numeric
+  bonus is already in their title. Combat rows retain the earlier bold uppercase
+  labels (Prof/Crit abbreviations) and use dot separators without boxed
   cells. Category, group, hands, armor type, rarity, and key ability move to
   compact metadata prose on the footer's left; slot/weight/price share its right
   with dot separators. Only worn items show slots, not weapons or implements.
@@ -52,11 +69,15 @@ separate projection over the same semantic model.
   This weapon Properties band sits immediately below the item title, before
   numeric/enum stat rows, matching the position of power Keywords.
   Paragraph-style `Property` entries remain in the body.
-  Weapon keyword values retain authored casing and regular weight, overriding
-  the generic prose heading's uppercase/bold treatment.
-  Passive body properties precede activated powers regardless of authored field
-  order. Item-power usage/action headers use the bordered combat-band language
-  of printed powers; their action symbols follow the existing card icon setting.
+  Weapon keyword values retain authored casing and match power Keywords in bold
+  weight and band borders, overriding the generic prose heading's uppercase
+  treatment.
+  Passive body properties follow activated powers regardless of authored field
+  order. Item-power usage/action headings are compact body subsections, aligned
+  with rule text, using a tinted rounded strip inset within the body rather
+  than a subheader-style grid, cell dividers, or edge-to-edge borders.
+  A modest adaptive gap separates them from passive rules; action symbols follow
+  the existing card icon setting and precede Usage / Action text.
   Follow-up verification: focused item-presentation/accessibility tests pass
   (38 tests), web typecheck passes, and local visual review confirms Bracers of
   Archery's passive Property precedes its icon-bearing Daily/Minor header.

@@ -51,6 +51,7 @@ export function printItemPresentation(card: SheetCard) {
     );
   const meaningfulPenalty = (value: string) =>
     !["-", "—", "0", "+0"].includes(value.trim());
+  const titleEnhancement = card.name.match(/\+(\d+)\b/)?.[1];
   const combatStats = allStats.filter(
     ({ label, value }) =>
       ![
@@ -61,7 +62,11 @@ export function printItemPresentation(card: SheetCard) {
         "Rarity",
         "Key ability",
       ].includes(label) &&
-      !(isWeapon && label === "Enhancement") &&
+      !(
+        label === "Enhancement" &&
+        (isWeapon ||
+          (titleEnhancement !== undefined && value === `+${titleEnhancement}`))
+      ) &&
       (!(label === "Check penalty" || label === "Speed penalty") ||
         meaningfulPenalty(value)),
   );
@@ -69,14 +74,9 @@ export function printItemPresentation(card: SheetCard) {
     labels.flatMap((label) =>
       combatStats.filter((stat) => stat.label === label),
     );
-  const hasRange = combatStats.some(
-    ({ label, value }) => label === "Range" && meaningfulPenalty(value),
-  );
   const groupedRows = (
     isWeapon
-      ? hasRange
-        ? [row("Range", "Proficiency"), row("Damage", "Critical")]
-        : [row("Proficiency", "Damage", "Critical")]
+      ? [row("Range", "Proficiency", "Damage", "Critical")]
       : isArmor
         ? [
             row("AC bonus", "Enhancement"),
@@ -196,10 +196,17 @@ export function printItemPresentation(card: SheetCard) {
       !excluded.has(entry.label.trim().toLowerCase()) &&
       !weaponProperties.includes(entry),
   );
-  const rules = [
-    ...bodyFields.filter((entry) => printItemPower(entry) === undefined),
-    ...bodyFields.filter((entry) => printItemPower(entry) !== undefined),
-  ];
+  const isProperty = (entry: SheetValue) =>
+    /^(?:property|properties)$/i.test(entry.label.trim());
+  const rules = bodyFields.some((entry) => printItemPower(entry) !== undefined)
+    ? [
+        ...bodyFields.filter(
+          (entry) => printItemPower(entry) === undefined && !isProperty(entry),
+        ),
+        ...bodyFields.filter((entry) => printItemPower(entry) !== undefined),
+        ...bodyFields.filter(isProperty),
+      ]
+    : bodyFields;
   const weight = field("Weight");
   const price =
     [

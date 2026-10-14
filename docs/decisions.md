@@ -1823,10 +1823,13 @@ title, and reuse its canonical category mapping. The sheet model exposes neutral
 item/base-type metadata; icon selection remains a web presentation concern.
 
 Combat values use item-specific rows: melee Proficiency / Damage / Critical;
-ranged-capable Range / Proficiency then Damage / Critical; implement Enhancement
+ranged-capable Range / Proficiency / Damage / Critical on one wrapping row; implement Enhancement
 / Critical; armor/shield AC bonus / Enhancement then nonzero penalties. Omit
 weapon enhancement already represented in the title, absent values, and empty
-rows. Use dot-separated values in softly tinted rows without boxed cells.
+rows. Other item types also omit Enhancement when their title includes the
+same numeric bonus; retain it when the title has no matching bonus. Use
+dot-separated values in softly tinted rows without boxed cells.
+Retain the earlier bold uppercase stat-label styling, per visual feedback.
 Noncombat enums become compact metadata prose on the footer's left; slot,
 weight, and price share its right with dot separators. Only worn items show
 slots; held weapons and implements do not. A Critical entry with a rider or
@@ -1840,9 +1843,14 @@ subheader band styled like power keywords. General paragraph-style `Property`
 entries remain in the body; these are distinct authored field types, not aliases.
 Recognized usage/action prefixes
 become per-power headings; unfamiliar prose is never rewritten speculatively.
-Passive body fields precede activated powers while preserving authored order
-within each group. Item-action headers mirror power combat bands, with action
-symbols controlled by the existing printed-card icon preference; category icons
+General Property paragraphs follow activated powers, while other body fields
+remain before them. Preserve authored order
+within each group. Item-action headings are body subsections, not header bands:
+body-aligned bold usage/action text, an optional leading action symbol, and a
+modest adaptive gap. A tinted rounded strip inset within the body makes the
+granted power easy to spot without resembling the top subheader's cell grid;
+there are no dividers or edge-to-edge borders. Action symbols are
+controlled by the existing printed-card icon preference; category icons
 in item titles remain independent of that preference.
 Combine category and level in the bottom bar and label numeric weight/price with
 units. Inventory quantity is not an inherent item property and is omitted from
@@ -1866,6 +1874,25 @@ warnings, not rules fields or physical cards. Preserve original authored labels
 and text, including legitimate repeated fields. Approved calculated attack/damage
 headers and tables remain presentation, not extra rules sections. The legacy
 Additional effects writing area is confirmed by recovered `PowerCardPower.cs`.
+
+### D075 — Preferred printed card size with gradual whole-card fitting
+
+Status: accepted. Date: 2026-10-14.
+
+Display settings expose a browser-local preferred printed card text size from
+6–10 pt in half-point steps, defaulting to 8 pt instead of the previous 6.7 pt.
+The preference applies to power and item cards, including body text, weapon
+tables, keywords, subheaders, and proportionally sized titles/labels/footers.
+Compact labels keep a 4.7 pt floor; titles keep an 8 pt floor and usage bars a
+5.5 pt floor. Physical card geometry and pagination do not change.
+
+For each visible card, try the preferred size first, then half-point decrements
+down to the existing 4.8 pt minimum. Reduce section spacing at small sizes.
+Check body, card, and header-cell overflow; do not shrink other cards because
+one card is dense. Refit on resize, print, and rerender so increasing a
+preference restores the largest fitting size rather than retaining an old fit.
+Invalid saved preferences fall back to 8 pt. The preference is presentation-only
+and does not modify character data or rules calculations.
 
 ## Deferred decisions and decision points
 

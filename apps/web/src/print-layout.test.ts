@@ -18,6 +18,30 @@ const sheetSource = ["./CharacterSheetPage.tsx", "./print-power-attacks.ts"]
   .join("\n");
 
 describe("print layout contract", () => {
+  it("scales card text together while preserving its typography hierarchy", () => {
+    expect(styles).toMatch(
+      /\.print-reference-card\s*\{[^}]*font-size:\s*var\(--print-card-text-size, 8pt\)/,
+    );
+    expect(sheetSource).toContain('"--preferred-print-card-text-size"');
+    expect(sheetSource).toContain("printCardFontSizes(preferred)");
+    expect(styles).not.toMatch(
+      /\.print-reference-card\.is-(?:compact|condensed)\s*\{[^}]*font-size:/,
+    );
+  });
+  it("styles item actions as body headings rather than floating header bands", () => {
+    const heading = styles.match(
+      /\.print-item-power-heading\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(heading).toContain("font-weight: 700");
+    expect(heading).toContain("background: color-mix");
+    expect(heading).toContain("border-radius: 0.025in");
+    expect(heading).not.toMatch(
+      /border(?:-top|-bottom|-left|-right)?:|margin-left:|margin-right:/,
+    );
+    expect(styles).toMatch(
+      /\.print-item-body section \+ \.print-item-power,\s*\.print-item-body \.print-item-power \+ \.print-item-rule\s*\{[^}]*margin-top:\s*calc\(var\(--print-card-section-gap\) \* 2\)/,
+    );
+  });
   it("preserves an empty action band without a divider or an orphan attack-type icon", () => {
     expect(sheetSource).toContain(
       '!displayActionType && !attackType ? " is-empty" : ""',

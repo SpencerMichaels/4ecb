@@ -1,4 +1,11 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 
 import { CharacterRepository } from "@4ecb/browser-storage";
 import type { CharacterRecord, SheetSettings } from "@4ecb/character-domain";
@@ -22,6 +29,10 @@ import { ActionTypeIcon } from "./ActionTypeIcon";
 import { Icon } from "./Icon";
 import { PortraitImage } from "./PortraitEditor";
 import { PrintPowerVariants } from "./PrintPowerVariants";
+import {
+  preferredPrintCardTextSize,
+  printCardFontSizes,
+} from "./print-card-fit";
 import {
   printItemPresentation,
   printItemPower,
@@ -248,20 +259,31 @@ function usePrintCardFit() {
     const fit = () => {
       // Hidden print cards have no measurable geometry. ResizeObserver reruns
       // this when the preview or print media makes them visible.
-      if (body.clientHeight === 0) return;
-      element.classList.remove("is-compact", "is-condensed");
-      if (
-        body.scrollHeight <= body.clientHeight + 1 &&
-        body.scrollWidth <= body.clientWidth + 1
-      )
+      if (element.clientHeight === 0 || element.getClientRects().length === 0)
         return;
-      element.classList.add("is-compact");
-      if (
-        body.scrollHeight <= body.clientHeight + 1 &&
-        body.scrollWidth <= body.clientWidth + 1
-      )
-        return;
-      element.classList.replace("is-compact", "is-condensed");
+      const preferred = preferredPrintCardTextSize(
+        getComputedStyle(element)
+          .getPropertyValue("--preferred-print-card-text-size")
+          .trim(),
+      );
+      for (const size of printCardFontSizes(preferred)) {
+        element.style.setProperty("--print-card-text-size", `${size}pt`);
+        element.classList.toggle("is-compact", size <= 6 && size > 5);
+        element.classList.toggle("is-condensed", size <= 5);
+        if (
+          body.clientHeight > 0 &&
+          body.scrollHeight <= body.clientHeight + 1 &&
+          body.scrollWidth <= body.clientWidth + 1 &&
+          element.scrollHeight <= element.clientHeight + 1 &&
+          element.scrollWidth <= element.clientWidth + 1 &&
+          [
+            ...element.querySelectorAll<HTMLElement>(
+              ".print-card-action-band > span, .print-card-combat-band > div",
+            ),
+          ].every((cell) => cell.scrollWidth <= cell.clientWidth + 1)
+        )
+          break;
+      }
     };
     const observer = new ResizeObserver(fit);
     observer.observe(body);
@@ -517,7 +539,13 @@ function PrintItemCard({
             <div className="print-item-stat-row" key={rowIndex}>
               {row.map(({ label, value }) => (
                 <div key={label}>
-                  <dt>{label}</dt>
+                  <dt>
+                    {label === "Proficiency"
+                      ? "Prof"
+                      : label === "Critical"
+                        ? "Crit"
+                        : label}
+                  </dt>
                   <dd>{value}</dd>
                 </div>
               ))}
@@ -538,12 +566,11 @@ function PrintItemCard({
                 <div className="print-item-power-heading">
                   {power.actionType ? (
                     <>
-                      <span>{power.usage}</span>
+                      {showActionIcons ? (
+                        <ActionTypeIcon decorative value={power.actionType} />
+                      ) : null}
                       <span>
-                        {showActionIcons ? (
-                          <ActionTypeIcon decorative value={power.actionType} />
-                        ) : null}
-                        {power.actionType}
+                        {power.usage} · {power.actionType}
                       </span>
                     </>
                   ) : (
@@ -673,6 +700,7 @@ export function CharacterSheetPage({
   colorUtilityPowersBlue = false,
   showEquippedAttackBonus = true,
   showPrintTitleActionIcon = true,
+  printCardTextSize = 8,
 }: {
   readonly characterId: string;
   readonly manifests: readonly ContentPackManifest[];
@@ -683,6 +711,7 @@ export function CharacterSheetPage({
   readonly colorUtilityPowersBlue?: boolean;
   readonly showEquippedAttackBonus?: boolean;
   readonly showPrintTitleActionIcon?: boolean;
+  readonly printCardTextSize?: number;
 }) {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [character, setCharacter] = useState<CharacterRecord>();
@@ -924,6 +953,13 @@ export function CharacterSheetPage({
     <main
       className={`sheet-page paper-${character.sheetSettings.paper} ${character.sheetSettings.monochrome ? "sheet-monochrome" : ""} ${showPrintPreview ? "is-print-preview" : ""}`}
       id="main-content"
+      style={
+        {
+          "--preferred-print-card-text-size": String(
+            preferredPrintCardTextSize(printCardTextSize),
+          ),
+        } as CSSProperties
+      }
     >
       {showPrintPreview ? (
         <div className="print-preview-toolbar">

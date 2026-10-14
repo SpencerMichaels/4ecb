@@ -20,6 +20,38 @@ function card(
 }
 
 describe("printed item presentation", () => {
+  it.each(["Neck Slot Item", "Ammunition", "Wand"])(
+    "omits enhancement repeated in the title for %s",
+    (kind) => {
+      const item = card("Magic Item", {
+        "Magic Item Type": kind,
+        Enhancement: "+1",
+      });
+      expect(
+        printItemPresentation({ ...item, name: "Fixture item +1" }).stats,
+      ).not.toContainEqual({ label: "Enhancement", value: "+1" });
+      expect(
+        printItemPresentation({ ...item, name: "Fixture item +10" }).stats,
+      ).toContainEqual({ label: "Enhancement", value: "+1" });
+      expect(printItemPresentation(item).stats).toContainEqual({
+        label: "Enhancement",
+        value: "+1",
+      });
+    },
+  );
+  it("keeps ranged combat values together on one row", () => {
+    const view = printItemPresentation(
+      card("Weapon", {
+        Range: "25/50",
+        "Proficiency Bonus": "+2",
+        Damage: "1d12",
+        Critical: "+3d6",
+      }),
+    );
+    expect(view.statRows.map((row) => row.map(({ label }) => label))).toEqual([
+      ["Range", "Proficiency", "Damage", "Critical"],
+    ]);
+  });
   it("preserves physical and magical structured values in the subheader", () => {
     const view = printItemPresentation(
       card(
@@ -50,8 +82,7 @@ describe("printed item presentation", () => {
       { label: "Critical", value: "+3d6 damage, or +3d10 against undead" },
     ]);
     expect(view.statRows.map((row) => row.map(({ label }) => label))).toEqual([
-      ["Range", "Proficiency"],
-      ["Damage"],
+      ["Range", "Proficiency", "Damage"],
     ]);
     expect(view.metadata).toBe("Heavy blade, axe");
     expect(view).toMatchObject({
@@ -118,10 +149,10 @@ describe("printed item presentation", () => {
     expect(view.weaponProperties.map(({ value }) => value)).toEqual([
       "Off-hand, light thrown",
     ]);
-    expect(view.rules.map(({ label }) => label)).toEqual(["Property", "Power"]);
+    expect(view.rules.map(({ label }) => label)).toEqual(["Power", "Property"]);
     expect(view.description).toBeUndefined();
   });
-  it("places passive properties before item actions regardless of authored field order", () => {
+  it("places passive properties below item actions regardless of authored field order", () => {
     const view = printItemPresentation(
       card("Magic Item", {
         Power: "Power (Daily): Minor Action. Activate the item.",
@@ -131,9 +162,9 @@ describe("printed item presentation", () => {
       }),
     );
     expect(view.rules.map(({ label }) => label)).toEqual([
-      "Property",
       "Power",
       "Utility Power",
+      "Property",
     ]);
   });
   it("projects known enum fields but leaves passive and unfamiliar prose in the body", () => {

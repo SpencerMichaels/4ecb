@@ -337,7 +337,7 @@ try {
           overflowing,
           weaponFontMismatch,
           tableFits,
-          shortCardFont: shortCard && getComputedStyle(shortCard).fontSize,
+          shortCardFont: shortCard && getComputedStyle(shortCard.querySelector(".print-card-body")).fontSize,
           bandOverflow,
           targetOverflow,
           applicationChromeHidden: hidden,
@@ -361,7 +361,7 @@ try {
     );
     assert(layout.tableFits, `${variant.name} overflows the multiattack table`);
     assert(
-      Math.abs(parseFloat(layout.shortCardFont) - (6.7 * 96) / 72) < 0.01,
+      Math.abs(parseFloat(layout.shortCardFont) - (8 * 96) / 72) < 0.01,
       `${variant.name} unnecessarily shrinks a short card: ${layout.shortCardFont}`,
     );
     assert(
@@ -562,7 +562,7 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
            overflowing,
            weaponFontMismatch,
            tableFits,
-           shortCardFont: shortCard && getComputedStyle(shortCard).fontSize,
+           shortCardFont: shortCard && getComputedStyle(shortCard.querySelector(".print-card-body")).fontSize,
            bandOverflow,
            targetOverflow,
            itemHeaderBackground: style?.backgroundColor,
@@ -586,7 +586,7 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
         `Firefox ${variant.name} overflows the multiattack table`,
       );
       assert(
-        Math.abs(parseFloat(layout.shortCardFont) - (6.7 * 96) / 72) < 0.01,
+        Math.abs(parseFloat(layout.shortCardFont) - (8 * 96) / 72) < 0.01,
         `Firefox ${variant.name} unnecessarily shrinks a short card: ${layout.shortCardFont}`,
       );
       assert(
