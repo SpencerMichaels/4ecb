@@ -657,7 +657,7 @@ export function SettingsPage({
               onPrintCardTextSizeChange(Number(event.currentTarget.value))
             }
           >
-            {Array.from({ length: 9 }, (_, index) => 6 + index * 0.5).map(
+            {Array.from({ length: 8 }, (_, index) => 6.5 + index * 0.5).map(
               (size) => (
                 <option key={size} value={size}>
                   {size} pt{size === 8 ? " (default)" : ""}
@@ -668,8 +668,10 @@ export function SettingsPage({
         </label>
         <p className="field-help">
           Cards use this size when space permits. Dense cards automatically use
-          smaller text to fit. Subheaders, keywords, labels, and footer text
-          scale with the card, keeping their relative sizes.
+          smaller body and subheader text to fit, never below 6.5 pt. Titles and
+          footers keep their preferred sizes across all cards. This applies to
+          both power and item cards. Print preview flags cards whose text still
+          exceeds the available space at the minimum size.
         </p>
       </section>
 

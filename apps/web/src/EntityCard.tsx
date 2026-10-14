@@ -2,6 +2,7 @@ import { Fragment, useState, type ReactNode } from "react";
 
 import {
   isUserFacingSpecific,
+  weaponPropertyText,
   type ContentEntity,
   type SpecificField,
 } from "@4ecb/content-domain";
@@ -681,7 +682,9 @@ export function composedWeaponDescriptorRows(
       descriptorFact(
         "properties",
         "Properties",
-        specificValues(base, "Properties"),
+        specificValues(base, "Properties").map((value) =>
+          weaponPropertyText(base, value),
+        ),
       ),
     ]),
   ].filter((row) => row.length > 0);

@@ -334,10 +334,13 @@ try {
         const style = header === null ? undefined : getComputedStyle(header);
         return {
           cardCount: cards.length,
+          additionalEffects: shortCard?.querySelector(".print-card-body .print-card-additional.has-effects")?.textContent,
           overflowing,
           weaponFontMismatch,
           tableFits,
           shortCardFont: shortCard && getComputedStyle(shortCard.querySelector(".print-card-body")).fontSize,
+          shortItemFont: getComputedStyle(cards.find((card) => card.querySelector("h3 > span")?.textContent === "Synthetic item 02").querySelector(".print-card-body")).fontSize,
+          minimumBodyFont: Math.min(...cards.map((card) => parseFloat(getComputedStyle(card.querySelector(".print-card-body")).fontSize))),
           bandOverflow,
           targetOverflow,
           applicationChromeHidden: hidden,
@@ -347,6 +350,12 @@ try {
       })()`,
     );
     assert(layout.applicationChromeHidden, `${variant.name} prints app chrome`);
+    assert(
+      layout.additionalEffects?.includes(
+        "+1 to damage while flanking (Synthetic feature).",
+      ),
+      `${variant.name} omits additional effects`,
+    );
     assert(
       layout.cardCount === 24,
       `${variant.name} did not render every card`,
@@ -360,6 +369,14 @@ try {
       `${variant.name} uses smaller weapon text`,
     );
     assert(layout.tableFits, `${variant.name} overflows the multiattack table`);
+    assert(
+      layout.minimumBodyFont >= (6.5 * 96) / 72 - 0.01,
+      `${variant.name} shrinks card bodies below 6.5 pt`,
+    );
+    assert(
+      Math.abs(parseFloat(layout.shortItemFont) - (8 * 96) / 72) < 0.01,
+      `${variant.name} unnecessarily shrinks a short item: ${layout.shortItemFont}`,
+    );
     assert(
       Math.abs(parseFloat(layout.shortCardFont) - (8 * 96) / 72) < 0.01,
       `${variant.name} unnecessarily shrinks a short card: ${layout.shortCardFont}`,
@@ -563,6 +580,8 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
            weaponFontMismatch,
            tableFits,
            shortCardFont: shortCard && getComputedStyle(shortCard.querySelector(".print-card-body")).fontSize,
+           shortItemFont: getComputedStyle(cards.find((card) => card.querySelector("h3 > span")?.textContent === "Synthetic item 02").querySelector(".print-card-body")).fontSize,
+           minimumBodyFont: Math.min(...cards.map((card) => parseFloat(getComputedStyle(card.querySelector(".print-card-body")).fontSize))),
            bandOverflow,
            targetOverflow,
            itemHeaderBackground: style?.backgroundColor,
@@ -584,6 +603,14 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
       assert(
         layout.tableFits,
         `Firefox ${variant.name} overflows the multiattack table`,
+      );
+      assert(
+        layout.minimumBodyFont >= (6.5 * 96) / 72 - 0.01,
+        `Firefox ${variant.name} shrinks card bodies below 6.5 pt`,
+      );
+      assert(
+        Math.abs(parseFloat(layout.shortItemFont) - (8 * 96) / 72) < 0.01,
+        `Firefox ${variant.name} unnecessarily shrinks a short item: ${layout.shortItemFont}`,
       );
       assert(
         Math.abs(parseFloat(layout.shortCardFont) - (8 * 96) / 72) < 0.01,
@@ -654,6 +681,9 @@ function printCharacter() {
         attackBonus: String(8 + (index % 7)),
         damage: `${index % 2 === 0 ? "2d8" : "1d8"}+5`,
         defense: "AC",
+        ...(index === 1
+          ? { conditions: "+1 to damage while flanking (Synthetic feature)." }
+          : {}),
       },
     ],
   }));

@@ -2,12 +2,112 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Printed-card product review accepted (2026-10-14): The product owner approved
+the accumulated power/item card changes for a checkpoint commit. This includes
+readable adaptive fitting, grouped item powers and metadata, weapon property
+values, Additional Effects with provenance, inactive sibling clause filtering,
+wrapped titles with anchored badges/icons, first-row keywords, softer internal
+dividers and compact sustain action indicators. Private corpus/recovered sources
+remain ignored; public regression coverage uses synthetic content. Next work is
+the printable sheet's first two reference pages. M5.6 is still open; product
+acceptance of cards does not remove the documented dense-card overflow boundary
+or substitute for the complete milestone exit criteria.
+Checkpoint verification: `nix develop path:. -c bash scripts/check.sh` passes
+formatting, lint, all 679 tests in 80 files, workspace typechecks and the
+production/PWA build. It then fails the unchanged print-overflow assertion on
+Chromium Letter color Synthetic power 01: body 279/256 px at the 6.5 pt floor.
+This supersedes the earlier 279/222 px measurement below, but is not a passing
+print matrix. Later checks in the script are not reached. The fixture/assertion
+are preserved; dense-card continuation/overflow presentation remains deferred
+to a separate product decision before M5.6 print-fit acceptance. No claim of
+full public-check or milestone completion is made by this checkpoint.
+Separately, `nix develop path:. -c node scripts/check-built-pwa.mjs` passes;
+the built web output contains no `.4ecp` or `.dnd4e` artifacts.
+
+Card-header refinement (2026-10-14): Long titles now wrap naturally without
+scaling title text; utility W/E/D badges remain fixed at the top right. Title
+action icons align with the first text line, including wrapped titles. Keywords
+return to the first subheader row, retaining their muted background and key icon.
+Immediate Interrupt's octagon glyph uses an 80% optical scale within its unchanged
+icon box to balance the font-based action symbols across app and printed cards.
+Internal horizontal/vertical subheader rules are softened to 35% card color;
+the bottom edge retains the prominent full-color divider. Cards remain fixed-size
+and excess content remains subject to the existing fitting/overflow boundary.
+Verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
+passes 18 focused tests. The full print matrix was not rerun for this style edit.
+Sustain follow-up: authored Sustain action fields add a second action-cell line
+with `step-forward` and the action type, preserving the complete clause in the
+body. Ordinary cards retain their single action line. Distinct sustain types
+remain individually visible; repeated labels are deduplicated in the header.
+Verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-power-attacks.test.ts apps/web/src/print-layout.test.ts`
+passes 33 tests; `nix develop path:. -c pnpm --filter @4ecb/web typecheck` passes.
+
+Class-feature clause filtering (2026-10-14): Personalized evaluated View/print
+cards now omit confirmed inactive sibling clauses using the parent Class Feature
+selection/category relationship, not hardcoded Censure/Covenant names. Ambiguous,
+custom, unresolved, multi-pick and composite families retain their text; generic
+Build details and legacy-cache sheets remain unchanged. See D077. The private Hu
+diagnostic retains Fury's Advance's Unity clause and omits Angelic Alacrity's
+Pursuit clause, with Pursuit/Retribution identified as inactive siblings. A local
+content diagnostic with a selected-Wrath fixture retains Wrath and hides
+Preservation/Malediction clauses. The latter is not a full Fei Zhu import replay
+(only the PDF reference is available), and neither diagnostic is a same-profile
+golden. Verification: `nix develop path:. -c pnpm exec vitest run packages/sheet-model/src/power-feature-clauses.test.ts packages/sheet-model/src/index.test.ts`
+passes 12 tests; `nix develop path:. -c pnpm typecheck` passes workspace checks.
+This presentation change does not close M5.6 or resolve the documented dense-card
+overflow blocker.
+
+Additional-effects checkpoint (2026-10-14): Printed power cards now show selected
+variant conditional attack/damage reminders, keyword `:info` text, and recovered
+striker extra damage. Conditional bonuses retain their provider/provenance and
+stay out of ordinary totals. Legacy fallback retains selected weapon `Conditions`
+verbatim as legacy-cache; equipped/saved main-hand evidence takes precedence over
+the historical first-cache fallback. No reminders are pooled across inventory
+alternatives. Populated effects participate in the body's existing fitting;
+empty cards omit the section and its reserved writing area. Fixed geometry and
+the 6.5 pt floor remain.
+Empty-section follow-up verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
+passed 16 focused tests; populated effects remain in the fitted body.
+Known effect providers now appear as bold leading `Name:` labels rather than
+trailing parenthetical/hyphenated prose. This is presentation-only: reminder text
+and provenance remain unchanged in the model; unidentified legacy text remains
+verbatim rather than guessing names from parenthetical conditions.
+Provider-label follow-up verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-additional-effects.test.ts apps/web/src/print-layout.test.ts packages/sheet-model/src/index.test.ts`
+passed 22 focused tests; web typecheck passed.
+See D076 and `character-import-and-sheets.md` for the source/selection boundary.
+The original private Hu sample produces Censure of Unity reminders on all 11
+cards whose first cached weapon contains that condition, with the same evaluated
++1 amount and authored condition; all 11 projected reminder strings match the
+first legacy weapon cache exactly. This is diagnostic comparison against the
+local profile, not a new same-profile golden. Native special Action Point cards,
+dwarf Second Wind reminders and specialized generated keyword families remain
+separate parity work. Verification: 68 tests in the focused rules-power,
+sheet-model, print-layout and runtime-cache suites pass; workspace typecheck and
+production/PWA build pass. `nix develop path:. -c pnpm check:print` verifies the
+new synthetic populated effects before reproducing the existing Chromium Letter
+color Synthetic power 01 overflow (279/222 px at 6.5 pt). Its assertion and dense
+fixture remain intact. This does not close M5.6 or its print overflow blocker.
+
 Printed-card text-size checkpoint (2026-10-14): Display now offers a persistent,
-browser-local preferred size of 6–10 pt in half-point steps, default 8 pt.
-Power/item body text, weapon tables, keywords, subheaders, and proportional
-titles/labels/footers scale together, with readable floors for compact text.
-Cards independently start at the preferred size and shrink gradually only on
-overflow, retaining fixed physical dimensions and the 4.8 pt minimum.
+browser-local preferred size of 6.5–10 pt in half-point steps, default 8 pt.
+The preference sets body text, weapon tables, keywords, subheaders, and
+proportional titles/labels/footers, with readable floors for compact text.
+Automatic fitting now reduces body text, weapon tables, keywords and subheaders
+(including additional attacks and item actions) together, preventing fixed
+subheadings from squeezing multiattack prose too far. Titles and footers retain
+their preferred sizes consistently across cards. Both item and power cards
+start at the preferred size and shrink gradually only on overflow, retaining
+fixed physical dimensions with a raised 6.5 pt minimum. Saved 6 pt preferences
+are raised to the new minimum. The previous body-only fitting checkpoint passed
+11 focused tests and all eight browser/paper/color print variants.
+Readable-floor follow-up: 50 focused fit/layout/attack/item tests, web typecheck
+and production build pass. The rebuilt `nix develop path:. -c pnpm check:print`
+currently fails on the deliberately oversized Synthetic power 01: body 279 px
+in 222 px available on Chromium Letter color at 6.5 pt. Keep that fixture and
+assertion unchanged; do not conceal the overflow by shrinking below the floor.
+Screen print preview marks cards that still exceed their fixed geometry. A
+continuation/overflow presentation decision remains necessary before M5.6 exit;
+this is not a completed print-fit acceptance checkpoint.
 Focused card-fit/layout/settings/item/sheet-model tests pass (62 tests in five
 files), web typecheck and production build pass, and `nix develop path:. -c pnpm
 check:print` passes all eight Chromium/Firefox Letter/A4 color/monochrome variants
@@ -64,16 +164,74 @@ separate projection over the same semantic model.
   Critical entries with riders or conditional wording are freeform rules
   and remain labeled Critical lines in the body, not subheader values.
   Activated powers and freeform Property entries stay in the body.
+  Item activation headers read usage/keywords from either field labels or body
+  prefixes, including No Action and consumables. Inset headings use muted green/
+  red/gray power-subheading backgrounds (#aaddaa/#ddbbbb/#d3d3d3) and dark text for
+  At-Will/Encounter/Daily, matching power subheaders; Consumable and
+  unknown headers retain their orange tint. Action and capitalized usage sit
+  together with one bullet, not right-aligned at opposite ends. Regular-weight,
+  comma-separated keywords align below the action text, not the icon. Disabling
+  icons removes the icon column; monochrome headers remain light with dark text.
+  Each complete inset item-power subsection has a 1px usage-colored border
+  around both heading and padded white rules body, or orange for Consumable;
+  monochrome uses a black border. General item rules remain outside the box.
+  Enclosed-power follow-up: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts`
+  passed all 11 focused layout tests.
+  Usage-color/inline-frequency/aligned-keyword follow-up:
+  `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts`
+  passed 11 focused layout tests; no full-suite rerun for this visual adjustment.
+  Icons align to the action's first line when it wraps. Consumable prefixes
+  without a colon (Coin of Good Luck) are recognized without losing Effect or
+  Special clauses. Explicit Trigger/Effect/etc. clauses have
+  bold labels; authored Augment clauses receive a separate labeled row within
+  their power rather than being mistaken for passive item properties. Unknown
+  activation forms stay intact.
+  Separated-header follow-up verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-item-presentation.test.ts apps/web/src/print-layout.test.ts apps/web/src/Prose.test.ts`
+  passed 56 focused tests; web typecheck passed. Private Coin of Good Luck
+  diagnostic resolves Consumable/Free and preserves both Effect and Special.
+  Verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-item-presentation.test.ts apps/web/src/print-layout.test.ts apps/web/src/Prose.test.ts`
+  passed 52 focused tests; web typecheck passed. Private definition diagnostics
+  confirm Flowform's Encounter/Augmentable/No Action header with separate
+  Trigger, Effect and Augment 1 clauses; Guardian's Whistle resolves its label
+  metadata into Daily/Teleportation/Move; Cape resolves Daily/Teleportation/
+  Immediate Reaction.
   Weapon keyword `Properties` occupy a wrapping
-  subheader band styled like power keywords, without repeating them in the body.
-  This weapon Properties band sits immediately below the item title, before
-  numeric/enum stat rows, matching the position of power Keywords.
+  regular final stat-subheader row, without repeating them in the body.
+  Following product-owner feedback, item Properties follows the numeric
+  subheader rather than preceding it.
+  Its bottom divider is omitted; power Keywords borders remain unchanged.
+  Item stats have a full-color bottom boundary even for a single Crit cell;
+  Properties now shares the stat row labels, values, background and spacing,
+  rather than the separate Keywords-band styling. When present it is the final
+  subheader row and has no bottom boundary; stat-only subheaders retain theirs.
   Paragraph-style `Property` entries remain in the body.
-  Weapon keyword values retain authored casing and match power Keywords in bold
-  weight and band borders, overriding the generic prose heading's uppercase
-  treatment.
-  Passive body properties follow activated powers regardless of authored field
-  order. Item-power usage/action headings are compact body subsections, aligned
+  Shared prose now renders legacy HTML-cell and tab-delimited tables as lightly
+  styled semantic tables rather than concatenated or accidentally bold headings.
+  The local Hunter's Quarry Effect parses as one two-column table with three
+  data rows and no accidental heading; original content remains unchanged.
+  Table cells remain escaped text; corpus HTML attributes are not rendered.
+  Verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/Prose.test.ts apps/web/src/print-layout.test.ts apps/web/src/power-level-text.test.ts apps/web/src/print-item-presentation.test.ts`
+  passed 50 focused tests; web typecheck passed. Existing dense-card print-fit
+  blocker remains separate; no full-suite rerun for these presentation changes.
+  Weapon keyword values retain authored casing with regular subheader value
+  weight, rather than uppercasing every property name. A shared helper now recovers
+  omitted numeric qualifiers from exact headings in authored Full Text
+  Properties blocks. Hu's gouge projects Brutal 1 across item details, sheet
+  cards and weapon metadata. Explicit values and ambiguous/missing evidence stay
+  unchanged; raw properties remain context tags. The evaluation cache version
+  is bumped for corrected weapon-property metadata.
+  Verification: `nix develop path:. -c pnpm exec vitest run packages/content-domain/src/index.test.ts packages/rules-engine/src/powers.test.ts packages/sheet-model/src/index.test.ts apps/web/src/EntityCard.test.ts`
+  passed 79 tests; `nix develop path:. -c pnpm exec vitest run apps/web/src/app-runtime.test.ts packages/rules-engine/src/powers.test.ts`
+  passed 52 tests. Workspace typecheck passed. Private gouge diagnostic confirms
+  original compact `Brutal` remains unchanged while projection is `Brutal 1`.
+  General body rules (Special, Property, Critical riders and unknown notes)
+  follow activated powers; only explicit Prerequisite/Requirement fields precede
+  them. Authored order is retained within each group and on cards without powers;
+  Special/Augment clauses within a power remain associated with that power.
+  General-rule ordering verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-item-presentation.test.ts apps/web/src/print-layout.test.ts`
+  passed 51 focused tests. Power Jewel's standalone Special field is confirmed
+  in the local definition and now follows its activated Power subsection.
+  Item-power usage/action headings are compact body subsections, aligned
   with rule text, using a tinted rounded strip inset within the body rather
   than a subheader-style grid, cell dividers, or edge-to-edge borders.
   A modest adaptive gap separates them from passive rules; action symbols follow
@@ -82,9 +240,9 @@ separate projection over the same semantic model.
   (38 tests), web typecheck passes, and local visual review confirms Bracers of
   Archery's passive Property precedes its icon-bearing Daily/Minor header.
   Grouped-layout checkpoint (2026-10-14): `nix develop path:. -c pnpm exec
-  vitest run apps/web/src/print-item-presentation.test.ts
-  apps/web/src/print-layout.test.ts apps/web/src/EntityCard.test.ts
-  apps/web/src/accessibility-contract.test.ts packages/sheet-model/src/index.test.ts`
+vitest run apps/web/src/print-item-presentation.test.ts
+apps/web/src/print-layout.test.ts apps/web/src/EntityCard.test.ts
+apps/web/src/accessibility-contract.test.ts packages/sheet-model/src/index.test.ts`
   passes 80 tests in five files. Web typecheck, focused ESLint, and production
   build pass; `nix develop path:. -c pnpm check:print` passes all eight browser /
   paper / color variants. Visual review on Silaqui confirms melee/ranged rows,
@@ -94,7 +252,12 @@ separate projection over the same semantic model.
   remains intact. Category and level share the orange bottom bar, with slot,
   weight, and price in a compact footer; numeric weights/prices receive units.
   Ordinary weapons, armor, and gear are no longer universally labeled magic
-  items. Inventory quantity is omitted from physical cards. Explicit flavor is
+  items. Weapon proficiency values are explicitly signed (Prof +3). Item-power
+  body text receives a small side inset matching heading content padding.
+  Recognized heroic/paragon/epic tier parentheses move from printed item titles
+  into footer metadata; other parentheses and stored names remain unchanged.
+  Focused item/layout tests pass (37 tests), and web typecheck passes for this
+  follow-up. Inventory quantity is omitted from physical cards. Explicit flavor is
   omitted; unstructured custom instructions are
   preserved when no structured rules replace them. Shared category mapping
   uses neutral item/base-type metadata in the sheet model, not UI icons there.
@@ -104,8 +267,8 @@ separate projection over the same semantic model.
   generic synthetic item descriptions rather than every structured category.
   Product-owner review and M5.6's broader acceptance remain open.
   Verification: `nix develop path:. -c pnpm exec vitest run
-  apps/web/src/print-item-presentation.test.ts apps/web/src/EntityCard.test.ts
-  apps/web/src/print-layout.test.ts packages/sheet-model/src/index.test.ts`
+apps/web/src/print-item-presentation.test.ts apps/web/src/EntityCard.test.ts
+apps/web/src/print-layout.test.ts packages/sheet-model/src/index.test.ts`
   passes 45 tests across four files. Web typecheck, focused ESLint, and production
   build pass. Visual review on the supplied character confirmed category icons,
   wrapping stat bands, grouped powers, and bounded long-title body layout.
@@ -123,14 +286,65 @@ separate projection over the same semantic model.
   their text. Power titles use bold Arial, matching the sans-serif body. The
   action/range and attack/target bands share text sizing and 0.1-inch icon boxes
   for equal single-line heights; long targets can still expand without clipping.
-  Subsequent attack bands have a matching top border to enclose each header.
+  Action/range and primary attack/target dividers share a per-card first-column
+  width, measured from their widest intrinsic first cell at each fitted size.
+  Reset that width before refitting so smaller preferences do not retain a stale
+  split; secondary inset attack sections are unaffected.
+  Shared-column verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
+  passed 16 focused tests; web typecheck passed.
+  Subsequent attack headers use rounded tinted strips inset in the body,
+  matching item-power headings without repeating the main subheader's dividers.
+  Their rule text uses the same side inset as item-power text. Inset headers
+  match their card's main subheader tint (including monochrome); row-leading
+  separators and their occupied space are removed after target/stat fields wrap,
+  recalculated during fit; wrapped target icons align with the attack icon above.
+  Secondary headers accept only explicit authored phase targets, not copied
+  primary target text from equipment variants. Same-target restrictions remain
+  in their original Hit prose.
+  Utility power title headers now include a fixed-size W/E/D badge at the right
+  for At-Will/Encounter/Daily, with green/red/gray backgrounds and white text.
+  The blue-utility option does not alter its usage color; monochrome keeps the
+  letter in dark text on white. Titles truncate before displacing the badge.
+  Badge verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts`
+  passed all 10 layout-contract tests; no full-suite rerun for this visual tweak.
+  Verification for wrapped separator alignment and authored secondary targets:
+  `nix develop path:. -c pnpm exec vitest run apps/web/src/print-power-attacks.test.ts apps/web/src/print-card-fit.test.ts apps/web/src/print-layout.test.ts`
+  passed 21 tests; `nix develop path:. -c pnpm --filter @4ecb/web typecheck`
+  passed. The local Assess and Strike definition has only a primary Target field;
+  the primary Hit constrains its secondary attack to that same target.
   Authored target fields are omitted from the printed body only when the same
   target text is already displayed in that specific attack's header.
   A browser-local Display setting (on by default) moves action symbols into
   printed power titles and uses a generic timer beside the action description.
   Turning it off restores the symbol beside that description; actionless powers,
   item cards, and interactive cards are unchanged.
-  Title action glyphs receive a small downward optical alignment adjustment.
+  Power Keywords now occupy an optional band immediately above the usage footer,
+  below Additional effects, using
+  the same bottom divider, spacing and icon size as action/attack rows, but a
+  slightly more muted background (12% card color versus their 20%).
+  A key icon replaces the visible Keywords label; values stay regular
+  weight. Empty/whitespace-only keywords omit the entire row. There is no
+  duplicate body property. Power card grids use five rows when keywords exist and four
+  otherwise, with the body as the third flexible row and unchanged dimensions.
+  Bottom-band placement verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
+  passed 16 focused tests.
+  Key-icon subheader follow-up verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
+  passed 16 focused tests; web typecheck passed. Full browser print-fit acceptance
+  remains a separate checkpoint.
+  Keywords-placement verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-layout.test.ts apps/web/src/print-card-fit.test.ts`
+  passed 16 focused tests; web typecheck passed. Full browser print-fit acceptance
+  remains separate from this feedback change and its existing dense-card blocker.
+  Printed action labels retain No Action (including authored qualifiers); only
+  redundant Action suffixes such as Standard Action are abbreviated.
+  Action-label regression verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/print-power-attacks.test.ts apps/web/src/print-layout.test.ts`
+  passed 28 focused tests.
+  Action symbol glyphs share a font-relative downward optical adjustment across
+  print titles, subheaders, item powers and interactive cards/selection summaries.
+  Separate per-surface shifts are removed to avoid inconsistent alignment;
+  interactive action-icon boxes align to the heading center rather than baseline.
+  Shared alignment and independent Additional Effects regression verification:
+  `nix develop path:. -c pnpm exec vitest run apps/web/src/ActionTypeIcon.test.ts apps/web/src/selection-summary-style.test.ts apps/web/src/print-layout.test.ts packages/rules-engine/src/powers.test.ts packages/sheet-model/src/index.test.ts`
+  passed 63 tests across five files; no full-suite rerun for this optical tweak.
   Immediate Interrupt uses the octagon-minus icon across print and interactive
   action displays; other action symbols are unchanged.
   Printed attack targets use the crosshair icon rather than the bullseye.
@@ -146,7 +360,7 @@ separate projection over the same semantic model.
   metadata. Additional effects is verified in recovered `PowerCardPower.cs`;
   approved Attack/Damage table and header labels are presentation, not new rules.
   Verification: `nix develop path:. -c pnpm exec vitest run
-  packages/sheet-model/src/index.test.ts apps/web/src/print-layout.test.ts`
+packages/sheet-model/src/index.test.ts apps/web/src/print-layout.test.ts`
   passes 11 tests; web typecheck passes. The synthetic fixture contains recovery
   metadata and unsupported calculations while asserting only authored card
   fields and separately preserved calculation warnings.

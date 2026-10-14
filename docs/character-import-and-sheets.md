@@ -239,6 +239,44 @@ are explicitly deferred and `sourceXml` remains required preservation input.
 
 ## Content-profile behavior
 
+### Class-feature-specific power clauses
+
+Evaluated personalized View/print power fields hide only proven inactive siblings
+of a resolved single-choice Class Feature selection (D077). The parent rule's
+literal category defines the family using complete content definitions; the
+selected option must be legal/source-entitled and the sole active family member.
+Clause labels must uniquely match sibling feature names. Uncertain/custom,
+multi-choice/composite and duplicate-name cases remain visible, as do ordinary
+rules labels. Generic Build descriptions and legacy-cache sheets keep all
+clauses. Raw authored content and character selections remain recoverable.
+
+### Additional effects on power cards
+
+`SheetCard.additionalEffects` and each equipment variant expose renderer-neutral
+reminders with an explicit authoritative-evaluation or legacy-cache source.
+Modern reminders come from conditional global attack/damage contributions and
+matching contextual `:attack`, `:damage`, `:damage-roll`, or authored `:info` stats,
+plus recovered striker expressions. Conditions never augment ordinary totals.
+The model preserves providers and contribution IDs, and deduplicates repeated
+aliases by contribution identity rather than discarding equal authored prose
+from distinct providers. Comma keyword predicates require every keyword, and
+parenthesized equipment limits match the selected base/enchantment definitions.
+Damage-roll reminders require dice; attack reminders require an attack.
+
+The card chooses the equipped main hand, then another equipped variant, then the
+existing first available fallback. Imported cache display uses the saved
+`_INTERNAL_MainHandWeapon` and equipped loot where available before the historical
+first-weapon fallback. Its Conditions string remains verbatim and cannot be
+mixed into evaluated output. Equipment-specific reminders on carried variants
+remain inspectable in the model without appearing on the default card.
+Printed populated effects are part of the fitted body with the established
+readability floor; empty effects omit the section and reserved writing area,
+returning that space to the rules body. Dense content remains
+subject to the visible overflow boundary, not silent truncation or smaller text.
+The separate native Action Point and dwarf Second Wind card specializations,
+and generated keyword families beyond the supported loadout context, are not
+implemented by this ordinary PowerStats projection.
+
 Import binds the active immutable content pack when one exists. The binding pins
 both pack ID and digest. A missing pack is visible in the library and sheet;
 users can install it or explicitly migrate the character. Profile migration is a

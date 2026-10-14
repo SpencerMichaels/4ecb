@@ -3,6 +3,7 @@ import type { SheetCard } from "@4ecb/sheet-model";
 import {
   printItemPresentation,
   printItemPower,
+  printItemPowerClauses,
 } from "./print-item-presentation";
 
 function card(
@@ -20,6 +21,33 @@ function card(
 }
 
 describe("printed item presentation", () => {
+  it.each(["Heroic", "Paragon", "Epic"])(
+    "moves the %s tier suffix into footer metadata",
+    (tier) => {
+      const item = {
+        ...card("Magic Item", { "Magic Item Type": "Arms Slot Item" }),
+        name: `Fixture armbands (${tier.toLowerCase()} tier)`,
+      };
+      const view = printItemPresentation(item);
+      expect(view.name).toBe("Fixture armbands");
+      expect(view.metadata).toContain(`${tier} tier`);
+      expect(item.name).toContain("tier)");
+      expect(
+        printItemPresentation({ ...item, name: "Fixture potion (Lvl 5)" }).name,
+      ).toBe("Fixture potion (Lvl 5)");
+    },
+  );
+  it.each([
+    ["3", "+3"],
+    ["+3", "+3"],
+    ["0", "+0"],
+    ["-1", "-1"],
+  ])("signs proficiency %s as %s", (value, displayed) => {
+    expect(
+      printItemPresentation(card("Weapon", { "Proficiency Bonus": value }))
+        .stats,
+    ).toContainEqual({ label: "Proficiency", value: displayed });
+  });
   it.each(["Neck Slot Item", "Ammunition", "Wand"])(
     "omits enhancement repeated in the title for %s",
     (kind) => {
@@ -166,6 +194,34 @@ describe("printed item presentation", () => {
       "Utility Power",
       "Property",
     ]);
+  });
+  it("places general item rules after powers while keeping explicit requirements before them", () => {
+    const view = printItemPresentation(
+      card("Magic Item", {
+        Special: "A restriction on using another such item.",
+        Property: "A passive benefit.",
+        Requirement: "You must carry the item.",
+        Power:
+          "Power (Daily): Minor Action. Effect: Activate it. Special: A power-specific restriction.",
+        "Custom instructions": "Keep this note.",
+        Prerequisite: "A required feature.",
+        "Utility Power": "Power (Encounter): Free Action. Another activation.",
+        Critical: "+1d6 damage against a marked target.",
+      }),
+    );
+    expect(view.rules.map((field) => field.label)).toEqual([
+      "Requirement",
+      "Prerequisite",
+      "Power",
+      "Utility Power",
+      "Special",
+      "Property",
+      "Custom instructions",
+      "Critical",
+    ]);
+    expect(printItemPower(view.rules[2]!)?.text).toContain(
+      "Special: A power-specific restriction.",
+    );
   });
   it("projects known enum fields but leaves passive and unfamiliar prose in the body", () => {
     const view = printItemPresentation(
@@ -317,6 +373,99 @@ describe("printed item presentation", () => {
         .description,
     ).toBeUndefined();
   });
+  it("recognizes No Action and preserves separate Trigger, Effect and Augment clauses", () => {
+    const text =
+      "Trigger: You are hit. Effect: Make a saving throw. Augment 1: Gain a bonus to that saving throw.";
+    const field = {
+      label: "Power",
+      value: `Power (Encounter • Augmentable): No Action. ${text}`,
+    };
+    expect(printItemPower(field)).toEqual({
+      title: "Encounter • Augmentable • No Action",
+      usage: "Encounter",
+      keywords: "Augmentable",
+      actionType: "No Action",
+      text,
+    });
+    expect(printItemPowerClauses(text)).toEqual([
+      { label: "Trigger", value: "You are hit." },
+      { label: "Effect", value: "Make a saving throw." },
+      { label: "Augment 1", value: "Gain a bonus to that saving throw." },
+    ]);
+    expect(field.value).toContain(
+      "Power (Encounter • Augmentable): No Action.",
+    );
+  });
+  it.each([": ", "\n", ".\n"])(
+    "parses consumable action prefixes terminated with %j",
+    (separator) => {
+      const text =
+        "Effect: Gain a bonus.\nSpecial: Wait until an extended rest to use another.";
+      expect(
+        printItemPower({
+          label: "Utility Power",
+          value: `consumable (free action)${separator}${text}`,
+        }),
+      ).toEqual({
+        title: "Consumable • Free",
+        usage: "Consumable",
+        actionType: "Free",
+        text,
+      });
+      expect(printItemPowerClauses(text).map((clause) => clause.label)).toEqual(
+        ["Effect", "Special"],
+      );
+    },
+  );
+  it("separates and normalizes usage without changing authored keywords or effect text", () => {
+    expect(
+      printItemPower({
+        label: "Power",
+        value:
+          "Power (consumable • Fire, Healing): minor action. Drink the potion.",
+      }),
+    ).toEqual({
+      title: "Consumable • Fire, Healing • Minor",
+      usage: "Consumable",
+      keywords: "Fire, Healing",
+      actionType: "Minor",
+      text: "Drink the potion.",
+    });
+  });
+  it.each([
+    "utility Power (Daily * Teleportation)",
+    "Utility Power (Teleportation • Daily)",
+    "Utility Power * Daily • Teleportation",
+    "Power (Daily · Teleportation): Move Action",
+  ])("reads metadata from the field label: %s", (label) => {
+    const labelHasAction = label.endsWith("Move Action");
+    const text = "Effect: Teleport an ally.";
+    expect(
+      printItemPower({
+        label,
+        value: labelHasAction ? text : `Move Action.\n${text}`,
+      }),
+    ).toEqual({
+      title: "Daily • Teleportation • Move",
+      usage: "Daily",
+      keywords: "Teleportation",
+      actionType: "Move",
+      text,
+    });
+  });
+  it("keeps prose and tables intact when splitting authored clauses", () => {
+    const text =
+      "Keep this sentence.\nTrigger: You are hit.\nEffect: Gain a benefit.\n<table>Name\tEffect\nOption\tSpecial: Keep this cell.</table>";
+    expect(printItemPowerClauses(text)).toEqual([
+      { label: "", value: "Keep this sentence." },
+      { label: "Trigger", value: "You are hit." },
+      {
+        label: "Effect",
+        value:
+          "Gain a benefit.\n<table>Name\tEffect\nOption\tSpecial: Keep this cell.</table>",
+      },
+    ]);
+  });
   it("gives every activated power its own usage/action heading without changing effects", () => {
     expect(
       printItemPower({
@@ -324,9 +473,10 @@ describe("printed item presentation", () => {
         value: "Power (Daily • Healing): Minor Action. Spend a surge.",
       }),
     ).toEqual({
-      title: "Daily • Healing · Minor",
+      title: "Daily • Healing • Minor",
       text: "Spend a surge.",
-      usage: "Daily • Healing",
+      usage: "Daily",
+      keywords: "Healing",
       actionType: "Minor",
     });
     expect(
@@ -336,7 +486,7 @@ describe("printed item presentation", () => {
           "Power (Encounter): Immediate Reaction. Trigger: You are hit. Effect: Teleport 5 squares.",
       }),
     ).toEqual({
-      title: "Encounter · Immediate Reaction",
+      title: "Encounter • Immediate Reaction",
       usage: "Encounter",
       actionType: "Immediate Reaction",
       text: "Trigger: You are hit. Effect: Teleport 5 squares.",
@@ -355,7 +505,7 @@ describe("printed item presentation", () => {
         value: "Consumable (Minor Action): Effect: Gain a benefit.",
       }),
     ).toEqual({
-      title: "Consumable · Minor",
+      title: "Consumable • Minor",
       text: "Effect: Gain a benefit.",
       usage: "Consumable",
       actionType: "Minor",
@@ -366,7 +516,7 @@ describe("printed item presentation", () => {
         value: "Minor Action. Effect: Gain a benefit.",
       }),
     ).toEqual({
-      title: "Consumable · Minor",
+      title: "Consumable • Minor",
       text: "Effect: Gain a benefit.",
       usage: "Consumable",
       actionType: "Minor",

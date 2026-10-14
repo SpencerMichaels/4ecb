@@ -18,33 +18,247 @@ const sheetSource = ["./CharacterSheetPage.tsx", "./print-power-attacks.ts"]
   .join("\n");
 
 describe("print layout contract", () => {
-  it("scales card text together while preserving its typography hierarchy", () => {
+  it("shares the first-column split between action/range and primary attack/target rows", () => {
+    for (const selector of [
+      "print-card-action-band",
+      "print-card-combat-band",
+    ]) {
+      expect(styles).toMatch(
+        new RegExp(
+          `\\.${selector}\\s*\\{[^}]*grid-template-columns:\\s*var\\(\\s*--print-card-header-first-column,\\s*max-content\\s*\\)\\s+minmax\\(0, 1fr\\)`,
+        ),
+      );
+    }
+    expect(sheetSource).toContain(
+      'element.style.removeProperty("--print-card-header-first-column")',
+    );
+    expect(sheetSource).toContain(
+      '".print-card-combat-band:not(.is-secondary) > div:first-child"',
+    );
+  });
+  it("places optional regular-weight keywords first in the subheader with a key icon", () => {
+    const powerSource = sheetSource.slice(
+      sheetSource.indexOf("function PrintPowerCard("),
+      sheetSource.indexOf("function PrintItemCard("),
+    );
+    const keywords = powerSource.indexOf('className="print-card-keyword-band"');
+    expect(keywords).toBeLessThan(
+      powerSource.indexOf("className={`print-card-action-band"),
+    );
+    expect(powerSource).toContain("{card.keywords?.trim() ? (");
+    expect(powerSource).toContain('<Icon name="key" />');
+    expect(powerSource).not.toContain("print-card-keywords-property");
+    expect(styles).toMatch(
+      /\.print-card-keyword-band\s*\{[^}]*font-weight:\s*400;/,
+    );
+    expect(styles).toContain(
+      ".print-card-keyword-band,\n.print-card-action-band,",
+    );
+    expect(styles).toMatch(
+      /\.print-reference-card\s*\{[^}]*grid-template-rows:\s*auto auto minmax\(0, 1fr\) auto auto;/,
+    );
+    expect(styles).toMatch(
+      /\.print-power-card\.has-keywords\s*\{[^}]*grid-template-rows:\s*auto auto auto minmax\(0, 1fr\) auto;/,
+    );
+    expect(styles).toMatch(
+      /\.print-power-card\s*\{[^}]*grid-template-rows:\s*auto auto minmax\(0, 1fr\) auto;/,
+    );
+    expect(powerSource).toContain(
+      "{(card.additionalEffects ?? []).length === 0 ? null : (",
+    );
+    expect(powerSource).not.toContain(
+      '<div className="print-card-additional">Additional effects</div>',
+    );
+  });
+  it("wraps long titles without shrinking or displacing the fixed usage badge", () => {
+    expect(styles).toMatch(
+      /\.print-reference-card > header h3\s*\{[^}]*white-space:\s*normal;[^}]*overflow-wrap:\s*anywhere;/,
+    );
+    expect(styles).toMatch(
+      /\.print-utility-usage-badge\s*\{[^}]*align-self:\s*flex-start;[^}]*flex-shrink:\s*0;/,
+    );
+    expect(styles).toMatch(
+      /\.print-power-card > header h3 > span:last-child\s*\{[^}]*white-space:\s*normal;/,
+    );
+    expect(styles).toMatch(
+      /\.print-power-card > header \.action-type-icon\s*\{[^}]*align-self:\s*flex-start;[^}]*margin-top:\s*max\(0px, calc\(0\.6em - 0\.075in\)\);/,
+    );
+  });
+  it("softens internal subheader separators but retains the prominent bottom rule", () => {
+    expect(styles).toMatch(
+      /\.print-card-action-band\s*\{[^}]*border-bottom:\s*1px solid color-mix/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-action-band > span\s*\{[^}]*border-right:\s*1px solid color-mix/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-combat-band > div\s*\{[^}]*border-bottom:\s*1px solid var\(--card-color\);[^}]*border-right:\s*1px solid color-mix/,
+    );
+    expect(styles).toContain(
+      ".print-power-card:not(:has(.print-card-combat-band)) .print-card-action-band",
+    );
+  });
+  it("places item keyword Properties below the numeric stat subheader", () => {
+    expect(styles).toMatch(
+      /\.print-item-stats\s*\{[^}]*border-bottom:\s*1px solid var\(--card-color\)/,
+    );
+    expect(styles).toMatch(
+      /\.print-item-stats\.has-properties\s*\{[^}]*border-bottom:\s*0;/,
+    );
+    const itemSource = sheetSource.slice(
+      sheetSource.indexOf("function PrintItemCard("),
+    );
+    expect(itemSource.indexOf("className={`print-item-stats")).toBeLessThan(
+      itemSource.indexOf(
+        'className="print-item-stat-row print-item-properties"',
+      ),
+    );
+    expect(
+      itemSource.indexOf(
+        'className="print-item-stat-row print-item-properties"',
+      ),
+    ).toBeLessThan(
+      itemSource.indexOf('className="print-card-body print-item-body"'),
+    );
+    expect(styles).toMatch(/\.prose-table\s*\{[^}]*font-size:\s*inherit;/);
+  });
+  it("identifies utility frequency with a fixed-size colored title badge, including monochrome", () => {
+    expect(sheetSource).toContain(
+      "className={`print-utility-usage-badge usage-${usageTone}`}",
+    );
+    expect(sheetSource).toMatch(
+      /usageTone === "encounter"\s*\? "E"\s*: usageTone === "daily"\s*\? "D"\s*: "W"/,
+    );
+    expect(styles).toMatch(
+      /\.print-utility-usage-badge\s*\{[^}]*flex-shrink:\s*0;[^}]*font-size:\s*7\.5pt;/,
+    );
+    expect(styles).toMatch(
+      /\.print-utility-usage-badge\.usage-encounter\s*\{[^}]*background:\s*#8b0000;/,
+    );
+    expect(styles).toMatch(
+      /\.print-utility-usage-badge\.usage-daily\s*\{[^}]*background:\s*#777;/,
+    );
+    expect(styles).toMatch(
+      /\.sheet-monochrome \.print-utility-usage-badge\s*\{[^}]*background:\s*#fff;[^}]*color:\s*#111;/,
+    );
+  });
+  it("removes wrapped separators and their space while keeping the target on its aligned row", () => {
+    expect(styles).toMatch(/starts-wrapped-row::before[^}]*display:\s*none;/);
+    expect(styles).toMatch(
+      /\.print-card-attack-target\.starts-wrapped-row\s*\{[^}]*flex-basis:\s*100%;/,
+    );
+    expect(sheetSource).toContain(
+      'cell.classList.remove("starts-wrapped-row")',
+    );
+    expect(sheetSource).toMatch(/withAuthoredPrintTargets\(\s*card,/);
+  });
+  it("keeps subsequent attacks inset and indents item-power text inside its heading strip", () => {
+    expect(sheetSource).toContain("secondary={attackIndex > 0}");
+    expect(styles).toMatch(
+      /\.print-card-combat-band\.is-secondary\s*\{[^}]*border-radius:\s*0\.025in;[^}]*margin:\s*0;/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-combat-band\.is-secondary > div\s*\{[^}]*border:\s*0;/,
+    );
+    expect(styles).toMatch(
+      /\.print-item-power > \.print-item-rule-text\s*\{[^}]*padding-inline:\s*0\.035in;/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-combat-band\.is-secondary \+ \.print-card-attack-rules\s*\{[^}]*padding-inline:\s*0\.035in;/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-combat-band\.is-secondary\s*\{[^}]*background:\s*color-mix\(in srgb, var\(--card-color\) 20%, white\)/,
+    );
+    expect(styles).toMatch(
+      /\.print-item-power-heading\s*\{[^}]*background:\s*color-mix\(in srgb, var\(--card-color\) 18%, white\)/,
+    );
+  });
+  it("fits body text and subheaders together while keeping titles at the preferred size", () => {
     expect(styles).toMatch(
       /\.print-reference-card\s*\{[^}]*font-size:\s*var\(--print-card-text-size, 8pt\)/,
     );
     expect(sheetSource).toContain('"--preferred-print-card-text-size"');
     expect(sheetSource).toContain("printCardFontSizes(preferred)");
+    expect(sheetSource).toContain(
+      'element.style.setProperty("--print-card-text-size", `${preferred}pt`)',
+    );
+    expect(sheetSource).toContain(
+      'element.style.setProperty("--print-card-body-size", `${size}pt`)',
+    );
+    expect(sheetSource).not.toContain(
+      'element.style.setProperty("--print-card-text-size", `${size}pt`)',
+    );
+    expect(styles).toMatch(
+      /\.print-card-body\s*\{[^}]*font-size:\s*var\(--print-card-body-size, 8pt\)/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-combat-band\s*\{[^}]*font-size:\s*var\(--print-card-body-size, 8pt\)/,
+    );
+    expect(styles).toMatch(
+      /\.print-item-power-heading\s*\{[^}]*font-size:\s*var\(--print-card-body-size, 8pt\)/,
+    );
     expect(styles).not.toMatch(
       /\.print-reference-card\.is-(?:compact|condensed)\s*\{[^}]*font-size:/,
     );
+    expect(sheetSource).toContain(
+      "element.dataset.fitOverflow = String(!fits)",
+    );
+    expect(styles).toContain('content: "Text exceeds card at minimum size"');
+    expect(styles).toMatch(
+      /\.print-item-stats\s*\{[^}]*font-size:\s*var\(--print-card-body-size, 8pt\)/,
+    );
   });
-  it("styles item actions as body headings rather than floating header bands", () => {
+  it("encloses item-power headings and rules in one usage-colored box", () => {
     const heading = styles.match(
       /\.print-item-power-heading\s*\{([^}]*)\}/,
     )?.[1];
     expect(heading).toContain("font-weight: 700");
     expect(heading).toContain("background: color-mix");
-    expect(heading).toContain("border-radius: 0.025in");
-    expect(heading).not.toMatch(
-      /border(?:-top|-bottom|-left|-right)?:|margin-left:|margin-right:/,
+    expect(heading).toContain("border-radius: 0.025in 0.025in 0 0");
+    expect(heading).toContain("display: grid");
+    expect(heading).toContain("align-items: start");
+    expect(styles).toMatch(
+      /\.print-item-power-action\s*\{[^}]*align-items:\s*flex-start;/,
     );
+    expect(styles).toMatch(
+      /\.print-item-power-usage\s*\{[^}]*white-space:\s*nowrap;/,
+    );
+    expect(styles).toMatch(
+      /\.print-item-power-keywords\s*\{[^}]*font-weight:\s*400;/,
+    );
+    expect(sheetSource).not.toContain("{power.usage} • {power.actionType}");
+    expect(sheetSource).toContain('className="print-item-power-keywords"');
+    expect(sheetSource).toContain('className="print-item-power-content"');
+    expect(styles).toMatch(
+      /\.print-item-power-heading\.has-action-icon\s*\{[^}]*grid-template-columns:\s*0\.1in minmax\(0, 1fr\)/,
+    );
+    for (const [usage, color] of [
+      ["at-will", "#aaddaa"],
+      ["encounter", "#ddbbbb"],
+      ["daily", "#d3d3d3"],
+    ]) {
+      expect(styles).toContain(
+        `.print-item-power-heading.usage-${usage} {\n  background: ${color};`,
+      );
+    }
+    expect(heading).toContain(
+      "border-bottom: 1px solid var(--item-power-color)",
+    );
+    expect(heading).toContain("margin-bottom: 0;");
+    expect(styles).toMatch(
+      /\.print-item-power\s*\{[^}]*border:\s*1px solid var\(--item-power-color\)/,
+    );
+    expect(styles).toMatch(
+      /\.print-item-power > \.print-item-rule-text\s*\{[^}]*padding-block:\s*0\.025in;/,
+    );
+    expect(heading).not.toMatch(/margin-left:|margin-right:/);
     expect(styles).toMatch(
       /\.print-item-body section \+ \.print-item-power,\s*\.print-item-body \.print-item-power \+ \.print-item-rule\s*\{[^}]*margin-top:\s*calc\(var\(--print-card-section-gap\) \* 2\)/,
     );
   });
   it("preserves an empty action band without a divider or an orphan attack-type icon", () => {
     expect(sheetSource).toContain(
-      '!displayActionType && !attackType ? " is-empty" : ""',
+      '!displayActionType && !attackType && sustainActions.length === 0 ? " is-empty" : ""',
     );
     expect(sheetSource).toContain(
       '{attackType ? <Icon name="sword" /> : null}',
@@ -161,7 +375,7 @@ describe("print layout contract", () => {
     expect(sheetSource).not.toContain("print-card-used");
     expect(styles).not.toContain(".print-card-used");
     expect(styles).toMatch(
-      /\.print-card-action-band \.action-type-icon > span\s*\{[\s\S]*?transform:\s*translateY\(0\.01in\)/,
+      /\.action-type-icon > span\s*\{[^}]*transform:\s*translateY\(0\.14em\)/,
     );
     expect(styles).toMatch(
       /\.print-reference-card\s*\{[\s\S]*?--print-card-section-gap:\s*0\.025in/,

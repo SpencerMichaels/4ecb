@@ -65,14 +65,17 @@ describe("shared prose renderer", () => {
     expect(markup).not.toContain("<script>");
   });
 
-  it("turns known legacy layout tags into readable plain-text blocks", () => {
+  it("preserves HTML table rows and headers as semantic tables", () => {
     expect(
       proseBlocks(
         "<table><tr><th>Level</th><th>Hunter's Quarry</th></tr><tr><td>1</td><td>1d6</td></tr></table>",
       ),
     ).toEqual([
-      { kind: "paragraph", text: "Level · Hunter's Quarry" },
-      { kind: "paragraph", text: "1 · 1d6" },
+      {
+        kind: "table",
+        headers: ["Level", "Hunter's Quarry"],
+        rows: [["1", "1d6"]],
+      },
     ]);
 
     const markup = renderToStaticMarkup(
@@ -83,5 +86,39 @@ describe("shared prose renderer", () => {
     expect(markup).toContain("Use one option.");
     expect(markup).toContain("Then continue &amp; resolve it.");
     expect(markup).not.toContain("&lt;br&gt;");
+  });
+  it("renders legacy tab-delimited tables without fusing headings, cells or surrounding prose", () => {
+    const value =
+      "An effect before the table.\n<table>Level\tExtra damage\n1–8\t+1d8\n9–16\t+2d8\n17–24\t+3d8</table>\nAn effect after the table.";
+    expect(proseBlocks(value)).toEqual([
+      { kind: "paragraph", text: "An effect before the table." },
+      {
+        kind: "table",
+        headers: ["Level", "Extra damage"],
+        rows: [
+          ["1–8", "+1d8"],
+          ["9–16", "+2d8"],
+          ["17–24", "+3d8"],
+        ],
+      },
+      { kind: "paragraph", text: "An effect after the table." },
+    ]);
+    const markup = renderToStaticMarkup(createElement(Prose, { value }));
+    expect(markup).toContain('<table class="prose-table"><thead>');
+    expect(markup).toContain('<th scope="col">Level</th>');
+    expect(markup).toContain("<td>1–8</td><td>+1d8</td>");
+    expect(markup).not.toContain("<h6>");
+  });
+  it("escapes cell markup and never copies source HTML attributes", () => {
+    const markup = renderToStaticMarkup(
+      createElement(Prose, {
+        value:
+          '<table onclick="bad()"><tr><th>Name</th><th>Effect</th></tr><tr><td>A &amp; B</td><td><img src=x onerror="bad()"></td></tr></table>',
+      }),
+    );
+    expect(markup).toContain("A &amp; B");
+    expect(markup).toContain("&lt;img");
+    expect(markup).not.toContain("<img");
+    expect(markup).not.toContain('onclick="bad()"');
   });
 });

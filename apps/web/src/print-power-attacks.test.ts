@@ -4,6 +4,9 @@ import {
   fallbackPrintAttacks,
   groupedPrintRules,
   printAttackHeader,
+  printActionLabel,
+  printSustainActions,
+  withAuthoredPrintTargets,
 } from "./print-power-attacks";
 
 const card: SheetCard = {
@@ -20,6 +23,60 @@ const card: SheetCard = {
 };
 
 describe("printed authored attack phases", () => {
+  it("projects distinct sustain action labels without changing the body clauses", () => {
+    const fields = [
+      { label: " Sustain Minor ", value: "The effect persists." },
+      { label: "Sustain minor", value: "Another clause." },
+      { label: "Sustain Move", value: "Move it." },
+      { label: "Sustain Standard", value: "Continue." },
+      { label: "Effect", value: "You can sustain this as a minor action." },
+    ];
+    expect(printSustainActions(fields)).toEqual(["Minor", "Move", "Standard"]);
+    expect(fields[0]?.value).toBe("The effect persists.");
+    expect(printSustainActions([])).toEqual([]);
+  });
+  it.each([
+    ["No Action", "No Action"],
+    [" no action ", "No Action"],
+    ["No Action (special)", "No Action (special)"],
+    ["Standard Action", "Standard"],
+    ["Free Action", "Free"],
+    ["Immediate Reaction", "Immediate Reaction"],
+    [undefined, undefined],
+    ["", undefined],
+  ])("formats the action label %s as %s", (source, expected) => {
+    expect(printActionLabel(source)).toBe(expected);
+  });
+  it("never carries a variant's primary target into an unspecified secondary header", () => {
+    const fields = card.fields.map((field, index) =>
+      index === 2
+        ? {
+            ...field,
+            value: "1[W] damage. Make a secondary attack against the target.",
+          }
+        : field,
+    );
+    const phases = fallbackPrintAttacks({ ...card, fields }, undefined).map(
+      (attack) => ({ ...attack, target: "One creature" }),
+    );
+    const headers = withAuthoredPrintTargets({ ...card, fields }, phases);
+    expect(headers[0]?.target).toBe("One creature");
+    expect(headers[1]?.target).toBeUndefined();
+    expect(groupedPrintRules(fields, headers).attacks.get(1)).toContainEqual(
+      fields[2],
+    );
+    const explicit = {
+      ...card,
+      fields: [
+        ...fields.slice(0, 4),
+        { label: "Secondary Target", value: "Another creature" },
+        ...fields.slice(4),
+      ],
+    };
+    expect(withAuthoredPrintTargets(explicit, phases)[1]?.target).toBe(
+      "Another creature",
+    );
+  });
   it.each([
     ["Strength", 0, "+12 vs AC", "+12 · STR vs AC", "STR vs AC"],
     ["Dexterity", 2, "+14 vs Reflex", "+14 · DEX+2 vs Ref", "DEX+2 vs Ref"],

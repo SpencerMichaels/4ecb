@@ -1645,9 +1645,12 @@ cards. Repeated authored clauses retain ordinal order. Supported flavor and
 printable prerequisites are first-class card data. Rituals, alchemical formulas,
 and martial practices are learned references rather than physical equipment;
 Ritual Scroll remains an item. Missing/custom inventory stays recoverable and
-visible. Legacy presentation-only table/paragraph tags may be normalized into
-safe plain-text structure, but arbitrary imported markup is never interpreted as
-HTML.
+visible. Legacy paragraphs normalize into safe plain-text structure. Legacy
+tables preserve rows/cells as semantic React tables, including tab-delimited
+rows wrapped in a table tag and HTML tr/th/td forms; surrounding prose remains
+in order. Corpus attributes are never copied and cell contents remain escaped
+text. Arbitrary imported markup is never injected as HTML. Malformed or
+unrecognized structures retain the conservative plain-text fallback.
 
 This separation allows View hierarchy and print pagination to evolve without
 forking rules calculations or character data. A legacy cache without matching
@@ -1669,9 +1672,10 @@ trimmed inside the boundary. Web print therefore chunks selected cards into
 explicit nine-card pages and uses a fixed 233:321 aspect at paper-specific
 physical dimensions. Content must never increase a card's height.
 
-Power cards project the title, keywords, action/range icon band, compact
+Power cards project the title, optional regular-weight keywords band with a key
+icon as the first subheader row, action/range icon band, compact
 attack/defense/target band when applicable, authored rules clauses in order,
-calculated compatible-weapon lines, additional-effects writing area, and the
+calculated compatible-weapon lines, a populated-only Additional effects section, and the
 usage-first type bar defined by D071. Attackless utility powers do not receive
 invented attack values. Item cards use their own legacy-derived stat grid,
 properties/power region, and compact footer. Flavor text, source citations,
@@ -1679,11 +1683,20 @@ verbose full text already represented by structured fields, internal
 identifiers, and other presentation-only metadata do not appear on physical
 cards. The interactive browser cards remain free to expose richer context and
 weapon switching.
+Keywords retain their softer background (12% card color versus 20% for
+action/attack). Internal subheader dividers use 35% card color mixed with white;
+the bottom divider retains the full card color. Long titles wrap at their
+preferred title size, consuming space within the fixed card rather than
+clipping text or moving the utility frequency badge, which remains anchored at
+the top right. Body fitting and the existing readable floor still apply.
 Composed-item cards merge the ordered public fields of every inventory element,
 so a magic weapon or armor card keeps the base item's physical statistics as
 well as its enchantment's enhancement, level, critical, properties, and powers.
 
-Within a power card, action labels omit the redundant word `Action`. Both compact
+Within a power card, action labels omit the redundant word `Action`. Authored
+Sustain action fields add a second line in that cell with a `step-forward` icon
+and the action type, without removing the full Sustain clause from the body.
+Both compact
 combat bands use an icon-left layout: action plus range on the first row, then
 the per-attack formula, calculated total/defense, and wrapping target defined by
 D070. Target text must be complete even when the row becomes taller; the fixed
@@ -1755,7 +1768,10 @@ The preference is browser-local and persistent; intrinsic power bonuses remain
 visible because they are part of the power, not the equipped weapon. The cell
 abbreviates only the long defense names `Fortitude` and `Reflex` to `Fort` and
 `Ref`; underlying calculations and authored rules text retain the full names.
-The combined attack cell sizes to its content and the target receives the
+The action/range and primary attack/target rows share a first-column split sized
+to the wider intrinsic action or attack cell at each fitted font size. Reset the
+shared width before refitting to avoid retaining a stale larger split.
+The combined attack cell uses that shared width and the target receives the
 remaining width, wrapping vertically when needed. The action/range and first
 attack bands remain visually contiguous;
 Requirement, trigger, and other unconditional setup follow the first attack
@@ -1784,6 +1800,12 @@ white text. A Utility card keeps its usage color everywhere except the bottom
 type bar, which is always Utility blue and reads forms such as `AT-WILL UTILITY
 POWER`; the numeric power level, when present, is right-aligned in the same bar.
 The three-checkbox frequency matrix is omitted.
+Utility titles additionally show a fixed-size rounded W/E/D badge at the right,
+using green/red/gray for At-Will/Encounter/Daily with bold white letters and a
+white outline. It is independent of the blue Utility preference; long titles
+yield space to the badge. Monochrome uses a white badge with dark text and border.
+Full usage wording remains in the footer, and title badges do not shrink with
+body fitting. This applies to printed utility power cards, not non-utility powers.
 The separate class/level/source footer is removed because class origin is not
 needed during play, keywords already carry Arcane, Divine, Martial, and similar
 descriptors, and physical cards do not need source citations.
@@ -1839,17 +1861,52 @@ the subheader. Prices remain in the footer, including silver/copper denomination
 Activated rules and freeform properties live in the body. Unknown fields are
 preserved there until their semantics are established, not classified by guessing
 from a short value. Weapon keyword `Properties` occupy a wrapping
-subheader band styled like power keywords. General paragraph-style `Property`
+regular stat-subheader row below the numeric stats, with the same background,
+labels, values and spacing. Its final bottom divider is omitted; stat-only
+subheaders keep their bottom boundary. General paragraph-style `Property`
 entries remain in the body; these are distinct authored field types, not aliases.
+Compact weapon Properties may omit numeric qualifiers present in the weapon's
+authored Full Text Properties block (for example Gouge's Brutal 1). A shared
+content helper restores an unambiguous exact property-heading value for item
+details, sheet cards and power weapon metadata. Explicit compact values win;
+ambiguous or missing evidence stays unchanged. Never infer from descriptive
+prose outside the Properties block or mutate the stored corpus.
 Recognized usage/action prefixes
 become per-power headings; unfamiliar prose is never rewritten speculatively.
-General Property paragraphs follow activated powers, while other body fields
-remain before them. Preserve authored order
-within each group. Item-action headings are body subsections, not header bands:
+Item power metadata may be authored in either the field label or the value.
+Recognize both, including No Action and consumables. Following visual feedback,
+item-power headings now place action and canonical usage together with a single
+bullet separator, rather than pushing usage to the right edge. Color the whole
+inset header with established light power-subheading colors (`#aaddaa`,
+`#ddbbbb`, `#d3d3d3`) for At-Will/Encounter/Daily with dark text, matching
+the native LinerAtWill/LinerEncounter/LinerDaily palette rather than diluted mixes or
+dark title headers; Consumable and unknown headers retain the orange tint with dark
+text. Monochrome uses the neutral light header with dark text.
+Usage-colored 1px outlines surround each complete power subsection, including
+its heading and body clauses (green/red/gray for
+At-Will/Encounter/Daily, orange for Consumable); monochrome outlines are black.
+Regular-weight, comma-separated keywords appear below, aligned with action text rather than
+the icon; disabling icons removes the reserved icon column.
+The icon aligns to the action's first text line, not the
+whole wrapped heading. Consumable prefixes may end with a colon, period/newline
+or newline (Coin of Good Luck); frequency and action capitalization normalize
+without changing original content. Explicit Trigger,
+Effect, Hit and other known authored clause labels render in bold, with Augment
+clauses separated but still associated with their activated power. Flowform's
+Augment is an authored power modification, not a passive item Property.
+Preserve unfamiliar activation forms and all remaining prose; do not guess rules.
+General item rules (Special, Property, Critical riders and unknown notes) follow
+activated powers. Only explicitly labeled Prerequisite/Requirement fields precede
+them. Clauses authored inside a power remain inside that power, including its
+Special and Augment clauses. Cards without powers retain their authored order.
+Preserve authored order
+within each group. Item-action headings and their rule bodies form inset bordered
+subsections, with a colored top strip and padded white body; general item rules
+remain outside those boxes. Their headings are not the item stat header:
 body-aligned bold usage/action text, an optional leading action symbol, and a
 modest adaptive gap. A tinted rounded strip inset within the body makes the
 granted power easy to spot without resembling the top subheader's cell grid;
-there are no dividers or edge-to-edge borders. Action symbols are
+the outer border groups the heading with its rules. Action symbols are
 controlled by the existing printed-card icon preference; category icons
 in item titles remain independent of that preference.
 Combine category and level in the bottom bar and label numeric weight/price with
@@ -1857,6 +1914,21 @@ units. Inventory quantity is not an inherent item property and is omitted from
 physical cards. Honor both legacy Armor Bonus and AC Bonus. Omit identified flavor
 and retain unstructured custom instructions when structured rules are unavailable.
 Keep fixed card dimensions and adaptive fitting rather than growing cards.
+Printed weapon proficiency is signed. Recognized heroic/paragon/epic tier
+parentheses move from item titles to footer metadata without changing stored
+names. Item-action prose is slightly inset beneath its colored heading strip.
+Subsequent power attacks use the same inset strip language, preserving their
+attack/target data but omitting the main header's cell borders; the first attack
+retains its existing top-band treatment.
+Inset subsection headers match the main subheader background, rather than using
+a darker tint. Secondary-attack prose shares the item-power text inset. Hide
+separators at the start of wrapped target/stat rows, using measured row positions
+during fitting. Remove their occupied space too, aligning wrapped target icons
+with the attack icon above. Restore separators before measuring the natural
+layout; keep a wrapped secondary target on its own row to avoid wrap oscillation.
+Secondary target headers use only authored phase metadata, even if a calculated
+equipment variant supplies primary-target wording. Preserve same-target
+constraints in the authored Hit prose rather than implying a new target choice.
 
 Evidence: recovered `PowerCardItem.UpdatePowerCardItem` field composition,
 product-owner item-card audit approval, and synthetic presentation fixtures.
@@ -1873,26 +1945,100 @@ metadata. Compatibility diagnostics likewise belong to separate interactive
 warnings, not rules fields or physical cards. Preserve original authored labels
 and text, including legitimate repeated fields. Approved calculated attack/damage
 headers and tables remain presentation, not extra rules sections. The legacy
-Additional effects writing area is confirmed by recovered `PowerCardPower.cs`.
+Additional effects is confirmed by recovered `PowerCardPower.cs`; product-owner
+feedback now omits the entire section and writing area when there are no effects.
 
-### D075 — Preferred printed card size with gradual whole-card fitting
+### D075 — Preferred printed card size with readable adaptive fitting
 
 Status: accepted. Date: 2026-10-14.
 
 Display settings expose a browser-local preferred printed card text size from
-6–10 pt in half-point steps, defaulting to 8 pt instead of the previous 6.7 pt.
+6.5–10 pt in half-point steps, defaulting to 8 pt instead of the previous 6.7 pt.
 The preference applies to power and item cards, including body text, weapon
 tables, keywords, subheaders, and proportionally sized titles/labels/footers.
 Compact labels keep a 4.7 pt floor; titles keep an 8 pt floor and usage bars a
 5.5 pt floor. Physical card geometry and pagination do not change.
 
-For each visible card, try the preferred size first, then half-point decrements
-down to the existing 4.8 pt minimum. Reduce section spacing at small sizes.
+Title sizes remain consistent between sparse and dense cards. Keep titles and
+footers at their preferred sizes, but fit body text, weapon tables, keywords,
+subheaders, additional attack headings and embedded item-action headings together.
+Keeping subheaders fixed squeezed multiattack body text excessively; the accepted
+follow-up permits subheading shrinkage to share the space pressure. Power and
+item cards use the same size and fitting policy, starting at the preferred size.
+
+For each visible card's body, try the preferred size first, then half-point
+decrements down to a 6.5 pt minimum, replacing the unreadable 4.8 pt floor.
+Saved 6 pt preferences are raised to 6.5 pt. Reduce section spacing at 7 pt and
+again at the minimum rather than shrinking below the floor.
 Check body, card, and header-cell overflow; do not shrink other cards because
 one card is dense. Refit on resize, print, and rerender so increasing a
 preference restores the largest fitting size rather than retaining an old fit.
+Screen print preview flags any card that still overflows at the minimum. Do not
+silently lower the floor or drop authored rules to force a pass. Exceptionally
+dense cards require a further overflow/continuation layout decision; physical
+print overflow remains a visible acceptance blocker rather than a resolved case.
 Invalid saved preferences fall back to 8 pt. The preference is presentation-only
 and does not modify character data or rules calculations.
+
+### D076 — Additional effects retain situational rules and calculation provenance
+
+Status: accepted. Date: 2026-10-14.
+
+Printed power cards populate the recovered Additional effects area from the
+selected equipped/main-hand/default power variant. Do not pool reminders from
+all owned equipment alternatives. The rules engine supplies conditional attack
+and damage contributions separately from ordinary totals, preserving authored
+condition text, evaluated amounts, bonus types, providers, and contribution IDs.
+Native global attack/damage stats, matching contextual keyword stats, comma
+keyword conjunctions, and exact base/enchantment name limits are supported.
+Native opportunity-attack and charge-only condition spellings remain restricted
+to basic attacks, including powers authored with `_BasicAttack`.
+Keyword `:info` values remain authored text. Existing recovered striker damage
+expressions also appear here with their provider and cadence.
+Printed reminders lead with their known provider as a bold `Name:` label.
+Move an exact matching trailing provider suffix out of the displayed prose
+without changing the stored reminder/provenance. Do not infer providers from
+arbitrary parentheses or rewrite legacy-cache text whose provider is unknown.
+
+The shared sheet model tags these effects as authoritative evaluation output.
+Fallback sheets project the selected serialized weapon's `Conditions` verbatim
+and tag it as legacy-cache; cached text never enters authoritative calculations.
+Saved main-hand and equipped inventory evidence select the legacy variant when
+available, with the historical first-cache fallback retained for incomplete
+imports. Original clauses remain in the card body. Populated effects share the
+body's adaptive fitting and 6.5 pt floor; an empty card omits the section and
+reserved writing area, yielding that space back to its rules body.
+Fixed card dimensions and visible overflow reporting remain unchanged.
+
+Evidence: `PowerCardPower.AddPowerDetails` uses `DefaultWeapon` and
+`PowerStats.conditions`; native `CalcConditionals`, `InfoKeyword`, `IsKeyword`,
+`IsLimiterName`, `BasicAttackOnly`, `CalcStriker`, and `MergeConditionals` establish
+the separate reminder channel. Public synthetic fixtures cover provenance,
+equipment selection, keyword conjunction/limits, alias deduplication and legacy
+preservation. The private Hu sample confirms Censure of Unity on damage-roll
+cards. This is ordinary power-card coverage: the distinct native Action Point
+card and dwarf Second Wind specialization remain separate parity work, as do
+special generated keyword families outside the current power-loadout model.
+
+### D077 — Personalized power clauses follow resolved class-feature choice families
+
+Status: accepted (2026-10-14).
+
+Personalized evaluated View/print cards omit named clauses that uniquely match
+an inactive sibling of a confirmed single-choice Class Feature selection. Derive
+the family from the parent feature's literal `select` category and the complete
+content definitions, not a hardcoded list or a potentially trimmed candidate
+list. Require a legal, source-entitled selected option, one resolved choice slot,
+and exactly one active family member. Normalize whitespace/case only when
+matching labels; retain authored field ordering and text.
+
+Unresolved/custom choices, non-converged evaluation, multi-pick or composite
+selectors, duplicate names and standard rules labels remain visible. Generic
+Build details and legacy-cache sheets remain unfiltered; stored content and
+selections are unchanged. This is an approved display enhancement rather than
+legacy parity: recovered `BuildSpecifics` enumerates the fields, and
+`RulesElementSpecificIsHidden` returns false. Local metadata confirms the parent
+selection/category relationship for Avenger's Censure and Divine Covenant.
 
 ## Deferred decisions and decision points
 

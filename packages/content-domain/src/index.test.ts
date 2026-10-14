@@ -5,9 +5,55 @@ import {
   getElementText,
   isUserFacingSpecific,
   normalizeDisplayText,
+  weaponPropertyText,
+  type ContentEntity,
 } from "./index";
 
 describe("content-domain helpers", () => {
+  it("recovers omitted numeric weapon properties only from unambiguous authored property headings", () => {
+    const weapon: ContentEntity = {
+      id: "SYNTHETIC_WEAPON",
+      name: "Synthetic weapon",
+      type: "Weapon",
+      source: "test",
+      sources: ["test"],
+      attributes: [],
+      categories: [],
+      rules: [],
+      description: "",
+      extensions: [],
+      provenance: { sourceKey: "test", sourceOrdinal: 0 },
+      specifics: [
+        {
+          name: "Full Text",
+          value:
+            "Synthetic weapon\nProperties:\nBrutal 2 (Reroll low dice.)\nGroup:\nTest group",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+    expect(weaponPropertyText(weapon, "High Crit, Brutal")).toBe(
+      "High Crit, Brutal 2",
+    );
+    expect(weaponPropertyText(weapon, "Brutal 1")).toBe("Brutal 1");
+    expect(
+      weaponPropertyText({ ...weapon, type: "Magic Item" }, "Brutal"),
+    ).toBe("Brutal");
+    for (const value of [
+      "Brutal 2 is mentioned only in prose.",
+      "Properties:\nBrutal 1\nBrutal 2\nGroup:\nTest",
+      "Properties:\nOther\nGroup:\nBrutal 3",
+    ]) {
+      expect(
+        weaponPropertyText(
+          { ...weapon, specifics: [{ ...weapon.specifics[0]!, value }] },
+          "Brutal",
+        ),
+      ).toBe("Brutal");
+    }
+    expect(weapon.specifics[0]?.value).toContain("Brutal 2");
+  });
   it("looks attributes up case-insensitively", () => {
     expect(
       getAttribute([{ name: "Internal-ID", value: "ID_TEST" }], "internal-id"),

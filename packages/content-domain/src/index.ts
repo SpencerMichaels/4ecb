@@ -1,5 +1,38 @@
 export type DiagnosticSeverity = "error" | "warning" | "info";
 
+/** Compact weapon Properties can omit values retained by authored Full Text
+ * headings. Never infer values from descriptive prose or replace explicit ones. */
+export function weaponPropertyText(
+  entity: ContentEntity | undefined,
+  value: string,
+): string {
+  if (entity?.type.trim().toLocaleLowerCase() !== "weapon") return value;
+  const fullText = entity.specifics.find(
+    (field) => field.name.trim().toLocaleLowerCase() === "full text",
+  )?.value;
+  const section = fullText?.match(
+    /(?:^|\n)\s*Properties:\s*([\s\S]*?)(?=\n\s*Group:|$)/i,
+  )?.[1];
+  if (!section) return value;
+  return value
+    .split(",")
+    .map((part) => {
+      const property = part.trim();
+      if (!property || /\d/.test(property)) return part;
+      const escaped = property.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const values = [
+        ...section.matchAll(
+          new RegExp(`(?:^|\\n)\\s*(?:[•*]\\s*)?${escaped}\\s+(\\d+)\\b`, "gi"),
+        ),
+      ].map((match) => match[1]);
+      const unique = [...new Set(values)];
+      return unique.length === 1
+        ? part.replace(property, `${property} ${unique[0]}`)
+        : part;
+    })
+    .join(",");
+}
+
 export interface ContentDiagnostic {
   readonly severity: DiagnosticSeverity;
   readonly code: string;

@@ -1,5 +1,10 @@
 export const DEFAULT_PRINT_CARD_TEXT_SIZE = 8;
-export const MIN_PRINT_CARD_TEXT_SIZE = 4.8;
+export const MIN_PRINT_CARD_TEXT_SIZE = 6.5;
+
+/** Only the first field on a subsequent flex row loses its separator. */
+export function wrappedRowStarts(tops: readonly number[]): readonly boolean[] {
+  return tops.map((top, index) => index > 0 && top > tops[index - 1]! + 1);
+}
 
 export function preferredPrintCardTextSize(
   value: string | number | null | undefined,
@@ -8,7 +13,7 @@ export function preferredPrintCardTextSize(
     return DEFAULT_PRINT_CARD_TEXT_SIZE;
   const size = Number(value);
   return Number.isFinite(size) && size >= 6 && size <= 10
-    ? Math.round(size * 2) / 2
+    ? Math.max(MIN_PRINT_CARD_TEXT_SIZE, Math.round(size * 2) / 2)
     : DEFAULT_PRINT_CARD_TEXT_SIZE;
 }
 

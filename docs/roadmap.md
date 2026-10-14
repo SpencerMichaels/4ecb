@@ -511,6 +511,14 @@ M5.5 interface blockers.
 
 ## M5.6 — Refined browser View sheet
 
+**Printed-card product review accepted (2026-10-14):** Power and item card
+presentation is accepted after the fixed-size layout, equipment comparisons,
+item-power grouping, action/sustain indicators, readability settings, additional
+effects and class-feature-specific clause refinements. This is a card checkpoint,
+not milestone closure. Next: refine the first two reference pages of the printable
+sheet. The automated dense-card overflow boundary remains explicit; see the
+current verification results in `implementation-status.md`.
+
 ### Goal
 
 Bring the authoritative browser **View** sheet to a refined, product-owner-

@@ -11,13 +11,22 @@ export function printItemPresentation(card: SheetCard) {
   const field = (...names: string[]) => find(card.fields, names);
   const lastField = (...names: string[]) =>
     find([...card.fields].reverse(), names);
+  const titleTier = card.name.match(/\s*\((heroic|paragon|epic)\s+tier\)/i);
+  const tier = lastField("Tier") ?? titleTier?.[1];
+  const name = titleTier
+    ? card.name
+        .replace(titleTier[0], "")
+        .replace(/\s{2,}/g, " ")
+        .trim()
+    : card.name;
+  const proficiency = field("Proficiency Bonus", "Proficient");
   const critical = lastField("Critical");
   const criticalFormula = critical
     ?.trim()
     .match(/^(\+?\d+d\d+)(?:\s+damage)?\.?$/i)?.[1];
   const allStats = [
     ["Damage", field("Damage")],
-    ["Proficiency", field("Proficiency Bonus", "Proficient")],
+    ["Proficiency", proficiency?.trim().replace(/^(\d+)$/, "+$1")],
     ["Group", field("Group")],
     ["Range", field("Range")],
     ["AC bonus", field("Armor Bonus", "AC Bonus")],
@@ -139,11 +148,19 @@ export function printItemPresentation(card: SheetCard) {
     isWeapon && category ? sentenceCase(category.toLowerCase()) : undefined,
     !isWeapon && field("Group") ? `Group ${field("Group")}` : undefined,
     field("Key Ability") ? `Key ability ${field("Key Ability")}` : undefined,
+    tier
+      ? sentenceCase(
+          /tier$/i.test(tier.trim())
+            ? tier.toLowerCase()
+            : `${tier.toLowerCase()} tier`,
+        )
+      : undefined,
   ]
     .filter(Boolean)
     .join(" · ");
   const excluded = new Set([
     "level",
+    "tier",
     "gold",
     "silver",
     "copper",
@@ -196,15 +213,19 @@ export function printItemPresentation(card: SheetCard) {
       !excluded.has(entry.label.trim().toLowerCase()) &&
       !weaponProperties.includes(entry),
   );
-  const isProperty = (entry: SheetValue) =>
-    /^(?:property|properties)$/i.test(entry.label.trim());
+  const precedesPowers = (entry: SheetValue) =>
+    /^(?:prerequisites?|requirements?)$/i.test(entry.label.trim());
   const rules = bodyFields.some((entry) => printItemPower(entry) !== undefined)
     ? [
         ...bodyFields.filter(
-          (entry) => printItemPower(entry) === undefined && !isProperty(entry),
+          (entry) =>
+            printItemPower(entry) === undefined && precedesPowers(entry),
         ),
         ...bodyFields.filter((entry) => printItemPower(entry) !== undefined),
-        ...bodyFields.filter(isProperty),
+        ...bodyFields.filter(
+          (entry) =>
+            printItemPower(entry) === undefined && !precedesPowers(entry),
+        ),
       ]
     : bodyFields;
   const weight = field("Weight");
@@ -233,6 +254,8 @@ export function printItemPresentation(card: SheetCard) {
       : weight
     : undefined;
   return {
+    name,
+    tier,
     stats,
     statRows,
     metadata,
@@ -267,41 +290,101 @@ export function printItemPresentation(card: SheetCard) {
 }
 
 /** Only remove a recognized usage/action prefix; unknown authored prose stays intact. */
-export function printItemPower(field: SheetValue) {
+export function printItemPower(field: SheetValue):
+  | {
+      readonly title: string;
+      readonly text: string;
+      readonly usage?: string;
+      readonly keywords?: string;
+      readonly actionType?: string;
+    }
+  | undefined {
   if (!/^(?:power|utility power|attack power)\b/i.test(field.label.trim()))
     return undefined;
-  const match = field.value.match(
-    /^\s*Power\s*\(([^)]+)\)\s*:\s*(Standard|Move|Minor|Free|Immediate Interrupt|Immediate Reaction|Opportunity)(?:\s+Action)?\s*\.\s*/i,
+  const actionPattern =
+    "No Action|Immediate Interrupt|Immediate Reaction|Opportunity|Standard|Move|Minor|Free";
+  const actionStart = new RegExp(
+    `^\\s*(${actionPattern})(?:\\s+Action)?\\s*(?:\\.\\s*|$)`,
+    "i",
   );
-  if (!match) {
-    const consumable = field.value.match(
-      /^\s*Consumable\s*\((Standard|Move|Minor|Free|Immediate Interrupt|Immediate Reaction|Opportunity)(?:\s+Action)?\)\s*:\s*/i,
-    );
-    if (consumable)
-      return {
-        title: `Consumable · ${consumable[1]}`,
-        usage: "Consumable",
-        actionType: consumable[1],
-        text: field.value.slice(consumable[0].length),
-      };
-    const action = /\(Consumable\)/i.test(field.label)
-      ? field.value.match(
-          /^\s*(Standard|Move|Minor|Free|Immediate Interrupt|Immediate Reaction|Opportunity)\s+Action\s*\.\s*/i,
-        )
-      : undefined;
-    if (action)
-      return {
-        title: `Consumable · ${action[1]}`,
-        usage: "Consumable",
-        actionType: action[1],
-        text: field.value.slice(action[0].length),
-      };
+  const labelParts = field.label
+    .trim()
+    .replace(/^(?:(?:utility|attack)\s+)?power\b/i, "");
+  const labelAction = labelParts.match(
+    new RegExp(`:\\s*(${actionPattern})(?:\\s+Action)?\\.?\\s*$`, "i"),
+  );
+  const labelMetadata = labelParts.replace(/:\s*.*$/, "");
+  const valuePrefix = field.value.match(
+    /^\s*(?:(?:Utility|Attack)\s+)?Power\s*\(([^)]+)\)\s*:\s*/i,
+  );
+  const consumable = field.value.match(
+    new RegExp(
+      `^\\s*Consumable\\s*\\((${actionPattern})(?:\\s+Action)?\\)[ \\t]*(?::\\s*|\\.?[ \\t]*\\r?\\n[ \\t]*|$)`,
+      "i",
+    ),
+  );
+  let text = field.value.slice(
+    valuePrefix?.[0].length ?? consumable?.[0].length ?? 0,
+  );
+  const action = text.match(actionStart);
+  const actionType = action?.[1] ?? consumable?.[1] ?? labelAction?.[1];
+  const metadata =
+    valuePrefix?.[1] ?? (consumable ? "Consumable" : labelMetadata);
+  const tokens = metadata
+    .replace(/[()]/g, "")
+    .split(/\s*[*•·]\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const frequency = tokens.find((part) =>
+    /^(?:at[- ]will|encounter|daily|consumable)$/i.test(part),
+  );
+  if (!frequency || !actionType)
     return { title: field.label.trim(), text: field.value };
-  }
+  const usage = /^at[- ]will$/i.test(frequency)
+    ? "At-Will"
+    : frequency[0]!.toUpperCase() + frequency.slice(1).toLowerCase();
+  const keywords = tokens.filter((part) => part !== frequency).join(", ");
+  const displayAction = actionType
+    .split(" ")
+    .map((word) => word[0]!.toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+  if (action) text = text.slice(action[0].length);
   return {
-    title: `${match[1]} · ${match[2]}`,
-    usage: match[1],
-    actionType: match[2],
-    text: field.value.slice(match[0].length),
+    title: `${usage}${keywords ? ` • ${keywords}` : ""} • ${displayAction}`,
+    usage,
+    ...(keywords ? { keywords } : {}),
+    actionType: displayAction,
+    text,
   };
+}
+
+/** Separate only explicit authored rule labels at sentence/line boundaries.
+ * In particular Augment remains a clause of its power, not a passive Property. */
+export function printItemPowerClauses(text: string): readonly SheetValue[] {
+  const tables = [...text.matchAll(/<table\b[^>]*>[\s\S]*?<\/table\s*>/gi)];
+  const labels = [
+    ...text.matchAll(
+      /(?:^|[.!?]\s+|\n\s*)(Trigger|Effect|Attack|Hit|Miss|Special|Requirements?|Prerequisites?|Target|Sustain (?:Minor|Move|Standard)|Augment \d+)\s*:\s*/gi,
+    ),
+  ].filter(
+    (match) =>
+      !tables.some(
+        (table) =>
+          match.index >= table.index &&
+          match.index < table.index + table[0].length,
+      ),
+  );
+  if (labels.length === 0) return [{ label: "", value: text }];
+  const clauses: SheetValue[] = [];
+  let start = 0;
+  let label = "";
+  for (const match of labels) {
+    const labelOffset = match.index + match[0].indexOf(match[1]!);
+    const value = text.slice(start, labelOffset).trim();
+    if (value) clauses.push({ label, value });
+    label = match[1]!;
+    start = match.index + match[0].length;
+  }
+  clauses.push({ label, value: text.slice(start).trim() });
+  return clauses;
 }

@@ -833,6 +833,36 @@ dd {
 .prose-blocks > * {
   margin: 0;
 }
+.prose-table {
+  border-collapse: collapse;
+  font-size: inherit;
+  line-height: inherit;
+  width: 100%;
+}
+.prose-blocks > .prose-table {
+  margin-block: 0.35em;
+}
+.prose-table :is(th, td) {
+  padding: 0.15em 0.35em;
+  overflow-wrap: anywhere;
+  text-align: left;
+  text-indent: 0;
+  vertical-align: top;
+}
+.prose-table thead {
+  background: color-mix(
+    in srgb,
+    var(--card-color, var(--text)) 10%,
+    transparent
+  );
+}
+.prose-table tbody tr:nth-child(odd) {
+  background: color-mix(
+    in srgb,
+    var(--card-color, var(--text)) 5%,
+    transparent
+  );
+}
 
 .prose-blocks > .prose-paragraph {
   text-indent: 1.5em;
@@ -1829,7 +1859,7 @@ textarea {
   display: grid;
   font-family: Arial, sans-serif;
   font-size: var(--print-card-text-size, 8pt);
-  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   height: 3.405in;
   line-height: 1.08;
   min-width: 0;
@@ -1839,8 +1869,32 @@ textarea {
 .print-reference-card.is-compact {
   --print-card-section-gap: 0.0125in;
 }
+.print-power-card {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+.print-power-card.has-keywords {
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+}
 .print-reference-card.is-condensed {
   --print-card-section-gap: 0;
+}
+@media screen {
+  .print-reference-card[data-fit-overflow="true"] {
+    outline: 2px dashed #b42318;
+    position: relative;
+  }
+  .print-reference-card[data-fit-overflow="true"]::after {
+    background: #fff1ed;
+    bottom: 0;
+    color: #9a1c12;
+    content: "Text exceeds card at minimum size";
+    font-size: 7pt;
+    left: 0;
+    padding: 0.02in;
+    position: absolute;
+    right: 0;
+    text-align: center;
+  }
 }
 .print-reference-card > header {
   align-items: center;
@@ -1858,8 +1912,8 @@ textarea {
   line-height: 1.2;
   margin: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .print-power-card > header {
   background: var(--card-color);
@@ -1871,55 +1925,94 @@ textarea {
   gap: 0.035in;
   font-weight: 700;
   min-width: 0;
+  flex: 1;
+}
+.print-utility-usage-badge {
+  align-items: center;
+  align-self: flex-start;
+  background: #006b2e;
+  border: 1px solid #fff;
+  border-radius: 0.035in;
+  box-sizing: border-box;
+  color: #fff;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 7.5pt;
+  font-weight: 800;
+  height: 0.18in;
+  justify-content: center;
+  line-height: 1;
+  width: 0.18in;
+}
+.print-utility-usage-badge.usage-encounter {
+  background: #8b0000;
+}
+.print-utility-usage-badge.usage-daily {
+  background: #777;
+}
+.sheet-monochrome .print-utility-usage-badge {
+  background: #fff;
+  border-color: #555;
+  color: #111;
 }
 .print-power-card > header h3 > span:last-child {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .print-power-card > header .action-type-icon {
+  align-self: flex-start;
   flex-shrink: 0;
   font-size: inherit;
   height: 0.15in;
+  margin-top: max(0px, calc(0.6em - 0.075in));
   min-width: 0;
   width: 0.15in;
-}
-.print-power-card > header .action-type-icon > span {
-  transform: translateY(0.01in);
 }
 .print-power-card > header .action-type-icon .icon {
   height: 0.15in;
   width: 0.15in;
 }
-.print-card-keywords {
-  border-bottom: 1px solid var(--card-color);
-  border-top: 1px solid var(--card-color);
-  display: grid;
-  gap: 0.03in;
-  grid-template-columns: auto minmax(0, 1fr);
-  min-height: 0.17in;
-  padding: 0.025in 0.03in;
-}
-.print-card-keywords > span,
 .print-item-body section > span {
   font-size: max(4.7pt, 0.7em);
   text-transform: uppercase;
 }
+.print-card-keyword-band,
 .print-card-action-band,
 .print-card-combat-band {
   background: color-mix(in srgb, var(--card-color) 20%, white);
-  font-size: inherit;
+  font-size: var(--print-card-body-size, 8pt);
   line-height: 1.08;
 }
+.print-card-keyword-band {
+  align-items: center;
+  background: color-mix(in srgb, var(--card-color) 12%, white);
+  border-bottom: 1px solid color-mix(in srgb, var(--card-color) 35%, white);
+  display: flex;
+  font-weight: 400;
+  gap: 0.025in;
+  padding: 0.025in 0.04in;
+}
+.print-card-keyword-band .icon {
+  flex-shrink: 0;
+  height: 0.1in;
+  width: 0.1in;
+}
+.print-card-keyword-band > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .print-card-action-band {
-  border-bottom: 1px solid var(--card-color);
+  border-bottom: 1px solid color-mix(in srgb, var(--card-color) 35%, white);
   display: grid;
   font-weight: 700;
-  grid-template-columns: max-content minmax(0, 1fr);
+  grid-template-columns:
+    var(--print-card-header-first-column, max-content)
+    minmax(0, 1fr);
 }
 .print-card-action-band > span {
   align-items: center;
-  border-right: 1px solid var(--card-color);
+  border-right: 1px solid color-mix(in srgb, var(--card-color) 35%, white);
   display: flex;
   gap: 0.025in;
   min-width: 0;
@@ -1928,6 +2021,18 @@ textarea {
 }
 .print-card-action-band > span:last-child {
   border-right: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.print-card-action-band > .print-card-action-types {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 0.025in;
+}
+.print-card-action-line {
+  align-items: center;
+  display: flex;
+  gap: 0.025in;
 }
 .print-card-action-band.is-empty {
   min-height: 0.15in;
@@ -1945,22 +2050,22 @@ textarea {
   min-width: 0;
   width: 0.1in;
 }
-.print-card-action-band .action-type-icon > span {
-  transform: translateY(0.01in);
-}
 .print-card-action-band .action-type-icon .icon {
   height: 0.1in;
   width: 0.1in;
 }
 .print-card-combat-band {
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
+  font-size: var(--print-card-body-size, 8pt);
+  grid-template-columns:
+    var(--print-card-header-first-column, max-content)
+    minmax(0, 1fr);
   margin: 0 -0.035in;
 }
 .print-card-combat-band > div {
   align-items: flex-start;
   border-bottom: 1px solid var(--card-color);
-  border-right: 1px solid var(--card-color);
+  border-right: 1px solid color-mix(in srgb, var(--card-color) 35%, white);
   display: flex;
   gap: 0.025in;
   min-width: 0;
@@ -1969,6 +2074,9 @@ textarea {
 }
 .print-card-combat-band > div:last-child {
   border-right: 0;
+}
+.print-power-card:not(:has(.print-card-combat-band)) .print-card-action-band {
+  border-bottom-color: var(--card-color);
 }
 .print-card-combat-band dd {
   font-size: inherit;
@@ -1989,7 +2097,7 @@ textarea {
 }
 .print-card-body {
   color: #111;
-  font-size: inherit;
+  font-size: var(--print-card-body-size, 8pt);
   min-height: 0;
   overflow: hidden;
   padding: 0.035in;
@@ -2007,13 +2115,36 @@ textarea {
 .print-card-attack-section + .print-card-attack-section {
   margin-top: 0.025in;
 }
-.print-card-attack-section
-  + .print-card-attack-section
-  > .print-card-combat-band {
-  border-top: 1px solid var(--card-color);
+.print-card-combat-band.is-secondary {
+  background: color-mix(in srgb, var(--card-color) 20%, white);
+  border-radius: 0.025in;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.025in;
+  margin: 0;
+  padding: 0.02in 0.035in;
+}
+.print-card-combat-band.is-secondary > div {
+  border: 0;
+  padding: 0;
+}
+.print-card-combat-band.is-secondary .print-card-attack-target::before {
+  content: "·";
+}
+.print-card-combat-band.is-secondary
+  .print-card-attack-target.starts-wrapped-row::before,
+.print-item-stat-row > div.starts-wrapped-row::before {
+  display: none;
+}
+.print-card-combat-band.is-secondary
+  .print-card-attack-target.starts-wrapped-row {
+  flex-basis: 100%;
 }
 .print-card-attack-rules {
   padding-top: 0.025in;
+}
+.print-card-combat-band.is-secondary + .print-card-attack-rules {
+  padding-inline: 0.035in;
 }
 .print-card-rule-line {
   display: block;
@@ -2094,10 +2225,23 @@ textarea {
 }
 .print-card-additional {
   border-top: 1px solid var(--card-color);
-  font-size: 0.5625em;
-  height: 0.34in;
-  padding: 0.02in 0.03in;
+}
+.print-card-additional.has-effects {
+  font-size: inherit;
+  height: auto;
+  margin-top: var(--print-card-section-gap);
+  padding: 0.025in 0 0;
+  text-transform: none;
+}
+.print-card-additional.has-effects > strong {
+  display: block;
+  font-size: max(4.7pt, 0.7em);
   text-transform: uppercase;
+}
+.print-card-additional.has-effects > p {
+  margin: 0.015in 0 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 .print-reference-card > footer {
   align-items: center;
@@ -2154,8 +2298,8 @@ textarea {
 }
 .print-item-card > header h3 > span {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .print-item-card > header .icon {
   flex-shrink: 0;
@@ -2167,15 +2311,13 @@ textarea {
   justify-content: space-between;
 }
 .print-item-stats {
+  border-bottom: 1px solid var(--card-color);
+  font-size: var(--print-card-body-size, 8pt);
   background: color-mix(in srgb, var(--card-color) 18%, white);
   margin: 0;
 }
-.print-item-properties {
-  grid-template-columns: auto minmax(0, 1fr);
-}
-.print-item-properties > div {
-  font-weight: 700;
-  overflow-wrap: anywhere;
+.print-item-stats.has-properties {
+  border-bottom: 0;
 }
 .print-item-properties .prose-blocks,
 .print-item-properties .prose-paragraph,
@@ -2196,6 +2338,9 @@ textarea {
   gap: 0.035in 0.05in;
   border-bottom: 1px solid color-mix(in srgb, var(--card-color) 35%, white);
   padding: 0.025in 0.035in;
+}
+.print-item-stat-row:last-child {
+  border-bottom: 0;
 }
 .print-item-stat-row > div {
   align-items: baseline;
@@ -2243,29 +2388,98 @@ textarea {
 .print-item-body p {
   margin: 0;
 }
-.print-item-power-heading {
-  align-items: center;
-  background: color-mix(in srgb, var(--card-color) 35%, white);
+.print-item-power {
+  --item-power-color: var(--card-color);
+  background: #fff;
+  border: 1px solid var(--item-power-color);
   border-radius: 0.025in;
-  display: flex;
+}
+.print-item-power.usage-at-will {
+  --item-power-color: #006b2e;
+}
+.print-item-power.usage-encounter {
+  --item-power-color: #8b0000;
+}
+.print-item-power.usage-daily {
+  --item-power-color: #777;
+}
+.print-item-power-heading {
+  align-items: start;
+  background: color-mix(in srgb, var(--card-color) 18%, white);
+  color: #111;
+  border-bottom: 1px solid var(--item-power-color);
+  border-radius: 0.025in 0.025in 0 0;
+  display: grid;
   gap: 0.025in;
+  grid-template-columns: minmax(0, 1fr);
   font-weight: 700;
-  margin-bottom: 0.0125in;
+  font-size: var(--print-card-body-size, 8pt);
+  margin-bottom: 0;
   padding: 0.02in 0.035in;
+}
+.print-item-power-heading.has-action-icon {
+  grid-template-columns: 0.1in minmax(0, 1fr);
+}
+.print-item-power-heading.usage-at-will {
+  background: #aaddaa;
+  border-color: #006b2e;
+  color: #111;
+}
+.print-item-power-heading.usage-encounter {
+  background: #ddbbbb;
+  border-color: #8b0000;
+  color: #111;
+}
+.print-item-power-heading.usage-daily {
+  background: #d3d3d3;
+  border-color: #777;
+  color: #111;
+}
+.print-item-power-content {
+  min-width: 0;
+}
+.print-item-power-action {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.025in;
+  min-width: 0;
+}
+.print-item-power-action > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.print-item-power-usage {
+  white-space: nowrap;
+}
+.print-item-power-unparsed {
+  grid-column: 1 / -1;
+}
+.print-item-power-keywords {
+  display: block;
+  font-weight: 400;
+  margin-top: 0.025in;
+  overflow-wrap: anywhere;
+}
+.print-item-power > .print-item-rule-text {
+  padding-block: 0.025in;
+  padding-inline: 0.035in;
+}
+.print-item-power-clause + .print-item-power-clause.is-augment {
+  margin-top: var(--print-card-section-gap);
 }
 .print-item-power-heading > span {
   min-width: 0;
   overflow-wrap: anywhere;
 }
 .print-item-power-heading .action-type-icon {
+  align-self: flex-start;
+  margin-top: max(0px, calc((1.08em - 0.1in) / 2));
   flex-shrink: 0;
   font-size: inherit;
   height: 0.1in;
   min-width: 0;
   width: 0.1in;
-}
-.print-item-power-heading .action-type-icon > span {
-  transform: translateY(0.01in);
 }
 .print-item-power-heading .action-type-icon .icon {
   height: 0.1in;
@@ -2523,6 +2737,7 @@ textarea {
   --card-color: #000;
   --card-footer-color: #000;
 }
+.sheet-monochrome .print-card-keyword-band,
 .sheet-monochrome .print-card-action-band,
 .sheet-monochrome .print-card-combat-band,
 .sheet-monochrome .print-item-stats dt {
@@ -2540,7 +2755,15 @@ textarea {
   background: #eee;
 }
 .sheet-monochrome .print-item-power-heading {
-  background: #ddd;
+  background: #eee;
+  border-color: #000;
+  color: #111;
+}
+.sheet-monochrome .print-item-power {
+  --item-power-color: #000;
+}
+.sheet-monochrome .print-card-combat-band.is-secondary {
+  background: #eee;
 }
 
 .editor-page {
@@ -3853,9 +4076,7 @@ textarea {
 
 .selection-summary-icon > .action-type-icon > span {
   font-size: 0.7rem;
-  inset-block-start: 0.04rem;
   line-height: 1;
-  position: relative;
 }
 
 .selection-summary-name {
@@ -4200,6 +4421,19 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   font-size: 1rem;
   font-weight: 700;
   line-height: 1;
+}
+.action-type-icon > span {
+  display: block;
+  /* Symbol glyphs sit above the optical center of their font's line box. */
+  transform: translateY(0.14em);
+}
+.action-type-icon > .lucide-octagon-minus {
+  /* Match the optical weight of the smaller font-based action glyphs. */
+  transform: scale(0.8);
+  transform-origin: center;
+}
+.entity-card-heading-main .action-type-icon {
+  align-self: center;
 }
 
 .selection-table-summary {

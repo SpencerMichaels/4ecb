@@ -68,9 +68,17 @@ describe("selection-summary detail-header styling", () => {
       "height: var(--detail-card-header-compact-icon-size)",
     );
     expect(actionGlyph).toContain("font-size: 0.7rem");
-    expect(actionGlyph).toContain("inset-block-start: 0.04rem");
+    expect(styles).toMatch(
+      /\n\.action-type-icon > span\s*\{[^}]*transform:\s*translateY\(0\.14em\)/,
+    );
     expect(actionGlyph).toContain("line-height: 1");
-    expect(actionGlyph).toContain("position: relative");
+    expect(actionGlyph).not.toContain("position: relative");
+    expect(rule(".action-type-icon > .lucide-octagon-minus")).toContain(
+      "transform: scale(0.8)",
+    );
+    expect(styles).toMatch(
+      /\n\.entity-card-heading-main \.action-type-icon\s*\{[^}]*align-self:\s*center/,
+    );
     expect(interactiveName).toContain("text-decoration: underline");
     expect(styles).toMatch(
       /button:focus-visible,[\s\S]*?outline: 3px solid var\(--focus\)/,

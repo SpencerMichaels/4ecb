@@ -14,6 +14,56 @@ function namedOrdinal(label: string): number | undefined {
   ]).get(label.trim().toLocaleLowerCase());
 }
 
+export function printSustainActions(
+  fields: readonly SheetValue[],
+): readonly string[] {
+  return [
+    ...new Set(
+      fields.flatMap((field) => {
+        const match =
+          /^sustain\s+(minor|move|standard|free|no action)\s*:?$/i.exec(
+            field.label.trim(),
+          );
+        return match
+          ? [
+              match[1]!
+                .toLowerCase()
+                .replace(/\b\w/g, (letter) => letter.toUpperCase()),
+            ]
+          : [];
+      }),
+    ),
+  ];
+}
+
+export function printActionLabel(
+  value: string | undefined,
+): string | undefined {
+  const label = value?.trim();
+  if (!label) return undefined;
+  if (/^no\s+action\b/i.test(label))
+    return label.replace(/^no\s+action\b/i, "No Action");
+  return label.replace(/\s+action\b/i, "").trim();
+}
+
+/** A calculated equipment variant must not carry a power-wide primary target
+ * into later phases. Only authored phase metadata supplies those headers. */
+export function withAuthoredPrintTargets(
+  card: SheetCard,
+  attacks: readonly SheetPowerAttack[],
+): readonly SheetPowerAttack[] {
+  const authored = fallbackPrintAttacks(card, undefined);
+  return attacks.map((attack) => {
+    if (attack.ordinal === 1) return attack;
+    const rest = { ...attack };
+    delete rest.target;
+    const target = authored.find(
+      (phase) => phase.ordinal === attack.ordinal,
+    )?.target;
+    return target === undefined ? rest : { ...rest, target };
+  });
+}
+
 export function printAttackHeader(
   attack: SheetPowerAttack,
   showEquippedAttackBonus: boolean,

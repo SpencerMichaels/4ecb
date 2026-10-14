@@ -55,6 +55,142 @@ function combatStat(name: string, value: number): EvaluatedStat {
 }
 
 describe("power evaluation", () => {
+  it("keeps conditional reminders and keyword info separate from totals and alternate equipment", () => {
+    const conditional = (
+      name: string,
+      value: number,
+      condition: string,
+    ): EvaluatedStat => ({
+      name,
+      value: 0,
+      contributions: [
+        {
+          id: `reminder:${name}`,
+          stat: name,
+          value: String(value),
+          numericValue: value,
+          providerId: "feature",
+          providerName: "Synthetic feature",
+          condition,
+          applied: false,
+          reason: "conditional",
+        },
+      ],
+    });
+    const info: EvaluatedStat = {
+      name: "fire,weapon:info(Synthetic Sword)",
+      value: "Preserve this authored reminder.",
+      contributions: [
+        {
+          id: "info",
+          stat: "fire,weapon:info(Synthetic Sword)",
+          value: "Preserve this authored reminder.",
+          providerId: "feature",
+          providerName: "Synthetic feature",
+          applied: true,
+        },
+      ],
+    };
+    const global = conditional(
+      "damage rolls",
+      1,
+      "per ally adjacent to the marked target",
+    );
+    const powers = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["POWER"],
+      overlays: [],
+      entities: [
+        entity("POWER", "Synthetic Strike", "Power", {
+          Keywords: "Weapon, Fire",
+          "Attack Type": "Melee weapon",
+          Attack: "Strength vs. AC",
+          Hit: "1[W] + Strength modifier fire damage.",
+        }),
+        entity("SWORD", "Synthetic Sword", "Weapon", { Damage: "1d8" }),
+        entity("DAGGER", "Synthetic Dagger", "Weapon", { Damage: "1d4" }),
+      ],
+      inventory: [
+        {
+          id: "sword",
+          definitionIds: ["SWORD"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+        {
+          id: "dagger",
+          definitionIds: ["DAGGER"],
+          quantity: 1,
+          equippedQuantity: 0,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Strength modifier": stat("Strength modifier", 4),
+        "damage rolls": global,
+        "alias duplicate:info": { ...global },
+        "weapon:damage": { ...global },
+        "fire:attack": conditional(
+          "fire:attack",
+          2,
+          "against a burning target",
+        ),
+        "cold:damage": conditional(
+          "cold:damage",
+          20,
+          "against a chilled target",
+        ),
+        "attack rolls": conditional("attack rolls", 7, "when you charge"),
+        "fire,weapon:info(Synthetic Sword)": info,
+        "fire,cold:info": { ...info },
+        "weapon:damage(Synthetic Dagger)": conditional(
+          "weapon:damage(Synthetic Dagger)",
+          3,
+          "while flanking",
+        ),
+        "fire:damage": {
+          ...conditional("fire:damage", 10, "while armored"),
+          contributions: [
+            {
+              ...conditional("fire:damage", 10, "while armored")
+                .contributions[0]!,
+              reason: "equipment",
+            },
+          ],
+        },
+      },
+    });
+    const sword = powers[0]?.variants.find(
+      (v) => v.equipmentName === "Synthetic Sword",
+    );
+    const dagger = powers[0]?.variants.find(
+      (v) => v.equipmentName === "Synthetic Dagger",
+    );
+    expect(sword?.damage).toBe("1d8+4");
+    expect(sword?.additionalEffects).toEqual([
+      {
+        text: "+1 to damage rolls per ally adjacent to the marked target - Synthetic feature.",
+        source: "Synthetic feature",
+        provenanceId: "reminder:damage rolls",
+      },
+      {
+        text: "+2 to attack rolls against a burning target - Synthetic feature.",
+        source: "Synthetic feature",
+        provenanceId: "reminder:fire:attack",
+      },
+      {
+        text: "Preserve this authored reminder.",
+        source: "Synthetic feature",
+        provenanceId: "info",
+      },
+    ]);
+    expect(dagger?.additionalEffects?.map((v) => v.text)).toEqual([
+      "+1 to damage rolls per ally adjacent to the marked target - Synthetic feature.",
+      "+2 to attack rolls against a burning target - Synthetic feature.",
+      "+3 to damage rolls while flanking - Synthetic feature.",
+    ]);
+  });
   it("adds versatile damage only when the legacy two-handed choice is set", () => {
     const entities = [
       entity("POWER", "Synthetic Strike", "Power", {
@@ -465,67 +601,72 @@ describe("power evaluation", () => {
     ).toHaveLength(1);
   });
 
-  it("produces explainable weapon and unarmed variants", () => {
-    const entities = [
-      entity("POWER", "Overwhelming Strike", "Power", {
-        Keywords: "Divine, Weapon",
-        "Attack Type": "Melee weapon",
-        Attack: "Wisdom vs. AC",
-        Hit: "1[W] + Wisdom modifier damage.",
-      }),
-      entity("GOUGE", "Gouge", "Weapon", {
-        Damage: "2d6",
-        "Proficiency Bonus": "2",
-        Properties: "High Crit, Brutal 1",
-      }),
-      entity("MAGIC", "Way-Leader Weapon +1", "Magic Item", {
-        "Magic Item Type": "Weapon",
-        Enhancement: "+1 attack rolls and damage rolls",
-        Critical: "+1d6 damage",
-      }),
-    ];
-    const [power] = evaluatePowers({
-      level: 8,
-      activeDefinitionIds: ["POWER"],
-      inventory: [
-        {
-          id: "gouge",
-          name: "Custom gouge",
-          definitionIds: ["GOUGE", "MAGIC"],
-          quantity: 1,
-          equippedQuantity: 0,
-          acquiredLevel: 1,
-          overrides: { Damage: "2d8" },
+  it.each(["Brutal 1", "Brutal"])(
+    "produces explainable weapon and unarmed variants with %s",
+    (brutalProperty) => {
+      const entities = [
+        entity("POWER", "Overwhelming Strike", "Power", {
+          Keywords: "Divine, Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Wisdom vs. AC",
+          Hit: "1[W] + Wisdom modifier damage.",
+        }),
+        entity("GOUGE", "Gouge", "Weapon", {
+          Damage: "2d6",
+          "Proficiency Bonus": "2",
+          Properties: `High Crit, ${brutalProperty}`,
+          "Full Text":
+            "Synthetic weapon\nProperties:\nHigh Crit\nBrutal 1 (Reroll low dice.)\nGroup:\nTest group",
+        }),
+        entity("MAGIC", "Way-Leader Weapon +1", "Magic Item", {
+          "Magic Item Type": "Weapon",
+          Enhancement: "+1 attack rolls and damage rolls",
+          Critical: "+1d6 damage",
+        }),
+      ];
+      const [power] = evaluatePowers({
+        level: 8,
+        activeDefinitionIds: ["POWER"],
+        inventory: [
+          {
+            id: "gouge",
+            name: "Custom gouge",
+            definitionIds: ["GOUGE", "MAGIC"],
+            quantity: 1,
+            equippedQuantity: 0,
+            acquiredLevel: 1,
+            overrides: { Damage: "2d8" },
+          },
+        ],
+        stats: {
+          "Wisdom modifier": stat("Wisdom modifier", 5),
+          "melee:damage": stat("melee:damage", 2),
         },
-      ],
-      stats: {
-        "Wisdom modifier": stat("Wisdom modifier", 5),
-        "melee:damage": stat("melee:damage", 2),
-      },
-      overlays: [],
-      entities,
-    });
+        overlays: [],
+        entities,
+      });
 
-    expect(power?.variants).toMatchObject([
-      {
-        equipmentName: "Custom gouge",
-        attackStat: "Wisdom",
-        defense: "AC",
-        attackBonus: 12,
-        damage: "2d8+8",
-        critical: "+2d8 high crit damage; +1d6 damage",
-        brutal: 1,
-      },
-      {
-        equipmentName: "Unarmed",
-        attackBonus: 9,
-        damage: "1d4+7",
-      },
-    ]);
-    expect(
-      power?.variants[0]?.attackComponents.map((part) => part.value),
-    ).toEqual([5, 4, 2, 1]);
-  });
+      expect(power?.variants).toMatchObject([
+        {
+          equipmentName: "Custom gouge",
+          attackStat: "Wisdom",
+          defense: "AC",
+          attackBonus: 12,
+          damage: "2d8+8",
+          critical: "+2d8 high crit damage; +1d6 damage",
+          brutal: 1,
+        },
+        {
+          equipmentName: "Unarmed",
+          attackBonus: 9,
+          damage: "1d4+7",
+        },
+      ]);
+      expect(
+        power?.variants[0]?.attackComponents.map((part) => part.value),
+      ).toEqual([5, 4, 2, 1]);
+    },
+  );
 
   it("applies an implement enhancement to fixed power dice", () => {
     const entities = [
@@ -831,7 +972,9 @@ describe("power evaluation", () => {
             "Primary Attack": "Strength vs. Reflex",
             Hit: "1d6 damage.",
             " Secondary Attack": "Dexterity vs. AC",
-            ...(override ? { "Secondary Targets": "A different creature" } : {}),
+            ...(override
+              ? { "Secondary Targets": "A different creature" }
+              : {}),
             " Hit": "2d6 + Dexterity modifier damage.",
           }),
         ],

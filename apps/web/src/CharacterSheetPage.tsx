@@ -29,18 +29,24 @@ import { ActionTypeIcon } from "./ActionTypeIcon";
 import { Icon } from "./Icon";
 import { PortraitImage } from "./PortraitEditor";
 import { PrintPowerVariants } from "./PrintPowerVariants";
+import { printAdditionalEffect } from "./print-additional-effects";
 import {
   preferredPrintCardTextSize,
   printCardFontSizes,
+  wrappedRowStarts,
 } from "./print-card-fit";
 import {
   printItemPresentation,
   printItemPower,
+  printItemPowerClauses,
 } from "./print-item-presentation";
 import {
   fallbackPrintAttacks,
+  withAuthoredPrintTargets,
   groupedPrintRules,
   printAttackHeader,
+  printActionLabel,
+  printSustainActions,
 } from "./print-power-attacks";
 import {
   defaultPowerVariant,
@@ -266,10 +272,42 @@ function usePrintCardFit() {
           .getPropertyValue("--preferred-print-card-text-size")
           .trim(),
       );
+      element.style.setProperty("--print-card-text-size", `${preferred}pt`);
+      let fits = false;
       for (const size of printCardFontSizes(preferred)) {
-        element.style.setProperty("--print-card-text-size", `${size}pt`);
-        element.classList.toggle("is-compact", size <= 6 && size > 5);
-        element.classList.toggle("is-condensed", size <= 5);
+        element.style.setProperty("--print-card-body-size", `${size}pt`);
+        element.classList.toggle("is-compact", size <= 7 && size > 6.5);
+        element.classList.toggle("is-condensed", size <= 6.5);
+        // Restore intrinsic sizing before sharing the widest first cell between
+        // the action/range and primary attack/target rows. Never measure the
+        // previously assigned width, which would prevent shrinking on refit.
+        element.style.removeProperty("--print-card-header-first-column");
+        const firstHeaderCells = [
+          element.querySelector<HTMLElement>(
+            ".print-card-action-band > span:first-child",
+          ),
+          element.querySelector<HTMLElement>(
+            ".print-card-combat-band:not(.is-secondary) > div:first-child",
+          ),
+        ].filter((cell): cell is HTMLElement => cell !== null);
+        if (firstHeaderCells.length > 0)
+          element.style.setProperty(
+            "--print-card-header-first-column",
+            `${Math.max(...firstHeaderCells.map((cell) => cell.getBoundingClientRect().width))}px`,
+          );
+        for (const row of element.querySelectorAll<HTMLElement>(
+          ".print-card-combat-band.is-secondary, .print-item-stat-row",
+        )) {
+          const cells = [...row.children];
+          // Measure the natural layout with separators restored each time.
+          cells.forEach((cell) => cell.classList.remove("starts-wrapped-row"));
+          const starts = wrappedRowStarts(
+            cells.map((cell) => cell.getBoundingClientRect().top),
+          );
+          cells.forEach((cell, index) =>
+            cell.classList.toggle("starts-wrapped-row", starts[index] === true),
+          );
+        }
         if (
           body.clientHeight > 0 &&
           body.scrollHeight <= body.clientHeight + 1 &&
@@ -281,9 +319,12 @@ function usePrintCardFit() {
               ".print-card-action-band > span, .print-card-combat-band > div",
             ),
           ].every((cell) => cell.scrollWidth <= cell.clientWidth + 1)
-        )
+        ) {
+          fits = true;
           break;
+        }
       }
+      element.dataset.fitOverflow = String(!fits);
     };
     const observer = new ResizeObserver(fit);
     observer.observe(body);
@@ -329,21 +370,25 @@ function PrintRuleLines({
 function PrintAttackBand({
   attack,
   showEquippedAttackBonus,
+  secondary = false,
 }: {
   readonly attack: SheetPowerAttack;
   readonly showEquippedAttackBonus: boolean;
+  readonly secondary?: boolean;
 }) {
   const total = printAttackHeader(attack, showEquippedAttackBonus);
   return (
-    <dl className="print-card-combat-band">
+    <dl className={`print-card-combat-band${secondary ? " is-secondary" : ""}`}>
       <div className="print-card-attack-total">
         <Icon name="dices" />
         <dd>{total}</dd>
       </div>
-      <div className="print-card-attack-target">
-        {attack.target === undefined ? null : <Icon name="target" />}
-        <dd>{attack.target ?? ""}</dd>
-      </div>
+      {!secondary || attack.target?.trim() ? (
+        <div className="print-card-attack-target">
+          {attack.target === undefined ? null : <Icon name="target" />}
+          <dd>{attack.target ?? ""}</dd>
+        </div>
+      ) : null}
     </dl>
   );
 }
@@ -365,7 +410,8 @@ function PrintPowerCard({
   const attackType = cardField(card, "Attack Type")?.trim() ?? "";
   const level = cardField(card, "Level");
   const powerType = cardField(card, "Power Type");
-  const displayActionType = card.actionType?.replace(/\s+action\b/i, "").trim();
+  const displayActionType = printActionLabel(card.actionType);
+  const sustainActions = printSustainActions(card.fields);
   const isUtility = powerType?.trim().toLocaleLowerCase() === "utility";
   const variants = card.variants ?? [];
   const printVariants = variants.filter(
@@ -377,7 +423,8 @@ function PrintPowerCard({
     variants.find((variant) => variant.equipped && variant.hand === "main") ??
     variants.find((variant) => variant.equipped) ??
     variants[0];
-  const attacks: readonly SheetPowerAttack[] =
+  const attacks: readonly SheetPowerAttack[] = withAuthoredPrintTargets(
+    card,
     selectedPrintVariant?.attacks?.map((attack) =>
       attack.eligible !== false
         ? attack
@@ -390,7 +437,8 @@ function PrintPowerCard({
                 candidate.ordinal === attack.ordinal &&
                 candidate.eligible !== false,
             ) ?? attack),
-    ) ?? fallbackPrintAttacks(card, selectedPrintVariant);
+    ) ?? fallbackPrintAttacks(card, selectedPrintVariant),
+  );
   const rules = card.fields.filter(
     (field) =>
       !LEGACY_POWER_BODY_EXCLUDES.has(field.label.trim().toLocaleLowerCase()),
@@ -411,7 +459,7 @@ function PrintPowerCard({
   return (
     <article
       ref={cardRef}
-      className={`print-reference-card print-power-card usage-${usageTone}${isUtility ? " utility-power" : ""}${isUtility && colorUtilityPowersBlue ? " legacy-utility-color" : ""}`}
+      className={`print-reference-card print-power-card usage-${usageTone}${card.keywords?.trim() ? " has-keywords" : ""}${isUtility ? " utility-power" : ""}${isUtility && colorUtilityPowersBlue ? " legacy-utility-color" : ""}`}
     >
       <header>
         <h3>
@@ -420,21 +468,49 @@ function PrintPowerCard({
           ) : null}
           <span>{card.name}</span>
         </h3>
+        {isUtility ? (
+          <span
+            className={`print-utility-usage-badge usage-${usageTone}`}
+            aria-label={`${displayUsage} utility power`}
+            title={displayUsage}
+          >
+            {usageTone === "encounter"
+              ? "E"
+              : usageTone === "daily"
+                ? "D"
+                : "W"}
+          </span>
+        ) : null}
       </header>
-      <div className="print-card-keywords">
-        <span>Keywords</span>
-        <strong>{card.keywords}</strong>
-      </div>
+      {card.keywords?.trim() ? (
+        <div className="print-card-keyword-band" aria-label="Keywords">
+          <Icon name="key" />
+          <span>{card.keywords.trim()}</span>
+        </div>
+      ) : null}
       <div
-        className={`print-card-action-band${!displayActionType && !attackType ? " is-empty" : ""}`}
+        className={`print-card-action-band${!displayActionType && !attackType && sustainActions.length === 0 ? " is-empty" : ""}`}
       >
-        <span>
-          {showPrintTitleActionIcon && card.actionType?.trim() ? (
-            <Icon name="timer" />
-          ) : (
-            <ActionTypeIcon decorative value={card.actionType} />
-          )}
-          {displayActionType}
+        <span className="print-card-action-types">
+          <span className="print-card-action-line">
+            {showPrintTitleActionIcon && card.actionType?.trim() ? (
+              <Icon name="timer" />
+            ) : (
+              <ActionTypeIcon decorative value={card.actionType} />
+            )}
+            {displayActionType}
+          </span>
+          {sustainActions.map((action) => (
+            <span
+              className="print-card-action-line"
+              key={action}
+              aria-label={`Sustain ${action}`}
+              title={`Sustain ${action}`}
+            >
+              <Icon name="step-forward" />
+              {action}
+            </span>
+          ))}
         </span>
         <span>
           {attackType ? <Icon name="sword" /> : null}
@@ -461,6 +537,7 @@ function PrintPowerCard({
             <PrintAttackBand
               attack={attack}
               showEquippedAttackBonus={showEquippedAttackBonus}
+              secondary={attackIndex > 0}
             />
             <div className="print-card-attack-rules">
               {attackIndex === 0 ? (
@@ -496,8 +573,23 @@ function PrintPowerCard({
           variants={printVariants}
           attackOrdinals={attacks.map((attack) => attack.ordinal)}
         />
+        {(card.additionalEffects ?? []).length === 0 ? null : (
+          <section className="print-card-additional has-effects">
+            <strong>Additional effects</strong>
+            {card.additionalEffects?.map((effect, index) => {
+              const display = printAdditionalEffect(effect);
+              return (
+                <p
+                  key={`${effect.provenanceId ?? effect.provider ?? "effect"}:${index}`}
+                >
+                  {display.name ? <strong>{display.name}: </strong> : null}
+                  {display.text}
+                </p>
+              );
+            })}
+          </section>
+        )}
       </div>
-      <div className="print-card-additional">Additional effects</div>
       <div className="print-card-type">
         <span>{typeLabel}</span>
         {level === undefined ? null : <span>Level {level}</span>}
@@ -520,21 +612,13 @@ function PrintItemCard({
       <header>
         <h3>
           <Icon name={item.icon} />
-          <span>{card.name}</span>
+          <span>{item.name}</span>
         </h3>
       </header>
       <div className="print-item-subheader">
-        {item.weaponProperties.length > 0 ? (
-          <div className="print-card-keywords print-item-properties">
-            <span>Properties</span>
-            <div>
-              {item.weaponProperties.map((field, index) => (
-                <Prose key={index} value={field.value} />
-              ))}
-            </div>
-          </div>
-        ) : null}
-        <dl className="print-item-stats">
+        <dl
+          className={`print-item-stats${item.weaponProperties.length > 0 ? " has-properties" : ""}`}
+        >
           {item.statRows.map((row, rowIndex) => (
             <div className="print-item-stat-row" key={rowIndex}>
               {row.map(({ label, value }) => (
@@ -551,6 +635,20 @@ function PrintItemCard({
               ))}
             </div>
           ))}
+          {item.weaponProperties.length > 0 ? (
+            <div className="print-item-stat-row print-item-properties">
+              <div>
+                <dt>Properties</dt>
+                <dd>
+                  <Prose
+                    value={item.weaponProperties
+                      .map((field) => field.value)
+                      .join(", ")}
+                  />
+                </dd>
+              </div>
+            </div>
+          ) : null}
         </dl>
       </div>
       <div className="print-card-body print-item-body">
@@ -559,28 +657,62 @@ function PrintItemCard({
           const power = printItemPower(field);
           return (
             <section
-              className={power ? "print-item-power" : "print-item-rule"}
+              className={
+                power
+                  ? `print-item-power${power.usage ? ` usage-${power.usage.toLocaleLowerCase()}` : ""}`
+                  : "print-item-rule"
+              }
               key={`${field.label}-${index}`}
             >
               {power ? (
-                <div className="print-item-power-heading">
+                <div
+                  className={`print-item-power-heading${power.usage ? ` usage-${power.usage.toLocaleLowerCase()}` : ""}${power.actionType && showActionIcons ? " has-action-icon" : ""}`}
+                >
                   {power.actionType ? (
                     <>
                       {showActionIcons ? (
                         <ActionTypeIcon decorative value={power.actionType} />
                       ) : null}
-                      <span>
-                        {power.usage} · {power.actionType}
-                      </span>
+                      <div className="print-item-power-content">
+                        <div className="print-item-power-action">
+                          <span>{power.actionType}</span>
+                          <span className="print-item-power-usage">
+                            • {power.usage}
+                          </span>
+                        </div>
+                        {power.keywords ? (
+                          <span className="print-item-power-keywords">
+                            {power.keywords}
+                          </span>
+                        ) : null}
+                      </div>
                     </>
                   ) : (
-                    <span>{power.title}</span>
+                    <span className="print-item-power-unparsed">
+                      {power.title}
+                    </span>
                   )}
                 </div>
               ) : null}
               <div className="print-item-rule-text">
                 <strong>{power ? null : `${field.label}: `}</strong>
-                <Prose value={power?.text ?? field.value} />
+                {power ? (
+                  printItemPowerClauses(power.text).map(
+                    (clause, clauseIndex) => (
+                      <div
+                        className={`print-item-power-clause${/^augment\b/i.test(clause.label) ? " is-augment" : ""}`}
+                        key={clauseIndex}
+                      >
+                        {clause.label ? (
+                          <strong>{clause.label}: </strong>
+                        ) : null}
+                        <Prose value={clause.value} />
+                      </div>
+                    ),
+                  )
+                ) : (
+                  <Prose value={field.value} />
+                )}
               </div>
             </section>
           );

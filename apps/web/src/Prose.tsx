@@ -4,6 +4,11 @@ export type ProseBlock =
   | { readonly kind: "heading"; readonly text: string }
   | { readonly kind: "paragraph"; readonly text: string }
   | {
+      readonly kind: "table";
+      readonly headers?: readonly string[];
+      readonly rows: readonly (readonly string[])[];
+    }
+  | {
       readonly kind: "list";
       readonly ordered: boolean;
       readonly start?: number;
@@ -80,7 +85,7 @@ function isRecognizableHeading(line: string): boolean {
  * blank lines are presentation noise, while contiguous list markers remain a
  * semantic list.
  */
-export function proseBlocks(value: string): readonly ProseBlock[] {
+function plainProseBlocks(value: string): readonly ProseBlock[] {
   const blocks: ProseBlock[] = [];
   let list:
     | {
@@ -133,6 +138,60 @@ export function proseBlocks(value: string): readonly ProseBlock[] {
   return blocks;
 }
 
+/** Legacy tables occur both as HTML cells and tab-separated lines inside
+ * <table>. Extract text only; never inject corpus markup into the DOM. */
+function legacyTable(
+  value: string,
+): Extract<ProseBlock, { kind: "table" }> | undefined {
+  const taggedRows = [
+    ...value.matchAll(/<tr(?:\s[^>]*)?>([\s\S]*?)<\/tr\s*>/giu),
+  ];
+  const rows =
+    taggedRows.length > 0
+      ? taggedRows.map((row) =>
+          [
+            ...(row[1] ?? "").matchAll(
+              /<(td|th)(?:\s[^>]*)?>([\s\S]*?)<\/(?:td|th)\s*>/giu,
+            ),
+          ].map((cell) => normalizeLegacyStructure(cell[2] ?? "").trim()),
+        )
+      : value
+          .trim()
+          .split(/\r?\n/u)
+          .filter((line) => line.trim())
+          .map((line) =>
+            line
+              .split("\t")
+              .map((cell) => normalizeLegacyStructure(cell).trim()),
+          );
+  const columns = rows[0]?.length ?? 0;
+  if (
+    columns < 2 ||
+    rows.length < 2 ||
+    rows.some((row) => row.length !== columns)
+  )
+    return undefined;
+  const hasHeaders =
+    taggedRows.length === 0 || /<th(?:\s|>)/iu.test(taggedRows[0]?.[1] ?? "");
+  return hasHeaders
+    ? { kind: "table", headers: rows[0]!, rows: rows.slice(1) }
+    : { kind: "table", rows };
+}
+
+export function proseBlocks(value: string): readonly ProseBlock[] {
+  const blocks: ProseBlock[] = [];
+  let start = 0;
+  for (const match of value.matchAll(
+    /<table(?:\s[^>]*)?>([\s\S]*?)<\/table\s*>/giu,
+  )) {
+    const table = legacyTable(match[1] ?? "");
+    if (table === undefined) continue;
+    blocks.push(...plainProseBlocks(value.slice(start, match.index)), table);
+    start = match.index + match[0].length;
+  }
+  return [...blocks, ...plainProseBlocks(value.slice(start))];
+}
+
 export function ProseBlocks({
   blocks,
   className,
@@ -143,6 +202,31 @@ export function ProseBlocks({
   readonly renderText?: (text: string) => ReactNode;
 }) {
   const content: ReactNode[] = blocks.map((block, index) => {
+    if (block.kind === "table")
+      return (
+        <table className="prose-table" key={index}>
+          {block.headers === undefined ? null : (
+            <thead>
+              <tr>
+                {block.headers.map((text, column) => (
+                  <th scope="col" key={column}>
+                    {renderText(text)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+          )}
+          <tbody>
+            {block.rows.map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                {row.map((text, column) => (
+                  <td key={column}>{renderText(text)}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
     if (block.kind === "heading")
       return <h6 key={index}>{renderText(block.text)}</h6>;
     if (block.kind === "paragraph")

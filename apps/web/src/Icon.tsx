@@ -69,6 +69,7 @@ import {
   Sparkles,
   SquareStar,
   Stamp,
+  StepForward,
   Star,
   Sun,
   Sword,
@@ -117,6 +118,7 @@ export type IconName =
   | "class"
   | "clock"
   | "timer"
+  | "step-forward"
   | "dices"
   | "dice-5"
   | "octagon-minus"
@@ -210,6 +212,7 @@ const icons: Record<IconName, LucideIcon> = {
   class: Shield,
   clock: Clock3,
   timer: Timer,
+  "step-forward": StepForward,
   dices: Dices,
   "dice-5": Dice5,
   "octagon-minus": OctagonMinus,

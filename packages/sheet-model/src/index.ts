@@ -8,6 +8,7 @@ import {
 } from "@4ecb/character-domain";
 import {
   isUserFacingSpecific,
+  weaponPropertyText,
   type ContentEntity,
   type SpecificField,
 } from "@4ecb/content-domain";
@@ -17,6 +18,11 @@ import {
   type EvaluatedCharacter,
   type EvaluatedPower,
 } from "@4ecb/rules-engine";
+
+import {
+  featureClauseKey,
+  irrelevantFeatureClauseNames,
+} from "./power-feature-clauses";
 
 export interface SheetValue {
   readonly label: string;
@@ -45,6 +51,14 @@ export interface SheetCard {
   readonly variants?: readonly SheetPowerVariant[];
   /** Calculation diagnostics, never authored rules or physical-card sections. */
   readonly calculationWarnings?: readonly string[];
+  readonly additionalEffects?: readonly SheetAdditionalEffect[];
+}
+
+export interface SheetAdditionalEffect {
+  readonly text: string;
+  readonly source: "authoritative-evaluation" | "legacy-cache";
+  readonly provider?: string;
+  readonly provenanceId?: string;
 }
 
 export type SheetLearnedReferenceKind =
@@ -76,6 +90,7 @@ export interface SheetPowerVariant {
   readonly attacks?: readonly SheetPowerAttack[];
   readonly damage?: string;
   readonly damageType?: string;
+  readonly additionalEffects?: readonly SheetAdditionalEffect[];
 }
 
 export interface SheetPowerAttack {
@@ -177,7 +192,15 @@ function entityFields(entity: ContentEntity | undefined): SheetValue[] {
     entity?.specifics.flatMap((field) =>
       field.value.length === 0 || !isUserFacingSpecific(field)
         ? []
-        : [{ label: field.name, value: field.value }],
+        : [
+            {
+              label: field.name,
+              value:
+                field.name.trim().toLocaleLowerCase() === "properties"
+                  ? weaponPropertyText(entity, field.value)
+                  : field.value,
+            },
+          ],
     ) ?? []
   );
 }
@@ -601,11 +624,13 @@ function evaluatedPowerCards(
   entity: ContentEntity | undefined,
   evaluation: EvaluatedCharacter,
   personalize: (text: string) => string,
+  irrelevantFeatureClauses: ReadonlySet<string>,
 ): SheetCard[] {
   const commonFields: SheetValue[] = [
     ...(entity === undefined ? [] : evaluatedEntityFields(entity, evaluation))
       .filter(
         ({ label }) =>
+          !irrelevantFeatureClauses.has(featureClauseKey(label)) &&
           !["power usage", "action type", "keywords"].includes(
             label.toLocaleLowerCase(),
           ),
@@ -664,6 +689,21 @@ function evaluatedPowerCards(
         : { damageType: variant.damageType }),
       ...(variant.critical === undefined ? {} : { critical: variant.critical }),
       ...(variant.brutal === undefined ? {} : { brutal: variant.brutal }),
+      additionalEffects: [
+        ...(variant.additionalEffects ?? []).map((effect) => ({
+          text: effect.text,
+          source: "authoritative-evaluation" as const,
+          provider: effect.source,
+          ...(effect.provenanceId === undefined
+            ? {}
+            : { provenanceId: effect.provenanceId }),
+        })),
+        ...variant.conditionalDamage.map((effect) => ({
+          text: `${effect.expression.startsWith("-") || effect.expression.startsWith("+") ? "" : "+"}${effect.expression} to damage ${effect.condition} (${effect.source}).`,
+          source: "authoritative-evaluation" as const,
+          provider: effect.source,
+        })),
+      ],
     }),
   );
   const defaultVariant =
@@ -689,6 +729,9 @@ function evaluatedPowerCards(
         ? {}
         : { damage: defaultVariant.damage }),
       ...(variants.length === 0 ? {} : { variants }),
+      ...(defaultVariant?.additionalEffects?.length
+        ? { additionalEffects: defaultVariant.additionalEffects }
+        : {}),
       fields: commonFields,
       ...(power.unsupported.length === 0
         ? {}
@@ -709,7 +752,31 @@ function powerCard(
     power.id === undefined
       ? undefined
       : entities.get(power.id.toLocaleLowerCase());
-  const weapon = power.weapons[0];
+  const normalize = (value: string) => value.trim().toLocaleLowerCase();
+  const mainHandName = Object.entries(snapshot.textStrings).find(
+    ([name]) => normalize(name) === "_internal_mainhandweapon",
+  )?.[1];
+  const equippedWeapon = (candidate: LegacyPowerSnapshot["weapons"][number]) =>
+    snapshot.loot.some(
+      (item) =>
+        item.equippedCount > 0 &&
+        (normalize(item.name) === normalize(candidate.name) ||
+          (candidate.definitionIds?.length &&
+            candidate.definitionIds.every((id) =>
+              item.elements.some(
+                (element) => normalize(element.id ?? "") === normalize(id),
+              ),
+            ))),
+    );
+  const weapon =
+    power.weapons.find(
+      (candidate) =>
+        mainHandName !== undefined &&
+        normalize(candidate.name) === normalize(mainHandName) &&
+        equippedWeapon(candidate),
+    ) ??
+    power.weapons.find(equippedWeapon) ??
+    power.weapons[0];
   const attack =
     weapon?.attackBonus === undefined
       ? undefined
@@ -721,7 +788,8 @@ function powerCard(
     (candidate, index) => ({
       id: `${power.id ?? power.name}:weapon-${index}`,
       equipmentName: candidate.name,
-      equipped: index === 0,
+      equipped: equippedWeapon(candidate) || candidate === weapon,
+      ...(candidate === weapon ? { hand: "main" as const } : {}),
       ...(candidate.attackStat === undefined
         ? {}
         : { ability: candidate.attackStat }),
@@ -732,6 +800,16 @@ function powerCard(
             attack: `+${candidate.attackBonus} vs ${candidate.defense ?? "defense"}`,
           }),
       ...(candidate.damage === undefined ? {} : { damage: candidate.damage }),
+      ...(candidate.conditions?.trim()
+        ? {
+            additionalEffects: [
+              {
+                text: candidate.conditions.trim(),
+                source: "legacy-cache" as const,
+              },
+            ],
+          }
+        : {}),
     }),
   );
   return {
@@ -753,6 +831,14 @@ function powerCard(
     ...(attack === undefined ? {} : { attack }),
     ...(weapon?.damage === undefined ? {} : { damage: weapon.damage }),
     ...(variants.length === 0 ? {} : { variants }),
+    ...(variants.find((variant) => variant.hand === "main")
+      ?.additionalEffects === undefined
+      ? {}
+      : {
+          additionalEffects: variants.find(
+            (variant) => variant.hand === "main",
+          )!.additionalEffects,
+        }),
     fields: entityFields(entity)
       .filter(
         (field) =>
@@ -1179,12 +1265,17 @@ export function buildEvaluatedSheetModel(
         : [learnedReference(referenceKind, name, entry.quantity, entity)],
   );
 
+  const irrelevantFeatureClauses = irrelevantFeatureClauseNames(
+    evaluation,
+    content,
+  );
   const powerCards = evaluation.powers.flatMap((power) =>
     evaluatedPowerCards(
       power,
       entities.get(power.definitionId.toLocaleLowerCase()),
       evaluation,
       personalizePowerText,
+      irrelevantFeatureClauses,
     ),
   );
   const evaluatedValues = (names: readonly string[]) =>

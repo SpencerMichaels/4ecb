@@ -1,4 +1,4 @@
-import type { ContentEntity } from "@4ecb/content-domain";
+import { weaponPropertyText, type ContentEntity } from "@4ecb/content-domain";
 
 import type { CharacterInventoryEntry, FieldOverlay } from "./evaluator";
 import type { EvaluatedStat } from "./stats";
@@ -29,6 +29,13 @@ export interface PowerVariant {
   readonly attacks?: readonly PowerAttack[];
   readonly damageComponents: readonly PowerComponent[];
   readonly conditionalDamage: readonly PowerConditionalDamage[];
+  readonly additionalEffects?: readonly PowerAdditionalEffect[];
+}
+
+export interface PowerAdditionalEffect {
+  readonly text: string;
+  readonly source: string;
+  readonly provenanceId?: string;
 }
 
 export interface PowerAttack {
@@ -204,6 +211,7 @@ function loadouts(
               `${field(weapon, "Group") ?? ""} group`,
               field(weapon, "Item Slot") ?? "",
               field(weapon, "Hands Required") ?? "",
+              ...(field(weapon, "Properties") ?? "").split(","),
             ]),
         magicType ?? "",
         ...(implement === undefined || !magicType
@@ -212,7 +220,10 @@ function loadouts(
       ]
         .map(key)
         .filter(Boolean),
-      properties: (field(weapon ?? emptyEntity, "Properties") ?? "")
+      properties: weaponPropertyText(
+        weapon,
+        field(weapon ?? emptyEntity, "Properties") ?? "",
+      )
         .split(",")
         .map(key)
         .filter(Boolean),
@@ -799,6 +810,133 @@ function conditionalStrikerDamage(input: {
   });
 }
 
+/** Native CalcConditionals/InfoKeyword reminders, kept out of ordinary totals. */
+function powerAdditionalEffects(input: {
+  readonly stats: Readonly<Record<string, EvaluatedStat>>;
+  readonly power: ContentEntity;
+  readonly equipment: Loadout;
+  readonly keywords: readonly string[];
+  readonly attackType?: string;
+  readonly attackStat: string;
+  readonly defense: string;
+  readonly hasAttack: boolean;
+  readonly damage?: string;
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+}): readonly PowerAdditionalEffect[] {
+  const tags = new Set([
+    ...input.keywords.map(key),
+    ...input.equipment.tags,
+    ...input.equipment.properties,
+    key(input.power.name),
+    ...input.power.categories.map(key),
+    key(field(input.power, "Class") ?? ""),
+    key(field(input.power, "Class ID") ?? ""),
+    key(field(input.power, "Power Usage") ?? ""),
+    key(input.attackStat),
+    key(input.defense),
+    ...["melee", "ranged", "close", "area"].filter((tag) =>
+      new RegExp(`\\b${tag}\\b`, "i").test(input.attackType ?? ""),
+    ),
+  ]);
+  if (/melee\s+or\s+ranged/i.test(input.attackType ?? "")) {
+    tags.delete(input.equipment.rangedWeapon ? "melee" : "ranged");
+  }
+  const basicAttack =
+    /^(?:Melee|Ranged) Basic Attack$/i.test(input.power.name) ||
+    Boolean(field(input.power, "_BasicAttack"));
+  if (basicAttack) {
+    tags.add("basic");
+    tags.add(`${tags.has("ranged") ? "ranged" : "melee"} basic`);
+  }
+  const damageRoll = /\d+d\d+/i.test(input.damage ?? "");
+  const globals = new Map([
+    ["attack rolls", "attack"],
+    ["damage", "damage"],
+    ["damage rolls", "damage-roll"],
+    [
+      "weapon attack rolls",
+      tags.has("weapon") && !input.equipment.unarmed ? "attack" : "none",
+    ],
+    [
+      "weapon damage rolls",
+      tags.has("weapon") && !input.equipment.unarmed ? "damage-roll" : "none",
+    ],
+  ]);
+  const seen = new Set<string>();
+  return Object.entries(input.stats).flatMap(([name, stat]) => {
+    const normalized = key(name);
+    const qualified = normalized.match(
+      /^(.*):(attack|damage|damage-roll|info)(?:\((.*)\))?$/,
+    );
+    const kind = globals.get(normalized) ?? qualified?.[2];
+    if (kind === undefined || kind === "none") return [];
+    if (kind === "attack" && !input.hasAttack) return [];
+    if (kind === "damage" && input.damage === undefined) return [];
+    if (kind === "damage-roll" && !damageRoll) return [];
+    // Native comma keywords are a conjunction; parenthesized limits name the
+    // selected weapon/base/enchantment, not another owned inventory variant.
+    if (qualified !== null && qualified !== undefined) {
+      if (!qualified[1]?.split(",").every((tag) => tags.has(key(tag))))
+        return [];
+      const limiter = qualified[3];
+      if (
+        limiter !== undefined &&
+        !input.equipment.definitionIds.some(
+          (id) => key(input.byId.get(key(id))?.name ?? "") === limiter,
+        )
+      )
+        return [];
+    }
+    return stat.contributions.flatMap((contribution) => {
+      const identity = `${contribution.id}:${kind === "damage-roll" ? "damage" : kind}`;
+      if (seen.has(identity) || contribution.reason === "equipment") return [];
+      if (
+        !basicAttack &&
+        (/opportunity attack/i.test(contribution.condition ?? "") ||
+          /^(?:on any successful charge|when you charge)$/i.test(
+            contribution.condition ?? "",
+          ))
+      )
+        return [];
+      if (kind === "info") {
+        if (!contribution.applied && contribution.reason !== "conditional")
+          return [];
+        const text = contribution.value.trim();
+        if (!text) return [];
+        seen.add(identity);
+        return [
+          {
+            text,
+            source: contribution.providerName,
+            provenanceId: contribution.id,
+          },
+        ];
+      }
+      if (contribution.reason !== "conditional" || !contribution.condition)
+        return [];
+      const value = contribution.numericValue;
+      if (value === 0) return [];
+      const amount =
+        value === undefined
+          ? contribution.value
+          : `${value > 0 ? "+" : ""}${value}`;
+      const bonus =
+        contribution.bonusType === undefined
+          ? ""
+          : ` ${contribution.bonusType} bonus`;
+      const text = `${amount}${bonus} to ${kind === "attack" ? "attack rolls" : "damage rolls"} ${contribution.condition} - ${contribution.providerName}.`;
+      seen.add(identity);
+      return [
+        {
+          text,
+          source: contribution.providerName,
+          provenanceId: contribution.id,
+        },
+      ];
+    });
+  });
+}
+
 export function evaluatePowers(input: {
   readonly level: number;
   readonly activeDefinitionIds: readonly string[];
@@ -1295,6 +1433,18 @@ export function evaluatePowers(input: {
           ? {}
           : { attackBonus: primaryAttack.attackBonus }),
         ...damage,
+        additionalEffects: powerAdditionalEffects({
+          stats: input.stats,
+          power,
+          equipment,
+          keywords,
+          ...(attackType === undefined ? {} : { attackType }),
+          attackStat,
+          defense,
+          hasAttack,
+          ...(damage.damage === undefined ? {} : { damage: damage.damage }),
+          byId,
+        }),
         ...(critical === undefined ? {} : { critical }),
         ...(brutal === undefined ? {} : { brutal: Number(brutal) }),
         attackComponents,

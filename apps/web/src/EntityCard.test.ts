@@ -286,7 +286,12 @@ describe("shared power and item cards", () => {
       field("Group", "Hammer", 4),
       field("Weight", "5 lb.", 5),
       field("Properties", "Versatile", 6),
-      field("Properties", "Brutal 1", 7),
+      field("Properties", "Brutal", 7),
+      field(
+        "Full Text",
+        "Synthetic weapon\nProperties:\nBrutal 1 (Reroll low dice.)\nGroup:\nTest group",
+        8,
+      ),
     ]);
     const enchantment = entity("Magic Item", [
       field("Enhancement", "+2 attack rolls and damage rolls", 0),

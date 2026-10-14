@@ -10,6 +10,52 @@ import type { EvaluatedCharacter } from "@4ecb/rules-engine";
 import { buildEvaluatedSheetModel, buildSheetModel } from ".";
 
 describe("sheet model", () => {
+  it("selects legacy additional effects from the equipped saved main hand without pooling alternate caches", () => {
+    const model = buildSheetModel({
+      details: {},
+      abilities: {},
+      stats: {},
+      selectedRules: [],
+      levelCount: 1,
+      source: "legacy-cache",
+      textStrings: { _INTERNAL_MainHandWeapon: "Equipped blade" },
+      loot: [
+        {
+          name: "Equipped blade",
+          count: 1,
+          equippedCount: 1,
+          showPowerCard: true,
+          elements: [],
+        },
+      ],
+      powers: [
+        {
+          name: "Synthetic strike",
+          weapons: [
+            {
+              name: "Carried blade",
+              attackBonus: "1",
+              conditions: "Carried reminder.",
+            },
+            {
+              name: "Equipped blade",
+              attackBonus: "4",
+              conditions: "Equipped reminder.",
+            },
+          ],
+        },
+      ],
+    });
+    expect(model.powers[0]?.attack).toBe("+4 vs defense");
+    expect(model.powers[0]?.additionalEffects).toEqual([
+      { text: "Equipped reminder.", source: "legacy-cache" },
+    ]);
+    expect(model.powers[0]?.variants?.[0]?.additionalEffects).toEqual([
+      { text: "Carried reminder.", source: "legacy-cache" },
+    ]);
+    expect(model.powers[0]?.variants?.[0]?.equipped).toBe(false);
+    expect(model.powers[0]?.variants?.[1]?.hand).toBe("main");
+  });
   it("maps legacy cached values and enriches cards from content", () => {
     const model = buildSheetModel(
       {
@@ -29,6 +75,8 @@ describe("sheet model", () => {
                 attackStat: "Intelligence",
                 defense: "Reflex",
                 damage: "1d6+4",
+                conditions:
+                  "  +1 to damage while flanking (Synthetic feature).\nA verbatim reminder.  ",
               },
             ],
           },
@@ -84,6 +132,12 @@ describe("sheet model", () => {
       attack: "+7 vs Reflex",
       damage: "1d6+4",
       description: "Description",
+      additionalEffects: [
+        {
+          text: "+1 to damage while flanking (Synthetic feature).\nA verbatim reminder.",
+          source: "legacy-cache",
+        },
+      ],
       variants: [
         {
           ability: "Intelligence",
@@ -427,7 +481,20 @@ describe("sheet model", () => {
                 },
               ],
               damageComponents: [],
-              conditionalDamage: [],
+              conditionalDamage: [
+                {
+                  source: "Synthetic striker",
+                  expression: "2d6",
+                  condition: "once per turn",
+                },
+              ],
+              additionalEffects: [
+                {
+                  text: "+1 to damage against a marked target (Synthetic feature).",
+                  source: "Synthetic feature",
+                  provenanceId: "reminder:1",
+                },
+              ],
             },
           ],
           recoveries: [
@@ -655,6 +722,19 @@ describe("sheet model", () => {
     );
 
     expect(model.source).toBe("authoritative-evaluation");
+    expect(model.powers[0]?.additionalEffects).toEqual([
+      {
+        text: "+1 to damage against a marked target (Synthetic feature).",
+        source: "authoritative-evaluation",
+        provider: "Synthetic feature",
+        provenanceId: "reminder:1",
+      },
+      {
+        text: "+2d6 to damage once per turn (Synthetic striker).",
+        source: "authoritative-evaluation",
+        provider: "Synthetic striker",
+      },
+    ]);
     expect(model.identity).toContainEqual({ label: "Level", value: "3" });
     expect(model.identity).toContainEqual({ label: "Race", value: "Cliffkin" });
     expect(model.abilities).toContainEqual({ label: "Strength", value: "20" });
