@@ -56,6 +56,9 @@ application's architecture.
     defines the public synthetic browser workload, metric collection protocol,
     current measurements, guardrail results, and visual evidence used by that
     refactor program.
+18. [Printed overview design study](sheet-overview-prototype.md) documents the
+    isolated M5.6 summary/scratchpad/reference-page prototype and its review and
+    integration boundaries.
 
 ## Definition hierarchy
 

@@ -2,6 +2,22 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Overview prototype (2026-10-14): A separate development entry at
+`/sheet-prototype.html` presents four print-sized synthetic review pages:
+summary, play scratchpad, full feature/feat references, and equipment/character
+record. The scratchpad follows the private quicksheet's organizational pattern,
+including numbered surge hearts and a multi-encounter matrix without copying
+private rules or character content. Letter/A4 and monochrome controls are local
+to the prototype. Production sheets, card layouts, data and settings are untouched.
+See `sheet-overview-prototype.md` for review scope and integration boundaries.
+This is a design review artifact, not finalized pagination or milestone closure.
+Verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/prototypes/SheetPrototype.test.tsx`
+passes 2 render tests; web typecheck and prototype lint pass. In-app browser
+review confirms all four fixture pages stay above their footers with no horizontal
+page overflow on Letter (minimum clearance 11 px) and A4 (minimum 63 px).
+Monochrome toggling is confirmed visually. Browser print/PDF output and arbitrary
+real-data pagination are not acceptance-tested by this isolated review slice.
+
 Printed-card product review accepted (2026-10-14): The product owner approved
 the accumulated power/item card changes for a checkpoint commit. This includes
 readable adaptive fitting, grouped item powers and metadata, weapon property
