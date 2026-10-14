@@ -238,7 +238,7 @@ describe("shared power and item cards", () => {
     expect(itemCardLabel(entity("Weapon", []))).toBe("Weapon");
     const expected = [
       ["Armor", "shirt"],
-      ["Ammunition", "target"],
+      ["Ammunition", "bow-arrow"],
       ["Arms Slot Item", "arms"],
       ["Holy Symbol", "church"],
       ["Ki Focus", "focus"],

@@ -139,7 +139,7 @@ describe("release accessibility contract", () => {
       'localStorage.setItem(SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY, "0")',
     );
     expect(app).toContain("showEquippedAttackBonus={showEquippedAttackBonus}");
-    expect(settingsPage).toContain("Show action icons in printed power titles");
+    expect(settingsPage).toContain("Show action icons on printed cards");
     expect(settingsPage).toContain("checked={showPrintTitleActionIcon}");
     expect(app).toContain(
       'localStorage.getItem(SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY) !== "0"',

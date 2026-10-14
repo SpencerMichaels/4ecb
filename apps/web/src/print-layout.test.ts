@@ -18,6 +18,20 @@ const sheetSource = ["./CharacterSheetPage.tsx", "./print-power-attacks.ts"]
   .join("\n");
 
 describe("print layout contract", () => {
+  it("preserves an empty action band without a divider or an orphan attack-type icon", () => {
+    expect(sheetSource).toContain(
+      '!displayActionType && !attackType ? " is-empty" : ""',
+    );
+    expect(sheetSource).toContain(
+      '{attackType ? <Icon name="sword" /> : null}',
+    );
+    expect(styles).toMatch(
+      /\.print-card-action-band\.is-empty\s*\{[^}]*min-height:\s*0\.15in;/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-action-band\.is-empty > span\s*\{[^}]*border-right:\s*0;/,
+    );
+  });
   it("keeps table text the same dark color as the card body", () => {
     expect(styles).toMatch(/\.print-card-body\s*\{[^}]*color:\s*#111;/);
     expect(styles).toMatch(

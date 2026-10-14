@@ -35,9 +35,41 @@ separate projection over the same semantic model.
 - Item-card follow-up (2026-10-01): title bars now use the equipment/shop's
   category icons and readable bold sans-serif type. Physical statistics wrap
   without four/eight-entry caps; both recovered `Armor Bonus` and `AC Bonus`
-  are supported. Enhancement, Critical, properties, and activated powers stay
-  in the body rather than clipped stat cells. Recognized item-power and
-  consumable prefixes become compact usage/action headings; unknown wording
+  are supported. The revised combat-focused subheader groups melee weapons as
+  Proficiency / Damage / Critical; ranged-capable weapons as Range / Proficiency
+  then Damage / Critical; implements as Enhancement / Critical; armor/shields
+  as AC bonus / Enhancement then nonzero Check / Speed penalties. Missing fields
+  and empty rows disappear. Weapon enhancement is omitted because it is already
+  in the title. Combat rows use mixed-case text and dot separators without boxed
+  cells. Category, group, hands, armor type, rarity, and key ability move to
+  compact metadata prose on the footer's left; slot/weight/price share its right
+  with dot separators. Only worn items show slots, not weapons or implements.
+  Critical entries with riders or conditional wording are freeform rules
+  and remain labeled Critical lines in the body, not subheader values.
+  Activated powers and freeform Property entries stay in the body.
+  Weapon keyword `Properties` occupy a wrapping
+  subheader band styled like power keywords, without repeating them in the body.
+  This weapon Properties band sits immediately below the item title, before
+  numeric/enum stat rows, matching the position of power Keywords.
+  Paragraph-style `Property` entries remain in the body.
+  Weapon keyword values retain authored casing and regular weight, overriding
+  the generic prose heading's uppercase/bold treatment.
+  Passive body properties precede activated powers regardless of authored field
+  order. Item-power usage/action headers use the bordered combat-band language
+  of printed powers; their action symbols follow the existing card icon setting.
+  Follow-up verification: focused item-presentation/accessibility tests pass
+  (38 tests), web typecheck passes, and local visual review confirms Bracers of
+  Archery's passive Property precedes its icon-bearing Daily/Minor header.
+  Grouped-layout checkpoint (2026-10-14): `nix develop path:. -c pnpm exec
+  vitest run apps/web/src/print-item-presentation.test.ts
+  apps/web/src/print-layout.test.ts apps/web/src/EntityCard.test.ts
+  apps/web/src/accessibility-contract.test.ts packages/sheet-model/src/index.test.ts`
+  passes 80 tests in five files. Web typecheck, focused ESLint, and production
+  build pass; `nix develop path:. -c pnpm check:print` passes all eight browser /
+  paper / color variants. Visual review on Silaqui confirms melee/ranged rows,
+  compact armor bonuses, dot-separated right footer details, and no measured
+  item-body/footer overflow. Full milestone acceptance remains separate.
+  Recognized item-power and consumable prefixes become compact usage/action headings; unknown wording
   remains intact. Category and level share the orange bottom bar, with slot,
   weight, and price in a compact footer; numeric weights/prices receive units.
   Ordinary weapons, armor, and gear are no longer universally labeled magic
@@ -56,6 +88,10 @@ separate projection over the same semantic model.
   passes 45 tests across four files. Web typecheck, focused ESLint, and production
   build pass. Visual review on the supplied character confirmed category icons,
   wrapping stat bands, grouped powers, and bounded long-title body layout.
+  Item stat cells place labels and values inline on a shared baseline, wrapping
+  long values without forcing short values onto a separate line.
+  Ammunition uses Lucide `bow-arrow` through the shared item mapping, including
+  mundane gear category metadata, across shop, equipment, details, and print.
   `nix develop path:. -c pnpm check:print` passes all eight Chromium/Firefox
   Letter/A4 color/monochrome variants: 24 cards, five pages, no measured card,
   header-band, target, or table overflow. The matrix now covers a long item title
@@ -77,6 +113,22 @@ separate projection over the same semantic model.
   Immediate Interrupt uses the octagon-minus icon across print and interactive
   action displays; other action symbols are unchanged.
   Printed attack targets use the crosshair icon rather than the bullseye.
+  Empty printed action/type bands retain their spacing but omit the internal
+  divider and icons (for example, Divine Sanction); sword icons appear only
+  beside nonempty attack-type text.
+  Card-label audit (2026-10-14): removed synthesized Recovery rules sections;
+  healing/temporary-hit-point sentences remain solely in their authored Hit or
+  Effect fields. The other synthesized rules label, Compatibility, is replaced
+  by separate interactive calculation warnings, never physical-card sections.
+  Rules-engine recovery metadata remains available for calculations. Remaining
+  body labels originate from authored public fields or established prerequisite
+  metadata. Additional effects is verified in recovered `PowerCardPower.cs`;
+  approved Attack/Damage table and header labels are presentation, not new rules.
+  Verification: `nix develop path:. -c pnpm exec vitest run
+  packages/sheet-model/src/index.test.ts apps/web/src/print-layout.test.ts`
+  passes 11 tests; web typecheck passes. The synthetic fixture contains recovery
+  metadata and unsupported calculations while asserting only authored card
+  fields and separately preserved calculation warnings.
   The printed attack-type cell uses a fixed sword icon to identify the field,
   independent of its melee/ranged/area text.
   Printed to-hit cells use Lucide's dices to distinguish the attack roll from

@@ -51,6 +51,9 @@ export function canonicalItemIcon(
     armorType: contentSpecificValue(identity, "Armor Type"),
     magicItemType: contentSpecificValue(entity, "Magic Item Type"),
     itemSlot: contentSpecificValue(entity, "Item Slot"),
+    gearCategory:
+      contentSpecificValue(entity, "Gear Category") ??
+      contentSpecificValue(entity, "Category"),
     ritualType: contentSpecificValue(entity, "type"),
   });
 }
@@ -62,6 +65,7 @@ export function itemCategoryIcon(metadata: {
   readonly armorType?: string | undefined;
   readonly magicItemType?: string | undefined;
   readonly itemSlot?: string | undefined;
+  readonly gearCategory?: string | undefined;
   readonly ritualType?: string | undefined;
 }): IconName {
   const identityType = normalized(metadata.identityType ?? metadata.type);
@@ -86,6 +90,11 @@ export function itemCategoryIcon(metadata: {
   if (value.includes("artifact") || value.includes("dragonshard")) return "gem";
   if (kind === "weapon") return LOADOUT_SLOT_ICONS["main-hand"];
   if (kind === "armor") return LOADOUT_SLOT_ICONS.body;
+  if (
+    kind.includes("ammunition") ||
+    normalized(metadata.gearCategory) === "ammunition"
+  )
+    return "bow-arrow";
   if (type === "gear") return "item";
   if (type === "item set") return "layers";
   if (type === "ritual scroll") return "details";
@@ -100,7 +109,6 @@ export function itemCategoryIcon(metadata: {
   if (/secret|mystery/u.test(kind)) return "key-round";
   if (kind.includes("soulfang")) return "bone";
   if (kind.includes("templar brand")) return "stamp";
-  if (kind.includes("ammunition")) return "target";
   if (kind.includes("arms slot")) return LOADOUT_SLOT_ICONS.arms;
   if (kind.includes("feet")) return LOADOUT_SLOT_ICONS.feet;
   if (kind.includes("hands")) return LOADOUT_SLOT_ICONS.hands;

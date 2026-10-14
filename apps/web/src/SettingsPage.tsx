@@ -637,12 +637,13 @@ export function SettingsPage({
               onShowPrintTitleActionIconChange(event.currentTarget.checked)
             }
           />{" "}
-          Show action icons in printed power titles
+          Show action icons on printed cards
         </label>
         <p className="field-help">
           Put the action symbol beside the power name, with a timer beside the
-          action description below. Turn this off to keep the action symbol only
-          beside its description.
+          action description below, and show action symbols in item-power
+          headers. Turn this off to keep power symbols only beside their
+          descriptions and omit item-action symbols.
         </p>
       </section>
 

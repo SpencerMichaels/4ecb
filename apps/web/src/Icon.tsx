@@ -5,6 +5,7 @@ import {
   Badge,
   BicepsFlexed,
   Bone,
+  BowArrow,
   BookMarked,
   BookOpen,
   Brain,
@@ -100,6 +101,7 @@ export type IconName =
   | "background"
   | "badge"
   | "bone"
+  | "bow-arrow"
   | "book"
   | "book-marked"
   | "brain"
@@ -192,6 +194,7 @@ const icons: Record<IconName, LucideIcon> = {
   background: ScrollText,
   badge: Badge,
   bone: Bone,
+  "bow-arrow": BowArrow,
   book: BookOpen,
   "book-marked": BookMarked,
   brain: Brain,

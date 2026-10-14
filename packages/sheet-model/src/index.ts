@@ -43,6 +43,8 @@ export interface SheetCard {
   readonly description?: string;
   readonly source?: string;
   readonly variants?: readonly SheetPowerVariant[];
+  /** Calculation diagnostics, never authored rules or physical-card sections. */
+  readonly calculationWarnings?: readonly string[];
 }
 
 export type SheetLearnedReferenceKind =
@@ -612,13 +614,6 @@ function evaluatedPowerCards(
         label,
         value: personalize(value),
       })),
-    ...power.recoveries.map((recovery) => ({
-      label: "Recovery",
-      value: recovery.expression,
-    })),
-    ...(power.unsupported.length === 0
-      ? []
-      : [{ label: "Compatibility", value: power.unsupported.join("; ") }]),
   ];
   const variants: readonly SheetPowerVariant[] = power.variants.map(
     (variant) => ({
@@ -695,6 +690,9 @@ function evaluatedPowerCards(
         : { damage: defaultVariant.damage }),
       ...(variants.length === 0 ? {} : { variants }),
       fields: commonFields,
+      ...(power.unsupported.length === 0
+        ? {}
+        : { calculationWarnings: power.unsupported }),
       ...entityPresentation(entity),
     },
   ];

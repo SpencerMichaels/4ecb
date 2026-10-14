@@ -208,6 +208,11 @@ function Card({
       {card.description === undefined ? null : (
         <Prose value={card.description} />
       )}
+      {card.calculationWarnings?.map((warning, index) => (
+        <p className="status warning screen-only" key={index}>
+          {warning}
+        </p>
+      ))}
       {card.source === undefined ? null : <footer>{card.source}</footer>}
     </article>
   );
@@ -335,7 +340,7 @@ function PrintPowerCard({
   readonly showPrintTitleActionIcon: boolean;
 }) {
   const cardRef = usePrintCardFit();
-  const attackType = cardField(card, "Attack Type") ?? "";
+  const attackType = cardField(card, "Attack Type")?.trim() ?? "";
   const level = cardField(card, "Level");
   const powerType = cardField(card, "Power Type");
   const displayActionType = card.actionType?.replace(/\s+action\b/i, "").trim();
@@ -398,7 +403,9 @@ function PrintPowerCard({
         <span>Keywords</span>
         <strong>{card.keywords}</strong>
       </div>
-      <div className="print-card-action-band">
+      <div
+        className={`print-card-action-band${!displayActionType && !attackType ? " is-empty" : ""}`}
+      >
         <span>
           {showPrintTitleActionIcon && card.actionType?.trim() ? (
             <Icon name="timer" />
@@ -408,7 +415,7 @@ function PrintPowerCard({
           {displayActionType}
         </span>
         <span>
-          <Icon name="sword" />
+          {attackType ? <Icon name="sword" /> : null}
           {attackType}
         </span>
       </div>
@@ -477,7 +484,13 @@ function PrintPowerCard({
   );
 }
 
-function PrintItemCard({ card }: { readonly card: SheetCard }) {
+function PrintItemCard({
+  card,
+  showActionIcons,
+}: {
+  readonly card: SheetCard;
+  readonly showActionIcons: boolean;
+}) {
   const cardRef = usePrintCardFit();
   const item = printItemPresentation(card);
   return (
@@ -488,14 +501,30 @@ function PrintItemCard({ card }: { readonly card: SheetCard }) {
           <span>{card.name}</span>
         </h3>
       </header>
-      <dl className="print-item-stats">
-        {item.stats.map(({ label, value }) => (
-          <div key={label}>
-            <dt>{label}</dt>
-            <dd>{value}</dd>
+      <div className="print-item-subheader">
+        {item.weaponProperties.length > 0 ? (
+          <div className="print-card-keywords print-item-properties">
+            <span>Properties</span>
+            <div>
+              {item.weaponProperties.map((field, index) => (
+                <Prose key={index} value={field.value} />
+              ))}
+            </div>
           </div>
-        ))}
-      </dl>
+        ) : null}
+        <dl className="print-item-stats">
+          {item.statRows.map((row, rowIndex) => (
+            <div className="print-item-stat-row" key={rowIndex}>
+              {row.map(({ label, value }) => (
+                <div key={label}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+            </div>
+          ))}
+        </dl>
+      </div>
       <div className="print-card-body print-item-body">
         {item.description ? <Prose value={item.description} /> : null}
         {item.rules.map((field, index) => {
@@ -506,7 +535,21 @@ function PrintItemCard({ card }: { readonly card: SheetCard }) {
               key={`${field.label}-${index}`}
             >
               {power ? (
-                <div className="print-item-power-heading">{power.title}</div>
+                <div className="print-item-power-heading">
+                  {power.actionType ? (
+                    <>
+                      <span>{power.usage}</span>
+                      <span>
+                        {showActionIcons ? (
+                          <ActionTypeIcon decorative value={power.actionType} />
+                        ) : null}
+                        {power.actionType}
+                      </span>
+                    </>
+                  ) : (
+                    <span>{power.title}</span>
+                  )}
+                </div>
               ) : null}
               <div className="print-item-rule-text">
                 <strong>{power ? null : `${field.label}: `}</strong>
@@ -516,10 +559,9 @@ function PrintItemCard({ card }: { readonly card: SheetCard }) {
           );
         })}
       </div>
-      <footer>
-        <span>{item.slot}</span>
-        <span>{item.weight}</span>
-        <span>{item.price}</span>
+      <footer className="print-item-footer">
+        <span>{item.metadata}</span>
+        <span className="print-item-footer-details">{item.footerDetails}</span>
       </footer>
       <div className="print-card-type">
         <span>{item.kind}</span>
@@ -551,7 +593,7 @@ function PrintCard({
       showPrintTitleActionIcon={showPrintTitleActionIcon}
     />
   ) : (
-    <PrintItemCard card={card} />
+    <PrintItemCard card={card} showActionIcons={showPrintTitleActionIcon} />
   );
 }
 

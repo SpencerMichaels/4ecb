@@ -430,8 +430,13 @@ describe("sheet model", () => {
               conditionalDamage: [],
             },
           ],
-          recoveries: [],
-          unsupported: [],
+          recoveries: [
+            {
+              kind: "temporary-hit-points",
+              expression: "Gain 5 + half your level temporary hit points.",
+            },
+          ],
+          unsupported: ["Synthetic calculation limitation."],
         },
       ],
       suggestions: [],
@@ -660,6 +665,7 @@ describe("sheet model", () => {
     });
     expect(model.powers[0]).toMatchObject({
       name: "Arc Flash",
+      calculationWarnings: ["Synthetic calculation limitation."],
       attack: "+7 vs Reflex",
       damage: "1d6+4",
       flavor: "Lightning gathers around your implement.",
@@ -740,7 +746,11 @@ describe("sheet model", () => {
     });
     expect(model.items[0]).toMatchObject({ name: "Test wand" });
     expect(model.items).toContainEqual(
-      expect.objectContaining({ name: "Gloaming Leather Armor +1", itemType: "Magic Item", baseItemType: "Armor" }),
+      expect.objectContaining({
+        name: "Gloaming Leather Armor +1",
+        itemType: "Magic Item",
+        baseItemType: "Armor",
+      }),
     );
     expect(
       model.items.find(({ name }) => name === "Gloaming Leather Armor +1")

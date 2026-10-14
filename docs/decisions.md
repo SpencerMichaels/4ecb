@@ -1822,19 +1822,50 @@ Keep orange item identity, add the existing shop/equipment category icon to the
 title, and reuse its canonical category mapping. The sheet model exposes neutral
 item/base-type metadata; icon selection remains a web presentation concern.
 
-Physical stats wrap and are not silently capped. Enhancement and Critical live
-with properties and activated rules in the body. Recognized usage/action prefixes
+Combat values use item-specific rows: melee Proficiency / Damage / Critical;
+ranged-capable Range / Proficiency then Damage / Critical; implement Enhancement
+/ Critical; armor/shield AC bonus / Enhancement then nonzero penalties. Omit
+weapon enhancement already represented in the title, absent values, and empty
+rows. Use dot-separated values in softly tinted rows without boxed cells.
+Noncombat enums become compact metadata prose on the footer's left; slot,
+weight, and price share its right with dot separators. Only worn items show
+slots; held weapons and implements do not. A Critical entry with a rider or
+conditional wording is freeform:
+keep its entire value as a labeled Critical line in the body and omit it from
+the subheader. Prices remain in the footer, including silver/copper denominations.
+Activated rules and freeform properties live in the body. Unknown fields are
+preserved there until their semantics are established, not classified by guessing
+from a short value. Weapon keyword `Properties` occupy a wrapping
+subheader band styled like power keywords. General paragraph-style `Property`
+entries remain in the body; these are distinct authored field types, not aliases.
+Recognized usage/action prefixes
 become per-power headings; unfamiliar prose is never rewritten speculatively.
+Passive body fields precede activated powers while preserving authored order
+within each group. Item-action headers mirror power combat bands, with action
+symbols controlled by the existing printed-card icon preference; category icons
+in item titles remain independent of that preference.
 Combine category and level in the bottom bar and label numeric weight/price with
 units. Inventory quantity is not an inherent item property and is omitted from
 physical cards. Honor both legacy Armor Bonus and AC Bonus. Omit identified flavor
-and
-retain unstructured custom instructions when structured rules are unavailable.
+and retain unstructured custom instructions when structured rules are unavailable.
 Keep fixed card dimensions and adaptive fitting rather than growing cards.
 
 Evidence: recovered `PowerCardItem.UpdatePowerCardItem` field composition,
 product-owner item-card audit approval, and synthetic presentation fixtures.
 This checkpoint does not close M5.6 or replace its broader acceptance gates.
+
+### D074 — Card rules labels must come from authored rules
+
+Status: accepted. Date: 2026-10-14.
+
+Do not synthesize novel rules sections from calculated metadata. Recovery was
+an invented heading that duplicated healing/temporary-hit-point sentences from
+Hit or Effect; omit it from sheet card fields while retaining rules-engine
+metadata. Compatibility diagnostics likewise belong to separate interactive
+warnings, not rules fields or physical cards. Preserve original authored labels
+and text, including legitimate repeated fields. Approved calculated attack/damage
+headers and tables remain presentation, not extra rules sections. The legacy
+Additional effects writing area is confirmed by recovered `PowerCardPower.cs`.
 
 ## Deferred decisions and decision points
 
