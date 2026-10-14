@@ -23,4 +23,40 @@ describe("isolated sheet design prototype", () => {
     expect(markup).toContain("Conditions &amp; temporary effects");
     expect(markup).toContain("When an effect would move you");
   });
+  it("prioritizes combat references, groups languages with skills and uses skull death markers", () => {
+    const markup = renderToStaticMarkup(<SheetPrototype />);
+    const summary = markup.split('id="summary"')[1]!.split("</article>")[0]!;
+    expect(summary.indexOf("Defenses")).toBeLessThan(
+      summary.indexOf("Ability scores"),
+    );
+    expect(summary.indexOf("Movement &amp; awareness")).toBeLessThan(
+      summary.indexOf("Ability scores"),
+    );
+    expect(summary).toMatch(/sp-skills-column[\s\S]*Languages/);
+    const scratchpad = markup
+      .split('id="scratchpad"')[1]!
+      .split("</article>")[0]!;
+    expect(scratchpad.match(/lucide-skull/g)).toHaveLength(3);
+    expect(scratchpad.indexOf("Ten healing surge hearts")).toBeLessThan(
+      scratchpad.indexOf(">Resources</h3>"),
+    );
+    expect(scratchpad).not.toContain("<h2>");
+    expect(scratchpad).not.toContain("Extended rest");
+    const shared = scratchpad
+      .split('class="sp-shared-resource"')[1]!
+      .split("</tr>")[0]!;
+    expect(shared).toContain("Channel Divinity");
+    expect(shared.match(/action-type-icon/g)).toHaveLength(2);
+  });
+  it("groups reference cards by category and labels indexed powers with levels or nonlevel origins", () => {
+    const markup = renderToStaticMarkup(<SheetPrototype />);
+    for (const title of ["Class features", "Racial traits", "Feats"])
+      expect(markup).toContain(`<h3>${title}</h3>`);
+    expect(markup).toContain(
+      "<span>Radiant Strike</span><small>Level 1</small>",
+    );
+    expect(markup).toContain(
+      "<span>Boots of the Wayfarer</span><small>Item</small>",
+    );
+  });
 });

@@ -18,22 +18,26 @@ physical card layout, stored characters, settings and evaluation are unchanged.
 
 ## Review surfaces
 
-1. **Summary:** identity/portrait placeholder, ability scores and modifiers,
+1. **Summary:** identity/portrait placeholder, compact secondary ability scores and modifiers,
    prominent defenses and health references, movement/awareness, complete skill
-   list, languages, conditional/ally-facing reminders and abbreviated feat
+   list with a prominent adjacent Languages panel, conditional/ally-facing reminders and abbreviated feat
    reminders. Mutable values point to the scratchpad instead of scattering
    writing boxes throughout the reference page.
 2. **Play scratchpad:** blank health/temp-HP fields, numbered fillable-on-paper
-   surge hearts, action points, death saves, six encounter-use columns, daily
-   power tracking, an explicit shared-use example, treasure/consumables and
+   surge hearts grouped with health, action points, skull death-save markers, six encounter-use columns, daily
+   power tracking, an explicit Channel Divinity shared-use example with per-power
+   action icons, treasure/consumables and
    temporary effects. Quick reference and pertinent reminders are deliberately
-   repeated. The product owner's private quicksheet informs the organization;
+   repeated. A small session/date field replaces the large heading and extended-rest
+   field. The product owner's private quicksheet informs the organization;
    its private character/rules data is not embedded.
-3. **Feature reference:** readable variable-height full-description cards,
+3. **Feature reference:** readable variable-height full-description cards grouped
+   into Class features, Racial traits and Feats,
    category icons/subheaders, preserved prose headings, a long-title case and
    multi-paragraph benefits. These are not fixed-size physical cards.
 4. **Equipment and record:** slot-oriented equipped list, carried quantities,
-   power frequency index, appearance/personality, companions and notes.
+   power frequency index with levels (or explicit nonlevel origins such as Item),
+   appearance/personality, companions and notes.
 
 All content is synthetic and labelled illustrative, not an authoritative D&D
 build or a calculated example. The portrait is a placeholder. No proprietary

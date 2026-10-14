@@ -103,10 +103,12 @@ function Page({
         <span>{title}</span>
       </header>
       <div className="sp-page-content">
-        <div className="sp-page-heading">
-          <h2>{title}</h2>
-          <p>{subtitle}</p>
-        </div>
+        {id === "scratchpad" ? null : (
+          <div className="sp-page-heading">
+            <h2>{title}</h2>
+            <p>{subtitle}</p>
+          </div>
+        )}
         {children}
       </div>
       <footer className="sp-page-footer">
@@ -160,16 +162,6 @@ function Summary() {
           <small>Next level 16,500</small>
         </div>
       </section>
-      <div className="sp-abilities">
-        {abilities.map(([name, score, modifier]) => (
-          <div key={name}>
-            <span>{name}</span>
-            <strong>{score}</strong>
-            <b>{modifier}</b>
-            <small>modifier</small>
-          </div>
-        ))}
-      </div>
       <div className="sp-summary-grid">
         <div className="sp-column">
           <Panel title="Defenses" icon="shield">
@@ -234,6 +226,20 @@ function Summary() {
               <strong>Saving throws:</strong> +1
             </p>
           </Panel>
+          <section className="sp-ability-reference" aria-label="Ability scores">
+            <h3>
+              Ability scores <span>Score / modifier</span>
+            </h3>
+            <div className="sp-abilities">
+              {abilities.map(([name, score, modifier]) => (
+                <div key={name}>
+                  <span>{name}</span>
+                  <strong>{score}</strong>
+                  <b>{modifier}</b>
+                </div>
+              ))}
+            </div>
+          </section>
           <Panel
             title="Remember in play"
             icon="feat"
@@ -242,36 +248,38 @@ function Summary() {
             <ReminderList />
             <p className="sp-caption">Full feature descriptions → p. 3</p>
           </Panel>
-          <p className="sp-languages">
-            <strong>Languages:</strong> Common, Dwarven, Elven
-          </p>
         </div>
-        <Panel title="Skills" icon="skill" className="sp-skills-panel">
-          <div className="sp-skill-legend">
-            ● Trained <span>Ability</span>
-          </div>
-          <table className="sp-skill-table">
-            <tbody>
-              {skills.map(([name, ability, total, trained]) => (
-                <tr key={name}>
-                  <td className="sp-skill-total">{total}</td>
-                  <th scope="row">{name}</th>
-                  <td
-                    className="sp-trained"
-                    aria-label={trained ? "Trained" : "Untrained"}
-                  >
-                    {trained ? "●" : ""}
-                  </td>
-                  <td className="sp-skill-ability">{ability}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="sp-caption">
-            Totals include permanent modifiers. Apply conditional benefits when
-            relevant.
-          </p>
-        </Panel>
+        <div className="sp-column sp-skills-column">
+          <Panel title="Skills" icon="skill" className="sp-skills-panel">
+            <div className="sp-skill-legend">
+              ● Trained <span>Ability</span>
+            </div>
+            <table className="sp-skill-table">
+              <tbody>
+                {skills.map(([name, ability, total, trained]) => (
+                  <tr key={name}>
+                    <td className="sp-skill-total">{total}</td>
+                    <th scope="row">{name}</th>
+                    <td
+                      className="sp-trained"
+                      aria-label={trained ? "Trained" : "Untrained"}
+                    >
+                      {trained ? "●" : ""}
+                    </td>
+                    <td className="sp-skill-ability">{ability}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="sp-caption">
+              Totals include permanent modifiers. Apply conditional benefits
+              when relevant.
+            </p>
+          </Panel>
+          <Panel title="Languages" icon="race" className="sp-languages-panel">
+            <p>Common · Dwarven · Elven</p>
+          </Panel>
+        </div>
       </div>
       <section className="sp-feat-summary">
         <h3>
@@ -330,9 +338,6 @@ function Scratchpad() {
         <span>
           Session / date <i />
         </span>
-        <span>
-          Extended rest <i />
-        </span>
       </div>
       <div className="sp-scratch-top">
         <Panel title="Health" icon="class">
@@ -352,15 +357,24 @@ function Scratchpad() {
               <span>Temporary HP</span>
             </div>
           </div>
-          <div className="sp-death-saves">
-            Death saves <span>○ ○ ○</span>
+          <div className="sp-health-trackers">
+            <div>
+              <p className="sp-caption">
+                Healing surges · 10/day · Fill when spent
+              </p>
+              <Hearts />
+            </div>
+            <div className="sp-death-saves">
+              Death saves
+              <span aria-label="Three death save markers">
+                <Icon name="skull" />
+                <Icon name="skull" />
+                <Icon name="skull" />
+              </span>
+            </div>
           </div>
         </Panel>
         <Panel title="Resources" icon="circle">
-          <p className="sp-caption">
-            Fill one heart per surge spent · 10 per day
-          </p>
-          <Hearts />
           <div className="sp-action-points">
             <span>Action points</span>
             <i />
@@ -398,8 +412,16 @@ function Scratchpad() {
                 ))}
                 <tr className="sp-shared-resource">
                   <th scope="row">
-                    <span>Shared allowance</span>Radiant Rebuke / Restoring
-                    Light<small>One use of either per encounter</small>
+                    <span>Channel Divinity</span>
+                    <div className="sp-shared-power">
+                      <ActionTypeIcon decorative value="Standard Action" />
+                      Radiant Rebuke
+                    </div>
+                    <div className="sp-shared-power">
+                      <ActionTypeIcon decorative value="Minor Action" />
+                      Restoring Light
+                    </div>
+                    <small>One use of either per encounter</small>
                   </th>
                   {Array.from({ length: 6 }, (_, n) => (
                     <td key={n} />
@@ -580,6 +602,40 @@ const featureCards: readonly {
   },
 ];
 
+function FeatureGroup({
+  title,
+  cards,
+}: {
+  title: string;
+  cards: readonly (typeof featureCards)[number][];
+}) {
+  return (
+    <section className="sp-feature-group">
+      <h3>{title}</h3>
+      <div className="sp-column">
+        {cards.map((card) => (
+          <section className="sp-feature-card" key={card.name}>
+            <header>
+              <Icon name={card.icon} />
+              <h4>{card.name}</h4>
+            </header>
+            <div className="sp-feature-category">{card.type}</div>
+            <div className="sp-feature-body">
+              {card.intro ? <p className="sp-flavor">{card.intro}</p> : null}
+              {card.paragraphs.map(([label, text]) => (
+                <p key={label}>
+                  <strong>{label}:</strong> {text}
+                </p>
+              ))}
+            </div>
+            <footer>Illustrative rules · Layout sample</footer>
+          </section>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function FeatureReference() {
   return (
     <Page
@@ -589,32 +645,22 @@ function FeatureReference() {
       subtitle="Full rules, not just the reminder. Variable-height reference cards, not cut-out cards."
     >
       <div className="sp-feature-columns">
-        {[featureCards.slice(0, 3), featureCards.slice(3)].map(
-          (cards, index) => (
-            <div className="sp-column" key={index}>
-              {cards.map((card) => (
-                <section className="sp-feature-card" key={card.name}>
-                  <header>
-                    <Icon name={card.icon} />
-                    <h3>{card.name}</h3>
-                  </header>
-                  <div className="sp-feature-category">{card.type}</div>
-                  <div className="sp-feature-body">
-                    {card.intro ? (
-                      <p className="sp-flavor">{card.intro}</p>
-                    ) : null}
-                    {card.paragraphs.map(([label, text]) => (
-                      <p key={label}>
-                        <strong>{label}:</strong> {text}
-                      </p>
-                    ))}
-                  </div>
-                  <footer>Illustrative rules · Layout sample</footer>
-                </section>
-              ))}
-            </div>
-          ),
-        )}
+        <div className="sp-column">
+          <FeatureGroup
+            title="Class features"
+            cards={featureCards.filter((card) =>
+              card.type.startsWith("Class feature"),
+            )}
+          />
+          <FeatureGroup
+            title="Racial traits"
+            cards={featureCards.filter((card) => card.type === "Racial trait")}
+          />
+        </div>
+        <FeatureGroup
+          title="Feats"
+          cards={featureCards.filter((card) => card.type === "Feat")}
+        />
       </div>
       <div className="sp-reference-note">
         <Icon name="book" />
@@ -626,6 +672,23 @@ function FeatureReference() {
     </Page>
   );
 }
+
+const powerLevels: Readonly<Record<string, string>> = {
+  "Radiant Strike": "Level 1",
+  "Hold the Line": "Level 1",
+  "A Shield Between Friends": "Level 3",
+  "Driving Advance": "Level 1",
+  "Light Through the Gathering Storm": "Level 7",
+  "Second Wind": "Basic",
+  "Guardian’s Signal": "Class feature",
+  "Boots of the Wayfarer": "Item",
+  "Radiant Rebuke": "Class feature",
+  "Restoring Light": "Class feature",
+  "Beacon at the Edge of Darkness": "Level 5",
+  "Unbroken Resolve": "Level 2",
+  "Cloak of Safe Passage": "Item",
+  "A Promise Remembered": "Racial",
+};
 
 function EquipmentRecord() {
   return (
@@ -698,7 +761,14 @@ function EquipmentRecord() {
             <div className="sp-power-index">
               {[
                 ["At-Will", ["Radiant Strike", "Hold the Line"]],
-                ["Encounter", encounters.map(([name]) => name)],
+                [
+                  "Encounter",
+                  [
+                    ...encounters.map(([name]) => name),
+                    "Radiant Rebuke",
+                    "Restoring Light",
+                  ],
+                ],
                 ["Daily", dailies.map(([name]) => name)],
               ].map(([usage, names]) => (
                 <section
@@ -707,7 +777,10 @@ function EquipmentRecord() {
                 >
                   <h4>{usage}</h4>
                   {(names as string[]).map((name) => (
-                    <p key={name}>{name}</p>
+                    <p key={name}>
+                      <span>{name}</span>
+                      <small>{powerLevels[name]}</small>
+                    </p>
                   ))}
                 </section>
               ))}

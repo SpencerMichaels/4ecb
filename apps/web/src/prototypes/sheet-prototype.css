@@ -160,18 +160,9 @@ body:has(.sp-prototype) {
 #summary .sp-column {
   gap: 0.085in;
 }
-.sp-languages {
-  font-size: 9pt;
-  padding: 0.035in 0.01in;
-}
-#scratchpad .sp-page-heading {
-  margin-block: 0.1in;
-}
-#scratchpad .sp-page-heading p {
-  display: none;
-}
-#scratchpad .sp-page-heading h2 {
-  font-size: 17pt;
+.sp-languages-panel .sp-panel-content {
+  font-size: 10.5pt;
+  line-height: 1.5;
 }
 .sp-page-footer {
   position: absolute;
@@ -289,15 +280,26 @@ body:has(.sp-prototype) {
   grid-template-columns: repeat(6, 1fr);
   border: 1px solid var(--sp-border);
   border-radius: 3px;
-  margin: 0.15in 0;
+  margin: 0;
 }
 #summary .sp-abilities {
-  margin-block: 0.11in;
+  margin: 0;
+}
+.sp-ability-reference h3 {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9pt;
+  color: var(--sp-muted);
+  margin-bottom: 0.04in;
+}
+.sp-ability-reference h3 > span {
+  font-size: 8pt;
+  font-weight: 400;
 }
 .sp-abilities > div {
   display: grid;
   grid-template-columns: 1fr auto;
-  padding: 0.07in 0.1in;
+  padding: 0.045in 0.065in;
   align-items: baseline;
   border-right: 1px solid #d5dadd;
 }
@@ -305,29 +307,26 @@ body:has(.sp-prototype) {
   border: 0;
 }
 .sp-abilities span {
-  font-size: 9pt;
+  font-size: 8pt;
   font-weight: 700;
   grid-column: 1 / -1;
   color: var(--sp-muted);
 }
 .sp-abilities strong {
-  font-size: 22pt;
+  font-size: 12pt;
   line-height: 1.2;
+  font-weight: 400;
 }
 .sp-abilities b {
-  font-size: 13pt;
-  font-weight: 500;
-}
-.sp-abilities small {
-  grid-column: 2;
-  font-size: 6.5pt;
-  color: var(--sp-muted);
+  font-size: 11pt;
+  font-weight: 600;
 }
 .sp-summary-grid {
   display: grid;
   grid-template-columns: 1.52fr 1fr;
   gap: 0.15in;
   align-items: start;
+  margin-top: 0.15in;
 }
 .sp-values {
   display: grid;
@@ -466,7 +465,8 @@ body:has(.sp-prototype) {
 .sp-session {
   display: flex;
   gap: 0.3in;
-  margin-bottom: 0.15in;
+  margin: 0.1in 0 0.12in auto;
+  width: 3in;
 }
 .sp-session > span {
   display: flex;
@@ -482,7 +482,7 @@ body:has(.sp-prototype) {
 }
 .sp-scratch-top {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.5fr 1fr;
   gap: 0.15in;
   margin-bottom: 0.15in;
 }
@@ -521,10 +521,31 @@ body:has(.sp-prototype) {
   justify-content: space-between;
   margin-top: 0.045in;
   font-size: 8.5pt;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.08in;
+}
+.sp-health-trackers {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.1in;
+  margin-top: 0.05in;
+}
+.sp-health-trackers .sp-hearts {
+  margin-block: 0.06in 0.02in;
+}
+.sp-health-trackers .sp-hearts svg {
+  width: 0.2in;
+  height: 0.2in;
 }
 .sp-death-saves > span {
-  font-size: 19pt;
-  letter-spacing: 0.04in;
+  display: flex;
+  gap: 0.1in;
+}
+.sp-death-saves .icon {
+  width: 0.2in;
+  height: 0.2in;
+  stroke-width: 1.4;
 }
 .sp-hearts {
   display: grid;
@@ -549,15 +570,28 @@ body:has(.sp-prototype) {
   font-size: 7pt;
 }
 .sp-action-points {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
   gap: 0.07in;
   font-size: 9pt;
   margin-top: 0.14in;
 }
+.sp-action-points > :nth-child(1) {
+  grid-area: 1 / 1;
+}
+.sp-action-points > :nth-child(2) {
+  grid-area: 2 / 1;
+}
+.sp-action-points > :nth-child(3) {
+  grid-area: 1 / 2;
+}
+.sp-action-points > :nth-child(4) {
+  grid-area: 2 / 2;
+}
 .sp-action-points i {
   border: 1px solid var(--sp-border);
-  height: 0.28in;
+  height: 0.5in;
   flex: 1;
   border-radius: 2px;
 }
@@ -622,6 +656,14 @@ body:has(.sp-prototype) {
   font-size: 7pt;
   margin-top: 0.02in;
   color: var(--sp-muted);
+}
+.sp-shared-power {
+  display: flex;
+  align-items: baseline;
+  margin-top: 0.04in;
+}
+.sp-shared-power .action-type-icon {
+  flex-shrink: 0;
 }
 .sp-daily-list > div {
   display: flex;
@@ -720,10 +762,16 @@ body:has(.sp-prototype) {
   align-self: start;
   margin-top: 0.015in;
 }
-.sp-feature-card h3 {
+.sp-feature-card h4 {
   font-size: 12pt;
   line-height: 1.2;
   font-weight: 700;
+}
+.sp-feature-group > h3 {
+  font-size: 11pt;
+  border-bottom: 2px solid var(--sp-ink);
+  padding-bottom: 0.045in;
+  margin-bottom: 0.08in;
 }
 .sp-feature-category {
   background: var(--sp-soft);
@@ -804,6 +852,15 @@ body:has(.sp-prototype) {
 .sp-index-group p {
   padding: 0.025in 0.06in;
   font-size: 9pt;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.1in;
+}
+.sp-index-group p > small {
+  flex-shrink: 0;
+  font-size: 8pt;
+  color: var(--sp-muted);
 }
 .sp-record-notes {
   height: 0.85in;

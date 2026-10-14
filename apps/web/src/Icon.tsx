@@ -69,6 +69,7 @@ import {
   Sparkles,
   SquareStar,
   Stamp,
+  Skull,
   StepForward,
   Star,
   Sun,
@@ -168,6 +169,7 @@ export type IconName =
   | "shopping-cart"
   | "shirt"
   | "skill"
+  | "skull"
   | "square-star"
   | "stamp"
   | "scroll-text"
@@ -262,6 +264,7 @@ const icons: Record<IconName, LucideIcon> = {
   "shopping-cart": ShoppingCart,
   shirt: Shirt,
   skill: GraduationCap,
+  skull: Skull,
   "square-star": SquareStar,
   stamp: Stamp,
   "scroll-text": ScrollText,
