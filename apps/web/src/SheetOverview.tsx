@@ -6,10 +6,14 @@ import {
   type ReactNode,
 } from "react";
 import type { CharacterPortrait } from "@4ecb/character-domain";
-import type { CharacterSheetModel, SheetValue } from "@4ecb/sheet-model";
+import type {
+  CharacterSheetModel,
+  SheetCard,
+  SheetPowerVariant,
+  SheetValue,
+} from "@4ecb/sheet-model";
 import { Icon, type IconName } from "./Icon";
 import { ActionTypeIcon } from "./ActionTypeIcon";
-import { PrintPowerVariants } from "./PrintPowerVariants";
 import { Prose, ProseBlocks, proseBlocks, type ProseBlock } from "./Prose";
 import { printItemPower } from "./print-item-presentation";
 import "./sheet-overview.css";
@@ -112,57 +116,111 @@ const abilityKey: Readonly<Record<string, string>> = {
   Wisdom: "WIS",
   Charisma: "CHA",
 };
+function basicAttackVariants(power: SheetCard) {
+  const ranged = /^ranged basic attack$/i.test(power.name.trim());
+  const rank = (variant: SheetPowerVariant) =>
+    !variant.equipped
+      ? 3
+      : variant.hand === "main"
+        ? 0
+        : variant.hand === "off"
+          ? 1
+          : 2;
+  return [...(power.variants ?? [])]
+    .filter(
+      (variant) => !ranged || !/^unarmed$/i.test(variant.equipmentName.trim()),
+    )
+    .sort((a, b) => rank(a) - rank(b));
+}
+export function overviewBasicAttackRows(
+  model: CharacterSheetModel,
+  variantLimit = Infinity,
+) {
+  return model.powers
+    .filter((power) => /^(melee|ranged) basic attack$/i.test(power.name.trim()))
+    .flatMap((power) => {
+      const ranged = /^ranged/i.test(power.name);
+      const variants = basicAttackVariants(power);
+      const visible = variants.slice(0, variantLimit);
+      const rows = visible.map((variant) => {
+        const cell =
+          variant.attacks === undefined
+            ? variant
+            : variant.attacks.find((attack) => attack.ordinal === 1);
+        const eligible =
+          cell !== undefined &&
+          !("eligible" in cell && cell.eligible === false);
+        return {
+          id: `${power.id ?? power.name}:${variant.id}`,
+          ranged,
+          weapon: variant.equipmentName,
+          attack:
+            eligible && !cell.attack?.includes("Unknown")
+              ? (cell.attack?.match(/^[+-]?\d+/)?.[0] ?? "—")
+              : "—",
+          damage: eligible
+            ? (cell.damage?.replace(/\s*\+\s*/g, "+") ?? "—")
+            : "—",
+        };
+      });
+      if (!variants.length && !power.variants?.length)
+        rows.push({
+          id: power.id ?? power.name,
+          ranged,
+          weapon: "Unspecified weapon",
+          attack: power.attack?.match(/^[+-]?\d+/)?.[0] ?? "—",
+          damage: power.damage ?? "—",
+        });
+      return rows;
+    });
+}
 function BasicAttacks({
   model,
-  abbreviated = false,
   variantLimit = 2,
 }: {
   model: CharacterSheetModel;
-  abbreviated?: boolean;
   variantLimit?: number;
 }) {
-  const powers = model.powers.filter((power) =>
-    /^(melee|ranged) basic attack$/i.test(power.name.trim()),
-  );
+  const rows = overviewBasicAttackRows(model, variantLimit);
+  const hasMore = rows.length < overviewBasicAttackRows(model).length;
   return (
     <Panel title="Basic attacks" icon="sword" className="sp-basic-attacks">
-      {powers.length === 0 ? (
-        <p className="sp-caption">No basic attack calculation is available.</p>
+      {rows.length ? (
+        <table
+          className="ov-basic-table"
+          aria-label="Basic attack weapon calculations"
+        >
+          <thead>
+            <tr>
+              <th scope="col">Weapon</th>
+              <th scope="col">Attack</th>
+              <th scope="col">Damage</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id}>
+                <th scope="row">
+                  <span className="ov-basic-weapon">
+                    <Icon name={row.ranged ? "bow-arrow" : "sword"} />
+                    <span className="sp-sr-only">
+                      {row.ranged ? "Ranged" : "Melee"}:{" "}
+                    </span>
+                    <span>{row.weapon}</span>
+                  </span>
+                </th>
+                <td>{row.attack}</td>
+                <td>{row.damage}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       ) : (
-        powers.map((power) => {
-          const variants = power.variants ?? [];
-          const visible = abbreviated
-            ? [...variants]
-                .sort((a, b) => Number(b.equipped) - Number(a.equipped))
-                .slice(0, variantLimit)
-            : variants;
-          const first = visible[0];
-          return (
-            <section key={power.id ?? power.name}>
-              <h4>
-                {power.name.replace(/ basic attack/i, "")}
-                <span>
-                  {abilityKey[first?.ability ?? ""] ?? first?.ability ?? ""}
-                  {first?.attack?.match(/\bvs\s+(.+)/i)?.[1]
-                    ? ` vs ${first.attack.match(/\bvs\s+(.+)/i)![1]}`
-                    : ""}
-                </span>
-              </h4>
-              <PrintPowerVariants attackOrdinals={[1]} variants={visible} />
-              {variants.length === 0 ? (
-                <p>
-                  {power.attack ?? "—"} · {power.damage ?? "—"}
-                </p>
-              ) : null}
-              {visible.length < variants.length ? (
-                <p className="sp-caption">
-                  More weapon alternatives in references.
-                </p>
-              ) : null}
-            </section>
-          );
-        })
+        <p className="sp-caption">No basic attack calculation is available.</p>
       )}
+      {hasMore ? (
+        <p className="sp-caption">More weapon alternatives in references.</p>
+      ) : null}
     </Panel>
   );
 }
@@ -370,22 +428,6 @@ function Summary({
               ]}
             />
           </Panel>
-          <Panel title="Movement & awareness" icon="footprints">
-            <Values
-              className="sp-movement"
-              values={[
-                ["Initiative", find(model.resources, "Initiative")],
-                ["Speed", find(model.resources, "Speed")],
-                ["Pass. Insight", find(model.senses, "Passive Insight")],
-                ["Pass. Perception", find(model.senses, "Passive Perception")],
-              ]}
-            />
-            {overview.vision ? (
-              <p className="sp-inline-rule">
-                <strong>Vision:</strong> {overview.vision}
-              </p>
-            ) : null}
-          </Panel>
           {overview.reminders.length ? (
             <Panel
               title="Remember in play"
@@ -409,33 +451,52 @@ function Summary({
           ) : null}
         </div>
         <div className="sp-column sp-skills-column">
-          <Panel
-            title="Abilities"
-            icon="ability"
-            className="sp-ability-reference"
-          >
-            <table className="sp-ability-table">
-              <thead>
-                <tr>
-                  {["Ability", "Score", "Modifier", "+½ level"].map((label) => (
-                    <th scope="col" key={label}>
-                      {label}
+          <div className="ov-abilities-movement">
+            <Panel
+              title="Movement"
+              icon="footprints"
+              className="ov-movement-panel"
+            >
+              <Values
+                className="ov-movement-values"
+                values={[
+                  ["Initiative", find(model.resources, "Initiative")],
+                  ["Speed", find(model.resources, "Speed")],
+                ]}
+              />
+            </Panel>
+            <Panel
+              title="Abilities"
+              icon="ability"
+              className="sp-ability-reference"
+            >
+              <table className="sp-ability-table">
+                <thead>
+                  <tr>
+                    <th scope="col" colSpan={2}>
+                      Ability
                     </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {overview.abilities.map((ability) => (
-                  <tr key={ability.name}>
-                    <th scope="row">{ability.name}</th>
-                    <td>{ability.score}</td>
-                    <td>{ability.modifier}</td>
-                    <td>{ability.check}</td>
+                    <th scope="col">Modifier</th>
+                    <th scope="col">+½ level</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </Panel>
+                </thead>
+                <tbody>
+                  {overview.abilities.map((ability) => (
+                    <tr key={ability.name}>
+                      <td className="ov-ability-score">{ability.score}</td>
+                      <th scope="row">
+                        <abbr title={ability.name}>
+                          {abilityKey[ability.name] ?? ability.name}
+                        </abbr>
+                      </th>
+                      <td>{ability.modifier}</td>
+                      <td>{ability.check}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Panel>
+          </div>
           <Panel title="Skills" icon="skill" className="sp-skills-panel">
             <div className="sp-skill-columns">
               {[overview.skills.slice(0, 9), overview.skills.slice(9)].map(
@@ -462,19 +523,37 @@ function Summary({
                         </tr>
                       ))}
                     </tbody>
-                    {index === 1 ? (
-                      <tfoot>
+                    <tfoot>
+                      {index === 1 ? (
                         <tr>
                           <td colSpan={2} className="sp-training-key">
                             <sup className="sp-trained-marker">T</sup>: trained
                           </td>
                         </tr>
-                      </tfoot>
-                    ) : null}
+                      ) : null}
+                      <tr className="ov-passive-skill">
+                        <th scope="row">
+                          {index === 0 ? "Pass. Insight" : "Pass. Perception"}
+                        </th>
+                        <td className="sp-skill-total">
+                          {find(
+                            model.senses,
+                            index === 0
+                              ? "Passive Insight"
+                              : "Passive Perception",
+                          )}
+                        </td>
+                      </tr>
+                    </tfoot>
                   </table>
                 ),
               )}
             </div>
+            {overview.vision ? (
+              <p className="sp-inline-rule">
+                <strong>Vision:</strong> {overview.vision}
+              </p>
+            ) : null}
           </Panel>
           <Panel title="Languages" icon="race">
             <p>
@@ -484,9 +563,9 @@ function Summary({
                 .join(" · ") || "Not recorded"}
             </p>
           </Panel>
-          <BasicAttacks model={model} abbreviated variantLimit={variantLimit} />
+          <BasicAttacks model={model} variantLimit={variantLimit} />
           <div className="ov-basic-probe" aria-hidden="true">
-            <BasicAttacks model={model} abbreviated />
+            <BasicAttacks model={model} />
           </div>
         </div>
       </div>
@@ -889,7 +968,7 @@ function references(model: CharacterSheetModel): ReferenceEntry[] {
   for (const power of model.powers.filter((power) =>
     /^(melee|ranged) basic attack$/i.test(power.name.trim()),
   )) {
-    const rows = (power.variants ?? []).map((variant) => [
+    const rows = basicAttackVariants(power).map((variant) => [
       variant.equipmentName,
       variant.attack ?? "—",
       variant.damage ?? "—",

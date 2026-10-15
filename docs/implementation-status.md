@@ -2,6 +2,20 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Compact summary grouping (2026-10-14): Basic attacks now share one icon-led
+Weapon/Attack/Damage table, with no separate melee/ranged headings or STR/DEX vs
+AC indicators. Melee uses sword, ranged bow-arrow; ranged Unarmed is omitted from
+overview attack tables. The existing evaluated attack/damage values and source
+variants are unchanged. Abilities show raw score before abbreviated name, followed
+by Modifier and +½ level; no separate Score header. A vertical Initiative/Speed
+pane sits to the left of Abilities. Passive senses move into Skills footer rows,
+with Vision retained nearby. Live Silaqui preview has no page/cell overflow;
+the narrow Movement header fits after a compact heading adjustment.
+Verification: all ten focused overview tests, web typechecking, focused lint and
+the production build pass. Chromium overview-only Letter/A4 × color/monochrome
+PDF checks pass with no overview overflow. The full public/physical-card matrix
+was not rerun for this summary-layout refinement.
+
 Power-access reminder exclusion (2026-10-14): Grant/select-only definitions are
 not reminders merely because their prose describes once-per-encounter activation
 or a shared allowance. They must supply an independent mechanical benefit rather

@@ -122,6 +122,101 @@ body:has(.sp-prototype) {
 .ov-basic-probe {
   margin-top: -0.12in;
 }
+.ov-abilities-movement {
+  display: grid;
+  grid-template-columns: 0.9in minmax(0, 1fr);
+  gap: 0.08in;
+  align-items: stretch;
+}
+.ov-movement-panel {
+  display: flex;
+  flex-direction: column;
+}
+.sheet-overview .ov-movement-panel > h3 {
+  font-size: 9pt;
+  padding-inline: 0.04in;
+  gap: 0.03in;
+  min-height: 0.29in;
+}
+.sheet-overview .ov-movement-panel > h3 .icon {
+  width: 0.12in;
+}
+.ov-movement-panel .sp-panel-content {
+  display: flex;
+  flex: 1;
+}
+.ov-movement-values {
+  width: 100%;
+  grid-template-rows: 1fr 1fr;
+}
+.ov-movement-values > div {
+  border-right: 0;
+  border-bottom: 1px solid #d5dadd;
+  justify-content: center;
+  padding-block: 0.06in;
+}
+.ov-movement-values span {
+  font-size: 8.5pt;
+}
+.sheet-overview .sp-ability-table {
+  table-layout: auto;
+}
+.sheet-overview .sp-ability-table thead th {
+  width: auto;
+}
+.sheet-overview .sp-ability-table .ov-ability-score {
+  width: 1.6em;
+  font-size: 10pt;
+}
+.sheet-overview .sp-ability-table tbody th {
+  width: 2.8em;
+  color: var(--sp-muted);
+  font-size: 8.5pt;
+}
+.sheet-overview .sp-ability-table abbr {
+  text-decoration: none;
+}
+.sheet-overview .ov-abilities-movement .sp-ability-table tbody th {
+  text-align: left;
+}
+.ov-passive-skill {
+  background: #e8edf0;
+  border-top: 1px solid #b9c4ca;
+}
+.ov-basic-table :is(th, td) {
+  padding: 0.04in 0.045in;
+  vertical-align: top;
+}
+.ov-basic-table thead th {
+  font-size: 8pt;
+  font-weight: 400;
+  color: var(--sp-muted);
+}
+.ov-basic-table tbody th {
+  font-size: 9pt;
+  font-weight: 400;
+}
+.ov-basic-table tbody tr:nth-child(odd) {
+  background: #f0f3f5;
+}
+.ov-basic-table td,
+.ov-basic-table th:not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.ov-basic-table td {
+  font-size: 9pt;
+  overflow-wrap: anywhere;
+}
+.ov-basic-weapon {
+  display: flex;
+  align-items: baseline;
+  gap: 0.045in;
+}
+.ov-basic-weapon .icon {
+  align-self: start;
+  margin-top: 0.015in;
+}
 /* Measure reference flow while in normal View, before print media hides the probe. */
 .sheet-overview.print-only {
   display: block;

@@ -72,6 +72,18 @@ hearts are paper affordances, not interactive Play state.
 
 ## Real-data integration
 
+Latest summary refinement: Basic attacks use one Weapon/Attack/Damage table,
+with a sword or bow icon prefacing each weapon row. Repeated melee/ranged
+subheadings and ability/defense formula indicators are removed. Equipped variants
+remain first (main hand, then off hand); ranged Unarmed rows are omitted from
+overview attack tables, without changing the underlying power calculations.
+The abilities table reads score then STR/CON/DEX/INT/WIS/CHA, Modifier and +½ level;
+score has no separate header, and full ability names remain available as abbreviation
+titles. A narrow Initiative/Speed pane sits to its left. Passive Insight and
+Perception are table-footer rows inside Skills; Vision remains in that panel too.
+This supersedes the initial prototype's ability-column order and separate
+Movement & awareness panel.
+
 The shared sheet model now retains full selected feature rules separately from
 authored short descriptions, including prerequisites and user-facing fields.
 Missing full rules are labelled rather than presenting abbreviations as complete.

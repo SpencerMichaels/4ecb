@@ -4,6 +4,7 @@ import { buildSheetModel } from "@4ecb/sheet-model";
 import {
   SheetOverview,
   fittingReminderIndices,
+  overviewBasicAttackRows,
   overviewTrackingRows,
   paginateReferences,
   referenceParts,
@@ -22,6 +23,117 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("uses one icon-led basic-attack table, omitting only ranged unarmed rows", () => {
+    const variants = [
+      {
+        id: "off",
+        equipmentName: "Off blade",
+        equipped: true,
+        hand: "off" as const,
+        attack: "+8 vs AC",
+        damage: "1d6 + 3",
+      },
+      {
+        id: "unarmed",
+        equipmentName: "Unarmed",
+        equipped: false,
+        attack: "+4 vs AC",
+        damage: "1d4",
+      },
+      {
+        id: "main",
+        equipmentName: "Main blade",
+        equipped: true,
+        hand: "main" as const,
+        attack: "+10 vs AC",
+        damage: "1d8+5",
+      },
+    ];
+    const m = {
+      ...model,
+      powers: [
+        {
+          id: "melee",
+          name: "Melee Basic Attack",
+          kind: "power" as const,
+          fields: [],
+          variants,
+        },
+        {
+          id: "ranged",
+          name: "Ranged Basic Attack",
+          kind: "power" as const,
+          fields: [],
+          variants,
+        },
+      ],
+    };
+    const rows = overviewBasicAttackRows(m);
+    expect(rows.filter((r) => !r.ranged).map((r) => r.weapon)).toEqual([
+      "Main blade",
+      "Off blade",
+      "Unarmed",
+    ]);
+    expect(rows.filter((r) => r.ranged).map((r) => r.weapon)).toEqual([
+      "Main blade",
+      "Off blade",
+    ]);
+    expect(rows[0]).toMatchObject({ attack: "+10", damage: "1d8+5" });
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={m}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const summary = html
+      .split('aria-label="Character summary"')[1]!
+      .split("</article>")[0]!
+      .split('class="ov-basic-probe"')[0]!;
+    expect(summary.match(/<th scope="col">Weapon<\/th>/g)).toHaveLength(1);
+    expect(summary).toContain("lucide-bow-arrow");
+    expect(summary).toContain("lucide-sword");
+    expect(summary).not.toContain("vs AC");
+    expect(variants).toHaveLength(3);
+  });
+  it("places score-first abbreviated abilities beside movement, with passive senses in Skills", () => {
+    const m = {
+      ...model,
+      senses: [
+        { label: "Passive Insight", value: "18" },
+        { label: "Passive Perception", value: "25" },
+      ],
+    };
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={m}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const summary = html
+      .split('aria-label="Character summary"')[1]!
+      .split("</article>")[0]!;
+    const right = summary.split('class="sp-column sp-skills-column"')[1]!;
+    expect(right.indexOf(">Movement</h3>")).toBeLessThan(
+      right.indexOf(">Abilities</h3>"),
+    );
+    expect(right).toContain(
+      '<td class="ov-ability-score">19</td><th scope="row"><abbr title="Strength">STR</abbr></th>',
+    );
+    expect(right).not.toContain(">Score</th>");
+    const skills = right.split(">Skills</h3>")[1]!.split(">Languages</h3>")[0]!;
+    expect(skills).toContain("Pass. Insight");
+    expect(skills).toContain("Pass. Perception");
+    expect(skills).toContain(">18</td>");
+    expect(skills).toContain(">25</td>");
+  });
   it("fills reminder space without a fixed count cap, reserving overflow-caption space", () => {
     expect(
       fittingReminderIndices([30, 30, 30, 30, 30, 30, 30], 5, 300, 20),
