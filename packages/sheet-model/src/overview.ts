@@ -356,7 +356,14 @@ export function withSheetOverview(
       const identity = `${effect.provenanceId ?? key(effect.provider ?? feature?.name ?? "")}:${key(effect.text)}`;
       if (seenEffects.has(identity)) continue;
       seenEffects.add(identity);
-      addReminder(effect.provider ?? feature?.name ?? power.name, effect.text);
+      // An access-only feature can still be the known source of an evaluated
+      // conditional effect. Keep that effect's text, but do not lose its category
+      // merely because the feature's own description is only a power grant.
+      addReminder(
+        effect.provider ?? feature?.name ?? power.name,
+        effect.text,
+        feature ? reminderCategory(feature.group) : "Other reminders",
+      );
     }
   reminders.sort(
     (a, b) =>

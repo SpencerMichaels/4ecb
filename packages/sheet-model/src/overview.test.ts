@@ -466,6 +466,53 @@ describe("printed overview data", () => {
       ),
     ).toHaveLength(1);
   });
+  it("keeps the source category of conditional effects from power-granting features", () => {
+    const feature = {
+      ...feat,
+      id: "feature:mark",
+      name: "Test Mark",
+      type: "Class Feature",
+      description: "You gain the test mark power.",
+      specifics: [],
+      rules: [
+        {
+          name: "grant",
+          attributes: [{ name: "type", value: "Power" }],
+          children: [],
+          text: "",
+          ordinal: 0,
+        },
+      ],
+    };
+    const selections = [feature];
+    const base = buildSheetModel({ ...snapshot, selectedRules: selections }, [
+      feature,
+    ]);
+    expect(base.overview?.features[0]?.accessOnly).toBe(true);
+    expect(base.overview?.reminders).toEqual([]);
+    const text = "+1d6 to damage once per round against your marked foe.";
+    const model = withSheetOverview(
+      {
+        ...base,
+        powers: ["First", "Second"].map((name) => ({
+          name,
+          kind: "power" as const,
+          fields: [],
+          additionalEffects: [
+            {
+              source: "authoritative-evaluation" as const,
+              provider: feature.name,
+              text,
+            },
+          ],
+        })),
+      },
+      { level: 8, stats: {}, selections, content: [feature], inventory: [] },
+    );
+    expect(model.overview?.reminders).toEqual([
+      { label: feature.name, value: text, category: "Class features" },
+    ]);
+  });
   it("omits passive grants and loadout bonuses from reminders, retaining actionable benefits", () => {
     const examples = [
       ["Weapon Training", "Gain proficiency with the test blade.", false],

@@ -228,8 +228,8 @@ function BasicAttacks({
       headerNote={
         hasMore
           ? referencePage
-            ? `More on pg ${referencePage}`
-            : "More in references"
+            ? `More on pg ${referencePage}…`
+            : "More in references…"
           : undefined
       }
     >

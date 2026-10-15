@@ -274,7 +274,7 @@ describe("real-data sheet overview", () => {
     expect(summary).toContain("lucide-bow-arrow");
     expect(summary).toContain("lucide-sword");
     expect(summary).toContain(
-      '<span class="ov-panel-note">More in references</span>',
+      '<span class="ov-panel-note">More in references…</span>',
     );
     expect(summary).not.toContain("Showing the highest-ranked weapons");
     expect(

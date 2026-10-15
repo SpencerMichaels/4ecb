@@ -227,6 +227,7 @@ When the summary omits alternatives, Basic Attacks puts a muted, right-aligned
 label comes from measured reference pagination (two columns per R-numbered page),
 not a guessed physical page offset; before measurement it says `More in references`.
 The note is omitted when all eligible alternatives are shown.
+The note's trailing ellipsis is the single Unicode character `…`.
 Grant/choice-only wrappers are omitted using authored Benefit text and grant/
 selection metadata, without mistaking introductory flavor for an extra effect.
 The exclusion also covers power-access/shared-usage containers: grant/select-only
@@ -241,8 +242,12 @@ using its authored Short Description once instead of repeating the bonus per
 power. Missing summaries fall back to the feature description; complete authored
 descriptions remain in feature references. Conditional stat contributions alone
 are not substituted for authored summaries, since they can omit timing or scope.
-Unresolved identical effects deduplicate across affected powers; distinct effects
-and ambiguous providers remain recoverable. Original power/card effects are unchanged.
+Unresolved identical effects deduplicate across affected powers. Effects
+from known access-only providers keep their Class/Racial/Feat source category
+using the evaluated effect text rather than reintroducing grant-only descriptions.
+Grant-only providers with no independent effect still produce no reminder.
+Distinct effects and ambiguous providers remain recoverable.
+Original power/card effects are unchanged.
 This remains a display heuristic, not
 proof that every excluded benefit is calculated; all feats retain full references.
 Up to two highest-ranked basic-attack variants per attack kind appear in the summary; all valid alternatives

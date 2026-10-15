@@ -2,6 +2,18 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Known-source conditional reminder categories (2026-10-15): Additional Effects
+whose selected feature is an access-only power grant now retain that feature's
+known source category while keeping the evaluated effect text. Previously this
+fallback incorrectly assigned Other reminders even after resolving a Class
+Feature provider. Grant-only features without an independent effect remain
+excluded; unknown sources remain Other reminders, with no named-feature exception.
+A private Silaqui evaluation reproduces the old misclassification and confirms
+one Hunter's Quarry entry under Class features after the fix. The small pending
+header-note follow-up uses a Unicode ellipsis (`More on pg R…`).
+Verification: 41 focused overview/render tests, web typecheck and focused lint
+pass. No calculation or layout change; the print matrix/full suite was not rerun.
+
 Compact Basic Attacks reference note (2026-10-15): Removed the two-line body
 caption about additional weapons. When eligible alternatives are omitted, a
 muted right-aligned header note now reads `More on pg R…`, using the first
