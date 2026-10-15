@@ -107,6 +107,12 @@ metadata; unattributed effects remain in Other reminders. Empty panes are omitte
 Measured fitting includes pane headings/padding and the overflow caption, and
 all omitted entries remain in full references. Scratchpad/reference reminder
 sections retain their existing list layout.
+The Item properties pane includes actionable named weapon/superior-implement
+properties expanded from authored item text or matching property definitions,
+alongside freeform enchantment properties. Property parameters remain in the
+description rather than the entity name, so name-only tier abbreviation does not
+erase meaningful arguments such as an energized damage type. Only equipped
+positive-quantity items qualify; no named-item exception list is used.
 An optional Defensive traits panel sits above Basic Attacks,
 grouping resistances, vulnerabilities, authored immunity clauses and conditional
 or death-saving-throw modifiers in a striped benefit/source table without visible

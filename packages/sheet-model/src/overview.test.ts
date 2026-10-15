@@ -44,6 +44,80 @@ const feat: ContentEntity = {
   ],
 };
 describe("printed overview data", () => {
+  it("includes named superior-implement and conditional enchantment properties even with item cards hidden", () => {
+    const definitions = [
+      {
+        ...feat,
+        id: "implement:synthetic",
+        name: "Synthetic staff",
+        type: "Superior Implement",
+        specifics: [
+          {
+            name: "Properties",
+            value: "Shoving",
+            ordinal: 0,
+            extraAttributes: [],
+          },
+          {
+            name: "Full Text",
+            value:
+              "Properties:\nShoving (Whenever you pull a foe, increase the distance.).\nGroup:\nStaff (A staff.)",
+            ordinal: 1,
+            extraAttributes: [],
+          },
+        ],
+      },
+      {
+        ...feat,
+        id: "magic:synthetic",
+        name: "Synthetic warding enchantment",
+        type: "Magic Item",
+        specifics: [
+          {
+            name: "Property",
+            value: "Gain a bonus against enemies subject to your effects.",
+            ordinal: 0,
+            extraAttributes: [],
+          },
+        ],
+      },
+    ];
+    const m = buildSheetModel(
+      {
+        ...snapshot,
+        loot: [
+          {
+            name: "Synthetic combined staff",
+            count: 1,
+            equippedCount: 1,
+            showPowerCard: false,
+            elements: definitions.map(({ id, name, type }) => ({
+              id,
+              name,
+              type,
+            })),
+          },
+        ],
+      },
+      definitions,
+    );
+    const reminders = m.overview?.reminders.filter(
+      (entry) => entry.category === "Item properties",
+    );
+    expect(reminders).toEqual([
+      {
+        label: "Synthetic combined staff",
+        value: "Shoving: Whenever you pull a foe, increase the distance.",
+        category: "Item properties",
+      },
+      {
+        label: "Synthetic combined staff",
+        value: "Gain a bonus against enemies subject to your effects.",
+        category: "Item properties",
+      },
+    ]);
+    expect(m.items).toEqual([]);
+  });
   it("assigns reminder categories from feature and equipped item provenance", () => {
     const entities = ["Feat", "Class Feature", "Racial Trait"].map(
       (type, index) => ({

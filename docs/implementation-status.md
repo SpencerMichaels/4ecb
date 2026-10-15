@@ -2,6 +2,26 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Weapon/implement property reminders (2026-10-14): Fixed two general extraction
+gaps behind the owner's Quickbeam/Aversion examples. Declared `Properties`
+keywords now resolve authored explanations from the same item's Full Text first
+and matching Weapon Property definitions second, retaining numeric/parenthetical
+parameters and nested examples. Freeform `Property` condition detection also
+recognizes target-dependent wording such as `against ... enemies subject to your
+effects`, rather than requiring the old small when/if/while vocabulary. The
+shared inventory projection covers both native and legacy sheets and does not
+depend on printing an item card. Carried/zero-quantity items, plain always-on
+numeric bonuses, powers/flavor/group prose and missing descriptions are not
+invented into reminders; complete original fields remain recoverable. This is
+still a conservative display heuristic, not exhaustive mechanical analysis.
+
+Verification: 43 focused property/model/render tests, web typecheck, focused lint
+and production build pass. A read-only private-definition diagnostic yields
+Quickbeam's Energized (thunder) and Forceful entries plus Aversion's conditional
+defense property, without private definitions in public fixtures. The
+overview-only Letter/A4 × color/monochrome PDF matrix passes (12 measured pages
+each, no overview overflow). The physical-card/milestone gate remains separate.
+
 Dedicated reminder column / compact defensive rows (2026-10-14): The left column
 now contains Defensive Traits above Basic Attacks, then Abilities/Languages and
 Skills. The right column is dedicated to source-categorized Class features,

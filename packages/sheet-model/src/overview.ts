@@ -3,6 +3,7 @@ import type { LegacyRuleElement } from "@4ecb/character-domain";
 import type { CharacterSheetModel, SheetValue } from "./index";
 import type { EvaluatedStat } from "@4ecb/rules-engine";
 import { defensiveStatTraits, type DefensiveTrait } from "./defensive-traits";
+import { equippedItemPropertyReminders } from "./item-reminders";
 
 export interface OverviewFeature {
   readonly id: string;
@@ -312,13 +313,11 @@ export function withSheetOverview(
       );
       if (index >= 0) reminderByFeature.set(feature.id, index);
     }
-  for (const item of input.inventory.filter((item) => item.equipped > 0))
-    for (const field of item.fields)
-      if (
-        /^propert(?:y|ies)$/i.test(field.label) &&
-        /\b(?:allies|ally|when|whenever|while|if|trigger)\b/i.test(field.value)
-      )
-        addReminder(item.name, field.value, "Item properties");
+  for (const reminder of equippedItemPropertyReminders(
+    input.inventory,
+    input.content,
+  ))
+    addReminder(reminder.label, reminder.value, "Item properties");
   const seenEffects = new Set<string>();
   for (const power of model.powers)
     for (const effect of power.additionalEffects ?? []) {

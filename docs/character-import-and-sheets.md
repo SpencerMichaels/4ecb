@@ -327,6 +327,16 @@ The summary reminder column uses feature/item source metadata to split actionabl
 entries into class, racial, feat and item-property panes, retaining unattributed
 effects in Other reminders. Empty categories are omitted; measured truncation
 accounts for pane overhead and retains omitted entries in full references.
+Equipped item reminders handle both freeform `Property` paragraphs and declared
+weapon/superior-implement `Properties` keywords. Named properties use the item's
+authored Full Text Properties section first, then matching Weapon Property
+definitions; numeric and parenthetical parameters are retained. Conditional
+target-dependent wording such as `against ... enemies subject to your effects`
+is actionable even without `when`/`if`. Plain always-on numeric bonuses, item
+powers, flavor and group prose are not promoted by this extraction. This remains
+a display heuristic, not exhaustive proof of automatic calculation coverage.
+Missing/malformed explanations are not invented; original item/card/reference
+fields remain intact. Hidden item cards do not suppress equipped reminders.
 
 The semantic model exposes identity, final abilities, defenses, resources,
 senses, skills, feature groups, notes, inventory, powers, and cards. The browser
