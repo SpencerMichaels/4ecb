@@ -4,7 +4,7 @@
 
 Scratchpad working-surface redesign (2026-10-15): The product owner accepts the
 first-page summary. The approved scratchpad proposal is implemented for feedback:
-Health with a single-digit action-point box beside Effect/Ends, a full-width Encounter/Daily
+Health with a three-circle action-point tracker beside Effect/Ends, a full-width Encounter/Daily
 tracking pair, then Treasure/consumables beside Session notes/XP. Slate pane headers, violet health
 reference cells, encounter-red/daily-gray tracking headings and explicit grayscale
 reuse the accepted visual vocabulary. Current/temp HP retain at least 0.7in writing boxes,
@@ -114,6 +114,16 @@ tests, web typecheck, production build and focused lint pass. All eight
 Chromium/Firefox overview variants pass the added gap, HP-fill, column-split,
 square-box and session-header checks. The generated Chromium preview was
 visually reviewed. No full milestone/card gate was run.
+Action points now use three hollow circle marks, matching Death saves' three
+skulls in size and spacing, rather than a single numeric box. This is a paper
+tracking affordance, not a new calculated cap or persisted Play-state rule.
+Encounter tracking columns alternate subtle vertical backgrounds including the
+number header; the name column is unstriped and row stripes are removed. Daily
+retains its horizontal row striping.
+Verification: 33 focused overview tests and production build pass; four
+Chromium overview variants verify three hollow AP icons and alternating tracking
+column backgrounds with no name-column stripe. The generated preview was
+reviewed; Firefox/full milestone suites were not rerun for this style follow-up.
 Verification: 43 focused overview/layout tests, web typecheck, focused lint and
 production build pass. `node scripts/check-print.mjs --overview-only
 --firefox-scratchpad --scratchpad-preview` passes all four Chromium PDF variants

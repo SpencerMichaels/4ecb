@@ -1089,8 +1089,9 @@ async function checkScratchpad(client, monochrome) {
       headerSession:page.querySelector('.ov-scratch-header-session') !== null,
       contentSession:page.querySelector('.sp-page-content .sp-session') !== null,
       milestone:page.textContent.includes('Milestone'),
-      actionPointBoxes:page.querySelectorAll('.ov-action-point-count > i').length,
-      actionPointWidth:page.querySelector('.ov-action-point-count > i').getBoundingClientRect().width,
+      actionPointMarks:page.querySelectorAll('.ov-action-point-count .icon').length,
+      actionPointHollow:[...page.querySelectorAll('.ov-action-point-count .icon')].every(e=>getComputedStyle(e).fill==='none'),
+      encounterColumnColors:[...page.querySelector('.sp-usage-table tbody tr').children].map(e=>getComputedStyle(e).backgroundColor),
       upperBottoms:[...page.querySelectorAll('.ov-scratch-upper > .sp-column > .sp-panel')].map(e=>e.getBoundingClientRect().bottom),
       powerWidth:page.querySelector('.ov-scratch-powers').getBoundingClientRect().width,
       contentWidth:page.querySelector('.sp-page-content').getBoundingClientRect().width,
@@ -1149,12 +1150,18 @@ async function checkScratchpad(client, monochrome) {
       state.trackerBottomGap > 0 &&
       state.trackerBottomGap < 12 &&
       !state.milestone &&
-      state.actionPointBoxes === 1 &&
-      state.actionPointWidth >= 24 &&
-      state.actionPointWidth < 32 &&
+      state.actionPointMarks === 3 &&
+      state.actionPointHollow &&
       state.upperBottoms.length === 2 &&
       Math.abs(state.upperBottoms[0] - state.upperBottoms[1]) < 1,
-    `Upper panes must align with one small action-point box and no milestone tracker: ${JSON.stringify(state)}`,
+    `Upper panes must align with three hollow AP marks and no milestone tracker: ${JSON.stringify(state)}`,
+  );
+  assert(
+    state.encounterColumnColors.every(
+      (color, index) =>
+        color === (index % 2 ? "rgb(240, 243, 245)" : "rgba(0, 0, 0, 0)"),
+    ),
+    "Encounter tracking columns must alternate backgrounds, leaving the name column unstriped",
   );
   assert(
     JSON.stringify(state.labels) ===

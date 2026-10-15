@@ -1364,7 +1364,12 @@ function Scratchpad({
                   </span>
                 </div>
                 <div className="ov-action-point-count">
-                  Action points <i aria-label="Action point count" />
+                  Action points
+                  <span aria-label="Three action point marks">
+                    {[0, 1, 2].map((n) => (
+                      <Icon key={n} name="circle" />
+                    ))}
+                  </span>
                 </div>
               </div>
             </Panel>

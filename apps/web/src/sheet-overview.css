@@ -912,11 +912,13 @@ body:has(.sp-prototype) {
   width: 0.2in;
   height: 0.2in;
 }
-.sp-death-saves > span {
+.sp-death-saves > span,
+.ov-action-point-count > span {
   display: flex;
   gap: 0.1in;
 }
-.sp-death-saves .icon {
+.sp-death-saves .icon,
+.ov-action-point-count .icon {
   width: 0.2in;
   height: 0.2in;
   stroke-width: 1.4;
@@ -1137,7 +1139,7 @@ body:has(.sp-prototype) {
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
-  margin-top: 0.025in;
+  margin-top: 0;
   font-size: 9pt;
 }
 .ov-health-trackers {
@@ -1154,13 +1156,6 @@ body:has(.sp-prototype) {
   align-items: center;
   gap: 0.08in;
   font-size: 9pt;
-}
-.ov-action-point-count > i {
-  display: block;
-  width: 0.28in;
-  height: 0.28in;
-  border: 1px solid var(--sp-border);
-  border-radius: 3px;
 }
 .ov-effects-table {
   table-layout: fixed;
@@ -1226,12 +1221,14 @@ body:has(.sp-prototype) {
   margin-inline: auto;
   border: 1px solid #8f9aa2;
 }
-.ov-power-trackers .sp-usage-table tbody tr:nth-child(odd),
 .ov-power-trackers .sp-daily-list > div:nth-child(odd) {
   background: #f0f3f5;
 }
-.ov-power-trackers .sp-usage-table tbody tr:nth-child(even) {
+.ov-power-trackers .sp-usage-table tbody tr:nth-child(n) {
   background: transparent;
+}
+.ov-power-trackers .sp-usage-table tr > :nth-child(2n) {
+  background: #f0f3f5;
 }
 .ov-power-trackers .sp-usage-table tbody th {
   padding: 0.06in;

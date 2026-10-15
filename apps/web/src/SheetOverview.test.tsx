@@ -77,6 +77,11 @@ describe("real-data sheet overview", () => {
     expect(cells).toContain(
       `<span>Surges</span><strong>${model.resources.find((value) => value.label === "Healing Surges")!.value}</strong>`,
     );
+    const ap = html
+      .split('class="ov-action-point-count"')[1]!
+      .split("</div>")[0]!;
+    expect(ap.match(/lucide-circle/g)).toHaveLength(3);
+    expect(ap).not.toContain("<i");
   });
   it("sorts tracking powers by action, explicit utility type, then name without mutating input", () => {
     const rows = [
