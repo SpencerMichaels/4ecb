@@ -146,6 +146,11 @@ body:has(.sp-prototype) {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.ov-character-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .ov-player-company {
   margin-top: 0.04in !important;
   font-size: 8.5pt;
@@ -582,8 +587,8 @@ body:has(.sp-prototype) {
 .sp-ability-table tbody tr:last-child > * {
   border-bottom: 0;
 }
-.sp-ability-table tbody tr:nth-child(even),
-.sp-skill-table tbody tr:nth-child(even) {
+.sp-ability-table tbody tr:nth-child(odd),
+.sp-skill-table tbody tr:nth-child(odd) {
   background: #f0f3f5;
 }
 .sp-summary-grid {

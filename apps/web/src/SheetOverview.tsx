@@ -295,7 +295,7 @@ function Reminders({
       {values.map((entry, index) => (
         <div key={index} data-reminder-index={indices?.[index]}>
           <strong>
-            {entry.label.replace(/\s*\([^()]*\)/g, "").trim() || entry.label}:
+            {entry.label.replace(/\s*\([^()]*\)/g, "").trim() || entry.label}
           </strong>{" "}
           <Prose value={entry.value} />
         </div>
@@ -320,6 +320,12 @@ function ReminderPanels({
     "Item properties",
     "Other reminders",
   ];
+  const categoryIcons: Readonly<Record<string, IconName>> = {
+    "Class features": "class",
+    "Racial features": "race",
+    Feats: "feat",
+    "Item properties": "item",
+  };
   return (
     <div className="sp-column ov-reminder-panels">
       {categories.map((category) => {
@@ -333,7 +339,7 @@ function ReminderPanels({
           <Panel
             key={category}
             title={category}
-            icon={category === "Item properties" ? "item" : "feat"}
+            icon={categoryIcons[category] ?? "feat"}
           >
             <Reminders
               values={entries.map(({ entry }) => entry)}
@@ -668,6 +674,53 @@ function SummaryColumns({
     </div>
   );
 }
+export function fittingIdentityNameSize(
+  measure: (size: number) => number,
+  available: number,
+  preferred = 27,
+  minimum = 18,
+): number {
+  if (measure(preferred) <= available) return preferred;
+  let low = minimum;
+  let high = preferred;
+  while (high - low > 0.25) {
+    const size = (low + high) / 2;
+    if (measure(size) <= available) low = size;
+    else high = size;
+  }
+  return low;
+}
+function IdentityName({ name }: { name: string }) {
+  const ref = useRef<HTMLHeadingElement>(null);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const check = () => {
+      if (!element.clientWidth) return;
+      const size = fittingIdentityNameSize((size) => {
+        element.style.fontSize = `${size}pt`;
+        return element.scrollWidth;
+      }, element.clientWidth);
+      element.style.fontSize = `${size}pt`;
+    };
+    const observer = new ResizeObserver(check);
+    observer.observe(element.parentElement!);
+    check();
+    let active = true;
+    void document.fonts.ready.then(() => {
+      if (active) check();
+    });
+    return () => {
+      active = false;
+      observer.disconnect();
+    };
+  }, [name]);
+  return (
+    <h1 className="ov-character-name" ref={ref} title={name}>
+      {name}
+    </h1>
+  );
+}
 function Summary({
   model,
   name,
@@ -689,7 +742,7 @@ function Summary({
           </div>
         ) : null}
         <div className="ov-identity-name">
-          <h1>{name}</h1>
+          <IdentityName name={name} />
           <p className="sp-character-line">
             {["Race", "Class", "Level"]
               .flatMap((label) =>
@@ -783,7 +836,7 @@ function Summary({
         </SummaryPane>
         <SummaryPane id="senses">
           {overview.vision ? (
-            <Panel title="Senses" icon="focus" className="ov-senses">
+            <Panel title="Senses" icon="eye" className="ov-senses">
               <p>{overview.vision}</p>
             </Panel>
           ) : null}

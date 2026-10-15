@@ -2,6 +2,23 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Summary presentation consistency (2026-10-15): Bold reminder names no longer have
+trailing colons. Senses uses a shared Eye icon; class/racial reminder panes reuse
+the builder's class/race mappings instead of showing the feat icon for every
+non-item category. Skills/Abilities now shade the first row, consistent with
+Languages, Basic Attacks and continuous Defensive Traits striping. First-page
+names fit from 27pt to a minimum 18pt, then use single-line ellipsis with the full
+name retained in the heading/title tooltip. Name/font/width changes remeasure the
+heading without changing stored identity or card typography.
+
+Verification: 24 focused rendering/fitting tests, web typecheck, focused lint,
+formatting and production build pass. Chromium presentation checks verify the Eye
+glyph, shaded first table rows, the 18pt floor/ellipsis under a very long name,
+and restoration after the diagnostic. All four overview-only Letter/A4 ×
+color/monochrome PDF checks pass (12 measured pages each, no overview overflow),
+alongside the pane overflow/restoration checks. Full physical-card and milestone
+exit gates remain separate; M5.6 is still open.
+
 Opportunistic summary columns (2026-10-15): Preferred left order is Defensive
 Traits, Skills, Abilities/Languages (one unit), then Basic Attacks. Senses leads
 the right column. Measured whole-pane fitting keeps a prefix on the left and

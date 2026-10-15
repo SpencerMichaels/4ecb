@@ -95,12 +95,19 @@ The portrait is circular; the identity line reads race, class,
 then bare level (`Dwarf Paladin 7`). The redundant first-page running header
 is omitted; the full-width identity separator and
 later-page running headers remain.
+The first-page name prefers 27pt, measures down to an 18pt minimum, and then
+uses single-line ellipsis. Its full text remains in the heading and title tooltip;
+fitting reruns on name, width and font changes and is independent of card sizing.
 Passive Insight and Perception precede their active skill bonuses, e.g.
 `Perception (25) +15`, not as separate rows. Vision and special senses occupy a
 compact Senses pane at the top of the right column, not Skills.
+Senses uses the shared Eye glyph; reminder categories reuse the builder's
+class/race/feat/item icon mappings. Bold reminder names have no trailing colon.
 Languages form a single-column striped table in a narrow panel to the right of
 Abilities, using the Basic Attacks row styling. Skills retain alternating row
-backgrounds without inter-cell borders. Below the numeric band, equal-width
+backgrounds without inter-cell borders. All summary tables start with a shaded
+first data row, with defensive categories maintaining continuous striping.
+Below the numeric band, equal-width
 columns prefer Defensive Traits, Skills, Abilities/Languages and Basic Attacks on
 the left, with Senses above reminders on the right. Whole panes fill the left in
 that order; the first that cannot fit and all following panes move to the right,

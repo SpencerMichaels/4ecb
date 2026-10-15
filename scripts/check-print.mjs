@@ -300,6 +300,7 @@ try {
       `document.querySelectorAll('.sheet-overview > .ov-paper[aria-label="Character reference"]').length > 0`,
     );
     await checkSummaryPaneFlow(client);
+    await checkSummaryPresentation(client);
     const overview = await evaluate(
       client,
       `(() => {
@@ -856,6 +857,77 @@ function printCharacter() {
       includeItemCards: true,
     },
   };
+}
+
+async function checkSummaryPresentation(client) {
+  const presentation = await evaluate(
+    client,
+    `(() => {
+    const summary = document.querySelector('.ov-paper[aria-label="Character summary"]');
+    const tables = [...summary.querySelectorAll('.ov-main-column table, .ov-reminders-column > .ov-flow-pane table')];
+    return {
+      backgrounds: tables.flatMap(table => {
+        const row = table.querySelector('tbody tr');
+        return row ? [getComputedStyle(row).backgroundColor] : [];
+      }),
+      eye:!!summary.querySelector('.ov-senses .lucide-eye'),
+    };
+  })()`,
+  );
+  assert(presentation.eye, "Senses must use the shared eye icon");
+  assert(
+    presentation.backgrounds.length > 0 &&
+      presentation.backgrounds.every((color) => color === "rgb(240, 243, 245)"),
+    `Summary tables must consistently shade their first row: ${JSON.stringify(presentation.backgrounds)}`,
+  );
+  const original = await evaluate(
+    client,
+    `(() => {
+    const name = document.querySelector('.ov-character-name');
+    const parent = name.parentElement;
+    const saved = {text:name.textContent,maxWidth:parent.style.maxWidth,fontSize:parseFloat(getComputedStyle(name).fontSize)};
+    name.textContent = 'A very long synthetic character name '.repeat(20);
+    parent.style.maxWidth = (parent.getBoundingClientRect().width-1)+'px';
+    return saved;
+  })()`,
+  );
+  try {
+    await waitForExpression(
+      client,
+      `parseFloat(getComputedStyle(document.querySelector('.ov-character-name')).fontSize) <= 24.01`,
+    );
+    const longName = await evaluate(
+      client,
+      `(() => {
+      const name = document.querySelector('.ov-character-name');
+      const style = getComputedStyle(name);
+      return {fontSize:parseFloat(style.fontSize),ellipsis:style.textOverflow,nowrap:style.whiteSpace,overflowing:name.scrollWidth>name.clientWidth};
+    })()`,
+    );
+    assert(
+      Math.abs(longName.fontSize - 24) < 0.1,
+      "Long names must stop shrinking at 18pt",
+    );
+    assert(
+      longName.ellipsis === "ellipsis" &&
+        longName.nowrap === "nowrap" &&
+        longName.overflowing,
+      "Names beyond the minimum must truncate on one line",
+    );
+  } finally {
+    await evaluate(
+      client,
+      `(() => {
+      const name = document.querySelector('.ov-character-name');
+      name.textContent = ${JSON.stringify(original.text)};
+      name.parentElement.style.maxWidth = ${JSON.stringify(original.maxWidth)};
+    })()`,
+    );
+  }
+  await waitForExpression(
+    client,
+    `Math.abs(parseFloat(getComputedStyle(document.querySelector('.ov-character-name')).fontSize) - ${original.fontSize}) < 0.4`,
+  );
 }
 
 async function checkSummaryPaneFlow(client) {

@@ -6,6 +6,7 @@ import {
   fittingReminderIndices,
   fittingReminderGroups,
   fittingSummaryPaneCount,
+  fittingIdentityNameSize,
   overviewBasicAttackRows,
   overviewTrackingRows,
   paginateReferences,
@@ -25,6 +26,29 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("shrinks identity names to a readable minimum before leaving overflow to ellipsis", () => {
+    expect(fittingIdentityNameSize((size) => size * 5, 200)).toBe(27);
+    const fitted = fittingIdentityNameSize((size) => size * 10, 220);
+    expect(fitted).toBeLessThanOrEqual(22);
+    expect(fitted).toBeGreaterThan(21.75);
+    expect(fittingIdentityNameSize((size) => size * 100, 220)).toBe(18);
+  });
+  it("preserves the full long name in title text and the heading tooltip", () => {
+    const name = "A very long synthetic character name that needs truncation";
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={model}
+        name={name}
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    expect(html).toContain(
+      `<h1 class="ov-character-name" title="${name}">${name}</h1>`,
+    );
+  });
   it("orders the main panes by consultation frequency and keeps senses on the right", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
@@ -62,6 +86,7 @@ describe("real-data sheet overview", () => {
     expect(left).not.toContain(">Senses</h3>");
     expect(right).toContain(">Senses</h3>");
     expect(summary).toContain("Low-light vision; Tremorsense 4");
+    expect(right).toContain("lucide-eye");
     expect(summary).not.toContain("<strong>Vision:</strong>");
   });
   it("omits a blank company and its separator from the player subtitle", () => {
@@ -568,6 +593,8 @@ describe("real-data sheet overview", () => {
       .split('aria-label="Character summary"')[1]!
       .split("</article>")[0]!;
     expect(summary).toContain("Quick Hands");
+    expect(summary).toContain("<strong>Quick Hands</strong>");
+    expect(summary).not.toContain("<strong>Quick Hands:</strong>");
     expect(summary).not.toContain("Quick Hands (heroic tier)");
     expect(summary).toContain("Defensive Stance");
     expect(summary).toContain("Protective Charm");
