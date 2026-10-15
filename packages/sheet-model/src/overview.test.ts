@@ -44,6 +44,122 @@ const feat: ContentEntity = {
   ],
 };
 describe("printed overview data", () => {
+  it("excludes grant/choice-only wrappers despite evocative flavor, retaining mixed benefits", () => {
+    const wrapper = {
+      ...feat,
+      id: "feature:choice",
+      type: "Class Feature",
+      name: "First Choice",
+      description:
+        "When you raise your symbol, allies feel inspired. Benefit: Choose shining spark or smiting spark. You gain that power.",
+      specifics: [
+        {
+          name: "Short Description",
+          value: "Choose a power. You gain that power.",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+      rules: [
+        {
+          name: "select",
+          attributes: [{ name: "type", value: "Power" }],
+          children: [],
+          text: "",
+          ordinal: 0,
+        },
+      ],
+    };
+    const mixed = {
+      ...wrapper,
+      id: "feature:mixed",
+      name: "Choice With Benefit",
+      description:
+        "Benefit: You gain a power. When you are bloodied, an ally can shift.",
+      specifics: [],
+    };
+    const m = buildSheetModel(
+      {
+        ...snapshot,
+        selectedRules: [wrapper, mixed].map((e) => ({
+          id: e.id,
+          name: e.name,
+          type: e.type,
+        })),
+      },
+      [wrapper, mixed],
+    );
+    expect(
+      m.overview?.features.find((f) => f.id === wrapper.id)?.playReminder,
+    ).toBe(false);
+    expect(m.overview?.reminders.map((r) => r.label)).toEqual([
+      "Choice With Benefit",
+    ]);
+    expect(m.overview?.features).toHaveLength(2);
+  });
+  it("lists a selected feature once instead of repeating its bonus per affected power", () => {
+    const base = buildSheetModel(snapshot, [feat]);
+    const powers = [
+      {
+        kind: "power" as const,
+        name: "First strike",
+        fields: [],
+        additionalEffects: [
+          { source: "legacy-cache" as const, text: "+1 to an ally - Guard." },
+        ],
+      },
+      {
+        kind: "power" as const,
+        name: "Second strike",
+        fields: [],
+        additionalEffects: [
+          {
+            source: "authoritative-evaluation" as const,
+            provider: "Guard",
+            provenanceId: feat.id,
+            text: "+1 to an ally.",
+          },
+        ],
+      },
+    ];
+    const m = withSheetOverview(
+      { ...base, powers },
+      {
+        level: 8,
+        stats: snapshot.stats,
+        selections: snapshot.selectedRules,
+        content: [feat],
+        inventory: [],
+      },
+    );
+    expect(m.overview?.reminders).toEqual([
+      { label: feat.name, value: feat.description },
+    ]);
+    expect(m.powers).toEqual(powers);
+  });
+  it("deduplicates unattributed identical effects without merging distinct effects", () => {
+    const base = buildSheetModel(snapshot, []);
+    const powers = ["First", "Second"].map((name) => ({
+      kind: "power" as const,
+      name,
+      fields: [],
+      additionalEffects: [
+        {
+          source: "legacy-cache" as const,
+          text: "Conditional bonus without a known provider.",
+        },
+      ],
+    }));
+    const m = withSheetOverview(
+      { ...base, powers },
+      { level: 8, stats: {}, selections: [], content: [], inventory: [] },
+    );
+    expect(
+      m.overview?.reminders.filter(
+        (r) => r.value === "Conditional bonus without a known provider.",
+      ),
+    ).toHaveLength(1);
+  });
   it("omits passive grants and loadout bonuses from reminders, retaining actionable benefits", () => {
     const examples = [
       ["Weapon Training", "Gain proficiency with the test blade.", false],

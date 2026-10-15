@@ -113,6 +113,15 @@ body:has(.sp-prototype) {
   min-height: 0;
   background: transparent;
 }
+.ov-reminder-probe,
+.ov-basic-probe {
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+.ov-basic-probe {
+  margin-top: -0.12in;
+}
 /* Measure reference flow while in normal View, before print media hides the probe. */
 .sheet-overview.print-only {
   display: block;

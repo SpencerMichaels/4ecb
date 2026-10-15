@@ -2,6 +2,28 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Reminder fitting/source refinement (2026-10-14): Remember in play now measures
+rendered entries and fills available left-column space rather than enforcing a
+four-entry/320-character cap. It reserves the overflow caption only when needed;
+long entries remain in full references. Basic-attack summaries can reduce their
+weapon rows when the right column would otherwise overflow, retaining complete
+alternatives in references. Live Silaqui review fits nine reminders and keeps both
+columns above the footer (20/22 px clearance).
+
+Grant/choice-only feats/features are excluded using actual Benefit text and
+grant/select metadata rather than introductory flavor; mixed benefits remain
+eligible. Additional Effects resolve exact provider IDs or uniquely known selected
+names/suffixes and reuse the feature's full authored rule once, not once per
+affected power. Unattributed identical effects deduplicate without merging
+different texts. Original power/card effects and full references are unchanged.
+A read-only exact-profile evaluation of Hu yields one Censure of Unity reminder,
+no Level 1 Ordained Priest Feature wrapper, and five total reminder entries.
+Verification: 23 focused sheet-model/render tests, web typechecking, focused lint
+and formatting pass, along with the production web build and Chromium
+overview-only Letter/A4 × color/monochrome PDF checks
+(12 measured pages each, no overview overflow). The full public suite and
+unchanged dense physical-card gate were not rerun for this focused change.
+
 Summary geography (2026-10-14): Basic attacks move to the right column directly
 below Languages, leaving the left column's remaining space for Remember in play.
 Focused rendering coverage asserts column membership and ordering; calculations,

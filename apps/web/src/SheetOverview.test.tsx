@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { buildSheetModel } from "@4ecb/sheet-model";
 import {
   SheetOverview,
+  fittingReminderIndices,
   overviewTrackingRows,
   paginateReferences,
   referenceParts,
@@ -21,6 +22,16 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("fills reminder space without a fixed count cap, reserving overflow-caption space", () => {
+    expect(
+      fittingReminderIndices([30, 30, 30, 30, 30, 30, 30], 5, 300, 20),
+    ).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    expect(
+      fittingReminderIndices([30, 30, 30, 30, 30, 30, 30], 5, 130, 20),
+    ).toEqual([0, 1, 2]);
+    expect(fittingReminderIndices([500, 30, 30], 5, 130, 20)).toEqual([1, 2]);
+    expect(fittingReminderIndices([50, 50], 0, 100, 20)).toEqual([0, 1]);
+  });
   it("combines actionable feat, feature and item reminders in one summary section", () => {
     const features = [false, true].map((playReminder) => ({
       id: `feat:${playReminder}`,
@@ -69,7 +80,9 @@ describe("real-data sheet overview", () => {
     expect(summary).toContain("Defensive Stance");
     expect(summary).toContain("Protective Charm");
     expect(summary.match(/Remember in play/g)).toHaveLength(1);
-    expect(summary.match(/Quick Hands/g)).toHaveLength(1);
+    expect(
+      summary.split('class="ov-reminder-probe"')[0]!.match(/Quick Hands/g),
+    ).toHaveLength(1);
     expect(summary).not.toContain("Feat reminders");
     const [left, right] = summary.split('class="sp-column sp-skills-column"');
     expect(left).toContain("Remember in play");

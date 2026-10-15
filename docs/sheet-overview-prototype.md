@@ -89,7 +89,18 @@ action in authored feat text, rather than taking the first short descriptions.
 Passive proficiency/training/numeric grants and armor-only loadout conditions are
 omitted from reminders. There is no separate Feat reminders category: one shared,
 deduplicated candidate list supplies summary, scratchpad and full references.
-The summary shows up to four entries, reducing optional content if needed to fit.
+The summary measures rendered entry heights and fills the available left-column
+space, reserving room for an overflow caption only when entries truly do not fit.
+There is no fixed entry-count or character-count cap. Oversized entries remain
+in references while shorter later entries can still use the remaining space.
+Basic-attack summaries prefer two weapon alternatives, reducing to one when the
+right column needs room; complete alternatives remain in references.
+Grant/choice-only wrappers are omitted using authored Benefit text and grant/
+selection metadata, without mistaking introductory flavor for an extra effect.
+Additional Effects resolve to a uniquely known selected provider (or exact ID),
+using its complete authored rule once instead of repeating the bonus per power.
+Unresolved identical effects deduplicate across affected powers; distinct effects
+and ambiguous providers remain recoverable. Original power/card effects are unchanged.
 This remains a display heuristic, not
 proof that every excluded benefit is calculated; all feats retain full references.
 Two equipped-first basic-attack variants appear per summary table; all alternatives

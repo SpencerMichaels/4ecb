@@ -13,6 +13,7 @@ export interface OverviewFeature {
   readonly fullTextAvailable: boolean;
   /** A display heuristic, not a claim that every other benefit is calculated. */
   readonly playReminder?: boolean;
+  readonly grantsOnly?: boolean;
 }
 export interface OverviewInventory {
   readonly name: string;
@@ -56,6 +57,39 @@ function hasPlayReminder(summary: string, description: string): boolean {
   // training, numeric bonuses and power grants alone are not useful reminders.
   return /\b(?:when|whenever|if|unless|trigger|bloodied|combat advantage|opportunity|reroll|draw|shift(?:s|ing)?|push|pull|slide|teleport|spend|forgo|give up|once per)\b/i.test(
     withoutLoadoutConditions,
+  );
+}
+function grantOnly(
+  entity: ContentEntity | undefined,
+  benefit: string,
+): boolean {
+  // A grant plus an independent conditional/numeric benefit is not a wrapper.
+  if (
+    /\b(?:when|whenever|if|while|unless|until|penalty|bonus(?!\s+(?:feat|power)\b))\b|[+-]\s*\d/i.test(
+      benefit,
+    )
+  )
+    return false;
+  const statements = benefit
+    .split(/(?:[.!?]\s+|\n+)/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const selectorOnly = Boolean(
+    entity?.rules.length &&
+    entity.rules.every((rule) => /^(?:grant|select)$/i.test(rule.name)),
+  );
+  const explicitGrant =
+    /\b(?:gain|learn|granted|have|use)\b[^.!?]*\b(?:power|ability|feature)\b/i.test(
+      benefit,
+    );
+  return (
+    (selectorOnly || explicitGrant) &&
+    statements.length > 0 &&
+    statements.every((statement) =>
+      /^(?:(?:once per (?:turn|round|encounter|day)|at will)[,:]?\s*)?(?:choose|select|(?:you\s+)?(?:gain|learn|are granted|have)|you(?: (?:can|may|must))? (?:choose|select|use))\b/i.test(
+        statement,
+      ),
+    )
   );
 }
 const skillAbilities: Readonly<Record<string, string>> = {
@@ -132,6 +166,12 @@ export function withSheetOverview(
           .find((field) => key(field.name) === "full text")
           ?.value.trim() ||
         "";
+      const benefit =
+        entity?.specifics
+          .find((field) => key(field.name) === "benefit")
+          ?.value.trim() ||
+        description.split(/\bBenefit:\s*/i).at(-1) ||
+        description;
       const fields =
         entity?.specifics
           .filter(
@@ -159,10 +199,14 @@ export function withSheetOverview(
         fields,
         source: entity?.source ?? "",
         fullTextAvailable: Boolean(description || fields.length),
-        playReminder: hasPlayReminder(summary, description),
+        playReminder:
+          !grantOnly(entity, benefit || summary) &&
+          hasPlayReminder(summary, benefit),
+        grantsOnly: grantOnly(entity, benefit || summary),
       });
     }
   const reminders: SheetValue[] = [];
+  const reminderByFeature = new Map<string, number>();
   const reminderKeys = new Set<string>();
   const addReminder = (label: string, value: string) => {
     const identity = `${label}:${value}`;
@@ -173,13 +217,16 @@ export function withSheetOverview(
   for (const feature of features)
     if (
       ["Feat", "Class Feature", "Racial Trait"].includes(feature.group) &&
-      (feature.group === "Feat"
-        ? feature.playReminder
-        : /\b(?:allies|ally|when|whenever|while|if|trigger)\b/i.test(
-            `${feature.summary} ${feature.description}`,
-          ))
-    )
+      feature.playReminder
+    ) {
       addReminder(feature.name, feature.summary || feature.description);
+      const index = reminders.findIndex(
+        (reminder) =>
+          reminder.label === feature.name &&
+          reminder.value === (feature.summary || feature.description),
+      );
+      if (index >= 0) reminderByFeature.set(feature.id, index);
+    }
   for (const item of input.inventory.filter((item) => item.equipped > 0))
     for (const field of item.fields)
       if (
@@ -187,9 +234,44 @@ export function withSheetOverview(
         /\b(?:allies|ally|when|whenever|while|if|trigger)\b/i.test(field.value)
       )
         addReminder(item.name, field.value);
+  const seenEffects = new Set<string>();
   for (const power of model.powers)
-    for (const effect of power.additionalEffects ?? [])
-      addReminder(effect.provider ?? power.name, effect.text);
+    for (const effect of power.additionalEffects ?? []) {
+      // Legacy caches repeat a source suffix on every affected power. Resolve
+      // only against known selected features, never an arbitrary parenthesis.
+      const namedFeatures = features.filter(
+        (feature) =>
+          key(effect.provider ?? "") === key(feature.name) ||
+          [` - ${feature.name}`, ` (${feature.name})`].some((suffix) =>
+            key(effect.text).replace(/[.]$/, "").endsWith(key(suffix)),
+          ),
+      );
+      const feature =
+        features.find((feature) => effect.provenanceId === feature.id) ??
+        (namedFeatures.length === 1 ? namedFeatures[0] : undefined);
+      if (feature && !feature.grantsOnly) {
+        const existing = reminderByFeature.get(feature.id);
+        const canonical = {
+          label: feature.name,
+          value: feature.description || feature.summary,
+        };
+        if (existing !== undefined) reminders[existing] = canonical;
+        else {
+          addReminder(canonical.label, canonical.value);
+          const index = reminders.findIndex(
+            (reminder) =>
+              reminder.label === canonical.label &&
+              reminder.value === canonical.value,
+          );
+          if (index >= 0) reminderByFeature.set(feature.id, index);
+        }
+        continue;
+      }
+      const identity = `${effect.provenanceId ?? key(effect.provider ?? feature?.name ?? "")}:${key(effect.text)}`;
+      if (seenEffects.has(identity)) continue;
+      seenEffects.add(identity);
+      addReminder(effect.provider ?? feature?.name ?? power.name, effect.text);
+    }
   reminders.sort(
     (a, b) =>
       Number(/\ball(?:y|ies)\b/i.test(b.value)) -

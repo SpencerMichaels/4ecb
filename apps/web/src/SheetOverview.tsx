@@ -115,9 +115,11 @@ const abilityKey: Readonly<Record<string, string>> = {
 function BasicAttacks({
   model,
   abbreviated = false,
+  variantLimit = 2,
 }: {
   model: CharacterSheetModel;
   abbreviated?: boolean;
+  variantLimit?: number;
 }) {
   const powers = model.powers.filter((power) =>
     /^(melee|ranged) basic attack$/i.test(power.name.trim()),
@@ -132,7 +134,7 @@ function BasicAttacks({
           const visible = abbreviated
             ? [...variants]
                 .sort((a, b) => Number(b.equipped) - Number(a.equipped))
-                .slice(0, 2)
+                .slice(0, variantLimit)
             : variants;
           const first = visible[0];
           return (
@@ -193,6 +195,29 @@ function Reminders({ values }: { values: readonly SheetValue[] }) {
     </div>
   );
 }
+/** Fill the measured space in priority order; an oversized entry stays in references. */
+export function fittingReminderIndices(
+  heights: readonly number[],
+  gap: number,
+  available: number,
+  captionHeight: number,
+): readonly number[] {
+  const total = heights.reduce(
+    (sum, height, index) => sum + height + (index ? gap : 0),
+    0,
+  );
+  if (total <= available) return heights.map((_, index) => index);
+  const indices: number[] = [];
+  let used = 0;
+  for (const [index, height] of heights.entries()) {
+    const next = used + height + (indices.length ? gap : 0);
+    if (next <= available - captionHeight) {
+      indices.push(index);
+      used = next;
+    }
+  }
+  return indices;
+}
 function Summary({
   model,
   name,
@@ -206,28 +231,79 @@ function Summary({
 }) {
   const overview = model.overview!;
   const ref = useRef<HTMLElement>(null);
-  const [compact, setCompact] = useState(false);
-  const reminders = overview.reminders
-    .filter((entry) => entry.value.length < 320)
-    .slice(0, compact ? 1 : 4);
+  const [visibleIndices, setVisibleIndices] = useState<readonly number[]>();
+  const [variantLimit, setVariantLimit] = useState(2);
+  const reminders =
+    visibleIndices === undefined
+      ? overview.reminders
+      : visibleIndices.flatMap((index) =>
+          overview.reminders[index] ? [overview.reminders[index]!] : [],
+        );
   useLayoutEffect(() => {
     const page = ref.current;
     if (!page) return;
+    let active = true;
     const check = () => {
+      if (!active) return;
       if (!page.clientHeight) return;
-      const body = page.querySelector<HTMLElement>(".sp-page-content")!;
       const footer = page.querySelector<HTMLElement>(".sp-page-footer")!;
-      const overflow =
-        body.getBoundingClientRect().bottom >
-        footer.getBoundingClientRect().top - 8;
-      if (overflow && !compact) setCompact(true);
-      page.dataset.overviewOverflow = String(overflow);
+      const basic = page.querySelector<HTMLElement>(
+        ".sp-skills-column > .sp-basic-attacks",
+      );
+      const basicProbe = page.querySelector<HTMLElement>(
+        ".ov-basic-probe .sp-basic-attacks",
+      );
+      if (basic && basicProbe)
+        setVariantLimit(
+          basicProbe.getBoundingClientRect().height <=
+            footer.getBoundingClientRect().top -
+              8 -
+              basic.getBoundingClientRect().top
+            ? 2
+            : 1,
+        );
+      const panel = page.querySelector<HTMLElement>(".ov-summary-reminders");
+      const probe = panel?.querySelector<HTMLElement>(".ov-reminder-probe");
+      const list = panel?.querySelector<HTMLElement>(
+        ".sp-panel-content > .sp-reminders",
+      );
+      if (!panel || !probe || !list) return;
+      const entries = [
+        ...probe.querySelector<HTMLElement>(".sp-reminders")!.children,
+      ];
+      const gap =
+        entries.length > 1
+          ? parseFloat(getComputedStyle(entries[1]!).marginTop) || 0
+          : 0;
+      const content = panel.querySelector<HTMLElement>(".sp-panel-content")!;
+      const available =
+        footer.getBoundingClientRect().top -
+        8 -
+        list.getBoundingClientRect().top -
+        parseFloat(getComputedStyle(content).paddingBottom) -
+        parseFloat(getComputedStyle(panel).borderBottomWidth);
+      const caption = probe.querySelector<HTMLElement>(".sp-caption")!;
+      const indices = fittingReminderIndices(
+        entries.map((entry) => entry.getBoundingClientRect().height),
+        gap,
+        available,
+        caption.getBoundingClientRect().height +
+          parseFloat(getComputedStyle(caption).marginTop),
+      );
+      setVisibleIndices((previous) =>
+        previous?.join(",") === indices.join(",") ? previous : indices,
+      );
     };
     const observer = new ResizeObserver(check);
     observer.observe(page);
+    observer.observe(page.querySelector(".sp-page-content")!);
     check();
-    return () => observer.disconnect();
-  }, [model, compact]);
+    void document.fonts.ready.then(check);
+    return () => {
+      active = false;
+      observer.disconnect();
+    };
+  }, [model]);
   return (
     <Paper
       name={name}
@@ -311,7 +387,11 @@ function Summary({
             ) : null}
           </Panel>
           {overview.reminders.length ? (
-            <Panel title="Remember in play" icon="feat">
+            <Panel
+              title="Remember in play"
+              icon="feat"
+              className="ov-summary-reminders"
+            >
               <Reminders values={reminders} />
               {reminders.length < overview.reminders.length ? (
                 <p className="sp-caption">
@@ -319,6 +399,12 @@ function Summary({
                   in references.
                 </p>
               ) : null}
+              <div className="ov-reminder-probe" aria-hidden="true">
+                <Reminders values={overview.reminders} />
+                <p className="sp-caption">
+                  {overview.reminders.length} more reminders in references.
+                </p>
+              </div>
             </Panel>
           ) : null}
         </div>
@@ -398,7 +484,10 @@ function Summary({
                 .join(" · ") || "Not recorded"}
             </p>
           </Panel>
-          <BasicAttacks model={model} abbreviated />
+          <BasicAttacks model={model} abbreviated variantLimit={variantLimit} />
+          <div className="ov-basic-probe" aria-hidden="true">
+            <BasicAttacks model={model} abbreviated />
+          </div>
         </div>
       </div>
     </Paper>
