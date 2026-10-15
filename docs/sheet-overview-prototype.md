@@ -72,6 +72,19 @@ hearts are paper affordances, not interactive Play state.
 
 ## Real-data integration
 
+Named weapon/implement reminder policy (2026-10-15): Named properties use explicit
+show/reference-only sets in `item-reminders.ts`, rather than trigger-word matching
+alone. Show Brutal, Defensive, High Crit, Versatile, Mounted, Empowered Crit,
+Energized (all damage-type variants), Forceful, Shielding, Undeniable, Unerring,
+Unstoppable, Mobile and Blinking. Keep Off-hand, Heavy/Light Thrown, Load
+Free/Minor, Reach, Small, Stout, Accurate, Deadly, Distant and Reaching in the
+weapon reference/card rules, not reminders: they describe handling, targeting
+geometry or unconditional statistics rather than situational effects to track.
+Numbered properties retain their values; descriptions must still come from
+authored content. Unknown custom traits and freeform enchanted-item Property
+paragraphs retain the conservative actionability heuristic. Filtering affects
+reminder selection only, never the source data, item cards or calculations.
+
 Summary continuation (2026-10-15): The defensive-traits pane is named
 **Resistances & Weaknesses**, reserving Defenses for AC/Fortitude/Reflex/Will.
 The measured page-1 reminder selection now sends omitted reminders directly to
@@ -105,8 +118,8 @@ All eleven values use matching individual soft tiles, with labels above numbers.
 Each group has a thin rounded outline and no visible group heading; semantic
 group labels remain available. Field labels use darker, slightly heavier text.
 Page 1 uses one muted slate-blue accent for all body pane headers, without
-category-specific pane colors. The numeric band uses muted-violet Defenses,
-sage-green Health, and teal Initiative/Speed to distinguish its groups.
+category-specific pane colors. The numeric band uses sage-green Defenses,
+muted-violet Health, and teal Initiative/Speed to distinguish its groups.
 Tints are limited to pane headers
 and numeric tiles/outlines; body text and alternating table rows remain neutral.
 Monochrome mode replaces these accents with explicit grayscale values, preserving

@@ -40,6 +40,104 @@ const item: OverviewInventory = {
 };
 
 describe("equipped item property reminders", () => {
+  it.each([
+    "Off-hand",
+    "Heavy Thrown",
+    "Light Thrown",
+    "Load Minor",
+    "LOAD FREE",
+    "Reach",
+    "Small",
+    "Stout",
+    "Accurate",
+    "Deadly",
+    "Distant",
+    "Reaching",
+  ])(
+    "keeps %s in weapon rules rather than reminders, even with conditional prose",
+    (name) => {
+      const definition = propertyDefinition(
+        name,
+        "When you use this item, you may follow its operating rules.",
+      );
+      const fields = [{ label: "Properties", value: name }];
+      expect(
+        equippedItemPropertyReminders([{ ...item, fields }], [definition]),
+      ).toEqual([]);
+      expect(fields[0]!.value).toBe(name);
+      expect(
+        equippedItemPropertyReminders(
+          [
+            {
+              ...item,
+              fields: [
+                ...fields,
+                {
+                  label: "Full Text",
+                  value: `Properties:\n${name} (When you use this item, you may follow its operating rules.).`,
+                },
+              ],
+            },
+          ],
+          [],
+        ),
+      ).toEqual([]);
+    },
+  );
+  it.each([
+    ["Brutal 1", "Brutal"],
+    ["Defensive", "Defensive"],
+    ["High Crit", "High Crit"],
+    ["Versatile", "Versatile"],
+    ["Mounted", "Mounted"],
+    ["Empowered Crit", "Empowered Crit"],
+    ["Energized (fire)", "Energized (fire)"],
+    ["Forceful", "Forceful"],
+    ["Shielding", "Shielding"],
+    ["Undeniable", "Undeniable"],
+    ["Unerring", "Unerring"],
+    ["Unstoppable", "Unstoppable"],
+    ["Mobile", "Mobile"],
+    ["Blinking", "Blinking"],
+  ])(
+    "retains the authored benefit for %s without requiring heuristic trigger words",
+    (name, definitionName) => {
+      const description =
+        "A synthetic situational benefit with deliberately neutral wording.";
+      expect(
+        equippedItemPropertyReminders(
+          [{ ...item, fields: [{ label: "Properties", value: name }] }],
+          [propertyDefinition(definitionName, description)],
+        ),
+      ).toEqual([{ label: item.name, value: `${name}: ${description}` }]);
+    },
+  );
+  it("filters operating traits without losing independent enchanted item benefits", () => {
+    const benefit = "When an ally is hit, grant the ally a bonus.";
+    expect(
+      equippedItemPropertyReminders(
+        [
+          {
+            ...item,
+            fields: [
+              { label: "Properties", value: "Load Free, Brutal 1" },
+              { label: "Property", value: benefit },
+            ],
+          },
+        ],
+        [
+          propertyDefinition("Load Free", "When you attack, you may load."),
+          propertyDefinition("Brutal", "Reroll the indicated dice."),
+        ],
+      ),
+    ).toEqual([
+      {
+        label: item.name,
+        value: `Brutal 1: Reroll the indicated dice.\n\n${benefit}`,
+        elements: ["Brutal 1: Reroll the indicated dice.", benefit],
+      },
+    ]);
+  });
   it("keeps multiple paragraphs of one property inside a single element", () => {
     const first =
       "When you defend, gain a benefit.\n\nYou may apply it to an ally.";

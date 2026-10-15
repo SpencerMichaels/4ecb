@@ -213,16 +213,16 @@ body:has(.sp-prototype) {
 .sheet-overview
   .ov-paper[aria-label="Character summary"]
   .ov-stat-group[aria-label="Defenses"] {
-  --ov-accent: #65557d;
-  --ov-tint: #f0ecf5;
-  --ov-edge: #cbbfd9;
+  --ov-accent: #526b45;
+  --ov-tint: #eef3e9;
+  --ov-edge: #c1cfb5;
 }
 .sheet-overview
   .ov-paper[aria-label="Character summary"]
   .ov-stat-group[aria-label="Health"] {
-  --ov-accent: #526b45;
-  --ov-tint: #eef3e9;
-  --ov-edge: #c1cfb5;
+  --ov-accent: #65557d;
+  --ov-tint: #f0ecf5;
+  --ov-edge: #cbbfd9;
 }
 .sheet-overview
   .ov-paper[aria-label="Character summary"]

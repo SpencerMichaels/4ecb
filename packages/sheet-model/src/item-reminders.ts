@@ -51,6 +51,53 @@ function actionableProperty(text: string): boolean {
   );
 }
 
+// Named weapon/implement traits need a display policy, not a prose-keyword guess:
+// basic operating rules often say "when" or "you can" without being reminders.
+// Keep manual/conditional benefits; omit handling/range rules and always-on
+// numerical traits. Unknown custom properties retain the conservative fallback.
+const REMINDER_PROPERTIES = new Set([
+  "brutal",
+  "defensive",
+  "high crit",
+  "versatile",
+  "mounted",
+  "empowered crit",
+  "energized",
+  "forceful",
+  "shielding",
+  "undeniable",
+  "unerring",
+  "unstoppable",
+  "mobile",
+  "blinking",
+]);
+const REFERENCE_ONLY_PROPERTIES = new Set([
+  "off hand",
+  "heavy thrown",
+  "light thrown",
+  "load minor",
+  "load free",
+  "reach",
+  "small",
+  "stout",
+  "accurate",
+  "deadly",
+  "distant",
+  "reaching",
+]);
+function propertyReminderPolicy(name: string): "show" | "hide" | undefined {
+  const key = name
+    .toLowerCase()
+    .replace(/\s+\d+$/, "")
+    .replace(/\s*\([^()]*\)$/, "")
+    .replace(/[-‐‑–]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (REMINDER_PROPERTIES.has(key)) return "show";
+  if (REFERENCE_ONLY_PROPERTIES.has(key)) return "hide";
+  return undefined;
+}
+
 export function equippedItemPropertyReminders(
   inventory: readonly OverviewInventory[],
   content: readonly ContentEntity[],
@@ -84,6 +131,8 @@ export function equippedItemPropertyReminders(
         continue;
       }
       for (const name of propertyNames(field.value)) {
+        const policy = propertyReminderPolicy(name);
+        if (policy === "hide") continue;
         const entity =
           definitions.get(name.toLowerCase()) ??
           definitions.get(name.replace(/\s+\d+$/, "").toLowerCase());
@@ -93,7 +142,10 @@ export function equippedItemPropertyReminders(
           entity?.specifics
             .find((field) => /^full text$/i.test(field.name))
             ?.value.trim();
-        if (description && actionableProperty(description))
+        if (
+          description &&
+          (policy === "show" || actionableProperty(description))
+        )
           add(item, `${name}: ${description}`);
       }
     }

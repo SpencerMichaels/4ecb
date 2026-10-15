@@ -2,6 +2,34 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Named weapon/implement reminder classification (2026-10-15): Explicit
+show/reference-only trait sets replace prose-trigger guessing for the known
+weapon/implement property families. Handling/loading/thrown/reach/size traits and
+unconditional numerical traits stay in item rules, not reminders. Situational
+benefits (including Brutal, High Crit, Versatile, Defensive and triggered superior
+implement benefits) retain authored explanations. Numeric/damage-type parameters
+normalize for policy lookup without being removed from displayed descriptions.
+Unknown custom traits retain the existing heuristic; independent freeform magic
+item properties are unaffected. See `sheet-overview-prototype.md` for both lists.
+
+Verification: 69 focused item-reminder/sheet-model/overview tests pass, including
+all known classification families, numeric parameters, authored Full Text and
+generic-definition paths, custom fallback and independent enchanted properties.
+A read-only local-corpus Greatbow check confirms Properties=Load Free and zero
+reminders. Focused lint and the web production build pass. Package typecheck
+fails at the pre-existing, unchanged
+`packages/sheet-model/src/index.test.ts:922` (`delete older.equipmentId`, TS2790);
+that exact line is also present in HEAD. This is not a milestone closure.
+Remaining review issue: summary continuation still uses reference-card styling
+rather than page-1 reminder panes, and its one-reminder caption needs singular
+grammar. Removing ineligible traits can remove unnecessary continuation pages,
+but does not correct that separate presentation mismatch.
+
+Numeric-group color swap (2026-10-15): Swapped the complete Defenses and Health
+palettes (text, tint and separator): Defenses is sage green, Health muted violet.
+Other colors and layout are unchanged. Updated focused browser color assertions;
+only diff/whitespace checks were run for this direct palette swap.
+
 Defense-group accent feedback (2026-10-15): The Defenses numeric group now uses
 muted violet, distinct from the body panes' slate blue. Health remains sage green
 and Initiative/Speed teal; grayscale behavior is unchanged. Production build and
