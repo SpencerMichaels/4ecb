@@ -106,7 +106,10 @@ The unified
 summary, scratchpad and reference heading is now simply **Reminders**.
 An optional Defensive traits panel sits between Basic Attacks and Reminders,
 grouping resistances, vulnerabilities, authored immunity clauses and conditional
-or death-saving-throw modifiers. It never inflates the universal Saves tile.
+or death-saving-throw modifiers in a striped Bonus/Source table. Related entries
+share category headings, and source names are not embedded in bonus prose.
+It never inflates the universal Saves tile. The full-width divider below the
+identity header is restored.
 Player, theme, paragon path, epic destiny and company move to the header's right
 identity block, omitted when absent. See `character-import-and-sheets.md` for the
 structured-stat/prose detection and legacy-cache compatibility boundary.

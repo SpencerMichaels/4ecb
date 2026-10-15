@@ -123,8 +123,34 @@ body:has(.sp-prototype) {
   margin-top: -0.12in;
 }
 .sheet-overview .sp-identity {
-  border-bottom: 0;
-  padding-bottom: 0;
+  border-bottom: 2px solid var(--sp-ink);
+  padding-bottom: 0.12in;
+}
+.sheet-overview .ov-defensive-table {
+  table-layout: fixed;
+  font-size: 9pt;
+}
+.ov-defensive-table :is(th, td) {
+  padding: 0.04in 0.045in;
+  border: 0;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.ov-defensive-table thead th {
+  font-weight: 400;
+  font-size: 8pt;
+  color: var(--sp-muted);
+}
+.ov-defensive-table thead th:first-child {
+  width: 62%;
+}
+.ov-defensive-table .ov-defensive-group th {
+  font-size: 8.5pt;
+  padding-top: 0.07in;
+  font-weight: 600;
+}
+.ov-defensive-table tbody tr:nth-child(even) {
+  background: #f0f3f5;
 }
 .ov-identity-name {
   flex: 1;

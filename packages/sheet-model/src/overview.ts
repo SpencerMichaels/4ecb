@@ -2,7 +2,7 @@ import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
 import type { LegacyRuleElement } from "@4ecb/character-domain";
 import type { CharacterSheetModel, SheetValue } from "./index";
 import type { EvaluatedStat } from "@4ecb/rules-engine";
-import { defensiveStatTraits } from "./defensive-traits";
+import { defensiveStatTraits, type DefensiveTrait } from "./defensive-traits";
 
 export interface OverviewFeature {
   readonly id: string;
@@ -39,7 +39,7 @@ export interface SheetOverview {
     readonly trained: boolean | undefined;
   }[];
   readonly saves: string;
-  readonly defensiveTraits: readonly SheetValue[];
+  readonly defensiveTraits: readonly DefensiveTrait[];
   readonly bloodied: string;
   readonly vision: string;
   readonly features: readonly OverviewFeature[];
@@ -227,14 +227,25 @@ export function withSheetOverview(
     /\byou (?:are|become) immune\b|\byou (?:have|gain) (?:immunity|vulnerability)\b/i;
   for (const feature of features) {
     if (selfDefense.test(feature.description))
-      defensiveTraits.push({ label: feature.name, value: feature.description });
+      defensiveTraits.push({
+        label: feature.name,
+        value: feature.description,
+        source: feature.name,
+        group: /immune|immunity/i.test(feature.description)
+          ? "Immunities"
+          : "Vulnerabilities",
+      });
     for (const field of feature.fields)
       if (
         /^(?:immunities|immunity|resistances|vulnerabilities)$/i.test(
           field.label,
         )
       )
-        defensiveTraits.push(field);
+        defensiveTraits.push({
+          ...field,
+          source: feature.name,
+          group: field.label,
+        });
   }
   for (const item of input.inventory.filter((item) => item.equipped > 0))
     for (const field of item.fields)
@@ -247,6 +258,12 @@ export function withSheetOverview(
         defensiveTraits.push({
           label: `${item.name} · ${field.label}`,
           value: field.value,
+          source: item.name,
+          group: /^property$/i.test(field.label)
+            ? /immune|immunity/i.test(field.value)
+              ? "Immunities"
+              : "Vulnerabilities"
+            : field.label,
         });
   const reminders: SheetValue[] = [];
   const reminderByFeature = new Map<string, number>();
@@ -345,7 +362,9 @@ export function withSheetOverview(
         (entry, index, entries) =>
           entries.findIndex(
             (other) =>
-              other.label === entry.label && other.value === entry.value,
+              other.label === entry.label &&
+              other.value === entry.value &&
+              other.source === entry.source,
           ) === index,
       ),
       abilities: model.abilities.map(({ label, value }) => {

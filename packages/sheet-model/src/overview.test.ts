@@ -54,6 +54,8 @@ describe("printed overview data", () => {
     expect(m.overview?.defensiveTraits).toContainEqual({
       label: immune.name,
       value: immune.description,
+      source: immune.name,
+      group: "Immunities",
     });
     expect(
       buildSheetModel(snapshot, [

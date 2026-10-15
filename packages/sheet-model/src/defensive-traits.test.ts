@@ -43,18 +43,24 @@ describe("defensive stat projection", () => {
       ]),
     );
     expect(defensiveStatTraits(values, evaluated)).toEqual([
-      { label: "Resistance", value: "Fire 5" },
+      { label: "Resistance", value: "Fire 5", source: "Synthetic trait" },
       {
         label: "Resistance",
-        value: "Fire 10 while bloodied (Synthetic trait)",
+        value: "Fire 10 while bloodied",
+        source: "Synthetic trait",
       },
-      { label: "Vulnerability", value: "Cold 3" },
+      { label: "Vulnerability", value: "Cold 3", source: "Synthetic trait" },
       {
         label: "Saving throws",
-        value: "+2 Feat bonus against poison (Synthetic trait)",
+        value: "+2 Feat bonus against poison",
+        source: "Synthetic trait",
       },
-      { label: "Saving throws", value: "+3 while bloodied (Synthetic trait)" },
-      { label: "Death saves", value: "+2" },
+      {
+        label: "Saving throws",
+        value: "+3 while bloodied",
+        source: "Synthetic trait",
+      },
+      { label: "Death saves", value: "+2", source: "Synthetic trait" },
     ]);
   });
   it("preserves unresolved resistance values and omits zero/irrelevant stats", () => {
@@ -66,7 +72,11 @@ describe("defensive stat projection", () => {
         "Saving Throws": "0",
       }),
     ).toEqual([
-      { label: "Resistance / vulnerability", value: "Cold: Custom value" },
+      {
+        label: "Resistance / vulnerability",
+        value: "Cold: Custom value",
+        source: "Legacy cache",
+      },
     ]);
   });
   it("does not guess unresolved conditional bonuses", () => {
@@ -88,7 +98,8 @@ describe("defensive stat projection", () => {
     ).toEqual([
       {
         label: "Saving throws",
-        value: "Custom modifier against fear (unresolved; Custom trait)",
+        value: "Custom modifier against fear (unresolved)",
+        source: "Custom trait",
       },
     ]);
   });

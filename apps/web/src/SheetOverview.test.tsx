@@ -322,8 +322,16 @@ describe("real-data sheet overview", () => {
           overview: {
             ...model.overview!,
             defensiveTraits: [
-              { label: "Resistance", value: "Fire 5" },
-              { label: "Saving throws", value: "+2 against poison" },
+              {
+                label: "Resistance",
+                value: "Fire 5",
+                source: "Synthetic cloak",
+              },
+              {
+                label: "Saving throws",
+                value: "+2 against poison",
+                source: "Synthetic feat",
+              },
             ],
           },
         }}
@@ -340,6 +348,13 @@ describe("real-data sheet overview", () => {
     expect(summary).toContain(">Defensive traits</h3>");
     expect(summary).toContain("Fire 5");
     expect(summary).toContain("+2 against poison");
+    expect(summary).toContain('<table class="ov-defensive-table"');
+    expect(summary).toContain(
+      '<th scope="col">Bonus</th><th scope="col">Source</th>',
+    );
+    expect(summary).toContain("<td>Synthetic cloak</td>");
+    expect(summary).toContain("<td>Synthetic feat</td>");
+    expect(summary).toContain("Resistances</th>");
     expect(
       summary.split('class="sp-identity"')[1]!.split("</section>")[0],
     ).not.toContain("Fire 5");

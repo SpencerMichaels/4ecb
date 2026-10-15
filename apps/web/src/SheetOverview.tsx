@@ -292,6 +292,72 @@ function Reminders({ values }: { values: readonly SheetValue[] }) {
     </div>
   );
 }
+function DefensiveTraits({ model }: { model: CharacterSheetModel }) {
+  const groups = new Map<
+    string,
+    NonNullable<CharacterSheetModel["overview"]>["defensiveTraits"][number][]
+  >();
+  const names: Record<string, string> = {
+    resistance: "Resistances",
+    resistances: "Resistances",
+    vulnerability: "Vulnerabilities",
+    vulnerabilities: "Vulnerabilities",
+    immunity: "Immunities",
+    immunities: "Immunities",
+    "saving throws": "Saving throws",
+    "death saves": "Saving throws",
+  };
+  for (const trait of model.overview?.defensiveTraits ?? []) {
+    const group =
+      names[(trait.group ?? trait.label).toLowerCase()] ??
+      trait.group ??
+      trait.label;
+    groups.set(group, [...(groups.get(group) ?? []), trait]);
+  }
+  return (
+    <table className="ov-defensive-table" aria-label="Defensive traits">
+      <thead>
+        <tr>
+          <th scope="col">Bonus</th>
+          <th scope="col">Source</th>
+        </tr>
+      </thead>
+      {[...groups]
+        .sort(([a], [b]) => {
+          const order = [
+            "Resistances",
+            "Immunities",
+            "Vulnerabilities",
+            "Saving throws",
+          ];
+          const rank = (value: string) =>
+            order.includes(value) ? order.indexOf(value) : order.length;
+          return rank(a) - rank(b);
+        })
+        .map(([group, traits]) => (
+          <tbody key={group}>
+            <tr className="ov-defensive-group">
+              <th colSpan={2}>{group}</th>
+            </tr>
+            {traits.map((trait, index) => (
+              <tr key={index}>
+                <td>
+                  <Prose
+                    value={
+                      trait.label === "Death saves"
+                        ? `Death saves: ${trait.value}`
+                        : trait.value
+                    }
+                  />
+                </td>
+                <td>{trait.source ?? "Source unavailable"}</td>
+              </tr>
+            ))}
+          </tbody>
+        ))}
+    </table>
+  );
+}
 /** Fill the measured space in priority order; an oversized entry stays in references. */
 export function fittingReminderIndices(
   heights: readonly number[],
@@ -520,7 +586,7 @@ function Summary({
               icon="shield"
               className="ov-defensive-traits"
             >
-              <Reminders values={overview.defensiveTraits} />
+              <DefensiveTraits model={model} />
             </Panel>
           ) : null}
           {overview.reminders.length ? (
@@ -1052,7 +1118,10 @@ function references(model: CharacterSheetModel): ReferenceEntry[] {
       group: "Defensive traits",
       source: "",
       parts: o.defensiveTraits.flatMap((entry) =>
-        referenceParts(entry.value, entry.label),
+        referenceParts(
+          entry.source ? `${entry.value} (${entry.source})` : entry.value,
+          entry.label,
+        ),
       ),
     });
   if (o.reminders.length)

@@ -299,7 +299,7 @@ pages retain their source warning. The React renderer paginates prose, not rules
 calculations. Power/item physical cards retain their separate accepted layout.
 See `sheet-overview-prototype.md` for the approved geography and review limits.
 
-The summary's optional Defensive traits block groups signed `resist:*` totals
+The summary's optional Defensive traits table groups signed `resist:*` totals
 (positive resistance, negative vulnerability), conditional resistance/save
 contributions and death-save modifiers. Native conditions retain numeric values,
 wording and provider names separately; inapplicable equipment contributions are
@@ -309,7 +309,11 @@ explicit defensive fields are retained whole; this is not a general natural-
 language rules parser or an assertion that all prose-only defenses are detected.
 Legacy snapshots lack conditional stat-add provenance, so no native conditions
 are fabricated from cached totals; selected full rules remain in references.
-The same defensive list is retained in full references. Player, theme, paragon
+Bonus and Source are separate columns with alternating row backgrounds, grouped
+by resistance/immunity/vulnerability/saving throw. Applied native contributors
+supply total provenance; conditional entries retain their own provider. Cached
+totals say Legacy cache rather than inventing a source. The same defensive list
+and sources are retained in full references. Player, theme, paragon
 path, epic destiny and company occupy the header's identity area when present.
 
 The semantic model exposes identity, final abilities, defenses, resources,

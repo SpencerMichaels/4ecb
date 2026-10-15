@@ -743,10 +743,12 @@ describe("sheet model", () => {
     expect(model.overview?.defensiveTraits).toContainEqual({
       label: "Resistance",
       value: "Fire 5",
+      source: "Evaluated total",
     });
     expect(model.overview?.defensiveTraits).toContainEqual({
       label: "Saving throws",
-      value: "+2 against poison (Synthetic saving feat)",
+      value: "+2 against poison",
+      source: "Synthetic saving feat",
     });
     expect(model.powers[0]?.additionalEffects).toEqual([
       {

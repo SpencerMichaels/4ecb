@@ -2,6 +2,27 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Defensive table / AC investigation (2026-10-14): The full-width identity divider
+is restored. Defensive traits use a striped Bonus/Source table with related
+resistance, immunity, vulnerability and saving-throw groups; native applied
+contributors and per-condition providers are retained separately from bonus text,
+and cached totals explicitly retain legacy-cache provenance. Full references
+keep both the benefits and sources.
+
+Ingi's reported AC 15 was traced against both supplied private `.dnd4e` and native
+`.4ecb` exports, the exact bound content digest, typed item contributions and the
+recovered `CharSummaryCard` AC projection. Both exports evaluate to the legacy
+total 26: 10 base + 3 half level + 9 plate + 2 enhancement + 2 shield. The owner
+confirmed the browser also displays 26 after a full reload. No formula, cached
+total, content definition or saved equipment state was changed to fit the report;
+the transient browser-state discrepancy was not independently reproduced.
+
+Verification for this slice: 75 focused overview/model/defensive projection and
+evaluator tests, web typecheck, focused lint and production build pass. The
+overview-only Letter/A4 × color/monochrome print matrix also passes (12 measured
+pages each, no overview overflow). Physical cards and the full milestone gate
+remain separate.
+
 Defensive traits / identity header follow-up (2026-10-14): The first-page body
 now groups resistances, vulnerabilities, authored self-immunity clauses,
 conditional saves and death-save modifiers in an optional Defensive traits panel
