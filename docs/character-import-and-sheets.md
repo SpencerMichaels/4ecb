@@ -337,6 +337,16 @@ powers, flavor and group prose are not promoted by this extraction. This remains
 a display heuristic, not exhaustive proof of automatic calculation coverage.
 Missing/malformed explanations are not invented; original item/card/reference
 fields remain intact. Hidden item cards do not suppress equipped reminders.
+All extracted properties for one item display name are grouped as separate
+paragraphs under a single reminder heading, with duplicate paragraphs omitted.
+The grouped entry is a single measured fitting unit and remains complete in
+references when it cannot fit the summary.
+Evaluated weapon/implement variants retain a stable inventory `equipmentId` for
+display projection. Their sheet names reuse the inventory's shared composed-name
+formatter (including explicit custom names), not the engine's component-name
+string. Older in-memory results can resolve by their exact power:inventory
+variant identity; unknown/unarmed names retain their existing fallback. This
+changes presentation only, not rule identifiers or attack/damage calculations.
 
 The semantic model exposes identity, final abilities, defenses, resources,
 senses, skills, feature groups, notes, inventory, powers, and cards. The browser

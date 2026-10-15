@@ -13,6 +13,8 @@ export interface PowerComponent {
 export interface PowerVariant {
   readonly id: string;
   readonly equipmentName: string;
+  /** Stable inventory identity for presentation; do not derive it from a name. */
+  readonly equipmentId?: string;
   readonly basicAttackTypes?: readonly ("melee" | "ranged")[];
   readonly definitionIds?: readonly string[];
   readonly equipped?: boolean;
@@ -1419,6 +1421,7 @@ export function evaluatePowers(input: {
       return {
         id: `${power.id}:${equipment.id}`,
         equipmentName: equipment.name,
+        equipmentId: equipment.id,
         ...(equipment.unarmed
           ? { basicAttackTypes: ["melee" as const] }
           : equipment.weaponCategory?.includes("melee")

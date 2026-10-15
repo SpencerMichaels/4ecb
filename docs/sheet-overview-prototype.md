@@ -113,6 +113,10 @@ alongside freeform enchantment properties. Property parameters remain in the
 description rather than the entity name, so name-only tier abbreviation does not
 erase meaningful arguments such as an energized damage type. Only equipped
 positive-quantity items qualify; no named-item exception list is used.
+An item's property paragraphs share one heading, rather than repeating its name
+for each property. Basic Attacks and other evaluated variant tables use the same
+composed inventory display name as item cards and reminders, including custom
+names; original calculation names and numeric values are unchanged.
 An optional Defensive traits panel sits above Basic Attacks,
 grouping resistances, vulnerabilities, authored immunity clauses and conditional
 or death-saving-throw modifiers in a striped benefit/source table without visible

@@ -853,6 +853,115 @@ describe("sheet model", () => {
       value: "Use your Strength or Dexterity modifier.",
     });
     expect(model.items[0]).toMatchObject({ name: "Test wand" });
+    const template = content.find((entity) => entity.id === "ITEM_1")!;
+    const displayContent = [
+      ...content,
+      {
+        ...template,
+        id: "DISPLAY_BASE",
+        name: "Quick staff",
+        type: "Superior Implement",
+      },
+      {
+        ...template,
+        id: "DISPLAY_MAGIC",
+        name: "Veiling Staff +2",
+        type: "Magic Item",
+      },
+    ];
+    const displayEntry = {
+      ...build.inventory[0]!,
+      elements: [
+        {
+          definitionId: "DISPLAY_BASE",
+          name: "Quick staff",
+          type: "Superior Implement",
+        },
+        {
+          definitionId: "DISPLAY_MAGIC",
+          name: "Veiling Staff +2",
+          type: "Magic Item",
+        },
+      ],
+    };
+    const displayBuild = { ...build, inventory: [displayEntry] };
+    const displayEvaluation = {
+      ...evaluation,
+      powers: evaluation.powers.map((power) => ({
+        ...power,
+        variants: power.variants.map((variant) => ({
+          ...variant,
+          equipmentId: displayEntry.id,
+          equipmentName: "Quick staff + Veiling Staff +2",
+        })),
+      })),
+    };
+    const displayModel = buildEvaluatedSheetModel(
+      snapshot,
+      displayBuild,
+      displayEvaluation,
+      displayContent,
+    );
+    expect(displayModel.powers[0]?.variants?.[0]).toMatchObject({
+      equipmentName: "Veiling Quick staff +2",
+      attack: "+7 vs Reflex",
+      damage: "1d6+4",
+    });
+    expect(displayModel.powers[0]?.variants?.[0]?.equipmentName).toBe(
+      displayModel.overview?.inventory[0]?.name,
+    );
+    const olderEvaluation = {
+      ...displayEvaluation,
+      powers: displayEvaluation.powers.map((power) => ({
+        ...power,
+        variants: power.variants.map((variant) => {
+          const older = {
+            ...variant,
+            id: `${power.definitionId}:${displayEntry.id}`,
+          };
+          delete older.equipmentId;
+          return older;
+        }),
+      })),
+    };
+    expect(
+      buildEvaluatedSheetModel(
+        snapshot,
+        displayBuild,
+        olderEvaluation,
+        displayContent,
+      ).powers[0]?.variants?.[0]?.equipmentName,
+    ).toBe("Veiling Quick staff +2");
+    const customBuild = {
+      ...displayBuild,
+      inventory: [
+        { ...displayEntry, name: "Personal staff" },
+        {
+          ...displayEntry,
+          id: "spare",
+          name: "Spare staff",
+          equippedQuantity: 0,
+        },
+      ],
+    };
+    const customEvaluation = {
+      ...displayEvaluation,
+      powers: displayEvaluation.powers.map((power) => ({
+        ...power,
+        variants: [
+          power.variants[0]!,
+          { ...power.variants[0]!, id: "spare-variant", equipmentId: "spare" },
+        ],
+      })),
+    };
+    expect(
+      buildEvaluatedSheetModel(
+        snapshot,
+        customBuild,
+        customEvaluation,
+        displayContent,
+      ).powers[0]?.variants?.map((variant) => variant.equipmentName),
+    ).toEqual(["Personal staff", "Spare staff"]);
     expect(model.items).toContainEqual(
       expect.objectContaining({
         name: "Gloaming Leather Armor +1",

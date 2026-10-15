@@ -2,6 +2,22 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Grouped item properties / consistent variant names (2026-10-15): Item Properties
+now groups distinct property paragraphs under one heading per item display name,
+retaining every property and treating the group as one measured fitting unit.
+Evaluated power variants carry inventory identity so sheet projection can reuse
+the existing composed/custom inventory display name instead of the calculation
+engine's raw component-name string. Exact native power:inventory IDs support
+older in-memory evaluations without equipmentId; unresolved/unarmed names fall
+back unchanged. Numerical calculations and rules identities are unchanged.
+
+Verification: 84 focused property/model/render/power tests, web typecheck, focused
+lint and production build pass. A local private-definition diagnostic confirms
+one Aversion Quickbeam staff +2 heading containing all extracted properties.
+All four overview-only Letter/A4 × color/monochrome PDF checks pass (12 measured
+pages each, no overview overflow). Full physical-card and milestone exit gates
+remain separate.
+
 Weapon/implement property reminders (2026-10-14): Fixed two general extraction
 gaps behind the owner's Quickbeam/Aversion examples. Declared `Properties`
 keywords now resolve authored explanations from the same item's Full Text first

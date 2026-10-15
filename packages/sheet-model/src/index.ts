@@ -633,7 +633,16 @@ function evaluatedPowerCards(
   evaluation: EvaluatedCharacter,
   personalize: (text: string) => string,
   irrelevantFeatureClauses: ReadonlySet<string>,
+  inventoryNames: ReadonlyMap<string, string>,
 ): SheetCard[] {
+  // Older in-memory evaluations lack equipmentId but retain the exact native
+  // power:inventory variant identity. Never join equipment by its display name.
+  const legacyVariantNames = new Map(
+    [...inventoryNames].map(([id, name]) => [
+      `${power.definitionId}:${id}`,
+      name,
+    ]),
+  );
   const commonFields: SheetValue[] = [
     ...(entity === undefined ? [] : evaluatedEntityFields(entity, evaluation))
       .filter(
@@ -651,7 +660,12 @@ function evaluatedPowerCards(
   const variants: readonly SheetPowerVariant[] = power.variants.map(
     (variant) => ({
       id: variant.id,
-      equipmentName: variant.equipmentName,
+      equipmentName:
+        (variant.equipmentId === undefined
+          ? undefined
+          : inventoryNames.get(variant.equipmentId)) ??
+        legacyVariantNames.get(variant.id) ??
+        variant.equipmentName,
       ...(variant.basicAttackTypes === undefined
         ? {}
         : { basicAttackTypes: variant.basicAttackTypes }),
@@ -1307,6 +1321,7 @@ export function buildEvaluatedSheetModel(
       evaluation,
       personalizePowerText,
       irrelevantFeatureClauses,
+      inventoryNames,
     ),
   );
   const evaluatedValues = (names: readonly string[]) =>

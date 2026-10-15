@@ -45,15 +45,7 @@ describe("equipped item property reminders", () => {
       {
         label: item.name,
         value:
-          "Resonant (storm): When a matching power hits, add a bonus (only once per roll).",
-      },
-      {
-        label: item.name,
-        value: "Shoving: Whenever you push a foe, push it one extra square.",
-      },
-      {
-        label: item.name,
-        value: "Gain a bonus against enemies subject to your effects.",
+          "Resonant (storm): When a matching power hits, add a bonus (only once per roll).\n\nShoving: Whenever you push a foe, push it one extra square.\n\nGain a bonus against enemies subject to your effects.",
       },
     ]);
   });
@@ -76,9 +68,9 @@ describe("equipped item property reminders", () => {
       "Shoving",
       "Whenever you push, use the generic rule.",
     );
-    expect(equippedItemPropertyReminders([item], [definition])[1]?.value).toBe(
-      "Shoving: Whenever you push a foe, push it one extra square.",
-    );
+    expect(
+      equippedItemPropertyReminders([item], [definition])[0]?.value,
+    ).toContain("Shoving: Whenever you push a foe, push it one extra square.");
   });
   it("does not add carried/zero-quantity items, empty properties, or simple precalculated bonuses", () => {
     const passive = {

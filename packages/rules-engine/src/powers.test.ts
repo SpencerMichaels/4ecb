@@ -1543,6 +1543,7 @@ describe("power evaluation", () => {
       attackBonus: 9,
       damage: "1d6+5",
       basicAttackTypes: ["melee", "ranged"],
+      equipmentId: "handaxe",
     });
   });
 

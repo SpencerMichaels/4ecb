@@ -107,12 +107,8 @@ describe("printed overview data", () => {
     expect(reminders).toEqual([
       {
         label: "Synthetic combined staff",
-        value: "Shoving: Whenever you pull a foe, increase the distance.",
-        category: "Item properties",
-      },
-      {
-        label: "Synthetic combined staff",
-        value: "Gain a bonus against enemies subject to your effects.",
+        value:
+          "Shoving: Whenever you pull a foe, increase the distance.\n\nGain a bonus against enemies subject to your effects.",
         category: "Item properties",
       },
     ]);

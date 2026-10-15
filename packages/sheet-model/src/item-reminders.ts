@@ -56,11 +56,12 @@ export function equippedItemPropertyReminders(
       .filter((entity) => entity.type.toLowerCase() === "weapon property")
       .map((entity) => [entity.name.trim().toLowerCase(), entity]),
   );
-  const result: SheetValue[] = [];
+  const grouped = new Map<string, string[]>();
   const seen = new Set<string>();
   const add = (item: OverviewInventory, value: string) => {
     const key = `${item.name}:${value}`;
-    if (!seen.has(key)) result.push({ label: item.name, value });
+    if (!seen.has(key))
+      grouped.set(item.name, [...(grouped.get(item.name) ?? []), value]);
     seen.add(key);
   };
   for (const item of inventory.filter(
@@ -93,5 +94,8 @@ export function equippedItemPropertyReminders(
       }
     }
   }
-  return result;
+  return [...grouped].map(([label, values]) => ({
+    label,
+    value: values.join("\n\n"),
+  }));
 }
