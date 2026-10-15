@@ -61,6 +61,21 @@ Verification: 32 overview tests, production build and focused lint pass; all
 eight overview Chromium/Firefox layout variants pass, including matching upper
 pane bottoms, exactly one small AP box and no milestone text. Generated preview
 reviewed; no full milestone suite was run for this refinement.
+Health's standalone heart/Surges heading is removed; the numeric reference cell
+remains simply “Surges.” Death saves/APs are anchored at the bottom of the
+stretched Health pane with normal content padding below, rather than leaving
+an unused line beneath them. Surge tracking sits above Current/Temporary HP,
+immediately below the numeric reference row so it is closer to the Surges total.
+The surge bar has a pale violet backing with a short connector to the Surges
+reference cell, matching its background (neutral gray in monochrome); individual
+segments stay white for pencil marks. This replaces the removed standalone label
+with a visual association rather than another caption.
+Verification: production build and focused lint pass. The heading removal,
+bar-before-HP ordering and bottom-tracker padding pass all eight Chromium/Firefox
+overview layout variants; the final connector styling passes four Chromium
+Letter/A4 color/monochrome variants and was visually reviewed. Assertions require
+the backing/connector to match the reference-cell color. No full unit/milestone
+suite rerun for these markup/style refinements.
 Verification: 43 focused overview/layout tests, web typecheck, focused lint and
 production build pass. `node scripts/check-print.mjs --overview-only
 --firefox-scratchpad --scratchpad-preview` passes all four Chromium PDF variants

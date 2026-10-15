@@ -1072,7 +1072,12 @@ async function checkScratchpad(client, monochrome) {
     return {expected:[...new Set(expected)].sort(), actual:actual.sort(),
       segments:segments.length, tracks:page.querySelectorAll('.ov-surge-row').length,
       surgeGaps:segments.some(e=>parseFloat(getComputedStyle(e).marginLeft)>0),
-      redundantSurgeCount:page.querySelector('.ov-scratch-surges > p').textContent.includes('/day'),
+      redundantSurgeCount:page.querySelector('.ov-scratch-surges').textContent.includes('/day'),
+      surgeHeading:page.querySelector('.ov-scratch-surges > p') !== null,
+      surgesBeforeHP:page.querySelector('.ov-scratch-surges').getBoundingClientRect().bottom <= page.querySelector('.sp-hp-writing').getBoundingClientRect().top,
+      surgeBackground:getComputedStyle(page.querySelector('.ov-scratch-surges')).backgroundColor,
+      surgeConnector:getComputedStyle(page.querySelector('.ov-scratch-surges'),'::before').backgroundColor,
+      trackerBottomGap:page.querySelector('.ov-scratch-health').getBoundingClientRect().bottom-page.querySelector('.ov-health-trackers').getBoundingClientRect().bottom,
       milestone:page.textContent.includes('Milestone'),
       actionPointBoxes:page.querySelectorAll('.ov-action-point-count > i').length,
       actionPointWidth:page.querySelector('.ov-action-point-count > i').getBoundingClientRect().width,
@@ -1120,7 +1125,11 @@ async function checkScratchpad(client, monochrome) {
     `Power panes must share a row with a narrower Daily pane, and surge bars have no grouping gaps: ${JSON.stringify(state)}`,
   );
   assert(
-    !state.milestone &&
+    state.surgesBeforeHP &&
+      !state.surgeHeading &&
+      state.trackerBottomGap > 0 &&
+      state.trackerBottomGap < 12 &&
+      !state.milestone &&
       state.actionPointBoxes === 1 &&
       state.actionPointWidth >= 24 &&
       state.actionPointWidth < 32 &&
@@ -1149,6 +1158,11 @@ async function checkScratchpad(client, monochrome) {
       state.health ===
         (monochrome ? "rgb(238, 238, 238)" : "rgb(240, 236, 245)"),
     `Scratchpad must match the approved slate header/violet health palette: ${JSON.stringify(state)}`,
+  );
+  assert(
+    state.surgeBackground === state.health &&
+      state.surgeConnector === state.health,
+    "Surge bar background and connector must match the Surges reference cell",
   );
   const baseline = await evaluate(
     client,

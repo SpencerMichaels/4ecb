@@ -1048,15 +1048,38 @@ body:has(.sp-prototype) {
 .ov-scratch-health .sp-hp-writing > div {
   font-size: 9pt;
 }
-.ov-scratch-surges {
-  margin-top: 0.12in;
-}
-.ov-scratch-surges > p {
+.ov-scratch-health,
+.ov-scratch-health > .sp-panel-content {
   display: flex;
-  align-items: center;
-  gap: 0.045in;
-  font-weight: 600;
-  font-size: 9pt;
+  flex-direction: column;
+}
+.ov-scratch-health > .sp-panel-content {
+  flex: 1;
+}
+.ov-scratch-surges {
+  position: relative;
+  margin-top: 0.12in;
+  padding: 0.065in 0.02in 0.02in;
+  border-radius: 3px;
+  background: #f0ecf5;
+}
+.ov-scratch-surges::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: calc(62.5% - 0.08in);
+  width: 0.16in;
+  height: 0.12in;
+  background: inherit;
+}
+.sheet-overview.sp-monochrome .ov-scratch-surges {
+  background: #eee;
+}
+.ov-scratch-surges .ov-surge-segment {
+  background: #fff;
+}
+.ov-scratch-surges .ov-surge-track {
+  margin-top: 0;
 }
 .ov-surge-track {
   padding: 0 0.07in;
@@ -1099,7 +1122,8 @@ body:has(.sp-prototype) {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.1in;
-  margin-top: 0.04in;
+  margin-top: auto;
+  padding-top: 0.04in;
 }
 .ov-action-point-count {
   display: flex;

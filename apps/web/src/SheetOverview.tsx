@@ -1320,15 +1320,12 @@ function Scratchpad({
                   ["Surge HP", find(model.resources, "Healing Surge Value")],
                 ]}
               />
+              <div className="ov-scratch-surges">
+                <SurgeBar count={find(model.resources, "Healing Surges")} />
+              </div>
               <div className="sp-hp-writing">
                 <div>Current HP</div>
                 <div>Temporary HP</div>
-              </div>
-              <div className="ov-scratch-surges">
-                <p>
-                  <Icon name="heart" /> Surges
-                </p>
-                <SurgeBar count={find(model.resources, "Healing Surges")} />
               </div>
               <div className="ov-health-trackers">
                 <div className="sp-death-saves">
