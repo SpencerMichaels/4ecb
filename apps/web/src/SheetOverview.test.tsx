@@ -264,9 +264,11 @@ describe("real-data sheet overview", () => {
     const band = summary
       .split('class="ov-numeric-band"')[1]!
       .split('class="sp-summary-grid')[0]!;
-    expect(band).toContain(">Defenses</h3>");
-    expect(band).toContain(">Health</h3>");
-    expect(band).toContain("Initiative &amp; speed");
+    expect(band).toContain('aria-label="Defenses" class="ov-stat-group"');
+    expect(band).toContain('aria-label="Health" class="ov-stat-group"');
+    expect(band).toContain('aria-label="Initiative" class="ov-stat-group"');
+    expect(band).toContain('aria-label="Speed" class="ov-stat-group"');
+    expect(band).not.toContain("<h3");
     expect(right).toContain(
       '<td class="ov-ability-score">19</td><th scope="row">Strength</th>',
     );

@@ -87,8 +87,10 @@ Gouge and Unarmed as melee-only; neither produces a ranged overview row.
 The abilities table reads score then full ability name, Modifier and +½ level;
 score has no separate header. Ability names are bold and cells have no borders,
 using alternating row backgrounds instead. A full-width numeric band below the
-identity header presents three distinct groups: Defenses, Health, Initiative/Speed.
+identity header presents four distinct groups: Defenses, Health, Initiative, Speed.
 All eleven values use matching individual soft tiles, with labels above numbers.
+Each group has a thin rounded outline and no visible group heading; semantic
+group labels remain available. Field labels use darker, slightly heavier text.
 The portrait is circular; the identity line reads race, class,
 then bare level (`Dwarf Paladin 7`). The redundant first-page running header and
 full-width identity separator are omitted; later-page running headers remain.

@@ -439,7 +439,7 @@ function Summary({
         </div>
       </section>
       <section className="ov-numeric-band" aria-label="Combat statistics">
-        <Panel title="Defenses" icon="shield" className="ov-stat-group">
+        <section aria-label="Defenses" className="ov-stat-group">
           <Values
             className="sp-defenses ov-band-values"
             values={[
@@ -450,8 +450,8 @@ function Summary({
               ["Saves", overview.saves],
             ]}
           />
-        </Panel>
-        <Panel title="Health" icon="class" className="ov-stat-group">
+        </section>
+        <section aria-label="Health" className="ov-stat-group">
           <Values
             className="sp-health ov-band-values"
             values={[
@@ -461,19 +461,21 @@ function Summary({
               ["Surge value", find(model.resources, "Healing Surge Value")],
             ]}
           />
-        </Panel>
-        <Panel
-          title="Initiative & speed"
-          className="ov-stat-group ov-readiness-group"
-        >
+        </section>
+        <section aria-label="Initiative" className="ov-stat-group">
           <Values
-            className="ov-readiness-values ov-band-values"
+            className="ov-band-values"
             values={[
               ["Initiative", signedBonus(find(model.resources, "Initiative"))],
-              ["Speed", find(model.resources, "Speed")],
             ]}
           />
-        </Panel>
+        </section>
+        <section aria-label="Speed" className="ov-stat-group">
+          <Values
+            className="ov-band-values"
+            values={[["Speed", find(model.resources, "Speed")]]}
+          />
+        </section>
       </section>
       <div className="sp-summary-grid ov-balanced-columns">
         <div className="sp-column ov-main-column">
