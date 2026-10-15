@@ -60,6 +60,7 @@ function Paper({
   source,
   children,
   pageRef,
+  runningHeader,
 }: {
   name: string;
   title: string;
@@ -67,6 +68,7 @@ function Paper({
   source: string;
   children: ReactNode;
   pageRef?: React.RefObject<HTMLElement | null>;
+  runningHeader?: ReactNode;
 }) {
   const localRef = useRef<HTMLElement>(null);
   const ref = pageRef ?? localRef;
@@ -92,9 +94,15 @@ function Paper({
   return (
     <article className="sp-paper ov-paper" ref={ref} aria-label={title}>
       {page !== 1 ? (
-        <header className="sp-running-header">
-          <span>{name}</span>
-          <span>{title}</span>
+        <header
+          className={`sp-running-header${runningHeader ? " ov-scratch-header" : ""}`}
+        >
+          {runningHeader ?? (
+            <>
+              <span>{name}</span>
+              <span>{title}</span>
+            </>
+          )}
         </header>
       ) : null}
       <div className="sp-page-content">{children}</div>
@@ -1133,7 +1141,9 @@ function EncounterTable({ groups }: { groups: readonly UsageGroup[] }) {
                 ))}
               </th>
               {[1, 2, 3, 4, 5, 6].map((n) => (
-                <td key={n} />
+                <td key={n}>
+                  <i className="ov-encounter-box" />
+                </td>
               ))}
             </tr>
           ))}
@@ -1285,6 +1295,13 @@ function Scratchpad({
     },
   ];
   const first = layout[0]!;
+  const identityLine = ["Race", "Class", "Level"]
+    .flatMap((label) =>
+      model.identity
+        .filter((entry) => entry.label === label)
+        .map((entry) => entry.value),
+    )
+    .join(" ");
   const renderTracking = (slice: TrackingPage) => (
     <TrackingPanels
       encounter={encounter.slice(slice.encounterStart, slice.encounterEnd)}
@@ -1299,12 +1316,22 @@ function Scratchpad({
         page={startPage}
         source={model.source}
         pageRef={pageRef}
+        runningHeader={
+          <>
+            <span
+              className="ov-scratch-header-identity"
+              title={[name, identityLine].filter(Boolean).join(" · ")}
+            >
+              {name}
+              {identityLine ? ` · ${identityLine}` : ""}
+            </span>
+            <span>Play scratchpad</span>
+            <span className="ov-scratch-header-session">
+              Session / date <i />
+            </span>
+          </>
+        }
       >
-        <div className="sp-session ov-scratch-session">
-          <span>
-            Session / date <i />
-          </span>
-        </div>
         <div className="ov-scratch-layout ov-scratch-upper">
           <div className="sp-column ov-scratch-main ov-scratch-records">
             <Panel title="Health" icon="heart" className="ov-scratch-health">

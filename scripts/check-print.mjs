@@ -1081,6 +1081,13 @@ async function checkScratchpad(client, monochrome) {
       surgeCellWidth:page.querySelector('.ov-scratch-health-values > div:nth-child(3)').getBoundingClientRect().width,
       surgeLabelsInside:[...page.querySelectorAll('.ov-surge-label')].every(e=>{const r=e.getBoundingClientRect(),p=e.parentElement.getBoundingClientRect();return r.top>=p.top && r.bottom<=p.bottom && r.left>=p.left && r.right<=p.right;}),
       trackerBottomGap:page.querySelector('.ov-scratch-health').getBoundingClientRect().bottom-page.querySelector('.ov-health-trackers').getBoundingClientRect().bottom,
+      surgeGap:page.querySelector('.ov-scratch-surges').getBoundingClientRect().top-page.querySelector('.ov-scratch-health-values').getBoundingClientRect().bottom,
+      statGap:parseFloat(getComputedStyle(page.querySelector('.ov-scratch-health-values')).columnGap),
+      hpToTrackers:page.querySelector('.ov-health-trackers').getBoundingClientRect().top-page.querySelector('.sp-hp-writing').getBoundingClientRect().bottom,
+      columnSplitDifference:Math.abs(page.querySelector('.ov-scratch-upper > .sp-column:last-child').getBoundingClientRect().left-page.querySelector('.sp-daily').getBoundingClientRect().left),
+      encounterSquares:[...page.querySelectorAll('.ov-encounter-box')].every(e=>{const r=e.getBoundingClientRect();return Math.abs(r.width-r.height)<0.1 && r.width>=18;}),
+      headerSession:page.querySelector('.ov-scratch-header-session') !== null,
+      contentSession:page.querySelector('.sp-page-content .sp-session') !== null,
       milestone:page.textContent.includes('Milestone'),
       actionPointBoxes:page.querySelectorAll('.ov-action-point-count > i').length,
       actionPointWidth:page.querySelector('.ov-action-point-count > i').getBoundingClientRect().width,
@@ -1116,6 +1123,15 @@ async function checkScratchpad(client, monochrome) {
       state.deathSaveAlignment === "flex-start" &&
       state.deathSaveGap < 120,
     `Scratchpad health needs four compact reference cells and skulls beside the death-save label: ${JSON.stringify(state)}`,
+  );
+  assert(
+    Math.abs(state.surgeGap - state.statGap) < 1 &&
+      state.hpToTrackers < 1 &&
+      state.columnSplitDifference < 1 &&
+      state.encounterSquares &&
+      state.headerSession &&
+      !state.contentSession,
+    `Scratchpad must have consistent surge spacing, expanding HP boxes, aligned power columns, square encounter boxes and a header-only session line: ${JSON.stringify(state)}`,
   );
   assert(
     !state.surgeGaps &&

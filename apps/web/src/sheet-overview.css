@@ -997,8 +997,29 @@ body:has(.sp-prototype) {
   gap: 0.15in;
 }
 /* Scratchpad: two-column writing areas around full-width power trackers. */
-.ov-scratch-session {
-  margin-top: 0.07in;
+.sp-running-header.ov-scratch-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.12in;
+  margin-bottom: 0.15in;
+}
+.ov-scratch-header-identity {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ov-scratch-header-session {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.06in;
+  white-space: nowrap;
+}
+.ov-scratch-header-session > i {
+  width: 0.7in;
+  height: 1em;
+  border-bottom: 1px solid var(--sp-border);
 }
 .ov-scratch-layout {
   display: grid;
@@ -1047,6 +1068,12 @@ body:has(.sp-prototype) {
 }
 .ov-scratch-health .sp-hp-writing > div {
   font-size: 9pt;
+  height: auto;
+  min-height: 0.7in;
+}
+.ov-scratch-health .sp-hp-writing {
+  flex: 1;
+  min-height: 0.7in;
 }
 .ov-scratch-health,
 .ov-scratch-health > .sp-panel-content {
@@ -1058,7 +1085,7 @@ body:has(.sp-prototype) {
 }
 .ov-scratch-surges {
   position: relative;
-  margin-top: 0.12in;
+  margin-top: 0.05in;
   padding: 0.065in 0.02in;
   border-radius: 3px;
   background: #f0ecf5;
@@ -1069,7 +1096,7 @@ body:has(.sp-prototype) {
   bottom: 100%;
   left: calc(50% + 0.025in);
   width: calc(25% - 0.0375in);
-  height: 0.12in;
+  height: 0.05in;
   background: inherit;
 }
 .sheet-overview.sp-monochrome .ov-scratch-surges {
@@ -1171,7 +1198,7 @@ body:has(.sp-prototype) {
 }
 .ov-tracking-panels {
   display: grid;
-  gap: 0.12in;
+  gap: 0.15in;
   align-items: start;
 }
 .ov-tracking-panels > .sp-panel {
@@ -1179,8 +1206,25 @@ body:has(.sp-prototype) {
 }
 @container (min-width: 3.6in) {
   .ov-tracking-panels.has-both {
-    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   }
+}
+.ov-power-trackers .sp-usage-table thead th:first-child {
+  width: auto;
+}
+.ov-power-trackers .sp-usage-table thead th:not(:first-child) {
+  width: 0.24in;
+}
+.ov-power-trackers .sp-usage-table tbody td {
+  border: 0;
+  padding: 0.025in 0;
+}
+.ov-encounter-box {
+  display: block;
+  width: 0.2in;
+  height: 0.2in;
+  margin-inline: auto;
+  border: 1px solid #8f9aa2;
 }
 .ov-power-trackers .sp-usage-table tbody tr:nth-child(odd),
 .ov-power-trackers .sp-daily-list > div:nth-child(odd) {

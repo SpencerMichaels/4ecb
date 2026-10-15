@@ -29,6 +29,34 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("puts session/date and compact identity in the scratchpad running header", () => {
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={{
+          ...model,
+          identity: [
+            { label: "Race", value: "Dwarf" },
+            { label: "Class", value: "Paladin" },
+            { label: "Level", value: "7" },
+          ],
+        }}
+        name="Ingi"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const header = html
+      .split('class="sp-running-header ov-scratch-header"')[1]!
+      .split("</header>")[0]!;
+    expect(header).toContain("Ingi · Dwarf Paladin 7");
+    expect(header).toContain("<span>Play scratchpad</span>");
+    expect(header).toContain(
+      'class="ov-scratch-header-session">Session / date',
+    );
+    expect(html).not.toContain("ov-scratch-session");
+  });
   it("matches scratchpad health reference values to the four summary cells", () => {
     const html = renderToStaticMarkup(
       <SheetOverview

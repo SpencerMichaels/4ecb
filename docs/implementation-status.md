@@ -7,7 +7,7 @@ first-page summary. The approved scratchpad proposal is implemented for feedback
 Health with a single-digit action-point box beside Effect/Ends, a full-width Encounter/Daily
 tracking pair, then Treasure/consumables beside Session notes/XP. Slate pane headers, violet health
 reference cells, encounter-red/daily-gray tracking headings and explicit grayscale
-reuse the accepted visual vocabulary. Current/temp HP retain 0.7in writing boxes,
+reuse the accepted visual vocabulary. Current/temp HP retain at least 0.7in writing boxes,
 temporary effects six 0.42in rows. Redundant quick-reference/two-short-reminder
 panes are removed. Surge hearts become markable segmented bars with boxes at
 least as wide as they are tall, remaining-count labels inside every box
@@ -36,7 +36,7 @@ Page 1 ability names use regular weight, matching the other left-column table
 labels; this isolated CSS adjustment does not alter values or layout structure.
 Surge bars are continuous at all counts, with every box numbered from the total
 down to one and no visual grouping gaps. Encounter and Daily panes share a row,
-across the full page body, with Encounter receiving 1.65 times Daily's width.
+across the full page body, with Encounter receiving 1.5 times Daily's width.
 A sole pane fills the available
 width; containers below 3.6in fall back to stacked panes. Pagination measures the
 actual narrow/wide row heights and uses the maximum pane height when adjacent,
@@ -99,6 +99,21 @@ lint pass. All eight Chromium/Firefox overview variants pass, including the new
 wrapping/restoration check. The every-box print expectation now compares DOM
 strings with strings (previously numeric expected values); the numbering itself
 is unchanged. No full milestone suite was run.
+Scratchpad spacing/header follow-up: the surge bar-to-reference gap now matches
+the 0.05in reference-cell gap, including the connector height. Current/Temp HP
+boxes flex to consume spare Health height above the bottom trackers, retaining
+their 0.7in minimum. Power panes use the same 1.5:1 split and 0.15in gutter as
+the upper/lower panes. Encounter tracking uses fixed 0.2in square writing boxes
+within each row, preserving their shape even beside multi-line power names.
+The scratchpad running header has name · race class level at left (ellipsis for
+long identities), centered Play scratchpad, and Session / date with a writing
+line at right; the standalone session row is removed. Other page headers are
+unchanged.
+Verification for this spacing/header follow-up: 45 focused overview/layout
+tests, web typecheck, production build and focused lint pass. All eight
+Chromium/Firefox overview variants pass the added gap, HP-fill, column-split,
+square-box and session-header checks. The generated Chromium preview was
+visually reviewed. No full milestone/card gate was run.
 Verification: 43 focused overview/layout tests, web typecheck, focused lint and
 production build pass. `node scripts/check-print.mjs --overview-only
 --firefox-scratchpad --scratchpad-preview` passes all four Chromium PDF variants
