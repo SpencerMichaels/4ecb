@@ -103,7 +103,7 @@ Scratchpad spacing/header follow-up: the surge bar-to-reference gap now matches
 the 0.05in reference-cell gap, including the connector height. Current/Temp HP
 boxes flex to consume spare Health height above the bottom trackers, retaining
 their 0.7in minimum. Power panes use the same 1.5:1 split and 0.15in gutter as
-the upper/lower panes. Encounter tracking uses fixed 0.2in square writing boxes
+the upper/lower panes. Encounter tracking uses fixed 0.22in square writing boxes
 within each row, preserving their shape even beside multi-line power names.
 The scratchpad running header has name · race class level at left (ellipsis for
 long identities), centered Play scratchpad, and Session / date with a writing
@@ -117,13 +117,23 @@ visually reviewed. No full milestone/card gate was run.
 Action points now use three hollow circle marks, matching Death saves' three
 skulls in size and spacing, rather than a single numeric box. This is a paper
 tracking affordance, not a new calculated cap or persisted Play-state rule.
-Encounter tracking columns alternate subtle vertical backgrounds including the
-number header; the name column is unstriped and row stripes are removed. Daily
+Encounter tracking columns alternate subtle vertical backgrounds;
+the name column is unstriped and row stripes are removed. Daily
 retains its horizontal row striping.
 Verification: 33 focused overview tests and production build pass; four
 Chromium overview variants verify three hollow AP icons and alternating tracking
 column backgrounds with no name-column stripe. The generated preview was
 reviewed; Firefox/full milestone suites were not rerun for this style follow-up.
+Encounter tracking now has ten unnumbered columns (rather than six), retaining
+vertical column stripes and an unstriped name column. Squares increase from
+0.2in to 0.22in, with 0.26in column widths. Faint horizontal rules between power
+rows span the name and all tracking cells, guiding the eye without restoring
+row backgrounds. The entire numbered header row is removed; column widths are
+set through a colgroup instead. Shared-use groups remain one tracking row.
+Verification: 34 focused overview tests and production build pass; four Chromium
+overview variants verify ten columns, no header row, vertical stripes and faint
+rules across each row. Generated preview reviewed. No Firefox/full milestone
+rerun for this presentation follow-up.
 Verification: 43 focused overview/layout tests, web typecheck, focused lint and
 production build pass. `node scripts/check-print.mjs --overview-only
 --firefox-scratchpad --scratchpad-preview` passes all four Chromium PDF variants

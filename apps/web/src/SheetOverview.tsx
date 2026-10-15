@@ -1113,21 +1113,16 @@ function usageGroups(rows: readonly TrackingRow[]): UsageGroup[] {
   return groups;
 }
 function EncounterTable({ groups }: { groups: readonly UsageGroup[] }) {
+  const columns = Array.from({ length: 10 }, (_, i) => i + 1);
   return (
     <Panel title="Encounter powers" icon="power" className="sp-encounter">
-      <table className="sp-usage-table">
-        <thead>
-          <tr>
-            <th scope="col">
-              <span className="sp-sr-only">Power</span>
-            </th>
-            {[1, 2, 3, 4, 5, 6].map((n) => (
-              <th scope="col" key={n}>
-                {n}
-              </th>
-            ))}
-          </tr>
-        </thead>
+      <table className="sp-usage-table" aria-label="Encounter power usage">
+        <colgroup>
+          <col />
+          {columns.map((n) => (
+            <col key={n} />
+          ))}
+        </colgroup>
         <tbody>
           {groups.map((group) => (
             <tr key={group.id} data-tracking-id={group.id}>
@@ -1140,7 +1135,7 @@ function EncounterTable({ groups }: { groups: readonly UsageGroup[] }) {
                   </div>
                 ))}
               </th>
-              {[1, 2, 3, 4, 5, 6].map((n) => (
+              {columns.map((n) => (
                 <td key={n}>
                   <i className="ov-encounter-box" />
                 </td>

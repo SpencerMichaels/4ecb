@@ -29,6 +29,33 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("provides ten encounter tracking marks per power row", () => {
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={{
+          ...model,
+          powers: ["Alpha", "Beta"].map((name) => ({
+            name,
+            kind: "power" as const,
+            usage: "Encounter",
+            actionType: "Standard",
+            fields: [],
+          })),
+        }}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const table = html
+      .split('class="sp-usage-table"')[1]!
+      .split("</table>")[0]!;
+    expect(table.match(/<col\//g)).toHaveLength(11);
+    expect(table).not.toContain("<thead");
+    expect(table.match(/class="ov-encounter-box"/g)).toHaveLength(20);
+  });
   it("puts session/date and compact identity in the scratchpad running header", () => {
     const html = renderToStaticMarkup(
       <SheetOverview

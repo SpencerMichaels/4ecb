@@ -1092,6 +1092,9 @@ async function checkScratchpad(client, monochrome) {
       actionPointMarks:page.querySelectorAll('.ov-action-point-count .icon').length,
       actionPointHollow:[...page.querySelectorAll('.ov-action-point-count .icon')].every(e=>getComputedStyle(e).fill==='none'),
       encounterColumnColors:[...page.querySelector('.sp-usage-table tbody tr').children].map(e=>getComputedStyle(e).backgroundColor),
+      encounterColumns:page.querySelectorAll('.sp-usage-table colgroup col').length-1,
+      encounterHeader:page.querySelector('.sp-usage-table thead') !== null,
+      encounterRowRules:[...page.querySelector('.sp-usage-table tbody tr:nth-child(2)').children].every(e=>getComputedStyle(e).borderTopStyle==='solid' && getComputedStyle(e).borderTopColor==='rgb(226, 230, 233)'),
       upperBottoms:[...page.querySelectorAll('.ov-scratch-upper > .sp-column > .sp-panel')].map(e=>e.getBoundingClientRect().bottom),
       powerWidth:page.querySelector('.ov-scratch-powers').getBoundingClientRect().width,
       contentWidth:page.querySelector('.sp-page-content').getBoundingClientRect().width,
@@ -1157,10 +1160,13 @@ async function checkScratchpad(client, monochrome) {
     `Upper panes must align with three hollow AP marks and no milestone tracker: ${JSON.stringify(state)}`,
   );
   assert(
-    state.encounterColumnColors.every(
-      (color, index) =>
-        color === (index % 2 ? "rgb(240, 243, 245)" : "rgba(0, 0, 0, 0)"),
-    ),
+    state.encounterColumns === 10 &&
+      !state.encounterHeader &&
+      state.encounterRowRules &&
+      state.encounterColumnColors.every(
+        (color, index) =>
+          color === (index % 2 ? "rgb(240, 243, 245)" : "rgba(0, 0, 0, 0)"),
+      ),
     "Encounter tracking columns must alternate backgrounds, leaving the name column unstriped",
   );
   assert(

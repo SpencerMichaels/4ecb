@@ -1204,11 +1204,11 @@ body:has(.sp-prototype) {
     grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   }
 }
-.ov-power-trackers .sp-usage-table thead th:first-child {
+.ov-power-trackers .sp-usage-table col:first-child {
   width: auto;
 }
-.ov-power-trackers .sp-usage-table thead th:not(:first-child) {
-  width: 0.24in;
+.ov-power-trackers .sp-usage-table col:not(:first-child) {
+  width: 0.26in;
 }
 .ov-power-trackers .sp-usage-table tbody td {
   border: 0;
@@ -1216,8 +1216,8 @@ body:has(.sp-prototype) {
 }
 .ov-encounter-box {
   display: block;
-  width: 0.2in;
-  height: 0.2in;
+  width: 0.22in;
+  height: 0.22in;
   margin-inline: auto;
   border: 1px solid #8f9aa2;
 }
@@ -1233,6 +1233,9 @@ body:has(.sp-prototype) {
 .ov-power-trackers .sp-usage-table tbody th {
   padding: 0.06in;
   overflow-wrap: anywhere;
+}
+.ov-power-trackers .sp-usage-table tbody tr + tr > * {
+  border-top: 1px solid #e2e6e9;
 }
 .ov-power-trackers .sp-shared-power {
   margin-top: 0.025in;
