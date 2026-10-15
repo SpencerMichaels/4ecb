@@ -25,17 +25,22 @@ function Panel({
   icon,
   children,
   className = "",
+  headerNote,
 }: {
   title: string;
   icon?: IconName;
   children: ReactNode;
   className?: string;
+  headerNote?: ReactNode;
 }) {
   return (
     <section className={`sp-panel ${className}`}>
       <h3>
         {icon ? <Icon name={icon} /> : null}
         {title}
+        {headerNote ? (
+          <span className="ov-panel-note">{headerNote}</span>
+        ) : null}
       </h3>
       <div className="sp-panel-content">{children}</div>
     </section>
@@ -207,14 +212,27 @@ export function overviewBasicAttackRows(
 function BasicAttacks({
   model,
   variantLimit = 2,
+  referencePage,
 }: {
   model: CharacterSheetModel;
   variantLimit?: number;
+  referencePage?: string | undefined;
 }) {
   const rows = overviewBasicAttackRows(model, variantLimit);
   const hasMore = rows.length < overviewBasicAttackRows(model).length;
   return (
-    <Panel title="Basic attacks" icon="sword" className="sp-basic-attacks">
+    <Panel
+      title="Basic attacks"
+      icon="sword"
+      className="sp-basic-attacks"
+      headerNote={
+        hasMore
+          ? referencePage
+            ? `More on pg ${referencePage}`
+            : "More in references"
+          : undefined
+      }
+    >
       {rows.length ? (
         <table
           className="ov-basic-table"
@@ -256,12 +274,6 @@ function BasicAttacks({
       ) : (
         <p className="sp-caption">No basic attack calculation is available.</p>
       )}
-      {hasMore ? (
-        <p className="sp-caption">
-          Showing the highest-ranked weapons; all eligible weapons are listed in
-          the reference pages.
-        </p>
-      ) : null}
     </Panel>
   );
 }
@@ -726,11 +738,13 @@ function Summary({
   name,
   portrait,
   blankHP,
+  basicAttackPage,
 }: {
   model: CharacterSheetModel;
   name: string;
   portrait: CharacterPortrait | undefined;
   blankHP: boolean;
+  basicAttackPage?: string | undefined;
 }) {
   const overview = model.overview!;
   return (
@@ -842,7 +856,7 @@ function Summary({
           ) : null}
         </SummaryPane>
         <SummaryPane id="attacks">
-          <BasicAttacks model={model} />
+          <BasicAttacks model={model} referencePage={basicAttackPage} />
         </SummaryPane>
         <SummaryPane id="abilities">
           <div className="ov-ability-section">
@@ -1584,12 +1598,22 @@ export function paginateReferences(
   }
   return columns;
 }
+export function basicAttackReferencePage(
+  columns: readonly (readonly ReferenceEntry[])[],
+): string | undefined {
+  const index = columns.findIndex((column) =>
+    column.some((entry) => entry.group === "Basic attack alternatives"),
+  );
+  return index < 0 ? undefined : `R${Math.floor(index / 2) + 1}`;
+}
 function Details({
   model,
   name,
+  onBasicAttackPage,
 }: {
   model: CharacterSheetModel;
   name: string;
+  onBasicAttackPage: (page: string | undefined) => void;
 }) {
   const entries = useMemo(() => references(model), [model]);
   const probe = useRef<HTMLElement>(null);
@@ -1628,7 +1652,9 @@ function Details({
           ] as const;
         }),
       );
-      setColumns(paginateReferences(entries, measurements, capacity));
+      const next = paginateReferences(entries, measurements, capacity);
+      setColumns(next);
+      onBasicAttackPage(basicAttackReferencePage(next));
     };
     const observer = new ResizeObserver(measure);
     observer.observe(element);
@@ -1638,7 +1664,7 @@ function Details({
       active = false;
       observer.disconnect();
     };
-  }, [entries]);
+  }, [entries, onBasicAttackPage]);
   return (
     <>
       <div className="ov-measure" aria-hidden="true">
@@ -1699,6 +1725,7 @@ export function SheetOverview({
   monochrome: boolean;
   blankHP: boolean;
 }) {
+  const [basicAttackPage, setBasicAttackPage] = useState<string>();
   if (!model.overview) return null;
   return (
     <div
@@ -1709,9 +1736,14 @@ export function SheetOverview({
         name={name}
         portrait={portrait}
         blankHP={blankHP}
+        basicAttackPage={basicAttackPage}
       />
       <Scratchpad model={model} name={name} blankHP={blankHP} />
-      <Details model={model} name={name} />
+      <Details
+        model={model}
+        name={name}
+        onBasicAttackPage={setBasicAttackPage}
+      />
     </div>
   );
 }

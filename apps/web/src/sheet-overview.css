@@ -537,6 +537,13 @@ body:has(.sp-prototype) {
 .sp-panel-content {
   padding: 0.07in;
 }
+.ov-panel-note {
+  margin-left: auto;
+  color: var(--sp-muted);
+  font-size: 8pt;
+  font-weight: 400;
+  white-space: nowrap;
+}
 .sp-panel-content > p + p {
   margin-top: 0.07in;
 }

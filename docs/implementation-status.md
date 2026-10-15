@@ -2,6 +2,17 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Compact Basic Attacks reference note (2026-10-15): Removed the two-line body
+caption about additional weapons. When eligible alternatives are omitted, a
+muted right-aligned header note now reads `More on pg R…`, using the first
+Basic attack alternatives page from measured reference pagination and the sheet's
+existing R-page labels. Until pagination resolves it says `More in references`;
+there is no note when all eligible variants fit. Weapon calculations and reference
+contents are unchanged. Verification: 25 focused rendering/fitting tests, web
+typecheck, focused lint, formatting and production build pass. All four
+overview-only Letter/A4 × color/monochrome PDF checks pass (12 measured pages
+each, no overview overflow); full milestone/physical-card gates remain separate.
+
 Palette feedback (2026-10-15): Health changes from rose to sage green to distinguish
 it from rust-colored attacks. The separate Senses pane uses lavender rather than
 sharing the teal Skills/Abilities/Languages accent. Grayscale overrides are

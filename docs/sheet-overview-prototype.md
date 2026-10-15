@@ -222,6 +222,11 @@ in references while shorter later entries can still use the remaining space.
 Basic-attack summaries retain up to two weapon alternatives per attack kind;
 their whole pane moves to the right before sacrificing summary content.
 Complete alternatives remain in references.
+When the summary omits alternatives, Basic Attacks puts a muted, right-aligned
+`More on pg R…` note in its header instead of a body caption. The reference-page
+label comes from measured reference pagination (two columns per R-numbered page),
+not a guessed physical page offset; before measurement it says `More in references`.
+The note is omitted when all eligible alternatives are shown.
 Grant/choice-only wrappers are omitted using authored Benefit text and grant/
 selection metadata, without mistaking introductory flavor for an extra effect.
 The exclusion also covers power-access/shared-usage containers: grant/select-only

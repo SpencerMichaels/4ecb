@@ -7,6 +7,7 @@ import {
   fittingReminderGroups,
   fittingSummaryPaneCount,
   fittingIdentityNameSize,
+  basicAttackReferencePage,
   overviewBasicAttackRows,
   overviewTrackingRows,
   paginateReferences,
@@ -26,6 +27,19 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("finds the actual reference-page label for basic attack alternatives", () => {
+    const entry: ReferenceEntry = {
+      id: "basic:test",
+      name: "Test attack",
+      group: "Basic attack alternatives",
+      source: "",
+      parts: [],
+    };
+    expect(basicAttackReferencePage([])).toBeUndefined();
+    expect(basicAttackReferencePage([[entry]])).toBe("R1");
+    expect(basicAttackReferencePage([[], [], [], [entry]])).toBe("R2");
+    expect(basicAttackReferencePage([[], [], [], [], [entry]])).toBe("R3");
+  });
   it("shrinks identity names to a readable minimum before leaving overflow to ellipsis", () => {
     expect(fittingIdentityNameSize((size) => size * 5, 200)).toBe(27);
     const fitted = fittingIdentityNameSize((size) => size * 10, 220);
@@ -259,6 +273,10 @@ describe("real-data sheet overview", () => {
     expect(summary.match(/<th scope="col">Weapon<\/th>/g)).toHaveLength(1);
     expect(summary).toContain("lucide-bow-arrow");
     expect(summary).toContain("lucide-sword");
+    expect(summary).toContain(
+      '<span class="ov-panel-note">More in references</span>',
+    );
+    expect(summary).not.toContain("Showing the highest-ranked weapons");
     expect(
       renderToStaticMarkup(
         <SheetOverview
