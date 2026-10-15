@@ -1050,7 +1050,10 @@ async function checkSummaryContinuation(client) {
       "Scratchpad must follow the summary continuation",
     );
   } catch (error) {
-    const state = await evaluate(client, `({pages:[...document.querySelectorAll('.sheet-overview > .ov-paper')].map(p=>p.getAttribute('aria-label')),caption:document.querySelector('.ov-reminder-region .sp-caption')?.textContent,entries:[...document.querySelectorAll('.ov-reminder-probe [data-reminder-index]')].map(e=>e.getBoundingClientRect().height),probes:[...document.querySelectorAll('.ov-measure')].map(e=>({height:e.getBoundingClientRect().height,text:e.textContent.slice(0,250)}))})`);
+    const state = await evaluate(
+      client,
+      `({pages:[...document.querySelectorAll('.sheet-overview > .ov-paper')].map(p=>p.getAttribute('aria-label')),caption:document.querySelector('.ov-reminder-region .sp-caption')?.textContent,entries:[...document.querySelectorAll('.ov-reminder-probe [data-reminder-index]')].map(e=>e.getBoundingClientRect().height),probes:[...document.querySelectorAll('.ov-measure')].map(e=>({height:e.getBoundingClientRect().height,text:e.textContent.slice(0,250)}))})`,
+    );
     throw new Error(`${error.message}: ${JSON.stringify(state)}`);
   } finally {
     await evaluate(client, `document.styleSheets[0].deleteRule(${ruleIndex})`);
@@ -1069,15 +1072,51 @@ async function checkSummaryPaneFlow(client) {
     const left = summary.querySelector('.ov-main-column');
     const right = summary.querySelector('.ov-reminders-column');
     const ids = (column) => [...column.querySelectorAll(':scope > .ov-flow-pane')].map(p=>p.dataset.summaryPane);
-    return {left:ids(left),right:ids(right),sensesOnRight:!!right.querySelector(':scope > .ov-senses')};
+    return {left:ids(left),right:ids(right),sensesOnLeft:!!left.querySelector('[data-summary-pane="senses"] .ov-senses'),defensesOnRight:!!right.querySelector(':scope > .ov-defensive-traits')};
   })()`,
   );
-  assert(baseline.sensesOnRight, "Summary senses must be on the right");
+  assert(
+    baseline.sensesOnLeft,
+    "Summary senses must precede skills on the left",
+  );
+  assert(
+    baseline.defensesOnRight,
+    "Defensive traits must remain above reminders on the right",
+  );
   assert(
     JSON.stringify([...baseline.left, ...baseline.right]) ===
-      JSON.stringify(["defenses", "skills", "abilities", "attacks"]),
+      JSON.stringify(["senses", "skills", "abilities", "attacks"]),
     `Summary panes must retain priority order without duplicates: ${JSON.stringify(baseline)}`,
   );
+  // Defensive-trait growth must consume reminder space, not displace left panes.
+  const defenseRule = await evaluate(
+    client,
+    `(() => {
+    const pane=document.querySelector('.ov-reminders-column > .ov-defensive-traits');
+    const sheet=document.styleSheets[0];
+    return sheet.insertRule('.ov-reminders-column > .ov-defensive-traits { min-height: '+(pane.getBoundingClientRect().height+80)+'px; }', sheet.cssRules.length);
+  })()`,
+  );
+  try {
+    await evaluate(
+      client,
+      "new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))",
+      true,
+    );
+    const left = await evaluate(
+      client,
+      `[...document.querySelectorAll('.ov-main-column > .ov-flow-pane')].map(p=>p.dataset.summaryPane)`,
+    );
+    assert(
+      JSON.stringify(left) === JSON.stringify(baseline.left),
+      "Defensive traits must not displace skills or abilities",
+    );
+  } finally {
+    await evaluate(
+      client,
+      `document.styleSheets[0].deleteRule(${defenseRule})`,
+    );
+  }
   // Increase the last whole pane's height to force a real measured overflow.
   // CSSOM avoids inline-style CSP exemptions and applies after React moves it.
   const ruleIndex = await evaluate(

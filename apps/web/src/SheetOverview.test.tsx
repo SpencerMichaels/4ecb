@@ -170,7 +170,7 @@ describe("real-data sheet overview", () => {
       `<h1 class="ov-character-name" title="${name}">${name}</h1>`,
     );
   });
-  it("orders the main panes by consultation frequency and keeps senses on the right", () => {
+  it("puts senses before skills and keeps defensive traits above reminders on the right", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
         model={{
@@ -194,15 +194,18 @@ describe("real-data sheet overview", () => {
     const [left, right] = summary.split(
       'class="sp-column ov-reminders-column"',
     );
-    const headings = ["Defenses", "Skills", "Abilities", "Basic attacks"];
+    const headings = ["Senses", "Skills", "Abilities", "Basic attacks"];
     for (let i = 1; i < headings.length; i++)
       expect(left!.indexOf(`>${headings[i]}</h3>`)).toBeGreaterThan(
         left!.indexOf(`>${headings[i - 1]}</h3>`),
       );
-    expect(left).not.toContain(">Senses</h3>");
-    expect(right).toContain(">Senses</h3>");
+    expect(left).not.toContain(">Defenses</h3>");
+    expect(right).toContain(">Defenses</h3>");
+    expect(right!.indexOf(">Defenses</h3>")).toBeLessThan(
+      right!.indexOf('class="ov-reminder-region"'),
+    );
     expect(summary).toContain("Low-light vision; Tremorsense 4");
-    expect(right).toContain("lucide-eye");
+    expect(left).toContain("lucide-eye");
     expect(summary).not.toContain("<strong>Vision:</strong>");
   });
   it("omits a blank company and its separator from the player subtitle", () => {
@@ -617,7 +620,7 @@ describe("real-data sheet overview", () => {
     expect(summary).toContain("<td>Synthetic feat</td>");
     expect(summary).toContain('aria-label="Resistances"');
     expect(summary.indexOf(">Defenses</h3>")).toBeLessThan(
-      summary.indexOf(">Basic attacks</h3>"),
+      summary.indexOf('class="ov-reminder-region"'),
     );
     expect(
       summary.split('class="sp-identity"')[1]!.split("</section>")[0],

@@ -119,7 +119,7 @@ uses single-line ellipsis. Its full text remains in the heading and title toolti
 fitting reruns on name, width and font changes and is independent of card sizing.
 Passive Insight and Perception precede their active skill bonuses, e.g.
 `Perception (25) +15`, not as separate rows. Vision and special senses occupy a
-compact Senses pane at the top of the right column, not Skills.
+compact Senses pane above Skills in the left column.
 Senses uses the shared Eye glyph; reminder categories reuse the builder's
 class/race/feat/item icon mappings. Bold reminder names have no trailing colon.
 Within each reminder, the bold title stays flush left and the entire description
@@ -140,10 +140,11 @@ Abilities, using the Basic Attacks row styling. Skills retain alternating row
 backgrounds without inter-cell borders. All summary tables start with a shaded
 first data row, with defensive categories maintaining continuous striping.
 Below the numeric band, equal-width
-columns prefer Defensive Traits, Skills, Abilities/Languages and Basic Attacks on
-the left, with Senses above reminders on the right. Whole panes fill the left in
+columns prefer Senses, Skills, Abilities/Languages and Basic Attacks on
+the left, with Defenses above reminders on the right. Defensive traits consume
+right-column reminder space, never left-column skill/ability space. Whole panes fill the left in
 that order; the first that cannot fit and all following panes move to the right,
-below Senses and above reminders. Abilities/Languages remain one fitting unit.
+below Defenses and above reminders. Abilities/Languages remain one fitting unit.
 Measurements use equal-width hidden pane probes, account for inter-pane gaps and
 the footer, and rerun for content, font and page-size changes. The layout can move
 panes back when space increases. Reminder fitting uses only the right-column
@@ -154,7 +155,7 @@ Reminders are split into
 Class features, Racial features, Feats and Item properties panes by source
 metadata; unattributed effects remain in Other reminders. Empty panes are omitted.
 Measured fitting includes pane headings/padding and the overflow caption, and
-all omitted entries remain in full references. Scratchpad/reference reminder
+all omitted entries continue directly after page 1. Scratchpad/reference reminder
 sections retain their existing list layout.
 The Item properties pane includes actionable named weapon/superior-implement
 properties expanded from authored item text or matching property definitions,

@@ -562,9 +562,9 @@ function SummaryColumns({
         : [],
     ),
   );
-  const panes = (
-    ["defenses", "skills", "abilities", "attacks"] as const
-  ).flatMap((id) => (slots.has(id) ? [{ id, content: slots.get(id) }] : []));
+  const panes = (["senses", "skills", "abilities", "attacks"] as const).flatMap(
+    (id) => (slots.has(id) ? [{ id, content: slots.get(id) }] : []),
+  );
   const [leftCount, setLeftCount] = useState(4);
   const [visibleIndices, setVisibleIndices] = useState<readonly number[]>();
   const reminders =
@@ -656,8 +656,10 @@ function SummaryColumns({
     );
     for (const pane of grid.querySelectorAll(".ov-pane-probe > .ov-flow-pane"))
       observer.observe(pane);
-    const senses = grid.querySelector(".ov-reminders-column > .ov-senses");
-    if (senses) observer.observe(senses);
+    const defenses = grid.querySelector(
+      ".ov-reminders-column > .ov-defensive-traits",
+    );
+    if (defenses) observer.observe(defenses);
     check();
     void document.fonts.ready.then(check);
     return () => {
@@ -677,9 +679,9 @@ function SummaryColumns({
       </div>
       <section
         className="sp-column ov-reminders-column"
-        aria-label="Senses and reminders"
+        aria-label="Defenses and reminders"
       >
-        {slots.get("senses")}
+        {slots.get("defenses")}
         {panes.slice(leftCount).map(renderPane)}
         <section className="ov-reminder-region" aria-label="Reminders">
           <ReminderPanels

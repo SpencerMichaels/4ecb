@@ -2,6 +2,16 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Summary pane placement feedback (2026-10-15): Senses now precedes Skills in the
+left-column flow, followed by Abilities/Languages and Basic Attacks. The Defenses
+trait pane is fixed above the right-column reminders, so additional defensive
+traits consume reminder space rather than displacing Skills or Abilities. Whole
+left-pane overflow handling and adjacent reminder continuation remain unchanged.
+Verification: 28 focused overview tests, focused lint and production build pass.
+All four Chromium overview-only Letter/A4 × color/monochrome checks pass without
+overflow, including a new regression assertion that growing the Defenses pane
+leaves the left-pane placement unchanged. No full milestone gate was run.
+
 Adjacent summary reminder continuation (2026-10-15): The defensive-traits pane
 is now titled Defenses. Reminders omitted by measured page-1 fitting continue
 immediately on an optional summary page 2, before the scratchpad. Category labels
