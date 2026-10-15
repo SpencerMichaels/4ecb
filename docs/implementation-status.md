@@ -2,6 +2,36 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Core class-power reminders (2026-10-15): Added metadata-driven discovery through
+the selected class's level-one feature grants and explicit feature-to-owned-power
+links, including intermediate Grants containers and evaluated grant ancestry.
+The usefulness filter selects non-attack ongoing target-dependent powers; it does
+not restore ordinary attacks, instantaneous healing with only a temporary personal
+drawback, or grant/shared-use containers. Selected class identity prevents other
+active class records from supplying unrelated core powers. Reminder names/text
+come from the granted power (useful authored summaries first, otherwise full
+evaluated mechanical fields), merging known conditional damage once rather than
+duplicating its feature reminder. Full feature references, power cards, builds,
+calculations and evaluation-cache semantics are unchanged.
+
+Private-data checks: Hu has one Oath of Enmity reminder alongside Censure of Unity;
+Ingi's current native backup has Divine Challenge; Silaqui retains one Hunter's
+Quarry reminder with its authored designation summary and calculated extra-damage
+text. An additional fighter sample retains its existing feature reminders rather
+than duplicating its attack power. The first broad probe also surfaced an
+instantaneous healing candidate; selected-class and personal-drawback safeguards
+exclude it. These are local content evaluations, not new same-profile golden
+parity claims. No proprietary definitions/descriptions enter public fixtures.
+
+Verification: 58 focused core-power/overview/model/render tests, web typecheck,
+focused lint, formatting and production build pass. All four overview-only
+Letter/A4 × color/monochrome print checks pass (12 measured pages each, no overview
+overflow); full physical-card
+and milestone exit gates remain separate. M5.6 is still open for real-sheet review.
+Discovery remains conservative when level/grant ownership metadata is unavailable;
+long mechanical reminders use the existing measured-fit/reference fallback rather
+than losing restrictions through automatic truncation.
+
 Known-source conditional reminder categories (2026-10-15): Additional Effects
 whose selected feature is an access-only power grant now retain that feature's
 known source category while keeping the evaluated effect text. Previously this

@@ -44,6 +44,94 @@ const feat: ContentEntity = {
   ],
 };
 describe("printed overview data", () => {
+  it("replaces a core feature's grant wrapper with its owned power reminder once", () => {
+    const feature = {
+      ...feat,
+      id: "feature:core",
+      name: "Core Feature",
+      type: "Class Feature",
+      description: "You gain the chosen foe power.",
+      specifics: [
+        { name: "Level", value: "1", ordinal: 0, extraAttributes: [] },
+      ],
+      rules: [
+        {
+          name: "grant",
+          attributes: [
+            { name: "name", value: "power:core" },
+            { name: "type", value: "Power" },
+          ],
+          children: [],
+          text: "",
+          ordinal: 0,
+        },
+      ],
+    };
+    const klass = {
+      ...feat,
+      id: "class:test",
+      name: "Test Class",
+      type: "Class",
+      specifics: [],
+      rules: [
+        {
+          ...feature.rules[0]!,
+          attributes: [
+            { name: "name", value: feature.id },
+            { name: "type", value: "Class Feature" },
+          ],
+        },
+      ],
+    };
+    const definition = {
+      ...feat,
+      id: "power:core",
+      name: "Chosen Foe",
+      type: "Power",
+      specifics: [],
+      rules: [],
+    };
+    const selections = [klass, feature, definition];
+    const content = selections;
+    const base = buildSheetModel(
+      { ...snapshot, selectedRules: selections },
+      content,
+    );
+    const effect =
+      "While you fight the target, gain a benefit until the encounter ends. You must remain adjacent.";
+    const extra = "+1d6 to damage against your chosen foe.";
+    const model = withSheetOverview(
+      {
+        ...base,
+        powers: [
+          {
+            id: definition.id,
+            name: definition.name,
+            kind: "power",
+            fields: [{ label: "Effect", value: effect }],
+            additionalEffects: [
+              {
+                source: "authoritative-evaluation",
+                provider: feature.name,
+                text: extra,
+              },
+            ],
+          },
+        ],
+      },
+      { level: 8, stats: {}, selections, content, inventory: [] },
+    );
+    expect(model.overview?.reminders).toEqual([
+      {
+        label: definition.name,
+        value: `${effect}\n\n${extra}`,
+        category: "Class features",
+      },
+    ]);
+    expect(
+      model.overview?.features.find((f) => f.id === feature.id)?.description,
+    ).toBe(feature.description);
+  });
   it("includes named superior-implement and conditional enchantment properties even with item cards hidden", () => {
     const definitions = [
       {

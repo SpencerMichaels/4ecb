@@ -237,6 +237,27 @@ reminder effect. Definitions with independent mechanical benefits remain outside
 this exclusion, including manual effects not represented in native statements.
 Full feature references, granted powers and usage tracking remain unchanged;
 there is no feature-name denylist.
+Core class powers are discovered from active level-1 Class Features with explicit
+power grants/Powers/_DisplayPowers or power _ParentFeature links. Discovery is
+restricted to the character's selected class identity. Evaluated level-one grant
+ancestry must lead back through class grant containers/features/builds, not feats,
+themes or later paths; legacy-only projection follows explicit automatic grant
+edges through class/Grants/level-one feature records. Owned powers are required,
+so inactive choices and replaced powers are not invented into reminders.
+The first usefulness filter includes non-attack powers with ongoing
+target-dependent Effect text, not instantaneous healing, ordinary attacks or
+grant/shared-allowance containers. A temporary personal drawback alone does not
+qualify as an ongoing target effect. Effect-only `vs Unknown` calculations are
+not treated as evidence of an authored attack.
+Reminders use the granted power name, a mechanically useful authored short
+description when available, otherwise its evaluated Effect/Special/Requirement/
+Trigger/Sustain text without arbitrary sentence truncation. Known calculated
+conditional effects (such as extra damage dice) are deduplicated and retained.
+Access-only/same-named feature reminders consolidate into the power reminder;
+separate independent feature benefits remain available. Full feature/power
+references are unchanged. This is conservative discovery and text selection,
+not exhaustive classification of every class's core mechanics or automatic prose
+summarization; long entries still follow the measured fit/reference fallback.
 Additional Effects resolve to a uniquely known selected provider (or exact ID),
 using its authored Short Description once instead of repeating the bonus per
 power. Missing summaries fall back to the feature description; complete authored

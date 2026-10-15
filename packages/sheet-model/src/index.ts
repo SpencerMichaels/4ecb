@@ -1422,6 +1422,7 @@ export function buildEvaluatedSheetModel(
   return withSheetOverview(model, {
     level: evaluation.level,
     evaluatedStats: evaluation.stats,
+    occurrences: evaluation.occurrences,
     stats: Object.fromEntries(
       Object.entries(evaluation.stats).map(([name, stat]) => [
         name,

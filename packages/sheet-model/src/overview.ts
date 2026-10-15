@@ -1,10 +1,11 @@
 import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
 import type { LegacyRuleElement } from "@4ecb/character-domain";
 import type { CharacterSheetModel, SheetValue } from "./index";
-import type { EvaluatedStat } from "@4ecb/rules-engine";
+import type { CharacterOccurrence, EvaluatedStat } from "@4ecb/rules-engine";
 import { defensiveStatTraits, type DefensiveTrait } from "./defensive-traits";
 import { equippedItemPropertyReminders } from "./item-reminders";
 import { overviewSenses } from "./senses";
+import { corePowerReminders } from "./core-power-reminders";
 
 export interface OverviewFeature {
   readonly id: string;
@@ -147,6 +148,7 @@ export function withSheetOverview(
     level: number;
     stats: Readonly<Record<string, string>>;
     evaluatedStats?: Readonly<Record<string, EvaluatedStat>>;
+    occurrences?: readonly CharacterOccurrence[];
     selections: readonly LegacyRuleElement[];
     content: readonly ContentEntity[];
     inventory: readonly OverviewInventory[];
@@ -365,6 +367,38 @@ export function withSheetOverview(
         feature ? reminderCategory(feature.group) : "Other reminders",
       );
     }
+  const corePowers = corePowerReminders({
+    ...input,
+    powers: model.powers,
+    className: model.identity.find((entry) => entry.label === "Class")?.value,
+  });
+  const powerLabels = new Set(corePowers.map((power) => key(power.label)));
+  const replacedFeatures = new Set(
+    corePowers
+      .filter(
+        (power) =>
+          features.find((feature) => feature.id === power.featureId)
+            ?.accessOnly || key(power.featureName) === key(power.label),
+      )
+      .map((power) => key(power.featureName)),
+  );
+  for (let index = reminders.length - 1; index >= 0; index--)
+    if (
+      reminders[index]!.category === "Class features" &&
+      (powerLabels.has(key(reminders[index]!.label)) ||
+        replacedFeatures.has(key(reminders[index]!.label)))
+    )
+      reminders.splice(index, 1);
+  for (const power of corePowers)
+    // The feature may have already inserted this label/text before consolidation.
+    if (
+      !reminders.some((r) => r.label === power.label && r.value === power.value)
+    )
+      reminders.push({
+        label: power.label,
+        value: power.value,
+        category: "Class features",
+      });
   reminders.sort(
     (a, b) =>
       Number(/\ball(?:y|ies)\b/i.test(b.value)) -
