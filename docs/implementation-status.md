@@ -2,6 +2,25 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Summary Senses pane (2026-10-15): Vision and special senses now appear below
+Defensive Traits and above Basic Attacks, rather than in a small line under Skills.
+Projection reads explicit Vision/Senses fields on selected definitions, matching
+stats and selected rules of type Vision. This covers racial Low-light metadata
+without guessing from arbitrary feature names. Duplicates collapse; enhanced
+vision suppresses redundant Normal vision. Special-sense direct-provider sentences
+retain authored ranges/conditions, with explicit numeric sense stats as a range
+fallback; missing ranges are not invented. Temporary senses expressed only in
+item/power prose are not exhaustively inferred and remain in full descriptions.
+The earlier approved identity label-column widening (0.85in to 0.95in) is included.
+
+Verification: 48 focused senses/overview/model/render tests, web typecheck, focused
+lint, formatting and production build pass. Read-only private-content checks show
+Low-light vision for Silaqui and Normal vision for Hu without adding private data
+to public fixtures. The print fixture now explicitly has Low-light vision; all
+four overview-only Letter/A4 × color/monochrome PDF checks pass (12 measured pages
+each, no overview overflow). Full physical-card/milestone gates remain separate;
+M5.6 is still open for product review.
+
 Identity subtitle refinement (2026-10-15): Player/company subtitles now omit field
 labels and blank values, adding a center dot only between actual values. An empty
 subtitle takes no space; the three-row identity box retains its labeled em-dash

@@ -693,6 +693,11 @@ function Summary({
               <DefensiveTraits model={model} />
             </Panel>
           ) : null}
+          {overview.vision ? (
+            <Panel title="Senses" icon="focus" className="ov-senses">
+              <p>{overview.vision}</p>
+            </Panel>
+          ) : null}
           <BasicAttacks model={model} variantLimit={variantLimit} />
           <div className="ov-basic-probe" aria-hidden="true">
             <BasicAttacks model={model} />
@@ -802,11 +807,6 @@ function Summary({
                 ),
               )}
             </div>
-            {overview.vision ? (
-              <p className="sp-inline-rule">
-                <strong>Vision:</strong> {overview.vision}
-              </p>
-            ) : null}
           </Panel>
         </div>
         <section

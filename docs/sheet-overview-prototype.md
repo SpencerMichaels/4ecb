@@ -96,11 +96,12 @@ then bare level (`Dwarf Paladin 7`). The redundant first-page running header
 is omitted; the full-width identity separator and
 later-page running headers remain.
 Passive Insight and Perception precede their active skill bonuses, e.g.
-`Perception (25) +15`, not as separate rows. Vision remains in Skills.
+`Perception (25) +15`, not as separate rows. Vision and special senses occupy a
+compact Senses pane below Defensive Traits and above Basic Attacks, not Skills.
 Languages form a single-column striped table in a narrow panel to the right of
 Abilities, using the Basic Attacks row styling. Skills retain alternating row
 backgrounds without inter-cell borders. Below the numeric band, equal-width
-columns place Defensive Traits, Basic Attacks, Abilities/Languages and Skills on
+columns place Defensive Traits, Senses, Basic Attacks, Abilities/Languages and Skills on
 the left, with a dedicated reminder column on the right. Reminders are split into
 Class features, Racial features, Feats and Item properties panes by source
 metadata; unattributed effects remain in Other reminders. Empty panes are omitted.
@@ -171,6 +172,15 @@ Ability checks add rounded-down half level to the supplied/fallback ability
 modifier in the model. Training uses explicit training stats or selected Skill
 Training definitions. Missing training/vision remain unknown; absent unconditional
 saves use the native sparse-stat zero convention.
+Senses use explicit Vision/Senses stats and fields on active definitions plus
+selected rules of type Vision (including names such as Low-light that do not
+contain the word vision). Unselected definitions and incidental names mentioning
+vision do not qualify. Known direct providers' special-sense sentences preserve
+authored ranges and conditions; explicit numeric sense stats supply ranges when
+no such sentence exists. Missing ranges are not invented. Duplicate modes are
+collapsed, and redundant Normal vision is omitted when enhanced vision is known.
+This is a display projection, not exhaustive parsing of temporary senses in
+item/power prose; those remain available in their full descriptions.
 
 The real output contains one summary, a scratchpad (with continuation usage
 pages as needed), and measured two-column references before the existing cards.

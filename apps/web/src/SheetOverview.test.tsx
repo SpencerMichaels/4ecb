@@ -24,6 +24,36 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("places senses between defensive traits and basic attacks, not under skills", () => {
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={{
+          ...model,
+          overview: {
+            ...model.overview!,
+            vision: "Low-light vision; Tremorsense 4",
+            defensiveTraits: [{ label: "Resistance", value: "Fire 5" }],
+          },
+        }}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const summary = html
+      .split('aria-label="Character summary"')[1]!
+      .split("</article>")[0]!;
+    expect(summary.indexOf(">Senses</h3>")).toBeGreaterThan(
+      summary.indexOf(">Defensive traits</h3>"),
+    );
+    expect(summary.indexOf(">Senses</h3>")).toBeLessThan(
+      summary.indexOf(">Basic attacks</h3>"),
+    );
+    expect(summary).toContain("Low-light vision; Tremorsense 4");
+    expect(summary).not.toContain("<strong>Vision:</strong>");
+  });
   it("omits a blank company and its separator from the player subtitle", () => {
     const html = renderToStaticMarkup(
       <SheetOverview

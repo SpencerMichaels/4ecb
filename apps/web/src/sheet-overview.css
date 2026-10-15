@@ -172,7 +172,7 @@ body:has(.sp-prototype) {
 }
 .ov-identity-details > div {
   display: grid;
-  grid-template-columns: 0.85in minmax(0, 1fr);
+  grid-template-columns: 0.95in minmax(0, 1fr);
 }
 .ov-identity-details > div + div {
   border-top: 1px solid var(--sp-border);

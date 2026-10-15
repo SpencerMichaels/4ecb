@@ -4,6 +4,7 @@ import type { CharacterSheetModel, SheetValue } from "./index";
 import type { EvaluatedStat } from "@4ecb/rules-engine";
 import { defensiveStatTraits, type DefensiveTrait } from "./defensive-traits";
 import { equippedItemPropertyReminders } from "./item-reminders";
+import { overviewSenses } from "./senses";
 
 export interface OverviewFeature {
   readonly id: string;
@@ -427,12 +428,7 @@ export function withSheetOverview(
       bloodied:
         stat("Bloodied Value", "Bloodied") ??
         (hp === undefined ? "—" : String(Math.floor(hp / 2))),
-      vision:
-        stat("Vision") ??
-        input.selections
-          .filter((rule) => /vision/i.test(rule.name))
-          .map((rule) => rule.name)
-          .join(", "),
+      vision: overviewSenses(input.selections, input.content, input.stats),
       features,
       inventory: input.inventory.filter((item) => item.quantity > 0),
       reminders,

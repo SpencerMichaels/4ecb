@@ -814,6 +814,11 @@ function printCharacter() {
       stats,
       selectedRules: [
         {
+          id: "VISION_PRINT_1",
+          name: "Low-light",
+          type: "Vision",
+        },
+        {
           id: "FEATURE_PRINT_1",
           name: "Synthetic resilience",
           type: "Class Feature",
