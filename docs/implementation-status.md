@@ -2,6 +2,15 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Reminder paragraph grouping (2026-10-15): Paragraphs within a reminder now have
+zero internal vertical gaps/margins; the first paragraph stays flush left and
+later paragraphs use a 1em first-line indent. Existing spacing between independent
+entries remains intact across item/class/racial/feat reminders. Verification:
+production build and all four overview-only Letter/A4 × color/monochrome checks
+pass with no overview overflow. A focused browser style assertion checks zero
+paragraph gaps, subsequent indentation and positive inter-entry spacing. The
+full unit/milestone suite was not rerun for this CSS-only change.
+
 Concise page-one reminders restored (2026-10-15): Page 1 now uses reminder
 candidates captured before expanded core-power descriptions are consolidated.
 This removes the newly added Oath/Challenge descriptions from the summary while

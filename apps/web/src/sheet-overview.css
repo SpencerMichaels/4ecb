@@ -702,8 +702,15 @@ body:has(.sp-prototype) {
   margin-top: 0.09in !important;
   font-size: 8.5pt;
 }
-.sp-reminders p + p {
-  margin-top: 0.08in;
+.sheet-overview .sp-reminders .prose-blocks {
+  gap: 0;
+}
+.sheet-overview .sp-reminders .prose-blocks > .prose-paragraph {
+  margin: 0;
+  text-indent: 1em;
+}
+.sheet-overview .sp-reminders .prose-blocks > .prose-paragraph:first-child {
+  text-indent: 0;
 }
 .sp-reminders {
   font-size: 9pt;

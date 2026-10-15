@@ -888,6 +888,30 @@ async function checkSummaryPresentation(client, monochrome) {
   );
   assert(presentation.eye, "Senses must use the shared eye icon");
   const { accents } = presentation;
+  const paragraphs = await evaluate(
+    client,
+    `(() => {
+    const summary=document.querySelector('.ov-paper[aria-label="Character summary"]');
+    const sample=document.createElement('div');
+    sample.className='sp-reminders';
+    sample.innerHTML='<div><strong>Synthetic item</strong><div class="prose-blocks"><p class="prose-paragraph">First property.</p><p class="prose-paragraph">Second property.</p></div></div><div>Separate entry.</div>';
+    summary.querySelector('.ov-pane-probe').append(sample);
+    const blocks=sample.querySelector('.prose-blocks');
+    const first=getComputedStyle(blocks.children[0]);
+    const second=getComputedStyle(blocks.children[1]);
+    const result={gap:parseFloat(getComputedStyle(blocks).rowGap),firstIndent:parseFloat(first.textIndent),secondIndent:parseFloat(second.textIndent),paragraphMargin:parseFloat(second.marginTop),entryMargin:parseFloat(getComputedStyle(sample.children[1]).marginTop)};
+    sample.remove();
+    return result;
+  })()`,
+  );
+  assert(
+    paragraphs.gap === 0 &&
+      paragraphs.paragraphMargin === 0 &&
+      paragraphs.firstIndent === 0 &&
+      paragraphs.secondIndent > 0 &&
+      paragraphs.entryMargin > 0,
+    `Reminder paragraphs must use indentation, reserving spacing for separate entries: ${JSON.stringify(paragraphs)}`,
+  );
   if (monochrome) {
     assert(
       Object.values(accents).every((color) => {
