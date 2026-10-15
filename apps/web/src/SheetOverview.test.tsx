@@ -248,6 +248,8 @@ describe("real-data sheet overview", () => {
         { label: "Level", value: "7" },
         { label: "Class", value: "Paladin" },
         { label: "Race", value: "Dwarf" },
+        { label: "Player", value: "Synthetic player" },
+        { label: "Theme", value: "Synthetic theme" },
       ],
       overview: {
         ...model.overview!,
@@ -283,6 +285,8 @@ describe("real-data sheet overview", () => {
       .split('class="sp-identity"')[1]!
       .split("</section>")[0]!;
     expect(header).not.toContain("Initiative");
+    expect(header).toContain('class="ov-identity-details"');
+    expect(header).toContain("<dt>Theme</dt><dd>Synthetic theme</dd>");
     const band = summary
       .split('class="ov-numeric-band"')[1]!
       .split('class="sp-summary-grid')[0]!;
@@ -309,6 +313,47 @@ describe("real-data sheet overview", () => {
     expect(skills).toContain('<span class="ov-passive-value">(25)</span> +15');
     expect(skills).not.toContain("ov-passive-skill");
     expect(band).toContain("<span>Initiative</span><strong>+12</strong>");
+  });
+  it("groups defensive traits in the summary body and preserves full references", () => {
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={{
+          ...model,
+          overview: {
+            ...model.overview!,
+            defensiveTraits: [
+              { label: "Resistance", value: "Fire 5" },
+              { label: "Saving throws", value: "+2 against poison" },
+            ],
+          },
+        }}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const summary = html
+      .split('aria-label="Character summary"')[1]!
+      .split("</article>")[0]!;
+    expect(summary).toContain(">Defensive traits</h3>");
+    expect(summary).toContain("Fire 5");
+    expect(summary).toContain("+2 against poison");
+    expect(
+      summary.split('class="sp-identity"')[1]!.split("</section>")[0],
+    ).not.toContain("Fire 5");
+    const empty = renderToStaticMarkup(
+      <SheetOverview
+        model={model}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    expect(empty).not.toContain(">Defensive traits</h3>");
   });
   it.each([
     ["0", "+0"],

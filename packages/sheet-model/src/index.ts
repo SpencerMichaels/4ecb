@@ -1030,6 +1030,7 @@ export function buildSheetModel(
       "Level",
       "Race",
       "Class",
+      "Theme",
       "ParagonPath",
       "EpicDestiny",
       "Player",
@@ -1330,6 +1331,7 @@ export function buildEvaluatedSheetModel(
       "Level",
       "Race",
       "Class",
+      "Theme",
       "ParagonPath",
       "EpicDestiny",
       "Player",
@@ -1404,6 +1406,7 @@ export function buildEvaluatedSheetModel(
   };
   return withSheetOverview(model, {
     level: evaluation.level,
+    evaluatedStats: evaluation.stats,
     stats: Object.fromEntries(
       Object.entries(evaluation.stats).map(([name, stat]) => [
         name,

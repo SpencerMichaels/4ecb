@@ -131,6 +131,26 @@ body:has(.sp-prototype) {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.ov-identity-details {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.03in 0.07in;
+  flex: 0 1 2.7in;
+  min-width: 0;
+  margin: 0 0 0 auto;
+  font-size: 8.5pt;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.ov-identity-details > div {
+  display: contents;
+}
+.ov-identity-details dt {
+  color: var(--sp-muted);
+}
+.ov-identity-details dd {
+  margin: 0;
+}
 .ov-numeric-band {
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 4fr) minmax(0, 1fr) minmax(

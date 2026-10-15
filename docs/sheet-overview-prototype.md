@@ -104,6 +104,12 @@ above Skills on the right. This offsets moving Health/Defenses out of the left
 column, while reminders still fill measured available space without clipping.
 The unified
 summary, scratchpad and reference heading is now simply **Reminders**.
+An optional Defensive traits panel sits between Basic Attacks and Reminders,
+grouping resistances, vulnerabilities, authored immunity clauses and conditional
+or death-saving-throw modifiers. It never inflates the universal Saves tile.
+Player, theme, paragon path, epic destiny and company move to the header's right
+identity block, omitted when absent. See `character-import-and-sheets.md` for the
+structured-stat/prose detection and legacy-cache compatibility boundary.
 Header follow-up verification: 14 focused render tests, lint, production build,
 and the overview-only Letter/A4 color/monochrome PDF matrix pass with no overview
 overflow. This does not replace the separately tracked full physical-card gate.

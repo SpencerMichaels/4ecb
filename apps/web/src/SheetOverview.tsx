@@ -426,17 +426,45 @@ function Summary({
               )
               .join(" ")}
           </p>
-          <p className="sp-identity-note">
-            {model.identity
-              .filter((entry) =>
-                ["Player", "ParagonPath", "EpicDestiny", "Company"].includes(
-                  entry.label,
-                ),
-              )
-              .map((entry) => entry.value)
-              .join(" · ")}
-          </p>
         </div>
+        {model.identity.some(
+          (entry) =>
+            [
+              "Player",
+              "Theme",
+              "ParagonPath",
+              "EpicDestiny",
+              "Company",
+            ].includes(entry.label) && entry.value.trim(),
+        ) ? (
+          <dl className="ov-identity-details">
+            {model.identity
+              .filter(
+                (entry) =>
+                  [
+                    "Player",
+                    "Theme",
+                    "ParagonPath",
+                    "EpicDestiny",
+                    "Company",
+                  ].includes(entry.label) && entry.value.trim(),
+              )
+              .map((entry) => (
+                <div key={entry.label}>
+                  <dt>
+                    {(
+                      {
+                        ParagonPath: "Paragon path",
+                        EpicDestiny: "Epic destiny",
+                        Company: "Company",
+                      } as Record<string, string>
+                    )[entry.label] ?? entry.label}
+                  </dt>
+                  <dd>{entry.value}</dd>
+                </div>
+              ))}
+          </dl>
+        ) : null}
       </section>
       <section className="ov-numeric-band" aria-label="Combat statistics">
         <section aria-label="Defenses" className="ov-stat-group">
@@ -486,6 +514,15 @@ function Summary({
           <div className="ov-basic-probe" aria-hidden="true">
             <BasicAttacks model={model} />
           </div>
+          {overview.defensiveTraits?.length ? (
+            <Panel
+              title="Defensive traits"
+              icon="shield"
+              className="ov-defensive-traits"
+            >
+              <Reminders values={overview.defensiveTraits} />
+            </Panel>
+          ) : null}
           {overview.reminders.length ? (
             <Panel
               title="Reminders"
@@ -1008,6 +1045,16 @@ function references(model: CharacterSheetModel): ReferenceEntry[] {
           : []),
       ],
     }));
+  if (o.defensiveTraits?.length)
+    result.push({
+      id: "defensive-traits",
+      name: "Defensive traits",
+      group: "Defensive traits",
+      source: "",
+      parts: o.defensiveTraits.flatMap((entry) =>
+        referenceParts(entry.value, entry.label),
+      ),
+    });
   if (o.reminders.length)
     result.push({
       id: "reminders",

@@ -2,6 +2,27 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Defensive traits / identity header follow-up (2026-10-14): The first-page body
+now groups resistances, vulnerabilities, authored self-immunity clauses,
+conditional saves and death-save modifiers in an optional Defensive traits panel
+between Basic Attacks and Reminders. The projection follows recovered
+`BasicUtils.BuildResistancesString`/`BuildSavingThrowString`: signed `resist:*`
+totals map to resistance/vulnerability, while conditional contributions retain
+their values, bonus types, conditions and providers separately, without summing
+or inflating universal Saves. Equipment-inapplicable contributions are excluded;
+unresolved conditions stay explicit. Authored immunity wording is preserved whole;
+this is conservative extraction, not exhaustive prose interpretation. Legacy
+snapshots do not acquire invented conditional provenance. Full references retain
+the same defensive list. Player/theme/path/destiny/company move to the header's
+right identity block, with no empty placeholders.
+
+Verification: 37 focused projection/model/render tests, web typecheck, focused
+lint and production build pass. The populated overview-only Chromium Letter/A4
+× color/monochrome PDF matrix passes (12 measured pages each, no overview
+overflow, defensive text retained). A read-only local reference evaluation shows
+its two expected resistance entries. The full suite / unchanged physical-card
+gate was not rerun; M5.6 remains open for overview review and existing exit gates.
+
 Summary sign/passive refinement (2026-10-14): Positive Initiative includes + in
 the Movement pane and scratchpad reference; existing signs, zero and unknown
 values are preserved. Passive Insight/Perception appear in parentheses beside

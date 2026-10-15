@@ -369,6 +369,24 @@ describe("sheet model", () => {
       choices: [],
       stats: {
         Strength: { name: "Strength", value: 20, contributions: [] },
+        "resist:fire": { name: "resist:fire", value: 5, contributions: [] },
+        "Saving Throws": {
+          name: "Saving Throws",
+          value: 0,
+          contributions: [
+            {
+              id: "save:conditional",
+              stat: "Saving Throws",
+              value: "2",
+              providerId: "feat:save",
+              providerName: "Synthetic saving feat",
+              numericValue: 2,
+              applied: false,
+              reason: "conditional",
+              condition: "against poison",
+            },
+          ],
+        },
         Constitution: {
           name: "Constitution",
           value: 21,
@@ -722,6 +740,14 @@ describe("sheet model", () => {
     );
 
     expect(model.source).toBe("authoritative-evaluation");
+    expect(model.overview?.defensiveTraits).toContainEqual({
+      label: "Resistance",
+      value: "Fire 5",
+    });
+    expect(model.overview?.defensiveTraits).toContainEqual({
+      label: "Saving throws",
+      value: "+2 against poison (Synthetic saving feat)",
+    });
     expect(model.powers[0]?.additionalEffects).toEqual([
       {
         text: "+1 to damage against a marked target (Synthetic feature).",

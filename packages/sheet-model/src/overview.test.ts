@@ -44,6 +44,23 @@ const feat: ContentEntity = {
   ],
 };
 describe("printed overview data", () => {
+  it("retains authored self-immunity wording and distinguishes it from target effects", () => {
+    const immune = {
+      ...feat,
+      description:
+        "While transformed, you are immune to disease. This ends when you revert.",
+    };
+    const m = buildSheetModel(snapshot, [immune]);
+    expect(m.overview?.defensiveTraits).toContainEqual({
+      label: immune.name,
+      value: immune.description,
+    });
+    expect(
+      buildSheetModel(snapshot, [
+        { ...immune, description: "The target is immune to your next attack." },
+      ]).overview?.defensiveTraits,
+    ).toEqual([]);
+  });
   it("projects native surge bonuses over quarter HP and absent saves as zero", () => {
     const base = { ...snapshot, stats: { "Hit Points": "68" } };
     const m = buildSheetModel(base);

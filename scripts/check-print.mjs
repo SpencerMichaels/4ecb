@@ -776,6 +776,9 @@ function printCharacter() {
     "Hit Points": "72",
     "Healing Surges": "10",
     "Healing Surge Value": "18",
+    "resist:fire": "5",
+    "resist:cold": "-3",
+    "Death Saving Throws": "2",
     "Action Point": "1",
     Speed: "6",
     Initiative: "+9",
@@ -947,6 +950,9 @@ async function inspectPdf(
     "Character reference",
     "Synthetic resilience",
     "Synthetic focus",
+    "Defensive traits",
+    "Fire 5",
+    "Cold 3",
     ...(onlyOverview
       ? []
       : [

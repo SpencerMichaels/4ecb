@@ -1,6 +1,8 @@
 import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
 import type { LegacyRuleElement } from "@4ecb/character-domain";
 import type { CharacterSheetModel, SheetValue } from "./index";
+import type { EvaluatedStat } from "@4ecb/rules-engine";
+import { defensiveStatTraits } from "./defensive-traits";
 
 export interface OverviewFeature {
   readonly id: string;
@@ -37,6 +39,7 @@ export interface SheetOverview {
     readonly trained: boolean | undefined;
   }[];
   readonly saves: string;
+  readonly defensiveTraits: readonly SheetValue[];
   readonly bloodied: string;
   readonly vision: string;
   readonly features: readonly OverviewFeature[];
@@ -124,6 +127,7 @@ export function withSheetOverview(
   input: {
     level: number;
     stats: Readonly<Record<string, string>>;
+    evaluatedStats?: Readonly<Record<string, EvaluatedStat>>;
     selections: readonly LegacyRuleElement[];
     content: readonly ContentEntity[];
     inventory: readonly OverviewInventory[];
@@ -213,6 +217,37 @@ export function withSheetOverview(
         accessOnly: accessOnly(entity, benefit || summary),
       });
     }
+  const defensiveTraits = defensiveStatTraits(
+    input.stats,
+    input.evaluatedStats,
+  );
+  // Preserve whole authored clauses rather than reducing prose immunities to an
+  // invented numeric stat or dropping conditions from the preceding sentence.
+  const selfDefense =
+    /\byou (?:are|become) immune\b|\byou (?:have|gain) (?:immunity|vulnerability)\b/i;
+  for (const feature of features) {
+    if (selfDefense.test(feature.description))
+      defensiveTraits.push({ label: feature.name, value: feature.description });
+    for (const field of feature.fields)
+      if (
+        /^(?:immunities|immunity|resistances|vulnerabilities)$/i.test(
+          field.label,
+        )
+      )
+        defensiveTraits.push(field);
+  }
+  for (const item of input.inventory.filter((item) => item.equipped > 0))
+    for (const field of item.fields)
+      if (
+        /^(?:immunities|immunity|resistances|vulnerabilities)$/i.test(
+          field.label,
+        ) ||
+        (/^property$/i.test(field.label) && selfDefense.test(field.value))
+      )
+        defensiveTraits.push({
+          label: `${item.name} · ${field.label}`,
+          value: field.value,
+        });
   const reminders: SheetValue[] = [];
   const reminderByFeature = new Map<string, number>();
   const reminderKeys = new Set<string>();
@@ -306,6 +341,13 @@ export function withSheetOverview(
     ],
     overview: {
       level: input.level,
+      defensiveTraits: defensiveTraits.filter(
+        (entry, index, entries) =>
+          entries.findIndex(
+            (other) =>
+              other.label === entry.label && other.value === entry.value,
+          ) === index,
+      ),
       abilities: model.abilities.map(({ label, value }) => {
         const score = number(value);
         const mod =
