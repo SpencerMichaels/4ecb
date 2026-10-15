@@ -97,12 +97,21 @@ is omitted; the full-width identity separator and
 later-page running headers remain.
 Passive Insight and Perception precede their active skill bonuses, e.g.
 `Perception (25) +15`, not as separate rows. Vision and special senses occupy a
-compact Senses pane below Defensive Traits and above Basic Attacks, not Skills.
+compact Senses pane at the top of the right column, not Skills.
 Languages form a single-column striped table in a narrow panel to the right of
 Abilities, using the Basic Attacks row styling. Skills retain alternating row
 backgrounds without inter-cell borders. Below the numeric band, equal-width
-columns place Defensive Traits, Senses, Basic Attacks, Abilities/Languages and Skills on
-the left, with a dedicated reminder column on the right. Reminders are split into
+columns prefer Defensive Traits, Skills, Abilities/Languages and Basic Attacks on
+the left, with Senses above reminders on the right. Whole panes fill the left in
+that order; the first that cannot fit and all following panes move to the right,
+below Senses and above reminders. Abilities/Languages remain one fitting unit.
+Measurements use equal-width hidden pane probes, account for inter-pane gaps and
+the footer, and rerun for content, font and page-size changes. The layout can move
+panes back when space increases. Reminder fitting uses only the right-column
+space remaining after fixed/overflow panes. Tables are not split or text shrunk
+to force a fit; pathological data too large for both columns retains the existing
+visible overflow warning and full reference data rather than being clipped.
+Reminders are split into
 Class features, Racial features, Feats and Item properties panes by source
 metadata; unattributed effects remain in Other reminders. Empty panes are omitted.
 Measured fitting includes pane headings/padding and the overflow caption, and
@@ -118,7 +127,7 @@ An item's property paragraphs share one heading, rather than repeating its name
 for each property. Basic Attacks and other evaluated variant tables use the same
 composed inventory display name as item cards and reminders, including custom
 names; original calculation names and numeric values are unchanged.
-An optional Defensive traits panel sits above Basic Attacks,
+An optional Defensive traits panel leads the left column,
 grouping resistances, vulnerabilities, authored immunity clauses and conditional
 or death-saving-throw modifiers in a striped benefit/source table without visible
 column/category headings. Compact numeric clauses read `Resist 5 fire` or
@@ -196,8 +205,9 @@ The summary measures rendered entry heights and fills the available left-column
 space, reserving room for an overflow caption only when entries truly do not fit.
 There is no fixed entry-count or character-count cap. Oversized entries remain
 in references while shorter later entries can still use the remaining space.
-Basic-attack summaries prefer two weapon alternatives, reducing to one when the
-right column needs room; complete alternatives remain in references.
+Basic-attack summaries retain up to two weapon alternatives per attack kind;
+their whole pane moves to the right before sacrificing summary content.
+Complete alternatives remain in references.
 Grant/choice-only wrappers are omitted using authored Benefit text and grant/
 selection metadata, without mistaking introductory flavor for an extra effect.
 The exclusion also covers power-access/shared-usage containers: grant/select-only

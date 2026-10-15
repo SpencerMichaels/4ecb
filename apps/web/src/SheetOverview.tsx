@@ -1,4 +1,6 @@
 import {
+  Children,
+  isValidElement,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -488,21 +490,51 @@ export function fittingReminderGroups(
   }
   return indices;
 }
-function Summary({
+/** Keep a prefix on the left; overflow is an ordered suffix, never a split pane. */
+export function fittingSummaryPaneCount(
+  heights: readonly number[],
+  available: number,
+  gap: number,
+): number {
+  let used = 0;
+  let count = 0;
+  for (const height of heights) {
+    const next = used + height + (count ? gap : 0);
+    if (next > available) break;
+    used = next;
+    count++;
+  }
+  return count;
+}
+type SummaryPaneId = "defenses" | "skills" | "abilities" | "attacks" | "senses";
+interface SummaryPaneProps {
+  id: SummaryPaneId;
+  children: ReactNode;
+}
+function SummaryPane({ children }: SummaryPaneProps) {
+  return <>{children}</>;
+}
+function SummaryColumns({
   model,
-  name,
-  portrait,
-  blankHP,
+  children,
 }: {
   model: CharacterSheetModel;
-  name: string;
-  portrait: CharacterPortrait | undefined;
-  blankHP: boolean;
+  children: ReactNode;
 }) {
   const overview = model.overview!;
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const slots = new Map(
+    Children.toArray(children).flatMap((child) =>
+      isValidElement<SummaryPaneProps>(child) && child.props.children
+        ? [[child.props.id, child.props.children] as const]
+        : [],
+    ),
+  );
+  const panes = (
+    ["defenses", "skills", "abilities", "attacks"] as const
+  ).flatMap((id) => (slots.has(id) ? [{ id, content: slots.get(id) }] : []));
+  const [leftCount, setLeftCount] = useState(4);
   const [visibleIndices, setVisibleIndices] = useState<readonly number[]>();
-  const [variantLimit, setVariantLimit] = useState(2);
   const reminders =
     visibleIndices === undefined
       ? overview.reminders
@@ -510,30 +542,31 @@ function Summary({
           overview.reminders[index] ? [overview.reminders[index]!] : [],
         );
   useLayoutEffect(() => {
-    const page = ref.current;
-    if (!page) return;
+    const grid = ref.current;
+    const page = grid?.closest<HTMLElement>(".ov-paper");
+    if (!page || !grid) return;
     let active = true;
     const check = () => {
       if (!active) return;
       if (!page.clientHeight) return;
       const footer = page.querySelector<HTMLElement>(".sp-page-footer")!;
-      const basic = page.querySelector<HTMLElement>(
-        ".ov-main-column > .sp-basic-attacks",
+      const left = grid.querySelector<HTMLElement>(".ov-main-column")!;
+      const gap = parseFloat(getComputedStyle(left).rowGap) || 0;
+      const count = fittingSummaryPaneCount(
+        [
+          ...grid.querySelectorAll<HTMLElement>(
+            ".ov-pane-probe > .ov-flow-pane",
+          ),
+        ].map((pane) => pane.getBoundingClientRect().height),
+        footer.getBoundingClientRect().top -
+          8 -
+          left.getBoundingClientRect().top,
+        gap,
       );
-      const basicProbe = page.querySelector<HTMLElement>(
-        ".ov-basic-probe .sp-basic-attacks",
-      );
-      if (basic && basicProbe)
-        setVariantLimit(
-          page
-            .querySelector<HTMLElement>(".ov-main-column")!
-            .getBoundingClientRect().bottom +
-            basicProbe.getBoundingClientRect().height -
-            basic.getBoundingClientRect().height <=
-            footer.getBoundingClientRect().top - 8
-            ? 2
-            : 1,
-        );
+      if (count !== Math.min(leftCount, panes.length)) {
+        setLeftCount(count);
+        return; // Measure reminders after React has placed the overflow panes.
+      }
       const column = page.querySelector<HTMLElement>(".ov-reminders-column");
       const probe = column?.querySelector<HTMLElement>(".ov-reminder-probe");
       const panels = probe?.querySelector<HTMLElement>(".ov-reminder-panels");
@@ -563,7 +596,9 @@ function Summary({
       const available =
         footer.getBoundingClientRect().top -
         8 -
-        column.getBoundingClientRect().top;
+        column
+          .querySelector<HTMLElement>(".ov-reminder-region")!
+          .getBoundingClientRect().top;
       const caption = probe.querySelector<HTMLElement>(".sp-caption")!;
       const indices = fittingReminderGroups(
         groups,
@@ -580,21 +615,73 @@ function Summary({
     const observer = new ResizeObserver(check);
     observer.observe(page);
     observer.observe(page.querySelector(".sp-page-content")!);
+    observer.observe(grid.querySelector(".ov-pane-probe")!);
+    for (const pane of grid.querySelectorAll(".ov-pane-probe > .ov-flow-pane"))
+      observer.observe(pane);
+    const senses = grid.querySelector(".ov-reminders-column > .ov-senses");
+    if (senses) observer.observe(senses);
     check();
     void document.fonts.ready.then(check);
     return () => {
       active = false;
       observer.disconnect();
     };
-  }, [model]);
+  }, [model, children, leftCount, panes.length]);
+  const renderPane = (pane: (typeof panes)[number]) => (
+    <div className="ov-flow-pane" data-summary-pane={pane.id} key={pane.id}>
+      {pane.content}
+    </div>
+  );
   return (
-    <Paper
-      name={name}
-      title="Character summary"
-      page={1}
-      source={model.source}
-      pageRef={ref}
-    >
+    <div className="sp-summary-grid ov-balanced-columns" ref={ref}>
+      <div className="sp-column ov-main-column">
+        {panes.slice(0, leftCount).map(renderPane)}
+      </div>
+      <section
+        className="sp-column ov-reminders-column"
+        aria-label="Senses and reminders"
+      >
+        {slots.get("senses")}
+        {panes.slice(leftCount).map(renderPane)}
+        <section className="ov-reminder-region" aria-label="Reminders">
+          <ReminderPanels
+            values={overview.reminders}
+            visibleIndices={visibleIndices}
+          />
+          {reminders.length < overview.reminders.length ? (
+            <p className="sp-caption">
+              {overview.reminders.length - reminders.length} more reminders in
+              references.
+            </p>
+          ) : null}
+        </section>
+        <div className="ov-reminder-probe" aria-hidden="true">
+          <ReminderPanels values={overview.reminders} />
+          <p className="sp-caption">
+            {overview.reminders.length} more reminders in references.
+          </p>
+        </div>
+      </section>
+      <div className="ov-pane-probe" aria-hidden="true">
+        {panes.map(renderPane)}
+      </div>
+    </div>
+  );
+}
+function Summary({
+  model,
+  name,
+  portrait,
+  blankHP,
+}: {
+  model: CharacterSheetModel;
+  name: string;
+  portrait: CharacterPortrait | undefined;
+  blankHP: boolean;
+}) {
+  const overview = model.overview!;
+  return (
+    <Paper name={name} title="Character summary" page={1} source={model.source}>
       <section className="sp-identity">
         {portrait ? (
           <div className="sp-portrait">
@@ -682,8 +769,8 @@ function Summary({
           />
         </section>
       </section>
-      <div className="sp-summary-grid ov-balanced-columns">
-        <div className="sp-column ov-main-column">
+      <SummaryColumns model={model}>
+        <SummaryPane id="defenses">
           {overview.defensiveTraits?.length ? (
             <Panel
               title="Defensive traits"
@@ -693,15 +780,18 @@ function Summary({
               <DefensiveTraits model={model} />
             </Panel>
           ) : null}
+        </SummaryPane>
+        <SummaryPane id="senses">
           {overview.vision ? (
             <Panel title="Senses" icon="focus" className="ov-senses">
               <p>{overview.vision}</p>
             </Panel>
           ) : null}
-          <BasicAttacks model={model} variantLimit={variantLimit} />
-          <div className="ov-basic-probe" aria-hidden="true">
-            <BasicAttacks model={model} />
-          </div>
+        </SummaryPane>
+        <SummaryPane id="attacks">
+          <BasicAttacks model={model} />
+        </SummaryPane>
+        <SummaryPane id="abilities">
           <div className="ov-ability-section">
             <Panel
               title="Abilities"
@@ -750,6 +840,8 @@ function Summary({
               ) : null}
             </Panel>
           </div>
+        </SummaryPane>
+        <SummaryPane id="skills">
           <Panel title="Skills" icon="skill" className="sp-skills-panel">
             <div className="sp-skill-columns">
               {[overview.skills.slice(0, 9), overview.skills.slice(9)].map(
@@ -808,29 +900,8 @@ function Summary({
               )}
             </div>
           </Panel>
-        </div>
-        <section
-          className="sp-column ov-reminders-column"
-          aria-label="Reminders"
-        >
-          <ReminderPanels
-            values={overview.reminders}
-            visibleIndices={visibleIndices}
-          />
-          {reminders.length < overview.reminders.length ? (
-            <p className="sp-caption">
-              {overview.reminders.length - reminders.length} more reminders in
-              references.
-            </p>
-          ) : null}
-          <div className="ov-reminder-probe" aria-hidden="true">
-            <ReminderPanels values={overview.reminders} />
-            <p className="sp-caption">
-              {overview.reminders.length} more reminders in references.
-            </p>
-          </div>
-        </section>
-      </div>
+        </SummaryPane>
+      </SummaryColumns>
     </Paper>
   );
 }

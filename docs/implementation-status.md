@@ -2,6 +2,26 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Opportunistic summary columns (2026-10-15): Preferred left order is Defensive
+Traits, Skills, Abilities/Languages (one unit), then Basic Attacks. Senses leads
+the right column. Measured whole-pane fitting keeps a prefix on the left and
+moves the first unfitting pane plus its ordered suffix below Senses and above
+Reminders. Reminder fitting uses only the remaining right-column space. Equal-
+width hidden probes and resize/font/content checks allow panes to return left
+when room increases; no table splitting or fit-driven text shrinking is added.
+Basic Attacks retains its usual two alternatives per attack kind rather than
+dropping alternatives merely because the left column is full. Full references
+and the existing visible overflow warning remain the recovery boundary for data
+too large for both columns.
+
+Verification: all 22 focused rendering/fitting tests, web typecheck, focused lint,
+formatting and production build pass. The Chromium print check now forces actual
+last-pane overflow using a temporary CSSOM height constraint, verifies placement
+before reminders/above the footer, then verifies restoration after removing it.
+All four overview-only Letter/A4 × color/monochrome PDF checks pass (12 measured
+pages each, no overview overflow). Full physical-card/milestone gates remain
+separate; M5.6 is still open for product review.
+
 Summary Senses pane (2026-10-15): Vision and special senses now appear below
 Defensive Traits and above Basic Attacks, rather than in a small line under Skills.
 Projection reads explicit Vision/Senses fields on selected definitions, matching

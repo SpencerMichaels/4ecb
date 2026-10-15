@@ -299,6 +299,7 @@ try {
       client,
       `document.querySelectorAll('.sheet-overview > .ov-paper[aria-label="Character reference"]').length > 0`,
     );
+    await checkSummaryPaneFlow(client);
     const overview = await evaluate(
       client,
       `(() => {
@@ -855,6 +856,76 @@ function printCharacter() {
       includeItemCards: true,
     },
   };
+}
+
+async function checkSummaryPaneFlow(client) {
+  const baseline = await evaluate(
+    client,
+    `(() => {
+    const summary = document.querySelector('.ov-paper[aria-label="Character summary"]');
+    const left = summary.querySelector('.ov-main-column');
+    const right = summary.querySelector('.ov-reminders-column');
+    const ids = (column) => [...column.querySelectorAll(':scope > .ov-flow-pane')].map(p=>p.dataset.summaryPane);
+    return {left:ids(left),right:ids(right),sensesOnRight:!!right.querySelector(':scope > .ov-senses')};
+  })()`,
+  );
+  assert(baseline.sensesOnRight, "Summary senses must be on the right");
+  assert(
+    JSON.stringify([...baseline.left, ...baseline.right]) ===
+      JSON.stringify(["defenses", "skills", "abilities", "attacks"]),
+    `Summary panes must retain priority order without duplicates: ${JSON.stringify(baseline)}`,
+  );
+  // Increase the last whole pane's height to force a real measured overflow.
+  // CSSOM avoids inline-style CSP exemptions and applies after React moves it.
+  const ruleIndex = await evaluate(
+    client,
+    `(() => {
+    const summary = document.querySelector('.ov-paper[aria-label="Character summary"]');
+    const left = summary.querySelector('.ov-main-column');
+    const panes = [...summary.querySelectorAll('.ov-pane-probe > .ov-flow-pane')];
+    const gap = parseFloat(getComputedStyle(left).rowGap) || 0;
+    const available = summary.querySelector('.sp-page-footer').getBoundingClientRect().top - 8 - left.getBoundingClientRect().top;
+    const prefix = panes.slice(0,-1).reduce((sum,p)=>sum+p.getBoundingClientRect().height+gap,0);
+    const height = Math.max(panes.at(-1).getBoundingClientRect().height, available-prefix+24);
+    const sheet = document.styleSheets[0];
+    return sheet.insertRule('.ov-paper[aria-label="Character summary"] .ov-flow-pane[data-summary-pane="attacks"] { min-height: '+height+'px; }', sheet.cssRules.length);
+  })()`,
+  );
+  try {
+    await waitForExpression(
+      client,
+      `!!document.querySelector('.ov-reminders-column > [data-summary-pane="attacks"]')`,
+    );
+    const stress = await evaluate(
+      client,
+      `(() => {
+      const summary = document.querySelector('.ov-paper[aria-label="Character summary"]');
+      const moved = summary.querySelector('.ov-reminders-column > [data-summary-pane="attacks"]');
+      const reminders = summary.querySelector('.ov-reminder-region');
+      const footer = summary.querySelector('.sp-page-footer');
+      return {beforeReminders:!!(moved.compareDocumentPosition(reminders) & Node.DOCUMENT_POSITION_FOLLOWING),bottom:moved.getBoundingClientRect().bottom,footer:footer.getBoundingClientRect().top};
+    })()`,
+    );
+    assert(stress.beforeReminders, "Overflow panes must precede reminders");
+    assert(
+      stress.bottom <= stress.footer - 7,
+      "Moved pane must fit above the footer",
+    );
+  } finally {
+    await evaluate(client, `document.styleSheets[0].deleteRule(${ruleIndex})`);
+  }
+  await waitForExpression(
+    client,
+    `(() => {
+    const left = document.querySelector('.ov-main-column');
+    return JSON.stringify([...left.querySelectorAll(':scope > .ov-flow-pane')].map(p=>p.dataset.summaryPane)) === ${JSON.stringify(JSON.stringify(baseline.left))};
+  })()`,
+  );
+  await evaluate(
+    client,
+    "new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))))",
+    true,
+  );
 }
 
 async function updateSheetSettings(cdp, id, variant) {

@@ -113,14 +113,10 @@ body:has(.sp-prototype) {
   min-height: 0;
   background: transparent;
 }
-.ov-reminder-probe,
-.ov-basic-probe {
+.ov-reminder-probe {
   height: 0;
   overflow: hidden;
   visibility: hidden;
-}
-.ov-basic-probe {
-  margin-top: -0.12in;
 }
 .sheet-overview .sp-identity {
   border-bottom: 2px solid var(--sp-ink);
@@ -220,6 +216,26 @@ body:has(.sp-prototype) {
 }
 .sheet-overview .ov-balanced-columns {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  position: relative;
+}
+.ov-pane-probe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc((100% - 0.15in) / 2);
+  visibility: hidden;
+  pointer-events: none;
+  /* Keep measurements without contributing to page overflow or print text. */
+  height: 0;
+  overflow: hidden;
+}
+.ov-flow-pane {
+  min-width: 0;
+  break-inside: avoid;
+}
+.ov-reminder-region {
+  display: grid;
+  gap: 0.12in;
 }
 .ov-ability-section {
   display: grid;

@@ -5,6 +5,7 @@ import {
   SheetOverview,
   fittingReminderIndices,
   fittingReminderGroups,
+  fittingSummaryPaneCount,
   overviewBasicAttackRows,
   overviewTrackingRows,
   paginateReferences,
@@ -24,7 +25,7 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
-  it("places senses between defensive traits and basic attacks, not under skills", () => {
+  it("orders the main panes by consultation frequency and keeps senses on the right", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
         model={{
@@ -45,12 +46,21 @@ describe("real-data sheet overview", () => {
     const summary = html
       .split('aria-label="Character summary"')[1]!
       .split("</article>")[0]!;
-    expect(summary.indexOf(">Senses</h3>")).toBeGreaterThan(
-      summary.indexOf(">Defensive traits</h3>"),
+    const [left, right] = summary.split(
+      'class="sp-column ov-reminders-column"',
     );
-    expect(summary.indexOf(">Senses</h3>")).toBeLessThan(
-      summary.indexOf(">Basic attacks</h3>"),
-    );
+    const headings = [
+      "Defensive traits",
+      "Skills",
+      "Abilities",
+      "Basic attacks",
+    ];
+    for (let i = 1; i < headings.length; i++)
+      expect(left!.indexOf(`>${headings[i]}</h3>`)).toBeGreaterThan(
+        left!.indexOf(`>${headings[i - 1]}</h3>`),
+      );
+    expect(left).not.toContain(">Senses</h3>");
+    expect(right).toContain(">Senses</h3>");
     expect(summary).toContain("Low-light vision; Tremorsense 4");
     expect(summary).not.toContain("<strong>Vision:</strong>");
   });
@@ -220,7 +230,7 @@ describe("real-data sheet overview", () => {
     const summary = html
       .split('aria-label="Character summary"')[1]!
       .split("</article>")[0]!
-      .split('class="ov-basic-probe"')[0]!;
+      .split('class="ov-pane-probe"')[0]!;
     expect(summary.match(/<th scope="col">Weapon<\/th>/g)).toHaveLength(1);
     expect(summary).toContain("lucide-bow-arrow");
     expect(summary).toContain("lucide-sword");
@@ -577,7 +587,9 @@ describe("real-data sheet overview", () => {
     expect(left).toContain(">Abilities</h3>");
     expect(left).toContain(">Skills</h3>");
     expect(right).toContain("Quick Hands");
-    expect(right).not.toContain("Basic attacks");
+    expect(right!.split('class="ov-pane-probe"')[0]).not.toContain(
+      "Basic attacks",
+    );
     expect(summary).not.toContain("Passive Training");
     expect(html).toContain("Passive Training");
   });
@@ -596,6 +608,24 @@ describe("real-data sheet overview", () => {
     expect(fittingReminderGroups(groups, 130, 20, 10)).toEqual([1, 2]);
     expect(fittingReminderGroups(groups, 100, 20, 10)).toEqual([1]);
     expect(fittingReminderGroups(groups, 700, 20, 10)).toEqual([0, 1, 2]);
+  });
+  it("moves an ordered suffix of whole panes when the left column fills", () => {
+    expect(fittingSummaryPaneCount([80, 180, 130, 100], 520, 10)).toBe(4);
+    expect(fittingSummaryPaneCount([80, 180, 130, 100], 419, 10)).toBe(3);
+    expect(fittingSummaryPaneCount([80, 180, 130, 100], 400, 10)).toBe(2);
+    // Do not skip an oversized pane to squeeze later, smaller panes onto the left.
+    expect(fittingSummaryPaneCount([80, 500, 20], 200, 10)).toBe(1);
+    expect(fittingSummaryPaneCount([500, 20], 200, 10)).toBe(0);
+    expect(fittingSummaryPaneCount([], 200, 10)).toBe(0);
+    // Overflow panes consume right-column space before reminder selection.
+    expect(
+      fittingReminderGroups(
+        [{ overhead: 20, gap: 0, entries: [{ index: 0, height: 80 }] }],
+        90,
+        20,
+        0,
+      ),
+    ).toEqual([]);
   });
   it("indexes item powers even when the physical item-card list is empty", () => {
     const rows = overviewTrackingRows({
