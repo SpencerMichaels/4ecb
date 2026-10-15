@@ -2,6 +2,14 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Numeric-band palette clarification (2026-10-15): The uniform slate-blue treatment
+applies only to body pane headers. The top numeric groups retain their previous
+colors: slate-blue Defenses, sage-green Health, teal Initiative/Speed. All numeric
+labels, fills and borders follow those group colors; body panes stay slate blue.
+Verification: production build and four Chromium overview-only Letter/A4 ×
+color/monochrome checks pass, including explicit numeric-group and uniform-pane
+color assertions. No full unit/milestone gate was rerun for this CSS correction.
+
 Unified summary accent (2026-10-15): All first-page overview pane headers and
 numeric groups share muted slate-blue text, tint and separators. Category-specific
 rust, ochre, green and teal overrides are removed; layout, headings and icons carry

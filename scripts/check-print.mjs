@@ -880,6 +880,9 @@ async function checkSummaryPresentation(client, monochrome) {
         ['senses','.ov-senses > h3'],
         ['reminders','.ov-reminder-region .sp-panel > h3'],
         ['health','.ov-stat-group[aria-label="Health"] .ov-band-values > div'],
+        ['defenseStats','.ov-stat-group[aria-label="Defenses"] .ov-band-values > div'],
+        ['initiative','.ov-stat-group[aria-label="Initiative"] .ov-band-values > div'],
+        ['speed','.ov-stat-group[aria-label="Speed"] .ov-band-values > div'],
       ].flatMap(([key,selector]) => {
         const element=summary.querySelector(selector);
         return element ? [[key,getComputedStyle(element).backgroundColor]] : [];
@@ -935,8 +938,22 @@ async function checkSummaryPresentation(client, monochrome) {
     );
   } else {
     assert(
-      Object.values(accents).every((color) => color === "rgb(234, 240, 246)"),
-      `All summary panes and numeric groups must share the slate-blue tint: ${JSON.stringify(accents)}`,
+      [
+        accents.attack,
+        accents.defense,
+        accents.info,
+        accents.abilities,
+        accents.senses,
+        ...(accents.reminders ? [accents.reminders] : []),
+      ].every((color) => color === "rgb(234, 240, 246)"),
+      `All summary panes must share the slate-blue tint: ${JSON.stringify(accents)}`,
+    );
+    assert(
+      accents.defenseStats === "rgb(234, 240, 246)" &&
+        accents.health === "rgb(238, 243, 233)" &&
+        accents.initiative === "rgb(234, 242, 240)" &&
+        accents.speed === accents.initiative,
+      `Numeric groups must retain blue defenses, green health and teal initiative/speed: ${JSON.stringify(accents)}`,
     );
   }
   assert(
