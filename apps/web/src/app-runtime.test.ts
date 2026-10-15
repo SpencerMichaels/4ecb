@@ -181,50 +181,55 @@ describe("application content runtime", () => {
     );
   });
 
-  it("does not reuse evaluations from before per-attack calculations", async () => {
-    const cache = evaluationCache();
-    const input = {
-      level: 8,
-      baseAbilities: {},
-      occurrences: [],
-      inventory: [],
-      candidateDetailLevels: [],
-      includePowers: true,
-    } satisfies EvaluationInput;
-    const profile = "core\0digest-core";
-    const oldVersion = "evaluated-character-v3-2026-09-17";
-    const digest = new Uint8Array(
-      await crypto.subtle.digest(
-        "SHA-256",
-        new TextEncoder().encode(
-          `${oldVersion}\0${profile}\0${JSON.stringify(input)}`,
+  it.each([
+    "evaluated-character-v3-2026-09-17",
+    "evaluated-character-v6-2026-10-14-weapon-property-values",
+  ])(
+    "does not reuse older power-projection evaluations (%s)",
+    async (oldVersion) => {
+      const cache = evaluationCache();
+      const input = {
+        level: 8,
+        baseAbilities: {},
+        occurrences: [],
+        inventory: [],
+        candidateDetailLevels: [],
+        includePowers: true,
+      } satisfies EvaluationInput;
+      const profile = "core\0digest-core";
+      const digest = new Uint8Array(
+        await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(
+            `${oldVersion}\0${profile}\0${JSON.stringify(input)}`,
+          ),
         ),
-      ),
-    );
-    const oldKey = [...digest]
-      .map((value) => value.toString(16).padStart(2, "0"))
-      .join("");
-    await cache.put(oldKey, oldVersion, profile, evaluation(8));
-    const fresh = evaluation(8);
-    const evaluate = vi.fn(async () => fresh);
-    const runtime = new AppContentRuntime({
-      evaluationCache: cache,
-      createRulesClient: () =>
-        rulesClient(
-          vi.fn(async () => undefined),
-          evaluate,
-        ),
-    });
-    const client = await runtime.getRulesClient("core", "digest-core");
-    await expect(client.evaluate(input)).resolves.toBe(fresh);
-    expect(evaluate).toHaveBeenCalledOnce();
-    expect(cache.get).toHaveBeenCalledWith(
-      expect.not.stringMatching(`^${oldKey}$`),
-      RULES_EVALUATION_CACHE_VERSION,
-      profile,
-    );
-    expect(RULES_EVALUATION_CACHE_VERSION).not.toBe(oldVersion);
-  });
+      );
+      const oldKey = [...digest]
+        .map((value) => value.toString(16).padStart(2, "0"))
+        .join("");
+      await cache.put(oldKey, oldVersion, profile, evaluation(8));
+      const fresh = evaluation(8);
+      const evaluate = vi.fn(async () => fresh);
+      const runtime = new AppContentRuntime({
+        evaluationCache: cache,
+        createRulesClient: () =>
+          rulesClient(
+            vi.fn(async () => undefined),
+            evaluate,
+          ),
+      });
+      const client = await runtime.getRulesClient("core", "digest-core");
+      await expect(client.evaluate(input)).resolves.toBe(fresh);
+      expect(evaluate).toHaveBeenCalledOnce();
+      expect(cache.get).toHaveBeenCalledWith(
+        expect.not.stringMatching(`^${oldKey}$`),
+        RULES_EVALUATION_CACHE_VERSION,
+        profile,
+      );
+      expect(RULES_EVALUATION_CACHE_VERSION).not.toBe(oldVersion);
+    },
+  );
 
   it("misses for changed inputs and changed profile revisions", async () => {
     const cache = evaluationCache();

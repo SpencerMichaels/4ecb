@@ -91,6 +91,12 @@ identity header presents four distinct groups: Defenses, Health, Initiative, Spe
 All eleven values use matching individual soft tiles, with labels above numbers.
 Each group has a thin rounded outline and no visible group heading; semantic
 group labels remain available. Field labels use darker, slightly heavier text.
+The page-1 functional palette uses muted rust for Basic Attacks, slate blue for
+Defenses/Defensive Traits, teal for informational panes and Initiative/Speed,
+ochre for Reminders, and soft rose for Health. Tints are limited to pane headers
+and numeric tiles/outlines; body text and alternating table rows remain neutral.
+Monochrome mode replaces these accents with explicit grayscale values, preserving
+text-based/searchable PDF output. This palette does not recolor cards or later pages.
 The portrait is circular; the identity line reads race, class,
 then bare level (`Dwarf Paladin 7`). The redundant first-page running header
 is omitted; the full-width identity separator and

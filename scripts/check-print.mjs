@@ -300,7 +300,7 @@ try {
       `document.querySelectorAll('.sheet-overview > .ov-paper[aria-label="Character reference"]').length > 0`,
     );
     await checkSummaryPaneFlow(client);
-    await checkSummaryPresentation(client);
+    await checkSummaryPresentation(client, variant.monochrome);
     const overview = await evaluate(
       client,
       `(() => {
@@ -859,7 +859,7 @@ function printCharacter() {
   };
 }
 
-async function checkSummaryPresentation(client) {
+async function checkSummaryPresentation(client, monochrome) {
   const presentation = await evaluate(
     client,
     `(() => {
@@ -871,10 +871,52 @@ async function checkSummaryPresentation(client) {
         return row ? [getComputedStyle(row).backgroundColor] : [];
       }),
       eye:!!summary.querySelector('.ov-senses .lucide-eye'),
+      accents: Object.fromEntries([
+        ['attack','.sp-basic-attacks > h3'],
+        ['defense','.ov-defensive-traits > h3'],
+        ['info','.sp-skills-panel > h3'],
+        ['abilities','.sp-ability-reference > h3'],
+        ['senses','.ov-senses > h3'],
+        ['reminders','.ov-reminder-region .sp-panel > h3'],
+        ['health','.ov-stat-group[aria-label="Health"] .ov-band-values > div'],
+      ].flatMap(([key,selector]) => {
+        const element=summary.querySelector(selector);
+        return element ? [[key,getComputedStyle(element).backgroundColor]] : [];
+      })),
     };
   })()`,
   );
   assert(presentation.eye, "Senses must use the shared eye icon");
+  const { accents } = presentation;
+  if (monochrome) {
+    assert(
+      Object.values(accents).every((color) => {
+        const channels = color.match(/\d+/g)?.map(Number);
+        return (
+          channels?.length === 3 &&
+          channels[0] === channels[1] &&
+          channels[1] === channels[2]
+        );
+      }),
+      `Monochrome summary accents must be grayscale: ${JSON.stringify(accents)}`,
+    );
+  } else {
+    assert(
+      new Set([accents.attack, accents.defense, accents.info]).size === 3,
+      "Attack, defense and informational panes must have distinct accents",
+    );
+    assert(
+      accents.info === accents.abilities && accents.info === accents.senses,
+      "Informational panes must share their accent",
+    );
+    if (accents.reminders)
+      assert(
+        ![accents.attack, accents.defense, accents.info].includes(
+          accents.reminders,
+        ),
+        "Reminders must have their own accent",
+      );
+  }
   assert(
     presentation.backgrounds.length > 0 &&
       presentation.backgrounds.every((color) => color === "rgb(240, 243, 245)"),

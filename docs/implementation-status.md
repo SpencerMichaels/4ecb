@@ -2,6 +2,32 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Functional summary palette / eligibility-cache invalidation (2026-10-15): Page 1
+uses muted rust for Basic Attacks, slate blue for Defensive Traits/Defenses, teal
+for informational panes and Initiative/Speed, ochre for Reminders, and soft rose
+for Health. Color is confined to headings/icons and numeric-group accents; body
+text and table stripes remain neutral. Monochrome mode explicitly replaces these
+accents with grayscale without rasterizing PDF text. Later pages/cards are unchanged.
+
+The evaluation-cache revision advances from v6 to v7 to invalidate results created
+before weapon basic-attack eligibility/inventory-identity metadata was added. The
+old revision could admit variants without eligibility metadata; the UI deliberately
+retains unknown/custom cases rather than pretending they are known-invalid. Fresh
+local evaluation marks Hu's Way-Leader Gouge melee-only, consistent with its base
+weapon metadata and absence from the legacy ranged-basic-attack variants. The
+owner's live cached value was not inspected; the concrete invalidation gap is
+fixed without altering character documents, weapon formulas or unknown-data policy.
+Reloading the app adopts the new version and recomputes derived results.
+
+Verification: 77 focused runtime/render/power tests, web typecheck, focused lint,
+formatting and production build pass. Runtime tests reject both the previous v6
+cache and pre-multiattack versions while preserving exact current-version reuse.
+Chromium checks distinguish functional accent groups and confirm grayscale
+monochrome output. All four overview-only Letter/A4 × color/monochrome PDF checks
+pass (12 measured pages each, no overview overflow), including existing pane-flow
+and long-name checks. Full physical-card/milestone gates remain separate; M5.6
+remains open for product review.
+
 Summary presentation consistency (2026-10-15): Bold reminder names no longer have
 trailing colons. Senses uses a shared Eye icon; class/racial reminder panes reuse
 the builder's class/race mappings instead of showing the feat icon for every
