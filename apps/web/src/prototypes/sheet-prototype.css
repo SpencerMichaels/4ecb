@@ -260,55 +260,43 @@ body:has(.sp-prototype) {
   font-size: 8.5pt;
   margin-top: 0.06in !important;
 }
-.sp-abilities {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 0;
-}
 .sp-ability-reference .sp-panel-content {
-  padding: 0;
+  padding: 0.04in 0.06in;
 }
-.sp-abilities > div {
-  padding: 0.045in 0.05in;
-  border-right: 1px solid #d5dadd;
+.sp-ability-table {
+  table-layout: fixed;
 }
-.sp-abilities > div:nth-child(3n) {
-  border-right: 0;
+.sp-ability-table th,
+.sp-ability-table td {
+  padding: 0.045in 0.025in;
+  border-bottom: 1px solid #e0e4e7;
+  font-variant-numeric: tabular-nums;
 }
-.sp-abilities > div:nth-child(n + 4) {
-  border-top: 1px solid #d5dadd;
-}
-.sp-ability-name {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.025in;
+.sp-ability-table thead th {
+  width: 25%;
   font-size: 8pt;
-}
-.sp-ability-name > span {
+  font-weight: 400;
   color: var(--sp-muted);
-  font-size: 7pt;
+  white-space: nowrap;
 }
-.sp-ability-legend {
-  font-size: 8pt;
-  color: var(--sp-muted);
-  padding: 0.04in 0.05in;
-  border-bottom: 1px solid #d5dadd;
-}
-.sp-ability-bonuses {
-  display: flex;
-  align-items: baseline;
-  gap: 0.04in;
-  font-size: 12pt;
-  line-height: 1.25;
-  margin-top: 0.025in;
-}
-.sp-ability-bonuses b {
-  font-weight: 600;
-}
-.sp-ability-bonuses > span {
+.sp-ability-table tbody th {
   font-size: 9pt;
-  color: #8d969c;
+  font-weight: 400;
+}
+.sp-ability-table td {
+  font-size: 10.5pt;
+  font-weight: 600;
+  text-align: right;
+}
+.sp-ability-table td:first-of-type {
+  font-weight: 400;
+  color: var(--sp-muted);
+}
+.sp-ability-table th:not(:first-child) {
+  text-align: right;
+}
+.sp-ability-table tbody tr:last-child > * {
+  border-bottom: 0;
 }
 .sp-summary-grid {
   display: grid;

@@ -67,10 +67,11 @@ describe("isolated sheet design prototype", () => {
     expect(markup.indexOf(">Abilities</h3>")).toBeLessThan(
       markup.indexOf(">Skills</h3>"),
     );
-    expect(markup).toContain('aria-label="STR modifier +4">+4</b>');
+    expect(markup).toContain('<th scope="col">+½ level</th>');
     expect(markup).toContain(
-      'aria-label="STR modifier plus half level +8">+8</b>',
+      '<th scope="row">Strength</th><td>18</td><td>+4</td><td>+8</td>',
     );
+    expect(markup).not.toContain("sp-ability-bonuses");
     expect(markup).toContain(
       'class="is-trained" aria-label="Athletics, trained"',
     );

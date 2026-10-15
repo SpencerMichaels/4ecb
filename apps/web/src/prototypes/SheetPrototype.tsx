@@ -4,12 +4,12 @@ import { ActionTypeIcon } from "../ActionTypeIcon";
 
 // Deliberately synthetic. No private character, content pack, or stored state is read.
 const abilities: readonly [string, string, string][] = [
-  ["STR", "18", "+4"],
-  ["CON", "14", "+2"],
-  ["DEX", "12", "+1"],
-  ["INT", "10", "+0"],
-  ["WIS", "16", "+3"],
-  ["CHA", "19", "+4"],
+  ["Strength", "18", "+4"],
+  ["Constitution", "14", "+2"],
+  ["Dexterity", "12", "+1"],
+  ["Intelligence", "10", "+0"],
+  ["Wisdom", "16", "+3"],
+  ["Charisma", "19", "+4"],
 ];
 const prototypeLevel = 8;
 
@@ -230,28 +230,26 @@ function Summary() {
             icon="ability"
             className="sp-ability-reference"
           >
-            <p className="sp-ability-legend">Modifier / Modifier + ½ level</p>
-            <div className="sp-abilities">
-              {abilities.map(([name, score, modifier]) => (
-                <div key={name}>
-                  <div className="sp-ability-name">
-                    <strong>{name}</strong>
-                    <span>{score}</span>
-                  </div>
-                  <div className="sp-ability-bonuses">
-                    <b aria-label={`${name} modifier ${modifier}`}>
-                      {modifier}
-                    </b>
-                    <span>/</span>
-                    <b
-                      aria-label={`${name} modifier plus half level ${abilityCheckBonus(modifier, prototypeLevel)}`}
-                    >
-                      {abilityCheckBonus(modifier, prototypeLevel)}
-                    </b>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <table className="sp-ability-table">
+              <thead>
+                <tr>
+                  <th scope="col">Ability</th>
+                  <th scope="col">Score</th>
+                  <th scope="col">Modifier</th>
+                  <th scope="col">+½ level</th>
+                </tr>
+              </thead>
+              <tbody>
+                {abilities.map(([name, score, modifier]) => (
+                  <tr key={name}>
+                    <th scope="row">{name}</th>
+                    <td>{score}</td>
+                    <td>{modifier}</td>
+                    <td>{abilityCheckBonus(modifier, prototypeLevel)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </Panel>
           <Panel title="Skills" icon="skill" className="sp-skills-panel">
             <div className="sp-skill-legend">

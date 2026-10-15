@@ -18,24 +18,23 @@ physical card layout, stored characters, settings and evaluation are unchanged.
 
 ## Review surfaces
 
-1. **Summary:** identity/portrait placeholder, a compact 3×2 ability block above
-   Skills with score, modifier and modifier plus rounded-down half level,
+1. **Summary:** identity/portrait placeholder, a compact six-row ability table above
+   Skills with full names and shared Ability/Score/Modifier/+½ level headings,
    prominent defenses and health references, movement/awareness, complete skill
    list with a prominent adjacent Languages panel, conditional/ally-facing reminders and abbreviated feat
    reminders. Mutable values point to the scratchpad instead of scattering
    writing boxes throughout the reference page.
    Skills use two alphabetically ordered columns, with trained rows shaded and
-   a matching swatch legend. Ability bonuses share one legend instead of repeating
-   labels in every cell. Health has four equal cells (HP, bloodied, surges, surge
+   a matching swatch legend. Ability columns have equal widths and consistent padding;
+   the last bonus includes the modifier plus rounded-down half level. Health has four equal cells (HP, bloodied, surges, surge
    value). Defenses has five label-first cells, including Saves and full Fortitude/
    Reflex labels. Movement/awareness uses a matching four-cell row; Speed has no
    unit suffix. Skill cells have horizontal padding. XP and AP do not appear on the
    summary. Feat reminders occupy
    available space beneath the left-column reminders rather than extending the
    page below the taller ability/skill column.
-   The health panel is named Health. A six-row ability table with shared Score/
-   Modifier/With-half-level columns is proposed as a replacement for the slash
-   display, pending product-owner feedback; the ability layout is not changed yet.
+   The health panel is named Health. The approved ability table replaces the slash
+   display and repeated cell legends; it retains both bonus values.
 2. **Play scratchpad:** blank health/temp-HP fields, numbered fillable-on-paper
    surge hearts grouped with health, action points, skull death-save markers, six encounter-use columns, daily
    power tracking, an explicit Channel Divinity shared-use example with per-power
