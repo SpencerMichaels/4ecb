@@ -301,6 +301,7 @@ try {
     );
     await checkSummaryPaneFlow(client);
     await checkSummaryPresentation(client, variant.monochrome);
+    await checkSummaryContinuation(client);
     const overview = await evaluate(
       client,
       `(() => {
@@ -1008,6 +1009,58 @@ async function checkSummaryPresentation(client, monochrome) {
   );
 }
 
+async function checkSummaryContinuation(client) {
+  const reminderCount = await evaluate(
+    client,
+    `document.querySelectorAll('.ov-reminder-probe [data-reminder-index]').length`,
+  );
+  assert(reminderCount > 0, "Continuation fixture needs summary reminders");
+  const ruleIndex = await evaluate(
+    client,
+    `(() => {
+    const sheet = document.styleSheets[0];
+    return sheet.insertRule('.ov-reminder-probe [data-reminder-index] { min-height: 2000px; }', sheet.cssRules.length);
+  })()`,
+  );
+  try {
+    await waitForExpression(
+      client,
+      `document.querySelectorAll('.sheet-overview > .ov-paper[aria-label="Character summary · continued"]').length > 0 && document.querySelector('.ov-reminder-region .sp-caption')?.textContent.includes('page 2')`,
+    );
+    const continuation = await evaluate(
+      client,
+      `(() => {
+      const pages=[...document.querySelectorAll('.sheet-overview > .ov-paper')];
+      const summary=pages[0], next=pages[1], scratch=pages.find(p=>p.getAttribute('aria-label')==='Play scratchpad');
+      const labels=[...summary.querySelectorAll('.ov-reminder-probe [data-reminder-index] > strong')].map(e=>e.textContent.trim());
+      return {second:next?.getAttribute('aria-label'),page:next?.querySelector('.sp-page-footer').textContent,allPresent:labels.every(label=>next?.textContent.includes(label)),scratchPage:scratch?.querySelector('.sp-page-footer').textContent,overflow:next?.dataset.overviewOverflow};
+    })()`,
+    );
+    assert(
+      continuation.second === "Character summary · continued" &&
+        continuation.page.endsWith(" · 2"),
+      `Reminders must continue directly on page 2: ${JSON.stringify(continuation)}`,
+    );
+    assert(
+      continuation.allPresent && continuation.overflow === "false",
+      `Continuation must retain reminders and fit: ${JSON.stringify(continuation)}`,
+    );
+    assert(
+      continuation.scratchPage.endsWith(" · 3"),
+      "Scratchpad must follow the summary continuation",
+    );
+  } catch (error) {
+    const state = await evaluate(client, `({pages:[...document.querySelectorAll('.sheet-overview > .ov-paper')].map(p=>p.getAttribute('aria-label')),caption:document.querySelector('.ov-reminder-region .sp-caption')?.textContent,entries:[...document.querySelectorAll('.ov-reminder-probe [data-reminder-index]')].map(e=>e.getBoundingClientRect().height),probes:[...document.querySelectorAll('.ov-measure')].map(e=>({height:e.getBoundingClientRect().height,text:e.textContent.slice(0,250)}))})`);
+    throw new Error(`${error.message}: ${JSON.stringify(state)}`);
+  } finally {
+    await evaluate(client, `document.styleSheets[0].deleteRule(${ruleIndex})`);
+  }
+  await waitForExpression(
+    client,
+    `!document.querySelector('.sheet-overview > .ov-paper[aria-label="Character summary · continued"]') && document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"] .sp-page-footer').textContent.endsWith(' · 2')`,
+  );
+}
+
 async function checkSummaryPaneFlow(client) {
   const baseline = await evaluate(
     client,
@@ -1176,7 +1229,7 @@ async function inspectPdf(
     "Character reference",
     "Synthetic resilience",
     "Synthetic focus",
-    "Defensive traits",
+    "Defenses",
     "Fire 5",
     "Cold 3",
     ...(onlyOverview

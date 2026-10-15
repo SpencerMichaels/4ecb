@@ -2,6 +2,33 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Adjacent summary reminder continuation (2026-10-15): The defensive-traits pane
+is now titled Defenses. Reminders omitted by measured page-1 fitting continue
+immediately on an optional summary page 2, before the scratchpad. Category labels
+and distinct item-benefit bullets are retained. Shared measured reference-card
+pagination handles unusually long reminders across adjacent continuation pages;
+the scratchpad's page labels follow the actual continuation count. Matching
+summary reminders are removed from the later reference reminder collection;
+expanded reference-only core-power descriptions and full feature/item rules
+remain. Hidden measurement surfaces retain layout geometry in print media while
+staying clipped and invisible, allowing continuations to be added or removed
+after a paper-size/media change.
+
+Verification: 28 focused overview tests, web typecheck, focused lint and production
+build pass. All four Chromium overview-only Letter/A4 × color/monochrome checks
+pass (12 normal fixture pages each, no overview overflow). Each also forces
+reminder overflow and verifies an adjacent page 2 with all omitted reminders,
+scratchpad relabeling to page 3, and removal/restored numbering when space
+returns. No full milestone/physical-card suite or Firefox print matrix was run
+for this slice. M5.6 remains open for real-character review.
+
+Reminder wrapping feedback (2026-10-15): Reminder paragraphs use `text-wrap:
+pretty` as progressive enhancement; Firefox currently falls back to normal
+wrapping. A `balance` experiment was verified in headless Firefox 154 but rejected
+after visual review because the evenly balanced lines looked awkward. Existing
+paragraph grouping, bullets and insets are unchanged. No full-sheet pagination
+or milestone gate was rerun for this CSS-only adjustment.
+
 Structured reminder benefit bullets (2026-10-15): Grouped item-property reminders
 now retain distinct authored property fields/named-property explanations as
 structured elements in addition to their compatible combined text. Multi-element

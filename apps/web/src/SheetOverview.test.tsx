@@ -12,6 +12,7 @@ import {
   overviewTrackingRows,
   paginateReferences,
   referenceParts,
+  summaryContinuationEntries,
   type ReferenceEntry,
 } from "./SheetOverview";
 
@@ -27,6 +28,37 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("continues only omitted reminders in category order, retaining all benefits", () => {
+    const values = [
+      {
+        label: "Item (heroic tier)",
+        category: "Item properties" as const,
+        value: "First benefit.\n\nSecond benefit.",
+        elements: ["First benefit.", "Second benefit."],
+      },
+      {
+        label: "Visible feat",
+        category: "Feats" as const,
+        value: "Already on page one.",
+      },
+      {
+        label: "Class reminder",
+        category: "Class features" as const,
+        value: "Still needs space.",
+      },
+    ];
+    const entries = summaryContinuationEntries(values, [1]);
+    expect(entries.map((entry) => entry.name)).toEqual([
+      "Class reminder",
+      "Item",
+    ]);
+    expect(entries[1]!.parts.map((part) => part.block)).toEqual([
+      { kind: "list", ordered: false, items: ["First benefit."] },
+      { kind: "list", ordered: false, items: ["Second benefit."] },
+    ]);
+    expect(summaryContinuationEntries(values, [0, 1, 2])).toEqual([]);
+    expect(summaryContinuationEntries([], [])).toEqual([]);
+  });
   it("bullets distinct reminder elements without splitting paragraphs into new bullets", () => {
     const first =
       "When you defend, gain a benefit.\n\nYou may apply it to an ally.";
@@ -162,12 +194,7 @@ describe("real-data sheet overview", () => {
     const [left, right] = summary.split(
       'class="sp-column ov-reminders-column"',
     );
-    const headings = [
-      "Defensive traits",
-      "Skills",
-      "Abilities",
-      "Basic attacks",
-    ];
+    const headings = ["Defenses", "Skills", "Abilities", "Basic attacks"];
     for (let i = 1; i < headings.length; i++)
       expect(left!.indexOf(`>${headings[i]}</h3>`)).toBeGreaterThan(
         left!.indexOf(`>${headings[i - 1]}</h3>`),
@@ -570,7 +597,7 @@ describe("real-data sheet overview", () => {
     const summary = html
       .split('aria-label="Character summary"')[1]!
       .split("</article>")[0]!;
-    expect(summary).toContain(">Defensive traits</h3>");
+    expect(summary).toContain(">Defenses</h3>");
     expect(summary).toContain("Resist 5 fire");
     expect(summary).toContain("Vulnerable 5 cold");
     expect(summary).toContain("Immune to acid");
@@ -589,7 +616,7 @@ describe("real-data sheet overview", () => {
     expect(summary).toContain("<td>Synthetic cloak</td>");
     expect(summary).toContain("<td>Synthetic feat</td>");
     expect(summary).toContain('aria-label="Resistances"');
-    expect(summary.indexOf(">Defensive traits</h3>")).toBeLessThan(
+    expect(summary.indexOf(">Defenses</h3>")).toBeLessThan(
       summary.indexOf(">Basic attacks</h3>"),
     );
     expect(
@@ -605,7 +632,7 @@ describe("real-data sheet overview", () => {
         blankHP={false}
       />,
     );
-    expect(empty).not.toContain(">Defensive traits</h3>");
+    expect(empty).not.toContain(">Defenses</h3>");
   });
   it.each([
     ["0", "+0"],

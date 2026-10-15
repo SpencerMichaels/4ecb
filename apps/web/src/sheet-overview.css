@@ -709,6 +709,7 @@ body:has(.sp-prototype) {
 .sheet-overview .sp-reminders .prose-blocks > .prose-paragraph {
   margin: 0;
   text-indent: 0;
+  text-wrap: pretty;
 }
 .ov-reminder-elements {
   margin: 0;
@@ -1311,7 +1312,12 @@ body:has(.sp-prototype) {
     display: block;
   }
   .ov-measure {
-    display: none !important;
+    /* Continuations can appear after print media changes the available space.
+       Keep their measurement geometry without adding printable content/pages. */
+    display: block !important;
+    left: 0;
+    height: 0;
+    overflow: hidden;
   }
   html,
   body,

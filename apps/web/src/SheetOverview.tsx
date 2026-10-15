@@ -1,6 +1,7 @@
 import {
   Children,
   isValidElement,
+  useCallback,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -420,7 +421,7 @@ function DefensiveTraits({ model }: { model: CharacterSheetModel }) {
   }
   let rowNumber = 0;
   return (
-    <table className="ov-defensive-table" aria-label="Defensive traits">
+    <table className="ov-defensive-table" aria-label="Defenses">
       <colgroup>
         <col />
         <col />
@@ -457,7 +458,7 @@ function DefensiveTraits({ model }: { model: CharacterSheetModel }) {
     </table>
   );
 }
-/** Fill the measured space in priority order; an oversized entry stays in references. */
+/** Fill measured space in priority order; remaining entries continue after page 1. */
 export function fittingReminderIndices(
   heights: readonly number[],
   gap: number,
@@ -545,9 +546,11 @@ function SummaryPane({ children }: SummaryPaneProps) {
 function SummaryColumns({
   model,
   children,
+  onVisibleReminders,
 }: {
   model: CharacterSheetModel;
   children: ReactNode;
+  onVisibleReminders: (indices: readonly number[]) => void;
 }) {
   const overview = model.overview!;
   const summaryReminders = overview.summaryReminders ?? overview.reminders;
@@ -570,6 +573,9 @@ function SummaryColumns({
       : visibleIndices.flatMap((index) =>
           summaryReminders[index] ? [summaryReminders[index]!] : [],
         );
+  useLayoutEffect(() => {
+    if (visibleIndices !== undefined) onVisibleReminders(visibleIndices);
+  }, [visibleIndices, onVisibleReminders]);
   useLayoutEffect(() => {
     const grid = ref.current;
     const page = grid?.closest<HTMLElement>(".ov-paper");
@@ -645,6 +651,9 @@ function SummaryColumns({
     observer.observe(page);
     observer.observe(page.querySelector(".sp-page-content")!);
     observer.observe(grid.querySelector(".ov-pane-probe")!);
+    observer.observe(
+      grid.querySelector(".ov-reminder-probe > .ov-reminder-panels")!,
+    );
     for (const pane of grid.querySelectorAll(".ov-pane-probe > .ov-flow-pane"))
       observer.observe(pane);
     const senses = grid.querySelector(".ov-reminders-column > .ov-senses");
@@ -679,15 +688,15 @@ function SummaryColumns({
           />
           {reminders.length < summaryReminders.length ? (
             <p className="sp-caption">
-              {summaryReminders.length - reminders.length} more reminders in
-              references.
+              {summaryReminders.length - reminders.length} more reminders on
+              page 2…
             </p>
           ) : null}
         </section>
         <div className="ov-reminder-probe" aria-hidden="true">
           <ReminderPanels values={summaryReminders} />
           <p className="sp-caption">
-            {summaryReminders.length} more reminders in references.
+            {summaryReminders.length} more reminders on page 2…
           </p>
         </div>
       </section>
@@ -750,12 +759,14 @@ function Summary({
   portrait,
   blankHP,
   basicAttackPage,
+  onVisibleReminders,
 }: {
   model: CharacterSheetModel;
   name: string;
   portrait: CharacterPortrait | undefined;
   blankHP: boolean;
   basicAttackPage?: string | undefined;
+  onVisibleReminders: (indices: readonly number[]) => void;
 }) {
   const overview = model.overview!;
   return (
@@ -847,11 +858,11 @@ function Summary({
           />
         </section>
       </section>
-      <SummaryColumns model={model}>
+      <SummaryColumns model={model} onVisibleReminders={onVisibleReminders}>
         <SummaryPane id="defenses">
           {overview.defensiveTraits?.length ? (
             <Panel
-              title="Defensive traits"
+              title="Defenses"
               icon="shield"
               className="ov-defensive-traits"
             >
@@ -1120,10 +1131,12 @@ function Scratchpad({
   model,
   name,
   blankHP,
+  startPage,
 }: {
   model: CharacterSheetModel;
   name: string;
   blankHP: boolean;
+  startPage: number;
 }) {
   const rows = overviewTrackingRows(model);
   const encounter = usageGroups(
@@ -1164,7 +1177,7 @@ function Scratchpad({
       <Paper
         name={name}
         title="Play scratchpad"
-        page={2}
+        page={startPage}
         source={model.source}
         pageRef={pageRef}
       >
@@ -1264,7 +1277,7 @@ function Scratchpad({
           key={index}
           name={name}
           title="Power usage · continued"
-          page={`2.${index + 1}`}
+          page={`${startPage}.${index + 1}`}
           source={model.source}
         >
           <div className="sp-page-heading">
@@ -1369,8 +1382,8 @@ function references(model: CharacterSheetModel): ReferenceEntry[] {
   if (o.defensiveTraits?.length)
     result.push({
       id: "defensive-traits",
-      name: "Defensive traits",
-      group: "Defensive traits",
+      name: "Defenses",
+      group: "Defenses",
       source: "",
       parts: o.defensiveTraits.flatMap((entry) =>
         referenceParts(
@@ -1379,13 +1392,22 @@ function references(model: CharacterSheetModel): ReferenceEntry[] {
         ),
       ),
     });
-  if (o.reminders.length)
+  // Summary reminders now stay beside page 1; retain only expanded reference-only
+  // descriptions here (including discovered core-class power descriptions).
+  const summary = o.summaryReminders ?? o.reminders;
+  const referenceReminders = o.reminders.filter(
+    (entry) =>
+      !summary.some(
+        (other) => other.label === entry.label && other.value === entry.value,
+      ),
+  );
+  if (referenceReminders.length)
     result.push({
       id: "reminders",
       name: "Reminders",
       group: "Combat reminders",
       source: "",
-      parts: o.reminders.flatMap((entry) =>
+      parts: referenceReminders.flatMap((entry) =>
         referenceParts(entry.value, entry.label),
       ),
     });
@@ -1627,6 +1649,72 @@ function Details({
   onBasicAttackPage: (page: string | undefined) => void;
 }) {
   const entries = useMemo(() => references(model), [model]);
+  return (
+    <ReferencePages
+      model={model}
+      name={name}
+      entries={entries}
+      onBasicAttackPage={onBasicAttackPage}
+    />
+  );
+}
+
+/** Only reminders omitted by the measured summary belong on its continuation. */
+export function summaryContinuationEntries(
+  values: readonly ReminderEntry[],
+  visibleIndices: readonly number[],
+): ReferenceEntry[] {
+  const visible = new Set(visibleIndices);
+  const categories = [
+    "Class features",
+    "Racial features",
+    "Feats",
+    "Item properties",
+    "Other reminders",
+  ];
+  return categories.flatMap((category) =>
+    values.flatMap((entry, index) =>
+      !visible.has(index) && (entry.category ?? "Other reminders") === category
+        ? [
+            {
+              id: `summary-reminder:${index}`,
+              name:
+                entry.label.replace(/\s*\([^()]*\)/g, "").trim() || entry.label,
+              group: category,
+              source: "",
+              parts:
+                entry.elements && entry.elements.length > 1
+                  ? referenceParts(
+                      entry.elements
+                        .map((value) => `• ${value.replace(/\n+/g, " ")}`)
+                        .join("\n"),
+                    )
+                  : referenceParts(entry.value),
+            },
+          ]
+        : [],
+    ),
+  );
+}
+
+function ReferencePages({
+  model,
+  name,
+  entries,
+  summaryContinuation = false,
+  onPageCount,
+  onBasicAttackPage,
+}: {
+  model: CharacterSheetModel;
+  name: string;
+  entries: readonly ReferenceEntry[];
+  summaryContinuation?: boolean;
+  onPageCount?: (count: number) => void;
+  onBasicAttackPage?: (page: string | undefined) => void;
+}) {
+  const title = summaryContinuation
+    ? "Character summary · continued"
+    : "Character reference";
   const probe = useRef<HTMLElement>(null);
   const [columns, setColumns] = useState<
     readonly (readonly ReferenceEntry[])[]
@@ -1665,7 +1753,8 @@ function Details({
       );
       const next = paginateReferences(entries, measurements, capacity);
       setColumns(next);
-      onBasicAttackPage(basicAttackReferencePage(next));
+      onBasicAttackPage?.(basicAttackReferencePage(next));
+      onPageCount?.(Math.ceil(next.length / 2));
     };
     const observer = new ResizeObserver(measure);
     observer.observe(element);
@@ -1675,19 +1764,19 @@ function Details({
       active = false;
       observer.disconnect();
     };
-  }, [entries, onBasicAttackPage]);
+  }, [entries, onBasicAttackPage, onPageCount]);
   return (
     <>
       <div className="ov-measure" aria-hidden="true">
         <Paper
           name={name}
-          title="Character reference"
+          title={title}
           page=""
           source={model.source}
           pageRef={probe}
         >
           <div className="sp-page-heading">
-            <h2>Character reference</h2>
+            <h2>{title}</h2>
           </div>
           <div className="ov-measure-column">
             {entries.map((entry) => (
@@ -1700,12 +1789,12 @@ function Details({
         <Paper
           key={index}
           name={name}
-          title="Character reference"
-          page={`R${index + 1}`}
+          title={title}
+          page={summaryContinuation ? index + 2 : `R${index + 1}`}
           source={model.source}
         >
           <div className="sp-page-heading">
-            <h2>Character reference</h2>
+            <h2>{title}</h2>
           </div>
           <div className="sp-feature-columns ov-reference-columns">
             {columns.slice(index * 2, index * 2 + 2).map((column, n) => (
@@ -1737,6 +1826,27 @@ export function SheetOverview({
   blankHP: boolean;
 }) {
   const [basicAttackPage, setBasicAttackPage] = useState<string>();
+  const [summarySelection, setSummarySelection] = useState<{
+    model: CharacterSheetModel;
+    indices: readonly number[];
+  }>();
+  const [continuationPages, setContinuationPages] = useState(0);
+  const onVisibleReminders = useCallback(
+    (indices: readonly number[]) => {
+      setSummarySelection({ model, indices });
+    },
+    [model],
+  );
+  const continuationEntries = useMemo(
+    () =>
+      model.overview && summarySelection?.model === model
+        ? summaryContinuationEntries(
+            model.overview.summaryReminders ?? model.overview.reminders,
+            summarySelection.indices,
+          )
+        : [],
+    [model, summarySelection],
+  );
   if (!model.overview) return null;
   return (
     <div
@@ -1748,8 +1858,21 @@ export function SheetOverview({
         portrait={portrait}
         blankHP={blankHP}
         basicAttackPage={basicAttackPage}
+        onVisibleReminders={onVisibleReminders}
       />
-      <Scratchpad model={model} name={name} blankHP={blankHP} />
+      <ReferencePages
+        model={model}
+        name={name}
+        entries={continuationEntries}
+        summaryContinuation
+        onPageCount={setContinuationPages}
+      />
+      <Scratchpad
+        model={model}
+        name={name}
+        blankHP={blankHP}
+        startPage={2 + continuationPages}
+      />
       <Details
         model={model}
         name={name}

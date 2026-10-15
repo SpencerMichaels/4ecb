@@ -72,6 +72,18 @@ hearts are paper affordances, not interactive Play state.
 
 ## Real-data integration
 
+Summary continuation (2026-10-15): The defensive-traits pane is named **Defenses**.
+The measured page-1 reminder selection now sends omitted reminders directly to
+an optional summary continuation starting on physical page 2, suitable as the
+summary's reverse side. No continuation page is emitted when all reminders fit.
+The scratchpad follows these pages and its page labels adjust accordingly.
+Continuation reminders retain category labels and distinct item-benefit bullets;
+the shared measured reference-card paginator preserves unusually long entries
+across adjacent continuation columns/pages rather than clipping or shrinking
+them. Matching summary reminders are no longer repeated in the distant reference
+reminder collection; reference-only expanded core-power descriptions and complete
+feature/item rules remain available in the reference pages.
+
 Latest summary refinement: Basic attacks use one Weapon/Attack/Damage table,
 with a sword, bow or (for Unarmed) fist icon prefacing each weapon row. Repeated
 melee/ranged subheadings and ability/defense formula indicators are removed.
