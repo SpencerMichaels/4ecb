@@ -73,10 +73,17 @@ hearts are paper affordances, not interactive Play state.
 ## Real-data integration
 
 Latest summary refinement: Basic attacks use one Weapon/Attack/Damage table,
-with a sword or bow icon prefacing each weapon row. Repeated melee/ranged
-subheadings and ability/defense formula indicators are removed. Equipped variants
-remain first (main hand, then off hand); ranged Unarmed rows are omitted from
-overview attack tables, without changing the underlying power calculations.
+with a sword, bow or (for Unarmed) fist icon prefacing each weapon row. Repeated
+melee/ranged subheadings and ability/defense formula indicators are removed.
+Resolved weapon categories filter invalid melee/ranged combinations; Light Thrown
+and Heavy Thrown melee weapons support both. Unknown custom/legacy capabilities
+remain visible rather than being guessed from names; ranged Unarmed is omitted.
+Rows sort by descending to-hit, then average displayed dice damage, with stable
+ties and unknown values last. This does not change underlying power calculations
+or the equipped-first ordering on physical power cards.
+Verification: 60 focused overview/rules-power/sheet-model tests, web typecheck
+and focused lint pass. A read-only private Hu evaluation resolves Way-Leader
+Gouge and Unarmed as melee-only; neither produces a ranged overview row.
 The abilities table reads score then STR/CON/DEX/INT/WIS/CHA, Modifier and +½ level;
 score has no separate header, and full ability names remain available as abbreviation
 titles. A narrow Initiative/Speed pane sits to its left; positive Initiative has
@@ -124,7 +131,7 @@ Unresolved identical effects deduplicate across affected powers; distinct effect
 and ambiguous providers remain recoverable. Original power/card effects are unchanged.
 This remains a display heuristic, not
 proof that every excluded benefit is calculated; all feats retain full references.
-Two equipped-first basic-attack variants appear per summary table; all alternatives
+Up to two highest-ranked basic-attack variants per attack kind appear in the summary; all valid alternatives
 are retained in references. Unfittable custom data raises a visible overflow
 warning rather than being silently clipped or shrunk below readable reference text.
 

@@ -50,7 +50,7 @@ describe("real-data sheet overview", () => {
       );
     }
   });
-  it("uses one icon-led basic-attack table, omitting only ranged unarmed rows", () => {
+  it("uses one icon-led basic-attack table and a fist for unarmed", () => {
     const variants = [
       {
         id: "off",
@@ -123,8 +123,92 @@ describe("real-data sheet overview", () => {
     expect(summary.match(/<th scope="col">Weapon<\/th>/g)).toHaveLength(1);
     expect(summary).toContain("lucide-bow-arrow");
     expect(summary).toContain("lucide-sword");
+    expect(
+      renderToStaticMarkup(
+        <SheetOverview
+          model={{
+            ...m,
+            powers: [{ ...m.powers[0]!, variants: [variants[1]!] }],
+          }}
+          name="Fixture"
+          portrait={undefined}
+          paper="letter"
+          monochrome={false}
+          blankHP={false}
+        />,
+      ),
+    ).toContain("lucide-hand-fist");
     expect(summary).not.toContain("vs AC");
     expect(variants).toHaveLength(3);
+  });
+  it("filters weapon capabilities and sorts globally by attack then average damage", () => {
+    const variants = [
+      {
+        id: "gouge",
+        equipmentName: "Gouge",
+        basicAttackTypes: ["melee"] as const,
+        equipped: true,
+        attack: "+8 vs AC",
+        damage: "2d6+3",
+      },
+      {
+        id: "bow",
+        equipmentName: "Bow",
+        basicAttackTypes: ["ranged"] as const,
+        equipped: false,
+        attack: "+10 vs AC",
+        damage: "1d10+3",
+      },
+      {
+        id: "light",
+        equipmentName: "Light thrown",
+        basicAttackTypes: ["melee", "ranged"] as const,
+        equipped: false,
+        attack: "+8 vs AC",
+        damage: "1d4+3",
+      },
+      {
+        id: "heavy",
+        equipmentName: "Heavy thrown",
+        basicAttackTypes: ["melee", "ranged"] as const,
+        equipped: false,
+        attack: "+8 vs AC",
+        damage: "1d12+3",
+      },
+      {
+        id: "custom",
+        equipmentName: "Unresolved custom weapon",
+        equipped: false,
+        attack: "Unknown",
+        damage: "Unknown",
+      },
+    ];
+    const m = {
+      ...model,
+      powers: ["Melee", "Ranged"].map((kind) => ({
+        name: `${kind} Basic Attack`,
+        kind: "power" as const,
+        fields: [],
+        variants,
+      })),
+    };
+    const rows = overviewBasicAttackRows(m);
+    expect(rows.map((row) => row.weapon)).toEqual([
+      "Bow",
+      "Gouge",
+      "Heavy thrown",
+      "Heavy thrown",
+      "Light thrown",
+      "Light thrown",
+      "Unresolved custom weapon",
+      "Unresolved custom weapon",
+    ]);
+    expect(rows.find((row) => row.weapon === "Bow")?.ranged).toBe(true);
+    expect(rows.find((row) => row.weapon === "Gouge")?.ranged).toBe(false);
+    expect(overviewBasicAttackRows(m, 1).map((row) => row.weapon)).toEqual([
+      "Bow",
+      "Gouge",
+    ]);
   });
   it("places score-first abbreviated abilities beside movement, with passive senses in Skills", () => {
     const m = {

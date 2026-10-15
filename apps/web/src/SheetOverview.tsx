@@ -120,21 +120,52 @@ const abilityKey: Readonly<Record<string, string>> = {
   Wisdom: "WIS",
   Charisma: "CHA",
 };
+function basicAttackCell(variant: SheetPowerVariant) {
+  return variant.attacks === undefined
+    ? variant
+    : variant.attacks.find(
+        (attack) => attack.ordinal === 1 && attack.eligible !== false,
+      );
+}
+function averageDamage(expression: string | undefined): number {
+  const compact = expression?.replace(/\s+/g, "") ?? "";
+  if (!/^[+-]?(?:\d+d\d+|\d+)(?:[+-](?:\d+d\d+|\d+))*$/i.test(compact))
+    return -Infinity;
+  return (compact.match(/[+-]?(?:\d+d\d+|\d+)/gi) ?? []).reduce((sum, term) => {
+    const dice = /^([+-]?\d+)d(\d+)$/i.exec(term);
+    return (
+      sum +
+      (dice ? (Number(dice[1]) * (Number(dice[2]) + 1)) / 2 : Number(term))
+    );
+  }, 0);
+}
+function compareBasicAttacks(
+  a: { attack?: string; damage?: string },
+  b: { attack?: string; damage?: string },
+) {
+  const bonus = (value: string | undefined) =>
+    /^[+-]?\d+/.test(value ?? "")
+      ? Number(value!.match(/^[+-]?\d+/)![0])
+      : -Infinity;
+  const attackA = bonus(a.attack),
+    attackB = bonus(b.attack);
+  if (attackA !== attackB) return attackA > attackB ? -1 : 1;
+  const damageA = averageDamage(a.damage),
+    damageB = averageDamage(b.damage);
+  return damageA === damageB ? 0 : damageA > damageB ? -1 : 1;
+}
 function basicAttackVariants(power: SheetCard) {
   const ranged = /^ranged basic attack$/i.test(power.name.trim());
-  const rank = (variant: SheetPowerVariant) =>
-    !variant.equipped
-      ? 3
-      : variant.hand === "main"
-        ? 0
-        : variant.hand === "off"
-          ? 1
-          : 2;
   return [...(power.variants ?? [])]
     .filter(
-      (variant) => !ranged || !/^unarmed$/i.test(variant.equipmentName.trim()),
+      (variant) =>
+        (!ranged || !/^unarmed$/i.test(variant.equipmentName.trim())) &&
+        (variant.basicAttackTypes === undefined ||
+          variant.basicAttackTypes.includes(ranged ? "ranged" : "melee")),
     )
-    .sort((a, b) => rank(a) - rank(b));
+    .sort((a, b) =>
+      compareBasicAttacks(basicAttackCell(a) ?? {}, basicAttackCell(b) ?? {}),
+    );
 }
 export function overviewBasicAttackRows(
   model: CharacterSheetModel,
@@ -143,7 +174,7 @@ export function overviewBasicAttackRows(
   return model.powers
     .filter((power) => /^(melee|ranged) basic attack$/i.test(power.name.trim()))
     .flatMap((power) => {
-      const ranged = /^ranged/i.test(power.name);
+      const ranged = /^ranged/i.test(power.name.trim());
       const variants = basicAttackVariants(power);
       const visible = variants.slice(0, variantLimit);
       const rows = visible.map((variant) => {
@@ -176,7 +207,8 @@ export function overviewBasicAttackRows(
           damage: power.damage ?? "—",
         });
       return rows;
-    });
+    })
+    .sort(compareBasicAttacks);
 }
 function BasicAttacks({
   model,
@@ -206,7 +238,15 @@ function BasicAttacks({
               <tr key={row.id}>
                 <th scope="row">
                   <span className="ov-basic-weapon">
-                    <Icon name={row.ranged ? "bow-arrow" : "sword"} />
+                    <Icon
+                      name={
+                        /^unarmed$/i.test(row.weapon.trim())
+                          ? "fist"
+                          : row.ranged
+                            ? "bow-arrow"
+                            : "sword"
+                      }
+                    />
                     <span className="sp-sr-only">
                       {row.ranged ? "Ranged" : "Melee"}:{" "}
                     </span>

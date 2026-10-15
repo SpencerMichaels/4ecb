@@ -1515,6 +1515,7 @@ describe("power evaluation", () => {
         Damage: "1d6",
         "Proficiency Bonus": "2",
         Properties: "Heavy Thrown, Off-Hand",
+        "Weapon Category": "Simple Melee",
       }),
     ];
     const [power] = evaluatePowers({
@@ -1541,6 +1542,7 @@ describe("power evaluation", () => {
       attackStat: "Strength",
       attackBonus: 9,
       damage: "1d6+5",
+      basicAttackTypes: ["melee", "ranged"],
     });
   });
 

@@ -13,6 +13,7 @@ export interface PowerComponent {
 export interface PowerVariant {
   readonly id: string;
   readonly equipmentName: string;
+  readonly basicAttackTypes?: readonly ("melee" | "ranged")[];
   readonly definitionIds?: readonly string[];
   readonly equipped?: boolean;
   readonly weaponDamage?: string;
@@ -1418,6 +1419,19 @@ export function evaluatePowers(input: {
       return {
         id: `${power.id}:${equipment.id}`,
         equipmentName: equipment.name,
+        ...(equipment.unarmed
+          ? { basicAttackTypes: ["melee" as const] }
+          : equipment.weaponCategory?.includes("melee")
+            ? {
+                basicAttackTypes: /(?:light|heavy) thrown/i.test(
+                  equipment.properties.join(","),
+                )
+                  ? ["melee" as const, "ranged" as const]
+                  : ["melee" as const],
+              }
+            : equipment.weaponCategory?.includes("ranged")
+              ? { basicAttackTypes: ["ranged" as const] }
+              : {}),
         definitionIds: equipment.definitionIds,
         equipped: equipment.equipped,
         ...(equipment.weaponDamage === undefined

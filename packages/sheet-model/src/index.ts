@@ -84,6 +84,7 @@ export interface SheetLearnedReference {
 }
 
 export interface SheetPowerVariant {
+  readonly basicAttackTypes?: readonly ("melee" | "ranged")[];
   readonly id: string;
   readonly equipmentName: string;
   readonly equipped: boolean;
@@ -651,6 +652,9 @@ function evaluatedPowerCards(
     (variant) => ({
       id: variant.id,
       equipmentName: variant.equipmentName,
+      ...(variant.basicAttackTypes === undefined
+        ? {}
+        : { basicAttackTypes: variant.basicAttackTypes }),
       equipped: variant.equipped === true,
       ...(variant.weaponDamage === undefined
         ? {}

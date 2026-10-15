@@ -30,6 +30,7 @@ import {
   Dice5,
   Download,
   FileText,
+  HandFist,
   FlaskConical,
   FlaskRound,
   Focus,
@@ -141,6 +142,7 @@ export type IconName =
   | "gem"
   | "gift"
   | "hand"
+  | "fist"
   | "handbag"
   | "hard-hat"
   | "house"
@@ -236,6 +238,7 @@ const icons: Record<IconName, LucideIcon> = {
   gem: Gem,
   gift: Gift,
   hand: Hand,
+  fist: HandFist,
   handbag: Handbag,
   "hard-hat": HardHat,
   house: House,
