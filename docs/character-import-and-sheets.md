@@ -313,10 +313,12 @@ Benefits and sources are separate columns with alternating row backgrounds,
 without visible table/category headers. Compact clauses are self-contained
 (`Resist 5 fire`, `Vulnerable 5 cold`, `Immune to acid`), while authored conditional
 wording is retained. Related resistance/immunity/vulnerability/save entries are
-adjacent, with space between groups.
+adjacent without blank category gaps; row striping continues across groups.
 Structured save modifiers explicitly say `to saves`/`to death saves` after any
 bonus or penalty type, before the unchanged condition. This wording is generated
-from stat provenance rather than substituted into arbitrary prose. Applied native contributors
+from stat provenance rather than substituted into arbitrary prose.
+Summary save rows abbreviate `against` to `vs` for display only, retaining full
+model/reference wording and unmodified source names. Applied native contributors
 supply total provenance; conditional entries retain their own provider. Cached
 totals say Legacy cache rather than inventing a source. The same defensive list
 and sources are retained in full references. Player, theme, paragon

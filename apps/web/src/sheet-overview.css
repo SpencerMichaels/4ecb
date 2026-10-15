@@ -139,11 +139,8 @@ body:has(.sp-prototype) {
 .ov-defensive-table col:first-child {
   width: 62%;
 }
-.ov-defensive-table tbody tr:nth-child(odd) {
+.ov-defensive-table .ov-defensive-striped {
   background: #f0f3f5;
-}
-.ov-defensive-table tbody + tbody tr:first-child td {
-  border-top: 0.06in solid white;
 }
 .ov-reminders-column > .ov-reminder-probe {
   margin-top: -0.12in;

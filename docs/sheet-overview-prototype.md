@@ -112,12 +112,15 @@ grouping resistances, vulnerabilities, authored immunity clauses and conditional
 or death-saving-throw modifiers in a striped benefit/source table without visible
 column/category headings. Compact numeric clauses read `Resist 5 fire` or
 `Vulnerable 5 cold`; explicit immunity lists read `Immune to acid`. Authored
-conditional prose is preserved. Related rows are adjacent with space between
-categories, and source names are not embedded in benefit prose.
+conditional prose is preserved. Related rows are adjacent without blank category
+gaps, with continuous alternating backgrounds across category boundaries.
+Source names are not embedded in benefit prose.
 Rows begin with a capital letter (numeric modifiers retain their leading sign).
-Structured save entries read `+5 racial bonus to saves against poison`, or
-`+2 to saves against fear` when untyped; penalties and death saves use the same
+Structured save rows display `+5 racial bonus to saves vs poison`, or
+`+2 to saves vs fear` when untyped; penalties and death saves use the same
 projection, without attempting grammar substitutions in arbitrary authored text.
+Only summary save rows abbreviate `against` to `vs`; model/reference wording and
+source names retain their original text.
 Wording follow-up verification: 43 focused projection/render tests, web typecheck
 and focused lint pass; the full print matrix was not rerun for this text-only change.
 It never inflates the universal Saves tile. The full-width divider below the

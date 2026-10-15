@@ -365,13 +365,17 @@ describe("real-data sheet overview", () => {
     expect(summary).toContain("Vulnerable 5 cold");
     expect(summary).toContain("Immune to acid");
     expect(summary).toContain("While transformed, you are immune to disease.");
-    expect(summary).toContain("+2 to saves against poison");
+    expect(summary).toContain("+2 to saves vs poison");
     expect(summary).toContain('<table class="ov-defensive-table"');
     const defensiveTable = summary
       .split('<table class="ov-defensive-table"')[1]!
       .split("</table>")[0]!;
     expect(defensiveTable).not.toContain("<thead");
     expect(defensiveTable).not.toContain("<th");
+    expect(defensiveTable.match(/class="ov-defensive-striped"/g)).toHaveLength(
+      3,
+    );
+    expect(defensiveTable).not.toContain("<tr></tr>");
     expect(summary).toContain("<td>Synthetic cloak</td>");
     expect(summary).toContain("<td>Synthetic feat</td>");
     expect(summary).toContain('aria-label="Resistances"');

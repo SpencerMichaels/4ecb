@@ -358,7 +358,10 @@ function defensiveBonusText(
     return `Immune to ${trait.value}`;
   if (trait.label === "Resistance / vulnerability")
     return `Resistance / vulnerability: ${trait.value}`;
-  return trait.value.replace(
+  const text = ["Saving throws", "Death saves"].includes(trait.label)
+    ? trait.value.replace(/\bagainst\b/gi, "vs")
+    : trait.value;
+  return text.replace(
     /^(\s*(?:\*\*|__|\*|_)?)(\p{Ll})/u,
     (_, prefix: string, letter: string) => prefix + letter.toUpperCase(),
   );
@@ -385,6 +388,7 @@ function DefensiveTraits({ model }: { model: CharacterSheetModel }) {
       trait.label;
     groups.set(group, [...(groups.get(group) ?? []), trait]);
   }
+  let rowNumber = 0;
   return (
     <table className="ov-defensive-table" aria-label="Defensive traits">
       <colgroup>
@@ -406,7 +410,12 @@ function DefensiveTraits({ model }: { model: CharacterSheetModel }) {
         .map(([group, traits]) => (
           <tbody key={group} aria-label={group}>
             {traits.map((trait, index) => (
-              <tr key={index}>
+              <tr
+                key={index}
+                className={
+                  rowNumber++ % 2 === 0 ? "ov-defensive-striped" : undefined
+                }
+              >
                 <td>
                   <Prose value={defensiveBonusText(trait)} />
                 </td>
