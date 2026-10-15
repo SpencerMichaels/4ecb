@@ -9,8 +9,8 @@ tracking pair, then Treasure/consumables beside Session notes/XP. Slate pane hea
 reference cells, encounter-red/daily-gray tracking headings and explicit grayscale
 reuse the accepted visual vocabulary. Current/temp HP retain 0.7in writing boxes,
 temporary effects six 0.42in rows. Redundant quick-reference/two-short-reminder
-panes are removed. Surge hearts become markable segmented bars with approximately
-4mm minimum segments, remaining-count labels inside every box
+panes are removed. Surge hearts become markable segmented bars with boxes at
+least as wide as they are tall, remaining-count labels inside every box
 and deliberate aligned additional tracks. Unknown/very large custom totals remain
 explicit; the existing 100-mark rendering bound is not a silent truncation.
 
@@ -88,6 +88,17 @@ Firefox/full milestone suites were not rerun for this refinement.
 The subsequent every-box numbering change passes all 11 focused surge/layout
 tests; its print expectation is updated, with no full print rerun for this
 text-only follow-up.
+Surge wrapping now derives column capacity from the actual row width, box height
+and inter-box gap, replacing the fixed 18px estimate. Additional rows retain the
+first row's column widths rather than stretching the last few boxes. Focused
+tests cover the exact square-box boundary and 20/25-surges split over two rows;
+the rendered regression narrows a track, verifies wrapping with width >= height,
+then restores its original width and single row.
+Verification: all 12 focused layout/surge tests, production build and focused
+lint pass. All eight Chromium/Firefox overview variants pass, including the new
+wrapping/restoration check. The every-box print expectation now compares DOM
+strings with strings (previously numeric expected values); the numbering itself
+is unchanged. No full milestone suite was run.
 Verification: 43 focused overview/layout tests, web typecheck, focused lint and
 production build pass. `node scripts/check-print.mjs --overview-only
 --firefox-scratchpad --scratchpad-preview` passes all four Chromium PDF variants

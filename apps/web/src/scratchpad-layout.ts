@@ -100,6 +100,15 @@ export function paginateTracking(
   return pages;
 }
 
+/** Include inter-cell gaps; each box must be at least as wide as it is tall. */
+export function surgeTrackColumns(
+  width: number,
+  height: number,
+  gap: number,
+): number {
+  return Math.max(1, Math.floor((width + gap) / (height + gap)));
+}
+
 export function surgeTrackRows(
   total: number,
   columns: number,

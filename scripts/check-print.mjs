@@ -1142,8 +1142,8 @@ async function checkScratchpad(client, monochrome) {
   );
   assert(
     JSON.stringify(state.labels) ===
-      JSON.stringify(Array.from({ length: 13 }, (_, i) => 13 - i)),
-    "Every surge box must display its remaining count",
+      JSON.stringify(Array.from({ length: 13 }, (_, i) => String(13 - i))),
+    `Every surge box must display its remaining count: ${JSON.stringify(state.labels)}`,
   );
   assert(
     state.writingHeight >= 66 &&
@@ -1223,6 +1223,26 @@ async function checkScratchpad(client, monochrome) {
   await waitForExpression(
     client,
     `document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"]').querySelectorAll('[data-tracking-id]').length === ${baseline.count}`,
+  );
+  // Force a narrow track to exercise the same height-based wrapping as high totals.
+  await evaluate(
+    client,
+    `(() => { document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"] .ov-surge-track').style.width='180px'; return true; })()`,
+  );
+  try {
+    await waitForExpression(
+      client,
+      `(() => { const track=document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"] .ov-surge-track'); return track.querySelectorAll('.ov-surge-row').length>1 && [...track.querySelectorAll('.ov-surge-segment')].every(e=>{const r=e.getBoundingClientRect(); return r.width+0.1>=r.height;}); })()`,
+    );
+  } finally {
+    await evaluate(
+      client,
+      `(() => { document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"] .ov-surge-track').style.removeProperty('width'); return true; })()`,
+    );
+  }
+  await waitForExpression(
+    client,
+    `document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"]').querySelectorAll('.ov-surge-row').length === 1`,
   );
 }
 

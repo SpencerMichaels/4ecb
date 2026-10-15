@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   paginateTracking,
   surgeTrackRows,
+  surgeTrackColumns,
   type TrackingMeasurements,
 } from "./scratchpad-layout";
 import { SurgeBar } from "./SurgeBar";
@@ -91,6 +92,19 @@ describe("scratchpad measured tracking layout", () => {
   });
 });
 describe("segmented surge bar", () => {
+  it("wraps before boxes become narrower than their height, accounting for gaps", () => {
+    expect(surgeTrackColumns(219, 21, 1)).toBe(10);
+    expect(surgeTrackColumns(218, 21, 1)).toBe(9);
+    const columns = surgeTrackColumns(400, 21.12, 1);
+    expect(columns).toBe(18);
+    for (const total of [20, 25]) {
+      const rows = surgeTrackRows(total, columns);
+      expect(rows.map((row) => row.length)).toEqual([18, total - 18]);
+      expect(rows.flat()).toEqual(
+        Array.from({ length: total }, (_, i) => total - i),
+      );
+    }
+  });
   it("keeps all surge bars uninterrupted, with numbers providing grouping", () => {
     for (const count of ["6", "9", "10", "13"])
       expect(renderToStaticMarkup(<SurgeBar count={count} />)).not.toContain(

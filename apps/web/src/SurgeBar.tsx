@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import { surgeTrackRows } from "./scratchpad-layout";
+import { surgeTrackColumns, surgeTrackRows } from "./scratchpad-layout";
 
 export function SurgeBar({ count }: { count: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -8,15 +8,20 @@ export function SurgeBar({ count }: { count: string }) {
     const element = ref.current;
     if (!element) return;
     const measure = () => {
-      const width = element.getBoundingClientRect().width;
-      // Includes gaps: each markable segment stays at least roughly 4mm wide.
-      if (width > 0) setColumns(Math.max(1, Math.floor(width / 18)));
+      const row = element.querySelector<HTMLElement>(".ov-surge-row");
+      const segment = element.querySelector<HTMLElement>(".ov-surge-segment");
+      if (!row || !segment) return;
+      const width = row.getBoundingClientRect().width;
+      const height = segment.getBoundingClientRect().height;
+      const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+      if (width > 0 && height > 0)
+        setColumns(surgeTrackColumns(width, height, gap));
     };
     const observer = new ResizeObserver(measure);
     observer.observe(element);
     measure();
     return () => observer.disconnect();
-  }, []);
+  }, [count]);
   const total = /^\d+$/.test(count) ? Number(count) : undefined;
   const rows = total === undefined ? [] : surgeTrackRows(total, columns);
   return (
