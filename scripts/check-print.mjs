@@ -949,11 +949,11 @@ async function checkSummaryPresentation(client, monochrome) {
       `All summary panes must share the slate-blue tint: ${JSON.stringify(accents)}`,
     );
     assert(
-      accents.defenseStats === "rgb(234, 240, 246)" &&
+      accents.defenseStats === "rgb(240, 236, 245)" &&
         accents.health === "rgb(238, 243, 233)" &&
         accents.initiative === "rgb(234, 242, 240)" &&
         accents.speed === accents.initiative,
-      `Numeric groups must retain blue defenses, green health and teal initiative/speed: ${JSON.stringify(accents)}`,
+      `Numeric groups must use violet defenses, green health and teal initiative/speed: ${JSON.stringify(accents)}`,
     );
   }
   assert(

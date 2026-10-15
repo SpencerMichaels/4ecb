@@ -105,7 +105,7 @@ All eleven values use matching individual soft tiles, with labels above numbers.
 Each group has a thin rounded outline and no visible group heading; semantic
 group labels remain available. Field labels use darker, slightly heavier text.
 Page 1 uses one muted slate-blue accent for all body pane headers, without
-category-specific pane colors. The numeric band retains slate-blue Defenses,
+category-specific pane colors. The numeric band uses muted-violet Defenses,
 sage-green Health, and teal Initiative/Speed to distinguish its groups.
 Tints are limited to pane headers
 and numeric tiles/outlines; body text and alternating table rows remain neutral.

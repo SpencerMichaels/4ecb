@@ -2,6 +2,12 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Defense-group accent feedback (2026-10-15): The Defenses numeric group now uses
+muted violet, distinct from the body panes' slate blue. Health remains sage green
+and Initiative/Speed teal; grayscale behavior is unchanged. Production build and
+all four Chromium overview-only Letter/A4 × color/monochrome checks pass, including
+the updated numeric-group color assertion. No full milestone gate was rerun.
+
 Numeric-band palette clarification (2026-10-15): The uniform slate-blue treatment
 applies only to body pane headers. The top numeric groups retain their previous
 colors: slate-blue Defenses, sage-green Health, teal Initiative/Speed. All numeric
