@@ -78,6 +78,9 @@ describe("real-data sheet overview", () => {
       .split('class="sp-running-header ov-scratch-header"')[1]!
       .split("</header>")[0]!;
     expect(header).toContain("Ingi · Dwarf Paladin 7");
+    expect(header).toContain(
+      'class="ov-scratch-header-details"> · Dwarf Paladin 7</span>',
+    );
     expect(header).toContain("<span>Play scratchpad</span>");
     expect(header).toContain(
       'class="ov-scratch-header-session">Session / date',
@@ -109,6 +112,10 @@ describe("real-data sheet overview", () => {
       .split("</div>")[0]!;
     expect(ap.match(/lucide-circle/g)).toHaveLength(3);
     expect(ap).not.toContain("<i");
+    const death = html.split('class="sp-death-saves"')[1]!.split("</div>")[0]!;
+    expect(death.indexOf("lucide-skull")).toBeLessThan(
+      death.indexOf("Death saves"),
+    );
   });
   it("sorts tracking powers by action, explicit utility type, then name without mutating input", () => {
     const rows = [

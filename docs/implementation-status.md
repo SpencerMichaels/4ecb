@@ -134,6 +134,12 @@ Verification: 34 focused overview tests and production build pass; four Chromium
 overview variants verify ten columns, no header row, vertical stripes and faint
 rules across each row. Generated preview reviewed. No Firefox/full milestone
 rerun for this presentation follow-up.
+Health/header polish: the Surges reference cell has square bottom corners where
+it joins its connector; race/class/level use regular weight while the character
+name remains bold. Death-save skulls precede their label, mirroring AP circles
+at the opposite outside edge of the pane. All 34 focused overview tests pass,
+including assertions covering
+the identity span and skull/label ordering; no full print rerun for this polish.
 Verification: 43 focused overview/layout tests, web typecheck, focused lint and
 production build pass. `node scripts/check-print.mjs --overview-only
 --firefox-scratchpad --scratchpad-preview` passes all four Chromium PDF variants

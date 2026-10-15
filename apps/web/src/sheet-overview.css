@@ -1011,6 +1011,9 @@ body:has(.sp-prototype) {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.ov-scratch-header-details {
+  font-weight: 400;
+}
 .ov-scratch-header-session {
   display: flex;
   align-items: center;
@@ -1060,6 +1063,10 @@ body:has(.sp-prototype) {
   border-radius: 3px;
   color: #65557d;
   background: #f0ecf5;
+}
+.ov-scratch-health-values > div:nth-child(3) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 .ov-scratch-health-values span {
   color: inherit;

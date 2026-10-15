@@ -1318,7 +1318,12 @@ function Scratchpad({
               title={[name, identityLine].filter(Boolean).join(" · ")}
             >
               {name}
-              {identityLine ? ` · ${identityLine}` : ""}
+              {identityLine ? (
+                <span className="ov-scratch-header-details">
+                  {" "}
+                  · {identityLine}
+                </span>
+              ) : null}
             </span>
             <span>Play scratchpad</span>
             <span className="ov-scratch-header-session">
@@ -1351,12 +1356,12 @@ function Scratchpad({
               </div>
               <div className="ov-health-trackers">
                 <div className="sp-death-saves">
-                  Death saves
                   <span>
                     {[0, 1, 2].map((n) => (
                       <Icon key={n} name="skull" />
                     ))}
                   </span>
+                  Death saves
                 </div>
                 <div className="ov-action-point-count">
                   Action points
