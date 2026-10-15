@@ -2,6 +2,12 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Identity subtitle refinement (2026-10-15): Player/company subtitles now omit field
+labels and blank values, adding a center dot only between actual values. An empty
+subtitle takes no space; the three-row identity box retains its labeled em-dash
+placeholders. All 20 focused rendering tests pass, including a blank-company case.
+No calculation or structural print change; the full print matrix was not rerun.
+
 Compact identity follow-up (2026-10-15): Player and Company move from the bordered
 box to a muted line beneath race/class/level, separated by a center dot. The box
 now has only Theme, Paragon path and Epic destiny, reducing its height and pressure

@@ -614,10 +614,12 @@ function Summary({
           </p>
           <p className="ov-player-company">
             {["Player", "Company"]
-              .map(
-                (label) =>
-                  `${label}: ${model.identity.find((entry) => entry.label === label)?.value.trim() || "—"}`,
+              .map((label) =>
+                model.identity
+                  .find((entry) => entry.label === label)
+                  ?.value.trim(),
               )
+              .filter(Boolean)
               .join(" · ")}
           </p>
         </div>

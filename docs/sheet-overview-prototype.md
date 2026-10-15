@@ -135,8 +135,9 @@ Wording follow-up verification: 43 focused projection/render tests, web typechec
 and focused lint pass; the full print matrix was not rerun for this text-only change.
 It never inflates the universal Saves tile. The full-width divider below the
 identity header is restored.
-Player and company appear beneath the race/class/level line in muted text with a
-center-dot separator. Theme, paragon path and epic destiny remain in the header's
+Player and company appear without field labels beneath the race/class/level line
+in muted text, omitting blank values and using a center dot only between values.
+Theme, paragon path and epic destiny remain in the header's
 right identity box, with bordered rows and em dashes for missing values.
 See `character-import-and-sheets.md` for the
 structured-stat/prose detection and legacy-cache compatibility boundary.

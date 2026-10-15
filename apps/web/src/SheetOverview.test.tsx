@@ -24,6 +24,25 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("omits a blank company and its separator from the player subtitle", () => {
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={{
+          ...model,
+          identity: [
+            { label: "Player", value: "Test player" },
+            { label: "Company", value: "  " },
+          ],
+        }}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    expect(html).toContain('<p class="ov-player-company">Test player</p>');
+  });
   it.each([
     { identity: [] },
     { identity: [{ label: "Theme", value: "Test theme" }] },
@@ -45,9 +64,7 @@ describe("real-data sheet overview", () => {
         .split("</dl>")[0]!;
       expect(box).not.toContain("<dt>Player</dt>");
       expect(box).not.toContain("<dt>Company</dt>");
-      expect(html).toContain(
-        '<p class="ov-player-company">Player: — · Company: —</p>',
-      );
+      expect(html).toContain('<p class="ov-player-company"></p>');
       for (const label of ["Paragon path", "Epic destiny"])
         expect(box).toContain(`<dt>${label}</dt><dd>—</dd>`);
       expect(box).toContain(
@@ -323,7 +340,7 @@ describe("real-data sheet overview", () => {
     expect(header).toContain('class="ov-identity-details"');
     expect(header).toContain("<dt>Theme</dt><dd>Synthetic theme</dd>");
     expect(header).toContain(
-      '<p class="ov-player-company">Player: Synthetic player · Company: Synthetic company</p>',
+      '<p class="ov-player-company">Synthetic player · Synthetic company</p>',
     );
     const band = summary
       .split('class="ov-numeric-band"')[1]!

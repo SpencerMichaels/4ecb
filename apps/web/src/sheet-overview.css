@@ -156,6 +156,9 @@ body:has(.sp-prototype) {
   line-height: 1.35;
   color: var(--sp-muted);
 }
+.ov-player-company:empty {
+  display: none;
+}
 .ov-identity-details {
   border: 1px solid var(--sp-border);
   border-radius: 5px;
