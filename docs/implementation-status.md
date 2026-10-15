@@ -2,6 +2,15 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Reminder block-inset feedback (2026-10-15): Bold reminder titles stay flush left;
+the entire description block is now inset 1em, including wrapped lines. Paragraph
+first-line indents are removed, with no extra paragraph gaps and unchanged spacing
+between independent entries. This supersedes the first-line-indent experiments.
+Verification: production build and formatting pass; browser assertions check the
+block inset, zero paragraph indents/gaps and preserved inter-entry spacing. All
+four overview-only Letter/A4 × color/monochrome print checks pass without overflow. Full
+unit/milestone checks were not rerun for this CSS-only adjustment.
+
 Reminder paragraph grouping (2026-10-15): Paragraphs within a reminder now have
 zero internal vertical gaps/margins; the first paragraph stays flush left and
 later paragraphs use a 1em first-line indent. Existing spacing between independent

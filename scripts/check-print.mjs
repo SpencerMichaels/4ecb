@@ -899,7 +899,7 @@ async function checkSummaryPresentation(client, monochrome) {
     const blocks=sample.querySelector('.prose-blocks');
     const first=getComputedStyle(blocks.children[0]);
     const second=getComputedStyle(blocks.children[1]);
-    const result={gap:parseFloat(getComputedStyle(blocks).rowGap),firstIndent:parseFloat(first.textIndent),secondIndent:parseFloat(second.textIndent),paragraphMargin:parseFloat(second.marginTop),entryMargin:parseFloat(getComputedStyle(sample.children[1]).marginTop)};
+    const result={gap:parseFloat(getComputedStyle(blocks).rowGap),blockInset:parseFloat(getComputedStyle(blocks).paddingInlineStart),firstIndent:parseFloat(first.textIndent),secondIndent:parseFloat(second.textIndent),paragraphMargin:parseFloat(second.marginTop),entryMargin:parseFloat(getComputedStyle(sample.children[1]).marginTop)};
     sample.remove();
     return result;
   })()`,
@@ -908,9 +908,10 @@ async function checkSummaryPresentation(client, monochrome) {
     paragraphs.gap === 0 &&
       paragraphs.paragraphMargin === 0 &&
       paragraphs.firstIndent === 0 &&
-      paragraphs.secondIndent > 0 &&
+      paragraphs.secondIndent === 0 &&
+      paragraphs.blockInset > 0 &&
       paragraphs.entryMargin > 0,
-    `Reminder paragraphs must use indentation, reserving spacing for separate entries: ${JSON.stringify(paragraphs)}`,
+    `Reminder descriptions must be inset as a block, reserving spacing for separate entries: ${JSON.stringify(paragraphs)}`,
   );
   if (monochrome) {
     assert(

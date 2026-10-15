@@ -110,8 +110,9 @@ Passive Insight and Perception precede their active skill bonuses, e.g.
 compact Senses pane at the top of the right column, not Skills.
 Senses uses the shared Eye glyph; reminder categories reuse the builder's
 class/race/feat/item icon mappings. Bold reminder names have no trailing colon.
-Within each reminder, paragraphs have no vertical gap: the first is flush left,
-and subsequent paragraphs use a 1em first-line indent. Spacing between independent
+Within each reminder, the bold title stays flush left and the entire description
+block is inset 1em, including wrapped lines. Paragraphs have no vertical gap or
+first-line indent. Spacing between independent
 reminder entries is unchanged, preserving the distinction between item/feature
 boundaries and multiple paragraphs of the same benefit.
 Languages form a single-column striped table in a narrow panel to the right of
