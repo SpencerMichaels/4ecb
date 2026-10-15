@@ -149,9 +149,8 @@ body:has(.sp-prototype) {
   width: 100%;
   grid-template-rows: 1fr 1fr;
 }
-.ov-movement-values > div {
-  border-right: 0;
-  border-bottom: 1px solid #d5dadd;
+.sp-values.ov-movement-values > div {
+  border: 0;
   justify-content: center;
   padding-block: 0.06in;
 }

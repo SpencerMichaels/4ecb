@@ -287,9 +287,23 @@ export function withSheetOverview(
   );
   const hp = number(stat("Hit Points"));
   const saves = stat("Saving Throws", "Saving Throw Bonus", "Saving Throw");
-  const savesNumber = number(saves);
+  const savesNumber = saves === undefined ? 0 : number(saves);
+  // The native stat is an additive bonus, not the displayed surge total
+  // (legacy PanelModelHitPoints.Update: HP / 4 + Healing Surge Value).
+  const surgeBonus = stat("Healing Surge Value");
+  const surgeNumber = surgeBonus === undefined ? 0 : number(surgeBonus);
+  const surgeValue =
+    hp === undefined || surgeNumber === undefined
+      ? "—"
+      : String(Math.floor(hp / 4) + surgeNumber);
   return {
     ...model,
+    resources: [
+      ...model.resources.filter(
+        ({ label }) => key(label) !== "healing surge value",
+      ),
+      { label: "Healing Surge Value", value: surgeValue },
+    ],
     overview: {
       level: input.level,
       abilities: model.abilities.map(({ label, value }) => {
@@ -323,7 +337,12 @@ export function withSheetOverview(
                 : undefined,
         };
       }),
-      saves: savesNumber === undefined ? (saves ?? "—") : signed(savesNumber),
+      saves:
+        savesNumber === undefined
+          ? (saves ?? "—")
+          : savesNumber === 0
+            ? "0"
+            : signed(savesNumber),
       bloodied:
         stat("Bloodied Value", "Bloodied") ??
         (hp === undefined ? "—" : String(Math.floor(hp / 2))),

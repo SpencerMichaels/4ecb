@@ -44,6 +44,32 @@ const feat: ContentEntity = {
   ],
 };
 describe("printed overview data", () => {
+  it("projects native surge bonuses over quarter HP and absent saves as zero", () => {
+    const base = { ...snapshot, stats: { "Hit Points": "68" } };
+    const m = buildSheetModel(base);
+    expect(m.resources).toContainEqual({
+      label: "Healing Surge Value",
+      value: "17",
+    });
+    expect(m.overview?.saves).toBe("0");
+    const bonus = buildSheetModel({
+      ...base,
+      stats: {
+        "Hit Points": "71",
+        "Healing Surge Value": "3",
+        "Saving Throws": "2",
+      },
+    });
+    expect(bonus.resources).toContainEqual({
+      label: "Healing Surge Value",
+      value: "20",
+    });
+    expect(bonus.overview?.saves).toBe("+2");
+    expect(buildSheetModel({ ...base, stats: {} }).resources).toContainEqual({
+      label: "Healing Surge Value",
+      value: "—",
+    });
+  });
   it("excludes power-access/shared-use wrappers by their rules, not their names", () => {
     const wrapper = {
       ...feat,
@@ -340,9 +366,9 @@ describe("printed overview data", () => {
     });
     expect(snapshot.stats["Hit Points"]).toBe("73");
   });
-  it("does not invent missing training, saves, or full rules", () => {
+  it("keeps missing training and full rules unknown while sparse saves default to zero", () => {
     const m = buildSheetModel({ ...snapshot, stats: { Athletics: "3" } }, []);
-    expect(m.overview?.saves).toBe("—");
+    expect(m.overview?.saves).toBe("0");
     expect(m.overview?.bloodied).toBe("—");
     expect(m.overview?.skills[0]?.trained).toBeUndefined();
     expect(m.overview?.features[0]?.fullTextAvailable).toBe(false);

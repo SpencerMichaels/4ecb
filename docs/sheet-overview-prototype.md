@@ -90,6 +90,15 @@ titles. A narrow Initiative/Speed pane sits to its left; positive Initiative has
 an explicit + sign. Passive Insight and Perception appear parenthesized beside
 their skill bonuses, e.g. `Perception +15 (25)`, not as separate rows. Vision
 remains in that panel too.
+Surge value follows the recovered legacy sheet projection: floor(maximum HP / 4)
+plus the additive `Healing Surge Value` stat (absent bonus = zero), not that raw
+stat alone. Absent unconditional Saving Throws likewise displays `0`; conditional
+saving-throw benefits remain separate reminders, not part of that universal bonus.
+Unknown HP still leaves surge value unknown. Initiative/Speed's vertical cells
+have no inherited horizontal-stat borders.
+Verified against recovered `PanelModelHitPoints`/`BasicUtils` display paths and
+Hu's evaluated data (68 HP, surge value 17, unconditional saves 0). All 29 focused
+overview/model/render tests, web typecheck and focused lint pass.
 This supersedes the initial prototype's ability-column order and separate
 Movement & awareness panel.
 
