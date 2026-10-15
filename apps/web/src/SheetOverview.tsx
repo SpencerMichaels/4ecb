@@ -209,15 +209,7 @@ function Summary({
   const [compact, setCompact] = useState(false);
   const reminders = overview.reminders
     .filter((entry) => entry.value.length < 320)
-    .slice(0, compact ? 1 : 2);
-  const feats = overview.features
-    .filter(
-      (feature) =>
-        feature.group === "Feat" &&
-        feature.playReminder === true &&
-        feature.summary.length < 160,
-    )
-    .slice(0, 4);
+    .slice(0, compact ? 1 : 4);
   useLayoutEffect(() => {
     const page = ref.current;
     if (!page) return;
@@ -407,21 +399,6 @@ function Summary({
                 .join(" · ") || "Not recorded"}
             </p>
           </Panel>
-          {!compact && feats.length ? (
-            <section className="sp-feat-summary">
-              <h3>Feat reminders</h3>
-              <div>
-                {feats.map((feat) => (
-                  <div key={feat.id}>
-                    <strong>{feat.name}:</strong> <Prose value={feat.summary} />
-                  </div>
-                ))}
-              </div>
-              <p className="sp-caption">
-                All feats and full descriptions in references.
-              </p>
-            </section>
-          ) : null}
         </div>
       </div>
     </Paper>

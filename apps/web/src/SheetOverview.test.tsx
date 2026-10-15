@@ -21,7 +21,7 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
-  it("limits the summary feat reminders to actionable entries without removing full references", () => {
+  it("combines actionable feat, feature and item reminders in one summary section", () => {
     const features = [false, true].map((playReminder) => ({
       id: `feat:${playReminder}`,
       name: playReminder ? "Quick Hands" : "Passive Training",
@@ -37,7 +37,24 @@ describe("real-data sheet overview", () => {
     }));
     const html = renderToStaticMarkup(
       <SheetOverview
-        model={{ ...model, overview: { ...model.overview!, features } }}
+        model={{
+          ...model,
+          overview: {
+            ...model.overview!,
+            features,
+            reminders: [
+              { label: "Quick Hands", value: "Draw a weapon while attacking." },
+              {
+                label: "Defensive Stance",
+                value: "When attacked, you can shift.",
+              },
+              {
+                label: "Protective Charm",
+                value: "An adjacent ally gains a bonus.",
+              },
+            ],
+          },
+        }}
         name="Fixture"
         portrait={undefined}
         paper="letter"
@@ -49,6 +66,11 @@ describe("real-data sheet overview", () => {
       .split('aria-label="Character summary"')[1]!
       .split("</article>")[0]!;
     expect(summary).toContain("Quick Hands");
+    expect(summary).toContain("Defensive Stance");
+    expect(summary).toContain("Protective Charm");
+    expect(summary.match(/Remember in play/g)).toHaveLength(1);
+    expect(summary.match(/Quick Hands/g)).toHaveLength(1);
+    expect(summary).not.toContain("Feat reminders");
     expect(summary).not.toContain("Passive Training");
     expect(html).toContain("Passive Training");
   });

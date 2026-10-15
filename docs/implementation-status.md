@@ -2,6 +2,16 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Unified reminders (2026-10-14): The summary now has one Remember in play panel
+for actionable feats, features and item benefits. The separate Feat reminders
+category is removed; summary, scratchpad and full reminder reference consume the
+same deduplicated model list. Up to four entries fit in the summary before the
+existing measured compact fallback; all remaining entries stay in references.
+Focused rendering coverage checks mixed origins, one heading, no duplicated feat
+entry and preservation of the full feat reference.
+Verification: 12 focused model/render tests, web typechecking and focused lint
+pass. The full print matrix was not rerun for this category consolidation.
+
 Feat-reminder refinement (2026-10-14): Summary feat reminders no longer take the
 first four arbitrary short descriptions. The model marks authored in-play
 conditions, ally-facing benefits and changed actions as reminder candidates,

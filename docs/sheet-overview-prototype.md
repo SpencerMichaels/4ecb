@@ -38,9 +38,9 @@ and real overview share `sheet-overview.css`.
    unit suffix. Skill cells have horizontal padding. XP and AP do not appear on the
    summary. Basic attacks reuse the power-card weapon table component, with
    separate melee/ranged sections and Weapon/Attack/Damage columns. The fixture
-   calculations are illustrative, not a new evaluation path. Feat reminders use
-   space in the right column below Languages to leave combat references together
-   in the left column. The training key sits in the unused bottom-right skill row;
+   calculations are illustrative, not a new evaluation path. The initial study
+   placed feat reminders below Languages; real-data feedback now combines them
+   with feature/item reminders in one Remember in play panel. The training key sits in the unused bottom-right skill row;
    the Skills preamble is removed. Passive senses use compact `Pass.` labels.
    The health panel is named Health. The approved ability table replaces the slash
    display and repeated cell legends; it retains both bonus values.
@@ -82,10 +82,13 @@ pages as needed), and measured two-column references before the existing cards.
 Long prose/list/table content continues without discarding words or rows; reference
 titles identify continuations. Optional summary reminders/feat summaries yield to
 essential stats when space is tight. All full reference entries remain available.
-Feat reminders now require an in-play condition, ally-facing benefit or changed
+Feat entries in Remember in play require an in-play condition, ally-facing benefit or changed
 action in authored feat text, rather than taking the first short descriptions.
 Passive proficiency/training/numeric grants and armor-only loadout conditions are
-omitted from both feat reminder surfaces. This remains a display heuristic, not
+omitted from reminders. There is no separate Feat reminders category: one shared,
+deduplicated candidate list supplies summary, scratchpad and full references.
+The summary shows up to four entries, reducing optional content if needed to fit.
+This remains a display heuristic, not
 proof that every excluded benefit is calculated; all feats retain full references.
 Two equipped-first basic-attack variants appear per summary table; all alternatives
 are retained in references. Unfittable custom data raises a visible overflow
