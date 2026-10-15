@@ -262,7 +262,7 @@ describe("real-data sheet overview", () => {
       .split("</section>")[0]!;
     expect(header).toContain('class="sp-values ov-header-stats"');
     expect(right).toContain(
-      '<td class="ov-ability-score">19</td><th scope="row"><abbr title="Strength">STR</abbr></th>',
+      '<td class="ov-ability-score">19</td><th scope="row">Strength</th>',
     );
     expect(right).not.toContain(">Score</th>");
     expect(right).toContain('aria-label="Ability score"');

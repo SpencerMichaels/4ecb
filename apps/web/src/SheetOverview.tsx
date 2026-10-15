@@ -112,14 +112,6 @@ const featureGroups: Readonly<Record<string, string>> = {
   "Epic Destiny": "Epic destinies",
 };
 const groupName = (name: string) => featureGroups[name] ?? name;
-const abilityKey: Readonly<Record<string, string>> = {
-  Strength: "STR",
-  Constitution: "CON",
-  Dexterity: "DEX",
-  Intelligence: "INT",
-  Wisdom: "WIS",
-  Charisma: "CHA",
-};
 function basicAttackCell(variant: SheetPowerVariant) {
   return variant.attacks === undefined
     ? variant
@@ -525,11 +517,7 @@ function Summary({
                   {overview.abilities.map((ability) => (
                     <tr key={ability.name}>
                       <td className="ov-ability-score">{ability.score}</td>
-                      <th scope="row">
-                        <abbr title={ability.name}>
-                          {abilityKey[ability.name] ?? ability.name}
-                        </abbr>
-                      </th>
+                      <th scope="row">{ability.name}</th>
                       <td>{ability.modifier}</td>
                       <td>{ability.check}</td>
                     </tr>

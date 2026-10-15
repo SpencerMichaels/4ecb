@@ -84,9 +84,9 @@ or the equipped-first ordering on physical power cards.
 Verification: 60 focused overview/rules-power/sheet-model tests, web typecheck
 and focused lint pass. A read-only private Hu evaluation resolves Way-Leader
 Gouge and Unarmed as melee-only; neither produces a ranged overview row.
-The abilities table reads score then STR/CON/DEX/INT/WIS/CHA, Modifier and +½ level;
-score has no separate header, and full ability names remain available as abbreviation
-titles; abbreviations are bold. Initiative and Speed are compact numeric tiles
+The abilities table reads score then full ability name, Modifier and +½ level;
+score has no separate header. Ability names are bold and cells have no borders,
+using alternating row backgrounds instead. Initiative and Speed are compact numeric tiles
 in the main identity header's right side, not a separate Movement pane or part
 of Health/Defenses. The portrait is circular; the identity line reads race, class,
 then bare level (`Dwarf Paladin 7`). The redundant first-page running header and
@@ -113,7 +113,7 @@ overview/model/render tests, web typecheck and focused lint pass.
 Display follow-up: Saves and Initiative use explicit signs, including `+0`.
 Reminder names omit parenthetical qualifiers for display only; original names
 remain intact in the model and references. The Ability heading aligns with the
-abbreviation column rather than the raw-score column; abbreviations use normal
+name column rather than the raw-score column; names use normal
 ink.
 This supersedes the initial prototype's ability-column order and separate
 Movement & awareness panel.

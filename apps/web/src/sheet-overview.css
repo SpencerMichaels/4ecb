@@ -172,13 +172,11 @@ body:has(.sp-prototype) {
   font-size: 10pt;
 }
 .sheet-overview .sp-ability-table tbody th {
-  width: 2.8em;
+  width: auto;
+  white-space: nowrap;
   color: var(--sp-ink);
   font-size: 8.5pt;
   font-weight: 700;
-}
-.sheet-overview .sp-ability-table abbr {
-  text-decoration: none;
 }
 .sheet-overview .ov-ability-section .sp-ability-table tbody th {
   text-align: left;
@@ -460,7 +458,7 @@ body:has(.sp-prototype) {
 .sp-ability-table th,
 .sp-ability-table td {
   padding: 0.045in 0.025in;
-  border-bottom: 1px solid #e0e4e7;
+  border: 0;
   font-variant-numeric: tabular-nums;
 }
 .sp-ability-table thead th {
