@@ -45,13 +45,9 @@ export function SurgeBar({ count }: { count: string }) {
                 {total <= 10 ||
                 remaining === total ||
                 index === 0 ||
+                index === row.length - 1 ||
                 remaining % 5 === 0 ? (
                   <small className="ov-surge-label">{remaining}</small>
-                ) : null}
-                {index === row.length - 1 ? (
-                  <small className="ov-surge-label ov-surge-end">
-                    {remaining - 1}
-                  </small>
                 ) : null}
               </div>
             ))}

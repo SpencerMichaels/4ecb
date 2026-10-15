@@ -76,6 +76,15 @@ overview layout variants; the final connector styling passes four Chromium
 Letter/A4 color/monochrome variants and was visually reviewed. Assertions require
 the backing/connector to match the reference-cell color. No full unit/milestone
 suite rerun for these markup/style refinements.
+Surge numbers now sit inside their boxes, removing the extra label strip below.
+Short bars label each box; longer bars label the starting total, multiples of
+five and the last box (one remaining), with no separate zero boundary label.
+The connector now spans the full width of the Surges reference cell rather than
+a thin stem; the bar's backing has even vertical padding.
+Verification: all 11 focused layout/surge tests and production build pass. Four
+Chromium overview variants pass with assertions that labels stay within boxes
+and connector width matches the Surges cell; the generated preview was reviewed.
+Firefox/full milestone suites were not rerun for this refinement.
 Verification: 43 focused overview/layout tests, web typecheck, focused lint and
 production build pass. `node scripts/check-print.mjs --overview-only
 --firefox-scratchpad --scratchpad-preview` passes all four Chromium PDF variants

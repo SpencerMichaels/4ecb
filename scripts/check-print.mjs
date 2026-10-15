@@ -1077,6 +1077,9 @@ async function checkScratchpad(client, monochrome) {
       surgesBeforeHP:page.querySelector('.ov-scratch-surges').getBoundingClientRect().bottom <= page.querySelector('.sp-hp-writing').getBoundingClientRect().top,
       surgeBackground:getComputedStyle(page.querySelector('.ov-scratch-surges')).backgroundColor,
       surgeConnector:getComputedStyle(page.querySelector('.ov-scratch-surges'),'::before').backgroundColor,
+      surgeConnectorWidth:parseFloat(getComputedStyle(page.querySelector('.ov-scratch-surges'),'::before').width),
+      surgeCellWidth:page.querySelector('.ov-scratch-health-values > div:nth-child(3)').getBoundingClientRect().width,
+      surgeLabelsInside:[...page.querySelectorAll('.ov-surge-label')].every(e=>{const r=e.getBoundingClientRect(),p=e.parentElement.getBoundingClientRect();return r.top>=p.top && r.bottom<=p.bottom && r.left>=p.left && r.right<=p.right;}),
       trackerBottomGap:page.querySelector('.ov-scratch-health').getBoundingClientRect().bottom-page.querySelector('.ov-health-trackers').getBoundingClientRect().bottom,
       milestone:page.textContent.includes('Milestone'),
       actionPointBoxes:page.querySelectorAll('.ov-action-point-count > i').length,
@@ -1138,8 +1141,8 @@ async function checkScratchpad(client, monochrome) {
     `Upper panes must align with one small action-point box and no milestone tracker: ${JSON.stringify(state)}`,
   );
   assert(
-    JSON.stringify(state.labels) === JSON.stringify(["13", "10", "5", "0"]),
-    "Longer surge bars need sparse remaining-count labels and both endpoints",
+    JSON.stringify(state.labels) === JSON.stringify(["13", "10", "5", "1"]),
+    "Longer surge bars need sparse remaining-count labels inside the boxes",
   );
   assert(
     state.writingHeight >= 66 &&
@@ -1160,7 +1163,9 @@ async function checkScratchpad(client, monochrome) {
     `Scratchpad must match the approved slate header/violet health palette: ${JSON.stringify(state)}`,
   );
   assert(
-    state.surgeBackground === state.health &&
+    state.surgeLabelsInside &&
+      Math.abs(state.surgeConnectorWidth - state.surgeCellWidth) < 2 &&
+      state.surgeBackground === state.health &&
       state.surgeConnector === state.health,
     "Surge bar background and connector must match the Surges reference cell",
   );

@@ -105,15 +105,15 @@ describe("segmented surge bar", () => {
       [...html.matchAll(/class="ov-surge-label[^\"]*">(\d+)<\/small>/g)].map(
         (m) => Number(m[1]),
       ),
-    ).toEqual([13, 10, 5, 0]);
+    ).toEqual([13, 10, 5, 1]);
   });
-  it("numbers every boundary for short bars", () => {
+  it("numbers each box for short bars", () => {
     const html = renderToStaticMarkup(<SurgeBar count="3" />);
     expect(
       [...html.matchAll(/class="ov-surge-label[^\"]*">(\d+)<\/small>/g)].map(
         (m) => Number(m[1]),
       ),
-    ).toEqual([3, 2, 1, 0]);
+    ).toEqual([3, 2, 1]);
   });
   it("makes deliberate aligned tracks when the minimum segment size requires it", () => {
     expect(surgeTrackRows(13, 8)).toEqual([

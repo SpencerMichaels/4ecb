@@ -1059,7 +1059,7 @@ body:has(.sp-prototype) {
 .ov-scratch-surges {
   position: relative;
   margin-top: 0.12in;
-  padding: 0.065in 0.02in 0.02in;
+  padding: 0.065in 0.02in;
   border-radius: 3px;
   background: #f0ecf5;
 }
@@ -1067,8 +1067,8 @@ body:has(.sp-prototype) {
   content: "";
   position: absolute;
   bottom: 100%;
-  left: calc(62.5% - 0.08in);
-  width: 0.16in;
+  left: calc(50% + 0.025in);
+  width: calc(25% - 0.0375in);
   height: 0.12in;
   background: inherit;
 }
@@ -1082,13 +1082,14 @@ body:has(.sp-prototype) {
   margin-top: 0;
 }
 .ov-surge-track {
+  display: grid;
+  gap: 0.04in;
   padding: 0 0.07in;
   margin-top: 0.08in;
 }
 .ov-surge-row {
   display: grid;
   gap: 1px;
-  padding-bottom: 0.2in;
 }
 .ov-surge-segment {
   border: 1px solid #8f9aa2;
@@ -1097,17 +1098,13 @@ body:has(.sp-prototype) {
 }
 .ov-surge-label {
   position: absolute;
-  left: -1px;
-  top: calc(100% + 0.025in);
-  transform: translateX(-50%);
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 7.5pt;
   line-height: 1;
   color: var(--sp-muted);
-}
-.ov-surge-end {
-  left: auto;
-  right: -1px;
-  transform: translateX(50%);
 }
 .ov-scratch-health .sp-death-saves {
   flex-direction: row;
