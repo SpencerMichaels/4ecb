@@ -51,7 +51,7 @@ describe("printed overview data", () => {
       label: "Healing Surge Value",
       value: "17",
     });
-    expect(m.overview?.saves).toBe("0");
+    expect(m.overview?.saves).toBe("+0");
     const bonus = buildSheetModel({
       ...base,
       stats: {
@@ -368,7 +368,7 @@ describe("printed overview data", () => {
   });
   it("keeps missing training and full rules unknown while sparse saves default to zero", () => {
     const m = buildSheetModel({ ...snapshot, stats: { Athletics: "3" } }, []);
-    expect(m.overview?.saves).toBe("0");
+    expect(m.overview?.saves).toBe("+0");
     expect(m.overview?.bloodied).toBe("—");
     expect(m.overview?.skills[0]?.trained).toBeUndefined();
     expect(m.overview?.features[0]?.fullTextAvailable).toBe(false);

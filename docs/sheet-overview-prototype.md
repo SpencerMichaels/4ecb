@@ -97,8 +97,13 @@ saving-throw benefits remain separate reminders, not part of that universal bonu
 Unknown HP still leaves surge value unknown. Initiative/Speed's vertical cells
 have no inherited horizontal-stat borders.
 Verified against recovered `PanelModelHitPoints`/`BasicUtils` display paths and
-Hu's evaluated data (68 HP, surge value 17, unconditional saves 0). All 29 focused
+Hu's evaluated data (68 HP, surge value 17, unconditional saves +0). All 29 focused
 overview/model/render tests, web typecheck and focused lint pass.
+Display follow-up: Saves and Initiative use explicit signs, including `+0`.
+Reminder names omit parenthetical qualifiers for display only; original names
+remain intact in the model and references. The Ability heading aligns with the
+abbreviation column rather than the raw-score column; abbreviations use normal
+ink. The separate Movement pane's replacement remains a product-review decision.
 This supersedes the initial prototype's ability-column order and separate
 Movement & awareness panel.
 

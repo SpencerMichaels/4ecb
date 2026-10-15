@@ -101,9 +101,7 @@ const find = (values: readonly SheetValue[], label: string) =>
   values.find((value) => value.label.toLowerCase() === label.toLowerCase())
     ?.value ?? "—";
 const signedBonus = (value: string) =>
-  /^\d+(?:\.\d+)?$/.test(value.trim()) && Number(value) > 0
-    ? `+${value.trim()}`
-    : value;
+  /^\d+(?:\.\d+)?$/.test(value.trim()) ? `+${value.trim()}` : value;
 const featureGroups: Readonly<Record<string, string>> = {
   "Class Feature": "Class features",
   "Racial Trait": "Racial traits",
@@ -291,7 +289,10 @@ function Reminders({ values }: { values: readonly SheetValue[] }) {
     <div className="sp-reminders">
       {values.map((entry, index) => (
         <div key={index}>
-          <strong>{entry.label}:</strong> <Prose value={entry.value} />
+          <strong>
+            {entry.label.replace(/\s*\([^()]*\)/g, "").trim() || entry.label}:
+          </strong>{" "}
+          <Prose value={entry.value} />
         </div>
       ))}
     </div>
@@ -520,7 +521,8 @@ function Summary({
               <table className="sp-ability-table">
                 <thead>
                   <tr>
-                    <th scope="col" colSpan={2}>
+                    <th scope="col" aria-label="Ability score" />
+                    <th scope="col" className="ov-ability-name-heading">
                       Ability
                     </th>
                     <th scope="col">Modifier</th>

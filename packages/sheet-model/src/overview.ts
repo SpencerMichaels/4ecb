@@ -337,12 +337,7 @@ export function withSheetOverview(
                 : undefined,
         };
       }),
-      saves:
-        savesNumber === undefined
-          ? (saves ?? "—")
-          : savesNumber === 0
-            ? "0"
-            : signed(savesNumber),
+      saves: savesNumber === undefined ? (saves ?? "—") : signed(savesNumber),
       bloodied:
         stat("Bloodied Value", "Bloodied") ??
         (hp === undefined ? "—" : String(Math.floor(hp / 2))),

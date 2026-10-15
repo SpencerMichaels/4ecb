@@ -23,11 +23,11 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
-  it("signs positive initiative without doubling signs or changing zero/negative/unknown values", () => {
+  it("signs nonnegative initiative without doubling signs or changing negative/unknown values", () => {
     for (const [value, expected] of [
       ["12", "+12"],
       ["+12", "+12"],
-      ["0", "0"],
+      ["0", "+0"],
       ["-2", "-2"],
       ["—", "—"],
     ]) {
@@ -247,11 +247,31 @@ describe("real-data sheet overview", () => {
       '<td class="ov-ability-score">19</td><th scope="row"><abbr title="Strength">STR</abbr></th>',
     );
     expect(right).not.toContain(">Score</th>");
+    expect(right).toContain('aria-label="Ability score"');
+    expect(right).toContain('class="ov-ability-name-heading">Ability</th>');
     const skills = right.split(">Skills</h3>")[1]!.split(">Languages</h3>")[0]!;
     expect(skills).toContain('+8 <span class="ov-passive-value">(18)</span>');
     expect(skills).toContain('+15 <span class="ov-passive-value">(25)</span>');
     expect(skills).not.toContain("ov-passive-skill");
     expect(right).toContain("<span>Initiative</span><strong>+12</strong>");
+  });
+  it.each([
+    ["0", "+0"],
+    ["-2", "-2"],
+  ])("signs initiative %s as %s", (value, expected) => {
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={{ ...model, resources: [{ label: "Initiative", value }] }}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    expect(html).toContain(
+      `<span>Initiative</span><strong>${expected}</strong>`,
+    );
   });
   it("fills reminder space without a fixed count cap, reserving overflow-caption space", () => {
     expect(
@@ -285,7 +305,10 @@ describe("real-data sheet overview", () => {
             ...model.overview!,
             features,
             reminders: [
-              { label: "Quick Hands", value: "Draw a weapon while attacking." },
+              {
+                label: "Quick Hands (heroic tier)",
+                value: "Draw a weapon while attacking.",
+              },
               {
                 label: "Defensive Stance",
                 value: "When attacked, you can shift.",
@@ -308,6 +331,7 @@ describe("real-data sheet overview", () => {
       .split('aria-label="Character summary"')[1]!
       .split("</article>")[0]!;
     expect(summary).toContain("Quick Hands");
+    expect(summary).not.toContain("Quick Hands (heroic tier)");
     expect(summary).toContain("Defensive Stance");
     expect(summary).toContain("Protective Charm");
     expect(summary.match(/Remember in play/g)).toHaveLength(1);

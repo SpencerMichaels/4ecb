@@ -169,13 +169,16 @@ body:has(.sp-prototype) {
 }
 .sheet-overview .sp-ability-table tbody th {
   width: 2.8em;
-  color: var(--sp-muted);
+  color: var(--sp-ink);
   font-size: 8.5pt;
 }
 .sheet-overview .sp-ability-table abbr {
   text-decoration: none;
 }
 .sheet-overview .ov-abilities-movement .sp-ability-table tbody th {
+  text-align: left;
+}
+.sheet-overview .sp-ability-table th.ov-ability-name-heading {
   text-align: left;
 }
 .sheet-overview .sp-skill-total.has-passive {
