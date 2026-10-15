@@ -24,6 +24,23 @@ export interface OverviewInventory {
   readonly slots: readonly string[];
   readonly fields: readonly SheetValue[];
 }
+export interface OverviewReminder extends SheetValue {
+  readonly category?:
+    | "Class features"
+    | "Racial features"
+    | "Feats"
+    | "Item properties"
+    | "Other reminders";
+}
+const reminderCategories: Readonly<
+  Record<string, NonNullable<OverviewReminder["category"]>>
+> = {
+  "Class Feature": "Class features",
+  "Racial Trait": "Racial features",
+  Feat: "Feats",
+};
+const reminderCategory = (group: string) =>
+  reminderCategories[group] ?? "Other reminders";
 export interface SheetOverview {
   readonly level: number;
   readonly abilities: readonly {
@@ -44,7 +61,7 @@ export interface SheetOverview {
   readonly vision: string;
   readonly features: readonly OverviewFeature[];
   readonly inventory: readonly OverviewInventory[];
-  readonly reminders: readonly SheetValue[];
+  readonly reminders: readonly OverviewReminder[];
 }
 const key = (s: string) => s.trim().toLowerCase();
 const signed = (n: number) => `${n >= 0 ? "+" : ""}${n}`;
@@ -265,21 +282,29 @@ export function withSheetOverview(
               : "Vulnerabilities"
             : field.label,
         });
-  const reminders: SheetValue[] = [];
+  const reminders: OverviewReminder[] = [];
   const reminderByFeature = new Map<string, number>();
   const reminderKeys = new Set<string>();
-  const addReminder = (label: string, value: string) => {
+  const addReminder = (
+    label: string,
+    value: string,
+    category: OverviewReminder["category"] = "Other reminders",
+  ) => {
     const identity = `${label}:${value}`;
     if (!value.trim() || reminderKeys.has(identity)) return;
     reminderKeys.add(identity);
-    reminders.push({ label, value });
+    reminders.push({ label, value, category });
   };
   for (const feature of features)
     if (
       ["Feat", "Class Feature", "Racial Trait"].includes(feature.group) &&
       feature.playReminder
     ) {
-      addReminder(feature.name, feature.summary || feature.description);
+      addReminder(
+        feature.name,
+        feature.summary || feature.description,
+        reminderCategory(feature.group),
+      );
       const index = reminders.findIndex(
         (reminder) =>
           reminder.label === feature.name &&
@@ -293,7 +318,7 @@ export function withSheetOverview(
         /^propert(?:y|ies)$/i.test(field.label) &&
         /\b(?:allies|ally|when|whenever|while|if|trigger)\b/i.test(field.value)
       )
-        addReminder(item.name, field.value);
+        addReminder(item.name, field.value, "Item properties");
   const seenEffects = new Set<string>();
   for (const power of model.powers)
     for (const effect of power.additionalEffects ?? []) {
@@ -314,10 +339,11 @@ export function withSheetOverview(
         const canonical = {
           label: feature.name,
           value: feature.description || feature.summary,
+          category: reminderCategory(feature.group),
         };
         if (existing !== undefined) reminders[existing] = canonical;
         else {
-          addReminder(canonical.label, canonical.value);
+          addReminder(canonical.label, canonical.value, canonical.category);
           const index = reminders.findIndex(
             (reminder) =>
               reminder.label === canonical.label &&

@@ -309,12 +309,19 @@ explicit defensive fields are retained whole; this is not a general natural-
 language rules parser or an assertion that all prose-only defenses are detected.
 Legacy snapshots lack conditional stat-add provenance, so no native conditions
 are fabricated from cached totals; selected full rules remain in references.
-Bonus and Source are separate columns with alternating row backgrounds, grouped
-by resistance/immunity/vulnerability/saving throw. Applied native contributors
+Benefits and sources are separate columns with alternating row backgrounds,
+without visible table/category headers. Compact clauses are self-contained
+(`resist 5 fire`, `vulnerable 5 cold`, `immune to acid`), while authored conditional
+wording is retained. Related resistance/immunity/vulnerability/save entries are
+adjacent, with space between groups. Applied native contributors
 supply total provenance; conditional entries retain their own provider. Cached
 totals say Legacy cache rather than inventing a source. The same defensive list
 and sources are retained in full references. Player, theme, paragon
 path, epic destiny and company occupy the header's identity area when present.
+The summary reminder column uses feature/item source metadata to split actionable
+entries into class, racial, feat and item-property panes, retaining unattributed
+effects in Other reminders. Empty categories are omitted; measured truncation
+accounts for pane overhead and retains omitted entries in full references.
 
 The semantic model exposes identity, final abilities, defenses, resources,
 senses, skills, feature groups, notes, inventory, powers, and cards. The browser

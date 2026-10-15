@@ -92,22 +92,28 @@ All eleven values use matching individual soft tiles, with labels above numbers.
 Each group has a thin rounded outline and no visible group heading; semantic
 group labels remain available. Field labels use darker, slightly heavier text.
 The portrait is circular; the identity line reads race, class,
-then bare level (`Dwarf Paladin 7`). The redundant first-page running header and
-full-width identity separator are omitted; later-page running headers remain.
+then bare level (`Dwarf Paladin 7`). The redundant first-page running header
+is omitted; the full-width identity separator and
+later-page running headers remain.
 Passive Insight and Perception precede their active skill bonuses, e.g.
 `Perception (25) +15`, not as separate rows. Vision remains in Skills.
 Languages form a single-column striped table in a narrow panel to the right of
 Abilities, using the Basic Attacks row styling. Skills retain alternating row
 backgrounds without inter-cell borders. Below the numeric band, equal-width
-columns place Basic Attacks above Reminders on the left and Abilities/Languages
-above Skills on the right. This offsets moving Health/Defenses out of the left
-column, while reminders still fill measured available space without clipping.
-The unified
-summary, scratchpad and reference heading is now simply **Reminders**.
-An optional Defensive traits panel sits between Basic Attacks and Reminders,
+columns place Defensive Traits, Basic Attacks, Abilities/Languages and Skills on
+the left, with a dedicated reminder column on the right. Reminders are split into
+Class features, Racial features, Feats and Item properties panes by source
+metadata; unattributed effects remain in Other reminders. Empty panes are omitted.
+Measured fitting includes pane headings/padding and the overflow caption, and
+all omitted entries remain in full references. Scratchpad/reference reminder
+sections retain their existing list layout.
+An optional Defensive traits panel sits above Basic Attacks,
 grouping resistances, vulnerabilities, authored immunity clauses and conditional
-or death-saving-throw modifiers in a striped Bonus/Source table. Related entries
-share category headings, and source names are not embedded in bonus prose.
+or death-saving-throw modifiers in a striped benefit/source table without visible
+column/category headings. Compact numeric clauses read `resist 5 fire` or
+`vulnerable 5 cold`; explicit immunity lists read `immune to acid`. Authored
+conditional prose is preserved. Related rows are adjacent with space between
+categories, and source names are not embedded in benefit prose.
 It never inflates the universal Saves tile. The full-width divider below the
 identity header is restored.
 Player, theme, paragon path, epic destiny and company move to the header's right

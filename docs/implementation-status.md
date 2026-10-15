@@ -2,6 +2,27 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Dedicated reminder column / compact defensive rows (2026-10-14): The left column
+now contains Defensive Traits above Basic Attacks, then Abilities/Languages and
+Skills. The right column is dedicated to source-categorized Class features,
+Racial features, Feats and Item properties panes. Unattributed effects remain in
+Other reminders, and empty categories are omitted. Source categories are carried
+by the sheet projection, not inferred from displayed names. Measured fitting
+accounts for each pane's heading, padding, row gaps and the overflow caption;
+unfittable entries stay in full references. The left-column fit check includes
+the blocks following Basic Attacks when choosing one/two variants per attack
+kind. Its alternatives note now explicitly points to all eligible weapon rows in
+the reference pages.
+
+Defensive rows retain benefit and source columns but no visible column/category
+headings; numeric clauses are self-contained (`resist 5 fire`, `vulnerable 5 cold`)
+and immunity lists read `immune to ...`. Related categories remain adjacent and
+spaced apart without dropping authored conditions or changing calculations.
+Verification: 39 focused model/render/fit tests, web typecheck, lint and production
+build pass. All four overview-only Letter/A4 × color/monochrome PDF checks pass
+(12 measured pages each, no overview overflow). Physical cards/full milestone
+acceptance remain separate; M5.6 is still open for product review.
+
 Defensive table / AC investigation (2026-10-14): The full-width identity divider
 is restored. Defensive traits use a striped Bonus/Source table with related
 resistance, immunity, vulnerability and saving-throw groups; native applied

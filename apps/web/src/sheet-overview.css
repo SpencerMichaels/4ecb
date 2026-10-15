@@ -136,21 +136,17 @@ body:has(.sp-prototype) {
   vertical-align: top;
   overflow-wrap: anywhere;
 }
-.ov-defensive-table thead th {
-  font-weight: 400;
-  font-size: 8pt;
-  color: var(--sp-muted);
-}
-.ov-defensive-table thead th:first-child {
+.ov-defensive-table col:first-child {
   width: 62%;
 }
-.ov-defensive-table .ov-defensive-group th {
-  font-size: 8.5pt;
-  padding-top: 0.07in;
-  font-weight: 600;
-}
-.ov-defensive-table tbody tr:nth-child(even) {
+.ov-defensive-table tbody tr:nth-child(odd) {
   background: #f0f3f5;
+}
+.ov-defensive-table tbody + tbody tr:first-child td {
+  border-top: 0.06in solid white;
+}
+.ov-reminders-column > .ov-reminder-probe {
+  margin-top: -0.12in;
 }
 .ov-identity-name {
   flex: 1;

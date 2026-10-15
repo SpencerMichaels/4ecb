@@ -4,6 +4,7 @@ import { buildSheetModel } from "@4ecb/sheet-model";
 import {
   SheetOverview,
   fittingReminderIndices,
+  fittingReminderGroups,
   overviewBasicAttackRows,
   overviewTrackingRows,
   paginateReferences,
@@ -277,7 +278,9 @@ describe("real-data sheet overview", () => {
     const summary = html
       .split('aria-label="Character summary"')[1]!
       .split("</article>")[0]!;
-    const right = summary.split('class="sp-column sp-skills-column"')[1]!;
+    const right = summary
+      .split('class="sp-column ov-main-column"')[1]!
+      .split('class="sp-column ov-reminders-column"')[0]!;
     expect(summary).not.toContain('class="sp-running-header"');
     expect(summary).not.toContain(">Movement</h3>");
     expect(summary).toContain("Dwarf Paladin 7");
@@ -328,6 +331,12 @@ describe("real-data sheet overview", () => {
                 source: "Synthetic cloak",
               },
               {
+                label: "Vulnerability",
+                value: "Cold 5",
+                source: "Synthetic curse",
+              },
+              { label: "Immunity", value: "acid", source: "Synthetic ward" },
+              {
                 label: "Saving throws",
                 value: "+2 against poison",
                 source: "Synthetic feat",
@@ -346,18 +355,25 @@ describe("real-data sheet overview", () => {
       .split('aria-label="Character summary"')[1]!
       .split("</article>")[0]!;
     expect(summary).toContain(">Defensive traits</h3>");
-    expect(summary).toContain("Fire 5");
-    expect(summary).toContain("+2 against poison");
+    expect(summary).toContain("resist 5 fire");
+    expect(summary).toContain("vulnerable 5 cold");
+    expect(summary).toContain("immune to acid");
+    expect(summary).toContain("saves +2 against poison");
     expect(summary).toContain('<table class="ov-defensive-table"');
-    expect(summary).toContain(
-      '<th scope="col">Bonus</th><th scope="col">Source</th>',
-    );
+    const defensiveTable = summary
+      .split('<table class="ov-defensive-table"')[1]!
+      .split("</table>")[0]!;
+    expect(defensiveTable).not.toContain("<thead");
+    expect(defensiveTable).not.toContain("<th");
     expect(summary).toContain("<td>Synthetic cloak</td>");
     expect(summary).toContain("<td>Synthetic feat</td>");
-    expect(summary).toContain("Resistances</th>");
+    expect(summary).toContain('aria-label="Resistances"');
+    expect(summary.indexOf(">Defensive traits</h3>")).toBeLessThan(
+      summary.indexOf(">Basic attacks</h3>"),
+    );
     expect(
       summary.split('class="sp-identity"')[1]!.split("</section>")[0],
-    ).not.toContain("Fire 5");
+    ).not.toContain("resist 5 fire");
     const empty = renderToStaticMarkup(
       <SheetOverview
         model={model}
@@ -398,7 +414,7 @@ describe("real-data sheet overview", () => {
     expect(fittingReminderIndices([500, 30, 30], 5, 130, 20)).toEqual([1, 2]);
     expect(fittingReminderIndices([50, 50], 0, 100, 20)).toEqual([0, 1]);
   });
-  it("combines actionable feat, feature and item reminders in one summary section", () => {
+  it("places source-categorized reminder panes in their own right column", () => {
     const features = [false, true].map((playReminder) => ({
       id: `feat:${playReminder}`,
       name: playReminder ? "Quick Hands" : "Passive Training",
@@ -423,14 +439,17 @@ describe("real-data sheet overview", () => {
               {
                 label: "Quick Hands (heroic tier)",
                 value: "Draw a weapon while attacking.",
+                category: "Feats",
               },
               {
                 label: "Defensive Stance",
                 value: "When attacked, you can shift.",
+                category: "Class features",
               },
               {
                 label: "Protective Charm",
                 value: "An adjacent ally gains a bonus.",
+                category: "Item properties",
               },
             ],
           },
@@ -449,20 +468,41 @@ describe("real-data sheet overview", () => {
     expect(summary).not.toContain("Quick Hands (heroic tier)");
     expect(summary).toContain("Defensive Stance");
     expect(summary).toContain("Protective Charm");
-    expect(summary.match(/>Reminders</g)).toHaveLength(1);
+    expect(summary).toContain('aria-label="Reminders"');
+    expect(summary).toContain(">Feats</h3>");
+    expect(summary).toContain(">Class features</h3>");
+    expect(summary).toContain(">Item properties</h3>");
     expect(
       summary.split('class="ov-reminder-probe"')[0]!.match(/Quick Hands/g),
     ).toHaveLength(1);
     expect(summary).not.toContain("Feat reminders");
-    const [left, right] = summary.split('class="sp-column sp-skills-column"');
-    expect(left).toContain("Reminders");
-    expect(left).toContain("Basic attacks");
-    expect(left!.indexOf("Basic attacks")).toBeLessThan(
-      left!.indexOf(">Reminders<"),
+    const [left, right] = summary.split(
+      'class="sp-column ov-reminders-column"',
     );
+    expect(left).not.toContain("Quick Hands");
+    expect(left).toContain("Basic attacks");
+    expect(left).toContain(">Abilities</h3>");
+    expect(left).toContain(">Skills</h3>");
+    expect(right).toContain("Quick Hands");
     expect(right).not.toContain("Basic attacks");
     expect(summary).not.toContain("Passive Training");
     expect(html).toContain("Passive Training");
+  });
+  it("accounts for reminder pane overhead and preserves later fitting entries", () => {
+    const groups = [
+      {
+        overhead: 20,
+        gap: 5,
+        entries: [
+          { index: 0, height: 500 },
+          { index: 1, height: 30 },
+        ],
+      },
+      { overhead: 20, gap: 5, entries: [{ index: 2, height: 30 }] },
+    ];
+    expect(fittingReminderGroups(groups, 130, 20, 10)).toEqual([1, 2]);
+    expect(fittingReminderGroups(groups, 100, 20, 10)).toEqual([1]);
+    expect(fittingReminderGroups(groups, 700, 20, 10)).toEqual([0, 1, 2]);
   });
   it("indexes item powers even when the physical item-card list is empty", () => {
     const rows = overviewTrackingRows({

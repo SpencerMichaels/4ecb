@@ -255,7 +255,10 @@ function BasicAttacks({
         <p className="sp-caption">No basic attack calculation is available.</p>
       )}
       {hasMore ? (
-        <p className="sp-caption">More weapon alternatives in references.</p>
+        <p className="sp-caption">
+          Showing the highest-ranked weapons; all eligible weapons are listed in
+          the reference pages.
+        </p>
       ) : null}
     </Panel>
   );
@@ -278,11 +281,17 @@ function Values({
     </div>
   );
 }
-function Reminders({ values }: { values: readonly SheetValue[] }) {
+function Reminders({
+  values,
+  indices,
+}: {
+  values: readonly SheetValue[];
+  indices?: readonly number[];
+}) {
   return (
     <div className="sp-reminders">
       {values.map((entry, index) => (
-        <div key={index}>
+        <div key={index} data-reminder-index={indices?.[index]}>
           <strong>
             {entry.label.replace(/\s*\([^()]*\)/g, "").trim() || entry.label}:
           </strong>{" "}
@@ -291,6 +300,68 @@ function Reminders({ values }: { values: readonly SheetValue[] }) {
       ))}
     </div>
   );
+}
+type ReminderEntry = NonNullable<
+  CharacterSheetModel["overview"]
+>["reminders"][number];
+function ReminderPanels({
+  values,
+  visibleIndices,
+}: {
+  values: readonly ReminderEntry[];
+  visibleIndices?: readonly number[] | undefined;
+}) {
+  const categories = [
+    "Class features",
+    "Racial features",
+    "Feats",
+    "Item properties",
+    "Other reminders",
+  ];
+  return (
+    <div className="sp-column ov-reminder-panels">
+      {categories.map((category) => {
+        const entries = values.flatMap((entry, index) =>
+          (entry.category ?? "Other reminders") === category &&
+          (visibleIndices === undefined || visibleIndices.includes(index))
+            ? [{ entry, index }]
+            : [],
+        );
+        return entries.length ? (
+          <Panel
+            key={category}
+            title={category}
+            icon={category === "Item properties" ? "item" : "feat"}
+          >
+            <Reminders
+              values={entries.map(({ entry }) => entry)}
+              indices={entries.map(({ index }) => index)}
+            />
+          </Panel>
+        ) : null;
+      })}
+    </div>
+  );
+}
+function defensiveBonusText(
+  trait: NonNullable<
+    CharacterSheetModel["overview"]
+  >["defensiveTraits"][number],
+) {
+  const numeric = /^(.+?) (\d+)(.*)$/.exec(trait.value);
+  if (numeric && ["Resistance", "Vulnerability"].includes(trait.label))
+    return `${trait.label === "Resistance" ? "resist" : "vulnerable"} ${numeric[2]} ${numeric[1]!.toLowerCase()}${numeric[3] ?? ""}`;
+  if (
+    /^immunit(?:y|ies)$/i.test(trait.group ?? trait.label) &&
+    !/\bimmun(?:e|ity)\b/i.test(trait.value)
+  )
+    return `immune to ${trait.value}`;
+  if (trait.label === "Saving throws") return `saves ${trait.value}`;
+  if (trait.label === "Resistance / vulnerability")
+    return `resistance / vulnerability: ${trait.value}`;
+  return trait.label === "Death saves"
+    ? `death saves ${trait.value}`
+    : trait.value;
 }
 function DefensiveTraits({ model }: { model: CharacterSheetModel }) {
   const groups = new Map<
@@ -316,12 +387,10 @@ function DefensiveTraits({ model }: { model: CharacterSheetModel }) {
   }
   return (
     <table className="ov-defensive-table" aria-label="Defensive traits">
-      <thead>
-        <tr>
-          <th scope="col">Bonus</th>
-          <th scope="col">Source</th>
-        </tr>
-      </thead>
+      <colgroup>
+        <col />
+        <col />
+      </colgroup>
       {[...groups]
         .sort(([a], [b]) => {
           const order = [
@@ -335,20 +404,11 @@ function DefensiveTraits({ model }: { model: CharacterSheetModel }) {
           return rank(a) - rank(b);
         })
         .map(([group, traits]) => (
-          <tbody key={group}>
-            <tr className="ov-defensive-group">
-              <th colSpan={2}>{group}</th>
-            </tr>
+          <tbody key={group} aria-label={group}>
             {traits.map((trait, index) => (
               <tr key={index}>
                 <td>
-                  <Prose
-                    value={
-                      trait.label === "Death saves"
-                        ? `Death saves: ${trait.value}`
-                        : trait.value
-                    }
-                  />
+                  <Prose value={defensiveBonusText(trait)} />
                 </td>
                 <td>{trait.source ?? "Source unavailable"}</td>
               </tr>
@@ -377,6 +437,44 @@ export function fittingReminderIndices(
     if (next <= available - captionHeight) {
       indices.push(index);
       used = next;
+    }
+  }
+  return indices;
+}
+export function fittingReminderGroups(
+  groups: readonly {
+    overhead: number;
+    gap: number;
+    entries: readonly { index: number; height: number }[];
+  }[],
+  available: number,
+  captionHeight: number,
+  panelGap: number,
+): readonly number[] {
+  const total = groups.reduce(
+    (sum, group, index) =>
+      sum +
+      group.overhead +
+      group.entries.reduce((s, entry) => s + entry.height, 0) +
+      group.gap * Math.max(0, group.entries.length - 1) +
+      (index ? panelGap : 0),
+    0,
+  );
+  if (total <= available)
+    return groups.flatMap((group) => group.entries.map((entry) => entry.index));
+  const indices: number[] = [];
+  let used = 0;
+  for (const group of groups) {
+    let count = 0;
+    for (const entry of group.entries) {
+      const cost =
+        entry.height +
+        (count ? group.gap : group.overhead + (indices.length ? panelGap : 0));
+      if (used + cost <= available - captionHeight) {
+        indices.push(entry.index);
+        used += cost;
+        count++;
+      }
     }
   }
   return indices;
@@ -418,40 +516,53 @@ function Summary({
       );
       if (basic && basicProbe)
         setVariantLimit(
-          basicProbe.getBoundingClientRect().height <=
-            footer.getBoundingClientRect().top -
-              8 -
-              basic.getBoundingClientRect().top
+          page
+            .querySelector<HTMLElement>(".ov-main-column")!
+            .getBoundingClientRect().bottom +
+            basicProbe.getBoundingClientRect().height -
+            basic.getBoundingClientRect().height <=
+            footer.getBoundingClientRect().top - 8
             ? 2
             : 1,
         );
-      const panel = page.querySelector<HTMLElement>(".ov-summary-reminders");
-      const probe = panel?.querySelector<HTMLElement>(".ov-reminder-probe");
-      const list = panel?.querySelector<HTMLElement>(
-        ".sp-panel-content > .sp-reminders",
-      );
-      if (!panel || !probe || !list) return;
-      const entries = [
-        ...probe.querySelector<HTMLElement>(".sp-reminders")!.children,
-      ];
-      const gap =
-        entries.length > 1
-          ? parseFloat(getComputedStyle(entries[1]!).marginTop) || 0
-          : 0;
-      const content = panel.querySelector<HTMLElement>(".sp-panel-content")!;
+      const column = page.querySelector<HTMLElement>(".ov-reminders-column");
+      const probe = column?.querySelector<HTMLElement>(".ov-reminder-probe");
+      const panels = probe?.querySelector<HTMLElement>(".ov-reminder-panels");
+      if (!column || !probe || !panels) return;
+      const panelGap = parseFloat(getComputedStyle(panels).rowGap) || 0;
+      const groups = [...panels.children].map((panel) => {
+        const entries = [
+          ...panel.querySelectorAll<HTMLElement>("[data-reminder-index]"),
+        ];
+        const gap =
+          entries.length > 1
+            ? parseFloat(getComputedStyle(entries[1]!).marginTop) || 0
+            : 0;
+        const heights = entries.map((entry) => ({
+          index: Number(entry.dataset.reminderIndex),
+          height: entry.getBoundingClientRect().height,
+        }));
+        return {
+          entries: heights,
+          gap,
+          overhead:
+            panel.getBoundingClientRect().height -
+            heights.reduce((sum, entry) => sum + entry.height, 0) -
+            gap * Math.max(0, entries.length - 1),
+        };
+      });
       const available =
         footer.getBoundingClientRect().top -
         8 -
-        list.getBoundingClientRect().top -
-        parseFloat(getComputedStyle(content).paddingBottom) -
-        parseFloat(getComputedStyle(panel).borderBottomWidth);
+        column.getBoundingClientRect().top;
       const caption = probe.querySelector<HTMLElement>(".sp-caption")!;
-      const indices = fittingReminderIndices(
-        entries.map((entry) => entry.getBoundingClientRect().height),
-        gap,
+      const indices = fittingReminderGroups(
+        groups,
         available,
         caption.getBoundingClientRect().height +
-          parseFloat(getComputedStyle(caption).marginTop),
+          parseFloat(getComputedStyle(caption).marginTop) +
+          (parseFloat(getComputedStyle(column).rowGap) || 0),
+        panelGap,
       );
       setVisibleIndices((previous) =>
         previous?.join(",") === indices.join(",") ? previous : indices,
@@ -576,10 +687,6 @@ function Summary({
       </section>
       <div className="sp-summary-grid ov-balanced-columns">
         <div className="sp-column ov-main-column">
-          <BasicAttacks model={model} variantLimit={variantLimit} />
-          <div className="ov-basic-probe" aria-hidden="true">
-            <BasicAttacks model={model} />
-          </div>
           {overview.defensiveTraits?.length ? (
             <Panel
               title="Defensive traits"
@@ -589,29 +696,10 @@ function Summary({
               <DefensiveTraits model={model} />
             </Panel>
           ) : null}
-          {overview.reminders.length ? (
-            <Panel
-              title="Reminders"
-              icon="feat"
-              className="ov-summary-reminders"
-            >
-              <Reminders values={reminders} />
-              {reminders.length < overview.reminders.length ? (
-                <p className="sp-caption">
-                  {overview.reminders.length - reminders.length} more reminders
-                  in references.
-                </p>
-              ) : null}
-              <div className="ov-reminder-probe" aria-hidden="true">
-                <Reminders values={overview.reminders} />
-                <p className="sp-caption">
-                  {overview.reminders.length} more reminders in references.
-                </p>
-              </div>
-            </Panel>
-          ) : null}
-        </div>
-        <div className="sp-column sp-skills-column">
+          <BasicAttacks model={model} variantLimit={variantLimit} />
+          <div className="ov-basic-probe" aria-hidden="true">
+            <BasicAttacks model={model} />
+          </div>
           <div className="ov-ability-section">
             <Panel
               title="Abilities"
@@ -724,6 +812,27 @@ function Summary({
             ) : null}
           </Panel>
         </div>
+        <section
+          className="sp-column ov-reminders-column"
+          aria-label="Reminders"
+        >
+          <ReminderPanels
+            values={overview.reminders}
+            visibleIndices={visibleIndices}
+          />
+          {reminders.length < overview.reminders.length ? (
+            <p className="sp-caption">
+              {overview.reminders.length - reminders.length} more reminders in
+              references.
+            </p>
+          ) : null}
+          <div className="ov-reminder-probe" aria-hidden="true">
+            <ReminderPanels values={overview.reminders} />
+            <p className="sp-caption">
+              {overview.reminders.length} more reminders in references.
+            </p>
+          </div>
+        </section>
       </div>
     </Paper>
   );

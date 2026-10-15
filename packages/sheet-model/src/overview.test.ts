@@ -44,6 +44,55 @@ const feat: ContentEntity = {
   ],
 };
 describe("printed overview data", () => {
+  it("assigns reminder categories from feature and equipped item provenance", () => {
+    const entities = ["Feat", "Class Feature", "Racial Trait"].map(
+      (type, index) => ({
+        ...feat,
+        id: `category:${index}`,
+        name: `Synthetic ${type}`,
+        type,
+      }),
+    );
+    const selections = entities.map(({ id, name, type }) => ({
+      id,
+      name,
+      type,
+    }));
+    const base = buildSheetModel(
+      { ...snapshot, selectedRules: selections },
+      entities,
+    );
+    const m = withSheetOverview(base, {
+      level: 8,
+      stats: snapshot.stats,
+      selections,
+      content: entities,
+      inventory: [
+        {
+          name: "Synthetic charm",
+          quantity: 1,
+          equipped: 1,
+          slots: [],
+          fields: [
+            {
+              label: "Property",
+              value: "While adjacent to an ally, grant a bonus.",
+            },
+          ],
+        },
+      ],
+    });
+    expect(
+      new Set(m.overview?.reminders.map((entry) => entry.category)),
+    ).toEqual(
+      new Set([
+        "Feats",
+        "Class features",
+        "Racial features",
+        "Item properties",
+      ]),
+    );
+  });
   it("retains authored self-immunity wording and distinguishes it from target effects", () => {
     const immune = {
       ...feat,
@@ -262,7 +311,7 @@ describe("printed overview data", () => {
       },
     );
     expect(m.overview?.reminders).toEqual([
-      { label: feat.name, value: feat.description },
+      { label: feat.name, value: feat.description, category: "Feats" },
     ]);
     expect(m.powers).toEqual(powers);
   });
@@ -382,6 +431,7 @@ describe("printed overview data", () => {
     expect(m.overview?.reminders).toContainEqual({
       label: "Guard",
       value: feat.specifics[0]!.value,
+      category: "Feats",
     });
     expect(snapshot.stats["Hit Points"]).toBe("73");
   });
