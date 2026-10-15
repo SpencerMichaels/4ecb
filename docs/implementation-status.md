@@ -16,9 +16,10 @@ full names, score, modifier and modifier plus rounded-down half level. Shared
 headings use Ability/Score/Modifier/+½ level; four equal-width columns replace
 slash expressions and repeated legends. Browser measurements confirm equal
 column widths (within subpixel rounding), including no cell overflow on Letter/A4.
-Skills use two name-first columns followed by bonuses. Ability/skill tables have
-alternating row fills; trained skills retain alternating blue shades distinct
-from untrained rows. Feat reminders occupy spare left-column space.
+Skills use two name-first columns with superscript T training markers, muted
+subscript governing abilities beside the name and rightmost bonuses. Ability/
+skill tables have neutral alternating row fills; training no longer changes
+row colors. Feat reminders occupy spare left-column space.
 Health uses four equal HP/bloodied/surges/surge-value cells. Saving throws sit
 in a fifth label-first defense cell (Saves); Fortitude/Reflex use full names.
 Movement/awareness matches Health's four-cell row, with labels above values and

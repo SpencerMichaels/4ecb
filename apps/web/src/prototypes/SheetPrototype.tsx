@@ -254,9 +254,9 @@ function Summary() {
           <Panel title="Skills" icon="skill" className="sp-skills-panel">
             <div className="sp-skill-legend">
               <span>
-                <span className="sp-trained-swatch" /> Trained
+                <sup className="sp-trained-marker">T</sup> Trained
               </span>
-              <span>Ability</span>
+              <span>Bonus</span>
             </div>
             <div className="sp-skill-columns">
               {[skills.slice(0, 9), skills.slice(9)].map((column, index) => (
@@ -265,12 +265,21 @@ function Summary() {
                     {column.map(([name, ability, total, trained]) => (
                       <tr
                         key={name}
-                        className={trained ? "is-trained" : undefined}
                         aria-label={`${name}, ${trained ? "trained" : "untrained"}`}
                       >
-                        <th scope="row">{name}</th>
+                        <th scope="row">
+                          {name}
+                          {trained ? (
+                            <sup
+                              className="sp-trained-marker"
+                              aria-hidden="true"
+                            >
+                              T
+                            </sup>
+                          ) : null}
+                          <sub className="sp-skill-ability">{ability}</sub>
+                        </th>
                         <td className="sp-skill-total">{total}</td>
-                        <td className="sp-skill-ability">{ability}</td>
                       </tr>
                     ))}
                   </tbody>

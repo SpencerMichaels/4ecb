@@ -4,10 +4,10 @@ import { describe, expect, it } from "vitest";
 import { abilityCheckBonus, SheetPrototype } from "./SheetPrototype";
 
 describe("isolated sheet design prototype", () => {
-  it("leads skill rows with their names and stripes tables without losing trained tint", () => {
+  it("leads with skill names, superscripts training, subscripts abilities and leaves bonuses last", () => {
     const markup = renderToStaticMarkup(<SheetPrototype />);
     expect(markup).toContain(
-      '<th scope="row">Athletics</th><td class="sp-skill-total">+11</td>',
+      '<th scope="row">Athletics<sup class="sp-trained-marker" aria-hidden="true">T</sup><sub class="sp-skill-ability">STR</sub></th><td class="sp-skill-total">+11</td>',
     );
     const styles = readFileSync(
       new URL("./sheet-prototype.css", import.meta.url),
@@ -15,9 +15,7 @@ describe("isolated sheet design prototype", () => {
     );
     expect(styles).toContain(".sp-ability-table tbody tr:nth-child(even)");
     expect(styles).toContain(".sp-skill-table tbody tr:nth-child(even)");
-    expect(styles).toContain(
-      ".sp-skill-table tbody tr.is-trained:nth-child(even)",
-    );
+    expect(styles).not.toContain("tr.is-trained");
   });
   it("provides all four reference surfaces without real character data", () => {
     const markup = renderToStaticMarkup(<SheetPrototype />);
@@ -88,9 +86,7 @@ describe("isolated sheet design prototype", () => {
       '<th scope="row">Strength</th><td>18</td><td>+4</td><td>+8</td>',
     );
     expect(markup).not.toContain("sp-ability-bonuses");
-    expect(markup).toContain(
-      'class="is-trained" aria-label="Athletics, trained"',
-    );
+    expect(markup).toContain('aria-label="Athletics, trained"');
     expect(abilityCheckBonus("-1", 7)).toBe("+2");
     expect(abilityCheckBonus("-2", 1)).toBe("-2");
     expect(abilityCheckBonus("-1", 2)).toBe("+0");

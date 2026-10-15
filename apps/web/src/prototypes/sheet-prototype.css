@@ -405,22 +405,18 @@ body:has(.sp-prototype) {
   padding-right: 0.05in;
 }
 .sp-skill-ability {
-  font-size: 7pt;
-  text-align: right;
+  font-size: 6.5pt;
+  line-height: 0;
+  margin-left: 0.04in;
+  vertical-align: sub;
   color: var(--sp-muted);
 }
-.sp-skill-table tbody tr.is-trained {
-  background: #dbe6ee;
-}
-.sp-skill-table tbody tr.is-trained:nth-child(even) {
-  background: #cbdce8;
-}
-.sp-trained-swatch {
-  display: inline-block;
-  background: #dbe6ee;
-  width: 0.2in;
-  height: 0.12in;
-  border: 1px solid #8ca0ad;
+.sp-trained-marker {
+  font-size: 6.5pt;
+  font-weight: 700;
+  line-height: 0;
+  margin-left: 0.02in;
+  vertical-align: super;
 }
 .sp-skill-legend > span:first-child {
   display: inline-flex;
