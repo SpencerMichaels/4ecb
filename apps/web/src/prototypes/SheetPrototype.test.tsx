@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { SheetPrototype } from "./SheetPrototype";
+import { abilityCheckBonus, SheetPrototype } from "./SheetPrototype";
 
 describe("isolated sheet design prototype", () => {
   it("provides all four reference surfaces without real character data", () => {
@@ -27,10 +27,10 @@ describe("isolated sheet design prototype", () => {
     const markup = renderToStaticMarkup(<SheetPrototype />);
     const summary = markup.split('id="summary"')[1]!.split("</article>")[0]!;
     expect(summary.indexOf("Defenses")).toBeLessThan(
-      summary.indexOf("Ability scores"),
+      summary.indexOf(">Abilities</h3>"),
     );
     expect(summary.indexOf("Movement &amp; awareness")).toBeLessThan(
-      summary.indexOf("Ability scores"),
+      summary.indexOf(">Abilities</h3>"),
     );
     expect(summary).toMatch(/sp-skills-column[\s\S]*Languages/);
     const scratchpad = markup
@@ -58,5 +58,19 @@ describe("isolated sheet design prototype", () => {
     expect(markup).toContain(
       "<span>Boots of the Wayfarer</span><small>Item</small>",
     );
+  });
+  it("puts both ability bonuses above skills and clearly marks trained rows", () => {
+    const markup = renderToStaticMarkup(<SheetPrototype />);
+    expect(markup.indexOf(">Abilities</h3>")).toBeLessThan(
+      markup.indexOf(">Skills</h3>"),
+    );
+    expect(markup).toContain("<dt>Mod</dt><dd>+4</dd>");
+    expect(markup).toContain("<dt>Mod + ½ lvl</dt><dd>+8</dd>");
+    expect(markup).toContain(
+      'aria-label="Trained"><span class="sp-trained-marker">T</span>',
+    );
+    expect(abilityCheckBonus("-1", 7)).toBe("+2");
+    expect(abilityCheckBonus("-2", 1)).toBe("-2");
+    expect(abilityCheckBonus("-1", 2)).toBe("+0");
   });
 });

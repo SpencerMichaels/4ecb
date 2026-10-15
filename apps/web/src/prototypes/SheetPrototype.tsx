@@ -3,7 +3,7 @@ import { Icon, type IconName } from "../Icon";
 import { ActionTypeIcon } from "../ActionTypeIcon";
 
 // Deliberately synthetic. No private character, content pack, or stored state is read.
-const abilities = [
+const abilities: readonly [string, string, string][] = [
   ["STR", "18", "+4"],
   ["CON", "14", "+2"],
   ["DEX", "12", "+1"],
@@ -11,6 +11,12 @@ const abilities = [
   ["WIS", "16", "+3"],
   ["CHA", "19", "+4"],
 ];
+const prototypeLevel = 8;
+
+export function abilityCheckBonus(modifier: string, level: number): string {
+  const total = Number(modifier) + Math.floor(level / 2);
+  return `${total >= 0 ? "+" : ""}${total}`;
+}
 const skills: readonly [string, string, string, boolean][] = [
   ["Acrobatics", "DEX", "+3", false],
   ["Arcana", "INT", "+2", false],
@@ -226,20 +232,6 @@ function Summary() {
               <strong>Saving throws:</strong> +1
             </p>
           </Panel>
-          <section className="sp-ability-reference" aria-label="Ability scores">
-            <h3>
-              Ability scores <span>Score / modifier</span>
-            </h3>
-            <div className="sp-abilities">
-              {abilities.map(([name, score, modifier]) => (
-                <div key={name}>
-                  <span>{name}</span>
-                  <strong>{score}</strong>
-                  <b>{modifier}</b>
-                </div>
-              ))}
-            </div>
-          </section>
           <Panel
             title="Remember in play"
             icon="feat"
@@ -248,11 +240,41 @@ function Summary() {
             <ReminderList />
             <p className="sp-caption">Full feature descriptions → p. 3</p>
           </Panel>
+          <FeatReminders />
         </div>
         <div className="sp-column sp-skills-column">
+          <Panel
+            title="Abilities"
+            icon="ability"
+            className="sp-ability-reference"
+          >
+            <div className="sp-abilities">
+              {abilities.map(([name, score, modifier]) => (
+                <div key={name}>
+                  <div className="sp-ability-name">
+                    <strong>{name}</strong>
+                    <span>Score {score}</span>
+                  </div>
+                  <dl>
+                    <div>
+                      <dt>Mod</dt>
+                      <dd>{modifier}</dd>
+                    </div>
+                    <div>
+                      <dt>Mod + ½ lvl</dt>
+                      <dd>{abilityCheckBonus(modifier, prototypeLevel)}</dd>
+                    </div>
+                  </dl>
+                </div>
+              ))}
+            </div>
+          </Panel>
           <Panel title="Skills" icon="skill" className="sp-skills-panel">
             <div className="sp-skill-legend">
-              ● Trained <span>Ability</span>
+              <span>
+                <span className="sp-trained-marker">T</span> Trained
+              </span>
+              <span>Ability</span>
             </div>
             <table className="sp-skill-table">
               <tbody>
@@ -264,7 +286,9 @@ function Summary() {
                       className="sp-trained"
                       aria-label={trained ? "Trained" : "Untrained"}
                     >
-                      {trained ? "●" : ""}
+                      {trained ? (
+                        <span className="sp-trained-marker">T</span>
+                      ) : null}
                     </td>
                     <td className="sp-skill-ability">{ability}</td>
                   </tr>
@@ -272,8 +296,7 @@ function Summary() {
               </tbody>
             </table>
             <p className="sp-caption">
-              Totals include permanent modifiers. Apply conditional benefits
-              when relevant.
+              Skill totals already include half level.
             </p>
           </Panel>
           <Panel title="Languages" icon="race" className="sp-languages-panel">
@@ -281,30 +304,35 @@ function Summary() {
           </Panel>
         </div>
       </div>
-      <section className="sp-feat-summary">
-        <h3>
-          Feat reminders <span>Full rules on p. 3</span>
-        </h3>
-        <div>
-          <p>
-            <strong>Steady Footing:</strong> Keep your footing when you protect
-            an ally.
-          </p>
-          <p>
-            <strong>Watchful Guardian:</strong> Remember your reaction when an
-            enemy leaves.
-          </p>
-          <p>
-            <strong>Practiced Recovery:</strong> Check the extra benefit when
-            using Second Wind.
-          </p>
-          <p>
-            <strong>Shared Resolve:</strong> Your protection can benefit nearby
-            allies.
-          </p>
-        </div>
-      </section>
     </Page>
+  );
+}
+
+function FeatReminders() {
+  return (
+    <section className="sp-feat-summary">
+      <h3>
+        Feat reminders <span>Full rules on p. 3</span>
+      </h3>
+      <div>
+        <p>
+          <strong>Steady Footing:</strong> Keep your footing when you protect an
+          ally.
+        </p>
+        <p>
+          <strong>Watchful Guardian:</strong> Remember your reaction when an
+          enemy leaves.
+        </p>
+        <p>
+          <strong>Practiced Recovery:</strong> Check the extra benefit when
+          using Second Wind.
+        </p>
+        <p>
+          <strong>Shared Resolve:</strong> Your protection can benefit nearby
+          allies.
+        </p>
+      </div>
+    </section>
   );
 }
 

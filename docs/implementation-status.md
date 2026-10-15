@@ -11,15 +11,17 @@ private rules or character content. Letter/A4 and monochrome controls are local
 to the prototype. Production sheets, card layouts, data and settings are untouched.
 See `sheet-overview-prototype.md` for review scope and integration boundaries.
 This is a design review artifact, not finalized pagination or milestone closure.
-First feedback revision: abilities are a compact secondary reference below combat
-values; Languages has a dedicated panel beside Skills. Scratchpad surges join
+Feedback revisions: abilities are a compact 3×2 reference above Skills, showing
+score, modifier and modifier plus rounded-down half level. Trained skills have
+high-contrast `T` markers. Feat reminders occupy spare left-column space.
+Languages has a dedicated panel beside Skills. Scratchpad surges join
 health, skulls replace death-save dots, the large heading/rest field are removed,
 and the Channel Divinity example retains each power's action icon. Feature cards
 are grouped by category; the power index shows levels or nonlevel origins.
 Verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/prototypes/SheetPrototype.test.tsx`
-passes 4 render tests; web typecheck and prototype lint pass. In-app browser
+passes 5 render tests; web typecheck and prototype lint pass. In-app browser
 review confirms all four fixture pages stay above their footers with no horizontal
-page overflow on Letter (minimum clearance 11 px) and A4 (minimum 78 px).
+page overflow on Letter (minimum clearance 6 px) and A4 (minimum 73 px).
 Monochrome toggling is confirmed visually. Browser print/PDF output and arbitrary
 real-data pagination are not acceptance-tested by this isolated review slice.
 

@@ -277,48 +277,48 @@ body:has(.sp-prototype) {
 }
 .sp-abilities {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  border: 1px solid var(--sp-border);
-  border-radius: 3px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin: 0;
 }
-#summary .sp-abilities {
-  margin: 0;
-}
-.sp-ability-reference h3 {
-  display: flex;
-  justify-content: space-between;
-  font-size: 9pt;
-  color: var(--sp-muted);
-  margin-bottom: 0.04in;
-}
-.sp-ability-reference h3 > span {
-  font-size: 8pt;
-  font-weight: 400;
+.sp-ability-reference .sp-panel-content {
+  padding: 0;
 }
 .sp-abilities > div {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  padding: 0.045in 0.065in;
-  align-items: baseline;
+  padding: 0.045in 0.05in;
   border-right: 1px solid #d5dadd;
 }
-.sp-abilities > div:last-child {
-  border: 0;
+.sp-abilities > div:nth-child(3n) {
+  border-right: 0;
 }
-.sp-abilities span {
+.sp-abilities > div:nth-child(n + 4) {
+  border-top: 1px solid #d5dadd;
+}
+.sp-ability-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.025in;
   font-size: 8pt;
-  font-weight: 700;
-  grid-column: 1 / -1;
+}
+.sp-ability-name > span {
   color: var(--sp-muted);
+  font-size: 7pt;
 }
-.sp-abilities strong {
+.sp-abilities dl {
+  display: grid;
+  grid-template-columns: 0.7fr 1.3fr;
+  gap: 0.025in;
+  margin: 0.025in 0 0;
+}
+.sp-abilities dt {
+  font-size: 6.5pt;
+  color: var(--sp-muted);
+  white-space: nowrap;
+}
+.sp-abilities dd {
+  margin: 0;
   font-size: 12pt;
-  line-height: 1.2;
-  font-weight: 400;
-}
-.sp-abilities b {
-  font-size: 11pt;
+  line-height: 1.15;
   font-weight: 600;
 }
 .sp-summary-grid {
@@ -414,7 +414,7 @@ body:has(.sp-prototype) {
 }
 .sp-skill-table td,
 .sp-skill-table th {
-  padding: 0.035in 0;
+  padding: 0.025in 0;
   border-bottom: 1px solid #e0e4e7;
 }
 .sp-skill-table tr:last-child > * {
@@ -436,9 +436,28 @@ body:has(.sp-prototype) {
   color: var(--sp-muted);
 }
 .sp-trained {
+  width: 0.23in;
+  text-align: center;
+}
+.sp-trained-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #69757d;
+  background: #e8edf0;
+  color: #20272a;
+  font-size: 8pt;
+  font-weight: 700;
+  line-height: 1;
   width: 0.16in;
-  font-size: 6pt;
-  color: #566b79;
+  height: 0.16in;
+}
+.sp-skill-legend > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.045in;
+  color: var(--sp-ink);
+  font-size: 8pt;
 }
 .sp-feat-summary {
   margin-top: 0.14in;

@@ -18,11 +18,16 @@ physical card layout, stored characters, settings and evaluation are unchanged.
 
 ## Review surfaces
 
-1. **Summary:** identity/portrait placeholder, compact secondary ability scores and modifiers,
+1. **Summary:** identity/portrait placeholder, a compact 3×2 ability block above
+   Skills with score, modifier and modifier plus rounded-down half level,
    prominent defenses and health references, movement/awareness, complete skill
    list with a prominent adjacent Languages panel, conditional/ally-facing reminders and abbreviated feat
    reminders. Mutable values point to the scratchpad instead of scattering
    writing boxes throughout the reference page.
+   Trained skills use high-contrast outlined `T` markers and a matching legend;
+   skill totals explicitly already include half level. Feat reminders occupy
+   available space beneath the left-column reminders rather than extending the
+   page below the taller ability/skill column.
 2. **Play scratchpad:** blank health/temp-HP fields, numbered fillable-on-paper
    surge hearts grouped with health, action points, skull death-save markers, six encounter-use columns, daily
    power tracking, an explicit Channel Divinity shared-use example with per-power
