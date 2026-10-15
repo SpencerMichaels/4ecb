@@ -10,7 +10,7 @@ export function SurgeBar({ count }: { count: string }) {
     const measure = () => {
       const width = element.getBoundingClientRect().width;
       // Includes gaps: each markable segment stays at least roughly 4mm wide.
-      if (width > 0) setColumns(Math.max(1, Math.floor(width / 18)));
+      if (width > 0) setColumns(Math.max(1, Math.floor(width / 24)));
     };
     const observer = new ResizeObserver(measure);
     observer.observe(element);
@@ -42,7 +42,7 @@ export function SurgeBar({ count }: { count: string }) {
           >
             {row.map((remaining, index) => (
               <div
-                className={`ov-surge-segment${index && (total - remaining) % 5 === 0 ? " ov-surge-group" : ""}`}
+                className={`ov-surge-segment${total >= 10 && index && (total - remaining) % 5 === 0 ? " ov-surge-group" : ""}`}
                 key={remaining}
               >
                 {total <= 10 ||

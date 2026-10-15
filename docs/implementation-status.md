@@ -34,6 +34,11 @@ overview print check passes Letter/A4 in color/monochrome with no overflow,
 including assertions for four health cells and left-grouped death-save skulls.
 Page 1 ability names use regular weight, matching the other left-column table
 labels; this isolated CSS adjustment does not alter values or layout structure.
+Surge bars below ten surges have no grouping gaps. At ten or more, every fifth
+segment has a deliberate 0.08in break; width measurement reserves enough room
+for these larger gaps while keeping segments markable.
+All ten focused scratchpad-layout/surge-bar tests pass, including the grouping
+threshold at ten surges. No full print matrix was rerun for this style adjustment.
 
 Measured row/group heights and panel/caption gaps replace fixed power-count
 limits. Encounter and daily lists share available space, shared-use groups remain

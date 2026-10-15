@@ -81,6 +81,18 @@ describe("scratchpad measured tracking layout", () => {
   });
 });
 describe("segmented surge bar", () => {
+  it("groups longer bars in fives but leaves fewer than ten surges uninterrupted", () => {
+    for (const count of ["6", "9"])
+      expect(renderToStaticMarkup(<SurgeBar count={count} />)).not.toContain(
+        "ov-surge-group",
+      );
+    expect(
+      renderToStaticMarkup(<SurgeBar count="10" />).match(/ov-surge-group/g),
+    ).toHaveLength(1);
+    expect(
+      renderToStaticMarkup(<SurgeBar count="13" />).match(/ov-surge-group/g),
+    ).toHaveLength(2);
+  });
   it("keeps 13 surges on one track and labels remaining boundaries sparsely", () => {
     const html = renderToStaticMarkup(<SurgeBar count="13" />);
     expect(html.match(/class="ov-surge-segment/g)).toHaveLength(13);
