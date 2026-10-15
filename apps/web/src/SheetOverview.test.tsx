@@ -337,8 +337,14 @@ describe("real-data sheet overview", () => {
               },
               { label: "Immunity", value: "acid", source: "Synthetic ward" },
               {
+                label: "Synthetic immunity",
+                group: "Immunities",
+                value: "while transformed, you are immune to disease.",
+                source: "Synthetic form",
+              },
+              {
                 label: "Saving throws",
-                value: "+2 against poison",
+                value: "+2 to saves against poison",
                 source: "Synthetic feat",
               },
             ],
@@ -355,10 +361,11 @@ describe("real-data sheet overview", () => {
       .split('aria-label="Character summary"')[1]!
       .split("</article>")[0]!;
     expect(summary).toContain(">Defensive traits</h3>");
-    expect(summary).toContain("resist 5 fire");
-    expect(summary).toContain("vulnerable 5 cold");
-    expect(summary).toContain("immune to acid");
-    expect(summary).toContain("saves +2 against poison");
+    expect(summary).toContain("Resist 5 fire");
+    expect(summary).toContain("Vulnerable 5 cold");
+    expect(summary).toContain("Immune to acid");
+    expect(summary).toContain("While transformed, you are immune to disease.");
+    expect(summary).toContain("+2 to saves against poison");
     expect(summary).toContain('<table class="ov-defensive-table"');
     const defensiveTable = summary
       .split('<table class="ov-defensive-table"')[1]!
@@ -373,7 +380,7 @@ describe("real-data sheet overview", () => {
     );
     expect(
       summary.split('class="sp-identity"')[1]!.split("</section>")[0],
-    ).not.toContain("resist 5 fire");
+    ).not.toContain("Resist 5 fire");
     const empty = renderToStaticMarkup(
       <SheetOverview
         model={model}

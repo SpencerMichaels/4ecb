@@ -350,18 +350,18 @@ function defensiveBonusText(
 ) {
   const numeric = /^(.+?) (\d+)(.*)$/.exec(trait.value);
   if (numeric && ["Resistance", "Vulnerability"].includes(trait.label))
-    return `${trait.label === "Resistance" ? "resist" : "vulnerable"} ${numeric[2]} ${numeric[1]!.toLowerCase()}${numeric[3] ?? ""}`;
+    return `${trait.label === "Resistance" ? "Resist" : "Vulnerable"} ${numeric[2]} ${numeric[1]!.toLowerCase()}${numeric[3] ?? ""}`;
   if (
     /^immunit(?:y|ies)$/i.test(trait.group ?? trait.label) &&
     !/\bimmun(?:e|ity)\b/i.test(trait.value)
   )
-    return `immune to ${trait.value}`;
-  if (trait.label === "Saving throws") return `saves ${trait.value}`;
+    return `Immune to ${trait.value}`;
   if (trait.label === "Resistance / vulnerability")
-    return `resistance / vulnerability: ${trait.value}`;
-  return trait.label === "Death saves"
-    ? `death saves ${trait.value}`
-    : trait.value;
+    return `Resistance / vulnerability: ${trait.value}`;
+  return trait.value.replace(
+    /^(\s*(?:\*\*|__|\*|_)?)(\p{Ll})/u,
+    (_, prefix: string, letter: string) => prefix + letter.toUpperCase(),
+  );
 }
 function DefensiveTraits({ model }: { model: CharacterSheetModel }) {
   const groups = new Map<

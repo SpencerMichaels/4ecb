@@ -747,7 +747,7 @@ describe("sheet model", () => {
     });
     expect(model.overview?.defensiveTraits).toContainEqual({
       label: "Saving throws",
-      value: "+2 against poison",
+      value: "+2 to saves against poison",
       source: "Synthetic saving feat",
     });
     expect(model.powers[0]?.additionalEffects).toEqual([

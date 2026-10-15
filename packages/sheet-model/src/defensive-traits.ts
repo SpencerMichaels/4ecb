@@ -48,7 +48,7 @@ export function defensiveStatTraits(
     if (Number.isFinite(total) && total !== 0) {
       if (resist) resistance(total);
       else if (/^death /i.test(name.trim()))
-        add("Death saves", signed(total), source);
+        add("Death saves", `${signed(total)} to death saves`, source);
     } else if (resist && raw.trim() && !Number.isFinite(total)) {
       add("Resistance / vulnerability", `${label}: ${raw}`, source);
     }
@@ -60,8 +60,12 @@ export function defensiveStatTraits(
       const condition = contribution.condition;
       if (numeric === undefined) {
         add(
-          resist ? "Resistance / vulnerability" : "Saving throws",
-          `${resist ? `${label}: ` : ""}${contribution.value} ${condition} (unresolved)`,
+          resist
+            ? "Resistance / vulnerability"
+            : /^death /i.test(name.trim())
+              ? "Death saves"
+              : "Saving throws",
+          `${resist ? `${label}: ${contribution.value}` : `${contribution.value} to ${/^death /i.test(name.trim()) ? "death saves" : "saves"}`} ${condition} (unresolved)`,
           contribution.providerName,
         );
       } else if (resist)
@@ -69,7 +73,7 @@ export function defensiveStatTraits(
       else
         add(
           /^death /i.test(name.trim()) ? "Death saves" : "Saving throws",
-          `${signed(numeric)} ${contribution.bonusType ? `${contribution.bonusType} ${numeric < 0 ? "penalty" : "bonus"} ` : ""}${condition}`,
+          `${signed(numeric)} ${contribution.bonusType ? `${contribution.bonusType.toLowerCase()} ${numeric < 0 ? "penalty" : "bonus"} ` : ""}to ${/^death /i.test(name.trim()) ? "death saves" : "saves"} ${condition}`,
           contribution.providerName,
         );
     }

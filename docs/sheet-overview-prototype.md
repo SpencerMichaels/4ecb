@@ -110,10 +110,16 @@ sections retain their existing list layout.
 An optional Defensive traits panel sits above Basic Attacks,
 grouping resistances, vulnerabilities, authored immunity clauses and conditional
 or death-saving-throw modifiers in a striped benefit/source table without visible
-column/category headings. Compact numeric clauses read `resist 5 fire` or
-`vulnerable 5 cold`; explicit immunity lists read `immune to acid`. Authored
+column/category headings. Compact numeric clauses read `Resist 5 fire` or
+`Vulnerable 5 cold`; explicit immunity lists read `Immune to acid`. Authored
 conditional prose is preserved. Related rows are adjacent with space between
 categories, and source names are not embedded in benefit prose.
+Rows begin with a capital letter (numeric modifiers retain their leading sign).
+Structured save entries read `+5 racial bonus to saves against poison`, or
+`+2 to saves against fear` when untyped; penalties and death saves use the same
+projection, without attempting grammar substitutions in arbitrary authored text.
+Wording follow-up verification: 43 focused projection/render tests, web typecheck
+and focused lint pass; the full print matrix was not rerun for this text-only change.
 It never inflates the universal Saves tile. The full-width divider below the
 identity header is restored.
 Player, theme, paragon path, epic destiny and company move to the header's right

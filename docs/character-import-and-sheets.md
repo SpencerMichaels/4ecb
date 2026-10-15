@@ -311,9 +311,12 @@ Legacy snapshots lack conditional stat-add provenance, so no native conditions
 are fabricated from cached totals; selected full rules remain in references.
 Benefits and sources are separate columns with alternating row backgrounds,
 without visible table/category headers. Compact clauses are self-contained
-(`resist 5 fire`, `vulnerable 5 cold`, `immune to acid`), while authored conditional
+(`Resist 5 fire`, `Vulnerable 5 cold`, `Immune to acid`), while authored conditional
 wording is retained. Related resistance/immunity/vulnerability/save entries are
-adjacent, with space between groups. Applied native contributors
+adjacent, with space between groups.
+Structured save modifiers explicitly say `to saves`/`to death saves` after any
+bonus or penalty type, before the unchanged condition. This wording is generated
+from stat provenance rather than substituted into arbitrary prose. Applied native contributors
 supply total provenance; conditional entries retain their own provider. Cached
 totals say Legacy cache rather than inventing a source. The same defensive list
 and sources are retained in full references. Player, theme, paragon
