@@ -27,10 +27,15 @@ physical card layout, stored characters, settings and evaluation are unchanged.
    Skills use two alphabetically ordered columns, with trained rows shaded and
    a matching swatch legend. Ability bonuses share one legend instead of repeating
    labels in every cell. Health has four equal cells (HP, bloodied, surges, surge
-   value), and saving throws sit beneath defenses. XP and AP do not appear on the
+   value). Defenses has five label-first cells, including Saves and full Fortitude/
+   Reflex labels. Movement/awareness uses a matching four-cell row; Speed has no
+   unit suffix. Skill cells have horizontal padding. XP and AP do not appear on the
    summary. Feat reminders occupy
    available space beneath the left-column reminders rather than extending the
    page below the taller ability/skill column.
+   The health panel is named Health. A six-row ability table with shared Score/
+   Modifier/With-half-level columns is proposed as a replacement for the slash
+   display, pending product-owner feedback; the ability layout is not changed yet.
 2. **Play scratchpad:** blank health/temp-HP fields, numbered fillable-on-paper
    surge hearts grouped with health, action points, skull death-save markers, six encounter-use columns, daily
    power tracking, an explicit Channel Divinity shared-use example with per-power

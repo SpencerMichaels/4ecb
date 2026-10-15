@@ -169,22 +169,19 @@ function Summary() {
             <div className="sp-values sp-defenses">
               {[
                 ["AC", "24"],
-                ["Fort", "21"],
-                ["Ref", "19"],
+                ["Fortitude", "21"],
+                ["Reflex", "19"],
                 ["Will", "23"],
+                ["Saves", "+1"],
               ].map(([label, value]) => (
                 <div key={label}>
-                  <strong>{value}</strong>
                   <span>{label}</span>
+                  <strong>{value}</strong>
                 </div>
               ))}
             </div>
-            <p className="sp-defense-note">
-              <strong>Saving throws</strong>
-              <span>+1</span>
-            </p>
           </Panel>
-          <Panel title="Health & resources" icon="class">
+          <Panel title="Health" icon="class">
             <div className="sp-values sp-health">
               {[
                 ["Maximum HP", "68"],
@@ -193,30 +190,25 @@ function Summary() {
                 ["Surge value", "17"],
               ].map(([label, value]) => (
                 <div key={label}>
-                  <strong>{value}</strong>
                   <span>{label}</span>
+                  <strong>{value}</strong>
                 </div>
               ))}
             </div>
           </Panel>
           <Panel title="Movement & awareness" icon="footprints">
-            <div className="sp-movement">
-              <div>
-                <strong>+6</strong>
-                <span>Initiative</span>
-              </div>
-              <div>
-                <strong>5</strong>
-                <span>Speed · squares</span>
-              </div>
-              <div>
-                <strong>20</strong>
-                <span>Passive Insight</span>
-              </div>
-              <div>
-                <strong>20</strong>
-                <span>Passive Perception</span>
-              </div>
+            <div className="sp-values sp-movement">
+              {[
+                ["Initiative", "+6"],
+                ["Speed", "5"],
+                ["Passive Insight", "20"],
+                ["Passive Perception", "20"],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <span>{label}</span>
+                  <strong>{value}</strong>
+                </div>
+              ))}
             </div>
             <p className="sp-inline-rule">
               <strong>Vision:</strong> Normal

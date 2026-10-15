@@ -15,7 +15,11 @@ Feedback revisions: abilities are a compact 3×2 reference above Skills, showing
 score, modifier and modifier plus rounded-down half level with a shared legend.
 Skills use two columns and trained-row shading. Feat reminders occupy spare left-column space.
 Health uses four equal HP/bloodied/surges/surge-value cells. Saving throws sit
-under defenses. Summary XP/AP are removed; XP has scratchpad writing space and
+in a fifth label-first defense cell (Saves); Fortitude/Reflex use full names.
+Movement/awareness matches Health's four-cell row, with labels above values and
+unqualified Speed. Skill cells have horizontal padding. The summary panel is now
+named Health. A simpler shared-column ability table is proposed, not implemented.
+Summary XP/AP are removed; XP has scratchpad writing space and
 a details-page advancement record. Tracking instructions/captions are removed.
 Languages has a dedicated panel beside Skills. Scratchpad surges join
 health, skulls replace death-save dots, the large heading/rest field are removed,

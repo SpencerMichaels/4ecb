@@ -84,9 +84,14 @@ describe("isolated sheet design prototype", () => {
     expect(summary).not.toContain("Experience");
     expect(summary).not.toContain("Action points");
     expect(summary).toContain("<span>Surges</span>");
-    expect(summary.indexOf("Saving throws")).toBeLessThan(
-      summary.indexOf("Health &amp; resources"),
-    );
+    expect(
+      summary.indexOf("<span>Saves</span><strong>+1</strong>"),
+    ).toBeLessThan(summary.indexOf(">Health</h3>"));
+    expect(summary).toContain("<span>Fortitude</span><strong>21</strong>");
+    expect(summary).toContain("<span>Reflex</span><strong>19</strong>");
+    expect(summary).toContain("<span>Speed</span><strong>5</strong>");
+    expect(summary).not.toContain("squares");
+    expect(summary).toContain('class="sp-values sp-movement"');
     expect(summary.match(/class="sp-skill-table"/g)).toHaveLength(2);
     for (const id of ["scratchpad", "record"])
       expect(markup.split(`id="${id}"`)[1]!.split("</article>")[0]).toContain(
