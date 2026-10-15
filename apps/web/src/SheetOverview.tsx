@@ -483,7 +483,7 @@ function Summary({
           </Panel>
           {overview.reminders.length ? (
             <Panel
-              title="Remember in play"
+              title="Reminders"
               icon="feat"
               className="ov-summary-reminders"
             >
@@ -536,6 +536,20 @@ function Summary({
                   ))}
                 </tbody>
               </table>
+            </Panel>
+            <Panel title="Languages" icon="race" className="ov-languages-panel">
+              <ul className="ov-language-list">
+                {(
+                  model.features.find((group) => group.group === "Language")
+                    ?.entries ?? []
+                ).map((entry, index) => (
+                  <li key={index}>{entry.label}</li>
+                ))}
+              </ul>
+              {!model.features.find((group) => group.group === "Language")
+                ?.entries.length ? (
+                <p>Not recorded</p>
+              ) : null}
             </Panel>
           </div>
           <Panel title="Skills" icon="skill" className="sp-skills-panel">
@@ -600,14 +614,6 @@ function Summary({
                 <strong>Vision:</strong> {overview.vision}
               </p>
             ) : null}
-          </Panel>
-          <Panel title="Languages" icon="race">
-            <p>
-              {model.features
-                .find((group) => group.group === "Language")
-                ?.entries.map((entry) => entry.label)
-                .join(" · ") || "Not recorded"}
-            </p>
           </Panel>
           <BasicAttacks model={model} variantLimit={variantLimit} />
           <div className="ov-basic-probe" aria-hidden="true">
@@ -879,7 +885,7 @@ function Scratchpad({
                 Speed {find(model.resources, "Speed")}
               </p>
             </Panel>
-            <Panel title="Remember in play" icon="feat">
+            <Panel title="Reminders" icon="feat">
               <Reminders
                 values={model
                   .overview!.reminders.filter(
@@ -1004,7 +1010,7 @@ function references(model: CharacterSheetModel): ReferenceEntry[] {
   if (o.reminders.length)
     result.push({
       id: "reminders",
-      name: "Remember in play",
+      name: "Reminders",
       group: "Combat reminders",
       source: "",
       parts: o.reminders.flatMap((entry) =>

@@ -133,14 +133,39 @@ body:has(.sp-prototype) {
 }
 .sp-values.ov-header-stats {
   grid-template-columns: repeat(2, minmax(0.65in, 1fr));
-  gap: 0.08in;
+  gap: 0;
   flex-shrink: 0;
+  background: var(--sp-soft);
+  border-radius: 3px;
+  padding: 0.04in;
 }
 .sp-values.ov-header-stats > div {
   border: 0;
   padding: 0.08in;
-  background: var(--sp-soft);
-  border-radius: 3px;
+}
+.sheet-overview .sp-values.ov-header-stats > div + div {
+  border-left: 1px solid var(--sp-border);
+}
+.ov-ability-section {
+  display: grid;
+  grid-template-columns: minmax(0, 2.15fr) minmax(0.95in, 1fr);
+  gap: 0.08in;
+  align-items: stretch;
+}
+.sheet-overview .ov-languages-panel > h3 {
+  font-size: 9pt;
+  gap: 0.04in;
+}
+.ov-language-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 9pt;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.ov-language-list li + li {
+  margin-top: 0.04in;
 }
 .sheet-overview .sp-portrait {
   width: 0.8in;

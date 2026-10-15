@@ -213,6 +213,15 @@ describe("real-data sheet overview", () => {
   it("places initiative and speed in the identity header, with passive senses before skill bonuses", () => {
     const m = {
       ...model,
+      features: [
+        {
+          group: "Language",
+          entries: [
+            { label: "Common", value: "" },
+            { label: "Draconic", value: "" },
+          ],
+        },
+      ],
       identity: [
         { label: "Level", value: "7" },
         { label: "Class", value: "Paladin" },
@@ -258,6 +267,13 @@ describe("real-data sheet overview", () => {
     expect(right).not.toContain(">Score</th>");
     expect(right).toContain('aria-label="Ability score"');
     expect(right).toContain('class="ov-ability-name-heading">Ability</th>');
+    const abilitySection = right
+      .split('class="ov-ability-section"')[1]!
+      .split('class="sp-panel sp-skills-panel"')[0]!;
+    expect(abilitySection).toContain(">Languages</h3>");
+    expect(abilitySection).toContain(
+      '<ul class="ov-language-list"><li>Common</li><li>Draconic</li></ul>',
+    );
     const skills = right.split(">Skills</h3>")[1]!.split(">Languages</h3>")[0]!;
     expect(skills).toContain('<span class="ov-passive-value">(18)</span> +8');
     expect(skills).toContain('<span class="ov-passive-value">(25)</span> +15');
@@ -343,13 +359,13 @@ describe("real-data sheet overview", () => {
     expect(summary).not.toContain("Quick Hands (heroic tier)");
     expect(summary).toContain("Defensive Stance");
     expect(summary).toContain("Protective Charm");
-    expect(summary.match(/Remember in play/g)).toHaveLength(1);
+    expect(summary.match(/>Reminders</g)).toHaveLength(1);
     expect(
       summary.split('class="ov-reminder-probe"')[0]!.match(/Quick Hands/g),
     ).toHaveLength(1);
     expect(summary).not.toContain("Feat reminders");
     const [left, right] = summary.split('class="sp-column sp-skills-column"');
-    expect(left).toContain("Remember in play");
+    expect(left).toContain("Reminders");
     expect(left).not.toContain("Basic attacks");
     expect(right!.indexOf("Languages")).toBeLessThan(
       right!.indexOf("Basic attacks"),

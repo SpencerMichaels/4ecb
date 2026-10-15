@@ -93,6 +93,10 @@ then bare level (`Dwarf Paladin 7`). The redundant first-page running header and
 full-width identity separator are omitted; later-page running headers remain.
 Passive Insight and Perception precede their active skill bonuses, e.g.
 `Perception (25) +15`, not as separate rows. Vision remains in Skills.
+Languages form a vertical list in a narrow panel to the right of Abilities;
+Skills and Basic attacks follow below. Initiative/Speed share one soft header
+background with a subtle internal divider rather than isolated tiles. The unified
+summary, scratchpad and reference heading is now simply **Reminders**.
 Header follow-up verification: 14 focused render tests, lint, production build,
 and the overview-only Letter/A4 color/monochrome PDF matrix pass with no overview
 overflow. This does not replace the separately tracked full physical-card gate.
@@ -108,7 +112,7 @@ Display follow-up: Saves and Initiative use explicit signs, including `+0`.
 Reminder names omit parenthetical qualifiers for display only; original names
 remain intact in the model and references. The Ability heading aligns with the
 abbreviation column rather than the raw-score column; abbreviations use normal
-ink. A replacement name for Remember in play remains a product-review decision.
+ink.
 This supersedes the initial prototype's ability-column order and separate
 Movement & awareness panel.
 
