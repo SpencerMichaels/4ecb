@@ -150,6 +150,12 @@ body:has(.sp-prototype) {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.ov-player-company {
+  margin-top: 0.04in !important;
+  font-size: 8.5pt;
+  line-height: 1.35;
+  color: var(--sp-muted);
+}
 .ov-identity-details {
   border: 1px solid var(--sp-border);
   border-radius: 5px;

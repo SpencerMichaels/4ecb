@@ -2,6 +2,14 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Compact identity follow-up (2026-10-15): Player and Company move from the bordered
+box to a muted line beneath race/class/level, separated by a center dot. The box
+now has only Theme, Paragon path and Epic destiny, reducing its height and pressure
+on summary-body space. Missing values still use em dashes in both locations.
+Verification: all 19 focused overview rendering tests and focused lint pass;
+formatting is checked. This small follow-up does not change calculations; the
+print matrix/full milestone gate was not rerun.
+
 Identity details box / development-module diagnosis (2026-10-15): Summary identity
 details now always show Player, Company, Theme, Paragon path and Epic destiny in a
 bordered label/value box, with delimited rows and em dashes for absent/blank fields.

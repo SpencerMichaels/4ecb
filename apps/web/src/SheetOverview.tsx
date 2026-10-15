@@ -612,11 +612,17 @@ function Summary({
               )
               .join(" ")}
           </p>
+          <p className="ov-player-company">
+            {["Player", "Company"]
+              .map(
+                (label) =>
+                  `${label}: ${model.identity.find((entry) => entry.label === label)?.value.trim() || "—"}`,
+              )
+              .join(" · ")}
+          </p>
         </div>
         <dl className="ov-identity-details">
           {[
-            ["Player", "Player"],
-            ["Company", "Company"],
             ["Theme", "Theme"],
             ["ParagonPath", "Paragon path"],
             ["EpicDestiny", "Epic destiny"],

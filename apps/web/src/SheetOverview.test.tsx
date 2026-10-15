@@ -43,10 +43,12 @@ describe("real-data sheet overview", () => {
       const box = html
         .split('class="ov-identity-details"')[1]!
         .split("</dl>")[0]!;
-      expect(box.indexOf("<dt>Company</dt>")).toBeLessThan(
-        box.indexOf("<dt>Theme</dt>"),
+      expect(box).not.toContain("<dt>Player</dt>");
+      expect(box).not.toContain("<dt>Company</dt>");
+      expect(html).toContain(
+        '<p class="ov-player-company">Player: — · Company: —</p>',
       );
-      for (const label of ["Player", "Paragon path", "Epic destiny", "Company"])
+      for (const label of ["Paragon path", "Epic destiny"])
         expect(box).toContain(`<dt>${label}</dt><dd>—</dd>`);
       expect(box).toContain(
         `<dt>Theme</dt><dd>${identity.length ? "Test theme" : "—"}</dd>`,
@@ -279,6 +281,7 @@ describe("real-data sheet overview", () => {
         { label: "Class", value: "Paladin" },
         { label: "Race", value: "Dwarf" },
         { label: "Player", value: "Synthetic player" },
+        { label: "Company", value: "Synthetic company" },
         { label: "Theme", value: "Synthetic theme" },
       ],
       overview: {
@@ -319,6 +322,9 @@ describe("real-data sheet overview", () => {
     expect(header).not.toContain("Initiative");
     expect(header).toContain('class="ov-identity-details"');
     expect(header).toContain("<dt>Theme</dt><dd>Synthetic theme</dd>");
+    expect(header).toContain(
+      '<p class="ov-player-company">Player: Synthetic player · Company: Synthetic company</p>',
+    );
     const band = summary
       .split('class="ov-numeric-band"')[1]!
       .split('class="sp-summary-grid')[0]!;
