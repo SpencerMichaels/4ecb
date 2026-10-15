@@ -199,9 +199,9 @@ describe("real-data sheet overview", () => {
       expect(left!.indexOf(`>${headings[i]}</h3>`)).toBeGreaterThan(
         left!.indexOf(`>${headings[i - 1]}</h3>`),
       );
-    expect(left).not.toContain(">Defenses</h3>");
-    expect(right).toContain(">Defenses</h3>");
-    expect(right!.indexOf(">Defenses</h3>")).toBeLessThan(
+    expect(left).not.toContain(">Resistances &amp; Weaknesses</h3>");
+    expect(right).toContain(">Resistances &amp; Weaknesses</h3>");
+    expect(right!.indexOf(">Resistances &amp; Weaknesses</h3>")).toBeLessThan(
       right!.indexOf('class="ov-reminder-region"'),
     );
     expect(summary).toContain("Low-light vision; Tremorsense 4");
@@ -600,7 +600,7 @@ describe("real-data sheet overview", () => {
     const summary = html
       .split('aria-label="Character summary"')[1]!
       .split("</article>")[0]!;
-    expect(summary).toContain(">Defenses</h3>");
+    expect(summary).toContain(">Resistances &amp; Weaknesses</h3>");
     expect(summary).toContain("Resist 5 fire");
     expect(summary).toContain("Vulnerable 5 cold");
     expect(summary).toContain("Immune to acid");
@@ -619,7 +619,7 @@ describe("real-data sheet overview", () => {
     expect(summary).toContain("<td>Synthetic cloak</td>");
     expect(summary).toContain("<td>Synthetic feat</td>");
     expect(summary).toContain('aria-label="Resistances"');
-    expect(summary.indexOf(">Defenses</h3>")).toBeLessThan(
+    expect(summary.indexOf(">Resistances &amp; Weaknesses</h3>")).toBeLessThan(
       summary.indexOf('class="ov-reminder-region"'),
     );
     expect(
@@ -635,7 +635,7 @@ describe("real-data sheet overview", () => {
         blankHP={false}
       />,
     );
-    expect(empty).not.toContain(">Defenses</h3>");
+    expect(empty).not.toContain(">Resistances &amp; Weaknesses</h3>");
   });
   it.each([
     ["0", "+0"],

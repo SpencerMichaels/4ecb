@@ -939,12 +939,12 @@ async function checkSummaryPresentation(client, monochrome) {
       "Attack, defense and informational panes must have distinct accents",
     );
     assert(
-      accents.info === accents.abilities,
+      accents.info === accents.abilities && accents.info === accents.senses,
       "Informational panes must share their accent",
     );
     assert(
-      accents.senses !== accents.info && accents.health !== accents.attack,
-      "Senses and health must remain distinct from informational and attack accents",
+      accents.health !== accents.attack,
+      "Health must remain distinct from attack accents",
     );
     if (accents.reminders)
       assert(
@@ -1268,7 +1268,7 @@ async function inspectPdf(
     "Character reference",
     "Synthetic resilience",
     "Synthetic focus",
-    "Defenses",
+    "Resistances & Weaknesses",
     "Fire 5",
     "Cold 3",
     ...(onlyOverview

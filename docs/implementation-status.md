@@ -2,6 +2,15 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Summary naming/color feedback (2026-10-15): The defensive-traits pane and its
+reference entry are now named Resistances & Weaknesses, reserving Defenses for
+AC/Fortitude/Reflex/Will. Senses inherits the same teal accent, tint and separator
+color as Skills/Abilities/Languages rather than a separate lavender palette.
+Verification: 28 focused overview tests and production build pass; all four
+Chromium overview-only Letter/A4 × color/monochrome checks pass without overflow,
+including matching Senses/informational-pane accent assertions. No full milestone
+gate was rerun for this label/style refinement.
+
 Summary pane placement feedback (2026-10-15): Senses now precedes Skills in the
 left-column flow, followed by Abilities/Languages and Basic Attacks. The Defenses
 trait pane is fixed above the right-column reminders, so additional defensive

@@ -72,7 +72,8 @@ hearts are paper affordances, not interactive Play state.
 
 ## Real-data integration
 
-Summary continuation (2026-10-15): The defensive-traits pane is named **Defenses**.
+Summary continuation (2026-10-15): The defensive-traits pane is named
+**Resistances & Weaknesses**, reserving Defenses for AC/Fortitude/Reflex/Will.
 The measured page-1 reminder selection now sends omitted reminders directly to
 an optional summary continuation starting on physical page 2, suitable as the
 summary's reverse side. No continuation page is emitted when all reminders fit.
@@ -104,8 +105,8 @@ All eleven values use matching individual soft tiles, with labels above numbers.
 Each group has a thin rounded outline and no visible group heading; semantic
 group labels remain available. Field labels use darker, slightly heavier text.
 The page-1 functional palette uses muted rust for Basic Attacks, slate blue for
-Defenses/Defensive Traits, teal for Skills/Abilities/Languages and Initiative/Speed,
-lavender for the separate Senses pane, ochre for Reminders, and sage green for
+Defenses/Resistances & Weaknesses, teal for Senses/Skills/Abilities/Languages and
+Initiative/Speed, ochre for Reminders, and sage green for
 Health. Tints are limited to pane headers
 and numeric tiles/outlines; body text and alternating table rows remain neutral.
 Monochrome mode replaces these accents with explicit grayscale values, preserving
@@ -141,10 +142,10 @@ backgrounds without inter-cell borders. All summary tables start with a shaded
 first data row, with defensive categories maintaining continuous striping.
 Below the numeric band, equal-width
 columns prefer Senses, Skills, Abilities/Languages and Basic Attacks on
-the left, with Defenses above reminders on the right. Defensive traits consume
+the left, with Resistances & Weaknesses above reminders on the right. Defensive traits consume
 right-column reminder space, never left-column skill/ability space. Whole panes fill the left in
 that order; the first that cannot fit and all following panes move to the right,
-below Defenses and above reminders. Abilities/Languages remain one fitting unit.
+below Resistances & Weaknesses and above reminders. Abilities/Languages remain one fitting unit.
 Measurements use equal-width hidden pane probes, account for inter-pane gaps and
 the footer, and rerun for content, font and page-size changes. The layout can move
 panes back when space increases. Reminder fitting uses only the right-column

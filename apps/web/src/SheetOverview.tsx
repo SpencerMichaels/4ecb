@@ -421,7 +421,7 @@ function DefensiveTraits({ model }: { model: CharacterSheetModel }) {
   }
   let rowNumber = 0;
   return (
-    <table className="ov-defensive-table" aria-label="Defenses">
+    <table className="ov-defensive-table" aria-label="Resistances & Weaknesses">
       <colgroup>
         <col />
         <col />
@@ -679,7 +679,7 @@ function SummaryColumns({
       </div>
       <section
         className="sp-column ov-reminders-column"
-        aria-label="Defenses and reminders"
+        aria-label="Resistances, weaknesses and reminders"
       >
         {slots.get("defenses")}
         {panes.slice(leftCount).map(renderPane)}
@@ -864,7 +864,7 @@ function Summary({
         <SummaryPane id="defenses">
           {overview.defensiveTraits?.length ? (
             <Panel
-              title="Defenses"
+              title="Resistances & Weaknesses"
               icon="shield"
               className="ov-defensive-traits"
             >
@@ -1384,8 +1384,8 @@ function references(model: CharacterSheetModel): ReferenceEntry[] {
   if (o.defensiveTraits?.length)
     result.push({
       id: "defensive-traits",
-      name: "Defenses",
-      group: "Defenses",
+      name: "Resistances & Weaknesses",
+      group: "Resistances & Weaknesses",
       source: "",
       parts: o.defensiveTraits.flatMap((entry) =>
         referenceParts(
