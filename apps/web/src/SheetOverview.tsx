@@ -1009,6 +1009,7 @@ export interface TrackingRow {
   action: string;
   usage: string;
   group?: string;
+  utility?: boolean;
 }
 export function overviewTrackingRows(
   model: CharacterSheetModel,
@@ -1018,6 +1019,13 @@ export function overviewTrackingRows(
     name: power.name,
     action: power.actionType ?? "",
     usage: power.usage ?? "",
+    ...(power.fields.some(
+      (field) =>
+        field.label.trim().toLowerCase() === "power type" &&
+        field.value.trim().toLowerCase() === "utility",
+    )
+      ? { utility: true }
+      : {}),
     ...(/(?:^|,)\s*Channel Divinity\s*(?:,|$)/i.test(power.keywords ?? "")
       ? { group: "Channel Divinity" }
       : {}),
@@ -1033,11 +1041,36 @@ export function overviewTrackingRows(
               name: item.name,
               action: power.actionType ?? "",
               usage: power.usage ?? "",
+              ...(/^utility power\b/i.test(field.label.trim()) ||
+              /^\s*utility power\b/i.test(field.value)
+                ? { utility: true }
+                : {}),
             },
           ];
     }),
   );
   return [...powers, ...items];
+}
+/** Keep authored metadata authoritative: an absent Attack field does not mean Utility. */
+export function sortedTrackingRows(
+  rows: readonly TrackingRow[],
+): TrackingRow[] {
+  const actionRank = (action: string): number => {
+    const normalized = action.trim().toLowerCase();
+    if (/^standard\b/.test(normalized)) return 0;
+    if (/^move\b/.test(normalized)) return 1;
+    if (/^minor\b/.test(normalized)) return 2;
+    if (/^(?:free|no action)\b/.test(normalized)) return 3;
+    if (/^(?:immediate|opportunity|reaction|interrupt)\b/.test(normalized))
+      return 4;
+    return 5;
+  };
+  return [...rows].sort(
+    (a, b) =>
+      actionRank(a.action) - actionRank(b.action) ||
+      Number(Boolean(a.utility)) - Number(Boolean(b.utility)) ||
+      a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+  );
 }
 interface UsageGroup {
   id: string;
@@ -1144,11 +1177,14 @@ function Scratchpad({
 }) {
   const rows = useMemo(() => overviewTrackingRows(model), [model]);
   const encounter = useMemo(
-    () => usageGroups(rows.filter((row) => /^encounter/i.test(row.usage))),
+    () =>
+      usageGroups(
+        sortedTrackingRows(rows.filter((row) => /^encounter/i.test(row.usage))),
+      ),
     [rows],
   );
   const daily = useMemo(
-    () => rows.filter((row) => /^daily/i.test(row.usage)),
+    () => sortedTrackingRows(rows.filter((row) => /^daily/i.test(row.usage))),
     [rows],
   );
   const [pages, setPages] = useState<readonly TrackingPage[]>();

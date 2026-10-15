@@ -14,6 +14,14 @@ panes are removed. Surge hearts become markable segmented bars with approximatel
 and deliberate aligned additional tracks. Unknown/very large custom totals remain
 explicit; the existing 100-mark rendering bound is not a silent truncation.
 
+Scratchpad Encounter/Daily lists sort by action (standard, move, minor, free,
+reaction), then attack/non-utility before explicitly metadata-labeled Utility,
+then alphabetically. No Action sorts with free; immediate interrupts and
+opportunity actions sort with reactions; unrecognized actions follow known ones.
+Shared-use groups stay intact, positioned by their first sorted member, with
+members sorted by the same precedence. Item-granted powers participate too.
+Sorting verification: all 30 overview tests, web typecheck and focused lint pass.
+
 Measured row/group heights and panel/caption gaps replace fixed power-count
 limits. Encounter and daily lists share available space, shared-use groups remain
 intact, and excess rows continue on immediately adjacent pages at a separately

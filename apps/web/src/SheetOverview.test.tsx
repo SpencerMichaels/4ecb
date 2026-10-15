@@ -10,6 +10,7 @@ import {
   basicAttackReferencePage,
   overviewBasicAttackRows,
   overviewTrackingRows,
+  sortedTrackingRows,
   paginateReferences,
   referenceParts,
   summaryContinuationEntries,
@@ -28,6 +29,105 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("sorts tracking powers by action, explicit utility type, then name without mutating input", () => {
+    const rows = [
+      {
+        id: "reaction",
+        name: "A reaction",
+        action: "Immediate Reaction",
+        usage: "Daily",
+      },
+      {
+        id: "utility",
+        name: "A utility",
+        action: "Standard Action",
+        usage: "Daily",
+        utility: true,
+      },
+      { id: "z", name: "Z attack", action: "Standard", usage: "Daily" },
+      { id: "a", name: "a attack", action: "Standard", usage: "Daily" },
+      { id: "minor", name: "Minor", action: "Minor Action", usage: "Daily" },
+      { id: "move", name: "Move", action: "Move Action", usage: "Daily" },
+      { id: "free", name: "Free", action: "Free Action", usage: "Daily" },
+      { id: "none", name: "No action", action: "No Action", usage: "Daily" },
+      {
+        id: "interrupt",
+        name: "B interrupt",
+        action: "Immediate Interrupt",
+        usage: "Daily",
+      },
+      {
+        id: "opportunity",
+        name: "C opportunity",
+        action: "Opportunity Action",
+        usage: "Daily",
+      },
+      { id: "unknown", name: "Unknown", action: "", usage: "Daily" },
+    ];
+    const original = [...rows];
+    expect(sortedTrackingRows(rows).map((row) => row.id)).toEqual([
+      "a",
+      "z",
+      "utility",
+      "move",
+      "minor",
+      "free",
+      "none",
+      "reaction",
+      "interrupt",
+      "opportunity",
+      "unknown",
+    ]);
+    expect(rows).toEqual(original);
+  });
+
+  it("recognizes utility tracking powers only from explicit power and item metadata", () => {
+    const rows = overviewTrackingRows({
+      ...model,
+      powers: [
+        {
+          name: "Divine Challenge",
+          kind: "power",
+          usage: "Encounter",
+          fields: [],
+        },
+        {
+          name: "Utility",
+          kind: "power",
+          usage: "Daily",
+          fields: [{ label: "Power Type", value: "Utility" }],
+        },
+      ],
+      overview: {
+        ...model.overview!,
+        inventory: [
+          {
+            name: "Charm",
+            quantity: 1,
+            equipped: 0,
+            slots: [],
+            fields: [
+              {
+                label: "Utility Power (Daily)",
+                value: "Minor Action. Effect: Test.",
+              },
+              {
+                label: "Power",
+                value: "Utility Power (Encounter): Free Action. Effect: Test.",
+              },
+            ],
+          },
+        ],
+      },
+    });
+    expect(rows.map((row) => Boolean(row.utility))).toEqual([
+      false,
+      true,
+      true,
+      true,
+    ]);
+  });
+
   it("continues only omitted reminders in category order, retaining all benefits", () => {
     const values = [
       {
