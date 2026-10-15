@@ -1073,6 +1073,10 @@ async function checkScratchpad(client, monochrome) {
       segments:segments.length, tracks:page.querySelectorAll('.ov-surge-row').length,
       surgeGaps:segments.some(e=>parseFloat(getComputedStyle(e).marginLeft)>0),
       redundantSurgeCount:page.querySelector('.ov-scratch-surges > p').textContent.includes('/day'),
+      milestone:page.textContent.includes('Milestone'),
+      actionPointBoxes:page.querySelectorAll('.ov-action-point-count > i').length,
+      actionPointWidth:page.querySelector('.ov-action-point-count > i').getBoundingClientRect().width,
+      upperBottoms:[...page.querySelectorAll('.ov-scratch-upper > .sp-column > .sp-panel')].map(e=>e.getBoundingClientRect().bottom),
       powerWidth:page.querySelector('.ov-scratch-powers').getBoundingClientRect().width,
       contentWidth:page.querySelector('.sp-page-content').getBoundingClientRect().width,
       powerPanes:[...page.querySelectorAll('.ov-tracking-panels > .sp-panel')].map(e=>({left:e.getBoundingClientRect().left,top:e.getBoundingClientRect().top,width:e.getBoundingClientRect().width})),
@@ -1114,6 +1118,15 @@ async function checkScratchpad(client, monochrome) {
       state.powerPanes[0].width > state.powerPanes[1].width &&
       state.powerPanes[1].left > state.powerPanes[0].left,
     `Power panes must share a row with a narrower Daily pane, and surge bars have no grouping gaps: ${JSON.stringify(state)}`,
+  );
+  assert(
+    !state.milestone &&
+      state.actionPointBoxes === 1 &&
+      state.actionPointWidth >= 24 &&
+      state.actionPointWidth < 32 &&
+      state.upperBottoms.length === 2 &&
+      Math.abs(state.upperBottoms[0] - state.upperBottoms[1]) < 1,
+    `Upper panes must align with one small action-point box and no milestone tracker: ${JSON.stringify(state)}`,
   );
   assert(
     JSON.stringify(state.labels) === JSON.stringify(["13", "10", "5", "0"]),

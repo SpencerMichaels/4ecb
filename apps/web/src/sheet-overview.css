@@ -1010,6 +1010,12 @@ body:has(.sp-prototype) {
 .ov-scratch-bottom {
   margin-top: 0.15in;
 }
+.ov-scratch-upper {
+  align-items: stretch;
+}
+.ov-scratch-upper > .sp-column > .sp-panel {
+  flex: 1;
+}
 .sheet-overview
   .ov-paper[aria-label="Play scratchpad"]
   .sp-panel:not(.sp-encounter):not(.sp-daily)
@@ -1087,8 +1093,26 @@ body:has(.sp-prototype) {
   margin-top: 0.025in;
   font-size: 9pt;
 }
-.ov-scratch-records .sp-action-points {
-  margin-top: 0;
+.ov-health-trackers {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.1in;
+  margin-top: 0.04in;
+}
+.ov-action-point-count {
+  display: flex;
+  align-items: center;
+  gap: 0.08in;
+  font-size: 9pt;
+}
+.ov-action-point-count > i {
+  display: block;
+  width: 0.28in;
+  height: 0.28in;
+  border: 1px solid var(--sp-border);
+  border-radius: 3px;
 }
 .ov-effects-table {
   table-layout: fixed;

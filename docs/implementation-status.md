@@ -4,7 +4,7 @@
 
 Scratchpad working-surface redesign (2026-10-15): The product owner accepts the
 first-page summary. The approved scratchpad proposal is implemented for feedback:
-Health/action-point column beside Effect/Ends, a full-width Encounter/Daily
+Health with a single-digit action-point box beside Effect/Ends, a full-width Encounter/Daily
 tracking pair, then Treasure/consumables beside Session notes/XP. Slate pane headers, violet health
 reference cells, encounter-red/daily-gray tracking headings and explicit grayscale
 reuse the accepted visual vocabulary. Current/temp HP retain 0.7in writing boxes,
@@ -53,6 +53,14 @@ full body-width trackers and removal of the redundant surge count. The generated
 preview was reviewed. Writing-area stability checks allow less than 0.5px of
 subpixel rounding after Firefox reflows, rather than exact floating-point equality;
 overflow, row completeness and reserved-area checks are unchanged.
+The separate Action points & milestones pane is removed: milestones are not
+tracked, and Action points has one 0.28in writing box beside Death saves inside
+Health. The upper Health/Conditions panes stretch to matching bottom edges;
+power panes remain full width and the other writing-area sizes are unchanged.
+Verification: 32 overview tests, production build and focused lint pass; all
+eight overview Chromium/Firefox layout variants pass, including matching upper
+pane bottoms, exactly one small AP box and no milestone text. Generated preview
+reviewed; no full milestone suite was run for this refinement.
 Verification: 43 focused overview/layout tests, web typecheck, focused lint and
 production build pass. `node scripts/check-print.mjs --overview-only
 --firefox-scratchpad --scratchpad-preview` passes all four Chromium PDF variants

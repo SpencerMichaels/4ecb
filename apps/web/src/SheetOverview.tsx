@@ -1305,7 +1305,7 @@ function Scratchpad({
             Session / date <i />
           </span>
         </div>
-        <div className="ov-scratch-layout">
+        <div className="ov-scratch-layout ov-scratch-upper">
           <div className="sp-column ov-scratch-main ov-scratch-records">
             <Panel title="Health" icon="heart" className="ov-scratch-health">
               <Values
@@ -1330,21 +1330,18 @@ function Scratchpad({
                 </p>
                 <SurgeBar count={find(model.resources, "Healing Surges")} />
               </div>
-              <div className="sp-death-saves">
-                Death saves
-                <span>
-                  {[0, 1, 2].map((n) => (
-                    <Icon key={n} name="skull" />
-                  ))}
-                </span>
-              </div>
-            </Panel>
-            <Panel title="Action points & milestones" icon="circle">
-              <div className="sp-action-points">
-                <span>Action points</span>
-                <i />
-                <span>Milestone</span>
-                <i />
+              <div className="ov-health-trackers">
+                <div className="sp-death-saves">
+                  Death saves
+                  <span>
+                    {[0, 1, 2].map((n) => (
+                      <Icon key={n} name="skull" />
+                    ))}
+                  </span>
+                </div>
+                <div className="ov-action-point-count">
+                  Action points <i aria-label="Action point count" />
+                </div>
               </div>
             </Panel>
           </div>
