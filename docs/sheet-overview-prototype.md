@@ -104,10 +104,8 @@ identity header presents four distinct groups: Defenses, Health, Initiative, Spe
 All eleven values use matching individual soft tiles, with labels above numbers.
 Each group has a thin rounded outline and no visible group heading; semantic
 group labels remain available. Field labels use darker, slightly heavier text.
-The page-1 functional palette uses muted rust for Basic Attacks, slate blue for
-Defenses/Resistances & Weaknesses, teal for Senses/Skills/Abilities/Languages and
-Initiative/Speed, ochre for Reminders, and sage green for
-Health. Tints are limited to pane headers
+Page 1 uses one muted slate-blue accent for all pane headers and numeric groups,
+without category-specific colors. Tints are limited to pane headers
 and numeric tiles/outlines; body text and alternating table rows remain neutral.
 Monochrome mode replaces these accents with explicit grayscale values, preserving
 text-based/searchable PDF output. This palette does not recolor cards or later pages.

@@ -935,24 +935,9 @@ async function checkSummaryPresentation(client, monochrome) {
     );
   } else {
     assert(
-      new Set([accents.attack, accents.defense, accents.info]).size === 3,
-      "Attack, defense and informational panes must have distinct accents",
+      Object.values(accents).every((color) => color === "rgb(234, 240, 246)"),
+      `All summary panes and numeric groups must share the slate-blue tint: ${JSON.stringify(accents)}`,
     );
-    assert(
-      accents.info === accents.abilities && accents.info === accents.senses,
-      "Informational panes must share their accent",
-    );
-    assert(
-      accents.health !== accents.attack,
-      "Health must remain distinct from attack accents",
-    );
-    if (accents.reminders)
-      assert(
-        ![accents.attack, accents.defense, accents.info].includes(
-          accents.reminders,
-        ),
-        "Reminders must have their own accent",
-      );
   }
   assert(
     presentation.backgrounds.length > 0 &&

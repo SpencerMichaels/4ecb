@@ -2,6 +2,16 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Unified summary accent (2026-10-15): All first-page overview pane headers and
+numeric groups share muted slate-blue text, tint and separators. Category-specific
+rust, ochre, green and teal overrides are removed; layout, headings and icons carry
+the grouping instead. Body text/striped rows remain neutral, monochrome retains
+explicit grayscale, and physical power/item card usage colors are unchanged.
+This supersedes the earlier functional summary palette experiments below.
+Verification: production build and all four Chromium overview-only Letter/A4 ×
+color/monochrome checks pass, with shared slate-blue tint assertions and no
+overview overflow. Full unit/milestone gates were not rerun for this CSS change.
+
 Summary naming/color feedback (2026-10-15): The defensive-traits pane and its
 reference entry are now named Resistances & Weaknesses, reserving Defenses for
 AC/Fortitude/Reflex/Will. Senses inherits the same teal accent, tint and separator
