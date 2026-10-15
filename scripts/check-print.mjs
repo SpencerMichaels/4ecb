@@ -906,8 +906,12 @@ async function checkSummaryPresentation(client, monochrome) {
       "Attack, defense and informational panes must have distinct accents",
     );
     assert(
-      accents.info === accents.abilities && accents.info === accents.senses,
+      accents.info === accents.abilities,
       "Informational panes must share their accent",
+    );
+    assert(
+      accents.senses !== accents.info && accents.health !== accents.attack,
+      "Senses and health must remain distinct from informational and attack accents",
     );
     if (accents.reminders)
       assert(

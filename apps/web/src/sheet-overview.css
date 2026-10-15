@@ -227,12 +227,17 @@ body:has(.sp-prototype) {
   --ov-tint: #f5f0e3;
   --ov-edge: #d5c8a7;
 }
+.sheet-overview .ov-paper[aria-label="Character summary"] .ov-senses {
+  --ov-accent: #65557d;
+  --ov-tint: #f0ecf5;
+  --ov-edge: #cbbfd9;
+}
 .sheet-overview
   .ov-paper[aria-label="Character summary"]
   .ov-stat-group[aria-label="Health"] {
-  --ov-accent: #84515c;
-  --ov-tint: #f5ecef;
-  --ov-edge: #d8bec6;
+  --ov-accent: #526b45;
+  --ov-tint: #eef3e9;
+  --ov-edge: #c1cfb5;
 }
 .sheet-overview .ov-paper[aria-label="Character summary"] .sp-panel > h3 {
   color: var(--ov-accent);

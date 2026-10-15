@@ -2,6 +2,14 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Palette feedback (2026-10-15): Health changes from rose to sage green to distinguish
+it from rust-colored attacks. The separate Senses pane uses lavender rather than
+sharing the teal Skills/Abilities/Languages accent. Grayscale overrides are
+unchanged. Browser palette checks distinguish these pairs; production build and
+all four overview-only Letter/A4 × color/monochrome print checks pass with no
+overview overflow. No calculation or layout changes; the full suite was not rerun
+for this color-only adjustment.
+
 Functional summary palette / eligibility-cache invalidation (2026-10-15): Page 1
 uses muted rust for Basic Attacks, slate blue for Defensive Traits/Defenses, teal
 for informational panes and Initiative/Speed, ochre for Reminders, and soft rose
