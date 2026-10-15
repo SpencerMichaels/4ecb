@@ -447,7 +447,10 @@ function Summary({
               ["Fortitude", find(model.defenses, "Fortitude")],
               ["Reflex", find(model.defenses, "Reflex")],
               ["Will", find(model.defenses, "Will")],
-              ["Saves", overview.saves],
+              [
+                "Saves",
+                /^[+-]?0$/.test(overview.saves.trim()) ? "---" : overview.saves,
+              ],
             ]}
           />
         </section>
@@ -458,7 +461,7 @@ function Summary({
               ["Max HP", blankHP ? "" : find(model.resources, "Hit Points")],
               ["Bloodied", overview.bloodied],
               ["Surges", find(model.resources, "Healing Surges")],
-              ["Surge value", find(model.resources, "Healing Surge Value")],
+              ["Surge HP", find(model.resources, "Healing Surge Value")],
             ]}
           />
         </section>

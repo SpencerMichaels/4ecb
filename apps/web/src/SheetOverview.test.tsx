@@ -23,6 +23,28 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("shows zero saves as dashes while retaining nonzero bonuses and unknowns", () => {
+    for (const [saves, expected] of [
+      ["+0", "---"],
+      ["0", "---"],
+      ["+2", "+2"],
+      ["-1", "-1"],
+      ["—", "—"],
+    ]) {
+      const html = renderToStaticMarkup(
+        <SheetOverview
+          model={{ ...model, overview: { ...model.overview!, saves: saves! } }}
+          name="Fixture"
+          portrait={undefined}
+          paper="letter"
+          monochrome={false}
+          blankHP={false}
+        />,
+      );
+      expect(html).toContain(`<span>Saves</span><strong>${expected}</strong>`);
+      expect(html).toContain("<span>Surge HP</span>");
+    }
+  });
   it("signs nonnegative initiative without doubling signs or changing negative/unknown values", () => {
     for (const [value, expected] of [
       ["12", "+12"],
