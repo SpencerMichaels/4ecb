@@ -308,6 +308,23 @@ enhancements and require the bonus to follow the hand selection exactly. The
 ignored nine-character historical matrix remains cross-profile diagnostic
 evidence; it is not used to define these calculations.
 
+Power combat-stat selection follows native `CalcKeywords`/`IsKeyword` for
+comma-conjoined keyword predicates and `IsLimiterName` for parenthesized base/
+enchantment names. Each attack phase supplies its own target defense; power
+keywords qualify damage. Thus authored channels such as
+`implement,will:attack(Synthetic orb)` and
+`implement,Fire:damage(Synthetic orb)` contribute only to the matching implement
+variant and attack/power context. Contributions must already be applied by the
+evaluator, preserving training requirements, conditions and tier-scaled values;
+no second formula is synthesized from descriptive property names. Matching
+channels share typed bonus maxima and deduplicate contribution provenance.
+Equipment's `Weapon` category does not turn an Implement power into a Weapon
+power. Unenchanted Superior Implement bases also appear as implement variants.
+This resolves the executable rules behind Undeniable/Unerring/Unstoppable and
+Energized, whether those rules live on the base or its training feat. Their prose
+reminders are omitted, while original item rules remain available. Evaluation
+cache v8 invalidates pre-fix totals.
+
 Attack phases now retain their own ordered Hit field, optional attack-type
 override, evaluated damage components/expression, immediate damage type, and
 explicit main/off-hand role. The same damage parser and recovered exception,

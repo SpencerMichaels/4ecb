@@ -53,6 +53,10 @@ describe("equipped item property reminders", () => {
     "Deadly",
     "Distant",
     "Reaching",
+    "Energized (fire)",
+    "Undeniable",
+    "Unerring",
+    "Unstoppable",
   ])(
     "keeps %s in weapon rules rather than reminders, even with conditional prose",
     (name) => {
@@ -91,12 +95,8 @@ describe("equipped item property reminders", () => {
     ["Versatile", "Versatile"],
     ["Mounted", "Mounted"],
     ["Empowered Crit", "Empowered Crit"],
-    ["Energized (fire)", "Energized (fire)"],
     ["Forceful", "Forceful"],
     ["Shielding", "Shielding"],
-    ["Undeniable", "Undeniable"],
-    ["Unerring", "Unerring"],
-    ["Unstoppable", "Unstoppable"],
     ["Mobile", "Mobile"],
     ["Blinking", "Blinking"],
   ])(

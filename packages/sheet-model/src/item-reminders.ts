@@ -62,12 +62,8 @@ const REMINDER_PROPERTIES = new Set([
   "versatile",
   "mounted",
   "empowered crit",
-  "energized",
   "forceful",
   "shielding",
-  "undeniable",
-  "unerring",
-  "unstoppable",
   "mobile",
   "blinking",
 ]);
@@ -84,6 +80,10 @@ const REFERENCE_ONLY_PROPERTIES = new Set([
   "deadly",
   "distant",
   "reaching",
+  "energized",
+  "undeniable",
+  "unerring",
+  "unstoppable",
 ]);
 function propertyReminderPolicy(name: string): "show" | "hide" | undefined {
   const key = name

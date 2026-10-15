@@ -55,6 +55,151 @@ function combatStat(name: string, value: number): EvaluatedStat {
 }
 
 describe("power evaluation", () => {
+  it("shares typed bonus maxima across general and defense-specific implement channels", () => {
+    const typed = (name: string, value: number) => {
+      const base = combatStat(name, value);
+      return {
+        ...base,
+        contributions: base.contributions.map((c) => ({
+          ...c,
+          bonusType: "Superior Implement",
+        })),
+      };
+    };
+    const [power] = evaluatePowers({
+      level: 8,
+      activeDefinitionIds: ["POWER"],
+      overlays: [],
+      entities: [
+        entity("POWER", "Synthetic spell", "Power", {
+          Keywords: "Implement",
+          Attack: "Intelligence vs. Will",
+        }),
+        entity("ORB", "Synthetic orb", "Superior Implement", { Group: "Orb" }),
+      ],
+      inventory: [
+        {
+          id: "orb",
+          definitionIds: ["ORB"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Intelligence modifier": stat("Intelligence modifier", 4),
+        "implement:attack(Synthetic orb)": typed(
+          "implement:attack(Synthetic orb)",
+          1,
+        ),
+        "implement,will:attack(Synthetic orb)": typed(
+          "implement,will:attack(Synthetic orb)",
+          2,
+        ),
+      },
+    });
+    expect(
+      power?.variants.find((v) => v.equipmentId === "orb")?.attackBonus,
+    ).toBe(10);
+  });
+  it.each(["Will", "Reflex", "Fortitude"])(
+    "resolves implement bonuses per attack defense (%s), keyword and selected item",
+    (defense) => {
+      const entities = [
+        entity("POWER", "Synthetic paired spell", "Power", {
+          Keywords: "Arcane, Implement, Fire",
+          Attack: `Intelligence vs. ${defense}`,
+          "Attack Type": "Ranged 10",
+          Hit: "1d8 + Intelligence modifier fire damage.",
+          "Secondary Attack": "Intelligence vs. AC",
+          "Secondary Hit": "2d8 + Intelligence modifier fire damage.",
+        }),
+        entity("ORB", "Focused orb", "Superior Implement", { Group: "Orb" }),
+        entity("OTHER", "Other orb", "Superior Implement", { Group: "Orb" }),
+      ];
+      const attackKey = `implement,${defense.toLowerCase()}:attack(Focused orb)`;
+      const damageKey = "implement,Fire:damage(Focused orb)";
+      const result = evaluatePowers({
+        level: 8,
+        activeDefinitionIds: ["POWER"],
+        overlays: [],
+        entities,
+        inventory: ["ORB", "OTHER"].map((id) => ({
+          id,
+          definitionIds: [id],
+          quantity: 1,
+          equippedQuantity: id === "ORB" ? 1 : 0,
+          acquiredLevel: 1,
+        })),
+        stats: {
+          "Intelligence modifier": stat("Intelligence modifier", 4),
+          [attackKey]: combatStat(attackKey, 1),
+          [damageKey]: combatStat(damageKey, 3),
+          "implement,Cold:damage(Focused orb)": combatStat(
+            "implement,Cold:damage(Focused orb)",
+            99,
+          ),
+          "weapon,Fire:damage(Focused orb)": combatStat(
+            "weapon,Fire:damage(Focused orb)",
+            99,
+          ),
+          "implement,will:attack(Other orb)": combatStat(
+            "implement,will:attack(Other orb)",
+            2,
+          ),
+        },
+      })[0]!;
+      const focused = result.variants.find(
+        (v) => v.equipmentName === "Focused orb",
+      )!;
+      expect(focused.attackBonus).toBe(9);
+      expect(focused.attacks?.map((a) => a.attackBonus)).toEqual([9, 8]);
+      expect(focused.attacks?.map((a) => a.damage)).toEqual(["1d8+7", "2d8+7"]);
+      expect(focused.attackComponents).toContainEqual(
+        expect.objectContaining({
+          label: attackKey,
+          value: 1,
+          source: "Combat feat",
+        }),
+      );
+      expect(focused.additionalEffects ?? []).toEqual([]);
+      const other = result.variants.find(
+        (v) => v.equipmentName === "Other orb",
+      )!;
+      expect(other.attackBonus).toBe(defense === "Will" ? 10 : 8);
+      expect(other.damage).toBe("1d8+4");
+      const noFire = evaluatePowers({
+        level: 8,
+        activeDefinitionIds: ["POWER"],
+        overlays: [],
+        entities: entities.map((e) =>
+          e.id === "POWER"
+            ? entity("POWER", e.name, "Power", {
+                Keywords: "Arcane, Implement, Cold",
+                Attack: `Intelligence vs. ${defense}`,
+                Hit: "1d8 + Intelligence modifier cold damage.",
+              })
+            : e,
+        ),
+        inventory: [
+          {
+            id: "ORB",
+            definitionIds: ["ORB"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+        stats: {
+          "Intelligence modifier": stat("Intelligence modifier", 4),
+          [damageKey]: combatStat(damageKey, 3),
+        },
+      })[0]!;
+      expect(
+        noFire.variants.find((v) => v.equipmentName === "Focused orb")?.damage,
+      ).toBe("1d8+4");
+    },
+  );
   it("keeps conditional reminders and keyword info separate from totals and alternate equipment", () => {
     const conditional = (
       name: string,

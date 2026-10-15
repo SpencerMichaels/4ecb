@@ -107,6 +107,18 @@ them in one equipment-predicate module.
 
 ## Power calculation exceptions
 
+Defense/keyword-specific superior-implement bonuses are data-driven, not new
+named exceptions. In recovered `-Module-.cs`, `CalcKeywords` (around line 25835)
+splits the stat channel at `:`, treats the parenthesized suffix as a selected-item
+limiter via `IsLimiterName` (around 22734), and requires every comma-separated
+prefix token through `IsKeyword` (around 20876). `AttackKeyword` (around 25111)
+uses shared typed maxima before adding component breakdowns; damage channels
+follow `DamageKeyword`. Local content inspection confirms attack-defense and
+damage-keyword channels on superior implements and, for holy symbols, their
+training feats. The modern projection consumes those evaluated channels rather
+than adding a second property-name-derived bonus. Descriptive property records
+alone are not sufficient evidence of an executable contribution.
+
 Native power math includes special handling for:
 
 - weapon versus implement attacks and special attack-stat selection;

@@ -2,6 +2,32 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Calculated superior-implement modifiers (2026-10-15): Attack/damage projection
+now consumes comma-conjoined, item-limited stat channels using each attack's
+defense and the power's keywords. This follows recovered native `CalcKeywords`,
+`IsKeyword`, `IsLimiterName`, and shared typed maxima; no property-name-derived
+second bonus is invented. Item- and training-feat-provided rules both work,
+preserving training requirements and tier-scaled expressions. Unenchanted
+Superior Implement bases also appear as variants. Bonuses do not leak between
+inventory alternatives or from weapon expertise onto implement attacks, and
+matching channels deduplicate provenance and obey typed stacking. Undeniable,
+Unerring, Unstoppable and Energized move from manual reminders to reference-only
+traits because their encoded conditions are now resolved by the calculator.
+Evaluation cache v8 invalidates pre-fix v7 totals.
+
+Verification through `nix develop path:. -c ...`: 273 tests pass across the rules
+and sheet-model suites plus app-runtime and print-variant tests (`pnpm exec
+vitest run packages/rules-engine/src packages/sheet-model/src
+apps/web/src/app-runtime.test.ts apps/web/src/PrintPowerVariants.test.tsx`).
+Rules-engine/web typechecks, focused lint and web production build pass. The
+ignored `tmp/audit-qualified-implement-bonuses.ts` checks 42 controlled cases
+using actual local superior-implement/training/tier definitions: seven implements,
+levels 8/18/28, trained/untrained. These are local-content calculation diagnostics
+with synthetic spells, not original-application character-export goldens. Public
+fixtures are synthetic; proprietary content remains ignored. The earlier
+sheet-model test-file typecheck limitation remains separately recorded; no full
+milestone/physical-print gate was run, and M5.6 remains open.
+
 Named weapon/implement reminder classification (2026-10-15): Explicit
 show/reference-only trait sets replace prose-trigger guessing for the known
 weapon/implement property families. Handling/loading/thrown/reach/size traits and

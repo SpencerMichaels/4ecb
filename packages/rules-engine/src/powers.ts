@@ -179,7 +179,9 @@ function loadouts(
       return (
         /(implement|holy symbol|ki focus|orb|rod|staff|tome|totem|wand)/i.test(
           itemType,
-        ) || /^(holy symbol|ki focus)$/i.test(entity.name)
+        ) ||
+        /^(holy symbol|ki focus)$/i.test(entity.name) ||
+        key(entity.type) === "superior implement"
       );
     });
     if (weapon === undefined && implement === undefined) continue;
@@ -433,6 +435,11 @@ function combatStatComponents(
   kind: "weapon" | "implement",
   fieldName: "attack" | "damage",
   attackType: string | undefined,
+  context: {
+    keywords: readonly string[];
+    defense?: string;
+    byId: ReadonlyMap<string, ContentEntity>;
+  },
 ): PowerComponent[] {
   const suffix = `${kind}:${fieldName}`;
   const attackTypeTags = (() => {
@@ -450,8 +457,30 @@ function combatStatComponents(
     key(powerName).replace(/\s+attack$/, ""),
     ...attackTypeTags,
   ].filter(Boolean);
+  const tags = new Set([
+    ...equipment.tags.filter((tag) => tag !== "weapon" && tag !== "implement"),
+    ...powerTags,
+    ...context.keywords.map(key),
+    key(context.defense ?? ""),
+  ]);
   const relevant = Object.entries(stats).filter(([name]) => {
     const normalized = key(name);
+    // Native CalcKeywords/IsKeyword: comma qualifiers are conjunctive;
+    // parenthesized limits identify the selected base/enchantment, not any
+    // other implement in the inventory. The evaluated contribution has already
+    // enforced training/prerequisites, conditions and numeric expressions.
+    const qualified = normalized.match(/^(.*):(attack|damage)(?:\((.*)\))?$/);
+    if (
+      qualified &&
+      qualified[2] === fieldName &&
+      qualified[1]!.split(",").every((tag) => tags.has(key(tag))) &&
+      (qualified[3] === undefined ||
+        equipment.definitionIds.some(
+          (id) => key(context.byId.get(key(id))?.name ?? "") === qualified[3],
+        ))
+    )
+      return true;
+    if (qualified?.[3] !== undefined) return false;
     if (normalized === suffix) return true;
     if (normalized.endsWith(`,${suffix}`)) {
       const qualifier = normalized.slice(0, -suffix.length - 1);
@@ -473,29 +502,55 @@ function combatStatComponents(
     return equipment.equipped && normalized.endsWith(`-${suffix}`);
   });
   const seen = new Set<string>();
-  return relevant.flatMap(([name, stat]) => {
-    if (stat.contributions.length === 0)
-      return typeof stat.value === "number" && stat.value !== 0
-        ? [{ label: name, value: stat.value }]
-        : [];
-    return stat.contributions.flatMap((contribution) => {
-      if (
-        !contribution.applied ||
-        contribution.numericValue === undefined ||
-        seen.has(contribution.id)
-      )
-        return [];
-      seen.add(contribution.id);
-      return [
-        {
-          label: name,
-          value: contribution.numericValue,
-          source: contribution.providerName,
-          provenanceId: contribution.id,
-        },
-      ];
+  const components: { component: PowerComponent; bonusType?: string }[] =
+    relevant.flatMap(([name, stat]) => {
+      if (stat.contributions.length === 0)
+        return typeof stat.value === "number" && stat.value !== 0
+          ? [{ component: { label: name, value: stat.value } }]
+          : [];
+      return stat.contributions.flatMap((contribution) => {
+        if (
+          !contribution.applied ||
+          contribution.numericValue === undefined ||
+          seen.has(contribution.id)
+        )
+          return [];
+        seen.add(contribution.id);
+        return [
+          {
+            ...(contribution.bonusType
+              ? { bonusType: key(contribution.bonusType) }
+              : {}),
+            component: {
+              label: name,
+              value: contribution.numericValue,
+              source: contribution.providerName,
+              provenanceId: contribution.id,
+            },
+          },
+        ];
+      });
     });
-  });
+  // Native AttackKeyword/DamageKeyword share typed maxima across matching
+  // channels; qualifying the same type more narrowly must not stack it twice.
+  const maxima = new Map<string, (typeof components)[number]>();
+  for (const entry of components) {
+    if (!entry.bonusType) continue;
+    const old = maxima.get(entry.bonusType);
+    const value = entry.component.value;
+    if (
+      !old ||
+      (value >= 0 &&
+        (old.component.value < 0 || value > old.component.value)) ||
+      (value < 0 && old.component.value < 0 && value < old.component.value)
+    )
+      maxima.set(entry.bonusType, entry);
+  }
+  return components
+    .filter(
+      (entry) => !entry.bonusType || maxima.get(entry.bonusType) === entry,
+    )
+    .map(({ component }) => component);
 }
 
 function uniquePowerComponents(
@@ -1105,6 +1160,7 @@ export function evaluatePowers(input: {
             weaponPower ? "weapon" : "implement",
             "attack",
             phaseAttackType,
+            { keywords, defense, byId },
           ),
         );
         if (implementPower && equipment.weaponDefinition)
@@ -1116,6 +1172,7 @@ export function evaluatePowers(input: {
               "weapon",
               "attack",
               phaseAttackType,
+              { keywords, defense, byId },
             ).filter(({ provenanceId }) =>
               provenanceId?.endsWith(":legacy-focused-expertise"),
             ),
@@ -1274,6 +1331,7 @@ export function evaluatePowers(input: {
               weaponPower ? "weapon" : "implement",
               "damage",
               attackType,
+              { keywords, byId },
             ),
           );
         if (
@@ -1300,6 +1358,7 @@ export function evaluatePowers(input: {
               "weapon",
               "damage",
               attackType,
+              { keywords, byId },
             ),
           );
         const powerDamageBonus = Number(

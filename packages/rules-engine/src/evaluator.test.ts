@@ -72,6 +72,111 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it.each([
+    [false, false],
+    [true, false],
+    [false, true],
+    [true, true],
+  ])(
+    "gates superior-implement rules on training (%s), including feat-owned bonuses (%s)",
+    (trained, featOwned) => {
+      const entities = [
+        entity("ROOT", "Synthetic ability modifier", "Level", {
+          rules: [
+            rule("statadd", { name: "Intelligence modifier", value: "+4" }, 0),
+          ],
+        }),
+        entity("ORB", "Synthetic focus orb", "Superior Implement", {
+          specifics: {
+            Group: "Orb",
+            Properties: "Undeniable, Energized (fire)",
+          },
+          rules: [
+            rule(
+              "statadd",
+              {
+                name: "implement,will:attack(Synthetic focus orb)",
+                value: "+1",
+                type: "Superior Implement",
+                requires: "Synthetic orb training",
+              },
+              0,
+            ),
+            rule(
+              "statadd",
+              {
+                name: "implement,Fire:damage(Synthetic focus orb)",
+                value: "+2",
+                type: "Superior Implement",
+                requires: "Synthetic orb training",
+              },
+              1,
+            ),
+          ],
+        }),
+        entity("TRAINING", "Synthetic orb training", "Feat"),
+        entity("SPELL", "Synthetic flame", "Power", {
+          specifics: {
+            Keywords: "Arcane, Implement, Fire",
+            Attack: "Intelligence vs. Will",
+            Hit: "1d8 + Intelligence modifier fire damage.",
+          },
+        }),
+      ];
+      const evaluated = evaluateCharacter(
+        {
+          level: 8,
+          baseAbilities: { Intelligence: 18 },
+          occurrences: [
+            rootOccurrence,
+            {
+              id: "spell",
+              definitionId: "SPELL",
+              acquiredLevel: 1,
+              kind: "grabbag",
+            },
+            ...(trained
+              ? [
+                  {
+                    id: "training",
+                    definitionId: "TRAINING",
+                    acquiredLevel: 1,
+                    kind: "grabbag" as const,
+                  },
+                ]
+              : []),
+          ],
+          inventory: [
+            {
+              id: "orb",
+              definitionIds: ["ORB"],
+              quantity: 1,
+              equippedQuantity: 1,
+              acquiredLevel: 1,
+            },
+          ],
+          candidateDetailLevels: [],
+        },
+        featOwned
+          ? entities.map((e) =>
+              e.id === "ORB"
+                ? { ...e, rules: [] }
+                : e.id === "TRAINING"
+                  ? {
+                      ...e,
+                      rules: entities.find((item) => item.id === "ORB")!.rules,
+                    }
+                  : e,
+            )
+          : entities,
+      );
+      const variant = evaluated.powers
+        .find((p) => p.definitionId === "SPELL")
+        ?.variants.find((v) => v.equipmentId === "orb");
+      expect(variant?.attackBonus).toBe(trained ? 9 : 8);
+      expect(variant?.damage).toBe(trained ? "1d8+6" : "1d8+4");
+    },
+  );
   it("makes the shared deity choice required for covered classes and hybrids", () => {
     const deityRule = rule("select", { type: "Deity", optional: "true" }, 0);
     const evaluateFor = (selectedClass: ContentEntity) =>

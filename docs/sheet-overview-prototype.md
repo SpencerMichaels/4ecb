@@ -75,11 +75,13 @@ hearts are paper affordances, not interactive Play state.
 Named weapon/implement reminder policy (2026-10-15): Named properties use explicit
 show/reference-only sets in `item-reminders.ts`, rather than trigger-word matching
 alone. Show Brutal, Defensive, High Crit, Versatile, Mounted, Empowered Crit,
-Energized (all damage-type variants), Forceful, Shielding, Undeniable, Unerring,
-Unstoppable, Mobile and Blinking. Keep Off-hand, Heavy/Light Thrown, Load
+Forceful, Shielding, Mobile and Blinking. Keep Off-hand, Heavy/Light Thrown, Load
 Free/Minor, Reach, Small, Stout, Accurate, Deadly, Distant and Reaching in the
 weapon reference/card rules, not reminders: they describe handling, targeting
-geometry or unconditional statistics rather than situational effects to track.
+geometry or unconditional statistics. Undeniable, Unerring, Unstoppable and
+Energized (all damage-type variants) are also reference-only: their conditions
+are known from the attack defense/power keywords, so authored item- or training-
+provided bonus rules feed calculated totals rather than manual reminders.
 Numbered properties retain their values; descriptions must still come from
 authored content. Unknown custom traits and freeform enchanted-item Property
 paragraphs retain the conservative actionability heuristic. Filtering affects

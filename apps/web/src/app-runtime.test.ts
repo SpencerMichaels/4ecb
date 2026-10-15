@@ -184,6 +184,7 @@ describe("application content runtime", () => {
   it.each([
     "evaluated-character-v3-2026-09-17",
     "evaluated-character-v6-2026-10-14-weapon-property-values",
+    "evaluated-character-v7-2026-10-15-weapon-eligibility",
   ])(
     "does not reuse older power-projection evaluations (%s)",
     async (oldVersion) => {
