@@ -16,7 +16,9 @@ full names, score, modifier and modifier plus rounded-down half level. Shared
 headings use Ability/Score/Modifier/+½ level; four equal-width columns replace
 slash expressions and repeated legends. Browser measurements confirm equal
 column widths (within subpixel rounding), including no cell overflow on Letter/A4.
-Skills use two columns and trained-row shading. Feat reminders occupy spare left-column space.
+Skills use two name-first columns followed by bonuses. Ability/skill tables have
+alternating row fills; trained skills retain alternating blue shades distinct
+from untrained rows. Feat reminders occupy spare left-column space.
 Health uses four equal HP/bloodied/surges/surge-value cells. Saving throws sit
 in a fifth label-first defense cell (Saves); Fortitude/Reflex use full names.
 Movement/awareness matches Health's four-cell row, with labels above values and
@@ -29,7 +31,8 @@ health, skulls replace death-save dots, the large heading/rest field are removed
 and the Channel Divinity example retains each power's action icon. Feature cards
 are grouped by category; the power index shows levels or nonlevel origins.
 Verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/prototypes/SheetPrototype.test.tsx`
-passes 6 render tests; web typecheck and prototype lint pass. In-app browser
+passes 7 focused render/style tests; web typecheck and prototype lint pass at the
+ability-table checkpoint. In-app browser
 review confirms all four fixture pages stay above their footers with no horizontal
 page overflow on Letter (minimum clearance 49 px) and A4 (minimum 116 px).
 Monochrome toggling is confirmed visually. Browser print/PDF output and arbitrary

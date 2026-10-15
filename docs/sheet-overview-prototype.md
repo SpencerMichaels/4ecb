@@ -24,8 +24,10 @@ physical card layout, stored characters, settings and evaluation are unchanged.
    list with a prominent adjacent Languages panel, conditional/ally-facing reminders and abbreviated feat
    reminders. Mutable values point to the scratchpad instead of scattering
    writing boxes throughout the reference page.
-   Skills use two alphabetically ordered columns, with trained rows shaded and
-   a matching swatch legend. Ability columns have equal widths and consistent padding;
+   Skills use two alphabetically ordered, name-first columns followed by their
+   bonuses and governing abilities. Both skill and ability tables have subtle
+   alternating row fills. Trained skills retain a blue tint with two alternating
+   shades and a matching swatch legend. Ability columns have equal widths and consistent padding;
    the last bonus includes the modifier plus rounded-down half level. Health has four equal cells (HP, bloodied, surges, surge
    value). Defenses has five label-first cells, including Saves and full Fortitude/
    Reflex labels. Movement/awareness uses a matching four-cell row; Speed has no

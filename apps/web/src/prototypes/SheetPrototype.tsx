@@ -268,8 +268,8 @@ function Summary() {
                         className={trained ? "is-trained" : undefined}
                         aria-label={`${name}, ${trained ? "trained" : "untrained"}`}
                       >
-                        <td className="sp-skill-total">{total}</td>
                         <th scope="row">{name}</th>
+                        <td className="sp-skill-total">{total}</td>
                         <td className="sp-skill-ability">{ability}</td>
                       </tr>
                     ))}

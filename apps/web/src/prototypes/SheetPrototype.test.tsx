@@ -1,8 +1,24 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { abilityCheckBonus, SheetPrototype } from "./SheetPrototype";
 
 describe("isolated sheet design prototype", () => {
+  it("leads skill rows with their names and stripes tables without losing trained tint", () => {
+    const markup = renderToStaticMarkup(<SheetPrototype />);
+    expect(markup).toContain(
+      '<th scope="row">Athletics</th><td class="sp-skill-total">+11</td>',
+    );
+    const styles = readFileSync(
+      new URL("./sheet-prototype.css", import.meta.url),
+      "utf8",
+    );
+    expect(styles).toContain(".sp-ability-table tbody tr:nth-child(even)");
+    expect(styles).toContain(".sp-skill-table tbody tr:nth-child(even)");
+    expect(styles).toContain(
+      ".sp-skill-table tbody tr.is-trained:nth-child(even)",
+    );
+  });
   it("provides all four reference surfaces without real character data", () => {
     const markup = renderToStaticMarkup(<SheetPrototype />);
     for (const id of ["summary", "scratchpad", "features", "record"])

@@ -298,6 +298,10 @@ body:has(.sp-prototype) {
 .sp-ability-table tbody tr:last-child > * {
   border-bottom: 0;
 }
+.sp-ability-table tbody tr:nth-child(even),
+.sp-skill-table tbody tr:nth-child(even) {
+  background: #f0f3f5;
+}
 .sp-summary-grid {
   display: grid;
   grid-template-columns: 1.25fr 1fr;
@@ -395,6 +399,7 @@ body:has(.sp-prototype) {
   width: 0.26in;
   font-size: 11pt;
   font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 .sp-skill-table .sp-skill-total {
   padding-right: 0.05in;
@@ -404,8 +409,11 @@ body:has(.sp-prototype) {
   text-align: right;
   color: var(--sp-muted);
 }
-.sp-skill-table .is-trained {
+.sp-skill-table tbody tr.is-trained {
   background: #dbe6ee;
+}
+.sp-skill-table tbody tr.is-trained:nth-child(even) {
+  background: #cbdce8;
 }
 .sp-trained-swatch {
   display: inline-block;
