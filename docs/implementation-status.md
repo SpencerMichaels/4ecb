@@ -32,6 +32,8 @@ areas and the segmented surge bar are unchanged.
 Verification: 32 overview tests and production build pass; the refreshed-build
 overview print check passes Letter/A4 in color/monochrome with no overflow,
 including assertions for four health cells and left-grouped death-save skulls.
+Page 1 ability names use regular weight, matching the other left-column table
+labels; this isolated CSS adjustment does not alter values or layout structure.
 
 Measured row/group heights and panel/caption gaps replace fixed power-count
 limits. Encounter and daily lists share available space, shared-use groups remain

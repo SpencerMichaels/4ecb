@@ -323,7 +323,7 @@ body:has(.sp-prototype) {
   white-space: nowrap;
   color: var(--sp-ink);
   font-size: 8.5pt;
-  font-weight: 700;
+  font-weight: 400;
 }
 .sheet-overview .ov-ability-section .sp-ability-table tbody th {
   text-align: left;
