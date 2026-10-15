@@ -538,14 +538,18 @@ function Summary({
               </table>
             </Panel>
             <Panel title="Languages" icon="race" className="ov-languages-panel">
-              <ul className="ov-language-list">
-                {(
-                  model.features.find((group) => group.group === "Language")
-                    ?.entries ?? []
-                ).map((entry, index) => (
-                  <li key={index}>{entry.label}</li>
-                ))}
-              </ul>
+              <table className="ov-language-table" aria-label="Languages">
+                <tbody>
+                  {(
+                    model.features.find((group) => group.group === "Language")
+                      ?.entries ?? []
+                  ).map((entry, index) => (
+                    <tr key={index}>
+                      <th scope="row">{entry.label}</th>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
               {!model.features.find((group) => group.group === "Language")
                 ?.entries.length ? (
                 <p>Not recorded</p>

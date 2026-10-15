@@ -272,7 +272,7 @@ describe("real-data sheet overview", () => {
       .split('class="sp-panel sp-skills-panel"')[0]!;
     expect(abilitySection).toContain(">Languages</h3>");
     expect(abilitySection).toContain(
-      '<ul class="ov-language-list"><li>Common</li><li>Draconic</li></ul>',
+      '<table class="ov-language-table" aria-label="Languages"><tbody><tr><th scope="row">Common</th></tr><tr><th scope="row">Draconic</th></tr></tbody></table>',
     );
     const skills = right.split(">Skills</h3>")[1]!.split(">Languages</h3>")[0]!;
     expect(skills).toContain('<span class="ov-passive-value">(18)</span> +8');

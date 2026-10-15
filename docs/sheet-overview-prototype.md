@@ -93,9 +93,11 @@ then bare level (`Dwarf Paladin 7`). The redundant first-page running header and
 full-width identity separator are omitted; later-page running headers remain.
 Passive Insight and Perception precede their active skill bonuses, e.g.
 `Perception (25) +15`, not as separate rows. Vision remains in Skills.
-Languages form a vertical list in a narrow panel to the right of Abilities;
-Skills and Basic attacks follow below. Initiative/Speed share one soft header
-background with a subtle internal divider rather than isolated tiles. The unified
+Languages form a single-column striped table in a narrow panel to the right of
+Abilities, using the Basic Attacks row styling. Skills retain alternating row
+backgrounds without inter-cell borders. Initiative/Speed retain separate soft
+header tiles; moving other numeric groups into the header remains under review.
+The unified
 summary, scratchpad and reference heading is now simply **Reminders**.
 Header follow-up verification: 14 focused render tests, lint, production build,
 and the overview-only Letter/A4 color/monochrome PDF matrix pass with no overview
