@@ -25,6 +25,13 @@ Scratchpad item-power names omit enhancement suffixes and parenthetical
 heroic/paragon/epic tiers; full item names remain in the reference index and
 underlying character data. The compact-name regression brings overview coverage
 to 31 passing tests; web typecheck passes.
+Scratchpad Health now mirrors the summary's four reference values (Max HP,
+Bloodied, Surges, Surge HP) with tighter cell padding. Death-save skulls sit
+beside their label rather than at the opposite edge of the pane; HP writing
+areas and the segmented surge bar are unchanged.
+Verification: 32 overview tests and production build pass; the refreshed-build
+overview print check passes Letter/A4 in color/monochrome with no overflow,
+including assertions for four health cells and left-grouped death-save skulls.
 
 Measured row/group heights and panel/caption gaps replace fixed power-count
 limits. Encounter and daily lists share available space, shared-use groups remain

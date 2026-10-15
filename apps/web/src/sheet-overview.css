@@ -1015,14 +1015,14 @@ body:has(.sp-prototype) {
   border-bottom-color: #b9cbdc;
 }
 .ov-scratch-health-values {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.05in;
 }
 .ov-scratch-health-values > div {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0.045in;
+  padding: 0.03in;
   border: 0;
   border-radius: 3px;
   color: #65557d;
@@ -1087,7 +1087,7 @@ body:has(.sp-prototype) {
 }
 .ov-scratch-health .sp-death-saves {
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   margin-top: 0.025in;
   font-size: 9pt;

@@ -1307,6 +1307,7 @@ function Scratchpad({
                     blankHP ? "" : find(model.resources, "Hit Points"),
                   ],
                   ["Bloodied", model.overview!.bloodied],
+                  ["Surges", find(model.resources, "Healing Surges")],
                   ["Surge HP", find(model.resources, "Healing Surge Value")],
                 ]}
               />

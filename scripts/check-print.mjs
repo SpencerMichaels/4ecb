@@ -1079,6 +1079,9 @@ async function checkScratchpad(client, monochrome) {
       obsolete:page.textContent.includes('Quick reference')||page.textContent.includes('Reminders'),
       header:getComputedStyle(page.querySelector('.ov-scratch-health > h3')).backgroundColor,
       health:getComputedStyle(page.querySelector('.ov-scratch-health-values > div')).backgroundColor,
+      healthCells:page.querySelectorAll('.ov-scratch-health-values > div').length,
+      deathSaveGap:page.querySelector('.sp-death-saves > span').getBoundingClientRect().left-page.querySelector('.sp-death-saves').getBoundingClientRect().left,
+      deathSaveAlignment:getComputedStyle(page.querySelector('.sp-death-saves')).justifyContent,
       surgeHP:page.querySelector('.ov-scratch-health-values > div:last-child strong').textContent,
     };
   })()`,
@@ -1090,6 +1093,12 @@ async function checkScratchpad(client, monochrome) {
   assert(
     state.segments === 13 && state.tracks === 1 && state.segmentWidth >= 14,
     `13 surges must fit one markable segmented bar: ${JSON.stringify(state)}`,
+  );
+  assert(
+    state.healthCells === 4 &&
+      state.deathSaveAlignment === "flex-start" &&
+      state.deathSaveGap < 120,
+    `Scratchpad health needs four compact reference cells and skulls beside the death-save label: ${JSON.stringify(state)}`,
   );
   assert(
     JSON.stringify(state.labels) === JSON.stringify(["13", "10", "5", "0"]),

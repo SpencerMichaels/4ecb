@@ -29,6 +29,27 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("matches scratchpad health reference values to the four summary cells", () => {
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={model}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const cells = html
+      .split('class="sp-values ov-scratch-health-values"')[1]!
+      .split('<div class="sp-hp-writing">')[0]!;
+    expect(
+      [...cells.matchAll(/<span>(.*?)<\/span>/g)].map((match) => match[1]),
+    ).toEqual(["Max HP", "Bloodied", "Surges", "Surge HP"]);
+    expect(cells).toContain(
+      `<span>Surges</span><strong>${model.resources.find((value) => value.label === "Healing Surges")!.value}</strong>`,
+    );
+  });
   it("sorts tracking powers by action, explicit utility type, then name without mutating input", () => {
     const rows = [
       {
