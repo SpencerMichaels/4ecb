@@ -10,7 +10,7 @@ reference cells, encounter-red/daily-gray tracking headings and explicit graysca
 reuse the accepted visual vocabulary. Current/temp HP retain 0.7in writing boxes,
 temporary effects six 0.42in rows. Redundant quick-reference/two-short-reminder
 panes are removed. Surge hearts become markable segmented bars with approximately
-4mm minimum segments, sparse five-remaining labels above ten surges, endpoints
+4mm minimum segments, remaining-count labels inside every box
 and deliberate aligned additional tracks. Unknown/very large custom totals remain
 explicit; the existing 100-mark rendering bound is not a silent truncation.
 
@@ -34,8 +34,8 @@ overview print check passes Letter/A4 in color/monochrome with no overflow,
 including assertions for four health cells and left-grouped death-save skulls.
 Page 1 ability names use regular weight, matching the other left-column table
 labels; this isolated CSS adjustment does not alter values or layout structure.
-Surge bars are continuous at all counts; sparse number labels supply the
-five-surge grouping without visual gaps. Encounter and Daily panes share a row,
+Surge bars are continuous at all counts, with every box numbered from the total
+down to one and no visual grouping gaps. Encounter and Daily panes share a row,
 across the full page body, with Encounter receiving 1.65 times Daily's width.
 A sole pane fills the available
 width; containers below 3.6in fall back to stacked panes. Pagination measures the
@@ -77,14 +77,17 @@ Letter/A4 color/monochrome variants and was visually reviewed. Assertions requir
 the backing/connector to match the reference-cell color. No full unit/milestone
 suite rerun for these markup/style refinements.
 Surge numbers now sit inside their boxes, removing the extra label strip below.
-Short bars label each box; longer bars label the starting total, multiples of
-five and the last box (one remaining), with no separate zero boundary label.
+All bars label each box, counting down to the last box (one remaining), with no
+separate zero boundary label; sparse numbering was removed after visual feedback.
 The connector now spans the full width of the Surges reference cell rather than
 a thin stem; the bar's backing has even vertical padding.
 Verification: all 11 focused layout/surge tests and production build pass. Four
 Chromium overview variants pass with assertions that labels stay within boxes
 and connector width matches the Surges cell; the generated preview was reviewed.
 Firefox/full milestone suites were not rerun for this refinement.
+The subsequent every-box numbering change passes all 11 focused surge/layout
+tests; its print expectation is updated, with no full print rerun for this
+text-only follow-up.
 Verification: 43 focused overview/layout tests, web typecheck, focused lint and
 production build pass. `node scripts/check-print.mjs --overview-only
 --firefox-scratchpad --scratchpad-preview` passes all four Chromium PDF variants

@@ -97,7 +97,7 @@ describe("segmented surge bar", () => {
         "ov-surge-group",
       );
   });
-  it("keeps 13 surges on one track and labels remaining boundaries sparsely", () => {
+  it("keeps 13 surges on one track and numbers every box", () => {
     const html = renderToStaticMarkup(<SurgeBar count="13" />);
     expect(html.match(/class="ov-surge-segment/g)).toHaveLength(13);
     expect(html.match(/class="ov-surge-row"/g)).toHaveLength(1);
@@ -105,7 +105,7 @@ describe("segmented surge bar", () => {
       [...html.matchAll(/class="ov-surge-label[^\"]*">(\d+)<\/small>/g)].map(
         (m) => Number(m[1]),
       ),
-    ).toEqual([13, 10, 5, 1]);
+    ).toEqual([13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
   });
   it("numbers each box for short bars", () => {
     const html = renderToStaticMarkup(<SurgeBar count="3" />);

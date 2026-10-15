@@ -40,15 +40,9 @@ export function SurgeBar({ count }: { count: string }) {
             }}
             key={rowIndex}
           >
-            {row.map((remaining, index) => (
+            {row.map((remaining) => (
               <div className="ov-surge-segment" key={remaining}>
-                {total <= 10 ||
-                remaining === total ||
-                index === 0 ||
-                index === row.length - 1 ||
-                remaining % 5 === 0 ? (
-                  <small className="ov-surge-label">{remaining}</small>
-                ) : null}
+                <small className="ov-surge-label">{remaining}</small>
               </div>
             ))}
           </div>

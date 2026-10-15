@@ -1141,8 +1141,9 @@ async function checkScratchpad(client, monochrome) {
     `Upper panes must align with one small action-point box and no milestone tracker: ${JSON.stringify(state)}`,
   );
   assert(
-    JSON.stringify(state.labels) === JSON.stringify(["13", "10", "5", "1"]),
-    "Longer surge bars need sparse remaining-count labels inside the boxes",
+    JSON.stringify(state.labels) ===
+      JSON.stringify(Array.from({ length: 13 }, (_, i) => 13 - i)),
+    "Every surge box must display its remaining count",
   );
   assert(
     state.writingHeight >= 66 &&
