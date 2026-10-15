@@ -2040,6 +2040,35 @@ legacy parity: recovered `BuildSpecifics` enumerates the fields, and
 `RulesElementSpecificIsHidden` returns false. Local metadata confirms the parent
 selection/category relationship for Avenger's Censure and Divine Covenant.
 
+### D078 — Integrate the approved printed overview without mutable Play state
+
+Status: accepted (2026-10-14).
+
+The production print preview adopts the reviewed summary/scratchpad design.
+One summary prioritizes defenses, health, awareness and basic attacks, with
+abilities/skills/languages adjacent. The paper scratchpad centralizes mutable
+writing spaces. Full selected feature/feat rules, equipment, power indexes and
+notes flow through measured two-column reference pages, preserving content and
+marking continuations. The fixed-size physical cards are unchanged.
+
+Keep full feature text, prerequisites and user-facing fields distinct from
+authored short descriptions in the sheet model. Use exact definition IDs, not
+name-only corpus joins; retain missing-rule/source boundaries explicitly.
+Model-derived ability checks and training do not create a second React evaluator.
+Inventory retains explicit slots and hidden-card items; unknown slots are labelled.
+
+Channel Divinity's explicit keyword establishes its scratchpad grouping. Other
+shared allowances must have comparable evidence before grouping. Reminders reuse
+authored conditional/ally-facing class/racial/feat text, equipped item properties
+and existing Additional Effects, prioritizing ally-facing entries. This display
+heuristic is not exhaustive mechanical inference; full descriptions remain in
+references. Bound optional summary content, never silently discard detail rules.
+
+Tracking hearts, skulls, usage boxes, AP and XP are printable affordances only;
+no persisted PlayState or character mutation is introduced. Real-character
+feedback continues under M5.6. Overview-only PDF diagnostics supplement, but do
+not relax, the existing dense physical-card overflow assertion.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

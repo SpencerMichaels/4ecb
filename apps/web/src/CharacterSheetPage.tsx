@@ -58,6 +58,7 @@ import {
   type PowerCardPresentation,
 } from "./PowerCardPresentation";
 import { Prose } from "./Prose";
+import { SheetOverview } from "./SheetOverview";
 import { powerTextAtLevel } from "./power-level-text";
 
 const characters = new CharacterRepository();
@@ -1013,11 +1014,6 @@ export function CharacterSheetPage({
     });
     setCharacter(updated);
   }
-  const hp = character.sheetSettings.blankHitPoints
-    ? model.resources.map((value) =>
-        value.label === "Hit Points" ? { ...value, value: "" } : value,
-      )
-    : model.resources;
   const characterName =
     character.snapshot.details.name || character.title || "Unnamed character";
   const identitySummary = model.identity
@@ -1369,131 +1365,14 @@ export function CharacterSheetPage({
         </section>
       </div>
 
-      <article className="print-sheet print-page summary-sheet print-only">
-        <header className="sheet-title">
-          <div className="sheet-title-identity">
-            {character.portrait === undefined ? null : (
-              <PortraitImage
-                className="sheet-portrait"
-                name={characterName}
-                portrait={character.portrait}
-              />
-            )}
-            <div>
-              <p className="eyebrow">Character sheet</p>
-              <h2>{characterName}</h2>
-            </div>
-          </div>
-          <p>{identitySummary}</p>
-        </header>
-        <section className="identity-block">
-          <ValueList values={model.identity} />
-        </section>
-        <div className="print-dashboard">
-          <div className="print-dashboard-column">
-            <section className="print-panel print-abilities-panel">
-              <h3>Ability scores</h3>
-              <ValueList values={model.abilities} />
-            </section>
-            <section className="print-panel print-resources-panel">
-              <h3>Health &amp; resources</h3>
-              <ValueList values={hp} />
-            </section>
-          </div>
-          <div className="print-dashboard-column">
-            <section className="print-panel print-defenses-panel">
-              <h3>Defenses</h3>
-              <ValueList values={model.defenses} className="large-values" />
-            </section>
-            <section className="print-panel print-senses-panel">
-              <h3>Movement &amp; senses</h3>
-              <ValueList values={model.senses} />
-            </section>
-          </div>
-          <section className="print-panel print-skills-panel">
-            <h3>Skills</h3>
-            <ValueList values={model.skills} />
-          </section>
-          <section className="print-panel print-features-panel">
-            <h3>Features &amp; feats</h3>
-            {model.features.map((group) => (
-              <div className="print-feature-index" key={group.group}>
-                <h4>{group.group}</h4>
-                <p>{group.entries.map((entry) => entry.label).join(" · ")}</p>
-              </div>
-            ))}
-          </section>
-        </div>
-      </article>
-
-      <article className="print-sheet print-page reference-sheet print-only">
-        <header className="sheet-title compact-sheet-title">
-          <div>
-            <p className="eyebrow">Character reference</p>
-            <h2>{characterName}</h2>
-          </div>
-          <p>{identitySummary}</p>
-        </header>
-        <div className="print-reference-columns">
-          <div>
-            <section className="print-panel">
-              <h3>Power index</h3>
-              <ul className="print-index-list">
-                {model.powers.map((power) => (
-                  <li key={power.id ?? power.name}>
-                    <strong>{power.name}</strong>
-                    <span>{power.usage ?? power.actionType}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-            <section className="print-panel">
-              <h3>Equipment</h3>
-              <ul className="print-index-list">
-                {model.equipment.map((item) => (
-                  <li key={`${item.label}-${item.value}`}>
-                    <strong>{item.label}</strong>
-                    <span>{item.value}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-            {model.learnedReferences.length === 0 ? null : (
-              <section className="print-panel">
-                <h3>Rituals &amp; practices</h3>
-                <ul className="print-index-list">
-                  {model.learnedReferences.map((reference) => (
-                    <li
-                      key={`${reference.kind}-${reference.id ?? reference.name}`}
-                    >
-                      <strong>{reference.name}</strong>
-                      <span>{reference.fields[0]?.value}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-          </div>
-          <div className="print-notes-column">
-            {character.portrait === undefined ? null : (
-              <PortraitImage
-                className="print-reference-portrait"
-                name={characterName}
-                portrait={character.portrait}
-              />
-            )}
-            {model.notes.map((note) => (
-              <section
-                className="print-panel print-note-panel"
-                key={note.label}
-              >
-                <h3>{note.label}</h3>
-                <p>{note.value}</p>
-              </section>
-            ))}
-          </div>
-        </div>
-      </article>
+      <SheetOverview
+        model={model}
+        name={characterName}
+        portrait={character.portrait}
+        paper={character.sheetSettings.paper}
+        monochrome={character.sheetSettings.monochrome}
+        blankHP={character.sheetSettings.blankHitPoints}
+      />
 
       {printCardPages.map((page, pageIndex) => (
         <section

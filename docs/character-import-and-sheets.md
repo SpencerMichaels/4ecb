@@ -290,6 +290,15 @@ usage, attacks, and damage still render, but rules text can be incomplete.
 
 ## Sheet and print behavior
 
+The printed overview follows D078: one combat summary, a paper scratchpad with
+usage continuations when needed, then measured full-description references.
+`CharacterSheetModel.overview` preserves feature summaries and full rules as
+distinct values, training, ability checks, explicit inventory slots and reminder
+candidates. Both evaluated and legacy-cache projections supply it; recovery
+pages retain their source warning. The React renderer paginates prose, not rules
+calculations. Power/item physical cards retain their separate accepted layout.
+See `sheet-overview-prototype.md` for the approved geography and review limits.
+
 The semantic model exposes identity, final abilities, defenses, resources,
 senses, skills, feature groups, notes, inventory, powers, and cards. The browser
 renderer supplies a conservative desktop/tablet layout modeled on the legacy

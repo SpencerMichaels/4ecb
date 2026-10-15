@@ -23,6 +23,12 @@ import {
   featureClauseKey,
   irrelevantFeatureClauseNames,
 } from "./power-feature-clauses";
+import { withSheetOverview, type SheetOverview } from "./overview";
+export type {
+  SheetOverview,
+  OverviewFeature,
+  OverviewInventory,
+} from "./overview";
 
 export interface SheetValue {
   readonly label: string;
@@ -107,6 +113,7 @@ export interface SheetPowerAttack {
 }
 
 export interface CharacterSheetModel {
+  readonly overview?: SheetOverview;
   readonly source: "legacy-cache" | "native-empty" | "authoritative-evaluation";
   readonly identity: readonly SheetValue[];
   readonly abilities: readonly SheetValue[];
@@ -1012,7 +1019,7 @@ export function buildSheetModel(
     snapshot.details,
     snapshot.textStrings,
   );
-  return {
+  const model: CharacterSheetModel = {
     source: snapshot.source,
     identity: [
       "name",
@@ -1081,6 +1088,25 @@ export function buildSheetModel(
       ...extendedLegacyNotes(snapshot.textStrings),
     ],
   };
+  return withSheetOverview(model, {
+    level: Number(detail.Level) || snapshot.levelCount || 1,
+    stats: snapshot.stats,
+    selections: snapshot.selectedRules,
+    content,
+    inventory: lootPresentations
+      .filter(({ referenceKind }) => referenceKind === undefined)
+      .map(({ loot }) => ({
+        name: loot.name,
+        quantity: loot.count,
+        equipped: loot.equippedCount,
+        slots: [],
+        fields: loot.elements.flatMap((element) =>
+          element.id
+            ? entityFields(entities.get(element.id.toLocaleLowerCase()))
+            : [],
+        ),
+      })),
+  });
 }
 
 /** Build a sheet only from a converged rules evaluation and its exact content profile. */
@@ -1293,7 +1319,7 @@ export function buildEvaluatedSheetModel(
       return value === undefined ? [] : [{ label, value }];
     });
 
-  return {
+  const model: CharacterSheetModel = {
     source: "authoritative-evaluation",
     identity: [
       "name",
@@ -1372,4 +1398,29 @@ export function buildEvaluatedSheetModel(
       ...extendedLegacyNotes(build.textStrings),
     ],
   };
+  return withSheetOverview(model, {
+    level: evaluation.level,
+    stats: Object.fromEntries(
+      Object.entries(evaluation.stats).map(([name, stat]) => [
+        name,
+        String(stat.value),
+      ]),
+    ),
+    selections: active.map(({ entity }) => ({
+      id: entity.id,
+      name: entity.name,
+      type: entity.type,
+    })),
+    content,
+    inventory: inventoryPresentations
+      .filter(({ referenceKind }) => referenceKind === undefined)
+      .map(({ entry, original, name, itemEntities }) => ({
+        name,
+        quantity: entry.quantity,
+        equipped: entry.equippedQuantity,
+        slots:
+          original?.equippedSlots?.map((assignment) => assignment.slot) ?? [],
+        fields: itemEntities.flatMap(entityFields),
+      })),
+  });
 }

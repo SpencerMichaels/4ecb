@@ -511,6 +511,13 @@ M5.5 interface blockers.
 
 ## M5.6 — Refined browser View sheet
 
+**Overview real-data review (2026-10-14):** The approved summary/scratchpad study
+is now connected to the shared sheet model in print preview. Full feature/feat
+rules, equipment, power indexes and character notes paginate into reference
+pages; the accepted physical cards remain unchanged. Continue owner feedback
+against actual characters. This does not close M5.6 or resolve its existing
+dense-card print-fit blocker. See `sheet-overview-prototype.md`.
+
 **Printed-card product review accepted (2026-10-14):** Power and item card
 presentation is accepted after the fixed-size layout, equipment comparisons,
 item-power grouping, action/sustain indicators, readability settings, additional

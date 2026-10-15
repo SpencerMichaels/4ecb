@@ -57,8 +57,8 @@ application's architecture.
     current measurements, guardrail results, and visual evidence used by that
     refactor program.
 18. [Printed overview design study](sheet-overview-prototype.md) documents the
-    isolated M5.6 summary/scratchpad/reference-page prototype and its review and
-    integration boundaries.
+    M5.6 summary/scratchpad/reference-page design study, real-data print integration,
+    and remaining review boundaries.
 
 ## Definition hierarchy
 

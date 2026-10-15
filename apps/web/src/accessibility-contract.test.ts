@@ -183,8 +183,15 @@ describe("release accessibility contract", () => {
     expect(characterSheet).toContain("setShowPrintPreview(true)");
     expect(characterSheet).toContain('className="print-preview-toolbar"');
     expect(characterSheet).toContain("model.learnedReferences.map");
-    expect(characterSheet).toContain("print-dashboard");
-    expect(characterSheet).toContain("print-reference-columns");
+    expect(characterSheet).toContain("<SheetOverview");
+    const overview = readFileSync(
+      new URL("./SheetOverview.tsx", import.meta.url),
+      "utf8",
+    );
+    expect(overview).toContain('title="Character summary"');
+    expect(overview).toContain('title="Play scratchpad"');
+    expect(overview).toContain('title="Character reference"');
+    expect(overview).toContain('scope="row"');
     expect(characterSheet).toContain("print-card-grid");
     expect(styles).toMatch(
       /@media print[\s\S]*\.screen-sheet-view,[\s\S]*display: none !important/,

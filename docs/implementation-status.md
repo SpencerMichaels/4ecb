@@ -2,13 +2,46 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
-Overview prototype (2026-10-14): A separate development entry at
+Real-data overview integration (2026-10-14): The reviewed prototype now supplies
+the normal character print preview: one summary, a paper scratchpad with usage
+continuations, and measured full-description reference pages before the accepted
+physical cards. Interactive View, saved characters and card rendering are not
+changed. Full feature/feat rules and authored summaries are separate model
+values; prerequisites, explicit training/slots, carried spares, learned references,
+power levels, item powers (including hidden-card items), XP and narrative records
+remain available. Reminder candidates retain authored text and prioritize allies;
+Channel Divinity grouping requires its explicit keyword. Missing data and
+oversized custom content remain explicit. See D078 and
+`sheet-overview-prototype.md` for heuristics and review boundaries.
+
+Overview verification: `nix develop path:. -c node scripts/check-print.mjs --overview-only`
+passes Chromium Letter/A4 × color/monochrome. The long-note fixture produces 12
+measured pages in each case, all matching the generated PDF page count/dimensions,
+with no overview overflow, tagged/selectable text, blank-HP behavior and the final
+continued-note marker retained. This diagnostic deliberately excludes physical
+cards; the default gate retains every card assertion. Browser review of Silaqui's
+actual evaluated print preview confirms no overview page crosses its footer
+(minimum 37 px clearance); summary, scratchpad, usage continuation and seven
+reference pages remain available for owner feedback. The accepted physical-card
+overflow blocker is unchanged. M5.6 remains open.
+
+Checkpoint verification: `nix develop path:. -c bash scripts/check.sh` passes
+formatting, lint, all 696 tests in 83 files, workspace typechecks and the
+production/PWA build. The default print check then stops on the same unchanged
+Synthetic power 01 dense-card assertion (279/256 px at the 6.5 pt floor).
+The fixture, assertion and minimum font remain intact. Later public-check stages
+are not reached; this is not a clean full-gate or milestone completion claim.
+Separately, `nix develop path:. -c node scripts/check-built-pwa.mjs` passes;
+the built web output contains no `.4ecp` or `.dnd4e` artifacts.
+
+Earlier overview prototype (2026-10-14): A separate development entry at
 `/sheet-prototype.html` presents four print-sized synthetic review pages:
 summary, play scratchpad, full feature/feat references, and equipment/character
 record. The scratchpad follows the private quicksheet's organizational pattern,
 including numbered surge hearts and a multi-encounter matrix without copying
 private rules or character content. Letter/A4 and monochrome controls are local
-to the prototype. Production sheets, card layouts, data and settings are untouched.
+to the prototype. At that earlier checkpoint production sheets, card layouts,
+data and settings were untouched; the integration above supersedes that boundary.
 See `sheet-overview-prototype.md` for review scope and integration boundaries.
 This is a design review artifact, not finalized pagination or milestone closure.
 Feedback revisions: abilities are a compact six-row table above Skills, showing

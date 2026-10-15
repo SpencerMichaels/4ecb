@@ -10,7 +10,7 @@ describe("isolated sheet design prototype", () => {
       '<th scope="row">Athletics<sup class="sp-trained-marker" aria-hidden="true">T</sup><sub class="sp-skill-ability">STR</sub></th><td class="sp-skill-total">+11</td>',
     );
     const styles = readFileSync(
-      new URL("./sheet-prototype.css", import.meta.url),
+      new URL("../sheet-overview.css", import.meta.url),
       "utf8",
     );
     expect(styles).toContain(".sp-ability-table tbody tr:nth-child(even)");

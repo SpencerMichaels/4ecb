@@ -54,6 +54,8 @@ class CdpClient {
 
 const execute = promisify(execFile);
 const projectRoot = process.cwd();
+// Diagnostic for overview work; the default gate still checks every card.
+const overviewOnly = process.argv.includes("--overview-only");
 const { stdout: variantTableMarkup } = await execute("pnpm", [
   "exec",
   "tsx",
@@ -244,6 +246,11 @@ try {
     `detail-card flavor rhythm changed: ${JSON.stringify(styleContract)}`,
   );
   const character = printCharacter();
+  if (overviewOnly)
+    character.snapshot.details.Notes +=
+      "\n" +
+      Array.from({ length: 1200 }, (_, n) => `continuationword${n}`).join(" ") +
+      ". End of preserved overview notes.";
   await evaluate(
     client,
     `(async () => {
@@ -288,6 +295,43 @@ try {
       "new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))))",
       true,
     );
+    await waitForExpression(
+      client,
+      `document.querySelectorAll('.sheet-overview > .ov-paper[aria-label="Character reference"]').length > 0`,
+    );
+    const overview = await evaluate(
+      client,
+      `(() => {
+      const pages=[...document.querySelectorAll('.sheet-overview .ov-paper')].filter(p=>!p.closest('.ov-measure'));
+      return {pageCount:pages.length,cardPages:document.querySelectorAll('.print-card-page').length,overflow:pages.filter(p=>p.querySelector('.sp-page-content').getBoundingClientRect().bottom > p.querySelector('.sp-page-footer').getBoundingClientRect().top-7 || p.scrollWidth > p.clientWidth+1).map(p=>p.getAttribute('aria-label'))};
+    })()`,
+    );
+    assert(
+      overview.overflow.length === 0,
+      `${variant.name} overflows overview pages: ${overview.overflow.join(", ")}`,
+    );
+    if (overviewOnly) {
+      await evaluate(
+        client,
+        `(() => { document.querySelectorAll('.print-card-page').forEach(page=>page.classList.add('print-excluded'));return true;})()`,
+      );
+      const pdf = await client.send("Page.printToPDF", {
+        printBackground: true,
+        preferCSSPageSize: true,
+        generateTaggedPDF: true,
+      });
+      const path = join(scratch, `${variant.name}-overview.pdf`);
+      await writeFile(path, Buffer.from(pdf.data, "base64"));
+      const evidence = await inspectPdf(
+        path,
+        variant.paper,
+        true,
+        overview.pageCount,
+        true,
+      );
+      chromiumResults.push({ ...variant, ...overview, ...evidence });
+      continue;
+    }
     const layout = await evaluate(
       client,
       `(() => {
@@ -400,12 +444,19 @@ try {
     });
     const pdfPath = join(scratch, `${variant.name}.pdf`);
     await writeFile(pdfPath, Buffer.from(pdf.data, "base64"));
-    const evidence = await inspectPdf(pdfPath, variant.paper);
+    const evidence = await inspectPdf(
+      pdfPath,
+      variant.paper,
+      true,
+      overview.pageCount + overview.cardPages,
+    );
     chromiumResults.push({ ...variant, ...layout, ...evidence });
   }
 
   assert(browserMessages.length === 0, browserMessages.join("\n"));
-  const firefoxResults = await firefoxPrintMatrix(character, origin, scratch);
+  const firefoxResults = overviewOnly
+    ? []
+    : await firefoxPrintMatrix(character, origin, scratch);
   console.log(
     JSON.stringify(
       {
@@ -538,7 +589,7 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
       await webdriverWait(
         port,
         sessionId,
-        `return document.querySelector(".sheet-page")?.classList.contains("is-print-preview") && document.querySelector(".print-card-body")?.clientHeight > 0;`,
+        `return document.querySelector(".sheet-page")?.classList.contains("is-print-preview") && document.querySelector(".print-card-body")?.clientHeight > 0 && document.querySelectorAll('.sheet-overview > .ov-paper[aria-label="Character reference"]').length > 0;`,
       );
       await webdriverExecute(port, sessionId, installVariantTable);
       const layout = await webdriverExecute(
@@ -641,7 +692,17 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
       );
       const path = join(outputDirectory, `firefox-${variant.name}.pdf`);
       await writeFile(path, Buffer.from(printed, "base64"));
-      const evidence = await inspectPdf(path, variant.paper, false);
+      const expectedPages = await webdriverExecute(
+        port,
+        sessionId,
+        `return [...document.querySelectorAll('.sheet-overview .ov-paper')].filter(p=>!p.closest('.ov-measure')).length + document.querySelectorAll('.print-card-page').length;`,
+      );
+      const evidence = await inspectPdf(
+        path,
+        variant.paper,
+        false,
+        expectedPages,
+      );
       results.push({ ...variant, ...layout, ...evidence });
     }
     return results;
@@ -821,7 +882,13 @@ async function updateSheetSettings(cdp, id, variant) {
   );
 }
 
-async function inspectPdf(path, paper, requireTagged = true) {
+async function inspectPdf(
+  path,
+  paper,
+  requireTagged = true,
+  expectedPages,
+  onlyOverview = false,
+) {
   const [{ stdout: info }, { stdout: text }] = await Promise.all([
     execute("pdfinfo", [path]),
     execute("pdftotext", ["-layout", path, "-"]),
@@ -838,8 +905,11 @@ async function inspectPdf(path, paper, requireTagged = true) {
   assert(Math.abs(width - expected[0]) < 1, `${path} has width ${width}`);
   assert(Math.abs(height - expected[1]) < 1, `${path} has height ${height}`);
   assert(
-    pages === 5,
-    `${path} should contain two reference pages and three nine-card pages, got ${pages}`,
+    pages === expectedPages,
+    `${path} should contain ${expectedPages} measured overview/card pages, got ${pages}: ${text
+      .split("\f")
+      .map((page, index) => `${index + 1}: ${page.trim().slice(0, 100)}`)
+      .join(" | ")}`,
   );
   const tagged = /^Tagged:\s+yes$/m.test(info);
   if (requireTagged) assert(tagged, `${path} is not a tagged PDF`);
@@ -866,14 +936,25 @@ async function inspectPdf(path, paper, requireTagged = true) {
     );
   }
   const normalizedText = text.toLocaleLowerCase();
+  if (onlyOverview)
+    assert(
+      normalizedText.includes("end of preserved overview notes."),
+      `${path} loses continued overview notes`,
+    );
   const compactText = text.replace(/\s+/g, " ");
   for (const required of [
     "Synthetic print fixture hero",
     "Character reference",
-    "Synthetic power 01",
-    "Synthetic power 18",
-    "Synthetic item 01",
-    "Synthetic item 06",
+    "Synthetic resilience",
+    "Synthetic focus",
+    ...(onlyOverview
+      ? []
+      : [
+          "Synthetic power 01",
+          "Synthetic power 18",
+          "Synthetic item 01",
+          "Synthetic item 06",
+        ]),
   ])
     assert(
       normalizedText.includes(required.toLocaleLowerCase()),
@@ -891,7 +972,7 @@ async function inspectPdf(path, paper, requireTagged = true) {
       `${path} includes application chrome: ${hidden}`,
     );
   assert(
-    !/Hit Points\s+72/i.test(compactText),
+    !/(?:Hit Points|Maximum HP)\s+72/i.test(compactText),
     `${path} did not blank the mutable hit-point value`,
   );
   return { pages, widthPoints: width, heightPoints: height, tagged };

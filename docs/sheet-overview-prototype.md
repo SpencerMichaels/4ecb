@@ -1,7 +1,7 @@
 # Printed overview design study
 
-Status: prototype for product-owner feedback, 2026-10-14. Not the production
-sheet and not an accepted final layout or M5.6 exit checkpoint.
+Status: approved prototype integrated into the production print overview for
+real-character feedback, 2026-10-14. M5.6 remains open.
 
 ## Open
 
@@ -13,8 +13,11 @@ nix develop path:. -c pnpm --filter @4ecb/web dev --host 127.0.0.1 --port 5174
 
 Visit `http://127.0.0.1:5174/sheet-prototype.html`. This is a separate Vite
 development entry, intentionally not linked from the production application or
-included as a production build entry. The production character-sheet route,
-physical card layout, stored characters, settings and evaluation are unchanged.
+included as a production build entry. For actual characters, open the normal
+character View and choose **Print / save PDF**. Its print preview now uses the
+approved layout with evaluated character data; the normal interactive View and
+accepted fixed-size physical power/item cards remain unchanged. The prototype
+and real overview share `sheet-overview.css`.
 
 ## Review surfaces
 
@@ -65,22 +68,57 @@ definitions or sample files are required. Controls switch Letter/A4 and
 monochrome in memory and expose the browser print action; writing areas and
 hearts are paper affordances, not interactive Play state.
 
-## Boundaries before integration
+## Real-data integration
 
-- Replace the fixtures with the shared sheet model only after visual feedback.
-- Preserve both full feature rules and authored short descriptions; the current
-  production model flattens features into abbreviated values.
-- Determine reliable reminder inclusion and shared-resource relationships from
-  recovered metadata; do not infer mechanical restrictions from this fixture.
-- Implement real variable-count pagination and continuation for dense features,
-  long notes, large inventories and many powers. Four fixture pages do not
-  constitute a pagination solution.
-- Carry through real inventory slots, loadout calculations, learned references,
-  conditional defenses/movement and recovery/source boundaries.
-- Confirm paper/ink usability and actual browser print output during integration;
-  this prototype is not the production Letter/A4 print acceptance matrix.
+The shared sheet model now retains full selected feature rules separately from
+authored short descriptions, including prerequisites and user-facing fields.
+Missing full rules are labelled rather than presenting abbreviations as complete.
+Ability checks add rounded-down half level to the supplied/fallback ability
+modifier in the model. Training uses explicit training stats or selected Skill
+Training definitions. Missing saves/training/vision are not invented as zeroes.
 
-Focused checks: prototype rendering tests, web TypeScript checks and prototype
-lint. Browser review checks fixture content against page-footer bounds on Letter
-and A4, along with monochrome controls. This does not resolve the existing dense
-physical-card overflow assertion documented in `implementation-status.md`.
+The real output contains one summary, a scratchpad (with continuation usage
+pages as needed), and measured two-column references before the existing cards.
+Long prose/list/table content continues without discarding words or rows; reference
+titles identify continuations. Optional summary reminders/feat summaries yield to
+essential stats when space is tight. All full reference entries remain available.
+Two equipped-first basic-attack variants appear per summary table; all alternatives
+are retained in references. Unfittable custom data raises a visible overflow
+warning rather than being silently clipped or shrunk below readable reference text.
+
+Inventory includes items whose physical cards are hidden, preserves explicit
+slot assignments, falls back to authored Item Slot, and labels unknown slots.
+Equipped quantities and carried spares are separate. The power index preserves
+levels, with absent levels explicit rather than manufactured. Item powers also
+have an index and encounter/daily tracking regardless of card visibility.
+
+Channel Divinity grouping uses its explicit power keyword, confirmed against
+the local content metadata, retaining each action icon. No other shared resource
+is inferred from names. Reminder candidates are authored conditional/ally-facing
+class/racial/feat descriptions, equipped item properties and existing Additional
+Effects; ally-facing reminders sort first. This is a conservative display
+heuristic, not exhaustive mechanical analysis or a new calculation path. Theme/
+background narrative is not classified as a combat reminder. The summary shows a
+bounded subset with a count pointing to the complete reminder reference.
+
+Paper tracking remains blank writing space, not persisted interactive Play state.
+Private source characters and the quicksheet remain ignored. Public tests use
+synthetic data. `scripts/check-print.mjs --overview-only` isolates overview PDF
+pagination (including long-note continuation) from the unchanged dense-card gate;
+it is not a substitute for the default full print check.
+
+## Remaining review boundaries
+
+- Continue product-owner feedback with actual characters, especially reminder
+  selection, reference density, equipment organization and scratchpad overflow.
+- Do not treat this presentation integration as a correction to pre-existing
+  evaluation mismatches or as exhaustive reminder/shared-resource coverage.
+- Complete M5.6 acceptance separately, including the existing dense physical-card
+  overflow decision. Four synthetic prototype pages were not that acceptance gate.
+
+Initial prototype checks covered rendering, TypeScript/lint, page-footer bounds
+on Letter/A4 and monochrome controls. The integrated overview adds synthetic
+model/render/pagination tests, real-character browser review, and an isolated
+Chromium PDF matrix with long-note continuation and selectable text in all four
+paper/color combinations. See `implementation-status.md` for measured results
+and the unchanged dense physical-card overflow assertion.
