@@ -116,8 +116,9 @@ Verified against recovered `PanelModelHitPoints`/`BasicUtils` display paths and
 Hu's evaluated data (68 HP, surge value 17, unconditional saves +0). All 29 focused
 overview/model/render tests, web typecheck and focused lint pass.
 Display follow-up: Saves and Initiative retain explicit signs in the model.
-The summary displays zero Saves as `---` to reduce noise; Initiative still shows
-`+0`. Nonzero saving-throw bonuses remain signed, and unknowns stay distinct.
+The summary displays zero Saves as an em dash (`—`) to reduce noise; Initiative
+still shows `+0`. Nonzero saving-throw bonuses remain signed; the model retains
+the distinction between zero and unknown values.
 The summary's surge-value label is shortened to **Surge HP**.
 Reminder names omit parenthetical qualifiers for display only; original names
 remain intact in the model and references. The Ability heading aligns with the

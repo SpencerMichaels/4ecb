@@ -449,7 +449,7 @@ function Summary({
               ["Will", find(model.defenses, "Will")],
               [
                 "Saves",
-                /^[+-]?0$/.test(overview.saves.trim()) ? "---" : overview.saves,
+                /^[+-]?0$/.test(overview.saves.trim()) ? "—" : overview.saves,
               ],
             ]}
           />

@@ -25,8 +25,8 @@ const model = buildSheetModel({
 describe("real-data sheet overview", () => {
   it("shows zero saves as dashes while retaining nonzero bonuses and unknowns", () => {
     for (const [saves, expected] of [
-      ["+0", "---"],
-      ["0", "---"],
+      ["+0", "—"],
+      ["0", "—"],
       ["+2", "+2"],
       ["-1", "-1"],
       ["—", "—"],
