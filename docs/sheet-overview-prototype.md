@@ -24,25 +24,30 @@ physical card layout, stored characters, settings and evaluation are unchanged.
    list with a prominent adjacent Languages panel, conditional/ally-facing reminders and abbreviated feat
    reminders. Mutable values point to the scratchpad instead of scattering
    writing boxes throughout the reference page.
-   Trained skills use high-contrast outlined `T` markers and a matching legend;
-   skill totals explicitly already include half level. Feat reminders occupy
+   Skills use two alphabetically ordered columns, with trained rows shaded and
+   a matching swatch legend. Ability bonuses share one legend instead of repeating
+   labels in every cell. Health has four equal cells (HP, bloodied, surges, surge
+   value), and saving throws sit beneath defenses. XP and AP do not appear on the
+   summary. Feat reminders occupy
    available space beneath the left-column reminders rather than extending the
    page below the taller ability/skill column.
 2. **Play scratchpad:** blank health/temp-HP fields, numbered fillable-on-paper
    surge hearts grouped with health, action points, skull death-save markers, six encounter-use columns, daily
    power tracking, an explicit Channel Divinity shared-use example with per-power
-   action icons, treasure/consumables and
+   action icons, an XP writing field, treasure/consumables and
    temporary effects. Quick reference and pertinent reminders are deliberately
    repeated. A small session/date field replaces the large heading and extended-rest
    field. The product owner's private quicksheet informs the organization;
    its private character/rules data is not embedded.
+   Instructional tracking captions are omitted; the matrix and shared group
+   structure carry that information visually.
 3. **Feature reference:** readable variable-height full-description cards grouped
    into Class features, Racial traits and Feats,
    category icons/subheaders, preserved prose headings, a long-title case and
    multi-paragraph benefits. These are not fixed-size physical cards.
 4. **Equipment and record:** slot-oriented equipped list, carried quantities,
    power frequency index with levels (or explicit nonlevel origins such as Item),
-   appearance/personality, companions and notes.
+   advancement/XP, appearance/personality, companions and notes.
 
 All content is synthetic and labelled illustrative, not an authoritative D&D
 build or a calculated example. The portrait is a placeholder. No proprietary

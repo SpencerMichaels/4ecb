@@ -162,11 +162,6 @@ function Summary() {
             Guardian of the Dawn · Unaligned · Player: Alex
           </p>
         </div>
-        <div className="sp-level">
-          <span>Experience</span>
-          <strong>14,500</strong>
-          <small>Next level 16,500</small>
-        </div>
       </section>
       <div className="sp-summary-grid">
         <div className="sp-column">
@@ -184,12 +179,17 @@ function Summary() {
                 </div>
               ))}
             </div>
+            <p className="sp-defense-note">
+              <strong>Saving throws</strong>
+              <span>+1</span>
+            </p>
           </Panel>
           <Panel title="Health & resources" icon="class">
             <div className="sp-values sp-health">
               {[
                 ["Maximum HP", "68"],
                 ["Bloodied", "34"],
+                ["Surges", "10"],
                 ["Surge value", "17"],
               ].map(([label, value]) => (
                 <div key={label}>
@@ -198,15 +198,6 @@ function Summary() {
                 </div>
               ))}
             </div>
-            <div className="sp-fact-line">
-              <span>
-                Healing surges <strong>10 / day</strong>
-              </span>
-              <span>
-                Action points <strong>1 after extended rest</strong>
-              </span>
-            </div>
-            <p className="sp-caption">Current values → Play scratchpad, p. 2</p>
           </Panel>
           <Panel title="Movement & awareness" icon="footprints">
             <div className="sp-movement">
@@ -228,8 +219,7 @@ function Summary() {
               </div>
             </div>
             <p className="sp-inline-rule">
-              <strong>Vision:</strong> Normal <span>·</span>{" "}
-              <strong>Saving throws:</strong> +1
+              <strong>Vision:</strong> Normal
             </p>
           </Panel>
           <Panel
@@ -248,23 +238,25 @@ function Summary() {
             icon="ability"
             className="sp-ability-reference"
           >
+            <p className="sp-ability-legend">Modifier / Modifier + ½ level</p>
             <div className="sp-abilities">
               {abilities.map(([name, score, modifier]) => (
                 <div key={name}>
                   <div className="sp-ability-name">
                     <strong>{name}</strong>
-                    <span>Score {score}</span>
+                    <span>{score}</span>
                   </div>
-                  <dl>
-                    <div>
-                      <dt>Mod</dt>
-                      <dd>{modifier}</dd>
-                    </div>
-                    <div>
-                      <dt>Mod + ½ lvl</dt>
-                      <dd>{abilityCheckBonus(modifier, prototypeLevel)}</dd>
-                    </div>
-                  </dl>
+                  <div className="sp-ability-bonuses">
+                    <b aria-label={`${name} modifier ${modifier}`}>
+                      {modifier}
+                    </b>
+                    <span>/</span>
+                    <b
+                      aria-label={`${name} modifier plus half level ${abilityCheckBonus(modifier, prototypeLevel)}`}
+                    >
+                      {abilityCheckBonus(modifier, prototypeLevel)}
+                    </b>
+                  </div>
                 </div>
               ))}
             </div>
@@ -272,32 +264,29 @@ function Summary() {
           <Panel title="Skills" icon="skill" className="sp-skills-panel">
             <div className="sp-skill-legend">
               <span>
-                <span className="sp-trained-marker">T</span> Trained
+                <span className="sp-trained-swatch" /> Trained
               </span>
               <span>Ability</span>
             </div>
-            <table className="sp-skill-table">
-              <tbody>
-                {skills.map(([name, ability, total, trained]) => (
-                  <tr key={name}>
-                    <td className="sp-skill-total">{total}</td>
-                    <th scope="row">{name}</th>
-                    <td
-                      className="sp-trained"
-                      aria-label={trained ? "Trained" : "Untrained"}
-                    >
-                      {trained ? (
-                        <span className="sp-trained-marker">T</span>
-                      ) : null}
-                    </td>
-                    <td className="sp-skill-ability">{ability}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p className="sp-caption">
-              Skill totals already include half level.
-            </p>
+            <div className="sp-skill-columns">
+              {[skills.slice(0, 9), skills.slice(9)].map((column, index) => (
+                <table className="sp-skill-table" key={index}>
+                  <tbody>
+                    {column.map(([name, ability, total, trained]) => (
+                      <tr
+                        key={name}
+                        className={trained ? "is-trained" : undefined}
+                        aria-label={`${name}, ${trained ? "trained" : "untrained"}`}
+                      >
+                        <td className="sp-skill-total">{total}</td>
+                        <th scope="row">{name}</th>
+                        <td className="sp-skill-ability">{ability}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ))}
+            </div>
           </Panel>
           <Panel title="Languages" icon="race" className="sp-languages-panel">
             <p>Common · Dwarven · Elven</p>
@@ -387,9 +376,7 @@ function Scratchpad() {
           </div>
           <div className="sp-health-trackers">
             <div>
-              <p className="sp-caption">
-                Healing surges · 10/day · Fill when spent
-              </p>
+              <p className="sp-caption">Healing surges · 10/day</p>
               <Hearts />
             </div>
             <div className="sp-death-saves">
@@ -409,7 +396,10 @@ function Scratchpad() {
             <span>Milestone</span>
             <i />
           </div>
-          <p className="sp-caption">Start at 1 AP after an extended rest.</p>
+          <div className="sp-xp-tracker">
+            <span>Experience</span>
+            <i />
+          </div>
         </Panel>
       </div>
       <div className="sp-scratch-grid">
@@ -418,7 +408,9 @@ function Scratchpad() {
             <table className="sp-usage-table">
               <thead>
                 <tr>
-                  <th scope="col">Mark when used</th>
+                  <th scope="col">
+                    <span className="sp-sr-only">Power</span>
+                  </th>
                   {Array.from({ length: 6 }, (_, n) => (
                     <th scope="col" key={n}>
                       {n + 1}
@@ -449,7 +441,6 @@ function Scratchpad() {
                       <ActionTypeIcon decorative value="Minor Action" />
                       Restoring Light
                     </div>
-                    <small>One use of either per encounter</small>
                   </th>
                   {Array.from({ length: 6 }, (_, n) => (
                     <td key={n} />
@@ -457,9 +448,6 @@ function Scratchpad() {
                 </tr>
               </tbody>
             </table>
-            <p className="sp-caption">
-              Columns are separate encounters. Item powers included.
-            </p>
           </Panel>
           <Panel title="Daily powers" icon="power" className="sp-daily">
             <div className="sp-daily-list">
@@ -471,15 +459,9 @@ function Scratchpad() {
                 </div>
               ))}
             </div>
-            <p className="sp-caption">
-              Mark when used. Reset after an extended rest.
-            </p>
           </Panel>
           <Panel title="Treasure & consumables" icon="item">
             <div className="sp-writing-lines sp-treasure" />
-            <p className="sp-caption">
-              Gained / spent / used. Transfer to inventory after play.
-            </p>
           </Panel>
         </div>
         <div className="sp-column">
@@ -771,6 +753,13 @@ function EquipmentRecord() {
             <p className="sp-inline-rule">
               <strong>Money:</strong> 84 gp · 12 sp · 6 cp
             </p>
+          </Panel>
+          <Panel title="Advancement" icon="level">
+            <p>
+              Level <strong>8</strong> <span>·</span> Experience{" "}
+              <strong>14,500</strong>
+            </p>
+            <p className="sp-caption">Next level: 16,500 XP</p>
           </Panel>
           <Panel title="Appearance & personality" icon="character">
             <p>

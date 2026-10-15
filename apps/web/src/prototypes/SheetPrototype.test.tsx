@@ -17,7 +17,10 @@ describe("isolated sheet design prototype", () => {
     expect(
       markup.match(/viewBox="0 0 24 24" aria-hidden="true"><path/g),
     ).toHaveLength(10);
-    expect(markup).toContain("One use of either per encounter");
+    expect(markup).toContain("Channel Divinity");
+    expect(markup).not.toContain("One use of either per encounter");
+    expect(markup).not.toContain("Mark when used");
+    expect(markup).not.toContain("Columns are separate encounters");
     expect(markup).toContain("Current HP");
     expect(markup).toContain("Temporary HP");
     expect(markup).toContain("Conditions &amp; temporary effects");
@@ -64,13 +67,30 @@ describe("isolated sheet design prototype", () => {
     expect(markup.indexOf(">Abilities</h3>")).toBeLessThan(
       markup.indexOf(">Skills</h3>"),
     );
-    expect(markup).toContain("<dt>Mod</dt><dd>+4</dd>");
-    expect(markup).toContain("<dt>Mod + ½ lvl</dt><dd>+8</dd>");
+    expect(markup).toContain('aria-label="STR modifier +4">+4</b>');
     expect(markup).toContain(
-      'aria-label="Trained"><span class="sp-trained-marker">T</span>',
+      'aria-label="STR modifier plus half level +8">+8</b>',
+    );
+    expect(markup).toContain(
+      'class="is-trained" aria-label="Athletics, trained"',
     );
     expect(abilityCheckBonus("-1", 7)).toBe("+2");
     expect(abilityCheckBonus("-2", 1)).toBe("-2");
     expect(abilityCheckBonus("-1", 2)).toBe("+0");
+  });
+  it("keeps XP and action points off the summary and groups saves with defenses", () => {
+    const markup = renderToStaticMarkup(<SheetPrototype />);
+    const summary = markup.split('id="summary"')[1]!.split("</article>")[0]!;
+    expect(summary).not.toContain("Experience");
+    expect(summary).not.toContain("Action points");
+    expect(summary).toContain("<span>Surges</span>");
+    expect(summary.indexOf("Saving throws")).toBeLessThan(
+      summary.indexOf("Health &amp; resources"),
+    );
+    expect(summary.match(/class="sp-skill-table"/g)).toHaveLength(2);
+    for (const id of ["scratchpad", "record"])
+      expect(markup.split(`id="${id}"`)[1]!.split("</article>")[0]).toContain(
+        "Experience",
+      );
   });
 });

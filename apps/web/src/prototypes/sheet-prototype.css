@@ -260,21 +260,6 @@ body:has(.sp-prototype) {
   font-size: 8.5pt;
   margin-top: 0.06in !important;
 }
-.sp-level {
-  margin-left: auto;
-  text-align: right;
-  display: flex;
-  flex-direction: column;
-  gap: 0.025in;
-}
-.sp-level span,
-.sp-level small {
-  font-size: 8pt;
-  color: var(--sp-muted);
-}
-.sp-level strong {
-  font-size: 16pt;
-}
 .sp-abilities {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -304,26 +289,30 @@ body:has(.sp-prototype) {
   color: var(--sp-muted);
   font-size: 7pt;
 }
-.sp-abilities dl {
-  display: grid;
-  grid-template-columns: 0.7fr 1.3fr;
-  gap: 0.025in;
-  margin: 0.025in 0 0;
-}
-.sp-abilities dt {
-  font-size: 6.5pt;
+.sp-ability-legend {
+  font-size: 8pt;
   color: var(--sp-muted);
-  white-space: nowrap;
+  padding: 0.04in 0.05in;
+  border-bottom: 1px solid #d5dadd;
 }
-.sp-abilities dd {
-  margin: 0;
+.sp-ability-bonuses {
+  display: flex;
+  align-items: baseline;
+  gap: 0.04in;
   font-size: 12pt;
-  line-height: 1.15;
+  line-height: 1.25;
+  margin-top: 0.025in;
+}
+.sp-ability-bonuses b {
   font-weight: 600;
+}
+.sp-ability-bonuses > span {
+  font-size: 9pt;
+  color: #8d969c;
 }
 .sp-summary-grid {
   display: grid;
-  grid-template-columns: 1.52fr 1fr;
+  grid-template-columns: 1.3fr 1fr;
   gap: 0.15in;
   align-items: start;
   margin-top: 0.15in;
@@ -354,21 +343,23 @@ body:has(.sp-prototype) {
   grid-template-columns: repeat(4, 1fr);
 }
 .sp-health {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
 }
-.sp-fact-line {
+.sp-defense-note {
   display: flex;
   justify-content: space-between;
-  gap: 0.1in;
+  align-items: baseline;
   border-top: 1px solid #d5dadd;
-  margin-top: 0.08in;
-  padding-top: 0.06in;
-  font-size: 8pt;
-}
-.sp-fact-line strong {
-  display: block;
+  margin-top: 0.07in !important;
+  padding-top: 0.045in;
   font-size: 9pt;
-  margin-top: 0.02in;
+}
+.sp-defense-note strong {
+  font-weight: 400;
+}
+.sp-defense-note > span {
+  font-weight: 700;
+  font-size: 11pt;
 }
 .sp-movement {
   display: grid;
@@ -405,6 +396,15 @@ body:has(.sp-prototype) {
 .sp-skills-panel .sp-panel-content {
   padding: 0.04in 0.085in 0.085in;
 }
+.sp-skill-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.1in;
+  align-items: start;
+}
+.sp-skill-table {
+  table-layout: auto;
+}
 .sp-skill-legend {
   display: flex;
   justify-content: space-between;
@@ -422,35 +422,32 @@ body:has(.sp-prototype) {
 }
 .sp-skill-table th {
   font-weight: 400;
-  font-size: 9pt;
+  font-size: 8.5pt;
+  white-space: nowrap;
 }
 .sp-skill-total {
   font-weight: 700;
-  width: 0.34in;
-  font-size: 12pt;
+  width: 0.26in;
+  font-size: 11pt;
   font-variant-numeric: tabular-nums;
+}
+.sp-skill-table .sp-skill-total {
+  padding-right: 0.05in;
 }
 .sp-skill-ability {
   font-size: 7pt;
   text-align: right;
   color: var(--sp-muted);
 }
-.sp-trained {
-  width: 0.23in;
-  text-align: center;
+.sp-skill-table .is-trained {
+  background: #dbe6ee;
 }
-.sp-trained-marker {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #69757d;
-  background: #e8edf0;
-  color: #20272a;
-  font-size: 8pt;
-  font-weight: 700;
-  line-height: 1;
-  width: 0.16in;
-  height: 0.16in;
+.sp-trained-swatch {
+  display: inline-block;
+  background: #dbe6ee;
+  width: 0.2in;
+  height: 0.12in;
+  border: 1px solid #8ca0ad;
 }
 .sp-skill-legend > span:first-child {
   display: inline-flex;
@@ -613,6 +610,28 @@ body:has(.sp-prototype) {
   height: 0.5in;
   flex: 1;
   border-radius: 2px;
+}
+.sp-xp-tracker {
+  display: flex;
+  gap: 0.08in;
+  font-size: 9pt;
+  align-items: center;
+  margin-top: 0.16in;
+}
+.sp-xp-tracker i {
+  height: 0.35in;
+  flex: 1;
+  border: 1px solid var(--sp-border);
+  border-radius: 2px;
+}
+.sp-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .sp-scratch-grid {
   display: grid;
