@@ -195,7 +195,10 @@ this exclusion, including manual effects not represented in native statements.
 Full feature references, granted powers and usage tracking remain unchanged;
 there is no feature-name denylist.
 Additional Effects resolve to a uniquely known selected provider (or exact ID),
-using its complete authored rule once instead of repeating the bonus per power.
+using its authored Short Description once instead of repeating the bonus per
+power. Missing summaries fall back to the feature description; complete authored
+descriptions remain in feature references. Conditional stat contributions alone
+are not substituted for authored summaries, since they can omit timing or scope.
 Unresolved identical effects deduplicate across affected powers; distinct effects
 and ambiguous providers remain recoverable. Original power/card effects are unchanged.
 This remains a display heuristic, not

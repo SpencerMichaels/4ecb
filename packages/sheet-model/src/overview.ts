@@ -337,7 +337,7 @@ export function withSheetOverview(
         const existing = reminderByFeature.get(feature.id);
         const canonical = {
           label: feature.name,
-          value: feature.description || feature.summary,
+          value: feature.summary || feature.description,
           category: reminderCategory(feature.group),
         };
         if (existing !== undefined) reminders[existing] = canonical;

@@ -381,10 +381,68 @@ describe("printed overview data", () => {
       },
     );
     expect(m.overview?.reminders).toEqual([
-      { label: feat.name, value: feat.description, category: "Feats" },
+      { label: feat.name, value: feat.specifics[0]!.value, category: "Feats" },
     ]);
     expect(m.powers).toEqual(powers);
   });
+  it.each([true, false])(
+    "prefers authored mechanical summaries for matched effects, with full-text fallback (summary: %s)",
+    (hasSummary) => {
+      const feature = {
+        ...feat,
+        type: "Class Feature",
+        description:
+          "You have pledged yourself to the stars. Granted Power: You gain shining spark. Manifestation: When you attack on your turn, gain a bonus for each foe targeted.",
+        specifics: hasSummary
+          ? [
+              {
+                ...feat.specifics[0]!,
+                value:
+                  "When you attack on your turn, gain a bonus for each foe targeted.",
+              },
+            ]
+          : [],
+      };
+      const selectedRules = [feature];
+      const base = buildSheetModel({ ...snapshot, selectedRules }, [feature]);
+      const powers = [
+        {
+          kind: "power" as const,
+          name: "Shining spark",
+          fields: [],
+          additionalEffects: [
+            {
+              source: "authoritative-evaluation" as const,
+              provider: feature.name,
+              provenanceId: feature.id,
+              text: "+1 to damage rolls for each foe targeted.",
+            },
+          ],
+        },
+      ];
+      const model = withSheetOverview(
+        { ...base, powers },
+        {
+          level: 8,
+          stats: snapshot.stats,
+          selections: selectedRules,
+          content: [feature],
+          inventory: [],
+        },
+      );
+      expect(model.overview?.reminders).toEqual([
+        {
+          label: feature.name,
+          value: hasSummary ? feature.specifics[0]!.value : feature.description,
+          category: "Class features",
+        },
+      ]);
+      expect(model.overview?.features[0]?.description).toBe(
+        feature.description,
+      );
+      expect(model.powers).toEqual(powers);
+    },
+  );
   it("deduplicates unattributed identical effects without merging distinct effects", () => {
     const base = buildSheetModel(snapshot, []);
     const powers = ["First", "Second"].map((name) => ({

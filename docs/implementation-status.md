@@ -2,6 +2,19 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Concise feature reminders (2026-10-15): Matching Additional Effects no longer
+replace an authored Short Description with the feature's full prose. Both direct
+feature candidates and matched effect providers prefer the same authored summary,
+with description fallback when absent. This preserves timing/scope omitted by
+conditional stat contributions while avoiding flavor and grant text when a
+mechanical summary is available. Complete feature references and original power
+effects are unchanged. Synthetic coverage checks legacy/native provider matching,
+deduplication, summary preference and missing-summary fallback.
+
+Verification: 22 focused overview/model tests, focused lint and web typecheck
+pass. No layout or calculation changes; the print matrix/full milestone gates
+were not rerun for this text-selection fix. M5.6 remains open.
+
 Grouped item properties / consistent variant names (2026-10-15): Item Properties
 now groups distinct property paragraphs under one heading per item display name,
 retaining every property and treating the group as one measured fitting unit.
