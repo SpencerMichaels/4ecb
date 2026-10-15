@@ -210,9 +210,14 @@ describe("real-data sheet overview", () => {
       "Gouge",
     ]);
   });
-  it("places score-first abbreviated abilities beside movement, with passive senses in Skills", () => {
+  it("places initiative and speed in the identity header, with passive senses before skill bonuses", () => {
     const m = {
       ...model,
+      identity: [
+        { label: "Level", value: "7" },
+        { label: "Class", value: "Paladin" },
+        { label: "Race", value: "Dwarf" },
+      ],
       overview: {
         ...model.overview!,
         skills: [
@@ -240,9 +245,13 @@ describe("real-data sheet overview", () => {
       .split('aria-label="Character summary"')[1]!
       .split("</article>")[0]!;
     const right = summary.split('class="sp-column sp-skills-column"')[1]!;
-    expect(right.indexOf(">Movement</h3>")).toBeLessThan(
-      right.indexOf(">Abilities</h3>"),
-    );
+    expect(summary).not.toContain('class="sp-running-header"');
+    expect(summary).not.toContain(">Movement</h3>");
+    expect(summary).toContain("Dwarf Paladin 7");
+    const header = summary
+      .split('class="sp-identity"')[1]!
+      .split("</section>")[0]!;
+    expect(header).toContain('class="sp-values ov-header-stats"');
     expect(right).toContain(
       '<td class="ov-ability-score">19</td><th scope="row"><abbr title="Strength">STR</abbr></th>',
     );
@@ -250,10 +259,10 @@ describe("real-data sheet overview", () => {
     expect(right).toContain('aria-label="Ability score"');
     expect(right).toContain('class="ov-ability-name-heading">Ability</th>');
     const skills = right.split(">Skills</h3>")[1]!.split(">Languages</h3>")[0]!;
-    expect(skills).toContain('+8 <span class="ov-passive-value">(18)</span>');
-    expect(skills).toContain('+15 <span class="ov-passive-value">(25)</span>');
+    expect(skills).toContain('<span class="ov-passive-value">(18)</span> +8');
+    expect(skills).toContain('<span class="ov-passive-value">(25)</span> +15');
     expect(skills).not.toContain("ov-passive-skill");
-    expect(right).toContain("<span>Initiative</span><strong>+12</strong>");
+    expect(header).toContain("<span>Initiative</span><strong>+12</strong>");
   });
   it.each([
     ["0", "+0"],

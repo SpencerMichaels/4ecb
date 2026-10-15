@@ -86,16 +86,21 @@ and focused lint pass. A read-only private Hu evaluation resolves Way-Leader
 Gouge and Unarmed as melee-only; neither produces a ranged overview row.
 The abilities table reads score then STR/CON/DEX/INT/WIS/CHA, Modifier and +½ level;
 score has no separate header, and full ability names remain available as abbreviation
-titles. A narrow Initiative/Speed pane sits to its left; positive Initiative has
-an explicit + sign. Passive Insight and Perception appear parenthesized beside
-their skill bonuses, e.g. `Perception +15 (25)`, not as separate rows. Vision
-remains in that panel too.
+titles; abbreviations are bold. Initiative and Speed are compact numeric tiles
+in the main identity header's right side, not a separate Movement pane or part
+of Health/Defenses. The portrait is circular; the identity line reads race, class,
+then bare level (`Dwarf Paladin 7`). The redundant first-page running header and
+full-width identity separator are omitted; later-page running headers remain.
+Passive Insight and Perception precede their active skill bonuses, e.g.
+`Perception (25) +15`, not as separate rows. Vision remains in Skills.
+Header follow-up verification: 14 focused render tests, lint, production build,
+and the overview-only Letter/A4 color/monochrome PDF matrix pass with no overview
+overflow. This does not replace the separately tracked full physical-card gate.
 Surge value follows the recovered legacy sheet projection: floor(maximum HP / 4)
 plus the additive `Healing Surge Value` stat (absent bonus = zero), not that raw
-stat alone. Absent unconditional Saving Throws likewise displays `0`; conditional
+stat alone. Absent unconditional Saving Throws likewise displays `+0`; conditional
 saving-throw benefits remain separate reminders, not part of that universal bonus.
-Unknown HP still leaves surge value unknown. Initiative/Speed's vertical cells
-have no inherited horizontal-stat borders.
+Unknown HP still leaves surge value unknown.
 Verified against recovered `PanelModelHitPoints`/`BasicUtils` display paths and
 Hu's evaluated data (68 HP, surge value 17, unconditional saves +0). All 29 focused
 overview/model/render tests, web typecheck and focused lint pass.
@@ -103,7 +108,7 @@ Display follow-up: Saves and Initiative use explicit signs, including `+0`.
 Reminder names omit parenthetical qualifiers for display only; original names
 remain intact in the model and references. The Ability heading aligns with the
 abbreviation column rather than the raw-score column; abbreviations use normal
-ink. The separate Movement pane's replacement remains a product-review decision.
+ink. A replacement name for Remember in play remains a product-review decision.
 This supersedes the initial prototype's ability-column order and separate
 Movement & awareness panel.
 
@@ -112,7 +117,8 @@ authored short descriptions, including prerequisites and user-facing fields.
 Missing full rules are labelled rather than presenting abbreviations as complete.
 Ability checks add rounded-down half level to the supplied/fallback ability
 modifier in the model. Training uses explicit training stats or selected Skill
-Training definitions. Missing saves/training/vision are not invented as zeroes.
+Training definitions. Missing training/vision remain unknown; absent unconditional
+saves use the native sparse-stat zero convention.
 
 The real output contains one summary, a scratchpad (with continuation usage
 pages as needed), and measured two-column references before the existing cards.

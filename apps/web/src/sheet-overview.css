@@ -122,40 +122,31 @@ body:has(.sp-prototype) {
 .ov-basic-probe {
   margin-top: -0.12in;
 }
-.ov-abilities-movement {
-  display: grid;
-  grid-template-columns: 0.9in minmax(0, 1fr);
-  gap: 0.08in;
-  align-items: stretch;
+.sheet-overview .sp-identity {
+  border-bottom: 0;
+  padding-bottom: 0;
 }
-.ov-movement-panel {
-  display: flex;
-  flex-direction: column;
-}
-.sheet-overview .ov-movement-panel > h3 {
-  font-size: 9pt;
-  padding-inline: 0.04in;
-  gap: 0.03in;
-  min-height: 0.29in;
-}
-.sheet-overview .ov-movement-panel > h3 .icon {
-  width: 0.12in;
-}
-.ov-movement-panel .sp-panel-content {
-  display: flex;
+.ov-identity-name {
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
-.ov-movement-values {
-  width: 100%;
-  grid-template-rows: 1fr 1fr;
+.sp-values.ov-header-stats {
+  grid-template-columns: repeat(2, minmax(0.65in, 1fr));
+  gap: 0.08in;
+  flex-shrink: 0;
 }
-.sp-values.ov-movement-values > div {
+.sp-values.ov-header-stats > div {
   border: 0;
-  justify-content: center;
-  padding-block: 0.06in;
+  padding: 0.08in;
+  background: var(--sp-soft);
+  border-radius: 3px;
 }
-.ov-movement-values span {
-  font-size: 8.5pt;
+.sheet-overview .sp-portrait {
+  width: 0.8in;
+  height: 0.8in;
+  border-radius: 50%;
+  overflow: hidden;
 }
 .sheet-overview .sp-ability-table {
   table-layout: auto;
@@ -171,11 +162,12 @@ body:has(.sp-prototype) {
   width: 2.8em;
   color: var(--sp-ink);
   font-size: 8.5pt;
+  font-weight: 700;
 }
 .sheet-overview .sp-ability-table abbr {
   text-decoration: none;
 }
-.sheet-overview .ov-abilities-movement .sp-ability-table tbody th {
+.sheet-overview .ov-ability-section .sp-ability-table tbody th {
   text-align: left;
 }
 .sheet-overview .sp-ability-table th.ov-ability-name-heading {

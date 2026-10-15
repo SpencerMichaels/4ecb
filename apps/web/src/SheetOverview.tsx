@@ -77,10 +77,12 @@ function Paper({
   }, [ref]);
   return (
     <article className="sp-paper ov-paper" ref={ref} aria-label={title}>
-      <header className="sp-running-header">
-        <span>{name}</span>
-        <span>{title}</span>
-      </header>
+      {page !== 1 ? (
+        <header className="sp-running-header">
+          <span>{name}</span>
+          <span>{title}</span>
+        </header>
+      ) : null}
       <div className="sp-page-content">{children}</div>
       <footer className="sp-page-footer">
         <span>
@@ -421,17 +423,16 @@ function Summary({
             <img src={portrait.renderedDataUrl} alt={`${name} portrait`} />
           </div>
         ) : null}
-        <div>
+        <div className="ov-identity-name">
           <h1>{name}</h1>
           <p className="sp-character-line">
-            {model.identity
-              .filter((entry) =>
-                ["Race", "Class", "Level"].includes(entry.label),
+            {["Race", "Class", "Level"]
+              .flatMap((label) =>
+                model.identity
+                  .filter((entry) => entry.label === label)
+                  .map((entry) => entry.value),
               )
-              .map((entry) =>
-                entry.label === "Level" ? `Level ${entry.value}` : entry.value,
-              )
-              .join(" · ")}
+              .join(" ")}
           </p>
           <p className="sp-identity-note">
             {model.identity
@@ -444,6 +445,13 @@ function Summary({
               .join(" · ")}
           </p>
         </div>
+        <Values
+          className="ov-header-stats"
+          values={[
+            ["Initiative", signedBonus(find(model.resources, "Initiative"))],
+            ["Speed", find(model.resources, "Speed")],
+          ]}
+        />
       </section>
       <div className="sp-summary-grid">
         <div className="sp-column">
@@ -496,23 +504,7 @@ function Summary({
           ) : null}
         </div>
         <div className="sp-column sp-skills-column">
-          <div className="ov-abilities-movement">
-            <Panel
-              title="Movement"
-              icon="footprints"
-              className="ov-movement-panel"
-            >
-              <Values
-                className="ov-movement-values"
-                values={[
-                  [
-                    "Initiative",
-                    signedBonus(find(model.resources, "Initiative")),
-                  ],
-                  ["Speed", find(model.resources, "Speed")],
-                ]}
-              />
-            </Panel>
+          <div className="ov-ability-section">
             <Panel
               title="Abilities"
               icon="ability"
@@ -577,15 +569,14 @@ function Summary({
                             <td
                               className={`sp-skill-total${passive === undefined ? "" : " has-passive"}`}
                             >
-                              {skill.bonus}
                               {passive === undefined ? null : (
                                 <>
-                                  {" "}
                                   <span className="ov-passive-value">
                                     ({passive})
-                                  </span>
+                                  </span>{" "}
                                 </>
                               )}
+                              {skill.bonus}
                             </td>
                           </tr>
                         );
