@@ -23,6 +23,33 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("signs positive initiative without doubling signs or changing zero/negative/unknown values", () => {
+    for (const [value, expected] of [
+      ["12", "+12"],
+      ["+12", "+12"],
+      ["0", "0"],
+      ["-2", "-2"],
+      ["—", "—"],
+    ]) {
+      const m = {
+        ...model,
+        resources: [...model.resources, { label: "Initiative", value: value! }],
+      };
+      const html = renderToStaticMarkup(
+        <SheetOverview
+          model={m}
+          name="Fixture"
+          portrait={undefined}
+          paper="letter"
+          monochrome={false}
+          blankHP={false}
+        />,
+      );
+      expect(html).toContain(
+        `<span>Initiative</span><strong>${expected}</strong>`,
+      );
+    }
+  });
   it("uses one icon-led basic-attack table, omitting only ranged unarmed rows", () => {
     const variants = [
       {
@@ -102,6 +129,14 @@ describe("real-data sheet overview", () => {
   it("places score-first abbreviated abilities beside movement, with passive senses in Skills", () => {
     const m = {
       ...model,
+      overview: {
+        ...model.overview!,
+        skills: [
+          { name: "Insight", ability: "WIS", bonus: "+8", trained: false },
+          { name: "Perception", ability: "WIS", bonus: "+15", trained: true },
+        ],
+      },
+      resources: [...model.resources, { label: "Initiative", value: "12" }],
       senses: [
         { label: "Passive Insight", value: "18" },
         { label: "Passive Perception", value: "25" },
@@ -129,10 +164,10 @@ describe("real-data sheet overview", () => {
     );
     expect(right).not.toContain(">Score</th>");
     const skills = right.split(">Skills</h3>")[1]!.split(">Languages</h3>")[0]!;
-    expect(skills).toContain("Pass. Insight");
-    expect(skills).toContain("Pass. Perception");
-    expect(skills).toContain(">18</td>");
-    expect(skills).toContain(">25</td>");
+    expect(skills).toContain('+8 <span class="ov-passive-value">(18)</span>');
+    expect(skills).toContain('+15 <span class="ov-passive-value">(25)</span>');
+    expect(skills).not.toContain("ov-passive-skill");
+    expect(right).toContain("<span>Initiative</span><strong>+12</strong>");
   });
   it("fills reminder space without a fixed count cap, reserving overflow-caption space", () => {
     expect(
@@ -291,7 +326,6 @@ describe("real-data sheet overview", () => {
     expect(markup).toContain('aria-label="Character summary"');
     expect(markup).toContain('aria-label="Play scratchpad"');
     expect(markup).toContain("+½ level");
-    expect(markup).toContain("Pass. Perception");
     expect(markup.match(/lucide-skull/g)).toHaveLength(3);
     expect(markup.match(/<small>[1-8]<\/small>/g)).toHaveLength(8);
     expect(markup).not.toContain(">72<");

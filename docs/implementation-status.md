@@ -2,6 +2,15 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Summary sign/passive refinement (2026-10-14): Positive Initiative includes + in
+the Movement pane and scratchpad reference; existing signs, zero and unknown
+values are preserved. Passive Insight/Perception appear in parentheses beside
+their ordinary skill bonuses, replacing separate footer rows. Source calculations
+are unchanged. Live Silaqui review confirms +12 and +8 (18)/+15 (25), with no
+skill-cell/table overflow and the summary still fitting its page. Focused rendering
+coverage checks both inline placement and initiative sign edge cases; no full
+print matrix was rerun for this small display adjustment.
+
 Compact summary grouping (2026-10-14): Basic attacks now share one icon-led
 Weapon/Attack/Damage table, with no separate melee/ranged headings or STR/DEX vs
 AC indicators. Melee uses sword, ranged bow-arrow; ranged Unarmed is omitted from

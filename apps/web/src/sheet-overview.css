@@ -179,9 +179,12 @@ body:has(.sp-prototype) {
 .sheet-overview .ov-abilities-movement .sp-ability-table tbody th {
   text-align: left;
 }
-.ov-passive-skill {
-  background: #e8edf0;
-  border-top: 1px solid #b9c4ca;
+.sheet-overview .sp-skill-total.has-passive {
+  white-space: nowrap;
+}
+.ov-passive-value {
+  font-size: 8.5pt;
+  font-weight: 400;
 }
 .ov-basic-table :is(th, td) {
   padding: 0.04in 0.045in;

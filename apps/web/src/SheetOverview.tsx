@@ -100,6 +100,10 @@ function Paper({
 const find = (values: readonly SheetValue[], label: string) =>
   values.find((value) => value.label.toLowerCase() === label.toLowerCase())
     ?.value ?? "—";
+const signedBonus = (value: string) =>
+  /^\d+(?:\.\d+)?$/.test(value.trim()) && Number(value) > 0
+    ? `+${value.trim()}`
+    : value;
 const featureGroups: Readonly<Record<string, string>> = {
   "Class Feature": "Class features",
   "Racial Trait": "Racial traits",
@@ -460,7 +464,10 @@ function Summary({
               <Values
                 className="ov-movement-values"
                 values={[
-                  ["Initiative", find(model.resources, "Initiative")],
+                  [
+                    "Initiative",
+                    signedBonus(find(model.resources, "Initiative")),
+                  ],
                   ["Speed", find(model.resources, "Speed")],
                 ]}
               />
@@ -503,25 +510,44 @@ function Summary({
                 (skills, index) => (
                   <table className="sp-skill-table" key={index}>
                     <tbody>
-                      {skills.map((skill) => (
-                        <tr key={skill.name}>
-                          <th scope="row">
-                            {skill.name}
-                            {skill.trained ? (
-                              <sup
-                                className="sp-trained-marker"
-                                aria-label="Trained"
-                              >
-                                T
-                              </sup>
-                            ) : null}
-                            <sub className="sp-skill-ability">
-                              {skill.ability}
-                            </sub>
-                          </th>
-                          <td className="sp-skill-total">{skill.bonus}</td>
-                        </tr>
-                      ))}
+                      {skills.map((skill) => {
+                        const passive = /^(?:Insight|Perception)$/.test(
+                          skill.name,
+                        )
+                          ? find(model.senses, `Passive ${skill.name}`)
+                          : undefined;
+                        return (
+                          <tr key={skill.name}>
+                            <th scope="row">
+                              {skill.name}
+                              {skill.trained ? (
+                                <sup
+                                  className="sp-trained-marker"
+                                  aria-label="Trained"
+                                >
+                                  T
+                                </sup>
+                              ) : null}
+                              <sub className="sp-skill-ability">
+                                {skill.ability}
+                              </sub>
+                            </th>
+                            <td
+                              className={`sp-skill-total${passive === undefined ? "" : " has-passive"}`}
+                            >
+                              {skill.bonus}
+                              {passive === undefined ? null : (
+                                <>
+                                  {" "}
+                                  <span className="ov-passive-value">
+                                    ({passive})
+                                  </span>
+                                </>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                     <tfoot>
                       {index === 1 ? (
@@ -531,19 +557,6 @@ function Summary({
                           </td>
                         </tr>
                       ) : null}
-                      <tr className="ov-passive-skill">
-                        <th scope="row">
-                          {index === 0 ? "Pass. Insight" : "Pass. Perception"}
-                        </th>
-                        <td className="sp-skill-total">
-                          {find(
-                            model.senses,
-                            index === 0
-                              ? "Passive Insight"
-                              : "Passive Perception",
-                          )}
-                        </td>
-                      </tr>
                     </tfoot>
                   </table>
                 ),
@@ -829,8 +842,8 @@ function Scratchpad({
                   .join(" · ")}
               </p>
               <p className="sp-inline-rule">
-                Initiative {find(model.resources, "Initiative")} · Speed{" "}
-                {find(model.resources, "Speed")}
+                Initiative {signedBonus(find(model.resources, "Initiative"))} ·
+                Speed {find(model.resources, "Speed")}
               </p>
             </Panel>
             <Panel title="Remember in play" icon="feat">
