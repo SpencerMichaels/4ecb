@@ -11,6 +11,8 @@ export interface OverviewFeature {
   readonly fields: readonly SheetValue[];
   readonly source: string;
   readonly fullTextAvailable: boolean;
+  /** A display heuristic, not a claim that every other benefit is calculated. */
+  readonly playReminder?: boolean;
 }
 export interface OverviewInventory {
   readonly name: string;
@@ -42,6 +44,20 @@ export interface SheetOverview {
 }
 const key = (s: string) => s.trim().toLowerCase();
 const signed = (n: number) => `${n >= 0 ? "+" : ""}${n}`;
+function hasPlayReminder(summary: string, description: string): boolean {
+  const text = `${summary} ${description}`;
+  // Ally-facing benefits remain manual even when their prerequisite is a loadout.
+  if (/\b(?:ally|allies)\b/i.test(text)) return true;
+  const withoutLoadoutConditions = text.replace(
+    /\b(?:while|when|if)\s+(?:you\s+(?:are\s+)?)?(?:wearing|wielding|equipped)\b[^.;]*/gi,
+    "",
+  );
+  // Require an in-play condition, choice, or changed action. Passive proficiency,
+  // training, numeric bonuses and power grants alone are not useful reminders.
+  return /\b(?:when|whenever|if|unless|trigger|bloodied|combat advantage|opportunity|reroll|draw|shift(?:s|ing)?|push|pull|slide|teleport|spend|forgo|give up|once per)\b/i.test(
+    withoutLoadoutConditions,
+  );
+}
 const skillAbilities: Readonly<Record<string, string>> = {
   Acrobatics: "DEX",
   Arcana: "INT",
@@ -143,6 +159,7 @@ export function withSheetOverview(
         fields,
         source: entity?.source ?? "",
         fullTextAvailable: Boolean(description || fields.length),
+        playReminder: hasPlayReminder(summary, description),
       });
     }
   const reminders: SheetValue[] = [];
@@ -156,9 +173,11 @@ export function withSheetOverview(
   for (const feature of features)
     if (
       ["Feat", "Class Feature", "Racial Trait"].includes(feature.group) &&
-      /\b(?:allies|ally|when|whenever|while|if|trigger)\b/i.test(
-        `${feature.summary} ${feature.description}`,
-      )
+      (feature.group === "Feat"
+        ? feature.playReminder
+        : /\b(?:allies|ally|when|whenever|while|if|trigger)\b/i.test(
+            `${feature.summary} ${feature.description}`,
+          ))
     )
       addReminder(feature.name, feature.summary || feature.description);
   for (const item of input.inventory.filter((item) => item.equipped > 0))

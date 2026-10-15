@@ -82,6 +82,11 @@ pages as needed), and measured two-column references before the existing cards.
 Long prose/list/table content continues without discarding words or rows; reference
 titles identify continuations. Optional summary reminders/feat summaries yield to
 essential stats when space is tight. All full reference entries remain available.
+Feat reminders now require an in-play condition, ally-facing benefit or changed
+action in authored feat text, rather than taking the first short descriptions.
+Passive proficiency/training/numeric grants and armor-only loadout conditions are
+omitted from both feat reminder surfaces. This remains a display heuristic, not
+proof that every excluded benefit is calculated; all feats retain full references.
 Two equipped-first basic-attack variants appear per summary table; all alternatives
 are retained in references. Unfittable custom data raises a visible overflow
 warning rather than being silently clipped or shrunk below readable reference text.

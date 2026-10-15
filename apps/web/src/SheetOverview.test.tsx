@@ -21,6 +21,37 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("limits the summary feat reminders to actionable entries without removing full references", () => {
+    const features = [false, true].map((playReminder) => ({
+      id: `feat:${playReminder}`,
+      name: playReminder ? "Quick Hands" : "Passive Training",
+      group: "Feat",
+      summary: playReminder
+        ? "Draw a weapon while attacking."
+        : "Gain weapon proficiency.",
+      description: "Complete reference remains available.",
+      fields: [],
+      source: "Synthetic",
+      fullTextAvailable: true,
+      playReminder,
+    }));
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={{ ...model, overview: { ...model.overview!, features } }}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const summary = html
+      .split('aria-label="Character summary"')[1]!
+      .split("</article>")[0]!;
+    expect(summary).toContain("Quick Hands");
+    expect(summary).not.toContain("Passive Training");
+    expect(html).toContain("Passive Training");
+  });
   it("indexes item powers even when the physical item-card list is empty", () => {
     const rows = overviewTrackingRows({
       ...model,

@@ -44,6 +44,77 @@ const feat: ContentEntity = {
   ],
 };
 describe("printed overview data", () => {
+  it("omits passive grants and loadout bonuses from reminders, retaining actionable benefits", () => {
+    const examples = [
+      ["Weapon Training", "Gain proficiency with the test blade.", false],
+      [
+        "Skill Domain",
+        "+1 to trained skill checks; associated powers can be used as basic attacks.",
+        false,
+      ],
+      [
+        "Light Defense",
+        "+2 to AC while wearing cloth armor or no armor.",
+        false,
+      ],
+      ["Improved Quarry", "Your extra damage dice increase to d8s.", false],
+      [
+        "Fast Hands",
+        "Draw a weapon as part of the action when using it; +2 to initiative.",
+        true,
+      ],
+      [
+        "Hampering Strike",
+        "Give up one extra damage die to slow the target.",
+        true,
+      ],
+      [
+        "Longer Steps",
+        "Increase shifts from encounter powers by 2 squares.",
+        true,
+      ],
+      [
+        "Protect Allies",
+        "While you use a shield, your allies gain +1 AC.",
+        true,
+      ],
+    ] as const;
+    const definitions = examples.map(([name, text], i) => ({
+      ...feat,
+      id: `feat:reminder:${i}`,
+      name,
+      description: text,
+      specifics: [
+        {
+          name: "Short Description",
+          value: text,
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    }));
+    const m = buildSheetModel(
+      {
+        ...snapshot,
+        selectedRules: definitions.map((e) => ({
+          id: e.id,
+          name: e.name,
+          type: "Feat",
+        })),
+      },
+      definitions,
+    );
+    expect(m.overview?.features.map((f) => [f.name, f.playReminder])).toEqual(
+      examples.map(([name, , expected]) => [name, expected]),
+    );
+    expect(m.overview?.features).toHaveLength(examples.length);
+    expect(m.overview?.reminders.map((r) => r.label).sort()).toEqual(
+      examples
+        .filter(([, , expected]) => expected)
+        .map(([name]) => name)
+        .sort(),
+    );
+  });
   it("retains full selected rules separately from authored short descriptions", () => {
     const m = buildSheetModel(snapshot, [feat]);
     expect(m.overview?.features[0]).toMatchObject({

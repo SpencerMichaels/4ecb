@@ -2,6 +2,20 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Feat-reminder refinement (2026-10-14): Summary feat reminders no longer take the
+first four arbitrary short descriptions. The model marks authored in-play
+conditions, ally-facing benefits and changed actions as reminder candidates,
+excluding passive grants and armor-only loadout conditions from feat reminders
+and the general reminder list. Full feat references remain intact. Hu's local
+definitions confirm proficiency, trained-skill bonuses and unarmored AC as the
+reported passive cases. Synthetic tests cover these patterns alongside retained
+action/shift/ally-facing reminders; this is a display heuristic, not an evaluator
+completeness assertion.
+Verification: 12 focused overview/model tests pass, along with web typechecking
+and focused lint. A read-only local projection of Hu excludes the three reported
+feats and retains Battle Awareness. The full print matrix was not rerun for this
+reminder-selection-only change.
+
 Real-data overview integration (2026-10-14): The reviewed prototype now supplies
 the normal character print preview: one summary, a paper scratchpad with usage
 continuations, and measured full-description reference pages before the accepted

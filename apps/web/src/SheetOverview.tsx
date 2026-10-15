@@ -212,7 +212,10 @@ function Summary({
     .slice(0, compact ? 1 : 2);
   const feats = overview.features
     .filter(
-      (feature) => feature.group === "Feat" && feature.summary.length < 160,
+      (feature) =>
+        feature.group === "Feat" &&
+        feature.playReminder === true &&
+        feature.summary.length < 160,
     )
     .slice(0, 4);
   useLayoutEffect(() => {
