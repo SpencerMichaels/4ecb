@@ -1072,6 +1072,9 @@ async function checkScratchpad(client, monochrome) {
     return {expected:[...new Set(expected)].sort(), actual:actual.sort(),
       segments:segments.length, tracks:page.querySelectorAll('.ov-surge-row').length,
       surgeGaps:segments.some(e=>parseFloat(getComputedStyle(e).marginLeft)>0),
+      redundantSurgeCount:page.querySelector('.ov-scratch-surges > p').textContent.includes('/day'),
+      powerWidth:page.querySelector('.ov-scratch-powers').getBoundingClientRect().width,
+      contentWidth:page.querySelector('.sp-page-content').getBoundingClientRect().width,
       powerPanes:[...page.querySelectorAll('.ov-tracking-panels > .sp-panel')].map(e=>({left:e.getBoundingClientRect().left,top:e.getBoundingClientRect().top,width:e.getBoundingClientRect().width})),
       segmentWidth:Math.min(...segments.map(e=>e.getBoundingClientRect().width)),
       labels:[...page.querySelectorAll('.ov-surge-label')].map(e=>e.textContent),
@@ -1104,6 +1107,8 @@ async function checkScratchpad(client, monochrome) {
   );
   assert(
     !state.surgeGaps &&
+      !state.redundantSurgeCount &&
+      Math.abs(state.powerWidth - state.contentWidth) < 1 &&
       state.powerPanes.length === 2 &&
       Math.abs(state.powerPanes[0].top - state.powerPanes[1].top) < 1 &&
       state.powerPanes[0].width > state.powerPanes[1].width &&
@@ -1136,7 +1141,7 @@ async function checkScratchpad(client, monochrome) {
     client,
     `(() => {
     const p=document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"]');
-    return {count:p.querySelectorAll('[data-tracking-id]').length,health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,records:p.querySelector('.ov-scratch-records').getBoundingClientRect().height};
+    return {count:p.querySelectorAll('[data-tracking-id]').length,health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,records:p.querySelector('.ov-scratch-bottom').getBoundingClientRect().height};
   })()`,
   );
   const rule = await evaluate(
@@ -1163,7 +1168,7 @@ async function checkScratchpad(client, monochrome) {
       `(() => {
       const pages=[...document.querySelectorAll('.sheet-overview > .ov-paper')].filter(p=>['Play scratchpad','Power usage · continued'].includes(p.getAttribute('aria-label')));
       const p=pages[0];
-      return {ids:pages.flatMap(p=>[...p.querySelectorAll('[data-tracking-id]')].map(e=>e.dataset.trackingId)).sort(),overflow:pages.some(p=>p.querySelector('.sp-page-content').getBoundingClientRect().bottom>p.querySelector('.sp-page-footer').getBoundingClientRect().top-7),geometry:pages.map(p=>({title:p.getAttribute('aria-label'),bottom:p.querySelector('.sp-page-content').getBoundingClientRect().bottom,footer:p.querySelector('.sp-page-footer').getBoundingClientRect().top,rows:p.querySelectorAll('[data-tracking-id]').length})),health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,records:p.querySelector('.ov-scratch-records').getBoundingClientRect().height};
+      return {ids:pages.flatMap(p=>[...p.querySelectorAll('[data-tracking-id]')].map(e=>e.dataset.trackingId)).sort(),overflow:pages.some(p=>p.querySelector('.sp-page-content').getBoundingClientRect().bottom>p.querySelector('.sp-page-footer').getBoundingClientRect().top-7),geometry:pages.map(p=>({title:p.getAttribute('aria-label'),bottom:p.querySelector('.sp-page-content').getBoundingClientRect().bottom,footer:p.querySelector('.sp-page-footer').getBoundingClientRect().top,rows:p.querySelectorAll('[data-tracking-id]').length})),health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,records:p.querySelector('.ov-scratch-bottom').getBoundingClientRect().height};
     })()`,
     );
     assert(
@@ -1172,8 +1177,9 @@ async function checkScratchpad(client, monochrome) {
       `Dense tracking must preserve every row on adjacent measured pages: ${JSON.stringify(stress)}`,
     );
     assert(
-      stress.health === baseline.health && stress.records === baseline.records,
-      "Power growth must not displace health or consume handwriting areas",
+      Math.abs(stress.health - baseline.health) < 0.5 &&
+        Math.abs(stress.records - baseline.records) < 0.5,
+      `Power growth must not displace health or consume handwriting areas: ${JSON.stringify({ baseline, stress })}`,
     );
   } finally {
     await evaluate(

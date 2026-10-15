@@ -996,7 +996,7 @@ body:has(.sp-prototype) {
   grid-template-columns: 1.5fr 1fr;
   gap: 0.15in;
 }
-/* Scratchpad: fixed writing areas beside measured, variable-length trackers. */
+/* Scratchpad: two-column writing areas around full-width power trackers. */
 .ov-scratch-session {
   margin-top: 0.07in;
 }
@@ -1005,6 +1005,10 @@ body:has(.sp-prototype) {
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   gap: 0.15in;
   align-items: start;
+}
+.ov-scratch-powers,
+.ov-scratch-bottom {
+  margin-top: 0.15in;
 }
 .sheet-overview
   .ov-paper[aria-label="Play scratchpad"]
@@ -1047,12 +1051,6 @@ body:has(.sp-prototype) {
   gap: 0.045in;
   font-weight: 600;
   font-size: 9pt;
-}
-.ov-scratch-surges > p > span {
-  margin-left: auto;
-  color: var(--sp-muted);
-  font-weight: 400;
-  font-size: 8.5pt;
 }
 .ov-surge-track {
   padding: 0 0.07in;

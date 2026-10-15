@@ -4,8 +4,8 @@
 
 Scratchpad working-surface redesign (2026-10-15): The product owner accepts the
 first-page summary. The approved scratchpad proposal is implemented for feedback:
-wide Health/power-tracking column, narrow action-point/milestone, Effect/Ends,
-treasure/consumable and session-note/XP column. Slate pane headers, violet health
+Health/action-point column beside Effect/Ends, a full-width Encounter/Daily
+tracking pair, then Treasure/consumables beside Session notes/XP. Slate pane headers, violet health
 reference cells, encounter-red/daily-gray tracking headings and explicit grayscale
 reuse the accepted visual vocabulary. Current/temp HP retain 0.7in writing boxes,
 temporary effects six 0.42in rows. Redundant quick-reference/two-short-reminder
@@ -36,11 +36,23 @@ Page 1 ability names use regular weight, matching the other left-column table
 labels; this isolated CSS adjustment does not alter values or layout structure.
 Surge bars are continuous at all counts; sparse number labels supply the
 five-surge grouping without visual gaps. Encounter and Daily panes share a row,
-with Encounter receiving 1.65 times Daily's width. A sole pane fills the available
+across the full page body, with Encounter receiving 1.65 times Daily's width.
+A sole pane fills the available
 width; containers below 3.6in fall back to stacked panes. Pagination measures the
 actual narrow/wide row heights and uses the maximum pane height when adjacent,
 rather than adding both heights. Full names, shared-use grouping and adjacent
 overflow pages remain intact.
+The redundant surges `X/day` marker is removed. Health and action points occupy
+the upper left, Conditions the upper right; Treasure and Session Notes sit below
+the full-width power pair. Their writing-area heights are reserved before power
+pagination, so long power lists cannot consume those areas. Both hidden width
+probes and visible trackers use full page width.
+The full-width follow-up passes the same 43 focused tests, typecheck, build,
+lint and eight Chromium/Firefox print-layout variants; the new assertions check
+full body-width trackers and removal of the redundant surge count. The generated
+preview was reviewed. Writing-area stability checks allow less than 0.5px of
+subpixel rounding after Firefox reflows, rather than exact floating-point equality;
+overflow, row completeness and reserved-area checks are unchanged.
 Verification: 43 focused overview/layout tests, web typecheck, focused lint and
 production build pass. `node scripts/check-print.mjs --overview-only
 --firefox-scratchpad --scratchpad-preview` passes all four Chromium PDF variants

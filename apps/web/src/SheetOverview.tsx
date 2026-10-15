@@ -1199,6 +1199,7 @@ function Scratchpad({
   const [pages, setPages] = useState<readonly TrackingPage[]>();
   const pageRef = useRef<HTMLElement>(null);
   const regionRef = useRef<HTMLDivElement>(null);
+  const recordsRef = useRef<HTMLDivElement>(null);
   const firstProbe = useRef<HTMLDivElement>(null);
   const nextProbe = useRef<HTMLDivElement>(null);
   const nextPaper = useRef<HTMLElement>(null);
@@ -1248,7 +1249,9 @@ function Scratchpad({
         measurements(next),
         page.querySelector(".sp-page-footer")!.getBoundingClientRect().top -
           8 -
-          regionRef.current!.getBoundingClientRect().top,
+          regionRef.current!.getBoundingClientRect().top -
+          recordsRef.current!.getBoundingClientRect().height -
+          parseFloat(getComputedStyle(recordsRef.current!).marginTop),
         paper.querySelector(".sp-page-footer")!.getBoundingClientRect().top -
           8 -
           next.getBoundingClientRect().top,
@@ -1265,6 +1268,7 @@ function Scratchpad({
     observer.observe(page.querySelector(".sp-page-content")!);
     observer.observe(first);
     observer.observe(next);
+    observer.observe(recordsRef.current!);
     check();
     void document.fonts.ready.then(check);
     return () => {
@@ -1302,7 +1306,7 @@ function Scratchpad({
           </span>
         </div>
         <div className="ov-scratch-layout">
-          <div className="sp-column ov-scratch-main">
+          <div className="sp-column ov-scratch-main ov-scratch-records">
             <Panel title="Health" icon="heart" className="ov-scratch-health">
               <Values
                 className="ov-scratch-health-values"
@@ -1322,8 +1326,7 @@ function Scratchpad({
               </div>
               <div className="ov-scratch-surges">
                 <p>
-                  <Icon name="heart" /> Surges{" "}
-                  <span>{find(model.resources, "Healing Surges")}/day</span>
+                  <Icon name="heart" /> Surges
                 </p>
                 <SurgeBar count={find(model.resources, "Healing Surges")} />
               </div>
@@ -1336,16 +1339,6 @@ function Scratchpad({
                 </span>
               </div>
             </Panel>
-            <div className="ov-power-trackers sp-column" ref={regionRef}>
-              {renderTracking(first)}
-              {layout.length > 1 ? (
-                <p className="sp-caption ov-tracking-caption">
-                  Power tracking continues on page {startPage + 1}…
-                </p>
-              ) : null}
-            </div>
-          </div>
-          <div className="sp-column ov-scratch-records">
             <Panel title="Action points & milestones" icon="circle">
               <div className="sp-action-points">
                 <span>Action points</span>
@@ -1354,6 +1347,8 @@ function Scratchpad({
                 <i />
               </div>
             </Panel>
+          </div>
+          <div className="sp-column">
             <Panel title="Conditions & temporary effects" icon="edit">
               <table className="ov-effects-table">
                 <thead>
@@ -1372,17 +1367,33 @@ function Scratchpad({
                 </tbody>
               </table>
             </Panel>
-            <Panel title="Treasure & consumables" icon="item">
-              <div className="sp-writing-lines ov-scratch-treasure" />
-            </Panel>
-            <Panel title="Session notes" icon="edit">
-              <div className="sp-writing-lines ov-scratch-notes" />
-              <div className="sp-xp-tracker">
-                <span>XP</span>
-                <i />
-              </div>
-            </Panel>
           </div>
+        </div>
+        <div
+          className="ov-power-trackers sp-column ov-scratch-powers"
+          ref={regionRef}
+        >
+          {renderTracking(first)}
+          {layout.length > 1 ? (
+            <p className="sp-caption ov-tracking-caption">
+              Power tracking continues on page {startPage + 1}…
+            </p>
+          ) : null}
+        </div>
+        <div
+          className="ov-scratch-layout ov-scratch-records ov-scratch-bottom"
+          ref={recordsRef}
+        >
+          <Panel title="Treasure & consumables" icon="item">
+            <div className="sp-writing-lines ov-scratch-treasure" />
+          </Panel>
+          <Panel title="Session notes" icon="edit">
+            <div className="sp-writing-lines ov-scratch-notes" />
+            <div className="sp-xp-tracker">
+              <span>XP</span>
+              <i />
+            </div>
+          </Panel>
         </div>
       </Paper>
       {layout.slice(1).map((slice, index) => (
@@ -1414,14 +1425,11 @@ function Scratchpad({
           page=""
           source={model.source}
         >
-          <div className="ov-scratch-layout">
-            <div className="ov-power-trackers sp-column" ref={firstProbe}>
-              <TrackingPanels encounter={encounter} daily={daily} />
-              <p className="sp-caption ov-tracking-caption">
-                Power tracking continues on page {startPage + 1}…
-              </p>
-            </div>
-            <div />
+          <div className="ov-power-trackers sp-column" ref={firstProbe}>
+            <TrackingPanels encounter={encounter} daily={daily} />
+            <p className="sp-caption ov-tracking-caption">
+              Power tracking continues on page {startPage + 1}…
+            </p>
           </div>
         </Paper>
         <Paper
