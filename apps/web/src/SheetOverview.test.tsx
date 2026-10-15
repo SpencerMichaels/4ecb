@@ -210,7 +210,7 @@ describe("real-data sheet overview", () => {
       "Gouge",
     ]);
   });
-  it("places initiative and speed in the identity header, with passive senses before skill bonuses", () => {
+  it("places combat statistics in a full-width band with balanced summary columns", () => {
     const m = {
       ...model,
       features: [
@@ -260,7 +260,13 @@ describe("real-data sheet overview", () => {
     const header = summary
       .split('class="sp-identity"')[1]!
       .split("</section>")[0]!;
-    expect(header).toContain('class="sp-values ov-header-stats"');
+    expect(header).not.toContain("Initiative");
+    const band = summary
+      .split('class="ov-numeric-band"')[1]!
+      .split('class="sp-summary-grid')[0]!;
+    expect(band).toContain(">Defenses</h3>");
+    expect(band).toContain(">Health</h3>");
+    expect(band).toContain("Initiative &amp; speed");
     expect(right).toContain(
       '<td class="ov-ability-score">19</td><th scope="row">Strength</th>',
     );
@@ -278,7 +284,7 @@ describe("real-data sheet overview", () => {
     expect(skills).toContain('<span class="ov-passive-value">(18)</span> +8');
     expect(skills).toContain('<span class="ov-passive-value">(25)</span> +15');
     expect(skills).not.toContain("ov-passive-skill");
-    expect(header).toContain("<span>Initiative</span><strong>+12</strong>");
+    expect(band).toContain("<span>Initiative</span><strong>+12</strong>");
   });
   it.each([
     ["0", "+0"],
@@ -366,10 +372,11 @@ describe("real-data sheet overview", () => {
     expect(summary).not.toContain("Feat reminders");
     const [left, right] = summary.split('class="sp-column sp-skills-column"');
     expect(left).toContain("Reminders");
-    expect(left).not.toContain("Basic attacks");
-    expect(right!.indexOf("Languages")).toBeLessThan(
-      right!.indexOf("Basic attacks"),
+    expect(left).toContain("Basic attacks");
+    expect(left!.indexOf("Basic attacks")).toBeLessThan(
+      left!.indexOf(">Reminders<"),
     );
+    expect(right).not.toContain("Basic attacks");
     expect(summary).not.toContain("Passive Training");
     expect(html).toContain("Passive Training");
   });

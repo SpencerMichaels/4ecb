@@ -345,7 +345,7 @@ function Summary({
       if (!page.clientHeight) return;
       const footer = page.querySelector<HTMLElement>(".sp-page-footer")!;
       const basic = page.querySelector<HTMLElement>(
-        ".sp-skills-column > .sp-basic-attacks",
+        ".ov-main-column > .sp-basic-attacks",
       );
       const basicProbe = page.querySelector<HTMLElement>(
         ".ov-basic-probe .sp-basic-attacks",
@@ -437,42 +437,50 @@ function Summary({
               .join(" · ")}
           </p>
         </div>
-        <Values
-          className="ov-header-stats"
-          values={[
-            ["Initiative", signedBonus(find(model.resources, "Initiative"))],
-            ["Speed", find(model.resources, "Speed")],
-          ]}
-        />
       </section>
-      <div className="sp-summary-grid">
-        <div className="sp-column">
-          <Panel title="Defenses" icon="shield">
-            <Values
-              className="sp-defenses"
-              values={[
-                ["AC", find(model.defenses, "AC")],
-                ["Fortitude", find(model.defenses, "Fortitude")],
-                ["Reflex", find(model.defenses, "Reflex")],
-                ["Will", find(model.defenses, "Will")],
-                ["Saves", overview.saves],
-              ]}
-            />
-          </Panel>
-          <Panel title="Health" icon="class">
-            <Values
-              className="sp-health"
-              values={[
-                [
-                  "Maximum HP",
-                  blankHP ? "" : find(model.resources, "Hit Points"),
-                ],
-                ["Bloodied", overview.bloodied],
-                ["Surges", find(model.resources, "Healing Surges")],
-                ["Surge value", find(model.resources, "Healing Surge Value")],
-              ]}
-            />
-          </Panel>
+      <section className="ov-numeric-band" aria-label="Combat statistics">
+        <Panel title="Defenses" icon="shield" className="ov-stat-group">
+          <Values
+            className="sp-defenses ov-band-values"
+            values={[
+              ["AC", find(model.defenses, "AC")],
+              ["Fortitude", find(model.defenses, "Fortitude")],
+              ["Reflex", find(model.defenses, "Reflex")],
+              ["Will", find(model.defenses, "Will")],
+              ["Saves", overview.saves],
+            ]}
+          />
+        </Panel>
+        <Panel title="Health" icon="class" className="ov-stat-group">
+          <Values
+            className="sp-health ov-band-values"
+            values={[
+              ["Max HP", blankHP ? "" : find(model.resources, "Hit Points")],
+              ["Bloodied", overview.bloodied],
+              ["Surges", find(model.resources, "Healing Surges")],
+              ["Surge value", find(model.resources, "Healing Surge Value")],
+            ]}
+          />
+        </Panel>
+        <Panel
+          title="Initiative & speed"
+          className="ov-stat-group ov-readiness-group"
+        >
+          <Values
+            className="ov-readiness-values ov-band-values"
+            values={[
+              ["Initiative", signedBonus(find(model.resources, "Initiative"))],
+              ["Speed", find(model.resources, "Speed")],
+            ]}
+          />
+        </Panel>
+      </section>
+      <div className="sp-summary-grid ov-balanced-columns">
+        <div className="sp-column ov-main-column">
+          <BasicAttacks model={model} variantLimit={variantLimit} />
+          <div className="ov-basic-probe" aria-hidden="true">
+            <BasicAttacks model={model} />
+          </div>
           {overview.reminders.length ? (
             <Panel
               title="Reminders"
@@ -607,10 +615,6 @@ function Summary({
               </p>
             ) : null}
           </Panel>
-          <BasicAttacks model={model} variantLimit={variantLimit} />
-          <div className="ov-basic-probe" aria-hidden="true">
-            <BasicAttacks model={model} />
-          </div>
         </div>
       </div>
     </Paper>

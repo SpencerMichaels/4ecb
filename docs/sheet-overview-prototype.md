@@ -86,17 +86,20 @@ and focused lint pass. A read-only private Hu evaluation resolves Way-Leader
 Gouge and Unarmed as melee-only; neither produces a ranged overview row.
 The abilities table reads score then full ability name, Modifier and +½ level;
 score has no separate header. Ability names are bold and cells have no borders,
-using alternating row backgrounds instead. Initiative and Speed are compact numeric tiles
-in the main identity header's right side, not a separate Movement pane or part
-of Health/Defenses. The portrait is circular; the identity line reads race, class,
+using alternating row backgrounds instead. A full-width numeric band below the
+identity header presents three distinct groups: Defenses, Health, Initiative/Speed.
+All eleven values use matching individual soft tiles, with labels above numbers.
+The portrait is circular; the identity line reads race, class,
 then bare level (`Dwarf Paladin 7`). The redundant first-page running header and
 full-width identity separator are omitted; later-page running headers remain.
 Passive Insight and Perception precede their active skill bonuses, e.g.
 `Perception (25) +15`, not as separate rows. Vision remains in Skills.
 Languages form a single-column striped table in a narrow panel to the right of
 Abilities, using the Basic Attacks row styling. Skills retain alternating row
-backgrounds without inter-cell borders. Initiative/Speed retain separate soft
-header tiles; moving other numeric groups into the header remains under review.
+backgrounds without inter-cell borders. Below the numeric band, equal-width
+columns place Basic Attacks above Reminders on the left and Abilities/Languages
+above Skills on the right. This offsets moving Health/Defenses out of the left
+column, while reminders still fill measured available space without clipping.
 The unified
 summary, scratchpad and reference heading is now simply **Reminders**.
 Header follow-up verification: 14 focused render tests, lint, production build,
