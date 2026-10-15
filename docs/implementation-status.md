@@ -19,7 +19,11 @@ column widths (within subpixel rounding), including no cell overflow on Letter/A
 Skills use two name-first columns with superscript T training markers, muted
 subscript governing abilities beside the name and rightmost bonuses. Ability/
 skill tables have neutral alternating row fills; training no longer changes
-row colors. Feat reminders occupy spare left-column space.
+row colors. The training key occupies the unused bottom-right skill row; there
+is no Skills preamble. Passive senses use `Pass.` labels on one line. Basic
+attacks now reuse `PrintPowerVariants` for melee/ranged weapon, attack and damage
+tables, with synthetic illustrative loadouts. Feat reminders move below Languages
+in the right column to keep combat references together on the left.
 Health uses four equal HP/bloodied/surges/surge-value cells. Saving throws sit
 in a fifth label-first defense cell (Saves); Fortitude/Reflex use full names.
 Movement/awareness matches Health's four-cell row, with labels above values and
@@ -33,7 +37,7 @@ and the Channel Divinity example retains each power's action icon. Feature cards
 are grouped by category; the power index shows levels or nonlevel origins.
 Verification: `nix develop path:. -c pnpm exec vitest run apps/web/src/prototypes/SheetPrototype.test.tsx`
 passes 7 focused render/style tests; web typecheck and prototype lint pass at the
-ability-table checkpoint. In-app browser
+basic-attack checkpoint. In-app browser
 review confirms all four fixture pages stay above their footers with no horizontal
 page overflow on Letter (minimum clearance 49 px) and A4 (minimum 116 px).
 Monochrome toggling is confirmed visually. Browser print/PDF output and arbitrary

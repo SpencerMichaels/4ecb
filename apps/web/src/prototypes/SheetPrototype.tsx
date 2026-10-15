@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Icon, type IconName } from "../Icon";
 import { ActionTypeIcon } from "../ActionTypeIcon";
+import { PrintPowerVariants } from "../PrintPowerVariants";
 
 // Deliberately synthetic. No private character, content pack, or stored state is read.
 const abilities: readonly [string, string, string][] = [
@@ -201,8 +202,8 @@ function Summary() {
               {[
                 ["Initiative", "+6"],
                 ["Speed", "5"],
-                ["Passive Insight", "20"],
-                ["Passive Perception", "20"],
+                ["Pass. Insight", "20"],
+                ["Pass. Perception", "20"],
               ].map(([label, value]) => (
                 <div key={label}>
                   <span>{label}</span>
@@ -215,6 +216,57 @@ function Summary() {
             </p>
           </Panel>
           <Panel
+            title="Basic attacks"
+            icon="sword"
+            className="sp-basic-attacks"
+          >
+            <section>
+              <h4>
+                Melee <span>STR vs AC</span>
+              </h4>
+              <PrintPowerVariants
+                attackOrdinals={[1]}
+                variants={[
+                  {
+                    id: "prototype-basic-longsword",
+                    equipmentName: "Dawnwatch Longsword +2",
+                    equipped: true,
+                    hand: "main",
+                    ability: "Strength",
+                    attack: "+13 vs AC",
+                    damage: "1d8+6",
+                  },
+                  {
+                    id: "prototype-basic-javelin",
+                    equipmentName: "Javelin",
+                    equipped: false,
+                    ability: "Strength",
+                    attack: "+10 vs AC",
+                    damage: "1d6+4",
+                  },
+                ]}
+              />
+            </section>
+            <section>
+              <h4>
+                Ranged <span>STR vs AC</span>
+              </h4>
+              <PrintPowerVariants
+                attackOrdinals={[1]}
+                variants={[
+                  {
+                    id: "prototype-basic-thrown-javelin",
+                    equipmentName: "Javelin",
+                    equipped: false,
+                    ability: "Strength",
+                    attack: "+10 vs AC",
+                    damage: "1d6+4",
+                  },
+                ]}
+              />
+            </section>
+          </Panel>
+          <Panel
             title="Remember in play"
             icon="feat"
             className="sp-reminder-panel"
@@ -222,7 +274,6 @@ function Summary() {
             <ReminderList />
             <p className="sp-caption">Full feature descriptions → p. 3</p>
           </Panel>
-          <FeatReminders />
         </div>
         <div className="sp-column sp-skills-column">
           <Panel
@@ -252,12 +303,6 @@ function Summary() {
             </table>
           </Panel>
           <Panel title="Skills" icon="skill" className="sp-skills-panel">
-            <div className="sp-skill-legend">
-              <span>
-                <sup className="sp-trained-marker">T</sup> Trained
-              </span>
-              <span>Bonus</span>
-            </div>
             <div className="sp-skill-columns">
               {[skills.slice(0, 9), skills.slice(9)].map((column, index) => (
                 <table className="sp-skill-table" key={index}>
@@ -283,6 +328,15 @@ function Summary() {
                       </tr>
                     ))}
                   </tbody>
+                  {index === 1 ? (
+                    <tfoot>
+                      <tr>
+                        <td colSpan={2} className="sp-training-key">
+                          <sup className="sp-trained-marker">T</sup>: trained
+                        </td>
+                      </tr>
+                    </tfoot>
+                  ) : null}
                 </table>
               ))}
             </div>
@@ -290,6 +344,7 @@ function Summary() {
           <Panel title="Languages" icon="race" className="sp-languages-panel">
             <p>Common · Dwarven · Elven</p>
           </Panel>
+          <FeatReminders />
         </div>
       </div>
     </Page>
@@ -487,7 +542,7 @@ function Scratchpad() {
               <tbody>
                 <tr>
                   <td>Longsword</td>
-                  <td>+12</td>
+                  <td>+13</td>
                   <td>1d8+6</td>
                 </tr>
                 <tr>

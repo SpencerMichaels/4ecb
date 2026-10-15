@@ -50,6 +50,11 @@ describe("isolated sheet design prototype", () => {
       summary.indexOf(">Abilities</h3>"),
     );
     expect(summary).toMatch(/sp-skills-column[\s\S]*Languages/);
+    expect(summary).toContain("Basic attacks");
+    expect(summary).toContain("Dawnwatch Longsword +2");
+    expect(summary).toContain("<span>Pass. Perception</span>");
+    expect(summary).toContain('class="sp-training-key"');
+    expect(summary).not.toContain('class="sp-skill-legend"');
     const scratchpad = markup
       .split('id="scratchpad"')[1]!
       .split("</article>")[0]!;

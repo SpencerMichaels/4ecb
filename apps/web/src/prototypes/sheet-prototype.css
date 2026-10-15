@@ -341,11 +341,12 @@ body:has(.sp-prototype) {
   grid-template-columns: repeat(4, 1fr);
 }
 .sp-movement span {
-  min-height: 2.64em;
+  min-height: 1.32em;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-inline: 0.025in;
+  font-size: 8.5pt;
+  white-space: nowrap;
 }
 .sp-inline-rule {
   border-top: 1px solid #d5dadd;
@@ -373,13 +374,6 @@ body:has(.sp-prototype) {
 }
 .sp-skill-table {
   table-layout: auto;
-}
-.sp-skill-legend {
-  display: flex;
-  justify-content: space-between;
-  font-size: 7.5pt;
-  color: var(--sp-muted);
-  padding: 0.04in 0;
 }
 .sp-skill-table td,
 .sp-skill-table th {
@@ -418,12 +412,43 @@ body:has(.sp-prototype) {
   margin-left: 0.02in;
   vertical-align: super;
 }
-.sp-skill-legend > span:first-child {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.045in;
-  color: var(--sp-ink);
+.sp-skill-table .sp-training-key {
+  text-align: right;
+  font-size: 7.5pt;
+  color: var(--sp-muted);
+  padding-top: 0.07in;
+}
+.sp-basic-attacks {
+  --card-color: #526773;
+}
+.sp-basic-attacks h4 {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9pt;
+  font-weight: 700;
+  padding-bottom: 0.04in;
+}
+.sp-basic-attacks h4 > span {
   font-size: 8pt;
+  font-weight: 400;
+  color: var(--sp-muted);
+}
+.sp-basic-attacks section + section {
+  margin-top: 0.08in;
+}
+.sp-basic-attacks .print-card-variant-table {
+  font-size: 9pt;
+}
+.sp-basic-attacks .print-card-variant-table th,
+.sp-basic-attacks .print-card-variant-table td {
+  padding: 0.04in 0.045in;
+}
+.sp-basic-attacks .print-card-variant-table thead th {
+  font-weight: 400;
+  font-size: 8pt;
+}
+.sp-basic-attacks .print-card-variant-table th:first-child {
+  width: 66%;
 }
 .sp-feat-summary {
   margin-top: 0.14in;

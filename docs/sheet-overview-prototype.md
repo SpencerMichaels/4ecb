@@ -33,9 +33,12 @@ physical card layout, stored characters, settings and evaluation are unchanged.
    value). Defenses has five label-first cells, including Saves and full Fortitude/
    Reflex labels. Movement/awareness uses a matching four-cell row; Speed has no
    unit suffix. Skill cells have horizontal padding. XP and AP do not appear on the
-   summary. Feat reminders occupy
-   available space beneath the left-column reminders rather than extending the
-   page below the taller ability/skill column.
+   summary. Basic attacks reuse the power-card weapon table component, with
+   separate melee/ranged sections and Weapon/Attack/Damage columns. The fixture
+   calculations are illustrative, not a new evaluation path. Feat reminders use
+   space in the right column below Languages to leave combat references together
+   in the left column. The training key sits in the unused bottom-right skill row;
+   the Skills preamble is removed. Passive senses use compact `Pass.` labels.
    The health panel is named Health. The approved ability table replaces the slash
    display and repeated cell legends; it retains both bonus values.
 2. **Play scratchpad:** blank health/temp-HP fields, numbered fillable-on-paper
