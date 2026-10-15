@@ -115,6 +115,14 @@ block is inset 1em, including wrapped lines. Paragraphs have no vertical gap or
 first-line indent. Spacing between independent
 reminder entries is unchanged, preserving the distinction between item/feature
 boundaries and multiple paragraphs of the same benefit.
+Grouped reminders with multiple explicit benefits use a bullet per benefit inside
+the inset description. Item-property projection retains the authored field/named-
+property boundaries as structured elements alongside the compatible combined text;
+it never splits elements by paragraph breaks. Multiple paragraphs within one
+benefit remain in one list item. Lists provide the single inset (their nested
+paragraph blocks do not add another), while single-element prose keeps the normal
+block inset. The same renderer supports structured elements in any reminder
+category; it does not guess structure for unannotated class-feature prose.
 Languages form a single-column striped table in a narrow panel to the right of
 Abilities, using the Basic Attacks row styling. Skills retain alternating row
 backgrounds without inter-cell borders. All summary tables start with a shaded

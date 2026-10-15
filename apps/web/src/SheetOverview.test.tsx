@@ -27,6 +27,43 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("bullets distinct reminder elements without splitting paragraphs into new bullets", () => {
+    const first =
+      "When you defend, gain a benefit.\n\nYou may apply it to an ally.";
+    const second = "Whenever you shift, gain another benefit.";
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={{
+          ...model,
+          overview: {
+            ...model.overview!,
+            reminders: [
+              {
+                label: "Synthetic weapon",
+                value: `${first}\n\n${second}`,
+                elements: [first, second],
+                category: "Item properties",
+              },
+            ],
+          },
+        }}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const summary = html
+      .split('aria-label="Character summary"')[1]!
+      .split('class="ov-reminder-probe"')[0]!;
+    const list = summary
+      .split('<ul class="ov-reminder-elements">')[1]!
+      .split("</ul>")[0]!;
+    expect(list.match(/<li>/g)).toHaveLength(2);
+    expect(list.match(/class="prose-paragraph"/g)).toHaveLength(3);
+    expect(list.split("</li>")[0]).toContain("You may apply it to an ally.");
+  });
   it("keeps expanded core-power descriptions off page one but available in references", () => {
     const short = {
       label: "Existing bonus",

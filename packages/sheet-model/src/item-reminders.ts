@@ -2,6 +2,10 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import type { SheetValue } from "./index";
 import type { OverviewInventory } from "./overview";
 
+export interface ItemPropertyReminder extends SheetValue {
+  readonly elements?: readonly string[];
+}
+
 function propertyNames(value: string): string[] {
   const names: string[] = [];
   let depth = 0,
@@ -50,7 +54,7 @@ function actionableProperty(text: string): boolean {
 export function equippedItemPropertyReminders(
   inventory: readonly OverviewInventory[],
   content: readonly ContentEntity[],
-): SheetValue[] {
+): ItemPropertyReminder[] {
   const definitions = new Map(
     content
       .filter((entity) => entity.type.toLowerCase() === "weapon property")
@@ -97,5 +101,6 @@ export function equippedItemPropertyReminders(
   return [...grouped].map(([label, values]) => ({
     label,
     value: values.join("\n\n"),
+    ...(values.length > 1 ? { elements: values } : {}),
   }));
 }

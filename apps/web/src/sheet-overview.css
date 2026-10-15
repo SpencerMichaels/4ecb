@@ -710,6 +710,21 @@ body:has(.sp-prototype) {
   margin: 0;
   text-indent: 0;
 }
+.ov-reminder-elements {
+  margin: 0;
+  padding-inline-start: 1em;
+  list-style: disc;
+}
+.ov-reminder-elements > li {
+  margin: 0;
+  padding: 0;
+}
+.ov-reminder-elements > li::marker {
+  color: var(--sp-muted);
+}
+.sheet-overview .sp-reminders .ov-reminder-elements .prose-blocks {
+  padding-inline-start: 0;
+}
 .sp-reminders {
   font-size: 9pt;
 }

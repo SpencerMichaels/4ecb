@@ -299,7 +299,7 @@ function Reminders({
   values,
   indices,
 }: {
-  values: readonly SheetValue[];
+  values: readonly ReminderEntry[];
   indices?: readonly number[];
 }) {
   return (
@@ -309,7 +309,17 @@ function Reminders({
           <strong>
             {entry.label.replace(/\s*\([^()]*\)/g, "").trim() || entry.label}
           </strong>{" "}
-          <Prose value={entry.value} />
+          {entry.elements && entry.elements.length > 1 ? (
+            <ul className="ov-reminder-elements">
+              {entry.elements.map((element, index) => (
+                <li key={index}>
+                  <Prose value={element} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <Prose value={entry.value} />
+          )}
         </div>
       ))}
     </div>

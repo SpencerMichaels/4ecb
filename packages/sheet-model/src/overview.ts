@@ -28,6 +28,8 @@ export interface OverviewInventory {
   readonly fields: readonly SheetValue[];
 }
 export interface OverviewReminder extends SheetValue {
+  /** Distinct authored benefits; paragraphs inside one benefit stay together. */
+  readonly elements?: readonly string[];
   readonly category?:
     | "Class features"
     | "Racial features"
@@ -295,11 +297,17 @@ export function withSheetOverview(
     label: string,
     value: string,
     category: OverviewReminder["category"] = "Other reminders",
+    elements?: readonly string[],
   ) => {
     const identity = `${label}:${value}`;
     if (!value.trim() || reminderKeys.has(identity)) return;
     reminderKeys.add(identity);
-    reminders.push({ label, value, category });
+    reminders.push({
+      label,
+      value,
+      category,
+      ...(elements && elements.length > 1 ? { elements } : {}),
+    });
   };
   for (const feature of features)
     if (
@@ -322,7 +330,12 @@ export function withSheetOverview(
     input.inventory,
     input.content,
   ))
-    addReminder(reminder.label, reminder.value, "Item properties");
+    addReminder(
+      reminder.label,
+      reminder.value,
+      "Item properties",
+      reminder.elements,
+    );
   const seenEffects = new Set<string>();
   for (const power of model.powers)
     for (const effect of power.additionalEffects ?? []) {

@@ -40,12 +40,36 @@ const item: OverviewInventory = {
 };
 
 describe("equipped item property reminders", () => {
+  it("keeps multiple paragraphs of one property inside a single element", () => {
+    const first =
+      "When you defend, gain a benefit.\n\nYou may apply it to an ally.";
+    const second = "Whenever you shift, gain another benefit.";
+    const reminders = equippedItemPropertyReminders(
+      [
+        {
+          ...item,
+          fields: [
+            { label: "Property", value: first },
+            { label: "Property", value: second },
+          ],
+        },
+      ],
+      [],
+    );
+    expect(reminders[0]?.elements).toEqual([first, second]);
+    expect(reminders[0]?.value).toBe(`${first}\n\n${second}`);
+  });
   it("expands declared names from authored property sections and retains nested parentheses", () => {
     expect(equippedItemPropertyReminders([item], [])).toEqual([
       {
         label: item.name,
         value:
           "Resonant (storm): When a matching power hits, add a bonus (only once per roll).\n\nShoving: Whenever you push a foe, push it one extra square.\n\nGain a bonus against enemies subject to your effects.",
+        elements: [
+          "Resonant (storm): When a matching power hits, add a bonus (only once per roll).",
+          "Shoving: Whenever you push a foe, push it one extra square.",
+          "Gain a bonus against enemies subject to your effects.",
+        ],
       },
     ]);
   });

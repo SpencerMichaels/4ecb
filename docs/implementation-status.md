@@ -2,6 +2,22 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Structured reminder benefit bullets (2026-10-15): Grouped item-property reminders
+now retain distinct authored property fields/named-property explanations as
+structured elements in addition to their compatible combined text. Multi-element
+reminders render one bullet per element under the shared heading, with no second
+inset on nested paragraphs. Paragraph breaks inside one property stay within that
+same bullet. The shared renderer accepts elements in any reminder category, but
+does not invent boundaries in unannotated prose. Group fitting still measures the
+whole entry as one unit; original text and reference data remain recoverable.
+
+Verification: 51 focused item/model/render tests, web typecheck, focused lint and
+production build pass. A read-only native Ingi check confirms Defensive Warhammer
++2 has two elements. Browser checks verify visible bullet style and a single
+description inset; all four overview-only Letter/A4 × color/monochrome print
+checks pass (12 measured pages each, no overview overflow). Full milestone and
+physical-card gates remain separate.
+
 Reminder block-inset feedback (2026-10-15): Bold reminder titles stay flush left;
 the entire description block is now inset 1em, including wrapped lines. Paragraph
 first-line indents are removed, with no extra paragraph gaps and unchanged spacing

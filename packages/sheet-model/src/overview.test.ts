@@ -201,6 +201,10 @@ describe("printed overview data", () => {
         value:
           "Shoving: Whenever you pull a foe, increase the distance.\n\nGain a bonus against enemies subject to your effects.",
         category: "Item properties",
+        elements: [
+          "Shoving: Whenever you pull a foe, increase the distance.",
+          "Gain a bonus against enemies subject to your effects.",
+        ],
       },
     ]);
     expect(m.items).toEqual([]);

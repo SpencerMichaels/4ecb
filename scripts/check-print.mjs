@@ -894,12 +894,13 @@ async function checkSummaryPresentation(client, monochrome) {
     const summary=document.querySelector('.ov-paper[aria-label="Character summary"]');
     const sample=document.createElement('div');
     sample.className='sp-reminders';
-    sample.innerHTML='<div><strong>Synthetic item</strong><div class="prose-blocks"><p class="prose-paragraph">First property.</p><p class="prose-paragraph">Second property.</p></div></div><div>Separate entry.</div>';
+    sample.innerHTML='<div><strong>Synthetic item</strong><div class="prose-blocks"><p class="prose-paragraph">First property.</p><p class="prose-paragraph">Second property.</p></div></div><div><strong>Separate entry</strong><ul class="ov-reminder-elements"><li><div class="prose-blocks"><p class="prose-paragraph">One benefit.</p><p class="prose-paragraph">Same benefit continued.</p></div></li><li>Another benefit.</li></ul></div>';
     summary.querySelector('.ov-pane-probe').append(sample);
     const blocks=sample.querySelector('.prose-blocks');
     const first=getComputedStyle(blocks.children[0]);
     const second=getComputedStyle(blocks.children[1]);
-    const result={gap:parseFloat(getComputedStyle(blocks).rowGap),blockInset:parseFloat(getComputedStyle(blocks).paddingInlineStart),firstIndent:parseFloat(first.textIndent),secondIndent:parseFloat(second.textIndent),paragraphMargin:parseFloat(second.marginTop),entryMargin:parseFloat(getComputedStyle(sample.children[1]).marginTop)};
+    const list=sample.querySelector('.ov-reminder-elements');
+    const result={gap:parseFloat(getComputedStyle(blocks).rowGap),blockInset:parseFloat(getComputedStyle(blocks).paddingInlineStart),firstIndent:parseFloat(first.textIndent),secondIndent:parseFloat(second.textIndent),paragraphMargin:parseFloat(second.marginTop),entryMargin:parseFloat(getComputedStyle(sample.children[1]).marginTop),listStyle:getComputedStyle(list).listStyleType,listInset:parseFloat(getComputedStyle(list).paddingInlineStart),nestedInset:parseFloat(getComputedStyle(list.querySelector('.prose-blocks')).paddingInlineStart)};
     sample.remove();
     return result;
   })()`,
@@ -912,6 +913,12 @@ async function checkSummaryPresentation(client, monochrome) {
       paragraphs.blockInset > 0 &&
       paragraphs.entryMargin > 0,
     `Reminder descriptions must be inset as a block, reserving spacing for separate entries: ${JSON.stringify(paragraphs)}`,
+  );
+  assert(
+    paragraphs.listStyle === "disc" &&
+      paragraphs.listInset > 0 &&
+      paragraphs.nestedInset === 0,
+    "Distinct benefits must have bullets without double-indenting their paragraphs",
   );
   if (monochrome) {
     assert(
