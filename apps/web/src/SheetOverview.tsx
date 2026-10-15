@@ -1013,6 +1013,7 @@ export interface TrackingRow {
 }
 export function overviewTrackingRows(
   model: CharacterSheetModel,
+  compactItemNames = false,
 ): readonly TrackingRow[] {
   const powers = model.powers.map((power) => ({
     id: power.id ?? power.name,
@@ -1038,7 +1039,13 @@ export function overviewTrackingRows(
         : [
             {
               id: `item:${index}:${ordinal}`,
-              name: item.name,
+              name: compactItemNames
+                ? item.name
+                    .replace(/\s*\((?:heroic|paragon|epic)\s+tier\)/gi, "")
+                    .replace(/\s*\+\d+\b/g, "")
+                    .replace(/\s{2,}/g, " ")
+                    .trim()
+                : item.name,
               action: power.actionType ?? "",
               usage: power.usage ?? "",
               ...(/^utility power\b/i.test(field.label.trim()) ||
@@ -1175,7 +1182,7 @@ function Scratchpad({
   blankHP: boolean;
   startPage: number;
 }) {
-  const rows = useMemo(() => overviewTrackingRows(model), [model]);
+  const rows = useMemo(() => overviewTrackingRows(model, true), [model]);
   const encounter = useMemo(
     () =>
       usageGroups(

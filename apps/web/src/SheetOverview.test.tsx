@@ -906,6 +906,43 @@ describe("real-data sheet overview", () => {
       usage: "Daily",
     });
   });
+  it("omits item enhancement and tier only in compact scratchpad names", () => {
+    const fixture = {
+      ...model,
+      powers: [
+        { name: "Power +2 (heroic tier)", kind: "power" as const, fields: [] },
+      ],
+      overview: {
+        ...model.overview!,
+        inventory: [
+          "Charm +2 (heroic tier)",
+          "Ring (paragon tier) +3",
+          "Orb (epic tier)",
+        ].map((name) => ({
+          name,
+          quantity: 1,
+          equipped: 1,
+          slots: [],
+          fields: [
+            {
+              label: "Power",
+              value: "Power (Daily): Minor Action. Effect: Test.",
+            },
+          ],
+        })),
+      },
+    };
+    expect(overviewTrackingRows(fixture, true).map((row) => row.name)).toEqual([
+      "Power +2 (heroic tier)",
+      "Charm",
+      "Ring",
+      "Orb",
+    ]);
+    expect(overviewTrackingRows(fixture)[1]?.name).toBe(
+      "Charm +2 (heroic tier)",
+    );
+    expect(fixture.overview.inventory[0]?.name).toBe("Charm +2 (heroic tier)");
+  });
   it("retains carried spares and full descriptions in the reference measurement surface", () => {
     const m = {
       ...model,

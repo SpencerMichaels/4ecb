@@ -21,6 +21,10 @@ opportunity actions sort with reactions; unrecognized actions follow known ones.
 Shared-use groups stay intact, positioned by their first sorted member, with
 members sorted by the same precedence. Item-granted powers participate too.
 Sorting verification: all 30 overview tests, web typecheck and focused lint pass.
+Scratchpad item-power names omit enhancement suffixes and parenthetical
+heroic/paragon/epic tiers; full item names remain in the reference index and
+underlying character data. The compact-name regression brings overview coverage
+to 31 passing tests; web typecheck passes.
 
 Measured row/group heights and panel/caption gaps replace fixed power-count
 limits. Encounter and daily lists share available space, shared-use groups remain
