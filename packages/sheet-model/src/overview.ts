@@ -13,7 +13,7 @@ export interface OverviewFeature {
   readonly fullTextAvailable: boolean;
   /** A display heuristic, not a claim that every other benefit is calculated. */
   readonly playReminder?: boolean;
-  readonly grantsOnly?: boolean;
+  readonly accessOnly?: boolean;
 }
 export interface OverviewInventory {
   readonly name: string;
@@ -59,10 +59,22 @@ function hasPlayReminder(summary: string, description: string): boolean {
     withoutLoadoutConditions,
   );
 }
-function grantOnly(
+function accessOnly(
   entity: ContentEntity | undefined,
   benefit: string,
 ): boolean {
+  const selectorOnly = Boolean(
+    entity?.rules.length &&
+    entity.rules.every((rule) => /^(?:grant|select)$/i.test(rule.name)),
+  );
+  // Access and shared-use prose is not an independent benefit. Do not mistake
+  // "once per encounter" for an effect when all native rules grant/select powers.
+  // Keep mixed benefits, including manual effects absent from native statements.
+  const independentBenefit =
+    /[+-]\s*\d|\b(?:bonus(?!\s+(?:feat|power)\b)|penalty|damage|hit points|healing surge|saving throws?|attack rolls?|defenses?|AC|speed|shift(?:s|ing)?|push|pull|slide|teleport|reroll|draw|sheathe|resistan(?:ce|t)|immunity|combat advantage|opportunity attacks?)\b|\b(?:ally|allies|target)\b[^.!?]*\b(?:gain|gains|move|moves|act|acts|take|takes|make|makes)\b/i.test(
+      benefit,
+    );
+  if (selectorOnly && !independentBenefit) return true;
   // A grant plus an independent conditional/numeric benefit is not a wrapper.
   if (
     /\b(?:when|whenever|if|while|unless|until|penalty|bonus(?!\s+(?:feat|power)\b))\b|[+-]\s*\d/i.test(
@@ -74,10 +86,6 @@ function grantOnly(
     .split(/(?:[.!?]\s+|\n+)/)
     .map((s) => s.trim())
     .filter(Boolean);
-  const selectorOnly = Boolean(
-    entity?.rules.length &&
-    entity.rules.every((rule) => /^(?:grant|select)$/i.test(rule.name)),
-  );
   const explicitGrant =
     /\b(?:gain|learn|granted|have|use)\b[^.!?]*\b(?:power|ability|feature)\b/i.test(
       benefit,
@@ -200,9 +208,9 @@ export function withSheetOverview(
         source: entity?.source ?? "",
         fullTextAvailable: Boolean(description || fields.length),
         playReminder:
-          !grantOnly(entity, benefit || summary) &&
+          !accessOnly(entity, benefit || summary) &&
           hasPlayReminder(summary, benefit),
-        grantsOnly: grantOnly(entity, benefit || summary),
+        accessOnly: accessOnly(entity, benefit || summary),
       });
     }
   const reminders: SheetValue[] = [];
@@ -249,7 +257,7 @@ export function withSheetOverview(
       const feature =
         features.find((feature) => effect.provenanceId === feature.id) ??
         (namedFeatures.length === 1 ? namedFeatures[0] : undefined);
-      if (feature && !feature.grantsOnly) {
+      if (feature && !feature.accessOnly) {
         const existing = reminderByFeature.get(feature.id);
         const canonical = {
           label: feature.name,

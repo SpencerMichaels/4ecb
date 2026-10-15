@@ -44,6 +44,90 @@ const feat: ContentEntity = {
   ],
 };
 describe("printed overview data", () => {
+  it("excludes power-access/shared-use wrappers by their rules, not their names", () => {
+    const wrapper = {
+      ...feat,
+      id: "feature:shared",
+      name: "Shared Techniques",
+      type: "Class Feature",
+      description:
+        "Once per encounter you can invoke special powers. You can learn other uses for this feature. Regardless of how many uses you know, you can use only one such ability per encounter. Each power works like your other powers.",
+      specifics: [],
+      rules: [
+        {
+          name: "grant",
+          attributes: [
+            { name: "type", value: "Power" },
+            { name: "name", value: "power:one" },
+          ],
+          text: "",
+          children: [],
+          ordinal: 0,
+        },
+        {
+          name: "select",
+          attributes: [{ name: "type", value: "Power" }],
+          text: "",
+          children: [],
+          ordinal: 1,
+        },
+      ],
+    };
+    const mixed = {
+      ...wrapper,
+      id: "feature:shared-benefit",
+      name: "Techniques With Benefit",
+      description:
+        wrapper.description +
+        " When you use one of these powers, you can shift one square.",
+    };
+    const rolled = {
+      ...wrapper,
+      id: "feature:rolled",
+      name: "Calculated Benefit",
+      description:
+        wrapper.description + " You gain a +1 bonus to saving throws.",
+      rules: [
+        ...wrapper.rules,
+        {
+          name: "statadd",
+          attributes: [
+            { name: "name", value: "Saving Throws" },
+            { name: "value", value: "+1" },
+          ],
+          text: "",
+          children: [],
+          ordinal: 2,
+        },
+      ],
+    };
+    const definitions = [wrapper, mixed, rolled];
+    const m = buildSheetModel(
+      {
+        ...snapshot,
+        selectedRules: definitions.map((e) => ({
+          id: e.id,
+          name: e.name,
+          type: e.type,
+        })),
+      },
+      definitions,
+    );
+    expect(m.overview?.features.find((f) => f.id === wrapper.id)).toMatchObject(
+      { accessOnly: true, playReminder: false },
+    );
+    expect(m.overview?.reminders.map((r) => r.label)).not.toContain(
+      wrapper.name,
+    );
+    expect(m.overview?.features.find((f) => f.id === mixed.id)).toMatchObject({
+      accessOnly: false,
+      playReminder: true,
+    });
+    expect(
+      m.overview?.features.find((f) => f.id === rolled.id)?.accessOnly,
+    ).toBe(false);
+    expect(m.overview?.features).toHaveLength(3);
+  });
   it("excludes grant/choice-only wrappers despite evocative flavor, retaining mixed benefits", () => {
     const wrapper = {
       ...feat,

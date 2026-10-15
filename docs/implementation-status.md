@@ -2,6 +2,20 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Power-access reminder exclusion (2026-10-14): Grant/select-only definitions are
+not reminders merely because their prose describes once-per-encounter activation
+or a shared allowance. They must supply an independent mechanical benefit rather
+than only access to other powers. Authored mixed benefits (including manual
+movement/roll effects not encoded in native statements) remain eligible for the
+existing reminder rules. The implementation uses rule structure and benefit text,
+not a Channel Divinity special case; its full feature reference, powers and
+shared-use tracker are preserved. Seventeen focused overview/model tests, web
+typechecking and focused lint pass. The full print matrix was not rerun for this
+selection-only change.
+A read-only exact-profile evaluation confirms four reminders for Hu, with
+Channel Divinity retained as a full feature but not a reminder; all 21 powers
+remain in the sheet model.
+
 Reminder fitting/source refinement (2026-10-14): Remember in play now measures
 rendered entries and fills available left-column space rather than enforcing a
 four-entry/320-character cap. It reserves the overflow caption only when needed;

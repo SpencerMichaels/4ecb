@@ -97,6 +97,13 @@ Basic-attack summaries prefer two weapon alternatives, reducing to one when the
 right column needs room; complete alternatives remain in references.
 Grant/choice-only wrappers are omitted using authored Benefit text and grant/
 selection metadata, without mistaking introductory flavor for an extra effect.
+The exclusion also covers power-access/shared-usage containers: grant/select-only
+definitions whose prose merely explains learning, invoking or sharing uses of
+other powers. A cadence such as once per encounter is not itself an independent
+reminder effect. Definitions with independent mechanical benefits remain outside
+this exclusion, including manual effects not represented in native statements.
+Full feature references, granted powers and usage tracking remain unchanged;
+there is no feature-name denylist.
 Additional Effects resolve to a uniquely known selected provider (or exact ID),
 using its complete authored rule once instead of repeating the bonus per power.
 Unresolved identical effects deduplicate across affected powers; distinct effects
