@@ -1,7 +1,9 @@
 # Printed overview design study
 
-Status: approved prototype integrated into the production print overview for
-real-character feedback, 2026-10-14. M5.6 remains open.
+Status: page-1 summary accepted by the product owner, 2026-10-15. The approved
+scratchpad redesign is implemented for real-character feedback. Reference-page
+review and the separately noted summary-continuation styling correction remain;
+M5.6 stays open.
 
 ## Open
 
@@ -71,6 +73,43 @@ monochrome in memory and expose the browser print action; writing areas and
 hearts are paper affordances, not interactive Play state.
 
 ## Real-data integration
+
+### Scratchpad redesign (2026-10-15)
+
+The production scratchpad is a paper working surface, not another reference
+page. The wider left column anchors Health above encounter/daily power tracking;
+the narrower right column holds Action points & milestones, Conditions &
+temporary effects, Treasure & consumables, and Session notes with a secondary XP
+field. A small running header and session/date line replace any large page title.
+The duplicated Quick reference pane and arbitrarily selected two reminders are
+removed. Health uses label-first Max HP/Bloodied/Surge HP reference cells, large
+current/temp-HP writing boxes, a surge track and three death-save skulls.
+
+Surges use outlined rectangular segments, one per surge, with a heart beside the
+label. Up to ten surges receive a label at every boundary; larger totals label
+multiples of five remaining plus each track's endpoints. The bar measures its
+width and uses deliberately aligned additional tracks rather than shrinking
+segments below roughly 4mm. The existing defensive 100-mark rendering bound is
+retained with explicit additional-count text for pathological/custom values;
+unknown values remain textual, never guessed. Marking is pencil-on-paper only;
+this does not introduce persisted interactive Play state.
+
+Body pane headings use slate blue, health reference cells violet, and the power
+sections retain meaningful encounter-red/daily-gray headers. Monochrome uses
+explicit grayscale. Neutral alternating rows and consistently placed action icons
+support scanning. Tracking boxes retain boundaries for pencil marks. Conditions
+use six generously spaced Effect/Ends rows; treasure and notes have ruled writing
+areas. The accepted first-page layout and physical cards are unchanged.
+
+Power tracking uses measured group/row heights, panel overheads, gaps and an
+overflow caption, replacing the fixed seven-encounter/four-daily limits. Both
+lists get alternating opportunities to occupy available space. Shared resources
+remain indivisible groups; item powers and complete names are preserved. Overflow
+continues immediately after the scratchpad on numerically labeled pages, using
+full-width tables measured separately at that width. Resizing restores rows when
+space returns. Oversized custom groups remain visible with an explicit warning
+rather than being discarded or made unreadably small. Health and all right-side
+writing areas retain their allocation when power lists grow.
 
 Named weapon/implement reminder policy (2026-10-15): Named properties use explicit
 show/reference-only sets in `item-reminders.ts`, rather than trigger-word matching

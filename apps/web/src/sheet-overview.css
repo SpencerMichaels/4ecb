@@ -996,6 +996,169 @@ body:has(.sp-prototype) {
   grid-template-columns: 1.5fr 1fr;
   gap: 0.15in;
 }
+/* Scratchpad: fixed writing areas beside measured, variable-length trackers. */
+.ov-scratch-session {
+  margin-top: 0.07in;
+}
+.ov-scratch-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 0.15in;
+  align-items: start;
+}
+.sheet-overview
+  .ov-paper[aria-label="Play scratchpad"]
+  .sp-panel:not(.sp-encounter):not(.sp-daily)
+  > h3 {
+  color: #3e5f7c;
+  background: #eaf0f6;
+  border-bottom-color: #b9cbdc;
+}
+.ov-scratch-health-values {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.05in;
+}
+.ov-scratch-health-values > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.045in;
+  border: 0;
+  border-radius: 3px;
+  color: #65557d;
+  background: #f0ecf5;
+}
+.ov-scratch-health-values span {
+  color: inherit;
+  font-size: 8.5pt;
+}
+.ov-scratch-health-values strong {
+  font-size: 17pt;
+}
+.ov-scratch-health .sp-hp-writing > div {
+  font-size: 9pt;
+}
+.ov-scratch-surges {
+  margin-top: 0.12in;
+}
+.ov-scratch-surges > p {
+  display: flex;
+  align-items: center;
+  gap: 0.045in;
+  font-weight: 600;
+  font-size: 9pt;
+}
+.ov-scratch-surges > p > span {
+  margin-left: auto;
+  color: var(--sp-muted);
+  font-weight: 400;
+  font-size: 8.5pt;
+}
+.ov-surge-track {
+  padding: 0 0.07in;
+  margin-top: 0.08in;
+}
+.ov-surge-row {
+  display: grid;
+  gap: 1px;
+  padding-bottom: 0.2in;
+}
+.ov-surge-segment {
+  border: 1px solid #8f9aa2;
+  height: 0.22in;
+  position: relative;
+}
+.ov-surge-group {
+  margin-left: 0.025in;
+}
+.ov-surge-label {
+  position: absolute;
+  left: -1px;
+  top: calc(100% + 0.025in);
+  transform: translateX(-50%);
+  font-size: 7.5pt;
+  line-height: 1;
+  color: var(--sp-muted);
+}
+.ov-surge-end {
+  left: auto;
+  right: -1px;
+  transform: translateX(50%);
+}
+.ov-scratch-health .sp-death-saves {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.025in;
+  font-size: 9pt;
+}
+.ov-scratch-records .sp-action-points {
+  margin-top: 0;
+}
+.ov-effects-table {
+  table-layout: fixed;
+}
+.ov-effects-table th {
+  text-align: left;
+  font-size: 8.5pt;
+  color: var(--sp-muted);
+  font-weight: 400;
+  padding: 0.04in;
+}
+.ov-effects-table th:last-child {
+  width: 30%;
+}
+.ov-effects-table td {
+  height: 0.42in;
+  border: 1px solid #d5dadd;
+}
+.ov-scratch-treasure {
+  height: 1in;
+}
+.ov-scratch-notes {
+  height: 1.25in;
+}
+.ov-scratch-records .sp-xp-tracker {
+  margin-top: 0.1in;
+  color: var(--sp-muted);
+  font-size: 8.5pt;
+}
+.ov-tracking-caption {
+  margin-top: 0.07in !important;
+}
+.ov-power-trackers .sp-usage-table tbody tr:nth-child(odd),
+.ov-power-trackers .sp-daily-list > div:nth-child(odd) {
+  background: #f0f3f5;
+}
+.ov-power-trackers .sp-usage-table tbody tr:nth-child(even) {
+  background: transparent;
+}
+.ov-power-trackers .sp-usage-table tbody th {
+  padding: 0.06in;
+  overflow-wrap: anywhere;
+}
+.ov-power-trackers .sp-shared-power {
+  margin-top: 0.025in;
+  align-items: flex-start;
+}
+.ov-power-trackers .sp-shared-power:first-child {
+  margin-top: 0;
+}
+.ov-power-trackers .sp-daily-list > div {
+  padding: 0.06in;
+  border: 0;
+  overflow-wrap: anywhere;
+}
+.sheet-overview.sp-monochrome
+  .ov-paper[aria-label="Play scratchpad"]
+  .sp-panel:not(.sp-encounter):not(.sp-daily)
+  > h3,
+.sheet-overview.sp-monochrome .ov-power-trackers .sp-panel > h3,
+.sheet-overview.sp-monochrome .ov-scratch-health-values > div {
+  color: #333;
+  background: #eee;
+  border-color: #aaa;
+}
 .sp-encounter > h3 {
   color: #671919;
   background: #ddbbbb;

@@ -2,6 +2,41 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Scratchpad working-surface redesign (2026-10-15): The product owner accepts the
+first-page summary. The approved scratchpad proposal is implemented for feedback:
+wide Health/power-tracking column, narrow action-point/milestone, Effect/Ends,
+treasure/consumable and session-note/XP column. Slate pane headers, violet health
+reference cells, encounter-red/daily-gray tracking headings and explicit grayscale
+reuse the accepted visual vocabulary. Current/temp HP retain 0.7in writing boxes,
+temporary effects six 0.42in rows. Redundant quick-reference/two-short-reminder
+panes are removed. Surge hearts become markable segmented bars with approximately
+4mm minimum segments, sparse five-remaining labels above ten surges, endpoints
+and deliberate aligned additional tracks. Unknown/very large custom totals remain
+explicit; the existing 100-mark rendering bound is not a silent truncation.
+
+Measured row/group heights and panel/caption gaps replace fixed power-count
+limits. Encounter and daily lists share available space, shared-use groups remain
+intact, and excess rows continue on immediately adjacent pages at a separately
+measured full width. Resizing restores rows; no text shrink is used. Handwriting
+areas and health do not move or contract as power lists grow. Oversized custom
+groups remain visible with an overflow warning. These are paper affordances,
+not persisted Play state. The isolated prototype's stale even-row CSS assertions
+now reflect the previously accepted first-row-shaded production convention.
+
+Verification via the project Nix environment: 44 focused overview/scratchpad/
+prototype tests, web typecheck, focused lint and production build pass.
+`node scripts/check-print.mjs --overview-only --firefox-scratchpad` passes all four
+Letter/A4 × color/monochrome Chromium PDF checks (11 overview fixture pages each,
+no overflow) and four Firefox print-preview geometry checks. Both engines verify
+13 markable surge segments in one bar with 13/10/5/0 labels, preserved writing
+space, correct projected Surge HP, exact-once power coverage, dense-row measured
+continuations and restoration after space returns. A Chromium scratchpad screenshot
+was visually reviewed (`--scratchpad-preview`). Synthetic fixture surge input was
+corrected from a displayed total to the native additive-bonus convention; no rules
+formula changed. No full milestone/physical-card suite was run. M5.6 remains open
+for scratchpad feedback, reference-page refinement and the separately recorded
+summary-continuation formatting issue.
+
 Calculated superior-implement modifiers (2026-10-15): Attack/damage projection
 now consumes comma-conjoined, item-limited stat channels using each attack's
 defense and the power's keywords. This follows recovered native `CalcKeywords`,

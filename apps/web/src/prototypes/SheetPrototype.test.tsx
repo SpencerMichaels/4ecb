@@ -13,8 +13,8 @@ describe("isolated sheet design prototype", () => {
       new URL("../sheet-overview.css", import.meta.url),
       "utf8",
     );
-    expect(styles).toContain(".sp-ability-table tbody tr:nth-child(even)");
-    expect(styles).toContain(".sp-skill-table tbody tr:nth-child(even)");
+    expect(styles).toContain(".sp-ability-table tbody tr:nth-child(odd)");
+    expect(styles).toContain(".sp-skill-table tbody tr:nth-child(odd)");
     expect(styles).not.toContain("tr.is-trained");
   });
   it("provides all four reference surfaces without real character data", () => {

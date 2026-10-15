@@ -1,0 +1,112 @@
+export interface TrackingMeasurements {
+  readonly encounter: readonly number[];
+  readonly daily: readonly number[];
+  readonly encounterOverhead: number;
+  readonly dailyOverhead: number;
+  readonly gap: number;
+}
+export interface TrackingPage {
+  readonly encounterStart: number;
+  readonly encounterEnd: number;
+  readonly dailyStart: number;
+  readonly dailyEnd: number;
+  readonly oversized?: boolean;
+}
+
+/** Measure rows at each page's actual column width; never shrink tracking text.
+ * Alternate opportunities to add encounter/daily rows so neither list starves.
+ * Shared-use groups are indivisible. Oversized custom groups remain explicit. */
+export function paginateTracking(
+  first: TrackingMeasurements,
+  continuation: TrackingMeasurements,
+  firstCapacity: number,
+  continuationCapacity: number,
+  captionHeight: number,
+): readonly TrackingPage[] {
+  const pages: TrackingPage[] = [];
+  let encounterStart = 0,
+    dailyStart = 0;
+  do {
+    const m = pages.length ? continuation : first;
+    let capacity = Math.max(
+      0,
+      pages.length ? continuationCapacity : firstCapacity,
+    );
+    const encounterRemaining = m.encounter.slice(encounterStart);
+    const dailyRemaining = m.daily.slice(dailyStart);
+    const total =
+      encounterRemaining.reduce((a, b) => a + b, 0) +
+      dailyRemaining.reduce((a, b) => a + b, 0) +
+      (encounterRemaining.length ? m.encounterOverhead : 0) +
+      (dailyRemaining.length ? m.dailyOverhead : 0) +
+      (encounterRemaining.length && dailyRemaining.length ? m.gap : 0);
+    if (!pages.length && total > capacity)
+      capacity = Math.max(0, capacity - captionHeight);
+    let encounterEnd = encounterStart,
+      dailyEnd = dailyStart,
+      used = 0,
+      progressed = true;
+    while (progressed) {
+      progressed = false;
+      if (encounterEnd < m.encounter.length) {
+        const cost =
+          m.encounter[encounterEnd]! +
+          (encounterEnd === encounterStart
+            ? m.encounterOverhead + (dailyEnd > dailyStart ? m.gap : 0)
+            : 0);
+        if (used + cost <= capacity) {
+          used += cost;
+          encounterEnd++;
+          progressed = true;
+        }
+      }
+      if (dailyEnd < m.daily.length) {
+        const cost =
+          m.daily[dailyEnd]! +
+          (dailyEnd === dailyStart
+            ? m.dailyOverhead + (encounterEnd > encounterStart ? m.gap : 0)
+            : 0);
+        if (used + cost <= capacity) {
+          used += cost;
+          dailyEnd++;
+          progressed = true;
+        }
+      }
+    }
+    const oversized =
+      pages.length > 0 &&
+      encounterEnd === encounterStart &&
+      dailyEnd === dailyStart;
+    if (oversized) {
+      if (encounterEnd < m.encounter.length) encounterEnd++;
+      else if (dailyEnd < m.daily.length) dailyEnd++;
+    }
+    pages.push({
+      encounterStart,
+      encounterEnd,
+      dailyStart,
+      dailyEnd,
+      ...(oversized ? { oversized: true } : {}),
+    });
+    encounterStart = encounterEnd;
+    dailyStart = dailyEnd;
+  } while (
+    encounterStart < first.encounter.length ||
+    dailyStart < first.daily.length
+  );
+  return pages;
+}
+
+export function surgeTrackRows(
+  total: number,
+  columns: number,
+): readonly (readonly number[])[] {
+  const count = Math.min(100, Math.max(0, Math.floor(total)));
+  const width = Math.max(1, Math.floor(columns));
+  return Array.from({ length: Math.ceil(count / width) }, (_, row) =>
+    Array.from(
+      { length: Math.min(width, count - row * width) },
+      (_, cell) => total - row * width - cell,
+    ),
+  );
+}

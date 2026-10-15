@@ -19,6 +19,12 @@ import { Icon, type IconName } from "./Icon";
 import { ActionTypeIcon } from "./ActionTypeIcon";
 import { Prose, ProseBlocks, proseBlocks, type ProseBlock } from "./Prose";
 import { printItemPower } from "./print-item-presentation";
+import { SurgeBar } from "./SurgeBar";
+import {
+  paginateTracking,
+  type TrackingMeasurements,
+  type TrackingPage,
+} from "./scratchpad-layout";
 import "./sheet-overview.css";
 
 function Panel({
@@ -1076,7 +1082,7 @@ function EncounterTable({ groups }: { groups: readonly UsageGroup[] }) {
         </thead>
         <tbody>
           {groups.map((group) => (
-            <tr key={group.id}>
+            <tr key={group.id} data-tracking-id={group.id}>
               <th scope="row">
                 {group.name ? <strong>{group.name}</strong> : null}
                 {group.powers.map((power) => (
@@ -1101,7 +1107,7 @@ function DailyList({ rows }: { rows: readonly TrackingRow[] }) {
     <Panel title="Daily powers" icon="power" className="sp-daily">
       <div className="sp-daily-list">
         {rows.map((power) => (
-          <div key={power.id}>
+          <div key={power.id} data-tracking-id={power.id}>
             <ActionTypeIcon decorative value={power.action} />
             <span>{power.name}</span>
             <span className="sp-use-box" />
@@ -1111,22 +1117,18 @@ function DailyList({ rows }: { rows: readonly TrackingRow[] }) {
     </Panel>
   );
 }
-function Hearts({ count }: { count: string }) {
-  const number = /^\d+$/.test(count) ? Number(count) : undefined;
-  return number === undefined ? (
-    <p>Surges: {count}</p>
-  ) : (
-    <div className="sp-hearts ov-hearts">
-      {Array.from({ length: Math.min(number, 100) }, (_, i) => (
-        <span key={i}>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 21 3.5 12.6C-3 6.1 5.8-1 12 5.2 18.2-1 27 6.1 20.5 12.6Z" />
-          </svg>
-          <small>{number - i}</small>
-        </span>
-      ))}
-      {number > 100 ? <span>+{number - 100}</span> : null}
-    </div>
+function TrackingPanels({
+  encounter,
+  daily,
+}: {
+  encounter: readonly UsageGroup[];
+  daily: readonly TrackingRow[];
+}) {
+  return (
+    <>
+      {encounter.length ? <EncounterTable groups={encounter} /> : null}
+      {daily.length ? <DailyList rows={daily} /> : null}
+    </>
   );
 }
 function Scratchpad({
@@ -1140,39 +1142,102 @@ function Scratchpad({
   blankHP: boolean;
   startPage: number;
 }) {
-  const rows = overviewTrackingRows(model);
-  const encounter = usageGroups(
-    rows.filter((row) => /^encounter/i.test(row.usage)),
+  const rows = useMemo(() => overviewTrackingRows(model), [model]);
+  const encounter = useMemo(
+    () => usageGroups(rows.filter((row) => /^encounter/i.test(row.usage))),
+    [rows],
   );
-  const daily = rows.filter((row) => /^daily/i.test(row.usage));
-  const [counts, setCounts] = useState({ encounter: 7, daily: 4 });
+  const daily = useMemo(
+    () => rows.filter((row) => /^daily/i.test(row.usage)),
+    [rows],
+  );
+  const [pages, setPages] = useState<readonly TrackingPage[]>();
   const pageRef = useRef<HTMLElement>(null);
+  const regionRef = useRef<HTMLDivElement>(null);
+  const firstProbe = useRef<HTMLDivElement>(null);
+  const nextProbe = useRef<HTMLDivElement>(null);
+  const nextPaper = useRef<HTMLElement>(null);
   useLayoutEffect(() => {
     const page = pageRef.current;
-    if (!page) return;
-    const check = () => {
-      if (!page.clientHeight) return;
-      const overflow =
-        page.querySelector(".sp-page-content")!.getBoundingClientRect().bottom >
-        page.querySelector(".sp-page-footer")!.getBoundingClientRect().top - 8;
-      if (overflow && (counts.encounter > 2 || counts.daily > 1))
-        setCounts((count) =>
-          count.encounter > 2
-            ? { ...count, encounter: count.encounter - 1 }
-            : { ...count, daily: count.daily - 1 },
+    const first = firstProbe.current,
+      next = nextProbe.current,
+      paper = nextPaper.current;
+    if (!page || !first || !next || !paper) return;
+    let active = true;
+    const measurements = (element: HTMLElement): TrackingMeasurements => {
+      const encounterPanel =
+        element.querySelector<HTMLElement>(".sp-encounter");
+      const dailyPanel = element.querySelector<HTMLElement>(".sp-daily");
+      const heights = (selector: string) =>
+        [...element.querySelectorAll<HTMLElement>(selector)].map(
+          (row) => row.getBoundingClientRect().height,
         );
-      page.dataset.overviewOverflow = String(overflow);
+      const encounter = heights(".sp-usage-table tbody > tr"),
+        daily = heights(".sp-daily-list > div");
+      return {
+        encounter,
+        daily,
+        encounterOverhead:
+          (encounterPanel?.getBoundingClientRect().height ?? 0) -
+          encounter.reduce((a, b) => a + b, 0),
+        dailyOverhead:
+          (dailyPanel?.getBoundingClientRect().height ?? 0) -
+          daily.reduce((a, b) => a + b, 0),
+        gap: parseFloat(getComputedStyle(element).rowGap) || 0,
+      };
+    };
+    const check = () => {
+      if (
+        !active ||
+        !page.clientHeight ||
+        !first.clientWidth ||
+        !next.clientWidth
+      )
+        return;
+      const caption = first.querySelector<HTMLElement>(".ov-tracking-caption")!;
+      const layout = paginateTracking(
+        measurements(first),
+        measurements(next),
+        page.querySelector(".sp-page-footer")!.getBoundingClientRect().top -
+          8 -
+          regionRef.current!.getBoundingClientRect().top,
+        paper.querySelector(".sp-page-footer")!.getBoundingClientRect().top -
+          8 -
+          next.getBoundingClientRect().top,
+        caption.getBoundingClientRect().height +
+          parseFloat(getComputedStyle(caption).marginTop) +
+          (parseFloat(getComputedStyle(first).rowGap) || 0),
+      );
+      setPages((old) =>
+        JSON.stringify(old) === JSON.stringify(layout) ? old : layout,
+      );
     };
     const observer = new ResizeObserver(check);
     observer.observe(page);
+    observer.observe(page.querySelector(".sp-page-content")!);
+    observer.observe(first);
+    observer.observe(next);
     check();
-    return () => observer.disconnect();
-  }, [model, counts]);
-  const extraEncounter = encounter.slice(counts.encounter),
-    extraDaily = daily.slice(counts.daily);
-  const extraPages = Math.max(
-    Math.ceil(extraEncounter.length / 5),
-    Math.ceil(extraDaily.length / 8),
+    void document.fonts.ready.then(check);
+    return () => {
+      active = false;
+      observer.disconnect();
+    };
+  }, [model]);
+  const layout = pages ?? [
+    {
+      encounterStart: 0,
+      encounterEnd: encounter.length,
+      dailyStart: 0,
+      dailyEnd: daily.length,
+    },
+  ];
+  const first = layout[0]!;
+  const renderTracking = (slice: TrackingPage) => (
+    <TrackingPanels
+      encounter={encounter.slice(slice.encounterStart, slice.encounterEnd)}
+      daily={daily.slice(slice.dailyStart, slice.dailyEnd)}
+    />
   );
   return (
     <>
@@ -1183,33 +1248,35 @@ function Scratchpad({
         source={model.source}
         pageRef={pageRef}
       >
-        <div className="sp-session">
+        <div className="sp-session ov-scratch-session">
           <span>
             Session / date <i />
           </span>
         </div>
-        <div className="sp-scratch-top">
-          <Panel title="Health" icon="class">
-            <div className="sp-hp-reference">
-              <strong>
-                {blankHP ? "" : find(model.resources, "Hit Points")}{" "}
-                <small>max HP</small>
-              </strong>
-              <span>
-                Bloodied <b>{model.overview!.bloodied}</b> · Surge{" "}
-                <b>{find(model.resources, "Healing Surge Value")}</b>
-              </span>
-            </div>
-            <div className="sp-hp-writing">
-              <div>Current HP</div>
-              <div>Temporary HP</div>
-            </div>
-            <div className="sp-health-trackers">
-              <div>
-                <p className="sp-caption">
-                  Healing surges · {find(model.resources, "Healing Surges")}/day
+        <div className="ov-scratch-layout">
+          <div className="sp-column ov-scratch-main">
+            <Panel title="Health" icon="heart" className="ov-scratch-health">
+              <Values
+                className="ov-scratch-health-values"
+                values={[
+                  [
+                    "Max HP",
+                    blankHP ? "" : find(model.resources, "Hit Points"),
+                  ],
+                  ["Bloodied", model.overview!.bloodied],
+                  ["Surge HP", find(model.resources, "Healing Surge Value")],
+                ]}
+              />
+              <div className="sp-hp-writing">
+                <div>Current HP</div>
+                <div>Temporary HP</div>
+              </div>
+              <div className="ov-scratch-surges">
+                <p>
+                  <Icon name="heart" /> Surges{" "}
+                  <span>{find(model.resources, "Healing Surges")}/day</span>
                 </p>
-                <Hearts count={find(model.resources, "Healing Surges")} />
+                <SurgeBar count={find(model.resources, "Healing Surges")} />
               </div>
               <div className="sp-death-saves">
                 Death saves
@@ -1219,80 +1286,110 @@ function Scratchpad({
                   ))}
                 </span>
               </div>
-            </div>
-          </Panel>
-          <Panel title="Resources" icon="circle">
-            <div className="sp-action-points">
-              <span>Action points</span>
-              <i />
-              <span>Milestone</span>
-              <i />
-            </div>
-            <div className="sp-xp-tracker">
-              <span>Experience</span>
-              <i />
-            </div>
-          </Panel>
-        </div>
-        <div className="sp-scratch-grid">
-          <div className="sp-column">
-            <EncounterTable groups={encounter.slice(0, counts.encounter)} />
-            <DailyList rows={daily.slice(0, counts.daily)} />
-            {extraPages ? (
-              <p className="sp-caption">
-                Remaining usage rows continue on the following pages.
-              </p>
-            ) : null}
-            <Panel title="Treasure & consumables" icon="item">
-              <div className="sp-writing-lines sp-treasure" />
             </Panel>
+            <div className="ov-power-trackers sp-column" ref={regionRef}>
+              {renderTracking(first)}
+              {layout.length > 1 ? (
+                <p className="sp-caption ov-tracking-caption">
+                  Power tracking continues on page {startPage + 1}…
+                </p>
+              ) : null}
+            </div>
           </div>
-          <div className="sp-column">
-            <Panel title="Quick reference" icon="dices">
-              <p>
-                {model.defenses
-                  .map((entry) => `${entry.label} ${entry.value}`)
-                  .join(" · ")}
-              </p>
-              <p className="sp-inline-rule">
-                Initiative {signedBonus(find(model.resources, "Initiative"))} ·
-                Speed {find(model.resources, "Speed")}
-              </p>
-            </Panel>
-            <Panel title="Reminders" icon="feat">
-              <Reminders
-                values={model
-                  .overview!.reminders.filter(
-                    (entry) => entry.value.length < 220,
-                  )
-                  .slice(0, 2)}
-              />
+          <div className="sp-column ov-scratch-records">
+            <Panel title="Action points & milestones" icon="circle">
+              <div className="sp-action-points">
+                <span>Action points</span>
+                <i />
+                <span>Milestone</span>
+                <i />
+              </div>
             </Panel>
             <Panel title="Conditions & temporary effects" icon="edit">
-              <div className="sp-writing-lines sp-conditions" />
+              <table className="ov-effects-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Effect</th>
+                    <th scope="col">Ends</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: 6 }, (_, i) => (
+                    <tr key={i}>
+                      <td />
+                      <td />
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Panel>
+            <Panel title="Treasure & consumables" icon="item">
+              <div className="sp-writing-lines ov-scratch-treasure" />
+            </Panel>
+            <Panel title="Session notes" icon="edit">
+              <div className="sp-writing-lines ov-scratch-notes" />
+              <div className="sp-xp-tracker">
+                <span>XP</span>
+                <i />
+              </div>
             </Panel>
           </div>
         </div>
       </Paper>
-      {Array.from({ length: extraPages }, (_, index) => (
+      {layout.slice(1).map((slice, index) => (
         <Paper
           key={index}
           name={name}
           title="Power usage · continued"
-          page={`${startPage}.${index + 1}`}
+          page={startPage + index + 1}
           source={model.source}
         >
           <div className="sp-page-heading">
             <h2>Power usage</h2>
           </div>
-          <div className="sp-record-grid">
-            <EncounterTable
-              groups={extraEncounter.slice(index * 5, index * 5 + 5)}
-            />
-            <DailyList rows={extraDaily.slice(index * 8, index * 8 + 8)} />
+          <div className="ov-power-trackers sp-column">
+            {renderTracking(slice)}
           </div>
+          {slice.oversized ? (
+            <p className="sp-caption">
+              A shared-use group exceeds the available page space; its full text
+              is retained.
+            </p>
+          ) : null}
         </Paper>
       ))}
+      <div className="ov-measure" aria-hidden="true">
+        <Paper
+          name={name}
+          title="Play scratchpad"
+          page=""
+          source={model.source}
+        >
+          <div className="ov-scratch-layout">
+            <div className="ov-power-trackers sp-column" ref={firstProbe}>
+              <TrackingPanels encounter={encounter} daily={daily} />
+              <p className="sp-caption ov-tracking-caption">
+                Power tracking continues on page {startPage + 1}…
+              </p>
+            </div>
+            <div />
+          </div>
+        </Paper>
+        <Paper
+          name={name}
+          title="Power usage · continued"
+          page=""
+          source={model.source}
+          pageRef={nextPaper}
+        >
+          <div className="sp-page-heading">
+            <h2>Power usage</h2>
+          </div>
+          <div className="ov-power-trackers sp-column" ref={nextProbe}>
+            <TrackingPanels encounter={encounter} daily={daily} />
+          </div>
+        </Paper>
+      </div>
     </>
   );
 }

@@ -70,6 +70,12 @@ const installVariantTable = `
   window.dispatchEvent(new Event("beforeprint"));
 `;
 const scratch = await mkdtemp(join(tmpdir(), "4ecb-print-check-"));
+const scratchpadPreview = process.argv.includes("--scratchpad-preview")
+  ? join(
+      await mkdtemp(join(tmpdir(), "4ecb-scratchpad-preview-")),
+      "scratchpad.png",
+    )
+  : undefined;
 const browserProfile = join(scratch, "chromium-profile");
 const previewPort = await availablePort();
 const debugPort = await availablePort();
@@ -302,6 +308,25 @@ try {
     await checkSummaryPaneFlow(client);
     await checkSummaryPresentation(client, variant.monochrome);
     await checkSummaryContinuation(client);
+    await checkScratchpad(client, variant.monochrome);
+    if (scratchpadPreview && variant.name === "letter-color") {
+      const clip = await evaluate(
+        client,
+        `(() => {
+        const r=document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"]').getBoundingClientRect();
+        return {x:r.left+scrollX,y:r.top+scrollY,width:r.width,height:r.height,scale:1};
+      })()`,
+      );
+      const screenshot = await client.send("Page.captureScreenshot", {
+        format: "png",
+        captureBeyondViewport: true,
+        clip,
+      });
+      await writeFile(
+        scratchpadPreview,
+        Buffer.from(screenshot.data, "base64"),
+      );
+    }
     const overview = await evaluate(
       client,
       `(() => {
@@ -457,9 +482,10 @@ try {
   }
 
   assert(browserMessages.length === 0, browserMessages.join("\n"));
-  const firefoxResults = overviewOnly
-    ? []
-    : await firefoxPrintMatrix(character, origin, scratch);
+  const firefoxResults =
+    overviewOnly && !process.argv.includes("--firefox-scratchpad")
+      ? []
+      : await firefoxPrintMatrix(character, origin, scratch);
   console.log(
     JSON.stringify(
       {
@@ -471,6 +497,7 @@ try {
           blankHitPoints: character.sheetSettings.blankHitPoints,
         },
         chromiumResults,
+        ...(scratchpadPreview ? { scratchpadPreview } : {}),
         firefox: await firefoxVersion(),
         firefoxResults,
       },
@@ -594,6 +621,27 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
         sessionId,
         `return document.querySelector(".sheet-page")?.classList.contains("is-print-preview") && document.querySelector(".print-card-body")?.clientHeight > 0 && document.querySelectorAll('.sheet-overview > .ov-paper[aria-label="Character reference"]').length > 0;`,
       );
+      if (overviewOnly) {
+        // Focused overview diagnostics do not weaken the default physical-card gate.
+        const adapter = {
+          send: async (method, { expression }) => {
+            if (method !== "Runtime.evaluate")
+              throw new Error(
+                `Unsupported Firefox diagnostic method: ${method}`,
+              );
+            const value = await webdriverExecuteAsync(
+              port,
+              sessionId,
+              `const done=arguments[arguments.length-1];(async()=>(${expression}))().then(done).catch(error=>done({diagnosticError:String(error)}));`,
+            );
+            if (value?.diagnosticError) throw new Error(value.diagnosticError);
+            return { result: { value } };
+          },
+        };
+        await checkScratchpad(adapter, variant.monochrome);
+        results.push({ ...variant, scratchpadGeometry: "pass" });
+        continue;
+      }
       await webdriverExecute(port, sessionId, installVariantTable);
       const layout = await webdriverExecute(
         port,
@@ -777,8 +825,9 @@ function printCharacter() {
     Reflex: "22",
     Will: "19",
     "Hit Points": "72",
-    "Healing Surges": "10",
-    "Healing Surge Value": "18",
+    "Healing Surges": "13",
+    // Native stat is the additive bonus; 72 HP projects to 18 Surge HP.
+    "Healing Surge Value": "0",
     "resist:fire": "5",
     "resist:cold": "-3",
     "Death Saving Throws": "2",
@@ -1008,6 +1057,114 @@ async function checkSummaryPresentation(client, monochrome) {
   await waitForExpression(
     client,
     `Math.abs(parseFloat(getComputedStyle(document.querySelector('.ov-character-name')).fontSize) - ${original.fontSize}) < 0.4`,
+  );
+}
+
+async function checkScratchpad(client, monochrome) {
+  const state = await evaluate(
+    client,
+    `(() => {
+    const page=document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"]');
+    const expected=[...document.querySelectorAll('.ov-measure .ov-power-trackers [data-tracking-id]')].map(e=>e.dataset.trackingId);
+    const pages=[...document.querySelectorAll('.sheet-overview > .ov-paper')].filter(p=>['Play scratchpad','Power usage · continued'].includes(p.getAttribute('aria-label')));
+    const actual=pages.flatMap(p=>[...p.querySelectorAll('[data-tracking-id]')].map(e=>e.dataset.trackingId));
+    const segments=[...page.querySelectorAll('.ov-surge-segment')];
+    return {expected:[...new Set(expected)].sort(), actual:actual.sort(),
+      segments:segments.length, tracks:page.querySelectorAll('.ov-surge-row').length,
+      segmentWidth:Math.min(...segments.map(e=>e.getBoundingClientRect().width)),
+      labels:[...page.querySelectorAll('.ov-surge-label')].map(e=>e.textContent),
+      writingHeight:page.querySelector('.sp-hp-writing > div').getBoundingClientRect().height,
+      effectsRows:page.querySelectorAll('.ov-effects-table tbody tr').length,
+      effectHeight:page.querySelector('.ov-effects-table tbody tr').getBoundingClientRect().height,
+      obsolete:page.textContent.includes('Quick reference')||page.textContent.includes('Reminders'),
+      header:getComputedStyle(page.querySelector('.ov-scratch-health > h3')).backgroundColor,
+      health:getComputedStyle(page.querySelector('.ov-scratch-health-values > div')).backgroundColor,
+      surgeHP:page.querySelector('.ov-scratch-health-values > div:last-child strong').textContent,
+    };
+  })()`,
+  );
+  assert(
+    JSON.stringify(state.actual) === JSON.stringify(state.expected),
+    `Every tracking group must occur exactly once across adjacent pages: ${JSON.stringify(state)}`,
+  );
+  assert(
+    state.segments === 13 && state.tracks === 1 && state.segmentWidth >= 14,
+    `13 surges must fit one markable segmented bar: ${JSON.stringify(state)}`,
+  );
+  assert(
+    JSON.stringify(state.labels) === JSON.stringify(["13", "10", "5", "0"]),
+    "Longer surge bars need sparse remaining-count labels and both endpoints",
+  );
+  assert(
+    state.writingHeight >= 66 &&
+      state.effectsRows === 6 &&
+      state.effectHeight >= 39 &&
+      !state.obsolete,
+    "Scratchpad must reserve handwriting space and omit redundant reference panes",
+  );
+  assert(
+    state.surgeHP === "18",
+    "Scratchpad must use the projected surge total, not the raw additive stat",
+  );
+  assert(
+    state.header ===
+      (monochrome ? "rgb(238, 238, 238)" : "rgb(234, 240, 246)") &&
+      state.health ===
+        (monochrome ? "rgb(238, 238, 238)" : "rgb(240, 236, 245)"),
+    `Scratchpad must match the approved slate header/violet health palette: ${JSON.stringify(state)}`,
+  );
+  const baseline = await evaluate(
+    client,
+    `(() => {
+    const p=document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"]');
+    return {count:p.querySelectorAll('[data-tracking-id]').length,health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,records:p.querySelector('.ov-scratch-records').getBoundingClientRect().height};
+  })()`,
+  );
+  const rule = await evaluate(
+    client,
+    `(() => {
+    const s=document.styleSheets[0], i=s.cssRules.length;
+    s.insertRule('.sheet-overview .ov-power-trackers .sp-usage-table tbody > tr { height: 80px; }',i);
+    s.insertRule('.sheet-overview .ov-power-trackers .sp-daily-list > div { min-height: 80px; }',i+1);
+    return i;
+  })()`,
+  );
+  try {
+    await waitForExpression(
+      client,
+      `document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"]').querySelectorAll('[data-tracking-id]').length < ${baseline.count}`,
+    );
+    await evaluate(
+      client,
+      "new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))",
+      true,
+    );
+    const stress = await evaluate(
+      client,
+      `(() => {
+      const pages=[...document.querySelectorAll('.sheet-overview > .ov-paper')].filter(p=>['Play scratchpad','Power usage · continued'].includes(p.getAttribute('aria-label')));
+      const p=pages[0];
+      return {ids:pages.flatMap(p=>[...p.querySelectorAll('[data-tracking-id]')].map(e=>e.dataset.trackingId)).sort(),overflow:pages.some(p=>p.querySelector('.sp-page-content').getBoundingClientRect().bottom>p.querySelector('.sp-page-footer').getBoundingClientRect().top-7),geometry:pages.map(p=>({title:p.getAttribute('aria-label'),bottom:p.querySelector('.sp-page-content').getBoundingClientRect().bottom,footer:p.querySelector('.sp-page-footer').getBoundingClientRect().top,rows:p.querySelectorAll('[data-tracking-id]').length})),health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,records:p.querySelector('.ov-scratch-records').getBoundingClientRect().height};
+    })()`,
+    );
+    assert(
+      JSON.stringify(stress.ids) === JSON.stringify(state.expected) &&
+        !stress.overflow,
+      `Dense tracking must preserve every row on adjacent measured pages: ${JSON.stringify(stress)}`,
+    );
+    assert(
+      stress.health === baseline.health && stress.records === baseline.records,
+      "Power growth must not displace health or consume handwriting areas",
+    );
+  } finally {
+    await evaluate(
+      client,
+      `(() => { document.styleSheets[0].deleteRule(${rule + 1}); document.styleSheets[0].deleteRule(${rule}); return true; })()`,
+    );
+  }
+  await waitForExpression(
+    client,
+    `document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"]').querySelectorAll('[data-tracking-id]').length === ${baseline.count}`,
   );
 }
 

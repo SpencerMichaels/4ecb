@@ -864,7 +864,15 @@ describe("real-data sheet overview", () => {
     expect(markup).toContain('aria-label="Play scratchpad"');
     expect(markup).toContain("+½ level");
     expect(markup.match(/lucide-skull/g)).toHaveLength(3);
-    expect(markup.match(/<small>[1-8]<\/small>/g)).toHaveLength(8);
+    expect(markup.match(/class="ov-surge-segment/g)).toHaveLength(8);
+    const scratchpad = markup
+      .split('aria-label="Play scratchpad"')[1]!
+      .split("</article>")[0]!;
+    expect(scratchpad).toContain('class="ov-effects-table"');
+    expect(scratchpad).toContain('<th scope="col">Ends</th>');
+    expect(scratchpad).toContain(">Session notes</h3>");
+    expect(scratchpad).not.toContain(">Reminders</h3>");
+    expect(scratchpad).not.toContain(">Quick reference</h3>");
     expect(markup).not.toContain(">72<");
     expect(model.resources.find((v) => v.label === "Hit Points")?.value).toBe(
       "72",
