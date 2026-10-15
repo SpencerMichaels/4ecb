@@ -34,11 +34,21 @@ overview print check passes Letter/A4 in color/monochrome with no overflow,
 including assertions for four health cells and left-grouped death-save skulls.
 Page 1 ability names use regular weight, matching the other left-column table
 labels; this isolated CSS adjustment does not alter values or layout structure.
-Surge bars below ten surges have no grouping gaps. At ten or more, every fifth
-segment has a deliberate 0.08in break; width measurement reserves enough room
-for these larger gaps while keeping segments markable.
-All ten focused scratchpad-layout/surge-bar tests pass, including the grouping
-threshold at ten surges. No full print matrix was rerun for this style adjustment.
+Surge bars are continuous at all counts; sparse number labels supply the
+five-surge grouping without visual gaps. Encounter and Daily panes share a row,
+with Encounter receiving 1.65 times Daily's width. A sole pane fills the available
+width; containers below 3.6in fall back to stacked panes. Pagination measures the
+actual narrow/wide row heights and uses the maximum pane height when adjacent,
+rather than adding both heights. Full names, shared-use grouping and adjacent
+overflow pages remain intact.
+Verification: 43 focused overview/layout tests, web typecheck, focused lint and
+production build pass. `node scripts/check-print.mjs --overview-only
+--firefox-scratchpad --scratchpad-preview` passes all four Chromium PDF variants
+and four Firefox print-preview geometry variants, with exact-once power coverage,
+side-by-side pane proportions and no surge grouping gaps. The overflow stress
+fixture now uses 160px rows (80px rows all fit in parallel columns), retaining
+the same overflow/restoration assertions. The generated Chromium preview was
+visually reviewed. No full milestone/card gate was run.
 
 Measured row/group heights and panel/caption gaps replace fixed power-count
 limits. Encounter and daily lists share available space, shared-use groups remain

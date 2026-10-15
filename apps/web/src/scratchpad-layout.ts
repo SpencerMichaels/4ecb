@@ -4,6 +4,7 @@ export interface TrackingMeasurements {
   readonly encounterOverhead: number;
   readonly dailyOverhead: number;
   readonly gap: number;
+  readonly sideBySide?: boolean;
 }
 export interface TrackingPage {
   readonly encounterStart: number;
@@ -34,40 +35,42 @@ export function paginateTracking(
     );
     const encounterRemaining = m.encounter.slice(encounterStart);
     const dailyRemaining = m.daily.slice(dailyStart);
-    const total =
+    const height = (encounterHeight: number, dailyHeight: number) =>
+      m.sideBySide
+        ? Math.max(encounterHeight, dailyHeight)
+        : encounterHeight +
+          dailyHeight +
+          (encounterHeight && dailyHeight ? m.gap : 0);
+    const total = height(
       encounterRemaining.reduce((a, b) => a + b, 0) +
+        (encounterRemaining.length ? m.encounterOverhead : 0),
       dailyRemaining.reduce((a, b) => a + b, 0) +
-      (encounterRemaining.length ? m.encounterOverhead : 0) +
-      (dailyRemaining.length ? m.dailyOverhead : 0) +
-      (encounterRemaining.length && dailyRemaining.length ? m.gap : 0);
+        (dailyRemaining.length ? m.dailyOverhead : 0),
+    );
     if (!pages.length && total > capacity)
       capacity = Math.max(0, capacity - captionHeight);
     let encounterEnd = encounterStart,
       dailyEnd = dailyStart,
-      used = 0,
+      encounterHeight = 0,
+      dailyHeight = 0,
       progressed = true;
     while (progressed) {
       progressed = false;
       if (encounterEnd < m.encounter.length) {
         const cost =
           m.encounter[encounterEnd]! +
-          (encounterEnd === encounterStart
-            ? m.encounterOverhead + (dailyEnd > dailyStart ? m.gap : 0)
-            : 0);
-        if (used + cost <= capacity) {
-          used += cost;
+          (encounterEnd === encounterStart ? m.encounterOverhead : 0);
+        if (height(encounterHeight + cost, dailyHeight) <= capacity) {
+          encounterHeight += cost;
           encounterEnd++;
           progressed = true;
         }
       }
       if (dailyEnd < m.daily.length) {
         const cost =
-          m.daily[dailyEnd]! +
-          (dailyEnd === dailyStart
-            ? m.dailyOverhead + (encounterEnd > encounterStart ? m.gap : 0)
-            : 0);
-        if (used + cost <= capacity) {
-          used += cost;
+          m.daily[dailyEnd]! + (dailyEnd === dailyStart ? m.dailyOverhead : 0);
+        if (height(encounterHeight, dailyHeight + cost) <= capacity) {
+          dailyHeight += cost;
           dailyEnd++;
           progressed = true;
         }

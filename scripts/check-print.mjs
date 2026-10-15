@@ -1071,6 +1071,8 @@ async function checkScratchpad(client, monochrome) {
     const segments=[...page.querySelectorAll('.ov-surge-segment')];
     return {expected:[...new Set(expected)].sort(), actual:actual.sort(),
       segments:segments.length, tracks:page.querySelectorAll('.ov-surge-row').length,
+      surgeGaps:segments.some(e=>parseFloat(getComputedStyle(e).marginLeft)>0),
+      powerPanes:[...page.querySelectorAll('.ov-tracking-panels > .sp-panel')].map(e=>({left:e.getBoundingClientRect().left,top:e.getBoundingClientRect().top,width:e.getBoundingClientRect().width})),
       segmentWidth:Math.min(...segments.map(e=>e.getBoundingClientRect().width)),
       labels:[...page.querySelectorAll('.ov-surge-label')].map(e=>e.textContent),
       writingHeight:page.querySelector('.sp-hp-writing > div').getBoundingClientRect().height,
@@ -1099,6 +1101,14 @@ async function checkScratchpad(client, monochrome) {
       state.deathSaveAlignment === "flex-start" &&
       state.deathSaveGap < 120,
     `Scratchpad health needs four compact reference cells and skulls beside the death-save label: ${JSON.stringify(state)}`,
+  );
+  assert(
+    !state.surgeGaps &&
+      state.powerPanes.length === 2 &&
+      Math.abs(state.powerPanes[0].top - state.powerPanes[1].top) < 1 &&
+      state.powerPanes[0].width > state.powerPanes[1].width &&
+      state.powerPanes[1].left > state.powerPanes[0].left,
+    `Power panes must share a row with a narrower Daily pane, and surge bars have no grouping gaps: ${JSON.stringify(state)}`,
   );
   assert(
     JSON.stringify(state.labels) === JSON.stringify(["13", "10", "5", "0"]),
@@ -1133,8 +1143,8 @@ async function checkScratchpad(client, monochrome) {
     client,
     `(() => {
     const s=document.styleSheets[0], i=s.cssRules.length;
-    s.insertRule('.sheet-overview .ov-power-trackers .sp-usage-table tbody > tr { height: 80px; }',i);
-    s.insertRule('.sheet-overview .ov-power-trackers .sp-daily-list > div { min-height: 80px; }',i+1);
+    s.insertRule('.sheet-overview .ov-power-trackers .sp-usage-table tbody > tr { height: 160px; }',i);
+    s.insertRule('.sheet-overview .ov-power-trackers .sp-daily-list > div { min-height: 160px; }',i+1);
     return i;
   })()`,
   );

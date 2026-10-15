@@ -1068,9 +1068,6 @@ body:has(.sp-prototype) {
   height: 0.22in;
   position: relative;
 }
-.ov-surge-group {
-  margin-left: 0.08in;
-}
 .ov-surge-label {
   position: absolute;
   left: -1px;
@@ -1125,6 +1122,22 @@ body:has(.sp-prototype) {
 }
 .ov-tracking-caption {
   margin-top: 0.07in !important;
+}
+.ov-power-trackers {
+  container-type: inline-size;
+}
+.ov-tracking-panels {
+  display: grid;
+  gap: 0.12in;
+  align-items: start;
+}
+.ov-tracking-panels > .sp-panel {
+  min-width: 0;
+}
+@container (min-width: 3.6in) {
+  .ov-tracking-panels.has-both {
+    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  }
 }
 .ov-power-trackers .sp-usage-table tbody tr:nth-child(odd),
 .ov-power-trackers .sp-daily-list > div:nth-child(odd) {

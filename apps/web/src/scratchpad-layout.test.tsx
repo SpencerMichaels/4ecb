@@ -18,6 +18,16 @@ const measurements = (
   gap: 5,
 });
 describe("scratchpad measured tracking layout", () => {
+  it("shares vertical space between side-by-side encounter and daily panes", () => {
+    const m = { ...measurements([20, 20, 20], [20, 20, 20]), sideBySide: true };
+    expect(paginateTracking(m, m, 70, 500, 20)).toEqual([
+      { encounterStart: 0, encounterEnd: 3, dailyStart: 0, dailyEnd: 3 },
+    ]);
+    expect(paginateTracking(m, m, 60, 70, 20)).toEqual([
+      { encounterStart: 0, encounterEnd: 1, dailyStart: 0, dailyEnd: 1 },
+      { encounterStart: 1, encounterEnd: 3, dailyStart: 1, dailyEnd: 3 },
+    ]);
+  });
   it("uses all available space, reserving a caption only for actual overflow", () => {
     const m = measurements([20, 20], [20, 20]);
     expect(paginateTracking(m, m, 105, 500, 20)).toEqual([
@@ -81,17 +91,11 @@ describe("scratchpad measured tracking layout", () => {
   });
 });
 describe("segmented surge bar", () => {
-  it("groups longer bars in fives but leaves fewer than ten surges uninterrupted", () => {
-    for (const count of ["6", "9"])
+  it("keeps all surge bars uninterrupted, with numbers providing grouping", () => {
+    for (const count of ["6", "9", "10", "13"])
       expect(renderToStaticMarkup(<SurgeBar count={count} />)).not.toContain(
         "ov-surge-group",
       );
-    expect(
-      renderToStaticMarkup(<SurgeBar count="10" />).match(/ov-surge-group/g),
-    ).toHaveLength(1);
-    expect(
-      renderToStaticMarkup(<SurgeBar count="13" />).match(/ov-surge-group/g),
-    ).toHaveLength(2);
   });
   it("keeps 13 surges on one track and labels remaining boundaries sparsely", () => {
     const html = renderToStaticMarkup(<SurgeBar count="13" />);

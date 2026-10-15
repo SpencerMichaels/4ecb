@@ -1165,10 +1165,12 @@ function TrackingPanels({
   daily: readonly TrackingRow[];
 }) {
   return (
-    <>
+    <div
+      className={`ov-tracking-panels${encounter.length && daily.length ? " has-both" : ""}`}
+    >
       {encounter.length ? <EncounterTable groups={encounter} /> : null}
       {daily.length ? <DailyList rows={daily} /> : null}
-    </>
+    </div>
   );
 }
 function Scratchpad({
@@ -1208,6 +1210,7 @@ function Scratchpad({
     if (!page || !first || !next || !paper) return;
     let active = true;
     const measurements = (element: HTMLElement): TrackingMeasurements => {
+      const panels = element.querySelector<HTMLElement>(".ov-tracking-panels")!;
       const encounterPanel =
         element.querySelector<HTMLElement>(".sp-encounter");
       const dailyPanel = element.querySelector<HTMLElement>(".sp-daily");
@@ -1226,7 +1229,9 @@ function Scratchpad({
         dailyOverhead:
           (dailyPanel?.getBoundingClientRect().height ?? 0) -
           daily.reduce((a, b) => a + b, 0),
-        gap: parseFloat(getComputedStyle(element).rowGap) || 0,
+        gap: parseFloat(getComputedStyle(panels).rowGap) || 0,
+        sideBySide:
+          getComputedStyle(panels).gridTemplateColumns.split(" ").length > 1,
       };
     };
     const check = () => {
