@@ -2,6 +2,25 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Identity details box / development-module diagnosis (2026-10-15): Summary identity
+details now always show Player, Company, Theme, Paragon path and Epic destiny in a
+bordered label/value box, with delimited rows and em dashes for absent/blank fields.
+Sparse metadata no longer leaves isolated labels floating in the header.
+
+The reported missing createEvaluatedPowerTextPersonalizer export was reproduced
+as a port-5173 development-server response containing only an empty source map.
+The source export exists; a fresh query returned the full module. Refreshing the
+source invalidated the stale transform, after which both the original timestamped
+URL and the unqualified URL returned the function again. No application export or
+calculation change was necessary; a browser reload may still be needed to recover
+from the failed module load. The initiating cause of the cached empty transform
+has not been established.
+
+Verification: 34 focused rendering/overview tests, web typecheck, focused lint
+and production build pass. All four overview-only Letter/A4 × color/monochrome
+PDF checks pass (12 measured pages each, no overview overflow). Full physical-card
+and milestone exit gates remain separate; M5.6 is still open.
+
 Concise feature reminders (2026-10-15): Matching Additional Effects no longer
 replace an authored Short Description with the feature's full prose. Both direct
 feature candidates and matched effect providers prefer the same authored summary,

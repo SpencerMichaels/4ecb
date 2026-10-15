@@ -135,8 +135,9 @@ Wording follow-up verification: 43 focused projection/render tests, web typechec
 and focused lint pass; the full print matrix was not rerun for this text-only change.
 It never inflates the universal Saves tile. The full-width divider below the
 identity header is restored.
-Player, theme, paragon path, epic destiny and company move to the header's right
-identity block, omitted when absent. See `character-import-and-sheets.md` for the
+Player, company, theme, paragon path and epic destiny appear in that order in the
+header's right identity box, with bordered rows and em dashes for missing values.
+See `character-import-and-sheets.md` for the
 structured-stat/prose detection and legacy-cache compatibility boundary.
 Header follow-up verification: 14 focused render tests, lint, production build,
 and the overview-only Letter/A4 color/monochrome PDF matrix pass with no overview

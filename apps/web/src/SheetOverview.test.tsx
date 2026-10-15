@@ -24,6 +24,35 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it.each([
+    { identity: [] },
+    { identity: [{ label: "Theme", value: "Test theme" }] },
+  ])(
+    "keeps a complete identity box even with sparse metadata (%j)",
+    ({ identity }) => {
+      const html = renderToStaticMarkup(
+        <SheetOverview
+          model={{ ...model, identity }}
+          name="Fixture"
+          portrait={undefined}
+          paper="letter"
+          monochrome={false}
+          blankHP={false}
+        />,
+      );
+      const box = html
+        .split('class="ov-identity-details"')[1]!
+        .split("</dl>")[0]!;
+      expect(box.indexOf("<dt>Company</dt>")).toBeLessThan(
+        box.indexOf("<dt>Theme</dt>"),
+      );
+      for (const label of ["Player", "Paragon path", "Epic destiny", "Company"])
+        expect(box).toContain(`<dt>${label}</dt><dd>—</dd>`);
+      expect(box).toContain(
+        `<dt>Theme</dt><dd>${identity.length ? "Test theme" : "—"}</dd>`,
+      );
+    },
+  );
   it("shows zero saves as dashes while retaining nonzero bonuses and unknowns", () => {
     for (const [saves, expected] of [
       ["+0", "—"],

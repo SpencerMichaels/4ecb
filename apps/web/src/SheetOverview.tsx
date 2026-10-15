@@ -613,44 +613,24 @@ function Summary({
               .join(" ")}
           </p>
         </div>
-        {model.identity.some(
-          (entry) =>
-            [
-              "Player",
-              "Theme",
-              "ParagonPath",
-              "EpicDestiny",
-              "Company",
-            ].includes(entry.label) && entry.value.trim(),
-        ) ? (
-          <dl className="ov-identity-details">
-            {model.identity
-              .filter(
-                (entry) =>
-                  [
-                    "Player",
-                    "Theme",
-                    "ParagonPath",
-                    "EpicDestiny",
-                    "Company",
-                  ].includes(entry.label) && entry.value.trim(),
-              )
-              .map((entry) => (
-                <div key={entry.label}>
-                  <dt>
-                    {(
-                      {
-                        ParagonPath: "Paragon path",
-                        EpicDestiny: "Epic destiny",
-                        Company: "Company",
-                      } as Record<string, string>
-                    )[entry.label] ?? entry.label}
-                  </dt>
-                  <dd>{entry.value}</dd>
-                </div>
-              ))}
-          </dl>
-        ) : null}
+        <dl className="ov-identity-details">
+          {[
+            ["Player", "Player"],
+            ["Company", "Company"],
+            ["Theme", "Theme"],
+            ["ParagonPath", "Paragon path"],
+            ["EpicDestiny", "Epic destiny"],
+          ].map(([field, label]) => (
+            <div key={field}>
+              <dt>{label}</dt>
+              <dd>
+                {model.identity
+                  .find((entry) => entry.label === field)
+                  ?.value.trim() || "—"}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </section>
       <section className="ov-numeric-band" aria-label="Combat statistics">
         <section aria-label="Defenses" className="ov-stat-group">

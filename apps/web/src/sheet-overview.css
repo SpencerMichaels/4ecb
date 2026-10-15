@@ -151,9 +151,9 @@ body:has(.sp-prototype) {
   overflow-wrap: anywhere;
 }
 .ov-identity-details {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.03in 0.07in;
+  border: 1px solid var(--sp-border);
+  border-radius: 5px;
+  overflow: hidden;
   flex: 0 1 2.7in;
   min-width: 0;
   margin: 0 0 0 auto;
@@ -162,10 +162,19 @@ body:has(.sp-prototype) {
   overflow-wrap: anywhere;
 }
 .ov-identity-details > div {
-  display: contents;
+  display: grid;
+  grid-template-columns: 0.85in minmax(0, 1fr);
+}
+.ov-identity-details > div + div {
+  border-top: 1px solid var(--sp-border);
+}
+.ov-identity-details :is(dt, dd) {
+  padding: 0.025in 0.06in;
 }
 .ov-identity-details dt {
   color: var(--sp-muted);
+  background: #f0f3f5;
+  border-right: 1px solid var(--sp-border);
 }
 .ov-identity-details dd {
   margin: 0;
