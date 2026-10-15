@@ -65,6 +65,8 @@ export interface SheetOverview {
   readonly features: readonly OverviewFeature[];
   readonly inventory: readonly OverviewInventory[];
   readonly reminders: readonly OverviewReminder[];
+  /** Page-one candidates before expanded core-power reference descriptions. */
+  readonly summaryReminders?: readonly OverviewReminder[];
 }
 const key = (s: string) => s.trim().toLowerCase();
 const signed = (n: number) => `${n >= 0 ? "+" : ""}${n}`;
@@ -367,6 +369,7 @@ export function withSheetOverview(
         feature ? reminderCategory(feature.group) : "Other reminders",
       );
     }
+  const summaryReminders = [...reminders];
   const corePowers = corePowerReminders({
     ...input,
     powers: model.powers,
@@ -400,6 +403,11 @@ export function withSheetOverview(
         category: "Class features",
       });
   reminders.sort(
+    (a, b) =>
+      Number(/\ball(?:y|ies)\b/i.test(b.value)) -
+      Number(/\ball(?:y|ies)\b/i.test(a.value)),
+  );
+  summaryReminders.sort(
     (a, b) =>
       Number(/\ball(?:y|ies)\b/i.test(b.value)) -
       Number(/\ball(?:y|ies)\b/i.test(a.value)),
@@ -473,6 +481,7 @@ export function withSheetOverview(
       features,
       inventory: input.inventory.filter((item) => item.quantity > 0),
       reminders,
+      ...(corePowers.length ? { summaryReminders } : {}),
     },
   };
 }

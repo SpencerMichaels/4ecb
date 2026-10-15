@@ -540,6 +540,7 @@ function SummaryColumns({
   children: ReactNode;
 }) {
   const overview = model.overview!;
+  const summaryReminders = overview.summaryReminders ?? overview.reminders;
   const ref = useRef<HTMLDivElement>(null);
   const slots = new Map(
     Children.toArray(children).flatMap((child) =>
@@ -555,9 +556,9 @@ function SummaryColumns({
   const [visibleIndices, setVisibleIndices] = useState<readonly number[]>();
   const reminders =
     visibleIndices === undefined
-      ? overview.reminders
+      ? summaryReminders
       : visibleIndices.flatMap((index) =>
-          overview.reminders[index] ? [overview.reminders[index]!] : [],
+          summaryReminders[index] ? [summaryReminders[index]!] : [],
         );
   useLayoutEffect(() => {
     const grid = ref.current;
@@ -663,20 +664,20 @@ function SummaryColumns({
         {panes.slice(leftCount).map(renderPane)}
         <section className="ov-reminder-region" aria-label="Reminders">
           <ReminderPanels
-            values={overview.reminders}
+            values={summaryReminders}
             visibleIndices={visibleIndices}
           />
-          {reminders.length < overview.reminders.length ? (
+          {reminders.length < summaryReminders.length ? (
             <p className="sp-caption">
-              {overview.reminders.length - reminders.length} more reminders in
+              {summaryReminders.length - reminders.length} more reminders in
               references.
             </p>
           ) : null}
         </section>
         <div className="ov-reminder-probe" aria-hidden="true">
-          <ReminderPanels values={overview.reminders} />
+          <ReminderPanels values={summaryReminders} />
           <p className="sp-caption">
-            {overview.reminders.length} more reminders in references.
+            {summaryReminders.length} more reminders in references.
           </p>
         </div>
       </section>

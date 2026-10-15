@@ -128,6 +128,9 @@ describe("printed overview data", () => {
         category: "Class features",
       },
     ]);
+    expect(model.overview?.summaryReminders).toEqual([
+      { label: feature.name, value: extra, category: "Class features" },
+    ]);
     expect(
       model.overview?.features.find((f) => f.id === feature.id)?.description,
     ).toBe(feature.description);

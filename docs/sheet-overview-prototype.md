@@ -258,6 +258,12 @@ separate independent feature benefits remain available. Full feature/power
 references are unchanged. This is conservative discovery and text selection,
 not exhaustive classification of every class's core mechanics or automatic prose
 summarization; long entries still follow the measured fit/reference fallback.
+Product review subsequently removed these expanded core-power descriptions from
+page 1. Its reminder candidates are captured before core-power expansion, retaining
+the existing concise feature/conditional-effect reminders (including calculated
+extra damage). The full reminder reference still receives discovered core-power
+mechanics. Discovery and its provenance tests remain active for later use. Page-1
+measurement and overflow counts use only its eligible concise candidate list.
 Additional Effects resolve to a uniquely known selected provider (or exact ID),
 using its authored Short Description once instead of repeating the bonus per
 power. Missing summaries fall back to the feature description; complete authored

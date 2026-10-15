@@ -27,6 +27,44 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("keeps expanded core-power descriptions off page one but available in references", () => {
+    const short = {
+      label: "Existing bonus",
+      value: "+1d6 against your chosen foe.",
+      category: "Class features" as const,
+    };
+    const expanded = {
+      label: "Core power description",
+      value: "A long ongoing target-dependent mechanical description.",
+      category: "Class features" as const,
+    };
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={{
+          ...model,
+          overview: {
+            ...model.overview!,
+            reminders: [short, expanded],
+            summaryReminders: [short],
+          },
+        }}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const summary = html
+      .split('aria-label="Character summary"')[1]!
+      .split("</article>")[0]!;
+    expect(summary).toContain("Existing bonus");
+    expect(summary).not.toContain("Core power description");
+    expect(summary.split('class="ov-reminder-probe"')[0]).not.toContain(
+      "more reminders in references.",
+    );
+    expect(html).toContain(expanded.value);
+  });
   it("finds the actual reference-page label for basic attack alternatives", () => {
     const entry: ReferenceEntry = {
       id: "basic:test",

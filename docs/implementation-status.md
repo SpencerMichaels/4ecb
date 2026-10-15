@@ -2,6 +2,18 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Concise page-one reminders restored (2026-10-15): Page 1 now uses reminder
+candidates captured before expanded core-power descriptions are consolidated.
+This removes the newly added Oath/Challenge descriptions from the summary while
+retaining earlier concise feature/effect reminders, including calculated quarry
+damage. Core class-power discovery, provenance checks and full reminder references
+remain intact. Summary fitting/probes/overflow counts use only summary-eligible
+candidates; reference-only expansions do not trigger a misleading overflow count.
+Verification: 52 focused overview/render/core-discovery tests, web typecheck and
+focused lint pass. Regression coverage preserves concise candidates separately
+and verifies expanded text is absent on page 1 but retained in references. No
+calculation or layout-structure change; full print/suite gates were not rerun.
+
 Core class-power reminders (2026-10-15): Added metadata-driven discovery through
 the selected class's level-one feature grants and explicit feature-to-owned-power
 links, including intermediate Grants containers and evaluated grant ancestry.
