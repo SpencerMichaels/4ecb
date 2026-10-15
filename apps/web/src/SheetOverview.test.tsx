@@ -71,6 +71,12 @@ describe("real-data sheet overview", () => {
     expect(summary.match(/Remember in play/g)).toHaveLength(1);
     expect(summary.match(/Quick Hands/g)).toHaveLength(1);
     expect(summary).not.toContain("Feat reminders");
+    const [left, right] = summary.split('class="sp-column sp-skills-column"');
+    expect(left).toContain("Remember in play");
+    expect(left).not.toContain("Basic attacks");
+    expect(right!.indexOf("Languages")).toBeLessThan(
+      right!.indexOf("Basic attacks"),
+    );
     expect(summary).not.toContain("Passive Training");
     expect(html).toContain("Passive Training");
   });

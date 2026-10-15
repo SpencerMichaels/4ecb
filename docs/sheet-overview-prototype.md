@@ -40,7 +40,9 @@ and real overview share `sheet-overview.css`.
    separate melee/ranged sections and Weapon/Attack/Damage columns. The fixture
    calculations are illustrative, not a new evaluation path. The initial study
    placed feat reminders below Languages; real-data feedback now combines them
-   with feature/item reminders in one Remember in play panel. The training key sits in the unused bottom-right skill row;
+   with feature/item reminders in one Remember in play panel on the left.
+   Basic attacks sit below Languages in the right column, leaving more of the
+   left column available for reminders. The training key sits in the unused bottom-right skill row;
    the Skills preamble is removed. Passive senses use compact `Pass.` labels.
    The health panel is named Health. The approved ability table replaces the slash
    display and repeated cell legends; it retains both bonus values.

@@ -310,7 +310,6 @@ function Summary({
               </p>
             ) : null}
           </Panel>
-          <BasicAttacks model={model} abbreviated />
           {overview.reminders.length ? (
             <Panel title="Remember in play" icon="feat">
               <Reminders values={reminders} />
@@ -399,6 +398,7 @@ function Summary({
                 .join(" · ") || "Not recorded"}
             </p>
           </Panel>
+          <BasicAttacks model={model} abbreviated />
         </div>
       </div>
     </Paper>

@@ -2,6 +2,13 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Summary geography (2026-10-14): Basic attacks move to the right column directly
+below Languages, leaving the left column's remaining space for Remember in play.
+Focused rendering coverage asserts column membership and ordering; calculations,
+physical cards and reference contents are unchanged.
+Verification: all seven overview rendering tests pass. The full test/print matrix
+was not rerun for this small layout move.
+
 Unified reminders (2026-10-14): The summary now has one Remember in play panel
 for actionable feats, features and item benefits. The separate Feat reminders
 category is removed; summary, scratchpad and full reminder reference consume the
