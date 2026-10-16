@@ -7,9 +7,10 @@ M5.6 stays open.
 Final audit follow-up: Inventory includes a compact encumbrance line (carried
 weight, normal limit, load), not a separate pane. Inventory names have muted,
 right-aligned weights including the listed quantity; unknown weights show an
-em dash. Page 1's top-right identity table is a content-sized four-column grid,
-three rows pairing Size/Theme, Deity/Paragon path and Alignment/Epic destiny.
-It stays right-aligned, caps its width to preserve room for the name, and wraps
+em dash. Page 1's top-right identity area has two separate content-sized tables:
+Size/Deity/Alignment and Theme/Paragon path/Epic destiny. Each has its own border
+and three label/value rows, separated by a small open gap instead of an internal
+gutter in a shared border. The pair stays right-aligned, caps its width to preserve room for the name, and wraps
 long values without wrapping labels. Blank fields retain em dashes. Character
 Record's Details table retains populated Gender, Age, Height, Weight and RPGA
 before descriptive notes, without repeating the new page-1 fields. Reminder continuations

@@ -1036,8 +1036,8 @@ async function checkSummaryPresentation(client, monochrome) {
     return {
       identityPairs: (() => {
         const box=summary.querySelector('.ov-identity-details');
-        const rows=[...box.children];
-        return rows.length===3 && rows.every(row=>row.children.length===4 && [...row.children].every((cell,i,all)=>!i || cell.getBoundingClientRect().left>=all[i-1].getBoundingClientRect().right-1)) && box.textContent.includes('Synthetic patron') && box.getBoundingClientRect().right<=summary.querySelector('.sp-identity').getBoundingClientRect().right+1;
+        const tables=[...box.querySelectorAll('.ov-identity-table')];
+        return tables.length===2 && tables.every(table=>table.children.length===3 && [...table.children].every(row=>row.children.length===2 && row.children[1].getBoundingClientRect().left>=row.children[0].getBoundingClientRect().right-1)) && box.textContent.includes('Synthetic patron') && box.getBoundingClientRect().right<=summary.querySelector('.sp-identity').getBoundingClientRect().right+1;
       })(),
       backgrounds: tables.flatMap(table => {
         const row = table.querySelector('tbody tr');
@@ -1130,7 +1130,7 @@ async function checkSummaryPresentation(client, monochrome) {
   }
   assert(
     presentation.identityPairs,
-    "Summary identity must retain three paired four-cell rows within the header",
+    "Summary identity must retain two three-row tables within the header",
   );
   assert(
     presentation.backgrounds.length > 0 &&

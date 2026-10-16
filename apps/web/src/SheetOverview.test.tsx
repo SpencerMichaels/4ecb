@@ -93,7 +93,8 @@ describe("real-data sheet overview", () => {
     );
     expect(
       html.split('aria-label="Character summary"')[1]!.split("</article>")[0]!,
-    ).toContain("<dt>Size</dt><dd>Small</dd><dt>Theme</dt><dd>—</dd>");
+    ).toContain("<dt>Size</dt><dd>Small</dd>");
+    expect(html.match(/class="ov-identity-table"/g)).toHaveLength(2);
   });
   it("prints carried weight, normal limit and load without guessing unknown inputs", () => {
     const entry = references({
@@ -191,7 +192,7 @@ describe("real-data sheet overview", () => {
       );
       const identity = html
         .split('class="ov-identity-details"')[1]!
-        .split("</dl>")[0]!;
+        .split("</section>")[0]!;
       expect(identity).not.toContain("<dt>XP</dt>");
       expect(html).toContain(
         `class="ov-recorded-xp">Recorded: ${value}</small>`,
@@ -1343,7 +1344,7 @@ describe("real-data sheet overview", () => {
       );
       const box = html
         .split('class="ov-identity-details"')[1]!
-        .split("</dl>")[0]!;
+        .split("</section>")[0]!;
       expect(box).not.toContain("<dt>Player</dt>");
       expect(box).not.toContain("<dt>Company</dt>");
       expect(html).toContain('<p class="ov-player-company"></p>');

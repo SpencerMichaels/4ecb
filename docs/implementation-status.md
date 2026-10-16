@@ -2,6 +2,15 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Identity-header feedback (2026-10-16): the single four-column grid and its
+internal gutter are replaced by two separately bordered, content-sized tables
+side by side. Size/Deity/Alignment occupy the left table; Theme/Paragon path/
+Epic destiny the right. The combined width cap, right alignment, wrapped values
+and em-dash blanks remain unchanged.
+Verification: 65 focused overview tests, web typecheck and production/PWA build
+pass. Print geometry assertions now target the two-table structure; the full
+print/milestone matrix was not rerun for this visual feedback change.
+
 Paired identity-header trial (2026-10-16): page 1 now uses a right-aligned,
 content-sized four-column identity table. Rows pair Size/Theme, Deity/Paragon
 path and Alignment/Epic destiny. A 62% width cap leaves room for the character

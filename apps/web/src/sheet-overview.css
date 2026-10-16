@@ -161,14 +161,10 @@ body:has(.sp-prototype) {
   display: none;
 }
 .ov-identity-details {
-  border: 1px solid var(--sp-border);
-  border-radius: 5px;
-  overflow: hidden;
   display: grid;
-  grid-template-columns: max-content minmax(0, max-content) max-content minmax(
-      0,
-      max-content
-    );
+  grid-template-columns: minmax(0, max-content) minmax(0, max-content);
+  gap: 0.1in;
+  align-items: start;
   flex: 0 1 auto;
   width: max-content;
   max-width: 62%;
@@ -178,10 +174,19 @@ body:has(.sp-prototype) {
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
-.ov-identity-details > div {
+.ov-identity-table {
+  display: grid;
+  grid-template-columns: max-content minmax(0, max-content);
+  border: 1px solid var(--sp-border);
+  border-radius: 5px;
+  overflow: hidden;
+  min-width: 0;
+  margin: 0;
+}
+.ov-identity-table > div {
   display: contents;
 }
-.ov-identity-details > div + div > :is(dt, dd) {
+.ov-identity-table > div + div > :is(dt, dd) {
   border-top: 1px solid var(--sp-border);
 }
 .ov-identity-details :is(dt, dd) {
@@ -194,9 +199,6 @@ body:has(.sp-prototype) {
 }
 .ov-identity-details dd {
   margin: 0;
-}
-.ov-identity-details dd:not(:last-child) {
-  border-right: 1px solid var(--sp-border);
 }
 .ov-numeric-band {
   display: grid;

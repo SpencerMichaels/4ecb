@@ -825,24 +825,29 @@ function Summary({
               .join(" · ")}
           </p>
         </div>
-        <dl className="ov-identity-details">
+        <div className="ov-identity-details">
           {[
-            ["Size", "Theme", "Theme"],
-            ["Deity", "ParagonPath", "Paragon path"],
-            ["Alignment", "EpicDestiny", "Epic destiny"],
-          ].map(([first, field, label]) => (
-            <div key={first}>
-              <dt>{first}</dt>
-              <dd>{find(model.identity, first!).trim() || "—"}</dd>
-              <dt>{label}</dt>
-              <dd>
-                {model.identity
-                  .find((entry) => entry.label === field)
-                  ?.value.trim() || "—"}
-              </dd>
-            </div>
+            [
+              ["Size", "Size"],
+              ["Deity", "Deity"],
+              ["Alignment", "Alignment"],
+            ],
+            [
+              ["Theme", "Theme"],
+              ["ParagonPath", "Paragon path"],
+              ["EpicDestiny", "Epic destiny"],
+            ],
+          ].map((fields, index) => (
+            <dl className="ov-identity-table" key={index}>
+              {fields.map(([field, label]) => (
+                <div key={field}>
+                  <dt>{label}</dt>
+                  <dd>{find(model.identity, field!).trim() || "—"}</dd>
+                </div>
+              ))}
+            </dl>
           ))}
-        </dl>
+        </div>
       </section>
       <section className="ov-numeric-band" aria-label="Combat statistics">
         <section aria-label="Defenses" className="ov-stat-group">
