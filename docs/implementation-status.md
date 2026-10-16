@@ -279,8 +279,15 @@ Level1Rules grants (including generic grant containers, excluding conditioned or
 later-level grants). Class/power names and publication Source do not establish
 universal availability. With unavailable content, provenance remains unknown
 rather than guessed. Explicit nonempty Rules Item fields identify rules records
-such as Divine Sanction: their names move to Rules references, while the original
-cards remain. Power Type Feature or No Action alone never cause exclusion.
+such as Divine Sanction: their complete Rules Item text becomes a normal feature
+reference card under explicit class/race/theme/background/path/destiny origin
+metadata, falling back to evaluated/grant ancestry and then Other Features.
+Non-reference metadata is not dumped into the body; authored additional fields
+and source are retained. No separate name-only rules index remains. The underlying
+power/physical card remains intact. Reference-only projections are added after
+summary/reminder/defensive processing so long rules descriptions cannot change
+page-1 reminder or defensive-trait inference. Power Type Feature or No Action
+alone never cause exclusion.
 Only the power index switches back to formulas; physical-card calculations and
 weapon comparison tables retain their accepted behavior.
 "Equipped by slot" is a Slot/Item lookup using the builder's body/held/other
@@ -389,6 +396,15 @@ formula/explicit See-card attack cells rather than weapon-specific totals.
 The cache-only public print fixture cannot supply authored formulas; exact
 formula and grouping assertions live in synthetic model/UI tests. Original
 cards and physical-card math remain unchanged. Reference review remains open.
+
+Full rules-card follow-up: removed the name-only Rules references index. Rules
+Item records project their complete authored text into origin-grouped feature
+cards, retaining native identity/source and any additional authored fields.
+71 focused overview/model/provenance tests, web typecheck, focused lint and
+formatting pass. Tests cover full Class Features text, explicit Class routing,
+historical missing-ID field fallback, unknown-origin preservation, no new page-1
+reminders, original power retention and absence of the name-only index. No full
+print matrix was rerun for this content-placement refinement. M5.6 remains open.
 
 Verification: 139 focused sheet-model/overview/index/layout tests, web typecheck,
 focused lint and production build pass. The overview-only print check passes

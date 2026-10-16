@@ -1798,23 +1798,6 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
         });
     }
   }
-  const rulesReferences = model.powers.filter(isRulesReferencePower);
-  if (rulesReferences.length)
-    result.push({
-      id: "power-rules-references",
-      name: "Rules references",
-      group: "Power index",
-      source: "",
-      parts: [...rulesReferences]
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map((power) => ({
-          block: {
-            kind: "table" as const,
-            headers: ["Reference"],
-            rows: [[power.name]],
-          },
-        })),
-    });
   const itemPowers = overviewTrackingRows(model).filter((row) =>
     row.id.startsWith("item:"),
   );

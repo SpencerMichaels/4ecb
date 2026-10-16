@@ -48,7 +48,26 @@ describe("real-data sheet overview", () => {
       },
       { ...power("Legitimate free effect"), actionType: "No Action" },
     ];
-    const entries = references({ ...model, powers });
+    const entries = references({
+      ...model,
+      powers,
+      overview: {
+        ...model.overview!,
+        features: [
+          {
+            id: "effect-rule",
+            name: "Effect rule",
+            group: "Rules Item",
+            referenceGroup: "Class Feature",
+            description: "An applied effect.",
+            summary: "An applied effect.",
+            fields: [],
+            source: "Synthetic",
+            fullTextAvailable: true,
+          },
+        ],
+      },
+    });
     const names = (id: string) =>
       entries
         .find((entry) => entry.id === id)!
@@ -62,7 +81,15 @@ describe("real-data sheet overview", () => {
       "Legitimate free effect",
     ]);
     expect(names("powers:At-Will:common")).toEqual(["Common maneuver"]);
-    expect(names("power-rules-references")).toEqual(["Effect rule"]);
+    expect(entries.some((entry) => entry.id === "power-rules-references")).toBe(
+      false,
+    );
+    expect(entries.find((entry) => entry.id === "effect-rule")?.group).toBe(
+      "Class features",
+    );
+    expect(entries.find((entry) => entry.id === "effect-rule")?.parts).toEqual(
+      referenceParts("An applied effect."),
+    );
     expect(powers).toHaveLength(4);
   });
   it("prints background mechanics without narrative while retaining unresolved legacy text", () => {

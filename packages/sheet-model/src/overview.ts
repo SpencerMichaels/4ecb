@@ -251,6 +251,74 @@ export function withSheetOverview(
         accessOnly: accessOnly(entity, benefit || summary),
       });
     }
+  // Rules Item powers are authored reference entities, not invokable actions.
+  // Project their complete text beside features, using explicit origin metadata
+  // before grant ancestry; never infer the category from a power/publication name.
+  const rulesReferences: OverviewFeature[] = [];
+  const originTypes = new Map([
+    ["class", "Class Feature"],
+    ["race", "Racial Trait"],
+    ["theme", "Theme"],
+    ["background", "Background"],
+    ["paragon path", "Paragon Path"],
+    ["epic destiny", "Epic Destiny"],
+  ]);
+  for (const power of model.powers) {
+    const rules = power.fields.filter(
+      (field) => key(field.label) === "rules item" && field.value.trim(),
+    );
+    if (!rules.length) continue;
+    const id = power.id ?? `rules:${power.name}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const entity = power.id ? definitions.get(key(power.id)) : undefined;
+    const originFields = [
+      ...(entity?.specifics.map((field) => ({
+        name: field.name,
+        value: field.value,
+      })) ?? []),
+      ...power.fields.map((field) => ({
+        name: field.label,
+        value: field.value,
+      })),
+    ];
+    const declared = originFields.flatMap((field) =>
+      originTypes.has(key(field.name))
+        ? field.value.split(/[,;|\s]+/).flatMap((token) => {
+            const root = definitions.get(key(token));
+            const group =
+              root && key(root.name) !== "any class"
+                ? originTypes.get(key(root.type))
+                : undefined;
+            return group ? [group] : [];
+          })
+        : [],
+    )[0];
+    const provenance = power.id
+      ? referenceMetadata.get(key(power.id))
+      : undefined;
+    const group = declared ?? provenance?.referenceGroup ?? "Other features";
+    const description = rules.map((field) => field.value).join("\n\n");
+    rulesReferences.push({
+      id,
+      name: power.name,
+      group: "Rules Item",
+      referenceGroup: group,
+      ...(provenance?.level === undefined ? {} : { level: provenance.level }),
+      description,
+      summary: description,
+      fields: power.fields.filter(
+        (field) =>
+          field.value.trim() &&
+          !/^(?:rules item|class|race|theme|background|paragon path|epic destiny|power type|power usage|display|level|attack type|target|range)$/i.test(
+            field.label.trim(),
+          ),
+      ),
+      source: power.source ?? entity?.source ?? "",
+      fullTextAvailable: true,
+      playReminder: false,
+    });
+  }
   const defensiveTraits = defensiveStatTraits(
     input.stats,
     input.evaluatedStats,
@@ -500,7 +568,7 @@ export function withSheetOverview(
         stat("Bloodied Value", "Bloodied") ??
         (hp === undefined ? "—" : String(Math.floor(hp / 2))),
       vision: overviewSenses(input.selections, input.content, input.stats),
-      features,
+      features: [...features, ...rulesReferences],
       inventory: input.inventory.filter((item) => item.quantity > 0),
       reminders,
       ...(corePowers.length ? { summaryReminders } : {}),

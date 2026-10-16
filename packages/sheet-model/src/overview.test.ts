@@ -44,6 +44,118 @@ const feat: ContentEntity = {
   ],
 };
 describe("printed overview data", () => {
+  it("projects complete rules-item text under its declared class without adding a play reminder", () => {
+    const classEntity = {
+      ...feat,
+      id: "class:synthetic",
+      name: "Synthetic class",
+      type: "Class",
+      specifics: [],
+      rules: [],
+    };
+    const text =
+      "A marked target suffers an effect when it ignores you.\n\nThe effect has an authored duration and ending condition.";
+    const rule = {
+      ...feat,
+      id: "power:rule",
+      name: "Synthetic sanction",
+      type: "Power",
+      description: "",
+      specifics: [
+        { name: "Rules Item", value: text, ordinal: 0, extraAttributes: [] },
+        {
+          name: "Class",
+          value: classEntity.id,
+          ordinal: 1,
+          extraAttributes: [],
+        },
+        {
+          name: "Power Usage",
+          value: "At-Will",
+          ordinal: 2,
+          extraAttributes: [],
+        },
+        {
+          name: "Power Type",
+          value: "Feature",
+          ordinal: 3,
+          extraAttributes: [],
+        },
+      ],
+    };
+    const model = buildSheetModel(
+      {
+        ...snapshot,
+        selectedRules: [
+          { id: classEntity.id, name: classEntity.name, type: "Class" },
+        ],
+        powers: [
+          { id: rule.id, name: rule.name, usage: "At-Will", weapons: [] },
+        ],
+      },
+      [classEntity, rule],
+    );
+    const reference = model.overview!.features.find(
+      (entry) => entry.id === rule.id,
+    )!;
+    expect(reference.referenceGroup).toBe("Class Feature");
+    expect(reference.description).toBe(text);
+    expect(reference.fields).toEqual([]);
+    expect(reference.playReminder).toBe(false);
+    expect(
+      model.overview?.reminders.some((entry) => entry.label === rule.name),
+    ).toBe(false);
+    expect(model.powers[0]?.fields).toContainEqual({
+      label: "Rules Item",
+      value: text,
+    });
+    // Historical power records may omit an ID but still retain explicit Class fields.
+    const noId = withSheetOverview(
+      {
+        ...model,
+        powers: model.powers.map((card) => {
+          const cached = { ...card };
+          delete cached.id;
+          return cached;
+        }),
+      },
+      {
+        level: 8,
+        stats: {},
+        selections: [],
+        content: [classEntity],
+        inventory: [],
+      },
+    );
+    expect(
+      noId.overview?.features.find((entry) => entry.name === rule.name)
+        ?.referenceGroup,
+    ).toBe("Class Feature");
+    const unknown = withSheetOverview(
+      {
+        ...model,
+        powers: model.powers.map((card) => ({
+          ...card,
+          fields: card.fields.filter((field) => field.label !== "Class"),
+        })),
+      },
+      {
+        level: 8,
+        stats: {},
+        selections: [],
+        content: [],
+        inventory: [],
+      },
+    );
+    expect(
+      unknown.overview?.features.find((entry) => entry.name === rule.name)
+        ?.referenceGroup,
+    ).toBe("Other features");
+    expect(
+      unknown.overview?.features.find((entry) => entry.name === rule.name)
+        ?.description,
+    ).toBe(text);
+  });
   it("retains an explicit background Benefit even when it equals the description", () => {
     const benefit = "Gain a conditional bonus to a skill check.";
     const background = {

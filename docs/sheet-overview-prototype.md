@@ -25,8 +25,11 @@ icons preceding names instead of a separate Action column. It uses authored,
 weapon-independent formulas (STR+2 vs AC, 2[W]+STR), not an equipped weapon's
 calculated totals. Separate multiattack lines retain their own formulas/targets.
 Character-specific at-wills and positively identified common at-will actions have
-separate green panes. Explicit Rules Item records are indexed under Rules
-references, not as invokable powers; their physical cards remain available.
+separate green panes. Explicit Rules Item records are full reference cards under
+their declared origin (Divine Sanction under Class Features), not invokable
+powers or a name-only rules index. Explicit origin fields precede grant ancestry;
+unknown origins stay in Other Features. Their physical cards remain available,
+and the full text does not become a page-1 reminder.
 Universal availability comes from unconditional generic Level1Rules grants, not
 power names or Core publication metadata. Unresolved provenance is not guessed.
 Section headings,
