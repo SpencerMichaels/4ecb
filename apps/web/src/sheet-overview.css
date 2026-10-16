@@ -523,14 +523,14 @@ body:has(.sp-prototype) {
 .ov-reference-group-probe {
   position: absolute;
 }
-.sheet-overview .ov-reference-card > header {
+.sheet-overview .ov-reference-pane > header {
   background: var(--ref-fill);
   color: var(--ref-ink);
   padding: 0.055in 0.085in;
   border-bottom: 1px solid var(--ref-line);
   align-items: flex-start;
 }
-.sheet-overview .ov-reference-card {
+.sheet-overview .ov-reference-pane {
   border-color: var(--ref-line);
 }
 .sheet-overview .ov-reference-card h3 {
@@ -577,19 +577,40 @@ body:has(.sp-prototype) {
   font-variant-numeric: tabular-nums;
 }
 .ov-equipped-table thead th:first-child {
-  width: 30%;
+  width: 32%;
 }
-.sheet-overview .ov-inventory-table {
-  width: auto;
-  max-width: 100%;
-  table-layout: auto;
+.ov-equipment-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 0.18in;
+  align-items: start;
 }
-.ov-inventory-table thead th:last-child,
-.ov-inventory-table td:last-child:not(:first-child) {
-  width: 3ch;
-  padding-left: 0.18in;
+.ov-equipment-pair > * {
+  min-width: 0;
+}
+.ov-currency-pane th {
+  width: 35%;
+  border-bottom: 0;
+  font-size: inherit;
+}
+.ov-currency-pane .ov-reference-table tbody {
+  background: transparent;
+}
+.ov-currency-pane tr:nth-child(odd) {
+  background: #f0f3f5;
+}
+.ov-currency-pane p {
+  margin: 0;
+}
+.ov-inventory-table thead th:nth-child(even),
+.ov-inventory-table td:nth-child(even) {
+  width: 7%;
   text-align: right;
   white-space: nowrap;
+}
+.ov-inventory-table thead th:nth-child(3),
+.ov-inventory-table td:nth-child(3) {
+  padding-left: 0.18in;
 }
 .ov-reference-table .ov-reference-table-category th {
   background: #fff;
@@ -652,7 +673,7 @@ body:has(.sp-prototype) {
 .ov-reference-table td:first-child .action-type-icon {
   margin-right: 0.35em;
 }
-.sheet-overview.sp-monochrome .ov-reference-card > header {
+.sheet-overview.sp-monochrome .ov-reference-pane > header {
   background: #eee;
   color: #333;
   border-color: #aaa;
@@ -661,7 +682,7 @@ body:has(.sp-prototype) {
   color: #333;
   border-color: #555;
 }
-.sheet-overview.sp-monochrome .ov-reference-card {
+.sheet-overview.sp-monochrome .ov-reference-pane {
   border-color: #aaa;
 }
 .ov-hearts {

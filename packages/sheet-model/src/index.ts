@@ -1,4 +1,5 @@
 import {
+  characterWalletTextKey,
   detailsWithLegacyTextStrings,
   formatInventoryItemName,
   type CharacterBuild,
@@ -124,6 +125,7 @@ export interface SheetPowerAttack {
 }
 
 export interface CharacterSheetModel {
+  readonly currency?: readonly SheetValue[];
   readonly overview?: SheetOverview;
   readonly source: "legacy-cache" | "native-empty" | "authoritative-evaluation";
   readonly identity: readonly SheetValue[];
@@ -141,6 +143,23 @@ export interface CharacterSheetModel {
   readonly items: readonly SheetCard[];
   readonly learnedReferences: readonly SheetLearnedReference[];
   readonly notes: readonly SheetValue[];
+}
+
+/** Preserve wallet text verbatim, with the builder's latest-at-or-below-level lookup. */
+function sheetCurrency(
+  details: Readonly<Record<string, string>>,
+  textStrings: Readonly<Record<string, string>>,
+  level: number,
+): SheetValue[] {
+  return (["carried", "stored"] as const).map((location) => {
+    const label = location === "carried" ? "Carried" : "Stored";
+    for (let at = Math.min(30, Math.max(1, Math.floor(level))); at >= 1; at--) {
+      const key = characterWalletTextKey(at, location);
+      if (Object.hasOwn(textStrings, key))
+        return { label, value: textStrings[key]?.trim() || "0 gp" };
+    }
+    return { label, value: details[`${label}Money`]?.trim() || "—" };
+  });
 }
 
 export interface SheetModelOptions {
@@ -1080,6 +1099,7 @@ export function buildSheetModel(
   );
   const model: CharacterSheetModel = {
     source: snapshot.source,
+    currency: sheetCurrency(detail, snapshot.textStrings, snapshot.levelCount),
     identity: [
       "name",
       "Level",
@@ -1390,6 +1410,11 @@ export function buildEvaluatedSheetModel(
 
   const model: CharacterSheetModel = {
     source: "authoritative-evaluation",
+    currency: sheetCurrency(
+      identityDetails,
+      build.textStrings,
+      evaluation.level,
+    ),
     identity: [
       "name",
       "Level",

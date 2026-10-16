@@ -17,8 +17,12 @@ Skills/Languages and prerequisites instead of narrative/Common Knowledge text.
 Explicit prose "Benefit:" tails are a fallback; unresolved legacy-only text is
 preserved with its existing unavailable-rules notice. Actual granted feature
 descriptions remain complete. Equipment and power indexes
-use full-width panes; the Inventory table sizes to its contents to keep quantities
-near item names, while other equipment/index tables fill their panes.
+use full-width panes. Equipment opens with Equipped (two-thirds width) beside
+Currency (one-third); ordinary empty slots show an em dash, while conditional
+implement/companion slots appear when occupied. Currency shows carried/stored
+wallet text at the current level, retaining custom denominations verbatim.
+Inventory follows with two Item/Qty pairs per row and full-width category dividers;
+equipped superscripts stay attached to each item, and every owned item remains.
 Features/rituals/character prose use stacked category-local
 two-column blocks under full-width headings. Measured splits balance column
 heights while preserving down-then-across level/name order. The power

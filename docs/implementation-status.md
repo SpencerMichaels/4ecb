@@ -258,9 +258,22 @@ monochrome output. Internally chunked long paragraphs
 rejoin within each rendered pane; only actual continuation boundaries divide
 them. Reference continuations repeat titles and retain their complete parts.
 
-Equipment and power indexes use full-width panes. Inventory uses a content-sized
-table with a compact, right-aligned quantity column rather than leaving a
-page-wide gap after item names; other equipment/index tables remain full-width. Features,
+Equipment and power indexes use full-width panes. Equipment opens with Equipped
+(two-thirds width) beside Currency (one-third), then a full-width Inventory with
+two Item/Qty pairs per row, grouped under category dividers. Equipped lists open
+ordinary slots with an em dash, preserving builder slot order/icons; conditional
+implement/companion slots appear when occupied. Currency uses current-level
+carried/stored wallet text (latest applicable per-level key, legacy details as
+fallback), preserving custom text/denominations instead of recalculating balances.
+Redundant carried/stored character-note cards are omitted. Equipment/Currency
+are measured as a paired block; inventory pagination retains complete paired rows
+and repeats category headings at continuation starts. The equipment-layout
+follow-up passes 57 focused overview/sheet-model tests, web typechecking, focused
+lint, and the production build. The Chromium overview-only Letter/A4 ×
+color/monochrome print check passes without overflow and verifies the paired
+panes, open slots, four inventory columns, and per-item equipped markers. Firefox
+and the full physical-card/milestone suite were not rerun for this feedback slice.
+Owner visual review remains open. Features,
 rituals and character prose use category-local two-column blocks. The power index columns are
 Power, Level, Range, Target, Attack and Damage. Action icons precede power names;
 item-power indexes likewise place icons beside item names, leaving Item/Usage

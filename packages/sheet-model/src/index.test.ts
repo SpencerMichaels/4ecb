@@ -10,6 +10,36 @@ import type { EvaluatedCharacter } from "@4ecb/rules-engine";
 import { buildEvaluatedSheetModel, buildSheetModel } from ".";
 
 describe("sheet model", () => {
+  it("projects current-level carried and stored wallet text without losing custom denominations", () => {
+    const snapshot: LegacyCharacterSnapshot = {
+      details: { CarriedMoney: "old value", StoredMoney: "legacy stored" },
+      abilities: {},
+      stats: {},
+      selectedRules: [],
+      loot: [],
+      powers: [],
+      levelCount: 8,
+      source: "legacy-cache",
+      textStrings: {
+        "_PER_LEVEL_1_Carried Money": "1 gp",
+        "_PER_LEVEL_7_Carried Money": "17 gp; 2 custom coins",
+        "_PER_LEVEL_9_Carried Money": "999 gp",
+      },
+    };
+    expect(buildSheetModel(snapshot).currency).toEqual([
+      { label: "Carried", value: "17 gp; 2 custom coins" },
+      { label: "Stored", value: "legacy stored" },
+    ]);
+    expect(
+      buildSheetModel({
+        ...snapshot,
+        textStrings: { "_PER_LEVEL_8_Stored Money": "" },
+      }).currency,
+    ).toEqual([
+      { label: "Carried", value: "old value" },
+      { label: "Stored", value: "0 gp" },
+    ]);
+  });
   it("selects legacy additional effects from the equipped saved main hand without pooling alternate caches", () => {
     const model = buildSheetModel({
       details: {},

@@ -207,7 +207,11 @@ describe("real-data sheet overview", () => {
         ],
       },
     });
-    expect(entries.map((entry) => entry.id)).toEqual(["Granted theme benefit"]);
+    expect(
+      entries
+        .filter((entry) => entry.group === "Theme")
+        .map((entry) => entry.id),
+    ).toEqual(["Granted theme benefit"]);
     expect(entries[0]?.group).toBe("Theme");
     expect(entries[0]?.parts).toEqual(
       referenceParts("You gain a conditional bonus."),
@@ -1635,29 +1639,41 @@ describe("real-data sheet overview", () => {
     expect(
       equipped.every((table) => table.headers?.join("/") === "Slot/Item"),
     ).toBe(true);
-    expect(equipped.flatMap((table) => table.rows)).toEqual([
+    const equippedRows = equipped.flatMap((table) => table.rows);
+    expect(equippedRows.filter((row) => row[1] !== "—")).toEqual([
       ["Head", "Z helmet"],
       ["Feet", "Boots"],
       ["Main hand", "A sword"],
     ]);
+    expect(equippedRows).toContainEqual(["Neck", "—"]);
+    expect(equippedRows).toContainEqual(["Off hand", "—"]);
+    expect(equippedRows.some((row) => row[0] === "Ki focus")).toBe(false);
+    expect(entries.find((entry) => entry.id === "inventory:true")?.name).toBe(
+      "Equipped",
+    );
     const carried = tables("inventory:false");
     expect(
-      carried.every((table) => table.headers?.join("/") === "Item/Qty"),
+      carried.every(
+        (table) => table.headers?.join("/") === "Item/Qty/Item/Qty",
+      ),
     ).toBe(true);
     expect(carried.flatMap((table) => table.rows)).toEqual([
-      ["A sword", "2"],
-      ["Boots", "2"],
-      ["Z helmet", "2"],
+      ["A sword", "2", "", ""],
+      ["Boots", "2", "Z helmet", "2"],
     ]);
     expect(
       entries
         .find((entry) => entry.id === "inventory:false")
         ?.parts.map((part) => part.tableCategory),
-    ).toEqual(["Weapons", "Worn items", "Worn items"]);
+    ).toEqual(["Weapons", "Worn items"]);
     expect(
       entries
         .find((entry) => entry.id === "inventory:true")
-        ?.parts.map((part) => part.slotCells?.map((slot) => slot.icon)),
+        ?.parts.filter(
+          (part) =>
+            part.block.kind === "table" && part.block.rows[0]?.[1] !== "—",
+        )
+        .map((part) => part.slotCells?.map((slot) => slot.icon)),
     ).toEqual([["hard-hat"], ["footprints"], ["sword"]]);
   });
   it("includes equipped-only holdings and total stack quantities with equipped superscripts", () => {
@@ -1698,13 +1714,12 @@ describe("real-data sheet overview", () => {
         part.block.kind === "table" ? part.block.rows : [],
       ),
     ).toEqual([
-      ["Carried only", "3"],
-      ["Equipped only", "1"],
-      ["Stack", "5"],
+      ["Carried only", "3", "Equipped only", "1"],
+      ["Stack", "5", "", ""],
     ]);
     expect(
-      inventory.parts.map((part) => Boolean(part.equippedInventory)),
-    ).toEqual([false, true, true]);
+      inventory.parts.map((part) => part.equippedInventoryColumns),
+    ).toEqual([[2], [0]]);
     const html = renderToStaticMarkup(
       <SheetOverview
         model={fixture}
@@ -1718,6 +1733,44 @@ describe("real-data sheet overview", () => {
     expect(html.match(/class="ov-equipped-marker"/g)).toHaveLength(2);
     expect(html).toContain('class="ov-slot-cell"');
     expect(html).toContain("lucide-shirt");
+  });
+  it("pairs Equipped with one Currency pane even with an empty loadout", () => {
+    const fixture = {
+      ...model,
+      currency: [
+        { label: "Carried", value: "13 gp" },
+        { label: "Stored", value: "20 pp" },
+      ],
+      notes: [
+        { label: "CarriedMoney", value: "13 gp" },
+        { label: "StoredMoney", value: "20 pp" },
+      ],
+      overview: { ...model.overview!, inventory: [] },
+    };
+    const entries = references(fixture);
+    const equipped = entries.find((entry) => entry.id === "inventory:true")!;
+    expect(equipped.currency).toEqual(fixture.currency);
+    expect(
+      equipped.parts.every(
+        (part) =>
+          part.block.kind === "table" && part.block.rows[0]?.[1] === "—",
+      ),
+    ).toBe(true);
+    expect(entries.some((entry) => entry.id.startsWith("note:"))).toBe(false);
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={fixture}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    expect(html).toContain('class="ov-reference-card ov-equipment-pair"');
+    expect(html).toContain(">Currency</h3>");
+    expect(html).toContain("13 gp");
+    expect(html).toContain("20 pp");
   });
   it("renders the approved summary and scratchpad without changing source data", () => {
     const markup = renderToStaticMarkup(

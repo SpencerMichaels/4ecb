@@ -320,6 +320,10 @@ try {
           '.sheet-overview > .ov-paper[aria-label="Character reference"]',
         ],
         [
+          "equipment",
+          '.sheet-overview > .ov-paper[aria-label="Character reference"]:has(.ov-equipment-pair)',
+        ],
+        [
           "power-index",
           '.sheet-overview > .ov-paper[aria-label="Character reference"]:has(.ov-power-index-table)',
         ],
@@ -1131,8 +1135,16 @@ async function checkReferences(client) {
       equippedHeaders:pages.flatMap(p=>[...p.querySelectorAll('.ov-equipped-table')]).every(table=>
         [...table.querySelectorAll('thead th')].map(cell=>cell.textContent).join('/')==='Slot/Item'),
       inventoryHeaders:pages.flatMap(p=>[...p.querySelectorAll('.ov-inventory-table')]).every(table=>
-        [...table.querySelectorAll('thead th')].map(cell=>cell.textContent).join('/')==='Item/Qty' &&
-          table.querySelector('tbody .ov-reference-inventory-category th')?.getAttribute('colspan')==='2'),
+        [...table.querySelectorAll('thead th')].map(cell=>cell.textContent).join('/')==='Item/Qty/Item/Qty' &&
+          table.querySelector('tbody .ov-reference-inventory-category th')?.getAttribute('colspan')==='4'),
+      equipmentPair:pages.some(p=>[...p.querySelectorAll('.ov-equipment-pair')].some(pair=>{
+        const equipped=pair.querySelector('.ov-reference-pane');
+        const currency=pair.querySelector('.ov-currency-pane');
+        return equipped.querySelector('h3').textContent.startsWith('Equipped') && currency.querySelector('h3').textContent==='Currency' &&
+          equipped.getBoundingClientRect().right < currency.getBoundingClientRect().left &&
+          Math.abs(equipped.getBoundingClientRect().top-currency.getBoundingClientRect().top)<1 &&
+          [...equipped.querySelectorAll('tbody tr')].some(row=>row.querySelector('td:last-child')?.textContent==='—');
+      })),
       pageNumbersOnly:pages.every(p=>/^R\\d+$/.test(p.querySelector('.sp-page-footer').textContent.trim())),
       noStandaloneBasics:ids.every(id=>!id.startsWith('basic:')),
       inlinePowerActions:pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table tbody')]).every(body=>
@@ -1140,8 +1152,8 @@ async function checkReferences(client) {
       weaponIndependentIndexAttacks:pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table tbody td:nth-child(5)')]).every(cell=>
         !cell.textContent.trim() || /^(?:STR|CON|DEX|INT|WIS|CHA|Primary ability|See card)/i.test(cell.textContent.trim())),
       equippedIcons:pages.flatMap(p=>[...p.querySelectorAll('.ov-equipped-table tbody td:first-child')]).every(cell=>cell.querySelector('.icon')),
-      inventoryIncludesEquipped:pages.some(p=>[...p.querySelectorAll('.ov-inventory-table tbody tr')].some(row=>
-        row.querySelector('td:first-child')?.textContent.startsWith('Synthetic item 01') && row.querySelector('.ov-equipped-marker') && row.querySelector('td:last-child')?.textContent==='1')),
+      inventoryIncludesEquipped:pages.some(p=>[...p.querySelectorAll('.ov-inventory-table tbody td')].some(cell=>
+        cell.textContent.startsWith('Synthetic item 01') && cell.querySelector('.ov-equipped-marker') && cell.nextElementSibling?.textContent==='1')),
       usageColors:[...new Set(pages.flatMap(p=>[...p.querySelectorAll('.ov-reference-card[data-usage]')].map(c=>getComputedStyle(c.querySelector('header')).backgroundColor)))],
       monochrome:pages[0]?.closest('.sp-monochrome')!==null,
       powerHeaders:[...pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table')])].map(t=>[...t.querySelectorAll('thead th')].map(e=>e.textContent)),
@@ -1154,6 +1166,7 @@ async function checkReferences(client) {
       state.cardStyleIsolated &&
       state.headings &&
       state.coverage &&
+      state.equipmentPair &&
       state.authoredOnly &&
       state.uniqueGroups &&
       state.categoryBlocks &&

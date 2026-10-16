@@ -24,7 +24,11 @@ import {
   isRulesReferencePower,
   referencePowerRows,
 } from "./reference-power-index";
-import { INVENTORY_CATEGORIES, ORDERED_LOADOUT_SLOTS } from "./equipment-ui";
+import {
+  INVENTORY_CATEGORIES,
+  LOADOUT_SLOT_COLUMNS,
+  ORDERED_LOADOUT_SLOTS,
+} from "./equipment-ui";
 import { powerActionRank } from "./power-card-order";
 import {
   paginateTracking,
@@ -1501,6 +1505,7 @@ interface ReferencePart {
   tableCategory?: string;
   slotCells?: readonly { label: string; icon: IconName }[];
   equippedInventory?: boolean;
+  equippedInventoryColumns?: readonly number[];
 }
 export interface ReferenceEntry {
   id: string;
@@ -1511,6 +1516,7 @@ export interface ReferenceEntry {
   continued?: boolean;
   level?: number;
   feature?: boolean;
+  currency?: readonly SheetValue[];
 }
 /** Split prose only for layout. Every word, list item and table row remains. */
 export function referenceParts(value: string, label?: string): ReferencePart[] {
@@ -1695,12 +1701,20 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
               INVENTORY_CATEGORIES.indexOf(b.inventoryCategory)) ||
           a.name.localeCompare(b.name),
       );
-    if (entries.length)
+    if (equipped || entries.length)
       result.push({
         id: `inventory:${equipped}`,
-        name: equipped ? "Equipped by slot" : "Inventory",
+        name: equipped ? "Equipped" : "Inventory",
         group: "Equipment",
         source: "",
+        ...(equipped
+          ? {
+              currency: model.currency ?? [
+                { label: "Carried", value: find(model.notes, "CarriedMoney") },
+                { label: "Stored", value: find(model.notes, "StoredMoney") },
+              ],
+            }
+          : {}),
         parts: entries.map((item) => ({
           ...(!equipped ? { tableCategory: item.inventoryCategory.label } : {}),
           ...(!equipped && item.equipped > 0
@@ -1733,6 +1747,82 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
           },
         })),
       });
+  }
+  const equipped = result.find((entry) => entry.id === "inventory:true")!;
+  // Ordinary open slots remain useful lookup rows. Conditional implement and
+  // companion slots appear only when represented in the actual loadout.
+  const occupiedParts = equipped.parts;
+  const ordinarySlots = LOADOUT_SLOT_COLUMNS.flatMap(
+    (column) => column.slots,
+  ).filter((slot) => !slot.requiredActiveDefinitionId);
+  const allSlots = [
+    ...ordinarySlots,
+    ...ORDERED_LOADOUT_SLOTS.filter(
+      (slot) =>
+        !ordinarySlots.includes(slot) &&
+        occupiedParts.some((part) =>
+          part.slotCells?.some((cell) => cell.label === slot.label),
+        ),
+    ),
+  ];
+  equipped.parts = [
+    ...allSlots
+      .sort(
+        (a, b) =>
+          ORDERED_LOADOUT_SLOTS.indexOf(a) - ORDERED_LOADOUT_SLOTS.indexOf(b),
+      )
+      .map((slot) => ({
+        slotCells: [{ label: slot.label, icon: slot.icon }],
+        block: {
+          kind: "table" as const,
+          headers: ["Slot", "Item"],
+          rows: [
+            [
+              slot.label,
+              occupiedParts
+                .flatMap((part) =>
+                  part.slotCells?.some((cell) => cell.label === slot.label) &&
+                  part.block.kind === "table"
+                    ? part.block.rows.map((row) => row[1]!)
+                    : [],
+                )
+                .join(", ") || "—",
+            ],
+          ],
+        },
+      })),
+    ...occupiedParts.filter(
+      (part) =>
+        !part.slotCells?.some((cell) =>
+          allSlots.some((slot) => slot.label === cell.label),
+        ),
+    ),
+  ];
+  const inventory = result.find((entry) => entry.id === "inventory:false");
+  if (inventory) {
+    const rows: ReferencePart[] = [];
+    for (let i = 0; i < inventory.parts.length; i++) {
+      const first = inventory.parts[i]!;
+      const second =
+        inventory.parts[i + 1]?.tableCategory === first.tableCategory
+          ? inventory.parts[++i]
+          : undefined;
+      const cells = (part: ReferencePart | undefined) =>
+        part?.block.kind === "table" ? part.block.rows[0]! : ["", ""];
+      rows.push({
+        ...(first.tableCategory ? { tableCategory: first.tableCategory } : {}),
+        equippedInventoryColumns: [
+          first.equippedInventory ? 0 : -1,
+          second?.equippedInventory ? 2 : -1,
+        ].filter((column) => column >= 0),
+        block: {
+          kind: "table",
+          headers: ["Item", "Qty", "Item", "Qty"],
+          rows: [[...cells(first), ...cells(second)]],
+        },
+      });
+    }
+    inventory.parts = rows;
   }
   for (const usage of ["At-Will", "Encounter", "Daily", "Other"]) {
     const available = model.powers.filter(
@@ -1835,7 +1925,9 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       source: "",
       parts: referenceParts(xp.value, "Experience"),
     });
-  for (const note of model.notes)
+  for (const note of model.notes.filter(
+    (note) => !/^(?:Carried|Stored)Money$/i.test(note.label),
+  ))
     result.push({
       id: `note:${note.label}`,
       name: note.label.replace(/([a-z])([A-Z])/g, "$1 $2"),
@@ -1862,10 +1954,46 @@ const referenceIcon = (group: string): IconName =>
 function ReferenceCard({
   entry,
   measure = false,
+  nested = false,
 }: {
   entry: ReferenceEntry;
   measure?: boolean;
+  nested?: boolean;
 }) {
+  if (entry.currency) {
+    const { currency, ...loadout } = entry;
+    return (
+      <div
+        className="ov-reference-card ov-equipment-pair"
+        data-reference-id={entry.id}
+      >
+        <ReferenceCard entry={loadout} measure={measure} nested />
+        <section
+          className="sp-feature-card ov-reference-pane ov-currency-pane"
+          data-reference-category="equipment"
+        >
+          <header>
+            <Icon name="circle-dollar-sign" />
+            <h3>Currency</h3>
+          </header>
+          <div className="sp-feature-body">
+            <table className="ov-reference-table">
+              <tbody>
+                {currency.map((value) => (
+                  <tr key={value.label}>
+                    <th scope="row">{value.label}</th>
+                    <td>
+                      <Prose value={value.value || "—"} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    );
+  }
   const parts: ReferencePart[] = [];
   for (const part of entry.parts) {
     const last = parts.at(-1);
@@ -1903,7 +2031,7 @@ function ReferenceCard({
     : [];
   return (
     <section
-      className="sp-feature-card ov-reference-card"
+      className={`sp-feature-card ov-reference-pane${nested ? "" : " ov-reference-card"}`}
       data-reference-id={entry.id}
       data-reference-category={referenceCategory(entry.group)}
       data-usage={/^powers:(At-Will|Encounter|Daily)/.exec(entry.id)?.[1]}
@@ -1920,7 +2048,10 @@ function ReferenceCard({
           </span>
         ) : null}
         {entry.id.startsWith("inventory:false") &&
-        parts.some((part) => part.equippedInventory) ? (
+        parts.some(
+          (part) =>
+            part.equippedInventory || part.equippedInventoryColumns?.length,
+        ) ? (
           <span className="ov-inventory-legend">
             <sup>E</sup> Equipped
           </span>
@@ -1987,7 +2118,8 @@ function ReferenceCard({
                         ) : (
                           cell
                         )}
-                        {part.equippedInventory && column === 0 ? (
+                        {(part.equippedInventory && column === 0) ||
+                        part.equippedInventoryColumns?.includes(column) ? (
                           <sup
                             className="ov-equipped-marker"
                             aria-label="Equipped"
