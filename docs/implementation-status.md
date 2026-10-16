@@ -2,6 +2,14 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Inventory weight-noise follow-up (2026-10-16): unspecified/blank item weights
+are omitted entirely, not rendered as zero or an em dash. Explicit numeric zero
+and weight overrides remain visible. Native aggregate encumbrance semantics are
+unchanged: known definitions without Weight still contribute zero to the total.
+Verification: 77 focused overview/encumbrance tests and web typecheck pass.
+The preceding Character Details column-heading removal is retained. No full
+print/milestone suite was rerun for these small display changes.
+
 Identity-header feedback (2026-10-16): the single four-column grid and its
 internal gutter are replaced by two separately bordered, content-sized tables
 side by side. Size/Deity/Alignment occupy the left table; Theme/Paragon path/

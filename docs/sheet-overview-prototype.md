@@ -10,8 +10,8 @@ Companions, Character Background and Notes.
 
 Final audit follow-up: Inventory includes a compact encumbrance line (carried
 weight, normal limit, load), not a separate pane. Inventory names have muted,
-right-aligned weights including the listed quantity; unknown weights show an
-em dash. Page 1's top-right identity area has two separate content-sized tables:
+right-aligned weights including the listed quantity; unspecified weights have
+no label, while explicit zero weights still show 0 lb. Page 1's top-right identity area has two separate content-sized tables:
 Size/Deity/Alignment and Theme/Paragon path/Epic destiny. Each has its own border
 and three label/value rows, separated by a small open gap instead of an internal
 gutter in a shared border. The pair stays right-aligned, caps its width to preserve room for the name, and wraps

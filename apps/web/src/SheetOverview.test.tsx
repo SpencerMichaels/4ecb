@@ -79,7 +79,7 @@ describe("real-data sheet overview", () => {
       "Appearance",
     ]);
     expect(entries[0]?.parts.map((part) => part.block)).toEqual([
-      { kind: "table", headers: ["Detail", "Value"], rows: [["Age", "30"]] },
+      { kind: "table", headers: [], rows: [["Age", "30"]] },
     ]);
     const html = renderToStaticMarkup(
       <SheetOverview
@@ -124,6 +124,21 @@ describe("real-data sheet overview", () => {
             fields: [],
             weight: 8,
           },
+          {
+            name: "Unknown weight",
+            quantity: 1,
+            equipped: 1,
+            slots: [],
+            fields: [],
+          },
+          {
+            name: "Zero weight",
+            quantity: 1,
+            equipped: 0,
+            slots: [],
+            fields: [],
+            weight: 0,
+          },
         ],
       },
     };
@@ -142,6 +157,8 @@ describe("real-data sheet overview", () => {
       />,
     );
     expect(html).toContain('class="ov-inventory-weight">8 lb</span>');
+    expect(html).toContain('class="ov-inventory-weight">0 lb</span>');
+    expect(html.match(/class="ov-inventory-weight"/g)).toHaveLength(2);
     expect(html).toContain('class="ov-inventory-encumbrance"');
   });
   it("puts Session notes in the wider first column and XP inside Treasure & consumables", () => {

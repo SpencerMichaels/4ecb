@@ -64,6 +64,17 @@ export function inventoryItemWeight(
 export function inventoryHoldingWeight(
   holding: WeightedHolding,
 ): number | undefined {
+  // Missing native weight contributes zero to encumbrance, but is not an
+  // explicitly listed zero to display beside an item.
+  const override = holding.override?.trim();
+  const explicitOverride =
+    override !== undefined &&
+    override !== "" &&
+    Number.isFinite(Number(override)) &&
+    Number(override) >= 0;
+  const base = holding.definitions[0];
+  if (!explicitOverride && (!base || !/^\d[\d,]*/.test(field(base, "Weight"))))
+    return undefined;
   const weight = inventoryItemWeight(holding);
   return weight === undefined ? undefined : weight * holding.quantity;
 }

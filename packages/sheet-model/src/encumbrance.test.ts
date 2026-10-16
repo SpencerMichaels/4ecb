@@ -30,6 +30,23 @@ const definition = (
   provenance: { sourceKey: "public", sourceOrdinal: 0 },
 });
 describe("native encumbrance projection", () => {
+  it("hides unspecified row weights while preserving explicit zero and native totals", () => {
+    const blank = {
+      quantity: 1,
+      definitions: [definition("Magic Item", "Test amulet", {})],
+    };
+    expect(inventoryHoldingWeight(blank)).toBeUndefined();
+    expect(inventoryWeight([blank])).toBe(0);
+    expect(
+      inventoryHoldingWeight({
+        ...blank,
+        definitions: [
+          definition("Magic Item", "Weightless item", { Weight: "0" }),
+        ],
+      }),
+    ).toBe(0);
+    expect(inventoryHoldingWeight({ ...blank, override: "0" })).toBe(0);
+  });
   it("can ignore coin weight without changing gear weight, limits or wallet data", () => {
     const currency = [{ label: "Carried", value: "500 gp" }];
     const input = { gearWeight: 95, strength: 10, currency };

@@ -2071,7 +2071,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       parts: details.map((value) => ({
         block: {
           kind: "table",
-          headers: ["Detail", "Value"],
+          headers: [],
           rows: [[value.label, value.value]],
         },
       })),
@@ -2343,7 +2343,7 @@ function ReferenceCard({
           <table
             className={`ov-reference-table${parts[0]?.powerIndex && headers.length === 6 ? " ov-power-index-table" : ""}${entry.id.startsWith("inventory:true") ? " ov-equipped-table" : entry.id.startsWith("inventory:false") ? " ov-inventory-table" : ""}`}
           >
-            {!inventoryColumn ? (
+            {!inventoryColumn && headers.length > 0 ? (
               <thead>
                 <tr>
                   {headers.map((heading) => (
@@ -2395,11 +2395,14 @@ function ReferenceCard({
                               </sup>
                             ) : null}
                           </span>
-                          <span className="ov-inventory-weight">
-                            {part.inventoryWeight === undefined
-                              ? "—"
-                              : `${part.inventoryWeight.toLocaleString("en-US", { maximumFractionDigits: 3 })} lb`}
-                          </span>
+                          {part.inventoryWeight === undefined ? null : (
+                            <span className="ov-inventory-weight">
+                              {part.inventoryWeight.toLocaleString("en-US", {
+                                maximumFractionDigits: 3,
+                              })}{" "}
+                              lb
+                            </span>
+                          )}
                         </span>
                       </td>
                     </tr>
