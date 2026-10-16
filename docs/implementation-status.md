@@ -365,10 +365,16 @@ No private corpus or UI dependencies enter the shared model. Unknown categories
 remain visible under Miscellaneous. Category rows are table row-group headers,
 kept with their first item and repeated at continuation starts.
 Category subheaders have white backgrounds and quiet rules instead of a tint
-that blends with alternating row fills. Reference and scratchpad pages retain
-their top running header, with only a page number in the bottom footer; the
-page-1 source-status note remains. Measurement and continuation numbering still
-use that footer boundary.
+that blends with alternating row fills. Reference R pages omit the running top
+header; their three-part footer has name · race class level at left, Character
+Reference centered, and the R number at right. Long identity text truncates on one
+line rather than displacing the centered title. Scratchpad/summary headers and
+the page-1 source-status note remain unchanged. Reference measurement probes use
+the same footer layout and omit the header too, reclaiming that content space.
+The footer refinement passes 56 focused overview tests, web typechecking, focused
+lint, production build, and all four Chromium overview print cases without
+overflow. Rendered reference pages were visually inspected; Firefox/full milestone
+gates were not rerun.
 Verification of these lookup-table refinements: all 40 overview tests pass,
 including explicit/fallback slot ordering, carried spares and updated basic-attack
 reference links. No full print matrix was rerun for this small table change.

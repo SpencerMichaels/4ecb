@@ -72,6 +72,7 @@ function Paper({
   children,
   pageRef,
   runningHeader,
+  referenceIdentity,
 }: {
   name: string;
   title: string;
@@ -80,6 +81,7 @@ function Paper({
   children: ReactNode;
   pageRef?: React.RefObject<HTMLElement | null>;
   runningHeader?: ReactNode;
+  referenceIdentity?: string;
 }) {
   const localRef = useRef<HTMLElement>(null);
   const ref = pageRef ?? localRef;
@@ -104,7 +106,7 @@ function Paper({
   }, [ref]);
   return (
     <article className="sp-paper ov-paper" ref={ref} aria-label={title}>
-      {page !== 1 ? (
+      {page !== 1 && referenceIdentity === undefined ? (
         <header
           className={`sp-running-header${runningHeader ? " ov-scratch-header" : ""}`}
         >
@@ -117,8 +119,20 @@ function Paper({
         </header>
       ) : null}
       <div className="sp-page-content">{children}</div>
-      <footer className="sp-page-footer">
-        {page === 1 ? (
+      <footer
+        className={`sp-page-footer${referenceIdentity !== undefined ? " ov-reference-footer" : ""}`}
+      >
+        {referenceIdentity !== undefined ? (
+          <>
+            <span
+              className="ov-reference-footer-identity"
+              title={[name, referenceIdentity].filter(Boolean).join(" · ")}
+            >
+              {[name, referenceIdentity].filter(Boolean).join(" · ")}
+            </span>
+            <span>Character Reference</span>
+          </>
+        ) : page === 1 ? (
           <span>
             {source === "authoritative-evaluation"
               ? "Character reference"
@@ -2765,6 +2779,14 @@ function ReferencePages({
   wide?: boolean;
   startPage?: number;
 }) {
+  const referenceFooter = summaryContinuation
+    ? {}
+    : {
+        referenceIdentity: ["Race", "Class", "Level"]
+          .map((label) => find(model.identity, label))
+          .filter((value) => value !== "—" && value.trim())
+          .join(" "),
+      };
   const title = summaryContinuation
     ? "Character summary · continued"
     : "Character reference";
@@ -2908,6 +2930,7 @@ function ReferencePages({
           page=""
           source={model.source}
           pageRef={probe}
+          {...referenceFooter}
         >
           {summaryContinuation ? (
             <div className="sp-page-heading">
@@ -2934,6 +2957,7 @@ function ReferencePages({
               title={title}
               page={`R${startPage + index}`}
               source={model.source}
+              {...referenceFooter}
             >
               <div className="ov-reference-category-stack">
                 {blocks.map((block) => (
@@ -2975,6 +2999,7 @@ function ReferencePages({
             title={title}
             page={summaryContinuation ? index + 2 : `R${startPage + index}`}
             source={model.source}
+            {...referenceFooter}
           >
             {summaryContinuation ? (
               <div className="sp-page-heading">

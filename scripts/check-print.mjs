@@ -1170,7 +1170,10 @@ async function checkReferences(client) {
           Math.abs(equipped.getBoundingClientRect().width-currency.getBoundingClientRect().width)<1 &&
           [...equipped.querySelectorAll('tbody tr')].some(row=>row.querySelector('td:last-child')?.textContent==='—');
       })),
-      pageNumbersOnly:pages.every(p=>/^R\\d+$/.test(p.querySelector('.sp-page-footer').textContent.trim())),
+      pageNumbersOnly:pages.every(p=>!p.querySelector('.sp-running-header') &&
+        /^R\\d+$/.test(p.querySelector('.ov-page-number').textContent.trim()) &&
+        p.querySelector('.ov-reference-footer-identity').textContent.includes('Synthetic print fixture hero · Synthetic ancestry Synthetic guardian 18') &&
+        p.querySelector('.ov-reference-footer > span:nth-child(2)').textContent==='Character Reference'),
       noStandaloneBasics:ids.every(id=>!id.startsWith('basic:')),
       inlinePowerActions:pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table tbody')]).every(body=>
         body.querySelector('td:first-child .action-type-icon')),

@@ -31,6 +31,40 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("moves reference-page running identity and title into a three-part footer", () => {
+    const fixture = {
+      ...model,
+      identity: [
+        { label: "Race", value: "Dwarf" },
+        { label: "Class", value: "Paladin" },
+        { label: "Level", value: "7" },
+      ],
+    };
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={fixture}
+        name="Ingi fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const pages = [
+      ...html.matchAll(
+        /<article[^>]*aria-label="Character reference"[^>]*>([\s\S]*?)<\/article>/g,
+      ),
+    ];
+    expect(pages.length).toBeGreaterThan(0);
+    for (const page of pages) {
+      expect(page[1]).not.toContain('class="sp-running-header"');
+      expect(page[1]).toContain('class="sp-page-footer ov-reference-footer"');
+      expect(page[1]).toContain(">Ingi fixture · Dwarf Paladin 7</span>");
+      expect(page[1]).toContain("<span>Character Reference</span>");
+      expect(page[1]).toContain('class="ov-page-number"');
+    }
+    expect(html).toContain('class="sp-running-header ov-scratch-header"');
+  });
   const inventoryParts = (category: string, count: number) =>
     Array.from({ length: count }, (_, i) => ({
       tableCategory: category,

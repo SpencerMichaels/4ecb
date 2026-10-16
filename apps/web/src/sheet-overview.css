@@ -835,6 +835,21 @@ body:has(.sp-prototype) {
   font-size: 7pt;
   color: var(--sp-muted);
 }
+.sp-page-footer.ov-reference-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.12in;
+}
+.ov-reference-footer-identity {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ov-reference-footer .ov-page-number {
+  justify-self: end;
+}
 .sp-panel {
   border: 1px solid var(--sp-border);
   border-radius: 3px;

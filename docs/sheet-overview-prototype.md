@@ -75,6 +75,10 @@ Larger categories still keep their first two cards together when feasible.
 Single-entry categories and oversized pairs retain normal flow;
 summary reminder continuation (without category headings) is unchanged.
 This is a first draft, not final reference or M5.6 acceptance.
+R pages omit the running top header. Their footer places name · race class level
+at left, Character Reference centered, and the R page number at right. The identity
+stays on one line (ellipsis for exceptionally long names); summary/scratchpad
+headers are unchanged. Measurement probes use the same footer/header layout.
 See `implementation-status.md` for the final accepted scratchpad refinements;
 the study and initial integration descriptions below retain their historical
 design context.
