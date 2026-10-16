@@ -278,6 +278,12 @@ preserved below the groups and never silently converted to zero. Inventory uses 
 reserved leading quantity prefix (2×, 3×; blank for one) rather than a Qty column;
 item names naturally indent beneath flush-left category headings. Row striping
 restarts with a shaded row in each category, including continuation starts.
+The generic reference-table odd-tbody rule excludes Inventory: its type-selector
+specificity previously overrode the clear category-local rows after odd-length
+categories. The print harness verifies computed backgrounds for two consecutive
+three-item categories, not merely the assigned stripe classes.
+Verification: production build and all four Chromium overview-only print cases
+pass, including that computed-style regression; Firefox was not rerun.
 Redundant carried/stored character-note cards are omitted. Equipment/Currency
 are measured as a stacked block; inventory pagination retains complete category groups
 and repeats category headings at continuation starts. The equipment-layout

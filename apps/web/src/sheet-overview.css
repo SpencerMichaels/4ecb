@@ -570,7 +570,7 @@ body:has(.sp-prototype) {
   font-size: 8pt;
   border-bottom: 1px solid var(--sp-border);
 }
-.ov-reference-table tbody:nth-of-type(odd) {
+.ov-reference-table:not(.ov-inventory-table) tbody:nth-of-type(odd) {
   background: #f0f3f5;
 }
 .ov-reference-table td:not(:first-child) {

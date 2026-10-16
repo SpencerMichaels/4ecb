@@ -1148,6 +1148,20 @@ async function checkReferences(client) {
       inventoryHeaders:pages.flatMap(p=>[...p.querySelectorAll('.ov-inventory-table')]).every(table=>
         !table.querySelector('thead') && table.querySelector('.ov-inventory-quantity') &&
           table.querySelector('tbody .ov-reference-inventory-category th')?.getAttribute('colspan')==='2'),
+      inventoryStripeColors:(()=>{
+        const fixture=document.createElement('table');
+        fixture.className='ov-reference-table ov-inventory-table';
+        fixture.style.visibility='hidden';
+        fixture.style.position='absolute';
+        // Two three-item categories put the second category's clear row at
+        // global tbody position five, where generic striping used to win.
+        fixture.innerHTML=[true,false,true,true,false,true].map(striped=>
+          '<tbody class="ov-reference-part'+(striped?' is-striped':'')+'"><tr><td>Item</td></tr></tbody>').join('');
+        document.body.append(fixture);
+        const colors=[...fixture.tBodies].map(body=>getComputedStyle(body).backgroundColor);
+        fixture.remove();
+        return colors;
+      })(),
       equipmentPair:pages.some(p=>[...p.querySelectorAll('.ov-equipment-stack')].some(pair=>{
         const equipped=pair.querySelector('.ov-reference-pane:has(.ov-equipped-table)');
         const currency=pair.querySelector('.ov-currency-pane');
@@ -1184,6 +1198,15 @@ async function checkReferences(client) {
       state.pairedCategory &&
       state.equippedHeaders &&
       state.inventoryHeaders &&
+      JSON.stringify(state.inventoryStripeColors) ===
+        JSON.stringify([
+          "rgb(240, 243, 245)",
+          "rgba(0, 0, 0, 0)",
+          "rgb(240, 243, 245)",
+          "rgb(240, 243, 245)",
+          "rgba(0, 0, 0, 0)",
+          "rgb(240, 243, 245)",
+        ]) &&
       state.pageNumbersOnly &&
       state.noStandaloneBasics &&
       state.inlinePowerActions &&
