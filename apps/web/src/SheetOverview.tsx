@@ -1256,11 +1256,13 @@ function Scratchpad({
   name,
   blankHP,
   startPage,
+  onPageCount,
 }: {
   model: CharacterSheetModel;
   name: string;
   blankHP: boolean;
   startPage: number;
+  onPageCount: (count: number) => void;
 }) {
   const rows = useMemo(() => overviewTrackingRows(model, true), [model]);
   const encounter = useMemo(
@@ -1380,6 +1382,10 @@ function Scratchpad({
     },
   ];
   const first = layout[0]!;
+  useLayoutEffect(
+    () => onPageCount(layout.length),
+    [onPageCount, layout.length],
+  );
   const identityLine = ["Race", "Class", "Level"]
     .flatMap((label) =>
       model.identity
@@ -2695,9 +2701,13 @@ export function paginateReferenceGroups(
 function Details({
   model,
   name,
+  startPage,
+  onPageCount,
 }: {
   model: CharacterSheetModel;
   name: string;
+  startPage: number;
+  onPageCount: (count: number) => void;
 }) {
   const sections = useMemo(() => {
     const entries = references(model);
@@ -2740,6 +2750,8 @@ function Details({
     );
   }, [model]);
   const [counts, setCounts] = useState<readonly number[]>([0, 0, 0, 0, 0]);
+  const totalPages = counts.reduce((sum, count) => sum + count, 0);
+  useLayoutEffect(() => onPageCount(totalPages), [onPageCount, totalPages]);
   const callbacks = useMemo(
     () =>
       Array.from(
@@ -2762,7 +2774,9 @@ function Details({
           name={name}
           entries={entries}
           wide={index === 1 || index === 2}
-          startPage={1 + counts.slice(0, index).reduce((a, b) => a + b, 0)}
+          startPage={
+            startPage + counts.slice(0, index).reduce((a, b) => a + b, 0)
+          }
           onPageCount={callbacks[index]!}
         />
       ))}
@@ -3001,7 +3015,7 @@ function ReferencePages({
               key={index}
               name={name}
               title={title}
-              page={`R${startPage + index}`}
+              page={startPage + index}
               source={model.source}
               {...referenceFooter}
             >
@@ -3043,7 +3057,7 @@ function ReferencePages({
             key={index}
             name={name}
             title={title}
-            page={summaryContinuation ? index + 2 : `R${startPage + index}`}
+            page={summaryContinuation ? index + 2 : startPage + index}
             source={model.source}
             {...referenceFooter}
           >
@@ -3100,13 +3114,15 @@ export function SheetOverview({
   paper: "letter" | "a4";
   monochrome: boolean;
   blankHP: boolean;
-  children?: ReactNode;
+  children?: ReactNode | ((firstCardPage: number) => ReactNode);
 }) {
   const [summarySelection, setSummarySelection] = useState<{
     model: CharacterSheetModel;
     indices: readonly number[];
   }>();
   const [continuationPages, setContinuationPages] = useState(0);
+  const [scratchpadPages, setScratchpadPages] = useState(1);
+  const [detailsPages, setDetailsPages] = useState(0);
   const onVisibleReminders = useCallback(
     (indices: readonly number[]) => {
       setSummarySelection({ model, indices });
@@ -3123,7 +3139,8 @@ export function SheetOverview({
         : [],
     [model, summarySelection],
   );
-  if (!model.overview) return <>{children}</>;
+  if (!model.overview)
+    return <>{typeof children === "function" ? children(1) : children}</>;
   const overviewClass = `sheet-overview sp-prototype sp-paper-${paper}${monochrome ? " sp-monochrome" : ""} print-only`;
   return (
     <>
@@ -3147,12 +3164,20 @@ export function SheetOverview({
           name={name}
           blankHP={blankHP}
           startPage={2 + continuationPages}
+          onPageCount={setScratchpadPages}
         />
       </div>
-      {children}
       <div className={overviewClass}>
-        <Details model={model} name={name} />
+        <Details
+          model={model}
+          name={name}
+          startPage={2 + continuationPages + scratchpadPages}
+          onPageCount={setDetailsPages}
+        />
       </div>
+      {typeof children === "function"
+        ? children(2 + continuationPages + scratchpadPages + detailsPages)
+        : children}
     </>
   );
 }

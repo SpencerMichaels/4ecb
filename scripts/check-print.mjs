@@ -56,6 +56,10 @@ const execute = promisify(execFile);
 const projectRoot = process.cwd();
 // Diagnostic for overview work; the default gate still checks every card.
 const overviewOnly = process.argv.includes("--overview-only");
+// Include fixed card pages for document-order/numbering diagnostics without
+// changing the default gate's dense-card content assertions.
+const includeCardPages =
+  overviewOnly && process.argv.includes("--include-card-pages");
 const { stdout: variantTableMarkup } = await execute("pnpm", [
   "exec",
   "tsx",
@@ -308,6 +312,10 @@ try {
       client,
       `document.querySelectorAll('.sheet-overview > .ov-paper[aria-label="Character reference"]').length > 0`,
     );
+    await waitForExpression(
+      client,
+      `[...document.querySelectorAll('.sheet-overview > .ov-paper, .print-card-page')].every((page,i)=>Number(page.querySelector('.ov-page-number')?.textContent)===i+1)`,
+    );
     await checkSummaryPaneFlow(client);
     await checkSummaryPresentation(client, variant.monochrome);
     await checkSummaryContinuation(client);
@@ -377,10 +385,11 @@ try {
       `${variant.name} overflows overview pages: ${overview.overflow.join(", ")}`,
     );
     if (overviewOnly) {
-      await evaluate(
-        client,
-        `(() => { document.querySelectorAll('.print-card-page').forEach(page=>page.classList.add('print-excluded'));return true;})()`,
-      );
+      if (!includeCardPages)
+        await evaluate(
+          client,
+          `(() => { document.querySelectorAll('.print-card-page').forEach(page=>page.classList.add('print-excluded'));return true;})()`,
+        );
       const pdf = await client.send("Page.printToPDF", {
         printBackground: true,
         preferCSSPageSize: true,
@@ -392,8 +401,9 @@ try {
         path,
         variant.paper,
         true,
-        overview.pageCount,
+        overview.pageCount + (includeCardPages ? overview.cardPages : 0),
         true,
+        includeCardPages,
       );
       chromiumResults.push({ ...variant, ...overview, ...evidence });
       continue;
@@ -684,7 +694,41 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
         };
         await checkScratchpad(adapter, variant.monochrome);
         await checkReferences(adapter);
-        results.push({ ...variant, scratchpadGeometry: "pass" });
+        let evidence = {};
+        if (includeCardPages) {
+          const printed = await webdriverRequest(
+            port,
+            `/session/${sessionId}/print`,
+            "POST",
+            {
+              background: true,
+              shrinkToFit: true,
+              page:
+                variant.paper === "letter"
+                  ? { width: 21.59, height: 27.94 }
+                  : { width: 21, height: 29.7 },
+            },
+          );
+          const path = join(
+            outputDirectory,
+            `firefox-${variant.name}-numbering.pdf`,
+          );
+          await writeFile(path, Buffer.from(printed, "base64"));
+          const expectedPages = await webdriverExecute(
+            port,
+            sessionId,
+            `return document.querySelectorAll('.sheet-overview > .ov-paper, .print-card-page').length;`,
+          );
+          evidence = await inspectPdf(
+            path,
+            variant.paper,
+            false,
+            expectedPages,
+            true,
+            true,
+          );
+        }
+        results.push({ ...variant, scratchpadGeometry: "pass", ...evidence });
         continue;
       }
       await webdriverExecute(port, sessionId, installVariantTable);
@@ -1126,10 +1170,20 @@ async function checkReferences(client) {
     client,
     `(() => {
     const pages=[...document.querySelectorAll('.sheet-overview > .ov-paper[aria-label="Character reference"]')];
-    const lastCard=[...document.querySelectorAll('.print-card-page')].at(-1);
+    const firstCard=document.querySelector('.print-card-page');
+    const physicalPages=[...document.querySelectorAll('.sheet-overview > .ov-paper, .print-card-page')];
     const ids=pages.flatMap(p=>[...p.querySelectorAll('[data-reference-id]')].map(e=>e.dataset.referenceId.replace(/:(?:part\\d+|last)$/,'')));
     const expected=[...document.querySelectorAll('.ov-measure .ov-reference-card')].map(e=>e.dataset.referenceId).filter(id=>!id.startsWith('summary-reminder:'));
-    return {afterCards:!lastCard || Boolean(lastCard.compareDocumentPosition(pages[0]) & Node.DOCUMENT_POSITION_FOLLOWING),
+    return {beforeCards:!firstCard || Boolean(pages.at(-1).compareDocumentPosition(firstCard) & Node.DOCUMENT_POSITION_FOLLOWING),
+      continuousNumbers:physicalPages.every((page,i)=>Number(page.querySelector('.ov-page-number')?.textContent)===i+1),
+      cardFooterBounds:[...document.querySelectorAll('.print-card-page')].every(page=>{
+        const p=page.getBoundingClientRect(), f=page.querySelector('.print-card-page-footer').getBoundingClientRect(), g=page.querySelector('.print-card-grid').getBoundingClientRect();
+        return f.top>=g.bottom && f.bottom<=p.bottom && f.left>=p.left && f.right<=p.right;
+      }),
+      fixedCardSizes:[...document.querySelectorAll('.print-card-page .print-reference-card')].every(card=>{
+        const r=card.getBoundingClientRect(), a4=Boolean(card.closest('.paper-a4'));
+        return Math.abs(r.width-(a4?63*96/25.4:2.47*96))<1 && Math.abs(r.height-(a4?86.8*96/25.4:3.405*96))<1;
+      }),
       cardStyleIsolated:[...document.querySelectorAll('.print-card-page')].every(e=>!e.closest('.sp-prototype')),
       headings:pages.every(p=>!p.querySelector('.sp-page-heading h2')),
       coverage:[...new Set(expected)].every(id=>ids.includes(id)),
@@ -1171,7 +1225,7 @@ async function checkReferences(client) {
           [...equipped.querySelectorAll('tbody tr')].some(row=>row.querySelector('td:last-child')?.textContent==='—');
       })),
       pageNumbersOnly:pages.every(p=>!p.querySelector('.sp-running-header') &&
-        /^R\\d+$/.test(p.querySelector('.ov-page-number').textContent.trim()) &&
+        /^\\d+$/.test(p.querySelector('.ov-page-number').textContent.trim()) &&
         p.querySelector('.ov-reference-footer-identity').textContent.includes('Synthetic print fixture hero · Synthetic ancestry Synthetic guardian 18') &&
         p.querySelector('.ov-reference-footer > span:nth-child(2)').textContent==='Character Reference'),
       noStandaloneBasics:ids.every(id=>!id.startsWith('basic:')),
@@ -1190,7 +1244,10 @@ async function checkReferences(client) {
   })()`,
   );
   assert(
-    state.afterCards &&
+    state.beforeCards &&
+      state.continuousNumbers &&
+      state.cardFooterBounds &&
+      state.fixedCardSizes &&
       state.cardStyleIsolated &&
       state.headings &&
       state.coverage &&
@@ -1219,7 +1276,7 @@ async function checkReferences(client) {
       state.usageColors.length === (state.monochrome ? 1 : 3) &&
       state.tablesInBounds &&
       state.groupHeaders > 0,
-    `Reference pages must follow cards, preserve entries, and use compact in-bounds sections: ${JSON.stringify(state)}`,
+    `Reference pages must precede cards, preserve entries, number every page continuously, and use in-bounds sections: ${JSON.stringify(state)}`,
   );
   assert(
     state.powerHeaders.length > 0 &&
@@ -1696,6 +1753,7 @@ async function inspectPdf(
   requireTagged = true,
   expectedPages,
   onlyOverview = false,
+  continuousNumbers = false,
 ) {
   const [{ stdout: info }, { stdout: text }] = await Promise.all([
     execute("pdfinfo", [path]),
@@ -1750,6 +1808,19 @@ async function inspectPdf(
       `${path} loses continued overview notes`,
     );
   const compactText = text.replace(/\s+/g, " ");
+  if (continuousNumbers) {
+    const printedPages = text.split("\f").filter((page) => page.trim());
+    assert(
+      printedPages.length === expectedPages,
+      `${path} has missing text pages`,
+    );
+    printedPages.forEach((page, index) =>
+      assert(
+        page.trim().match(/(?:^|\s)(\d+)$/)?.[1] === String(index + 1),
+        `${path} printed page ${index + 1} lacks its continuous footer number`,
+      ),
+    );
+  }
   for (const required of [
     "Synthetic print fixture hero",
     "Character reference",

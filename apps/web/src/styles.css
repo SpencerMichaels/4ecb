@@ -1685,6 +1685,18 @@ textarea {
   overflow: hidden;
   padding: 0.35in;
 }
+.print-card-page {
+  position: relative;
+}
+.print-card-page-footer {
+  position: absolute;
+  bottom: 0.12in;
+  left: 0.35in;
+  right: 0.35in;
+  color: #5b6570;
+  font-size: 7pt;
+  text-align: right;
+}
 .paper-a4 .print-page {
   height: 297mm;
   padding: 9mm;
@@ -6865,5 +6877,21 @@ button.inventory-icon-action:disabled {
   .paper-a4 .print-reference-card {
     height: 86.8mm;
     width: 63mm;
+  }
+  /* Use the same full-sheet named pages as the overview. Footers sit in the
+     existing bottom margin; fixed, sleeve-sized card dimensions never shrink. */
+  .sheet-page.paper-letter .print-card-page,
+  .sheet-page.paper-letter.is-print-preview .print-card-page {
+    page: sp-letter;
+    width: 8.5in;
+    height: 11in;
+    padding: 0.35in;
+  }
+  .sheet-page.paper-a4 .print-card-page,
+  .sheet-page.paper-a4.is-print-preview .print-card-page {
+    page: sp-a4;
+    width: 210mm;
+    height: 297mm;
+    padding: 9mm;
   }
 }

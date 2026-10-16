@@ -1368,25 +1368,32 @@ export function CharacterSheetPage({
         monochrome={character.sheetSettings.monochrome}
         blankHP={character.sheetSettings.blankHitPoints}
       >
-        {printCardPages.map((page, pageIndex) => (
-          <section
-            className="print-card-page print-page print-only"
-            key={`print-card-page-${pageIndex}`}
-          >
-            <div className="print-card-grid">
-              {page.map((card, index) => (
-                <PrintCard
-                  card={card}
-                  characterLevel={characterLevel}
-                  colorUtilityPowersBlue={colorUtilityPowersBlue}
-                  showEquippedAttackBonus={showEquippedAttackBonus}
-                  showPrintTitleActionIcon={showPrintTitleActionIcon}
-                  key={`${card.kind}-${card.id ?? card.name}-${index}`}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
+        {(firstCardPage) =>
+          printCardPages.map((page, pageIndex) => (
+            <section
+              className="print-card-page print-page print-only"
+              key={`print-card-page-${pageIndex}`}
+            >
+              <div className="print-card-grid">
+                {page.map((card, index) => (
+                  <PrintCard
+                    card={card}
+                    characterLevel={characterLevel}
+                    colorUtilityPowersBlue={colorUtilityPowersBlue}
+                    showEquippedAttackBonus={showEquippedAttackBonus}
+                    showPrintTitleActionIcon={showPrintTitleActionIcon}
+                    key={`${card.kind}-${card.id ?? card.name}-${index}`}
+                  />
+                ))}
+              </div>
+              <footer className="print-card-page-footer">
+                <span className="ov-page-number">
+                  {firstCardPage + pageIndex}
+                </span>
+              </footer>
+            </section>
+          ))
+        }
       </SheetOverview>
     </main>
   );

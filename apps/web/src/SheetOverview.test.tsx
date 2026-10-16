@@ -692,7 +692,7 @@ describe("real-data sheet overview", () => {
     ).toEqual(["Theme child", "A early", "Z early", "A later", "Unknown"]);
     expect(entries[0]?.group).toBe("Theme");
   });
-  it("places card pages after the scratchpad and before full reference probes", () => {
+  it("places card pages after the scratchpad and full references", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
         model={model}
@@ -709,9 +709,22 @@ describe("real-data sheet overview", () => {
     expect(marker).toBeGreaterThan(
       html.indexOf('class="ov-scratch-layout ov-scratch-upper"'),
     );
-    expect(html.indexOf('class="ov-measure-column"', marker)).toBeGreaterThan(
-      marker,
+    expect(html.lastIndexOf('class="ov-measure-column')).toBeLessThan(marker);
+  });
+  it("supplies a continuous starting page to card rendering", () => {
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={model}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      >
+        {(firstPage) => <span data-card-start={firstPage} />}
+      </SheetOverview>,
     );
+    expect(html).toContain('data-card-start="3"');
   });
   it("provides ten encounter tracking marks per power row", () => {
     const html = renderToStaticMarkup(

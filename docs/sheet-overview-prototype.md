@@ -20,7 +20,11 @@ Session notes occupies the wider left bottom pane; Treasure & consumables is on
 the right and contains the XP box. Both panes still fill the available height.
 
 Production reference first draft is implemented for feedback: full references
-follow the existing power/item card pages. Origin sections sort entries by known
+precede the existing power/item card pages. Page numbers run continuously from
+summary through scratchpad/continuations, references, and cards (1 through N,
+without an R prefix). Measured section counts supply subsequent offsets; card
+numbers occupy the page margin without changing sleeve-sized card geometry.
+Origin sections sort entries by known
 acquired/granted level then name, with core grants counted as level 1 and unknown
 levels last. Evaluated grant ancestry and explicit legacy automatic grants
 identify origins independently of publication Source. The Theme root is an identity/origin
@@ -89,8 +93,8 @@ Larger categories still keep their first two cards together when feasible.
 Single-entry categories and oversized pairs retain normal flow;
 summary reminder continuation (without category headings) is unchanged.
 This is a first draft, not final reference or M5.6 acceptance.
-R pages omit the running top header. Their footer places name · race class level
-at left, Character Reference centered, and the R page number at right. The identity
+Reference pages omit the running top header. Their footer places name · race class level
+at left, Character Reference centered, and the continuous page number at right. The identity
 stays on one line (ellipsis for exceptionally long names); summary/scratchpad
 headers are unchanged. Measurement probes use the same footer/header layout.
 See `implementation-status.md` for the final accepted scratchpad refinements;

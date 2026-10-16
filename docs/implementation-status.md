@@ -347,7 +347,23 @@ targets; secondary targets are not inherited without authored metadata. Missing
 authored formulas point to the card, never reverse-engineer a cached total. Unfamiliar
 damage formulas point to the card rather than absorbing riders. Legacy range,
 target and level are retained separately as index metadata, without adding them
-to physical-card rule fields. All reference sections share coherent R-numbering.
+to physical-card rule fields. References now precede physical power/item cards.
+Numbering is continuous from summary through summary/scratchpad continuations,
+references, and cards (1 through N; no R prefix). The overview owns measured
+scratchpad/reference page counts and passes the next page offset to card rendering.
+Fixed card dimensions remain unchanged; card-page numbers sit in the existing
+bottom margin on the same full-sheet named Letter/A4 pages used by the overview.
+Verification: 88 focused overview/scratchpad/print-layout tests, web typechecking,
+focused lint, and production build pass. The print-layout source contract now
+follows the previously extracted defaultPrintAttacks helper and still asserts its
+legacy fallback path; attack calculations are unchanged. Running
+`node scripts/check-print.mjs --overview-only --include-card-pages --firefox-scratchpad`
+through Nix passes eight Chromium/Firefox Letter/A4 color/monochrome cases,
+including every printed PDF footer numbered 1–16, references before cards, exact
+card sizes and footer bounds, and no extra blank transition pages. This explicit
+document-order diagnostic includes card pages but does not evaluate the separately
+recorded dense-card content-overflow blocker. The default gate's assertion stays
+unchanged.
 Basic attacks are regular Power Index entries; their standalone alternatives
 tables and page-link plumbing are removed. Page-1 omitted-weapon notes point to
 power cards, which retain the complete comparison tables.
@@ -389,9 +405,9 @@ No private corpus or UI dependencies enter the shared model. Unknown categories
 remain visible under Miscellaneous. Category rows are table row-group headers,
 kept with their first item and repeated at continuation starts.
 Category subheaders have white backgrounds and quiet rules instead of a tint
-that blends with alternating row fills. Reference R pages omit the running top
+that blends with alternating row fills. Reference pages omit the running top
 header; their three-part footer has name · race class level at left, Character
-Reference centered, and the R number at right. Long identity text truncates on one
+Reference centered, and the continuous page number at right. Long identity text truncates on one
 line rather than displacing the centered title. Scratchpad/summary headers and
 the page-1 source-status note remain unchanged. Reference measurement probes use
 the same footer layout and omit the header too, reclaiming that content space.

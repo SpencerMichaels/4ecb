@@ -336,9 +336,8 @@ describe("print layout contract", () => {
     expect(sheetSource).toContain(
       'const isUtility = powerType?.trim().toLocaleLowerCase() === "utility"',
     );
-    expect(sheetSource).toContain(
-      "fallbackPrintAttacks(card, selectedPrintVariant)",
-    );
+    expect(sheetSource).toContain("defaultPrintAttacks(card)");
+    expect(sheetSource).toContain("fallbackPrintAttacks(card, selected)");
     expect(styles).toMatch(
       /\.print-card-combat-band > div\s*\{[\s\S]*?align-items:\s*flex-start/,
     );
