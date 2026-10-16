@@ -44,6 +44,32 @@ const feat: ContentEntity = {
   ],
 };
 describe("printed overview data", () => {
+  it("retains an explicit background Benefit even when it equals the description", () => {
+    const benefit = "Gain a conditional bonus to a skill check.";
+    const background = {
+      ...feat,
+      id: "background:synthetic",
+      type: "Background",
+      name: "Synthetic background",
+      description: benefit,
+      specifics: [
+        { name: "Benefit", value: benefit, extraAttributes: [], ordinal: 0 },
+      ],
+    };
+    const model = buildSheetModel(
+      {
+        ...snapshot,
+        selectedRules: [
+          { id: background.id, name: background.name, type: background.type },
+        ],
+      },
+      [background],
+    );
+    expect(model.overview?.features[0]?.fields).toContainEqual({
+      label: "Benefit",
+      value: benefit,
+    });
+  });
   it("retains injected inventory categories without coupling the model to UI taxonomy", () => {
     const elements = [
       { id: "weapon:test", name: "Synthetic sword", type: "Weapon" },

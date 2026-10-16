@@ -225,6 +225,14 @@ separately granted features retain native feature types and Theme provenance,
 so they remain in Theme references; granted powers keep their power cards. This
 is a root-entity boundary, not a name/length-based flavor-text heuristic, and
 does not remove full descriptions from actual feature cards or change the model.
+Background root references retain authored Benefit, Associated Skills/Languages
+and prerequisites, excluding story/Common Knowledge/campaign fields. Explicitly
+labeled prose Benefit tails are retained when no structured Benefit exists.
+Story-only background roots produce no empty card; unresolved legacy-only text
+is preserved rather than semantically guessed away. Full raw feature descriptions
+remain in the model, and actual granted feature cards are not abbreviated. An
+explicit Background Benefit is retained in overview fields even when identical
+to its description, so mechanics-only projection cannot lose it as a duplicate.
 
 Reference headings use subtle origin-category tints without the oversized
 repeated page title or per-card category strip. Variable-height panes retain
@@ -319,6 +327,13 @@ while benefits are separate features. 48 focused overview/provenance tests pass,
 including omission of a synthetic Theme root while preserving a granted Class
 Feature under Theme. No private text was added to public fixtures. No full print
 matrix was rerun for this reference-entry selection adjustment.
+
+Background follow-up: inspected the ignored background definitions' explicit
+Benefit/Associated Skills/Associated Languages/Common Knowledge structure.
+65 focused overview/model tests pass, covering compact mechanical fields,
+description-equal Benefits, inline Benefit fallback, flavor-only omission and
+unresolved legacy text preservation. Web typecheck and focused lint pass. No full
+print matrix was rerun for this content-selection adjustment.
 
 Verification: 139 focused sheet-model/overview/index/layout tests, web typecheck,
 focused lint and production build pass. The overview-only print check passes

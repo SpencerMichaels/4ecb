@@ -224,7 +224,9 @@ export function withSheetOverview(
               !/^(?:short description|full text|level|type|class|power|powers|associated powers|associated power info|tier|source)$/i.test(
                 field.name.trim(),
               ) &&
-              field.value.trim() !== description,
+              (field.value.trim() !== description ||
+                (key(group.group) === "background" &&
+                  key(field.name) === "benefit")),
           )
           .map((field) => ({ label: field.name.trim(), value: field.value })) ??
         [];

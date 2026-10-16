@@ -31,6 +31,61 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("prints background mechanics without narrative while retaining unresolved legacy text", () => {
+    const feature = {
+      id: "background",
+      name: "Synthetic background",
+      group: "Background",
+      description: "A long story about growing up in a remote settlement.",
+      summary: "A background story.",
+      source: "Synthetic",
+      fullTextAvailable: true,
+      fields: [
+        { label: "Common Knowledge", value: "More story and questions." },
+        { label: "Benefit", value: "Reroll a failed save once per encounter." },
+        { label: "Associated Skills", value: "History, Nature" },
+        { label: "Associated Languages", value: "Elven" },
+      ],
+    };
+    const entries = references({
+      ...model,
+      overview: {
+        ...model.overview!,
+        features: [
+          feature,
+          {
+            ...feature,
+            id: "legacy",
+            fields: [],
+            description: "A retained custom benefit.",
+            fullTextAvailable: false,
+          },
+          {
+            ...feature,
+            id: "inline",
+            fields: [],
+            description: "Some story. Benefit: Gain a conditional bonus.",
+          },
+          { ...feature, id: "story-only", fields: [feature.fields[0]!] },
+        ],
+      },
+    });
+    const compact = entries.find((entry) => entry.id === "background")!;
+    expect(compact.parts.map((part) => part.label)).toEqual([
+      "Benefit",
+      "Associated Skills",
+      "Associated Languages",
+    ]);
+    expect(JSON.stringify(compact)).not.toContain(feature.description);
+    expect(JSON.stringify(compact)).not.toContain("More story");
+    expect(
+      JSON.stringify(entries.find((entry) => entry.id === "legacy")),
+    ).toContain("A retained custom benefit.");
+    expect(entries.find((entry) => entry.id === "inline")?.parts).toEqual(
+      referenceParts("Gain a conditional bonus.", "Benefit"),
+    );
+    expect(entries.some((entry) => entry.id === "story-only")).toBe(false);
+  });
   it("omits theme overview prose while retaining separately granted theme features", () => {
     const feature = (id: string, group: string, description: string) => ({
       id,

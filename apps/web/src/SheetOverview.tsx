@@ -1600,25 +1600,34 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
         a.name.localeCompare(b.name)
       );
     })
-    .map((feature) => ({
-      id: feature.id,
-      name: feature.name,
-      group: groupName(
-        feature.referenceGroup ??
-          (order.includes(feature.group) ? feature.group : "Other features"),
-      ),
-      feature: true,
-      ...(feature.level === undefined ? {} : { level: feature.level }),
-      source: feature.source,
-      parts: [
-        ...referenceParts(feature.description),
-        ...feature.fields
+    .flatMap((feature) => {
+      const background = feature.group.trim().toLowerCase() === "background";
+      const structuredBackground = background && feature.fullTextAvailable;
+      const description = structuredBackground ? "" : feature.description;
+      const fields = structuredBackground
+        ? feature.fields.filter((field) =>
+            /^(?:benefits?|associated skills|associated languages|prerequisites?)$/i.test(
+              field.label.trim(),
+            ),
+          )
+        : feature.fields;
+      // Some legacy definitions put an explicitly labeled Benefit in prose
+      // instead of a specific. Retain that authored mechanical tail as fallback.
+      const inlineBenefit =
+        structuredBackground &&
+        !fields.some((field) => /^benefits?$/i.test(field.label.trim()))
+          ? /\bBenefit:\s*([\s\S]+)/i.exec(feature.description)?.[1]
+          : undefined;
+      const parts = [
+        ...referenceParts(description),
+        ...(inlineBenefit ? referenceParts(inlineBenefit, "Benefit") : []),
+        ...fields
           .filter(
             (field) =>
               !(
                 /^(?:benefit|flavor(?: text)?|description)$/i.test(
                   field.label,
-                ) && feature.description.includes(field.value)
+                ) && description.includes(field.value)
               ),
           )
           .flatMap((field) => referenceParts(field.value, field.label)),
@@ -1627,8 +1636,25 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
               "Full rules unavailable for this content profile; the retained abbreviated description is shown.",
             )
           : []),
-      ],
-    }));
+      ];
+      if (structuredBackground && !parts.length) return [];
+      return [
+        {
+          id: feature.id,
+          name: feature.name,
+          group: groupName(
+            feature.referenceGroup ??
+              (order.includes(feature.group)
+                ? feature.group
+                : "Other features"),
+          ),
+          feature: true,
+          ...(feature.level === undefined ? {} : { level: feature.level }),
+          source: feature.source,
+          parts,
+        },
+      ];
+    });
   // References retain authored entities, not synthetic defensive summaries or
   // expanded reminder projections (whose underlying features/powers appear here
   // or on their own cards already).

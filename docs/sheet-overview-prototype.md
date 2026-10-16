@@ -12,7 +12,11 @@ levels last. Evaluated grant ancestry and explicit legacy automatic grants
 identify origins independently of publication Source. The Theme root is an identity/origin
 overview, not a reference card, paralleling omission of whole Class/Race
 descriptions. Separately granted theme features remain grouped under Theme, and
-their granted powers retain their own cards. Equipment and power indexes
+their granted powers retain their own cards. Background root cards show Benefit, Associated
+Skills/Languages and prerequisites instead of narrative/Common Knowledge text.
+Explicit prose "Benefit:" tails are a fallback; unresolved legacy-only text is
+preserved with its existing unavailable-rules notice. Actual granted feature
+descriptions remain complete. Equipment and power indexes
 are full-width tables; features/rituals/character prose use stacked category-local
 two-column blocks under full-width headings. Measured splits balance column
 heights while preserving down-then-across level/name order. The power
