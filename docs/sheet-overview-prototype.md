@@ -4,6 +4,12 @@ Status: page-1 summary and scratchpad accepted by the product owner, 2026-10-15.
 Reference-page review and the separately noted summary-continuation styling
 correction remain; M5.6 stays open.
 
+Running information uses footers consistently, including the scratchpad and
+optional summary/power-usage continuations; none has a running top header.
+Scratchpad footers show character identity at left, Scratchpad centered, and a
+compact Date writing line beside the page number at right. Measurement probes
+use the same footer geometry. The first-page identity header is unchanged.
+
 The scratchpad uses numbered tracking tables for both frequencies: ten Encounter
 columns and five Daily columns. Both have square marks, vertical column stripes,
 an unstriped power-name column, and faint horizontal row dividers. Numbers align

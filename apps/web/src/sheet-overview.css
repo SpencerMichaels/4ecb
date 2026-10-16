@@ -781,22 +781,6 @@ body:has(.sp-prototype) {
 .sp-paper th {
   text-align: left;
 }
-.sp-running-header {
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--sp-border);
-  padding-bottom: 0.07in;
-  font-size: 8pt;
-  font-weight: 700;
-}
-.sp-running-header span span {
-  font-weight: 400;
-  color: var(--sp-muted);
-}
-.sp-running-header > span:last-child {
-  color: var(--sp-muted);
-  font-weight: 400;
-}
 .sp-page-heading {
   margin: 0.16in 0 0.18in;
 }
@@ -1337,29 +1321,19 @@ body:has(.sp-prototype) {
   gap: 0.15in;
 }
 /* Scratchpad: two-column writing areas around full-width power trackers. */
-.sp-running-header.ov-scratch-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: 0.12in;
-  margin-bottom: 0.15in;
-}
-.ov-scratch-header-identity {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.ov-scratch-header-details {
-  font-weight: 400;
-}
-.ov-scratch-header-session {
+.ov-scratch-footer-right,
+.ov-scratch-footer-date {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 0.06in;
   white-space: nowrap;
 }
-.ov-scratch-header-session > i {
+.ov-scratch-footer-right {
+  justify-self: end;
+  gap: 0.15in;
+}
+.ov-scratch-footer-date > i {
   width: 0.7in;
   height: 1em;
   border-bottom: 1px solid var(--sp-border);

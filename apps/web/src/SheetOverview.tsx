@@ -71,8 +71,9 @@ function Paper({
   source,
   children,
   pageRef,
-  runningHeader,
-  referenceIdentity,
+  footerIdentity,
+  footerTitle,
+  footerDate = false,
 }: {
   name: string;
   title: string;
@@ -80,8 +81,9 @@ function Paper({
   source: string;
   children: ReactNode;
   pageRef?: React.RefObject<HTMLElement | null>;
-  runningHeader?: ReactNode;
-  referenceIdentity?: string;
+  footerIdentity?: string;
+  footerTitle?: string;
+  footerDate?: boolean;
 }) {
   const localRef = useRef<HTMLElement>(null);
   const ref = pageRef ?? localRef;
@@ -106,31 +108,19 @@ function Paper({
   }, [ref]);
   return (
     <article className="sp-paper ov-paper" ref={ref} aria-label={title}>
-      {page !== 1 && referenceIdentity === undefined ? (
-        <header
-          className={`sp-running-header${runningHeader ? " ov-scratch-header" : ""}`}
-        >
-          {runningHeader ?? (
-            <>
-              <span>{name}</span>
-              <span>{title}</span>
-            </>
-          )}
-        </header>
-      ) : null}
       <div className="sp-page-content">{children}</div>
       <footer
-        className={`sp-page-footer${referenceIdentity !== undefined ? " ov-reference-footer" : ""}`}
+        className={`sp-page-footer${footerIdentity !== undefined ? " ov-reference-footer" : ""}`}
       >
-        {referenceIdentity !== undefined ? (
+        {footerIdentity !== undefined ? (
           <>
             <span
               className="ov-reference-footer-identity"
-              title={[name, referenceIdentity].filter(Boolean).join(" · ")}
+              title={[name, footerIdentity].filter(Boolean).join(" · ")}
             >
-              {[name, referenceIdentity].filter(Boolean).join(" · ")}
+              {[name, footerIdentity].filter(Boolean).join(" · ")}
             </span>
-            <span>Character Reference</span>
+            <span>{footerTitle ?? "Character Reference"}</span>
           </>
         ) : page === 1 ? (
           <span>
@@ -141,7 +131,17 @@ function Paper({
                 : "Legacy cache · verify missing rules and values"}
           </span>
         ) : null}
-        <span className="ov-page-number">{page}</span>
+        {footerDate ? (
+          <span className="ov-scratch-footer-right">
+            <span className="ov-scratch-footer-date">
+              <strong>Date</strong>
+              <i />
+            </span>
+            <span className="ov-page-number">{page}</span>
+          </span>
+        ) : (
+          <span className="ov-page-number">{page}</span>
+        )}
       </footer>
     </article>
   );
@@ -1407,26 +1407,9 @@ function Scratchpad({
         page={startPage}
         source={model.source}
         pageRef={pageRef}
-        runningHeader={
-          <>
-            <span
-              className="ov-scratch-header-identity"
-              title={[name, identityLine].filter(Boolean).join(" · ")}
-            >
-              {name}
-              {identityLine ? (
-                <span className="ov-scratch-header-details">
-                  {" "}
-                  · {identityLine}
-                </span>
-              ) : null}
-            </span>
-            <span>Scratchpad</span>
-            <span className="ov-scratch-header-session">
-              <strong>Date</strong> <i />
-            </span>
-          </>
-        }
+        footerIdentity={identityLine}
+        footerTitle="Scratchpad"
+        footerDate
       >
         <div className="ov-scratch-layout ov-scratch-upper">
           <div className="sp-column ov-scratch-main ov-scratch-records">
@@ -1517,6 +1500,9 @@ function Scratchpad({
           title="Power usage · continued"
           page={startPage + index + 1}
           source={model.source}
+          footerIdentity={identityLine}
+          footerTitle="Scratchpad · continued"
+          footerDate
         >
           <div className="sp-page-heading">
             <h2>Power usage</h2>
@@ -1538,6 +1524,9 @@ function Scratchpad({
           title="Play scratchpad"
           page=""
           source={model.source}
+          footerIdentity={identityLine}
+          footerTitle="Scratchpad"
+          footerDate
         >
           <div className="ov-power-trackers sp-column" ref={firstProbe}>
             <TrackingPanels encounter={encounter} daily={daily} />
@@ -1559,6 +1548,9 @@ function Scratchpad({
           page=""
           source={model.source}
           pageRef={nextPaper}
+          footerIdentity={identityLine}
+          footerTitle="Scratchpad · continued"
+          footerDate
         >
           <div className="sp-page-heading">
             <h2>Power usage</h2>
@@ -2839,14 +2831,15 @@ function ReferencePages({
   wide?: boolean;
   startPage?: number;
 }) {
-  const referenceFooter = summaryContinuation
-    ? {}
-    : {
-        referenceIdentity: ["Race", "Class", "Level"]
-          .map((label) => find(model.identity, label))
-          .filter((value) => value !== "—" && value.trim())
-          .join(" "),
-      };
+  const referenceFooter = {
+    footerIdentity: ["Race", "Class", "Level"]
+      .map((label) => find(model.identity, label))
+      .filter((value) => value !== "—" && value.trim())
+      .join(" "),
+    footerTitle: summaryContinuation
+      ? "Character Summary · continued"
+      : "Character Reference",
+  };
   const title = summaryContinuation
     ? "Character summary · continued"
     : "Character reference";

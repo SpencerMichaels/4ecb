@@ -105,10 +105,17 @@ boxes flex to consume spare Health height above the bottom trackers, retaining
 their 0.7in minimum. Power panes use the same 1.5:1 split and 0.15in gutter as
 the upper/lower panes. Encounter tracking uses fixed 0.22in square writing boxes
 within each row, preserving their shape even beside multi-line power names.
-The scratchpad running header has name · race class level at left (ellipsis for
-long identities), centered Play scratchpad, and Session / date with a writing
-line at right; the standalone session row is removed. Other page headers are
-unchanged.
+The scratchpad now follows the reference pages' footer-only running layout:
+name · race class level at left (ellipsis for long identities), centered
+Scratchpad, and a compact Date writing line beside the page number at right.
+Optional summary/power-usage continuations also use footers rather than running
+top headers; measurement probes use the same geometry. No standalone date row
+occupies body space. The first-page identity header remains unchanged.
+Footer consistency verification: 73 focused overview/scratchpad tests, web
+typecheck, focused lint and production build pass. All eight Chromium/Firefox
+Letter/A4 color/monochrome print cases pass, with continuous numbering 1–16
+and no overview overflow. The scratchpad preview was visually inspected.
+The full milestone gate was not rerun; M5.6 remains open.
 Verification for this spacing/header follow-up: 45 focused overview/layout
 tests, web typecheck, production build and focused lint pass. All eight
 Chromium/Firefox overview variants pass the added gap, HP-fill, column-split,
@@ -408,8 +415,9 @@ Category subheaders have white backgrounds and quiet rules instead of a tint
 that blends with alternating row fills. Reference pages omit the running top
 header; their three-part footer has name · race class level at left, Character
 Reference centered, and the continuous page number at right. Long identity text truncates on one
-line rather than displacing the centered title. Scratchpad/summary headers and
-the page-1 source-status note remain unchanged. Reference measurement probes use
+line rather than displacing the centered title. Scratchpad/summary continuations
+now follow this footer-only layout too; the page-1 source-status note remains
+unchanged. Reference measurement probes use
 the same footer layout and omit the header too, reclaiming that content space.
 The footer refinement passes 56 focused overview tests, web typechecking, focused
 lint, production build, and all four Chromium overview print cases without

@@ -119,7 +119,8 @@ describe("real-data sheet overview", () => {
       expect(page[1]).toContain("<span>Character Reference</span>");
       expect(page[1]).toContain('class="ov-page-number"');
     }
-    expect(html).toContain('class="sp-running-header ov-scratch-header"');
+    expect(html).not.toContain('class="sp-running-header');
+    expect(html).toContain("<span>Scratchpad</span>");
   });
   const inventoryParts = (category: string, count: number) =>
     Array.from({ length: count }, (_, i) => ({
@@ -795,7 +796,7 @@ describe("real-data sheet overview", () => {
     expect(table).toContain("Alpha daily");
     expect(table).toContain("Beta daily");
   });
-  it("puts session/date and compact identity in the scratchpad running header", () => {
+  it("puts date and compact identity in the scratchpad footer without a running header", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
         model={{
@@ -813,17 +814,17 @@ describe("real-data sheet overview", () => {
         blankHP={false}
       />,
     );
-    const header = html
-      .split('class="sp-running-header ov-scratch-header"')[1]!
-      .split("</header>")[0]!;
-    expect(header).toContain("Ingi · Dwarf Paladin 7");
-    expect(header).toContain(
-      'class="ov-scratch-header-details"> · Dwarf Paladin 7</span>',
+    const footer = html
+      .split('aria-label="Play scratchpad"')[1]!
+      .split("<footer")[1]!
+      .split("</footer>")[0]!;
+    expect(footer).toContain("Ingi · Dwarf Paladin 7");
+    expect(footer).toContain("<span>Scratchpad</span>");
+    expect(footer).toContain(
+      'class="ov-scratch-footer-date"><strong>Date</strong>',
     );
-    expect(header).toContain("<span>Scratchpad</span>");
-    expect(header).toContain(
-      'class="ov-scratch-header-session"><strong>Date</strong>',
-    );
+    expect(footer).toContain('class="ov-page-number">2</span>');
+    expect(html).not.toContain('class="sp-running-header');
     expect(html).not.toContain("ov-scratch-session");
   });
   it("matches scratchpad health reference values to the four summary cells", () => {
@@ -2141,10 +2142,11 @@ describe("real-data sheet overview", () => {
       .split("</article>")[0]!;
     expect(scratchpad).toContain('class="ov-effects-table"');
     const footer = scratchpad
-      .split('class="sp-page-footer"')[1]!
+      .split('class="sp-page-footer ov-reference-footer"')[1]!
       .split("</footer>")[0]!;
     expect(footer).toContain('class="ov-page-number">2</span>');
-    expect(footer).not.toContain("Overview fixture");
+    expect(footer).toContain("Overview fixture");
+    expect(footer).toContain("<span>Scratchpad</span>");
     expect(footer).not.toContain("Character reference");
     expect(scratchpad).toContain('<th scope="col">Ends</th>');
     expect(scratchpad).toContain(">Session notes</h3>");

@@ -1322,7 +1322,8 @@ async function checkScratchpad(client, monochrome) {
       hpToTrackers:page.querySelector('.ov-health-trackers').getBoundingClientRect().top-page.querySelector('.sp-hp-writing').getBoundingClientRect().bottom,
       columnSplitDifference:Math.abs(page.querySelector('.ov-scratch-upper > .sp-column:last-child').getBoundingClientRect().left-page.querySelector('.sp-daily').getBoundingClientRect().left),
       encounterSquares:[...page.querySelectorAll('.ov-encounter-box')].every(e=>{const r=e.getBoundingClientRect();return Math.abs(r.width-r.height)<0.1 && r.width>=18;}),
-      headerSession:page.querySelector('.ov-scratch-header-session') !== null,
+      footerSession:page.querySelector('.sp-page-footer .ov-scratch-footer-date') !== null,
+      runningHeader:page.querySelector('.sp-running-header') !== null,
       contentSession:page.querySelector('.sp-page-content .sp-session') !== null,
       milestone:page.textContent.includes('Milestone'),
       actionPointMarks:page.querySelectorAll('.ov-action-point-count .icon').length,
@@ -1393,9 +1394,10 @@ async function checkScratchpad(client, monochrome) {
       state.hpToTrackers < 1 &&
       state.columnSplitDifference < 1 &&
       state.encounterSquares &&
-      state.headerSession &&
+      state.footerSession &&
+      !state.runningHeader &&
       !state.contentSession,
-    `Scratchpad must have consistent surge spacing, expanding HP boxes, aligned power columns, square encounter boxes and a header-only session line: ${JSON.stringify(state)}`,
+    `Scratchpad must have consistent surge spacing, expanding HP boxes, aligned power columns, square encounter boxes and a footer-only date line: ${JSON.stringify(state)}`,
   );
   assert(
     !state.surgeGaps &&
@@ -1577,7 +1579,7 @@ async function checkSummaryContinuation(client) {
       const pages=[...document.querySelectorAll('.sheet-overview > .ov-paper')];
       const summary=pages[0], next=pages[1], scratch=pages.find(p=>p.getAttribute('aria-label')==='Play scratchpad');
       const labels=[...summary.querySelectorAll('.ov-reminder-probe [data-reminder-index] > strong')].map(e=>e.textContent.trim());
-      return {second:next?.getAttribute('aria-label'),page:next?.querySelector('.sp-page-footer').textContent,allPresent:labels.every(label=>next?.textContent.includes(label)),scratchPage:scratch?.querySelector('.sp-page-footer').textContent,overflow:next?.dataset.overviewOverflow};
+      return {second:next?.getAttribute('aria-label'),page:next?.querySelector('.ov-page-number').textContent,allPresent:labels.every(label=>next?.textContent.includes(label)),scratchPage:scratch?.querySelector('.ov-page-number').textContent,overflow:next?.dataset.overviewOverflow};
     })()`,
     );
     assert(
@@ -1604,7 +1606,7 @@ async function checkSummaryContinuation(client) {
   }
   await waitForExpression(
     client,
-    `!document.querySelector('.sheet-overview > .ov-paper[aria-label="Character summary · continued"]') && document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"] .sp-page-footer').textContent.trim()==='2'`,
+    `!document.querySelector('.sheet-overview > .ov-paper[aria-label="Character summary · continued"]') && document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"] .ov-page-number').textContent.trim()==='2'`,
   );
 }
 
