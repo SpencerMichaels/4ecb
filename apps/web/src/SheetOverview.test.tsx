@@ -81,9 +81,9 @@ describe("real-data sheet overview", () => {
     expect(header).toContain(
       'class="ov-scratch-header-details"> · Dwarf Paladin 7</span>',
     );
-    expect(header).toContain("<span>Play scratchpad</span>");
+    expect(header).toContain("<span>Scratchpad</span>");
     expect(header).toContain(
-      'class="ov-scratch-header-session">Session / date',
+      'class="ov-scratch-header-session"><strong>Date</strong>',
     );
     expect(html).not.toContain("ov-scratch-session");
   });

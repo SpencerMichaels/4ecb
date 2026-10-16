@@ -169,6 +169,9 @@ giving Current HP three quarters of the available row while preserving their
 shared expanding height. This does not alter any resource calculation.
 All 34 focused overview tests pass; no full print/milestone rerun for this
 small label/proportion adjustment.
+The visible scratchpad header now reads “Scratchpad” in the center and bold
+“Date” beside the upper-right writing line (replacing “Session / date”).
+All 34 focused overview tests pass; no full print rerun for this text-only tweak.
 Verification: 43 focused overview/layout tests, web typecheck, focused lint and
 production build pass. `node scripts/check-print.mjs --overview-only
 --firefox-scratchpad --scratchpad-preview` passes all four Chromium PDF variants

@@ -1367,9 +1367,9 @@ function Scratchpad({
                 </span>
               ) : null}
             </span>
-            <span>Play scratchpad</span>
+            <span>Scratchpad</span>
             <span className="ov-scratch-header-session">
-              Session / date <i />
+              <strong>Date</strong> <i />
             </span>
           </>
         }
