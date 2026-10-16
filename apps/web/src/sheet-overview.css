@@ -1593,15 +1593,13 @@ body:has(.sp-prototype) {
   border: 0;
   padding: 0.025in 0;
 }
-.ov-encounter-box {
+.ov-encounter-box,
+.ov-daily-box {
   display: block;
   width: 0.22in;
   height: 0.22in;
   margin-inline: auto;
   border: 1px solid #8f9aa2;
-}
-.ov-power-trackers .sp-daily-list > div:nth-child(odd) {
-  background: #f0f3f5;
 }
 .ov-power-trackers .sp-usage-table tbody tr:nth-child(n) {
   background: transparent;
@@ -1622,11 +1620,6 @@ body:has(.sp-prototype) {
 }
 .ov-power-trackers .sp-shared-power:first-child {
   margin-top: 0;
-}
-.ov-power-trackers .sp-daily-list > div {
-  padding: 0.06in;
-  border: 0;
-  overflow-wrap: anywhere;
 }
 .sheet-overview.sp-monochrome
   .ov-paper[aria-label="Play scratchpad"]
@@ -1655,7 +1648,6 @@ body:has(.sp-prototype) {
   text-align: center;
 }
 .sp-usage-table thead th:first-child {
-  width: 57%;
   text-align: left;
   font-weight: 400;
 }

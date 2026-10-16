@@ -4,6 +4,12 @@ Status: page-1 summary and scratchpad accepted by the product owner, 2026-10-15.
 Reference-page review and the separately noted summary-continuation styling
 correction remain; M5.6 stays open.
 
+The scratchpad uses numbered tracking tables for both frequencies: ten Encounter
+columns and five Daily columns. Both have square marks, vertical column stripes,
+an unstriped power-name column, and faint horizontal row dividers. Shared-use
+encounter groups retain one row; measured pagination includes both header rows
+and keeps encounter/daily row measurements separate.
+
 Recorded XP is a small "Recorded: …" label inside the scratchpad's existing XP
 box, leaving room below for writing. The page-1 identity table stays at three
 rows, and XP does not create a standalone Advancement reference card/page.

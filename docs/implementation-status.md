@@ -118,22 +118,26 @@ Action points now use three hollow circle marks, matching Death saves' three
 skulls in size and spacing, rather than a single numeric box. This is a paper
 tracking affordance, not a new calculated cap or persisted Play-state rule.
 Encounter tracking columns alternate subtle vertical backgrounds;
-the name column is unstriped and row stripes are removed. Daily
-retains its horizontal row striping.
+the name column is unstriped and row stripes are removed. Daily now uses the
+same table styling rather than horizontal row striping.
 Verification: 33 focused overview tests and production build pass; four
 Chromium overview variants verify three hollow AP icons and alternating tracking
 column backgrounds with no name-column stripe. The generated preview was
 reviewed; Firefox/full milestone suites were not rerun for this style follow-up.
-Encounter tracking now has ten unnumbered columns (rather than six), retaining
+Encounter tracking has ten numbered columns, and Daily has five numbered
+columns, both retaining
 vertical column stripes and an unstriped name column. Squares increase from
 0.2in to 0.22in, with 0.26in column widths. Faint horizontal rules between power
 rows span the name and all tracking cells, guiding the eye without restoring
-row backgrounds. The entire numbered header row is removed; column widths are
-set through a colgroup instead. Shared-use groups remain one tracking row.
-Verification: 34 focused overview tests and production build pass; four Chromium
-overview variants verify ten columns, no header row, vertical stripes and faint
-rules across each row. Generated preview reviewed. No Firefox/full milestone
-rerun for this presentation follow-up.
+row backgrounds. Column widths are set through a colgroup. Both tables share
+one renderer and measured row/heading pagination; encounter and daily measurements
+are scoped independently so daily rows cannot be counted as encounters.
+Shared-use groups remain one encounter tracking row.
+Verification: 71 focused overview/scratchpad tests, web typechecking, focused
+lint and production build pass. Four Chromium overview print variants verify
+1–10/1–5 headers, vertical stripes, horizontal dividers, and complete measured
+dense-tracker continuation without overflow. Scratchpad preview visually inspected;
+Firefox/full milestone gates were not rerun.
 Health/header polish: the Surges reference cell has square bottom corners where
 it joins its connector; race/class/level use regular weight while the character
 name remains bold. Death-save skulls precede their label, mirroring AP circles

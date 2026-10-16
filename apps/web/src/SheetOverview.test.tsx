@@ -715,8 +715,41 @@ describe("real-data sheet overview", () => {
       .split('class="sp-usage-table"')[1]!
       .split("</table>")[0]!;
     expect(table.match(/<col\//g)).toHaveLength(11);
-    expect(table).not.toContain("<thead");
+    expect(table).toContain("<thead");
+    for (let n = 1; n <= 10; n++)
+      expect(table).toContain(`<th scope="col">${n}</th>`);
     expect(table.match(/class="ov-encounter-box"/g)).toHaveLength(20);
+  });
+  it("provides five numbered daily tracking marks per power row", () => {
+    const fixture = {
+      ...model,
+      powers: ["Alpha daily", "Beta daily"].map((name) => ({
+        name,
+        kind: "power" as const,
+        usage: "Daily",
+        actionType: "Minor",
+        fields: [],
+      })),
+    };
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={fixture}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const table = html
+      .split('aria-label="Daily power usage"')[1]!
+      .split("</table>")[0]!;
+    expect(table.match(/<col\//g)).toHaveLength(6);
+    for (let n = 1; n <= 5; n++)
+      expect(table).toContain(`<th scope="col">${n}</th>`);
+    expect(table.match(/class="ov-daily-box"/g)).toHaveLength(10);
+    expect(table).toContain("Alpha daily");
+    expect(table).toContain("Beta daily");
   });
   it("puts session/date and compact identity in the scratchpad running header", () => {
     const html = renderToStaticMarkup(

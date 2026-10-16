@@ -1117,17 +1117,39 @@ function usageGroups(rows: readonly TrackingRow[]): UsageGroup[] {
   }
   return groups;
 }
-function EncounterTable({ groups }: { groups: readonly UsageGroup[] }) {
-  const columns = Array.from({ length: 10 }, (_, i) => i + 1);
+function PowerUsageTable({
+  groups,
+  kind,
+}: {
+  groups: readonly UsageGroup[];
+  kind: "encounter" | "daily";
+}) {
+  const columns = Array.from(
+    { length: kind === "encounter" ? 10 : 5 },
+    (_, i) => i + 1,
+  );
+  const label = kind === "encounter" ? "Encounter" : "Daily";
   return (
-    <Panel title="Encounter powers" icon="power" className="sp-encounter">
-      <table className="sp-usage-table" aria-label="Encounter power usage">
+    <Panel title={`${label} powers`} icon="power" className={`sp-${kind}`}>
+      <table className="sp-usage-table" aria-label={`${label} power usage`}>
         <colgroup>
           <col />
           {columns.map((n) => (
             <col key={n} />
           ))}
         </colgroup>
+        <thead>
+          <tr>
+            <th scope="col">
+              <span className="sp-sr-only">Power</span>
+            </th>
+            {columns.map((n) => (
+              <th key={n} scope="col">
+                {n}
+              </th>
+            ))}
+          </tr>
+        </thead>
         <tbody>
           {groups.map((group) => (
             <tr key={group.id} data-tracking-id={group.id}>
@@ -1142,7 +1164,7 @@ function EncounterTable({ groups }: { groups: readonly UsageGroup[] }) {
               </th>
               {columns.map((n) => (
                 <td key={n}>
-                  <i className="ov-encounter-box" />
+                  <i className={`ov-${kind}-box`} />
                 </td>
               ))}
             </tr>
@@ -1154,17 +1176,14 @@ function EncounterTable({ groups }: { groups: readonly UsageGroup[] }) {
 }
 function DailyList({ rows }: { rows: readonly TrackingRow[] }) {
   return (
-    <Panel title="Daily powers" icon="power" className="sp-daily">
-      <div className="sp-daily-list">
-        {rows.map((power) => (
-          <div key={power.id} data-tracking-id={power.id}>
-            <ActionTypeIcon decorative value={power.action} />
-            <span>{power.name}</span>
-            <span className="sp-use-box" />
-          </div>
-        ))}
-      </div>
-    </Panel>
+    <PowerUsageTable
+      kind="daily"
+      groups={rows.map((power) => ({
+        id: power.id,
+        name: "",
+        powers: [power],
+      }))}
+    />
   );
 }
 function TrackingPanels({
@@ -1178,7 +1197,9 @@ function TrackingPanels({
     <div
       className={`ov-tracking-panels${encounter.length && daily.length ? " has-both" : ""}`}
     >
-      {encounter.length ? <EncounterTable groups={encounter} /> : null}
+      {encounter.length ? (
+        <PowerUsageTable kind="encounter" groups={encounter} />
+      ) : null}
       {daily.length ? <DailyList rows={daily} /> : null}
     </div>
   );
@@ -1263,8 +1284,8 @@ function Scratchpad({
         [...element.querySelectorAll<HTMLElement>(selector)].map(
           (row) => row.getBoundingClientRect().height,
         );
-      const encounter = heights(".sp-usage-table tbody > tr"),
-        daily = heights(".sp-daily-list > div");
+      const encounter = heights(".sp-encounter .sp-usage-table tbody > tr"),
+        daily = heights(".sp-daily .sp-usage-table tbody > tr");
       return {
         encounter,
         daily,

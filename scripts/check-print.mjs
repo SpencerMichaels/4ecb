@@ -1271,8 +1271,12 @@ async function checkScratchpad(client, monochrome) {
       actionPointMarks:page.querySelectorAll('.ov-action-point-count .icon').length,
       actionPointHollow:[...page.querySelectorAll('.ov-action-point-count .icon')].every(e=>getComputedStyle(e).fill==='none'),
       encounterColumnColors:[...page.querySelector('.sp-usage-table tbody tr').children].map(e=>getComputedStyle(e).backgroundColor),
-      encounterColumns:page.querySelectorAll('.sp-usage-table colgroup col').length-1,
+      encounterColumns:page.querySelectorAll('.sp-encounter .sp-usage-table colgroup col').length-1,
       encounterHeader:page.querySelector('.sp-usage-table thead') !== null,
+      encounterNumbers:[...page.querySelectorAll('.sp-encounter .sp-usage-table thead th')].slice(1).map(e=>e.textContent),
+      dailyNumbers:[...page.querySelectorAll('.sp-daily .sp-usage-table thead th')].slice(1).map(e=>e.textContent),
+      dailyColumnColors:[...page.querySelector('.sp-daily .sp-usage-table tbody tr').children].map(e=>getComputedStyle(e).backgroundColor),
+      dailyRowRules:[...page.querySelector('.sp-daily .sp-usage-table tbody tr:nth-child(2)').children].every(e=>getComputedStyle(e).borderTopStyle==='solid' && getComputedStyle(e).borderTopColor==='rgb(226, 230, 233)'),
       recordsBottomGap:page.querySelector('.sp-page-footer').getBoundingClientRect().top-page.querySelector('.ov-scratch-bottom').getBoundingClientRect().bottom,
       overflowWarning:page.dataset.overviewOverflow,
       contentBottomGap:page.querySelector('.sp-page-footer').getBoundingClientRect().top-page.querySelector('.sp-page-content').getBoundingClientRect().bottom,
@@ -1348,13 +1352,20 @@ async function checkScratchpad(client, monochrome) {
   );
   assert(
     state.encounterColumns === 10 &&
-      !state.encounterHeader &&
+      state.encounterHeader &&
+      state.encounterNumbers.join(",") === "1,2,3,4,5,6,7,8,9,10" &&
+      state.dailyNumbers.join(",") === "1,2,3,4,5" &&
+      state.dailyRowRules &&
+      state.dailyColumnColors.every(
+        (color, index) =>
+          color === (index % 2 ? "rgb(240, 243, 245)" : "rgba(0, 0, 0, 0)"),
+      ) &&
       state.encounterRowRules &&
       state.encounterColumnColors.every(
         (color, index) =>
           color === (index % 2 ? "rgb(240, 243, 245)" : "rgba(0, 0, 0, 0)"),
       ),
-    "Encounter tracking columns must alternate backgrounds, leaving the name column unstriped",
+    "Encounter/daily tracking must have numbered, vertically striped columns and horizontal row dividers, leaving names unstriped",
   );
   assert(
     JSON.stringify(state.labels) ===
@@ -1403,7 +1414,6 @@ async function checkScratchpad(client, monochrome) {
     `(() => {
     const s=document.styleSheets[0], i=s.cssRules.length;
     s.insertRule('.sheet-overview .ov-power-trackers .sp-usage-table tbody > tr { height: 160px; }',i);
-    s.insertRule('.sheet-overview .ov-power-trackers .sp-daily-list > div { min-height: 160px; }',i+1);
     return i;
   })()`,
   );
@@ -1440,7 +1450,7 @@ async function checkScratchpad(client, monochrome) {
   } finally {
     await evaluate(
       client,
-      `(() => { document.styleSheets[0].deleteRule(${rule + 1}); document.styleSheets[0].deleteRule(${rule}); return true; })()`,
+      `(() => { document.styleSheets[0].deleteRule(${rule}); return true; })()`,
     );
   }
   await waitForExpression(
