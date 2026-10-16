@@ -715,7 +715,11 @@ describe("real-data sheet overview", () => {
       .split('class="sp-usage-table"')[1]!
       .split("</table>")[0]!;
     expect(table.match(/<col\//g)).toHaveLength(11);
-    expect(table).toContain("<thead");
+    expect(table).toContain('<thead class="sp-sr-only">');
+    const heading = html
+      .split('class="ov-tracking-title"')[1]!
+      .split("</h3>")[0]!;
+    expect(heading.match(/class="ov-tracking-number"/g)).toHaveLength(10);
     for (let n = 1; n <= 10; n++)
       expect(table).toContain(`<th scope="col">${n}</th>`);
     expect(table.match(/class="ov-encounter-box"/g)).toHaveLength(20);
@@ -745,6 +749,11 @@ describe("real-data sheet overview", () => {
       .split('aria-label="Daily power usage"')[1]!
       .split("</table>")[0]!;
     expect(table.match(/<col\//g)).toHaveLength(6);
+    expect(table).toContain('<thead class="sp-sr-only">');
+    const heading = html
+      .split('class="ov-tracking-title"')[1]!
+      .split("</h3>")[0]!;
+    expect(heading.match(/class="ov-tracking-number"/g)).toHaveLength(5);
     for (let n = 1; n <= 5; n++)
       expect(table).toContain(`<th scope="col">${n}</th>`);
     expect(table.match(/class="ov-daily-box"/g)).toHaveLength(10);

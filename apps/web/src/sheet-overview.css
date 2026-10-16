@@ -1569,6 +1569,36 @@ body:has(.sp-prototype) {
 }
 .ov-power-trackers {
   container-type: inline-size;
+  --ov-tracking-column-width: 0.26in;
+}
+.ov-power-trackers .sp-encounter {
+  --ov-tracking-count: 10;
+}
+.ov-power-trackers .sp-daily {
+  --ov-tracking-count: 5;
+}
+.ov-power-trackers .ov-usage-panel > h3 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(
+      var(--ov-tracking-count),
+      var(--ov-tracking-column-width)
+    );
+  gap: 0;
+  padding-inline: 0.07in;
+}
+.ov-tracking-title {
+  display: flex;
+  align-items: center;
+  gap: 0.06in;
+  min-width: 0;
+}
+.ov-tracking-number {
+  text-align: center;
+  font-size: 8pt;
+  font-weight: 600;
+}
+.ov-usage-panel .sp-usage-table thead.sp-sr-only {
+  display: block;
 }
 .ov-tracking-panels {
   display: grid;
@@ -1587,7 +1617,7 @@ body:has(.sp-prototype) {
   width: auto;
 }
 .ov-power-trackers .sp-usage-table col:not(:first-child) {
-  width: 0.26in;
+  width: var(--ov-tracking-column-width);
 }
 .ov-power-trackers .sp-usage-table tbody td {
   border: 0;

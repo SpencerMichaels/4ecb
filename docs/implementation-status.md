@@ -125,8 +125,10 @@ Chromium overview variants verify three hollow AP icons and alternating tracking
 column backgrounds with no name-column stripe. The generated preview was
 reviewed; Firefox/full milestone suites were not rerun for this style follow-up.
 Encounter tracking has ten numbered columns, and Daily has five numbered
-columns, both retaining
-vertical column stripes and an unstriped name column. Squares increase from
+columns. Their numbers sit in the colored pane-title band, directly aligned with the tracking
+boxes. A shared width variable and matching header/body padding keep centers
+aligned; screen-reader column headers remain but occupy no visible row. Both
+retain vertical column stripes and an unstriped name column. Squares increase from
 0.2in to 0.22in, with 0.26in column widths. Faint horizontal rules between power
 rows span the name and all tracking cells, guiding the eye without restoring
 row backgrounds. Column widths are set through a colgroup. Both tables share
@@ -138,6 +140,10 @@ lint and production build pass. Four Chromium overview print variants verify
 1–10/1–5 headers, vertical stripes, horizontal dividers, and complete measured
 dense-tracker continuation without overflow. Scratchpad preview visually inspected;
 Firefox/full milestone gates were not rerun.
+The merged-title-band follow-up passes the same 71 focused tests, web typechecking,
+lint/build and four Chromium overview variants. It checks number/box centers
+within one pixel and confirms the accessible table header has no visible row
+height; the scratchpad preview was visually inspected.
 Health/header polish: the Surges reference cell has square bottom corners where
 it joins its connector; race/class/level use regular weight while the character
 name remains bold. Death-save skulls precede their label, mirroring AP circles

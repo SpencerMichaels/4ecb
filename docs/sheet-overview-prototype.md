@@ -6,8 +6,10 @@ correction remain; M5.6 stays open.
 
 The scratchpad uses numbered tracking tables for both frequencies: ten Encounter
 columns and five Daily columns. Both have square marks, vertical column stripes,
-an unstriped power-name column, and faint horizontal row dividers. Shared-use
-encounter groups retain one row; measured pagination includes both header rows
+an unstriped power-name column, and faint horizontal row dividers. Numbers align
+over their boxes within the colored pane-title band, not a separate visible row.
+Hidden table headers retain column semantics. Shared-use encounter groups retain
+one row; measured pagination includes the merged pane headings
 and keeps encounter/daily row measurements separate.
 
 Recorded XP is a small "Recorded: …" label inside the scratchpad's existing XP

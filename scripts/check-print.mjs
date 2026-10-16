@@ -1273,8 +1273,20 @@ async function checkScratchpad(client, monochrome) {
       encounterColumnColors:[...page.querySelector('.sp-usage-table tbody tr').children].map(e=>getComputedStyle(e).backgroundColor),
       encounterColumns:page.querySelectorAll('.sp-encounter .sp-usage-table colgroup col').length-1,
       encounterHeader:page.querySelector('.sp-usage-table thead') !== null,
-      encounterNumbers:[...page.querySelectorAll('.sp-encounter .sp-usage-table thead th')].slice(1).map(e=>e.textContent),
-      dailyNumbers:[...page.querySelectorAll('.sp-daily .sp-usage-table thead th')].slice(1).map(e=>e.textContent),
+      encounterNumbers:[...page.querySelectorAll('.sp-encounter > h3 .ov-tracking-number')].map(e=>e.textContent),
+      dailyNumbers:[...page.querySelectorAll('.sp-daily > h3 .ov-tracking-number')].map(e=>e.textContent),
+      trackingHeadersMerged:[...page.querySelectorAll('.ov-usage-panel')].every(panel=>{
+        const heading=panel.querySelector('h3');
+        const row=panel.querySelector('tbody tr');
+        const numbers=[...heading.querySelectorAll('.ov-tracking-number')];
+        const cells=[...row.querySelectorAll('td')];
+        return panel.querySelector('thead').getBoundingClientRect().height<=1.1 &&
+          row.getBoundingClientRect().top-heading.getBoundingClientRect().bottom<8 &&
+          numbers.length===cells.length && numbers.every((number,i)=>{
+            const n=number.getBoundingClientRect(), c=cells[i].getBoundingClientRect();
+            return Math.abs(n.left+n.width/2-c.left-c.width/2)<1;
+          });
+      }),
       dailyColumnColors:[...page.querySelector('.sp-daily .sp-usage-table tbody tr').children].map(e=>getComputedStyle(e).backgroundColor),
       dailyRowRules:[...page.querySelector('.sp-daily .sp-usage-table tbody tr:nth-child(2)').children].every(e=>getComputedStyle(e).borderTopStyle==='solid' && getComputedStyle(e).borderTopColor==='rgb(226, 230, 233)'),
       recordsBottomGap:page.querySelector('.sp-page-footer').getBoundingClientRect().top-page.querySelector('.ov-scratch-bottom').getBoundingClientRect().bottom,
@@ -1353,6 +1365,7 @@ async function checkScratchpad(client, monochrome) {
   assert(
     state.encounterColumns === 10 &&
       state.encounterHeader &&
+      state.trackingHeadersMerged &&
       state.encounterNumbers.join(",") === "1,2,3,4,5,6,7,8,9,10" &&
       state.dailyNumbers.join(",") === "1,2,3,4,5" &&
       state.dailyRowRules &&

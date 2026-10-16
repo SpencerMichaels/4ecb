@@ -45,7 +45,7 @@ function Panel({
   className = "",
   headerNote,
 }: {
-  title: string;
+  title: ReactNode;
   icon?: IconName;
   children: ReactNode;
   className?: string;
@@ -1130,7 +1130,22 @@ function PowerUsageTable({
   );
   const label = kind === "encounter" ? "Encounter" : "Daily";
   return (
-    <Panel title={`${label} powers`} icon="power" className={`sp-${kind}`}>
+    <Panel
+      title={
+        <>
+          <span className="ov-tracking-title">
+            <Icon name="power" />
+            {label} powers
+          </span>
+          {columns.map((n) => (
+            <span className="ov-tracking-number" key={n} aria-hidden="true">
+              {n}
+            </span>
+          ))}
+        </>
+      }
+      className={`sp-${kind} ov-usage-panel`}
+    >
       <table className="sp-usage-table" aria-label={`${label} power usage`}>
         <colgroup>
           <col />
@@ -1138,7 +1153,7 @@ function PowerUsageTable({
             <col key={n} />
           ))}
         </colgroup>
-        <thead>
+        <thead className="sp-sr-only">
           <tr>
             <th scope="col">
               <span className="sp-sr-only">Power</span>
