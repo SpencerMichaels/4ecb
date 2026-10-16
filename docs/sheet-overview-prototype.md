@@ -20,13 +20,18 @@ descriptions remain complete. Equipment and power indexes
 use full-width panes. Items opens with a two-column Equipped table (breaking after
 Feet), then full-width Currency and Inventory panes; ordinary empty slots show an em dash, while conditional
 implement/companion slots appear when occupied. Currency shows carried/stored
-wallet amounts at the current level, with builder-style denomination columns. Nonzero
-stored balances add Carried/Stored/Total rows (per-denomination counts, no
-conversion); otherwise one Amount row has no carried/stored distinction.
+wallet amounts at the current level, with page-1-style numeric groups: small
+denomination labels above prominent values in softly tinted cells. Nonzero
+stored balances add Carried/Stored/Total groups (per-denomination counts, no
+conversion); otherwise one group has no carried/stored distinction.
 Unknown/custom currency remains visible as text, never coerced to zero.
-Inventory follows with two Item/Qty pairs per row and full-width category dividers;
-a white center gutter separates the pairs, with quantities aligned toward their
-own item names instead of toward the neighboring pair.
+Inventory follows with two category columns, balanced by estimated printed lines
+(including wrapped item names), placing each category in the shorter column.
+Categories stay intact and retain builder order within each column;
+a single short category stays in one column even when that leaves the other empty.
+Measured pagination moves whole categories; only a category taller than a fresh
+page column may split, with its heading repeated. Each column has Item/Qty labels
+and a clear central gutter.
 equipped superscripts stay attached to each item, and every owned item remains.
 Features/rituals/character prose use stacked category-local
 two-column blocks under full-width headings. Measured splits balance column

@@ -1507,7 +1507,7 @@ interface ReferencePart {
   slotCells?: readonly { label: string; icon: IconName }[];
   rightSlotCells?: readonly { label: string; icon: IconName }[];
   equippedInventory?: boolean;
-  equippedInventoryColumns?: readonly number[];
+  inventoryIndex?: number;
 }
 export interface ReferenceEntry {
   id: string;
@@ -1519,6 +1519,66 @@ export interface ReferenceEntry {
   level?: number;
   feature?: boolean;
   currency?: readonly SheetValue[];
+  inventoryColumns?: readonly (readonly ReferencePart[])[];
+}
+
+function inventoryGroups(parts: readonly ReferencePart[]): ReferencePart[][] {
+  const groups: ReferencePart[][] = [];
+  for (const part of parts) {
+    if (
+      !groups.length ||
+      groups.at(-1)![0]!.tableCategory !== part.tableCategory
+    )
+      groups.push([]);
+    groups.at(-1)!.push(part);
+  }
+  return groups;
+}
+function balanceInventoryGroups(
+  groups: readonly (readonly ReferencePart[])[],
+  cost: (part: ReferencePart) => number,
+) {
+  // Oversized-category continuations must read down then across in item order.
+  if (
+    new Set(groups.map((group) => group[0]?.tableCategory)).size < groups.length
+  ) {
+    const prefix = [0];
+    for (const group of groups)
+      prefix.push(
+        prefix.at(-1)! + group.reduce((sum, part) => sum + cost(part), 0),
+      );
+    let split = groups.length;
+    let height = prefix.at(-1)!;
+    for (let at = 1; at < groups.length; at++) {
+      const next = Math.max(prefix[at]!, prefix.at(-1)! - prefix[at]!);
+      if (next < height) {
+        split = at;
+        height = next;
+      }
+    }
+    return {
+      columns: [groups.slice(0, split).flat(), groups.slice(split).flat()],
+      height,
+    };
+  }
+  const columns: ReferencePart[][] = [[], []];
+  const heights = [0, 0];
+  for (const group of groups) {
+    const column = heights[0]! <= heights[1]! ? 0 : 1;
+    columns[column]!.push(...group);
+    heights[column]! += group.reduce((sum, part) => sum + cost(part), 0);
+  }
+  return { columns, height: Math.max(...heights) };
+}
+/** Keep whole categories and their order within each column, balancing printed lines. */
+export function balancedInventoryColumns(parts: readonly ReferencePart[]) {
+  const groups = inventoryGroups(parts);
+  return balanceInventoryGroups(groups, (part) => {
+    const name =
+      part.block.kind === "table" ? (part.block.rows[0]?.[0] ?? "") : "";
+    const heading = groups.some((group) => group[0] === part) ? 2 : 0;
+    return heading + Math.max(1, Math.ceil(name.length / 30));
+  }).columns;
 }
 /** Split prose only for layout. Every word, list item and table row remains. */
 export function referenceParts(value: string, label?: string): ReferencePart[] {
@@ -1823,32 +1883,6 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       };
     },
   );
-  const inventory = result.find((entry) => entry.id === "inventory:false");
-  if (inventory) {
-    const rows: ReferencePart[] = [];
-    for (let i = 0; i < inventory.parts.length; i++) {
-      const first = inventory.parts[i]!;
-      const second =
-        inventory.parts[i + 1]?.tableCategory === first.tableCategory
-          ? inventory.parts[++i]
-          : undefined;
-      const cells = (part: ReferencePart | undefined) =>
-        part?.block.kind === "table" ? part.block.rows[0]! : ["", ""];
-      rows.push({
-        ...(first.tableCategory ? { tableCategory: first.tableCategory } : {}),
-        equippedInventoryColumns: [
-          first.equippedInventory ? 0 : -1,
-          second?.equippedInventory ? 2 : -1,
-        ].filter((column) => column >= 0),
-        block: {
-          kind: "table",
-          headers: ["Item", "Qty", "Item", "Qty"],
-          rows: [[...cells(first), ...cells(second)]],
-        },
-      });
-    }
-    inventory.parts = rows;
-  }
   for (const usage of ["At-Will", "Encounter", "Daily", "Other"]) {
     const available = model.powers.filter(
       (power) => !isRulesReferencePower(power),
@@ -1980,10 +2014,12 @@ function ReferenceCard({
   entry,
   measure = false,
   nested = false,
+  inventoryColumn = false,
 }: {
   entry: ReferenceEntry;
   measure?: boolean;
   nested?: boolean;
+  inventoryColumn?: boolean;
 }) {
   if (entry.currency) {
     const { currency, ...loadout } = entry;
@@ -2003,27 +2039,29 @@ function ReferenceCard({
             <h3>Currency</h3>
           </header>
           <div className="sp-feature-body">
-            <table className="ov-reference-table ov-currency-table">
-              <thead>
-                <tr>
-                  {["", ...wallet.rows.map((row) => row[0]!)].map((heading) => (
-                    <th key={heading} scope="col">
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {wallet.headers.slice(1).map((label, column) => (
-                  <tr key={label}>
-                    <th scope="row">{label}</th>
-                    {wallet.rows.map((row, i) => (
-                      <td key={i}>{row[column + 1]}</td>
+            <div className="ov-wallet-groups">
+              {wallet.headers.slice(1).map((label, column) => (
+                <section
+                  className="ov-stat-group ov-wallet-group"
+                  aria-label={
+                    label === "Amount"
+                      ? "Currency amounts"
+                      : `${label} currency`
+                  }
+                  key={label}
+                >
+                  {label !== "Amount" ? <h4>{label}</h4> : null}
+                  <div className="sp-values ov-band-values ov-wallet-values">
+                    {wallet.rows.map((row) => (
+                      <div key={row[0]}>
+                        <span>{row[0]}</span>
+                        <strong>{row[column + 1]}</strong>
+                      </div>
                     ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  </div>
+                </section>
+              ))}
+            </div>
             {wallet.notes.map((note, i) => (
               <div className="ov-currency-note" key={i}>
                 {note.label ? <strong>{note.label}: </strong> : null}
@@ -2033,6 +2071,48 @@ function ReferenceCard({
           </div>
         </section>
       </div>
+    );
+  }
+  if (entry.id.startsWith("inventory:false") && !inventoryColumn) {
+    const columns =
+      entry.inventoryColumns ?? balancedInventoryColumns(entry.parts);
+    return (
+      <section
+        className="sp-feature-card ov-reference-card ov-reference-pane"
+        data-reference-id={entry.id}
+        data-reference-category="items"
+      >
+        <header>
+          <Icon name="item" />
+          <h3>Inventory{entry.continued ? " (continued)" : ""}</h3>
+          {entry.parts.some((part) => part.equippedInventory) ? (
+            <span className="ov-inventory-legend">
+              <sup>E</sup> Equipped
+            </span>
+          ) : null}
+        </header>
+        <div className="sp-feature-body ov-inventory-columns">
+          {columns.map((parts, i) =>
+            parts.length ? (
+              <ReferenceCard
+                key={i}
+                entry={{
+                  ...entry,
+                  parts: parts.map((part) => ({
+                    ...part,
+                    inventoryIndex: entry.parts.indexOf(part),
+                  })),
+                }}
+                measure={measure}
+                nested
+                inventoryColumn
+              />
+            ) : (
+              <div key={i} />
+            ),
+          )}
+        </div>
+      </section>
     );
   }
   const parts: ReferencePart[] = [];
@@ -2072,32 +2152,35 @@ function ReferenceCard({
     : [];
   return (
     <section
-      className={`sp-feature-card ov-reference-pane${nested ? "" : " ov-reference-card"}`}
+      className={
+        inventoryColumn
+          ? "ov-inventory-column"
+          : `sp-feature-card ov-reference-pane${nested ? "" : " ov-reference-card"}`
+      }
       data-reference-id={entry.id}
       data-reference-category={referenceCategory(entry.group)}
       data-usage={/^powers:(At-Will|Encounter|Daily)/.exec(entry.id)?.[1]}
     >
-      <header>
-        <Icon name={referenceIcon(entry.group)} />
-        <h3>
-          {entry.name}
-          {entry.continued ? " (continued)" : ""}
-        </h3>
-        {entry.feature ? (
-          <span className="ov-reference-level">
-            {entry.level === undefined ? "Level —" : `Level ${entry.level}`}
-          </span>
-        ) : null}
-        {entry.id.startsWith("inventory:false") &&
-        parts.some(
-          (part) =>
-            part.equippedInventory || part.equippedInventoryColumns?.length,
-        ) ? (
-          <span className="ov-inventory-legend">
-            <sup>E</sup> Equipped
-          </span>
-        ) : null}
-      </header>
+      {!inventoryColumn ? (
+        <header>
+          <Icon name={referenceIcon(entry.group)} />
+          <h3>
+            {entry.name}
+            {entry.continued ? " (continued)" : ""}
+          </h3>
+          {entry.feature ? (
+            <span className="ov-reference-level">
+              {entry.level === undefined ? "Level —" : `Level ${entry.level}`}
+            </span>
+          ) : null}
+          {entry.id.startsWith("inventory:false") &&
+          parts.some((part) => part.equippedInventory) ? (
+            <span className="ov-inventory-legend">
+              <sup>E</sup> Equipped
+            </span>
+          ) : null}
+        </header>
+      ) : null}
       <div className="sp-feature-body">
         {tables ? (
           <table
@@ -2113,7 +2196,11 @@ function ReferenceCard({
               </tr>
             </thead>
             {parts.map((part, index) => (
-              <tbody className="ov-reference-part" key={index}>
+              <tbody
+                className="ov-reference-part"
+                data-inventory-index={part.inventoryIndex}
+                key={index}
+              >
                 {part.tableCategory &&
                 (index === 0 ||
                   part.tableCategory !== parts[index - 1]?.tableCategory) ? (
@@ -2163,8 +2250,7 @@ function ReferenceCard({
                         ) : (
                           cell
                         )}
-                        {(part.equippedInventory && column === 0) ||
-                        part.equippedInventoryColumns?.includes(column) ? (
+                        {part.equippedInventory && column === 0 ? (
                           <sup
                             className="ov-equipped-marker"
                             aria-label="Equipped"
@@ -2243,6 +2329,72 @@ export function paginateReferences(
     if (!m) {
       // Preserve unmeasured content; the page overflow indicator remains explicit.
       place(entry, capacity);
+      continue;
+    }
+    const inventoryHeading = seenGroups.has(entry.group)
+      ? 0
+      : groupHeadingHeight;
+    if (
+      entry.id.startsWith("inventory:false") &&
+      m.height + inventoryHeading > capacity
+    ) {
+      const bodyCapacity = Math.max(
+        1,
+        capacity - m.overhead - inventoryHeading,
+      );
+      const costs = new Map(
+        entry.parts.map((part, i) => [part, m.parts[i] ?? bodyCapacity]),
+      );
+      const cost = (part: ReferencePart) => costs.get(part) ?? bodyCapacity;
+      const groups: ReferencePart[][] = [];
+      for (const category of inventoryGroups(entry.parts)) {
+        if (
+          category.reduce((sum, part) => sum + cost(part), 0) <= bodyCapacity
+        ) {
+          groups.push(category);
+          continue;
+        }
+        // Only a category taller than a fresh column may be divided. Reserve
+        // its repeated category heading when beginning a continuation chunk.
+        let chunk: ReferencePart[] = [];
+        let height = 0;
+        for (const part of category) {
+          if (chunk.length && height + cost(part) > bodyCapacity) {
+            groups.push(chunk);
+            chunk = [];
+            height = 0;
+            costs.set(part, cost(part) + 30);
+          }
+          chunk.push(part);
+          height += cost(part);
+        }
+        if (chunk.length) groups.push(chunk);
+      }
+      let offset = 0;
+      while (offset < groups.length) {
+        let count = 1;
+        while (
+          offset + count < groups.length &&
+          balanceInventoryGroups(groups.slice(offset, offset + count + 1), cost)
+            .height <= bodyCapacity
+        )
+          count++;
+        const balanced = balanceInventoryGroups(
+          groups.slice(offset, offset + count),
+          cost,
+        );
+        place(
+          {
+            ...entry,
+            id: `${entry.id}:part${offset + 1}`,
+            continued: offset > 0,
+            parts: groups.slice(offset, offset + count).flat(),
+            inventoryColumns: balanced.columns,
+          },
+          m.overhead + balanced.height,
+        );
+        offset += count;
+      }
       continue;
     }
     if (
@@ -2569,16 +2721,40 @@ function ReferencePages({
         Array.from(
           container.querySelectorAll<HTMLElement>(".ov-reference-card"),
         ).map((card) => {
-          const heights = Array.from(
+          const measuredParts = Array.from(
             card.querySelectorAll<HTMLElement>(".ov-reference-part"),
-          ).map((part) => part.getBoundingClientRect().height);
+          );
+          if (card.querySelector(".ov-inventory-columns"))
+            measuredParts.sort(
+              (a, b) =>
+                Number(a.dataset.inventoryIndex) -
+                Number(b.dataset.inventoryIndex),
+            );
+          const heights = measuredParts.map(
+            (part) => part.getBoundingClientRect().height,
+          );
           return [
             card.dataset.referenceId!,
             {
               height: card.getBoundingClientRect().height,
               overhead:
                 card.getBoundingClientRect().height -
-                heights.reduce((sum, h) => sum + h, 0),
+                (card.querySelector(".ov-inventory-columns")
+                  ? Math.max(
+                      0,
+                      ...Array.from(
+                        card.querySelectorAll(".ov-inventory-column"),
+                      ).map((column) =>
+                        Array.from(
+                          column.querySelectorAll(".ov-reference-part"),
+                        ).reduce(
+                          (sum, part) =>
+                            sum + part.getBoundingClientRect().height,
+                          0,
+                        ),
+                      ),
+                    )
+                  : heights.reduce((sum, h) => sum + h, 0)),
               parts: heights,
             },
           ] as const;

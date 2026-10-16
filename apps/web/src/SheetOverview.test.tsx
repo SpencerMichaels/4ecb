@@ -14,6 +14,7 @@ import {
   paginateReferenceGroups,
   referenceParts,
   references,
+  balancedInventoryColumns,
   summaryContinuationEntries,
   type ReferenceEntry,
 } from "./SheetOverview";
@@ -30,6 +31,123 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  const inventoryParts = (category: string, count: number) =>
+    Array.from({ length: count }, (_, i) => ({
+      tableCategory: category,
+      block: {
+        kind: "table" as const,
+        headers: ["Item", "Qty"],
+        rows: [[`${category} ${i}`, "1"]],
+      },
+    }));
+  it("balances inventory lines at whole-category boundaries, not halfway through each category", () => {
+    const parts = [
+      ...inventoryParts("Weapons", 10),
+      ...inventoryParts("Armor", 5),
+      ...inventoryParts("Gear", 4),
+    ];
+    const columns = balancedInventoryColumns(parts);
+    expect(
+      columns.map((column) => [
+        ...new Set(column.map((part) => part.tableCategory)),
+      ]),
+    ).toEqual([["Weapons"], ["Armor", "Gear"]]);
+    expect(columns.flat()).toEqual(parts);
+    expect(
+      balancedInventoryColumns(parts.slice(0, 10)).map(
+        (column) => column.length,
+      ),
+    ).toEqual([10, 0]);
+  });
+  it("moves complete inventory categories rather than splitting those that fit a fresh column", () => {
+    const parts = [
+      ...inventoryParts("Weapons", 2),
+      ...inventoryParts("Armor", 3),
+      ...inventoryParts("Gear", 2),
+    ];
+    const entry: ReferenceEntry = {
+      id: "inventory:false",
+      name: "Inventory",
+      group: "Items",
+      source: "",
+      parts,
+    };
+    const pages = paginateReferences(
+      [entry],
+      new Map([
+        [
+          entry.id,
+          { height: 700, overhead: 40, parts: [90, 90, 70, 70, 70, 90, 90] },
+        ],
+      ]),
+      300,
+    ).flat();
+    expect(pages).toHaveLength(2);
+    const placements = pages.flatMap((page) =>
+      page.inventoryColumns!.map((column) => [
+        ...new Set(column.map((part) => part.tableCategory)),
+      ]),
+    );
+    expect(placements.flat().filter((name) => name === "Weapons")).toHaveLength(
+      1,
+    );
+    expect(placements.flat().filter((name) => name === "Armor")).toHaveLength(
+      1,
+    );
+    expect(placements.flat().filter((name) => name === "Gear")).toHaveLength(1);
+    expect(pages.flatMap((page) => page.parts)).toEqual(parts);
+  });
+  it("includes wrapped item-name lines when balancing inventory categories", () => {
+    const wrapped = inventoryParts("Weapons", 1);
+    wrapped[0]!.block.rows[0]![0] = "Long item name ".repeat(20);
+    const columns = balancedInventoryColumns([
+      ...wrapped,
+      ...inventoryParts("Armor", 5),
+      ...inventoryParts("Gear", 4),
+    ]);
+    expect(
+      columns.map((column) => [
+        ...new Set(column.map((part) => part.tableCategory)),
+      ]),
+    ).toEqual([["Weapons"], ["Armor", "Gear"]]);
+  });
+  it("uses the shorter column for later categories rather than forcing a contiguous split", () => {
+    const columns = balancedInventoryColumns([
+      ...inventoryParts("Weapons", 4),
+      ...inventoryParts("Gear", 10),
+      ...inventoryParts("Worn", 4),
+    ]);
+    expect(
+      columns.map((column) => [
+        ...new Set(column.map((part) => part.tableCategory)),
+      ]),
+    ).toEqual([["Weapons", "Worn"], ["Gear"]]);
+  });
+  it("splits a genuinely oversized inventory category without losing items", () => {
+    const parts = inventoryParts("Gear", 10);
+    const entry: ReferenceEntry = {
+      id: "inventory:false",
+      name: "Inventory",
+      group: "Items",
+      source: "",
+      parts,
+    };
+    const pages = paginateReferences(
+      [entry],
+      new Map([
+        [entry.id, { height: 1040, overhead: 40, parts: parts.map(() => 100) }],
+      ]),
+      400,
+    ).flat();
+    expect(pages.length).toBeGreaterThan(1);
+    expect(pages.flatMap((page) => page.parts)).toEqual(parts);
+    expect(pages[1]?.continued).toBe(true);
+    expect(
+      pages.every((page) =>
+        page.inventoryColumns!.every((column) => column.length <= 3),
+      ),
+    ).toBe(true);
+  });
   it("separates common at-will grants and rules references without hiding actual No Action powers", () => {
     const power = (name: string): SheetCard => ({
       kind: "power",
@@ -1663,19 +1781,18 @@ describe("real-data sheet overview", () => {
     );
     const carried = tables("inventory:false");
     expect(
-      carried.every(
-        (table) => table.headers?.join("/") === "Item/Qty/Item/Qty",
-      ),
+      carried.every((table) => table.headers?.join("/") === "Item/Qty"),
     ).toBe(true);
     expect(carried.flatMap((table) => table.rows)).toEqual([
-      ["A sword", "2", "", ""],
-      ["Boots", "2", "Z helmet", "2"],
+      ["A sword", "2"],
+      ["Boots", "2"],
+      ["Z helmet", "2"],
     ]);
     expect(
       entries
         .find((entry) => entry.id === "inventory:false")
         ?.parts.map((part) => part.tableCategory),
-    ).toEqual(["Weapons", "Worn items"]);
+    ).toEqual(["Weapons", "Worn items", "Worn items"]);
     expect(
       entries
         .find((entry) => entry.id === "inventory:true")
@@ -1731,12 +1848,13 @@ describe("real-data sheet overview", () => {
         part.block.kind === "table" ? part.block.rows : [],
       ),
     ).toEqual([
-      ["Carried only", "3", "Equipped only", "1"],
-      ["Stack", "5", "", ""],
+      ["Carried only", "3"],
+      ["Equipped only", "1"],
+      ["Stack", "5"],
     ]);
     expect(
-      inventory.parts.map((part) => part.equippedInventoryColumns),
-    ).toEqual([[2], [0]]);
+      inventory.parts.map((part) => Boolean(part.equippedInventory)),
+    ).toEqual([false, true, true]);
     const html = renderToStaticMarkup(
       <SheetOverview
         model={fixture}
@@ -1787,10 +1905,10 @@ describe("real-data sheet overview", () => {
     expect(html).toContain('class="ov-reference-card ov-equipment-stack"');
     expect(html).toContain(">Currency</h3>");
     expect(equipped.group).toBe("Items");
-    expect(html).toContain('<th scope="row">Carried</th>');
-    expect(html).toContain('<th scope="row">Stored</th>');
-    expect(html).toContain('<th scope="row">Total</th>');
-    expect(html).toContain('<th scope="col">GP</th>');
+    expect(html).toContain('aria-label="Carried currency"');
+    expect(html).toContain('aria-label="Stored currency"');
+    expect(html).toContain('aria-label="Total currency"');
+    expect(html).toContain("<span>GP</span><strong>13</strong>");
   });
   it("renders the approved summary and scratchpad without changing source data", () => {
     const markup = renderToStaticMarkup(

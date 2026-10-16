@@ -592,25 +592,55 @@ body:has(.sp-prototype) {
 .ov-equipment-stack > * {
   min-width: 0;
 }
-.ov-currency-table tbody th {
-  border-bottom: 0;
-  font-size: inherit;
+.ov-wallet-groups {
+  display: grid;
+  gap: 0.08in;
 }
-.ov-currency-table th:first-child {
-  width: 15%;
+.ov-wallet-group {
+  border: 1px solid #b9cbdc;
+  border-radius: 5px;
+  padding: 0.04in;
+  min-width: 0;
 }
-.ov-currency-table :is(th, td):not(:first-child) {
-  text-align: right;
-}
-.ov-currency-table thead th {
+.ov-currency-pane .ov-wallet-group h4 {
+  margin: 0 0 0.04in;
   padding-left: 0.025in;
-  padding-right: 0.025in;
+  color: #3e5f7c;
+  font-size: 8pt;
+  font-weight: 600;
 }
-.ov-currency-pane .ov-reference-table tbody {
-  background: transparent;
+.ov-wallet-values {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
-.ov-currency-pane tbody tr:nth-child(odd) {
-  background: #f0f3f5;
+.sp-values.ov-wallet-values > div {
+  background: #eaf0f6;
+}
+.sp-values.ov-wallet-values strong {
+  font-size: 16pt;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.sp-values.ov-wallet-values span {
+  color: #3e5f7c;
+}
+.ov-wallet-group[aria-label="Total currency"] {
+  border-color: #c1cfb5;
+}
+.ov-wallet-group[aria-label="Total currency"] .ov-wallet-values > div {
+  background: #eef3e9;
+}
+.ov-wallet-group[aria-label="Total currency"] .ov-wallet-values span {
+  color: #526b45;
+}
+.sheet-overview.sp-monochrome .ov-wallet-group {
+  border-color: #aaa;
+}
+.sheet-overview.sp-monochrome .ov-wallet-values > div {
+  background: #eee;
+}
+.sheet-overview.sp-monochrome .ov-wallet-values span,
+.sheet-overview.sp-monochrome .ov-wallet-group h4 {
+  color: #333;
 }
 .ov-currency-pane p {
   margin: 0;
@@ -619,16 +649,23 @@ body:has(.sp-prototype) {
   margin-top: 0.08in;
   overflow-wrap: anywhere;
 }
-.ov-inventory-table thead th:nth-child(even),
-.ov-inventory-table td:nth-child(even) {
-  width: 16%;
-  text-align: left;
-  white-space: nowrap;
+.ov-inventory-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.24in;
+  align-items: start;
 }
-.ov-inventory-table thead th:nth-child(3),
-.ov-inventory-table td:nth-child(3) {
-  border-left: 0.24in solid #fff;
-  padding-left: 0.12in;
+.ov-inventory-column {
+  min-width: 0;
+}
+.ov-inventory-column .sp-feature-body {
+  padding: 0;
+}
+.ov-inventory-table thead th:last-child,
+.ov-inventory-table td:last-child:not(:first-child) {
+  width: 14%;
+  text-align: right;
+  white-space: nowrap;
 }
 .ov-reference-table .ov-reference-table-category th {
   background: #fff;

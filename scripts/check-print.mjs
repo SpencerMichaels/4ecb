@@ -324,6 +324,10 @@ try {
           '.sheet-overview > .ov-paper[aria-label="Character reference"]:has(.ov-equipment-stack)',
         ],
         [
+          "inventory",
+          '.sheet-overview > .ov-paper[aria-label="Character reference"]:has(.ov-inventory-columns)',
+        ],
+        [
           "power-index",
           '.sheet-overview > .ov-paper[aria-label="Character reference"]:has(.ov-power-index-table)',
         ],
@@ -545,7 +549,12 @@ try {
   chromium.kill("SIGTERM");
   preview.kill("SIGTERM");
   await Promise.allSettled([processExit(chromium), processExit(preview)]);
-  await rm(scratch, { recursive: true, force: true });
+  await rm(scratch, {
+    recursive: true,
+    force: true,
+    maxRetries: 5,
+    retryDelay: 100,
+  });
 }
 
 async function firefoxPrintMatrix(character, origin, outputDirectory) {
@@ -1137,8 +1146,8 @@ async function checkReferences(client) {
       equippedHeaders:pages.flatMap(p=>[...p.querySelectorAll('.ov-equipped-table')]).every(table=>
         [...table.querySelectorAll('thead th')].map(cell=>cell.textContent).join('/')==='Slot/Item/Slot/Item'),
       inventoryHeaders:pages.flatMap(p=>[...p.querySelectorAll('.ov-inventory-table')]).every(table=>
-        [...table.querySelectorAll('thead th')].map(cell=>cell.textContent).join('/')==='Item/Qty/Item/Qty' &&
-          table.querySelector('tbody .ov-reference-inventory-category th')?.getAttribute('colspan')==='4'),
+        [...table.querySelectorAll('thead th')].map(cell=>cell.textContent).join('/')==='Item/Qty' &&
+          table.querySelector('tbody .ov-reference-inventory-category th')?.getAttribute('colspan')==='2'),
       equipmentPair:pages.some(p=>[...p.querySelectorAll('.ov-equipment-stack')].some(pair=>{
         const equipped=pair.querySelector('.ov-reference-pane');
         const currency=pair.querySelector('.ov-currency-pane');

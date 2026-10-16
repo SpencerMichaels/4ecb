@@ -261,17 +261,22 @@ them. Reference continuations repeat titles and retain their complete parts.
 Items and power indexes use full-width panes. Items opens with a two-column
 Equipped table, breaking after Feet like the builder, followed by full-width
 Currency and Inventory panes. Inventory has
-two Item/Qty pairs per row, grouped under category dividers. Equipped lists open
+two category columns, assigning each category to the shorter column by estimated
+printed lines and preserving category order within each column. Whole categories remain in one column, even if that leaves a
+shorter/empty partner column. Measured pagination moves categories intact;
+only a category taller than a fresh page column may split, repeating its heading.
+Equipped lists open
 ordinary slots with an em dash, preserving builder slot order/icons; conditional
 implement/companion slots appear when occupied. Currency uses current-level
 carried/stored wallet text (latest applicable per-level key, legacy details as
-fallback). Denomination columns show one Amount row without carried/stored labels
-when stored currency is absent/zero; nonzero stored funds add Carried, Stored,
-and Total count rows without denomination conversion. Unknown/custom text is
-preserved below the table and never silently converted to zero. Inventory quantity
+fallback). Currency reuses page-1-style numeric groups with small denomination
+labels above prominent counts in softly tinted cells. One group has no
+carried/stored labels when stored currency is absent/zero; nonzero stored funds
+add Carried, Stored, and Total groups without denomination conversion. Unknown/custom text is
+preserved below the groups and never silently converted to zero. Inventory quantity
 columns align toward their own names, with a white center gutter separating pairs.
 Redundant carried/stored character-note cards are omitted. Equipment/Currency
-are measured as a stacked block; inventory pagination retains complete paired rows
+are measured as a stacked block; inventory pagination retains complete category groups
 and repeats category headings at continuation starts. The equipment-layout
 follow-up passes 57 focused overview/sheet-model tests, web typechecking, focused
 lint, and the production build. The Chromium overview-only Letter/A4 ×
@@ -283,7 +288,13 @@ overview/wallet tests, web typechecking, focused lint and production build, plus
 the same four Chromium overview print cases with no overflow. The Items page was
 visually inspected using nonzero carried/stored synthetic balances. Wallet tests
 cover zero/absent stored funds, per-denomination totals, unknown/custom text and
-unknown versus known-zero balances. Owner visual review remains open. Features,
+unknown versus known-zero balances. The category-preserving Inventory/numeric
+Currency follow-up passes 61 focused overview/wallet tests, including wrapped-name
+line estimates, intact-category pagination, and oversized-category preservation.
+Web typechecking, focused lint and the production build pass; the four Chromium
+overview print cases remain free of overflow. The print harness retries temporary
+directory cleanup briefly to tolerate Chromium's late profile writes. Owner visual
+review remains open. Features,
 rituals and character prose use category-local two-column blocks. The power index columns are
 Power, Level, Range, Target, Attack and Damage. Action icons precede power names;
 item-power indexes likewise place icons beside item names, leaving Item/Usage
