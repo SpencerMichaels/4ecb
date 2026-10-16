@@ -21,9 +21,15 @@ are full-width tables; features/rituals/character prose use stacked category-loc
 two-column blocks under full-width headings. Measured splits balance column
 heights while preserving down-then-across level/name order. The power
 index has Power, Level, Range, Target, Attack and Damage columns, with action
-icons preceding names instead of a separate Action column. It uses calculated
-equipped/default-variant totals and separate multiattack lines; unknown secondary
-totals remain unknown rather than borrowing the primary total. Section headings,
+icons preceding names instead of a separate Action column. It uses authored,
+weapon-independent formulas (STR+2 vs AC, 2[W]+STR), not an equipped weapon's
+calculated totals. Separate multiattack lines retain their own formulas/targets.
+Character-specific at-wills and positively identified common at-will actions have
+separate green panes. Explicit Rules Item records are indexed under Rules
+references, not as invokable powers; their physical cards remain available.
+Universal availability comes from unconditional generic Level1Rules grants, not
+power names or Core publication metadata. Unresolved provenance is not guessed.
+Section headings,
 level metadata and source footers use the accepted
 muted pane vocabulary; long prose flows at normal size with measured continuation.
 Category headings now appear only once at the start, with a subtle origin tint

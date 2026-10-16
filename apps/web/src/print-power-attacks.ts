@@ -75,7 +75,7 @@ export function defaultPrintVariant(
   );
 }
 
-/** Shared equipped-variant projection for physical cards and reference indexes. */
+/** Equipped phase projection for physical cards; indexes use authored formulas. */
 export function defaultPrintAttacks(
   card: SheetCard,
 ): readonly SheetPowerAttack[] {

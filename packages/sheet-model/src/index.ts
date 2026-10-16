@@ -24,6 +24,7 @@ import {
   featureClauseKey,
   irrelevantFeatureClauseNames,
 } from "./power-feature-clauses";
+import { universalPowerDefinitionIds } from "./power-reference";
 import {
   withSheetOverview,
   type SheetOverview,
@@ -57,6 +58,8 @@ export interface SheetCard {
   readonly fields: readonly SheetValue[];
   /** Retained legacy index metadata, separate from authored card rule fields. */
   readonly referenceFields?: readonly SheetValue[];
+  /** Positively identified unconditional generic starting-rule power grant. */
+  readonly universal?: boolean;
   readonly flavor?: string;
   readonly prerequisites?: string;
   readonly description?: string;
@@ -153,6 +156,21 @@ function inventoryCategoryFields(
 ): Pick<OverviewInventory, "category"> {
   const category = options.inventoryCategory?.(elements);
   return category === undefined ? {} : { category };
+}
+
+function withPowerReferenceMetadata(
+  model: CharacterSheetModel,
+  content: readonly ContentEntity[],
+): CharacterSheetModel {
+  const universal = universalPowerDefinitionIds(content);
+  return {
+    ...model,
+    powers: model.powers.map((card) =>
+      card.id && universal.has(card.id.trim().toLowerCase())
+        ? { ...card, universal: true }
+        : card,
+    ),
+  };
 }
 
 function extendedLegacyNotes(
@@ -1130,7 +1148,7 @@ export function buildSheetModel(
       ...extendedLegacyNotes(snapshot.textStrings),
     ],
   };
-  return withSheetOverview(model, {
+  return withSheetOverview(withPowerReferenceMetadata(model, content), {
     level: Number(detail.Level) || snapshot.levelCount || 1,
     stats: snapshot.stats,
     selections: snapshot.selectedRules,
@@ -1450,7 +1468,7 @@ export function buildEvaluatedSheetModel(
       ...extendedLegacyNotes(build.textStrings),
     ],
   };
-  return withSheetOverview(model, {
+  return withSheetOverview(withPowerReferenceMetadata(model, content), {
     level: evaluation.level,
     evaluatedStats: evaluation.stats,
     occurrences: evaluation.occurrences,

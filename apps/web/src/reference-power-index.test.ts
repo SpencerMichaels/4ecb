@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { referencePowerRows } from "./reference-power-index";
+import {
+  isRulesReferencePower,
+  referencePowerRows,
+} from "./reference-power-index";
 import type { SheetCard } from "@4ecb/sheet-model";
 import { buildSheetModel } from "@4ecb/sheet-model";
 const power: SheetCard = {
@@ -50,19 +53,19 @@ describe("reference power index", () => {
     expect(row[1]).toBe("3");
     expect(row.slice(2, 4)).toEqual(["Ranged 10", "One creature"]);
   });
-  it("keeps range and target separate, damage formulas compact, and unknown totals explicit", () => {
+  it("keeps range and target separate and uses compact authored formulas", () => {
     const rows = referencePowerRows(power);
     expect(rows[0]).toEqual([
       "Two steps · Attack 1",
       "7",
       "Melee weapon",
       "One creature",
-      "— vs AC",
+      "STR+2 vs AC",
       "2[W]+STR",
     ]);
-    expect(rows[1]).toEqual(["Attack 2", "", "", "", "— vs Ref", "1[W]+DEX"]);
+    expect(rows[1]).toEqual(["Attack 2", "", "", "", "DEX vs Ref", "1[W]+DEX"]);
   });
-  it("does not invent utility attacks and retains a supplied legacy primary total only for that phase", () => {
+  it("does not invent utility attacks or substitute cached weapon totals", () => {
     expect(
       referencePowerRows({ kind: "power", name: "Aid", fields: [] })[0]?.slice(
         4,
@@ -74,12 +77,12 @@ describe("reference power index", () => {
         attack: "+17 vs AC",
         damage: "2d10+8",
       })[0]?.slice(4),
-    ).toEqual(["+17 vs AC", "2d10+8"]);
+    ).toEqual(["STR+2 vs AC", "2[W]+STR"]);
     expect(referencePowerRows({ ...power, attack: "+17 vs AC" })[1]?.[4]).toBe(
-      "— vs Ref",
+      "DEX vs Ref",
     );
   });
-  it("uses equipped main-hand totals per phase, including different secondary abilities", () => {
+  it("ignores equipped and spare totals while retaining distinct secondary formulas", () => {
     const attack = (
       ordinal: number,
       ability: string,
@@ -118,8 +121,8 @@ describe("reference power index", () => {
       ],
     };
     const rows = referencePowerRows(card);
-    expect(rows[0]?.slice(4)).toEqual(["+14 vs AC", "2d8+5"]);
-    expect(rows[1]?.slice(3)).toEqual(["", "+10 vs Ref", "1d8+3"]);
+    expect(rows[0]?.slice(4)).toEqual(["STR+2 vs AC", "2[W]+STR"]);
+    expect(rows[1]?.slice(3)).toEqual(["", "DEX vs Ref", "1[W]+DEX"]);
     const offHand = {
       ...main,
       id: "off",
@@ -136,7 +139,22 @@ describe("reference power index", () => {
         offHand,
       ],
     });
-    expect(mixed[1]?.slice(4)).toEqual(["+16 vs Ref", "1d6+5"]);
+    expect(mixed[1]?.slice(4)).toEqual(["DEX vs Ref", "1[W]+DEX"]);
+  });
+  it("identifies explicit rules items, not legitimate No Action powers or generic Feature metadata", () => {
+    expect(
+      isRulesReferencePower({
+        ...power,
+        fields: [{ label: "Rules Item", value: "A persistent effect rule." }],
+      }),
+    ).toBe(true);
+    expect(
+      isRulesReferencePower({
+        ...power,
+        actionType: "No Action",
+        fields: [{ label: "Power Type", value: "Feature" }],
+      }),
+    ).toBe(false);
   });
   it("leaves unfamiliar damage prose on the card rather than swallowing its riders", () => {
     const card = {

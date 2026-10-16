@@ -262,17 +262,27 @@ Equipment and power indexes use full-width tables; features,
 rituals and character prose use category-local two-column blocks. The power index columns are
 Power, Level, Range, Target, Attack and Damage. Action icons precede power names;
 item-power indexes likewise place icons beside item names, leaving Item/Usage
-columns. Attack/damage values use the shared physical-card equipped/default
-variant projection, including separate per-phase totals and eligible equipped
-off-hand phase fallback. Legacy caches supply only their known primary total,
-never an assumed secondary total. Authored damage formulas remain fallback when
-no calculated damage is available. Secondary targets are not inherited without authored metadata; unfamiliar
+columns. Attack/damage values use weapon-independent authored formulas, preserving
+intrinsic power offsets (STR+2 vs AC) and [W] expressions rather than selecting an
+equipped weapon. Multiattack phases retain their own formulas and explicit
+targets; secondary targets are not inherited without authored metadata. Missing
+authored formulas point to the card, never reverse-engineer a cached total. Unfamiliar
 damage formulas point to the card rather than absorbing riders. Legacy range,
 target and level are retained separately as index metadata, without adding them
 to physical-card rule fields. All reference sections share coherent R-numbering.
 Basic attacks are regular Power Index entries; their standalone alternatives
 tables and page-link plumbing are removed. Page-1 omitted-weapon notes point to
 power cards, which retain the complete comparison tables.
+Character-specific at-wills and common at-will actions have separate green
+panes. The sheet model marks universal powers only from unconditional generic
+Level1Rules grants (including generic grant containers, excluding conditioned or
+later-level grants). Class/power names and publication Source do not establish
+universal availability. With unavailable content, provenance remains unknown
+rather than guessed. Explicit nonempty Rules Item fields identify rules records
+such as Divine Sanction: their names move to Rules references, while the original
+cards remain. Power Type Feature or No Action alone never cause exclusion.
+Only the power index switches back to formulas; physical-card calculations and
+weapon comparison tables retain their accepted behavior.
 "Equipped by slot" is a Slot/Item lookup using the builder's body/held/other
 slot order, labels and icons (unknown slots last), then item name. "Inventory" includes
 all owned quantities (including equipped holdings) in Item/Qty columns, with a
@@ -366,6 +376,19 @@ tables. All eight overview-only Chromium/Firefox variants pass (13 fixture pages
 no overflow), checking six index columns, inline action icons, calculated/explicit
 unknown attack cells and absence of standalone basic tables. The index preview
 was visually reviewed. Reference review and M5.6 remain open.
+
+Weapon-independent/grouped-index follow-up: inspected ignored generic starting
+grants and the explicit Divine Sanction Rules Item definition. 162 focused
+sheet-model/overview/index/print-attack tests, web typecheck, focused lint,
+formatting and production build pass. Regressions verify ignoring equipped/cache
+totals, preserving authored per-phase formulas, rules-item separation without
+excluding legitimate No Action powers, conditional/later-level grant rejection,
+and conservative behavior without content. The overview-only Chromium/Firefox
+matrix passes all eight variants (13 fixture pages, no overflow), checking
+formula/explicit See-card attack cells rather than weapon-specific totals.
+The cache-only public print fixture cannot supply authored formulas; exact
+formula and grouping assertions live in synthetic model/UI tests. Original
+cards and physical-card math remain unchanged. Reference review remains open.
 
 Verification: 139 focused sheet-model/overview/index/layout tests, web typecheck,
 focused lint and production build pass. The overview-only print check passes

@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { buildSheetModel } from "@4ecb/sheet-model";
+import { buildSheetModel, type SheetCard } from "@4ecb/sheet-model";
 import {
   SheetOverview,
   fittingReminderIndices,
@@ -30,6 +30,41 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("separates common at-will grants and rules references without hiding actual No Action powers", () => {
+    const power = (name: string): SheetCard => ({
+      kind: "power",
+      name,
+      usage: "At-Will",
+      actionType: "Standard Action",
+      fields: [],
+    });
+    const powers = [
+      power("Character attack"),
+      { ...power("Common maneuver"), universal: true },
+      {
+        ...power("Effect rule"),
+        actionType: "",
+        fields: [{ label: "Rules Item", value: "An applied effect." }],
+      },
+      { ...power("Legitimate free effect"), actionType: "No Action" },
+    ];
+    const entries = references({ ...model, powers });
+    const names = (id: string) =>
+      entries
+        .find((entry) => entry.id === id)!
+        .parts.flatMap((part) =>
+          part.block.kind === "table"
+            ? part.block.rows.map((row) => row[0])
+            : [],
+        );
+    expect(names("powers:At-Will")).toEqual([
+      "Character attack",
+      "Legitimate free effect",
+    ]);
+    expect(names("powers:At-Will:common")).toEqual(["Common maneuver"]);
+    expect(names("power-rules-references")).toEqual(["Effect rule"]);
+    expect(powers).toHaveLength(4);
+  });
   it("prints background mechanics without narrative while retaining unresolved legacy text", () => {
     const feature = {
       id: "background",

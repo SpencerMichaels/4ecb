@@ -1137,8 +1137,8 @@ async function checkReferences(client) {
       noStandaloneBasics:ids.every(id=>!id.startsWith('basic:')),
       inlinePowerActions:pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table tbody')]).every(body=>
         body.querySelector('td:first-child .action-type-icon')),
-      calculatedIndexAttacks:pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table tbody td:nth-child(5)')]).every(cell=>
-        !cell.textContent.trim() || /^(?:[+-]?\\d+\\s+vs\\b|—)/i.test(cell.textContent.trim())),
+      weaponIndependentIndexAttacks:pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table tbody td:nth-child(5)')]).every(cell=>
+        !cell.textContent.trim() || /^(?:STR|CON|DEX|INT|WIS|CHA|Primary ability|See card)/i.test(cell.textContent.trim())),
       equippedIcons:pages.flatMap(p=>[...p.querySelectorAll('.ov-equipped-table tbody td:first-child')]).every(cell=>cell.querySelector('.icon')),
       inventoryIncludesEquipped:pages.some(p=>[...p.querySelectorAll('.ov-inventory-table tbody tr')].some(row=>
         row.querySelector('td:first-child')?.textContent.startsWith('Synthetic item 01') && row.querySelector('.ov-equipped-marker') && row.querySelector('td:last-child')?.textContent==='1')),
@@ -1163,7 +1163,7 @@ async function checkReferences(client) {
       state.pageNumbersOnly &&
       state.noStandaloneBasics &&
       state.inlinePowerActions &&
-      state.calculatedIndexAttacks &&
+      state.weaponIndependentIndexAttacks &&
       state.equippedIcons &&
       state.inventoryIncludesEquipped &&
       state.usageColors.length === (state.monochrome ? 1 : 3) &&

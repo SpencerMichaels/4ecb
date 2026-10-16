@@ -20,7 +20,10 @@ import { ActionTypeIcon } from "./ActionTypeIcon";
 import { Prose, ProseBlocks, proseBlocks, type ProseBlock } from "./Prose";
 import { printItemPower } from "./print-item-presentation";
 import { SurgeBar } from "./SurgeBar";
-import { referencePowerRows } from "./reference-power-index";
+import {
+  isRulesReferencePower,
+  referencePowerRows,
+} from "./reference-power-index";
 import { INVENTORY_CATEGORIES, ORDERED_LOADOUT_SLOTS } from "./equipment-ui";
 import {
   paginateTracking,
@@ -1741,51 +1744,77 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       });
   }
   for (const usage of ["At-Will", "Encounter", "Daily", "Other"]) {
-    const powers = model.powers.filter((power) =>
+    const available = model.powers.filter(
+      (power) => !isRulesReferencePower(power),
+    );
+    const matching = available.filter((power) =>
       usage === "Other"
         ? !/^(?:at-will|encounter|daily)/i.test(power.usage ?? "")
         : (power.usage ?? "").toLowerCase().startsWith(usage.toLowerCase()),
     );
-    if (powers.length)
-      result.push({
-        id: `powers:${usage}`,
-        name: `${usage} powers`,
-        group: "Power index",
-        source: "",
-        parts: sortedTrackingRows(
-          powers.map((power) => ({
-            id: power.id ?? power.name,
-            name: power.name,
-            action: power.actionType ?? "",
-            usage: power.usage ?? "",
-            utility:
-              find(power.fields, "Power Type").toLowerCase() === "utility",
-          })),
-        ).flatMap((row) => {
-          const power = powers.find(
-            (entry) => (entry.id ?? entry.name) === row.id,
-          )!;
-          return [
-            {
-              powerIndex: true,
-              indexAction: power.actionType ?? "",
-              block: {
-                kind: "table" as const,
-                headers: [
-                  "Power",
-                  "Level",
-                  "Range",
-                  "Target",
-                  "Attack",
-                  "Damage",
-                ],
-                rows: referencePowerRows(power),
+    for (const common of usage === "At-Will" ? [false, true] : [false]) {
+      const powers =
+        usage === "At-Will"
+          ? matching.filter((power) => Boolean(power.universal) === common)
+          : matching;
+      if (powers.length)
+        result.push({
+          id: `powers:${usage}${common ? ":common" : ""}`,
+          name: common ? "Common at-will actions" : `${usage} powers`,
+          group: "Power index",
+          source: "",
+          parts: sortedTrackingRows(
+            powers.map((power) => ({
+              id: power.id ?? power.name,
+              name: power.name,
+              action: power.actionType ?? "",
+              usage: power.usage ?? "",
+              utility:
+                find(power.fields, "Power Type").toLowerCase() === "utility",
+            })),
+          ).flatMap((row) => {
+            const power = powers.find(
+              (entry) => (entry.id ?? entry.name) === row.id,
+            )!;
+            return [
+              {
+                powerIndex: true,
+                indexAction: power.actionType ?? "",
+                block: {
+                  kind: "table" as const,
+                  headers: [
+                    "Power",
+                    "Level",
+                    "Range",
+                    "Target",
+                    "Attack",
+                    "Damage",
+                  ],
+                  rows: referencePowerRows(power),
+                },
               },
-            },
-          ];
-        }),
-      });
+            ];
+          }),
+        });
+    }
   }
+  const rulesReferences = model.powers.filter(isRulesReferencePower);
+  if (rulesReferences.length)
+    result.push({
+      id: "power-rules-references",
+      name: "Rules references",
+      group: "Power index",
+      source: "",
+      parts: [...rulesReferences]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((power) => ({
+          block: {
+            kind: "table" as const,
+            headers: ["Reference"],
+            rows: [[power.name]],
+          },
+        })),
+    });
   const itemPowers = overviewTrackingRows(model).filter((row) =>
     row.id.startsWith("item:"),
   );
