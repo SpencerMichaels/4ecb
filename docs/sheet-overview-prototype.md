@@ -24,8 +24,12 @@ index has Power, Level, Range, Target, Attack and Damage columns, with action
 icons preceding names instead of a separate Action column. It uses authored,
 weapon-independent formulas (STR+2 vs AC, 2[W]+STR), not an equipped weapon's
 calculated totals. Separate multiattack lines retain their own formulas/targets.
-Character-specific at-wills and positively identified common at-will actions have
-separate green panes. Explicit Rules Item records are full reference cards under
+Character-specific at-wills and positively identified universal at-will actions
+currently have separate green panes; an in-pane subheading is proposed, pending
+owner choice. Character-sheet power cards (screen and print) sort specific
+at-will, universal at-will, encounter, daily; non-utility before utility, then
+alphabetically. Rules-only cards follow actionable powers, before items.
+Explicit Rules Item records are full reference cards under
 their declared origin (Divine Sanction under Class Features), not invokable
 powers or a name-only rules index. Explicit origin fields precede grant ancestry;
 unknown origins stay in Other Features. Their physical cards remain available,

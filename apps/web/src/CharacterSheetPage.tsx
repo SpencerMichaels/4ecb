@@ -29,6 +29,7 @@ import { ActionTypeIcon } from "./ActionTypeIcon";
 import { Icon } from "./Icon";
 import { PortraitImage } from "./PortraitEditor";
 import { inventoryCategory } from "./equipment-ui";
+import { sortedPowerCards } from "./power-card-order";
 import { PrintPowerVariants } from "./PrintPowerVariants";
 import { printAdditionalEffect } from "./print-additional-effects";
 import {
@@ -1060,8 +1061,9 @@ export function CharacterSheetPage({
                   `The exact ${boundManifest.name} profile is installed, but evaluation is not available.`)}
       </>
     );
+  const powerCards = sortedPowerCards(model.powers);
   const printableCards = [
-    ...(character.sheetSettings.includePowerCards ? model.powers : []),
+    ...(character.sheetSettings.includePowerCards ? powerCards : []),
     ...(character.sheetSettings.includeItemCards ? model.items : []),
   ];
   const printCardPages = chunks(printableCards, 9);
@@ -1258,7 +1260,7 @@ export function CharacterSheetPage({
               <h2>Powers</h2>
             </header>
             <div className="view-card-grid">
-              {model.powers.map((card, index) => (
+              {powerCards.map((card, index) => (
                 <Card
                   key={`${card.name}-${index}`}
                   card={card}

@@ -273,8 +273,9 @@ to physical-card rule fields. All reference sections share coherent R-numbering.
 Basic attacks are regular Power Index entries; their standalone alternatives
 tables and page-link plumbing are removed. Page-1 omitted-weapon notes point to
 power cards, which retain the complete comparison tables.
-Character-specific at-wills and common at-will actions have separate green
-panes. The sheet model marks universal powers only from unconditional generic
+Character-specific at-wills and universal at-will actions currently have separate
+green panes; an in-pane subgroup is proposed, pending owner choice. The sheet
+model marks universal powers only from unconditional generic
 Level1Rules grants (including generic grant containers, excluding conditioned or
 later-level grants). Class/power names and publication Source do not establish
 universal availability. With unavailable content, provenance remains unknown
@@ -290,6 +291,11 @@ page-1 reminder or defensive-trait inference. Power Type Feature or No Action
 alone never cause exclusion.
 Only the power index switches back to formulas; physical-card calculations and
 weapon comparison tables retain their accepted behavior.
+Character-sheet power cards on screen and in print sort specific at-will,
+universal at-will, encounter, daily, with non-utility/attack powers before
+explicit utilities and alphabetical names as the final tie-break. Unknown usage
+follows known usage; Rules Item cards follow actionable powers, before items.
+This changes no builder-dialog/table or scratchpad action ordering.
 "Equipped by slot" is a Slot/Item lookup using the builder's body/held/other
 slot order, labels and icons (unknown slots last), then item name. "Inventory" includes
 all owned quantities (including equipped holdings) in Item/Qty columns, with a
@@ -405,6 +411,14 @@ formatting pass. Tests cover full Class Features text, explicit Class routing,
 historical missing-ID field fallback, unknown-origin preservation, no new page-1
 reminders, original power retention and absence of the name-only index. No full
 print matrix was rerun for this content-placement refinement. M5.6 remains open.
+
+Card-order/terminology follow-up: renamed Common to Universal at-will actions;
+its pane-to-subheading redesign awaits owner choice. Applied the requested
+specific at-will/universal at-will/encounter/daily card order to screen and print,
+with utility metadata and alphabetical tie-breaks; rules-only cards follow
+actionable powers. 55 focused card-order/index/overview tests, web typecheck and
+focused lint pass. Input card arrays are not mutated. No full print matrix was
+rerun for this ordering-only refinement.
 
 Verification: 139 focused sheet-model/overview/index/layout tests, web typecheck,
 focused lint and production build pass. The overview-only print check passes

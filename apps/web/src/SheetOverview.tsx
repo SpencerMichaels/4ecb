@@ -1760,7 +1760,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       if (powers.length)
         result.push({
           id: `powers:${usage}${common ? ":common" : ""}`,
-          name: common ? "Common at-will actions" : `${usage} powers`,
+          name: common ? "Universal at-will actions" : `${usage} powers`,
           group: "Power index",
           source: "",
           parts: sortedTrackingRows(

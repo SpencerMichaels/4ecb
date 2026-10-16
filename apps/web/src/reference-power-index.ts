@@ -17,12 +17,7 @@ const compact = (value: string) =>
     .replace(/\bvs\.\s*/gi, "vs ")
     .replace(/\s*\+\s*/g, "+")
     .trim();
-export const isRulesReferencePower = (card: SheetCard) =>
-  card.fields.some(
-    (field) =>
-      field.label.trim().toLowerCase() === "rules item" &&
-      Boolean(field.value.trim()),
-  );
+export { isRulesReferencePower } from "./power-card-order";
 
 /** Weapon-independent authored formulas; never substitute an equipment total. */
 export function referencePowerRows(
