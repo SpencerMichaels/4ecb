@@ -4,9 +4,10 @@ Status: page-1 summary and scratchpad accepted by the product owner, 2026-10-15.
 Reference-page review and the separately noted summary-continuation styling
 correction remain; M5.6 stays open.
 
-XP is now a compact fourth row of the page-1 identity table after Theme, Paragon
-path, and Epic destiny (em dash when absent). It no longer creates a standalone
-Advancement reference card/page. The scratchpad's writable XP field remains.
+Recorded XP is a small "Recorded: …" label inside the scratchpad's existing XP
+box, leaving room below for writing. The page-1 identity table stays at three
+rows, and XP does not create a standalone Advancement reference card/page.
+Absent XP leaves the scratchpad box blank; explicit zero remains visible.
 
 Production reference first draft is implemented for feedback: full references
 follow the existing power/item card pages. Origin sections sort entries by known

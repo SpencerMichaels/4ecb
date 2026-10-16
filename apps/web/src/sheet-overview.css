@@ -1548,7 +1548,9 @@ body:has(.sp-prototype) {
   min-height: 1.25in;
 }
 .ov-scratch-records .sp-xp-tracker {
-  display: block;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   min-height: 0.35in;
   flex-shrink: 0;
   border: 1px solid var(--sp-border);
@@ -1557,6 +1559,10 @@ body:has(.sp-prototype) {
   margin-top: 0.1in;
   color: var(--sp-muted);
   font-size: 8.5pt;
+}
+.ov-recorded-xp {
+  font-size: 7.5pt;
+  overflow-wrap: anywhere;
 }
 .ov-tracking-caption {
   margin-top: 0.07in !important;

@@ -835,7 +835,6 @@ function Summary({
             ["Theme", "Theme"],
             ["ParagonPath", "Paragon path"],
             ["EpicDestiny", "Epic destiny"],
-            ["Experience", "XP"],
           ].map(([field, label]) => (
             <div key={field}>
               <dt>{label}</dt>
@@ -1187,9 +1186,11 @@ function TrackingPanels({
 function ScratchpadRecords({
   panelRef,
   height,
+  recordedXP,
 }: {
   panelRef: React.RefObject<HTMLDivElement | null>;
   height?: number | undefined;
+  recordedXP: string | undefined;
 }) {
   return (
     <div
@@ -1204,6 +1205,11 @@ function ScratchpadRecords({
         <div className="sp-writing-lines ov-scratch-notes" />
         <div className="sp-xp-tracker">
           <span>XP</span>
+          {recordedXP?.trim() ? (
+            <small className="ov-recorded-xp">
+              Recorded: {recordedXP.trim()}
+            </small>
+          ) : null}
         </div>
       </Panel>
     </div>
@@ -1454,7 +1460,13 @@ function Scratchpad({
             </p>
           ) : null}
         </div>
-        <ScratchpadRecords panelRef={recordsRef} height={recordsHeight} />
+        <ScratchpadRecords
+          panelRef={recordsRef}
+          height={recordsHeight}
+          recordedXP={
+            model.identity.find((entry) => entry.label === "Experience")?.value
+          }
+        />
       </Paper>
       {layout.slice(1).map((slice, index) => (
         <Paper
@@ -1491,7 +1503,13 @@ function Scratchpad({
               Power tracking continues on page {startPage + 1}…
             </p>
           </div>
-          <ScratchpadRecords panelRef={recordsProbe} />
+          <ScratchpadRecords
+            panelRef={recordsProbe}
+            recordedXP={
+              model.identity.find((entry) => entry.label === "Experience")
+                ?.value
+            }
+          />
         </Paper>
         <Paper
           name={name}

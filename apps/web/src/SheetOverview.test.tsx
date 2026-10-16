@@ -31,34 +31,40 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
-  it("shows XP in the summary identity table instead of a standalone reference card", () => {
-    const fixture = {
-      ...model,
-      identity: [...model.identity, { label: "Experience", value: "12500" }],
-      notes: [],
-    };
-    expect(
-      references(fixture).some(
-        (entry) =>
-          entry.id === "experience" || entry.group === "Character record",
-      ),
-    ).toBe(false);
-    const html = renderToStaticMarkup(
-      <SheetOverview
-        model={fixture}
-        name="Fixture"
-        portrait={undefined}
-        paper="letter"
-        monochrome={false}
-        blankHP={false}
-      />,
-    );
-    const identity = html
-      .split('class="ov-identity-details"')[1]!
-      .split("</dl>")[0]!;
-    expect(identity).toContain("<dt>XP</dt><dd>12500</dd>");
-    expect(html).toContain("<span>XP</span>");
-  });
+  it.each(["12500", "0"])(
+    "shows recorded XP %s in the scratchpad box, not identity or a standalone reference card",
+    (value) => {
+      const fixture = {
+        ...model,
+        identity: [...model.identity, { label: "Experience", value }],
+        notes: [],
+      };
+      expect(
+        references(fixture).some(
+          (entry) =>
+            entry.id === "experience" || entry.group === "Character record",
+        ),
+      ).toBe(false);
+      const html = renderToStaticMarkup(
+        <SheetOverview
+          model={fixture}
+          name="Fixture"
+          portrait={undefined}
+          paper="letter"
+          monochrome={false}
+          blankHP={false}
+        />,
+      );
+      const identity = html
+        .split('class="ov-identity-details"')[1]!
+        .split("</dl>")[0]!;
+      expect(identity).not.toContain("<dt>XP</dt>");
+      expect(html).toContain(
+        `class="ov-recorded-xp">Recorded: ${value}</small>`,
+      );
+      expect(html).toContain("<span>XP</span>");
+    },
+  );
   it("moves reference-page running identity and title into a three-part footer", () => {
     const fixture = {
       ...model,
