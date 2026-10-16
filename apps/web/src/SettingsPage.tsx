@@ -120,6 +120,8 @@ export interface SettingsPageProps {
   readonly hideFlavortext: boolean;
   readonly onHideFlavortextChange: (hideFlavortext: boolean) => void;
   readonly keepLargeAmountsInGold: boolean;
+  readonly countCoinWeight: boolean;
+  readonly onCountCoinWeightChange: (value: boolean) => void;
   readonly onKeepLargeAmountsInGoldChange: (value: boolean) => void;
   readonly resolveAbilityChoices: boolean;
   readonly onResolveAbilityChoicesChange: (value: boolean) => void;
@@ -150,6 +152,8 @@ export function SettingsPage({
   hideFlavortext,
   onHideFlavortextChange,
   keepLargeAmountsInGold,
+  countCoinWeight,
+  onCountCoinWeightChange,
   onKeepLargeAmountsInGoldChange,
   resolveAbilityChoices,
   onResolveAbilityChoicesChange,
@@ -602,6 +606,20 @@ export function SettingsPage({
         <p className="field-help">
           Use the card's weapon selector to change the calculation or compare
           every compatible weapon in the character's inventory.
+        </p>
+        <label>
+          <input
+            type="checkbox"
+            checked={countCoinWeight}
+            onChange={(event) =>
+              onCountCoinWeightChange(event.currentTarget.checked)
+            }
+          />{" "}
+          Count coin weight
+        </label>
+        <p className="field-help">
+          Include carried coins in encumbrance on character sheets. Turn this
+          off if your group ignores coin weight. Stored coins never count.
         </p>
         <label>
           <input

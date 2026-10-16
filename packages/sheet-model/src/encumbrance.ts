@@ -75,16 +75,24 @@ export function sheetEncumbrance({
   loadAdjustment = 0,
   weightDiscount = 0,
   currency,
+  countCoinWeight = true,
 }: {
   gearWeight: number | undefined;
   strength: number | undefined;
   loadAdjustment?: number;
   weightDiscount?: number;
   currency: readonly SheetValue[];
+  countCoinWeight?: boolean;
 }): SheetEncumbrance {
   let carriedWeight: number | undefined;
   const raw = currency.find((value) => value.label === "Carried")?.value;
   if (
+    !countCoinWeight &&
+    gearWeight !== undefined &&
+    Number.isFinite(gearWeight)
+  ) {
+    carriedWeight = Math.max(0, gearWeight);
+  } else if (
     gearWeight !== undefined &&
     Number.isFinite(gearWeight) &&
     raw !== undefined &&

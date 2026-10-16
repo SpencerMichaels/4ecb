@@ -102,6 +102,15 @@ describe("release accessibility contract", () => {
   });
 
   it("keeps interactive power-card presentation options enabled by default", () => {
+    expect(settingsPage).toContain("Count coin weight");
+    expect(settingsPage).toContain("checked={countCoinWeight}");
+    expect(app).toContain(
+      'localStorage.getItem(COUNT_COIN_WEIGHT_STORAGE_KEY) !== "0"',
+    );
+    expect(app).toContain(
+      'localStorage.setItem(COUNT_COIN_WEIGHT_STORAGE_KEY, "0")',
+    );
+    expect(app).toContain("countCoinWeight={countCoinWeight}");
     expect(settingsPage).toContain(
       "Use the best ability in power descriptions",
     );
@@ -190,7 +199,8 @@ describe("release accessibility contract", () => {
     );
     expect(overview).toContain('title="Character summary"');
     expect(overview).toContain('title="Play scratchpad"');
-    expect(overview).toContain('title="Character reference"');
+    expect(overview).toContain('const title = "Character reference"');
+    expect(overview).toContain("title={title}");
     expect(overview).toContain('scope="row"');
     expect(characterSheet).toContain("print-card-grid");
     expect(styles).toMatch(

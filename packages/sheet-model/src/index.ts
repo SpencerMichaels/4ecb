@@ -170,6 +170,7 @@ function sheetCurrency(
 }
 
 export interface SheetModelOptions {
+  readonly countCoinWeight?: boolean;
   readonly resolveAbilityChoices?: boolean;
   readonly inventoryCategory?: (
     elements: readonly BuildInventoryElement[],
@@ -1124,6 +1125,7 @@ export function buildSheetModel(
     source: snapshot.source,
     currency: sheetCurrency(detail, snapshot.textStrings, snapshot.levelCount),
     encumbrance: sheetEncumbrance({
+      countCoinWeight: options.countCoinWeight !== false,
       gearWeight: cachedNumber("Weight"),
       strength: cachedNumber("Strength") ?? snapshot.abilities.Strength,
       loadAdjustment: cachedNumber("StrLoadAdjust") ?? 0,
@@ -1465,6 +1467,7 @@ export function buildEvaluatedSheetModel(
   const model: CharacterSheetModel = {
     source: "authoritative-evaluation",
     encumbrance: sheetEncumbrance({
+      countCoinWeight: options.countCoinWeight !== false,
       gearWeight: (() => {
         const weight = inventoryWeight(
           inventoryPresentations.map(({ entry, itemEntities }) => ({

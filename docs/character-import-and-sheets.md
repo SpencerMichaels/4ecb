@@ -41,6 +41,11 @@ limit is `(Strength + StrLoadAdjust) * 10 + Weight Discount`; native load states
 compare against adjusted Strength ×10/×20/×50 without Weight Discount. That
 distinction is preserved, not silently corrected. Unknown/custom currency keeps
 the carried weight and load unknown, while a known limit may still be shown.
+The browser-local Settings “Count coin weight” preference defaults to on and
+applies to both sheet-model paths. Off omits carried coins entirely, including
+unknown/custom wallet text, but never invents missing gear weight. It changes
+sheet encumbrance/load only, not wallet amounts, inventory weights, load limits,
+character data, or native compatibility exports.
 Encumbrance appears as a compact line inside Inventory. Each inventory row also
 projects its quantity-inclusive weight using the same base/override rules before
 stock-stat truncation, displayed at the right of the item cell in muted text.

@@ -10,6 +10,25 @@ import type { EvaluatedCharacter } from "@4ecb/rules-engine";
 import { buildEvaluatedSheetModel, buildSheetModel } from ".";
 
 describe("sheet model", () => {
+  it("applies the coin-weight option to cached sheets without modifying the cache", () => {
+    const snapshot: LegacyCharacterSnapshot = {
+      details: { CarriedMoney: "500 gp" },
+      abilities: { Strength: 10 },
+      stats: { Weight: "95" },
+      selectedRules: [],
+      loot: [],
+      powers: [],
+      textStrings: {},
+      levelCount: 1,
+      source: "legacy-cache",
+    };
+    expect(buildSheetModel(snapshot).encumbrance?.carriedWeight).toBe(105);
+    expect(
+      buildSheetModel(snapshot, [], { countCoinWeight: false }).encumbrance
+        ?.carriedWeight,
+    ).toBe(95);
+    expect(snapshot.stats.Weight).toBe("95");
+  });
   it("retains physical and identity details and cached encumbrance for legacy references", () => {
     const model = buildSheetModel({
       details: {
@@ -858,6 +877,28 @@ describe("sheet model", () => {
     ])
       expect(model.identity.some((value) => value.label === label)).toBe(true);
     expect(model.encumbrance?.normalLimit).toBe(200);
+    const withCoins = {
+      ...snapshot,
+      details: { ...snapshot.details, CarriedMoney: "500 gp" },
+    };
+    const withCoinWeight = buildEvaluatedSheetModel(
+      withCoins,
+      build,
+      evaluation,
+      content,
+    );
+    const withoutCoinWeight = buildEvaluatedSheetModel(
+      withCoins,
+      build,
+      evaluation,
+      content,
+      { countCoinWeight: false },
+    );
+    expect(
+      withCoinWeight.encumbrance!.carriedWeight! -
+        withoutCoinWeight.encumbrance!.carriedWeight!,
+    ).toBe(10);
+    expect(withCoinWeight.currency).toEqual(withoutCoinWeight.currency);
     expect(model.abilities).toContainEqual({ label: "Strength", value: "20" });
     expect(model.defenses).toContainEqual({ label: "AC", value: "19" });
     expect(model.defenses).toContainEqual({

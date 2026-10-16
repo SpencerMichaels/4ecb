@@ -116,6 +116,7 @@ export const SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY =
 export const SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY =
   "4ecb.showPrintTitleActionIcon.v1";
 export const PRINT_CARD_TEXT_SIZE_STORAGE_KEY = "4ecb.printCardTextSize.v1";
+export const COUNT_COIN_WEIGHT_STORAGE_KEY = "4ecb.countCoinWeight.v1";
 
 function RouteFocusOnMount({
   children,
@@ -213,6 +214,22 @@ export function App() {
     }
   });
   const firstRoute = useRef(true);
+  const [countCoinWeight, setCountCoinWeight] = useState(() => {
+    try {
+      return localStorage.getItem(COUNT_COIN_WEIGHT_STORAGE_KEY) !== "0";
+    } catch {
+      return true;
+    }
+  });
+  useEffect(() => {
+    try {
+      if (countCoinWeight)
+        localStorage.removeItem(COUNT_COIN_WEIGHT_STORAGE_KEY);
+      else localStorage.setItem(COUNT_COIN_WEIGHT_STORAGE_KEY, "0");
+    } catch {
+      // The encumbrance preference still applies for this session.
+    }
+  }, [countCoinWeight]);
   const [showEquippedAttackBonus, setShowEquippedAttackBonus] = useState(() => {
     try {
       return (
@@ -584,6 +601,8 @@ export function App() {
                   onHideFlavortextChange={setHideFlavortext}
                   keepLargeAmountsInGold={keepLargeAmountsInGold}
                   onKeepLargeAmountsInGoldChange={setKeepLargeAmountsInGold}
+                  countCoinWeight={countCoinWeight}
+                  onCountCoinWeightChange={setCountCoinWeight}
                   resolveAbilityChoices={resolveAbilityChoices}
                   onResolveAbilityChoicesChange={setResolveAbilityChoices}
                   abbreviateAbilityValues={abbreviateAbilityValues}
@@ -620,6 +639,7 @@ export function App() {
                   characterId={route.characterId}
                   manifests={manifests}
                   printOnReady={route.print === true}
+                  countCoinWeight={countCoinWeight}
                   resolveAbilityChoices={resolveAbilityChoices}
                   abbreviateAbilityValues={abbreviateAbilityValues}
                   expandWeaponDice={expandWeaponDice}

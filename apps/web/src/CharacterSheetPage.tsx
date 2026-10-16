@@ -816,6 +816,7 @@ export function CharacterSheetPage({
   showEquippedAttackBonus = true,
   showPrintTitleActionIcon = true,
   printCardTextSize = 8,
+  countCoinWeight = true,
 }: {
   readonly characterId: string;
   readonly manifests: readonly ContentPackManifest[];
@@ -827,6 +828,7 @@ export function CharacterSheetPage({
   readonly showEquippedAttackBonus?: boolean;
   readonly showPrintTitleActionIcon?: boolean;
   readonly printCardTextSize?: number;
+  readonly countCoinWeight?: boolean;
 }) {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [character, setCharacter] = useState<CharacterRecord>();
@@ -919,6 +921,7 @@ export function CharacterSheetPage({
       ]),
     );
     const options = {
+      countCoinWeight,
       resolveAbilityChoices,
       inventoryCategory: (
         elements: Parameters<typeof inventoryCategory>[0]["elements"],
@@ -937,7 +940,14 @@ export function CharacterSheetPage({
           exactProfile ? content?.entities : undefined,
           options,
         );
-  }, [character, content, evaluation, exactProfile, resolveAbilityChoices]);
+  }, [
+    character,
+    content,
+    evaluation,
+    exactProfile,
+    resolveAbilityChoices,
+    countCoinWeight,
+  ]);
   const evaluatedSheetReady =
     !exactProfile || evaluation !== undefined || evaluationError !== undefined;
   useEffect(() => {

@@ -2,6 +2,22 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Coin-weight preference (2026-10-16): Settings now offers “Count coin weight,”
+enabled by default, persisted per browser with session fallback when storage is
+unavailable. Character sheets rebuild their model when it changes. Both evaluated
+and legacy-cache encumbrance/load omit carried coins when disabled; wallets,
+per-item weights, limits and character/export data remain unchanged. Unknown
+money does not block gear-only encumbrance, but unknown gear still does.
+The proposed page-1 identity status line is not implemented yet: its scope is
+Size, Deity and possibly Alignment only, not physical-description trivia.
+Verification: 195 focused sheet-model/overview/settings-contract tests,
+sheet-model/web typechecks, focused lint, formatting and production/PWA build
+pass. Tests cover default-on counting, off-state load changes, both projection
+paths, custom money, unknown gear and unchanged wallets. A stale source-shape
+assertion now follows the reference title variable introduced by the prior
+footer refactor; its page-title requirement is retained. No print-layout or
+full milestone suite was rerun for this calculation/settings-only change.
+
 Inventory follow-up (2026-10-16): encumbrance now appears as a compact line
 inside Inventory, replacing the separate pane. Each item cell has a muted,
 right-aligned quantity-inclusive weight; per-row fractions are retained before

@@ -243,6 +243,11 @@ On **View sheet**, select Letter or A4, optional blank hit points, power/item
 cards, and color or monochrome. Settings persist per character. Choose **Print
 or save PDF** and confirm the same paper size in the browser print dialog.
 
+The browser-level **Settings → Display → Count coin weight** checkbox controls
+whether carried coins contribute to sheet encumbrance. It starts enabled; turn
+it off for groups that ignore coin weight. Stored coins never count. Changing
+this preference does not change the recorded money or item weights.
+
 The browser-level **Settings → Display** option **Use the best ability in power
 descriptions** is enabled by default. When power prose offers several abilities,
 View and print show only the highest available modifier and its value. Equal

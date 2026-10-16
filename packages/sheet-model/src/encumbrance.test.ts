@@ -30,6 +30,35 @@ const definition = (
   provenance: { sourceKey: "public", sourceOrdinal: 0 },
 });
 describe("native encumbrance projection", () => {
+  it("can ignore coin weight without changing gear weight, limits or wallet data", () => {
+    const currency = [{ label: "Carried", value: "500 gp" }];
+    const input = { gearWeight: 95, strength: 10, currency };
+    expect(sheetEncumbrance(input)).toEqual({
+      carriedWeight: 105,
+      normalLimit: 100,
+      load: "Heavy",
+    });
+    expect(sheetEncumbrance({ ...input, countCoinWeight: false })).toEqual({
+      carriedWeight: 95,
+      normalLimit: 100,
+      load: "Normal",
+    });
+    expect(currency[0]?.value).toBe("500 gp");
+    expect(
+      sheetEncumbrance({
+        ...input,
+        currency: [{ label: "Carried", value: "custom coins" }],
+        countCoinWeight: false,
+      }).carriedWeight,
+    ).toBe(95);
+    expect(
+      sheetEncumbrance({
+        ...input,
+        gearWeight: undefined,
+        countCoinWeight: false,
+      }).carriedWeight,
+    ).toBeUndefined();
+  });
   it("retains fractional weight in quantity-inclusive inventory rows", () => {
     expect(
       inventoryHoldingWeight({ quantity: 3, definitions: [], override: "0.5" }),
