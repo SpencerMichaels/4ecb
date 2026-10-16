@@ -583,16 +583,37 @@ body:has(.sp-prototype) {
   width: 14%;
 }
 .ov-reference-table .ov-reference-inventory-category th {
-  background: #eaf0f6;
+  background: #fff;
   color: #3e5f7c;
   font-size: 9pt;
   font-weight: 700;
   padding: 0.055in;
-  border-bottom: 0;
+  border-bottom: 1px solid #b9cbdc;
+  border-top: 1px solid #b9cbdc;
 }
 .sheet-overview.sp-monochrome .ov-reference-inventory-category th {
-  background: #eee;
+  background: #fff;
   color: #333;
+  border-color: #aaa;
+}
+.ov-slot-cell .icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.12em;
+  margin-right: 0.3em;
+}
+.ov-equipped-marker {
+  margin-left: 0.2em;
+  font-size: 7pt;
+}
+.ov-inventory-legend {
+  margin-left: auto;
+  font-size: 8pt;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.ov-page-number {
+  margin-left: auto;
 }
 .ov-power-index-table {
   font-size: 9pt !important;

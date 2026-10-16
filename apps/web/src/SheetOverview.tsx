@@ -109,16 +109,16 @@ function Paper({
       ) : null}
       <div className="sp-page-content">{children}</div>
       <footer className="sp-page-footer">
-        <span>
-          {source === "authoritative-evaluation"
-            ? "Character reference"
-            : source === "native-empty"
-              ? "Incomplete character · no evaluated rules"
-              : "Legacy cache · verify missing rules and values"}
-        </span>
-        <span>
-          {name} · {page}
-        </span>
+        {page === 1 ? (
+          <span>
+            {source === "authoritative-evaluation"
+              ? "Character reference"
+              : source === "native-empty"
+                ? "Incomplete character · no evaluated rules"
+                : "Legacy cache · verify missing rules and values"}
+          </span>
+        ) : null}
+        <span className="ov-page-number">{page}</span>
       </footer>
     </article>
   );
@@ -1514,6 +1514,8 @@ interface ReferencePart {
   paragraph?: number;
   powerIndex?: boolean;
   tableCategory?: string;
+  slotCells?: readonly { label: string; icon: IconName }[];
+  equippedInventory?: boolean;
 }
 export interface ReferenceEntry {
   id: string;
@@ -1723,7 +1725,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
           ) ?? INVENTORY_CATEGORIES.at(-1)!,
         quantity: equipped
           ? Math.min(item.quantity, item.equipped)
-          : Math.max(0, item.quantity - item.equipped),
+          : item.quantity,
       }))
       .filter((item) => item.quantity > 0)
       .sort(
@@ -1742,6 +1744,23 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
         source: "",
         parts: entries.map((item) => ({
           ...(!equipped ? { tableCategory: item.inventoryCategory.label } : {}),
+          ...(!equipped && item.equipped > 0
+            ? { equippedInventory: true }
+            : {}),
+          ...(equipped
+            ? {
+                slotCells: (item.slots.length
+                  ? [...item.slots].sort(
+                      (a, b) => slotRank([a]) - slotRank([b]),
+                    )
+                  : [item.referenceSlot]
+                ).map((slot) => ({
+                  label:
+                    slotPresentation(slot)?.label ?? slot.replaceAll("-", " "),
+                  icon: slotPresentation(slot)?.icon ?? ("item" as IconName),
+                })),
+              }
+            : {}),
           block: {
             kind: "table" as const,
             headers: equipped ? ["Slot", "Item"] : ["Item", "Qty"],
@@ -1928,6 +1947,12 @@ function ReferenceCard({
             {entry.level === undefined ? "Level —" : `Level ${entry.level}`}
           </span>
         ) : null}
+        {entry.id.startsWith("inventory:false") &&
+        parts.some((part) => part.equippedInventory) ? (
+          <span className="ov-inventory-legend">
+            <sup>E</sup> Equipped
+          </span>
+        ) : null}
       </header>
       <div className="sp-feature-body">
         {tables ? (
@@ -1960,7 +1985,17 @@ function ReferenceCard({
                   <tr key={n}>
                     {row.map((cell, column) => (
                       <td key={column}>
-                        {part.powerIndex && column === 2 ? (
+                        {part.slotCells && column === 0 ? (
+                          <span className="ov-slot-cell">
+                            {part.slotCells.map((slot, i) => (
+                              <span key={i}>
+                                {i ? " / " : null}
+                                <Icon name={slot.icon} />
+                                {slot.label}
+                              </span>
+                            ))}
+                          </span>
+                        ) : part.powerIndex && column === 2 ? (
                           <>
                             <ActionTypeIcon decorative value={cell} />
                             <span className="sp-sr-only">{cell}</span>
@@ -1968,6 +2003,14 @@ function ReferenceCard({
                         ) : (
                           cell
                         )}
+                        {part.equippedInventory && column === 0 ? (
+                          <sup
+                            className="ov-equipped-marker"
+                            aria-label="Equipped"
+                          >
+                            E
+                          </sup>
+                        ) : null}
                       </td>
                     ))}
                   </tr>

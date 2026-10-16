@@ -1455,7 +1455,9 @@ describe("real-data sheet overview", () => {
       />,
     );
     expect(html).toContain("The full synthetic description is preserved.");
-    expect(html.match(/<td>Synthetic blade<\/td>/g)).toHaveLength(2);
+    expect(
+      html.match(/<td>Synthetic blade(?:<sup[^>]*>E<\/sup>)?<\/td>/g),
+    ).toHaveLength(2);
     expect(html).toContain("Main hand");
     expect(html).toContain(">Inventory</h3>");
   });
@@ -1508,15 +1510,79 @@ describe("real-data sheet overview", () => {
       carried.every((table) => table.headers?.join("/") === "Item/Qty"),
     ).toBe(true);
     expect(carried.flatMap((table) => table.rows)).toEqual([
-      ["A sword", "1"],
-      ["Boots", "1"],
-      ["Z helmet", "1"],
+      ["A sword", "2"],
+      ["Boots", "2"],
+      ["Z helmet", "2"],
     ]);
     expect(
       entries
         .find((entry) => entry.id === "inventory:false")
         ?.parts.map((part) => part.tableCategory),
     ).toEqual(["Weapons", "Worn items", "Worn items"]);
+    expect(
+      entries
+        .find((entry) => entry.id === "inventory:true")
+        ?.parts.map((part) => part.slotCells?.map((slot) => slot.icon)),
+    ).toEqual([["hard-hat"], ["footprints"], ["sword"]]);
+  });
+  it("includes equipped-only holdings and total stack quantities with equipped superscripts", () => {
+    const fixture = {
+      ...model,
+      overview: {
+        ...model.overview!,
+        inventory: [
+          {
+            name: "Equipped only",
+            quantity: 1,
+            equipped: 1,
+            slots: ["body"],
+            fields: [],
+          },
+          {
+            name: "Stack",
+            quantity: 5,
+            equipped: 2,
+            slots: ["main-hand"],
+            fields: [],
+          },
+          {
+            name: "Carried only",
+            quantity: 3,
+            equipped: 0,
+            slots: [],
+            fields: [],
+          },
+        ],
+      },
+    };
+    const inventory = references(fixture).find(
+      (entry) => entry.id === "inventory:false",
+    )!;
+    expect(
+      inventory.parts.flatMap((part) =>
+        part.block.kind === "table" ? part.block.rows : [],
+      ),
+    ).toEqual([
+      ["Carried only", "3"],
+      ["Equipped only", "1"],
+      ["Stack", "5"],
+    ]);
+    expect(
+      inventory.parts.map((part) => Boolean(part.equippedInventory)),
+    ).toEqual([false, true, true]);
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={fixture}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    expect(html.match(/class="ov-equipped-marker"/g)).toHaveLength(2);
+    expect(html).toContain('class="ov-slot-cell"');
+    expect(html).toContain("lucide-shirt");
   });
   it("renders the approved summary and scratchpad without changing source data", () => {
     const markup = renderToStaticMarkup(
@@ -1538,6 +1604,12 @@ describe("real-data sheet overview", () => {
       .split('aria-label="Play scratchpad"')[1]!
       .split("</article>")[0]!;
     expect(scratchpad).toContain('class="ov-effects-table"');
+    const footer = scratchpad
+      .split('class="sp-page-footer"')[1]!
+      .split("</footer>")[0]!;
+    expect(footer).toContain('class="ov-page-number">2</span>');
+    expect(footer).not.toContain("Overview fixture");
+    expect(footer).not.toContain("Character reference");
     expect(scratchpad).toContain('<th scope="col">Ends</th>');
     expect(scratchpad).toContain(">Session notes</h3>");
     expect(scratchpad).not.toContain(">Reminders</h3>");

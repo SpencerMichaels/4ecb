@@ -1133,6 +1133,10 @@ async function checkReferences(client) {
       inventoryHeaders:pages.flatMap(p=>[...p.querySelectorAll('.ov-inventory-table')]).every(table=>
         [...table.querySelectorAll('thead th')].map(cell=>cell.textContent).join('/')==='Item/Qty' &&
           table.querySelector('tbody .ov-reference-inventory-category th')?.getAttribute('colspan')==='2'),
+      pageNumbersOnly:pages.every(p=>/^R\\d+$/.test(p.querySelector('.sp-page-footer').textContent.trim())),
+      equippedIcons:pages.flatMap(p=>[...p.querySelectorAll('.ov-equipped-table tbody td:first-child')]).every(cell=>cell.querySelector('.icon')),
+      inventoryIncludesEquipped:pages.some(p=>[...p.querySelectorAll('.ov-inventory-table tbody tr')].some(row=>
+        row.querySelector('td:first-child')?.textContent.startsWith('Synthetic item 01') && row.querySelector('.ov-equipped-marker') && row.querySelector('td:last-child')?.textContent==='1')),
       usageColors:[...new Set(pages.flatMap(p=>[...p.querySelectorAll('.ov-reference-card[data-usage]')].map(c=>getComputedStyle(c.querySelector('header')).backgroundColor)))],
       monochrome:pages[0]?.closest('.sp-monochrome')!==null,
       powerHeaders:[...pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table')])].map(t=>[...t.querySelectorAll('thead th')].map(e=>e.textContent)),
@@ -1151,6 +1155,9 @@ async function checkReferences(client) {
       state.pairedCategory &&
       state.equippedHeaders &&
       state.inventoryHeaders &&
+      state.pageNumbersOnly &&
+      state.equippedIcons &&
+      state.inventoryIncludesEquipped &&
       state.usageColors.length === (state.monochrome ? 1 : 3) &&
       state.tablesInBounds &&
       state.groupHeaders > 0,
@@ -1438,7 +1445,7 @@ async function checkSummaryContinuation(client) {
     );
     assert(
       continuation.second === "Character summary · continued" &&
-        continuation.page.endsWith(" · 2"),
+        continuation.page.trim() === "2",
       `Reminders must continue directly on page 2: ${JSON.stringify(continuation)}`,
     );
     assert(
@@ -1446,7 +1453,7 @@ async function checkSummaryContinuation(client) {
       `Continuation must retain reminders and fit: ${JSON.stringify(continuation)}`,
     );
     assert(
-      continuation.scratchPage.endsWith(" · 3"),
+      continuation.scratchPage.trim() === "3",
       "Scratchpad must follow the summary continuation",
     );
   } catch (error) {
@@ -1460,7 +1467,7 @@ async function checkSummaryContinuation(client) {
   }
   await waitForExpression(
     client,
-    `!document.querySelector('.sheet-overview > .ov-paper[aria-label="Character summary · continued"]') && document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"] .sp-page-footer').textContent.endsWith(' · 2')`,
+    `!document.querySelector('.sheet-overview > .ov-paper[aria-label="Character summary · continued"]') && document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"] .sp-page-footer').textContent.trim()==='2'`,
   );
 }
 

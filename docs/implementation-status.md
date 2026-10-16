@@ -269,14 +269,20 @@ to physical-card rule fields. Item powers have a compact Item/Usage/Action index
 All reference sections share coherent R-numbering and updated basic-attack links.
 The "Basic Attacks" reference section retains separate melee/ranged tables.
 "Equipped by slot" is a Slot/Item lookup using the builder's body/held/other
-slot order and labels (unknown slots last), then item name. "Inventory" retains
-carried/spare quantities in Item/Qty columns, divided by the builder's inventory
+slot order, labels and icons (unknown slots last), then item name. "Inventory" includes
+all owned quantities (including equipped holdings) in Item/Qty columns, with a
+superscript E indicating equipped holdings and a small legend. It is divided by the builder's inventory
 category labels/order. The UI injects its existing authored-role classifier into
 both evaluated and legacy sheet projections; the sheet model retains optional
 category metadata rather than duplicating UI taxonomy or guessing from names.
 No private corpus or UI dependencies enter the shared model. Unknown categories
 remain visible under Miscellaneous. Category rows are table row-group headers,
 kept with their first item and repeated at continuation starts.
+Category subheaders have white backgrounds and quiet rules instead of a tint
+that blends with alternating row fills. Reference and scratchpad pages retain
+their top running header, with only a page number in the bottom footer; the
+page-1 source-status note remains. Measurement and continuation numbering still
+use that footer boundary.
 Verification of these lookup-table refinements: all 40 overview tests pass,
 including explicit/fallback slot ordering, carried spares and updated basic-attack
 reference links. No full print matrix was rerun for this small table change.
@@ -334,6 +340,15 @@ Benefit/Associated Skills/Associated Languages/Common Knowledge structure.
 description-equal Benefits, inline Benefit fallback, flavor-only omission and
 unresolved legacy text preservation. Web typecheck and focused lint pass. No full
 print matrix was rerun for this content-selection adjustment.
+
+Inventory/header follow-up: 59 focused overview/scratchpad tests, web typecheck,
+focused lint, formatting and production build pass. The overview-only print
+matrix passes four Chromium PDFs and four Firefox variants (13 fixture pages,
+no overflow), checking page-number-only reference footers, equipped slot icons,
+full-inventory inclusion of a fully equipped holding, and unchanged summary
+continuation/scratchpad numbering. Unit tests cover total stack quantities,
+equipped superscripts and the retained page-top identity header. Owner reference
+review remains open; M5.6 is not closed.
 
 Verification: 139 focused sheet-model/overview/index/layout tests, web typecheck,
 focused lint and production build pass. The overview-only print check passes

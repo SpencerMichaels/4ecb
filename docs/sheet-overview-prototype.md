@@ -399,10 +399,13 @@ warning rather than being silently clipped or shrunk below readable reference te
 
 Inventory includes items whose physical cards are hidden, preserves explicit
 slot assignments, falls back to authored Item Slot, and labels unknown slots.
-Equipped quantities and carried spares are separate. The reference "Basic Attacks" section has
+The equipped loadout and complete inventory have separate lookup tables. The reference "Basic Attacks" section has
 separate melee and ranged tables. Equipped inventory uses Slot/Item columns,
 ordered by the builder's body/held/other slot sequence, then name. "Inventory"
-uses Item/Qty for carried/spare quantities, with category subheaders matching the
+uses Item/Qty for full owned quantities, including equipped items marked with a
+superscript E and a small legend. Equipped slot names use the builder slot icons.
+Category subheaders use white backgrounds and quiet rules, distinct from row
+striping, with category labels/order matching the
 builder's category labels/order and shared authored-role classification. Unknown
 items remain visible under Miscellaneous; unknown slots remain after known slots.
 The power index preserves
