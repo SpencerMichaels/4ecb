@@ -1623,37 +1623,9 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
           : []),
       ],
     }));
-  if (o.defensiveTraits?.length)
-    result.push({
-      id: "defensive-traits",
-      name: "Resistances & Weaknesses",
-      group: "Resistances & Weaknesses",
-      source: "",
-      parts: o.defensiveTraits.flatMap((entry) =>
-        referenceParts(
-          entry.source ? `${entry.value} (${entry.source})` : entry.value,
-          entry.label,
-        ),
-      ),
-    });
-  // Summary reminders now stay beside page 1; retain only expanded reference-only
-  // descriptions here (including discovered core-class power descriptions).
-  const summary = o.summaryReminders ?? o.reminders;
-  const referenceReminders = o.reminders.filter(
-    (entry) =>
-      !summary.some(
-        (other) => other.label === entry.label && other.value === entry.value,
-      ),
-  );
-  referenceReminders.forEach((entry, index) =>
-    result.push({
-      id: `reference-reminder:${index}`,
-      name: entry.label,
-      group: entry.category ?? "Other features",
-      source: "",
-      parts: referenceParts(entry.value),
-    }),
-  );
+  // References retain authored entities, not synthetic defensive summaries or
+  // expanded reminder projections (whose underlying features/powers appear here
+  // or on their own cards already).
   for (const power of model.powers.filter((power) =>
     /^(melee|ranged) basic attack$/i.test(power.name.trim()),
   )) {
@@ -1821,6 +1793,8 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
     });
   return result;
 }
+const referenceCategory = (group: string) =>
+  group.toLowerCase().replace(/[^a-z]+/g, "-");
 const referenceIcon = (group: string): IconName =>
   group === "Feats"
     ? "feat"
@@ -1879,6 +1853,8 @@ function ReferenceCard({
     <section
       className="sp-feature-card ov-reference-card"
       data-reference-id={entry.id}
+      data-reference-category={referenceCategory(entry.group)}
+      data-usage={/^powers:(At-Will|Encounter|Daily)/.exec(entry.id)?.[1]}
     >
       <header>
         <Icon name={referenceIcon(entry.group)} />
@@ -1956,16 +1932,16 @@ export function paginateReferences(
 ): readonly (readonly ReferenceEntry[])[] {
   if (!entries.length) return [];
   const columns: ReferenceEntry[][] = [[]];
+  const seenGroups = new Set<string>();
   let used = 0;
   const place = (entry: ReferenceEntry, height: number) => {
-    let heading =
-      columns.at(-1)!.at(-1)?.group === entry.group ? 0 : groupHeadingHeight;
+    const heading = seenGroups.has(entry.group) ? 0 : groupHeadingHeight;
     if (used && used + height + 16 + heading > capacity) {
       columns.push([]);
       used = 0;
-      heading = groupHeadingHeight;
     }
     columns.at(-1)!.push(entry);
+    seenGroups.add(entry.group);
     used += height + 16 + heading;
   };
   for (const entry of entries) {
@@ -1975,7 +1951,10 @@ export function paginateReferences(
       place(entry, capacity);
       continue;
     }
-    if (m.height + groupHeadingHeight <= capacity) {
+    if (
+      m.height + (seenGroups.has(entry.group) ? 0 : groupHeadingHeight) <=
+      capacity
+    ) {
       place(entry, m.height);
       continue;
     }
@@ -1984,7 +1963,11 @@ export function paginateReferences(
       partIndex = 0;
     for (const part of entry.parts) {
       const h = m.parts[partIndex++] ?? 0;
-      if (parts.length && height + h + groupHeadingHeight > capacity) {
+      if (
+        parts.length &&
+        height + h + (seenGroups.has(entry.group) ? 0 : groupHeadingHeight) >
+          capacity
+      ) {
         place(
           {
             ...entry,
@@ -2237,6 +2220,17 @@ function ReferencePages({
     startPage,
     summaryContinuation,
   ]);
+  const seenGroups = new Set<string>();
+  const categoryOpenings = new Set(
+    columns
+      .flat()
+      .filter((entry) => {
+        if (seenGroups.has(entry.group)) return false;
+        seenGroups.add(entry.group);
+        return true;
+      })
+      .map((entry) => entry.id),
+  );
   return (
     <>
       <div className="ov-measure" aria-hidden="true">
@@ -2286,12 +2280,16 @@ function ReferencePages({
                 .slice(index * (wide ? 1 : 2), (index + 1) * (wide ? 1 : 2))
                 .map((column, n) => (
                   <div className="sp-column" key={n}>
-                    {column.map((entry, entryIndex) => (
+                    {column.map((entry) => (
                       <div key={entry.id}>
                         {!summaryContinuation &&
-                        (entryIndex === 0 ||
-                          column[entryIndex - 1]?.group !== entry.group) ? (
-                          <h3 className="ov-reference-group-heading">
+                        categoryOpenings.has(entry.id) ? (
+                          <h3
+                            className="ov-reference-group-heading"
+                            data-reference-category={referenceCategory(
+                              entry.group,
+                            )}
+                          >
                             <Icon name={referenceIcon(entry.group)} />
                             {entry.group}
                           </h3>

@@ -30,6 +30,44 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("does not invent reference entities from defensive stats or expanded reminders", () => {
+    const entries = references({
+      ...model,
+      overview: {
+        ...model.overview!,
+        defensiveTraits: [{ label: "Resistance", value: "Fire 5" }],
+        summaryReminders: [],
+        reminders: [{ label: "Expanded reminder", value: "Derived prose" }],
+      },
+    });
+    expect(
+      entries.some(
+        (entry) =>
+          entry.id === "defensive-traits" ||
+          entry.id.startsWith("reference-reminder:"),
+      ),
+    ).toBe(false);
+  });
+  it("budgets a category heading only once across columns", () => {
+    const entries = ["first", "second", "third"].map((id) => ({
+      id,
+      name: id,
+      group: "Feats",
+      source: "",
+      parts: [],
+    }));
+    const measured = new Map(
+      entries.map((entry) => [
+        entry.id,
+        { height: 80, overhead: 80, parts: [] },
+      ]),
+    );
+    // The first column fits one entry + heading; the next fits two entries
+    // because a category continuing across columns has no repeated heading.
+    expect(
+      paginateReferences(entries, measured, 200, 50).map((c) => c.length),
+    ).toEqual([1, 2]);
+  });
   it("sorts origin sections by known acquisition level then name, leaving unknown levels last", () => {
     const feature = (name: string, group: string, level?: number) => ({
       id: name,
@@ -342,7 +380,7 @@ describe("real-data sheet overview", () => {
     expect(list.match(/class="prose-paragraph"/g)).toHaveLength(3);
     expect(list.split("</li>")[0]).toContain("You may apply it to an ally.");
   });
-  it("keeps expanded core-power descriptions off page one but available in references", () => {
+  it("does not promote expanded core-power reminders to reference entities", () => {
     const short = {
       label: "Existing bonus",
       value: "+1d6 against your chosen foe.",
@@ -378,7 +416,7 @@ describe("real-data sheet overview", () => {
     expect(summary.split('class="ov-reminder-probe"')[0]).not.toContain(
       "more reminders in references.",
     );
-    expect(html).toContain(expanded.value);
+    expect(html).not.toContain(expanded.value);
   });
   it("finds the actual reference-page label for basic attack alternatives", () => {
     const entry: ReferenceEntry = {

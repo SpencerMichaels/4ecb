@@ -15,6 +15,10 @@ index has Power, Level, Action, Range, Target, Attack and Damage columns, using
 authored formulas and separate multiattack lines rather than weapon-specific
 totals. Section headings, level metadata and source footers use the accepted
 muted pane vocabulary; long prose flows at normal size with measured continuation.
+Category headings now appear only once at the start, with a subtle origin tint
+shared by subsequent panes. References omit synthesized defensive/reminder
+entities, retaining the existing features and powers. Power indexes use subtle
+at-will green, encounter red and daily gray (neutral in monochrome).
 This is a first draft, not final reference or M5.6 acceptance.
 See `implementation-status.md` for the final accepted scratchpad refinements;
 the study and initial integration descriptions below retain their historical

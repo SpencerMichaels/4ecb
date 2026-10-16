@@ -1104,6 +1104,10 @@ async function checkReferences(client) {
       cardStyleIsolated:[...document.querySelectorAll('.print-card-page')].every(e=>!e.closest('.sp-prototype')),
       headings:pages.every(p=>!p.querySelector('.sp-page-heading h2')),
       coverage:[...new Set(expected)].every(id=>ids.includes(id)),
+      authoredOnly:ids.every(id=>id!=='defensive-traits'&&!id.startsWith('reference-reminder:')),
+      uniqueGroups:(()=>{const groups=pages.flatMap(p=>[...p.querySelectorAll('.ov-reference-group-heading')].map(h=>h.textContent));return new Set(groups).size===groups.length;})(),
+      usageColors:[...new Set(pages.flatMap(p=>[...p.querySelectorAll('.ov-reference-card[data-usage]')].map(c=>getComputedStyle(c.querySelector('header')).backgroundColor)))],
+      monochrome:pages[0]?.closest('.sp-monochrome')!==null,
       powerHeaders:[...pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table')])].map(t=>[...t.querySelectorAll('thead th')].map(e=>e.textContent)),
       tablesInBounds:pages.every(p=>[...p.querySelectorAll('.ov-reference-table')].every(t=>t.scrollWidth<=t.clientWidth+1)),
       groupHeaders:pages.reduce((sum,p)=>sum+p.querySelectorAll('.ov-reference-group-heading').length,0)};
@@ -1114,6 +1118,9 @@ async function checkReferences(client) {
       state.cardStyleIsolated &&
       state.headings &&
       state.coverage &&
+      state.authoredOnly &&
+      state.uniqueGroups &&
+      state.usageColors.length === (state.monochrome ? 1 : 3) &&
       state.tablesInBounds &&
       state.groupHeaders > 0,
     `Reference pages must follow cards, preserve entries, and use compact in-bounds sections: ${JSON.stringify(state)}`,
@@ -1631,8 +1638,8 @@ async function inspectPdf(
     "Synthetic resilience",
     "Synthetic focus",
     "Resistances & Weaknesses",
-    "Fire 5",
-    "Cold 3",
+    "Resist 5 fire",
+    "Vulnerable 3 cold",
     ...(onlyOverview
       ? []
       : [

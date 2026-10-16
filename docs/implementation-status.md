@@ -221,11 +221,16 @@ remain present, including precalculated and access-only selections excluded from
 page-1 reminders. Identical authored Benefit/Flavor text already present in the
 description is not repeated.
 
-Reference headings reuse the muted slate vocabulary without the oversized
+Reference headings use subtle origin-category tints without the oversized
 repeated page title or per-card category strip. Variable-height panes retain
 readable body text, quiet source footers, known level metadata and explicit
-missing-full-text notices. Category headings repeat at column/page boundaries
-and are included in measured pagination. Internally chunked long paragraphs
+missing-full-text notices. Each category has one prominent opening heading,
+with its tint carried by subsequent pane headers and borders across columns and
+pages. Only that opening heading is charged to measured pagination. References
+present existing character entities: synthetic defensive summaries and expanded
+reminder entries are omitted; page-1 defensive traits remain unchanged.
+At-will/encounter/daily index panes use subtle green/red/gray headers, with neutral
+monochrome output. Internally chunked long paragraphs
 rejoin within each rendered pane; only actual continuation boundaries divide
 them. Reference continuations repeat titles and retain their complete parts.
 
@@ -238,6 +243,15 @@ damage formulas point to the card rather than absorbing riders. Legacy range,
 target and level are retained separately as index metadata, without adding them
 to physical-card rule fields. Item powers have a compact Item/Usage/Action index.
 All reference sections share coherent R-numbering and updated basic-attack links.
+
+Reference feedback follow-up verification (2026-10-15): 54 focused web
+overview/index/layout tests, web typecheck, focused lint and production build
+pass. `node scripts/check-print.mjs --overview-only --firefox-scratchpad
+--reference-preview` passes all four Chromium PDF and four Firefox variants
+(13 overview fixture pages, no overflow). Checks include one opening heading per
+category, absence of synthetic defensive/reminder entries, three distinct usage
+tints in color and neutral monochrome headers. Feature/index previews were
+visually reviewed. Owner review of the reference draft remains open.
 
 Verification: 139 focused sheet-model/overview/index/layout tests, web typecheck,
 focused lint and production build pass. The overview-only print check passes
