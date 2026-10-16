@@ -291,7 +291,9 @@ usage, attacks, and damage still render, but rules text can be incomplete.
 ## Sheet and print behavior
 
 The printed overview follows D078: one combat summary, a paper scratchpad with
-usage continuations when needed, then measured full-description references.
+usage continuations when needed, the enabled power/item card pages, then measured
+full-description references. Reference origin/level metadata is distinct from
+publication source; missing grant/acquisition levels remain explicitly unknown.
 `CharacterSheetModel.overview` preserves feature summaries and full rules as
 distinct values, training, ability checks, explicit inventory slots and reminder
 candidates. Both evaluated and legacy-cache projections supply it; recovery

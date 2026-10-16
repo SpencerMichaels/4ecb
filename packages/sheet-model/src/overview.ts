@@ -6,6 +6,7 @@ import { defensiveStatTraits, type DefensiveTrait } from "./defensive-traits";
 import { equippedItemPropertyReminders } from "./item-reminders";
 import { overviewSenses } from "./senses";
 import { corePowerReminders } from "./core-power-reminders";
+import { featureReferenceMetadata } from "./feature-reference";
 
 export interface OverviewFeature {
   readonly id: string;
@@ -16,6 +17,8 @@ export interface OverviewFeature {
   readonly fields: readonly SheetValue[];
   readonly source: string;
   readonly fullTextAvailable: boolean;
+  readonly referenceGroup?: string;
+  readonly level?: number;
   /** A display heuristic, not a claim that every other benefit is calculated. */
   readonly playReminder?: boolean;
   readonly accessOnly?: boolean;
@@ -173,6 +176,7 @@ export function withSheetOverview(
     input.content.map((entity) => [key(entity.id), entity]),
   );
   const features: OverviewFeature[] = [];
+  const referenceMetadata = featureReferenceMetadata(input);
   const seen = new Set<string>();
   for (const group of model.features)
     for (const entry of group.entries) {
@@ -236,6 +240,7 @@ export function withSheetOverview(
         fields,
         source: entity?.source ?? "",
         fullTextAvailable: Boolean(description || fields.length),
+        ...(entity ? referenceMetadata.get(key(entity.id)) : undefined),
         playReminder:
           !accessOnly(entity, benefit || summary) &&
           hasPlayReminder(summary, benefit),

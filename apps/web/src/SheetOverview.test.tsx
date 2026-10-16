@@ -13,6 +13,7 @@ import {
   sortedTrackingRows,
   paginateReferences,
   referenceParts,
+  references,
   summaryContinuationEntries,
   type ReferenceEntry,
 } from "./SheetOverview";
@@ -29,6 +30,60 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("sorts origin sections by known acquisition level then name, leaving unknown levels last", () => {
+    const feature = (name: string, group: string, level?: number) => ({
+      id: name,
+      name,
+      group,
+      description: name,
+      summary: name,
+      source: "Synthetic",
+      fields: [],
+      fullTextAvailable: true,
+      ...(level === undefined ? {} : { level }),
+    });
+    const entries = references({
+      ...model,
+      overview: {
+        ...model.overview!,
+        features: [
+          feature("A later", "Feat", 6),
+          feature("Z early", "Feat", 1),
+          feature("A early", "Feat", 1),
+          feature("Unknown", "Feat"),
+          {
+            ...feature("Theme child", "Class Feature", 2),
+            referenceGroup: "Theme",
+          },
+        ],
+      },
+    });
+    expect(
+      entries.filter((entry) => entry.feature).map((entry) => entry.name),
+    ).toEqual(["Theme child", "A early", "Z early", "A later", "Unknown"]);
+    expect(entries[0]?.group).toBe("Theme");
+  });
+  it("places card pages after the scratchpad and before full reference probes", () => {
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={model}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      >
+        <section data-card-position="here" />
+      </SheetOverview>,
+    );
+    const marker = html.indexOf('data-card-position="here"');
+    expect(marker).toBeGreaterThan(
+      html.indexOf('class="ov-scratch-layout ov-scratch-upper"'),
+    );
+    expect(html.indexOf('class="ov-measure-column"', marker)).toBeGreaterThan(
+      marker,
+    );
+  });
   it("provides ten encounter tracking marks per power row", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
@@ -1073,7 +1128,7 @@ describe("real-data sheet overview", () => {
       />,
     );
     expect(html).toContain("The full synthetic description is preserved.");
-    expect(html.match(/Synthetic blade ×1/g)).toHaveLength(2);
+    expect(html.match(/<td>Synthetic blade<\/td>/g)).toHaveLength(2);
     expect(html).toContain("main hand");
     expect(html).toContain("Carried equipment");
   });

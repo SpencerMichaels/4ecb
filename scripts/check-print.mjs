@@ -77,6 +77,9 @@ const scratchpadPreview = process.argv.includes("--scratchpad-preview")
     )
   : undefined;
 const browserProfile = join(scratch, "chromium-profile");
+const referencePreview = process.argv.includes("--reference-preview")
+  ? await mkdtemp(join(tmpdir(), "4ecb-reference-preview-"))
+  : undefined;
 const previewPort = await availablePort();
 const debugPort = await availablePort();
 const preview = spawn(
@@ -309,6 +312,33 @@ try {
     await checkSummaryPresentation(client, variant.monochrome);
     await checkSummaryContinuation(client);
     await checkScratchpad(client, variant.monochrome);
+    await checkReferences(client);
+    if (referencePreview && variant.name === "letter-color") {
+      for (const [name, selector] of [
+        [
+          "features",
+          '.sheet-overview > .ov-paper[aria-label="Character reference"]',
+        ],
+        [
+          "power-index",
+          '.sheet-overview > .ov-paper[aria-label="Character reference"]:has(.ov-power-index-table)',
+        ],
+      ]) {
+        const clip = await evaluate(
+          client,
+          `(() => {const r=document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return {x:r.left+scrollX,y:r.top+scrollY,width:r.width,height:r.height,scale:1};})()`,
+        );
+        const shot = await client.send("Page.captureScreenshot", {
+          format: "png",
+          captureBeyondViewport: true,
+          clip,
+        });
+        await writeFile(
+          join(referencePreview, `${name}.png`),
+          Buffer.from(shot.data, "base64"),
+        );
+      }
+    }
     if (scratchpadPreview && variant.name === "letter-color") {
       const clip = await evaluate(
         client,
@@ -498,6 +528,7 @@ try {
         },
         chromiumResults,
         ...(scratchpadPreview ? { scratchpadPreview } : {}),
+        ...(referencePreview ? { referencePreview } : {}),
         firefox: await firefoxVersion(),
         firefoxResults,
       },
@@ -639,6 +670,7 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
           },
         };
         await checkScratchpad(adapter, variant.monochrome);
+        await checkReferences(adapter);
         results.push({ ...variant, scratchpadGeometry: "pass" });
         continue;
       }
@@ -1057,6 +1089,51 @@ async function checkSummaryPresentation(client, monochrome) {
   await waitForExpression(
     client,
     `Math.abs(parseFloat(getComputedStyle(document.querySelector('.ov-character-name')).fontSize) - ${original.fontSize}) < 0.4`,
+  );
+}
+
+async function checkReferences(client) {
+  const state = await evaluate(
+    client,
+    `(() => {
+    const pages=[...document.querySelectorAll('.sheet-overview > .ov-paper[aria-label="Character reference"]')];
+    const lastCard=[...document.querySelectorAll('.print-card-page')].at(-1);
+    const ids=pages.flatMap(p=>[...p.querySelectorAll('[data-reference-id]')].map(e=>e.dataset.referenceId.replace(/:(?:part\\d+|last)$/,'')));
+    const expected=[...document.querySelectorAll('.ov-measure .ov-reference-card')].map(e=>e.dataset.referenceId).filter(id=>!id.startsWith('summary-reminder:'));
+    return {afterCards:!lastCard || Boolean(lastCard.compareDocumentPosition(pages[0]) & Node.DOCUMENT_POSITION_FOLLOWING),
+      cardStyleIsolated:[...document.querySelectorAll('.print-card-page')].every(e=>!e.closest('.sp-prototype')),
+      headings:pages.every(p=>!p.querySelector('.sp-page-heading h2')),
+      coverage:[...new Set(expected)].every(id=>ids.includes(id)),
+      powerHeaders:[...pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table')])].map(t=>[...t.querySelectorAll('thead th')].map(e=>e.textContent)),
+      tablesInBounds:pages.every(p=>[...p.querySelectorAll('.ov-reference-table')].every(t=>t.scrollWidth<=t.clientWidth+1)),
+      groupHeaders:pages.reduce((sum,p)=>sum+p.querySelectorAll('.ov-reference-group-heading').length,0)};
+  })()`,
+  );
+  assert(
+    state.afterCards &&
+      state.cardStyleIsolated &&
+      state.headings &&
+      state.coverage &&
+      state.tablesInBounds &&
+      state.groupHeaders > 0,
+    `Reference pages must follow cards, preserve entries, and use compact in-bounds sections: ${JSON.stringify(state)}`,
+  );
+  assert(
+    state.powerHeaders.length > 0 &&
+      state.powerHeaders.every(
+        (headers) =>
+          JSON.stringify(headers) ===
+          JSON.stringify([
+            "Power",
+            "Level",
+            "Action",
+            "Range",
+            "Target",
+            "Attack",
+            "Damage",
+          ]),
+      ),
+    "Power index must provide separate Range and Target columns",
   );
 }
 
@@ -1541,7 +1618,7 @@ async function inspectPdf(
       `${path} mixes heights`,
     );
   }
-  const normalizedText = text.toLocaleLowerCase();
+  const normalizedText = text.toLocaleLowerCase().replace(/\s+/g, " ");
   if (onlyOverview)
     assert(
       normalizedText.includes("end of preserved overview notes."),

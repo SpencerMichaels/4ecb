@@ -204,12 +204,53 @@ formula changed. No full milestone/physical-card suite was run. M5.6 remains ope
 for reference-page refinement and the separately recorded
 summary-continuation formatting issue.
 
-Reference-page review is next. The owner requires full character reference pages
-to follow power cards; that rendering-order change is pending implementation.
-Reference panes must group by character origin (class, race, theme, background,
-feats and other applicable origins), not publication source. The current type
-sort is not a complete grant-origin classification; design assessment is pending
-owner review. Item-card adjacency is a proposal, not a new approved constraint.
+Reference first draft (2026-10-15): implemented for owner feedback. Printed order
+is summary/optional nearby reminder continuation, scratchpad/usage continuations,
+the existing power/item card pages, then full character references. Card pages
+remain outside the overview's typography wrapper so their accepted presentation
+does not inherit reference styles. No rules calculations or mutable Play state
+are changed.
+
+Feature references have visible origin sections (class, race, theme, background,
+paragon path, epic destiny, feats, other), sorted by known acquired/granted level
+then name, with unknown levels last and explicitly marked. Evaluated occurrence
+ancestry resolves generic features to their granting origin; legacy fallback
+follows explicit automatic grants from selected origins. Core starting grants
+count as level 1. Publication Source remains separate. Full feature/feat rules
+remain present, including precalculated and access-only selections excluded from
+page-1 reminders. Identical authored Benefit/Flavor text already present in the
+description is not repeated.
+
+Reference headings reuse the muted slate vocabulary without the oversized
+repeated page title or per-card category strip. Variable-height panes retain
+readable body text, quiet source footers, known level metadata and explicit
+missing-full-text notices. Category headings repeat at column/page boundaries
+and are included in measured pagination. Internally chunked long paragraphs
+rejoin within each rendered pane; only actual continuation boundaries divide
+them. Reference continuations repeat titles and retain their complete parts.
+
+Equipment/basic alternatives and power indexes use full-width tables; features,
+rituals and character prose retain two-column flow. The power index columns are
+Power, Level, Action, Range, Target, Attack and Damage. Action icons and compact
+authored formulas distinguish multiple attacks without substituting one weapon's
+totals. Secondary targets are not inherited without authored metadata; unfamiliar
+damage formulas point to the card rather than absorbing riders. Legacy range,
+target and level are retained separately as index metadata, without adding them
+to physical-card rule fields. Item powers have a compact Item/Usage/Action index.
+All reference sections share coherent R-numbering and updated basic-attack links.
+
+Verification: 139 focused sheet-model/overview/index/layout tests, web typecheck,
+focused lint and production build pass. The overview-only print check passes
+four Chromium Letter/A4 color/monochrome PDFs (13 overview fixture pages each)
+and four Firefox geometry variants, covering post-card ordering, isolated card
+styles, reference-entry coverage, separate Range/Target columns, table bounds,
+scratchpad invariants and long-note preservation. The PDF text check normalizes
+extracted whitespace before checking the final note phrase, since natural
+paragraph flow can wrap it across lines; no words or evidence are dropped.
+Feature and index previews were visually reviewed. `--reference-preview` retains
+optional diagnostic screenshots. No full milestone/physical-card gate was run;
+owner reference review, summary-continuation styling and the recorded dense-card
+boundary remain open. M5.6 is not closed.
 
 Calculated superior-implement modifiers (2026-10-15): Attack/damage projection
 now consumes comma-conjoined, item-limited stat channels using each attack's

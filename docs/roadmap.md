@@ -523,8 +523,10 @@ page 1 and the working-surface scratchpad,
 with segmented surge tracking, reserved handwriting areas and measured power-use
 continuations. Reference pages and the known summary-continuation style mismatch
 remain separate review work; this does not close M5.6. Full character reference
-pages must follow power cards and group their panes by character origin; those
-changes are the next review/implementation slice.
+pages now follow the power/item cards in a first draft for owner feedback, with
+origin groups sorted by level/name, full-description panes, and full-width
+equipment and power indexes (separate Range/Target columns). This is not final
+reference acceptance or milestone closure.
 
 **Printed-card product review accepted (2026-10-14):** Power and item card
 presentation is accepted after the fixed-size layout, equipment comparisons,

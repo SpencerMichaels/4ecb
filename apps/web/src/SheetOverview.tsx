@@ -20,6 +20,7 @@ import { ActionTypeIcon } from "./ActionTypeIcon";
 import { Prose, ProseBlocks, proseBlocks, type ProseBlock } from "./Prose";
 import { printItemPower } from "./print-item-presentation";
 import { SurgeBar } from "./SurgeBar";
+import { referencePowerRows } from "./reference-power-index";
 import {
   paginateTracking,
   type TrackingMeasurements,
@@ -1509,6 +1510,8 @@ function Scratchpad({
 interface ReferencePart {
   label?: string;
   block: ProseBlock;
+  paragraph?: number;
+  powerIndex?: boolean;
 }
 export interface ReferenceEntry {
   id: string;
@@ -1517,16 +1520,24 @@ export interface ReferenceEntry {
   source: string;
   parts: readonly ReferencePart[];
   continued?: boolean;
+  level?: number;
+  feature?: boolean;
 }
 /** Split prose only for layout. Every word, list item and table row remains. */
 export function referenceParts(value: string, label?: string): ReferencePart[] {
-  const blocks = proseBlocks(value).flatMap<ProseBlock>((block) => {
+  const paragraphIds = new Map<ProseBlock, number>();
+  const blocks = proseBlocks(value).flatMap<ProseBlock>((block, paragraph) => {
     if (block.kind === "paragraph" && block.text.split(/\s+/).length > 80) {
       const words = block.text.split(/\s+/);
-      return Array.from({ length: Math.ceil(words.length / 80) }, (_, i) => ({
-        kind: "paragraph" as const,
-        text: words.slice(i * 80, i * 80 + 80).join(" "),
-      }));
+      const chunks = Array.from(
+        { length: Math.ceil(words.length / 80) },
+        (_, i) => ({
+          kind: "paragraph" as const,
+          text: words.slice(i * 80, i * 80 + 80).join(" "),
+        }),
+      );
+      chunks.forEach((chunk) => paragraphIds.set(chunk, paragraph));
+      return chunks;
     }
     if (block.kind === "table" && block.rows.length > 4)
       return Array.from(
@@ -1553,36 +1564,58 @@ export function referenceParts(value: string, label?: string): ReferencePart[] {
                 },
         );
       });
+    if (block.kind === "paragraph") paragraphIds.set(block, paragraph);
     return [block];
   });
   return blocks.map((block, index) => ({
     ...(!index && label ? { label } : {}),
     block,
+    ...(paragraphIds.has(block) ? { paragraph: paragraphIds.get(block)! } : {}),
   }));
 }
-function references(model: CharacterSheetModel): ReferenceEntry[] {
+export function references(model: CharacterSheetModel): ReferenceEntry[] {
   const o = model.overview!;
   const order = [
     "Class Feature",
     "Racial Trait",
-    "Feat",
     "Theme",
     "Background",
     "Paragon Path",
     "Epic Destiny",
+    "Feat",
   ];
   const result: ReferenceEntry[] = [...o.features]
-    .sort((a, b) => order.indexOf(a.group) - order.indexOf(b.group))
+    .sort((a, b) => {
+      const rank = (group: string) =>
+        order.includes(group) ? order.indexOf(group) : order.length;
+      return (
+        rank(a.referenceGroup ?? a.group) - rank(b.referenceGroup ?? b.group) ||
+        (a.level ?? Infinity) - (b.level ?? Infinity) ||
+        a.name.localeCompare(b.name)
+      );
+    })
     .map((feature) => ({
       id: feature.id,
       name: feature.name,
-      group: groupName(feature.group),
+      group: groupName(
+        feature.referenceGroup ??
+          (order.includes(feature.group) ? feature.group : "Other features"),
+      ),
+      feature: true,
+      ...(feature.level === undefined ? {} : { level: feature.level }),
       source: feature.source,
       parts: [
         ...referenceParts(feature.description),
-        ...feature.fields.flatMap((field) =>
-          referenceParts(field.value, field.label),
-        ),
+        ...feature.fields
+          .filter(
+            (field) =>
+              !(
+                /^(?:benefit|flavor(?: text)?|description)$/i.test(
+                  field.label,
+                ) && feature.description.includes(field.value)
+              ),
+          )
+          .flatMap((field) => referenceParts(field.value, field.label)),
         ...(!feature.fullTextAvailable
           ? referenceParts(
               "Full rules unavailable for this content profile; the retained abbreviated description is shown.",
@@ -1612,16 +1645,15 @@ function references(model: CharacterSheetModel): ReferenceEntry[] {
         (other) => other.label === entry.label && other.value === entry.value,
       ),
   );
-  if (referenceReminders.length)
+  referenceReminders.forEach((entry, index) =>
     result.push({
-      id: "reminders",
-      name: "Reminders",
-      group: "Combat reminders",
+      id: `reference-reminder:${index}`,
+      name: entry.label,
+      group: entry.category ?? "Other features",
       source: "",
-      parts: referenceReminders.flatMap((entry) =>
-        referenceParts(entry.value, entry.label),
-      ),
-    });
+      parts: referenceParts(entry.value),
+    }),
+  );
   for (const power of model.powers.filter((power) =>
     /^(melee|ranged) basic attack$/i.test(power.name.trim()),
   )) {
@@ -1671,8 +1703,22 @@ function references(model: CharacterSheetModel): ReferenceEntry[] {
         source: "",
         parts: entries.map((item) => ({
           block: {
-            kind: "paragraph" as const,
-            text: `${item.name} ×${item.quantity}${equipped ? ` · ${item.slots.length ? item.slots.map((slot) => slot.replaceAll("-", " ")).join(" / ") : find(item.fields, "Item Slot") !== "—" ? find(item.fields, "Item Slot") : "Equipped · slot not recorded"}` : ""}`,
+            kind: "table" as const,
+            headers: ["Item", "Slot", "Qty"],
+            rows: [
+              [
+                item.name,
+                equipped
+                  ? item.slots
+                      .map((slot) => slot.replaceAll("-", " "))
+                      .join(" / ") ||
+                    (find(item.fields, "Item Slot") === "—"
+                      ? "Held / unspecified"
+                      : find(item.fields, "Item Slot"))
+                  : "Carried",
+                String(item.quantity),
+              ],
+            ],
           },
         })),
       });
@@ -1689,11 +1735,38 @@ function references(model: CharacterSheetModel): ReferenceEntry[] {
         name: `${usage} powers`,
         group: "Power index",
         source: "",
-        parts: powers.flatMap((power) =>
-          referenceParts(
-            `${power.name} · ${power.actionType ?? ""} · ${find(power.fields, "Level") === "—" || !find(power.fields, "Level").trim() ? "Feature / level not specified" : `Level ${find(power.fields, "Level")}`}`,
-          ),
-        ),
+        parts: sortedTrackingRows(
+          powers.map((power) => ({
+            id: power.id ?? power.name,
+            name: power.name,
+            action: power.actionType ?? "",
+            usage: power.usage ?? "",
+            utility:
+              find(power.fields, "Power Type").toLowerCase() === "utility",
+          })),
+        ).flatMap((row) => {
+          const power = powers.find(
+            (entry) => (entry.id ?? entry.name) === row.id,
+          )!;
+          return [
+            {
+              powerIndex: true,
+              block: {
+                kind: "table" as const,
+                headers: [
+                  "Power",
+                  "Level",
+                  "Action",
+                  "Range",
+                  "Target",
+                  "Attack",
+                  "Damage",
+                ],
+                rows: referencePowerRows(power),
+              },
+            },
+          ];
+        }),
       });
   }
   const itemPowers = overviewTrackingRows(model).filter((row) =>
@@ -1706,9 +1779,13 @@ function references(model: CharacterSheetModel): ReferenceEntry[] {
       group: "Item power index",
       source: "",
       parts: itemPowers.map((power) => ({
+        powerIndex: true,
         block: {
-          kind: "paragraph" as const,
-          text: `${power.name} · ${power.usage || "Usage unspecified"} · ${power.action}`,
+          kind: "table" as const,
+          headers: ["Item", "Usage", "Action"],
+          rows: [
+            [power.name, power.usage || "Usage unspecified", power.action],
+          ],
         },
       })),
     });
@@ -1744,35 +1821,125 @@ function references(model: CharacterSheetModel): ReferenceEntry[] {
     });
   return result;
 }
-function ReferenceCard({ entry }: { entry: ReferenceEntry }) {
+const referenceIcon = (group: string): IconName =>
+  group === "Feats"
+    ? "feat"
+    : group.startsWith("Racial")
+      ? "race"
+      : group === "Class features"
+        ? "class"
+        : group === "Equipment"
+          ? "item"
+          : group === "Background"
+            ? "background"
+            : "book";
+function ReferenceCard({
+  entry,
+  measure = false,
+}: {
+  entry: ReferenceEntry;
+  measure?: boolean;
+}) {
+  const parts: ReferencePart[] = [];
+  for (const part of entry.parts) {
+    const last = parts.at(-1);
+    if (
+      !measure &&
+      last?.block.kind === "paragraph" &&
+      part.block.kind === "paragraph" &&
+      part.paragraph !== undefined &&
+      last.paragraph === part.paragraph &&
+      !part.label
+    )
+      parts[parts.length - 1] = {
+        ...last,
+        block: {
+          kind: "paragraph",
+          text: `${last.block.text} ${part.block.text}`,
+        },
+      };
+    else parts.push(part);
+  }
+  const tables =
+    parts.length > 0 &&
+    parts.every(
+      (part) =>
+        part.block.kind === "table" &&
+        !part.label &&
+        JSON.stringify(part.block.headers) ===
+          JSON.stringify(
+            (parts[0]!.block as Extract<ProseBlock, { kind: "table" }>).headers,
+          ),
+    );
+  const headers = tables
+    ? ((parts[0]!.block as Extract<ProseBlock, { kind: "table" }>).headers ??
+      [])
+    : [];
   return (
     <section
       className="sp-feature-card ov-reference-card"
       data-reference-id={entry.id}
     >
       <header>
-        <Icon
-          name={
-            entry.group === "Feats"
-              ? "feat"
-              : entry.group === "Equipment"
-                ? "item"
-                : "book"
-          }
-        />
+        <Icon name={referenceIcon(entry.group)} />
         <h3>
           {entry.name}
           {entry.continued ? " (continued)" : ""}
         </h3>
+        {entry.feature ? (
+          <span className="ov-reference-level">
+            {entry.level === undefined ? "Level —" : `Level ${entry.level}`}
+          </span>
+        ) : null}
       </header>
-      <div className="sp-feature-category">{entry.group}</div>
       <div className="sp-feature-body">
-        {entry.parts.map((part, index) => (
-          <div className="ov-reference-part" key={index}>
-            {part.label ? <strong>{part.label}: </strong> : null}
-            <ProseBlocks blocks={[part.block]} />
-          </div>
-        ))}
+        {tables ? (
+          <table
+            className={`ov-reference-table${parts[0]?.powerIndex && headers.length === 7 ? " ov-power-index-table" : ""}`}
+          >
+            <thead>
+              <tr>
+                {headers.map((heading) => (
+                  <th scope="col" key={heading}>
+                    {heading}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            {parts.map((part, index) => (
+              <tbody className="ov-reference-part" key={index}>
+                {(
+                  part.block as Extract<ProseBlock, { kind: "table" }>
+                ).rows.map((row, n) => (
+                  <tr key={n}>
+                    {row.map((cell, column) => (
+                      <td key={column}>
+                        {part.powerIndex && column === 2 ? (
+                          <>
+                            <ActionTypeIcon decorative value={cell} />
+                            <span className="sp-sr-only">{cell}</span>
+                          </>
+                        ) : (
+                          cell
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            ))}
+          </table>
+        ) : (
+          parts.map((part, index) => (
+            <div
+              className={`ov-reference-part${/^(?:flavor|prerequisites?)$/i.test(part.label ?? "") ? " is-secondary" : ""}`}
+              key={index}
+            >
+              {part.label ? <strong>{part.label}: </strong> : null}
+              <ProseBlocks blocks={[part.block]} />
+            </div>
+          ))
+        )}
       </div>
       {entry.source ? <footer>{entry.source}</footer> : null}
     </section>
@@ -1785,17 +1952,21 @@ export function paginateReferences(
     { height: number; overhead: number; parts: readonly number[] }
   >,
   capacity: number,
+  groupHeadingHeight = 0,
 ): readonly (readonly ReferenceEntry[])[] {
   if (!entries.length) return [];
   const columns: ReferenceEntry[][] = [[]];
   let used = 0;
   const place = (entry: ReferenceEntry, height: number) => {
-    if (used && used + height + 16 > capacity) {
+    let heading =
+      columns.at(-1)!.at(-1)?.group === entry.group ? 0 : groupHeadingHeight;
+    if (used && used + height + 16 + heading > capacity) {
       columns.push([]);
       used = 0;
+      heading = groupHeadingHeight;
     }
     columns.at(-1)!.push(entry);
-    used += height + 16;
+    used += height + 16 + heading;
   };
   for (const entry of entries) {
     const m = measurements.get(entry.id);
@@ -1804,7 +1975,7 @@ export function paginateReferences(
       place(entry, capacity);
       continue;
     }
-    if (m.height <= capacity) {
+    if (m.height + groupHeadingHeight <= capacity) {
       place(entry, m.height);
       continue;
     }
@@ -1813,7 +1984,7 @@ export function paginateReferences(
       partIndex = 0;
     for (const part of entry.parts) {
       const h = m.parts[partIndex++] ?? 0;
-      if (parts.length && height + h > capacity) {
+      if (parts.length && height + h + groupHeadingHeight > capacity) {
         place(
           {
             ...entry,
@@ -1844,11 +2015,15 @@ export function paginateReferences(
 }
 export function basicAttackReferencePage(
   columns: readonly (readonly ReferenceEntry[])[],
+  columnsPerPage = 2,
+  startPage = 1,
 ): string | undefined {
   const index = columns.findIndex((column) =>
     column.some((entry) => entry.group === "Basic attack alternatives"),
   );
-  return index < 0 ? undefined : `R${Math.floor(index / 2) + 1}`;
+  return index < 0
+    ? undefined
+    : `R${Math.floor(index / columnsPerPage) + startPage}`;
 }
 function Details({
   model,
@@ -1859,14 +2034,75 @@ function Details({
   name: string;
   onBasicAttackPage: (page: string | undefined) => void;
 }) {
-  const entries = useMemo(() => references(model), [model]);
+  const sections = useMemo(() => {
+    const entries = references(model);
+    const bucket = (entry: ReferenceEntry) =>
+      entry.group === "Equipment" || entry.group === "Basic attack alternatives"
+        ? 1
+        : /^(?:Power index|Item power index)$/.test(entry.group)
+          ? 2
+          : entry.group === "Rituals & practices"
+            ? 3
+            : entry.group === "Character record"
+              ? 4
+              : 0;
+    const groups = [
+      "Class features",
+      "Racial traits",
+      "Racial features",
+      "Theme",
+      "Background",
+      "Paragon paths",
+      "Epic destinies",
+      "Feats",
+      "Other features",
+    ];
+    return Array.from({ length: 5 }, (_, index) =>
+      entries
+        .filter((entry) => bucket(entry) === index)
+        .sort((a, b) =>
+          index
+            ? 0
+            : (groups.includes(a.group)
+                ? groups.indexOf(a.group)
+                : groups.length) -
+                (groups.includes(b.group)
+                  ? groups.indexOf(b.group)
+                  : groups.length) ||
+              (a.level ?? Infinity) - (b.level ?? Infinity) ||
+              a.name.localeCompare(b.name),
+        ),
+    );
+  }, [model]);
+  const [counts, setCounts] = useState<readonly number[]>([0, 0, 0, 0, 0]);
+  const callbacks = useMemo(
+    () =>
+      Array.from(
+        { length: 5 },
+        (_, index) => (count: number) =>
+          setCounts((old) =>
+            old[index] === count
+              ? old
+              : old.map((value, n) => (n === index ? count : value)),
+          ),
+      ),
+    [],
+  );
   return (
-    <ReferencePages
-      model={model}
-      name={name}
-      entries={entries}
-      onBasicAttackPage={onBasicAttackPage}
-    />
+    <>
+      {sections.map((entries, index) => (
+        <ReferencePages
+          key={index}
+          model={model}
+          name={name}
+          entries={entries}
+          wide={index === 1 || index === 2}
+          startPage={1 + counts.slice(0, index).reduce((a, b) => a + b, 0)}
+          onPageCount={callbacks[index]!}
+          {...(index === 1 ? { onBasicAttackPage } : {})}
+        />
+      ))}
+    </>
   );
 }
 
@@ -1915,6 +2151,8 @@ function ReferencePages({
   summaryContinuation = false,
   onPageCount,
   onBasicAttackPage,
+  wide = false,
+  startPage = 1,
 }: {
   model: CharacterSheetModel;
   name: string;
@@ -1922,6 +2160,8 @@ function ReferencePages({
   summaryContinuation?: boolean;
   onPageCount?: (count: number) => void;
   onBasicAttackPage?: (page: string | undefined) => void;
+  wide?: boolean;
+  startPage?: number;
 }) {
   const title = summaryContinuation
     ? "Character summary · continued"
@@ -1962,10 +2202,24 @@ function ReferencePages({
           ] as const;
         }),
       );
-      const next = paginateReferences(entries, measurements, capacity);
+      const heading = element.querySelector<HTMLElement>(
+        ".ov-reference-group-heading",
+      );
+      const headingHeight = heading
+        ? heading.getBoundingClientRect().height +
+          parseFloat(getComputedStyle(heading).marginBottom)
+        : 0;
+      const next = paginateReferences(
+        entries,
+        measurements,
+        capacity,
+        summaryContinuation ? 0 : headingHeight,
+      );
       setColumns(next);
-      onBasicAttackPage?.(basicAttackReferencePage(next));
-      onPageCount?.(Math.ceil(next.length / 2));
+      onBasicAttackPage?.(
+        basicAttackReferencePage(next, wide ? 1 : 2, startPage),
+      );
+      onPageCount?.(Math.ceil(next.length / (wide ? 1 : 2)));
     };
     const observer = new ResizeObserver(measure);
     observer.observe(element);
@@ -1975,7 +2229,14 @@ function ReferencePages({
       active = false;
       observer.disconnect();
     };
-  }, [entries, onBasicAttackPage, onPageCount]);
+  }, [
+    entries,
+    onBasicAttackPage,
+    onPageCount,
+    wide,
+    startPage,
+    summaryContinuation,
+  ]);
   return (
     <>
       <div className="ov-measure" aria-hidden="true">
@@ -1986,38 +2247,64 @@ function ReferencePages({
           source={model.source}
           pageRef={probe}
         >
-          <div className="sp-page-heading">
-            <h2>{title}</h2>
-          </div>
-          <div className="ov-measure-column">
+          {summaryContinuation ? (
+            <div className="sp-page-heading">
+              <h2>{title}</h2>
+            </div>
+          ) : null}
+          <div className={`ov-measure-column${wide ? " is-wide" : ""}`}>
+            {!summaryContinuation ? (
+              <h3 className="ov-reference-group-heading ov-reference-group-probe">
+                Class features
+              </h3>
+            ) : null}
             {entries.map((entry) => (
-              <ReferenceCard entry={entry} key={entry.id} />
+              <ReferenceCard entry={entry} key={entry.id} measure />
             ))}
           </div>
         </Paper>
       </div>
-      {Array.from({ length: Math.ceil(columns.length / 2) }, (_, index) => (
-        <Paper
-          key={index}
-          name={name}
-          title={title}
-          page={summaryContinuation ? index + 2 : `R${index + 1}`}
-          source={model.source}
-        >
-          <div className="sp-page-heading">
-            <h2>{title}</h2>
-          </div>
-          <div className="sp-feature-columns ov-reference-columns">
-            {columns.slice(index * 2, index * 2 + 2).map((column, n) => (
-              <div className="sp-column" key={n}>
-                {column.map((entry) => (
-                  <ReferenceCard entry={entry} key={entry.id} />
-                ))}
+      {Array.from(
+        { length: Math.ceil(columns.length / (wide ? 1 : 2)) },
+        (_, index) => (
+          <Paper
+            key={index}
+            name={name}
+            title={title}
+            page={summaryContinuation ? index + 2 : `R${startPage + index}`}
+            source={model.source}
+          >
+            {summaryContinuation ? (
+              <div className="sp-page-heading">
+                <h2>{title}</h2>
               </div>
-            ))}
-          </div>
-        </Paper>
-      ))}
+            ) : null}
+            <div
+              className={`sp-feature-columns ov-reference-columns${wide ? " is-wide" : ""}`}
+            >
+              {columns
+                .slice(index * (wide ? 1 : 2), (index + 1) * (wide ? 1 : 2))
+                .map((column, n) => (
+                  <div className="sp-column" key={n}>
+                    {column.map((entry, entryIndex) => (
+                      <div key={entry.id}>
+                        {!summaryContinuation &&
+                        (entryIndex === 0 ||
+                          column[entryIndex - 1]?.group !== entry.group) ? (
+                          <h3 className="ov-reference-group-heading">
+                            <Icon name={referenceIcon(entry.group)} />
+                            {entry.group}
+                          </h3>
+                        ) : null}
+                        <ReferenceCard entry={entry} />
+                      </div>
+                    ))}
+                  </div>
+                ))}
+            </div>
+          </Paper>
+        ),
+      )}
     </>
   );
 }
@@ -2028,6 +2315,7 @@ export function SheetOverview({
   paper,
   monochrome,
   blankHP,
+  children,
 }: {
   model: CharacterSheetModel;
   name: string;
@@ -2035,6 +2323,7 @@ export function SheetOverview({
   paper: "letter" | "a4";
   monochrome: boolean;
   blankHP: boolean;
+  children?: ReactNode;
 }) {
   const [basicAttackPage, setBasicAttackPage] = useState<string>();
   const [summarySelection, setSummarySelection] = useState<{
@@ -2058,37 +2347,41 @@ export function SheetOverview({
         : [],
     [model, summarySelection],
   );
-  if (!model.overview) return null;
+  if (!model.overview) return <>{children}</>;
+  const overviewClass = `sheet-overview sp-prototype sp-paper-${paper}${monochrome ? " sp-monochrome" : ""} print-only`;
   return (
-    <div
-      className={`sheet-overview sp-prototype sp-paper-${paper}${monochrome ? " sp-monochrome" : ""} print-only`}
-    >
-      <Summary
-        model={model}
-        name={name}
-        portrait={portrait}
-        blankHP={blankHP}
-        basicAttackPage={basicAttackPage}
-        onVisibleReminders={onVisibleReminders}
-      />
-      <ReferencePages
-        model={model}
-        name={name}
-        entries={continuationEntries}
-        summaryContinuation
-        onPageCount={setContinuationPages}
-      />
-      <Scratchpad
-        model={model}
-        name={name}
-        blankHP={blankHP}
-        startPage={2 + continuationPages}
-      />
-      <Details
-        model={model}
-        name={name}
-        onBasicAttackPage={setBasicAttackPage}
-      />
-    </div>
+    <>
+      <div className={overviewClass}>
+        <Summary
+          model={model}
+          name={name}
+          portrait={portrait}
+          blankHP={blankHP}
+          basicAttackPage={basicAttackPage}
+          onVisibleReminders={onVisibleReminders}
+        />
+        <ReferencePages
+          model={model}
+          name={name}
+          entries={continuationEntries}
+          summaryContinuation
+          onPageCount={setContinuationPages}
+        />
+        <Scratchpad
+          model={model}
+          name={name}
+          blankHP={blankHP}
+          startPage={2 + continuationPages}
+        />
+      </div>
+      {children}
+      <div className={overviewClass}>
+        <Details
+          model={model}
+          name={name}
+          onBasicAttackPage={setBasicAttackPage}
+        />
+      </div>
+    </>
   );
 }

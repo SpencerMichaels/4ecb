@@ -1372,27 +1372,27 @@ export function CharacterSheetPage({
         paper={character.sheetSettings.paper}
         monochrome={character.sheetSettings.monochrome}
         blankHP={character.sheetSettings.blankHitPoints}
-      />
-
-      {printCardPages.map((page, pageIndex) => (
-        <section
-          className="print-card-page print-page print-only"
-          key={`print-card-page-${pageIndex}`}
-        >
-          <div className="print-card-grid">
-            {page.map((card, index) => (
-              <PrintCard
-                card={card}
-                characterLevel={characterLevel}
-                colorUtilityPowersBlue={colorUtilityPowersBlue}
-                showEquippedAttackBonus={showEquippedAttackBonus}
-                showPrintTitleActionIcon={showPrintTitleActionIcon}
-                key={`${card.kind}-${card.id ?? card.name}-${index}`}
-              />
-            ))}
-          </div>
-        </section>
-      ))}
+      >
+        {printCardPages.map((page, pageIndex) => (
+          <section
+            className="print-card-page print-page print-only"
+            key={`print-card-page-${pageIndex}`}
+          >
+            <div className="print-card-grid">
+              {page.map((card, index) => (
+                <PrintCard
+                  card={card}
+                  characterLevel={characterLevel}
+                  colorUtilityPowersBlue={colorUtilityPowersBlue}
+                  showEquippedAttackBonus={showEquippedAttackBonus}
+                  showPrintTitleActionIcon={showPrintTitleActionIcon}
+                  key={`${card.kind}-${card.id ?? card.name}-${index}`}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
+      </SheetOverview>
     </main>
   );
 }

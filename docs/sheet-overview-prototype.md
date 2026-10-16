@@ -5,10 +5,17 @@ Reference-page
 review and the separately noted summary-continuation styling correction remain;
 M5.6 stays open.
 
-Next production review: group full reference panes by character origin (class,
-race, theme, background, feats, and other applicable origins) and place character
-reference after power cards. The ordering change is requested, not implemented
-yet; the detailed reference-page redesign remains a proposal for owner feedback.
+Production reference first draft is implemented for feedback: full references
+follow the existing power/item card pages. Origin sections sort entries by known
+acquired/granted level then name, with core grants counted as level 1 and unknown
+levels last. Evaluated grant ancestry and explicit legacy automatic grants
+identify origins independently of publication Source. Equipment and power indexes
+are full-width tables; features/rituals/character prose use two columns. The power
+index has Power, Level, Action, Range, Target, Attack and Damage columns, using
+authored formulas and separate multiattack lines rather than weapon-specific
+totals. Section headings, level metadata and source footers use the accepted
+muted pane vocabulary; long prose flows at normal size with measured continuation.
+This is a first draft, not final reference or M5.6 acceptance.
 See `implementation-status.md` for the final accepted scratchpad refinements;
 the study and initial integration descriptions below retain their historical
 design context.

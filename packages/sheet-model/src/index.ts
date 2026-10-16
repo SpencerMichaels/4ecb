@@ -50,6 +50,8 @@ export interface SheetCard {
   readonly critical?: string;
   readonly brutal?: number;
   readonly fields: readonly SheetValue[];
+  /** Retained legacy index metadata, separate from authored card rule fields. */
+  readonly referenceFields?: readonly SheetValue[];
   readonly flavor?: string;
   readonly prerequisites?: string;
   readonly description?: string;
@@ -864,6 +866,11 @@ function powerCard(
             (variant) => variant.hand === "main",
           )!.additionalEffects,
         }),
+    referenceFields: [
+      ["Level", power.level],
+      ["Attack Type", power.attackType],
+      ["Target", power.target],
+    ].flatMap(([label, value]) => (value && label ? [{ label, value }] : [])),
     fields: entityFields(entity)
       .filter(
         (field) =>
