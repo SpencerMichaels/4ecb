@@ -1234,11 +1234,11 @@ function ScratchpadRecords({
       ref={panelRef}
       style={height === undefined ? undefined : { height }}
     >
-      <Panel title="Treasure & consumables" icon="item">
-        <div className="sp-writing-lines ov-scratch-treasure" />
-      </Panel>
       <Panel title="Session notes" icon="edit">
         <div className="sp-writing-lines ov-scratch-notes" />
+      </Panel>
+      <Panel title="Treasure & consumables" icon="item">
+        <div className="sp-writing-lines ov-scratch-treasure" />
         <div className="sp-xp-tracker">
           <span>XP</span>
           {recordedXP?.trim() ? (

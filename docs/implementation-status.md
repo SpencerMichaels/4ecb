@@ -5,7 +5,7 @@
 Scratchpad working-surface redesign (2026-10-15): The product owner accepts both
 the first-page summary and scratchpad. The accepted scratchpad layout has
 Health with a three-circle action-point tracker beside Effect/Ends, a full-width Encounter/Daily
-tracking pair, then Treasure/consumables beside Session notes/XP. Slate pane headers, violet health
+tracking pair, then wider Session notes beside Treasure/consumables with XP. Slate pane headers, violet health
 reference cells, encounter-red/daily-gray tracking headings and explicit grayscale
 reuse the accepted visual vocabulary. Current/temp HP retain at least 0.7in writing boxes,
 temporary effects six 0.42in rows. Redundant quick-reference/two-short-reminder
@@ -270,12 +270,17 @@ them. Reference continuations repeat titles and retain their complete parts.
 
 Recorded XP appears as a small "Recorded: …" label within the existing scratchpad
 XP writing box, aligned to the right of its XP label and leaving writing space
-below. It does not appear in page-1 identity metadata, restoring the compact
+below, within Treasure & consumables on the right. Session notes occupies the
+wider left pane; both panes continue filling the available height. XP does not
+appear in page-1 identity metadata, restoring the compact
 three-row Theme/Paragon/Epic box. The standalone Advancement card remains removed,
 so XP alone cannot create a Character Record page. Missing XP leaves the writing
 box blank; explicit zero remains visible.
 Verification: 58 focused overview tests and web typechecking pass. The print
 matrix was not rerun for this small placement adjustment.
+The subsequent pane swap passes 72 focused overview/scratchpad tests, including
+Session notes first and XP scoped to Treasure & consumables. The print matrix
+was not rerun for this simple order/ownership swap.
 
 Items and power indexes use full-width panes. Items opens with Currency above
 two-column Equipped (breaking after Feet like the builder), then Inventory.

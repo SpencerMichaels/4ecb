@@ -16,6 +16,8 @@ Recorded XP is a small "Recorded: …" label inside the scratchpad's existing XP
 box, leaving room below for writing. The page-1 identity table stays at three
 rows, and XP does not create a standalone Advancement reference card/page.
 Absent XP leaves the scratchpad box blank; explicit zero remains visible.
+Session notes occupies the wider left bottom pane; Treasure & consumables is on
+the right and contains the XP box. Both panes still fill the available height.
 
 Production reference first draft is implemented for feedback: full references
 follow the existing power/item card pages. Origin sections sort entries by known

@@ -31,6 +31,28 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("puts Session notes in the wider first column and XP inside Treasure & consumables", () => {
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={model}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const records = html.split(
+      'class="ov-scratch-layout ov-scratch-records ov-scratch-bottom"',
+    )[1]!;
+    const [notes, treasure] = records.split("</section>");
+    expect(notes).toContain(">Session notes</h3>");
+    expect(notes).toContain('class="sp-writing-lines ov-scratch-notes"');
+    expect(notes).not.toContain('class="sp-xp-tracker"');
+    expect(treasure).toContain(">Treasure &amp; consumables</h3>");
+    expect(treasure).toContain('class="sp-writing-lines ov-scratch-treasure"');
+    expect(treasure).toContain('class="sp-xp-tracker"');
+  });
   it.each(["12500", "0"])(
     "shows recorded XP %s in the scratchpad box, not identity or a standalone reference card",
     (value) => {
