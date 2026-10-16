@@ -28,6 +28,7 @@ import { contentProfileMatchesRevision } from "./profile-migration";
 import { ActionTypeIcon } from "./ActionTypeIcon";
 import { Icon } from "./Icon";
 import { PortraitImage } from "./PortraitEditor";
+import { inventoryCategory } from "./equipment-ui";
 import { PrintPowerVariants } from "./PrintPowerVariants";
 import { printAdditionalEffect } from "./print-additional-effects";
 import {
@@ -930,18 +931,30 @@ export function CharacterSheetPage({
   }, [character?.build, content, exactProfile]);
   const model = useMemo(() => {
     if (character === undefined) return undefined;
+    const byId = new Map(
+      (exactProfile ? (content?.entities ?? []) : []).map((entity) => [
+        entity.id.toLocaleLowerCase(),
+        entity,
+      ]),
+    );
+    const options = {
+      resolveAbilityChoices,
+      inventoryCategory: (
+        elements: Parameters<typeof inventoryCategory>[0]["elements"],
+      ) => inventoryCategory({ elements }, byId),
+    };
     return evaluation !== undefined && content !== undefined && exactProfile
       ? buildEvaluatedSheetModel(
           character.snapshot,
           character.build,
           evaluation,
           content.entities,
-          { resolveAbilityChoices },
+          options,
         )
       : buildSheetModel(
           character.snapshot,
           exactProfile ? content?.entities : undefined,
-          { resolveAbilityChoices },
+          options,
         );
   }, [character, content, evaluation, exactProfile, resolveAbilityChoices]);
   const evaluatedSheetReady =

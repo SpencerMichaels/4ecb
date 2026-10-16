@@ -21,6 +21,7 @@ import { Prose, ProseBlocks, proseBlocks, type ProseBlock } from "./Prose";
 import { printItemPower } from "./print-item-presentation";
 import { SurgeBar } from "./SurgeBar";
 import { referencePowerRows } from "./reference-power-index";
+import { INVENTORY_CATEGORIES, ORDERED_LOADOUT_SLOTS } from "./equipment-ui";
 import {
   paginateTracking,
   type TrackingMeasurements,
@@ -1512,6 +1513,7 @@ interface ReferencePart {
   block: ProseBlock;
   paragraph?: number;
   powerIndex?: boolean;
+  tableCategory?: string;
 }
 export interface ReferenceEntry {
   id: string;
@@ -1653,14 +1655,42 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       });
   }
   for (const equipped of [true, false]) {
+    const slotPresentation = (slot: string) =>
+      ORDERED_LOADOUT_SLOTS.find(
+        (entry) =>
+          entry.id === slot.trim().toLowerCase().replaceAll(" ", "-") ||
+          entry.label.toLowerCase() === slot.trim().toLowerCase(),
+      );
+    const slotRank = (slots: readonly string[]) =>
+      Math.min(
+        ...slots.map((slot) => {
+          const presentation = slotPresentation(slot);
+          return presentation
+            ? ORDERED_LOADOUT_SLOTS.indexOf(presentation)
+            : Infinity;
+        }),
+      );
     const entries = o.inventory
       .map((item) => ({
         ...item,
         referenceSlot:
-          item.slots.map((slot) => slot.replaceAll("-", " ")).join(" / ") ||
+          [...item.slots]
+            .sort((a, b) => slotRank([a]) - slotRank([b]))
+            .map(
+              (slot) =>
+                slotPresentation(slot)?.label ?? slot.replaceAll("-", " "),
+            )
+            .join(" / ") ||
           (find(item.fields, "Item Slot") === "—"
             ? "Held / unspecified"
             : find(item.fields, "Item Slot")),
+        slotRank: slotRank(
+          item.slots.length ? item.slots : [find(item.fields, "Item Slot")],
+        ),
+        inventoryCategory:
+          INVENTORY_CATEGORIES.find(
+            (category) => category.id === item.category,
+          ) ?? INVENTORY_CATEGORIES.at(-1)!,
         quantity: equipped
           ? Math.min(item.quantity, item.equipped)
           : Math.max(0, item.quantity - item.equipped),
@@ -1668,24 +1698,28 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       .filter((item) => item.quantity > 0)
       .sort(
         (a, b) =>
-          (equipped ? a.referenceSlot.localeCompare(b.referenceSlot) : 0) ||
+          (equipped
+            ? a.slotRank - b.slotRank
+            : INVENTORY_CATEGORIES.indexOf(a.inventoryCategory) -
+              INVENTORY_CATEGORIES.indexOf(b.inventoryCategory)) ||
           a.name.localeCompare(b.name),
       );
     if (entries.length)
       result.push({
         id: `inventory:${equipped}`,
-        name: equipped ? "Equipped by slot" : "Carried equipment",
+        name: equipped ? "Equipped by slot" : "Inventory",
         group: "Equipment",
         source: "",
         parts: entries.map((item) => ({
+          ...(!equipped ? { tableCategory: item.inventoryCategory.label } : {}),
           block: {
             kind: "table" as const,
-            headers: equipped ? ["Slot", "Item", "Qty"] : ["Item", "Qty"],
+            headers: equipped ? ["Slot", "Item"] : ["Item", "Qty"],
             rows: [
               [
                 ...(equipped ? [item.referenceSlot] : []),
                 item.name,
-                String(item.quantity),
+                ...(!equipped ? [String(item.quantity)] : []),
               ],
             ],
           },
@@ -1868,7 +1902,7 @@ function ReferenceCard({
       <div className="sp-feature-body">
         {tables ? (
           <table
-            className={`ov-reference-table${parts[0]?.powerIndex && headers.length === 7 ? " ov-power-index-table" : ""}`}
+            className={`ov-reference-table${parts[0]?.powerIndex && headers.length === 7 ? " ov-power-index-table" : ""}${entry.id.startsWith("inventory:true") ? " ov-equipped-table" : entry.id.startsWith("inventory:false") ? " ov-inventory-table" : ""}`}
           >
             <thead>
               <tr>
@@ -1881,6 +1915,15 @@ function ReferenceCard({
             </thead>
             {parts.map((part, index) => (
               <tbody className="ov-reference-part" key={index}>
+                {part.tableCategory &&
+                (index === 0 ||
+                  part.tableCategory !== parts[index - 1]?.tableCategory) ? (
+                  <tr className="ov-reference-inventory-category">
+                    <th colSpan={headers.length} scope="rowgroup">
+                      {part.tableCategory}
+                    </th>
+                  </tr>
+                ) : null}
                 {(
                   part.block as Extract<ProseBlock, { kind: "table" }>
                 ).rows.map((row, n) => (

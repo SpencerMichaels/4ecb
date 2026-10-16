@@ -576,6 +576,24 @@ body:has(.sp-prototype) {
 .ov-reference-table td:not(:first-child) {
   font-variant-numeric: tabular-nums;
 }
+.ov-equipped-table thead th:first-child {
+  width: 30%;
+}
+.ov-inventory-table thead th:last-child {
+  width: 14%;
+}
+.ov-reference-table .ov-reference-inventory-category th {
+  background: #eaf0f6;
+  color: #3e5f7c;
+  font-size: 9pt;
+  font-weight: 700;
+  padding: 0.055in;
+  border-bottom: 0;
+}
+.sheet-overview.sp-monochrome .ov-reference-inventory-category th {
+  background: #eee;
+  color: #333;
+}
 .ov-power-index-table {
   font-size: 9pt !important;
 }

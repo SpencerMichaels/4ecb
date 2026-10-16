@@ -44,6 +44,34 @@ const feat: ContentEntity = {
   ],
 };
 describe("printed overview data", () => {
+  it("retains injected inventory categories without coupling the model to UI taxonomy", () => {
+    const elements = [
+      { id: "weapon:test", name: "Synthetic sword", type: "Weapon" },
+    ];
+    const model = buildSheetModel(
+      {
+        ...snapshot,
+        loot: [
+          {
+            name: "Sword",
+            count: 2,
+            equippedCount: 1,
+            showPowerCard: true,
+            elements,
+          },
+        ],
+      },
+      [],
+      {
+        inventoryCategory: (items) =>
+          items[0]?.definitionId === "weapon:test"
+            ? "weapons"
+            : "miscellaneous",
+      },
+    );
+    expect(model.overview?.inventory[0]?.category).toBe("weapons");
+    expect(model.overview?.inventory[0]?.quantity).toBe(2);
+  });
   it("replaces a core feature's grant wrapper with its owned power reminder once", () => {
     const feature = {
       ...feat,

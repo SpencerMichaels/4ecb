@@ -1128,6 +1128,11 @@ async function checkReferences(client) {
       }),
       pairedCategory:pages.some(p=>[...p.querySelectorAll('.ov-reference-category-block')].some(block=>
         [...block.querySelectorAll('.sp-column')].filter(column=>column.querySelector('.ov-reference-card')).length===2)),
+      equippedHeaders:pages.flatMap(p=>[...p.querySelectorAll('.ov-equipped-table')]).every(table=>
+        [...table.querySelectorAll('thead th')].map(cell=>cell.textContent).join('/')==='Slot/Item'),
+      inventoryHeaders:pages.flatMap(p=>[...p.querySelectorAll('.ov-inventory-table')]).every(table=>
+        [...table.querySelectorAll('thead th')].map(cell=>cell.textContent).join('/')==='Item/Qty' &&
+          table.querySelector('tbody .ov-reference-inventory-category th')?.getAttribute('colspan')==='2'),
       usageColors:[...new Set(pages.flatMap(p=>[...p.querySelectorAll('.ov-reference-card[data-usage]')].map(c=>getComputedStyle(c.querySelector('header')).backgroundColor)))],
       monochrome:pages[0]?.closest('.sp-monochrome')!==null,
       powerHeaders:[...pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table')])].map(t=>[...t.querySelectorAll('thead th')].map(e=>e.textContent)),
@@ -1144,6 +1149,8 @@ async function checkReferences(client) {
       state.uniqueGroups &&
       state.categoryBlocks &&
       state.pairedCategory &&
+      state.equippedHeaders &&
+      state.inventoryHeaders &&
       state.usageColors.length === (state.monochrome ? 1 : 3) &&
       state.tablesInBounds &&
       state.groupHeaders > 0,

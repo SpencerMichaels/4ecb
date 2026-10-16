@@ -2,6 +2,7 @@ import {
   detailsWithLegacyTextStrings,
   formatInventoryItemName,
   type CharacterBuild,
+  type BuildInventoryElement,
   type LegacyCharacterSnapshot,
   type LegacyLootSnapshot,
   type LegacyPowerSnapshot,
@@ -23,7 +24,11 @@ import {
   featureClauseKey,
   irrelevantFeatureClauseNames,
 } from "./power-feature-clauses";
-import { withSheetOverview, type SheetOverview } from "./overview";
+import {
+  withSheetOverview,
+  type SheetOverview,
+  type OverviewInventory,
+} from "./overview";
 export type {
   SheetOverview,
   OverviewFeature,
@@ -137,6 +142,17 @@ export interface CharacterSheetModel {
 
 export interface SheetModelOptions {
   readonly resolveAbilityChoices?: boolean;
+  readonly inventoryCategory?: (
+    elements: readonly BuildInventoryElement[],
+  ) => string | undefined;
+}
+
+function inventoryCategoryFields(
+  elements: readonly BuildInventoryElement[],
+  options: SheetModelOptions,
+): Pick<OverviewInventory, "category"> {
+  const category = options.inventoryCategory?.(elements);
+  return category === undefined ? {} : { category };
 }
 
 function extendedLegacyNotes(
@@ -1126,6 +1142,14 @@ export function buildSheetModel(
         quantity: loot.count,
         equipped: loot.equippedCount,
         slots: [],
+        ...inventoryCategoryFields(
+          loot.elements.map((element) => ({
+            name: element.name,
+            type: element.type,
+            ...(element.id ? { definitionId: element.id } : {}),
+          })),
+          options,
+        ),
         fields: loot.elements.flatMap((element) =>
           element.id
             ? entityFields(entities.get(element.id.toLocaleLowerCase()))
@@ -1446,6 +1470,18 @@ export function buildEvaluatedSheetModel(
       .filter(({ referenceKind }) => referenceKind === undefined)
       .map(({ entry, original, name, itemEntities }) => ({
         name,
+        ...inventoryCategoryFields(
+          original?.elements ??
+            entry.definitionIds.map((definitionId) => {
+              const entity = entities.get(definitionId.toLocaleLowerCase());
+              return {
+                definitionId,
+                name: entity?.name ?? "",
+                type: entity?.type ?? "",
+              };
+            }),
+          options,
+        ),
         quantity: entry.quantity,
         equipped: entry.equippedQuantity,
         slots:

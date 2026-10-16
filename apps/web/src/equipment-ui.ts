@@ -97,6 +97,12 @@ const CONDITIONAL_LOADOUT_SLOTS: readonly LoadoutSlotPresentation[] = [
   { id: "mount", label: "Mount", icon: LOADOUT_SLOT_ICONS.mount },
 ];
 
+/** Shared builder/print ordering, including conditional held/companion slots. */
+export const ORDERED_LOADOUT_SLOTS = [
+  ...LOADOUT_SLOT_COLUMNS.flatMap((column) => column.slots),
+  ...CONDITIONAL_LOADOUT_SLOTS,
+];
+
 export function visibleLoadoutSlotColumns(
   activeDefinitionIds: readonly string[],
   inventory: readonly BuildInventoryEntry[],
@@ -300,7 +306,7 @@ const MUNDANE_IMPLEMENT_IDS = new Set([
  * do. A composed physical base wins over a generic enchantment category.
  */
 export function inventoryCategory(
-  entry: BuildInventoryEntry,
+  entry: Pick<BuildInventoryEntry, "elements">,
   byId: ReadonlyMap<string, ContentEntity>,
 ): InventoryCategoryId | undefined {
   const definitions = inventoryDefinitionIds(entry).flatMap((id) => {
@@ -783,7 +789,7 @@ export function groupMagicItemFamilies(
 }
 
 export function inventoryDefinitionIds(
-  entry: BuildInventoryEntry,
+  entry: Pick<BuildInventoryEntry, "elements">,
 ): readonly string[] {
   return entry.elements.flatMap(({ definitionId }) =>
     definitionId === undefined ? [] : [definitionId.toLocaleLowerCase()],

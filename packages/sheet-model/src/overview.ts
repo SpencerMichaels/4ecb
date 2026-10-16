@@ -29,6 +29,8 @@ export interface OverviewInventory {
   readonly equipped: number;
   readonly slots: readonly string[];
   readonly fields: readonly SheetValue[];
+  /** Optional UI-provided classification, shared with the builder inventory. */
+  readonly category?: string;
 }
 export interface OverviewReminder extends SheetValue {
   /** Distinct authored benefits; paragraphs inside one benefit stay together. */

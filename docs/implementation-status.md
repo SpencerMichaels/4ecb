@@ -252,8 +252,15 @@ target and level are retained separately as index metadata, without adding them
 to physical-card rule fields. Item powers have a compact Item/Usage/Action index.
 All reference sections share coherent R-numbering and updated basic-attack links.
 The "Basic Attacks" reference section retains separate melee/ranged tables.
-"Equipped by slot" is a Slot/Item/Qty lookup sorted by displayed slot then item;
-"Carried equipment" uses Item/Qty only, sorted by name, preserving spare quantities.
+"Equipped by slot" is a Slot/Item lookup using the builder's body/held/other
+slot order and labels (unknown slots last), then item name. "Inventory" retains
+carried/spare quantities in Item/Qty columns, divided by the builder's inventory
+category labels/order. The UI injects its existing authored-role classifier into
+both evaluated and legacy sheet projections; the sheet model retains optional
+category metadata rather than duplicating UI taxonomy or guessing from names.
+No private corpus or UI dependencies enter the shared model. Unknown categories
+remain visible under Miscellaneous. Category rows are table row-group headers,
+kept with their first item and repeated at continuation starts.
 Verification of these lookup-table refinements: all 40 overview tests pass,
 including explicit/fallback slot ordering, carried spares and updated basic-attack
 reference links. No full print matrix was rerun for this small table change.
@@ -283,6 +290,14 @@ category headings, not just one-card sections. All four Chromium PDF and four
 Firefox overview variants pass (13 fixture pages; no overflow), with complete
 entry coverage and unchanged index/card boundaries. The feature preview was
 visually reviewed. Owner reference review remains open.
+
+Builder-aligned equipment follow-up: 98 focused overview/equipment/model tests,
+web typecheck, focused lint, formatting and production build pass. The
+overview-only Chromium/Firefox matrix passes all eight variants (13 fixture
+pages, no overflow), including Slot/Item equipped headers and grouped Item/Qty
+Inventory headers. Tests cover canonical slot order, authored slot fallback,
+carried/spare quantities, category metadata projection and shared builder
+classification. M5.6 reference review remains open.
 
 Verification: 139 focused sheet-model/overview/index/layout tests, web typecheck,
 focused lint and production build pass. The overview-only print check passes

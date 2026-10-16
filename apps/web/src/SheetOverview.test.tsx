@@ -1294,18 +1294,20 @@ describe("real-data sheet overview", () => {
     );
     expect(html).toContain("The full synthetic description is preserved.");
     expect(html.match(/<td>Synthetic blade<\/td>/g)).toHaveLength(2);
-    expect(html).toContain("main hand");
-    expect(html).toContain("Carried equipment");
+    expect(html).toContain("Main hand");
+    expect(html).toContain(">Inventory</h3>");
   });
   it("makes equipped inventory a slot-first lookup and omits carried slot labels", () => {
     const item = (
       name: string,
       slots: string[],
       fields: { label: string; value: string }[] = [],
+      category = "miscellaneous",
     ) => ({
       name,
       slots,
       fields,
+      category,
       equipped: 1,
       quantity: 2,
     });
@@ -1314,9 +1316,14 @@ describe("real-data sheet overview", () => {
       overview: {
         ...model.overview!,
         inventory: [
-          item("A sword", ["main-hand"]),
-          item("Z helmet", ["head"]),
-          item("Boots", [], [{ label: "Item Slot", value: "Feet" }]),
+          item("A sword", ["main-hand"], [], "weapons"),
+          item("Z helmet", ["head"], [], "worn-items"),
+          item(
+            "Boots",
+            [],
+            [{ label: "Item Slot", value: "Feet" }],
+            "worn-items",
+          ),
         ],
       },
     });
@@ -1327,12 +1334,12 @@ describe("real-data sheet overview", () => {
         .filter((block) => block.kind === "table");
     const equipped = tables("inventory:true");
     expect(
-      equipped.every((table) => table.headers?.join("/") === "Slot/Item/Qty"),
+      equipped.every((table) => table.headers?.join("/") === "Slot/Item"),
     ).toBe(true);
     expect(equipped.flatMap((table) => table.rows)).toEqual([
-      ["Feet", "Boots", "1"],
-      ["head", "Z helmet", "1"],
-      ["main hand", "A sword", "1"],
+      ["Head", "Z helmet"],
+      ["Feet", "Boots"],
+      ["Main hand", "A sword"],
     ]);
     const carried = tables("inventory:false");
     expect(
@@ -1343,6 +1350,11 @@ describe("real-data sheet overview", () => {
       ["Boots", "1"],
       ["Z helmet", "1"],
     ]);
+    expect(
+      entries
+        .find((entry) => entry.id === "inventory:false")
+        ?.parts.map((part) => part.tableCategory),
+    ).toEqual(["Weapons", "Worn items", "Worn items"]);
   });
   it("renders the approved summary and scratchpad without changing source data", () => {
     const markup = renderToStaticMarkup(
