@@ -1280,7 +1280,8 @@ function Scratchpad({
       const minimumRecordsHeight =
         recordsProbe.current!.getBoundingClientRect().height;
       const footerTop =
-        page.querySelector(".sp-page-footer")!.getBoundingClientRect().top - 8;
+        // Stay one pixel inside Paper's 8px guard to absorb fractional layout rounding.
+        page.querySelector(".sp-page-footer")!.getBoundingClientRect().top - 9;
       const availableRecordsHeight = Math.max(
         minimumRecordsHeight,
         footerTop - recordsRef.current!.getBoundingClientRect().top,

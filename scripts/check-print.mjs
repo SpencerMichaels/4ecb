@@ -1095,6 +1095,8 @@ async function checkScratchpad(client, monochrome) {
       encounterColumns:page.querySelectorAll('.sp-usage-table colgroup col').length-1,
       encounterHeader:page.querySelector('.sp-usage-table thead') !== null,
       recordsBottomGap:page.querySelector('.sp-page-footer').getBoundingClientRect().top-page.querySelector('.ov-scratch-bottom').getBoundingClientRect().bottom,
+      overflowWarning:page.dataset.overviewOverflow,
+      contentBottomGap:page.querySelector('.sp-page-footer').getBoundingClientRect().top-page.querySelector('.sp-page-content').getBoundingClientRect().bottom,
       recordsPaneBottoms:[...page.querySelectorAll('.ov-scratch-bottom > .sp-panel')].map(e=>e.getBoundingClientRect().bottom),
       encounterRowRules:[...page.querySelector('.sp-usage-table tbody tr:nth-child(2)').children].every(e=>getComputedStyle(e).borderTopStyle==='solid' && getComputedStyle(e).borderTopColor==='rgb(226, 230, 233)'),
       upperBottoms:[...page.querySelectorAll('.ov-scratch-upper > .sp-column > .sp-panel')].map(e=>e.getBoundingClientRect().bottom),
@@ -1115,6 +1117,10 @@ async function checkScratchpad(client, monochrome) {
       surgeHP:page.querySelector('.ov-scratch-health-values > div:last-child strong').textContent,
     };
   })()`,
+  );
+  assert(
+    state.overflowWarning === "false",
+    `Scratchpad must not show an overflow warning: ${JSON.stringify(state)}`,
   );
   assert(
     JSON.stringify(state.actual) === JSON.stringify(state.expected),
@@ -1202,7 +1208,7 @@ async function checkScratchpad(client, monochrome) {
     "Surge bar background and connector must match the Surges reference cell",
   );
   assert(
-    Math.abs(state.recordsBottomGap - 8) < 1 &&
+    Math.abs(state.recordsBottomGap - 9) < 1 &&
       Math.abs(state.recordsPaneBottoms[0] - state.recordsPaneBottoms[1]) < 1,
     `Both record panes must extend to the page bottom above the footer: ${JSON.stringify(state)}`,
   );
@@ -1281,6 +1287,10 @@ async function checkScratchpad(client, monochrome) {
   await waitForExpression(
     client,
     `document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"]').querySelectorAll('.ov-surge-row').length === 1`,
+  );
+  await waitForExpression(
+    client,
+    `document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"]').dataset.overviewOverflow === 'false'`,
   );
 }
 

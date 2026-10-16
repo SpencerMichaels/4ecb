@@ -153,6 +153,16 @@ and focused lint pass. Four Chromium PDF and four Firefox print-preview geometry
 variants pass bottom-edge alignment, dense-power minimum-space preservation,
 exact-once power coverage and restoration checks. Generated preview reviewed;
 no full milestone/card suite was run.
+Firefox overflow-warning follow-up: expanding records reproduced a false
+warning with a content/footer gap of 7.99993896484375px against Paper's strict
+8px guard, while the record panes themselves had an 8px gap. Scratchpad now
+targets 9px clearance so fractional layout rounding stays safely within that
+unchanged guard. The rendered check explicitly requires the visible warning
+flag to be false, including after resize/restoration, rather than checking only
+physical page overflow with a looser measurement margin.
+Verification: production build and all eight Chromium/Firefox overview variants
+pass, explicitly including absence of the warning before and after resizing.
+No full milestone suite rerun for this one-pixel clearance correction.
 Verification: 43 focused overview/layout tests, web typecheck, focused lint and
 production build pass. `node scripts/check-print.mjs --overview-only
 --firefox-scratchpad --scratchpad-preview` passes all four Chromium PDF variants
