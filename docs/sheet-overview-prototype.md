@@ -17,22 +17,25 @@ Skills/Languages and prerequisites instead of narrative/Common Knowledge text.
 Explicit prose "Benefit:" tails are a fallback; unresolved legacy-only text is
 preserved with its existing unavailable-rules notice. Actual granted feature
 descriptions remain complete. Equipment and power indexes
-use full-width panes. Items opens with a two-column Equipped table (breaking after
-Feet), then full-width Currency and Inventory panes; ordinary empty slots show an em dash, while conditional
+use full-width panes. Items opens with Currency, then two-column Equipped (breaking after
+Feet), then Inventory; ordinary empty slots show an em dash, while conditional
 implement/companion slots appear when occupied. Currency shows carried/stored
 wallet amounts at the current level, with page-1-style numeric groups: small
-denomination labels above prominent values in softly tinted cells. Nonzero
-stored balances add Carried/Stored/Total groups (per-denomination counts, no
-conversion); otherwise one group has no carried/stored distinction.
+denomination labels above prominent values in softly tinted cells.
+Carried and Stored groups are always side by side, without a separate Total group
+or denomination conversion. Equipped slot-label widths follow their contents,
+independently in each column, matching the builder.
 Unknown/custom currency remains visible as text, never coerced to zero.
 Inventory follows with two category columns, balanced by estimated printed lines
 (including wrapped item names), placing each category in the shorter column.
 Categories stay intact and retain builder order within each column;
 a single short category stays in one column even when that leaves the other empty.
 Measured pagination moves whole categories; only a category taller than a fresh
-page column may split, with its heading repeated. Each column has Item/Qty labels
-and a clear central gutter.
-equipped superscripts stay attached to each item, and every owned item remains.
+page column may split, with its heading repeated. Quantities lead item names as
+2×/3× prefixes (blank, with reserved space, for one); there is no Qty header.
+Category headings stay flush left, with names naturally indented. Striping restarts
+within each category. A clear central gutter separates columns.
+Equipped superscripts stay attached to each item, and every owned item remains.
 Features/rituals/character prose use stacked category-local
 two-column blocks under full-width headings. Measured splits balance column
 heights while preserving down-then-across level/name order. The power

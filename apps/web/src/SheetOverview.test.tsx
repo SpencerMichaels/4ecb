@@ -1869,7 +1869,7 @@ describe("real-data sheet overview", () => {
     expect(html).toContain('class="ov-slot-cell"');
     expect(html).toContain("lucide-shirt");
   });
-  it("stacks two-column Equipped above Currency even with an empty loadout", () => {
+  it("places side-by-side carried/stored Currency above two-column Equipped", () => {
     const fixture = {
       ...model,
       currency: [
@@ -1904,11 +1904,76 @@ describe("real-data sheet overview", () => {
     );
     expect(html).toContain('class="ov-reference-card ov-equipment-stack"');
     expect(html).toContain(">Currency</h3>");
+    expect(html.indexOf(">Currency</h3>")).toBeLessThan(
+      html.indexOf(">Equipped</h3>"),
+    );
     expect(equipped.group).toBe("Items");
     expect(html).toContain('aria-label="Carried currency"');
     expect(html).toContain('aria-label="Stored currency"');
-    expect(html).toContain('aria-label="Total currency"');
+    expect(html).not.toContain('aria-label="Total currency"');
     expect(html).toContain("<span>GP</span><strong>13</strong>");
+  });
+  it("restarts inventory stripes per category and uses quantity prefixes with a blank for one", () => {
+    const fixture = {
+      ...model,
+      overview: {
+        ...model.overview!,
+        inventory: [
+          {
+            name: "Gear one",
+            category: "adventuring-gear",
+            quantity: 1,
+            equipped: 0,
+            slots: [],
+            fields: [],
+          },
+          ...Array.from({ length: 10 }, (_, i) => ({
+            name: `Armor ${i}`,
+            category: "armor-shields",
+            quantity: 2,
+            equipped: 0,
+            slots: [],
+            fields: [],
+          })),
+          {
+            name: "Blade one",
+            category: "weapons",
+            quantity: 3,
+            equipped: 0,
+            slots: [],
+            fields: [],
+          },
+          {
+            name: "Blade two",
+            category: "weapons",
+            quantity: 4,
+            equipped: 0,
+            slots: [],
+            fields: [],
+          },
+        ],
+      },
+    };
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={fixture}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const firstColumn = html
+      .split('class="ov-inventory-column"')[1]!
+      .split('class="ov-inventory-column"')[0]!;
+    expect(
+      firstColumn.match(/class="ov-reference-part is-striped"/g),
+    ).toHaveLength(2);
+    expect(firstColumn.match(/class="ov-reference-part"/g)).toHaveLength(1);
+    expect(firstColumn).toContain('aria-label="Quantity 1"><span> </span>');
+    expect(firstColumn).toContain('aria-label="Quantity 3"><span>3×</span>');
+    expect(html).not.toContain(">Qty</th>");
   });
   it("renders the approved summary and scratchpad without changing source data", () => {
     const markup = renderToStaticMarkup(

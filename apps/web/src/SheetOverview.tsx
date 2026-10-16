@@ -2010,6 +2010,50 @@ const referenceIcon = (group: string): IconName =>
           : group === "Background"
             ? "background"
             : "book";
+function EquippedTables({ parts }: { parts: readonly ReferencePart[] }) {
+  return (
+    <div className="ov-equipped-columns">
+      {[0, 2].map((column) => (
+        <table className="ov-reference-table ov-equipped-table" key={column}>
+          <thead>
+            <tr>
+              <th scope="col">Slot</th>
+              <th scope="col">Item</th>
+            </tr>
+          </thead>
+          {parts.map((part, i) => {
+            const row =
+              part.block.kind === "table" ? part.block.rows[0] : undefined;
+            const slots = column === 0 ? part.slotCells : part.rightSlotCells;
+            if (!row?.[column]) return null;
+            return (
+              <tbody
+                className="ov-reference-part"
+                data-equipment-index={i}
+                key={i}
+              >
+                <tr>
+                  <td>
+                    <span className="ov-slot-cell">
+                      {slots?.map((slot, n) => (
+                        <span key={n}>
+                          {n ? " / " : null}
+                          <Icon name={slot.icon} />
+                          {slot.label}
+                        </span>
+                      ))}
+                    </span>
+                  </td>
+                  <td>{row[column + 1]}</td>
+                </tr>
+              </tbody>
+            );
+          })}
+        </table>
+      ))}
+    </div>
+  );
+}
 function ReferenceCard({
   entry,
   measure = false,
@@ -2029,7 +2073,6 @@ function ReferenceCard({
         className="ov-reference-card ov-equipment-stack"
         data-reference-id={entry.id}
       >
-        <ReferenceCard entry={loadout} measure={measure} nested />
         <section
           className="sp-feature-card ov-reference-pane ov-currency-pane"
           data-reference-category="items"
@@ -2043,14 +2086,10 @@ function ReferenceCard({
               {wallet.headers.slice(1).map((label, column) => (
                 <section
                   className="ov-stat-group ov-wallet-group"
-                  aria-label={
-                    label === "Amount"
-                      ? "Currency amounts"
-                      : `${label} currency`
-                  }
+                  aria-label={`${label} currency`}
                   key={label}
                 >
-                  {label !== "Amount" ? <h4>{label}</h4> : null}
+                  <h4>{label}</h4>
                   <div className="sp-values ov-band-values ov-wallet-values">
                     {wallet.rows.map((row) => (
                       <div key={row[0]}>
@@ -2070,6 +2109,7 @@ function ReferenceCard({
             ))}
           </div>
         </section>
+        <ReferenceCard entry={loadout} measure={measure} nested />
       </div>
     );
   }
@@ -2150,6 +2190,12 @@ function ReferenceCard({
     ? ((parts[0]!.block as Extract<ProseBlock, { kind: "table" }>).headers ??
       [])
     : [];
+  let categoryStart = 0;
+  const striped = parts.map((part, index) => {
+    if (index === 0 || part.tableCategory !== parts[index - 1]?.tableCategory)
+      categoryStart = index;
+    return (index - categoryStart) % 2 === 0;
+  });
   return (
     <section
       className={
@@ -2182,22 +2228,26 @@ function ReferenceCard({
         </header>
       ) : null}
       <div className="sp-feature-body">
-        {tables ? (
+        {tables && entry.id.startsWith("inventory:true") ? (
+          <EquippedTables parts={parts} />
+        ) : tables ? (
           <table
             className={`ov-reference-table${parts[0]?.powerIndex && headers.length === 6 ? " ov-power-index-table" : ""}${entry.id.startsWith("inventory:true") ? " ov-equipped-table" : entry.id.startsWith("inventory:false") ? " ov-inventory-table" : ""}`}
           >
-            <thead>
-              <tr>
-                {headers.map((heading) => (
-                  <th scope="col" key={heading}>
-                    {heading}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+            {!inventoryColumn ? (
+              <thead>
+                <tr>
+                  {headers.map((heading) => (
+                    <th scope="col" key={heading}>
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+            ) : null}
             {parts.map((part, index) => (
               <tbody
-                className="ov-reference-part"
+                className={`ov-reference-part${inventoryColumn && striped[index] ? " is-striped" : ""}`}
                 data-inventory-index={part.inventoryIndex}
                 key={index}
               >
@@ -2214,43 +2264,18 @@ function ReferenceCard({
                 ) : null}
                 {(
                   part.block as Extract<ProseBlock, { kind: "table" }>
-                ).rows.map((row, n) => (
-                  <tr key={n}>
-                    {row.map((cell, column) => (
-                      <td key={column}>
-                        {(part.slotCells && column === 0) ||
-                        (part.rightSlotCells && column === 2) ? (
-                          <span className="ov-slot-cell">
-                            {(column === 0
-                              ? part.slotCells!
-                              : part.rightSlotCells!
-                            ).map((slot, i) => (
-                              <span key={i}>
-                                {i ? " / " : null}
-                                <Icon name={slot.icon} />
-                                {slot.label}
-                              </span>
-                            ))}
-                          </span>
-                        ) : part.powerIndex && column === 0 && n === 0 ? (
-                          <>
-                            {part.indexAction ? (
-                              <>
-                                <ActionTypeIcon
-                                  decorative
-                                  value={part.indexAction}
-                                />
-                                <span className="sp-sr-only">
-                                  {part.indexAction}:{" "}
-                                </span>
-                              </>
-                            ) : null}
-                            {cell}
-                          </>
-                        ) : (
-                          cell
-                        )}
-                        {part.equippedInventory && column === 0 ? (
+                ).rows.map((row, n) =>
+                  inventoryColumn ? (
+                    <tr key={n}>
+                      <td
+                        className="ov-inventory-quantity"
+                        aria-label={`Quantity ${row[1]}`}
+                      >
+                        <span>{row[1] === "1" ? "\u00a0" : `${row[1]}×`}</span>
+                      </td>
+                      <td>
+                        {row[0]}
+                        {part.equippedInventory ? (
                           <sup
                             className="ov-equipped-marker"
                             aria-label="Equipped"
@@ -2259,9 +2284,56 @@ function ReferenceCard({
                           </sup>
                         ) : null}
                       </td>
-                    ))}
-                  </tr>
-                ))}
+                    </tr>
+                  ) : (
+                    <tr key={n}>
+                      {row.map((cell, column) => (
+                        <td key={column}>
+                          {(part.slotCells && column === 0) ||
+                          (part.rightSlotCells && column === 2) ? (
+                            <span className="ov-slot-cell">
+                              {(column === 0
+                                ? part.slotCells!
+                                : part.rightSlotCells!
+                              ).map((slot, i) => (
+                                <span key={i}>
+                                  {i ? " / " : null}
+                                  <Icon name={slot.icon} />
+                                  {slot.label}
+                                </span>
+                              ))}
+                            </span>
+                          ) : part.powerIndex && column === 0 && n === 0 ? (
+                            <>
+                              {part.indexAction ? (
+                                <>
+                                  <ActionTypeIcon
+                                    decorative
+                                    value={part.indexAction}
+                                  />
+                                  <span className="sp-sr-only">
+                                    {part.indexAction}:{" "}
+                                  </span>
+                                </>
+                              ) : null}
+                              {cell}
+                            </>
+                          ) : (
+                            cell
+                          )}
+                          {part.equippedInventory && column === 0 ? (
+                            <sup
+                              className="ov-equipped-marker"
+                              aria-label="Equipped"
+                            >
+                              E
+                            </sup>
+                          ) : null}
+                        </td>
+                      ))}
+                    </tr>
+                  ),
+                )}
               </tbody>
             ))}
           </table>
@@ -2730,20 +2802,40 @@ function ReferencePages({
                 Number(a.dataset.inventoryIndex) -
                 Number(b.dataset.inventoryIndex),
             );
-          const heights = measuredParts.map(
+          let heights = measuredParts.map(
             (part) => part.getBoundingClientRect().height,
           );
+          if (card.querySelector(".ov-equipped-columns")) {
+            const paired = new Map<number, number>();
+            measuredParts.forEach((part) => {
+              const index = Number(part.dataset.equipmentIndex);
+              paired.set(
+                index,
+                Math.max(
+                  paired.get(index) ?? 0,
+                  part.getBoundingClientRect().height,
+                ),
+              );
+            });
+            heights = [...paired]
+              .sort(([a], [b]) => a - b)
+              .map(([, height]) => height);
+          }
           return [
             card.dataset.referenceId!,
             {
               height: card.getBoundingClientRect().height,
               overhead:
                 card.getBoundingClientRect().height -
-                (card.querySelector(".ov-inventory-columns")
+                (card.querySelector(
+                  ".ov-inventory-columns, .ov-equipped-columns",
+                )
                   ? Math.max(
                       0,
                       ...Array.from(
-                        card.querySelectorAll(".ov-inventory-column"),
+                        card.querySelectorAll(
+                          ".ov-inventory-column, .ov-equipped-table",
+                        ),
                       ).map((column) =>
                         Array.from(
                           column.querySelectorAll(".ov-reference-part"),

@@ -576,12 +576,18 @@ body:has(.sp-prototype) {
 .ov-reference-table td:not(:first-child) {
   font-variant-numeric: tabular-nums;
 }
-.ov-equipped-table thead th:nth-child(odd) {
-  width: 15%;
+.ov-equipped-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.24in;
+  align-items: start;
 }
-.ov-equipped-table :is(th, td):nth-child(3) {
-  border-left: 0.24in solid #fff;
-  padding-left: 0.12in;
+.ov-equipped-table {
+  table-layout: auto;
+}
+.ov-equipped-table :is(th, td):first-child {
+  width: 1%;
+  white-space: nowrap;
 }
 .ov-equipment-stack {
   display: grid;
@@ -594,6 +600,7 @@ body:has(.sp-prototype) {
 }
 .ov-wallet-groups {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.08in;
 }
 .ov-wallet-group {
@@ -622,15 +629,6 @@ body:has(.sp-prototype) {
 }
 .sp-values.ov-wallet-values span {
   color: #3e5f7c;
-}
-.ov-wallet-group[aria-label="Total currency"] {
-  border-color: #c1cfb5;
-}
-.ov-wallet-group[aria-label="Total currency"] .ov-wallet-values > div {
-  background: #eef3e9;
-}
-.ov-wallet-group[aria-label="Total currency"] .ov-wallet-values span {
-  color: #526b45;
 }
 .sheet-overview.sp-monochrome .ov-wallet-group {
   border-color: #aaa;
@@ -661,11 +659,24 @@ body:has(.sp-prototype) {
 .ov-inventory-column .sp-feature-body {
   padding: 0;
 }
-.ov-inventory-table thead th:last-child,
-.ov-inventory-table td:last-child:not(:first-child) {
-  width: 14%;
+.ov-inventory-table {
+  table-layout: auto;
+}
+.ov-inventory-table .ov-reference-part {
+  background: transparent;
+}
+.ov-inventory-table .ov-reference-part.is-striped {
+  background: #f0f3f5;
+}
+.ov-inventory-table .ov-inventory-quantity {
+  width: 1%;
   text-align: right;
   white-space: nowrap;
+}
+.ov-inventory-quantity span {
+  display: inline-block;
+  min-width: 2.8ch;
+  font-variant-numeric: tabular-nums;
 }
 .ov-reference-table .ov-reference-table-category th {
   background: #fff;

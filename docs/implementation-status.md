@@ -258,9 +258,11 @@ monochrome output. Internally chunked long paragraphs
 rejoin within each rendered pane; only actual continuation boundaries divide
 them. Reference continuations repeat titles and retain their complete parts.
 
-Items and power indexes use full-width panes. Items opens with a two-column
-Equipped table, breaking after Feet like the builder, followed by full-width
-Currency and Inventory panes. Inventory has
+Items and power indexes use full-width panes. Items opens with Currency above
+two-column Equipped (breaking after Feet like the builder), then Inventory.
+The independent Equipped tables size slot labels to their contents like the
+builder, keeping Holy Symbol unwrapped without over-widening the left labels.
+Inventory has
 two category columns, assigning each category to the shorter column by estimated
 printed lines and preserving category order within each column. Whole categories remain in one column, even if that leaves a
 shorter/empty partner column. Measured pagination moves categories intact;
@@ -270,11 +272,12 @@ ordinary slots with an em dash, preserving builder slot order/icons; conditional
 implement/companion slots appear when occupied. Currency uses current-level
 carried/stored wallet text (latest applicable per-level key, legacy details as
 fallback). Currency reuses page-1-style numeric groups with small denomination
-labels above prominent counts in softly tinted cells. One group has no
-carried/stored labels when stored currency is absent/zero; nonzero stored funds
-add Carried, Stored, and Total groups without denomination conversion. Unknown/custom text is
-preserved below the groups and never silently converted to zero. Inventory quantity
-columns align toward their own names, with a white center gutter separating pairs.
+labels above prominent counts in softly tinted cells. Carried and Stored are
+always side by side, with no separate Total group or denomination conversion. Unknown/custom text is
+preserved below the groups and never silently converted to zero. Inventory uses a
+reserved leading quantity prefix (2×, 3×; blank for one) rather than a Qty column;
+item names naturally indent beneath flush-left category headings. Row striping
+restarts with a shaded row in each category, including continuation starts.
 Redundant carried/stored character-note cards are omitted. Equipment/Currency
 are measured as a stacked block; inventory pagination retains complete category groups
 and repeats category headings at continuation starts. The equipment-layout
@@ -294,7 +297,13 @@ line estimates, intact-category pagination, and oversized-category preservation.
 Web typechecking, focused lint and the production build pass; the four Chromium
 overview print cases remain free of overflow. The print harness retries temporary
 directory cleanup briefly to tolerate Chromium's late profile writes. Owner visual
-review remains open. Features,
+review remains open. The slot-width/category-striping/quantity-prefix refinement
+passes 62 focused overview/wallet tests. Currency now precedes Equipped, with
+Carried and Stored always side by side and no Total group; explicit zero balances
+and unknown/custom balances remain distinct. Web typechecking, focused lint,
+production build, and four Chromium overview print cases pass; rendered Items
+pages were visually inspected. Firefox/full milestone gates were not rerun.
+Features,
 rituals and character prose use category-local two-column blocks. The power index columns are
 Power, Level, Range, Target, Attack and Damage. Action icons precede power names;
 item-power indexes likewise place icons beside item names, leaving Item/Usage
