@@ -1767,7 +1767,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
             {
               powerIndex: true,
               indexAction: power.actionType ?? "",
-              ...(common ? { tableCategory: "Universal at-will actions" } : {}),
+              ...(common ? { tableCategory: "Universal actions" } : {}),
               block: {
                 kind: "table" as const,
                 headers: [

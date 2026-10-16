@@ -274,7 +274,7 @@ Basic attacks are regular Power Index entries; their standalone alternatives
 tables and page-link plumbing are removed. Page-1 omitted-weapon notes point to
 power cards, which retain the complete comparison tables.
 Character-specific at-wills and universal at-will actions share one green pane
-and one set of column headings. A full-width "Universal at-will actions" table
+and one set of column headings. A full-width "Universal actions" table
 subheading introduces the universal rows, using white fill and quiet green rules;
 it stays attached to its first power and repeats at continuation starts. The sheet
 model marks universal powers only from unconditional generic

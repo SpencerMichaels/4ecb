@@ -25,7 +25,7 @@ icons preceding names instead of a separate Action column. It uses authored,
 weapon-independent formulas (STR+2 vs AC, 2[W]+STR), not an equipped weapon's
 calculated totals. Separate multiattack lines retain their own formulas/targets.
 Character-specific and universal at-wills share one green pane and one table
-header. A full-width "Universal at-will actions" divider precedes the universal
+header. A full-width "Universal actions" divider precedes the universal
 rows, using quiet rules/white background and the pane's green accent. It stays
 with its first power and repeats at continuation starts as needed. Character-sheet
 power cards (screen and print) sort specific at-will, universal at-will, encounter,

@@ -88,7 +88,7 @@ describe("real-data sheet overview", () => {
       entries
         .find((entry) => entry.id === "powers:At-Will")
         ?.parts.map((part) => part.tableCategory),
-    ).toEqual([undefined, undefined, "Universal at-will actions"]);
+    ).toEqual([undefined, undefined, "Universal actions"]);
     const html = renderToStaticMarkup(
       <SheetOverview
         model={{ ...model, powers }}
@@ -106,10 +106,10 @@ describe("real-data sheet overview", () => {
       'class="ov-reference-table-category ov-power-index-subheading"',
     );
     expect(atWill).toContain(
-      '<th colSpan="6" scope="rowgroup">Universal at-will actions</th>',
+      '<th colSpan="6" scope="rowgroup">Universal actions</th>',
     );
     expect(atWill.match(/<thead>/g)).toHaveLength(1);
-    expect(html).not.toContain(">Universal at-will actions</h3>");
+    expect(html).not.toContain(">Universal actions</h3>");
     expect(entries.some((entry) => entry.id === "power-rules-references")).toBe(
       false,
     );
