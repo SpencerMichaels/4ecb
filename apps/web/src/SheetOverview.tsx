@@ -827,11 +827,13 @@ function Summary({
         </div>
         <dl className="ov-identity-details">
           {[
-            ["Theme", "Theme"],
-            ["ParagonPath", "Paragon path"],
-            ["EpicDestiny", "Epic destiny"],
-          ].map(([field, label]) => (
-            <div key={field}>
+            ["Size", "Theme", "Theme"],
+            ["Deity", "ParagonPath", "Paragon path"],
+            ["Alignment", "EpicDestiny", "Epic destiny"],
+          ].map(([first, field, label]) => (
+            <div key={first}>
+              <dt>{first}</dt>
+              <dd>{find(model.identity, first!).trim() || "—"}</dd>
               <dt>{label}</dt>
               <dd>
                 {model.identity
@@ -2052,9 +2054,8 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
     });
   const details = model.identity.filter(
     (value) =>
-      /^(?:Size|Gender|Age|Height|Weight|Alignment|Deity|RPGA)$/.test(
-        value.label,
-      ) && value.value.trim(),
+      /^(?:Gender|Age|Height|Weight|RPGA)$/.test(value.label) &&
+      value.value.trim(),
   );
   if (details.length)
     result.push({

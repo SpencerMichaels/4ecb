@@ -60,7 +60,7 @@ describe("real-data sheet overview", () => {
       ),
     ).toEqual([[0]]);
   });
-  it("places character details before descriptive references and keeps size off page one", () => {
+  it("puts mechanical identity in the paired header and physical details before descriptive references", () => {
     const fixture = {
       ...model,
       identity: [
@@ -79,16 +79,6 @@ describe("real-data sheet overview", () => {
       "Appearance",
     ]);
     expect(entries[0]?.parts.map((part) => part.block)).toEqual([
-      {
-        kind: "table",
-        headers: ["Detail", "Value"],
-        rows: [["Size", "Small"]],
-      },
-      {
-        kind: "table",
-        headers: ["Detail", "Value"],
-        rows: [["Deity", "Example deity"]],
-      },
       { kind: "table", headers: ["Detail", "Value"], rows: [["Age", "30"]] },
     ]);
     const html = renderToStaticMarkup(
@@ -103,7 +93,7 @@ describe("real-data sheet overview", () => {
     );
     expect(
       html.split('aria-label="Character summary"')[1]!.split("</article>")[0]!,
-    ).not.toContain("Small");
+    ).toContain("<dt>Size</dt><dd>Small</dd><dt>Theme</dt><dd>—</dd>");
   });
   it("prints carried weight, normal limit and load without guessing unknown inputs", () => {
     const entry = references({
@@ -1357,7 +1347,13 @@ describe("real-data sheet overview", () => {
       expect(box).not.toContain("<dt>Player</dt>");
       expect(box).not.toContain("<dt>Company</dt>");
       expect(html).toContain('<p class="ov-player-company"></p>');
-      for (const label of ["Paragon path", "Epic destiny"])
+      for (const label of [
+        "Size",
+        "Deity",
+        "Alignment",
+        "Paragon path",
+        "Epic destiny",
+      ])
         expect(box).toContain(`<dt>${label}</dt><dd>—</dd>`);
       expect(box).toContain(
         `<dt>Theme</dt><dd>${identity.length ? "Test theme" : "—"}</dd>`,

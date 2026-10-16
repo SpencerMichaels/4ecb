@@ -324,6 +324,10 @@ try {
     if (referencePreview && variant.name === "letter-color") {
       for (const [name, selector] of [
         [
+          "summary",
+          '.sheet-overview > .ov-paper[aria-label="Character summary"]',
+        ],
+        [
           "features",
           '.sheet-overview > .ov-paper[aria-label="Character reference"]',
         ],
@@ -1030,6 +1034,11 @@ async function checkSummaryPresentation(client, monochrome) {
     const summary = document.querySelector('.ov-paper[aria-label="Character summary"]');
     const tables = [...summary.querySelectorAll('.ov-main-column table, .ov-reminders-column > .ov-flow-pane table')];
     return {
+      identityPairs: (() => {
+        const box=summary.querySelector('.ov-identity-details');
+        const rows=[...box.children];
+        return rows.length===3 && rows.every(row=>row.children.length===4 && [...row.children].every((cell,i,all)=>!i || cell.getBoundingClientRect().left>=all[i-1].getBoundingClientRect().right-1)) && box.textContent.includes('Synthetic patron') && box.getBoundingClientRect().right<=summary.querySelector('.sp-identity').getBoundingClientRect().right+1;
+      })(),
       backgrounds: tables.flatMap(table => {
         const row = table.querySelector('tbody tr');
         return row ? [getComputedStyle(row).backgroundColor] : [];
@@ -1120,6 +1129,10 @@ async function checkSummaryPresentation(client, monochrome) {
     );
   }
   assert(
+    presentation.identityPairs,
+    "Summary identity must retain three paired four-cell rows within the header",
+  );
+  assert(
     presentation.backgrounds.length > 0 &&
       presentation.backgrounds.every((color) => color === "rgb(240, 243, 245)"),
     `Summary tables must consistently shade their first row: ${JSON.stringify(presentation.backgrounds)}`,
@@ -1190,7 +1203,7 @@ async function checkReferences(client) {
         return f.top>=g.bottom && f.bottom<=p.bottom && f.left>=p.left && f.right<=p.right;
       }),
       cardFooterContents:[...document.querySelectorAll('.print-card-page-footer')].every(footer=>footer.querySelector('.print-card-footer-identity')?.textContent.includes('Synthetic print fixture hero · Synthetic ancestry Synthetic guardian 18') && footer.textContent.includes('Power & Item Cards')),
-      details:pages.some(page=>page.querySelector('[data-reference-id="character-details"]')?.textContent.includes('Synthetic patron')),
+      details:pages.some(page=>page.querySelector('[data-reference-id="character-details"]')?.textContent.includes('Age30')),
       encumbrance:pages.some(page=>page.querySelector('[data-reference-id="inventory:false"] .ov-inventory-encumbrance')?.textContent.includes('67 lb')) && !pages.some(page=>page.querySelector('[data-reference-id="encumbrance"]')),
       fixedCardSizes:[...document.querySelectorAll('.print-card-page .print-reference-card')].every(card=>{
         const r=card.getBoundingClientRect(), a4=Boolean(card.closest('.paper-a4'));

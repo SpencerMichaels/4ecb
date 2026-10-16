@@ -2,6 +2,20 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Paired identity-header trial (2026-10-16): page 1 now uses a right-aligned,
+content-sized four-column identity table. Rows pair Size/Theme, Deity/Paragon
+path and Alignment/Epic destiny. A 62% width cap leaves room for the character
+name; label tracks fit the longest label and value tracks wrap only as needed.
+Empty values remain em dashes. The three mechanical identity fields are removed
+from the reference Details table; Gender/Age/Height/Weight/RPGA remain there.
+This supersedes the prior pending status-line proposal and is for owner feedback.
+Verification: 65 overview tests, web typecheck, focused lint, formatting and
+production build pass. All eight Chromium/Firefox Letter/A4 color/monochrome
+overview print cases pass with no overflow and continuous numbering. Added
+geometry assertions check three four-cell rows in reading order within the
+header. The generated summary preview was visually inspected. No full milestone
+or dense-card content gate was rerun.
+
 Coin-weight preference (2026-10-16): Settings now offers “Count coin weight,”
 enabled by default, persisted per browser with session fallback when storage is
 unavailable. Character sheets rebuild their model when it changes. Both evaluated

@@ -164,7 +164,14 @@ body:has(.sp-prototype) {
   border: 1px solid var(--sp-border);
   border-radius: 5px;
   overflow: hidden;
-  flex: 0 1 2.7in;
+  display: grid;
+  grid-template-columns: max-content minmax(0, max-content) max-content minmax(
+      0,
+      max-content
+    );
+  flex: 0 1 auto;
+  width: max-content;
+  max-width: 62%;
   min-width: 0;
   margin: 0 0 0 auto;
   font-size: 8.5pt;
@@ -172,10 +179,9 @@ body:has(.sp-prototype) {
   overflow-wrap: anywhere;
 }
 .ov-identity-details > div {
-  display: grid;
-  grid-template-columns: 0.95in minmax(0, 1fr);
+  display: contents;
 }
-.ov-identity-details > div + div {
+.ov-identity-details > div + div > :is(dt, dd) {
   border-top: 1px solid var(--sp-border);
 }
 .ov-identity-details :is(dt, dd) {
@@ -188,6 +194,9 @@ body:has(.sp-prototype) {
 }
 .ov-identity-details dd {
   margin: 0;
+}
+.ov-identity-details dd:not(:last-child) {
+  border-right: 1px solid var(--sp-border);
 }
 .ov-numeric-band {
   display: grid;

@@ -20,8 +20,12 @@ React renders the model. It never parses XML or calculates a character value.
 Both sheet paths retain Size, Gender, Age, Height, Weight, Alignment, Deity and
 RPGA in identity metadata. Evaluated Size/Gender/Alignment/Deity selections take
 precedence over imported identity caches; edited free-text fields use the existing
-detail-text overlay. Populated fields appear in Character Details at the start
-of the Character Record references, not in the accepted page-1 identity header.
+detail-text overlay. Page 1's right-aligned identity table has three paired rows:
+Size / Theme, Deity / Paragon path, Alignment / Epic destiny. Each pair has its
+own label/value columns, sized to contents within a 62%-of-header maximum;
+labels stay whole while long values may wrap. Missing values show em dashes.
+Size, Deity and Alignment are not duplicated in Character Details. Populated
+Gender, Age, Height, Weight and RPGA stay in that reference table before notes.
 
 Encumbrance is model data, not React arithmetic. The fallback path uses the
 cached gear `Weight` stat. The evaluated path reconstructs the native stock

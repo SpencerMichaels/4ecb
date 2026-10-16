@@ -7,9 +7,12 @@ M5.6 stays open.
 Final audit follow-up: Inventory includes a compact encumbrance line (carried
 weight, normal limit, load), not a separate pane. Inventory names have muted,
 right-aligned weights including the listed quantity; unknown weights show an
-em dash. Character Record currently starts with a compact Character Details table for
-populated Size, Gender, Age, Height, Weight, Alignment, Deity and RPGA fields,
-before descriptive notes. Size is not added to page 1. Reminder continuations
+em dash. Page 1's top-right identity table is a content-sized four-column grid,
+three rows pairing Size/Theme, Deity/Paragon path and Alignment/Epic destiny.
+It stays right-aligned, caps its width to preserve room for the name, and wraps
+long values without wrapping labels. Blank fields retain em dashes. Character
+Record's Details table retains populated Gender, Age, Height, Weight and RPGA
+before descriptive notes, without repeating the new page-1 fields. Reminder continuations
 reuse page-1 category panes, inset descriptions and benefit bullets; measured
 columns repeat the category heading when split, with no large continuation
 heading or reference-card chrome. A single oversized reminder remains intact
