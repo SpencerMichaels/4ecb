@@ -2,6 +2,17 @@ import { describe, expect, it } from "vitest";
 import { referenceCurrency } from "./reference-currency";
 
 describe("reference wallet", () => {
+  it("dims only a known zero stored balance, never unknown or custom balances", () => {
+    for (const value of ["0", "0 gp", "0 ad; 0 pp; 0 gp; 0 sp; 0 cp"])
+      expect(referenceCurrency([{ label: "Stored", value }]).storedEmpty).toBe(
+        true,
+      );
+    for (const value of ["—", "", "1 cp", "2 custom coins"])
+      expect(referenceCurrency([{ label: "Stored", value }]).storedEmpty).toBe(
+        false,
+      );
+    expect(referenceCurrency([]).storedEmpty).toBe(false);
+  });
   it("always shows carried and stored counts without converting coins", () => {
     const wallet = referenceCurrency([
       { label: "Carried", value: "13 gp; 2 sp" },

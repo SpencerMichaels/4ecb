@@ -609,6 +609,9 @@ body:has(.sp-prototype) {
   padding: 0.04in;
   min-width: 0;
 }
+.ov-wallet-group.is-empty {
+  opacity: 0.5;
+}
 .ov-currency-pane .ov-wallet-group h4 {
   margin: 0 0 0.04in;
   padding-left: 0.025in;

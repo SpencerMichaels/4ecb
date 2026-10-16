@@ -26,6 +26,8 @@ Carried and Stored groups are always side by side, without a separate Total grou
 or denomination conversion. Equipped slot-label widths follow their contents,
 independently in each column, matching the builder.
 Unknown/custom currency remains visible as text, never coerced to zero.
+The Stored group fades to 50% opacity only for a known zero balance, retaining
+its layout space; unknown/custom balances remain fully visible.
 Inventory follows with two category columns, balanced by estimated printed lines
 (including wrapped item names), placing each category in the shorter column.
 Categories stay intact and retain builder order within each column;

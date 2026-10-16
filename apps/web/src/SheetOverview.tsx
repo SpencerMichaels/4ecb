@@ -2085,7 +2085,7 @@ function ReferenceCard({
             <div className="ov-wallet-groups">
               {wallet.headers.slice(1).map((label, column) => (
                 <section
-                  className="ov-stat-group ov-wallet-group"
+                  className={`ov-stat-group ov-wallet-group${label === "Stored" && wallet.storedEmpty ? " is-empty" : ""}`}
                   aria-label={`${label} currency`}
                   key={label}
                 >

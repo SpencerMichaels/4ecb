@@ -24,6 +24,9 @@ export function referenceCurrency(values: readonly SheetValue[]) {
     coin: keyof CurrencyAmount,
   ) => (amount ? amount[coin].toLocaleString("en-US") : "—");
   return {
+    storedEmpty:
+      stored.amount !== undefined &&
+      Object.values(stored.amount).every((count) => count === 0),
     headers: ["Coin", "Carried", "Stored"],
     rows: CURRENCY_DENOMINATIONS.map((coin) => {
       return [

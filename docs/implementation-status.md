@@ -300,7 +300,10 @@ directory cleanup briefly to tolerate Chromium's late profile writes. Owner visu
 review remains open. The slot-width/category-striping/quantity-prefix refinement
 passes 62 focused overview/wallet tests. Currency now precedes Equipped, with
 Carried and Stored always side by side and no Total group; explicit zero balances
-and unknown/custom balances remain distinct. Web typechecking, focused lint,
+and unknown/custom balances remain distinct. A known zero Stored balance fades
+its whole group to 50% opacity without changing layout; unknown/custom balances
+do not fade. That opacity-only follow-up passes eight focused wallet tests;
+the print matrix was not rerun for it. Web typechecking, focused lint,
 production build, and four Chromium overview print cases pass; rendered Items
 pages were visually inspected. Firefox/full milestone gates were not rerun.
 Features,
