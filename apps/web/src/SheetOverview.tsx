@@ -1638,7 +1638,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       result.push({
         id: `basic:${power.id ?? power.name}`,
         name: power.name,
-        group: "Basic attack alternatives",
+        group: "Basic Attacks",
         source: "",
         parts: Array.from(
           { length: Math.ceil(rows.length / 4) },
@@ -1656,6 +1656,11 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
     const entries = o.inventory
       .map((item) => ({
         ...item,
+        referenceSlot:
+          item.slots.map((slot) => slot.replaceAll("-", " ")).join(" / ") ||
+          (find(item.fields, "Item Slot") === "—"
+            ? "Held / unspecified"
+            : find(item.fields, "Item Slot")),
         quantity: equipped
           ? Math.min(item.quantity, item.equipped)
           : Math.max(0, item.quantity - item.equipped),
@@ -1663,9 +1668,8 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       .filter((item) => item.quantity > 0)
       .sort(
         (a, b) =>
-          (a.slots.join("/") || find(a.fields, "Item Slot")).localeCompare(
-            b.slots.join("/") || find(b.fields, "Item Slot"),
-          ) || a.name.localeCompare(b.name),
+          (equipped ? a.referenceSlot.localeCompare(b.referenceSlot) : 0) ||
+          a.name.localeCompare(b.name),
       );
     if (entries.length)
       result.push({
@@ -1676,18 +1680,11 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
         parts: entries.map((item) => ({
           block: {
             kind: "table" as const,
-            headers: ["Item", "Slot", "Qty"],
+            headers: equipped ? ["Slot", "Item", "Qty"] : ["Item", "Qty"],
             rows: [
               [
+                ...(equipped ? [item.referenceSlot] : []),
                 item.name,
-                equipped
-                  ? item.slots
-                      .map((slot) => slot.replaceAll("-", " "))
-                      .join(" / ") ||
-                    (find(item.fields, "Item Slot") === "—"
-                      ? "Held / unspecified"
-                      : find(item.fields, "Item Slot"))
-                  : "Carried",
                 String(item.quantity),
               ],
             ],
@@ -2022,7 +2019,7 @@ export function basicAttackReferencePage(
   startPage = 1,
 ): string | undefined {
   const index = columns.findIndex((column) =>
-    column.some((entry) => entry.group === "Basic attack alternatives"),
+    column.some((entry) => entry.group === "Basic Attacks"),
   );
   return index < 0
     ? undefined
@@ -2040,7 +2037,7 @@ function Details({
   const sections = useMemo(() => {
     const entries = references(model);
     const bucket = (entry: ReferenceEntry) =>
-      entry.group === "Equipment" || entry.group === "Basic attack alternatives"
+      entry.group === "Equipment" || entry.group === "Basic Attacks"
         ? 1
         : /^(?:Power index|Item power index)$/.test(entry.group)
           ? 2

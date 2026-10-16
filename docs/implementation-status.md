@@ -247,6 +247,12 @@ damage formulas point to the card rather than absorbing riders. Legacy range,
 target and level are retained separately as index metadata, without adding them
 to physical-card rule fields. Item powers have a compact Item/Usage/Action index.
 All reference sections share coherent R-numbering and updated basic-attack links.
+The "Basic Attacks" reference section retains separate melee/ranged tables.
+"Equipped by slot" is a Slot/Item/Qty lookup sorted by displayed slot then item;
+"Carried equipment" uses Item/Qty only, sorted by name, preserving spare quantities.
+Verification of these lookup-table refinements: all 40 overview tests pass,
+including explicit/fallback slot ordering, carried spares and updated basic-attack
+reference links. No full print matrix was rerun for this small table change.
 
 Reference feedback follow-up verification (2026-10-15): 54 focused web
 overview/index/layout tests, web typecheck, focused lint and production build

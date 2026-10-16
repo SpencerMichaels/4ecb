@@ -466,7 +466,7 @@ describe("real-data sheet overview", () => {
     const entry: ReferenceEntry = {
       id: "basic:test",
       name: "Test attack",
-      group: "Basic attack alternatives",
+      group: "Basic Attacks",
       source: "",
       parts: [],
     };
@@ -1213,6 +1213,53 @@ describe("real-data sheet overview", () => {
     expect(html.match(/<td>Synthetic blade<\/td>/g)).toHaveLength(2);
     expect(html).toContain("main hand");
     expect(html).toContain("Carried equipment");
+  });
+  it("makes equipped inventory a slot-first lookup and omits carried slot labels", () => {
+    const item = (
+      name: string,
+      slots: string[],
+      fields: { label: string; value: string }[] = [],
+    ) => ({
+      name,
+      slots,
+      fields,
+      equipped: 1,
+      quantity: 2,
+    });
+    const entries = references({
+      ...model,
+      overview: {
+        ...model.overview!,
+        inventory: [
+          item("A sword", ["main-hand"]),
+          item("Z helmet", ["head"]),
+          item("Boots", [], [{ label: "Item Slot", value: "Feet" }]),
+        ],
+      },
+    });
+    const tables = (id: string) =>
+      entries
+        .find((entry) => entry.id === id)!
+        .parts.map((part) => part.block)
+        .filter((block) => block.kind === "table");
+    const equipped = tables("inventory:true");
+    expect(
+      equipped.every((table) => table.headers?.join("/") === "Slot/Item/Qty"),
+    ).toBe(true);
+    expect(equipped.flatMap((table) => table.rows)).toEqual([
+      ["Feet", "Boots", "1"],
+      ["head", "Z helmet", "1"],
+      ["main hand", "A sword", "1"],
+    ]);
+    const carried = tables("inventory:false");
+    expect(
+      carried.every((table) => table.headers?.join("/") === "Item/Qty"),
+    ).toBe(true);
+    expect(carried.flatMap((table) => table.rows)).toEqual([
+      ["A sword", "1"],
+      ["Boots", "1"],
+      ["Z helmet", "1"],
+    ]);
   });
   it("renders the approved summary and scratchpad without changing source data", () => {
     const markup = renderToStaticMarkup(
