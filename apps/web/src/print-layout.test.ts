@@ -18,6 +18,24 @@ const sheetSource = ["./CharacterSheetPage.tsx", "./print-power-attacks.ts"]
   .join("\n");
 
 describe("print layout contract", () => {
+  it("reserves a bottom strip for consumable stock without changing card dimensions", () => {
+    const source = sheetSource.slice(
+      sheetSource.indexOf("function PrintItemCard("),
+      sheetSource.indexOf("function PrintCard("),
+    );
+    expect(source.indexOf("<PrintConsumableTracker")).toBeGreaterThan(
+      source.indexOf("item.rules.map"),
+    );
+    expect(source.indexOf("<PrintConsumableTracker")).toBeLessThan(
+      source.indexOf('<footer className="print-item-footer"'),
+    );
+    expect(styles).toMatch(
+      /\.print-item-card\.has-consumable-tracker\s*\{[^}]*grid-template-rows:\s*auto auto minmax\(0, 1fr\) auto auto auto;/,
+    );
+    expect(styles).toMatch(
+      /\.print-consumable-tracker\s*\{[^}]*flex-wrap:\s*nowrap;/,
+    );
+  });
   it("shares the first-column split between action/range and primary attack/target rows", () => {
     for (const selector of [
       "print-card-action-band",

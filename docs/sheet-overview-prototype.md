@@ -4,6 +4,17 @@ Status: page-1 summary and scratchpad accepted by the product owner, 2026-10-15.
 Final reference-page review and the recorded dense-card overflow gate remain;
 M5.6 stays open.
 
+Consumable item cards have one shared Remaining strip between the flexible body
+and metadata footer, never in the title or repeated per granted power. One to
+eight owned copies use 0.2in hollow circles (matching scratchpad action-point
+marks). Larger quantities use a blank count box followed by the owned total;
+unknown quantities use the box without an invented total. Nothing wraps or
+shrinks the circles. Zero-copy holdings have no tracker. Consumable/ammunition
+classification reuses authored equipment kinds plus explicit Consumable power
+metadata, never item-name matching. Nonconsumable cards are unchanged. The strip
+reserves layout space so normal body fitting accounts for it; sleeve-sized card
+dimensions remain fixed. Tracking is paper-only and does not change inventory.
+
 The descriptive reference section is titled **Character Profile**. It contains
 Character Details and populated freeform sections such as Appearance, Traits,
 Companions, Character Background and Notes.

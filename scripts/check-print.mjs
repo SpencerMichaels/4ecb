@@ -347,7 +347,12 @@ try {
           "character-details",
           '.sheet-overview > .ov-paper[aria-label="Character reference"]:has([data-reference-id="character-details"])',
         ],
-        ...(includeCardPages ? [["cards", ".print-card-page"]] : []),
+        ...(includeCardPages
+          ? [
+              ["cards", ".print-card-page"],
+              ["item-cards", ".print-card-page:has(.print-item-card)"],
+            ]
+          : []),
       ]) {
         const clip = await evaluate(
           client,
@@ -899,14 +904,14 @@ function printCharacter() {
   }));
   const loot = Array.from({ length: 6 }, (_, index) => ({
     name: `Synthetic item ${String(index + 1).padStart(2, "0")}${index === 5 ? " with a deliberately long category title" : ""}`,
-    count: index + 1,
+    count: index === 5 ? 25 : index === 4 ? 8 : index + 1,
     equippedCount: index < 2 ? 1 : 0,
     showPowerCard: true,
     elements: [
       {
         id: `ITEM_PRINT_${index + 1}`,
         name: `Synthetic item ${String(index + 1).padStart(2, "0")}`,
-        type: "Magic Item",
+        type: index >= 3 ? "Potion" : "Magic Item",
         description: index % 2 === 0 ? longText : "A compact synthetic item.",
       },
     ],
@@ -1209,6 +1214,17 @@ async function checkReferences(client) {
         const r=card.getBoundingClientRect(), a4=Boolean(card.closest('.paper-a4'));
         return Math.abs(r.width-(a4?63*96/25.4:2.47*96))<1 && Math.abs(r.height-(a4?86.8*96/25.4:3.405*96))<1;
       }),
+      consumableTrackers:(()=>{
+        const cards=[...document.querySelectorAll('.print-card-page .print-item-card')];
+        if(!cards.length) return true;
+        const trackers=cards.flatMap(card=>[...card.querySelectorAll('.print-consumable-tracker')]);
+        const circles=trackers.filter(t=>t.querySelector('.print-consumable-circles'));
+        const count=trackers.find(t=>t.querySelector('.print-consumable-count-box'));
+        return trackers.length===3 && circles.map(t=>t.querySelectorAll('.lucide-circle').length).sort((a,b)=>a-b).join('/')==='4/8' && count?.textContent.includes('/ 25') && trackers.every(t=>{
+          const card=t.closest('.print-item-card'),r=t.getBoundingClientRect(),body=card.querySelector('.print-card-body').getBoundingClientRect(),footer=card.querySelector('.print-item-footer').getBoundingClientRect();
+          return card.querySelectorAll('.print-consumable-tracker').length===1 && r.top>=body.bottom-1 && r.bottom<=footer.top+1 && t.scrollWidth<=t.clientWidth+1 && [...t.querySelectorAll('.icon')].every(icon=>{const i=icon.getBoundingClientRect();return Math.abs(i.width-19.2)<1 && Math.abs(i.height-19.2)<1 && getComputedStyle(icon).fill==='none';});
+        });
+      })(),
       cardStyleIsolated:[...document.querySelectorAll('.print-card-page')].every(e=>!e.closest('.sp-prototype')),
       headings:pages.every(p=>!p.querySelector('.sp-page-heading h2')),
       coverage:[...new Set(expected)].every(id=>ids.includes(id)),
@@ -1276,6 +1292,7 @@ async function checkReferences(client) {
       state.details &&
       state.encumbrance &&
       state.fixedCardSizes &&
+      state.consumableTrackers &&
       state.cardStyleIsolated &&
       state.headings &&
       state.coverage &&
