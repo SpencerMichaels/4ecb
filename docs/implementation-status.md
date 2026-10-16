@@ -258,16 +258,21 @@ monochrome output. Internally chunked long paragraphs
 rejoin within each rendered pane; only actual continuation boundaries divide
 them. Reference continuations repeat titles and retain their complete parts.
 
-Equipment/basic alternatives and power indexes use full-width tables; features,
+Equipment and power indexes use full-width tables; features,
 rituals and character prose use category-local two-column blocks. The power index columns are
-Power, Level, Action, Range, Target, Attack and Damage. Action icons and compact
-authored formulas distinguish multiple attacks without substituting one weapon's
-totals. Secondary targets are not inherited without authored metadata; unfamiliar
+Power, Level, Range, Target, Attack and Damage. Action icons precede power names;
+item-power indexes likewise place icons beside item names, leaving Item/Usage
+columns. Attack/damage values use the shared physical-card equipped/default
+variant projection, including separate per-phase totals and eligible equipped
+off-hand phase fallback. Legacy caches supply only their known primary total,
+never an assumed secondary total. Authored damage formulas remain fallback when
+no calculated damage is available. Secondary targets are not inherited without authored metadata; unfamiliar
 damage formulas point to the card rather than absorbing riders. Legacy range,
 target and level are retained separately as index metadata, without adding them
-to physical-card rule fields. Item powers have a compact Item/Usage/Action index.
-All reference sections share coherent R-numbering and updated basic-attack links.
-The "Basic Attacks" reference section retains separate melee/ranged tables.
+to physical-card rule fields. All reference sections share coherent R-numbering.
+Basic attacks are regular Power Index entries; their standalone alternatives
+tables and page-link plumbing are removed. Page-1 omitted-weapon notes point to
+power cards, which retain the complete comparison tables.
 "Equipped by slot" is a Slot/Item lookup using the builder's body/held/other
 slot order, labels and icons (unknown slots last), then item name. "Inventory" includes
 all owned quantities (including equipped holdings) in Item/Qty columns, with a
@@ -349,6 +354,18 @@ full-inventory inclusion of a fully equipped holding, and unchanged summary
 continuation/scratchpad numbering. Unit tests cover total stack quantities,
 equipped superscripts and the retained page-top identity header. Owner reference
 review remains open; M5.6 is not closed.
+
+Consolidated power-index follow-up: 82 focused overview/index/print-attack/
+scratchpad tests, web typecheck, focused lint, formatting and production build
+pass. The shared default variant/phase helper is extracted from the accepted
+physical-card path without changing its selection semantics; indexes consume
+those existing results rather than recalculating attack math. Tests cover
+equipped-main preference, distinct secondary totals, equipped off-hand fallback,
+unknown cached secondary totals and basic-power inclusion without separate
+tables. All eight overview-only Chromium/Firefox variants pass (13 fixture pages,
+no overflow), checking six index columns, inline action icons, calculated/explicit
+unknown attack cells and absence of standalone basic tables. The index preview
+was visually reviewed. Reference review and M5.6 remain open.
 
 Verification: 139 focused sheet-model/overview/index/layout tests, web typecheck,
 focused lint and production build pass. The overview-only print check passes

@@ -619,25 +619,25 @@ body:has(.sp-prototype) {
   font-size: 9pt !important;
 }
 .ov-power-index-table th:nth-child(1) {
-  width: 21%;
+  width: 27%;
 }
 .ov-power-index-table th:nth-child(2) {
   width: 6%;
 }
 .ov-power-index-table th:nth-child(3) {
-  width: 6%;
-}
-.ov-power-index-table th:nth-child(4) {
   width: 13%;
 }
-.ov-power-index-table th:nth-child(5) {
+.ov-power-index-table th:nth-child(4) {
   width: 22%;
 }
-.ov-power-index-table th:nth-child(6) {
+.ov-power-index-table th:nth-child(5) {
   width: 17%;
 }
-.ov-power-index-table th:nth-child(7) {
+.ov-power-index-table th:nth-child(6) {
   width: 15%;
+}
+.ov-reference-table td:first-child .action-type-icon {
+  margin-right: 0.35em;
 }
 .sheet-overview.sp-monochrome .ov-reference-card > header {
   background: #eee;

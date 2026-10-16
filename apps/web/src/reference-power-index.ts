@@ -1,6 +1,9 @@
 import type { SheetCard } from "@4ecb/sheet-model";
 import { abbreviatePowerAbilities } from "./PowerCardPresentation";
-import { fallbackPrintAttacks } from "./print-power-attacks";
+import {
+  defaultPrintAttacks,
+  defaultPrintVariant,
+} from "./print-power-attacks";
 
 const ordinal = (name: string) =>
   new Map([
@@ -17,7 +20,7 @@ const compact = (value: string) =>
     .replace(/\bvs\.\s*/gi, "vs ")
     .replace(/\s*\+\s*/g, "+")
     .trim();
-/** Formula-only index: never substitute one weapon's totals for all weapons. */
+/** Equipped/default variant totals, sharing the physical card's phase projection. */
 export function referencePowerRows(
   card: SheetCard,
 ): readonly (readonly string[])[] {
@@ -28,15 +31,14 @@ export function referencePowerRows(
       (f) => f.label.toLowerCase() === label.toLowerCase(),
     )?.value ??
     "";
-  const attacks = fallbackPrintAttacks(card, undefined);
-  const authored = new Map<number, string>(),
-    hits = new Map<number, string>();
+  const attacks = defaultPrintAttacks(card);
+  const primaryDamage = defaultPrintVariant(card)?.damage ?? card.damage;
+  const hits = new Map<number, string>();
   let active = 1;
   for (const entry of card.fields) {
     const label = entry.label.trim().toLowerCase();
     if (/^(?:(?:primary|secondary|tertiary|quaternary) )?attack$/.test(label)) {
       active = ordinal(label) ?? active;
-      authored.set(active, entry.value);
     }
     if (/^(?:(?:primary|secondary|tertiary|quaternary) )?hit$/.test(label))
       hits.set(ordinal(label) ?? active, entry.value);
@@ -64,11 +66,16 @@ export function referencePowerRows(
         ? `Attack ${phase}`
         : `${card.name}${phases.length > 1 ? ` · Attack ${phase}` : ""}`,
       index ? "" : field("Level") || "—",
-      index ? "" : (card.actionType ?? ""),
       index ? "" : field("Range") || field("Attack Type"),
       attack?.target ?? (index ? "" : field("Target")),
-      attack ? compact(authored.get(phase) ?? "See card") : "",
-      attack ? damage || (/\bdamage\b/i.test(hit) ? "See card" : "") : "",
+      attack ? compact(attack.eligible === false ? "—" : attack.attack) : "",
+      attack && attack.eligible !== false
+        ? compact(
+            attack.damage ?? (phase === 1 ? primaryDamage : undefined) ?? "",
+          ) ||
+          damage ||
+          (/\bdamage\b/i.test(hit) ? "See card" : "")
+        : "",
     ];
   });
 }

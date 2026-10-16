@@ -229,11 +229,9 @@ export function overviewBasicAttackRows(
 function BasicAttacks({
   model,
   variantLimit = 2,
-  referencePage,
 }: {
   model: CharacterSheetModel;
   variantLimit?: number;
-  referencePage?: string | undefined;
 }) {
   const rows = overviewBasicAttackRows(model, variantLimit);
   const hasMore = rows.length < overviewBasicAttackRows(model).length;
@@ -242,13 +240,7 @@ function BasicAttacks({
       title="Basic attacks"
       icon="sword"
       className="sp-basic-attacks"
-      headerNote={
-        hasMore
-          ? referencePage
-            ? `More on pg ${referencePage}…`
-            : "More in references…"
-          : undefined
-      }
+      headerNote={hasMore ? "More on power cards…" : undefined}
     >
       {rows.length ? (
         <table
@@ -776,14 +768,12 @@ function Summary({
   name,
   portrait,
   blankHP,
-  basicAttackPage,
   onVisibleReminders,
 }: {
   model: CharacterSheetModel;
   name: string;
   portrait: CharacterPortrait | undefined;
   blankHP: boolean;
-  basicAttackPage?: string | undefined;
   onVisibleReminders: (indices: readonly number[]) => void;
 }) {
   const overview = model.overview!;
@@ -896,7 +886,7 @@ function Summary({
           ) : null}
         </SummaryPane>
         <SummaryPane id="attacks">
-          <BasicAttacks model={model} referencePage={basicAttackPage} />
+          <BasicAttacks model={model} />
         </SummaryPane>
         <SummaryPane id="abilities">
           <div className="ov-ability-section">
@@ -1513,6 +1503,7 @@ interface ReferencePart {
   block: ProseBlock;
   paragraph?: number;
   powerIndex?: boolean;
+  indexAction?: string;
   tableCategory?: string;
   slotCells?: readonly { label: string; icon: IconName }[];
   equippedInventory?: boolean;
@@ -1660,32 +1651,6 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
   // References retain authored entities, not synthetic defensive summaries or
   // expanded reminder projections (whose underlying features/powers appear here
   // or on their own cards already).
-  for (const power of model.powers.filter((power) =>
-    /^(melee|ranged) basic attack$/i.test(power.name.trim()),
-  )) {
-    const rows = basicAttackVariants(power).map((variant) => [
-      variant.equipmentName,
-      variant.attack ?? "—",
-      variant.damage ?? "—",
-    ]);
-    if (rows.length)
-      result.push({
-        id: `basic:${power.id ?? power.name}`,
-        name: power.name,
-        group: "Basic Attacks",
-        source: "",
-        parts: Array.from(
-          { length: Math.ceil(rows.length / 4) },
-          (_, index) => ({
-            block: {
-              kind: "table" as const,
-              headers: ["Weapon", "Attack", "Damage"],
-              rows: rows.slice(index * 4, index * 4 + 4),
-            },
-          }),
-        ),
-      });
-  }
   for (const equipped of [true, false]) {
     const slotPresentation = (slot: string) =>
       ORDERED_LOADOUT_SLOTS.find(
@@ -1803,12 +1768,12 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
           return [
             {
               powerIndex: true,
+              indexAction: power.actionType ?? "",
               block: {
                 kind: "table" as const,
                 headers: [
                   "Power",
                   "Level",
-                  "Action",
                   "Range",
                   "Target",
                   "Attack",
@@ -1832,12 +1797,11 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       source: "",
       parts: itemPowers.map((power) => ({
         powerIndex: true,
+        indexAction: power.action,
         block: {
           kind: "table" as const,
-          headers: ["Item", "Usage", "Action"],
-          rows: [
-            [power.name, power.usage || "Usage unspecified", power.action],
-          ],
+          headers: ["Item", "Usage"],
+          rows: [[power.name, power.usage || "Usage unspecified"]],
         },
       })),
     });
@@ -1957,7 +1921,7 @@ function ReferenceCard({
       <div className="sp-feature-body">
         {tables ? (
           <table
-            className={`ov-reference-table${parts[0]?.powerIndex && headers.length === 7 ? " ov-power-index-table" : ""}${entry.id.startsWith("inventory:true") ? " ov-equipped-table" : entry.id.startsWith("inventory:false") ? " ov-inventory-table" : ""}`}
+            className={`ov-reference-table${parts[0]?.powerIndex && headers.length === 6 ? " ov-power-index-table" : ""}${entry.id.startsWith("inventory:true") ? " ov-equipped-table" : entry.id.startsWith("inventory:false") ? " ov-inventory-table" : ""}`}
           >
             <thead>
               <tr>
@@ -1995,10 +1959,20 @@ function ReferenceCard({
                               </span>
                             ))}
                           </span>
-                        ) : part.powerIndex && column === 2 ? (
+                        ) : part.powerIndex && column === 0 && n === 0 ? (
                           <>
-                            <ActionTypeIcon decorative value={cell} />
-                            <span className="sp-sr-only">{cell}</span>
+                            {part.indexAction ? (
+                              <>
+                                <ActionTypeIcon
+                                  decorative
+                                  value={part.indexAction}
+                                />
+                                <span className="sp-sr-only">
+                                  {part.indexAction}:{" "}
+                                </span>
+                              </>
+                            ) : null}
+                            {cell}
                           </>
                         ) : (
                           cell
@@ -2129,18 +2103,6 @@ export function paginateReferences(
   }
   return columns;
 }
-export function basicAttackReferencePage(
-  columns: readonly (readonly ReferenceEntry[])[],
-  columnsPerPage = 2,
-  startPage = 1,
-): string | undefined {
-  const index = columns.findIndex((column) =>
-    column.some((entry) => entry.group === "Basic Attacks"),
-  );
-  return index < 0
-    ? undefined
-    : `R${Math.floor(index / columnsPerPage) + startPage}`;
-}
 export interface ReferenceCategoryBlock {
   group: string;
   opening: boolean;
@@ -2262,16 +2224,14 @@ export function paginateReferenceGroups(
 function Details({
   model,
   name,
-  onBasicAttackPage,
 }: {
   model: CharacterSheetModel;
   name: string;
-  onBasicAttackPage: (page: string | undefined) => void;
 }) {
   const sections = useMemo(() => {
     const entries = references(model);
     const bucket = (entry: ReferenceEntry) =>
-      entry.group === "Equipment" || entry.group === "Basic Attacks"
+      entry.group === "Equipment"
         ? 1
         : /^(?:Power index|Item power index)$/.test(entry.group)
           ? 2
@@ -2333,7 +2293,6 @@ function Details({
           wide={index === 1 || index === 2}
           startPage={1 + counts.slice(0, index).reduce((a, b) => a + b, 0)}
           onPageCount={callbacks[index]!}
-          {...(index === 1 ? { onBasicAttackPage } : {})}
         />
       ))}
     </>
@@ -2384,7 +2343,6 @@ function ReferencePages({
   entries,
   summaryContinuation = false,
   onPageCount,
-  onBasicAttackPage,
   wide = false,
   startPage = 1,
 }: {
@@ -2393,7 +2351,6 @@ function ReferencePages({
   entries: readonly ReferenceEntry[];
   summaryContinuation?: boolean;
   onPageCount?: (count: number) => void;
-  onBasicAttackPage?: (page: string | undefined) => void;
   wide?: boolean;
   startPage?: number;
 }) {
@@ -2465,9 +2422,6 @@ function ReferencePages({
         summaryContinuation ? 0 : headingHeight,
       );
       setColumns(next);
-      onBasicAttackPage?.(
-        basicAttackReferencePage(next, wide ? 1 : 2, startPage),
-      );
       onPageCount?.(Math.ceil(next.length / (wide ? 1 : 2)));
     };
     const observer = new ResizeObserver(measure);
@@ -2478,15 +2432,7 @@ function ReferencePages({
       active = false;
       observer.disconnect();
     };
-  }, [
-    entries,
-    onBasicAttackPage,
-    onPageCount,
-    wide,
-    startPage,
-    summaryContinuation,
-    grouped,
-  ]);
+  }, [entries, onPageCount, wide, startPage, summaryContinuation, grouped]);
   const seenGroups = new Set<string>();
   const categoryOpenings = new Set(
     columns
@@ -2630,7 +2576,6 @@ export function SheetOverview({
   blankHP: boolean;
   children?: ReactNode;
 }) {
-  const [basicAttackPage, setBasicAttackPage] = useState<string>();
   const [summarySelection, setSummarySelection] = useState<{
     model: CharacterSheetModel;
     indices: readonly number[];
@@ -2662,7 +2607,6 @@ export function SheetOverview({
           name={name}
           portrait={portrait}
           blankHP={blankHP}
-          basicAttackPage={basicAttackPage}
           onVisibleReminders={onVisibleReminders}
         />
         <ReferencePages
@@ -2681,11 +2625,7 @@ export function SheetOverview({
       </div>
       {children}
       <div className={overviewClass}>
-        <Details
-          model={model}
-          name={name}
-          onBasicAttackPage={setBasicAttackPage}
-        />
+        <Details model={model} name={name} />
       </div>
     </>
   );

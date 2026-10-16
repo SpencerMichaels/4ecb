@@ -7,7 +7,6 @@ import {
   fittingReminderGroups,
   fittingSummaryPaneCount,
   fittingIdentityNameSize,
-  basicAttackReferencePage,
   overviewBasicAttackRows,
   overviewTrackingRows,
   sortedTrackingRows,
@@ -707,18 +706,63 @@ describe("real-data sheet overview", () => {
     );
     expect(html).not.toContain(expanded.value);
   });
-  it("finds the actual reference-page label for basic attack alternatives", () => {
-    const entry: ReferenceEntry = {
-      id: "basic:test",
-      name: "Test attack",
-      group: "Basic Attacks",
-      source: "",
-      parts: [],
-    };
-    expect(basicAttackReferencePage([])).toBeUndefined();
-    expect(basicAttackReferencePage([[entry]])).toBe("R1");
-    expect(basicAttackReferencePage([[], [], [], [entry]])).toBe("R2");
-    expect(basicAttackReferencePage([[], [], [], [], [entry]])).toBe("R3");
+  it("indexes basic attacks as powers without standalone alternative tables", () => {
+    const entries = references({
+      ...model,
+      powers: [
+        {
+          kind: "power",
+          name: "Melee Basic Attack",
+          usage: "At-Will",
+          actionType: "Standard Action",
+          attack: "+12 vs AC",
+          fields: [],
+        },
+        {
+          kind: "power",
+          name: "Ranged Basic Attack",
+          usage: "At-Will",
+          actionType: "Standard Action",
+          attack: "+10 vs AC",
+          fields: [],
+        },
+      ],
+    });
+    expect(entries.some((entry) => entry.id.startsWith("basic:"))).toBe(false);
+    const index = entries.find((entry) => entry.id === "powers:At-Will")!;
+    expect(index.parts.map((part) => part.indexAction)).toEqual([
+      "Standard Action",
+      "Standard Action",
+    ]);
+    expect(
+      index.parts.flatMap((part) =>
+        part.block.kind === "table" ? part.block.rows.map((row) => row[0]) : [],
+      ),
+    ).toEqual(["Melee Basic Attack", "Ranged Basic Attack"]);
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={{
+          ...model,
+          powers: [
+            {
+              kind: "power",
+              name: "Melee Basic Attack",
+              usage: "At-Will",
+              actionType: "Standard Action",
+              attack: "+12 vs AC",
+              fields: [],
+            },
+          ],
+        }}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    expect(html).toContain('class="selection-metadata-icon action-type-icon"');
+    expect(html).not.toContain(">Action</th>");
   });
   it("shrinks identity names to a readable minimum before leaving overflow to ellipsis", () => {
     expect(fittingIdentityNameSize((size) => size * 5, 200)).toBe(27);
@@ -952,7 +996,7 @@ describe("real-data sheet overview", () => {
     expect(summary).toContain("lucide-bow-arrow");
     expect(summary).toContain("lucide-sword");
     expect(summary).toContain(
-      '<span class="ov-panel-note">More in references…</span>',
+      '<span class="ov-panel-note">More on power cards…</span>',
     );
     expect(summary).not.toContain("Showing the highest-ranked weapons");
     expect(

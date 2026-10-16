@@ -1134,6 +1134,11 @@ async function checkReferences(client) {
         [...table.querySelectorAll('thead th')].map(cell=>cell.textContent).join('/')==='Item/Qty' &&
           table.querySelector('tbody .ov-reference-inventory-category th')?.getAttribute('colspan')==='2'),
       pageNumbersOnly:pages.every(p=>/^R\\d+$/.test(p.querySelector('.sp-page-footer').textContent.trim())),
+      noStandaloneBasics:ids.every(id=>!id.startsWith('basic:')),
+      inlinePowerActions:pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table tbody')]).every(body=>
+        body.querySelector('td:first-child .action-type-icon')),
+      calculatedIndexAttacks:pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table tbody td:nth-child(5)')]).every(cell=>
+        !cell.textContent.trim() || /^(?:[+-]?\\d+\\s+vs\\b|—)/i.test(cell.textContent.trim())),
       equippedIcons:pages.flatMap(p=>[...p.querySelectorAll('.ov-equipped-table tbody td:first-child')]).every(cell=>cell.querySelector('.icon')),
       inventoryIncludesEquipped:pages.some(p=>[...p.querySelectorAll('.ov-inventory-table tbody tr')].some(row=>
         row.querySelector('td:first-child')?.textContent.startsWith('Synthetic item 01') && row.querySelector('.ov-equipped-marker') && row.querySelector('td:last-child')?.textContent==='1')),
@@ -1156,6 +1161,9 @@ async function checkReferences(client) {
       state.equippedHeaders &&
       state.inventoryHeaders &&
       state.pageNumbersOnly &&
+      state.noStandaloneBasics &&
+      state.inlinePowerActions &&
+      state.calculatedIndexAttacks &&
       state.equippedIcons &&
       state.inventoryIncludesEquipped &&
       state.usageColors.length === (state.monochrome ? 1 : 3) &&
@@ -1171,7 +1179,6 @@ async function checkReferences(client) {
           JSON.stringify([
             "Power",
             "Level",
-            "Action",
             "Range",
             "Target",
             "Attack",

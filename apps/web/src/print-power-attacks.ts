@@ -64,6 +64,41 @@ export function withAuthoredPrintTargets(
   });
 }
 
+export function defaultPrintVariant(
+  card: SheetCard,
+): SheetPowerVariant | undefined {
+  const variants = card.variants ?? [];
+  return (
+    variants.find((variant) => variant.equipped && variant.hand === "main") ??
+    variants.find((variant) => variant.equipped) ??
+    variants[0]
+  );
+}
+
+/** Shared equipped-variant projection for physical cards and reference indexes. */
+export function defaultPrintAttacks(
+  card: SheetCard,
+): readonly SheetPowerAttack[] {
+  const variants = card.variants ?? [];
+  const selected = defaultPrintVariant(card);
+  return withAuthoredPrintTargets(
+    card,
+    selected?.attacks?.map((attack) =>
+      attack.eligible !== false
+        ? attack
+        : (variants
+            .flatMap((variant) =>
+              variant.equipped ? (variant.attacks ?? []) : [],
+            )
+            .find(
+              (candidate) =>
+                candidate.ordinal === attack.ordinal &&
+                candidate.eligible !== false,
+            ) ?? attack),
+    ) ?? fallbackPrintAttacks(card, selected),
+  );
+}
+
 export function printAttackHeader(
   attack: SheetPowerAttack,
   showEquippedAttackBonus: boolean,

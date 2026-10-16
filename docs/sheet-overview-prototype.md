@@ -20,9 +20,11 @@ descriptions remain complete. Equipment and power indexes
 are full-width tables; features/rituals/character prose use stacked category-local
 two-column blocks under full-width headings. Measured splits balance column
 heights while preserving down-then-across level/name order. The power
-index has Power, Level, Action, Range, Target, Attack and Damage columns, using
-authored formulas and separate multiattack lines rather than weapon-specific
-totals. Section headings, level metadata and source footers use the accepted
+index has Power, Level, Range, Target, Attack and Damage columns, with action
+icons preceding names instead of a separate Action column. It uses calculated
+equipped/default-variant totals and separate multiattack lines; unknown secondary
+totals remain unknown rather than borrowing the primary total. Section headings,
+level metadata and source footers use the accepted
 muted pane vocabulary; long prose flows at normal size with measured continuation.
 Category headings now appear only once at the start, with a subtle origin tint
 shared by subsequent panes. References omit synthesized defensive/reminder
@@ -337,11 +339,10 @@ There is no fixed entry-count or character-count cap. Oversized entries remain
 in references while shorter later entries can still use the remaining space.
 Basic-attack summaries retain up to two weapon alternatives per attack kind;
 their whole pane moves to the right before sacrificing summary content.
-Complete alternatives remain in references.
+Complete weapon alternatives remain on power cards.
 When the summary omits alternatives, Basic Attacks puts a muted, right-aligned
-`More on pg R…` note in its header instead of a body caption. The reference-page
-label comes from measured reference pagination (two columns per R-numbered page),
-not a guessed physical page offset; before measurement it says `More in references`.
+`More on power cards…` note in its header instead of a body caption. Basic attacks
+are ordinary entries in the Power Index, not separate reference tables/pages.
 The note is omitted when all eligible alternatives are shown.
 The note's trailing ellipsis is the single Unicode character `…`.
 Grant/choice-only wrappers are omitted using authored Benefit text and grant/
@@ -394,13 +395,13 @@ Original power/card effects are unchanged.
 This remains a display heuristic, not
 proof that every excluded benefit is calculated; all feats retain full references.
 Up to two highest-ranked basic-attack variants per attack kind appear in the summary; all valid alternatives
-are retained in references. Unfittable custom data raises a visible overflow
+are retained on power cards. Unfittable custom data raises a visible overflow
 warning rather than being silently clipped or shrunk below readable reference text.
 
 Inventory includes items whose physical cards are hidden, preserves explicit
 slot assignments, falls back to authored Item Slot, and labels unknown slots.
-The equipped loadout and complete inventory have separate lookup tables. The reference "Basic Attacks" section has
-separate melee and ranged tables. Equipped inventory uses Slot/Item columns,
+The equipped loadout and complete inventory have separate lookup tables. Basic
+attacks appear in the Power Index. Equipped inventory uses Slot/Item columns,
 ordered by the builder's body/held/other slot sequence, then name. "Inventory"
 uses Item/Qty for full owned quantities, including equipped items marked with a
 superscript E and a small legend. Equipped slot names use the builder slot icons.

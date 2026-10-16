@@ -48,33 +48,24 @@ describe("reference power index", () => {
     expect(card.fields).toEqual([]);
     const row = referencePowerRows(card)[0]!;
     expect(row[1]).toBe("3");
-    expect(row.slice(3, 5)).toEqual(["Ranged 10", "One creature"]);
+    expect(row.slice(2, 4)).toEqual(["Ranged 10", "One creature"]);
   });
-  it("keeps range and target separate, formulas compact, and secondary targets unspecified", () => {
+  it("keeps range and target separate, damage formulas compact, and unknown totals explicit", () => {
     const rows = referencePowerRows(power);
     expect(rows[0]).toEqual([
       "Two steps · Attack 1",
       "7",
-      "Standard Action",
       "Melee weapon",
       "One creature",
-      "STR+2 vs AC",
+      "— vs AC",
       "2[W]+STR",
     ]);
-    expect(rows[1]).toEqual([
-      "Attack 2",
-      "",
-      "",
-      "",
-      "",
-      "DEX vs Ref",
-      "1[W]+DEX",
-    ]);
+    expect(rows[1]).toEqual(["Attack 2", "", "", "", "— vs Ref", "1[W]+DEX"]);
   });
-  it("does not invent attack/damage for utility powers or use cached equipment totals", () => {
+  it("does not invent utility attacks and retains a supplied legacy primary total only for that phase", () => {
     expect(
       referencePowerRows({ kind: "power", name: "Aid", fields: [] })[0]?.slice(
-        5,
+        4,
       ),
     ).toEqual(["", ""]);
     expect(
@@ -82,8 +73,70 @@ describe("reference power index", () => {
         ...power,
         attack: "+17 vs AC",
         damage: "2d10+8",
-      })[0]?.slice(5),
-    ).toEqual(["STR+2 vs AC", "2[W]+STR"]);
+      })[0]?.slice(4),
+    ).toEqual(["+17 vs AC", "2d10+8"]);
+    expect(referencePowerRows({ ...power, attack: "+17 vs AC" })[1]?.[4]).toBe(
+      "— vs Ref",
+    );
+  });
+  it("uses equipped main-hand totals per phase, including different secondary abilities", () => {
+    const attack = (
+      ordinal: number,
+      ability: string,
+      total: string,
+      damage: string,
+    ) => ({
+      id: String(ordinal),
+      ordinal,
+      ability,
+      powerBonus: 0,
+      attack: total,
+      damage,
+      target: "One creature",
+    });
+    const main = {
+      id: "main",
+      equipmentName: "Equipped blade",
+      equipped: true,
+      hand: "main" as const,
+      attacks: [
+        attack(1, "Strength", "+14 vs AC", "2d8+5"),
+        attack(2, "Dexterity", "+10 vs Reflex", "1d8+3"),
+      ],
+    };
+    const card = {
+      ...power,
+      attack: "+99 vs AC",
+      variants: [
+        {
+          ...main,
+          id: "spare",
+          equipped: false,
+          attacks: [attack(1, "Strength", "+99 vs AC", "2d12+9")],
+        },
+        main,
+      ],
+    };
+    const rows = referencePowerRows(card);
+    expect(rows[0]?.slice(4)).toEqual(["+14 vs AC", "2d8+5"]);
+    expect(rows[1]?.slice(3)).toEqual(["", "+10 vs Ref", "1d8+3"]);
+    const offHand = {
+      ...main,
+      id: "off",
+      hand: "off" as const,
+      attacks: [attack(2, "Dexterity", "+16 vs Reflex", "1d6+5")],
+    };
+    const mixed = referencePowerRows({
+      ...power,
+      variants: [
+        {
+          ...main,
+          attacks: [main.attacks[0]!, { ...main.attacks[1]!, eligible: false }],
+        },
+        offHand,
+      ],
+    });
+    expect(mixed[1]?.slice(4)).toEqual(["+16 vs Ref", "1d6+5"]);
   });
   it("leaves unfamiliar damage prose on the card rather than swallowing its riders", () => {
     const card = {

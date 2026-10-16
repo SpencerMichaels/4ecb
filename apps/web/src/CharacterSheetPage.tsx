@@ -42,8 +42,7 @@ import {
   printItemPowerClauses,
 } from "./print-item-presentation";
 import {
-  fallbackPrintAttacks,
-  withAuthoredPrintTargets,
+  defaultPrintAttacks,
   groupedPrintRules,
   printAttackHeader,
   printActionLabel,
@@ -421,26 +420,7 @@ function PrintPowerCard({
       variant.damage !== undefined ||
       (variant.attack !== undefined && !variant.attack.includes("Unknown")),
   );
-  const selectedPrintVariant =
-    variants.find((variant) => variant.equipped && variant.hand === "main") ??
-    variants.find((variant) => variant.equipped) ??
-    variants[0];
-  const attacks: readonly SheetPowerAttack[] = withAuthoredPrintTargets(
-    card,
-    selectedPrintVariant?.attacks?.map((attack) =>
-      attack.eligible !== false
-        ? attack
-        : (variants
-            .flatMap((variant) =>
-              variant.equipped ? (variant.attacks ?? []) : [],
-            )
-            .find(
-              (candidate) =>
-                candidate.ordinal === attack.ordinal &&
-                candidate.eligible !== false,
-            ) ?? attack),
-    ) ?? fallbackPrintAttacks(card, selectedPrintVariant),
-  );
+  const attacks = defaultPrintAttacks(card);
   const rules = card.fields.filter(
     (field) =>
       !LEGACY_POWER_BODY_EXCLUDES.has(field.label.trim().toLocaleLowerCase()),
