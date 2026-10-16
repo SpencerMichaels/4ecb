@@ -112,6 +112,9 @@ describe("real-data sheet overview", () => {
       .split("</div>")[0]!;
     expect(ap.match(/lucide-circle/g)).toHaveLength(3);
     expect(ap).not.toContain("<i");
+    const xp = html.split('class="sp-xp-tracker"')[1]!.split("</div>")[0]!;
+    expect(xp).toContain("<span>XP</span>");
+    expect(xp).not.toContain("<i");
     const death = html.split('class="sp-death-saves"')[1]!.split("</div>")[0]!;
     expect(death.indexOf("lucide-skull")).toBeLessThan(
       death.indexOf("Death saves"),

@@ -1198,7 +1198,6 @@ function ScratchpadRecords({
         <div className="sp-writing-lines ov-scratch-notes" />
         <div className="sp-xp-tracker">
           <span>XP</span>
-          <i />
         </div>
       </Panel>
     </div>

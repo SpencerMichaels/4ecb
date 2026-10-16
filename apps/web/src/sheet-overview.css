@@ -1083,6 +1083,7 @@ body:has(.sp-prototype) {
 .ov-scratch-health .sp-hp-writing {
   flex: 1;
   min-height: 0.7in;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
 }
 .ov-scratch-health,
 .ov-scratch-health > .sp-panel-content {
@@ -1209,6 +1210,12 @@ body:has(.sp-prototype) {
   min-height: 1.25in;
 }
 .ov-scratch-records .sp-xp-tracker {
+  display: block;
+  min-height: 0.35in;
+  flex-shrink: 0;
+  border: 1px solid var(--sp-border);
+  border-radius: 3px;
+  padding: 0.045in;
   margin-top: 0.1in;
   color: var(--sp-muted);
   font-size: 8.5pt;

@@ -163,6 +163,12 @@ physical page overflow with a looser measurement margin.
 Verification: production build and all eight Chromium/Firefox overview variants
 pass, explicitly including absence of the warning before and after resizing.
 No full milestone suite rerun for this one-pixel clearance correction.
+XP's label now sits inside its bordered writing area at the upper left, matching
+the HP-box label style. Scratchpad Current/Temporary HP use a 3:1 width split,
+giving Current HP three quarters of the available row while preserving their
+shared expanding height. This does not alter any resource calculation.
+All 34 focused overview tests pass; no full print/milestone rerun for this
+small label/proportion adjustment.
 Verification: 43 focused overview/layout tests, web typecheck, focused lint and
 production build pass. `node scripts/check-print.mjs --overview-only
 --firefox-scratchpad --scratchpad-preview` passes all four Chromium PDF variants
