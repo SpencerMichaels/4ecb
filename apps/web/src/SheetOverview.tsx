@@ -25,6 +25,7 @@ import {
   referencePowerRows,
 } from "./reference-power-index";
 import { INVENTORY_CATEGORIES, ORDERED_LOADOUT_SLOTS } from "./equipment-ui";
+import { powerActionRank } from "./power-card-order";
 import {
   paginateTracking,
   type TrackingMeasurements,
@@ -1065,19 +1066,9 @@ export function overviewTrackingRows(
 export function sortedTrackingRows(
   rows: readonly TrackingRow[],
 ): TrackingRow[] {
-  const actionRank = (action: string): number => {
-    const normalized = action.trim().toLowerCase();
-    if (/^standard\b/.test(normalized)) return 0;
-    if (/^move\b/.test(normalized)) return 1;
-    if (/^minor\b/.test(normalized)) return 2;
-    if (/^(?:free|no action)\b/.test(normalized)) return 3;
-    if (/^(?:immediate|opportunity|reaction|interrupt)\b/.test(normalized))
-      return 4;
-    return 5;
-  };
   return [...rows].sort(
     (a, b) =>
-      actionRank(a.action) - actionRank(b.action) ||
+      powerActionRank(a.action) - powerActionRank(b.action) ||
       Number(Boolean(a.utility)) - Number(Boolean(b.utility)) ||
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
   );
@@ -1752,51 +1743,56 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
         ? !/^(?:at-will|encounter|daily)/i.test(power.usage ?? "")
         : (power.usage ?? "").toLowerCase().startsWith(usage.toLowerCase()),
     );
+    const parts: ReferencePart[] = [];
     for (const common of usage === "At-Will" ? [false, true] : [false]) {
       const powers =
         usage === "At-Will"
           ? matching.filter((power) => Boolean(power.universal) === common)
           : matching;
-      if (powers.length)
-        result.push({
-          id: `powers:${usage}${common ? ":common" : ""}`,
-          name: common ? "Universal at-will actions" : `${usage} powers`,
-          group: "Power index",
-          source: "",
-          parts: sortedTrackingRows(
-            powers.map((power) => ({
-              id: power.id ?? power.name,
-              name: power.name,
-              action: power.actionType ?? "",
-              usage: power.usage ?? "",
-              utility:
-                find(power.fields, "Power Type").toLowerCase() === "utility",
-            })),
-          ).flatMap((row) => {
-            const power = powers.find(
-              (entry) => (entry.id ?? entry.name) === row.id,
-            )!;
-            return [
-              {
-                powerIndex: true,
-                indexAction: power.actionType ?? "",
-                block: {
-                  kind: "table" as const,
-                  headers: [
-                    "Power",
-                    "Level",
-                    "Range",
-                    "Target",
-                    "Attack",
-                    "Damage",
-                  ],
-                  rows: referencePowerRows(power),
-                },
+      parts.push(
+        ...sortedTrackingRows(
+          powers.map((power) => ({
+            id: power.id ?? power.name,
+            name: power.name,
+            action: power.actionType ?? "",
+            usage: power.usage ?? "",
+            utility:
+              find(power.fields, "Power Type").toLowerCase() === "utility",
+          })),
+        ).flatMap((row) => {
+          const power = powers.find(
+            (entry) => (entry.id ?? entry.name) === row.id,
+          )!;
+          return [
+            {
+              powerIndex: true,
+              indexAction: power.actionType ?? "",
+              ...(common ? { tableCategory: "Universal at-will actions" } : {}),
+              block: {
+                kind: "table" as const,
+                headers: [
+                  "Power",
+                  "Level",
+                  "Range",
+                  "Target",
+                  "Attack",
+                  "Damage",
+                ],
+                rows: referencePowerRows(power),
               },
-            ];
-          }),
-        });
+            },
+          ];
+        }),
+      );
     }
+    if (parts.length)
+      result.push({
+        id: `powers:${usage}`,
+        name: `${usage} powers`,
+        group: "Power index",
+        source: "",
+        parts,
+      });
   }
   const itemPowers = overviewTrackingRows(model).filter((row) =>
     row.id.startsWith("item:"),
@@ -1949,7 +1945,9 @@ function ReferenceCard({
                 {part.tableCategory &&
                 (index === 0 ||
                   part.tableCategory !== parts[index - 1]?.tableCategory) ? (
-                  <tr className="ov-reference-inventory-category">
+                  <tr
+                    className={`ov-reference-table-category${part.powerIndex ? " ov-power-index-subheading" : " ov-reference-inventory-category"}`}
+                  >
                     <th colSpan={headers.length} scope="rowgroup">
                       {part.tableCategory}
                     </th>

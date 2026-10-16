@@ -582,7 +582,7 @@ body:has(.sp-prototype) {
 .ov-inventory-table thead th:last-child {
   width: 14%;
 }
-.ov-reference-table .ov-reference-inventory-category th {
+.ov-reference-table .ov-reference-table-category th {
   background: #fff;
   color: #3e5f7c;
   font-size: 9pt;
@@ -591,10 +591,14 @@ body:has(.sp-prototype) {
   border-bottom: 1px solid #b9cbdc;
   border-top: 1px solid #b9cbdc;
 }
-.sheet-overview.sp-monochrome .ov-reference-inventory-category th {
+.sheet-overview.sp-monochrome .ov-reference-table-category th {
   background: #fff;
   color: #333;
   border-color: #aaa;
+}
+.ov-reference-table .ov-power-index-subheading th {
+  color: var(--ref-ink);
+  border-color: var(--ref-line);
 }
 .ov-slot-cell .icon {
   width: 1em;

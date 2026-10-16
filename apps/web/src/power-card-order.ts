@@ -7,7 +7,18 @@ export const isRulesReferencePower = (card: SheetCard) =>
       Boolean(field.value.trim()),
   );
 
-/** Character-sheet cards, independently of builder-table/action sorting. */
+export function powerActionRank(action: string): number {
+  const normalized = action.trim().toLowerCase();
+  if (/^standard\b/.test(normalized)) return 0;
+  if (/^move\b/.test(normalized)) return 1;
+  if (/^minor\b/.test(normalized)) return 2;
+  if (/^(?:free|no action)\b/.test(normalized)) return 3;
+  if (/^(?:immediate|opportunity|reaction|interrupt)\b/.test(normalized))
+    return 4;
+  return 5;
+}
+
+/** Character-sheet usage groups, then the same action hierarchy as power tables. */
 export function sortedPowerCards(cards: readonly SheetCard[]): SheetCard[] {
   const group = (card: SheetCard) => {
     if (isRulesReferencePower(card)) return 5;
@@ -28,7 +39,9 @@ export function sortedPowerCards(cards: readonly SheetCard[]): SheetCard[] {
   return [...cards].sort(
     (a, b) =>
       group(a) - group(b) ||
+      powerActionRank(a.actionType ?? "") -
+        powerActionRank(b.actionType ?? "") ||
       utility(a) - utility(b) ||
-      a.name.localeCompare(b.name),
+      a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
   );
 }

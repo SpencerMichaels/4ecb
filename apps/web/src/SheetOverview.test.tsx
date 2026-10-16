@@ -79,8 +79,37 @@ describe("real-data sheet overview", () => {
     expect(names("powers:At-Will")).toEqual([
       "Character attack",
       "Legitimate free effect",
+      "Common maneuver",
     ]);
-    expect(names("powers:At-Will:common")).toEqual(["Common maneuver"]);
+    expect(entries.some((entry) => entry.id === "powers:At-Will:common")).toBe(
+      false,
+    );
+    expect(
+      entries
+        .find((entry) => entry.id === "powers:At-Will")
+        ?.parts.map((part) => part.tableCategory),
+    ).toEqual([undefined, undefined, "Universal at-will actions"]);
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={{ ...model, powers }}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const atWill = html
+      .split('data-reference-id="powers:At-Will"')[1]!
+      .split("</section>")[0]!;
+    expect(atWill).toContain(
+      'class="ov-reference-table-category ov-power-index-subheading"',
+    );
+    expect(atWill).toContain(
+      '<th colSpan="6" scope="rowgroup">Universal at-will actions</th>',
+    );
+    expect(atWill.match(/<thead>/g)).toHaveLength(1);
+    expect(html).not.toContain(">Universal at-will actions</h3>");
     expect(entries.some((entry) => entry.id === "power-rules-references")).toBe(
       false,
     );

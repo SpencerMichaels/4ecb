@@ -273,8 +273,10 @@ to physical-card rule fields. All reference sections share coherent R-numbering.
 Basic attacks are regular Power Index entries; their standalone alternatives
 tables and page-link plumbing are removed. Page-1 omitted-weapon notes point to
 power cards, which retain the complete comparison tables.
-Character-specific at-wills and universal at-will actions currently have separate
-green panes; an in-pane subgroup is proposed, pending owner choice. The sheet
+Character-specific at-wills and universal at-will actions share one green pane
+and one set of column headings. A full-width "Universal at-will actions" table
+subheading introduces the universal rows, using white fill and quiet green rules;
+it stays attached to its first power and repeats at continuation starts. The sheet
 model marks universal powers only from unconditional generic
 Level1Rules grants (including generic grant containers, excluding conditioned or
 later-level grants). Class/power names and publication Source do not establish
@@ -292,8 +294,10 @@ alone never cause exclusion.
 Only the power index switches back to formulas; physical-card calculations and
 weapon comparison tables retain their accepted behavior.
 Character-sheet power cards on screen and in print sort specific at-will,
-universal at-will, encounter, daily, with non-utility/attack powers before
-explicit utilities and alphabetical names as the final tie-break. Unknown usage
+universal at-will, encounter, daily. Within each group, the shared table/card
+action hierarchy comes first (standard, move, minor, free/no action, reaction,
+unknown), then non-utility/attack before explicit utility and alphabetical names.
+Unknown usage
 follows known usage; Rules Item cards follow actionable powers, before items.
 This changes no builder-dialog/table or scratchpad action ordering.
 "Equipped by slot" is a Slot/Item lookup using the builder's body/held/other
@@ -419,6 +423,18 @@ with utility metadata and alphabetical tie-breaks; rules-only cards follow
 actionable powers. 55 focused card-order/index/overview tests, web typecheck and
 focused lint pass. Input card arrays are not mutated. No full print matrix was
 rerun for this ordering-only refinement.
+
+At-will consolidation/action-order follow-up: implemented the owner's option 1,
+one at-will pane/table with an internal Universal at-will actions divider and no
+repeated column headings or separate universal card. The table category-row
+mechanism retains heading/first-power attachment and continuation context.
+Cards and power tables share one action-rank helper; within usage groups action
+rank precedes utility and alphabetical tie-breaks. 68 focused order/overview/
+index/scratchpad tests, web typecheck, focused lint, formatting and production
+build pass. Tests assert the single table header, six-column subsection, absence
+of a separate universal pane, all action ranks and action-before-utility behavior.
+No full print matrix was rerun for this feedback iteration; owner visual review
+and M5.6 remain open.
 
 Verification: 139 focused sheet-model/overview/index/layout tests, web typecheck,
 focused lint and production build pass. The overview-only print check passes

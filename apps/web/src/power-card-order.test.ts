@@ -3,6 +3,43 @@ import type { SheetCard } from "@4ecb/sheet-model";
 import { sortedPowerCards } from "./power-card-order";
 
 describe("character-sheet power-card order", () => {
+  it("uses the power-table action hierarchy before utility and alphabetical tie-breaks", () => {
+    const card = (
+      name: string,
+      actionType: string,
+      utility = false,
+    ): SheetCard => ({
+      kind: "power",
+      name,
+      usage: "At-Will",
+      actionType,
+      fields: [{ label: "Power Type", value: utility ? "Utility" : "Attack" }],
+    });
+    const cards = [
+      card("A reaction", "Immediate Interrupt"),
+      card("B opportunity", "Opportunity Action"),
+      card("Z no action", "No Action"),
+      card("A free", "Free Action"),
+      card("A minor", "Minor Action"),
+      card("A move", "Move Action"),
+      card("A standard utility", "Standard Action", true),
+      card("Z standard attack", "Standard Action"),
+      card("B standard attack", "Standard Action"),
+      card("Unknown", ""),
+    ];
+    expect(sortedPowerCards(cards).map((power) => power.name)).toEqual([
+      "B standard attack",
+      "Z standard attack",
+      "A standard utility",
+      "A move",
+      "A minor",
+      "A free",
+      "Z no action",
+      "A reaction",
+      "B opportunity",
+      "Unknown",
+    ]);
+  });
   it("orders specific at-will, universal at-will, encounter and daily, then utility and name", () => {
     const card = (
       name: string,
