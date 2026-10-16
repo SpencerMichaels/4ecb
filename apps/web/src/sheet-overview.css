@@ -656,6 +656,34 @@ body:has(.sp-prototype) {
   gap: 0.24in;
   align-items: start;
 }
+.ov-inventory-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.08in;
+}
+.ov-inventory-item > span:first-child {
+  min-width: 0;
+}
+.ov-inventory-weight {
+  flex-shrink: 0;
+  white-space: nowrap;
+  color: var(--sp-muted);
+  font-size: 8pt;
+}
+.ov-inventory-encumbrance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.06in 0.2in;
+  padding: 0.06in 0.08in;
+  border-top: 1px solid var(--sp-border);
+  font-size: 8.5pt;
+  color: var(--sp-muted);
+}
+.ov-inventory-encumbrance strong {
+  color: var(--sp-ink);
+  font-weight: 400;
+}
 .ov-inventory-column {
   min-width: 0;
 }

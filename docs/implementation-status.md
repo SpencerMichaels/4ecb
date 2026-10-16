@@ -2,6 +2,18 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Inventory follow-up (2026-10-16): encumbrance now appears as a compact line
+inside Inventory, replacing the separate pane. Each item cell has a muted,
+right-aligned quantity-inclusive weight; per-row fractions are retained before
+the native aggregate stock-weight truncation. Unknown weights remain em dashes.
+Character Details remains in place pending the product owner's choice of a
+page-1 status-line design; no header redesign has been implemented in this slice.
+Verification: 168 focused sheet-model/overview tests, sheet-model/web typechecks,
+focused lint, formatting and production build pass. Four Chromium Letter/A4
+color/monochrome overview cases pass with no overflow and continuous numbering;
+the updated Items preview was visually inspected. Firefox/full milestone gates
+were not rerun for this refinement.
+
 Final print audit follow-up (2026-10-16): all four requested corrections are
 implemented for owner feedback. Items has a carried-weight/normal-limit/load
 pane. Character Record opens with populated physical/identity details (Size,

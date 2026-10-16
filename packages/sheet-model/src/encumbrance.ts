@@ -24,34 +24,48 @@ export function inventoryWeight(
   let total = 0;
   for (const holding of holdings) {
     if (holding.quantity <= 0) continue;
-    const base = holding.definitions[0];
-    if (base && field(base, "Category").toLowerCase() === "transportation")
-      continue;
-    const override = holding.override?.trim();
-    if (
-      override !== undefined &&
-      override !== "" &&
-      Number.isFinite(Number(override)) &&
-      Number(override) >= 0
-    ) {
-      total += Number(override) * holding.quantity;
-      continue;
-    }
-    if (!base || holding.complete === false) return undefined;
-    if (
-      (base.type.toLowerCase() === "armor" && /barding/i.test(base.name)) ||
-      /^(?:mount|companion|familiar) slot item$/i.test(
-        field(base, "Magic Item Type"),
-      )
-    )
-      continue;
-    // Native field parsing consumes leading integer digits/commas; custom
-    // decimal weights are supported through the explicit override above.
-    const weight = /^\d[\d,]*/.exec(field(base, "Weight"))?.[0];
-    total +=
-      (weight ? Number(weight.replaceAll(",", "")) : 0) * holding.quantity;
+    const weight = inventoryItemWeight(holding);
+    if (weight === undefined) return undefined;
+    total += weight * holding.quantity;
   }
   return Math.trunc(total);
+}
+
+/** Per-copy weight, before quantity multiplication and stock-stat truncation. */
+export function inventoryItemWeight(
+  holding: WeightedHolding,
+): number | undefined {
+  const base = holding.definitions[0];
+  if (base && field(base, "Category").toLowerCase() === "transportation")
+    return 0;
+  const override = holding.override?.trim();
+  if (
+    override !== undefined &&
+    override !== "" &&
+    Number.isFinite(Number(override)) &&
+    Number(override) >= 0
+  ) {
+    return Number(override);
+  }
+  if (!base || holding.complete === false) return undefined;
+  if (
+    (base.type.toLowerCase() === "armor" && /barding/i.test(base.name)) ||
+    /^(?:mount|companion|familiar) slot item$/i.test(
+      field(base, "Magic Item Type"),
+    )
+  )
+    return 0;
+  // Native field parsing consumes leading integer digits/commas; custom
+  // decimal weights are supported through the explicit override above.
+  const weight = /^\d[\d,]*/.exec(field(base, "Weight"))?.[0];
+  return weight ? Number(weight.replaceAll(",", "")) : 0;
+}
+
+export function inventoryHoldingWeight(
+  holding: WeightedHolding,
+): number | undefined {
+  const weight = inventoryItemWeight(holding);
+  return weight === undefined ? undefined : weight * holding.quantity;
 }
 
 /** GearPageData: stock gear Weight + whole-pound carried coins, adjusted limit. */

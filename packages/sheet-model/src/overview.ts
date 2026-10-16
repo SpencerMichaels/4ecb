@@ -24,6 +24,8 @@ export interface OverviewFeature {
   readonly accessOnly?: boolean;
 }
 export interface OverviewInventory {
+  /** Total weight of the listed quantity, not a per-copy weight. */
+  readonly weight?: number | undefined;
   readonly name: string;
   readonly quantity: number;
   readonly equipped: number;

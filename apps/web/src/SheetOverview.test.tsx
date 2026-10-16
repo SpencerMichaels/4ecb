@@ -109,12 +109,49 @@ describe("real-data sheet overview", () => {
     const entry = references({
       ...model,
       encumbrance: { carriedWeight: 65, normalLimit: 130, load: "Normal" },
-    }).find((entry) => entry.id === "encumbrance");
-    expect(entry?.parts[0]?.block).toEqual({
-      kind: "table",
-      headers: ["Carried weight", "Normal limit", "Load"],
-      rows: [["65 lb", "130 lb", "Normal"]],
+    }).find((entry) => entry.id === "inventory:false");
+    expect(entry?.encumbrance).toEqual({
+      carriedWeight: 65,
+      normalLimit: 130,
+      load: "Normal",
     });
+    expect(references(model).some((entry) => entry.id === "encumbrance")).toBe(
+      false,
+    );
+  });
+  it("places muted quantity-inclusive weights beside inventory names", () => {
+    const fixture = {
+      ...model,
+      overview: {
+        ...model.overview!,
+        inventory: [
+          {
+            name: "Test staff",
+            quantity: 2,
+            equipped: 0,
+            slots: [],
+            fields: [],
+            weight: 8,
+          },
+        ],
+      },
+    };
+    const entry = references(fixture).find(
+      (entry) => entry.id === "inventory:false",
+    );
+    expect(entry?.parts[0]?.inventoryWeight).toBe(8);
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={fixture}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    expect(html).toContain('class="ov-inventory-weight">8 lb</span>');
+    expect(html).toContain('class="ov-inventory-encumbrance"');
   });
   it("puts Session notes in the wider first column and XP inside Treasure & consumables", () => {
     const html = renderToStaticMarkup(
@@ -1955,7 +1992,10 @@ describe("real-data sheet overview", () => {
     expect(html).toContain("The full synthetic description is preserved.");
     expect(
       html.match(/<td>Synthetic blade(?:<sup[^>]*>E<\/sup>)?<\/td>/g),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
+    expect(html).toContain(
+      '<span>Synthetic blade<sup class="ov-equipped-marker"',
+    );
     expect(html).toContain("Main hand");
     expect(html).toContain(">Inventory</h3>");
   });

@@ -1575,6 +1575,7 @@ interface ReferencePart {
   rightSlotCells?: readonly { label: string; icon: IconName }[];
   equippedInventory?: boolean;
   inventoryIndex?: number;
+  inventoryWeight?: number | undefined;
 }
 export interface ReferenceEntry {
   id: string;
@@ -1588,6 +1589,7 @@ export interface ReferenceEntry {
   currency?: readonly SheetValue[];
   reminder?: ReminderEntry;
   inventoryColumns?: readonly (readonly ReferencePart[])[];
+  encumbrance?: CharacterSheetModel["encumbrance"];
 }
 
 function inventoryGroups(parts: readonly ReferencePart[]): ReferencePart[][] {
@@ -1781,30 +1783,6 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
   // References retain authored entities, not synthetic defensive summaries or
   // expanded reminder projections (whose underlying features/powers appear here
   // or on their own cards already).
-  if (model.encumbrance) {
-    const { carriedWeight, normalLimit, load } = model.encumbrance;
-    result.push({
-      id: "encumbrance",
-      name: "Encumbrance",
-      group: "Items",
-      source: "",
-      parts: [
-        {
-          block: {
-            kind: "table",
-            headers: ["Carried weight", "Normal limit", "Load"],
-            rows: [
-              [
-                carriedWeight === undefined ? "—" : `${carriedWeight} lb`,
-                normalLimit === undefined ? "—" : `${normalLimit} lb`,
-                load ?? "—",
-              ],
-            ],
-          },
-        },
-      ],
-    });
-  }
   for (const equipped of [true, false]) {
     const slotPresentation = (slot: string) =>
       ORDERED_LOADOUT_SLOTS.find(
@@ -1855,7 +1833,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
               INVENTORY_CATEGORIES.indexOf(b.inventoryCategory)) ||
           a.name.localeCompare(b.name),
       );
-    if (equipped || entries.length)
+    if (equipped || entries.length || model.encumbrance)
       result.push({
         id: `inventory:${equipped}`,
         name: equipped ? "Equipped" : "Inventory",
@@ -1868,8 +1846,13 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
                 { label: "Stored", value: find(model.notes, "StoredMoney") },
               ],
             }
-          : {}),
+          : { encumbrance: model.encumbrance }),
         parts: entries.map((item) => ({
+          ...(!equipped
+            ? {
+                inventoryWeight: item.weight,
+              }
+            : {}),
           ...(!equipped ? { tableCategory: item.inventoryCategory.label } : {}),
           ...(!equipped && item.equipped > 0
             ? { equippedInventory: true }
@@ -2255,6 +2238,23 @@ function ReferenceCard({
             ),
           )}
         </div>
+        {entry.encumbrance ? (
+          <div className="ov-inventory-encumbrance">
+            <span>
+              Carried{" "}
+              <strong>{entry.encumbrance.carriedWeight ?? "—"} lb</strong>
+            </span>
+            <span>
+              Normal limit{" "}
+              <strong>{entry.encumbrance.normalLimit ?? "—"} lb</strong>
+            </span>
+            <span>
+              {entry.encumbrance.load
+                ? `${entry.encumbrance.load} load`
+                : "Load —"}
+            </span>
+          </div>
+        ) : null}
       </section>
     );
   }
@@ -2377,15 +2377,24 @@ function ReferenceCard({
                         <span>{row[1] === "1" ? "\u00a0" : `${row[1]}×`}</span>
                       </td>
                       <td>
-                        {row[0]}
-                        {part.equippedInventory ? (
-                          <sup
-                            className="ov-equipped-marker"
-                            aria-label="Equipped"
-                          >
-                            E
-                          </sup>
-                        ) : null}
+                        <span className="ov-inventory-item">
+                          <span>
+                            {row[0]}
+                            {part.equippedInventory ? (
+                              <sup
+                                className="ov-equipped-marker"
+                                aria-label="Equipped"
+                              >
+                                E
+                              </sup>
+                            ) : null}
+                          </span>
+                          <span className="ov-inventory-weight">
+                            {part.inventoryWeight === undefined
+                              ? "—"
+                              : `${part.inventoryWeight.toLocaleString("en-US", { maximumFractionDigits: 3 })} lb`}
+                          </span>
+                        </span>
                       </td>
                     </tr>
                   ) : (

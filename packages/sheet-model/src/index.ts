@@ -28,6 +28,7 @@ import {
 import { universalPowerDefinitionIds } from "./power-reference";
 import {
   inventoryWeight,
+  inventoryHoldingWeight,
   sheetEncumbrance,
   type SheetEncumbrance,
 } from "./encumbrance";
@@ -1216,8 +1217,13 @@ export function buildSheetModel(
     content,
     inventory: lootPresentations
       .filter(({ referenceKind }) => referenceKind === undefined)
-      .map(({ loot }) => ({
+      .map(({ loot, itemEntities }) => ({
         name: loot.name,
+        weight: inventoryHoldingWeight({
+          quantity: loot.count,
+          definitions: itemEntities,
+          complete: itemEntities.length === loot.elements.length,
+        }),
         quantity: loot.count,
         equipped: loot.equippedCount,
         slots: [],
@@ -1612,6 +1618,14 @@ export function buildEvaluatedSheetModel(
         ),
         quantity: entry.quantity,
         equipped: entry.equippedQuantity,
+        weight: inventoryHoldingWeight({
+          quantity: entry.quantity,
+          definitions: itemEntities,
+          complete: entry.definitionIds.length === itemEntities.length,
+          override: Object.entries(entry.overrides ?? {}).find(
+            ([name]) => name.toLowerCase() === "weight",
+          )?.[1],
+        }),
         slots:
           original?.equippedSlots?.map((assignment) => assignment.slot) ?? [],
         fields: itemEntities.flatMap(entityFields),

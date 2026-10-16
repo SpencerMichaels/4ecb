@@ -4,8 +4,10 @@ Status: page-1 summary and scratchpad accepted by the product owner, 2026-10-15.
 Final reference-page review and the recorded dense-card overflow gate remain;
 M5.6 stays open.
 
-Final audit follow-up: Items includes Encumbrance (carried weight, normal limit,
-load). Character Record starts with a compact Character Details table for
+Final audit follow-up: Inventory includes a compact encumbrance line (carried
+weight, normal limit, load), not a separate pane. Inventory names have muted,
+right-aligned weights including the listed quantity; unknown weights show an
+em dash. Character Record currently starts with a compact Character Details table for
 populated Size, Gender, Age, Height, Weight, Alignment, Deity and RPGA fields,
 before descriptive notes. Size is not added to page 1. Reminder continuations
 reuse page-1 category panes, inset descriptions and benefit bullets; measured

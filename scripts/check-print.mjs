@@ -1191,7 +1191,7 @@ async function checkReferences(client) {
       }),
       cardFooterContents:[...document.querySelectorAll('.print-card-page-footer')].every(footer=>footer.querySelector('.print-card-footer-identity')?.textContent.includes('Synthetic print fixture hero · Synthetic ancestry Synthetic guardian 18') && footer.textContent.includes('Power & Item Cards')),
       details:pages.some(page=>page.querySelector('[data-reference-id="character-details"]')?.textContent.includes('Synthetic patron')),
-      encumbrance:pages.some(page=>page.querySelector('[data-reference-id="encumbrance"]')?.textContent.includes('67 lb')),
+      encumbrance:pages.some(page=>page.querySelector('[data-reference-id="inventory:false"] .ov-inventory-encumbrance')?.textContent.includes('67 lb')) && !pages.some(page=>page.querySelector('[data-reference-id="encumbrance"]')),
       fixedCardSizes:[...document.querySelectorAll('.print-card-page .print-reference-card')].every(card=>{
         const r=card.getBoundingClientRect(), a4=Boolean(card.closest('.paper-a4'));
         return Math.abs(r.width-(a4?63*96/25.4:2.47*96))<1 && Math.abs(r.height-(a4?86.8*96/25.4:3.405*96))<1;

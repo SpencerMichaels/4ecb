@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { ContentEntity } from "@4ecb/content-domain";
-import { inventoryWeight, sheetEncumbrance } from "./encumbrance";
+import {
+  inventoryWeight,
+  inventoryHoldingWeight,
+  sheetEncumbrance,
+} from "./encumbrance";
 
 const definition = (
   type: string,
@@ -26,6 +30,11 @@ const definition = (
   provenance: { sourceKey: "public", sourceOrdinal: 0 },
 });
 describe("native encumbrance projection", () => {
+  it("retains fractional weight in quantity-inclusive inventory rows", () => {
+    expect(
+      inventoryHoldingWeight({ quantity: 3, definitions: [], override: "0.5" }),
+    ).toBe(1.5);
+  });
   it("uses base gear, signed quantities, decimal overrides and native weight exclusions", () => {
     expect(
       inventoryWeight([
