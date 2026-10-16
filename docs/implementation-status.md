@@ -2,8 +2,8 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
-Scratchpad working-surface redesign (2026-10-15): The product owner accepts the
-first-page summary. The approved scratchpad proposal is implemented for feedback:
+Scratchpad working-surface redesign (2026-10-15): The product owner accepts both
+the first-page summary and scratchpad. The accepted scratchpad layout has
 Health with a three-circle action-point tracker beside Effect/Ends, a full-width Encounter/Daily
 tracking pair, then Treasure/consumables beside Session notes/XP. Slate pane headers, violet health
 reference cells, encounter-red/daily-gray tracking headings and explicit grayscale
@@ -201,8 +201,15 @@ continuations and restoration after space returns. A Chromium scratchpad screens
 was visually reviewed (`--scratchpad-preview`). Synthetic fixture surge input was
 corrected from a displayed total to the native additive-bonus convention; no rules
 formula changed. No full milestone/physical-card suite was run. M5.6 remains open
-for scratchpad feedback, reference-page refinement and the separately recorded
+for reference-page refinement and the separately recorded
 summary-continuation formatting issue.
+
+Reference-page review is next. The owner requires full character reference pages
+to follow power cards; that rendering-order change is pending implementation.
+Reference panes must group by character origin (class, race, theme, background,
+feats and other applicable origins), not publication source. The current type
+sort is not a complete grant-origin classification; design assessment is pending
+owner review. Item-card adjacency is a proposal, not a new approved constraint.
 
 Calculated superior-implement modifiers (2026-10-15): Attack/damage projection
 now consumes comma-conjoined, item-limited stat channels using each attack's

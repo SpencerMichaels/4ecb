@@ -1,9 +1,17 @@
 # Printed overview design study
 
-Status: page-1 summary accepted by the product owner, 2026-10-15. The approved
-scratchpad redesign is implemented for real-character feedback. Reference-page
+Status: page-1 summary and scratchpad accepted by the product owner, 2026-10-15.
+Reference-page
 review and the separately noted summary-continuation styling correction remain;
 M5.6 stays open.
+
+Next production review: group full reference panes by character origin (class,
+race, theme, background, feats, and other applicable origins) and place character
+reference after power cards. The ordering change is requested, not implemented
+yet; the detailed reference-page redesign remains a proposal for owner feedback.
+See `implementation-status.md` for the final accepted scratchpad refinements;
+the study and initial integration descriptions below retain their historical
+design context.
 
 ## Open
 

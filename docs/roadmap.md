@@ -518,11 +518,13 @@ pages; the accepted physical cards remain unchanged. Continue owner feedback
 against actual characters. This does not close M5.6 or resolve its existing
 dense-card print-fit blocker. See `sheet-overview-prototype.md`.
 
-**Summary acceptance / scratchpad review (2026-10-15):** The product owner accepts
-page 1. Its working-surface scratchpad redesign is now implemented for feedback,
+**Summary and scratchpad accepted (2026-10-15):** The product owner accepts
+page 1 and the working-surface scratchpad,
 with segmented surge tracking, reserved handwriting areas and measured power-use
 continuations. Reference pages and the known summary-continuation style mismatch
-remain separate review work; this does not close M5.6.
+remain separate review work; this does not close M5.6. Full character reference
+pages must follow power cards and group their panes by character origin; those
+changes are the next review/implementation slice.
 
 **Printed-card product review accepted (2026-10-14):** Power and item card
 presentation is accepted after the fixed-size layout, equipment comparisons,
