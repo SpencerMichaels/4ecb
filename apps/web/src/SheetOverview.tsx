@@ -2138,13 +2138,18 @@ export function paginateReferenceGroups(
         }
         return { split, height };
       };
-      // Do not strand the category opening with one card if two fit on a fresh page.
+      // Keep an entire category together when a fresh page can hold it. For
+      // larger categories, still keep the opening with at least two cards.
+      const wholeHeight = balance(cards.length - offset).height;
+      const keepHeight =
+        wholeHeight + heading <= capacity
+          ? wholeHeight
+          : balance(Math.min(2, cards.length - offset)).height;
       if (
         used &&
         opening &&
-        cards.length - offset > 1 &&
-        balance(2).height > available &&
-        balance(2).height + heading <= capacity
+        keepHeight > available &&
+        keepHeight + heading <= capacity
       ) {
         pages.push([]);
         used = 0;

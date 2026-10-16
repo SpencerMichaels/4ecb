@@ -113,6 +113,76 @@ describe("real-data sheet overview", () => {
     ).toBe(true);
     expect(paginateReferenceGroups([], new Map(), 400, 30)).toEqual([]);
   });
+  it.each(["Feats", "Racial traits"])(
+    "keeps whole %s together when possible, but splits oversized categories",
+    (category) => {
+      const makeEntries = (count: number): ReferenceEntry[] => [
+        {
+          id: "before",
+          name: "Before",
+          group: "Class features",
+          source: "",
+          parts: [],
+        },
+        ...Array.from({ length: count }, (_, index) => ({
+          id: `feat:${index}`,
+          name: `Feat ${index}`,
+          group: category,
+          source: "",
+          parts: [],
+        })),
+        {
+          id: "after",
+          name: "After",
+          group: "Other features",
+          source: "",
+          parts: [],
+        },
+      ];
+      const measure = (entries: readonly ReferenceEntry[]) =>
+        new Map(
+          entries.map((entry) => [
+            entry.id,
+            {
+              height: entry.id === "before" ? 170 : 60,
+              overhead: 0,
+              parts: [],
+            },
+          ]),
+        );
+      const entries = makeEntries(6);
+      const pages = paginateReferenceGroups(entries, measure(entries), 400, 30);
+      expect(pages).toHaveLength(2);
+      expect(pages[0]?.map((block) => block.group)).toEqual(["Class features"]);
+      expect(pages[1]?.map((block) => block.group)).toEqual([
+        category,
+        "Other features",
+      ]);
+      expect(pages[1]?.[0]?.columns.map((column) => column.length)).toEqual([
+        3, 3,
+      ]);
+      expect(
+        pages.flatMap((page) => page.flatMap((block) => block.columns.flat())),
+      ).toEqual(entries);
+      const oversized = makeEntries(12);
+      const split = paginateReferenceGroups(
+        oversized,
+        measure(oversized),
+        400,
+        30,
+      );
+      expect(split[0]?.map((block) => block.group)).toEqual([
+        "Class features",
+        category,
+      ]);
+      expect(
+        split.flat().filter((block) => block.group === category),
+      ).toHaveLength(2);
+      expect(
+        split.flatMap((page) => page.flatMap((block) => block.columns.flat())),
+      ).toEqual(oversized);
+    },
+  );
   it("does not invent reference entities from defensive stats or expanded reminders", () => {
     const entries = references({
       ...model,

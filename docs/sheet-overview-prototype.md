@@ -23,8 +23,9 @@ entities, retaining the existing features and powers. Power indexes use subtle
 at-will green, encounter red and daily gray (neutral in monochrome).
 Category titles are larger, unboxed headings with a stronger colored underline,
 distinct from the smaller filled pane headers; pagination measures their height.
-Category openings keep their first two cards together when both fit on a fresh
-page, moving to the next page if remaining space would fit only the first.
+Whole categories stay on one page whenever their balanced two-column block fits
+a fresh page; they move rather than split if remaining space is insufficient.
+Larger categories still keep their first two cards together when feasible.
 Single-entry categories and oversized pairs retain normal flow;
 summary reminder continuation (without category headings) is unchanged.
 This is a first draft, not final reference or M5.6 acceptance.

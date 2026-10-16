@@ -232,7 +232,10 @@ Contiguous level/name order runs down the left column then down the right, with
 the split balanced by measured card heights; the next category starts beneath
 both columns. Large categories continue onto later pages without repeating their
 opening heading. Oversized cards retain measured prose continuations, and the
-first two cards are kept with their heading when a fresh page can fit them.
+whole category is moved intact to a fresh page if its balanced block fits there
+but not in the remaining space. Only categories larger than a page split, keeping
+their first two cards with the heading when feasible. This applies to every
+category, not just the last one (often Feats).
 Summary reminder continuation and full-width indexes remain separate. Category
 titles are larger, unboxed and underlined to distinguish them from pane headers.
 References present existing character entities: synthetic defensive summaries
@@ -298,6 +301,12 @@ pages, no overflow), including Slot/Item equipped headers and grouped Item/Qty
 Inventory headers. Tests cover canonical slot order, authored slot fallback,
 carried/spare quantities, category metadata projection and shared builder
 classification. M5.6 reference review remains open.
+
+Whole-category reflow follow-up: all 44 focused overview tests pass. Parameterized
+Feats/Racial traits regressions verify intact movement to a fresh page, even
+before a later category, while genuinely oversized categories still split and
+preserve all entries. The existing space-available case remains covered. No full
+print matrix was rerun for this small pagination-policy adjustment.
 
 Verification: 139 focused sheet-model/overview/index/layout tests, web typecheck,
 focused lint and production build pass. The overview-only print check passes
