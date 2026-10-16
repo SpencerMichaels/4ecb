@@ -1586,6 +1586,7 @@ export interface ReferenceEntry {
   level?: number;
   feature?: boolean;
   currency?: readonly SheetValue[];
+  reminder?: ReminderEntry;
   inventoryColumns?: readonly (readonly ReferencePart[])[];
 }
 
@@ -1780,6 +1781,30 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
   // References retain authored entities, not synthetic defensive summaries or
   // expanded reminder projections (whose underlying features/powers appear here
   // or on their own cards already).
+  if (model.encumbrance) {
+    const { carriedWeight, normalLimit, load } = model.encumbrance;
+    result.push({
+      id: "encumbrance",
+      name: "Encumbrance",
+      group: "Items",
+      source: "",
+      parts: [
+        {
+          block: {
+            kind: "table",
+            headers: ["Carried weight", "Normal limit", "Load"],
+            rows: [
+              [
+                carriedWeight === undefined ? "—" : `${carriedWeight} lb`,
+                normalLimit === undefined ? "—" : `${normalLimit} lb`,
+                load ?? "—",
+              ],
+            ],
+          },
+        },
+      ],
+    });
+  }
   for (const equipped of [true, false]) {
     const slotPresentation = (slot: string) =>
       ORDERED_LOADOUT_SLOTS.find(
@@ -2041,6 +2066,26 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
           referenceParts(field.value, field.label),
         ),
       ],
+    });
+  const details = model.identity.filter(
+    (value) =>
+      /^(?:Size|Gender|Age|Height|Weight|Alignment|Deity|RPGA)$/.test(
+        value.label,
+      ) && value.value.trim(),
+  );
+  if (details.length)
+    result.push({
+      id: "character-details",
+      name: "Character Details",
+      group: "Character record",
+      source: "",
+      parts: details.map((value) => ({
+        block: {
+          kind: "table",
+          headers: ["Detail", "Value"],
+          rows: [[value.label, value.value]],
+        },
+      })),
     });
   for (const note of model.notes.filter(
     (note) => !/^(?:Carried|Stored)Money$/i.test(note.label),
@@ -2798,6 +2843,7 @@ export function summaryContinuationEntries(
               name:
                 entry.label.replace(/\s*\([^()]*\)/g, "").trim() || entry.label,
               group: category,
+              reminder: entry,
               source: "",
               parts:
                 entry.elements && entry.elements.length > 1
@@ -2814,11 +2860,149 @@ export function summaryContinuationEntries(
   );
 }
 
+export function paginateReminderColumns(
+  groups: readonly {
+    overhead: number;
+    gap: number;
+    entries: readonly { index: number; height: number }[];
+  }[],
+  capacity: number,
+  panelGap: number,
+): readonly (readonly number[])[] {
+  const columns: number[][] = [];
+  let used = 0;
+  for (const group of groups) {
+    let inPanel = false;
+    for (const entry of group.entries) {
+      let cost =
+        entry.height +
+        (inPanel ? group.gap : group.overhead + (used ? panelGap : 0));
+      if (used && used + cost > capacity) {
+        used = 0;
+        inPanel = false;
+        cost = entry.height + group.overhead;
+      }
+      if (!used) columns.push([]);
+      columns.at(-1)!.push(entry.index);
+      used += cost;
+      inPanel = true;
+    }
+  }
+  return columns;
+}
+
+function SummaryContinuationPages({
+  model,
+  name,
+  entries,
+  onPageCount,
+}: {
+  model: CharacterSheetModel;
+  name: string;
+  entries: readonly ReferenceEntry[];
+  onPageCount: (count: number) => void;
+}) {
+  const probe = useRef<HTMLElement>(null);
+  const values = useMemo(
+    () => entries.flatMap((entry) => (entry.reminder ? [entry.reminder] : [])),
+    [entries],
+  );
+  const [columns, setColumns] = useState<readonly (readonly number[])[]>([]);
+  useLayoutEffect(() => {
+    const page = probe.current;
+    if (!page) return;
+    const measure = () => {
+      const panels = page.querySelector<HTMLElement>(".ov-reminder-panels")!;
+      const capacity =
+        page.querySelector(".sp-page-footer")!.getBoundingClientRect().top -
+        panels.getBoundingClientRect().top -
+        14;
+      if (capacity < 100) return;
+      const groups = [...panels.children].map((panel) => {
+        const rows = [
+          ...panel.querySelectorAll<HTMLElement>("[data-reminder-index]"),
+        ];
+        const gap =
+          rows.length > 1
+            ? parseFloat(getComputedStyle(rows[1]!).marginTop) || 0
+            : 0;
+        const entries = rows.map((row) => ({
+          index: Number(row.dataset.reminderIndex),
+          height: row.getBoundingClientRect().height,
+        }));
+        return {
+          entries,
+          gap,
+          overhead:
+            panel.getBoundingClientRect().height -
+            entries.reduce((sum, entry) => sum + entry.height, 0) -
+            gap * Math.max(0, entries.length - 1),
+        };
+      });
+      const next = paginateReminderColumns(
+        groups,
+        capacity,
+        parseFloat(getComputedStyle(panels).rowGap) || 0,
+      );
+      setColumns(next);
+      onPageCount(Math.ceil(next.length / 2));
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(page);
+    observer.observe(page.querySelector(".ov-reminder-panels")!);
+    measure();
+    return () => observer.disconnect();
+  }, [values, onPageCount]);
+  const footer = {
+    footerIdentity: ["Race", "Class", "Level"]
+      .map((label) => find(model.identity, label))
+      .filter((value) => value !== "—" && value.trim())
+      .join(" "),
+    footerTitle: "Character Summary · continued",
+  };
+  const content = (indices?: readonly number[]) => (
+    <ReminderPanels values={values} visibleIndices={indices} />
+  );
+  return (
+    <>
+      <div className="ov-measure" aria-hidden="true">
+        <Paper
+          name={name}
+          title="Character summary · continued"
+          page=""
+          source={model.source}
+          pageRef={probe}
+          {...footer}
+        >
+          <div className="ov-measure-column">{content()}</div>
+        </Paper>
+      </div>
+      {Array.from({ length: Math.ceil(columns.length / 2) }, (_, index) => (
+        <Paper
+          key={index}
+          name={name}
+          title="Character summary · continued"
+          page={index + 2}
+          source={model.source}
+          {...footer}
+        >
+          <div className="sp-feature-columns ov-summary-continuation-columns">
+            {columns.slice(index * 2, index * 2 + 2).map((column, n) => (
+              <div className="sp-column" key={n}>
+                {content(column)}
+              </div>
+            ))}
+          </div>
+        </Paper>
+      ))}
+    </>
+  );
+}
+
 function ReferencePages({
   model,
   name,
   entries,
-  summaryContinuation = false,
   onPageCount,
   wide = false,
   startPage = 1,
@@ -2826,7 +3010,6 @@ function ReferencePages({
   model: CharacterSheetModel;
   name: string;
   entries: readonly ReferenceEntry[];
-  summaryContinuation?: boolean;
   onPageCount?: (count: number) => void;
   wide?: boolean;
   startPage?: number;
@@ -2836,18 +3019,14 @@ function ReferencePages({
       .map((label) => find(model.identity, label))
       .filter((value) => value !== "—" && value.trim())
       .join(" "),
-    footerTitle: summaryContinuation
-      ? "Character Summary · continued"
-      : "Character Reference",
+    footerTitle: "Character Reference",
   };
-  const title = summaryContinuation
-    ? "Character summary · continued"
-    : "Character reference";
+  const title = "Character reference";
   const probe = useRef<HTMLElement>(null);
   const [columns, setColumns] = useState<
     readonly (readonly ReferenceEntry[])[]
   >([]);
-  const grouped = !wide && !summaryContinuation;
+  const grouped = !wide;
   const [categoryPages, setCategoryPages] = useState<
     readonly (readonly ReferenceCategoryBlock[])[]
   >([]);
@@ -2949,7 +3128,7 @@ function ReferencePages({
         entries,
         measurements,
         capacity,
-        summaryContinuation ? 0 : headingHeight,
+        headingHeight,
       );
       setColumns(next);
       onPageCount?.(Math.ceil(next.length / (wide ? 1 : 2)));
@@ -2962,7 +3141,7 @@ function ReferencePages({
       active = false;
       observer.disconnect();
     };
-  }, [entries, onPageCount, wide, startPage, summaryContinuation, grouped]);
+  }, [entries, onPageCount, wide, startPage, grouped]);
   const seenGroups = new Set<string>();
   const categoryOpenings = new Set(
     columns
@@ -2985,17 +3164,10 @@ function ReferencePages({
           pageRef={probe}
           {...referenceFooter}
         >
-          {summaryContinuation ? (
-            <div className="sp-page-heading">
-              <h2>{title}</h2>
-            </div>
-          ) : null}
           <div className={`ov-measure-column${wide ? " is-wide" : ""}`}>
-            {!summaryContinuation ? (
-              <h3 className="ov-reference-group-heading ov-reference-group-probe">
-                Class features
-              </h3>
-            ) : null}
+            <h3 className="ov-reference-group-heading ov-reference-group-probe">
+              Class features
+            </h3>
             {entries.map((entry) => (
               <ReferenceCard entry={entry} key={entry.id} measure />
             ))}
@@ -3050,15 +3222,10 @@ function ReferencePages({
             key={index}
             name={name}
             title={title}
-            page={summaryContinuation ? index + 2 : startPage + index}
+            page={startPage + index}
             source={model.source}
             {...referenceFooter}
           >
-            {summaryContinuation ? (
-              <div className="sp-page-heading">
-                <h2>{title}</h2>
-              </div>
-            ) : null}
             <div
               className={`sp-feature-columns ov-reference-columns${wide ? " is-wide" : ""}`}
             >
@@ -3068,8 +3235,7 @@ function ReferencePages({
                   <div className="sp-column" key={n}>
                     {column.map((entry) => (
                       <div key={entry.id}>
-                        {!summaryContinuation &&
-                        categoryOpenings.has(entry.id) ? (
+                        {categoryOpenings.has(entry.id) ? (
                           <h3
                             className="ov-reference-group-heading"
                             data-reference-category={referenceCategory(
@@ -3145,11 +3311,10 @@ export function SheetOverview({
           blankHP={blankHP}
           onVisibleReminders={onVisibleReminders}
         />
-        <ReferencePages
+        <SummaryContinuationPages
           model={model}
           name={name}
           entries={continuationEntries}
-          summaryContinuation
           onPageCount={setContinuationPages}
         />
         <Scratchpad

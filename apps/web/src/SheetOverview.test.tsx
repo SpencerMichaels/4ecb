@@ -16,6 +16,7 @@ import {
   references,
   balancedInventoryColumns,
   summaryContinuationEntries,
+  paginateReminderColumns,
   type ReferenceEntry,
 } from "./SheetOverview";
 
@@ -31,6 +32,90 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("preserves compact reminder categories across measured continuation columns", () => {
+    expect(
+      paginateReminderColumns(
+        [
+          {
+            overhead: 20,
+            gap: 5,
+            entries: [
+              { index: 0, height: 30 },
+              { index: 1, height: 30 },
+              { index: 2, height: 30 },
+            ],
+          },
+          { overhead: 20, gap: 5, entries: [{ index: 3, height: 30 }] },
+        ],
+        100,
+        10,
+      ),
+    ).toEqual([[0, 1], [2], [3]]);
+    expect(paginateReminderColumns([], 100, 10)).toEqual([]);
+    expect(
+      paginateReminderColumns(
+        [{ overhead: 20, gap: 5, entries: [{ index: 0, height: 200 }] }],
+        100,
+        10,
+      ),
+    ).toEqual([[0]]);
+  });
+  it("places character details before descriptive references and keeps size off page one", () => {
+    const fixture = {
+      ...model,
+      identity: [
+        ...model.identity,
+        { label: "Size", value: "Small" },
+        { label: "Deity", value: "Example deity" },
+        { label: "Age", value: "30" },
+      ],
+      notes: [{ label: "Appearance", value: "A description." }],
+    };
+    const entries = references(fixture).filter(
+      (entry) => entry.group === "Character record",
+    );
+    expect(entries.map((entry) => entry.name)).toEqual([
+      "Character Details",
+      "Appearance",
+    ]);
+    expect(entries[0]?.parts.map((part) => part.block)).toEqual([
+      {
+        kind: "table",
+        headers: ["Detail", "Value"],
+        rows: [["Size", "Small"]],
+      },
+      {
+        kind: "table",
+        headers: ["Detail", "Value"],
+        rows: [["Deity", "Example deity"]],
+      },
+      { kind: "table", headers: ["Detail", "Value"], rows: [["Age", "30"]] },
+    ]);
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={fixture}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    expect(
+      html.split('aria-label="Character summary"')[1]!.split("</article>")[0]!,
+    ).not.toContain("Small");
+  });
+  it("prints carried weight, normal limit and load without guessing unknown inputs", () => {
+    const entry = references({
+      ...model,
+      encumbrance: { carriedWeight: 65, normalLimit: 130, load: "Normal" },
+    }).find((entry) => entry.id === "encumbrance");
+    expect(entry?.parts[0]?.block).toEqual({
+      kind: "table",
+      headers: ["Carried weight", "Normal limit", "Load"],
+      rows: [["65 lb", "130 lb", "Normal"]],
+    });
+  });
   it("puts Session notes in the wider first column and XP inside Treasure & consumables", () => {
     const html = renderToStaticMarkup(
       <SheetOverview

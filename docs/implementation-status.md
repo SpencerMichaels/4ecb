@@ -2,6 +2,42 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Final print audit follow-up (2026-10-16): all four requested corrections are
+implemented for owner feedback. Items has a carried-weight/normal-limit/load
+pane. Character Record opens with populated physical/identity details (Size,
+Gender, Age, Height, Weight, Alignment, Deity, RPGA) before descriptive notes;
+Size stays out of the page-1 identity header. Both evaluated and legacy sheet
+paths retain these fields. Encumbrance follows the recovered native gear,
+coin-weight, StrLoadAdjust and Weight Discount paths; see the sheet specification
+for exact semantics and unknown-data boundaries. Private diagnostic Hu results
+are 65/130 lb in both cached and evaluated projections; Ingi is 70/100 lb in
+both. These are supplied-file diagnostics, not a new exhaustive same-profile
+parity claim.
+
+Reminder overflow now reuses page-1 category panes, inset descriptions and
+multi-benefit bullets in measured two-column pages directly after the summary.
+There is no large continuation title or reference-card restyling. Category
+headings repeat when needed; an oversized indivisible reminder stays intact and
+raises the existing overflow warning. Card margins now carry the same ruled
+identity/title/page footer as the overview. Letter grids move upward 0.05in for
+footer clearance; fixed sleeve sizes and inter-card gaps do not change. A4 card
+placement is unchanged. The prior Date-box size/font/corner feedback is retained.
+
+Verification: 193 focused sheet-model/overview/print-layout/scratchpad tests,
+sheet-model and web typechecks, focused lint, formatting and production/PWA build
+pass. The legacy-shape variant test now explicitly types its removed equipmentId
+as optional (test-only typing repair; no runtime or assertion relaxation).
+`node scripts/check-print.mjs --overview-only --include-card-pages --firefox-scratchpad --reference-preview`
+passes all eight Chromium/Firefox Letter/A4 color/monochrome cases: 16 pages each,
+continuous numbering, no overview overflow, fixed card sizes and footer clearance.
+It verifies compact continuation panes with matching page-1 heading colors,
+Character Details, encumbrance, and card-footer contents. An additional four-case
+Chromium pass generated previews for visual review of Details, reminder overflow,
+Items and card-page footers. Native Hu/Ingi diagnostics used the supplied files
+and local private content; no private data is required by public tests.
+The full milestone gate and known dense-card content-overflow assertion were not
+rerun or relaxed. Owner review and that existing blocker remain; M5.6 stays open.
+
 Scratchpad working-surface redesign (2026-10-15): The product owner accepts both
 the first-page summary and scratchpad. The accepted scratchpad layout has
 Health with a three-circle action-point tracker beside Effect/Ends, a full-width Encounter/Daily

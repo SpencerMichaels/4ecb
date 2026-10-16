@@ -10,6 +10,46 @@ import type { EvaluatedCharacter } from "@4ecb/rules-engine";
 import { buildEvaluatedSheetModel, buildSheetModel } from ".";
 
 describe("sheet model", () => {
+  it("retains physical and identity details and cached encumbrance for legacy references", () => {
+    const model = buildSheetModel({
+      details: {
+        Size: "Medium",
+        Gender: "Female",
+        Age: "30",
+        Height: "5 ft",
+        Weight: "120 lb",
+        Alignment: "Good",
+        Deity: "Example",
+        RPGA: "123",
+        CarriedMoney: "0 gp",
+      },
+      abilities: { Strength: 13 },
+      stats: { Weight: "65" },
+      selectedRules: [],
+      loot: [],
+      powers: [],
+      textStrings: { Age: "31" },
+      levelCount: 1,
+      source: "legacy-cache",
+    });
+    for (const label of [
+      "Size",
+      "Gender",
+      "Age",
+      "Height",
+      "Weight",
+      "Alignment",
+      "Deity",
+      "RPGA",
+    ])
+      expect(model.identity.some((value) => value.label === label)).toBe(true);
+    expect(model.identity).toContainEqual({ label: "Age", value: "31" });
+    expect(model.encumbrance).toEqual({
+      carriedWeight: 65,
+      normalLimit: 130,
+      load: "Normal",
+    });
+  });
   it("projects current-level carried and stored wallet text without losing custom denominations", () => {
     const snapshot: LegacyCharacterSnapshot = {
       details: { CarriedMoney: "old value", StoredMoney: "legacy stored" },
@@ -276,7 +316,19 @@ describe("sheet model", () => {
 
   it("projects converged engine values, current selections, powers, and inventory", () => {
     const snapshot: LegacyCharacterSnapshot = {
-      details: { name: "Ada", Level: "1", Race: "Old race" },
+      details: {
+        name: "Ada",
+        Level: "1",
+        Race: "Old race",
+        Size: "Medium",
+        Deity: "Example",
+        Gender: "Female",
+        Alignment: "Good",
+        Age: "30",
+        Height: "5 ft",
+        Weight: "120 lb",
+        CarriedMoney: "0 gp",
+      },
       abilities: { Strength: 10 },
       stats: { AC: "12" },
       selectedRules: [],
@@ -795,6 +847,17 @@ describe("sheet model", () => {
     ]);
     expect(model.identity).toContainEqual({ label: "Level", value: "3" });
     expect(model.identity).toContainEqual({ label: "Race", value: "Cliffkin" });
+    for (const label of [
+      "Size",
+      "Gender",
+      "Age",
+      "Height",
+      "Weight",
+      "Alignment",
+      "Deity",
+    ])
+      expect(model.identity.some((value) => value.label === label)).toBe(true);
+    expect(model.encumbrance?.normalLimit).toBe(200);
     expect(model.abilities).toContainEqual({ label: "Strength", value: "20" });
     expect(model.defenses).toContainEqual({ label: "AC", value: "19" });
     expect(model.defenses).toContainEqual({
@@ -945,7 +1008,9 @@ describe("sheet model", () => {
       powers: displayEvaluation.powers.map((power) => ({
         ...power,
         variants: power.variants.map((variant) => {
-          const older = {
+          const older: Omit<typeof variant, "equipmentId"> & {
+            equipmentId?: string;
+          } = {
             ...variant,
             id: `${power.definitionId}:${displayEntry.id}`,
           };

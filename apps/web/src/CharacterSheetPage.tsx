@@ -1387,6 +1387,30 @@ export function CharacterSheetPage({
                 ))}
               </div>
               <footer className="print-card-page-footer">
+                <span
+                  className="print-card-footer-identity"
+                  title={[
+                    characterName,
+                    ...["Race", "Class", "Level"].map(
+                      (label) =>
+                        model.identity.find((value) => value.label === label)
+                          ?.value,
+                    ),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                >
+                  {characterName} ·{" "}
+                  {["Race", "Class", "Level"]
+                    .map(
+                      (label) =>
+                        model.identity.find((value) => value.label === label)
+                          ?.value,
+                    )
+                    .filter(Boolean)
+                    .join(" ")}
+                </span>
+                <span>Power &amp; Item Cards</span>
                 <span className="ov-page-number">
                   {firstCardPage + pageIndex}
                 </span>

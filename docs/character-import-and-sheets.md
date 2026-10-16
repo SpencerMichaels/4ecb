@@ -15,6 +15,33 @@ calculations are a modern rules engine. Three packages own the boundary:
 
 React renders the model. It never parses XML or calculates a character value.
 
+### Printed reference completeness
+
+Both sheet paths retain Size, Gender, Age, Height, Weight, Alignment, Deity and
+RPGA in identity metadata. Evaluated Size/Gender/Alignment/Deity selections take
+precedence over imported identity caches; edited free-text fields use the existing
+detail-text overlay. Populated fields appear in Character Details at the start
+of the Character Record references, not in the accepted page-1 identity header.
+
+Encumbrance is model data, not React arithmetic. The fallback path uses the
+cached gear `Weight` stat. The evaluated path reconstructs the native stock
+weight input from current-level aggregated inventory: base (not enchantment)
+weights, custom per-item Weight overrides, signed quantity history, integer
+stock-weight truncation, and the native transportation/barding/mount-slot/
+companion-slot/familiar-slot exclusions. Evaluated Weight contributions then
+adjust that stock input. Unknown definitions without a valid weight override
+leave carried weight unknown rather than inventing zero.
+
+Recovered evidence: `D20Workspace.UpdateLoot`/`LootWeight`/`CharLootWeight`,
+`GearPageData.UpdateTotalEncumbrance`, `UpdateCarriedMoneyWeight`, `UpdateLoad`
+and `UpdateEncumbranceLimit`. Carried coin pounds are
+`floor((cp + sp + gp + pp + ad / 10) / 50)`; stored coins do not count.
+Negative stock weight clamps to zero before adding coins. The displayed normal
+limit is `(Strength + StrLoadAdjust) * 10 + Weight Discount`; native load states
+compare against adjusted Strength ×10/×20/×50 without Weight Discount. That
+distinction is preserved, not silently corrected. Unknown/custom currency keeps
+the carried weight and load unknown, while a known limit may still be shown.
+
 ## Durable record version 2
 
 The IndexedDB `characters` store uses the character UUID as its key and indexes

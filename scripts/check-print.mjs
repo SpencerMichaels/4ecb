@@ -339,6 +339,11 @@ try {
           "power-index",
           '.sheet-overview > .ov-paper[aria-label="Character reference"]:has(.ov-power-index-table)',
         ],
+        [
+          "character-details",
+          '.sheet-overview > .ov-paper[aria-label="Character reference"]:has([data-reference-id="character-details"])',
+        ],
+        ...(includeCardPages ? [["cards", ".print-card-page"]] : []),
       ]) {
         const clip = await evaluate(
           client,
@@ -903,6 +908,7 @@ function printCharacter() {
     ],
   }));
   const stats = {
+    Weight: "65",
     Strength: "18",
     Constitution: "14",
     Dexterity: "16",
@@ -949,6 +955,9 @@ function printCharacter() {
         Race: "Synthetic ancestry",
         Class: "Synthetic guardian",
         Player: "Public fixture",
+        Size: "Medium",
+        Deity: "Synthetic patron",
+        Age: "30",
         CarriedMoney: "125 gp; 4 sp; 7 cp",
         StoredMoney: "2 pp; 75 gp",
         Notes: "Long and short cards exercise deterministic pagination.",
@@ -1180,6 +1189,9 @@ async function checkReferences(client) {
         const p=page.getBoundingClientRect(), f=page.querySelector('.print-card-page-footer').getBoundingClientRect(), g=page.querySelector('.print-card-grid').getBoundingClientRect();
         return f.top>=g.bottom && f.bottom<=p.bottom && f.left>=p.left && f.right<=p.right;
       }),
+      cardFooterContents:[...document.querySelectorAll('.print-card-page-footer')].every(footer=>footer.querySelector('.print-card-footer-identity')?.textContent.includes('Synthetic print fixture hero · Synthetic ancestry Synthetic guardian 18') && footer.textContent.includes('Power & Item Cards')),
+      details:pages.some(page=>page.querySelector('[data-reference-id="character-details"]')?.textContent.includes('Synthetic patron')),
+      encumbrance:pages.some(page=>page.querySelector('[data-reference-id="encumbrance"]')?.textContent.includes('67 lb')),
       fixedCardSizes:[...document.querySelectorAll('.print-card-page .print-reference-card')].every(card=>{
         const r=card.getBoundingClientRect(), a4=Boolean(card.closest('.paper-a4'));
         return Math.abs(r.width-(a4?63*96/25.4:2.47*96))<1 && Math.abs(r.height-(a4?86.8*96/25.4:3.405*96))<1;
@@ -1247,6 +1259,9 @@ async function checkReferences(client) {
     state.beforeCards &&
       state.continuousNumbers &&
       state.cardFooterBounds &&
+      state.cardFooterContents &&
+      state.details &&
+      state.encumbrance &&
       state.fixedCardSizes &&
       state.cardStyleIsolated &&
       state.headings &&
@@ -1395,7 +1410,8 @@ async function checkScratchpad(client, monochrome) {
       state.hpToTrackers < 1 &&
       state.columnSplitDifference < 1 &&
       state.encounterSquares &&
-      state.notesDate && !state.footerDate &&
+      state.notesDate &&
+      !state.footerDate &&
       !state.runningHeader &&
       !state.contentSession,
     `Scratchpad must have consistent surge spacing, expanding HP boxes, aligned power columns, square encounter boxes and Date in the notes heading: ${JSON.stringify(state)}`,
@@ -1580,7 +1596,9 @@ async function checkSummaryContinuation(client) {
       const pages=[...document.querySelectorAll('.sheet-overview > .ov-paper')];
       const summary=pages[0], next=pages[1], scratch=pages.find(p=>p.getAttribute('aria-label')==='Play scratchpad');
       const labels=[...summary.querySelectorAll('.ov-reminder-probe [data-reminder-index] > strong')].map(e=>e.textContent.trim());
-      return {second:next?.getAttribute('aria-label'),page:next?.querySelector('.ov-page-number').textContent,allPresent:labels.every(label=>next?.textContent.includes(label)),scratchPage:scratch?.querySelector('.ov-page-number').textContent,overflow:next?.dataset.overviewOverflow};
+      return {second:next?.getAttribute('aria-label'),page:next?.querySelector('.ov-page-number').textContent,allPresent:labels.every(label=>next?.textContent.includes(label)),scratchPage:scratch?.querySelector('.ov-page-number').textContent,overflow:next?.dataset.overviewOverflow,
+        compact:!!next?.querySelector('.ov-reminder-panels .sp-reminders') && !next?.querySelector('.ov-reference-card, .sp-page-heading'),
+        matchingHeaders:getComputedStyle(next.querySelector('.sp-panel > h3')).backgroundColor===getComputedStyle(summary.querySelector('.sp-panel > h3')).backgroundColor};
     })()`,
     );
     assert(
@@ -1589,9 +1607,27 @@ async function checkSummaryContinuation(client) {
       `Reminders must continue directly on page 2: ${JSON.stringify(continuation)}`,
     );
     assert(
-      continuation.allPresent && continuation.overflow === "false",
+      continuation.allPresent &&
+        continuation.overflow === "false" &&
+        continuation.compact &&
+        continuation.matchingHeaders,
       `Continuation must retain reminders and fit: ${JSON.stringify(continuation)}`,
     );
+    if (referencePreview) {
+      const clip = await evaluate(
+        client,
+        `(() => {const r=document.querySelector('.sheet-overview > .ov-paper[aria-label="Character summary · continued"]').getBoundingClientRect();return {x:r.left+scrollX,y:r.top+scrollY,width:r.width,height:r.height,scale:1};})()`,
+      );
+      const shot = await client.send("Page.captureScreenshot", {
+        format: "png",
+        captureBeyondViewport: true,
+        clip,
+      });
+      await writeFile(
+        join(referencePreview, "summary-continuation.png"),
+        Buffer.from(shot.data, "base64"),
+      );
+    }
     assert(
       continuation.scratchPage.trim() === "3",
       "Scratchpad must follow the summary continuation",

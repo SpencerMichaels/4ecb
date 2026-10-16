@@ -1,14 +1,26 @@
 # Printed overview design study
 
 Status: page-1 summary and scratchpad accepted by the product owner, 2026-10-15.
-Reference-page review and the separately noted summary-continuation styling
-correction remain; M5.6 stays open.
+Final reference-page review and the recorded dense-card overflow gate remain;
+M5.6 stays open.
+
+Final audit follow-up: Items includes Encumbrance (carried weight, normal limit,
+load). Character Record starts with a compact Character Details table for
+populated Size, Gender, Age, Height, Weight, Alignment, Deity and RPGA fields,
+before descriptive notes. Size is not added to page 1. Reminder continuations
+reuse page-1 category panes, inset descriptions and benefit bullets; measured
+columns repeat the category heading when split, with no large continuation
+heading or reference-card chrome. A single oversized reminder remains intact
+with the normal overflow warning, not silently truncated or shrunk.
+Card-page margins now carry the same ruled identity/section-title/page footer;
+Letter card grids move up 0.05in to leave clearance, with sleeve dimensions and
+inter-card gaps unchanged. A4 card placement is unchanged.
 
 Running information uses footers consistently, including the scratchpad and
 optional summary/power-usage continuations; none has a running top header.
 Overview footers consistently show character identity at left, the page's section
 title centered (including Character Summary on page 1), and page number at right.
-Date appears beside a small writing box on the right of the Session notes pane
+Date appears beside a 1.25in × 0.25in handwriting box on the right of the Session notes pane
 heading, not in the footer. Measurement probes use the same geometry. The
 first-page identity header is unchanged. Surge rows fill to measured capacity
 before wrapping; only overflow goes to the next row, with equal-sized boxes
@@ -101,7 +113,7 @@ Whole categories stay on one page whenever their balanced two-column block fits
 a fresh page; they move rather than split if remaining space is insufficient.
 Larger categories still keep their first two cards together when feasible.
 Single-entry categories and oversized pairs retain normal flow;
-summary reminder continuation (without category headings) is unchanged.
+summary reminder continuations use their own measured category panes.
 This is a first draft, not final reference or M5.6 acceptance.
 Reference pages omit the running top header. Their footer places name · race class level
 at left, Character Reference centered, and the continuous page number at right. The identity

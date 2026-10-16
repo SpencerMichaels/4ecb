@@ -27,6 +27,11 @@ import {
 } from "./power-feature-clauses";
 import { universalPowerDefinitionIds } from "./power-reference";
 import {
+  inventoryWeight,
+  sheetEncumbrance,
+  type SheetEncumbrance,
+} from "./encumbrance";
+import {
   withSheetOverview,
   type SheetOverview,
   type OverviewInventory,
@@ -125,6 +130,7 @@ export interface SheetPowerAttack {
 }
 
 export interface CharacterSheetModel {
+  readonly encumbrance?: SheetEncumbrance;
   readonly currency?: readonly SheetValue[];
   readonly overview?: SheetOverview;
   readonly source: "legacy-cache" | "native-empty" | "authoritative-evaluation";
@@ -1097,9 +1103,36 @@ export function buildSheetModel(
     snapshot.details,
     snapshot.textStrings,
   );
+  for (const type of ["Size", "Gender", "Alignment", "Deity"]) {
+    const selected = snapshot.selectedRules.find(
+      (rule) => rule.type.toLowerCase() === type.toLowerCase(),
+    );
+    if (selected) detail[type] = selected.name;
+  }
+  if (snapshot.textStrings.RPGA !== undefined)
+    detail.RPGA = snapshot.textStrings.RPGA;
+  const cachedNumber = (name: string) => {
+    const value = snapshot.stats[name];
+    return value === undefined ||
+      !value.trim() ||
+      !Number.isFinite(Number(value))
+      ? undefined
+      : Number(value);
+  };
   const model: CharacterSheetModel = {
     source: snapshot.source,
     currency: sheetCurrency(detail, snapshot.textStrings, snapshot.levelCount),
+    encumbrance: sheetEncumbrance({
+      gearWeight: cachedNumber("Weight"),
+      strength: cachedNumber("Strength") ?? snapshot.abilities.Strength,
+      loadAdjustment: cachedNumber("StrLoadAdjust") ?? 0,
+      weightDiscount: cachedNumber("Weight Discount") ?? 0,
+      currency: sheetCurrency(
+        detail,
+        snapshot.textStrings,
+        snapshot.levelCount,
+      ),
+    }),
     identity: [
       "name",
       "Level",
@@ -1111,6 +1144,14 @@ export function buildSheetModel(
       "Player",
       "Experience",
       "Company",
+      "Size",
+      "Gender",
+      "Age",
+      "Height",
+      "Weight",
+      "Alignment",
+      "Deity",
+      "RPGA",
     ].flatMap((name) =>
       detail[name] === undefined || detail[name]?.length === 0
         ? []
@@ -1221,6 +1262,9 @@ export function buildEvaluatedSheetModel(
   const identityDetails: Record<string, string> = {
     ...detailsWithLegacyTextStrings(snapshot.details, build.textStrings),
     Level: String(evaluation.level),
+    ...(build.textStrings.RPGA === undefined
+      ? {}
+      : { RPGA: build.textStrings.RPGA }),
   };
   for (const [type, detailName] of [
     ["Race", "Race"],
@@ -1228,6 +1272,10 @@ export function buildEvaluatedSheetModel(
     ["Theme", "Theme"],
     ["Paragon Path", "ParagonPath"],
     ["Epic Destiny", "EpicDestiny"],
+    ["Size", "Size"],
+    ["Gender", "Gender"],
+    ["Alignment", "Alignment"],
+    ["Deity", "Deity"],
   ] as const) {
     const selected = active.find(
       ({ entity }) =>
@@ -1410,6 +1458,35 @@ export function buildEvaluatedSheetModel(
 
   const model: CharacterSheetModel = {
     source: "authoritative-evaluation",
+    encumbrance: sheetEncumbrance({
+      gearWeight: (() => {
+        const weight = inventoryWeight(
+          inventoryPresentations.map(({ entry, itemEntities }) => ({
+            quantity: entry.quantity,
+            definitions: itemEntities,
+            override: Object.entries(entry.overrides ?? {}).find(
+              ([name]) => name.toLowerCase() === "weight",
+            )?.[1],
+            complete: entry.definitionIds.length === itemEntities.length,
+          })),
+        );
+        return weight === undefined
+          ? undefined
+          : weight + Number(evaluatedStat(evaluation, "Weight") ?? 0);
+      })(),
+      strength: Number(
+        evaluatedStat(evaluation, "Strength") ??
+          build.baseAbilities.Strength ??
+          snapshot.abilities.Strength,
+      ),
+      loadAdjustment: Number(evaluatedStat(evaluation, "StrLoadAdjust") ?? 0),
+      weightDiscount: Number(evaluatedStat(evaluation, "Weight Discount") ?? 0),
+      currency: sheetCurrency(
+        identityDetails,
+        build.textStrings,
+        evaluation.level,
+      ),
+    }),
     currency: sheetCurrency(
       identityDetails,
       build.textStrings,
@@ -1426,6 +1503,14 @@ export function buildEvaluatedSheetModel(
       "Player",
       "Experience",
       "Company",
+      "Size",
+      "Gender",
+      "Age",
+      "Height",
+      "Weight",
+      "Alignment",
+      "Deity",
+      "RPGA",
     ].flatMap((name) =>
       identityDetails[name] === undefined || identityDetails[name]?.length === 0
         ? []

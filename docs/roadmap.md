@@ -511,6 +511,14 @@ M5.5 interface blockers.
 
 ## M5.6 — Refined browser View sheet
 
+**Final print audit follow-up (2026-10-16):** Implemented encumbrance in Items,
+populated Character Details at the start of Character Record (including Size,
+without expanding page 1), page-1-style reminder continuation panes, and ruled
+identity/title/page footers on card pages without changing physical card sizes.
+Current order is summary/nearby continuations, scratchpad, references, then cards,
+with continuous numbering. Owner feedback and the recorded dense-card print-fit
+gate remain; this is not milestone closure.
+
 **Overview real-data review (2026-10-14):** The approved summary/scratchpad study
 is now connected to the shared sheet model in print preview. Full feature/feat
 rules, equipment, power indexes and character notes paginate into reference
