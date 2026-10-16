@@ -9,7 +9,10 @@ Production reference first draft is implemented for feedback: full references
 follow the existing power/item card pages. Origin sections sort entries by known
 acquired/granted level then name, with core grants counted as level 1 and unknown
 levels last. Evaluated grant ancestry and explicit legacy automatic grants
-identify origins independently of publication Source. Equipment and power indexes
+identify origins independently of publication Source. The Theme root is an identity/origin
+overview, not a reference card, paralleling omission of whole Class/Race
+descriptions. Separately granted theme features remain grouped under Theme, and
+their granted powers retain their own cards. Equipment and power indexes
 are full-width tables; features/rituals/character prose use stacked category-local
 two-column blocks under full-width headings. Measured splits balance column
 heights while preserving down-then-across level/name order. The power

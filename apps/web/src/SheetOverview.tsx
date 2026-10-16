@@ -1587,6 +1587,10 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
     "Feat",
   ];
   const result: ReferenceEntry[] = [...o.features]
+    // A Theme entity is an identity/origin overview, like Class or Race—not a
+    // feature card. Its granted features retain their own native group and
+    // Theme reference provenance, so filtering the root does not hide benefits.
+    .filter((feature) => feature.group.trim().toLowerCase() !== "theme")
     .sort((a, b) => {
       const rank = (group: string) =>
         order.includes(group) ? order.indexOf(group) : order.length;

@@ -31,6 +31,43 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("omits theme overview prose while retaining separately granted theme features", () => {
+    const feature = (id: string, group: string, description: string) => ({
+      id,
+      name: id,
+      group,
+      description,
+      summary: description,
+      source: "Synthetic",
+      fullTextAvailable: true,
+      fields: [],
+      referenceGroup: "Theme",
+      level: 1,
+    });
+    const entries = references({
+      ...model,
+      overview: {
+        ...model.overview!,
+        features: [
+          feature(
+            "Theme overview",
+            "Theme",
+            "A lengthy story about the theme's members.",
+          ),
+          feature(
+            "Granted theme benefit",
+            "Class Feature",
+            "You gain a conditional bonus.",
+          ),
+        ],
+      },
+    });
+    expect(entries.map((entry) => entry.id)).toEqual(["Granted theme benefit"]);
+    expect(entries[0]?.group).toBe("Theme");
+    expect(entries[0]?.parts).toEqual(
+      referenceParts("You gain a conditional bonus."),
+    );
+  });
   it("stacks balanced two-column categories instead of flowing categories down whole-page columns", () => {
     const entries = [
       "Class features",

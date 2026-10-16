@@ -219,7 +219,12 @@ follows explicit automatic grants from selected origins. Core starting grants
 count as level 1. Publication Source remains separate. Full feature/feat rules
 remain present, including precalculated and access-only selections excluded from
 page-1 reminders. Identical authored Benefit/Flavor text already present in the
-description is not repeated.
+description is not repeated. Theme root overviews (identity/origin narratives,
+like a whole Class/Race description) are not printed as feature cards. Their
+separately granted features retain native feature types and Theme provenance,
+so they remain in Theme references; granted powers keep their power cards. This
+is a root-entity boundary, not a name/length-based flavor-text heuristic, and
+does not remove full descriptions from actual feature cards or change the model.
 
 Reference headings use subtle origin-category tints without the oversized
 repeated page title or per-card category strip. Variable-height panes retain
@@ -307,6 +312,13 @@ Feats/Racial traits regressions verify intact movement to a fresh page, even
 before a later category, while genuinely oversized categories still split and
 preserve all entries. The existing space-available case remains covered. No full
 print matrix was rerun for this small pagination-policy adjustment.
+
+Theme-root follow-up: inspected the ignored Guardian Theme definition and its
+explicit level-1/5/10 Class Feature grants; the root contains origin narrative,
+while benefits are separate features. 48 focused overview/provenance tests pass,
+including omission of a synthetic Theme root while preserving a granted Class
+Feature under Theme. No private text was added to public fixtures. No full print
+matrix was rerun for this reference-entry selection adjustment.
 
 Verification: 139 focused sheet-model/overview/index/layout tests, web typecheck,
 focused lint and production build pass. The overview-only print check passes
