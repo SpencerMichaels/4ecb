@@ -140,6 +140,19 @@ name remains bold. Death-save skulls precede their label, mirroring AP circles
 at the opposite outside edge of the pane. All 34 focused overview tests pass,
 including assertions covering
 the identity span and skull/label ordering; no full print rerun for this polish.
+Treasure/consumables and Session Notes now expand together to the available
+bottom edge above the footer, including their ruled writing areas; XP stays at
+the bottom of Notes. A shared hidden record-pane probe measures minimum natural
+height (at least 1in treasure lines and 1.25in note lines). Power pagination
+reserves that minimum, not the expanded visible height, avoiding a feedback loop
+that would push powers off the page. Visible records then consume remaining
+height. Dense-power checks now require minimum writing areas and stable bottom
+alignment rather than identical record heights before/after power growth.
+Verification: 46 focused overview/layout tests, web typecheck, production build
+and focused lint pass. Four Chromium PDF and four Firefox print-preview geometry
+variants pass bottom-edge alignment, dense-power minimum-space preservation,
+exact-once power coverage and restoration checks. Generated preview reviewed;
+no full milestone/card suite was run.
 Verification: 43 focused overview/layout tests, web typecheck, focused lint and
 production build pass. `node scripts/check-print.mjs --overview-only
 --firefox-scratchpad --scratchpad-preview` passes all four Chromium PDF variants

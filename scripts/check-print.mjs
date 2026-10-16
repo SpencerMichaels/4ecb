@@ -1094,6 +1094,8 @@ async function checkScratchpad(client, monochrome) {
       encounterColumnColors:[...page.querySelector('.sp-usage-table tbody tr').children].map(e=>getComputedStyle(e).backgroundColor),
       encounterColumns:page.querySelectorAll('.sp-usage-table colgroup col').length-1,
       encounterHeader:page.querySelector('.sp-usage-table thead') !== null,
+      recordsBottomGap:page.querySelector('.sp-page-footer').getBoundingClientRect().top-page.querySelector('.ov-scratch-bottom').getBoundingClientRect().bottom,
+      recordsPaneBottoms:[...page.querySelectorAll('.ov-scratch-bottom > .sp-panel')].map(e=>e.getBoundingClientRect().bottom),
       encounterRowRules:[...page.querySelector('.sp-usage-table tbody tr:nth-child(2)').children].every(e=>getComputedStyle(e).borderTopStyle==='solid' && getComputedStyle(e).borderTopColor==='rgb(226, 230, 233)'),
       upperBottoms:[...page.querySelectorAll('.ov-scratch-upper > .sp-column > .sp-panel')].map(e=>e.getBoundingClientRect().bottom),
       powerWidth:page.querySelector('.ov-scratch-powers').getBoundingClientRect().width,
@@ -1199,11 +1201,16 @@ async function checkScratchpad(client, monochrome) {
       state.surgeConnector === state.health,
     "Surge bar background and connector must match the Surges reference cell",
   );
+  assert(
+    Math.abs(state.recordsBottomGap - 8) < 1 &&
+      Math.abs(state.recordsPaneBottoms[0] - state.recordsPaneBottoms[1]) < 1,
+    `Both record panes must extend to the page bottom above the footer: ${JSON.stringify(state)}`,
+  );
   const baseline = await evaluate(
     client,
     `(() => {
     const p=document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"]');
-    return {count:p.querySelectorAll('[data-tracking-id]').length,health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,records:p.querySelector('.ov-scratch-bottom').getBoundingClientRect().height};
+    return {count:p.querySelectorAll('[data-tracking-id]').length,health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,recordsBottom:p.querySelector('.ov-scratch-bottom').getBoundingClientRect().bottom};
   })()`,
   );
   const rule = await evaluate(
@@ -1230,7 +1237,7 @@ async function checkScratchpad(client, monochrome) {
       `(() => {
       const pages=[...document.querySelectorAll('.sheet-overview > .ov-paper')].filter(p=>['Play scratchpad','Power usage · continued'].includes(p.getAttribute('aria-label')));
       const p=pages[0];
-      return {ids:pages.flatMap(p=>[...p.querySelectorAll('[data-tracking-id]')].map(e=>e.dataset.trackingId)).sort(),overflow:pages.some(p=>p.querySelector('.sp-page-content').getBoundingClientRect().bottom>p.querySelector('.sp-page-footer').getBoundingClientRect().top-7),geometry:pages.map(p=>({title:p.getAttribute('aria-label'),bottom:p.querySelector('.sp-page-content').getBoundingClientRect().bottom,footer:p.querySelector('.sp-page-footer').getBoundingClientRect().top,rows:p.querySelectorAll('[data-tracking-id]').length})),health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,records:p.querySelector('.ov-scratch-bottom').getBoundingClientRect().height};
+      return {ids:pages.flatMap(p=>[...p.querySelectorAll('[data-tracking-id]')].map(e=>e.dataset.trackingId)).sort(),overflow:pages.some(p=>p.querySelector('.sp-page-content').getBoundingClientRect().bottom>p.querySelector('.sp-page-footer').getBoundingClientRect().top-7),geometry:pages.map(p=>({title:p.getAttribute('aria-label'),bottom:p.querySelector('.sp-page-content').getBoundingClientRect().bottom,footer:p.querySelector('.sp-page-footer').getBoundingClientRect().top,rows:p.querySelectorAll('[data-tracking-id]').length})),health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,recordsBottom:p.querySelector('.ov-scratch-bottom').getBoundingClientRect().bottom,treasureHeight:p.querySelector('.ov-scratch-treasure').getBoundingClientRect().height,notesHeight:p.querySelector('.ov-scratch-notes').getBoundingClientRect().height};
     })()`,
     );
     assert(
@@ -1240,8 +1247,10 @@ async function checkScratchpad(client, monochrome) {
     );
     assert(
       Math.abs(stress.health - baseline.health) < 0.5 &&
-        Math.abs(stress.records - baseline.records) < 0.5,
-      `Power growth must not displace health or consume handwriting areas: ${JSON.stringify({ baseline, stress })}`,
+        Math.abs(stress.recordsBottom - baseline.recordsBottom) < 0.5 &&
+        stress.treasureHeight >= 95 &&
+        stress.notesHeight >= 119,
+      `Power growth must retain health position, bottom alignment and minimum handwriting areas: ${JSON.stringify({ baseline, stress })}`,
     );
   } finally {
     await evaluate(

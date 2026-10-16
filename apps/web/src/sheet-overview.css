@@ -1187,6 +1187,27 @@ body:has(.sp-prototype) {
 .ov-scratch-notes {
   height: 1.25in;
 }
+.ov-scratch-bottom {
+  align-items: stretch;
+}
+.ov-scratch-bottom > .sp-panel,
+.ov-scratch-bottom .sp-panel-content {
+  display: flex;
+  flex-direction: column;
+}
+.ov-scratch-bottom .sp-panel-content {
+  flex: 1;
+}
+.ov-scratch-bottom .sp-writing-lines {
+  flex: 1;
+  height: auto;
+}
+.ov-scratch-bottom .ov-scratch-treasure {
+  min-height: 1in;
+}
+.ov-scratch-bottom .ov-scratch-notes {
+  min-height: 1.25in;
+}
 .ov-scratch-records .sp-xp-tracker {
   margin-top: 0.1in;
   color: var(--sp-muted);

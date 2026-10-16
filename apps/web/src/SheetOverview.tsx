@@ -1178,6 +1178,32 @@ function TrackingPanels({
     </div>
   );
 }
+function ScratchpadRecords({
+  panelRef,
+  height,
+}: {
+  panelRef: React.RefObject<HTMLDivElement | null>;
+  height?: number | undefined;
+}) {
+  return (
+    <div
+      className="ov-scratch-layout ov-scratch-records ov-scratch-bottom"
+      ref={panelRef}
+      style={height === undefined ? undefined : { height }}
+    >
+      <Panel title="Treasure & consumables" icon="item">
+        <div className="sp-writing-lines ov-scratch-treasure" />
+      </Panel>
+      <Panel title="Session notes" icon="edit">
+        <div className="sp-writing-lines ov-scratch-notes" />
+        <div className="sp-xp-tracker">
+          <span>XP</span>
+          <i />
+        </div>
+      </Panel>
+    </div>
+  );
+}
 function Scratchpad({
   model,
   name,
@@ -1205,6 +1231,8 @@ function Scratchpad({
   const pageRef = useRef<HTMLElement>(null);
   const regionRef = useRef<HTMLDivElement>(null);
   const recordsRef = useRef<HTMLDivElement>(null);
+  const recordsProbe = useRef<HTMLDivElement>(null);
+  const [recordsHeight, setRecordsHeight] = useState<number>();
   const firstProbe = useRef<HTMLDivElement>(null);
   const nextProbe = useRef<HTMLDivElement>(null);
   const nextPaper = useRef<HTMLElement>(null);
@@ -1249,13 +1277,25 @@ function Scratchpad({
       )
         return;
       const caption = first.querySelector<HTMLElement>(".ov-tracking-caption")!;
+      const minimumRecordsHeight =
+        recordsProbe.current!.getBoundingClientRect().height;
+      const footerTop =
+        page.querySelector(".sp-page-footer")!.getBoundingClientRect().top - 8;
+      const availableRecordsHeight = Math.max(
+        minimumRecordsHeight,
+        footerTop - recordsRef.current!.getBoundingClientRect().top,
+      );
+      setRecordsHeight((old) =>
+        old !== undefined && Math.abs(old - availableRecordsHeight) < 0.1
+          ? old
+          : availableRecordsHeight,
+      );
       const layout = paginateTracking(
         measurements(first),
         measurements(next),
-        page.querySelector(".sp-page-footer")!.getBoundingClientRect().top -
-          8 -
+        footerTop -
           regionRef.current!.getBoundingClientRect().top -
-          recordsRef.current!.getBoundingClientRect().height -
+          minimumRecordsHeight -
           parseFloat(getComputedStyle(recordsRef.current!).marginTop),
         paper.querySelector(".sp-page-footer")!.getBoundingClientRect().top -
           8 -
@@ -1274,6 +1314,8 @@ function Scratchpad({
     observer.observe(first);
     observer.observe(next);
     observer.observe(recordsRef.current!);
+    observer.observe(recordsProbe.current!);
+    observer.observe(regionRef.current!);
     check();
     void document.fonts.ready.then(check);
     return () => {
@@ -1406,21 +1448,7 @@ function Scratchpad({
             </p>
           ) : null}
         </div>
-        <div
-          className="ov-scratch-layout ov-scratch-records ov-scratch-bottom"
-          ref={recordsRef}
-        >
-          <Panel title="Treasure & consumables" icon="item">
-            <div className="sp-writing-lines ov-scratch-treasure" />
-          </Panel>
-          <Panel title="Session notes" icon="edit">
-            <div className="sp-writing-lines ov-scratch-notes" />
-            <div className="sp-xp-tracker">
-              <span>XP</span>
-              <i />
-            </div>
-          </Panel>
-        </div>
+        <ScratchpadRecords panelRef={recordsRef} height={recordsHeight} />
       </Paper>
       {layout.slice(1).map((slice, index) => (
         <Paper
@@ -1457,6 +1485,7 @@ function Scratchpad({
               Power tracking continues on page {startPage + 1}…
             </p>
           </div>
+          <ScratchpadRecords panelRef={recordsProbe} />
         </Paper>
         <Paper
           name={name}
