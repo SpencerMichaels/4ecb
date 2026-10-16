@@ -19,6 +19,12 @@ Category headings now appear only once at the start, with a subtle origin tint
 shared by subsequent panes. References omit synthesized defensive/reminder
 entities, retaining the existing features and powers. Power indexes use subtle
 at-will green, encounter red and daily gray (neutral in monochrome).
+Category titles are larger, unboxed headings with a stronger colored underline,
+distinct from the smaller filled pane headers; pagination measures their height.
+Category openings keep their first two cards together when both fit in a fresh
+column, moving to the next column if the current one would fit only the first.
+Single-entry categories and pairs too tall for a column retain normal flow;
+summary reminder continuation (without category headings) is unchanged.
 This is a first draft, not final reference or M5.6 acceptance.
 See `implementation-status.md` for the final accepted scratchpad refinements;
 the study and initial integration descriptions below retain their historical

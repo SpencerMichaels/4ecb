@@ -1944,8 +1944,28 @@ export function paginateReferences(
     seenGroups.add(entry.group);
     used += height + 16 + heading;
   };
-  for (const entry of entries) {
+  for (const [index, entry] of entries.entries()) {
     const m = measurements.get(entry.id);
+    // Avoid a category heading stranded near the foot of a column with only
+    // one card beneath it. Reserve two complete cards when that opening can
+    // fit in a fresh column; large cards retain their normal splitting flow.
+    const next = entries[index + 1];
+    const nextMeasurement =
+      next?.group === entry.group ? measurements.get(next.id) : undefined;
+    if (
+      used &&
+      groupHeadingHeight &&
+      !seenGroups.has(entry.group) &&
+      m &&
+      nextMeasurement
+    ) {
+      const openingHeight =
+        groupHeadingHeight + m.height + nextMeasurement.height + 32;
+      if (openingHeight <= capacity && used + openingHeight > capacity) {
+        columns.push([]);
+        used = 0;
+      }
+    }
     if (!m) {
       // Preserve unmeasured content; the page overflow indicator remains explicit.
       place(entry, capacity);

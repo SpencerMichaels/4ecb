@@ -68,6 +68,50 @@ describe("real-data sheet overview", () => {
       paginateReferences(entries, measured, 200, 50).map((c) => c.length),
     ).toEqual([1, 2]);
   });
+  it("moves a category opening to keep its first two cards together when feasible", () => {
+    const entries = [
+      "Class features",
+      "Racial traits",
+      "Racial traits",
+      "Feats",
+    ].map((group, index) => ({
+      id: String(index),
+      name: String(index),
+      group,
+      source: "",
+      parts: [],
+    }));
+    const measured = new Map(
+      entries.map((entry) => [
+        entry.id,
+        { height: 80, overhead: 80, parts: [] },
+      ]),
+    );
+    const columns = paginateReferences(entries, measured, 280, 30);
+    expect(columns.map((column) => column.map((entry) => entry.id))).toEqual([
+      ["0"],
+      ["1", "2"],
+      ["3"],
+    ]);
+    // No repeated title is charged in the continuation; content order remains.
+    expect(columns.flat()).toEqual(entries);
+    // With enough remaining space, a new category stays in the current column.
+    expect(
+      paginateReferences(entries, measured, 400, 30)[0]?.map(
+        (entry) => entry.id,
+      ),
+    ).toEqual(["0", "1", "2"]);
+    // A pair too tall for a fresh column must not introduce pointless whitespace.
+    const large = new Map(measured);
+    large.set("2", { height: 200, overhead: 200, parts: [] });
+    expect(
+      paginateReferences(entries, large, 280, 30)[0]?.map((entry) => entry.id),
+    ).toEqual(["0", "1"]);
+    // Summary continuation has no category headings and retains ordinary flow.
+    expect(
+      paginateReferences(entries, measured, 280)[0]?.map((entry) => entry.id),
+    ).toEqual(["0", "1"]);
+  });
   it("sorts origin sections by known acquisition level then name, leaving unknown levels last", () => {
     const feature = (name: string, group: string, level?: number) => ({
       id: name,

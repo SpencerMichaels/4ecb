@@ -226,9 +226,13 @@ repeated page title or per-card category strip. Variable-height panes retain
 readable body text, quiet source footers, known level metadata and explicit
 missing-full-text notices. Each category has one prominent opening heading,
 with its tint carried by subsequent pane headers and borders across columns and
-pages. Only that opening heading is charged to measured pagination. References
-present existing character entities: synthetic defensive summaries and expanded
-reminder entries are omitted; page-1 defensive traits remain unchanged.
+pages. Only that opening heading is charged to measured pagination. The first
+two cards beneath a new category heading stay together when they fit
+in a fresh column; this avoids a heading stranded near the bottom with only one
+entry. Oversized pairs and single-entry categories retain ordinary flow. Category
+titles are larger, unboxed and underlined to distinguish them from pane headers.
+References present existing character entities: synthetic defensive summaries
+and expanded reminder entries are omitted; page-1 defensive traits remain unchanged.
 At-will/encounter/daily index panes use subtle green/red/gray headers, with neutral
 monochrome output. Internally chunked long paragraphs
 rejoin within each rendered pane; only actual continuation boundaries divide
@@ -252,6 +256,13 @@ pass. `node scripts/check-print.mjs --overview-only --firefox-scratchpad
 category, absence of synthetic defensive/reminder entries, three distinct usage
 tints in color and neutral monochrome headers. Feature/index previews were
 visually reviewed. Owner review of the reference draft remains open.
+
+Category-opening reflow follow-up: 55 focused overview/index/layout tests pass,
+including two-card keep-together, sufficient remaining space, oversized-pair
+fallback and unchanged summary continuation. Web typecheck, focused lint,
+formatting and production build pass. The overview-only Chromium/Firefox print
+matrix again passes all eight variants with no overview overflow (13 fixture
+pages). The larger unboxed category titles are included in these measurements.
 
 Verification: 139 focused sheet-model/overview/index/layout tests, web typecheck,
 focused lint and production build pass. The overview-only print check passes
