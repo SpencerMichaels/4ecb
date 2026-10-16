@@ -579,8 +579,17 @@ body:has(.sp-prototype) {
 .ov-equipped-table thead th:first-child {
   width: 30%;
 }
-.ov-inventory-table thead th:last-child {
-  width: 14%;
+.sheet-overview .ov-inventory-table {
+  width: auto;
+  max-width: 100%;
+  table-layout: auto;
+}
+.ov-inventory-table thead th:last-child,
+.ov-inventory-table td:last-child:not(:first-child) {
+  width: 3ch;
+  padding-left: 0.18in;
+  text-align: right;
+  white-space: nowrap;
 }
 .ov-reference-table .ov-reference-table-category th {
   background: #fff;

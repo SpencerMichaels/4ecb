@@ -17,7 +17,9 @@ Skills/Languages and prerequisites instead of narrative/Common Knowledge text.
 Explicit prose "Benefit:" tails are a fallback; unresolved legacy-only text is
 preserved with its existing unavailable-rules notice. Actual granted feature
 descriptions remain complete. Equipment and power indexes
-are full-width tables; features/rituals/character prose use stacked category-local
+use full-width panes; the Inventory table sizes to its contents to keep quantities
+near item names, while other equipment/index tables fill their panes.
+Features/rituals/character prose use stacked category-local
 two-column blocks under full-width headings. Measured splits balance column
 heights while preserving down-then-across level/name order. The power
 index has Power, Level, Range, Target, Attack and Damage columns, with action

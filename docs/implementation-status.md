@@ -258,7 +258,9 @@ monochrome output. Internally chunked long paragraphs
 rejoin within each rendered pane; only actual continuation boundaries divide
 them. Reference continuations repeat titles and retain their complete parts.
 
-Equipment and power indexes use full-width tables; features,
+Equipment and power indexes use full-width panes. Inventory uses a content-sized
+table with a compact, right-aligned quantity column rather than leaving a
+page-wide gap after item names; other equipment/index tables remain full-width. Features,
 rituals and character prose use category-local two-column blocks. The power index columns are
 Power, Level, Range, Target, Attack and Damage. Action icons precede power names;
 item-power indexes likewise place icons beside item names, leaving Item/Usage
