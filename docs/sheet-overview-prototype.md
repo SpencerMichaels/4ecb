@@ -6,9 +6,13 @@ correction remain; M5.6 stays open.
 
 Running information uses footers consistently, including the scratchpad and
 optional summary/power-usage continuations; none has a running top header.
-Scratchpad footers show character identity at left, Scratchpad centered, and a
-compact Date writing line beside the page number at right. Measurement probes
-use the same footer geometry. The first-page identity header is unchanged.
+Overview footers consistently show character identity at left, the page's section
+title centered (including Character Summary on page 1), and page number at right.
+Date appears beside a small writing box on the right of the Session notes pane
+heading, not in the footer. Measurement probes use the same geometry. The
+first-page identity header is unchanged. Surge rows fill to measured capacity
+before wrapping; only overflow goes to the next row, with equal-sized boxes
+across rows rather than balancing row lengths.
 
 The scratchpad uses numbered tracking tables for both frequencies: ten Encounter
 columns and five Daily columns. Both have square marks, vertical column stripes,

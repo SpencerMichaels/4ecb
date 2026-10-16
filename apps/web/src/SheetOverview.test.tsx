@@ -46,7 +46,7 @@ describe("real-data sheet overview", () => {
       'class="ov-scratch-layout ov-scratch-records ov-scratch-bottom"',
     )[1]!;
     const [notes, treasure] = records.split("</section>");
-    expect(notes).toContain(">Session notes</h3>");
+    expect(notes).toContain('>Session notes<span class="ov-panel-note">');
     expect(notes).toContain('class="sp-writing-lines ov-scratch-notes"');
     expect(notes).not.toContain('class="sp-xp-tracker"');
     expect(treasure).toContain(">Treasure &amp; consumables</h3>");
@@ -121,6 +121,14 @@ describe("real-data sheet overview", () => {
     }
     expect(html).not.toContain('class="sp-running-header');
     expect(html).toContain("<span>Scratchpad</span>");
+    const summary = html
+      .split('aria-label="Character summary"')[1]!
+      .split("</article>")[0]!;
+    const summaryFooter = summary.split("<footer")[1]!;
+    expect(summaryFooter).toContain('class="ov-reference-footer-identity"');
+    expect(summaryFooter).toContain(">Ingi fixture · Dwarf Paladin 7</span>");
+    expect(summaryFooter).toContain("<span>Character Summary</span>");
+    expect(summaryFooter).toContain('class="ov-page-number">1</span>');
   });
   const inventoryParts = (category: string, count: number) =>
     Array.from({ length: count }, (_, i) => ({
@@ -796,7 +804,7 @@ describe("real-data sheet overview", () => {
     expect(table).toContain("Alpha daily");
     expect(table).toContain("Beta daily");
   });
-  it("puts date and compact identity in the scratchpad footer without a running header", () => {
+  it("puts date in Session notes and compact identity in the scratchpad footer", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
         model={{
@@ -820,8 +828,10 @@ describe("real-data sheet overview", () => {
       .split("</footer>")[0]!;
     expect(footer).toContain("Ingi · Dwarf Paladin 7");
     expect(footer).toContain("<span>Scratchpad</span>");
-    expect(footer).toContain(
-      'class="ov-scratch-footer-date"><strong>Date</strong>',
+    expect(footer).not.toContain("Date");
+    const notesHeader = html.split("Session notes")[1]!.split("</h3>")[0]!;
+    expect(notesHeader).toContain(
+      'class="ov-session-date"><strong>Date</strong><i></i>',
     );
     expect(footer).toContain('class="ov-page-number">2</span>');
     expect(html).not.toContain('class="sp-running-header');
@@ -2149,7 +2159,7 @@ describe("real-data sheet overview", () => {
     expect(footer).toContain("<span>Scratchpad</span>");
     expect(footer).not.toContain("Character reference");
     expect(scratchpad).toContain('<th scope="col">Ends</th>');
-    expect(scratchpad).toContain(">Session notes</h3>");
+    expect(scratchpad).toContain('>Session notes<span class="ov-panel-note">');
     expect(scratchpad).not.toContain(">Reminders</h3>");
     expect(scratchpad).not.toContain(">Quick reference</h3>");
     expect(markup).not.toContain(">72<");

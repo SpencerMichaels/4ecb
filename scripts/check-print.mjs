@@ -1322,7 +1322,8 @@ async function checkScratchpad(client, monochrome) {
       hpToTrackers:page.querySelector('.ov-health-trackers').getBoundingClientRect().top-page.querySelector('.sp-hp-writing').getBoundingClientRect().bottom,
       columnSplitDifference:Math.abs(page.querySelector('.ov-scratch-upper > .sp-column:last-child').getBoundingClientRect().left-page.querySelector('.sp-daily').getBoundingClientRect().left),
       encounterSquares:[...page.querySelectorAll('.ov-encounter-box')].every(e=>{const r=e.getBoundingClientRect();return Math.abs(r.width-r.height)<0.1 && r.width>=18;}),
-      footerSession:page.querySelector('.sp-page-footer .ov-scratch-footer-date') !== null,
+      notesDate:page.querySelector('.ov-scratch-bottom h3 .ov-session-date') !== null,
+      footerDate:page.querySelector('.sp-page-footer').textContent.includes('Date'),
       runningHeader:page.querySelector('.sp-running-header') !== null,
       contentSession:page.querySelector('.sp-page-content .sp-session') !== null,
       milestone:page.textContent.includes('Milestone'),
@@ -1394,10 +1395,10 @@ async function checkScratchpad(client, monochrome) {
       state.hpToTrackers < 1 &&
       state.columnSplitDifference < 1 &&
       state.encounterSquares &&
-      state.footerSession &&
+      state.notesDate && !state.footerDate &&
       !state.runningHeader &&
       !state.contentSession,
-    `Scratchpad must have consistent surge spacing, expanding HP boxes, aligned power columns, square encounter boxes and a footer-only date line: ${JSON.stringify(state)}`,
+    `Scratchpad must have consistent surge spacing, expanding HP boxes, aligned power columns, square encounter boxes and Date in the notes heading: ${JSON.stringify(state)}`,
   );
   assert(
     !state.surgeGaps &&

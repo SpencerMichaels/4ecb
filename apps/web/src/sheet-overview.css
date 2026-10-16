@@ -1321,22 +1321,18 @@ body:has(.sp-prototype) {
   gap: 0.15in;
 }
 /* Scratchpad: two-column writing areas around full-width power trackers. */
-.ov-scratch-footer-right,
-.ov-scratch-footer-date {
+.ov-session-date {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 0.06in;
   white-space: nowrap;
 }
-.ov-scratch-footer-right {
-  justify-self: end;
-  gap: 0.15in;
-}
-.ov-scratch-footer-date > i {
-  width: 0.7in;
+.ov-session-date > i {
+  width: 0.85in;
   height: 1em;
-  border-bottom: 1px solid var(--sp-border);
+  border: 1px solid var(--sp-border);
+  background: #fff;
 }
 .ov-scratch-layout {
   display: grid;

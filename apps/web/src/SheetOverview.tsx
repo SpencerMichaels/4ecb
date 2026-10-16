@@ -73,7 +73,6 @@ function Paper({
   pageRef,
   footerIdentity,
   footerTitle,
-  footerDate = false,
 }: {
   name: string;
   title: string;
@@ -83,7 +82,6 @@ function Paper({
   pageRef?: React.RefObject<HTMLElement | null>;
   footerIdentity?: string;
   footerTitle?: string;
-  footerDate?: boolean;
 }) {
   const localRef = useRef<HTMLElement>(null);
   const ref = pageRef ?? localRef;
@@ -107,7 +105,12 @@ function Paper({
     return () => observer.disconnect();
   }, [ref]);
   return (
-    <article className="sp-paper ov-paper" ref={ref} aria-label={title}>
+    <article
+      className="sp-paper ov-paper"
+      ref={ref}
+      aria-label={title}
+      data-sheet-source={source}
+    >
       <div className="sp-page-content">{children}</div>
       <footer
         className={`sp-page-footer${footerIdentity !== undefined ? " ov-reference-footer" : ""}`}
@@ -122,26 +125,8 @@ function Paper({
             </span>
             <span>{footerTitle ?? "Character Reference"}</span>
           </>
-        ) : page === 1 ? (
-          <span>
-            {source === "authoritative-evaluation"
-              ? "Character reference"
-              : source === "native-empty"
-                ? "Incomplete character · no evaluated rules"
-                : "Legacy cache · verify missing rules and values"}
-          </span>
         ) : null}
-        {footerDate ? (
-          <span className="ov-scratch-footer-right">
-            <span className="ov-scratch-footer-date">
-              <strong>Date</strong>
-              <i />
-            </span>
-            <span className="ov-page-number">{page}</span>
-          </span>
-        ) : (
-          <span className="ov-page-number">{page}</span>
-        )}
+        <span className="ov-page-number">{page}</span>
       </footer>
     </article>
   );
@@ -801,7 +786,17 @@ function Summary({
 }) {
   const overview = model.overview!;
   return (
-    <Paper name={name} title="Character summary" page={1} source={model.source}>
+    <Paper
+      name={name}
+      title="Character summary"
+      page={1}
+      source={model.source}
+      footerIdentity={["Race", "Class", "Level"]
+        .map((label) => find(model.identity, label))
+        .filter((value) => value !== "—" && value.trim())
+        .join(" ")}
+      footerTitle="Character Summary"
+    >
       <section className="sp-identity">
         {portrait ? (
           <div className="sp-portrait">
@@ -1234,7 +1229,16 @@ function ScratchpadRecords({
       ref={panelRef}
       style={height === undefined ? undefined : { height }}
     >
-      <Panel title="Session notes" icon="edit">
+      <Panel
+        title="Session notes"
+        icon="edit"
+        headerNote={
+          <span className="ov-session-date">
+            <strong>Date</strong>
+            <i />
+          </span>
+        }
+      >
         <div className="sp-writing-lines ov-scratch-notes" />
       </Panel>
       <Panel title="Treasure & consumables" icon="item">
@@ -1409,7 +1413,6 @@ function Scratchpad({
         pageRef={pageRef}
         footerIdentity={identityLine}
         footerTitle="Scratchpad"
-        footerDate
       >
         <div className="ov-scratch-layout ov-scratch-upper">
           <div className="sp-column ov-scratch-main ov-scratch-records">
@@ -1502,7 +1505,6 @@ function Scratchpad({
           source={model.source}
           footerIdentity={identityLine}
           footerTitle="Scratchpad · continued"
-          footerDate
         >
           <div className="sp-page-heading">
             <h2>Power usage</h2>
@@ -1526,7 +1528,6 @@ function Scratchpad({
           source={model.source}
           footerIdentity={identityLine}
           footerTitle="Scratchpad"
-          footerDate
         >
           <div className="ov-power-trackers sp-column" ref={firstProbe}>
             <TrackingPanels encounter={encounter} daily={daily} />
@@ -1550,7 +1551,6 @@ function Scratchpad({
           pageRef={nextPaper}
           footerIdentity={identityLine}
           footerTitle="Scratchpad · continued"
-          footerDate
         >
           <div className="sp-page-heading">
             <h2>Power usage</h2>

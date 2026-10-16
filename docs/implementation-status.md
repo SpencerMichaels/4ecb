@@ -107,11 +107,15 @@ the upper/lower panes. Encounter tracking uses fixed 0.22in square writing boxes
 within each row, preserving their shape even beside multi-line power names.
 The scratchpad now follows the reference pages' footer-only running layout:
 name · race class level at left (ellipsis for long identities), centered
-Scratchpad, and a compact Date writing line beside the page number at right.
+Scratchpad, and page number at right. Date now occupies the right side of the
+Session notes heading, followed by a small bordered writing box. Page 1 uses
+the same identity/title/number footer with Character Summary centered, replacing
+its differing source-status note (source provenance remains on the page's
+data-sheet-source attribute).
 Optional summary/power-usage continuations also use footers rather than running
 top headers; measurement probes use the same geometry. No standalone date row
 occupies body space. The first-page identity header remains unchanged.
-Footer consistency verification: 73 focused overview/scratchpad tests, web
+Footer/Date-placement consistency verification: 73 focused overview/scratchpad tests, web
 typecheck, focused lint and production build pass. All eight Chromium/Firefox
 Letter/A4 color/monochrome print cases pass, with continuous numbering 1–16
 and no overview overflow. The scratchpad preview was visually inspected.
@@ -416,8 +420,8 @@ that blends with alternating row fills. Reference pages omit the running top
 header; their three-part footer has name · race class level at left, Character
 Reference centered, and the continuous page number at right. Long identity text truncates on one
 line rather than displacing the centered title. Scratchpad/summary continuations
-now follow this footer-only layout too; the page-1 source-status note remains
-unchanged. Reference measurement probes use
+now follow this footer-only layout too; page 1 now uses identity/title/number
+instead of a source-status note. Reference measurement probes use
 the same footer layout and omit the header too, reclaiming that content space.
 The footer refinement passes 56 focused overview tests, web typechecking, focused
 lint, production build, and all four Chromium overview print cases without
