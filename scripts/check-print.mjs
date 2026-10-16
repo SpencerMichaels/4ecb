@@ -321,7 +321,7 @@ try {
         ],
         [
           "equipment",
-          '.sheet-overview > .ov-paper[aria-label="Character reference"]:has(.ov-equipment-pair)',
+          '.sheet-overview > .ov-paper[aria-label="Character reference"]:has(.ov-equipment-stack)',
         ],
         [
           "power-index",
@@ -896,6 +896,8 @@ function printCharacter() {
         Race: "Synthetic ancestry",
         Class: "Synthetic guardian",
         Player: "Public fixture",
+        CarriedMoney: "125 gp; 4 sp; 7 cp",
+        StoredMoney: "2 pp; 75 gp",
         Notes: "Long and short cards exercise deterministic pagination.",
       },
       abilities: {},
@@ -1133,16 +1135,16 @@ async function checkReferences(client) {
       pairedCategory:pages.some(p=>[...p.querySelectorAll('.ov-reference-category-block')].some(block=>
         [...block.querySelectorAll('.sp-column')].filter(column=>column.querySelector('.ov-reference-card')).length===2)),
       equippedHeaders:pages.flatMap(p=>[...p.querySelectorAll('.ov-equipped-table')]).every(table=>
-        [...table.querySelectorAll('thead th')].map(cell=>cell.textContent).join('/')==='Slot/Item'),
+        [...table.querySelectorAll('thead th')].map(cell=>cell.textContent).join('/')==='Slot/Item/Slot/Item'),
       inventoryHeaders:pages.flatMap(p=>[...p.querySelectorAll('.ov-inventory-table')]).every(table=>
         [...table.querySelectorAll('thead th')].map(cell=>cell.textContent).join('/')==='Item/Qty/Item/Qty' &&
           table.querySelector('tbody .ov-reference-inventory-category th')?.getAttribute('colspan')==='4'),
-      equipmentPair:pages.some(p=>[...p.querySelectorAll('.ov-equipment-pair')].some(pair=>{
+      equipmentPair:pages.some(p=>[...p.querySelectorAll('.ov-equipment-stack')].some(pair=>{
         const equipped=pair.querySelector('.ov-reference-pane');
         const currency=pair.querySelector('.ov-currency-pane');
         return equipped.querySelector('h3').textContent.startsWith('Equipped') && currency.querySelector('h3').textContent==='Currency' &&
-          equipped.getBoundingClientRect().right < currency.getBoundingClientRect().left &&
-          Math.abs(equipped.getBoundingClientRect().top-currency.getBoundingClientRect().top)<1 &&
+          equipped.getBoundingClientRect().bottom < currency.getBoundingClientRect().top &&
+          Math.abs(equipped.getBoundingClientRect().width-currency.getBoundingClientRect().width)<1 &&
           [...equipped.querySelectorAll('tbody tr')].some(row=>row.querySelector('td:last-child')?.textContent==='—');
       })),
       pageNumbersOnly:pages.every(p=>/^R\\d+$/.test(p.querySelector('.sp-page-footer').textContent.trim())),
@@ -1151,7 +1153,7 @@ async function checkReferences(client) {
         body.querySelector('td:first-child .action-type-icon')),
       weaponIndependentIndexAttacks:pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table tbody td:nth-child(5)')]).every(cell=>
         !cell.textContent.trim() || /^(?:STR|CON|DEX|INT|WIS|CHA|Primary ability|See card)/i.test(cell.textContent.trim())),
-      equippedIcons:pages.flatMap(p=>[...p.querySelectorAll('.ov-equipped-table tbody td:first-child')]).every(cell=>cell.querySelector('.icon')),
+      equippedIcons:pages.flatMap(p=>[...p.querySelectorAll('.ov-equipped-table tbody td:nth-child(odd)')]).filter(cell=>cell.textContent.trim()).every(cell=>cell.querySelector('.icon')),
       inventoryIncludesEquipped:pages.some(p=>[...p.querySelectorAll('.ov-inventory-table tbody td')].some(cell=>
         cell.textContent.startsWith('Synthetic item 01') && cell.querySelector('.ov-equipped-marker') && cell.nextElementSibling?.textContent==='1')),
       usageColors:[...new Set(pages.flatMap(p=>[...p.querySelectorAll('.ov-reference-card[data-usage]')].map(c=>getComputedStyle(c.querySelector('header')).backgroundColor)))],

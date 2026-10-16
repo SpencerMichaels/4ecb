@@ -30,6 +30,7 @@ import {
   ORDERED_LOADOUT_SLOTS,
 } from "./equipment-ui";
 import { powerActionRank } from "./power-card-order";
+import { referenceCurrency } from "./reference-currency";
 import {
   paginateTracking,
   type TrackingMeasurements,
@@ -1504,6 +1505,7 @@ interface ReferencePart {
   indexAction?: string;
   tableCategory?: string;
   slotCells?: readonly { label: string; icon: IconName }[];
+  rightSlotCells?: readonly { label: string; icon: IconName }[];
   equippedInventory?: boolean;
   equippedInventoryColumns?: readonly number[];
 }
@@ -1705,7 +1707,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       result.push({
         id: `inventory:${equipped}`,
         name: equipped ? "Equipped" : "Inventory",
-        group: "Equipment",
+        group: "Items",
         source: "",
         ...(equipped
           ? {
@@ -1798,6 +1800,29 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
         ),
     ),
   ];
+  const slots = equipped.parts;
+  const breakAt =
+    slots.findIndex((part) => part.slotCells?.[0]?.label === "Feet") + 1;
+  const leftSlots = slots.slice(0, breakAt);
+  const rightSlots = slots.slice(breakAt);
+  equipped.parts = Array.from(
+    { length: Math.max(leftSlots.length, rightSlots.length) },
+    (_, i) => {
+      const left = leftSlots[i];
+      const right = rightSlots[i];
+      const cells = (part: ReferencePart | undefined) =>
+        part?.block.kind === "table" ? part.block.rows[0]! : ["", ""];
+      return {
+        ...(left?.slotCells ? { slotCells: left.slotCells } : {}),
+        ...(right?.slotCells ? { rightSlotCells: right.slotCells } : {}),
+        block: {
+          kind: "table",
+          headers: ["Slot", "Item", "Slot", "Item"],
+          rows: [[...cells(left), ...cells(right)]],
+        },
+      };
+    },
+  );
   const inventory = result.find((entry) => entry.id === "inventory:false");
   if (inventory) {
     const rows: ReferencePart[] = [];
@@ -1946,7 +1971,7 @@ const referenceIcon = (group: string): IconName =>
       ? "race"
       : group === "Class features"
         ? "class"
-        : group === "Equipment"
+        : group === "Items"
           ? "item"
           : group === "Background"
             ? "background"
@@ -1962,33 +1987,49 @@ function ReferenceCard({
 }) {
   if (entry.currency) {
     const { currency, ...loadout } = entry;
+    const wallet = referenceCurrency(currency);
     return (
       <div
-        className="ov-reference-card ov-equipment-pair"
+        className="ov-reference-card ov-equipment-stack"
         data-reference-id={entry.id}
       >
         <ReferenceCard entry={loadout} measure={measure} nested />
         <section
           className="sp-feature-card ov-reference-pane ov-currency-pane"
-          data-reference-category="equipment"
+          data-reference-category="items"
         >
           <header>
             <Icon name="circle-dollar-sign" />
             <h3>Currency</h3>
           </header>
           <div className="sp-feature-body">
-            <table className="ov-reference-table">
+            <table className="ov-reference-table ov-currency-table">
+              <thead>
+                <tr>
+                  {["", ...wallet.rows.map((row) => row[0]!)].map((heading) => (
+                    <th key={heading} scope="col">
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
               <tbody>
-                {currency.map((value) => (
-                  <tr key={value.label}>
-                    <th scope="row">{value.label}</th>
-                    <td>
-                      <Prose value={value.value || "—"} />
-                    </td>
+                {wallet.headers.slice(1).map((label, column) => (
+                  <tr key={label}>
+                    <th scope="row">{label}</th>
+                    {wallet.rows.map((row, i) => (
+                      <td key={i}>{row[column + 1]}</td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
             </table>
+            {wallet.notes.map((note, i) => (
+              <div className="ov-currency-note" key={i}>
+                {note.label ? <strong>{note.label}: </strong> : null}
+                <Prose value={note.value} />
+              </div>
+            ))}
           </div>
         </section>
       </div>
@@ -2090,9 +2131,13 @@ function ReferenceCard({
                   <tr key={n}>
                     {row.map((cell, column) => (
                       <td key={column}>
-                        {part.slotCells && column === 0 ? (
+                        {(part.slotCells && column === 0) ||
+                        (part.rightSlotCells && column === 2) ? (
                           <span className="ov-slot-cell">
-                            {part.slotCells.map((slot, i) => (
+                            {(column === 0
+                              ? part.slotCells!
+                              : part.rightSlotCells!
+                            ).map((slot, i) => (
                               <span key={i}>
                                 {i ? " / " : null}
                                 <Icon name={slot.icon} />
@@ -2373,7 +2418,7 @@ function Details({
   const sections = useMemo(() => {
     const entries = references(model);
     const bucket = (entry: ReferenceEntry) =>
-      entry.group === "Equipment"
+      entry.group === "Items"
         ? 1
         : /^(?:Power index|Item power index)$/.test(entry.group)
           ? 2

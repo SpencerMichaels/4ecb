@@ -258,22 +258,32 @@ monochrome output. Internally chunked long paragraphs
 rejoin within each rendered pane; only actual continuation boundaries divide
 them. Reference continuations repeat titles and retain their complete parts.
 
-Equipment and power indexes use full-width panes. Equipment opens with Equipped
-(two-thirds width) beside Currency (one-third), then a full-width Inventory with
+Items and power indexes use full-width panes. Items opens with a two-column
+Equipped table, breaking after Feet like the builder, followed by full-width
+Currency and Inventory panes. Inventory has
 two Item/Qty pairs per row, grouped under category dividers. Equipped lists open
 ordinary slots with an em dash, preserving builder slot order/icons; conditional
 implement/companion slots appear when occupied. Currency uses current-level
 carried/stored wallet text (latest applicable per-level key, legacy details as
-fallback), preserving custom text/denominations instead of recalculating balances.
+fallback). Denomination columns show one Amount row without carried/stored labels
+when stored currency is absent/zero; nonzero stored funds add Carried, Stored,
+and Total count rows without denomination conversion. Unknown/custom text is
+preserved below the table and never silently converted to zero. Inventory quantity
+columns align toward their own names, with a white center gutter separating pairs.
 Redundant carried/stored character-note cards are omitted. Equipment/Currency
-are measured as a paired block; inventory pagination retains complete paired rows
+are measured as a stacked block; inventory pagination retains complete paired rows
 and repeats category headings at continuation starts. The equipment-layout
 follow-up passes 57 focused overview/sheet-model tests, web typechecking, focused
 lint, and the production build. The Chromium overview-only Letter/A4 ×
 color/monochrome print check passes without overflow and verifies the paired
 panes, open slots, four inventory columns, and per-item equipped markers. Firefox
 and the full physical-card/milestone suite were not rerun for this feedback slice.
-Owner visual review remains open. Features,
+The subsequent two-column Equipped/full-width wallet refinement passes 56 focused
+overview/wallet tests, web typechecking, focused lint and production build, plus
+the same four Chromium overview print cases with no overflow. The Items page was
+visually inspected using nonzero carried/stored synthetic balances. Wallet tests
+cover zero/absent stored funds, per-denomination totals, unknown/custom text and
+unknown versus known-zero balances. Owner visual review remains open. Features,
 rituals and character prose use category-local two-column blocks. The power index columns are
 Power, Level, Range, Target, Attack and Damage. Action icons precede power names;
 item-power indexes likewise place icons beside item names, leaving Item/Usage

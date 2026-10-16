@@ -17,11 +17,16 @@ Skills/Languages and prerequisites instead of narrative/Common Knowledge text.
 Explicit prose "Benefit:" tails are a fallback; unresolved legacy-only text is
 preserved with its existing unavailable-rules notice. Actual granted feature
 descriptions remain complete. Equipment and power indexes
-use full-width panes. Equipment opens with Equipped (two-thirds width) beside
-Currency (one-third); ordinary empty slots show an em dash, while conditional
+use full-width panes. Items opens with a two-column Equipped table (breaking after
+Feet), then full-width Currency and Inventory panes; ordinary empty slots show an em dash, while conditional
 implement/companion slots appear when occupied. Currency shows carried/stored
-wallet text at the current level, retaining custom denominations verbatim.
+wallet amounts at the current level, with builder-style denomination columns. Nonzero
+stored balances add Carried/Stored/Total rows (per-denomination counts, no
+conversion); otherwise one Amount row has no carried/stored distinction.
+Unknown/custom currency remains visible as text, never coerced to zero.
 Inventory follows with two Item/Qty pairs per row and full-width category dividers;
+a white center gutter separates the pairs, with quantities aligned toward their
+own item names instead of toward the neighboring pair.
 equipped superscripts stay attached to each item, and every owned item remains.
 Features/rituals/character prose use stacked category-local
 two-column blocks under full-width headings. Measured splits balance column

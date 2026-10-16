@@ -1637,9 +1637,19 @@ describe("real-data sheet overview", () => {
         .filter((block) => block.kind === "table");
     const equipped = tables("inventory:true");
     expect(
-      equipped.every((table) => table.headers?.join("/") === "Slot/Item"),
+      equipped.every(
+        (table) => table.headers?.join("/") === "Slot/Item/Slot/Item",
+      ),
     ).toBe(true);
-    const equippedRows = equipped.flatMap((table) => table.rows);
+    const pairedRows = equipped.flatMap((table) => table.rows);
+    expect(pairedRows[0]?.[0]).toBe("Head");
+    expect(pairedRows[0]?.[2]).toBe("Main hand");
+    expect(pairedRows[6]?.[0]).toBe("Feet");
+    const equippedRows = [0, 2]
+      .flatMap((column) =>
+        pairedRows.map((row) => row.slice(column, column + 2)),
+      )
+      .filter((row) => row[0]);
     expect(equippedRows.filter((row) => row[1] !== "—")).toEqual([
       ["Head", "Z helmet"],
       ["Feet", "Boots"],
@@ -1669,12 +1679,19 @@ describe("real-data sheet overview", () => {
     expect(
       entries
         .find((entry) => entry.id === "inventory:true")
-        ?.parts.filter(
-          (part) =>
-            part.block.kind === "table" && part.block.rows[0]?.[1] !== "—",
-        )
-        .map((part) => part.slotCells?.map((slot) => slot.icon)),
-    ).toEqual([["hard-hat"], ["footprints"], ["sword"]]);
+        ?.parts.flatMap((part) =>
+          part.block.kind !== "table"
+            ? []
+            : [
+                ...(part.block.rows[0]?.[1] !== "—"
+                  ? (part.slotCells?.map((slot) => slot.icon) ?? [])
+                  : []),
+                ...(part.block.rows[0]?.[3] !== "—"
+                  ? (part.rightSlotCells?.map((slot) => slot.icon) ?? [])
+                  : []),
+              ],
+        ),
+    ).toEqual(["hard-hat", "sword", "footprints"]);
   });
   it("includes equipped-only holdings and total stack quantities with equipped superscripts", () => {
     const fixture = {
@@ -1734,7 +1751,7 @@ describe("real-data sheet overview", () => {
     expect(html).toContain('class="ov-slot-cell"');
     expect(html).toContain("lucide-shirt");
   });
-  it("pairs Equipped with one Currency pane even with an empty loadout", () => {
+  it("stacks two-column Equipped above Currency even with an empty loadout", () => {
     const fixture = {
       ...model,
       currency: [
@@ -1767,10 +1784,13 @@ describe("real-data sheet overview", () => {
         blankHP={false}
       />,
     );
-    expect(html).toContain('class="ov-reference-card ov-equipment-pair"');
+    expect(html).toContain('class="ov-reference-card ov-equipment-stack"');
     expect(html).toContain(">Currency</h3>");
-    expect(html).toContain("13 gp");
-    expect(html).toContain("20 pp");
+    expect(equipped.group).toBe("Items");
+    expect(html).toContain('<th scope="row">Carried</th>');
+    expect(html).toContain('<th scope="row">Stored</th>');
+    expect(html).toContain('<th scope="row">Total</th>');
+    expect(html).toContain('<th scope="col">GP</th>');
   });
   it("renders the approved summary and scratchpad without changing source data", () => {
     const markup = renderToStaticMarkup(
