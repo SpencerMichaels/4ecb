@@ -12,6 +12,7 @@ import {
   overviewTrackingRows,
   sortedTrackingRows,
   paginateReferences,
+  paginateReferenceGroups,
   referenceParts,
   references,
   summaryContinuationEntries,
@@ -30,6 +31,88 @@ const model = buildSheetModel({
   source: "legacy-cache",
 });
 describe("real-data sheet overview", () => {
+  it("stacks balanced two-column categories instead of flowing categories down whole-page columns", () => {
+    const entries = [
+      "Class features",
+      "Class features",
+      "Class features",
+      "Class features",
+      "Racial traits",
+      "Racial traits",
+    ].map((group, index) => ({
+      id: String(index),
+      name: String(index),
+      group,
+      source: "",
+      parts: [],
+    }));
+    const measurements = new Map(
+      entries.map((entry) => [
+        entry.id,
+        { height: 60, overhead: 60, parts: [] },
+      ]),
+    );
+    const pages = paginateReferenceGroups(entries, measurements, 400, 30);
+    expect(pages).toHaveLength(1);
+    expect(pages[0]?.map((block) => block.group)).toEqual([
+      "Class features",
+      "Racial traits",
+    ]);
+    expect(
+      pages[0]?.[0]?.columns.map((column) => column.map((entry) => entry.id)),
+    ).toEqual([
+      ["0", "1"],
+      ["2", "3"],
+    ]);
+    expect(
+      pages[0]?.[1]?.columns.map((column) => column.map((entry) => entry.id)),
+    ).toEqual([["4"], ["5"]]);
+    expect(
+      paginateReferenceGroups(
+        entries.slice(0, 3),
+        measurements,
+        400,
+        30,
+      )[0]?.[0]?.columns.map((column) => column.length),
+    ).toEqual([2, 1]);
+    const smaller = paginateReferenceGroups(entries, measurements, 270, 30);
+    expect(smaller).toHaveLength(2);
+    expect(smaller[1]?.[0]?.group).toBe("Racial traits");
+    expect(
+      smaller.flatMap((page) => page.flatMap((block) => block.columns.flat())),
+    ).toEqual(entries);
+  });
+  it("continues oversized category cards without repeating headings or losing prose", () => {
+    const parts = referenceParts(
+      Array.from({ length: 260 }, (_, n) => `word${n}`).join(" ") + ".",
+    );
+    const entry: ReferenceEntry = {
+      id: "long",
+      name: "Full rules",
+      group: "Feats",
+      source: "Synthetic",
+      parts,
+    };
+    const pages = paginateReferenceGroups(
+      [entry],
+      new Map([
+        [entry.id, { height: 650, overhead: 50, parts: parts.map(() => 150) }],
+      ]),
+      400,
+      30,
+    );
+    const blocks = pages.flat();
+    expect(blocks.filter((block) => block.opening)).toHaveLength(1);
+    expect(
+      blocks.flatMap((block) =>
+        block.columns.flat().flatMap((card) => card.parts),
+      ),
+    ).toEqual(parts);
+    expect(
+      blocks.flatMap((block) => block.columns.flat()).at(-1)?.continued,
+    ).toBe(true);
+    expect(paginateReferenceGroups([], new Map(), 400, 30)).toEqual([]);
+  });
   it("does not invent reference entities from defensive stats or expanded reminders", () => {
     const entries = references({
       ...model,

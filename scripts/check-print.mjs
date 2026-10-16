@@ -914,6 +914,20 @@ function printCharacter() {
           type: "Feat",
           description: "A public fixture feat with readable rules text.",
         },
+        ...Array.from({ length: 3 }, (_, index) => ({
+          id: `FEATURE_PRINT_EXTRA_${index}`,
+          name: `Synthetic class feature ${index + 1}`,
+          type: "Class Feature",
+          description:
+            "Authored public feature text exercises category-local column balancing.",
+        })),
+        ...Array.from({ length: 2 }, (_, index) => ({
+          id: `RACE_PRINT_EXTRA_${index}`,
+          name: `Synthetic racial trait ${index + 1}`,
+          type: "Racial Trait",
+          description:
+            "Authored public racial text exercises the next stacked category block.",
+        })),
       ],
       powers,
       loot,
@@ -1106,6 +1120,14 @@ async function checkReferences(client) {
       coverage:[...new Set(expected)].every(id=>ids.includes(id)),
       authoredOnly:ids.every(id=>id!=='defensive-traits'&&!id.startsWith('reference-reminder:')),
       uniqueGroups:(()=>{const groups=pages.flatMap(p=>[...p.querySelectorAll('.ov-reference-group-heading')].map(h=>h.textContent));return new Set(groups).size===groups.length;})(),
+      categoryBlocks:pages.flatMap(p=>[...p.querySelectorAll('.ov-reference-category-block')]).every(block=>{
+        const columns=block.querySelectorAll('.sp-column');
+        const heading=block.querySelector('.ov-reference-group-heading');
+        return columns.length===2 && [...block.querySelectorAll('.ov-reference-card')].every(card=>card.dataset.referenceCategory===block.dataset.referenceGroup.toLowerCase().replace(/[^a-z]+/g,'-')) &&
+          (!heading || heading.getBoundingClientRect().width > columns[0].getBoundingClientRect().width * 1.9);
+      }),
+      pairedCategory:pages.some(p=>[...p.querySelectorAll('.ov-reference-category-block')].some(block=>
+        [...block.querySelectorAll('.sp-column')].filter(column=>column.querySelector('.ov-reference-card')).length===2)),
       usageColors:[...new Set(pages.flatMap(p=>[...p.querySelectorAll('.ov-reference-card[data-usage]')].map(c=>getComputedStyle(c.querySelector('header')).backgroundColor)))],
       monochrome:pages[0]?.closest('.sp-monochrome')!==null,
       powerHeaders:[...pages.flatMap(p=>[...p.querySelectorAll('.ov-power-index-table')])].map(t=>[...t.querySelectorAll('thead th')].map(e=>e.textContent)),
@@ -1120,6 +1142,8 @@ async function checkReferences(client) {
       state.coverage &&
       state.authoredOnly &&
       state.uniqueGroups &&
+      state.categoryBlocks &&
+      state.pairedCategory &&
       state.usageColors.length === (state.monochrome ? 1 : 3) &&
       state.tablesInBounds &&
       state.groupHeaders > 0,

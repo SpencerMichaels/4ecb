@@ -10,7 +10,9 @@ follow the existing power/item card pages. Origin sections sort entries by known
 acquired/granted level then name, with core grants counted as level 1 and unknown
 levels last. Evaluated grant ancestry and explicit legacy automatic grants
 identify origins independently of publication Source. Equipment and power indexes
-are full-width tables; features/rituals/character prose use two columns. The power
+are full-width tables; features/rituals/character prose use stacked category-local
+two-column blocks under full-width headings. Measured splits balance column
+heights while preserving down-then-across level/name order. The power
 index has Power, Level, Action, Range, Target, Attack and Damage columns, using
 authored formulas and separate multiattack lines rather than weapon-specific
 totals. Section headings, level metadata and source footers use the accepted
@@ -21,9 +23,9 @@ entities, retaining the existing features and powers. Power indexes use subtle
 at-will green, encounter red and daily gray (neutral in monochrome).
 Category titles are larger, unboxed headings with a stronger colored underline,
 distinct from the smaller filled pane headers; pagination measures their height.
-Category openings keep their first two cards together when both fit in a fresh
-column, moving to the next column if the current one would fit only the first.
-Single-entry categories and pairs too tall for a column retain normal flow;
+Category openings keep their first two cards together when both fit on a fresh
+page, moving to the next page if remaining space would fit only the first.
+Single-entry categories and oversized pairs retain normal flow;
 summary reminder continuation (without category headings) is unchanged.
 This is a first draft, not final reference or M5.6 acceptance.
 See `implementation-status.md` for the final accepted scratchpad refinements;

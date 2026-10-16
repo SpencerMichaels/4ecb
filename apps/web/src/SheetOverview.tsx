@@ -2025,6 +2025,119 @@ export function basicAttackReferencePage(
     ? undefined
     : `R${Math.floor(index / columnsPerPage) + startPage}`;
 }
+export interface ReferenceCategoryBlock {
+  group: string;
+  opening: boolean;
+  columns: readonly (readonly ReferenceEntry[])[];
+}
+/** Stack category-local two-column blocks, preserving down-then-across order. */
+export function paginateReferenceGroups(
+  entries: readonly ReferenceEntry[],
+  measurements: ReadonlyMap<
+    string,
+    { height: number; overhead: number; parts: readonly number[] }
+  >,
+  capacity: number,
+  headingHeight: number,
+): readonly (readonly ReferenceCategoryBlock[])[] {
+  if (!entries.length) return [];
+  const pages: ReferenceCategoryBlock[][] = [[]];
+  let used = 0;
+  const gap = 16;
+  const groups = [...new Set(entries.map((entry) => entry.group))];
+  for (const group of groups) {
+    const heights = new Map<ReferenceEntry, number>();
+    const cards = entries
+      .filter((entry) => entry.group === group)
+      .flatMap((entry) => {
+        const m = measurements.get(entry.id);
+        const fragments = entry.parts.length
+          ? paginateReferences(
+              [entry],
+              measurements,
+              capacity - headingHeight - gap,
+            ).flat()
+          : [entry];
+        for (const fragment of fragments) {
+          heights.set(
+            fragment,
+            fragment === entry
+              ? (m?.height ?? capacity)
+              : (m?.overhead ?? 0) +
+                  25 +
+                  fragment.parts.reduce(
+                    (sum, part) =>
+                      sum + (m?.parts[entry.parts.indexOf(part)] ?? 0),
+                    0,
+                  ),
+          );
+        }
+        return fragments;
+      });
+    let offset = 0;
+    let opening = true;
+    while (offset < cards.length) {
+      const heading = opening ? headingHeight : 0;
+      const available = capacity - used - heading;
+      // Find the most even contiguous split for each candidate prefix.
+      const balance = (count: number) => {
+        const prefix = [0];
+        for (const card of cards.slice(offset, offset + count))
+          prefix.push(prefix.at(-1)! + (heights.get(card) ?? capacity) + gap);
+        let split = count;
+        let height = prefix[count]!;
+        for (let at = 1; at < count; at++) {
+          const candidate = Math.max(prefix[at]!, prefix[count]! - prefix[at]!);
+          if (candidate <= height) {
+            split = at;
+            height = candidate;
+          }
+        }
+        return { split, height };
+      };
+      // Do not strand the category opening with one card if two fit on a fresh page.
+      if (
+        used &&
+        opening &&
+        cards.length - offset > 1 &&
+        balance(2).height > available &&
+        balance(2).height + heading <= capacity
+      ) {
+        pages.push([]);
+        used = 0;
+        continue;
+      }
+      let count = 0;
+      while (
+        offset + count < cards.length &&
+        balance(count + 1).height <= available
+      )
+        count++;
+      if (!count && used) {
+        pages.push([]);
+        used = 0;
+        continue;
+      }
+      // Preserve an unmeasurable/unsplittable card and expose existing overflow warning.
+      count = Math.max(1, count);
+      const { split, height } = balance(count);
+      const selected = cards.slice(offset, offset + count);
+      pages.at(-1)!.push({
+        group,
+        opening,
+        columns: [selected.slice(0, split), selected.slice(split)],
+      });
+      used += heading + height;
+      opening = false;
+      offset += count;
+      if (offset < cards.length) {
+        pages.push([]);
+        used = 0;
+      }
+    }
+  }
+  return pages;
+}
 function Details({
   model,
   name,
@@ -2170,6 +2283,10 @@ function ReferencePages({
   const [columns, setColumns] = useState<
     readonly (readonly ReferenceEntry[])[]
   >([]);
+  const grouped = !wide && !summaryContinuation;
+  const [categoryPages, setCategoryPages] = useState<
+    readonly (readonly ReferenceCategoryBlock[])[]
+  >([]);
   useLayoutEffect(() => {
     const element = probe.current;
     if (!element) return;
@@ -2209,6 +2326,17 @@ function ReferencePages({
         ? heading.getBoundingClientRect().height +
           parseFloat(getComputedStyle(heading).marginBottom)
         : 0;
+      if (grouped) {
+        const pages = paginateReferenceGroups(
+          entries,
+          measurements,
+          capacity,
+          headingHeight,
+        );
+        setCategoryPages(pages);
+        onPageCount?.(pages.length);
+        return;
+      }
       const next = paginateReferences(
         entries,
         measurements,
@@ -2236,6 +2364,7 @@ function ReferencePages({
     wide,
     startPage,
     summaryContinuation,
+    grouped,
   ]);
   const seenGroups = new Set<string>();
   const categoryOpenings = new Set(
@@ -2275,8 +2404,48 @@ function ReferencePages({
           </div>
         </Paper>
       </div>
+      {grouped
+        ? categoryPages.map((blocks, index) => (
+            <Paper
+              key={index}
+              name={name}
+              title={title}
+              page={`R${startPage + index}`}
+              source={model.source}
+            >
+              <div className="ov-reference-category-stack">
+                {blocks.map((block) => (
+                  <section
+                    className="ov-reference-category-block"
+                    key={block.group}
+                    data-reference-group={block.group}
+                  >
+                    {block.opening ? (
+                      <h3
+                        className="ov-reference-group-heading"
+                        data-reference-category={referenceCategory(block.group)}
+                      >
+                        <Icon name={referenceIcon(block.group)} />
+                        {block.group}
+                      </h3>
+                    ) : null}
+                    <div className="sp-feature-columns ov-reference-columns">
+                      {block.columns.map((column, n) => (
+                        <div className="sp-column" key={n}>
+                          {column.map((entry) => (
+                            <ReferenceCard key={entry.id} entry={entry} />
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </Paper>
+          ))
+        : null}
       {Array.from(
-        { length: Math.ceil(columns.length / (wide ? 1 : 2)) },
+        { length: grouped ? 0 : Math.ceil(columns.length / (wide ? 1 : 2)) },
         (_, index) => (
           <Paper
             key={index}

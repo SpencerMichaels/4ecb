@@ -226,10 +226,14 @@ repeated page title or per-card category strip. Variable-height panes retain
 readable body text, quiet source footers, known level metadata and explicit
 missing-full-text notices. Each category has one prominent opening heading,
 with its tint carried by subsequent pane headers and borders across columns and
-pages. Only that opening heading is charged to measured pagination. The first
-two cards beneath a new category heading stay together when they fit
-in a fresh column; this avoids a heading stranded near the bottom with only one
-entry. Oversized pairs and single-entry categories retain ordinary flow. Category
+pages. Feature/ritual/character-record categories now form vertically stacked
+full-width sections: a single heading above a category-local two-column block.
+Contiguous level/name order runs down the left column then down the right, with
+the split balanced by measured card heights; the next category starts beneath
+both columns. Large categories continue onto later pages without repeating their
+opening heading. Oversized cards retain measured prose continuations, and the
+first two cards are kept with their heading when a fresh page can fit them.
+Summary reminder continuation and full-width indexes remain separate. Category
 titles are larger, unboxed and underlined to distinguish them from pane headers.
 References present existing character entities: synthetic defensive summaries
 and expanded reminder entries are omitted; page-1 defensive traits remain unchanged.
@@ -239,7 +243,7 @@ rejoin within each rendered pane; only actual continuation boundaries divide
 them. Reference continuations repeat titles and retain their complete parts.
 
 Equipment/basic alternatives and power indexes use full-width tables; features,
-rituals and character prose retain two-column flow. The power index columns are
+rituals and character prose use category-local two-column blocks. The power index columns are
 Power, Level, Action, Range, Target, Attack and Damage. Action icons and compact
 authored formulas distinguish multiple attacks without substituting one weapon's
 totals. Secondary targets are not inherited without authored metadata; unfamiliar
@@ -269,6 +273,16 @@ fallback and unchanged summary continuation. Web typecheck, focused lint,
 formatting and production build pass. The overview-only Chromium/Firefox print
 matrix again passes all eight variants with no overview overflow (13 fixture
 pages). The larger unboxed category titles are included in these measurements.
+
+Category-local two-column follow-up: 58 focused overview/index/layout tests,
+web typecheck, focused lint and production build pass. Tests cover balanced
+contiguous ordering, stacked origins, page deferral and complete oversized-card
+continuations. The public print fixture now includes four class features and two
+racial traits so browser checks exercise populated paired columns and full-width
+category headings, not just one-card sections. All four Chromium PDF and four
+Firefox overview variants pass (13 fixture pages; no overflow), with complete
+entry coverage and unchanged index/card boundaries. The feature preview was
+visually reviewed. Owner reference review remains open.
 
 Verification: 139 focused sheet-model/overview/index/layout tests, web typecheck,
 focused lint and production build pass. The overview-only print check passes

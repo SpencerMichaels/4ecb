@@ -440,6 +440,14 @@ body:has(.sp-prototype) {
 .ov-reference-columns.is-wide {
   grid-template-columns: minmax(0, 1fr);
 }
+.ov-reference-category-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ov-reference-category-block {
+  min-width: 0;
+}
 .ov-paper[aria-label="Character reference"] .sp-page-content {
   padding-top: 0.15in;
 }
