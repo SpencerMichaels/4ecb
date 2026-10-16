@@ -835,6 +835,7 @@ function Summary({
             ["Theme", "Theme"],
             ["ParagonPath", "Paragon path"],
             ["EpicDestiny", "Epic destiny"],
+            ["Experience", "XP"],
           ].map(([field, label]) => (
             <div key={field}>
               <dt>{label}</dt>
@@ -1988,15 +1989,6 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
           referenceParts(field.value, field.label),
         ),
       ],
-    });
-  const xp = model.identity.find((entry) => entry.label === "Experience");
-  if (xp)
-    result.push({
-      id: "experience",
-      name: "Advancement",
-      group: "Character record",
-      source: "",
-      parts: referenceParts(xp.value, "Experience"),
     });
   for (const note of model.notes.filter(
     (note) => !/^(?:Carried|Stored)Money$/i.test(note.label),

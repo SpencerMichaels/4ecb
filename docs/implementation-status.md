@@ -258,6 +258,14 @@ monochrome output. Internally chunked long paragraphs
 rejoin within each rendered pane; only actual continuation boundaries divide
 them. Reference continuations repeat titles and retain their complete parts.
 
+XP appears as a fourth row of the page-1 identity table (after Theme, Paragon path,
+and Epic destiny), with an em dash when absent. The standalone Advancement card
+is removed, so XP alone cannot create a Character Record page. The scratchpad XP
+writing field is unchanged.
+Verification: 57 focused overview tests pass, including recorded XP, removal of
+the standalone reference entry, and preservation of the writable scratchpad box.
+The print matrix was not rerun for this small placement adjustment.
+
 Items and power indexes use full-width panes. Items opens with Currency above
 two-column Equipped (breaking after Feet like the builder), then Inventory.
 The independent Equipped tables size slot labels to their contents like the
