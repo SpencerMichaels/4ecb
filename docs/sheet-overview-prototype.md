@@ -4,6 +4,10 @@ Status: page-1 summary and scratchpad accepted by the product owner, 2026-10-15.
 Final reference-page review and the recorded dense-card overflow gate remain;
 M5.6 stays open.
 
+The descriptive reference section is titled **Character Profile**. It contains
+Character Details and populated freeform sections such as Appearance, Traits,
+Companions, Character Background and Notes.
+
 Final audit follow-up: Inventory includes a compact encumbrance line (carried
 weight, normal limit, load), not a separate pane. Inventory names have muted,
 right-aligned weights including the listed quantity; unknown weights show an

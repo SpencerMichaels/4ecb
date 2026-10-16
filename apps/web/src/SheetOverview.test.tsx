@@ -72,7 +72,7 @@ describe("real-data sheet overview", () => {
       notes: [{ label: "Appearance", value: "A description." }],
     };
     const entries = references(fixture).filter(
-      (entry) => entry.group === "Character record",
+      (entry) => entry.group === "Character Profile",
     );
     expect(entries.map((entry) => entry.name)).toEqual([
       "Character Details",
@@ -177,7 +177,7 @@ describe("real-data sheet overview", () => {
       expect(
         references(fixture).some(
           (entry) =>
-            entry.id === "experience" || entry.group === "Character record",
+            entry.id === "experience" || entry.group === "Character Profile",
         ),
       ).toBe(false);
       const html = renderToStaticMarkup(

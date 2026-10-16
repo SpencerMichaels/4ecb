@@ -1352,7 +1352,7 @@ export function CharacterSheetPage({
 
         <section className="view-sheet-section" id="view-notes">
           <header>
-            <p className="eyebrow">Character record</p>
+            <p className="eyebrow">Character Profile</p>
             <h2>Notes</h2>
           </header>
           {model.notes.length === 0 ? (

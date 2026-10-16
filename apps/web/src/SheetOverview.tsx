@@ -2066,7 +2066,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
     result.push({
       id: "character-details",
       name: "Character Details",
-      group: "Character record",
+      group: "Character Profile",
       source: "",
       parts: details.map((value) => ({
         block: {
@@ -2082,7 +2082,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
     result.push({
       id: `note:${note.label}`,
       name: note.label.replace(/([a-z])([A-Z])/g, "$1 $2"),
-      group: "Character record",
+      group: "Character Profile",
       source: "",
       parts: referenceParts(note.value),
     });
@@ -2770,7 +2770,7 @@ function Details({
           ? 2
           : entry.group === "Rituals & practices"
             ? 3
-            : entry.group === "Character record"
+            : entry.group === "Character Profile"
               ? 4
               : 0;
     const groups = [
