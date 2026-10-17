@@ -882,27 +882,22 @@ body:has(.sp-prototype) {
 }
 .sp-page-footer.ov-reference-footer {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(max-content, 1fr) minmax(0, auto) minmax(
+      max-content,
+      1fr
+    );
   align-items: baseline;
   gap: 0.12in;
 }
 .ov-reference-footer-identity {
   min-width: 0;
+  text-align: center;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 .ov-reference-footer .ov-page-number {
   justify-self: end;
-}
-.ov-reference-footer:has(.ov-page-number) {
-  grid-template-columns: minmax(max-content, 1fr) minmax(0, auto) minmax(
-      max-content,
-      1fr
-    );
-}
-.ov-reference-footer:has(.ov-page-number) .ov-reference-footer-identity {
-  text-align: center;
 }
 .sp-panel {
   border: 1px solid var(--sp-border);

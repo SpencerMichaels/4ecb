@@ -1358,7 +1358,7 @@ async function checkScratchpad(client, monochrome) {
       columnSplitDifference:Math.abs(page.querySelector('.ov-scratch-upper > .sp-column:last-child').getBoundingClientRect().left-page.querySelector('.sp-daily').getBoundingClientRect().left),
       encounterSquares:[...page.querySelectorAll('.ov-encounter-box')].every(e=>{const r=e.getBoundingClientRect();return Math.abs(r.width-r.height)<0.1 && r.width>=18;}),
       scratchpadDateOrXP:page.querySelector('.ov-scratch-session, .sp-xp-tracker, .ov-session-date') !== null,
-      notesPage:(()=>{const n=document.querySelector('.sheet-overview > .ov-paper[aria-label="Session notes"]');return {ruled:n.querySelectorAll('.sp-writing-lines').length,inBounds:n.querySelector('.sp-page-content').getBoundingClientRect().bottom<=n.querySelector('.sp-page-footer').getBoundingClientRect().top-8,dateInHeader:n.querySelector('.ov-session-notes-main > h3 .ov-panel-note .ov-session-date')!==null,unnumbered:!n.querySelector('.ov-page-number'),blankXP:!n.textContent.includes('Recorded:'),last:[...document.querySelectorAll('.sheet-overview > .ov-paper, .print-card-page')].at(-1)===n,notesHeight:n.querySelector('.ov-session-notes-main .sp-writing-lines').getBoundingClientRect().height,ledgerHeight:n.querySelector('.ov-session-ledgers .sp-writing-lines').getBoundingClientRect().height};})(),
+      notesPage:(()=>{const n=document.querySelector('.sheet-overview > .ov-paper[aria-label="Session notes"]');return {ruled:n.querySelectorAll('.sp-writing-lines').length,inBounds:n.querySelector('.sp-page-content').getBoundingClientRect().bottom<=n.getBoundingClientRect().bottom-8,noFooter:!n.querySelector('.sp-page-footer'),dateInHeader:n.querySelector('.ov-session-notes-main > h3 .ov-panel-note .ov-session-date')!==null,unnumbered:!n.querySelector('.ov-page-number'),blankXP:!n.textContent.includes('Recorded:'),last:[...document.querySelectorAll('.sheet-overview > .ov-paper, .print-card-page')].at(-1)===n,notesHeight:n.querySelector('.ov-session-notes-main .sp-writing-lines').getBoundingClientRect().height,ledgerHeight:n.querySelector('.ov-session-ledgers .sp-writing-lines').getBoundingClientRect().height};})(),
       consumableIds:pages.flatMap(p=>[...p.querySelectorAll('[data-consumable-id]')].map(e=>e.dataset.consumableId)).sort(),
       expectedConsumables:[...new Set([...document.querySelectorAll('.ov-measure [data-consumable-id]')].map(e=>e.dataset.consumableId))].sort(),
       consumablesBelowDaily:page.querySelector('.ov-consumables').getBoundingClientRect().top>page.querySelector('.sp-daily').getBoundingClientRect().bottom,
@@ -1425,6 +1425,7 @@ async function checkScratchpad(client, monochrome) {
   assert(
     state.notesPage.ruled === 3 &&
       state.notesPage.inBounds &&
+      state.notesPage.noFooter &&
       state.notesPage.dateInHeader &&
       state.notesPage.unnumbered &&
       state.notesPage.blankXP &&

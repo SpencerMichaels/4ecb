@@ -79,6 +79,7 @@ function Paper({
   pageRef,
   footerIdentity,
   footerTitle,
+  footer = true,
 }: {
   name: string;
   title: string;
@@ -88,6 +89,7 @@ function Paper({
   pageRef?: React.RefObject<HTMLElement | null>;
   footerIdentity?: string;
   footerTitle?: string;
+  footer?: boolean;
 }) {
   const localRef = useRef<HTMLElement>(null);
   const ref = pageRef ?? localRef;
@@ -99,8 +101,9 @@ function Paper({
       element.dataset.overviewOverflow = String(
         element.querySelector(".sp-page-content")!.getBoundingClientRect()
           .bottom >
-          element.querySelector(".sp-page-footer")!.getBoundingClientRect()
-            .top -
+          (
+            element.querySelector(".sp-page-footer") ?? element
+          ).getBoundingClientRect()[footer ? "top" : "bottom"] -
             8,
       );
     };
@@ -109,7 +112,7 @@ function Paper({
     observer.observe(element.querySelector(".sp-page-content")!);
     check();
     return () => observer.disconnect();
-  }, [ref]);
+  }, [ref, footer]);
   return (
     <article
       className="sp-paper ov-paper"
@@ -118,28 +121,26 @@ function Paper({
       data-sheet-source={source}
     >
       <div className="sp-page-content">{children}</div>
-      <footer
-        className={`sp-page-footer${footerIdentity !== undefined ? " ov-reference-footer" : ""}`}
-      >
-        {footerIdentity !== undefined
-          ? (() => {
-              const identity = (
-                <span
-                  className="ov-reference-footer-identity"
-                  title={[name, footerIdentity].filter(Boolean).join(" · ")}
-                  key="identity"
-                >
-                  {[name, footerIdentity].filter(Boolean).join(" · ")}
-                </span>
-              );
-              const title = (
-                <span key="title">{footerTitle ?? "Character Reference"}</span>
-              );
-              return page !== null ? [title, identity] : [identity, title];
-            })()
-          : null}
-        {page !== null ? <span className="ov-page-number">{page}</span> : null}
-      </footer>
+      {footer ? (
+        <footer
+          className={`sp-page-footer${footerIdentity !== undefined ? " ov-reference-footer" : ""}`}
+        >
+          {footerIdentity !== undefined ? (
+            <>
+              <span>{footerTitle ?? "Character Reference"}</span>
+              <span
+                className="ov-reference-footer-identity"
+                title={[name, footerIdentity].filter(Boolean).join(" · ")}
+              >
+                {[name, footerIdentity].filter(Boolean).join(" · ")}
+              </span>
+            </>
+          ) : null}
+          {page !== null ? (
+            <span className="ov-page-number">{page}</span>
+          ) : null}
+        </footer>
+      ) : null}
     </article>
   );
 }
@@ -1424,14 +1425,7 @@ function SessionNotes({
       title="Session notes"
       page={null}
       source={model.source}
-      footerIdentity={["Race", "Class", "Level"]
-        .flatMap((label) =>
-          model.identity
-            .filter((entry) => entry.label === label)
-            .map((entry) => entry.value),
-        )
-        .join(" ")}
-      footerTitle="Session Notes"
+      footer={false}
     >
       <div className="ov-session-notes-page">
         <Panel

@@ -184,6 +184,7 @@ describe("real-data sheet overview", () => {
       .split("</article>")[0]!;
     expect(notes.match(/class="sp-writing-lines"/g)).toHaveLength(3);
     expect(notes).not.toContain('class="ov-page-number"');
+    expect(notes).not.toContain("<footer");
     expect(html.indexOf('aria-label="Session notes"')).toBeGreaterThan(
       html.lastIndexOf('aria-label="Character reference"'),
     );

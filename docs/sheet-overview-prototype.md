@@ -40,7 +40,7 @@ Running information uses footers consistently, including the scratchpad and
 optional summary/power-usage continuations; none has a running top header.
 Numbered overview footers show the page's section title at left (including
 Character Summary on page 1), character identity centered, and page number at
-right; unnumbered pages keep identity at left and the section title centered.
+right. The Session Notes template is not character-specific and has no footer.
 A Date field occupies the right side of the Session notes pane header, using a
 1.25in × 0.25in rounded writing box and bold 10pt label. The
 first-page identity header is unchanged. Surge bars use a Letter-oriented
@@ -60,8 +60,8 @@ and keeps encounter/daily row measurements separate.
 The reusable notes template's XP pane is blank, without recorded character XP.
 The page-1 identity table stays at three
 rows, and XP does not create a standalone Advancement reference card/page.
-Notes, Treasure and XP use almost the full template page, with safe footer
-clearance on Letter/A4.
+Notes, Treasure and XP use almost the full template page, keeping the same
+bottom margin on Letter/A4.
 
 Production reference first draft is implemented for feedback: full references
 precede the existing power/item card pages. Page numbers run continuously from
