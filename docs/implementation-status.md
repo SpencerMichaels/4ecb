@@ -2,6 +2,24 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Reusable notes-template follow-up (2026-10-16): Session Notes now follows all
+reference and enabled card pages at the document's end. Its page-number element
+is omitted entirely, and it does not advance any character-sheet page numbers.
+The remaining pages retain continuous 1…N numbering. Recorded character XP is
+no longer prefilled: Notes/Treasure/XP are blank ruled writing areas intended
+for repeat printing; the right-aligned Date field remains. Identity/section
+footer and pane styling are retained. Public renderer/PDF checks explicitly
+verify this final unnumbered template rather than weakening numbered-page checks.
+Verification: 68 focused overview tests, web typecheck, focused lint and
+production/PWA build pass. All eight Chromium/Firefox Letter/A4 color/monochrome
+overview PDF cases pass, verifying continuous numbered character pages followed
+by exactly the unnumbered template, with no overflow or extra blank pages. The
+updated template preview was visually inspected. Commands: Nix-wrapped focused
+`vitest run`, web `typecheck`/`build`, `eslint`, and
+`node scripts/check-print.mjs --overview-only --include-card-pages
+--firefox-scratchpad --reference-preview`. No full milestone/dense-card gate was
+rerun; M5.6 remains open.
+
 BA-flag cache invalidation correction (2026-10-16): the preceding eligibility
 change omitted the required engine-cache version bump. Version v8 results could
 still be accepted from persistent storage with no `basicAttackKind`, so a fresh

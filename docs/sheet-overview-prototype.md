@@ -6,11 +6,13 @@ M5.6 stays open.
 
 The consumable item-card tracker trial was reverted after owner feedback.
 Stock tracking belongs on the scratchpad instead: Consumables follows Daily
-powers in the right column. A separate ruled Session Notes page follows the
-scratchpad and its usage continuations, before character references. Notes gets
+powers in the right column. A separate ruled Session Notes template is appended
+after all character references and enabled power/item cards. Notes gets
 the larger upper area; Treasure and XP panes occupy the lower area. A Date field
 appears only at the right of the Session notes pane header, not on the combat
-scratchpad. Continuous numbering and the standard footer apply.
+scratchpad. It has no page number and does not consume a number in the character
+sheet sequence, so extra copies can be printed independently. Its identity and
+section footer otherwise matches.
 
 The descriptive reference section is titled **Character Profile**. It contains
 Character Details and populated freeform sections such as Appearance, Traits,
@@ -52,11 +54,11 @@ Hidden table headers retain column semantics. Shared-use encounter groups retain
 one row; measured pagination includes the merged pane headings
 and keeps encounter/daily row measurements separate.
 
-Recorded XP is a small "Recorded: …" label in the separate notes page's XP pane
-header, leaving ruled room below for writing. The page-1 identity table stays at three
+The reusable notes template's XP pane is blank, without recorded character XP.
+The page-1 identity table stays at three
 rows, and XP does not create a standalone Advancement reference card/page.
-Absent XP leaves its pane blank; explicit zero remains visible. Notes, Treasure
-and XP use almost the full notes page, with safe footer clearance on Letter/A4.
+Notes, Treasure and XP use almost the full template page, with safe footer
+clearance on Letter/A4.
 
 Production reference first draft is implemented for feedback: full references
 precede the existing power/item card pages. Page numbers run continuously from

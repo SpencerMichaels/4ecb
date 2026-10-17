@@ -80,7 +80,7 @@ function Paper({
 }: {
   name: string;
   title: string;
-  page: number | string;
+  page: number | string | null;
   source: string;
   children: ReactNode;
   pageRef?: React.RefObject<HTMLElement | null>;
@@ -130,7 +130,7 @@ function Paper({
             <span>{footerTitle ?? "Character Reference"}</span>
           </>
         ) : null}
-        <span className="ov-page-number">{page}</span>
+        {page !== null ? <span className="ov-page-number">{page}</span> : null}
       </footer>
     </article>
   );
@@ -1328,20 +1328,15 @@ function TrackingPanels({
 function SessionNotes({
   model,
   name,
-  page,
 }: {
   model: CharacterSheetModel;
   name: string;
-  page: number;
 }) {
-  const xp = model.identity
-    .find((entry) => entry.label === "Experience")
-    ?.value?.trim();
   return (
     <Paper
       name={name}
       title="Session notes"
-      page={page}
+      page={null}
       source={model.source}
       footerIdentity={["Race", "Class", "Level"]
         .flatMap((label) =>
@@ -1370,11 +1365,7 @@ function SessionNotes({
           <Panel title="Treasure" icon="circle-dollar-sign">
             <div className="sp-writing-lines" />
           </Panel>
-          <Panel
-            title="XP"
-            icon="favorite"
-            headerNote={xp ? `Recorded: ${xp}` : undefined}
-          >
+          <Panel title="XP" icon="favorite">
             <div className="sp-writing-lines" />
           </Panel>
         </div>
@@ -3451,23 +3442,21 @@ export function SheetOverview({
           startPage={2 + continuationPages}
           onPageCount={setScratchpadPages}
         />
-        <SessionNotes
-          model={model}
-          name={name}
-          page={2 + continuationPages + scratchpadPages}
-        />
       </div>
       <div className={overviewClass}>
         <Details
           model={model}
           name={name}
-          startPage={3 + continuationPages + scratchpadPages}
+          startPage={2 + continuationPages + scratchpadPages}
           onPageCount={setDetailsPages}
         />
       </div>
       {typeof children === "function"
-        ? children(3 + continuationPages + scratchpadPages + detailsPages)
+        ? children(2 + continuationPages + scratchpadPages + detailsPages)
         : children}
+      <div className={overviewClass}>
+        <SessionNotes model={model} name={name} />
+      </div>
     </>
   );
 }

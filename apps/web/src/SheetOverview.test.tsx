@@ -161,7 +161,7 @@ describe("real-data sheet overview", () => {
     expect(html.match(/class="ov-inventory-weight"/g)).toHaveLength(2);
     expect(html).toContain('class="ov-inventory-encumbrance"');
   });
-  it("keeps Date and XP off the scratchpad and adds a ruled notes page before references", () => {
+  it("keeps Date and XP off the scratchpad and appends an unnumbered ruled template", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
         model={model}
@@ -182,7 +182,10 @@ describe("real-data sheet overview", () => {
       .split('aria-label="Session notes"')[1]!
       .split("</article>")[0]!;
     expect(notes.match(/class="sp-writing-lines"/g)).toHaveLength(3);
-    expect(notes).toContain('class="ov-page-number">3</span>');
+    expect(notes).not.toContain('class="ov-page-number"');
+    expect(html.indexOf('aria-label="Session notes"')).toBeGreaterThan(
+      html.lastIndexOf('aria-label="Character reference"'),
+    );
     expect(notes).toContain(">Treasure</h3>");
     expect(notes).toContain(">XP</h3>");
     const notesHeader = notes.split("</h3>")[0]!;
@@ -241,7 +244,7 @@ describe("real-data sheet overview", () => {
     expect(right).toContain("/ 20");
   });
   it.each(["12500", "0"])(
-    "shows recorded XP %s on the notes page, not summary or scratchpad",
+    "keeps the reusable notes template blank even with recorded XP %s",
     (value) => {
       const fixture = {
         ...model,
@@ -271,8 +274,8 @@ describe("real-data sheet overview", () => {
       const notes = html
         .split('aria-label="Session notes"')[1]!
         .split("</article>")[0]!;
-      expect(notes).toContain(`Recorded: ${value}`);
-      expect(notes).toContain(">XP<span");
+      expect(notes).not.toContain("Recorded:");
+      expect(notes).toContain(">XP</h3>");
     },
   );
   it("moves reference-page running identity and title into a three-part footer", () => {
@@ -921,7 +924,10 @@ describe("real-data sheet overview", () => {
         {(firstPage) => <span data-card-start={firstPage} />}
       </SheetOverview>,
     );
-    expect(html).toContain('data-card-start="4"');
+    expect(html).toContain('data-card-start="3"');
+    expect(html.indexOf('aria-label="Session notes"')).toBeGreaterThan(
+      html.indexOf('data-card-start="3"'),
+    );
   });
   it("provides ten encounter tracking marks per power row", () => {
     const html = renderToStaticMarkup(

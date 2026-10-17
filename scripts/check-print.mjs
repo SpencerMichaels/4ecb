@@ -314,7 +314,7 @@ try {
     );
     await waitForExpression(
       client,
-      `[...document.querySelectorAll('.sheet-overview > .ov-paper, .print-card-page')].every((page,i)=>Number(page.querySelector('.ov-page-number')?.textContent)===i+1)`,
+      `[...document.querySelectorAll('.sheet-overview > .ov-paper, .print-card-page')].filter(page=>page.getAttribute('aria-label')!=='Session notes').every((page,i)=>Number(page.querySelector('.ov-page-number')?.textContent)===i+1)`,
     );
     await checkSummaryPaneFlow(client);
     await checkSummaryPresentation(client, variant.monochrome);
@@ -1201,7 +1201,8 @@ async function checkReferences(client) {
     const ids=pages.flatMap(p=>[...p.querySelectorAll('[data-reference-id]')].map(e=>e.dataset.referenceId.replace(/:(?:part\\d+|last)$/,'')));
     const expected=[...document.querySelectorAll('.ov-measure .ov-reference-card')].map(e=>e.dataset.referenceId).filter(id=>!id.startsWith('summary-reminder:'));
     return {beforeCards:!firstCard || Boolean(pages.at(-1).compareDocumentPosition(firstCard) & Node.DOCUMENT_POSITION_FOLLOWING),
-      continuousNumbers:physicalPages.every((page,i)=>Number(page.querySelector('.ov-page-number')?.textContent)===i+1),
+      continuousNumbers:physicalPages.filter(page=>page.getAttribute('aria-label')!=='Session notes').every((page,i)=>Number(page.querySelector('.ov-page-number')?.textContent)===i+1),
+      notesTemplateLast:physicalPages.at(-1)?.getAttribute('aria-label')==='Session notes' && !physicalPages.at(-1).querySelector('.ov-page-number'),
       cardFooterBounds:[...document.querySelectorAll('.print-card-page')].every(page=>{
         const p=page.getBoundingClientRect(), f=page.querySelector('.print-card-page-footer').getBoundingClientRect(), g=page.querySelector('.print-card-grid').getBoundingClientRect();
         return f.top>=g.bottom && f.bottom<=p.bottom && f.left>=p.left && f.right<=p.right;
@@ -1275,6 +1276,7 @@ async function checkReferences(client) {
   assert(
     state.beforeCards &&
       state.continuousNumbers &&
+      state.notesTemplateLast &&
       state.cardFooterBounds &&
       state.cardFooterContents &&
       state.details &&
@@ -1308,7 +1310,7 @@ async function checkReferences(client) {
       state.usageColors.length === (state.monochrome ? 1 : 3) &&
       state.tablesInBounds &&
       state.groupHeaders > 0,
-    `Reference pages must precede cards, preserve entries, number every page continuously, and use in-bounds sections: ${JSON.stringify(state)}`,
+    `Reference pages must precede cards, preserve entries, number character pages continuously, finish with an unnumbered notes template, and use in-bounds sections: ${JSON.stringify(state)}`,
   );
   assert(
     state.powerHeaders.length > 0 &&
@@ -1355,7 +1357,7 @@ async function checkScratchpad(client, monochrome) {
       columnSplitDifference:Math.abs(page.querySelector('.ov-scratch-upper > .sp-column:last-child').getBoundingClientRect().left-page.querySelector('.sp-daily').getBoundingClientRect().left),
       encounterSquares:[...page.querySelectorAll('.ov-encounter-box')].every(e=>{const r=e.getBoundingClientRect();return Math.abs(r.width-r.height)<0.1 && r.width>=18;}),
       scratchpadDateOrXP:page.querySelector('.ov-scratch-session, .sp-xp-tracker, .ov-session-date') !== null,
-      notesPage:(()=>{const n=document.querySelector('.sheet-overview > .ov-paper[aria-label="Session notes"]');return {ruled:n.querySelectorAll('.sp-writing-lines').length,inBounds:n.querySelector('.sp-page-content').getBoundingClientRect().bottom<=n.querySelector('.sp-page-footer').getBoundingClientRect().top-8,dateInHeader:n.querySelector('.ov-session-notes-main > h3 .ov-panel-note .ov-session-date')!==null,afterScratchpad:Number(n.querySelector('.ov-page-number').textContent)>Number(pages.at(-1).querySelector('.ov-page-number').textContent),notesHeight:n.querySelector('.ov-session-notes-main .sp-writing-lines').getBoundingClientRect().height,ledgerHeight:n.querySelector('.ov-session-ledgers .sp-writing-lines').getBoundingClientRect().height};})(),
+      notesPage:(()=>{const n=document.querySelector('.sheet-overview > .ov-paper[aria-label="Session notes"]');return {ruled:n.querySelectorAll('.sp-writing-lines').length,inBounds:n.querySelector('.sp-page-content').getBoundingClientRect().bottom<=n.querySelector('.sp-page-footer').getBoundingClientRect().top-8,dateInHeader:n.querySelector('.ov-session-notes-main > h3 .ov-panel-note .ov-session-date')!==null,unnumbered:!n.querySelector('.ov-page-number'),blankXP:!n.textContent.includes('Recorded:'),last:[...document.querySelectorAll('.sheet-overview > .ov-paper, .print-card-page')].at(-1)===n,notesHeight:n.querySelector('.ov-session-notes-main .sp-writing-lines').getBoundingClientRect().height,ledgerHeight:n.querySelector('.ov-session-ledgers .sp-writing-lines').getBoundingClientRect().height};})(),
       consumableIds:pages.flatMap(p=>[...p.querySelectorAll('[data-consumable-id]')].map(e=>e.dataset.consumableId)).sort(),
       expectedConsumables:[...new Set([...document.querySelectorAll('.ov-measure [data-consumable-id]')].map(e=>e.dataset.consumableId))].sort(),
       consumablesBelowDaily:page.querySelector('.ov-consumables').getBoundingClientRect().top>page.querySelector('.sp-daily').getBoundingClientRect().bottom,
@@ -1421,7 +1423,9 @@ async function checkScratchpad(client, monochrome) {
     state.notesPage.ruled === 3 &&
       state.notesPage.inBounds &&
       state.notesPage.dateInHeader &&
-      state.notesPage.afterScratchpad &&
+      state.notesPage.unnumbered &&
+      state.notesPage.blankXP &&
+      state.notesPage.last &&
       state.notesPage.notesHeight > state.notesPage.ledgerHeight &&
       state.notesPage.ledgerHeight > 200,
     `Session notes must have generous ruled notes/treasure/XP areas after the scratchpad: ${JSON.stringify(state.notesPage)}`,
@@ -1897,12 +1901,21 @@ async function inspectPdf(
       printedPages.length === expectedPages,
       `${path} has missing text pages`,
     );
-    printedPages.forEach((page, index) =>
-      assert(
-        page.trim().match(/(?:^|\s)(\d+)$/)?.[1] === String(index + 1),
-        `${path} printed page ${index + 1} lacks its continuous footer number`,
-      ),
+    const template = printedPages.at(-1);
+    assert(
+      template?.toLowerCase().includes("session notes") &&
+        template.includes("Treasure") &&
+        !/(?:^|\s)\d+$/.test(template.trim()),
+      `${path} must end with an unnumbered Session Notes template`,
     );
+    printedPages
+      .slice(0, -1)
+      .forEach((page, index) =>
+        assert(
+          page.trim().match(/(?:^|\s)(\d+)$/)?.[1] === String(index + 1),
+          `${path} printed page ${index + 1} lacks its continuous footer number`,
+        ),
+      );
   }
   for (const required of [
     "Synthetic print fixture hero",

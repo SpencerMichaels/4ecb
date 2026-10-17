@@ -341,12 +341,14 @@ pages retain their source warning. The React renderer paginates prose, not rules
 calculations. Power/item physical cards retain their separate accepted layout.
 See `sheet-overview-prototype.md` for the approved geography and review limits.
 
-The scratchpad has no Date or XP fields. A separate ruled Session Notes page
-follows the scratchpad and any usage continuations, before character references.
-It reserves most of the page for notes, with Treasure and XP writing panes below;
-recorded XP, including zero, appears in the XP pane header when present. There is a
-Date field on the right side of the Session notes header only. Its footer and
-continuous numbering match the rest of the sheet.
+The scratchpad has no Date or XP fields. A separate ruled Session Notes template
+is appended after all character references and enabled power/item card pages.
+It is unnumbered and excluded from the character sheet's continuous numbering,
+so players can print extra copies independently. It reserves most of the page
+for notes, with blank Treasure and XP writing panes below; recorded character
+XP is not prefilled on this reusable template. A Date field appears on the right
+side of the Session notes header only. Pane styling and the identity/section
+footer match the rest of the sheet, without a page-number element.
 Encounter powers occupy the scratchpad's wider left column; Daily
 powers and then Consumables stack independently on the right. Consumables use
 the item-card gold header, all owned inventory (including hidden-card items),

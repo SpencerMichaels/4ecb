@@ -2072,9 +2072,11 @@ not relax, the existing dense physical-card overflow assertion.
 Scratchpad stock-tracking feedback (2026-10-16): generic Session notes and
 Treasure writing panes are removed in favor of owned Consumables below Daily
 powers in the right column, independent of Encounter powers on the left. Date
-appears only in the Session Notes pane header; XP moves to that separate ruled page after the scratchpad
-and any usage continuations, with Session notes, Treasure and XP panes. This
-page shares continuous numbering and the standard footer. Small stocks use power-tracking boxes and larger stacks a count
+appears only in the Session Notes pane header; XP writing space moves to that
+separate ruled template, appended after all references/cards. It has Session
+notes, Treasure and XP panes, without prefilled recorded XP or a page number.
+The numbered character sheet remains continuous and excludes this repeat-print
+template. Its identity/section footer otherwise matches. Small stocks use power-tracking boxes and larger stacks a count
 box; classification follows authored inventory metadata, not names or the
 item-card visibility checkbox. Item cards remain stock-tracker-free after the
 rejected bottom-strip trial. All three tracking streams use measured pagination.
