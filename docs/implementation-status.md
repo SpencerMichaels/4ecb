@@ -2,6 +2,20 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Scratchpad visual follow-up (2026-10-16): immediate interrupts now use Lucide
+`trending-up`. Consumables uses the 20% item-gold/white combat-subheading tint
+rather than the saturated title color; stock boxes/count controls right-align.
+Channel Divinity investigation: existing `usageGroups` merges recognized members
+across action types into one indivisible row with one set of encounter boxes.
+Recognition currently requires an explicit comma-delimited Channel Divinity
+keyword. A mixed-standard/free-action renderer regression test confirms sorting
+alone does not split recognized members. Broader recognition and preferred group
+placement are pending owner review; no Channel Divinity behavior changed here.
+Verification: 76 focused overview/stock/action-icon tests, focused lint, web
+typecheck and production/PWA build pass using the project Nix environment.
+Print assertions now expect the muted header and right-aligned boxes; the full
+print matrix was not rerun for these small styling changes. M5.6 remains open.
+
 Consumables styling follow-up (2026-10-16): remaining-stock circles are replaced
 by the exact square boxes shared by Encounter/Daily power tables. Pane borders
 now match ordinary panes; only the header uses item-card gold. Rows use the same

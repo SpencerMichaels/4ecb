@@ -352,11 +352,12 @@ are omitted. All three row streams paginate using measured heights without
 shrinking text or changing inventory data; fixed-size item cards have no stock
 trackers.
 
-Consumables share ordinary pane borders; only the header uses item-card gold.
+Consumables share ordinary pane borders; only the header uses the muted 20%
+item-gold/white subheading tint. Remaining-stock boxes are right-aligned.
 Row icons use the same metadata mapping as item cards, including composed base
 items. Parenthetical name annotations are omitted unless two distinct owned
 names would otherwise become identical (case-insensitive); those variants retain
-their annotations for disambiguation. Immediate interrupts use Lucide `zap-off`
+their annotations for disambiguation. Immediate interrupts use Lucide `trending-up`
 everywhere the shared action icon appears.
 
 The summary's optional Defensive traits table groups signed `resist:*` totals

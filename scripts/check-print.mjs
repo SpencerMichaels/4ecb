@@ -1357,6 +1357,7 @@ async function checkScratchpad(client, monochrome) {
       consumableColor:getComputedStyle(page.querySelector('.ov-consumables > h3')).backgroundColor,
       consumableBoxes:page.querySelectorAll('.ov-consumable-boxes .ov-daily-box').length,
       consumableBoxStyle:[...page.querySelectorAll('.ov-consumable-boxes .ov-daily-box')].every(e=>{const b=e.getBoundingClientRect(), d=page.querySelector('.sp-daily .ov-daily-box').getBoundingClientRect();return Math.abs(b.width-d.width)<0.1&&Math.abs(b.height-d.height)<0.1;}),
+      consumableBoxesRightAligned:[...page.querySelectorAll('.ov-consumable-boxes')].every(e=>Math.abs(e.lastElementChild.getBoundingClientRect().right-e.getBoundingClientRect().right)<0.1),
       consumableBorder:getComputedStyle(page.querySelector('.ov-consumables')).borderColor===getComputedStyle(page.querySelector('.sp-daily')).borderColor,
       consumableIcons:page.querySelectorAll('.ov-consumable-name .lucide-flask-round').length,
       consumableCount:page.querySelectorAll('.ov-consumable-count').length,
@@ -1512,11 +1513,12 @@ async function checkScratchpad(client, monochrome) {
         JSON.stringify(state.expectedConsumables) &&
       state.consumableBoxes === 9 &&
       state.consumableBoxStyle &&
+      state.consumableBoxesRightAligned &&
       state.consumableBorder &&
       state.consumableIcons === 3 &&
       state.consumableCount === 1 &&
       state.consumableColor ===
-        (monochrome ? "rgb(238, 238, 238)" : "rgb(255, 140, 0)"),
+        (monochrome ? "rgb(238, 238, 238)" : "rgb(255, 232, 204)"),
     `Consumables must use the item-card gold accent, track every owned stack once and sit below Daily powers: ${JSON.stringify(state)}`,
   );
   const baseline = await evaluate(

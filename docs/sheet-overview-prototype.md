@@ -220,7 +220,8 @@ Encounter powers occupy the wider left column below; Daily powers and a gold
 Consumables pane stack independently on the right. Consumable quantities up to
 five use power-tracking square boxes, larger/custom amounts a remaining-count box. All owned
 stocks qualify by authored category/type/power metadata, independent of printed
-item-card visibility. Pane borders match other panes; only the header is gold.
+item-card visibility. Pane borders match other panes; only the header uses the
+muted item-gold subheading tint. Stock boxes are right-aligned.
 Each row has its item-card icon. Parentheticals are hidden unless distinct owned
 variants need them to remain distinguishable. No trackers appear on physical item cards.
 

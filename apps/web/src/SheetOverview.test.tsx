@@ -2386,6 +2386,60 @@ describe("real-data sheet overview", () => {
     });
     expect(rows[1]?.group).toBeUndefined();
   });
+  it("shares one encounter tracker across recognized Channel Divinity powers with different actions", () => {
+    const fixture = {
+      ...model,
+      powers: [
+        {
+          id: "cd-standard",
+          name: "Standard choice",
+          kind: "power" as const,
+          keywords: "Divine, Channel Divinity",
+          usage: "Encounter",
+          actionType: "Standard Action",
+          fields: [],
+        },
+        {
+          id: "ordinary",
+          name: "Ordinary power",
+          kind: "power" as const,
+          usage: "Encounter",
+          actionType: "Move Action",
+          fields: [],
+        },
+        {
+          id: "cd-free",
+          name: "Free choice",
+          kind: "power" as const,
+          keywords: "Channel Divinity, Divine",
+          usage: "Encounter",
+          actionType: "Free Action",
+          fields: [],
+        },
+      ],
+    };
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={fixture}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const scratchpad = html
+      .split('aria-label="Play scratchpad"')[1]!
+      .split("</article>")[0]!;
+    const group = scratchpad
+      .split('data-tracking-id="Channel Divinity"')[1]!
+      .split("</tr>")[0]!;
+    expect(group).toContain("Standard choice");
+    expect(group).toContain("Free choice");
+    expect(group.match(/class="ov-encounter-box"/g)).toHaveLength(10);
+    expect(scratchpad).not.toContain('data-tracking-id="cd-free"');
+    expect(scratchpad).not.toContain('data-tracking-id="cd-standard"');
+  });
   it("preserves every word and numbered-list origin while splitting long rules", () => {
     const words =
       Array.from({ length: 230 }, (_, n) => `word${n}`).join(" ") + ".";

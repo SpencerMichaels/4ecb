@@ -1603,8 +1603,9 @@ body:has(.sp-prototype) {
   gap: 0.15in;
 }
 .ov-consumables > h3 {
-  background: #ff8c00;
-  color: #111;
+  /* Same 20% item-gold/white mix as the physical card combat subheading. */
+  background: #ffe8cc;
+  color: #664119;
 }
 .ov-consumables .sp-panel-content {
   padding: 0;
@@ -1635,6 +1636,7 @@ body:has(.sp-prototype) {
 .ov-consumable-count {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.03in;
   white-space: nowrap;
 }

@@ -5,14 +5,14 @@ import { describe, expect, it } from "vitest";
 import { ActionTypeIcon } from "./ActionTypeIcon";
 
 describe("ActionTypeIcon", () => {
-  it("renders zap-off for interrupts while preserving the authored label", () => {
+  it("renders trending-up for interrupts while preserving the authored label", () => {
     const markup = renderToStaticMarkup(
       createElement(ActionTypeIcon, { value: "Immediate Interrupt" }),
     );
 
     expect(markup).toContain('aria-label="Immediate Interrupt"');
     expect(markup).toContain('title="Immediate Interrupt"');
-    expect(markup).toContain("lucide-zap-off");
+    expect(markup).toContain("lucide-trending-up");
     expect(markup).not.toContain("↯");
   });
 

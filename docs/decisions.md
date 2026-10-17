@@ -2076,7 +2076,7 @@ and XP retain a compact row. Small stocks use power-tracking boxes and larger st
 box; classification follows authored inventory metadata, not names or the
 item-card visibility checkbox. Item cards remain stock-tracker-free after the
 rejected bottom-strip trial. All three tracking streams use measured pagination.
-Consumables retain ordinary pane borders, with item-card gold only in the header,
+Consumables retain ordinary pane borders, with muted item-card gold only in the header,
 and use shared item-card icons. Parentheticals are suppressed unless different
 owned names would collide without them.
 
