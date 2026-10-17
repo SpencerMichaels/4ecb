@@ -161,7 +161,7 @@ describe("real-data sheet overview", () => {
     expect(html.match(/class="ov-inventory-weight"/g)).toHaveLength(2);
     expect(html).toContain('class="ov-inventory-encumbrance"');
   });
-  it("puts Session notes in the wider first column and XP inside Treasure & consumables", () => {
+  it("keeps Date and XP compact without blank-writing panes", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
         model={model}
@@ -172,16 +172,57 @@ describe("real-data sheet overview", () => {
         blankHP={false}
       />,
     );
-    const records = html.split(
-      'class="ov-scratch-layout ov-scratch-records ov-scratch-bottom"',
-    )[1]!;
-    const [notes, treasure] = records.split("</section>");
-    expect(notes).toContain('>Session notes<span class="ov-panel-note">');
-    expect(notes).toContain('class="sp-writing-lines ov-scratch-notes"');
-    expect(notes).not.toContain('class="sp-xp-tracker"');
-    expect(treasure).toContain(">Treasure &amp; consumables</h3>");
-    expect(treasure).toContain('class="sp-writing-lines ov-scratch-treasure"');
-    expect(treasure).toContain('class="sp-xp-tracker"');
+    const session = html
+      .split('class="ov-scratch-layout ov-scratch-session"')[1]!
+      .split('class="ov-power-trackers')[0]!;
+    expect(session).toContain('class="ov-session-date"');
+    expect(session).toContain('class="sp-xp-tracker"');
+    expect(html).not.toContain(">Session notes");
+    expect(html).not.toContain(">Treasure &amp; consumables");
+  });
+  it("renders small stocks and larger count boxes in the right-hand consumables pane", () => {
+    const fixture = {
+      ...model,
+      overview: {
+        ...model.overview!,
+        inventory: [
+          {
+            name: "Potion",
+            quantity: 3,
+            equipped: 0,
+            slots: [],
+            fields: [],
+            category: "consumables",
+          },
+          {
+            name: "Arrows",
+            quantity: 20,
+            equipped: 0,
+            slots: [],
+            fields: [],
+            category: "ammunition",
+          },
+        ],
+      },
+    };
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={fixture}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const scratchpad = html
+      .split('aria-label="Play scratchpad"')[1]!
+      .split("</article>")[0]!;
+    const right = scratchpad.split('class="sp-column ov-tracking-right"')[1]!;
+    expect(right).toContain("ov-consumables");
+    expect(right).toContain('aria-label="3 copies"');
+    expect(right).toContain('class="ov-consumable-count"');
+    expect(right).toContain("/ 20");
   });
   it.each(["12500", "0"])(
     "shows recorded XP %s in the scratchpad box, not identity or a standalone reference card",
@@ -934,7 +975,7 @@ describe("real-data sheet overview", () => {
     expect(table).toContain("Alpha daily");
     expect(table).toContain("Beta daily");
   });
-  it("puts date in Session notes and compact identity in the scratchpad footer", () => {
+  it("puts date in the compact session row and identity in the scratchpad footer", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
         model={{
@@ -959,13 +1000,15 @@ describe("real-data sheet overview", () => {
     expect(footer).toContain("Ingi · Dwarf Paladin 7");
     expect(footer).toContain("<span>Scratchpad</span>");
     expect(footer).not.toContain("Date");
-    const notesHeader = html.split("Session notes")[1]!.split("</h3>")[0]!;
+    const notesHeader = html.split(
+      'class="ov-scratch-layout ov-scratch-session"',
+    )[1]!;
     expect(notesHeader).toContain(
       'class="ov-session-date"><strong>Date</strong><i></i>',
     );
     expect(footer).toContain('class="ov-page-number">2</span>');
     expect(html).not.toContain('class="sp-running-header');
-    expect(html).not.toContain("ov-scratch-session");
+    expect(html).toContain("ov-scratch-session");
   });
   it("matches scratchpad health reference values to the four summary cells", () => {
     const html = renderToStaticMarkup(
@@ -2298,7 +2341,10 @@ describe("real-data sheet overview", () => {
     expect(footer).toContain("<span>Scratchpad</span>");
     expect(footer).not.toContain("Character reference");
     expect(scratchpad).toContain('<th scope="col">Ends</th>');
-    expect(scratchpad).toContain('>Session notes<span class="ov-panel-note">');
+    expect(scratchpad).toContain(
+      'class="ov-scratch-layout ov-scratch-session"',
+    );
+    expect(scratchpad).not.toContain(">Session notes");
     expect(scratchpad).not.toContain(">Reminders</h3>");
     expect(scratchpad).not.toContain(">Quick reference</h3>");
     expect(markup).not.toContain(">72<");

@@ -209,17 +209,22 @@ hearts are paper affordances, not interactive Play state.
 ### Scratchpad redesign (2026-10-15)
 
 The production scratchpad is a paper working surface, not another reference
-page. The wider left column anchors Health above encounter/daily power tracking;
-the narrower right column holds Action points & milestones, Conditions &
-temporary effects, Treasure & consumables, and Session notes with a secondary XP
-field. A small running header and session/date line replace any large page title.
-The duplicated Quick reference pane and arbitrarily selected two reminders are
-removed. Health uses label-first Max HP/Bloodied/Surge HP reference cells, large
-current/temp-HP writing boxes, a surge track and three death-save skulls.
+page. Health and Conditions & temporary effects share the top row. Health has
+label-first Max HP/Bloodied/Surges/Surge HP reference cells, a numbered surge bar,
+large Current HP and smaller Temp HP writing boxes, three death-save skulls and
+three hollow action-point circles. There is no milestone tracker or running
+header; a consistent identity/section/page footer matches the other pages.
+Date and XP occupy a compact row below Health/Conditions. The former Session
+notes and Treasure & consumables blank-writing panes are removed (2026-10-16).
+Encounter powers occupy the wider left column below; Daily powers and a gold
+Consumables pane stack independently on the right. Consumable quantities up to
+five use hollow circles, larger/custom amounts a remaining-count box. All owned
+stocks qualify by authored category/type/power metadata, independent of printed
+item-card visibility. No trackers appear on physical item cards.
 
-Surges use outlined rectangular segments, one per surge, with a heart beside the
-label. Up to ten surges receive a label at every boundary; larger totals label
-multiples of five remaining plus each track's endpoints. The bar measures its
+Surges use outlined rectangular segments, one per surge, numbered internally by
+remaining count without grouping breaks. A background connector joins the bar
+to the Surges reference cell above. The bar measures its
 width and uses deliberately aligned additional tracks rather than shrinking
 segments below roughly 4mm. The existing defensive 100-mark rendering bound is
 retained with explicit additional-count text for pathological/custom values;
@@ -230,18 +235,19 @@ Body pane headings use slate blue, health reference cells violet, and the power
 sections retain meaningful encounter-red/daily-gray headers. Monochrome uses
 explicit grayscale. Neutral alternating rows and consistently placed action icons
 support scanning. Tracking boxes retain boundaries for pencil marks. Conditions
-use six generously spaced Effect/Ends rows; treasure and notes have ruled writing
-areas. The accepted first-page layout and physical cards are unchanged.
+use six generously spaced Effect/Ends rows. Encounter and Daily power tables use
+numbered columns in their pane headers, vertical stripes and horizontal row
+rules. The accepted first-page layout and physical cards are unchanged.
 
-Power tracking uses measured group/row heights, panel overheads, gaps and an
+Power and consumable tracking uses measured group/row heights, panel overheads, gaps and an
 overflow caption, replacing the fixed seven-encounter/four-daily limits. Both
-lists get alternating opportunities to occupy available space. Shared resources
+power lists and consumable stocks get opportunities to occupy available space. Shared resources
 remain indivisible groups; item powers and complete names are preserved. Overflow
 continues immediately after the scratchpad on numerically labeled pages, using
-full-width tables measured separately at that width. Resizing restores rows when
+tables measured at each page's actual column widths. Resizing restores rows when
 space returns. Oversized custom groups remain visible with an explicit warning
-rather than being discarded or made unreadably small. Health and all right-side
-writing areas retain their allocation when power lists grow.
+rather than being discarded or made unreadably small. Health, Conditions and the
+compact Date/XP row retain their allocation when tracking lists grow.
 
 Named weapon/implement reminder policy (2026-10-15): Named properties use explicit
 show/reference-only sets in `item-reminders.ts`, rather than trigger-word matching

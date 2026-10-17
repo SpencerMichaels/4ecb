@@ -899,14 +899,14 @@ function printCharacter() {
   }));
   const loot = Array.from({ length: 6 }, (_, index) => ({
     name: `Synthetic item ${String(index + 1).padStart(2, "0")}${index === 5 ? " with a deliberately long category title" : ""}`,
-    count: index + 1,
+    count: index === 5 ? 25 : index + 1,
     equippedCount: index < 2 ? 1 : 0,
     showPowerCard: true,
     elements: [
       {
         id: `ITEM_PRINT_${index + 1}`,
         name: `Synthetic item ${String(index + 1).padStart(2, "0")}`,
-        type: "Magic Item",
+        type: index >= 3 ? "Potion" : "Magic Item",
         description: index % 2 === 0 ? longText : "A compact synthetic item.",
       },
     ],
@@ -1350,7 +1350,13 @@ async function checkScratchpad(client, monochrome) {
       hpToTrackers:page.querySelector('.ov-health-trackers').getBoundingClientRect().top-page.querySelector('.sp-hp-writing').getBoundingClientRect().bottom,
       columnSplitDifference:Math.abs(page.querySelector('.ov-scratch-upper > .sp-column:last-child').getBoundingClientRect().left-page.querySelector('.sp-daily').getBoundingClientRect().left),
       encounterSquares:[...page.querySelectorAll('.ov-encounter-box')].every(e=>{const r=e.getBoundingClientRect();return Math.abs(r.width-r.height)<0.1 && r.width>=18;}),
-      notesDate:page.querySelector('.ov-scratch-bottom h3 .ov-session-date') !== null,
+      notesDate:page.querySelector('.ov-scratch-session .ov-session-date') !== null,
+      consumableIds:pages.flatMap(p=>[...p.querySelectorAll('[data-consumable-id]')].map(e=>e.dataset.consumableId)).sort(),
+      expectedConsumables:[...new Set([...document.querySelectorAll('.ov-measure [data-consumable-id]')].map(e=>e.dataset.consumableId))].sort(),
+      consumablesBelowDaily:page.querySelector('.ov-consumables').getBoundingClientRect().top>page.querySelector('.sp-daily').getBoundingClientRect().bottom,
+      consumableColor:getComputedStyle(page.querySelector('.ov-consumables > h3')).backgroundColor,
+      consumableCircles:page.querySelectorAll('.ov-consumable-circles .icon').length,
+      consumableCount:page.querySelectorAll('.ov-consumable-count').length,
       footerDate:page.querySelector('.sp-page-footer').textContent.includes('Date'),
       runningHeader:page.querySelector('.sp-running-header') !== null,
       contentSession:page.querySelector('.sp-page-content .sp-session') !== null,
@@ -1376,15 +1382,13 @@ async function checkScratchpad(client, monochrome) {
       }),
       dailyColumnColors:[...page.querySelector('.sp-daily .sp-usage-table tbody tr').children].map(e=>getComputedStyle(e).backgroundColor),
       dailyRowRules:[...page.querySelector('.sp-daily .sp-usage-table tbody tr:nth-child(2)').children].every(e=>getComputedStyle(e).borderTopStyle==='solid' && getComputedStyle(e).borderTopColor==='rgb(226, 230, 233)'),
-      recordsBottomGap:page.querySelector('.sp-page-footer').getBoundingClientRect().top-page.querySelector('.ov-scratch-bottom').getBoundingClientRect().bottom,
       overflowWarning:page.dataset.overviewOverflow,
       contentBottomGap:page.querySelector('.sp-page-footer').getBoundingClientRect().top-page.querySelector('.sp-page-content').getBoundingClientRect().bottom,
-      recordsPaneBottoms:[...page.querySelectorAll('.ov-scratch-bottom > .sp-panel')].map(e=>e.getBoundingClientRect().bottom),
       encounterRowRules:[...page.querySelector('.sp-usage-table tbody tr:nth-child(2)').children].every(e=>getComputedStyle(e).borderTopStyle==='solid' && getComputedStyle(e).borderTopColor==='rgb(226, 230, 233)'),
       upperBottoms:[...page.querySelectorAll('.ov-scratch-upper > .sp-column > .sp-panel')].map(e=>e.getBoundingClientRect().bottom),
       powerWidth:page.querySelector('.ov-scratch-powers').getBoundingClientRect().width,
       contentWidth:page.querySelector('.sp-page-content').getBoundingClientRect().width,
-      powerPanes:[...page.querySelectorAll('.ov-tracking-panels > .sp-panel')].map(e=>({left:e.getBoundingClientRect().left,top:e.getBoundingClientRect().top,width:e.getBoundingClientRect().width})),
+      powerPanes:[...page.querySelectorAll('.ov-tracking-panels .sp-encounter, .ov-tracking-panels .sp-daily')].map(e=>({left:e.getBoundingClientRect().left,top:e.getBoundingClientRect().top,width:e.getBoundingClientRect().width})),
       segmentWidth:Math.min(...segments.map(e=>e.getBoundingClientRect().width)),
       labels:[...page.querySelectorAll('.ov-surge-label')].map(e=>e.textContent),
       writingHeight:page.querySelector('.sp-hp-writing > div').getBoundingClientRect().height,
@@ -1500,15 +1504,20 @@ async function checkScratchpad(client, monochrome) {
     "Surge bar background and connector must match the Surges reference cell",
   );
   assert(
-    Math.abs(state.recordsBottomGap - 9) < 1 &&
-      Math.abs(state.recordsPaneBottoms[0] - state.recordsPaneBottoms[1]) < 1,
-    `Both record panes must extend to the page bottom above the footer: ${JSON.stringify(state)}`,
+    state.consumablesBelowDaily &&
+      JSON.stringify(state.consumableIds) ===
+        JSON.stringify(state.expectedConsumables) &&
+      state.consumableCircles === 9 &&
+      state.consumableCount === 1 &&
+      state.consumableColor ===
+        (monochrome ? "rgb(238, 238, 238)" : "rgb(255, 140, 0)"),
+    `Consumables must use the item-card gold accent, track every owned stack once and sit below Daily powers: ${JSON.stringify(state)}`,
   );
   const baseline = await evaluate(
     client,
     `(() => {
     const p=document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"]');
-    return {count:p.querySelectorAll('[data-tracking-id]').length,health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,recordsBottom:p.querySelector('.ov-scratch-bottom').getBoundingClientRect().bottom};
+    return {count:p.querySelectorAll('[data-tracking-id]').length,health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,sessionTop:p.querySelector('.ov-scratch-session').getBoundingClientRect().top};
   })()`,
   );
   const rule = await evaluate(
@@ -1534,20 +1543,20 @@ async function checkScratchpad(client, monochrome) {
       `(() => {
       const pages=[...document.querySelectorAll('.sheet-overview > .ov-paper')].filter(p=>['Play scratchpad','Power usage · continued'].includes(p.getAttribute('aria-label')));
       const p=pages[0];
-      return {ids:pages.flatMap(p=>[...p.querySelectorAll('[data-tracking-id]')].map(e=>e.dataset.trackingId)).sort(),overflow:pages.some(p=>p.querySelector('.sp-page-content').getBoundingClientRect().bottom>p.querySelector('.sp-page-footer').getBoundingClientRect().top-7),geometry:pages.map(p=>({title:p.getAttribute('aria-label'),bottom:p.querySelector('.sp-page-content').getBoundingClientRect().bottom,footer:p.querySelector('.sp-page-footer').getBoundingClientRect().top,rows:p.querySelectorAll('[data-tracking-id]').length})),health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,recordsBottom:p.querySelector('.ov-scratch-bottom').getBoundingClientRect().bottom,treasureHeight:p.querySelector('.ov-scratch-treasure').getBoundingClientRect().height,notesHeight:p.querySelector('.ov-scratch-notes').getBoundingClientRect().height};
+      return {ids:pages.flatMap(p=>[...p.querySelectorAll('[data-tracking-id]')].map(e=>e.dataset.trackingId)).sort(),consumableIds:pages.flatMap(p=>[...p.querySelectorAll('[data-consumable-id]')].map(e=>e.dataset.consumableId)).sort(),overflow:pages.some(p=>p.querySelector('.sp-page-content').getBoundingClientRect().bottom>p.querySelector('.sp-page-footer').getBoundingClientRect().top-7),geometry:pages.map(p=>({title:p.getAttribute('aria-label'),bottom:p.querySelector('.sp-page-content').getBoundingClientRect().bottom,footer:p.querySelector('.sp-page-footer').getBoundingClientRect().top,rows:p.querySelectorAll('[data-tracking-id]').length})),health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,sessionTop:p.querySelector('.ov-scratch-session').getBoundingClientRect().top};
     })()`,
     );
     assert(
       JSON.stringify(stress.ids) === JSON.stringify(state.expected) &&
+        JSON.stringify(stress.consumableIds) ===
+          JSON.stringify(state.expectedConsumables) &&
         !stress.overflow,
       `Dense tracking must preserve every row on adjacent measured pages: ${JSON.stringify(stress)}`,
     );
     assert(
       Math.abs(stress.health - baseline.health) < 0.5 &&
-        Math.abs(stress.recordsBottom - baseline.recordsBottom) < 0.5 &&
-        stress.treasureHeight >= 95 &&
-        stress.notesHeight >= 119,
-      `Power growth must retain health position, bottom alignment and minimum handwriting areas: ${JSON.stringify({ baseline, stress })}`,
+        Math.abs(stress.sessionTop - baseline.sessionTop) < 0.5,
+      `Power growth must retain health and compact Date/XP positions: ${JSON.stringify({ baseline, stress })}`,
     );
   } finally {
     await evaluate(

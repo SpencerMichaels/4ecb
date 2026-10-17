@@ -21,6 +21,10 @@ import { Prose, ProseBlocks, proseBlocks, type ProseBlock } from "./Prose";
 import { printItemPower } from "./print-item-presentation";
 import { SurgeBar } from "./SurgeBar";
 import {
+  scratchpadConsumables,
+  type ScratchpadConsumable,
+} from "./scratchpad-consumables";
+import {
   isRulesReferencePower,
   referencePowerRows,
 } from "./reference-power-index";
@@ -1206,59 +1210,90 @@ function DailyList({ rows }: { rows: readonly TrackingRow[] }) {
 function TrackingPanels({
   encounter,
   daily,
+  consumables = [],
 }: {
   encounter: readonly UsageGroup[];
   daily: readonly TrackingRow[];
+  consumables?: readonly ScratchpadConsumable[];
 }) {
   return (
     <div
-      className={`ov-tracking-panels${encounter.length && daily.length ? " has-both" : ""}`}
+      className={`ov-tracking-panels${encounter.length && (daily.length || consumables.length) ? " has-both" : ""}`}
     >
       {encounter.length ? (
         <PowerUsageTable kind="encounter" groups={encounter} />
       ) : null}
-      {daily.length ? <DailyList rows={daily} /> : null}
+      {daily.length || consumables.length ? (
+        <div className="sp-column ov-tracking-right">
+          {daily.length ? <DailyList rows={daily} /> : null}
+          {consumables.length ? (
+            <Panel
+              title="Consumables"
+              icon="package-open"
+              className="ov-consumables"
+            >
+              <table
+                className="ov-consumable-table"
+                aria-label="Consumables remaining"
+              >
+                <thead className="sp-sr-only">
+                  <tr>
+                    <th scope="col">Item</th>
+                    <th scope="col">Remaining</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {consumables.map((item) => (
+                    <tr key={item.id} data-consumable-id={item.id}>
+                      <th scope="row">{item.name}</th>
+                      <td>
+                        {item.circles ? (
+                          <span
+                            className="ov-consumable-circles"
+                            aria-label={`${item.quantity} copies`}
+                          >
+                            {Array.from(
+                              { length: item.quantity },
+                              (_, index) => (
+                                <Icon name="circle" key={index} />
+                              ),
+                            )}
+                          </span>
+                        ) : (
+                          <span className="ov-consumable-count">
+                            <i aria-label="Write remaining count" />
+                            <span>
+                              / {item.quantity.toLocaleString("en-US")}
+                            </span>
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Panel>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
-function ScratchpadRecords({
-  panelRef,
-  height,
-  recordedXP,
-}: {
-  panelRef: React.RefObject<HTMLDivElement | null>;
-  height?: number | undefined;
-  recordedXP: string | undefined;
-}) {
+function ScratchpadSession({ recordedXP }: { recordedXP: string | undefined }) {
   return (
-    <div
-      className="ov-scratch-layout ov-scratch-records ov-scratch-bottom"
-      ref={panelRef}
-      style={height === undefined ? undefined : { height }}
-    >
-      <Panel
-        title="Session notes"
-        icon="edit"
-        headerNote={
-          <span className="ov-session-date">
-            <strong>Date</strong>
-            <i />
-          </span>
-        }
-      >
-        <div className="sp-writing-lines ov-scratch-notes" />
-      </Panel>
-      <Panel title="Treasure & consumables" icon="item">
-        <div className="sp-writing-lines ov-scratch-treasure" />
-        <div className="sp-xp-tracker">
-          <span>XP</span>
-          {recordedXP?.trim() ? (
-            <small className="ov-recorded-xp">
-              Recorded: {recordedXP.trim()}
-            </small>
-          ) : null}
-        </div>
-      </Panel>
+    <div className="ov-scratch-layout ov-scratch-session">
+      <div className="ov-session-date">
+        <strong>Date</strong>
+        <i />
+      </div>
+      <div className="sp-xp-tracker">
+        <span>XP</span>
+        {recordedXP?.trim() ? (
+          <small className="ov-recorded-xp">
+            Recorded: {recordedXP.trim()}
+          </small>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -1276,6 +1311,7 @@ function Scratchpad({
   onPageCount: (count: number) => void;
 }) {
   const rows = useMemo(() => overviewTrackingRows(model, true), [model]);
+  const consumables = useMemo(() => scratchpadConsumables(model), [model]);
   const encounter = useMemo(
     () =>
       usageGroups(
@@ -1290,9 +1326,6 @@ function Scratchpad({
   const [pages, setPages] = useState<readonly TrackingPage[]>();
   const pageRef = useRef<HTMLElement>(null);
   const regionRef = useRef<HTMLDivElement>(null);
-  const recordsRef = useRef<HTMLDivElement>(null);
-  const recordsProbe = useRef<HTMLDivElement>(null);
-  const [recordsHeight, setRecordsHeight] = useState<number>();
   const firstProbe = useRef<HTMLDivElement>(null);
   const nextProbe = useRef<HTMLDivElement>(null);
   const nextPaper = useRef<HTMLElement>(null);
@@ -1308,15 +1341,22 @@ function Scratchpad({
       const encounterPanel =
         element.querySelector<HTMLElement>(".sp-encounter");
       const dailyPanel = element.querySelector<HTMLElement>(".sp-daily");
+      const consumablePanel =
+        element.querySelector<HTMLElement>(".ov-consumables");
       const heights = (selector: string) =>
         [...element.querySelectorAll<HTMLElement>(selector)].map(
           (row) => row.getBoundingClientRect().height,
         );
       const encounter = heights(".sp-encounter .sp-usage-table tbody > tr"),
-        daily = heights(".sp-daily .sp-usage-table tbody > tr");
+        daily = heights(".sp-daily .sp-usage-table tbody > tr"),
+        consumables = heights(".ov-consumable-table tbody > tr");
       return {
         encounter,
         daily,
+        consumables,
+        consumableOverhead:
+          (consumablePanel?.getBoundingClientRect().height ?? 0) -
+          consumables.reduce((a, b) => a + b, 0),
         encounterOverhead:
           (encounterPanel?.getBoundingClientRect().height ?? 0) -
           encounter.reduce((a, b) => a + b, 0),
@@ -1337,27 +1377,13 @@ function Scratchpad({
       )
         return;
       const caption = first.querySelector<HTMLElement>(".ov-tracking-caption")!;
-      const minimumRecordsHeight =
-        recordsProbe.current!.getBoundingClientRect().height;
       const footerTop =
         // Stay one pixel inside Paper's 8px guard to absorb fractional layout rounding.
         page.querySelector(".sp-page-footer")!.getBoundingClientRect().top - 9;
-      const availableRecordsHeight = Math.max(
-        minimumRecordsHeight,
-        footerTop - recordsRef.current!.getBoundingClientRect().top,
-      );
-      setRecordsHeight((old) =>
-        old !== undefined && Math.abs(old - availableRecordsHeight) < 0.1
-          ? old
-          : availableRecordsHeight,
-      );
       const layout = paginateTracking(
         measurements(first),
         measurements(next),
-        footerTop -
-          regionRef.current!.getBoundingClientRect().top -
-          minimumRecordsHeight -
-          parseFloat(getComputedStyle(recordsRef.current!).marginTop),
+        footerTop - regionRef.current!.getBoundingClientRect().top,
         paper.querySelector(".sp-page-footer")!.getBoundingClientRect().top -
           8 -
           next.getBoundingClientRect().top,
@@ -1374,8 +1400,6 @@ function Scratchpad({
     observer.observe(page.querySelector(".sp-page-content")!);
     observer.observe(first);
     observer.observe(next);
-    observer.observe(recordsRef.current!);
-    observer.observe(recordsProbe.current!);
     observer.observe(regionRef.current!);
     check();
     void document.fonts.ready.then(check);
@@ -1390,6 +1414,8 @@ function Scratchpad({
       encounterEnd: encounter.length,
       dailyStart: 0,
       dailyEnd: daily.length,
+      consumableStart: 0,
+      consumableEnd: consumables.length,
     },
   ];
   const first = layout[0]!;
@@ -1408,6 +1434,10 @@ function Scratchpad({
     <TrackingPanels
       encounter={encounter.slice(slice.encounterStart, slice.encounterEnd)}
       daily={daily.slice(slice.dailyStart, slice.dailyEnd)}
+      consumables={consumables.slice(
+        slice.consumableStart ?? 0,
+        slice.consumableEnd ?? consumables.length,
+      )}
     />
   );
   return (
@@ -1484,6 +1514,11 @@ function Scratchpad({
             </Panel>
           </div>
         </div>
+        <ScratchpadSession
+          recordedXP={
+            model.identity.find((entry) => entry.label === "Experience")?.value
+          }
+        />
         <div
           className="ov-power-trackers sp-column ov-scratch-powers"
           ref={regionRef}
@@ -1491,17 +1526,10 @@ function Scratchpad({
           {renderTracking(first)}
           {layout.length > 1 ? (
             <p className="sp-caption ov-tracking-caption">
-              Power tracking continues on page {startPage + 1}…
+              Tracking continues on page {startPage + 1}…
             </p>
           ) : null}
         </div>
-        <ScratchpadRecords
-          panelRef={recordsRef}
-          height={recordsHeight}
-          recordedXP={
-            model.identity.find((entry) => entry.label === "Experience")?.value
-          }
-        />
       </Paper>
       {layout.slice(1).map((slice, index) => (
         <Paper
@@ -1537,18 +1565,15 @@ function Scratchpad({
           footerTitle="Scratchpad"
         >
           <div className="ov-power-trackers sp-column" ref={firstProbe}>
-            <TrackingPanels encounter={encounter} daily={daily} />
+            <TrackingPanels
+              encounter={encounter}
+              daily={daily}
+              consumables={consumables}
+            />
             <p className="sp-caption ov-tracking-caption">
-              Power tracking continues on page {startPage + 1}…
+              Tracking continues on page {startPage + 1}…
             </p>
           </div>
-          <ScratchpadRecords
-            panelRef={recordsProbe}
-            recordedXP={
-              model.identity.find((entry) => entry.label === "Experience")
-                ?.value
-            }
-          />
         </Paper>
         <Paper
           name={name}
@@ -1563,7 +1588,11 @@ function Scratchpad({
             <h2>Power usage</h2>
           </div>
           <div className="ov-power-trackers sp-column" ref={nextProbe}>
-            <TrackingPanels encounter={encounter} daily={daily} />
+            <TrackingPanels
+              encounter={encounter}
+              daily={daily}
+              consumables={consumables}
+            />
           </div>
         </Paper>
       </div>

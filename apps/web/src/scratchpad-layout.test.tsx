@@ -19,6 +19,49 @@ const measurements = (
   gap: 5,
 });
 describe("scratchpad measured tracking layout", () => {
+  it("stacks consumables below dailies independently of encounter height", () => {
+    const m = {
+      ...measurements([20, 20, 20, 20], [20]),
+      consumables: [20],
+      consumableOverhead: 10,
+      sideBySide: true,
+    };
+    expect(paginateTracking(m, m, 90, 500, 20)).toEqual([
+      {
+        encounterStart: 0,
+        encounterEnd: 4,
+        dailyStart: 0,
+        dailyEnd: 1,
+        consumableStart: 0,
+        consumableEnd: 1,
+      },
+    ]);
+  });
+  it("preserves consumable rows exactly once through dense continuations", () => {
+    const m = {
+      ...measurements(Array(20).fill(30), Array(10).fill(30)),
+      consumables: Array(17).fill(25),
+      consumableOverhead: 10,
+      sideBySide: true,
+    };
+    const pages = paginateTracking(m, m, 150, 300, 20);
+    expect(
+      pages.flatMap((page) =>
+        Array.from(
+          { length: page.consumableEnd! - page.consumableStart! },
+          (_, i) => page.consumableStart! + i,
+        ),
+      ),
+    ).toEqual(Array.from({ length: 17 }, (_, i) => i));
+    const oversized = {
+      ...measurements([], []),
+      consumables: [1000],
+      consumableOverhead: 10,
+    };
+    expect(
+      paginateTracking(oversized, oversized, 50, 100, 20)[1],
+    ).toMatchObject({ consumableStart: 0, consumableEnd: 1, oversized: true });
+  });
   it("shares vertical space between side-by-side encounter and daily panes", () => {
     const m = { ...measurements([20, 20, 20], [20, 20, 20]), sideBySide: true };
     expect(paginateTracking(m, m, 70, 500, 20)).toEqual([

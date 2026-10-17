@@ -2069,6 +2069,14 @@ no persisted PlayState or character mutation is introduced. Real-character
 feedback continues under M5.6. Overview-only PDF diagnostics supplement, but do
 not relax, the existing dense physical-card overflow assertion.
 
+Scratchpad stock-tracking feedback (2026-10-16): generic Session notes and
+Treasure writing panes are removed in favor of owned Consumables below Daily
+powers in the right column, independent of Encounter powers on the left. Date
+and XP retain a compact row. Small stocks use circles and larger stacks a count
+box; classification follows authored inventory metadata, not names or the
+item-card visibility checkbox. Item cards remain stock-tracker-free after the
+rejected bottom-strip trial. All three tracking streams use measured pagination.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

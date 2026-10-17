@@ -1,6 +1,8 @@
 export interface TrackingMeasurements {
   readonly encounter: readonly number[];
   readonly daily: readonly number[];
+  readonly consumables?: readonly number[];
+  readonly consumableOverhead?: number;
   readonly encounterOverhead: number;
   readonly dailyOverhead: number;
   readonly gap: number;
@@ -11,6 +13,8 @@ export interface TrackingPage {
   readonly encounterEnd: number;
   readonly dailyStart: number;
   readonly dailyEnd: number;
+  readonly consumableStart?: number;
+  readonly consumableEnd?: number;
   readonly oversized?: boolean;
 }
 
@@ -26,7 +30,8 @@ export function paginateTracking(
 ): readonly TrackingPage[] {
   const pages: TrackingPage[] = [];
   let encounterStart = 0,
-    dailyStart = 0;
+    dailyStart = 0,
+    consumableStart = 0;
   do {
     const m = pages.length ? continuation : first;
     let capacity = Math.max(
@@ -35,24 +40,44 @@ export function paginateTracking(
     );
     const encounterRemaining = m.encounter.slice(encounterStart);
     const dailyRemaining = m.daily.slice(dailyStart);
-    const height = (encounterHeight: number, dailyHeight: number) =>
+    const consumableRemaining = (m.consumables ?? []).slice(consumableStart);
+    const height = (
+      encounterHeight: number,
+      dailyHeight: number,
+      consumableHeight = 0,
+    ) =>
       m.sideBySide
-        ? Math.max(encounterHeight, dailyHeight)
+        ? Math.max(
+            encounterHeight,
+            dailyHeight +
+              consumableHeight +
+              (dailyHeight && consumableHeight ? m.gap : 0),
+          )
         : encounterHeight +
           dailyHeight +
-          (encounterHeight && dailyHeight ? m.gap : 0);
+          consumableHeight +
+          Math.max(
+            0,
+            [encounterHeight, dailyHeight, consumableHeight].filter(Boolean)
+              .length - 1,
+          ) *
+            m.gap;
     const total = height(
       encounterRemaining.reduce((a, b) => a + b, 0) +
         (encounterRemaining.length ? m.encounterOverhead : 0),
       dailyRemaining.reduce((a, b) => a + b, 0) +
         (dailyRemaining.length ? m.dailyOverhead : 0),
+      consumableRemaining.reduce((a, b) => a + b, 0) +
+        (consumableRemaining.length ? (m.consumableOverhead ?? 0) : 0),
     );
     if (!pages.length && total > capacity)
       capacity = Math.max(0, capacity - captionHeight);
     let encounterEnd = encounterStart,
       dailyEnd = dailyStart,
+      consumableEnd = consumableStart,
       encounterHeight = 0,
       dailyHeight = 0,
+      consumableHeight = 0,
       progressed = true;
     while (progressed) {
       progressed = false;
@@ -60,7 +85,10 @@ export function paginateTracking(
         const cost =
           m.encounter[encounterEnd]! +
           (encounterEnd === encounterStart ? m.encounterOverhead : 0);
-        if (height(encounterHeight + cost, dailyHeight) <= capacity) {
+        if (
+          height(encounterHeight + cost, dailyHeight, consumableHeight) <=
+          capacity
+        ) {
           encounterHeight += cost;
           encounterEnd++;
           progressed = true;
@@ -69,9 +97,25 @@ export function paginateTracking(
       if (dailyEnd < m.daily.length) {
         const cost =
           m.daily[dailyEnd]! + (dailyEnd === dailyStart ? m.dailyOverhead : 0);
-        if (height(encounterHeight, dailyHeight + cost) <= capacity) {
+        if (
+          height(encounterHeight, dailyHeight + cost, consumableHeight) <=
+          capacity
+        ) {
           dailyHeight += cost;
           dailyEnd++;
+          progressed = true;
+        }
+      }
+      if (consumableEnd < (m.consumables?.length ?? 0)) {
+        const cost =
+          m.consumables![consumableEnd]! +
+          (consumableEnd === consumableStart ? (m.consumableOverhead ?? 0) : 0);
+        if (
+          height(encounterHeight, dailyHeight, consumableHeight + cost) <=
+          capacity
+        ) {
+          consumableHeight += cost;
+          consumableEnd++;
           progressed = true;
         }
       }
@@ -79,23 +123,30 @@ export function paginateTracking(
     const oversized =
       pages.length > 0 &&
       encounterEnd === encounterStart &&
-      dailyEnd === dailyStart;
+      dailyEnd === dailyStart &&
+      consumableEnd === consumableStart;
     if (oversized) {
       if (encounterEnd < m.encounter.length) encounterEnd++;
       else if (dailyEnd < m.daily.length) dailyEnd++;
+      else if (consumableEnd < (m.consumables?.length ?? 0)) consumableEnd++;
     }
     pages.push({
       encounterStart,
       encounterEnd,
       dailyStart,
       dailyEnd,
+      ...(first.consumables === undefined
+        ? {}
+        : { consumableStart, consumableEnd }),
       ...(oversized ? { oversized: true } : {}),
     });
     encounterStart = encounterEnd;
     dailyStart = dailyEnd;
+    consumableStart = consumableEnd;
   } while (
     encounterStart < first.encounter.length ||
-    dailyStart < first.daily.length
+    dailyStart < first.daily.length ||
+    consumableStart < (first.consumables?.length ?? 0)
   );
   return pages;
 }

@@ -2,14 +2,29 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
-Consumable tracker feedback (2026-10-16): the bottom-of-item-card Remaining
-strip was rejected as obtrusive and reverted. Fixed-size item cards are restored
-without stock trackers. A separate scratchpad consumables pane is proposed,
-using part of the existing Treasure & consumables writing area; that redesign
-is not implemented or accepted yet. The discarded trial remains recoverable
-in Git history and changes no character/inventory data.
-Verification: 55 focused item-presentation/print-layout tests pass after the
-revert; no full print/milestone gate was rerun for restoring the prior layout.
+Consumable scratchpad feedback (2026-10-16): the rejected bottom-of-item-card
+Remaining strip stays reverted. Session notes and Treasure & consumables blank
+writing panes are removed; Date/XP retain a compact row below Health/Conditions.
+Encounter powers occupy the wider left column, while Daily powers and then
+Consumables stack independently on the right. The consumables header matches
+item-card gold/yellow, with circles for stocks up to five and a remaining-count
+box for larger/custom quantities. All owned consumables/ammunition qualify from
+authored category/type/power metadata, including hidden-card items; names are
+not guessed. Empty stock is omitted. Optional item type is preserved in both
+sheet projections. All three tracking streams use measured pagination without
+changing character/inventory data. The discarded card-strip trial remains
+recoverable in Git history.
+Verification: 83 focused overview/stock/pagination tests plus all 106 sheet-model
+tests, web and sheet-model
+typechecks, focused lint, production/PWA build, and all eight Chromium/Firefox
+Letter/A4 color/monochrome overview print cases pass. Geometry checks cover gold
+and monochrome headers, right-column positioning, circles/count box, exact-once
+row retention and dense tracking continuations. Scratchpad preview visually
+inspected. Commands: focused `vitest run`, package `typecheck`, `eslint`, web
+`build`, and `node scripts/check-print.mjs --overview-only --include-card-pages
+--firefox-scratchpad --reference-preview --scratchpad-preview`, all through the
+project Nix environment. No full milestone/dense-card gate was rerun; M5.6 remains
+open with its previously recorded dense physical-card blocker.
 
 Inventory weight-noise follow-up (2026-10-16): unspecified/blank item weights
 are omitted entirely, not rendered as zero or an em dash. Explicit numeric zero

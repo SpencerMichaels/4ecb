@@ -331,8 +331,8 @@ usage, attacks, and damage still render, but rules text can be incomplete.
 ## Sheet and print behavior
 
 The printed overview follows D078: one combat summary, a paper scratchpad with
-usage continuations when needed, the enabled power/item card pages, then measured
-full-description references. Reference origin/level metadata is distinct from
+usage continuations when needed, measured full-description references, then the
+enabled power/item card pages. Reference origin/level metadata is distinct from
 publication source; missing grant/acquisition levels remain explicitly unknown.
 `CharacterSheetModel.overview` preserves feature summaries and full rules as
 distinct values, training, ability checks, explicit inventory slots and reminder
@@ -340,6 +340,17 @@ candidates. Both evaluated and legacy-cache projections supply it; recovery
 pages retain their source warning. The React renderer paginates prose, not rules
 calculations. Power/item physical cards retain their separate accepted layout.
 See `sheet-overview-prototype.md` for the approved geography and review limits.
+
+The scratchpad has a compact Date/XP row rather than generic Session notes or
+Treasure writing panes. Encounter powers occupy the wider left column; Daily
+powers and then Consumables stack independently on the right. Consumables use
+the item-card gold header, all owned inventory (including hidden-card items),
+and authored item/category or consumable-power metadata, never name guessing.
+Stacks of one through five use hollow circles; larger or custom fractional
+quantities use a remaining-count box beside the original quantity. Empty stocks
+are omitted. All three row streams paginate using measured heights without
+shrinking text or changing inventory data; fixed-size item cards have no stock
+trackers.
 
 The summary's optional Defensive traits table groups signed `resist:*` totals
 (positive resistance, negative vulnerability), conditional resistance/save

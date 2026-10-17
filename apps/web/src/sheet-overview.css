@@ -1382,7 +1382,7 @@ body:has(.sp-prototype) {
   align-items: start;
 }
 .ov-scratch-powers,
-.ov-scratch-bottom {
+.ov-scratch-session {
   margin-top: 0.15in;
 }
 .ov-scratch-upper {
@@ -1393,7 +1393,7 @@ body:has(.sp-prototype) {
 }
 .sheet-overview
   .ov-paper[aria-label="Play scratchpad"]
-  .sp-panel:not(.sp-encounter):not(.sp-daily)
+  .sp-panel:not(.sp-encounter):not(.sp-daily):not(.ov-consumables)
   > h3 {
   color: #3e5f7c;
   background: #eaf0f6;
@@ -1531,34 +1531,13 @@ body:has(.sp-prototype) {
   height: 0.42in;
   border: 1px solid #d5dadd;
 }
-.ov-scratch-treasure {
-  height: 1in;
+.ov-scratch-session {
+  align-items: center;
 }
-.ov-scratch-notes {
-  height: 1.25in;
+.ov-scratch-session .ov-session-date {
+  justify-content: flex-start;
 }
-.ov-scratch-bottom {
-  align-items: stretch;
-}
-.ov-scratch-bottom > .sp-panel,
-.ov-scratch-bottom .sp-panel-content {
-  display: flex;
-  flex-direction: column;
-}
-.ov-scratch-bottom .sp-panel-content {
-  flex: 1;
-}
-.ov-scratch-bottom .sp-writing-lines {
-  flex: 1;
-  height: auto;
-}
-.ov-scratch-bottom .ov-scratch-treasure {
-  min-height: 1in;
-}
-.ov-scratch-bottom .ov-scratch-notes {
-  min-height: 1.25in;
-}
-.ov-scratch-records .sp-xp-tracker {
+.ov-scratch-session .sp-xp-tracker {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -1567,7 +1546,7 @@ body:has(.sp-prototype) {
   border: 1px solid var(--sp-border);
   border-radius: 3px;
   padding: 0.045in;
-  margin-top: 0.1in;
+  margin-top: 0;
   color: var(--sp-muted);
   font-size: 8.5pt;
 }
@@ -1618,6 +1597,67 @@ body:has(.sp-prototype) {
 }
 .ov-tracking-panels > .sp-panel {
   min-width: 0;
+}
+.ov-tracking-right {
+  min-width: 0;
+  gap: 0.15in;
+}
+.ov-consumables {
+  border-color: #ff8c00;
+}
+.ov-consumables > h3 {
+  background: #ff8c00;
+  color: #111;
+  border-bottom-color: #ff8c00;
+}
+.ov-consumables .sp-panel-content {
+  padding: 0;
+}
+.ov-consumable-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9pt;
+}
+.ov-consumable-table th,
+.ov-consumable-table td {
+  padding: 0.05in;
+  vertical-align: middle;
+}
+.ov-consumable-table tbody th {
+  font-weight: 400;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+.ov-consumable-table tbody tr:nth-child(odd) {
+  background: #f0f3f5;
+}
+.ov-consumable-table td {
+  width: 1%;
+  white-space: nowrap;
+}
+.ov-consumable-circles,
+.ov-consumable-count {
+  display: flex;
+  align-items: center;
+  gap: 0.03in;
+  white-space: nowrap;
+}
+.ov-consumable-circles .icon {
+  width: 0.2in;
+  height: 0.2in;
+  flex-shrink: 0;
+  fill: none;
+  stroke-width: 1.4;
+}
+.ov-consumable-count > i {
+  display: block;
+  width: 0.38in;
+  height: 0.24in;
+  border: 1px solid #8f9aa2;
+  border-radius: 3px;
+}
+.sheet-overview.sp-monochrome .ov-consumables {
+  border-color: #999;
 }
 @container (min-width: 3.6in) {
   .ov-tracking-panels.has-both {
