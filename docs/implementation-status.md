@@ -2,6 +2,13 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Shared tracker alignment (2026-10-16): Channel Divinity's encounter boxes align
+to the top group-heading line, using the same top inset as the name cell rather
+than centering through the multi-power row. Ordinary single-power rows retain
+their existing alignment. All 82 focused overview/layout tests pass via Nix;
+the full print/milestone suite was not rerun for this small alignment change.
+No calculation, grouping, pagination or milestone status changes.
+
 Notes date follow-up (2026-10-16): Date returns only at the right of the separate
 Session notes pane header, reusing the 1.25in × 0.25in rounded handwriting box
 and bold 10pt label. The combat scratchpad remains Date/XP-free. The header-note

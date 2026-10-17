@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   paginateTracking,
@@ -19,6 +20,17 @@ const measurements = (
   gap: 5,
 });
 describe("scratchpad measured tracking layout", () => {
+  it("top-aligns shared-use tracking boxes to the group heading", () => {
+    const styles = readFileSync(
+      new URL("./sheet-overview.css", import.meta.url),
+      "utf8",
+    );
+    const rule = styles.match(
+      /\.ov-power-trackers \.sp-usage-table \.ov-shared-usage td\s*\{([^}]+)\}/,
+    )?.[1];
+    expect(rule).toContain("vertical-align: top");
+    expect(rule).toContain("padding-top: 0.06in");
+  });
   it("stacks consumables below dailies independently of encounter height", () => {
     const m = {
       ...measurements([20, 20, 20, 20], [20]),

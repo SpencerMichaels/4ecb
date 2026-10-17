@@ -1697,6 +1697,10 @@ body:has(.sp-prototype) {
   padding: 0.06in;
   overflow-wrap: anywhere;
 }
+.ov-power-trackers .sp-usage-table .ov-shared-usage td {
+  vertical-align: top;
+  padding-top: 0.06in;
+}
 .ov-power-trackers .sp-usage-table tbody tr + tr > * {
   border-top: 1px solid #e2e6e9;
 }

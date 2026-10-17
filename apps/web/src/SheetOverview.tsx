@@ -1183,7 +1183,11 @@ function PowerUsageTable({
         </thead>
         <tbody>
           {groups.map((group) => (
-            <tr key={group.id} data-tracking-id={group.id}>
+            <tr
+              key={group.id}
+              data-tracking-id={group.id}
+              className={group.name ? "ov-shared-usage" : undefined}
+            >
               <th scope="row">
                 {group.name ? <strong>{group.name}</strong> : null}
                 {group.powers.map((power) => (

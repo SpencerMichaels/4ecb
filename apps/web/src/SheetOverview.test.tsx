@@ -2458,6 +2458,7 @@ describe("real-data sheet overview", () => {
       .split('data-tracking-id="Channel Divinity"')[1]!
       .split("</tr>")[0]!;
     expect(group).toContain("Standard choice");
+    expect(group).toContain('class="ov-shared-usage"');
     expect(group).toContain("Z free choice");
     expect(group.indexOf("Standard choice")).toBeLessThan(
       group.indexOf("A free choice"),
