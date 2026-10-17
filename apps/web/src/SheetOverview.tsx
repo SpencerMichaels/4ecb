@@ -1554,9 +1554,9 @@ function Scratchpad({
               >
                 {[
                   ["AC", "AC"],
-                  ["Fortitude", "FORT"],
-                  ["Reflex", "REF"],
-                  ["Will", "WILL"],
+                  ["Fortitude", "Fort"],
+                  ["Reflex", "Ref"],
+                  ["Will", "Will"],
                 ].map(([field, label]) => (
                   <div key={field}>
                     <span>{label}</span>

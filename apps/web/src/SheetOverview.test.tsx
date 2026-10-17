@@ -1051,9 +1051,9 @@ describe("real-data sheet overview", () => {
       .split('class="ov-scratch-defenses"')[1]!
       .split('class="sp-values ov-scratch-health-values"')[0]!;
     const labels: Record<string, string> = {
-      Fortitude: "FORT",
-      Reflex: "REF",
-      Will: "WILL",
+      Fortitude: "Fort",
+      Reflex: "Ref",
+      Will: "Will",
     };
     for (const defense of fixture.defenses) {
       const label = labels[defense.label] ?? defense.label;
