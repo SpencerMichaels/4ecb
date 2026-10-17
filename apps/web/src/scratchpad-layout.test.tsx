@@ -32,7 +32,9 @@ describe("scratchpad measured tracking layout", () => {
       /\.ov-scratch-health-values \.ov-health-label \.icon\s*\{([^}]+)\}/,
     )?.[1];
     expect(label).toContain("justify-content: center");
-    expect(label).toContain("gap: 0.04in");
+    expect(label).toContain("width: max-content");
+    expect(icon).toContain("position: absolute");
+    expect(icon).toContain("right: calc(100% + 0.04in)");
     expect(icon).toContain("width: 9pt");
     for (const selector of [
       ".ov-scratch-health-values > div",

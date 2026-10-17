@@ -1427,13 +1427,18 @@ body:has(.sp-prototype) {
   min-height: 1.2em;
 }
 .ov-scratch-health-values .ov-health-label {
+  position: relative;
+  width: max-content;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.04in;
   white-space: nowrap;
 }
 .ov-scratch-health-values .ov-health-label .icon {
+  position: absolute;
+  right: calc(100% + 0.04in);
+  top: 50%;
+  transform: translateY(-50%);
   width: 9pt;
   height: 9pt;
 }
