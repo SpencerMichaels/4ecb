@@ -1159,12 +1159,6 @@ body:has(.sp-prototype) {
   margin-left: 0.02in;
   vertical-align: super;
 }
-.sp-skill-table .sp-training-key {
-  text-align: right;
-  font-size: 7.5pt;
-  color: var(--sp-muted);
-  padding-top: 0.07in;
-}
 .sp-basic-attacks {
   --card-color: #526773;
 }

@@ -172,7 +172,8 @@ and real overview share `sheet-overview.css`.
    reminders. Mutable values point to the scratchpad instead of scattering
    writing boxes throughout the reference page.
    Skills use two alphabetically ordered, name-first columns with a superscript T
-   for training and a muted subscript governing ability beside the name. The
+   for training (keyed by a right-aligned `T Trained` header note when any skill
+   is trained) and a muted subscript governing ability beside the name. The
    bonus is the rightmost cell. Both skill and ability tables have subtle neutral
    alternating row fills; training no longer changes row colors. Ability columns
    have equal widths and consistent padding;

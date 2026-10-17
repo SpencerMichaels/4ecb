@@ -1073,7 +1073,18 @@ function Summary({
           </div>
         </SummaryPane>
         <SummaryPane id="skills">
-          <Panel title="Skills" icon="skill" className="sp-skills-panel">
+          <Panel
+            title="Skills"
+            icon="skill"
+            className="sp-skills-panel"
+            headerNote={
+              overview.skills.some((skill) => skill.trained) ? (
+                <>
+                  <sup className="sp-trained-marker">T</sup> Trained
+                </>
+              ) : undefined
+            }
+          >
             <div className="sp-skill-columns">
               {[overview.skills.slice(0, 9), overview.skills.slice(9)].map(
                 (skills, index) => (
@@ -1117,15 +1128,6 @@ function Summary({
                         );
                       })}
                     </tbody>
-                    <tfoot>
-                      {index === 1 ? (
-                        <tr>
-                          <td colSpan={2} className="sp-training-key">
-                            <sup className="sp-trained-marker">T</sup>: trained
-                          </td>
-                        </tr>
-                      ) : null}
-                    </tfoot>
                   </table>
                 ),
               )}

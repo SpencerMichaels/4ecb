@@ -1873,7 +1873,11 @@ describe("real-data sheet overview", () => {
     expect(abilitySection).toContain(
       '<table class="ov-language-table" aria-label="Languages"><tbody><tr><th scope="row">Common</th></tr><tr><th scope="row">Draconic</th></tr></tbody></table>',
     );
-    const skills = right.split(">Skills</h3>")[1]!.split(">Languages</h3>")[0]!;
+    const skills = right.split(">Skills")[1]!.split(">Languages</h3>")[0]!;
+    expect(skills).toMatch(
+      /^<span class="ov-panel-note"><sup class="sp-trained-marker">T<\/sup> Trained<\/span><\/h3>/,
+    );
+    expect(skills).not.toContain("sp-training-key");
     expect(skills).toContain('<span class="ov-passive-value">(18)</span> +8');
     expect(skills).toContain('<span class="ov-passive-value">(25)</span> +15');
     expect(skills).not.toContain("ov-passive-skill");
