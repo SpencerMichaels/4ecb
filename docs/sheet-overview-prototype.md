@@ -220,7 +220,8 @@ page. Health and Conditions & temporary effects share the top row. Health has
 label-first Max HP/Bloodied/Surges/Surge HP reference cells, a numbered surge bar,
 large Current HP and smaller Temp HP writing boxes, three death-save skulls and
 three hollow action-point circles. Health's four reference cells pair icons with the large numbers below
-their labels: heart, droplets, zap and heart-plus respectively. Icons inherit
+their labels: heart, droplets, zap and heart-plus respectively. Numbers are
+centered independently with icons positioned to their left. Icons inherit
 the cell ink, are slightly smaller than the numbers, and introduce no new row.
 There is no milestone tracker or running
 header; a consistent identity/section/page footer matches the other pages.
@@ -245,7 +246,7 @@ retained with explicit additional-count text for pathological/custom values;
 unknown values remain textual, never guessed. Marking is pencil-on-paper only;
 this does not introduce persisted interactive Play state.
 
-Body pane headings use slate blue, health reference cells violet, and the power
+Body pane headings, health reference cells and the connected surge bar use slate blue, and the power
 sections retain meaningful encounter-red/daily-gray headers. Monochrome uses
 explicit grayscale. Neutral alternating rows and consistently placed action icons
 support scanning. Tracking boxes retain boundaries for pencil marks. Conditions

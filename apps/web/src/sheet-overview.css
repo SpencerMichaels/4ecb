@@ -1409,8 +1409,8 @@ body:has(.sp-prototype) {
   padding: 0.03in;
   border: 0;
   border-radius: 3px;
-  color: #65557d;
-  background: #f0ecf5;
+  color: #3e5f7c;
+  background: #eaf0f6;
 }
 .ov-scratch-health-values > div:nth-child(3) {
   border-bottom-left-radius: 0;
@@ -1424,12 +1424,18 @@ body:has(.sp-prototype) {
   font-size: 17pt;
 }
 .ov-scratch-health-values .ov-health-icon-value {
-  display: inline-flex;
+  position: relative;
+  width: 100%;
+  min-height: 1.2em;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.04in;
 }
 .ov-scratch-health-values .ov-health-icon-value .icon {
+  position: absolute;
+  left: 0.02in;
+  top: 50%;
+  transform: translateY(-50%);
   width: 13pt;
   height: 13pt;
 }
@@ -1461,7 +1467,7 @@ body:has(.sp-prototype) {
   margin-top: 0.05in;
   padding: 0.065in 0.02in;
   border-radius: 3px;
-  background: #f0ecf5;
+  background: #eaf0f6;
 }
 .ov-scratch-surges::before {
   content: "";

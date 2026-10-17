@@ -3,13 +3,15 @@
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
 Scratchpad health-value icon trial (2026-10-16): Max HP/Bloodied/Surges/Surge HP
-now place Heart/Droplets/Zap/Heart Plus immediately before the large value,
-centered together below the existing label. Icons are 13pt beside 17pt numbers,
-inherit the muted violet/monochrome ink, and add no heading row or extra color.
+now place Heart/Droplets/Zap/Heart Plus to the left of the large value,
+with numbers centered independently below the existing label. Icons are 13pt
+beside 17pt numbers. The four cells and connected surge bar use slate blue
+instead of violet; monochrome remains grayscale. No extra heading row is added.
 An empty value reserves a small writing space beside its icon. Page-1 cells and
 other numeric groups remain unchanged. This is for owner visual feedback.
-Verification: 85 focused overview/layout tests, web typecheck, focused lint and
-production/PWA build pass through Nix. The renderer test verifies all four icon
+Verification: 86 focused overview/layout tests and the production/PWA build
+pass through Nix. A style regression covers independent value centering and
+matching slate backgrounds. The renderer test verifies all four icon
 identities and unchanged resource values. No full print/milestone gate was rerun
 for this small styling trial; a focused Letter/17-surge preview was rendered
 and visually inspected. M5.6 remains open.

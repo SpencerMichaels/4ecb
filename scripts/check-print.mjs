@@ -1519,8 +1519,8 @@ async function checkScratchpad(client, monochrome) {
     state.header ===
       (monochrome ? "rgb(238, 238, 238)" : "rgb(234, 240, 246)") &&
       state.health ===
-        (monochrome ? "rgb(238, 238, 238)" : "rgb(240, 236, 245)"),
-    `Scratchpad must match the approved slate header/violet health palette: ${JSON.stringify(state)}`,
+        (monochrome ? "rgb(238, 238, 238)" : "rgb(234, 240, 246)"),
+    `Scratchpad must match the approved slate header/health palette: ${JSON.stringify(state)}`,
   );
   assert(
     state.surgeLabelsInside &&

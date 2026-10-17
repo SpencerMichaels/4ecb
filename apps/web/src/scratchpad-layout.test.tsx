@@ -20,6 +20,28 @@ const measurements = (
   gap: 5,
 });
 describe("scratchpad measured tracking layout", () => {
+  it("centers health values independently of side icons with slate backgrounds", () => {
+    const styles = readFileSync(
+      new URL("./sheet-overview.css", import.meta.url),
+      "utf8",
+    );
+    const value = styles.match(
+      /\.ov-scratch-health-values \.ov-health-icon-value\s*\{([^}]+)\}/,
+    )?.[1];
+    const icon = styles.match(
+      /\.ov-scratch-health-values \.ov-health-icon-value \.icon\s*\{([^}]+)\}/,
+    )?.[1];
+    expect(value).toContain("width: 100%");
+    expect(value).toContain("justify-content: center");
+    expect(icon).toContain("position: absolute");
+    for (const selector of [
+      ".ov-scratch-health-values > div",
+      ".ov-scratch-surges",
+    ]) {
+      const rule = styles.slice(styles.indexOf(`${selector} {`)).split("}")[0];
+      expect(rule).toContain("background: #eaf0f6");
+    }
+  });
   it("keeps skull and action-point marks close together", () => {
     const styles = readFileSync(
       new URL("./sheet-overview.css", import.meta.url),
