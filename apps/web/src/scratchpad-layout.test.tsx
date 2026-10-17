@@ -20,6 +20,16 @@ const measurements = (
   gap: 5,
 });
 describe("scratchpad measured tracking layout", () => {
+  it("keeps skull and action-point marks close together", () => {
+    const styles = readFileSync(
+      new URL("./sheet-overview.css", import.meta.url),
+      "utf8",
+    );
+    const rule = styles.match(
+      /\.sp-death-saves > span,\s*\.ov-action-point-count > span\s*\{([^}]+)\}/,
+    )?.[1];
+    expect(rule).toContain("gap: 0.04in");
+  });
   it("top-aligns shared-use tracking boxes to the group heading", () => {
     const styles = readFileSync(
       new URL("./sheet-overview.css", import.meta.url),

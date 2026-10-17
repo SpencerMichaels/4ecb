@@ -2,6 +2,14 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Health tracker spacing (2026-10-16): gaps within death-save skulls and action-point
+circles shrink from 0.1in to 0.04in; icon sizes and label/group placement stay
+unchanged. Surge wrapping remains fill-first, overflow-only on subsequent rows,
+not balanced; all rows retain the same segment width. This is a small styling
+follow-up, not a change to surge counts, wrapping or tracking behavior.
+Verification: all 16 focused scratchpad layout/style tests pass via Nix. The
+full print/milestone suite was not rerun for this spacing-only edit.
+
 Reusable notes-template follow-up (2026-10-16): Session Notes now follows all
 reference and enabled card pages at the document's end. Its page-number element
 is omitted entirely, and it does not advance any character-sheet page numbers.

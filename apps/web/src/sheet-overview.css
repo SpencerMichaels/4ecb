@@ -1276,7 +1276,7 @@ body:has(.sp-prototype) {
 .sp-death-saves > span,
 .ov-action-point-count > span {
   display: flex;
-  gap: 0.1in;
+  gap: 0.04in;
 }
 .sp-death-saves .icon,
 .ov-action-point-count .icon {
