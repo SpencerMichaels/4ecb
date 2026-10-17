@@ -2,6 +2,41 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Basic-attack alternatives (2026-10-16): owned powers with effective authored
+`_BasicAttack` = Melee/Ranged now join the summary table. Active rule overlays
+are authoritative, including Power of Skill; no feat-name/prose heuristic is
+used. Typed `basicAttackKind` passes through evaluation and sheet projection,
+remaining separate from equipment `basicAttackTypes` and hidden from printed
+rules fields. Each flagged nonstandard power gets one row labelled only by its
+power name, using eligible equipped/main-hand-first math with best-available
+fallback. Ordinary MBA/RBA weapon alternatives and numeric ranking stay intact;
+ranged implement powers are not rejected because their staff is a melee weapon.
+The power's original ability and damage remain unchanged, not substituted with
+generic Strength-based MBA math. Full riders/other weapon alternatives stay on
+power cards. Cached recovery recognizes direct authored flags only; it does not
+invent missing feat overlays.
+
+Recovered `IsBasicAttack` and `BuildKeywordSet` show that effective BA flags also
+qualify basic-specific numeric channels. The evaluator now propagates that tag
+to attack/damage stat matching and conditional reminders, including feat-added
+flags rather than only raw fields. Evidence is recorded in the legacy exception
+notes. A read-only private Hu diagnostic using the current local pack finds
+Overwhelming Strike flagged Melee with Power of Skill and unflagged after
+removing that feat; its projected main-hand calculation is +12 vs AC, 2d6+8.
+This is current-profile diagnostic evidence, not a same-profile legacy golden.
+Public tests use synthetic rules/data only; private character/corpus artifacts
+remain ignored.
+Verification: all 340 rules-engine/sheet-model/overview tests, their three
+package typechecks, focused lint and production/PWA build pass. A read-only Hu
+evaluation confirms selected/deselected feat eligibility as described above;
+this is separate from public tests. All eight Chromium/Firefox Letter/A4
+color/monochrome overview print cases pass with no overflow or numbering loss.
+Commands: Nix-wrapped `vitest run packages/rules-engine/src
+packages/sheet-model/src apps/web/src/SheetOverview.test.tsx`, package
+`typecheck`, focused `eslint`, web `build`, and `node scripts/check-print.mjs
+--overview-only --include-card-pages --firefox-scratchpad --scratchpad-preview`.
+No full milestone/dense-card gate was rerun; M5.6 remains open.
+
 Shared tracker alignment (2026-10-16): Channel Divinity's encounter boxes align
 to the top group-heading line, using the same top inset as the name cell rather
 than centering through the multi-power row. Ordinary single-power rows retain

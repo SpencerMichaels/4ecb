@@ -285,8 +285,13 @@ reminder collection; reference-only expanded core-power descriptions and complet
 feature/item rules remain available in the reference pages.
 
 Latest summary refinement: Basic attacks use one Weapon/Attack/Damage table,
-with a sword, bow or (for Unarmed) fist icon prefacing each weapon row. Repeated
-melee/ranged subheadings and ability/defense formula indicators are removed.
+with a sword, bow or (for Unarmed) fist icon prefacing each weapon row, and
+the name column relabelled Weapon / power when flagged power alternatives
+are present. A nonstandard power marked as a basic attack gets one row labelled
+only by its own name, using an eligible equipped/main-hand-first calculation
+(best available fallback). Its normal attack ability and damage are retained;
+other equipment alternatives and riders remain on the power card.
+Repeated melee/ranged subheadings and ability/defense formula indicators are removed.
 Resolved weapon categories filter invalid melee/ranged combinations; Light Thrown
 and Heavy Thrown melee weapons support both. Unknown custom/legacy capabilities
 remain visible rather than being guessed from names; ranged Unarmed is omitted.

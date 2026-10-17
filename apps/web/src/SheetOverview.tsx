@@ -182,17 +182,33 @@ function compareBasicAttacks(
     damageB = averageDamage(b.damage);
   return damageA === damageB ? 0 : damageA > damageB ? -1 : 1;
 }
-function basicAttackVariants(power: SheetCard) {
-  const ranged = /^ranged basic attack$/i.test(power.name.trim());
+function basicAttackVariants(
+  power: SheetCard,
+  ranged: boolean,
+  namedPower: boolean,
+) {
+  const weaponBased =
+    !namedPower || /(?:^|,)\s*Weapon\s*(?:,|$)/i.test(power.keywords ?? "");
   return [...(power.variants ?? [])]
     .filter(
       (variant) =>
-        (!ranged || !/^unarmed$/i.test(variant.equipmentName.trim())) &&
-        (variant.basicAttackTypes === undefined ||
-          variant.basicAttackTypes.includes(ranged ? "ranged" : "melee")),
+        (!ranged ||
+          !weaponBased ||
+          !/^unarmed$/i.test(variant.equipmentName.trim())) &&
+        (!weaponBased ||
+          variant.basicAttackTypes === undefined ||
+          variant.basicAttackTypes.includes(ranged ? "ranged" : "melee")) &&
+        (!namedPower || basicAttackCell(variant) !== undefined),
     )
-    .sort((a, b) =>
-      compareBasicAttacks(basicAttackCell(a) ?? {}, basicAttackCell(b) ?? {}),
+    .sort(
+      (a, b) =>
+        (namedPower
+          ? Number(!a.equipped) - Number(!b.equipped) ||
+            (a.equipped && b.equipped
+              ? Number(a.hand !== "main") - Number(b.hand !== "main")
+              : 0)
+          : 0) ||
+        compareBasicAttacks(basicAttackCell(a) ?? {}, basicAttackCell(b) ?? {}),
     );
 }
 export function overviewBasicAttackRows(
@@ -200,11 +216,14 @@ export function overviewBasicAttackRows(
   variantLimit = Infinity,
 ) {
   return model.powers
-    .filter((power) => /^(melee|ranged) basic attack$/i.test(power.name.trim()))
     .flatMap((power) => {
-      const ranged = /^ranged/i.test(power.name.trim());
-      const variants = basicAttackVariants(power);
-      const visible = variants.slice(0, variantLimit);
+      const standard = /^(melee|ranged) basic attack$/i.exec(power.name.trim());
+      const kind = power.basicAttackKind ?? standard?.[1]?.toLowerCase();
+      if (kind !== "melee" && kind !== "ranged") return [];
+      const namedPower = standard === null;
+      const ranged = kind === "ranged";
+      const variants = basicAttackVariants(power, ranged, namedPower);
+      const visible = variants.slice(0, namedPower ? 1 : variantLimit);
       const rows = visible.map((variant) => {
         const cell =
           variant.attacks === undefined
@@ -216,7 +235,8 @@ export function overviewBasicAttackRows(
         return {
           id: `${power.id ?? power.name}:${variant.id}`,
           ranged,
-          weapon: variant.equipmentName,
+          weapon: namedPower ? power.name : variant.equipmentName,
+          namedPower,
           attack:
             eligible && !cell.attack?.includes("Unknown")
               ? (cell.attack?.match(/^[+-]?\d+/)?.[0] ?? "—")
@@ -226,13 +246,16 @@ export function overviewBasicAttackRows(
             : "—",
         };
       });
-      if (!variants.length && !power.variants?.length)
+      if (!variants.length && (!power.variants?.length || namedPower))
         rows.push({
           id: power.id ?? power.name,
           ranged,
-          weapon: "Unspecified weapon",
-          attack: power.attack?.match(/^[+-]?\d+/)?.[0] ?? "—",
-          damage: power.damage ?? "—",
+          weapon: namedPower ? power.name : "Unspecified weapon",
+          namedPower,
+          attack: power.variants?.length
+            ? "—"
+            : (power.attack?.match(/^[+-]?\d+/)?.[0] ?? "—"),
+          damage: power.variants?.length ? "—" : (power.damage ?? "—"),
         });
       return rows;
     })
@@ -261,7 +284,11 @@ function BasicAttacks({
         >
           <thead>
             <tr>
-              <th scope="col">Weapon</th>
+              <th scope="col">
+                {rows.some((row) => row.namedPower)
+                  ? "Weapon / power"
+                  : "Weapon"}
+              </th>
               <th scope="col">Attack</th>
               <th scope="col">Damage</th>
             </tr>

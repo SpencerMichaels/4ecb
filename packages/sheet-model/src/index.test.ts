@@ -841,6 +841,20 @@ describe("sheet model", () => {
     );
 
     expect(model.source).toBe("authoritative-evaluation");
+    const flaggedModel = buildEvaluatedSheetModel(
+      snapshot,
+      build,
+      {
+        ...evaluation,
+        powers: evaluation.powers.map((power) => ({
+          ...power,
+          basicAttackKind: "ranged" as const,
+        })),
+      },
+      content,
+    );
+    expect(flaggedModel.powers[0]?.basicAttackKind).toBe("ranged");
+    expect(model.powers[0]?.basicAttackKind).toBeUndefined();
     expect(model.overview?.defensiveTraits).toContainEqual({
       label: "Resistance",
       value: "Fire 5",

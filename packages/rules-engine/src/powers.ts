@@ -70,6 +70,8 @@ export interface EvaluatedPower {
   readonly usage?: string;
   readonly actionType?: string;
   readonly attackType?: string;
+  /** Effective authored _BasicAttack field, including active rule overlays. */
+  readonly basicAttackKind?: "melee" | "ranged";
   readonly keywords: readonly string[];
   readonly variants: readonly PowerVariant[];
   readonly recoveries: readonly PowerRecovery[];
@@ -439,6 +441,7 @@ function combatStatComponents(
     keywords: readonly string[];
     defense?: string;
     byId: ReadonlyMap<string, ContentEntity>;
+    basicAttackKind?: "melee" | "ranged" | undefined;
   },
 ): PowerComponent[] {
   const suffix = `${kind}:${fieldName}`;
@@ -456,6 +459,7 @@ function combatStatComponents(
     key(powerName),
     key(powerName).replace(/\s+attack$/, ""),
     ...attackTypeTags,
+    ...(context.basicAttackKind ? [`${context.basicAttackKind} basic`] : []),
   ].filter(Boolean);
   const tags = new Set([
     ...equipment.tags.filter((tag) => tag !== "weapon" && tag !== "implement"),
@@ -880,6 +884,7 @@ function powerAdditionalEffects(input: {
   readonly hasAttack: boolean;
   readonly damage?: string;
   readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly basicAttackKind?: "melee" | "ranged" | undefined;
 }): readonly PowerAdditionalEffect[] {
   const tags = new Set([
     ...input.keywords.map(key),
@@ -901,7 +906,7 @@ function powerAdditionalEffects(input: {
   }
   const basicAttack =
     /^(?:Melee|Ranged) Basic Attack$/i.test(input.power.name) ||
-    Boolean(field(input.power, "_BasicAttack"));
+    input.basicAttackKind !== undefined;
   if (basicAttack) {
     tags.add("basic");
     tags.add(`${tags.has("ranged") ? "ranged" : "melee"} basic`);
@@ -1034,6 +1039,17 @@ export function evaluatePowers(input: {
       .map((value) => value.trim())
       .filter(Boolean);
     const attackType = effectiveField(power, "Attack Type", input.overlays);
+    const rawBasic = effectiveField(power, "_BasicAttack", input.overlays)
+      ?.trim()
+      .toLowerCase();
+    const basicAttackKind: "melee" | "ranged" | undefined =
+      rawBasic === "melee" || rawBasic === "ranged"
+        ? rawBasic
+        : /^melee basic attack$/i.test(power.name)
+          ? "melee"
+          : /^ranged basic attack$/i.test(power.name)
+            ? "ranged"
+            : undefined;
     const attackDefinitions = authoredAttacks(power, input.overlays);
     const attackLine = attackDefinitions[0]?.line;
     const hitLine = lineAtLevel(
@@ -1160,7 +1176,7 @@ export function evaluatePowers(input: {
             weaponPower ? "weapon" : "implement",
             "attack",
             phaseAttackType,
-            { keywords, defense, byId },
+            { keywords, defense, byId, basicAttackKind },
           ),
         );
         if (implementPower && equipment.weaponDefinition)
@@ -1172,7 +1188,7 @@ export function evaluatePowers(input: {
               "weapon",
               "attack",
               phaseAttackType,
-              { keywords, defense, byId },
+              { keywords, defense, byId, basicAttackKind },
             ).filter(({ provenanceId }) =>
               provenanceId?.endsWith(":legacy-focused-expertise"),
             ),
@@ -1331,7 +1347,7 @@ export function evaluatePowers(input: {
               weaponPower ? "weapon" : "implement",
               "damage",
               attackType,
-              { keywords, byId },
+              { keywords, byId, basicAttackKind },
             ),
           );
         if (
@@ -1358,7 +1374,7 @@ export function evaluatePowers(input: {
               "weapon",
               "damage",
               attackType,
-              { keywords, byId },
+              { keywords, byId, basicAttackKind },
             ),
           );
         const powerDamageBonus = Number(
@@ -1520,6 +1536,7 @@ export function evaluatePowers(input: {
           hasAttack,
           ...(damage.damage === undefined ? {} : { damage: damage.damage }),
           byId,
+          basicAttackKind,
         }),
         ...(critical === undefined ? {} : { critical }),
         ...(brutal === undefined ? {} : { brutal: Number(brutal) }),
@@ -1575,6 +1592,7 @@ export function evaluatePowers(input: {
         ...(usage === undefined ? {} : { usage }),
         ...(actionType === undefined ? {} : { actionType }),
         ...(attackType === undefined ? {} : { attackType }),
+        ...(basicAttackKind === undefined ? {} : { basicAttackKind }),
         keywords,
         variants,
         recoveries,

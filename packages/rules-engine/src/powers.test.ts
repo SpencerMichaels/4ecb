@@ -55,6 +55,110 @@ function combatStat(name: string, value: number): EvaluatedStat {
 }
 
 describe("power evaluation", () => {
+  it("uses the effective BA flag for eligibility and native basic-specific combat channels", () => {
+    const entities = [
+      entity("POWER", "Synthetic wisdom strike", "Power", {
+        Keywords: "Weapon",
+        "Attack Type": "Melee weapon",
+        Attack: "Wisdom vs. AC",
+        Hit: "1[W] + Wisdom modifier damage.",
+      }),
+      entity("BLADE", "Blade", "Weapon", {
+        Damage: "1d8",
+        "Proficiency Bonus": "3",
+        "Weapon Category": "Military Melee",
+        Group: "Heavy Blade",
+      }),
+    ];
+    const input = {
+      level: 2,
+      activeDefinitionIds: ["POWER"],
+      entities,
+      inventory: [
+        {
+          id: "blade",
+          definitionIds: ["BLADE"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Wisdom modifier": stat("Wisdom modifier", 5),
+        "Strength modifier": stat("Strength modifier", 1),
+        "melee basic:attack": combatStat("melee basic:attack", 2),
+        "melee basic:damage": combatStat("melee basic:damage", 3),
+      },
+    };
+    const ordinary = evaluatePowers({ ...input, overlays: [] })[0]!;
+    expect(ordinary.basicAttackKind).toBeUndefined();
+    const flagged = evaluatePowers({
+      ...input,
+      overlays: [
+        {
+          providerOccurrenceId: "selected-feat",
+          targetDefinitionIds: ["POWER"],
+          field: "_BasicAttack",
+          value: "Melee",
+        },
+      ],
+    })[0]!;
+    expect(flagged.basicAttackKind).toBe("melee");
+    const before = ordinary.variants.find(
+      (variant) => variant.equipmentId === "blade",
+    )!;
+    const after = flagged.variants.find(
+      (variant) => variant.equipmentId === "blade",
+    )!;
+    expect(after.attackStat).toBe("Wisdom");
+    expect(after.attackBonus).toBe(before.attackBonus! + 2);
+    expect(after.damage).toBe("1d8+8");
+    expect(before.damage).toBe("1d8+5");
+    expect(
+      evaluatePowers({
+        ...input,
+        overlays: [
+          {
+            providerOccurrenceId: "other",
+            targetDefinitionIds: ["OTHER"],
+            field: "_BasicAttack",
+            value: "Melee",
+          },
+        ],
+      })[0]?.basicAttackKind,
+    ).toBeUndefined();
+  });
+  it("preserves direct ranged BA flags and honors an effective cleared flag", () => {
+    const power = entity("POWER", "Synthetic bolt", "Power", {
+      _BasicAttack: "Ranged",
+      "Attack Type": "Ranged 10",
+      Attack: "Wisdom vs. Reflex",
+      Hit: "1d6 damage.",
+    });
+    const input = {
+      level: 1,
+      activeDefinitionIds: ["POWER"],
+      entities: [power],
+      inventory: [],
+      stats: {},
+    };
+    expect(evaluatePowers({ ...input, overlays: [] })[0]?.basicAttackKind).toBe(
+      "ranged",
+    );
+    expect(
+      evaluatePowers({
+        ...input,
+        overlays: [
+          {
+            providerOccurrenceId: "override",
+            targetDefinitionIds: ["POWER"],
+            field: "_BasicAttack",
+            value: "",
+          },
+        ],
+      })[0]?.basicAttackKind,
+    ).toBeUndefined();
+  });
   it("shares typed bonus maxima across general and defense-specific implement channels", () => {
     const typed = (name: string, value: number) => {
       const base = combatStat(name, value);

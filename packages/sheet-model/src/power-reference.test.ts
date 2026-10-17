@@ -18,6 +18,38 @@ const entity = (id: string, type: string): ContentEntity => ({
   provenance: { sourceKey: "synthetic", sourceOrdinal: 0 },
 });
 describe("universal power reference provenance", () => {
+  it("retains direct BA flags in cached sheets without exposing the internal field", () => {
+    const power = {
+      ...entity("ba", "Power"),
+      specifics: [
+        {
+          name: "_BasicAttack",
+          value: " Melee ",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+    const snapshot = {
+      details: {},
+      abilities: {},
+      stats: {},
+      selectedRules: [],
+      textStrings: {},
+      loot: [],
+      levelCount: 1,
+      source: "legacy-cache" as const,
+      powers: [{ id: "ba", name: "Special strike", weapons: [] }],
+    };
+    const card = buildSheetModel(snapshot, [power]).powers[0]!;
+    expect(card.basicAttackKind).toBe("melee");
+    expect(card.fields.some((field) => field.label === "_BasicAttack")).toBe(
+      false,
+    );
+    expect(
+      buildSheetModel(snapshot).powers[0]?.basicAttackKind,
+    ).toBeUndefined();
+  });
   it("projects an authored Channel Divinity field without inventing a keyword or relying on names", () => {
     const power = {
       ...entity("shared", "Power"),

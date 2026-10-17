@@ -1573,6 +1573,103 @@ describe("real-data sheet overview", () => {
     expect(summary).not.toContain("vs AC");
     expect(variants).toHaveLength(3);
   });
+  it("lists flagged owned powers once by power name using an eligible equipped calculation", () => {
+    const variant = (
+      id: string,
+      equipped: boolean,
+      hand: "main" | "off",
+      attack: string,
+    ) => ({
+      id,
+      equipped,
+      hand,
+      equipmentName: `${id} weapon`,
+      basicAttackTypes: ["melee" as const],
+      attack,
+      damage: "1d8 + 5",
+    });
+    const flagged: SheetCard = {
+      id: "flagged",
+      kind: "power",
+      name: "Wisdom strike",
+      basicAttackKind: "melee",
+      keywords: "Weapon",
+      fields: [],
+      variants: [
+        variant("inventory", false, "main", "+30 vs AC"),
+        variant("off", true, "off", "+20 vs AC"),
+        variant("main", true, "main", "+12 vs AC"),
+      ],
+    };
+    const ranged: SheetCard = {
+      id: "bolt",
+      kind: "power",
+      name: "Divine bolt",
+      basicAttackKind: "ranged",
+      keywords: "Implement",
+      fields: [],
+      variants: [
+        { ...variant("staff", true, "main", "+11 vs Ref"), damage: "1d6+5" },
+      ],
+    };
+    const fixture = {
+      ...model,
+      powers: [
+        flagged,
+        ranged,
+        {
+          id: "ordinary",
+          name: "Not a basic attack",
+          kind: "power" as const,
+          fields: [],
+        },
+      ],
+    };
+    const rows = overviewBasicAttackRows(fixture);
+    expect(rows.map((row) => row.weapon)).toEqual([
+      "Wisdom strike",
+      "Divine bolt",
+    ]);
+    expect(rows[0]).toMatchObject({
+      attack: "+12",
+      damage: "1d8+5",
+      ranged: false,
+    });
+    expect(rows[1]).toMatchObject({ attack: "+11", ranged: true });
+    expect(overviewBasicAttackRows(fixture, 1)).toHaveLength(2);
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={fixture}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const table = html
+      .split('aria-label="Basic attack weapon calculations"')[1]!
+      .split("</table>")[0]!;
+    expect(table).toContain("Weapon / power");
+    expect(table).not.toContain("main weapon");
+    expect(table).toContain("Wisdom strike");
+    const unresolved = overviewBasicAttackRows({
+      ...model,
+      powers: [
+        {
+          ...flagged,
+          variants: [
+            { ...flagged.variants![0]!, basicAttackTypes: ["ranged"] },
+          ],
+        },
+      ],
+    });
+    expect(unresolved[0]).toMatchObject({
+      weapon: "Wisdom strike",
+      attack: "—",
+      damage: "—",
+    });
+  });
   it("filters weapon capabilities and sorts globally by attack then average damage", () => {
     const variants = [
       {

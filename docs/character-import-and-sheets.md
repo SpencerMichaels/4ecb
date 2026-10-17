@@ -365,6 +365,25 @@ names would otherwise become identical (case-insensitive); those variants retain
 their annotations for disambiguation. Immediate interrupts use Lucide `trending-up`
 everywhere the shared action icon appears.
 
+Basic Attacks includes owned powers whose effective `_BasicAttack` field is
+Melee or Ranged, including active feat overlays, as well as the ordinary basic
+attacks. The internal flag is typed metadata, never a printed property. Each
+flagged nonstandard power gets one row labelled only by its power name, using
+an eligible equipped calculation (main hand first, then other equipped, then
+the highest-ranked available variant). Ordinary basic attacks retain their
+weapon alternatives. Weapon compatibility filtering does not reject an
+implement spell merely because its implement can also be a melee weapon.
+The power keeps its authored attack ability, damage and other rules; the table
+does not turn it into the Strength-based ordinary MBA. Native basic-specific
+attack/damage channels also recognize the effective flag. Full riders and
+alternative weapon calculations remain on the power card.
+
+Cached-only recovery sheets recognize direct authored BA flags but do not guess
+feat-generated overlays from prose or selected feat names. Full evaluated sheets
+use active rule overlays, so deselecting a granting feat removes eligibility.
+Prose-only or conditional permissions without a flag are not automatically
+promoted; the full authored power/feat description remains available.
+
 Channel Divinity members are recognized from an authored Channel Divinity field
 or keyword, projected as shared-usage metadata through both model paths. A group
 occupies the earliest member's place in normal encounter ordering, retains each

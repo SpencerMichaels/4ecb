@@ -2090,6 +2090,21 @@ a specific Channel Divinity field even when their Keywords contain only Divine;
 recognition must preserve that authored distinction rather than add a fake
 keyword or infer shared usage from a power's name.
 
+### Basic-attack alternatives (2026-10-16)
+
+Status: accepted.
+
+Owned powers with an effective authored `_BasicAttack` value of Melee/Ranged
+join the summary Basic Attacks table. Keep power eligibility separate from
+equipment `basicAttackTypes`: a staff can deliver a ranged implement power even
+though the physical staff is a melee weapon. Each nonstandard BA power is
+labelled by its power name alone and uses one eligible equipped/main-hand-first
+calculation, falling back to the best available variant. Ordinary basic attacks
+retain multiple weapon rows. Preserve the power's own ability/damage; native
+basic-specific bonus channels recognize the effective flag after overlays.
+This is metadata-driven, not a Power of Skill name special case or prose parser.
+Cached recovery does not fabricate feat overlays absent authoritative evaluation.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

@@ -69,6 +69,7 @@ export interface SheetCard {
   readonly universal?: boolean;
   /** Authored shared encounter allowance; not inferred from the power name. */
   readonly sharedUsage?: "Channel Divinity";
+  readonly basicAttackKind?: "melee" | "ranged";
   readonly flavor?: string;
   readonly prerequisites?: string;
   readonly description?: string;
@@ -830,6 +831,9 @@ function evaluatedPowerCards(
       id: power.definitionId,
       kind: "power",
       name: power.name,
+      ...(power.basicAttackKind === undefined
+        ? {}
+        : { basicAttackKind: power.basicAttackKind }),
       ...(power.usage === undefined ? {} : { usage: power.usage }),
       ...(power.actionType === undefined
         ? {}
@@ -927,10 +931,17 @@ function powerCard(
         : {}),
     }),
   );
+  const rawBasic = entity?.specifics
+    .find((field) => field.name.trim().toLowerCase() === "_basicattack")
+    ?.value.trim()
+    .toLowerCase();
   return {
     ...(power.id === undefined ? {} : { id: power.id }),
     kind: "power",
     name: power.name,
+    ...(rawBasic === "melee" || rawBasic === "ranged"
+      ? { basicAttackKind: rawBasic }
+      : {}),
     ...(power.usage === undefined ? {} : { usage: power.usage }),
     ...(power.actionType === undefined ? {} : { actionType: power.actionType }),
     ...(entity?.specifics.find((field) => field.name === "Keywords")?.value ===

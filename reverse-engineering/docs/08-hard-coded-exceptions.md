@@ -119,6 +119,17 @@ training feats. The modern projection consumes those evaluated channels rather
 than adding a second property-name-derived bonus. Descriptive property records
 alone are not sufficient evidence of an executable contribution.
 
+Basic-attack eligibility is explicit metadata, including feat-generated field
+overlays: local Power of Skill definitions modify associated powers' hidden
+`_BasicAttack` field to Melee/Ranged. Recovered `D20RulesEngine.IsBasicAttack`
+(`-Module-.cs`, around 34377) accepts the ordinary basic attacks or a nonempty
+workspace-resolved field. `BuildKeywordSet` (around 25801) then inserts melee
+basic/ranged basic, which feeds the conjunctive `CalcKeywords` path above.
+The modern evaluator must therefore consume the effective field after active
+overlays for both eligibility and basic-specific attack/damage channels; reading
+only the raw authored field misses feat-granted eligibility. This does not
+replace the power's own ability/damage expression with the generic MBA formula.
+
 Native power math includes special handling for:
 
 - weapon versus implement attacks and special attack-stat selection;
