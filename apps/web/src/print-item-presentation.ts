@@ -47,7 +47,12 @@ export function printItemPresentation(card: SheetCard) {
     ["Proficiency", proficiency?.trim().replace(/^(\d+)$/, "+$1")],
     ["Group", field("Group")],
     ["Range", field("Range")],
-    ["AC bonus", field("Armor Bonus", "AC Bonus")],
+    [
+      "AC bonus",
+      field("Armor Bonus", "AC Bonus")
+        ?.trim()
+        .replace(/^(\d+)$/, "+$1"),
+    ],
     ["Check penalty", field("Check")],
     ["Speed penalty", field("Speed")],
     ["Critical", criticalFormula],

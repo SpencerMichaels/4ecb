@@ -169,7 +169,7 @@ describe("printed item presentation", () => {
         ),
       );
       expect(view.icon).toBe("shield");
-      expect(view.stats.map(({ value }) => value)).toEqual(["8", "-2", "-1"]);
+      expect(view.stats.map(({ value }) => value)).toEqual(["+8", "-2", "-1"]);
       expect(view.weaponProperties).toEqual([]);
       expect(view.rules).toEqual([
         { label: "Property", value: "Retained property." },
