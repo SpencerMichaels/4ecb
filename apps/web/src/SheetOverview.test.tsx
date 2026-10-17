@@ -185,7 +185,10 @@ describe("real-data sheet overview", () => {
     expect(notes).toContain('class="ov-page-number">3</span>');
     expect(notes).toContain(">Treasure</h3>");
     expect(notes).toContain(">XP</h3>");
-    expect(notes).not.toContain("Date");
+    const notesHeader = notes.split("</h3>")[0]!;
+    expect(notesHeader).toContain(
+      'class="ov-panel-note"><span class="ov-session-date"><strong>Date</strong><i></i>',
+    );
     expect(html).not.toContain(">Treasure &amp; consumables");
   });
   it("renders small stocks and larger count boxes in the right-hand consumables pane", () => {

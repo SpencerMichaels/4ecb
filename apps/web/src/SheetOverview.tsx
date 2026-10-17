@@ -1326,6 +1326,12 @@ function SessionNotes({
           title="Session notes"
           icon="edit"
           className="ov-session-notes-main"
+          headerNote={
+            <span className="ov-session-date">
+              <strong>Date</strong>
+              <i />
+            </span>
+          }
         >
           <div className="sp-writing-lines" />
         </Panel>

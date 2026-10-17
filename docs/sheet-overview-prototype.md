@@ -8,8 +8,9 @@ The consumable item-card tracker trial was reverted after owner feedback.
 Stock tracking belongs on the scratchpad instead: Consumables follows Daily
 powers in the right column. A separate ruled Session Notes page follows the
 scratchpad and its usage continuations, before character references. Notes gets
-the larger upper area; Treasure and XP panes occupy the lower area. No date
-field appears on either page. Continuous numbering and the standard footer apply.
+the larger upper area; Treasure and XP panes occupy the lower area. A Date field
+appears only at the right of the Session notes pane header, not on the combat
+scratchpad. Continuous numbering and the standard footer apply.
 
 The descriptive reference section is titled **Character Profile**. It contains
 Character Details and populated freeform sections such as Appearance, Traits,
@@ -37,7 +38,8 @@ Running information uses footers consistently, including the scratchpad and
 optional summary/power-usage continuations; none has a running top header.
 Overview footers consistently show character identity at left, the page's section
 title centered (including Character Summary on page 1), and page number at right.
-There is no Date field; sessions may span multiple dates. The
+A Date field occupies the right side of the Session notes pane header, using a
+1.25in × 0.25in rounded writing box and bold 10pt label. The
 first-page identity header is unchanged. Surge rows fill to measured capacity
 before wrapping; only overflow goes to the next row, with equal-sized boxes
 across rows rather than balancing row lengths.

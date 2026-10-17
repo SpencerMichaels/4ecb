@@ -2,6 +2,16 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Notes date follow-up (2026-10-16): Date returns only at the right of the separate
+Session notes pane header, reusing the 1.25in × 0.25in rounded handwriting box
+and bold 10pt label. The combat scratchpad remains Date/XP-free. The header-note
+slot supplies right alignment without a separate row. Renderer and print
+assertions now distinguish the notes-page Date from the intentionally absent
+scratchpad field. No page order, numbering or persisted character data changes.
+Verification: all 67 focused overview tests and web typecheck pass through the
+project Nix environment. The full print/milestone suite was not rerun for this
+small header edit; M5.6's existing blocker is unchanged.
+
 Shared encounter/session-notes follow-up (2026-10-16): Channel Divinity now
 recognizes the authored Channel Divinity specific field, not just a keyword.
 Inspection of the private original definitions for Ingi's two Channel Divinity

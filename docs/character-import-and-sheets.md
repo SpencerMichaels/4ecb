@@ -344,8 +344,9 @@ See `sheet-overview-prototype.md` for the approved geography and review limits.
 The scratchpad has no Date or XP fields. A separate ruled Session Notes page
 follows the scratchpad and any usage continuations, before character references.
 It reserves most of the page for notes, with Treasure and XP writing panes below;
-recorded XP, including zero, appears in the XP pane header when present. There is
-no date field. Its footer and continuous numbering match the rest of the sheet.
+recorded XP, including zero, appears in the XP pane header when present. There is a
+Date field on the right side of the Session notes header only. Its footer and
+continuous numbering match the rest of the sheet.
 Encounter powers occupy the scratchpad's wider left column; Daily
 powers and then Consumables stack independently on the right. Consumables use
 the item-card gold header, all owned inventory (including hidden-card items),
