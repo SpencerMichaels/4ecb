@@ -219,11 +219,10 @@ The production scratchpad is a paper working surface, not another reference
 page. Health and Conditions & temporary effects share the top row. Health has
 label-first Max HP/Bloodied/Surges/Surge HP reference cells, a numbered surge bar,
 large Current HP and smaller Temp HP writing boxes, three death-save skulls and
-three hollow action-point circles. Health's four reference cells pair icons with the large numbers below
-their labels: heart, droplets, zap and heart-plus respectively. Numbers are
-centered independently with icons immediately to their left (0.04in gap), not
-at the cell edge. Icons inherit
-the cell ink, are slightly smaller than the numbers, and introduce no new row.
+three hollow action-point circles. Health's four reference cells pair icons with
+their labels: heart, droplets, zap and heart-plus respectively. The icon/label
+pairs are centered above the large centered numbers, with a 0.04in gap between
+each 9pt icon and its label. Icons inherit the cell ink and introduce no new row.
 There is no milestone tracker or running
 header; a consistent identity/section/page footer matches the other pages.
 Date is omitted; XP and ruled session/treasure notes have their own following
