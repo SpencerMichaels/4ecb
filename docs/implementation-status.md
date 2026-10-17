@@ -2,6 +2,34 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Shared encounter/session-notes follow-up (2026-10-16): Channel Divinity now
+recognizes the authored Channel Divinity specific field, not just a keyword.
+Inspection of the private original definitions for Ingi's two Channel Divinity
+powers confirms Keywords contains only Divine while a separate field states the
+shared limit; this explains the prior recognition failure. Both sheet-model
+paths project explicit `sharedUsage` metadata without inventing a keyword.
+Recognized members share one indivisible encounter row/box set, placed at the
+earliest member's normal sorted position (owner-selected option 2). Within it,
+powers sort by action then alphabetically, retaining action icons; utility type
+does not override that internal alphabetical tie-breaker. Name-only matches
+remain excluded.
+
+Date and XP are removed from the combat scratchpad. A separate Session Notes
+page follows it and any usage continuations, before references/cards. Most of
+the page is ruled notes space; the lower row has Treasure and XP panes. Recorded
+XP (including zero) is retained in the XP header when present. No Date field is
+added. The page uses standard pane styling, identity footer and continuous
+numbering; it is paper-only, not persisted session/XP state.
+Verification: 188 focused overview/pagination/sheet-model tests, web and
+sheet-model typechecks, focused lint and production/PWA build pass. All eight
+Chromium/Firefox Letter/A4 color/monochrome overview print cases pass with no
+overflow, including notes-page ruled-area/clearance/order checks and shifted
+continuous numbering. Notes and scratchpad previews visually inspected.
+Commands: focused `vitest run`, package `typecheck`, `eslint`, web `build`, and
+`node scripts/check-print.mjs --overview-only --include-card-pages
+--firefox-scratchpad --reference-preview --scratchpad-preview`, through project
+Nix. No full milestone/dense-card gate was rerun; M5.6 remains open.
+
 Scratchpad visual follow-up (2026-10-16): immediate interrupts now use Lucide
 `trending-up`. Consumables uses the 20% item-gold/white combat-subheading tint
 rather than the saturated title color; stock boxes/count controls right-align.

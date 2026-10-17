@@ -341,8 +341,12 @@ pages retain their source warning. The React renderer paginates prose, not rules
 calculations. Power/item physical cards retain their separate accepted layout.
 See `sheet-overview-prototype.md` for the approved geography and review limits.
 
-The scratchpad has a compact Date/XP row rather than generic Session notes or
-Treasure writing panes. Encounter powers occupy the wider left column; Daily
+The scratchpad has no Date or XP fields. A separate ruled Session Notes page
+follows the scratchpad and any usage continuations, before character references.
+It reserves most of the page for notes, with Treasure and XP writing panes below;
+recorded XP, including zero, appears in the XP pane header when present. There is
+no date field. Its footer and continuous numbering match the rest of the sheet.
+Encounter powers occupy the scratchpad's wider left column; Daily
 powers and then Consumables stack independently on the right. Consumables use
 the item-card gold header, all owned inventory (including hidden-card items),
 and authored item/category or consumable-power metadata, never name guessing.
@@ -359,6 +363,13 @@ items. Parenthetical name annotations are omitted unless two distinct owned
 names would otherwise become identical (case-insensitive); those variants retain
 their annotations for disambiguation. Immediate interrupts use Lucide `trending-up`
 everywhere the shared action icon appears.
+
+Channel Divinity members are recognized from an authored Channel Divinity field
+or keyword, projected as shared-usage metadata through both model paths. A group
+occupies the earliest member's place in normal encounter ordering, retains each
+member's action icon, and shares one set of encounter boxes. Within the group,
+members sort by action hierarchy then alphabetically, without the general
+attack/utility tie-breaker. Power names alone never establish shared usage.
 
 The summary's optional Defensive traits table groups signed `resist:*` totals
 (positive resistance, negative vulnerability), conditional resistance/save

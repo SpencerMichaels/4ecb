@@ -1381,8 +1381,7 @@ body:has(.sp-prototype) {
   gap: 0.15in;
   align-items: start;
 }
-.ov-scratch-powers,
-.ov-scratch-session {
+.ov-scratch-powers {
   margin-top: 0.15in;
 }
 .ov-scratch-upper {
@@ -1531,28 +1530,31 @@ body:has(.sp-prototype) {
   height: 0.42in;
   border: 1px solid #d5dadd;
 }
-.ov-scratch-session {
-  align-items: center;
+.ov-session-notes-page {
+  height: calc(var(--sp-page-height) - 0.8in);
+  display: grid;
+  grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 0.15in;
 }
-.ov-scratch-session .ov-session-date {
-  justify-content: flex-start;
+.ov-session-ledgers {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 0.15in;
+  min-height: 0;
 }
-.ov-scratch-session .sp-xp-tracker {
+.ov-session-notes-page .sp-panel,
+.ov-session-notes-page .sp-panel-content {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  min-height: 0.35in;
-  flex-shrink: 0;
-  border: 1px solid var(--sp-border);
-  border-radius: 3px;
-  padding: 0.045in;
-  margin-top: 0;
-  color: var(--sp-muted);
-  font-size: 8.5pt;
+  flex-direction: column;
+  min-height: 0;
 }
-.ov-recorded-xp {
-  font-size: 7.5pt;
-  overflow-wrap: anywhere;
+.ov-session-notes-page .sp-panel-content,
+.ov-session-notes-page .sp-writing-lines {
+  flex: 1;
+}
+.ov-session-notes-page .sp-panel > h3 {
+  color: #3e5f7c;
+  background: #eaf0f6;
 }
 .ov-tracking-caption {
   margin-top: 0.07in !important;

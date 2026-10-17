@@ -161,7 +161,7 @@ describe("real-data sheet overview", () => {
     expect(html.match(/class="ov-inventory-weight"/g)).toHaveLength(2);
     expect(html).toContain('class="ov-inventory-encumbrance"');
   });
-  it("keeps Date and XP compact without blank-writing panes", () => {
+  it("keeps Date and XP off the scratchpad and adds a ruled notes page before references", () => {
     const html = renderToStaticMarkup(
       <SheetOverview
         model={model}
@@ -172,12 +172,20 @@ describe("real-data sheet overview", () => {
         blankHP={false}
       />,
     );
-    const session = html
-      .split('class="ov-scratch-layout ov-scratch-session"')[1]!
-      .split('class="ov-power-trackers')[0]!;
-    expect(session).toContain('class="ov-session-date"');
-    expect(session).toContain('class="sp-xp-tracker"');
-    expect(html).not.toContain(">Session notes");
+    const scratchpad = html
+      .split('aria-label="Play scratchpad"')[1]!
+      .split("</article>")[0]!;
+    expect(scratchpad).not.toContain("ov-scratch-session");
+    expect(scratchpad).not.toContain("Date");
+    expect(scratchpad).not.toContain("XP");
+    const notes = html
+      .split('aria-label="Session notes"')[1]!
+      .split("</article>")[0]!;
+    expect(notes.match(/class="sp-writing-lines"/g)).toHaveLength(3);
+    expect(notes).toContain('class="ov-page-number">3</span>');
+    expect(notes).toContain(">Treasure</h3>");
+    expect(notes).toContain(">XP</h3>");
+    expect(notes).not.toContain("Date");
     expect(html).not.toContain(">Treasure &amp; consumables");
   });
   it("renders small stocks and larger count boxes in the right-hand consumables pane", () => {
@@ -230,7 +238,7 @@ describe("real-data sheet overview", () => {
     expect(right).toContain("/ 20");
   });
   it.each(["12500", "0"])(
-    "shows recorded XP %s in the scratchpad box, not identity or a standalone reference card",
+    "shows recorded XP %s on the notes page, not summary or scratchpad",
     (value) => {
       const fixture = {
         ...model,
@@ -257,10 +265,11 @@ describe("real-data sheet overview", () => {
         .split('class="ov-identity-details"')[1]!
         .split("</section>")[0]!;
       expect(identity).not.toContain("<dt>XP</dt>");
-      expect(html).toContain(
-        `class="ov-recorded-xp">Recorded: ${value}</small>`,
-      );
-      expect(html).toContain("<span>XP</span>");
+      const notes = html
+        .split('aria-label="Session notes"')[1]!
+        .split("</article>")[0]!;
+      expect(notes).toContain(`Recorded: ${value}`);
+      expect(notes).toContain(">XP<span");
     },
   );
   it("moves reference-page running identity and title into a three-part footer", () => {
@@ -909,7 +918,7 @@ describe("real-data sheet overview", () => {
         {(firstPage) => <span data-card-start={firstPage} />}
       </SheetOverview>,
     );
-    expect(html).toContain('data-card-start="3"');
+    expect(html).toContain('data-card-start="4"');
   });
   it("provides ten encounter tracking marks per power row", () => {
     const html = renderToStaticMarkup(
@@ -1005,15 +1014,9 @@ describe("real-data sheet overview", () => {
     expect(footer).toContain("Ingi · Dwarf Paladin 7");
     expect(footer).toContain("<span>Scratchpad</span>");
     expect(footer).not.toContain("Date");
-    const notesHeader = html.split(
-      'class="ov-scratch-layout ov-scratch-session"',
-    )[1]!;
-    expect(notesHeader).toContain(
-      'class="ov-session-date"><strong>Date</strong><i></i>',
-    );
     expect(footer).toContain('class="ov-page-number">2</span>');
     expect(html).not.toContain('class="sp-running-header');
-    expect(html).toContain("ov-scratch-session");
+    expect(html).not.toContain("ov-scratch-session");
   });
   it("matches scratchpad health reference values to the four summary cells", () => {
     const html = renderToStaticMarkup(
@@ -1040,9 +1043,6 @@ describe("real-data sheet overview", () => {
       .split("</div>")[0]!;
     expect(ap.match(/lucide-circle/g)).toHaveLength(3);
     expect(ap).not.toContain("<i");
-    const xp = html.split('class="sp-xp-tracker"')[1]!.split("</div>")[0]!;
-    expect(xp).toContain("<span>XP</span>");
-    expect(xp).not.toContain("<i");
     const death = html.split('class="sp-death-saves"')[1]!.split("</div>")[0]!;
     expect(death.indexOf("lucide-skull")).toBeLessThan(
       death.indexOf("Death saves"),
@@ -2346,9 +2346,7 @@ describe("real-data sheet overview", () => {
     expect(footer).toContain("<span>Scratchpad</span>");
     expect(footer).not.toContain("Character reference");
     expect(scratchpad).toContain('<th scope="col">Ends</th>');
-    expect(scratchpad).toContain(
-      'class="ov-scratch-layout ov-scratch-session"',
-    );
+    expect(scratchpad).not.toContain("ov-scratch-session");
     expect(scratchpad).not.toContain(">Session notes");
     expect(scratchpad).not.toContain(">Reminders</h3>");
     expect(scratchpad).not.toContain(">Quick reference</h3>");
@@ -2400,6 +2398,14 @@ describe("real-data sheet overview", () => {
           fields: [],
         },
         {
+          id: "earlier",
+          name: "A normal standard",
+          kind: "power" as const,
+          usage: "Encounter",
+          actionType: "Standard Action",
+          fields: [],
+        },
+        {
           id: "ordinary",
           name: "Ordinary power",
           kind: "power" as const,
@@ -2409,12 +2415,26 @@ describe("real-data sheet overview", () => {
         },
         {
           id: "cd-free",
-          name: "Free choice",
+          name: "Z free choice",
           kind: "power" as const,
-          keywords: "Channel Divinity, Divine",
+          keywords: "Divine",
           usage: "Encounter",
           actionType: "Free Action",
-          fields: [],
+          fields: [
+            {
+              label: "Channel Divinity",
+              value: "One shared use per encounter.",
+            },
+          ],
+        },
+        {
+          id: "cd-utility",
+          name: "A free choice",
+          kind: "power" as const,
+          sharedUsage: "Channel Divinity" as const,
+          usage: "Encounter",
+          actionType: "Free Action",
+          fields: [{ label: "Power Type", value: "Utility" }],
         },
       ],
     };
@@ -2435,7 +2455,18 @@ describe("real-data sheet overview", () => {
       .split('data-tracking-id="Channel Divinity"')[1]!
       .split("</tr>")[0]!;
     expect(group).toContain("Standard choice");
-    expect(group).toContain("Free choice");
+    expect(group).toContain("Z free choice");
+    expect(group.indexOf("Standard choice")).toBeLessThan(
+      group.indexOf("A free choice"),
+    );
+    expect(group.indexOf("A free choice")).toBeLessThan(
+      group.indexOf("Z free choice"),
+    );
+    expect(
+      [...scratchpad.matchAll(/data-tracking-id="([^"]+)"/g)].map(
+        (match) => match[1],
+      ),
+    ).toEqual(["earlier", "Channel Divinity", "ordinary"]);
     expect(group.match(/class="ov-encounter-box"/g)).toHaveLength(10);
     expect(scratchpad).not.toContain('data-tracking-id="cd-free"');
     expect(scratchpad).not.toContain('data-tracking-id="cd-standard"');

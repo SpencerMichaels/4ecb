@@ -2057,7 +2057,7 @@ name-only corpus joins; retain missing-rule/source boundaries explicitly.
 Model-derived ability checks and training do not create a second React evaluator.
 Inventory retains explicit slots and hidden-card items; unknown slots are labelled.
 
-Channel Divinity's explicit keyword establishes its scratchpad grouping. Other
+Channel Divinity's explicit authored field or keyword establishes its scratchpad grouping. Other
 shared allowances must have comparable evidence before grouping. Reminders reuse
 authored conditional/ally-facing class/racial/feat text, equipped item properties
 and existing Additional Effects, prioritizing ally-facing entries. This display
@@ -2072,13 +2072,23 @@ not relax, the existing dense physical-card overflow assertion.
 Scratchpad stock-tracking feedback (2026-10-16): generic Session notes and
 Treasure writing panes are removed in favor of owned Consumables below Daily
 powers in the right column, independent of Encounter powers on the left. Date
-and XP retain a compact row. Small stocks use power-tracking boxes and larger stacks a count
+is omitted; XP moves to a separate ruled Session Notes page after the scratchpad
+and any usage continuations, with Session notes, Treasure and XP panes. This
+page shares continuous numbering and the standard footer. Small stocks use power-tracking boxes and larger stacks a count
 box; classification follows authored inventory metadata, not names or the
 item-card visibility checkbox. Item cards remain stock-tracker-free after the
 rejected bottom-strip trial. All three tracking streams use measured pagination.
 Consumables retain ordinary pane borders, with muted item-card gold only in the header,
 and use shared item-card icons. Parentheticals are suppressed unless different
 owned names would collide without them.
+
+Shared-use placement (2026-10-16): Channel Divinity stays in the encounter table
+at its earliest sorted member's position (owner-selected option 2), not in a
+separate subsection. Each member retains its action icon; all share one set of
+boxes. Members sort by action then alphabetically. The original definitions use
+a specific Channel Divinity field even when their Keywords contain only Divine;
+recognition must preserve that authored distinction rather than add a fake
+keyword or infer shared usage from a power's name.
 
 ## Deferred decisions and decision points
 

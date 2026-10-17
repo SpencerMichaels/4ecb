@@ -1056,7 +1056,13 @@ export function overviewTrackingRows(
     )
       ? { utility: true }
       : {}),
-    ...(/(?:^|,)\s*Channel Divinity\s*(?:,|$)/i.test(power.keywords ?? "")
+    ...(power.sharedUsage === "Channel Divinity" ||
+    power.fields.some(
+      (field) =>
+        field.label.trim().toLowerCase() === "channel divinity" &&
+        field.value.trim().length > 0,
+    ) ||
+    /(?:^|,)\s*Channel Divinity\s*(?:,|$)/i.test(power.keywords ?? "")
       ? { group: "Channel Divinity" }
       : {}),
   }));
@@ -1112,7 +1118,11 @@ function usageGroups(rows: readonly TrackingRow[]): UsageGroup[] {
     if (existing)
       groups[groups.indexOf(existing)] = {
         ...existing,
-        powers: [...existing.powers, row],
+        powers: [...existing.powers, row].sort(
+          (a, b) =>
+            powerActionRank(a.action) - powerActionRank(b.action) ||
+            a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+        ),
       };
     else
       groups.push({
@@ -1284,22 +1294,55 @@ function TrackingPanels({
     </div>
   );
 }
-function ScratchpadSession({ recordedXP }: { recordedXP: string | undefined }) {
+function SessionNotes({
+  model,
+  name,
+  page,
+}: {
+  model: CharacterSheetModel;
+  name: string;
+  page: number;
+}) {
+  const xp = model.identity
+    .find((entry) => entry.label === "Experience")
+    ?.value?.trim();
   return (
-    <div className="ov-scratch-layout ov-scratch-session">
-      <div className="ov-session-date">
-        <strong>Date</strong>
-        <i />
+    <Paper
+      name={name}
+      title="Session notes"
+      page={page}
+      source={model.source}
+      footerIdentity={["Race", "Class", "Level"]
+        .flatMap((label) =>
+          model.identity
+            .filter((entry) => entry.label === label)
+            .map((entry) => entry.value),
+        )
+        .join(" ")}
+      footerTitle="Session Notes"
+    >
+      <div className="ov-session-notes-page">
+        <Panel
+          title="Session notes"
+          icon="edit"
+          className="ov-session-notes-main"
+        >
+          <div className="sp-writing-lines" />
+        </Panel>
+        <div className="ov-session-ledgers">
+          <Panel title="Treasure" icon="circle-dollar-sign">
+            <div className="sp-writing-lines" />
+          </Panel>
+          <Panel
+            title="XP"
+            icon="favorite"
+            headerNote={xp ? `Recorded: ${xp}` : undefined}
+          >
+            <div className="sp-writing-lines" />
+          </Panel>
+        </div>
       </div>
-      <div className="sp-xp-tracker">
-        <span>XP</span>
-        {recordedXP?.trim() ? (
-          <small className="ov-recorded-xp">
-            Recorded: {recordedXP.trim()}
-          </small>
-        ) : null}
-      </div>
-    </div>
+    </Paper>
   );
 }
 function Scratchpad({
@@ -1519,11 +1562,6 @@ function Scratchpad({
             </Panel>
           </div>
         </div>
-        <ScratchpadSession
-          recordedXP={
-            model.identity.find((entry) => entry.label === "Experience")?.value
-          }
-        />
         <div
           className="ov-power-trackers sp-column ov-scratch-powers"
           ref={regionRef}
@@ -3376,17 +3414,22 @@ export function SheetOverview({
           startPage={2 + continuationPages}
           onPageCount={setScratchpadPages}
         />
+        <SessionNotes
+          model={model}
+          name={name}
+          page={2 + continuationPages + scratchpadPages}
+        />
       </div>
       <div className={overviewClass}>
         <Details
           model={model}
           name={name}
-          startPage={2 + continuationPages + scratchpadPages}
+          startPage={3 + continuationPages + scratchpadPages}
           onPageCount={setDetailsPages}
         />
       </div>
       {typeof children === "function"
-        ? children(2 + continuationPages + scratchpadPages + detailsPages)
+        ? children(3 + continuationPages + scratchpadPages + detailsPages)
         : children}
     </>
   );

@@ -328,6 +328,10 @@ try {
           '.sheet-overview > .ov-paper[aria-label="Character summary"]',
         ],
         [
+          "session-notes",
+          '.sheet-overview > .ov-paper[aria-label="Session notes"]',
+        ],
+        [
           "features",
           '.sheet-overview > .ov-paper[aria-label="Character reference"]',
         ],
@@ -1350,7 +1354,8 @@ async function checkScratchpad(client, monochrome) {
       hpToTrackers:page.querySelector('.ov-health-trackers').getBoundingClientRect().top-page.querySelector('.sp-hp-writing').getBoundingClientRect().bottom,
       columnSplitDifference:Math.abs(page.querySelector('.ov-scratch-upper > .sp-column:last-child').getBoundingClientRect().left-page.querySelector('.sp-daily').getBoundingClientRect().left),
       encounterSquares:[...page.querySelectorAll('.ov-encounter-box')].every(e=>{const r=e.getBoundingClientRect();return Math.abs(r.width-r.height)<0.1 && r.width>=18;}),
-      notesDate:page.querySelector('.ov-scratch-session .ov-session-date') !== null,
+      scratchpadDateOrXP:page.querySelector('.ov-scratch-session, .sp-xp-tracker, .ov-session-date') !== null,
+      notesPage:(()=>{const n=document.querySelector('.sheet-overview > .ov-paper[aria-label="Session notes"]');return {ruled:n.querySelectorAll('.sp-writing-lines').length,inBounds:n.querySelector('.sp-page-content').getBoundingClientRect().bottom<=n.querySelector('.sp-page-footer').getBoundingClientRect().top-8,noDate:!n.textContent.includes('Date'),afterScratchpad:Number(n.querySelector('.ov-page-number').textContent)>Number(pages.at(-1).querySelector('.ov-page-number').textContent),notesHeight:n.querySelector('.ov-session-notes-main .sp-writing-lines').getBoundingClientRect().height,ledgerHeight:n.querySelector('.ov-session-ledgers .sp-writing-lines').getBoundingClientRect().height};})(),
       consumableIds:pages.flatMap(p=>[...p.querySelectorAll('[data-consumable-id]')].map(e=>e.dataset.consumableId)).sort(),
       expectedConsumables:[...new Set([...document.querySelectorAll('.ov-measure [data-consumable-id]')].map(e=>e.dataset.consumableId))].sort(),
       consumablesBelowDaily:page.querySelector('.ov-consumables').getBoundingClientRect().top>page.querySelector('.sp-daily').getBoundingClientRect().bottom,
@@ -1413,6 +1418,15 @@ async function checkScratchpad(client, monochrome) {
     `Scratchpad must not show an overflow warning: ${JSON.stringify(state)}`,
   );
   assert(
+    state.notesPage.ruled === 3 &&
+      state.notesPage.inBounds &&
+      state.notesPage.noDate &&
+      state.notesPage.afterScratchpad &&
+      state.notesPage.notesHeight > state.notesPage.ledgerHeight &&
+      state.notesPage.ledgerHeight > 200,
+    `Session notes must have generous ruled notes/treasure/XP areas after the scratchpad: ${JSON.stringify(state.notesPage)}`,
+  );
+  assert(
     JSON.stringify(state.actual) === JSON.stringify(state.expected),
     `Every tracking group must occur exactly once across adjacent pages: ${JSON.stringify(state)}`,
   );
@@ -1431,11 +1445,11 @@ async function checkScratchpad(client, monochrome) {
       state.hpToTrackers < 1 &&
       state.columnSplitDifference < 1 &&
       state.encounterSquares &&
-      state.notesDate &&
+      !state.scratchpadDateOrXP &&
       !state.footerDate &&
       !state.runningHeader &&
       !state.contentSession,
-    `Scratchpad must have consistent surge spacing, expanding HP boxes, aligned power columns, square encounter boxes and Date in the notes heading: ${JSON.stringify(state)}`,
+    `Scratchpad must have consistent surge spacing, expanding HP boxes, aligned power columns and square encounter boxes, without Date or XP: ${JSON.stringify(state)}`,
   );
   assert(
     !state.surgeGaps &&
@@ -1525,7 +1539,7 @@ async function checkScratchpad(client, monochrome) {
     client,
     `(() => {
     const p=document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"]');
-    return {count:p.querySelectorAll('[data-tracking-id]').length,health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,sessionTop:p.querySelector('.ov-scratch-session').getBoundingClientRect().top};
+    return {count:p.querySelectorAll('[data-tracking-id]').length,health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,powersTop:p.querySelector('.ov-scratch-powers').getBoundingClientRect().top};
   })()`,
   );
   const rule = await evaluate(
@@ -1551,7 +1565,7 @@ async function checkScratchpad(client, monochrome) {
       `(() => {
       const pages=[...document.querySelectorAll('.sheet-overview > .ov-paper')].filter(p=>['Play scratchpad','Power usage · continued'].includes(p.getAttribute('aria-label')));
       const p=pages[0];
-      return {ids:pages.flatMap(p=>[...p.querySelectorAll('[data-tracking-id]')].map(e=>e.dataset.trackingId)).sort(),consumableIds:pages.flatMap(p=>[...p.querySelectorAll('[data-consumable-id]')].map(e=>e.dataset.consumableId)).sort(),overflow:pages.some(p=>p.querySelector('.sp-page-content').getBoundingClientRect().bottom>p.querySelector('.sp-page-footer').getBoundingClientRect().top-7),geometry:pages.map(p=>({title:p.getAttribute('aria-label'),bottom:p.querySelector('.sp-page-content').getBoundingClientRect().bottom,footer:p.querySelector('.sp-page-footer').getBoundingClientRect().top,rows:p.querySelectorAll('[data-tracking-id]').length})),health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,sessionTop:p.querySelector('.ov-scratch-session').getBoundingClientRect().top};
+      return {ids:pages.flatMap(p=>[...p.querySelectorAll('[data-tracking-id]')].map(e=>e.dataset.trackingId)).sort(),consumableIds:pages.flatMap(p=>[...p.querySelectorAll('[data-consumable-id]')].map(e=>e.dataset.consumableId)).sort(),overflow:pages.some(p=>p.querySelector('.sp-page-content').getBoundingClientRect().bottom>p.querySelector('.sp-page-footer').getBoundingClientRect().top-7),geometry:pages.map(p=>({title:p.getAttribute('aria-label'),bottom:p.querySelector('.sp-page-content').getBoundingClientRect().bottom,footer:p.querySelector('.sp-page-footer').getBoundingClientRect().top,rows:p.querySelectorAll('[data-tracking-id]').length})),health:p.querySelector('.ov-scratch-health').getBoundingClientRect().top,powersTop:p.querySelector('.ov-scratch-powers').getBoundingClientRect().top};
     })()`,
     );
     assert(
@@ -1563,8 +1577,8 @@ async function checkScratchpad(client, monochrome) {
     );
     assert(
       Math.abs(stress.health - baseline.health) < 0.5 &&
-        Math.abs(stress.sessionTop - baseline.sessionTop) < 0.5,
-      `Power growth must retain health and compact Date/XP positions: ${JSON.stringify({ baseline, stress })}`,
+        Math.abs(stress.powersTop - baseline.powersTop) < 0.5,
+      `Power growth must retain health and tracking-region positions: ${JSON.stringify({ baseline, stress })}`,
     );
   } finally {
     await evaluate(

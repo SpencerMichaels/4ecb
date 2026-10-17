@@ -18,6 +18,44 @@ const entity = (id: string, type: string): ContentEntity => ({
   provenance: { sourceKey: "synthetic", sourceOrdinal: 0 },
 });
 describe("universal power reference provenance", () => {
+  it("projects an authored Channel Divinity field without inventing a keyword or relying on names", () => {
+    const power = {
+      ...entity("shared", "Power"),
+      name: "Synthetic choice",
+      specifics: [
+        { name: "Keywords", value: "Divine", extraAttributes: [], ordinal: 0 },
+        {
+          name: "Channel Divinity",
+          value: "Choose one shared power per encounter.",
+          extraAttributes: [],
+          ordinal: 1,
+        },
+      ],
+    };
+    const snapshot = {
+      details: {},
+      abilities: {},
+      stats: {},
+      selectedRules: [],
+      textStrings: {},
+      loot: [],
+      levelCount: 1,
+      source: "legacy-cache" as const,
+      powers: [
+        {
+          id: "shared",
+          name: "Synthetic choice",
+          usage: "Encounter",
+          actionType: "Minor Action",
+          weapons: [],
+        },
+      ],
+    };
+    const card = buildSheetModel(snapshot, [power]).powers[0]!;
+    expect(card.sharedUsage).toBe("Channel Divinity");
+    expect(card.keywords).toBe("Divine");
+    expect(buildSheetModel(snapshot).powers[0]?.sharedUsage).toBeUndefined();
+  });
   it("follows unconditional generic starting grants, not publication or power names", () => {
     const common = entity("common", "Power");
     const personal = entity("personal", "Power");

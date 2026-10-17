@@ -5,8 +5,11 @@ Final reference-page review and the recorded dense-card overflow gate remain;
 M5.6 stays open.
 
 The consumable item-card tracker trial was reverted after owner feedback.
-Stock tracking belongs on the scratchpad instead; a separate Consumables pane
-above Treasure/XP in the lower-right column is proposed, not implemented.
+Stock tracking belongs on the scratchpad instead: Consumables follows Daily
+powers in the right column. A separate ruled Session Notes page follows the
+scratchpad and its usage continuations, before character references. Notes gets
+the larger upper area; Treasure and XP panes occupy the lower area. No date
+field appears on either page. Continuous numbering and the standard footer apply.
 
 The descriptive reference section is titled **Character Profile**. It contains
 Character Details and populated freeform sections such as Appearance, Traits,
@@ -34,8 +37,7 @@ Running information uses footers consistently, including the scratchpad and
 optional summary/power-usage continuations; none has a running top header.
 Overview footers consistently show character identity at left, the page's section
 title centered (including Character Summary on page 1), and page number at right.
-Date appears beside a 1.25in × 0.25in handwriting box on the right of the Session notes pane
-heading, not in the footer. Measurement probes use the same geometry. The
+There is no Date field; sessions may span multiple dates. The
 first-page identity header is unchanged. Surge rows fill to measured capacity
 before wrapping; only overflow goes to the next row, with equal-sized boxes
 across rows rather than balancing row lengths.
@@ -48,12 +50,11 @@ Hidden table headers retain column semantics. Shared-use encounter groups retain
 one row; measured pagination includes the merged pane headings
 and keeps encounter/daily row measurements separate.
 
-Recorded XP is a small "Recorded: …" label inside the scratchpad's existing XP
-box, leaving room below for writing. The page-1 identity table stays at three
+Recorded XP is a small "Recorded: …" label in the separate notes page's XP pane
+header, leaving ruled room below for writing. The page-1 identity table stays at three
 rows, and XP does not create a standalone Advancement reference card/page.
-Absent XP leaves the scratchpad box blank; explicit zero remains visible.
-Session notes occupies the wider left bottom pane; Treasure & consumables is on
-the right and contains the XP box. Both panes still fill the available height.
+Absent XP leaves its pane blank; explicit zero remains visible. Notes, Treasure
+and XP use almost the full notes page, with safe footer clearance on Letter/A4.
 
 Production reference first draft is implemented for feedback: full references
 precede the existing power/item card pages. Page numbers run continuously from
@@ -214,7 +215,8 @@ label-first Max HP/Bloodied/Surges/Surge HP reference cells, a numbered surge ba
 large Current HP and smaller Temp HP writing boxes, three death-save skulls and
 three hollow action-point circles. There is no milestone tracker or running
 header; a consistent identity/section/page footer matches the other pages.
-Date and XP occupy a compact row below Health/Conditions. The former Session
+Date is omitted; XP and ruled session/treasure notes have their own following
+page. The former Session
 notes and Treasure & consumables blank-writing panes are removed (2026-10-16).
 Encounter powers occupy the wider left column below; Daily powers and a gold
 Consumables pane stack independently on the right. Consumable quantities up to
@@ -250,7 +252,7 @@ continues immediately after the scratchpad on numerically labeled pages, using
 tables measured at each page's actual column widths. Resizing restores rows when
 space returns. Oversized custom groups remain visible with an explicit warning
 rather than being discarded or made unreadably small. Health, Conditions and the
-compact Date/XP row retain their allocation when tracking lists grow.
+separate Session Notes page retain their allocation when tracking lists grow.
 
 Named weapon/implement reminder policy (2026-10-15): Named properties use explicit
 show/reference-only sets in `item-reminders.ts`, rather than trigger-word matching
@@ -517,8 +519,10 @@ The power index preserves
 levels, with absent levels explicit rather than manufactured. Item powers also
 have an index and encounter/daily tracking regardless of card visibility.
 
-Channel Divinity grouping uses its explicit power keyword, confirmed against
-the local content metadata, retaining each action icon. No other shared resource
+Channel Divinity grouping uses its explicit authored field (the local legacy
+definitions' actual encoding) or keyword, retaining each action icon and one
+shared box set. The group occupies its earliest member's normal sort position;
+members sort by action then alphabetically. No other shared resource
 is inferred from names. Reminder candidates are authored conditional/ally-facing
 class/racial/feat descriptions, equipped item properties and existing Additional
 Effects; ally-facing reminders sort first. This is a conservative display

@@ -67,6 +67,8 @@ export interface SheetCard {
   readonly referenceFields?: readonly SheetValue[];
   /** Positively identified unconditional generic starting-rule power grant. */
   readonly universal?: boolean;
+  /** Authored shared encounter allowance; not inferred from the power name. */
+  readonly sharedUsage?: "Channel Divinity";
   readonly flavor?: string;
   readonly prerequisites?: string;
   readonly description?: string;
@@ -190,13 +192,38 @@ function withPowerReferenceMetadata(
   content: readonly ContentEntity[],
 ): CharacterSheetModel {
   const universal = universalPowerDefinitionIds(content);
+  const definitions = entityMap(content);
+  const isChannelDivinity = (card: SheetCard) => {
+    const definition = card.id
+      ? definitions.get(card.id.trim().toLowerCase())
+      : undefined;
+    const fields = [
+      ...card.fields,
+      ...(definition?.specifics.map((field) => ({
+        label: field.name,
+        value: field.value,
+      })) ?? []),
+    ];
+    return (
+      /(?:^|,)\s*Channel Divinity\s*(?:,|$)/i.test(card.keywords ?? "") ||
+      fields.some(
+        (field) =>
+          field.label.trim().toLowerCase() === "channel divinity" &&
+          field.value.trim().length > 0,
+      )
+    );
+  };
   return {
     ...model,
-    powers: model.powers.map((card) =>
-      card.id && universal.has(card.id.trim().toLowerCase())
-        ? { ...card, universal: true }
-        : card,
-    ),
+    powers: model.powers.map((card) => ({
+      ...card,
+      ...(card.id && universal.has(card.id.trim().toLowerCase())
+        ? { universal: true }
+        : {}),
+      ...(isChannelDivinity(card)
+        ? { sharedUsage: "Channel Divinity" as const }
+        : {}),
+    })),
   };
 }
 
