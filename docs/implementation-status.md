@@ -1,5 +1,24 @@
 # Implementation status
 
+## M5.6 printable character sheet closure (2026-10-16)
+
+M5.6 is complete as the printable character sheet. The product owner reviewed
+the summary, scratchpad, references, power/item cards and Session Notes template
+against real characters in browser print preview and accepted them. By the same
+decision the unfinished interactive View sheet moves to M6 (mobile interface);
+the builder's Character sheet tab and the library's sheet action now open print
+preview through `#/characters/:id?preview=1`, whose back button returns to the
+previous page. The synthetic dense-card overflow assertion remains in the print
+check as an accepted known boundary, not a closure blocker.
+
+Verification: `nix develop path:. -c pnpm vitest run` (910 tests), workspace
+typecheck and lint pass. The automated print matrix (`check:print`) was not
+rerun for closure; in this environment Chromium only starts when an inherited
+`LD_LIBRARY_PATH` (alsa-lib built against a newer glibc) is unset.
+
+Remaining work: interactive View sheet (M6); invited-beta UI cleanup and hosting
+(M5.7).
+
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
 Scratchpad defenses strip (2026-10-16): Health now starts with a compact,

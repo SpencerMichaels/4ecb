@@ -309,8 +309,8 @@ All of the following must be true:
     compatibility limitations are documented.
 
 **Release characterization:** functional MVP / core builder release; designed
-Builder/Equipment closure follows in M5.5, browser View parity in M5.6, and
-invited-beta UI/deployment preparation in M5.7. Local play begins beyond parity
+Builder/Equipment closure follows in M5.5, the printable sheet in M5.6 (interactive View
+deferred to M6), and invited-beta UI/deployment preparation in M5.7. Local play begins beyond parity
 in M5.8; a lightweight stabilization pass remains staged in M9.
 
 ## M5.5 — Builder and Equipment interface closure
@@ -509,7 +509,22 @@ matrix (D063). Remaining native equipment edge cases named in D044 are visible
 compatibility limitations under the existing support contract, not hidden
 M5.5 interface blockers.
 
-## M5.6 — Refined browser View sheet
+## M5.6 — Printable character sheet
+
+**Status (2026-10-16): complete.** The product owner accepts the printable sheet:
+page-1 summary and continuations, scratchpad, character reference pages, power
+and item cards, and the Session Notes template, reviewed against real characters
+in the browser print preview. Scope was narrowed by product-owner decision: the
+interactive browser View sheet is unfinished and moves to M6, where it will be
+designed alongside the mobile interface. Until then the builder's Character
+sheet tab and the library's sheet action open print preview directly
+(`#/characters/:id?preview=1`). The synthetic dense-card overflow assertion
+(Synthetic power 01 at the 6.5 pt floor) is accepted as a known boundary for
+pathological card text rather than a closure blocker; the fixture and assertion
+are unchanged. Closure verification: all 910 workspace tests, workspace
+typecheck and lint pass through Nix, plus product-owner visual review; the
+automated print matrix was not rerun for closure. The original View-oriented
+goal and exit criteria below are retained for history and now belong to M6.
 
 **Final print audit follow-up (2026-10-16):** Implemented encumbrance in Items,
 populated Character Details at the start of Character Record (including Size,
@@ -750,6 +765,9 @@ purpose-built phone interface without requiring networking.
 ### Deliverables
 
 - Phone-first dashboard, powers, effects, equipment, and journal views.
+- The interactive (non-printable) character View sheet deferred from M5.6,
+  designed together with the mobile interface; until then sheet entry points
+  open the printable sheet's print preview.
 - Phone interaction patterns for the shared PlayState commands, cards, effects,
   resource adjustment, undo, and rest workflows established in M5.8.
 - Portable play-bundle import/export containing only character-relevant content.

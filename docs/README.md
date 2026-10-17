@@ -76,11 +76,10 @@ application's architecture.
 ## Status
 
 The reverse-engineering specification remains the compatibility evidence base.
-Milestones M1 through M5.5 are implemented and verified. M5 is the functional
-builder MVP, and M5.5 closes the designed builder, library, and Equipment
-interfaces. M5.6 is the current milestone and focuses only on the refined
-browser View sheet, bringing the application mostly to original Character
-Builder parity. M5.7 performs final UI cleanup and invited-beta hosting
+Milestones M1 through M5.6 are implemented and verified. M5 is the functional
+builder MVP, M5.5 closes the designed builder, library, and Equipment
+interfaces, and M5.6 closes the printable character sheet; the interactive
+browser View sheet is deferred to M6 alongside the mobile interface. M5.7 performs final UI cleanup and invited-beta hosting
 preparation. The beyond-parity desktop/tablet Play foundation moves to M5.8;
 M6 depends on it before adapting play to phones.
 See the [roadmap](roadmap.md) and [implementation status](implementation-status.md).
