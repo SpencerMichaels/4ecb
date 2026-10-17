@@ -21,7 +21,7 @@ export function powerActionRank(action: string): number {
 /** Character-sheet usage groups, then the same action hierarchy as power tables. */
 export function sortedPowerCards(cards: readonly SheetCard[]): SheetCard[] {
   const group = (card: SheetCard) => {
-    if (isRulesReferencePower(card)) return 5;
+    if (isRulesReferencePower(card)) return -1;
     const usage = card.usage?.trim() ?? "";
     if (/^at[- ]will\b/i.test(usage)) return card.universal ? 1 : 0;
     if (/^encounter\b/i.test(usage)) return 2;
@@ -39,9 +39,9 @@ export function sortedPowerCards(cards: readonly SheetCard[]): SheetCard[] {
   return [...cards].sort(
     (a, b) =>
       group(a) - group(b) ||
+      utility(a) - utility(b) ||
       powerActionRank(a.actionType ?? "") -
         powerActionRank(b.actionType ?? "") ||
-      utility(a) - utility(b) ||
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
   );
 }

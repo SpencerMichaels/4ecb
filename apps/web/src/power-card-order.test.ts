@@ -3,7 +3,7 @@ import type { SheetCard } from "@4ecb/sheet-model";
 import { sortedPowerCards } from "./power-card-order";
 
 describe("character-sheet power-card order", () => {
-  it("uses the power-table action hierarchy before utility and alphabetical tie-breaks", () => {
+  it("lists attacks before utilities, each by the power-table action hierarchy", () => {
     const card = (
       name: string,
       actionType: string,
@@ -30,7 +30,6 @@ describe("character-sheet power-card order", () => {
     expect(sortedPowerCards(cards).map((power) => power.name)).toEqual([
       "B standard attack",
       "Z standard attack",
-      "A standard utility",
       "A move",
       "A minor",
       "A free",
@@ -38,6 +37,7 @@ describe("character-sheet power-card order", () => {
       "A reaction",
       "B opportunity",
       "Unknown",
+      "A standard utility",
     ]);
   });
   it("orders specific at-will, universal at-will, encounter and daily, then utility and name", () => {
@@ -70,6 +70,7 @@ describe("character-sheet power-card order", () => {
     ];
     const original = [...input];
     expect(sortedPowerCards(input).map((power) => power.name)).toEqual([
+      "Rules only",
       "B personal attack",
       "Z personal attack",
       "A personal utility",
@@ -79,7 +80,6 @@ describe("character-sheet power-card order", () => {
       "A encounter utility",
       "Daily attack",
       "A daily utility",
-      "Rules only",
     ]);
     expect(input).toEqual(original);
   });

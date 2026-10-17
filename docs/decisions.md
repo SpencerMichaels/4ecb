@@ -1823,9 +1823,17 @@ bands from the usage color to Utility blue; the already-blue bottom bar remains
 unchanged and continues to name the actual At-Will, Encounter, or Daily
 frequency. Monochrome print overrides both color treatments.
 
-**Superseded (2026-10-16):** The all-blue Utility preference is removed. The
-usage-colored card with an always-blue Utility type bar already conveys both the
-usage and the Utility type, so the option no longer earned a setting.
+**Superseded (2026-10-16, corrected 2026-10-17):** The preference is removed and
+the all-blue Utility card is now the only behavior: the whole card uses Utility
+blue, and the top-right usage badge (green / red / gray) carries At-Will,
+Encounter, or Daily.
+
+**Feature cards (2026-10-17):** A power carrying an authored Rules Item (for
+example Divine Sanction, `Power Type: Feature`) is a rules reference, not a usable
+power, even when its data says `Power Usage: At-Will`. Its printed card uses
+plum (`#5e3a78`, distinct from every usage and item color) and the type bar reads **Feature**;
+feature cards sort before at-will cards. Power and item cards omit an empty
+action band or subheading instead of reserving a blank line.
 
 ### D072 — Keep Lucide after small-size icon evaluation
 

@@ -29,7 +29,7 @@ import { ActionTypeIcon } from "./ActionTypeIcon";
 import { Icon } from "./Icon";
 import { PortraitImage } from "./PortraitEditor";
 import { inventoryCategory } from "./equipment-ui";
-import { sortedPowerCards } from "./power-card-order";
+import { isRulesReferencePower, sortedPowerCards } from "./power-card-order";
 import { PrintPowerVariants } from "./PrintPowerVariants";
 import { printAdditionalEffect } from "./print-additional-effects";
 import {
@@ -425,22 +425,31 @@ function PrintPowerCard({
       !LEGACY_POWER_BODY_EXCLUDES.has(field.label.trim().toLocaleLowerCase()),
   );
   const groupedRules = groupedPrintRules(rules, attacks);
-  const usageTone = /^encounter/i.test(card.usage ?? "")
-    ? "encounter"
-    : /^daily/i.test(card.usage ?? "")
-      ? "daily"
-      : "at-will";
+  const isFeature = isRulesReferencePower(card);
+  const usageTone = isFeature
+    ? "feature"
+    : /^encounter/i.test(card.usage ?? "")
+      ? "encounter"
+      : /^daily/i.test(card.usage ?? "")
+        ? "daily"
+        : "at-will";
   const displayUsage =
     usageTone === "encounter"
       ? "Encounter"
       : usageTone === "daily"
         ? "Daily"
         : "At-Will";
-  const typeLabel = `${displayUsage}${isUtility ? " Utility" : ""} power`;
+  const hasActionBand =
+    Boolean(displayActionType) ||
+    Boolean(attackType) ||
+    sustainActions.length > 0;
+  const typeLabel = isFeature
+    ? "Feature"
+    : `${displayUsage}${isUtility ? " Utility" : ""} power`;
   return (
     <article
       ref={cardRef}
-      className={`print-reference-card print-power-card usage-${usageTone}${card.keywords?.trim() ? " has-keywords" : ""}${isUtility ? " utility-power" : ""}`}
+      className={`print-reference-card print-power-card usage-${usageTone}${card.keywords?.trim() ? " has-keywords" : ""}${isUtility ? " utility-power" : ""}${hasActionBand ? "" : " no-action-band"}`}
     >
       <header>
         <h3>
@@ -469,35 +478,35 @@ function PrintPowerCard({
           <span>{card.keywords.trim()}</span>
         </div>
       ) : null}
-      <div
-        className={`print-card-action-band${!displayActionType && !attackType && sustainActions.length === 0 ? " is-empty" : ""}`}
-      >
-        <span className="print-card-action-types">
-          <span className="print-card-action-line">
-            {showPrintTitleActionIcon && card.actionType?.trim() ? (
-              <Icon name="timer" />
-            ) : (
-              <ActionTypeIcon decorative value={card.actionType} />
-            )}
-            {displayActionType}
-          </span>
-          {sustainActions.map((action) => (
-            <span
-              className="print-card-action-line"
-              key={action}
-              aria-label={`Sustain ${action}`}
-              title={`Sustain ${action}`}
-            >
-              <Icon name="step-forward" />
-              {action}
+      {!hasActionBand ? null : (
+        <div className="print-card-action-band">
+          <span className="print-card-action-types">
+            <span className="print-card-action-line">
+              {showPrintTitleActionIcon && card.actionType?.trim() ? (
+                <Icon name="timer" />
+              ) : (
+                <ActionTypeIcon decorative value={card.actionType} />
+              )}
+              {displayActionType}
             </span>
-          ))}
-        </span>
-        <span>
-          {attackType ? <Icon name="sword" /> : null}
-          {attackType}
-        </span>
-      </div>
+            {sustainActions.map((action) => (
+              <span
+                className="print-card-action-line"
+                key={action}
+                aria-label={`Sustain ${action}`}
+                title={`Sustain ${action}`}
+              >
+                <Icon name="step-forward" />
+                {action}
+              </span>
+            ))}
+          </span>
+          <span>
+            {attackType ? <Icon name="sword" /> : null}
+            {attackType}
+          </span>
+        </div>
+      )}
       <div className="print-card-body">
         {attacks.length === 0 ? (
           <div className="print-card-leading-rules">
@@ -588,51 +597,56 @@ function PrintItemCard({
 }) {
   const cardRef = usePrintCardFit();
   const item = printItemPresentation(card);
+  const hasSubheader =
+    item.statRows.length > 0 || item.weaponProperties.length > 0;
   return (
-    <article ref={cardRef} className="print-reference-card print-item-card">
+    <article
+      ref={cardRef}
+      className={`print-reference-card print-item-card${hasSubheader ? "" : " no-subheader"}`}
+    >
       <header>
         <h3>
           <Icon name={item.icon} />
           <span>{item.name}</span>
         </h3>
       </header>
-      <div className="print-item-subheader">
-        <dl
-          className={`print-item-stats${item.weaponProperties.length > 0 ? " has-properties" : ""}`}
-        >
-          {item.statRows.map((row, rowIndex) => (
-            <div className="print-item-stat-row" key={rowIndex}>
-              {row.map(({ label, value }) => (
-                <div key={label}>
-                  <dt>
-                    {label === "Proficiency" &&
-                    row.some((stat) => stat.label === "Range")
-                      ? "Prof"
-                      : label === "Critical"
-                        ? "Crit"
-                        : label}
-                  </dt>
-                  <dd>{value}</dd>
-                </div>
-              ))}
-            </div>
-          ))}
-          {item.weaponProperties.length > 0 ? (
-            <div className="print-item-stat-row print-item-properties">
-              <div>
-                <dt>Properties</dt>
-                <dd>
-                  <Prose
-                    value={item.weaponProperties
-                      .map((field) => field.value)
-                      .join(", ")}
-                  />
-                </dd>
+      {!hasSubheader ? null : (
+        <div className="print-item-subheader">
+          <dl className="print-item-stats">
+            {item.statRows.map((row, rowIndex) => (
+              <div className="print-item-stat-row" key={rowIndex}>
+                {row.map(({ label, value }) => (
+                  <div key={label}>
+                    <dt>
+                      {label === "Proficiency" &&
+                      row.some((stat) => stat.label === "Range")
+                        ? "Prof"
+                        : label === "Critical"
+                          ? "Crit"
+                          : label}
+                    </dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
               </div>
-            </div>
-          ) : null}
-        </dl>
-      </div>
+            ))}
+            {item.weaponProperties.length > 0 ? (
+              <div className="print-item-stat-row print-item-properties">
+                <div>
+                  <dt>Properties</dt>
+                  <dd>
+                    <Prose
+                      value={item.weaponProperties
+                        .map((field) => field.value)
+                        .join(", ")}
+                    />
+                  </dd>
+                </div>
+              </div>
+            ) : null}
+          </dl>
+        </div>
+      )}
       <div className="print-card-body print-item-body">
         {item.description ? <Prose value={item.description} /> : null}
         {item.rules.map((field, index) => {

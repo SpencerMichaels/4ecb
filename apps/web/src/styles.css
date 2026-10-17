@@ -1976,6 +1976,13 @@ textarea {
 .print-power-card.has-keywords {
   grid-template-rows: auto auto auto minmax(0, 1fr) auto;
 }
+/* Cards omit an empty action band rather than reserving a blank line. */
+.print-power-card.no-action-band {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+.print-power-card.has-keywords.no-action-band {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
 .print-reference-card.is-condensed {
   --print-card-section-gap: 0;
 }
@@ -2134,12 +2141,6 @@ textarea {
   align-items: center;
   display: flex;
   gap: 0.025in;
-}
-.print-card-action-band.is-empty {
-  min-height: 0.15in;
-}
-.print-card-action-band.is-empty > span {
-  border-right: 0;
 }
 .print-card-action-band .icon {
   height: 0.1in;
@@ -2375,13 +2376,20 @@ textarea {
 .print-power-card.usage-daily {
   --card-color: #777;
 }
+/* Rules references (Power Type Feature) rather than usable powers. */
+.print-power-card.usage-feature {
+  --card-color: #5e3a78;
+}
 .print-power-card.utility-power {
-  --card-footer-color: #000080;
+  --card-color: #000080;
 }
 .print-item-card {
   --card-color: #ff8c00;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+}
+.print-item-card.no-subheader {
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
 }
 .print-item-card > header {
   background: var(--card-color);
@@ -2414,15 +2422,13 @@ textarea {
   background: color-mix(in srgb, var(--card-color) 18%, white);
   margin: 0;
 }
-.print-item-stats.has-properties {
-  border-bottom: 0;
-}
 .print-item-properties .prose-blocks,
 .print-item-properties .prose-paragraph,
 .print-item-properties h6,
 .print-item-properties p {
   font-size: inherit;
   margin: 0;
+  text-indent: 0;
 }
 .print-item-properties .prose-blocks > h6 {
   font-weight: inherit;

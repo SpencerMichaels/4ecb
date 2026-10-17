@@ -43,7 +43,7 @@ describe("print layout contract", () => {
     );
     const keywords = powerSource.indexOf('className="print-card-keyword-band"');
     expect(keywords).toBeLessThan(
-      powerSource.indexOf("className={`print-card-action-band"),
+      powerSource.indexOf('className="print-card-action-band"'),
     );
     expect(powerSource).toContain("{card.keywords?.trim() ? (");
     expect(powerSource).toContain('<Icon name="key" />');
@@ -102,13 +102,14 @@ describe("print layout contract", () => {
     expect(styles).toMatch(
       /\.print-item-stats\s*\{[^}]*border-bottom:\s*1px solid var\(--card-color\)/,
     );
+    expect(styles).not.toContain(".print-item-stats.has-properties");
     expect(styles).toMatch(
-      /\.print-item-stats\.has-properties\s*\{[^}]*border-bottom:\s*0;/,
+      /\.print-item-properties p \{[^}]*text-indent:\s*0;/,
     );
     const itemSource = sheetSource.slice(
       sheetSource.indexOf("function PrintItemCard("),
     );
-    expect(itemSource.indexOf("className={`print-item-stats")).toBeLessThan(
+    expect(itemSource.indexOf('className="print-item-stats"')).toBeLessThan(
       itemSource.indexOf(
         'className="print-item-stat-row print-item-properties"',
       ),
@@ -256,18 +257,18 @@ describe("print layout contract", () => {
       /\.print-item-body section \+ \.print-item-power,\s*\.print-item-body \.print-item-power \+ \.print-item-rule\s*\{[^}]*margin-top:\s*calc\(var\(--print-card-section-gap\) \* 2\)/,
     );
   });
-  it("preserves an empty action band without a divider or an orphan attack-type icon", () => {
-    expect(sheetSource).toContain(
-      '!displayActionType && !attackType && sustainActions.length === 0 ? " is-empty" : ""',
-    );
+  it("omits an empty action band and reflows the card rows", () => {
+    expect(sheetSource).toContain("{!hasActionBand ? null : (");
     expect(sheetSource).toContain(
       '{attackType ? <Icon name="sword" /> : null}',
     );
+    expect(sheetSource).not.toContain("&nbsp;");
+    expect(styles).not.toContain(".print-card-action-band.is-empty");
     expect(styles).toMatch(
-      /\.print-card-action-band\.is-empty\s*\{[^}]*min-height:\s*0\.15in;/,
+      /\.print-power-card\.no-action-band\s*\{[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\) auto;/,
     );
     expect(styles).toMatch(
-      /\.print-card-action-band\.is-empty > span\s*\{[^}]*border-right:\s*0;/,
+      /\.print-item-card\.no-subheader\s*\{[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\) auto auto;/,
     );
   });
   it("keeps table text the same dark color as the card body", () => {
@@ -360,8 +361,13 @@ describe("print layout contract", () => {
       /\.print-reference-card > footer\s*\{[^}]*align-items:\s*center;/,
     );
     expect(styles).toMatch(
-      /\.print-power-card\.utility-power\s*\{[\s\S]*?--card-footer-color:\s*#000080/,
+      /\.print-power-card\.utility-power\s*\{[\s\S]*?--card-color:\s*#000080/,
     );
+    expect(styles).toMatch(
+      /\.print-power-card\.usage-feature\s*\{[^}]*--card-color:\s*#5e3a78/,
+    );
+    expect(sheetSource).toContain('? "Feature"');
+    expect(sheetSource).toContain("isRulesReferencePower(card)");
     expect(styles).toMatch(
       /\.print-card-type\s*\{[\s\S]*?background:\s*var\(--card-footer-color, var\(--card-color\)\)/,
     );
@@ -402,7 +408,7 @@ describe("print layout contract", () => {
       /\.print-card-weapon-variants\s*\{[\s\S]*?padding-top:\s*var\(--print-card-section-gap\)/,
     );
     expect(sheetSource).toContain(
-      'const typeLabel = `${displayUsage}${isUtility ? " Utility" : ""} power`',
+      '`${displayUsage}${isUtility ? " Utility" : ""} power`',
     );
     expect(sheetSource).not.toContain("print-power-frequency");
     expect(sheetSource).not.toContain("print-item-frequency");
