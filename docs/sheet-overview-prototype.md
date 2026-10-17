@@ -225,8 +225,9 @@ Health has
 label-first Max HP/Bloodied/Surges/Surge HP reference cells, a numbered surge bar,
 large Current HP and smaller Temp HP writing boxes, three death-save skulls and
 three hollow action-point circles. Health's four reference cells use muted
-green (Max HP), rose (Bloodied), gold (Surges) and teal (Surge HP) backgrounds,
-with dark text and centered label/number stacks. Icons are omitted.
+green (Max HP), rose (Bloodied), gold (Surges) and blue (Surge HP) backgrounds,
+with dark text and centered label/number stacks. Icons are omitted. The defenses
+strip uses neutral gray so its grouping is not associated with blue Surge HP.
 There is no milestone tracker or running
 header; a consistent identity/section/page footer matches the other pages.
 Date is omitted; XP and ruled session/treasure notes have their own following

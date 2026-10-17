@@ -23,7 +23,10 @@ Verification: 87 focused overview/layout tests and web typecheck pass through
 Nix; no broader print/milestone gate was repeated for this styling follow-up.
 
 Scratchpad health-cell color trial (2026-10-16): Max HP/Bloodied/Surges/Surge HP
-use muted green/rose/gold/teal tints respectively, with dark readable ink.
+use muted green/rose/gold/blue tints respectively, with dark readable ink.
+The defenses strip is now neutral gray, preventing a misleading color
+association with blue Surge HP. This follows feedback that teal resembled
+Max HP, lavender resembled Bloodied, and a lone gray health cell looked out of place.
 All four icons are removed; label/number stacks remain centered, with 17pt
 values and blank-HP writing space. The connected surge bar matches Surges gold.
 Monochrome remains grayscale; page-1 groups remain unchanged. This supersedes
@@ -32,6 +35,8 @@ Verification: 87 focused overview/layout tests and the production/PWA build
 pass through Nix. The Letter/17-surge preview was rendered and visually
 inspected. Public print assertions now expect four tints (grayscale in
 monochrome) and match the surge bar/connector to the third cell, not Max HP.
+The neutral-defense/blue-Surge-HP palette follow-up passes all 18 focused
+layout tests and the production/PWA build; its Letter preview was inspected.
 No full print/milestone gate was rerun for this styling trial. M5.6 remains open.
 
 Balanced surge wrapping (2026-10-16): 18 surges is now the Letter-oriented

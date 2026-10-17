@@ -1410,6 +1410,7 @@ async function checkScratchpad(client, monochrome) {
       header:getComputedStyle(page.querySelector('.ov-scratch-health > h3')).backgroundColor,
       health:getComputedStyle(page.querySelector('.ov-scratch-health-values > div')).backgroundColor,
       healthColors:[...page.querySelectorAll('.ov-scratch-health-values > div')].map(cell=>getComputedStyle(cell).backgroundColor),
+      defenseBackground:getComputedStyle(page.querySelector('.ov-scratch-defenses')).backgroundColor,
       healthCells:page.querySelectorAll('.ov-scratch-health-values > div').length,
       deathSaveGap:page.querySelector('.sp-death-saves > span').getBoundingClientRect().left-page.querySelector('.sp-death-saves').getBoundingClientRect().left,
       deathSaveAlignment:getComputedStyle(page.querySelector('.sp-death-saves')).justifyContent,
@@ -1519,6 +1520,8 @@ async function checkScratchpad(client, monochrome) {
   assert(
     state.header ===
       (monochrome ? "rgb(238, 238, 238)" : "rgb(234, 240, 246)") &&
+      state.defenseBackground ===
+        (monochrome ? "rgb(238, 238, 238)" : "rgb(240, 241, 242)") &&
       JSON.stringify(state.healthColors) ===
         JSON.stringify(
           monochrome
@@ -1527,7 +1530,7 @@ async function checkScratchpad(client, monochrome) {
                 "rgb(232, 241, 232)",
                 "rgb(245, 231, 233)",
                 "rgb(245, 237, 218)",
-                "rgb(227, 240, 237)",
+                "rgb(231, 237, 247)",
               ],
         ),
     `Scratchpad must match the approved health tints: ${JSON.stringify(state)}`,

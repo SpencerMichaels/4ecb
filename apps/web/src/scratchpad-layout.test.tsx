@@ -26,10 +26,11 @@ describe("scratchpad measured tracking layout", () => {
       "utf8",
     );
     for (const [selector, color] of [
+      [".ov-scratch-defenses", "#f0f1f2"],
       [".ov-scratch-health-values > div", "#e8f1e8"],
       [".ov-scratch-health-values > div:nth-child(2)", "#f5e7e9"],
       [".ov-scratch-health-values > div:nth-child(3)", "#f5edda"],
-      [".ov-scratch-health-values > div:nth-child(4)", "#e3f0ed"],
+      [".ov-scratch-health-values > div:nth-child(4)", "#e7edf7"],
       [".ov-scratch-surges", "#f5edda"],
     ]) {
       const rule = styles.slice(styles.indexOf(`${selector} {`)).split("}")[0];
