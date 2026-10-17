@@ -2353,11 +2353,13 @@ function ReferenceCard({
   measure = false,
   nested = false,
   inventoryColumn = false,
+  inventoryEndRule = false,
 }: {
   entry: ReferenceEntry;
   measure?: boolean;
   nested?: boolean;
   inventoryColumn?: boolean;
+  inventoryEndRule?: boolean;
 }) {
   if (entry.currency) {
     const { currency, ...loadout } = entry;
@@ -2440,6 +2442,12 @@ function ReferenceCard({
                 measure={measure}
                 nested
                 inventoryColumn
+                inventoryEndRule={
+                  parts.at(-1)?.tableCategory === undefined ||
+                  parts.at(-1)?.tableCategory !==
+                    columns.slice(i + 1).find((column) => column.length)?.[0]
+                      ?.tableCategory
+                }
               />
             ) : (
               <div key={i} />
@@ -2543,7 +2551,7 @@ function ReferenceCard({
           <EquippedTables parts={parts} />
         ) : tables ? (
           <table
-            className={`ov-reference-table${parts[0]?.powerIndex && headers.length === 6 ? " ov-power-index-table" : ""}${entry.id.startsWith("inventory:true") ? " ov-equipped-table" : entry.id.startsWith("inventory:false") ? " ov-inventory-table" : ""}`}
+            className={`ov-reference-table${parts[0]?.powerIndex && headers.length === 6 ? " ov-power-index-table" : ""}${entry.id.startsWith("inventory:true") ? " ov-equipped-table" : entry.id.startsWith("inventory:false") ? " ov-inventory-table" : ""}${inventoryEndRule ? " has-end-rule" : ""}`}
           >
             {!inventoryColumn && headers.length > 0 ? (
               <thead>

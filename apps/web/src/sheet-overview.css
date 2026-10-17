@@ -741,6 +741,16 @@ body:has(.sp-prototype) {
   th {
   border-top: 0;
 }
+.ov-inventory-table.has-end-rule > tbody:last-of-type > tr:last-child > td {
+  border-bottom: 1px solid #b9cbdc;
+}
+.sheet-overview.sp-monochrome
+  .ov-inventory-table.has-end-rule
+  > tbody:last-of-type
+  > tr:last-child
+  > td {
+  border-color: #aaa;
+}
 .sheet-overview.sp-monochrome .ov-reference-table-category th {
   background: #fff;
   color: #333;
