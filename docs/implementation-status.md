@@ -1112,6 +1112,17 @@ typecheck, focused lint, formatting and production build pass. All four
 overview-only Letter/A4 × color/monochrome PDF checks pass (12 measured pages
 each, no overview overflow); full milestone/physical-card gates remain separate.
 
+Space-fitted Basic Attacks (2026-10-16): The fixed two-alternative cap left the
+`More on power cards…` note visible while free left-column space remained (e.g.
+Unarmed hidden as a third melee alternative). The hidden pane probe now renders
+every alternative; pane placement still uses the two-alternative height, and
+when Basic Attacks stays on the left its per-kind limit grows to the largest
+count whose measured rows fit the remaining column space. The note appears only
+when rows are actually omitted. Verification: 70 focused overview tests
+(including a new fitting test), web typecheck, focused lint and formatting pass.
+`check:print` could not run locally: the Nix-shell Chromium fails to load
+(`GLIBC_2.43 not found`), unrelated to this change.
+
 Palette feedback (2026-10-15): Health changes from rose to sage green to distinguish
 it from rust-colored attacks. The separate Senses pane uses lavender rather than
 sharing the teal Skills/Abilities/Languages accent. Grayscale overrides are

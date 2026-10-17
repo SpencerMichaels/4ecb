@@ -463,8 +463,11 @@ The summary measures rendered entry heights and fills the available left-column
 space, reserving room for an overflow caption only when entries truly do not fit.
 There is no fixed entry-count or character-count cap. Oversized entries remain
 in references while shorter later entries can still use the remaining space.
-Basic-attack summaries retain up to two weapon alternatives per attack kind;
-their whole pane moves to the right before sacrificing summary content.
+Basic-attack summaries show at least two weapon alternatives per attack kind
+and, while the pane stays in the left column, grow into the column's remaining
+measured space up to every eligible alternative. Pane placement uses the
+two-alternative height; the whole pane moves to the right before sacrificing
+summary content, where it keeps two alternatives.
 Complete weapon alternatives remain on power cards.
 When the summary omits alternatives, Basic Attacks puts a muted, right-aligned
 `More on power cards…` note in its header instead of a body caption. Basic attacks

@@ -1,7 +1,9 @@
 import {
   Children,
+  createContext,
   isValidElement,
   useCallback,
+  useContext,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -261,13 +263,36 @@ export function overviewBasicAttackRows(
     })
     .sort(compareBasicAttacks);
 }
-function BasicAttacks({
-  model,
-  variantLimit = 2,
-}: {
-  model: CharacterSheetModel;
-  variantLimit?: number;
-}) {
+const MIN_BASIC_ATTACK_VARIANTS = 2;
+const BasicAttackLimit = createContext(MIN_BASIC_ATTACK_VARIANTS);
+/** Largest per-attack variant limit whose rows fit; never below the minimum. */
+export function fittingBasicAttackLimit(
+  model: CharacterSheetModel,
+  fullHeight: number,
+  rowHeights: ReadonlyMap<string, number>,
+  available: number,
+): number {
+  const all = overviewBasicAttackRows(model);
+  const heightAt = (limit: number) => {
+    const shown = new Set(
+      overviewBasicAttackRows(model, limit).map((row) => row.id),
+    );
+    return all.reduce(
+      (height, row) =>
+        shown.has(row.id) ? height : height - (rowHeights.get(row.id) ?? 0),
+      fullHeight,
+    );
+  };
+  let limit = MIN_BASIC_ATTACK_VARIANTS;
+  while (
+    overviewBasicAttackRows(model, limit).length < all.length &&
+    heightAt(limit + 1) <= available
+  )
+    limit++;
+  return limit;
+}
+function BasicAttacks({ model }: { model: CharacterSheetModel }) {
+  const variantLimit = useContext(BasicAttackLimit);
   const rows = overviewBasicAttackRows(model, variantLimit);
   const hasMore = rows.length < overviewBasicAttackRows(model).length;
   return (
@@ -295,7 +320,7 @@ function BasicAttacks({
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.id}>
+              <tr key={row.id} data-basic-attack-row={row.id}>
                 <th scope="row">
                   <span className="ov-basic-weapon">
                     <Icon
@@ -615,6 +640,7 @@ function SummaryColumns({
     (id) => (slots.has(id) ? [{ id, content: slots.get(id) }] : []),
   );
   const [leftCount, setLeftCount] = useState(4);
+  const [attackLimit, setAttackLimit] = useState(MIN_BASIC_ATTACK_VARIANTS);
   const [visibleIndices, setVisibleIndices] = useState<readonly number[]>();
   const reminders =
     visibleIndices === undefined
@@ -636,21 +662,61 @@ function SummaryColumns({
       const footer = page.querySelector<HTMLElement>(".sp-page-footer")!;
       const left = grid.querySelector<HTMLElement>(".ov-main-column")!;
       const gap = parseFloat(getComputedStyle(left).rowGap) || 0;
-      const count = fittingSummaryPaneCount(
+      const leftAvailable =
+        footer.getBoundingClientRect().top -
+        8 -
+        left.getBoundingClientRect().top;
+      const probePanes = [
+        ...grid.querySelectorAll<HTMLElement>(".ov-pane-probe > .ov-flow-pane"),
+      ];
+      const rowHeights = new Map(
         [
           ...grid.querySelectorAll<HTMLElement>(
-            ".ov-pane-probe > .ov-flow-pane",
+            ".ov-pane-probe [data-basic-attack-row]",
           ),
-        ].map((pane) => pane.getBoundingClientRect().height),
-        footer.getBoundingClientRect().top -
-          8 -
-          left.getBoundingClientRect().top,
-        gap,
+        ].map((row) => [
+          row.dataset.basicAttackRow!,
+          row.getBoundingClientRect().height,
+        ]),
       );
+      // The probe shows every basic attack; place panes using the minimum rows.
+      const minimumRows = new Set(
+        overviewBasicAttackRows(model, MIN_BASIC_ATTACK_VARIANTS).map(
+          (row) => row.id,
+        ),
+      );
+      const omittedHeight = [...rowHeights].reduce(
+        (sum, [id, height]) => (minimumRows.has(id) ? sum : sum + height),
+        0,
+      );
+      const heights = probePanes.map((pane) => {
+        const height = pane.getBoundingClientRect().height;
+        return pane.dataset.summaryPane === "attacks"
+          ? height - omittedHeight
+          : height;
+      });
+      const count = fittingSummaryPaneCount(heights, leftAvailable, gap);
       if (count !== Math.min(leftCount, panes.length)) {
         setLeftCount(count);
         return; // Measure reminders after React has placed the overflow panes.
       }
+      const attacksIndex = probePanes.findIndex(
+        (pane) => pane.dataset.summaryPane === "attacks",
+      );
+      const othersOnLeft = heights
+        .slice(0, count)
+        .filter((_, index) => index !== attacksIndex);
+      const nextAttackLimit =
+        attacksIndex >= 0 && attacksIndex < count
+          ? fittingBasicAttackLimit(
+              model,
+              probePanes[attacksIndex]!.getBoundingClientRect().height,
+              rowHeights,
+              leftAvailable -
+                othersOnLeft.reduce((sum, height) => sum + height + gap, 0),
+            )
+          : MIN_BASIC_ATTACK_VARIANTS;
+      setAttackLimit(nextAttackLimit);
       const column = page.querySelector<HTMLElement>(".ov-reminders-column");
       const probe = column?.querySelector<HTMLElement>(".ov-reminder-probe");
       const panels = probe?.querySelector<HTMLElement>(".ov-reminder-panels");
@@ -723,9 +789,11 @@ function SummaryColumns({
   );
   return (
     <div className="sp-summary-grid ov-balanced-columns" ref={ref}>
-      <div className="sp-column ov-main-column">
-        {panes.slice(0, leftCount).map(renderPane)}
-      </div>
+      <BasicAttackLimit.Provider value={attackLimit}>
+        <div className="sp-column ov-main-column">
+          {panes.slice(0, leftCount).map(renderPane)}
+        </div>
+      </BasicAttackLimit.Provider>
       <section
         className="sp-column ov-reminders-column"
         aria-label="Resistances, weaknesses and reminders"
@@ -751,9 +819,11 @@ function SummaryColumns({
           </p>
         </div>
       </section>
-      <div className="ov-pane-probe" aria-hidden="true">
-        {panes.map(renderPane)}
-      </div>
+      <BasicAttackLimit.Provider value={Infinity}>
+        <div className="ov-pane-probe" aria-hidden="true">
+          {panes.map(renderPane)}
+        </div>
+      </BasicAttackLimit.Provider>
     </div>
   );
 }

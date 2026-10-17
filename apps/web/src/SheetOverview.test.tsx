@@ -5,6 +5,7 @@ import {
   SheetOverview,
   fittingReminderIndices,
   fittingReminderGroups,
+  fittingBasicAttackLimit,
   fittingSummaryPaneCount,
   fittingIdentityNameSize,
   overviewBasicAttackRows,
@@ -2079,6 +2080,33 @@ describe("real-data sheet overview", () => {
     expect(fittingReminderGroups(groups, 130, 20, 10)).toEqual([1, 2]);
     expect(fittingReminderGroups(groups, 100, 20, 10)).toEqual([1]);
     expect(fittingReminderGroups(groups, 700, 20, 10)).toEqual([0, 1, 2]);
+  });
+  it("grows basic attack alternatives into free column space", () => {
+    const m = {
+      ...model,
+      powers: [
+        {
+          id: "melee",
+          name: "Melee Basic Attack",
+          kind: "power" as const,
+          fields: [],
+          variants: ["a", "b", "c", "d"].map((id, index) => ({
+            id,
+            equipmentName: `Weapon ${id}`,
+            equipped: index === 0,
+            attack: `+${10 - index} vs AC`,
+            damage: "1d8",
+          })),
+        },
+      ],
+    };
+    const rows = overviewBasicAttackRows(m);
+    const heights = new Map(rows.map((row) => [row.id, 20]));
+    // 40px of panel chrome plus four 20px rows.
+    expect(fittingBasicAttackLimit(m, 120, heights, 50)).toBe(2);
+    expect(fittingBasicAttackLimit(m, 120, heights, 100)).toBe(3);
+    expect(fittingBasicAttackLimit(m, 120, heights, 120)).toBe(4);
+    expect(fittingBasicAttackLimit(m, 120, heights, 900)).toBe(4);
   });
   it("moves an ordered suffix of whole panes when the left column fills", () => {
     expect(fittingSummaryPaneCount([80, 180, 130, 100], 520, 10)).toBe(4);
