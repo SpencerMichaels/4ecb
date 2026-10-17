@@ -1423,24 +1423,21 @@ body:has(.sp-prototype) {
 .ov-scratch-health-values strong {
   font-size: 17pt;
 }
-.ov-scratch-health-values .ov-health-value {
-  min-height: 1.2em;
-}
-.ov-scratch-health-values .ov-health-label {
+.ov-scratch-health-values .ov-health-icon-value {
   position: relative;
   width: max-content;
+  min-height: 1.2em;
   display: flex;
   align-items: center;
   justify-content: center;
-  white-space: nowrap;
 }
-.ov-scratch-health-values .ov-health-label .icon {
+.ov-scratch-health-values .ov-health-icon-value .icon {
   position: absolute;
   right: calc(100% + 0.04in);
   top: 50%;
   transform: translateY(-50%);
-  width: 9pt;
-  height: 9pt;
+  width: 13pt;
+  height: 13pt;
 }
 .ov-scratch-health-values .ov-health-value-number {
   font-size: inherit;
