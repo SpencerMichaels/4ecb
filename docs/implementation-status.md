@@ -1,5 +1,17 @@
 # Implementation status
 
+## Printed play-data cards (2026-10-17)
+
+The card pages now open with two "Play data" cards modeled on the legacy builder
+(teal frame): a character card (circular portrait, bold name, race/class/level,
+ability tiles reading score–label–modifier, defenses, health incl. bloodied and
+surges, initiative, speed, passive insight/perception, then senses, saves and
+resistances) and a skills card whose column band serves as its header, with a
+bottom-right trained key. Both use the shared stat tiles; they print whenever
+power cards do. `defensive-text.ts` now holds the defensive clause wording shared
+with page 1. Verification: 546 web tests, typecheck and lint pass through Nix,
+plus product-owner print-preview review.
+
 ## Shared stat tiles (2026-10-17)
 
 Page 1's combat band and the builder header now share `StatTiles.tsx` /

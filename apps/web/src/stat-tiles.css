@@ -58,7 +58,7 @@
   white-space: nowrap;
 }
 .stat-tile dd {
-  font-size: 2.75em;
+  font-size: var(--stat-value-size, 2.75em);
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   line-height: 1.15;
@@ -66,6 +66,7 @@
 }
 /* Two rows of label/value pairs that fit the height of one full tile row. */
 .stat-tiles-compact {
+  --stat-value-size: 1.55em;
   grid-auto-flow: row;
   grid-auto-rows: 1fr;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -77,6 +78,11 @@
   justify-content: center;
   padding: 0.3em 0.5em;
 }
-.stat-tiles-compact .stat-tile dd {
-  font-size: 1.55em;
+/* Same size as the value, but quieter, so "18 STR +4" reads left to right. */
+.stat-tile-lead {
+  color: #808080;
+  font-size: var(--stat-value-size, 2.75em);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  margin-right: 0.3em;
 }

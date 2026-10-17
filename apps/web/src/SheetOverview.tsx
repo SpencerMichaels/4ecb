@@ -23,6 +23,7 @@ import { Prose, ProseBlocks, proseBlocks, type ProseBlock } from "./Prose";
 import { printItemPower } from "./print-item-presentation";
 import { SurgeBar } from "./SurgeBar";
 import { StatGroup } from "./StatTiles";
+import { defensiveBonusText } from "./defensive-text";
 import {
   scratchpadConsumables,
   type ScratchpadConsumable,
@@ -454,29 +455,6 @@ function ReminderPanels({
         ) : null;
       })}
     </div>
-  );
-}
-function defensiveBonusText(
-  trait: NonNullable<
-    CharacterSheetModel["overview"]
-  >["defensiveTraits"][number],
-) {
-  const numeric = /^(.+?) (\d+)(.*)$/.exec(trait.value);
-  if (numeric && ["Resistance", "Vulnerability"].includes(trait.label))
-    return `${trait.label === "Resistance" ? "Resist" : "Vulnerable"} ${numeric[2]} ${numeric[1]!.toLowerCase()}${numeric[3] ?? ""}`;
-  if (
-    /^immunit(?:y|ies)$/i.test(trait.group ?? trait.label) &&
-    !/\bimmun(?:e|ity)\b/i.test(trait.value)
-  )
-    return `Immune to ${trait.value}`;
-  if (trait.label === "Resistance / vulnerability")
-    return `Resistance / vulnerability: ${trait.value}`;
-  const text = ["Saving throws", "Death saves"].includes(trait.label)
-    ? trait.value.replace(/\bagainst\b/gi, "vs")
-    : trait.value;
-  return text.replace(
-    /^(\s*(?:\*\*|__|\*|_)?)(\p{Ll})/u,
-    (_, prefix: string, letter: string) => prefix + letter.toUpperCase(),
   );
 }
 function DefensiveTraits({ model }: { model: CharacterSheetModel }) {

@@ -2383,6 +2383,160 @@ textarea {
 .print-power-card.utility-power {
   --card-color: #000080;
 }
+/* "Play data" cards: core numbers and skills for use at the table. */
+.print-play-card {
+  --card-color: #1f6b70;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+.print-play-body {
+  color: #111;
+  display: flex;
+  flex-direction: column;
+  gap: 0.045in;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0.04in;
+}
+.print-play-body .stat-group {
+  font-size: 6pt;
+}
+/* Room for descenders: tile labels clip overflow. */
+.print-play-body .stat-tile dt {
+  line-height: 1.25;
+}
+/* Tighter than page 1 so the card fits its fixed height. */
+.print-play-body .stat-tiles:not(.stat-tiles-compact) {
+  --stat-value-size: 2.35em;
+}
+.print-play-body .stat-tiles:not(.stat-tiles-compact) .stat-tile {
+  padding-block: 0.4em;
+}
+/* Ability labels match the score and modifier height. */
+.print-play-body .stat-tiles-compact .stat-tile dt {
+  font-size: var(--stat-value-size);
+}
+.print-play-body .stat-tiles-compact .stat-tile-lead {
+  font-size: 1em;
+}
+/* Score left, label centered, modifier right, whatever the label width. */
+.print-play-body .stat-tiles-compact .stat-tile {
+  align-items: baseline;
+  column-gap: 0.3em;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+.print-play-body .stat-tiles-compact .stat-tile dt {
+  display: contents;
+}
+.print-play-body .stat-tiles-compact .stat-tile-lead {
+  justify-self: start;
+  margin-right: 0;
+}
+.print-play-body .stat-tiles-compact .stat-tile dd {
+  justify-self: end;
+}
+.print-play-character > header {
+  gap: 0.06in;
+  justify-content: flex-start;
+}
+.print-play-portrait {
+  border: 1.5px solid var(--card-color);
+  border-radius: 50%;
+  flex: none;
+  height: 0.46in;
+  object-fit: cover;
+  width: 0.46in;
+}
+.print-play-heading {
+  min-width: 0;
+}
+.print-play-character .print-play-heading h3 {
+  font-size: 13pt;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.print-play-identity {
+  color: #444;
+  font-size: 7.5pt;
+  margin: 0;
+}
+.print-play-note {
+  font-size: 7pt;
+  margin: 0;
+}
+.print-play-note strong {
+  color: var(--card-color);
+}
+.print-play-row {
+  display: grid;
+  gap: 0.045in;
+  grid-template-columns: 1fr 1fr 2.2fr;
+}
+.print-play-skills {
+  border-collapse: collapse;
+  font-size: 8.5pt;
+  width: 100%;
+}
+.print-play-skills :is(th, td) {
+  padding: 0.012in 0.045in;
+}
+.print-play-skills tbody th {
+  font-weight: 400;
+  text-align: left;
+}
+/* Column labels styled like a power card's subheading band. */
+.print-play-skills thead th {
+  background: color-mix(in srgb, var(--card-color) 20%, white);
+  border-bottom: 1px solid color-mix(in srgb, var(--card-color) 35%, white);
+  font-size: 8pt;
+  font-weight: 700;
+  height: 0.23in;
+  text-align: left;
+  vertical-align: middle;
+}
+.print-play-skills thead th:last-child {
+  text-align: right;
+}
+/* The table header row stands in for the card header. */
+.print-play-skills-card {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+.print-play-skills-card .print-play-body {
+  padding: 0;
+}
+.print-play-trained-key {
+  align-self: flex-end;
+  font-size: 7pt;
+  margin: auto 0 0;
+  padding: 0.03in 0.045in;
+}
+.print-play-skills tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--card-color) 10%, white);
+}
+.print-play-skill-ability {
+  color: #555;
+  font-size: 0.85em;
+}
+.print-play-skill-bonus {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: right;
+}
+.print-play-trained {
+  font-size: 0.7em;
+  font-weight: 700;
+  margin-left: 0.02in;
+}
+.sheet-monochrome .print-play-card .stat-group {
+  --stat-accent: #333;
+  --stat-tint: #eee;
+  --stat-edge: #aaa;
+}
+.sheet-monochrome .print-play-skills tbody tr:nth-child(even),
+.sheet-monochrome .print-play-skills thead th {
+  background: #eee;
+}
 .print-item-card {
   --card-color: #ff8c00;
   grid-template-columns: minmax(0, 1fr);

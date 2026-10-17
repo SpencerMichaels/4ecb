@@ -8,7 +8,11 @@ import {
 } from "react";
 
 import { CharacterRepository } from "@4ecb/browser-storage";
-import type { CharacterRecord, SheetSettings } from "@4ecb/character-domain";
+import type {
+  CharacterPortrait,
+  CharacterRecord,
+  SheetSettings,
+} from "@4ecb/character-domain";
 import type { ContentPackManifest } from "@4ecb/content-pack";
 import { appContentRuntime } from "./app-runtime";
 import {
@@ -18,6 +22,7 @@ import {
 import {
   buildEvaluatedSheetModel,
   buildSheetModel,
+  type CharacterSheetModel,
   type SheetCard,
   type SheetLearnedReference,
   type SheetPowerAttack,
@@ -30,6 +35,11 @@ import { Icon } from "./Icon";
 import { PortraitImage } from "./PortraitEditor";
 import { inventoryCategory } from "./equipment-ui";
 import { isRulesReferencePower, sortedPowerCards } from "./power-card-order";
+import {
+  PrintCharacterCard,
+  PrintSkillsCard,
+  type PlayCardKind,
+} from "./PrintPlayCards";
 import { PrintPowerVariants } from "./PrintPowerVariants";
 import { printAdditionalEffect } from "./print-additional-effects";
 import {
@@ -726,17 +736,43 @@ function PrintItemCard({
   );
 }
 
+type PrintableCard = SheetCard | { readonly kind: PlayCardKind };
+
+const isPlayCard = (
+  card: PrintableCard,
+): card is { readonly kind: PlayCardKind } =>
+  card.kind === "play-character" || card.kind === "play-skills";
+
 function PrintCard({
   card,
+  model,
+  name,
+  portrait,
+  blankHP,
   characterLevel,
   showEquippedAttackBonus,
   showPrintTitleActionIcon,
 }: {
-  readonly card: SheetCard;
+  readonly card: PrintableCard;
+  readonly model: CharacterSheetModel;
+  readonly name: string;
+  readonly portrait: CharacterPortrait | undefined;
+  readonly blankHP: boolean;
   readonly characterLevel: number;
   readonly showEquippedAttackBonus: boolean;
   readonly showPrintTitleActionIcon: boolean;
 }) {
+  if (isPlayCard(card))
+    return card.kind === "play-character" ? (
+      <PrintCharacterCard
+        model={model}
+        name={name}
+        portrait={portrait}
+        blankHP={blankHP}
+      />
+    ) : (
+      <PrintSkillsCard model={model} />
+    );
   return card.kind === "power" ? (
     <PrintPowerCard
       card={card}
@@ -1085,8 +1121,14 @@ export function CharacterSheetPage({
       </>
     );
   const powerCards = sortedPowerCards(model.powers);
-  const printableCards = [
-    ...(character.sheetSettings.includePowerCards ? powerCards : []),
+  const printableCards: PrintableCard[] = [
+    ...(character.sheetSettings.includePowerCards
+      ? [
+          { kind: "play-character" as const },
+          { kind: "play-skills" as const },
+          ...powerCards,
+        ]
+      : []),
     ...(character.sheetSettings.includeItemCards ? model.items : []),
   ];
   const printCardPages = chunks(printableCards, 9);
@@ -1414,10 +1456,14 @@ export function CharacterSheetPage({
                 {page.map((card, index) => (
                   <PrintCard
                     card={card}
+                    model={model}
+                    name={characterName}
+                    portrait={character.portrait}
+                    blankHP={character.sheetSettings.blankHitPoints}
                     characterLevel={characterLevel}
                     showEquippedAttackBonus={showEquippedAttackBonus}
                     showPrintTitleActionIcon={showPrintTitleActionIcon}
-                    key={`${card.kind}-${card.id ?? card.name}-${index}`}
+                    key={`${card.kind}-${isPlayCard(card) ? "" : (card.id ?? card.name)}-${index}`}
                   />
                 ))}
               </div>

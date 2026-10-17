@@ -4,6 +4,8 @@ export interface StatTileValue {
   readonly label: string;
   readonly value: string;
   readonly title?: string;
+  /** Value shown before the label at the value size, e.g. an ability score. */
+  readonly lead?: string;
 }
 
 export type StatTone = "defenses" | "health" | "movement" | "abilities";
@@ -32,7 +34,16 @@ export function StatGroup({
       <dl className={compact ? "stat-tiles stat-tiles-compact" : "stat-tiles"}>
         {values.map((value) => (
           <div className="stat-tile" key={value.label}>
-            <dt>{value.label}</dt>
+            <dt>
+              {value.lead === undefined ? (
+                value.label
+              ) : (
+                <>
+                  <span className="stat-tile-lead">{value.lead}</span>
+                  <span className="stat-tile-label">{value.label}</span>
+                </>
+              )}
+            </dt>
             <dd {...(value.title === undefined ? {} : { title: value.title })}>
               {value.value}
             </dd>
