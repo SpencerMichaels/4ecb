@@ -53,6 +53,22 @@ describe("reference power index", () => {
     expect(row[1]).toBe("3");
     expect(row.slice(2, 4)).toEqual(["Ranged 10", "One creature"]);
   });
+  it("keeps alternative ability modifiers in a damage formula", () => {
+    const row = referencePowerRows({
+      kind: "power",
+      name: "Either ability",
+      actionType: "Standard Action",
+      fields: [
+        { label: "Attack", value: "Strength or Charisma vs. AC" },
+        {
+          label: "Hit",
+          value:
+            "1[W] + Strength modifier or Charisma modifier damage, and the target is marked.",
+        },
+      ],
+    })[0]!;
+    expect(row.slice(4)).toEqual(["STR or CHA vs AC", "1[W]+STR or CHA"]);
+  });
   it("keeps range and target separate and uses compact authored formulas", () => {
     const rows = referencePowerRows(power);
     expect(rows[0]).toEqual([

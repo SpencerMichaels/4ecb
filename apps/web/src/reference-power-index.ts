@@ -52,7 +52,7 @@ export function referencePowerRows(
     )?.[1];
     const candidate = prefix ? compact(prefix) : "";
     const mathOnly = candidate.replace(
-      /\b(?:STR|CON|DEX|INT|WIS|CHA|half|your|level)\b|\[W\]|d(?=\d)/gi,
+      /\b(?:STR|CON|DEX|INT|WIS|CHA|half|your|level|or)\b|\[W\]|d(?=\d)/gi,
       "",
     );
     const damage =
