@@ -31,7 +31,6 @@ import { PortraitImage } from "./PortraitEditor";
 import { inventoryCategory } from "./equipment-ui";
 import { sortedPowerCards } from "./power-card-order";
 import { PrintPowerVariants } from "./PrintPowerVariants";
-import { PrintConsumableTracker } from "./PrintConsumableTracker";
 import { printAdditionalEffect } from "./print-additional-effects";
 import {
   preferredPrintCardTextSize,
@@ -592,10 +591,7 @@ function PrintItemCard({
   const cardRef = usePrintCardFit();
   const item = printItemPresentation(card);
   return (
-    <article
-      ref={cardRef}
-      className={`print-reference-card print-item-card${item.consumableTracker ? " has-consumable-tracker" : ""}`}
-    >
+    <article ref={cardRef} className="print-reference-card print-item-card">
       <header>
         <h3>
           <Icon name={item.icon} />
@@ -705,9 +701,6 @@ function PrintItemCard({
           );
         })}
       </div>
-      {item.consumableTracker ? (
-        <PrintConsumableTracker tracker={item.consumableTracker} />
-      ) : null}
       <footer className="print-item-footer">
         <span>{item.metadata}</span>
         <span className="print-item-footer-details">{item.footerDetails}</span>

@@ -2,23 +2,14 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
-Consumable print trackers (2026-10-16): item cards now reserve a bottom Remaining
-strip above their metadata footer. Quantities 1–8 get one 0.2in hollow circle per
-copy; larger quantities use a writable count box plus owned total, without
-wrapping or shrinking marks. Unknown quantities get a box without an invented
-total; explicit zero gets no tracker. Multiple item powers share the same stock
-tracker. Authored consumable/ammunition kinds and explicit Consumable power
-metadata drive classification, not item names. Fitting reserves the strip before
-shrinking prose; fixed physical card sizes and nonconsumable layouts are retained.
-This is a paper writing surface, not persisted used-state or inventory mutation.
-Verification: 88 focused tracker/item-presentation/equipment/print-layout tests,
-web typecheck, focused lint, formatting and production/PWA build pass. The
-overview diagnostic with card pages passes eight Chromium/Firefox Letter/A4
-color/monochrome cases, including 4/8-circle and 25-copy fixtures, no tracker
-wrapping/overflow, hollow marks, shared placement above footers and unchanged card
-dimensions. Final left-grouped marker spacing passes another four Chromium
-cases; the item-card preview was visually inspected. The normal dense-card
-content-overflow gate was neither rerun nor relaxed; M5.6 remains open.
+Consumable tracker feedback (2026-10-16): the bottom-of-item-card Remaining
+strip was rejected as obtrusive and reverted. Fixed-size item cards are restored
+without stock trackers. A separate scratchpad consumables pane is proposed,
+using part of the existing Treasure & consumables writing area; that redesign
+is not implemented or accepted yet. The discarded trial remains recoverable
+in Git history and changes no character/inventory data.
+Verification: 55 focused item-presentation/print-layout tests pass after the
+revert; no full print/milestone gate was rerun for restoring the prior layout.
 
 Inventory weight-noise follow-up (2026-10-16): unspecified/blank item weights
 are omitted entirely, not rendered as zero or an em dash. Explicit numeric zero

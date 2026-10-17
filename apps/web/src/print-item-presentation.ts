@@ -1,62 +1,5 @@
 import type { SheetCard, SheetValue } from "@4ecb/sheet-model";
 import { itemCategoryIcon } from "./item-icons";
-import { CONSUMABLE_KINDS } from "./equipment-ui";
-
-export const PRINT_CONSUMABLE_CIRCLE_LIMIT = 8;
-export interface ConsumableTracker {
-  readonly quantity?: number;
-  readonly mode: "circles" | "count";
-}
-export function printConsumableTracker(
-  card: SheetCard,
-): ConsumableTracker | undefined {
-  if (card.kind !== "item") return undefined;
-  const fields = (names: readonly string[]) =>
-    card.fields.filter((field) =>
-      names.includes(field.label.trim().toLowerCase()),
-    );
-  const kinds = [
-    card.itemType,
-    card.baseItemType,
-    ...fields(["magic item type", "gear category", "category"]).map(
-      (field) => field.value,
-    ),
-  ].map((value) => value?.trim().toLowerCase());
-  const consumable =
-    kinds.some(
-      (kind) =>
-        kind !== undefined &&
-        (
-          [
-            ...CONSUMABLE_KINDS,
-            "ammunition",
-            "ritual scroll",
-          ] as readonly string[]
-        ).includes(kind),
-    ) ||
-    card.fields.some((field) => {
-      const power = printItemPower(field);
-      return (
-        power !== undefined &&
-        (power.usage?.toLowerCase() === "consumable" ||
-          /\(\s*consumable(?:\s*[*•·)]|$)/i.test(field.label) ||
-          /^\s*consumable\s*\(/i.test(field.value) ||
-          /^\s*(?:(?:utility|attack)\s+)?power\s*\(\s*consumable(?:\s*[*•·)]|$)/i.test(
-            field.value,
-          ))
-      );
-    });
-  if (!consumable) return undefined;
-  const raw = fields(["quantity", "count"])[0]?.value.trim();
-  const parsed =
-    raw !== undefined && /^\d+$/.test(raw) ? Number(raw) : undefined;
-  if (parsed === 0) return undefined;
-  const quantity =
-    parsed !== undefined && Number.isSafeInteger(parsed) ? parsed : undefined;
-  return quantity !== undefined && quantity <= PRINT_CONSUMABLE_CIRCLE_LIMIT
-    ? { quantity, mode: "circles" }
-    : { ...(quantity === undefined ? {} : { quantity }), mode: "count" };
-}
 
 export function printItemPresentation(card: SheetCard) {
   const find = (entries: readonly SheetValue[], names: string[]) =>
@@ -312,7 +255,6 @@ export function printItemPresentation(card: SheetCard) {
     : undefined;
   return {
     name,
-    consumableTracker: printConsumableTracker(card),
     tier,
     stats,
     statRows,

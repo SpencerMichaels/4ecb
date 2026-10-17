@@ -2317,42 +2317,6 @@ textarea {
   background: var(--card-color);
   color: #111;
 }
-.print-item-card.has-consumable-tracker {
-  grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
-}
-.print-consumable-tracker {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  flex-wrap: nowrap;
-  gap: 0.06in;
-  padding: 0.045in 0.04in;
-  border-top: 1px solid color-mix(in srgb, var(--card-color) 35%, white);
-  color: #111;
-  font-size: 8pt;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-.print-consumable-circles,
-.print-consumable-count {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  gap: 0.025in;
-}
-.print-consumable-circles > .icon {
-  width: 0.2in;
-  height: 0.2in;
-  flex-shrink: 0;
-  fill: none;
-  stroke-width: 1.4;
-}
-.print-consumable-count-box {
-  width: 0.5in;
-  height: 0.23in;
-  border: 1px solid #8f9aa2;
-  border-radius: 3px;
-}
 .print-item-card > header h3 {
   align-items: center;
   display: flex;

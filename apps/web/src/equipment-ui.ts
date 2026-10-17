@@ -245,7 +245,7 @@ const IMPLEMENT_KINDS = [
   "superior implement",
 ] as const;
 
-export const CONSUMABLE_KINDS = [
+const CONSUMABLE_KINDS = [
   "alchemical",
   "alchemical item",
   "potion",
