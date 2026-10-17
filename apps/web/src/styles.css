@@ -426,6 +426,75 @@ a {
   margin-top: 0;
 }
 
+.settings-columns {
+  column-gap: 1rem;
+  columns: 2 32rem;
+}
+
+.settings-columns > .settings-section {
+  break-inside: avoid;
+}
+
+.settings-options {
+  display: grid;
+  gap: 1rem;
+  max-width: 44rem;
+}
+
+.settings-option {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.settings-check {
+  align-items: baseline;
+  display: flex;
+  gap: 0.55rem;
+  font-weight: 600;
+}
+
+.settings-check input {
+  flex: none;
+  margin: 0;
+  transform: translateY(0.1em);
+}
+
+.settings-option > .field-help {
+  line-height: 1.45;
+  padding-left: 1.55rem;
+}
+
+.settings-slider {
+  align-items: center;
+  color: var(--muted, #5d554a);
+  display: flex;
+  font-size: 0.9rem;
+  gap: 0.6rem;
+  max-width: 28rem;
+  padding-left: 1.55rem;
+}
+
+.settings-slider input[type="range"] {
+  border: 0;
+  flex: 1;
+  min-width: 6rem;
+  padding: 0;
+}
+
+.settings-slider-reset {
+  font-size: 0.85rem;
+  padding: 0.15rem 0.5rem;
+}
+
+.settings-section p {
+  max-width: 46rem;
+}
+
+.settings-section > div:first-child p {
+  color: var(--muted, #5d554a);
+  margin-bottom: 0;
+}
+
 .theme-options {
   align-items: center;
   border: 0;

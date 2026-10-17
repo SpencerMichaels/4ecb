@@ -7,7 +7,10 @@ key and CSS (see D071 superseded note). Display options are now grouped as
 Display (theme), Builder & Equipment (flavortext, large gold amounts, compact
 ability values, weapon dice) and Printed sheet (best ability, coin weight,
 equipped to-hit bonus, action icons, card text size). Help text no longer refers
-to the deferred character View. Verification: 544 web tests, web typecheck and
+to the deferred character View. A follow-up style pass caps text width,
+pairs each option with its described help text, uses a Smaller–Larger slider
+(with an always-present Reset) for printed card text size, and flows the four
+preference panels into two columns on wide windows. Verification: 544 web tests, web typecheck and
 lint pass through Nix.
 
 ## M5.6 printable character sheet closure (2026-10-16)

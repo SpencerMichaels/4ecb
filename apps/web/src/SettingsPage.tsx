@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import {
   CharacterRepository,
@@ -34,6 +34,11 @@ import {
 } from "./content-profile-ui";
 import type { AdvertisedContentPack } from "./runtime-content";
 import type { ThemePreference } from "./theme";
+import {
+  DEFAULT_PRINT_CARD_TEXT_SIZE,
+  MAX_PRINT_CARD_TEXT_SIZE,
+  MIN_PRINT_CARD_TEXT_SIZE,
+} from "./print-card-fit";
 
 const repository = new ContentPackRepository();
 const characterRepository = new CharacterRepository();
@@ -135,6 +140,45 @@ export interface SettingsPageProps {
   readonly onShowPrintTitleActionIconChange: (value: boolean) => void;
   readonly printCardTextSize: number;
   readonly onPrintCardTextSizeChange: (value: number) => void;
+}
+
+function cardTextSizeDescription(size: number): string {
+  const steps = Math.round((size - DEFAULT_PRINT_CARD_TEXT_SIZE) / 0.5);
+  if (steps === 0) return "Default";
+  const count = Math.abs(steps);
+  return `${count} ${count === 1 ? "step" : "steps"} ${steps < 0 ? "smaller" : "larger"} than default`;
+}
+
+function CheckboxSetting({
+  checked,
+  onChange,
+  label,
+  help,
+}: {
+  readonly checked: boolean;
+  readonly onChange: (value: boolean) => void;
+  readonly label: string;
+  readonly help?: string;
+}) {
+  const helpId = useId();
+  return (
+    <div className="settings-option">
+      <label className="settings-check">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(event) => onChange(event.currentTarget.checked)}
+          {...(help === undefined ? {} : { "aria-describedby": helpId })}
+        />
+        <span>{label}</span>
+      </label>
+      {help === undefined ? null : (
+        <p className="field-help" id={helpId}>
+          {help}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export function SettingsPage({
@@ -512,296 +556,260 @@ export function SettingsPage({
         </div>
       </header>
 
-      <section className="panel settings-section">
-        <div>
-          <h3>Display</h3>
-          <p>Choose a color theme for this browser.</p>
-        </div>
-        <fieldset className="theme-options">
-          <legend>Color theme</legend>
-          {(
-            [
-              ["system", "System Default"],
-              ["light", "Light"],
-              ["dark", "Dark"],
-            ] as const
-          ).map(([value, label]) => (
-            <label key={value}>
-              <input
-                type="radio"
-                name="theme"
-                value={value}
-                checked={theme === value}
-                onChange={() => onThemeChange(value)}
-              />
-              {label}
-            </label>
-          ))}
-        </fieldset>
-      </section>
-
-      <section className="panel settings-section">
-        <div>
-          <h3>Builder &amp; Equipment</h3>
-          <p>Options for the builder, Equipment, and Shop.</p>
-        </div>
-        <label>
-          <input
-            type="checkbox"
-            checked={hideFlavortext}
-            onChange={(event) =>
-              onHideFlavortextChange(event.currentTarget.checked)
-            }
-          />{" "}
-          Hide flavortext
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={keepLargeAmountsInGold}
-            onChange={(event) =>
-              onKeepLargeAmountsInGoldChange(event.currentTarget.checked)
-            }
-          />{" "}
-          Keep large amounts in gold
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={abbreviateAbilityValues}
-            onChange={(event) =>
-              onAbbreviateAbilityValuesChange(event.currentTarget.checked)
-            }
-          />{" "}
-          Show ability values compactly in calculated power details
-        </label>
-        <p className="field-help">
-          Replace phrases such as “Charisma modifier (+4)” with an underlined
-          “+4” whose tooltip identifies the ability on Equipment and Shop power
-          cards. The Build tab and printed cards keep general formulas.
-        </p>
-        <label>
-          <input
-            type="checkbox"
-            checked={expandWeaponDice}
-            onChange={(event) =>
-              onExpandWeaponDiceChange(event.currentTarget.checked)
-            }
-          />{" "}
-          Replace [W] with the selected weapon's dice in calculated power
-          details
-        </label>
-        <p className="field-help">
-          Use the card's weapon selector to change the calculation or compare
-          every compatible weapon in the character's inventory.
-        </p>
-      </section>
-
-      <section className="panel settings-section">
-        <div>
-          <h3>Printed sheet</h3>
-          <p>Options for the printable character sheet and its cards.</p>
-        </div>
-        <label>
-          <input
-            type="checkbox"
-            checked={resolveAbilityChoices}
-            onChange={(event) =>
-              onResolveAbilityChoicesChange(event.currentTarget.checked)
-            }
-          />{" "}
-          Use the best ability in power descriptions
-        </label>
-        <p className="field-help">
-          When a power offers several abilities, show only the one with the
-          highest modifier. Ties prefer the higher score, then the class's key
-          abilities in their listed order, then the power's first option. Also
-          applies to Equipment and Shop power cards.
-        </p>
-        <label>
-          <input
-            type="checkbox"
-            checked={countCoinWeight}
-            onChange={(event) =>
-              onCountCoinWeightChange(event.currentTarget.checked)
-            }
-          />{" "}
-          Count coin weight
-        </label>
-        <p className="field-help">
-          Include carried coins in encumbrance on the printed sheet. Turn this
-          off if your group ignores coin weight. Stored coins never count.
-        </p>
-        <label>
-          <input
-            type="checkbox"
-            checked={showEquippedAttackBonus}
-            onChange={(event) =>
-              onShowEquippedAttackBonusChange(event.currentTarget.checked)
-            }
-          />{" "}
-          Show equipped weapon to-hit bonus in attack headers
-        </label>
-        <p className="field-help">
-          Include the equipped weapon's bonus in each printed attack header.
-          Turn this off if you frequently switch weapons; the weapon table
-          always shows each weapon's calculated bonus.
-        </p>
-        <label>
-          <input
-            type="checkbox"
-            checked={showPrintTitleActionIcon}
-            onChange={(event) =>
-              onShowPrintTitleActionIconChange(event.currentTarget.checked)
-            }
-          />{" "}
-          Show action icons on printed cards
-        </label>
-        <p className="field-help">
-          Put the action symbol beside the power name, with a timer beside the
-          action description below, and show action symbols in item-power
-          headers. Turn this off to keep power symbols only beside their
-          descriptions and omit item-action symbols.
-        </p>
-        <label>
-          Preferred printed card text size
-          <select
-            value={printCardTextSize}
-            onChange={(event) =>
-              onPrintCardTextSizeChange(Number(event.currentTarget.value))
-            }
-          >
-            {Array.from({ length: 8 }, (_, index) => 6.5 + index * 0.5).map(
-              (size) => (
-                <option key={size} value={size}>
-                  {size} pt{size === 8 ? " (default)" : ""}
-                </option>
-              ),
-            )}
-          </select>
-        </label>
-        <p className="field-help">
-          Cards use this size when space permits. Dense cards automatically use
-          smaller body and subheader text to fit, never below 6.5 pt. Titles and
-          footers keep their preferred sizes across all cards. This applies to
-          both power and item cards. Print preview flags cards whose text still
-          exceeds the available space at the minimum size.
-        </p>
-      </section>
-
-      <section className="panel settings-section">
-        <div>
-          <h3>Backups &amp; storage</h3>
-          <p>
-            Your characters and added content stay in this browser. Back up
-            characters here, and keep copies of any added content-pack files
-            separately.
-          </p>
-        </div>
-        <p className="field-help">
-          {storageStatus === undefined
-            ? "Checking browser storage…"
-            : storageStatus.persisted === true
-              ? "This browser has granted persistent storage. Backups are still recommended."
-              : "Browser storage may be cleared automatically. Backups are the reliable recovery path."}
-        </p>
-        <div className="heading-actions">
-          <button
-            type="button"
-            onClick={() =>
-              void exportBackup().catch((reason: unknown) =>
-                setLibraryError(
-                  reason instanceof Error ? reason.message : String(reason),
-                ),
-              )
-            }
-          >
-            Back up library
-          </button>
-          <label className="file-button">
-            Restore backup
-            <input
-              type="file"
-              accept=".json,.4ecb,application/json"
-              onChange={(event) => {
-                const file = event.currentTarget.files?.[0];
-                if (file !== undefined)
-                  void inspectBackupFile(file).catch((reason: unknown) =>
-                    setLibraryError(
-                      reason instanceof Error ? reason.message : String(reason),
-                    ),
-                  );
-                event.currentTarget.value = "";
-              }}
-            />
-          </label>
-        </div>
-        {libraryStatus === "" ? null : (
-          <p className="status" aria-live="polite">
-            {libraryStatus}
-          </p>
-        )}
-        {libraryError === undefined ? null : (
-          <div className="error" role="alert">
-            <strong>Library problem</strong>
-            <span>{libraryError}</span>
+      <div className="settings-columns">
+        <section className="panel settings-section">
+          <div>
+            <h3>Display</h3>
+            <p>How the app looks in this browser.</p>
           </div>
-        )}
-        {pendingBackup === undefined ? null : (
-          <div className="backup-preview" aria-label="Backup restore preview">
-            <h4>Restore preview</h4>
-            <dl className="report-facts">
-              <div>
-                <dt>Format</dt>
-                <dd>Version {pendingBackup.inspection.version}</dd>
-              </div>
-              <div>
-                <dt>Checksum</dt>
-                <dd>
-                  {pendingBackup.inspection.checksumVerified
-                    ? "Verified"
-                    : "Unavailable in legacy backup"}
-                </dd>
-              </div>
-              <div>
-                <dt>Active</dt>
-                <dd>{pendingBackup.inspection.activeCount}</dd>
-              </div>
-              <div>
-                <dt>Trashed</dt>
-                <dd>{pendingBackup.inspection.trashedCount}</dd>
-              </div>
-              <div>
-                <dt>Existing IDs replaced</dt>
-                <dd>{pendingBackup.inspection.conflictingIds.length}</dd>
-              </div>
-            </dl>
-            {!pendingBackup.inspection.checksumVerified ? (
-              <p className="profile-warning">
-                This older backup has no checksum. Its records are structurally
-                valid, but payload integrity cannot be verified.
-              </p>
-            ) : null}
-            <div className="inline-actions">
-              <button
-                type="button"
-                onClick={() =>
-                  void restoreInspectedBackup().catch((reason: unknown) =>
-                    setLibraryError(
-                      reason instanceof Error ? reason.message : String(reason),
-                    ),
-                  )
-                }
+          <fieldset className="theme-options">
+            <legend>Color theme</legend>
+            {(
+              [
+                ["system", "System Default"],
+                ["light", "Light"],
+                ["dark", "Dark"],
+              ] as const
+            ).map(([value, label]) => (
+              <label key={value}>
+                <input
+                  type="radio"
+                  name="theme"
+                  value={value}
+                  checked={theme === value}
+                  onChange={() => onThemeChange(value)}
+                />
+                {label}
+              </label>
+            ))}
+          </fieldset>
+        </section>
+
+        <section className="panel settings-section">
+          <div>
+            <h3>Builder &amp; Equipment</h3>
+            <p>Options for the builder, Equipment, and Shop.</p>
+          </div>
+          <div className="settings-options">
+            <CheckboxSetting
+              checked={hideFlavortext}
+              onChange={onHideFlavortextChange}
+              label="Hide flavortext"
+            />
+            <CheckboxSetting
+              checked={keepLargeAmountsInGold}
+              onChange={onKeepLargeAmountsInGoldChange}
+              label="Keep large amounts in gold"
+            />
+            <CheckboxSetting
+              checked={abbreviateAbilityValues}
+              onChange={onAbbreviateAbilityValuesChange}
+              label="Show ability values compactly in calculated power details"
+              help="On Equipment and Shop power cards, show “Charisma modifier (+4)” as an underlined “+4” whose tooltip names the ability. The Build tab and printed cards keep general formulas."
+            />
+            <CheckboxSetting
+              checked={expandWeaponDice}
+              onChange={onExpandWeaponDiceChange}
+              label="Replace [W] with the selected weapon's dice in calculated power details"
+              help="Use the card's weapon selector to change the calculation or compare every compatible weapon in the character's inventory."
+            />
+          </div>
+        </section>
+
+        <section className="panel settings-section">
+          <div>
+            <h3>Printed sheet</h3>
+            <p>Options for the printable character sheet and its cards.</p>
+          </div>
+          <div className="settings-options">
+            <CheckboxSetting
+              checked={resolveAbilityChoices}
+              onChange={onResolveAbilityChoicesChange}
+              label="Use the best ability in power descriptions"
+              help="When a power lets you choose an ability, show only the one with the highest modifier. Ties go to the higher score, then your class's key abilities, then the power's first option. Also applies to Equipment and Shop power cards."
+            />
+            <CheckboxSetting
+              checked={countCoinWeight}
+              onChange={onCountCoinWeightChange}
+              label="Count coin weight"
+              help="Include carried coins in encumbrance. Turn this off if your group ignores coin weight. Stored coins never count."
+            />
+            <CheckboxSetting
+              checked={showEquippedAttackBonus}
+              onChange={onShowEquippedAttackBonusChange}
+              label="Show equipped weapon to-hit bonus in attack headers"
+              help="Turn this off if you often switch weapons. Each card's weapon table always lists every weapon's bonus."
+            />
+            <CheckboxSetting
+              checked={showPrintTitleActionIcon}
+              onChange={onShowPrintTitleActionIconChange}
+              label="Show action icons on printed cards"
+              help="Show the action symbol beside each power name and in item-power headers. When off, power symbols appear only beside the action description."
+            />
+            <div className="settings-option">
+              <label
+                className="settings-check"
+                htmlFor="settings-card-text-size"
               >
-                Restore {pendingBackup.inspection.characterCount} record(s)
-              </button>
-              <button type="button" onClick={() => setPendingBackup(undefined)}>
-                Cancel
-              </button>
+                Printed card text size
+              </label>
+              <div className="settings-slider">
+                <span aria-hidden="true">Smaller</span>
+                <input
+                  id="settings-card-text-size"
+                  type="range"
+                  min={MIN_PRINT_CARD_TEXT_SIZE}
+                  max={MAX_PRINT_CARD_TEXT_SIZE}
+                  step={0.5}
+                  value={printCardTextSize}
+                  aria-describedby="settings-card-text-size-help"
+                  aria-valuetext={cardTextSizeDescription(printCardTextSize)}
+                  onChange={(event) =>
+                    onPrintCardTextSizeChange(Number(event.currentTarget.value))
+                  }
+                />
+                <span aria-hidden="true">Larger</span>
+                <button
+                  type="button"
+                  className="settings-slider-reset"
+                  disabled={printCardTextSize === DEFAULT_PRINT_CARD_TEXT_SIZE}
+                  onClick={() =>
+                    onPrintCardTextSizeChange(DEFAULT_PRINT_CARD_TEXT_SIZE)
+                  }
+                >
+                  Reset
+                </button>
+              </div>
+              <p className="field-help" id="settings-card-text-size-help">
+                Cards use this size when space allows; dense cards shrink to
+                fit. Titles and footers keep their size. Print preview flags
+                cards that still overflow.
+              </p>
             </div>
           </div>
-        )}
-      </section>
+        </section>
+
+        <section className="panel settings-section">
+          <div>
+            <h3>Backups &amp; storage</h3>
+            <p>
+              Your characters and added content stay in this browser. Back up
+              characters here, and keep copies of any added content-pack files
+              separately.
+            </p>
+          </div>
+          <p className="field-help">
+            {storageStatus === undefined
+              ? "Checking browser storage…"
+              : storageStatus.persisted === true
+                ? "This browser has granted persistent storage. Backups are still recommended."
+                : "Browser storage may be cleared automatically. Backups are the reliable recovery path."}
+          </p>
+          <div className="heading-actions">
+            <button
+              type="button"
+              onClick={() =>
+                void exportBackup().catch((reason: unknown) =>
+                  setLibraryError(
+                    reason instanceof Error ? reason.message : String(reason),
+                  ),
+                )
+              }
+            >
+              Back up library
+            </button>
+            <label className="file-button">
+              Restore backup
+              <input
+                type="file"
+                accept=".json,.4ecb,application/json"
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  if (file !== undefined)
+                    void inspectBackupFile(file).catch((reason: unknown) =>
+                      setLibraryError(
+                        reason instanceof Error
+                          ? reason.message
+                          : String(reason),
+                      ),
+                    );
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
+          </div>
+          {libraryStatus === "" ? null : (
+            <p className="status" aria-live="polite">
+              {libraryStatus}
+            </p>
+          )}
+          {libraryError === undefined ? null : (
+            <div className="error" role="alert">
+              <strong>Library problem</strong>
+              <span>{libraryError}</span>
+            </div>
+          )}
+          {pendingBackup === undefined ? null : (
+            <div className="backup-preview" aria-label="Backup restore preview">
+              <h4>Restore preview</h4>
+              <dl className="report-facts">
+                <div>
+                  <dt>Format</dt>
+                  <dd>Version {pendingBackup.inspection.version}</dd>
+                </div>
+                <div>
+                  <dt>Checksum</dt>
+                  <dd>
+                    {pendingBackup.inspection.checksumVerified
+                      ? "Verified"
+                      : "Unavailable in legacy backup"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Active</dt>
+                  <dd>{pendingBackup.inspection.activeCount}</dd>
+                </div>
+                <div>
+                  <dt>Trashed</dt>
+                  <dd>{pendingBackup.inspection.trashedCount}</dd>
+                </div>
+                <div>
+                  <dt>Existing IDs replaced</dt>
+                  <dd>{pendingBackup.inspection.conflictingIds.length}</dd>
+                </div>
+              </dl>
+              {!pendingBackup.inspection.checksumVerified ? (
+                <p className="profile-warning">
+                  This older backup has no checksum. Its records are
+                  structurally valid, but payload integrity cannot be verified.
+                </p>
+              ) : null}
+              <div className="inline-actions">
+                <button
+                  type="button"
+                  onClick={() =>
+                    void restoreInspectedBackup().catch((reason: unknown) =>
+                      setLibraryError(
+                        reason instanceof Error
+                          ? reason.message
+                          : String(reason),
+                      ),
+                    )
+                  }
+                >
+                  Restore {pendingBackup.inspection.characterCount} record(s)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPendingBackup(undefined)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+      </div>
 
       <section className="panel settings-section game-content-settings">
         <div>

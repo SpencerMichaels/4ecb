@@ -141,7 +141,8 @@ describe("release accessibility contract", () => {
     );
     expect(app).toContain("showEquippedAttackBonus={showEquippedAttackBonus}");
     expect(settingsPage).toContain("Show action icons on printed cards");
-    expect(settingsPage).toContain("Preferred printed card text size");
+    expect(settingsPage).toContain("Printed card text size");
+    expect(settingsPage).toContain('type="range"');
     expect(settingsPage).toContain("checked={showPrintTitleActionIcon}");
     expect(app).toContain(
       'localStorage.getItem(SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY) !== "0"',
