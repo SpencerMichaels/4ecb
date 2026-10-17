@@ -33,6 +33,8 @@ import {
   FileText,
   HandFist,
   Heart,
+  HeartPlus,
+  Droplets,
   FlaskConical,
   FlaskRound,
   Focus,
@@ -146,6 +148,8 @@ export type IconName =
   | "gift"
   | "hand"
   | "heart"
+  | "heart-plus"
+  | "droplets"
   | "fist"
   | "handbag"
   | "hard-hat"
@@ -244,6 +248,8 @@ const icons: Record<IconName, LucideIcon> = {
   gift: Gift,
   hand: Hand,
   heart: Heart,
+  "heart-plus": HeartPlus,
+  droplets: Droplets,
   fist: HandFist,
   handbag: Handbag,
   "hard-hat": HardHat,

@@ -1423,6 +1423,21 @@ body:has(.sp-prototype) {
 .ov-scratch-health-values strong {
   font-size: 17pt;
 }
+.ov-scratch-health-values .ov-health-icon-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.04in;
+}
+.ov-scratch-health-values .ov-health-icon-value .icon {
+  width: 13pt;
+  height: 13pt;
+}
+.ov-scratch-health-values .ov-health-value-number {
+  font-size: inherit;
+  min-width: 2ch;
+  text-align: center;
+}
 .ov-scratch-health .sp-hp-writing > div {
   font-size: 9pt;
   height: auto;

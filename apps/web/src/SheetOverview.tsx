@@ -328,18 +328,30 @@ function BasicAttacks({
 function Values({
   values,
   className,
+  icons,
 }: {
   values: readonly (readonly [string, string])[];
   className: string;
+  icons?: Readonly<Record<string, IconName>>;
 }) {
   return (
     <div className={`sp-values ${className}`}>
-      {values.map(([label, value]) => (
-        <div key={label}>
-          <span>{label}</span>
-          <strong>{value}</strong>
-        </div>
-      ))}
+      {values.map(([label, value]) => {
+        const icon = icons?.[label];
+        return (
+          <div key={label}>
+            <span>{label}</span>
+            {icon ? (
+              <strong className="ov-health-icon-value">
+                <Icon name={icon} />
+                <span className="ov-health-value-number">{value}</span>
+              </strong>
+            ) : (
+              <strong>{value}</strong>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1532,6 +1544,12 @@ function Scratchpad({
             <Panel title="Health" icon="heart" className="ov-scratch-health">
               <Values
                 className="ov-scratch-health-values"
+                icons={{
+                  "Max HP": "heart",
+                  Bloodied: "droplets",
+                  Surges: "power",
+                  "Surge HP": "heart-plus",
+                }}
                 values={[
                   [
                     "Max HP",

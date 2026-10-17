@@ -1045,8 +1045,13 @@ describe("real-data sheet overview", () => {
       [...cells.matchAll(/<span>(.*?)<\/span>/g)].map((match) => match[1]),
     ).toEqual(["Max HP", "Bloodied", "Surges", "Surge HP"]);
     expect(cells).toContain(
-      `<span>Surges</span><strong>${model.resources.find((value) => value.label === "Healing Surges")!.value}</strong>`,
+      `class="ov-health-value-number">${model.resources.find((value) => value.label === "Healing Surges")!.value}</span>`,
     );
+    expect(
+      [...cells.matchAll(/class="lucide lucide-([^ ]+) icon"/g)].map(
+        (match) => match[1],
+      ),
+    ).toEqual(["heart", "droplets", "zap", "heart-plus"]);
     const ap = html
       .split('class="ov-action-point-count"')[1]!
       .split("</div>")[0]!;
