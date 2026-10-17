@@ -718,6 +718,13 @@ describe("sheet model", () => {
             ordinal: 6,
           },
           {
+            name: "Miss",
+            value:
+              "1[W] + Strength modifier or Dexterity modifier damage; add Strength modifier and Wisdom modifier.",
+            extraAttributes: [],
+            ordinal: 6,
+          },
+          {
             name: "Display",
             value: "Wizard Attack 1",
             extraAttributes: [],
@@ -973,6 +980,11 @@ describe("sheet model", () => {
       {
         label: "Requirement",
         value: "Use Strength modifier (+5).",
+      },
+      {
+        label: "Miss",
+        value:
+          "1[W] + Strength modifier (+5) damage; add Strength modifier and Wisdom modifier.",
       },
     ]);
     const authoredChoices = buildEvaluatedSheetModel(

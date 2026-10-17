@@ -1112,6 +1112,12 @@ typecheck, focused lint, formatting and production build pass. All four
 overview-only Letter/A4 × color/monochrome PDF checks pass (12 measured pages
 each, no overview overflow); full milestone/physical-card gates remain separate.
 
+Per-ability modifier choices (2026-10-16): Best-ability resolution now also
+recognizes `X modifier or Y modifier` (e.g. Ardent Strike), so cards and the
+Power Index show the chosen ability (`1[W]+CHA`) instead of `See card`. `and`
+lists still sum and are not collapsed. With best-ability resolution disabled the
+index keeps `See card` rather than an ambiguous multi-ability formula.
+
 Space-fitted Basic Attacks (2026-10-16): The fixed two-alternative cap left the
 `More on power cards…` note visible while free left-column space remained (e.g.
 Unarmed hidden as a third melee alternative). The hidden pane probe now renders

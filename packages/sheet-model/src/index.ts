@@ -559,6 +559,12 @@ const ABILITY_CHOICE_MODIFIER_PATTERN = new RegExp(
   `\\b(${ABILITY_CHOICE_LIST_PATTERN})\\s+modifier\\b`,
   "gi",
 );
+// "X modifier or Y modifier" is a choice; "X modifier and Y modifier" sums both.
+const ABILITY_MODIFIER_OPTION = `(?:your\\s+)?(?:${ABILITY_PATTERN})\\s+modifier`;
+const ABILITY_MODIFIER_OPTIONS_PATTERN = new RegExp(
+  `\\b(${ABILITY_MODIFIER_OPTION}(?:\\s*,\\s*${ABILITY_MODIFIER_OPTION})*\\s*,?\\s+or\\s+${ABILITY_MODIFIER_OPTION})\\b(?!\\s*\\([+-]?\\d+\\))`,
+  "gi",
+);
 const ABILITY_CHOICE_ATTACK_PATTERN = new RegExp(
   `\\b(${ABILITY_CHOICE_LIST_PATTERN})(?=\\s+vs\\.?\\s)`,
   "gi",
@@ -656,6 +662,12 @@ function personalizePowerText(
               new RegExp(`^${chosen.name}\\b`, "i").test(option),
             )?.[0] ?? match
           );
+        })
+        .replace(ABILITY_MODIFIER_OPTIONS_PATTERN, (match, list: string) => {
+          const chosen = chooseAbility(list);
+          return chosen === undefined
+            ? match
+            : `${chosen.name} modifier (${signed(chosen.value)})`;
         })
         .replace(ABILITY_CHOICE_MODIFIER_PATTERN, (match, list: string) => {
           const chosen = chooseAbility(list);
