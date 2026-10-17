@@ -3,8 +3,8 @@
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
 Scratchpad defenses strip (2026-10-16): Health now starts with a compact,
-single-line AC/Fort/Ref/Will bar above its four health reference cells.
-It uses the same calculated defenses as page 1, with inline labels and 11pt
+single-line AC/FORT/REF/WILL bar above its four health reference cells.
+It uses the same calculated defenses as page 1, with 10pt uppercase inline labels and 11pt
 values instead of the health cells' taller label-over-17pt-value layout.
 Slate-blue and monochrome styling match the health pane; missing values remain
 explicit em dashes. Verification: 87 focused overview/layout tests and the
@@ -15,6 +15,8 @@ header note displays a known nonzero saving-throw modifier (e.g. +1 to saves),
 omitting zero/unknown values. This label/header follow-up passes all 69 overview
 tests and web typecheck through Nix, including positive/negative saves and
 zero/unknown omission. No full milestone gate was rerun for this layout trial.
+The subsequent uppercase/10pt-label styling adjustment also passes the 69
+overview tests; no broader test run was repeated for that small visual edit.
 
 Scratchpad health-value icon trial (2026-10-16): Max HP/Bloodied/Surges/Surge HP
 now place Heart/Droplets/Zap/Heart Plus beside their large numbers with a 0.04in

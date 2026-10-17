@@ -1050,7 +1050,11 @@ describe("real-data sheet overview", () => {
     const strip = html
       .split('class="ov-scratch-defenses"')[1]!
       .split('class="sp-values ov-scratch-health-values"')[0]!;
-    const labels: Record<string, string> = { Fortitude: "Fort", Reflex: "Ref" };
+    const labels: Record<string, string> = {
+      Fortitude: "FORT",
+      Reflex: "REF",
+      Will: "WILL",
+    };
     for (const defense of fixture.defenses) {
       const label = labels[defense.label] ?? defense.label;
       expect(strip).toContain(

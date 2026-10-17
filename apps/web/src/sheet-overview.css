@@ -1412,7 +1412,7 @@ body:has(.sp-prototype) {
   align-items: baseline;
   justify-content: center;
   gap: 0.04in;
-  font-size: 8.5pt;
+  font-size: 10pt;
 }
 .ov-scratch-defenses strong {
   font-size: 11pt;
