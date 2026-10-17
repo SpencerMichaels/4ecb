@@ -221,7 +221,8 @@ label-first Max HP/Bloodied/Surges/Surge HP reference cells, a numbered surge ba
 large Current HP and smaller Temp HP writing boxes, three death-save skulls and
 three hollow action-point circles. Health's four reference cells pair icons with the large numbers below
 their labels: heart, droplets, zap and heart-plus respectively. Numbers are
-centered independently with icons positioned to their left. Icons inherit
+centered independently with icons immediately to their left (0.04in gap), not
+at the cell edge. Icons inherit
 the cell ink, are slightly smaller than the numbers, and introduce no new row.
 There is no milestone tracker or running
 header; a consistent identity/section/page footer matches the other pages.

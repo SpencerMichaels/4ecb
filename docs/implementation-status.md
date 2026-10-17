@@ -4,7 +4,8 @@
 
 Scratchpad health-value icon trial (2026-10-16): Max HP/Bloodied/Surges/Surge HP
 now place Heart/Droplets/Zap/Heart Plus to the left of the large value,
-with numbers centered independently below the existing label. Icons are 13pt
+with numbers centered independently below the existing label. Icons sit 0.04in
+from the number's left edge, not the cell edge. Icons are 13pt
 beside 17pt numbers. The four cells and connected surge bar use slate blue
 instead of violet; monochrome remains grayscale. No extra heading row is added.
 An empty value reserves a small writing space beside its icon. Page-1 cells and

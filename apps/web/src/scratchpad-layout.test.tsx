@@ -31,9 +31,10 @@ describe("scratchpad measured tracking layout", () => {
     const icon = styles.match(
       /\.ov-scratch-health-values \.ov-health-icon-value \.icon\s*\{([^}]+)\}/,
     )?.[1];
-    expect(value).toContain("width: 100%");
+    expect(value).toContain("width: max-content");
     expect(value).toContain("justify-content: center");
     expect(icon).toContain("position: absolute");
+    expect(icon).toContain("right: calc(100% + 0.04in)");
     for (const selector of [
       ".ov-scratch-health-values > div",
       ".ov-scratch-surges",

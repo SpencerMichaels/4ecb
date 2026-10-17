@@ -1425,7 +1425,7 @@ body:has(.sp-prototype) {
 }
 .ov-scratch-health-values .ov-health-icon-value {
   position: relative;
-  width: 100%;
+  width: max-content;
   min-height: 1.2em;
   display: flex;
   align-items: center;
@@ -1433,7 +1433,7 @@ body:has(.sp-prototype) {
 }
 .ov-scratch-health-values .ov-health-icon-value .icon {
   position: absolute;
-  left: 0.02in;
+  right: calc(100% + 0.04in);
   top: 50%;
   transform: translateY(-50%);
   width: 13pt;
@@ -1441,8 +1441,10 @@ body:has(.sp-prototype) {
 }
 .ov-scratch-health-values .ov-health-value-number {
   font-size: inherit;
-  min-width: 2ch;
   text-align: center;
+}
+.ov-scratch-health-values .ov-health-value-number:empty {
+  min-width: 2ch;
 }
 .ov-scratch-health .sp-hp-writing > div {
   font-size: 9pt;
