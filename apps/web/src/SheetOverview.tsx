@@ -22,6 +22,7 @@ import { ActionTypeIcon } from "./ActionTypeIcon";
 import { Prose, ProseBlocks, proseBlocks, type ProseBlock } from "./Prose";
 import { printItemPower } from "./print-item-presentation";
 import { SurgeBar } from "./SurgeBar";
+import { StatGroup } from "./StatTiles";
 import {
   scratchpadConsumables,
   type ScratchpadConsumable,
@@ -966,46 +967,57 @@ function Summary({
         </div>
       </section>
       <section className="ov-numeric-band" aria-label="Combat statistics">
-        <section aria-label="Defenses" className="ov-stat-group">
-          <Values
-            className="sp-defenses ov-band-values"
-            values={[
-              ["AC", find(model.defenses, "AC")],
-              ["Fortitude", find(model.defenses, "Fortitude")],
-              ["Reflex", find(model.defenses, "Reflex")],
-              ["Will", find(model.defenses, "Will")],
-              [
-                "Saves",
-                /^[+-]?0$/.test(overview.saves.trim()) ? "—" : overview.saves,
-              ],
-            ]}
-          />
-        </section>
-        <section aria-label="Health" className="ov-stat-group">
-          <Values
-            className="sp-health ov-band-values"
-            values={[
-              ["Max HP", blankHP ? "" : find(model.resources, "Hit Points")],
-              ["Bloodied", overview.bloodied],
-              ["Surges", find(model.resources, "Healing Surges")],
-              ["Surge HP", find(model.resources, "Healing Surge Value")],
-            ]}
-          />
-        </section>
-        <section aria-label="Initiative" className="ov-stat-group">
-          <Values
-            className="ov-band-values"
-            values={[
-              ["Initiative", signedBonus(find(model.resources, "Initiative"))],
-            ]}
-          />
-        </section>
-        <section aria-label="Speed" className="ov-stat-group">
-          <Values
-            className="ov-band-values"
-            values={[["Speed", find(model.resources, "Speed")]]}
-          />
-        </section>
+        <StatGroup
+          label="Defenses"
+          tone="defenses"
+          className="ov-stat-group"
+          values={[
+            { label: "AC", value: find(model.defenses, "AC") },
+            { label: "Fortitude", value: find(model.defenses, "Fortitude") },
+            { label: "Reflex", value: find(model.defenses, "Reflex") },
+            { label: "Will", value: find(model.defenses, "Will") },
+            {
+              label: "Saves",
+              value: /^[+-]?0$/.test(overview.saves.trim())
+                ? "—"
+                : overview.saves,
+            },
+          ]}
+        />
+        <StatGroup
+          label="Health"
+          tone="health"
+          className="ov-stat-group"
+          values={[
+            {
+              label: "Max HP",
+              value: blankHP ? "" : find(model.resources, "Hit Points"),
+            },
+            { label: "Bloodied", value: overview.bloodied },
+            { label: "Surges", value: find(model.resources, "Healing Surges") },
+            {
+              label: "Surge HP",
+              value: find(model.resources, "Healing Surge Value"),
+            },
+          ]}
+        />
+        <StatGroup
+          label="Initiative"
+          tone="movement"
+          className="ov-stat-group"
+          values={[
+            {
+              label: "Initiative",
+              value: signedBonus(find(model.resources, "Initiative")),
+            },
+          ]}
+        />
+        <StatGroup
+          label="Speed"
+          tone="movement"
+          className="ov-stat-group"
+          values={[{ label: "Speed", value: find(model.resources, "Speed") }]}
+        />
       </section>
       <SummaryColumns model={model} onVisibleReminders={onVisibleReminders}>
         <SummaryPane id="defenses">

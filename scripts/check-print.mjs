@@ -1055,10 +1055,10 @@ async function checkSummaryPresentation(client, monochrome) {
         ['abilities','.sp-ability-reference > h3'],
         ['senses','.ov-senses > h3'],
         ['reminders','.ov-reminder-region .sp-panel > h3'],
-        ['health','.ov-stat-group[aria-label="Health"] .ov-band-values > div'],
-        ['defenseStats','.ov-stat-group[aria-label="Defenses"] .ov-band-values > div'],
-        ['initiative','.ov-stat-group[aria-label="Initiative"] .ov-band-values > div'],
-        ['speed','.ov-stat-group[aria-label="Speed"] .ov-band-values > div'],
+        ['health','.ov-stat-group[aria-label="Health"] .stat-tile'],
+        ['defenseStats','.ov-stat-group[aria-label="Defenses"] .stat-tile'],
+        ['initiative','.ov-stat-group[aria-label="Initiative"] .stat-tile'],
+        ['speed','.ov-stat-group[aria-label="Speed"] .stat-tile'],
       ].flatMap(([key,selector]) => {
         const element=summary.querySelector(selector);
         return element ? [[key,getComputedStyle(element).backgroundColor]] : [];

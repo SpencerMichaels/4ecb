@@ -53,14 +53,20 @@ describe("BuilderHeaderStats", () => {
     expect(markup).toContain('aria-label="Ability scores"');
     expect(markup).not.toContain(">Defenses<");
     expect(markup).not.toContain(">Abilities<");
-    expect(markup).toContain('<dd title="HP 71">71</dd>');
-    expect(markup).toContain('<dd title="INIT +2">+2</dd>');
-    expect(markup).toContain('<dt>FORT</dt><dd title="FORT 22">22</dd>');
-    expect(markup).toContain('<dt>REF</dt><dd title="REF 18">18</dd>');
-    expect(markup).toContain('<dt>WILL</dt><dd title="WILL 21">21</dd>');
+    expect(markup).toContain('<dd title="Max HP 71">71</dd>');
+    expect(markup).toContain('<dd title="Initiative +2">+2</dd>');
+    expect(markup).toContain(
+      '<dt>Fortitude</dt><dd title="Fortitude 22">22</dd>',
+    );
+    expect(markup).toContain('<dt>Reflex</dt><dd title="Reflex 18">18</dd>');
+    expect(markup).toContain('<dt>Will</dt><dd title="Will 21">21</dd>');
     expect(markup).toContain('<dt>INT</dt><dd title="INT 8">8</dd>');
-    expect(markup.match(/<dd title=/g)).toHaveLength(13);
-    expect(markup).toContain('<dd title="HP 71">71</dd>');
+    expect(markup.match(/<dd title=/g)).toHaveLength(14);
+    expect(markup).toContain('aria-label="Health"');
+    expect(markup).toContain(
+      '<dt>Bloodied</dt><dd title="Bloodied 35\nHalf of max HP 71">35</dd>',
+    );
+    expect(markup).toContain('<dd title="Max HP 71">71</dd>');
   });
 
   it("recognizes the legacy short aliases for defense totals", () => {
@@ -78,15 +84,17 @@ describe("BuilderHeaderStats", () => {
     );
 
     expect(markup).toContain('<dt>AC</dt><dd title="AC 24">24</dd>');
-    expect(markup).toContain('<dt>FORT</dt><dd title="FORT 20">20</dd>');
-    expect(markup).toContain('<dt>REF</dt><dd title="REF 19">19</dd>');
-    expect(markup).toContain('<dt>WILL</dt><dd title="WILL 21">21</dd>');
+    expect(markup).toContain(
+      '<dt>Fortitude</dt><dd title="Fortitude 20">20</dd>',
+    );
+    expect(markup).toContain('<dt>Reflex</dt><dd title="Reflex 19">19</dd>');
+    expect(markup).toContain('<dt>Will</dt><dd title="Will 21">21</dd>');
   });
 
   it("uses stable em dashes while the current evaluation is unavailable", () => {
     const markup = renderToStaticMarkup(createElement(BuilderHeaderStats, {}));
 
-    expect(markup.match(/<dd>—<\/dd>/g)).toHaveLength(13);
+    expect(markup.match(/<dd>—<\/dd>/g)).toHaveLength(16);
     expect(markup).not.toContain("title=");
   });
 
@@ -204,7 +212,7 @@ describe("BuilderHeaderStats", () => {
     );
 
     expect(markup).toContain(
-      'title="HP 32\nLevel 1 hit points +14\nLevel 2 hit points +6\nConstitution score +12"',
+      'title="Max HP 32\nLevel 1 hit points +14\nLevel 2 hit points +6\nConstitution score +12"',
     );
   });
 
@@ -238,7 +246,7 @@ describe("BuilderHeaderStats", () => {
     );
 
     expect(markup).toContain(
-      'title="HP 55\nLevels 2–3 hit points +6 each\nLevels 4–5 hit points +5 each\nLevel 7 hit points +5\nLevel 8 hit points +6"',
+      'title="Max HP 55\nLevels 2–3 hit points +6 each\nLevels 4–5 hit points +5 each\nLevel 7 hit points +5\nLevel 8 hit points +6"',
     );
   });
 });

@@ -22,7 +22,7 @@ describe("builder header layout", () => {
       "grid-template-columns: minmax(0, 19rem) minmax(0, 1fr)",
     );
     expect(declarationsFor(".builder-header-stat-groups")).toContain(
-      "minmax(4.5rem, 0.6fr) minmax(7.6rem, 1fr) minmax(15.2rem, 2.2fr)",
+      "minmax(15rem, 4fr) minmax(15rem, 4fr) minmax(4.6rem, 1fr)",
     );
     expect(declarationsFor(".builder-character-heading")).toContain(
       "min-width: 0",
@@ -30,25 +30,19 @@ describe("builder header layout", () => {
     expect(declarationsFor(".builder-character-name input")).toContain(
       "inline-size: 100%",
     );
-    expect(declarationsFor(".builder-header-stat-cluster")).toContain(
-      "border-top: 3px solid",
-    );
     expect(styles).not.toContain(
       ".builder-header-vitals .builder-header-stat dd",
     );
     expect(declarationsFor(".builder-tabs-bar")).not.toContain("border-top");
   });
 
-  it("centers each ability pair while fixing its label and value columns", () => {
-    const abilityStat = declarationsFor(
-      ".builder-header-abilities .builder-header-stat",
-    );
-
-    expect(abilityStat).toContain("grid-template-columns: 1.7rem 1.25rem");
-    expect(declarationsFor(".builder-header-stat")).toContain(
-      "justify-content: center",
-    );
-    expect(abilityStat).toContain("justify-items: start");
+  it("shows ability scores as compact shared stat tiles", () => {
+    expect(
+      declarationsFor(
+        ".builder-header-stats .stat-tiles-compact .stat-tile dd",
+      ),
+    ).toContain("font-size: 1.4em");
+    expect(styles).not.toContain(".builder-header-stat-cluster");
   });
 
   it("stacks the identity and status surfaces at responsive breakpoints", () => {

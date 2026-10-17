@@ -1,5 +1,15 @@
 # Implementation status
 
+## Shared stat tiles (2026-10-17)
+
+Page 1's combat band and the builder header now share `StatTiles.tsx` /
+`stat-tiles.css` (em-sized; page 1 sets an 8pt base). The builder shows
+Defenses / Health (Max HP, Bloodied, Surges, Surge HP) / Initiative / Speed in
+page-1 order plus compact ability tiles, colored from the app theme; print keeps
+its group palette and monochrome override. The deployment security-contract
+test now requires security headers on every nginx location instead of a fixed
+count. Verification: 544 web tests, typecheck and lint pass through Nix.
+
 ## M5.7 beta deployment checkpoint (2026-10-16)
 
 Compose deployment, image-served advertised packs and `content-tool advertise`

@@ -1498,7 +1498,7 @@ describe("real-data sheet overview", () => {
           blankHP={false}
         />,
       );
-      expect(html).toContain(`<span>Saves</span><strong>${expected}</strong>`);
+      expect(html).toContain(`<dt>Saves</dt><dd>${expected}</dd>`);
       expect(html).toContain("<span>Surge HP</span>");
       const header = html.split("Conditions")[1]!.split("</h3>")[0]!;
       if (saves === "+2" || saves === "-1") {
@@ -1530,9 +1530,7 @@ describe("real-data sheet overview", () => {
           blankHP={false}
         />,
       );
-      expect(html).toContain(
-        `<span>Initiative</span><strong>${expected}</strong>`,
-      );
+      expect(html).toContain(`<dt>Initiative</dt><dd>${expected}</dd>`);
     }
   });
   it("uses one icon-led basic-attack table and a fist for unarmed", () => {
@@ -1860,10 +1858,18 @@ describe("real-data sheet overview", () => {
     const band = summary
       .split('class="ov-numeric-band"')[1]!
       .split('class="sp-summary-grid')[0]!;
-    expect(band).toContain('aria-label="Defenses" class="ov-stat-group"');
-    expect(band).toContain('aria-label="Health" class="ov-stat-group"');
-    expect(band).toContain('aria-label="Initiative" class="ov-stat-group"');
-    expect(band).toContain('aria-label="Speed" class="ov-stat-group"');
+    expect(band).toContain(
+      'aria-label="Defenses" class="stat-group stat-tone-defenses ov-stat-group"',
+    );
+    expect(band).toContain(
+      'aria-label="Health" class="stat-group stat-tone-health ov-stat-group"',
+    );
+    expect(band).toContain(
+      'aria-label="Initiative" class="stat-group stat-tone-movement ov-stat-group"',
+    );
+    expect(band).toContain(
+      'aria-label="Speed" class="stat-group stat-tone-movement ov-stat-group"',
+    );
     expect(band).not.toContain("<h3");
     expect(right).toContain(
       '<td class="ov-ability-score">19</td><th scope="row">Strength</th>',
@@ -1886,7 +1892,7 @@ describe("real-data sheet overview", () => {
     expect(skills).toContain('<span class="ov-passive-value">(18)</span> +8');
     expect(skills).toContain('<span class="ov-passive-value">(25)</span> +15');
     expect(skills).not.toContain("ov-passive-skill");
-    expect(band).toContain("<span>Initiative</span><strong>+12</strong>");
+    expect(band).toContain("<dt>Initiative</dt><dd>+12</dd>");
   });
   it("groups defensive traits in the summary body and preserves full references", () => {
     const html = renderToStaticMarkup(
@@ -1983,9 +1989,7 @@ describe("real-data sheet overview", () => {
         blankHP={false}
       />,
     );
-    expect(html).toContain(
-      `<span>Initiative</span><strong>${expected}</strong>`,
-    );
+    expect(html).toContain(`<dt>Initiative</dt><dd>${expected}</dd>`);
   });
   it("fills reminder space without a fixed count cap, reserving overflow-caption space", () => {
     expect(

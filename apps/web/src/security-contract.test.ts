@@ -39,7 +39,7 @@ describe("public deployment security contract", () => {
     );
     expect(
       nginx.match(/include \/etc\/nginx\/security-headers\.conf;/g),
-    ).toHaveLength(4);
+    ).toHaveLength(nginx.match(/^\s*location /gm)?.length ?? -1);
     const headers = readFileSync(
       new URL("docker/security-headers.conf", repositoryRoot),
       "utf8",

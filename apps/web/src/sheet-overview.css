@@ -208,6 +208,7 @@ body:has(.sp-prototype) {
 }
 .ov-numeric-band {
   display: grid;
+  font-size: 8pt;
   grid-template-columns: minmax(0, 5fr) minmax(0, 4fr) minmax(0, 1fr) minmax(
       0,
       1fr
@@ -215,73 +216,16 @@ body:has(.sp-prototype) {
   gap: 0.12in;
   margin-top: 0.1in;
 }
-.ov-numeric-band .ov-stat-group {
-  border: 1px solid var(--sp-border);
-  border-radius: 5px;
-  padding: 0.04in;
-  min-width: 0;
-}
 /* One quiet pane accent; numeric-band groups retain their distinguishing colors. */
 .sheet-overview .ov-paper[aria-label^="Character summary"] {
   --ov-accent: #3e5f7c;
   --ov-tint: #eaf0f6;
   --ov-edge: #b9cbdc;
 }
-.sheet-overview
-  .ov-paper[aria-label="Character summary"]
-  .ov-stat-group[aria-label="Defenses"] {
-  --ov-accent: #526b45;
-  --ov-tint: #eef3e9;
-  --ov-edge: #c1cfb5;
-}
-.sheet-overview
-  .ov-paper[aria-label="Character summary"]
-  .ov-stat-group[aria-label="Health"] {
-  --ov-accent: #65557d;
-  --ov-tint: #f0ecf5;
-  --ov-edge: #cbbfd9;
-}
-.sheet-overview
-  .ov-paper[aria-label="Character summary"]
-  :is(
-    .ov-stat-group[aria-label="Initiative"],
-    .ov-stat-group[aria-label="Speed"]
-  ) {
-  --ov-accent: #32665f;
-  --ov-tint: #eaf2f0;
-  --ov-edge: #b6cec8;
-}
 .sheet-overview .ov-paper[aria-label^="Character summary"] .sp-panel > h3 {
   color: var(--ov-accent);
   background: var(--ov-tint);
   border-bottom-color: var(--ov-edge);
-}
-.sheet-overview .ov-paper[aria-label="Character summary"] .ov-stat-group {
-  border-color: var(--ov-edge);
-}
-.sheet-overview
-  .ov-paper[aria-label="Character summary"]
-  .ov-band-values
-  > div {
-  background: var(--ov-tint);
-}
-.sheet-overview .ov-paper[aria-label="Character summary"] .ov-band-values span {
-  color: var(--ov-accent);
-}
-.sp-values.ov-band-values {
-  gap: 0.04in;
-}
-.sp-values.ov-band-values > div {
-  border: 0;
-  padding: 0.06in 0.015in;
-  background: var(--sp-soft);
-  border-radius: 3px;
-}
-.sp-values.ov-band-values span {
-  font-size: 8pt;
-  color: var(--sp-ink);
-  font-weight: 600;
-  white-space: nowrap;
 }
 .sheet-overview .ov-balanced-columns {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -2071,6 +2015,11 @@ body:has(.sp-prototype) {
   --ov-accent: #333;
   --ov-tint: #eee;
   --ov-edge: #aaa;
+}
+.sheet-overview.sp-monochrome .stat-group {
+  --stat-accent: #333;
+  --stat-tint: #eee;
+  --stat-edge: #aaa;
 }
 @page sp-letter {
   size: letter;

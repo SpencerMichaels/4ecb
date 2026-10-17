@@ -3140,84 +3140,56 @@ textarea {
   display: grid;
   gap: 0.45rem;
   grid-template-columns:
-    minmax(4.5rem, 0.6fr) minmax(7.6rem, 1fr) minmax(15.2rem, 2.2fr)
-    minmax(10.8rem, 1.7fr);
+    minmax(15rem, 4fr) minmax(15rem, 4fr) minmax(4.6rem, 1fr)
+    minmax(4.6rem, 1fr) minmax(11rem, 3fr);
 }
 
-.builder-header-stat-cluster {
-  align-items: center;
-  background: color-mix(in srgb, var(--surface-subtle) 72%, var(--surface));
-  border: 1px solid var(--border);
+/* Shared stat tiles at screen scale; colors follow the active theme. */
+.builder-header-stats .stat-group {
+  font-size: 0.68rem;
+}
+
+.builder-header-stats .stat-tile dd {
+  color: var(--text);
+  font-size: 2.3em;
+}
+
+.builder-header-stats .stat-tiles-compact .stat-tile dd {
+  font-size: 1.4em;
+}
+
+.builder-header-stats .stat-tile dd[title] {
+  cursor: help;
+}
+
+/* The builder colors tiles from the app theme; print keeps its group palette. */
+.builder-header-stats .stat-group {
+  --stat-accent: var(--muted);
+  --stat-tint: color-mix(in srgb, var(--surface-subtle) 72%, var(--surface));
+  --stat-edge: var(--border);
   border-top: 3px solid
     color-mix(in srgb, var(--tone-neutral) 72%, var(--border));
-  display: grid;
-  min-width: 0;
 }
 
-.builder-header-vitals {
-  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
-  grid-template-columns: 1fr;
-}
-
-.builder-header-movement {
-  grid-template-columns: repeat(2, minmax(3.8rem, 1fr));
-}
-
-.builder-header-defenses {
-  background: color-mix(in srgb, var(--tone-neutral) 7%, var(--surface));
-  grid-template-columns: repeat(4, minmax(3.8rem, 1fr));
-}
-
-.builder-header-abilities {
-  align-content: center;
-  grid-template-columns: repeat(3, minmax(3.6rem, 1fr));
-}
-
-.builder-header-stat {
-  align-items: center;
-  display: grid;
-  gap: 0.12rem;
-  justify-content: center;
-  justify-items: center;
-  min-width: 0;
-  padding: 0.45rem 0.55rem;
-  position: relative;
-}
-
-.builder-header-stat dt {
-  color: var(--muted);
-  font-size: 0.66rem;
+.builder-header-stats .stat-tile dt {
   font-weight: 800;
   letter-spacing: 0.045em;
 }
 
-.builder-header-stat dd {
-  color: var(--text);
-  font-size: 1.05rem;
-  font-variant-numeric: tabular-nums;
-  font-weight: 800;
-}
+@media (max-width: 80rem) {
+  .builder-header-stat-groups {
+    grid-template-columns:
+      minmax(0, 4fr) minmax(0, 4fr) minmax(4.6rem, 1fr)
+      minmax(4.6rem, 1fr);
+  }
 
-.builder-header-stat dd[title] {
-  cursor: help;
-}
+  .builder-header-abilities {
+    grid-column: 1 / -1;
+  }
 
-.builder-header-defenses .builder-header-stat:not(:first-child),
-.builder-header-movement .builder-header-stat + .builder-header-stat {
-  border-left: 1px solid var(--border);
-}
-
-.builder-header-abilities .builder-header-stat {
-  align-items: baseline;
-  gap: 0.32rem;
-  grid-template-columns: 1.7rem 1.25rem;
-  justify-items: start;
-  padding-block: 0.22rem;
-  padding-inline: 0.35rem;
-}
-
-.builder-header-abilities .builder-header-stat dd {
-  font-size: 0.95rem;
+  .builder-header-abilities .stat-tiles-compact {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
 }
 
 .builder-tabs-bar {
@@ -6760,12 +6732,13 @@ button.inventory-icon-action:disabled {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .builder-header-defenses,
+  .builder-header-stat-groups > .stat-tone-defenses,
+  .builder-header-stat-groups > .stat-tone-health,
   .builder-header-abilities {
     grid-column: 1 / -1;
   }
 
-  .builder-header-abilities {
+  .builder-header-abilities .stat-tiles-compact {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 

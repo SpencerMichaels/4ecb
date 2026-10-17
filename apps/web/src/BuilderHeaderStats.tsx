@@ -4,13 +4,15 @@ import type {
   EvaluatedStat,
 } from "@4ecb/rules-engine";
 
+import { StatGroup, type StatTileValue } from "./StatTiles";
+
 type HeaderEvaluation = Pick<EvaluatedCharacter, "stats">;
 
 const defenses = [
   ["AC", ["AC", "Armor Class"]],
-  ["FORT", ["Fortitude Defense", "Fortitude"]],
-  ["REF", ["Reflex Defense", "Reflex"]],
-  ["WILL", ["Will Defense", "Will"]],
+  ["Fortitude", ["Fortitude Defense", "Fortitude"]],
+  ["Reflex", ["Reflex Defense", "Reflex"]],
+  ["Will", ["Will Defense", "Will"]],
 ] as const;
 
 const abilities = [
@@ -178,32 +180,28 @@ function statTooltip(
   ].join("\n");
 }
 
-function Stat({
-  label,
-  names,
-  evaluation,
+function statTile(
+  evaluation: HeaderEvaluation | undefined,
+  label: string,
+  names: string | readonly string[],
   signed = false,
-}: {
-  readonly label: string;
-  readonly names: string | readonly string[];
-  readonly evaluation: HeaderEvaluation | undefined;
-  readonly signed?: boolean;
-}) {
+): StatTileValue {
   const stat = evaluatedStat(evaluation, names);
   const value = displayValue(stat, signed);
-  const numeric = typeof stat?.value === "number";
-  return (
-    <div className="builder-header-stat">
-      <dt>{label}</dt>
-      <dd
-        {...(numeric && stat !== undefined
-          ? { title: statTooltip(label, value, stat) }
-          : {})}
-      >
-        {value}
-      </dd>
-    </div>
-  );
+  return typeof stat?.value === "number"
+    ? { label, value, title: statTooltip(label, value, stat) }
+    : { label, value };
+}
+
+function bloodiedTile(evaluation: HeaderEvaluation | undefined): StatTileValue {
+  const hitPoints = evaluatedStat(evaluation, "Hit Points")?.value;
+  if (typeof hitPoints !== "number") return { label: "Bloodied", value: "—" };
+  const value = String(Math.floor(hitPoints / 2));
+  return {
+    label: "Bloodied",
+    value,
+    title: `Bloodied ${value}\nHalf of max HP ${hitPoints}`,
+  };
 }
 
 export function BuilderHeaderStats({
@@ -214,50 +212,42 @@ export function BuilderHeaderStats({
   return (
     <section aria-label="Key statistics" className="builder-header-stats">
       <div className="builder-header-stat-groups">
-        <dl
-          aria-label="Hit points"
-          className="builder-header-stat-cluster builder-header-vitals"
-        >
-          <Stat evaluation={evaluation} label="HP" names="Hit Points" />
-        </dl>
-        <dl
-          aria-label="Movement"
-          className="builder-header-stat-cluster builder-header-movement"
-        >
-          <Stat evaluation={evaluation} label="SPEED" names="Speed" />
-          <Stat
-            evaluation={evaluation}
-            label="INIT"
-            names="Initiative"
-            signed
-          />
-        </dl>
-        <dl
-          aria-label="Defenses"
-          className="builder-header-stat-cluster builder-header-defenses"
-        >
-          {defenses.map(([label, names]) => (
-            <Stat
-              key={label}
-              evaluation={evaluation}
-              label={label}
-              names={names}
-            />
-          ))}
-        </dl>
-        <dl
-          aria-label="Ability scores"
-          className="builder-header-stat-cluster builder-header-abilities"
-        >
-          {abilities.map(([label, name]) => (
-            <Stat
-              key={name}
-              evaluation={evaluation}
-              label={label}
-              names={name}
-            />
-          ))}
-        </dl>
+        <StatGroup
+          label="Defenses"
+          tone="defenses"
+          values={defenses.map(([label, names]) =>
+            statTile(evaluation, label, names),
+          )}
+        />
+        <StatGroup
+          label="Health"
+          tone="health"
+          values={[
+            statTile(evaluation, "Max HP", "Hit Points"),
+            bloodiedTile(evaluation),
+            statTile(evaluation, "Surges", "Healing Surges"),
+            statTile(evaluation, "Surge HP", "Healing Surge Value"),
+          ]}
+        />
+        <StatGroup
+          label="Initiative"
+          tone="movement"
+          values={[statTile(evaluation, "Initiative", "Initiative", true)]}
+        />
+        <StatGroup
+          label="Speed"
+          tone="movement"
+          values={[statTile(evaluation, "Speed", "Speed")]}
+        />
+        <StatGroup
+          label="Ability scores"
+          tone="abilities"
+          className="builder-header-abilities"
+          compact
+          values={abilities.map(([label, name]) =>
+            statTile(evaluation, label, name),
+          )}
+        />
       </div>
     </section>
   );
