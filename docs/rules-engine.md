@@ -157,6 +157,14 @@ persisted. The worker validates only the pack manifest during initialization,
 then shares one lazy full-pack decode across concurrent misses, so a persistent
 hit does not pay the former duplicate worker decode.
 
+Advance `RULES_EVALUATION_CACHE_VERSION` for changes to evaluated math, input
+semantics or output projections, even when added output fields are optional.
+Shape validation cannot distinguish an older otherwise-valid power record
+missing newly computed metadata. The effective basic-attack flag projection
+uses v9 (`evaluated-character-v9-2026-10-16-effective-basic-attack-flags`);
+runtime regression tests require pre-v9 cached powers to miss and recompute.
+Fresh command-line evaluations alone do not validate a browser cache upgrade.
+
 Builder routes explicitly request full candidates only where a selectable UI is
 visible: the chosen Build level or the Character details choice levels.
 Overview, Equipment, and Diagnostics retain topology, selected candidates, and

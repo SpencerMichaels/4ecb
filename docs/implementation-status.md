@@ -2,6 +2,24 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+BA-flag cache invalidation correction (2026-10-16): the preceding eligibility
+change omitted the required engine-cache version bump. Version v8 results could
+still be accepted from persistent storage with no `basicAttackKind`, so a fresh
+private evaluation passed while existing browser sheets could omit the row.
+`RULES_EVALUATION_CACHE_VERSION` now advances to
+`evaluated-character-v9-2026-10-16-effective-basic-attack-flags`, invalidating
+derived results only, not character/profile/content data. Runtime regression
+tests seed old flagged-power projections without eligibility metadata and
+require a fresh worker evaluation with the flag, including the former v8 key.
+After loading the updated app, sheets recompute rather than reuse old results.
+Verification: 129 focused runtime-cache/overview/power tests pass, including
+old-v8-cache rejection and fresh BA-flag preservation. Web/rules typechecks,
+focused lint and production/PWA build pass through Nix. No full print/milestone
+gate was rerun: this changes cache identity, not layout or character data. The
+connected browser tab could not be inspected because its control connection
+timed out; reopening/reloading the updated browser document is still needed to
+confirm the owner's live Hu sheet. M5.6 remains open.
+
 Basic-attack alternatives (2026-10-16): owned powers with effective authored
 `_BasicAttack` = Melee/Ranged now join the summary table. Active rule overlays
 are authoritative, including Power of Skill; no feat-name/prose heuristic is

@@ -185,6 +185,7 @@ describe("application content runtime", () => {
     "evaluated-character-v3-2026-09-17",
     "evaluated-character-v6-2026-10-14-weapon-property-values",
     "evaluated-character-v7-2026-10-15-weapon-eligibility",
+    "evaluated-character-v8-2026-10-15-qualified-implement-bonuses",
   ])(
     "does not reuse older power-projection evaluations (%s)",
     async (oldVersion) => {
@@ -209,8 +210,22 @@ describe("application content runtime", () => {
       const oldKey = [...digest]
         .map((value) => value.toString(16).padStart(2, "0"))
         .join("");
-      await cache.put(oldKey, oldVersion, profile, evaluation(8));
-      const fresh = evaluation(8);
+      const oldPower = {
+        definitionId: "synthetic-strike",
+        name: "Synthetic strike",
+        keywords: ["Weapon"],
+        variants: [],
+        recoveries: [],
+        unsupported: [],
+      };
+      await cache.put(oldKey, oldVersion, profile, {
+        ...evaluation(8),
+        powers: [oldPower],
+      });
+      const fresh = {
+        ...evaluation(8),
+        powers: [{ ...oldPower, basicAttackKind: "melee" as const }],
+      };
       const evaluate = vi.fn(async () => fresh);
       const runtime = new AppContentRuntime({
         evaluationCache: cache,
@@ -222,6 +237,9 @@ describe("application content runtime", () => {
       });
       const client = await runtime.getRulesClient("core", "digest-core");
       await expect(client.evaluate(input)).resolves.toBe(fresh);
+      expect((await client.evaluate(input)).powers[0]?.basicAttackKind).toBe(
+        "melee",
+      );
       expect(evaluate).toHaveBeenCalledOnce();
       expect(cache.get).toHaveBeenCalledWith(
         expect.not.stringMatching(`^${oldKey}$`),
