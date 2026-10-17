@@ -1675,8 +1675,10 @@ separate projection over the same semantic model.
   / Damage / Critical on one wrapping row; implements as Enhancement / Critical; armor/shields
   as AC bonus / Enhancement then nonzero Check / Speed penalties. Missing fields
   and empty rows disappear. Weapon enhancement is omitted because it is already
-  in the title. Other item types also omit Enhancement when the same numeric
-  bonus is already in their title. Combat rows retain the earlier bold uppercase
+  in the title. Other items show Enhancement as a stat only when their kind
+  implies its target (implements: attack/damage; armor: AC), omitted when the
+  title repeats it; otherwise (e.g. neck Fortitude, Reflex, and Will) it leads
+  the card body as a rule (2026-10-16). Combat rows retain the earlier bold uppercase
   labels (Prof/Crit abbreviations) and use dot separators without boxed
   cells. Category, group, hands, armor type, rarity, and key ability move to
   compact metadata prose on the footer's left; slot/weight/price share its right

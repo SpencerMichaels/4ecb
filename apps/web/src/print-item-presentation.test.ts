@@ -67,6 +67,51 @@ describe("printed item presentation", () => {
       });
     },
   );
+  it("shows an enhancement as a body rule when the item kind does not imply its target", () => {
+    const amulet = {
+      ...card("Magic Item", {
+        "Magic Item Type": "Neck Slot Item",
+        Enhancement: "+2 Fortitude, Reflex, and Will",
+        Property: "A passive benefit.",
+      }),
+      name: "Fixture amulet +2",
+    };
+    const view = printItemPresentation(amulet);
+    expect(view.stats).toEqual([]);
+    expect(view.rules).toEqual([
+      { label: "Enhancement", value: "+2 Fortitude, Reflex, and Will" },
+      { label: "Property", value: "A passive benefit." },
+    ]);
+    const mismatched = printItemPresentation(
+      card("Magic Item", {
+        "Magic Item Type": "Neck Slot Item",
+        Enhancement: "+1 attack rolls and damage rolls",
+      }),
+    );
+    expect(mismatched.rules.map(({ label }) => label)).toEqual(["Enhancement"]);
+  });
+  it.each([
+    ["Holy Symbol", "Magic Item", "+1 attack rolls and damage rolls"],
+    ["Armor", "Armor", "+1 AC"],
+  ])(
+    "keeps an implied %s enhancement as a stat, omitted when the title repeats it",
+    (magicType, baseType, enhancement) => {
+      const item = card(
+        "Magic Item",
+        { "Magic Item Type": magicType, Enhancement: enhancement },
+        baseType,
+      );
+      expect(printItemPresentation(item).stats).toContainEqual({
+        label: "Enhancement",
+        value: "+1",
+      });
+      const titled = printItemPresentation({ ...item, name: "Fixture +1" });
+      expect(titled.stats.map(({ label }) => label)).not.toContain(
+        "Enhancement",
+      );
+      expect(titled.rules).toEqual([]);
+    },
+  );
   it("keeps ranged combat values together on one row", () => {
     const view = printItemPresentation(
       card("Weapon", {

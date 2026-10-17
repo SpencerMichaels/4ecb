@@ -1848,8 +1848,11 @@ Combat values use item-specific rows: melee Proficiency / Damage / Critical;
 ranged-capable Range / Proficiency / Damage / Critical on one wrapping row; implement Enhancement
 / Critical; armor/shield AC bonus / Enhancement then nonzero penalties. Omit
 weapon enhancement already represented in the title, absent values, and empty
-rows. Other item types also omit Enhancement when their title includes the
-same numeric bonus; retain it when the title has no matching bonus. Use
+rows. Enhancement is a compact stat only when the item kind implies its target
+(weapons/implements: attack and damage rolls; armor/shields: AC); it is then
+omitted when the title repeats the same bonus. An enhancement whose target the
+kind does not imply (e.g. a neck item's Fortitude, Reflex, and Will) is the
+item's rule, so it leads the card body verbatim before powers and properties. Use
 dot-separated values in softly tinted rows without boxed cells.
 Retain the earlier bold uppercase stat-label styling, per visual feedback.
 Noncombat enums become compact metadata prose on the footer's left; slot,

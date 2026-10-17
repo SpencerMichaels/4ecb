@@ -20,6 +20,32 @@ export function printItemPresentation(card: SheetCard) {
         .trim()
     : card.name;
   const proficiency = field("Proficiency Bonus", "Proficient");
+  const magicType = lastField("Magic Item Type");
+  const baseType = card.baseItemType ?? card.itemType;
+  const isWeapon =
+    baseType === "Weapon" || magicType?.toLowerCase() === "weapon";
+  const isArmor = baseType === "Armor" || magicType?.toLowerCase() === "armor";
+  const isImplement =
+    /^(?:superior implement|implement|holy symbol|ki focus|orb|rod|staff|tome|totem|wand)$/i.test(
+      magicType ?? card.itemType ?? "",
+    );
+  // The item kind implies what an enhancement modifies; anything else is a rule.
+  const impliedEnhancementTarget =
+    isWeapon || isImplement
+      ? /^attack rolls and damage rolls$/i
+      : isArmor
+        ? /^AC$/i
+        : undefined;
+  const enhancementField = [...card.fields]
+    .reverse()
+    .find((entry) => entry.label.trim().toLowerCase() === "enhancement");
+  const enhancementMatch =
+    enhancementField?.value.trim().match(/^([+-]\d+)\s*(.*?)\.?$/) ?? undefined;
+  const enhancementTarget = enhancementMatch?.[2] ?? "";
+  const enhancementIsStat =
+    enhancementMatch !== undefined &&
+    (enhancementTarget === "" ||
+      impliedEnhancementTarget?.test(enhancementTarget) === true);
   const critical = lastField("Critical");
   const criticalFormula = critical
     ?.trim()
@@ -32,13 +58,7 @@ export function printItemPresentation(card: SheetCard) {
     ["AC bonus", field("Armor Bonus", "AC Bonus")],
     ["Check penalty", field("Check")],
     ["Speed penalty", field("Speed")],
-    [
-      "Enhancement",
-      lastField("Enhancement")?.replace(
-        /^(\+\d+)\s+(?:attack rolls and damage rolls|AC|Fortitude, Reflex, and Will)\.?$/i,
-        "$1",
-      ),
-    ],
+    ["Enhancement", enhancementIsStat ? enhancementMatch[1] : undefined],
     ["Critical", criticalFormula],
     [
       "Category",
@@ -49,15 +69,6 @@ export function printItemPresentation(card: SheetCard) {
     ["Rarity", lastField("Rarity")],
     ["Key ability", field("Key Ability")],
   ].flatMap(([label, value]) => (label && value ? [{ label, value }] : []));
-  const magicType = lastField("Magic Item Type");
-  const baseType = card.baseItemType ?? card.itemType;
-  const isWeapon =
-    baseType === "Weapon" || magicType?.toLowerCase() === "weapon";
-  const isArmor = baseType === "Armor" || magicType?.toLowerCase() === "armor";
-  const isImplement =
-    /^(?:superior implement|implement|holy symbol|ki focus|orb|rod|staff|tome|totem|wand)$/i.test(
-      magicType ?? card.itemType ?? "",
-    );
   const meaningfulPenalty = (value: string) =>
     !["-", "—", "0", "+0"].includes(value.trim());
   const titleEnhancement = card.name.match(/\+(\d+)\b/)?.[1];
@@ -215,8 +226,13 @@ export function printItemPresentation(card: SheetCard) {
   );
   const precedesPowers = (entry: SheetValue) =>
     /^(?:prerequisites?|requirements?)$/i.test(entry.label.trim());
+  const enhancementRule =
+    enhancementField !== undefined && !enhancementIsStat
+      ? [enhancementField]
+      : [];
   const rules = bodyFields.some((entry) => printItemPower(entry) !== undefined)
     ? [
+        ...enhancementRule,
         ...bodyFields.filter(
           (entry) =>
             printItemPower(entry) === undefined && precedesPowers(entry),
@@ -227,7 +243,7 @@ export function printItemPresentation(card: SheetCard) {
             printItemPower(entry) === undefined && !precedesPowers(entry),
         ),
       ]
-    : bodyFields;
+    : [...enhancementRule, ...bodyFields];
   const weight = field("Weight");
   const price =
     [
