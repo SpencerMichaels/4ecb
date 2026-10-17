@@ -36,6 +36,7 @@ describe("scratchpad measured tracking layout", () => {
     expect(icon).toContain("position: absolute");
     expect(icon).toContain("right: calc(100% + 0.04in)");
     expect(icon).toContain("width: 13pt");
+    expect(icon).toContain("opacity: 0.55");
     for (const selector of [
       ".ov-scratch-health-values > div",
       ".ov-scratch-surges",

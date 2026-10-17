@@ -1062,11 +1062,7 @@ describe("real-data sheet overview", () => {
       );
     }
     expect(strip).toContain('aria-label="Defenses"');
-    expect(
-      [...strip.matchAll(/class="lucide lucide-([^ ]+) icon"/g)].map(
-        (match) => match[1],
-      ),
-    ).toEqual(["shield", "biceps-flexed", "wind", "brain"]);
+    expect(strip).not.toContain("<svg");
     expect(strip).not.toContain("ov-health-icon-value");
   });
   it("matches scratchpad health reference values to the four summary cells", () => {

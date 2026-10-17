@@ -88,7 +88,6 @@ import {
   UsersRound,
   WandSparkles,
   Waves,
-  Wind,
   X,
   Zap,
   type LucideIcon,
@@ -192,8 +191,7 @@ export type IconName =
   | "undo"
   | "wand-sparkles"
   | "warning"
-  | "waves"
-  | "wind";
+  | "waves";
 
 const icons: Record<IconName, LucideIcon> = {
   ability: ChartNoAxesColumnIncreasing,
@@ -294,7 +292,6 @@ const icons: Record<IconName, LucideIcon> = {
   "wand-sparkles": WandSparkles,
   warning: TriangleAlert,
   waves: Waves,
-  wind: Wind,
 };
 
 export function Icon({ name }: { readonly name: IconName }) {

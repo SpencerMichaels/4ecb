@@ -1554,14 +1554,13 @@ function Scratchpad({
               >
                 {(
                   [
-                    ["AC", "AC", "shield"],
-                    ["Fortitude", "Fort", "arms"],
-                    ["Reflex", "Ref", "wind"],
-                    ["Will", "Will", "brain"],
+                    ["AC", "AC"],
+                    ["Fortitude", "Fort"],
+                    ["Reflex", "Ref"],
+                    ["Will", "Will"],
                   ] as const
-                ).map(([field, label, icon]) => (
+                ).map(([field, label]) => (
                   <div key={field}>
-                    <Icon name={icon} />
                     <span>{label}</span>
                     <strong>{find(model.defenses, field) || "—"}</strong>
                   </div>

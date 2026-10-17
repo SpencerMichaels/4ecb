@@ -1417,12 +1417,6 @@ body:has(.sp-prototype) {
 .ov-scratch-defenses strong {
   font-size: 11pt;
 }
-.ov-scratch-defenses .icon {
-  align-self: center;
-  flex-shrink: 0;
-  width: 10pt;
-  height: 10pt;
-}
 .sheet-overview.sp-monochrome .ov-scratch-defenses {
   background: #eee;
   color: #333;
@@ -1461,6 +1455,7 @@ body:has(.sp-prototype) {
   justify-content: center;
 }
 .ov-scratch-health-values .ov-health-icon-value .icon {
+  opacity: 0.55;
   position: absolute;
   right: calc(100% + 0.04in);
   top: 50%;
