@@ -1,5 +1,12 @@
 # Implementation status
 
+## M5.7 beta deployment checkpoint (2026-10-16)
+
+Compose deployment, image-served advertised packs and `content-tool advertise`
+are implemented and verified against a locally running container. Browser,
+real-host, access-control and rehearsal steps remain; see
+[`m5.7-beta-deployment.md`](m5.7-beta-deployment.md).
+
 ## Settings cleanup (2026-10-16)
 
 Removed the obsolete "Color utility powers entirely blue" preference, its stored
