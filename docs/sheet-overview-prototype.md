@@ -216,8 +216,9 @@ hearts are paper affordances, not interactive Play state.
 ### Scratchpad redesign (2026-10-15)
 
 The production scratchpad is a paper working surface, not another reference
-page. Health and Conditions & temporary effects share the top row. Health starts
-with a compact AC/Fortitude/Reflex/Will strip using the same calculated values
+page. Health and Conditions share the top row. Conditions shows any known
+nonzero saving-throw modifier on the right of its header (e.g. +1 to saves).
+Health starts with a compact AC/Fort/Ref/Will strip using the same calculated values
 as page 1. Its inline labels and 11pt values are shorter than the health cells.
 Health has
 label-first Max HP/Bloodied/Surges/Surge HP reference cells, a numbered surge bar,

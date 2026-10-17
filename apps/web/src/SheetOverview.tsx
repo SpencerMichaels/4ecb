@@ -1399,6 +1399,11 @@ function Scratchpad({
   onPageCount: (count: number) => void;
 }) {
   const rows = useMemo(() => overviewTrackingRows(model, true), [model]);
+  const saves = model.overview?.saves.trim() ?? "";
+  const savesNote =
+    /^[+-]?\d+$/.test(saves) && Number(saves) !== 0
+      ? `${signedBonus(saves)} to saves`
+      : undefined;
   const consumables = useMemo(() => scratchpadConsumables(model), [model]);
   const encounter = useMemo(
     () =>
@@ -1547,10 +1552,15 @@ function Scratchpad({
                 role="group"
                 aria-label="Defenses"
               >
-                {["AC", "Fortitude", "Reflex", "Will"].map((label) => (
-                  <div key={label}>
+                {[
+                  ["AC", "AC"],
+                  ["Fortitude", "Fort"],
+                  ["Reflex", "Ref"],
+                  ["Will", "Will"],
+                ].map(([field, label]) => (
+                  <div key={field}>
                     <span>{label}</span>
-                    <strong>{find(model.defenses, label) || "—"}</strong>
+                    <strong>{find(model.defenses, field!) || "—"}</strong>
                   </div>
                 ))}
               </div>
@@ -1600,7 +1610,7 @@ function Scratchpad({
             </Panel>
           </div>
           <div className="sp-column">
-            <Panel title="Conditions & temporary effects" icon="edit">
+            <Panel title="Conditions" icon="edit" headerNote={savesNote}>
               <table className="ov-effects-table">
                 <thead>
                   <tr>

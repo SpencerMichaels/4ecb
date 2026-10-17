@@ -1050,9 +1050,11 @@ describe("real-data sheet overview", () => {
     const strip = html
       .split('class="ov-scratch-defenses"')[1]!
       .split('class="sp-values ov-scratch-health-values"')[0]!;
+    const labels: Record<string, string> = { Fortitude: "Fort", Reflex: "Ref" };
     for (const defense of fixture.defenses) {
+      const label = labels[defense.label] ?? defense.label;
       expect(strip).toContain(
-        `<span>${defense.label}</span><strong>${defense.value}</strong>`,
+        `<span>${label}</span><strong>${defense.value}</strong>`,
       );
     }
     expect(strip).toContain('aria-label="Defenses"');
@@ -1493,6 +1495,12 @@ describe("real-data sheet overview", () => {
       );
       expect(html).toContain(`<span>Saves</span><strong>${expected}</strong>`);
       expect(html).toContain("<span>Surge HP</span>");
+      const header = html.split("Conditions")[1]!.split("</h3>")[0]!;
+      if (saves === "+2" || saves === "-1") {
+        expect(header).toContain(`${saves} to saves`);
+      } else {
+        expect(header).not.toContain("to saves");
+      }
     }
   });
   it("signs nonnegative initiative without doubling signs or changing negative/unknown values", () => {
