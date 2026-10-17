@@ -810,6 +810,7 @@ export function CharacterSheetPage({
   characterId,
   manifests,
   printOnReady = false,
+  openPrintPreview = false,
   resolveAbilityChoices = true,
   abbreviateAbilityValues = true,
   expandWeaponDice = true,
@@ -822,6 +823,7 @@ export function CharacterSheetPage({
   readonly characterId: string;
   readonly manifests: readonly ContentPackManifest[];
   readonly printOnReady?: boolean;
+  readonly openPrintPreview?: boolean;
   readonly resolveAbilityChoices?: boolean;
   readonly abbreviateAbilityValues?: boolean;
   readonly expandWeaponDice?: boolean;
@@ -831,7 +833,10 @@ export function CharacterSheetPage({
   readonly printCardTextSize?: number;
   readonly countCoinWeight?: boolean;
 }) {
-  const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [showPrintPreview, setShowPrintPreview] = useState(openPrintPreview);
+  useEffect(() => {
+    setShowPrintPreview(openPrintPreview);
+  }, [characterId, openPrintPreview]);
   const [character, setCharacter] = useState<CharacterRecord>();
   const [content, setContent] =
     useState<Awaited<ReturnType<typeof appContentRuntime.getPack>>>();
@@ -1097,9 +1102,22 @@ export function CharacterSheetPage({
     >
       {showPrintPreview ? (
         <div className="print-preview-toolbar">
-          <button type="button" onClick={() => setShowPrintPreview(false)}>
-            ← Back to character view
-          </button>
+          {openPrintPreview ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.history.length > 1) window.history.back();
+                else
+                  window.location.hash = `#/characters/${encodeURIComponent(characterId)}/edit`;
+              }}
+            >
+              ← Back
+            </button>
+          ) : (
+            <button type="button" onClick={() => setShowPrintPreview(false)}>
+              ← Back to character view
+            </button>
+          )}
           <div>
             <strong>Print preview</strong>
             <span>

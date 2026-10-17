@@ -1692,7 +1692,7 @@ export function CharacterEditorPage({
           <a
             aria-selected="false"
             className="builder-tab"
-            href={`#/characters/${encodeURIComponent(characterId)}`}
+            href={`#/characters/${encodeURIComponent(characterId)}?preview=1`}
             role="tab"
           >
             <Icon name="sheet" /> Character sheet

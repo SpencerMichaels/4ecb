@@ -31,6 +31,12 @@ describe("hash routes", () => {
     expect(
       canonicalHashRedirect("#/characters/one?print=1&filter=ignored"),
     ).toBe("#/characters/one?print=1");
+    expect(parseHashRoute("#/characters/one?preview=1")).toEqual({
+      page: "characters",
+      characterId: "one",
+      preview: true,
+    });
+    expect(canonicalHashRedirect("#/characters/one?preview=1")).toBeUndefined();
     expect(canonicalHashRedirect("#/characters/one?print=0")).toBe(
       "#/characters/one",
     );

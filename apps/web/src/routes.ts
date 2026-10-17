@@ -53,6 +53,7 @@ export type AppRoute =
       readonly characterId?: string;
       readonly mode?: "sheet" | "edit";
       readonly print?: boolean;
+      readonly preview?: boolean;
       readonly builder?: BuilderNavigation;
     };
 
@@ -174,7 +175,9 @@ export function parseHashRoute(hash: string): AppRoute {
           }
         : new URLSearchParams(query).get("print") === "1"
           ? { print: true }
-          : {}),
+          : new URLSearchParams(query).get("preview") === "1"
+            ? { preview: true }
+            : {}),
     };
   }
   return { page: "characters" };
@@ -226,7 +229,7 @@ function hashForRoute(route: AppRoute): string {
       route.characterId,
       route.builder ?? { workspace: "build" },
     );
-  return `#/characters/${encodeURIComponent(route.characterId)}${route.print === true ? "?print=1" : ""}`;
+  return `#/characters/${encodeURIComponent(route.characterId)}${route.print === true ? "?print=1" : route.preview === true ? "?preview=1" : ""}`;
 }
 
 export function canonicalHashRedirect(hash: string): string | undefined {

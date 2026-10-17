@@ -344,7 +344,7 @@ export function CharacterLibraryPage({
                   </a>
                   <a
                     className="character-card-action"
-                    href={`#/characters/${encodeURIComponent(character.id)}`}
+                    href={`#/characters/${encodeURIComponent(character.id)}?preview=1`}
                     aria-label={`View ${character.title} character sheet`}
                     title="View character sheet"
                   >

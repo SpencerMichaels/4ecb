@@ -639,6 +639,7 @@ export function App() {
                   characterId={route.characterId}
                   manifests={manifests}
                   printOnReady={route.print === true}
+                  openPrintPreview={route.preview === true}
                   countCoinWeight={countCoinWeight}
                   resolveAbilityChoices={resolveAbilityChoices}
                   abbreviateAbilityValues={abbreviateAbilityValues}
