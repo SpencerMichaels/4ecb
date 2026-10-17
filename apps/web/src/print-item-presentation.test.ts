@@ -48,68 +48,35 @@ describe("printed item presentation", () => {
         .stats,
     ).toContainEqual({ label: "Proficiency", value: displayed });
   });
-  it.each(["Neck Slot Item", "Ammunition", "Wand"])(
-    "omits enhancement repeated in the title for %s",
+  it.each(["Neck Slot Item", "Weapon", "Wand", "Armor"])(
+    "omits a bare enhancement bonus for %s",
     (kind) => {
-      const item = card("Magic Item", {
-        "Magic Item Type": kind,
-        Enhancement: "+1",
-      });
-      expect(
-        printItemPresentation({ ...item, name: "Fixture item +1" }).stats,
-      ).not.toContainEqual({ label: "Enhancement", value: "+1" });
-      expect(
-        printItemPresentation({ ...item, name: "Fixture item +10" }).stats,
-      ).toContainEqual({ label: "Enhancement", value: "+1" });
-      expect(printItemPresentation(item).stats).toContainEqual({
-        label: "Enhancement",
-        value: "+1",
-      });
+      const view = printItemPresentation(
+        card("Magic Item", { "Magic Item Type": kind, Enhancement: "+1" }),
+      );
+      expect(view.stats.map(({ label }) => label)).not.toContain("Enhancement");
+      expect(view.rules).toEqual([]);
     },
   );
-  it("shows an enhancement as a body rule when the item kind does not imply its target", () => {
-    const amulet = {
-      ...card("Magic Item", {
-        "Magic Item Type": "Neck Slot Item",
-        Enhancement: "+2 Fortitude, Reflex, and Will",
-        Property: "A passive benefit.",
-      }),
-      name: "Fixture amulet +2",
-    };
-    const view = printItemPresentation(amulet);
-    expect(view.stats).toEqual([]);
-    expect(view.rules).toEqual([
-      { label: "Enhancement", value: "+2 Fortitude, Reflex, and Will" },
-      { label: "Property", value: "A passive benefit." },
-    ]);
-    const mismatched = printItemPresentation(
-      card("Magic Item", {
-        "Magic Item Type": "Neck Slot Item",
-        Enhancement: "+1 attack rolls and damage rolls",
-      }),
-    );
-    expect(mismatched.rules.map(({ label }) => label)).toEqual(["Enhancement"]);
-  });
   it.each([
-    ["Holy Symbol", "Magic Item", "+1 attack rolls and damage rolls"],
-    ["Armor", "Armor", "+1 AC"],
+    ["Neck Slot Item", "+2 Fortitude, Reflex, and Will"],
+    ["Weapon", "+2 attack rolls and damage rolls"],
+    ["Armor", "+2 AC"],
   ])(
-    "keeps an implied %s enhancement as a stat, omitted when the title repeats it",
-    (magicType, baseType, enhancement) => {
-      const item = card(
-        "Magic Item",
-        { "Magic Item Type": magicType, Enhancement: enhancement },
-        baseType,
+    "shows a %s enhancement that names what it modifies as the first body rule",
+    (kind, enhancement) => {
+      const view = printItemPresentation(
+        card("Magic Item", {
+          "Magic Item Type": kind,
+          Property: "A passive benefit.",
+          Enhancement: enhancement,
+        }),
       );
-      expect(printItemPresentation(item).stats).toContainEqual({
-        label: "Enhancement",
-        value: "+1",
-      });
-      const titled = printItemPresentation({ ...item, name: "Fixture +1" });
-      expect(titled.stats.map(({ label }) => label)).not.toContain(
-        "Enhancement",
-      );
-      expect(titled.rules).toEqual([]);
+      expect(view.stats.map(({ label }) => label)).not.toContain("Enhancement");
+      expect(view.rules).toEqual([
+        { label: "Enhancement", value: enhancement },
+        { label: "Property", value: "A passive benefit." },
+      ]);
     },
   );
   it("keeps ranged combat values together on one row", () => {
@@ -152,6 +119,7 @@ describe("printed item presentation", () => {
     expect(view.stats.some(({ label }) => label === "Quantity")).toBe(false);
     expect(view.rules.some(({ label }) => label === "Quantity")).toBe(false);
     expect(view.rules).toEqual([
+      { label: "Enhancement", value: "+3 attack rolls and damage rolls" },
       { label: "Critical", value: "+3d6 damage, or +3d10 against undead" },
     ]);
     expect(view.statRows.map((row) => row.map(({ label }) => label))).toEqual([
@@ -172,10 +140,7 @@ describe("printed item presentation", () => {
         "Magic Item Type": "Wand",
       }),
     );
-    expect(simple.stats).toEqual([
-      { label: "Enhancement", value: "+3" },
-      { label: "Critical", value: "+3d12" },
-    ]);
+    expect(simple.stats).toEqual([{ label: "Critical", value: "+3d12" }]);
     const conditional = printItemPresentation(
       card("Weapon", {
         Critical: "+3d6 damage, or +3d10 against undead",
@@ -339,9 +304,10 @@ describe("printed item presentation", () => {
       ),
     );
     expect(view.statRows.map((row) => row.map(({ label }) => label))).toEqual([
-      ["AC bonus", "Enhancement"],
+      ["AC bonus"],
       ["Check penalty", "Speed penalty"],
     ]);
+    expect(view.rules).toEqual([{ label: "Enhancement", value: "+2 AC" }]);
     expect(view.metadata).toBe("Rare heavy plate armor");
     expect(view.footerDetails).toBe("Body · 50 lb · 5000 gp");
     const shield = printItemPresentation(
@@ -371,8 +337,9 @@ describe("printed item presentation", () => {
       }),
     );
     expect(view.statRows.map((row) => row.map(({ label }) => label))).toEqual([
-      ["Enhancement", "Critical"],
+      ["Critical"],
     ]);
+    expect(view.rules).toEqual([]);
     expect(view.slot).toBeUndefined();
     expect(view.metadata).toBe("Uncommon holy symbol");
   });

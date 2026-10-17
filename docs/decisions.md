@@ -1845,14 +1845,12 @@ title, and reuse its canonical category mapping. The sheet model exposes neutral
 item/base-type metadata; icon selection remains a web presentation concern.
 
 Combat values use item-specific rows: melee Proficiency / Damage / Critical;
-ranged-capable Range / Proficiency / Damage / Critical on one wrapping row; implement Enhancement
-/ Critical; armor/shield AC bonus / Enhancement then nonzero penalties. Omit
-weapon enhancement already represented in the title, absent values, and empty
-rows. Enhancement is a compact stat only when the item kind implies its target
-(weapons/implements: attack and damage rolls; armor/shields: AC); it is then
-omitted when the title repeats the same bonus. An enhancement whose target the
-kind does not imply (e.g. a neck item's Fortitude, Reflex, and Will) is the
-item's rule, so it leads the card body verbatim before powers and properties. Use
+ranged-capable Range / Proficiency / Damage / Critical on one wrapping row; implement
+Critical; armor/shield AC bonus then nonzero penalties. Omit absent values and
+empty rows. Enhancement is never a subheader stat (revised 2026-10-16): a bare
+`+N` only repeats the item name and is omitted, while `+N <what it modifies>`
+(e.g. `+2 AC`, `+2 Fortitude, Reflex, and Will`) leads the card body verbatim
+before powers and properties. Use
 dot-separated values in softly tinted rows without boxed cells.
 Retain the earlier bold uppercase stat-label styling, per visual feedback.
 Noncombat enums become compact metadata prose on the footer's left; slot,

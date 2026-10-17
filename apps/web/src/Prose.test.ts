@@ -52,6 +52,19 @@ describe("shared prose renderer", () => {
     ]);
   });
 
+  it("treats a heading-like final line as prose because nothing follows it", () => {
+    expect(proseBlocks("+2 Fortitude, Reflex, and Will")).toEqual([
+      { kind: "paragraph", text: "+2 Fortitude, Reflex, and Will" },
+    ]);
+    expect(proseBlocks("DIVINE SANCTION\nThe mark.\nSpecial:")).toEqual([
+      { kind: "heading", text: "DIVINE SANCTION" },
+      { kind: "paragraph", text: "The mark." },
+      { kind: "paragraph", text: "Special:" },
+    ]);
+    expect(
+      proseBlocks("Levels\n<table><tr><td>1</td></tr></table>")[0],
+    ).toEqual({ kind: "heading", text: "Levels" });
+  });
   it("escapes corpus text instead of interpreting it as HTML", () => {
     const markup = renderToStaticMarkup(
       createElement(Prose, {

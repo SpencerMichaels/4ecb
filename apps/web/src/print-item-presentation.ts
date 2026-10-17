@@ -29,23 +29,15 @@ export function printItemPresentation(card: SheetCard) {
     /^(?:superior implement|implement|holy symbol|ki focus|orb|rod|staff|tome|totem|wand)$/i.test(
       magicType ?? card.itemType ?? "",
     );
-  // The item kind implies what an enhancement modifies; anything else is a rule.
-  const impliedEnhancementTarget =
-    isWeapon || isImplement
-      ? /^attack rolls and damage rolls$/i
-      : isArmor
-        ? /^AC$/i
-        : undefined;
+  // A bare "+N" repeats the name; one that names what it modifies is a rule.
   const enhancementField = [...card.fields]
     .reverse()
     .find((entry) => entry.label.trim().toLowerCase() === "enhancement");
-  const enhancementMatch =
-    enhancementField?.value.trim().match(/^([+-]\d+)\s*(.*?)\.?$/) ?? undefined;
-  const enhancementTarget = enhancementMatch?.[2] ?? "";
-  const enhancementIsStat =
-    enhancementMatch !== undefined &&
-    (enhancementTarget === "" ||
-      impliedEnhancementTarget?.test(enhancementTarget) === true);
+  const enhancementRule =
+    enhancementField !== undefined &&
+    !/^[+-]?\d+\.?$/.test(enhancementField.value.trim())
+      ? [enhancementField]
+      : [];
   const critical = lastField("Critical");
   const criticalFormula = critical
     ?.trim()
@@ -58,7 +50,6 @@ export function printItemPresentation(card: SheetCard) {
     ["AC bonus", field("Armor Bonus", "AC Bonus")],
     ["Check penalty", field("Check")],
     ["Speed penalty", field("Speed")],
-    ["Enhancement", enhancementIsStat ? enhancementMatch[1] : undefined],
     ["Critical", criticalFormula],
     [
       "Category",
@@ -71,7 +62,6 @@ export function printItemPresentation(card: SheetCard) {
   ].flatMap(([label, value]) => (label && value ? [{ label, value }] : []));
   const meaningfulPenalty = (value: string) =>
     !["-", "—", "0", "+0"].includes(value.trim());
-  const titleEnhancement = card.name.match(/\+(\d+)\b/)?.[1];
   const combatStats = allStats.filter(
     ({ label, value }) =>
       ![
@@ -82,11 +72,6 @@ export function printItemPresentation(card: SheetCard) {
         "Rarity",
         "Key ability",
       ].includes(label) &&
-      !(
-        label === "Enhancement" &&
-        (isWeapon ||
-          (titleEnhancement !== undefined && value === `+${titleEnhancement}`))
-      ) &&
       (!(label === "Check penalty" || label === "Speed penalty") ||
         meaningfulPenalty(value)),
   );
@@ -98,12 +83,9 @@ export function printItemPresentation(card: SheetCard) {
     isWeapon
       ? [row("Range", "Proficiency", "Damage", "Critical")]
       : isArmor
-        ? [
-            row("AC bonus", "Enhancement"),
-            row("Check penalty", "Speed penalty"),
-          ]
+        ? [row("AC bonus"), row("Check penalty", "Speed penalty")]
         : [
-            row("Enhancement", "Critical"),
+            row("Critical"),
             row("Range", "Proficiency", "Damage"),
             row("AC bonus", "Check penalty", "Speed penalty"),
           ]
@@ -226,10 +208,6 @@ export function printItemPresentation(card: SheetCard) {
   );
   const precedesPowers = (entry: SheetValue) =>
     /^(?:prerequisites?|requirements?)$/i.test(entry.label.trim());
-  const enhancementRule =
-    enhancementField !== undefined && !enhancementIsStat
-      ? [enhancementField]
-      : [];
   const rules = bodyFields.some((entry) => printItemPower(entry) !== undefined)
     ? [
         ...enhancementRule,

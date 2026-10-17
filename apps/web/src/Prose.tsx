@@ -85,8 +85,12 @@ function isRecognizableHeading(line: string): boolean {
  * blank lines are presentation noise, while contiguous list markers remain a
  * semantic list.
  */
-function plainProseBlocks(value: string): readonly ProseBlock[] {
+function plainProseBlocks(
+  value: string,
+  trailing = false,
+): readonly ProseBlock[] {
   const blocks: ProseBlock[] = [];
+  let lastLine = "";
   let list:
     | {
         ordered: boolean;
@@ -128,6 +132,7 @@ function plainProseBlocks(value: string): readonly ProseBlock[] {
     }
 
     flushList();
+    lastLine = line;
     blocks.push(
       isRecognizableHeading(line)
         ? { kind: "heading", text: line.replace(/:$/u, "") }
@@ -135,6 +140,9 @@ function plainProseBlocks(value: string): readonly ProseBlock[] {
     );
   }
   flushList();
+  // A heading introduces following content; one with nothing after it is prose.
+  if (trailing && blocks.at(-1)?.kind === "heading")
+    blocks[blocks.length - 1] = { kind: "paragraph", text: lastLine };
   return blocks;
 }
 
@@ -189,7 +197,7 @@ export function proseBlocks(value: string): readonly ProseBlock[] {
     blocks.push(...plainProseBlocks(value.slice(start, match.index)), table);
     start = match.index + match[0].length;
   }
-  return [...blocks, ...plainProseBlocks(value.slice(start))];
+  return [...blocks, ...plainProseBlocks(value.slice(start), true)];
 }
 
 export function ProseBlocks({

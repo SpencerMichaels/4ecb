@@ -1672,13 +1672,12 @@ separate projection over the same semantic model.
   without four/eight-entry caps; both recovered `Armor Bonus` and `AC Bonus`
   are supported. The revised combat-focused subheader groups melee weapons as
   Proficiency / Damage / Critical; ranged-capable weapons as Range / Proficiency
-  / Damage / Critical on one wrapping row; implements as Enhancement / Critical; armor/shields
-  as AC bonus / Enhancement then nonzero Check / Speed penalties. Missing fields
-  and empty rows disappear. Weapon enhancement is omitted because it is already
-  in the title. Other items show Enhancement as a stat only when their kind
-  implies its target (implements: attack/damage; armor: AC), omitted when the
-  title repeats it; otherwise (e.g. neck Fortitude, Reflex, and Will) it leads
-  the card body as a rule (2026-10-16). Combat rows retain the earlier bold uppercase
+  / Damage / Critical on one wrapping row; implements as Critical; armor/shields as AC
+  bonus then nonzero Check / Speed penalties. Missing fields and empty rows
+  disappear. Enhancement is no longer a stat (2026-10-16): a bare `+N` is
+  omitted, and `+N <what it modifies>` leads the card body as a rule. Shared
+  prose no longer treats a heading-like final line (nothing after it) as a
+  heading, so single-line rule values are not bolded with a trailing colon. Combat rows retain the earlier bold uppercase
   labels (Prof/Crit abbreviations) and use dot separators without boxed
   cells. Category, group, hands, armor type, rarity, and key ability move to
   compact metadata prose on the footer's left; slot/weight/price share its right
