@@ -346,11 +346,18 @@ Treasure writing panes. Encounter powers occupy the wider left column; Daily
 powers and then Consumables stack independently on the right. Consumables use
 the item-card gold header, all owned inventory (including hidden-card items),
 and authored item/category or consumable-power metadata, never name guessing.
-Stacks of one through five use hollow circles; larger or custom fractional
+Stacks of one through five use the same square boxes as power tracking; larger or custom fractional
 quantities use a remaining-count box beside the original quantity. Empty stocks
 are omitted. All three row streams paginate using measured heights without
 shrinking text or changing inventory data; fixed-size item cards have no stock
 trackers.
+
+Consumables share ordinary pane borders; only the header uses item-card gold.
+Row icons use the same metadata mapping as item cards, including composed base
+items. Parenthetical name annotations are omitted unless two distinct owned
+names would otherwise become identical (case-insensitive); those variants retain
+their annotations for disambiguation. Immediate interrupts use Lucide `zap-off`
+everywhere the shared action icon appears.
 
 The summary's optional Defensive traits table groups signed `resist:*` totals
 (positive resistance, negative vulnerability), conditional resistance/save

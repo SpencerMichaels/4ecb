@@ -1355,7 +1355,10 @@ async function checkScratchpad(client, monochrome) {
       expectedConsumables:[...new Set([...document.querySelectorAll('.ov-measure [data-consumable-id]')].map(e=>e.dataset.consumableId))].sort(),
       consumablesBelowDaily:page.querySelector('.ov-consumables').getBoundingClientRect().top>page.querySelector('.sp-daily').getBoundingClientRect().bottom,
       consumableColor:getComputedStyle(page.querySelector('.ov-consumables > h3')).backgroundColor,
-      consumableCircles:page.querySelectorAll('.ov-consumable-circles .icon').length,
+      consumableBoxes:page.querySelectorAll('.ov-consumable-boxes .ov-daily-box').length,
+      consumableBoxStyle:[...page.querySelectorAll('.ov-consumable-boxes .ov-daily-box')].every(e=>{const b=e.getBoundingClientRect(), d=page.querySelector('.sp-daily .ov-daily-box').getBoundingClientRect();return Math.abs(b.width-d.width)<0.1&&Math.abs(b.height-d.height)<0.1;}),
+      consumableBorder:getComputedStyle(page.querySelector('.ov-consumables')).borderColor===getComputedStyle(page.querySelector('.sp-daily')).borderColor,
+      consumableIcons:page.querySelectorAll('.ov-consumable-name .lucide-flask-round').length,
       consumableCount:page.querySelectorAll('.ov-consumable-count').length,
       footerDate:page.querySelector('.sp-page-footer').textContent.includes('Date'),
       runningHeader:page.querySelector('.sp-running-header') !== null,
@@ -1507,7 +1510,10 @@ async function checkScratchpad(client, monochrome) {
     state.consumablesBelowDaily &&
       JSON.stringify(state.consumableIds) ===
         JSON.stringify(state.expectedConsumables) &&
-      state.consumableCircles === 9 &&
+      state.consumableBoxes === 9 &&
+      state.consumableBoxStyle &&
+      state.consumableBorder &&
+      state.consumableIcons === 3 &&
       state.consumableCount === 1 &&
       state.consumableColor ===
         (monochrome ? "rgb(238, 238, 238)" : "rgb(255, 140, 0)"),

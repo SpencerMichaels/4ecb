@@ -4455,11 +4455,6 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   /* Symbol glyphs sit above the optical center of their font's line box. */
   transform: translateY(0.14em);
 }
-.action-type-icon > .lucide-octagon-minus {
-  /* Match the optical weight of the smaller font-based action glyphs. */
-  transform: scale(0.8);
-  transform-origin: center;
-}
 .entity-card-heading-main .action-type-icon {
   align-self: center;
 }

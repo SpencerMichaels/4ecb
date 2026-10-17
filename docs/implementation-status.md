@@ -2,6 +2,25 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Consumables styling follow-up (2026-10-16): remaining-stock circles are replaced
+by the exact square boxes shared by Encounter/Daily power tables. Pane borders
+now match ordinary panes; only the header uses item-card gold. Rows use the same
+item-category icon mapping as cards, preserving physical-base and composed-item
+type metadata in both sheet projections. Parenthetical annotations are hidden
+unless distinct owned consumable names would otherwise collide; exact duplicate
+names alone do not force annotations back on. Shared immediate-interrupt icons
+now use Lucide `zap-off`; the old octagon-specific scaling is removed.
+Verification: 238 focused stock/overview/icon/style/item-presentation/sheet-model
+tests pass, along with web/sheet-model typechecks, focused lint and production
+build. The eight Chromium/Firefox Letter/A4 color/monochrome overview print cases
+pass, checking shared box dimensions, ordinary pane borders, item icons, exact
+stock coverage and pagination. Scratchpad preview visually inspected; the final
+header-divider color reset uses the inherited pane rule and does not alter
+geometry. No full milestone or dense-card gate was rerun; the known M5.6 blocker
+remains unchanged. Verification used Nix-wrapped focused `vitest run`, package
+`typecheck`, `eslint`, web `build`, and `node scripts/check-print.mjs
+--overview-only --include-card-pages --firefox-scratchpad --scratchpad-preview`.
+
 Consumable scratchpad feedback (2026-10-16): the rejected bottom-of-item-card
 Remaining strip stays reverted. Session notes and Treasure & consumables blank
 writing panes are removed; Date/XP retain a compact row below Health/Conditions.

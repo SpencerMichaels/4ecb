@@ -1219,9 +1219,10 @@ export function buildSheetModel(
     content,
     inventory: lootPresentations
       .filter(({ referenceKind }) => referenceKind === undefined)
-      .map(({ loot, itemEntities }) => ({
+      .map(({ loot, element, entity, itemEntities }) => ({
         name: loot.name,
-        itemType: itemEntities[0]?.type ?? loot.elements[0]?.type,
+        itemType: entity?.type ?? element?.type,
+        baseItemType: itemEntities[0]?.type ?? loot.elements[0]?.type,
         weight: inventoryHoldingWeight({
           quantity: loot.count,
           definitions: itemEntities,
@@ -1606,9 +1607,10 @@ export function buildEvaluatedSheetModel(
     content,
     inventory: inventoryPresentations
       .filter(({ referenceKind }) => referenceKind === undefined)
-      .map(({ entry, original, name, itemEntities }) => ({
+      .map(({ entry, original, name, entity, itemEntities }) => ({
         name,
-        itemType: itemEntities[0]?.type ?? original?.elements[0]?.type,
+        itemType: entity?.type ?? original?.elements.at(-1)?.type,
+        baseItemType: itemEntities[0]?.type ?? original?.elements[0]?.type,
         ...inventoryCategoryFields(
           original?.elements ??
             entry.definitionIds.map((definitionId) => {

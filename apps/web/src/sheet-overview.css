@@ -1602,13 +1602,9 @@ body:has(.sp-prototype) {
   min-width: 0;
   gap: 0.15in;
 }
-.ov-consumables {
-  border-color: #ff8c00;
-}
 .ov-consumables > h3 {
   background: #ff8c00;
   color: #111;
-  border-bottom-color: #ff8c00;
 }
 .ov-consumables .sp-panel-content {
   padding: 0;
@@ -1635,19 +1631,27 @@ body:has(.sp-prototype) {
   width: 1%;
   white-space: nowrap;
 }
-.ov-consumable-circles,
+.ov-consumable-boxes,
 .ov-consumable-count {
   display: flex;
   align-items: center;
   gap: 0.03in;
   white-space: nowrap;
 }
-.ov-consumable-circles .icon {
-  width: 0.2in;
-  height: 0.2in;
+.ov-consumable-boxes .ov-daily-box {
+  margin: 0;
   flex-shrink: 0;
-  fill: none;
-  stroke-width: 1.4;
+}
+.ov-consumable-name {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.04in;
+}
+.ov-consumable-name .icon {
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
+  margin-top: 0.1em;
 }
 .ov-consumable-count > i {
   display: block;
@@ -1655,9 +1659,6 @@ body:has(.sp-prototype) {
   height: 0.24in;
   border: 1px solid #8f9aa2;
   border-radius: 3px;
-}
-.sheet-overview.sp-monochrome .ov-consumables {
-  border-color: #999;
 }
 @container (min-width: 3.6in) {
   .ov-tracking-panels.has-both {

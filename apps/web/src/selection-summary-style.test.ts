@@ -73,9 +73,7 @@ describe("selection-summary detail-header styling", () => {
     );
     expect(actionGlyph).toContain("line-height: 1");
     expect(actionGlyph).not.toContain("position: relative");
-    expect(rule(".action-type-icon > .lucide-octagon-minus")).toContain(
-      "transform: scale(0.8)",
-    );
+    expect(styles).not.toContain(".lucide-octagon-minus");
     expect(styles).toMatch(
       /\n\.entity-card-heading-main \.action-type-icon\s*\{[^}]*align-self:\s*center/,
     );

@@ -188,6 +188,7 @@ describe("real-data sheet overview", () => {
         inventory: [
           {
             name: "Potion",
+            itemType: "Potion",
             quantity: 3,
             equipped: 0,
             slots: [],
@@ -196,6 +197,7 @@ describe("real-data sheet overview", () => {
           },
           {
             name: "Arrows",
+            itemType: "Ammunition",
             quantity: 20,
             equipped: 0,
             slots: [],
@@ -221,6 +223,9 @@ describe("real-data sheet overview", () => {
     const right = scratchpad.split('class="sp-column ov-tracking-right"')[1]!;
     expect(right).toContain("ov-consumables");
     expect(right).toContain('aria-label="3 copies"');
+    expect(right.match(/class="ov-daily-box"/g)).toHaveLength(3);
+    expect(right).toContain("lucide-flask-round");
+    expect(right).toContain("lucide-bow-arrow");
     expect(right).toContain('class="ov-consumable-count"');
     expect(right).toContain("/ 20");
   });

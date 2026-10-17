@@ -53,7 +53,7 @@ import {
   Medal,
   Minus,
   Orbit,
-  OctagonMinus,
+  ZapOff,
   PackageOpen,
   PawPrint,
   Pencil,
@@ -125,7 +125,7 @@ export type IconName =
   | "step-forward"
   | "dices"
   | "dice-5"
-  | "octagon-minus"
+  | "zap-off"
   | "companion"
   | "content"
   | "crown"
@@ -223,7 +223,7 @@ const icons: Record<IconName, LucideIcon> = {
   "step-forward": StepForward,
   dices: Dices,
   "dice-5": Dice5,
-  "octagon-minus": OctagonMinus,
+  "zap-off": ZapOff,
   companion: PawPrint,
   content: LayoutGrid,
   crown: Crown,

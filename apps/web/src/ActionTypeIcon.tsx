@@ -19,7 +19,7 @@ export function ActionTypeIcon({
       title={label}
     >
       {label.toLocaleLowerCase().includes("interrupt") ? (
-        <Icon name="octagon-minus" />
+        <Icon name="zap-off" />
       ) : (
         <span aria-hidden="true">{powerActionSymbol(value)}</span>
       )}

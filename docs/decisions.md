@@ -2072,10 +2072,13 @@ not relax, the existing dense physical-card overflow assertion.
 Scratchpad stock-tracking feedback (2026-10-16): generic Session notes and
 Treasure writing panes are removed in favor of owned Consumables below Daily
 powers in the right column, independent of Encounter powers on the left. Date
-and XP retain a compact row. Small stocks use circles and larger stacks a count
+and XP retain a compact row. Small stocks use power-tracking boxes and larger stacks a count
 box; classification follows authored inventory metadata, not names or the
 item-card visibility checkbox. Item cards remain stock-tracker-free after the
 rejected bottom-strip trial. All three tracking streams use measured pagination.
+Consumables retain ordinary pane borders, with item-card gold only in the header,
+and use shared item-card icons. Parentheticals are suppressed unless different
+owned names would collide without them.
 
 ## Deferred decisions and decision points
 

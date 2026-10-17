@@ -218,9 +218,11 @@ Date and XP occupy a compact row below Health/Conditions. The former Session
 notes and Treasure & consumables blank-writing panes are removed (2026-10-16).
 Encounter powers occupy the wider left column below; Daily powers and a gold
 Consumables pane stack independently on the right. Consumable quantities up to
-five use hollow circles, larger/custom amounts a remaining-count box. All owned
+five use power-tracking square boxes, larger/custom amounts a remaining-count box. All owned
 stocks qualify by authored category/type/power metadata, independent of printed
-item-card visibility. No trackers appear on physical item cards.
+item-card visibility. Pane borders match other panes; only the header is gold.
+Each row has its item-card icon. Parentheticals are hidden unless distinct owned
+variants need them to remain distinguishable. No trackers appear on physical item cards.
 
 Surges use outlined rectangular segments, one per surge, numbered internally by
 remaining count without grouping breaks. A background connector joins the bar

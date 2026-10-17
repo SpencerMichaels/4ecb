@@ -1245,17 +1245,22 @@ function TrackingPanels({
                 <tbody>
                   {consumables.map((item) => (
                     <tr key={item.id} data-consumable-id={item.id}>
-                      <th scope="row">{item.name}</th>
+                      <th scope="row">
+                        <span className="ov-consumable-name">
+                          <Icon name={item.icon} />
+                          {item.name}
+                        </span>
+                      </th>
                       <td>
-                        {item.circles ? (
+                        {item.boxes ? (
                           <span
-                            className="ov-consumable-circles"
+                            className="ov-consumable-boxes"
                             aria-label={`${item.quantity} copies`}
                           >
                             {Array.from(
                               { length: item.quantity },
                               (_, index) => (
-                                <Icon name="circle" key={index} />
+                                <i className="ov-daily-box" key={index} />
                               ),
                             )}
                           </span>
