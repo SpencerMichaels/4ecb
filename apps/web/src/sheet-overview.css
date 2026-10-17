@@ -132,6 +132,12 @@ body:has(.sp-prototype) {
   vertical-align: top;
   overflow-wrap: anywhere;
 }
+.ov-defensive-table thead th {
+  font-size: 8pt;
+  font-weight: 400;
+  color: var(--sp-muted);
+  text-align: left;
+}
 .ov-defensive-table col:first-child {
   width: 62%;
 }

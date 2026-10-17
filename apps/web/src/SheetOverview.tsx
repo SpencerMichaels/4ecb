@@ -500,6 +500,12 @@ function DefensiveTraits({ model }: { model: CharacterSheetModel }) {
         <col />
         <col />
       </colgroup>
+      <thead>
+        <tr>
+          <th scope="col">Effect</th>
+          <th scope="col">Source</th>
+        </tr>
+      </thead>
       {[...groups]
         .sort(([a], [b]) => {
           const order = [

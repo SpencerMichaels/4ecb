@@ -1932,8 +1932,9 @@ describe("real-data sheet overview", () => {
     const defensiveTable = summary
       .split('<table class="ov-defensive-table"')[1]!
       .split("</table>")[0]!;
-    expect(defensiveTable).not.toContain("<thead");
-    expect(defensiveTable).not.toContain("<th");
+    expect(defensiveTable).toContain(
+      '<thead><tr><th scope="col">Effect</th><th scope="col">Source</th></tr></thead>',
+    );
     expect(defensiveTable.match(/class="ov-defensive-striped"/g)).toHaveLength(
       3,
     );

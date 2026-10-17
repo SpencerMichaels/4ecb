@@ -286,6 +286,8 @@ reminder selection only, never the source data, item cards or calculations.
 
 Summary continuation (2026-10-15): The defensive-traits pane is named
 **Resistances & Weaknesses**, reserving Defenses for AC/Fortitude/Reflex/Will.
+Its table has muted `Effect` and `Source` column headings, styled like the
+Basic Attacks headings (2026-10-16).
 The measured page-1 reminder selection now sends omitted reminders directly to
 an optional summary continuation starting on physical page 2, suitable as the
 summary's reverse side. No continuation page is emitted when all reminders fit.
