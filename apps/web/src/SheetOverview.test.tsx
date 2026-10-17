@@ -1027,6 +1027,37 @@ describe("real-data sheet overview", () => {
     expect(html).not.toContain('class="sp-running-header');
     expect(html).not.toContain("ov-scratch-session");
   });
+  it("lists calculated defenses above the scratchpad health values", () => {
+    const fixture = {
+      ...model,
+      defenses: [
+        { label: "AC", value: "26" },
+        { label: "Fortitude", value: "22" },
+        { label: "Reflex", value: "19" },
+        { label: "Will", value: "24" },
+      ],
+    };
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={fixture}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const strip = html
+      .split('class="ov-scratch-defenses"')[1]!
+      .split('class="sp-values ov-scratch-health-values"')[0]!;
+    for (const defense of fixture.defenses) {
+      expect(strip).toContain(
+        `<span>${defense.label}</span><strong>${defense.value}</strong>`,
+      );
+    }
+    expect(strip).toContain('aria-label="Defenses"');
+    expect(strip).not.toContain("ov-health-icon-value");
+  });
   it("matches scratchpad health reference values to the four summary cells", () => {
     const html = renderToStaticMarkup(
       <SheetOverview

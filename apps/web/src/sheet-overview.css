@@ -1398,6 +1398,29 @@ body:has(.sp-prototype) {
   background: #eaf0f6;
   border-bottom-color: #b9cbdc;
 }
+.ov-scratch-defenses {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 0.05in;
+  padding: 0.035in 0;
+  border-radius: 3px;
+  background: #eaf0f6;
+  color: #3e5f7c;
+}
+.ov-scratch-defenses > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.04in;
+  font-size: 8.5pt;
+}
+.ov-scratch-defenses strong {
+  font-size: 11pt;
+}
+.sheet-overview.sp-monochrome .ov-scratch-defenses {
+  background: #eee;
+  color: #333;
+}
 .ov-scratch-health-values {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.05in;

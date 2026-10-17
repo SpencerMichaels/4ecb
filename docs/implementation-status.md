@@ -2,6 +2,16 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Scratchpad defenses strip (2026-10-16): Health now starts with a compact,
+single-line AC/Fortitude/Reflex/Will bar above its four health reference cells.
+It uses the same calculated defenses as page 1, with inline labels and 11pt
+values instead of the health cells' taller label-over-17pt-value layout.
+Slate-blue and monochrome styling match the health pane; missing values remain
+explicit em dashes. Verification: 87 focused overview/layout tests and the
+production/PWA build pass through Nix. A focused Letter/17-surge preview was
+rendered and visually inspected; the strip fits without changing the health
+pane's outer height. No full milestone gate was rerun for this layout trial.
+
 Scratchpad health-value icon trial (2026-10-16): Max HP/Bloodied/Surges/Surge HP
 now place Heart/Droplets/Zap/Heart Plus beside their large numbers with a 0.04in
 gap, with numbers centered independently of the icons below the labels.

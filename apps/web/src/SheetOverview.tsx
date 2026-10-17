@@ -1542,6 +1542,18 @@ function Scratchpad({
         <div className="ov-scratch-layout ov-scratch-upper">
           <div className="sp-column ov-scratch-main ov-scratch-records">
             <Panel title="Health" icon="heart" className="ov-scratch-health">
+              <div
+                className="ov-scratch-defenses"
+                role="group"
+                aria-label="Defenses"
+              >
+                {["AC", "Fortitude", "Reflex", "Will"].map((label) => (
+                  <div key={label}>
+                    <span>{label}</span>
+                    <strong>{find(model.defenses, label) || "—"}</strong>
+                  </div>
+                ))}
+              </div>
               <Values
                 className="ov-scratch-health-values"
                 icons={{
