@@ -340,10 +340,10 @@ function Values({
         const icon = icons?.[label];
         return (
           <div key={label}>
+            {icon ? <Icon name={icon} /> : null}
             <span>{label}</span>
             {icon ? (
-              <strong className="ov-health-icon-value">
-                <Icon name={icon} />
+              <strong className="ov-health-value">
                 <span className="ov-health-value-number">{value}</span>
               </strong>
             ) : (

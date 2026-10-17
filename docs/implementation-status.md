@@ -18,22 +18,21 @@ zero/unknown omission. No full milestone gate was rerun for this layout trial.
 The subsequent regular-case/10pt-label styling adjustment also passes the 69
 overview tests; no broader test run was repeated for that small visual edit.
 The defense-icon trial was removed after owner feedback: the strip retains
-text-only 10pt labels. Icons beside the four large health numbers now use 55%
+text-only 10pt labels. Icons in the four health cells now use 55%
 opacity to reduce visual noise without muting the numbers or labels.
 Verification: 87 focused overview/layout tests and web typecheck pass through
 Nix; no broader print/milestone gate was repeated for this styling follow-up.
 
 Scratchpad health-value icon trial (2026-10-16): Max HP/Bloodied/Surges/Surge HP
-now place Heart/Droplets/Zap/Heart Plus beside their large numbers with a 0.04in
-gap, with numbers centered independently of the icons below the labels.
-Icons are 13pt beside 17pt numbers. Owner feedback restores this arrangement
-after the beside-label trials.
+now place Heart/Droplets/Zap/Heart Plus in each cell's top-left corner, with
+labels and numbers independently centered as a stack. Icons remain 13pt at
+55% opacity; numbers remain 17pt. This supersedes the beside-number/label trials.
 The four cells and connected surge bar use slate blue
 instead of violet; monochrome remains grayscale. No extra heading row is added.
-An empty value reserves a small writing space beside its icon. Page-1 cells and
+An empty value reserves a small writing space below its label. Page-1 cells and
 other numeric groups remain unchanged. This is for owner visual feedback.
-Verification: 86 focused overview/layout tests and the production/PWA build
-pass through Nix. A style regression covers independently centered numbers and
+Verification: 87 focused overview/layout tests and the production/PWA build
+pass through Nix. A style regression covers corner icons, centered numbers and
 matching slate backgrounds. The renderer test verifies all four icon
 identities and unchanged resource values. No full print/milestone gate was rerun
 for this small styling trial; a focused Letter/17-surge preview was rendered

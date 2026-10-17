@@ -20,21 +20,22 @@ const measurements = (
   gap: 5,
 });
 describe("scratchpad measured tracking layout", () => {
-  it("pairs health icons with independently centered numbers with slate backgrounds", () => {
+  it("places muted health icons in cell corners beside centered label/value stacks", () => {
     const styles = readFileSync(
       new URL("./sheet-overview.css", import.meta.url),
       "utf8",
     );
     const value = styles.match(
-      /\.ov-scratch-health-values \.ov-health-icon-value\s*\{([^}]+)\}/,
+      /\.ov-scratch-health-values \.ov-health-value\s*\{([^}]+)\}/,
     )?.[1];
     const icon = styles.match(
-      /\.ov-scratch-health-values \.ov-health-icon-value \.icon\s*\{([^}]+)\}/,
+      /\.ov-scratch-health-values > div > \.icon\s*\{([^}]+)\}/,
     )?.[1];
     expect(value).toContain("justify-content: center");
     expect(value).toContain("width: max-content");
     expect(icon).toContain("position: absolute");
-    expect(icon).toContain("right: calc(100% + 0.04in)");
+    expect(icon).toContain("left: 0.04in");
+    expect(icon).toContain("top: 0.035in");
     expect(icon).toContain("width: 13pt");
     expect(icon).toContain("opacity: 0.55");
     for (const selector of [

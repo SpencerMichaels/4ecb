@@ -224,10 +224,10 @@ Defense labels remain text-only to avoid visual noise.
 Health has
 label-first Max HP/Bloodied/Surges/Surge HP reference cells, a numbered surge bar,
 large Current HP and smaller Temp HP writing boxes, three death-save skulls and
-three hollow action-point circles. Health's four reference cells pair icons with
-their large numbers: heart, droplets, zap and heart-plus respectively. The
-numbers are centered independently of their icons below the labels,
-with a 0.04in gap between each 13pt icon and its number. Icons use 55% opacity and inherit
+three hollow action-point circles. Health's four reference cells place icons in
+their top-left corners: heart, droplets, zap and heart-plus respectively. The
+labels and numbers form an independently centered stack.
+The 13pt icons use 55% opacity and inherit
 the cell ink and introduce no new row.
 There is no milestone tracker or running
 header; a consistent identity/section/page footer matches the other pages.

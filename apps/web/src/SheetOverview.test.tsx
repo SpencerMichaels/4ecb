@@ -1082,7 +1082,8 @@ describe("real-data sheet overview", () => {
     expect(
       [...cells.matchAll(/<span>(.*?)<\/span>/g)].map((match) => match[1]),
     ).toEqual(["Max HP", "Bloodied", "Surges", "Surge HP"]);
-    expect(cells.match(/class="ov-health-icon-value"><svg/g)).toHaveLength(4);
+    expect(cells.match(/<div><svg/g)).toHaveLength(4);
+    expect(cells).not.toContain('class="ov-health-value"><svg');
     expect(cells).not.toContain('class="ov-health-label"');
     expect(cells).toContain(
       `class="ov-health-value-number">${model.resources.find((value) => value.label === "Healing Surges")!.value}</span>`,

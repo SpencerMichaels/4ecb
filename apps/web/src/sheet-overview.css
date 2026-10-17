@@ -1426,6 +1426,7 @@ body:has(.sp-prototype) {
   gap: 0.05in;
 }
 .ov-scratch-health-values > div {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1446,20 +1447,18 @@ body:has(.sp-prototype) {
 .ov-scratch-health-values strong {
   font-size: 17pt;
 }
-.ov-scratch-health-values .ov-health-icon-value {
-  position: relative;
+.ov-scratch-health-values .ov-health-value {
   width: max-content;
   min-height: 1.2em;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.ov-scratch-health-values .ov-health-icon-value .icon {
+.ov-scratch-health-values > div > .icon {
   opacity: 0.55;
   position: absolute;
-  right: calc(100% + 0.04in);
-  top: 50%;
-  transform: translateY(-50%);
+  left: 0.04in;
+  top: 0.035in;
   width: 13pt;
   height: 13pt;
 }
