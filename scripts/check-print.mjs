@@ -928,7 +928,7 @@ function printCharacter() {
     Reflex: "22",
     Will: "19",
     "Hit Points": "72",
-    "Healing Surges": "13",
+    "Healing Surges": "18",
     // Native stat is the additive bonus; 72 HP projects to 18 Surge HP.
     "Healing Surge Value": "0",
     "resist:fire": "5",
@@ -1341,6 +1341,7 @@ async function checkScratchpad(client, monochrome) {
     const segments=[...page.querySelectorAll('.ov-surge-segment')];
     return {expected:[...new Set(expected)].sort(), actual:actual.sort(),
       segments:segments.length, tracks:page.querySelectorAll('.ov-surge-row').length,
+      surgeRowLengths:[...page.querySelectorAll('.ov-surge-row')].map(row=>row.children.length),
       surgeGaps:segments.some(e=>parseFloat(getComputedStyle(e).marginLeft)>0),
       redundantSurgeCount:page.querySelector('.ov-scratch-surges').textContent.includes('/day'),
       surgeHeading:page.querySelector('.ov-scratch-surges > p') !== null,
@@ -1435,8 +1436,11 @@ async function checkScratchpad(client, monochrome) {
     `Every tracking group must occur exactly once across adjacent pages: ${JSON.stringify(state)}`,
   );
   assert(
-    state.segments === 13 && state.tracks === 1 && state.segmentWidth >= 14,
-    `13 surges must fit one markable segmented bar: ${JSON.stringify(state)}`,
+    state.segments === 18 &&
+      state.tracks === 2 &&
+      state.segmentWidth >= 14 &&
+      JSON.stringify(state.surgeRowLengths) === "[9,9]",
+    `18 surges must balance into 9+9 markable segments: ${JSON.stringify(state)}`,
   );
   assert(
     state.healthCells === 4 &&
@@ -1497,7 +1501,7 @@ async function checkScratchpad(client, monochrome) {
   );
   assert(
     JSON.stringify(state.labels) ===
-      JSON.stringify(Array.from({ length: 13 }, (_, i) => String(13 - i))),
+      JSON.stringify(Array.from({ length: 18 }, (_, i) => String(18 - i))),
     `Every surge box must display its remaining count: ${JSON.stringify(state.labels)}`,
   );
   assert(
@@ -1612,7 +1616,7 @@ async function checkScratchpad(client, monochrome) {
   }
   await waitForExpression(
     client,
-    `document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"]').querySelectorAll('.ov-surge-row').length === 1`,
+    `document.querySelector('.sheet-overview > .ov-paper[aria-label="Play scratchpad"]').querySelectorAll('.ov-surge-row').length === 2`,
   );
   await waitForExpression(
     client,

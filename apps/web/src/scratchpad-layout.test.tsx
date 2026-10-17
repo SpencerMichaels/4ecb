@@ -164,11 +164,34 @@ describe("segmented surge bar", () => {
     expect(columns).toBe(18);
     for (const total of [20, 25]) {
       const rows = surgeTrackRows(total, columns);
-      expect(rows.map((row) => row.length)).toEqual([18, total - 18]);
+      expect(rows.map((row) => row.length)).toEqual([
+        Math.ceil(total / 2),
+        Math.floor(total / 2),
+      ]);
       expect(rows.flat()).toEqual(
         Array.from({ length: total }, (_, i) => total - i),
       );
     }
+  });
+  it("starts balanced rows at 18 surges and keeps odd overflow left-aligned in equal-width slots", () => {
+    expect(surgeTrackRows(17, 18).map((row) => row.length)).toEqual([17]);
+    for (const [total, sizes] of [
+      [18, [9, 9]],
+      [19, [10, 9]],
+      [20, [10, 10]],
+      [25, [13, 12]],
+      [37, [13, 12, 12]],
+    ] as const) {
+      const rows = surgeTrackRows(total, 18);
+      expect(rows.map((row) => row.length)).toEqual(sizes);
+      expect(rows.flat()).toEqual(
+        Array.from({ length: total }, (_, i) => total - i),
+      );
+    }
+    const html = renderToStaticMarkup(<SurgeBar count="19" />);
+    expect(
+      html.match(/grid-template-columns:repeat\(10, minmax\(0, 1fr\)\)/g),
+    ).toHaveLength(2);
   });
   it("keeps all surge bars uninterrupted, with numbers providing grouping", () => {
     for (const count of ["6", "9", "10", "13"])
@@ -196,8 +219,8 @@ describe("segmented surge bar", () => {
   });
   it("makes deliberate aligned tracks when the minimum segment size requires it", () => {
     expect(surgeTrackRows(13, 8)).toEqual([
-      [13, 12, 11, 10, 9, 8, 7, 6],
-      [5, 4, 3, 2, 1],
+      [13, 12, 11, 10, 9, 8, 7],
+      [6, 5, 4, 3, 2, 1],
     ]);
     expect(surgeTrackRows(0, 20)).toEqual([]);
   });

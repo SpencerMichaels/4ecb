@@ -3,7 +3,7 @@ import { surgeTrackColumns, surgeTrackRows } from "./scratchpad-layout";
 
 export function SurgeBar({ count }: { count: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [columns, setColumns] = useState(20);
+  const [columns, setColumns] = useState(18);
   useLayoutEffect(() => {
     const element = ref.current;
     if (!element) return;
@@ -24,6 +24,7 @@ export function SurgeBar({ count }: { count: string }) {
   }, [count]);
   const total = /^\d+$/.test(count) ? Number(count) : undefined;
   const rows = total === undefined ? [] : surgeTrackRows(total, columns);
+  const rowColumns = Math.max(0, ...rows.map((row) => row.length));
   return (
     <div
       className="ov-surge-track"
@@ -41,7 +42,7 @@ export function SurgeBar({ count }: { count: string }) {
           <div
             className="ov-surge-row"
             style={{
-              gridTemplateColumns: `repeat(${Math.min(columns, total)}, minmax(0, 1fr))`,
+              gridTemplateColumns: `repeat(${rowColumns}, minmax(0, 1fr))`,
             }}
             key={rowIndex}
           >

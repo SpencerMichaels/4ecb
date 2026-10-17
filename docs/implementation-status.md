@@ -2,6 +2,21 @@
 
 ## M5.6 initial View and print-structure checkpoint (2026-09-30)
 
+Balanced surge wrapping (2026-10-16): 18 surges is now the Letter-oriented
+two-row threshold, yielding 9+9 (19: 10+9; 20: 10+10). Larger or narrower bars
+use as many measured rows as needed, balanced evenly with extras on earlier
+rows. Both rows share the same slot width; shorter rows remain left-aligned.
+Sequential remaining-count labels and the explicit 100-mark safety bound stay
+intact. This supersedes the previous fill-first/overflow-only behavior.
+Verification: 85 focused overview/layout tests, web typecheck, focused lint and
+production/PWA build pass. The public print fixture now has 18 surges and checks
+9+9 explicitly; all eight Chromium/Firefox Letter/A4 color/monochrome overview
+cases pass, including narrow-track reflow and restoration. The Letter preview
+was visually inspected. Commands: Nix-wrapped focused `vitest run`, web
+`typecheck`/`build`, `eslint`, and `node scripts/check-print.mjs --overview-only
+--include-card-pages --firefox-scratchpad --scratchpad-preview`. The existing
+full milestone/dense-card gate remains separate; M5.6 is still open.
+
 Health tracker spacing (2026-10-16): gaps within death-save skulls and action-point
 circles shrink from 0.1in to 0.04in; icon sizes and label/group placement stay
 unchanged. Surge wrapping remains fill-first, overflow-only on subsequent rows,

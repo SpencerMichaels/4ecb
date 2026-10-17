@@ -165,11 +165,16 @@ export function surgeTrackRows(
   columns: number,
 ): readonly (readonly number[])[] {
   const count = Math.min(100, Math.max(0, Math.floor(total)));
+  if (count === 0) return [];
   const width = Math.max(1, Math.floor(columns));
-  return Array.from({ length: Math.ceil(count / width) }, (_, row) =>
+  // Letter-oriented threshold; narrower tracks may need more rows sooner.
+  const rowCount = Math.max(Math.ceil(count / width), count >= 18 ? 2 : 0);
+  const perRow = Math.floor(count / rowCount);
+  const extra = count % rowCount;
+  return Array.from({ length: rowCount }, (_, row) =>
     Array.from(
-      { length: Math.min(width, count - row * width) },
-      (_, cell) => total - row * width - cell,
+      { length: perRow + (row < extra ? 1 : 0) },
+      (_, cell) => total - row * perRow - Math.min(row, extra) - cell,
     ),
   );
 }

@@ -42,9 +42,11 @@ Overview footers consistently show character identity at left, the page's sectio
 title centered (including Character Summary on page 1), and page number at right.
 A Date field occupies the right side of the Session notes pane header, using a
 1.25in × 0.25in rounded writing box and bold 10pt label. The
-first-page identity header is unchanged. Surge rows fill to measured capacity
-before wrapping; only overflow goes to the next row, with equal-sized boxes
-across rows rather than balancing row lengths.
+first-page identity header is unchanged. Surge bars use a Letter-oriented
+two-row threshold of 18: 18 becomes 9+9, 19 becomes 10+9, and 20 becomes 10+10.
+Rows balance as evenly as possible, with the extra box on earlier rows; shorter
+rows stay left-aligned with equal-sized boxes across rows. Measured width still
+adds rows sooner when necessary to keep boxes at least as wide as tall.
 
 The scratchpad uses numbered tracking tables for both frequencies: ten Encounter
 columns and five Daily columns. Both have square marks, vertical column stripes,
