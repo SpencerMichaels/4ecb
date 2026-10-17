@@ -735,6 +735,12 @@ body:has(.sp-prototype) {
   border-bottom: 1px solid #b9cbdc;
   border-top: 1px solid #b9cbdc;
 }
+.ov-inventory-table
+  > tbody:first-of-type
+  > .ov-reference-table-category:first-child
+  th {
+  border-top: 0;
+}
 .sheet-overview.sp-monochrome .ov-reference-table-category th {
   background: #fff;
   color: #333;

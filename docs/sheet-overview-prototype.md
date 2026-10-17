@@ -93,6 +93,8 @@ Inventory follows with two category columns, balanced by estimated printed lines
 (including wrapped item names), placing each category in the shorter column.
 Categories stay intact and retain builder order within each column;
 a single short category stays in one column even when that leaves the other empty.
+A category heading that opens a column omits its top rule; later headings keep
+both rules.
 Measured pagination moves whole categories; only a category taller than a fresh
 page column may split, with its heading repeated. Quantities lead item names as
 2×/3× prefixes (blank, with reserved space, for one); there is no Qty header.
