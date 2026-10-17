@@ -1678,7 +1678,8 @@ separate projection over the same semantic model.
   omitted, and `+N <what it modifies>` leads the card body as a rule. Shared
   prose no longer treats a heading-like final line (nothing after it) as a
   heading, so single-line rule values are not bolded with a trailing colon. Combat rows retain the earlier bold uppercase
-  labels (Prof/Crit abbreviations) and use dot separators without boxed
+  labels (Crit abbreviated; Proficiency abbreviates to Prof only on rows with
+  Range) and use dot separators without boxed
   cells. Category, group, hands, armor type, rarity, and key ability move to
   compact metadata prose on the footer's left; slot/weight/price share its right
   with dot separators. Only worn items show slots, not weapons or implements.

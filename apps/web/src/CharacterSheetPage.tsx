@@ -607,7 +607,8 @@ function PrintItemCard({
               {row.map(({ label, value }) => (
                 <div key={label}>
                   <dt>
-                    {label === "Proficiency"
+                    {label === "Proficiency" &&
+                    row.some((stat) => stat.label === "Range")
                       ? "Prof"
                       : label === "Critical"
                         ? "Crit"
