@@ -1697,7 +1697,10 @@ textarea {
   border-top: 1px solid #abb3b8;
   padding-top: 0.06in;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(max-content, 1fr) minmax(0, auto) minmax(
+      max-content,
+      1fr
+    );
   align-items: baseline;
   gap: 0.12in;
   color: #56616a;
@@ -1706,6 +1709,7 @@ textarea {
 }
 .print-card-footer-identity {
   min-width: 0;
+  text-align: center;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;

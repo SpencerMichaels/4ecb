@@ -32,7 +32,7 @@ reuse page-1 category panes, inset descriptions and benefit bullets; measured
 columns repeat the category heading when split, with no large continuation
 heading or reference-card chrome. A single oversized reminder remains intact
 with the normal overflow warning, not silently truncated or shrunk.
-Card-page margins now carry the same ruled identity/section-title/page footer;
+Card-page margins now carry the same ruled section-title/identity/page footer;
 Letter card grids move up 0.05in to leave clearance, with sleeve dimensions and
 inter-card gaps unchanged. A4 card placement is unchanged.
 

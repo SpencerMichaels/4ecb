@@ -1397,6 +1397,7 @@ export function CharacterSheetPage({
                 ))}
               </div>
               <footer className="print-card-page-footer">
+                <span>Power &amp; Item Cards</span>
                 <span
                   className="print-card-footer-identity"
                   title={[
@@ -1420,7 +1421,6 @@ export function CharacterSheetPage({
                     .filter(Boolean)
                     .join(" ")}
                 </span>
-                <span>Power &amp; Item Cards</span>
                 <span className="ov-page-number">
                   {firstCardPage + pageIndex}
                 </span>
