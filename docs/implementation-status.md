@@ -17,6 +17,11 @@ tests and web typecheck through Nix, including positive/negative saves and
 zero/unknown omission. No full milestone gate was rerun for this layout trial.
 The subsequent regular-case/10pt-label styling adjustment also passes the 69
 overview tests; no broader test run was repeated for that small visual edit.
+The strip now places 10pt Shield/Biceps Flexed/Wind/Brain icons before
+AC/Fort/Ref/Will respectively. Icons inherit the slate/monochrome ink and fit
+within the existing strip height. Verification: all 69 overview tests, web
+typecheck and production/PWA build pass through Nix. The focused Letter preview
+was visually inspected; the renderer test verifies the four icon identities.
 
 Scratchpad health-value icon trial (2026-10-16): Max HP/Bloodied/Surges/Surge HP
 now place Heart/Droplets/Zap/Heart Plus beside their large numbers with a 0.04in

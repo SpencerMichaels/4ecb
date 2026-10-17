@@ -1417,6 +1417,12 @@ body:has(.sp-prototype) {
 .ov-scratch-defenses strong {
   font-size: 11pt;
 }
+.ov-scratch-defenses .icon {
+  align-self: center;
+  flex-shrink: 0;
+  width: 10pt;
+  height: 10pt;
+}
 .sheet-overview.sp-monochrome .ov-scratch-defenses {
   background: #eee;
   color: #333;

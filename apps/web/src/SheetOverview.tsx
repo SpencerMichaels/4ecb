@@ -1552,15 +1552,18 @@ function Scratchpad({
                 role="group"
                 aria-label="Defenses"
               >
-                {[
-                  ["AC", "AC"],
-                  ["Fortitude", "Fort"],
-                  ["Reflex", "Ref"],
-                  ["Will", "Will"],
-                ].map(([field, label]) => (
+                {(
+                  [
+                    ["AC", "AC", "shield"],
+                    ["Fortitude", "Fort", "arms"],
+                    ["Reflex", "Ref", "wind"],
+                    ["Will", "Will", "brain"],
+                  ] as const
+                ).map(([field, label, icon]) => (
                   <div key={field}>
+                    <Icon name={icon} />
                     <span>{label}</span>
-                    <strong>{find(model.defenses, field!) || "—"}</strong>
+                    <strong>{find(model.defenses, field) || "—"}</strong>
                   </div>
                 ))}
               </div>
