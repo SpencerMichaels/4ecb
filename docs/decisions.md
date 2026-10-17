@@ -1823,6 +1823,10 @@ bands from the usage color to Utility blue; the already-blue bottom bar remains
 unchanged and continues to name the actual At-Will, Encounter, or Daily
 frequency. Monochrome print overrides both color treatments.
 
+**Superseded (2026-10-16):** The all-blue Utility preference is removed. The
+usage-colored card with an always-blue Utility type bar already conveys both the
+usage and the Utility type, so the option no longer earned a setting.
+
 ### D072 — Keep Lucide after small-size icon evaluation
 
 Status: accepted (supersedes the brief Nerd Fonts integration). Date: 2026-10-01.

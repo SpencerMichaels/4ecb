@@ -2309,9 +2309,6 @@ textarea {
 .print-power-card.utility-power {
   --card-footer-color: #000080;
 }
-.print-power-card.legacy-utility-color {
-  --card-color: #000080;
-}
 .print-item-card {
   --card-color: #ff8c00;
   grid-template-columns: minmax(0, 1fr);

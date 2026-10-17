@@ -360,9 +360,6 @@ describe("print layout contract", () => {
       /\.print-reference-card > footer\s*\{[^}]*align-items:\s*center;/,
     );
     expect(styles).toMatch(
-      /\.print-power-card\.legacy-utility-color\s*\{[\s\S]*?--card-color:\s*#000080/,
-    );
-    expect(styles).toMatch(
       /\.print-power-card\.utility-power\s*\{[\s\S]*?--card-footer-color:\s*#000080/,
     );
     expect(styles).toMatch(

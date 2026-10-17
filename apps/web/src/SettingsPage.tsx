@@ -129,8 +129,6 @@ export interface SettingsPageProps {
   readonly onAbbreviateAbilityValuesChange: (value: boolean) => void;
   readonly expandWeaponDice: boolean;
   readonly onExpandWeaponDiceChange: (value: boolean) => void;
-  readonly colorUtilityPowersBlue: boolean;
-  readonly onColorUtilityPowersBlueChange: (value: boolean) => void;
   readonly showEquippedAttackBonus: boolean;
   readonly onShowEquippedAttackBonusChange: (value: boolean) => void;
   readonly showPrintTitleActionIcon: boolean;
@@ -161,8 +159,6 @@ export function SettingsPage({
   onAbbreviateAbilityValuesChange,
   expandWeaponDice,
   onExpandWeaponDiceChange,
-  colorUtilityPowersBlue,
-  onColorUtilityPowersBlueChange,
   showEquippedAttackBonus,
   onShowEquippedAttackBonusChange,
   showPrintTitleActionIcon,
@@ -542,6 +538,13 @@ export function SettingsPage({
             </label>
           ))}
         </fieldset>
+      </section>
+
+      <section className="panel settings-section">
+        <div>
+          <h3>Builder &amp; Equipment</h3>
+          <p>Options for the builder, Equipment, and Shop.</p>
+        </div>
         <label>
           <input
             type="checkbox"
@@ -565,21 +568,6 @@ export function SettingsPage({
         <label>
           <input
             type="checkbox"
-            checked={resolveAbilityChoices}
-            onChange={(event) =>
-              onResolveAbilityChoicesChange(event.currentTarget.checked)
-            }
-          />{" "}
-          Use the best ability in power descriptions
-        </label>
-        <p className="field-help">
-          When a power offers several abilities, show only the one with the
-          highest modifier. Ties prefer the higher score, then the class's key
-          abilities in their listed order, then the power's first option.
-        </p>
-        <label>
-          <input
-            type="checkbox"
             checked={abbreviateAbilityValues}
             onChange={(event) =>
               onAbbreviateAbilityValuesChange(event.currentTarget.checked)
@@ -589,8 +577,8 @@ export function SettingsPage({
         </label>
         <p className="field-help">
           Replace phrases such as “Charisma modifier (+4)” with an underlined
-          “+4” whose tooltip identifies the ability in Equipment and character
-          View. Build and printed cards keep general formulas.
+          “+4” whose tooltip identifies the ability on Equipment and Shop power
+          cards. The Build tab and printed cards keep general formulas.
         </p>
         <label>
           <input
@@ -607,6 +595,29 @@ export function SettingsPage({
           Use the card's weapon selector to change the calculation or compare
           every compatible weapon in the character's inventory.
         </p>
+      </section>
+
+      <section className="panel settings-section">
+        <div>
+          <h3>Printed sheet</h3>
+          <p>Options for the printable character sheet and its cards.</p>
+        </div>
+        <label>
+          <input
+            type="checkbox"
+            checked={resolveAbilityChoices}
+            onChange={(event) =>
+              onResolveAbilityChoicesChange(event.currentTarget.checked)
+            }
+          />{" "}
+          Use the best ability in power descriptions
+        </label>
+        <p className="field-help">
+          When a power offers several abilities, show only the one with the
+          highest modifier. Ties prefer the higher score, then the class's key
+          abilities in their listed order, then the power's first option. Also
+          applies to Equipment and Shop power cards.
+        </p>
         <label>
           <input
             type="checkbox"
@@ -618,23 +629,8 @@ export function SettingsPage({
           Count coin weight
         </label>
         <p className="field-help">
-          Include carried coins in encumbrance on character sheets. Turn this
+          Include carried coins in encumbrance on the printed sheet. Turn this
           off if your group ignores coin weight. Stored coins never count.
-        </p>
-        <label>
-          <input
-            type="checkbox"
-            checked={colorUtilityPowersBlue}
-            onChange={(event) =>
-              onColorUtilityPowersBlueChange(event.currentTarget.checked)
-            }
-          />{" "}
-          Color utility powers entirely blue on printed cards
-        </label>
-        <p className="field-help">
-          Reproduce the original builder's all-blue Utility card style.
-          Otherwise, only the footer stays Utility blue while the rest of the
-          card shows how often the power can be used.
         </p>
         <label>
           <input
@@ -647,9 +643,9 @@ export function SettingsPage({
           Show equipped weapon to-hit bonus in attack headers
         </label>
         <p className="field-help">
-          On printable character sheets, include the equipped weapon's bonus in
-          each attack header. Turn this off if you frequently switch weapons;
-          the weapon table always shows each weapon's calculated bonus.
+          Include the equipped weapon's bonus in each printed attack header.
+          Turn this off if you frequently switch weapons; the weapon table
+          always shows each weapon's calculated bonus.
         </p>
         <label>
           <input

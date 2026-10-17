@@ -128,15 +128,7 @@ describe("release accessibility contract", () => {
     );
     expect(app).toContain("ABBREVIATE_ABILITY_VALUES_STORAGE_KEY");
     expect(app).toContain("EXPAND_WEAPON_DICE_STORAGE_KEY");
-    expect(settingsPage).toContain(
-      "Color utility powers entirely blue on printed cards",
-    );
-    expect(settingsPage).toContain("checked={colorUtilityPowersBlue}");
-    expect(app).toContain("COLOR_UTILITY_POWERS_BLUE_STORAGE_KEY");
-    expect(app).toContain(
-      'localStorage.setItem(COLOR_UTILITY_POWERS_BLUE_STORAGE_KEY, "1")',
-    );
-    expect(app).toContain("colorUtilityPowersBlue={colorUtilityPowersBlue}");
+    expect(settingsPage).not.toContain("Color utility powers");
     expect(settingsPage).toContain(
       "Show equipped weapon to-hit bonus in attack headers",
     );

@@ -109,8 +109,6 @@ export const RESOLVE_ABILITY_CHOICES_STORAGE_KEY =
 export const ABBREVIATE_ABILITY_VALUES_STORAGE_KEY =
   "4ecb.abbreviateAbilityValues.v1";
 export const EXPAND_WEAPON_DICE_STORAGE_KEY = "4ecb.expandWeaponDice.v1";
-export const COLOR_UTILITY_POWERS_BLUE_STORAGE_KEY =
-  "4ecb.colorUtilityPowersBlue.v1";
 export const SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY =
   "4ecb.showEquippedAttackBonus.v1";
 export const SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY =
@@ -202,15 +200,6 @@ export function App() {
       return localStorage.getItem(EXPAND_WEAPON_DICE_STORAGE_KEY) !== "0";
     } catch {
       return true;
-    }
-  });
-  const [colorUtilityPowersBlue, setColorUtilityPowersBlue] = useState(() => {
-    try {
-      return (
-        localStorage.getItem(COLOR_UTILITY_POWERS_BLUE_STORAGE_KEY) === "1"
-      );
-    } catch {
-      return false;
     }
   });
   const firstRoute = useRef(true);
@@ -329,15 +318,6 @@ export function App() {
       // The power-card display preference still applies for this session.
     }
   }, [expandWeaponDice]);
-  useEffect(() => {
-    try {
-      if (colorUtilityPowersBlue)
-        localStorage.setItem(COLOR_UTILITY_POWERS_BLUE_STORAGE_KEY, "1");
-      else localStorage.removeItem(COLOR_UTILITY_POWERS_BLUE_STORAGE_KEY);
-    } catch {
-      // The printed-card display preference still applies for this session.
-    }
-  }, [colorUtilityPowersBlue]);
   useEffect(() => {
     try {
       if (showEquippedAttackBonus)
@@ -609,8 +589,6 @@ export function App() {
                   onAbbreviateAbilityValuesChange={setAbbreviateAbilityValues}
                   expandWeaponDice={expandWeaponDice}
                   onExpandWeaponDiceChange={setExpandWeaponDice}
-                  colorUtilityPowersBlue={colorUtilityPowersBlue}
-                  onColorUtilityPowersBlueChange={setColorUtilityPowersBlue}
                   showEquippedAttackBonus={showEquippedAttackBonus}
                   onShowEquippedAttackBonusChange={setShowEquippedAttackBonus}
                   showPrintTitleActionIcon={showPrintTitleActionIcon}
@@ -644,7 +622,6 @@ export function App() {
                   resolveAbilityChoices={resolveAbilityChoices}
                   abbreviateAbilityValues={abbreviateAbilityValues}
                   expandWeaponDice={expandWeaponDice}
-                  colorUtilityPowersBlue={colorUtilityPowersBlue}
                   showEquippedAttackBonus={showEquippedAttackBonus}
                   showPrintTitleActionIcon={showPrintTitleActionIcon}
                   printCardTextSize={printCardTextSize}

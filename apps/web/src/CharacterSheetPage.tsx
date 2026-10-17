@@ -398,13 +398,11 @@ function PrintAttackBand({
 function PrintPowerCard({
   card,
   characterLevel,
-  colorUtilityPowersBlue,
   showEquippedAttackBonus,
   showPrintTitleActionIcon,
 }: {
   readonly card: SheetCard;
   readonly characterLevel: number;
-  readonly colorUtilityPowersBlue: boolean;
   readonly showEquippedAttackBonus: boolean;
   readonly showPrintTitleActionIcon: boolean;
 }) {
@@ -442,7 +440,7 @@ function PrintPowerCard({
   return (
     <article
       ref={cardRef}
-      className={`print-reference-card print-power-card usage-${usageTone}${card.keywords?.trim() ? " has-keywords" : ""}${isUtility ? " utility-power" : ""}${isUtility && colorUtilityPowersBlue ? " legacy-utility-color" : ""}`}
+      className={`print-reference-card print-power-card usage-${usageTone}${card.keywords?.trim() ? " has-keywords" : ""}${isUtility ? " utility-power" : ""}`}
     >
       <header>
         <h3>
@@ -717,13 +715,11 @@ function PrintItemCard({
 function PrintCard({
   card,
   characterLevel,
-  colorUtilityPowersBlue,
   showEquippedAttackBonus,
   showPrintTitleActionIcon,
 }: {
   readonly card: SheetCard;
   readonly characterLevel: number;
-  readonly colorUtilityPowersBlue: boolean;
   readonly showEquippedAttackBonus: boolean;
   readonly showPrintTitleActionIcon: boolean;
 }) {
@@ -731,7 +727,6 @@ function PrintCard({
     <PrintPowerCard
       card={card}
       characterLevel={characterLevel}
-      colorUtilityPowersBlue={colorUtilityPowersBlue}
       showEquippedAttackBonus={showEquippedAttackBonus}
       showPrintTitleActionIcon={showPrintTitleActionIcon}
     />
@@ -814,7 +809,6 @@ export function CharacterSheetPage({
   resolveAbilityChoices = true,
   abbreviateAbilityValues = true,
   expandWeaponDice = true,
-  colorUtilityPowersBlue = false,
   showEquippedAttackBonus = true,
   showPrintTitleActionIcon = true,
   printCardTextSize = 8,
@@ -827,7 +821,6 @@ export function CharacterSheetPage({
   readonly resolveAbilityChoices?: boolean;
   readonly abbreviateAbilityValues?: boolean;
   readonly expandWeaponDice?: boolean;
-  readonly colorUtilityPowersBlue?: boolean;
   readonly showEquippedAttackBonus?: boolean;
   readonly showPrintTitleActionIcon?: boolean;
   readonly printCardTextSize?: number;
@@ -1408,7 +1401,6 @@ export function CharacterSheetPage({
                   <PrintCard
                     card={card}
                     characterLevel={characterLevel}
-                    colorUtilityPowersBlue={colorUtilityPowersBlue}
                     showEquippedAttackBonus={showEquippedAttackBonus}
                     showPrintTitleActionIcon={showPrintTitleActionIcon}
                     key={`${card.kind}-${card.id ?? card.name}-${index}`}
