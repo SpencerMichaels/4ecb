@@ -12,6 +12,9 @@
 *.4ecp
 *.4ecp.gz
 
+# Operator deployment inputs (runtime config and private packs)
+/deploy/
+
 # Local agent/editor state and scratch output
 /.agents/
 /.codex/

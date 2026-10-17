@@ -1,0 +1,16 @@
+# Small-group deployment. Generate ./deploy first:
+#   nix develop path:. --command pnpm content-tool advertise /path/to/pack.4ecp
+# then: docker compose up -d --build
+services:
+  web:
+    build: .
+    image: "4ecb:${FOURECB_TAG:-local}"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    ports:
+      - "127.0.0.1:${FOURECB_PORT:-8080}:8080"
+    volumes:
+      - ./deploy/runtime-config.json:/app/runtime-config.json:ro
+      - ./deploy/private-packs:/app/private-packs:ro

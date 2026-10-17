@@ -141,6 +141,62 @@ or new network trust boundary. Operators remain responsible for preserving the
 reference response headers and protecting the browser profile that stores local
 private data.
 
+## Small-group deployment with Compose
+
+The repository-root `compose.yaml` runs the production image on the loopback
+interface with the read-only root filesystem, bounded `/tmp`, and two read-only
+operator mounts from the ignored `deploy/` directory. The image serves
+`/private-packs/` from the mounted directory (immutable `private` caching; a
+missing file is 404), so no proxy configuration is needed to advertise a pack.
+
+1. Generate the runtime configuration and a revision-qualified pack copy:
+
+   ```sh
+   nix develop path:. --command pnpm content-tool advertise /path/to/pack.4ecp
+   ```
+
+   This validates the pack, writes
+   `deploy/private-packs/<packId>-<digest prefix>.4ecp`, and writes
+   `deploy/runtime-config.json` advertising exactly that pack. Rerun it after
+   building a new pack. `deploy/` is ignored by git and by the Docker build
+   context, so private content never enters a commit or the image.
+
+2. Build, tag and start:
+
+   ```sh
+   FOURECB_TAG=$(git rev-parse --short HEAD) docker compose up -d --build
+   ```
+
+   `FOURECB_PORT` (default `8080`) changes the loopback host port. Confirm with
+   `curl -f http://127.0.0.1:8080/healthz`.
+
+3. Point the reverse proxy at it. For Caddy on the same host, which obtains and
+   renews TLS automatically and passes the container's headers through:
+
+   ```caddyfile
+   builder.example.net {
+       reverse_proxy 127.0.0.1:8080
+   }
+   ```
+
+   If Caddy runs in a container, attach it to the compose project's network and
+   use `reverse_proxy web:8080` instead of publishing the port. Add access
+   control (for example Caddy `basic_auth`) before advertising a private pack:
+   the pack URL is downloadable by anyone who can reach the site. Same-origin
+   credentials are sent with the pack download, so proxy authentication covers
+   it.
+
+**Updates.** Ask testers to back up their libraries before significant changes,
+then rebuild with a new tag as in step 2. Testers see **Reload and update**;
+IndexedDB data on the same origin is retained. **Rollback** reuses an earlier
+local image without rebuilding: `FOURECB_TAG=<previous tag> docker compose up -d`.
+Keep the HTTPS origin unchanged across updates, since browser data is per
+origin.
+
+**New content revisions.** A rebuilt pack with a different digest should get a
+new `packId` (characters bind pack identity and digest), then rerun
+`content-tool advertise`. Testers adopt the new profile explicitly.
+
 ## M5.7 invited-beta boundary
 
 The unprivileged static image, health endpoint, runtime-configuration path,

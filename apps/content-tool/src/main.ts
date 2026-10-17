@@ -134,6 +134,38 @@ async function diff(arguments_: ParsedArguments): Promise<void> {
   printJson(diffContentPacks(before, after));
 }
 
+async function advertise(arguments_: ParsedArguments): Promise<void> {
+  const source = arguments_.positionals[1];
+  if (source === undefined) throw new Error("advertise requires a pack path");
+  const outDir = resolve(arguments_.options.get("out-dir") ?? "deploy");
+  const bytes = await readFile(resolve(source));
+  const gzipped = bytes[0] === 0x1f && bytes[1] === 0x8b;
+  const pack = decodeContentPack(
+    (gzipped ? await gunzip(bytes) : bytes).toString("utf8"),
+  );
+  const validation = await validateContentPack(pack);
+  if (!validation.valid) {
+    printJson(validation);
+    throw new Error("Refusing to advertise an invalid content pack");
+  }
+  const { packId, name, contentDigest } = summarizeContentPack(pack);
+  // Revision-qualified so browsers never see one URL change content.
+  const fileName = `${packId}-${contentDigest.slice(0, 12)}.4ecp`;
+  const packPath = resolve(outDir, "private-packs", fileName);
+  await writeAtomically(packPath, gzipped ? bytes : await gzip(bytes));
+  const configPath = resolve(outDir, "runtime-config.json");
+  const config = {
+    relayUrl: null,
+    defaultPackUrl: null,
+    contentPacks: [
+      { packId, name, contentDigest, url: `/private-packs/${fileName}` },
+    ],
+    features: { playMode: false, sessionRelay: false },
+  };
+  await writeAtomically(configPath, `${JSON.stringify(config, null, 2)}\n`);
+  printJson({ packPath, configPath, advertised: config.contentPacks[0] });
+}
+
 function printHelp(): void {
   stdout.write(`4ecb content tool
 
@@ -142,6 +174,7 @@ Usage:
   content-tool inspect PACK.4ecp
   content-tool validate PACK.4ecp
   content-tool diff BEFORE.4ecp AFTER.4ecp
+  content-tool advertise PACK.4ecp [--out-dir deploy]
 `);
 }
 
@@ -160,6 +193,9 @@ async function main(): Promise<void> {
       break;
     case "diff":
       await diff(arguments_);
+      break;
+    case "advertise":
+      await advertise(arguments_);
       break;
     case "help":
     case "--help":

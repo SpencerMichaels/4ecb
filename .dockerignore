@@ -18,3 +18,4 @@ reverse-engineering/tools/dotnet
 data/private
 *.4ecp
 *.4ecp.gz
+deploy
