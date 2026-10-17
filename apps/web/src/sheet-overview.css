@@ -895,6 +895,15 @@ body:has(.sp-prototype) {
 .ov-reference-footer .ov-page-number {
   justify-self: end;
 }
+.ov-reference-footer:has(.ov-page-number) {
+  grid-template-columns: minmax(max-content, 1fr) minmax(0, auto) minmax(
+      max-content,
+      1fr
+    );
+}
+.ov-reference-footer:has(.ov-page-number) .ov-reference-footer-identity {
+  text-align: center;
+}
 .sp-panel {
   border: 1px solid var(--sp-border);
   border-radius: 3px;

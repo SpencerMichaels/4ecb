@@ -38,8 +38,9 @@ inter-card gaps unchanged. A4 card placement is unchanged.
 
 Running information uses footers consistently, including the scratchpad and
 optional summary/power-usage continuations; none has a running top header.
-Overview footers consistently show character identity at left, the page's section
-title centered (including Character Summary on page 1), and page number at right.
+Numbered overview footers show the page's section title at left (including
+Character Summary on page 1), character identity centered, and page number at
+right; unnumbered pages keep identity at left and the section title centered.
 A Date field occupies the right side of the Session notes pane header, using a
 1.25in × 0.25in rounded writing box and bold 10pt label. The
 first-page identity header is unchanged. Surge bars use a Letter-oriented
@@ -139,8 +140,8 @@ Larger categories still keep their first two cards together when feasible.
 Single-entry categories and oversized pairs retain normal flow;
 summary reminder continuations use their own measured category panes.
 This is a first draft, not final reference or M5.6 acceptance.
-Reference pages omit the running top header. Their footer places name · race class level
-at left, Character Reference centered, and the continuous page number at right. The identity
+Reference pages omit the running top header. Their footer places Character Reference at left,
+name · race class level centered, and the continuous page number at right. The identity
 stays on one line (ellipsis for exceptionally long names); summary/scratchpad
 headers are unchanged. Measurement probes use the same footer/header layout.
 See `implementation-status.md` for the final accepted scratchpad refinements;

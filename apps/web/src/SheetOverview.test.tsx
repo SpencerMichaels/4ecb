@@ -310,6 +310,10 @@ describe("real-data sheet overview", () => {
       expect(page[1]).toContain(">Ingi fixture · Dwarf Paladin 7</span>");
       expect(page[1]).toContain("<span>Character Reference</span>");
       expect(page[1]).toContain('class="ov-page-number"');
+      const footer = page[1]!.split("<footer")[1]!;
+      expect(footer.indexOf("<span>Character Reference</span>")).toBeLessThan(
+        footer.indexOf('class="ov-reference-footer-identity"'),
+      );
     }
     expect(html).not.toContain('class="sp-running-header');
     expect(html).toContain("<span>Scratchpad</span>");

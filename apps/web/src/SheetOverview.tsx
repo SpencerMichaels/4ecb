@@ -121,17 +121,23 @@ function Paper({
       <footer
         className={`sp-page-footer${footerIdentity !== undefined ? " ov-reference-footer" : ""}`}
       >
-        {footerIdentity !== undefined ? (
-          <>
-            <span
-              className="ov-reference-footer-identity"
-              title={[name, footerIdentity].filter(Boolean).join(" · ")}
-            >
-              {[name, footerIdentity].filter(Boolean).join(" · ")}
-            </span>
-            <span>{footerTitle ?? "Character Reference"}</span>
-          </>
-        ) : null}
+        {footerIdentity !== undefined
+          ? (() => {
+              const identity = (
+                <span
+                  className="ov-reference-footer-identity"
+                  title={[name, footerIdentity].filter(Boolean).join(" · ")}
+                  key="identity"
+                >
+                  {[name, footerIdentity].filter(Boolean).join(" · ")}
+                </span>
+              );
+              const title = (
+                <span key="title">{footerTitle ?? "Character Reference"}</span>
+              );
+              return page !== null ? [title, identity] : [identity, title];
+            })()
+          : null}
         {page !== null ? <span className="ov-page-number">{page}</span> : null}
       </footer>
     </article>
