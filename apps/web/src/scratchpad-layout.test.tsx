@@ -20,30 +20,20 @@ const measurements = (
   gap: 5,
 });
 describe("scratchpad measured tracking layout", () => {
-  it("places muted health icons in cell corners beside centered label/value stacks", () => {
+  it("uses distinct muted health tints and a matching gold surge bar", () => {
     const styles = readFileSync(
       new URL("./sheet-overview.css", import.meta.url),
       "utf8",
     );
-    const value = styles.match(
-      /\.ov-scratch-health-values \.ov-health-value\s*\{([^}]+)\}/,
-    )?.[1];
-    const icon = styles.match(
-      /\.ov-scratch-health-values > div > \.icon\s*\{([^}]+)\}/,
-    )?.[1];
-    expect(value).toContain("justify-content: center");
-    expect(value).toContain("width: max-content");
-    expect(icon).toContain("position: absolute");
-    expect(icon).toContain("left: 0.04in");
-    expect(icon).toContain("top: 0.035in");
-    expect(icon).toContain("width: 13pt");
-    expect(icon).toContain("opacity: 0.55");
-    for (const selector of [
-      ".ov-scratch-health-values > div",
-      ".ov-scratch-surges",
+    for (const [selector, color] of [
+      [".ov-scratch-health-values > div", "#e8f1e8"],
+      [".ov-scratch-health-values > div:nth-child(2)", "#f5e7e9"],
+      [".ov-scratch-health-values > div:nth-child(3)", "#f5edda"],
+      [".ov-scratch-health-values > div:nth-child(4)", "#e3f0ed"],
+      [".ov-scratch-surges", "#f5edda"],
     ]) {
       const rule = styles.slice(styles.indexOf(`${selector} {`)).split("}")[0];
-      expect(rule).toContain("background: #eaf0f6");
+      expect(rule).toContain(`background: ${color}`);
     }
   });
   it("keeps skull and action-point marks close together", () => {

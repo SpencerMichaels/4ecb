@@ -1409,6 +1409,7 @@ async function checkScratchpad(client, monochrome) {
       obsolete:page.textContent.includes('Quick reference')||page.textContent.includes('Reminders'),
       header:getComputedStyle(page.querySelector('.ov-scratch-health > h3')).backgroundColor,
       health:getComputedStyle(page.querySelector('.ov-scratch-health-values > div')).backgroundColor,
+      healthColors:[...page.querySelectorAll('.ov-scratch-health-values > div')].map(cell=>getComputedStyle(cell).backgroundColor),
       healthCells:page.querySelectorAll('.ov-scratch-health-values > div').length,
       deathSaveGap:page.querySelector('.sp-death-saves > span').getBoundingClientRect().left-page.querySelector('.sp-death-saves').getBoundingClientRect().left,
       deathSaveAlignment:getComputedStyle(page.querySelector('.sp-death-saves')).justifyContent,
@@ -1518,15 +1519,24 @@ async function checkScratchpad(client, monochrome) {
   assert(
     state.header ===
       (monochrome ? "rgb(238, 238, 238)" : "rgb(234, 240, 246)") &&
-      state.health ===
-        (monochrome ? "rgb(238, 238, 238)" : "rgb(234, 240, 246)"),
-    `Scratchpad must match the approved slate header/health palette: ${JSON.stringify(state)}`,
+      JSON.stringify(state.healthColors) ===
+        JSON.stringify(
+          monochrome
+            ? Array(4).fill("rgb(238, 238, 238)")
+            : [
+                "rgb(232, 241, 232)",
+                "rgb(245, 231, 233)",
+                "rgb(245, 237, 218)",
+                "rgb(227, 240, 237)",
+              ],
+        ),
+    `Scratchpad must match the approved health tints: ${JSON.stringify(state)}`,
   );
   assert(
     state.surgeLabelsInside &&
       Math.abs(state.surgeConnectorWidth - state.surgeCellWidth) < 2 &&
-      state.surgeBackground === state.health &&
-      state.surgeConnector === state.health,
+      state.surgeBackground === state.healthColors[2] &&
+      state.surgeConnector === state.healthColors[2],
     "Surge bar background and connector must match the Surges reference cell",
   );
   assert(

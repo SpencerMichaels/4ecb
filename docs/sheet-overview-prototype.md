@@ -224,11 +224,9 @@ Defense labels remain text-only to avoid visual noise.
 Health has
 label-first Max HP/Bloodied/Surges/Surge HP reference cells, a numbered surge bar,
 large Current HP and smaller Temp HP writing boxes, three death-save skulls and
-three hollow action-point circles. Health's four reference cells place icons in
-their top-left corners: heart, droplets, zap and heart-plus respectively. The
-labels and numbers form an independently centered stack.
-The 13pt icons use 55% opacity and inherit
-the cell ink and introduce no new row.
+three hollow action-point circles. Health's four reference cells use muted
+green (Max HP), rose (Bloodied), gold (Surges) and teal (Surge HP) backgrounds,
+with dark text and centered label/number stacks. Icons are omitted.
 There is no milestone tracker or running
 header; a consistent identity/section/page footer matches the other pages.
 Date is omitted; XP and ruled session/treasure notes have their own following
@@ -252,7 +250,7 @@ retained with explicit additional-count text for pathological/custom values;
 unknown values remain textual, never guessed. Marking is pencil-on-paper only;
 this does not introduce persisted interactive Play state.
 
-Body pane headings, health reference cells and the connected surge bar use slate blue, and the power
+Body pane headings use slate blue; the connected surge bar matches the gold Surges cell. The power
 sections retain meaningful encounter-red/daily-gray headers. Monochrome uses
 explicit grayscale. Neutral alternating rows and consistently placed action icons
 support scanning. Tracking boxes retain boundaries for pencil marks. Conditions

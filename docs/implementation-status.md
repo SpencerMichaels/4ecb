@@ -18,25 +18,21 @@ zero/unknown omission. No full milestone gate was rerun for this layout trial.
 The subsequent regular-case/10pt-label styling adjustment also passes the 69
 overview tests; no broader test run was repeated for that small visual edit.
 The defense-icon trial was removed after owner feedback: the strip retains
-text-only 10pt labels. Icons in the four health cells now use 55%
-opacity to reduce visual noise without muting the numbers or labels.
+text-only 10pt labels. The later health-cell color trial removes those icons too.
 Verification: 87 focused overview/layout tests and web typecheck pass through
 Nix; no broader print/milestone gate was repeated for this styling follow-up.
 
-Scratchpad health-value icon trial (2026-10-16): Max HP/Bloodied/Surges/Surge HP
-now place Heart/Droplets/Zap/Heart Plus in each cell's top-left corner, with
-labels and numbers independently centered as a stack. Icons remain 13pt at
-55% opacity; numbers remain 17pt. This supersedes the beside-number/label trials.
-The four cells and connected surge bar use slate blue
-instead of violet; monochrome remains grayscale. No extra heading row is added.
-An empty value reserves a small writing space below its label. Page-1 cells and
-other numeric groups remain unchanged. This is for owner visual feedback.
+Scratchpad health-cell color trial (2026-10-16): Max HP/Bloodied/Surges/Surge HP
+use muted green/rose/gold/teal tints respectively, with dark readable ink.
+All four icons are removed; label/number stacks remain centered, with 17pt
+values and blank-HP writing space. The connected surge bar matches Surges gold.
+Monochrome remains grayscale; page-1 groups remain unchanged. This supersedes
+the beside-number/label and corner-icon trials and is for owner visual feedback.
 Verification: 87 focused overview/layout tests and the production/PWA build
-pass through Nix. A style regression covers corner icons, centered numbers and
-matching slate backgrounds. The renderer test verifies all four icon
-identities and unchanged resource values. No full print/milestone gate was rerun
-for this small styling trial; a focused Letter/17-surge preview was rendered
-and visually inspected. M5.6 remains open.
+pass through Nix. The Letter/17-surge preview was rendered and visually
+inspected. Public print assertions now expect four tints (grayscale in
+monochrome) and match the surge bar/connector to the third cell, not Max HP.
+No full print/milestone gate was rerun for this styling trial. M5.6 remains open.
 
 Balanced surge wrapping (2026-10-16): 18 surges is now the Letter-oriented
 two-row threshold, yielding 9+9 (19: 10+9; 20: 10+10). Larger or narrower bars
