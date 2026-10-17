@@ -6871,6 +6871,8 @@ button.inventory-icon-action:disabled {
   .print-page {
     break-after: page;
     break-inside: avoid;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
   .print-page:last-child {
     break-after: auto;
