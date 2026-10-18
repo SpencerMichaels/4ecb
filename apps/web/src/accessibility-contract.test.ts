@@ -770,9 +770,12 @@ describe("release accessibility contract", () => {
   });
 
   it("retains check glyphs for non-radio completion states", () => {
+    const emptyStart = characterEditor.indexOf(
+      'className="choice-empty-state"',
+    );
     const emptyLevelState = characterEditor.slice(
-      characterEditor.indexOf('className="choice-empty-state"'),
-      characterEditor.indexOf('className="level-choice-tabs-layout"'),
+      emptyStart,
+      characterEditor.indexOf("</div>", emptyStart),
     );
     expect(emptyLevelState).toContain('<Icon name="check" />');
     expect(emptyLevelState).toContain("No choices need attention");

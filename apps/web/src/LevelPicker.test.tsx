@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { LevelPicker } from "./LevelPicker";
 
 describe("LevelPicker", () => {
-  it("shows the viewed level and its status on one collapsed button", () => {
+  it("renders the Level heading as its trigger until opened", () => {
     const markup = renderToStaticMarkup(
       createElement(LevelPicker, {
         tiers: [
@@ -18,11 +18,11 @@ describe("LevelPicker", () => {
         onSelect: () => undefined,
       }),
     );
-    expect(markup).toContain("Level 7");
-    expect(markup).toContain('aria-expanded="false"');
-    expect(markup).toContain("level-rail-incomplete");
-    expect(markup).toContain('title="Level 7: 1 unresolved"');
-    // The tier grid only renders once opened.
-    expect(markup).not.toContain('aria-label="Level plan"');
+    // The "Level N" heading is the trigger; the plan opens as a modal.
+    expect(markup).toContain('<h3 class="level-picker-heading">');
+    expect(markup).toContain("<span>Level 7</span>");
+    expect(markup).toContain('aria-haspopup="dialog"');
+    expect(markup).toContain('aria-label="Level 7, change level"');
+    expect(markup).not.toContain("<dialog");
   });
 });

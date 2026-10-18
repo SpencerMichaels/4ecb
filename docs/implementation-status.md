@@ -4,8 +4,9 @@
 
 D080: the builder header and level rail are replaced by a sticky sidebar on
 every builder tab (large portrait, editable name, race/class/level, Play-card
-stat arrangement with passive senses and score + modifier abilities) and a
-single "Level N ▾" picker with per-level status. Choice, details and detail
+stat arrangement with passive senses and score + modifier abilities). The
+Build tab's "Level N ▾" heading opens a modal level plan with per-level
+status, including on levels with no choices. Choice, details and detail
 panes give their second column exactly one card width. Verification: 920
 tests, typecheck, lint and build pass; visual review is pending.
 

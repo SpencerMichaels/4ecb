@@ -2185,9 +2185,10 @@ component, because the two are expected to diverge; values and tooltips come
 from the evaluated stats and shared derived values as before.
 
 Level switching is rare (play mostly fills the newest level), so the level
-plan moves behind a single "Level N ▾" picker under the stats: a tier-by-level
-grid that keeps the former rail's completion status. No extra arrows; the
-choice pane's Next button still advances through sections and levels. Detail
+plan moves behind the Build tab's own "Level N ▾" heading, which opens a modal
+tier-by-level grid keeping the former rail's completion status. It is not in
+the sidebar and has no extra arrows; the choice pane's Next button still
+advances through sections and levels. Detail
 columns are one card wide and flush right; below 63rem the sidebar folds above
 the workspace.
 

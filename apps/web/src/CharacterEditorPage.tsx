@@ -1569,6 +1569,16 @@ export function CharacterEditorPage({
           return { level, status, statusLabel };
         });
 
+  const levelPicker = (
+    <LevelPicker
+      disabled={entities.length === 0}
+      entries={levelPlanEntries}
+      selectedLevel={selectedLevel}
+      tiers={CHARACTER_TIERS}
+      onSelect={(level) => selectLevel(level)}
+    />
+  );
+
   return (
     <BuilderCardContext.Provider value={buildCardSettings}>
       <main
@@ -1607,13 +1617,6 @@ export function CharacterEditorPage({
               </p>
             </header>
             <BuilderCharacterStats evaluation={currentEvaluation} />
-            <LevelPicker
-              disabled={entities.length === 0}
-              entries={levelPlanEntries}
-              selectedLevel={selectedLevel}
-              tiers={CHARACTER_TIERS}
-              onSelect={(level) => selectLevel(level)}
-            />
           </aside>
           <div className="builder-main">
             {reviewingContentUpdate &&
@@ -1885,18 +1888,23 @@ export function CharacterEditorPage({
                       : `Evaluating choices through level ${planningHorizon}…`}
                   </p>
                 ) : levelChoices.length === 0 && selectedLevel !== 1 ? (
-                  <div className="choice-empty-state">
-                    <Icon name="check" />
-                    <h4>No choices need attention at level {selectedLevel}</h4>
-                    <p>
-                      Select another level from the timeline or review the
-                      completed history below.
-                    </p>
+                  <div className="level-choice-tabs-layout">
+                    <div className="level-choice-tab-bar">{levelPicker}</div>
+                    <div className="choice-empty-state">
+                      <Icon name="check" />
+                      <h4>
+                        No choices need attention at level {selectedLevel}
+                      </h4>
+                      <p>
+                        Choose another level from the Level {selectedLevel} menu
+                        above.
+                      </p>
+                    </div>
                   </div>
                 ) : (
                   <div className="level-choice-tabs-layout">
                     <div className="level-choice-tab-bar">
-                      <h3>Level {selectedLevel}</h3>
+                      {levelPicker}
                       <div
                         aria-label={`Level ${selectedLevel} choice sections`}
                         className="level-choice-tabs"

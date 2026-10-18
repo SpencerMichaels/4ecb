@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Icon } from "./Icon";
 
@@ -18,8 +18,8 @@ export interface LevelPickerEntry {
 
 /**
  * Level navigation for the builder sidebar. Switching levels is rare (most
- * play fills in the newest level), so the plan lives behind one button: a
- * tier-by-level grid that keeps each level's completion status.
+ * play fills in the newest level), so the plan lives behind the Build tab's
+ * "Level N" heading: a modal tier-by-level grid keeping each level's status.
  */
 export function LevelPicker({
   tiers,
@@ -35,98 +35,108 @@ export function LevelPicker({
   readonly onSelect: (level: number) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const panelId = useId();
-  const root = useRef<HTMLDivElement>(null);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
   const byLevel = new Map(entries.map((entry) => [entry.level, entry]));
-  const selected = byLevel.get(selectedLevel);
 
   useEffect(() => {
-    if (!open) return;
-    const close = (event: Event) => {
-      if (
-        event instanceof KeyboardEvent
-          ? event.key === "Escape"
-          : !root.current?.contains(event.target as Node)
-      )
-        setOpen(false);
-    };
-    document.addEventListener("pointerdown", close);
-    document.addEventListener("keydown", close);
-    return () => {
-      document.removeEventListener("pointerdown", close);
-      document.removeEventListener("keydown", close);
-    };
+    const current = dialog.current;
+    if (open && current !== null && !current.open) current.showModal();
   }, [open]);
 
+  const close = () => {
+    dialog.current?.close();
+    setOpen(false);
+    trigger.current?.focus();
+  };
+
   return (
-    <div className="level-picker" ref={root}>
-      <button
-        aria-controls={panelId}
-        aria-expanded={open}
-        className="level-picker-toggle"
-        disabled={disabled}
-        title={
-          selected === undefined
-            ? undefined
-            : `Level ${selectedLevel}: ${selected.statusLabel}`
-        }
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-      >
-        <span
-          aria-hidden="true"
-          className={`level-rail-status level-rail-${selected?.status ?? "future"}`}
-        />
-        <span>Level {selectedLevel}</span>
-        <Icon name="chevron" />
-      </button>
-      {open ? (
-        <div
-          aria-label="Level plan"
-          className="level-picker-panel"
-          id={panelId}
-          role="group"
+    <>
+      <h3 className="level-picker-heading">
+        <button
+          aria-haspopup="dialog"
+          aria-label={`Level ${selectedLevel}, change level`}
+          className="level-picker-trigger"
+          disabled={disabled}
+          ref={trigger}
+          title="Change level"
+          type="button"
+          onClick={() => setOpen(true)}
         >
-          {tiers.map((tier) => (
-            <section className="level-picker-tier" key={tier.id}>
-              <h4>{tier.label}</h4>
-              <ol>
-                {Array.from(
-                  { length: tier.lastLevel - tier.firstLevel + 1 },
-                  (_, index) => tier.firstLevel + index,
-                ).map((level) => {
-                  const entry = byLevel.get(level);
-                  const status = entry?.status ?? "future";
-                  const label = entry?.statusLabel ?? "no choices made";
-                  return (
-                    <li key={level}>
-                      <button
-                        aria-current={
-                          level === selectedLevel ? "step" : undefined
-                        }
-                        aria-label={`Level ${level}, ${label}`}
-                        className={`level-rail-button level-rail-${status}`}
-                        title={`Level ${level}: ${label}`}
-                        type="button"
-                        onClick={() => {
-                          setOpen(false);
-                          onSelect(level);
-                        }}
-                      >
-                        <span>{level}</span>
-                        <span
-                          aria-hidden="true"
-                          className="level-rail-status"
-                        />
-                      </button>
-                    </li>
-                  );
-                })}
-              </ol>
-            </section>
-          ))}
-        </div>
-      ) : null}
-    </div>
+          <span>Level {selectedLevel}</span>
+          <Icon name="chevron" />
+        </button>
+      </h3>
+      {!open ? null : (
+        <dialog
+          aria-labelledby="level-picker-title"
+          className="level-picker-dialog dialog-shell dialog-shell--branded"
+          ref={dialog}
+          onCancel={(event) => {
+            event.preventDefault();
+            close();
+          }}
+          onClick={(event) => {
+            // A click on the backdrop lands on the dialog element itself.
+            if (event.target === event.currentTarget) close();
+          }}
+        >
+          <header>
+            <div>
+              <p className="eyebrow">Level plan</p>
+              <h2 id="level-picker-title">Choose a level</h2>
+            </div>
+            <button
+              aria-label="Close level plan"
+              className="button-icon dialog-close"
+              type="button"
+              onClick={close}
+            >
+              <Icon name="remove" />
+            </button>
+          </header>
+          <div className="level-picker-body">
+            {tiers.map((tier) => (
+              <section className="level-picker-tier" key={tier.id}>
+                <h3>{tier.label}</h3>
+                <ol>
+                  {Array.from(
+                    { length: tier.lastLevel - tier.firstLevel + 1 },
+                    (_, index) => tier.firstLevel + index,
+                  ).map((level) => {
+                    const entry = byLevel.get(level);
+                    const status = entry?.status ?? "future";
+                    const label = entry?.statusLabel ?? "no choices made";
+                    return (
+                      <li key={level}>
+                        <button
+                          aria-current={
+                            level === selectedLevel ? "step" : undefined
+                          }
+                          aria-label={`Level ${level}, ${label}`}
+                          className={`level-rail-button level-rail-${status}`}
+                          title={`Level ${level}: ${label}`}
+                          type="button"
+                          onClick={() => {
+                            close();
+                            onSelect(level);
+                          }}
+                        >
+                          <span>{level}</span>
+                          <span
+                            aria-hidden="true"
+                            className="level-rail-status"
+                          />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </section>
+            ))}
+          </div>
+        </dialog>
+      )}
+    </>
   );
 }

@@ -3893,50 +3893,53 @@ textarea {
   border-top: 4px solid var(--brand-navy);
 }
 
-.level-picker {
-  position: relative;
+/* The Build tab's "Level N" heading opens the level plan. */
+.level-picker-heading {
+  margin: 0;
 }
 
-.level-picker-toggle {
+.level-picker-trigger {
   align-items: center;
-  display: flex;
-  gap: 0.45rem;
-  justify-content: center;
-  width: 100%;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  display: inline-flex;
+  font: inherit;
+  gap: 0.3rem;
+  padding: 0.1rem 0.2rem;
 }
 
-.level-picker-toggle .icon {
+.level-picker-trigger:not(:disabled):hover {
+  background: var(--surface-subtle);
+}
+
+.level-picker-trigger .icon {
+  height: 0.9em;
   transform: rotate(90deg);
+  width: 0.9em;
 }
 
-.level-picker-toggle[aria-expanded="true"] .icon {
-  transform: rotate(-90deg);
+/* The level plan is a modal popup, not part of the sidebar's flow. */
+.level-picker-dialog {
+  width: min(32rem, calc(100vw - 2rem));
 }
 
-.level-picker-panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-top: 4px solid var(--brand-navy);
-  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.2);
+.level-picker-body {
   display: grid;
-  gap: 0.5rem;
-  inset-inline-start: 0;
-  margin-top: 0.25rem;
-  padding: 0.6rem;
-  position: absolute;
-  width: max(100%, 24rem);
-  z-index: 20;
+  gap: 0.75rem;
+  padding: 1rem;
 }
 
-.level-picker-tier h4 {
+.level-picker-tier h3 {
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   letter-spacing: 0.04em;
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.3rem;
   text-transform: uppercase;
 }
 
 .level-picker-tier ol {
+  border: 1px solid var(--border);
   display: grid;
   gap: 1px;
   grid-template-columns: repeat(10, minmax(0, 1fr));
@@ -3945,8 +3948,9 @@ textarea {
   padding: 0;
 }
 
-.level-picker .level-rail-button {
+.level-picker-dialog .level-rail-button {
   flex-direction: column;
+  min-height: 2.6rem;
   padding-inline: 0;
 }
 
