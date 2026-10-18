@@ -78,6 +78,13 @@ These instructions apply to the entire repository.
   them separate from the public suite.
 - Make coherent checkpoint commits after verification. Do not declare a
   milestone complete from a dirty or unverified worktree.
+- Never duplicate a value calculation. Every number shown on more than one
+  surface (builder, sheet pages, cards, scratchpad) must come from one shared
+  source: evaluated stats or a function in
+  `packages/rules-engine/src/derived-values.ts`. Before writing arithmetic on
+  game values in sheet or UI code, reuse or extend that module instead of
+  re-deriving a formula locally; display formatting may differ, the calculation
+  may not.
 - Build UI structure and functionality first. Defer visual theming, animation,
   and subjective polish to a tighter feedback loop with the product owner.
 
