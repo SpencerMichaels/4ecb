@@ -7,6 +7,7 @@ import {
   fittingReminderGroups,
   fittingBasicAttackLimit,
   fittingSummaryPaneCount,
+  moreRemindersCaption,
   fittingIdentityNameSize,
   overviewBasicAttackRows,
   overviewTrackingRows,
@@ -2121,6 +2122,10 @@ describe("real-data sheet overview", () => {
     expect(fittingBasicAttackLimit(m, 120, heights, 100)).toBe(3);
     expect(fittingBasicAttackLimit(m, 120, heights, 120)).toBe(4);
     expect(fittingBasicAttackLimit(m, 120, heights, 900)).toBe(4);
+  });
+  it("pluralizes the reminder continuation caption", () => {
+    expect(moreRemindersCaption(1)).toBe("1 more reminder on page 2…");
+    expect(moreRemindersCaption(3)).toBe("3 more reminders on page 2…");
   });
   it("moves an ordered suffix of whole panes when the left column fills", () => {
     expect(fittingSummaryPaneCount([80, 180, 130, 100], 520, 10)).toBe(4);

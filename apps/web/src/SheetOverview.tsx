@@ -609,6 +609,9 @@ interface SummaryPaneProps {
 function SummaryPane({ children }: SummaryPaneProps) {
   return <>{children}</>;
 }
+export const moreRemindersCaption = (count: number) =>
+  `${count} more ${count === 1 ? "reminder" : "reminders"} on page 2…`;
+
 function SummaryColumns({
   model,
   children,
@@ -799,15 +802,14 @@ function SummaryColumns({
           />
           {reminders.length < summaryReminders.length ? (
             <p className="sp-caption">
-              {summaryReminders.length - reminders.length} more reminders on
-              page 2…
+              {moreRemindersCaption(summaryReminders.length - reminders.length)}
             </p>
           ) : null}
         </section>
         <div className="ov-reminder-probe" aria-hidden="true">
           <ReminderPanels values={summaryReminders} />
           <p className="sp-caption">
-            {summaryReminders.length} more reminders on page 2…
+            {moreRemindersCaption(summaryReminders.length)}
           </p>
         </div>
       </section>
