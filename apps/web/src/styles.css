@@ -3766,13 +3766,6 @@ textarea {
   margin-bottom: 1rem;
   padding: 0.75rem;
 }
-.content-update-banner {
-  color: var(--text);
-  font-weight: 400;
-}
-.content-update-banner > button {
-  margin-left: auto;
-}
 
 .builder-tabs {
   border-bottom: 1px solid var(--border);

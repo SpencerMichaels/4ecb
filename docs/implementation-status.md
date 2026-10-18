@@ -80,7 +80,9 @@ ranges/targets use a person icon.
 ## Content updates and Game content settings (2026-10-17)
 
 Characters stay pinned to their content. When the active content differs, the
-builder shows "Your game content has been updated" with a review dialog that
+builder raises a "Game content has been updated" warning through the ordinary
+character diagnostics (header warning badge and Diagnostics tab, 2026-10-18;
+previously its own banner) whose Review button opens a dialog that
 lists, in player terms, stat and power changes, rewritten rules, selections the
 new content no longer grants (removed on update; from
 `previewProfileMigration().removedSelections`, which compares each provider's

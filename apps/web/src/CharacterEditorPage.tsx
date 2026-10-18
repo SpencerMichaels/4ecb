@@ -18,7 +18,12 @@ import {
   publishEvaluationResult,
   selectedCandidateDetailLevels,
 } from "./builder-evaluation-plan";
-import { builderIssueGroups, type BuilderIssue } from "./builder-diagnostics";
+import {
+  builderIssueGroups,
+  contentUpdateIssue,
+  withCharacterIssues,
+  type BuilderIssue,
+} from "./builder-diagnostics";
 import { recordLoadDuration } from "./load-performance";
 import {
   CharacterTransaction,
@@ -1172,19 +1177,28 @@ export function CharacterEditorPage({
     selectedClass,
     selectedClassKeyAbilities,
   );
-  const builderIssues = builderIssueGroups({
-    evaluation: planningEvaluation,
-    byId,
-    effectiveLevel: build.effectiveLevel,
-    planningHorizon,
-    abilityScoresIncomplete,
-    abilityScoresHouseRuled,
-  });
+  const builderIssues = withCharacterIssues(
+    builderIssueGroups({
+      evaluation: planningEvaluation,
+      byId,
+      effectiveLevel: build.effectiveLevel,
+      planningHorizon,
+      abilityScoresIncomplete,
+      abilityScoresHouseRuled,
+    }),
+    needsContentUpdate(character.profileBinding, activeManifest)
+      ? [contentUpdateIssue(character.title)]
+      : [],
+  );
   const totalUnresolved = builderIssues.unresolved.length;
   const warningCount = builderIssues.warnings.length;
   const errorCount = builderIssues.errors.length;
   const houseRuleCount = builderIssues.houseRules.length;
   const navigateToDiagnosticIssue = (issue: BuilderIssue): void => {
+    if (issue.target?.kind === "content-update") {
+      setReviewingContentUpdate(true);
+      return;
+    }
     if (issue.target?.kind === "abilities") {
       setSelectedLevel(1);
       setSelectedSectionByLevel((current) => ({
@@ -1565,23 +1579,6 @@ export function CharacterEditorPage({
           <BuilderHeaderStats evaluation={currentEvaluation} />
         </header>
 
-        {character !== undefined &&
-        needsContentUpdate(character.profileBinding, activeManifest) ? (
-          <div className="profile-warning panel-warning content-update-banner">
-            <Icon name="warning" />
-            <span>
-              <strong>Your game content has been updated.</strong>{" "}
-              {character.title || "This character"} still uses the older
-              version.
-            </span>
-            <button
-              type="button"
-              onClick={() => setReviewingContentUpdate(true)}
-            >
-              Review the update
-            </button>
-          </div>
-        ) : null}
         {reviewingContentUpdate &&
         character !== undefined &&
         activeManifest !== undefined ? (

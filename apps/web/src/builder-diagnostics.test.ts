@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import type { EvaluatedCharacter } from "@4ecb/rules-engine";
-import { builderIssueGroups } from "./builder-diagnostics";
+import {
+  builderIssueGroups,
+  contentUpdateIssue,
+  withCharacterIssues,
+} from "./builder-diagnostics";
 
 function evaluation(
   overrides: Partial<EvaluatedCharacter> = {},
@@ -448,5 +452,25 @@ describe("builder issue groups", () => {
     ]);
     expect(result.warnings).toHaveLength(0);
     expect(result.errors).toHaveLength(0);
+  });
+});
+
+describe("character issues outside rules evaluation", () => {
+  it("raises available content updates as a reviewable warning", () => {
+    const issue = contentUpdateIssue("Ingi");
+    expect(issue).toMatchObject({
+      kind: "warning",
+      title: "Game content has been updated",
+      target: { kind: "content-update" },
+    });
+    expect(issue.detail).toContain("Ingi still uses the older version");
+    expect(contentUpdateIssue("").detail).toContain("This character");
+
+    const groups = withCharacterIssues(
+      { unresolved: [], warnings: [], errors: [], houseRules: [] },
+      [issue],
+    );
+    expect(groups.warnings).toEqual([issue]);
+    expect(groups.unresolved).toEqual([]);
   });
 });

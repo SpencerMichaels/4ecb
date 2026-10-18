@@ -11,6 +11,7 @@ export type BuilderIssueKind =
 
 export type BuilderIssueTarget =
   | { readonly kind: "abilities" }
+  | { readonly kind: "content-update" }
   | { readonly kind: "choice"; readonly choiceId: string };
 
 export interface BuilderIssue {
@@ -117,6 +118,44 @@ function deduplicate(issues: readonly BuilderIssue[]): BuilderIssue[] {
   for (const issue of issues)
     if (!byKey.has(issue.key)) byKey.set(issue.key, issue);
   return [...byKey.values()];
+}
+
+/** Character issues not produced by rules evaluation, raised through the
+ * same diagnostics, header badges and Diagnostics tab as evaluated ones. */
+export function contentUpdateIssue(characterTitle: string): BuilderIssue {
+  return {
+    key: "content:update-available",
+    kind: "warning",
+    title: "Game content has been updated",
+    detail: `${characterTitle || "This character"} still uses the older version of the game content.`,
+    effect:
+      "Rules, powers and items stay as they were until you review and apply the update.",
+    target: { kind: "content-update" },
+  };
+}
+
+export function withCharacterIssues(
+  groups: BuilderIssueGroups,
+  issues: readonly BuilderIssue[],
+): BuilderIssueGroups {
+  return {
+    unresolved: [
+      ...groups.unresolved,
+      ...issues.filter((issue) => issue.kind === "unresolved"),
+    ],
+    warnings: [
+      ...issues.filter((issue) => issue.kind === "warning"),
+      ...groups.warnings,
+    ],
+    errors: [
+      ...issues.filter((issue) => issue.kind === "error"),
+      ...groups.errors,
+    ],
+    houseRules: [
+      ...groups.houseRules,
+      ...issues.filter((issue) => issue.kind === "house-rule"),
+    ],
+  };
 }
 
 export function builderIssueGroups({
