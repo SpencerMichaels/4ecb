@@ -10,7 +10,8 @@ import {
   catalogItemDetail,
   inventoryEquippedStatus,
   inventoryItemDetail,
-  walletDisplayCurrency,
+  shownWalletCoins,
+  walletWithCoinCount,
 } from "./EquipmentWorkspace";
 
 function entity(
@@ -44,36 +45,46 @@ function entity(
 }
 
 describe("equipment item details", () => {
-  it("keeps explicit large coins while showing lower overflow as gold", () => {
-    const wallet = {
-      carried: {
-        copper: 0,
-        silver: 0,
-        gold: 10_000,
-        platinum: 2,
-        astral: 1,
-      },
-      stored: {
-        copper: 0,
-        silver: 0,
-        gold: 5_000,
-        platinum: 3,
-        astral: 0,
-      },
-    };
-    expect(walletDisplayCurrency(wallet, true)).toEqual({
-      ad: 1,
-      pp: 5,
-      gp: 15_000,
+  const coins = (copper: number, gold: number, platinum = 0) => ({
+    copper,
+    silver: 0,
+    gold,
+    platinum,
+    astral: 0,
+  });
+
+  it("shows actual coins, merged or for one location", () => {
+    const wallet = { carried: coins(5, 100, 2), stored: coins(0, 40) };
+    expect(shownWalletCoins(wallet, undefined)).toEqual({
+      cp: 5,
       sp: 0,
-      cp: 0,
+      gp: 140,
+      pp: 2,
+      ad: 0,
     });
-    expect(walletDisplayCurrency(wallet, false)).toEqual({
-      ad: 2,
-      pp: 55,
-      gp: 0,
-      sp: 0,
-      cp: 0,
+    expect(shownWalletCoins(wallet, "stored").gp).toBe(40);
+  });
+
+  it("edits merged coin counts carried first, keeping stored coins", () => {
+    const wallet = { carried: coins(0, 100), stored: coins(0, 40) };
+    // An increase is carried.
+    expect(walletWithCoinCount(wallet, "gp", 150, undefined)).toEqual({
+      carried: coins(0, 110),
+      stored: coins(0, 40),
+    });
+    // A decrease spends carried coins before stored ones.
+    expect(walletWithCoinCount(wallet, "gp", 60, undefined)).toEqual({
+      carried: coins(0, 20),
+      stored: coins(0, 40),
+    });
+    expect(walletWithCoinCount(wallet, "gp", 30, undefined)).toEqual({
+      carried: coins(0, 0),
+      stored: coins(0, 30),
+    });
+    // Separate funds edit only the chosen location.
+    expect(walletWithCoinCount(wallet, "gp", 7, "stored")).toEqual({
+      carried: coins(0, 100),
+      stored: coins(0, 7),
     });
   });
 

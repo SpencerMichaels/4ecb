@@ -55,13 +55,13 @@ describe("loadout interaction and geometry", () => {
       /className=\{`shared-choice-detail[\s\S]*?<ItemDetail/,
     );
     expect(workspace).not.toContain("loadoutDialog");
-    expect(workspace).toContain('className="wallet-dialog dialog-shell"');
+    expect(workspace).not.toContain("wallet-dialog");
   });
 
   it("inspects committed and currently focused loadout items", () => {
     const loadout = workspace.slice(
       workspace.indexOf("function LoadoutGrid"),
-      workspace.indexOf("function WalletDialog"),
+      workspace.indexOf("function FundsPane"),
     );
 
     expect(loadout).toMatch(
@@ -75,7 +75,7 @@ describe("loadout interaction and geometry", () => {
   it("does not pretend native popup highlighting is a portable selection event", () => {
     const loadout = workspace.slice(
       workspace.indexOf("function LoadoutGrid"),
-      workspace.indexOf("function WalletDialog"),
+      workspace.indexOf("function FundsPane"),
     );
 
     expect(loadout).not.toContain("onInput=");

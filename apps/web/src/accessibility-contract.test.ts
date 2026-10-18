@@ -844,7 +844,9 @@ describe("release accessibility contract", () => {
     expect(shopWorkspace).toContain('"is-selected"');
     expect(equipmentWorkspace).toContain('id="funds-wallet-adjustment"');
     expect(equipmentWorkspace).toContain("parseCurrencyAdjustment(adjustment)");
-    expect(equipmentWorkspace).toContain("onAdjustMoney(deltaCopper)");
+    expect(equipmentWorkspace).toContain(
+      "onAdjustMoney(deltaCopper, location)",
+    );
     expect(equipmentWorkspace).toContain(
       'aria-controls="funds-wallet-adjust-options"',
     );
@@ -862,8 +864,13 @@ describe("release accessibility contract", () => {
     expect(characterEditor).toContain("<CharacterWallet");
     expect(equipmentWorkspace).toContain('aria-label="Quick adjust funds"');
     expect(equipmentWorkspace).toContain('title="Quick adjust funds"');
-    expect(equipmentWorkspace).toContain('aria-label="Edit funds"');
-    expect(equipmentWorkspace).toContain("onSetWallet(draft)");
+    // Coin counts are edited in place; there is no edit-funds dialog.
+    expect(equipmentWorkspace).not.toContain('aria-label="Edit funds"');
+    expect(equipmentWorkspace).not.toContain("function WalletDialog");
+    expect(equipmentWorkspace).toContain("onDoubleClick={() => startCoinEdit(");
+    expect(equipmentWorkspace).toContain(
+      "onSetWallet(walletWithCoinCount(wallet, editing.coin, count, location))",
+    );
     expect(characterEditor).toContain("onSetWallet={setWalletAmounts}");
     expect(equipmentWorkspace).not.toContain(
       'className="inventory-wallet-label"',
@@ -963,5 +970,15 @@ describe("release accessibility contract", () => {
     expect(settingsPage).toContain('aria-label="Close settings"');
     expect(characterEditor).toContain('aria-label="Character sheet"');
     expect(characterEditor).toContain('aria-label="Close character"');
+  });
+  it("merges carried and stored funds by default, with a switch when separate", () => {
+    expect(settingsPage).toContain("Merge carried and stored funds");
+    expect(app).toContain(
+      'localStorage.getItem(MERGE_FUNDS_STORAGE_KEY) !== "0"',
+    );
+    expect(app).toContain("mergeFunds={mergeFunds}");
+    expect(characterEditor).toContain("mergeFunds={mergeFunds}");
+    expect(equipmentWorkspace).toContain('aria-label="Funds location"');
+    expect(equipmentWorkspace).toContain("{mergeFunds ? null : (");
   });
 });

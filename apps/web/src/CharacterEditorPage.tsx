@@ -223,6 +223,7 @@ export function CharacterEditorPage({
   navigation,
   onNavigate,
   keepLargeAmountsInGold,
+  mergeFunds,
   resolveAbilityChoices,
   abbreviateAbilityValues,
   showEquippedAttackBonus,
@@ -237,6 +238,7 @@ export function CharacterEditorPage({
     replace?: boolean,
   ) => void;
   readonly keepLargeAmountsInGold: boolean;
+  readonly mergeFunds: boolean;
   readonly resolveAbilityChoices: boolean;
   readonly abbreviateAbilityValues: boolean;
   readonly showEquippedAttackBonus: boolean;
@@ -1607,17 +1609,38 @@ export function CharacterEditorPage({
       })),
     });
   };
-  const adjustMoney = (deltaCopper: number): string | undefined => {
+  const adjustMoney = (
+    deltaCopper: number,
+    location: "carried" | "stored" | undefined,
+  ): string | undefined => {
     const activeBuild = transaction.current?.current;
     if (activeBuild === undefined) return "Character funds are not available";
+    const carried = resolveCharacterWallet(activeBuild, "carried").amount;
+    const stored = resolveCharacterWallet(activeBuild, "stored").amount;
+    const none = { cp: 0, sp: 0, gp: 0, pp: 0, ad: 0 };
     let adjusted: ReturnType<typeof adjustWalletCurrency>;
     try {
-      adjusted = adjustWalletCurrency(
-        resolveCharacterWallet(activeBuild, "carried").amount,
-        resolveCharacterWallet(activeBuild, "stored").amount,
-        deltaCopper,
-        keepLargeAmountsInGold,
-      );
+      if (location === undefined)
+        // Merged funds: spend carried coins first, then stored.
+        adjusted = adjustWalletCurrency(
+          carried,
+          stored,
+          deltaCopper,
+          keepLargeAmountsInGold,
+        );
+      else {
+        // Separate funds: adjust only the location the wallet shows.
+        const one = adjustWalletCurrency(
+          location === "carried" ? carried : stored,
+          none,
+          deltaCopper,
+          keepLargeAmountsInGold,
+        ).carried;
+        adjusted =
+          location === "carried"
+            ? { carried: one, stored }
+            : { carried, stored: one };
+      }
     } catch (reason: unknown) {
       return reason instanceof Error
         ? reason.message
@@ -1693,7 +1716,7 @@ export function CharacterEditorPage({
               {equipmentWallet !== undefined ? (
                 <CharacterWallet
                   wallet={equipmentWallet}
-                  keepLargeAmountsInGold={keepLargeAmountsInGold}
+                  mergeFunds={mergeFunds}
                   onSetWallet={setWalletAmounts}
                   onAdjustMoney={adjustMoney}
                 />

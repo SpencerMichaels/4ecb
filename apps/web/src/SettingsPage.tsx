@@ -160,6 +160,8 @@ export interface SettingsPageProps {
   readonly countCoinWeight: boolean;
   readonly onCountCoinWeightChange: (value: boolean) => void;
   readonly onKeepLargeAmountsInGoldChange: (value: boolean) => void;
+  readonly mergeFunds: boolean;
+  readonly onMergeFundsChange: (value: boolean) => void;
   readonly resolveAbilityChoices: boolean;
   readonly onResolveAbilityChoicesChange: (value: boolean) => void;
   readonly abbreviateAbilityValues: boolean;
@@ -227,6 +229,8 @@ export function SettingsPage({
   countCoinWeight,
   onCountCoinWeightChange,
   onKeepLargeAmountsInGoldChange,
+  mergeFunds,
+  onMergeFundsChange,
   resolveAbilityChoices,
   onResolveAbilityChoicesChange,
   abbreviateAbilityValues,
@@ -684,6 +688,12 @@ export function SettingsPage({
               checked={keepLargeAmountsInGold}
               onChange={onKeepLargeAmountsInGoldChange}
               label="Keep large amounts in gold"
+            />
+            <CheckboxSetting
+              checked={mergeFunds}
+              onChange={onMergeFundsChange}
+              label="Merge carried and stored funds"
+              help="Show and edit one set of coins. Turn off to keep stored funds (a bank or stash) separate, with a Carried / Stored switch on the wallet."
             />
             <CheckboxSetting
               checked={abbreviateAbilityValues}

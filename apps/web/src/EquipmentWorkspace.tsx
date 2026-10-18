@@ -2,8 +2,6 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   CURRENCY_DENOMINATIONS,
-  currencyFromCopper,
-  currencyFromCopperKeepingLargeCoins,
   currencyToCopper,
   inventoryEntryWithQuantity,
   parseCurrencyAdjustment,
@@ -94,18 +92,65 @@ function combinedWalletCurrency(wallet: EquipmentWalletView): CurrencyAmount {
   };
 }
 
-export function walletDisplayCurrency(
-  wallet: EquipmentWalletView,
-  keepLargeAmountsInGold: boolean,
+const DENOMINATION_BY_KEY = Object.fromEntries(
+  Object.entries(DENOMINATION_KEYS).map(([denomination, coin]) => [
+    coin,
+    denomination,
+  ]),
+) as Record<keyof CurrencyAmount, Denomination>;
+
+function locationCurrency(
+  coins: EquipmentWalletView[MoneyLocation],
 ): CurrencyAmount {
-  const totalCopper =
-    walletCopper(wallet.carried) + walletCopper(wallet.stored);
-  return keepLargeAmountsInGold
-    ? currencyFromCopperKeepingLargeCoins(
-        totalCopper,
-        combinedWalletCurrency(wallet),
-      )
-    : currencyFromCopper(totalCopper);
+  return {
+    cp: coins.copper,
+    sp: coins.silver,
+    gp: coins.gold,
+    pp: coins.platinum,
+    ad: coins.astral,
+  };
+}
+
+/** The coins the wallet shows: every coin owned when funds are merged, else
+ * the chosen location's. Actual coins, never re-minted, so a tile can be
+ * edited directly. */
+export function shownWalletCoins(
+  wallet: EquipmentWalletView,
+  location: MoneyLocation | undefined,
+): CurrencyAmount {
+  return location === undefined
+    ? combinedWalletCurrency(wallet)
+    : locationCurrency(wallet[location]);
+}
+
+/**
+ * Sets one coin count. With merged funds an increase is carried and a
+ * decrease comes from carried coins first, then stored, so stored amounts
+ * survive where possible (legacy export keeps the distinction).
+ */
+export function walletWithCoinCount(
+  wallet: EquipmentWalletView,
+  coin: keyof CurrencyAmount,
+  count: number,
+  location: MoneyLocation | undefined,
+): EquipmentWalletView {
+  const denomination = DENOMINATION_BY_KEY[coin];
+  const set = (where: MoneyLocation, value: number) => ({
+    ...wallet[where],
+    [denomination]: value,
+  });
+  if (location !== undefined)
+    return { ...wallet, [location]: set(location, count) };
+  const carried = wallet.carried[denomination];
+  const stored = wallet.stored[denomination];
+  const delta = count - (carried + stored);
+  if (delta >= 0)
+    return { ...wallet, carried: set("carried", carried + delta) };
+  const fromCarried = Math.min(carried, -delta);
+  return {
+    carried: set("carried", carried - fromCarried),
+    stored: set("stored", stored - (-delta - fromCarried)),
+  };
 }
 
 export function inventoryEquippedStatus(
@@ -357,152 +402,27 @@ function LoadoutGrid({
   );
 }
 
-function WalletDialog({
-  open,
-  wallet,
-  keepLargeAmountsInGold,
-  onClose,
-  onSetWallet,
-}: {
-  readonly open: boolean;
-  readonly wallet: EquipmentWalletView;
-  readonly keepLargeAmountsInGold: boolean;
-  readonly onClose: () => void;
-  readonly onSetWallet: (wallet: EquipmentWalletView) => void;
-}) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  const [draft, setDraft] = useState(wallet);
-  useEffect(() => {
-    const element = dialog.current;
-    if (element === null) return;
-    if (open && !element.open) {
-      setDraft(wallet);
-      element.showModal();
-    } else if (!open && element.open) {
-      element.close();
-    }
-  }, [open, wallet]);
-  const total = walletDisplayCurrency(draft, keepLargeAmountsInGold);
-  return (
-    <dialog
-      id="wallet-dialog"
-      className="wallet-dialog dialog-shell"
-      ref={dialog}
-      aria-labelledby="wallet-dialog-title"
-      onClose={onClose}
-    >
-      <form
-        method="dialog"
-        onSubmit={(event) => {
-          event.preventDefault();
-          onSetWallet(draft);
-          dialog.current?.close();
-        }}
-      >
-        <header>
-          <h2 id="wallet-dialog-title">Edit funds</h2>
-          <button
-            className="button-icon dialog-close"
-            type="button"
-            aria-label="Close funds editor"
-            onClick={() => dialog.current?.close()}
-          >
-            ×
-          </button>
-        </header>
-        <div className="wallet-dialog-body">
-          <div className="inventory-wallet-editor">
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">Location</th>
-                  {DENOMINATIONS.map(({ id, label }) => (
-                    <th scope="col" key={id}>
-                      {label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {(["carried", "stored"] as const).map((location) => (
-                  <tr
-                    key={location}
-                    className={
-                      location === "stored"
-                        ? "inventory-wallet-stored"
-                        : undefined
-                    }
-                  >
-                    <th scope="row">
-                      {location === "carried" ? "Carried" : "Stored"}
-                    </th>
-                    {DENOMINATIONS.map(({ id, label }) => (
-                      <td key={id}>
-                        <label
-                          className="visually-hidden"
-                          htmlFor={`wallet-dialog-${location}-${id}`}
-                        >
-                          {location} {label}
-                        </label>
-                        <input
-                          id={`wallet-dialog-${location}-${id}`}
-                          type="number"
-                          min={0}
-                          step={1}
-                          value={draft[location][id]}
-                          onChange={(event) =>
-                            setDraft((current) => ({
-                              ...current,
-                              [location]: {
-                                ...current[location],
-                                [id]: Math.max(
-                                  0,
-                                  Number(event.currentTarget.value),
-                                ),
-                              },
-                            }))
-                          }
-                        />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-                <tr className="inventory-wallet-total">
-                  <th scope="row">Total</th>
-                  {DENOMINATIONS.map(({ id }) => (
-                    <td key={id}>{total[DENOMINATION_KEYS[id]]}</td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <footer>
-          <button type="button" onClick={() => dialog.current?.close()}>
-            Cancel
-          </button>
-          <button className="dialog-primary button-primary" type="submit">
-            Apply
-          </button>
-        </footer>
-      </form>
-    </dialog>
-  );
-}
-
 function FundsPane({
   wallet,
-  keepLargeAmountsInGold,
-  editOpen,
-  onEdit,
+  mergeFunds,
+  onSetWallet,
   onAdjustMoney,
 }: {
   readonly wallet: EquipmentWalletView;
-  readonly keepLargeAmountsInGold: boolean;
-  readonly editOpen: boolean;
-  readonly onEdit: () => void;
-  readonly onAdjustMoney: (deltaCopper: number) => string | undefined;
+  readonly mergeFunds: boolean;
+  readonly onSetWallet: (wallet: EquipmentWalletView) => void;
+  readonly onAdjustMoney: (
+    deltaCopper: number,
+    location: MoneyLocation | undefined,
+  ) => string | undefined;
 }) {
+  const [chosenLocation, setChosenLocation] =
+    useState<MoneyLocation>("carried");
+  const location = mergeFunds ? undefined : chosenLocation;
+  const [editing, setEditing] = useState<{
+    readonly coin: keyof CurrencyAmount;
+    readonly draft: string;
+  }>();
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [adjustment, setAdjustment] = useState("");
   const [adjustmentMessage, setAdjustmentMessage] = useState<{
@@ -520,8 +440,8 @@ function FundsPane({
   const totalWalletCopper =
     walletCopper(wallet.carried) + walletCopper(wallet.stored);
   const totalWallet = useMemo(
-    () => walletDisplayCurrency(wallet, keepLargeAmountsInGold),
-    [keepLargeAmountsInGold, wallet],
+    () => shownWalletCoins(wallet, location),
+    [location, wallet],
   );
   const previousWalletCopper = useRef(totalWalletCopper);
   const previousWallet = useRef(wallet);
@@ -530,10 +450,7 @@ function FundsPane({
     const previousCopper = previousWalletCopper.current;
     previousWalletCopper.current = totalWalletCopper;
     if (previousCopper === totalWalletCopper) return;
-    const previousTotal = walletDisplayCurrency(
-      previousWallet.current,
-      keepLargeAmountsInGold,
-    );
+    const previousTotal = shownWalletCoins(previousWallet.current, location);
     previousWallet.current = wallet;
     setWalletPulse((current) => ({
       generation: current.generation + 1,
@@ -543,7 +460,7 @@ function FundsPane({
       ),
       direction: totalWalletCopper < previousCopper ? "decrease" : "increase",
     }));
-  }, [keepLargeAmountsInGold, totalWallet, totalWalletCopper, wallet]);
+  }, [location, totalWallet, totalWalletCopper, wallet]);
 
   useEffect(() => {
     if (!adjustOpen) return;
@@ -604,7 +521,7 @@ function FundsPane({
       );
       return;
     }
-    const error = onAdjustMoney(deltaCopper);
+    const error = onAdjustMoney(deltaCopper, location);
     if (error !== undefined) {
       showAdjustmentError(error);
       return;
@@ -619,6 +536,17 @@ function FundsPane({
     requestAnimationFrame(() => adjustTrigger.current?.focus());
   };
 
+  const startCoinEdit = (coin: keyof CurrencyAmount) =>
+    setEditing({ coin, draft: String(totalWallet[coin]) });
+  const commitCoinEdit = () => {
+    if (editing === undefined) return;
+    const count = Number(editing.draft.replaceAll(",", "").trim());
+    setEditing(undefined);
+    if (!Number.isSafeInteger(count) || count < 0) return;
+    if (count === totalWallet[editing.coin]) return;
+    onSetWallet(walletWithCoinCount(wallet, editing.coin, count, location));
+  };
+
   const coinTile = (denomination: keyof CurrencyAmount) => (
     <div
       key={`${denomination}-${walletPulse.denominations.includes(denomination) ? walletPulse.generation : 0}`}
@@ -629,7 +557,50 @@ function FundsPane({
       }`}
     >
       <dt>{DENOMINATION_NAMES[denomination]}</dt>
-      <dd>{totalWallet[denomination].toLocaleString("en-US")}</dd>
+      <dd>
+        {editing?.coin === denomination ? (
+          <input
+            aria-label={`${DENOMINATION_NAMES[denomination]} coins`}
+            autoFocus
+            className="funds-coin-input"
+            inputMode="numeric"
+            value={editing.draft}
+            onBlur={commitCoinEdit}
+            onChange={(event) =>
+              setEditing({
+                coin: denomination,
+                draft: event.currentTarget.value,
+              })
+            }
+            onFocus={(event) => event.currentTarget.select()}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                commitCoinEdit();
+              } else if (event.key === "Escape") {
+                event.preventDefault();
+                setEditing(undefined);
+              }
+            }}
+          />
+        ) : (
+          <button
+            aria-label={`${DENOMINATION_NAMES[denomination]}: ${totalWallet[denomination].toLocaleString("en-US")}. Double-click or press Enter to edit`}
+            className="funds-coin-value"
+            title="Double-click to edit"
+            type="button"
+            onDoubleClick={() => startCoinEdit(denomination)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === "F2") {
+                event.preventDefault();
+                startCoinEdit(denomination);
+              }
+            }}
+          >
+            {totalWallet[denomination].toLocaleString("en-US")}
+          </button>
+        )}
+      </dd>
     </div>
   );
 
@@ -638,8 +609,31 @@ function FundsPane({
       className="stat-group stat-tone-wealth funds-pane"
       aria-label="Funds"
     >
+      {mergeFunds ? null : (
+        <div
+          aria-label="Funds location"
+          className="funds-location-switch"
+          role="radiogroup"
+        >
+          {(["carried", "stored"] as const).map((where) => (
+            <button
+              aria-checked={chosenLocation === where}
+              key={where}
+              role="radio"
+              type="button"
+              onClick={() => {
+                setEditing(undefined);
+                setChosenLocation(where);
+              }}
+            >
+              {where === "carried" ? "Carried" : "Stored"}
+            </button>
+          ))}
+        </div>
+      )}
       {/* PP, GP and an actions tile, then SP, CP, AD: one 3 × 2 grid like
-          the ability scores, values below their labels so none are cut off. */}
+          the ability scores, values below their labels so none are cut off.
+          Double-click (or Enter on) a coin count to edit it. */}
       <dl className="stat-tiles stat-tiles-compact inventory-wallet-denominations">
         {CURRENCY_DENOMINATIONS.slice(0, 2).map(coinTile)}
         <div className="stat-tile funds-pane-actions">
@@ -710,17 +704,6 @@ function FundsPane({
                 </form>
               ) : null}
             </div>
-            <button
-              type="button"
-              className="inventory-wallet-edit button-icon"
-              aria-label="Edit funds"
-              title="Edit funds"
-              aria-expanded={editOpen}
-              aria-controls="wallet-dialog"
-              onClick={onEdit}
-            >
-              <Icon name="edit" />
-            </button>
           </dd>
         </div>
         {CURRENCY_DENOMINATIONS.slice(2).map(coinTile)}
@@ -729,37 +712,30 @@ function FundsPane({
   );
 }
 
-/** The character's funds with quick-adjust and edit, shown in the builder's
- * character sidebar on the Inventory, Loadout and Shop tabs. */
+/** The character's funds in the builder sidebar: coin counts edited in place
+ * and quick adjust. With merged funds (the default setting) carried and
+ * stored coins show as one; otherwise a switch chooses which is shown. */
 export function CharacterWallet({
   wallet,
-  keepLargeAmountsInGold,
+  mergeFunds,
   onSetWallet,
   onAdjustMoney,
 }: {
   readonly wallet: EquipmentWalletView;
-  readonly keepLargeAmountsInGold: boolean;
+  readonly mergeFunds: boolean;
   readonly onSetWallet: (wallet: EquipmentWalletView) => void;
-  readonly onAdjustMoney: (deltaCopper: number) => string | undefined;
+  readonly onAdjustMoney: (
+    deltaCopper: number,
+    location: MoneyLocation | undefined,
+  ) => string | undefined;
 }) {
-  const [walletOpen, setWalletOpen] = useState(false);
   return (
-    <>
-      <FundsPane
-        wallet={wallet}
-        keepLargeAmountsInGold={keepLargeAmountsInGold}
-        editOpen={walletOpen}
-        onEdit={() => setWalletOpen(true)}
-        onAdjustMoney={onAdjustMoney}
-      />
-      <WalletDialog
-        open={walletOpen}
-        wallet={wallet}
-        keepLargeAmountsInGold={keepLargeAmountsInGold}
-        onClose={() => setWalletOpen(false)}
-        onSetWallet={onSetWallet}
-      />
-    </>
+    <FundsPane
+      wallet={wallet}
+      mergeFunds={mergeFunds}
+      onSetWallet={onSetWallet}
+      onAdjustMoney={onAdjustMoney}
+    />
   );
 }
 

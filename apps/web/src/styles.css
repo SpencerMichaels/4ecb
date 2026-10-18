@@ -3540,6 +3540,50 @@ textarea {
   min-width: 14rem;
 }
 
+/* Coin counts read as plain numbers and edit in place on double-click or
+   Enter. */
+.funds-coin-value {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  cursor: text;
+  font: inherit;
+  padding: 0;
+}
+.funds-coin-value:hover,
+.funds-coin-value:focus-visible {
+  box-shadow: inset 0 -2px var(--stat-accent);
+  outline: none;
+}
+.funds-coin-input {
+  font: inherit;
+  inline-size: 100%;
+  padding: 0 0.15rem;
+  text-align: center;
+}
+
+/* Shown only when carried and stored funds are kept separate. */
+.funds-location-switch {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 0.36em;
+}
+.funds-location-switch button {
+  background: transparent;
+  border: 1px solid var(--stat-edge);
+  border-radius: 0;
+  color: var(--stat-accent);
+  font: inherit;
+  font-weight: 800;
+  padding: 0.15em 0.3em;
+}
+.funds-location-switch button[aria-checked="true"] {
+  background: var(--stat-tint);
+  color: var(--text);
+}
+
 .builder-sidebar-identity {
   align-items: center;
   display: flex;
@@ -6111,7 +6155,6 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   position: static;
 }
 
-.wallet-dialog,
 .shop-physical-dialog {
   border: 1px solid var(--border);
   border-radius: 0.6rem;
@@ -6143,33 +6186,24 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   overflow: hidden;
 }
 
-.wallet-dialog::backdrop,
 .shop-physical-dialog::backdrop {
   background: rgb(0 0 0 / 45%);
   backdrop-filter: blur(2px);
 }
 
-.wallet-dialog > form > header,
 .shop-physical-dialog > form > header,
-.wallet-dialog > form > footer,
 .shop-physical-dialog > form > footer {
   flex: none;
   padding: 0.75rem 1rem;
 }
 
-.wallet-dialog > form > header,
 .shop-physical-dialog > form > header {
   border-bottom: 1px solid var(--border);
 }
 
-.wallet-dialog > form > footer,
 .shop-physical-dialog > form > footer {
   border-top: 1px solid var(--border);
   gap: 0.5rem;
-}
-
-.wallet-dialog > form > footer {
-  justify-content: flex-end;
 }
 
 .shop-physical-dialog > form > footer {
@@ -6182,14 +6216,11 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   gap: 0.5rem;
 }
 
-.wallet-dialog h2,
 .shop-physical-dialog h2,
-.wallet-dialog .eyebrow,
 .shop-physical-dialog .eyebrow {
   margin: 0;
 }
 
-.wallet-dialog > form > header > button,
 .shop-physical-dialog > form > header > button {
   border: 0;
   color: var(--muted);
@@ -6344,14 +6375,6 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   }
 }
 
-.inventory-wallet-total td.is-adjusted.is-increase {
-  animation: wallet-denomination-increased 650ms ease-out;
-}
-
-.inventory-wallet-total td.is-adjusted.is-decrease {
-  animation: wallet-denomination-decreased 650ms ease-out;
-}
-
 @keyframes wallet-adjustment-error {
   35% {
     background: var(--danger-soft);
@@ -6369,54 +6392,6 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 .inventory-icon-action .icon {
   height: 1rem;
   width: 1rem;
-}
-
-.inventory-wallet-editor {
-  overflow-x: auto;
-  padding: 0.55rem 0.75rem 0.65rem;
-}
-
-.inventory-wallet-editor table {
-  min-width: 34rem;
-  table-layout: fixed;
-}
-
-.inventory-wallet-editor :is(th, td) {
-  padding: 0.3rem;
-  text-align: center;
-}
-
-.inventory-wallet-editor th:first-child {
-  text-align: left;
-  width: 6rem;
-}
-
-.inventory-wallet-editor input {
-  appearance: textfield;
-  box-sizing: border-box;
-  display: block;
-  inline-size: 100%;
-  min-inline-size: 0;
-  text-align: right;
-  width: 100%;
-}
-
-.inventory-wallet-editor input::-webkit-inner-spin-button,
-.inventory-wallet-editor input::-webkit-outer-spin-button {
-  appearance: none;
-  margin: 0;
-}
-
-.inventory-wallet-stored {
-  color: var(--muted);
-}
-
-.inventory-wallet-total {
-  font-weight: 700;
-}
-
-.inventory-wallet-editor .field-help {
-  margin: 0.45rem 0 0;
 }
 
 .inventory-table-scroll {
@@ -6615,8 +6590,7 @@ button.inventory-icon-action:disabled {
 
 @media (prefers-reduced-motion: reduce) {
   .inventory-wallet-denominations > div.is-adjusted,
-  .funds-wallet-adjust-options input.is-error,
-  .inventory-wallet-total td.is-adjusted {
+  .funds-wallet-adjust-options input.is-error {
     animation: none;
   }
 }

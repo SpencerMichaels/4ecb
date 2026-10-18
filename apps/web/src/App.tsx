@@ -104,6 +104,7 @@ const SettingsPage = lazy(() => initialSettingsPage ?? loadSettingsPage());
 const HIDE_FLAVORTEXT_STORAGE_KEY = "4ecb.hideFlavortext.v1";
 export const KEEP_LARGE_AMOUNTS_IN_GOLD_STORAGE_KEY =
   "4ecb.keepLargeAmountsInGold.v1";
+export const MERGE_FUNDS_STORAGE_KEY = "4ecb.mergeFunds.v1";
 export const RESOLVE_ABILITY_CHOICES_STORAGE_KEY =
   "4ecb.resolveAbilityChoices.v1";
 export const ABBREVIATE_ABILITY_VALUES_STORAGE_KEY =
@@ -176,6 +177,13 @@ export function App() {
       );
     } catch {
       return false;
+    }
+  });
+  const [mergeFunds, setMergeFunds] = useState(() => {
+    try {
+      return localStorage.getItem(MERGE_FUNDS_STORAGE_KEY) !== "0";
+    } catch {
+      return true;
     }
   });
   const [resolveAbilityChoices, setResolveAbilityChoices] = useState(() => {
@@ -292,6 +300,14 @@ export function App() {
       // The power-card display preference still applies for this session.
     }
   }, [resolveAbilityChoices]);
+  useEffect(() => {
+    try {
+      if (mergeFunds) localStorage.removeItem(MERGE_FUNDS_STORAGE_KEY);
+      else localStorage.setItem(MERGE_FUNDS_STORAGE_KEY, "0");
+    } catch {
+      // The funds preference still applies for this session.
+    }
+  }, [mergeFunds]);
   useEffect(() => {
     try {
       if (abbreviateAbilityValues)
@@ -564,6 +580,8 @@ export function App() {
                   onHideFlavortextChange={setHideFlavortext}
                   keepLargeAmountsInGold={keepLargeAmountsInGold}
                   onKeepLargeAmountsInGoldChange={setKeepLargeAmountsInGold}
+                  mergeFunds={mergeFunds}
+                  onMergeFundsChange={setMergeFunds}
                   countCoinWeight={countCoinWeight}
                   onCountCoinWeightChange={setCountCoinWeight}
                   resolveAbilityChoices={resolveAbilityChoices}
@@ -589,6 +607,7 @@ export function App() {
                   navigation={route.builder ?? { workspace: "build" }}
                   onNavigate={navigateBuilder}
                   keepLargeAmountsInGold={keepLargeAmountsInGold}
+                  mergeFunds={mergeFunds}
                   resolveAbilityChoices={resolveAbilityChoices}
                   abbreviateAbilityValues={abbreviateAbilityValues}
                   showEquippedAttackBonus={showEquippedAttackBonus}

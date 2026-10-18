@@ -2195,9 +2195,14 @@ the workspace.
 **Navigation cleanup (2026-10-18).** The portrait, name and race/class/level
 sit on the page above the sidebar's stat groups, which are unboxed and use
 the printed Play card's group colors (with hue-derived dark-theme tints). The
-funds are a stat group shown on every tab: an actions tile then five coin
-tiles (actions top right, untinted, buttons centered) in one 3 × 2 grid, values with thousands separators
-under their labels and never truncated. Every detail column is one card wide. Tabs are Build, Details,
+funds are a stat group shown on every tab: five coin tiles (Platinum, Gold,
+Silver, Copper, Diamond; "AD" if abbreviated) and an untinted actions tile top
+right with quick adjust, in one 3 × 2 grid, values with thousands separators
+under their labels and never truncated. Tiles show actual coins and edit in
+place (double-click or Enter); there is no edit-funds dialog. A "Merge carried
+and stored funds" setting (on by default) shows one set of coins, edits adding
+to carried and spending carried before stored; when off, a Carried / Stored
+switch chooses which location the tiles and quick adjust use. Every detail column is one card wide. Tabs are Build, Details,
 Loadout, Inventory and Shop: Overview is removed (the character sheet replaces
 it; old links fall back to Build), Equipment splits into Inventory and Loadout,
 and Diagnostics is reached only from the status badges, so it is hidden when
