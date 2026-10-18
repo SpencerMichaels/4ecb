@@ -453,9 +453,11 @@ function PrintPowerCard({
     Boolean(displayActionType) ||
     Boolean(attackType) ||
     sustainActions.length > 0;
+  // e.g. "Encounter (Special)": a nonstandard limit explained by the card.
+  const specialUsage = /\(special\)/i.test(card.usage ?? "");
   const typeLabel = isFeature
     ? "Feature"
-    : `${displayUsage}${isUtility ? " Utility" : ""} power`;
+    : `${displayUsage}${isUtility ? " Utility" : ""} power${specialUsage ? " (Special)" : ""}`;
   return (
     <article
       ref={cardRef}
@@ -1121,12 +1123,20 @@ export function CharacterSheetPage({
       </>
     );
   const powerCards = sortedPowerCards(model.powers);
+  // Like the legacy builder, the special Action Point and Second Wind cards
+  // follow the play-data cards.
+  const specialCardRank = (card: SheetCard) =>
+    ["action point", "second wind"].indexOf(card.name.trim().toLowerCase());
+  const specialCards = powerCards
+    .filter((card) => card.universal && specialCardRank(card) >= 0)
+    .sort((a, b) => specialCardRank(a) - specialCardRank(b));
   const printableCards: PrintableCard[] = [
     ...(character.sheetSettings.includePowerCards
       ? [
           { kind: "play-character" as const },
           { kind: "play-skills" as const },
-          ...powerCards,
+          ...specialCards,
+          ...powerCards.filter((card) => !specialCards.includes(card)),
         ]
       : []),
     ...(character.sheetSettings.includeItemCards ? model.items : []),

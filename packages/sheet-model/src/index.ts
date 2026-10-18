@@ -28,6 +28,7 @@ import {
   irrelevantFeatureClauseNames,
 } from "./power-feature-clauses";
 import { universalPowerDefinitionIds } from "./power-reference";
+import { withUniversalActionCards } from "./universal-action-cards";
 import {
   inventoryWeight,
   inventoryHoldingWeight,
@@ -1491,15 +1492,20 @@ export function buildEvaluatedSheetModel(
     evaluation,
     content,
   );
-  const powerCards = evaluation.powers.flatMap((power) =>
-    evaluatedPowerCards(
-      power,
-      entities.get(power.definitionId.toLocaleLowerCase()),
-      evaluation,
-      personalizePowerText,
-      irrelevantFeatureClauses,
-      inventoryNames,
+  const powerCards = withUniversalActionCards(
+    evaluation.powers.flatMap((power) =>
+      evaluatedPowerCards(
+        power,
+        entities.get(power.definitionId.toLocaleLowerCase()),
+        evaluation,
+        personalizePowerText,
+        irrelevantFeatureClauses,
+        inventoryNames,
+      ),
     ),
+    evaluation,
+    active.find(({ entity }) => entity.type.toLocaleLowerCase() === "race")
+      ?.entity.name,
   );
   const evaluatedValues = (names: readonly string[]) =>
     names.flatMap((name) => {

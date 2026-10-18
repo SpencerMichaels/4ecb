@@ -11,6 +11,22 @@ header, which showed only the bonus, e.g. Ingi 1 instead of 17), bloodied (page
 ability modifier and half level. Verification: 917 tests, typecheck and lint
 pass through Nix.
 
+## Universal action cards (2026-10-17)
+
+Following the legacy CharacterSheetViewer special cards, printed cards now include
+Action Point and Second Wind immediately after the play-data cards. Action Point
+(Encounter (Special), footer "Encounter power (Special)") lists the stacked
+`Action Point`, `ALLY.Action Point` and `BEAST.Action Point` textstrings like
+`ActionPointCard`; the evaluator now records every textstring contribution with
+its source (cache v10) because same-named strings previously overwrote each
+other. Second Wind is always synthesized like `SecondWindCard` (Utility,
+Personal, healing HP / 4 + Healing Surge Value; Minor action plus "Second wind is
+a minor action for dwarves." for dwarves), and any content-supplied Second Wind
+is dropped so it never prints twice. Other `(Special)` usages print a
+"(Special)" footer suffix, and Personal ranges/targets use a person icon.
+Verification: 915 tests, workspace typecheck and lint pass through Nix; Hu and
+Ingi checked end to end against the legacy cards.
+
 ## Printed play-data cards (2026-10-17)
 
 The card pages now open with two "Play data" cards modeled on the legacy builder

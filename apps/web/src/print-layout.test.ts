@@ -408,7 +408,7 @@ describe("print layout contract", () => {
       /\.print-card-weapon-variants\s*\{[\s\S]*?padding-top:\s*var\(--print-card-section-gap\)/,
     );
     expect(sheetSource).toContain(
-      '`${displayUsage}${isUtility ? " Utility" : ""} power`',
+      '`${displayUsage}${isUtility ? " Utility" : ""} power${specialUsage ? " (Special)" : ""}`',
     );
     expect(sheetSource).not.toContain("print-power-frequency");
     expect(sheetSource).not.toContain("print-item-frequency");
