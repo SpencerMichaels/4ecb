@@ -1029,8 +1029,15 @@ export function CharacterEditorPage({
     selectedLevel,
   ]);
 
-  useEffect(() => {
+  // Clear the details while rendering the new level, before its tables mount
+  // and show their selection; an effect would run after them and erase it.
+  const [inspectedLevel, setInspectedLevel] = useState(selectedLevel);
+  if (inspectedLevel !== selectedLevel) {
+    setInspectedLevel(selectedLevel);
     setInspectedOption(undefined);
+  }
+
+  useEffect(() => {
     setExpandedReplacementChoiceId(undefined);
   }, [selectedLevel]);
 

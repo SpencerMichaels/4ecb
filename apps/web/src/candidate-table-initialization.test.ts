@@ -17,21 +17,20 @@ describe("candidate table initialization", () => {
     expect(firstSelectedCandidateId(new Set())).toBeUndefined();
   });
 
-  it("lets only the first table initialize a shared details pane", () => {
+  it("lets the first table with a selection initialize a shared details pane", () => {
     const state = {
       initializationClaimed: false,
       explicitlyInspected: false,
     };
     const inspections: Array<string | undefined> = [];
+    const inspect = (option: string | undefined) => inspections.push(option);
 
-    initializeCandidateInspection(state, undefined, (option) =>
-      inspections.push(option),
-    );
-    initializeCandidateInspection(state, "later-table-selection", (option) =>
-      inspections.push(option),
-    );
+    initializeCandidateInspection(state, undefined, inspect);
+    initializeCandidateInspection(state, "later-table-selection", inspect);
+    initializeCandidateInspection(state, "third-table-selection", inspect);
+    initializeCandidateInspection(state, undefined, inspect);
 
-    expect(inspections).toEqual([undefined]);
+    expect(inspections).toEqual([undefined, "later-table-selection"]);
   });
 
   it("never overwrites an explicit inspection with initialization", () => {

@@ -15,7 +15,9 @@ export function initializeCandidateInspection<Option>(
   inspect: (option: Option | undefined) => void,
 ): void {
   if (state.initializationClaimed || state.explicitlyInspected) return;
-  state.initializationClaimed = true;
+  // A table without a selection clears the pane but leaves it for a later
+  // table on the same page that has one.
+  if (option !== undefined) state.initializationClaimed = true;
   inspect(option);
 }
 
