@@ -2593,8 +2593,13 @@ textarea {
   margin: 0;
 }
 .print-card-flavor {
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--card-color) 35%, var(--card-paper));
+  color: var(--card-ink);
+  font-size: var(--print-card-body-size, 8pt);
   font-style: italic;
-  margin: 0 0 0.35rem;
+  margin: 0;
+  padding: 0.3rem 0.55rem;
 }
 /* Classes, races, feats and other choices share the printed card frame:
    solid title band, card-color border and uppercase type bar (D079). */

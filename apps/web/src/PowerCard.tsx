@@ -252,6 +252,10 @@ export function PowerCard({
           </span>
         ) : null}
       </header>
+      {/* Like published power blocks: italic flavor right under the name. */}
+      {panel.flavor === undefined ? null : (
+        <p className="print-card-flavor">{panel.flavor}</p>
+      )}
       <CardPanelSubheading subheading={panel.subheading} />
       {card.keywords?.trim() ? (
         <div className="print-card-keyword-band" aria-label="Keywords">
@@ -293,9 +297,6 @@ export function PowerCard({
         </div>
       )}
       <div className="print-card-body">
-        {panel.flavor === undefined ? null : (
-          <p className="print-card-flavor">{panel.flavor}</p>
-        )}
         {attacks.length === 0 ? (
           <div className="print-card-leading-rules">
             {card.prerequisites === undefined ? null : (

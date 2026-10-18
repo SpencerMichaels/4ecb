@@ -57,6 +57,10 @@ export function ItemCard({
           </span>
         </h3>
       </header>
+      {/* Like published power blocks: italic flavor right under the name. */}
+      {panel.flavor === undefined ? null : (
+        <p className="print-card-flavor">{panel.flavor}</p>
+      )}
       <CardPanelSubheading subheading={panel.subheading} />
       {!hasSubheader ? null : (
         <div className="print-item-subheader">
@@ -96,9 +100,6 @@ export function ItemCard({
         </div>
       )}
       <div className="print-card-body print-item-body">
-        {panel.flavor === undefined ? null : (
-          <p className="print-card-flavor">{panel.flavor}</p>
-        )}
         {item.description ? (
           <CardText
             value={item.description}

@@ -2163,7 +2163,9 @@ thousands ("3,400 gp").
 Panel cards (builder, on-screen sheet) have dark-theme paper, ink and card
 colors; printed cards and the print preview always use light paper. Panel cards
 keep the printed width-to-text ratio (2.47in at 8pt) and grow downward rather
-than widening; other choices' reference cards use the same width.
+than widening; other choices' reference cards use the same width. Panel flavor
+text sits directly under the name bar, as in published power blocks; printed
+cards omit it.
 
 ## Deferred decisions and decision points
 
