@@ -21,6 +21,7 @@ import {
 import {
   builderIssueGroups,
   contentUpdateIssue,
+  deityAlignmentIssue,
   withCharacterIssues,
   type BuilderIssue,
 } from "./builder-diagnostics";
@@ -92,7 +93,7 @@ import { CandidateInspectionScope } from "./builder-choice-context";
 import { Icon, type IconName } from "./Icon";
 import { BuilderCharacterStats } from "./BuilderCharacterStats";
 import { LevelPicker, type LevelPickerEntry } from "./LevelPicker";
-import { LoadingScreen } from "./LoadingScreen";
+import { LoadingPane, LoadingScreen } from "./LoadingScreen";
 import { loadingStepDetail, useLoadingProgress } from "./use-loading-progress";
 import { useFittedTableHeight } from "./use-fitted-table-height";
 import { ContentUpdateDialog } from "./ContentUpdateDialog";
@@ -306,7 +307,6 @@ export function CharacterEditorPage({
   const evaluationRevision = useRef(0);
   const characterLoadStartedAt = useRef(performance.now());
   const firstEvaluationRecorded = useRef(false);
-  const pendingForcedAlignmentKey = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
@@ -680,7 +680,7 @@ export function CharacterEditorPage({
     () => levelChoices.filter(isRequiredClassDeityChoice),
     [levelChoices],
   );
-  const forcedAlignment = useMemo(
+  const deityAlignment = useMemo(
     () =>
       planningEvaluation === undefined
         ? undefined
@@ -979,68 +979,6 @@ export function CharacterEditorPage({
     }
   }
 
-  useEffect(() => {
-    if (forcedAlignment === undefined || planningEvaluation === undefined) {
-      pendingForcedAlignmentKey.current = undefined;
-      return;
-    }
-    const dispatchKey = `${forcedAlignment.alignmentChoice.id}\0${forcedAlignment.deityName}\0${forcedAlignment.alignmentCandidate.definitionId}`;
-    if (
-      selectedDefinitionId(
-        forcedAlignment.alignmentChoice,
-        planningEvaluation,
-      ) === forcedAlignment.alignmentCandidate.definitionId
-    ) {
-      pendingForcedAlignmentKey.current = undefined;
-      return;
-    }
-    if (
-      build === undefined ||
-      pendingForcedAlignmentKey.current === dispatchKey
-    )
-      return;
-    const definition = byId.get(
-      forcedAlignment.alignmentCandidate.definitionId.toLocaleLowerCase(),
-    );
-    const provider = planningEvaluation.occurrences.find(
-      (occurrence) =>
-        occurrence.id === forcedAlignment.alignmentChoice.providerOccurrenceId,
-    );
-    const buildProvider = findOccurrence(
-      build,
-      forcedAlignment.alignmentChoice.providerOccurrenceId,
-    );
-    if (definition === undefined) return;
-    const command = commandForEvaluatedChoice(
-      build,
-      forcedAlignment.alignmentChoice,
-      planningEvaluation.occurrences,
-      entities,
-      {
-        id: `web:${crypto.randomUUID()}`,
-        identity: {
-          definitionId: definition.id,
-          name: definition.name,
-          type: definition.type,
-        },
-        acquiredLevel:
-          buildProvider?.acquiredLevel ??
-          provider?.acquiredLevel ??
-          planningEvaluation.level,
-        legality: forcedAlignment.alignmentCandidate.eligible
-          ? "rules-legal"
-          : "houserule",
-        children: [],
-        unresolved: false,
-      },
-      (index) => `web:placeholder:${index}:${crypto.randomUUID()}`,
-    );
-    if (command !== undefined) {
-      pendingForcedAlignmentKey.current = dispatchKey;
-      dispatch(command);
-    }
-  }, [build, byId, entities, forcedAlignment, planningEvaluation]);
-
   function selectRaceAbilityBonus(
     choice: EvaluatedChoice,
     definitionId: string | undefined,
@@ -1175,6 +1113,10 @@ export function CharacterEditorPage({
     selectedClass,
     selectedClassKeyAbilities,
   );
+  const alignmentIssue =
+    deityAlignment === undefined || planningEvaluation === undefined
+      ? undefined
+      : deityAlignmentIssue(deityAlignment, planningEvaluation, byId);
   const builderIssues = withCharacterIssues(
     builderIssueGroups({
       evaluation: planningEvaluation,
@@ -1184,9 +1126,12 @@ export function CharacterEditorPage({
       abilityScoresIncomplete,
       abilityScoresHouseRuled,
     }),
-    needsContentUpdate(character.profileBinding, activeManifest)
-      ? [contentUpdateIssue(character.title)]
-      : [],
+    [
+      ...(needsContentUpdate(character.profileBinding, activeManifest)
+        ? [contentUpdateIssue(character.title)]
+        : []),
+      ...(alignmentIssue === undefined ? [] : [alignmentIssue]),
+    ],
   );
   const totalUnresolved = builderIssues.unresolved.length;
   const warningCount = builderIssues.warnings.length;
@@ -1511,13 +1456,31 @@ export function CharacterEditorPage({
         "Rules the evaluator preserved but cannot fully verify or calculate.",
       issues: builderIssues.warnings,
     },
-    {
-      title: "House rules",
-      description:
-        "Intentional departures from standard character-building rules.",
-      issues: builderIssues.houseRules,
-    },
   ];
+  const renderIssueList = (issues: readonly BuilderIssue[]) => (
+    <ul className="diagnostic-list">
+      {issues.map((issue) => (
+        <li key={issue.key}>
+          <div>
+            <strong>{issue.title}</strong>
+            <p>{issue.detail}</p>
+            <p className="diagnostic-effect">
+              <strong>Effect:</strong> {issue.effect}
+            </p>
+          </div>
+          {issue.target === undefined ? null : (
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => navigateToDiagnosticIssue(issue)}
+            >
+              Review
+            </button>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
 
   const levelPlanEntries: readonly LevelPickerEntry[] =
     planningEvaluation === undefined
@@ -1683,6 +1646,7 @@ export function CharacterEditorPage({
               <h2 className="builder-character-name-heading">
                 <CharacterTextField
                   className="builder-character-name"
+                  fitContent
                   label="Character name"
                   name="Name"
                   value={characterDisplayName({
@@ -1869,12 +1833,12 @@ export function CharacterEditorPage({
                 ) : null}
                 {houseRuleCount > 0 ? (
                   <button
-                    aria-label={`${houseRuleCount} ${houseRuleCount === 1 ? "house rule" : "house rules"}, open diagnostics`}
+                    aria-label={`${houseRuleCount} ${houseRuleCount === 1 ? "house rule" : "house rules"}, open house rules`}
                     className="builder-health builder-health-house-rule"
                     title={`${houseRuleCount} ${houseRuleCount === 1 ? "house rule" : "house rules"}`}
                     type="button"
                     onClick={() =>
-                      onNavigate(characterId, { workspace: "diagnostics" })
+                      onNavigate(characterId, { workspace: "house-rules" })
                     }
                   >
                     <Icon name="house" />
@@ -1941,7 +1905,7 @@ export function CharacterEditorPage({
             </div>
 
             <div
-              className="builder-workspace"
+              className="builder-workspace builder-tab-content"
               hidden={workspaceTab !== "build"}
             >
               <section
@@ -1949,12 +1913,20 @@ export function CharacterEditorPage({
                 className="choice-pane"
                 hidden={workspaceTab !== "build"}
               >
-                {planningEvaluation === undefined ? (
-                  <p>
-                    {entities.length === 0
-                      ? "Content is unavailable for planning."
-                      : `Evaluating choices through level ${planningHorizon}${loadingProgress.evaluationPercent === undefined ? "" : ` (${loadingProgress.evaluationPercent}%)`}…`}
-                  </p>
+                {planningEvaluation === undefined && entities.length === 0 ? (
+                  <p>Content is unavailable for planning.</p>
+                ) : planningEvaluation === undefined ? (
+                  <div className="level-choice-tabs-layout">
+                    <div className="level-choice-tab-bar">{levelPicker}</div>
+                    <LoadingPane
+                      label={`Evaluating choices through level ${planningHorizon}…`}
+                      detail={
+                        loadingProgress.evaluationPercent === undefined
+                          ? undefined
+                          : `${loadingProgress.evaluationPercent}%`
+                      }
+                    />
+                  </div>
                 ) : levelChoices.length === 0 && selectedLevel !== 1 ? (
                   <div className="level-choice-tabs-layout">
                     <div className="level-choice-tab-bar">{levelPicker}</div>
@@ -2212,7 +2184,10 @@ export function CharacterEditorPage({
               </section>
             </div>
 
-            <div hidden={workspaceTab !== "details"}>
+            <div
+              className="builder-tab-content"
+              hidden={workspaceTab !== "details"}
+            >
               <CharacterDetailsEditor
                 active={workspaceTab === "details"}
                 choices={characterDetailChoices}
@@ -2224,7 +2199,8 @@ export function CharacterEditorPage({
                 byId={byId}
                 rollbackRevision={rollbackRevision}
                 effectiveLevel={build.effectiveLevel}
-                forcedAlignment={forcedAlignment}
+                deityAlignment={deityAlignment}
+                alignmentHouseRuled={alignmentIssue !== undefined}
                 onLevelChange={changeCurrentLevel}
                 onDispatch={dispatch}
               />
@@ -2232,7 +2208,7 @@ export function CharacterEditorPage({
 
             <section
               aria-labelledby="diagnostics-heading"
-              className="choice-pane standalone-workspace-pane"
+              className="choice-pane standalone-workspace-pane builder-tab-content"
               hidden={workspaceTab !== "diagnostics"}
             >
               <header>
@@ -2255,30 +2231,7 @@ export function CharacterEditorPage({
                           </h4>
                           <p>{description}</p>
                         </header>
-                        <ul className="diagnostic-list">
-                          {issues.map((issue) => (
-                            <li key={issue.key}>
-                              <div>
-                                <strong>{issue.title}</strong>
-                                <p>{issue.detail}</p>
-                                <p className="diagnostic-effect">
-                                  <strong>Effect:</strong> {issue.effect}
-                                </p>
-                              </div>
-                              {issue.target === undefined ? null : (
-                                <button
-                                  className="secondary-button"
-                                  type="button"
-                                  onClick={() =>
-                                    navigateToDiagnosticIssue(issue)
-                                  }
-                                >
-                                  Review
-                                </button>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
+                        {renderIssueList(issues)}
                       </section>
                     ),
                   )
@@ -2286,7 +2239,34 @@ export function CharacterEditorPage({
               </div>
             </section>
 
+            <section
+              aria-labelledby="house-rules-heading"
+              className="choice-pane standalone-workspace-pane builder-tab-content"
+              hidden={workspaceTab !== "house-rules"}
+            >
+              <header>
+                <h3 id="house-rules-heading">House rules</h3>
+              </header>
+              <div className="standalone-workspace-content diagnostics-workspace">
+                {planningEvaluation === undefined ? (
+                  <p>Evaluating character…</p>
+                ) : builderIssues.houseRules.length === 0 ? (
+                  <p>This character follows the standard rules.</p>
+                ) : (
+                  <>
+                    <p className="field-help">
+                      Intentional departures from the standard
+                      character-building rules. They stay active and are kept on
+                      export.
+                    </p>
+                    {renderIssueList(builderIssues.houseRules)}
+                  </>
+                )}
+              </div>
+            </section>
+
             <div
+              className="builder-tab-content"
               hidden={workspaceTab !== "equipment" && workspaceTab !== "shop"}
             >
               {equipmentWallet === undefined ? null : (

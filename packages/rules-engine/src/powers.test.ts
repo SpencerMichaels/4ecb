@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ContentEntity } from "@4ecb/content-domain";
 
-import { evaluatePowers } from "./powers";
+import { evaluatePowers, powerAttackProfile } from "./powers";
 import type { EvaluatedStat } from "./stats";
 
 function entity(
@@ -2485,5 +2485,55 @@ describe("item implement metadata", () => {
     expect(variantsFor("PRAYER", [universal])).toContain(
       "Controller's Implement Dagger +3",
     );
+  });
+});
+
+describe("power attack profile", () => {
+  const stats = {
+    "Strength modifier": stat("Strength modifier", 2),
+    "Dexterity modifier": stat("Dexterity modifier", 4),
+    "Wisdom modifier": stat("Wisdom modifier", 3),
+  };
+  const fighter = entity("CLASS", "Ranger", "Class", {
+    "Key Abilities": "Dexterity, Strength, Wisdom",
+  });
+  const byId = new Map([["class", fighter]]);
+  const profile = (specifics: Record<string, string>) =>
+    powerAttackProfile(entity("POWER", "Synthetic power", "Power", specifics), {
+      stats,
+      activeDefinitionIds: ["CLASS"],
+      byId,
+    });
+
+  it("takes the character's best ability when the attack offers a choice", () => {
+    expect(profile({ Attack: "Strength or Dexterity vs. AC" })).toEqual({
+      abilities: ["Dexterity"],
+      defenses: ["AC"],
+    });
+  });
+
+  it("collects every attack's ability and defense, normalizing names", () => {
+    expect(
+      profile({
+        "Primary Attack": "Wisdom + 2 vs. Fort",
+        "Secondary Attack": "Strength vs. Reflex",
+      }),
+    ).toEqual({
+      abilities: ["Wisdom", "Strength"],
+      defenses: ["Fortitude", "Reflex"],
+    });
+  });
+
+  it("resolves a primary-ability attack from the class's key abilities", () => {
+    expect(profile({ Attack: "Primary ability vs. Will" }).abilities).toEqual([
+      "Dexterity",
+    ]);
+  });
+
+  it("is empty for a power without an attack", () => {
+    expect(profile({ Effect: "You shift 1 square." })).toEqual({
+      abilities: [],
+      defenses: [],
+    });
   });
 });

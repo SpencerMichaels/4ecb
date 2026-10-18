@@ -66,7 +66,7 @@ interface ShopSessionPreferences {
 }
 
 const DEFAULT_SHOP_SESSION_PREFERENCES: ShopSessionPreferences = {
-  browse: "adventuring-gear",
+  browse: "all",
   search: "",
   slot: "",
   subtype: "",
@@ -986,8 +986,10 @@ export function ShopWorkspace({
   return (
     <>
       <div className="shop-toolbar">
-        <label>
-          Browse
+        {/* Each dropdown carries its name inside its own frame, so a chosen
+            value ("Head") still says what it filters by. */}
+        <label className="shop-inline-field">
+          <span className="shop-field-label">Type</span>
           <select
             value={browse}
             onChange={(event) => {
@@ -1002,8 +1004,8 @@ export function ShopWorkspace({
             ))}
           </select>
         </label>
-        <label>
-          Slot
+        <label className="shop-inline-field">
+          <span className="shop-field-label">Slot</span>
           <select
             disabled={learning || slots.length <= 1}
             value={slot}
@@ -1025,8 +1027,8 @@ export function ShopWorkspace({
             )}
           </select>
         </label>
-        <label>
-          Subtype
+        <label className="shop-inline-field">
+          <span className="shop-field-label">Subtype</span>
           <select
             disabled={learning || subtypes.length <= 1}
             value={subtype}
@@ -1049,7 +1051,7 @@ export function ShopWorkspace({
         </label>
         <div className="shop-result-tools">
           <label className="shop-search">
-            Search
+            <span className="visually-hidden">Search</span>
             <Icon name="search" />
             <input
               type="search"

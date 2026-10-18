@@ -48,7 +48,12 @@ describe("candidate table initialization integration", () => {
     expect(table).toContain("viewport.scrollTop = initialCandidateScrollTop");
     expect(table).toContain("stickyHeaderHeight:");
     expect(table).not.toContain("scrollIntoView");
-    expect(table).not.toContain('setFilter("")');
+    // Only the search field's own "x" clears the filter; nothing resets it
+    // automatically to locate a row.
+    expect(table.split('setFilter("")')).toHaveLength(2);
+    expect(table.slice(table.indexOf('aria-label="Clear filter"'))).toContain(
+      'setFilter("")',
+    );
     expect(table).not.toContain("setFavoritesOnly(false)");
   });
 });

@@ -880,6 +880,82 @@ function authoredAttacks(
     });
 }
 
+const ATTACK_LINE_PATTERN = /^(.*?)\s+vs\.?\s+([A-Za-z]+)/i;
+
+/**
+ * The ability an authored attack line uses for this character: an explicit
+ * ability choice when the line allows it, else the best of the abilities it
+ * names, else (for "primary ability") the best class key ability.
+ */
+function attackLineAbility(
+  line: string,
+  stats: Readonly<Record<string, EvaluatedStat>>,
+  explicitAbilityChoice: string | undefined,
+  preferredAbilities: readonly string[],
+): string {
+  const attackLeft = line.match(ATTACK_LINE_PATTERN)?.[1] ?? "";
+  const availableAbilities = abilityNames.filter((ability) =>
+    new RegExp(`\\b${ability}\\b`, "i").test(line),
+  );
+  if (
+    explicitAbilityChoice !== undefined &&
+    (new RegExp(`\\b${explicitAbilityChoice}\\b`, "i").test(line) ||
+      /primary ability/i.test(attackLeft))
+  )
+    return explicitAbilityChoice;
+  if (availableAbilities.length > 0)
+    return highestAbility(stats, availableAbilities);
+  return /primary ability/i.test(attackLeft)
+    ? highestAbility(stats, preferredAbilities)
+    : "Unknown";
+}
+
+export interface PowerAttackProfile {
+  /** The ability each attack uses for this character, first attack first. */
+  readonly abilities: readonly string[];
+  /** The defenses its attacks target (AC, Fortitude, Reflex, Will). */
+  readonly defenses: readonly string[];
+}
+
+const defenseNames = ["AC", "Fortitude", "Reflex", "Will"] as const;
+
+/**
+ * What a power attacks with and against, from its authored attack lines,
+ * resolving ability choices the same way evaluated powers do. Used to sort
+ * and filter powers that are not (yet) part of the character.
+ */
+export function powerAttackProfile(
+  power: ContentEntity,
+  input: {
+    readonly stats: Readonly<Record<string, EvaluatedStat>>;
+    readonly activeDefinitionIds: readonly string[];
+    readonly byId: ReadonlyMap<string, ContentEntity>;
+  },
+): PowerAttackProfile {
+  const preferredAbilities = classKeyAbilities(
+    input.activeDefinitionIds,
+    input.byId,
+  );
+  const abilities = new Set<string>();
+  const defenses = new Set<string>();
+  for (const { line } of authoredAttacks(power, [])) {
+    const ability = attackLineAbility(
+      line,
+      input.stats,
+      undefined,
+      preferredAbilities,
+    );
+    if (ability !== "Unknown") abilities.add(ability);
+    for (const match of line.matchAll(/\bvs\.?\s+([A-Za-z]+)/gi)) {
+      const defense = defenseNames.find((name) =>
+        key(name).startsWith(key(match[1]!).slice(0, 3)),
+      );
+      if (defense !== undefined) defenses.add(defense);
+    }
+  }
+  return { abilities: [...abilities], defenses: [...defenses] };
+}
+
 function classKeyAbilities(
   activeDefinitionIds: readonly string[],
   byId: ReadonlyMap<string, ContentEntity>,
@@ -1311,26 +1387,13 @@ export function evaluatePowers(input: {
                 ? phaseAlternatives.at(-1)
                 : phaseAlternatives[0]) ?? definition.line)
             : definition.line;
-        const attack = authoredLine.match(/^(.*?)\s+vs\.?\s+([A-Za-z]+)/i);
-        const attackLeft = attack?.[1] ?? "";
-        const availableAbilities = abilityNames.filter((ability) =>
-          new RegExp(`\\b${ability}\\b`, "i").test(authoredLine),
+        const attack = authoredLine.match(ATTACK_LINE_PATTERN);
+        let attackStat = attackLineAbility(
+          authoredLine,
+          input.stats,
+          explicitAbilityChoice,
+          preferredAbilities,
         );
-        const selectedAbilityForAttack =
-          explicitAbilityChoice !== undefined &&
-          (new RegExp(`\\b${explicitAbilityChoice}\\b`, "i").test(
-            authoredLine,
-          ) ||
-            /primary ability/i.test(attackLeft))
-            ? explicitAbilityChoice
-            : undefined;
-        let attackStat =
-          selectedAbilityForAttack ??
-          (availableAbilities.length > 0
-            ? highestAbility(input.stats, availableAbilities)
-            : /primary ability/i.test(attackLeft)
-              ? highestAbility(input.stats, preferredAbilities)
-              : "Unknown");
         if (
           weaponPower &&
           /^ranged\b/i.test(phaseAttackType ?? "") &&

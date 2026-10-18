@@ -394,8 +394,8 @@ export function CharacterSheetPage({
         portraitUrl={character?.portrait?.renderedDataUrl}
         label={
           character === undefined
-            ? "Loading character sheet…"
-            : `Loading ${characterDisplayName(character) || "character"}'s sheet…`
+            ? "Generating character sheet…"
+            : `Generating ${characterDisplayName(character) || "character"}'s sheet…`
         }
         detail={
           character === undefined

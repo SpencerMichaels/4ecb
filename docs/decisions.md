@@ -350,11 +350,12 @@ candidate is visible; selecting the replaced occurrence then dispatches that
 exact candidate automatically.
 
 The recovered exact deity-alignment rule edits that same saved Alignment
-choice; it is not a second derived field. Paladin, Invoker, Hybrid Paladin, and
-Hybrid Invoker synchronize it to the selected deity and disable manual
-Alignment selection while constrained. A class change removes the constraint
-without deleting the occurrence, preserving ordinary editing and legacy
-recovery. Cleric compatibility is intentionally not treated as identity, and
+choice; it is not a second derived field. For Paladin, Invoker, Hybrid
+Paladin, and Hybrid Invoker, Character details explains the deity's alignment
+beside the Alignment choice, but the choice stays freely editable: an
+alignment that differs from the deity's is a derived house-rule issue
+(`deityAlignmentIssue`), not a forced or disabled selection. A class change
+removes the constraint without touching the occurrence. Cleric compatibility is intentionally not treated as identity, and
 Avenger has no exact-alignment rule in the full corpus.
 
 Base ability entry defaults to the legacy 22-point-buy workflow. A new native
@@ -1310,7 +1311,9 @@ search, while canonical names and IDs remain authoritative.
 
 The builder header remains a compact status surface: it shows only nonzero
 icon-and-count indicators, with accessible labels and concise tooltips. Detailed
-explanations and repair actions belong to the existing Diagnostics workspace.
+explanations and repair actions belong to the Diagnostics workspace; house
+rules, which may be entirely legitimate table choices rather than problems,
+have their own House rules workspace opened from the house-rule badge.
 
 Unresolved required choices, evaluator warnings, evaluator errors, and explicit
 house rules are four separate categories. A required-choice diagnostic appears

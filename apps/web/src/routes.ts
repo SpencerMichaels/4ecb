@@ -1,5 +1,5 @@
 export type BuilderWorkspaceTab =
-  "build" | "details" | "equipment" | "shop" | "diagnostics";
+  "build" | "details" | "equipment" | "shop" | "diagnostics" | "house-rules";
 
 export type BuilderSectionSlug =
   | "class"
@@ -42,7 +42,7 @@ export type BuilderNavigation =
       readonly level?: number;
       readonly section?: BuilderSectionSlug;
     }
-  | { readonly workspace: "details" | "diagnostics" }
+  | { readonly workspace: "details" | "diagnostics" | "house-rules" }
   | { readonly workspace: "equipment"; readonly loadout?: boolean }
   | { readonly workspace: "shop"; readonly category?: ShopCategory };
 
@@ -63,6 +63,7 @@ const BUILDER_WORKSPACES: readonly BuilderWorkspaceTab[] = [
   "equipment",
   "shop",
   "diagnostics",
+  "house-rules",
 ];
 const BUILDER_SECTIONS: readonly BuilderSectionSlug[] = [
   "class",

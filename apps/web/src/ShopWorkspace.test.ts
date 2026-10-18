@@ -148,9 +148,9 @@ const nestedChoiceEntities = [
 ];
 
 describe("Shop workspace", () => {
-  it("defaults first-time Shop browsing to Adventuring gear", () => {
+  it("defaults first-time Shop browsing to All items", () => {
     const emptyStorage = { getItem: () => null };
-    expect(preferredShopBrowse("items", emptyStorage)).toBe("adventuring-gear");
+    expect(preferredShopBrowse("items", emptyStorage)).toBe("all");
     expect(preferredShopBrowse("armor-shields", emptyStorage)).toBe(
       "armor-shields",
     );
@@ -198,7 +198,7 @@ describe("Shop workspace", () => {
     };
 
     expect(readShopSessionPreferences(storage)).toMatchObject({
-      browse: "adventuring-gear",
+      browse: "all",
       search: "",
       affordable: true,
       sort: { column: "name", direction: "ascending" },
@@ -428,7 +428,7 @@ describe("Shop workspace", () => {
     );
 
     expect(markup).toMatch(
-      /Subtype<select disabled=""[^>]*><option>—<\/option>/,
+      /Subtype<\/span><select disabled=""[^>]*><option>—<\/option>/,
     );
     expect(markup).not.toContain("All subtypes");
   });

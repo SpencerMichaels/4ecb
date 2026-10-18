@@ -165,9 +165,17 @@ describe("builder tab bar rule and level heading", () => {
 });
 
 describe("selection table names", () => {
-  it("underline only the hovered name's text, not the whole cell", () => {
+  it("leave hover to the row tint and underline only a keyboard-focused name", () => {
+    const hover = declarationsFor(
+      ".selection-table-scroll td button:hover:not(:disabled)",
+    );
+    expect(hover).toContain("box-shadow: none");
+    expect(hover).not.toContain("text-decoration");
+    expect(
+      declarationsFor(".selection-table-scroll td button:focus-visible"),
+    ).toContain("text-decoration: underline");
     expect(styles).toMatch(
-      /\.selection-table-scroll td button:hover:not\(:disabled\),\s*\.selection-table-scroll td button:focus-visible\s*\{[^}]*box-shadow: none;[^}]*text-decoration: underline;/,
+      /tr\.selection-candidate-row:hover:not\(\.selection-family-row\)\s*> td\s*\{[^}]*background-image:/,
     );
   });
 });

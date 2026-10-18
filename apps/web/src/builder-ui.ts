@@ -975,7 +975,6 @@ export interface DeityAlignmentConstraint {
   readonly deityName: string;
   readonly alignmentName: string;
   readonly alignmentChoice: EvaluatedChoice;
-  readonly alignmentCandidate: CandidateDecision;
 }
 
 /** Resolves an enforceable exact deity/alignment rule from authored content. */
@@ -1011,19 +1010,10 @@ export function deityAlignmentConstraint(
   const alignmentChoice = evaluation.choices.find(
     (choice) => choice.type.trim().toLocaleLowerCase() === "alignment",
   );
-  const alignmentCandidate = alignmentChoice?.candidates.find((candidate) => {
-    const definition = byId.get(candidate.definitionId.toLocaleLowerCase());
-    return (
-      alignmentName !== undefined &&
-      definition?.name.trim().toLocaleLowerCase() ===
-        alignmentName.trim().toLocaleLowerCase()
-    );
-  });
   if (
     deity === undefined ||
     alignmentName === undefined ||
-    alignmentChoice === undefined ||
-    alignmentCandidate === undefined
+    alignmentChoice === undefined
   )
     return undefined;
   return {
@@ -1031,7 +1021,6 @@ export function deityAlignmentConstraint(
     deityName: deity.name,
     alignmentName,
     alignmentChoice,
-    alignmentCandidate,
   };
 }
 

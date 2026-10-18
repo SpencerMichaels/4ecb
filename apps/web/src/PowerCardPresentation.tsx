@@ -1,18 +1,11 @@
 import { Fragment, type ReactNode } from "react";
 
+import { ABILITY_ABBREVIATIONS } from "./ability-abbreviations";
+
 /**
  * Display-only transforms for power rules text on cards: ability-name
  * abbreviation and compact ability values. Calculations stay in the rules engine and sheet model.
  */
-
-const ABILITY_ABBREVIATIONS = [
-  ["Strength", "STR"],
-  ["Constitution", "CON"],
-  ["Dexterity", "DEX"],
-  ["Intelligence", "INT"],
-  ["Wisdom", "WIS"],
-  ["Charisma", "CHA"],
-] as const;
 
 export function abbreviatePowerAbilities(value: string): string {
   return ABILITY_ABBREVIATIONS.reduce(

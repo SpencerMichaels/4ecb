@@ -5,6 +5,8 @@ import type {
   SheetValue,
 } from "@4ecb/sheet-model";
 
+import { abilityAbbreviation } from "./ability-abbreviations";
+
 function namedOrdinal(label: string): number | undefined {
   return new Map([
     ["primary attack", 1],
@@ -93,16 +95,7 @@ export function printAttackHeader(
   attack: SheetPowerAttack,
   showEquippedAttackBonus: boolean,
 ): string {
-  const ability =
-    new Map([
-      ["strength", "STR"],
-      ["constitution", "CON"],
-      ["dexterity", "DEX"],
-      ["intelligence", "INT"],
-      ["wisdom", "WIS"],
-      ["charisma", "CHA"],
-    ]).get(attack.ability.trim().toLocaleLowerCase()) ??
-    attack.ability.toLocaleUpperCase();
+  const ability = abilityAbbreviation(attack.ability);
   const formula = `${ability}${attack.powerBonus === 0 ? "" : attack.powerBonus > 0 ? `+${attack.powerBonus}` : attack.powerBonus}`;
   const total = attack.attack
     .replace(/\bFortitude\b/gi, "Fort")

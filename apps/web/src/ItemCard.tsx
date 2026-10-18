@@ -57,6 +57,7 @@ export function ItemCard({
             {nameWithBoundEnhancement(item.name)}
           </span>
         </h3>
+        {panel.headerAction}
       </header>
       {/* Like published power blocks: italic flavor right under the name. */}
       {panel.flavor === undefined ? null : (

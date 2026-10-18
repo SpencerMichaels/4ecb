@@ -32,6 +32,13 @@ button.button-primary {
   font-weight: 800;
 }
 
+/* A closed <dialog> stays hidden even when its own class sets a display
+   (e.g. flex), which would otherwise override the browser's hiding rule and
+   leave an empty bordered box in the page. */
+dialog:not([open]) {
+  display: none;
+}
+
 .dialog-shell {
   background: var(--surface);
   color: var(--text);

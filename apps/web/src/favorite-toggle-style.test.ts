@@ -7,12 +7,17 @@ const styles = ["./styles/primitives.css", "./styles.css"]
   .join("\\n");
 
 describe("favorite toggle styling", () => {
-  it("does not underline the add favorite button on hover", () => {
+  it("does not underline the card's favorite star on hover", () => {
     const hoverRule = styles.match(
-      /\.selection-table-scroll td \.selection-favorite-toggle:hover:not\(:disabled\)\s*\{([^}]*)\}/,
+      /:is\(\.print-reference-card, \.reference-card-title\)\s*\.card-favorite-toggle:not\(:disabled\):hover\s*\{([^}]*)\}/,
     )?.[1];
 
     expect(hoverRule).toContain("box-shadow: none");
-    expect(hoverRule).toContain("text-decoration: none");
+  });
+
+  it("tints favorite rows in the selection tables", () => {
+    expect(styles).toMatch(
+      /\.selection-table-scroll tbody tr\.selection-row-favorite\s*\{[^}]*background:/,
+    );
   });
 });

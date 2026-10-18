@@ -4,14 +4,19 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
-  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
 import type { ContentEntity } from "@4ecb/content-domain";
-import type { CandidateDecision } from "@4ecb/rules-engine";
+import {
+  powerAttackProfile,
+  type CandidateDecision,
+  type EvaluatedCharacter,
+  type PowerAttackProfile,
+} from "@4ecb/rules-engine";
 
 import {
   backgroundAssociatedSkills,
@@ -38,8 +43,13 @@ import {
   candidatePageWindow,
   candidateSectionOnPage,
 } from "./candidate-table-paging";
+import {
+  ABILITY_ABBREVIATIONS,
+  abilityAbbreviation,
+} from "./ability-abbreviations";
+import { useCandidateFavorites } from "./candidate-favorites";
+import { EntityCardLeadingIcon } from "./EntityCard";
 import { Icon } from "./Icon";
-import { SelectionSummary } from "./SelectionSummary";
 import { entityVisualTone, visualToneClass } from "./visual-language";
 
 export type InspectedOption = {
@@ -50,50 +60,6 @@ export type InspectedOption = {
 export const InitializeCandidateInspectionContext = createContext<
   ((option: InspectedOption | undefined) => void) | undefined
 >(undefined);
-
-const CANDIDATE_FAVORITES_KEY = "4ecb:candidate-favorites:v1";
-let candidateFavoritesSnapshot: ReadonlySet<string> | undefined;
-const candidateFavoriteListeners = new Set<() => void>();
-
-function storedCandidateFavorites(): ReadonlySet<string> {
-  try {
-    const stored = JSON.parse(
-      localStorage.getItem(CANDIDATE_FAVORITES_KEY) ?? "[]",
-    );
-    return new Set(
-      Array.isArray(stored)
-        ? stored.filter((value): value is string => typeof value === "string")
-        : [],
-    );
-  } catch {
-    return new Set();
-  }
-}
-
-function currentCandidateFavorites(): ReadonlySet<string> {
-  candidateFavoritesSnapshot ??= storedCandidateFavorites();
-  return candidateFavoritesSnapshot;
-}
-
-function useCandidateFavorites(): ReadonlySet<string> {
-  return useSyncExternalStore((listener) => {
-    candidateFavoriteListeners.add(listener);
-    return () => candidateFavoriteListeners.delete(listener);
-  }, currentCandidateFavorites);
-}
-
-function toggleCandidateFavorite(definitionId: string): void {
-  const next = new Set(currentCandidateFavorites());
-  const key = definitionId.toLocaleLowerCase();
-  if (next.has(key)) next.delete(key);
-  else next.add(key);
-  candidateFavoritesSnapshot = next;
-  localStorage.setItem(
-    CANDIDATE_FAVORITES_KEY,
-    JSON.stringify([...next].sort()),
-  );
-  for (const listener of candidateFavoriteListeners) listener();
-}
 
 const candidateReferenceIndexes = new WeakMap<
   ReadonlyMap<string, ContentEntity>,
@@ -174,14 +140,79 @@ function candidateTableNoun(
 type CandidateSortColumn =
   | "name"
   | "level"
-  | "action"
   | "attack"
+  | "attack-ability"
+  | "defense"
   | "summary"
   | "role"
   | "power-source"
   | "associated-skills"
   | "deity-description";
 type CandidateSortDirection = "ascending" | "descending";
+
+const DEFENSE_ABBREVIATIONS: Readonly<Record<string, string>> = {
+  AC: "AC",
+  Fortitude: "Fort",
+  Reflex: "Ref",
+  Will: "Will",
+};
+const ABILITY_ORDER: readonly string[] = ABILITY_ABBREVIATIONS.map(
+  ([ability]) => ability,
+);
+const DEFENSE_ORDER = Object.keys(DEFENSE_ABBREVIATIONS);
+
+/** A power-table filter: the values a candidate has, in display order. */
+interface CandidateFacet {
+  readonly id: string;
+  readonly label: string;
+  readonly allLabel: string;
+  readonly valuesFor: (
+    entity: ContentEntity,
+    profile: PowerAttackProfile | undefined,
+  ) => readonly string[];
+  readonly order?: readonly string[];
+  /** Numeric: filtered by a min/max pair of fields instead of a dropdown. */
+  readonly range?: boolean;
+}
+
+const present = (value: string | number | undefined): readonly string[] =>
+  value === undefined || value === "" ? [] : [String(value)];
+
+const POWER_FACETS: readonly CandidateFacet[] = [
+  {
+    id: "level",
+    label: "Level",
+    allLabel: "All levels",
+    valuesFor: (entity) => present(powerTableLevel(entity)),
+    range: true,
+  },
+  {
+    id: "action",
+    label: "Action",
+    allLabel: "All actions",
+    valuesFor: (entity) => present(powerTableActionLabel(entity)),
+  },
+  {
+    id: "type",
+    label: "Type",
+    allLabel: "All types",
+    valuesFor: (entity) => present(powerTableAttackLabel(entity)),
+  },
+  {
+    id: "ability",
+    label: "Attack",
+    allLabel: "All abilities",
+    valuesFor: (_entity, profile) => profile?.abilities ?? [],
+    order: ABILITY_ORDER,
+  },
+  {
+    id: "defense",
+    label: "Defense",
+    allLabel: "All defenses",
+    valuesFor: (_entity, profile) => profile?.defenses ?? [],
+    order: DEFENSE_ORDER,
+  },
+];
 
 function defaultCandidateSortFor(kind: ChoiceSelectionTableKind): {
   readonly column: CandidateSortColumn;
@@ -225,9 +256,8 @@ export function CandidateSelectionTable({
   onExpandGroup,
   onInspect,
   onToggle,
-  onRemove,
-  onClear,
   onToggleShowIllegal,
+  evaluation,
 }: {
   readonly kind: ChoiceSelectionTableKind;
   readonly candidates: readonly CandidateDecision[];
@@ -242,13 +272,30 @@ export function CandidateSelectionTable({
   readonly onExpandGroup: (key: string) => void;
   readonly onInspect: (candidate: CandidateDecision) => void;
   readonly onToggle: (definitionId: string) => void;
-  readonly onRemove: (definitionId: string) => void;
-  readonly onClear?: () => void;
   readonly onToggleShowIllegal?: () => void;
+  /** The character, so power rows can show the ability it would attack with. */
+  readonly evaluation?: EvaluatedCharacter;
 }) {
   const initializeInspection = useContext(InitializeCandidateInspectionContext);
   const [filter, setFilter] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const facets = kind === "power" ? POWER_FACETS : [];
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [facetValues, setFacetValues] = useState<
+    Readonly<Record<string, string>>
+  >({});
+  // A range facet stores its bounds under "<id>:min" and "<id>:max".
+  const facetBound = (facet: CandidateFacet, bound: "min" | "max") =>
+    facetValues[`${facet.id}:${bound}`] ?? "";
+  const facetActive = (facet: CandidateFacet) =>
+    facet.range === true
+      ? facetBound(facet, "min") !== "" || facetBound(facet, "max") !== ""
+      : (facetValues[facet.id] ?? "") !== "";
+  const activeFacetCount = facets.filter(facetActive).length;
+  const setFacetValue = (key: string, value: string) => {
+    setFacetValues((current) => ({ ...current, [key]: value }));
+    setRequestedPage(0);
+  };
   // Undefined only for the first render, which opens on the page containing
   // the initially selected row.
   const [requestedPage, setRequestedPage] = useState<number>();
@@ -264,6 +311,7 @@ export function CandidateSelectionTable({
     ReadonlyMap<string, boolean>
   >(new Map());
   const tableScrollRef = useRef<HTMLDivElement>(null);
+  const filterInputRef = useRef<HTMLInputElement>(null);
   const tableContentRef = useRef<HTMLTableElement>(null);
   const initialSelectedIdRef = useRef(firstSelectedCandidateId(selectedIds));
   const initialSelectedRowRef = useRef<HTMLTableRowElement>(null);
@@ -272,6 +320,56 @@ export function CandidateSelectionTable({
   const normalizedFilter = filter.trim().toLocaleLowerCase();
   const entityFor = (candidate: CandidateDecision) =>
     byId.get(candidate.definitionId.toLocaleLowerCase());
+  const attackProfiles = useMemo(() => {
+    const profiles = new Map<string, PowerAttackProfile>();
+    if (kind !== "power") return profiles;
+    const input = {
+      stats: evaluation?.stats ?? {},
+      activeDefinitionIds: evaluation?.activeDefinitionIds ?? [],
+      byId,
+    };
+    for (const candidate of candidates) {
+      const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
+      if (entity !== undefined)
+        profiles.set(candidate.definitionId, powerAttackProfile(entity, input));
+    }
+    return profiles;
+  }, [byId, candidates, evaluation, kind]);
+  const facetValuesFor = (
+    facet: CandidateFacet,
+    candidate: CandidateDecision,
+  ) => {
+    const entity = entityFor(candidate);
+    return entity === undefined
+      ? []
+      : facet.valuesFor(entity, attackProfiles.get(candidate.definitionId));
+  };
+  const facetOptions = (facet: CandidateFacet): readonly string[] => {
+    const values = new Set(
+      candidates.flatMap((candidate) => facetValuesFor(facet, candidate)),
+    );
+    return [...values].sort((left, right) =>
+      facet.order !== undefined
+        ? facet.order.indexOf(left) - facet.order.indexOf(right)
+        : facet.range === true
+          ? Number(left) - Number(right)
+          : left.localeCompare(right),
+    );
+  };
+  const matchesFacets = (candidate: CandidateDecision) =>
+    facets.every((facet) => {
+      if (facet.range === true) {
+        if (!facetActive(facet)) return true;
+        const min = Number(facetBound(facet, "min") || -Infinity);
+        const max = Number(facetBound(facet, "max") || Infinity);
+        return facetValuesFor(facet, candidate).some((value) => {
+          const number = Number(value);
+          return number >= min && number <= max;
+        });
+      }
+      const wanted = facetValues[facet.id] ?? "";
+      return wanted === "" || facetValuesFor(facet, candidate).includes(wanted);
+    });
   const referenceIndex = candidateReferenceIndex(byId);
   const typeGroupFor = (candidate: CandidateDecision) => {
     const entity = entityFor(candidate);
@@ -300,20 +398,14 @@ export function CandidateSelectionTable({
         : contentSpecificValue(entity, "Attack Type"),
       entity === undefined ? undefined : contentSpecificValue(entity, "Level"),
       entity === undefined ? undefined : backgroundAssociatedSkills(entity),
+      ...(attackProfiles.get(candidate.definitionId)?.abilities ?? []),
+      ...(attackProfiles.get(candidate.definitionId)?.defenses ?? []),
     ].some((value) => value?.toLocaleLowerCase().includes(normalizedFilter));
   };
   const isFavorite = (candidate: CandidateDecision) =>
     favoriteIds.has(candidate.definitionId.toLocaleLowerCase());
   const candidateLabel = (candidate: CandidateDecision) =>
     entityFor(candidate)?.name ?? candidate.definitionId;
-  const selectedItems = [...selectedIds].map((definitionId) => {
-    const entity = byId.get(definitionId.toLocaleLowerCase());
-    return {
-      id: definitionId,
-      label: entity?.name ?? definitionId,
-      ...(entity === undefined ? {} : { entity }),
-    };
-  });
   useLayoutEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
@@ -352,8 +444,17 @@ export function CandidateSelectionTable({
     if (column === "name") return label;
     if (entity === undefined) return undefined;
     if (column === "level") return powerTableLevel(entity);
-    if (column === "action") return contentSpecificValue(entity, "Action Type");
     if (column === "attack") return contentSpecificValue(entity, "Attack Type");
+    if (column === "attack-ability")
+      return (
+        attackProfiles.get(candidate.definitionId)?.abilities.join("/") ||
+        undefined
+      );
+    if (column === "defense")
+      return (
+        attackProfiles.get(candidate.definitionId)?.defenses.join("/") ||
+        undefined
+      );
     if (column === "role") return classTableMetadata(entity).role.label;
     if (column === "power-source")
       return classTableMetadata(entity).powerSource.label;
@@ -418,6 +519,7 @@ export function CandidateSelectionTable({
   };
   const isVisible = (candidate: CandidateDecision, label?: string) =>
     (!favoritesOnly || isFavorite(candidate)) &&
+    matchesFacets(candidate) &&
     matchesFilter(candidate, label);
   const visibleCandidates = candidates.filter((candidate) =>
     isVisible(candidate),
@@ -492,27 +594,38 @@ export function CandidateSelectionTable({
         ? "tone-neutral"
         : visualToneClass(entityVisualTone(entity));
     return (
+      // The whole row is the click target: click inspects, double-click
+      // selects. The name button inside keeps keyboard access (its clicks
+      // bubble here; Enter selects).
       <tr
-        className={`${tone}${selected ? " selection-row-selected" : ""}${unavailable ? " selection-row-unavailable" : ""}`}
+        className={`selection-candidate-row ${tone}${selected ? " selection-row-selected" : ""}${unavailable ? " selection-row-unavailable" : ""}${isFavorite(candidate) ? " selection-row-favorite" : ""}`}
         key={rowKey}
         ref={
           candidate.definitionId === initialSelectedIdRef.current
             ? initialSelectedRowRef
             : undefined
         }
+        title={
+          selectionBlocked
+            ? "Click for details"
+            : "Click for details; double-click to select"
+        }
+        onClick={() => onInspect(candidate)}
+        onDoubleClick={() => {
+          if (!selectionBlocked) onToggle(candidate.definitionId);
+        }}
+        onMouseDown={(event) => {
+          // A double-click selects the row, not a word of its text.
+          if (event.detail > 1) event.preventDefault();
+        }}
       >
         <td className={nested ? "selection-table-nested" : undefined}>
           <div className="selection-table-name">
-            <button
-              aria-label={`${isFavorite(candidate) ? "Remove" : "Add"} ${label} ${isFavorite(candidate) ? "from" : "to"} favorites`}
-              aria-pressed={isFavorite(candidate)}
-              className="selection-favorite-toggle"
-              title={isFavorite(candidate) ? "Remove favorite" : "Add favorite"}
-              type="button"
-              onClick={() => toggleCandidateFavorite(candidate.definitionId)}
-            >
-              <Icon name="favorite" />
-            </button>
+            {/* The same icon as the card's title; favorites are toggled on
+                the card and shown here as the row's tint. */}
+            <span aria-hidden="true" className="selection-row-icon">
+              <EntityCardLeadingIcon entity={entity} />
+            </span>
             <button
               aria-description={
                 selectionBlocked
@@ -521,16 +634,7 @@ export function CandidateSelectionTable({
               }
               aria-pressed={selected}
               className="selection-candidate-toggle"
-              title={
-                selectionBlocked
-                  ? "Click for details"
-                  : "Click for details; double-click to select"
-              }
               type="button"
-              onClick={() => onInspect(candidate)}
-              onDoubleClick={() => {
-                if (!selectionBlocked) onToggle(candidate.definitionId);
-              }}
               onKeyDown={(event) => {
                 if (event.key !== "Enter" || selectionBlocked) return;
                 event.preventDefault();
@@ -539,6 +643,15 @@ export function CandidateSelectionTable({
               }}
             >
               <span>{label}</span>
+              {/* Powers show their action only as the row icon. */}
+              {kind === "power" && entity !== undefined ? (
+                <span className="visually-hidden">
+                  {`, ${powerTableActionLabel(entity) ?? "no action"}`}
+                </span>
+              ) : null}
+              {isFavorite(candidate) ? (
+                <span className="visually-hidden"> (favorite)</span>
+              ) : null}
             </button>
           </div>
           {unavailable ? (
@@ -552,23 +665,34 @@ export function CandidateSelectionTable({
             </td>
             <td
               title={
-                entity === undefined
-                  ? undefined
-                  : contentSpecificValue(entity, "Action Type")
-              }
-            >
-              {entity === undefined
-                ? "—"
-                : (powerTableActionLabel(entity) ?? "—")}
-            </td>
-            <td
-              title={
                 entity === undefined ? undefined : powerTableAttackTitle(entity)
               }
             >
               {entity === undefined
                 ? "—"
                 : (powerTableAttackLabel(entity) ?? "—")}
+            </td>
+            <td
+              title={attackProfiles
+                .get(candidate.definitionId)
+                ?.abilities.join(" / ")}
+            >
+              {attackProfiles
+                .get(candidate.definitionId)
+                ?.abilities.map(abilityAbbreviation)
+                .join("/") || "—"}
+            </td>
+            <td
+              title={attackProfiles
+                .get(candidate.definitionId)
+                ?.defenses.join(" / ")}
+            >
+              {attackProfiles
+                .get(candidate.definitionId)
+                ?.defenses.map(
+                  (defense) => DEFENSE_ABBREVIATIONS[defense] ?? defense,
+                )
+                .join("/") || "—"}
             </td>
             <td>
               <span className="selection-table-summary">{summary || "—"}</span>
@@ -726,6 +850,32 @@ export function CandidateSelectionTable({
           });
       }
     }
+    if (!expanded) {
+      // A collapsed section still shows its selections; like any selected
+      // row they float at the table's edge while scrolled out of view.
+      for (const candidate of [...section.candidates]
+        .filter((item) => selectedIds.has(item.definitionId))
+        .sort((left, right) => compareCandidates(left, right)))
+        rows.push({
+          candidateId: candidate.definitionId,
+          render: () =>
+            candidateRow(
+              candidate,
+              entityFor(candidate)?.name ?? candidate.definitionId,
+            ),
+        });
+      for (const group of section.featGroups)
+        for (const { candidate, label } of group.options)
+          if (selectedIds.has(candidate.definitionId))
+            rows.push({
+              candidateId: candidate.definitionId,
+              render: () =>
+                candidateRow(
+                  candidate,
+                  group.parameterLabel === undefined ? group.label : label,
+                ),
+            });
+    }
     const start = resultRowCount;
     resultRowCount += rows.length;
     return { section, expanded, rows, start };
@@ -747,23 +897,20 @@ export function CandidateSelectionTable({
   useLayoutEffect(() => {
     if (requestedPage === undefined) setRequestedPage(pageWindow.page);
   }, [requestedPage, pageWindow.page]);
-  const pageCandidateIds = new Set(
+  // Selected rows stay visible by sticking to the table's edges. Those on
+  // another page are mounted too, before or after this page's rows, so they
+  // float at the top or bottom edge in the same way.
+  const offPageSelectedRows = (before: boolean) =>
     resultSections.flatMap(({ rows, start }) =>
-      rows
-        .slice(
-          Math.max(0, pageWindow.start - start),
-          Math.max(0, pageWindow.end - start),
-        )
-        .flatMap(({ candidateId }) =>
-          candidateId === undefined ? [] : [candidateId],
-        ),
-    ),
-  );
-  // Selected rows on this page stay visible by sticking to the table's edges;
-  // the summary lists only selections that aren't on the page at all.
-  const offPageSelections = selectedItems.filter(
-    ({ id }) => !pageCandidateIds.has(id),
-  );
+      rows.filter(
+        ({ candidateId }, index) =>
+          candidateId !== undefined &&
+          selectedIds.has(candidateId) &&
+          (before
+            ? start + index < pageWindow.start
+            : start + index >= pageWindow.end),
+      ),
+    );
   useLayoutEffect(() => {
     const table = tableContentRef.current;
     if (table === null) return;
@@ -784,41 +931,53 @@ export function CandidateSelectionTable({
     >
       <div className="selection-table-controls">
         <div className="selection-table-toolbar">
-          <label>
-            <span className="visually-hidden">
-              Filter {candidateTableNoun(kind, true)}
-            </span>
-            <input
-              placeholder={`Filter ${candidateTableNoun(kind, true)}`}
-              type="search"
-              value={filter}
-              onChange={(event) => {
-                setFilter(event.currentTarget.value);
-                setRequestedPage(0);
-              }}
-            />
-          </label>
-          {onClear === undefined ? null : (
-            <button
-              disabled={disabled || selectedIds.size === 0}
-              type="button"
-              onClick={onClear}
-            >
-              Clear
-            </button>
-          )}
+          <div className="selection-table-search">
+            <label>
+              <span className="visually-hidden">
+                Filter {candidateTableNoun(kind, true)}
+              </span>
+              <input
+                placeholder={`Filter ${candidateTableNoun(kind, true)}`}
+                ref={filterInputRef}
+                type="search"
+                value={filter}
+                onChange={(event) => {
+                  setFilter(event.currentTarget.value);
+                  setRequestedPage(0);
+                }}
+              />
+            </label>
+            {filter === "" ? null : (
+              <button
+                aria-label="Clear filter"
+                className="selection-table-search-clear"
+                title="Clear filter"
+                type="button"
+                onClick={() => {
+                  setFilter("");
+                  setRequestedPage(0);
+                  filterInputRef.current?.focus();
+                }}
+              >
+                <Icon name="remove" />
+              </button>
+            )}
+          </div>
           <button
+            aria-label="Favorites only"
             aria-pressed={favoritesOnly}
-            className="selection-favorites-filter"
+            className="icon-only-button button-icon selection-favorites-filter"
+            title={
+              favoritesOnly ? "Showing favorites only" : "Show favorites only"
+            }
             type="button"
             onClick={() => {
               setFavoritesOnly((current) => !current);
               setRequestedPage(0);
             }}
           >
-            <Icon name="favorite" /> Favorites
+            <Icon name="favorite" />
           </button>
-          <span className="selection-table-count">{totalRows} shown</span>
           {onToggleShowIllegal === undefined ? null : (
             <button
               aria-label={
@@ -839,18 +998,93 @@ export function CandidateSelectionTable({
               <Icon name="scale" />
             </button>
           )}
+          {facets.length === 0 ? null : (
+            <button
+              aria-expanded={filtersOpen}
+              aria-label={
+                activeFacetCount === 0
+                  ? "Filters"
+                  : `Filters, ${activeFacetCount} active`
+              }
+              aria-pressed={activeFacetCount > 0}
+              className="icon-only-button button-icon selection-filters-toggle"
+              title="Filters"
+              type="button"
+              onClick={() => setFiltersOpen((current) => !current)}
+            >
+              <Icon name="filter" />
+              {activeFacetCount === 0 ? null : (
+                <span aria-hidden="true" className="selection-filters-count">
+                  {activeFacetCount}
+                </span>
+              )}
+            </button>
+          )}
+          <span className="selection-table-count">{totalRows} shown</span>
         </div>
-        <SelectionSummary
-          items={offPageSelections}
-          visible={offPageSelections.length > 0}
-          onInspect={(definitionId) => {
-            const candidate = candidates.find(
-              (item) => item.definitionId === definitionId,
-            );
-            if (candidate !== undefined) onInspect(candidate);
-          }}
-          onRemove={onRemove}
-        />
+        {filtersOpen && facets.length > 0 ? (
+          <div className="selection-table-filters">
+            {facets.map((facet) =>
+              facet.range === true ? (
+                <fieldset className="selection-filter-range" key={facet.id}>
+                  <legend>{facet.label}</legend>
+                  {(["min", "max"] as const).map((bound) => {
+                    const options = facetOptions(facet);
+                    return (
+                      <input
+                        aria-label={`${facet.label} ${bound === "min" ? "minimum" : "maximum"}`}
+                        inputMode="numeric"
+                        key={bound}
+                        min={0}
+                        placeholder={
+                          (bound === "min" ? options[0] : options.at(-1)) ??
+                          (bound === "min" ? "Min" : "Max")
+                        }
+                        type="number"
+                        value={facetBound(facet, bound)}
+                        onChange={(event) =>
+                          setFacetValue(
+                            `${facet.id}:${bound}`,
+                            event.currentTarget.value,
+                          )
+                        }
+                      />
+                    );
+                  })}
+                </fieldset>
+              ) : (
+                <label key={facet.id}>
+                  {facet.label}
+                  <select
+                    value={facetValues[facet.id] ?? ""}
+                    onChange={(event) =>
+                      setFacetValue(facet.id, event.currentTarget.value)
+                    }
+                  >
+                    <option value="">{facet.allLabel}</option>
+                    {facetOptions(facet).map((value) => (
+                      <option key={value} value={value}>
+                        {value}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ),
+            )}
+            {activeFacetCount === 0 ? null : (
+              <button
+                className="selection-filters-reset"
+                type="button"
+                onClick={() => {
+                  setFacetValues({});
+                  setRequestedPage(0);
+                }}
+              >
+                Reset
+              </button>
+            )}
+          </div>
+        ) : null}
       </div>
       <div className="selection-table-scroll" ref={tableScrollRef}>
         <table ref={tableContentRef}>
@@ -862,9 +1096,22 @@ export function CandidateSelectionTable({
               )}
               {kind === "power" ? (
                 <>
-                  {sortableHeader("level", "Level")}
-                  {sortableHeader("action", "Action")}
+                  {sortableHeader(
+                    "level",
+                    "Level",
+                    <abbr title="Level">Lvl</abbr>,
+                  )}
                   {sortableHeader("attack", "Type")}
+                  {sortableHeader(
+                    "attack-ability",
+                    "Attack ability",
+                    <abbr title="Attack ability">Atk</abbr>,
+                  )}
+                  {sortableHeader(
+                    "defense",
+                    "Defense",
+                    <abbr title="Defense">Def</abbr>,
+                  )}
                   {sortableHeader("summary", "Description")}
                 </>
               ) : kind === "class" ? (
@@ -889,6 +1136,7 @@ export function CandidateSelectionTable({
             </tr>
           </thead>
           <tbody>
+            {offPageSelectedRows(true).map((row) => row.render())}
             {resultSections.map(
               ({ section, expanded, rows, start: sectionStart }) => {
                 if (
@@ -907,7 +1155,7 @@ export function CandidateSelectionTable({
                   <Fragment key={section.key}>
                     {kind === "feat" || kind === "power" ? (
                       <tr className="selection-type-row table-section-row">
-                        <th colSpan={kind === "power" ? 5 : 2} scope="rowgroup">
+                        <th colSpan={kind === "power" ? 6 : 2} scope="rowgroup">
                           <button
                             className="table-section-toggle"
                             aria-expanded={expanded}
@@ -936,6 +1184,7 @@ export function CandidateSelectionTable({
                 );
               },
             )}
+            {offPageSelectedRows(false).map((row) => row.render())}
             {(kind === "feat"
               ? visibleFeatGroups.length
               : visibleCandidates.length) === 0 ? (
@@ -943,7 +1192,7 @@ export function CandidateSelectionTable({
                 <td
                   colSpan={
                     kind === "power"
-                      ? 5
+                      ? 6
                       : kind === "class"
                         ? 4
                         : kind === "background"

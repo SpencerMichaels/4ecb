@@ -10,6 +10,10 @@ import {
   themePowerGroups,
 } from "./builder-ui";
 import { BuilderItemCard, BuilderPowerCard } from "./BuilderCards";
+import {
+  toggleCandidateFavorite,
+  useCandidateFavorites,
+} from "./candidate-favorites";
 import { candidateReferenceIndex } from "./CandidateSelectionTable";
 import {
   EntityCardBody,
@@ -18,6 +22,7 @@ import {
   isItemEntity,
 } from "./EntityCard";
 import { HideFlavortextContext } from "./HideFlavortextContext";
+import { Icon } from "./Icon";
 import { ProseBlocks, proseBlocks } from "./Prose";
 
 export function CandidateDetail({
@@ -117,6 +122,23 @@ function ThemeCandidateDescription({
   );
 }
 
+/** Favorites a table option from its card, once its text has been read. */
+function FavoriteToggle({ entity }: { readonly entity: ContentEntity }) {
+  const favorite = useCandidateFavorites().has(entity.id.toLocaleLowerCase());
+  return (
+    <button
+      aria-label={`${favorite ? "Remove" : "Add"} ${entity.name} ${favorite ? "from" : "to"} favorites`}
+      aria-pressed={favorite}
+      className="card-favorite-toggle"
+      title={favorite ? "Remove favorite" : "Add favorite"}
+      type="button"
+      onClick={() => toggleCandidateFavorite(entity.id)}
+    >
+      <Icon name="favorite" />
+    </button>
+  );
+}
+
 export function CandidateDetailCard({
   candidate,
   entity,
@@ -134,6 +156,11 @@ export function CandidateDetailCard({
     entity.type.trim().toLocaleLowerCase() === "theme";
   const isPower = entity.type.trim().toLocaleLowerCase() === "power";
   const isUnavailable = candidate !== undefined && !candidate.eligible;
+  // Only the option being inspected, not cards for what it grants.
+  const headerAction =
+    candidate === undefined || relationship !== undefined ? undefined : (
+      <FavoriteToggle entity={entity} />
+    );
   const subheading =
     relationship === undefined && !isUnavailable ? undefined : (
       <>
@@ -158,6 +185,7 @@ export function CandidateDetailCard({
             entity={entity}
             headingSuffix={headingSuffix}
             subheading={subheading}
+            headerAction={headerAction}
           />
         ) : (
           <BuilderItemCard
@@ -165,6 +193,7 @@ export function CandidateDetailCard({
             entities={[entity]}
             headingSuffix={headingSuffix}
             subheading={subheading}
+            headerAction={headerAction}
           />
         )}
         {relationship === undefined ? (
@@ -188,6 +217,7 @@ export function CandidateDetailCard({
             <EntityCardLeadingIcon entity={entity} />
             <span id={headingId}>{entity.name}</span>
           </h3>
+          {headerAction}
         </header>
         {subheading === undefined ? null : (
           <div className="reference-card-subheading">{subheading}</div>

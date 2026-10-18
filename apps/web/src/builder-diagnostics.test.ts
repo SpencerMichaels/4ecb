@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import type { EvaluatedCharacter } from "@4ecb/rules-engine";
+import type { ContentEntity } from "@4ecb/content-domain";
+import type { EvaluatedCharacter, EvaluatedChoice } from "@4ecb/rules-engine";
+import type { DeityAlignmentConstraint } from "./builder-ui";
 import {
   builderIssueGroups,
   contentUpdateIssue,
+  deityAlignmentIssue,
   withCharacterIssues,
 } from "./builder-diagnostics";
 
@@ -472,5 +475,51 @@ describe("character issues outside rules evaluation", () => {
     );
     expect(groups.warnings).toEqual([issue]);
     expect(groups.unresolved).toEqual([]);
+  });
+});
+
+describe("deity alignment", () => {
+  const alignmentChoice = {
+    id: "alignment-choice",
+    type: "Alignment",
+    selectedOccurrenceId: "alignment",
+  } as unknown as EvaluatedChoice;
+  const constraint = {
+    classNames: ["Paladin"],
+    deityName: "Pelor",
+    alignmentName: "Good",
+    alignmentChoice,
+  } as unknown as DeityAlignmentConstraint;
+  // No candidate list: tabs other than Details evaluate without one.
+  const byId = new Map(
+    [
+      { id: "GOOD", name: "Good" },
+      { id: "UNALIGNED", name: "Unaligned" },
+    ].map((entity) => [entity.id.toLocaleLowerCase(), entity]),
+  ) as unknown as ReadonlyMap<string, ContentEntity>;
+  const chosen = (definitionId: string) =>
+    evaluation({
+      occurrences: [
+        { id: "alignment", definitionId },
+      ] as unknown as EvaluatedCharacter["occurrences"],
+    });
+
+  it("marks an alignment that differs from the deity's as a house rule", () => {
+    expect(
+      deityAlignmentIssue(constraint, chosen("UNALIGNED"), byId),
+    ).toMatchObject({
+      key: "house-rule:deity-alignment",
+      kind: "house-rule",
+      detail:
+        "As a Paladin, your alignment should match your deity's. Pelor is Good.",
+      target: { kind: "choice", choiceId: "alignment-choice" },
+    });
+  });
+
+  it("raises nothing for a matching or unchosen alignment", () => {
+    expect(
+      deityAlignmentIssue(constraint, chosen("GOOD"), byId),
+    ).toBeUndefined();
+    expect(deityAlignmentIssue(constraint, evaluation(), byId)).toBeUndefined();
   });
 });

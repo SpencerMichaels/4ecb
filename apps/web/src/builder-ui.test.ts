@@ -1601,7 +1601,6 @@ describe("builder planning UI", () => {
       classNames: ["Paladin"],
       deityName: "Pelor",
       alignmentName: "Good",
-      alignmentCandidate: { definitionId: "GOOD" },
     });
     expect(
       deityAlignmentConstraint(evaluationFor(cleric), entities),

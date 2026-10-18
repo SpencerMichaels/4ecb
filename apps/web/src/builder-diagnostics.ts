@@ -4,7 +4,12 @@ import type {
   EvaluatedCharacter,
   EvaluatedChoice,
 } from "@4ecb/rules-engine";
-import { candidateReason, isBuildPresetChoice } from "./builder-ui";
+import {
+  candidateReason,
+  isBuildPresetChoice,
+  selectedDefinitionId,
+  type DeityAlignmentConstraint,
+} from "./builder-ui";
 
 export type BuilderIssueKind =
   "unresolved" | "warning" | "error" | "house-rule";
@@ -131,6 +136,38 @@ export function contentUpdateIssue(characterTitle: string): BuilderIssue {
     effect:
       "Rules, powers and items stay as they were until you review and apply the update.",
     target: { kind: "content-update" },
+  };
+}
+
+/**
+ * Classes bound to their deity's alignment (Paladin, Invoker…) may still pick
+ * another one; a mismatch marks the character as house-ruled.
+ */
+export function deityAlignmentIssue(
+  constraint: DeityAlignmentConstraint,
+  evaluation: EvaluatedCharacter,
+  byId: ReadonlyMap<string, ContentEntity>,
+): BuilderIssue | undefined {
+  // Compared by name: the alignment candidate list is only evaluated on the
+  // tab showing it, but this issue must hold on every tab.
+  const selected = entityName(
+    selectedDefinitionId(constraint.alignmentChoice, evaluation),
+    byId,
+  );
+  if (
+    selected === undefined ||
+    selected.trim().toLocaleLowerCase() ===
+      constraint.alignmentName.trim().toLocaleLowerCase()
+  )
+    return undefined;
+  return {
+    key: "house-rule:deity-alignment",
+    kind: "house-rule",
+    title: "Alignment",
+    detail: `As a ${constraint.classNames.join(" and ")}, your alignment should match your deity's. ${constraint.deityName} is ${constraint.alignmentName}.`,
+    effect:
+      "The alignment remains active and is preserved on export, but the character is marked as using house rules.",
+    target: { kind: "choice", choiceId: constraint.alignmentChoice.id },
   };
 }
 

@@ -53,10 +53,6 @@ const hideFlavortextContext = readFileSync(
   new URL("./HideFlavortextContext.ts", import.meta.url),
   "utf8",
 );
-const selectionSummary = readFileSync(
-  new URL("./SelectionSummary.tsx", import.meta.url),
-  "utf8",
-);
 const icon = readFileSync(new URL("./Icon.tsx", import.meta.url), "utf8");
 const builderChoiceContext = readFileSync(
   new URL("./builder-choice-context.tsx", import.meta.url),
@@ -361,18 +357,15 @@ describe("release accessibility contract", () => {
     );
   });
 
-  it("locks and explains alignment while exact deity alignment applies", () => {
+  it("explains deity alignment and marks a mismatch as a house rule", () => {
     expect(characterEditor).toContain("deityAlignmentConstraint(");
-    expect(characterEditor).toContain("pendingForcedAlignmentKey");
-    expect(characterDetailsEditor).toContain("disabled={alignmentLocked}");
+    expect(characterEditor).toContain("deityAlignmentIssue(");
+    expect(characterEditor).not.toContain("pendingForcedAlignmentKey");
+    expect(characterDetailsEditor).not.toContain("disabled={alignment");
     expect(characterDetailsEditor).toContain(
-      '{ selectedIcon: "lock" as const }',
+      "alignment should match your deity's.",
     );
-    expect(choiceEditors).toContain("<Icon name={selectedIcon} />");
-    expect(characterDetailsEditor).toContain(
-      "alignment must match your deity's.",
-    );
-    expect(characterEditor).toContain("dispatch(command)");
+    expect(characterDetailsEditor).toContain("{alignmentHouseRuled ? (");
     expect(styles).toContain(
       'button:not(:disabled):not([aria-disabled="true"]):hover',
     );
@@ -408,7 +401,10 @@ describe("release accessibility contract", () => {
     );
     expect(styles).toMatch(/\.builder-character-facts\s*\{[^}]*margin: 0;/);
     expect(styles).toMatch(
-      /\.builder-character-name input\s*\{[^}]*background: transparent;[^}]*border: 0;[^}]*border-bottom: 1px solid transparent;[^}]*font-size: 1\.5rem;/,
+      /\.builder-character-name input\s*\{[^}]*background: transparent;[^}]*border: 0;[^}]*border-bottom: 1px solid transparent;/,
+    );
+    expect(styles).toMatch(
+      /\.builder-character-name\s*\{[^}]*font-size: 1\.5rem;/,
     );
     expect(styles).toMatch(
       /\.builder-character-name input:hover:not\(:focus-visible\)\s*\{[^}]*box-shadow: inset 0 -1px var\(--border-strong\)/,
@@ -529,34 +525,19 @@ describe("release accessibility contract", () => {
     expect(tableSource).not.toContain('name="check"');
     expect(tableSource).toContain("candidate-selection-short");
     expect(tableSource).toContain("defaultCandidateSortFor(kind)");
-    expect(tableSource).toContain("<SelectionSummary");
-    expect(tableSource).toContain("onRemove={onRemove}");
+    // Selections float in the table (collapsed sections and other pages
+    // included) instead of being listed in a separate summary.
+    expect(tableSource).not.toContain("SelectionSummary");
+    expect(tableSource).toContain("offPageSelectedRows(true)");
+    expect(tableSource).toContain("offPageSelectedRows(false)");
     expect(tableSource).not.toContain("locateCandidate");
     expect(tableSource).not.toContain("scrollIntoView");
     expect(styles).not.toMatch(
       /\.selection-table-controls\s*\{[^}]*position:\s*sticky/,
     );
-    expect(styles).toMatch(
-      /\.selection-summary\s*\{[^}]*background:[^}]*border:[^}]*padding:/,
-    );
-    expect(styles).toMatch(
-      /\.selection-summary-item\s*\{[^}]*border-block-end:[^}]*border-block-start:[^}]*border-inline:[^}]*border-radius: 0/,
-    );
-    expect(styles).toMatch(
-      /\.selection-summary-item\s*\{[^}]*background: var\(--tone-soft\)[^}]*border-block-end: var\(--detail-card-header-border-block-end-width\)[^}]*var\(--tone\)[^}]*border-block-start: var\(--detail-card-header-compact-border-block-start-width\)[^}]*var\(--tone\)[^}]*border-inline: var\(--detail-card-header-border-inline\)/,
-    );
-    expect(styles).toMatch(
-      /\.selection-summary-name\s*\{[^}]*font-weight: 700[^}]*line-height: var\(--detail-card-header-line-height\)[^}]*text-decoration: none/,
-    );
-    expect(styles).toMatch(
-      /\.selection-summary-icon\s*\{[^}]*align-items: center[^}]*align-self: center/,
-    );
-    expect(selectionSummary).toContain("EntityCardLeadingIcon");
-    expect(selectionSummary).toContain("entityVisualTone(item.entity)");
-    expect(selectionSummary).toContain('aria-hidden="true"');
-    expect(selectionSummary).toContain("aria-label={`Remove ${item.label}`}");
+    expect(styles).not.toContain(".selection-summary");
     expect(tableSource).toContain('sortableHeader("power-source", "Power")');
-    expect(tableSource).toContain('sortableHeader("action", "Action")');
+    expect(tableSource).not.toContain('sortableHeader("action", "Action")');
     expect(tableSource).toContain('sortableHeader("attack", "Type")');
     expect(tableSource).toContain("powerTableActionLabel(entity)");
     expect(tableSource).toContain("powerTableAttackLabel(entity)");
@@ -588,7 +569,7 @@ describe("release accessibility contract", () => {
       /\.selection-table-scroll table\s*\{[^}]*table-layout: auto/,
     );
     expect(styles).toMatch(
-      /\.candidate-selection-power td:nth-child\(3\),[\s\S]*?\.candidate-selection-power td:nth-child\(4\)\s*\{[^}]*text-align: left/,
+      /\.candidate-selection-power :is\(th, td\):nth-child\(n \+ 2\):nth-child\(-n \+ 5\)\s*\{[^}]*text-align: left/,
     );
     expect(styles).toMatch(
       /\.selection-table-scroll thead th:first-child,[\s\S]*?\.selection-table-scroll tbody td:first-child[\s\S]*?width: 1%/,
@@ -887,14 +868,20 @@ describe("release accessibility contract", () => {
     );
     expect(styles).toContain("animation: wallet-denomination-decreased");
     expect(styles).toMatch(
-      /\.shop-toolbar\s*\{[^}]*grid-template-columns:[^;]*minmax\(8rem, 11rem\) minmax\(6rem, 1fr\)[^;]*minmax\(8rem, 1\.35fr\)/s,
+      /\.shop-toolbar\s*\{[^}]*grid-template-columns: max-content minmax\(8rem, 1fr\) minmax\(8rem, 1\.35fr\)/s,
     );
     expect(styles).toMatch(
       /\.shop-result-tools\s*\{[^}]*display: flex;[^}]*flex-wrap: wrap;/s,
     );
-    const browseIndex = shopWorkspace.indexOf("Browse\n          <select");
-    const slotIndex = shopWorkspace.indexOf("Slot\n          <select");
-    const subtypeIndex = shopWorkspace.indexOf("Subtype\n          <select");
+    const browseIndex = shopWorkspace.indexOf(
+      '<span className="shop-field-label">Type</span>',
+    );
+    const slotIndex = shopWorkspace.indexOf(
+      '<span className="shop-field-label">Slot</span>',
+    );
+    const subtypeIndex = shopWorkspace.indexOf(
+      '<span className="shop-field-label">Subtype</span>',
+    );
     const resultToolsIndex = shopWorkspace.indexOf(
       '<div className="shop-result-tools">',
     );
@@ -920,14 +907,9 @@ describe("release accessibility contract", () => {
       "readonly onToggleShowIllegal?: () => void;",
     );
     const toggleButton = candidateSelectionTable.slice(
+      candidateSelectionTable.indexOf("{onToggleShowIllegal === undefined"),
       candidateSelectionTable.indexOf(
         '<span className="selection-table-count">',
-      ),
-      candidateSelectionTable.indexOf(
-        "</div>",
-        candidateSelectionTable.indexOf(
-          '<span className="selection-table-count">',
-        ),
       ),
     );
     expect(toggleButton).toContain(

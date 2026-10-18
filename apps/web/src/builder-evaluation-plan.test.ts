@@ -24,7 +24,7 @@ describe("builder evaluation planning", () => {
     expect(currentCandidateDetailLevels("details", 8, 8)).toEqual([]);
   });
 
-  it.each(["shop", "equipment", "diagnostics"] as const)(
+  it.each(["shop", "equipment", "diagnostics", "house-rules"] as const)(
     "omits selectable candidate expansion on %s",
     (workspace) => {
       expect(planningCandidateDetailLevels(workspace, 8, [1, 4])).toEqual([]);

@@ -134,6 +134,8 @@ export interface CardPanelProps {
   readonly flavor?: string;
   /** Appended after the body (e.g. an unavailable reason). */
   readonly afterBody?: ReactNode;
+  /** A control at the right end of the title band (e.g. a favorite star). */
+  readonly headerAction?: ReactNode;
   readonly textPresentation?: CardTextPresentation;
 }
 
@@ -251,6 +253,7 @@ export function PowerCard({
                 : "W"}
           </span>
         ) : null}
+        {panel.headerAction}
       </header>
       {/* Like published power blocks: italic flavor right under the name. */}
       {panel.flavor === undefined ? null : (

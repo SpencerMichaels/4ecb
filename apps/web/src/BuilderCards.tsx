@@ -130,10 +130,12 @@ export function BuilderPowerCard({
   entity,
   headingSuffix,
   subheading,
+  headerAction,
 }: {
   readonly entity: ContentEntity;
   readonly headingSuffix?: string;
   readonly subheading?: ReactNode;
+  readonly headerAction?: ReactNode;
 }) {
   const settings = useContext(BuilderCardContext);
   const hideFlavortext = useContext(HideFlavortextContext);
@@ -148,6 +150,7 @@ export function BuilderPowerCard({
       panel={{
         headingId: headingIdFor(entity, headingSuffix),
         subheading,
+        headerAction,
         ...(hideFlavortext || card.flavor === undefined
           ? {}
           : { flavor: card.flavor }),
@@ -164,11 +167,13 @@ export function BuilderItemCard({
   entities,
   headingSuffix,
   subheading,
+  headerAction,
 }: {
   readonly name: string;
   readonly entities: readonly ContentEntity[];
   readonly headingSuffix?: string;
   readonly subheading?: ReactNode;
+  readonly headerAction?: ReactNode;
 }) {
   const settings = useContext(BuilderCardContext);
   const hideFlavortext = useContext(HideFlavortextContext);
@@ -183,6 +188,7 @@ export function BuilderItemCard({
       panel={{
         headingId: headingIdFor(entity, headingSuffix),
         subheading,
+        headerAction,
         ...(hideFlavortext || card.flavor === undefined
           ? {}
           : { flavor: card.flavor }),

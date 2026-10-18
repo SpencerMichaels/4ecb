@@ -44,7 +44,7 @@ import {
 import { InspectCandidateContext } from "./builder-choice-context";
 import { CandidateDetail } from "./CandidateDetail";
 import { CandidateSelectionTable } from "./CandidateSelectionTable";
-import { Icon, type IconName } from "./Icon";
+import { Icon } from "./Icon";
 import { KeyAbilitiesSummary, KeyAbilityName } from "./KeyAbilityMarker";
 
 function retrainingCategory(type: string | undefined): string | undefined {
@@ -59,7 +59,6 @@ export function CompactChoiceButtons({
   hideLabel = false,
   options,
   keyAbilities = [],
-  selectedIcon,
   selectedId,
   disabled,
   onChoose,
@@ -77,7 +76,6 @@ export function CompactChoiceButtons({
     readonly unavailableReason?: string;
   }[];
   readonly keyAbilities?: readonly string[];
-  readonly selectedIcon?: IconName;
   readonly selectedId: string;
   readonly disabled: boolean;
   readonly onChoose: (id: string) => void;
@@ -132,9 +130,6 @@ export function CompactChoiceButtons({
                 className="compact-choice-label"
                 marked={keyAbility}
               >
-                {selected && selectedIcon !== undefined ? (
-                  <Icon name={selectedIcon} />
-                ) : null}
                 {option.label}
               </KeyAbilityName>
               {option.unavailableReason === undefined ? null : (
@@ -233,11 +228,6 @@ export function BuildPresetPanel({
             setSelectedPresetId(definitionId);
             setApplyStatus(undefined);
             inspectCandidate?.(selected);
-          }}
-          onRemove={() => {
-            setSelectedPresetId("");
-            setApplyStatus(undefined);
-            inspectCandidate?.(undefined);
           }}
         />
         <div className="build-preset-actions">
@@ -542,6 +532,7 @@ function ReplacementEditor({
         {target === undefined ||
         (target.candidates.length === 1 && visible.length === 1) ? null : (
           <CandidateSelectionTable
+            evaluation={evaluation}
             kind={replacementKind}
             {...(replacementKind === "option"
               ? { nameColumnLabel: "Replacement" }
@@ -560,12 +551,19 @@ function ReplacementEditor({
               inspect(candidate);
             }}
             onToggle={(definitionId) => {
+              // Picking the selected replacement again clears it.
+              if (
+                definitionId.toLocaleLowerCase() ===
+                selectedValue.toLocaleLowerCase()
+              ) {
+                clearReplacement();
+                return;
+              }
               const candidate = target.candidates.find(
                 (item) => item.definitionId === definitionId,
               );
               if (candidate !== undefined) selectReplacement(target, candidate);
             }}
-            onRemove={clearReplacement}
             onToggleShowIllegal={() => setShowAll((current) => !current)}
           />
         )}
@@ -592,7 +590,6 @@ export function ChoiceEditor({
   hideSelectionLabel = false,
   selectionLabel = "Selection",
   keyAbilities = [],
-  selectedIcon,
   replacementTargetType,
   rollbackRevision,
   onOptimisticSelectionChange,
@@ -608,7 +605,6 @@ export function ChoiceEditor({
   readonly hideSelectionLabel?: boolean;
   readonly selectionLabel?: string;
   readonly keyAbilities?: readonly string[];
-  readonly selectedIcon?: IconName;
   readonly replacementTargetType?: string;
   readonly rollbackRevision: number;
   readonly onOptimisticSelectionChange?: (
@@ -799,6 +795,7 @@ export function ChoiceEditor({
       <div className="choice-editor-fields">
         {selectionTableKind !== undefined ? (
           <CandidateSelectionTable
+            evaluation={evaluation}
             kind={selectionTableKind}
             {...(selectionTableKind === "option"
               ? { nameColumnLabel: choiceTitle(choice) }
@@ -819,9 +816,14 @@ export function ChoiceEditor({
               if (entity !== undefined)
                 inspectCandidate?.({ candidate, entity });
             }}
-            onToggle={selectDefinition}
-            onRemove={clearSelection}
-            onClear={clearSelection}
+            onToggle={(definitionId) =>
+              // Picking the selected row again deselects it, as in
+              // multi-select tables.
+              definitionId.toLocaleLowerCase() ===
+              selectedValue.toLocaleLowerCase()
+                ? clearSelection()
+                : selectDefinition(definitionId)
+            }
             onToggleShowIllegal={() => setShowAll((current) => !current)}
           />
         ) : groupedPresentation ? (
@@ -840,7 +842,6 @@ export function ChoiceEditor({
                 selectable: true,
               }))}
               keyAbilities={keyAbilities}
-              {...(selectedIcon === undefined ? {} : { selectedIcon })}
               selectedId={displayedGroupKey}
               disabled={editorDisabled}
               onClear={clearSelection}
@@ -876,7 +877,6 @@ export function ChoiceEditor({
                       }),
                 }))}
                 keyAbilities={keyAbilities}
-                {...(selectedIcon === undefined ? {} : { selectedIcon })}
                 selectedId={
                   displayedGroup.options.some(
                     ({ candidate }) =>
@@ -914,7 +914,6 @@ export function ChoiceEditor({
                 : { unavailableReason: candidateReason(candidate.reasons) }),
             }))}
             keyAbilities={keyAbilities}
-            {...(selectedIcon === undefined ? {} : { selectedIcon })}
             selectedId={selectedValue}
             disabled={editorDisabled}
             onClear={clearSelection}
@@ -1568,30 +1567,9 @@ function RepeatedCandidateTableEditor({
     onDispatch(command);
   };
 
-  const clear = (): void => {
-    const commands = choices.flatMap((choice) => {
-      if (optimisticSlots.get(choice.id) === undefined) return [];
-      const command = unresolveEvaluatedChoiceCommand(
-        build,
-        choice,
-        evaluation,
-        entities,
-        `web:placeholder:table:${crypto.randomUUID()}`,
-      );
-      return command === undefined ? [] : [command];
-    });
-    if (commands.length === 0) return;
-    setOptimisticSlots(
-      new Map(choices.map((choice) => [choice.id, undefined])),
-    );
-    inspectCandidate?.(undefined);
-    onDispatch(
-      commands.length === 1 ? commands[0]! : { kind: "batch", commands },
-    );
-  };
-
   return (
     <CandidateSelectionTable
+      evaluation={evaluation}
       kind={kind}
       candidates={candidates}
       featGroups={featGroups}
@@ -1607,8 +1585,6 @@ function RepeatedCandidateTableEditor({
         if (entity !== undefined) inspectCandidate?.({ candidate, entity });
       }}
       onToggle={toggle}
-      onRemove={toggle}
-      onClear={clear}
       onToggleShowIllegal={() => setShowAll((current) => !current)}
     />
   );

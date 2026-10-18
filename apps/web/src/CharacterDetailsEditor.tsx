@@ -22,6 +22,7 @@ export function CharacterTextField({
   multiline = false,
   className,
   visuallyHideLabel = false,
+  fitContent = false,
   onDispatch,
 }: {
   readonly name: string;
@@ -30,6 +31,8 @@ export function CharacterTextField({
   readonly multiline?: boolean;
   readonly className?: string;
   readonly visuallyHideLabel?: boolean;
+  /** Size a single-line field to its text instead of its container. */
+  readonly fitContent?: boolean;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
   const [draft, setDraft] = useState(value);
@@ -67,6 +70,16 @@ export function CharacterTextField({
     pendingCommit.current = setTimeout(() => commit(next), 500);
   };
 
+  const input = (
+    <input
+      {...(name === "Name" ? { maxLength: 120, required: true } : {})}
+      size={fitContent ? 1 : undefined}
+      value={draft}
+      onBlur={() => commit(draft)}
+      onChange={(event) => change(event.currentTarget.value)}
+    />
+  );
+
   return (
     <label className={className}>
       <span className={visuallyHideLabel ? "visually-hidden" : undefined}>
@@ -79,13 +92,14 @@ export function CharacterTextField({
           onBlur={() => commit(draft)}
           onChange={(event) => change(event.currentTarget.value)}
         />
+      ) : fitContent ? (
+        // An invisible copy of the text (::after) shares the input's grid
+        // cell, so the cell, and the input with it, is as wide as the text.
+        <span className="text-field-fit" data-value={draft}>
+          {input}
+        </span>
       ) : (
-        <input
-          {...(name === "Name" ? { maxLength: 120, required: true } : {})}
-          value={draft}
-          onBlur={() => commit(draft)}
-          onChange={(event) => change(event.currentTarget.value)}
-        />
+        input
       )}
     </label>
   );
@@ -102,7 +116,8 @@ export function CharacterDetailsEditor({
   byId,
   rollbackRevision,
   effectiveLevel,
-  forcedAlignment,
+  deityAlignment,
+  alignmentHouseRuled,
   onLevelChange,
   onDispatch,
 }: {
@@ -116,13 +131,14 @@ export function CharacterDetailsEditor({
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly rollbackRevision: number;
   readonly effectiveLevel: number;
-  readonly forcedAlignment:
+  readonly deityAlignment:
     | {
         readonly classNames: readonly string[];
         readonly deityName: string;
         readonly alignmentName: string;
       }
     | undefined;
+  readonly alignmentHouseRuled: boolean;
   readonly onLevelChange: (level: number) => void;
   readonly onDispatch: (command: CharacterCommand) => void;
 }) {
@@ -247,8 +263,8 @@ export function CharacterDetailsEditor({
               >
                 <div className="compact-detail-list">
                   {choices.map((choice) => {
-                    const alignmentLocked =
-                      forcedAlignment !== undefined &&
+                    const alignmentBound =
+                      deityAlignment !== undefined &&
                       choice.type.trim().toLocaleLowerCase() === "alignment";
                     const tableChoice =
                       choiceSelectionTableKind(choice) !== undefined;
@@ -291,20 +307,24 @@ export function CharacterDetailsEditor({
                           build={build}
                           entities={entities}
                           byId={byId}
-                          disabled={alignmentLocked}
-                          {...(alignmentLocked
-                            ? { selectedIcon: "lock" as const }
-                            : {})}
+                          disabled={false}
                           selectionLabel={choice.type}
                           rollbackRevision={rollbackRevision}
                           onDispatch={onDispatch}
                         />
-                        {alignmentLocked ? (
+                        {alignmentBound ? (
                           <p className="field-help deity-alignment-note">
-                            As a {forcedAlignment.classNames.join(" and ")},
-                            your alignment must match your deity's.{" "}
-                            {forcedAlignment.deityName} is{" "}
-                            {forcedAlignment.alignmentName}.
+                            {alignmentHouseRuled ? (
+                              <span className="attention-badge">
+                                <Icon name="house" /> House rule
+                              </span>
+                            ) : null}
+                            <span>
+                              As a {deityAlignment.classNames.join(" and ")},
+                              your alignment should match your deity's.{" "}
+                              {deityAlignment.deityName} is{" "}
+                              {deityAlignment.alignmentName}.
+                            </span>
                           </p>
                         ) : null}
                       </div>

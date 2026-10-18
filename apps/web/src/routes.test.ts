@@ -90,6 +90,10 @@ describe("hash routes", () => {
         navigation: { workspace: "diagnostics" as const },
         expected: { workspace: "diagnostics" },
       },
+      {
+        navigation: { workspace: "house-rules" as const },
+        expected: { workspace: "house-rules" },
+      },
     ];
     for (const { navigation, expected } of routes) {
       const hash = characterEditorHash("character / one", navigation);
