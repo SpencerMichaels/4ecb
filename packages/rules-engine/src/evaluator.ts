@@ -38,7 +38,7 @@ import { evaluatePowers, type EvaluatedPower } from "./powers";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v10-2026-10-17-text-contributions";
+  "evaluated-character-v11-2026-10-17-overlay-target-names";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -140,6 +140,8 @@ export interface EvaluatedChoice {
 export interface FieldOverlay {
   readonly providerOccurrenceId: string;
   readonly targetDefinitionIds: readonly string[];
+  /** The rule's target name, kept even when no owned definition matches it. */
+  readonly targetName?: string;
   readonly field: string;
   readonly value?: string;
   readonly listAddition?: string;
@@ -988,7 +990,6 @@ function evaluateCharacterInternal(
       code: "engine.non-convergent",
       message: "Rule topology did not converge within 30 iterations.",
     });
-
   const ownedDefinitions = occurrences.flatMap((occurrence) => {
     const definition = index.get(occurrence.definitionId);
     if (definition !== undefined) return [definition];
@@ -2079,6 +2080,7 @@ function overlay(
   return {
     providerOccurrenceId: provider.id,
     targetDefinitionIds,
+    ...(rule.name === undefined ? {} : { targetName: rule.name }),
     field: rule.field,
     ...(rule.value === undefined ? {} : { value: rule.value }),
     ...(rule.listAddition === undefined

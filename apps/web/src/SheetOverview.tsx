@@ -1162,15 +1162,17 @@ export function overviewTrackingRows(
     )
       ? { utility: true }
       : {}),
-    ...(power.sharedUsage === "Channel Divinity" ||
-    power.fields.some(
-      (field) =>
-        field.label.trim().toLowerCase() === "channel divinity" &&
-        field.value.trim().length > 0,
-    ) ||
-    /(?:^|,)\s*Channel Divinity\s*(?:,|$)/i.test(power.keywords ?? "")
-      ? { group: "Channel Divinity" }
-      : {}),
+    ...(power.sharedUsage === "Second Wind"
+      ? { group: "Second Wind" }
+      : power.sharedUsage === "Channel Divinity" ||
+          power.fields.some(
+            (field) =>
+              field.label.trim().toLowerCase() === "channel divinity" &&
+              field.value.trim().length > 0,
+          ) ||
+          /(?:^|,)\s*Channel Divinity\s*(?:,|$)/i.test(power.keywords ?? "")
+        ? { group: "Channel Divinity" }
+        : {}),
   }));
   const items = (model.overview?.inventory ?? []).flatMap((item, index) =>
     item.fields.flatMap((field, ordinal) => {
@@ -1226,6 +1228,9 @@ function usageGroups(rows: readonly TrackingRow[]): UsageGroup[] {
         ...existing,
         powers: [...existing.powers, row].sort(
           (a, b) =>
+            // A power named like its group (Second Wind) leads it.
+            Number(b.name === existing.name) -
+              Number(a.name === existing.name) ||
             powerActionRank(a.action) - powerActionRank(b.action) ||
             a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
         ),
@@ -1295,7 +1300,9 @@ function PowerUsageTable({
               className={group.name ? "ov-shared-usage" : undefined}
             >
               <th scope="row">
-                {group.name ? <strong>{group.name}</strong> : null}
+                {group.name && group.powers[0]?.name !== group.name ? (
+                  <strong>{group.name}</strong>
+                ) : null}
                 {group.powers.map((power) => (
                   <div className="sp-shared-power" key={power.id}>
                     <ActionTypeIcon decorative value={power.action} />

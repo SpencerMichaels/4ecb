@@ -55,13 +55,49 @@ function actionPointEffects(
 }
 
 const ACTION_POINT_ID = "4ecb:universal:action-point";
+
+/** Encounter powers whose own effect spends your second wind (e.g. Dwarven
+ *  Resilience) share its single use; allies' second winds do not count. */
+function spendsOwnSecondWind(card: SheetCard): boolean {
+  return (
+    /^encounter\b/i.test(card.usage ?? "") &&
+    card.fields.some(
+      (field) =>
+        /^(?:effect|hit)$/i.test(field.label.trim()) &&
+        /\byou (?:can )?use your second wind\b/i.test(field.value),
+    )
+  );
+}
 const SECOND_WIND_ID = "4ecb:universal:second-wind";
 
+/** `modify name="Second Wind"` overlays, matched by name so no content Second
+ *  Wind power is required. `Action Type` changes the card's action (last rule
+ *  wins, as for any power field); other fields become labeled notes, e.g.
+ *  Stoneheart Warrior or the corrected Dwarven Resilience trait. */
+function secondWindOverlays(evaluation: EvaluatedCharacter) {
+  const overlays = (evaluation.overlays ?? []).filter(
+    (overlay) =>
+      overlay.value?.trim() && key(overlay.targetName ?? "") === "second wind",
+  );
+  const actionType = overlays
+    .filter((overlay) => key(overlay.field) === "action type")
+    .at(-1)
+    ?.value?.trim();
+  const notes: SheetAdditionalEffect[] = overlays
+    .filter((overlay) => key(overlay.field) !== "action type")
+    .map((overlay) => ({
+      text: overlay.value!.trim(),
+      source: "authoritative-evaluation" as const,
+      provider: overlay.field,
+      provenanceId: overlay.providerOccurrenceId,
+      cardOnly: true,
+    }));
+  return { actionType, notes };
+}
+
 /** Legacy SecondWindCard; healing uses the shared surge value calculation. */
-function secondWindCard(
-  evaluation: EvaluatedCharacter,
-  dwarf: boolean,
-): SheetCard {
+function secondWindCard(evaluation: EvaluatedCharacter): SheetCard {
+  const { actionType, notes } = secondWindOverlays(evaluation);
   const surgeValue = evaluatedHealingSurgeValue(evaluation.stats ?? {});
   const regained =
     surgeValue === undefined
@@ -72,7 +108,8 @@ function secondWindCard(
     kind: "power",
     name: "Second Wind",
     usage: "Encounter",
-    actionType: dwarf ? "Minor Action" : "Standard Action",
+    sharedUsage: "Second Wind",
+    actionType: actionType ?? "Standard Action",
     universal: true,
     fields: [
       { label: "Attack Type", value: "Personal" },
@@ -82,29 +119,17 @@ function secondWindCard(
         value: `You spend a healing surge and regain ${regained}. You gain a +2 bonus to all defenses until the start of your next turn.`,
       },
     ],
-    ...(dwarf
-      ? {
-          additionalEffects: [
-            {
-              text: "Second wind is a minor action for dwarves.",
-              source: "authoritative-evaluation" as const,
-              cardOnly: true,
-            },
-          ],
-        }
-      : {}),
+    ...(notes.length > 0 ? { additionalEffects: notes } : {}),
   };
 }
 
 /**
  * The legacy builder printed Action Point and Second Wind cards as special
- * cards. Second Wind is a minor action for dwarves (legacy SecondWindCard);
- * Action Point has no content power, so its card is synthesized.
+ * cards. Action Point has no content power, so its card is synthesized.
  */
 export function withUniversalActionCards(
   cards: readonly SheetCard[],
   evaluation: EvaluatedCharacter,
-  race: string | undefined,
 ): SheetCard[] {
   // Always built here; a content-supplied Second Wind would print twice.
   const others = cards.filter(
@@ -114,8 +139,12 @@ export function withUniversalActionCards(
       key(card.name) !== "second wind",
   );
   const withSecondWind = [
-    ...others,
-    secondWindCard(evaluation, key(race ?? "") === "dwarf"),
+    ...others.map((card) =>
+      spendsOwnSecondWind(card)
+        ? { ...card, sharedUsage: "Second Wind" as const }
+        : card,
+    ),
+    secondWindCard(evaluation),
   ];
   const effects = actionPointEffects(evaluation);
   return [
@@ -125,6 +154,8 @@ export function withUniversalActionCards(
       kind: "power",
       name: "Action Point",
       usage: "Encounter (Special)",
+      // Spending a point is a free action (legacy ActionPointCard rules text).
+      actionType: "Free Action",
       universal: true,
       fields: [
         { label: "Effect", value: "Gain a standard action this turn." },

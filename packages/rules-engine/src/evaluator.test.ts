@@ -72,6 +72,48 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it("keeps a modify rule's target name when no owned definition matches", () => {
+    const evaluated = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "own-feat",
+            definitionId: "FEAT",
+            acquiredLevel: 1,
+            kind: "choice",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "1", "Level"),
+        entity("FEAT", "Stoneheart Warrior", "Feat", {
+          rules: [
+            rule(
+              "modify",
+              {
+                name: "Second Wind",
+                Field: "Stoneheart Warrior",
+                value: "Free action.",
+              },
+              0,
+            ),
+          ],
+        }),
+      ],
+    );
+    expect(evaluated.overlays).toContainEqual(
+      expect.objectContaining({
+        targetName: "Second Wind",
+        targetDefinitionIds: [],
+        field: "Stoneheart Warrior",
+        value: "Free action.",
+      }),
+    );
+  });
   it("keeps every textstring contribution with its source", () => {
     const occurrence = (id: string): CharacterOccurrence => ({
       id: `own-${id}`,

@@ -71,7 +71,8 @@ export interface SheetCard {
   /** Positively identified unconditional generic starting-rule power grant. */
   readonly universal?: boolean;
   /** Authored shared encounter allowance; not inferred from the power name. */
-  readonly sharedUsage?: "Channel Divinity";
+  /** Powers that spend one shared use per encounter. */
+  readonly sharedUsage?: "Channel Divinity" | "Second Wind";
   readonly basicAttackKind?: "melee" | "ranged";
   readonly flavor?: string;
   readonly prerequisites?: string;
@@ -1506,8 +1507,6 @@ export function buildEvaluatedSheetModel(
       ),
     ),
     evaluation,
-    active.find(({ entity }) => entity.type.toLocaleLowerCase() === "race")
-      ?.entity.name,
   );
   const evaluatedValues = (names: readonly string[]) =>
     names.flatMap((name) => {

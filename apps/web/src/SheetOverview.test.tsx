@@ -2671,6 +2671,42 @@ describe("real-data sheet overview", () => {
     expect(scratchpad).not.toContain('data-tracking-id="cd-free"');
     expect(scratchpad).not.toContain('data-tracking-id="cd-standard"');
   });
+  it("leads the Second Wind group with Second Wind itself, without a separate heading", () => {
+    const shared = (id: string, name: string, actionType: string) => ({
+      id,
+      name,
+      kind: "power" as const,
+      sharedUsage: "Second Wind" as const,
+      usage: "Encounter",
+      actionType,
+      fields: [],
+    });
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={{
+          ...model,
+          powers: [
+            shared("dr", "Dwarven Resilience", "Minor Action"),
+            shared("sw", "Second Wind", "Standard Action"),
+          ],
+        }}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+        monochrome={false}
+        blankHP={false}
+      />,
+    );
+    const group = html
+      .split('aria-label="Play scratchpad"')[1]!
+      .split('data-tracking-id="Second Wind"')[1]!
+      .split("</tr>")[0]!;
+    expect(group).not.toContain("<strong>Second Wind</strong>");
+    expect(group.indexOf("Second Wind")).toBeLessThan(
+      group.indexOf("Dwarven Resilience"),
+    );
+    expect(group.match(/class="ov-encounter-box"/g)).toHaveLength(10);
+  });
   it("preserves every word and numbered-list origin while splitting long rules", () => {
     const words =
       Array.from({ length: 230 }, (_, n) => `word${n}`).join(" ") + ".";
