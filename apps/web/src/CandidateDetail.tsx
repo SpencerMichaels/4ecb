@@ -5,6 +5,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 
 import {
   candidateReason,
+  primaryDetailTypeLabel,
   grantedDetailEntities,
   themePowerGroups,
 } from "./builder-ui";
@@ -12,13 +13,12 @@ import { BuilderItemCard, BuilderPowerCard } from "./BuilderCards";
 import { candidateReferenceIndex } from "./CandidateSelectionTable";
 import {
   EntityCardBody,
-  EntityCardHeader,
+  EntityCardLeadingIcon,
   entityCardSource,
   isItemEntity,
 } from "./EntityCard";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { ProseBlocks, proseBlocks } from "./Prose";
-import { entityVisualTone, visualToneClass } from "./visual-language";
 
 export function CandidateDetail({
   candidate,
@@ -132,8 +132,6 @@ export function CandidateDetailCard({
   const isThemeCandidate =
     candidate !== undefined &&
     entity.type.trim().toLocaleLowerCase() === "theme";
-  const entityTone = entityVisualTone(entity);
-  const tone = visualToneClass(entityTone);
   const isPower = entity.type.trim().toLocaleLowerCase() === "power";
   const isUnavailable = candidate !== undefined && !candidate.eligible;
   const subheading =
@@ -176,57 +174,50 @@ export function CandidateDetailCard({
         ) : null}
       </div>
     );
-  const body = (
-    <EntityCardBody
-      entity={entity}
-      hideFlavortext={hideFlavortext}
-      beforeNarrative={
-        candidate === undefined || candidate.eligible ? null : (
-          <p className="candidate-reason">
-            {candidateReason(candidate.reasons)}
-          </p>
-        )
-      }
-      {...(isThemeCandidate
-        ? {
-            renderDescription: (description: string) => (
-              <ThemeCandidateDescription
-                key={entity.id}
-                description={description}
-                entityName={entity.name}
-                id={`${headingId}-description`}
-              />
-            ),
-          }
-        : {})}
-    />
-  );
-
+  // Other choices use the printed card's frame: a solid title band, card
+  // border and type bar, around the familiar detail body (D079).
   return (
-    <aside
-      aria-labelledby={headingId}
-      className={`candidate-detail ${tone}`}
-      tabIndex={0}
-    >
-      <header className="primary-detail-heading entity-card-header">
-        <EntityCardHeader
-          entity={entity}
-          headingId={headingId}
-          subheading={
-            relationship === undefined && !isUnavailable ? undefined : (
-              <>
-                {relationship === undefined ? null : (
-                  <p className="candidate-relationship">{relationship}</p>
-                )}
-                {isUnavailable ? (
-                  <span className="candidate-unavailable">Unavailable</span>
-                ) : null}
-              </>
-            )
-          }
-        />
-      </header>
-      {body}
-    </aside>
+    <div className="candidate-card-panel">
+      <aside
+        aria-labelledby={headingId}
+        className="candidate-detail reference-entity-card"
+        tabIndex={0}
+      >
+        <header className="reference-card-title">
+          <h3>
+            <EntityCardLeadingIcon entity={entity} />
+            <span id={headingId}>{entity.name}</span>
+          </h3>
+        </header>
+        {subheading === undefined ? null : (
+          <div className="reference-card-subheading">{subheading}</div>
+        )}
+        <div className="reference-card-body">
+          <EntityCardBody
+            entity={entity}
+            hideFlavortext={hideFlavortext}
+            showSource={false}
+            {...(isThemeCandidate
+              ? {
+                  renderDescription: (description: string) => (
+                    <ThemeCandidateDescription
+                      key={entity.id}
+                      description={description}
+                      entityName={entity.name}
+                      id={`${headingId}-description`}
+                    />
+                  ),
+                }
+              : {})}
+          />
+        </div>
+        <div className="print-card-type">
+          <span>{primaryDetailTypeLabel(entity)}</span>
+        </div>
+      </aside>
+      {relationship === undefined ? (
+        <p className="detail-source-note">Source: {entityCardSource(entity)}</p>
+      ) : null}
+    </div>
   );
 }

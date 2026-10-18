@@ -2583,6 +2583,60 @@ textarea {
   font-style: italic;
   margin: 0 0 0.35rem;
 }
+/* Classes, races, feats and other choices share the printed card frame:
+   solid title band, card-color border and uppercase type bar (D079). */
+.candidate-detail.reference-entity-card {
+  --card-color: var(--tone-neutral);
+  border: 2px solid var(--card-color);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+.reference-card-title {
+  background: var(--card-color);
+  color: #fff;
+  padding: 0.35rem 0.55rem;
+}
+.reference-card-title h3 {
+  align-items: center;
+  display: flex;
+  font-family: var(--font-ui);
+  font-size: 1.07rem;
+  font-weight: 700;
+  gap: 0.4rem;
+  line-height: 1.2;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.reference-card-title .icon {
+  flex-shrink: 0;
+  height: 1.05em;
+  width: 1.05em;
+}
+.reference-card-subheading {
+  align-items: center;
+  background: color-mix(in srgb, var(--card-color) 10%, var(--parchment));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.6rem;
+  padding: 0.3rem 0.55rem;
+}
+.reference-card-subheading p {
+  margin: 0;
+}
+.reference-card-body {
+  --entity-card-flavor-padding: 0.6rem 0.75rem;
+  flex: 1;
+  padding: 0.75rem;
+}
+.reference-card-body .candidate-flavor {
+  margin: -0.75rem -0.75rem 0.5rem !important;
+}
+.reference-entity-card > .print-card-type {
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  padding: 0.25rem 0.55rem;
+}
 .candidate-card-panel {
   display: grid;
   gap: 0.35rem;

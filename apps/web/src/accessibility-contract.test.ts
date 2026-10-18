@@ -495,7 +495,8 @@ describe("release accessibility contract", () => {
     const candidateDetails = candidateDetail.slice(
       candidateDetail.indexOf("export function CandidateDetail("),
     );
-    expect(candidateDetails).toContain("EntityCardHeader");
+    expect(candidateDetails).toContain("reference-entity-card");
+    expect(candidateDetails).toContain("primaryDetailTypeLabel(entity)");
     expect(candidateDetails).toContain("EntityCardBody");
     expect(equipmentWorkspace).toContain("<BuilderItemCard");
     expect(equipmentWorkspace).toContain("<BuilderPowerCard");

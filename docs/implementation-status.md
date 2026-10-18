@@ -1,15 +1,34 @@
 # Implementation status
 
-## Unified card classification (2026-10-18, in progress)
+## Unified builder and sheet cards (2026-10-18)
 
-D079 step 1: builder detail headers, power tables, overview, printed cards, the
-screen sheet card and sheet card order all classify powers through
-`sheet-model` `classifyPower`. The builder now reads "Encounter 7" / "Feature"
-(Divine Sanction) with Utility-blue and plum-feature tones; No Action is no
-longer shown as Free and has the `minus` icon. Remaining D079 steps: shared
-`SheetCard` projection for builder candidates, shared power/item card
-components (builder tier selection, print clause labels), the reference-card
-frame for other choices, and removal of the old builder card paths.
+D079 implemented on branch `unified-cards`:
+
+- Builder detail headers, power tables, overview, printed and screen cards,
+  and sheet card order classify powers only through `sheet-model`
+  `classifyPower`. The builder reads "Encounter 7" / "Feature" (Divine
+  Sanction) with Utility-blue and plum-feature tones; No Action is distinct
+  from Free with the `minus` icon and sorts after Free.
+- The printed `PowerCard`/`ItemCard` are the only power/item renderers. Builder
+  Build choices, granted/theme powers, Equipment, Shop and the screen sheet use
+  them in a fluid `panel` layout from the same `SheetCard` projections
+  (`authoredSheetPowerCard`, `createSheetPowerCardFinder`, `sheetItemCard`).
+  A parity test confirms an owned power's builder card equals the sheet's.
+- Cards show only the power tier for the character level (Build: the selected
+  level; Equipment: the current level) and the printed clause labels; the
+  builder-only Damage/numbered relabelling is gone. Build cards keep D067's
+  authored formulas; Equipment cards show evaluated totals and the printed
+  weapon table instead of the old variant selector.
+- Class, race, feat and other choice details use the printed card frame
+  (title band, border, type bar) around the existing detail body.
+- An enchantment without a physical base names the weapons/armor it fits.
+- Removed: the builder's structured power/item body, embedded/composed cards,
+  weapon variant panel, the screen sheet's own `Card`, and their CSS/tests.
+
+Verification: `pnpm vitest run` (912 tests), `pnpm typecheck`, `pnpm lint`,
+`pnpm format:check` and `pnpm build` pass through Nix. Visual review of the
+builder panel cards (including dark theme, where cards stay light like
+physical cards) is pending with the product owner.
 
 ## Shared derived values (2026-10-17)
 
