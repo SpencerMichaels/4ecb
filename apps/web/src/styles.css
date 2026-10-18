@@ -4165,19 +4165,21 @@ button.builder-health:focus-visible {
 }
 
 /* While a card scrolls in the detail pane, its title band and type bar stay
-   in place so only the body moves (wide layouts, where the pane scrolls). */
+   in place so only the body moves (wide layouts, where the pane scrolls).
+   The -4px offsets cover the pane's focus-outline inset, so no scrolled
+   content shows above the title or below the type bar. */
 @media (min-width: 60.01rem) {
   .shared-choice-detail
     :is(.print-reference-card.is-panel, .reference-entity-card)
     > :is(header, .reference-card-title) {
     position: sticky;
-    top: 0;
+    top: -4px;
     z-index: 1;
   }
   .shared-choice-detail
     :is(.print-reference-card.is-panel, .reference-entity-card)
     > .print-card-type {
-    bottom: 0;
+    bottom: -4px;
     position: sticky;
     z-index: 1;
   }

@@ -51,13 +51,13 @@ export interface EquipmentWalletView {
 const DENOMINATIONS: readonly {
   id: Denomination;
   label: string;
-  abbreviation: string;
 }[] = [
-  { id: "copper", label: "Copper", abbreviation: "CP" },
-  { id: "silver", label: "Silver", abbreviation: "SP" },
-  { id: "gold", label: "Gold", abbreviation: "GP" },
-  { id: "platinum", label: "Platinum", abbreviation: "PP" },
-  { id: "astral", label: "Astral diamond", abbreviation: "AD" },
+  { id: "copper", label: "Copper" },
+  { id: "silver", label: "Silver" },
+  { id: "gold", label: "Gold" },
+  { id: "platinum", label: "Platinum" },
+  // "Diamond" is the astral diamond's full name ("AD" if abbreviated).
+  { id: "astral", label: "Diamond" },
 ];
 
 const DENOMINATION_KEYS: Readonly<Record<Denomination, keyof CurrencyAmount>> =
@@ -68,6 +68,11 @@ const DENOMINATION_KEYS: Readonly<Record<Denomination, keyof CurrencyAmount>> =
     platinum: "pp",
     astral: "ad",
   };
+
+const DENOMINATION_NAMES: Readonly<Record<keyof CurrencyAmount, string>> =
+  Object.fromEntries(
+    DENOMINATIONS.map(({ id, label }) => [DENOMINATION_KEYS[id], label]),
+  ) as Record<keyof CurrencyAmount, string>;
 
 function walletCopper(wallet: EquipmentWalletView[MoneyLocation]): number {
   return currencyToCopper({
@@ -411,9 +416,9 @@ function WalletDialog({
               <thead>
                 <tr>
                   <th scope="col">Location</th>
-                  {DENOMINATIONS.map(({ id, label, abbreviation }) => (
+                  {DENOMINATIONS.map(({ id, label }) => (
                     <th scope="col" key={id}>
-                      <abbr title={label}>{abbreviation}</abbr>
+                      {label}
                     </th>
                   ))}
                 </tr>
@@ -623,7 +628,7 @@ function FundsPane({
           : ""
       }`}
     >
-      <dt>{denomination.toLocaleUpperCase()}</dt>
+      <dt>{DENOMINATION_NAMES[denomination]}</dt>
       <dd>{totalWallet[denomination].toLocaleString("en-US")}</dd>
     </div>
   );

@@ -51,6 +51,11 @@ describe("builder character sidebar layout", () => {
       declarationsFor(".builder-sidebar .funds-pane .funds-pane-actions"),
     ).toContain("background: transparent");
     expect(equipment).toContain('toLocaleString("en-US")');
+    // Full currency names, with "Diamond" for astral diamonds.
+    for (const name of ["Copper", "Silver", "Gold", "Platinum", "Diamond"])
+      expect(equipment).toContain(`label: "${name}"`);
+    expect(equipment).toContain("<dt>{DENOMINATION_NAMES[denomination]}</dt>");
+    expect(equipment).not.toContain("Astral diamond");
     expect(styles).not.toContain(
       "text-overflow: ellipsis;\n}\n\n.inventory-wallet",
     );
@@ -101,10 +106,10 @@ describe("builder character sidebar layout", () => {
     expect(pane).toContain("position: sticky");
     // Card title bands and type bars stay put while the body scrolls.
     expect(styles).toMatch(
-      /\.shared-choice-detail\s*:is\([^)]*\)\s*> :is\(header, \.reference-card-title\)\s*\{[^}]*position: sticky;[^}]*top: 0;/,
+      /\.shared-choice-detail\s*:is\([^)]*\)\s*> :is\(header, \.reference-card-title\)\s*\{[^}]*position: sticky;[^}]*top: -4px;/,
     );
     expect(styles).toMatch(
-      /\.shared-choice-detail\s*:is\([^)]*\)\s*> \.print-card-type\s*\{[^}]*bottom: 0;[^}]*position: sticky;/,
+      /\.shared-choice-detail\s*:is\([^)]*\)\s*> \.print-card-type\s*\{[^}]*bottom: -4px;[^}]*position: sticky;/,
     );
   });
 
