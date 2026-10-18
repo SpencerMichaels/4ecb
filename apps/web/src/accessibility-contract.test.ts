@@ -621,10 +621,10 @@ describe("release accessibility contract", () => {
       /\.selection-table-scroll thead\s*\{[^}]*background: var\(--legacy-neutral\)/,
     );
     expect(styles).toMatch(
-      /\.selection-table-scroll thead th\s*\{[^}]*background: var\(--legacy-neutral\)[^}]*position:\s*sticky[^}]*top:\s*0[^}]*z-index:\s*2/,
+      /\.selection-table-scroll thead th\s*\{[^}]*background: var\(--legacy-neutral\)[^}]*position:\s*sticky[^}]*top:\s*0[^}]*z-index:\s*3/,
     );
     expect(styles).toMatch(
-      /\.selection-table-scroll tbody \.table-section-row th\s*\{[^}]*background: var\(--brand-navy\)[^}]*position:\s*sticky[^}]*top:\s*var\(--selection-table-header-height\)[^}]*z-index:\s*1/,
+      /\.selection-table-scroll tbody \.table-section-row th\s*\{[^}]*background: var\(--brand-navy\)[^}]*position:\s*sticky[^}]*top:\s*var\(--selection-table-header-height\)[^}]*z-index:\s*2/,
     );
     expect(styles).toMatch(
       /\.selection-table-scroll table\s*\{[^}]*border-collapse: separate[^}]*border-spacing: 0/,

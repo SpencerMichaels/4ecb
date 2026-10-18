@@ -4562,14 +4562,14 @@ textarea {
   position: sticky;
   top: 0;
   text-transform: uppercase;
-  z-index: 2;
+  z-index: 3;
 }
 
 .selection-table-scroll tbody .table-section-row th {
   background: var(--brand-navy);
   position: sticky;
   top: var(--selection-table-header-height);
-  z-index: 1;
+  z-index: 2;
 }
 
 .selection-sort-button {
@@ -4683,6 +4683,19 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   tbody
   tr.selection-row-selected {
   background: var(--tone-soft);
+}
+
+/* A selected row scrolled out of view hangs at the top or bottom edge of the
+   table; offsets stack several selections (see pinSelectedRows). */
+.selection-table-scroll
+  tbody
+  tr.selection-row-selected:not(.selection-family-row)
+  > td {
+  background: inherit;
+  bottom: var(--selection-sticky-bottom, 0);
+  position: sticky;
+  top: var(--selection-sticky-top, var(--selection-table-header-height));
+  z-index: 1;
 }
 
 .selection-table-scroll tbody tr.selection-row-unavailable {

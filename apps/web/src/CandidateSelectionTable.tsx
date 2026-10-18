@@ -40,7 +40,6 @@ import {
 } from "./candidate-table-paging";
 import { Icon } from "./Icon";
 import { SelectionSummary } from "./SelectionSummary";
-import { useVerticalOverflow } from "./useVerticalOverflow";
 import { entityVisualTone, visualToneClass } from "./visual-language";
 
 export type InspectedOption = {
@@ -100,6 +99,39 @@ const candidateReferenceIndexes = new WeakMap<
   ReadonlyMap<string, ContentEntity>,
   ReadonlyMap<string, ContentEntity>
 >();
+
+/**
+ * Stacks the selected rows' sticky offsets so several selections pinned at the
+ * same edge sit one above another instead of overlapping. Rows stick below the
+ * header and the sticky section row, if the table has sections.
+ */
+function pinSelectedRows(table: HTMLTableElement): void {
+  const rows = [
+    ...table.querySelectorAll<HTMLTableRowElement>(
+      "tbody tr.selection-row-selected:not(.selection-family-row)",
+    ),
+  ];
+  // Section rows stick at the CSS header height, which can differ from the
+  // rendered header by a fraction of a pixel, so stack below where they stick.
+  const section = table.querySelector<HTMLElement>(
+    "tbody .table-section-row > th",
+  );
+  const base =
+    section === null
+      ? (table.tHead?.getBoundingClientRect().height ?? 0)
+      : parseFloat(getComputedStyle(section).top) +
+        section.getBoundingClientRect().height;
+  const heights = rows.map((row) => row.getBoundingClientRect().height);
+  // Tuck 1px under the (higher-layered) header so rounding never shows a gap.
+  let above = Math.floor(base) - 1;
+  let below = heights.reduce((total, height) => total + height, 0);
+  rows.forEach((row, index) => {
+    below -= heights[index] ?? 0;
+    row.style.setProperty("--selection-sticky-top", `${above}px`);
+    row.style.setProperty("--selection-sticky-bottom", `${below}px`);
+    above += heights[index] ?? 0;
+  });
+}
 
 export function candidateReferenceIndex(
   byId: ReadonlyMap<string, ContentEntity>,
@@ -236,10 +268,6 @@ export function CandidateSelectionTable({
   const initialSelectedIdRef = useRef(firstSelectedCandidateId(selectedIds));
   const initialSelectedRowRef = useRef<HTMLTableRowElement>(null);
   const initializedRef = useRef(false);
-  const tableHasVerticalOverflow = useVerticalOverflow(
-    tableScrollRef,
-    tableContentRef,
-  );
   const favoriteIds = useCandidateFavorites();
   const normalizedFilter = filter.trim().toLocaleLowerCase();
   const entityFor = (candidate: CandidateDecision) =>
@@ -719,6 +747,32 @@ export function CandidateSelectionTable({
   useLayoutEffect(() => {
     if (requestedPage === undefined) setRequestedPage(pageWindow.page);
   }, [requestedPage, pageWindow.page]);
+  const pageCandidateIds = new Set(
+    resultSections.flatMap(({ rows, start }) =>
+      rows
+        .slice(
+          Math.max(0, pageWindow.start - start),
+          Math.max(0, pageWindow.end - start),
+        )
+        .flatMap(({ candidateId }) =>
+          candidateId === undefined ? [] : [candidateId],
+        ),
+    ),
+  );
+  // Selected rows on this page stay visible by sticking to the table's edges;
+  // the summary lists only selections that aren't on the page at all.
+  const offPageSelections = selectedItems.filter(
+    ({ id }) => !pageCandidateIds.has(id),
+  );
+  useLayoutEffect(() => {
+    const table = tableContentRef.current;
+    if (table === null) return;
+    pinSelectedRows(table);
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => pinSelectedRows(table));
+    observer.observe(table);
+    return () => observer.disconnect();
+  });
   const showPage = (page: number) => {
     setRequestedPage(page);
     if (tableScrollRef.current !== null) tableScrollRef.current.scrollTop = 0;
@@ -787,8 +841,8 @@ export function CandidateSelectionTable({
           )}
         </div>
         <SelectionSummary
-          items={selectedItems}
-          visible={tableHasVerticalOverflow}
+          items={offPageSelections}
+          visible={offPageSelections.length > 0}
           onInspect={(definitionId) => {
             const candidate = candidates.find(
               (item) => item.definitionId === definitionId,
