@@ -224,82 +224,6 @@ a {
   min-height: 100vh;
 }
 
-.app-header {
-  align-items: center;
-  background: var(--brand-navy);
-  border-bottom: 4px solid var(--brand-blue);
-  color: #fff;
-  display: flex;
-  justify-content: space-between;
-  padding: 0.55rem 1.5rem;
-}
-
-.app-brand {
-  align-items: center;
-  color: #fff;
-  display: inline-flex;
-  gap: 0.7rem;
-  text-decoration: none;
-}
-
-.app-brand-mark {
-  border: 1px solid rgb(255 255 255 / 55%);
-  border-block-width: 3px;
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  padding: 0.3rem 0.38rem;
-}
-
-.app-brand-name {
-  display: grid;
-  line-height: 1.05;
-}
-
-.app-brand-name strong {
-  font-family: var(--font-display);
-  font-size: 1.45rem;
-  font-weight: 700;
-}
-
-.app-brand-name small {
-  color: #c9d9e7;
-  font-size: 0.65rem;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
-
-.app-header-nav {
-  align-items: center;
-  display: flex;
-  align-self: stretch;
-  gap: 0.25rem;
-}
-
-.app-header-nav a {
-  align-items: center;
-  border-bottom: 3px solid transparent;
-  color: #dce8f2;
-  display: inline-flex;
-  gap: 0.4rem;
-  font-weight: 700;
-  padding: 0.55rem 0.75rem 0.45rem;
-  text-decoration: none;
-}
-
-.app-header-nav a:hover {
-  background: rgb(255 255 255 / 8%);
-  color: #fff;
-}
-
-.app-header-nav a[aria-current="page"] {
-  background: rgb(255 255 255 / 10%);
-  border-bottom-color: #ff8c00;
-  color: #fff;
-}
-
 .eyebrow {
   font-size: 0.75rem;
   font-weight: 700;
@@ -6721,7 +6645,6 @@ button.inventory-icon-action:disabled {
 }
 
 @media (max-width: 60rem) {
-  .app-header,
   .page-heading {
     align-items: start;
     display: grid;
@@ -6729,10 +6652,6 @@ button.inventory-icon-action:disabled {
   }
   .unofficial {
     text-align: left;
-  }
-  .app-header-nav {
-    align-self: auto;
-    flex-wrap: wrap;
   }
 
   .equipment-workspace {
@@ -6941,7 +6860,6 @@ button.inventory-icon-action:disabled {
     background: #fff;
     min-width: 0;
   }
-  .app-header,
   .pwa-status,
   .screen-sheet-view,
   .print-preview-toolbar,
@@ -7015,4 +6933,13 @@ button.inventory-icon-action:disabled {
     height: 297mm;
     padding: 9mm;
   }
+}
+
+/* Page-level icon actions (Settings gear, close) now that there is no app
+   header; the builder keeps its own next to undo/redo. */
+.page-actions {
+  align-items: center;
+  display: flex;
+  flex: none;
+  gap: 0.35rem;
 }

@@ -63,6 +63,10 @@ const builderChoiceContext = readFileSync(
   "utf8",
 );
 const app = readFileSync(new URL("./App.tsx", import.meta.url), "utf8");
+const characterLibrary = readFileSync(
+  new URL("./CharacterLibraryPage.tsx", import.meta.url),
+  "utf8",
+);
 const settingsPage = readFileSync(
   new URL("./SettingsPage.tsx", import.meta.url),
   "utf8",
@@ -948,5 +952,14 @@ describe("release accessibility contract", () => {
       expect(body).toContain("const [showAll, setShowAll] = useState(false);");
       expect(body).toContain("onToggleShowIllegal={() => setShowAll");
     }
+  });
+  it("navigates without an app header through per-page icon actions", () => {
+    expect(app).not.toContain('className="app-header"');
+    expect(styles).not.toContain(".app-header");
+    expect(characterLibrary).toContain("<h2>Characters</h2>");
+    expect(characterLibrary).toContain('href="#/settings"');
+    expect(settingsPage).toContain('aria-label="Close settings"');
+    expect(characterEditor).toContain('aria-label="Character sheet"');
+    expect(characterEditor).toContain('aria-label="Close character"');
   });
 });

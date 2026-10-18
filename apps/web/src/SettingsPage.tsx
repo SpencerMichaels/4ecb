@@ -34,6 +34,7 @@ import {
   type DiscoveredContentSource,
 } from "./content-onboarding";
 import type { ContentDownloadState } from "./App";
+import { Icon } from "./Icon";
 import {
   ACTIVE_PROFILE_ID,
   ACTIVE_PROFILE_NAME,
@@ -626,6 +627,16 @@ export function SettingsPage({
       <header className="page-heading">
         <div>
           <h2>Settings</h2>
+        </div>
+        <div className="page-actions">
+          <a
+            aria-label="Close settings"
+            className="icon-only-button button-icon"
+            href="#/characters"
+            title="Close settings"
+          >
+            <Icon name="remove" />
+          </a>
         </div>
       </header>
 

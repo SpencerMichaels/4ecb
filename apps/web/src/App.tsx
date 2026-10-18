@@ -19,7 +19,6 @@ import { storeAlreadyValidatedContentPack } from "@4ecb/browser-storage/validate
 import { CharacterLibraryPage } from "./CharacterLibraryPage";
 import { preferredPrintCardTextSize } from "./print-card-fit";
 import { HideFlavortextContext } from "./HideFlavortextContext";
-import { Icon } from "./Icon";
 import {
   canonicalHashRedirect,
   characterEditorHash,
@@ -520,34 +519,6 @@ export function App() {
       <a className="skip-link" href="#main-content">
         Skip to main content
       </a>
-      <header className="app-header">
-        <a
-          className="app-brand"
-          href="#/characters"
-          aria-label="4E Character Builder home"
-        >
-          <span className="app-brand-mark">4E</span>
-          <span className="app-brand-name">
-            <strong>Character Builder</strong>
-            <small>Fourth Edition</small>
-          </span>
-        </a>
-        <nav className="app-header-nav" aria-label="Primary navigation">
-          <a
-            aria-current={route.page === "characters" ? "page" : undefined}
-            href="#/characters"
-          >
-            <Icon name="character" /> Characters
-          </a>
-          <a
-            aria-current={route.page === "settings" ? "page" : undefined}
-            href="#/settings"
-          >
-            <Icon name="content" /> Settings
-          </a>
-        </nav>
-      </header>
-
       <PwaStatus />
 
       {error === undefined ? null : (

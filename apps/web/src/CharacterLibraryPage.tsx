@@ -211,7 +211,19 @@ export function CharacterLibraryPage({
 
   return (
     <main className="characters-page" id="main-content">
-      <h2 className="visually-hidden">Characters</h2>
+      <header className="page-heading">
+        <h2>Characters</h2>
+        <div className="page-actions">
+          <a
+            aria-label="Settings"
+            className="icon-only-button button-icon"
+            href="#/settings"
+            title="Settings"
+          >
+            <Icon name="settings" />
+          </a>
+        </div>
+      </header>
       <div className="library-toolbar">
         <div className="heading-actions">
           <label className="file-button">
