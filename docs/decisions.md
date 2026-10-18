@@ -2145,8 +2145,8 @@ features. Compact labels read "Encounter 7", "Daily Utility 2", "Feature".
 
 Free and No Action are distinct actions (No Action powers work even when unable
 to take actions). No Action keeps its own label and uses the Lucide `minus`
-icon; Opportunity Action uses Lucide `redo-dot`, distinct from the Immediate
-Interrupt (`trending-up`) and Reaction (↻) arrows of the same triggered family;
+icon; Opportunity Action uses Lucide `redo-dot` and Immediate Reaction `redo-2`,
+beside Immediate Interrupt's `trending-up`: one arrow family for triggered actions;
 action order is Standard, Move, Minor, Free, No Action, triggered.
 
 Cards show only the power text tier at the character's level; beyond a power's
@@ -2161,7 +2161,9 @@ supersedes D067's authored-formula Build cards. Item prices and weights group
 thousands ("3,400 gp").
 
 Panel cards (builder, on-screen sheet) have dark-theme paper, ink and card
-colors; printed cards and the print preview always use light paper.
+colors; printed cards and the print preview always use light paper. Panel cards
+keep the printed width-to-text ratio (2.47in at 8pt) and grow downward rather
+than widening; other choices' reference cards use the same width.
 
 ## Deferred decisions and decision points
 

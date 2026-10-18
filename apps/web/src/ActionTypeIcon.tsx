@@ -24,6 +24,8 @@ export function ActionTypeIcon({
         <Icon name="action-none" />
       ) : /\bopportunity\b/i.test(label) ? (
         <Icon name="action-opportunity" />
+      ) : /\breaction\b/i.test(label) ? (
+        <Icon name="action-reaction" />
       ) : (
         <span aria-hidden="true">{powerActionSymbol(value)}</span>
       )}

@@ -98,6 +98,7 @@ export type IconName =
   | "ability"
   | "action-none"
   | "action-opportunity"
+  | "action-reaction"
   | "anvil"
   | "arms"
   | "attack-area"
@@ -199,6 +200,7 @@ const icons: Record<IconName, LucideIcon> = {
   ability: ChartNoAxesColumnIncreasing,
   "action-none": Minus,
   "action-opportunity": RedoDot,
+  "action-reaction": Redo2,
   anvil: Anvil,
   arms: BicepsFlexed,
   "attack-area": CircleDashed,

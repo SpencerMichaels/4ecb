@@ -16,7 +16,7 @@ describe("ActionTypeIcon", () => {
     expect(markup).not.toContain("↯");
   });
 
-  it("gives Opportunity Action its own arrow icon, distinct from reactions", () => {
+  it("gives Opportunity Action and Immediate Reaction distinct arrow icons", () => {
     const opportunity = renderToStaticMarkup(
       createElement(ActionTypeIcon, { value: "Opportunity Action" }),
     );
@@ -27,7 +27,8 @@ describe("ActionTypeIcon", () => {
     const reaction = renderToStaticMarkup(
       createElement(ActionTypeIcon, { value: "Immediate Reaction" }),
     );
-    expect(reaction).toContain("↻");
+    expect(reaction).toContain("lucide-redo-2");
+    expect(reaction).not.toContain("↻");
     expect(reaction).not.toContain("lucide-redo-dot");
   });
 

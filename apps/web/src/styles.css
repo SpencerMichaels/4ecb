@@ -2523,8 +2523,14 @@ textarea {
 }
 /* Builder detail panes reuse the printed card format at a readable, fluid
    size (D079): same bands, colors and type bar, no fixed size or fitting. */
+/* A printed card is 2.47in wide at 8pt text; panel cards keep that
+   width-to-text ratio at their larger text and grow downward, never wider. */
+:root {
+  --panel-card-text-size: 10.5pt;
+  --panel-card-width: calc(var(--panel-card-text-size) * 2.47 * 72 / 8);
+}
 .print-reference-card.is-panel {
-  --print-card-text-size: 10.5pt;
+  --print-card-text-size: var(--panel-card-text-size);
   --print-card-body-size: 10pt;
   --print-card-section-gap: 0.3rem;
   background: var(--card-paper);
@@ -2533,8 +2539,9 @@ textarea {
   flex-direction: column;
   height: auto;
   line-height: 1.3;
+  max-width: 100%;
   overflow: visible;
-  width: 100%;
+  width: var(--panel-card-width);
 }
 .print-reference-card.is-panel:focus-visible {
   outline: 3px solid var(--focus);
@@ -2596,7 +2603,9 @@ textarea {
   border: 2px solid var(--card-color);
   display: flex;
   flex-direction: column;
+  max-width: 100%;
   padding: 0;
+  width: var(--panel-card-width);
 }
 .reference-card-title {
   background: var(--card-color);
@@ -2646,6 +2655,7 @@ textarea {
 .candidate-card-panel {
   display: grid;
   gap: 0.35rem;
+  max-width: min(100%, var(--panel-card-width));
 }
 .candidate-card-panel > .detail-source-note {
   margin: 0;
