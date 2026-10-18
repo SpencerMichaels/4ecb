@@ -3513,17 +3513,17 @@ textarea {
   gap: 0.4rem;
 }
 
-/* Wallet highlights use the item gold (item card headers), not the app focus
-   blue, to match the wealth group. */
+/* Wallet highlights use a brighter, yellower version of the wealth group gold
+   (stat-tone-wealth #7a5a12) rather than the app focus blue. */
 .funds-pane {
-  --funds-focus: var(--power-item);
+  --funds-focus: #c9971c;
 }
 :root[data-theme="dark"] .funds-pane {
-  --funds-focus: #f2a73b;
+  --funds-focus: #e6bd4f;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) .funds-pane {
-    --funds-focus: #f2a73b;
+    --funds-focus: #e6bd4f;
   }
 }
 

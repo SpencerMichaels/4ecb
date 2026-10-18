@@ -67,10 +67,8 @@ describe("builder character sidebar layout", () => {
       /\.funds-coin-tile:has\(\.funds-coin-input\),\s*\.funds-coin-tile:has\(\.funds-coin-value:focus-visible\)\s*\{[^}]*box-shadow: inset 0 0 0 2px var\(--funds-focus\)/,
     );
     expect(styles).not.toContain(".funds-coin-tile:focus-within");
-    // Highlights use the item gold, matching the wealth group.
-    expect(declarationsFor(".funds-pane")).toContain(
-      "--funds-focus: var(--power-item)",
-    );
+    // Highlights use a brighter version of the wealth group gold.
+    expect(declarationsFor(".funds-pane")).toContain("--funds-focus: #c9971c");
     expect(declarationsFor(".funds-adjust-form input:focus-visible")).toContain(
       "var(--funds-focus)",
     );
