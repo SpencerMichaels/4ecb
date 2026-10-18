@@ -2565,11 +2565,33 @@ textarea {
 }
 .print-reference-card.is-panel .print-card-keyword-band,
 .print-reference-card.is-panel .print-card-action-band > span,
-.print-reference-card.is-panel .print-card-combat-band > div {
+.print-reference-card.is-panel
+  .print-card-combat-band:not(.is-secondary)
+  > div {
   padding: 0.25rem 0.55rem;
 }
-.print-reference-card.is-panel .print-card-combat-band {
+.print-reference-card.is-panel .print-card-combat-band:not(.is-secondary) {
   margin: 0 -0.55rem;
+}
+/* Secondary attacks keep the printed inset strip, at panel scale
+   (0.035in in print is 0.55rem here). */
+.print-reference-card.is-panel .print-card-combat-band.is-secondary {
+  border-radius: 0.25rem;
+  gap: 0.4rem;
+  padding: 0.3rem 0.55rem;
+}
+.print-reference-card.is-panel
+  .print-card-attack-section
+  + .print-card-attack-section {
+  margin-top: 0.4rem;
+}
+.print-reference-card.is-panel .print-card-attack-rules {
+  padding-top: 0.4rem;
+}
+.print-reference-card.is-panel
+  .print-card-combat-band.is-secondary
+  + .print-card-attack-rules {
+  padding-inline: 0.55rem;
 }
 .print-reference-card.is-panel .print-card-body {
   overflow: visible;
