@@ -640,6 +640,7 @@ export function App() {
                   resolveAbilityChoices={resolveAbilityChoices}
                   abbreviateAbilityValues={abbreviateAbilityValues}
                   expandWeaponDice={expandWeaponDice}
+                  showEquippedAttackBonus={showEquippedAttackBonus}
                   {...(activeManifest === undefined ? {} : { activeManifest })}
                   {...(activeProfile === undefined ? {} : { activeProfile })}
                 />

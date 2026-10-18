@@ -1,6 +1,14 @@
 import type { SheetCard, SheetValue } from "@4ecb/sheet-model";
 import { itemCategoryIcon } from "./item-icons";
 
+/** "3400" → "3,400"; authored values that are not plain numbers stay as is. */
+export function groupedNumber(value: string): string {
+  const number = Number(value.replaceAll(",", ""));
+  return Number.isFinite(number)
+    ? number.toLocaleString("en-US", { maximumFractionDigits: 2 })
+    : value;
+}
+
 export function printItemPresentation(card: SheetCard) {
   const find = (entries: readonly SheetValue[], names: string[]) =>
     entries.find((entry) =>
@@ -247,7 +255,13 @@ export function printItemPresentation(card: SheetCard) {
       [lastField("Copper"), "cp"],
     ]
       .flatMap(([value, unit]) =>
-        value ? [/^[\d.,]+$/.test(value) ? `${value} ${unit}` : value] : [],
+        value
+          ? [
+              /^[\d.,]+$/.test(value)
+                ? `${groupedNumber(value)} ${unit}`
+                : value,
+            ]
+          : [],
       )
       .join(" · ") || lastField("Market Price");
   const rawSlot = field("Item Slot");
@@ -261,7 +275,7 @@ export function printItemPresentation(card: SheetCard) {
       : undefined;
   const displayWeight = weight
     ? /^[\d.,]+$/.test(weight)
-      ? `${weight} lb`
+      ? `${groupedNumber(weight)} lb`
       : weight
     : undefined;
   return {

@@ -1580,7 +1580,8 @@ cache without modifying character builds or legacy snapshots.
 
 ### D067 — Build power cards preserve complete authored combat clauses
 
-**Status:** accepted
+**Status:** superseded by D079 (2026-10-18): Build cards are the printed,
+evaluated card with its weapon table.
 
 **Date:** 2026-09-29
 
@@ -2149,9 +2150,16 @@ icon; action order is Standard, Move, Minor, Free, No Action, triggered.
 Cards show only the power text tier at the character's level; beyond a power's
 later tiers the base tier is shown. Builder cards present clauses exactly as
 printed cards do (no builder-only relabelling). Builder detail panes reuse the
-printed card components in a fluid "panel" layout with interactive additions
-(weapon variant choice, availability, source); other choices (class, race,
-feats, …) adopt the same card frame.
+printed card components in a fluid "panel" layout with builder additions
+(availability, relationship, source below the card); other choices (class,
+race, feats, …) adopt the same card frame. Every builder card is the
+character's evaluated card, including the printed weapon table: the Build tab
+at the level being viewed, Equipment and Shop at the current level. This
+supersedes D067's authored-formula Build cards. Item prices and weights group
+thousands ("3,400 gp").
+
+Panel cards (builder, on-screen sheet) have dark-theme paper, ink and card
+colors; printed cards and the print preview always use light paper.
 
 ## Deferred decisions and decision points
 

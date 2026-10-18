@@ -128,7 +128,7 @@ describe("printed item presentation", () => {
     expect(view.metadata).toBe("Heavy blade, axe");
     expect(view).toMatchObject({
       weight: "6 lb",
-      price: "17000 gp",
+      price: "17,000 gp",
       level: "13",
     });
   });
@@ -282,7 +282,7 @@ describe("printed item presentation", () => {
     ]);
     expect(view.metadata).toBe("Uncommon one-handed hammer · Military melee");
     expect(view.slot).toBeUndefined();
-    expect(view.footerDetails).toBe("6 lb · 1000 gp");
+    expect(view.footerDetails).toBe("6 lb · 1,000 gp");
   });
   it("groups armor bonuses and penalties, omits zero penalties, and preserves worn slots", () => {
     const view = printItemPresentation(
@@ -309,7 +309,7 @@ describe("printed item presentation", () => {
     ]);
     expect(view.rules).toEqual([{ label: "Enhancement", value: "+2 AC" }]);
     expect(view.metadata).toBe("Rare heavy plate armor");
-    expect(view.footerDetails).toBe("Body · 50 lb · 5000 gp");
+    expect(view.footerDetails).toBe("Body · 50 lb · 5,000 gp");
     const shield = printItemPresentation(
       card("Armor", {
         "Armor Type": "Heavy Shield",

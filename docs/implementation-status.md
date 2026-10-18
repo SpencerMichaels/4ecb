@@ -14,11 +14,16 @@ D079 implemented on branch `unified-cards`:
   them in a fluid `panel` layout from the same `SheetCard` projections
   (`authoredSheetPowerCard`, `createSheetPowerCardFinder`, `sheetItemCard`).
   A parity test confirms an owned power's builder card equals the sheet's.
-- Cards show only the power tier for the character level (Build: the selected
+- Cards show only the power tier for the character level (Build: the viewed
   level; Equipment: the current level) and the printed clause labels; the
-  builder-only Damage/numbered relabelling is gone. Build cards keep D067's
-  authored formulas; Equipment cards show evaluated totals and the printed
-  weapon table instead of the old variant selector.
+  builder-only Damage/numbered relabelling is gone. Every builder card is the
+  evaluated printed card with its weapon table (superseding D067's authored
+  Build cards), honoring the equipped to-hit bonus print setting; the old
+  variant selector is gone.
+- Item prices and weights group thousands ("3,400 gp") on every card.
+- Builder and on-screen panel cards have dark-theme paper, ink and card
+  colors (`--card-paper`/`--card-ink` tokens); printing and the print
+  preview always stay light.
 - Class, race, feat and other choice details use the printed card frame
   (title band, border, type bar) around the existing detail body.
 - An enchantment without a physical base names the weapons/armor it fits.
@@ -27,8 +32,8 @@ D079 implemented on branch `unified-cards`:
 
 Verification: `pnpm vitest run` (912 tests), `pnpm typecheck`, `pnpm lint`,
 `pnpm format:check` and `pnpm build` pass through Nix. Visual review of the
-builder panel cards (including dark theme, where cards stay light like
-physical cards) is pending with the product owner.
+builder panel cards, including their dark-theme colors, is pending with the
+product owner.
 
 ## Shared derived values (2026-10-17)
 

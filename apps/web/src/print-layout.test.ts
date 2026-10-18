@@ -92,13 +92,13 @@ describe("print layout contract", () => {
   });
   it("softens internal subheader separators but retains the prominent bottom rule", () => {
     expect(styles).toMatch(
-      /\.print-card-action-band\s*\{[^}]*border-bottom:\s*1px solid color-mix/,
+      /\.print-card-action-band\s*\{[^}]*border-bottom:\s*1px solid\s+color-mix/,
     );
     expect(styles).toMatch(
-      /\.print-card-action-band > span\s*\{[^}]*border-right:\s*1px solid color-mix/,
+      /\.print-card-action-band > span\s*\{[^}]*border-right:\s*1px solid\s+color-mix/,
     );
     expect(styles).toMatch(
-      /\.print-card-combat-band > div\s*\{[^}]*border-bottom:\s*1px solid var\(--card-color\);[^}]*border-right:\s*1px solid color-mix/,
+      /\.print-card-combat-band > div\s*\{[^}]*border-bottom:\s*1px solid var\(--card-color\);[^}]*border-right:\s*1px solid\s+color-mix/,
     );
     expect(styles).toContain(
       ".print-power-card:not(:has(.print-card-combat-band)) .print-card-action-band",
@@ -174,10 +174,10 @@ describe("print layout contract", () => {
       /\.print-card-combat-band\.is-secondary \+ \.print-card-attack-rules\s*\{[^}]*padding-inline:\s*0\.035in;/,
     );
     expect(styles).toMatch(
-      /\.print-card-combat-band\.is-secondary\s*\{[^}]*background:\s*color-mix\(in srgb, var\(--card-color\) 20%, white\)/,
+      /\.print-card-combat-band\.is-secondary\s*\{[^}]*background:\s*color-mix\(in srgb, var\(--card-color\) 20%, var\(--card-paper\)\)/,
     );
     expect(styles).toMatch(
-      /\.print-item-power-heading\s*\{[^}]*background:\s*color-mix\(in srgb, var\(--card-color\) 18%, white\)/,
+      /\.print-item-power-heading\s*\{[^}]*background:\s*color-mix\(in srgb, var\(--card-color\) 18%, var\(--card-paper\)\)/,
     );
   });
   it("fits body text and subheaders together while keeping titles at the preferred size", () => {
@@ -245,7 +245,7 @@ describe("print layout contract", () => {
       ["daily", "#d3d3d3"],
     ]) {
       expect(styles).toContain(
-        `.print-item-power-heading.usage-${usage} {\n  background: ${color};`,
+        `.print-item-power-heading.usage-${usage} {\n  background: var(--item-power-heading-${usage}, ${color});`,
       );
     }
     expect(heading).toContain(
@@ -285,7 +285,16 @@ describe("print layout contract", () => {
     );
   });
   it("keeps table text the same dark color as the card body", () => {
-    expect(styles).toMatch(/\.print-card-body\s*\{[^}]*color:\s*#111;/);
+    expect(styles).toMatch(
+      /\.print-card-body\s*\{[^}]*color:\s*var\(--card-ink\);/,
+    );
+    expect(styles).toMatch(
+      /\.print-reference-card\s*\{[^}]*--card-ink:\s*#111;/,
+    );
+    // Dark card colors apply only to on-screen panel cards, never to print.
+    expect(styles).toMatch(
+      /@media screen \{\s*:root\[data-theme="dark"\] \.print-reference-card\.is-panel \{[^}]*--card-paper: #1b2130;/,
+    );
     expect(styles).toMatch(
       /\.print-card-variant-table\s*\{[^}]*color:\s*inherit;/,
     );

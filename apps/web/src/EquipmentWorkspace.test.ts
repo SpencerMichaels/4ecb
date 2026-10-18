@@ -152,7 +152,7 @@ describe("equipment item details", () => {
     expect(markup).not.toContain("Duplicated shield text.");
     expect(markup).not.toContain("Weapon:");
     expect(markup).toContain("Gain a defensive benefit.");
-    expect(markup).toContain("3400 gp");
+    expect(markup).toContain("3,400 gp");
     expect(markup).toContain("Sources: A; B");
   });
 
@@ -207,7 +207,7 @@ describe("equipment item details", () => {
       markup.indexOf("Reward an aggressive wearer."),
     );
     expect(markup).toContain("50 lb");
-    expect(markup).toContain("3400 gp");
+    expect(markup).toContain("3,400 gp");
     expect(markup).not.toContain("Plate Armor</h");
     expect(markup).not.toContain("Scale, Plate");
     expect(markup).not.toContain("Duplicated armor text.");
@@ -277,7 +277,7 @@ describe("equipment item details", () => {
     expect(markup).toContain("+2d6");
     expect(markup).not.toContain("+2d6 damage");
     expect(markup).toContain("<dt>Properties</dt>");
-    expect(markup).toContain("2600 gp");
+    expect(markup).toContain("2,600 gp");
     expect(markup).toContain("+2 attack rolls and damage rolls");
     expect(markup).not.toContain("Weapon: Any");
     expect(markup).not.toContain("Damage: 1d10. Group: Hammer.");

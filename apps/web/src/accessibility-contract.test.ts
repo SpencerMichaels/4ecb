@@ -158,7 +158,8 @@ describe("release accessibility contract", () => {
       "showPrintTitleActionIcon={showPrintTitleActionIcon}",
     );
     // Builder details render the sheet's evaluated cards (D079).
-    expect(characterEditor).toContain("createSheetPowerCardFinder");
+    expect(characterEditor).toContain("evaluatedBuilderCardSettings(");
+    expect(builderCards).toContain("createSheetPowerCardFinder(");
     expect(characterEditor).toContain("<BuilderCardContext.Provider");
     expect(builderCards).toContain("renderPowerText(text, true)");
     expect(builderCards).toContain("expandWeaponDice(value, weaponDamage)");

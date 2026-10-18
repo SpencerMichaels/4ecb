@@ -32,13 +32,11 @@ import {
   type CharacterRecord,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import { createSheetPowerCardFinder } from "@4ecb/sheet-model";
 import { projectBuildForLegacyExport } from "@4ecb/legacy-dnd4e";
 import {
   ABILITY_SCORE_NAMES,
   assessAbilityPointBuy,
   commandForEvaluatedChoice,
-  evaluatePowers,
   projectBuildForEvaluation,
   type EvaluatedCharacter,
   type EvaluatedChoice,
@@ -113,7 +111,7 @@ import { PortraitEditor } from "./PortraitEditor";
 import {
   authoredBuilderCardSettings,
   BuilderCardContext,
-  type BuilderCardSettings,
+  evaluatedBuilderCardSettings,
 } from "./BuilderCards";
 import type {
   BuilderNavigation,
@@ -224,6 +222,7 @@ export function CharacterEditorPage({
   resolveAbilityChoices,
   abbreviateAbilityValues,
   expandWeaponDice,
+  showEquippedAttackBonus,
   activeManifest,
   activeProfile,
 }: {
@@ -238,6 +237,7 @@ export function CharacterEditorPage({
   readonly resolveAbilityChoices: boolean;
   readonly abbreviateAbilityValues: boolean;
   readonly expandWeaponDice: boolean;
+  readonly showEquippedAttackBonus: boolean;
   readonly activeManifest?: ContentPackManifest;
   readonly activeProfile?: ContentProfileDefinition;
 }) {
@@ -455,95 +455,45 @@ export function CharacterEditorPage({
       ),
     [entities],
   );
-  const currentEvaluationWithPowers = useMemo(() => {
-    if (build === undefined || currentEvaluation === undefined)
-      return undefined;
-    const input = projectBuildForEvaluation(
-      projectBuildForLegacyExport(build),
-      entities,
-    );
-    return {
-      ...currentEvaluation,
-      powers: evaluatePowers({
-        level: currentEvaluation.level,
-        activeDefinitionIds: currentEvaluation.activeDefinitionIds,
-        inventory: input.inventory,
-        stats: currentEvaluation.stats,
-        overlays: currentEvaluation.overlays,
-        ...(input.textStrings === undefined
-          ? {}
-          : { textStrings: input.textStrings }),
-        entities: [...entities, ...(input.localEntities ?? [])],
-      }),
-    };
-  }, [build, currentEvaluation, entities]);
-  const equipmentCardSettings = useMemo((): BuilderCardSettings | undefined => {
-    if (
-      build === undefined ||
-      currentEvaluation === undefined ||
-      currentEvaluationWithPowers === undefined
-    )
-      return undefined;
-    const input = projectBuildForEvaluation(
-      projectBuildForLegacyExport(build),
-      entities,
-    );
-    const evaluationEntities = [...entities, ...(input.localEntities ?? [])];
-    const cardFor = createSheetPowerCardFinder(
-      currentEvaluationWithPowers,
-      entities,
-      { resolveAbilityChoices },
-    );
-    const owned = new Map(
-      currentEvaluationWithPowers.powers.map((power) => [
-        power.definitionId.toLocaleLowerCase(),
-        power,
-      ]),
-    );
-    // A power the character does not own (e.g. granted by an item in the
-    // Shop) is evaluated as though it were active, like the sheet would.
-    const hypotheticalPower = (entity: ContentEntity) =>
-      evaluatePowers({
-        level: currentEvaluation.level,
-        activeDefinitionIds: [
-          ...currentEvaluation.activeDefinitionIds,
-          entity.id,
-        ],
-        inventory: input.inventory,
-        stats: currentEvaluation.stats,
-        overlays: currentEvaluation.overlays,
-        ...(input.textStrings === undefined
-          ? {}
-          : { textStrings: input.textStrings }),
-        entities: evaluationEntities,
-      }).find(
-        (power) =>
-          power.definitionId.toLocaleLowerCase() ===
-          entity.id.toLocaleLowerCase(),
-      );
-    return {
-      powerCardFor: (entity) =>
-        cardFor(
-          entity,
-          owned.get(entity.id.toLocaleLowerCase()) ?? hypotheticalPower(entity),
-        ),
-      characterLevel: currentEvaluation.level,
-      showEquippedAttackBonus: true,
+  const cardPreferences = useMemo(
+    () => ({
+      resolveAbilityChoices,
       abbreviateAbilityValues,
       expandWeaponDice,
-    };
-  }, [
-    abbreviateAbilityValues,
-    build,
-    currentEvaluation,
-    currentEvaluationWithPowers,
-    entities,
-    expandWeaponDice,
-    resolveAbilityChoices,
-  ]);
+      showEquippedAttackBonus,
+    }),
+    [
+      abbreviateAbilityValues,
+      expandWeaponDice,
+      resolveAbilityChoices,
+      showEquippedAttackBonus,
+    ],
+  );
+  const equipmentCardSettings = useMemo(
+    () =>
+      build === undefined || currentEvaluation === undefined
+        ? undefined
+        : evaluatedBuilderCardSettings(
+            build,
+            currentEvaluation,
+            entities,
+            cardPreferences,
+          ),
+    [build, cardPreferences, currentEvaluation, entities],
+  );
+  // The Build tab shows the same evaluated cards at the level being viewed.
+  const buildEvaluation = selectedLevelEvaluation ?? currentEvaluation;
   const buildCardSettings = useMemo(
-    () => authoredBuilderCardSettings(selectedLevel),
-    [selectedLevel],
+    () =>
+      build === undefined || buildEvaluation === undefined
+        ? authoredBuilderCardSettings(selectedLevel)
+        : evaluatedBuilderCardSettings(
+            build,
+            buildEvaluation,
+            entities,
+            cardPreferences,
+          ),
+    [build, buildEvaluation, cardPreferences, entities, selectedLevel],
   );
   const carriedWallet =
     build === undefined

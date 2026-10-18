@@ -2080,6 +2080,8 @@ textarea {
 }
 .print-reference-card {
   --card-color: #006b2e;
+  --card-paper: #fff;
+  --card-ink: #111;
   --print-card-section-gap: 0.025in;
   border: 1.5px solid var(--card-color);
   box-sizing: border-box;
@@ -2132,8 +2134,8 @@ textarea {
 }
 .print-reference-card > header {
   align-items: center;
-  background: #fff;
-  color: #111;
+  background: var(--card-paper);
+  color: var(--card-ink);
   display: flex;
   gap: 0.04in;
   justify-content: space-between;
@@ -2214,14 +2216,15 @@ textarea {
 .print-card-keyword-band,
 .print-card-action-band,
 .print-card-combat-band {
-  background: color-mix(in srgb, var(--card-color) 20%, white);
+  background: color-mix(in srgb, var(--card-color) 20%, var(--card-paper));
   font-size: var(--print-card-body-size, 8pt);
   line-height: 1.08;
 }
 .print-card-keyword-band {
   align-items: center;
-  background: color-mix(in srgb, var(--card-color) 12%, white);
-  border-bottom: 1px solid color-mix(in srgb, var(--card-color) 35%, white);
+  background: color-mix(in srgb, var(--card-color) 12%, var(--card-paper));
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--card-color) 35%, var(--card-paper));
   display: flex;
   font-weight: 400;
   gap: 0.025in;
@@ -2237,7 +2240,8 @@ textarea {
   overflow-wrap: anywhere;
 }
 .print-card-action-band {
-  border-bottom: 1px solid color-mix(in srgb, var(--card-color) 35%, white);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--card-color) 35%, var(--card-paper));
   display: grid;
   font-weight: 700;
   grid-template-columns:
@@ -2246,7 +2250,8 @@ textarea {
 }
 .print-card-action-band > span {
   align-items: center;
-  border-right: 1px solid color-mix(in srgb, var(--card-color) 35%, white);
+  border-right: 1px solid
+    color-mix(in srgb, var(--card-color) 35%, var(--card-paper));
   display: flex;
   gap: 0.025in;
   min-width: 0;
@@ -2293,7 +2298,8 @@ textarea {
 .print-card-combat-band > div {
   align-items: flex-start;
   border-bottom: 1px solid var(--card-color);
-  border-right: 1px solid color-mix(in srgb, var(--card-color) 35%, white);
+  border-right: 1px solid
+    color-mix(in srgb, var(--card-color) 35%, var(--card-paper));
   display: flex;
   gap: 0.025in;
   min-width: 0;
@@ -2324,7 +2330,7 @@ textarea {
   width: 0.1in;
 }
 .print-card-body {
-  color: #111;
+  color: var(--card-ink);
   font-size: var(--print-card-body-size, 8pt);
   min-height: 0;
   overflow: hidden;
@@ -2344,7 +2350,7 @@ textarea {
   margin-top: 0.025in;
 }
 .print-card-combat-band.is-secondary {
-  background: color-mix(in srgb, var(--card-color) 20%, white);
+  background: color-mix(in srgb, var(--card-color) 20%, var(--card-paper));
   border-radius: 0.025in;
   display: flex;
   flex-wrap: wrap;
@@ -2431,13 +2437,13 @@ textarea {
   vertical-align: top;
 }
 .print-card-variant-table thead th {
-  background: color-mix(in srgb, var(--card-color) 10%, white);
+  background: color-mix(in srgb, var(--card-color) 10%, var(--card-paper));
 }
 .print-card-variant-table tbody tr:nth-child(odd) {
-  background: color-mix(in srgb, var(--card-color) 5%, white);
+  background: color-mix(in srgb, var(--card-color) 5%, var(--card-paper));
 }
 .print-card-variant-table tbody tr:nth-child(even) {
-  background: white;
+  background: var(--card-paper);
 }
 .print-card-variant-table tbody th {
   font-weight: normal;
@@ -2521,7 +2527,7 @@ textarea {
   --print-card-text-size: 10.5pt;
   --print-card-body-size: 10pt;
   --print-card-section-gap: 0.3rem;
-  background: #fff;
+  background: var(--card-paper);
   border-width: 2px;
   display: flex;
   flex-direction: column;
@@ -2568,8 +2574,8 @@ textarea {
 }
 .print-card-panel-subheading {
   align-items: center;
-  background: color-mix(in srgb, var(--card-color) 8%, white);
-  color: #111;
+  background: color-mix(in srgb, var(--card-color) 8%, var(--card-paper));
+  color: var(--card-ink);
   display: flex;
   flex-wrap: wrap;
   font-size: 0.9rem;
@@ -2644,6 +2650,63 @@ textarea {
 .candidate-card-panel > .detail-source-note {
   margin: 0;
 }
+/* Dark-theme card colors for builder and on-screen panel cards. Printed
+   cards and the print preview always stay on light paper (D079). */
+@media screen {
+  :root[data-theme="dark"] .print-reference-card.is-panel {
+    --card-paper: #1b2130;
+    --card-ink: #e7e9ee;
+    --item-power-heading-at-will: #183923;
+    --item-power-heading-encounter: #442020;
+    --item-power-heading-daily: #34383f;
+  }
+  :root[data-theme="dark"] .print-reference-card.is-panel {
+    --card-color: #1f7a3e;
+  }
+  :root[data-theme="dark"] .print-power-card.is-panel.usage-encounter {
+    --card-color: #a82424;
+  }
+  :root[data-theme="dark"] .print-power-card.is-panel.usage-daily {
+    --card-color: #6b7280;
+  }
+  :root[data-theme="dark"] .print-power-card.is-panel.usage-feature {
+    --card-color: #7a4b9c;
+  }
+  :root[data-theme="dark"] .print-power-card.is-panel.utility-power {
+    --card-color: #3346b5;
+  }
+  :root[data-theme="dark"] .print-item-card.is-panel {
+    --card-color: #e08a12;
+  }
+}
+@media screen and (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .print-reference-card.is-panel {
+    --card-paper: #1b2130;
+    --card-ink: #e7e9ee;
+    --item-power-heading-at-will: #183923;
+    --item-power-heading-encounter: #442020;
+    --item-power-heading-daily: #34383f;
+  }
+  :root:not([data-theme]) .print-reference-card.is-panel {
+    --card-color: #1f7a3e;
+  }
+  :root:not([data-theme]) .print-power-card.is-panel.usage-encounter {
+    --card-color: #a82424;
+  }
+  :root:not([data-theme]) .print-power-card.is-panel.usage-daily {
+    --card-color: #6b7280;
+  }
+  :root:not([data-theme]) .print-power-card.is-panel.usage-feature {
+    --card-color: #7a4b9c;
+  }
+  :root:not([data-theme]) .print-power-card.is-panel.utility-power {
+    --card-color: #3346b5;
+  }
+  :root:not([data-theme]) .print-item-card.is-panel {
+    --card-color: #e08a12;
+  }
+}
+
 /* "Play data" cards: core numbers and skills for use at the table. */
 .print-play-card {
   --card-color: #1f6b70;
@@ -2748,8 +2811,9 @@ textarea {
 }
 /* Column labels styled like a power card's subheading band. */
 .print-play-skills thead th {
-  background: color-mix(in srgb, var(--card-color) 20%, white);
-  border-bottom: 1px solid color-mix(in srgb, var(--card-color) 35%, white);
+  background: color-mix(in srgb, var(--card-color) 20%, var(--card-paper));
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--card-color) 35%, var(--card-paper));
   font-size: 8pt;
   font-weight: 700;
   height: 0.23in;
@@ -2773,7 +2837,7 @@ textarea {
   padding: 0.03in 0.045in;
 }
 .print-play-skills tbody tr:nth-child(even) {
-  background: color-mix(in srgb, var(--card-color) 10%, white);
+  background: color-mix(in srgb, var(--card-color) 10%, var(--card-paper));
 }
 .print-play-skill-ability {
   color: #555;
@@ -2834,7 +2898,7 @@ textarea {
 .print-item-stats {
   border-bottom: 1px solid var(--card-color);
   font-size: var(--print-card-body-size, 8pt);
-  background: color-mix(in srgb, var(--card-color) 18%, white);
+  background: color-mix(in srgb, var(--card-color) 18%, var(--card-paper));
   margin: 0;
 }
 .print-item-properties .prose-blocks,
@@ -2855,7 +2919,8 @@ textarea {
   display: flex;
   flex-wrap: wrap;
   gap: 0.035in 0.05in;
-  border-bottom: 1px solid color-mix(in srgb, var(--card-color) 35%, white);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--card-color) 35%, var(--card-paper));
   padding: 0.025in 0.035in;
 }
 .print-item-stat-row:last-child {
@@ -2909,7 +2974,7 @@ textarea {
 }
 .print-item-power {
   --item-power-color: var(--card-color);
-  background: #fff;
+  background: var(--card-paper);
   border: 1px solid var(--item-power-color);
   border-radius: 0.025in;
 }
@@ -2924,8 +2989,8 @@ textarea {
 }
 .print-item-power-heading {
   align-items: start;
-  background: color-mix(in srgb, var(--card-color) 18%, white);
-  color: #111;
+  background: color-mix(in srgb, var(--card-color) 18%, var(--card-paper));
+  color: var(--card-ink);
   border-bottom: 1px solid var(--item-power-color);
   border-radius: 0.025in 0.025in 0 0;
   display: grid;
@@ -2940,19 +3005,19 @@ textarea {
   grid-template-columns: 0.1in minmax(0, 1fr);
 }
 .print-item-power-heading.usage-at-will {
-  background: #aaddaa;
+  background: var(--item-power-heading-at-will, #aaddaa);
   border-color: #006b2e;
-  color: #111;
+  color: var(--card-ink);
 }
 .print-item-power-heading.usage-encounter {
-  background: #ddbbbb;
+  background: var(--item-power-heading-encounter, #ddbbbb);
   border-color: #8b0000;
-  color: #111;
+  color: var(--card-ink);
 }
 .print-item-power-heading.usage-daily {
-  background: #d3d3d3;
+  background: var(--item-power-heading-daily, #d3d3d3);
   border-color: #777;
-  color: #111;
+  color: var(--card-ink);
 }
 .print-item-power-content {
   min-width: 0;
