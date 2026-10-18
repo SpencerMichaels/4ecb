@@ -619,22 +619,9 @@ function FundsPane({
       className="stat-group stat-tone-wealth funds-pane"
       aria-label="Funds"
     >
-      {/* Five coin tiles and an actions tile: one 3 × 2 grid like the
+      {/* An actions tile then five coin tiles: one 3 × 2 grid like the
           ability scores, values below their labels so none are cut off. */}
       <dl className="stat-tiles stat-tiles-compact inventory-wallet-denominations">
-        {CURRENCY_DENOMINATIONS.map((denomination) => (
-          <div
-            key={`${denomination}-${walletPulse.denominations.includes(denomination) ? walletPulse.generation : 0}`}
-            className={`stat-tile${
-              walletPulse.denominations.includes(denomination)
-                ? ` is-adjusted is-${walletPulse.direction}`
-                : ""
-            }`}
-          >
-            <dt>{denomination.toLocaleUpperCase()}</dt>
-            <dd>{totalWallet[denomination].toLocaleString("en-US")}</dd>
-          </div>
-        ))}
         <div className="stat-tile funds-pane-actions">
           <dt className="visually-hidden">Change funds</dt>
           <dd>
@@ -716,6 +703,19 @@ function FundsPane({
             </button>
           </dd>
         </div>
+        {CURRENCY_DENOMINATIONS.map((denomination) => (
+          <div
+            key={`${denomination}-${walletPulse.denominations.includes(denomination) ? walletPulse.generation : 0}`}
+            className={`stat-tile${
+              walletPulse.denominations.includes(denomination)
+                ? ` is-adjusted is-${walletPulse.direction}`
+                : ""
+            }`}
+          >
+            <dt>{denomination.toLocaleUpperCase()}</dt>
+            <dd>{totalWallet[denomination].toLocaleString("en-US")}</dd>
+          </div>
+        ))}
       </dl>
     </section>
   );

@@ -40,6 +40,13 @@ describe("builder character sidebar layout", () => {
       'className="stat-group stat-tone-wealth funds-pane"',
     );
     expect(equipment).toContain('className="stat-tile funds-pane-actions"');
+    // The actions tile comes first, untinted, with its buttons centered.
+    expect(equipment.indexOf("funds-pane-actions")).toBeLessThan(
+      equipment.indexOf("{CURRENCY_DENOMINATIONS.map("),
+    );
+    expect(
+      declarationsFor(".builder-sidebar .funds-pane .funds-pane-actions"),
+    ).toContain("background: transparent");
     expect(equipment).toContain('toLocaleString("en-US")');
     expect(styles).not.toContain(
       "text-overflow: ellipsis;\n}\n\n.inventory-wallet",

@@ -3513,7 +3513,7 @@ textarea {
   gap: 0.4rem;
 }
 
-/* Funds: five coin tiles and an actions tile in one 3 × 2 grid; each value
+/* Funds: an actions tile and five coin tiles in one 3 × 2 grid; each value
    sits under its label at full tile width, so none are truncated. */
 .builder-sidebar .funds-pane .stat-tile {
   flex-direction: column;
@@ -3524,6 +3524,12 @@ textarea {
   font-size: 1.15em;
   overflow-wrap: anywhere;
 }
+/* The first tile holds the funds buttons: no tile color, buttons centered. */
+.builder-sidebar .funds-pane .funds-pane-actions {
+  align-items: center;
+  background: transparent;
+  justify-content: center;
+}
 .builder-sidebar .funds-pane-actions dd {
   align-items: center;
   display: flex;
@@ -3531,7 +3537,10 @@ textarea {
   justify-content: center;
 }
 .builder-sidebar .funds-wallet-adjust-options {
+  /* The trigger is in the first tile, so open toward the sidebar. */
+  left: 0;
   min-width: 14rem;
+  right: auto;
 }
 
 .builder-sidebar-identity {
