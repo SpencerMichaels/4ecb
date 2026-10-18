@@ -1,5 +1,15 @@
 # Implementation status
 
+## Implement power equipment (2026-10-18)
+
+D081: Implement powers list only implements the character is proficient
+with, weapons their implement proficiencies cover, and Unarmed (tooltip: no
+implement); plain weapons are no longer offered. Evaluation cache bumped to
+v13. Private check: Hu Sheng-Ming's implement powers now offer Symbol of
+Hope +1 and Unarmed, Piri's Pure Spirit Totem +1 and Unarmed; the only cached
+parity mismatches are the dropped legacy weapon rows. Pact-blade style item
+properties are not yet recognized.
+
 ## Builder character sidebar (2026-10-18, branch `builder-character-sidebar`)
 
 D080: the builder header and level rail are replaced by a sticky sidebar on

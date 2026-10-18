@@ -358,6 +358,7 @@ export function PowerCard({
         <PrintPowerVariants
           variants={printVariants}
           attackOrdinals={attacks.map((attack) => attack.ordinal)}
+          implementPower={/\bimplement\b/i.test(card.keywords ?? "")}
         />
         {(card.additionalEffects ?? []).length === 0 ||
         printVariants.length > 0 ? null : (

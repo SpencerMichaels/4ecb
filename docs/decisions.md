@@ -2203,6 +2203,28 @@ nothing needs attention. The app header is removed: the builder's Character
 sheet, Settings and Close icons follow undo/redo, the library has a visible
 title and Settings gear, and Settings has a close button.
 
+### D081 — Implement powers list only usable implements (rules over legacy)
+
+Status: accepted (2026-10-18).
+
+The legacy builder's PowerStats offers every equipped item to an Implement
+power and even adds a plain weapon's enhancement bonus (Hu Sheng-Ming's
+Way-Leader Gouge +1 shows +10 on Shining Symbol, like his holy symbol). By the
+4E rules an implement power uses only an implement the character is proficient
+with; with anything else in hand the attack gets no implement benefits, which
+is the Unarmed (no implement) calculation. This is a deliberate, owner-approved
+departure from the legacy oracle.
+
+Implement powers list: implements matching an active "Implement Proficiency
+(…)" or "Arcane Implement Proficiency (…)" element; weapons those proficiencies
+name by weapon or group (e.g. a swordmage's blades, a monk's weapons); and
+Unarmed, labeled as before with a "No implement" tooltip. If the content
+records no implement proficiency at all, implements are still listed rather
+than leaving only Unarmed. Weapon powers are unchanged. Cached-parity tools
+report the dropped legacy weapon rows (Hu's gouge, Piri's spear and dagger) as
+expected mismatches. Weapons that become implements through item properties
+(e.g. a pact blade) are not yet recognized.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

@@ -100,6 +100,9 @@ interface Loadout {
   readonly hand?: "main" | "off";
   readonly pairedEquipmentName?: string;
   readonly tags: readonly string[];
+  /** What implement proficiency this item answers to: its implement kinds
+   * (e.g. "holy symbol", "staff") and, for weapons, its name and group. */
+  readonly implementKinds: readonly string[];
   readonly properties: readonly string[];
   readonly weaponCategory?: string;
   readonly rangedWeapon: boolean;
@@ -107,6 +110,51 @@ interface Loadout {
 
 function key(value: string): string {
   return value.trim().toLocaleLowerCase();
+}
+
+/** "Ki focuses" → "ki focus", "light blade group" → "light blade". */
+function implementKind(value: string): string {
+  return key(value)
+    .replace(/\s+group$/u, "")
+    .replace(/(?<=[a-z])(?:es|s)$/u, "");
+}
+
+const IMPLEMENT_PROFICIENCY =
+  /^(?:arcane\s+)?implement proficiency\s*\((.+)\)$/iu;
+
+/**
+ * Implement kinds the character can use, from active "Implement Proficiency
+ * (…)" elements. 4E lets an implement power use only an implement the
+ * character is proficient with; anything else (a plain weapon in hand) adds
+ * nothing, which is exactly the Unarmed/no-implement calculation.
+ */
+function implementProficiencies(
+  activeDefinitionIds: readonly string[],
+  byId: ReadonlyMap<string, ContentEntity>,
+): ReadonlySet<string> {
+  return new Set(
+    activeDefinitionIds.flatMap((id) => {
+      const match = IMPLEMENT_PROFICIENCY.exec(
+        byId.get(key(id))?.name.trim() ?? "",
+      );
+      return match?.[1] === undefined ? [] : [implementKind(match[1])];
+    }),
+  );
+}
+
+function usableAsImplement(
+  item: Loadout,
+  proficiencies: ReadonlySet<string>,
+): boolean {
+  if (item.unarmed) return true;
+  const proficient = item.implementKinds.some((kind) =>
+    proficiencies.has(kind),
+  );
+  if (item.implementDefinition)
+    // Without any recorded implement proficiency (incomplete or custom
+    // content), keep implements rather than leave only Unarmed.
+    return proficient || proficiencies.size === 0;
+  return proficient;
 }
 
 function field(entity: ContentEntity, name: string): string | undefined {
@@ -223,6 +271,21 @@ function loadouts(
       ]
         .map(key)
         .filter(Boolean),
+      implementKinds: [
+        ...(implement === undefined
+          ? []
+          : [
+              magicType ?? "",
+              field(implement, "Magic Item Type") ?? "",
+              field(implement, "Group") ?? "",
+              implement.name,
+            ]),
+        ...(weapon === undefined
+          ? []
+          : [weapon.name, field(weapon, "Group") ?? ""]),
+      ]
+        .filter((value) => value.trim() !== "")
+        .map(implementKind),
       properties: weaponPropertyText(
         weapon,
         field(weapon ?? emptyEntity, "Properties") ?? "",
@@ -248,6 +311,7 @@ function loadouts(
     implementDefinition: false,
     equipped: false,
     tags: ["unarmed"],
+    implementKinds: [],
     properties: [],
     weaponCategory: "melee",
     rangedWeapon: false,
@@ -1009,6 +1073,12 @@ export function evaluatePowers(input: {
     input.entities.map((entity) => [key(entity.id), entity]),
   );
   const equipped = loadouts(input.inventory, byId, input.textStrings ?? {});
+  // Deliberate departure from legacy PowerStats, which offered every
+  // equipped item to implement powers (D081).
+  const characterImplementProficiencies = implementProficiencies(
+    input.activeDefinitionIds,
+    byId,
+  );
   const versatileUsedTwoHanded =
     Number(
       textValue(input.textStrings ?? {}, "_INTERNAL_VersatileUsedTwoHanded"),
@@ -1065,7 +1135,9 @@ export function evaluatePowers(input: {
               (item) => item.weaponDamage !== undefined || item.unarmed,
             )
           : implementPower
-            ? equipped
+            ? equipped.filter((item) =>
+                usableAsImplement(item, characterImplementProficiencies),
+              )
             : equipped.filter((item) => item.unarmed)
         : []
       : weaponPower
@@ -1073,7 +1145,9 @@ export function evaluatePowers(input: {
             (item) => item.weaponDamage !== undefined || item.unarmed,
           )
         : implementPower
-          ? equipped
+          ? equipped.filter((item) =>
+              usableAsImplement(item, characterImplementProficiencies),
+            )
           : equipped.filter((item) => item.unarmed);
     // Legacy PowerStats retains every legal equipment variant even for prose
     // that names one hand. The saved main-hand selection describes the active

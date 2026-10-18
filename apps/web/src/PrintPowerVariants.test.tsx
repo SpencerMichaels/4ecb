@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import type { SheetPowerAttack, SheetPowerVariant } from "@4ecb/sheet-model";
@@ -240,5 +241,33 @@ describe("printed weapon calculation summaries", () => {
       />,
     );
     expect(text(missing)).toContain("+7 → 1d6+2—");
+  });
+});
+
+describe("implement power Unarmed row", () => {
+  it("explains that Unarmed is the no-implement attack", () => {
+    const variants = [
+      {
+        id: "power:unarmed",
+        equipmentName: "Unarmed",
+        equipped: false,
+        attack: "+9 vs Will",
+        ability: "Wisdom",
+        powerBonus: 0,
+      },
+    ];
+    const implement = renderToStaticMarkup(
+      createElement(PrintPowerVariants, {
+        variants,
+        attackOrdinals: [1],
+        implementPower: true,
+      }),
+    );
+    expect(implement).toContain('title="No implement:');
+    expect(implement).toContain(">Unarmed</th>");
+    const weapon = renderToStaticMarkup(
+      createElement(PrintPowerVariants, { variants, attackOrdinals: [1] }),
+    );
+    expect(weapon).not.toContain("No implement");
   });
 });

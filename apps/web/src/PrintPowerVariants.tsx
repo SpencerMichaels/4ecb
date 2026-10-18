@@ -76,12 +76,19 @@ function AttackSummary({ cell }: { readonly cell: AttackCell | undefined }) {
   );
 }
 
+const isUnarmed = (variant: SheetPowerVariant) =>
+  variant.id.endsWith(":unarmed") ||
+  variant.equipmentName.trim().toLocaleLowerCase() === "unarmed";
+
 export function PrintPowerVariants({
   variants,
   attackOrdinals,
+  implementPower = false,
 }: {
   readonly variants: readonly SheetPowerVariant[];
   readonly attackOrdinals: readonly number[];
+  /** On implement powers the Unarmed row is the no-implement attack. */
+  readonly implementPower?: boolean;
 }) {
   if (variants.length === 0) return null;
   const ordinals = [
@@ -152,7 +159,15 @@ export function PrintPowerVariants({
         <tbody>
           {rows.map(({ variant, cells }) => (
             <tr key={variant.id}>
-              <th scope="row">
+              <th
+                scope="row"
+                {...(implementPower && isUnarmed(variant)
+                  ? {
+                      title:
+                        "No implement: the attack uses none of an implement's bonuses or properties",
+                    }
+                  : {})}
+              >
                 {nameWithBoundEnhancement(variant.equipmentName)}
               </th>
               {shared || splitDamage ? (

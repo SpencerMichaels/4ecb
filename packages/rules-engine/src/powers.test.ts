@@ -1060,7 +1060,7 @@ describe("power evaluation", () => {
   it("does not bridge unrelated weapon expertise onto implement attacks", () => {
     const [power] = evaluatePowers({
       level: 15,
-      activeDefinitionIds: ["POWER"],
+      activeDefinitionIds: ["POWER", "STRIKE_IMPLEMENT"],
       inventory: [
         {
           id: "strike",
@@ -1085,6 +1085,13 @@ describe("power evaluation", () => {
           Attack: "Dexterity vs. Reflex",
           Hit: "1d8 + Dexterity modifier damage.",
         }),
+        // Monks may use proficient weapons as implements.
+        entity(
+          "STRIKE_IMPLEMENT",
+          "Implement Proficiency (Synthetic Unarmed Strike)",
+          "Proficiency",
+          {},
+        ),
         entity("STRIKE", "Synthetic Unarmed Strike", "Weapon", {
           Damage: "1d8",
           Group: "Heavy Blade",
@@ -2271,5 +2278,81 @@ describe("power variant equipment names", () => {
     )?.equipmentName;
     expect(name).not.toContain(" + ");
     expect(name).toMatch(/^Aversion Quickbeam staff \+2$/i);
+  });
+});
+
+describe("implement power equipment", () => {
+  const entities = [
+    entity("POWER", "Synthetic Censure", "Power", {
+      Keywords: "Divine, Implement",
+      "Attack Type": "Ranged 5",
+      Attack: "Wisdom vs. Will",
+      Hit: "1d8 + Wisdom modifier damage.",
+    }),
+    entity(
+      "SYMBOL_PROFICIENCY",
+      "Implement Proficiency (Holy Symbol)",
+      "Proficiency",
+      {},
+    ),
+    entity("SYMBOL", "Symbol of Hope +1", "Magic Item", {
+      "Magic Item Type": "Holy Symbol",
+      Enhancement: "+1 attack rolls and damage rolls",
+    }),
+    entity("ORB", "Orb of Light +1", "Magic Item", {
+      "Magic Item Type": "Orb",
+      Enhancement: "+1 attack rolls and damage rolls",
+    }),
+    entity("PICK", "War Pick", "Weapon", {
+      Damage: "1d8",
+      Group: "Pick",
+    }),
+  ];
+  const owned = (id: string) => ({
+    id,
+    definitionIds: [id],
+    quantity: 1,
+    equippedQuantity: 1,
+    acquiredLevel: 1,
+  });
+  const names = (activeDefinitionIds: readonly string[]) =>
+    evaluatePowers({
+      level: 8,
+      activeDefinitionIds,
+      inventory: ["SYMBOL", "ORB", "PICK"].map(owned),
+      stats: { "Wisdom modifier": stat("Wisdom modifier", 5) },
+      overlays: [],
+      entities,
+    })[0]?.variants.map((variant) => variant.equipmentName);
+
+  it("offers only proficient implements and Unarmed, never a plain weapon", () => {
+    expect(names(["POWER", "SYMBOL_PROFICIENCY"])).toEqual([
+      "Symbol of Hope +1",
+      "Unarmed",
+    ]);
+  });
+
+  it("keeps implements when the content records no implement proficiency", () => {
+    expect(names(["POWER"])).toEqual([
+      "Symbol of Hope +1",
+      "Orb of Light +1",
+      "Unarmed",
+    ]);
+  });
+
+  it("offers a weapon its owner can use as an implement", () => {
+    const proficiency = entity(
+      "PICK_PROFICIENCY",
+      "Implement Proficiency (War Pick)",
+      "Proficiency",
+      {},
+    );
+    entities.push(proficiency);
+    expect(names(["POWER", "SYMBOL_PROFICIENCY", "PICK_PROFICIENCY"])).toEqual([
+      "Symbol of Hope +1",
+      "War Pick",
+      "Unarmed",
+    ]);
+    entities.pop();
   });
 });
