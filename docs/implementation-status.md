@@ -6,7 +6,10 @@ D080: the builder header and level rail are replaced by a sticky sidebar on
 every builder tab (large portrait, editable name, race/class/level, Play-card
 stat arrangement with passive senses and score + modifier abilities). The
 Build tab's "Level N ▾" heading opens a modal level plan with per-level
-status, including on levels with no choices. Choice, details and detail
+status, including on levels with no choices. Navigation cleanup: identity above
+the sidebar box; funds in the sidebar on Inventory/Loadout/Shop; tabs Build,
+Details, Inventory, Loadout, Shop (Overview removed, Diagnostics via status
+badges); no app header (per-page Settings/Close/Character sheet icons). Choice, details and detail
 panes give their second column exactly one card width. Verification: 920
 tests, typecheck, lint and build pass; visual review is pending.
 

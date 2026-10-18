@@ -3497,7 +3497,16 @@ textarea {
   min-width: 0;
 }
 
+/* Identity sits on the page above the box; the box starts at the stats. */
 .builder-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.builder-sidebar-panel {
   background: var(--surface);
   border: 1px solid var(--border);
   border-top: 4px solid var(--brand-navy);
@@ -3505,8 +3514,6 @@ textarea {
   flex-direction: column;
   gap: 0.6rem;
   padding: 0.75rem;
-  position: sticky;
-  top: 1rem;
 }
 
 /* Funds sit in the sidebar on Inventory, Loadout and Shop: coins on their own
@@ -3540,17 +3547,27 @@ textarea {
   align-items: center;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
   min-width: 0;
   text-align: center;
 }
 
+/* Name and race/class/level read as one two-line block. */
+.builder-sidebar-identity .builder-character-name-heading {
+  margin: 0;
+}
+
+.builder-sidebar-identity .builder-character-name input {
+  line-height: 1.15;
+  padding-block: 0;
+}
+
 .builder-sidebar-identity .portrait-trigger {
   height: 9rem;
+  margin-bottom: 0.5rem;
   width: 9rem;
 }
 
-.builder-sidebar-identity .builder-character-name-heading {
+.builder-sidebar-identity h2.builder-character-name-heading {
   inline-size: 100%;
 }
 

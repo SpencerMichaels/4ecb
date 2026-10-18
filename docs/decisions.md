@@ -2192,6 +2192,17 @@ advances through sections and levels. Detail
 columns are one card wide and flush right; below 63rem the sidebar folds above
 the workspace.
 
+**Navigation cleanup (2026-10-18).** The portrait, name and race/class/level
+sit on the page above the sidebar box, which starts at the stats. The funds
+(coins, quick adjust, edit) move into that box on the Inventory, Loadout and
+Shop tabs, so every detail column is one card wide. Tabs are Build, Details,
+Inventory, Loadout and Shop: Overview is removed (the character sheet replaces
+it; old links fall back to Build), Equipment splits into Inventory and Loadout,
+and Diagnostics is reached only from the status badges, so it is hidden when
+nothing needs attention. The app header is removed: the builder's Character
+sheet, Settings and Close icons follow undo/redo, the library has a visible
+title and Settings gear, and Settings has a close button.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

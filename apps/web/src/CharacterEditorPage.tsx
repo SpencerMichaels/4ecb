@@ -1689,15 +1689,17 @@ export function CharacterEditorPage({
                 )}
               </p>
             </header>
-            <BuilderCharacterStats evaluation={currentEvaluation} />
-            {showsWallet && equipmentWallet !== undefined ? (
-              <CharacterWallet
-                wallet={equipmentWallet}
-                keepLargeAmountsInGold={keepLargeAmountsInGold}
-                onSetWallet={setWalletAmounts}
-                onAdjustMoney={adjustMoney}
-              />
-            ) : null}
+            <div className="builder-sidebar-panel">
+              <BuilderCharacterStats evaluation={currentEvaluation} />
+              {showsWallet && equipmentWallet !== undefined ? (
+                <CharacterWallet
+                  wallet={equipmentWallet}
+                  keepLargeAmountsInGold={keepLargeAmountsInGold}
+                  onSetWallet={setWalletAmounts}
+                  onAdjustMoney={adjustMoney}
+                />
+              ) : null}
+            </div>
           </aside>
           <div className="builder-main">
             {reviewingContentUpdate &&
