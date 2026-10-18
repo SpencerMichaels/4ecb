@@ -27,7 +27,9 @@ import {
 import { recordLoadDuration } from "./load-performance";
 import {
   CharacterTransaction,
-  adjustWalletCurrency,
+  adjustWalletCoins,
+  type CoinAdjustment,
+  ZERO_CURRENCY,
   characterWalletTextKey,
   formatLegacyCurrency,
   resolveCharacterWallet,
@@ -1610,31 +1612,25 @@ export function CharacterEditorPage({
     });
   };
   const adjustMoney = (
-    deltaCopper: number,
+    coins: CoinAdjustment,
     location: "carried" | "stored" | undefined,
   ): string | undefined => {
     const activeBuild = transaction.current?.current;
     if (activeBuild === undefined) return "Character funds are not available";
     const carried = resolveCharacterWallet(activeBuild, "carried").amount;
     const stored = resolveCharacterWallet(activeBuild, "stored").amount;
-    const none = { cp: 0, sp: 0, gp: 0, pp: 0, ad: 0 };
-    let adjusted: ReturnType<typeof adjustWalletCurrency>;
+    let adjusted: ReturnType<typeof adjustWalletCoins>;
     try {
+      // Quick adjust changes the coin typed; it never re-mints the wallet.
       if (location === undefined)
         // Merged funds: spend carried coins first, then stored.
-        adjusted = adjustWalletCurrency(
-          carried,
-          stored,
-          deltaCopper,
-          keepLargeAmountsInGold,
-        );
+        adjusted = adjustWalletCoins(carried, stored, coins);
       else {
         // Separate funds: adjust only the location the wallet shows.
-        const one = adjustWalletCurrency(
+        const one = adjustWalletCoins(
           location === "carried" ? carried : stored,
-          none,
-          deltaCopper,
-          keepLargeAmountsInGold,
+          ZERO_CURRENCY,
+          coins,
         ).carried;
         adjusted =
           location === "carried"

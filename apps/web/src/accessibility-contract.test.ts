@@ -843,10 +843,12 @@ describe("release accessibility contract", () => {
     expect(shopWorkspace).toContain("setInspectedEntityId(entity.id)");
     expect(shopWorkspace).toContain('"is-selected"');
     expect(equipmentWorkspace).toContain('id="funds-wallet-adjustment"');
-    expect(equipmentWorkspace).toContain("parseCurrencyAdjustment(adjustment)");
-    expect(equipmentWorkspace).toContain(
-      "onAdjustMoney(deltaCopper, location)",
+    // Quick adjust changes the typed coin rather than re-minting the wallet.
+    expect(equipmentWorkspace).toContain("parseCoinAdjustment(adjustment)");
+    expect(characterEditor).toContain(
+      "adjustWalletCoins(carried, stored, coins)",
     );
+    expect(equipmentWorkspace).toContain("onAdjustMoney(coins, location)");
     // Quick adjust is a field in the funds grid, not a popup.
     expect(equipmentWorkspace).toContain('className="funds-adjust-form"');
     expect(equipmentWorkspace).not.toContain("funds-wallet-adjust-options");

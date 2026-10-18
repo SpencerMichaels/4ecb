@@ -408,6 +408,89 @@ export function adjustWalletCurrency(
   };
 }
 
+export interface CoinAdjustment {
+  readonly coin: CurrencyDenomination;
+  /** Signed number of coins: positive adds, negative spends. */
+  readonly count: number;
+}
+
+/** Parses "20pp" or "-15 gp" into the coin and count typed. */
+export function parseCoinAdjustment(value: string): CoinAdjustment {
+  const match = /^\s*([+-]?)\s*(\d+)\s*(ad|pp|gp|sp|cp)\s*$/iu.exec(value);
+  if (match === null) throw new Error("Enter an amount such as 20pp or -15 gp");
+  const count = Number(match[2]);
+  const coin = match[3]?.toLocaleLowerCase() as
+    CurrencyDenomination | undefined;
+  if (coin === undefined || !Number.isSafeInteger(count))
+    throw new Error("Currency adjustment is too large");
+  return { coin, count: match[1] === "-" ? -count : count };
+}
+
+/**
+ * Applies a typed coin adjustment to the coins themselves rather than
+ * re-minting the wallet from a copper total (the legacy purchase order in
+ * {@link adjustWalletCurrency}). Added coins are carried. Spent coins come
+ * from that coin, carried before stored; only a shortfall makes change, by
+ * breaking the nearest larger coins (or, failing that, spending smaller ones,
+ * largest first), with the change returned to carried coins.
+ */
+export function adjustWalletCoins(
+  carried: CurrencyAmount,
+  stored: CurrencyAmount,
+  adjustment: CoinAdjustment,
+): { readonly carried: CurrencyAmount; readonly stored: CurrencyAmount } {
+  const { coin, count } = adjustment;
+  if (!Number.isSafeInteger(count))
+    throw new Error("Currency adjustment is too large");
+  if (count >= 0) {
+    const total = carried[coin] + count;
+    if (!Number.isSafeInteger(total))
+      throw new Error("Currency adjustment is too large");
+    return { carried: { ...carried, [coin]: total }, stored };
+  }
+  const nextCarried: Record<CurrencyDenomination, number> = { ...carried };
+  const nextStored: Record<CurrencyDenomination, number> = { ...stored };
+  let needed = -count;
+  const fromCarried = Math.min(nextCarried[coin], needed);
+  nextCarried[coin] -= fromCarried;
+  needed -= fromCarried;
+  const fromStored = Math.min(nextStored[coin], needed);
+  nextStored[coin] -= fromStored;
+  needed -= fromStored;
+  if (needed === 0) return { carried: nextCarried, stored: nextStored };
+
+  // Make change for the shortfall: nearest larger coins first, then smaller.
+  const shortfall = needed * CURRENCY_COPPER_VALUES[coin];
+  if (!Number.isSafeInteger(shortfall))
+    throw new Error("Currency adjustment is too large");
+  const order = [
+    ...CURRENCY_DENOMINATIONS.filter(
+      (other) => CURRENCY_COPPER_VALUES[other] > CURRENCY_COPPER_VALUES[coin],
+    ).reverse(),
+    ...CURRENCY_DENOMINATIONS.filter(
+      (other) => CURRENCY_COPPER_VALUES[other] < CURRENCY_COPPER_VALUES[coin],
+    ),
+  ];
+  let paid = 0;
+  for (const other of order) {
+    for (const wallet of [nextCarried, nextStored]) {
+      if (paid >= shortfall) break;
+      const value = CURRENCY_COPPER_VALUES[other];
+      const take = Math.min(
+        wallet[other],
+        Math.ceil((shortfall - paid) / value),
+      );
+      wallet[other] -= take;
+      paid += take * value;
+    }
+  }
+  if (paid < shortfall) throw new Error("Not enough funds for that adjustment");
+  const change = currencyFromCopper(paid - shortfall);
+  for (const denomination of CURRENCY_DENOMINATIONS)
+    nextCarried[denomination] += change[denomination];
+  return { carried: nextCarried, stored: nextStored };
+}
+
 export function characterWalletTextKey(
   level: number,
   wallet: CharacterWalletKind,

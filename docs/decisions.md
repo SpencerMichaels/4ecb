@@ -2202,7 +2202,11 @@ under their labels and never truncated. Tiles show actual coins and edit in
 place (double-click or Enter); there is no edit-funds dialog. A "Merge carried
 and stored funds" setting (on by default) shows one set of coins, edits adding
 to carried and spending carried before stored; when off, a Carried / Stored
-switch chooses which location the tiles and quick adjust use. Every detail column is one card wide. Tabs are Build, Details,
+switch chooses which location the tiles and quick adjust use. Quick adjust changes the coin typed
+("-1pp" spends one platinum): added coins are carried, spent coins come from
+that coin (carried before stored), and only a shortfall makes change, by
+breaking the nearest larger coin or spending smaller ones. Purchases keep the
+recovered legacy change-making order. Every detail column is one card wide. Tabs are Build, Details,
 Loadout, Inventory and Shop: Overview is removed (the character sheet replaces
 it; old links fall back to Build), Equipment splits into Inventory and Loadout,
 and Diagnostics is reached only from the status badges, so it is hidden when

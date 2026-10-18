@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   addCurrency,
+  adjustWalletCoins,
   adjustWalletCurrency,
   applyCharacterCommand,
   CharacterTransaction,
@@ -21,11 +22,14 @@ import {
   newCharacterRecord,
   newNativeCharacterRecord,
   parseLegacyCurrency,
+  parseCoinAdjustment,
   parseCurrencyAdjustment,
   resolveCharacterWallet,
   subtractCurrency,
   type CharacterBuild,
   type BuildInventoryEntry,
+  type CurrencyAmount,
+  ZERO_CURRENCY,
 } from ".";
 
 const snapshot = {
@@ -714,5 +718,65 @@ describe("character records", () => {
       id: "new-feat",
       replacesId: "old-feat",
     });
+  });
+});
+
+describe("coin-aware wallet adjustments", () => {
+  const coins = (overrides: Partial<CurrencyAmount> = {}): CurrencyAmount => ({
+    ...ZERO_CURRENCY,
+    ...overrides,
+  });
+
+  it("parses the coin and signed count typed", () => {
+    expect(parseCoinAdjustment("-1pp")).toEqual({ coin: "pp", count: -1 });
+    expect(parseCoinAdjustment(" 20 GP ")).toEqual({ coin: "gp", count: 20 });
+    expect(() => parseCoinAdjustment("lots")).toThrow();
+  });
+
+  it("spends and adds the typed coin without converting others", () => {
+    const carried = coins({ pp: 3, gp: 250 });
+    expect(
+      adjustWalletCoins(carried, ZERO_CURRENCY, { coin: "pp", count: -1 }),
+    ).toEqual({ carried: coins({ pp: 2, gp: 250 }), stored: ZERO_CURRENCY });
+    expect(
+      adjustWalletCoins(carried, ZERO_CURRENCY, { coin: "sp", count: 5 }),
+    ).toEqual({
+      carried: coins({ pp: 3, gp: 250, sp: 5 }),
+      stored: ZERO_CURRENCY,
+    });
+  });
+
+  it("spends carried coins before stored ones", () => {
+    expect(
+      adjustWalletCoins(coins({ gp: 10 }), coins({ gp: 50 }), {
+        coin: "gp",
+        count: -30,
+      }),
+    ).toEqual({ carried: coins(), stored: coins({ gp: 30 }) });
+  });
+
+  it("makes change only for a shortfall, breaking the nearest larger coin", () => {
+    expect(
+      adjustWalletCoins(coins({ ad: 1, pp: 1, gp: 5 }), ZERO_CURRENCY, {
+        coin: "gp",
+        count: -15,
+      }),
+    ).toEqual({
+      // 5 gp spent, then 1 pp broken for the other 10 gp: 90 gp change.
+      carried: coins({ ad: 1, gp: 90 }),
+      stored: ZERO_CURRENCY,
+    });
+    expect(
+      adjustWalletCoins(coins({ sp: 25 }), ZERO_CURRENCY, {
+        coin: "gp",
+        count: -2,
+      }),
+    ).toEqual({ carried: coins({ sp: 5 }), stored: ZERO_CURRENCY });
+    expect(() =>
+      adjustWalletCoins(coins({ gp: 1 }), ZERO_CURRENCY, {
+        coin: "pp",
+        count: -1,
+      }),
+    ).toThrow("Not enough funds");
   });
 });

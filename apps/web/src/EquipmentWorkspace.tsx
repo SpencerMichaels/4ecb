@@ -4,7 +4,8 @@ import {
   CURRENCY_DENOMINATIONS,
   currencyToCopper,
   inventoryEntryWithQuantity,
-  parseCurrencyAdjustment,
+  parseCoinAdjustment,
+  type CoinAdjustment,
   type CurrencyAmount,
   type BuildInventoryEntry,
   type CharacterBuild,
@@ -412,7 +413,7 @@ function FundsPane({
   readonly mergeFunds: boolean;
   readonly onSetWallet: (wallet: EquipmentWalletView) => void;
   readonly onAdjustMoney: (
-    deltaCopper: number,
+    adjustment: CoinAdjustment,
     location: MoneyLocation | undefined,
   ) => string | undefined;
 }) {
@@ -476,9 +477,9 @@ function FundsPane({
   };
 
   const applyAdjustment = () => {
-    let deltaCopper: number;
+    let coins: CoinAdjustment;
     try {
-      deltaCopper = parseCurrencyAdjustment(adjustment);
+      coins = parseCoinAdjustment(adjustment);
     } catch (reason: unknown) {
       showAdjustmentError(
         reason instanceof Error
@@ -487,7 +488,7 @@ function FundsPane({
       );
       return;
     }
-    const error = onAdjustMoney(deltaCopper, location);
+    const error = onAdjustMoney(coins, location);
     if (error !== undefined) {
       showAdjustmentError(error);
       return;
@@ -670,7 +671,7 @@ export function CharacterWallet({
   readonly mergeFunds: boolean;
   readonly onSetWallet: (wallet: EquipmentWalletView) => void;
   readonly onAdjustMoney: (
-    deltaCopper: number,
+    adjustment: CoinAdjustment,
     location: MoneyLocation | undefined,
   ) => string | undefined;
 }) {
