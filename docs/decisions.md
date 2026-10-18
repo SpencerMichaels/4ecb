@@ -2193,9 +2193,11 @@ columns are one card wide and flush right; below 63rem the sidebar folds above
 the workspace.
 
 **Navigation cleanup (2026-10-18).** The portrait, name and race/class/level
-sit on the page above the sidebar box, which starts at the stats. The funds
-(coins, quick adjust, edit) move into that box on the Inventory, Loadout and
-Shop tabs, so every detail column is one card wide. Tabs are Build, Details,
+sit on the page above the sidebar's stat groups, which are unboxed and use
+the printed Play card's group colors (with hue-derived dark-theme tints). The
+funds are a stat group shown on every tab: five coin tiles plus an actions
+tile (quick adjust, edit) in one 3 × 2 grid, values with thousands separators
+under their labels and never truncated. Every detail column is one card wide. Tabs are Build, Details,
 Loadout, Inventory and Shop: Overview is removed (the character sheet replaces
 it; old links fall back to Build), Equipment splits into Inventory and Loadout,
 and Diagnostics is reached only from the status badges, so it is hidden when

@@ -881,7 +881,7 @@ describe("release accessibility contract", () => {
       /\.shared-choice-detail\.shop-rail\s*\{[^}]*position: sticky;/s,
     );
     expect(equipmentWorkspace).toContain(
-      "`is-adjusted is-${walletPulse.direction}`",
+      "` is-adjusted is-${walletPulse.direction}`",
     );
     expect(styles).toContain(
       ".inventory-wallet-denominations > div.is-adjusted.is-decrease",

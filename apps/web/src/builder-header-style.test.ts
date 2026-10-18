@@ -16,7 +16,36 @@ function declarationsFor(selector: string): string {
   return declarations ?? "";
 }
 
+const editor = readFileSync(
+  new URL("./CharacterEditorPage.tsx", import.meta.url),
+  "utf8",
+);
+const equipment = readFileSync(
+  new URL("./EquipmentWorkspace.tsx", import.meta.url),
+  "utf8",
+);
+
 describe("builder character sidebar layout", () => {
+  it("shows unboxed, Play-card colored groups and funds on every tab", () => {
+    const panel = declarationsFor(".builder-sidebar-panel");
+    expect(panel).not.toContain("border");
+    expect(panel).not.toContain("background");
+    expect(styles).not.toMatch(
+      /\.builder-sidebar-panel \.stat-group\s*\{[^}]*--stat-tint:\s*color-mix\(in srgb, var\(--surface-subtle\)/,
+    );
+    expect(editor).toContain("{equipmentWallet !== undefined ? (");
+    expect(editor).not.toContain("showsWallet");
+    // Funds are one stat group: five coin tiles plus an actions tile.
+    expect(equipment).toContain(
+      'className="stat-group stat-tone-wealth funds-pane"',
+    );
+    expect(equipment).toContain('className="stat-tile funds-pane-actions"');
+    expect(equipment).toContain('toLocaleString("en-US")');
+    expect(styles).not.toContain(
+      "text-overflow: ellipsis;\n}\n\n.inventory-wallet",
+    );
+  });
+
   it("puts a sticky character sidebar beside every builder workspace", () => {
     expect(declarationsFor(".builder-layout")).toContain(
       "grid-template-columns: var(--builder-sidebar-width) minmax(0, 1fr)",
@@ -38,7 +67,7 @@ describe("builder character sidebar layout", () => {
     );
     expect(
       declarationsFor(
-        ".builder-character-stats .stat-tiles-compact .stat-tile dd",
+        ".builder-sidebar-panel .stat-tiles-compact .stat-tile dd",
       ),
     ).toContain("font-size: 1.4em");
   });

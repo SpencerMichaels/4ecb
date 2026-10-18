@@ -615,103 +615,108 @@ function FundsPane({
   };
 
   return (
-    <section className="inventory-wallet funds-pane" aria-label="Funds">
-      <div className="inventory-wallet-summary">
-        <Icon name="circle-dollar-sign" />
-        <div className="inventory-wallet-balance">
-          <dl className="inventory-wallet-denominations">
-            {CURRENCY_DENOMINATIONS.map((denomination) => (
-              <div
-                key={`${denomination}-${walletPulse.denominations.includes(denomination) ? walletPulse.generation : 0}`}
-                className={
-                  walletPulse.denominations.includes(denomination)
-                    ? `is-adjusted is-${walletPulse.direction}`
-                    : undefined
-                }
-              >
-                <dt>{denomination.toLocaleUpperCase()}</dt>
-                <dd>{totalWallet[denomination]}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-        <div className="funds-pane-actions">
-          <div className="funds-wallet-adjust-menu" data-wallet-adjust="">
-            <button
-              ref={adjustTrigger}
-              type="button"
-              className="inventory-wallet-edit button-icon"
-              aria-label="Quick adjust funds"
-              title="Quick adjust funds"
-              aria-expanded={adjustOpen}
-              aria-controls="funds-wallet-adjust-options"
-              onClick={() => {
-                setAdjustOpen((current) => !current);
-                setAdjustmentMessage(undefined);
-              }}
-            >
-              <Icon name="calculator" />
-            </button>
-            {adjustOpen ? (
-              <form
-                id="funds-wallet-adjust-options"
-                className="inventory-sale-options funds-wallet-adjust-options"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  applyAdjustment();
+    <section
+      className="stat-group stat-tone-wealth funds-pane"
+      aria-label="Funds"
+    >
+      {/* Five coin tiles and an actions tile: one 3 × 2 grid like the
+          ability scores, values below their labels so none are cut off. */}
+      <dl className="stat-tiles stat-tiles-compact inventory-wallet-denominations">
+        {CURRENCY_DENOMINATIONS.map((denomination) => (
+          <div
+            key={`${denomination}-${walletPulse.denominations.includes(denomination) ? walletPulse.generation : 0}`}
+            className={`stat-tile${
+              walletPulse.denominations.includes(denomination)
+                ? ` is-adjusted is-${walletPulse.direction}`
+                : ""
+            }`}
+          >
+            <dt>{denomination.toLocaleUpperCase()}</dt>
+            <dd>{totalWallet[denomination].toLocaleString("en-US")}</dd>
+          </div>
+        ))}
+        <div className="stat-tile funds-pane-actions">
+          <dt className="visually-hidden">Change funds</dt>
+          <dd>
+            <div className="funds-wallet-adjust-menu" data-wallet-adjust="">
+              <button
+                ref={adjustTrigger}
+                type="button"
+                className="inventory-wallet-edit button-icon"
+                aria-label="Quick adjust funds"
+                title="Quick adjust funds"
+                aria-expanded={adjustOpen}
+                aria-controls="funds-wallet-adjust-options"
+                onClick={() => {
+                  setAdjustOpen((current) => !current);
+                  setAdjustmentMessage(undefined);
                 }}
               >
-                <label
-                  className="visually-hidden"
-                  htmlFor="funds-wallet-adjustment"
-                >
-                  Adjust funds
-                </label>
-                <input
-                  id="funds-wallet-adjustment"
-                  ref={adjustmentInput}
-                  type="text"
-                  inputMode="text"
-                  className={
-                    adjustmentMessage?.kind === "error" ? "is-error" : undefined
-                  }
-                  placeholder="20pp, -15 gp, ..."
-                  value={adjustment}
-                  aria-describedby="funds-wallet-adjustment-message"
-                  aria-invalid={
-                    adjustmentMessage?.kind === "error" || undefined
-                  }
-                  onChange={(event) => {
-                    setAdjustment(event.currentTarget.value);
-                    setAdjustmentMessage(undefined);
+                <Icon name="calculator" />
+              </button>
+              {adjustOpen ? (
+                <form
+                  id="funds-wallet-adjust-options"
+                  className="inventory-sale-options funds-wallet-adjust-options"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    applyAdjustment();
                   }}
-                />
-                <span
-                  key={`funds-wallet-adjustment-${adjustmentMessage?.generation ?? 0}`}
-                  className="visually-hidden"
-                  id="funds-wallet-adjustment-message"
-                  role={
-                    adjustmentMessage?.kind === "error" ? "alert" : "status"
-                  }
                 >
-                  {adjustmentMessage?.text ?? ""}
-                </span>
-              </form>
-            ) : null}
-          </div>
-          <button
-            type="button"
-            className="inventory-wallet-edit button-icon"
-            aria-label="Edit funds"
-            title="Edit funds"
-            aria-expanded={editOpen}
-            aria-controls="wallet-dialog"
-            onClick={onEdit}
-          >
-            <Icon name="edit" />
-          </button>
+                  <label
+                    className="visually-hidden"
+                    htmlFor="funds-wallet-adjustment"
+                  >
+                    Adjust funds
+                  </label>
+                  <input
+                    id="funds-wallet-adjustment"
+                    ref={adjustmentInput}
+                    type="text"
+                    inputMode="text"
+                    className={
+                      adjustmentMessage?.kind === "error"
+                        ? "is-error"
+                        : undefined
+                    }
+                    placeholder="20pp, -15 gp, ..."
+                    value={adjustment}
+                    aria-describedby="funds-wallet-adjustment-message"
+                    aria-invalid={
+                      adjustmentMessage?.kind === "error" || undefined
+                    }
+                    onChange={(event) => {
+                      setAdjustment(event.currentTarget.value);
+                      setAdjustmentMessage(undefined);
+                    }}
+                  />
+                  <span
+                    key={`funds-wallet-adjustment-${adjustmentMessage?.generation ?? 0}`}
+                    className="visually-hidden"
+                    id="funds-wallet-adjustment-message"
+                    role={
+                      adjustmentMessage?.kind === "error" ? "alert" : "status"
+                    }
+                  >
+                    {adjustmentMessage?.text ?? ""}
+                  </span>
+                </form>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className="inventory-wallet-edit button-icon"
+              aria-label="Edit funds"
+              title="Edit funds"
+              aria-expanded={editOpen}
+              aria-controls="wallet-dialog"
+              onClick={onEdit}
+            >
+              <Icon name="edit" />
+            </button>
+          </dd>
         </div>
-      </div>
+      </dl>
     </section>
   );
 }

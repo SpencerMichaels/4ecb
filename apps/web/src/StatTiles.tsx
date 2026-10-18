@@ -8,7 +8,8 @@ export interface StatTileValue {
   readonly lead?: string;
 }
 
-export type StatTone = "defenses" | "health" | "movement" | "abilities";
+export type StatTone =
+  "defenses" | "health" | "movement" | "abilities" | "wealth";
 
 /** Labeled numeric tiles shared by the printed summary band and the builder. */
 export function StatGroup({

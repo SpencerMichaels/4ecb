@@ -1640,7 +1640,6 @@ export function CharacterEditorPage({
     });
     return undefined;
   };
-  const showsWallet = workspaceTab === "equipment" || workspaceTab === "shop";
 
   const levelPicker = (
     <LevelPicker
@@ -1691,7 +1690,7 @@ export function CharacterEditorPage({
             </header>
             <div className="builder-sidebar-panel">
               <BuilderCharacterStats evaluation={currentEvaluation} />
-              {showsWallet && equipmentWallet !== undefined ? (
+              {equipmentWallet !== undefined ? (
                 <CharacterWallet
                   wallet={equipmentWallet}
                   keepLargeAmountsInGold={keepLargeAmountsInGold}

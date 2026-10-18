@@ -21,7 +21,9 @@ Build tab's "Level N ▾" heading opens a modal level plan with per-level
 status, including on levels with no choices. Navigation cleanup: identity above
 the sidebar box; funds in the sidebar on Inventory/Loadout/Shop; tabs Build,
 Details, Loadout, Inventory, Shop (Overview removed, Diagnostics via status
-badges); no app header (per-page Settings/Close/Character sheet icons). Choice, details and detail
+badges); no app header (per-page Settings/Close/Character sheet icons). Sidebar
+stats are unboxed and Play-card colored; funds are a coin-tile stat group on
+every tab. Choice, details and detail
 panes give their second column exactly one card width. Verification: 920
 tests, typecheck, lint and build pass; visual review is pending.
 
