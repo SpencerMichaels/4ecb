@@ -4158,8 +4158,15 @@ button.builder-health:focus-visible {
   }
 }
 
+/* Long details (a class, a deity) scroll inside the pane instead of running
+   past the window; the small inset keeps card focus outlines visible. */
 .shared-choice-detail {
+  max-height: calc(100dvh - 2rem);
   min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+  margin: -4px;
   position: sticky;
   top: 1rem;
 }
@@ -6624,6 +6631,11 @@ button.inventory-icon-action:disabled {
   .characters-page,
   .sheet-page {
     padding-inline: 1rem;
+  }
+  .shared-choice-detail {
+    max-height: none;
+    overflow-y: visible;
+    position: static;
   }
   .builder-workspace,
   .level-choice-workspace,

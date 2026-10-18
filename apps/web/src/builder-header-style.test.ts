@@ -84,6 +84,13 @@ describe("builder character sidebar layout", () => {
     );
   });
 
+  it("scrolls long detail panes inside the window", () => {
+    const pane = declarationsFor(".shared-choice-detail");
+    expect(pane).toContain("max-height: calc(100dvh - 2rem)");
+    expect(pane).toContain("overflow-y: auto");
+    expect(pane).toContain("position: sticky");
+  });
+
   it("keeps the expanded top-level navigation compact", () => {
     expect(
       declarationsFor(".builder-tabs :is(button, .builder-tab)"),
