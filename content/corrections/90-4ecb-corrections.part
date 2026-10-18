@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  4ecb content corrections, merged after the CBLoader parts by
+  scripts/build-private-content.sh. Each fix patches records by ID with our own
+  rule statements; no official text is copied here.
+-->
+<D20Rules game-system="D&amp;D4E">
+  <!-- Dwarven Resilience is phrased as a separate power, but in play it makes
+       second wind a minor action. Express that directly on Second Wind. -->
+  <RemoveNodes internal-id="ID_FMP_RACIAL_TRAIT_12">
+    <rules />
+    <MainText />
+    <specific name="Short Description" />
+    <specific name="Powers" />
+    <specific name="_DisplayPowers" />
+  </RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_RACIAL_TRAIT_12">You can use your second wind as a minor action.
+    <specific name="Short Description">You can use your second wind as a minor action.</specific>
+    <rules>
+      <modify name="Second Wind" Field="Action Type" value="Minor Action" />
+      <modify name="Second Wind" Field="Dwarven Resilience" value="You can use your second wind as a minor action." />
+    </rules>
+  </AppendNodes>
+
+  <!-- Stoneheart Warrior only noted the free action; also change the action. -->
+  <AppendNodes internal-id="ID_FMP_FEAT_902">
+    <rules>
+      <modify name="Second Wind" Field="Action Type" value="Free Action" />
+    </rules>
+  </AppendNodes>
+</D20Rules>

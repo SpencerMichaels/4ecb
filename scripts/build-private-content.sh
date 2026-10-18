@@ -25,18 +25,28 @@ fi
 
 cd "$project_root"
 python reverse-engineering/scripts/merge_parts.py \
-  "$base_xml" "${parts[@]}" -o "$scratch_dir/merged.xml"
+  "$base_xml" "${parts[@]}" -o "$scratch_dir/cbloader.xml"
 
+# Parity check against CBLoader's own cache, before 4ecb corrections.
 if [[ -f "$reference_merged" ]]; then
   python reverse-engineering/scripts/compare_rulesets.py \
-    "$reference_merged" "$scratch_dir/merged.xml"
+    "$reference_merged" "$scratch_dir/cbloader.xml"
+fi
+
+# 4ecb's own corrections (content/corrections/*.part) apply last.
+corrections=("$project_root"/content/corrections/*.part)
+if (( ${#corrections[@]} > 0 )); then
+  python reverse-engineering/scripts/merge_parts.py \
+    "$scratch_dir/cbloader.xml" "${corrections[@]}" -o "$scratch_dir/merged.xml"
+else
+  cp "$scratch_dir/cbloader.xml" "$scratch_dir/merged.xml"
 fi
 
 pnpm content-tool build \
   --input "$scratch_dir/merged.xml" \
   --output "$output" \
-  --id local-wotc-and-custom \
-  --name "Local legacy rules corpus" \
+  --id "${PACK_ID:-local-wotc-and-custom}" \
+  --name "${PACK_NAME:-Local legacy rules corpus}" \
   --source-key "legacy-base-plus-ordered-parts"
 pnpm content-tool validate "$output"
 
