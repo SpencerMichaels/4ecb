@@ -13,7 +13,13 @@ const a4Styles = readFileSync(
   new URL("../public/print-a4.css", import.meta.url),
   "utf8",
 );
-const sheetSource = ["./CharacterSheetPage.tsx", "./print-power-attacks.ts"]
+const sheetSource = [
+  "./CharacterSheetPage.tsx",
+  "./PowerCard.tsx",
+  "./ItemCard.tsx",
+  "./use-print-card-fit.ts",
+  "./print-power-attacks.ts",
+]
   .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
   .join("\n");
 
@@ -38,8 +44,8 @@ describe("print layout contract", () => {
   });
   it("places optional regular-weight keywords first in the subheader with a key icon", () => {
     const powerSource = sheetSource.slice(
-      sheetSource.indexOf("function PrintPowerCard("),
-      sheetSource.indexOf("function PrintItemCard("),
+      sheetSource.indexOf("export function PowerCard("),
+      sheetSource.indexOf("export function ItemCard("),
     );
     const keywords = powerSource.indexOf('className="print-card-keyword-band"');
     expect(keywords).toBeLessThan(
@@ -107,7 +113,7 @@ describe("print layout contract", () => {
       /\.print-item-properties p \{[^}]*text-indent:\s*0;/,
     );
     const itemSource = sheetSource.slice(
-      sheetSource.indexOf("function PrintItemCard("),
+      sheetSource.indexOf("export function ItemCard("),
     );
     expect(itemSource.indexOf('className="print-item-stats"')).toBeLessThan(
       itemSource.indexOf(

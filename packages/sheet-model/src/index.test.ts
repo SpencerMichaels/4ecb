@@ -7,7 +7,12 @@ import type {
 import type { ContentEntity } from "@4ecb/content-domain";
 import type { EvaluatedCharacter } from "@4ecb/rules-engine";
 
-import { buildEvaluatedSheetModel, buildSheetModel } from ".";
+import {
+  authoredSheetPowerCard,
+  buildEvaluatedSheetModel,
+  buildSheetModel,
+  createSheetPowerCardFinder,
+} from ".";
 
 describe("sheet model", () => {
   it("applies the coin-weight option to cached sheets without modifying the cache", () => {
@@ -862,6 +867,19 @@ describe("sheet model", () => {
     );
     expect(flaggedModel.powers[0]?.basicAttackKind).toBe("ranged");
     expect(model.powers[0]?.basicAttackKind).toBeUndefined();
+    // The builder's card for an owned power is exactly the sheet's card.
+    const ownedPower = evaluation.powers[0]!;
+    const ownedEntity = content.find(
+      (entity) =>
+        entity.id.toLocaleLowerCase() ===
+        ownedPower.definitionId.toLocaleLowerCase(),
+    );
+    expect(ownedEntity).toBeDefined();
+    expect(
+      createSheetPowerCardFinder(evaluation, content, {
+        resolveAbilityChoices: true,
+      })(ownedEntity!, ownedPower),
+    ).toEqual(model.powers.find((card) => card.id === ownedPower.definitionId));
     expect(model.overview?.defensiveTraits).toContainEqual({
       label: "Resistance",
       value: "Fire 5",
@@ -1392,5 +1410,57 @@ describe("sheet model", () => {
         [],
       ),
     ).toThrow("nonconvergent");
+  });
+});
+
+describe("authored power cards", () => {
+  it("projects a build choice into the printed card shape without calculations", () => {
+    const specifics = [
+      ["Power Usage", "Encounter"],
+      ["Action Type", "Standard Action"],
+      ["Keywords", "Martial, Weapon"],
+      ["Attack Type", "Melee weapon"],
+      ["Class", "ID_SYNTHETIC_CLASS"],
+      ["Level", "7"],
+      ["Attack", "Strength vs. AC"],
+      ["Hit", "2[W] + Strength modifier damage."],
+    ].map(([name, value], ordinal) => ({
+      name: name!,
+      value: value!,
+      ordinal,
+      extraAttributes: [],
+    }));
+    const card = authoredSheetPowerCard(
+      {
+        id: "SYNTHETIC_POWER",
+        name: "Synthetic Strike",
+        type: "Power",
+        source: "Synthetic",
+        sources: ["Synthetic"],
+        attributes: [],
+        categories: [],
+        specifics,
+        rules: [],
+        description: "",
+        extensions: [],
+        provenance: { sourceKey: "fixture", sourceOrdinal: 0 },
+      },
+      (text) => text.replace("Strength modifier", "STR"),
+    );
+    expect(card).toMatchObject({
+      kind: "power",
+      usage: "Encounter",
+      actionType: "Standard Action",
+      keywords: "Martial, Weapon",
+      source: "Synthetic",
+    });
+    expect(card.variants).toBeUndefined();
+    expect(card.fields.map(({ label }) => label)).toEqual([
+      "Attack Type",
+      "Level",
+      "Attack",
+      "Hit",
+    ]);
+    expect(card.fields.at(-1)?.value).toBe("2[W] + STR damage.");
   });
 });

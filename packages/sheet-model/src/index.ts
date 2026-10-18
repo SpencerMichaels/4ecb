@@ -365,16 +365,16 @@ function isUserFacingPowerField(field: SpecificField): boolean {
  */
 function evaluatedEntityFields(
   entity: ContentEntity,
-  evaluation: EvaluatedCharacter,
+  overlays: EvaluatedCharacter["overlays"],
 ): SheetValue[] {
-  const applied = applyFieldOverlays(entity, evaluation.overlays);
+  const applied = applyFieldOverlays(entity, overlays);
   const appliedByName = new Map(
     Object.entries(applied).map(([name, value]) => [
       name.trim().toLocaleLowerCase(),
       { name, value },
     ]),
   );
-  const matchingOverlays = evaluation.overlays.filter((overlay) =>
+  const matchingOverlays = overlays.filter((overlay) =>
     overlay.targetDefinitionIds.some(
       (id) => id.toLocaleLowerCase() === entity.id.toLocaleLowerCase(),
     ),
@@ -765,7 +765,10 @@ function evaluatedPowerCards(
     ]),
   );
   const commonFields: SheetValue[] = [
-    ...(entity === undefined ? [] : evaluatedEntityFields(entity, evaluation))
+    ...(entity === undefined
+      ? []
+      : evaluatedEntityFields(entity, evaluation.overlays)
+    )
       .filter(
         ({ label }) =>
           !irrelevantFeatureClauses.has(featureClauseKey(label)) &&
@@ -888,6 +891,121 @@ function evaluatedPowerCards(
       ...entityPresentation(entity),
     },
   ];
+}
+
+const CARD_HEADER_POWER_FIELDS = new Set([
+  "power usage",
+  "action type",
+  "keywords",
+]);
+
+/**
+ * The printed card for a power the character is only considering (a build
+ * choice): authored formulas, no equipment calculations. The same card shape
+ * and field selection as an evaluated power card, so builder and sheet render
+ * one format.
+ */
+export function authoredSheetPowerCard(
+  entity: ContentEntity,
+  personalize: (text: string) => string = (text) => text,
+): SheetCard {
+  const field = (name: string) =>
+    entity.specifics
+      .find(
+        (specific) =>
+          specific.name.trim().toLocaleLowerCase() === name.toLocaleLowerCase(),
+      )
+      ?.value.trim() || undefined;
+  const usage = field("Power Usage");
+  const actionType = field("Action Type");
+  const keywords = field("Keywords");
+  return {
+    id: entity.id,
+    kind: "power",
+    name: entity.name,
+    ...(usage === undefined ? {} : { usage }),
+    ...(actionType === undefined ? {} : { actionType }),
+    ...(keywords === undefined ? {} : { keywords }),
+    fields: evaluatedEntityFields(entity, [])
+      .filter(
+        ({ label }) => !CARD_HEADER_POWER_FIELDS.has(label.toLocaleLowerCase()),
+      )
+      .map(({ label, value }) => ({ label, value: personalize(value) })),
+    ...entityPresentation(entity),
+  };
+}
+
+/**
+ * Builds printed power cards from a builder evaluation, including powers the
+ * character does not own yet when the caller supplies a hypothetical
+ * evaluation of that power. Owned powers produce exactly the sheet's card.
+ */
+export function createSheetPowerCardFinder(
+  evaluation: EvaluatedCharacter,
+  content: readonly ContentEntity[],
+  options: { readonly resolveAbilityChoices?: boolean } = {},
+): (entity: ContentEntity, power: EvaluatedPower | undefined) => SheetCard {
+  const personalize = createEvaluatedPowerTextPersonalizer(
+    evaluation,
+    content,
+    options.resolveAbilityChoices === true,
+  );
+  const irrelevantFeatureClauses = irrelevantFeatureClauseNames(
+    evaluation,
+    content,
+  );
+  const cache = new Map<string, SheetCard>();
+  return (entity, power) => {
+    const key = `${entity.id}\u0000${power?.definitionId ?? ""}`;
+    const cached = cache.get(key);
+    if (cached !== undefined) return cached;
+    const card =
+      power === undefined
+        ? authoredSheetPowerCard(entity, personalize)
+        : evaluatedPowerCards(
+            power,
+            entity,
+            evaluation,
+            personalize,
+            irrelevantFeatureClauses,
+            new Map(),
+          )[0]!;
+    cache.set(key, card);
+    return card;
+  };
+}
+
+/**
+ * The printed card for an item composed of its content entities (a base item
+ * and its enchantment, the last one naming it). Shared by the sheet and the
+ * builder's equipment and shop details.
+ */
+export function sheetItemCard(input: {
+  readonly name: string;
+  readonly entities: readonly ContentEntity[];
+  readonly itemType?: string | undefined;
+  readonly baseItemType?: string | undefined;
+  readonly quantity?: number | undefined;
+  readonly equippedQuantity?: number | undefined;
+}): SheetCard {
+  const entity = input.entities.at(-1);
+  return {
+    ...(entity === undefined ? {} : { id: entity.id }),
+    kind: "item",
+    name: input.name,
+    itemType: input.itemType ?? entity?.type ?? "Item",
+    baseItemType: input.baseItemType ?? input.entities[0]?.type ?? "Item",
+    fields: [
+      ...(input.quantity === undefined
+        ? []
+        : [{ label: "Quantity", value: String(input.quantity) }]),
+      ...(input.equippedQuantity === undefined || input.equippedQuantity === 0
+        ? []
+        : [{ label: "Equipped", value: String(input.equippedQuantity) }]),
+      ...input.entities.flatMap((candidate) => entityFields(candidate)),
+    ],
+    ...entityPresentation(entity),
+  };
 }
 
 function powerCard(
@@ -1472,27 +1590,14 @@ export function buildEvaluatedSheetModel(
       if (original?.showPowerCard === false || referenceKind !== undefined)
         return [];
       return [
-        {
-          ...(entity === undefined ? {} : { id: entity.id }),
-          kind: "item" as const,
+        sheetItemCard({
           name,
-          itemType: entity?.type ?? original?.elements.at(-1)?.type ?? "Item",
-          baseItemType:
-            itemEntities[0]?.type ?? original?.elements[0]?.type ?? "Item",
-          fields: [
-            { label: "Quantity", value: String(entry.quantity) },
-            ...(entry.equippedQuantity === 0
-              ? []
-              : [
-                  {
-                    label: "Equipped",
-                    value: String(entry.equippedQuantity),
-                  },
-                ]),
-            ...itemEntities.flatMap((candidate) => entityFields(candidate)),
-          ],
-          ...entityPresentation(entity),
-        },
+          entities: itemEntities,
+          itemType: entity?.type ?? original?.elements.at(-1)?.type,
+          baseItemType: itemEntities[0]?.type ?? original?.elements[0]?.type,
+          quantity: entry.quantity,
+          equippedQuantity: entry.equippedQuantity,
+        }),
       ];
     },
   );
