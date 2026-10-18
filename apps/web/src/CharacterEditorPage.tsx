@@ -111,7 +111,11 @@ import {
   CharacterDetailsEditor,
   CharacterTextField,
 } from "./CharacterDetailsEditor";
-import { EquipmentWorkspace } from "./EquipmentWorkspace";
+import {
+  CharacterWallet,
+  EquipmentWorkspace,
+  type EquipmentWalletView,
+} from "./EquipmentWorkspace";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
 import { PortraitEditor } from "./PortraitEditor";
 import {
@@ -1567,6 +1571,77 @@ export function CharacterEditorPage({
           return { level, status, statusLabel };
         });
 
+  const equipmentWallet: EquipmentWalletView | undefined =
+    carriedWallet === undefined || storedWallet === undefined
+      ? undefined
+      : {
+          carried: {
+            copper: carriedWallet.cp,
+            silver: carriedWallet.sp,
+            gold: carriedWallet.gp,
+            platinum: carriedWallet.pp,
+            astral: carriedWallet.ad,
+          },
+          stored: {
+            copper: storedWallet.cp,
+            silver: storedWallet.sp,
+            gold: storedWallet.gp,
+            platinum: storedWallet.pp,
+            astral: storedWallet.ad,
+          },
+        };
+  const setWalletAmounts = (nextWallet: EquipmentWalletView): void => {
+    const amount = (location: "carried" | "stored") => ({
+      cp: Math.max(0, Math.trunc(nextWallet[location].copper)),
+      sp: Math.max(0, Math.trunc(nextWallet[location].silver)),
+      gp: Math.max(0, Math.trunc(nextWallet[location].gold)),
+      pp: Math.max(0, Math.trunc(nextWallet[location].platinum)),
+      ad: Math.max(0, Math.trunc(nextWallet[location].astral)),
+    });
+    dispatch({
+      kind: "batch",
+      commands: (["carried", "stored"] as const).map((location) => ({
+        kind: "set-text" as const,
+        name: characterWalletTextKey(build.effectiveLevel, location),
+        value: formatLegacyCurrency(amount(location)),
+      })),
+    });
+  };
+  const adjustMoney = (deltaCopper: number): string | undefined => {
+    const activeBuild = transaction.current?.current;
+    if (activeBuild === undefined) return "Character funds are not available";
+    let adjusted: ReturnType<typeof adjustWalletCurrency>;
+    try {
+      adjusted = adjustWalletCurrency(
+        resolveCharacterWallet(activeBuild, "carried").amount,
+        resolveCharacterWallet(activeBuild, "stored").amount,
+        deltaCopper,
+        keepLargeAmountsInGold,
+      );
+    } catch (reason: unknown) {
+      return reason instanceof Error
+        ? reason.message
+        : "Currency adjustment was rejected";
+    }
+    dispatch({
+      kind: "batch",
+      commands: [
+        {
+          kind: "set-text",
+          name: characterWalletTextKey(activeBuild.effectiveLevel, "carried"),
+          value: formatLegacyCurrency(adjusted.carried),
+        },
+        {
+          kind: "set-text",
+          name: characterWalletTextKey(activeBuild.effectiveLevel, "stored"),
+          value: formatLegacyCurrency(adjusted.stored),
+        },
+      ],
+    });
+    return undefined;
+  };
+  const showsWallet = workspaceTab === "equipment" || workspaceTab === "shop";
+
   const levelPicker = (
     <LevelPicker
       disabled={entities.length === 0}
@@ -1615,6 +1690,14 @@ export function CharacterEditorPage({
               </p>
             </header>
             <BuilderCharacterStats evaluation={currentEvaluation} />
+            {showsWallet && equipmentWallet !== undefined ? (
+              <CharacterWallet
+                wallet={equipmentWallet}
+                keepLargeAmountsInGold={keepLargeAmountsInGold}
+                onSetWallet={setWalletAmounts}
+                onAdjustMoney={adjustMoney}
+              />
+            ) : null}
           </aside>
           <div className="builder-main">
             {reviewingContentUpdate &&
@@ -2225,8 +2308,7 @@ export function CharacterEditorPage({
             <div
               hidden={workspaceTab !== "equipment" && workspaceTab !== "shop"}
             >
-              {carriedWallet === undefined ||
-              storedWallet === undefined ? null : (
+              {equipmentWallet === undefined ? null : (
                 <BuilderCardContext.Provider
                   value={equipmentCardSettings ?? buildCardSettings}
                 >
@@ -2237,7 +2319,6 @@ export function CharacterEditorPage({
                     activeDefinitionIds={
                       currentEvaluation?.activeDefinitionIds ?? []
                     }
-                    keepLargeAmountsInGold={keepLargeAmountsInGold}
                     workspace={workspaceTab === "shop" ? "shop" : "equipment"}
                     loadoutView={
                       navigation.workspace === "equipment" &&
@@ -2251,22 +2332,7 @@ export function CharacterEditorPage({
                     onShopCategoryChange={(category) =>
                       onNavigate(characterId, { workspace: "shop", category })
                     }
-                    wallet={{
-                      carried: {
-                        copper: carriedWallet.cp,
-                        silver: carriedWallet.sp,
-                        gold: carriedWallet.gp,
-                        platinum: carriedWallet.pp,
-                        astral: carriedWallet.ad,
-                      },
-                      stored: {
-                        copper: storedWallet.cp,
-                        silver: storedWallet.sp,
-                        gold: storedWallet.gp,
-                        platinum: storedWallet.pp,
-                        astral: storedWallet.ad,
-                      },
-                    }}
+                    wallet={equipmentWallet}
                     onPutInventory={(entry) =>
                       dispatch({ kind: "put-inventory", entry })
                     }
@@ -2305,80 +2371,6 @@ export function CharacterEditorPage({
                         displacedSlotIds,
                       );
                       if (command !== undefined) dispatch(command);
-                    }}
-                    onSetWallet={(nextWallet) => {
-                      const amount = (location: "carried" | "stored") => ({
-                        cp: Math.max(
-                          0,
-                          Math.trunc(nextWallet[location].copper),
-                        ),
-                        sp: Math.max(
-                          0,
-                          Math.trunc(nextWallet[location].silver),
-                        ),
-                        gp: Math.max(0, Math.trunc(nextWallet[location].gold)),
-                        pp: Math.max(
-                          0,
-                          Math.trunc(nextWallet[location].platinum),
-                        ),
-                        ad: Math.max(
-                          0,
-                          Math.trunc(nextWallet[location].astral),
-                        ),
-                      });
-                      dispatch({
-                        kind: "batch",
-                        commands: (["carried", "stored"] as const).map(
-                          (location) => ({
-                            kind: "set-text" as const,
-                            name: characterWalletTextKey(
-                              build.effectiveLevel,
-                              location,
-                            ),
-                            value: formatLegacyCurrency(amount(location)),
-                          }),
-                        ),
-                      });
-                    }}
-                    onAdjustMoney={(deltaCopper) => {
-                      const activeBuild = transaction.current?.current;
-                      if (activeBuild === undefined)
-                        return "Character funds are not available";
-                      let adjusted: ReturnType<typeof adjustWalletCurrency>;
-                      try {
-                        adjusted = adjustWalletCurrency(
-                          resolveCharacterWallet(activeBuild, "carried").amount,
-                          resolveCharacterWallet(activeBuild, "stored").amount,
-                          deltaCopper,
-                          keepLargeAmountsInGold,
-                        );
-                      } catch (reason: unknown) {
-                        return reason instanceof Error
-                          ? reason.message
-                          : "Currency adjustment was rejected";
-                      }
-                      dispatch({
-                        kind: "batch",
-                        commands: [
-                          {
-                            kind: "set-text",
-                            name: characterWalletTextKey(
-                              activeBuild.effectiveLevel,
-                              "carried",
-                            ),
-                            value: formatLegacyCurrency(adjusted.carried),
-                          },
-                          {
-                            kind: "set-text",
-                            name: characterWalletTextKey(
-                              activeBuild.effectiveLevel,
-                              "stored",
-                            ),
-                            value: formatLegacyCurrency(adjusted.stored),
-                          },
-                        ],
-                      });
-                      return undefined;
                     }}
                   />
                 </BuilderCardContext.Provider>

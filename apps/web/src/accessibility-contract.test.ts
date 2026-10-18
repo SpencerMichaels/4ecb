@@ -607,7 +607,7 @@ describe("release accessibility contract", () => {
       /\.equipment-workspace\s*\{([^}]*)\}/,
     )?.[1];
     expect(equipmentWorkspaceRule).toContain("minmax(0, 1fr)");
-    expect(equipmentWorkspaceRule).toContain("clamp(28rem, 41vw, 32rem)");
+    expect(equipmentWorkspaceRule).toContain("var(--panel-card-width)");
     expect(styles).toMatch(
       /@media \(max-width: 60rem\)[\s\S]*?\.equipment-workspace\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\)/,
     );
@@ -857,12 +857,14 @@ describe("release accessibility contract", () => {
       'document.addEventListener("keydown", dismissWithEscape)',
     );
     expect(equipmentWorkspace).toContain("applyAdjustment()");
-    expect(equipmentWorkspace.match(/<FundsPane/g)).toHaveLength(2);
+    // One wallet, in the character sidebar (CharacterWallet).
+    expect(equipmentWorkspace.match(/<FundsPane/g)).toHaveLength(1);
+    expect(characterEditor).toContain("<CharacterWallet");
     expect(equipmentWorkspace).toContain('aria-label="Quick adjust funds"');
     expect(equipmentWorkspace).toContain('title="Quick adjust funds"');
     expect(equipmentWorkspace).toContain('aria-label="Edit funds"');
     expect(equipmentWorkspace).toContain("onSetWallet(draft)");
-    expect(characterEditor).toContain("onSetWallet={(nextWallet) =>");
+    expect(characterEditor).toContain("onSetWallet={setWalletAmounts}");
     expect(equipmentWorkspace).not.toContain(
       'className="inventory-wallet-label"',
     );
@@ -872,9 +874,9 @@ describe("release accessibility contract", () => {
     expect(styles).toMatch(
       /\.inventory-sale-options\.funds-wallet-adjust-options\s*\{[^}]*min-width: min\(18rem, calc\(100vw - 2rem\)\);/s,
     );
-    expect(styles).toMatch(
-      /\.shop-rail \.shop-funds\s*\{[^}]*background: var\(--surface\);[^}]*position: sticky;[^}]*top: 0\.75rem;/s,
-    );
+    // Funds stay in view through the sticky character sidebar instead.
+    expect(styles).not.toContain(".shop-funds");
+    expect(styles).toMatch(/\.builder-sidebar\s*\{[^}]*position: sticky;/s);
     expect(styles).not.toMatch(
       /\.shared-choice-detail\.shop-rail\s*\{[^}]*position: sticky;/s,
     );

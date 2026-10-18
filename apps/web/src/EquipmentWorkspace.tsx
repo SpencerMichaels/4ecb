@@ -489,14 +489,12 @@ function FundsPane({
   wallet,
   keepLargeAmountsInGold,
   editOpen,
-  sticky = false,
   onEdit,
   onAdjustMoney,
 }: {
   readonly wallet: EquipmentWalletView;
   readonly keepLargeAmountsInGold: boolean;
   readonly editOpen: boolean;
-  readonly sticky?: boolean;
   readonly onEdit: () => void;
   readonly onAdjustMoney: (deltaCopper: number) => string | undefined;
 }) {
@@ -617,10 +615,7 @@ function FundsPane({
   };
 
   return (
-    <section
-      className={`inventory-wallet funds-pane${sticky ? " shop-funds" : ""}`}
-      aria-label="Funds"
-    >
+    <section className="inventory-wallet funds-pane" aria-label="Funds">
       <div className="inventory-wallet-summary">
         <Icon name="circle-dollar-sign" />
         <div className="inventory-wallet-balance">
@@ -721,13 +716,46 @@ function FundsPane({
   );
 }
 
+/** The character's funds with quick-adjust and edit, shown in the builder's
+ * character sidebar on the Inventory, Loadout and Shop tabs. */
+export function CharacterWallet({
+  wallet,
+  keepLargeAmountsInGold,
+  onSetWallet,
+  onAdjustMoney,
+}: {
+  readonly wallet: EquipmentWalletView;
+  readonly keepLargeAmountsInGold: boolean;
+  readonly onSetWallet: (wallet: EquipmentWalletView) => void;
+  readonly onAdjustMoney: (deltaCopper: number) => string | undefined;
+}) {
+  const [walletOpen, setWalletOpen] = useState(false);
+  return (
+    <>
+      <FundsPane
+        wallet={wallet}
+        keepLargeAmountsInGold={keepLargeAmountsInGold}
+        editOpen={walletOpen}
+        onEdit={() => setWalletOpen(true)}
+        onAdjustMoney={onAdjustMoney}
+      />
+      <WalletDialog
+        open={walletOpen}
+        wallet={wallet}
+        keepLargeAmountsInGold={keepLargeAmountsInGold}
+        onClose={() => setWalletOpen(false)}
+        onSetWallet={onSetWallet}
+      />
+    </>
+  );
+}
+
 export function EquipmentWorkspace({
   build,
   entities,
   byId,
   wallet,
   activeDefinitionIds,
-  keepLargeAmountsInGold,
   workspace,
   loadoutView,
   shopCategory,
@@ -736,15 +764,12 @@ export function EquipmentWorkspace({
   onPurchase,
   onSell,
   onEquipSlot,
-  onSetWallet,
-  onAdjustMoney,
 }: {
   readonly build: CharacterBuild;
   readonly entities: readonly ContentEntity[];
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly wallet: EquipmentWalletView;
   readonly activeDefinitionIds: readonly string[];
-  readonly keepLargeAmountsInGold: boolean;
   readonly workspace: "equipment" | "shop";
   readonly loadoutView: boolean;
   readonly shopCategory: ShopCategory;
@@ -765,11 +790,8 @@ export function EquipmentWorkspace({
     currentEntryId?: string,
     currentSlots?: readonly string[],
   ) => void;
-  readonly onSetWallet: (wallet: EquipmentWalletView) => void;
-  readonly onAdjustMoney: (deltaCopper: number) => string | undefined;
 }) {
   const [inspected, setInspected] = useState<InspectedItemDetail>();
-  const [walletOpen, setWalletOpen] = useState(false);
   const [openSaleId, setOpenSaleId] = useState<string>();
   // A "Remove" click arms the button (a second click confirms) instead of a
   // native confirm() dialog.
@@ -865,15 +887,6 @@ export function EquipmentWorkspace({
         >
           {workspace === "equipment" ? (
             <>
-              <div className="equipment-summary-row">
-                <FundsPane
-                  wallet={wallet}
-                  keepLargeAmountsInGold={keepLargeAmountsInGold}
-                  editOpen={walletOpen}
-                  onEdit={() => setWalletOpen(true)}
-                  onAdjustMoney={onAdjustMoney}
-                />
-              </div>
               <div className="equipment-mode-content">
                 {loadoutView ? (
                   <LoadoutGrid
@@ -1311,26 +1324,9 @@ export function EquipmentWorkspace({
         <div
           className={`shared-choice-detail${workspace === "shop" ? " shop-rail" : ""}`}
         >
-          {workspace === "shop" ? (
-            <FundsPane
-              wallet={wallet}
-              keepLargeAmountsInGold={keepLargeAmountsInGold}
-              editOpen={walletOpen}
-              sticky
-              onEdit={() => setWalletOpen(true)}
-              onAdjustMoney={onAdjustMoney}
-            />
-          ) : null}
           <ItemDetail byId={byId} item={inspected} />
         </div>
       </div>
-      <WalletDialog
-        open={walletOpen}
-        wallet={wallet}
-        keepLargeAmountsInGold={keepLargeAmountsInGold}
-        onClose={() => setWalletOpen(false)}
-        onSetWallet={onSetWallet}
-      />
     </section>
   );
 }

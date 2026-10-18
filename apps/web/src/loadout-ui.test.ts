@@ -46,10 +46,10 @@ describe("loadout interaction and geometry", () => {
     expect(editor).toContain("loadout: true,");
     expect(workspace).not.toContain("equipment-view-toggle");
     expect(workspace).toMatch(/\{loadoutView \? \([\s\S]*?<LoadoutGrid/);
-    expect(workspace.match(/<FundsPane/g)).toHaveLength(2);
-    expect(workspace).toContain(
-      'className={`inventory-wallet funds-pane${sticky ? " shop-funds" : ""}`}',
-    );
+    // Funds live in the character sidebar, not in the Inventory/Loadout pane.
+    expect(workspace.match(/<FundsPane/g)).toHaveLength(1);
+    expect(workspace).toContain("export function CharacterWallet(");
+    expect(editor).toContain("<CharacterWallet");
     expect(styles).not.toContain(".equipment-toolbar");
     expect(workspace).toMatch(
       /className=\{`shared-choice-detail[\s\S]*?<ItemDetail/,
