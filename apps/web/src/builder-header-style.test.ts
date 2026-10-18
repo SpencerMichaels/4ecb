@@ -40,9 +40,12 @@ describe("builder character sidebar layout", () => {
       'className="stat-group stat-tone-wealth funds-pane"',
     );
     expect(equipment).toContain('className="stat-tile funds-pane-actions"');
-    // The actions tile comes first, untinted, with its buttons centered.
+    // The actions tile is top right (after PP and GP), untinted, centered.
+    expect(
+      equipment.indexOf("CURRENCY_DENOMINATIONS.slice(0, 2)"),
+    ).toBeLessThan(equipment.indexOf("funds-pane-actions"));
     expect(equipment.indexOf("funds-pane-actions")).toBeLessThan(
-      equipment.indexOf("{CURRENCY_DENOMINATIONS.map("),
+      equipment.indexOf("CURRENCY_DENOMINATIONS.slice(2)"),
     );
     expect(
       declarationsFor(".builder-sidebar .funds-pane .funds-pane-actions"),

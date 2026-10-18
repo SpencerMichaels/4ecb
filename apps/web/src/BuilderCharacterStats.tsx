@@ -189,11 +189,13 @@ function statTile(
   label: string,
   names: string | readonly string[],
   signed = false,
+  /** Full name for the tooltip when the tile label is abbreviated. */
+  tooltipLabel = label,
 ): StatTileValue {
   const stat = evaluatedStat(evaluation, names);
   const value = displayValue(stat, signed);
   return typeof stat?.value === "number"
-    ? { label, value, title: statTooltip(label, value, stat) }
+    ? { label, value, title: statTooltip(tooltipLabel, value, stat) }
     : { label, value };
 }
 
@@ -317,8 +319,20 @@ export function BuilderCharacterStats({
           label="Passive senses"
           tone="abilities"
           values={[
-            statTile(evaluation, "Insight", "Passive Insight"),
-            statTile(evaluation, "Perception", "Passive Perception"),
+            statTile(
+              evaluation,
+              "Pass Ins",
+              "Passive Insight",
+              false,
+              "Passive Insight",
+            ),
+            statTile(
+              evaluation,
+              "Pass Perc",
+              "Passive Perception",
+              false,
+              "Passive Perception",
+            ),
           ]}
         />
       </div>

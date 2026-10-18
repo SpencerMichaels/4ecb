@@ -2196,7 +2196,7 @@ the workspace.
 sit on the page above the sidebar's stat groups, which are unboxed and use
 the printed Play card's group colors (with hue-derived dark-theme tints). The
 funds are a stat group shown on every tab: an actions tile then five coin
-tiles (actions untinted, buttons centered) in one 3 × 2 grid, values with thousands separators
+tiles (actions top right, untinted, buttons centered) in one 3 × 2 grid, values with thousands separators
 under their labels and never truncated. Every detail column is one card wide. Tabs are Build, Details,
 Loadout, Inventory and Shop: Overview is removed (the character sheet replaces
 it; old links fall back to Build), Equipment splits into Inventory and Loadout,

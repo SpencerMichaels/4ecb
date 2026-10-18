@@ -270,9 +270,11 @@ describe("BuilderCharacterStats Play-card arrangement", () => {
       }),
     );
     expect(markup).toContain('aria-label="Passive senses"');
-    expect(markup).toContain('<dt>Insight</dt><dd title="Insight 17">17</dd>');
     expect(markup).toContain(
-      '<dt>Perception</dt><dd title="Perception 19">19</dd>',
+      '<dt>Pass Ins</dt><dd title="Passive Insight 17">17</dd>',
+    );
+    expect(markup).toContain(
+      '<dt>Pass Perc</dt><dd title="Passive Perception 19">19</dd>',
     );
     expect(markup).toContain(
       '<span class="stat-tile-lead">14</span><span class="stat-tile-label">WIS</span></dt><dd title="WIS 14">+2</dd>',
