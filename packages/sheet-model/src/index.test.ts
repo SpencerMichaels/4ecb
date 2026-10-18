@@ -905,16 +905,12 @@ describe("sheet model", () => {
     ]);
     expect(model.identity).toContainEqual({ label: "Level", value: "3" });
     expect(model.identity).toContainEqual({ label: "Race", value: "Cliffkin" });
-    for (const label of [
-      "Size",
-      "Gender",
-      "Age",
-      "Height",
-      "Weight",
-      "Alignment",
-      "Deity",
-    ])
+    // Free-text details carry over, but element-backed details the evaluated
+    // build doesn't select must not resurface from the import-time snapshot.
+    for (const label of ["Age", "Height", "Weight"])
       expect(model.identity.some((value) => value.label === label)).toBe(true);
+    for (const label of ["Size", "Gender", "Alignment", "Deity"])
+      expect(model.identity.some((value) => value.label === label)).toBe(false);
     expect(model.encumbrance?.normalLimit).toBe(200);
     const withCoins = {
       ...snapshot,

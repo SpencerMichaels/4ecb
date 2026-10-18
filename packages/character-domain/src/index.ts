@@ -606,6 +606,17 @@ export function isLegacyCharacterRecordV1(
   return characterRecordBase(value)?.schemaVersion === 1;
 }
 
+/**
+ * The character's current display name. The build's `Name` text string is
+ * what the builder edits; `snapshot.details.name` is the import-time legacy
+ * cache and goes stale after a rename, so it is never consulted here.
+ */
+export function characterDisplayName(
+  record: Pick<CharacterRecord, "build" | "title">,
+): string {
+  return record.build.textStrings.Name?.trim() || record.title;
+}
+
 export function newCharacterRecord(
   legacy: LegacyEnvelope,
   snapshot: LegacyCharacterSnapshot,

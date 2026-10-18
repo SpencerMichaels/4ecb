@@ -653,6 +653,27 @@ export const LEGACY_DETAIL_TEXT_MAP = {
   "NOTE_Session and Campaign Notes": "Notes",
 } as const;
 
+/**
+ * Names of the build's selected elements of one type (e.g. "Race", "Class")
+ * up to the effective level, read from the authoritative build rather than
+ * the import-time snapshot, which goes stale once the build is edited.
+ */
+export function buildElementNames(
+  build: CharacterBuild,
+  type: string,
+): string[] {
+  const wanted = type.toLocaleLowerCase();
+  const names: string[] = [];
+  const visit = (occurrence: BuildOccurrence) => {
+    if (occurrence.identity.type.toLocaleLowerCase() === wanted)
+      names.push(occurrence.identity.name);
+    occurrence.children.forEach(visit);
+  };
+  for (const frame of build.levels)
+    if (frame.level <= build.effectiveLevel) visit(frame.root);
+  return names;
+}
+
 export function detailsWithLegacyTextStrings(
   details: Readonly<Record<string, string>>,
   textStrings: Readonly<Record<string, string>>,

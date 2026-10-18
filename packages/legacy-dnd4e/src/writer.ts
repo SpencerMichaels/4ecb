@@ -568,7 +568,10 @@ function detailsXml(
     const selected = evaluation.occurrences
       .map((occurrence) => entities.get(key(occurrence.definitionId)))
       .find((entity) => entity !== undefined && key(entity.type) === key(type));
-    if (selected !== undefined) details[detail] = selected.name;
+    // A choice cleared in the builder must not resurface from the
+    // import-time snapshot (legacy Details omit these fields anyway).
+    if (selected === undefined) delete details[detail];
+    else details[detail] = selected.name;
   }
   return element(
     "Details",

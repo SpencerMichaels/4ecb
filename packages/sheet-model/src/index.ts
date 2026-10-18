@@ -1471,12 +1471,22 @@ export function buildEvaluatedSheetModel(
     ["Alignment", "Alignment"],
     ["Deity", "Deity"],
   ] as const) {
-    const selected = active.find(
-      ({ entity }) =>
-        entity.type.toLocaleLowerCase() === type.toLocaleLowerCase(),
-    );
-    if (selected !== undefined)
-      identityDetails[detailName] = selected.entity.name;
+    const namesOf = (entityType: string) =>
+      active
+        .filter(
+          ({ entity }) =>
+            entity.type.toLocaleLowerCase() === entityType.toLocaleLowerCase(),
+        )
+        .map(({ entity }) => entity.name);
+    const selected =
+      namesOf(type)[0] ??
+      (type === "Class"
+        ? [...new Set(namesOf("Hybrid Class"))].join(" / ") || undefined
+        : undefined);
+    // The evaluated build is authoritative: an element cleared in the
+    // builder must not fall back to the import-time snapshot's value.
+    if (selected === undefined) delete identityDetails[detailName];
+    else identityDetails[detailName] = selected;
   }
 
   const features = new Map<string, SheetValue[]>();

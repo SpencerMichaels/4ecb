@@ -4,6 +4,8 @@ import {
   addCurrency,
   adjustWalletCoins,
   adjustWalletCurrency,
+  buildElementNames,
+  characterDisplayName,
   applyCharacterCommand,
   CharacterTransaction,
   currencyFromCopper,
@@ -778,5 +780,34 @@ describe("coin-aware wallet adjustments", () => {
         count: -1,
       }),
     ).toThrow("Not enough funds");
+  });
+});
+
+describe("characterDisplayName", () => {
+  it("prefers the edited build name over the import-time title", () => {
+    expect(
+      characterDisplayName({
+        build: { ...build, textStrings: { Name: "Ingi the Bold" } },
+        title: "Ingi",
+      }),
+    ).toBe("Ingi the Bold");
+  });
+
+  it("falls back to the title when the build name is blank", () => {
+    expect(
+      characterDisplayName({
+        build: { ...build, textStrings: { Name: "  " } },
+        title: "Ingi",
+      }),
+    ).toBe("Ingi");
+  });
+});
+
+describe("buildElementNames", () => {
+  it("reads selected element names from the build up to its level", () => {
+    expect(buildElementNames(build, "Level")).toEqual(["1"]);
+    expect(buildElementNames({ ...build, effectiveLevel: 0 }, "Level")).toEqual(
+      [],
+    );
   });
 });

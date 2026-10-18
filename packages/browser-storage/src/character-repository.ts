@@ -1,4 +1,6 @@
 import {
+  buildElementNames,
+  characterDisplayName,
   duplicateCharacterRecord,
   isCharacterRecord,
   isLegacyCharacterRecordV1,
@@ -211,19 +213,27 @@ async function database(name: string) {
 
 function characterMetadata(record: StoredCharacterRecord): CharacterMetadata {
   const current = record.schemaVersion === 2 ? record : undefined;
+  // Read race/class from the edited build; the import-time snapshot is only
+  // a fallback for v1 records that have no build.
+  const race =
+    current === undefined
+      ? record.snapshot.details.Race
+      : buildElementNames(current.build, "Race")[0];
+  const className =
+    current === undefined
+      ? record.snapshot.details.Class
+      : (buildElementNames(current.build, "Class")[0] ??
+        (buildElementNames(current.build, "Hybrid Class").join(" / ") ||
+          undefined));
   return {
     id: record.id,
-    title: record.title,
+    title: current === undefined ? record.title : characterDisplayName(current),
     updatedAt: record.updatedAt,
     ...(record.deletedAt === undefined ? {} : { deletedAt: record.deletedAt }),
     effectiveLevel:
       current?.build.effectiveLevel ?? record.snapshot.levelCount ?? 1,
-    ...(record.snapshot.details.Race === undefined
-      ? {}
-      : { race: record.snapshot.details.Race }),
-    ...(record.snapshot.details.Class === undefined
-      ? {}
-      : { className: record.snapshot.details.Class }),
+    ...(race === undefined ? {} : { race }),
+    ...(className === undefined ? {} : { className }),
   };
 }
 
