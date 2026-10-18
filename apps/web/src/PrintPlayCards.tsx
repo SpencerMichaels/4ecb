@@ -58,9 +58,27 @@ export function PrintCharacterCard({
   ]
     .filter(Boolean)
     .join("; ");
-  const defenses = traits
+  // Group by kind and drop the repeated word: "Resistances 5 fire, 7 cold".
+  const defenseGroups = [
+    ["Resistances", /^Resist\s+/i],
+    ["Vulnerabilities", /^Vulnerable\s+/i],
+    ["Immunities", /^Immune(?:\s+to)?\s+/i],
+  ] as const;
+  const defenseTexts = traits
     .filter((trait) => !isSavingThrowTrait(trait))
-    .map(defensiveBonusText)
+    .map(defensiveBonusText);
+  const defenseLines = defenseGroups.map(
+    ([label, prefix]) =>
+      [
+        label,
+        defenseTexts
+          .filter((text) => prefix.test(text))
+          .map((text) => text.replace(prefix, ""))
+          .join(", "),
+      ] as const,
+  );
+  const otherDefenses = defenseTexts
+    .filter((text) => !defenseGroups.some(([, prefix]) => prefix.test(text)))
     .join("; ");
   const summary = [identity("Race"), identity("Class"), identity("Level")]
     .filter(Boolean)
@@ -156,7 +174,8 @@ export function PrintCharacterCard({
       {[
         ["Senses", overview?.vision ?? ""],
         ["Saves", saves],
-        ["Resistances", defenses],
+        ...defenseLines,
+        ["Other", otherDefenses],
       ]
         .filter(([, text]) => text)
         .map(([label, text]) => (
