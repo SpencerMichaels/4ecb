@@ -327,6 +327,17 @@ describe("print layout contract", () => {
       /\.print-card-variant-table th:first-child\s*\{[^}]*width:/,
     );
   });
+  it("keeps wrapped weapon names and adjacent attack expressions distinct", () => {
+    expect(styles).toMatch(
+      /\.print-card-variant-table tbody th\s*\{[^}]*padding-left:\s*calc\(0\.02in \+ 0\.8em\);[^}]*text-indent:\s*-0\.8em;/,
+    );
+    expect(styles).toMatch(
+      /\.print-card-variant-table td \+ td,\s*\.print-card-variant-table thead th \+ th \+ th\s*\{[^}]*border-left:\s*1px solid/,
+    );
+    expect(styles).toMatch(
+      /\.print-variant-bonus\s*\{[^}]*font-weight:\s*700;/,
+    );
+  });
   it("defines Letter and A4 pages with a fixed three-by-three card grid", () => {
     expect(styles).toMatch(/@page\s*\{[\s\S]*?size:\s*letter/);
     expect(styles).toMatch(/@page\s+a4sheet\s*\{[\s\S]*?size:\s*A4/);

@@ -24,6 +24,8 @@ D079 implemented on branch `unified-cards`:
 - Rules clauses keep [W]; the weapon table carries weapon-specific damage, and
   the "Replace [W] with the selected weapon's dice" setting is removed. Panel
   weapon tables keep attack cells on one line, giving spare width to names.
+  Every weapon table hangs wrapped weapon names under their first word, divides
+  attack columns and bolds each to-hit bonus so adjacent expressions stay apart.
 - Panel cards lay out their bands like printed cards, so a wrapped secondary
   attack line starts with its target icon rather than a "·" separator.
 - Builder and on-screen panel cards have dark-theme paper, ink and card

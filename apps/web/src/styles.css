@@ -2445,9 +2445,23 @@ textarea {
 .print-card-variant-table tbody tr:nth-child(even) {
   background: var(--card-paper);
 }
+/* A wrapped weapon name hangs under its first word so the continuation
+   cannot be mistaken for another weapon. */
 .print-card-variant-table tbody th {
   font-weight: normal;
   overflow-wrap: break-word;
+  padding-left: calc(0.02in + 0.8em);
+  text-indent: -0.8em;
+}
+/* Attack columns are divided and lead with a bold to-hit bonus, so adjacent
+   expressions ("2d10+3 | +11 → 2d8+6") never read as one sum. */
+.print-card-variant-table td + td,
+.print-card-variant-table thead th + th + th {
+  border-left: 1px solid
+    color-mix(in srgb, var(--card-color) 35%, var(--card-paper));
+}
+.print-variant-bonus {
+  font-weight: 700;
 }
 .print-variant-bonus,
 .print-variant-expression {
@@ -2586,7 +2600,11 @@ textarea {
 }
 .print-reference-card.is-panel .print-card-variant-table td,
 .print-reference-card.is-panel .print-card-variant-table thead th {
+  padding-inline: 0.4em;
   white-space: nowrap;
+}
+.print-reference-card.is-panel .print-card-variant-table tbody th {
+  padding-left: calc(0.4em + 0.8em);
 }
 .print-card-panel-subheading {
   align-items: center;
