@@ -16,12 +16,15 @@ export function StatGroup({
   tone,
   values,
   className,
+  heading,
   compact = false,
 }: {
   readonly label: string;
   readonly tone: StatTone;
   readonly values: readonly StatTileValue[];
   readonly className?: string;
+  /** Visible caption inside the group, e.g. "Carried". */
+  readonly heading?: string;
   readonly compact?: boolean;
 }) {
   return (
@@ -31,6 +34,9 @@ export function StatGroup({
         .filter(Boolean)
         .join(" ")}
     >
+      {heading === undefined ? null : (
+        <h4 className="stat-group-heading">{heading}</h4>
+      )}
       <dl className={compact ? "stat-tiles stat-tiles-compact" : "stat-tiles"}>
         {values.map((value) => (
           <div className="stat-tile" key={value.label}>

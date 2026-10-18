@@ -2372,21 +2372,17 @@ function ReferenceCard({
           <div className="sp-feature-body">
             <div className="ov-wallet-groups">
               {wallet.headers.slice(1).map((label, column) => (
-                <section
-                  className={`ov-stat-group ov-wallet-group${label === "Stored" && wallet.storedEmpty ? " is-empty" : ""}`}
-                  aria-label={`${label} currency`}
+                <StatGroup
                   key={label}
-                >
-                  <h4>{label}</h4>
-                  <div className="sp-values ov-band-values ov-wallet-values">
-                    {wallet.rows.map((row) => (
-                      <div key={row[0]}>
-                        <span>{row[0]}</span>
-                        <strong>{row[column + 1]}</strong>
-                      </div>
-                    ))}
-                  </div>
-                </section>
+                  label={`${label} currency`}
+                  heading={label}
+                  tone="abilities"
+                  className={`ov-wallet-group${label === "Stored" && wallet.storedEmpty ? " is-empty" : ""}`}
+                  values={wallet.rows.map((row) => ({
+                    label: row[0] ?? "",
+                    value: row[column + 1] ?? "",
+                  }))}
+                />
               ))}
             </div>
             {wallet.notes.map((note, i) => (

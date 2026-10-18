@@ -564,45 +564,16 @@ body:has(.sp-prototype) {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.08in;
 }
+/* Shared stat tiles at 8pt with 16pt values. */
 .ov-wallet-group {
-  border: 1px solid #b9cbdc;
-  border-radius: 5px;
-  padding: 0.04in;
-  min-width: 0;
+  --stat-value-size: 2em;
+  font-size: 8pt;
+}
+.ov-wallet-group .stat-tile dd {
+  overflow-wrap: anywhere;
 }
 .ov-wallet-group.is-empty {
   opacity: 0.5;
-}
-.ov-currency-pane .ov-wallet-group h4 {
-  margin: 0 0 0.04in;
-  padding-left: 0.025in;
-  color: #3e5f7c;
-  font-size: 8pt;
-  font-weight: 600;
-}
-.ov-wallet-values {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-}
-.sp-values.ov-wallet-values > div {
-  background: #eaf0f6;
-}
-.sp-values.ov-wallet-values strong {
-  font-size: 16pt;
-  line-height: 1.15;
-  overflow-wrap: anywhere;
-}
-.sp-values.ov-wallet-values span {
-  color: #3e5f7c;
-}
-.sheet-overview.sp-monochrome .ov-wallet-group {
-  border-color: #aaa;
-}
-.sheet-overview.sp-monochrome .ov-wallet-values > div {
-  background: #eee;
-}
-.sheet-overview.sp-monochrome .ov-wallet-values span,
-.sheet-overview.sp-monochrome .ov-wallet-group h4 {
-  color: #333;
 }
 .ov-currency-pane p {
   margin: 0;

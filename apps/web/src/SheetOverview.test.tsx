@@ -2447,7 +2447,8 @@ describe("real-data sheet overview", () => {
     expect(html).toContain('aria-label="Carried currency"');
     expect(html).toContain('aria-label="Stored currency"');
     expect(html).not.toContain('aria-label="Total currency"');
-    expect(html).toContain("<span>GP</span><strong>13</strong>");
+    expect(html).toContain("<dt>GP</dt><dd>13</dd>");
+    expect(html).toContain('<h4 class="stat-group-heading">Carried</h4>');
   });
   it("restarts inventory stripes per category and uses quantity prefixes with a blank for one", () => {
     const fixture = {
