@@ -95,7 +95,6 @@ import { ContentUpdateDialog } from "./ContentUpdateDialog";
 import { needsContentUpdate } from "./content-update";
 import { loadoutChangeCommand } from "./equipment-ui";
 import { type InspectedOption } from "./CandidateSelectionTable";
-import { CharacterOverview } from "./CharacterOverview";
 import { CandidateDetail } from "./CandidateDetail";
 import { BaseAbilityScoreEditor } from "./BaseAbilityScoreEditor";
 import {
@@ -263,7 +262,6 @@ export function CharacterEditorPage({
   const [selectedLevel, setSelectedLevel] = useState(
     navigation.workspace === "build" ? (navigation.level ?? 1) : 1,
   );
-  const [showPlannedOverview, setShowPlannedOverview] = useState(false);
   const [selectedChoiceId, setSelectedChoiceId] = useState<string>();
   const [selectedSectionByLevel, setSelectedSectionByLevel] = useState<
     Readonly<Partial<Record<number, LevelChoiceTab>>>
@@ -1671,16 +1669,6 @@ export function CharacterEditorPage({
                   <Icon name="level" /> Build
                 </button>
                 <button
-                  aria-selected={workspaceTab === "overview"}
-                  role="tab"
-                  type="button"
-                  onClick={() =>
-                    onNavigate(characterId, { workspace: "overview" })
-                  }
-                >
-                  <Icon name="book" /> Overview
-                </button>
-                <button
                   aria-selected={workspaceTab === "details"}
                   role="tab"
                   type="button"
@@ -1688,28 +1676,45 @@ export function CharacterEditorPage({
                     onNavigate(characterId, { workspace: "details" })
                   }
                 >
-                  <Icon name="details" /> Character details
+                  <Icon name="details" /> Details
                   {unresolvedCharacterDetailChoices.length > 0 ? (
                     <span
-                      aria-label="Character details has unresolved required choices"
+                      aria-label="Details has unresolved required choices"
                       className="tab-attention"
-                      title="Character details has unresolved required choices"
+                      title="Details has unresolved required choices"
                     >
                       <Icon name="circle-help" />
                     </span>
                   ) : null}
                 </button>
                 <button
-                  aria-selected={workspaceTab === "equipment"}
+                  aria-selected={
+                    navigation.workspace === "equipment" &&
+                    navigation.loadout !== true
+                  }
+                  role="tab"
+                  type="button"
+                  onClick={() =>
+                    onNavigate(characterId, { workspace: "equipment" })
+                  }
+                >
+                  <Icon name="handbag" /> Inventory
+                </button>
+                <button
+                  aria-selected={
+                    navigation.workspace === "equipment" &&
+                    navigation.loadout === true
+                  }
                   role="tab"
                   type="button"
                   onClick={() =>
                     onNavigate(characterId, {
                       workspace: "equipment",
+                      loadout: true,
                     })
                   }
                 >
-                  <Icon name="item" /> Equipment
+                  <Icon name="sword" /> Loadout
                 </button>
                 <button
                   aria-selected={workspaceTab === "shop"}
@@ -1719,65 +1724,63 @@ export function CharacterEditorPage({
                 >
                   <Icon name="shopping-cart" /> Shop
                 </button>
-                <a
-                  aria-selected="false"
-                  className="builder-tab"
-                  href={`#/characters/${encodeURIComponent(characterId)}?preview=1`}
-                  role="tab"
-                >
-                  <Icon name="sheet" /> Character sheet
-                </a>
-                <button
-                  aria-selected={workspaceTab === "diagnostics"}
-                  role="tab"
-                  type="button"
-                  onClick={() =>
-                    onNavigate(characterId, { workspace: "diagnostics" })
-                  }
-                >
-                  <Icon name="warning" /> Diagnostics
-                </button>
               </div>
               <div aria-label="Builder status" className="builder-status">
                 {totalUnresolved > 0 ? (
-                  <span
-                    aria-label={`${totalUnresolved} unresolved ${totalUnresolved === 1 ? "choice" : "choices"}`}
+                  <button
+                    aria-label={`${totalUnresolved} unresolved ${totalUnresolved === 1 ? "choice" : "choices"}, open diagnostics`}
                     className="builder-health builder-health-attention"
                     title={`${totalUnresolved} unresolved ${totalUnresolved === 1 ? "choice" : "choices"}`}
+                    type="button"
+                    onClick={() =>
+                      onNavigate(characterId, { workspace: "diagnostics" })
+                    }
                   >
                     <Icon name="circle-help" />
                     <span aria-hidden="true">{totalUnresolved}</span>
-                  </span>
+                  </button>
                 ) : null}
                 {warningCount > 0 ? (
-                  <span
-                    aria-label={`${warningCount} ${warningCount === 1 ? "warning" : "warnings"}`}
+                  <button
+                    aria-label={`${warningCount} ${warningCount === 1 ? "warning" : "warnings"}, open diagnostics`}
                     className="builder-health builder-health-warning"
                     title={`${warningCount} ${warningCount === 1 ? "warning" : "warnings"}`}
+                    type="button"
+                    onClick={() =>
+                      onNavigate(characterId, { workspace: "diagnostics" })
+                    }
                   >
                     <Icon name="warning" />
                     <span aria-hidden="true">{warningCount}</span>
-                  </span>
+                  </button>
                 ) : null}
                 {errorCount > 0 ? (
-                  <span
-                    aria-label={`${errorCount} ${errorCount === 1 ? "error" : "errors"}`}
+                  <button
+                    aria-label={`${errorCount} ${errorCount === 1 ? "error" : "errors"}, open diagnostics`}
                     className="builder-health builder-health-error"
                     title={`${errorCount} ${errorCount === 1 ? "evaluation error" : "evaluation errors"}`}
+                    type="button"
+                    onClick={() =>
+                      onNavigate(characterId, { workspace: "diagnostics" })
+                    }
                   >
                     <Icon name="circle-x" />
                     <span aria-hidden="true">{errorCount}</span>
-                  </span>
+                  </button>
                 ) : null}
                 {houseRuleCount > 0 ? (
-                  <span
-                    aria-label={`${houseRuleCount} ${houseRuleCount === 1 ? "house rule" : "house rules"}`}
+                  <button
+                    aria-label={`${houseRuleCount} ${houseRuleCount === 1 ? "house rule" : "house rules"}, open diagnostics`}
                     className="builder-health builder-health-house-rule"
                     title={`${houseRuleCount} ${houseRuleCount === 1 ? "house rule" : "house rules"}`}
+                    type="button"
+                    onClick={() =>
+                      onNavigate(characterId, { workspace: "diagnostics" })
+                    }
                   >
                     <Icon name="house" />
                     <span aria-hidden="true">{houseRuleCount}</span>
-                  </span>
+                  </button>
                 ) : null}
                 <span
                   aria-live={
@@ -1810,72 +1813,38 @@ export function CharacterEditorPage({
                 >
                   <Icon name="redo" />
                 </button>
+                <span aria-hidden="true" className="builder-actions-divider" />
+                <a
+                  aria-label="Character sheet"
+                  className="icon-only-button button-icon"
+                  href={`#/characters/${encodeURIComponent(characterId)}?preview=1`}
+                  title="Character sheet"
+                >
+                  <Icon name="sheet" />
+                </a>
+                <a
+                  aria-label="Settings"
+                  className="icon-only-button button-icon"
+                  href="#/settings"
+                  title="Settings"
+                >
+                  <Icon name="settings" />
+                </a>
+                <a
+                  aria-label="Close character"
+                  className="icon-only-button button-icon"
+                  href="#/characters"
+                  title="Close character"
+                >
+                  <Icon name="remove" />
+                </a>
               </div>
             </div>
 
             <div
               className="builder-workspace"
-              hidden={workspaceTab !== "build" && workspaceTab !== "overview"}
+              hidden={workspaceTab !== "build"}
             >
-              <div
-                className="overview-pane"
-                hidden={workspaceTab !== "overview"}
-              >
-                <CharacterOverview
-                  abilityStatus={
-                    abilityScoresIncomplete
-                      ? "unresolved"
-                      : abilityScoresHouseRuled
-                        ? "warning"
-                        : "complete"
-                  }
-                  abilitySummary={
-                    abilityPointBuy.legal
-                      ? "Point buy complete"
-                      : abilityScoresHouseRuled
-                        ? "House rule"
-                        : `${abilityPointBuy.remaining ?? 22} ${abilityPointBuy.remaining === 1 ? "point" : "points"} left`
-                  }
-                  build={build}
-                  byId={byId}
-                  evaluation={planningEvaluation}
-                  selectedChoiceId={selectedChoiceId}
-                  showPlanned={showPlannedOverview}
-                  onNavigateAbilities={() => {
-                    setSelectedLevel(1);
-                    setSelectedSectionByLevel((current) => ({
-                      ...current,
-                      1: "Ability Scores",
-                    }));
-                    onNavigate(characterId, {
-                      workspace: "build",
-                      level: 1,
-                      section: "ability-scores",
-                    });
-                  }}
-                  onNavigateChoice={(choice) => {
-                    setSelectedLevel(choice.level);
-                    setSelectedChoiceId(choice.id);
-                    setSelectedSectionByLevel((current) => ({
-                      ...current,
-                      [choice.level]: isOptionalRetrainingChoice(choice)
-                        ? "Retraining"
-                        : legacyChoiceSection(choice),
-                    }));
-                    onNavigate(characterId, {
-                      workspace: "build",
-                      level: choice.level,
-                      section: levelChoiceTabSlug(
-                        isOptionalRetrainingChoice(choice)
-                          ? "Retraining"
-                          : legacyChoiceSection(choice),
-                      ),
-                    });
-                  }}
-                  onShowPlannedChange={setShowPlannedOverview}
-                />
-              </div>
-
               <section
                 aria-label={`Level ${selectedLevel}`}
                 className="choice-pane"
@@ -2278,12 +2247,6 @@ export function CharacterEditorPage({
                       navigation.workspace === "shop"
                         ? (navigation.category ?? "items")
                         : "items"
-                    }
-                    onLoadoutViewChange={(loadout) =>
-                      onNavigate(characterId, {
-                        workspace: "equipment",
-                        ...(loadout ? { loadout: true } : {}),
-                      })
                     }
                     onShopCategoryChange={(category) =>
                       onNavigate(characterId, { workspace: "shop", category })

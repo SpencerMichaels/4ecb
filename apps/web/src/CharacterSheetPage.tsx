@@ -535,7 +535,7 @@ export function CharacterSheetPage({
             <a href="#/characters">Characters</a>
             <a
               className="button-link"
-              href={`#/characters/${encodeURIComponent(characterId)}/edit?tab=overview`}
+              href={`#/characters/${encodeURIComponent(characterId)}/edit`}
             >
               Build
             </a>

@@ -13,10 +13,6 @@ const characterSheet = readFileSync(
   new URL("./CharacterSheetPage.tsx", import.meta.url),
   "utf8",
 );
-const characterOverview = readFileSync(
-  new URL("./CharacterOverview.tsx", import.meta.url),
-  "utf8",
-);
 const builderCards = readFileSync(
   new URL("./BuilderCards.tsx", import.meta.url),
   "utf8",
@@ -179,7 +175,7 @@ describe("release accessibility contract", () => {
       "view-notes",
     ])
       expect(characterSheet).toContain(section);
-    expect(characterSheet).toContain("/edit?tab=overview");
+    expect(characterSheet).not.toContain("tab=overview");
     expect(characterSheet).toContain("Print / save PDF");
     expect(characterSheet).toContain("setShowPrintPreview(true)");
     expect(characterSheet).toContain('className="print-preview-toolbar"');
@@ -268,21 +264,12 @@ describe("release accessibility contract", () => {
     // Level navigation is one picker in the character sidebar (all tabs).
     expect(characterEditor).toContain("<LevelPicker");
     expect(characterEditor).not.toContain('className="level-rail"');
-    expect(characterEditor).toContain('workspaceTab === "overview"');
-    expect(characterEditor).toContain('workspaceTab === "equipment"');
-    expect(characterEditor).toContain('workspaceTab === "diagnostics"');
-    expect(characterOverview).toContain('className="build-overview"');
-    expect(characterOverview).toContain("Show planned choices");
-    expect(characterOverview).toContain(
-      "overview-checklist-pane overview-pane-",
-    );
-    expect(characterOverview).toContain('pane === "Retraining"');
-    expect(characterOverview).toContain("overviewPowerType(powerTone)");
-    expect(characterOverview).toContain(
-      'className="overview-retraining-marker"',
-    );
-    expect(characterOverview).toContain(
-      "Retrained from ${retraining.fromName} at level ${retraining.choice.level}",
+    expect(characterEditor).not.toContain('workspaceTab === "overview"');
+    expect(characterEditor).toContain('navigation.workspace === "equipment"');
+    // Diagnostics opens from the status badges, not a tab.
+    expect(characterEditor).toContain('workspace: "diagnostics"');
+    expect(characterEditor).not.toContain(
+      '<Icon name="warning" /> Diagnostics',
     );
     expect(candidateSelectionTable).toContain(
       'aria-sort={active ? sort.direction : "none"}',
@@ -315,7 +302,6 @@ describe("release accessibility contract", () => {
     const candidateDetailRule = styles.match(
       /\.candidate-detail\s*\{([^}]*)\}/,
     )?.[1];
-    const timelineRule = styles.match(/\.build-overview\s*\{([^}]*)\}/)?.[1];
     expect(levelRailButtonRule).toContain("display: flex");
     expect(levelRailButtonRule).not.toContain("flex-direction: column");
     expect(levelRailButtonRule).toContain("min-height: 1.425rem");
@@ -323,9 +309,7 @@ describe("release accessibility contract", () => {
     expect(candidateDetailRule).not.toContain("max-height");
     expect(candidateDetailRule).not.toContain("overflow:");
     expect(styles).not.toMatch(/\.candidate-flavor\s*\{[^}]*border-bottom:/);
-    expect(timelineRule).toBeDefined();
-    expect(timelineRule).not.toContain("max-height");
-    expect(timelineRule).not.toContain("overflow:");
+    expect(styles).not.toContain(".build-overview");
     expect(styles).toMatch(
       /\.selection-table-scroll\s*\{[^}]*max-height:[^}]*overflow: auto/,
     );
@@ -835,14 +819,10 @@ describe("release accessibility contract", () => {
     expect(icon).toContain('"shopping-cart": ShoppingCart');
     expect(icon).toContain('"scroll-text": ScrollText');
     expect(icon).toContain('aria-hidden="true"');
-    expect(characterEditor).toContain('<Icon name="item" /> Equipment');
+    expect(characterEditor).toContain('<Icon name="handbag" /> Inventory');
+    expect(characterEditor).toContain('<Icon name="sword" /> Loadout');
     expect(characterEditor).toContain('<Icon name="shopping-cart" /> Shop');
-    expect(equipmentWorkspace).toContain(
-      '<Icon name={loadoutView ? "handbag" : "sword"} />',
-    );
-    expect(equipmentWorkspace).toContain(
-      '{loadoutView ? "Inventory" : "Loadout"}',
-    );
+    expect(equipmentWorkspace).not.toContain("equipment-view-toggle");
   });
 
   it("keeps Shop filtering local, labeled, and independent of acquisition", () => {

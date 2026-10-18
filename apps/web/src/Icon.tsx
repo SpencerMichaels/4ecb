@@ -67,6 +67,7 @@ import {
   Scale,
   ScanLine,
   Search,
+  Settings,
   ScrollText,
   Shield,
   ShoppingCart,
@@ -176,6 +177,7 @@ export type IconName =
   | "save-pen"
   | "scale"
   | "search"
+  | "settings"
   | "sheet"
   | "shield"
   | "shop"
@@ -278,6 +280,7 @@ const icons: Record<IconName, LucideIcon> = {
   "save-pen": SavePen,
   scale: Scale,
   search: Search,
+  settings: Settings,
   sheet: FileText,
   shield: Shield,
   shop: ShoppingCart,

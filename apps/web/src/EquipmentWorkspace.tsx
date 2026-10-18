@@ -731,7 +731,6 @@ export function EquipmentWorkspace({
   workspace,
   loadoutView,
   shopCategory,
-  onLoadoutViewChange,
   onShopCategoryChange,
   onPutInventory,
   onPurchase,
@@ -749,7 +748,6 @@ export function EquipmentWorkspace({
   readonly workspace: "equipment" | "shop";
   readonly loadoutView: boolean;
   readonly shopCategory: ShopCategory;
-  readonly onLoadoutViewChange: (loadout: boolean) => void;
   readonly onShopCategoryChange: (category: ShopCategory) => void;
   readonly onPutInventory: (entry: BuildInventoryEntry) => void;
   readonly onPurchase: (
@@ -868,14 +866,6 @@ export function EquipmentWorkspace({
           {workspace === "equipment" ? (
             <>
               <div className="equipment-summary-row">
-                <button
-                  className="equipment-view-toggle"
-                  type="button"
-                  onClick={() => onLoadoutViewChange(!loadoutView)}
-                >
-                  <Icon name={loadoutView ? "handbag" : "sword"} />
-                  {loadoutView ? "Inventory" : "Loadout"}
-                </button>
                 <FundsPane
                   wallet={wallet}
                   keepLargeAmountsInGold={keepLargeAmountsInGold}

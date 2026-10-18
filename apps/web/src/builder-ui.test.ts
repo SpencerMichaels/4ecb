@@ -41,7 +41,6 @@ import {
   grantedDetailEntities,
   groupDependentChoiceFlows,
   groupLevelChoices,
-  groupOverviewChoices,
   groupChoicesByLegacyWorkflow,
   groupBackgroundChoiceCandidates,
   groupParameterizedCandidates,
@@ -2256,44 +2255,6 @@ describe("builder planning UI", () => {
     ).toEqual([
       ["ability-1", "ability-2"],
       ["companion-1", "companion-2"],
-    ]);
-  });
-
-  it("groups overview choices by category and then level", () => {
-    const choices = [
-      { id: "power-7", level: 7, type: "Power Encounter 7" },
-      { id: "class", level: 1, type: "Class" },
-      { id: "theme", level: 1, type: "Theme" },
-      { id: "race-bonus", level: 1, type: "Race Ability Bonus" },
-      { id: "power-1", level: 1, type: "Power At-Will 1" },
-      { id: "skill", level: 1, type: "Skill Training" },
-      { id: "feat-4", level: 4, type: "Feat" },
-      {
-        id: "companion",
-        level: 8,
-        type: "Companion Ability Increase (Level 8)",
-      },
-      {
-        id: "retraining",
-        level: 6,
-        type: "Replacement",
-        optional: true,
-      },
-    ] as unknown as EvaluatedCharacter["choices"];
-
-    expect(
-      groupOverviewChoices(choices).map(({ pane, choices }) => [
-        pane,
-        choices.map(({ id }) => id),
-      ]),
-    ).toEqual([
-      ["Character", ["class", "theme"]],
-      ["Ability Scores", ["race-bonus"]],
-      ["Companion", ["companion"]],
-      ["Skills", ["skill"]],
-      ["Powers", ["power-1", "power-7"]],
-      ["Feats", ["feat-4"]],
-      ["Retraining", ["retraining"]],
     ]);
   });
 

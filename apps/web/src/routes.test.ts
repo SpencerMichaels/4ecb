@@ -69,10 +69,6 @@ describe("hash routes", () => {
         },
       },
       {
-        navigation: { workspace: "overview" as const },
-        expected: { workspace: "overview" },
-      },
-      {
         navigation: { workspace: "details" as const },
         expected: { workspace: "details" },
       },
@@ -105,9 +101,13 @@ describe("hash routes", () => {
     }
     expect(
       characterEditorHash("one", {
-        workspace: "overview",
+        workspace: "details",
       }),
-    ).toBe("#/characters/one/edit?tab=overview");
+    ).toBe("#/characters/one/edit?tab=details");
+    // The removed Overview tab falls back to Build.
+    expect(parseHashRoute("#/characters/one/edit?tab=overview")).toMatchObject({
+      builder: { workspace: "build" },
+    });
   });
 
   it("falls back safely from invalid and inapplicable editor values", () => {
@@ -118,9 +118,9 @@ describe("hash routes", () => {
     ).toMatchObject({ builder: { workspace: "build" } });
     expect(
       canonicalHashRedirect(
-        "#/characters/one/edit?tab=overview&level=8&section=powers",
+        "#/characters/one/edit?tab=details&level=8&section=powers",
       ),
-    ).toBe("#/characters/one/edit?tab=overview");
+    ).toBe("#/characters/one/edit?tab=details");
     expect(
       canonicalHashRedirect(
         "#/characters/one/edit?tab=equipment&section=unknown",
@@ -172,7 +172,7 @@ describe("hash routes", () => {
       level: 4,
       section: "feats",
     });
-    const overview = characterEditorHash("one", { workspace: "overview" });
+    const overview = characterEditorHash("one", { workspace: "details" });
     const inventory = characterEditorHash("one", {
       workspace: "equipment",
     });
@@ -184,7 +184,7 @@ describe("hash routes", () => {
 
     index -= 1;
     expect(parseHashRoute(target.location.hash)).toMatchObject({
-      builder: { workspace: "overview" },
+      builder: { workspace: "details" },
     });
     index -= 1;
     expect(parseHashRoute(target.location.hash)).toMatchObject({
@@ -192,7 +192,7 @@ describe("hash routes", () => {
     });
     index += 1;
     expect(parseHashRoute(target.location.hash)).toMatchObject({
-      builder: { workspace: "overview" },
+      builder: { workspace: "details" },
     });
 
     expect(commitHashNavigation(target, overview, true)).toBe(false);

@@ -3762,6 +3762,26 @@ textarea {
   padding: 0.35rem 0.15rem;
 }
 
+/* Status badges open Diagnostics; there is no Diagnostics tab. */
+button.builder-health {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+button.builder-health:hover,
+button.builder-health:focus-visible {
+  background: var(--surface-subtle);
+}
+
+.builder-actions-divider {
+  align-self: stretch;
+  border-left: 1px solid var(--border);
+  margin-inline: 0.25rem;
+}
+
 .builder-health .icon {
   height: 1rem;
   width: 1rem;
@@ -3884,13 +3904,6 @@ textarea {
 .builder-workspace[hidden],
 .modern-builder > div[hidden] {
   display: none;
-}
-
-.build-overview {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 0;
-  border-top: 4px solid var(--brand-navy);
 }
 
 /* The Build tab's "Level N" heading opens the level plan. */
@@ -4021,15 +4034,6 @@ textarea {
   border-color: color-mix(in srgb, var(--muted) 55%, transparent);
 }
 
-.overview-pane {
-  grid-column: 1 / -1;
-  min-width: 0;
-}
-
-.build-overview {
-  width: 100%;
-}
-
 .timeline-heading {
   align-items: end;
   background: var(--surface-subtle);
@@ -4063,148 +4067,6 @@ textarea {
   align-items: end;
   display: flex;
   gap: 0.6rem;
-}
-
-.overview-planned-toggle {
-  align-items: center;
-  display: inline-flex;
-  font-size: 0.78rem;
-  font-weight: 700;
-  gap: 0.4rem;
-}
-
-.overview-checklists {
-  align-items: start;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.85rem;
-  padding: 0.85rem;
-}
-
-.overview-checklist-pane {
-  border: 1px solid var(--border);
-  flex: 0 1 auto;
-  max-width: 100%;
-  min-width: 0;
-}
-
-.overview-checklist-pane h4 {
-  background: var(--brand-navy);
-  color: white;
-  margin: 0;
-  padding: 0.55rem 0.7rem;
-}
-
-.overview-checklist-scroll {
-  overflow-x: auto;
-}
-
-.overview-checklist-pane table {
-  border-collapse: collapse;
-  font-size: 0.78rem;
-  min-width: 18rem;
-  width: max-content;
-}
-
-.overview-pane-powers table,
-.overview-pane-retraining table {
-  min-width: 25rem;
-}
-
-.overview-checklist-pane th,
-.overview-checklist-pane td {
-  border-bottom: 1px solid var(--border);
-  padding: 0.45rem 0.55rem;
-  text-align: left;
-  vertical-align: middle;
-}
-
-.overview-checklist-pane th {
-  background: var(--legacy-neutral);
-  font-size: 0.68rem;
-  letter-spacing: 0.035em;
-  text-transform: uppercase;
-}
-
-.overview-checklist-pane:not(.overview-pane-character) th:first-child {
-  width: 3.5rem;
-}
-
-.overview-pane-powers th:nth-child(2) {
-  width: 6.5rem;
-}
-
-.overview-pane-retraining th:nth-child(3),
-.overview-retraining-arrow {
-  text-align: center;
-  width: 2rem;
-}
-
-.overview-checklist-pane tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.overview-checklist-pane td button {
-  background: transparent;
-  border: 0;
-  color: inherit;
-  font: inherit;
-  font-weight: 700;
-  padding: 0;
-  text-align: left;
-}
-
-.overview-checklist-pane td button:hover,
-.overview-checklist-pane td button:focus-visible {
-  color: var(--focus);
-  text-decoration: underline;
-}
-
-.overview-checklist-pane td button[aria-current="true"] {
-  color: var(--focus);
-}
-
-.overview-checklist-pane td:last-child > .icon {
-  color: var(--danger);
-  height: 0.9rem;
-  margin-right: 0.3rem;
-  width: 0.9rem;
-}
-
-.overview-choice-unresolved td:first-child {
-  box-shadow: inset 4px 0 var(--warning);
-}
-
-.overview-choice-warning td:first-child {
-  box-shadow: inset 4px 0 var(--danger);
-}
-
-.overview-choice-planned {
-  color: var(--muted);
-}
-
-.overview-retraining-marker {
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  color: var(--accent-strong);
-  cursor: help;
-  display: inline-grid;
-  font-size: 0.55rem;
-  font-weight: 800;
-  height: 1rem;
-  line-height: 1;
-  margin-left: 0.3rem;
-  place-items: center;
-  vertical-align: super;
-  width: 1rem;
-}
-
-.overview-pane-powers tr[class*="tone-"] td {
-  background: var(--tone-soft);
-}
-
-.overview-pane-powers tr[class*="tone-"] td:first-child {
-  border-left: 4px solid var(--tone);
 }
 
 .choice-pane {
@@ -5780,13 +5642,6 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   gap: 0.65rem;
   grid-template-columns: auto minmax(0, 1fr);
   margin-bottom: 1rem;
-}
-
-.equipment-view-toggle {
-  align-items: center;
-  display: inline-flex;
-  gap: 0.4rem;
-  margin-top: 0.65rem;
 }
 
 .equipment-workspace {

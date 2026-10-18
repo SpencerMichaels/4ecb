@@ -5,6 +5,10 @@ import { describe, expect, it } from "vitest";
 const styles = ["./styles/primitives.css", "./styles.css"]
   .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
   .join("\\n");
+const editor = readFileSync(
+  new URL("./CharacterEditorPage.tsx", import.meta.url),
+  "utf8",
+);
 const workspace = readFileSync(
   new URL("./EquipmentWorkspace.tsx", import.meta.url),
   "utf8",
@@ -36,17 +40,12 @@ describe("loadout interaction and geometry", () => {
     );
   });
 
-  it("swaps Inventory and Loadout in the main pane", () => {
-    expect(workspace).toContain(
-      "onClick={() => onLoadoutViewChange(!loadoutView)}",
-    );
-    expect(workspace).toContain(
-      '<Icon name={loadoutView ? "handbag" : "sword"} />',
-    );
-    expect(workspace).toContain('{loadoutView ? "Inventory" : "Loadout"}');
-    expect(workspace).toMatch(
-      /<div className="equipment-summary-row">[\s\S]*?<button[\s\S]*?className="equipment-view-toggle"[\s\S]*?<FundsPane[\s\S]*?\{loadoutView \? \([\s\S]*?<LoadoutGrid/,
-    );
+  it("shows Inventory and Loadout as separate builder tabs", () => {
+    expect(editor).toContain('<Icon name="handbag" /> Inventory');
+    expect(editor).toContain('<Icon name="sword" /> Loadout');
+    expect(editor).toContain("loadout: true,");
+    expect(workspace).not.toContain("equipment-view-toggle");
+    expect(workspace).toMatch(/\{loadoutView \? \([\s\S]*?<LoadoutGrid/);
     expect(workspace.match(/<FundsPane/g)).toHaveLength(2);
     expect(workspace).toContain(
       'className={`inventory-wallet funds-pane${sticky ? " shop-funds" : ""}`}',
