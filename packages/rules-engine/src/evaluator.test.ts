@@ -72,6 +72,57 @@ const rootOccurrence: CharacterOccurrence = {
 };
 
 describe("character evaluator", () => {
+  it("keeps every textstring contribution with its source", () => {
+    const occurrence = (id: string): CharacterOccurrence => ({
+      id: `own-${id}`,
+      definitionId: id,
+      acquiredLevel: 1,
+      kind: "choice",
+    });
+    const evaluated = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [rootOccurrence, occurrence("TATTOO"), occurrence("FEAT")],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "1", "Level"),
+        entity("TATTOO", "Tattoo", "Feat", {
+          rules: [
+            rule(
+              "textstring",
+              { name: "Action Point", value: "Tattoo:Resist." },
+              0,
+            ),
+          ],
+        }),
+        entity("FEAT", "Surge", "Feat", {
+          rules: [
+            rule(
+              "textstring",
+              { name: "Action Point", value: "Surge:+3 attack." },
+              0,
+            ),
+          ],
+        }),
+      ],
+    );
+    expect(
+      evaluated.textContributions?.filter((c) => c.name === "Action Point"),
+    ).toEqual([
+      expect.objectContaining({
+        value: "Tattoo:Resist.",
+        providerName: "Tattoo",
+        definitionId: "TATTOO",
+      }),
+      expect.objectContaining({
+        value: "Surge:+3 attack.",
+        providerName: "Surge",
+        definitionId: "FEAT",
+      }),
+    ]);
+  });
   it.each([
     [false, false],
     [true, false],

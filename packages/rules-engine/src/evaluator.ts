@@ -38,7 +38,7 @@ import { evaluatePowers, type EvaluatedPower } from "./powers";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v9-2026-10-16-effective-basic-attack-flags";
+  "evaluated-character-v10-2026-10-17-text-contributions";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -154,6 +154,14 @@ export interface EngineDiagnostic {
   readonly ruleOrdinal?: number;
 }
 
+export interface EvaluatedTextContribution {
+  readonly name: string;
+  readonly value: string;
+  readonly providerId: string;
+  readonly providerName: string;
+  readonly definitionId: string;
+}
+
 export interface EvaluatedCharacter {
   readonly level: number;
   readonly converged: boolean;
@@ -166,6 +174,9 @@ export interface EvaluatedCharacter {
   readonly choices: readonly EvaluatedChoice[];
   readonly stats: Readonly<Record<string, EvaluatedStat>>;
   readonly textStrings: Readonly<Record<string, string>>;
+  /** Every applied textstring with its source; stackable strings such as
+   *  "Action Point" accumulate here where `textStrings` keeps the last value. */
+  readonly textContributions?: readonly EvaluatedTextContribution[];
   readonly overlays: readonly FieldOverlay[];
   readonly powers: readonly EvaluatedPower[];
   readonly suggestions: readonly {
@@ -1107,6 +1118,7 @@ function evaluateCharacterInternal(
   const overlays: FieldOverlay[] = [];
   const suggestions: EvaluatedCharacter["suggestions"][number][] = [];
   const text = { ...(input.textStrings ?? {}) };
+  const textContributions: EvaluatedTextContribution[] = [];
   const candidateCache = new Map<string, CandidateDecision[]>();
   const categoryCache = new Map<
     string,
@@ -1325,8 +1337,16 @@ function evaluateCharacterInternal(
             rule.condition === undefined &&
             (rule.wearing === undefined ||
               equipmentPredicate(equipment, rule.wearing))
-          )
+          ) {
             text[rule.name] = rule.value;
+            textContributions.push({
+              name: rule.name,
+              value: rule.value,
+              providerId: occurrence.id,
+              providerName: entity.name,
+              definitionId: entity.id,
+            });
+          }
           break;
         case "select": {
           if (prerequisiteContextOnly) break;
@@ -2025,6 +2045,7 @@ function evaluateCharacterInternal(
     choices,
     stats: evaluatedStats,
     textStrings: text,
+    textContributions,
     overlays,
     powers,
     suggestions,
