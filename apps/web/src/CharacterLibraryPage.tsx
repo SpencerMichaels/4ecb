@@ -21,6 +21,7 @@ import {
 import { projectBuildForEvaluation } from "@4ecb/rules-engine";
 
 import { contentProfileMatchesRevision } from "./profile-migration";
+import { activeProfileBinding } from "./content-update";
 import { Icon } from "./Icon";
 import { RulesWorkerClient } from "./rules-client";
 import { createNativeCharacter } from "./new-character";
@@ -101,16 +102,7 @@ export function CharacterLibraryPage({
         ...(manifest === undefined
           ? {}
           : {
-              profileBinding: {
-                packId: manifest.packId,
-                contentDigest: manifest.contentDigest,
-                ...(activeProfile?.materializedPackId === manifest.packId
-                  ? {
-                      layers: activeProfile.layers,
-                      resolutionPolicy: activeProfile.resolutionPolicy,
-                    }
-                  : {}),
-              },
+              profileBinding: activeProfileBinding(manifest, activeProfile),
             }),
       },
     );

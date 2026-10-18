@@ -2,6 +2,7 @@ import type { CharacterBuild } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 
 import { projectBuildForEvaluation } from "./build-projection";
+import { parseRules } from "./ir";
 import {
   evaluateCharacter,
   type EngineDiagnostic,
@@ -35,7 +36,29 @@ export interface ProfileMigrationPreview {
   readonly sourceAvailable: boolean;
   readonly referencedDefinitionCount: number;
   readonly missingDefinitionIds: readonly string[];
+  /** Missing records named from the source content, for plain-language display. */
+  readonly missingDefinitions: readonly {
+    readonly id: string;
+    readonly name?: string;
+    readonly type?: string;
+  }[];
   readonly changedDefinitionIds: readonly string[];
+  /** Changed records named from the new content, for plain-language display. */
+  readonly changedDefinitions: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly type: string;
+  }[];
+  /** Saved selections the old content granted but the new content no longer
+   *  does (e.g. a corrected trait that stops granting a power). Adoption removes
+   *  them; anything the old content did not visibly grant is never listed. */
+  readonly removedSelections: readonly {
+    readonly occurrenceId: string;
+    readonly name: string;
+    readonly type?: string;
+    readonly providerName: string;
+    readonly providerType: string;
+  }[];
   readonly source?: ProfileEvaluationSummary;
   readonly target: ProfileEvaluationSummary;
   readonly statChanges: readonly ProfileMigrationValueChange[];
@@ -68,6 +91,60 @@ function referencedDefinitionIds(build: CharacterBuild): string[] {
     entry.elements.forEach((element) => add(element.definitionId)),
   );
   return [...ids.values()].sort((left, right) => left.localeCompare(right));
+}
+
+function grants(
+  provider: ContentEntity | undefined,
+  child: { readonly definitionId?: string; readonly name: string },
+): boolean {
+  const names = [child.definitionId, child.name].flatMap((name) =>
+    name === undefined ? [] : [key(name)],
+  );
+  return (
+    provider !== undefined &&
+    parseRules(provider.id, provider.rules).some(
+      (rule) => rule.kind === "grant" && names.includes(key(rule.name)),
+    )
+  );
+}
+
+function removedSelections(
+  build: CharacterBuild,
+  sourceById: ReadonlyMap<string, ContentEntity>,
+  targetById: ReadonlyMap<string, ContentEntity>,
+): ProfileMigrationPreview["removedSelections"] {
+  const removed: {
+    occurrenceId: string;
+    name: string;
+    type?: string;
+    providerName: string;
+    providerType: string;
+  }[] = [];
+  const visit = (occurrence: CharacterBuild["grabbag"][number]) => {
+    const providerId = key(occurrence.identity.definitionId ?? "");
+    const before = sourceById.get(providerId);
+    const after = targetById.get(providerId);
+    for (const child of occurrence.children) {
+      if (
+        after !== undefined &&
+        grants(before, child.identity) &&
+        !grants(after, child.identity)
+      )
+        removed.push({
+          occurrenceId: child.id,
+          name: child.identity.name,
+          ...(child.identity.type === undefined
+            ? {}
+            : { type: child.identity.type }),
+          providerName: after.name,
+          providerType: after.type,
+        });
+      visit(child);
+    }
+  };
+  build.levels.forEach((frame) => visit(frame.root));
+  build.grabbag.forEach(visit);
+  return removed;
 }
 
 function entityFingerprint(entity: ContentEntity): string {
@@ -221,7 +298,26 @@ export function previewProfileMigration(
     sourceAvailable: sourceEntities !== undefined,
     referencedDefinitionCount: referenced.length,
     missingDefinitionIds,
+    missingDefinitions: missingDefinitionIds.map((id) => {
+      const entity = sourceById?.get(key(id));
+      return {
+        id,
+        ...(entity === undefined
+          ? {}
+          : { name: entity.name, type: entity.type }),
+      };
+    }),
     changedDefinitionIds,
+    changedDefinitions: changedDefinitionIds.flatMap((id) => {
+      const entity = targetById.get(key(id));
+      return entity === undefined
+        ? []
+        : [{ id, name: entity.name, type: entity.type }];
+    }),
+    removedSelections:
+      sourceById === undefined
+        ? []
+        : removedSelections(build, sourceById, targetById),
     ...(sourceEvaluation === undefined
       ? {}
       : { source: summary(sourceEvaluation) }),

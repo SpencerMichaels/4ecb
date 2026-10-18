@@ -495,6 +495,10 @@ export function App() {
     () => installedPacks.map(({ manifest }) => manifest),
     [installedPacks],
   );
+  const activeManifest = useMemo(
+    () => manifests.find((manifest) => manifest.packId === activePackId),
+    [manifests, activePackId],
+  );
 
   useEffect(() => {
     previousRoute.current = route;
@@ -611,6 +615,8 @@ export function App() {
                   resolveAbilityChoices={resolveAbilityChoices}
                   abbreviateAbilityValues={abbreviateAbilityValues}
                   expandWeaponDice={expandWeaponDice}
+                  {...(activeManifest === undefined ? {} : { activeManifest })}
+                  {...(activeProfile === undefined ? {} : { activeProfile })}
                 />
               ) : (
                 <SheetRoute

@@ -7,7 +7,11 @@ import {
   useState,
 } from "react";
 
-import { CharacterRepository } from "@4ecb/browser-storage";
+import {
+  CharacterRepository,
+  type ContentProfileDefinition,
+} from "@4ecb/browser-storage";
+import type { ContentPackManifest } from "@4ecb/content-pack";
 import { appContentRuntime, type RulesRuntimeClient } from "./app-runtime";
 import {
   resolvedBoundProfile,
@@ -88,6 +92,8 @@ import {
 import { CandidateInspectionScope } from "./builder-choice-context";
 import { Icon, type IconName } from "./Icon";
 import { BuilderHeaderStats } from "./BuilderHeaderStats";
+import { ContentUpdateDialog } from "./ContentUpdateDialog";
+import { needsContentUpdate } from "./content-update";
 import { loadoutChangeCommand } from "./equipment-ui";
 import { type InspectedOption } from "./CandidateSelectionTable";
 import { CharacterOverview } from "./CharacterOverview";
@@ -225,6 +231,8 @@ export function CharacterEditorPage({
   resolveAbilityChoices,
   abbreviateAbilityValues,
   expandWeaponDice,
+  activeManifest,
+  activeProfile,
 }: {
   readonly characterId: string;
   readonly navigation: BuilderNavigation;
@@ -237,8 +245,12 @@ export function CharacterEditorPage({
   readonly resolveAbilityChoices: boolean;
   readonly abbreviateAbilityValues: boolean;
   readonly expandWeaponDice: boolean;
+  readonly activeManifest?: ContentPackManifest;
+  readonly activeProfile?: ContentProfileDefinition;
 }) {
   const hideFlavortext = useContext(HideFlavortextContext);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [reviewingContentUpdate, setReviewingContentUpdate] = useState(false);
   const [character, setCharacter] = useState<CharacterRecord>();
   const [entities, setEntities] = useState<readonly ContentEntity[]>([]);
   const [boundProfileResolution, setBoundProfileResolution] =
@@ -377,7 +389,7 @@ export function CharacterEditorPage({
       cancelled = true;
       saveQueue.current = undefined;
     };
-  }, [characterId]);
+  }, [characterId, reloadKey]);
 
   useEffect(() => {
     if (navigation.workspace !== "build" || character === undefined) return;
@@ -1607,6 +1619,34 @@ export function CharacterEditorPage({
         </div>
         <BuilderHeaderStats evaluation={currentEvaluation} />
       </header>
+
+      {character !== undefined &&
+      needsContentUpdate(character.profileBinding, activeManifest) ? (
+        <div className="profile-warning panel-warning content-update-banner">
+          <Icon name="warning" />
+          <span>
+            <strong>Your game content has been updated.</strong>{" "}
+            {character.title || "This character"} still uses the older version.
+          </span>
+          <button type="button" onClick={() => setReviewingContentUpdate(true)}>
+            Review the update
+          </button>
+        </div>
+      ) : null}
+      {reviewingContentUpdate &&
+      character !== undefined &&
+      activeManifest !== undefined ? (
+        <ContentUpdateDialog
+          character={character}
+          target={activeManifest}
+          activeProfile={activeProfile}
+          onClose={() => setReviewingContentUpdate(false)}
+          onUpdated={() => {
+            setReviewingContentUpdate(false);
+            setReloadKey((key) => key + 1);
+          }}
+        />
+      ) : null}
 
       {shouldShowBoundProfileWarning(boundProfileResolution) ? (
         <div className="profile-warning panel-warning">

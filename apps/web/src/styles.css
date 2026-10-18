@@ -1138,7 +1138,8 @@ textarea {
   height: 0.8rem;
   width: 0.8rem;
 }
-.portrait-dialog {
+.portrait-dialog,
+.content-update-dialog {
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: 0;
@@ -1147,24 +1148,57 @@ textarea {
   overflow: auto;
   width: 31rem;
 }
-.portrait-dialog::backdrop {
+.content-update-dialog {
+  width: 34rem;
+}
+.content-update-body {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+}
+.content-update-body :is(h3, p, ul) {
+  margin: 0;
+}
+.content-update-body h3 {
+  font-size: 1rem;
+  margin-top: 0.4rem;
+}
+.content-update-changes {
+  display: grid;
+  gap: 0.2rem;
+  padding-left: 1.2rem;
+}
+.content-update-actions {
+  border-top: 1px solid var(--border);
+}
+.content-update-spacer {
+  flex: 1;
+}
+.portrait-dialog::backdrop,
+.content-update-dialog::backdrop {
   background: rgb(12 18 24 / 72%);
 }
 .portrait-dialog > header,
-.portrait-dialog > footer {
+.portrait-dialog > footer,
+.content-update-dialog > header,
+.content-update-dialog > footer {
   gap: 0.6rem;
   padding: 0.8rem 1rem;
 }
-.portrait-dialog > header {
+.portrait-dialog > header,
+.content-update-dialog > header {
   background: var(--brand-navy);
   border-bottom: 3px solid var(--brand-blue);
   color: #fff;
 }
 .portrait-dialog > header h2,
-.portrait-dialog > header p {
+.portrait-dialog > header p,
+.content-update-dialog > header h2,
+.content-update-dialog > header p {
   margin: 0;
 }
-.portrait-dialog > header button {
+.portrait-dialog > header button,
+.content-update-dialog > header button {
   border-color: transparent;
   color: #fff;
   padding: 0.3rem;
@@ -3429,6 +3463,13 @@ textarea {
   gap: 0.5rem;
   margin-bottom: 1rem;
   padding: 0.75rem;
+}
+.content-update-banner {
+  color: var(--text);
+  font-weight: 400;
+}
+.content-update-banner > button {
+  margin-left: auto;
 }
 
 .builder-tabs {
