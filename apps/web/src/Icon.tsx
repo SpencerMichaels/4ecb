@@ -60,6 +60,7 @@ import {
   PawPrint,
   Pencil,
   Redo2,
+  RedoDot,
   SaveCheck,
   SaveOff,
   SavePen,
@@ -96,6 +97,7 @@ import {
 export type IconName =
   | "ability"
   | "action-none"
+  | "action-opportunity"
   | "anvil"
   | "arms"
   | "attack-area"
@@ -196,6 +198,7 @@ export type IconName =
 const icons: Record<IconName, LucideIcon> = {
   ability: ChartNoAxesColumnIncreasing,
   "action-none": Minus,
+  "action-opportunity": RedoDot,
   anvil: Anvil,
   arms: BicepsFlexed,
   "attack-area": CircleDashed,

@@ -16,6 +16,21 @@ describe("ActionTypeIcon", () => {
     expect(markup).not.toContain("↯");
   });
 
+  it("gives Opportunity Action its own arrow icon, distinct from reactions", () => {
+    const opportunity = renderToStaticMarkup(
+      createElement(ActionTypeIcon, { value: "Opportunity Action" }),
+    );
+    expect(opportunity).toContain("lucide-redo-dot");
+    expect(opportunity).not.toContain("↻");
+    expect(opportunity).toContain('aria-label="Opportunity Action"');
+
+    const reaction = renderToStaticMarkup(
+      createElement(ActionTypeIcon, { value: "Immediate Reaction" }),
+    );
+    expect(reaction).toContain("↻");
+    expect(reaction).not.toContain("lucide-redo-dot");
+  });
+
   it("renders no element for missing or blank action types", () => {
     for (const value of [undefined, "", " \t\n "]) {
       const markup = renderToStaticMarkup(

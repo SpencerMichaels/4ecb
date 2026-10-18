@@ -22,6 +22,8 @@ export function ActionTypeIcon({
         <Icon name="trending-up" />
       ) : /^no action\b/i.test(label) ? (
         <Icon name="action-none" />
+      ) : /\bopportunity\b/i.test(label) ? (
+        <Icon name="action-opportunity" />
       ) : (
         <span aria-hidden="true">{powerActionSymbol(value)}</span>
       )}

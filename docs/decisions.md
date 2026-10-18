@@ -2145,7 +2145,9 @@ features. Compact labels read "Encounter 7", "Daily Utility 2", "Feature".
 
 Free and No Action are distinct actions (No Action powers work even when unable
 to take actions). No Action keeps its own label and uses the Lucide `minus`
-icon; action order is Standard, Move, Minor, Free, No Action, triggered.
+icon; Opportunity Action uses Lucide `redo-dot`, distinct from the Immediate
+Interrupt (`trending-up`) and Reaction (↻) arrows of the same triggered family;
+action order is Standard, Move, Minor, Free, No Action, triggered.
 
 Cards show only the power text tier at the character's level; beyond a power's
 later tiers the base tier is shown. Builder cards present clauses exactly as
