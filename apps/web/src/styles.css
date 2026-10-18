@@ -3594,8 +3594,10 @@ textarea {
   box-shadow: none;
   outline: none;
 }
-/* Instead the whole cell takes the focus border, like the quick-adjust cell. */
-.funds-coin-tile:focus-within {
+/* Instead the whole cell takes the focus border, like the quick-adjust cell,
+   while editing or under keyboard focus; a plain click changes nothing. */
+.funds-coin-tile:has(.funds-coin-input),
+.funds-coin-tile:has(.funds-coin-value:focus-visible) {
   box-shadow: inset 0 0 0 2px var(--focus);
 }
 
