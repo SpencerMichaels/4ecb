@@ -172,6 +172,7 @@ export function corePowerReminders(input: {
         ...new Set(
           input.powers
             .flatMap((p) => p.additionalEffects ?? [])
+            .filter((effect) => !effect.cardOnly)
             .filter(
               (effect) =>
                 key(effect.provider ?? "") === key(feature.name) ||

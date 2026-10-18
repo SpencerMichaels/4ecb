@@ -105,6 +105,7 @@ describe("universal action cards", () => {
     expect(dwarf?.additionalEffects).toEqual([
       expect.objectContaining({
         text: "Second wind is a minor action for dwarves.",
+        cardOnly: true,
       }),
     ]);
     const [human] = secondWinds("Human");

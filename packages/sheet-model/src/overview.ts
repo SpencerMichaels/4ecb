@@ -427,6 +427,7 @@ export function withSheetOverview(
   const seenEffects = new Set<string>();
   for (const power of model.powers)
     for (const effect of power.additionalEffects ?? []) {
+      if (effect.cardOnly) continue;
       // Legacy caches repeat a source suffix on every affected power. Resolve
       // only against known selected features, never an arbitrary parenthesis.
       const namedFeatures = features.filter(

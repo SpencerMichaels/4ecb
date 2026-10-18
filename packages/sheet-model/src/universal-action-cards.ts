@@ -47,6 +47,7 @@ function actionPointEffects(
         text,
         source: "authoritative-evaluation" as const,
         ...(provider ? { provider } : {}),
+        cardOnly: true,
         provenanceId: providerId,
       };
     }),
@@ -87,6 +88,7 @@ function secondWindCard(
             {
               text: "Second wind is a minor action for dwarves.",
               source: "authoritative-evaluation" as const,
+              cardOnly: true,
             },
           ],
         }

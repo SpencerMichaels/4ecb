@@ -88,6 +88,8 @@ export interface SheetAdditionalEffect {
   readonly source: "authoritative-evaluation" | "legacy-cache";
   readonly provider?: string;
   readonly provenanceId?: string;
+  /** Belongs only on its card (special cards), not in page-1 reminders. */
+  readonly cardOnly?: boolean;
 }
 
 export type SheetLearnedReferenceKind =
