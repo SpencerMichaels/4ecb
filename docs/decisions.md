@@ -2222,8 +2222,17 @@ Unarmed, labeled as before with a "No implement" tooltip. If the content
 records no implement proficiency at all, implements are still listed rather
 than leaving only Unarmed. Weapon powers are unchanged. Cached-parity tools
 report the dropped legacy weapon rows (Hu's gouge, Piri's spear and dagger) as
-expected mismatches. Weapons that become implements through item properties
-(e.g. a pact blade) are not yet recognized.
+expected mismatches.
+
+Items also become implements through authored metadata: `_ImplementForClass`
+and `_ImplementForPower` scopes (a class's class and paragon path powers,
+"PP <class>" paragon path powers, a power source or "@Power Source:<name>",
+with a race qualifier such as "warlock(dwarf)" requiring that race) make an
+item usable for matching powers regardless of proficiency (pact blades,
+Alfsair Spear, Star of Corellon); `_ImplementEquiv` makes a weapon count as
+an implement kind for proficiency (Holy Avenger as a holy symbol); and
+`_UniversalImplement` makes it usable for any implement power. Weapon
+proficiency bonuses never apply to implement attacks.
 
 ## Deferred decisions and decision points
 

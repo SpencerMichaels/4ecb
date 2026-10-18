@@ -7,8 +7,10 @@ with, weapons their implement proficiencies cover, and Unarmed (tooltip: no
 implement); plain weapons are no longer offered. Evaluation cache bumped to
 v13. Private check: Hu Sheng-Ming's implement powers now offer Symbol of
 Hope +1 and Unarmed, Piri's Pure Spirit Totem +1 and Unarmed; the only cached
-parity mismatches are the dropped legacy weapon rows. Pact-blade style item
-properties are not yet recognized.
+parity mismatches are the dropped legacy weapon rows; the other six samples
+match exactly. Item implement metadata (`_ImplementForClass`,
+`_ImplementForPower`, `_ImplementEquiv`, `_UniversalImplement`) is honored,
+covering pact blades and similar items; cache bumped to v14.
 
 ## Builder character sidebar (2026-10-18, branch `builder-character-sidebar`)
 

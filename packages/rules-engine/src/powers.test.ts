@@ -2356,3 +2356,134 @@ describe("implement power equipment", () => {
     entities.pop();
   });
 });
+
+describe("item implement metadata", () => {
+  // Weapon enchantments are owned on a base weapon, as in real inventories.
+  const owned = (item: ContentEntity) => ({
+    id: item.id,
+    definitionIds:
+      field(item, "Magic Item Type") === "Weapon"
+        ? ["DAGGER", item.id]
+        : [item.id],
+    quantity: 1,
+    equippedQuantity: 1,
+    acquiredLevel: 1,
+  });
+  const field = (item: ContentEntity, name: string) =>
+    item.specifics.find((specific) => specific.name === name)?.value;
+  const base = [
+    entity("WARLOCK", "Warlock", "Class", {}),
+    entity("CLERIC", "Cleric", "Class", {}),
+    entity("ARCANE", "Arcane", "Power Source", {}),
+    entity("DWARF", "Dwarf", "Race", {}),
+    entity("DAGGER", "Dagger", "Weapon", {
+      Damage: "1d4",
+      Group: "Light Blade",
+    }),
+    {
+      ...entity("ORACLE", "Divine Oracle", "Paragon Path", {}),
+      prerequisites: "Cleric class",
+    },
+    entity("CURSE", "Synthetic Curse", "Power", {
+      Keywords: "Arcane, Implement",
+      Class: "WARLOCK",
+      Attack: "Charisma vs. Will",
+      Hit: "1d6 + Charisma modifier damage.",
+    }),
+    entity("PRAYER", "Synthetic Prayer", "Power", {
+      Keywords: "Divine, Implement",
+      Class: "CLERIC",
+      Attack: "Wisdom vs. Will",
+      Hit: "1d6 + Wisdom modifier damage.",
+    }),
+    entity("FATE", "Synthetic Fate", "Power", {
+      Keywords: "Divine, Implement",
+      Class: "ORACLE",
+      Attack: "Wisdom vs. Will",
+      Hit: "1d6 + Wisdom modifier damage.",
+    }),
+    entity(
+      "SYMBOL_PROFICIENCY",
+      "Implement Proficiency (Holy Symbol)",
+      "Proficiency",
+      {},
+    ),
+  ];
+  const variantsFor = (
+    powerId: string,
+    items: readonly ContentEntity[],
+    active: readonly string[] = [],
+  ) =>
+    evaluatePowers({
+      level: 8,
+      activeDefinitionIds: [powerId, ...active],
+      inventory: items.map(owned),
+      stats: {},
+      overlays: [],
+      entities: [...base, ...items],
+    })[0]?.variants.map((variant) => variant.equipmentName);
+
+  it("uses a pact blade only for its class's powers", () => {
+    const blade = entity("BLADE", "Pact Blade +1", "Magic Item", {
+      "Magic Item Type": "Weapon",
+      Enhancement: "+1 attack rolls and damage rolls",
+      _ImplementForClass: "WARLOCK",
+    });
+    expect(variantsFor("CURSE", [blade])).toContain("Pact Blade Dagger +1");
+    expect(variantsFor("PRAYER", [blade], ["SYMBOL_PROFICIENCY"])).toEqual([
+      "Unarmed",
+    ]);
+  });
+
+  it("requires the race named in a scope qualifier", () => {
+    const hammer = entity("HAMMER", "Pact Hammer +1", "Magic Item", {
+      "Magic Item Type": "Weapon",
+      Enhancement: "+1 attack rolls and damage rolls",
+      _ImplementForClass: "warlock(dwarf)",
+    });
+    expect(variantsFor("CURSE", [hammer])).toEqual(["Unarmed"]);
+    expect(variantsFor("CURSE", [hammer], ["DWARF"])).toContain(
+      "Pact Hammer Dagger +1",
+    );
+  });
+
+  it("treats an implement-equivalent weapon as that implement", () => {
+    const avenger = entity("AVENGER", "Holy Avenger +5", "Magic Item", {
+      "Magic Item Type": "Weapon",
+      Enhancement: "+5 attack rolls and damage rolls",
+      _ImplementEquiv: "Holy Symbol",
+    });
+    expect(variantsFor("PRAYER", [avenger], ["SYMBOL_PROFICIENCY"])).toContain(
+      "Holy Avenger Dagger +5",
+    );
+    expect(variantsFor("PRAYER", [avenger])).toEqual(["Unarmed"]);
+  });
+
+  it("matches power-source and paragon-path scopes and universal implements", () => {
+    const star = entity("STAR", "Star of Corellon +2", "Magic Item", {
+      "Magic Item Type": "Holy Symbol",
+      Enhancement: "+2 attack rolls and damage rolls",
+      _ImplementForPower: "ARCANE(ARCANE)",
+    });
+    const oracle = entity("RELIC", "Oracle Relic +1", "Magic Item", {
+      "Magic Item Type": "Weapon",
+      Enhancement: "+1 attack rolls and damage rolls",
+      _ImplementForPower: "PP CLERIC",
+    });
+    const universal = entity("ANY", "Controller's Implement +3", "Magic Item", {
+      "Magic Item Type": "Weapon",
+      Enhancement: "+3 attack rolls and damage rolls",
+      _UniversalImplement: "true",
+    });
+    // A warlock without holy-symbol proficiency may still use the star for
+    // arcane powers.
+    expect(variantsFor("CURSE", [star], ["WARLOCK"])).toContain(
+      "Star of Corellon +2",
+    );
+    expect(variantsFor("FATE", [oracle])).toContain("Oracle Relic Dagger +1");
+    expect(variantsFor("PRAYER", [oracle])).toEqual(["Unarmed"]);
+    expect(variantsFor("PRAYER", [universal])).toContain(
+      "Controller's Implement Dagger +3",
+    );
+  });
+});

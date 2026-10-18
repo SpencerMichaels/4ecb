@@ -103,6 +103,12 @@ interface Loadout {
   /** What implement proficiency this item answers to: its implement kinds
    * (e.g. "holy symbol", "staff") and, for weapons, its name and group. */
   readonly implementKinds: readonly string[];
+  /** Authored scopes in which this item works as an implement regardless of
+   * proficiency (_ImplementForClass/_ImplementForPower), e.g. a pact blade
+   * for warlock powers. */
+  readonly implementScopes: readonly string[];
+  /** _UniversalImplement: works as any implement. */
+  readonly universalImplement: boolean;
   readonly properties: readonly string[];
   readonly weaponCategory?: string;
   readonly rangedWeapon: boolean;
@@ -145,8 +151,11 @@ function implementProficiencies(
 function usableAsImplement(
   item: Loadout,
   proficiencies: ReadonlySet<string>,
+  inScope: (scopes: readonly string[]) => boolean,
 ): boolean {
-  if (item.unarmed) return true;
+  if (item.unarmed || item.universalImplement) return true;
+  if (item.implementScopes.length > 0 && inScope(item.implementScopes))
+    return true;
   const proficient = item.implementKinds.some((kind) =>
     proficiencies.has(kind),
   );
@@ -155,6 +164,83 @@ function usableAsImplement(
     // content), keep implements rather than leave only Unarmed.
     return proficient || proficiencies.size === 0;
   return proficient;
+}
+
+function listField(parts: readonly ContentEntity[], name: string): string[] {
+  return parts.flatMap((entity) =>
+    entity.specifics
+      .filter((specific) => key(specific.name) === key(name))
+      .flatMap((specific) => specific.value.split(","))
+      .map((value) => value.trim())
+      .filter(Boolean),
+  );
+}
+
+/**
+ * Whether a power falls inside an item's authored implement scopes:
+ * a class (its class and paragon path powers), "PP <class>" (paragon path
+ * powers of that class), a power source, or "@Power Source:<name>". A race in
+ * parentheses ("warlock(dwarf)") also requires that race; other parenthesized
+ * text is a display label.
+ */
+function implementScopeMatcher(
+  power: ContentEntity,
+  keywords: readonly string[],
+  activeDefinitionIds: readonly string[],
+  byId: ReadonlyMap<string, ContentEntity>,
+  byName: ReadonlyMap<string, ContentEntity>,
+): (scopes: readonly string[]) => boolean {
+  const resolve = (reference: string) =>
+    byId.get(key(reference)) ?? byName.get(key(reference));
+  const owners = (field(power, "Class") ?? "")
+    .split(",")
+    .map((reference) => resolve(reference))
+    .filter((entity): entity is ContentEntity => entity !== undefined);
+  const ownerIds = new Set(owners.map((owner) => key(owner.id)));
+  // Paragon paths name their class in their prerequisite ("Cleric class").
+  const pathClassNames = new Set(
+    owners
+      .filter((owner) => key(owner.type) === "paragon path")
+      .flatMap((path) =>
+        [
+          ...(path.prerequisites ?? "").matchAll(/([A-Za-z' ]+?)\s+class\b/giu),
+        ].map((match) => key(match[1] ?? "")),
+      ),
+  );
+  const keywordSet = new Set(keywords.map(key));
+  const races = new Set(
+    activeDefinitionIds.flatMap((id) => {
+      const entity = byId.get(key(id));
+      return entity !== undefined && key(entity.type) === "race"
+        ? [key(entity.name)]
+        : [];
+    }),
+  );
+  const matches = (scope: string): boolean => {
+    const qualified = /^(.*?)\s*\(([^)]*)\)\s*$/u.exec(scope);
+    const base = (qualified?.[1] ?? scope).trim();
+    const qualifier = qualified?.[2]?.trim() ?? "";
+    const qualifierEntity = qualifier === "" ? undefined : resolve(qualifier);
+    if (
+      qualifierEntity !== undefined &&
+      key(qualifierEntity.type) === "race" &&
+      !races.has(key(qualifierEntity.name))
+    )
+      return false;
+    const pathClass = /^pp\s+(.+)$/iu.exec(base)?.[1];
+    if (pathClass !== undefined) {
+      const name = resolve(pathClass)?.name ?? pathClass;
+      return pathClassNames.has(key(name));
+    }
+    const source = /^@power source:\s*(.+)$/iu.exec(base)?.[1];
+    if (source !== undefined) return keywordSet.has(key(source));
+    const entity = resolve(base);
+    if (entity === undefined) return false;
+    if (key(entity.type) === "power source")
+      return keywordSet.has(key(entity.name));
+    return ownerIds.has(key(entity.id)) || pathClassNames.has(key(entity.name));
+  };
+  return (scopes) => scopes.some(matches);
 }
 
 function field(entity: ContentEntity, name: string): string | undefined {
@@ -283,9 +369,20 @@ function loadouts(
         ...(weapon === undefined
           ? []
           : [weapon.name, field(weapon, "Group") ?? ""]),
+        // A weapon that counts as an implement kind, e.g. a holy symbol.
+        ...listField(parts, "_ImplementEquiv").map((kind) =>
+          kind.replace(/\s*\([^)]*\)\s*$/u, ""),
+        ),
       ]
         .filter((value) => value.trim() !== "")
         .map(implementKind),
+      implementScopes: [
+        ...listField(parts, "_ImplementForClass"),
+        ...listField(parts, "_ImplementForPower"),
+      ],
+      universalImplement: parts.some(
+        (entity) => key(field(entity, "_UniversalImplement") ?? "") === "true",
+      ),
       properties: weaponPropertyText(
         weapon,
         field(weapon ?? emptyEntity, "Properties") ?? "",
@@ -312,6 +409,8 @@ function loadouts(
     equipped: false,
     tags: ["unarmed"],
     implementKinds: [],
+    implementScopes: [],
+    universalImplement: false,
     properties: [],
     weaponCategory: "melee",
     rangedWeapon: false,
@@ -1079,6 +1178,10 @@ export function evaluatePowers(input: {
     input.activeDefinitionIds,
     byId,
   );
+  const entitiesByName = new Map<string, ContentEntity>();
+  for (const entity of byId.values())
+    if (!entitiesByName.has(key(entity.name)))
+      entitiesByName.set(key(entity.name), entity);
   const versatileUsedTwoHanded =
     Number(
       textValue(input.textStrings ?? {}, "_INTERNAL_VersatileUsedTwoHanded"),
@@ -1127,6 +1230,13 @@ export function evaluatePowers(input: {
     const recoveries = recoveryExpressions(hitLine, effectLine);
     const weaponPower = keywords.some((value) => key(value) === "weapon");
     const implementPower = keywords.some((value) => key(value) === "implement");
+    const powerImplementScope = implementScopeMatcher(
+      power,
+      keywords,
+      input.activeDefinitionIds,
+      byId,
+      entitiesByName,
+    );
     const effectOnlyCalculation = !hasAttack && effectLine !== undefined;
     const candidates = !hasAttack
       ? effectOnlyCalculation
@@ -1136,7 +1246,11 @@ export function evaluatePowers(input: {
             )
           : implementPower
             ? equipped.filter((item) =>
-                usableAsImplement(item, characterImplementProficiencies),
+                usableAsImplement(
+                  item,
+                  characterImplementProficiencies,
+                  powerImplementScope,
+                ),
               )
             : equipped.filter((item) => item.unarmed)
         : []
@@ -1146,7 +1260,11 @@ export function evaluatePowers(input: {
           )
         : implementPower
           ? equipped.filter((item) =>
-              usableAsImplement(item, characterImplementProficiencies),
+              usableAsImplement(
+                item,
+                characterImplementProficiencies,
+                powerImplementScope,
+              ),
             )
           : equipped.filter((item) => item.unarmed);
     // Legacy PowerStats retains every legal equipment variant even for prose
