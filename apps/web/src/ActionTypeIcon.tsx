@@ -20,6 +20,8 @@ export function ActionTypeIcon({
     >
       {label.toLocaleLowerCase().includes("interrupt") ? (
         <Icon name="trending-up" />
+      ) : /^no action\b/i.test(label) ? (
+        <Icon name="action-none" />
       ) : (
         <span aria-hidden="true">{powerActionSymbol(value)}</span>
       )}

@@ -36,16 +36,6 @@ export function printSustainActions(
   ];
 }
 
-export function printActionLabel(
-  value: string | undefined,
-): string | undefined {
-  const label = value?.trim();
-  if (!label) return undefined;
-  if (/^no\s+action\b/i.test(label))
-    return label.replace(/^no\s+action\b/i, "No Action");
-  return label.replace(/\s+action\b/i, "").trim();
-}
-
 /** A calculated equipment variant must not carry a power-wide primary target
  * into later phases. Only authored phase metadata supplies those headers. */
 export function withAuthoredPrintTargets(

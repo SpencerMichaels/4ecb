@@ -6,6 +6,7 @@ import {
   type BuildOccurrence,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
+import { classifyPowerEntity, powerActionLabel } from "@4ecb/sheet-model";
 import {
   ABILITY_SCORE_NAMES,
   commandForEvaluatedChoice,
@@ -786,11 +787,7 @@ export function powerTableLevel(entity: ContentEntity): number | undefined {
 export function powerTableActionLabel(
   entity: ContentEntity,
 ): string | undefined {
-  const authored = contentSpecificValue(entity, "Action Type")?.trim();
-  if (!authored) return undefined;
-  if (authored.toLocaleLowerCase() === "no action") return "Free";
-  const label = authored.replace(/\s+action$/iu, "").trim();
-  return label || undefined;
+  return powerActionLabel(contentSpecificValue(entity, "Action Type"));
 }
 
 export function powerTableAttackLabel(
@@ -832,23 +829,7 @@ export function powerTableAttackTitle(
 /** The compact type shown opposite an entity name in primary detail panes. */
 export function primaryDetailTypeLabel(entity: ContentEntity): string {
   if (entity.type.trim().toLocaleLowerCase() !== "power") return entity.type;
-
-  const usage = (() => {
-    switch (entityVisualTone(entity)) {
-      case "at-will":
-        return "At-Will";
-      case "encounter":
-        return "Encounter";
-      case "daily":
-        return "Daily";
-      case "utility":
-        return "Utility";
-      default:
-        return "Power";
-    }
-  })();
-  const level = powerTableLevel(entity);
-  return level === undefined ? usage : `${usage} ${level}`;
+  return classifyPowerEntity(entity).compactLabel;
 }
 
 /**
@@ -1937,6 +1918,7 @@ export function contextualTimelineChoiceTitle(
 }
 
 const powerGroupLabels: Readonly<Record<LegacyVisualTone, string>> = {
+  feature: "Features",
   "at-will": "At-Will Powers",
   encounter: "Encounter Powers",
   daily: "Daily Powers",
@@ -2027,6 +2009,8 @@ export function overviewPowerTone(
 
 export function overviewPowerType(tone: LegacyVisualTone): string {
   switch (tone) {
+    case "feature":
+      return "Feature";
     case "at-will":
       return "At-Will";
     case "encounter":

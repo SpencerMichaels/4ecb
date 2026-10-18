@@ -6,6 +6,7 @@ import {
   type ContentEntity,
   type SpecificField,
 } from "@4ecb/content-domain";
+import { classifyPowerEntity } from "@4ecb/sheet-model";
 
 import { ActionTypeIcon } from "./ActionTypeIcon";
 import { entityCurrencyCopper, formatCopperPrice } from "./equipment-ui";
@@ -98,12 +99,7 @@ export function itemCardLabel(
 }
 
 export function powerCardLabel(entity: ContentEntity): string {
-  const usage = contentSpecificValue(entity, "Power Usage")?.trim();
-  const powerType = contentSpecificValue(entity, "Power Type")
-    ?.trim()
-    .toLocaleLowerCase();
-  const level = contentSpecificValue(entity, "Level")?.trim();
-  return [usage, powerType, level].filter(Boolean).join(" ") || "Power";
+  return classifyPowerEntity(entity).compactLabel;
 }
 
 export function itemCardIcon(

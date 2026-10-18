@@ -2120,6 +2120,39 @@ basic-specific bonus channels recognize the effective flag after overlays.
 This is metadata-driven, not a Power of Skill name special case or prose parser.
 Cached recovery does not fabricate feat overlays absent authoritative evaluation.
 
+### D079 — One card classification and one card format for builder and sheet
+
+Status: accepted (2026-10-18).
+
+An audit found three power/item card renderers (builder `EntityCard`, printed
+`PrintPowerCard`/`PrintItemCard`, the screen sheet `Card`) on two data paths
+(raw content specifics vs. `SheetCard`), each classifying cards itself. The
+builder showed "At-Will feature" and "Encounter attack 7" while print showed
+"Feature" and "Encounter power". Like the legacy builder, the product uses one
+card format on every surface.
+
+Classification lives only in `sheet-model/src/power-classification.ts`
+(`classifyPower`, `powerActionLabel`, `powerActionRank`). Following legacy
+`PowerCardFactory`, the card type is Utility for `Power Type: Utility`, else
+the usage with "(Special)" removed; the authored attack/feature Power Type is
+never shown. A power is anything with an action: class-feature powers such as
+Divine Challenge and Lay on Hands are At-Will/Encounter powers. A **Feature**
+card is a rules reference: a `Rules Item`, or `Power Type: Feature` with no
+action (Divine Sanction). Companion stat blocks without an action keep their
+usage. Builder tones match printed cards: usage colors, Utility blue, plum
+features. Compact labels read "Encounter 7", "Daily Utility 2", "Feature".
+
+Free and No Action are distinct actions (No Action powers work even when unable
+to take actions). No Action keeps its own label and uses the Lucide `minus`
+icon; action order is Standard, Move, Minor, Free, No Action, triggered.
+
+Cards show only the power text tier at the character's level; beyond a power's
+later tiers the base tier is shown. Builder cards present clauses exactly as
+printed cards do (no builder-only relabelling). Builder detail panes reuse the
+printed card components in a fluid "panel" layout with interactive additions
+(weapon variant choice, availability, source); other choices (class, race,
+feats, …) adopt the same card frame.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

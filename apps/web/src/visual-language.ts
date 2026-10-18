@@ -1,19 +1,16 @@
 import type { ContentEntity } from "@4ecb/content-domain";
+import { classifyPowerEntity } from "@4ecb/sheet-model";
 
 import type { IconName } from "./Icon";
 
 export type LegacyVisualTone =
-  "at-will" | "encounter" | "daily" | "utility" | "item" | "neutral";
-
-function normalizedField(entity: ContentEntity, name: string): string {
-  return (
-    entity.specifics.find(
-      (field) => field.name.trim().toLocaleLowerCase() === name,
-    )?.value ?? ""
-  )
-    .trim()
-    .toLocaleLowerCase();
-}
+  | "feature"
+  | "at-will"
+  | "encounter"
+  | "daily"
+  | "utility"
+  | "item"
+  | "neutral";
 
 export function entityVisualTone(entity: ContentEntity): LegacyVisualTone {
   const type = entity.type.trim().toLocaleLowerCase();
@@ -30,11 +27,7 @@ export function entityVisualTone(entity: ContentEntity): LegacyVisualTone {
   )
     return "item";
   if (type !== "power") return "neutral";
-  const usage = normalizedField(entity, "power usage");
-  if (usage.startsWith("at-will")) return "at-will";
-  if (usage.startsWith("encounter")) return "encounter";
-  if (usage.startsWith("daily")) return "daily";
-  return "neutral";
+  return classifyPowerEntity(entity).tone;
 }
 
 export function entityTypeIcon(type: string): IconName {
@@ -75,7 +68,7 @@ export function powerActionSymbol(
   value: string | undefined,
 ): PowerActionSymbol {
   const normalized = value?.trim().toLocaleLowerCase() ?? "";
-  if (normalized.includes("no action")) return "○";
+  if (normalized.includes("no action")) return "–";
   if (normalized === "") return "–";
   if (normalized.includes("interrupt")) return "↯";
   if (normalized.includes("reaction")) return "↻";

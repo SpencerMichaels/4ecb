@@ -29,6 +29,8 @@
   --power-daily-soft: #d3d3d3;
   --power-utility: #000080;
   --power-utility-soft: #bbbbdd;
+  --power-feature: #5e3a78;
+  --power-feature-soft: #d9cce3;
   --power-item: #ff8c00;
   --power-item-soft: #ffe3cc;
   --tone-neutral: #1d3d5d;
@@ -84,6 +86,7 @@
   --power-encounter-soft: #442020;
   --power-daily-soft: #34383f;
   --power-utility-soft: #222a55;
+  --power-feature-soft: #33233f;
   --power-item-soft: #49341d;
 }
 
@@ -113,6 +116,7 @@
     --power-encounter-soft: #442020;
     --power-daily-soft: #34383f;
     --power-utility-soft: #222a55;
+    --power-feature-soft: #33233f;
     --power-item-soft: #49341d;
   }
 }
@@ -3124,6 +3128,12 @@ textarea {
 .usage-utility > header {
   background: var(--power-utility);
 }
+.sheet-card.usage-feature {
+  border-color: var(--power-feature);
+}
+.sheet-card.usage-feature > header {
+  background: var(--power-feature);
+}
 .item-card {
   border-color: var(--power-item);
 }
@@ -5333,6 +5343,12 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   --tone-soft: var(--power-utility-soft);
 }
 
+.tone-feature {
+  --tone: var(--power-feature);
+  --tone-contrast: #fff;
+  --tone-soft: var(--power-feature-soft);
+}
+
 .tone-item {
   --tone: var(--power-item);
   --tone-contrast: #251506;
@@ -5387,6 +5403,10 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 :root[data-theme="dark"] .tone-utility {
   --tone: #829bff;
 }
+:root[data-theme="dark"] .tone-feature {
+  --tone: #b48ad6;
+  --tone-contrast: #111727;
+}
 :root[data-theme="dark"] .tone-item {
   --tone: #f2a73b;
   --tone-contrast: #111727;
@@ -5407,6 +5427,10 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   }
   :root:not([data-theme]) .tone-utility {
     --tone: #829bff;
+  }
+  :root:not([data-theme]) .tone-feature {
+    --tone: #b48ad6;
+    --tone-contrast: #111727;
   }
   :root:not([data-theme]) .tone-item {
     --tone: #f2a73b;

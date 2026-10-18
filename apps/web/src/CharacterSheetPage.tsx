@@ -22,6 +22,8 @@ import {
 import {
   buildEvaluatedSheetModel,
   buildSheetModel,
+  classifyPowerCard,
+  powerActionLabel,
   type CharacterSheetModel,
   type SheetCard,
   type SheetLearnedReference,
@@ -34,7 +36,7 @@ import { ActionTypeIcon } from "./ActionTypeIcon";
 import { Icon } from "./Icon";
 import { PortraitImage } from "./PortraitEditor";
 import { inventoryCategory } from "./equipment-ui";
-import { isRulesReferencePower, sortedPowerCards } from "./power-card-order";
+import { sortedPowerCards } from "./power-card-order";
 import {
   PrintCharacterCard,
   PrintSkillsCard,
@@ -56,7 +58,6 @@ import {
   defaultPrintAttacks,
   groupedPrintRules,
   printAttackHeader,
-  printActionLabel,
   printSustainActions,
 } from "./print-power-attacks";
 import {
@@ -104,17 +105,9 @@ function Card({
   readonly abbreviateAbilityValues: boolean;
   readonly expandWeaponDice: boolean;
 }) {
-  const powerType = card.fields.find(
-    (field) => field.label.trim().toLocaleLowerCase() === "power type",
-  )?.value;
-  const usage = (
-    powerType?.trim().toLocaleLowerCase() === "utility"
-      ? "utility"
-      : (card.usage ?? "item")
-  )
-    .trim()
-    .toLocaleLowerCase()
-    .replace(/[^a-z]+/g, "-");
+  const classification =
+    card.kind === "power" ? classifyPowerCard(card) : undefined;
+  const usage = classification?.tone ?? "item";
   const variants = card.variants ?? [];
   const [selectedVariantId, setSelectedVariantId] = useState(
     () => defaultPowerVariant(variants)?.id,
@@ -141,9 +134,7 @@ function Card({
     <article className={`sheet-card ${card.kind}-card usage-${usage}`}>
       <header>
         <h3>{card.name}</h3>
-        <span>
-          {card.usage ?? (card.kind === "item" ? "Magic item" : "Power")}
-        </span>
+        <span>{classification?.compactLabel ?? "Magic item"}</span>
       </header>
       {(card.actionType ?? card.keywords) === undefined ? null : (
         <p className="card-meta">
@@ -424,11 +415,11 @@ function PrintPowerCard({
 }) {
   const cardRef = usePrintCardFit();
   const attackType = cardField(card, "Attack Type")?.trim() ?? "";
-  const level = cardField(card, "Level");
-  const powerType = cardField(card, "Power Type");
-  const displayActionType = printActionLabel(card.actionType);
+  const classification = classifyPowerCard(card);
+  const level = classification.level;
+  const displayActionType = powerActionLabel(card.actionType);
   const sustainActions = printSustainActions(card.fields);
-  const isUtility = powerType?.trim().toLocaleLowerCase() === "utility";
+  const isUtility = classification.utility;
   const variants = card.variants ?? [];
   const printVariants = variants.filter(
     (variant) =>
@@ -441,29 +432,16 @@ function PrintPowerCard({
       !LEGACY_POWER_BODY_EXCLUDES.has(field.label.trim().toLocaleLowerCase()),
   );
   const groupedRules = groupedPrintRules(rules, attacks);
-  const isFeature = isRulesReferencePower(card);
-  const usageTone = isFeature
+  // Card frame color follows usage; an unknown usage keeps the at-will frame.
+  const usageTone = classification.feature
     ? "feature"
-    : /^encounter/i.test(card.usage ?? "")
-      ? "encounter"
-      : /^daily/i.test(card.usage ?? "")
-        ? "daily"
-        : "at-will";
-  const displayUsage =
-    usageTone === "encounter"
-      ? "Encounter"
-      : usageTone === "daily"
-        ? "Daily"
-        : "At-Will";
+    : (classification.usage ?? "at-will");
+  const displayUsage = classification.usageLabel ?? "At-Will";
   const hasActionBand =
     Boolean(displayActionType) ||
     Boolean(attackType) ||
     sustainActions.length > 0;
-  // e.g. "Encounter (Special)": a nonstandard limit explained by the card.
-  const specialUsage = /\(special\)/i.test(card.usage ?? "");
-  const typeLabel = isFeature
-    ? "Feature"
-    : `${displayUsage}${isUtility ? " Utility" : ""} power${specialUsage ? " (Special)" : ""}`;
+  const typeLabel = classification.typeLabel;
   return (
     <article
       ref={cardRef}

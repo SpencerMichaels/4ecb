@@ -752,13 +752,16 @@ describe("builder planning UI", () => {
         specifics: [{ ...power.specifics[0]!, value: "Minor Action" }],
       }),
     ).toBe("Minor");
-    for (const authored of ["No Action", "Free Action"]) {
+    for (const [authored, label] of [
+      ["No Action", "No Action"],
+      ["Free Action", "Free"],
+    ] as const) {
       expect(
         powerTableActionLabel({
           ...power,
           specifics: [{ ...power.specifics[0]!, value: authored }],
         }),
-      ).toBe("Free");
+      ).toBe(label);
     }
     for (const authored of ["", " \t\n "]) {
       expect(

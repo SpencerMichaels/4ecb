@@ -190,12 +190,13 @@ describe("shared power and item cards", () => {
       createElement(EntityCardHeader, { entity: power }),
     );
     expect(markup).toContain("action-type-icon");
-    expect(markup).toContain("Encounter attack 7");
+    expect(markup).toContain("Encounter 7");
+    expect(markup).not.toContain("attack 7");
     expect(markup).not.toContain("Close burst 3");
     expect(markup).not.toContain("entity-card-attack-type");
     expect(
       powerCardLabel(entity("Power", [field("Power Type", "Utility", 0)])),
-    ).toBe("utility");
+    ).toBe("Utility");
   });
 
   it("omits empty header subheading space but retains meaningful indicators", () => {
@@ -714,7 +715,7 @@ describe("shared power and item cards", () => {
       }),
     );
 
-    expect(headerMarkup).toContain("Encounter utility");
+    expect(headerMarkup).toContain("Encounter Utility");
     expect(bodyMarkup).toContain(
       '<dt>Range</dt><dd class="preserve-lines">Personal</dd>',
     );

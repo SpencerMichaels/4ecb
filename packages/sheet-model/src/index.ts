@@ -40,6 +40,18 @@ import {
   type SheetOverview,
   type OverviewInventory,
 } from "./overview";
+export {
+  classifyPower,
+  classifyPowerCard,
+  classifyPowerEntity,
+  powerActionLabel,
+  powerActionRank,
+  powerUsageCategory,
+  type PowerCardTone,
+  type PowerClassification,
+  type PowerClassificationInput,
+  type PowerUsageCategory,
+} from "./power-classification";
 export type {
   SheetOverview,
   OverviewFeature,

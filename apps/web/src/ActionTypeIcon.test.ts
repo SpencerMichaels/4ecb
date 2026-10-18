@@ -25,15 +25,20 @@ describe("ActionTypeIcon", () => {
     }
   });
 
-  it("presents authored No Action like Free Action", () => {
-    for (const value of ["No Action", "Free Action"]) {
-      const markup = renderToStaticMarkup(
-        createElement(ActionTypeIcon, { value }),
-      );
-      expect(markup).toContain(`<span aria-hidden="true">○</span>`);
-      expect(markup).toContain(`aria-label="${value}"`);
-      expect(markup).toContain(`title="${value}"`);
-    }
+  it("distinguishes No Action from Free Action", () => {
+    const free = renderToStaticMarkup(
+      createElement(ActionTypeIcon, { value: "Free Action" }),
+    );
+    expect(free).toContain(`<span aria-hidden="true">○</span>`);
+    expect(free).toContain('aria-label="Free Action"');
+
+    const none = renderToStaticMarkup(
+      createElement(ActionTypeIcon, { value: "No Action" }),
+    );
+    expect(none).toContain("lucide-minus");
+    expect(none).not.toContain("○");
+    expect(none).toContain('aria-label="No Action"');
+    expect(none).toContain('title="No Action"');
   });
 
   it("can render decoratively while retaining its hover title", () => {

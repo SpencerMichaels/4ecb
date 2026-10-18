@@ -330,7 +330,7 @@ describe("print layout contract", () => {
       /\.paper-a4 \.print-reference-card\s*\{[\s\S]*?height:\s*86\.8mm;[\s\S]*?width:\s*63mm;/,
     );
     expect(sheetSource).toContain("chunks(printableCards, 9)");
-    expect(sheetSource).toContain('.replace(/\\s+action\\b/i, "")');
+    expect(sheetSource).toContain("powerActionLabel(card.actionType)");
     expect(sheetSource).toContain(
       "powerTextAtLevel(field.value, characterLevel)",
     );
@@ -341,9 +341,7 @@ describe("print layout contract", () => {
     );
     expect(sheetSource).toContain("`$1 · ${formula} vs $2`");
     expect(sheetSource).not.toContain("`${attack.ordinal} · `");
-    expect(sheetSource).toContain(
-      'const isUtility = powerType?.trim().toLocaleLowerCase() === "utility"',
-    );
+    expect(sheetSource).toContain("const isUtility = classification.utility");
     expect(sheetSource).toContain("defaultPrintAttacks(card)");
     expect(sheetSource).toContain("fallbackPrintAttacks(card, selected)");
     expect(styles).toMatch(
@@ -373,8 +371,9 @@ describe("print layout contract", () => {
     expect(styles).toMatch(
       /\.print-power-card\.usage-feature\s*\{[^}]*--card-color:\s*#5e3a78/,
     );
-    expect(sheetSource).toContain('? "Feature"');
-    expect(sheetSource).toContain("isRulesReferencePower(card)");
+    // Feature/usage labels come from the shared sheet-model classification.
+    expect(sheetSource).toContain("classifyPowerCard(card)");
+    expect(sheetSource).toContain("classification.typeLabel");
     expect(styles).toMatch(
       /\.print-card-type\s*\{[\s\S]*?background:\s*var\(--card-footer-color, var\(--card-color\)\)/,
     );
@@ -414,9 +413,7 @@ describe("print layout contract", () => {
     expect(styles).toMatch(
       /\.print-card-weapon-variants\s*\{[\s\S]*?padding-top:\s*var\(--print-card-section-gap\)/,
     );
-    expect(sheetSource).toContain(
-      '`${displayUsage}${isUtility ? " Utility" : ""} power${specialUsage ? " (Special)" : ""}`',
-    );
+    expect(sheetSource).toContain("const typeLabel = classification.typeLabel");
     expect(sheetSource).not.toContain("print-power-frequency");
     expect(sheetSource).not.toContain("print-item-frequency");
     expect(sheetSource).not.toMatch(

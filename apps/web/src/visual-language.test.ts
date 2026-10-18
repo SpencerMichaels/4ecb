@@ -36,7 +36,37 @@ function entity(
 }
 
 describe("legacy-derived visual language", () => {
-  it("uses authored Power Usage for tone and never treats Utility as a color", () => {
+  it("matches printed card tones: usage, Utility blue, and plum features", () => {
+    expect(
+      entityVisualTone(
+        entity("Power", [], {
+          "Power Usage": "Encounter",
+          "Power Type": "Utility",
+          "Action Type": "Minor Action",
+        }),
+      ),
+    ).toBe("utility");
+    expect(
+      entityVisualTone(
+        entity("Power", [], {
+          "Power Usage": "At-Will",
+          "Power Type": "Feature",
+          "Action Type": "Minor Action",
+        }),
+      ),
+    ).toBe("at-will");
+    expect(
+      entityVisualTone(
+        entity("Power", [], {
+          "Power Usage": "At-Will",
+          "Rules Item": "Rules reference text.",
+          "Power Type": "Feature",
+        }),
+      ),
+    ).toBe("feature");
+  });
+
+  it("uses authored Power Usage for tone, ignoring Utility categories", () => {
     expect(
       entityVisualTone(
         entity("Power", ["Utility"], { "Power Usage": "Encounter" }),
@@ -67,7 +97,7 @@ describe("legacy-derived visual language", () => {
     expect(powerActionSymbol("Minor Action")).toBe("◔");
     expect(powerActionSymbol("Move Action")).toBe("≫");
     expect(powerActionSymbol("Free Action")).toBe("○");
-    expect(powerActionSymbol("No Action")).toBe("○");
+    expect(powerActionSymbol("No Action")).toBe("–");
     expect(powerActionSymbol("Immediate Reaction")).toBe("↻");
     expect(powerActionSymbol("Opportunity Action")).toBe("↻");
     expect(powerActionSymbol("Immediate Interrupt")).toBe("↯");

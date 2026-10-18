@@ -4,7 +4,6 @@ import {
   fallbackPrintAttacks,
   groupedPrintRules,
   printAttackHeader,
-  printActionLabel,
   printSustainActions,
   withAuthoredPrintTargets,
 } from "./print-power-attacks";
@@ -34,18 +33,6 @@ describe("printed authored attack phases", () => {
     expect(printSustainActions(fields)).toEqual(["Minor", "Move", "Standard"]);
     expect(fields[0]?.value).toBe("The effect persists.");
     expect(printSustainActions([])).toEqual([]);
-  });
-  it.each([
-    ["No Action", "No Action"],
-    [" no action ", "No Action"],
-    ["No Action (special)", "No Action (special)"],
-    ["Standard Action", "Standard"],
-    ["Free Action", "Free"],
-    ["Immediate Reaction", "Immediate Reaction"],
-    [undefined, undefined],
-    ["", undefined],
-  ])("formats the action label %s as %s", (source, expected) => {
-    expect(printActionLabel(source)).toBe(expected);
   });
   it("never carries a variant's primary target into an unspecified secondary header", () => {
     const fields = card.fields.map((field, index) =>

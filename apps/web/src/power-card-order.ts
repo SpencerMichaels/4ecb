@@ -1,47 +1,40 @@
-import type { SheetCard } from "@4ecb/sheet-model";
+import {
+  classifyPowerCard,
+  powerActionRank,
+  type SheetCard,
+} from "@4ecb/sheet-model";
+
+export { powerActionRank };
 
 export const isRulesReferencePower = (card: SheetCard) =>
-  card.fields.some(
-    (field) =>
-      field.label.trim().toLowerCase() === "rules item" &&
-      Boolean(field.value.trim()),
-  );
-
-export function powerActionRank(action: string): number {
-  const normalized = action.trim().toLowerCase();
-  if (/^standard\b/.test(normalized)) return 0;
-  if (/^move\b/.test(normalized)) return 1;
-  if (/^minor\b/.test(normalized)) return 2;
-  if (/^(?:free|no action)\b/.test(normalized)) return 3;
-  if (/^(?:immediate|opportunity|reaction|interrupt)\b/.test(normalized))
-    return 4;
-  return 5;
-}
+  classifyPowerCard(card).feature;
 
 /** Character-sheet usage groups, then the same action hierarchy as power tables. */
 export function sortedPowerCards(cards: readonly SheetCard[]): SheetCard[] {
+  const classifications = new Map(
+    cards.map((card) => [card, classifyPowerCard(card)]),
+  );
   const group = (card: SheetCard) => {
-    if (isRulesReferencePower(card)) return -1;
-    const usage = card.usage?.trim() ?? "";
-    if (/^at[- ]will\b/i.test(usage)) return card.universal ? 1 : 0;
-    if (/^encounter\b/i.test(usage)) return 2;
-    if (/^daily\b/i.test(usage)) return 3;
-    return 4;
+    const classification = classifications.get(card)!;
+    if (classification.feature) return -1;
+    switch (classification.usage) {
+      case "at-will":
+        return card.universal ? 1 : 0;
+      case "encounter":
+        return 2;
+      case "daily":
+        return 3;
+      default:
+        return 4;
+    }
   };
   const utility = (card: SheetCard) =>
-    Number(
-      card.fields.some(
-        (field) =>
-          field.label.trim().toLowerCase() === "power type" &&
-          field.value.trim().toLowerCase() === "utility",
-      ),
-    );
+    Number(classifications.get(card)!.utility);
   return [...cards].sort(
     (a, b) =>
       group(a) - group(b) ||
       utility(a) - utility(b) ||
-      powerActionRank(a.actionType ?? "") -
-        powerActionRank(b.actionType ?? "") ||
+      powerActionRank(a.actionType) - powerActionRank(b.actionType) ||
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
   );
 }

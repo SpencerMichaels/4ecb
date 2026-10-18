@@ -1,5 +1,16 @@
 # Implementation status
 
+## Unified card classification (2026-10-18, in progress)
+
+D079 step 1: builder detail headers, power tables, overview, printed cards, the
+screen sheet card and sheet card order all classify powers through
+`sheet-model` `classifyPower`. The builder now reads "Encounter 7" / "Feature"
+(Divine Sanction) with Utility-blue and plum-feature tones; No Action is no
+longer shown as Free and has the `minus` icon. Remaining D079 steps: shared
+`SheetCard` projection for builder candidates, shared power/item card
+components (builder tier selection, print clause labels), the reference-card
+frame for other choices, and removal of the old builder card paths.
+
 ## Shared derived values (2026-10-17)
 
 Audit of numeric values shown in more than one place: totals read directly from
