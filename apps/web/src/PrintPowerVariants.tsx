@@ -1,5 +1,7 @@
 import type { SheetPowerAttack, SheetPowerVariant } from "@4ecb/sheet-model";
 
+import { nameWithBoundEnhancement } from "./print-item-presentation";
+
 type AttackCell = Pick<
   SheetPowerAttack,
   "attack" | "ability" | "damage" | "eligible"
@@ -150,7 +152,9 @@ export function PrintPowerVariants({
         <tbody>
           {rows.map(({ variant, cells }) => (
             <tr key={variant.id}>
-              <th scope="row">{variant.equipmentName}</th>
+              <th scope="row">
+                {nameWithBoundEnhancement(variant.equipmentName)}
+              </th>
               {shared || splitDamage ? (
                 <>
                   <td className="print-variant-bonus" aria-label="To hit">

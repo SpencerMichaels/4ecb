@@ -198,7 +198,7 @@ describe("equipment item details", () => {
     );
 
     expect(markup).toContain("print-item-card is-panel");
-    expect(markup).toContain("Bloodiron Plate Armor +2");
+    expect(markup).toContain("Bloodiron Plate Armor\u00a0+2");
     expect(markup).toContain("<span>Armor</span>");
     expect(markup).toContain("Level 8");
     expect(markup).toContain("lucide-shirt");
@@ -265,7 +265,7 @@ describe("equipment item details", () => {
     );
 
     expect(markup).toContain("print-item-card is-panel");
-    expect(markup).toContain("Protective Public Warhammer +2");
+    expect(markup).toContain("Protective Public Warhammer\u00a0+2");
     expect(markup).toContain("<span>Weapon</span>");
     expect(markup).toContain("Level 7");
     expect(markup).not.toContain("Public Warhammer</h");

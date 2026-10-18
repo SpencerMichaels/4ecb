@@ -10,6 +10,7 @@ import {
   type CardPanelProps,
 } from "./PowerCard";
 import {
+  nameWithBoundEnhancement,
   printItemPresentation,
   printItemPower,
   printItemPowerClauses,
@@ -53,7 +54,7 @@ export function ItemCard({
           <span
             {...(panel.headingId === undefined ? {} : { id: panel.headingId })}
           >
-            {item.name}
+            {nameWithBoundEnhancement(item.name)}
           </span>
         </h3>
       </header>

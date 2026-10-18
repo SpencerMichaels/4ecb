@@ -1,6 +1,12 @@
 import type { SheetCard, SheetValue } from "@4ecb/sheet-model";
 import { itemCategoryIcon } from "./item-icons";
 
+/** Keeps a trailing enhancement bonus ("Defensive Warhammer +2") on the line
+ * of the word before it, so a wrapped name never orphans "+2". */
+export function nameWithBoundEnhancement(name: string): string {
+  return name.replace(/\s+([+-]\d+)\s*$/u, "\u00a0$1");
+}
+
 /** "3400" → "3,400"; authored values that are not plain numbers stay as is. */
 export function groupedNumber(value: string): string {
   const number = Number(value.replaceAll(",", ""));

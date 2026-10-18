@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { SheetCard } from "@4ecb/sheet-model";
 import {
+  nameWithBoundEnhancement,
   printItemPresentation,
   printItemPower,
   printItemPowerClauses,
@@ -19,6 +20,19 @@ function card(
     fields: Object.entries(values).map(([label, value]) => ({ label, value })),
   };
 }
+
+describe("nameWithBoundEnhancement", () => {
+  it("binds a trailing enhancement bonus to the preceding word", () => {
+    expect(nameWithBoundEnhancement("Defensive Warhammer +2")).toBe(
+      "Defensive Warhammer\u00a0+2",
+    );
+    expect(nameWithBoundEnhancement("Cursed Blade -1")).toBe(
+      "Cursed Blade\u00a0-1",
+    );
+    expect(nameWithBoundEnhancement("Longsword")).toBe("Longsword");
+    expect(nameWithBoundEnhancement("+2 Shield Bash")).toBe("+2 Shield Bash");
+  });
+});
 
 describe("printed item presentation", () => {
   it.each(["Heroic", "Paragon", "Epic"])(
