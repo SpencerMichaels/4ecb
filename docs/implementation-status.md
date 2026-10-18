@@ -15,17 +15,49 @@ pass through Nix.
 
 Following the legacy CharacterSheetViewer special cards, printed cards now include
 Action Point and Second Wind immediately after the play-data cards. Action Point
-(Encounter (Special), footer "Encounter power (Special)") lists the stacked
+(Encounter (Special), free action, footer "Encounter power (Special)") lists the stacked
 `Action Point`, `ALLY.Action Point` and `BEAST.Action Point` textstrings like
 `ActionPointCard`; the evaluator now records every textstring contribution with
 its source (cache v10) because same-named strings previously overwrote each
 other. Second Wind is always synthesized like `SecondWindCard` (Utility,
-Personal, healing HP / 4 + Healing Surge Value; Minor action plus "Second wind is
-a minor action for dwarves." for dwarves), and any content-supplied Second Wind
-is dropped so it never prints twice. Other `(Special)` usages print a
-"(Special)" footer suffix, and Personal ranges/targets use a person icon.
-Verification: 915 tests, workspace typecheck and lint pass through Nix; Hu and
-Ingi checked end to end against the legacy cards.
+Personal, healing HP / 4 + Healing Surge Value), and any content-supplied Second
+Wind is dropped so it never prints twice; the card never depends on community
+content. There is no race- or power-specific code: `modify name="Second Wind"`
+overlays (matched by the overlay's recorded target name, cache v11) set the
+card's action from the last `Action Type` overlay and print other fields as card
+notes. Content errata live in the tracked corrections pack
+`content/corrections/*.part`, merged by `scripts/build-private-content.sh` after
+the CBLoader parts and their parity check: Dwarven Resilience becomes a trait
+that makes second wind a minor action, and Stoneheart Warrior makes it a free
+action. Other encounter powers whose own effect uses your second wind share its
+single use (`sharedUsage: "Second Wind"`) and are grouped with it in the
+scratchpad tracker without a separate heading; dailies keep their own tracking.
+Other `(Special)` usages print a "(Special)" footer suffix, and Personal
+ranges/targets use a person icon.
+
+## Content updates and Game content settings (2026-10-17)
+
+Characters stay pinned to their content. When the active content differs, the
+builder shows "Your game content has been updated" with a review dialog that
+lists, in player terms, stat and power changes, rewritten rules, selections the
+new content no longer grants (removed on update; from
+`previewProfileMigration().removedSelections`, which compares each provider's
+grants in old and new content and has no false positives on unchanged content
+across the sample characters), and missing entries, with a backup download.
+Settings > Game content is one table of every installed pack in precedence
+order (lower rows win), each with an In use checkbox, Replace… (imports a file
+into that row's place and state, removing the old pack unless characters are
+pinned to it directly) and Remove (confirmed inline with the number of
+dependent characters), plus a single Import button that adds packs at the
+bottom, turned on. Rows reorder by drag or arrow keys on the handle; group
+(server) packs stay above imported packs, as the repository requires. Changes
+apply immediately and report how many characters will be offered the update;
+the order of packs that are off is remembered per browser. Duplicate pack names
+are qualified with their ID. A browser with no active content starts on the
+server-advertised group content, and a stale group pack offers "Use new
+version". Digests, IDs, raw rules-XML import and storage diagnostics live under
+Advanced content options. Verification: 925 tests, workspace typecheck, lint
+and format check pass through Nix.
 
 ## Printed play-data cards (2026-10-17)
 
