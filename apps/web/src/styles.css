@@ -4209,6 +4209,12 @@ textarea {
   white-space: nowrap;
 }
 
+/* Hovering keeps the divider between tabs its normal color (the app-wide
+   button hover would turn it blue). */
+.level-choice-tabs button:not(:disabled):not([aria-disabled="true"]):hover {
+  border-right-color: var(--border);
+}
+
 .level-choice-tabs button[aria-selected="true"] {
   background: var(--surface);
   border-bottom-color: var(--accent);

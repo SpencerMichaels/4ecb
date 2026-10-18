@@ -182,3 +182,13 @@ describe("level heading segment", () => {
     ).toContain("padding: 0.55rem 0.85rem");
   });
 });
+
+describe("level section tab hover", () => {
+  it("keeps the tab divider uncolored on hover", () => {
+    expect(
+      declarationsFor(
+        '.level-choice-tabs button:not(:disabled):not([aria-disabled="true"]):hover',
+      ),
+    ).toContain("border-right-color: var(--border)");
+  });
+});
