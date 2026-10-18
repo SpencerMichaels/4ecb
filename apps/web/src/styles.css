@@ -3516,6 +3516,7 @@ textarea {
 /* Funds: five coin tiles and an actions tile in one 3 × 2 grid; each value
    sits under its label at full tile width, so none are truncated. */
 .builder-sidebar .funds-pane .stat-tile {
+  align-items: center;
   flex-direction: column;
   gap: 0.1em;
   padding: 0.3em 0.2em;
@@ -3557,6 +3558,12 @@ textarea {
 
 /* Coin counts read as plain numbers and edit in place on double-click or
    Enter. */
+.funds-coin-tile {
+  cursor: text;
+}
+.funds-coin-tile dd {
+  inline-size: 100%;
+}
 .funds-coin-value {
   background: transparent;
   border: 0;
@@ -3564,7 +3571,9 @@ textarea {
   color: inherit;
   cursor: text;
   font: inherit;
+  inline-size: 100%;
   padding: 0;
+  text-align: center;
 }
 .funds-coin-value:hover,
 .funds-coin-value:focus-visible {

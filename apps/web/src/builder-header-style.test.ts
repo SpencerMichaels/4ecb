@@ -55,6 +55,11 @@ describe("builder character sidebar layout", () => {
     expect(field).toContain("background: var(--stat-tint)");
     expect(field).toContain("border-radius: 0");
     expect(field).toContain("font-size: 1em");
+    // Coin tiles are centered like the other stats and editable edge to edge.
+    expect(
+      declarationsFor(".builder-sidebar .funds-pane .stat-tile"),
+    ).toContain("align-items: center");
+    expect(declarationsFor(".funds-coin-value")).toContain("inline-size: 100%");
     expect(equipment).toContain('toLocaleString("en-US")');
     // Full currency names, with "Diamond" for astral diamonds.
     for (const name of ["Copper", "Silver", "Gold", "Platinum", "Diamond"])

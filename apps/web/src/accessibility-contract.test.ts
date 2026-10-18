@@ -862,7 +862,10 @@ describe("release accessibility contract", () => {
     // Coin counts are edited in place; there is no edit-funds dialog.
     expect(equipmentWorkspace).not.toContain('aria-label="Edit funds"');
     expect(equipmentWorkspace).not.toContain("function WalletDialog");
-    expect(equipmentWorkspace).toContain("onDoubleClick={() => startCoinEdit(");
+    expect(equipmentWorkspace).toContain(
+      "className={`stat-tile funds-coin-tile",
+    );
+    expect(equipmentWorkspace).toContain("startCoinEdit(denomination)");
     expect(equipmentWorkspace).toContain(
       "onSetWallet(walletWithCoinCount(wallet, editing.coin, count, location))",
     );

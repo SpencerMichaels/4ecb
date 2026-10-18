@@ -515,11 +515,15 @@ function FundsPane({
   const coinTile = (denomination: keyof CurrencyAmount) => (
     <div
       key={`${denomination}-${walletPulse.denominations.includes(denomination) ? walletPulse.generation : 0}`}
-      className={`stat-tile${
+      className={`stat-tile funds-coin-tile${
         walletPulse.denominations.includes(denomination)
           ? ` is-adjusted is-${walletPulse.direction}`
           : ""
       }`}
+      // The whole tile, not just its digits, starts editing on double-click.
+      onDoubleClick={() => {
+        if (editing?.coin !== denomination) startCoinEdit(denomination);
+      }}
     >
       <dt>{DENOMINATION_NAMES[denomination]}</dt>
       <dd>
@@ -554,7 +558,6 @@ function FundsPane({
             className="funds-coin-value"
             title="Double-click to edit"
             type="button"
-            onDoubleClick={() => startCoinEdit(denomination)}
             onKeyDown={(event) => {
               if (event.key === "Enter" || event.key === "F2") {
                 event.preventDefault();
