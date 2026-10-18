@@ -2196,7 +2196,7 @@ the workspace.
 sit on the page above the sidebar box, which starts at the stats. The funds
 (coins, quick adjust, edit) move into that box on the Inventory, Loadout and
 Shop tabs, so every detail column is one card wide. Tabs are Build, Details,
-Inventory, Loadout and Shop: Overview is removed (the character sheet replaces
+Loadout, Inventory and Shop: Overview is removed (the character sheet replaces
 it; old links fall back to Build), Equipment splits into Inventory and Loadout,
 and Diagnostics is reached only from the status badges, so it is hidden when
 nothing needs attention. The app header is removed: the builder's Character

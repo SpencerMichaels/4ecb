@@ -1775,19 +1775,6 @@ export function CharacterEditorPage({
                 <button
                   aria-selected={
                     navigation.workspace === "equipment" &&
-                    navigation.loadout !== true
-                  }
-                  role="tab"
-                  type="button"
-                  onClick={() =>
-                    onNavigate(characterId, { workspace: "equipment" })
-                  }
-                >
-                  <Icon name="handbag" /> Inventory
-                </button>
-                <button
-                  aria-selected={
-                    navigation.workspace === "equipment" &&
                     navigation.loadout === true
                   }
                   role="tab"
@@ -1800,6 +1787,19 @@ export function CharacterEditorPage({
                   }
                 >
                   <Icon name="sword" /> Loadout
+                </button>
+                <button
+                  aria-selected={
+                    navigation.workspace === "equipment" &&
+                    navigation.loadout !== true
+                  }
+                  role="tab"
+                  type="button"
+                  onClick={() =>
+                    onNavigate(characterId, { workspace: "equipment" })
+                  }
+                >
+                  <Icon name="handbag" /> Inventory
                 </button>
                 <button
                   aria-selected={workspaceTab === "shop"}
