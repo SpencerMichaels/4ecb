@@ -162,12 +162,9 @@ describe("release accessibility contract", () => {
     expect(characterEditor).toContain("<BuilderCardContext.Provider");
     expect(builderCards).toContain("renderPowerText(text, true)");
     expect(builderCards).toContain("expandWeaponDice(value, weaponDamage)");
-    expect(characterSheet).toContain('className="screen-power-text"');
-    expect(characterSheet).toContain('className="print-power-text"');
-    expect(characterSheet).toContain('className="print-power-variants"');
-    expect(styles).toMatch(
-      /@media print[\s\S]*\.screen-power-text,[\s\S]*\.screen-power-variants\s*\{[^}]*display: none !important/,
-    );
+    // The screen sheet uses the same shared cards, not a third renderer.
+    expect(characterSheet).not.toContain("function Card(");
+    expect(characterSheet).toContain('layout="panel"');
   });
 
   it("keeps browser View navigation and print presentation distinct", () => {
@@ -511,17 +508,12 @@ describe("release accessibility contract", () => {
     expect(entityCard).not.toContain('className="entity-card-attack-type"');
     expect(entityCard).toContain("itemCardLabel(entity, physicalBase)");
     expect(entityCard).toContain("itemCardIcon(entity, physicalBase)");
-    expect(entityCard).toContain('className="entity-card-descriptors"');
-    expect(entityCard).toContain('className="entity-card-rules"');
+    // Power and item rules render only through PowerCard/ItemCard (D079).
+    expect(entityCard).not.toContain('className="entity-card-descriptors"');
+    expect(entityCard).not.toContain('className="entity-card-rules"');
     expect(styles).toContain(".entity-card-heading-main .action-type-icon,");
     expect(styles).toMatch(
       /\.entity-card-heading-main > \.icon\s*\{[^}]*align-self: baseline[^}]*line-height: inherit/,
-    );
-    expect(styles).toMatch(
-      /\.entity-card-rules > div\s*\{[^}]*grid-template-columns: max-content minmax\(0, 1fr\)/s,
-    );
-    expect(styles).toMatch(
-      /\.entity-card-rules dt\s*\{[^}]*overflow-wrap: normal;[^}]*white-space: nowrap;/s,
     );
     expect(entityCard).not.toContain("<h5>Description</h5>");
     expect(builderCards).toContain("useContext(HideFlavortextContext)");

@@ -48,9 +48,13 @@ export const BuilderCardContext = createContext<BuilderCardSettings>(
   authoredBuilderCardSettings(1),
 );
 
-function cardTextPresentation(
+/** Applies the compact-ability-value and weapon-dice display preferences. */
+export function cardTextPresentation(
   card: SheetCard,
-  settings: BuilderCardSettings,
+  settings: Pick<
+    BuilderCardSettings,
+    "abbreviateAbilityValues" | "expandWeaponDice"
+  >,
 ): CardTextPresentation {
   const weaponDamage = defaultPrintVariant(card)?.weaponDamage;
   return {

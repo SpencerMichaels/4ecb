@@ -21,7 +21,6 @@ import {
 import {
   buildEvaluatedSheetModel,
   buildSheetModel,
-  classifyPowerCard,
   type CharacterSheetModel,
   type SheetCard,
   type SheetLearnedReference,
@@ -39,19 +38,10 @@ import {
 } from "./PrintPlayCards";
 import { ItemCard } from "./ItemCard";
 import { PowerCard } from "./PowerCard";
+import { cardTextPresentation } from "./BuilderCards";
 import { preferredPrintCardTextSize } from "./print-card-fit";
-import {
-  defaultPowerVariant,
-  PowerTextProse,
-  PowerVariantPanel,
-  powerVariantAttack,
-  powerVariantLabel,
-  powerVariantNotes,
-  type PowerCardPresentation,
-} from "./PowerCardPresentation";
 import { Prose } from "./Prose";
 import { SheetOverview } from "./SheetOverview";
-import { powerTextAtLevel } from "./power-level-text";
 
 const characters = new CharacterRepository();
 
@@ -71,150 +61,6 @@ function ValueList({
         </div>
       ))}
     </dl>
-  );
-}
-
-function Card({
-  card,
-  characterLevel,
-  abbreviateAbilityValues,
-  expandWeaponDice,
-}: {
-  readonly card: SheetCard;
-  readonly characterLevel: number;
-  readonly abbreviateAbilityValues: boolean;
-  readonly expandWeaponDice: boolean;
-}) {
-  const classification =
-    card.kind === "power" ? classifyPowerCard(card) : undefined;
-  const usage = classification?.tone ?? "item";
-  const variants = card.variants ?? [];
-  const [selectedVariantId, setSelectedVariantId] = useState(
-    () => defaultPowerVariant(variants)?.id,
-  );
-  const selectedVariant =
-    variants.find((variant) => variant.id === selectedVariantId) ??
-    defaultPowerVariant(variants);
-  const presentation: PowerCardPresentation | undefined =
-    card.kind !== "power"
-      ? undefined
-      : {
-          personalizePowerText: (value) => value,
-          abbreviateAbilityValues,
-          expandWeaponDice,
-          variants,
-        };
-  const printVariants =
-    variants.filter((variant) => variant.equipped).length > 0
-      ? variants.filter((variant) => variant.equipped)
-      : selectedVariant === undefined
-        ? []
-        : [selectedVariant];
-  return (
-    <article className={`sheet-card ${card.kind}-card usage-${usage}`}>
-      <header>
-        <h3>{card.name}</h3>
-        <span>{classification?.compactLabel ?? "Magic item"}</span>
-      </header>
-      {(card.actionType ?? card.keywords) === undefined ? null : (
-        <p className="card-meta">
-          <strong>{card.actionType}</strong>
-          {card.keywords === undefined ? null : ` · ${card.keywords}`}
-        </p>
-      )}
-      {selectedVariant === undefined &&
-      (card.attack ?? card.damage) !== undefined ? (
-        <dl className="card-combat">
-          <div>
-            <dt>Attack</dt>
-            <dd>{card.attack ?? "—"}</dd>
-          </div>
-          <div>
-            <dt>Damage</dt>
-            <dd>{card.damage ?? "—"}</dd>
-          </div>
-        </dl>
-      ) : null}
-      {selectedVariant === undefined ? null : (
-        <div className="screen-power-variants">
-          <PowerVariantPanel
-            variants={variants}
-            selected={selectedVariant}
-            onSelect={setSelectedVariantId}
-          />
-        </div>
-      )}
-      {printVariants.length === 0 ? null : (
-        <ul className="print-power-variants">
-          {printVariants.map((variant) => (
-            <li key={variant.id}>
-              <strong>{powerVariantLabel(variant)}:</strong>{" "}
-              {powerVariantAttack(variant)}; {variant.damage ?? "—"} damage
-              {powerVariantNotes(variant) === undefined
-                ? null
-                : `; ${powerVariantNotes(variant)}`}
-            </li>
-          ))}
-        </ul>
-      )}
-      {card.flavor === undefined ? null : (
-        <div className="sheet-card-flavor">
-          <Prose value={card.flavor} />
-        </div>
-      )}
-      {card.prerequisites === undefined ? null : (
-        <dl className="sheet-card-rules">
-          <div>
-            <dt>Prerequisite</dt>
-            <dd>
-              <Prose value={card.prerequisites} />
-            </dd>
-          </div>
-        </dl>
-      )}
-      {card.fields.length === 0 ? null : (
-        <dl className="sheet-card-rules">
-          {card.fields.map((field, index) => {
-            const value =
-              card.kind === "power"
-                ? powerTextAtLevel(field.value, characterLevel)
-                : field.value;
-            return (
-              <div key={`${field.label}-${field.value}-${index}`}>
-                <dt>{field.label}</dt>
-                <dd>
-                  {presentation === undefined ? (
-                    <Prose value={value} />
-                  ) : (
-                    <>
-                      <span className="screen-power-text">
-                        <PowerTextProse
-                          value={value}
-                          presentation={presentation}
-                          variant={selectedVariant}
-                        />
-                      </span>
-                      <span className="print-power-text">
-                        <Prose value={value} />
-                      </span>
-                    </>
-                  )}
-                </dd>
-              </div>
-            );
-          })}
-        </dl>
-      )}
-      {card.description === undefined ? null : (
-        <Prose value={card.description} />
-      )}
-      {card.calculationWarnings?.map((warning, index) => (
-        <p className="status warning screen-only" key={index}>
-          {warning}
-        </p>
-      ))}
-      {card.source === undefined ? null : <footer>{card.source}</footer>}
-    </article>
   );
 }
 
@@ -829,12 +675,19 @@ export function CharacterSheetPage({
             </header>
             <div className="view-card-grid">
               {powerCards.map((card, index) => (
-                <Card
+                <PowerCard
                   key={`${card.name}-${index}`}
                   card={card}
                   characterLevel={characterLevel}
-                  abbreviateAbilityValues={abbreviateAbilityValues}
-                  expandWeaponDice={expandWeaponDice}
+                  showEquippedAttackBonus={showEquippedAttackBonus}
+                  showPrintTitleActionIcon
+                  layout="panel"
+                  panel={{
+                    textPresentation: cardTextPresentation(card, {
+                      abbreviateAbilityValues,
+                      expandWeaponDice,
+                    }),
+                  }}
                 />
               ))}
             </div>
@@ -863,12 +716,11 @@ export function CharacterSheetPage({
               <h3>Item reference</h3>
               <div className="view-card-grid">
                 {model.items.map((card, index) => (
-                  <Card
+                  <ItemCard
                     key={`${card.name}-${index}`}
                     card={card}
-                    characterLevel={characterLevel}
-                    abbreviateAbilityValues={false}
-                    expandWeaponDice={false}
+                    showActionIcons
+                    layout="panel"
                   />
                 ))}
               </div>

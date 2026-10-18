@@ -337,13 +337,11 @@ describe("print layout contract", () => {
     );
     expect(sheetSource).toContain("chunks(printableCards, 9)");
     expect(sheetSource).toContain("powerActionLabel(card.actionType)");
-    expect(sheetSource).toContain(
-      "powerTextAtLevel(field.value, characterLevel)",
-    );
+    expect(sheetSource).toContain("powerTextAtLevel(value, characterLevel)");
     expect(sheetSource).toContain('.replace(/\\bFortitude\\b/gi, "Fort")');
     expect(sheetSource).toContain('.replace(/\\bReflex\\b/gi, "Ref")');
     expect(styles).toMatch(
-      /\.print-card-combat-band\s*\{[\s\S]*?grid-template-columns:\s*max-content minmax\(0, 1fr\)/,
+      /\.print-card-combat-band\s*\{[^}]*grid-template-columns:\s*var\(--print-card-header-first-column, max-content\)\s*minmax\(0, 1fr\)/,
     );
     expect(sheetSource).toContain("`$1 · ${formula} vs $2`");
     expect(sheetSource).not.toContain("`${attack.ordinal} · `");
@@ -383,8 +381,7 @@ describe("print layout contract", () => {
     expect(styles).toMatch(
       /\.print-card-type\s*\{[\s\S]*?background:\s*var\(--card-footer-color, var\(--card-color\)\)/,
     );
-    expect(styles).toContain(".sheet-card.usage-encounter > header");
-    expect(styles).toContain(".sheet-card.usage-daily > header");
+    expect(styles).not.toMatch(/\.sheet-card(?![\w-])/);
     expect(styles).not.toMatch(/\n\.usage-(?:encounter|daily) > header/);
     expect(sheetSource).not.toContain("print-card-used");
     expect(styles).not.toContain(".print-card-used");
