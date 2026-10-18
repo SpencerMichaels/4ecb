@@ -74,7 +74,9 @@ describe("builder header integration", () => {
     );
     expect(tabsBar).not.toContain("            {saveState.message}");
     expect(styles).toMatch(/\.save-saved\s*\{[^}]*color: var\(--success\)/);
-    expect(styles).toMatch(/\.save-saving\s*\{[^}]*color: var\(--accent\)/);
+    expect(styles).toMatch(
+      /\.builder-status > :is\(\.save-loading, \.save-saving\)\s*\{[^}]*color: var\(--accent\)/,
+    );
     expect(styles).toMatch(/\.save-failed\s*\{[^}]*color: var\(--danger\)/);
   });
 
@@ -164,6 +166,20 @@ describe("builder header integration", () => {
     );
     expect(styles).not.toMatch(
       /\.compact-choice-picker > legend,\s*\.character-detail-choice-heading h5/,
+    );
+  });
+  it("gives every control right of the tabs one borderless, centered style", () => {
+    expect(styles).toMatch(
+      /\.builder-status > :is\(button, a, \.save-status\)\s*\{[^}]*border: 0;[^}]*display: inline-flex;[^}]*height: 2rem;[^}]*justify-content: center;/,
+    );
+    expect(styles).toMatch(/\.builder-status \.icon\s*\{[^}]*height: 1\.1rem;/);
+    expect(styles).not.toContain(".builder-status .icon-only-button");
+    // Level section tabs mark selection with a bottom line, like the main tabs.
+    expect(styles).toMatch(
+      /\.level-choice-tabs button\[aria-selected="true"\]\s*\{[^}]*border-bottom-color: var\(--accent\)/,
+    );
+    expect(styles).not.toMatch(
+      /\.level-choice-tabs button\s*\{[^}]*border-top:/,
     );
   });
 });
