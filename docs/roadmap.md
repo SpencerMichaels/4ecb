@@ -918,6 +918,19 @@ program (see decision D063): real accessibility or compatibility complaints
 from actual users get fixed as ordinary bugs against the continuous structural
 baseline above, not staged into a dedicated audit milestone.
 
+## Possible future enhancements
+
+Recorded ideas with no milestone commitment:
+
+- **Shortened weapon names in card weapon tables (2026-10-18).** When a name
+  would wrap in a weapon table, shorten it only as far as needed: abbreviate
+  enchantment words before the base weapon, never the `+N`, cutting at
+  syllable boundaries from a hyphenation library (`hyphen`/`hypher`, Liang's
+  TeX patterns: "Defensive Warhammer +2" → "Def. Warhammer +2"), keeping names
+  unique among the character's weapons, with the full name on hover and a small
+  override table for bad cuts. Deferred as more complex than its benefit today;
+  wrapped names already hang-indent and keep `+N` attached.
+
 ## Historical first implementation slice
 
 M1 began with this end-to-end vertical slice:

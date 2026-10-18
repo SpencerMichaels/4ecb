@@ -38,7 +38,7 @@ import { evaluatePowers, type EvaluatedPower } from "./powers";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v11-2026-10-17-overlay-target-names";
+  "evaluated-character-v12-2026-10-18-canonical-equipment-names";
 
 export interface CharacterOccurrence {
   readonly id: string;

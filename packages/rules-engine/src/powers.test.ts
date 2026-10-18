@@ -2235,3 +2235,41 @@ describe("power evaluation", () => {
     expect(power?.unsupported).toContain("striker-feature:CUSTOM_QUARRY");
   });
 });
+
+describe("power variant equipment names", () => {
+  it("names a composed superior implement like the inventory, not as a part list", () => {
+    const [power] = evaluatePowers({
+      level: 8,
+      activeDefinitionIds: ["POWER"],
+      overlays: [],
+      entities: [
+        entity("POWER", "Synthetic spell", "Power", {
+          Keywords: "Implement",
+          Attack: "Wisdom vs. Will",
+        }),
+        entity("QUICKBEAM", "Quickbeam staff", "Superior Implement", {
+          Group: "Staff",
+        }),
+        entity("AVERSION", "Aversion Staff +2", "Magic Item", {
+          "Magic Item Type": "Staff",
+          Enhancement: "+2 attack rolls and damage rolls",
+        }),
+      ],
+      inventory: [
+        {
+          id: "staff",
+          definitionIds: ["QUICKBEAM", "AVERSION"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: { "Wisdom modifier": stat("Wisdom modifier", 4) },
+    });
+    const name = power?.variants.find(
+      (v) => v.equipmentId === "staff",
+    )?.equipmentName;
+    expect(name).not.toContain(" + ");
+    expect(name).toMatch(/^Aversion Quickbeam staff \+2$/i);
+  });
+});

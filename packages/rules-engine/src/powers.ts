@@ -1,3 +1,4 @@
+import { formatInventoryItemName } from "@4ecb/character-domain";
 import { weaponPropertyText, type ContentEntity } from "@4ecb/content-domain";
 
 import type { CharacterInventoryEntry, FieldOverlay } from "./evaluator";
@@ -145,18 +146,12 @@ const emptyEntity: ContentEntity = {
   provenance: { sourceKey: "", sourceOrdinal: 0 },
 };
 
+/** The character's item name, composed exactly as the inventory and sheet
+ * name it (e.g. "Aversion Quickbeam Staff +2"), never a joined part list. */
 function equipmentName(parts: readonly ContentEntity[]): string {
-  const weapon = parts.find((entity) => key(entity.type) === "weapon");
-  const magic = parts.find(
-    (entity) =>
-      key(entity.type) === "magic item" && parseEnhancement(entity) > 0,
+  return formatInventoryItemName(
+    parts.map(({ name, type }) => ({ name, type })),
   );
-  if (weapon !== undefined && magic !== undefined) {
-    return /weapon/i.test(magic.name)
-      ? magic.name.replace(/weapon/i, weapon.name)
-      : `${weapon.name} ${magic.name}`;
-  }
-  return parts.map((entity) => entity.name).join(" + ");
 }
 
 function loadouts(
