@@ -1,22 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import type {
-  ContentProfileLayer,
-  InstalledContentPack,
-} from "@4ecb/browser-storage";
+import type { InstalledContentPack } from "@4ecb/browser-storage";
 import type { ContentPackManifest } from "@4ecb/content-pack";
 
 import {
-  buildProfileLayerViews,
-  movePersonalLayer,
+  contentRows,
+  enabledLayers,
+  layerKey,
+  moveRow,
+  replaceRow,
   sameProfileLayers,
+  updateRow,
 } from "./content-profile-ui";
-
-const layers: readonly ContentProfileLayer[] = [
-  { packId: "server", contentDigest: "server-digest" },
-  { packId: "personal-a", contentDigest: "a-digest" },
-  { packId: "personal-b", contentDigest: "b-digest" },
-];
 
 function manifest(
   packId: string,
@@ -43,53 +38,92 @@ function manifest(
   };
 }
 
-describe("layered content profile UI", () => {
-  it("distinguishes server baselines, personal overlays, and missing revisions", () => {
-    const installed: readonly InstalledContentPack[] = [
-      {
-        manifest: manifest("server", "Campaign rules", "server-digest"),
-        origin: "server",
-      },
-      {
-        manifest: manifest("personal-a", "My homebrew", "a-digest"),
-        origin: "personal",
-      },
-    ];
+const pack = (
+  packId: string,
+  name: string,
+  origin: InstalledContentPack["origin"] = "personal",
+): InstalledContentPack => ({
+  manifest: manifest(packId, name, `${packId}-digest`),
+  origin,
+});
+const layer = (packId: string) => ({
+  packId,
+  contentDigest: `${packId}-digest`,
+});
 
-    expect(
-      buildProfileLayerViews(layers, installed, new Set(["server"])),
-    ).toEqual([
-      expect.objectContaining({
-        name: "Campaign rules",
-        origin: "server",
-        available: true,
-      }),
-      expect.objectContaining({
-        name: "My homebrew",
-        origin: "personal",
-        available: true,
-      }),
-      expect.objectContaining({
-        name: "personal-b",
-        origin: "personal",
-        available: false,
-      }),
+const installed = [
+  pack("homebrew", "My homebrew"),
+  pack("rules", "Local rules"),
+  pack("rules-b", "Local rules"),
+  pack("group", "Group rules", "server"),
+  pack("profile:x", "Combined", "profile"),
+];
+
+describe("game content table", () => {
+  it("lists group content first, then active packs in order, then the rest", () => {
+    const rows = contentRows(
+      installed,
+      [layer("group"), layer("rules"), layer("homebrew")],
+      [layer("group")],
+    );
+    expect(rows.map(({ label, enabled }) => [label, enabled])).toEqual([
+      ["Group rules", true],
+      ["Local rules (rules)", true],
+      ["My homebrew", true],
+      ["Local rules (rules-b)", false],
+    ]);
+    expect(rows[0]?.advertised).toBe(true);
+    expect(enabledLayers(rows)).toEqual([
+      layer("group"),
+      layer("rules"),
+      layer("homebrew"),
     ]);
   });
 
-  it("reorders personal overlays without crossing the fixed server prefix", () => {
-    expect(
-      movePersonalLayer(layers, 2, -1, 1).map(({ packId }) => packId),
-    ).toEqual(["server", "personal-b", "personal-a"]);
-    expect(movePersonalLayer(layers, 1, -1, 1)).toEqual(layers);
-    expect(movePersonalLayer(layers, 0, 1, 1)).toEqual(layers);
+  it("keeps a remembered order, including packs that are off", () => {
+    const order = ["group", "rules-b", "homebrew", "rules"].map((id) =>
+      layerKey(layer(id)),
+    );
+    const rows = contentRows(installed, [layer("rules")], [], order);
+    expect(rows.map(({ packId }) => packId)).toEqual([
+      "group",
+      "rules-b",
+      "homebrew",
+      "rules",
+    ]);
   });
 
-  it("compares the complete ordered profile revision", () => {
-    expect(sameProfileLayers(layers, [...layers])).toBe(true);
+  it("reorders, toggles, and replaces rows", () => {
+    const rows = contentRows(
+      installed,
+      [layer("group"), layer("rules"), layer("homebrew")],
+      [layer("group")],
+    );
+    expect(moveRow(rows, 2, 1).map(({ packId }) => packId)).toEqual([
+      "group",
+      "homebrew",
+      "rules",
+      "rules-b",
+    ]);
+    // Group content stays above imported packs.
+    expect(moveRow(rows, 1, 0)).toEqual(rows);
+
     expect(
-      sameProfileLayers(layers, [layers[0]!, layers[2]!, layers[1]!]),
-    ).toBe(false);
-    expect(sameProfileLayers(layers, layers.slice(0, 2))).toBe(false);
+      enabledLayers(updateRow(rows, layer("homebrew"), { enabled: false })),
+    ).toEqual([layer("group"), layer("rules")]);
+
+    const replacement = rows[3];
+    if (replacement === undefined) throw new Error("missing row");
+    const replaced = replaceRow(rows, layer("rules"), replacement);
+    expect(replaced.map(({ packId, enabled }) => [packId, enabled])).toEqual([
+      ["group", true],
+      ["rules-b", true],
+      ["homebrew", true],
+    ]);
+  });
+
+  it("compares layers", () => {
+    expect(sameProfileLayers([layer("a")], [layer("a")])).toBe(true);
+    expect(sameProfileLayers([layer("a")], [layer("b")])).toBe(false);
   });
 });

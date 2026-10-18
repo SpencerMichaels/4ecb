@@ -380,8 +380,118 @@ a {
   margin-bottom: 1rem;
 }
 
-.game-content-summary {
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+.game-content-empty {
+  color: var(--muted);
+  margin: 0;
+}
+
+.content-table {
+  border: 1px solid var(--border);
+  border-collapse: collapse;
+  max-width: 52rem;
+  width: 100%;
+}
+
+.content-table th {
+  border-bottom: 1px solid var(--border-strong);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.content-table td {
+  border-top: 1px solid var(--border);
+  padding: 0.5rem 0.6rem;
+  vertical-align: middle;
+}
+
+.content-table tbody tr:first-child td {
+  border-top: 0;
+}
+
+.content-table td:nth-child(2) {
+  width: 100%;
+}
+
+.content-table td:nth-child(2) strong,
+.content-row-source {
+  display: block;
+}
+
+.content-row-source {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.content-row-off td:nth-child(2) {
+  color: var(--muted);
+}
+
+.content-row-handle {
+  width: 2rem;
+}
+
+.content-row-handle button {
+  cursor: grab;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.2rem 0.35rem;
+}
+
+.content-row-dragging {
+  opacity: 0.5;
+}
+
+.content-row-drop-above td {
+  box-shadow: inset 0 3px 0 var(--accent);
+}
+
+.content-row-drop-below td {
+  box-shadow: inset 0 -3px 0 var(--accent);
+}
+
+.content-row-toggle {
+  display: flex;
+  justify-content: center;
+}
+
+.content-row-toggle input {
+  height: 1.1rem;
+  margin: 0;
+  width: 1.1rem;
+}
+
+.content-row-actions {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.content-row-actions .file-button,
+.content-row-actions button {
+  font-size: 0.9rem;
+  padding: 0.25rem 0.55rem;
+}
+
+.content-row-confirm td {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.file-button.disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+@media (max-width: 40rem) {
+  .content-row-actions {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
 }
 
 .settings-advanced {

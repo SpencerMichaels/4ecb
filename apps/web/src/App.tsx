@@ -38,6 +38,7 @@ import {
   type AdvertisedContentPack,
 } from "./runtime-content";
 import { appContentRuntime } from "./app-runtime";
+import { ACTIVE_PROFILE_ID, ACTIVE_PROFILE_NAME } from "./content-profile-ui";
 import {
   applyThemePreference,
   parseThemePreference,
@@ -463,12 +464,36 @@ export function App() {
       );
       for (const advertised of configured.contentPacks)
         await installAdvertisedPack(advertised, installed);
+      // A browser with no content yet starts on the group's content; once any
+      // content is active, switching stays an explicit choice in Settings.
+      if (
+        configured.contentPacks.length > 0 &&
+        (await repository.activeProfile()) === undefined
+      ) {
+        const available = await repository.listInstalled();
+        if (
+          configured.contentPacks.every((advertised) =>
+            available.some(
+              ({ manifest }) =>
+                manifest.packId === advertised.packId &&
+                manifest.contentDigest === advertised.contentDigest,
+            ),
+          )
+        ) {
+          await repository.activateProfile(
+            ACTIVE_PROFILE_ID,
+            ACTIVE_PROFILE_NAME,
+            configured.contentPacks.map(({ packId }) => packId),
+          );
+          await refreshAfterContentChange();
+        }
+      }
     } catch (reason: unknown) {
       setRuntimeContentError(
         reason instanceof Error ? reason.message : String(reason),
       );
     }
-  }, [installAdvertisedPack]);
+  }, [installAdvertisedPack, refreshAfterContentChange]);
 
   useEffect(() => {
     const onHashChange = () => setHash(window.location.hash);
