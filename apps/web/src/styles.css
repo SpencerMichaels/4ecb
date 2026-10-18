@@ -3564,27 +3564,39 @@ textarea {
 .funds-coin-tile dd {
   inline-size: 100%;
 }
-.funds-coin-value {
+/* The value and its edit box share one plain line box (no background,
+   border or outline of their own), so editing never changes the tile. */
+.funds-coin-value,
+.funds-coin-input {
   background: transparent;
+  block-size: calc(1em * 1.15);
   border: 0;
   border-radius: 0;
+  box-shadow: none;
   color: inherit;
-  cursor: text;
+  display: block;
   font: inherit;
   inline-size: 100%;
+  line-height: 1.15;
+  margin: 0;
+  min-inline-size: 0;
+  outline: none;
   padding: 0;
   text-align: center;
 }
-.funds-coin-value:hover,
-.funds-coin-value:focus-visible {
-  box-shadow: inset 0 -2px var(--stat-accent);
+.funds-coin-value {
+  cursor: text;
+}
+.funds-coin-tile
+  .funds-coin-value:not(:disabled):not([aria-disabled="true"]):hover,
+.funds-coin-tile .funds-coin-value:focus-visible,
+.funds-coin-tile .funds-coin-input:focus-visible {
+  box-shadow: none;
   outline: none;
 }
-.funds-coin-input {
-  font: inherit;
-  inline-size: 100%;
-  padding: 0 0.15rem;
-  text-align: center;
+/* Instead the whole cell takes the focus border, like the quick-adjust cell. */
+.funds-coin-tile:focus-within {
+  box-shadow: inset 0 0 0 2px var(--focus);
 }
 
 /* Shown only when carried and stored funds are kept separate. */
