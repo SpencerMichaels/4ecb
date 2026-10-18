@@ -2185,8 +2185,9 @@ component, because the two are expected to diverge; values and tooltips come
 from the evaluated stats and shared derived values as before.
 
 Level switching is rare (play mostly fills the newest level), so the level
-plan moves behind the Build tab's own "Level N ▾" heading, which opens a modal
-tier-by-level grid keeping the former rail's completion status. It is not in
+plan moves behind the Build tab's own "Level N ▾" heading, which drops down a
+tier-by-level grid keeping the former rail's completion status (a dropdown,
+matching its chevron, rather than a modal). It is not in
 the sidebar and has no extra arrows. The section tabs replace the former
 Next button: level tab tables instead end at the bottom of the window, later
 tables in a tab sharing the first one's height, and short lists shrinking to

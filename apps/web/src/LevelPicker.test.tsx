@@ -18,11 +18,14 @@ describe("LevelPicker", () => {
         onSelect: () => undefined,
       }),
     );
-    // The "Level N" heading is the trigger; the plan opens as a modal.
+    // The "Level N" heading is the trigger; the plan drops down below it.
     expect(markup).toContain('<h3 class="level-picker-heading">');
     expect(markup).toContain("<span>Level 7</span>");
-    expect(markup).toContain('aria-haspopup="dialog"');
+    // A dropdown disclosure, not a dialog.
+    expect(markup).toContain('aria-expanded="false"');
+    expect(markup).not.toContain("aria-haspopup");
     expect(markup).toContain('aria-label="Level 7, change level"');
     expect(markup).not.toContain("<dialog");
+    expect(markup).not.toContain("level-picker-panel");
   });
 });

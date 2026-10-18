@@ -3991,18 +3991,29 @@ textarea {
   width: 0.9em;
 }
 
-/* The level plan is a modal popup, not part of the sidebar's flow. */
-.level-picker-dialog {
-  width: min(32rem, calc(100vw - 2rem));
+/* The level plan drops down from the Level heading, over the page. */
+.level-picker {
+  display: flex;
+  flex: 0 0 auto;
+  position: relative;
 }
 
-.level-picker-body {
+.level-picker-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--brand-navy);
+  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.2);
   display: grid;
   gap: 0.75rem;
-  padding: 1rem;
+  inset-block-start: 100%;
+  inset-inline-start: 0;
+  padding: 0.75rem;
+  position: absolute;
+  width: min(28rem, calc(100vw - 2rem));
+  z-index: 20;
 }
 
-.level-picker-tier h3 {
+.level-picker-tier h4 {
   color: var(--muted);
   font-size: 0.75rem;
   letter-spacing: 0.04em;
@@ -4020,7 +4031,7 @@ textarea {
   padding: 0;
 }
 
-.level-picker-dialog .level-rail-button {
+.level-picker-panel .level-rail-button {
   flex-direction: column;
   min-height: 2.6rem;
   padding-inline: 0;
