@@ -3513,6 +3513,20 @@ textarea {
   gap: 0.4rem;
 }
 
+/* Wallet highlights use the item gold (item card headers), not the app focus
+   blue, to match the wealth group. */
+.funds-pane {
+  --funds-focus: var(--power-item);
+}
+:root[data-theme="dark"] .funds-pane {
+  --funds-focus: #f2a73b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .funds-pane {
+    --funds-focus: #f2a73b;
+  }
+}
+
 /* Funds: five coin tiles and an actions tile in one 3 × 2 grid; each value
    sits under its label at full tile width, so none are truncated. */
 .builder-sidebar .funds-pane .stat-tile {
@@ -3552,7 +3566,7 @@ textarea {
   text-align: center;
 }
 .funds-adjust-form input:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--focus);
+  box-shadow: inset 0 0 0 2px var(--funds-focus);
   outline: none;
 }
 
@@ -3598,7 +3612,7 @@ textarea {
    while editing or under keyboard focus; a plain click changes nothing. */
 .funds-coin-tile:has(.funds-coin-input),
 .funds-coin-tile:has(.funds-coin-value:focus-visible) {
-  box-shadow: inset 0 0 0 2px var(--focus);
+  box-shadow: inset 0 0 0 2px var(--funds-focus);
 }
 
 /* Shown only when carried and stored funds are kept separate. */

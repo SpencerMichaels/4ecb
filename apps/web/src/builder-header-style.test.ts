@@ -64,9 +64,16 @@ describe("builder character sidebar layout", () => {
     );
     // Editing or focusing a coin tile borders the whole cell, like quick adjust.
     expect(styles).toMatch(
-      /\.funds-coin-tile:has\(\.funds-coin-input\),\s*\.funds-coin-tile:has\(\.funds-coin-value:focus-visible\)\s*\{[^}]*box-shadow: inset 0 0 0 2px var\(--focus\)/,
+      /\.funds-coin-tile:has\(\.funds-coin-input\),\s*\.funds-coin-tile:has\(\.funds-coin-value:focus-visible\)\s*\{[^}]*box-shadow: inset 0 0 0 2px var\(--funds-focus\)/,
     );
     expect(styles).not.toContain(".funds-coin-tile:focus-within");
+    // Highlights use the item gold, matching the wealth group.
+    expect(declarationsFor(".funds-pane")).toContain(
+      "--funds-focus: var(--power-item)",
+    );
+    expect(declarationsFor(".funds-adjust-form input:focus-visible")).toContain(
+      "var(--funds-focus)",
+    );
     expect(equipment).toContain('toLocaleString("en-US")');
     // Full currency names, with "Diamond" for astral diamonds.
     for (const name of ["Copper", "Silver", "Gold", "Platinum", "Diamond"])
