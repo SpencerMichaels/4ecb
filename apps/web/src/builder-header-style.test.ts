@@ -96,6 +96,13 @@ describe("builder character sidebar layout", () => {
     expect(pane).toContain("max-height: calc(100dvh - 2rem)");
     expect(pane).toContain("overflow-y: auto");
     expect(pane).toContain("position: sticky");
+    // Card title bands and type bars stay put while the body scrolls.
+    expect(styles).toMatch(
+      /\.shared-choice-detail\s*:is\([^)]*\)\s*> :is\(header, \.reference-card-title\)\s*\{[^}]*position: sticky;[^}]*top: 0;/,
+    );
+    expect(styles).toMatch(
+      /\.shared-choice-detail\s*:is\([^)]*\)\s*> \.print-card-type\s*\{[^}]*bottom: 0;[^}]*position: sticky;/,
+    );
   });
 
   it("keeps the expanded top-level navigation compact", () => {

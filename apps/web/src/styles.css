@@ -4167,6 +4167,25 @@ button.builder-health:focus-visible {
   }
 }
 
+/* While a card scrolls in the detail pane, its title band and type bar stay
+   in place so only the body moves (wide layouts, where the pane scrolls). */
+@media (min-width: 60.01rem) {
+  .shared-choice-detail
+    :is(.print-reference-card.is-panel, .reference-entity-card)
+    > :is(header, .reference-card-title) {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  .shared-choice-detail
+    :is(.print-reference-card.is-panel, .reference-entity-card)
+    > .print-card-type {
+    bottom: 0;
+    position: sticky;
+    z-index: 1;
+  }
+}
+
 /* Long details (a class, a deity) scroll inside the pane instead of running
    past the window; the small inset keeps card focus outlines visible. */
 .shared-choice-detail {
