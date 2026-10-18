@@ -4167,15 +4167,21 @@ textarea {
 /* The Level heading is a label (and level-plan trigger), not a tab, so it
    carries no selection line. */
 .level-choice-tab-bar h3 {
-  align-items: center;
+  align-items: stretch;
   background: var(--brand-navy);
   color: #fff;
   display: flex;
   flex: 0 0 auto;
   font-size: 0.9rem;
   margin: 0;
-  padding: 0.55rem 0.85rem;
   white-space: nowrap;
+}
+
+/* The whole Level segment is the trigger and highlights as one, like the
+   section tabs beside it. */
+.level-choice-tab-bar .level-picker-trigger {
+  border-radius: 0;
+  padding: 0.55rem 0.85rem;
 }
 
 .level-choice-tabs {

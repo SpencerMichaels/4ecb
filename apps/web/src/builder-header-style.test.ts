@@ -171,3 +171,14 @@ describe("selection table names", () => {
     );
   });
 });
+
+describe("level heading segment", () => {
+  it("makes the whole Level segment the clickable, highlighted trigger", () => {
+    expect(declarationsFor(".level-choice-tab-bar h3")).not.toContain(
+      "padding",
+    );
+    expect(
+      declarationsFor(".level-choice-tab-bar .level-picker-trigger"),
+    ).toContain("padding: 0.55rem 0.85rem");
+  });
+});
