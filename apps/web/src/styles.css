@@ -3728,11 +3728,15 @@ textarea {
 .builder-character-abilities .stat-tiles-compact .stat-tile dt {
   display: contents;
 }
+/* Scores take a two-digit slot, right-aligned, so "8" spaces like "08". */
 .builder-character-abilities .stat-tiles-compact .stat-tile-lead {
   font-size: 1.4em;
+  font-variant-numeric: tabular-nums;
   font-weight: 700;
   justify-self: start;
   margin-right: 0;
+  min-inline-size: 2ch;
+  text-align: right;
 }
 .builder-character-abilities .stat-tiles-compact .stat-tile dd {
   justify-self: end;

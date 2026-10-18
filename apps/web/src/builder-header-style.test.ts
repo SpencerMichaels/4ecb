@@ -136,3 +136,14 @@ describe("builder character sidebar layout", () => {
     ).toContain("padding: 0.65rem");
   });
 });
+
+describe("builder ability tiles", () => {
+  it("right-aligns single-digit scores in a two-digit slot", () => {
+    const lead = declarationsFor(
+      ".builder-character-abilities .stat-tiles-compact .stat-tile-lead",
+    );
+    expect(lead).toContain("min-inline-size: 2ch");
+    expect(lead).toContain("text-align: right");
+    expect(lead).toContain("font-variant-numeric: tabular-nums");
+  });
+});
