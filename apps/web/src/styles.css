@@ -3477,8 +3477,14 @@ textarea {
   --stat-accent: var(--muted);
   --stat-tint: color-mix(in srgb, var(--surface-subtle) 72%, var(--surface));
   --stat-edge: var(--border);
+  border-radius: 0;
   border-top: 3px solid
     color-mix(in srgb, var(--tone-neutral) 72%, var(--border));
+}
+
+/* Square like the rest of the builder; page 1 and play cards keep rounding. */
+.builder-header-stats .stat-tile {
+  border-radius: 0;
 }
 
 .builder-header-stats .stat-tile dt {
