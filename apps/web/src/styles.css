@@ -220,6 +220,13 @@ a {
   top: 1rem;
 }
 
+/* Route changes focus the main landmark (route-focus.ts) so assistive tech
+   lands on the new page; it isn't a control, so it draws no focus ring.
+   (On the loading screen the ring's bottom edge showed as a stray line.) */
+#main-content:focus {
+  outline: none;
+}
+
 .app-shell {
   min-height: 100vh;
 }
