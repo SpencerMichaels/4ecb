@@ -379,6 +379,8 @@ function PrintRuleLines({
   ));
 }
 
+const isPersonal = (value: string) => /^\s*personal\s*$/i.test(value);
+
 function PrintAttackBand({
   attack,
   showEquippedAttackBonus,
@@ -397,7 +399,11 @@ function PrintAttackBand({
       </div>
       {!secondary || attack.target?.trim() ? (
         <div className="print-card-attack-target">
-          {attack.target === undefined ? null : <Icon name="target" />}
+          {attack.target === undefined ? null : (
+            <Icon
+              name={isPersonal(attack.target) ? "attack-personal" : "target"}
+            />
+          )}
           <dd>{attack.target ?? ""}</dd>
         </div>
       ) : null}
@@ -514,7 +520,11 @@ function PrintPowerCard({
             ))}
           </span>
           <span>
-            {attackType ? <Icon name="sword" /> : null}
+            {attackType ? (
+              <Icon
+                name={isPersonal(attackType) ? "attack-personal" : "sword"}
+              />
+            ) : null}
             {attackType}
           </span>
         </div>

@@ -260,8 +260,15 @@ describe("print layout contract", () => {
   it("omits an empty action band and reflows the card rows", () => {
     expect(sheetSource).toContain("{!hasActionBand ? null : (");
     expect(sheetSource).toContain(
-      '{attackType ? <Icon name="sword" /> : null}',
+      'name={isPersonal(attackType) ? "attack-personal" : "sword"}',
     );
+    expect(sheetSource).toContain(
+      'name={isPersonal(attack.target) ? "attack-personal" : "target"}',
+    );
+    expect(sheetSource).toContain('["action point", "second wind"]');
+    expect(
+      sheetSource.indexOf('{ kind: "play-skills" as const },'),
+    ).toBeLessThan(sheetSource.indexOf("...specialCards,"));
     expect(sheetSource).not.toContain("&nbsp;");
     expect(styles).not.toContain(".print-card-action-band.is-empty");
     expect(styles).toMatch(
