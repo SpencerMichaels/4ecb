@@ -4238,13 +4238,6 @@ button.builder-health:focus-visible {
   border: 0;
 }
 
-.level-choice-navigation {
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-  padding: 0.75rem 1rem;
-}
-
 .level-choice-workspace {
   align-items: start;
   display: grid;
@@ -4252,15 +4245,18 @@ button.builder-health:focus-visible {
   grid-template-columns: minmax(0, 1fr) var(--panel-card-width);
 }
 
+/* Level tab tables end at the bottom of the window; later tables in a tab
+   share the first one's height (--fitted-table-height, measured by
+   use-fitted-table-height.ts). Short lists still shrink to their rows. */
 @media (min-width: 60.01rem) and (min-height: 42rem) {
   .level-choice-tab-panel .selection-table-scroll {
-    height: max(24rem, calc(100dvh - 30rem));
+    height: var(--fitted-table-height, max(24rem, calc(100dvh - 30rem)));
     max-height: none;
   }
 
   .level-choice-tab-panel .candidate-selection-short .selection-table-scroll {
     height: auto;
-    max-height: calc(100dvh - 30rem);
+    max-height: var(--fitted-table-height, calc(100dvh - 30rem));
   }
 }
 

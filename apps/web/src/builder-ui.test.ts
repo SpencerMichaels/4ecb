@@ -23,7 +23,6 @@ import {
   candidateReason,
   candidateTableTypeGroup,
   characterHeaderSubtitle,
-  choiceSectionComplete,
   classKeyAbilities,
   classKeyAbilitiesSentence,
   classTableMetadata,
@@ -59,7 +58,6 @@ import {
   jumpToLevelCommand,
   levelChoiceProgress,
   levelRailChoiceStatus,
-  nextLevelChoiceDestination,
   planningEvaluationHorizon,
   planningHorizonCommand,
   pointBuyStepControl,
@@ -1524,37 +1522,6 @@ describe("builder planning UI", () => {
     expect(levelRailChoiceStatus([], true, 1)).toBe("incomplete");
   });
 
-  it("gates section advancement on unresolved required choices only", () => {
-    const required = {
-      id: "required",
-      optional: false,
-    } as EvaluatedCharacter["choices"][number];
-    expect(choiceSectionComplete([required])).toBe(false);
-    expect(
-      choiceSectionComplete([
-        { ...required, selectedOccurrenceId: "selected-with-warning" },
-      ]),
-    ).toBe(true);
-    expect(choiceSectionComplete([], 1)).toBe(false);
-  });
-
-  it("allows optional Background, Theme, and Retraining sections to advance", () => {
-    expect(choiceSectionComplete([])).toBe(true);
-    for (const section of ["Background", "Theme", "Retraining"] as const) {
-      const optional = {
-        id: `optional-${section.toLocaleLowerCase()}`,
-        type: section === "Retraining" ? "Replacement" : section,
-        optional: true,
-      } as EvaluatedCharacter["choices"][number];
-      expect(choiceSectionComplete([optional])).toBe(true);
-      expect(
-        nextLevelChoiceDestination(1, section, [section, "Feats"], [], 1),
-      ).toEqual({ level: 1, section: "Feats" });
-      if (section === "Retraining")
-        expect(isOptionalRetrainingChoice(optional)).toBe(true);
-    }
-  });
-
   it("promotes only a required level-1 deity into the Class tab gate", () => {
     const deity = {
       id: "deity",
@@ -1563,7 +1530,6 @@ describe("builder planning UI", () => {
       optional: false,
     } as EvaluatedCharacter["choices"][number];
     expect(isRequiredClassDeityChoice(deity)).toBe(true);
-    expect(choiceSectionComplete([deity])).toBe(false);
     expect(isRequiredClassDeityChoice({ ...deity, optional: true })).toBe(
       false,
     );
@@ -1639,42 +1605,6 @@ describe("builder planning UI", () => {
     });
     expect(
       deityAlignmentConstraint(evaluationFor(cleric), entities),
-    ).toBeUndefined();
-  });
-
-  it("advances to the next section within a level", () => {
-    expect(
-      nextLevelChoiceDestination(
-        4,
-        "Skills",
-        ["Ability Scores", "Skills", "Feats"],
-        ["Class"],
-        8,
-      ),
-    ).toEqual({ level: 4, section: "Feats" });
-  });
-
-  it("advances from the last section to the first section of the next current level", () => {
-    expect(
-      nextLevelChoiceDestination(
-        4,
-        "Feats",
-        ["Ability Scores", "Feats"],
-        ["Class", "Powers"],
-        8,
-      ),
-    ).toEqual({ level: 5, section: "Class" });
-  });
-
-  it("does not advance beyond the character's current level", () => {
-    expect(
-      nextLevelChoiceDestination(
-        8,
-        "Feats",
-        ["Ability Scores", "Feats"],
-        ["Class", "Powers"],
-        8,
-      ),
     ).toBeUndefined();
   });
 

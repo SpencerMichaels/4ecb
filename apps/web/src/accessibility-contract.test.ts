@@ -330,12 +330,11 @@ describe("release accessibility contract", () => {
         workspaceStart,
       ),
     );
-    expect(choiceWorkspace).toContain('className="level-choice-navigation"');
-    expect(choiceWorkspace).toContain("activeSectionComplete");
-    expect(choiceWorkspace).toContain("nextChoiceDestination === undefined");
-    expect(choiceWorkspace).toContain("advanceToNextChoiceSection");
+    // No Next button; level tab tables fill the window instead.
+    expect(choiceWorkspace).not.toContain("level-choice-navigation");
+    expect(characterEditor).toContain("useFittedTableHeight(levelChoicePage)");
     expect(styles).toMatch(
-      /\.level-choice-navigation\s*\{[^}]*display: flex;[^}]*justify-content: flex-end/,
+      /\.level-choice-tab-panel \.selection-table-scroll\s*\{[^}]*height: var\(--fitted-table-height,/,
     );
   });
 
@@ -346,7 +345,7 @@ describe("release accessibility contract", () => {
     const classPanel = characterEditor.slice(
       characterEditor.indexOf("activeChoiceSection.choices.map"),
       characterEditor.indexOf(
-        'className="level-choice-navigation"',
+        'className="shared-choice-detail"',
         characterEditor.indexOf("activeChoiceSection.choices.map"),
       ),
     );
@@ -358,7 +357,7 @@ describe("release accessibility contract", () => {
     expect(classPanel).toContain("deityChoice");
     expect(characterEditor).toContain("choices={characterDetailChoices}");
     expect(characterEditor).toContain(
-      'activeLevelSection === "Class" ? requiredClassDeityChoices : []',
+      '{ section: "Class" as const, choices: requiredClassDeityChoices }',
     );
   });
 

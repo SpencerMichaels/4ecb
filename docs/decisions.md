@@ -2187,8 +2187,10 @@ from the evaluated stats and shared derived values as before.
 Level switching is rare (play mostly fills the newest level), so the level
 plan moves behind the Build tab's own "Level N ▾" heading, which opens a modal
 tier-by-level grid keeping the former rail's completion status. It is not in
-the sidebar and has no extra arrows; the choice pane's Next button still
-advances through sections and levels. Detail
+the sidebar and has no extra arrows. The section tabs replace the former
+Next button: level tab tables instead end at the bottom of the window, later
+tables in a tab sharing the first one's height, and short lists shrinking to
+their rows. Detail
 columns are one card wide and flush right; below 63rem the sidebar folds above
 the workspace.
 
