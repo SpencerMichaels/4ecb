@@ -47,9 +47,14 @@ describe("builder character sidebar layout", () => {
     expect(equipment.indexOf("funds-pane-actions")).toBeLessThan(
       equipment.indexOf("CURRENCY_DENOMINATIONS.slice(2)"),
     );
+    // The top-right cell is a quick-adjust field shaped like a coin tile.
     expect(
       declarationsFor(".builder-sidebar .funds-pane .funds-pane-actions"),
-    ).toContain("background: transparent");
+    ).toContain("padding: 0");
+    const field = declarationsFor(".funds-adjust-form input");
+    expect(field).toContain("background: var(--stat-tint)");
+    expect(field).toContain("border-radius: 0");
+    expect(field).toContain("font-size: 1em");
     expect(equipment).toContain('toLocaleString("en-US")');
     // Full currency names, with "Diamond" for astral diamonds.
     for (const name of ["Copper", "Silver", "Gold", "Platinum", "Diamond"])

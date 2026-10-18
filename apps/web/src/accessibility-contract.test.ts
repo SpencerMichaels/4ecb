@@ -847,23 +847,16 @@ describe("release accessibility contract", () => {
     expect(equipmentWorkspace).toContain(
       "onAdjustMoney(deltaCopper, location)",
     );
-    expect(equipmentWorkspace).toContain(
-      'aria-controls="funds-wallet-adjust-options"',
-    );
-    expect(equipmentWorkspace).toContain('data-wallet-adjust=""');
-    expect(equipmentWorkspace).toContain("adjustmentInput.current?.select()");
-    expect(equipmentWorkspace).toContain(
-      'document.addEventListener("pointerdown", dismissOutside)',
-    );
-    expect(equipmentWorkspace).toContain(
-      'document.addEventListener("keydown", dismissWithEscape)',
-    );
+    // Quick adjust is a field in the funds grid, not a popup.
+    expect(equipmentWorkspace).toContain('className="funds-adjust-form"');
+    expect(equipmentWorkspace).not.toContain("funds-wallet-adjust-options");
     expect(equipmentWorkspace).toContain("applyAdjustment()");
     // One wallet, in the character sidebar (CharacterWallet).
     expect(equipmentWorkspace.match(/<FundsPane/g)).toHaveLength(1);
     expect(characterEditor).toContain("<CharacterWallet");
-    expect(equipmentWorkspace).toContain('aria-label="Quick adjust funds"');
-    expect(equipmentWorkspace).toContain('title="Quick adjust funds"');
+    expect(equipmentWorkspace).toContain(
+      "Adjust funds, for example -15 gp or 20pp",
+    );
     // Coin counts are edited in place; there is no edit-funds dialog.
     expect(equipmentWorkspace).not.toContain('aria-label="Edit funds"');
     expect(equipmentWorkspace).not.toContain("function WalletDialog");
@@ -875,12 +868,7 @@ describe("release accessibility contract", () => {
     expect(equipmentWorkspace).not.toContain(
       'className="inventory-wallet-label"',
     );
-    expect(styles).toMatch(
-      /\.funds-wallet-adjust-menu\s*\{[^}]*position: relative;/s,
-    );
-    expect(styles).toMatch(
-      /\.inventory-sale-options\.funds-wallet-adjust-options\s*\{[^}]*min-width: min\(18rem, calc\(100vw - 2rem\)\);/s,
-    );
+    expect(styles).not.toContain(".funds-wallet-adjust");
     // Funds stay in view through the sticky character sidebar instead.
     expect(styles).not.toContain(".shop-funds");
     expect(styles).toMatch(/\.builder-sidebar\s*\{[^}]*position: sticky;/s);

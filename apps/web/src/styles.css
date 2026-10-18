@@ -3524,20 +3524,35 @@ textarea {
   font-size: 1.15em;
   overflow-wrap: anywhere;
 }
-/* The top-right tile holds the funds buttons: no tile color, centered. */
+/* The top-right funds tile is a field (type "-15 gp" or "20pp", then Enter)
+   that fills its cell with the tile tint and square edges, like a coin tile. */
 .builder-sidebar .funds-pane .funds-pane-actions {
-  align-items: center;
-  background: transparent;
-  justify-content: center;
+  align-items: stretch;
+  padding: 0;
 }
-.builder-sidebar .funds-pane-actions dd {
-  align-items: center;
+.builder-sidebar .funds-pane-actions dd,
+.funds-adjust-form {
   display: flex;
-  gap: 0.2rem;
-  justify-content: center;
+  flex: 1;
+  margin: 0;
 }
-.builder-sidebar .funds-wallet-adjust-options {
-  min-width: 14rem;
+.funds-adjust-form input {
+  background: var(--stat-tint);
+  border: 0;
+  border-radius: 0;
+  color: var(--text);
+  flex: 1;
+  font: inherit;
+  font-size: 1em;
+  font-weight: 700;
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: 0.3em 0.2em;
+  text-align: center;
+}
+.funds-adjust-form input:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--focus);
+  outline: none;
 }
 
 /* Coin counts read as plain numbers and edit in place on double-click or
@@ -6100,54 +6115,9 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   gap: 0.4rem;
 }
 
-.funds-wallet-adjust-menu {
-  position: relative;
-}
-
-.inventory-sale-options.funds-wallet-adjust-options {
-  gap: 0.35rem;
-  min-width: min(18rem, calc(100vw - 2rem));
-}
-
-.funds-wallet-adjust-options > label {
-  color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  padding: 0.2rem 0.3rem 0;
-  text-transform: uppercase;
-}
-
-.funds-wallet-adjust-options > div {
-  align-items: center;
-  display: grid;
-  gap: 0.35rem;
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.funds-wallet-adjust-options input {
-  inline-size: 100%;
-  min-inline-size: 0;
-}
-
-.funds-wallet-adjust-options input.is-error {
+.funds-adjust-form input.is-error {
   animation: wallet-adjustment-error 550ms ease-out;
   border-color: var(--danger);
-}
-
-.inventory-sale-options.funds-wallet-adjust-options button {
-  align-items: center;
-  background: var(--accent);
-  border: 1px solid var(--accent);
-  color: var(--surface);
-  display: inline-flex;
-  justify-content: center;
-  padding: 0.45rem 0.55rem;
-}
-
-.inventory-sale-options.funds-wallet-adjust-options button:hover,
-.inventory-sale-options.funds-wallet-adjust-options button:focus-visible {
-  background: var(--accent-strong);
 }
 
 .shop-rail .candidate-detail {
@@ -6590,7 +6560,7 @@ button.inventory-icon-action:disabled {
 
 @media (prefers-reduced-motion: reduce) {
   .inventory-wallet-denominations > div.is-adjusted,
-  .funds-wallet-adjust-options input.is-error {
+  .funds-adjust-form input.is-error {
     animation: none;
   }
 }

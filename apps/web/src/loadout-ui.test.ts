@@ -106,7 +106,7 @@ describe("loadout interaction and geometry", () => {
     expect(styles).toMatch(
       /\.inventory-item-button:hover[\s\S]*?text-decoration: none/,
     );
-    expect(workspace).toContain('placeholder="20pp, -15 gp, ..."');
+    expect(workspace).toContain('placeholder="±gp"');
     expect(workspace).toContain(
       'document.addEventListener("pointerdown", dismissOutside)',
     );

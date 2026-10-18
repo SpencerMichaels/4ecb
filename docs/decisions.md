@@ -2196,8 +2196,8 @@ the workspace.
 sit on the page above the sidebar's stat groups, which are unboxed and use
 the printed Play card's group colors (with hue-derived dark-theme tints). The
 funds are a stat group shown on every tab: five coin tiles (Platinum, Gold,
-Silver, Copper, Diamond; "AD" if abbreviated) and an untinted actions tile top
-right with quick adjust, in one 3 × 2 grid, values with thousands separators
+Silver, Copper, Diamond; "AD" if abbreviated) and a quick-adjust field top
+right shaped like a coin tile (type "-15 gp", Enter), in one 3 × 2 grid, values with thousands separators
 under their labels and never truncated. Tiles show actual coins and edit in
 place (double-click or Enter); there is no edit-funds dialog. A "Merge carried
 and stored funds" setting (on by default) shows one set of coins, edits adding
