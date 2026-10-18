@@ -27,7 +27,10 @@ async function evaluationEntities(): Promise<readonly ContentEntity[]> {
     throw new Error("The rules worker is not ready");
   const profile = initializedProfile;
   entitiesReady = new ContentPackRepository()
-    .get(profile.packId)
+    .get(profile.packId, {
+      onProgress: ({ completed, total }) =>
+        respond({ type: "content-progress", completed, total, ready: false }),
+    })
     .then((pack) => {
       if (pack === undefined)
         throw new Error(
@@ -38,6 +41,12 @@ async function evaluationEntities(): Promise<readonly ContentEntity[]> {
           `Installed content pack ${profile.packId} no longer matches the bound revision`,
         );
       entities = pack.entities;
+      respond({
+        type: "content-progress",
+        completed: 1,
+        total: 1,
+        ready: true,
+      });
       return entities;
     })
     .catch((error: unknown) => {
@@ -84,13 +93,24 @@ async function handle(request: RulesWorkerRequest): Promise<void> {
         contentDigest: manifest.contentDigest,
         recordCount: manifest.recordCount,
       });
+      // Load content now rather than on the first evaluation, so it overlaps
+      // persistent-cache lookups. Failures resurface on the next evaluate.
+      void evaluationEntities().catch(() => undefined);
       break;
     }
     case "evaluate": {
       const started = performance.now();
       const evaluationContent = await evaluationEntities();
       const evaluationStarted = performance.now();
-      const result = evaluateCharacter(request.input, evaluationContent);
+      const result = evaluateCharacter(request.input, evaluationContent, {
+        onProgress: ({ completed, total }) =>
+          respond({
+            type: "evaluation-progress",
+            requestId: request.requestId,
+            completed,
+            total,
+          }),
+      });
       const completed = performance.now();
       respond({
         type: "evaluation",

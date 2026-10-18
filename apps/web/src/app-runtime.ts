@@ -2,7 +2,10 @@ import {
   ContentPackRepository,
   EvaluationCacheRepository,
 } from "@4ecb/browser-storage";
-import type { ContentPack } from "@4ecb/content-pack";
+import type {
+  ContentPack,
+  ContentPackDecodeProgress,
+} from "@4ecb/content-pack";
 import type { CharacterBuild } from "@4ecb/character-domain";
 import type {
   EvaluatedCharacter,
@@ -11,7 +14,7 @@ import type {
 } from "@4ecb/rules-engine";
 import { RULES_EVALUATION_CACHE_VERSION } from "@4ecb/rules-engine";
 
-import { RulesWorkerClient } from "./rules-client";
+import { RulesWorkerClient, type RulesProgressListener } from "./rules-client";
 import { recordLoadDuration } from "./load-performance";
 
 export interface RulesRuntimeClient {
@@ -23,6 +26,8 @@ export interface RulesRuntimeClient {
     sourcePackId?: string,
     sourceContentDigest?: string,
   ): Promise<ProfileMigrationPreview>;
+  /** Optional: clients that can't report progress just show no percentage. */
+  subscribeProgress?(listener: RulesProgressListener): () => void;
   terminate(reason?: string): void;
 }
 
@@ -134,6 +139,10 @@ class MemoizedRulesClient implements RulesRuntimeClient {
     return this.#delegate.initialize(packId, contentDigest);
   }
 
+  subscribeProgress(listener: RulesProgressListener): () => void {
+    return this.#delegate.subscribeProgress?.(listener) ?? (() => undefined);
+  }
+
   evaluate(input: EvaluationInput): Promise<EvaluatedCharacter> {
     const serializedInput = serializeEvaluationInput(input);
     const existing = this.#evaluations.get(serializedInput);
@@ -231,7 +240,10 @@ class MemoizedRulesClient implements RulesRuntimeClient {
 }
 
 export interface AppContentRuntimeOptions {
-  readonly loadPack?: (packId: string) => Promise<ContentPack | undefined>;
+  readonly loadPack?: (
+    packId: string,
+    onProgress?: (progress: ContentPackDecodeProgress) => void,
+  ) => Promise<ContentPack | undefined>;
   readonly createRulesClient?: () => RulesRuntimeClient;
   readonly evaluationCache?: EvaluationCacheStore;
   readonly retainedPackCount?: number;
@@ -242,7 +254,10 @@ export interface AppContentRuntimeOptions {
  * Route components borrow these objects; they do not own or terminate them.
  */
 export class AppContentRuntime {
-  readonly #loadPack: (packId: string) => Promise<ContentPack | undefined>;
+  readonly #loadPack: (
+    packId: string,
+    onProgress?: (progress: ContentPackDecodeProgress) => void,
+  ) => Promise<ContentPack | undefined>;
   readonly #createRulesClient: () => RulesRuntimeClient;
   readonly #retainedPackCount: number;
   readonly #evaluationCache: EvaluationCacheStore;
@@ -251,11 +266,20 @@ export class AppContentRuntime {
     { ready: Promise<ContentPack | undefined>; used: number }
   >();
   readonly #rules = new Map<string, RulesEntry>();
+  // Decode progress of packs still loading, for loading screens.
+  readonly #packProgress = new Map<string, ContentPackDecodeProgress>();
+  readonly #packProgressListeners = new Map<
+    string,
+    Set<(progress: ContentPackDecodeProgress) => void>
+  >();
   #clock = 0;
 
   constructor(options: AppContentRuntimeOptions = {}) {
     const repository = new ContentPackRepository();
-    this.#loadPack = options.loadPack ?? ((packId) => repository.get(packId));
+    this.#loadPack =
+      options.loadPack ??
+      ((packId, onProgress) =>
+        repository.get(packId, onProgress === undefined ? {} : { onProgress }));
     this.#createRulesClient =
       options.createRulesClient ?? (() => new RulesWorkerClient());
     this.#evaluationCache =
@@ -271,7 +295,12 @@ export class AppContentRuntime {
     }
     const startedAt = performance.now();
     const entry = {
-      ready: this.#loadPack(packId)
+      ready: this.#loadPack(packId, (progress) => {
+        this.#packProgress.set(packId, progress);
+        for (const listener of this.#packProgressListeners.get(packId) ?? [])
+          listener(progress);
+      })
+        .finally(() => this.#packProgress.delete(packId))
         .then((pack) => {
           recordLoadDuration("content-pack-ready", startedAt, {
             packId,
@@ -289,6 +318,25 @@ export class AppContentRuntime {
     this.#packs.set(packId, entry);
     this.#evictOldest(this.#packs);
     return entry.ready;
+  }
+
+  /** Byte progress of a pack being decoded; replays the latest on subscribe. */
+  subscribePackProgress(
+    packId: string,
+    listener: (progress: ContentPackDecodeProgress) => void,
+  ): () => void {
+    let listeners = this.#packProgressListeners.get(packId);
+    if (listeners === undefined) {
+      listeners = new Set();
+      this.#packProgressListeners.set(packId, listeners);
+    }
+    listeners.add(listener);
+    const current = this.#packProgress.get(packId);
+    if (current !== undefined) listener(current);
+    return () => {
+      listeners.delete(listener);
+      if (listeners.size === 0) this.#packProgressListeners.delete(packId);
+    };
   }
 
   async getRulesClient(

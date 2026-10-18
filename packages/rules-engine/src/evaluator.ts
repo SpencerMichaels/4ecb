@@ -605,6 +605,16 @@ function essentialsMagicArmorBonuses(
   return bonuses;
 }
 
+/** Coarse, monotonic progress of one top-level evaluation. */
+export interface EvaluationProgress {
+  readonly completed: number;
+  readonly total: number;
+}
+
+export interface EvaluationOptions {
+  readonly onProgress?: (progress: EvaluationProgress) => void;
+}
+
 function evaluateCharacterInternal(
   input: EvaluationInput,
   entities: readonly ContentEntity[],
@@ -613,7 +623,21 @@ function evaluateCharacterInternal(
     readonly evaluationEntities: readonly ContentEntity[];
     readonly index: RulesIndex;
   },
+  options: EvaluationOptions = {},
 ): EvaluatedCharacter {
+  // Progress counts work items, not time: one per earlier level's
+  // prerequisite scope (each a nested evaluation, the bulk of a cold run)
+  // plus one for the top-level pass.
+  const progressTotal = Math.max(0, input.level - 1) + 1;
+  let progressCompleted = 0;
+  const reportProgress = (completed: number) => {
+    progressCompleted = Math.min(progressTotal, completed);
+    options.onProgress?.({
+      completed: progressCompleted,
+      total: progressTotal,
+    });
+  };
+  reportProgress(0);
   const localEntities = input.localEntities ?? [];
   const evaluationEntities =
     prepared?.evaluationEntities ??
@@ -1849,6 +1873,7 @@ function evaluateCharacterInternal(
       },
     };
     prerequisiteScopes.set(level, scope);
+    reportProgress(progressCompleted + 1);
     return scope;
   };
   const candidatePrerequisiteStatuses = new Map<
@@ -2057,8 +2082,17 @@ function evaluateCharacterInternal(
 export function evaluateCharacter(
   input: EvaluationInput,
   entities: readonly ContentEntity[],
+  options: EvaluationOptions = {},
 ): EvaluatedCharacter {
-  return evaluateCharacterInternal(input, entities, false);
+  const evaluated = evaluateCharacterInternal(
+    input,
+    entities,
+    false,
+    undefined,
+    options,
+  );
+  options.onProgress?.({ completed: 1, total: 1 });
+  return evaluated;
 }
 
 function overlay(

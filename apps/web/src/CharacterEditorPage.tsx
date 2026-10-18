@@ -30,6 +30,7 @@ import {
   adjustWalletCoins,
   type CoinAdjustment,
   ZERO_CURRENCY,
+  characterDisplayName,
   characterWalletTextKey,
   formatLegacyCurrency,
   resolveCharacterWallet,
@@ -91,6 +92,8 @@ import { CandidateInspectionScope } from "./builder-choice-context";
 import { Icon, type IconName } from "./Icon";
 import { BuilderCharacterStats } from "./BuilderCharacterStats";
 import { LevelPicker, type LevelPickerEntry } from "./LevelPicker";
+import { LoadingScreen } from "./LoadingScreen";
+import { loadingStepDetail, useLoadingProgress } from "./use-loading-progress";
 import { useFittedTableHeight } from "./use-fitted-table-height";
 import { ContentUpdateDialog } from "./ContentUpdateDialog";
 import { needsContentUpdate } from "./content-update";
@@ -258,6 +261,9 @@ export function CharacterEditorPage({
     message: "Loading build…",
   });
   const [loadError, setLoadError] = useState<string>();
+  // Latched once the first evaluation (or a reason none can run) arrives, so
+  // later re-evaluations update in place instead of reopening the loader.
+  const [initialLoadSettled, setInitialLoadSettled] = useState(false);
   const [currentEvaluationResult, setCurrentEvaluation] =
     useState<EvaluatedCharacter>();
   const [planningEvaluationResult, setPlanningEvaluation] =
@@ -266,6 +272,9 @@ export function CharacterEditorPage({
     useState<EvaluatedCharacter>();
   const [evaluationStatus, setEvaluationStatus] = useState("Loading rules…");
   const [readyPackId, setReadyPackId] = useState<string>();
+  // Mirrors rulesClient once ready, so the loader can render its progress.
+  const [readyRulesClient, setReadyRulesClient] =
+    useState<RulesRuntimeClient>();
   const [selectedLevel, setSelectedLevel] = useState(
     navigation.workspace === "build" ? (navigation.level ?? 1) : 1,
   );
@@ -306,6 +315,7 @@ export function CharacterEditorPage({
     setEntities([]);
     setBoundProfileResolution("pending");
     setLoadError(undefined);
+    setInitialLoadSettled(false);
     characterLoadStartedAt.current = startedAt;
     firstEvaluationRecorded.current = false;
     void characters
@@ -400,6 +410,7 @@ export function CharacterEditorPage({
   useEffect(() => {
     rulesClient.current = undefined;
     setReadyPackId(undefined);
+    setReadyRulesClient(undefined);
     setCurrentEvaluation(undefined);
     setPlanningEvaluation(undefined);
     setSelectedLevelEvaluation(undefined);
@@ -411,6 +422,7 @@ export function CharacterEditorPage({
         if (cancelled) return;
         rulesClient.current = client;
         setReadyPackId(packId);
+        setReadyRulesClient(client);
       })
       .catch((reason: unknown) => {
         if (!cancelled)
@@ -444,6 +456,24 @@ export function CharacterEditorPage({
   const selectedLevelEvaluation = evaluationAtHorizon(
     selectedLevelEvaluationResult,
     selectedLevel,
+  );
+  const initialLoadReady =
+    initialLoadSettled ||
+    (build !== undefined &&
+      boundProfileResolution !== "pending" &&
+      // Open once the current level is evaluated; a further planning
+      // horizon keeps loading behind the Build tab's choice pane.
+      (boundProfileResolution !== "available" ||
+        entities.length === 0 ||
+        currentEvaluation !== undefined ||
+        evaluationStatus.startsWith("Rules evaluation failed")));
+  useEffect(() => {
+    if (initialLoadReady) setInitialLoadSettled(true);
+  }, [initialLoadReady]);
+  const loadingProgress = useLoadingProgress(
+    packId,
+    readyRulesClient,
+    !initialLoadReady || planningEvaluation === undefined,
   );
   const byId = useMemo(
     () =>
@@ -1102,11 +1132,25 @@ export function CharacterEditorPage({
         </div>
       </main>
     );
-  if (character === undefined || build === undefined)
+  if (character === undefined || build === undefined || !initialLoadReady)
     return (
-      <main className="editor-page loading-state" id="main-content">
-        Loading character build…
-      </main>
+      <LoadingScreen
+        className="editor-page"
+        portraitUrl={character?.portrait?.renderedDataUrl}
+        label={
+          character === undefined
+            ? "Loading character…"
+            : `Loading ${characterDisplayName(character) || "character"}…`
+        }
+        detail={
+          character === undefined
+            ? undefined
+            : loadingStepDetail(
+                boundProfileResolution !== "pending",
+                loadingProgress,
+              )
+        }
+      />
     );
 
   const saving = saveState.phase === "saving";
@@ -1119,7 +1163,12 @@ export function CharacterEditorPage({
         (entity) =>
           entity?.type.toLocaleLowerCase() === type.toLocaleLowerCase(),
       );
-  const race = entityOfType("Race")?.name ?? character.snapshot.details.Race;
+  // The import-time snapshot is only a fallback while no evaluation exists;
+  // once one does, a removed race/class must not resurface from it.
+  const race =
+    currentEvaluation === undefined
+      ? character.snapshot.details.Race
+      : entityOfType("Race")?.name;
   const selectedClass = entityOfType("Class") ?? entityOfType("Hybrid Class");
   const selectedClassKeyAbilities = classKeyAbilities(selectedClass);
   const keyAbilitiesSentence = classKeyAbilitiesSentence(
@@ -1636,7 +1685,10 @@ export function CharacterEditorPage({
                   className="builder-character-name"
                   label="Character name"
                   name="Name"
-                  value={build.textStrings.Name || character.title}
+                  value={characterDisplayName({
+                    build,
+                    title: character.title,
+                  })}
                   visuallyHideLabel
                   onDispatch={dispatch}
                 />
@@ -1644,7 +1696,9 @@ export function CharacterEditorPage({
               <p className="builder-character-facts">
                 {characterHeaderSubtitle(
                   race,
-                  selectedClass?.name || character.snapshot.details.Class,
+                  currentEvaluation === undefined
+                    ? character.snapshot.details.Class
+                    : selectedClass?.name,
                   build.effectiveLevel,
                 )}
               </p>
@@ -1899,7 +1953,7 @@ export function CharacterEditorPage({
                   <p>
                     {entities.length === 0
                       ? "Content is unavailable for planning."
-                      : `Evaluating choices through level ${planningHorizon}…`}
+                      : `Evaluating choices through level ${planningHorizon}${loadingProgress.evaluationPercent === undefined ? "" : ` (${loadingProgress.evaluationPercent}%)`}…`}
                   </p>
                 ) : levelChoices.length === 0 && selectedLevel !== 1 ? (
                   <div className="level-choice-tabs-layout">

@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const app = readFileSync(new URL("./App.tsx", import.meta.url), "utf8");
+const loadingScreen = readFileSync(
+  new URL("./LoadingScreen.tsx", import.meta.url),
+  "utf8",
+);
 
 describe("route-level lazy loading", () => {
   it("keeps the library in the shell and splits the three large workspaces", () => {
@@ -23,9 +27,11 @@ describe("route-level lazy loading", () => {
 
   it("provides an accessible route loading landmark", () => {
     expect(app).toContain("<Suspense");
-    expect(app).toContain('aria-busy="true"');
-    expect(app).toContain('data-route-loading="true"');
+    expect(app).toContain('className="route-loading-state"');
+    expect(app).toContain("routeLoading");
     expect(app).toContain("Loading workspace…");
+    expect(loadingScreen).toContain('aria-busy="true"');
+    expect(loadingScreen).toContain('"data-route-loading": "true"');
   });
 
   it("starts only a directly requested workspace before mounting the shell", () => {

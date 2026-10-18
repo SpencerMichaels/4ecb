@@ -11,6 +11,24 @@ import type {
 } from "./rules-worker-messages";
 import { recordLoadDuration } from "./load-performance";
 
+/** Work items done across every evaluation currently in flight. */
+export interface EvaluationProgress {
+  readonly completed: number;
+  readonly total: number;
+}
+
+export interface RulesContentProgress extends EvaluationProgress {
+  readonly ready: boolean;
+}
+
+/** Worker state for loading screens: its content load and evaluation batch. */
+export interface RulesProgress {
+  readonly content: RulesContentProgress | undefined;
+  readonly evaluation: EvaluationProgress | undefined;
+}
+
+export type RulesProgressListener = (progress: RulesProgress) => void;
+
 interface PendingRequest {
   readonly resolve: (response: RulesWorkerResponse) => void;
   readonly reject: (reason: Error) => void;
@@ -28,6 +46,11 @@ export class RulesWorkerClient {
   readonly #worker: Worker;
   readonly #pending = new Map<number, PendingRequest>();
   #nextRequestId = 1;
+  // Evaluations since the worker was last idle, so back-to-back requests
+  // read as one batch instead of restarting at 0%.
+  readonly #batch = new Map<number, EvaluationProgress>();
+  #content: RulesContentProgress | undefined;
+  readonly #progressListeners = new Set<RulesProgressListener>();
 
   constructor() {
     this.#worker = new Worker(new URL("./rules.worker.ts", import.meta.url), {
@@ -35,9 +58,28 @@ export class RulesWorkerClient {
     });
     this.#worker.onmessage = (event: MessageEvent<RulesWorkerResponse>) => {
       const response = event.data;
+      if (response.type === "content-progress") {
+        this.#content = {
+          completed: response.completed,
+          total: response.total,
+          ready: response.ready,
+        };
+        this.#notifyProgress();
+        return;
+      }
+      if (response.type === "evaluation-progress") {
+        if (!this.#batch.has(response.requestId)) return;
+        this.#batch.set(response.requestId, {
+          completed: response.completed,
+          total: response.total,
+        });
+        this.#notifyProgress();
+        return;
+      }
       const pending = this.#pending.get(response.requestId);
       if (pending === undefined) return;
       this.#pending.delete(response.requestId);
+      this.#finishBatchEntry(response.requestId);
       if (response.type === "error")
         pending.reject(new Error(response.message));
       else pending.resolve(response);
@@ -59,6 +101,13 @@ export class RulesWorkerClient {
 
   async evaluate(input: EvaluationInput): Promise<EvaluatedCharacter> {
     const startedAt = performance.now();
+    // Same unit count the engine reports: one per earlier level, plus the
+    // final pass. Queued requests count before the worker reaches them.
+    this.#batch.set(this.#nextRequestId, {
+      completed: 0,
+      total: Math.max(1, input.level),
+    });
+    this.#notifyProgress();
     const response = await this.#request({ type: "evaluate", input });
     if (response.type !== "evaluation")
       throw new Error("Unexpected rules-worker evaluation response");
@@ -89,6 +138,43 @@ export class RulesWorkerClient {
     return response.result;
   }
 
+  subscribeProgress(listener: RulesProgressListener): () => void {
+    this.#progressListeners.add(listener);
+    listener(this.#progress());
+    return () => this.#progressListeners.delete(listener);
+  }
+
+  #progress(): RulesProgress {
+    return {
+      content: this.#content,
+      evaluation: this.#batch.size === 0 ? undefined : this.#batchProgress(),
+    };
+  }
+
+  #batchProgress(): EvaluationProgress {
+    let completed = 0;
+    let total = 0;
+    for (const entry of this.#batch.values()) {
+      completed += entry.completed;
+      total += entry.total;
+    }
+    return { completed, total };
+  }
+
+  #notifyProgress(): void {
+    const progress = this.#progress();
+    for (const listener of this.#progressListeners) listener(progress);
+  }
+
+  #finishBatchEntry(requestId: number): void {
+    const entry = this.#batch.get(requestId);
+    if (entry === undefined) return;
+    this.#batch.set(requestId, { completed: entry.total, total: entry.total });
+    this.#notifyProgress();
+    if ([...this.#batch.keys()].every((id) => !this.#pending.has(id)))
+      this.#batch.clear();
+  }
+
   terminate(reason = "Rules evaluation cancelled"): void {
     this.#worker.terminate();
     this.#rejectAll(new Error(reason));
@@ -106,5 +192,6 @@ export class RulesWorkerClient {
   #rejectAll(error: Error): void {
     for (const pending of this.#pending.values()) pending.reject(error);
     this.#pending.clear();
+    this.#batch.clear();
   }
 }

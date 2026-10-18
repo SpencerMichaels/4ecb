@@ -7,13 +7,14 @@ import {
 } from "react";
 
 import { CharacterRepository } from "@4ecb/browser-storage";
-import type {
-  CharacterPortrait,
-  CharacterRecord,
-  SheetSettings,
+import {
+  characterDisplayName,
+  type CharacterPortrait,
+  type CharacterRecord,
+  type SheetSettings,
 } from "@4ecb/character-domain";
 import type { ContentPackManifest } from "@4ecb/content-pack";
-import { appContentRuntime } from "./app-runtime";
+import { appContentRuntime, type RulesRuntimeClient } from "./app-runtime";
 import {
   projectBuildForEvaluation,
   type EvaluatedCharacter,
@@ -37,6 +38,8 @@ import {
   type PlayCardKind,
 } from "./PrintPlayCards";
 import { ItemCard } from "./ItemCard";
+import { LoadingScreen } from "./LoadingScreen";
+import { loadingStepDetail, useLoadingProgress } from "./use-loading-progress";
 import { PowerCard } from "./PowerCard";
 import { cardTextPresentation } from "./BuilderCards";
 import { preferredPrintCardTextSize } from "./print-card-fit";
@@ -214,9 +217,14 @@ export function CharacterSheetPage({
   const [evaluation, setEvaluation] = useState<EvaluatedCharacter>();
   const [evaluating, setEvaluating] = useState(false);
   const [contentLoaded, setContentLoaded] = useState(false);
+  // Latched once the first sheet is ready, so settings changes that
+  // re-evaluate keep the sheet on screen instead of reopening the loader.
+  const [initialLoadSettled, setInitialLoadSettled] = useState(false);
+  const [rulesClient, setRulesClient] = useState<RulesRuntimeClient>();
   const printRequested = useRef(false);
   useEffect(() => {
     setError(undefined);
+    setInitialLoadSettled(false);
     setCharacter(undefined);
     setContent(undefined);
     setEvaluation(undefined);
@@ -256,14 +264,15 @@ export function CharacterSheetPage({
         content.manifest.packId,
         character.profileBinding?.contentDigest,
       )
-      .then((client) =>
-        client.evaluate({
+      .then((client) => {
+        if (!cancelled) setRulesClient(client);
+        return client.evaluate({
           ...projectBuildForEvaluation(character.build, content.entities),
           // Sheets consume calculated powers, but never selectable choice
           // catalogs. Keep powers at their compatibility-default `true`.
           candidateDetailLevels: [],
-        }),
-      )
+        });
+      })
       .then((result) => {
         if (cancelled) return;
         if (!result.converged) {
@@ -325,6 +334,16 @@ export function CharacterSheetPage({
   ]);
   const evaluatedSheetReady =
     !exactProfile || evaluation !== undefined || evaluationError !== undefined;
+  const initialLoadReady =
+    initialLoadSettled || (contentLoaded && evaluatedSheetReady);
+  useEffect(() => {
+    if (initialLoadReady) setInitialLoadSettled(true);
+  }, [initialLoadReady]);
+  const loadingProgress = useLoadingProgress(
+    character?.profileBinding?.packId,
+    rulesClient,
+    !initialLoadReady,
+  );
   useEffect(() => {
     if (
       !printOnReady ||
@@ -368,11 +387,22 @@ export function CharacterSheetPage({
         <div className="error">{error}</div>
       </main>
     );
-  if (character === undefined || model === undefined)
+  if (character === undefined || model === undefined || !initialLoadReady)
     return (
-      <main className="sheet-page loading-state" id="main-content">
-        Loading character…
-      </main>
+      <LoadingScreen
+        className="sheet-page"
+        portraitUrl={character?.portrait?.renderedDataUrl}
+        label={
+          character === undefined
+            ? "Loading character sheet…"
+            : `Loading ${characterDisplayName(character) || "character"}'s sheet…`
+        }
+        detail={
+          character === undefined
+            ? undefined
+            : loadingStepDetail(contentLoaded, loadingProgress)
+        }
+      />
     );
   const boundManifest =
     character.profileBinding === undefined
@@ -393,8 +423,7 @@ export function CharacterSheetPage({
     });
     setCharacter(updated);
   }
-  const characterName =
-    character.snapshot.details.name || character.title || "Unnamed character";
+  const characterName = characterDisplayName(character) || "Unnamed character";
   const identitySummary = model.identity
     .filter((entry) => ["Level", "Race", "Class"].includes(entry.label))
     .map((entry) => entry.value)

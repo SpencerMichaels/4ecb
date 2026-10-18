@@ -617,6 +617,36 @@ describe("character evaluator", () => {
     ]);
   });
 
+  it("reports work-item progress for earlier-level prerequisite scopes", () => {
+    const progress: { completed: number; total: number }[] = [];
+    evaluateCharacter(
+      {
+        level: 8,
+        baseAbilities: {},
+        occurrences: [rootOccurrence],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "1", "Level", {
+          rules: [rule("select", { type: "Feat" }, 0)],
+        }),
+        entity("GATED_FEAT", "Gated Feat", "Feat", {
+          prerequisites: "Paragon Tier",
+        }),
+      ],
+      { onProgress: (update) => progress.push(update) },
+    );
+
+    // One unit per earlier level plus the final pass; only the level-1
+    // scope is needed here, and the finish always reports completion.
+    expect(progress[0]).toEqual({ completed: 0, total: 8 });
+    expect(progress).toContainEqual({ completed: 1, total: 8 });
+    const last = progress.at(-1);
+    expect(last?.completed).toBe(last?.total);
+    const fractions = progress.map(({ completed, total }) => completed / total);
+    expect(fractions).toEqual([...fractions].sort((a, b) => a - b));
+  });
+
   it("satisfies implement prerequisites through nested class grants", () => {
     const result = evaluateCharacter(
       {

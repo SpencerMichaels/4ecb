@@ -43,6 +43,20 @@ export type RulesWorkerResponse =
       readonly evaluationMilliseconds: number;
     }
   | {
+      /** Broadcast while the worker decodes its content pack; not a reply. */
+      readonly type: "content-progress";
+      readonly completed: number;
+      readonly total: number;
+      readonly ready: boolean;
+    }
+  | {
+      /** Interim update for a pending evaluate request; not a reply. */
+      readonly type: "evaluation-progress";
+      readonly requestId: number;
+      readonly completed: number;
+      readonly total: number;
+    }
+  | {
       readonly type: "profile-migration-preview";
       readonly requestId: number;
       readonly result: ProfileMigrationPreview;

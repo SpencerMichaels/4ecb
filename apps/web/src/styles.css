@@ -248,8 +248,7 @@ a {
 .global-error,
 .settings-page,
 .characters-page,
-.sheet-page,
-.loading-state {
+.sheet-page {
   margin: 0 auto;
   max-width: 100rem;
 }
@@ -622,11 +621,94 @@ a {
   margin: 0;
 }
 
-.empty-state,
-.loading-state {
+.empty-state {
   background: var(--surface);
   border: 1px dashed var(--border-strong);
   padding: 1rem;
+}
+
+/* Full-page loader for route chunks, the builder and the sheet. */
+.loading-screen {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  margin: 0 auto;
+  max-width: 100rem;
+  min-height: 70vh;
+}
+
+.loading-screen-body {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.loading-spinner-frame {
+  display: block;
+  height: 6rem;
+  margin-bottom: 0.5rem;
+  position: relative;
+  width: 6rem;
+}
+
+.loading-spinner {
+  animation: loading-spin 0.9s linear infinite;
+  border: 0.3rem solid var(--accent-soft);
+  border-radius: 50%;
+  border-top-color: var(--accent);
+  box-sizing: border-box;
+  display: block;
+  inset: 0;
+  position: absolute;
+}
+
+/* Sits inside the ring with a small gap so the spinning edge stays visible.
+   An <img> keeps its natural size under `inset`, so size it explicitly. */
+.loading-portrait {
+  animation: loading-portrait-in 0.2s ease-out;
+  border-radius: 50%;
+  height: calc(100% - 1.2rem);
+  left: 0.6rem;
+  max-width: none;
+  object-fit: cover;
+  position: absolute;
+  top: 0.6rem;
+  width: calc(100% - 1.2rem);
+}
+
+.loading-screen-detail {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes loading-portrait-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.loading-screen-label {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.loading-screen-detail {
+  color: var(--muted);
+  margin: 0;
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner {
+    animation-duration: 3s;
+  }
 }
 
 .profile-grid {

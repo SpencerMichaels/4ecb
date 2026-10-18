@@ -539,9 +539,20 @@ export function decodeContentPack(value: string): ContentPack {
   return decoded;
 }
 
+/** Encoded bytes consumed so far; the final JSON parse reports nothing. */
+export interface ContentPackDecodeProgress {
+  readonly completed: number;
+  readonly total: number;
+}
+
+export interface ContentPackDecodeOptions {
+  readonly onProgress?: (progress: ContentPackDecodeProgress) => void;
+}
+
 export async function decodeContentPackBytes(
   value: ArrayBuffer,
   limits: ContentPackByteLimits = {},
+  options: ContentPackDecodeOptions = {},
 ): Promise<ContentPack> {
   const maxEncodedBytes =
     limits.maxEncodedBytes ?? MAX_CONTENT_PACK_ENCODED_BYTES;
@@ -554,9 +565,22 @@ export async function decodeContentPackBytes(
 
   const bytes = new Uint8Array(value);
   const gzip = bytes[0] === 0x1f && bytes[1] === 0x8b;
+  let consumedBytes = 0;
+  const source = new Blob([value]).stream().pipeThrough(
+    new TransformStream<Uint8Array<ArrayBuffer>, Uint8Array<ArrayBuffer>>({
+      transform(chunk, controller) {
+        consumedBytes += chunk.byteLength;
+        options.onProgress?.({
+          completed: consumedBytes,
+          total: value.byteLength,
+        });
+        controller.enqueue(chunk);
+      },
+    }),
+  );
   const stream = gzip
-    ? new Blob([value]).stream().pipeThrough(new DecompressionStream("gzip"))
-    : new Blob([value]).stream();
+    ? source.pipeThrough(new DecompressionStream("gzip"))
+    : source;
   const reader = stream.getReader();
   const chunks: Uint8Array[] = [];
   let decodedBytes = 0;

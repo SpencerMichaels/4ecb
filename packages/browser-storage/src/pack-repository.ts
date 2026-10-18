@@ -5,6 +5,7 @@ import {
   CONTENT_PROFILE_RESOLUTION_POLICY,
   validateContentPack,
   type ContentPack,
+  type ContentPackDecodeOptions,
   type ContentProfileLayer,
   type ContentPackManifest,
 } from "@4ecb/content-pack";
@@ -392,13 +393,16 @@ export class ContentPackRepository {
     }
   }
 
-  async get(packId: string): Promise<ContentPack | undefined> {
+  async get(
+    packId: string,
+    options: ContentPackDecodeOptions = {},
+  ): Promise<ContentPack | undefined> {
     const database = await openContentDatabase(this.#databaseName);
     try {
       const stored = await database.get("contentPacks", packId);
       if (stored === undefined) return undefined;
       if ("pack" in stored) return stored.pack;
-      return decodeStoredPack(stored.encodedPack);
+      return decodeStoredPack(stored.encodedPack, options);
     } finally {
       database.close();
     }
@@ -690,8 +694,11 @@ export async function storeValidatedContentPack(
   }
 }
 
-async function decodeStoredPack(encoded: ArrayBuffer): Promise<ContentPack> {
-  return decodeContentPackBytes(encoded);
+async function decodeStoredPack(
+  encoded: ArrayBuffer,
+  options: ContentPackDecodeOptions = {},
+): Promise<ContentPack> {
+  return decodeContentPackBytes(encoded, {}, options);
 }
 
 async function assertValidPack(pack: ContentPack): Promise<void> {

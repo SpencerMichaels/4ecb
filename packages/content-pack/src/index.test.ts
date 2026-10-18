@@ -176,6 +176,29 @@ describe("content pack", () => {
     ).rejects.toThrow("input-size limit");
   });
 
+  it("reports encoded bytes consumed while decoding", async () => {
+    const pack = await buildContentPack(source, {
+      packId: "synthetic",
+      name: "Synthetic",
+    });
+    const compressed = await new Response(
+      new Blob([JSON.stringify(pack)])
+        .stream()
+        .pipeThrough(new CompressionStream("gzip")),
+    ).arrayBuffer();
+    const progress: { completed: number; total: number }[] = [];
+    await decodeContentPackBytes(
+      compressed,
+      {},
+      { onProgress: (update) => progress.push(update) },
+    );
+    expect(progress.length).toBeGreaterThan(0);
+    expect(progress.at(-1)).toEqual({
+      completed: compressed.byteLength,
+      total: compressed.byteLength,
+    });
+  });
+
   it("bounds generated pack encoding before compression", async () => {
     const pack = await buildContentPack(source, {
       packId: "synthetic",

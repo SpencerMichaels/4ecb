@@ -30,6 +30,7 @@ import {
   focusMainContent,
   shouldFocusMainContentAfterRouteChange,
 } from "./route-focus";
+import { LoadingScreen } from "./LoadingScreen";
 import { PwaStatus } from "./PwaStatus";
 import {
   downloadAdvertisedPack,
@@ -546,20 +547,15 @@ export function App() {
 
       <HideFlavortextContext.Provider value={hideFlavortext}>
         {!storageReady ? (
-          <main className="loading-state" id="main-content">
-            Loading local content profiles…
-          </main>
+          <LoadingScreen label="Loading local content profiles…" />
         ) : (
           <Suspense
             fallback={
-              <main
-                aria-busy="true"
-                className="loading-state route-loading-state"
-                data-route-loading="true"
-                id="main-content"
-              >
-                Loading workspace…
-              </main>
+              <LoadingScreen
+                className="route-loading-state"
+                label="Loading workspace…"
+                routeLoading
+              />
             }
           >
             <RouteFocusOnMount enabled={focusRouteOnMount} focusKey={hash}>
