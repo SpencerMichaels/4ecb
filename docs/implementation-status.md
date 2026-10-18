@@ -21,6 +21,11 @@ D079 implemented on branch `unified-cards`:
   Build cards), honoring the equipped to-hit bonus print setting; the old
   variant selector is gone.
 - Item prices and weights group thousands ("3,400 gp") on every card.
+- Rules clauses keep [W]; the weapon table carries weapon-specific damage, and
+  the "Replace [W] with the selected weapon's dice" setting is removed. Panel
+  weapon tables keep attack cells on one line, giving spare width to names.
+- Panel cards lay out their bands like printed cards, so a wrapped secondary
+  attack line starts with its target icon rather than a "·" separator.
 - Builder and on-screen panel cards have dark-theme paper, ink and card
   colors (`--card-paper`/`--card-ink` tokens); printing and the print
   preview always stay light.

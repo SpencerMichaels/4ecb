@@ -186,7 +186,6 @@ export function CharacterSheetPage({
   openPrintPreview = false,
   resolveAbilityChoices = true,
   abbreviateAbilityValues = true,
-  expandWeaponDice = true,
   showEquippedAttackBonus = true,
   showPrintTitleActionIcon = true,
   printCardTextSize = 8,
@@ -198,7 +197,6 @@ export function CharacterSheetPage({
   readonly openPrintPreview?: boolean;
   readonly resolveAbilityChoices?: boolean;
   readonly abbreviateAbilityValues?: boolean;
-  readonly expandWeaponDice?: boolean;
   readonly showEquippedAttackBonus?: boolean;
   readonly showPrintTitleActionIcon?: boolean;
   readonly printCardTextSize?: number;
@@ -683,10 +681,9 @@ export function CharacterSheetPage({
                   showPrintTitleActionIcon
                   layout="panel"
                   panel={{
-                    textPresentation: cardTextPresentation(card, {
+                    textPresentation: cardTextPresentation(
                       abbreviateAbilityValues,
-                      expandWeaponDice,
-                    }),
+                    ),
                   }}
                 />
               ))}

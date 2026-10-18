@@ -221,7 +221,6 @@ export function CharacterEditorPage({
   keepLargeAmountsInGold,
   resolveAbilityChoices,
   abbreviateAbilityValues,
-  expandWeaponDice,
   showEquippedAttackBonus,
   activeManifest,
   activeProfile,
@@ -236,7 +235,6 @@ export function CharacterEditorPage({
   readonly keepLargeAmountsInGold: boolean;
   readonly resolveAbilityChoices: boolean;
   readonly abbreviateAbilityValues: boolean;
-  readonly expandWeaponDice: boolean;
   readonly showEquippedAttackBonus: boolean;
   readonly activeManifest?: ContentPackManifest;
   readonly activeProfile?: ContentProfileDefinition;
@@ -459,15 +457,9 @@ export function CharacterEditorPage({
     () => ({
       resolveAbilityChoices,
       abbreviateAbilityValues,
-      expandWeaponDice,
       showEquippedAttackBonus,
     }),
-    [
-      abbreviateAbilityValues,
-      expandWeaponDice,
-      resolveAbilityChoices,
-      showEquippedAttackBonus,
-    ],
+    [abbreviateAbilityValues, resolveAbilityChoices, showEquippedAttackBonus],
   );
   const equipmentCardSettings = useMemo(
     () =>

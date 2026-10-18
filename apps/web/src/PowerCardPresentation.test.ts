@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   abbreviatePowerAbilities,
-  expandWeaponDice,
   renderPowerText,
 } from "./PowerCardPresentation";
 
@@ -22,14 +21,6 @@ describe("power card text presentation", () => {
     ).toBe(
       "STR + 1 vs. AC; 2[W] + STR damage, and gain WIS temporary hit points.",
     );
-  });
-
-  it("expands weapon dice from the weapon's damage", () => {
-    expect(expandWeaponDice("Hit: 2[W] + 1[W].", "1d8")).toBe(
-      "Hit: 2d8 + 1d8.",
-    );
-    expect(expandWeaponDice("Hit: 2[W].", "2d4")).toBe("Hit: 4d4.");
-    expect(expandWeaponDice("Hit: 2[W].", undefined)).toBe("Hit: 2[W].");
   });
 
   it("renders compact ability tooltips without changing half-level text", () => {

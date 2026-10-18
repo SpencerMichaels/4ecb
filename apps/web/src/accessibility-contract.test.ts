@@ -127,11 +127,10 @@ describe("release accessibility contract", () => {
     expect(settingsPage).toContain(
       "Show ability values compactly in calculated power details",
     );
-    expect(settingsPage).toContain(
-      "Replace [W] with the selected weapon's dice",
-    );
+    // Cards keep [W]; the weapon table shows weapon-specific damage (D079).
+    expect(settingsPage).not.toContain("Replace [W]");
     expect(app).toContain("ABBREVIATE_ABILITY_VALUES_STORAGE_KEY");
-    expect(app).toContain("EXPAND_WEAPON_DICE_STORAGE_KEY");
+    expect(app).not.toContain("EXPAND_WEAPON_DICE_STORAGE_KEY");
     expect(settingsPage).not.toContain("Color utility powers");
     expect(settingsPage).toContain(
       "Show equipped weapon to-hit bonus in attack headers",
@@ -162,7 +161,7 @@ describe("release accessibility contract", () => {
     expect(builderCards).toContain("createSheetPowerCardFinder(");
     expect(characterEditor).toContain("<BuilderCardContext.Provider");
     expect(builderCards).toContain("renderPowerText(text, true)");
-    expect(builderCards).toContain("expandWeaponDice(value, weaponDamage)");
+    expect(builderCards).not.toContain("expandWeaponDice");
     // The screen sheet uses the same shared cards, not a third renderer.
     expect(characterSheet).not.toContain("function Card(");
     expect(characterSheet).toContain('layout="panel"');

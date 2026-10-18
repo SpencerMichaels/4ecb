@@ -2,8 +2,7 @@ import { Fragment, type ReactNode } from "react";
 
 /**
  * Display-only transforms for power rules text on cards: ability-name
- * abbreviation for Build comparisons, weapon-dice expansion, and compact
- * ability values. Calculations stay in the rules engine and sheet model.
+ * abbreviation and compact ability values. Calculations stay in the rules engine and sheet model.
  */
 
 const ABILITY_ABBREVIATIONS = [
@@ -23,22 +22,6 @@ export function abbreviatePowerAbilities(value: string): string {
         abbreviation,
       ),
     value,
-  );
-}
-
-export function expandWeaponDice(
-  value: string,
-  weaponDamage: string | undefined,
-): string {
-  const weapon = weaponDamage?.match(/^(\d+)d(\d+)$/iu);
-  if (weapon?.[1] === undefined || weapon[2] === undefined) return value;
-  return value.replace(
-    /\b(\d+)?\[W\]/giu,
-    (match, count: string | undefined) => {
-      const multiplier = count === undefined ? 1 : Number(count);
-      if (!Number.isFinite(multiplier)) return match;
-      return `${Number(weapon[1]) * multiplier}d${weapon[2]}`;
-    },
   );
 }
 

@@ -2579,6 +2579,15 @@ textarea {
   height: 1.1em;
   width: 1.1em;
 }
+/* Panel weapon tables give spare width to the weapon names and keep each
+   attack's bonus and damage on one line. */
+.print-reference-card.is-panel .print-card-variant-table tbody th {
+  width: 100%;
+}
+.print-reference-card.is-panel .print-card-variant-table td,
+.print-reference-card.is-panel .print-card-variant-table thead th {
+  white-space: nowrap;
+}
 .print-card-panel-subheading {
   align-items: center;
   background: color-mix(in srgb, var(--card-color) 8%, var(--card-paper));
@@ -2693,6 +2702,20 @@ textarea {
   :root[data-theme="dark"] .print-item-card.is-panel {
     --card-color: #e08a12;
   }
+  :root[data-theme="dark"]
+    .print-reference-card.is-panel
+    .print-card-variant-table
+    thead
+    th {
+    background: color-mix(in srgb, var(--card-color) 45%, var(--card-paper));
+  }
+  :root[data-theme="dark"]
+    .print-reference-card.is-panel
+    .print-card-variant-table
+    tbody
+    tr:nth-child(odd) {
+    background: color-mix(in srgb, var(--card-color) 20%, var(--card-paper));
+  }
 }
 @media screen and (prefers-color-scheme: dark) {
   :root:not([data-theme]) .print-reference-card.is-panel {
@@ -2719,6 +2742,20 @@ textarea {
   }
   :root:not([data-theme]) .print-item-card.is-panel {
     --card-color: #e08a12;
+  }
+  :root:not([data-theme])
+    .print-reference-card.is-panel
+    .print-card-variant-table
+    thead
+    th {
+    background: color-mix(in srgb, var(--card-color) 45%, var(--card-paper));
+  }
+  :root:not([data-theme])
+    .print-reference-card.is-panel
+    .print-card-variant-table
+    tbody
+    tr:nth-child(odd) {
+    background: color-mix(in srgb, var(--card-color) 20%, var(--card-paper));
   }
 }
 

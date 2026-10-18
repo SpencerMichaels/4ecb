@@ -163,8 +163,6 @@ export interface SettingsPageProps {
   readonly onResolveAbilityChoicesChange: (value: boolean) => void;
   readonly abbreviateAbilityValues: boolean;
   readonly onAbbreviateAbilityValuesChange: (value: boolean) => void;
-  readonly expandWeaponDice: boolean;
-  readonly onExpandWeaponDiceChange: (value: boolean) => void;
   readonly showEquippedAttackBonus: boolean;
   readonly onShowEquippedAttackBonusChange: (value: boolean) => void;
   readonly showPrintTitleActionIcon: boolean;
@@ -232,8 +230,6 @@ export function SettingsPage({
   onResolveAbilityChoicesChange,
   abbreviateAbilityValues,
   onAbbreviateAbilityValuesChange,
-  expandWeaponDice,
-  onExpandWeaponDiceChange,
   showEquippedAttackBonus,
   onShowEquippedAttackBonusChange,
   showPrintTitleActionIcon,
@@ -682,13 +678,7 @@ export function SettingsPage({
               checked={abbreviateAbilityValues}
               onChange={onAbbreviateAbilityValuesChange}
               label="Show ability values compactly in calculated power details"
-              help="On Equipment and Shop power cards, show “Charisma modifier (+4)” as an underlined “+4” whose tooltip names the ability. The Build tab and printed cards keep general formulas."
-            />
-            <CheckboxSetting
-              checked={expandWeaponDice}
-              onChange={onExpandWeaponDiceChange}
-              label="Replace [W] with the selected weapon's dice in calculated power details"
-              help="Use the card's weapon selector to change the calculation or compare every compatible weapon in the character's inventory."
+              help="On builder and on-screen sheet power cards, show “Charisma modifier (+4)” as an underlined “+4” whose tooltip names the ability. Printed cards keep the full wording."
             />
           </div>
         </section>

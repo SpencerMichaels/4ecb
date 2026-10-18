@@ -20,10 +20,8 @@ import { ItemCard } from "./ItemCard";
 import { PowerCard, type CardTextPresentation } from "./PowerCard";
 import {
   abbreviatePowerAbilities,
-  expandWeaponDice,
   renderPowerText,
 } from "./PowerCardPresentation";
-import { defaultPrintVariant } from "./print-power-attacks";
 
 /**
  * How builder detail panes turn content into the shared printed cards: the
@@ -36,13 +34,11 @@ export interface BuilderCardSettings {
   readonly characterLevel: number;
   readonly showEquippedAttackBonus: boolean;
   readonly abbreviateAbilityValues: boolean;
-  readonly expandWeaponDice: boolean;
 }
 
 export interface BuilderCardPreferences {
   readonly resolveAbilityChoices: boolean;
   readonly abbreviateAbilityValues: boolean;
-  readonly expandWeaponDice: boolean;
   readonly showEquippedAttackBonus: boolean;
 }
 
@@ -96,7 +92,6 @@ export function evaluatedBuilderCardSettings(
     characterLevel: evaluation.level,
     showEquippedAttackBonus: preferences.showEquippedAttackBonus,
     abbreviateAbilityValues: preferences.abbreviateAbilityValues,
-    expandWeaponDice: preferences.expandWeaponDice,
   };
 }
 
@@ -110,7 +105,6 @@ export function authoredBuilderCardSettings(
     characterLevel,
     showEquippedAttackBonus: false,
     abbreviateAbilityValues: false,
-    expandWeaponDice: false,
   };
 }
 
@@ -118,23 +112,14 @@ export const BuilderCardContext = createContext<BuilderCardSettings>(
   authoredBuilderCardSettings(1),
 );
 
-/** Applies the compact-ability-value and weapon-dice display preferences. */
+/** Applies the compact-ability-value display preference. Rules text keeps
+ * [W]; the weapon table shows each weapon's damage. */
 export function cardTextPresentation(
-  card: SheetCard,
-  settings: Pick<
-    BuilderCardSettings,
-    "abbreviateAbilityValues" | "expandWeaponDice"
-  >,
+  abbreviateAbilityValues: boolean,
 ): CardTextPresentation {
-  const weaponDamage = defaultPrintVariant(card)?.weaponDamage;
-  return {
-    ...(settings.expandWeaponDice
-      ? { transform: (value: string) => expandWeaponDice(value, weaponDamage) }
-      : {}),
-    ...(settings.abbreviateAbilityValues
-      ? { renderText: (text: string) => renderPowerText(text, true) }
-      : {}),
-  };
+  return abbreviateAbilityValues
+    ? { renderText: (text: string) => renderPowerText(text, true) }
+    : {};
 }
 
 function headingIdFor(entity: ContentEntity, suffix = ""): string {
@@ -166,7 +151,9 @@ export function BuilderPowerCard({
         ...(hideFlavortext || card.flavor === undefined
           ? {}
           : { flavor: card.flavor }),
-        textPresentation: cardTextPresentation(card, settings),
+        textPresentation: cardTextPresentation(
+          settings.abbreviateAbilityValues,
+        ),
       }}
     />
   );
@@ -199,7 +186,9 @@ export function BuilderItemCard({
         ...(hideFlavortext || card.flavor === undefined
           ? {}
           : { flavor: card.flavor }),
-        textPresentation: cardTextPresentation(card, settings),
+        textPresentation: cardTextPresentation(
+          settings.abbreviateAbilityValues,
+        ),
       }}
     />
   );

@@ -109,7 +109,6 @@ export const RESOLVE_ABILITY_CHOICES_STORAGE_KEY =
   "4ecb.resolveAbilityChoices.v1";
 export const ABBREVIATE_ABILITY_VALUES_STORAGE_KEY =
   "4ecb.abbreviateAbilityValues.v1";
-export const EXPAND_WEAPON_DICE_STORAGE_KEY = "4ecb.expandWeaponDice.v1";
 export const SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY =
   "4ecb.showEquippedAttackBonus.v1";
 export const SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY =
@@ -192,13 +191,6 @@ export function App() {
       return (
         localStorage.getItem(ABBREVIATE_ABILITY_VALUES_STORAGE_KEY) !== "0"
       );
-    } catch {
-      return true;
-    }
-  });
-  const [expandWeaponDice, setExpandWeaponDice] = useState(() => {
-    try {
-      return localStorage.getItem(EXPAND_WEAPON_DICE_STORAGE_KEY) !== "0";
     } catch {
       return true;
     }
@@ -310,15 +302,6 @@ export function App() {
       // The power-card display preference still applies for this session.
     }
   }, [abbreviateAbilityValues]);
-  useEffect(() => {
-    try {
-      if (expandWeaponDice)
-        localStorage.removeItem(EXPAND_WEAPON_DICE_STORAGE_KEY);
-      else localStorage.setItem(EXPAND_WEAPON_DICE_STORAGE_KEY, "0");
-    } catch {
-      // The power-card display preference still applies for this session.
-    }
-  }, [expandWeaponDice]);
   useEffect(() => {
     try {
       if (showEquippedAttackBonus)
@@ -616,8 +599,6 @@ export function App() {
                   onResolveAbilityChoicesChange={setResolveAbilityChoices}
                   abbreviateAbilityValues={abbreviateAbilityValues}
                   onAbbreviateAbilityValuesChange={setAbbreviateAbilityValues}
-                  expandWeaponDice={expandWeaponDice}
-                  onExpandWeaponDiceChange={setExpandWeaponDice}
                   showEquippedAttackBonus={showEquippedAttackBonus}
                   onShowEquippedAttackBonusChange={setShowEquippedAttackBonus}
                   showPrintTitleActionIcon={showPrintTitleActionIcon}
@@ -639,7 +620,6 @@ export function App() {
                   keepLargeAmountsInGold={keepLargeAmountsInGold}
                   resolveAbilityChoices={resolveAbilityChoices}
                   abbreviateAbilityValues={abbreviateAbilityValues}
-                  expandWeaponDice={expandWeaponDice}
                   showEquippedAttackBonus={showEquippedAttackBonus}
                   {...(activeManifest === undefined ? {} : { activeManifest })}
                   {...(activeProfile === undefined ? {} : { activeProfile })}
@@ -653,7 +633,6 @@ export function App() {
                   countCoinWeight={countCoinWeight}
                   resolveAbilityChoices={resolveAbilityChoices}
                   abbreviateAbilityValues={abbreviateAbilityValues}
-                  expandWeaponDice={expandWeaponDice}
                   showEquippedAttackBonus={showEquippedAttackBonus}
                   showPrintTitleActionIcon={showPrintTitleActionIcon}
                   printCardTextSize={printCardTextSize}

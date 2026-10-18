@@ -2157,8 +2157,10 @@ printed card components in a fluid "panel" layout with builder additions
 race, feats, …) adopt the same card frame. Every builder card is the
 character's evaluated card, including the printed weapon table: the Build tab
 at the level being viewed, Equipment and Shop at the current level. This
-supersedes D067's authored-formula Build cards. Item prices and weights group
-thousands ("3,400 gp").
+supersedes D067's authored-formula Build cards. Rules clauses keep weapon dice
+as [W]; weapon-specific damage appears only in the weapon table, so the
+"Replace [W] with the selected weapon's dice" setting is removed. Item prices
+and weights group thousands ("3,400 gp").
 
 Panel cards (builder, on-screen sheet) have dark-theme paper, ink and card
 colors; printed cards and the print preview always use light paper. Panel cards
