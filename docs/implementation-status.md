@@ -1,5 +1,14 @@
 # Implementation status
 
+## Builder character sidebar (2026-10-18, branch `builder-character-sidebar`)
+
+D080: the builder header and level rail are replaced by a sticky sidebar on
+every builder tab (large portrait, editable name, race/class/level, Play-card
+stat arrangement with passive senses and score + modifier abilities) and a
+single "Level N ▾" picker with per-level status. Choice, details and detail
+panes give their second column exactly one card width. Verification: 920
+tests, typecheck, lint and build pass; visual review is pending.
+
 ## Unified builder and sheet cards (2026-10-18)
 
 D079 implemented on branch `unified-cards`:

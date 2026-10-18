@@ -265,7 +265,9 @@ describe("release accessibility contract", () => {
   });
 
   it("keeps navigation compact and ordinary detail content in document flow", () => {
-    expect(characterEditor).toContain('className="level-rail"');
+    // Level navigation is one picker in the character sidebar (all tabs).
+    expect(characterEditor).toContain("<LevelPicker");
+    expect(characterEditor).not.toContain('className="level-rail"');
     expect(characterEditor).toContain('workspaceTab === "overview"');
     expect(characterEditor).toContain('workspaceTab === "equipment"');
     expect(characterEditor).toContain('workspaceTab === "diagnostics"');
@@ -308,7 +310,7 @@ describe("release accessibility contract", () => {
     expect(characterEditor).not.toContain('className="builder-secondary"');
 
     const levelRailButtonRule = styles.match(
-      /\.level-rail-button\s*\{([^}]*)\}/,
+      /(?:^|\n)\.level-rail-button\s*\{([^}]*)\}/,
     )?.[1];
     const candidateDetailRule = styles.match(
       /\.candidate-detail\s*\{([^}]*)\}/,
@@ -392,9 +394,9 @@ describe("release accessibility contract", () => {
     );
   });
 
-  it("keeps header identity editable and moves level changes into Character details", () => {
+  it("keeps sidebar identity editable and moves level changes into Character details", () => {
     const header = characterEditor.slice(
-      characterEditor.indexOf('<header className="builder-heading">'),
+      characterEditor.indexOf('<header className="builder-sidebar-identity">'),
       characterEditor.indexOf(
         "{shouldShowBoundProfileWarning(boundProfileResolution)",
       ),
@@ -415,7 +417,7 @@ describe("release accessibility contract", () => {
       "onLevelChange(Number(event.currentTarget.value))",
     );
     expect(styles).toMatch(
-      /\.portrait-trigger-compact\s*\{[^}]*height: 4\.5rem;[^}]*width: 4\.5rem;/,
+      /\.builder-sidebar-identity \.portrait-trigger\s*\{[^}]*height: 9rem;[^}]*width: 9rem;/,
     );
     expect(styles).toMatch(/\.builder-character-facts\s*\{[^}]*margin: 0;/);
     expect(styles).toMatch(
@@ -428,14 +430,10 @@ describe("release accessibility contract", () => {
       /\.builder-character-name input:focus-visible\s*\{[^}]*box-shadow: inset 0 -3px var\(--focus\)[^}]*outline: none/,
     );
     expect(styles).toMatch(
-      /\.builder-heading\s*\{[^}]*display: grid;[^}]*gap: 0\.65rem 1\.35rem;[^}]*grid-template-columns: minmax\(0, 19rem\) minmax\(0, 1fr\);/,
+      /\.builder-layout\s*\{[^}]*grid-template-columns: var\(--builder-sidebar-width\) minmax\(0, 1fr\);/,
     );
-    expect(styles).not.toMatch(
-      /\.builder-heading\s*\{[^}]*(?:border-bottom|margin-bottom):/,
-    );
-    expect(styles).toMatch(
-      /\.builder-heading\s*\{[^}]*padding-bottom: 0\.8rem/,
-    );
+    expect(styles).toMatch(/\.builder-sidebar\s*\{[^}]*position: sticky;/);
+    expect(styles).not.toContain(".builder-heading {");
     expect(styles).toMatch(/\.builder-tabs\s*\{[^}]*overflow-x: auto/);
   });
 

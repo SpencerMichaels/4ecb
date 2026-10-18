@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import type { EvaluatedContribution, EvaluatedStat } from "@4ecb/rules-engine";
 
-import { BuilderHeaderStats } from "./BuilderHeaderStats";
+import { BuilderCharacterStats } from "./BuilderCharacterStats";
 
 function stat(name: string, value: number | string): EvaluatedStat {
   return { name, value, contributions: [] };
@@ -24,10 +24,10 @@ function contribution(
   };
 }
 
-describe("BuilderHeaderStats", () => {
+describe("BuilderCharacterStats", () => {
   it("renders current evaluated totals in the approved semantic groups", () => {
     const markup = renderToStaticMarkup(
-      createElement(BuilderHeaderStats, {
+      createElement(BuilderCharacterStats, {
         evaluation: {
           stats: {
             "Hit Points": stat("Hit Points", 71),
@@ -55,13 +55,13 @@ describe("BuilderHeaderStats", () => {
     expect(markup).not.toContain(">Defenses<");
     expect(markup).not.toContain(">Abilities<");
     expect(markup).toContain('<dd title="Max HP 71">71</dd>');
-    expect(markup).toContain('<dd title="Initiative +2">+2</dd>');
-    expect(markup).toContain(
-      '<dt>Fortitude</dt><dd title="Fortitude 22">22</dd>',
-    );
-    expect(markup).toContain('<dt>Reflex</dt><dd title="Reflex 18">18</dd>');
+    expect(markup).toContain('<dd title="Init +2">+2</dd>');
+    expect(markup).toContain('<dt>Fort</dt><dd title="Fort 22">22</dd>');
+    expect(markup).toContain('<dt>Ref</dt><dd title="Ref 18">18</dd>');
     expect(markup).toContain('<dt>Will</dt><dd title="Will 21">21</dd>');
-    expect(markup).toContain('<dt>INT</dt><dd title="INT 8">8</dd>');
+    expect(markup).toContain(
+      '<span class="stat-tile-label">INT</span></dt><dd title="INT 8">-1</dd>',
+    );
     expect(markup.match(/<dd title=/g)).toHaveLength(15);
     expect(markup).toContain('aria-label="Health"');
     expect(markup).toContain(
@@ -75,7 +75,7 @@ describe("BuilderHeaderStats", () => {
 
   it("recognizes the legacy short aliases for defense totals", () => {
     const markup = renderToStaticMarkup(
-      createElement(BuilderHeaderStats, {
+      createElement(BuilderCharacterStats, {
         evaluation: {
           stats: {
             "Armor Class": stat("Armor Class", 24),
@@ -88,23 +88,23 @@ describe("BuilderHeaderStats", () => {
     );
 
     expect(markup).toContain('<dt>AC</dt><dd title="AC 24">24</dd>');
-    expect(markup).toContain(
-      '<dt>Fortitude</dt><dd title="Fortitude 20">20</dd>',
-    );
-    expect(markup).toContain('<dt>Reflex</dt><dd title="Reflex 19">19</dd>');
+    expect(markup).toContain('<dt>Fort</dt><dd title="Fort 20">20</dd>');
+    expect(markup).toContain('<dt>Ref</dt><dd title="Ref 19">19</dd>');
     expect(markup).toContain('<dt>Will</dt><dd title="Will 21">21</dd>');
   });
 
   it("uses stable em dashes while the current evaluation is unavailable", () => {
-    const markup = renderToStaticMarkup(createElement(BuilderHeaderStats, {}));
+    const markup = renderToStaticMarkup(
+      createElement(BuilderCharacterStats, {}),
+    );
 
-    expect(markup.match(/<dd>—<\/dd>/g)).toHaveLength(16);
+    expect(markup.match(/<dd>—<\/dd>/g)).toHaveLength(18);
     expect(markup).not.toContain("title=");
   });
 
   it("shows only applied evaluator provenance with player-facing labels", () => {
     const markup = renderToStaticMarkup(
-      createElement(BuilderHeaderStats, {
+      createElement(BuilderCharacterStats, {
         evaluation: {
           stats: {
             AC: {
@@ -153,7 +153,7 @@ describe("BuilderHeaderStats", () => {
 
   it("does not repeat an exact signed bonus already present in a provider name", () => {
     const markup = renderToStaticMarkup(
-      createElement(BuilderHeaderStats, {
+      createElement(BuilderCharacterStats, {
         evaluation: {
           stats: {
             AC: {
@@ -183,7 +183,7 @@ describe("BuilderHeaderStats", () => {
 
   it("translates opaque hit-point level providers without inventing a source", () => {
     const markup = renderToStaticMarkup(
-      createElement(BuilderHeaderStats, {
+      createElement(BuilderCharacterStats, {
         evaluation: {
           stats: {
             "Hit Points": {
@@ -229,7 +229,7 @@ describe("BuilderHeaderStats", () => {
         value: "+_PER-LEVEL-HPS",
       });
     const markup = renderToStaticMarkup(
-      createElement(BuilderHeaderStats, {
+      createElement(BuilderCharacterStats, {
         evaluation: {
           stats: {
             "Hit Points": {
@@ -251,6 +251,31 @@ describe("BuilderHeaderStats", () => {
 
     expect(markup).toContain(
       'title="Max HP 55\nLevels 2–3 hit points +6 each\nLevels 4–5 hit points +5 each\nLevel 7 hit points +5\nLevel 8 hit points +6"',
+    );
+  });
+});
+
+describe("BuilderCharacterStats Play-card arrangement", () => {
+  it("adds passive senses and shows ability scores with their modifiers", () => {
+    const markup = renderToStaticMarkup(
+      createElement(BuilderCharacterStats, {
+        evaluation: {
+          stats: {
+            "Passive Insight": stat("Passive Insight", 17),
+            "Passive Perception": stat("Passive Perception", 19),
+            Wisdom: stat("Wisdom", 14),
+            "Wisdom modifier": stat("Wisdom modifier", 2),
+          },
+        },
+      }),
+    );
+    expect(markup).toContain('aria-label="Passive senses"');
+    expect(markup).toContain('<dt>Insight</dt><dd title="Insight 17">17</dd>');
+    expect(markup).toContain(
+      '<dt>Perception</dt><dd title="Perception 19">19</dd>',
+    );
+    expect(markup).toContain(
+      '<span class="stat-tile-lead">14</span><span class="stat-tile-label">WIS</span></dt><dd title="WIS 14">+2</dd>',
     );
   });
 });

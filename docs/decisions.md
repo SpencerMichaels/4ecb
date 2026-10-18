@@ -2169,6 +2169,28 @@ than widening; other choices' reference cards use the same width. Panel flavor
 text sits directly under the name bar, as in published power blocks; printed
 cards omit it.
 
+### D080 — Builder character sidebar and level picker
+
+Status: accepted (2026-10-18).
+
+Builder detail cards are now one card wide, so the full-width character header
+and the always-visible level rail no longer earn their space. Every builder tab
+shares one sticky left sidebar beside the tab bar: a large centered portrait,
+the editable name and race/class/level line, then the key numbers arranged like
+the printed Play-data card (abilities as score + modifier, defenses, health,
+then initiative, speed and passive senses). Resistances and other notes stay
+on the sheet. The sidebar is its own component (`BuilderCharacterStats`),
+borrowing the Play card's arrangement rather than sharing the print
+component, because the two are expected to diverge; values and tooltips come
+from the evaluated stats and shared derived values as before.
+
+Level switching is rare (play mostly fills the newest level), so the level
+plan moves behind a single "Level N ▾" picker under the stats: a tier-by-level
+grid that keeps the former rail's completion status. No extra arrows; the
+choice pane's Next button still advances through sections and levels. Detail
+columns are one card wide and flush right; below 63rem the sidebar folds above
+the workspace.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

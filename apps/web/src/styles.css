@@ -199,7 +199,7 @@ h2 {
 
 .page-heading h1,
 .page-heading h2,
-.builder-heading h2 {
+.builder-sidebar-identity h2 {
   font-family: var(--font-display);
 }
 
@@ -3559,19 +3559,57 @@ textarea {
   display: flex;
 }
 
-.builder-heading {
-  align-items: center;
+/* The character sidebar is shared by every builder tab: identity on top,
+   then the Play-data card's stat arrangement, then the level picker. */
+.builder-layout {
+  --builder-sidebar-width: 17rem;
+  align-items: start;
   display: grid;
-  gap: 0.65rem 1.35rem;
-  grid-template-columns: minmax(0, 19rem) minmax(0, 1fr);
-  padding-bottom: 0.8rem;
+  gap: 1rem;
+  grid-template-columns: var(--builder-sidebar-width) minmax(0, 1fr);
 }
 
-.builder-character-heading {
+.builder-main {
   min-width: 0;
 }
 
-.builder-heading p,
+.builder-sidebar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--brand-navy);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  padding: 0.75rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.builder-sidebar-identity {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  text-align: center;
+}
+
+.builder-sidebar-identity .portrait-trigger {
+  height: 9rem;
+  width: 9rem;
+}
+
+.builder-sidebar-identity .builder-character-name-heading {
+  inline-size: 100%;
+}
+
+.builder-sidebar-identity .builder-character-name input {
+  font-size: 1.35rem;
+  text-align: center;
+}
+
 .timeline-heading p {
   margin-bottom: 0;
 }
@@ -3580,10 +3618,6 @@ textarea {
   color: var(--muted);
   font-size: 0.85rem;
   margin: 0;
-}
-
-.builder-character-heading > div {
-  min-width: 0;
 }
 
 .builder-character-name-heading {
@@ -3617,43 +3651,68 @@ textarea {
   outline: none;
 }
 
-.builder-header-stats {
+.builder-character-stats {
   min-width: 0;
 }
 
-.builder-header-stats dl,
-.builder-header-stats dd {
+.builder-character-stats dl,
+.builder-character-stats dd {
   margin: 0;
 }
 
-.builder-header-stat-groups {
+.builder-character-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Initiative, speed and passive senses share a row, as on the Play card. */
+.builder-character-stat-row {
   display: grid;
-  gap: 0.45rem;
-  grid-template-columns:
-    minmax(15rem, 4fr) minmax(15rem, 4fr) minmax(4.6rem, 1fr)
-    minmax(4.6rem, 1fr) minmax(11rem, 3fr);
+  gap: 0.4rem;
+  grid-template-columns: 1fr 1fr 2.2fr;
+}
+
+/* Ability score left, label centered, modifier right. */
+.builder-character-abilities .stat-tiles-compact .stat-tile {
+  align-items: baseline;
+  column-gap: 0.3em;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+.builder-character-abilities .stat-tiles-compact .stat-tile dt {
+  display: contents;
+}
+.builder-character-abilities .stat-tiles-compact .stat-tile-lead {
+  font-size: 1.4em;
+  font-weight: 700;
+  justify-self: start;
+  margin-right: 0;
+}
+.builder-character-abilities .stat-tiles-compact .stat-tile dd {
+  justify-self: end;
 }
 
 /* Shared stat tiles at screen scale; colors follow the active theme. */
-.builder-header-stats .stat-group {
+.builder-character-stats .stat-group {
   font-size: 0.68rem;
 }
 
-.builder-header-stats .stat-tile dd {
+.builder-character-stats .stat-tile dd {
   color: var(--text);
   font-size: 2.3em;
 }
 
-.builder-header-stats .stat-tiles-compact .stat-tile dd {
+.builder-character-stats .stat-tiles-compact .stat-tile dd {
   font-size: 1.4em;
 }
 
-.builder-header-stats .stat-tile dd[title] {
+.builder-character-stats .stat-tile dd[title] {
   cursor: help;
 }
 
 /* The builder colors tiles from the app theme; print keeps its group palette. */
-.builder-header-stats .stat-group {
+.builder-character-stats .stat-group {
   --stat-accent: var(--muted);
   --stat-tint: color-mix(in srgb, var(--surface-subtle) 72%, var(--surface));
   --stat-edge: var(--border);
@@ -3663,29 +3722,13 @@ textarea {
 }
 
 /* Square like the rest of the builder; page 1 and play cards keep rounding. */
-.builder-header-stats .stat-tile {
+.builder-character-stats .stat-tile {
   border-radius: 0;
 }
 
-.builder-header-stats .stat-tile dt {
+.builder-character-stats .stat-tile dt {
   font-weight: 800;
   letter-spacing: 0.045em;
-}
-
-@media (max-width: 80rem) {
-  .builder-header-stat-groups {
-    grid-template-columns:
-      minmax(0, 4fr) minmax(0, 4fr) minmax(4.6rem, 1fr)
-      minmax(4.6rem, 1fr);
-  }
-
-  .builder-header-abilities {
-    grid-column: 1 / -1;
-  }
-
-  .builder-header-abilities .stat-tiles-compact {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
 }
 
 .builder-tabs-bar {
@@ -3834,7 +3877,7 @@ textarea {
   align-items: start;
   display: grid;
   gap: var(--builder-workspace-gutter);
-  grid-template-columns: 5.5rem minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   position: relative;
 }
 
@@ -3850,50 +3893,61 @@ textarea {
   border-top: 4px solid var(--brand-navy);
 }
 
-.level-rail {
+.level-picker {
+  position: relative;
+}
+
+.level-picker-toggle {
+  align-items: center;
+  display: flex;
+  gap: 0.45rem;
+  justify-content: center;
+  width: 100%;
+}
+
+.level-picker-toggle .icon {
+  transform: rotate(90deg);
+}
+
+.level-picker-toggle[aria-expanded="true"] .icon {
+  transform: rotate(-90deg);
+}
+
+.level-picker-panel {
   background: var(--surface);
   border: 1px solid var(--border);
   border-top: 4px solid var(--brand-navy);
-  min-width: 0;
+  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.2);
+  display: grid;
+  gap: 0.5rem;
+  inset-inline-start: 0;
+  margin-top: 0.25rem;
+  padding: 0.6rem;
+  position: absolute;
+  width: max(100%, 24rem);
+  z-index: 20;
 }
 
-.level-rail ol {
+.level-picker-tier h4 {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.25rem;
+  text-transform: uppercase;
+}
+
+.level-picker-tier ol {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.level-tier + .level-tier,
-.level-tier > ol li + li {
-  border-top: 1px solid var(--border);
-}
-
-.level-tier-toggle {
-  align-items: center;
-  background: var(--surface-subtle);
-  border: 0;
-  border-radius: 0;
-  color: var(--text);
-  display: flex;
-  font-size: 0.68rem;
-  font-weight: 900;
-  gap: 0.2rem;
-  justify-content: flex-start;
-  letter-spacing: 0.02em;
-  min-height: 2.2rem;
-  padding: 0.35rem 0.45rem;
-  text-transform: uppercase;
-  width: 100%;
-}
-
-.level-tier-toggle .icon {
-  block-size: 0.8rem;
-  inline-size: 0.8rem;
-  transition: transform 120ms ease;
-}
-
-.level-tier-toggle[aria-expanded="true"] .icon {
-  transform: rotate(90deg);
+.level-picker .level-rail-button {
+  flex-direction: column;
+  padding-inline: 0;
 }
 
 .level-rail-button {
@@ -4259,7 +4313,7 @@ textarea {
   align-items: start;
   display: grid;
   gap: var(--builder-workspace-gutter);
-  grid-template-columns: minmax(30rem, 1.35fr) minmax(22rem, 1fr);
+  grid-template-columns: minmax(0, 1fr) var(--panel-card-width);
 }
 
 @media (min-width: 60.01rem) and (min-height: 42rem) {
@@ -4288,7 +4342,7 @@ textarea {
   align-items: start;
   display: grid;
   gap: 1rem;
-  grid-template-columns: minmax(30rem, 1fr) minmax(20rem, 0.7fr);
+  grid-template-columns: minmax(0, 1fr) var(--panel-card-width);
 }
 
 .character-details-form {
@@ -6795,13 +6849,15 @@ button.inventory-icon-action:disabled {
   }
 }
 
+/* Narrow windows fold the sidebar back above the workspace. */
 @media (max-width: 63rem) {
-  .builder-heading {
+  .builder-layout {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .builder-header-stats {
-    grid-column: 1 / -1;
+  .builder-sidebar {
+    max-height: none;
+    position: static;
   }
 }
 
@@ -6847,17 +6903,6 @@ button.inventory-icon-action:disabled {
   .profile-composer-heading,
   .profile-preview {
     grid-template-columns: 1fr;
-  }
-  .level-rail {
-    width: 100%;
-  }
-  .level-tier > ol {
-    display: grid;
-    grid-template-columns: repeat(10, minmax(0, 1fr));
-  }
-  .level-tier > ol li + li {
-    border-left: 1px solid var(--border);
-    border-top: 0;
   }
   .timeline-heading {
     position: static;
@@ -6915,20 +6960,6 @@ button.inventory-icon-action:disabled {
 }
 
 @media (max-width: 48rem) {
-  .builder-header-stat-groups {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .builder-header-stat-groups > .stat-tone-defenses,
-  .builder-header-stat-groups > .stat-tone-health,
-  .builder-header-abilities {
-    grid-column: 1 / -1;
-  }
-
-  .builder-header-abilities .stat-tiles-compact {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .builder-tabs-bar {
     align-items: stretch;
     flex-direction: column;

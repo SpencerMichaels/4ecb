@@ -25,13 +25,13 @@ describe("builder header integration", () => {
       "const currentEvaluation = evaluationAtHorizon(\n    currentEvaluationResult,\n    build?.effectiveLevel,\n  );",
     );
     expect(source).toContain(
-      "<BuilderHeaderStats evaluation={currentEvaluation} />",
+      "<BuilderCharacterStats evaluation={currentEvaluation} />",
     );
     expect(source).not.toContain(
-      "<BuilderHeaderStats evaluation={planningEvaluation}",
+      "<BuilderCharacterStats evaluation={planningEvaluation}",
     );
     expect(source).not.toContain(
-      "<BuilderHeaderStats evaluation={selectedLevelEvaluation}",
+      "<BuilderCharacterStats evaluation={selectedLevelEvaluation}",
     );
   });
 

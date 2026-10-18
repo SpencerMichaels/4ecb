@@ -1,4 +1,5 @@
 import {
+  abilityModifier,
   bloodiedValue,
   evaluatedHealingSurgeValue,
   healingSurgeValue,
@@ -13,8 +14,8 @@ type HeaderEvaluation = Pick<EvaluatedCharacter, "stats">;
 
 const defenses = [
   ["AC", ["AC", "Armor Class"]],
-  ["Fortitude", ["Fortitude Defense", "Fortitude"]],
-  ["Reflex", ["Reflex Defense", "Reflex"]],
+  ["Fort", ["Fortitude Defense", "Fortitude"]],
+  ["Ref", ["Reflex Defense", "Reflex"]],
   ["Will", ["Will Defense", "Will"]],
 ] as const;
 
@@ -231,35 +232,81 @@ function bloodiedTile(evaluation: HeaderEvaluation | undefined): StatTileValue {
   };
 }
 
-export function BuilderHeaderStats({
+function abilityTile(
+  evaluation: HeaderEvaluation | undefined,
+  label: string,
+  name: string,
+): StatTileValue {
+  const scoreStat = evaluatedStat(evaluation, name);
+  const score =
+    typeof scoreStat?.value === "number" ? scoreStat.value : undefined;
+  // Same precedence as the printed sheet: the evaluated modifier, else the
+  // shared derived formula.
+  const modifierStat = evaluatedStat(evaluation, `${name} modifier`);
+  const modifier =
+    typeof modifierStat?.value === "number"
+      ? modifierStat.value
+      : score === undefined
+        ? undefined
+        : abilityModifier(score);
+  const value =
+    modifier === undefined
+      ? "—"
+      : modifier >= 0
+        ? `+${modifier}`
+        : String(modifier);
+  return {
+    lead: score === undefined ? "—" : String(score),
+    label,
+    value,
+    ...(scoreStat === undefined || score === undefined
+      ? {}
+      : { title: statTooltip(label, String(score), scoreStat) }),
+  };
+}
+
+/**
+ * The builder sidebar's numbers, arranged like the printed Play-data card:
+ * abilities, defenses, health, then initiative, speed and passive senses.
+ */
+export function BuilderCharacterStats({
   evaluation,
 }: {
   readonly evaluation?: HeaderEvaluation | undefined;
 }) {
   return (
-    <section aria-label="Key statistics" className="builder-header-stats">
-      <div className="builder-header-stat-groups">
-        <StatGroup
-          label="Defenses"
-          tone="defenses"
-          values={defenses.map(([label, names]) =>
-            statTile(evaluation, label, names),
-          )}
-        />
-        <StatGroup
-          label="Health"
-          tone="health"
-          values={[
-            statTile(evaluation, "Max HP", "Hit Points"),
-            bloodiedTile(evaluation),
-            statTile(evaluation, "Surges", "Healing Surges"),
-            surgeValueTile(evaluation),
-          ]}
-        />
+    <section aria-label="Key statistics" className="builder-character-stats">
+      <StatGroup
+        label="Ability scores"
+        tone="abilities"
+        className="builder-character-abilities"
+        compact
+        values={abilities.map(([label, name]) =>
+          abilityTile(evaluation, label, name),
+        )}
+      />
+      <StatGroup
+        label="Defenses"
+        tone="defenses"
+        values={defenses.map(([label, names]) =>
+          statTile(evaluation, label, names),
+        )}
+      />
+      <StatGroup
+        label="Health"
+        tone="health"
+        values={[
+          statTile(evaluation, "Max HP", "Hit Points"),
+          bloodiedTile(evaluation),
+          statTile(evaluation, "Surges", "Healing Surges"),
+          surgeValueTile(evaluation),
+        ]}
+      />
+      <div className="builder-character-stat-row">
         <StatGroup
           label="Initiative"
           tone="movement"
-          values={[statTile(evaluation, "Initiative", "Initiative", true)]}
+          values={[statTile(evaluation, "Init", "Initiative", true)]}
         />
         <StatGroup
           label="Speed"
@@ -267,13 +314,12 @@ export function BuilderHeaderStats({
           values={[statTile(evaluation, "Speed", "Speed")]}
         />
         <StatGroup
-          label="Ability scores"
+          label="Passive senses"
           tone="abilities"
-          className="builder-header-abilities"
-          compact
-          values={abilities.map(([label, name]) =>
-            statTile(evaluation, label, name),
-          )}
+          values={[
+            statTile(evaluation, "Insight", "Passive Insight"),
+            statTile(evaluation, "Perception", "Passive Perception"),
+          ]}
         />
       </div>
     </section>
