@@ -31,6 +31,7 @@ describe("BuilderHeaderStats", () => {
         evaluation: {
           stats: {
             "Hit Points": stat("Hit Points", 71),
+            "Healing Surge Value": stat("Healing Surge Value", 2),
             Speed: stat("Speed", 5),
             Initiative: stat("Initiative", 2),
             AC: stat("AC", 25),
@@ -61,8 +62,11 @@ describe("BuilderHeaderStats", () => {
     expect(markup).toContain('<dt>Reflex</dt><dd title="Reflex 18">18</dd>');
     expect(markup).toContain('<dt>Will</dt><dd title="Will 21">21</dd>');
     expect(markup).toContain('<dt>INT</dt><dd title="INT 8">8</dd>');
-    expect(markup.match(/<dd title=/g)).toHaveLength(14);
+    expect(markup.match(/<dd title=/g)).toHaveLength(15);
     expect(markup).toContain('aria-label="Health"');
+    expect(markup).toContain(
+      '<dt>Surge HP</dt><dd title="Surge HP 19\nQuarter of max HP 17">19</dd>',
+    );
     expect(markup).toContain(
       '<dt>Bloodied</dt><dd title="Bloodied 35\nHalf of max HP 71">35</dd>',
     );

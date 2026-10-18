@@ -1,5 +1,6 @@
 import type { EquipmentState } from "./equipment";
 import { equipmentPredicate } from "./equipment";
+import { abilityModifier } from "./derived-values";
 
 export interface StatContribution {
   readonly id: string;
@@ -70,7 +71,7 @@ export class StatAccumulator {
     if (ability?.[2] !== undefined) {
       const score = this.#evaluate(ability[2], visiting).value;
       return typeof score === "number"
-        ? (ability[1] === "-" ? -1 : 1) * Math.floor((score - 10) / 2)
+        ? (ability[1] === "-" ? -1 : 1) * abilityModifier(score)
         : undefined;
     }
     const link = /^([+-])(.+)$/.exec(trimmed);

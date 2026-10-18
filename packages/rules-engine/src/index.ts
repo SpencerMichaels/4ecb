@@ -9,3 +9,4 @@ export * from "./prerequisites";
 export * from "./powers";
 export * from "./profile-migration";
 export * from "./stats";
+export * from "./derived-values";

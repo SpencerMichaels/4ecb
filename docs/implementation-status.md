@@ -1,5 +1,16 @@
 # Implementation status
 
+## Shared derived values (2026-10-17)
+
+Audit of numeric values shown in more than one place: totals read directly from
+evaluated stats (HP, surges, speed, initiative, defenses, abilities, skills,
+passives, attack variants) already had one source. Derived values now come only
+from `rules-engine/src/derived-values.ts`: healing surge value (fixes the builder
+header, which showed only the bonus, e.g. Ingi 1 instead of 17), bloodied (page
+1 no longer prefers a stored bloodied stat over half max HP, matching legacy),
+ability modifier and half level. Verification: 917 tests, typecheck and lint
+pass through Nix.
+
 ## Printed play-data cards (2026-10-17)
 
 The card pages now open with two "Play data" cards modeled on the legacy builder

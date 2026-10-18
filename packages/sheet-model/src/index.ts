@@ -15,8 +15,10 @@ import {
   type SpecificField,
 } from "@4ecb/content-domain";
 import {
+  abilityModifier,
   aggregateInventory,
   applyFieldOverlays,
+  halfLevel,
   type EvaluatedCharacter,
   type EvaluatedPower,
 } from "@4ecb/rules-engine";
@@ -692,7 +694,7 @@ function personalizePowerText(
   );
   return withAbilities.replace(
     HALF_LEVEL_PATTERN,
-    (match) => `${match} (${signed(Math.floor(level / 2))})`,
+    (match) => `${match} (${signed(halfLevel(level))})`,
   );
 }
 
@@ -1010,9 +1012,7 @@ function powerCard(
               );
               const score =
                 ability === undefined ? undefined : snapshot.abilities[ability];
-              return score === undefined
-                ? undefined
-                : Math.floor((score - 10) / 2);
+              return score === undefined ? undefined : abilityModifier(score);
             },
             score: (name) => {
               const found = Object.entries(snapshot.stats).find(

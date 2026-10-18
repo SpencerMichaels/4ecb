@@ -1,7 +1,14 @@
 import { isUserFacingSpecific, type ContentEntity } from "@4ecb/content-domain";
 import type { LegacyRuleElement } from "@4ecb/character-domain";
 import type { CharacterSheetModel, SheetValue } from "./index";
-import type { CharacterOccurrence, EvaluatedStat } from "@4ecb/rules-engine";
+import {
+  abilityModifier,
+  bloodiedValue,
+  halfLevel,
+  healingSurgeValue,
+  type CharacterOccurrence,
+  type EvaluatedStat,
+} from "@4ecb/rules-engine";
 import { defensiveStatTraits, type DefensiveTrait } from "./defensive-traits";
 import { equippedItemPropertyReminders } from "./item-reminders";
 import { overviewSenses } from "./senses";
@@ -509,14 +516,11 @@ export function withSheetOverview(
   const hp = number(stat("Hit Points"));
   const saves = stat("Saving Throws", "Saving Throw Bonus", "Saving Throw");
   const savesNumber = saves === undefined ? 0 : number(saves);
-  // The native stat is an additive bonus, not the displayed surge total
-  // (legacy PanelModelHitPoints.Update: HP / 4 + Healing Surge Value).
   const surgeBonus = stat("Healing Surge Value");
   const surgeNumber = surgeBonus === undefined ? 0 : number(surgeBonus);
-  const surgeValue =
-    hp === undefined || surgeNumber === undefined
-      ? "—"
-      : String(Math.floor(hp / 4) + surgeNumber);
+  const surgeTotal =
+    surgeNumber === undefined ? undefined : healingSurgeValue(hp, surgeNumber);
+  const surgeValue = surgeTotal === undefined ? "—" : String(surgeTotal);
   return {
     ...model,
     resources: [
@@ -540,13 +544,12 @@ export function withSheetOverview(
         const score = number(value);
         const mod =
           number(stat(`${label} modifier`)) ??
-          (score === undefined ? undefined : Math.floor((score - 10) / 2));
+          (score === undefined ? undefined : abilityModifier(score));
         return {
           name: label,
           score: value,
           modifier: mod === undefined ? "—" : signed(mod),
-          check:
-            mod === undefined ? "—" : signed(mod + Math.floor(input.level / 2)),
+          check: mod === undefined ? "—" : signed(mod + halfLevel(input.level)),
         };
       }),
       skills: model.skills.map(({ label, value }) => {
@@ -568,9 +571,9 @@ export function withSheetOverview(
         };
       }),
       saves: savesNumber === undefined ? (saves ?? "—") : signed(savesNumber),
-      bloodied:
-        stat("Bloodied Value", "Bloodied") ??
-        (hp === undefined ? "—" : String(Math.floor(hp / 2))),
+      bloodied: String(
+        bloodiedValue(hp) ?? stat("Bloodied Value", "Bloodied") ?? "—",
+      ),
       vision: overviewSenses(input.selections, input.content, input.stats),
       features: [...features, ...rulesReferences],
       inventory: input.inventory.filter((item) => item.quantity > 0),

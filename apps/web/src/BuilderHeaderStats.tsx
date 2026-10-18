@@ -1,7 +1,10 @@
-import type {
-  EvaluatedCharacter,
-  EvaluatedContribution,
-  EvaluatedStat,
+import {
+  bloodiedValue,
+  evaluatedHealingSurgeValue,
+  healingSurgeValue,
+  type EvaluatedCharacter,
+  type EvaluatedContribution,
+  type EvaluatedStat,
 } from "@4ecb/rules-engine";
 
 import { StatGroup, type StatTileValue } from "./StatTiles";
@@ -193,10 +196,34 @@ function statTile(
     : { label, value };
 }
 
+function surgeValueTile(
+  evaluation: HeaderEvaluation | undefined,
+): StatTileValue {
+  const total =
+    evaluation === undefined
+      ? undefined
+      : evaluatedHealingSurgeValue(evaluation.stats);
+  const hitPoints = evaluatedStat(evaluation, "Hit Points")?.value;
+  if (total === undefined || typeof hitPoints !== "number")
+    return { label: "Surge HP", value: "—" };
+  const bonus = evaluatedStat(evaluation, "Healing Surge Value");
+  return {
+    label: "Surge HP",
+    value: String(total),
+    title: [
+      `Surge HP ${total}`,
+      `Quarter of max HP ${healingSurgeValue(hitPoints, 0)}`,
+      ...(bonus === undefined
+        ? []
+        : appliedContributions(bonus).map(contributionLine)),
+    ].join("\n"),
+  };
+}
+
 function bloodiedTile(evaluation: HeaderEvaluation | undefined): StatTileValue {
   const hitPoints = evaluatedStat(evaluation, "Hit Points")?.value;
   if (typeof hitPoints !== "number") return { label: "Bloodied", value: "—" };
-  const value = String(Math.floor(hitPoints / 2));
+  const value = String(bloodiedValue(hitPoints));
   return {
     label: "Bloodied",
     value,
@@ -226,7 +253,7 @@ export function BuilderHeaderStats({
             statTile(evaluation, "Max HP", "Hit Points"),
             bloodiedTile(evaluation),
             statTile(evaluation, "Surges", "Healing Surges"),
-            statTile(evaluation, "Surge HP", "Healing Surge Value"),
+            surgeValueTile(evaluation),
           ]}
         />
         <StatGroup

@@ -2,6 +2,7 @@ import { weaponPropertyText, type ContentEntity } from "@4ecb/content-domain";
 
 import type { CharacterInventoryEntry, FieldOverlay } from "./evaluator";
 import type { EvaluatedStat } from "./stats";
+import { halfLevel } from "./derived-values";
 
 export interface PowerComponent {
   readonly label: string;
@@ -1156,7 +1157,7 @@ export function evaluatePowers(input: {
             label: `${attackStat} modifier`,
             value: numericStat(input.stats, `${attackStat} modifier`),
           },
-          { label: "half your level", value: Math.floor(input.level / 2) },
+          { label: "half your level", value: halfLevel(input.level) },
         ];
         if (weaponPower && equipment.proficiency !== 0)
           attackComponents.push({
