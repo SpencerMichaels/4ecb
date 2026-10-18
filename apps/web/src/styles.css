@@ -2453,10 +2453,9 @@ textarea {
   padding-left: calc(0.02in + 0.8em);
   text-indent: -0.8em;
 }
-/* Attack columns are divided and lead with a bold to-hit bonus, so adjacent
+/* Every column is divided and attacks lead with a bold to-hit bonus, so adjacent
    expressions ("2d10+3 | +11 → 2d8+6") never read as one sum. */
-.print-card-variant-table td + td,
-.print-card-variant-table thead th + th + th {
+.print-card-variant-table :is(th, td) + :is(th, td) {
   border-left: 1px solid
     color-mix(in srgb, var(--card-color) 35%, var(--card-paper));
 }
