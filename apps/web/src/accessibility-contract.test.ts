@@ -939,7 +939,7 @@ describe("release accessibility contract", () => {
   it("navigates without an app header through per-page icon actions", () => {
     expect(app).not.toContain('className="app-header"');
     expect(styles).not.toContain(".app-header");
-    expect(characterLibrary).toContain("<h2>Characters</h2>");
+    expect(characterLibrary).toContain('<h1 className="app-brand">');
     expect(characterLibrary).toContain('href="#/settings"');
     expect(settingsPage).toContain('aria-label="Close settings"');
     expect(characterEditor).toContain('aria-label="Character sheet"');

@@ -16,7 +16,6 @@ import {
   exportEditedDnd4e,
   importDnd4e,
   projectBuildForLegacyExport,
-  type Dnd4eImportReport,
 } from "@4ecb/legacy-dnd4e";
 import { projectBuildForEvaluation } from "@4ecb/rules-engine";
 
@@ -59,9 +58,7 @@ export function CharacterLibraryPage({
     readonly CharacterLibraryEntry[]
   >([]);
   const [trash, setTrash] = useState<readonly CharacterLibraryEntry[]>([]);
-  const [status, setStatus] = useState("Loading character library…");
   const [error, setError] = useState<string>();
-  const [report, setReport] = useState<Dnd4eImportReport>();
   const [creatingCharacter, setCreatingCharacter] = useState(false);
   const [openExportId, setOpenExportId] = useState<string>();
   // A "Move to trash"/"Delete permanently" click arms the button (a second
@@ -74,11 +71,6 @@ export function CharacterLibraryPage({
     const { active, deleted } = await repository.listMetadataPartitioned();
     setCharacters(active);
     setTrash(deleted);
-    setStatus(
-      active.length === 0
-        ? "No characters imported."
-        : `${active.length} character${active.length === 1 ? "" : "s"} stored in this browser.`,
-    );
   }, []);
 
   useEffect(() => {
@@ -107,9 +99,7 @@ export function CharacterLibraryPage({
       },
     );
     await repository.put(character);
-    setReport(imported.report);
     await refresh();
-    setStatus(`Imported ${character.title}.`);
   }
 
   async function exportNativeCharacter(
@@ -122,7 +112,6 @@ export function CharacterLibraryPage({
       JSON.stringify(backup, null, 2),
       "application/json",
     );
-    setStatus(`Exported ${character.title} as a native .4ecb character.`);
   }
 
   async function exportCharacter(
@@ -166,11 +155,6 @@ export function CharacterLibraryPage({
           `Edited export re-import check failed: ${comparison.differences.join(" ")}`,
         );
       download(`${fileBase(character)}.dnd4e`, xml, "application/xml");
-      setStatus(
-        evaluation.complete
-          ? "Exported current edited state for Legacy Character Builder 0.07a; semantic re-import check passed."
-          : "Exported current incomplete edited state for Legacy Character Builder 0.07a; semantic re-import check passed.",
-      );
     } finally {
       client.terminate();
     }
@@ -202,7 +186,6 @@ export function CharacterLibraryPage({
             },
       );
       await repository.put(character);
-      setStatus(`Created ${character.title} at level 1.`);
       window.location.hash = `#/characters/${encodeURIComponent(character.id)}/edit`;
     } finally {
       setCreatingCharacter(false);
@@ -211,24 +194,20 @@ export function CharacterLibraryPage({
 
   return (
     <main className="characters-page" id="main-content">
-      <header className="page-heading">
-        <h2>Characters</h2>
+      <header className="page-heading library-heading">
+        <h1 className="app-brand">
+          <span className="app-brand-mark" aria-hidden="true">
+            4E
+          </span>
+          <span className="app-brand-name">Character Builder</span>
+          <span className="visually-hidden"> — Characters</span>
+        </h1>
         <div className="page-actions">
-          <a
-            aria-label="Settings"
-            className="icon-only-button button-icon"
-            href="#/settings"
-            title="Settings"
-          >
-            <Icon name="settings" />
-          </a>
-        </div>
-      </header>
-      <div className="library-toolbar">
-        <div className="heading-actions">
-          <label className="file-button">
-            Import .dnd4e
+          <label className="icon-only-button" title="Import .dnd4e character">
+            <Icon name="import" />
             <input
+              aria-label="Import .dnd4e character"
+              className="visually-hidden"
               type="file"
               accept=".dnd4e,application/xml,text/xml"
               onChange={(event) => {
@@ -244,7 +223,12 @@ export function CharacterLibraryPage({
             />
           </label>
           <button
+            aria-label={
+              creatingCharacter ? "Creating character…" : "New character"
+            }
+            className="icon-only-button button-icon"
             type="button"
+            title="New character"
             disabled={activePackId === undefined || creatingCharacter}
             onClick={() =>
               void createCharacter().catch((reason: unknown) =>
@@ -254,49 +238,24 @@ export function CharacterLibraryPage({
               )
             }
           >
-            {creatingCharacter ? "Creating…" : "New Character"}
+            <Icon name="new-character" />
           </button>
+          <span aria-hidden="true" className="builder-actions-divider" />
+          <a
+            aria-label="Settings"
+            className="icon-only-button button-icon"
+            href="#/settings"
+            title="Settings"
+          >
+            <Icon name="settings" />
+          </a>
         </div>
-      </div>
-      <p className="status" aria-live="polite">
-        {status}
-      </p>
+      </header>
       {error === undefined ? null : (
         <div className="error" role="alert">
           <strong>Problem</strong>
           <span>{error}</span>
         </div>
-      )}
-      {report === undefined ? null : (
-        <section className="import-report" aria-label="Latest import report">
-          <h3>Import report</h3>
-          <dl className="report-facts">
-            <div>
-              <dt>Levels</dt>
-              <dd>{report.levelCount}</dd>
-            </div>
-            <div>
-              <dt>Selections</dt>
-              <dd>{report.selectedRuleCount}</dd>
-            </div>
-            <div>
-              <dt>Powers</dt>
-              <dd>{report.powerCount}</dd>
-            </div>
-            <div>
-              <dt>Inventory</dt>
-              <dd>{report.lootCount}</dd>
-            </div>
-          </dl>
-          {report.diagnostics.map((diagnostic) => (
-            <p
-              key={diagnostic.code}
-              className={`diagnostic ${diagnostic.severity}`}
-            >
-              <strong>{diagnostic.severity}:</strong> {diagnostic.message}
-            </p>
-          ))}
-        </section>
       )}
       {characters.length === 0 ? (
         <div className="empty-state">

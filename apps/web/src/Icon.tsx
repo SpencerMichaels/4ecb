@@ -31,6 +31,7 @@ import {
   Download,
   Eye,
   FileText,
+  FileUp,
   HandFist,
   Heart,
   HeartPlus,
@@ -87,6 +88,7 @@ import {
   TriangleAlert,
   Undo2,
   UserRound,
+  UserRoundPlus,
   UsersRound,
   WandSparkles,
   Waves,
@@ -158,6 +160,7 @@ export type IconName =
   | "handbag"
   | "hard-hat"
   | "house"
+  | "import"
   | "item"
   | "key"
   | "key-round"
@@ -165,6 +168,7 @@ export type IconName =
   | "level"
   | "lock"
   | "medal"
+  | "new-character"
   | "orbit"
   | "package-open"
   | "paw-print"
@@ -261,6 +265,7 @@ const icons: Record<IconName, LucideIcon> = {
   handbag: Handbag,
   "hard-hat": HardHat,
   house: House,
+  import: FileUp,
   item: Backpack,
   key: Key,
   "key-round": KeyRound,
@@ -268,6 +273,7 @@ const icons: Record<IconName, LucideIcon> = {
   level: ChevronsUp,
   lock: Lock,
   medal: Medal,
+  "new-character": UserRoundPlus,
   orbit: Orbit,
   "package-open": PackageOpen,
   "paw-print": PawPrint,
