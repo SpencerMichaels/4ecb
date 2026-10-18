@@ -2479,6 +2479,12 @@ textarea {
   padding: 0.025in 0 0;
   text-transform: none;
 }
+.print-power-card .print-card-body > .print-card-spacer {
+  flex: 1 0 var(--print-card-section-gap);
+}
+.print-card-spacer + .print-card-additional.has-effects {
+  margin-top: 0;
+}
 .print-card-additional.has-effects > strong {
   display: block;
   font-size: max(4.7pt, 0.7em);

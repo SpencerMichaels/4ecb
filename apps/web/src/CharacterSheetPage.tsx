@@ -585,6 +585,12 @@ function PrintPowerCard({
           variants={printVariants}
           attackOrdinals={attacks.map((attack) => attack.ordinal)}
         />
+        {(card.additionalEffects ?? []).length === 0 ||
+        printVariants.length > 0 ? null : (
+          // Without a weapon table (which sits at the bottom), keep additional
+          // effects at the bottom of the card like every other card.
+          <div className="print-card-spacer" aria-hidden="true" />
+        )}
         {(card.additionalEffects ?? []).length === 0 ? null : (
           <section className="print-card-additional has-effects">
             <strong>Additional effects</strong>
