@@ -163,3 +163,11 @@ describe("builder tab bar rule and level heading", () => {
     );
   });
 });
+
+describe("selection table names", () => {
+  it("underline only the hovered name's text, not the whole cell", () => {
+    expect(styles).toMatch(
+      /\.selection-table-scroll td button:hover:not\(:disabled\),\s*\.selection-table-scroll td button:focus-visible\s*\{[^}]*box-shadow: none;[^}]*text-decoration: underline;/,
+    );
+  });
+});

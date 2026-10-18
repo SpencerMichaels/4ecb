@@ -4907,8 +4907,11 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   text-align: left;
 }
 
+/* Hovered names underline their text only; the app-wide button hover
+   underline (an inset shadow across the cell) is cancelled here. */
 .selection-table-scroll td button:hover:not(:disabled),
 .selection-table-scroll td button:focus-visible {
+  box-shadow: none;
   color: var(--accent-strong);
   text-decoration: underline;
 }
