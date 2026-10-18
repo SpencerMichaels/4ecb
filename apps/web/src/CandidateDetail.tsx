@@ -8,29 +8,26 @@ import {
   grantedDetailEntities,
   themePowerGroups,
 } from "./builder-ui";
+import { BuilderItemCard, BuilderPowerCard } from "./BuilderCards";
 import { candidateReferenceIndex } from "./CandidateSelectionTable";
 import {
-  EmbeddedPowerCard,
   EntityCardBody,
   EntityCardHeader,
+  entityCardSource,
+  isItemEntity,
 } from "./EntityCard";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { ProseBlocks, proseBlocks } from "./Prose";
-import type { PowerCardPresentation } from "./PowerCardPresentation";
 import { entityVisualTone, visualToneClass } from "./visual-language";
 
 export function CandidateDetail({
   candidate,
   entity,
   byId,
-  powerPresentationFor,
 }: {
   readonly candidate: CandidateDecision | undefined;
   readonly entity: ContentEntity | undefined;
   readonly byId: ReadonlyMap<string, ContentEntity>;
-  readonly powerPresentationFor?:
-    | ((definitionId: string, name?: string) => PowerCardPresentation)
-    | undefined;
 }) {
   if (candidate === undefined || entity === undefined)
     return (
@@ -54,16 +51,11 @@ export function CandidateDetail({
   );
   return (
     <div className="candidate-detail-stack">
-      <CandidateDetailCard
-        candidate={candidate}
-        entity={entity}
-        powerPresentation={powerPresentationFor?.(entity.id, entity.name)}
-      />
+      <CandidateDetailCard candidate={candidate} entity={entity} />
       {grantedEntities.map((granted) => (
         <CandidateDetailCard
           key={granted.id}
           entity={granted}
-          powerPresentation={powerPresentationFor?.(granted.id, granted.name)}
           relationship={`Granted ${granted.type.toLocaleLowerCase()}`}
         />
       ))}
@@ -77,8 +69,11 @@ export function CandidateDetail({
               <CandidateDetailCard
                 entity={power}
                 key={power.id}
-                powerPresentation={powerPresentationFor?.(power.id, power.name)}
-                themePowerLevel={group.level ?? null}
+                relationship={
+                  group.level === undefined
+                    ? "Theme power"
+                    : `Theme power · Level ${group.level}`
+                }
               />
             )),
           )}
@@ -126,39 +121,65 @@ export function CandidateDetailCard({
   candidate,
   entity,
   relationship,
-  themePowerLevel,
-  powerPresentation,
 }: {
   readonly candidate?: CandidateDecision;
   readonly entity: ContentEntity;
   readonly relationship?: string;
-  readonly themePowerLevel?: number | null;
-  readonly powerPresentation?: PowerCardPresentation | undefined;
 }) {
   const hideFlavortext = useContext(HideFlavortextContext);
-  const headingId = `candidate-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}${relationship === undefined ? "" : "-granted"}`;
+  const headingSuffix = relationship === undefined ? "" : "-granted";
+  const headingId = `candidate-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}${headingSuffix}`;
   const isThemeCandidate =
     candidate !== undefined &&
     entity.type.trim().toLocaleLowerCase() === "theme";
   const entityTone = entityVisualTone(entity);
   const tone = visualToneClass(entityTone);
   const isPower = entity.type.trim().toLocaleLowerCase() === "power";
-  const isEmbeddedPower =
-    isPower && (relationship !== undefined || themePowerLevel !== undefined);
   const isUnavailable = candidate !== undefined && !candidate.eligible;
-  if (isEmbeddedPower)
+  const subheading =
+    relationship === undefined && !isUnavailable ? undefined : (
+      <>
+        {relationship === undefined ? null : (
+          <p className="candidate-relationship">{relationship}</p>
+        )}
+        {isUnavailable ? (
+          <>
+            <span className="candidate-unavailable">Unavailable</span>
+            <p className="candidate-reason">
+              {candidateReason(candidate.reasons)}
+            </p>
+          </>
+        ) : null}
+      </>
+    );
+  if (isPower || isItemEntity(entity))
     return (
-      <EmbeddedPowerCard
-        entity={entity}
-        hideFlavortext={hideFlavortext}
-        powerPresentation={powerPresentation}
-      />
+      <div className="candidate-card-panel">
+        {isPower ? (
+          <BuilderPowerCard
+            entity={entity}
+            headingSuffix={headingSuffix}
+            subheading={subheading}
+          />
+        ) : (
+          <BuilderItemCard
+            name={entity.name}
+            entities={[entity]}
+            headingSuffix={headingSuffix}
+            subheading={subheading}
+          />
+        )}
+        {relationship === undefined ? (
+          <p className="detail-source-note">
+            Source: {entityCardSource(entity)}
+          </p>
+        ) : null}
+      </div>
     );
   const body = (
     <EntityCardBody
       entity={entity}
       hideFlavortext={hideFlavortext}
-      powerPresentation={powerPresentation}
       beforeNarrative={
         candidate === undefined || candidate.eligible ? null : (
           <p className="candidate-reason">
@@ -184,7 +205,7 @@ export function CandidateDetailCard({
   return (
     <aside
       aria-labelledby={headingId}
-      className={`candidate-detail ${tone}${isPower ? " top-level-power-card" : ""}`}
+      className={`candidate-detail ${tone}`}
       tabIndex={0}
     >
       <header className="primary-detail-heading entity-card-header">

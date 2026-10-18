@@ -1,11 +1,4 @@
-import {
-  Fragment,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   CharacterRepository,
@@ -39,6 +32,7 @@ import {
   type CharacterRecord,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
+import { createSheetPowerCardFinder } from "@4ecb/sheet-model";
 import { projectBuildForLegacyExport } from "@4ecb/legacy-dnd4e";
 import {
   ABILITY_SCORE_NAMES,
@@ -113,14 +107,14 @@ import {
   CharacterDetailsEditor,
   CharacterTextField,
 } from "./CharacterDetailsEditor";
-import { HideFlavortextContext } from "./HideFlavortextContext";
 import { EquipmentWorkspace } from "./EquipmentWorkspace";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
 import { PortraitEditor } from "./PortraitEditor";
 import {
-  createBuildPowerCardPresentationFinder,
-  createPowerCardPresentationFinder,
-} from "./PowerCardPresentation";
+  authoredBuilderCardSettings,
+  BuilderCardContext,
+  type BuilderCardSettings,
+} from "./BuilderCards";
 import type {
   BuilderNavigation,
   BuilderSectionSlug,
@@ -128,7 +122,6 @@ import type {
 } from "./routes";
 
 const characters = new CharacterRepository();
-const buildPowerPresentationFor = createBuildPowerCardPresentationFinder();
 type LevelChoiceTab = LegacyChoiceSection | "Retraining";
 type CharacterTierId = "heroic" | "paragon" | "epic";
 const CHARACTER_TIERS: readonly {
@@ -248,7 +241,6 @@ export function CharacterEditorPage({
   readonly activeManifest?: ContentPackManifest;
   readonly activeProfile?: ContentProfileDefinition;
 }) {
-  const hideFlavortext = useContext(HideFlavortextContext);
   const [reloadKey, setReloadKey] = useState(0);
   const [reviewingContentUpdate, setReviewingContentUpdate] = useState(false);
   const [character, setCharacter] = useState<CharacterRecord>();
@@ -485,7 +477,7 @@ export function CharacterEditorPage({
       }),
     };
   }, [build, currentEvaluation, entities]);
-  const currentPowerPresentationFor = useMemo(() => {
+  const equipmentCardSettings = useMemo((): BuilderCardSettings | undefined => {
     if (
       build === undefined ||
       currentEvaluation === undefined ||
@@ -497,50 +489,49 @@ export function CharacterEditorPage({
       entities,
     );
     const evaluationEntities = [...entities, ...(input.localEntities ?? [])];
-    const evaluationEntitiesById = new Map(
-      evaluationEntities.map((entity) => [
-        entity.id.toLocaleLowerCase(),
-        entity,
-      ]),
-    );
-    return createPowerCardPresentationFinder(
+    const cardFor = createSheetPowerCardFinder(
       currentEvaluationWithPowers,
       entities,
-      {
-        resolveAbilityChoices,
-        abbreviateAbilityValues,
-        expandWeaponDice,
-      },
-      (definitionId, name) => {
-        if (
-          evaluationEntitiesById
-            .get(definitionId.toLocaleLowerCase())
-            ?.type.trim()
-            .toLocaleLowerCase() !== "power"
-        )
-          return undefined;
-        return evaluatePowers({
-          level: currentEvaluation.level,
-          activeDefinitionIds: [
-            ...currentEvaluation.activeDefinitionIds,
-            definitionId,
-          ],
-          inventory: input.inventory,
-          stats: currentEvaluation.stats,
-          overlays: currentEvaluation.overlays,
-          ...(input.textStrings === undefined
-            ? {}
-            : { textStrings: input.textStrings }),
-          entities: evaluationEntities,
-        }).find(
-          (power) =>
-            power.definitionId.toLocaleLowerCase() ===
-              definitionId.toLocaleLowerCase() ||
-            (name !== undefined &&
-              power.name.toLocaleLowerCase() === name.toLocaleLowerCase()),
-        );
-      },
+      { resolveAbilityChoices },
     );
+    const owned = new Map(
+      currentEvaluationWithPowers.powers.map((power) => [
+        power.definitionId.toLocaleLowerCase(),
+        power,
+      ]),
+    );
+    // A power the character does not own (e.g. granted by an item in the
+    // Shop) is evaluated as though it were active, like the sheet would.
+    const hypotheticalPower = (entity: ContentEntity) =>
+      evaluatePowers({
+        level: currentEvaluation.level,
+        activeDefinitionIds: [
+          ...currentEvaluation.activeDefinitionIds,
+          entity.id,
+        ],
+        inventory: input.inventory,
+        stats: currentEvaluation.stats,
+        overlays: currentEvaluation.overlays,
+        ...(input.textStrings === undefined
+          ? {}
+          : { textStrings: input.textStrings }),
+        entities: evaluationEntities,
+      }).find(
+        (power) =>
+          power.definitionId.toLocaleLowerCase() ===
+          entity.id.toLocaleLowerCase(),
+      );
+    return {
+      powerCardFor: (entity) =>
+        cardFor(
+          entity,
+          owned.get(entity.id.toLocaleLowerCase()) ?? hypotheticalPower(entity),
+        ),
+      characterLevel: currentEvaluation.level,
+      showEquippedAttackBonus: true,
+      abbreviateAbilityValues,
+      expandWeaponDice,
+    };
   }, [
     abbreviateAbilityValues,
     build,
@@ -550,6 +541,10 @@ export function CharacterEditorPage({
     expandWeaponDice,
     resolveAbilityChoices,
   ]);
+  const buildCardSettings = useMemo(
+    () => authoredBuilderCardSettings(selectedLevel),
+    [selectedLevel],
+  );
   const carriedWallet =
     build === undefined
       ? undefined
@@ -1587,899 +1582,919 @@ export function CharacterEditorPage({
   ];
 
   return (
-    <main
-      aria-busy={saving}
-      className="editor-page modern-builder"
-      id="main-content"
-    >
-      <header className="builder-heading">
-        <div className="builder-character-heading">
-          <PortraitEditor
-            compact
-            name={character.title}
-            portrait={character.portrait}
-            onSave={async (portrait) => {
-              setCharacter(
-                await characters.updateMetadata(characterId, { portrait }),
-              );
+    <BuilderCardContext.Provider value={buildCardSettings}>
+      <main
+        aria-busy={saving}
+        className="editor-page modern-builder"
+        id="main-content"
+      >
+        <header className="builder-heading">
+          <div className="builder-character-heading">
+            <PortraitEditor
+              compact
+              name={character.title}
+              portrait={character.portrait}
+              onSave={async (portrait) => {
+                setCharacter(
+                  await characters.updateMetadata(characterId, { portrait }),
+                );
+              }}
+            />
+            <div>
+              <h2 className="builder-character-name-heading">
+                <CharacterTextField
+                  className="builder-character-name"
+                  label="Character name"
+                  name="Name"
+                  value={build.textStrings.Name || character.title}
+                  visuallyHideLabel
+                  onDispatch={dispatch}
+                />
+              </h2>
+              <p className="builder-character-facts">
+                {characterHeaderSubtitle(
+                  race,
+                  selectedClass?.name || character.snapshot.details.Class,
+                  build.effectiveLevel,
+                )}
+              </p>
+            </div>
+          </div>
+          <BuilderHeaderStats evaluation={currentEvaluation} />
+        </header>
+
+        {character !== undefined &&
+        needsContentUpdate(character.profileBinding, activeManifest) ? (
+          <div className="profile-warning panel-warning content-update-banner">
+            <Icon name="warning" />
+            <span>
+              <strong>Your game content has been updated.</strong>{" "}
+              {character.title || "This character"} still uses the older
+              version.
+            </span>
+            <button
+              type="button"
+              onClick={() => setReviewingContentUpdate(true)}
+            >
+              Review the update
+            </button>
+          </div>
+        ) : null}
+        {reviewingContentUpdate &&
+        character !== undefined &&
+        activeManifest !== undefined ? (
+          <ContentUpdateDialog
+            character={character}
+            target={activeManifest}
+            activeProfile={activeProfile}
+            onClose={() => setReviewingContentUpdate(false)}
+            onUpdated={() => {
+              setReviewingContentUpdate(false);
+              setReloadKey((key) => key + 1);
             }}
           />
-          <div>
-            <h2 className="builder-character-name-heading">
-              <CharacterTextField
-                className="builder-character-name"
-                label="Character name"
-                name="Name"
-                value={build.textStrings.Name || character.title}
-                visuallyHideLabel
-                onDispatch={dispatch}
-              />
-            </h2>
-            <p className="builder-character-facts">
-              {characterHeaderSubtitle(
-                race,
-                selectedClass?.name || character.snapshot.details.Class,
-                build.effectiveLevel,
-              )}
-            </p>
+        ) : null}
+
+        {shouldShowBoundProfileWarning(boundProfileResolution) ? (
+          <div className="profile-warning panel-warning">
+            <Icon name="warning" /> Install or restore this character&apos;s
+            bound content profile to evaluate choices. Its authoritative history
+            remains editable.
           </div>
-        </div>
-        <BuilderHeaderStats evaluation={currentEvaluation} />
-      </header>
+        ) : null}
 
-      {character !== undefined &&
-      needsContentUpdate(character.profileBinding, activeManifest) ? (
-        <div className="profile-warning panel-warning content-update-banner">
-          <Icon name="warning" />
-          <span>
-            <strong>Your game content has been updated.</strong>{" "}
-            {character.title || "This character"} still uses the older version.
-          </span>
-          <button type="button" onClick={() => setReviewingContentUpdate(true)}>
-            Review the update
-          </button>
-        </div>
-      ) : null}
-      {reviewingContentUpdate &&
-      character !== undefined &&
-      activeManifest !== undefined ? (
-        <ContentUpdateDialog
-          character={character}
-          target={activeManifest}
-          activeProfile={activeProfile}
-          onClose={() => setReviewingContentUpdate(false)}
-          onUpdated={() => {
-            setReviewingContentUpdate(false);
-            setReloadKey((key) => key + 1);
-          }}
-        />
-      ) : null}
+        {evaluationStatus.startsWith("Rules evaluation failed") ? (
+          <div className="error" role="alert">
+            {evaluationStatus}
+          </div>
+        ) : null}
 
-      {shouldShowBoundProfileWarning(boundProfileResolution) ? (
-        <div className="profile-warning panel-warning">
-          <Icon name="warning" /> Install or restore this character&apos;s bound
-          content profile to evaluate choices. Its authoritative history remains
-          editable.
-        </div>
-      ) : null}
-
-      {evaluationStatus.startsWith("Rules evaluation failed") ? (
-        <div className="error" role="alert">
-          {evaluationStatus}
-        </div>
-      ) : null}
-
-      <div className="builder-tabs-bar">
-        <div
-          aria-label="Character editor sections"
-          className="builder-tabs"
-          role="tablist"
-        >
-          <button
-            aria-selected={workspaceTab === "build"}
-            role="tab"
-            type="button"
-            onClick={() =>
-              onNavigate(characterId, {
-                workspace: "build",
-                level: selectedLevel,
-                ...(activeLevelSection === undefined
-                  ? {}
-                  : { section: levelChoiceTabSlug(activeLevelSection) }),
-              })
-            }
+        <div className="builder-tabs-bar">
+          <div
+            aria-label="Character editor sections"
+            className="builder-tabs"
+            role="tablist"
           >
-            <Icon name="level" /> Build
-          </button>
-          <button
-            aria-selected={workspaceTab === "overview"}
-            role="tab"
-            type="button"
-            onClick={() => onNavigate(characterId, { workspace: "overview" })}
-          >
-            <Icon name="book" /> Overview
-          </button>
-          <button
-            aria-selected={workspaceTab === "details"}
-            role="tab"
-            type="button"
-            onClick={() => onNavigate(characterId, { workspace: "details" })}
-          >
-            <Icon name="details" /> Character details
-            {unresolvedCharacterDetailChoices.length > 0 ? (
+            <button
+              aria-selected={workspaceTab === "build"}
+              role="tab"
+              type="button"
+              onClick={() =>
+                onNavigate(characterId, {
+                  workspace: "build",
+                  level: selectedLevel,
+                  ...(activeLevelSection === undefined
+                    ? {}
+                    : { section: levelChoiceTabSlug(activeLevelSection) }),
+                })
+              }
+            >
+              <Icon name="level" /> Build
+            </button>
+            <button
+              aria-selected={workspaceTab === "overview"}
+              role="tab"
+              type="button"
+              onClick={() => onNavigate(characterId, { workspace: "overview" })}
+            >
+              <Icon name="book" /> Overview
+            </button>
+            <button
+              aria-selected={workspaceTab === "details"}
+              role="tab"
+              type="button"
+              onClick={() => onNavigate(characterId, { workspace: "details" })}
+            >
+              <Icon name="details" /> Character details
+              {unresolvedCharacterDetailChoices.length > 0 ? (
+                <span
+                  aria-label="Character details has unresolved required choices"
+                  className="tab-attention"
+                  title="Character details has unresolved required choices"
+                >
+                  <Icon name="circle-help" />
+                </span>
+              ) : null}
+            </button>
+            <button
+              aria-selected={workspaceTab === "equipment"}
+              role="tab"
+              type="button"
+              onClick={() =>
+                onNavigate(characterId, {
+                  workspace: "equipment",
+                })
+              }
+            >
+              <Icon name="item" /> Equipment
+            </button>
+            <button
+              aria-selected={workspaceTab === "shop"}
+              role="tab"
+              type="button"
+              onClick={() => onNavigate(characterId, { workspace: "shop" })}
+            >
+              <Icon name="shopping-cart" /> Shop
+            </button>
+            <a
+              aria-selected="false"
+              className="builder-tab"
+              href={`#/characters/${encodeURIComponent(characterId)}?preview=1`}
+              role="tab"
+            >
+              <Icon name="sheet" /> Character sheet
+            </a>
+            <button
+              aria-selected={workspaceTab === "diagnostics"}
+              role="tab"
+              type="button"
+              onClick={() =>
+                onNavigate(characterId, { workspace: "diagnostics" })
+              }
+            >
+              <Icon name="warning" /> Diagnostics
+            </button>
+          </div>
+          <div aria-label="Builder status" className="builder-status">
+            {totalUnresolved > 0 ? (
               <span
-                aria-label="Character details has unresolved required choices"
-                className="tab-attention"
-                title="Character details has unresolved required choices"
+                aria-label={`${totalUnresolved} unresolved ${totalUnresolved === 1 ? "choice" : "choices"}`}
+                className="builder-health builder-health-attention"
+                title={`${totalUnresolved} unresolved ${totalUnresolved === 1 ? "choice" : "choices"}`}
               >
                 <Icon name="circle-help" />
+                <span aria-hidden="true">{totalUnresolved}</span>
               </span>
             ) : null}
-          </button>
-          <button
-            aria-selected={workspaceTab === "equipment"}
-            role="tab"
-            type="button"
-            onClick={() =>
-              onNavigate(characterId, {
-                workspace: "equipment",
-              })
-            }
-          >
-            <Icon name="item" /> Equipment
-          </button>
-          <button
-            aria-selected={workspaceTab === "shop"}
-            role="tab"
-            type="button"
-            onClick={() => onNavigate(characterId, { workspace: "shop" })}
-          >
-            <Icon name="shopping-cart" /> Shop
-          </button>
-          <a
-            aria-selected="false"
-            className="builder-tab"
-            href={`#/characters/${encodeURIComponent(characterId)}?preview=1`}
-            role="tab"
-          >
-            <Icon name="sheet" /> Character sheet
-          </a>
-          <button
-            aria-selected={workspaceTab === "diagnostics"}
-            role="tab"
-            type="button"
-            onClick={() =>
-              onNavigate(characterId, { workspace: "diagnostics" })
-            }
-          >
-            <Icon name="warning" /> Diagnostics
-          </button>
+            {warningCount > 0 ? (
+              <span
+                aria-label={`${warningCount} ${warningCount === 1 ? "warning" : "warnings"}`}
+                className="builder-health builder-health-warning"
+                title={`${warningCount} ${warningCount === 1 ? "warning" : "warnings"}`}
+              >
+                <Icon name="warning" />
+                <span aria-hidden="true">{warningCount}</span>
+              </span>
+            ) : null}
+            {errorCount > 0 ? (
+              <span
+                aria-label={`${errorCount} ${errorCount === 1 ? "error" : "errors"}`}
+                className="builder-health builder-health-error"
+                title={`${errorCount} ${errorCount === 1 ? "evaluation error" : "evaluation errors"}`}
+              >
+                <Icon name="circle-x" />
+                <span aria-hidden="true">{errorCount}</span>
+              </span>
+            ) : null}
+            {houseRuleCount > 0 ? (
+              <span
+                aria-label={`${houseRuleCount} ${houseRuleCount === 1 ? "house rule" : "house rules"}`}
+                className="builder-health builder-health-house-rule"
+                title={`${houseRuleCount} ${houseRuleCount === 1 ? "house rule" : "house rules"}`}
+              >
+                <Icon name="house" />
+                <span aria-hidden="true">{houseRuleCount}</span>
+              </span>
+            ) : null}
+            <span
+              aria-live={saveState.phase === "failed" ? "assertive" : "polite"}
+              className={`save-status save-${saveState.phase}`}
+              role={saveState.phase === "failed" ? "alert" : "status"}
+              title={saveState.message}
+            >
+              <Icon name={saveStateIconName(saveState.phase)} />
+              <span className="visually-hidden">{saveState.message}</span>
+            </span>
+            <button
+              aria-label="Undo"
+              className="icon-only-button button-icon"
+              type="button"
+              disabled={!transaction.current?.canUndo}
+              title="Undo"
+              onClick={undo}
+            >
+              <Icon name="undo" />
+            </button>
+            <button
+              aria-label="Redo"
+              className="icon-only-button button-icon"
+              type="button"
+              disabled={!transaction.current?.canRedo}
+              title="Redo"
+              onClick={redo}
+            >
+              <Icon name="redo" />
+            </button>
+          </div>
         </div>
-        <div aria-label="Builder status" className="builder-status">
-          {totalUnresolved > 0 ? (
-            <span
-              aria-label={`${totalUnresolved} unresolved ${totalUnresolved === 1 ? "choice" : "choices"}`}
-              className="builder-health builder-health-attention"
-              title={`${totalUnresolved} unresolved ${totalUnresolved === 1 ? "choice" : "choices"}`}
-            >
-              <Icon name="circle-help" />
-              <span aria-hidden="true">{totalUnresolved}</span>
-            </span>
-          ) : null}
-          {warningCount > 0 ? (
-            <span
-              aria-label={`${warningCount} ${warningCount === 1 ? "warning" : "warnings"}`}
-              className="builder-health builder-health-warning"
-              title={`${warningCount} ${warningCount === 1 ? "warning" : "warnings"}`}
-            >
-              <Icon name="warning" />
-              <span aria-hidden="true">{warningCount}</span>
-            </span>
-          ) : null}
-          {errorCount > 0 ? (
-            <span
-              aria-label={`${errorCount} ${errorCount === 1 ? "error" : "errors"}`}
-              className="builder-health builder-health-error"
-              title={`${errorCount} ${errorCount === 1 ? "evaluation error" : "evaluation errors"}`}
-            >
-              <Icon name="circle-x" />
-              <span aria-hidden="true">{errorCount}</span>
-            </span>
-          ) : null}
-          {houseRuleCount > 0 ? (
-            <span
-              aria-label={`${houseRuleCount} ${houseRuleCount === 1 ? "house rule" : "house rules"}`}
-              className="builder-health builder-health-house-rule"
-              title={`${houseRuleCount} ${houseRuleCount === 1 ? "house rule" : "house rules"}`}
-            >
-              <Icon name="house" />
-              <span aria-hidden="true">{houseRuleCount}</span>
-            </span>
-          ) : null}
-          <span
-            aria-live={saveState.phase === "failed" ? "assertive" : "polite"}
-            className={`save-status save-${saveState.phase}`}
-            role={saveState.phase === "failed" ? "alert" : "status"}
-            title={saveState.message}
-          >
-            <Icon name={saveStateIconName(saveState.phase)} />
-            <span className="visually-hidden">{saveState.message}</span>
-          </span>
-          <button
-            aria-label="Undo"
-            className="icon-only-button button-icon"
-            type="button"
-            disabled={!transaction.current?.canUndo}
-            title="Undo"
-            onClick={undo}
-          >
-            <Icon name="undo" />
-          </button>
-          <button
-            aria-label="Redo"
-            className="icon-only-button button-icon"
-            type="button"
-            disabled={!transaction.current?.canRedo}
-            title="Redo"
-            onClick={redo}
-          >
-            <Icon name="redo" />
-          </button>
-        </div>
-      </div>
 
-      <div
-        className="builder-workspace"
-        hidden={workspaceTab !== "build" && workspaceTab !== "overview"}
-      >
-        <nav
-          aria-label="Level plan"
-          className="level-rail"
-          hidden={workspaceTab !== "build"}
+        <div
+          className="builder-workspace"
+          hidden={workspaceTab !== "build" && workspaceTab !== "overview"}
         >
-          <ol className="level-tier-list">
-            {CHARACTER_TIERS.map((tier) => {
-              const expanded = expandedTiers.has(tier.id);
-              return (
-                <li className="level-tier" key={tier.id}>
-                  <button
-                    aria-expanded={expanded}
-                    className="level-tier-toggle"
-                    type="button"
-                    onClick={() =>
-                      setExpandedTiers((current) => {
-                        const next = new Set(current);
-                        if (next.has(tier.id)) next.delete(tier.id);
-                        else next.add(tier.id);
-                        return next;
-                      })
-                    }
-                  >
-                    <Icon name="chevron" />
-                    <span>{tier.label}</span>
-                  </button>
-                  {expanded ? (
-                    <ol>
-                      {Array.from(
-                        { length: tier.lastLevel - tier.firstLevel + 1 },
-                        (_, index) => tier.firstLevel + index,
-                      ).map((level) => {
-                        const choices = choicesAtLevel(
-                          level,
-                          planningEvaluation,
-                        );
-                        const timelineChoices = choices.filter(
-                          (choice) =>
-                            !isOptionalRetrainingChoice(choice) &&
-                            (!isCharacterDetailChoice(choice) ||
-                              isRequiredClassDeityChoice(choice)) &&
-                            !isBuildPresetChoice(choice),
-                        );
-                        const progress = levelChoiceProgress(timelineChoices);
-                        const unresolved =
-                          timelineChoices.filter(isUnresolvedChoice).length +
-                          (level === 1 && abilityScoresIncomplete ? 1 : 0);
-                        const warnings =
-                          timelineChoices.filter((choice) =>
-                            selectedChoiceHasWarning(
-                              choice,
-                              planningEvaluation!,
-                            ),
-                          ).length +
-                          (level === 1 && abilityScoresHouseRuled ? 1 : 0);
-                        const choiceStatus = levelRailChoiceStatus(
-                          timelineChoices,
-                          level <= build.effectiveLevel,
-                          level === 1 && abilityScoresIncomplete ? 1 : 0,
-                        );
-                        const status =
-                          choiceStatus === "complete" && warnings > 0
-                            ? "warning"
-                            : choiceStatus;
-                        const statusLabel =
-                          status === "future"
-                            ? "no choices made"
-                            : status === "planned-complete"
-                              ? `all ${progress.required} choices complete`
-                              : status === "planned-partial"
-                                ? `${progress.completed} of ${progress.required} choices complete`
-                                : status === "incomplete"
-                                  ? `${unresolved} unresolved`
-                                  : status === "warning"
-                                    ? `${warnings} warnings`
-                                    : "complete";
-                        return (
-                          <li key={level}>
-                            <button
-                              aria-current={
-                                level === selectedLevel ? "step" : undefined
-                              }
-                              aria-label={`Level ${level}, ${statusLabel}`}
-                              title={`Level ${level}: ${statusLabel}`}
-                              className={`level-rail-button level-rail-${status}`}
-                              disabled={entities.length === 0}
-                              type="button"
-                              onClick={() => selectLevel(level)}
-                            >
-                              <span>{level}</span>
-                              <span
-                                aria-hidden="true"
-                                className="level-rail-status"
-                              />
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ol>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ol>
-        </nav>
+          <nav
+            aria-label="Level plan"
+            className="level-rail"
+            hidden={workspaceTab !== "build"}
+          >
+            <ol className="level-tier-list">
+              {CHARACTER_TIERS.map((tier) => {
+                const expanded = expandedTiers.has(tier.id);
+                return (
+                  <li className="level-tier" key={tier.id}>
+                    <button
+                      aria-expanded={expanded}
+                      className="level-tier-toggle"
+                      type="button"
+                      onClick={() =>
+                        setExpandedTiers((current) => {
+                          const next = new Set(current);
+                          if (next.has(tier.id)) next.delete(tier.id);
+                          else next.add(tier.id);
+                          return next;
+                        })
+                      }
+                    >
+                      <Icon name="chevron" />
+                      <span>{tier.label}</span>
+                    </button>
+                    {expanded ? (
+                      <ol>
+                        {Array.from(
+                          { length: tier.lastLevel - tier.firstLevel + 1 },
+                          (_, index) => tier.firstLevel + index,
+                        ).map((level) => {
+                          const choices = choicesAtLevel(
+                            level,
+                            planningEvaluation,
+                          );
+                          const timelineChoices = choices.filter(
+                            (choice) =>
+                              !isOptionalRetrainingChoice(choice) &&
+                              (!isCharacterDetailChoice(choice) ||
+                                isRequiredClassDeityChoice(choice)) &&
+                              !isBuildPresetChoice(choice),
+                          );
+                          const progress = levelChoiceProgress(timelineChoices);
+                          const unresolved =
+                            timelineChoices.filter(isUnresolvedChoice).length +
+                            (level === 1 && abilityScoresIncomplete ? 1 : 0);
+                          const warnings =
+                            timelineChoices.filter((choice) =>
+                              selectedChoiceHasWarning(
+                                choice,
+                                planningEvaluation!,
+                              ),
+                            ).length +
+                            (level === 1 && abilityScoresHouseRuled ? 1 : 0);
+                          const choiceStatus = levelRailChoiceStatus(
+                            timelineChoices,
+                            level <= build.effectiveLevel,
+                            level === 1 && abilityScoresIncomplete ? 1 : 0,
+                          );
+                          const status =
+                            choiceStatus === "complete" && warnings > 0
+                              ? "warning"
+                              : choiceStatus;
+                          const statusLabel =
+                            status === "future"
+                              ? "no choices made"
+                              : status === "planned-complete"
+                                ? `all ${progress.required} choices complete`
+                                : status === "planned-partial"
+                                  ? `${progress.completed} of ${progress.required} choices complete`
+                                  : status === "incomplete"
+                                    ? `${unresolved} unresolved`
+                                    : status === "warning"
+                                      ? `${warnings} warnings`
+                                      : "complete";
+                          return (
+                            <li key={level}>
+                              <button
+                                aria-current={
+                                  level === selectedLevel ? "step" : undefined
+                                }
+                                aria-label={`Level ${level}, ${statusLabel}`}
+                                title={`Level ${level}: ${statusLabel}`}
+                                className={`level-rail-button level-rail-${status}`}
+                                disabled={entities.length === 0}
+                                type="button"
+                                onClick={() => selectLevel(level)}
+                              >
+                                <span>{level}</span>
+                                <span
+                                  aria-hidden="true"
+                                  className="level-rail-status"
+                                />
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
 
-        <div className="overview-pane" hidden={workspaceTab !== "overview"}>
-          <CharacterOverview
-            abilityStatus={
-              abilityScoresIncomplete
-                ? "unresolved"
-                : abilityScoresHouseRuled
-                  ? "warning"
-                  : "complete"
-            }
-            abilitySummary={
-              abilityPointBuy.legal
-                ? "Point buy complete"
-                : abilityScoresHouseRuled
-                  ? "House rule"
-                  : `${abilityPointBuy.remaining ?? 22} ${abilityPointBuy.remaining === 1 ? "point" : "points"} left`
-            }
-            build={build}
-            byId={byId}
-            evaluation={planningEvaluation}
-            selectedChoiceId={selectedChoiceId}
-            showPlanned={showPlannedOverview}
-            onNavigateAbilities={() => {
-              setSelectedLevel(1);
-              setSelectedSectionByLevel((current) => ({
-                ...current,
-                1: "Ability Scores",
-              }));
-              onNavigate(characterId, {
-                workspace: "build",
-                level: 1,
-                section: "ability-scores",
-              });
-            }}
-            onNavigateChoice={(choice) => {
-              setSelectedLevel(choice.level);
-              setSelectedChoiceId(choice.id);
-              setSelectedSectionByLevel((current) => ({
-                ...current,
-                [choice.level]: isOptionalRetrainingChoice(choice)
-                  ? "Retraining"
-                  : legacyChoiceSection(choice),
-              }));
-              onNavigate(characterId, {
-                workspace: "build",
-                level: choice.level,
-                section: levelChoiceTabSlug(
-                  isOptionalRetrainingChoice(choice)
+          <div className="overview-pane" hidden={workspaceTab !== "overview"}>
+            <CharacterOverview
+              abilityStatus={
+                abilityScoresIncomplete
+                  ? "unresolved"
+                  : abilityScoresHouseRuled
+                    ? "warning"
+                    : "complete"
+              }
+              abilitySummary={
+                abilityPointBuy.legal
+                  ? "Point buy complete"
+                  : abilityScoresHouseRuled
+                    ? "House rule"
+                    : `${abilityPointBuy.remaining ?? 22} ${abilityPointBuy.remaining === 1 ? "point" : "points"} left`
+              }
+              build={build}
+              byId={byId}
+              evaluation={planningEvaluation}
+              selectedChoiceId={selectedChoiceId}
+              showPlanned={showPlannedOverview}
+              onNavigateAbilities={() => {
+                setSelectedLevel(1);
+                setSelectedSectionByLevel((current) => ({
+                  ...current,
+                  1: "Ability Scores",
+                }));
+                onNavigate(characterId, {
+                  workspace: "build",
+                  level: 1,
+                  section: "ability-scores",
+                });
+              }}
+              onNavigateChoice={(choice) => {
+                setSelectedLevel(choice.level);
+                setSelectedChoiceId(choice.id);
+                setSelectedSectionByLevel((current) => ({
+                  ...current,
+                  [choice.level]: isOptionalRetrainingChoice(choice)
                     ? "Retraining"
                     : legacyChoiceSection(choice),
-                ),
-              });
-            }}
-            onShowPlannedChange={setShowPlannedOverview}
+                }));
+                onNavigate(characterId, {
+                  workspace: "build",
+                  level: choice.level,
+                  section: levelChoiceTabSlug(
+                    isOptionalRetrainingChoice(choice)
+                      ? "Retraining"
+                      : legacyChoiceSection(choice),
+                  ),
+                });
+              }}
+              onShowPlannedChange={setShowPlannedOverview}
+            />
+          </div>
+
+          <section
+            aria-label={`Level ${selectedLevel}`}
+            className="choice-pane"
+            hidden={workspaceTab !== "build"}
+          >
+            {planningEvaluation === undefined ? (
+              <p>
+                {entities.length === 0
+                  ? "Content is unavailable for planning."
+                  : `Evaluating choices through level ${planningHorizon}…`}
+              </p>
+            ) : levelChoices.length === 0 && selectedLevel !== 1 ? (
+              <div className="choice-empty-state">
+                <Icon name="check" />
+                <h4>No choices need attention at level {selectedLevel}</h4>
+                <p>
+                  Select another level from the timeline or review the completed
+                  history below.
+                </p>
+              </div>
+            ) : (
+              <div className="level-choice-tabs-layout">
+                <div className="level-choice-tab-bar">
+                  <h3>Level {selectedLevel}</h3>
+                  <div
+                    aria-label={`Level ${selectedLevel} choice sections`}
+                    className="level-choice-tabs"
+                    role="tablist"
+                  >
+                    {levelSectionTabs.map((section, index) => {
+                      const sectionChoices =
+                        section === "Retraining"
+                          ? retrainingChoices
+                          : (displayedChoiceSections.find(
+                              (group) => group.section === section,
+                            )?.choices ?? []);
+                      const incomplete =
+                        selectedLevel <= build.effectiveLevel &&
+                        ((section === "Ability Scores" &&
+                          selectedLevel === 1 &&
+                          abilityScoresIncomplete) ||
+                          sectionChoices.some(isUnresolvedChoice));
+                      const warning =
+                        (section === "Ability Scores" &&
+                          selectedLevel === 1 &&
+                          abilityScoresHouseRuled) ||
+                        sectionChoices.some((choice) =>
+                          selectedChoiceHasWarning(choice, planningEvaluation),
+                        );
+                      const tabId = `level-${selectedLevel}-${levelChoiceTabSlug(section)}-tab`;
+                      const panelId = `level-${selectedLevel}-${levelChoiceTabSlug(section)}-panel`;
+                      return (
+                        <button
+                          aria-controls={panelId}
+                          aria-selected={section === activeLevelSection}
+                          className={`${incomplete ? "choice-tab-incomplete" : ""}${warning ? " choice-tab-warning" : ""}`}
+                          id={tabId}
+                          key={section}
+                          role="tab"
+                          tabIndex={section === activeLevelSection ? 0 : -1}
+                          type="button"
+                          onClick={() => activateLevelSection(section)}
+                          onKeyDown={(event) => {
+                            const direction =
+                              event.key === "ArrowRight"
+                                ? 1
+                                : event.key === "ArrowLeft"
+                                  ? -1
+                                  : 0;
+                            const targetIndex =
+                              event.key === "Home"
+                                ? 0
+                                : event.key === "End"
+                                  ? levelSectionTabs.length - 1
+                                  : direction === 0
+                                    ? -1
+                                    : (index +
+                                        direction +
+                                        levelSectionTabs.length) %
+                                      levelSectionTabs.length;
+                            if (targetIndex < 0) return;
+                            event.preventDefault();
+                            const target = levelSectionTabs[targetIndex]!;
+                            activateLevelSection(target);
+                            requestAnimationFrame(() =>
+                              document
+                                .getElementById(
+                                  `level-${selectedLevel}-${levelChoiceTabSlug(target)}-tab`,
+                                )
+                                ?.focus(),
+                            );
+                          }}
+                        >
+                          <Icon
+                            name={
+                              section === "Retraining"
+                                ? "undo"
+                                : choiceSectionIcon(section)
+                            }
+                          />
+                          <span>{section}</span>
+                          {warning ? (
+                            <>
+                              <Icon name="warning" />
+                              <span className="visually-hidden">Warning</span>
+                            </>
+                          ) : incomplete ? (
+                            <>
+                              <span
+                                aria-hidden="true"
+                                className="choice-tab-status"
+                              />
+                              <span className="visually-hidden">
+                                Incomplete
+                              </span>
+                            </>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="level-choice-workspace">
+                  <CandidateInspectionScope
+                    key={`${workspaceTab === "build" ? "open" : "closed"}:${selectedLevel}:${activeLevelSection ?? "empty"}`}
+                    onInspect={setInspectedOption}
+                  >
+                    <div className="level-choice-page">
+                      {activeLevelSection === "Retraining" ? (
+                        <section
+                          aria-labelledby={`level-${selectedLevel}-retraining-tab`}
+                          className="level-choice-tab-panel"
+                          id={`level-${selectedLevel}-retraining-panel`}
+                          role="tabpanel"
+                        >
+                          <RetrainingControls
+                            choices={retrainingChoices}
+                            evaluation={planningEvaluation}
+                            build={build}
+                            entities={entities}
+                            byId={byId}
+                            rollbackRevision={rollbackRevision}
+                            onRequestDetails={setExpandedReplacementChoiceId}
+                            onDispatch={dispatch}
+                          />
+                          <footer className="level-choice-navigation">
+                            <button
+                              disabled={
+                                !activeSectionComplete ||
+                                nextChoiceDestination === undefined
+                              }
+                              title={
+                                !activeSectionComplete
+                                  ? "Complete the required choices in this section to continue"
+                                  : nextChoiceDestination === undefined
+                                    ? "No next section at the character's current level"
+                                    : undefined
+                              }
+                              type="button"
+                              onClick={advanceToNextChoiceSection}
+                            >
+                              Next
+                            </button>
+                          </footer>
+                        </section>
+                      ) : activeChoiceSection === undefined ? null : (
+                        <section
+                          aria-labelledby={`level-${selectedLevel}-${levelChoiceTabSlug(activeChoiceSection.section)}-tab`}
+                          className="level-choice-tab-panel"
+                          id={`level-${selectedLevel}-${levelChoiceTabSlug(activeChoiceSection.section)}-panel`}
+                          role="tabpanel"
+                        >
+                          <div className="legacy-choice-list">
+                            {activeChoiceSection.section === "Ability Scores" &&
+                            selectedLevel === 1 ? (
+                              selectedLevelEvaluation === undefined ? null : (
+                                <BaseAbilityScoreEditor
+                                  build={build}
+                                  evaluation={selectedLevelEvaluation}
+                                  pendingBonusDeltas={
+                                    pendingLevelOneAbilityDeltas
+                                  }
+                                  keyAbilities={selectedClassKeyAbilities}
+                                  keyAbilitiesSentence={keyAbilitiesSentence}
+                                  race={selectedRaceEntity}
+                                  raceAbilityChoice={raceAbilityChoice}
+                                  raceAbilitySelectionId={
+                                    raceAbilitySelectionId
+                                  }
+                                  byId={byId}
+                                  onRaceAbilitySelection={
+                                    selectRaceAbilityBonus
+                                  }
+                                  onDispatch={dispatch}
+                                />
+                              )
+                            ) : null}
+                            {activeChoiceSection.choices.map((choice) =>
+                              selectedLevel === 1 &&
+                              choice.type.trim().toLocaleLowerCase() ===
+                                "race ability bonus" ? null : (
+                                <Fragment key={choice.id}>
+                                  {isRequiredClassDeityChoice(choice)
+                                    ? null
+                                    : renderPrimaryChoice(
+                                        choice,
+                                        shouldOmitIndividualChoiceHeading(
+                                          choice,
+                                          activeChoiceSection.choices.length,
+                                          selectedLevel,
+                                        ),
+                                      )}
+                                  {activeChoiceSection.section === "Class" &&
+                                  selectedLevel === 1 &&
+                                  choice.id === classChoicePlacementId ? (
+                                    <>
+                                      <BuildPresetPanel
+                                        choices={buildPresetChoices}
+                                        levelChoices={mechanicalLevelChoices}
+                                        evaluation={planningEvaluation}
+                                        build={build}
+                                        entities={entities}
+                                        byId={byId}
+                                        onDispatch={dispatch}
+                                      />
+                                      {requiredClassDeityChoices.length ===
+                                      0 ? null : (
+                                        <div className="class-deity-choice">
+                                          {requiredClassDeityChoices.map(
+                                            (deityChoice) => (
+                                              <Fragment key={deityChoice.id}>
+                                                {renderPrimaryChoice(
+                                                  deityChoice,
+                                                  false,
+                                                )}
+                                              </Fragment>
+                                            ),
+                                          )}
+                                        </div>
+                                      )}
+                                    </>
+                                  ) : null}
+                                </Fragment>
+                              ),
+                            )}
+                          </div>
+                          <footer className="level-choice-navigation">
+                            <button
+                              disabled={
+                                !activeSectionComplete ||
+                                nextChoiceDestination === undefined
+                              }
+                              title={
+                                !activeSectionComplete
+                                  ? "Complete the required choices in this section to continue"
+                                  : nextChoiceDestination === undefined
+                                    ? "No next section at the character's current level"
+                                    : undefined
+                              }
+                              type="button"
+                              onClick={advanceToNextChoiceSection}
+                            >
+                              Next
+                            </button>
+                          </footer>
+                        </section>
+                      )}
+                    </div>
+                    <div className="shared-choice-detail">
+                      <CandidateDetail
+                        byId={byId}
+                        candidate={inspectedOption?.candidate}
+                        entity={inspectedOption?.entity}
+                      />
+                    </div>
+                  </CandidateInspectionScope>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+
+        <div hidden={workspaceTab !== "details"}>
+          <CharacterDetailsEditor
+            active={workspaceTab === "details"}
+            choices={characterDetailChoices}
+            evaluation={planningEvaluation}
+            build={build}
+            snapshotDetails={character.snapshot.details}
+            characterTitle={character.title}
+            entities={entities}
+            byId={byId}
+            rollbackRevision={rollbackRevision}
+            effectiveLevel={build.effectiveLevel}
+            forcedAlignment={forcedAlignment}
+            onLevelChange={changeCurrentLevel}
+            onDispatch={dispatch}
           />
         </div>
 
         <section
-          aria-label={`Level ${selectedLevel}`}
-          className="choice-pane"
-          hidden={workspaceTab !== "build"}
+          aria-labelledby="diagnostics-heading"
+          className="choice-pane standalone-workspace-pane"
+          hidden={workspaceTab !== "diagnostics"}
         >
-          {planningEvaluation === undefined ? (
-            <p>
-              {entities.length === 0
-                ? "Content is unavailable for planning."
-                : `Evaluating choices through level ${planningHorizon}…`}
-            </p>
-          ) : levelChoices.length === 0 && selectedLevel !== 1 ? (
-            <div className="choice-empty-state">
-              <Icon name="check" />
-              <h4>No choices need attention at level {selectedLevel}</h4>
-              <p>
-                Select another level from the timeline or review the completed
-                history below.
-              </p>
-            </div>
-          ) : (
-            <div className="level-choice-tabs-layout">
-              <div className="level-choice-tab-bar">
-                <h3>Level {selectedLevel}</h3>
-                <div
-                  aria-label={`Level ${selectedLevel} choice sections`}
-                  className="level-choice-tabs"
-                  role="tablist"
-                >
-                  {levelSectionTabs.map((section, index) => {
-                    const sectionChoices =
-                      section === "Retraining"
-                        ? retrainingChoices
-                        : (displayedChoiceSections.find(
-                            (group) => group.section === section,
-                          )?.choices ?? []);
-                    const incomplete =
-                      selectedLevel <= build.effectiveLevel &&
-                      ((section === "Ability Scores" &&
-                        selectedLevel === 1 &&
-                        abilityScoresIncomplete) ||
-                        sectionChoices.some(isUnresolvedChoice));
-                    const warning =
-                      (section === "Ability Scores" &&
-                        selectedLevel === 1 &&
-                        abilityScoresHouseRuled) ||
-                      sectionChoices.some((choice) =>
-                        selectedChoiceHasWarning(choice, planningEvaluation),
-                      );
-                    const tabId = `level-${selectedLevel}-${levelChoiceTabSlug(section)}-tab`;
-                    const panelId = `level-${selectedLevel}-${levelChoiceTabSlug(section)}-panel`;
-                    return (
-                      <button
-                        aria-controls={panelId}
-                        aria-selected={section === activeLevelSection}
-                        className={`${incomplete ? "choice-tab-incomplete" : ""}${warning ? " choice-tab-warning" : ""}`}
-                        id={tabId}
-                        key={section}
-                        role="tab"
-                        tabIndex={section === activeLevelSection ? 0 : -1}
-                        type="button"
-                        onClick={() => activateLevelSection(section)}
-                        onKeyDown={(event) => {
-                          const direction =
-                            event.key === "ArrowRight"
-                              ? 1
-                              : event.key === "ArrowLeft"
-                                ? -1
-                                : 0;
-                          const targetIndex =
-                            event.key === "Home"
-                              ? 0
-                              : event.key === "End"
-                                ? levelSectionTabs.length - 1
-                                : direction === 0
-                                  ? -1
-                                  : (index +
-                                      direction +
-                                      levelSectionTabs.length) %
-                                    levelSectionTabs.length;
-                          if (targetIndex < 0) return;
-                          event.preventDefault();
-                          const target = levelSectionTabs[targetIndex]!;
-                          activateLevelSection(target);
-                          requestAnimationFrame(() =>
-                            document
-                              .getElementById(
-                                `level-${selectedLevel}-${levelChoiceTabSlug(target)}-tab`,
-                              )
-                              ?.focus(),
-                          );
-                        }}
-                      >
-                        <Icon
-                          name={
-                            section === "Retraining"
-                              ? "undo"
-                              : choiceSectionIcon(section)
-                          }
-                        />
-                        <span>{section}</span>
-                        {warning ? (
-                          <>
-                            <Icon name="warning" />
-                            <span className="visually-hidden">Warning</span>
-                          </>
-                        ) : incomplete ? (
-                          <>
-                            <span
-                              aria-hidden="true"
-                              className="choice-tab-status"
-                            />
-                            <span className="visually-hidden">Incomplete</span>
-                          </>
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="level-choice-workspace">
-                <CandidateInspectionScope
-                  key={`${workspaceTab === "build" ? "open" : "closed"}:${selectedLevel}:${activeLevelSection ?? "empty"}`}
-                  onInspect={setInspectedOption}
-                >
-                  <div className="level-choice-page">
-                    {activeLevelSection === "Retraining" ? (
-                      <section
-                        aria-labelledby={`level-${selectedLevel}-retraining-tab`}
-                        className="level-choice-tab-panel"
-                        id={`level-${selectedLevel}-retraining-panel`}
-                        role="tabpanel"
-                      >
-                        <RetrainingControls
-                          choices={retrainingChoices}
-                          evaluation={planningEvaluation}
-                          build={build}
-                          entities={entities}
-                          byId={byId}
-                          rollbackRevision={rollbackRevision}
-                          onRequestDetails={setExpandedReplacementChoiceId}
-                          onDispatch={dispatch}
-                        />
-                        <footer className="level-choice-navigation">
-                          <button
-                            disabled={
-                              !activeSectionComplete ||
-                              nextChoiceDestination === undefined
-                            }
-                            title={
-                              !activeSectionComplete
-                                ? "Complete the required choices in this section to continue"
-                                : nextChoiceDestination === undefined
-                                  ? "No next section at the character's current level"
-                                  : undefined
-                            }
-                            type="button"
-                            onClick={advanceToNextChoiceSection}
-                          >
-                            Next
-                          </button>
-                        </footer>
-                      </section>
-                    ) : activeChoiceSection === undefined ? null : (
-                      <section
-                        aria-labelledby={`level-${selectedLevel}-${levelChoiceTabSlug(activeChoiceSection.section)}-tab`}
-                        className="level-choice-tab-panel"
-                        id={`level-${selectedLevel}-${levelChoiceTabSlug(activeChoiceSection.section)}-panel`}
-                        role="tabpanel"
-                      >
-                        <div className="legacy-choice-list">
-                          {activeChoiceSection.section === "Ability Scores" &&
-                          selectedLevel === 1 ? (
-                            selectedLevelEvaluation === undefined ? null : (
-                              <BaseAbilityScoreEditor
-                                build={build}
-                                evaluation={selectedLevelEvaluation}
-                                pendingBonusDeltas={
-                                  pendingLevelOneAbilityDeltas
-                                }
-                                keyAbilities={selectedClassKeyAbilities}
-                                keyAbilitiesSentence={keyAbilitiesSentence}
-                                race={selectedRaceEntity}
-                                raceAbilityChoice={raceAbilityChoice}
-                                raceAbilitySelectionId={raceAbilitySelectionId}
-                                byId={byId}
-                                onRaceAbilitySelection={selectRaceAbilityBonus}
-                                onDispatch={dispatch}
-                              />
-                            )
-                          ) : null}
-                          {activeChoiceSection.choices.map((choice) =>
-                            selectedLevel === 1 &&
-                            choice.type.trim().toLocaleLowerCase() ===
-                              "race ability bonus" ? null : (
-                              <Fragment key={choice.id}>
-                                {isRequiredClassDeityChoice(choice)
-                                  ? null
-                                  : renderPrimaryChoice(
-                                      choice,
-                                      shouldOmitIndividualChoiceHeading(
-                                        choice,
-                                        activeChoiceSection.choices.length,
-                                        selectedLevel,
-                                      ),
-                                    )}
-                                {activeChoiceSection.section === "Class" &&
-                                selectedLevel === 1 &&
-                                choice.id === classChoicePlacementId ? (
-                                  <>
-                                    <BuildPresetPanel
-                                      choices={buildPresetChoices}
-                                      levelChoices={mechanicalLevelChoices}
-                                      evaluation={planningEvaluation}
-                                      build={build}
-                                      entities={entities}
-                                      byId={byId}
-                                      onDispatch={dispatch}
-                                    />
-                                    {requiredClassDeityChoices.length ===
-                                    0 ? null : (
-                                      <div className="class-deity-choice">
-                                        {requiredClassDeityChoices.map(
-                                          (deityChoice) => (
-                                            <Fragment key={deityChoice.id}>
-                                              {renderPrimaryChoice(
-                                                deityChoice,
-                                                false,
-                                              )}
-                                            </Fragment>
-                                          ),
-                                        )}
-                                      </div>
-                                    )}
-                                  </>
-                                ) : null}
-                              </Fragment>
-                            ),
+          <header>
+            <h3 id="diagnostics-heading">Diagnostics</h3>
+          </header>
+          <div className="standalone-workspace-content diagnostics-workspace">
+            {planningEvaluation === undefined ? (
+              <p>Evaluating character…</p>
+            ) : diagnosticGroups.every(({ issues }) => issues.length === 0) ? (
+              <p>No build issues.</p>
+            ) : (
+              diagnosticGroups.map(({ title, description, issues }) =>
+                issues.length === 0 ? null : (
+                  <section className="diagnostic-group" key={title}>
+                    <header>
+                      <h4>
+                        {title} <span>{issues.length}</span>
+                      </h4>
+                      <p>{description}</p>
+                    </header>
+                    <ul className="diagnostic-list">
+                      {issues.map((issue) => (
+                        <li key={issue.key}>
+                          <div>
+                            <strong>{issue.title}</strong>
+                            <p>{issue.detail}</p>
+                            <p className="diagnostic-effect">
+                              <strong>Effect:</strong> {issue.effect}
+                            </p>
+                          </div>
+                          {issue.target === undefined ? null : (
+                            <button
+                              className="secondary-button"
+                              type="button"
+                              onClick={() => navigateToDiagnosticIssue(issue)}
+                            >
+                              Review
+                            </button>
                           )}
-                        </div>
-                        <footer className="level-choice-navigation">
-                          <button
-                            disabled={
-                              !activeSectionComplete ||
-                              nextChoiceDestination === undefined
-                            }
-                            title={
-                              !activeSectionComplete
-                                ? "Complete the required choices in this section to continue"
-                                : nextChoiceDestination === undefined
-                                  ? "No next section at the character's current level"
-                                  : undefined
-                            }
-                            type="button"
-                            onClick={advanceToNextChoiceSection}
-                          >
-                            Next
-                          </button>
-                        </footer>
-                      </section>
-                    )}
-                  </div>
-                  <div className="shared-choice-detail">
-                    <CandidateDetail
-                      byId={byId}
-                      candidate={inspectedOption?.candidate}
-                      entity={inspectedOption?.entity}
-                      powerPresentationFor={buildPowerPresentationFor}
-                    />
-                  </div>
-                </CandidateInspectionScope>
-              </div>
-            </div>
-          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ),
+              )
+            )}
+          </div>
         </section>
-      </div>
 
-      <div hidden={workspaceTab !== "details"}>
-        <CharacterDetailsEditor
-          active={workspaceTab === "details"}
-          choices={characterDetailChoices}
-          evaluation={planningEvaluation}
-          build={build}
-          snapshotDetails={character.snapshot.details}
-          characterTitle={character.title}
-          entities={entities}
-          byId={byId}
-          rollbackRevision={rollbackRevision}
-          effectiveLevel={build.effectiveLevel}
-          forcedAlignment={forcedAlignment}
-          onLevelChange={changeCurrentLevel}
-          onDispatch={dispatch}
-        />
-      </div>
-
-      <section
-        aria-labelledby="diagnostics-heading"
-        className="choice-pane standalone-workspace-pane"
-        hidden={workspaceTab !== "diagnostics"}
-      >
-        <header>
-          <h3 id="diagnostics-heading">Diagnostics</h3>
-        </header>
-        <div className="standalone-workspace-content diagnostics-workspace">
-          {planningEvaluation === undefined ? (
-            <p>Evaluating character…</p>
-          ) : diagnosticGroups.every(({ issues }) => issues.length === 0) ? (
-            <p>No build issues.</p>
-          ) : (
-            diagnosticGroups.map(({ title, description, issues }) =>
-              issues.length === 0 ? null : (
-                <section className="diagnostic-group" key={title}>
-                  <header>
-                    <h4>
-                      {title} <span>{issues.length}</span>
-                    </h4>
-                    <p>{description}</p>
-                  </header>
-                  <ul className="diagnostic-list">
-                    {issues.map((issue) => (
-                      <li key={issue.key}>
-                        <div>
-                          <strong>{issue.title}</strong>
-                          <p>{issue.detail}</p>
-                          <p className="diagnostic-effect">
-                            <strong>Effect:</strong> {issue.effect}
-                          </p>
-                        </div>
-                        {issue.target === undefined ? null : (
-                          <button
-                            className="secondary-button"
-                            type="button"
-                            onClick={() => navigateToDiagnosticIssue(issue)}
-                          >
-                            Review
-                          </button>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ),
-            )
+        <div hidden={workspaceTab !== "equipment" && workspaceTab !== "shop"}>
+          {carriedWallet === undefined || storedWallet === undefined ? null : (
+            <BuilderCardContext.Provider
+              value={equipmentCardSettings ?? buildCardSettings}
+            >
+              <EquipmentWorkspace
+                build={build}
+                entities={entities}
+                byId={byId}
+                activeDefinitionIds={
+                  currentEvaluation?.activeDefinitionIds ?? []
+                }
+                keepLargeAmountsInGold={keepLargeAmountsInGold}
+                workspace={workspaceTab === "shop" ? "shop" : "equipment"}
+                loadoutView={
+                  navigation.workspace === "equipment" &&
+                  navigation.loadout === true
+                }
+                shopCategory={
+                  navigation.workspace === "shop"
+                    ? (navigation.category ?? "items")
+                    : "items"
+                }
+                onLoadoutViewChange={(loadout) =>
+                  onNavigate(characterId, {
+                    workspace: "equipment",
+                    ...(loadout ? { loadout: true } : {}),
+                  })
+                }
+                onShopCategoryChange={(category) =>
+                  onNavigate(characterId, { workspace: "shop", category })
+                }
+                wallet={{
+                  carried: {
+                    copper: carriedWallet.cp,
+                    silver: carriedWallet.sp,
+                    gold: carriedWallet.gp,
+                    platinum: carriedWallet.pp,
+                    astral: carriedWallet.ad,
+                  },
+                  stored: {
+                    copper: storedWallet.cp,
+                    silver: storedWallet.sp,
+                    gold: storedWallet.gp,
+                    platinum: storedWallet.pp,
+                    astral: storedWallet.ad,
+                  },
+                }}
+                onPutInventory={(entry) =>
+                  dispatch({ kind: "put-inventory", entry })
+                }
+                onPurchase={(entry, priceCopper) =>
+                  dispatch({
+                    kind: "purchase-inventory",
+                    entry,
+                    priceCopper,
+                    keepLargeAmountsInGold,
+                  })
+                }
+                onSell={(entry, priceCopper, percentage) =>
+                  dispatch({
+                    kind: "sell-inventory",
+                    entryId: entry.id,
+                    priceCopper,
+                    percentage,
+                    keepLargeAmountsInGold,
+                  })
+                }
+                onEquipSlot={(entryId, slots, currentEntryId, currentSlots) => {
+                  const slotIds = slots as readonly EquipmentSlotId[];
+                  const displacedSlotIds = (currentSlots ??
+                    slots) as readonly EquipmentSlotId[];
+                  const command = loadoutChangeCommand(
+                    build.inventory.filter(({ quantity }) => quantity > 0),
+                    byId,
+                    entryId,
+                    slotIds,
+                    currentEntryId,
+                    displacedSlotIds,
+                  );
+                  if (command !== undefined) dispatch(command);
+                }}
+                onSetWallet={(nextWallet) => {
+                  const amount = (location: "carried" | "stored") => ({
+                    cp: Math.max(0, Math.trunc(nextWallet[location].copper)),
+                    sp: Math.max(0, Math.trunc(nextWallet[location].silver)),
+                    gp: Math.max(0, Math.trunc(nextWallet[location].gold)),
+                    pp: Math.max(0, Math.trunc(nextWallet[location].platinum)),
+                    ad: Math.max(0, Math.trunc(nextWallet[location].astral)),
+                  });
+                  dispatch({
+                    kind: "batch",
+                    commands: (["carried", "stored"] as const).map(
+                      (location) => ({
+                        kind: "set-text" as const,
+                        name: characterWalletTextKey(
+                          build.effectiveLevel,
+                          location,
+                        ),
+                        value: formatLegacyCurrency(amount(location)),
+                      }),
+                    ),
+                  });
+                }}
+                onAdjustMoney={(deltaCopper) => {
+                  const activeBuild = transaction.current?.current;
+                  if (activeBuild === undefined)
+                    return "Character funds are not available";
+                  let adjusted: ReturnType<typeof adjustWalletCurrency>;
+                  try {
+                    adjusted = adjustWalletCurrency(
+                      resolveCharacterWallet(activeBuild, "carried").amount,
+                      resolveCharacterWallet(activeBuild, "stored").amount,
+                      deltaCopper,
+                      keepLargeAmountsInGold,
+                    );
+                  } catch (reason: unknown) {
+                    return reason instanceof Error
+                      ? reason.message
+                      : "Currency adjustment was rejected";
+                  }
+                  dispatch({
+                    kind: "batch",
+                    commands: [
+                      {
+                        kind: "set-text",
+                        name: characterWalletTextKey(
+                          activeBuild.effectiveLevel,
+                          "carried",
+                        ),
+                        value: formatLegacyCurrency(adjusted.carried),
+                      },
+                      {
+                        kind: "set-text",
+                        name: characterWalletTextKey(
+                          activeBuild.effectiveLevel,
+                          "stored",
+                        ),
+                        value: formatLegacyCurrency(adjusted.stored),
+                      },
+                    ],
+                  });
+                  return undefined;
+                }}
+              />
+            </BuilderCardContext.Provider>
           )}
         </div>
-      </section>
-
-      <div hidden={workspaceTab !== "equipment" && workspaceTab !== "shop"}>
-        {carriedWallet === undefined || storedWallet === undefined ? null : (
-          <EquipmentWorkspace
-            build={build}
-            entities={entities}
-            byId={byId}
-            activeDefinitionIds={currentEvaluation?.activeDefinitionIds ?? []}
-            hideFlavortext={hideFlavortext}
-            keepLargeAmountsInGold={keepLargeAmountsInGold}
-            powerPresentationFor={currentPowerPresentationFor}
-            workspace={workspaceTab === "shop" ? "shop" : "equipment"}
-            loadoutView={
-              navigation.workspace === "equipment" &&
-              navigation.loadout === true
-            }
-            shopCategory={
-              navigation.workspace === "shop"
-                ? (navigation.category ?? "items")
-                : "items"
-            }
-            onLoadoutViewChange={(loadout) =>
-              onNavigate(characterId, {
-                workspace: "equipment",
-                ...(loadout ? { loadout: true } : {}),
-              })
-            }
-            onShopCategoryChange={(category) =>
-              onNavigate(characterId, { workspace: "shop", category })
-            }
-            wallet={{
-              carried: {
-                copper: carriedWallet.cp,
-                silver: carriedWallet.sp,
-                gold: carriedWallet.gp,
-                platinum: carriedWallet.pp,
-                astral: carriedWallet.ad,
-              },
-              stored: {
-                copper: storedWallet.cp,
-                silver: storedWallet.sp,
-                gold: storedWallet.gp,
-                platinum: storedWallet.pp,
-                astral: storedWallet.ad,
-              },
-            }}
-            onPutInventory={(entry) =>
-              dispatch({ kind: "put-inventory", entry })
-            }
-            onPurchase={(entry, priceCopper) =>
-              dispatch({
-                kind: "purchase-inventory",
-                entry,
-                priceCopper,
-                keepLargeAmountsInGold,
-              })
-            }
-            onSell={(entry, priceCopper, percentage) =>
-              dispatch({
-                kind: "sell-inventory",
-                entryId: entry.id,
-                priceCopper,
-                percentage,
-                keepLargeAmountsInGold,
-              })
-            }
-            onEquipSlot={(entryId, slots, currentEntryId, currentSlots) => {
-              const slotIds = slots as readonly EquipmentSlotId[];
-              const displacedSlotIds = (currentSlots ??
-                slots) as readonly EquipmentSlotId[];
-              const command = loadoutChangeCommand(
-                build.inventory.filter(({ quantity }) => quantity > 0),
-                byId,
-                entryId,
-                slotIds,
-                currentEntryId,
-                displacedSlotIds,
-              );
-              if (command !== undefined) dispatch(command);
-            }}
-            onSetWallet={(nextWallet) => {
-              const amount = (location: "carried" | "stored") => ({
-                cp: Math.max(0, Math.trunc(nextWallet[location].copper)),
-                sp: Math.max(0, Math.trunc(nextWallet[location].silver)),
-                gp: Math.max(0, Math.trunc(nextWallet[location].gold)),
-                pp: Math.max(0, Math.trunc(nextWallet[location].platinum)),
-                ad: Math.max(0, Math.trunc(nextWallet[location].astral)),
-              });
-              dispatch({
-                kind: "batch",
-                commands: (["carried", "stored"] as const).map((location) => ({
-                  kind: "set-text" as const,
-                  name: characterWalletTextKey(build.effectiveLevel, location),
-                  value: formatLegacyCurrency(amount(location)),
-                })),
-              });
-            }}
-            onAdjustMoney={(deltaCopper) => {
-              const activeBuild = transaction.current?.current;
-              if (activeBuild === undefined)
-                return "Character funds are not available";
-              let adjusted: ReturnType<typeof adjustWalletCurrency>;
-              try {
-                adjusted = adjustWalletCurrency(
-                  resolveCharacterWallet(activeBuild, "carried").amount,
-                  resolveCharacterWallet(activeBuild, "stored").amount,
-                  deltaCopper,
-                  keepLargeAmountsInGold,
-                );
-              } catch (reason: unknown) {
-                return reason instanceof Error
-                  ? reason.message
-                  : "Currency adjustment was rejected";
-              }
-              dispatch({
-                kind: "batch",
-                commands: [
-                  {
-                    kind: "set-text",
-                    name: characterWalletTextKey(
-                      activeBuild.effectiveLevel,
-                      "carried",
-                    ),
-                    value: formatLegacyCurrency(adjusted.carried),
-                  },
-                  {
-                    kind: "set-text",
-                    name: characterWalletTextKey(
-                      activeBuild.effectiveLevel,
-                      "stored",
-                    ),
-                    value: formatLegacyCurrency(adjusted.stored),
-                  },
-                ],
-              });
-              return undefined;
-            }}
-          />
-        )}
-      </div>
-    </main>
+      </main>
+    </BuilderCardContext.Provider>
   );
 }

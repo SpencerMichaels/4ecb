@@ -132,7 +132,6 @@ describe("equipment item details", () => {
           entities: [base, enchantment],
           displayName: "Hammer Heavy Shield",
         },
-        hideFlavortext: false,
         byId: new Map(
           [base, enchantment].map((item) => [
             item.id.toLocaleLowerCase(),
@@ -142,19 +141,18 @@ describe("equipment item details", () => {
       }),
     );
 
+    // The builder shows the sheet's item card for the composed item (D079).
+    expect(markup).toContain("print-item-card is-panel");
     expect(markup).toContain("Hammer Heavy Shield");
     expect(markup).toContain("lucide-shield");
     expect(markup).not.toContain("lucide-biceps-flexed");
-    expect(markup).toContain("Armor 8");
-    expect(markup).toContain("composed-item-card composed-armor-card");
-    expect(markup).not.toContain("<h5>Heavy Shield</h5>");
-    expect(markup).not.toContain("<h5>Hammer Shield</h5>");
-    expect(markup).toContain("<dt>Slot</dt>");
-    expect(markup).toContain("<span>Off hand</span>");
-    expect(markup).not.toContain("<span>Arms</span>");
-    expect(markup).not.toContain("<dt>Armor</dt>");
-    expect(markup).not.toContain("<dt>Full Text</dt>");
+    expect(markup).toContain("<span>Armor</span>");
+    expect(markup).toContain("Level 8");
+    expect(markup).not.toContain("Heavy Shield</h");
+    expect(markup).not.toContain("Duplicated shield text.");
+    expect(markup).not.toContain("Weapon:");
     expect(markup).toContain("Gain a defensive benefit.");
+    expect(markup).toContain("3400 gp");
     expect(markup).toContain("Sources: A; B");
   });
 
@@ -190,7 +188,6 @@ describe("equipment item details", () => {
           entities: [base, enchantment],
           displayName: "Bloodiron Plate Armor +2",
         },
-        hideFlavortext: false,
         byId: new Map(
           [base, enchantment].map((item) => [
             item.id.toLocaleLowerCase(),
@@ -200,25 +197,20 @@ describe("equipment item details", () => {
       }),
     );
 
-    expect(markup).toContain(
-      "candidate-detail tone-item composed-item-card composed-armor-card",
-    );
+    expect(markup).toContain("print-item-card is-panel");
     expect(markup).toContain("Bloodiron Plate Armor +2");
-    expect(markup).toContain("Armor 8");
+    expect(markup).toContain("<span>Armor</span>");
+    expect(markup).toContain("Level 8");
     expect(markup).toContain("lucide-shirt");
-    expect(markup.indexOf("<dt>Enhancement</dt>")).toBeLessThan(
-      markup.indexOf("<dt>Armor bonus</dt>"),
+    expect(markup).toContain("<dt>AC bonus</dt>");
+    expect(markup.indexOf("+2 AC")).toBeLessThan(
+      markup.indexOf("Reward an aggressive wearer."),
     );
-    expect(markup.indexOf("<dt>Slot</dt>")).toBeLessThan(
-      markup.indexOf("<dt>Price</dt>"),
-    );
-    expect(markup.indexOf("<dt>Price</dt>")).toBeLessThan(
-      markup.indexOf("<dt>Weight</dt>"),
-    );
-    expect(markup).not.toContain("<h5>Plate Armor</h5>");
-    expect(markup).not.toContain("<h5>Bloodiron Armor +2</h5>");
-    expect(markup).not.toContain("<dt>Armor</dt>");
-    expect(markup).not.toContain("<dt>Full Text</dt>");
+    expect(markup).toContain("50 lb");
+    expect(markup).toContain("3400 gp");
+    expect(markup).not.toContain("Plate Armor</h");
+    expect(markup).not.toContain("Scale, Plate");
+    expect(markup).not.toContain("Duplicated armor text.");
     expect(markup).toContain("Reward an aggressive wearer.");
     expect(markup).toContain("Sources: Physical source; Magic source");
     expect(markup.match(/detail-source-note/g)).toHaveLength(1);
@@ -268,32 +260,27 @@ describe("equipment item details", () => {
           entities: [base, enchantment],
           displayName: "Protective Public Warhammer +2",
         },
-        hideFlavortext: false,
         byId,
       }),
     );
 
-    expect(markup).toContain(
-      "candidate-detail tone-item composed-item-card composed-weapon-card",
-    );
+    expect(markup).toContain("print-item-card is-panel");
     expect(markup).toContain("Protective Public Warhammer +2");
-    expect(markup).toContain("Weapon 7");
-    expect(markup).not.toContain("Weapon 7 · Common");
-    expect(markup).not.toContain("<h5>Public Warhammer</h5>");
-    expect(markup).not.toContain("<h5>Protective Weapon +2</h5>");
+    expect(markup).toContain("<span>Weapon</span>");
+    expect(markup).toContain("Level 7");
+    expect(markup).not.toContain("Public Warhammer</h");
     expect(markup.indexOf("1d10")).toBeLessThan(
       markup.indexOf("Gain a defensive benefit."),
     );
     expect(markup).toContain("<dt>Proficiency</dt>");
-    expect(markup).toContain("<dt>Critical</dt>");
+    expect(markup).toContain("<dt>Crit</dt>");
     expect(markup).toContain("+2d6");
     expect(markup).not.toContain("+2d6 damage");
     expect(markup).toContain("<dt>Properties</dt>");
-    expect(markup).toContain("2,600 gp");
-    expect(markup).toContain("<dt>Enhancement</dt>");
-    expect(markup).not.toContain("<dt>Weapon</dt>");
-    expect(markup).not.toContain("<dt>Item Slot</dt>");
-    expect(markup).not.toContain("<dt>Full Text</dt>");
+    expect(markup).toContain("2600 gp");
+    expect(markup).toContain("+2 attack rolls and damage rolls");
+    expect(markup).not.toContain("Weapon: Any");
+    expect(markup).not.toContain("Damage: 1d10. Group: Hammer.");
     expect(markup).toContain(
       "Sources: Public base source; Public enchantment source",
     );
@@ -351,7 +338,6 @@ describe("equipment item details", () => {
     const markup = renderToStaticMarkup(
       createElement(ItemDetail, {
         item: { entities: [item], displayName: item.name },
-        hideFlavortext: false,
         byId: new Map([[item.id.toLocaleLowerCase(), item]]),
       }),
     );
@@ -393,7 +379,6 @@ describe("equipment item details", () => {
           displayName: formula.name,
           effectiveLevel: 8,
         },
-        hideFlavortext: false,
         byId,
       }),
     );
@@ -402,7 +387,7 @@ describe("equipment item details", () => {
     expect(markup).toContain("Public Alchemical Item (level 6)");
     expect(markup).not.toContain("Public Alchemical Item (level 11)");
     expect(markup).not.toContain("Creates");
-    expect(markup.match(/candidate-detail tone-/g)).toHaveLength(2);
+    expect(markup.match(/print-item-card is-panel/g)).toHaveLength(2);
   });
 
   it("leads an uncomposed enchantment's descriptors with its own compatible-type field", () => {
@@ -424,17 +409,13 @@ describe("equipment item details", () => {
           entities: [enchantment],
           displayName: enchantment.name,
         },
-        hideFlavortext: false,
         byId: new Map([[enchantment.id.toLocaleLowerCase(), enchantment]]),
       }),
     );
 
     expect(markup).not.toContain("shop-detail-compatibility");
-    const weaponFieldIndex = markup.indexOf("<dt>Weapon</dt>");
-    const rarityFieldIndex = markup.indexOf("<dt>Rarity</dt>");
-    expect(weaponFieldIndex).toBeGreaterThan(-1);
-    expect(rarityFieldIndex).toBeGreaterThan(-1);
-    expect(weaponFieldIndex).toBeLessThan(rarityFieldIndex);
+    // Without a physical base, the card names what the enchantment fits.
+    expect(markup).toContain("Weapon: Heavy blade");
   });
 
   it("resolves an item-owned choice's chosen entity for the detail view", () => {
@@ -536,20 +517,19 @@ describe("equipment item details", () => {
           displayName: "Soul Public Plate of Probing +2 (Fireheart Blast)",
           resolvedChoiceEntities: [power],
         },
-        hideFlavortext: false,
         byId,
       }),
     );
 
     expect(markup).toContain("Fireheart Blast");
     expect(markup).toContain("candidate-detail-stack");
-    expect(markup).toContain("theme-power-card");
-    // The Power's card must come after the primary card's own </aside> —
+    expect(markup).toContain("print-power-card is-panel");
+    // The Power's card must come after the item card's own </article> —
     // a sibling in .candidate-detail-stack, the same way a granted power
     // shown in the Build choice inspector is a sibling of the entity that
     // grants it, never nested inside that entity's own card.
-    const primaryCardCloseIndex = markup.indexOf("</aside>");
-    const powerCardIndex = markup.indexOf("theme-power-card");
+    const primaryCardCloseIndex = markup.indexOf("</article>");
+    const powerCardIndex = markup.indexOf("print-power-card is-panel");
     expect(primaryCardCloseIndex).toBeGreaterThan(-1);
     expect(powerCardIndex).toBeGreaterThan(primaryCardCloseIndex);
   });
@@ -579,11 +559,10 @@ describe("equipment item details", () => {
           displayName: "Armor of Probing +2 (Fire)",
           resolvedChoiceEntities: [fire],
         },
-        hideFlavortext: false,
         byId,
       }),
     );
 
-    expect(markup).not.toContain("theme-power-card");
+    expect(markup).not.toContain("print-power-card");
   });
 });

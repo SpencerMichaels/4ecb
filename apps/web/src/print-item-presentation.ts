@@ -141,8 +141,20 @@ export function printItemPresentation(card: SheetCard) {
     .join(" ");
   const sentenceCase = (value: string) =>
     value ? value[0]!.toUpperCase() + value.slice(1) : value;
+  // An enchantment shown without a physical base (e.g. browsed in the Shop)
+  // still names the weapons or armor it can enhance.
+  const unbasedEnchantment =
+    card.baseItemType === undefined || card.baseItemType === card.itemType;
+  const compatibility = !unbasedEnchantment
+    ? undefined
+    : field("Weapon")
+      ? `Weapon: ${field("Weapon")}`
+      : field("Armor")
+        ? `Armor: ${field("Armor")}`
+        : undefined;
   const metadata = [
     sentenceCase(primaryMetadata),
+    compatibility,
     isWeapon && category ? sentenceCase(category.toLowerCase()) : undefined,
     !isWeapon && field("Group") ? `Group ${field("Group")}` : undefined,
     field("Key Ability") ? `Key ability ${field("Key Ability")}` : undefined,

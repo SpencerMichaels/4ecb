@@ -2537,6 +2537,81 @@ textarea {
 .print-power-card.utility-power {
   --card-color: #000080;
 }
+/* Builder detail panes reuse the printed card format at a readable, fluid
+   size (D079): same bands, colors and type bar, no fixed size or fitting. */
+.print-reference-card.is-panel {
+  --print-card-text-size: 10.5pt;
+  --print-card-body-size: 10pt;
+  --print-card-section-gap: 0.3rem;
+  background: #fff;
+  border-width: 2px;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  line-height: 1.3;
+  overflow: visible;
+  width: 100%;
+}
+.print-reference-card.is-panel:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.print-reference-card.is-panel > header {
+  padding: 0.35rem 0.55rem;
+}
+.print-reference-card.is-panel .print-card-keyword-band,
+.print-reference-card.is-panel .print-card-action-band > span,
+.print-reference-card.is-panel .print-card-combat-band > div {
+  padding: 0.25rem 0.55rem;
+}
+.print-reference-card.is-panel .print-card-combat-band {
+  margin: 0 -0.55rem;
+}
+.print-reference-card.is-panel .print-card-body {
+  overflow: visible;
+  padding: 0.5rem 0.55rem;
+}
+.print-reference-card.is-panel
+  .print-card-body
+  > .print-card-attack-section:first-child {
+  margin-top: -0.5rem;
+}
+.print-reference-card.is-panel .print-card-type {
+  padding: 0.25rem 0.55rem;
+}
+.print-reference-card.is-panel .icon {
+  height: 1em;
+  width: 1em;
+}
+.print-reference-card.is-panel > header .action-type-icon,
+.print-reference-card.is-panel > header .action-type-icon .icon {
+  height: 1.1em;
+  width: 1.1em;
+}
+.print-card-panel-subheading {
+  align-items: center;
+  background: color-mix(in srgb, var(--card-color) 8%, white);
+  color: #111;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  gap: 0.25rem 0.6rem;
+  padding: 0.25rem 0.55rem;
+}
+.print-card-panel-subheading p {
+  margin: 0;
+}
+.print-card-flavor {
+  font-style: italic;
+  margin: 0 0 0.35rem;
+}
+.candidate-card-panel {
+  display: grid;
+  gap: 0.35rem;
+}
+.candidate-card-panel > .detail-source-note {
+  margin: 0;
+}
 /* "Play data" cards: core numbers and skills for use at the table. */
 .print-play-card {
   --card-color: #1f6b70;

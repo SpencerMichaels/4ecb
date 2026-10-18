@@ -13,14 +13,7 @@ import {
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import { grantedDetailEntities } from "./builder-ui";
-import {
-  ComposedArmorCardBody,
-  ComposedWeaponCardBody,
-  EmbeddedPowerCard,
-  EntityCardBody,
-  EntityCardHeader,
-  entityCardSource,
-} from "./EntityCard";
+import { entityCardSource } from "./EntityCard";
 import {
   alchemicalFormulaItems,
   comparableSaleProceeds,
@@ -40,13 +33,12 @@ import {
   type ShopBrowseId,
   visibleLoadoutSlotColumns,
 } from "./equipment-ui";
-import { entityVisualTone, visualToneClass } from "./visual-language";
 import { Icon } from "./Icon";
-import { canonicalItemIcon, isAuthoredShield } from "./item-icons";
+import { canonicalItemIcon } from "./item-icons";
 import type { ShopCategory } from "./routes";
 import { preferredShopBrowse, ShopWorkspace } from "./ShopWorkspace";
 import { useArmedAction } from "./useArmedAction";
-import type { PowerCardPresentation } from "./PowerCardPresentation";
+import { BuilderItemCard, BuilderPowerCard } from "./BuilderCards";
 
 type MoneyLocation = "carried" | "stored";
 type Denomination = "copper" | "silver" | "gold" | "platinum" | "astral";
@@ -172,16 +164,10 @@ export function catalogItemDetail(
 
 export function ItemDetail({
   item,
-  hideFlavortext,
   byId,
-  powerPresentationFor,
 }: {
   readonly item: InspectedItemDetail | undefined;
-  readonly hideFlavortext: boolean;
   readonly byId: ReadonlyMap<string, ContentEntity>;
-  readonly powerPresentationFor?:
-    | ((definitionId: string, name?: string) => PowerCardPresentation)
-    | undefined;
 }) {
   const entity = item?.entities.at(-1);
   if (item === undefined || entity === undefined)
@@ -200,82 +186,21 @@ export function ItemDetail({
     const name = candidate.name.trim().toLocaleLowerCase();
     if (!references.has(name)) references.set(name, candidate);
   }
-  const cardEntity =
-    item.displayName === entity.name
-      ? entity
-      : { ...entity, name: item.displayName };
   const sources = [
     ...new Set(item.entities.map((component) => entityCardSource(component))),
   ];
-  const base = item.entities[0];
-  const isComposedWeapon =
-    item.entities.length > 1 &&
-    base?.type.trim().toLocaleLowerCase() === "weapon";
-  const isComposedArmor =
-    item.entities.length > 1 &&
-    base?.type.trim().toLocaleLowerCase() === "armor";
-  const isUnifiedComposedItem = isComposedWeapon || isComposedArmor;
-  const composedGrantedPowers = item.entities.flatMap((component) =>
-    grantedDetailEntities(component, references).filter(
-      (granted) => granted.type.trim().toLocaleLowerCase() === "power",
+  // Powers granted by any component, and an item-owned choice resolved to a
+  // power (e.g. the Power picked for a Genasi Soul Armor), are sibling cards.
+  const powers = [
+    ...item.entities.flatMap((component) =>
+      grantedDetailEntities(component, references),
     ),
+    ...(item.resolvedChoiceEntities ?? []),
+  ].filter(
+    (power, index, all) =>
+      power.type.trim().toLocaleLowerCase() === "power" &&
+      all.findIndex((candidate) => candidate.id === power.id) === index,
   );
-  const resolvedChoicePowers = (item.resolvedChoiceEntities ?? []).filter(
-    (chosen) => chosen.type.trim().toLocaleLowerCase() === "power",
-  );
-  const grantedPowerCards = composedGrantedPowers.map((power) => (
-    <EmbeddedPowerCard
-      entity={power}
-      hideFlavortext={hideFlavortext}
-      key={power.id}
-      powerPresentation={powerPresentationFor?.(power.id, power.name)}
-    />
-  ));
-  // A resolved item-owned choice (e.g. the Power picked for a Genasi Soul
-  // Armor) gets its own sibling card, matching how a granted power is shown
-  // in the Build choice inspector — never nested inside the item's own card.
-  const resolvedChoicePowerCards = resolvedChoicePowers.map((power) => (
-    <EmbeddedPowerCard
-      entity={power}
-      hideFlavortext={hideFlavortext}
-      key={power.id}
-      powerPresentation={powerPresentationFor?.(power.id, power.name)}
-    />
-  ));
-  const componentBody = (component: ContentEntity) => {
-    const displayComponent =
-      item.entities.length > 1 &&
-      base !== undefined &&
-      isAuthoredShield(base) &&
-      component.id === entity.id
-        ? {
-            ...component,
-            specifics: component.specifics.map((field) =>
-              field.name.trim().toLocaleLowerCase() === "item slot"
-                ? { ...field, value: "Off hand" }
-                : field,
-            ),
-          }
-        : component;
-    const grantedPowers = grantedDetailEntities(component, references).filter(
-      (granted) => granted.type.trim().toLocaleLowerCase() === "power",
-    );
-    return (
-      <EntityCardBody
-        entity={displayComponent}
-        hideFlavortext={hideFlavortext}
-        showSource={false}
-        afterFields={grantedPowers.map((power) => (
-          <EmbeddedPowerCard
-            entity={power}
-            hideFlavortext={hideFlavortext}
-            key={power.id}
-            powerPresentation={powerPresentationFor?.(power.id, power.name)}
-          />
-        ))}
-      />
-    );
-  };
   const formulaItems = alchemicalFormulaItems(entity, byId);
   const formulaItem =
     formulaItems
@@ -285,70 +210,32 @@ export function ItemDetail({
           (item.effectiveLevel ?? shopItemLevel(entity)),
       )
       .at(-1) ?? formulaItems[0];
-  const primaryCard = (
-    <aside
-      className={`candidate-detail ${visualToneClass(entityVisualTone(entity))}${isUnifiedComposedItem ? " composed-item-card" : ""}${isComposedWeapon ? " composed-weapon-card" : ""}${isComposedArmor ? " composed-armor-card" : ""}`}
-      tabIndex={0}
-    >
-      <header className="primary-detail-heading entity-card-header">
-        <EntityCardHeader
-          entity={cardEntity}
-          {...(item.kindLabel === undefined
-            ? {}
-            : { kindLabel: item.kindLabel })}
-          physicalBase={item.entities.length > 1 ? base : undefined}
-        />
-      </header>
-      {isComposedWeapon && base !== undefined ? (
-        <ComposedWeaponCardBody
-          afterFields={grantedPowerCards}
-          base={base}
-          enchantment={entity}
-          hideFlavortext={hideFlavortext}
-        />
-      ) : isComposedArmor && base !== undefined ? (
-        <ComposedArmorCardBody
-          afterFields={grantedPowerCards}
-          base={base}
-          enchantment={entity}
-          hideFlavortext={hideFlavortext}
-        />
-      ) : item.entities.length > 1 ? (
-        <div className="composed-item-details">
-          {item.entities.map((component) => (
-            <section className="composed-item-component" key={component.id}>
-              <h5>{component.name}</h5>
-              {componentBody(component)}
-            </section>
-          ))}
-        </div>
-      ) : (
-        componentBody(entity)
-      )}
-      <p className="detail-source-note">
-        {sources.length === 1 ? "Source" : "Sources"}: {sources.join("; ")}
-      </p>
-    </aside>
-  );
-  if (formulaItem === undefined && resolvedChoicePowerCards.length === 0)
-    return primaryCard;
   return (
     <div className="candidate-detail-stack">
-      {primaryCard}
-      {resolvedChoicePowerCards}
+      <div className="candidate-card-panel">
+        <BuilderItemCard name={item.displayName} entities={item.entities} />
+        <p className="detail-source-note">
+          {sources.length === 1 ? "Source" : "Sources"}: {sources.join("; ")}
+        </p>
+      </div>
+      {powers.map((power) => (
+        <BuilderPowerCard
+          entity={power}
+          headingSuffix="-granted"
+          key={power.id}
+        />
+      ))}
       {formulaItem === undefined ? null : (
-        <aside
-          className={`candidate-detail ${visualToneClass(entityVisualTone(formulaItem))}`}
-          tabIndex={0}
-        >
-          <header className="primary-detail-heading entity-card-header">
-            <EntityCardHeader entity={formulaItem} />
-          </header>
-          {componentBody(formulaItem)}
+        <div className="candidate-card-panel">
+          <BuilderItemCard
+            name={formulaItem.name}
+            entities={[formulaItem]}
+            headingSuffix="-formula"
+          />
           <p className="detail-source-note">
             Source: {entityCardSource(formulaItem)}
           </p>
-        </aside>
+        </div>
       )}
     </div>
   );
@@ -840,9 +727,7 @@ export function EquipmentWorkspace({
   byId,
   wallet,
   activeDefinitionIds,
-  hideFlavortext,
   keepLargeAmountsInGold,
-  powerPresentationFor,
   workspace,
   loadoutView,
   shopCategory,
@@ -860,11 +745,7 @@ export function EquipmentWorkspace({
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly wallet: EquipmentWalletView;
   readonly activeDefinitionIds: readonly string[];
-  readonly hideFlavortext: boolean;
   readonly keepLargeAmountsInGold: boolean;
-  readonly powerPresentationFor?:
-    | ((definitionId: string, name?: string) => PowerCardPresentation)
-    | undefined;
   readonly workspace: "equipment" | "shop";
   readonly loadoutView: boolean;
   readonly shopCategory: ShopCategory;
@@ -1450,12 +1331,7 @@ export function EquipmentWorkspace({
               onAdjustMoney={onAdjustMoney}
             />
           ) : null}
-          <ItemDetail
-            byId={byId}
-            item={inspected}
-            hideFlavortext={hideFlavortext}
-            powerPresentationFor={powerPresentationFor}
-          />
+          <ItemDetail byId={byId} item={inspected} />
         </div>
       </div>
       <WalletDialog

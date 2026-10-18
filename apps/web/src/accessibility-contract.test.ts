@@ -17,6 +17,10 @@ const characterOverview = readFileSync(
   new URL("./CharacterOverview.tsx", import.meta.url),
   "utf8",
 );
+const builderCards = readFileSync(
+  new URL("./BuilderCards.tsx", import.meta.url),
+  "utf8",
+);
 const candidateDetail = readFileSync(
   new URL("./CandidateDetail.tsx", import.meta.url),
   "utf8",
@@ -153,13 +157,11 @@ describe("release accessibility contract", () => {
     expect(app).toContain(
       "showPrintTitleActionIcon={showPrintTitleActionIcon}",
     );
-    expect(characterEditor).toContain("createPowerCardPresentationFinder");
-    expect(characterEditor).toContain(
-      "powerPresentationFor={currentPowerPresentationFor}",
-    );
-    expect(candidateDetail).toContain(
-      "powerPresentation={powerPresentationFor?.(entity.id, entity.name)}",
-    );
+    // Builder details render the sheet's evaluated cards (D079).
+    expect(characterEditor).toContain("createSheetPowerCardFinder");
+    expect(characterEditor).toContain("<BuilderCardContext.Provider");
+    expect(builderCards).toContain("renderPowerText(text, true)");
+    expect(builderCards).toContain("expandWeaponDice(value, weaponDamage)");
     expect(characterSheet).toContain('className="screen-power-text"');
     expect(characterSheet).toContain('className="print-power-text"');
     expect(characterSheet).toContain('className="print-power-variants"');
@@ -440,52 +442,18 @@ describe("release accessibility contract", () => {
     expect(styles).toMatch(/\.builder-tabs\s*\{[^}]*overflow-x: auto/);
   });
 
-  it("makes each theme power header its accessible disclosure control", () => {
+  it("renders theme and granted powers as the shared printed power card", () => {
     const candidateDetails = candidateDetail.slice(
       candidateDetail.indexOf("export function CandidateDetail("),
     );
     expect(candidateDetails).toContain("themePowers.flatMap");
-    expect(candidateDetails).toContain("themePowerLevel={group.level ?? null}");
-    expect(candidateDetails).not.toContain("theme-power-level");
-    expect(candidateDetails).not.toContain("Theme power");
-    expect(candidateDetails).toContain("isEmbeddedPower");
-    expect(candidateDetails).toContain("<EmbeddedPowerCard");
-    expect(entityCard).toMatch(
-      /<details[\s\S]*?open[\s\S]*?<summary>\s*<EntityCardHeader[\s\S]*?<\/summary>/,
-    );
-    expect(entityCard).toContain("showSource={false}");
-    expect(candidateDetails).toMatch(
-      /if \(isEmbeddedPower\)[\s\S]*?return \([\s\S]*?<aside[\s\S]*?tabIndex={0}/,
-    );
+    expect(candidateDetails).toContain("<BuilderPowerCard");
+    expect(candidateDetails).toContain("<BuilderItemCard");
+    expect(candidateDetails).toContain("Theme power · Level");
+    expect(candidateDetails).not.toContain("EmbeddedPowerCard");
+    expect(builderCards).toContain('layout="panel"');
     expect(styles).toMatch(
-      /\.theme-power-card > summary\s*\{[^}]*cursor: pointer/,
-    );
-    expect(styles).toMatch(
-      /\.theme-power-card > summary:focus-visible\s*\{[^}]*outline:/,
-    );
-    expect(styles).toMatch(/\.theme-power-card\s*\{[^}]*padding: 0/);
-    expect(styles).toMatch(/\.theme-power-card > summary\s*\{[^}]*margin: 0/);
-    expect(styles).toMatch(
-      /\.theme-power-card-body\s*\{[^}]*padding: 0 1rem 0\.85rem/,
-    );
-    expect(styles).toMatch(
-      /\.theme-power-card > summary\s*\{[^}]*background: var\(--tone-soft\)[^}]*border-block-end: var\(--detail-card-header-border-block-end-width\)[^}]*var\(--tone\)[^}]*color: var\(--text\)/,
-    );
-    expect(styles).toMatch(
-      /\.candidate-detail\[class\*="tone-"\] > header\s*\{[^}]*background: var\(--tone-soft\)[^}]*border-block-end: var\(--detail-card-header-border-block-end-width\)[^}]*var\(--tone\)[^}]*color: var\(--text\)/,
-    );
-    expect(candidateDetails).toContain(
-      'isPower ? " top-level-power-card" : ""',
-    );
-    expect(styles).toMatch(
-      /\.candidate-detail\.top-level-power-card > header\s*\{[^}]*margin-bottom: 0/,
-    );
-    expect(styles).toMatch(
-      /\.candidate-detail\.top-level-power-card > \.candidate-flavor\s*\{[^}]*--entity-card-flavor-padding: 0\.8rem 1rem 0\.65rem/,
-    );
-    expect(entityCard).not.toContain("top-level-power-card");
-    expect(styles).not.toMatch(
-      /\.candidate-detail:is\([^)]*tone-at-will[^)]*\)\s*> header/,
+      /\.print-reference-card\.is-panel\s*\{[^}]*height: auto/,
     );
   });
 
@@ -530,10 +498,10 @@ describe("release accessibility contract", () => {
     const candidateDetails = candidateDetail.slice(
       candidateDetail.indexOf("export function CandidateDetail("),
     );
-    for (const source of [candidateDetails, equipmentWorkspace]) {
-      expect(source).toContain("EntityCardHeader");
-      expect(source).toContain("EntityCardBody");
-    }
+    expect(candidateDetails).toContain("EntityCardHeader");
+    expect(candidateDetails).toContain("EntityCardBody");
+    expect(equipmentWorkspace).toContain("<BuilderItemCard");
+    expect(equipmentWorkspace).toContain("<BuilderPowerCard");
     expect(entityCard).toContain('className="detail-heading-row"');
     expect(entityCard).toContain("primaryDetailTypeLabel(entity)");
     expect(entityCard).toContain(
@@ -556,7 +524,7 @@ describe("release accessibility contract", () => {
       /\.entity-card-rules dt\s*\{[^}]*overflow-wrap: normal;[^}]*white-space: nowrap;/s,
     );
     expect(entityCard).not.toContain("<h5>Description</h5>");
-    expect(characterEditor).toContain("useContext(HideFlavortextContext)");
+    expect(builderCards).toContain("useContext(HideFlavortextContext)");
     expect(entityCard).toContain(
       "entity.flavor === undefined || hideFlavortext",
     );
