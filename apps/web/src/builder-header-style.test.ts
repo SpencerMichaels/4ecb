@@ -152,3 +152,14 @@ describe("builder ability tiles", () => {
     expect(lead).toContain("font-variant-numeric: tabular-nums");
   });
 });
+
+describe("builder tab bar rule and level heading", () => {
+  it("runs the tab rule under the whole bar and drops the Level heading line", () => {
+    const bar = declarationsFor(".builder-tabs-bar");
+    expect(bar).toContain("border-bottom: 1px solid var(--border)");
+    expect(declarationsFor(".builder-tabs")).not.toContain("border-bottom");
+    expect(declarationsFor(".level-choice-tab-bar h3")).not.toContain(
+      "border-top",
+    );
+  });
+});

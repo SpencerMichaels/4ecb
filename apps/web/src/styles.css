@@ -3801,11 +3801,18 @@ textarea {
   }
 }
 
+/* The rule under the tabs spans the whole bar, under the buttons too; the
+   selected tab's underline overlaps it. */
 .builder-tabs-bar {
-  align-items: center;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border);
   display: flex;
   gap: 1rem;
   margin-bottom: 1rem;
+}
+
+.builder-tabs-bar > .builder-status {
+  align-self: center;
 }
 
 /* One style for everything right of the builder tabs: status badges, save
@@ -3893,11 +3900,10 @@ textarea {
 }
 
 .builder-tabs {
-  border-bottom: 1px solid var(--border);
   display: flex;
   flex: 1 1 auto;
   gap: 0.25rem;
-  margin-bottom: 0;
+  margin-bottom: -1px;
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
@@ -3968,6 +3974,11 @@ textarea {
   font: inherit;
   gap: 0.3rem;
   padding: 0.1rem 0.2rem;
+}
+
+.level-choice-tab-bar .level-picker-trigger:not(:disabled):hover {
+  background: rgb(255 255 255 / 0.12);
+  box-shadow: none;
 }
 
 .level-picker-trigger:not(:disabled):hover {
@@ -4142,10 +4153,11 @@ textarea {
   min-width: 0;
 }
 
+/* The Level heading is a label (and level-plan trigger), not a tab, so it
+   carries no selection line. */
 .level-choice-tab-bar h3 {
   align-items: center;
   background: var(--brand-navy);
-  border-top: 3px solid var(--brand-blue);
   color: #fff;
   display: flex;
   flex: 0 0 auto;
@@ -6686,10 +6698,21 @@ button.inventory-icon-action:disabled {
 }
 
 @media (max-width: 48rem) {
+  /* Stacked: the rule returns under the tabs; the buttons keep their own row. */
   .builder-tabs-bar {
     align-items: stretch;
+    border-bottom: 0;
     flex-direction: column;
     gap: 0;
+  }
+
+  .builder-tabs {
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0;
+  }
+
+  .builder-tabs-bar > .builder-status {
+    align-self: stretch;
   }
 
   .shop-toolbar {
