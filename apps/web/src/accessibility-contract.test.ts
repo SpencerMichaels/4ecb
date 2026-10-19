@@ -991,6 +991,8 @@ describe("release accessibility contract", () => {
       expect(source, name).toContain("dialog-shell");
       expect(source, name).toContain('className="button-icon dialog-close"');
       expect(source, name).toContain('aria-label="Close"');
+      // One heading: no eyebrow label repeating it above the title.
+      expect(source, name).not.toContain('className="eyebrow"');
     }
     expect(styles).toMatch(/\.dialog-shell::backdrop\s*\{/);
     expect(styles).toMatch(

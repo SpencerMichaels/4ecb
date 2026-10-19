@@ -123,13 +123,11 @@ export function ContentUpdateDialog({
       }}
     >
       <header>
-        <div>
-          <p className="eyebrow">Game content update</p>
-          <h2 id="content-update-title">Update {name} to the new content?</h2>
-        </div>
+        <h2 id="content-update-title">Update {name} to the new content?</h2>
         <button
           aria-label="Close"
           className="button-icon dialog-close"
+          title="Close"
           type="button"
           onClick={close}
         >

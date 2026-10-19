@@ -223,7 +223,6 @@ export function ItemDetail({
   if (item === undefined || entity === undefined)
     return (
       <aside className="candidate-detail candidate-detail-empty">
-        <p className="eyebrow">Item details</p>
         <h4>Choose an item to inspect it</h4>
         <p>
           The same detail viewer follows selections across Inventory, Loadout,

@@ -21,8 +21,10 @@ instances listed.
   control makes obvious (a search box).
 - **Redundant headings.** Two headings saying the same thing ("Character
   identity / Character details", "Skill Training 3 of 3 / Paladin skills 3 of
-  3", "Theme power · Level N" under a theme). Rule: one heading per level of
-  structure; drop labels the context already states.
+  3", "Theme power · Level N" under a theme). An eyebrow label over a
+  title is the same thing ("Character image / Adjust portrait", "Game content
+  update / Update Ingi…"). Rule: one heading per level of structure; drop
+  labels the context already states.
 - **Columns that waste width.** Long header words over 2–3 character values,
   centred values in header-wide columns, columns that only repeat an icon
   (Action). Rule: abbreviate headers (Lvl, Atk, Def) with the full name in a
@@ -174,6 +176,11 @@ instances listed.
   content just to shorten a card; use expand/collapse only to show one of
   several large things (the one-table-or-none accordion), and always let the
   open one be closed.
+- **Look-alike buttons that act differently.** The portrait footer put
+  Replace image (stages a new picture) beside Remove portrait (deletes at once,
+  outside the undo history). Rule: actions on the content sit with the
+  content (Replace under the image); the footer only ends the dialog; a
+  destructive action that Undo can’t reverse asks for a second click.
 - **Hidden ways to deselect.** Removing a control removed the only way to
   undo a choice. Rule: when removing a control, check what else it was the
   only path for, and provide that path (reselect to deselect).

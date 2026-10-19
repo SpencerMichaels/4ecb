@@ -13,6 +13,7 @@ import type {
 } from "@4ecb/character-domain";
 
 import { Icon } from "./Icon";
+import { useArmedAction } from "./useArmedAction";
 import {
   clampPortraitCrop,
   initialPortraitCrop,
@@ -62,6 +63,7 @@ export function PortraitEditor({
   const [crop, setCrop] = useState<CharacterPortraitCrop>();
   const [error, setError] = useState<string>();
   const [saving, setSaving] = useState(false);
+  const removeAction = useArmedAction("portrait-remove-trigger");
   const dialog = useRef<HTMLDialogElement>(null);
   const drag = useRef<
     { x: number; y: number; crop: CharacterPortraitCrop } | undefined
@@ -180,13 +182,15 @@ export function PortraitEditor({
       <button
         aria-label={`${portrait === undefined ? "Add" : "Edit"} ${name}'s portrait`}
         className={`portrait-trigger ${compact ? "portrait-trigger-compact" : ""}`}
+        title={
+          portrait === undefined
+            ? "Click to add a portrait"
+            : "Click to change the portrait"
+        }
         type="button"
         onClick={beginEditing}
       >
         <PortraitImage portrait={portrait} name={name} />
-        <span className="portrait-camera" aria-hidden="true">
-          <Camera />
-        </span>
       </button>
       {!open ? null : (
         <dialog
@@ -194,17 +198,16 @@ export function PortraitEditor({
           ref={dialog}
           onCancel={(event) => {
             event.preventDefault();
+            // Esc first disarms a pending Remove, then closes.
+            if (removeAction.isArmed("portrait")) return;
             close();
           }}
           onClose={() => setOpen(false)}
         >
           <header>
-            <div>
-              <p className="eyebrow">Character image</p>
-              <h2>
-                {portrait === undefined ? "Add portrait" : "Adjust portrait"}
-              </h2>
-            </div>
+            <h2>
+              {portrait === undefined ? "Add portrait" : "Adjust portrait"}
+            </h2>
             <button
               aria-label="Close"
               className="button-icon dialog-close"
@@ -243,6 +246,7 @@ export function PortraitEditor({
                 <div
                   aria-label="Portrait crop. Drag to reposition the image."
                   className="portrait-crop-viewport"
+                  title="Drag the image to frame the portrait"
                   onPointerDown={(event) => {
                     event.currentTarget.setPointerCapture(event.pointerId);
                     drag.current = { x: event.clientX, y: event.clientY, crop };
@@ -291,11 +295,8 @@ export function PortraitEditor({
                   </label>
                   <Plus aria-hidden="true" />
                 </div>
-                <p className="portrait-help">
-                  Drag the image to frame the portrait.
-                </p>
                 <label className="file-button portrait-replace-button">
-                  Choose a different image
+                  Replace image
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp,image/gif"
@@ -324,10 +325,28 @@ export function PortraitEditor({
           <footer>
             {portrait === undefined ? null : (
               <button
+                aria-label={
+                  removeAction.isArmed("portrait")
+                    ? "Confirm removing the portrait"
+                    : "Remove portrait"
+                }
                 className="danger-button dialog-footer-start"
+                data-armed={removeAction.isArmed("portrait") || undefined}
+                data-portrait-remove-trigger="portrait"
                 disabled={saving}
+                title={
+                  removeAction.isArmed("portrait")
+                    ? "Click again to remove the portrait"
+                    : "Remove portrait"
+                }
                 type="button"
                 onClick={() => {
+                  // Not part of the build's undo history: confirm first.
+                  if (!removeAction.isArmed("portrait")) {
+                    removeAction.arm("portrait");
+                    return;
+                  }
+                  removeAction.disarm();
                   setSaving(true);
                   void onSave(null)
                     .then(close)
@@ -341,7 +360,9 @@ export function PortraitEditor({
                     .finally(() => setSaving(false));
                 }}
               >
-                Remove portrait
+                {removeAction.isArmed("portrait")
+                  ? "Click again to remove"
+                  : "Remove portrait"}
               </button>
             )}
             <button disabled={saving} type="button" onClick={close}>
@@ -353,7 +374,7 @@ export function PortraitEditor({
               type="button"
               onClick={() => void save()}
             >
-              {saving ? "Saving…" : "Use portrait"}
+              {saving ? "Saving…" : "Save"}
             </button>
           </footer>
         </dialog>
