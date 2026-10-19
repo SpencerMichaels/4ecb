@@ -15,6 +15,9 @@ CMD ["pnpm", "--filter", "@4ecb/web", "dev", "--host", "0.0.0.0"]
 
 FROM build AS web-build
 
+# The build context has no .git, so the commit shown in the app comes in here.
+ARG FOURECB_COMMIT=unknown
+ENV FOURECB_COMMIT=$FOURECB_COMMIT
 RUN pnpm --filter @4ecb/web build
 
 FROM nginxinc/nginx-unprivileged:1.29-alpine

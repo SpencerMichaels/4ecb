@@ -3505,6 +3505,15 @@ textarea {
   gap: 0.4rem;
 }
 
+/* Which build is running, for bug reports. */
+.build-version {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+  text-align: center;
+}
+
 /* Wallet highlights use a brighter, yellower version of the wealth group gold
    (stat-tone-wealth #7a5a12) rather than the app focus blue. */
 .funds-pane {

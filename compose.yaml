@@ -3,7 +3,10 @@
 # then: docker compose up -d --build
 services:
   web:
-    build: .
+    build:
+      context: .
+      args:
+        FOURECB_COMMIT: "${FOURECB_TAG:-unknown}"
     image: "4ecb:${FOURECB_TAG:-local}"
     restart: unless-stopped
     read_only: true

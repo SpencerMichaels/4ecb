@@ -23,6 +23,7 @@ import { contentProfileMatchesRevision } from "./profile-migration";
 import { activeProfileBinding } from "./content-update";
 import { download } from "./download";
 import { Icon } from "./Icon";
+import { BuildVersion } from "./BuildVersion";
 import { RulesWorkerClient } from "./rules-client";
 import { createNativeCharacter } from "./new-character";
 import { PortraitImage } from "./PortraitEditor";
@@ -220,13 +221,16 @@ export function CharacterLibraryPage({
   return (
     <main className="characters-page" id="main-content">
       <header className="page-heading library-heading">
-        <h1 className="app-brand">
-          <span className="app-brand-mark" aria-hidden="true">
-            4E
-          </span>
-          <span className="app-brand-name">Character Builder</span>
-          <span className="visually-hidden"> — Characters</span>
-        </h1>
+        <div className="library-brand">
+          <h1 className="app-brand">
+            <span className="app-brand-mark" aria-hidden="true">
+              4E
+            </span>
+            <span className="app-brand-name">Character Builder</span>
+            <span className="visually-hidden"> — Characters</span>
+          </h1>
+          <BuildVersion />
+        </div>
         <div className="page-actions">
           <label className="icon-only-button" title="Import .dnd4e character">
             <Icon name="import" />

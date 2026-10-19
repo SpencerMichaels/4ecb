@@ -135,6 +135,7 @@ import {
 } from "./EquipmentWorkspace";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
 import { PortraitEditor } from "./PortraitEditor";
+import { BuildVersion } from "./BuildVersion";
 import {
   authoredBuilderCardSettings,
   BuilderCardContext,
@@ -1876,6 +1877,7 @@ export function CharacterEditorPage({
                 />
               ) : null}
             </div>
+            <BuildVersion />
           </aside>
           <div className="builder-main">
             {reviewingContentUpdate &&

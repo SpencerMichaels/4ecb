@@ -1,8 +1,28 @@
+import { execSync } from "node:child_process";
+
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
+/** The build's short commit hash: FOURECB_COMMIT (Docker builds have no
+ *  .git), else git's, marked "-dirty" for uncommitted changes. */
+function buildCommit(): string {
+  if (process.env.FOURECB_COMMIT) return process.env.FOURECB_COMMIT;
+  try {
+    return execSync("git describe --always --dirty --abbrev=7", {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return "unknown";
+  }
+}
+
 export default defineConfig({
+  define: {
+    __BUILD_COMMIT__: JSON.stringify(buildCommit()),
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     {
       name: "development-style-csp",
