@@ -17,3 +17,41 @@ jobs:
       - uses: cachix/install-nix-action@v31
       - name: Run tests and deterministic fixture build
         run: nix develop path:. --command bash scripts/check.sh
+
+  # Publishes the production image to ghcr.io for hosted deployments, only from
+  # main and only after the public checks pass. Tags: the full commit SHA and
+  # `main`; deployments should pin the digest. The image never contains private
+  # content (see docs/public-deployment.md).
+  publish-image:
+    needs: public-checks
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,format=long
+            type=raw,value=main
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

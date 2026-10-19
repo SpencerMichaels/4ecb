@@ -67,6 +67,14 @@ nix develop path:. --command docker run --rm \
   4ecb
 ```
 
+### Published image
+
+CI publishes the production image to `ghcr.io/spencermichaels/4ecb` after the
+public checks pass on every push to `main`, tagged with the full commit SHA
+(`sha-<sha>`) and `main`. It is built from the same Dockerfile and build context
+as above, so it holds no private content. Deployments should pin the image by
+digest and update deliberately; the product owner's homelab does this.
+
 ## HTTPS and reverse proxies
 
 Serve public installations over HTTPS so service workers, installation prompts,
