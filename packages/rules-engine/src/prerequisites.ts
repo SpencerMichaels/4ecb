@@ -296,7 +296,7 @@ function internalizeLeaf(
   if (/^epic tier$/i.test(canonical))
     return { kind: "level", text, minimum: 21 };
   const training =
-    /^(?:you must (?:be trained|have training)|trained) in (.+)$/i.exec(
+    /^(?:you must (?:be trained|have training)|trained|training) in (.+)$/i.exec(
       canonical,
     );
   if (training?.[1] !== undefined)

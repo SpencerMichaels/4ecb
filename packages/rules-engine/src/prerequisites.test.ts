@@ -109,6 +109,13 @@ describe("legacy prerequisites", () => {
       evaluatePrerequisite("You must have training in Athletics.", context)
         .status,
     ).toBe("satisfied");
+    // Swift Recovery and Combat Medic say "Training in Endurance/Heal".
+    expect(evaluatePrerequisite("Training in Athletics", context).status).toBe(
+      "satisfied",
+    );
+    expect(evaluatePrerequisite("Training in Heal", context).status).toBe(
+      "failed",
+    );
     expect(
       evaluatePrerequisite("proficiency with longsword", context).status,
     ).toBe("satisfied");

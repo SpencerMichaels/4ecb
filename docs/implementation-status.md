@@ -1,5 +1,17 @@
 # Implementation status
 
+## "Training in X" prerequisites are verified (2026-10-19)
+
+Player report: Ingi's Swift Recovery ("Training in Endurance") showed as
+house-ruled though he is trained in Endurance. The prerequisite parser knew
+"Trained in", "You must be trained in" and "You must have training in" but not
+"Training in", so the check stayed unverified, which makes a character not
+rules-legal. It now accepts that wording (27 entries use it; simple ones such
+as Swift Recovery and Combat Medic now verify, while "training in any two
+of …" stays unverified). Evaluation cache bumped to v17. Verification: the
+supplied Ingi export evaluates legal with no unverified prerequisite; focused
+prerequisite tests, lint, typecheck and the workspace tests pass.
+
 ## Wallet: no automatic consolidation; clearer quick adjust (2026-10-19)
 
 Player feedback (D086). Purchases and sales keep the coins held instead of
