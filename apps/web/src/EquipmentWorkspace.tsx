@@ -531,8 +531,10 @@ function FundsPane({
   );
   const canConsolidate = !sameWallet(consolidated, wallet);
   const previousShown = useRef({ location, coins: totalWallet });
+  // Set when a coin cell is edited directly, for the next change only.
+  const directEdit = useRef(false);
 
-  // A layout effect, so the remounted tiles tick from the old count before
+  // A layout effect, so the remounted tiles roll from the old count before
   // the new one is ever painted.
   useLayoutEffect(() => {
     const previous = previousShown.current;
@@ -545,6 +547,13 @@ function FundsPane({
       if (delta !== 0) deltas[denomination] = delta;
     }
     if (Object.keys(deltas).length === 0) return;
+    // A count typed into its cell needs no echo: the user knows the number.
+    // Clearing the last change also keeps that tile from rolling again.
+    if (directEdit.current) {
+      directEdit.current = false;
+      setWalletPulse((current) => ({ ...current, deltas: {} }));
+      return;
+    }
     setWalletPulse((current) => ({
       generation: current.generation + 1,
       deltas,
@@ -609,6 +618,7 @@ function FundsPane({
     setEditing(undefined);
     if (!Number.isSafeInteger(count) || count < 0) return;
     if (count === totalWallet[editing.coin]) return;
+    directEdit.current = true;
     onSetWallet(walletWithCoinCount(wallet, editing.coin, count, location));
   };
 

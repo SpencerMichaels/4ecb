@@ -2354,8 +2354,9 @@ quoted in gold and players typed numbers that were silently rejected. Its
 error, previously screen-reader only, shows in a bubble under the field until
 the next keystroke, Escape or blur. A changed coin count rolls like an
 odometer: each changed digit turns in from below as the count grows, from
-above as it shrinks, the rightmost first, while its tile pulses
-(reduced motion: the new digits show at once).
+above as it shrinks, the rightmost first, while its tile pulses. A count typed
+into its own cell changes without either: the user already knows the number.
+With reduced motion the new digits show at once.
 
 ## Deferred decisions and decision points
 

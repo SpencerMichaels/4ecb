@@ -92,6 +92,14 @@
   block-size: 1.2em;
   inline-size: 1.2em;
 }
+/* Hover and keyboard focus take the funds cells' gold ring, not the app's
+   button underline. */
+.funds-pane-actions .funds-consolidate:not(:disabled):hover,
+.funds-pane-actions .funds-consolidate:focus-visible {
+  border-color: var(--stat-edge);
+  box-shadow: inset 0 0 0 2px var(--funds-focus);
+  outline: none;
+}
 
 /* Coin counts read as plain numbers and edit in place on double-click or
    Enter. */
