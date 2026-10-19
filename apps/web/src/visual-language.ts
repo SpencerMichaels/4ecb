@@ -34,9 +34,11 @@ export function entityTypeIcon(type: string): IconName {
   switch (type.trim().toLocaleLowerCase()) {
     case "class":
     case "hybrid class":
+      return "character";
     case "paragon path":
+      return "crown";
     case "epic destiny":
-      return "class";
+      return "sun";
     case "race":
       return "race";
     case "background":

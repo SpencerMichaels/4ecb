@@ -156,6 +156,8 @@ export interface SettingsPageProps {
   readonly onThemeChange: (theme: ThemePreference) => void;
   readonly hideFlavortext: boolean;
   readonly onHideFlavortextChange: (hideFlavortext: boolean) => void;
+  readonly showEntitySource: boolean;
+  readonly onShowEntitySourceChange: (showEntitySource: boolean) => void;
   readonly keepLargeAmountsInGold: boolean;
   readonly countCoinWeight: boolean;
   readonly onCountCoinWeightChange: (value: boolean) => void;
@@ -225,6 +227,8 @@ export function SettingsPage({
   onThemeChange,
   hideFlavortext,
   onHideFlavortextChange,
+  showEntitySource,
+  onShowEntitySourceChange,
   keepLargeAmountsInGold,
   countCoinWeight,
   onCountCoinWeightChange,
@@ -683,6 +687,12 @@ export function SettingsPage({
               checked={hideFlavortext}
               onChange={onHideFlavortextChange}
               label="Hide flavortext"
+            />
+            <CheckboxSetting
+              checked={showEntitySource}
+              onChange={onShowEntitySourceChange}
+              label="Show entity source"
+              help="Name the sourcebook in a line at the bottom of each card in the builder, Equipment, and Shop."
             />
             <CheckboxSetting
               checked={keepLargeAmountsInGold}

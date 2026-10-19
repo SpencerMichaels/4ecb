@@ -13,6 +13,7 @@ import {
   shownWalletCoins,
   walletWithCoinCount,
 } from "./EquipmentWorkspace";
+import { ShowEntitySourceContext } from "./ShowEntitySourceContext";
 
 function entity(
   id: string,
@@ -44,7 +45,34 @@ function entity(
   };
 }
 
+/** Renders with Settings' "Show entity source" on. */
+function sourcesShown(element: ReturnType<typeof createElement>) {
+  return createElement(
+    ShowEntitySourceContext.Provider,
+    { value: true },
+    element,
+  );
+}
+
 describe("equipment item details", () => {
+  it("leaves the source off item cards unless the setting is on", () => {
+    const item = entity(
+      "ITEM_SOURCE_OFF",
+      "Plain Rope",
+      "Gear",
+      "Hidden source",
+      {},
+    );
+    const markup = renderToStaticMarkup(
+      createElement(ItemDetail, {
+        item: { entities: [item], displayName: item.name },
+        byId: new Map([[item.id.toLocaleLowerCase(), item]]),
+      }),
+    );
+    expect(markup).not.toContain("Hidden source");
+    expect(markup).not.toContain("detail-source-note");
+  });
+
   const coins = (copper: number, gold: number, platinum = 0) => ({
     copper,
     silver: 0,
@@ -138,18 +166,20 @@ describe("equipment item details", () => {
       },
     );
     const markup = renderToStaticMarkup(
-      createElement(ItemDetail, {
-        item: {
-          entities: [base, enchantment],
-          displayName: "Hammer Heavy Shield",
-        },
-        byId: new Map(
-          [base, enchantment].map((item) => [
-            item.id.toLocaleLowerCase(),
-            item,
-          ]),
-        ),
-      }),
+      sourcesShown(
+        createElement(ItemDetail, {
+          item: {
+            entities: [base, enchantment],
+            displayName: "Hammer Heavy Shield",
+          },
+          byId: new Map(
+            [base, enchantment].map((item) => [
+              item.id.toLocaleLowerCase(),
+              item,
+            ]),
+          ),
+        }),
+      ),
     );
 
     // The builder shows the sheet's item card for the composed item (D079).
@@ -194,18 +224,20 @@ describe("equipment item details", () => {
       },
     );
     const markup = renderToStaticMarkup(
-      createElement(ItemDetail, {
-        item: {
-          entities: [base, enchantment],
-          displayName: "Bloodiron Plate Armor +2",
-        },
-        byId: new Map(
-          [base, enchantment].map((item) => [
-            item.id.toLocaleLowerCase(),
-            item,
-          ]),
-        ),
-      }),
+      sourcesShown(
+        createElement(ItemDetail, {
+          item: {
+            entities: [base, enchantment],
+            displayName: "Bloodiron Plate Armor +2",
+          },
+          byId: new Map(
+            [base, enchantment].map((item) => [
+              item.id.toLocaleLowerCase(),
+              item,
+            ]),
+          ),
+        }),
+      ),
     );
 
     expect(markup).toContain("print-item-card is-panel");
@@ -224,7 +256,7 @@ describe("equipment item details", () => {
     expect(markup).not.toContain("Duplicated armor text.");
     expect(markup).toContain("Reward an aggressive wearer.");
     expect(markup).toContain("Sources: Physical source; Magic source");
-    expect(markup.match(/detail-source-note/g)).toHaveLength(1);
+    expect(markup.match(/print-card-source"/g)).toHaveLength(1);
   });
 
   it("renders an owned base item before its enchantment under one composed title", () => {
@@ -266,13 +298,15 @@ describe("equipment item details", () => {
     );
 
     const markup = renderToStaticMarkup(
-      createElement(ItemDetail, {
-        item: {
-          entities: [base, enchantment],
-          displayName: "Protective Public Warhammer +2",
-        },
-        byId,
-      }),
+      sourcesShown(
+        createElement(ItemDetail, {
+          item: {
+            entities: [base, enchantment],
+            displayName: "Protective Public Warhammer +2",
+          },
+          byId,
+        }),
+      ),
     );
 
     expect(markup).toContain("print-item-card is-panel");
@@ -295,7 +329,7 @@ describe("equipment item details", () => {
     expect(markup).toContain(
       "Sources: Public base source; Public enchantment source",
     );
-    expect(markup.match(/detail-source-note/g)).toHaveLength(1);
+    expect(markup.match(/print-card-source"/g)).toHaveLength(1);
   });
 
   it("preserves both definitions through inventory, loadout, and shop inspection", () => {
@@ -347,10 +381,12 @@ describe("equipment item details", () => {
       { Weight: "1 lb." },
     );
     const markup = renderToStaticMarkup(
-      createElement(ItemDetail, {
-        item: { entities: [item], displayName: item.name },
-        byId: new Map([[item.id.toLocaleLowerCase(), item]]),
-      }),
+      sourcesShown(
+        createElement(ItemDetail, {
+          item: { entities: [item], displayName: item.name },
+          byId: new Map([[item.id.toLocaleLowerCase(), item]]),
+        }),
+      ),
     );
 
     expect(markup).toContain("Public Adventuring Gear");

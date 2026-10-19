@@ -15,7 +15,9 @@ import {
   type SheetCard,
 } from "@4ecb/sheet-model";
 
+import { entityCardSource } from "./EntityCard";
 import { HideFlavortextContext } from "./HideFlavortextContext";
+import { ShowEntitySourceContext } from "./ShowEntitySourceContext";
 import { ItemCard } from "./ItemCard";
 import { PowerCard, type CardTextPresentation } from "./PowerCard";
 import {
@@ -139,6 +141,7 @@ export function BuilderPowerCard({
 }) {
   const settings = useContext(BuilderCardContext);
   const hideFlavortext = useContext(HideFlavortextContext);
+  const showSource = useContext(ShowEntitySourceContext);
   const card = settings.powerCardFor(entity);
   return (
     <PowerCard
@@ -151,6 +154,9 @@ export function BuilderPowerCard({
         headingId: headingIdFor(entity, headingSuffix),
         subheading,
         headerAction,
+        ...(showSource
+          ? { source: `Source: ${entityCardSource(entity)}` }
+          : {}),
         ...(hideFlavortext || card.flavor === undefined
           ? {}
           : { flavor: card.flavor }),
@@ -177,8 +183,11 @@ export function BuilderItemCard({
 }) {
   const settings = useContext(BuilderCardContext);
   const hideFlavortext = useContext(HideFlavortextContext);
+  const showSource = useContext(ShowEntitySourceContext);
   const entity = entities.at(-1);
   if (entity === undefined) return null;
+  // A composed item (e.g. a magic armor on a base armor) cites each source.
+  const sources = [...new Set(entities.map(entityCardSource))];
   const card = sheetItemCard({ name, entities });
   return (
     <ItemCard
@@ -189,6 +198,11 @@ export function BuilderItemCard({
         headingId: headingIdFor(entity, headingSuffix),
         subheading,
         headerAction,
+        ...(showSource
+          ? {
+              source: `${sources.length === 1 ? "Source" : "Sources"}: ${sources.join("; ")}`,
+            }
+          : {}),
         ...(hideFlavortext || card.flavor === undefined
           ? {}
           : { flavor: card.flavor }),

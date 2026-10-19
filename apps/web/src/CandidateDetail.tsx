@@ -22,17 +22,25 @@ import {
   isItemEntity,
 } from "./EntityCard";
 import { HideFlavortextContext } from "./HideFlavortextContext";
+import { ShowEntitySourceContext } from "./ShowEntitySourceContext";
 import { Icon } from "./Icon";
 import { ProseBlocks, proseBlocks } from "./Prose";
+import {
+  StructuredEntityBody,
+  structuredEntityKind,
+} from "./StructuredEntityBody";
 
 export function CandidateDetail({
   candidate,
   entity,
   byId,
+  favoritable = false,
 }: {
   readonly candidate: CandidateDecision | undefined;
   readonly entity: ContentEntity | undefined;
   readonly byId: ReadonlyMap<string, ContentEntity>;
+  /** The option came from a selection table: offer the favorite star. */
+  readonly favoritable?: boolean;
 }) {
   if (candidate === undefined || entity === undefined)
     return (
@@ -56,7 +64,12 @@ export function CandidateDetail({
   );
   return (
     <div className="candidate-detail-stack">
-      <CandidateDetailCard candidate={candidate} entity={entity} />
+      <CandidateDetailCard
+        candidate={candidate}
+        entity={entity}
+        favoritable={favoritable}
+        references={referenceIndex}
+      />
       {grantedEntities.map((granted) => (
         <CandidateDetailCard
           key={granted.id}
@@ -71,15 +84,9 @@ export function CandidateDetail({
         >
           {themePowers.flatMap((group) =>
             group.powers.map((power) => (
-              <CandidateDetailCard
-                entity={power}
-                key={power.id}
-                relationship={
-                  group.level === undefined
-                    ? "Theme power"
-                    : `Theme power · Level ${group.level}`
-                }
-              />
+              // Under its theme a power needs no "Theme power" label, and its
+              // level is on the card's own type bar.
+              <CandidateDetailCard entity={power} key={power.id} />
             )),
           )}
         </section>
@@ -143,22 +150,34 @@ export function CandidateDetailCard({
   candidate,
   entity,
   relationship,
+  favoritable = false,
+  references,
 }: {
   readonly candidate?: CandidateDecision;
   readonly entity: ContentEntity;
   readonly relationship?: string;
+  readonly favoritable?: boolean;
+  /** Content by id and name; lets race/class cards list their traits and
+   * features inside the card (StructuredEntityBody). */
+  readonly references?: ReadonlyMap<string, ContentEntity>;
 }) {
   const hideFlavortext = useContext(HideFlavortextContext);
+  const showSource = useContext(ShowEntitySourceContext);
   const headingSuffix = relationship === undefined ? "" : "-granted";
   const headingId = `candidate-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}${headingSuffix}`;
   const isThemeCandidate =
     candidate !== undefined &&
     entity.type.trim().toLocaleLowerCase() === "theme";
   const isPower = entity.type.trim().toLocaleLowerCase() === "power";
+  const structuredKind = structuredEntityKind(entity);
   const isUnavailable = candidate !== undefined && !candidate.eligible;
   // Only the option being inspected, not cards for what it grants.
+  // Only an option picked from a table (not a card it grants, nor a button
+  // choice like Gender) can be favorited.
   const headerAction =
-    candidate === undefined || relationship !== undefined ? undefined : (
+    candidate === undefined ||
+    relationship !== undefined ||
+    !favoritable ? undefined : (
       <FavoriteToggle entity={entity} />
     );
   const subheading =
@@ -196,11 +215,6 @@ export function CandidateDetailCard({
             headerAction={headerAction}
           />
         )}
-        {relationship === undefined ? (
-          <p className="detail-source-note">
-            Source: {entityCardSource(entity)}
-          </p>
-        ) : null}
       </div>
     );
   // Other choices use the printed card's frame: a solid title band, card
@@ -223,31 +237,42 @@ export function CandidateDetailCard({
           <div className="reference-card-subheading">{subheading}</div>
         )}
         <div className="reference-card-body">
-          <EntityCardBody
-            entity={entity}
-            hideFlavortext={hideFlavortext}
-            showSource={false}
-            {...(isThemeCandidate
-              ? {
-                  renderDescription: (description: string) => (
-                    <ThemeCandidateDescription
-                      key={entity.id}
-                      description={description}
-                      entityName={entity.name}
-                      id={`${headingId}-description`}
-                    />
-                  ),
-                }
-              : {})}
-          />
+          {structuredKind !== undefined && references !== undefined ? (
+            <StructuredEntityBody
+              entity={entity}
+              hideFlavortext={hideFlavortext}
+              kind={structuredKind}
+              references={references}
+            />
+          ) : (
+            <EntityCardBody
+              entity={entity}
+              hideFlavortext={hideFlavortext}
+              showSource={false}
+              {...(isThemeCandidate
+                ? {
+                    renderDescription: (description: string) => (
+                      <ThemeCandidateDescription
+                        key={entity.id}
+                        description={description}
+                        entityName={entity.name}
+                        id={`${headingId}-description`}
+                      />
+                    ),
+                  }
+                : {})}
+            />
+          )}
         </div>
+        {showSource ? (
+          <footer className="reference-card-source">
+            Source: {entityCardSource(entity)}
+          </footer>
+        ) : null}
         <div className="print-card-type">
           <span>{primaryDetailTypeLabel(entity)}</span>
         </div>
       </aside>
-      {relationship === undefined ? (
-        <p className="detail-source-note">Source: {entityCardSource(entity)}</p>
-      ) : null}
     </div>
   );
 }

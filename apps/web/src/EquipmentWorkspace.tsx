@@ -12,7 +12,6 @@ import {
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import { grantedDetailEntities } from "./builder-ui";
-import { entityCardSource } from "./EntityCard";
 import {
   alchemicalFormulaItems,
   comparableSaleProceeds,
@@ -237,9 +236,6 @@ export function ItemDetail({
     const name = candidate.name.trim().toLocaleLowerCase();
     if (!references.has(name)) references.set(name, candidate);
   }
-  const sources = [
-    ...new Set(item.entities.map((component) => entityCardSource(component))),
-  ];
   // Powers granted by any component, and an item-owned choice resolved to a
   // power (e.g. the Power picked for a Genasi Soul Armor), are sibling cards.
   const powers = [
@@ -265,9 +261,6 @@ export function ItemDetail({
     <div className="candidate-detail-stack">
       <div className="candidate-card-panel">
         <BuilderItemCard name={item.displayName} entities={item.entities} />
-        <p className="detail-source-note">
-          {sources.length === 1 ? "Source" : "Sources"}: {sources.join("; ")}
-        </p>
       </div>
       {powers.map((power) => (
         <BuilderPowerCard
@@ -283,9 +276,6 @@ export function ItemDetail({
             entities={[formulaItem]}
             headingSuffix="-formula"
           />
-          <p className="detail-source-note">
-            Source: {entityCardSource(formulaItem)}
-          </p>
         </div>
       )}
     </div>
@@ -947,6 +937,7 @@ export function EquipmentWorkspace({
                                           removeAction.isArmed(entry.id);
                                         return (
                                           <tr
+                                            className="table-clickable-row"
                                             key={entry.id}
                                             title={loadoutToggleDescription}
                                             onClick={() =>

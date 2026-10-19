@@ -86,6 +86,9 @@ describe("legacy-derived visual language", () => {
   });
 
   it("maps familiar entity families to monochrome icons", () => {
+    expect(entityTypeIcon("Class")).toBe("character");
+    expect(entityTypeIcon("Paragon Path")).toBe("crown");
+    expect(entityTypeIcon("Epic Destiny")).toBe("sun");
     expect(entityTypeIcon("Race")).toBe("race");
     expect(entityTypeIcon("Feat")).toBe("feat");
     expect(entityTypeIcon("Power")).toBe("power");

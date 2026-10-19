@@ -182,6 +182,9 @@ export function ItemCard({
       <footer className="print-item-footer">
         <span>{item.metadata}</span>
         <span className="print-item-footer-details">{item.footerDetails}</span>
+        {panel.source === undefined ? null : (
+          <span className="print-card-source">{panel.source}</span>
+        )}
       </footer>
       {panel.afterBody}
       <div className="print-card-type">

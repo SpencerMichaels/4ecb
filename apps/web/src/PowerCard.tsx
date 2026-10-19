@@ -136,6 +136,8 @@ export interface CardPanelProps {
   readonly afterBody?: ReactNode;
   /** A control at the right end of the title band (e.g. a favorite star). */
   readonly headerAction?: ReactNode;
+  /** A "Source: …" line at the bottom of the card, above its type bar. */
+  readonly source?: string;
   readonly textPresentation?: CardTextPresentation;
 }
 
@@ -387,6 +389,11 @@ export function PowerCard({
         )}
       </div>
       {panel.afterBody}
+      {panel.source === undefined ? null : (
+        <footer className="print-card-source-footer">
+          <span className="print-card-source">{panel.source}</span>
+        </footer>
+      )}
       <div className="print-card-type">
         <span>{typeLabel}</span>
         {level === undefined ? null : <span>Level {level}</span>}
