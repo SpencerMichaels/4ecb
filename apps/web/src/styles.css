@@ -12,6 +12,10 @@
   --accent: #315f85;
   --accent-strong: #1d3d5d;
   --accent-soft: #dbe7f1;
+  /* Generic "selected" (rows, buttons, segments): the blue accent. Green is
+     kept for done/gained, and power colors for power usage. */
+  --selected: var(--accent);
+  --selected-soft: color-mix(in srgb, var(--accent) 38%, var(--surface));
   --brand-navy: #1d3d5d;
   --brand-blue: #4682b4;
   --focus: #4682b4;
@@ -320,6 +324,14 @@ a {
     padding-block: 0.42rem;
     text-box: trim-both cap alphabetic;
   }
+}
+
+/* The library's brand with the running version beside it. */
+.library-brand {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
 }
 
 .app-brand-name {
@@ -1134,7 +1146,7 @@ textarea {
   text-decoration: none;
   width: 2rem;
 }
-.character-card-action:hover {
+.character-card-action:not(:disabled):hover {
   background: var(--surface-subtle);
   border-color: var(--border);
 }
@@ -4484,7 +4496,7 @@ textarea {
 }
 
 .character-detail-choice .compact-choice-options > button.is-selected {
-  box-shadow: inset 0 -3px var(--success);
+  box-shadow: inset 0 -3px var(--selected);
   font-weight: 800;
   position: relative;
 }
@@ -4635,13 +4647,11 @@ textarea {
 }
 
 .compact-choice-options > button.is-selected {
-  background: var(--success-soft);
-  border-left-color: var(--success);
+  background: var(--selected-soft);
 }
 
 .race-ability-choice.is-selected {
-  background: var(--success-soft);
-  border-left-color: var(--success);
+  background: var(--selected-soft);
   color: var(--text);
   font-weight: 700;
 }
@@ -5039,8 +5049,21 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
   background: color-mix(in srgb, var(--power-item) 14%, var(--surface));
 }
 
+/* Selected rows take the blue accent tint the choice cards and the Shop's
+   selected rows use; green would read as an at-will power. Power tables
+   tint by the power's own usage color instead (below). */
 .selection-table-scroll tbody tr.selection-row-selected {
-  background: var(--success-soft);
+  background: var(--selected-soft);
+}
+
+/* ...and its leading tone bar (4px on every row, below) widens, so a
+   selection stands out from the stripes at a glance. */
+.candidate-selection-table:not(.candidate-selection-power)
+  .selection-table-scroll
+  tbody
+  tr.selection-row-selected
+  > td:first-child {
+  box-shadow: inset 6px 0 var(--selected);
 }
 
 .candidate-selection-power
@@ -5277,7 +5300,7 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 }
 
 .selection-table-scroll .selection-family-row.selection-row-selected {
-  background: var(--success-soft);
+  background: var(--selected-soft);
 }
 
 .selection-table-scroll td.selection-table-nested {
@@ -5546,13 +5569,13 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 }
 
 .skill-toggle-list button.skill-trained {
-  background: var(--success-soft);
-  border-color: var(--success);
-  box-shadow: inset 4px 0 var(--success);
+  background: var(--selected-soft);
+  border-color: var(--selected);
+  box-shadow: inset 4px 0 var(--selected);
 }
 
 .skill-toggle-list button.skill-trained .skill-toggle-status {
-  color: var(--success);
+  color: var(--selected);
 }
 
 .ability-choice-count {
@@ -5587,9 +5610,9 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 }
 
 .ability-increase-grid button.ability-selected {
-  background: var(--success-soft);
-  border-color: var(--success);
-  box-shadow: inset 4px 0 var(--success);
+  background: var(--selected-soft);
+  border-color: var(--selected);
+  box-shadow: inset 4px 0 var(--selected);
 }
 
 .ability-option-score {
@@ -6446,8 +6469,9 @@ label.inline-field > select:disabled {
   );
 }
 
-.shop-table tbody tr.is-selected {
-  background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+.shop-table tbody tr.is-selected,
+.retraining-levels tbody tr.is-selected {
+  background: var(--selected-soft);
   box-shadow: inset 3px 0 var(--accent);
 }
 
@@ -7104,6 +7128,15 @@ button.inventory-icon-action:disabled {
     min-height: 0;
   }
 
+  /* Retraining: content fills the pane, so its level page scrolls like
+     Build's. */
+  .builder-workspace > .choice-pane > .retraining-content {
+    display: grid;
+    flex: 1 1 0;
+    grid-template-rows: minmax(0, 1fr);
+    min-height: 0;
+  }
+
   .builder-workspace .level-choice-workspace {
     grid-template-rows: minmax(0, 1fr);
     min-height: 0;
@@ -7713,4 +7746,129 @@ button.toast-dismiss:not(:disabled):hover {
 
 .trash-list > li > span {
   overflow-wrap: anywhere;
+}
+
+/* Retraining tab: the levels that can retrain (one retrain per level), then
+   the selected level's skill / feat / power accordion. */
+.retraining-levels {
+  border: 1px solid var(--border);
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.retraining-levels :is(th, td) {
+  border-bottom: 1px solid var(--border);
+  padding: 0.3rem 0.6rem;
+  text-align: left;
+}
+
+.retraining-levels th {
+  background: var(--surface-subtle);
+  font-size: 0.85rem;
+}
+
+.retraining-levels :is(th, td):first-child {
+  font-variant-numeric: tabular-nums;
+  width: 3rem;
+}
+
+.retraining-levels :is(th, td):nth-child(2) {
+  width: 4.5rem;
+}
+
+.retraining-levels :is(th, td):last-child {
+  text-align: right;
+  white-space: nowrap;
+  width: 6rem;
+}
+
+/* Row actions: the bare icon buttons of the library cards, right-aligned. */
+.retraining-row-actions {
+  justify-content: flex-end;
+}
+
+.retraining-levels tbody tr.table-clickable-row {
+  cursor: pointer;
+}
+
+.retraining-levels tbody tr.table-clickable-row:hover > td {
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--accent) 18%, transparent),
+    color-mix(in srgb, var(--accent) 18%, transparent)
+  );
+}
+
+.retraining-none,
+.retraining-empty {
+  color: var(--muted);
+}
+
+.retraining-level {
+  border: 1px solid var(--border);
+}
+
+.retraining-empty {
+  margin: 0;
+  padding: 0 0.8rem 0.8rem;
+}
+
+.retraining-editor {
+  padding: 0 0.8rem 0.8rem;
+}
+
+/* What is given up: a short list, so it takes at most about a third of the
+   window and the replacement table below gets the rest. */
+.replacement-targets .selection-table-scroll {
+  max-height: min(14rem, 33dvh);
+}
+
+/* One level's retraining: the accordion beside its details card; the body
+   scrolls inside the dialog, the details card on its own. */
+.retraining-dialog {
+  overflow: hidden;
+  width: min(64rem, calc(100vw - 2rem));
+}
+
+.retraining-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.retraining-dialog-body {
+  align-items: start;
+  display: grid;
+  flex: 1 1 auto;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) var(--panel-card-width);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1rem;
+}
+
+.retraining-dialog-detail {
+  max-height: calc(100dvh - 9rem);
+  min-width: 0;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+}
+
+@media (max-width: 48rem) {
+  .retraining-dialog-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .retraining-dialog-detail {
+    position: static;
+  }
+}
+
+.replace-retrain-dialog {
+  width: 28rem;
+}
+
+.replace-retrain-body {
+  margin: 0;
+  padding: 1rem;
 }

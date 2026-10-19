@@ -196,7 +196,14 @@ describe("one table or none at a time", () => {
     expect(source).toContain(
       "if (firstChoiceId !== undefined) setSelectedChoiceId(firstChoiceId);",
     );
-    expect(source).toContain("{open ? children : null}");
+    // The fold itself is the shared ChoiceAccordionItem (also Retraining).
+    expect(source).toContain("<ChoiceAccordionItem");
+    expect(
+      readFileSync(
+        new URL("./ChoiceAccordionItem.tsx", import.meta.url),
+        "utf8",
+      ),
+    ).toContain("{open ? children : null}");
     // By default the open item follows the tab's selected choice, which a
     // selection never moves: no auto-advance to the next unresolved choice.
     expect(source).toContain(

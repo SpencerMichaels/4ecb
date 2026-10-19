@@ -120,6 +120,17 @@ instances listed.
   every hard-coded dark-theme color is checked against the surrounding
   palette; lower saturation and lightness, keep the hue, keep white-on-color
   text above 4.5:1. Item orange (`#e08a12`) still to review.
+- **Colors that already mean something.** Selected rows in background, theme
+  and deity tables were green, the at-will power color, while their cards are
+  navy. Rule: a color with a game meaning (power usage tones) is used only for
+  that meaning, and green only for done or gained (completion checks, a
+  wallet increase). Everything selected (table rows, segmented controls,
+  trained skills, ability and race-bonus buttons) uses the `--selected` /
+  `--selected-soft` tokens, the blue accent.
+- **"Undo" for things that aren't undo.** The retraining row's × was "Undo
+  retrain". Rule: "Undo" means reversing the last action (the builder's undo
+  button); taking something out is "Remove". Row actions are bare icon
+  buttons with spacing (`character-card-action`), never boxed ×s.
 - **Capitalisation and wording.** "Str" vs "STR"; "Browse" (a verb) naming a
   filter; "Loading" for something that's generated; "1 warnings"; "character
   sheet" in one message and "X's sheet" in the next. Rule: ability
@@ -401,7 +412,21 @@ implemented together after the walkthrough.
    & storage keeps a small "Keep data in this browser" button beside its
    storage sentence. Status: implemented; visual review pending.
 
-Also fixed while implementing (same kinds):
+8. **Retraining is basic and hidden in a level section tab** (information you
+   can't inspect; controls that disappear; the UI acting on its own;
+   redundant headings). The Replace targets were bare buttons; the three
+   "Retrain a …" buttons vanished after a pick; a target with one possible
+   replacement was applied silently; three stacked headings. Decision (with
+   the product owner): Retraining becomes its own builder tab, as in the
+   legacy builder. It is an overview table of every level that can retrain
+   (one retrain per level: Lvl, Kind, Replaced, With, edit/remove); editing a
+   level opens a dialog with three always-present items "Retrain a skill /
+   feat / power", one expanded at a time (an inline editor under the table
+   was pushed off screen as the table grew). The expanded item shows a Replace table (what you give up, with the
+   details pane) and the With table. Picking in another category when the
+   level already retrains confirms first ("Acrobatics → Athletics will be
+   removed"). No auto-apply. The Build tab loses its Retraining section tab.
+   Status: implemented; visual review pending.
 
 - Three copies of `download()` (library, Settings, content-update dialog)
   are one `download.ts`, which also holds the character backup used by

@@ -408,6 +408,18 @@ export function isOptionalRetrainingChoice(choice: EvaluatedChoice): boolean {
   );
 }
 
+/** Which kind of thing a retrain replaces: a skill, a feat or a power. */
+export type RetrainingCategory = "skill" | "feat" | "power";
+
+export function retrainingCategory(
+  type: string | undefined,
+): RetrainingCategory | undefined {
+  const normalized = type?.trim().toLocaleLowerCase();
+  if (normalized === "skill training" || normalized === "skill") return "skill";
+  if (normalized === "feat" || normalized === "power") return normalized;
+  return undefined;
+}
+
 export function isBuildPresetChoice(choice: EvaluatedChoice): boolean {
   return ["build", "class build"].includes(
     choice.type.trim().toLocaleLowerCase(),

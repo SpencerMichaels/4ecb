@@ -13,7 +13,8 @@ export function planningCandidateDetailLevels(
   selectedLevel: number,
   characterDetailLevels: readonly number[],
 ): readonly number[] {
-  if (workspace === "build") return [selectedLevel];
+  if (workspace === "build" || workspace === "retraining")
+    return [selectedLevel];
   if (workspace === "details")
     return uniqueLevels([selectedLevel, ...characterDetailLevels]);
   return [];

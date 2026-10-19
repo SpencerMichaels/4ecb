@@ -1,5 +1,17 @@
 # Implementation status
 
+## Retraining tab and replacement candidates (2026-10-18)
+
+Retraining is its own builder tab: an overview table of every level's retrain
+with a per-level edit dialog (see the interface brief). Rules engine: what a
+replacement (retraining, power swap) may take now has its prerequisites
+checked at the replacement's level, like ordinary choices (they were never
+checked, so e.g. an 11th-level wizard feat was offered to a character who
+is neither), and the retrained definition itself is no longer offered
+(Endurance → Endurance). What a retrain gives up never counts toward what it
+takes (D084). Evaluation cache bumped to v15. Verification: 965 workspace
+tests, typecheck and lint pass; visual review is pending.
+
 ## UI polish pass (2026-10-18, branch `builder-character-sidebar`)
 
 Audit findings and decisions are in `CLEANUP.md` (Current pass, items 1–7).

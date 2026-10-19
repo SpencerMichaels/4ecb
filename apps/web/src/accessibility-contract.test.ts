@@ -639,7 +639,7 @@ describe("release accessibility contract", () => {
     expect(compactChoices).not.toContain("compact-choice-clear");
     expect(compactChoices).not.toContain('name="check"');
     expect(styles).toMatch(
-      /\.compact-choice-options > button\.is-selected\s*\{[^}]*background: var\(--success-soft\)[^}]*border-left-color: var\(--success\)/,
+      /\.compact-choice-options > button\.is-selected\s*\{\s*background: var\(--selected-soft\);\s*\}/,
     );
 
     const baseAbilities = baseAbilityScoreEditor.slice(
@@ -687,7 +687,7 @@ describe("release accessibility contract", () => {
       "candidate === undefined || candidate.eligible",
     );
     expect(styles).toMatch(
-      /\.race-ability-choice\.is-selected\s*\{[^}]*background: var\(--success-soft\)[^}]*border-left-color: var\(--success\)/,
+      /\.race-ability-choice\.is-selected\s*\{(?![^}]*border-left-color)[^}]*background: var\(--selected-soft\)/,
     );
     expect(styles).toMatch(
       /\.ability-stepper input\s*\{[^}]*appearance: textfield/,
@@ -732,7 +732,7 @@ describe("release accessibility contract", () => {
     expect(abilityChoices).toContain('"ability-selected"');
     expect(abilityChoices).not.toContain('name="check"');
     expect(styles).toMatch(
-      /\.ability-increase-grid button\.ability-selected\s*\{[^}]*background: var\(--success-soft\)[^}]*border-color: var\(--success\)/,
+      /\.ability-increase-grid button\.ability-selected\s*\{[^}]*background: var\(--selected-soft\)[^}]*border-color: var\(--selected\)/,
     );
     expect(styles).toMatch(
       /\.level-choice-section\.ability-increase-section > header\s*\{[^}]*margin: -1rem -1rem 1rem;[^}]*padding: 0\.75rem 1rem;/,
@@ -910,7 +910,7 @@ describe("release accessibility contract", () => {
     expect(resultToolsIndex).toBeGreaterThan(subtypeIndex);
     expect(searchIndex).toBeGreaterThan(resultToolsIndex);
     expect(styles).toMatch(
-      /\.shop-table tbody tr\.is-selected\s*\{[^}]*box-shadow: inset 3px 0 var\(--accent\)/s,
+      /\.shop-table tbody tr\.is-selected[^{]*\{[^}]*box-shadow: inset 3px 0 var\(--accent\)/s,
     );
     expect(styles).toMatch(
       /\.shop-toolbar > label,[\s\S]*?\.shop-physical-tools label\s*\{[^}]*color: var\(--muted\);[^}]*font-size: 0\.6875rem;[^}]*font-weight: 800;[^}]*letter-spacing: 0\.05em;[^}]*text-transform: uppercase;/s,

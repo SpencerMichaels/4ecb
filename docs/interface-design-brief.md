@@ -376,14 +376,22 @@ pane and supporting filter prose; they also have no candidate table and so
 carry no illegal-options toggle.
 
 Ordinary optional replacement rules are presented as retraining, matching the
-player-facing game concept. An unused retraining slot is absent from the level
-rail and Overview history and initially renders only **Retrain a skill…**, **Retrain a feat…**,
-and **Retrain a power…** actions for categories actually available. Activating
-one reveals a category-filtered editor that can be cancelled before a choice is
-made. An imported or completed retraining remains visible in the level pane and
-Overview history, but not as a required decision, and can be explicitly removed
-with the same compact X affordance used for other optional additions to restore
-the replaced selection. Special replacements that
+player-facing game concept, on their own builder tab (**Retraining**, as in the legacy builder; last,
+after Shop, as the least used; 2026-10-18). The tab is an overview table of
+every level up to the current one that can retrain (one retrain per level):
+Lvl, Kind, Replaced, With, and edit/remove buttons, so every retrain is visible
+at once however many levels there are. Clicking a row shows its replacement
+in the details pane; double-clicking it or its edit button opens a **Level N
+retraining** dialog with three always-present accordion items, **Retrain a
+skill / feat / power**, one open at a time, beside a details card. An open
+item shows a Replace table (what is given up, all sections expanded) and the
+replacement table. Changes apply as they are made, so the dialog has only a
+close ×. Nothing is
+applied on its own, even with a single possible replacement. Choosing in
+another kind than the level's current retrain confirms first, since it removes
+that retrain. Retraining is never a required decision and stays out of the
+level picker's progress. Old `tab=build&section=retraining` links open the
+Retraining tab. Special replacements that
 are consequences of another choice, such as Rapid Shot Mastery, remain inside
 that choice's progressive flow rather than being relabeled as retraining.
 

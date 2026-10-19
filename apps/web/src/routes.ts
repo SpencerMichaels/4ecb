@@ -1,5 +1,11 @@
 export type BuilderWorkspaceTab =
-  "build" | "details" | "equipment" | "shop" | "diagnostics" | "house-rules";
+  | "build"
+  | "retraining"
+  | "details"
+  | "equipment"
+  | "shop"
+  | "diagnostics"
+  | "house-rules";
 
 export type BuilderSectionSlug =
   | "class"
@@ -42,6 +48,7 @@ export type BuilderNavigation =
       readonly level?: number;
       readonly section?: BuilderSectionSlug;
     }
+  | { readonly workspace: "retraining"; readonly level?: number }
   | { readonly workspace: "details" | "diagnostics" | "house-rules" }
   | { readonly workspace: "equipment"; readonly loadout?: boolean }
   | { readonly workspace: "shop"; readonly category?: ShopCategory };
@@ -59,6 +66,7 @@ export type AppRoute =
 
 const BUILDER_WORKSPACES: readonly BuilderWorkspaceTab[] = [
   "build",
+  "retraining",
   "details",
   "equipment",
   "shop",
@@ -133,15 +141,22 @@ function parseBuilderNavigation(query: string): BuilderNavigation {
       ...(includesValue(SHOP_CATEGORIES, category) ? { category } : {}),
     };
   }
-  if (workspace !== "build") return { workspace };
   const levelValue = parameters.get("level");
   const level = levelValue === null ? undefined : Number(levelValue);
+  const levelParameter =
+    Number.isInteger(level) && level! >= 1 && level! <= 30
+      ? { level: level as number }
+      : {};
+  if (workspace === "retraining")
+    return { workspace: "retraining", ...levelParameter };
+  if (workspace !== "build") return { workspace };
   const section = parameters.get("section");
+  // Retraining was a Build section; it is its own tab now.
+  if (section === "retraining")
+    return { workspace: "retraining", ...levelParameter };
   return {
     workspace,
-    ...(Number.isInteger(level) && level! >= 1 && level! <= 30
-      ? { level: level as number }
-      : {}),
+    ...levelParameter,
     ...(includesValue(BUILDER_SECTIONS, section) ? { section } : {}),
   };
 }
@@ -193,6 +208,9 @@ export function characterEditorHash(
       parameters.set("level", String(navigation.level));
     if (navigation.section !== undefined)
       parameters.set("section", navigation.section);
+  } else if (navigation.workspace === "retraining") {
+    if (navigation.level !== undefined)
+      parameters.set("level", String(navigation.level));
   } else if (navigation.workspace === "equipment") {
     if (navigation.loadout === true) parameters.set("loadout", "1");
   } else if (navigation.workspace === "shop") {

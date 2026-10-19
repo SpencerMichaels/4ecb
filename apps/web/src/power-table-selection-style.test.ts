@@ -22,7 +22,9 @@ describe("power candidate-table selection styling", () => {
       ".candidate-selection-power\n  .selection-table-scroll\n  tbody\n  tr.selection-row-selected",
     );
 
-    expect(genericSelection).toContain("background: var(--success-soft)");
+    // Non-power rows take the blue accent tint of the choice cards (green
+    // would read as an at-will power).
+    expect(genericSelection).toContain("background: var(--selected-soft)");
     expect(powerSelection).toContain("background: var(--tone-soft)");
     expect(powerSelection).not.toContain("var(--success-soft)");
   });

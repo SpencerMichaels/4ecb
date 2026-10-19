@@ -211,7 +211,7 @@ button.dialog-close {
 }
 
 .segmented-control-options > label:has(input:checked) {
-  box-shadow: inset 0 -3px var(--success);
+  box-shadow: inset 0 -3px var(--selected);
   font-weight: 800;
   position: relative;
 }

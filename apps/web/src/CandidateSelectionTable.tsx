@@ -286,6 +286,7 @@ export function CandidateSelectionTable({
   disabled,
   selectionLimit,
   nameColumnLabel,
+  expandSections = false,
   selectedOnlyToggle = false,
   showIllegal,
   onExpandGroup,
@@ -303,6 +304,9 @@ export function CandidateSelectionTable({
   readonly disabled: boolean;
   readonly selectionLimit?: number;
   readonly nameColumnLabel?: string;
+  /** Open every type section by default (short lists, e.g. what the
+   *  character already has); they can still be folded by hand. */
+  readonly expandSections?: boolean;
   /** Offer an "N selected" toggle that narrows the table to its selections,
    *  instead of pinning selected rows to the table's edges (many-pick tables
    *  like backgrounds, where pinning only some rows makes no sense). */
@@ -806,7 +810,8 @@ export function CandidateSelectionTable({
       );
     const expanded =
       normalizedFilter !== "" ||
-      (typeExpansion.get(section.key) ?? (selected || sectionIndex === 0));
+      (typeExpansion.get(section.key) ??
+        (expandSections || selected || sectionIndex === 0));
     const rows: ResultRow[] = [];
     if (expanded && kind !== "feat") {
       for (const candidate of [...section.candidates].sort((left, right) =>

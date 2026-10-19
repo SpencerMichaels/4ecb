@@ -231,4 +231,17 @@ describe("hash routes", () => {
     ).toBeUndefined();
     expect(canonicalHashRedirect("#/settings")).toBe(undefined);
   });
+  it("gives Retraining its own builder tab, redirecting the old Build section", () => {
+    expect(
+      parseHashRoute("#/characters/c/edit?tab=retraining&level=4"),
+    ).toMatchObject({ builder: { workspace: "retraining", level: 4 } });
+    expect(
+      parseHashRoute(
+        "#/characters/c/edit?tab=build&level=4&section=retraining",
+      ),
+    ).toMatchObject({ builder: { workspace: "retraining", level: 4 } });
+    expect(
+      characterEditorHash("c", { workspace: "retraining", level: 4 }),
+    ).toBe("#/characters/c/edit?tab=retraining&level=4");
+  });
 });

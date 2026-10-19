@@ -41,6 +41,7 @@ import {
   selectedChoiceIsHouseRule,
   selectedDefinitionId,
   selectedOccurrence,
+  retrainingCategory,
   unresolveEvaluatedChoiceCommand,
   type ChoiceSelectionTableKind,
 } from "./builder-ui";
@@ -49,13 +50,6 @@ import { CandidateDetail } from "./CandidateDetail";
 import { CandidateSelectionTable } from "./CandidateSelectionTable";
 import { Icon } from "./Icon";
 import { KeyAbilitiesSummary, KeyAbilityName } from "./KeyAbilityMarker";
-
-function retrainingCategory(type: string | undefined): string | undefined {
-  const normalized = type?.trim().toLocaleLowerCase();
-  if (normalized === "skill training" || normalized === "skill") return "skill";
-  if (normalized === "feat" || normalized === "power") return normalized;
-  return undefined;
-}
 
 export function CompactChoiceButtons({
   label,
@@ -330,6 +324,37 @@ function PresetReplaceDialog({
   );
 }
 
+/** A replace target (something the character has) as a table row. */
+function targetDecision(
+  option: NonNullable<EvaluatedChoice["replacementOptions"]>[number],
+): CandidateDecision {
+  return {
+    definitionId: option.definitionId,
+    eligible: true,
+    sourceEntitled: true,
+    rulesLegal: true,
+    activeDefinition: true,
+    activeOccurrenceIds: [option.replacesOccurrenceId],
+    providerOccurrenceIds: [],
+    reasons: [],
+  };
+}
+
+/** The table kind for a list of powers, feats, backgrounds or other options. */
+function replacementTableKind(
+  definitionIds: readonly string[],
+  byId: ReadonlyMap<string, ContentEntity>,
+): ChoiceSelectionTableKind {
+  const types = definitionIds.map(
+    (id) =>
+      byId.get(id.toLocaleLowerCase())?.type.trim().toLocaleLowerCase() ?? "",
+  );
+  if (types.every((type) => type.includes("power"))) return "power";
+  if (types.every((type) => type.includes("feat"))) return "feat";
+  if (types.every((type) => type === "background")) return "background";
+  return "option";
+}
+
 function ReplacementEditor({
   choice,
   evaluation,
@@ -394,16 +419,7 @@ function ReplacementEditor({
   const detailCandidate = perusingTarget
     ? targetOption === undefined
       ? undefined
-      : {
-          definitionId: targetOption.definitionId,
-          eligible: true,
-          sourceEntitled: true,
-          rulesLegal: true,
-          activeDefinition: true,
-          activeOccurrenceIds: [targetOption.replacesOccurrenceId],
-          providerOccurrenceIds: [],
-          reasons: [],
-        }
+      : targetDecision(targetOption)
     : (target?.candidates ?? []).find(
         (candidate) =>
           candidate.definitionId === perusedId &&
@@ -413,29 +429,25 @@ function ReplacementEditor({
     detailCandidate === undefined
       ? undefined
       : byId.get(detailCandidate.definitionId.toLocaleLowerCase());
-  const replacementKind: ChoiceSelectionTableKind = visible.every((candidate) =>
-    byId
-      .get(candidate.definitionId.toLocaleLowerCase())
-      ?.type.toLocaleLowerCase()
-      .includes("power"),
-  )
-    ? "power"
-    : visible.every((candidate) =>
-          byId
-            .get(candidate.definitionId.toLocaleLowerCase())
-            ?.type.toLocaleLowerCase()
-            .includes("feat"),
+  const replacementKind = replacementTableKind(
+    visible.map(({ definitionId }) => definitionId),
+    byId,
+  );
+  // What can be given up, as table rows with details (not bare buttons).
+  const targetCandidates = options.map(targetDecision);
+  const targetKind = replacementTableKind(
+    options.map(({ definitionId }) => definitionId),
+    byId,
+  );
+  // Feat tables draw their rows from groups, so owned feats need them too.
+  const targetFeatGroups =
+    targetKind === "feat"
+      ? groupParameterizedCandidates(
+          targetCandidates,
+          (definitionId) =>
+            byId.get(definitionId.toLocaleLowerCase())?.name ?? definitionId,
         )
-      ? "feat"
-      : visible.every(
-            (candidate) =>
-              byId
-                .get(candidate.definitionId.toLocaleLowerCase())
-                ?.type.trim()
-                .toLocaleLowerCase() === "background",
-          )
-        ? "background"
-        : "option";
+      : [];
   const replacementFeatGroups =
     replacementKind === "feat"
       ? groupParameterizedCandidates(
@@ -536,29 +548,7 @@ function ReplacementEditor({
       (item) => item.replacesOccurrenceId === nextTargetId,
     );
     setPerusedId(option?.definitionId ?? "");
-    inspect(
-      option === undefined
-        ? undefined
-        : {
-            definitionId: option.definitionId,
-            eligible: true,
-            sourceEntitled: true,
-            rulesLegal: true,
-            activeDefinition: true,
-            activeOccurrenceIds: [option.replacesOccurrenceId],
-            providerOccurrenceIds: [],
-            reasons: [],
-          },
-    );
-    const nextVisible = (option?.candidates ?? []).filter((candidate) =>
-      isCandidateVisible(candidate, showAll, selected?.definitionId),
-    );
-    if (
-      option !== undefined &&
-      option.candidates.length === 1 &&
-      nextVisible.length === 1
-    )
-      selectReplacement(option, nextVisible[0]!);
+    inspect(option === undefined ? undefined : targetDecision(option));
   };
 
   const clearReplacement = (): void => {
@@ -580,21 +570,41 @@ function ReplacementEditor({
   return (
     <div className="choice-selection-layout">
       <div className="choice-editor-fields">
-        <CompactChoiceButtons
-          label="Replace"
-          options={options.map((option) => ({
-            id: option.replacesOccurrenceId,
-            label:
-              byId.get(option.definitionId.toLocaleLowerCase())?.name ??
-              option.definitionId,
-            selectable: true,
-          }))}
-          selectedId={targetId}
-          disabled={disabled}
-          onChoose={chooseTarget}
-        />
-        {target === undefined ||
-        (target.candidates.length === 1 && visible.length === 1) ? null : (
+        <div className="replacement-targets">
+          <CandidateSelectionTable
+            kind={targetKind}
+            nameColumnLabel="Replace"
+            expandSections
+            candidates={targetCandidates}
+            featGroups={targetFeatGroups}
+            selectedIds={
+              new Set(
+                targetOption === undefined ? [] : [targetOption.definitionId],
+              )
+            }
+            expandedGroupKey=""
+            byId={byId}
+            disabled={disabled}
+            onExpandGroup={() => undefined}
+            onInspect={(candidate) => {
+              const option = options.find(
+                (item) => item.definitionId === candidate.definitionId,
+              );
+              if (option === undefined) return;
+              setPerusingTarget(true);
+              setPerusedId(option.definitionId);
+              inspect(targetDecision(option));
+            }}
+            onToggle={(definitionId) => {
+              const option = options.find(
+                (item) => item.definitionId === definitionId,
+              );
+              if (option !== undefined)
+                chooseTarget(option.replacesOccurrenceId);
+            }}
+          />
+        </div>
+        {target === undefined ? null : (
           <CandidateSelectionTable
             evaluation={evaluation}
             kind={replacementKind}
@@ -1662,160 +1672,6 @@ function RepeatedCandidateTableEditor({
       onToggle={toggle}
       onToggleShowIllegal={() => setShowAll((current) => !current)}
     />
-  );
-}
-
-export function RetrainingControls({
-  choices,
-  evaluation,
-  build,
-  entities,
-  byId,
-  rollbackRevision,
-  onRequestDetails,
-  onDispatch,
-}: {
-  readonly choices: readonly EvaluatedChoice[];
-  readonly evaluation: EvaluatedCharacter;
-  readonly build: CharacterRecord["build"];
-  readonly entities: readonly ContentEntity[];
-  readonly byId: ReadonlyMap<string, ContentEntity>;
-  readonly rollbackRevision: number;
-  readonly onRequestDetails: (choiceId: string | undefined) => void;
-  readonly onDispatch: (command: CharacterCommand) => void;
-}) {
-  const inspectCandidate = useContext(InspectCandidateContext);
-  const selectedChoice = choices.find(
-    (choice) => choice.selectedOccurrenceId !== undefined,
-  );
-  const selected =
-    selectedChoice === undefined
-      ? undefined
-      : selectedOccurrence(selectedChoice, evaluation);
-  const replaced = (selectedChoice?.replacementOptions ?? []).find(
-    (option) => option.replacesOccurrenceId === selected?.replacesId,
-  );
-  const selectedCategory = retrainingCategory(
-    replaced === undefined
-      ? undefined
-      : byId.get(replaced.definitionId.toLocaleLowerCase())?.type,
-  );
-  const [active, setActive] = useState<{
-    readonly choiceId: string;
-    readonly category: string;
-  }>();
-  useEffect(() => {
-    const next =
-      selectedChoice !== undefined && selectedCategory !== undefined
-        ? { choiceId: selectedChoice.id, category: selectedCategory }
-        : undefined;
-    setActive(next);
-    onRequestDetails(next?.choiceId);
-  }, [onRequestDetails, rollbackRevision, selectedCategory, selectedChoice]);
-
-  const categories = ["skill", "feat", "power"].filter((category) =>
-    choices.some((choice) =>
-      (choice.replacementOptions ?? []).some(
-        (option) =>
-          retrainingCategory(
-            byId.get(option.definitionId.toLocaleLowerCase())?.type,
-          ) === category,
-      ),
-    ),
-  );
-  const activeChoice =
-    choices.find((choice) => choice.id === active?.choiceId) ?? selectedChoice;
-  if (activeChoice === undefined || active === undefined)
-    return (
-      <div className="retraining-actions" aria-label="Optional retraining">
-        {categories.map((category) => (
-          <button
-            className="progressive-choice-button"
-            key={category}
-            type="button"
-            onClick={() => {
-              const next = {
-                choiceId: choices[0]!.id,
-                category,
-              };
-              setActive(next);
-              onRequestDetails(next.choiceId);
-            }}
-          >
-            Retrain a {category}…
-          </button>
-        ))}
-      </div>
-    );
-
-  return (
-    <section
-      aria-labelledby={`${choiceSectionId(activeChoice.id)}-heading`}
-      className="level-choice-section retraining-section"
-      id={choiceSectionId(activeChoice.id)}
-      tabIndex={-1}
-    >
-      <header>
-        <div>
-          <p className="eyebrow">Optional retraining</p>
-          <h4
-            className="selection-section-heading"
-            id={`${choiceSectionId(activeChoice.id)}-heading`}
-          >
-            {active.category[0]!.toLocaleUpperCase() + active.category.slice(1)}{" "}
-            retraining
-          </h4>
-        </div>
-        <div className="optional-choice-actions">
-          <button
-            aria-label={
-              selectedChoice === undefined
-                ? "Cancel retraining"
-                : "Remove retraining"
-            }
-            className="remove-optional-choice icon-only-button"
-            title={
-              selectedChoice === undefined
-                ? "Cancel retraining"
-                : "Remove retraining"
-            }
-            type="button"
-            onClick={() => {
-              if (selectedChoice === undefined) {
-                setActive(undefined);
-                onRequestDetails(undefined);
-                return;
-              }
-              const command = unresolveEvaluatedChoiceCommand(
-                build,
-                selectedChoice,
-                evaluation,
-                entities,
-                `web:placeholder:retraining:${crypto.randomUUID()}`,
-              );
-              if (command === undefined) return;
-              setActive(undefined);
-              onRequestDetails(undefined);
-              inspectCandidate?.(undefined);
-              onDispatch(command);
-            }}
-          >
-            <Icon name="remove" />
-          </button>
-        </div>
-      </header>
-      <ChoiceEditor
-        choice={activeChoice}
-        evaluation={evaluation}
-        build={build}
-        entities={entities}
-        byId={byId}
-        disabled={false}
-        replacementTargetType={active.category}
-        rollbackRevision={rollbackRevision}
-        onDispatch={onDispatch}
-      />
-    </section>
   );
 }
 

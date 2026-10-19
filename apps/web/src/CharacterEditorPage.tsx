@@ -112,6 +112,8 @@ import { needsContentUpdate } from "./content-update";
 import { loadoutChangeCommand } from "./equipment-ui";
 import { type InspectedOption } from "./CandidateSelectionTable";
 import { CandidateDetail } from "./CandidateDetail";
+import { ChoiceAccordionItem } from "./ChoiceAccordionItem";
+import { RetrainingWorkspace } from "./RetrainingWorkspace";
 import { BaseAbilityScoreEditor } from "./BaseAbilityScoreEditor";
 import {
   AbilityIncreaseEditor,
@@ -120,7 +122,6 @@ import {
   ChoiceEditor,
   ChoiceFlowSection,
   RepeatedChoiceGroup,
-  RetrainingControls,
   SkillTrainingEditor,
 } from "./ChoiceEditors";
 import {
@@ -146,7 +147,7 @@ import type {
 } from "./routes";
 
 const characters = new CharacterRepository();
-type LevelChoiceTab = LegacyChoiceSection | "Retraining";
+type LevelChoiceTab = LegacyChoiceSection;
 
 /** evaluationStatus while the rules worker has failed, before its message. */
 const EVALUATION_FAILED_PREFIX = "Rules evaluation failed: ";
@@ -204,8 +205,6 @@ function levelChoiceTabSlug(section: LevelChoiceTab): BuilderSectionSlug {
       return "spellbook";
     case "Feats":
       return "feats";
-    case "Retraining":
-      return "retraining";
     case "Character Details":
     case "Other":
       return "other";
@@ -236,10 +235,9 @@ function levelChoiceTabForSlug(
       return "Spellbook";
     case "feats":
       return "Feats";
-    case "retraining":
-      return "Retraining";
     case "other":
       return "Other";
+    case "retraining": // its own tab now; routes redirect it there
     case undefined:
       return undefined;
   }
@@ -424,6 +422,12 @@ export function CharacterEditorPage({
       saveQueue.current = undefined;
     };
   }, [characterId, reloadKey]);
+
+  useEffect(() => {
+    if (navigation.workspace !== "retraining" || character === undefined)
+      return;
+    if (navigation.level !== undefined) setSelectedLevel(navigation.level);
+  }, [character, navigation]);
 
   useEffect(() => {
     if (navigation.workspace !== "build" || character === undefined) return;
@@ -726,10 +730,6 @@ export function CharacterEditorPage({
     () => mechanicalLevelChoices.filter(isBuildPresetChoice),
     [mechanicalLevelChoices],
   );
-  const retrainingChoices = useMemo(
-    () => mechanicalLevelChoices.filter(isOptionalRetrainingChoice),
-    [mechanicalLevelChoices],
-  );
   const primaryLevelChoices = useMemo(
     () =>
       mechanicalLevelChoices.filter(
@@ -903,10 +903,8 @@ export function CharacterEditorPage({
               : abilitySectionIndex,
           ),
         ];
-  const levelSectionTabs: readonly LevelChoiceTab[] = [
-    ...displayedChoiceSections.map(({ section }) => section),
-    ...(retrainingChoices.length === 0 ? [] : (["Retraining"] as const)),
-  ];
+  const levelSectionTabs: readonly LevelChoiceTab[] =
+    displayedChoiceSections.map(({ section }) => section);
   const selectedChoiceSection = displayedChoiceSections.find(({ choices }) =>
     choices.some((choice) => choice.id === selectedChoiceId),
   )?.section;
@@ -929,10 +927,7 @@ export function CharacterEditorPage({
   const activeChoiceSection = displayedChoiceSections.find(
     ({ section }) => section === activeLevelSection,
   );
-  const activeSectionChoices =
-    activeLevelSection === "Retraining"
-      ? retrainingChoices
-      : (activeChoiceSection?.choices ?? []);
+  const activeSectionChoices = activeChoiceSection?.choices ?? [];
   const classChoicePlacementId = activeChoiceSection?.choices.find((choice) =>
     ["class", "hybrid class"].includes(choice.type.trim().toLocaleLowerCase()),
   )?.id;
@@ -993,10 +988,6 @@ export function CharacterEditorPage({
     setInspectedLevel(selectedLevel);
     setInspectedOption(undefined);
   }
-
-  useEffect(() => {
-    setExpandedReplacementChoiceId(undefined);
-  }, [selectedLevel]);
 
   function dispatch(command: CharacterCommand): void {
     const active = transaction.current;
@@ -1224,9 +1215,12 @@ export function CharacterEditorPage({
       onNavigate(characterId, { workspace: "details" });
       return;
     }
-    const section = isOptionalRetrainingChoice(choice)
-      ? "Retraining"
-      : legacyChoiceSection(choice);
+    if (isOptionalRetrainingChoice(choice)) {
+      setSelectedLevel(choice.level);
+      onNavigate(characterId, { workspace: "retraining", level: choice.level });
+      return;
+    }
+    const section = legacyChoiceSection(choice);
     setSelectedLevel(choice.level);
     setSelectedChoiceId(choice.id);
     setSelectedSectionByLevel((current) => ({
@@ -1247,10 +1241,8 @@ export function CharacterEditorPage({
     }));
     setInspectedOption(undefined);
     const sectionChoices =
-      section === "Retraining"
-        ? retrainingChoices
-        : (displayedChoiceSections.find((group) => group.section === section)
-            ?.choices ?? []);
+      displayedChoiceSections.find((group) => group.section === section)
+        ?.choices ?? [];
     setSelectedChoiceId(
       sectionChoices.find(isUnresolvedChoice)?.id ?? sectionChoices[0]?.id,
     );
@@ -1280,7 +1272,6 @@ export function CharacterEditorPage({
             isRequiredClassDeityChoice(choice)) &&
           !isBuildPresetChoice(choice),
       );
-      const retraining = choices.filter(isOptionalRetrainingChoice);
       const primary = choices.filter(
         (choice) => !isOptionalRetrainingChoice(choice),
       );
@@ -1290,16 +1281,14 @@ export function CharacterEditorPage({
       const rememberedSection =
         requestedSection ?? selectedSectionByLevel[level];
       const destinationChoices =
-        rememberedSection === "Retraining"
-          ? retraining
-          : rememberedSection === undefined
-            ? ordered
-            : ordered.filter(
-                (choice) =>
-                  (isRequiredClassDeityChoice(choice)
-                    ? "Class"
-                    : legacyChoiceSection(choice)) === rememberedSection,
-              );
+        rememberedSection === undefined
+          ? ordered
+          : ordered.filter(
+              (choice) =>
+                (isRequiredClassDeityChoice(choice)
+                  ? "Class"
+                  : legacyChoiceSection(choice)) === rememberedSection,
+            );
       setSelectedLevel(level);
       setSelectedChoiceId(
         destinationChoices.find(isUnresolvedChoice)?.id ??
@@ -1377,11 +1366,7 @@ export function CharacterEditorPage({
       choice.candidates.some((candidate) => candidate.eligible),
     );
   const accordionUnits = (() => {
-    if (
-      activeLevelSection === "Retraining" ||
-      activeChoiceSection === undefined
-    )
-      return [];
+    if (activeChoiceSection === undefined) return [];
     const seen = new Set<string>();
     const units: (readonly EvaluatedChoice[])[] = [];
     for (const choice of activeChoiceSection.choices) {
@@ -1441,41 +1426,17 @@ export function CharacterEditorPage({
     readonly onToggle: () => void;
     readonly children: ReactNode;
   }) => {
-    const open = openAccordionKey === key;
     return (
-      <div
-        className={`choice-accordion-item${open ? " is-open" : ""}${status === "unresolved" ? " is-unresolved" : ""}`}
+      <ChoiceAccordionItem
         key={`accordion:${key}`}
+        open={openAccordionKey === key}
+        title={title}
+        picks={picks}
+        status={status}
+        onToggle={onToggle}
       >
-        <h4 className="choice-accordion-heading">
-          <button aria-expanded={open} type="button" onClick={onToggle}>
-            <Icon name="chevron" />
-            <span className="choice-accordion-title">{title}</span>
-            <span className="choice-accordion-picks">{picks}</span>
-            <span
-              className={`choice-accordion-status${status === "house-rule" ? " is-house-rule" : ""}`}
-            >
-              {status === "house-rule" ? (
-                <>
-                  <Icon name="house" />
-                  <span className="visually-hidden">House rule</span>
-                </>
-              ) : status === "unresolved" ? (
-                <>
-                  <Icon name="circle-help" />
-                  <span className="visually-hidden">Incomplete</span>
-                </>
-              ) : status === "complete" ? (
-                <>
-                  <Icon name="check" />
-                  <span className="visually-hidden">Complete</span>
-                </>
-              ) : null}
-            </span>
-          </button>
-        </h4>
-        {open ? children : null}
-      </div>
+        {children}
+      </ChoiceAccordionItem>
     );
   };
   const renderPrimaryChoice = (
@@ -2010,6 +1971,20 @@ export function CharacterEditorPage({
                 >
                   <Icon name="shopping-cart" /> Shop
                 </button>
+                {/* Least used, so last. */}
+                <button
+                  aria-selected={workspaceTab === "retraining"}
+                  role="tab"
+                  type="button"
+                  onClick={() =>
+                    onNavigate(characterId, {
+                      workspace: "retraining",
+                      level: selectedLevel,
+                    })
+                  }
+                >
+                  <Icon name="undo" /> Retraining
+                </button>
               </div>
               <div aria-label="Builder status" className="builder-status">
                 {totalUnresolved > 0 ? (
@@ -2175,11 +2150,9 @@ export function CharacterEditorPage({
                       >
                         {levelSectionTabs.map((section, index) => {
                           const sectionChoices =
-                            section === "Retraining"
-                              ? retrainingChoices
-                              : (displayedChoiceSections.find(
-                                  (group) => group.section === section,
-                                )?.choices ?? []);
+                            displayedChoiceSections.find(
+                              (group) => group.section === section,
+                            )?.choices ?? [];
                           const incomplete =
                             selectedLevel <= build.effectiveLevel &&
                             ((section === "Ability Scores" &&
@@ -2232,13 +2205,7 @@ export function CharacterEditorPage({
                                 );
                               }}
                             >
-                              <Icon
-                                name={
-                                  section === "Retraining"
-                                    ? "undo"
-                                    : choiceSectionIcon(section)
-                                }
-                              />
+                              <Icon name={choiceSectionIcon(section)} />
                               <span>{section}</span>
                               {/* Progress only: warnings and house rules
                                   live in the tab bar's badges. */}
@@ -2271,27 +2238,7 @@ export function CharacterEditorPage({
                           className="level-choice-page"
                           ref={levelChoicePage}
                         >
-                          {activeLevelSection === "Retraining" ? (
-                            <section
-                              aria-labelledby={`level-${selectedLevel}-retraining-tab`}
-                              className="level-choice-tab-panel"
-                              id={`level-${selectedLevel}-retraining-panel`}
-                              role="tabpanel"
-                            >
-                              <RetrainingControls
-                                choices={retrainingChoices}
-                                evaluation={planningEvaluation}
-                                build={build}
-                                entities={entities}
-                                byId={byId}
-                                rollbackRevision={rollbackRevision}
-                                onRequestDetails={
-                                  setExpandedReplacementChoiceId
-                                }
-                                onDispatch={dispatch}
-                              />
-                            </section>
-                          ) : activeChoiceSection === undefined ? null : (
+                          {activeChoiceSection === undefined ? null : (
                             <section
                               aria-labelledby={`level-${selectedLevel}-${levelChoiceTabSlug(activeChoiceSection.section)}-tab`}
                               className="level-choice-tab-panel"
@@ -2410,6 +2357,28 @@ export function CharacterEditorPage({
                   </div>
                 )}
               </section>
+            </div>
+
+            <div
+              className="builder-workspace builder-tab-content"
+              hidden={workspaceTab !== "retraining"}
+            >
+              {workspaceTab === "retraining" ? (
+                <RetrainingWorkspace
+                  evaluation={planningEvaluation}
+                  build={build}
+                  entities={entities}
+                  byId={byId}
+                  rollbackRevision={rollbackRevision}
+                  selectedLevel={selectedLevel}
+                  onSelectLevel={(level) => {
+                    setSelectedLevel(level);
+                    onNavigate(characterId, { workspace: "retraining", level });
+                  }}
+                  onRequestDetails={setExpandedReplacementChoiceId}
+                  onDispatch={dispatch}
+                />
+              ) : null}
             </div>
 
             <div
