@@ -1620,8 +1620,13 @@ function evaluateCharacterInternal(
                 {
                   replacesOccurrenceId: candidate.id,
                   definitionId: candidate.definitionId,
+                  // Retraining X into X changes nothing, so it isn't offered.
                   candidates: detailedReplacement
-                    ? candidatesFor(gainSelect, gainProvider)
+                    ? candidatesFor(gainSelect, gainProvider).filter(
+                        (decision) =>
+                          key(decision.definitionId) !==
+                          key(candidate.definitionId),
+                      )
                     : selectedReplacement === undefined
                       ? []
                       : [
@@ -1835,14 +1840,14 @@ function evaluateCharacterInternal(
     knownTokens,
   });
   const prerequisiteScopes = new Map<
-    number,
+    string,
     {
       readonly context: PrerequisiteContext;
       readonly expressionContext: ExpressionContext;
     }
   >([
     [
-      input.level,
+      String(input.level),
       {
         context: prerequisiteContextFor(
           input.level,
@@ -1853,21 +1858,55 @@ function evaluateCharacterInternal(
       },
     ],
   ]);
-  const prerequisiteScopeAt = (requestedLevel: number) => {
+  /** Occurrences and everything they granted (their descendants). */
+  const withDescendants = (ids: readonly string[]): ReadonlySet<string> => {
+    const excluded = new Set(ids);
+    let grew = excluded.size > 0;
+    while (grew) {
+      grew = false;
+      for (const occurrence of input.occurrences)
+        if (
+          occurrence.parentId !== undefined &&
+          excluded.has(occurrence.parentId) &&
+          !excluded.has(occurrence.id)
+        ) {
+          excluded.add(occurrence.id);
+          grew = true;
+        }
+    }
+    return excluded;
+  };
+  /** The character at a level, optionally without some occurrences (what a
+   *  retrain gives up can't count toward what it takes). */
+  const prerequisiteScopeAt = (
+    requestedLevel: number,
+    excludedIds: readonly string[] = [],
+  ) => {
     const level = Math.min(input.level, requestedLevel);
-    const cached = prerequisiteScopes.get(level);
+    const excluded = withDescendants(excludedIds);
+    const scopeKey = [level, ...[...excluded].sort()].join("\0");
+    const cached = prerequisiteScopes.get(scopeKey);
     if (cached !== undefined) return cached;
+    const scopedInput =
+      excluded.size === 0
+        ? input
+        : {
+            ...input,
+            occurrences: input.occurrences.filter(
+              ({ id }) => !excluded.has(id),
+            ),
+          };
     const snapshotCache =
       prerequisiteSnapshotCaches.get(entities) ??
       new Map<string, EvaluatedCharacter>();
     if (!prerequisiteSnapshotCaches.has(entities))
       prerequisiteSnapshotCaches.set(entities, snapshotCache);
-    const snapshotKey = prerequisiteSnapshotKey(input, level);
+    const snapshotKey = prerequisiteSnapshotKey(scopedInput, level);
     let scoped = snapshotCache.get(snapshotKey);
     if (scoped === undefined) {
       scoped = evaluateCharacterInternal(
         {
-          ...input,
+          ...scopedInput,
           level,
           candidateDetailLevels: [],
           candidateDetailReplacementChoiceIds: [],
@@ -1907,7 +1946,7 @@ function evaluateCharacterInternal(
           index.categoryValues(entity),
       },
     };
-    prerequisiteScopes.set(level, scope);
+    prerequisiteScopes.set(scopeKey, scope);
     reportProgress(progressCompleted + 1);
     return scope;
   };
@@ -1915,48 +1954,77 @@ function evaluateCharacterInternal(
     string,
     ReturnType<typeof evaluatePrerequisite>["status"]
   >();
+  const withPrerequisites = (
+    level: number,
+    candidate: CandidateDecision,
+    excludedIds: readonly string[] = [],
+  ): CandidateDecision => {
+    const candidateEntity = index.get(candidate.definitionId);
+    if (
+      candidateEntity?.prerequisites === undefined ||
+      candidateEntity.prerequisites.trim().length === 0
+    )
+      return candidate;
+    const prerequisiteContext = prerequisiteScopeAt(level, excludedIds).context;
+    const candidateKey = [
+      level,
+      key(candidate.definitionId),
+      ...[...excludedIds].sort(),
+    ].join("\0");
+    let prerequisiteStatus = candidatePrerequisiteStatuses.get(candidateKey);
+    if (prerequisiteStatus === undefined) {
+      prerequisiteStatus = evaluatePrerequisite(
+        candidateEntity?.prerequisites,
+        {
+          ...prerequisiteContext,
+          ...(candidateEntity === undefined
+            ? {}
+            : { subject: candidateEntity }),
+        },
+      ).status;
+      candidatePrerequisiteStatuses.set(candidateKey, prerequisiteStatus);
+    }
+    if (
+      prerequisiteStatus === "satisfied" ||
+      candidate.reasons.includes("prerequisite") ||
+      candidate.reasons.includes("prerequisite-unverified")
+    )
+      return candidate;
+    return {
+      ...candidate,
+      eligible: false,
+      rulesLegal: false,
+      reasons: [
+        ...candidate.reasons,
+        prerequisiteStatus === "failed"
+          ? "prerequisite"
+          : "prerequisite-unverified",
+      ],
+    };
+  };
+  // Prerequisites hold for every offered candidate, including what a
+  // replacement (retraining, power swap) may take, checked at its level
+  // without what it gives up (nor the slot's current pick, being redone).
   choices = choices.map((choice) => ({
     ...choice,
-    candidates: choice.candidates.map((candidate) => {
-      const candidateEntity = index.get(candidate.definitionId);
-      if (
-        candidateEntity?.prerequisites === undefined ||
-        candidateEntity.prerequisites.trim().length === 0
-      )
-        return candidate;
-      const prerequisiteContext = prerequisiteScopeAt(choice.level).context;
-      const candidateKey = `${choice.level}\0${key(candidate.definitionId)}`;
-      let prerequisiteStatus = candidatePrerequisiteStatuses.get(candidateKey);
-      if (prerequisiteStatus === undefined) {
-        prerequisiteStatus = evaluatePrerequisite(
-          candidateEntity?.prerequisites,
-          {
-            ...prerequisiteContext,
-            ...(candidateEntity === undefined
-              ? {}
-              : { subject: candidateEntity }),
-          },
-        ).status;
-        candidatePrerequisiteStatuses.set(candidateKey, prerequisiteStatus);
-      }
-      if (
-        prerequisiteStatus === "satisfied" ||
-        candidate.reasons.includes("prerequisite") ||
-        candidate.reasons.includes("prerequisite-unverified")
-      )
-        return candidate;
-      return {
-        ...candidate,
-        eligible: false,
-        rulesLegal: false,
-        reasons: [
-          ...candidate.reasons,
-          prerequisiteStatus === "failed"
-            ? "prerequisite"
-            : "prerequisite-unverified",
-        ],
-      };
-    }),
+    candidates: choice.candidates.map((candidate) =>
+      withPrerequisites(choice.level, candidate),
+    ),
+    ...(choice.replacementOptions === undefined
+      ? {}
+      : {
+          replacementOptions: choice.replacementOptions.map((option) => ({
+            ...option,
+            candidates: option.candidates.map((candidate) =>
+              withPrerequisites(choice.level, candidate, [
+                option.replacesOccurrenceId,
+                ...(choice.selectedOccurrenceId === undefined
+                  ? []
+                  : [choice.selectedOccurrenceId]),
+              ]),
+            ),
+          })),
+        }),
   }));
   if (shouldChooseDeity(ownedDefinitions))
     choices = choices.map((choice) =>
@@ -2021,7 +2089,7 @@ function evaluateCharacterInternal(
     const prerequisiteScope =
       selectedEntity?.prerequisites === undefined ||
       selectedEntity.prerequisites.trim().length === 0
-        ? prerequisiteScopes.get(input.level)!
+        ? prerequisiteScopes.get(String(input.level))!
         : prerequisiteScopeAt(choice.level);
     const prerequisite = evaluatePrerequisite(selectedEntity?.prerequisites, {
       ...prerequisiteScope.context,

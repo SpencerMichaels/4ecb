@@ -2299,6 +2299,21 @@ characters, explaining in plain terms that browsers can clear saved data and
 offering "Keep my characters". A refusal turns it into a backup suggestion;
 dismissal is remembered, and Settings → Backups & storage keeps the request.
 
+### D084 — Replacement candidates get the same legality as ordinary choices
+
+Status: accepted (2026-10-18).
+
+What a replacement (retraining, power swap, power replace) may take was built
+by the shared candidate code but skipped the prerequisite pass that ordinary
+choices get, so the Retrain dialog offered feats the character didn't qualify
+for. Every offered candidate, ordinary or replacement, now goes through one
+prerequisite check (`withPrerequisites` in `evaluator.ts`). For a
+replacement it is evaluated at the replacement's level on the character
+without the occurrence being given up and everything it granted, and
+without the slot's current pick: per the product owner, what a retrain gives
+up can never count toward what it takes. The retrained definition itself is
+not offered (Endurance → Endurance changes nothing).
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

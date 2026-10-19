@@ -2243,7 +2243,7 @@ describe("character evaluator", () => {
     expect(result.choices[0]?.level).toBe(5);
   });
 
-  it("offers original slot candidates for ordinary retraining", () => {
+  it("offers original slot candidates, except the retrained one, for ordinary retraining", () => {
     const input = {
       level: 2,
       baseAbilities: {},
@@ -2291,10 +2291,8 @@ describe("character evaluator", () => {
         {
           replacesOccurrenceId: "old-feat",
           definitionId: "FEAT_A",
-          candidates: [
-            { definitionId: "FEAT_A", eligible: true },
-            { definitionId: "FEAT_B", eligible: true },
-          ],
+          // Retraining Old feat into Old feat changes nothing.
+          candidates: [{ definitionId: "FEAT_B", eligible: true }],
         },
       ],
     });
@@ -2317,7 +2315,146 @@ describe("character evaluator", () => {
     expect(
       open.choices.find((choice) => choice.type === "Replacement")
         ?.replacementOptions?.[0]?.candidates,
-    ).toHaveLength(2);
+    ).toHaveLength(1);
+  });
+
+  it("checks prerequisites for what a retrain may take, at the retraining level", () => {
+    const result = evaluateCharacter(
+      {
+        level: 2,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "level-1",
+            definitionId: "LEVEL_1",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "old-feat",
+            definitionId: "FEAT_A",
+            acquiredLevel: 1,
+            parentId: "level-1",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+          {
+            id: "level-2",
+            definitionId: "LEVEL_2",
+            acquiredLevel: 2,
+            kind: "root",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("LEVEL_1", "1", "Level", {
+          rules: [rule("select", { type: "Feat", number: "1" }, 0)],
+        }),
+        entity("LEVEL_2", "2", "Level", {
+          rules: [rule("replace", { retrain: "true", optional: "true" }, 0)],
+        }),
+        entity("FEAT_A", "Old feat", "Feat"),
+        entity("FEAT_B", "Open feat", "Feat"),
+        entity("FEAT_C", "Late feat", "Feat", {
+          prerequisites: "11th level",
+        }),
+      ],
+    );
+    const candidates = result.choices.find(
+      (choice) => choice.type === "Replacement",
+    )?.replacementOptions?.[0]?.candidates;
+    expect(candidates).toContainEqual(
+      expect.objectContaining({ definitionId: "FEAT_B", eligible: true }),
+    );
+    expect(candidates).toContainEqual(
+      expect.objectContaining({
+        definitionId: "FEAT_C",
+        eligible: false,
+        reasons: ["prerequisite"],
+      }),
+    );
+  });
+
+  it("doesn't count what a retrain gives up toward what it takes", () => {
+    const result = evaluateCharacter(
+      {
+        level: 3,
+        baseAbilities: {},
+        occurrences: [
+          {
+            id: "level-1",
+            definitionId: "LEVEL_1",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+          {
+            id: "base-feat",
+            definitionId: "FEAT_BASE",
+            acquiredLevel: 1,
+            parentId: "level-1",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+          {
+            id: "level-2",
+            definitionId: "LEVEL_2",
+            acquiredLevel: 2,
+            kind: "root",
+          },
+          {
+            id: "other-feat",
+            definitionId: "FEAT_OTHER",
+            acquiredLevel: 2,
+            parentId: "level-2",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+          {
+            id: "level-3",
+            definitionId: "LEVEL_3",
+            acquiredLevel: 3,
+            kind: "root",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("LEVEL_1", "1", "Level", {
+          rules: [rule("select", { type: "Feat", number: "1" }, 0)],
+        }),
+        entity("LEVEL_2", "2", "Level", {
+          rules: [rule("select", { type: "Feat", number: "1" }, 0)],
+        }),
+        entity("LEVEL_3", "3", "Level", {
+          rules: [rule("replace", { retrain: "true", optional: "true" }, 0)],
+        }),
+        entity("FEAT_BASE", "Base Feat", "Feat"),
+        entity("FEAT_OTHER", "Other Feat", "Feat"),
+        entity("FEAT_ADVANCED", "Advanced Feat", "Feat", {
+          prerequisites: "Base Feat",
+        }),
+      ],
+    );
+    const options =
+      result.choices.find((choice) => choice.type === "Replacement")
+        ?.replacementOptions ?? [];
+    const advanced = (replaces: string) =>
+      options
+        .find((option) => option.replacesOccurrenceId === replaces)
+        ?.candidates.find(
+          (candidate) => candidate.definitionId === "FEAT_ADVANCED",
+        );
+    // Giving up Base Feat can't pay for Advanced Feat's prerequisite...
+    expect(advanced("base-feat")).toMatchObject({
+      eligible: false,
+      reasons: ["prerequisite"],
+    });
+    // ...but giving up another feat keeps Base Feat, so it qualifies.
+    expect(advanced("other-feat")).toMatchObject({ eligible: true });
   });
 
   it("keeps the replaced occurrence visible in its completed retraining slot", () => {
@@ -2450,10 +2587,7 @@ describe("character evaluator", () => {
       replacementOptions: [
         {
           replacesOccurrenceId: "old-power",
-          candidates: [
-            { definitionId: "POWER_A", eligible: true },
-            { definitionId: "POWER_B", eligible: true },
-          ],
+          candidates: [{ definitionId: "POWER_B", eligible: true }],
         },
       ],
     });
@@ -2532,7 +2666,6 @@ describe("character evaluator", () => {
           definitionId: "FEAT_B",
           candidates: [
             { definitionId: "FEAT_A", eligible: true },
-            { definitionId: "FEAT_B", eligible: true },
             { definitionId: "FEAT_C", eligible: true },
           ],
         },
