@@ -5,18 +5,10 @@ export interface ImportPackRequest {
   readonly buffer: ArrayBuffer;
 }
 
-export interface ImportLegacyRulesRequest {
-  readonly type: "import-legacy-rules";
-  readonly buffer: ArrayBuffer;
-  readonly sourceKey: string;
-  readonly packId: string;
-  readonly name: string;
-}
+/** The browser installs portable packs only; conversion is the content tool's job. */
+export type ContentImportRequest = ImportPackRequest;
 
-export type ContentImportRequest = ImportPackRequest | ImportLegacyRulesRequest;
-
-export type ImportPackProgressPhase =
-  "decoding" | "parsing-rules" | "building-pack" | "validating" | "storing";
+export type ImportPackProgressPhase = "decoding" | "validating" | "storing";
 
 export type ImportPackResponse =
   | { readonly type: "progress"; readonly phase: ImportPackProgressPhase }

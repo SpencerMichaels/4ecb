@@ -164,3 +164,61 @@ button.dialog-close {
   --item-icon-glyph-size: 0.95rem;
   --item-icon-size: 1.55rem;
 }
+
+/* SegmentedControl: the label on the left and a joined row of options as
+   wide as they need; selection is an underline, as in Details. */
+.segmented-control {
+  align-items: center;
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.8rem;
+  margin: 0;
+  padding: 0;
+}
+
+.segmented-control > legend {
+  float: left;
+  font-weight: 600;
+  margin: 0;
+  padding: 0;
+}
+
+.segmented-control-options {
+  display: inline-flex;
+}
+
+.segmented-control-options > label {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 600;
+  margin-inline-start: -1px;
+  min-height: 2.1rem;
+  padding: 0.3rem 0.8rem;
+}
+
+.segmented-control-options > label:first-child {
+  margin-inline-start: 0;
+}
+
+.segmented-control-options > label:hover {
+  border-color: var(--focus);
+  position: relative;
+}
+
+.segmented-control-options > label:has(input:checked) {
+  box-shadow: inset 0 -3px var(--success);
+  font-weight: 800;
+  position: relative;
+}
+
+.segmented-control-options > label:has(input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  position: relative;
+  z-index: 1;
+}

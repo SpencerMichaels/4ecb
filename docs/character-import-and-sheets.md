@@ -66,6 +66,8 @@ id, title, notes
 createdAt, updatedAt, deletedAt?
 profileBinding? { packId, contentDigest? }
 sheetSettings { paper, monochrome, blankHitPoints, powerCards, itemCards }
+  (kept for compatibility; ignored since D083: paper is an app setting,
+  cards always print, no blank HP or monochrome mode)
 portrait? { sourceDataUrl, sourceWidth, sourceHeight, crop { x, y, size }, renderedDataUrl }
 legacy { format, origin?, version?, gameSystem?, legality?, sourceXml }
 snapshot { details, abilities, stats, selections, powers, loot, textStrings }

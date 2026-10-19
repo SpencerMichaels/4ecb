@@ -112,15 +112,9 @@ configured ID/digest comparison); the seam is not exported from the root
 storage API. Generated legacy packs encode first and then decode/validate that
 exact artifact once.
 
-On browsers with the File System Access directory picker, a user may choose a
-legacy-data or pack directory. Discovery is read-only, limited to four nested
-directory levels and 2,000 entries, and considers only `.4ecp` and recognized
-decrypted/merged `.dnd40.xml` files. It reads file contents only after the user
-selects a discovered candidate. Directory handles and source paths are not
-persisted. The ordinary file input exposes the same formats and remains the
-cross-browser fallback.
-
-The public web application deliberately does not open encrypted official
-containers, import decryption keys, follow update URLs, or merge loose `.part`
-files. Those operations remain in the project-local Nix content-tool workflow;
-its private `.4ecp` output is the portable onboarding path.
+The web application installs portable `.4ecp` packs only (D082, superseding
+D021's browser rules-XML and directory onboarding). It deliberately does not
+parse rules XML, open encrypted official containers, import decryption keys,
+follow update URLs, or merge loose `.part` files. Those operations remain in
+the project-local Nix content-tool workflow; its private `.4ecp` output is the
+portable onboarding path.

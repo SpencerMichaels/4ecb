@@ -160,6 +160,8 @@ application compatibility until the curated launch matrix passes.
 
 ### D021 — Browser directory onboarding reads normalized sources, not keys
 
+**Status:** superseded by D082.
+
 The progressive directory picker discovers portable `.4ecp` packs and
 recognized decrypted/merged `.dnd40.xml` files through a bounded, read-only
 scan. It keeps directory handles ephemeral and reads only the candidate the user
@@ -2251,6 +2253,48 @@ Alfsair Spear, Star of Corellon); `_ImplementEquiv` makes a weapon count as
 an implement kind for proficiency (Holy Avenger as a holy symbol); and
 `_UniversalImplement` makes it usable for any implement power. Weapon
 proficiency bonuses never apply to implement attacks.
+
+### D082 — The browser installs portable packs only (supersedes D021)
+
+Status: accepted (2026-10-18).
+
+D021 let the browser turn a decrypted, merged `.dnd40.xml` into a pack and scan
+a legacy data directory for sources, under Settings → Advanced content options.
+In practice every group gets content as an advertised server pack or a `.4ecp`
+built with the content tool, decryption and `.part` merging already required
+the tool, and the advanced section (pack digests, quota numbers, raw XML
+import) was developer tooling in a user screen. The main import button already
+accepted only `.4ecp`, so D021's "ordinary file picker accepts the same
+formats" had drifted from the code.
+
+The web app now installs `.4ecp` packs only, through Settings → Game content;
+raw rules XML, directory scanning and pack-identity fields are removed from the
+browser along with the web-only `legacy-rules-import` and `content-onboarding`
+modules. All conversion (`import`, `merge`, `compile`, `inspect`) lives in the
+project-local content tool. Exact versions and storage quota diagnostics are
+dropped; `pnpm content-tool inspect` covers digests. Asking the browser for
+persistent storage moves to a library banner (D083).
+
+### D083 — Print options, paper size and persistent storage
+
+Status: accepted (2026-10-18).
+
+The per-character print options (paper, monochrome, blank hit points, power
+and item card inclusion) were reachable only in the deferred screen sheet view
+that every route skips for print preview. Blank hit points is dropped (the
+scratchpad tracks play), cards always print, and monochrome is left to the
+browser's print dialog; the stored `sheetSettings` fields stay in the record
+for compatibility but the sheet ignores them. Paper size can't be left to the
+print dialog: the sheet is a fixed-size, measured layout pinned by
+`@page size`. It is a per-user preference, not character data: an app-wide
+Settings → Printed sheet Letter | A4 control, defaulting from the browser
+locale (`paper-size.ts`). The print-preview toolbar keeps only Back and Print.
+
+The library shows a standing banner, on arrival and only while the browser
+supports persistent storage, has not granted it, and the library has
+characters, explaining in plain terms that browsers can clear saved data and
+offering "Keep my characters". A refusal turns it into a backup suggestion;
+dismissal is remembered, and Settings → Backups & storage keeps the request.
 
 ## Deferred decisions and decision points
 

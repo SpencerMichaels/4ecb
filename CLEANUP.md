@@ -114,6 +114,11 @@ instances listed.
   match what actually happens; plurals agree; a thing has one name across
   related messages, and fallbacks for missing values read naturally (no
   "character's character sheet").
+- **Dismissals that nag.** "Not now" on the content-update dialog. Rule:
+  never label an option "Not now", "Maybe later" or similar; they're the
+  language of dark patterns that wear users down into consenting. Declining
+  is "Cancel" (or a plain statement of what happens), with equal standing to
+  the other choice.
 - **Ordering.** Options in content order where convention differs (Female,
   Male). Rule: conventional order where one exists (`conventionalOptionOrder`).
 
@@ -153,6 +158,20 @@ instances listed.
   floating toasts (`Toasts.tsx`) that stay until dismissed; errors announce as
   alerts, warnings as status; informational diagnostics (and any that are no
   longer true) aren't shown.
+- **Standing banners.** Persistent storage was a buried Settings button.
+  Rule: a banner is allowed only when it is actionable and present on
+  arrival (the library's keep-my-characters banner), dismissible, with its
+  action still reachable from its real home after dismissal; anything
+  triggered by an action stays a toast. Character problems are never
+  banners: they are issues in the badges.
+- **Navigation that loses your place.** Settings' close always went to the
+  library, even when opened from the builder. Rule: closing a page returns
+  to where you came from (falling back to home) via a real link; Esc closes
+  pages that have a close button, unless something inside handles it.
+- **Sibling dialogs that disagree.** Missing close ×, an unstyled primary,
+  "Not now" vs "Cancel", three spacing mechanisms. Rule: one dialog contract
+  (`primitives.css`): × in every header, right-hand [Cancel] [Back]
+  [Primary], extras on the left, dismiss is "Cancel", Esc equals Cancel.
 
 ## Information architecture
 
@@ -175,6 +194,18 @@ instances listed.
   don't lock legal-but-unusual choices; mark them as house rules.
 - **Settings defaults.** New, optional detail (entity sources) shown by
   default. Rule: extra detail is a setting, off by default.
+- **Controls on a screen nothing leads to.** Print options lived in the
+  screen sheet view, which every route skips for print preview. Rule: when
+  routes or views are deferred or hidden, check what controls only existed
+  there; move them, or drop the option if nobody needs it.
+- **Settings grouped by the wrong surface.** "Use the best ability" sat under
+  Printed sheet but changed builder cards too. Rule: trace where a setting
+  actually applies before filing it; settings that span surfaces get their
+  own section. Per-user preferences (paper size) are app settings, not
+  per-character data.
+- **Developer tools in the product.** Digests, quota numbers and raw XML
+  import under "Advanced". Rule: user-facing screens hold only what users
+  act on; diagnostics and conversion live in the content tool.
 
 ## Robustness behind the visuals
 
@@ -229,3 +260,131 @@ settings, dialogs), in light and dark themes and at 100 % and 140 % zoom:
 - [ ] No success chatter; failures and warnings as floating toasts.
 - [ ] Sticky stacks that grow with data are capped.
 - [ ] Each entity type has its own icon; no near-duplicate icons.
+- [ ] Every control reachable from some route; closes return where you were.
+- [ ] Dialogs follow the shared contract; no "Not now" / "Maybe later".
+- [ ] Banners only for standing, actionable states present on arrival.
+- [ ] Settings filed by where they apply; no developer diagnostics.
+
+## Current pass: findings (2026-10-18)
+
+Found in an audit after the committed builder work (881b11a). Walked through
+one at a time with the product owner; each records the proposal and, once
+agreed, the decision and status. Decisions are recorded first; items 1–6 are
+implemented together after the walkthrough.
+
+1. **Print options unreachable** (information you can't reach). Paper,
+   monochrome, blank HP and power/item card inclusion live only in the screen
+   sheet view's "Print options" `<details>`, but every entry opens
+   `?preview=1`, which hides that view, and Back returns to the builder.
+   Decision: drop blank HP (the scratchpad covers it), power/item card
+   inclusion (always included) and monochrome (a print-dialog setting); the
+   sheet ignores those stored character fields. Paper size can't defer to
+   the print dialog (fixed-size measured layout plus `@page size`), and it
+   isn't per character: it becomes an app-wide Settings → Printed sheet
+   Letter | A4 control, defaulting from the browser locale, and the
+   per-character `paper` field is ignored. The preview toolbar keeps only
+   Back and Print (icon buttons); the unreachable Print options panel goes.
+   Status: implemented; visual review pending.
+2. **Settings → Close always goes to the library** (navigation that loses
+   your place). Opened from the builder, closing Settings drops you in the
+   library. Decision: `App` remembers the last non-Settings route (with the
+   builder's tab/level/section); Settings' × is a real link to it, falling
+   back to `#/characters`. Esc also closes Settings, unless something else
+   handles it first (an open dialog, a native select, an import in progress
+   or a field being edited). Status: implemented; visual review pending.
+3. **Settings ignores the message rules** (success chatter; messages that
+   displace the page). Success lines ("Backed up N character record(s).",
+   "Removed X from this browser.", "Import cancelled…"), inline error boxes,
+   "Restore N record(s)". Decision: visible successes and non-events
+   (cancelled, unchanged, not started) are removed; failures become error
+   toasts carrying the real reason (bare "Import failed." lines go); the
+   persistent-storage denial is a warning toast; the no-checksum note stays
+   inside the restore preview; progress stays inline beside the control that
+   started it, not at the page bottom; the "N characters use the previous
+   content" note goes (the builder raises it per character); "Restore 1
+   character / 3 characters". Status: implemented; visual review pending.
+4. **One-off banners in the builder** (same status two ways). The
+   bound-profile warning and "Rules evaluation failed…" render as banners
+   above the tabs. Decision: both become error-kind character issues via
+   `withCharacterIssues` (red badge, Diagnostics), and the banners go.
+   "Game content isn't installed": Review opens the content-update dialog
+   when other content is active (and the "content has been updated" warning
+   is suppressed, one cause one issue), else links to Settings → Game
+   content. "Rules couldn't be calculated" carries the worker's message and
+   clears on the next successful evaluation (a state, so a badge, not a
+   toast). Status: implemented; visual review pending.
+5. **Sibling dialogs disagree.** Preset-replace has no close ×; "Use portrait"
+   isn't primary; "Not now" vs "Cancel"; three different footer spacing
+   mechanisms; per-dialog backdrop list. (Shop's Cancel, Back, primary order
+   is correct: Back pairs with Next.) Decision: one contract in
+   `primitives.css`: right-hand group [Cancel] [Back] [Primary], extra
+   actions pushed left by `dialog-footer-start` (no spacer elements or
+   wrapper divs); every main action `button-primary`; dismiss is always
+   "Cancel" and Esc does the same; close × in every header; one
+   `.dialog-shell::backdrop` rule. Status: implemented; visual review pending.
+6. **Smaller items.** Decision: all agreed as follows (g dropped). Status:
+   implemented; visual review pending.
+   - a: empty state becomes an `h2` "No characters yet" plus "Create one with
+     New character, or import a .dnd4e file from the legacy Character
+     Builder."
+   - b: disabled New character's tooltip/name: "Turn on game content in
+     Settings to create a character".
+   - c: Restore / Delete permanently report failures via `reportFailure`.
+   - d: new Settings → Power cards section holding "Use the best ability"
+     and "Show equipped to-hit bonus" (both affect builder and print); the
+     rest stay, Paper size joins Printed sheet.
+   - e: theme is a System | Light | Dark segmented control.
+   - f: both stray radii become 2px.
+   - g (dropped): Details' "?" marker is its only progress cue (Build's is
+     inside the tab), so it stays.
+
+   Found during the audit:
+   - Library empty state says "from the active profile above" (nothing is
+     above) and shows literal backticks around `.dnd4e`.
+   - New character silently disabled with no active content; tooltip should
+     say why.
+   - Trash Restore / Delete permanently swallow failures (no
+     `reportFailure`).
+   - Settings files "Use the best ability…" and "Count coin weight" under
+     Printed sheet though both affect builder, Equipment and Shop.
+   - Theme picker is radio buttons where Details uses segmented controls;
+     "System Default" capitalisation.
+   - Stray radii: `.character-card-action` 3px; panel secondary combat band
+     0.25rem.
+   - Details tab shows a "?" attention marker; Build doesn't, though both can
+     have unresolved choices.
+
+7. **Advanced content options are developer tools** (information for the
+   wrong audience). Decision: delete the section. Exact versions (pack IDs,
+   digests) goes; `pnpm content-tool inspect` covers it. Raw rules XML and
+   directory-scan import go: a new decision supersedes D021 (the browser
+   installs `.4ecp` only; all conversion lives in the content tool), with
+   `content-pack-format.md` and `implementation-status.md` updated; the web-only
+   `legacy-rules-import` and `content-onboarding` modules go; package code
+   stays for the tool. Persistence/quota numbers go. Persistent
+   storage moves to a library banner (proposal below). Status: implemented;
+   visual review pending.
+
+   Banner decision: shown on the library when there is at least one
+   character, persistence is supported and not yet granted. Text: "Your
+   characters are saved in this browser. Browsers can clear saved site data
+   to free up space, which would delete them. Ask the browser to keep them."
+   with [Keep my characters] and ×. Granted: banner disappears silently.
+   Refused: becomes a warning ("Your browser won't promise to keep them. Back
+   up your characters now and then…") with [Back up characters] (the
+   Settings backup). × hides it for good in this browser; Settings → Backups
+   & storage keeps a small "Keep data in this browser" button beside its
+   storage sentence. Status: implemented; visual review pending.
+
+Also fixed while implementing (same kinds):
+
+- Three copies of `download()` (library, Settings, content-update dialog)
+  are one `download.ts`, which also holds the character backup used by
+  Settings and the banner.
+- Dialog close buttons were an `Icon`, a raw lucide `X` and a literal "×";
+  all are `<Icon name="remove" />` labelled "Close". The Shop dialog's plain
+  header and blurred backdrop now match the others.
+- The library grid's top margin stacked on the heading's bottom margin.
+- Keyboard reordering in Game content still announces "Moved X up/down" to
+  screen readers (visually hidden), since that move isn't otherwise
+  perceivable; the visible success line is gone.

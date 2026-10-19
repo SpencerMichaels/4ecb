@@ -1,5 +1,6 @@
 import {
   Anvil,
+  ArrowLeft,
   Award,
   Backpack,
   Badge,
@@ -90,6 +91,7 @@ import {
   Trash2,
   TriangleAlert,
   Undo2,
+  Printer,
   UserRound,
   UserRoundPlus,
   UsersRound,
@@ -191,6 +193,8 @@ export type IconName =
   | "search"
   | "settings"
   | "sheet"
+  | "back"
+  | "print"
   | "shield"
   | "shop"
   | "shopping-cart"
@@ -300,6 +304,8 @@ const icons: Record<IconName, LucideIcon> = {
   search: Search,
   settings: Settings,
   sheet: FileText,
+  back: ArrowLeft,
+  print: Printer,
   shield: Shield,
   shop: ShoppingCart,
   "shopping-cart": ShoppingCart,

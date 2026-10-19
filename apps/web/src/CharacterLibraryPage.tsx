@@ -21,24 +21,17 @@ import { projectBuildForEvaluation } from "@4ecb/rules-engine";
 
 import { contentProfileMatchesRevision } from "./profile-migration";
 import { activeProfileBinding } from "./content-update";
+import { download } from "./download";
 import { Icon } from "./Icon";
 import { RulesWorkerClient } from "./rules-client";
 import { createNativeCharacter } from "./new-character";
 import { PortraitImage } from "./PortraitEditor";
+import { PersistenceBanner } from "./PersistenceBanner";
 import { ToastRegion, useToasts } from "./Toasts";
 import { useArmedAction } from "./useArmedAction";
 
 const repository = new CharacterRepository();
 const contentRepository = new ContentPackRepository();
-
-function download(name: string, contents: string, type: string): void {
-  const url = URL.createObjectURL(new Blob([contents], { type }));
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = name;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
 
 function fileBase(character: CharacterRecord): string {
   return character.title.replace(/[^a-z0-9_-]+/gi, "-");
@@ -214,6 +207,13 @@ export function CharacterLibraryPage({
     }
   }
 
+  const newCharacterLabel =
+    activePackId === undefined
+      ? "Turn on game content in Settings to create a character"
+      : creatingCharacter
+        ? "Creating character…"
+        : "New character";
+
   return (
     <main className="characters-page" id="main-content">
       <header className="page-heading library-heading">
@@ -243,18 +243,19 @@ export function CharacterLibraryPage({
             />
           </label>
           <button
-            aria-label={
-              creatingCharacter ? "Creating character…" : "New character"
-            }
+            aria-label={newCharacterLabel}
             className="icon-only-button button-icon"
             type="button"
-            title="New character"
-            disabled={activePackId === undefined || creatingCharacter}
-            onClick={() =>
+            title={newCharacterLabel}
+            // aria-disabled, not disabled, so the tooltip saying why shows.
+            aria-disabled={activePackId === undefined || undefined}
+            disabled={creatingCharacter}
+            onClick={() => {
+              if (activePackId === undefined) return;
               void createCharacter().catch((reason: unknown) =>
                 reportFailure(reason),
-              )
-            }
+              );
+            }}
           >
             <Icon name="new-character" />
           </button>
@@ -272,179 +273,185 @@ export function CharacterLibraryPage({
       <ToastRegion toasts={toasts.toasts} onDismiss={toasts.dismiss} />
       {characters.length === 0 ? (
         <div className="empty-state">
-          <h3>Your local library is empty</h3>
+          <h2>No characters yet</h2>
           <p>
-            Create a level-1 character from the active profile above, or choose
-            a `.dnd4e` file exported by the legacy Character Builder. Imported
-            original XML remains embedded so regenerated exports preserve
-            unknown legacy fields.
+            Create one with New character, or import a .dnd4e file from the
+            legacy Character Builder.
           </p>
         </div>
       ) : (
-        <ul className="character-grid">
-          {characters.map((character) => {
-            const identity = [
-              `Level ${character.effectiveLevel}`,
-              character.race,
-              character.className,
-            ]
-              .filter(Boolean)
-              .join(" ");
-            return (
-              <li key={character.id}>
-                <div className="character-card-heading">
-                  <PortraitImage
-                    className="library-portrait"
-                    name={character.title}
-                    portrait={
-                      character.renderedPortraitDataUrl === undefined
-                        ? undefined
-                        : {
-                            renderedDataUrl: character.renderedPortraitDataUrl,
-                          }
-                    }
-                  />
-                  <div>
-                    <h3>{character.title}</h3>
-                    <p className="character-summary">{identity}</p>
-                  </div>
-                </div>
-                <div className="character-card-actions">
-                  <a
-                    className="character-card-action"
-                    href={`#/characters/${encodeURIComponent(character.id)}/edit`}
-                    aria-label={`Edit ${character.title} build`}
-                    title="Edit build"
-                  >
-                    <Icon name="edit" />
-                  </a>
-                  <a
-                    className="character-card-action"
-                    href={`#/characters/${encodeURIComponent(character.id)}?preview=1`}
-                    aria-label={`View ${character.title} character sheet`}
-                    title="View character sheet"
-                  >
-                    <Icon name="sheet" />
-                  </a>
-                  <div className="character-export-menu">
-                    <button
-                      type="button"
-                      className="character-card-action"
-                      aria-label={`Export ${character.title}`}
-                      aria-expanded={openExportId === character.id}
-                      aria-controls={`export-${character.id}`}
-                      title="Export"
-                      onClick={() =>
-                        setOpenExportId((current) =>
-                          current === character.id ? undefined : character.id,
-                        )
-                      }
-                    >
-                      <Icon name="export" />
-                    </button>
-                    {openExportId === character.id ? (
-                      <div
-                        id={`export-${character.id}`}
-                        className="character-export-options"
-                        aria-label={`Export ${character.title} as`}
-                        onKeyDown={(event) => {
-                          if (event.key !== "Escape") return;
-                          setOpenExportId(undefined);
-                          const trigger =
-                            event.currentTarget.previousElementSibling;
-                          if (trigger instanceof HTMLElement) trigger.focus();
-                        }}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setOpenExportId(undefined);
-                            void exportNativeCharacter(character).catch(
-                              (reason: unknown) =>
-                                reportFailure(
-                                  reason,
-                                  `Couldn't export ${character.title}`,
-                                ),
-                            );
-                          }}
-                        >
-                          .4ecb
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setOpenExportId(undefined);
-                            void exportCharacter(character).catch(
-                              (reason: unknown) =>
-                                reportFailure(
-                                  reason,
-                                  `Couldn't export ${character.title}`,
-                                ),
-                            );
-                          }}
-                        >
-                          .dnd4e
-                        </button>
-                        <a
-                          href={`#/characters/${encodeURIComponent(character.id)}?print=1`}
-                        >
-                          PDF
-                        </a>
-                      </div>
-                    ) : null}
-                  </div>
-                  <button
-                    className="character-card-action"
-                    type="button"
-                    aria-label={`Duplicate ${character.title}`}
-                    title="Duplicate"
-                    onClick={() =>
-                      void repository
-                        .duplicate(character.id)
-                        .then(refresh)
-                        .catch((reason: unknown) => reportFailure(reason))
-                    }
-                  >
-                    <Icon name="duplicate" />
-                  </button>
-                  <button
-                    className="character-card-action danger-action"
-                    type="button"
-                    data-character-trash-trigger={character.id}
-                    data-armed={trashAction.isArmed(character.id) || undefined}
-                    aria-label={
-                      trashAction.isArmed(character.id)
-                        ? `Confirm moving ${character.title} to trash`
-                        : `Move ${character.title} to trash`
-                    }
-                    title={
-                      trashAction.isArmed(character.id)
-                        ? "Click again to move to trash"
-                        : "Move to trash"
-                    }
-                    onClick={() => {
-                      if (!trashAction.isArmed(character.id)) {
-                        trashAction.arm(character.id);
-                        return;
-                      }
-                      trashAction.disarm();
-                      void repository
-                        .moveToTrash(character.id)
-                        .then(refresh)
-                        .catch((reason: unknown) => reportFailure(reason));
-                    }}
-                  >
-                    <Icon
-                      name={
-                        trashAction.isArmed(character.id) ? "warning" : "trash"
+        <>
+          <PersistenceBanner onFailure={reportFailure} />
+          <ul className="character-grid">
+            {characters.map((character) => {
+              const identity = [
+                `Level ${character.effectiveLevel}`,
+                character.race,
+                character.className,
+              ]
+                .filter(Boolean)
+                .join(" ");
+              return (
+                <li key={character.id}>
+                  <div className="character-card-heading">
+                    <PortraitImage
+                      className="library-portrait"
+                      name={character.title}
+                      portrait={
+                        character.renderedPortraitDataUrl === undefined
+                          ? undefined
+                          : {
+                              renderedDataUrl:
+                                character.renderedPortraitDataUrl,
+                            }
                       }
                     />
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                    <div>
+                      <h3>{character.title}</h3>
+                      <p className="character-summary">{identity}</p>
+                    </div>
+                  </div>
+                  <div className="character-card-actions">
+                    <a
+                      className="character-card-action"
+                      href={`#/characters/${encodeURIComponent(character.id)}/edit`}
+                      aria-label={`Edit ${character.title} build`}
+                      title="Edit build"
+                    >
+                      <Icon name="edit" />
+                    </a>
+                    <a
+                      className="character-card-action"
+                      href={`#/characters/${encodeURIComponent(character.id)}?preview=1`}
+                      aria-label={`View ${character.title} character sheet`}
+                      title="View character sheet"
+                    >
+                      <Icon name="sheet" />
+                    </a>
+                    <div className="character-export-menu">
+                      <button
+                        type="button"
+                        className="character-card-action"
+                        aria-label={`Export ${character.title}`}
+                        aria-expanded={openExportId === character.id}
+                        aria-controls={`export-${character.id}`}
+                        title="Export"
+                        onClick={() =>
+                          setOpenExportId((current) =>
+                            current === character.id ? undefined : character.id,
+                          )
+                        }
+                      >
+                        <Icon name="export" />
+                      </button>
+                      {openExportId === character.id ? (
+                        <div
+                          id={`export-${character.id}`}
+                          className="character-export-options"
+                          aria-label={`Export ${character.title} as`}
+                          onKeyDown={(event) => {
+                            if (event.key !== "Escape") return;
+                            setOpenExportId(undefined);
+                            const trigger =
+                              event.currentTarget.previousElementSibling;
+                            if (trigger instanceof HTMLElement) trigger.focus();
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenExportId(undefined);
+                              void exportNativeCharacter(character).catch(
+                                (reason: unknown) =>
+                                  reportFailure(
+                                    reason,
+                                    `Couldn't export ${character.title}`,
+                                  ),
+                              );
+                            }}
+                          >
+                            .4ecb
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenExportId(undefined);
+                              void exportCharacter(character).catch(
+                                (reason: unknown) =>
+                                  reportFailure(
+                                    reason,
+                                    `Couldn't export ${character.title}`,
+                                  ),
+                              );
+                            }}
+                          >
+                            .dnd4e
+                          </button>
+                          <a
+                            href={`#/characters/${encodeURIComponent(character.id)}?print=1`}
+                          >
+                            PDF
+                          </a>
+                        </div>
+                      ) : null}
+                    </div>
+                    <button
+                      className="character-card-action"
+                      type="button"
+                      aria-label={`Duplicate ${character.title}`}
+                      title="Duplicate"
+                      onClick={() =>
+                        void repository
+                          .duplicate(character.id)
+                          .then(refresh)
+                          .catch((reason: unknown) => reportFailure(reason))
+                      }
+                    >
+                      <Icon name="duplicate" />
+                    </button>
+                    <button
+                      className="character-card-action danger-action"
+                      type="button"
+                      data-character-trash-trigger={character.id}
+                      data-armed={
+                        trashAction.isArmed(character.id) || undefined
+                      }
+                      aria-label={
+                        trashAction.isArmed(character.id)
+                          ? `Confirm moving ${character.title} to trash`
+                          : `Move ${character.title} to trash`
+                      }
+                      title={
+                        trashAction.isArmed(character.id)
+                          ? "Click again to move to trash"
+                          : "Move to trash"
+                      }
+                      onClick={() => {
+                        if (!trashAction.isArmed(character.id)) {
+                          trashAction.arm(character.id);
+                          return;
+                        }
+                        trashAction.disarm();
+                        void repository
+                          .moveToTrash(character.id)
+                          .then(refresh)
+                          .catch((reason: unknown) => reportFailure(reason));
+                      }}
+                    >
+                      <Icon
+                        name={
+                          trashAction.isArmed(character.id)
+                            ? "warning"
+                            : "trash"
+                        }
+                      />
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </>
       )}
       {trash.length === 0 ? null : (
         <details className="trash">
@@ -459,7 +466,15 @@ export function CharacterLibraryPage({
                     type="button"
                     onClick={() => {
                       purgeAction.disarm();
-                      void repository.restore(character.id).then(refresh);
+                      void repository
+                        .restore(character.id)
+                        .then(refresh)
+                        .catch((reason: unknown) =>
+                          reportFailure(
+                            reason,
+                            `Couldn't restore ${character.title}`,
+                          ),
+                        );
                     }}
                   >
                     Restore
@@ -474,7 +489,15 @@ export function CharacterLibraryPage({
                         return;
                       }
                       purgeAction.disarm();
-                      void repository.purge(character.id).then(refresh);
+                      void repository
+                        .purge(character.id)
+                        .then(refresh)
+                        .catch((reason: unknown) =>
+                          reportFailure(
+                            reason,
+                            `Couldn't delete ${character.title}`,
+                          ),
+                        );
                     }}
                   >
                     {purgeArmed

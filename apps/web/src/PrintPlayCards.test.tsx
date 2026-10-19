@@ -53,7 +53,6 @@ describe("printed play-data cards", () => {
         portrait={
           { renderedDataUrl: "data:image/png;base64,AA==" } as CharacterPortrait
         }
-        blankHP={false}
       />,
     );
     expect(html).toContain(
@@ -74,16 +73,6 @@ describe("printed play-data cards", () => {
       '<dt><span class="stat-tile-lead">16</span><span class="stat-tile-label">STR</span></dt><dd>+3</dd>',
     );
     expect(html).toContain("<span>Play data</span>");
-    expect(
-      renderToStaticMarkup(
-        <PrintCharacterCard
-          model={model}
-          name="Ingi"
-          portrait={undefined}
-          blankHP
-        />,
-      ),
-    ).toContain("<dt>Max HP</dt><dd></dd>");
   });
 
   it("lists every skill with ability, bonus and training", () => {

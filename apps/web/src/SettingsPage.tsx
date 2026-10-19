@@ -15,7 +15,6 @@ import {
   type InstalledContentPack,
 } from "@4ecb/browser-storage";
 import {
-  contentPackIdentityErrors,
   MAX_CONTENT_PACK_ENCODED_BYTES,
   type ContentPackManifest,
 } from "@4ecb/content-pack";
@@ -26,15 +25,16 @@ import type {
   ImportPackResponse,
 } from "./worker-messages";
 import {
-  chooseContentDirectory,
-  classifyContentSource,
-  discoverContentSources,
-  supportsDirectoryPicker,
-  type ContentSourceKind,
-  type DiscoveredContentSource,
-} from "./content-onboarding";
+  readPersistenceStatus,
+  requestPersistentStorage,
+  type PersistenceStatus,
+} from "./browser-persistence";
+import { downloadCharacterBackup } from "./download";
 import type { ContentDownloadState } from "./App";
 import { Icon } from "./Icon";
+import type { PaperSize } from "./paper-size";
+import { SegmentedControl } from "./SegmentedControl";
+import { ToastRegion, useToasts } from "./Toasts";
 import {
   ACTIVE_PROFILE_ID,
   ACTIVE_PROFILE_NAME,
@@ -47,7 +47,6 @@ import {
   updateRow,
   type ContentRow,
 } from "./content-profile-ui";
-import { contentProfileMatchesRevision } from "./profile-migration";
 import type { AdvertisedContentPack } from "./runtime-content";
 import type { ThemePreference } from "./theme";
 import {
@@ -59,23 +58,6 @@ import {
 const repository = new ContentPackRepository();
 const characterRepository = new CharacterRepository();
 
-function download(name: string, contents: string, type: string): void {
-  const url = URL.createObjectURL(new Blob([contents], { type }));
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = name;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
-
-interface StorageStatus {
-  readonly supported: boolean;
-  readonly persistenceSupported: boolean;
-  readonly persisted?: boolean;
-  readonly usage?: number;
-  readonly quota?: number;
-}
-
 function formatBytes(bytes: number | undefined): string {
   if (bytes === undefined) return "Unavailable";
   const units = ["B", "KiB", "MiB", "GiB"];
@@ -86,29 +68,6 @@ function formatBytes(bytes: number | undefined): string {
     unit += 1;
   }
   return `${value.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
-}
-
-async function readStorageStatus(): Promise<StorageStatus> {
-  const storage = navigator.storage;
-  if (storage === undefined)
-    return { supported: false, persistenceSupported: false };
-  const persistenceSupported = typeof storage.persisted === "function";
-  const [estimate, persisted] = await Promise.all([
-    typeof storage.estimate === "function"
-      ? storage.estimate()
-      : Promise.resolve<StorageEstimate>({}),
-    persistenceSupported
-      ? storage.persisted()
-      : Promise.resolve<boolean | undefined>(undefined),
-  ]);
-  return {
-    supported: true,
-    persistenceSupported:
-      persistenceSupported && typeof storage.persist === "function",
-    ...(persisted === undefined ? {} : { persisted }),
-    ...(estimate.usage === undefined ? {} : { usage: estimate.usage }),
-    ...(estimate.quota === undefined ? {} : { quota: estimate.quota }),
-  };
 }
 
 const CONTENT_ORDER_STORAGE_KEY = "4ecb.content-order";
@@ -131,10 +90,6 @@ function phaseLabel(phase: ImportPackProgressPhase): string {
   switch (phase) {
     case "decoding":
       return "Decoding pack…";
-    case "parsing-rules":
-      return "Parsing legacy rules XML…";
-    case "building-pack":
-      return "Building a portable pack…";
     case "validating":
       return "Validating digest and records…";
     case "storing":
@@ -174,6 +129,10 @@ export interface SettingsPageProps {
   readonly onShowPrintTitleActionIconChange: (value: boolean) => void;
   readonly printCardTextSize: number;
   readonly onPrintCardTextSizeChange: (value: number) => void;
+  readonly paperSize: PaperSize;
+  /** The page Settings was opened from (default: the library). */
+  readonly closeHref?: string;
+  readonly onPaperSizeChange: (value: PaperSize) => void;
 }
 
 function cardTextSizeDescription(size: number): string {
@@ -245,29 +204,23 @@ export function SettingsPage({
   onShowPrintTitleActionIconChange,
   printCardTextSize,
   onPrintCardTextSizeChange,
+  paperSize,
+  onPaperSizeChange,
+  closeHref = "#/characters",
 }: SettingsPageProps) {
-  const [status, setStatus] = useState(
-    installedPacks.length === 0 ? "No content packs installed." : "Ready.",
-  );
-  const [error, setError] = useState<string>();
-  const [libraryStatus, setLibraryStatus] = useState("");
-  const [libraryError, setLibraryError] = useState<string>();
+  // Ongoing work (an import, a content switch), shown beside its controls.
+  // Finished work shows in the page itself; failures and warnings are toasts.
+  const [progress, setProgress] = useState<string>();
+  const [announcement, setAnnouncement] = useState("");
+  const toasts = useToasts();
+  const pushToast = toasts.push;
   const [pendingBackup, setPendingBackup] = useState<{
     readonly value: unknown;
     readonly inspection: CharacterBackupInspection;
   }>();
   const [importing, setImporting] = useState(false);
-  const [storageStatus, setStorageStatus] = useState<StorageStatus>();
+  const [storageStatus, setStorageStatus] = useState<PersistenceStatus>();
   const [requestingPersistence, setRequestingPersistence] = useState(false);
-  const [scanningDirectory, setScanningDirectory] = useState(false);
-  const [directorySources, setDirectorySources] = useState<
-    readonly DiscoveredContentSource[]
-  >([]);
-  const [selectedSourcePath, setSelectedSourcePath] = useState("");
-  const [localPackId, setLocalPackId] = useState("local-legacy-rules");
-  const [localPackName, setLocalPackName] = useState(
-    "Local legacy rules corpus",
-  );
   const [savedOrder, setSavedOrder] = useState<readonly string[]>(readOrder);
   const [applying, setApplying] = useState(false);
   const [dragging, setDragging] = useState<number>();
@@ -277,7 +230,6 @@ export function SettingsPage({
     readonly characters: number;
   }>();
   const workerRef = useRef<Worker | undefined>(undefined);
-  const directoryPickerSupported = supportsDirectoryPicker(window);
   const serverLayers = advertisedPacks.map(({ packId, contentDigest }) => ({
     packId,
     contentDigest,
@@ -309,19 +261,18 @@ export function SettingsPage({
   const busy = applying || importing;
 
   useEffect(() => {
-    void readStorageStatus()
+    void readPersistenceStatus()
       .then(setStorageStatus)
-      .catch(() =>
-        setStorageStatus({
-          supported: false,
-          persistenceSupported: false,
-        }),
-      );
+      .catch(() => setStorageStatus({ supported: false, persisted: false }));
     return () => workerRef.current?.terminate();
   }, []);
 
-  function showError(reason: unknown): void {
-    setError(reason instanceof Error ? reason.message : String(reason));
+  function showError(reason: unknown, title = "Something went wrong"): void {
+    pushToast({
+      tone: "error",
+      title,
+      messages: [reason instanceof Error ? reason.message : String(reason)],
+    });
   }
 
   function rememberOrder(next: readonly ContentRow[]): void {
@@ -334,34 +285,14 @@ export function SettingsPage({
     }
   }
 
-  /** Characters on the content in use now, which a change offers the update. */
-  async function charactersOnActiveContent(): Promise<number> {
-    if (activeProfile === undefined) return 0;
-    const current = {
-      packId: activeProfile.materializedPackId,
-      contentDigest: activeProfile.contentDigest,
-    };
-    return (await characterRepository.list()).filter((character) =>
-      contentProfileMatchesRevision(character.profileBinding, current),
-    ).length;
-  }
-
   /** Saves the table and, when the packs in use change, switches to them. */
-  async function apply(
-    next: readonly ContentRow[],
-    done?: string,
-  ): Promise<void> {
+  async function apply(next: readonly ContentRow[]): Promise<void> {
     rememberOrder(next);
     const layers = enabledLayers(next);
-    if (sameProfileLayers(layers, activeProfile?.layers ?? [])) {
-      if (done !== undefined) setStatus(done);
-      return;
-    }
+    if (sameProfileLayers(layers, activeProfile?.layers ?? [])) return;
     setApplying(true);
-    setError(undefined);
-    setStatus("Switching content…");
+    setProgress("Switching content…");
     try {
-      const characters = await charactersOnActiveContent();
       if (layers.length === 0) await repository.deactivate();
       else
         await repository.activateProfile(
@@ -370,24 +301,11 @@ export function SettingsPage({
           layers.map(({ packId }) => packId),
         );
       await onChanged();
-      setStatus(
-        [
-          done ??
-            (layers.length === 0
-              ? "No content is in use."
-              : "The builder now uses the content marked In use."),
-          characters === 0 || layers.length === 0
-            ? ""
-            : `${characters} existing ${characters === 1 ? "character uses" : "characters use"} the previous content; when you open ${characters === 1 ? "it" : "one"}, you'll see what changes and can update it.`,
-        ]
-          .filter(Boolean)
-          .join(" "),
-      );
     } catch (reason: unknown) {
-      showError(reason);
-      setStatus("Content wasn't changed.");
+      showError(reason, "Couldn't switch content");
     } finally {
       setApplying(false);
+      setProgress(undefined);
     }
   }
 
@@ -413,7 +331,6 @@ export function SettingsPage({
     await apply(next);
     await repository.remove(row.packId);
     await onChanged();
-    setStatus(`Removed ${row.label} from this browser.`);
   }
 
   /** Puts a newly imported pack at the bottom, or in place of `replacing`. */
@@ -433,13 +350,10 @@ export function SettingsPage({
       (candidate) => layerKey(candidate) !== layerKey(row),
     );
     if (replacing === undefined) {
-      await apply([...others, row], `Added ${manifest.name} and turned it on.`);
+      await apply([...others, row]);
       return;
     }
-    await apply(
-      replaceRow(others, replacing, row),
-      `Replaced ${replacing.label} with ${manifest.name}.`,
-    );
+    await apply(replaceRow(others, replacing, row));
     if ((await charactersPinnedTo(replacing)) === 0) {
       await repository.remove(replacing.packId);
       await onChanged();
@@ -451,42 +365,30 @@ export function SettingsPage({
     const next = moveRow(rows, dragging, to);
     setDragging(undefined);
     setDropTarget(undefined);
-    void apply(next, "Saved the new order.");
+    void apply(next);
   }
 
   async function requestPersistence(): Promise<void> {
-    if (typeof navigator.storage?.persist !== "function") return;
     setRequestingPersistence(true);
     try {
-      const persisted = await navigator.storage.persist();
-      setStorageStatus(await readStorageStatus());
-      setStatus(
-        persisted
-          ? "Persistent browser storage was granted."
-          : "The browser did not grant persistent storage; keep current backups and review browser site-data settings.",
-      );
+      const persisted = await requestPersistentStorage();
+      setStorageStatus(await readPersistenceStatus());
+      if (!persisted)
+        pushToast({
+          tone: "warning",
+          title: "Your browser won't promise to keep your data",
+          messages: [
+            "Back up your characters now and then so you can restore them if the browser clears them.",
+          ],
+        });
     } finally {
       setRequestingPersistence(false);
     }
   }
 
-  async function importFile(
-    file: File,
-    sourceKind: ContentSourceKind,
-    replacing?: ContentRow,
-  ): Promise<void> {
+  async function importFile(file: File, replacing?: ContentRow): Promise<void> {
     if (file.size > MAX_CONTENT_PACK_ENCODED_BYTES) {
-      throw new Error("Content source exceeds the 128 MiB input limit");
-    }
-    if (sourceKind === "legacy-rules-xml") {
-      const identityErrors = contentPackIdentityErrors(
-        localPackId,
-        localPackName,
-      );
-      if (identityErrors.length > 0)
-        throw new Error(
-          `Rules XML profile metadata is invalid: ${identityErrors.join("; ")}`,
-        );
+      throw new Error("The content pack is larger than the 128 MiB limit.");
     }
     workerRef.current?.terminate();
     const worker = new Worker(new URL("./content.worker.ts", import.meta.url), {
@@ -494,135 +396,105 @@ export function SettingsPage({
     });
     workerRef.current = worker;
     setImporting(true);
-    setError(undefined);
-    setStatus(`Reading ${file.name}…`);
+    setProgress(`Reading ${file.name}…`);
 
     worker.onmessage = (event: MessageEvent<ImportPackResponse>) => {
       const response = event.data;
       if (response.type === "progress") {
-        setStatus(phaseLabel(response.phase));
+        setProgress(phaseLabel(response.phase));
         return;
       }
       setImporting(false);
+      setProgress(undefined);
       worker.terminate();
       workerRef.current = undefined;
       if (response.type === "complete") {
-        void added(response.manifest, replacing).catch(showError);
+        void added(response.manifest, replacing).catch((reason: unknown) =>
+          showError(reason, `Couldn't add ${response.manifest.name}`),
+        );
       } else {
-        setError(response.message);
-        setStatus("Import failed.");
+        showError(response.message, `Couldn't import ${file.name}`);
       }
     };
     worker.onerror = (event) => {
-      setError(event.message);
-      setStatus("Import worker failed.");
+      showError(event.message, `Couldn't import ${file.name}`);
       setImporting(false);
+      setProgress(undefined);
       worker.terminate();
       workerRef.current = undefined;
     };
 
     const buffer = await file.arrayBuffer();
-    const request: ContentImportRequest =
-      sourceKind === "portable-pack"
-        ? { type: "import-pack", buffer }
-        : {
-            type: "import-legacy-rules",
-            buffer,
-            sourceKey: file.name,
-            packId: localPackId,
-            name: localPackName,
-          };
+    const request: ContentImportRequest = { type: "import-pack", buffer };
     worker.postMessage(request, [buffer]);
-  }
-
-  async function scanDirectory(): Promise<void> {
-    setScanningDirectory(true);
-    setError(undefined);
-    try {
-      const directory = await chooseContentDirectory(window);
-      setStatus(`Scanning ${directory.name} without reading file contents…`);
-      const sources = await discoverContentSources(directory);
-      setDirectorySources(sources);
-      setSelectedSourcePath(sources[0]?.relativePath ?? "");
-      setStatus(
-        sources.length === 0
-          ? "No portable .4ecp pack or decrypted/merged .dnd40 XML was found. Encrypted containers and .part files must first be merged with the local content tool."
-          : `Found ${sources.length} supported content source${sources.length === 1 ? "" : "s"}. Choose one to validate and install.`,
-      );
-    } catch (reason: unknown) {
-      if (reason instanceof DOMException && reason.name === "AbortError") {
-        setStatus("Directory selection cancelled. No files were read.");
-      } else {
-        throw reason;
-      }
-    } finally {
-      setScanningDirectory(false);
-    }
-  }
-
-  async function importDiscoveredSource(): Promise<void> {
-    const source = directorySources.find(
-      (candidate) => candidate.relativePath === selectedSourcePath,
-    );
-    if (source === undefined) return;
-    await importFile(await source.handle.getFile(), source.kind);
   }
 
   function cancelImport(): void {
     workerRef.current?.terminate();
     workerRef.current = undefined;
     setImporting(false);
-    setStatus("Import cancelled. No changes were saved.");
+    setProgress(undefined);
   }
 
   function startFileImport(file: File, replacing?: ContentRow): void {
-    const kind = classifyContentSource(file.name);
-    if (kind === undefined) {
-      setError("Choose a .4ecp pack or a decrypted/merged .dnd40 XML file.");
-      setStatus("Import not started.");
+    if (!file.name.trim().toLocaleLowerCase().endsWith(".4ecp")) {
+      showError(
+        "Choose a .4ecp content pack. Other formats are converted with the content tool first.",
+        `Couldn't import ${file.name}`,
+      );
       return;
     }
-    void importFile(file, kind, replacing).catch((reason: unknown) => {
-      setError(reason instanceof Error ? reason.message : String(reason));
-      setStatus("Import failed.");
+    void importFile(file, replacing).catch((reason: unknown) => {
+      showError(reason, `Couldn't import ${file.name}`);
       setImporting(false);
+      setProgress(undefined);
     });
   }
 
-  async function exportBackup(): Promise<void> {
-    setLibraryError(undefined);
-    const backup = await characterRepository.exportBackup();
-    download(
-      `4ecb-characters-${new Date().toISOString().slice(0, 10)}.json`,
-      JSON.stringify(backup, null, 2),
-      "application/json",
-    );
-    setLibraryStatus(
-      `Backed up ${backup.characters.length} character record(s).`,
-    );
-  }
-
   async function inspectBackupFile(file: File): Promise<void> {
-    setLibraryError(undefined);
     if (file.size > 100 * 1024 * 1024)
       throw new Error("Backup exceeds the 100 MiB inspection limit");
     const value: unknown = JSON.parse(await file.text());
     const inspection = await characterRepository.inspectBackup(value);
     setPendingBackup({ value, inspection });
-    setLibraryStatus(
-      `Inspected ${inspection.characterCount} backup record(s); no data has been restored yet.`,
-    );
   }
 
   async function restoreInspectedBackup(): Promise<void> {
     if (pendingBackup === undefined) return;
-    setLibraryError(undefined);
-    const restored = await characterRepository.restoreBackup(
-      pendingBackup.value,
-    );
+    await characterRepository.restoreBackup(pendingBackup.value);
     setPendingBackup(undefined);
-    setLibraryStatus(`Restored ${restored} backup record(s).`);
   }
+
+  // Esc closes Settings, unless something on the page handles it first: an
+  // open dialog, a field or select, an inline confirmation, or an import.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent): void {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      if (document.querySelector("dialog[open]") !== null) return;
+      const target = event.target;
+      if (
+        target instanceof HTMLSelectElement ||
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLInputElement &&
+          !["checkbox", "radio", "range", "file", "button"].includes(
+            target.type,
+          ))
+      )
+        return;
+      if (pendingRemove !== undefined) {
+        setPendingRemove(undefined);
+        return;
+      }
+      if (pendingBackup !== undefined) {
+        setPendingBackup(undefined);
+        return;
+      }
+      if (importing) return;
+      window.location.hash = closeHref;
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [closeHref, importing, pendingBackup, pendingRemove]);
 
   const focusFirstButton = useCallback((node: HTMLDivElement | null) => {
     if (node === null) return;
@@ -640,7 +512,7 @@ export function SettingsPage({
           <a
             aria-label="Close settings"
             className="icon-only-button button-icon"
-            href="#/characters"
+            href={closeHref}
             title="Close settings"
           >
             <Icon name="remove" />
@@ -654,27 +526,16 @@ export function SettingsPage({
             <h3>Display</h3>
             <p>How the app looks in this browser.</p>
           </div>
-          <fieldset className="theme-options">
-            <legend>Color theme</legend>
-            {(
-              [
-                ["system", "System Default"],
-                ["light", "Light"],
-                ["dark", "Dark"],
-              ] as const
-            ).map(([value, label]) => (
-              <label key={value}>
-                <input
-                  type="radio"
-                  name="theme"
-                  value={value}
-                  checked={theme === value}
-                  onChange={() => onThemeChange(value)}
-                />
-                {label}
-              </label>
-            ))}
-          </fieldset>
+          <SegmentedControl
+            label="Color theme"
+            options={[
+              ["system", "System"],
+              ["light", "Light"],
+              ["dark", "Dark"],
+            ]}
+            value={theme}
+            onChange={onThemeChange}
+          />
         </section>
 
         <section className="panel settings-section">
@@ -716,27 +577,45 @@ export function SettingsPage({
 
         <section className="panel settings-section">
           <div>
-            <h3>Printed sheet</h3>
-            <p>Options for the printable character sheet and its cards.</p>
+            <h3>Power cards</h3>
+            <p>Options for power cards everywhere, on screen and printed.</p>
           </div>
           <div className="settings-options">
             <CheckboxSetting
               checked={resolveAbilityChoices}
               onChange={onResolveAbilityChoicesChange}
               label="Use the best ability in power descriptions"
-              help="When a power lets you choose an ability, show only the one with the highest modifier. Ties go to the higher score, then your class's key abilities, then the power's first option. Also applies to Equipment and Shop power cards."
-            />
-            <CheckboxSetting
-              checked={countCoinWeight}
-              onChange={onCountCoinWeightChange}
-              label="Count coin weight"
-              help="Include carried coins in encumbrance. Turn this off if your group ignores coin weight. Stored coins never count."
+              help="When a power lets you choose an ability, show only the one with the highest modifier. Ties go to the higher score, then your class's key abilities, then the power's first option."
             />
             <CheckboxSetting
               checked={showEquippedAttackBonus}
               onChange={onShowEquippedAttackBonusChange}
               label="Show equipped weapon to-hit bonus in attack headers"
               help="Turn this off if you often switch weapons. Each card's weapon table always lists every weapon's bonus."
+            />
+          </div>
+        </section>
+
+        <section className="panel settings-section">
+          <div>
+            <h3>Printed sheet</h3>
+            <p>Options for the printable character sheet and its cards.</p>
+          </div>
+          <div className="settings-options">
+            <SegmentedControl
+              label="Paper size"
+              options={[
+                ["letter", "Letter"],
+                ["a4", "A4"],
+              ]}
+              value={paperSize}
+              onChange={onPaperSizeChange}
+            />
+            <CheckboxSetting
+              checked={countCoinWeight}
+              onChange={onCountCoinWeightChange}
+              label="Count coin weight"
+              help="Include carried coins in encumbrance. Turn this off if your group ignores coin weight. Stored coins never count."
             />
             <CheckboxSetting
               checked={showPrintTitleActionIcon}
@@ -796,21 +675,33 @@ export function SettingsPage({
               separately.
             </p>
           </div>
-          <p className="field-help">
-            {storageStatus === undefined
-              ? "Checking browser storage…"
-              : storageStatus.persisted === true
-                ? "This browser has granted persistent storage. Backups are still recommended."
-                : "Browser storage may be cleared automatically. Backups are the reliable recovery path."}
-          </p>
+          {storageStatus === undefined ? null : (
+            <p className="field-help settings-persistence">
+              {storageStatus.persisted
+                ? "This browser has promised to keep your data. Backups are still recommended."
+                : "This browser may clear saved data to free up space. Backups are the reliable way to recover."}
+              {storageStatus.supported && !storageStatus.persisted ? (
+                <button
+                  type="button"
+                  disabled={requestingPersistence}
+                  onClick={() =>
+                    void requestPersistence().catch((reason: unknown) =>
+                      showError(reason, "Couldn't ask the browser"),
+                    )
+                  }
+                >
+                  Keep data in this browser
+                </button>
+              ) : null}
+            </p>
+          )}
           <div className="heading-actions">
             <button
               type="button"
               onClick={() =>
-                void exportBackup().catch((reason: unknown) =>
-                  setLibraryError(
-                    reason instanceof Error ? reason.message : String(reason),
-                  ),
+                void downloadCharacterBackup(characterRepository).catch(
+                  (reason: unknown) =>
+                    showError(reason, "Couldn't back up your characters"),
                 )
               }
             >
@@ -825,28 +716,13 @@ export function SettingsPage({
                   const file = event.currentTarget.files?.[0];
                   if (file !== undefined)
                     void inspectBackupFile(file).catch((reason: unknown) =>
-                      setLibraryError(
-                        reason instanceof Error
-                          ? reason.message
-                          : String(reason),
-                      ),
+                      showError(reason, `Couldn't read ${file.name}`),
                     );
                   event.currentTarget.value = "";
                 }}
               />
             </label>
           </div>
-          {libraryStatus === "" ? null : (
-            <p className="status" aria-live="polite">
-              {libraryStatus}
-            </p>
-          )}
-          {libraryError === undefined ? null : (
-            <div className="error" role="alert">
-              <strong>Library problem</strong>
-              <span>{libraryError}</span>
-            </div>
-          )}
           {pendingBackup === undefined ? null : (
             <div className="backup-preview" aria-label="Backup restore preview">
               <h4>Restore preview</h4>
@@ -887,15 +763,14 @@ export function SettingsPage({
                   type="button"
                   onClick={() =>
                     void restoreInspectedBackup().catch((reason: unknown) =>
-                      setLibraryError(
-                        reason instanceof Error
-                          ? reason.message
-                          : String(reason),
-                      ),
+                      showError(reason, "Couldn't restore the backup"),
                     )
                   }
                 >
-                  Restore {pendingBackup.inspection.characterCount} record(s)
+                  Restore {pendingBackup.inspection.characterCount}{" "}
+                  {pendingBackup.inspection.characterCount === 1
+                    ? "character"
+                    : "characters"}
                 </button>
                 <button
                   type="button"
@@ -1036,8 +911,10 @@ export function SettingsPage({
                                     : undefined;
                               if (to === undefined) return;
                               event.preventDefault();
-                              void apply(
-                                moveRow(rows, index, to),
+                              void apply(moveRow(rows, index, to));
+                              // Keyboard moves aren't visible to screen
+                              // readers, so they are announced.
+                              setAnnouncement(
                                 `Moved ${row.label} ${to < index ? "up" : "down"}.`,
                               );
                             }}
@@ -1086,7 +963,6 @@ export function SettingsPage({
                                 if (replacement !== undefined)
                                   void apply(
                                     replaceRow(rows, row, replacement),
-                                    `Switched to ${replacement.label}.`,
                                   );
                               }}
                             >
@@ -1187,276 +1063,23 @@ export function SettingsPage({
               Cancel import
             </button>
           ) : null}
+          {progress === undefined ? null : (
+            <p className="status" aria-live="polite">
+              {progress}
+            </p>
+          )}
         </div>
         <p className="field-help">
           Turning content on or off, reordering, or replacing it doesn&apos;t
           change existing characters: each keeps its content until you open it
-          and choose to update. Raw rules XML can be imported under Advanced
-          content options.
+          and choose to update.
         </p>
       </section>
 
-      {status === "Ready." ? null : (
-        <p className="status" aria-live="polite">
-          {status}
-        </p>
-      )}
-      {error === undefined ? null : (
-        <div className="error" role="alert">
-          <strong>Problem</strong>
-          <span>{error}</span>
-        </div>
-      )}
-
-      <details className="settings-advanced">
-        <summary>Advanced content options</summary>
-        <div className="settings-advanced-body">
-          <section className="panel content-versions">
-            <div>
-              <h3>Exact versions</h3>
-              <p>
-                For troubleshooting: every content pack stored in this browser,
-                with the identifiers characters are pinned to.
-              </p>
-            </div>
-            {activeProfile === undefined ? null : (
-              <p className="layer-digest">
-                Combined content in use{" "}
-                <code>{activeProfile.materializedPackId}</code>, digest{" "}
-                <code>{activeProfile.contentDigest}</code>
-              </p>
-            )}
-            <ul className="server-pack-list">
-              {installedPacks
-                .filter(({ origin }) => origin !== "profile")
-                .map(({ manifest, origin }) => (
-                  <li key={`${manifest.packId}:${manifest.contentDigest}`}>
-                    <div>
-                      <p className="eyebrow">
-                        {origin === "server"
-                          ? "From your group's server"
-                          : "Added in this browser"}
-                      </p>
-                      <h4>{manifest.name}</h4>
-                      <p className="identifier">{manifest.packId}</p>
-                    </div>
-                    <dl className="profile-facts">
-                      <div>
-                        <dt>Records</dt>
-                        <dd>{manifest.recordCount.toLocaleString()}</dd>
-                      </div>
-                      <div>
-                        <dt>Warnings</dt>
-                        <dd>
-                          {manifest.diagnosticCounts.warning.toLocaleString()}
-                        </dd>
-                      </div>
-                      <div className="digest-fact">
-                        <dt>Digest</dt>
-                        <dd>
-                          <code>{manifest.contentDigest}</code>
-                        </dd>
-                      </div>
-                    </dl>
-                  </li>
-                ))}
-            </ul>
-          </section>
-
-          <section className="panel content-onboarding">
-            <div>
-              <h3>Import raw rules XML</h3>
-              <p>
-                Turn a decrypted, merged `.dnd40.xml` rules file into a content
-                pack in this browser. It then appears under Other content in
-                this browser. Nothing is uploaded.
-              </p>
-            </div>
-            <div className="onboarding-fields">
-              <label>
-                Pack ID (must differ from other packs)
-                <input
-                  value={localPackId}
-                  disabled={importing}
-                  onChange={(event) =>
-                    setLocalPackId(event.currentTarget.value)
-                  }
-                />
-              </label>
-              <label>
-                Pack name
-                <input
-                  value={localPackName}
-                  disabled={importing}
-                  onChange={(event) =>
-                    setLocalPackName(event.currentTarget.value)
-                  }
-                />
-              </label>
-            </div>
-            <label className="file-button">
-              Import rules XML
-              <input
-                accept=".xml,application/xml,text/xml"
-                type="file"
-                disabled={importing}
-                onChange={(event) => {
-                  const file = event.currentTarget.files?.[0];
-                  if (file !== undefined) startFileImport(file);
-                  event.currentTarget.value = "";
-                }}
-              />
-            </label>
-            {directoryPickerSupported ? (
-              <button
-                type="button"
-                disabled={importing || scanningDirectory}
-                onClick={() =>
-                  void scanDirectory().catch((reason: unknown) => {
-                    setError(
-                      reason instanceof Error ? reason.message : String(reason),
-                    );
-                    setStatus("Directory scan failed.");
-                    setScanningDirectory(false);
-                  })
-                }
-              >
-                {scanningDirectory
-                  ? "Scanning selected directory…"
-                  : "Choose legacy data or pack directory"}
-              </button>
-            ) : (
-              <p className="profile-warning">
-                Directory selection is unavailable in this browser. Use the
-                Import file control above; it supports the same portable pack
-                and rules XML formats.
-              </p>
-            )}
-            {directorySources.length === 0 ? null : (
-              <div className="directory-source-picker">
-                <label>
-                  Discovered source
-                  <select
-                    value={selectedSourcePath}
-                    disabled={importing}
-                    onChange={(event) =>
-                      setSelectedSourcePath(event.currentTarget.value)
-                    }
-                  >
-                    {directorySources.map((source) => (
-                      <option
-                        key={source.relativePath}
-                        value={source.relativePath}
-                      >
-                        {source.relativePath} — {source.kind}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  disabled={importing || selectedSourcePath.length === 0}
-                  onClick={() =>
-                    void importDiscoveredSource().catch((reason: unknown) => {
-                      setError(
-                        reason instanceof Error
-                          ? reason.message
-                          : String(reason),
-                      );
-                      setStatus("Import failed.");
-                      setImporting(false);
-                    })
-                  }
-                >
-                  Install selected source
-                </button>
-              </div>
-            )}
-            <p className="field-help">
-              Legacy encrypted containers and loose `.part` files are not
-              decrypted or merged by the public web app. Use the project-local
-              content tool to create a private `.4ecp` first; this avoids
-              persisting decryption keys or update metadata in the browser.
-            </p>
-          </section>
-
-          <section className="panel storage-diagnostics">
-            <div>
-              <p className="eyebrow">Browser storage</p>
-              <h3>Persistence and quota</h3>
-              <p>
-                Characters, cached administrator packs, and personal packs live
-                in this browser profile. Personal packs are never uploaded.
-                Persistent storage reduces automatic eviction risk; backups
-                remain the recovery path for device or browser loss.
-              </p>
-            </div>
-            {storageStatus === undefined ? (
-              <p>Checking browser storage…</p>
-            ) : !storageStatus.supported ? (
-              <p className="profile-warning">
-                This browser does not expose storage quota diagnostics.
-              </p>
-            ) : (
-              <>
-                <dl className="report-facts">
-                  <div>
-                    <dt>Persistence</dt>
-                    <dd>
-                      {storageStatus.persisted === true
-                        ? "Granted"
-                        : storageStatus.persisted === false
-                          ? "Not granted"
-                          : "Unavailable"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Used</dt>
-                    <dd>{formatBytes(storageStatus.usage)}</dd>
-                  </div>
-                  <div>
-                    <dt>Quota</dt>
-                    <dd>{formatBytes(storageStatus.quota)}</dd>
-                  </div>
-                  <div>
-                    <dt>Quota used</dt>
-                    <dd>
-                      {storageStatus.usage === undefined ||
-                      storageStatus.quota === undefined ||
-                      storageStatus.quota === 0
-                        ? "Unavailable"
-                        : `${((storageStatus.usage / storageStatus.quota) * 100).toFixed(1)}%`}
-                    </dd>
-                  </div>
-                </dl>
-                <button
-                  type="button"
-                  disabled={
-                    !storageStatus.persistenceSupported ||
-                    storageStatus.persisted === true ||
-                    requestingPersistence
-                  }
-                  onClick={() =>
-                    void requestPersistence().catch((reason: unknown) =>
-                      setError(
-                        reason instanceof Error
-                          ? reason.message
-                          : String(reason),
-                      ),
-                    )
-                  }
-                >
-                  {storageStatus.persisted === true
-                    ? "Persistent storage granted"
-                    : requestingPersistence
-                      ? "Requesting…"
-                      : "Request persistent storage"}
-                </button>
-              </>
-            )}
-          </section>
-        </div>
-      </details>
+      <p aria-live="polite" className="visually-hidden">
+        {announcement}
+      </p>
+      <ToastRegion toasts={toasts.toasts} onDismiss={toasts.dismiss} />
     </main>
   );
 }

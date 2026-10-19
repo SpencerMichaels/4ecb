@@ -1,5 +1,20 @@
 # Implementation status
 
+## UI polish pass (2026-10-18, branch `builder-character-sidebar`)
+
+Audit findings and decisions are in `CLEANUP.md` (Current pass, items 1–7).
+D082: the browser installs `.4ecp` packs only; Settings → Advanced content
+options (digests, quota, raw rules XML and directory import) is removed with
+the web-only `legacy-rules-import` and `content-onboarding` modules. D083:
+per-character print options are gone (cards always print; no blank HP or
+monochrome); paper size is an app setting defaulting from the locale; the
+library offers persistent storage in a dismissible banner. Settings uses
+toasts (no success chatter), closes back to where it was opened (× or Esc),
+and gains a Power cards section and segmented theme/paper controls. Builder
+banners for missing content and failed evaluation became error issues. All
+dialogs share one header/footer contract. Verification: web typecheck, lint,
+format and tests pass; visual review is pending.
+
 ## Implement power equipment (2026-10-18)
 
 D081: Implement powers list only implements the character is proficient
@@ -5291,6 +5306,9 @@ TypeScript project, the production/PWA build and cache-boundary assertion,
 deterministic content checks, and the query benchmark.
 
 ### Data-directory and portable-pack onboarding
+
+Superseded by D082 (2026-10-18): the browser installs `.4ecp` packs only;
+the rules-XML and directory paths below were removed.
 
 - Content settings accepts portable `.4ecp` files and decrypted/merged
   `.dnd40.xml` through the ordinary file input. Rules XML is compiled with the

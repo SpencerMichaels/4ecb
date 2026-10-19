@@ -872,13 +872,11 @@ function Summary({
   model,
   name,
   portrait,
-  blankHP,
   onVisibleReminders,
 }: {
   model: CharacterSheetModel;
   name: string;
   portrait: CharacterPortrait | undefined;
-  blankHP: boolean;
   onVisibleReminders: (indices: readonly number[]) => void;
 }) {
   const overview = model.overview!;
@@ -971,7 +969,7 @@ function Summary({
           values={[
             {
               label: "Max HP",
-              value: blankHP ? "" : find(model.resources, "Hit Points"),
+              value: find(model.resources, "Hit Points"),
             },
             { label: "Bloodied", value: overview.bloodied },
             { label: "Surges", value: find(model.resources, "Healing Surges") },
@@ -1455,13 +1453,11 @@ function SessionNotes({
 function Scratchpad({
   model,
   name,
-  blankHP,
   startPage,
   onPageCount,
 }: {
   model: CharacterSheetModel;
   name: string;
-  blankHP: boolean;
   startPage: number;
   onPageCount: (count: number) => void;
 }) {
@@ -1636,10 +1632,7 @@ function Scratchpad({
               <Values
                 className="ov-scratch-health-values"
                 values={[
-                  [
-                    "Max HP",
-                    blankHP ? "" : find(model.resources, "Hit Points"),
-                  ],
+                  ["Max HP", find(model.resources, "Hit Points")],
                   ["Bloodied", model.overview!.bloodied],
                   ["Surges", find(model.resources, "Healing Surges")],
                   ["Surge HP", find(model.resources, "Healing Surge Value")],
@@ -3488,16 +3481,12 @@ export function SheetOverview({
   name,
   portrait,
   paper,
-  monochrome,
-  blankHP,
   children,
 }: {
   model: CharacterSheetModel;
   name: string;
   portrait: CharacterPortrait | undefined;
   paper: "letter" | "a4";
-  monochrome: boolean;
-  blankHP: boolean;
   children?: ReactNode | ((firstCardPage: number) => ReactNode);
 }) {
   const [summarySelection, setSummarySelection] = useState<{
@@ -3525,7 +3514,7 @@ export function SheetOverview({
   );
   if (!model.overview)
     return <>{typeof children === "function" ? children(1) : children}</>;
-  const overviewClass = `sheet-overview sp-prototype sp-paper-${paper}${monochrome ? " sp-monochrome" : ""} print-only`;
+  const overviewClass = `sheet-overview sp-prototype sp-paper-${paper} print-only`;
   return (
     <>
       <div className={overviewClass}>
@@ -3533,7 +3522,6 @@ export function SheetOverview({
           model={model}
           name={name}
           portrait={portrait}
-          blankHP={blankHP}
           onVisibleReminders={onVisibleReminders}
         />
         <SummaryContinuationPages
@@ -3545,7 +3533,6 @@ export function SheetOverview({
         <Scratchpad
           model={model}
           name={name}
-          blankHP={blankHP}
           startPage={2 + continuationPages}
           onPageCount={setScratchpadPages}
         />

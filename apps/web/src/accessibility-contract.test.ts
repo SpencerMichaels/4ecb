@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
@@ -178,7 +178,12 @@ describe("release accessibility contract", () => {
     expect(characterSheet).not.toContain("tab=overview");
     expect(characterSheet).toContain("Print / save PDF");
     expect(characterSheet).toContain("setShowPrintPreview(true)");
-    expect(characterSheet).toContain('className="print-preview-toolbar"');
+    expect(characterSheet).toContain(
+      'className="print-preview-toolbar page-actions"',
+    );
+    // Print options are app settings (paper) or gone; none on the sheet.
+    expect(characterSheet).not.toContain("view-print-options");
+    expect(characterSheet).toContain('aria-label="Print or save as PDF"');
     expect(characterSheet).toContain("model.learnedReferences.map");
     expect(characterSheet).toContain("<SheetOverview");
     const overview = readFileSync(
@@ -958,5 +963,38 @@ describe("release accessibility contract", () => {
     expect(characterEditor).toContain("mergeFunds={mergeFunds}");
     expect(equipmentWorkspace).toContain('aria-label="Funds location"');
     expect(equipmentWorkspace).toContain("{mergeFunds ? null : (");
+  });
+  it("keeps every dialog on the shared contract, without nagging labels", () => {
+    const sources = readdirSync(new URL(".", import.meta.url))
+      .filter((name) => name.endsWith(".tsx") && !name.includes(".test."))
+      .map((name) => [
+        name,
+        readFileSync(new URL(`./${name}`, import.meta.url), "utf8"),
+      ]);
+    for (const [name, source] of sources) {
+      // Declining is "Cancel": "Not now" and "Maybe later" are nag patterns.
+      expect(source, name).not.toMatch(/>\s*(Not now|Maybe later)\s*</i);
+      if (!source!.includes("<dialog")) continue;
+      expect(source, name).toContain("dialog-shell");
+      expect(source, name).toContain('className="button-icon dialog-close"');
+      expect(source, name).toContain('aria-label="Close"');
+    }
+    expect(styles).toMatch(/\.dialog-shell::backdrop\s*\{/);
+    expect(styles).toMatch(
+      /\.dialog-footer-start\s*\{[^}]*margin-inline-end:\s*auto;/,
+    );
+    expect(styles).not.toMatch(
+      /\.(portrait|content-update|preset-replace|shop-physical)-dialog::backdrop/,
+    );
+  });
+
+  it("returns Settings to the page it was opened from, also on Esc", () => {
+    const settings = readFileSync(
+      new URL("./SettingsPage.tsx", import.meta.url),
+      "utf8",
+    );
+    expect(settings).toContain("href={closeHref}");
+    expect(settings).toContain("window.location.hash = closeHref;");
+    expect(settings).not.toContain("Advanced content options");
   });
 });

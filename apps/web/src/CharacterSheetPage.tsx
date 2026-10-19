@@ -11,7 +11,6 @@ import {
   characterDisplayName,
   type CharacterPortrait,
   type CharacterRecord,
-  type SheetSettings,
 } from "@4ecb/character-domain";
 import type { ContentPackManifest } from "@4ecb/content-pack";
 import { appContentRuntime, type RulesRuntimeClient } from "./app-runtime";
@@ -29,6 +28,8 @@ import {
 } from "@4ecb/sheet-model";
 
 import { contentProfileMatchesRevision } from "./profile-migration";
+import { Icon } from "./Icon";
+import type { PaperSize } from "./paper-size";
 import { PortraitImage } from "./PortraitEditor";
 import { inventoryCategory } from "./equipment-ui";
 import { sortedPowerCards } from "./power-card-order";
@@ -79,7 +80,6 @@ function PrintCard({
   model,
   name,
   portrait,
-  blankHP,
   characterLevel,
   showEquippedAttackBonus,
   showPrintTitleActionIcon,
@@ -88,19 +88,13 @@ function PrintCard({
   readonly model: CharacterSheetModel;
   readonly name: string;
   readonly portrait: CharacterPortrait | undefined;
-  readonly blankHP: boolean;
   readonly characterLevel: number;
   readonly showEquippedAttackBonus: boolean;
   readonly showPrintTitleActionIcon: boolean;
 }) {
   if (isPlayCard(card))
     return card.kind === "play-character" ? (
-      <PrintCharacterCard
-        model={model}
-        name={name}
-        portrait={portrait}
-        blankHP={blankHP}
-      />
+      <PrintCharacterCard model={model} name={name} portrait={portrait} />
     ) : (
       <PrintSkillsCard model={model} />
     );
@@ -193,6 +187,7 @@ export function CharacterSheetPage({
   showPrintTitleActionIcon = true,
   printCardTextSize = 8,
   countCoinWeight = true,
+  paper = "letter",
 }: {
   readonly characterId: string;
   readonly manifests: readonly ContentPackManifest[];
@@ -204,6 +199,8 @@ export function CharacterSheetPage({
   readonly showPrintTitleActionIcon?: boolean;
   readonly printCardTextSize?: number;
   readonly countCoinWeight?: boolean;
+  /** The app-wide paper size (a preference, not per-character data). */
+  readonly paper?: PaperSize;
 }) {
   const [showPrintPreview, setShowPrintPreview] = useState(openPrintPreview);
   useEffect(() => {
@@ -370,9 +367,8 @@ export function CharacterSheetPage({
       if (finalFrame !== undefined) window.cancelAnimationFrame(finalFrame);
     };
   }, [contentLoaded, error, evaluatedSheetReady, model, printOnReady]);
-  const printPaper = character?.sheetSettings.paper;
+  const printPaper = paper;
   useEffect(() => {
-    if (printPaper === undefined) return;
     const link = document.createElement("link");
     link.dataset.printPaper = printPaper;
     link.href = `${import.meta.env.BASE_URL}print-${printPaper}.css`;
@@ -414,15 +410,6 @@ export function CharacterSheetPage({
     boundManifest !== undefined &&
     character.profileBinding?.contentDigest !== undefined &&
     boundManifest.contentDigest !== character.profileBinding.contentDigest;
-  async function setting<Key extends keyof SheetSettings>(
-    name: Key,
-    value: SheetSettings[Key],
-  ): Promise<void> {
-    const updated = await characters.updateMetadata(characterId, {
-      sheetSettings: { [name]: value },
-    });
-    setCharacter(updated);
-  }
   const characterName = characterDisplayName(character) || "Unnamed character";
   const identitySummary = model.identity
     .filter((entry) => ["Level", "Race", "Class"].includes(entry.label))
@@ -484,15 +471,11 @@ export function CharacterSheetPage({
     .filter((card) => card.universal && specialCardRank(card) >= 0)
     .sort((a, b) => specialCardRank(a) - specialCardRank(b));
   const printableCards: PrintableCard[] = [
-    ...(character.sheetSettings.includePowerCards
-      ? [
-          { kind: "play-character" as const },
-          { kind: "play-skills" as const },
-          ...specialCards,
-          ...powerCards.filter((card) => !specialCards.includes(card)),
-        ]
-      : []),
-    ...(character.sheetSettings.includeItemCards ? model.items : []),
+    { kind: "play-character" as const },
+    { kind: "play-skills" as const },
+    ...specialCards,
+    ...powerCards.filter((card) => !specialCards.includes(card)),
+    ...model.items,
   ];
   const printCardPages = chunks(printableCards, 9);
   const characterLevel =
@@ -502,7 +485,7 @@ export function CharacterSheetPage({
     ) || 1;
   return (
     <main
-      className={`sheet-page paper-${character.sheetSettings.paper} ${character.sheetSettings.monochrome ? "sheet-monochrome" : ""} ${showPrintPreview ? "is-print-preview" : ""}`}
+      className={`sheet-page paper-${paper}${showPrintPreview ? " is-print-preview" : ""}`}
       id="main-content"
       style={
         {
@@ -513,9 +496,12 @@ export function CharacterSheetPage({
       }
     >
       {showPrintPreview ? (
-        <div className="print-preview-toolbar">
+        <div className="print-preview-toolbar page-actions">
           {openPrintPreview ? (
             <button
+              aria-label="Back"
+              className="icon-only-button button-icon"
+              title="Back"
               type="button"
               onClick={() => {
                 if (window.history.length > 1) window.history.back();
@@ -523,24 +509,27 @@ export function CharacterSheetPage({
                   window.location.hash = `#/characters/${encodeURIComponent(characterId)}/edit`;
               }}
             >
-              ← Back
+              <Icon name="back" />
             </button>
           ) : (
-            <button type="button" onClick={() => setShowPrintPreview(false)}>
-              ← Back to character view
+            <button
+              aria-label="Back to character view"
+              className="icon-only-button button-icon"
+              title="Back to character view"
+              type="button"
+              onClick={() => setShowPrintPreview(false)}
+            >
+              <Icon name="back" />
             </button>
           )}
-          <div>
-            <strong>Print preview</strong>
-            <span>
-              {character.sheetSettings.paper === "a4" ? "A4" : "US Letter"}
-              {character.sheetSettings.monochrome
-                ? " · Monochrome"
-                : " · Color"}
-            </span>
-          </div>
-          <button type="button" onClick={() => window.print()}>
-            Print / save PDF
+          <button
+            aria-label="Print or save as PDF"
+            className="icon-only-button button-icon"
+            title="Print or save as PDF"
+            type="button"
+            onClick={() => window.print()}
+          >
+            <Icon name="print" />
           </button>
         </div>
       ) : null}
@@ -573,68 +562,6 @@ export function CharacterSheetPage({
             </button>
           </div>
         </header>
-
-        <details className="view-print-options">
-          <summary>Print options</summary>
-          <fieldset>
-            <legend>Printed sheet</legend>
-            <label>
-              Paper{" "}
-              <select
-                value={character.sheetSettings.paper}
-                onChange={(event) =>
-                  void setting(
-                    "paper",
-                    event.currentTarget.value as "letter" | "a4",
-                  )
-                }
-              >
-                <option value="letter">US Letter</option>
-                <option value="a4">A4</option>
-              </select>
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={character.sheetSettings.blankHitPoints}
-                onChange={(event) =>
-                  void setting("blankHitPoints", event.currentTarget.checked)
-                }
-              />{" "}
-              Blank hit points
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={character.sheetSettings.includePowerCards}
-                onChange={(event) =>
-                  void setting("includePowerCards", event.currentTarget.checked)
-                }
-              />{" "}
-              Power cards
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={character.sheetSettings.includeItemCards}
-                onChange={(event) =>
-                  void setting("includeItemCards", event.currentTarget.checked)
-                }
-              />{" "}
-              Item cards
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={character.sheetSettings.monochrome}
-                onChange={(event) =>
-                  void setting("monochrome", event.currentTarget.checked)
-                }
-              />{" "}
-              Monochrome
-            </label>
-          </fieldset>
-        </details>
 
         <aside
           className={
@@ -810,9 +737,7 @@ export function CharacterSheetPage({
         model={model}
         name={characterName}
         portrait={character.portrait}
-        paper={character.sheetSettings.paper}
-        monochrome={character.sheetSettings.monochrome}
-        blankHP={character.sheetSettings.blankHitPoints}
+        paper={paper}
       >
         {(firstCardPage) =>
           printCardPages.map((page, pageIndex) => (
@@ -827,7 +752,6 @@ export function CharacterSheetPage({
                     model={model}
                     name={characterName}
                     portrait={character.portrait}
-                    blankHP={character.sheetSettings.blankHitPoints}
                     characterLevel={characterLevel}
                     showEquippedAttackBonus={showEquippedAttackBonus}
                     showPrintTitleActionIcon={showPrintTitleActionIcon}

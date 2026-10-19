@@ -39,12 +39,10 @@ export function PrintCharacterCard({
   model,
   name,
   portrait,
-  blankHP,
 }: {
   readonly model: CharacterSheetModel;
   readonly name: string;
   readonly portrait: CharacterPortrait | undefined;
-  readonly blankHP: boolean;
 }) {
   const overview = model.overview;
   const identity = (label: string) =>
@@ -130,7 +128,7 @@ export function PrintCharacterCard({
         values={[
           {
             label: "Max HP",
-            value: blankHP ? "" : find(model.resources, "Hit Points"),
+            value: find(model.resources, "Hit Points"),
           },
           { label: "Bloodied", value: overview?.bloodied || "—" },
           { label: "Surges", value: find(model.resources, "Healing Surges") },

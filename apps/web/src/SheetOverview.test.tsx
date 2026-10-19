@@ -89,8 +89,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     expect(
@@ -154,8 +152,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     expect(html).toContain('class="ov-inventory-weight">8 lb</span>');
@@ -170,8 +166,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const scratchpad = html
@@ -230,8 +224,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const scratchpad = html
@@ -266,8 +258,6 @@ describe("real-data sheet overview", () => {
           name="Fixture"
           portrait={undefined}
           paper="letter"
-          monochrome={false}
-          blankHP={false}
         />,
       );
       const identity = html
@@ -296,8 +286,6 @@ describe("real-data sheet overview", () => {
         name="Ingi fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const pages = [
@@ -510,8 +498,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const atWill = html
@@ -906,8 +892,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       >
         <section data-card-position="here" />
       </SheetOverview>,
@@ -925,8 +909,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       >
         {(firstPage) => <span data-card-start={firstPage} />}
       </SheetOverview>,
@@ -952,8 +934,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const table = html
@@ -986,8 +966,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const table = html
@@ -1019,8 +997,6 @@ describe("real-data sheet overview", () => {
         name="Ingi"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const footer = html
@@ -1050,8 +1026,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const strip = html
@@ -1079,8 +1053,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const cells = html
@@ -1256,8 +1228,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const summary = html
@@ -1294,8 +1264,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const summary = html
@@ -1359,8 +1327,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     expect(html).toContain('class="selection-metadata-icon action-type-icon"');
@@ -1381,8 +1347,6 @@ describe("real-data sheet overview", () => {
         name={name}
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     expect(html).toContain(
@@ -1403,8 +1367,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const summary = html
@@ -1440,8 +1402,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     expect(html).toContain('<p class="ov-player-company">Test player</p>');
@@ -1458,8 +1418,6 @@ describe("real-data sheet overview", () => {
           name="Fixture"
           portrait={undefined}
           paper="letter"
-          monochrome={false}
-          blankHP={false}
         />,
       );
       const box = html
@@ -1495,8 +1453,6 @@ describe("real-data sheet overview", () => {
           name="Fixture"
           portrait={undefined}
           paper="letter"
-          monochrome={false}
-          blankHP={false}
         />,
       );
       expect(html).toContain(`<dt>Saves</dt><dd>${expected}</dd>`);
@@ -1527,8 +1483,6 @@ describe("real-data sheet overview", () => {
           name="Fixture"
           portrait={undefined}
           paper="letter"
-          monochrome={false}
-          blankHP={false}
         />,
       );
       expect(html).toContain(`<dt>Initiative</dt><dd>${expected}</dd>`);
@@ -1596,8 +1550,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const summary = html
@@ -1621,8 +1573,6 @@ describe("real-data sheet overview", () => {
           name="Fixture"
           portrait={undefined}
           paper="letter"
-          monochrome={false}
-          blankHP={false}
         />,
       ),
     ).toContain("lucide-hand-fist");
@@ -1699,8 +1649,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const table = html
@@ -1834,8 +1782,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const summary = html
@@ -1931,8 +1877,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const summary = html
@@ -1970,8 +1914,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     expect(empty).not.toContain(">Resistances &amp; Weaknesses</h3>");
@@ -1986,8 +1928,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     expect(html).toContain(`<dt>Initiative</dt><dd>${expected}</dd>`);
@@ -2045,8 +1985,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const summary = html
@@ -2245,8 +2183,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="a4"
-        monochrome
-        blankHP={false}
       />,
     );
     expect(html).toContain("The full synthetic description is preserved.");
@@ -2402,8 +2338,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     expect(html.match(/class="ov-equipped-marker"/g)).toHaveLength(2);
@@ -2439,8 +2373,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     expect(html).toContain('class="ov-reference-card ov-equipment-stack"');
@@ -2502,8 +2434,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const firstColumn = html
@@ -2524,8 +2454,6 @@ describe("real-data sheet overview", () => {
         name="Overview fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP
       />,
     );
     expect(markup).toContain('aria-label="Character summary"');
@@ -2549,10 +2477,8 @@ describe("real-data sheet overview", () => {
     expect(scratchpad).not.toContain(">Session notes");
     expect(scratchpad).not.toContain(">Reminders</h3>");
     expect(scratchpad).not.toContain(">Quick reference</h3>");
-    expect(markup).not.toContain(">72<");
-    expect(model.resources.find((v) => v.label === "Hit Points")?.value).toBe(
-      "72",
-    );
+    // Max HP always prints; the scratchpad is where play tracks it.
+    expect(markup).toContain(">72<");
   });
   it("groups Channel Divinity only from explicit keywords, retaining actions", () => {
     const rows = overviewTrackingRows({
@@ -2643,8 +2569,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const scratchpad = html
@@ -2693,8 +2617,6 @@ describe("real-data sheet overview", () => {
         name="Fixture"
         portrait={undefined}
         paper="letter"
-        monochrome={false}
-        blankHP={false}
       />,
     );
     const group = html

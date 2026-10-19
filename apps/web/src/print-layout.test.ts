@@ -129,7 +129,7 @@ describe("print layout contract", () => {
     );
     expect(styles).toMatch(/\.prose-table\s*\{[^}]*font-size:\s*inherit;/);
   });
-  it("identifies utility frequency with a fixed-size colored title badge, including monochrome", () => {
+  it("identifies utility frequency with a fixed-size colored title badge", () => {
     expect(sheetSource).toContain(
       "className={`print-utility-usage-badge usage-${usageTone}`}",
     );
@@ -144,9 +144,6 @@ describe("print layout contract", () => {
     );
     expect(styles).toMatch(
       /\.print-utility-usage-badge\.usage-daily\s*\{[^}]*background:\s*#777;/,
-    );
-    expect(styles).toMatch(
-      /\.sheet-monochrome \.print-utility-usage-badge\s*\{[^}]*background:\s*#fff;[^}]*color:\s*#111;/,
     );
   });
   it("removes wrapped separators and their space while keeping the target on its aligned row", () => {

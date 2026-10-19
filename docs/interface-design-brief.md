@@ -310,9 +310,32 @@ and invited-beta hostability preparation; desktop/tablet Play moves to M5.8.
   find a given value in roughly the same part of the same page as before.
 - A later modern template may substantially redesign hierarchy, density, and
   pagination while retaining the recognizable 4E power and stat semantics.
-- Template identity and relevant print options must be explicit in previews and
-  exports; adding a template must not change existing saved characters' rules
-  interpretation.
+- Template identity must be explicit in previews and exports; adding a template
+  must not change existing saved characters' rules interpretation.
+- The sheet has no per-character print options (D083): power and item cards
+  always print, monochrome is the browser print dialog's job, and paper size
+  is an app setting (Settings → Printed sheet, Letter | A4, defaulting from
+  the browser locale). The print-preview toolbar holds only Back and Print
+  icon buttons.
+
+### App-wide conventions (polish pass, 2026-10-18)
+
+- Dialogs share one contract (`primitives.css`): a branded header with the
+  title and a close ×, a body, and a footer with [Cancel] [Back] [Primary] on
+  the right and any other action (download a backup, remove portrait, the
+  purchase summary) on the left. Declining is always "Cancel", never "Not now"
+  or "Maybe later"; Esc equals Cancel.
+- Successes the page already shows produce no message; failures and warnings
+  are floating toasts on every page (library, Settings); ongoing work shows
+  inline beside the control that started it.
+- Character problems are builder issues in the status badges, never banners:
+  missing bound content and failed rules evaluation are errors with their own
+  Diagnostics entries. The only standing banner is the library's
+  persistent-storage prompt, shown on arrival while it is actionable.
+- Settings closes (× or Esc) back to the page it was opened from. Its sections
+  group settings by where they apply (Display, Builder & Equipment, Power
+  cards, Printed sheet, Backups & storage, Game content); single choices from
+  a few options are segmented controls (`SegmentedControl`).
 
 ### Browser View and deferred Play modes
 

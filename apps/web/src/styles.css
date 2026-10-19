@@ -453,31 +453,6 @@ a {
   }
 }
 
-.settings-advanced {
-  border: 1px solid var(--border);
-  margin: 1rem 0;
-}
-
-.settings-advanced > summary {
-  cursor: pointer;
-  font-weight: 700;
-  padding: 1rem;
-}
-
-.settings-advanced[open] > summary {
-  border-bottom: 1px solid var(--border);
-}
-
-.settings-advanced-body {
-  display: grid;
-  gap: 1rem;
-  padding: 1rem;
-}
-
-.settings-advanced-body > :last-child {
-  margin-bottom: 0;
-}
-
 .content-change-review {
   background: var(--accent-soft);
   border: 1px solid var(--accent);
@@ -562,27 +537,6 @@ a {
 .settings-section > div:first-child p {
   color: var(--muted, #5d554a);
   margin-bottom: 0;
-}
-
-.theme-options {
-  align-items: center;
-  border: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
-  margin: 0;
-  padding: 0;
-}
-
-.theme-options legend {
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.theme-options label {
-  align-items: center;
-  display: inline-flex;
-  gap: 0.4rem;
 }
 
 .backup-preview {
@@ -805,20 +759,17 @@ a {
 }
 
 .profile-facts code,
-.active-profile-summary code,
-.layer-digest code {
+.active-profile-summary code {
   overflow-wrap: anywhere;
 }
 
 .administrator-content,
-.profile-composer,
-.storage-diagnostics {
+.profile-composer {
   display: grid;
   gap: 1rem;
   margin-bottom: 1rem;
 }
 
-.server-pack-list,
 .profile-layer-list,
 .collision-list {
   list-style: none;
@@ -826,36 +777,14 @@ a {
   padding: 0;
 }
 
-.server-pack-list,
 .profile-layer-list {
   display: grid;
   gap: 0.75rem;
 }
 
-.server-pack-list > li {
-  background: var(--surface-subtle);
-  border: 1px solid var(--border);
-  display: grid;
-  gap: 0.75rem;
-  padding: 0.85rem;
-}
-
-.server-pack-list h4,
 .profile-layer-list h4,
 .profile-preview h4 {
   margin: 0;
-}
-
-.server-pack-list .profile-facts {
-  grid-template-columns: minmax(8rem, 0.4fr) minmax(16rem, 1fr);
-}
-
-.digest-fact {
-  min-width: 0;
-}
-
-.digest-fact dd {
-  white-space: normal;
 }
 
 .download-progress {
@@ -935,12 +864,6 @@ a {
 
 .layer-description p:last-child {
   margin-bottom: 0;
-}
-
-.layer-digest {
-  color: var(--muted);
-  font-size: 0.8rem;
-  margin: 0.35rem 0;
 }
 
 .layer-actions {
@@ -1134,7 +1057,7 @@ textarea {
   gap: 1rem;
   grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr));
   list-style: none;
-  margin: 1rem 0;
+  margin: 0 0 1rem;
   padding: 0;
 }
 .character-grid > li,
@@ -1184,7 +1107,7 @@ textarea {
   align-items: center;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 3px;
+  border-radius: 2px;
   color: var(--text);
   display: inline-flex;
   height: 2rem;
@@ -1533,20 +1456,10 @@ textarea {
   justify-content: space-between;
   margin: 0 auto 1rem;
   max-width: 88rem;
-  padding: 0.75rem 1rem;
+  padding: 0.25rem;
   position: sticky;
   top: 0;
   z-index: 5;
-}
-
-.print-preview-toolbar > div {
-  display: grid;
-  text-align: center;
-}
-
-.print-preview-toolbar span {
-  color: var(--muted);
-  font-size: 0.75rem;
 }
 
 .sheet-page.is-print-preview .print-page {
@@ -1619,38 +1532,6 @@ textarea {
 .view-sheet-actions > a:focus-visible {
   border-color: var(--accent);
   color: var(--accent-strong);
-}
-
-.view-print-options {
-  background: var(--surface-subtle);
-  border: 1px solid var(--border);
-  border-top: 0;
-  padding: 0.65rem 0.85rem;
-}
-
-.view-print-options summary {
-  cursor: pointer;
-  font-weight: 800;
-}
-
-.view-print-options fieldset {
-  align-items: center;
-  border: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-  margin: 0.65rem 0 0;
-  padding: 0;
-}
-
-.view-print-options legend {
-  font-weight: 700;
-}
-
-.view-print-options label {
-  align-items: center;
-  display: flex;
-  gap: 0.25rem;
 }
 
 .view-source-status {
@@ -1964,9 +1845,6 @@ textarea {
   height: 4.5rem;
   width: 4.5rem;
 }
-.sheet-monochrome .sheet-portrait {
-  filter: grayscale(1);
-}
 .identity-block {
   border-bottom: 1px solid #777;
   margin-bottom: 0.8rem;
@@ -2212,11 +2090,6 @@ textarea {
 }
 .print-utility-usage-badge.usage-daily {
   background: #777;
-}
-.sheet-monochrome .print-utility-usage-badge {
-  background: #fff;
-  border-color: #555;
-  color: #111;
 }
 .print-power-card > header h3 > span:last-child {
   min-width: 0;
@@ -2617,7 +2490,7 @@ textarea {
 /* Secondary attacks keep the printed inset strip, at panel scale
    (0.035in in print is 0.55rem here). */
 .print-reference-card.is-panel .print-card-combat-band.is-secondary {
-  border-radius: 0.25rem;
+  border-radius: 2px;
   gap: 0.4rem;
   padding: 0.3rem 0.55rem;
 }
@@ -3041,15 +2914,6 @@ textarea {
   font-weight: 700;
   margin-left: 0.02in;
 }
-.sheet-monochrome .print-play-card .stat-group {
-  --stat-accent: #333;
-  --stat-tint: #eee;
-  --stat-edge: #aaa;
-}
-.sheet-monochrome .print-play-skills tbody tr:nth-child(even),
-.sheet-monochrome .print-play-skills thead th {
-  background: #eee;
-}
 .print-item-card {
   --card-color: #ff8c00;
   grid-template-columns: minmax(0, 1fr);
@@ -3418,47 +3282,6 @@ textarea {
 .sheet-card-rules .prose-paragraph {
   margin: 0;
 }
-.sheet-monochrome .sheet-columns section > h3,
-.sheet-monochrome .print-summary-columns section > h3,
-.sheet-monochrome .print-wide-section > h3,
-.sheet-monochrome .card-section > h2 {
-  background: #fff;
-  border-color: #000;
-  color: #000;
-}
-.sheet-monochrome .print-reference-card {
-  --card-color: #000;
-  --card-footer-color: #000;
-}
-.sheet-monochrome .print-card-flavor,
-.sheet-monochrome .print-card-keyword-band,
-.sheet-monochrome .print-card-action-band,
-.sheet-monochrome .print-card-combat-band,
-.sheet-monochrome .print-item-stats dt {
-  background: #eee;
-}
-.sheet-monochrome .print-card-type {
-  background: #000;
-  color: #fff;
-}
-.sheet-monochrome .print-item-card > header {
-  background: #fff;
-  color: #111;
-}
-.sheet-monochrome .print-item-stats {
-  background: #eee;
-}
-.sheet-monochrome .print-item-power-heading {
-  background: #eee;
-  border-color: #000;
-  color: #111;
-}
-.sheet-monochrome .print-item-power {
-  --item-power-color: #000;
-}
-.sheet-monochrome .print-card-combat-band.is-secondary {
-  background: #eee;
-}
 
 .editor-page {
   /* The page's edge padding matches the gap between the sidebar and the
@@ -3476,27 +3299,6 @@ textarea {
 }
 .panel > h3 {
   margin-top: 0;
-}
-.content-onboarding {
-  display: grid;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-.onboarding-fields {
-  display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.onboarding-fields label,
-.directory-source-picker label {
-  display: grid;
-  gap: 0.25rem;
-}
-.directory-source-picker {
-  align-items: end;
-  display: grid;
-  gap: 0.75rem;
-  grid-template-columns: minmax(0, 1fr) auto;
 }
 .field-help {
   color: var(--muted, #5d554a);
@@ -7467,10 +7269,7 @@ button.inventory-icon-action:disabled {
   .report-facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .onboarding-fields,
-  .directory-source-picker,
-  .add-overlay-control,
-  .server-pack-list .profile-facts {
+  .add-overlay-control {
     grid-template-columns: 1fr;
   }
 }
@@ -7715,13 +7514,19 @@ button.inventory-icon-action:disabled {
   width: 2rem;
 }
 
-.page-actions > :is(button, a, label):not(:disabled):hover,
+.page-actions
+  > :is(button, a, label):not(:disabled):not([aria-disabled="true"]):hover,
 .page-actions > :is(button, a):focus-visible,
 .page-actions > label:focus-within {
   background: var(--surface-subtle);
   border-color: transparent;
   box-shadow: none;
   color: var(--text);
+}
+
+.page-actions > button[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .page-actions > label:focus-within {
@@ -7814,4 +7619,54 @@ button.toast-dismiss:not(:disabled):hover {
   .toast-region {
     display: none;
   }
+}
+
+/* Library: the browser may clear saved characters (PersistenceBanner). A
+   standing, actionable state shown on arrival, so it sits in the page. */
+.persistence-banner {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  box-shadow: inset 4px 0 var(--focus);
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.6rem 0.6rem 1rem;
+}
+
+.persistence-banner.is-refused {
+  box-shadow: inset 4px 0 var(--warning);
+}
+
+.persistence-banner > .icon {
+  color: var(--focus);
+  height: 1.2rem;
+  width: 1.2rem;
+}
+
+.persistence-banner.is-refused > .icon {
+  color: var(--warning);
+}
+
+.persistence-banner > p {
+  margin: 0;
+}
+
+@media (max-width: 40rem) {
+  .persistence-banner {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .persistence-banner > button:not(.icon-only-button) {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+.settings-persistence {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.8rem;
 }

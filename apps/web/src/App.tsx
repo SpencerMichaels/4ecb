@@ -21,6 +21,11 @@ import { preferredPrintCardTextSize } from "./print-card-fit";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { ShowEntitySourceContext } from "./ShowEntitySourceContext";
 import {
+  PAPER_SIZE_STORAGE_KEY,
+  storedPaperSize,
+  type PaperSize,
+} from "./paper-size";
+import {
   canonicalHashRedirect,
   characterEditorHash,
   commitHashNavigation,
@@ -212,6 +217,16 @@ export function App() {
       return true;
     }
   });
+  const [paperSize, setPaperSizeState] = useState<PaperSize>(storedPaperSize);
+  // Stored only once chosen, so the default keeps following the locale.
+  const setPaperSize = useCallback((next: PaperSize) => {
+    setPaperSizeState(next);
+    try {
+      localStorage.setItem(PAPER_SIZE_STORAGE_KEY, next);
+    } catch {
+      // The paper preference still applies for this session.
+    }
+  }, []);
   const firstRoute = useRef(true);
   const [countCoinWeight, setCountCoinWeight] = useState(() => {
     try {
@@ -260,6 +275,11 @@ export function App() {
     }
   });
   const route = useMemo(() => parseHashRoute(hash), [hash]);
+  // Where Settings' close (and Esc) returns: the last other page visited.
+  const [settingsReturnHash, setSettingsReturnHash] = useState("#/characters");
+  useEffect(() => {
+    if (route.page !== "settings" && hash !== "") setSettingsReturnHash(hash);
+  }, [hash, route.page]);
   const previousRoute = useRef(route);
   const focusRouteOnMount =
     !firstRoute.current &&
@@ -613,6 +633,9 @@ export function App() {
                     }
                     printCardTextSize={printCardTextSize}
                     onPrintCardTextSizeChange={setPrintCardTextSize}
+                    paperSize={paperSize}
+                    onPaperSizeChange={setPaperSize}
+                    closeHref={settingsReturnHash}
                   />
                 ) : route.characterId === undefined ? (
                   <CharacterLibraryPage
@@ -647,6 +670,7 @@ export function App() {
                     showEquippedAttackBonus={showEquippedAttackBonus}
                     showPrintTitleActionIcon={showPrintTitleActionIcon}
                     printCardTextSize={printCardTextSize}
+                    paper={paperSize}
                   />
                 )}
               </RouteFocusOnMount>
