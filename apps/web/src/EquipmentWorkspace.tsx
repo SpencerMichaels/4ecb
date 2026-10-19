@@ -532,6 +532,11 @@ function FundsPane({
     [location, wallet],
   );
   const canConsolidate = !sameWallet(consolidated, wallet);
+  // Nothing to consolidate disarms it, so it can't come back armed later.
+  const disarmConsolidate = consolidateAction.disarm;
+  useEffect(() => {
+    if (!canConsolidate) disarmConsolidate();
+  }, [canConsolidate, disarmConsolidate]);
   const previousShown = useRef({ location, coins: totalWallet });
   // Set when a coin cell is edited directly, for the next change only.
   const directEdit = useRef(false);
@@ -799,6 +804,8 @@ function FundsPane({
               className="funds-consolidate"
               data-armed={consolidateArmed || undefined}
               data-funds-consolidate-trigger="wallet"
+              // Leaving it, even by keyboard, cancels like a click elsewhere.
+              onBlur={() => consolidateAction.disarm()}
               disabled={!canConsolidate}
               title={
                 !canConsolidate
