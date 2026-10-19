@@ -365,6 +365,19 @@ export function CharacterSheetPage({
     document.head.append(link);
     return () => link.remove();
   }, [printPaper]);
+  // Browsers name a saved PDF after the page title ("Ingi - Level 8.pdf").
+  const pdfTitle =
+    character === undefined
+      ? undefined
+      : `${characterDisplayName(character) || "Unnamed character"} - Level ${character.build.effectiveLevel}`;
+  useEffect(() => {
+    if (pdfTitle === undefined) return;
+    const previous = document.title;
+    document.title = pdfTitle;
+    return () => {
+      document.title = previous;
+    };
+  }, [pdfTitle]);
   if (error !== undefined)
     return (
       <main className="sheet-page" id="main-content">
