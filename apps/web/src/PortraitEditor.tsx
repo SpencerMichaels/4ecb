@@ -5,13 +5,14 @@ import {
   type PointerEvent,
   type WheelEvent,
 } from "react";
-import { Camera, Minus, Plus, UserRound, X } from "lucide-react";
+import { Camera, Minus, Plus, UserRound } from "lucide-react";
 
 import type {
   CharacterPortrait,
   CharacterPortraitCrop,
 } from "@4ecb/character-domain";
 
+import { Icon } from "./Icon";
 import {
   clampPortraitCrop,
   initialPortraitCrop,
@@ -205,12 +206,13 @@ export function PortraitEditor({
               </h2>
             </div>
             <button
-              aria-label="Close portrait editor"
+              aria-label="Close"
               className="button-icon dialog-close"
+              title="Close"
               type="button"
               onClick={close}
             >
-              <X />
+              <Icon name="remove" />
             </button>
           </header>
           <div className="portrait-dialog-body">
@@ -322,7 +324,7 @@ export function PortraitEditor({
           <footer>
             {portrait === undefined ? null : (
               <button
-                className="danger-button"
+                className="danger-button dialog-footer-start"
                 disabled={saving}
                 type="button"
                 onClick={() => {
@@ -342,11 +344,11 @@ export function PortraitEditor({
                 Remove portrait
               </button>
             )}
-            <span />
             <button disabled={saving} type="button" onClick={close}>
               Cancel
             </button>
             <button
+              className="button-primary"
               disabled={source === undefined || saving}
               type="button"
               onClick={() => void save()}

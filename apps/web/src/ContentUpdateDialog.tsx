@@ -15,21 +15,11 @@ import {
   describeContentUpdate,
   type ContentUpdateSummary,
 } from "./content-update";
+import { download } from "./download";
 import { Icon } from "./Icon";
 import { RulesWorkerClient } from "./rules-client";
 
 const repository = new CharacterRepository();
-
-function download(name: string, contents: string): void {
-  const url = URL.createObjectURL(
-    new Blob([contents], { type: "application/json" }),
-  );
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = name;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
 
 /**
  * Explains, in player terms, what moving a character onto the active content
@@ -221,8 +211,9 @@ export function ContentUpdateDialog({
           current version, download a backup first.
         </p>
       </div>
-      <footer className="content-update-actions">
+      <footer>
         <button
+          className="dialog-footer-start"
           type="button"
           onClick={() =>
             void downloadBackup().catch((reason: unknown) =>
@@ -234,9 +225,8 @@ export function ContentUpdateDialog({
         >
           <Icon name="download" /> Download a backup
         </button>
-        <span className="content-update-spacer" />
         <button type="button" onClick={close}>
-          Not now
+          Cancel
         </button>
         <button
           type="button"

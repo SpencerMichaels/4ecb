@@ -295,6 +295,15 @@ function PresetReplaceDialog({
     >
       <header>
         <h2 id="preset-replace-title">Apply {name}?</h2>
+        <button
+          aria-label="Close"
+          className="button-icon dialog-close"
+          title="Close"
+          type="button"
+          onClick={onCancel}
+        >
+          <Icon name="remove" />
+        </button>
       </header>
       <div className="preset-replace-body">
         <p>

@@ -1315,11 +1315,6 @@ textarea {
 .portrait-dialog,
 .content-update-dialog,
 .preset-replace-dialog {
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: 0;
-  max-height: calc(100vh - 2rem);
-  max-width: calc(100vw - 2rem);
   overflow: auto;
   width: 31rem;
 }
@@ -1343,51 +1338,7 @@ textarea {
   gap: 0.2rem;
   padding-left: 1.2rem;
 }
-.content-update-actions {
-  border-top: 1px solid var(--border);
-}
-.content-update-spacer {
-  flex: 1;
-}
-.portrait-dialog::backdrop,
-.content-update-dialog::backdrop,
-.preset-replace-dialog::backdrop {
-  background: rgb(12 18 24 / 72%);
-}
-.portrait-dialog > header,
-.portrait-dialog > footer,
-.content-update-dialog > header,
-.content-update-dialog > footer,
-.preset-replace-dialog > header,
-.preset-replace-dialog > footer {
-  gap: 0.6rem;
-  padding: 0.8rem 1rem;
-}
-.portrait-dialog > header,
-.content-update-dialog > header,
-.preset-replace-dialog > header {
-  background: var(--brand-navy);
-  border-bottom: 3px solid var(--brand-blue);
-  color: #fff;
-}
-.portrait-dialog > header h2,
-.portrait-dialog > header p,
-.content-update-dialog > header h2,
-.preset-replace-dialog > header h2,
-.content-update-dialog > header p {
-  margin: 0;
-}
-.portrait-dialog > header button,
-.content-update-dialog > header button {
-  border-color: transparent;
-  color: #fff;
-  padding: 0.3rem;
-}
 /* Confirms a starting preset that would replace picks already made. */
-.preset-replace-dialog > footer {
-  gap: 0.5rem;
-  justify-content: flex-end;
-}
 .preset-replace-body {
   display: grid;
   gap: 0.5rem;
@@ -1488,12 +1439,6 @@ textarea {
   color: var(--muted);
   font-size: 0.82rem;
   margin: 0.35rem 0 0.8rem;
-}
-.portrait-dialog > footer {
-  border-top: 1px solid var(--border);
-}
-.portrait-dialog > footer > span {
-  flex: 1;
 }
 .portrait-dialog .danger-button {
   border-color: var(--danger);
@@ -6900,47 +6845,9 @@ label.inline-field > select:disabled {
   overflow: hidden;
 }
 
-.shop-physical-dialog::backdrop {
-  background: rgb(0 0 0 / 45%);
-  backdrop-filter: blur(2px);
-}
-
 .shop-physical-dialog > form > header,
 .shop-physical-dialog > form > footer {
   flex: none;
-  padding: 0.75rem 1rem;
-}
-
-.shop-physical-dialog > form > header {
-  border-bottom: 1px solid var(--border);
-}
-
-.shop-physical-dialog > form > footer {
-  border-top: 1px solid var(--border);
-  gap: 0.5rem;
-}
-
-.shop-physical-dialog > form > footer {
-  justify-content: space-between;
-}
-
-.shop-physical-dialog-actions {
-  display: flex;
-  flex: none;
-  gap: 0.5rem;
-}
-
-.shop-physical-dialog h2,
-.shop-physical-dialog .eyebrow {
-  margin: 0;
-}
-
-.shop-physical-dialog > form > header > button {
-  border: 0;
-  color: var(--muted);
-  font-size: 1.35rem;
-  line-height: 1;
-  padding: 0.25rem 0.45rem;
 }
 
 .wallet-dialog-body {

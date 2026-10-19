@@ -39,10 +39,21 @@ dialog:not([open]) {
   display: none;
 }
 
+/* The dialog contract: a branded header with the title and a close x, a body,
+   and a footer whose actions sit on the right as [Cancel] [Back] [Primary];
+   anything else goes on the left (.dialog-footer-start). Esc equals Cancel. */
 .dialog-shell {
   background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
   color: var(--text);
+  max-height: calc(100vh - 2rem);
+  max-width: calc(100vw - 2rem);
   padding: 0;
+}
+
+.dialog-shell::backdrop {
+  background: rgb(12 18 24 / 72%);
 }
 
 .dialog-shell > header,
@@ -51,11 +62,38 @@ dialog:not([open]) {
 .dialog-shell > form > footer {
   align-items: center;
   display: flex;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem;
+}
+
+.dialog-shell > header,
+.dialog-shell > form > header {
+  background: var(--brand-navy);
+  border-bottom: 3px solid var(--brand-blue);
+  color: #fff;
   justify-content: space-between;
+}
+
+.dialog-shell > header :is(h2, p),
+.dialog-shell > form > header :is(h2, p) {
+  margin: 0;
+}
+
+.dialog-shell > footer,
+.dialog-shell > form > footer {
+  border-top: 1px solid var(--border);
+  justify-content: flex-end;
+}
+
+.dialog-footer-start {
+  margin-inline-end: auto;
 }
 
 button.dialog-close {
   background: transparent;
+  border-color: transparent;
+  color: #fff;
+  padding: 0.3rem;
 }
 
 .selection-table-scroll .table-section-row,

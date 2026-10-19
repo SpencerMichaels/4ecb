@@ -1356,12 +1356,13 @@ export function ShopWorkspace({
                 </h2>
               </div>
               <button
+                aria-label="Close"
                 className="button-icon dialog-close"
+                title="Close"
                 type="button"
-                aria-label="Close item picker"
                 onClick={() => dialogRef.current?.close()}
               >
-                ×
+                <Icon name="remove" />
               </button>
             </header>
             <div className="shop-physical-dialog-body">
@@ -1555,7 +1556,7 @@ export function ShopWorkspace({
                   })()}
             </div>
             <footer>
-              <dl className="shop-physical-summary">
+              <dl className="shop-physical-summary dialog-footer-start">
                 <div>
                   <dt>Resulting item</dt>
                   <dd>
@@ -1577,45 +1578,40 @@ export function ShopWorkspace({
                   </dd>
                 </div>
               </dl>
-              <div className="shop-physical-dialog-actions">
+              <button type="button" onClick={() => dialogRef.current?.close()}>
+                Cancel
+              </button>
+              {dialogPageIndex === 0 ? null : (
                 <button
                   type="button"
-                  onClick={() => dialogRef.current?.close()}
-                >
-                  Cancel
-                </button>
-                {dialogPageIndex === 0 ? null : (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDialogPageIndex((index) => Math.max(0, index - 1))
-                    }
-                  >
-                    Back
-                  </button>
-                )}
-                <button
-                  className="dialog-primary button-primary"
-                  type="submit"
-                  disabled={
-                    onLastDialogPage
-                      ? (physicalNeeded > 0 && selectedPhysicalId === "") ||
-                        !allItemChoicesComplete
-                      : (currentDialogPage?.kind === "item-choice" &&
-                          !currentItemChoiceComplete) ||
-                        (currentDialogPage?.kind === "physical" &&
-                          !physicalChoiceComplete)
+                  onClick={() =>
+                    setDialogPageIndex((index) => Math.max(0, index - 1))
                   }
                 >
-                  {onLastDialogPage
-                    ? currentDialogPage?.kind === "physical"
-                      ? "Confirm"
-                      : acquisition.mode === "buy"
-                        ? "Buy"
-                        : "Give"
-                    : "Next"}
+                  Back
                 </button>
-              </div>
+              )}
+              <button
+                className="dialog-primary button-primary"
+                type="submit"
+                disabled={
+                  onLastDialogPage
+                    ? (physicalNeeded > 0 && selectedPhysicalId === "") ||
+                      !allItemChoicesComplete
+                    : (currentDialogPage?.kind === "item-choice" &&
+                        !currentItemChoiceComplete) ||
+                      (currentDialogPage?.kind === "physical" &&
+                        !physicalChoiceComplete)
+                }
+              >
+                {onLastDialogPage
+                  ? currentDialogPage?.kind === "physical"
+                    ? "Confirm"
+                    : acquisition.mode === "buy"
+                      ? "Buy"
+                      : "Give"
+                  : "Next"}
+              </button>
             </footer>
           </form>
         ) : null}
