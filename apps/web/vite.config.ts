@@ -60,7 +60,7 @@ export default defineConfig({
         // /enter/<invite> link, which sets a cookie and redirects to "/") must reach
         // the server, or the app would boot at that path and keep it in the URL.
         navigateFallbackAllowlist: [/^\/$/],
-        globPatterns: ["**/*.{css,html,js,json,svg}"],
+        globPatterns: ["**/*.{css,html,js,json,svg,woff2}"],
         globIgnores: ["runtime-config.json"],
         runtimeCaching: [
           {

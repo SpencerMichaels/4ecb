@@ -21,3 +21,8 @@ an engineering and distribution boundary, not legal advice.
 General-purpose interface icons are provided by Lucide through `lucide-react`
 under the ISC license. Only the components imported by the web application are
 included in production bundles. See <https://lucide.dev>.
+
+The display typeface is EB Garamond (Georg Duffner and Octavio Pardo), bundled
+through `@fontsource/eb-garamond` under the SIL Open Font License 1.1. Only the
+Latin and Latin Extended subsets of the weights in use are included. See
+<https://github.com/octaviopardo/EBGaramond12>.

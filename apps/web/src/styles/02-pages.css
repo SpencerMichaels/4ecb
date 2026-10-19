@@ -57,6 +57,7 @@
   border-block-width: 3px;
   font-family: var(--font-display);
   font-size: 1.2rem;
+  font-variant-numeric: lining-nums; /* EB Garamond's default "4" dips below the line */
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1;
@@ -66,6 +67,12 @@
 @supports (text-box: trim-both cap alphabetic) {
   .app-brand-mark {
     padding-block: 0.42rem;
+    text-box: trim-both cap alphabetic;
+  }
+
+  /* Trimmed the same way, so flex centering lines up the two pieces' capitals
+     rather than the name's descender-padded line box with the trimmed mark. */
+  .app-brand-name {
     text-box: trim-both cap alphabetic;
   }
 }
