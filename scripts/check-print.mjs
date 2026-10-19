@@ -141,7 +141,7 @@ try {
   await navigate(client, `${origin}/#/settings`);
   await waitForExpression(
     client,
-    `document.querySelector(".settings-page h2")?.textContent === "Settings" && document.body.textContent.includes("Content")`,
+    `document.querySelector(".settings-page h2")?.textContent === "Settings" && document.body.textContent.includes("Game content")`,
   );
   const styleContract = await evaluate(
     client,
@@ -601,7 +601,7 @@ async function firefoxPrintMatrix(character, origin, outputDirectory) {
     await webdriverWait(
       port,
       sessionId,
-      `return document.querySelector(".settings-page h2")?.textContent === "Settings" && document.body.textContent.includes("Content")`,
+      `return document.querySelector(".settings-page h2")?.textContent === "Settings" && document.body.textContent.includes("Game content")`,
     );
     await webdriverExecuteAsync(
       port,
