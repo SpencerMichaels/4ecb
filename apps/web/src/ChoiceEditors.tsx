@@ -1651,6 +1651,7 @@ function RepeatedCandidateTableEditor({
       byId={byId}
       disabled={false}
       selectionLimit={choices.length}
+      selectedOnlyToggle={kind === "background"}
       showIllegal={showAll}
       onExpandGroup={setExpandedGroupKey}
       onInspect={(candidate) => {

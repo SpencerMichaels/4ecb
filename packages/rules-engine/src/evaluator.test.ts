@@ -1118,6 +1118,74 @@ describe("character evaluator", () => {
     ]);
   });
 
+  it("marks background class-skill benefits the class already grants", () => {
+    const classSkill = (skill: string) =>
+      entity(
+        `${skill.toUpperCase()}_CLASS`,
+        `${skill} class skill`,
+        "Background Choice",
+        {
+          categories: ["BG_BENEFIT"],
+          rules: [
+            rule(
+              "modify",
+              {
+                name: skill,
+                type: "Skill Training",
+                Field: "UniversalClassSkill",
+                value: "true",
+              },
+              0,
+            ),
+          ],
+        },
+      );
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          {
+            id: "paladin",
+            definitionId: "PALADIN",
+            acquiredLevel: 1,
+            kind: "grant",
+          },
+        ],
+        inventory: [],
+      },
+      [
+        entity("ROOT", "1", "Level", {
+          rules: [
+            rule(
+              "select",
+              { type: "Background Choice", Category: "BG_BENEFIT" },
+              0,
+            ),
+          ],
+        }),
+        entity("PALADIN", "Paladin", "Class"),
+        entity("RELIGION", "Religion", "Skill Training", {
+          categories: ["PALADIN"],
+        }),
+        entity("STEALTH", "Stealth", "Skill Training", {
+          categories: ["ROGUE"],
+        }),
+        classSkill("Religion"),
+        classSkill("Stealth"),
+      ],
+    );
+    expect(result.choices[0]?.candidates).toMatchObject([
+      {
+        definitionId: "RELIGION_CLASS",
+        eligible: false,
+        reasons: ["already-class-skill"],
+      },
+      { definitionId: "STEALTH_CLASS", eligible: true, reasons: [] },
+    ]);
+  });
+
   it("offers the selected archery mastery power as a ranger at-will replacement", () => {
     const result = evaluateCharacter(
       {

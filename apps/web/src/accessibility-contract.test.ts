@@ -538,6 +538,13 @@ describe("release accessibility contract", () => {
     expect(tableSource).not.toContain("SelectionSummary");
     expect(tableSource).toContain("offPageSelectedRows(true)");
     expect(tableSource).toContain("offPageSelectedRows(false)");
+    // Many-pick tables (backgrounds) narrow to their selections on demand
+    // instead of pinning some selected rows and not others.
+    expect(tableSource).toContain("candidate-selection-unpinned");
+    expect(tableSource).toContain('<Icon name="list-checks" />');
+    expect(choiceEditors).toContain(
+      'selectedOnlyToggle={kind === "background"}',
+    );
     expect(tableSource).not.toContain("locateCandidate");
     expect(tableSource).not.toContain("scrollIntoView");
     expect(styles).not.toMatch(

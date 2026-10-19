@@ -1312,6 +1312,7 @@ export function candidateReason(reasons: readonly string[]): string {
     "source-unentitled": "Not included in this character's allowed sources",
     self: "A feature cannot select itself",
     duplicate: "Already selected in another slot",
+    "already-class-skill": "Already a class skill",
   };
   return reasons.map((reason) => labels[reason] ?? reason).join("; ");
 }

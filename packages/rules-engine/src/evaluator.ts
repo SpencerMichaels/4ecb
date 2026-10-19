@@ -38,7 +38,7 @@ import { evaluatePowers, type EvaluatedPower } from "./powers";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v14-2026-10-18-item-implement-metadata";
+  "evaluated-character-v16-2026-10-18-already-class-skill";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -1181,6 +1181,39 @@ function evaluateCharacterInternal(
     }
   }
 
+  // A background benefit that adds a skill the character's class (or hybrid
+  // class) already lists as a class skill would do nothing, so it is marked
+  // and left out of the default candidate list.
+  const classSkillValues = new Set([
+    ...(expressionContext.dynamicCategories?.$$CLASS ?? []),
+    ...(expressionContext.dynamicCategories?.$$HYBRID ?? []),
+  ]);
+  const grantsExistingClassSkill = (candidate: ContentEntity): boolean => {
+    if (key(candidate.type) !== "background choice") return false;
+    const grants = parseRules(candidate.id, candidate.rules).flatMap((rule) =>
+      rule.kind === "modify" &&
+      key(rule.field) === "universalclassskill" &&
+      key(rule.value ?? "") === "true"
+        ? [rule]
+        : [],
+    );
+    return (
+      grants.length > 0 &&
+      grants.every((rule) => {
+        const skill =
+          rule.name === undefined
+            ? undefined
+            : index.find(rule.name, rule.type ?? "Skill Training");
+        return (
+          skill !== undefined &&
+          skill.categories.some((category) =>
+            classSkillValues.has(key(category)),
+          )
+        );
+      })
+    );
+  };
+
   const candidateFor = (
     rule: SelectRule,
     provider: CharacterOccurrence,
@@ -1248,6 +1281,8 @@ function evaluateCharacterInternal(
       match ||= isCustomChoiceException(candidate);
       if (!match) reasons.push("category");
     }
+    if (grantsExistingClassSkill(candidate))
+      reasons.push("already-class-skill");
     const membership = memberships.get(key(candidate.id));
     if (rule.existing && membership === undefined) reasons.push("existing");
     const sourceEntitled = isSourceEntitled(candidate);
@@ -2021,6 +2056,8 @@ function evaluateCharacterInternal(
         (reason) =>
           reason !== "prerequisite" &&
           reason !== "prerequisite-unverified" &&
+          // A redundant pick is harmless, not an error.
+          reason !== "already-class-skill" &&
           (reason !== "category" || !exactOwnedPrerequisite),
       )
     )

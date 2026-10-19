@@ -4869,7 +4869,7 @@ textarea {
 .selection-table-count {
   color: var(--muted);
   flex: none;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
   inline-size: 11ch;
   text-align: end;
@@ -5052,8 +5052,10 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 
 /* A selected row scrolled out of view hangs at the top or bottom edge of the
    table; offsets stack several selections (see pinSelectedRows).
-   Rows past the pinned-stack budget (data-unpinned) scroll normally. */
-.selection-table-scroll
+   Rows past the pinned-stack budget (data-unpinned) scroll normally, as do
+   all rows of a table with a selected-only toggle instead. */
+.candidate-selection-table:not(.candidate-selection-unpinned)
+  .selection-table-scroll
   tbody
   tr.selection-row-selected:not(.selection-family-row):not([data-unpinned])
   > td {
@@ -5258,6 +5260,7 @@ th[aria-sort="descending"] .selection-sort-button > .icon,
 }
 
 .selection-filters-toggle[aria-pressed="true"],
+.selection-selected-filter[aria-pressed="true"],
 .selection-illegal-toggle[aria-pressed="true"] {
   background: var(--power-item-soft);
   border-color: var(--power-item);

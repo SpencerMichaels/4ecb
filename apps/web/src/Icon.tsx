@@ -55,6 +55,7 @@ import {
   Key,
   KeyRound,
   Layers3,
+  ListChecks,
   LayoutGrid,
   Lock,
   Medal,
@@ -175,6 +176,7 @@ export type IconName =
   | "key"
   | "key-round"
   | "layers"
+  | "list-checks"
   | "level"
   | "lock"
   | "medal"
@@ -286,6 +288,7 @@ const icons: Record<IconName, LucideIcon> = {
   key: Key,
   "key-round": KeyRound,
   layers: Layers3,
+  "list-checks": ListChecks,
   level: ChevronsUp,
   lock: Lock,
   medal: Medal,

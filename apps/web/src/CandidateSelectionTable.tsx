@@ -286,6 +286,7 @@ export function CandidateSelectionTable({
   disabled,
   selectionLimit,
   nameColumnLabel,
+  selectedOnlyToggle = false,
   showIllegal,
   onExpandGroup,
   onInspect,
@@ -302,6 +303,10 @@ export function CandidateSelectionTable({
   readonly disabled: boolean;
   readonly selectionLimit?: number;
   readonly nameColumnLabel?: string;
+  /** Offer an "N selected" toggle that narrows the table to its selections,
+   *  instead of pinning selected rows to the table's edges (many-pick tables
+   *  like backgrounds, where pinning only some rows makes no sense). */
+  readonly selectedOnlyToggle?: boolean;
   readonly showIllegal?: boolean;
   readonly onExpandGroup: (key: string) => void;
   readonly onInspect: (candidate: CandidateDecision) => void;
@@ -313,6 +318,7 @@ export function CandidateSelectionTable({
   const initializeInspection = useContext(InitializeCandidateInspectionContext);
   const [filter, setFilter] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [selectedOnly, setSelectedOnly] = useState(false);
   const facets = kind === "power" ? POWER_FACETS : [];
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [facetValues, setFacetValues] = useState<
@@ -557,6 +563,7 @@ export function CandidateSelectionTable({
   };
   const isVisible = (candidate: CandidateDecision, label?: string) =>
     (!favoritesOnly || isFavorite(candidate)) &&
+    (!selectedOnly || selectedIds.has(candidate.definitionId)) &&
     matchesFacets(candidate) &&
     matchesFilter(candidate, label);
   const visibleCandidates = candidates.filter((candidate) =>
@@ -939,19 +946,21 @@ export function CandidateSelectionTable({
   // another page are mounted too, before or after this page's rows, so they
   // float at the top or bottom edge in the same way.
   const offPageSelectedRows = (before: boolean) =>
-    resultSections.flatMap(({ rows, start }) =>
-      rows.filter(
-        ({ candidateId }, index) =>
-          candidateId !== undefined &&
-          selectedIds.has(candidateId) &&
-          (before
-            ? start + index < pageWindow.start
-            : start + index >= pageWindow.end),
-      ),
-    );
+    selectedOnlyToggle
+      ? []
+      : resultSections.flatMap(({ rows, start }) =>
+          rows.filter(
+            ({ candidateId }, index) =>
+              candidateId !== undefined &&
+              selectedIds.has(candidateId) &&
+              (before
+                ? start + index < pageWindow.start
+                : start + index >= pageWindow.end),
+          ),
+        );
   useLayoutEffect(() => {
     const table = tableContentRef.current;
-    if (table === null) return;
+    if (table === null || selectedOnlyToggle) return;
     const viewport = tableScrollRef.current;
     pinSelectedRows(table, viewport);
     if (typeof ResizeObserver === "undefined") return;
@@ -967,7 +976,7 @@ export function CandidateSelectionTable({
 
   return (
     <div
-      className={`candidate-selection-table candidate-selection-${kind}${totalRows <= 6 ? " candidate-selection-short" : ""}`}
+      className={`candidate-selection-table candidate-selection-${kind}${totalRows <= 6 ? " candidate-selection-short" : ""}${selectedOnlyToggle ? " candidate-selection-unpinned" : ""}`}
     >
       <div className="selection-table-controls">
         <div className="selection-table-toolbar">
@@ -1018,6 +1027,23 @@ export function CandidateSelectionTable({
           >
             <Icon name="favorite" />
           </button>
+          {selectedOnlyToggle ? (
+            <button
+              aria-label="Selected only"
+              aria-pressed={selectedOnly}
+              className="icon-only-button button-icon selection-selected-filter"
+              title={
+                selectedOnly ? "Showing selected only" : "Show selected only"
+              }
+              type="button"
+              onClick={() => {
+                setSelectedOnly((current) => !current);
+                setRequestedPage(0);
+              }}
+            >
+              <Icon name="list-checks" />
+            </button>
+          ) : null}
           {onToggleShowIllegal === undefined ? null : (
             <button
               aria-label={
