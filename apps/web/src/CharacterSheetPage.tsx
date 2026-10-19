@@ -393,9 +393,9 @@ export function CharacterSheetPage({
         className="sheet-page"
         portraitUrl={character?.portrait?.renderedDataUrl}
         label={
-          character === undefined
+          character === undefined || !characterDisplayName(character)
             ? "Generating character sheet…"
-            : `Generating ${characterDisplayName(character) || "character"}'s sheet…`
+            : `Generating ${characterDisplayName(character)}'s character sheet…`
         }
         detail={
           character === undefined

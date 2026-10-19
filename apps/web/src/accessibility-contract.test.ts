@@ -374,7 +374,7 @@ describe("release accessibility contract", () => {
     );
   });
 
-  it("keeps sidebar identity editable and moves level changes into Character details", () => {
+  it("keeps sidebar identity editable and changes the current level beside race and class", () => {
     const header = characterEditor.slice(
       characterEditor.indexOf('<header className="builder-sidebar-identity">'),
       characterEditor.indexOf(
@@ -389,13 +389,15 @@ describe("release accessibility contract", () => {
     expect(header).toContain('label="Character name"');
     expect(header).toContain('name="Name"');
     expect(header).toContain("characterHeaderSubtitle(");
-    expect(header).not.toContain('aria-label="Current level"');
+    expect(header).toContain('aria-label="Current level"');
+    expect(header).toContain(
+      "changeCurrentLevel(Number(event.currentTarget.value))",
+    );
     expect(header).not.toContain("Experience");
     expect(header).not.toContain("snapshot.details.XP");
-    expect(details).toContain('aria-label="Current level"');
-    expect(details).toContain(
-      "onLevelChange(Number(event.currentTarget.value))",
-    );
+    // Details holds neither the level nor the name (both in the sidebar).
+    expect(details).not.toContain('aria-label="Current level"');
+    expect(details).not.toContain('name: "Name"');
     expect(styles).toMatch(
       /\.builder-sidebar-identity \.portrait-trigger\s*\{[^}]*height: 9rem;[^}]*width: 9rem;/,
     );
@@ -427,7 +429,8 @@ describe("release accessibility contract", () => {
     expect(candidateDetails).toContain("themePowers.flatMap");
     expect(candidateDetails).toContain("<BuilderPowerCard");
     expect(candidateDetails).toContain("<BuilderItemCard");
-    expect(candidateDetails).toContain("Theme power · Level");
+    // Theme powers sit under their theme with no "Theme power" label.
+    expect(candidateDetails).not.toContain("Theme power · Level");
     expect(candidateDetails).not.toContain("EmbeddedPowerCard");
     expect(builderCards).toContain('layout="panel"');
     expect(styles).toMatch(
@@ -767,7 +770,7 @@ describe("release accessibility contract", () => {
       ).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("keeps the legacy semantic palette and scopes pill chrome to Shop filters", () => {
+  it("keeps the legacy semantic palette and uses no pill-shaped chrome", () => {
     for (const token of [
       "--power-at-will: #006400",
       "--power-encounter: #8b0000",
@@ -776,10 +779,11 @@ describe("release accessibility contract", () => {
       "--power-item: #ff8c00",
     ])
       expect(styles).toContain(token);
+    // Shop filter chips square off like every other builder button.
     expect(styles).toMatch(
-      /\.shop-filter-chip,[\s\S]*?\.shop-filter-button\s*\{[^}]*border-radius: 999px;/,
+      /\.shop-filter-chip,[\s\S]*?\.shop-filter-button\s*\{[^}]*border-radius: 2px;/,
     );
-    expect(styles.match(/border-radius: 999px/g)).toHaveLength(1);
+    expect(styles).not.toContain("border-radius: 999px");
   });
 
   it("keeps loadout slots compact and leaves shopping to the Shop tab", () => {
@@ -874,13 +878,13 @@ describe("release accessibility contract", () => {
       /\.shop-result-tools\s*\{[^}]*display: flex;[^}]*flex-wrap: wrap;/s,
     );
     const browseIndex = shopWorkspace.indexOf(
-      '<span className="shop-field-label">Type</span>',
+      '<span className="inline-field-label">Type</span>',
     );
     const slotIndex = shopWorkspace.indexOf(
-      '<span className="shop-field-label">Slot</span>',
+      '<span className="inline-field-label">Slot</span>',
     );
     const subtypeIndex = shopWorkspace.indexOf(
-      '<span className="shop-field-label">Subtype</span>',
+      '<span className="inline-field-label">Subtype</span>',
     );
     const resultToolsIndex = shopWorkspace.indexOf(
       '<div className="shop-result-tools">',

@@ -7,6 +7,7 @@ import type {
 import {
   candidateReason,
   isBuildPresetChoice,
+  selectedCandidateDecision,
   selectedDefinitionId,
   type DeityAlignmentConstraint,
 } from "./builder-ui";
@@ -41,23 +42,6 @@ function selectedOccurrence(
 ) {
   return evaluation.occurrences.find(
     (occurrence) => occurrence.id === choice.selectedOccurrenceId,
-  );
-}
-
-function selectedCandidate(
-  choice: EvaluatedChoice,
-  evaluation: EvaluatedCharacter,
-) {
-  const selected = selectedOccurrence(choice, evaluation);
-  if (selected === undefined) return undefined;
-  const candidates =
-    choice.type === "Replacement"
-      ? ((choice.replacementOptions ?? []).find(
-          (option) => option.replacesOccurrenceId === selected.replacesId,
-        )?.candidates ?? [])
-      : choice.candidates;
-  return candidates.find(
-    (candidate) => candidate.definitionId === selected.definitionId,
   );
 }
 
@@ -410,7 +394,7 @@ export function builderIssueGroups({
       diagnosedErrorOccurrenceIds.has(choice.selectedOccurrenceId)
     )
       return [];
-    const candidate = selectedCandidate(choice, evaluation);
+    const candidate = selectedCandidateDecision(choice, evaluation);
     if (candidate === undefined || candidate.eligible) return [];
     const unverified =
       candidate.reasons.length === 1 &&

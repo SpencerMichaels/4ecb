@@ -55,6 +55,9 @@ import { entityVisualTone, visualToneClass } from "./visual-language";
 export type InspectedOption = {
   readonly candidate: CandidateDecision;
   readonly entity: ContentEntity;
+  /** Picked from a selection table, so its card offers the favorite star
+   * (favorites only filter and tint tables; button choices have none). */
+  readonly favoritable?: boolean;
 };
 
 export const InitializeCandidateInspectionContext = createContext<
@@ -66,12 +69,21 @@ const candidateReferenceIndexes = new WeakMap<
   ReadonlyMap<string, ContentEntity>
 >();
 
+/** Pinned selections may cover at most this share of the visible table. */
+const PINNED_SELECTION_SHARE = 1 / 3;
+
 /**
  * Stacks the selected rows' sticky offsets so several selections pinned at the
  * same edge sit one above another instead of overlapping. Rows stick below the
- * header and the sticky section row, if the table has sections.
+ * header and the sticky section row, if the table has sections. Only as many
+ * rows pin as fit in a third of the visible table (a table that allows many
+ * picks, like backgrounds, would otherwise be all pinned rows); the rest stay
+ * highlighted but scroll normally.
  */
-function pinSelectedRows(table: HTMLTableElement): void {
+function pinSelectedRows(
+  table: HTMLTableElement,
+  viewport: HTMLElement | null,
+): void {
   const rows = [
     ...table.querySelectorAll<HTMLTableRowElement>(
       "tbody tr.selection-row-selected:not(.selection-family-row)",
@@ -87,11 +99,29 @@ function pinSelectedRows(table: HTMLTableElement): void {
       ? (table.tHead?.getBoundingClientRect().height ?? 0)
       : parseFloat(getComputedStyle(section).top) +
         section.getBoundingClientRect().height;
+  const budget =
+    viewport === null
+      ? Infinity
+      : (viewport.clientHeight - base) * PINNED_SELECTION_SHARE;
   const heights = rows.map((row) => row.getBoundingClientRect().height);
+  let pinnedCount = 0;
+  for (let used = 0; pinnedCount < rows.length; pinnedCount += 1) {
+    used += heights[pinnedCount] ?? 0;
+    if (used > budget) break;
+  }
   // Tuck 1px under the (higher-layered) header so rounding never shows a gap.
   let above = Math.floor(base) - 1;
-  let below = heights.reduce((total, height) => total + height, 0);
+  let below = heights
+    .slice(0, pinnedCount)
+    .reduce((total, height) => total + height, 0);
   rows.forEach((row, index) => {
+    if (index >= pinnedCount) {
+      row.dataset.unpinned = "";
+      row.style.removeProperty("--selection-sticky-top");
+      row.style.removeProperty("--selection-sticky-bottom");
+      return;
+    }
+    delete row.dataset.unpinned;
     below -= heights[index] ?? 0;
     row.style.setProperty("--selection-sticky-top", `${above}px`);
     row.style.setProperty("--selection-sticky-bottom", `${below}px`);
@@ -171,6 +201,8 @@ interface CandidateFacet {
     profile: PowerAttackProfile | undefined,
   ) => readonly string[];
   readonly order?: readonly string[];
+  /** Shorter option text (STR, Fort) so the filters fit on one line. */
+  readonly display?: (value: string) => string;
   /** Numeric: filtered by a min/max pair of fields instead of a dropdown. */
   readonly range?: boolean;
 }
@@ -201,16 +233,18 @@ const POWER_FACETS: readonly CandidateFacet[] = [
   {
     id: "ability",
     label: "Attack",
-    allLabel: "All abilities",
+    allLabel: "All",
     valuesFor: (_entity, profile) => profile?.abilities ?? [],
     order: ABILITY_ORDER,
+    display: abilityAbbreviation,
   },
   {
     id: "defense",
     label: "Defense",
-    allLabel: "All defenses",
+    allLabel: "All",
     valuesFor: (_entity, profile) => profile?.defenses ?? [],
     order: DEFENSE_ORDER,
+    display: (defense) => DEFENSE_ABBREVIATIONS[defense] ?? defense,
   },
 ];
 
@@ -421,7 +455,11 @@ export function CandidateSelectionTable({
     initializeInspection?.(
       initialCandidate === undefined || initialEntity === undefined
         ? undefined
-        : { candidate: initialCandidate, entity: initialEntity },
+        : {
+            candidate: initialCandidate,
+            entity: initialEntity,
+            favoritable: true,
+          },
     );
 
     const viewport = tableScrollRef.current;
@@ -914,10 +952,12 @@ export function CandidateSelectionTable({
   useLayoutEffect(() => {
     const table = tableContentRef.current;
     if (table === null) return;
-    pinSelectedRows(table);
+    const viewport = tableScrollRef.current;
+    pinSelectedRows(table, viewport);
     if (typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => pinSelectedRows(table));
+    const observer = new ResizeObserver(() => pinSelectedRows(table, viewport));
     observer.observe(table);
+    if (viewport !== null) observer.observe(viewport);
     return () => observer.disconnect();
   });
   const showPage = (page: number) => {
@@ -1064,7 +1104,7 @@ export function CandidateSelectionTable({
                     <option value="">{facet.allLabel}</option>
                     {facetOptions(facet).map((value) => (
                       <option key={value} value={value}>
-                        {value}
+                        {facet.display?.(value) ?? value}
                       </option>
                     ))}
                   </select>

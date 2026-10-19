@@ -143,7 +143,7 @@ describe("builder header integration", () => {
       "{unresolvedCharacterDetailChoices.length}</span>",
     );
     expect(characterDetailsEditor).toContain(
-      'className="character-detail-choice-heading"',
+      'className={`character-detail-choice${unresolved(choice) ? " is-unresolved" : ""}`}',
     );
     expect(characterDetailsEditor).toContain(
       'className="detail-choice-attention"',
@@ -155,7 +155,7 @@ describe("builder header integration", () => {
       'hideLabel ? "visually-hidden" : "selection-subsection-heading"',
     );
     expect(characterDetailsEditor).toContain(
-      '<h5 className="selection-subsection-heading">',
+      '<h4 className="selection-section-heading selection-section-heading--panel">',
     );
     expect(source).toContain('className="selection-section-heading"');
     expect(styles).toMatch(
@@ -181,5 +181,32 @@ describe("builder header integration", () => {
     expect(styles).not.toMatch(
       /\.level-choice-tabs button\s*\{[^}]*border-top:/,
     );
+  });
+});
+
+describe("one table or none at a time", () => {
+  it("folds a tab's table choices into an accordion opened only by its headings", () => {
+    expect(source).toContain(
+      "return units.length + (presetsInAccordion ? 1 : 0) >= 2 ? units : [];",
+    );
+    // A heading opens its item; the open heading folds it (none open).
+    expect(source).toContain(
+      "setAccordionOverride({ tab: accordionTabKey, key: null });",
+    );
+    expect(source).toContain(
+      "if (firstChoiceId !== undefined) setSelectedChoiceId(firstChoiceId);",
+    );
+    expect(source).toContain("{open ? children : null}");
+    // By default the open item follows the tab's selected choice, which a
+    // selection never moves: no auto-advance to the next unresolved choice.
+    expect(source).toContain(
+      "unit.some((item) => item.id === selectedChoiceId)",
+    );
+  });
+
+  it("makes starting presets an accordion item that starts closed", () => {
+    expect(source).toContain('key: "presets",');
+    expect(source).toContain('toggleAccordion("presets")');
+    expect(choiceEditors).not.toContain("<summary>Starting presets</summary>");
   });
 });

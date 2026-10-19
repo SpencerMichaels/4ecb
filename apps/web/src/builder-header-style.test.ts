@@ -200,3 +200,14 @@ describe("level section tab hover", () => {
     ).toContain("border-right-color: var(--border)");
   });
 });
+
+describe("pinned equipment tab", () => {
+  it("never un-hides the Equipment/Shop tab while another tab is open", () => {
+    expect(styles).toMatch(
+      /\.builder-tab-content:not\(\[hidden\]\):has\(> \.equipment-pane\)\s*\{[^}]*display: flex/,
+    );
+    expect(styles).not.toMatch(
+      /\.builder-tab-content:has\(> \.equipment-pane\)\s*\{[^}]*display:/,
+    );
+  });
+});

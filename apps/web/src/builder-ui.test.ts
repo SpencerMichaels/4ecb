@@ -14,6 +14,7 @@ import {
 
 import {
   applyBuildPresetCommand,
+  buildPresetPlan,
   abilityScoreAdjustment,
   abilityScoreBonus,
   abilityScoreDisplay,
@@ -23,6 +24,7 @@ import {
   candidateReason,
   candidateTableTypeGroup,
   characterHeaderSubtitle,
+  conventionalOptionOrder,
   classKeyAbilities,
   classKeyAbilitiesSentence,
   classTableMetadata,
@@ -66,7 +68,7 @@ import {
   powerTableAttackTitle,
   powerTableLevel,
   primaryDetailTypeLabel,
-  selectedChoiceHasWarning,
+  selectedCandidateDecision,
   shouldOmitIndividualChoiceHeading,
   splitLabeledDescription,
   themePowerGroups,
@@ -181,12 +183,10 @@ describe("builder planning UI", () => {
     });
   });
 
-  it("summarizes only available race, class, and current level", () => {
-    expect(characterHeaderSubtitle("Dwarf", "Paladin", 7)).toBe(
-      "Dwarf Paladin 7",
-    );
-    expect(characterHeaderSubtitle(undefined, "Paladin", 7)).toBe("Paladin 7");
-    expect(characterHeaderSubtitle("  Dwarf  ", "", 7)).toBe("Dwarf 7");
+  it("summarizes only available race and class", () => {
+    expect(characterHeaderSubtitle("Dwarf", "Paladin")).toBe("Dwarf Paladin");
+    expect(characterHeaderSubtitle(undefined, "Paladin")).toBe("Paladin");
+    expect(characterHeaderSubtitle("  Dwarf  ", "")).toBe("Dwarf");
   });
 
   it("presents class key abilities from structured metadata in authored order", () => {
@@ -693,6 +693,23 @@ describe("builder planning UI", () => {
         })),
       } as unknown as EvaluatedCharacter["choices"][number]),
     ).toBeUndefined();
+    // Options with rules text are a table however few there are, so they
+    // can be read before choosing; bare labels stay buttons.
+    for (const type of ["Racial Trait", "Language", "Familiar"])
+      expect(
+        choiceSelectionTableKind({
+          type,
+          candidates: Array.from({ length: 3 }, (_, index) => ({
+            definitionId: `option-${index}`,
+          })),
+        } as unknown as EvaluatedCharacter["choices"][number]),
+      ).toBe("option");
+    expect(
+      choiceSelectionTableKind({
+        type: "Gender",
+        candidates: [{ definitionId: "male" }, { definitionId: "female" }],
+      } as unknown as EvaluatedCharacter["choices"][number]),
+    ).toBeUndefined();
     expect(choiceTableSummary(feat, "feat")).toBe("Gain a +2 feat bonus.");
     expect(choiceTableSummary(power, "power")).toBe("Move before striking.");
     expect(choiceTableSummary(deity, "deity")).toBe("Lawful Good");
@@ -1039,6 +1056,139 @@ describe("builder planning UI", () => {
         (child) => child.identity.definitionId,
       ),
     ).toEqual([undefined, "FEAT", "SKILL"]);
+  });
+
+  it("replaces an existing pick with a preset's option and reports it", () => {
+    const rules = [
+      {
+        name: "select",
+        attributes: [
+          { name: "type", value: "Build" },
+          { name: "number", value: "1" },
+        ],
+        text: "",
+        children: [],
+        ordinal: 0,
+      },
+      {
+        name: "select",
+        attributes: [
+          { name: "type", value: "Feat" },
+          { name: "number", value: "1" },
+        ],
+        text: "",
+        children: [],
+        ordinal: 1,
+      },
+      {
+        name: "select",
+        attributes: [
+          { name: "type", value: "Skill Training" },
+          { name: "number", value: "1" },
+        ],
+        text: "",
+        children: [],
+        ordinal: 2,
+      },
+    ] satisfies RuleStatement[];
+    const provider = level(1, rules);
+    const preset = {
+      ...level(0),
+      id: "BUILD",
+      name: "Preset",
+      type: "Build",
+      specifics: [
+        {
+          name: "Suggested",
+          value: "Feat: Power Attack\nSkills: Athletics",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+    const feat = {
+      ...level(0),
+      id: "FEAT",
+      name: "Power Attack",
+      type: "Feat",
+    };
+    const skill = {
+      ...level(0),
+      id: "SKILL",
+      name: "Athletics",
+      type: "Skill Training",
+    };
+    const otherFeat = {
+      ...level(0),
+      id: "FEAT_OTHER",
+      name: "Toughness",
+      type: "Feat",
+    };
+    const otherPreset = {
+      ...preset,
+      id: "BUILD_OTHER",
+      specifics: [
+        {
+          name: "Suggested",
+          value: "Feat: Toughness",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+    const entities = [provider, preset, otherPreset, feat, otherFeat, skill];
+    const evaluation = evaluateCharacter(
+      projectBuildForEvaluation(build, entities),
+      entities,
+    );
+    // The character already took Toughness where the preset wants Power
+    // Attack; the empty skill choice is simply filled.
+    const withToughness = applyCharacterCommand(
+      build,
+      applyBuildPresetCommand(
+        build,
+        otherPreset,
+        evaluation.choices,
+        evaluation,
+        entities,
+        (definitionId) => `selected:${definitionId}`,
+      )!,
+    );
+    const evaluated = evaluateCharacter(
+      projectBuildForEvaluation(withToughness, entities),
+      entities,
+    );
+    const plan = buildPresetPlan(
+      withToughness,
+      preset,
+      evaluated.choices,
+      evaluated,
+      entities,
+      (definitionId) => `preset:${definitionId}`,
+    );
+    expect(plan?.replaced).toEqual([{ from: "Toughness", to: "Power Attack" }]);
+    const updated = applyCharacterCommand(withToughness, plan!.command);
+    expect(
+      updated.levels[0]?.root.children.map(
+        (child) => child.identity.definitionId,
+      ),
+    ).toEqual([undefined, "FEAT", "SKILL"]);
+
+    // Applying it again changes nothing.
+    const reevaluated = evaluateCharacter(
+      projectBuildForEvaluation(updated, entities),
+      entities,
+    );
+    expect(
+      buildPresetPlan(
+        updated,
+        preset,
+        reevaluated.choices,
+        reevaluated,
+        entities,
+        (definitionId) => `again:${definitionId}`,
+      ),
+    ).toBeUndefined();
   });
 
   it("groups large parenthetical families without changing exact candidates", () => {
@@ -1685,7 +1835,7 @@ describe("builder planning UI", () => {
         },
       ],
     } as unknown as EvaluatedCharacter;
-    expect(selectedChoiceHasWarning(choice, evaluation)).toBe(false);
+    expect(selectedCandidateDecision(choice, evaluation)?.eligible).toBe(true);
     expect(isOptionalRetrainingChoice(choice)).toBe(true);
     expect(
       isOptionalRetrainingChoice({ ...choice, name: "Mastery replacement" }),
@@ -2470,5 +2620,23 @@ describe("builder planning UI", () => {
         identity: { name: "", type: "" },
       },
     ]);
+  });
+});
+
+describe("conventional option order", () => {
+  const name = (option: string) => option;
+
+  it("lists Gender as Male, Female whatever the content order", () => {
+    expect(conventionalOptionOrder("Gender", ["Female", "Male"], name)).toEqual(
+      ["Male", "Female"],
+    );
+    expect(
+      conventionalOptionOrder(" gender ", ["Other", "Female", "Male"], name),
+    ).toEqual(["Male", "Female", "Other"]);
+  });
+
+  it("keeps content order for other choices", () => {
+    const options = ["Good", "Evil", "Unaligned"];
+    expect(conventionalOptionOrder("Alignment", options, name)).toBe(options);
   });
 });

@@ -5,6 +5,7 @@ import { useSyncExternalStore } from "react";
 const CANDIDATE_FAVORITES_KEY = "4ecb:candidate-favorites:v1";
 let candidateFavoritesSnapshot: ReadonlySet<string> | undefined;
 const candidateFavoriteListeners = new Set<() => void>();
+const NO_FAVORITES: ReadonlySet<string> = new Set();
 
 function storedCandidateFavorites(): ReadonlySet<string> {
   try {
@@ -27,10 +28,15 @@ function currentCandidateFavorites(): ReadonlySet<string> {
 }
 
 export function useCandidateFavorites(): ReadonlySet<string> {
-  return useSyncExternalStore((listener) => {
-    candidateFavoriteListeners.add(listener);
-    return () => candidateFavoriteListeners.delete(listener);
-  }, currentCandidateFavorites);
+  return useSyncExternalStore(
+    (listener) => {
+      candidateFavoriteListeners.add(listener);
+      return () => candidateFavoriteListeners.delete(listener);
+    },
+    currentCandidateFavorites,
+    // Server rendering (and tests) has no browser storage: no favorites.
+    () => NO_FAVORITES,
+  );
 }
 
 export function toggleCandidateFavorite(definitionId: string): void {

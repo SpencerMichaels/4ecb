@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import type {
   BuildOccurrence,
@@ -17,13 +17,16 @@ import {
 
 import {
   abilityScoreWithPendingDelta,
-  applyBuildPresetCommand,
+  buildPresetPlan,
+  type BuildPresetPlan,
+  type BuildPresetReplacement,
   candidateReason,
   choiceForRepeatedCandidate,
   choicePresentationLabel,
   choiceSectionId,
   choiceSelectionTableKind,
   choiceTitle,
+  conventionalOptionOrder,
   contextualChoiceName,
   contextualChoiceTitle,
   findOccurrence,
@@ -173,100 +176,148 @@ export function BuildPresetPanel({
       ),
     [byId, choices],
   );
-  const [selectedPresetId, setSelectedPresetId] = useState(
-    presets[0]?.entity.id ?? "",
-  );
   const [applyStatus, setApplyStatus] = useState<string>();
-  const [open, setOpen] = useState(false);
-  const selectedPreset = presets.find(
-    ({ entity }) => entity.id === selectedPresetId,
-  );
-
-  useEffect(() => {
-    const selected = presets.find(
-      ({ entity }) => entity.id === selectedPresetId,
-    );
-    const next = selected ?? presets[0];
-    setSelectedPresetId(next?.entity.id ?? "");
-    if (open) inspectCandidate?.(next);
-  }, [inspectCandidate, open, presets, selectedPresetId]);
+  // A preset whose application would replace existing picks, awaiting OK.
+  const [pending, setPending] = useState<{
+    readonly name: string;
+    readonly plan: BuildPresetPlan;
+  }>();
 
   if (presets.length === 0) return null;
+  const inspect = (definitionId: string) => {
+    const preset = presets.find(
+      ({ candidate }) => candidate.definitionId === definitionId,
+    );
+    inspectCandidate?.(
+      preset === undefined ? undefined : { ...preset, favoritable: true },
+    );
+  };
+  const apply = (plan: BuildPresetPlan) => {
+    const applied =
+      plan.command.kind === "batch" ? plan.command.commands.length : 1;
+    setApplyStatus(
+      `${applied} ${applied === 1 ? "choice" : "choices"} applied.`,
+    );
+    onDispatch(plan.command);
+  };
+  // Like any table: a click shows a preset, a double-click (or Enter)
+  // applies it — straight away when it only fills empty choices, after a
+  // confirmation when it would replace picks already made.
+  const choose = (definitionId: string) => {
+    const preset = presets.find(
+      ({ candidate }) => candidate.definitionId === definitionId,
+    );
+    if (preset === undefined) return;
+    inspect(definitionId);
+    const plan = buildPresetPlan(
+      build,
+      preset.entity,
+      levelChoices,
+      evaluation,
+      entities,
+      (id, index) => `web:preset:${id}:${index}:${crypto.randomUUID()}`,
+    );
+    if (plan === undefined) {
+      setApplyStatus(`${preset.entity.name} is already applied.`);
+      return;
+    }
+    if (plan.replaced.length > 0) {
+      setPending({ name: preset.entity.name, plan });
+      return;
+    }
+    apply(plan);
+  };
   return (
-    <details
-      className="build-presets"
-      open={open}
-      onToggle={(event) => setOpen(event.currentTarget.open)}
-    >
-      <summary>Starting presets</summary>
+    <section aria-label="Starting presets" className="build-presets">
       <div className="build-presets-content">
         <CandidateSelectionTable
-          key={open ? "open" : "closed"}
           kind="preset"
           candidates={presets.map(({ candidate }) => candidate)}
           featGroups={[]}
-          selectedIds={
-            new Set(selectedPresetId === "" ? [] : [selectedPresetId])
-          }
+          selectedIds={new Set()}
           expandedGroupKey=""
           byId={byId}
           disabled={false}
           onExpandGroup={() => undefined}
           onInspect={(candidate) => {
-            const selected = presets.find(
-              ({ candidate: option }) =>
-                option.definitionId === candidate.definitionId,
-            );
-            setSelectedPresetId(candidate.definitionId);
             setApplyStatus(undefined);
-            inspectCandidate?.(selected);
+            inspect(candidate.definitionId);
           }}
-          onToggle={(definitionId) => {
-            const selected = presets.find(
-              ({ candidate }) => candidate.definitionId === definitionId,
-            );
-            setSelectedPresetId(definitionId);
-            setApplyStatus(undefined);
-            inspectCandidate?.(selected);
-          }}
+          onToggle={choose}
         />
-        <div className="build-preset-actions">
-          <button
-            disabled={selectedPreset === undefined}
-            type="button"
-            onClick={() => {
-              if (selectedPreset === undefined) return;
-              const command = applyBuildPresetCommand(
-                build,
-                selectedPreset.entity,
-                levelChoices,
-                evaluation,
-                entities,
-                (definitionId, index) =>
-                  `web:preset:${definitionId}:${index}:${crypto.randomUUID()}`,
-              );
-              if (command === undefined) {
-                setApplyStatus("No open choices match this preset.");
-                return;
-              }
-              const applied =
-                command.kind === "batch" ? command.commands.length : 1;
-              setApplyStatus(
-                `${applied} ${applied === 1 ? "choice" : "choices"} applied.`,
-              );
-              onDispatch(command);
-            }}
-          >
-            Apply
-          </button>
-        </div>
         {applyStatus === undefined ? null : (
           <p aria-live="polite" className="build-preset-status">
             {applyStatus}
           </p>
         )}
       </div>
-    </details>
+      {pending === undefined ? null : (
+        <PresetReplaceDialog
+          name={pending.name}
+          replaced={pending.plan.replaced}
+          onCancel={() => setPending(undefined)}
+          onConfirm={() => {
+            apply(pending.plan);
+            setPending(undefined);
+          }}
+        />
+      )}
+    </section>
+  );
+}
+
+/** Confirms a preset that would overwrite picks the character already has. */
+function PresetReplaceDialog({
+  name,
+  replaced,
+  onCancel,
+  onConfirm,
+}: {
+  readonly name: string;
+  readonly replaced: readonly BuildPresetReplacement[];
+  readonly onCancel: () => void;
+  readonly onConfirm: () => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const current = dialog.current;
+    if (current !== null && !current.open) current.showModal();
+  }, []);
+  return (
+    <dialog
+      aria-labelledby="preset-replace-title"
+      className="preset-replace-dialog dialog-shell"
+      ref={dialog}
+      onCancel={(event) => {
+        event.preventDefault();
+        onCancel();
+      }}
+    >
+      <header>
+        <h2 id="preset-replace-title">Apply {name}?</h2>
+      </header>
+      <div className="preset-replace-body">
+        <p>
+          This replaces {replaced.length}{" "}
+          {replaced.length === 1 ? "choice" : "choices"} you already made:
+        </p>
+        <ul>
+          {replaced.map(({ from, to }) => (
+            <li key={`${from}->${to}`}>
+              {from} → <strong>{to}</strong>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <footer>
+        <button type="button" onClick={onCancel}>
+          Cancel
+        </button>
+        <button className="button-primary" type="button" onClick={onConfirm}>
+          Replace and apply
+        </button>
+      </footer>
+    </dialog>
   );
 }
 
@@ -385,10 +436,14 @@ function ReplacementEditor({
         )
       : [];
 
-  const inspect = (candidate: CandidateDecision | undefined): void => {
+  const inspect = (
+    candidate: CandidateDecision | undefined,
+    favoritable = false,
+  ): void => {
     if (candidate === undefined || inspectCandidate === undefined) return;
     const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
-    if (entity !== undefined) inspectCandidate({ candidate, entity });
+    if (entity !== undefined)
+      inspectCandidate({ candidate, entity, favoritable });
   };
 
   useEffect(() => {
@@ -548,7 +603,7 @@ function ReplacementEditor({
             onInspect={(candidate) => {
               setPerusingTarget(false);
               setPerusedId(candidate.definitionId);
-              inspect(candidate);
+              inspect(candidate, true);
             }}
             onToggle={(definitionId) => {
               // Picking the selected replacement again clears it.
@@ -740,7 +795,11 @@ export function ChoiceEditor({
       return;
     setOptimisticSelectedId(definitionId);
     setPerusedId(definitionId);
-    inspectCandidate?.({ candidate, entity: definition });
+    inspectCandidate?.({
+      candidate,
+      entity: definition,
+      favoritable: selectionTableKind !== undefined,
+    });
     const occurrence: BuildOccurrence = {
       id: `web:${crypto.randomUUID()}`,
       identity: {
@@ -814,7 +873,7 @@ export function ChoiceEditor({
                 candidate.definitionId.toLocaleLowerCase(),
               );
               if (entity !== undefined)
-                inspectCandidate?.({ candidate, entity });
+                inspectCandidate?.({ candidate, entity, favoritable: true });
             }}
             onToggle={(definitionId) =>
               // Picking the selected row again deselects it, as in
@@ -903,7 +962,11 @@ export function ChoiceEditor({
         ) : (
           <CompactChoiceButtons
             label={hideSelectionLabel ? choiceTitle(choice) : selectionLabel}
-            options={visibleCandidates.map((candidate) => ({
+            options={conventionalOptionOrder(
+              choice.type,
+              visibleCandidates,
+              (candidate) => candidateName(candidate.definitionId),
+            ).map((candidate) => ({
               id: candidate.definitionId,
               label:
                 byId.get(candidate.definitionId.toLocaleLowerCase())?.name ??
@@ -934,6 +997,7 @@ export function ChoiceEditor({
         <CandidateDetail
           candidate={detailCandidate}
           byId={byId}
+          favoritable={selectionTableKind !== undefined}
           entity={
             detailCandidate === undefined
               ? undefined
@@ -1563,7 +1627,7 @@ function RepeatedCandidateTableEditor({
       next.set(targetChoice.id, definitionId);
       return next;
     });
-    inspectCandidate?.({ candidate, entity: definition });
+    inspectCandidate?.({ candidate, entity: definition, favoritable: true });
     onDispatch(command);
   };
 
@@ -1582,7 +1646,8 @@ function RepeatedCandidateTableEditor({
       onExpandGroup={setExpandedGroupKey}
       onInspect={(candidate) => {
         const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
-        if (entity !== undefined) inspectCandidate?.({ candidate, entity });
+        if (entity !== undefined)
+          inspectCandidate?.({ candidate, entity, favoritable: true });
       }}
       onToggle={toggle}
       onToggleShowIllegal={() => setShowAll((current) => !current)}
@@ -1936,15 +2001,24 @@ export function SkillTrainingEditor({
               (choice) => optimisticSlots.get(choice.id) !== undefined,
             ).length;
             return (
-              <section className="skill-scope" key={scope.key}>
-                <header>
-                  <h5 className="selection-subsection-heading">
-                    {scopeTitle(scope)}
-                  </h5>
-                  <span>
-                    {scopeChosen} of {scope.choices.length} chosen
-                  </span>
-                </header>
+              <section
+                aria-label={scopeTitle(scope)}
+                className="skill-scope"
+                key={scope.key}
+              >
+                {/* A lone scope would only repeat the section's own count
+                    ("3 out of 3 skills chosen"); several get their own
+                    heading so each pick shows where it comes from. */}
+                {skillScopes.length === 1 ? null : (
+                  <header>
+                    <h5 className="selection-subsection-heading">
+                      {scopeTitle(scope)}
+                    </h5>
+                    <span>
+                      {scopeChosen} of {scope.choices.length} chosen
+                    </span>
+                  </header>
+                )}
                 <div className="skill-toggle-list">
                   {candidateRows
                     .filter(({ definitionId }) =>

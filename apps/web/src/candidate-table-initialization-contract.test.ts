@@ -31,7 +31,7 @@ describe("candidate table initialization integration", () => {
       'key={active ? "open" : "closed"}',
     );
     expect(characterEditor).toContain(
-      'key={`${workspaceTab === "build" ? "open" : "closed"}:${selectedLevel}:${activeLevelSection ?? "empty"}`}',
+      'key={`${workspaceTab === "build" ? "open" : "closed"}:${selectedLevel}:${activeLevelSection ?? "empty"}:${openAccordionKey ?? "none"}`}',
     );
   });
 

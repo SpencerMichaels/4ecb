@@ -109,7 +109,7 @@ button.dialog-close {
   align-items: center;
   background: var(--surface-subtle);
   border: 1px solid var(--border);
-  border-radius: 0.3rem;
+  border-radius: 2px;
   display: inline-flex;
   height: var(--item-icon-size);
   justify-content: center;

@@ -90,12 +90,12 @@ export function pointBuyStepControl(
   };
 }
 
+/** "Dwarf Paladin" for the sidebar; the level is its own control there. */
 export function characterHeaderSubtitle(
   race: string | undefined,
   characterClass: string | undefined,
-  level: number,
 ): string {
-  return [race?.trim(), characterClass?.trim(), String(level)]
+  return [race?.trim(), characterClass?.trim()]
     .filter((value): value is string => Boolean(value))
     .join(" ");
 }
@@ -424,6 +424,20 @@ export type ChoiceSelectionTableKind =
   | "preset"
   | "option";
 
+/**
+ * Choice types whose options are bare labels (no rules text to read), shown
+ * as buttons when there are few of them. Every other choice is a table, even
+ * a short one, so options such as racial traits, languages or familiars can
+ * be inspected before choosing.
+ */
+const BUTTON_CHOICE_TYPES = new Set([
+  "gender",
+  "alignment",
+  "proficiency",
+  "god fragment",
+  "background choice",
+]);
+
 export function choiceSelectionTableKind(
   choice: EvaluatedChoice,
 ): ChoiceSelectionTableKind | undefined {
@@ -438,9 +452,12 @@ export function choiceSelectionTableKind(
   if (type === "class feature") return "feature";
   if (type === "deity") return "deity";
   if (type === "background") return "background";
-  if (type !== "background choice" && (choice.candidates?.length ?? 0) > 8)
-    return "option";
-  return undefined;
+  if (
+    (BUTTON_CHOICE_TYPES.has(type) || type.includes("ability increase")) &&
+    (type === "background choice" || (choice.candidates?.length ?? 0) <= 8)
+  )
+    return undefined;
+  return "option";
 }
 
 export function contentSpecificValue(
@@ -894,43 +911,86 @@ export function buildPresetSuggestionNames(
   });
 }
 
-export function applyBuildPresetCommand(
+/** A pick a preset would replace: the choice's current option and the new. */
+export interface BuildPresetReplacement {
+  readonly from: string;
+  readonly to: string;
+}
+
+export interface BuildPresetPlan {
+  readonly command: CharacterCommand;
+  /** Existing picks the command overwrites (empty: it only fills gaps). */
+  readonly replaced: readonly BuildPresetReplacement[];
+}
+
+/**
+ * What applying a preset does: each suggested option already chosen stays;
+ * otherwise it fills an empty matching choice, or else replaces a matching
+ * choice's current pick (never one that is itself a suggestion of the
+ * preset). Replacements are reported so the UI can confirm them first.
+ */
+export function buildPresetPlan(
   build: CharacterBuild,
   preset: ContentEntity,
   choices: readonly EvaluatedChoice[],
   evaluation: EvaluatedCharacter,
   entities: readonly ContentEntity[],
   occurrenceId: (definitionId: string, index: number) => string,
-): CharacterCommand | undefined {
+): BuildPresetPlan | undefined {
   const byId = new Map(
     entities.map((entity) => [entity.id.toLocaleLowerCase(), entity]),
   );
+  const normalize = (name: string) => name.trim().toLocaleLowerCase();
+  const selectedName = (choice: EvaluatedChoice) => {
+    const definitionId = selectedDefinitionId(choice, evaluation);
+    return definitionId === undefined
+      ? undefined
+      : byId.get(definitionId.toLocaleLowerCase())?.name;
+  };
+  const suggestions = buildPresetSuggestionNames(preset);
+  const suggested = new Set(suggestions.map(normalize));
+  const slots = choices.filter((choice) => !isBuildPresetChoice(choice));
+  // Choices already holding one of the preset's options are left alone.
   const assignedChoices = new Set<string>();
+  const satisfied = new Set<string>();
+  for (const choice of slots) {
+    const name = selectedName(choice);
+    if (name === undefined || !suggested.has(normalize(name))) continue;
+    assignedChoices.add(choice.id);
+    satisfied.add(normalize(name));
+  }
   const assignedDefinitions = new Set<string>();
   const commands: CharacterCommand[] = [];
+  const replaced: BuildPresetReplacement[] = [];
   let projectedBuild = build;
-  for (const [suggestionIndex, suggestion] of buildPresetSuggestionNames(
-    preset,
-  ).entries()) {
-    const normalized = suggestion.toLocaleLowerCase();
-    const match = choices
-      .filter(
-        (choice) =>
-          !isBuildPresetChoice(choice) &&
-          choice.selectedOccurrenceId === undefined &&
-          !assignedChoices.has(choice.id),
-      )
-      .flatMap((choice) =>
-        choice.candidates.map((candidate) => ({ choice, candidate })),
-      )
-      .find(({ candidate }) => {
-        const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
-        return (
-          entity?.name.trim().toLocaleLowerCase() === normalized &&
-          candidate.eligible &&
-          !assignedDefinitions.has(candidate.definitionId.toLocaleLowerCase())
-        );
-      });
+  for (const [suggestionIndex, suggestion] of suggestions.entries()) {
+    const normalized = normalize(suggestion);
+    if (satisfied.has(normalized)) continue;
+    const matchIn = (pool: readonly EvaluatedChoice[]) =>
+      pool
+        .flatMap((choice) =>
+          choice.candidates.map((candidate) => ({ choice, candidate })),
+        )
+        .find(({ candidate }) => {
+          const entity = byId.get(candidate.definitionId.toLocaleLowerCase());
+          return (
+            entity !== undefined &&
+            normalize(entity.name) === normalized &&
+            candidate.eligible &&
+            !assignedDefinitions.has(candidate.definitionId.toLocaleLowerCase())
+          );
+        });
+    const open = slots.filter(
+      (choice) =>
+        choice.selectedOccurrenceId === undefined &&
+        !assignedChoices.has(choice.id),
+    );
+    const filled = slots.filter(
+      (choice) =>
+        choice.selectedOccurrenceId !== undefined &&
+        !assignedChoices.has(choice.id),
+    );
+    const match = matchIn(open) ?? matchIn(filled);
     if (match === undefined) continue;
     const definition = byId.get(
       match.candidate.definitionId.toLocaleLowerCase(),
@@ -956,12 +1016,48 @@ export function applyBuildPresetCommand(
       (index) => `web:placeholder:preset:${suggestionIndex}:${index}`,
     );
     if (command === undefined) continue;
+    const previous = selectedName(match.choice);
+    if (previous !== undefined)
+      replaced.push({ from: previous, to: definition.name });
     assignedChoices.add(match.choice.id);
     assignedDefinitions.add(definition.id.toLocaleLowerCase());
+    satisfied.add(normalized);
     commands.push(command);
     projectedBuild = applyCharacterCommand(projectedBuild, command);
   }
-  return commands.length === 0 ? undefined : { kind: "batch", commands };
+  return commands.length === 0
+    ? undefined
+    : { command: { kind: "batch", commands }, replaced };
+}
+
+export function applyBuildPresetCommand(
+  ...args: Parameters<typeof buildPresetPlan>
+): CharacterCommand | undefined {
+  return buildPresetPlan(...args)?.command;
+}
+
+/** Conventional option orders where content order reads oddly. */
+const CONVENTIONAL_OPTION_ORDER: Readonly<Record<string, readonly string[]>> = {
+  gender: ["male", "female"],
+};
+
+/**
+ * Orders a compact choice's options for display: Gender reads "Male,
+ * Female"; anything unlisted keeps its content order after the listed ones.
+ */
+export function conventionalOptionOrder<T>(
+  choiceType: string,
+  options: readonly T[],
+  nameOf: (option: T) => string,
+): readonly T[] {
+  const order =
+    CONVENTIONAL_OPTION_ORDER[choiceType.trim().toLocaleLowerCase()];
+  if (order === undefined) return options;
+  const rank = (option: T) => {
+    const index = order.indexOf(nameOf(option).trim().toLocaleLowerCase());
+    return index < 0 ? order.length : index;
+  };
+  return [...options].sort((left, right) => rank(left) - rank(right));
 }
 
 export function isCharacterDetailChoice(choice: EvaluatedChoice): boolean {
@@ -1086,28 +1182,30 @@ export function identityChoiceLabel(type: string): string | undefined {
     : undefined;
 }
 
-export function selectedChoiceHasWarning(
+/**
+ * The evaluator's decision for a choice's current selection. When the same
+ * definition is offered more than once, the selection stands if any offer
+ * allows it.
+ */
+export function selectedCandidateDecision(
   choice: EvaluatedChoice,
   evaluation: EvaluatedCharacter,
-): boolean {
+): CandidateDecision | undefined {
   const selected =
     choice.selectedOccurrenceId === undefined
       ? undefined
       : evaluation.occurrences.find(
           (occurrence) => occurrence.id === choice.selectedOccurrenceId,
         );
-  if (selected === undefined) return false;
-  if (selected.legality === "houserule") return true;
-  const decisions =
+  if (selected === undefined) return undefined;
+  const decisions = (
     choice.type === "Replacement"
       ? ((choice.replacementOptions ?? []).find(
           (option) => option.replacesOccurrenceId === selected.replacesId,
         )?.candidates ?? [])
-      : choice.candidates;
-  return decisions.some(
-    (candidate) =>
-      candidate.definitionId === selected.definitionId && !candidate.eligible,
-  );
+      : choice.candidates
+  ).filter((candidate) => candidate.definitionId === selected.definitionId);
+  return decisions.find((candidate) => candidate.eligible) ?? decisions[0];
 }
 
 export function selectedChoiceIsHouseRule(

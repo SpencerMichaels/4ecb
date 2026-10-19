@@ -376,7 +376,8 @@ count optimistically, and requires clearing one selected ability before choosing
 a different one when all slots are occupied.
 
 The Character details tab covers the legacy finishing-data pattern, not merely
-the three rule-backed examples. It exposes the seven primary legacy text fields,
+the three rule-backed examples. It exposes the primary legacy text fields
+(the name itself is edited in the builder sidebar),
 Gender/Alignment/Deity choices, and the six known `NOTE_` information fields.
 Text edits remain exact `set-text` commands, debounce into the existing
 optimistic save queue, and are projected into regenerated CharacterSheet details

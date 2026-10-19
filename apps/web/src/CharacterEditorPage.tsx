@@ -1,4 +1,11 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 import {
   CharacterRepository,
@@ -59,6 +66,7 @@ import {
   classKeyAbilities,
   classKeyAbilitiesSentence,
   choiceSectionIcon,
+  choiceSelectionTableKind,
   choiceSectionId,
   choicesAtLevel,
   contextualChoiceTitle,
@@ -82,8 +90,8 @@ import {
   legacyChoiceSection,
   planningEvaluationHorizon,
   planningHorizonCommand,
+  repeatedChoiceGroupTitle,
   selectedDefinitionId,
-  selectedChoiceHasWarning,
   selectedChoiceIsHouseRule,
   shouldOmitIndividualChoiceHeading,
   unresolveEvaluatedChoiceCommand,
@@ -136,6 +144,14 @@ import type {
 
 const characters = new CharacterRepository();
 type LevelChoiceTab = LegacyChoiceSection | "Retraining";
+
+/** Level sections whose detail cards are mostly long text. */
+const WIDE_DETAIL_SECTIONS: ReadonlySet<LevelChoiceTab> = new Set([
+  "Class",
+  "Race",
+  "Background",
+  "Theme",
+]);
 type CharacterTierId = "heroic" | "paragon" | "epic";
 const CHARACTER_TIERS: readonly {
   readonly id: CharacterTierId;
@@ -280,6 +296,12 @@ export function CharacterEditorPage({
     navigation.workspace === "build" ? (navigation.level ?? 1) : 1,
   );
   const [selectedChoiceId, setSelectedChoiceId] = useState<string>();
+  // The accordion item the user opened (or null: all folded) on one level
+  // tab; elsewhere, and after a tab change or Review jump, the default rules.
+  const [accordionOverride, setAccordionOverride] = useState<{
+    readonly tab: string;
+    readonly key: string | null;
+  }>();
   const [selectedSectionByLevel, setSelectedSectionByLevel] = useState<
     Readonly<Partial<Record<number, LevelChoiceTab>>>
   >({});
@@ -1138,6 +1160,7 @@ export function CharacterEditorPage({
   const errorCount = builderIssues.errors.length;
   const houseRuleCount = builderIssues.houseRules.length;
   const navigateToDiagnosticIssue = (issue: BuilderIssue): void => {
+    setAccordionOverride(undefined);
     if (issue.target?.kind === "content-update") {
       setReviewingContentUpdate(true);
       return;
@@ -1182,6 +1205,7 @@ export function CharacterEditorPage({
     });
   };
   const activateLevelSection = (section: LevelChoiceTab): void => {
+    setAccordionOverride(undefined);
     setSelectedSectionByLevel((current) => ({
       ...current,
       [selectedLevel]: section,
@@ -1206,6 +1230,7 @@ export function CharacterEditorPage({
     level: number,
     requestedSection?: LevelChoiceTab,
   ): void => {
+    setAccordionOverride(undefined);
     try {
       const command = planningHorizonCommand(
         build,
@@ -1290,7 +1315,171 @@ export function CharacterEditorPage({
     }
   };
 
+  // The choices a level-tab unit renders together (a repeated group shares
+  // one table, a dependent flow one section…), keyed by its first choice.
+  const unitChoicesFor = (
+    choice: EvaluatedChoice,
+  ): readonly EvaluatedChoice[] => {
+    if (groupedLevelChoices.backgrounds.includes(choice))
+      return groupedLevelChoices.backgrounds;
+    if (groupedLevelChoices.skillTraining.includes(choice))
+      return groupedLevelChoices.skillTraining;
+    return (
+      repeatedGroupByChoiceId.get(choice.id) ??
+      dependentFlowByChoiceId.get(choice.id) ?? [choice]
+    );
+  };
+  // A tab with two or more table choices shows at most one table at a time:
+  // each table unit folds to an accordion heading (title, picks, status),
+  // and the open heading folds away again. Unless the user picks a heading,
+  // the open one is the tab's selected choice (first unresolved on arrival,
+  // never moved by selecting), so the page doesn't jump on its own. At level
+  // 1 the Class tab's starting presets are an item too, closed by default.
+  const presetsInAccordion =
+    activeLevelSection === "Class" &&
+    selectedLevel === 1 &&
+    buildPresetChoices.some((choice) =>
+      choice.candidates.some((candidate) => candidate.eligible),
+    );
+  const accordionUnits = (() => {
+    if (
+      activeLevelSection === "Retraining" ||
+      activeChoiceSection === undefined
+    )
+      return [];
+    const seen = new Set<string>();
+    const units: (readonly EvaluatedChoice[])[] = [];
+    for (const choice of activeChoiceSection.choices) {
+      if (
+        selectedLevel === 1 &&
+        choice.type.trim().toLocaleLowerCase() === "race ability bonus"
+      )
+        continue;
+      const unit = unitChoicesFor(choice);
+      if (seen.has(unit[0]!.id)) continue;
+      seen.add(unit[0]!.id);
+      if (
+        unit !== groupedLevelChoices.skillTraining &&
+        !unit.every((item) => isAbilityIncreaseChoiceType(item.type)) &&
+        unit.some((item) => choiceSelectionTableKind(item) !== undefined)
+      )
+        units.push(unit);
+    }
+    return units.length + (presetsInAccordion ? 1 : 0) >= 2 ? units : [];
+  })();
+  const accordionTabKey = `${selectedLevel}:${activeLevelSection ?? ""}`;
+  const unitUnresolved = (unit: readonly EvaluatedChoice[]) =>
+    unit.some(
+      (item) => item.level <= build.effectiveLevel && isUnresolvedChoice(item),
+    );
+  const defaultAccordionKey = (accordionUnits.find((unit) =>
+    unit.some((item) => item.id === selectedChoiceId),
+  ) ??
+    accordionUnits.find(unitUnresolved) ??
+    accordionUnits[0])?.[0]?.id;
+  const openAccordionKey =
+    accordionOverride?.tab === accordionTabKey
+      ? accordionOverride.key
+      : defaultAccordionKey;
+  const toggleAccordion = (key: string, firstChoiceId?: string) => {
+    if (openAccordionKey === key) {
+      setAccordionOverride({ tab: accordionTabKey, key: null });
+      // No table is left to fill the details pane, so empty it.
+      setInspectedOption(undefined);
+      return;
+    }
+    setAccordionOverride({ tab: accordionTabKey, key });
+    if (firstChoiceId !== undefined) setSelectedChoiceId(firstChoiceId);
+  };
+  const renderAccordionItem = ({
+    key,
+    title,
+    picks,
+    status,
+    onToggle,
+    children,
+  }: {
+    readonly key: string;
+    readonly title: string;
+    readonly picks: string;
+    readonly status?: "complete" | "unresolved" | "house-rule" | undefined;
+    readonly onToggle: () => void;
+    readonly children: ReactNode;
+  }) => {
+    const open = openAccordionKey === key;
+    return (
+      <div
+        className={`choice-accordion-item${open ? " is-open" : ""}${status === "unresolved" ? " is-unresolved" : ""}`}
+        key={`accordion:${key}`}
+      >
+        <h4 className="choice-accordion-heading">
+          <button aria-expanded={open} type="button" onClick={onToggle}>
+            <Icon name="chevron" />
+            <span className="choice-accordion-title">{title}</span>
+            <span className="choice-accordion-picks">{picks}</span>
+            <span
+              className={`choice-accordion-status${status === "house-rule" ? " is-house-rule" : ""}`}
+            >
+              {status === "house-rule" ? (
+                <>
+                  <Icon name="house" />
+                  <span className="visually-hidden">House rule</span>
+                </>
+              ) : status === "unresolved" ? (
+                <>
+                  <Icon name="circle-help" />
+                  <span className="visually-hidden">Incomplete</span>
+                </>
+              ) : status === "complete" ? (
+                <>
+                  <Icon name="check" />
+                  <span className="visually-hidden">Complete</span>
+                </>
+              ) : null}
+            </span>
+          </button>
+        </h4>
+        {open ? children : null}
+      </div>
+    );
+  };
   const renderPrimaryChoice = (
+    choice: EvaluatedChoice,
+    omitIndividualHeading = false,
+  ) => {
+    const element = renderPrimaryChoiceUnit(choice, omitIndividualHeading);
+    if (element === null || planningEvaluation === undefined) return element;
+    const unit = accordionUnits.find((candidate) => candidate.includes(choice));
+    if (unit === undefined) return element;
+    const picks = unit.flatMap((item) => {
+      const definitionId = selectedDefinitionId(item, planningEvaluation);
+      return definitionId === undefined
+        ? []
+        : [byId.get(definitionId.toLocaleLowerCase())?.name ?? definitionId];
+    });
+    return renderAccordionItem({
+      key: unit[0]!.id,
+      title:
+        unit === groupedLevelChoices.backgrounds
+          ? "Background"
+          : repeatedGroupByChoiceId.has(unit[0]!.id)
+            ? repeatedChoiceGroupTitle(unit, byId)
+            : contextualChoiceTitle(unit[0]!, planningEvaluation, byId),
+      picks: picks.length === 0 ? "none chosen" : picks.join(", "),
+      status: unit.some((item) =>
+        selectedChoiceIsHouseRule(item, planningEvaluation),
+      )
+        ? "house-rule"
+        : unitUnresolved(unit)
+          ? "unresolved"
+          : picks.length > 0
+            ? "complete"
+            : undefined,
+      onToggle: () => toggleAccordion(unit[0]!.id, unit[0]!.id),
+      children: element,
+    });
+  };
+  const renderPrimaryChoiceUnit = (
     choice: EvaluatedChoice,
     omitIndividualHeading = false,
   ) => {
@@ -1482,6 +1671,9 @@ export function CharacterEditorPage({
     </ul>
   );
 
+  // The level picker shows progress only (done, unresolved, planned).
+  // Warnings, errors and house rules live in the tab bar's badges and their
+  // pages, whose Review buttons jump to the choice.
   const levelPlanEntries: readonly LevelPickerEntry[] =
     planningEvaluation === undefined
       ? []
@@ -1501,19 +1693,11 @@ export function CharacterEditorPage({
           const unresolved =
             timelineChoices.filter(isUnresolvedChoice).length +
             (level === 1 && abilityScoresIncomplete ? 1 : 0);
-          const warnings =
-            timelineChoices.filter((choice) =>
-              selectedChoiceHasWarning(choice, planningEvaluation!),
-            ).length + (level === 1 && abilityScoresHouseRuled ? 1 : 0);
-          const choiceStatus = levelRailChoiceStatus(
+          const status = levelRailChoiceStatus(
             timelineChoices,
             level <= build.effectiveLevel,
             level === 1 && abilityScoresIncomplete ? 1 : 0,
           );
-          const status =
-            choiceStatus === "complete" && warnings > 0
-              ? "warning"
-              : choiceStatus;
           const statusLabel =
             status === "future"
               ? "no choices made"
@@ -1523,9 +1707,7 @@ export function CharacterEditorPage({
                   ? `${progress.completed} of ${progress.required} choices complete`
                   : status === "incomplete"
                     ? `${unresolved} unresolved`
-                    : status === "warning"
-                      ? `${warnings} warnings`
-                      : "complete";
+                    : "complete";
           return { level, status, statusLabel };
         });
 
@@ -1657,14 +1839,33 @@ export function CharacterEditorPage({
                   onDispatch={dispatch}
                 />
               </h2>
+              {/* Race and class, then the current level, changed here (it
+                  isn't a Details field: it reshapes the whole build). */}
               <p className="builder-character-facts">
-                {characterHeaderSubtitle(
-                  race,
-                  currentEvaluation === undefined
-                    ? character.snapshot.details.Class
-                    : selectedClass?.name,
-                  build.effectiveLevel,
-                )}
+                <span>
+                  {characterHeaderSubtitle(
+                    race,
+                    currentEvaluation === undefined
+                      ? character.snapshot.details.Class
+                      : selectedClass?.name,
+                  )}
+                </span>
+                <label className="builder-level-select">
+                  Level
+                  <select
+                    aria-label="Current level"
+                    value={build.effectiveLevel}
+                    onChange={(event) =>
+                      changeCurrentLevel(Number(event.currentTarget.value))
+                    }
+                  >
+                    {Array.from({ length: MAX_CHARACTER_LEVEL }, (_, index) => (
+                      <option key={index + 1} value={index + 1}>
+                        {index + 1}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </p>
             </header>
             <div className="builder-sidebar-panel">
@@ -1963,23 +2164,15 @@ export function CharacterEditorPage({
                               selectedLevel === 1 &&
                               abilityScoresIncomplete) ||
                               sectionChoices.some(isUnresolvedChoice));
-                          const warning =
-                            (section === "Ability Scores" &&
-                              selectedLevel === 1 &&
-                              abilityScoresHouseRuled) ||
-                            sectionChoices.some((choice) =>
-                              selectedChoiceHasWarning(
-                                choice,
-                                planningEvaluation,
-                              ),
-                            );
                           const tabId = `level-${selectedLevel}-${levelChoiceTabSlug(section)}-tab`;
                           const panelId = `level-${selectedLevel}-${levelChoiceTabSlug(section)}-panel`;
                           return (
                             <button
                               aria-controls={panelId}
                               aria-selected={section === activeLevelSection}
-                              className={`${incomplete ? "choice-tab-incomplete" : ""}${warning ? " choice-tab-warning" : ""}`}
+                              className={
+                                incomplete ? "choice-tab-incomplete" : undefined
+                              }
                               id={tabId}
                               key={section}
                               role="tab"
@@ -2025,14 +2218,9 @@ export function CharacterEditorPage({
                                 }
                               />
                               <span>{section}</span>
-                              {warning ? (
-                                <>
-                                  <Icon name="warning" />
-                                  <span className="visually-hidden">
-                                    Warning
-                                  </span>
-                                </>
-                              ) : incomplete ? (
+                              {/* Progress only: warnings and house rules
+                                  live in the tab bar's badges. */}
+                              {incomplete ? (
                                 <>
                                   <span
                                     aria-hidden="true"
@@ -2048,9 +2236,13 @@ export function CharacterEditorPage({
                         })}
                       </div>
                     </div>
-                    <div className="level-choice-workspace">
+                    {/* Sections whose cards are long text get a wider
+                        detail pane (see .is-wide-detail). */}
+                    <div
+                      className={`level-choice-workspace${activeLevelSection !== undefined && WIDE_DETAIL_SECTIONS.has(activeLevelSection) ? " is-wide-detail" : ""}`}
+                    >
                       <CandidateInspectionScope
-                        key={`${workspaceTab === "build" ? "open" : "closed"}:${selectedLevel}:${activeLevelSection ?? "empty"}`}
+                        key={`${workspaceTab === "build" ? "open" : "closed"}:${selectedLevel}:${activeLevelSection ?? "empty"}:${openAccordionKey ?? "none"}`}
                         onInspect={setInspectedOption}
                       >
                         <div
@@ -2133,17 +2325,30 @@ export function CharacterEditorPage({
                                       selectedLevel === 1 &&
                                       choice.id === classChoicePlacementId ? (
                                         <>
-                                          <BuildPresetPanel
-                                            choices={buildPresetChoices}
-                                            levelChoices={
-                                              mechanicalLevelChoices
-                                            }
-                                            evaluation={planningEvaluation}
-                                            build={build}
-                                            entities={entities}
-                                            byId={byId}
-                                            onDispatch={dispatch}
-                                          />
+                                          {presetsInAccordion
+                                            ? renderAccordionItem({
+                                                key: "presets",
+                                                title: "Starting presets",
+                                                picks: "optional",
+                                                onToggle: () =>
+                                                  toggleAccordion("presets"),
+                                                children: (
+                                                  <BuildPresetPanel
+                                                    choices={buildPresetChoices}
+                                                    levelChoices={
+                                                      mechanicalLevelChoices
+                                                    }
+                                                    evaluation={
+                                                      planningEvaluation
+                                                    }
+                                                    build={build}
+                                                    entities={entities}
+                                                    byId={byId}
+                                                    onDispatch={dispatch}
+                                                  />
+                                                ),
+                                              })
+                                            : null}
                                           {requiredClassDeityChoices.length ===
                                           0 ? null : (
                                             <div className="class-deity-choice">
@@ -2175,6 +2380,7 @@ export function CharacterEditorPage({
                             byId={byId}
                             candidate={inspectedOption?.candidate}
                             entity={inspectedOption?.entity}
+                            favoritable={inspectedOption?.favoritable === true}
                           />
                         </div>
                       </CandidateInspectionScope>
@@ -2194,14 +2400,12 @@ export function CharacterEditorPage({
                 evaluation={planningEvaluation}
                 build={build}
                 snapshotDetails={character.snapshot.details}
-                characterTitle={character.title}
                 entities={entities}
                 byId={byId}
                 rollbackRevision={rollbackRevision}
                 effectiveLevel={build.effectiveLevel}
                 deityAlignment={deityAlignment}
                 alignmentHouseRuled={alignmentIssue !== undefined}
-                onLevelChange={changeCurrentLevel}
                 onDispatch={dispatch}
               />
             </div>
