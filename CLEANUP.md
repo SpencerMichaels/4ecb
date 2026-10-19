@@ -43,6 +43,19 @@ instances listed.
   separate row holding only Import / New Character. Rule: page actions sit in
   the page heading's row, on the right; the app's brand mark, not a generic
   page title, heads the home screen.
+- **Spacing that depends on flow position.** Settings used CSS columns,
+  where a section's bottom margin vanishes at a column break, so Game
+  content (outside the columns) had no gap above it and looked detached.
+  Rule: lay sections out with grid/flex `gap`, never per-item margins, and
+  put full-width sections in the same grid (`grid-column: 1 / -1`).
+- **Rare actions at the bottom of the page.** The library's Trash was a
+  collapsible under the list. Rule: page-level secondary areas are page
+  actions (an icon with a count) opening a dialog, not sections appended
+  below the content.
+- **Controls that appear and disappear.** The trash icon first showed only
+  when something was in the trash. Rule: no surprises: a control is always
+  in its place, whatever the data; an empty state says so inside it ("The
+  trash is empty.") rather than the control vanishing.
 - **Edge padding that disagrees with internal gaps.** The builder's outer
   padding was first larger, then smaller, than the gap between sidebar and
   workspace. Rule: a container's edge padding equals the gap between its
@@ -131,6 +144,18 @@ instances listed.
   while the others inspect. Rule: every table: click inspects, double-click
   or Enter selects; destructive results (overwriting picks) confirm first,
   harmless ones don't.
+- **Defaults decided before their data arrives.** A new character opened on
+  Ability Scores instead of Class: the default section was chosen (and
+  written to the URL, pinning it) before the rules evaluation existed, when
+  the placeholder Ability Scores tab was the only one. It worked only when
+  the evaluation was cached. Rule: a default that depends on loaded data
+  waits for that data; nothing derived from a placeholder may be persisted
+  (URL, storage) as if the user chose it. Test the cold path, not only the
+  cached one.
+- **Saving what the user never made.** New character stored a blank record
+  at once, so opening it and closing it again left blank characters behind.
+  Rule: nothing is persisted until the user changes something; a new
+  record is an in-memory draft until its first edit.
 - **Unpredictable automation.** Auto-advancing to the next choice after a
   selection; "first time only" behaviours. Rule: the UI never moves on its own
   after a user action; defaults apply only on arrival.

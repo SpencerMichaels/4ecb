@@ -300,6 +300,10 @@ a {
   margin: 0;
 }
 
+/* The "4E" mark: negative tracking also trims space after the last glyph,
+   so the right padding gets that 0.04em back; capitals-only text sits above
+   the em box's descender space, so where supported the box is trimmed to
+   cap height and baseline and padded evenly. */
 .app-brand-mark {
   border: 1px solid currentcolor;
   border-block-width: 3px;
@@ -308,7 +312,14 @@ a {
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1;
-  padding: 0.3rem 0.38rem;
+  padding: 0.3rem calc(0.38rem + 0.04em) 0.3rem 0.38rem;
+}
+
+@supports (text-box: trim-both cap alphabetic) {
+  .app-brand-mark {
+    padding-block: 0.42rem;
+    text-box: trim-both cap alphabetic;
+  }
 }
 
 .app-brand-name {
@@ -336,7 +347,6 @@ a {
 .settings-section {
   display: grid;
   gap: 0.8rem;
-  margin-bottom: 1rem;
 }
 
 .game-content-empty {
@@ -470,13 +480,22 @@ a {
   margin-top: 0;
 }
 
+/* Two stacks of sections, then Game content (a wide table) across both; one
+   gap between every pair of sections. One stack below 2 × 32rem. */
 .settings-columns {
-  column-gap: 1rem;
-  columns: 2 32rem;
+  align-items: start;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(32rem, 100%), 1fr));
 }
 
-.settings-columns > .settings-section {
-  break-inside: avoid;
+.settings-column {
+  display: grid;
+  gap: 1rem;
+}
+
+.settings-columns > .game-content-settings {
+  grid-column: 1 / -1;
 }
 
 .settings-options {
@@ -1060,8 +1079,7 @@ textarea {
   margin: 0 0 1rem;
   padding: 0;
 }
-.character-grid > li,
-.trash {
+.character-grid > li {
   background: var(--surface);
   border: 1px solid var(--border);
   padding: 1rem;
@@ -1367,7 +1385,6 @@ textarea {
   border-color: var(--danger);
   color: var(--danger);
 }
-.trash li,
 .sheet-toolbar,
 .sheet-toolbar fieldset {
   align-items: center;
@@ -1394,33 +1411,9 @@ textarea {
 .diagnostic.error {
   border-color: var(--danger);
 }
-.trash {
-  margin-top: 1.5rem;
-}
-.trash summary {
-  cursor: pointer;
-  font-weight: 700;
-}
-.trash ul {
-  list-style: none;
-  padding: 0;
-}
-.trash li {
-  border-top: 1px solid var(--border);
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-}
-.trash li span {
-  margin-right: auto;
-}
 
 /* Click-to-arm, click-again-to-confirm: replaces a native confirm() dialog
  * for the one destructive, irreversible action here (permanent deletion). */
-.trash li button[data-armed="true"] {
-  background: var(--danger);
-  border-color: var(--danger);
-  color: var(--surface);
-}
 
 .sheet-page {
   max-width: none;
@@ -7669,4 +7662,52 @@ button.toast-dismiss:not(:disabled):hover {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem 0.8rem;
+}
+
+/* Library trash: a count beside the trash icon in the page actions opens a
+   dialog listing trashed characters with Restore and Delete permanently. */
+.page-actions > .page-action-count {
+  gap: 0.2rem;
+  padding-inline: 0.35rem;
+  width: auto;
+}
+
+.page-action-count > span {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.trash-dialog {
+  overflow: auto;
+  width: 28rem;
+}
+
+.trash-empty {
+  color: var(--muted);
+  margin: 0;
+  padding: 1rem;
+}
+
+.trash-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.4rem 1rem 0.8rem;
+}
+
+.trash-list > li {
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 0.6rem;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+}
+
+.trash-list > li:last-child {
+  border-bottom: 0;
+}
+
+.trash-list > li > span {
+  overflow-wrap: anywhere;
 }

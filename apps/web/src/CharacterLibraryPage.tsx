@@ -26,8 +26,10 @@ import { Icon } from "./Icon";
 import { RulesWorkerClient } from "./rules-client";
 import { createNativeCharacter } from "./new-character";
 import { PortraitImage } from "./PortraitEditor";
+import { holdCharacterDraft } from "./character-drafts";
 import { PersistenceBanner } from "./PersistenceBanner";
 import { ToastRegion, useToasts } from "./Toasts";
+import { TrashDialog } from "./TrashDialog";
 import { useArmedAction } from "./useArmedAction";
 
 const repository = new CharacterRepository();
@@ -69,7 +71,7 @@ export function CharacterLibraryPage({
   // click confirms) instead of a native confirm() dialog; clicking
   // elsewhere or pressing Escape disarms it.
   const trashAction = useArmedAction("character-trash-trigger");
-  const purgeAction = useArmedAction("trash-purge-trigger");
+  const [trashOpen, setTrashOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     const { active, deleted } = await repository.listMetadataPartitioned();
@@ -200,7 +202,8 @@ export function CharacterLibraryPage({
               },
             },
       );
-      await repository.put(character);
+      // Held unsaved until its first change, so closing it adds nothing.
+      holdCharacterDraft(character);
       window.location.hash = `#/characters/${encodeURIComponent(character.id)}/edit`;
     } finally {
       setCreatingCharacter(false);
@@ -258,6 +261,16 @@ export function CharacterLibraryPage({
             }}
           >
             <Icon name="new-character" />
+          </button>
+          <button
+            aria-label={`Trash, ${trash.length} ${trash.length === 1 ? "character" : "characters"}`}
+            className="icon-only-button button-icon page-action-count"
+            title={`Trash (${trash.length})`}
+            type="button"
+            onClick={() => setTrashOpen(true)}
+          >
+            <Icon name="trash" />
+            <span aria-hidden="true">{trash.length}</span>
           </button>
           <span aria-hidden="true" className="builder-actions-divider" />
           <a
@@ -453,63 +466,28 @@ export function CharacterLibraryPage({
           </ul>
         </>
       )}
-      {trash.length === 0 ? null : (
-        <details className="trash">
-          <summary>Trash ({trash.length})</summary>
-          <ul>
-            {trash.map((character) => {
-              const purgeArmed = purgeAction.isArmed(character.id);
-              return (
-                <li key={character.id}>
-                  <span>{character.title}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      purgeAction.disarm();
-                      void repository
-                        .restore(character.id)
-                        .then(refresh)
-                        .catch((reason: unknown) =>
-                          reportFailure(
-                            reason,
-                            `Couldn't restore ${character.title}`,
-                          ),
-                        );
-                    }}
-                  >
-                    Restore
-                  </button>
-                  <button
-                    type="button"
-                    data-trash-purge-trigger={character.id}
-                    data-armed={purgeArmed || undefined}
-                    onClick={() => {
-                      if (!purgeArmed) {
-                        purgeAction.arm(character.id);
-                        return;
-                      }
-                      purgeAction.disarm();
-                      void repository
-                        .purge(character.id)
-                        .then(refresh)
-                        .catch((reason: unknown) =>
-                          reportFailure(
-                            reason,
-                            `Couldn't delete ${character.title}`,
-                          ),
-                        );
-                    }}
-                  >
-                    {purgeArmed
-                      ? "Click again to delete permanently"
-                      : "Delete permanently"}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </details>
-      )}
+      {trashOpen ? (
+        <TrashDialog
+          characters={trash}
+          onClose={() => setTrashOpen(false)}
+          onRestore={(character) =>
+            void repository
+              .restore(character.id)
+              .then(refresh)
+              .catch((reason: unknown) =>
+                reportFailure(reason, `Couldn't restore ${character.title}`),
+              )
+          }
+          onPurge={(character) =>
+            void repository
+              .purge(character.id)
+              .then(refresh)
+              .catch((reason: unknown) =>
+                reportFailure(reason, `Couldn't delete ${character.title}`),
+              )
+          }
+        />
+      ) : null}
     </main>
   );
 }

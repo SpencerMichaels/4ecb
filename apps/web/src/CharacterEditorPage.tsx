@@ -107,6 +107,7 @@ import { LoadingPane, LoadingScreen } from "./LoadingScreen";
 import { loadingStepDetail, useLoadingProgress } from "./use-loading-progress";
 import { useFittedTableHeight } from "./use-fitted-table-height";
 import { ContentUpdateDialog } from "./ContentUpdateDialog";
+import { loadCharacter, persistCharacterDraft } from "./character-drafts";
 import { needsContentUpdate } from "./content-update";
 import { loadoutChangeCommand } from "./equipment-ui";
 import { type InspectedOption } from "./CandidateSelectionTable";
@@ -345,8 +346,7 @@ export function CharacterEditorPage({
     setInitialLoadSettled(false);
     characterLoadStartedAt.current = startedAt;
     firstEvaluationRecorded.current = false;
-    void characters
-      .get(characterId)
+    void loadCharacter(characters, characterId)
       .then(async (loaded) => {
         recordLoadDuration("character-record-ready", startedAt, {
           characterId,
@@ -357,7 +357,11 @@ export function CharacterEditorPage({
         transaction.current = new CharacterTransaction(loaded.build);
         saveQueue.current = new OptimisticBuildSaveQueue(
           loaded.build,
-          (next) => characters.updateBuild(characterId, next),
+          async (next) => {
+            // A new character is first stored with its first change.
+            await persistCharacterDraft(characters, characterId);
+            return characters.updateBuild(characterId, next);
+          },
           (result) => result.build,
           {
             onSaving: (pendingCount) => {
@@ -944,6 +948,10 @@ export function CharacterEditorPage({
   useEffect(() => {
     if (
       character === undefined ||
+      // Until the level's choices are evaluated, the default section is
+      // only a placeholder (the injected Ability Scores tab); writing it to
+      // the URL would pin it as if the user had picked it.
+      planningEvaluation === undefined ||
       navigation.workspace !== "build" ||
       (navigationLevel !== undefined && navigationLevel !== selectedLevel)
     )
@@ -974,6 +982,7 @@ export function CharacterEditorPage({
     navigationSection,
     navigation.workspace,
     onNavigate,
+    planningEvaluation,
     selectedLevel,
   ]);
 
@@ -1846,6 +1855,7 @@ export function CharacterEditorPage({
                 name={character.title}
                 portrait={character.portrait}
                 onSave={async (portrait) => {
+                  await persistCharacterDraft(characters, characterId);
                   setCharacter(
                     await characters.updateMetadata(characterId, { portrait }),
                   );

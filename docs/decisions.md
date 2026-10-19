@@ -928,7 +928,10 @@ and restore, and Content. Theme preference defaults to the browser and operating
 system through `prefers-color-scheme`; explicit Light and Dark overrides remain
 browser-local. Characters is a compact library surface with Import and New
 Character actions, and new characters open immediately with their name edited
-later under Character details.
+later under Character details. A new character is held unsaved in memory
+(`character-drafts.ts`) until its first change (a build edit, its name or a
+portrait), so opening New character and closing it adds nothing to the
+library (2026-10-18).
 
 ### D046 — Content browsing is contextual, not a global destination
 

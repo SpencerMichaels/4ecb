@@ -521,560 +521,575 @@ export function SettingsPage({
       </header>
 
       <div className="settings-columns">
-        <section className="panel settings-section">
-          <div>
-            <h3>Display</h3>
-            <p>How the app looks in this browser.</p>
-          </div>
-          <SegmentedControl
-            label="Color theme"
-            options={[
-              ["system", "System"],
-              ["light", "Light"],
-              ["dark", "Dark"],
-            ]}
-            value={theme}
-            onChange={onThemeChange}
-          />
-        </section>
-
-        <section className="panel settings-section">
-          <div>
-            <h3>Builder &amp; Equipment</h3>
-            <p>Options for the builder, Equipment, and Shop.</p>
-          </div>
-          <div className="settings-options">
-            <CheckboxSetting
-              checked={hideFlavortext}
-              onChange={onHideFlavortextChange}
-              label="Hide flavortext"
-            />
-            <CheckboxSetting
-              checked={showEntitySource}
-              onChange={onShowEntitySourceChange}
-              label="Show entity source"
-              help="Name the sourcebook in a line at the bottom of each card in the builder, Equipment, and Shop."
-            />
-            <CheckboxSetting
-              checked={keepLargeAmountsInGold}
-              onChange={onKeepLargeAmountsInGoldChange}
-              label="Keep large amounts in gold"
-            />
-            <CheckboxSetting
-              checked={mergeFunds}
-              onChange={onMergeFundsChange}
-              label="Merge carried and stored funds"
-              help="Show and edit one set of coins. Turn off to keep stored funds (a bank or stash) separate, with a Carried / Stored switch on the wallet."
-            />
-            <CheckboxSetting
-              checked={abbreviateAbilityValues}
-              onChange={onAbbreviateAbilityValuesChange}
-              label="Show ability values compactly in calculated power details"
-              help="On builder and on-screen sheet power cards, show “Charisma modifier (+4)” as an underlined “+4” whose tooltip names the ability. Printed cards keep the full wording."
-            />
-          </div>
-        </section>
-
-        <section className="panel settings-section">
-          <div>
-            <h3>Power cards</h3>
-            <p>Options for power cards everywhere, on screen and printed.</p>
-          </div>
-          <div className="settings-options">
-            <CheckboxSetting
-              checked={resolveAbilityChoices}
-              onChange={onResolveAbilityChoicesChange}
-              label="Use the best ability in power descriptions"
-              help="When a power lets you choose an ability, show only the one with the highest modifier. Ties go to the higher score, then your class's key abilities, then the power's first option."
-            />
-            <CheckboxSetting
-              checked={showEquippedAttackBonus}
-              onChange={onShowEquippedAttackBonusChange}
-              label="Show equipped weapon to-hit bonus in attack headers"
-              help="Turn this off if you often switch weapons. Each card's weapon table always lists every weapon's bonus."
-            />
-          </div>
-        </section>
-
-        <section className="panel settings-section">
-          <div>
-            <h3>Printed sheet</h3>
-            <p>Options for the printable character sheet and its cards.</p>
-          </div>
-          <div className="settings-options">
+        <div className="settings-column">
+          <section className="panel settings-section">
+            <div>
+              <h3>Display</h3>
+              <p>How the app looks in this browser.</p>
+            </div>
             <SegmentedControl
-              label="Paper size"
+              label="Color theme"
               options={[
-                ["letter", "Letter"],
-                ["a4", "A4"],
+                ["system", "System"],
+                ["light", "Light"],
+                ["dark", "Dark"],
               ]}
-              value={paperSize}
-              onChange={onPaperSizeChange}
+              value={theme}
+              onChange={onThemeChange}
             />
-            <CheckboxSetting
-              checked={countCoinWeight}
-              onChange={onCountCoinWeightChange}
-              label="Count coin weight"
-              help="Include carried coins in encumbrance. Turn this off if your group ignores coin weight. Stored coins never count."
-            />
-            <CheckboxSetting
-              checked={showPrintTitleActionIcon}
-              onChange={onShowPrintTitleActionIconChange}
-              label="Show action icons on printed cards"
-              help="Show the action symbol beside each power name and in item-power headers. When off, power symbols appear only beside the action description."
-            />
-            <div className="settings-option">
-              <label
-                className="settings-check"
-                htmlFor="settings-card-text-size"
-              >
-                Printed card text size
-              </label>
-              <div className="settings-slider">
-                <span aria-hidden="true">Smaller</span>
-                <input
-                  id="settings-card-text-size"
-                  type="range"
-                  min={MIN_PRINT_CARD_TEXT_SIZE}
-                  max={MAX_PRINT_CARD_TEXT_SIZE}
-                  step={0.5}
-                  value={printCardTextSize}
-                  aria-describedby="settings-card-text-size-help"
-                  aria-valuetext={cardTextSizeDescription(printCardTextSize)}
-                  onChange={(event) =>
-                    onPrintCardTextSizeChange(Number(event.currentTarget.value))
-                  }
-                />
-                <span aria-hidden="true">Larger</span>
-                <button
-                  type="button"
-                  className="settings-slider-reset"
-                  disabled={printCardTextSize === DEFAULT_PRINT_CARD_TEXT_SIZE}
-                  onClick={() =>
-                    onPrintCardTextSizeChange(DEFAULT_PRINT_CARD_TEXT_SIZE)
-                  }
+          </section>
+
+          <section className="panel settings-section">
+            <div>
+              <h3>Builder &amp; Equipment</h3>
+              <p>Options for the builder, Equipment, and Shop.</p>
+            </div>
+            <div className="settings-options">
+              <CheckboxSetting
+                checked={hideFlavortext}
+                onChange={onHideFlavortextChange}
+                label="Hide flavortext"
+              />
+              <CheckboxSetting
+                checked={showEntitySource}
+                onChange={onShowEntitySourceChange}
+                label="Show entity source"
+                help="Name the sourcebook in a line at the bottom of each card in the builder, Equipment, and Shop."
+              />
+              <CheckboxSetting
+                checked={keepLargeAmountsInGold}
+                onChange={onKeepLargeAmountsInGoldChange}
+                label="Keep large amounts in gold"
+              />
+              <CheckboxSetting
+                checked={mergeFunds}
+                onChange={onMergeFundsChange}
+                label="Merge carried and stored funds"
+                help="Show and edit one set of coins. Turn off to keep stored funds (a bank or stash) separate, with a Carried / Stored switch on the wallet."
+              />
+              <CheckboxSetting
+                checked={abbreviateAbilityValues}
+                onChange={onAbbreviateAbilityValuesChange}
+                label="Show ability values compactly in calculated power details"
+                help="On builder and on-screen sheet power cards, show “Charisma modifier (+4)” as an underlined “+4” whose tooltip names the ability. Printed cards keep the full wording."
+              />
+            </div>
+          </section>
+
+          <section className="panel settings-section">
+            <div>
+              <h3>Power cards</h3>
+              <p>Options for power cards everywhere, on screen and printed.</p>
+            </div>
+            <div className="settings-options">
+              <CheckboxSetting
+                checked={resolveAbilityChoices}
+                onChange={onResolveAbilityChoicesChange}
+                label="Use the best ability in power descriptions"
+                help="When a power lets you choose an ability, show only the one with the highest modifier. Ties go to the higher score, then your class's key abilities, then the power's first option."
+              />
+              <CheckboxSetting
+                checked={showEquippedAttackBonus}
+                onChange={onShowEquippedAttackBonusChange}
+                label="Show equipped weapon to-hit bonus in attack headers"
+                help="Turn this off if you often switch weapons. Each card's weapon table always lists every weapon's bonus."
+              />
+            </div>
+          </section>
+        </div>
+        <div className="settings-column">
+          <section className="panel settings-section">
+            <div>
+              <h3>Printed sheet</h3>
+              <p>Options for the printable character sheet and its cards.</p>
+            </div>
+            <div className="settings-options">
+              <SegmentedControl
+                label="Paper size"
+                options={[
+                  ["letter", "Letter"],
+                  ["a4", "A4"],
+                ]}
+                value={paperSize}
+                onChange={onPaperSizeChange}
+              />
+              <CheckboxSetting
+                checked={countCoinWeight}
+                onChange={onCountCoinWeightChange}
+                label="Count coin weight"
+                help="Include carried coins in encumbrance. Turn this off if your group ignores coin weight. Stored coins never count."
+              />
+              <CheckboxSetting
+                checked={showPrintTitleActionIcon}
+                onChange={onShowPrintTitleActionIconChange}
+                label="Show action icons on printed cards"
+                help="Show the action symbol beside each power name and in item-power headers. When off, power symbols appear only beside the action description."
+              />
+              <div className="settings-option">
+                <label
+                  className="settings-check"
+                  htmlFor="settings-card-text-size"
                 >
-                  Reset
-                </button>
+                  Printed card text size
+                </label>
+                <div className="settings-slider">
+                  <span aria-hidden="true">Smaller</span>
+                  <input
+                    id="settings-card-text-size"
+                    type="range"
+                    min={MIN_PRINT_CARD_TEXT_SIZE}
+                    max={MAX_PRINT_CARD_TEXT_SIZE}
+                    step={0.5}
+                    value={printCardTextSize}
+                    aria-describedby="settings-card-text-size-help"
+                    aria-valuetext={cardTextSizeDescription(printCardTextSize)}
+                    onChange={(event) =>
+                      onPrintCardTextSizeChange(
+                        Number(event.currentTarget.value),
+                      )
+                    }
+                  />
+                  <span aria-hidden="true">Larger</span>
+                  <button
+                    type="button"
+                    className="settings-slider-reset"
+                    disabled={
+                      printCardTextSize === DEFAULT_PRINT_CARD_TEXT_SIZE
+                    }
+                    onClick={() =>
+                      onPrintCardTextSizeChange(DEFAULT_PRINT_CARD_TEXT_SIZE)
+                    }
+                  >
+                    Reset
+                  </button>
+                </div>
+                <p className="field-help" id="settings-card-text-size-help">
+                  Cards use this size when space allows; dense cards shrink to
+                  fit. Titles and footers keep their size. Print preview flags
+                  cards that still overflow.
+                </p>
               </div>
-              <p className="field-help" id="settings-card-text-size-help">
-                Cards use this size when space allows; dense cards shrink to
-                fit. Titles and footers keep their size. Print preview flags
-                cards that still overflow.
+            </div>
+          </section>
+
+          <section className="panel settings-section">
+            <div>
+              <h3>Backups &amp; storage</h3>
+              <p>
+                Your characters and added content stay in this browser. Back up
+                characters here, and keep copies of any added content-pack files
+                separately.
               </p>
             </div>
-          </div>
-        </section>
+            {storageStatus === undefined ? null : (
+              <p className="field-help settings-persistence">
+                {storageStatus.persisted
+                  ? "This browser has promised to keep your data. Backups are still recommended."
+                  : "This browser may clear saved data to free up space. Backups are the reliable way to recover."}
+                {storageStatus.supported && !storageStatus.persisted ? (
+                  <button
+                    type="button"
+                    disabled={requestingPersistence}
+                    onClick={() =>
+                      void requestPersistence().catch((reason: unknown) =>
+                        showError(reason, "Couldn't ask the browser"),
+                      )
+                    }
+                  >
+                    Keep data in this browser
+                  </button>
+                ) : null}
+              </p>
+            )}
+            <div className="heading-actions">
+              <button
+                type="button"
+                onClick={() =>
+                  void downloadCharacterBackup(characterRepository).catch(
+                    (reason: unknown) =>
+                      showError(reason, "Couldn't back up your characters"),
+                  )
+                }
+              >
+                Back up library
+              </button>
+              <label className="file-button">
+                Restore backup
+                <input
+                  type="file"
+                  accept=".json,.4ecb,application/json"
+                  onChange={(event) => {
+                    const file = event.currentTarget.files?.[0];
+                    if (file !== undefined)
+                      void inspectBackupFile(file).catch((reason: unknown) =>
+                        showError(reason, `Couldn't read ${file.name}`),
+                      );
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
+            </div>
+            {pendingBackup === undefined ? null : (
+              <div
+                className="backup-preview"
+                aria-label="Backup restore preview"
+              >
+                <h4>Restore preview</h4>
+                <dl className="report-facts">
+                  <div>
+                    <dt>Format</dt>
+                    <dd>Version {pendingBackup.inspection.version}</dd>
+                  </div>
+                  <div>
+                    <dt>Checksum</dt>
+                    <dd>
+                      {pendingBackup.inspection.checksumVerified
+                        ? "Verified"
+                        : "Unavailable in legacy backup"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Active</dt>
+                    <dd>{pendingBackup.inspection.activeCount}</dd>
+                  </div>
+                  <div>
+                    <dt>Trashed</dt>
+                    <dd>{pendingBackup.inspection.trashedCount}</dd>
+                  </div>
+                  <div>
+                    <dt>Existing IDs replaced</dt>
+                    <dd>{pendingBackup.inspection.conflictingIds.length}</dd>
+                  </div>
+                </dl>
+                {!pendingBackup.inspection.checksumVerified ? (
+                  <p className="profile-warning">
+                    This older backup has no checksum. Its records are
+                    structurally valid, but payload integrity cannot be
+                    verified.
+                  </p>
+                ) : null}
+                <div className="inline-actions">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void restoreInspectedBackup().catch((reason: unknown) =>
+                        showError(reason, "Couldn't restore the backup"),
+                      )
+                    }
+                  >
+                    Restore {pendingBackup.inspection.characterCount}{" "}
+                    {pendingBackup.inspection.characterCount === 1
+                      ? "character"
+                      : "characters"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingBackup(undefined)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
 
-        <section className="panel settings-section">
+        <section className="panel settings-section game-content-settings">
           <div>
-            <h3>Backups &amp; storage</h3>
+            <h3>Game content</h3>
             <p>
-              Your characters and added content stay in this browser. Back up
-              characters here, and keep copies of any added content-pack files
-              separately.
+              The rules, races, classes, powers, and items the builder offers.
+              When two packs include the same entry, the lower row wins. Drag
+              rows to change the order.
             </p>
           </div>
-          {storageStatus === undefined ? null : (
-            <p className="field-help settings-persistence">
-              {storageStatus.persisted
-                ? "This browser has promised to keep your data. Backups are still recommended."
-                : "This browser may clear saved data to free up space. Backups are the reliable way to recover."}
-              {storageStatus.supported && !storageStatus.persisted ? (
-                <button
-                  type="button"
-                  disabled={requestingPersistence}
-                  onClick={() =>
-                    void requestPersistence().catch((reason: unknown) =>
-                      showError(reason, "Couldn't ask the browser"),
-                    )
-                  }
-                >
-                  Keep data in this browser
-                </button>
-              ) : null}
+
+          {runtimeContentError === undefined ? null : (
+            <div className="error" role="alert">
+              <strong>Your group&apos;s content couldn&apos;t be loaded</strong>
+              <span>{runtimeContentError}</span>
+            </div>
+          )}
+          {downloading === undefined ? null : (
+            <p className="status" aria-live="polite">
+              {downloading.download?.phase === "installing"
+                ? `Setting up ${downloading.advertised.name ?? "your group's content"}…`
+                : `Downloading ${downloading.advertised.name ?? "your group's content"}${
+                    downloading.download?.phase === "downloading" &&
+                    downloading.download.totalBytes !== undefined
+                      ? ` (${formatBytes(downloading.download.receivedBytes)} of ${formatBytes(downloading.download.totalBytes)})`
+                      : ""
+                  }…`}
             </p>
           )}
-          <div className="heading-actions">
-            <button
-              type="button"
-              onClick={() =>
-                void downloadCharacterBackup(characterRepository).catch(
-                  (reason: unknown) =>
-                    showError(reason, "Couldn't back up your characters"),
-                )
-              }
-            >
-              Back up library
-            </button>
-            <label className="file-button">
-              Restore backup
-              <input
-                type="file"
-                accept=".json,.4ecb,application/json"
-                onChange={(event) => {
-                  const file = event.currentTarget.files?.[0];
-                  if (file !== undefined)
-                    void inspectBackupFile(file).catch((reason: unknown) =>
-                      showError(reason, `Couldn't read ${file.name}`),
-                    );
-                  event.currentTarget.value = "";
-                }}
-              />
-            </label>
-          </div>
-          {pendingBackup === undefined ? null : (
-            <div className="backup-preview" aria-label="Backup restore preview">
-              <h4>Restore preview</h4>
-              <dl className="report-facts">
-                <div>
-                  <dt>Format</dt>
-                  <dd>Version {pendingBackup.inspection.version}</dd>
-                </div>
-                <div>
-                  <dt>Checksum</dt>
-                  <dd>
-                    {pendingBackup.inspection.checksumVerified
-                      ? "Verified"
-                      : "Unavailable in legacy backup"}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Active</dt>
-                  <dd>{pendingBackup.inspection.activeCount}</dd>
-                </div>
-                <div>
-                  <dt>Trashed</dt>
-                  <dd>{pendingBackup.inspection.trashedCount}</dd>
-                </div>
-                <div>
-                  <dt>Existing IDs replaced</dt>
-                  <dd>{pendingBackup.inspection.conflictingIds.length}</dd>
-                </div>
-              </dl>
-              {!pendingBackup.inspection.checksumVerified ? (
-                <p className="profile-warning">
-                  This older backup has no checksum. Its records are
-                  structurally valid, but payload integrity cannot be verified.
-                </p>
-              ) : null}
-              <div className="inline-actions">
+          {failedDownloads.map(({ advertised, download }) => (
+            <div className="error" role="alert" key={advertised.packId}>
+              <strong>
+                Couldn&apos;t download{" "}
+                {advertised.name ?? "your group's content"}
+              </strong>
+              <span>{download?.error}</span>
+              <div>
                 <button
                   type="button"
-                  onClick={() =>
-                    void restoreInspectedBackup().catch((reason: unknown) =>
-                      showError(reason, "Couldn't restore the backup"),
-                    )
-                  }
+                  onClick={() => void onRetryAdvertised(advertised)}
                 >
-                  Restore {pendingBackup.inspection.characterCount}{" "}
-                  {pendingBackup.inspection.characterCount === 1
-                    ? "character"
-                    : "characters"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPendingBackup(undefined)}
-                >
-                  Cancel
+                  Try again
                 </button>
               </div>
             </div>
-          )}
-        </section>
-      </div>
+          ))}
 
-      <section className="panel settings-section game-content-settings">
-        <div>
-          <h3>Game content</h3>
-          <p>
-            The rules, races, classes, powers, and items the builder offers.
-            When two packs include the same entry, the lower row wins. Drag rows
-            to change the order.
-          </p>
-        </div>
-
-        {runtimeContentError === undefined ? null : (
-          <div className="error" role="alert">
-            <strong>Your group&apos;s content couldn&apos;t be loaded</strong>
-            <span>{runtimeContentError}</span>
-          </div>
-        )}
-        {downloading === undefined ? null : (
-          <p className="status" aria-live="polite">
-            {downloading.download?.phase === "installing"
-              ? `Setting up ${downloading.advertised.name ?? "your group's content"}…`
-              : `Downloading ${downloading.advertised.name ?? "your group's content"}${
-                  downloading.download?.phase === "downloading" &&
-                  downloading.download.totalBytes !== undefined
-                    ? ` (${formatBytes(downloading.download.receivedBytes)} of ${formatBytes(downloading.download.totalBytes)})`
-                    : ""
-                }…`}
-          </p>
-        )}
-        {failedDownloads.map(({ advertised, download }) => (
-          <div className="error" role="alert" key={advertised.packId}>
-            <strong>
-              Couldn&apos;t download {advertised.name ?? "your group's content"}
-            </strong>
-            <span>{download?.error}</span>
-            <div>
-              <button
-                type="button"
-                onClick={() => void onRetryAdvertised(advertised)}
-              >
-                Try again
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {rows.length === 0 ? (
-          <p className="game-content-empty">
-            No content yet. Import a content pack to start building characters.
-          </p>
-        ) : (
-          <table className="content-table">
-            <thead>
-              <tr>
-                <th scope="col">
-                  <span className="visually-hidden">Order</span>
-                </th>
-                <th scope="col">Content pack</th>
-                <th scope="col">In use</th>
-                <th scope="col">
-                  <span className="visually-hidden">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, index) => {
-                const key = layerKey(row);
-                const server = row.origin === "server";
-                const canMoveUp =
-                  index > 0 && rows[index - 1]?.origin === row.origin;
-                const canMoveDown = rows[index + 1]?.origin === row.origin;
-                const switchable =
-                  server &&
-                  staleGroupRows.length === 1 &&
-                  newGroupRows.length === 1 &&
-                  staleGroupRows[0] === row;
-                return (
-                  <Fragment key={key}>
-                    <tr
-                      className={[
-                        row.enabled ? undefined : "content-row-off",
-                        dragging === index ? "content-row-dragging" : undefined,
-                        dropTarget === index && dragging !== index
-                          ? dragging !== undefined && dragging < index
-                            ? "content-row-drop-below"
-                            : "content-row-drop-above"
-                          : undefined,
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      draggable={!busy && (canMoveUp || canMoveDown)}
-                      onDragStart={(event) => {
-                        event.dataTransfer.effectAllowed = "move";
-                        event.dataTransfer.setData("text/plain", key);
-                        setDragging(index);
-                      }}
-                      onDragOver={(event) => {
-                        if (dragging === undefined) return;
-                        if (rows[dragging]?.origin !== row.origin) return;
-                        event.preventDefault();
-                        setDropTarget(index);
-                      }}
-                      onDragEnd={() => {
-                        setDragging(undefined);
-                        setDropTarget(undefined);
-                      }}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        dropAt(index);
-                      }}
-                    >
-                      <td className="content-row-handle">
-                        {canMoveUp || canMoveDown ? (
-                          <button
-                            type="button"
-                            className="button-icon"
-                            disabled={busy}
-                            aria-label={`Move ${row.label}. Use the up and down arrow keys.`}
-                            title="Drag to reorder"
-                            onKeyDown={(event) => {
-                              const to =
-                                event.key === "ArrowUp" && canMoveUp
-                                  ? index - 1
-                                  : event.key === "ArrowDown" && canMoveDown
-                                    ? index + 1
-                                    : undefined;
-                              if (to === undefined) return;
-                              event.preventDefault();
-                              void apply(moveRow(rows, index, to));
-                              // Keyboard moves aren't visible to screen
-                              // readers, so they are announced.
-                              setAnnouncement(
-                                `Moved ${row.label} ${to < index ? "up" : "down"}.`,
-                              );
-                            }}
-                          >
-                            <span aria-hidden="true">⠿</span>
-                          </button>
-                        ) : null}
-                      </td>
-                      <td>
-                        <strong>{row.label}</strong>
-                        <span className="content-row-source">
-                          {server
-                            ? row.advertised
-                              ? "From your group"
-                              : "From your group (older version)"
-                            : "Imported in this browser"}
-                        </span>
-                      </td>
-                      <td>
-                        <label className="content-row-toggle">
-                          <input
-                            type="checkbox"
-                            checked={row.enabled}
-                            disabled={busy}
-                            onChange={(event) =>
-                              void apply(
-                                updateRow(rows, row, {
-                                  enabled: event.currentTarget.checked,
-                                }),
-                              )
-                            }
-                          />
-                          <span className="visually-hidden">
-                            Use {row.label}
-                          </span>
-                        </label>
-                      </td>
-                      <td>
-                        <div className="content-row-actions">
-                          {switchable ? (
+          {rows.length === 0 ? (
+            <p className="game-content-empty">
+              No content yet. Import a content pack to start building
+              characters.
+            </p>
+          ) : (
+            <table className="content-table">
+              <thead>
+                <tr>
+                  <th scope="col">
+                    <span className="visually-hidden">Order</span>
+                  </th>
+                  <th scope="col">Content pack</th>
+                  <th scope="col">In use</th>
+                  <th scope="col">
+                    <span className="visually-hidden">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, index) => {
+                  const key = layerKey(row);
+                  const server = row.origin === "server";
+                  const canMoveUp =
+                    index > 0 && rows[index - 1]?.origin === row.origin;
+                  const canMoveDown = rows[index + 1]?.origin === row.origin;
+                  const switchable =
+                    server &&
+                    staleGroupRows.length === 1 &&
+                    newGroupRows.length === 1 &&
+                    staleGroupRows[0] === row;
+                  return (
+                    <Fragment key={key}>
+                      <tr
+                        className={[
+                          row.enabled ? undefined : "content-row-off",
+                          dragging === index
+                            ? "content-row-dragging"
+                            : undefined,
+                          dropTarget === index && dragging !== index
+                            ? dragging !== undefined && dragging < index
+                              ? "content-row-drop-below"
+                              : "content-row-drop-above"
+                            : undefined,
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                        draggable={!busy && (canMoveUp || canMoveDown)}
+                        onDragStart={(event) => {
+                          event.dataTransfer.effectAllowed = "move";
+                          event.dataTransfer.setData("text/plain", key);
+                          setDragging(index);
+                        }}
+                        onDragOver={(event) => {
+                          if (dragging === undefined) return;
+                          if (rows[dragging]?.origin !== row.origin) return;
+                          event.preventDefault();
+                          setDropTarget(index);
+                        }}
+                        onDragEnd={() => {
+                          setDragging(undefined);
+                          setDropTarget(undefined);
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          dropAt(index);
+                        }}
+                      >
+                        <td className="content-row-handle">
+                          {canMoveUp || canMoveDown ? (
                             <button
                               type="button"
+                              className="button-icon"
                               disabled={busy}
-                              onClick={() => {
-                                const replacement = newGroupRows[0];
-                                if (replacement !== undefined)
-                                  void apply(
-                                    replaceRow(rows, row, replacement),
-                                  );
+                              aria-label={`Move ${row.label}. Use the up and down arrow keys.`}
+                              title="Drag to reorder"
+                              onKeyDown={(event) => {
+                                const to =
+                                  event.key === "ArrowUp" && canMoveUp
+                                    ? index - 1
+                                    : event.key === "ArrowDown" && canMoveDown
+                                      ? index + 1
+                                      : undefined;
+                                if (to === undefined) return;
+                                event.preventDefault();
+                                void apply(moveRow(rows, index, to));
+                                // Keyboard moves aren't visible to screen
+                                // readers, so they are announced.
+                                setAnnouncement(
+                                  `Moved ${row.label} ${to < index ? "up" : "down"}.`,
+                                );
                               }}
                             >
-                              Use new version
+                              <span aria-hidden="true">⠿</span>
                             </button>
                           ) : null}
-                          {server ? null : (
-                            <label
-                              className={`file-button${busy ? " disabled" : ""}`}
-                            >
-                              Replace…
-                              <input
-                                type="file"
-                                accept=".4ecp,application/json"
-                                disabled={busy}
-                                onChange={(event) => {
-                                  const file = event.currentTarget.files?.[0];
-                                  if (file !== undefined)
-                                    startFileImport(file, row);
-                                  event.currentTarget.value = "";
-                                }}
-                              />
-                            </label>
-                          )}
-                          {server && row.advertised ? null : (
-                            <button
-                              type="button"
+                        </td>
+                        <td>
+                          <strong>{row.label}</strong>
+                          <span className="content-row-source">
+                            {server
+                              ? row.advertised
+                                ? "From your group"
+                                : "From your group (older version)"
+                              : "Imported in this browser"}
+                          </span>
+                        </td>
+                        <td>
+                          <label className="content-row-toggle">
+                            <input
+                              type="checkbox"
+                              checked={row.enabled}
                               disabled={busy}
-                              onClick={() =>
-                                void askRemove(row).catch(showError)
+                              onChange={(event) =>
+                                void apply(
+                                  updateRow(rows, row, {
+                                    enabled: event.currentTarget.checked,
+                                  }),
+                                )
                               }
-                            >
-                              Remove
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                    {pendingRemove === undefined ||
-                    layerKey(pendingRemove.row) !== key ? null : (
-                      <tr className="content-row-confirm">
-                        <td colSpan={4}>
-                          <div
-                            className="content-change-review"
-                            ref={focusFirstButton}
-                          >
-                            <p>
-                              <strong>
-                                Remove {row.label} from this browser?
-                              </strong>{" "}
-                              {pendingRemove.characters === 0
-                                ? "No characters depend on it."
-                                : `${pendingRemove.characters} ${pendingRemove.characters === 1 ? "character depends" : "characters depend"} on it and won't open until you import it again.`}
-                            </p>
-                            <div className="inline-actions">
+                            />
+                            <span className="visually-hidden">
+                              Use {row.label}
+                            </span>
+                          </label>
+                        </td>
+                        <td>
+                          <div className="content-row-actions">
+                            {switchable ? (
                               <button
                                 type="button"
+                                disabled={busy}
+                                onClick={() => {
+                                  const replacement = newGroupRows[0];
+                                  if (replacement !== undefined)
+                                    void apply(
+                                      replaceRow(rows, row, replacement),
+                                    );
+                                }}
+                              >
+                                Use new version
+                              </button>
+                            ) : null}
+                            {server ? null : (
+                              <label
+                                className={`file-button${busy ? " disabled" : ""}`}
+                              >
+                                Replace…
+                                <input
+                                  type="file"
+                                  accept=".4ecp,application/json"
+                                  disabled={busy}
+                                  onChange={(event) => {
+                                    const file = event.currentTarget.files?.[0];
+                                    if (file !== undefined)
+                                      startFileImport(file, row);
+                                    event.currentTarget.value = "";
+                                  }}
+                                />
+                              </label>
+                            )}
+                            {server && row.advertised ? null : (
+                              <button
+                                type="button"
+                                disabled={busy}
                                 onClick={() =>
-                                  void remove(row).catch(showError)
+                                  void askRemove(row).catch(showError)
                                 }
                               >
                                 Remove
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => setPendingRemove(undefined)}
-                              >
-                                Cancel
-                              </button>
-                            </div>
+                            )}
                           </div>
                         </td>
                       </tr>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-
-        <div className="heading-actions">
-          <label className={`file-button${busy ? " disabled" : ""}`}>
-            Import content pack…
-            <input
-              accept=".4ecp,application/json"
-              type="file"
-              disabled={busy}
-              onChange={(event) => {
-                const file = event.currentTarget.files?.[0];
-                if (file !== undefined) startFileImport(file);
-                event.currentTarget.value = "";
-              }}
-            />
-          </label>
-          {importing ? (
-            <button type="button" onClick={cancelImport}>
-              Cancel import
-            </button>
-          ) : null}
-          {progress === undefined ? null : (
-            <p className="status" aria-live="polite">
-              {progress}
-            </p>
+                      {pendingRemove === undefined ||
+                      layerKey(pendingRemove.row) !== key ? null : (
+                        <tr className="content-row-confirm">
+                          <td colSpan={4}>
+                            <div
+                              className="content-change-review"
+                              ref={focusFirstButton}
+                            >
+                              <p>
+                                <strong>
+                                  Remove {row.label} from this browser?
+                                </strong>{" "}
+                                {pendingRemove.characters === 0
+                                  ? "No characters depend on it."
+                                  : `${pendingRemove.characters} ${pendingRemove.characters === 1 ? "character depends" : "characters depend"} on it and won't open until you import it again.`}
+                              </p>
+                              <div className="inline-actions">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void remove(row).catch(showError)
+                                  }
+                                >
+                                  Remove
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setPendingRemove(undefined)}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
-        </div>
-        <p className="field-help">
-          Turning content on or off, reordering, or replacing it doesn&apos;t
-          change existing characters: each keeps its content until you open it
-          and choose to update.
-        </p>
-      </section>
+
+          <div className="heading-actions">
+            <label className={`file-button${busy ? " disabled" : ""}`}>
+              Import content pack…
+              <input
+                accept=".4ecp,application/json"
+                type="file"
+                disabled={busy}
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  if (file !== undefined) startFileImport(file);
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
+            {importing ? (
+              <button type="button" onClick={cancelImport}>
+                Cancel import
+              </button>
+            ) : null}
+            {progress === undefined ? null : (
+              <p className="status" aria-live="polite">
+                {progress}
+              </p>
+            )}
+          </div>
+          <p className="field-help">
+            Turning content on or off, reordering, or replacing it doesn&apos;t
+            change existing characters: each keeps its content until you open it
+            and choose to update.
+          </p>
+        </section>
+      </div>
 
       <p aria-live="polite" className="visually-hidden">
         {announcement}

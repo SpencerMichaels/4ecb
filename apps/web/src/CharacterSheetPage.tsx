@@ -28,6 +28,7 @@ import {
 } from "@4ecb/sheet-model";
 
 import { contentProfileMatchesRevision } from "./profile-migration";
+import { loadCharacter } from "./character-drafts";
 import { Icon } from "./Icon";
 import type { PaperSize } from "./paper-size";
 import { PortraitImage } from "./PortraitEditor";
@@ -229,7 +230,7 @@ export function CharacterSheetPage({
     setContentLoaded(false);
     void (async () => {
       try {
-        const loaded = await characters.get(characterId);
+        const loaded = await loadCharacter(characters, characterId);
         setCharacter(loaded);
         if (loaded?.profileBinding !== undefined)
           setContent(
