@@ -372,8 +372,12 @@ describe("Shop workspace", () => {
     expect(markup).toContain("All items");
     expect(markup).toContain("Alchemical formulas");
     expect(markup).toContain("Implement enchantments");
-    expect(markup).toContain('aria-pressed="true">Affordable');
-    expect(markup).toContain('aria-pressed="true">Proficient');
+    expect(markup).toMatch(
+      /aria-pressed="true"><svg[^>]*lucide-coins[\s\S]*?<\/svg> Affordable/,
+    );
+    expect(markup).toMatch(
+      /aria-pressed="true"><svg[^>]*lucide-badge-check[\s\S]*?<\/svg> Proficient/,
+    );
     expect(markup).toContain('aria-label="Buy Public Potion"');
     expect(markup).toContain('aria-label="Give Public Potion"');
     expect(markup).not.toContain("Acquire");

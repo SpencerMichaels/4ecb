@@ -3,10 +3,12 @@ import {
   Award,
   Backpack,
   Badge,
+  BadgeCheck,
   BicepsFlexed,
   Bone,
   BowArrow,
   BookMarked,
+  BookCheck,
   BookOpen,
   Brain,
   Calculator,
@@ -28,10 +30,11 @@ import {
   Dumbbell,
   Dices,
   Dice5,
+  Coins,
   Download,
   Eye,
   FileText,
-  FileUp,
+  FolderInput,
   HandFist,
   Heart,
   HeartPlus,
@@ -95,6 +98,7 @@ import {
   X,
   Zap,
   type LucideIcon,
+  SquareArrowRightExit,
 } from "lucide-react";
 
 export type IconName =
@@ -138,7 +142,11 @@ export type IconName =
   | "content"
   | "crown"
   | "details"
+  | "affordable"
   | "download"
+  | "export"
+  | "known"
+  | "proficient"
   | "duplicate"
   | "dumbbell"
   | "edit"
@@ -265,7 +273,11 @@ const icons: Record<IconName, LucideIcon> = {
   handbag: Handbag,
   "hard-hat": HardHat,
   house: House,
-  import: FileUp,
+  import: FolderInput,
+  export: SquareArrowRightExit,
+  affordable: Coins,
+  proficient: BadgeCheck,
+  known: BookCheck,
   item: Backpack,
   key: Key,
   "key-round": KeyRound,

@@ -854,10 +854,33 @@ export function ShopWorkspace({
     const isKnown = known(entity);
     const proficiency = itemProficiencyStatus(entity, ownedDefinitions);
     const showIndent = options.disclosure || browse === "all";
+    const inspect = () => {
+      setInspectedEntityId(entity.id);
+      const kind = implementKind(entity);
+      onInspect(
+        entity,
+        displayName,
+        kind === undefined ? undefined : `Implement Enchantment (${kind})`,
+      );
+      setPreferredVariants((current) =>
+        new Map(current).set(family.key, entity.id),
+      );
+    };
     return (
+      // Clicking anywhere in the row inspects the item; the row's own
+      // controls (buy, give, variants, the name button) keep their actions.
       <tr
+        onClick={(event) => {
+          if (
+            event.target instanceof Element &&
+            event.target.closest("button, input, select, a, label") !== null
+          )
+            return;
+          inspect();
+        }}
         className={
           [
+            "table-clickable-row",
             options.child ? "shop-family-child" : undefined,
             inspectedEntityId === entity.id ? "is-selected" : undefined,
           ]
@@ -911,20 +934,7 @@ export function ShopWorkspace({
             <button
               type="button"
               className="table-inspect-button"
-              onClick={() => {
-                setInspectedEntityId(entity.id);
-                const kind = implementKind(entity);
-                onInspect(
-                  entity,
-                  displayName,
-                  kind === undefined
-                    ? undefined
-                    : `Implement Enchantment (${kind})`,
-                );
-                setPreferredVariants((current) =>
-                  new Map(current).set(family.key, entity.id),
-                );
-              }}
+              onClick={inspect}
             >
               <span>{displayName}</span>
             </button>
@@ -988,8 +998,8 @@ export function ShopWorkspace({
       <div className="shop-toolbar">
         {/* Each dropdown carries its name inside its own frame, so a chosen
             value ("Head") still says what it filters by. */}
-        <label className="shop-inline-field">
-          <span className="shop-field-label">Type</span>
+        <label className="inline-field">
+          <span className="inline-field-label">Type</span>
           <select
             value={browse}
             onChange={(event) => {
@@ -1004,8 +1014,8 @@ export function ShopWorkspace({
             ))}
           </select>
         </label>
-        <label className="shop-inline-field">
-          <span className="shop-field-label">Slot</span>
+        <label className="inline-field">
+          <span className="inline-field-label">Slot</span>
           <select
             disabled={learning || slots.length <= 1}
             value={slot}
@@ -1027,8 +1037,8 @@ export function ShopWorkspace({
             )}
           </select>
         </label>
-        <label className="shop-inline-field">
-          <span className="shop-field-label">Subtype</span>
+        <label className="inline-field">
+          <span className="inline-field-label">Subtype</span>
           <select
             disabled={learning || subtypes.length <= 1}
             value={subtype}
@@ -1069,7 +1079,7 @@ export function ShopWorkspace({
             aria-pressed={affordable}
             onClick={() => setAffordable((value) => !value)}
           >
-            Affordable
+            <Icon name="affordable" /> Affordable
           </button>
           {learning ? (
             <button
@@ -1078,7 +1088,7 @@ export function ShopWorkspace({
               aria-pressed={knownOnly}
               onClick={() => setKnownOnly((value) => !value)}
             >
-              Known
+              <Icon name="known" /> Known
             </button>
           ) : (
             <button
@@ -1087,7 +1097,7 @@ export function ShopWorkspace({
               aria-pressed={proficient}
               onClick={() => setProficient((value) => !value)}
             >
-              Proficient
+              <Icon name="proficient" /> Proficient
             </button>
           )}
           <button

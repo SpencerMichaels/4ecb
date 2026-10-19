@@ -340,7 +340,7 @@ export function CharacterLibraryPage({
                         )
                       }
                     >
-                      <Icon name="download" />
+                      <Icon name="export" />
                     </button>
                     {openExportId === character.id ? (
                       <div

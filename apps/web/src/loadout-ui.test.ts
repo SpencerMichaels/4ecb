@@ -100,8 +100,15 @@ describe("loadout interaction and geometry", () => {
   });
 
   it("keeps Inventory name decoration scoped and sale menus dismissible", () => {
+    // Hover is shown by the row tint; only keyboard focus decorates the name.
+    expect(styles).not.toMatch(
+      /\.inventory-item-button:hover[^{]*\.inventory-item-name/,
+    );
     expect(styles).toMatch(
-      /\.inventory-item-button:hover[^,]*\.inventory-item-name,[\s\S]*?text-decoration: underline/,
+      /\.inventory-item-button:focus-visible \.inventory-item-name\s*\{[^}]*text-decoration: underline/,
+    );
+    expect(styles).toMatch(
+      /tr\.table-clickable-row:hover > :is\(th, td\)\s*\{[^}]*background-image:/,
     );
     expect(styles).toMatch(
       /\.inventory-item-button:hover[\s\S]*?text-decoration: none/,
