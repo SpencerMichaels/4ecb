@@ -25,6 +25,7 @@ import { Icon } from "./Icon";
 import { RulesWorkerClient } from "./rules-client";
 import { createNativeCharacter } from "./new-character";
 import { PortraitImage } from "./PortraitEditor";
+import { ToastRegion, useToasts } from "./Toasts";
 import { useArmedAction } from "./useArmedAction";
 
 const repository = new CharacterRepository();
@@ -58,7 +59,17 @@ export function CharacterLibraryPage({
     readonly CharacterLibraryEntry[]
   >([]);
   const [trash, setTrash] = useState<readonly CharacterLibraryEntry[]>([]);
-  const [error, setError] = useState<string>();
+  const toasts = useToasts();
+  const pushToast = toasts.push;
+  const reportFailure = useCallback(
+    (reason: unknown, title = "Something went wrong") =>
+      pushToast({
+        tone: "error",
+        title,
+        messages: [reason instanceof Error ? reason.message : String(reason)],
+      }),
+    [pushToast],
+  );
   const [creatingCharacter, setCreatingCharacter] = useState(false);
   const [openExportId, setOpenExportId] = useState<string>();
   // A "Move to trash"/"Delete permanently" click arms the button (a second
@@ -75,9 +86,9 @@ export function CharacterLibraryPage({
 
   useEffect(() => {
     void refresh().catch((reason: unknown) =>
-      setError(reason instanceof Error ? reason.message : String(reason)),
+      reportFailure(reason, "Couldn't load the character library"),
     );
-  }, [refresh]);
+  }, [refresh, reportFailure]);
 
   async function importCharacter(file: File): Promise<void> {
     if (file.size > 10 * 1024 * 1024)
@@ -100,6 +111,17 @@ export function CharacterLibraryPage({
     );
     await repository.put(character);
     await refresh();
+    const warnings = imported.report.diagnostics.filter(
+      (diagnostic) => diagnostic.severity !== "info",
+    );
+    if (warnings.length > 0)
+      pushToast({
+        tone: warnings.some((warning) => warning.severity === "error")
+          ? "error"
+          : "warning",
+        title: `Imported ${character.title} with warnings`,
+        messages: warnings.map((warning) => warning.message),
+      });
   }
 
   async function exportNativeCharacter(
@@ -214,9 +236,7 @@ export function CharacterLibraryPage({
                 const file = event.currentTarget.files?.[0];
                 if (file !== undefined)
                   void importCharacter(file).catch((reason: unknown) =>
-                    setError(
-                      reason instanceof Error ? reason.message : String(reason),
-                    ),
+                    reportFailure(reason, `Couldn't import ${file.name}`),
                   );
                 event.currentTarget.value = "";
               }}
@@ -232,9 +252,7 @@ export function CharacterLibraryPage({
             disabled={activePackId === undefined || creatingCharacter}
             onClick={() =>
               void createCharacter().catch((reason: unknown) =>
-                setError(
-                  reason instanceof Error ? reason.message : String(reason),
-                ),
+                reportFailure(reason),
               )
             }
           >
@@ -251,12 +269,7 @@ export function CharacterLibraryPage({
           </a>
         </div>
       </header>
-      {error === undefined ? null : (
-        <div className="error" role="alert">
-          <strong>Problem</strong>
-          <span>{error}</span>
-        </div>
-      )}
+      <ToastRegion toasts={toasts.toasts} onDismiss={toasts.dismiss} />
       {characters.length === 0 ? (
         <div className="empty-state">
           <h3>Your local library is empty</h3>
@@ -348,10 +361,9 @@ export function CharacterLibraryPage({
                             setOpenExportId(undefined);
                             void exportNativeCharacter(character).catch(
                               (reason: unknown) =>
-                                setError(
-                                  reason instanceof Error
-                                    ? reason.message
-                                    : String(reason),
+                                reportFailure(
+                                  reason,
+                                  `Couldn't export ${character.title}`,
                                 ),
                             );
                           }}
@@ -364,10 +376,9 @@ export function CharacterLibraryPage({
                             setOpenExportId(undefined);
                             void exportCharacter(character).catch(
                               (reason: unknown) =>
-                                setError(
-                                  reason instanceof Error
-                                    ? reason.message
-                                    : String(reason),
+                                reportFailure(
+                                  reason,
+                                  `Couldn't export ${character.title}`,
                                 ),
                             );
                           }}
@@ -391,13 +402,7 @@ export function CharacterLibraryPage({
                       void repository
                         .duplicate(character.id)
                         .then(refresh)
-                        .catch((reason: unknown) =>
-                          setError(
-                            reason instanceof Error
-                              ? reason.message
-                              : String(reason),
-                          ),
-                        )
+                        .catch((reason: unknown) => reportFailure(reason))
                     }
                   >
                     <Icon name="duplicate" />
@@ -426,13 +431,7 @@ export function CharacterLibraryPage({
                       void repository
                         .moveToTrash(character.id)
                         .then(refresh)
-                        .catch((reason: unknown) =>
-                          setError(
-                            reason instanceof Error
-                              ? reason.message
-                              : String(reason),
-                          ),
-                        );
+                        .catch((reason: unknown) => reportFailure(reason));
                     }}
                   >
                     <Icon
