@@ -80,9 +80,10 @@ digest; the product owner's homelab re-pins and deploys automatically whenever
 To release, run `scripts/deploy.sh` from a clean `main`: it runs the checks that
 gate publishing (in a temporary worktree), pushes to GitHub `main`, and waits
 until the image for that commit is published. The product owner's homelab then
-deploys it automatically within about ten minutes. `--skip-checks` and
-`--no-wait` shorten it; it refuses uncommitted changes and a `main` that has
-diverged from GitHub's.
+deploys it automatically within about ten minutes. Only committed work is
+released: uncommitted changes (and new untracked files in source directories)
+are listed with a prompt to abort. `--skip-checks` and `--no-wait` shorten it,
+and `--yes` skips the prompt; it refuses a `main` behind GitHub's.
 
 ## HTTPS and reverse proxies
 

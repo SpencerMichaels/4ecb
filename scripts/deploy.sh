@@ -7,21 +7,26 @@
 #   scripts/deploy.sh                 # check, push, wait for the image
 #   scripts/deploy.sh --skip-checks   # push without the local check run (CI still checks)
 #   scripts/deploy.sh --no-wait       # push and return; don't wait for CI
+#   scripts/deploy.sh --yes           # release even if there is uncommitted work
 #
-# Run it from a clean checkout of main. It refuses uncommitted tracked changes (commit them
-# first) and a main that has diverged from GitHub's (rebase onto origin/main first). The
-# local checks are the same ones that gate publishing (public-checks: everything in
-# scripts/check.sh except the print check) and run in a temporary worktree of the commit
-# being pushed, so the checkout itself isn't touched. Pushing needs your SSH key loaded.
+# Run it on main. Only committed work is released: if there are uncommitted changes (or new
+# untracked files under apps/, packages/, scripts/, docs/ or fixtures/), it lists them and asks
+# before releasing without them (--yes skips the question). It refuses a main that is behind
+# GitHub's (rebase onto origin/main first). The local checks are the ones that gate
+# publishing (public-checks: scripts/check.sh except the print check), run in a temporary
+# worktree of the commit being pushed, so the checkout itself isn't touched. Pushing needs
+# your SSH key loaded.
 set -euo pipefail
 
 skip_checks=false
 wait_for_ci=true
+assume_yes=false
 for arg in "$@"; do
   case "$arg" in
     --skip-checks) skip_checks=true ;;
     --no-wait) wait_for_ci=false ;;
-    -h | --help) sed -n '2,15p' "$0"; exit 0 ;;
+    --yes) assume_yes=true ;;
+    -h | --help) sed -n '2,18p' "$0"; exit 0 ;;
     *) echo "deploy: unknown option $arg (see --help)" >&2; exit 2 ;;
   esac
 done
@@ -40,9 +45,19 @@ die() { printf 'deploy: %s\n' "$*" >&2; exit 1; }
 
 # --- What would be released ------------------------------------------------------------
 [[ "$(git branch --show-current)" == main ]] || die "not on main (on '$(git branch --show-current)')"
-if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
-  git status --short --untracked-files=no >&2
-  die "uncommitted changes to tracked files; commit them first"
+# Uncommitted work is never released (the checks and the push use the commit), so make sure
+# that's intended. Untracked files count only in source directories: the checkout's root
+# holds personal, ignored-by-convention files.
+uncommitted=$(git status --porcelain --untracked-files=all -- . |
+  grep -E '^[^?]|^\?\? (apps|packages|scripts|docs|fixtures)/' || true)
+if [[ -n "$uncommitted" ]]; then
+  printf '\033[1;33mUncommitted work will NOT be released:\033[0m\n'
+  while IFS= read -r line; do printf '  %s\n' "$line"; done <<<"$uncommitted"
+  if ! $assume_yes; then
+    [[ -t 0 ]] || die "uncommitted work; commit it first, or pass --yes to release without it"
+    read -r -p "Release the last commit without it? [y/N] " answer
+    [[ "$answer" =~ ^[Yy]([Ee][Ss])?$ ]] || die "aborted; commit the changes and run it again"
+  fi
 fi
 
 say "Fetching GitHub main"
