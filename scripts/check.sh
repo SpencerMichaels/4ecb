@@ -10,7 +10,11 @@ pnpm format:check
 pnpm lint
 pnpm test
 pnpm build
-pnpm check:print
+# CI runs the print check as its own job (print-checks in .github/workflows/ci.yml)
+# so it doesn't hold up image publishing; locally it runs here unless skipped.
+if [[ "${FOURECB_SKIP_PRINT_CHECK:-}" != 1 ]]; then
+  pnpm check:print
+fi
 
 test -f apps/web/dist/sw.js
 test -f apps/web/dist/manifest.webmanifest

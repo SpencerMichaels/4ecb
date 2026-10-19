@@ -76,6 +76,9 @@ done — mirrors CI, uses only synthetic content):
 nix develop path:. --command bash scripts/check.sh
 ```
 
+CI splits it: `public-checks` runs it with `FOURECB_SKIP_PRINT_CHECK=1` (and gates
+image publishing), and a separate `print-checks` job runs `check:print`.
+
 This runs format:check, lint, test, build, check:print, PWA artifact checks,
 and a deterministic content-pack build/validate/diff/benchmark round-trip
 against `fixtures/content/synthetic.dnd40.xml`.

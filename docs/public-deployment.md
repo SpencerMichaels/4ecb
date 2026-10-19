@@ -70,7 +70,8 @@ nix develop path:. --command docker run --rm \
 ### Published image
 
 CI publishes the production image to `ghcr.io/spencermichaels/4ecb` after the
-public checks pass on every push to `main`, tagged with the full commit SHA
+public checks (everything but the separate print check) pass on every push to
+`main`, tagged with the full commit SHA
 (`sha-<sha>`) and `main`. It is built from the same Dockerfile and build context
 as above, so it holds no private content. Deployments should pin the image by
 digest and update deliberately; the product owner's homelab does this.

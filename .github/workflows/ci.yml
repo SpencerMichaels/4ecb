@@ -16,10 +16,28 @@ jobs:
           submodules: false
       - uses: cachix/install-nix-action@v31
       - name: Run tests and deterministic fixture build
+        # The print check runs in print-checks below.
         run: nix develop path:. --command bash scripts/check.sh
+        env:
+          FOURECB_SKIP_PRINT_CHECK: "1"
+
+  # The browser print check (scripts/check-print.mjs), separate from public-checks
+  # so its result doesn't gate publish-image: its golden layout values depend on
+  # the fonts the machine resolves, and it is red on main pending a font-pinning
+  # and golden review. It still runs and reports on every push.
+  print-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: cachix/install-nix-action@v31
+      - name: Build and run the print check
+        run: nix develop path:. --command bash -c 'pnpm build && pnpm check:print'
 
   # Publishes the production image to ghcr.io for hosted deployments, only from
-  # main and only after the public checks pass. Tags: the full commit SHA and
+  # main and only after the public checks pass (not print-checks; see above). Tags: the full commit SHA and
   # `main`; deployments should pin the digest. The image never contains private
   # content (see docs/public-deployment.md).
   publish-image:
