@@ -228,6 +228,56 @@ describe("builder issue groups", () => {
     expect(result.houseRules).toHaveLength(0);
   });
 
+  it("reports a redundant class-skill benefit as a house rule, not an error", () => {
+    const result = builderIssueGroups({
+      ...common,
+      evaluation: evaluation({
+        occurrences: [
+          {
+            id: "selected",
+            definitionId: "religion-class-skill",
+            acquiredLevel: 1,
+            kind: "choice",
+            legality: "rules-legal",
+          },
+        ],
+        choices: [
+          {
+            id: "choice-1",
+            level: 1,
+            providerOccurrenceId: "provider",
+            ruleOrdinal: 0,
+            index: 0,
+            type: "Background Choice",
+            optional: false,
+            selectedOccurrenceId: "selected",
+            candidates: [
+              {
+                definitionId: "religion-class-skill",
+                eligible: false,
+                sourceEntitled: true,
+                rulesLegal: false,
+                activeDefinition: true,
+                activeOccurrenceIds: ["selected"],
+                providerOccurrenceIds: ["provider"],
+                reasons: ["already-class-skill"],
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    expect(result.errors).toHaveLength(0);
+    expect(result.houseRules).toEqual([
+      expect.objectContaining({
+        key: "selected-redundant:choice-1:selected",
+        kind: "house-rule",
+        target: { kind: "choice", choiceId: "choice-1" },
+      }),
+    ]);
+  });
+
   it("uses the selected replacement target's candidates when checking eligibility", () => {
     const result = builderIssueGroups({
       ...common,

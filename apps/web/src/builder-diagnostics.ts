@@ -417,37 +417,54 @@ export function builderIssueGroups({
         : [],
     ),
   );
-  const selectedIneligibleIssues = evaluation.choices.flatMap((choice) => {
-    if (
-      choice.level > planningHorizon ||
-      choice.selectedOccurrenceId === undefined ||
-      houseRuleOccurrenceIds.has(choice.selectedOccurrenceId) ||
-      diagnosedErrorOccurrenceIds.has(choice.selectedOccurrenceId)
-    )
-      return [];
-    const candidate = selectedCandidateDecision(choice, evaluation);
-    if (candidate === undefined || candidate.eligible) return [];
-    const unverified =
-      candidate.reasons.length === 1 &&
-      candidate.reasons[0] === "prerequisite-unverified";
-    if (
-      unverified &&
-      diagnosedUnverifiedOccurrenceIds.has(choice.selectedOccurrenceId)
-    )
-      return [];
-    return [
-      {
-        key: `selected-ineligible:${choice.id}:${choice.selectedOccurrenceId}`,
-        kind: unverified ? ("warning" as const) : ("error" as const),
-        title: choiceLabel(choice, evaluation, byId),
-        detail: `This selection is not eligible: ${candidateReason(candidate.reasons)}.`,
-        effect: unverified
-          ? "The selection remains active, but its rules legality cannot be confirmed automatically."
-          : "The selection remains present, but the character is not rules-legal until its eligibility is resolved or the selection is changed.",
-        target: { kind: "choice" as const, choiceId: choice.id },
-      },
-    ];
-  });
+  const selectedIneligibleIssues = evaluation.choices.flatMap(
+    (choice): BuilderIssue[] => {
+      if (
+        choice.level > planningHorizon ||
+        choice.selectedOccurrenceId === undefined ||
+        houseRuleOccurrenceIds.has(choice.selectedOccurrenceId) ||
+        diagnosedErrorOccurrenceIds.has(choice.selectedOccurrenceId)
+      )
+        return [];
+      const candidate = selectedCandidateDecision(choice, evaluation);
+      if (candidate === undefined || candidate.eligible) return [];
+      const unverified =
+        candidate.reasons.length === 1 &&
+        candidate.reasons[0] === "prerequisite-unverified";
+      if (
+        unverified &&
+        diagnosedUnverifiedOccurrenceIds.has(choice.selectedOccurrenceId)
+      )
+        return [];
+      // A benefit that adds a class skill the class already has does nothing;
+      // offered only alongside illegal options, it counts as a house rule.
+      if (candidate.reasons.every((reason) => reason === "already-class-skill"))
+        return [
+          {
+            key: `selected-redundant:${choice.id}:${choice.selectedOccurrenceId}`,
+            kind: "house-rule" as const,
+            title: choiceLabel(choice, evaluation, byId),
+            detail:
+              "This skill is already a class skill, so this selection has no effect.",
+            effect:
+              "It remains active and is preserved on export, but the character is marked as using house rules.",
+            target: { kind: "choice" as const, choiceId: choice.id },
+          },
+        ];
+      return [
+        {
+          key: `selected-ineligible:${choice.id}:${choice.selectedOccurrenceId}`,
+          kind: unverified ? ("warning" as const) : ("error" as const),
+          title: choiceLabel(choice, evaluation, byId),
+          detail: `This selection is not eligible: ${candidateReason(candidate.reasons)}.`,
+          effect: unverified
+            ? "The selection remains active, but its rules legality cannot be confirmed automatically."
+            : "The selection remains present, but the character is not rules-legal until its eligibility is resolved or the selection is changed.",
+          target: { kind: "choice" as const, choiceId: choice.id },
+        },
+      ];
+    },
+  );
 
   return {
     unresolved: deduplicate(unresolved),
@@ -459,6 +476,11 @@ export function builderIssueGroups({
       ...diagnosticIssues.filter((issue) => issue.kind === "error"),
       ...selectedIneligibleIssues.filter((issue) => issue.kind === "error"),
     ]),
-    houseRules: deduplicate(houseRules),
+    houseRules: deduplicate([
+      ...houseRules,
+      ...selectedIneligibleIssues.filter(
+        (issue) => issue.kind === "house-rule",
+      ),
+    ]),
   };
 }
