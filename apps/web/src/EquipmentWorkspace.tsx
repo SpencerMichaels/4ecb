@@ -824,7 +824,7 @@ function FundsPane({
                 consolidate();
               }}
             >
-              <Icon name={consolidateArmed ? "check" : "consolidate"} />
+              <Icon name={consolidateArmed ? "warning" : "consolidate"} />
             </button>
           </dd>
         </div>

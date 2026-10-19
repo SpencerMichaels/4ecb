@@ -101,7 +101,7 @@
   outline: none;
 }
 /* Click-to-arm, click-again-to-confirm, like moving a character to trash:
-   armed, it fills gold and shows a check. */
+   armed, it fills gold and shows the same warning sign. */
 .funds-pane-actions .funds-consolidate[data-armed="true"] {
   background: var(--funds-focus);
   color: var(--surface);
