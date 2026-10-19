@@ -346,15 +346,16 @@
 }
 
 .action-type-icon {
-  font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
   font-size: 1rem;
-  font-weight: 700;
   line-height: 1;
 }
-.action-type-icon > span {
-  display: block;
-  /* Symbol glyphs sit above the optical center of their font's line box. */
-  transform: translateY(0.14em);
+/* Standard action: the free-action circle, filled (● beside ○). */
+.action-type-icon.is-standard-action .icon {
+  fill: currentColor;
+}
+/* Minor action: the pie with its slice filled, like ◔. */
+.action-type-icon .lucide-chart-pie path:first-child {
+  fill: currentColor;
 }
 .entity-card-heading-main .action-type-icon {
   align-self: center;

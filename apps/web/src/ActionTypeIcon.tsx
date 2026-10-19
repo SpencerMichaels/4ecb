@@ -1,5 +1,20 @@
-import { powerActionSymbol } from "./visual-language";
-import { Icon } from "./Icon";
+import { powerActionSymbol, type PowerActionSymbol } from "./visual-language";
+import { Icon, type IconName } from "./Icon";
+
+/**
+ * Lucide icons for the action symbols. As text glyphs (● ◔ ≫ ○) they took
+ * their size from whichever symbol font a computer had, so printed cards
+ * differed between browsers. Standard is the free circle, filled by CSS.
+ */
+const SYMBOL_ICONS: Readonly<Record<PowerActionSymbol, IconName>> = {
+  "●": "circle",
+  "◔": "action-minor",
+  "≫": "chevron",
+  "○": "circle",
+  "↻": "action-reaction",
+  "↯": "trending-up",
+  "–": "action-none",
+};
 
 export function ActionTypeIcon({
   decorative = false,
@@ -10,10 +25,11 @@ export function ActionTypeIcon({
 }) {
   const label = value?.trim();
   if (!label) return null;
+  const symbol = powerActionSymbol(value);
 
   return (
     <span
-      className="selection-metadata-icon action-type-icon"
+      className={`selection-metadata-icon action-type-icon${symbol === "●" ? " is-standard-action" : ""}`}
       aria-hidden={decorative ? "true" : undefined}
       aria-label={decorative ? undefined : label}
       title={label}
@@ -27,7 +43,7 @@ export function ActionTypeIcon({
       ) : /\breaction\b/i.test(label) ? (
         <Icon name="action-reaction" />
       ) : (
-        <span aria-hidden="true">{powerActionSymbol(value)}</span>
+        <Icon name={SYMBOL_ICONS[symbol]} />
       )}
     </span>
   );

@@ -45,16 +45,42 @@ describe("ActionTypeIcon", () => {
     const free = renderToStaticMarkup(
       createElement(ActionTypeIcon, { value: "Free Action" }),
     );
-    expect(free).toContain(`<span aria-hidden="true">○</span>`);
+    expect(free).toContain("lucide-circle");
     expect(free).toContain('aria-label="Free Action"');
 
     const none = renderToStaticMarkup(
       createElement(ActionTypeIcon, { value: "No Action" }),
     );
     expect(none).toContain("lucide-minus");
-    expect(none).not.toContain("○");
+    expect(none).not.toContain("lucide-circle");
     expect(none).toContain('aria-label="No Action"');
     expect(none).toContain('title="No Action"');
+  });
+
+  it("draws the action symbols with Lucide icons rather than font glyphs", () => {
+    for (const [value, icon] of [
+      ["Standard Action", "lucide-circle"],
+      ["Minor Action", "lucide-chart-pie"],
+      ["Move Action", "lucide-chevron-right"],
+      ["Free Action", "lucide-circle"],
+    ] as const) {
+      const markup = renderToStaticMarkup(
+        createElement(ActionTypeIcon, { value }),
+      );
+      expect(markup).toContain(icon);
+      expect(markup).not.toMatch(/[●◔≫○]/u);
+    }
+    // Standard is the free circle, filled by CSS.
+    expect(
+      renderToStaticMarkup(
+        createElement(ActionTypeIcon, { value: "Standard Action" }),
+      ),
+    ).toContain("is-standard-action");
+    expect(
+      renderToStaticMarkup(
+        createElement(ActionTypeIcon, { value: "Free Action" }),
+      ),
+    ).not.toContain("is-standard-action");
   });
 
   it("can render decoratively while retaining its hover title", () => {
@@ -68,6 +94,6 @@ describe("ActionTypeIcon", () => {
     expect(markup).toContain('aria-hidden="true"');
     expect(markup).toContain('title="Standard Action"');
     expect(markup).not.toContain("aria-label");
-    expect(markup).toContain("●");
+    expect(markup).toContain("is-standard-action");
   });
 });

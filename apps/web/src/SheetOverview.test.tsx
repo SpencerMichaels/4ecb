@@ -1329,7 +1329,7 @@ describe("real-data sheet overview", () => {
         paper="letter"
       />,
     );
-    expect(html).toContain('class="selection-metadata-icon action-type-icon"');
+    expect(html).toContain('class="selection-metadata-icon action-type-icon');
     expect(html).not.toContain(">Action</th>");
   });
   it("shrinks identity names to a readable minimum before leaving overflow to ellipsis", () => {

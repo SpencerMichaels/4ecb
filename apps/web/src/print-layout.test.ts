@@ -404,9 +404,8 @@ describe("print layout contract", () => {
     expect(styles).not.toMatch(/\n\.usage-(?:encounter|daily) > header/);
     expect(sheetSource).not.toContain("print-card-used");
     expect(styles).not.toContain(".print-card-used");
-    expect(styles).toMatch(
-      /\.action-type-icon > span\s*\{[^}]*transform:\s*translateY\(0\.14em\)/,
-    );
+    // Action symbols are SVG, so no symbol font sizes them differently per OS.
+    expect(styles).not.toContain("Noto Sans Symbols");
     expect(styles).toMatch(
       /\.print-reference-card\s*\{[\s\S]*?--print-card-section-gap:\s*0\.025in/,
     );
