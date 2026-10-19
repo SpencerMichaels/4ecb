@@ -55,6 +55,11 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Routing lives in the hash, so "/" is the app's only document URL. Serve
+        // the cached app for that alone; any other path (e.g. a hosting proxy's
+        // /enter/<invite> link, which sets a cookie and redirects to "/") must reach
+        // the server, or the app would boot at that path and keep it in the URL.
+        navigateFallbackAllowlist: [/^\/$/],
         globPatterns: ["**/*.{css,html,js,json,svg}"],
         globIgnores: ["runtime-config.json"],
         runtimeCaching: [
