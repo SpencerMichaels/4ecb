@@ -2,13 +2,13 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { appStyles } from "./test-styles";
+
 const candidateDetail = readFileSync(
   new URL("./CandidateDetail.tsx", import.meta.url),
   "utf8",
 );
-const styles = ["./styles/primitives.css", "./styles.css"]
-  .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
-  .join("\\n");
+const styles = appStyles;
 
 describe("empty option details card", () => {
   it("uses one neutral card header and the click-to-inspect guidance", () => {

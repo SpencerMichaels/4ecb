@@ -1,0 +1,692 @@
+/* Skill training, ability increases, powers, tones, candidate detail cards. */
+
+.retraining-actions {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.retraining-actions .progressive-choice-button {
+  margin-top: 0;
+}
+
+.optional-choice-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: flex-end;
+}
+
+.remove-optional-choice {
+  align-items: center;
+  background: transparent;
+  color: var(--muted);
+  display: inline-flex;
+  font-size: 0.8rem;
+  gap: 0.35rem;
+  margin-top: 0.6rem;
+}
+
+.icon-only-button {
+  height: 2rem;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  width: 2rem;
+}
+
+.visually-hidden {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.level-choice-section > header .remove-optional-choice {
+  margin-top: 0;
+}
+
+.skill-training-layout {
+  align-items: start;
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(16rem, 0.65fr) minmax(20rem, 1fr);
+}
+
+.skill-training-controls {
+  display: grid;
+  gap: 1rem;
+}
+
+.skill-scope + .skill-scope {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.skill-scope > header {
+  align-items: baseline;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-bottom: 0.55rem;
+}
+
+.skill-scope > header h5 {
+  margin: 0;
+}
+
+.skill-scope > header span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.skill-toggle-list {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.skill-toggle-list button {
+  align-items: start;
+  background: var(--surface-subtle);
+  border-color: var(--border);
+  color: var(--text);
+  display: grid;
+  gap: 0.15rem;
+  min-height: 3.25rem;
+  text-align: left;
+}
+
+.skill-toggle-status {
+  color: var(--muted);
+  display: -webkit-box;
+  font-size: 0.72rem;
+  font-weight: 700;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1rem;
+  min-height: 2rem;
+  overflow: hidden;
+}
+
+.skill-toggle-list button.skill-trained {
+  background: var(--selected-soft);
+  border-color: var(--selected);
+  box-shadow: inset 4px 0 var(--selected);
+}
+
+.skill-toggle-list button.skill-trained .skill-toggle-status {
+  color: var(--selected);
+}
+
+.ability-choice-count {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.level-choice-section.ability-increase-section > header {
+  margin: -1rem -1rem 1rem;
+  padding: 0.75rem 1rem;
+}
+
+.legacy-choice-list > .level-choice-section.ability-increase-section > header {
+  margin: -0.75rem -0.8rem 0.7rem;
+  padding: 0.65rem 0.8rem;
+}
+
+.ability-increase-grid {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ability-increase-grid button {
+  align-items: center;
+  background: var(--surface-subtle);
+  border-color: var(--border);
+  color: var(--text);
+  display: flex;
+  justify-content: space-between;
+  min-height: 3rem;
+}
+
+.ability-increase-grid button.ability-selected {
+  background: var(--selected-soft);
+  border-color: var(--selected);
+  box-shadow: inset 4px 0 var(--selected);
+}
+
+.ability-option-score {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.ability-increase-grid button.ability-selected .ability-option-score {
+  color: var(--text);
+}
+
+.ability-increase-section .field-help {
+  margin-top: 0.65rem;
+}
+
+.attention-badge,
+.complete-badge {
+  align-items: center;
+  border-left: 3px solid currentColor;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  white-space: nowrap;
+}
+
+.attention-badge {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.complete-badge {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.choice-editor-fields {
+  display: grid;
+  gap: 1rem;
+  max-width: 58rem;
+}
+
+.choice-selection-layout {
+  align-items: start;
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(15rem, 0.6fr) minmax(20rem, 1fr);
+}
+
+.choice-selection-layout.choice-selection-compact {
+  grid-template-columns: minmax(0, 32rem);
+}
+
+.choice-editor-fields > label:not(.show-all-control) {
+  display: grid;
+  font-size: 0.85rem;
+  font-weight: 800;
+  gap: 0.35rem;
+}
+
+.choice-editor-fields select {
+  min-height: 3rem;
+  width: 100%;
+}
+
+.show-all-control {
+  align-items: center;
+  display: flex;
+  font-weight: 700;
+  gap: 0.5rem;
+}
+
+.show-all-control input {
+  block-size: 1.1rem;
+  inline-size: 1.1rem;
+}
+
+.candidate-detail {
+  --entity-card-flavor-padding: 0.8rem 1rem;
+  --entity-card-header-margin-bottom: 0.85rem;
+  --entity-card-divider: color-mix(in srgb, var(--border) 52%, transparent);
+
+  background: var(--parchment);
+  border-block-end: var(--detail-card-header-border-inline);
+  border-block-start: var(--detail-card-header-border-block-start-width) solid
+    var(--tone);
+  border-inline: var(--detail-card-header-border-inline);
+  border-radius: 0;
+  padding: 1rem;
+}
+
+.candidate-detail-stack {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.theme-power-cards {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.theme-candidate-description p {
+  margin-bottom: 0.65rem;
+}
+
+.theme-description-toggle {
+  background: transparent;
+  border: 0;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.15rem 0;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.candidate-relationship {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 0;
+  margin-top: 0.25rem !important;
+  text-transform: uppercase;
+}
+
+.tone-neutral {
+  --tone: var(--tone-neutral);
+  --tone-contrast: #fff;
+  --tone-soft: var(--surface-subtle);
+}
+
+.tone-at-will {
+  --tone: var(--power-at-will);
+  --tone-contrast: #fff;
+  --tone-soft: var(--power-at-will-soft);
+}
+
+.tone-encounter {
+  --tone: var(--power-encounter);
+  --tone-contrast: #fff;
+  --tone-soft: var(--power-encounter-soft);
+}
+
+.tone-daily {
+  --tone: var(--power-daily);
+  --tone-contrast: #17212b;
+  --tone-soft: var(--power-daily-soft);
+}
+
+.tone-utility {
+  --tone: var(--power-utility);
+  --tone-contrast: #fff;
+  --tone-soft: var(--power-utility-soft);
+}
+
+.tone-feature {
+  --tone: var(--power-feature);
+  --tone-contrast: #fff;
+  --tone-soft: var(--power-feature-soft);
+}
+
+.tone-item {
+  --tone: var(--power-item);
+  --tone-contrast: #251506;
+  --tone-soft: var(--power-item-soft);
+}
+
+.candidate-detail[class*="tone-"] {
+  border-block-start: var(--detail-card-header-border-block-start-width) solid
+    var(--tone);
+}
+
+.candidate-detail[class*="tone-"] > header {
+  background: var(--tone-soft);
+  border-block-end: var(--detail-card-header-border-block-end-width) solid
+    var(--tone);
+  color: var(--text);
+  margin: -1rem -1rem var(--entity-card-header-margin-bottom);
+  padding: var(--detail-card-header-padding);
+}
+
+.entity-kind {
+  align-items: center;
+  color: inherit;
+  display: flex;
+  font-family: var(--font-ui);
+  font-size: 1.07rem;
+  font-weight: 700;
+  gap: 0.35rem;
+  letter-spacing: normal;
+  line-height: var(--detail-card-header-line-height);
+  margin-bottom: 0;
+  min-width: 0;
+  text-transform: none;
+}
+
+:root[data-theme="dark"] .tone-at-will {
+  --tone: #63c37a;
+  --tone-contrast: #111727;
+}
+:root[data-theme="dark"] .tone-encounter {
+  --tone: #f07474;
+  --tone-contrast: #111727;
+}
+:root[data-theme="dark"] .tone-daily {
+  --tone: #b8bec7;
+  --tone-contrast: #111727;
+}
+:root[data-theme="dark"] .tone-utility {
+  --tone: #829bff;
+}
+:root[data-theme="dark"] .tone-feature {
+  --tone: #b48ad6;
+  --tone-contrast: #111727;
+}
+:root[data-theme="dark"] .tone-item {
+  --tone: #f2a73b;
+  --tone-contrast: #111727;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .tone-at-will {
+    --tone: #63c37a;
+    --tone-contrast: #111727;
+  }
+  :root:not([data-theme]) .tone-encounter {
+    --tone: #f07474;
+    --tone-contrast: #111727;
+  }
+  :root:not([data-theme]) .tone-daily {
+    --tone: #b8bec7;
+    --tone-contrast: #111727;
+  }
+  :root:not([data-theme]) .tone-utility {
+    --tone: #829bff;
+  }
+  :root:not([data-theme]) .tone-feature {
+    --tone: #b48ad6;
+    --tone-contrast: #111727;
+  }
+  :root:not([data-theme]) .tone-item {
+    --tone: #f2a73b;
+    --tone-contrast: #111727;
+  }
+}
+
+.candidate-detail:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.candidate-detail > header {
+  align-items: start;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-bottom: var(--entity-card-header-margin-bottom);
+  padding-bottom: 0.75rem;
+}
+
+.candidate-detail > header.primary-detail-heading {
+  display: block;
+}
+
+/* Flavor text supplies its own top padding; without this the header's own
+   bottom margin stacked on top of it, doubling the visible gap. */
+.candidate-detail > header.primary-detail-heading:has(+ .candidate-flavor) {
+  --entity-card-header-margin-bottom: 0;
+}
+
+.primary-detail-subheading {
+  align-items: start;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-top: 0.35rem;
+}
+
+.candidate-detail h4,
+.candidate-detail h5,
+.candidate-detail p,
+.candidate-detail dl {
+  margin-top: 0;
+}
+
+.candidate-detail h4 {
+  font-family: var(--font-ui);
+  font-size: 1.07rem;
+  line-height: var(--detail-card-header-line-height);
+  margin-bottom: 0;
+}
+
+.candidate-detail h5 {
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+}
+
+.candidate-detail section + section {
+  border-top: 1px solid var(--border);
+  padding-top: 0.85rem;
+}
+
+/* Race, class and background cards (StructuredEntityBody): rules first — a
+   lede, a compact stat grid, traits or features listed in the card — then
+   the lore, all on one scroll. */
+.structured-entity-body {
+  align-content: start;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.structured-entity-body > p {
+  margin: 0;
+}
+
+/* After the flavor band, the same divider as between card sections (e.g.
+   above "About …") instead of the band's own bottom margin and padding. */
+.reference-card-body .structured-entity-body > .candidate-flavor {
+  margin-bottom: 0 !important;
+  padding-bottom: 0;
+}
+
+.structured-entity-body > .candidate-flavor + * {
+  border-top: 1px solid var(--border);
+  padding-top: 0.85rem;
+}
+
+.entity-card-context {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.entity-card-lede {
+  font-weight: 600;
+}
+
+.entity-card-summary {
+  font-weight: 800;
+}
+
+.entity-stat-grid {
+  align-items: baseline;
+  display: grid;
+  gap: 0.3rem 0.75rem;
+  grid-template-columns: max-content minmax(0, 1fr);
+  margin: 0;
+}
+
+.entity-stat-grid > div {
+  display: contents;
+}
+
+.entity-stat-grid dt {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.entity-stat-grid dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.entity-trait-list {
+  display: grid;
+  gap: 0.55rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.entity-trait-list strong {
+  display: block;
+}
+
+.entity-trait-list p {
+  margin: 0;
+}
+
+.entity-lore-field h6 {
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin: 0.6rem 0 0.15rem;
+}
+
+.entity-benefit {
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  padding: 0.55rem 0.7rem;
+}
+
+.entity-benefit p {
+  margin: 0;
+}
+
+.candidate-unavailable {
+  background: var(--warning-soft);
+  border-left: 3px solid currentColor;
+  color: var(--warning);
+  flex: 0 0 auto;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.25rem 0.5rem;
+}
+
+.candidate-reason {
+  background: var(--warning-soft);
+  border-left: 3px solid var(--warning);
+  padding: 0.55rem 0.7rem;
+}
+
+.candidate-facts,
+.candidate-fields {
+  display: grid;
+  gap: 0.55rem 0.8rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.power-value-abbreviation {
+  cursor: help;
+  text-decoration: underline dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.candidate-facts > div,
+.candidate-fields > div {
+  min-width: 0;
+}
+
+.candidate-facts dt,
+.candidate-fields dt {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.candidate-facts dd,
+.candidate-fields dd {
+  margin: 0.15rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.candidate-flavor {
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-style: italic;
+  line-height: 1.4;
+  margin: 0 -1rem !important;
+  padding: var(--entity-card-flavor-padding);
+}
+
+.candidate-detail-empty {
+  color: var(--muted);
+  min-height: 10rem;
+}
+
+.candidate-detail-empty > p {
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+.choice-empty-state {
+  color: var(--muted);
+  margin: 4rem auto;
+  max-width: 30rem;
+  text-align: center;
+}
+
+.choice-empty-state > .icon {
+  block-size: 2.5rem;
+  color: var(--success);
+  inline-size: 2.5rem;
+}
+
+.standalone-workspace-pane > header {
+  background: var(--legacy-neutral);
+  border-bottom: 1px solid var(--border);
+  padding: 0.7rem 0.9rem;
+}
+
+.standalone-workspace-pane > header h3 {
+  margin: 0;
+}
+
+.standalone-workspace-content {
+  padding: 0.9rem;
+}
+
+.equipment-pane table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.equipment-pane th,
+.equipment-pane td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.55rem;
+  text-align: left;
+}
+
+.equipment-pane input {
+  width: 5rem;
+}
+
+.equipment-workspace {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) var(--panel-card-width);
+}
+
+.equipment-primary {
+  --equipment-mode-block-size: max(44rem, calc(200vh - 46rem));
+
+  min-width: 0;
+}

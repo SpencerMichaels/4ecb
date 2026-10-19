@@ -1,0 +1,90 @@
+/* Print pages (@page) and print-only rules. */
+
+@page {
+  size: letter;
+  margin: 0.35in;
+}
+@page a4sheet {
+  size: A4;
+  margin: 9mm;
+}
+
+@media print {
+  body {
+    background: #fff;
+    min-width: 0;
+  }
+  .pwa-status,
+  .screen-sheet-view,
+  .print-preview-toolbar,
+  .sheet-toolbar,
+  .cache-warning,
+  .sheet-page > .status,
+  .skip-link {
+    display: none !important;
+  }
+  .print-only {
+    display: block;
+  }
+  .print-excluded {
+    display: none !important;
+  }
+  .sheet-page {
+    padding: 0;
+  }
+  .print-page,
+  .sheet-page.is-print-preview .print-page {
+    border: 0;
+    box-shadow: none;
+    color: #111;
+    height: 10.3in;
+    margin: 0;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0;
+    width: 7.8in;
+  }
+  .print-page {
+    break-after: page;
+    break-inside: avoid;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .print-page:last-child {
+    break-after: auto;
+  }
+  .paper-a4 {
+    page: a4sheet;
+  }
+  .paper-a4 .print-page,
+  .sheet-page.paper-a4.is-print-preview .print-page {
+    height: 279mm;
+    page: a4sheet;
+    width: 192mm;
+  }
+  .paper-a4 .print-card-grid {
+    gap: 1mm;
+    grid-template-columns: repeat(3, 63mm);
+    grid-template-rows: repeat(3, 86.8mm);
+  }
+  .paper-a4 .print-reference-card {
+    height: 86.8mm;
+    width: 63mm;
+  }
+  /* Use the same full-sheet named pages as the overview. Footers sit in the
+     existing bottom margin; fixed, sleeve-sized card dimensions never shrink. */
+  .sheet-page.paper-letter .print-card-page,
+  .sheet-page.paper-letter.is-print-preview .print-card-page {
+    page: sp-letter;
+    width: 8.5in;
+    height: 11in;
+    padding: 0.3in 0.35in 0.35in;
+  }
+  .sheet-page.paper-a4 .print-card-page,
+  .sheet-page.paper-a4.is-print-preview .print-card-page {
+    page: sp-a4;
+    width: 210mm;
+    height: 297mm;
+    padding: 9mm;
+  }
+}

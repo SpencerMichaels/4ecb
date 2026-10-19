@@ -1,0 +1,233 @@
+/* Builder panels, ability and race pickers, diagnostics, timeline. */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 1rem;
+}
+.panel > h3 {
+  margin-top: 0;
+}
+.field-help {
+  color: var(--muted, #5d554a);
+  font-size: 0.9rem;
+  margin: 0;
+}
+.ability-editor {
+  display: grid;
+  gap: 0.65rem 0.9rem;
+  grid-template-columns: max-content auto max-content max-content minmax(0, 1fr);
+}
+.ability-editor label {
+  display: grid;
+  gap: 0.2rem;
+}
+.ability-point-buy-row {
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  display: grid;
+  grid-column: 1 / 5;
+  grid-template-columns: subgrid;
+  padding: 0.55rem 0.65rem;
+}
+.ability-point-buy-row .ability-name {
+  font-weight: 700;
+}
+.ability-point-buy-header {
+  border-color: transparent;
+  padding-block: 0 0.15rem;
+}
+.ability-race,
+.ability-total {
+  align-items: center;
+  display: grid;
+  grid-row: 1;
+  justify-items: center;
+  text-align: center;
+}
+.ability-race {
+  grid-column: 3;
+}
+.ability-total {
+  font-size: 1.05rem;
+  font-weight: 700;
+  grid-column: 4;
+}
+.ability-column-label {
+  color: var(--muted, #5d554a);
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.ability-base {
+  grid-column: 2;
+  justify-self: center;
+}
+.ability-stepper {
+  align-items: center;
+  display: grid;
+  grid-column: 2;
+  grid-row: 1;
+  grid-template-columns: 2.25rem 3.5rem 2.25rem;
+}
+.ability-stepper button {
+  border-radius: 0;
+  min-height: 2.5rem;
+  padding: 0;
+}
+.ability-stepper button:first-child {
+  border-radius: 2px 0 0 2px;
+}
+.ability-stepper button:last-child {
+  border-radius: 0 2px 2px 0;
+}
+.ability-stepper input {
+  -moz-appearance: textfield;
+  appearance: textfield;
+  border-left: 0;
+  border-radius: 0;
+  border-right: 0;
+  min-height: 2.5rem;
+  min-width: 0;
+  padding-inline: 0.25rem;
+  text-align: center;
+  width: 100%;
+}
+.ability-stepper input::-webkit-inner-spin-button,
+.ability-stepper input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+.ability-point-buy-footer {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-top: 0.7rem;
+}
+.ability-point-buy-footer p {
+  color: var(--muted, #5d554a);
+  font-size: 0.82rem;
+  margin: 0;
+  max-width: 38rem;
+}
+.ability-point-buy-footer button {
+  flex: none;
+}
+.diagnostic-list {
+  display: grid;
+  gap: 0.6rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.diagnostic-list li {
+  align-items: start;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: 0.8rem 0.9rem;
+}
+.diagnostic-list p {
+  margin: 0.25rem 0 0;
+}
+.diagnostic-list .diagnostic-effect {
+  color: var(--muted);
+}
+.diagnostic-list button {
+  flex: 0 0 auto;
+}
+.diagnostics-workspace,
+.diagnostic-group {
+  display: grid;
+  gap: 0.75rem;
+}
+.diagnostics-workspace {
+  gap: 1.25rem;
+}
+.diagnostic-group > header h4,
+.diagnostic-group > header p {
+  margin: 0;
+}
+.diagnostic-group > header h4 {
+  align-items: baseline;
+  display: flex;
+  gap: 0.4rem;
+}
+.diagnostic-group > header h4 span {
+  color: var(--muted);
+  font-size: inherit;
+}
+.diagnostic-group > header p {
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+.inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.timeline-level-button {
+  align-items: center;
+  display: flex;
+}
+
+/* The character sidebar is shared by every builder tab: identity on top,
+   then the Play-data card's stat arrangement, then the level picker. */
+.builder-layout {
+  --builder-sidebar-width: 17rem;
+  align-items: start;
+  display: grid;
+  gap: var(--builder-gap, 1rem);
+  grid-template-columns: var(--builder-sidebar-width) minmax(0, 1fr);
+}
+
+.builder-main {
+  min-width: 0;
+}
+
+/* Identity sits on the page above the box; the box starts at the stats. */
+.builder-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: sticky;
+  top: 1rem;
+}
+
+/* The stat groups stand on their own, colored like the printed Play card. */
+.builder-sidebar-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Which build is running, for bug reports. */
+.build-version {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+  text-align: center;
+}
+
+/* Wallet highlights use a brighter, yellower version of the wealth group gold
+   (stat-tone-wealth #7a5a12) rather than the app focus blue. */
+.funds-pane {
+  --funds-focus: #c9971c;
+}
+:root[data-theme="dark"] .funds-pane {
+  --funds-focus: #e6bd4f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .funds-pane {
+    --funds-focus: #e6bd4f;
+  }
+}

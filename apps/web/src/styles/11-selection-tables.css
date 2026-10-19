@@ -1,0 +1,482 @@
+/* Candidate selection tables. */
+
+.selection-table-scroll thead th:first-child,
+.selection-table-scroll tbody td:first-child {
+  width: 1%;
+}
+
+.selection-table-scroll .selection-type-row .table-section-count {
+  margin: 0 0 0 auto;
+}
+
+/* Short headers (Lvl, Atk, Def) are <abbr>s; the full name is in their
+   tooltip and sort label, so no dotted underline. */
+.selection-table-scroll th abbr {
+  cursor: inherit;
+  text-decoration: none;
+}
+
+/* Level, type, attack ability and defense shrink to their contents (the
+   action is the row icon). The fixed-size codes (Lvl, Atk, Def) are
+   left-aligned so they sit right after the previous column instead of
+   floating in a header-wide cell, and stay on one line; two-word types
+   ("Close burst") wrap a word per line to keep the column narrow. */
+.candidate-selection-power :is(th, td):nth-child(n + 2):nth-child(-n + 5) {
+  text-align: left;
+}
+
+.candidate-selection-power th:nth-child(n + 2):nth-child(-n + 5) {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.candidate-selection-power td:is(:nth-child(2), :nth-child(4), :nth-child(5)) {
+  white-space: nowrap;
+}
+
+.candidate-selection-power
+  :is(th, td):is(:nth-child(2), :nth-child(4), :nth-child(5)) {
+  padding-inline: 0.4rem;
+}
+
+.candidate-selection-deity .selection-table-scroll th:first-child,
+.candidate-selection-deity .selection-table-scroll td:first-child,
+.candidate-selection-deity .selection-table-scroll th:nth-child(2),
+.candidate-selection-deity .selection-table-scroll td:nth-child(2) {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.candidate-selection-class .selection-table-scroll th:nth-child(2),
+.candidate-selection-class .selection-table-scroll td:nth-child(2),
+.candidate-selection-class .selection-table-scroll th:nth-child(3),
+.candidate-selection-class .selection-table-scroll td:nth-child(3),
+.candidate-selection-background .selection-table-scroll th:nth-child(2),
+.candidate-selection-background .selection-table-scroll td:nth-child(2) {
+  width: 1%;
+}
+
+.selection-table-scroll tr:last-child td {
+  border-bottom: 0;
+}
+
+.selection-table-scroll tbody tr {
+  --tone: var(--accent);
+  background: var(--surface);
+}
+
+.selection-table-scroll tbody tr:nth-child(even) {
+  background: var(--surface-subtle);
+}
+
+/* Favorites (starred on their card) carry a gold tint; a selected row's
+   color still wins below. */
+.selection-table-scroll tbody tr.selection-row-favorite {
+  background: color-mix(in srgb, var(--power-item) 14%, var(--surface));
+}
+
+/* Selected rows take the blue accent tint the choice cards and the Shop's
+   selected rows use; green would read as an at-will power. Power tables
+   tint by the power's own usage color instead (below). */
+.selection-table-scroll tbody tr.selection-row-selected {
+  background: var(--selected-soft);
+}
+
+/* ...and its leading tone bar (4px on every row, below) widens, so a
+   selection stands out from the stripes at a glance. */
+.candidate-selection-table:not(.candidate-selection-power)
+  .selection-table-scroll
+  tbody
+  tr.selection-row-selected
+  > td:first-child {
+  box-shadow: inset 6px 0 var(--selected);
+}
+
+.candidate-selection-power
+  .selection-table-scroll
+  tbody
+  tr.selection-row-selected {
+  background: var(--tone-soft);
+}
+
+/* A selected row scrolled out of view hangs at the top or bottom edge of the
+   table; offsets stack several selections (see pinSelectedRows).
+   Rows past the pinned-stack budget (data-unpinned) scroll normally, as do
+   all rows of a table with a selected-only toggle instead. */
+.candidate-selection-table:not(.candidate-selection-unpinned)
+  .selection-table-scroll
+  tbody
+  tr.selection-row-selected:not(.selection-family-row):not([data-unpinned])
+  > td {
+  background: inherit;
+  bottom: var(--selection-sticky-bottom, 0);
+  position: sticky;
+  top: var(--selection-sticky-top, var(--selection-table-header-height));
+  z-index: 1;
+}
+
+.selection-table-scroll tbody tr.selection-row-unavailable {
+  color: var(--muted);
+}
+
+/* The row's tone bar is an inset shadow, not a left border: a 4px border
+   would meet the 1px row divider in a mitered corner that slants over the
+   bar. The extra padding keeps text clear of it. */
+.selection-table-scroll td:first-child {
+  box-shadow: inset 4px 0 var(--tone);
+  padding-inline-start: calc(0.55rem + 4px);
+}
+
+.selection-table-name {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.38rem;
+}
+
+.selection-table-scroll td button {
+  align-items: flex-start;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  display: flex;
+  font-weight: 700;
+  gap: 0.3rem;
+  padding: 0;
+  text-align: left;
+}
+
+/* The row tint is the hover cue, so a hovered name gets no underline of its
+   own (the app-wide button hover shadow is cancelled too); keyboard focus
+   still underlines it. */
+.selection-table-scroll td button:hover:not(:disabled) {
+  box-shadow: none;
+}
+
+.selection-table-scroll td button:focus-visible {
+  box-shadow: none;
+  color: var(--accent-strong);
+  text-decoration: underline;
+}
+
+/* Whole rows are click targets: hovering tints the row (over its own
+   background, whether plain, favorite or selected: the :not() outranks the
+   selected rows' background reset). */
+.selection-table-scroll tbody tr.selection-candidate-row {
+  cursor: pointer;
+}
+
+.selection-table-scroll
+  tbody
+  tr.selection-candidate-row:hover:not(.selection-family-row)
+  > td {
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--accent) 18%, transparent),
+    color-mix(in srgb, var(--accent) 18%, transparent)
+  );
+}
+
+/* Each row leads with its card's title icon (action type for powers). */
+.selection-table-scroll td .selection-row-icon {
+  align-items: center;
+  color: var(--muted);
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.selection-table-scroll td .selection-row-icon .icon {
+  height: 0.95rem;
+  width: 0.95rem;
+}
+
+.selection-table-scroll td .selection-candidate-toggle {
+  flex: 1 1 auto;
+}
+
+.selection-favorites-filter {
+  align-items: center;
+  display: inline-flex;
+}
+
+.selection-favorites-filter .icon {
+  height: 0.95rem;
+  width: 0.95rem;
+}
+
+.selection-favorites-filter[aria-pressed="true"] {
+  background: var(--power-item-soft);
+  border-color: var(--power-item);
+  color: var(--text);
+}
+
+.selection-favorites-filter[aria-pressed="true"] .icon {
+  fill: currentColor;
+}
+
+/* The filters toggle opens a row of labelled selects under the toolbar
+   (like the shop's Filters); a badge counts the active ones. */
+.selection-filters-toggle {
+  position: relative;
+}
+
+.selection-filters-count {
+  background: var(--accent);
+  border-radius: 2px;
+  color: var(--surface);
+  font-size: 0.62rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  inset-block-start: -0.35rem;
+  inset-inline-end: -0.35rem;
+  line-height: 1;
+  min-inline-size: 1rem;
+  padding: 0.15rem 0.25rem;
+  position: absolute;
+  text-align: center;
+}
+
+/* All the power filters share one row: each starts at its content width (the
+   ability and defense options are abbreviated) and shrinks evenly to fit. */
+.selection-table-filters {
+  align-items: end;
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.selection-table-filters > :is(label, .selection-filter-range) {
+  flex: 1 1 auto;
+}
+
+/* Number inputs report a ~20-character default width; levels need two digits. */
+.selection-table-filters > .selection-filter-range {
+  flex: 0 1 7rem;
+}
+
+.selection-table-filters label {
+  color: var(--muted);
+  display: grid;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  gap: 0.25rem;
+  letter-spacing: 0.05em;
+  min-width: 0;
+  text-transform: uppercase;
+}
+
+.selection-table-filters select {
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+/* A numeric range (Level): min and max fields side by side, labelled like
+   the dropdowns. */
+.selection-filter-range {
+  border: 0;
+  display: grid;
+  gap: 0.25rem 0.35rem;
+  grid-template-columns: 1fr 1fr;
+  margin: 0;
+  min-inline-size: 0;
+  padding: 0;
+}
+
+.selection-filter-range legend {
+  color: var(--muted);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  grid-column: 1 / -1;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+  padding: 0;
+  text-transform: uppercase;
+}
+
+.selection-filter-range input {
+  appearance: textfield;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+/* No spin buttons: they're tiny targets and crowd two-digit levels. */
+.selection-filter-range input::-webkit-inner-spin-button,
+.selection-filter-range input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.selection-table-filters .selection-filters-reset {
+  flex: none;
+}
+
+.selection-filters-toggle[aria-pressed="true"],
+.selection-selected-filter[aria-pressed="true"],
+.selection-illegal-toggle[aria-pressed="true"] {
+  background: var(--power-item-soft);
+  border-color: var(--power-item);
+  color: var(--text);
+}
+
+.selection-table-scroll td small {
+  display: block;
+  margin-top: 0.2rem;
+}
+
+.selection-table-scroll .selection-family-row {
+  background: var(--accent-soft);
+}
+
+.selection-table-scroll .selection-family-row.selection-row-selected {
+  background: var(--selected-soft);
+}
+
+.selection-table-scroll td.selection-table-nested {
+  padding-inline-start: calc(1.4rem + 4px);
+}
+
+.selection-metadata-icon {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  min-width: 1.5rem;
+}
+
+.selection-metadata-icon .icon {
+  height: 1rem;
+  width: 1rem;
+}
+
+.action-type-icon {
+  font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.action-type-icon > span {
+  display: block;
+  /* Symbol glyphs sit above the optical center of their font's line box. */
+  transform: translateY(0.14em);
+}
+.entity-card-heading-main .action-type-icon {
+  align-self: center;
+}
+
+.selection-table-summary {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+.level-choice-workspace .grouped-choice-list,
+.level-choice-workspace .choice-flow-list {
+  gap: 0.7rem;
+}
+
+.level-choice-workspace .grouped-choice-item + .grouped-choice-item,
+.level-choice-workspace .choice-flow-step + .choice-flow-step {
+  padding-top: 0.7rem;
+}
+
+.level-choice-section {
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 1rem;
+  scroll-margin-top: 1rem;
+}
+
+.level-choice-section.choice-section-incomplete {
+  border-color: var(--border);
+}
+
+.level-choice-section.choice-section-incomplete > header {
+  background: color-mix(in srgb, var(--warning-soft), var(--warning) 24%);
+  border-bottom-color: var(--warning);
+  margin: -1rem -1rem 1rem;
+  padding: 0.75rem 1rem;
+}
+
+.legacy-choice-list > .level-choice-section.choice-section-incomplete > header {
+  margin: -0.75rem -0.8rem 0.7rem;
+  padding: 0.65rem 0.8rem;
+}
+
+.level-choice-section:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.level-choice-section > header {
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+}
+
+.level-choice-section > header h4 {
+  margin: 0;
+}
+
+.choice-count,
+.skill-choice-count {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.grouped-choice-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.grouped-choice-item + .grouped-choice-item {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.grouped-choice-item h5 {
+  margin-top: 0;
+}
+
+.choice-flow-list {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.choice-flow-step + .choice-flow-step {
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+}
+
+.choice-flow-step-heading {
+  align-items: center;
+  display: flex;
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+}
+
+.choice-flow-step-heading > span {
+  align-items: center;
+  background: var(--accent);
+  border-radius: 2px;
+  color: #fff;
+  display: inline-flex;
+  flex: 0 0 1.55rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  height: 1.55rem;
+  justify-content: center;
+}
+
+.choice-flow-step-heading h5 {
+  margin: 0;
+}
+
+.progressive-choice-button {
+  background: transparent;
+  border-style: dashed;
+  color: var(--accent);
+  margin-top: 1rem;
+  width: 100%;
+}

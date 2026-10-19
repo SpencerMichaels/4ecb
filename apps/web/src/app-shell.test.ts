@@ -2,10 +2,10 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { appStyles } from "./test-styles";
+
 const app = readFileSync(new URL("./App.tsx", import.meta.url), "utf8");
-const styles = ["./styles/primitives.css", "./styles.css"]
-  .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
-  .join("\\n");
+const styles = appStyles;
 
 describe("application shell", () => {
   it("does not render the former disclaimer footer on any route", () => {

@@ -2,9 +2,9 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-const styles = ["./styles/primitives.css", "./styles.css"]
-  .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
-  .join("\\n");
+import { appStyles } from "./test-styles";
+
+const styles = appStyles;
 const editor = readFileSync(
   new URL("./CharacterEditorPage.tsx", import.meta.url),
   "utf8",

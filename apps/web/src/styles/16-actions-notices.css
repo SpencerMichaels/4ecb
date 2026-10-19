@@ -1,0 +1,373 @@
+/* Page actions, toasts, persistence banner, trash, retraining, set level. */
+
+/* Page-level icon actions (Settings gear, close) now that there is no app
+   header; the builder keeps its own next to undo/redo. */
+.page-actions {
+  align-items: center;
+  display: flex;
+  flex: none;
+  gap: 0.2rem;
+}
+
+/* Same bare, muted icon controls as the builder's actions (.builder-status). */
+.page-actions > :is(button, a, label) {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  height: 2rem;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  width: 2rem;
+}
+
+.page-actions
+  > :is(button, a, label):not(:disabled):not([aria-disabled="true"]):hover,
+.page-actions > :is(button, a):focus-visible,
+.page-actions > label:focus-within {
+  background: var(--surface-subtle);
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--text);
+}
+
+.page-actions > button[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.page-actions > label:focus-within {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.page-actions .icon {
+  height: 1.1rem;
+  width: 1.1rem;
+}
+
+/* Toasts (Toasts.tsx) float over the page, bottom-right, so a failure or
+   import warning never pushes the page's contents around. */
+.toast-region {
+  bottom: 1rem;
+  display: grid;
+  gap: 0.5rem;
+  inset-inline-end: 1rem;
+  max-width: min(26rem, calc(100vw - 2rem));
+  pointer-events: none;
+  position: fixed;
+  z-index: 30;
+}
+
+.toast {
+  align-items: start;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-left-width: 4px;
+  box-shadow: 0 0.35rem 0.8rem rgb(0 0 0 / 20%);
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 0.65rem 0.5rem 0.65rem 0.75rem;
+  pointer-events: auto;
+}
+
+.toast-error {
+  border-left-color: var(--danger);
+}
+
+.toast-warning {
+  border-left-color: var(--warning);
+}
+
+.toast > .icon {
+  height: 1.15rem;
+  margin-top: 0.1rem;
+  width: 1.15rem;
+}
+
+.toast-error > .icon {
+  color: var(--danger);
+}
+
+.toast-warning > .icon {
+  color: var(--warning);
+}
+
+.toast-body {
+  display: grid;
+  gap: 0.2rem;
+  overflow-wrap: anywhere;
+}
+
+.toast-body :is(p, ul) {
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.toast-body ul {
+  padding-left: 1.1rem;
+}
+
+button.toast-dismiss {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  height: 1.75rem;
+  width: 1.75rem;
+}
+
+button.toast-dismiss:not(:disabled):hover {
+  box-shadow: none;
+  color: var(--text);
+}
+
+@media print {
+  .toast-region {
+    display: none;
+  }
+}
+
+/* Library: the browser may clear saved characters (PersistenceBanner). A
+   standing, actionable state shown on arrival, so it sits in the page. */
+.persistence-banner {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  box-shadow: inset 4px 0 var(--focus);
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.6rem 0.6rem 1rem;
+}
+
+.persistence-banner.is-refused {
+  box-shadow: inset 4px 0 var(--warning);
+}
+
+.persistence-banner > .icon {
+  color: var(--focus);
+  height: 1.2rem;
+  width: 1.2rem;
+}
+
+.persistence-banner.is-refused > .icon {
+  color: var(--warning);
+}
+
+.persistence-banner > p {
+  margin: 0;
+}
+
+@media (max-width: 40rem) {
+  .persistence-banner {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .persistence-banner > button:not(.icon-only-button) {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+.settings-persistence {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.8rem;
+}
+
+/* Library trash: a count beside the trash icon in the page actions opens a
+   dialog listing trashed characters with Restore and Delete permanently. */
+.page-actions > .page-action-count {
+  gap: 0.2rem;
+  padding-inline: 0.35rem;
+  width: auto;
+}
+
+.page-action-count > span {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.trash-dialog {
+  overflow: auto;
+  width: 28rem;
+}
+
+.trash-empty {
+  color: var(--muted);
+  margin: 0;
+  padding: 1rem;
+}
+
+.trash-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.4rem 1rem 0.8rem;
+}
+
+.trash-list > li {
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 0.6rem;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+}
+
+.trash-list > li:last-child {
+  border-bottom: 0;
+}
+
+.trash-list > li > span {
+  overflow-wrap: anywhere;
+}
+
+/* Retraining tab: the levels that can retrain (one retrain per level), then
+   the selected level's skill / feat / power accordion. */
+.retraining-levels {
+  border: 1px solid var(--border);
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.retraining-levels :is(th, td) {
+  border-bottom: 1px solid var(--border);
+  padding: 0.3rem 0.6rem;
+  text-align: left;
+}
+
+.retraining-levels th {
+  background: var(--surface-subtle);
+  font-size: 0.85rem;
+}
+
+.retraining-levels :is(th, td):first-child {
+  font-variant-numeric: tabular-nums;
+  width: 3rem;
+}
+
+.retraining-levels :is(th, td):nth-child(2) {
+  width: 4.5rem;
+}
+
+.retraining-levels :is(th, td):last-child {
+  text-align: right;
+  white-space: nowrap;
+  width: 6rem;
+}
+
+/* Row actions: the bare icon buttons of the library cards, right-aligned. */
+.retraining-row-actions {
+  justify-content: flex-end;
+}
+
+.retraining-levels tbody tr.table-clickable-row {
+  cursor: pointer;
+}
+
+.retraining-levels tbody tr.table-clickable-row:hover > td {
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--accent) 18%, transparent),
+    color-mix(in srgb, var(--accent) 18%, transparent)
+  );
+}
+
+.retraining-none,
+.retraining-empty {
+  color: var(--muted);
+}
+
+.retraining-level {
+  border: 1px solid var(--border);
+}
+
+.retraining-empty {
+  margin: 0;
+  padding: 0 0.8rem 0.8rem;
+}
+
+.retraining-editor {
+  padding: 0 0.8rem 0.8rem;
+}
+
+/* What is given up: a short list, so it takes at most about a third of the
+   window and the replacement table below gets the rest. */
+.replacement-targets .selection-table-scroll {
+  max-height: min(14rem, 33dvh);
+}
+
+/* One level's retraining: the accordion beside its details card; the body
+   scrolls inside the dialog, the details card on its own. */
+.retraining-dialog {
+  overflow: hidden;
+  width: min(64rem, calc(100vw - 2rem));
+}
+
+.retraining-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.retraining-dialog-body {
+  align-items: start;
+  display: grid;
+  flex: 1 1 auto;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) var(--panel-card-width);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1rem;
+}
+
+.retraining-dialog-detail {
+  max-height: calc(100dvh - 9rem);
+  min-width: 0;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+}
+
+@media (max-width: 48rem) {
+  .retraining-dialog-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .retraining-dialog-detail {
+    position: static;
+  }
+}
+
+.replace-retrain-dialog {
+  width: 28rem;
+}
+
+.replace-retrain-body {
+  margin: 0;
+  padding: 1rem;
+}
+
+/* Set level: the level plan grid in a dialog; the pending pick is blue. */
+.set-level-dialog {
+  overflow: auto;
+  width: min(30rem, calc(100vw - 2rem));
+}
+
+.set-level-body {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+}
+
+.set-level-body > p {
+  margin: 0;
+}

@@ -2,13 +2,13 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { appStyles } from "./test-styles";
+
 const library = readFileSync(
   new URL("./CharacterLibraryPage.tsx", import.meta.url),
   "utf8",
 );
-const styles = ["./styles/primitives.css", "./styles.css"]
-  .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
-  .join("\\n");
+const styles = appStyles;
 const characterExport = readFileSync(
   new URL("./character-export.ts", import.meta.url),
   "utf8",

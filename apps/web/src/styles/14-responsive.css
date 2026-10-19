@@ -1,0 +1,394 @@
+/* Pinned builder layout and width breakpoints. */
+
+/* Wide windows pin the builder to the viewport: the page itself never
+   scrolls, the sidebar and both tab bars stay put, and the level page and
+   the detail pane each scroll on their own. Other tabs scroll as a whole,
+   with their detail pane held in view (sticky, at most the tab's height).
+   Scrollers carry a small padding inset so focus outlines are not clipped. */
+@media (min-width: 63.01rem) and (min-height: 30rem) {
+  /* No elastic overscroll ("rubber-banding") on the pinned page. Overflow
+     below is clipped (not hidden) so the page holds no scroll container
+     for Firefox to bounce; only the real scrollers inside it remain. */
+  html:has(.modern-builder),
+  html:has(.modern-builder) body {
+    overscroll-behavior: none;
+  }
+
+  .app-shell:has(> .modern-builder) {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 0;
+    overflow: clip;
+  }
+
+  .modern-builder {
+    display: grid;
+    flex: 1 1 0;
+    grid-template-rows: minmax(0, 1fr);
+    min-height: 0;
+    width: 100%;
+  }
+
+  .modern-builder .builder-layout {
+    align-items: stretch;
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .modern-builder .builder-sidebar {
+    margin: -6px;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 6px;
+    position: static;
+  }
+
+  .modern-builder .builder-main {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .modern-builder .builder-main > * {
+    flex: none;
+  }
+
+  .modern-builder .builder-main > .builder-tab-content {
+    container-type: size;
+    flex: 1 1 0;
+    margin: -6px;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 6px;
+  }
+
+  .modern-builder .builder-main > .builder-tab-content[hidden] {
+    display: none;
+  }
+
+  .builder-tab-content .shared-choice-detail {
+    max-height: 100cqh;
+    overscroll-behavior: contain;
+    top: 0;
+  }
+
+  /* Build tab: only the level page and its detail pane scroll. */
+  .modern-builder .builder-main > .builder-workspace {
+    align-items: stretch;
+    grid-template-rows: minmax(0, 1fr);
+    overflow: clip;
+  }
+
+  .builder-workspace > .choice-pane {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .builder-workspace .level-choice-tabs-layout {
+    flex: 1 1 0;
+    grid-template-rows: auto minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  /* Retraining: content fills the pane, so its level page scrolls like
+     Build's. */
+  .builder-workspace > .choice-pane > .retraining-content {
+    display: grid;
+    flex: 1 1 0;
+    grid-template-rows: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .builder-workspace .level-choice-workspace {
+    grid-template-rows: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .builder-workspace .level-choice-page {
+    align-content: start;
+    align-self: stretch;
+    margin: -6px;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 6px;
+  }
+
+  .builder-workspace .shared-choice-detail {
+    max-height: 100%;
+    position: static;
+  }
+
+  /* Equipment and Shop: like the level page, the tab itself doesn't scroll.
+     The table takes the height left under its toolbar (keeping the pager
+     below it) and scrolls on its own, and so does the item detail pane.
+     :not([hidden]) keeps this display from un-hiding the tab on other tabs. */
+  .modern-builder
+    .builder-main
+    > .builder-tab-content:not([hidden]):has(> .equipment-pane) {
+    display: flex;
+    flex-direction: column;
+    overflow: clip;
+  }
+
+  .builder-tab-content > .equipment-pane {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .equipment-pane > .equipment-workspace {
+    flex: 1 1 0;
+    grid-template-rows: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .equipment-workspace > .equipment-primary {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .equipment-primary > * {
+    flex: none;
+  }
+
+  .equipment-primary > .equipment-mode-content {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* Shrink to fit (a short list stays short) and scroll when longer. */
+  .equipment-primary .equipment-table-scroll {
+    flex: 0 1 auto;
+    max-block-size: none;
+    min-height: 0;
+    overscroll-behavior: contain;
+  }
+
+  .equipment-workspace > .shared-choice-detail {
+    max-height: 100%;
+    position: static;
+  }
+}
+
+/* Narrow windows fold the sidebar back above the workspace. */
+@media (max-width: 63rem) {
+  .builder-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .builder-sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 60rem) {
+  .page-heading {
+    align-items: start;
+    display: grid;
+    gap: 0.75rem;
+  }
+  .unofficial {
+    text-align: left;
+  }
+
+  .equipment-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .shop-advanced-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .settings-subheading {
+    align-items: start;
+    display: grid;
+  }
+  .settings-page,
+  .characters-page,
+  .sheet-page {
+    padding-inline: 1rem;
+  }
+  .shared-choice-detail {
+    max-height: none;
+    overflow-y: visible;
+    position: static;
+  }
+  .builder-workspace,
+  .level-choice-workspace,
+  .character-details-workspace,
+  .profile-composer-heading,
+  .profile-preview {
+    grid-template-columns: 1fr;
+  }
+  .timeline-heading {
+    position: static;
+  }
+  .character-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sheet-columns,
+  .print-summary-columns {
+    grid-template-columns: 1fr;
+  }
+  .view-sheet-header {
+    align-items: start;
+    flex-direction: column;
+  }
+  .view-summary-grid,
+  .view-card-grid,
+  .view-equipment-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .view-equipment-list > li:nth-child(odd) {
+    border-right: 0;
+  }
+  .view-feature-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .view-reference-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .identity-block .sheet-values,
+  .card-grid,
+  .report-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .add-overlay-control {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 36rem) {
+  .character-grid > li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .character-card-actions {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: end;
+  }
+  .character-grid .character-card-heading {
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 48rem) {
+  /* Stacked: the rule returns under the tabs; the buttons keep their own row. */
+  .builder-tabs-bar {
+    align-items: stretch;
+    border-bottom: 0;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .builder-tabs {
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0;
+  }
+
+  .builder-tabs-bar > .builder-status {
+    align-self: stretch;
+  }
+
+  .shop-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .builder-status {
+    border-bottom: 1px solid var(--border);
+    justify-content: flex-end;
+    padding: 0.35rem 0;
+  }
+
+  .loadout-grid,
+  .choice-selection-layout,
+  .skill-training-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .candidate-detail {
+    max-height: none;
+  }
+
+  .skill-toggle-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 34rem) {
+  .character-inline-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .builder-status {
+    justify-content: flex-start;
+  }
+
+  .card-grid,
+  .facts,
+  .identity-block .sheet-values,
+  .profile-facts,
+  .report-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .profile-layer-list > li {
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+  }
+
+  .layer-actions,
+  .fixed-layer {
+    grid-column: 2;
+  }
+
+  .collision-list {
+    columns: 1;
+  }
+
+  .timeline-heading {
+    align-items: start;
+    grid-template-columns: 1fr;
+  }
+
+  .timeline-heading select {
+    min-height: 2.75rem;
+    width: 100%;
+  }
+
+  .timeline-heading-actions {
+    align-items: end;
+  }
+
+  .choice-pane {
+    min-height: 22rem;
+  }
+
+  .choice-selection-layout,
+  .candidate-facts,
+  .candidate-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .candidate-detail {
+    max-height: none;
+  }
+
+  .ability-point-buy-footer {
+    align-items: start;
+    flex-direction: column;
+  }
+}

@@ -3,8 +3,7 @@ import { createRoot } from "react-dom/client";
 
 import { App, initialRouteReady } from "./App";
 import { ErrorBoundary } from "./ErrorBoundary";
-import "./styles/primitives.css";
-import "./styles.css";
+import "./styles/index.css";
 
 const root = document.getElementById("root");
 if (root === null) throw new Error("Application root was not found");

@@ -1,0 +1,353 @@
+/* Page shells and headings, the brand mark, Settings. */
+
+.global-error,
+.settings-page,
+.characters-page,
+.sheet-page {
+  margin: 0 auto;
+  max-width: 100rem;
+}
+
+.settings-page,
+.characters-page,
+.sheet-page {
+  padding: 1.5rem 2rem 3rem;
+}
+
+.page-heading {
+  align-items: start;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+}
+
+.page-heading p:last-child {
+  margin-bottom: 0;
+  max-width: 48rem;
+}
+
+.heading-actions,
+.profile-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+/* The library heading carries the app's brand mark in place of a page
+   title, with Import/New Character beside the Settings gear. */
+.library-heading {
+  align-items: center;
+}
+
+.app-brand {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.6rem;
+  margin: 0;
+}
+
+/* The "4E" mark: negative tracking also trims space after the last glyph,
+   so the right padding gets that 0.04em back; capitals-only text sits above
+   the em box's descender space, so where supported the box is trimmed to
+   cap height and baseline and padded evenly. */
+.app-brand-mark {
+  border: 1px solid currentcolor;
+  border-block-width: 3px;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  padding: 0.3rem calc(0.38rem + 0.04em) 0.3rem 0.38rem;
+}
+
+@supports (text-box: trim-both cap alphabetic) {
+  .app-brand-mark {
+    padding-block: 0.42rem;
+    text-box: trim-both cap alphabetic;
+  }
+}
+
+/* The library's brand with the running version beside it. */
+.library-brand {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
+}
+
+.app-brand-name {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.settings-subheading {
+  align-items: end;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+  margin: 2rem 0 1rem;
+  padding-bottom: 0.75rem;
+}
+
+.settings-subheading p:last-child {
+  margin-bottom: 0;
+  max-width: 48rem;
+}
+
+.settings-section {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.game-content-empty {
+  color: var(--muted);
+  margin: 0;
+}
+
+.content-table {
+  border: 1px solid var(--border);
+  border-collapse: collapse;
+  max-width: 52rem;
+  width: 100%;
+}
+
+.content-table th {
+  border-bottom: 1px solid var(--border-strong);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.content-table td {
+  border-top: 1px solid var(--border);
+  padding: 0.5rem 0.6rem;
+  vertical-align: middle;
+}
+
+.content-table tbody tr:first-child td {
+  border-top: 0;
+}
+
+.content-table td:nth-child(2) {
+  width: 100%;
+}
+
+.content-table td:nth-child(2) strong,
+.content-row-source {
+  display: block;
+}
+
+.content-row-source {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.content-row-off td:nth-child(2) {
+  color: var(--muted);
+}
+
+.content-row-handle {
+  width: 2rem;
+}
+
+.content-row-handle button {
+  cursor: grab;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.2rem 0.35rem;
+}
+
+.content-row-dragging {
+  opacity: 0.5;
+}
+
+.content-row-drop-above td {
+  box-shadow: inset 0 3px 0 var(--accent);
+}
+
+.content-row-drop-below td {
+  box-shadow: inset 0 -3px 0 var(--accent);
+}
+
+.content-row-toggle {
+  display: flex;
+  justify-content: center;
+}
+
+.content-row-toggle input {
+  height: 1.1rem;
+  margin: 0;
+  width: 1.1rem;
+}
+
+.content-row-actions {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.content-row-actions .file-button,
+.content-row-actions button {
+  font-size: 0.9rem;
+  padding: 0.25rem 0.55rem;
+}
+
+.content-row-confirm td {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.file-button.disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+@media (max-width: 40rem) {
+  .content-row-actions {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+}
+
+.content-change-review {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.8rem;
+}
+
+.content-change-review p {
+  margin: 0;
+}
+
+.settings-section > div:first-child > :first-child,
+.backup-preview > :first-child {
+  margin-top: 0;
+}
+
+/* Two stacks of sections, then Game content (a wide table) across both; one
+   gap between every pair of sections. One stack below 2 × 32rem. */
+.settings-columns {
+  align-items: start;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(32rem, 100%), 1fr));
+}
+
+.settings-column {
+  display: grid;
+  gap: 1rem;
+}
+
+.settings-columns > .game-content-settings {
+  grid-column: 1 / -1;
+}
+
+.settings-options {
+  display: grid;
+  gap: 1rem;
+  max-width: 44rem;
+}
+
+.settings-option {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.settings-check {
+  align-items: baseline;
+  display: flex;
+  gap: 0.55rem;
+  font-weight: 600;
+}
+
+.settings-check input {
+  flex: none;
+  margin: 0;
+  transform: translateY(0.1em);
+}
+
+.settings-option > .field-help {
+  line-height: 1.45;
+  padding-left: 1.55rem;
+}
+
+.settings-slider {
+  align-items: center;
+  color: var(--muted, #5d554a);
+  display: flex;
+  font-size: 0.9rem;
+  gap: 0.6rem;
+  max-width: 28rem;
+  padding-left: 1.55rem;
+}
+
+.settings-slider input[type="range"] {
+  border: 0;
+  flex: 1;
+  min-width: 6rem;
+  padding: 0;
+}
+
+.settings-slider-reset {
+  font-size: 0.85rem;
+  padding: 0.15rem 0.5rem;
+}
+
+.settings-section p {
+  max-width: 46rem;
+}
+
+.settings-section > div:first-child p {
+  color: var(--muted, #5d554a);
+  margin-bottom: 0;
+}
+
+.backup-preview {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.file-button {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  color: var(--text);
+  padding: 0.45rem 0.7rem;
+}
+
+.file-button input {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.status,
+.identifier,
+.detail-source-note {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.detail-source-note {
+  border-top: 1px solid var(--border);
+  font-size: 0.67rem;
+  margin-bottom: 0;
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+}

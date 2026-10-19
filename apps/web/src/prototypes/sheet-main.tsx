@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import "../styles/primitives.css";
-import "../styles.css";
+import "../styles/index.css";
 import "../sheet-overview.css";
 import { SheetPrototype } from "./SheetPrototype";
 

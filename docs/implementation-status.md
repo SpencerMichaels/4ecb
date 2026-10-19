@@ -1,5 +1,14 @@
 # Implementation status
 
+## Stylesheets split by surface (2026-10-18)
+
+`apps/web/src/styles.css` (~7,900 lines) became 16 files in
+`apps/web/src/styles/`, imported in order from `styles/index.css` after
+`primitives.css`. Rules kept their order, and a clean production build of the
+old and new sources produced a byte-identical CSS bundle. Tests read the
+combined CSS through `test-styles.ts`. Verification: format, lint,
+typecheck, 970 workspace tests and the build pass.
+
 ## Retraining tab and replacement candidates (2026-10-18)
 
 Retraining is its own builder tab: an overview table of every level's retrain

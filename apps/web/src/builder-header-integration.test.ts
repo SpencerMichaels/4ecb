@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { appStyles } from "./test-styles";
+
 const source = readFileSync(
   new URL("./CharacterEditorPage.tsx", import.meta.url),
   "utf8",
@@ -15,9 +17,7 @@ const choiceEditors = readFileSync(
   "utf8",
 );
 const iconSource = readFileSync(new URL("./Icon.tsx", import.meta.url), "utf8");
-const styles = ["./styles/primitives.css", "./styles.css"]
-  .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
-  .join("\\n");
+const styles = appStyles;
 
 describe("builder header integration", () => {
   it("renders key statistics from the effective-level evaluation", () => {

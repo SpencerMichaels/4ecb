@@ -277,6 +277,12 @@ header` (padding, margin, divider) also matched the choice card's title
   get explicit, ordered z-indexes; the title wins.
 - **Mitred borders.** A thick coloured border meeting a thin divider at a
   slanted, "rounded"-looking corner. Rule: draw accent bars with inset shadows.
+- **One giant stylesheet.** `styles.css` had grown to ~7,900 lines, with
+  related rules far apart. Rule: styles live in `styles/` by surface, imported
+  in cascade order from `styles/index.css`; a new rule goes in its surface's
+  file (and only moves earlier after checking what it would stop
+  overriding). The split itself kept every rule in order: the built CSS is
+  byte-identical.
 - **Duplicated lists and logic.** The same abbreviation list in three files;
   two "is this selection allowed" checks that disagreed. Rule: one shared
   source; UI surfaces derive from it.

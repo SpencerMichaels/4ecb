@@ -1,0 +1,584 @@
+/* Character sheet page, print preview and the deferred screen view. */
+
+.sheet-page.is-print-preview {
+  background: var(--surface-subtle);
+  max-width: none;
+}
+
+.sheet-page.is-print-preview .screen-sheet-view {
+  display: none;
+}
+
+.sheet-page.is-print-preview .print-only:not(.print-excluded) {
+  display: block;
+}
+
+.sheet-page.is-print-preview .print-preview-toolbar {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin: 0 auto 1rem;
+  max-width: 88rem;
+  padding: 0.25rem;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.sheet-page.is-print-preview .print-page {
+  box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 18%);
+  color: #111;
+  width: 8.5in;
+}
+
+.sheet-page.paper-a4.is-print-preview .print-page {
+  width: 210mm;
+}
+
+.screen-sheet-view {
+  margin: 0 auto;
+  max-width: 96rem;
+}
+
+.view-sheet-header {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--accent);
+  display: flex;
+  gap: 1.5rem;
+  justify-content: space-between;
+  padding: 1rem 1.2rem;
+}
+
+.view-sheet-identity {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.view-sheet-identity h1,
+.view-sheet-identity p {
+  margin: 0;
+}
+
+.view-sheet-portrait {
+  border: 2px solid var(--border-strong);
+  height: 5rem;
+  width: 5rem;
+}
+
+.view-sheet-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+}
+
+.view-sheet-actions > a,
+.view-sheet-actions > button {
+  min-height: 2.5rem;
+}
+
+.view-sheet-actions > a {
+  align-items: center;
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  display: inline-flex;
+  padding: 0.45rem 0.7rem;
+  text-decoration: none;
+}
+
+.view-sheet-actions > a:hover,
+.view-sheet-actions > a:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.view-source-status {
+  align-items: start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin: 1rem 0;
+  max-width: none;
+}
+
+.view-source-status > a {
+  flex: 0 0 auto;
+  font-weight: 700;
+}
+
+.view-section-nav {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.view-section-nav a {
+  border-right: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 800;
+  padding: 0.65rem 0.85rem;
+  text-decoration: none;
+}
+
+.view-section-nav a:hover,
+.view-section-nav a:focus-visible {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.view-sheet-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  margin-top: 1rem;
+  scroll-margin-top: 4rem;
+}
+
+.view-sheet-section > header {
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+}
+
+.view-sheet-section > header h2,
+.view-sheet-section > header p {
+  margin: 0;
+}
+
+.view-summary-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0.8rem;
+}
+
+.view-summary-grid > section,
+.view-feature-grid > section {
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+
+.view-summary-grid h3,
+.view-feature-grid h3,
+.view-item-reference > h3 {
+  background: var(--brand-navy);
+  color: white;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  margin: 0;
+  padding: 0.45rem 0.65rem;
+  text-transform: uppercase;
+}
+
+.view-summary-skills .sheet-values {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.view-card-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0.8rem;
+}
+
+.view-reference-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
+  padding: 0.8rem;
+}
+
+.learned-reference-card {
+  border: 1px solid var(--border);
+  min-width: 0;
+  padding: 0.65rem;
+}
+
+.learned-reference-card > header {
+  align-items: start;
+  border-bottom: 2px solid var(--brand-navy);
+  display: flex;
+  justify-content: space-between;
+  margin: -0.65rem -0.65rem 0.55rem;
+  padding: 0.55rem 0.65rem;
+}
+
+.learned-reference-card > header h3,
+.learned-reference-card > header p,
+.learned-reference-card .prose-blocks {
+  margin: 0;
+}
+
+.learned-reference-flavor {
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 0.5rem;
+}
+
+.learned-reference-card footer {
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.72rem;
+  margin-top: 0.55rem;
+  padding-top: 0.35rem;
+}
+
+.view-equipment-list {
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0.8rem;
+}
+
+.view-equipment-list > li {
+  align-items: baseline;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 0.7rem;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+}
+
+.view-equipment-list > li:nth-child(odd) {
+  border-right: 1px solid var(--border);
+}
+
+.view-equipment-list span {
+  color: var(--muted);
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+}
+
+.view-item-reference {
+  border-top: 1px solid var(--border);
+}
+
+.view-feature-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
+  padding: 0.8rem;
+}
+
+.view-feature-grid .sheet-values > div {
+  display: block;
+  padding: 0.55rem 0.65rem;
+}
+
+.view-feature-grid .sheet-values dt {
+  font-weight: 800;
+  margin-bottom: 0.2rem;
+}
+
+.view-feature-grid .sheet-values dd {
+  margin: 0;
+}
+
+.view-notes-list {
+  margin: 0;
+  padding: 0.8rem;
+}
+
+.view-notes-list > div {
+  border-bottom: 1px solid var(--border);
+  padding: 0.65rem;
+}
+
+.view-notes-list dt {
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+.view-notes-list dd {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.view-empty-state {
+  color: var(--muted);
+  margin: 0;
+  padding: 1rem;
+}
+
+.sheet-toolbar {
+  background: var(--surface-subtle);
+  justify-content: space-between;
+  margin: -0.5rem 0 1rem;
+  padding: 0.75rem;
+}
+.sheet-toolbar fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.sheet-toolbar legend {
+  font-weight: 700;
+  margin-right: 0.5rem;
+}
+.sheet-toolbar label {
+  align-items: center;
+  display: flex;
+  gap: 0.25rem;
+}
+.cache-warning {
+  background: var(--warning-soft);
+  border-left: 4px solid var(--warning);
+  margin: 0 auto 1rem;
+  max-width: 88rem;
+  padding: 0.75rem;
+}
+.print-page {
+  background: #fff;
+  border: 1px solid #999;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+  font-size: 8pt;
+  line-height: 1.2;
+  margin: 0 auto 1.25rem;
+  height: 11in;
+  overflow: hidden;
+  padding: 0.35in;
+}
+.print-card-page {
+  position: relative;
+  padding-top: 0.3in;
+}
+.print-card-page-footer {
+  position: absolute;
+  bottom: 0.18in;
+  left: 0.4in;
+  right: 0.4in;
+  border-top: 1px solid #abb3b8;
+  padding-top: 0.06in;
+  display: grid;
+  grid-template-columns: minmax(max-content, 1fr) minmax(0, auto) minmax(
+      max-content,
+      1fr
+    );
+  align-items: baseline;
+  gap: 0.12in;
+  color: #56616a;
+  font-size: 7pt;
+  line-height: 1.32;
+}
+.print-card-footer-identity {
+  min-width: 0;
+  text-align: center;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.print-card-page-footer .ov-page-number {
+  justify-self: end;
+}
+.paper-a4 .print-page {
+  height: 297mm;
+  padding: 9mm;
+}
+.paper-a4 .print-card-grid {
+  gap: 1mm;
+  grid-template-columns: repeat(3, 63mm);
+  grid-template-rows: repeat(3, 86.8mm);
+}
+.paper-a4 .print-reference-card {
+  height: 86.8mm;
+  width: 63mm;
+}
+.sheet-title {
+  align-items: end;
+  border-bottom: 4px solid #20272a;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+.sheet-portrait {
+  border: 2px solid #20272a;
+  height: 4.5rem;
+  width: 4.5rem;
+}
+.identity-block {
+  border-bottom: 1px solid #777;
+  margin-bottom: 0.8rem;
+}
+.identity-block .sheet-values {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.identity-block .sheet-values > div {
+  display: block;
+  min-width: 0;
+}
+.identity-block .sheet-values dt {
+  font-size: 6pt;
+  text-transform: uppercase;
+}
+.identity-block .sheet-values dd {
+  font-size: 8pt;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.print-dashboard {
+  display: grid;
+  gap: 0.1in;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.print-dashboard-column {
+  display: grid;
+  gap: 0.1in;
+  min-width: 0;
+}
+.print-panel {
+  border: 1px solid #777;
+  min-width: 0;
+  overflow: hidden;
+}
+.print-panel > h3 {
+  background: #20272a;
+  color: #fff;
+  font-size: 9pt;
+  letter-spacing: 0.03em;
+  margin: 0;
+  padding: 0.05in 0.07in;
+  text-transform: uppercase;
+}
+.print-panel .sheet-values > div {
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 0.035in 0.05in;
+}
+.print-skills-panel .sheet-values {
+  grid-template-columns: 1fr;
+}
+.print-features-panel {
+  grid-column: 1 / -1;
+}
+.print-feature-index {
+  border-bottom: 1px solid #ccc;
+  display: grid;
+  gap: 0.08in;
+  grid-template-columns: 1.15in minmax(0, 1fr);
+  padding: 0.04in 0.07in;
+}
+.print-feature-index h4,
+.print-feature-index p {
+  font-size: 7.5pt;
+  margin: 0;
+}
+.print-feature-index p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.compact-sheet-title {
+  align-items: center;
+}
+.compact-sheet-title h2,
+.compact-sheet-title p {
+  margin: 0;
+}
+.print-reference-columns {
+  display: grid;
+  gap: 0.12in;
+  grid-template-columns: 1fr 1fr;
+}
+.print-reference-columns > div {
+  display: grid;
+  gap: 0.12in;
+  min-width: 0;
+}
+.print-index-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.print-index-list li {
+  align-items: baseline;
+  border-bottom: 1px solid #ccc;
+  display: flex;
+  font-size: 6.5pt;
+  gap: 0.1in;
+  justify-content: space-between;
+  padding: 0.02in 0.05in;
+}
+.print-index-list span {
+  color: #444;
+  flex: 0 0 auto;
+}
+.print-notes-column {
+  align-content: start;
+}
+.print-reference-portrait {
+  border: 1px solid #777;
+  height: 2.4in;
+  object-fit: contain;
+  width: 100%;
+}
+.print-note-panel {
+  max-height: 1.6in;
+}
+.print-note-panel p {
+  display: -webkit-box;
+  font-size: 7.5pt;
+  line-height: 1.25;
+  margin: 0;
+  overflow: hidden;
+  padding: 0.06in;
+  white-space: pre-wrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 9;
+}
+.print-card-grid {
+  align-content: start;
+  display: grid;
+  gap: 0.04in;
+  grid-template-columns: repeat(3, 2.47in);
+  grid-template-rows: repeat(3, 3.405in);
+  justify-content: center;
+}
+.print-reference-card {
+  --card-color: #006b2e;
+  --card-paper: #fff;
+  --card-ink: #111;
+  --print-card-section-gap: 0.025in;
+  border: 1.5px solid var(--card-color);
+  box-sizing: border-box;
+  display: grid;
+  font-family: Arial, sans-serif;
+  font-size: var(--print-card-text-size, 8pt);
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  height: 3.405in;
+  line-height: 1.08;
+  min-width: 0;
+  overflow: hidden;
+  width: 2.47in;
+}
+.print-reference-card.is-compact {
+  --print-card-section-gap: 0.0125in;
+}
+.print-power-card {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+.print-power-card.has-keywords {
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+}
+/* Cards omit an empty action band rather than reserving a blank line. */
+.print-power-card.no-action-band {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+.print-power-card.has-keywords.no-action-band {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}

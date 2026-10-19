@@ -1,0 +1,20 @@
+/* Every app stylesheet, in cascade order (later files win ties). Split by
+   surface from one file without reordering rules, so the cascade is the same
+   as before; keep new rules in the file of the surface they style. */
+@import "./primitives.css";
+@import "./01-base.css";
+@import "./02-pages.css";
+@import "./03-shared.css";
+@import "./04-library.css";
+@import "./05-sheet.css";
+@import "./06-cards.css";
+@import "./07-sheet-sections.css";
+@import "./08-builder-panels.css";
+@import "./09-builder-shell.css";
+@import "./10-builder-choices.css";
+@import "./11-selection-tables.css";
+@import "./12-choice-details.css";
+@import "./13-equipment.css";
+@import "./14-responsive.css";
+@import "./15-print.css";
+@import "./16-actions-notices.css";

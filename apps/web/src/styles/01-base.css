@@ -1,0 +1,259 @@
+/* Tokens (light and dark), element defaults, buttons and forms, global errors. */
+
+:root {
+  --background: #eef2f6;
+  --surface: #fff;
+  --surface-subtle: #f5f3ea;
+  --surface-raised: #ffffff;
+  --legacy-neutral: #dedccb;
+  --parchment: #fbf1dd;
+  --text: #1e2933;
+  --muted: #52616e;
+  --border: #b7bec6;
+  --border-strong: #718091;
+  --accent: #315f85;
+  --accent-strong: #1d3d5d;
+  --accent-soft: #dbe7f1;
+  /* Generic "selected" (rows, buttons, segments): the blue accent. Green is
+     kept for done/gained, and power colors for power usage. */
+  --selected: var(--accent);
+  --selected-soft: color-mix(in srgb, var(--accent) 38%, var(--surface));
+  --brand-navy: #1d3d5d;
+  --brand-blue: #4682b4;
+  --focus: #4682b4;
+  --danger: #8b0000;
+  --danger-soft: #f1dede;
+  --warning: #8b4c00;
+  --warning-soft: #f8e8cc;
+  --success: #006400;
+  --success-soft: #deedde;
+  --power-at-will: #006400;
+  --power-at-will-soft: #aaddaa;
+  --power-encounter: #8b0000;
+  --power-encounter-soft: #ddbbbb;
+  --power-daily: #808080;
+  --power-daily-soft: #d3d3d3;
+  --power-utility: #000080;
+  --power-utility-soft: #bbbbdd;
+  --power-feature: #5e3a78;
+  --power-feature-soft: #d9cce3;
+  --power-item: #ff8c00;
+  --power-item-soft: #ffe3cc;
+  --tone-neutral: #1d3d5d;
+  --tone: var(--tone-neutral);
+  --tone-soft: var(--surface-subtle);
+  --detail-card-header-border-block-start-width: 5px;
+  --detail-card-header-border-block-end-width: 1px;
+  --detail-card-header-border-inline: 1px solid var(--border);
+  --detail-card-header-gap: 0.5rem;
+  --detail-card-header-icon-size: 1.05rem;
+  --detail-card-header-line-height: 1.15;
+  --detail-card-header-padding: 0.75rem 1rem;
+  --detail-card-header-compact-border-block-start-width: 3px;
+  --detail-card-header-compact-gap: 0.35rem;
+  --detail-card-header-compact-icon-size: 0.9rem;
+  --detail-card-header-compact-padding-block: 0.3rem;
+  --detail-card-header-compact-padding-inline: 0.55rem;
+  --font-ui:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Tahoma, sans-serif;
+  --font-display:
+    "Goudy Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-sheet: Georgia, "Times New Roman", serif;
+  color: var(--text);
+  background: var(--background);
+  font-family: var(--font-ui);
+  font-synthesis: none;
+  line-height: 1.5;
+}
+
+:root[data-theme="dark"] {
+  --background: #111727;
+  --surface: #182239;
+  --surface-subtle: #202d49;
+  --surface-raised: #202d49;
+  --legacy-neutral: #293550;
+  --parchment: #29261f;
+  --text: #f2f4f7;
+  --muted: #b7c1d1;
+  --border: #34445e;
+  --border-strong: #51637c;
+  --accent: #7eaed2;
+  --accent-strong: #b6d2e8;
+  --accent-soft: #223a55;
+  --focus: #72c1f0;
+  --danger: #ffaaa1;
+  --danger-soft: #482525;
+  --warning: #ffc36b;
+  --warning-soft: #46351f;
+  --success: #83d18b;
+  --success-soft: #203c2a;
+  --power-at-will-soft: #183923;
+  --power-encounter-soft: #442020;
+  --power-daily-soft: #34383f;
+  --power-utility-soft: #222a55;
+  --power-feature-soft: #33233f;
+  --power-item-soft: #49341d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --background: #111727;
+    --surface: #182239;
+    --surface-subtle: #202d49;
+    --surface-raised: #202d49;
+    --legacy-neutral: #293550;
+    --parchment: #29261f;
+    --text: #f2f4f7;
+    --muted: #b7c1d1;
+    --border: #34445e;
+    --border-strong: #51637c;
+    --accent: #7eaed2;
+    --accent-strong: #b6d2e8;
+    --accent-soft: #223a55;
+    --focus: #72c1f0;
+    --danger: #ffaaa1;
+    --danger-soft: #482525;
+    --warning: #ffc36b;
+    --warning-soft: #46351f;
+    --success: #83d18b;
+    --success-soft: #203c2a;
+    --power-at-will-soft: #183923;
+    --power-encounter-soft: #442020;
+    --power-daily-soft: #34383f;
+    --power-utility-soft: #222a55;
+    --power-feature-soft: #33233f;
+    --power-item-soft: #49341d;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: var(--text);
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+.file-button,
+select {
+  cursor: pointer;
+}
+
+button,
+input,
+select,
+textarea {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  color: var(--text);
+  padding: 0.4rem 0.55rem;
+}
+
+button {
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+button:not(:disabled):not([aria-disabled="true"]):hover,
+.file-button:hover {
+  border-color: var(--focus);
+  box-shadow: inset 0 -2px var(--focus);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+button[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible,
+.file-button:focus-within {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin-top: 0;
+}
+
+h1,
+h2 {
+  margin-bottom: 0.25rem;
+}
+
+.page-heading h1,
+.page-heading h2,
+.builder-sidebar-identity h2 {
+  font-family: var(--font-display);
+}
+
+a {
+  color: var(--accent);
+}
+
+.skip-link {
+  background: #fff;
+  left: 1rem;
+  padding: 0.5rem;
+  position: fixed;
+  top: -5rem;
+  z-index: 10;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* Route changes focus the main landmark (route-focus.ts) so assistive tech
+   lands on the new page; it isn't a control, so it draws no focus ring.
+   (On the loading screen the ring's bottom edge showed as a stray line.) */
+#main-content:focus {
+  outline: none;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.2rem;
+  text-transform: uppercase;
+}
+
+.unofficial {
+  margin: 0;
+  max-width: 32rem;
+  text-align: right;
+}
+
+.icon {
+  block-size: 1.05em;
+  flex: 0 0 auto;
+  inline-size: 1.05em;
+  vertical-align: -0.12em;
+}

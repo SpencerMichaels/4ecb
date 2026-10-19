@@ -1,0 +1,496 @@
+/* Shared pieces: detail notes, loading screens, content profiles, entity cards, prose. */
+
+.candidate-detail > .detail-source-note {
+  border-top-color: var(--entity-card-divider);
+  margin-inline: -1rem;
+  padding-inline: 1rem;
+}
+
+.error {
+  background: var(--danger-soft);
+  border-left: 4px solid var(--danger);
+  display: grid;
+  gap: 0.25rem;
+  margin: 1rem auto;
+  padding: 0.75rem;
+}
+
+.pwa-status {
+  align-items: center;
+  background: var(--accent-soft);
+  border-block: 1px solid var(--accent);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding: 0.75rem 2rem;
+}
+
+.pwa-status p {
+  flex: 1 1 28rem;
+  margin: 0;
+}
+
+.empty-state {
+  background: var(--surface);
+  border: 1px dashed var(--border-strong);
+  padding: 1rem;
+}
+
+/* Full-page loader for route chunks, the builder and the sheet. */
+.loading-screen {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  margin: 0 auto;
+  max-width: 100rem;
+  min-height: 70vh;
+}
+
+.loading-screen-body {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.loading-spinner-frame {
+  display: block;
+  height: 6rem;
+  margin-bottom: 0.5rem;
+  position: relative;
+  width: 6rem;
+}
+
+.loading-spinner {
+  animation: loading-spin 0.9s linear infinite;
+  border: 0.3rem solid var(--accent-soft);
+  border-radius: 50%;
+  border-top-color: var(--accent);
+  box-sizing: border-box;
+  display: block;
+  inset: 0;
+  position: absolute;
+}
+
+/* Sits inside the ring with a small gap so the spinning edge stays visible.
+   An <img> keeps its natural size under `inset`, so size it explicitly. */
+.loading-portrait {
+  animation: loading-portrait-in 0.2s ease-out;
+  border-radius: 50%;
+  height: calc(100% - 1.2rem);
+  left: 0.6rem;
+  max-width: none;
+  object-fit: cover;
+  position: absolute;
+  top: 0.6rem;
+  width: calc(100% - 1.2rem);
+}
+
+.loading-screen-detail {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes loading-portrait-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.loading-screen-label {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.loading-screen-detail {
+  color: var(--muted);
+  margin: 0;
+}
+
+/* In-place loader filling one pane (the level page while it evaluates). */
+.loading-pane {
+  align-content: center;
+  color: var(--muted);
+  display: grid;
+  gap: 0.75rem;
+  justify-items: center;
+  min-height: 16rem;
+  text-align: center;
+}
+
+.loading-pane > .loading-spinner {
+  height: 3rem;
+  position: relative;
+  width: 3rem;
+}
+
+.loading-pane-label {
+  color: var(--text);
+  font-weight: 600;
+  margin: 0;
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner {
+    animation-duration: 3s;
+  }
+}
+
+.profile-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(23rem, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.profile-grid > li {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.profile-grid > li.active-profile {
+  border-left: 5px solid var(--accent);
+}
+
+.profile-facts {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+}
+
+.profile-facts div {
+  min-width: 0;
+}
+
+.profile-facts dd {
+  margin-left: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-facts code,
+.active-profile-summary code {
+  overflow-wrap: anywhere;
+}
+
+.administrator-content,
+.profile-composer {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.profile-layer-list,
+.collision-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.profile-layer-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.profile-layer-list h4,
+.profile-preview h4 {
+  margin: 0;
+}
+
+.download-progress {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.download-progress progress {
+  inline-size: min(28rem, 100%);
+}
+
+.profile-availability-error {
+  background: var(--danger-soft);
+  border-left: 4px solid var(--danger);
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 0.6rem;
+}
+
+.profile-composer-heading {
+  align-items: start;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(20rem, 1fr) minmax(20rem, 0.8fr);
+}
+
+.profile-state,
+.active-profile-summary,
+.profile-safety-note {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  margin: 0;
+  padding: 0.75rem;
+}
+
+.active-profile-summary {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.active-profile-summary dd {
+  margin: 0.15rem 0 0;
+}
+
+.profile-layer-list {
+  counter-reset: profile-layers;
+}
+
+.profile-layer-list > li {
+  align-items: start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+  padding: 0.85rem;
+}
+
+.profile-layer-list > li.missing-layer {
+  border-color: var(--danger);
+}
+
+.layer-order {
+  align-items: center;
+  background: var(--accent);
+  border-radius: 2px;
+  color: #fff;
+  display: flex;
+  font-weight: 700;
+  height: 2rem;
+  justify-content: center;
+  width: 2rem;
+}
+
+.layer-description p:last-child {
+  margin-bottom: 0;
+}
+
+.layer-actions {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.fixed-layer {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.add-overlay-control {
+  align-items: end;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(16rem, 1fr) auto;
+}
+
+.add-overlay-control label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.profile-activation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.profile-preview {
+  align-items: end;
+  background: var(--success-soft);
+  border: 2px solid var(--success);
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 1rem;
+}
+
+.profile-preview .profile-facts {
+  margin: 0.75rem 0;
+}
+
+.collision-list {
+  columns: 2;
+  margin-top: 0.5rem;
+}
+
+.collision-list li {
+  break-inside: avoid;
+  margin-bottom: 0.25rem;
+}
+
+.section-heading {
+  margin: 1.5rem 0 0.75rem;
+}
+
+.section-heading p:last-child {
+  max-width: 52rem;
+}
+
+.detail-heading-row {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.detail-heading-row .entity-kind {
+  flex: 0 1 auto;
+  margin-left: auto;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: right;
+  white-space: normal;
+}
+
+.entity-card-heading-main {
+  align-items: baseline;
+  display: flex;
+  gap: var(--detail-card-header-gap);
+  flex: 1 1 11rem;
+  min-width: 0;
+}
+
+.entity-card-heading-main :is(h2, h3, h4, h5) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.entity-card-heading-main .action-type-icon,
+.entity-card-heading-main > .icon {
+  align-self: baseline;
+  color: currentColor;
+  flex: 0 0 auto;
+  height: var(--detail-card-header-icon-size);
+  line-height: inherit;
+  width: var(--detail-card-header-icon-size);
+}
+
+.field-list {
+  display: grid;
+  gap: 0;
+}
+
+.field-list > div {
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) minmax(0, 2fr);
+  padding: 0.5rem;
+}
+
+dt {
+  font-weight: 700;
+}
+
+dd {
+  margin: 0;
+}
+
+.preserve-lines {
+  white-space: pre-wrap;
+}
+
+.prose-blocks {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.prose-blocks > * {
+  margin: 0;
+}
+.prose-table {
+  border-collapse: collapse;
+  font-size: inherit;
+  line-height: inherit;
+  width: 100%;
+}
+.prose-blocks > .prose-table {
+  margin-block: 0.35em;
+}
+.prose-table :is(th, td) {
+  padding: 0.15em 0.35em;
+  overflow-wrap: anywhere;
+  text-align: left;
+  text-indent: 0;
+  vertical-align: top;
+}
+.prose-table thead {
+  background: color-mix(
+    in srgb,
+    var(--card-color, var(--text)) 10%,
+    transparent
+  );
+}
+.prose-table tbody tr:nth-child(odd) {
+  background: color-mix(
+    in srgb,
+    var(--card-color, var(--text)) 5%,
+    transparent
+  );
+}
+
+.prose-blocks > .prose-paragraph {
+  text-indent: 1.5em;
+}
+
+.prose-blocks > h6 {
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-indent: 0;
+  text-transform: uppercase;
+}
+
+.prose-blocks > :is(ol, ul) {
+  padding-left: 1.4rem;
+  text-indent: 0;
+}
+
+textarea {
+  font: inherit;
+  resize: vertical;
+}
+
+.character-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr));
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+.character-grid > li {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1rem;
+}
+.character-grid > li {
+  align-items: start;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+}

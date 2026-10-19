@@ -1,0 +1,852 @@
+/* Builder sidebar, tab bar and status, level picker, choice pane. */
+
+/* Funds: five coin tiles and an actions tile in one 3 × 2 grid; each value
+   sits under its label at full tile width, so none are truncated. */
+.builder-sidebar .funds-pane .stat-tile {
+  align-items: center;
+  flex-direction: column;
+  gap: 0.1em;
+  padding: 0.3em 0.2em;
+}
+.builder-sidebar .funds-pane .stat-tile dd {
+  font-size: 1.15em;
+  overflow-wrap: anywhere;
+}
+/* The top-right funds tile is a field (type "-15 gp" or "20pp", then Enter)
+   that fills its cell with the tile tint and square edges, like a coin tile. */
+.builder-sidebar .funds-pane .funds-pane-actions {
+  align-items: stretch;
+  padding: 0;
+}
+.builder-sidebar .funds-pane-actions dd,
+.funds-adjust-form {
+  display: flex;
+  flex: 1;
+  margin: 0;
+}
+.funds-adjust-form input {
+  background: var(--stat-tint);
+  border: 0;
+  border-radius: 0;
+  color: var(--text);
+  flex: 1;
+  font: inherit;
+  font-size: 1em;
+  font-weight: 700;
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: 0.3em 0.2em;
+  text-align: center;
+}
+.funds-adjust-form input:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--funds-focus);
+  outline: none;
+}
+
+/* Coin counts read as plain numbers and edit in place on double-click or
+   Enter. */
+.funds-coin-tile {
+  cursor: text;
+}
+.funds-coin-tile dd {
+  inline-size: 100%;
+}
+/* The value and its edit box share one plain line box (no background,
+   border or outline of their own), so editing never changes the tile. */
+.funds-coin-value,
+.funds-coin-input {
+  background: transparent;
+  block-size: calc(1em * 1.15);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: inherit;
+  display: block;
+  font: inherit;
+  inline-size: 100%;
+  line-height: 1.15;
+  margin: 0;
+  min-inline-size: 0;
+  outline: none;
+  padding: 0;
+  text-align: center;
+}
+.funds-coin-value {
+  cursor: text;
+}
+.funds-coin-tile
+  .funds-coin-value:not(:disabled):not([aria-disabled="true"]):hover,
+.funds-coin-tile .funds-coin-value:focus-visible,
+.funds-coin-tile .funds-coin-input:focus-visible {
+  box-shadow: none;
+  outline: none;
+}
+/* Instead the whole cell takes the focus border, like the quick-adjust cell,
+   while editing or under keyboard focus; a plain click changes nothing. */
+.funds-coin-tile:has(.funds-coin-input),
+.funds-coin-tile:has(.funds-coin-value:focus-visible) {
+  box-shadow: inset 0 0 0 2px var(--funds-focus);
+}
+
+/* Shown only when carried and stored funds are kept separate. */
+.funds-location-switch {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 0.36em;
+}
+.funds-location-switch button {
+  background: transparent;
+  border: 1px solid var(--stat-edge);
+  border-radius: 0;
+  color: var(--stat-accent);
+  font: inherit;
+  font-weight: 800;
+  padding: 0.15em 0.3em;
+}
+.funds-location-switch button[aria-checked="true"] {
+  background: var(--stat-tint);
+  color: var(--text);
+}
+
+.builder-sidebar-identity {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: center;
+}
+
+/* Name and race/class/level read as one two-line block. */
+.builder-sidebar-identity .builder-character-name-heading {
+  margin: 0;
+}
+
+.builder-sidebar-identity .builder-character-name input {
+  line-height: 1.15;
+  padding-block: 0;
+}
+
+.builder-sidebar-identity .portrait-trigger {
+  height: 9rem;
+  margin-bottom: 0.5rem;
+  width: 9rem;
+}
+
+.builder-sidebar-identity h2.builder-character-name-heading {
+  inline-size: 100%;
+}
+
+.builder-sidebar-identity .builder-character-name {
+  font-size: 1.35rem;
+}
+
+.builder-sidebar-identity .builder-character-name input {
+  text-align: center;
+}
+
+.timeline-heading p {
+  margin-bottom: 0;
+}
+
+.builder-character-facts {
+  align-items: baseline;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  gap: 0.15rem 0.45rem;
+  justify-content: center;
+  margin: 0;
+}
+
+.builder-character-name-heading {
+  margin-bottom: 0.15rem;
+}
+
+/* The font is set on the label so the input and its sizing copy share it. */
+.builder-character-name {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.builder-character-name input {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  padding: 0.1rem 0;
+}
+
+.builder-character-name input:hover:not(:focus-visible) {
+  box-shadow: inset 0 -1px var(--border-strong);
+}
+
+.builder-character-name input:focus-visible {
+  box-shadow: inset 0 -3px var(--focus);
+  outline: none;
+}
+
+.builder-character-stats {
+  min-width: 0;
+}
+
+/* A text field as wide as its text (CharacterTextField fitContent): the
+   hidden ::after copy sizes the shared grid cell, but never past the
+   container or below a usable minimum. The copy has no height, so only the
+   input sets the line's height. */
+.text-field-fit {
+  display: inline-grid;
+  max-inline-size: 100%;
+  min-inline-size: min(8rem, 100%);
+  vertical-align: top;
+}
+
+.text-field-fit > input,
+.text-field-fit::after {
+  grid-area: 1 / 1;
+}
+
+.text-field-fit::after {
+  block-size: 0;
+  content: attr(data-value) " ";
+  overflow: hidden;
+  visibility: hidden;
+  white-space: pre;
+}
+
+.builder-character-stats dl,
+.builder-character-stats dd {
+  margin: 0;
+}
+
+.builder-character-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Initiative, speed and passive senses share a row, as on the Play card. */
+.builder-character-stat-row {
+  display: grid;
+  gap: 0.4rem;
+  grid-template-columns: 1fr 1fr 2.2fr;
+}
+
+/* Ability score left, label centered, modifier right. */
+.builder-character-abilities .stat-tiles-compact .stat-tile {
+  align-items: baseline;
+  column-gap: 0.3em;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+.builder-character-abilities .stat-tiles-compact .stat-tile dt {
+  display: contents;
+}
+/* Scores take a two-digit slot, right-aligned, so "8" spaces like "08". */
+.builder-character-abilities .stat-tiles-compact .stat-tile-lead {
+  font-size: 1.4em;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  justify-self: start;
+  margin-right: 0;
+  min-inline-size: 2ch;
+  text-align: right;
+}
+.builder-character-abilities .stat-tiles-compact .stat-tile dd {
+  justify-self: end;
+}
+
+/* Shared stat tiles at screen scale, in the printed Play card's group
+   palette (defenses green, health purple, movement teal, abilities blue). */
+.builder-sidebar-panel .stat-group {
+  font-size: 0.68rem;
+}
+
+.builder-sidebar-panel .stat-tile dd {
+  color: var(--text);
+  font-size: 2.3em;
+}
+
+.builder-sidebar-panel .stat-tiles-compact .stat-tile dd {
+  font-size: 1.4em;
+}
+
+.builder-sidebar-panel .stat-tile dd[title] {
+  cursor: help;
+}
+
+/* Square like the rest of the builder; page 1 and play cards keep rounding. */
+.builder-sidebar-panel .stat-group,
+.builder-sidebar-panel .stat-tile {
+  border-radius: 0;
+}
+
+.builder-sidebar-panel .stat-tile dt {
+  font-weight: 800;
+  letter-spacing: 0.045em;
+}
+
+/* Dark themes derive each group's tint and edge from its hue. */
+:root[data-theme="dark"] .builder-sidebar-panel .stat-group {
+  --stat-accent: color-mix(in srgb, var(--stat-hue) 45%, white);
+  --stat-edge: color-mix(in srgb, var(--stat-hue) 60%, var(--surface));
+  --stat-tint: color-mix(in srgb, var(--stat-hue) 24%, var(--surface));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .builder-sidebar-panel .stat-group {
+    --stat-accent: color-mix(in srgb, var(--stat-hue) 45%, white);
+    --stat-edge: color-mix(in srgb, var(--stat-hue) 60%, var(--surface));
+    --stat-tint: color-mix(in srgb, var(--stat-hue) 24%, var(--surface));
+  }
+}
+
+/* The rule under the tabs spans the whole bar, under the buttons too; the
+   selected tab's underline overlaps it. */
+.builder-tabs-bar {
+  align-items: stretch;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.builder-tabs-bar > .builder-status {
+  align-self: center;
+}
+
+/* One style for everything right of the builder tabs: status badges, save
+   state, undo/redo and the page actions are borderless, 2rem-tall, centered,
+   muted until hovered; badges and save state keep their meaning colors. */
+.builder-status {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 0.2rem;
+}
+
+.builder-status > :is(button, a, .save-status),
+.builder-status > .action-menu > button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--muted);
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 800;
+  gap: 0.25rem;
+  height: 2rem;
+  justify-content: center;
+  margin: 0;
+  min-width: 2rem;
+  padding: 0 0.35rem;
+  text-decoration: none;
+}
+
+.builder-status > :is(button, a):not(:disabled):hover,
+.builder-status > :is(button, a):focus-visible,
+.builder-status > .action-menu > button:not(:disabled):hover,
+.builder-status > .action-menu > button:focus-visible {
+  background: var(--surface-subtle);
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--text);
+}
+
+.builder-status .icon {
+  height: 1.1rem;
+  width: 1.1rem;
+}
+
+.builder-actions-divider {
+  border-left: 1px solid var(--border);
+  height: 1.25rem;
+  margin-inline: 0.3rem;
+}
+
+.builder-status > .builder-health-attention,
+.builder-status > .builder-health-warning {
+  color: var(--warning);
+}
+
+.builder-status > .builder-health-error {
+  color: var(--danger);
+}
+
+.builder-status > .builder-health-house-rule {
+  color: var(--accent);
+}
+
+.builder-status > .save-saved {
+  color: var(--success);
+}
+
+.builder-status > :is(.save-loading, .save-saving) {
+  color: var(--accent);
+}
+
+.builder-status > .save-failed {
+  color: var(--danger);
+}
+
+.builder-tabs {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 0.25rem;
+  margin-bottom: -1px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.builder-tabs :is(button, .builder-tab) {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  color: var(--muted);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font: inherit;
+  margin-bottom: -1px;
+  padding: 0.65rem;
+  text-decoration: none;
+}
+
+.builder-tabs :is(button, .builder-tab) .icon {
+  margin-right: 0.35rem;
+}
+
+.builder-tabs :is(button, .builder-tab)[aria-selected="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+/* Every tab strip (builder, level sections, notes) hovers alike: the text
+   darkens and only the bottom edge, where selection shows, takes the focus
+   color. Dividers never change, and the global button hover's bar is
+   dropped; a selected tab keeps its accent line. */
+:is(
+    .builder-tabs :is(button, .builder-tab),
+    .level-choice-tabs button,
+    .character-note-tabs > button
+  ):not(:disabled):not([aria-disabled="true"]):hover {
+  border-color: var(--border);
+  border-bottom-color: var(--focus);
+  box-shadow: none;
+  color: var(--text);
+}
+
+:is(
+    .builder-tabs :is(button, .builder-tab),
+    .level-choice-tabs button,
+    .character-note-tabs > button
+  )[aria-selected="true"]:not(:disabled):not([aria-disabled="true"]):hover {
+  border-bottom-color: var(--accent);
+}
+
+.tab-attention {
+  color: var(--warning);
+  display: inline-flex;
+  margin-left: 0.18rem;
+  position: relative;
+  top: -0.38em;
+}
+
+.tab-attention .icon {
+  height: 0.72rem;
+  width: 0.72rem;
+}
+
+.builder-workspace {
+  --builder-workspace-gutter: 1rem;
+  align-items: start;
+  display: grid;
+  gap: var(--builder-workspace-gutter);
+  grid-template-columns: minmax(0, 1fr);
+  position: relative;
+}
+
+.builder-workspace[hidden],
+.modern-builder > div[hidden] {
+  display: none;
+}
+
+/* The Build tab's "Level N" heading opens the level plan. */
+.level-picker-heading {
+  margin: 0;
+}
+
+.level-picker-trigger {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  display: inline-flex;
+  font: inherit;
+  gap: 0.3rem;
+  padding: 0.1rem 0.2rem;
+}
+
+.level-choice-tab-bar .level-picker-trigger:not(:disabled):hover {
+  background: rgb(255 255 255 / 0.12);
+  box-shadow: none;
+}
+
+.level-picker-trigger:not(:disabled):hover {
+  background: var(--surface-subtle);
+}
+
+.level-picker-trigger .icon {
+  height: 0.9em;
+  transform: rotate(90deg);
+  width: 0.9em;
+}
+
+/* The level plan drops down from the Level heading, over the page. */
+.level-picker {
+  display: flex;
+  flex: 0 0 auto;
+  position: relative;
+}
+
+.level-picker-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--brand-navy);
+  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.2);
+  display: grid;
+  gap: 0.75rem;
+  inset-block-start: 100%;
+  inset-inline-start: 0;
+  padding: 0.75rem;
+  position: absolute;
+  width: min(28rem, calc(100vw - 2rem));
+  z-index: 20;
+}
+
+.level-picker-tier h4 {
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.3rem;
+  text-transform: uppercase;
+}
+
+.level-picker-tier ol {
+  border: 1px solid var(--border);
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.level-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.level-grid .level-rail-button {
+  flex-direction: column;
+  min-height: 2.6rem;
+  padding-inline: 0;
+}
+
+.level-rail-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--muted);
+  display: flex;
+  font-size: 0.72rem;
+  font-weight: 800;
+  gap: 0.25rem;
+  justify-content: center;
+  line-height: 1;
+  min-height: 1.425rem;
+  padding: 0.15rem 0.45rem;
+  width: 100%;
+}
+
+/* The selected level is underlined like a selected tab; hovering it keeps
+   that underline rather than the app-wide button hover line. */
+.level-rail-button[aria-current="step"],
+.level-rail-button[aria-current="step"]:not(:disabled):hover {
+  background: var(--accent-soft);
+  box-shadow: inset 0 -3px var(--accent);
+  color: var(--text);
+}
+
+/* A pending pick in the Set level dialog: the selection blue. */
+.level-rail-button[aria-pressed="true"],
+.level-rail-button[aria-pressed="true"]:not(:disabled):hover {
+  background: var(--selected-soft);
+  box-shadow: inset 0 -3px var(--selected);
+  color: var(--text);
+}
+
+.level-rail-button > span:first-child {
+  font-size: 0.9rem;
+}
+
+.level-rail-status {
+  background: var(--muted);
+  block-size: 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  inline-size: 0.45rem;
+}
+
+.level-rail-complete .level-rail-status {
+  background: var(--success);
+}
+
+.level-rail-incomplete .level-rail-status {
+  background: linear-gradient(90deg, var(--warning) 50%, transparent 50%);
+  border-color: var(--warning);
+}
+
+.level-rail-planned-complete .level-rail-status {
+  background: var(--muted);
+  border-color: var(--muted);
+}
+
+.level-rail-planned-partial .level-rail-status {
+  background: linear-gradient(90deg, var(--muted) 50%, transparent 50%);
+  border-color: var(--muted);
+}
+
+.level-rail-future {
+  color: color-mix(in srgb, var(--muted) 65%, transparent);
+}
+
+.level-rail-future .level-rail-status {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--muted) 55%, transparent);
+}
+
+.timeline-heading {
+  align-items: end;
+  background: var(--surface-subtle);
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 0.85rem;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.timeline-heading h3 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.timeline-heading label {
+  display: grid;
+  font-size: 0.68rem;
+  font-weight: 700;
+  gap: 0.2rem;
+}
+
+.timeline-heading select {
+  min-width: 5rem;
+}
+
+.timeline-heading-actions {
+  align-items: end;
+  display: flex;
+  gap: 0.6rem;
+}
+
+.choice-pane {
+  min-height: 30rem;
+  min-width: 0;
+}
+
+.level-choice-page {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.level-choice-tabs-layout {
+  display: grid;
+  gap: var(--builder-workspace-gutter);
+  min-width: 0;
+}
+
+.level-choice-tab-bar {
+  align-items: stretch;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  display: flex;
+  min-width: 0;
+}
+
+/* The Level heading is a label (and level-plan trigger), not a tab, so it
+   carries no selection line. */
+.level-choice-tab-bar h3 {
+  align-items: stretch;
+  background: var(--brand-navy);
+  color: #fff;
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 0.9rem;
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* The whole Level segment is the trigger and highlights as one, like the
+   section tabs beside it. */
+.level-choice-tab-bar .level-picker-trigger {
+  border-radius: 0;
+  padding: 0.55rem 0.85rem;
+}
+
+.level-choice-tabs {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.level-choice-tabs button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  border-bottom: 3px solid transparent;
+  border-right: 1px solid var(--border);
+  color: var(--muted);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.82rem;
+  font-weight: 800;
+  gap: 0.4rem;
+  min-height: 2.9rem;
+  padding: 0.55rem 0.8rem;
+  white-space: nowrap;
+}
+
+/* Hovering keeps the divider between tabs its normal color (the app-wide
+   button hover would turn it blue). */
+.level-choice-tabs button[aria-selected="true"] {
+  background: var(--surface);
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+.level-choice-tabs button.choice-tab-incomplete:not([aria-selected="true"]) {
+  background: color-mix(in srgb, var(--warning-soft), var(--warning) 12%);
+}
+
+.level-choice-tabs button.choice-tab-incomplete > .icon:first-child,
+.choice-tab-status {
+  color: var(--warning);
+}
+
+.choice-tab-status {
+  background: currentColor;
+  border-radius: 50%;
+  height: 0.45rem;
+  width: 0.45rem;
+}
+
+.level-choice-tab-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+
+.level-choice-tab-panel > .retraining-section {
+  border: 0;
+}
+
+.level-choice-workspace {
+  align-items: start;
+  display: grid;
+  gap: var(--builder-workspace-gutter);
+  grid-template-columns: minmax(0, 1fr) var(--panel-card-width);
+}
+
+/* Level tab tables end at the bottom of the window; later tables in a tab
+   share the first one's height (--fitted-table-height, measured by
+   use-fitted-table-height.ts). Short lists still shrink to their rows. */
+@media (min-width: 60.01rem) and (min-height: 30rem) {
+  .level-choice-tab-panel .selection-table-scroll {
+    height: var(--fitted-table-height, max(24rem, calc(100dvh - 30rem)));
+    max-height: none;
+  }
+
+  .level-choice-tab-panel .candidate-selection-short .selection-table-scroll {
+    height: auto;
+    max-height: var(--fitted-table-height, calc(100dvh - 30rem));
+  }
+}
+
+/* While a card scrolls in the detail pane, its title band and type bar stay
+   in place so only the body moves (wide layouts, where the pane scrolls).
+   The -4px offsets cover the pane's focus-outline inset, so no scrolled
+   content shows above the title or below the type bar.
+   Where the two meet (a card scrolling in from below), the title band
+   stays on top of the type bar. */
+@media (min-width: 60.01rem) {
+  .shared-choice-detail
+    :is(.print-reference-card.is-panel, .reference-entity-card)
+    > :is(header, .reference-card-title) {
+    position: sticky;
+    top: -4px;
+    z-index: 2;
+  }
+  .shared-choice-detail
+    :is(.print-reference-card.is-panel, .reference-entity-card)
+    > .print-card-type {
+    bottom: -4px;
+    position: sticky;
+    z-index: 1;
+  }
+}
+
+/* Long details (a class, a deity) scroll inside the pane instead of running
+   past the window; the small inset keeps card focus outlines visible. */
+.shared-choice-detail {
+  max-height: calc(100dvh - 2rem);
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+  margin: -4px;
+  position: sticky;
+  top: 1rem;
+}
+
+.character-details-pane {
+  min-height: 24rem;
+}
+
+.character-details-workspace {
+  align-items: start;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) var(--panel-card-width);
+}
+
+.character-details-form {
+  display: grid;
+  gap: 1rem;
+}

@@ -1,0 +1,154 @@
+/* Printed sheet sections and values. */
+
+.sheet-columns section,
+.print-summary-columns section {
+  break-inside: avoid;
+  margin-bottom: 0.75rem;
+}
+.sheet-columns section > h3,
+.print-summary-columns section > h3,
+.print-wide-section > h3,
+.card-section > h2 {
+  background: #20272a;
+  color: #fff;
+  font-size: 1rem;
+  letter-spacing: 0.03em;
+  margin: 0;
+  padding: 0.2rem 0.45rem;
+  text-transform: uppercase;
+}
+.print-wide-section {
+  break-inside: auto;
+  margin-top: 0.75rem;
+}
+.print-feature-grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-top: 0.5rem;
+}
+.print-reference-grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-top: 0.5rem;
+}
+.print-reference-grid .learned-reference-card {
+  break-inside: avoid;
+  color: #111;
+}
+.print-feature-grid > section {
+  break-inside: avoid;
+  border: 1px solid #ccc;
+}
+.print-feature-grid h4 {
+  background: #eee;
+  color: #111;
+  margin: 0;
+  padding: 0.25rem 0.35rem;
+}
+.print-feature-grid .sheet-values > div {
+  display: block;
+}
+.print-feature-grid .sheet-values dt {
+  font-weight: 800;
+}
+.print-feature-grid .sheet-values dd {
+  margin: 0.1rem 0 0;
+}
+.print-equipment-list {
+  columns: 2;
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0;
+}
+.print-equipment-list > li {
+  break-inside: avoid;
+  border-bottom: 1px solid #ccc;
+  padding: 0.2rem 0.35rem;
+}
+.print-notes-section > dl {
+  margin: 0;
+}
+.print-notes-section > dl > div {
+  break-inside: avoid;
+  border-bottom: 1px solid #ccc;
+  padding: 0.4rem 0.35rem;
+}
+.print-notes-section dt {
+  font-weight: 800;
+}
+.print-notes-section dd {
+  margin: 0.15rem 0 0;
+  white-space: pre-wrap;
+}
+.sheet-values {
+  display: grid;
+  margin: 0;
+}
+.sheet-values > div {
+  border-bottom: 1px solid #ccc;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(7rem, 1fr) minmax(0, 2fr);
+  padding: 0.25rem 0.35rem;
+}
+.large-values {
+  grid-template-columns: repeat(4, 1fr);
+}
+.large-values > div {
+  display: block;
+  text-align: center;
+}
+.large-values dd {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+.card-section > h2 {
+  margin: -1rem -1rem 0.8rem;
+  padding: 0.4rem 0.8rem;
+}
+.card-grid {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.sheet-card-flavor {
+  font-style: italic;
+  margin-bottom: 0.35rem;
+}
+.sheet-card-flavor .prose-blocks,
+.sheet-card-flavor .prose-paragraph {
+  margin: 0;
+}
+.sheet-card-rules {
+  margin: 0;
+}
+.sheet-card-rules > div {
+  border-top: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  display: grid;
+  gap: 0.35rem;
+  grid-template-columns: minmax(4.7rem, auto) minmax(0, 1fr);
+  padding: 0.3rem 0;
+}
+.sheet-card-rules dt {
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.sheet-card-rules dd {
+  margin: 0;
+  min-width: 0;
+}
+.sheet-card-rules .prose-blocks,
+.sheet-card-rules .prose-paragraph {
+  margin: 0;
+}
+
+.editor-page {
+  /* The page's edge padding matches the gap between the sidebar and the
+     workspace. */
+  --builder-gap: 1rem;
+  margin: 0 auto;
+  max-width: 100rem;
+  padding: var(--builder-gap);
+}
