@@ -3956,6 +3956,29 @@ textarea {
   color: var(--text);
 }
 
+/* Every tab strip (builder, level sections, notes) hovers alike: the text
+   darkens and only the bottom edge, where selection shows, takes the focus
+   color. Dividers never change, and the global button hover's bar is
+   dropped; a selected tab keeps its accent line. */
+:is(
+    .builder-tabs :is(button, .builder-tab),
+    .level-choice-tabs button,
+    .character-note-tabs > button
+  ):not(:disabled):not([aria-disabled="true"]):hover {
+  border-color: var(--border);
+  border-bottom-color: var(--focus);
+  box-shadow: none;
+  color: var(--text);
+}
+
+:is(
+    .builder-tabs :is(button, .builder-tab),
+    .level-choice-tabs button,
+    .character-note-tabs > button
+  )[aria-selected="true"]:not(:disabled):not([aria-disabled="true"]):hover {
+  border-bottom-color: var(--accent);
+}
+
 .tab-attention {
   color: var(--warning);
   display: inline-flex;
@@ -4246,10 +4269,6 @@ textarea {
 
 /* Hovering keeps the divider between tabs its normal color (the app-wide
    button hover would turn it blue). */
-.level-choice-tabs button:not(:disabled):not([aria-disabled="true"]):hover {
-  border-right-color: var(--border);
-}
-
 .level-choice-tabs button[aria-selected="true"] {
   background: var(--surface);
   border-bottom-color: var(--accent);
@@ -4493,6 +4512,23 @@ textarea {
   position: relative;
 }
 
+/* Hover like the segmented control: the whole outline, lifted over the
+   edges it shares with its neighbours, and no bottom bar to compete with
+   the selection bar. */
+.character-detail-choice
+  .compact-choice-options
+  > button:not(:disabled):not([aria-disabled="true"]):hover {
+  box-shadow: none;
+  position: relative;
+  z-index: 1;
+}
+
+.character-detail-choice
+  .compact-choice-options
+  > button.is-selected:not(:disabled):not([aria-disabled="true"]):hover {
+  box-shadow: inset 0 -3px var(--selected);
+}
+
 .character-detail-choice .deity-alignment-note {
   margin-inline-start: var(--detail-choice-label-width);
 }
@@ -4517,11 +4553,6 @@ textarea {
   font-weight: 800;
   margin-bottom: -1px;
   padding: 0.55rem 0.8rem;
-}
-
-.character-note-tabs > button:not(:disabled):hover {
-  box-shadow: none;
-  color: var(--text);
 }
 
 .character-note-tabs > button[aria-selected="true"] {

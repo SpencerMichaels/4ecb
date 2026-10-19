@@ -205,9 +205,12 @@ button.dialog-close {
   margin-inline-start: 0;
 }
 
+/* Lifted over its neighbours (a selected one included) so all four edges
+   of the hovered option show. */
 .segmented-control-options > label:hover {
   border-color: var(--focus);
   position: relative;
+  z-index: 1;
 }
 
 .segmented-control-options > label:has(input:checked) {

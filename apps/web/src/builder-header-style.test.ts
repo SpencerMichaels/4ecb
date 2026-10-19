@@ -191,13 +191,20 @@ describe("level heading segment", () => {
   });
 });
 
-describe("level section tab hover", () => {
-  it("keeps the tab divider uncolored on hover", () => {
-    expect(
-      declarationsFor(
-        '.level-choice-tabs button:not(:disabled):not([aria-disabled="true"]):hover',
-      ),
-    ).toContain("border-right-color: var(--border)");
+describe("tab hover", () => {
+  it("gives every tab strip one hover that keeps dividers uncolored", () => {
+    const hover = styles.match(
+      /\n:is\(([^)]*\)[^)]*)\):not\(:disabled\):not\(\[aria-disabled="true"\]\):hover\s*\{([^}]*)\}/,
+    );
+    expect(hover?.[1]).toContain(".builder-tabs :is(button, .builder-tab)");
+    expect(hover?.[1]).toContain(".level-choice-tabs button");
+    expect(hover?.[1]).toContain(".character-note-tabs > button");
+    expect(hover?.[2]).toContain("border-color: var(--border)");
+    expect(hover?.[2]).toContain("border-bottom-color: var(--focus)");
+    expect(hover?.[2]).toContain("box-shadow: none");
+    expect(styles).not.toMatch(
+      /\.character-note-tabs > button:not\(:disabled\):hover/,
+    );
   });
 });
 
