@@ -127,16 +127,21 @@ export function PortraitEditor({
     );
   }
 
-  function zoomCrop(event: WheelEvent<HTMLDivElement>): void {
+  /** Scales the crop window: a factor below 1 zooms in, above 1 out. */
+  function scaleCrop(factor: number): void {
     if (crop === undefined || source === undefined) return;
-    event.preventDefault();
     setCrop(
       clampPortraitCrop(
-        { ...crop, size: crop.size * (event.deltaY > 0 ? 1.08 : 0.92) },
+        { ...crop, size: crop.size * factor },
         source.sourceWidth,
         source.sourceHeight,
       ),
     );
+  }
+
+  function zoomCrop(event: WheelEvent<HTMLDivElement>): void {
+    event.preventDefault();
+    scaleCrop(event.deltaY > 0 ? 1.08 : 0.92);
   }
 
   async function save(): Promise<void> {
@@ -269,7 +274,16 @@ export function PortraitEditor({
                   />
                 </div>
                 <div className="portrait-zoom-control">
-                  <Minus aria-hidden="true" />
+                  <button
+                    aria-label="Zoom out"
+                    className="button-icon"
+                    disabled={zoom <= 1.001}
+                    title="Zoom out"
+                    type="button"
+                    onClick={() => scaleCrop(1.25)}
+                  >
+                    <Minus aria-hidden="true" />
+                  </button>
                   <label>
                     <span className="visually-hidden">Portrait zoom</span>
                     <input
@@ -293,7 +307,16 @@ export function PortraitEditor({
                       }
                     />
                   </label>
-                  <Plus aria-hidden="true" />
+                  <button
+                    aria-label="Zoom in"
+                    className="button-icon"
+                    disabled={zoom >= 11.999}
+                    title="Zoom in"
+                    type="button"
+                    onClick={() => scaleCrop(0.8)}
+                  >
+                    <Plus aria-hidden="true" />
+                  </button>
                 </div>
                 <label className="file-button portrait-replace-button">
                   Replace image
