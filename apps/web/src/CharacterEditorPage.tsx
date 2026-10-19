@@ -257,7 +257,6 @@ export function CharacterEditorPage({
   characterId,
   navigation,
   onNavigate,
-  keepLargeAmountsInGold,
   mergeFunds,
   resolveAbilityChoices,
   abbreviateAbilityValues,
@@ -271,7 +270,6 @@ export function CharacterEditorPage({
     navigation: BuilderNavigation,
     replace?: boolean,
   ) => void;
-  readonly keepLargeAmountsInGold: boolean;
   readonly mergeFunds: boolean;
   readonly resolveAbilityChoices: boolean;
   readonly abbreviateAbilityValues: boolean;
@@ -2584,7 +2582,6 @@ export function CharacterEditorPage({
                         kind: "purchase-inventory",
                         entry,
                         priceCopper,
-                        keepLargeAmountsInGold,
                       })
                     }
                     onSell={(entry, priceCopper, percentage) =>
@@ -2593,7 +2590,6 @@ export function CharacterEditorPage({
                         entryId: entry.id,
                         priceCopper,
                         percentage,
-                        keepLargeAmountsInGold,
                       })
                     }
                     onEquipSlot={(

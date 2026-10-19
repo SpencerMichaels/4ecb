@@ -145,6 +145,7 @@ export type IconName =
   | "dice-5"
   | "trending-up"
   | "companion"
+  | "consolidate"
   | "content"
   | "crown"
   | "details"
@@ -287,6 +288,7 @@ const icons: Record<IconName, LucideIcon> = {
   import: FolderInput,
   export: SquareArrowRightExit,
   affordable: Coins,
+  consolidate: Coins,
   proficient: BadgeCheck,
   known: BookCheck,
   item: Backpack,

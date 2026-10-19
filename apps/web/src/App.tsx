@@ -110,8 +110,6 @@ const SettingsPage = lazy(() => initialSettingsPage ?? loadSettingsPage());
 
 const HIDE_FLAVORTEXT_STORAGE_KEY = "4ecb.hideFlavortext.v1";
 const SHOW_ENTITY_SOURCE_STORAGE_KEY = "4ecb.showEntitySource.v1";
-export const KEEP_LARGE_AMOUNTS_IN_GOLD_STORAGE_KEY =
-  "4ecb.keepLargeAmountsInGold.v1";
 export const MERGE_FUNDS_STORAGE_KEY = "4ecb.mergeFunds.v1";
 export const RESOLVE_ABILITY_CHOICES_STORAGE_KEY =
   "4ecb.resolveAbilityChoices.v1";
@@ -177,15 +175,6 @@ export function App() {
   const [showEntitySource, setShowEntitySource] = useState<boolean>(() => {
     try {
       return localStorage.getItem(SHOW_ENTITY_SOURCE_STORAGE_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
-  const [keepLargeAmountsInGold, setKeepLargeAmountsInGold] = useState(() => {
-    try {
-      return (
-        localStorage.getItem(KEEP_LARGE_AMOUNTS_IN_GOLD_STORAGE_KEY) === "1"
-      );
     } catch {
       return false;
     }
@@ -297,15 +286,6 @@ export function App() {
       // The visual preference still applies for this session.
     }
   }, [showEntitySource]);
-  useEffect(() => {
-    try {
-      if (keepLargeAmountsInGold)
-        localStorage.setItem(KEEP_LARGE_AMOUNTS_IN_GOLD_STORAGE_KEY, "1");
-      else localStorage.removeItem(KEEP_LARGE_AMOUNTS_IN_GOLD_STORAGE_KEY);
-    } catch {
-      // The wallet preference still applies for this session.
-    }
-  }, [keepLargeAmountsInGold]);
   useEffect(() => {
     try {
       if (resolveAbilityChoices)
@@ -574,8 +554,6 @@ export function App() {
                       onHideFlavortextChange={setHideFlavortext}
                       showEntitySource={showEntitySource}
                       onShowEntitySourceChange={setShowEntitySource}
-                      keepLargeAmountsInGold={keepLargeAmountsInGold}
-                      onKeepLargeAmountsInGoldChange={setKeepLargeAmountsInGold}
                       mergeFunds={mergeFunds}
                       onMergeFundsChange={setMergeFunds}
                       countCoinWeight={countCoinWeight}
@@ -605,7 +583,6 @@ export function App() {
                       characterId={route.characterId}
                       navigation={route.builder ?? { workspace: "build" }}
                       onNavigate={navigateBuilder}
-                      keepLargeAmountsInGold={keepLargeAmountsInGold}
                       mergeFunds={mergeFunds}
                       resolveAbilityChoices={resolveAbilityChoices}
                       abbreviateAbilityValues={abbreviateAbilityValues}

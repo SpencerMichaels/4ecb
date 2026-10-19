@@ -1185,6 +1185,7 @@ only denomination cells whose displayed totals changed; failures retain and
 focus the input, announce the error, and use a non-layout-shifting error flash.
 Both effects respect reduced-motion preferences.
 
+(Superseded by D086: the preference is removed and nothing re-mints a wallet.)
 The browser-persisted **Keep large amounts in gold** display preference caps
 automatic normalization at GP for Quick adjust, purchases, sales, and compact
 totals. It does not prohibit PP or AD: explicitly entered larger coins remain
@@ -2328,6 +2329,33 @@ to look it up is clearer than two. Headers show the ability formula against
 the defense (`STR vs AC`, `DEX+2 vs Ref`). The settings' stored preferences
 (`4ecb.showEquippedAttackBonus.v1`, `4ecb.showPrintTitleActionIcon.v1`) are no
 longer read.
+
+### D086 — Coins are never consolidated automatically
+
+Status: accepted (2026-10-19). Supersedes the **Keep large amounts in gold**
+preference.
+
+Player feedback: coins "simplified themselves" (1,500 gp became 15 pp, large
+totals became astral diamonds), which read as an import bug. Purchases and
+sales re-minted the whole wallet from a copper total unless the preference was
+on. Now no transaction re-mints a wallet. A purchase still pays carried funds
+before stored (the recovered legacy order) but from the coins themselves
+(`payWalletCopper`): it spends the price's gold, silver and copper, and breaks
+the nearest larger coin only for a shortfall, as quick adjust does. A sale adds
+its proceeds as gold, silver and copper. The preference is removed.
+Consolidation is an explicit wallet action (`consolidateCurrency`): coins
+become the fewest of equal value up to platinum, each location on its own.
+Astral diamonds are kept and never minted. They are treasure rather than
+change, and a level-30 hoard still reads fine in platinum.
+
+Quick adjust takes a bare number as gold (`50`, `-15`) and `d` as well as `ad`
+for astral diamonds, since prices are
+quoted in gold and players typed numbers that were silently rejected. Its
+error, previously screen-reader only, shows in a bubble under the field until
+the next keystroke, Escape or blur. A changed coin count rolls like an
+odometer: each changed digit turns in from below as the count grows, from
+above as it shrinks, the rightmost first, while its tile pulses
+(reduced motion: the new digits show at once).
 
 ## Deferred decisions and decision points
 

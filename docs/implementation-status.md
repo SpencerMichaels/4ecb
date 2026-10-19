@@ -1,5 +1,17 @@
 # Implementation status
 
+## Wallet: no automatic consolidation; clearer quick adjust (2026-10-19)
+
+Player feedback (D086). Purchases and sales keep the coins held instead of
+re-minting the wallet. Carried funds are still spent before stored, and a
+shortfall breaks the nearest larger coin. The **Keep large amounts in gold**
+setting is gone. A Consolidate button at the end of the quick-adjust tile
+exchanges coins for the fewest of equal value up to platinum (diamonds kept);
+it is disabled when there is nothing to consolidate. Quick adjust reads a bare
+number as gold, shows its error in a bubble under the field, and every
+changed coin count rolls its changed digits like an odometer. Verification:
+format, lint, typecheck, build and 969 workspace tests pass; visual review is pending.
+
 ## Stylesheets split by surface (2026-10-18)
 
 `apps/web/src/styles.css` (~7,900 lines) became 16 files in

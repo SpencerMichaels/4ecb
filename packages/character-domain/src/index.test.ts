@@ -3,13 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   addCurrency,
   adjustWalletCoins,
-  adjustWalletCurrency,
+  consolidateCurrency,
   buildElementNames,
   characterDisplayName,
   applyCharacterCommand,
   CharacterTransaction,
   currencyFromCopper,
-  currencyFromCopperKeepingLargeCoins,
   currencyToCopper,
   detailsWithLegacyTextStrings,
   duplicateCharacterRecord,
@@ -25,7 +24,7 @@ import {
   newNativeCharacterRecord,
   parseLegacyCurrency,
   parseCoinAdjustment,
-  parseCurrencyAdjustment,
+  payWalletCopper,
   resolveCharacterWallet,
   subtractCurrency,
   type CharacterBuild,
@@ -374,56 +373,11 @@ describe("character records", () => {
     ).toThrow("Insufficient currency");
   });
 
-  it("keeps explicit large coins while normalizing automatic change through gold", () => {
+  it("consolidates coins up to platinum and leaves diamonds as they are", () => {
     expect(
-      currencyFromCopperKeepingLargeCoins(1_250_000, {
-        ad: 1,
-        pp: 5,
-        gp: 0,
-        sp: 0,
-        cp: 0,
-      }),
-    ).toEqual({ ad: 1, pp: 5, gp: 2000, sp: 0, cp: 0 });
-    expect(
-      currencyFromCopperKeepingLargeCoins(990_000, {
-        ad: 1,
-        pp: 5,
-        gp: 0,
-        sp: 0,
-        cp: 0,
-      }),
-    ).toEqual({ ad: 0, pp: 5, gp: 9400, sp: 0, cp: 0 });
-  });
-
-  it("parses one compact signed wallet adjustment exactly", () => {
-    expect(parseCurrencyAdjustment("20pp")).toBe(200_000);
-    expect(parseCurrencyAdjustment(" -15 gp ")).toBe(-1_500);
-    expect(parseCurrencyAdjustment("+73 SP")).toBe(730);
-    expect(parseCurrencyAdjustment("0 ad")).toBe(0);
-    expect(() => parseCurrencyAdjustment("15")).toThrow("such as");
-    expect(() => parseCurrencyAdjustment("1 gp; 2 sp")).toThrow("such as");
-    expect(() => parseCurrencyAdjustment("9007199254740991 ad")).toThrow(
-      "too large",
-    );
-  });
-
-  it("credits carried funds and deducts carried before stored atomically", () => {
-    const carried = currencyFromCopper(1_000);
-    const stored = currencyFromCopper(2_000);
-    expect(adjustWalletCurrency(carried, stored, 500)).toEqual({
-      carried: currencyFromCopper(1_500),
-      stored,
-    });
-    expect(adjustWalletCurrency(carried, stored, -1_500)).toEqual({
-      carried: currencyFromCopper(0),
-      stored: currencyFromCopper(1_500),
-    });
-    expect(() => adjustWalletCurrency(carried, stored, -3_001)).toThrow(
-      "Not enough funds",
-    );
-    expect(() =>
-      adjustWalletCurrency(carried, stored, Number.MAX_SAFE_INTEGER),
-    ).toThrow("too large");
+      consolidateCurrency({ ad: 1, pp: 2, gp: 15_250, sp: 13, cp: 27 }),
+    ).toEqual({ ad: 1, pp: 154, gp: 51, sp: 5, cp: 7 });
+    expect(consolidateCurrency(ZERO_CURRENCY)).toEqual(ZERO_CURRENCY);
   });
 
   it("inherits the latest legacy wallet text at or below the requested level", () => {
@@ -599,32 +553,57 @@ describe("character records", () => {
       percentage: 50,
     });
     expect(soldAgain.inventory).toEqual([]);
-    expect(soldAgain.textStrings["_PER_LEVEL_4_Carried Money"]).toBe("1 gp");
+    expect(soldAgain.textStrings["_PER_LEVEL_4_Carried Money"]).toBe("10 sp");
   });
 
-  it("can keep automatic purchase and sale normalization in gold", () => {
+  it("buys and sells with the coins held, never re-minting the wallet", () => {
     const wealthy: CharacterBuild = {
       ...build,
-      textStrings: { "_PER_LEVEL_1_Carried Money": "1 ad; 10000 gp" },
+      textStrings: { "_PER_LEVEL_1_Carried Money": "1 ad; 3 pp; 250 gp; 5 sp" },
       inventory: [inventoryEntry("gem")],
     };
-    const sold = applyCharacterCommand(wealthy, {
+    const bought = applyCharacterCommand(wealthy, {
+      kind: "purchase-inventory",
+      entry: inventoryEntry("rope"),
+      priceCopper: 2_010,
+    });
+    expect(bought.textStrings["_PER_LEVEL_1_Carried Money"]).toBe(
+      "1 ad; 3 pp; 230 gp; 4 sp",
+    );
+    const sold = applyCharacterCommand(bought, {
       kind: "sell-inventory",
       entryId: "gem",
       priceCopper: 20_000,
       percentage: 100,
-      keepLargeAmountsInGold: true,
     });
     expect(sold.textStrings["_PER_LEVEL_1_Carried Money"]).toBe(
-      "1 ad; 10200 gp",
+      "1 ad; 3 pp; 430 gp; 4 sp",
     );
-    const purchased = applyCharacterCommand(sold, {
+    // A shortfall breaks the nearest larger coin, the change kept as coins.
+    const broke = applyCharacterCommand(sold, {
       kind: "purchase-inventory",
       entry: inventoryEntry("purchase"),
-      priceCopper: 1_110_000,
-      keepLargeAmountsInGold: true,
+      priceCopper: 50_000,
     });
-    expect(purchased.textStrings["_PER_LEVEL_1_Carried Money"]).toBe("9100 gp");
+    expect(broke.textStrings["_PER_LEVEL_1_Carried Money"]).toBe(
+      "1 ad; 2 pp; 30 gp; 4 sp",
+    );
+  });
+
+  it("pays carried funds before stored ones, coin by coin", () => {
+    const coins = (overrides: Partial<CurrencyAmount>): CurrencyAmount => ({
+      ...ZERO_CURRENCY,
+      ...overrides,
+    });
+    expect(
+      payWalletCopper(coins({ pp: 1, sp: 5 }), coins({ gp: 40 }), 1_000),
+    ).toEqual({ carried: coins({ gp: 90, sp: 5 }), stored: coins({ gp: 40 }) });
+    expect(
+      payWalletCopper(coins({ gp: 5 }), coins({ pp: 1, gp: 2 }), 1_000),
+    ).toEqual({ carried: ZERO_CURRENCY, stored: coins({ gp: 97 }) });
+    expect(() => payWalletCopper(coins({ gp: 1 }), ZERO_CURRENCY, 101)).toThrow(
+      "Insufficient currency",
+    );
   });
 
   it("rejects invalid inventory transactions before changing a build", () => {
@@ -732,6 +711,10 @@ describe("coin-aware wallet adjustments", () => {
   it("parses the coin and signed count typed", () => {
     expect(parseCoinAdjustment("-1pp")).toEqual({ coin: "pp", count: -1 });
     expect(parseCoinAdjustment(" 20 GP ")).toEqual({ coin: "gp", count: 20 });
+    expect(parseCoinAdjustment("50")).toEqual({ coin: "gp", count: 50 });
+    expect(parseCoinAdjustment("-15")).toEqual({ coin: "gp", count: -15 });
+    expect(parseCoinAdjustment("2d")).toEqual({ coin: "ad", count: 2 });
+    expect(parseCoinAdjustment("-1 AD")).toEqual({ coin: "ad", count: -1 });
     expect(() => parseCoinAdjustment("lots")).toThrow();
   });
 

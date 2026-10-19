@@ -113,10 +113,8 @@ export interface SettingsPageProps {
   readonly onHideFlavortextChange: (hideFlavortext: boolean) => void;
   readonly showEntitySource: boolean;
   readonly onShowEntitySourceChange: (showEntitySource: boolean) => void;
-  readonly keepLargeAmountsInGold: boolean;
   readonly countCoinWeight: boolean;
   readonly onCountCoinWeightChange: (value: boolean) => void;
-  readonly onKeepLargeAmountsInGoldChange: (value: boolean) => void;
   readonly mergeFunds: boolean;
   readonly onMergeFundsChange: (value: boolean) => void;
   readonly resolveAbilityChoices: boolean;
@@ -184,10 +182,8 @@ export function SettingsPage({
   onHideFlavortextChange,
   showEntitySource,
   onShowEntitySourceChange,
-  keepLargeAmountsInGold,
   countCoinWeight,
   onCountCoinWeightChange,
-  onKeepLargeAmountsInGoldChange,
   mergeFunds,
   onMergeFundsChange,
   resolveAbilityChoices,
@@ -547,11 +543,6 @@ export function SettingsPage({
                 onChange={onShowEntitySourceChange}
                 label="Show entity source"
                 help="Name the sourcebook in a line at the bottom of each card in the builder, Equipment, and Shop."
-              />
-              <CheckboxSetting
-                checked={keepLargeAmountsInGold}
-                onChange={onKeepLargeAmountsInGoldChange}
-                label="Keep large amounts in gold"
               />
               <CheckboxSetting
                 checked={mergeFunds}

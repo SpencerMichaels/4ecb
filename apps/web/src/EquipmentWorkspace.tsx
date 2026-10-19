@@ -1,7 +1,16 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  Fragment,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import {
   CURRENCY_DENOMINATIONS,
+  consolidateCurrency,
   currencyToCopper,
   inventoryEntryWithQuantity,
   parseCoinAdjustment,
@@ -109,6 +118,43 @@ function locationCurrency(
     pp: coins.platinum,
     ad: coins.astral,
   };
+}
+
+function locationCoins(
+  amount: CurrencyAmount,
+): EquipmentWalletView[MoneyLocation] {
+  return {
+    copper: amount.cp,
+    silver: amount.sp,
+    gold: amount.gp,
+    platinum: amount.pp,
+    astral: amount.ad,
+  };
+}
+
+/** The wallet with the shown coins consolidated (up to platinum, diamonds
+ * kept), each location on its own so carried and stored totals never move. */
+export function consolidatedWallet(
+  wallet: EquipmentWalletView,
+  location: MoneyLocation | undefined,
+): EquipmentWalletView {
+  const consolidate = (coins: EquipmentWalletView[MoneyLocation]) =>
+    locationCoins(consolidateCurrency(locationCurrency(coins)));
+  return location === undefined
+    ? {
+        carried: consolidate(wallet.carried),
+        stored: consolidate(wallet.stored),
+      }
+    : { ...wallet, [location]: consolidate(wallet[location]) };
+}
+
+function sameWallet(
+  left: EquipmentWalletView,
+  right: EquipmentWalletView,
+): boolean {
+  return (["carried", "stored"] as const).every((where) =>
+    DENOMINATIONS.every(({ id }) => left[where][id] === right[where][id]),
+  );
 }
 
 /** The coins the wallet shows: every coin owned when funds are merged, else
@@ -392,6 +438,56 @@ function LoadoutGrid({
   );
 }
 
+/**
+ * A coin count whose changed characters roll in like an odometer: up (the
+ * new digit from below) when the count grows, down when it shrinks, the
+ * rightmost first. Tiles remount on each change, so the old count comes in
+ * as `from`; unchanged characters stay put.
+ */
+function RollingCount({
+  from,
+  value,
+}: {
+  readonly from: number;
+  readonly value: number;
+}) {
+  const next = value.toLocaleString("en-US");
+  if (from === value) return <>{next}</>;
+  const previous = from.toLocaleString("en-US");
+  const length = Math.max(previous.length, next.length);
+  const oldChars = previous.padStart(length, " ");
+  const newChars = next.padStart(length, " ");
+  const direction = value > from ? "up" : "down";
+  return (
+    <span className={`rolling-count is-rolling-${direction}`}>
+      {[...newChars].map((char, index) => {
+        if (char === " ") return null;
+        const old = oldChars[index] ?? " ";
+        if (old === char) return <span key={index}>{char}</span>;
+        return (
+          <span
+            className="rolling-digit"
+            key={index}
+            // The rightmost character turns first, like a register's wheels.
+            style={
+              {
+                "--roll-delay": `${(length - 1 - index) * 35}ms`,
+              } as CSSProperties
+            }
+          >
+            {old === " " ? null : (
+              <span aria-hidden="true" className="rolling-digit-old">
+                {old}
+              </span>
+            )}
+            <span className="rolling-digit-new">{char}</span>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 function FundsPane({
   wallet,
   mergeFunds,
@@ -419,36 +515,41 @@ function FundsPane({
     readonly text: string;
     readonly generation: number;
   }>();
+  // How much each shown coin last changed: its tile pulses and ticks.
   const [walletPulse, setWalletPulse] = useState<{
     readonly generation: number;
-    readonly denominations: readonly (keyof CurrencyAmount)[];
-    readonly direction: "increase" | "decrease";
-  }>({ generation: 0, denominations: [], direction: "increase" });
+    readonly deltas: Partial<Record<keyof CurrencyAmount, number>>;
+  }>({ generation: 0, deltas: {} });
   const adjustmentInput = useRef<HTMLInputElement>(null);
-  const totalWalletCopper =
-    walletCopper(wallet.carried) + walletCopper(wallet.stored);
   const totalWallet = useMemo(
     () => shownWalletCoins(wallet, location),
     [location, wallet],
   );
-  const previousWalletCopper = useRef(totalWalletCopper);
-  const previousWallet = useRef(wallet);
+  const consolidated = useMemo(
+    () => consolidatedWallet(wallet, location),
+    [location, wallet],
+  );
+  const canConsolidate = !sameWallet(consolidated, wallet);
+  const previousShown = useRef({ location, coins: totalWallet });
 
-  useEffect(() => {
-    const previousCopper = previousWalletCopper.current;
-    previousWalletCopper.current = totalWalletCopper;
-    if (previousCopper === totalWalletCopper) return;
-    const previousTotal = shownWalletCoins(previousWallet.current, location);
-    previousWallet.current = wallet;
+  // A layout effect, so the remounted tiles tick from the old count before
+  // the new one is ever painted.
+  useLayoutEffect(() => {
+    const previous = previousShown.current;
+    previousShown.current = { location, coins: totalWallet };
+    // Switching Carried / Stored changes the coins shown, not the coins.
+    if (previous.location !== location) return;
+    const deltas: Partial<Record<keyof CurrencyAmount, number>> = {};
+    for (const denomination of CURRENCY_DENOMINATIONS) {
+      const delta = totalWallet[denomination] - previous.coins[denomination];
+      if (delta !== 0) deltas[denomination] = delta;
+    }
+    if (Object.keys(deltas).length === 0) return;
     setWalletPulse((current) => ({
       generation: current.generation + 1,
-      denominations: CURRENCY_DENOMINATIONS.filter(
-        (denomination) =>
-          totalWallet[denomination] !== previousTotal[denomination],
-      ),
-      direction: totalWalletCopper < previousCopper ? "decrease" : "increase",
+      deltas,
     }));
-  }, [location, totalWallet, totalWalletCopper, wallet]);
+  }, [location, totalWallet]);
 
   const showAdjustmentError = (text: string) => {
     setAdjustmentMessage((current) => ({
@@ -485,7 +586,17 @@ function FundsPane({
     setAdjustment("");
     setAdjustmentMessage((current) => ({
       kind: "success",
-      text: "Funds adjusted.",
+      text: `${coins.count < 0 ? "Spent" : "Added"} ${Math.abs(coins.count).toLocaleString("en-US")} ${coins.coin}.`,
+      generation: (current?.generation ?? 0) + 1,
+    }));
+  };
+
+  const consolidate = () => {
+    if (!canConsolidate) return;
+    onSetWallet(consolidated);
+    setAdjustmentMessage((current) => ({
+      kind: "success",
+      text: "Coins consolidated.",
       generation: (current?.generation ?? 0) + 1,
     }));
   };
@@ -501,65 +612,75 @@ function FundsPane({
     onSetWallet(walletWithCoinCount(wallet, editing.coin, count, location));
   };
 
-  const coinTile = (denomination: keyof CurrencyAmount) => (
-    <div
-      key={`${denomination}-${walletPulse.denominations.includes(denomination) ? walletPulse.generation : 0}`}
-      className={`stat-tile funds-coin-tile${
-        walletPulse.denominations.includes(denomination)
-          ? ` is-adjusted is-${walletPulse.direction}`
-          : ""
-      }`}
-      // The whole tile, not just its digits, starts editing on double-click.
-      onDoubleClick={() => {
-        if (editing?.coin !== denomination) startCoinEdit(denomination);
-      }}
-    >
-      <dt>{DENOMINATION_NAMES[denomination]}</dt>
-      <dd>
-        {editing?.coin === denomination ? (
-          <input
-            aria-label={`${DENOMINATION_NAMES[denomination]} coins`}
-            autoFocus
-            className="funds-coin-input"
-            inputMode="numeric"
-            value={editing.draft}
-            onBlur={commitCoinEdit}
-            onChange={(event) =>
-              setEditing({
-                coin: denomination,
-                draft: event.currentTarget.value,
-              })
-            }
-            onFocus={(event) => event.currentTarget.select()}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                commitCoinEdit();
-              } else if (event.key === "Escape") {
-                event.preventDefault();
-                setEditing(undefined);
+  const coinTile = (denomination: keyof CurrencyAmount) => {
+    const delta = walletPulse.deltas[denomination];
+    return (
+      <div
+        // A new key per change restarts the pulse and the floating amount.
+        key={`${denomination}-${delta === undefined ? 0 : walletPulse.generation}`}
+        className={`stat-tile funds-coin-tile${
+          delta === undefined
+            ? ""
+            : ` is-adjusted is-${delta < 0 ? "decrease" : "increase"}`
+        }`}
+        // The whole tile, not just its digits, starts editing on double-click.
+        onDoubleClick={() => {
+          if (editing?.coin !== denomination) startCoinEdit(denomination);
+        }}
+      >
+        <dt>{DENOMINATION_NAMES[denomination]}</dt>
+        <dd>
+          {editing?.coin === denomination ? (
+            <input
+              aria-label={`${DENOMINATION_NAMES[denomination]} coins`}
+              autoFocus
+              className="funds-coin-input"
+              inputMode="numeric"
+              value={editing.draft}
+              onBlur={commitCoinEdit}
+              onChange={(event) =>
+                setEditing({
+                  coin: denomination,
+                  draft: event.currentTarget.value,
+                })
               }
-            }}
-          />
-        ) : (
-          <button
-            aria-label={`${DENOMINATION_NAMES[denomination]}: ${totalWallet[denomination].toLocaleString("en-US")}. Double-click or press Enter to edit`}
-            className="funds-coin-value"
-            title="Double-click to edit"
-            type="button"
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === "F2") {
-                event.preventDefault();
-                startCoinEdit(denomination);
-              }
-            }}
-          >
-            {totalWallet[denomination].toLocaleString("en-US")}
-          </button>
-        )}
-      </dd>
-    </div>
-  );
+              onFocus={(event) => event.currentTarget.select()}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  commitCoinEdit();
+                } else if (event.key === "Escape") {
+                  event.preventDefault();
+                  setEditing(undefined);
+                }
+              }}
+            />
+          ) : (
+            <button
+              aria-label={`${DENOMINATION_NAMES[denomination]}: ${totalWallet[denomination].toLocaleString("en-US")}. Double-click or press Enter to edit`}
+              className="funds-coin-value"
+              title="Double-click to edit"
+              type="button"
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === "F2") {
+                  event.preventDefault();
+                  startCoinEdit(denomination);
+                }
+              }}
+            >
+              <RollingCount
+                from={totalWallet[denomination] - (delta ?? 0)}
+                value={totalWallet[denomination]}
+              />
+            </button>
+          )}
+        </dd>
+      </div>
+    );
+  };
+
+  const adjustmentError =
+    adjustmentMessage?.kind === "error" ? adjustmentMessage.text : undefined;
 
   return (
     <section
@@ -596,7 +717,8 @@ function FundsPane({
         <div className="stat-tile funds-pane-actions">
           <dt className="visually-hidden">Change funds</dt>
           <dd>
-            {/* Type an amount ("-15 gp", "20pp") and press Enter. */}
+            {/* Type an amount ("50" is gold, "-15 sp", "20pp") and press
+                Enter. */}
             <form
               className="funds-adjust-form"
               onSubmit={(event) => {
@@ -608,7 +730,7 @@ function FundsPane({
                 className="visually-hidden"
                 htmlFor="funds-wallet-adjustment"
               >
-                Adjust funds, for example -15 gp or 20pp
+                Adjust funds, for example 50, -15 sp or 20pp
               </label>
               <input
                 id="funds-wallet-adjustment"
@@ -616,13 +738,17 @@ function FundsPane({
                 type="text"
                 inputMode="text"
                 className={
-                  adjustmentMessage?.kind === "error" ? "is-error" : undefined
+                  adjustmentError === undefined ? undefined : "is-error"
                 }
                 placeholder="±gp"
-                title="Adjust funds: type an amount such as -15 gp or 20pp, then press Enter"
+                title="Adjust funds: type an amount such as 50 (gold), -15 sp, 20pp or 2d (diamonds), then press Enter"
                 value={adjustment}
                 aria-describedby="funds-wallet-adjustment-message"
-                aria-invalid={adjustmentMessage?.kind === "error" || undefined}
+                aria-invalid={adjustmentError !== undefined || undefined}
+                onBlur={() => {
+                  if (adjustmentError !== undefined)
+                    setAdjustmentMessage(undefined);
+                }}
                 onChange={(event) => {
                   setAdjustment(event.currentTarget.value);
                   setAdjustmentMessage(undefined);
@@ -633,15 +759,37 @@ function FundsPane({
                   setAdjustmentMessage(undefined);
                 }}
               />
+              {/* Errors show as a bubble under the field until the next
+                  keystroke, Escape or leaving it; successes show as the
+                  amounts floated over the coin tiles, so this stays
+                  screen-reader only. */}
               <span
                 key={`funds-wallet-adjustment-${adjustmentMessage?.generation ?? 0}`}
-                className="visually-hidden"
+                className={
+                  adjustmentError === undefined
+                    ? "visually-hidden"
+                    : "funds-adjust-error"
+                }
                 id="funds-wallet-adjustment-message"
-                role={adjustmentMessage?.kind === "error" ? "alert" : "status"}
+                role={adjustmentError === undefined ? "status" : "alert"}
               >
                 {adjustmentMessage?.text ?? ""}
               </span>
             </form>
+            <button
+              aria-label="Consolidate coins"
+              className="funds-consolidate"
+              disabled={!canConsolidate}
+              title={
+                canConsolidate
+                  ? "Consolidate coins: exchange them for the fewest coins of the same value, up to platinum. Diamonds stay as they are."
+                  : "Coins are already consolidated"
+              }
+              type="button"
+              onClick={consolidate}
+            >
+              <Icon name="consolidate" />
+            </button>
           </dd>
         </div>
         {CURRENCY_DENOMINATIONS.slice(2).map(coinTile)}

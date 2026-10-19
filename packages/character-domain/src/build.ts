@@ -299,34 +299,39 @@ export function currencyFromCopper(copper: number): CurrencyAmount {
 }
 
 /**
- * Normalizes through gold while retaining explicitly held platinum and astral
- * coins whenever the new total can still cover them. If a larger coin must be
- * broken to pay a cost, its change remains in gold and smaller denominations.
+ * Exchanges coins for the fewest of equal value, up to platinum. Astral
+ * diamonds are kept as they are and never minted: they are treasure rather
+ * than change. Only the wallet's Consolidate action calls this; purchases,
+ * sales and adjustments never re-mint a wallet.
  */
-export function currencyFromCopperKeepingLargeCoins(
-  copper: number,
-  previous: CurrencyAmount,
-): CurrencyAmount {
-  if (!validCurrencyCount(copper))
-    throw new Error("Copper value must be a non-negative safe integer");
-  assertCurrencyAmount(previous);
-  const amount: Record<CurrencyDenomination, number> = { ...ZERO_CURRENCY };
-  let remainder = copper;
-  for (const denomination of ["ad", "pp"] as const) {
+export function consolidateCurrency(amount: CurrencyAmount): CurrencyAmount {
+  assertCurrencyAmount(amount);
+  let remainder = currencyToCopper({ ...amount, ad: 0 });
+  const consolidated: Record<CurrencyDenomination, number> = {
+    ...ZERO_CURRENCY,
+    ad: amount.ad,
+  };
+  for (const denomination of ["pp", "gp", "sp", "cp"] as const) {
     const value = CURRENCY_COPPER_VALUES[denomination];
-    const retained = Math.min(
-      previous[denomination],
-      Math.floor(remainder / value),
-    );
-    amount[denomination] = retained;
-    remainder -= retained * value;
-  }
-  for (const denomination of ["gp", "sp", "cp"] as const) {
-    const value = CURRENCY_COPPER_VALUES[denomination];
-    amount[denomination] = Math.floor(remainder / value);
+    consolidated[denomination] = Math.floor(remainder / value);
     remainder %= value;
   }
-  return amount;
+  return consolidated;
+}
+
+/** Splits a copper amount into gold, silver and copper, the coins shop prices
+ * are quoted in, so payments and proceeds never mint platinum or diamonds. */
+function goldCurrencyFromCopper(copper: number): CurrencyAmount {
+  if (!validCurrencyCount(copper))
+    throw new Error("Copper value must be a non-negative safe integer");
+  return {
+    ...ZERO_CURRENCY,
+    gp: Math.floor(copper / CURRENCY_COPPER_VALUES.gp),
+    sp: Math.floor(
+      (copper % CURRENCY_COPPER_VALUES.gp) / CURRENCY_COPPER_VALUES.sp,
+    ),
+    cp: copper % CURRENCY_COPPER_VALUES.sp,
+  };
 }
 
 export function addCurrency(
@@ -345,91 +350,29 @@ export function subtractCurrency(
   return currencyFromCopper(remainder);
 }
 
-/** Parses one signed denomination amount used by compact wallet adjustments. */
-export function parseCurrencyAdjustment(value: string): number {
-  const match = /^\s*([+-]?)\s*(\d+)\s*(ad|pp|gp|sp|cp)\s*$/iu.exec(value);
-  if (match === null) throw new Error("Enter an amount such as 20pp or -15 gp");
-  const count = Number(match[2]);
-  const denomination = match[3]?.toLocaleLowerCase() as
-    CurrencyDenomination | undefined;
-  if (denomination === undefined || !Number.isSafeInteger(count))
-    throw new Error("Currency adjustment is too large");
-  const copper = count * CURRENCY_COPPER_VALUES[denomination];
-  if (!Number.isSafeInteger(copper))
-    throw new Error("Currency adjustment is too large");
-  return match[1] === "-" && copper !== 0 ? -copper : copper;
-}
-
-/** Applies one delta using the recovered carried-first wallet transaction order. */
-export function adjustWalletCurrency(
-  carried: CurrencyAmount,
-  stored: CurrencyAmount,
-  deltaCopper: number,
-  keepLargeAmountsInGold = false,
-): { readonly carried: CurrencyAmount; readonly stored: CurrencyAmount } {
-  if (!Number.isSafeInteger(deltaCopper))
-    throw new Error("Currency adjustment is too large");
-  const carriedCopper = currencyToCopper(carried);
-  const storedCopper = currencyToCopper(stored);
-  const totalCopper = carriedCopper + storedCopper;
-  if (!Number.isSafeInteger(totalCopper))
-    throw new Error("Current funds are too large to adjust safely");
-  if (deltaCopper >= 0) {
-    const carriedAfter = carriedCopper + deltaCopper;
-    if (!Number.isSafeInteger(carriedAfter))
-      throw new Error("Currency adjustment is too large");
-    return {
-      carried: keepLargeAmountsInGold
-        ? currencyFromCopperKeepingLargeCoins(carriedAfter, carried)
-        : currencyFromCopper(carriedAfter),
-      stored: keepLargeAmountsInGold
-        ? currencyFromCopperKeepingLargeCoins(storedCopper, stored)
-        : currencyFromCopper(storedCopper),
-    };
-  }
-  const cost = -deltaCopper;
-  if (!Number.isSafeInteger(cost))
-    throw new Error("Currency adjustment is too large");
-  if (cost > totalCopper)
-    throw new Error("Not enough funds for that adjustment");
-  return {
-    carried: keepLargeAmountsInGold
-      ? currencyFromCopperKeepingLargeCoins(
-          Math.max(0, carriedCopper - cost),
-          carried,
-        )
-      : currencyFromCopper(Math.max(0, carriedCopper - cost)),
-    stored: keepLargeAmountsInGold
-      ? currencyFromCopperKeepingLargeCoins(
-          storedCopper - Math.max(0, cost - carriedCopper),
-          stored,
-        )
-      : currencyFromCopper(storedCopper - Math.max(0, cost - carriedCopper)),
-  };
-}
-
 export interface CoinAdjustment {
   readonly coin: CurrencyDenomination;
   /** Signed number of coins: positive adds, negative spends. */
   readonly count: number;
 }
 
-/** Parses "20pp" or "-15 gp" into the coin and count typed. */
+/** Parses "20pp", "-15 gp", "2d" (astral diamonds, also "ad") or a bare "50"
+ * (gold, the coin prices are quoted in) into the coin and count typed. */
 export function parseCoinAdjustment(value: string): CoinAdjustment {
-  const match = /^\s*([+-]?)\s*(\d+)\s*(ad|pp|gp|sp|cp)\s*$/iu.exec(value);
-  if (match === null) throw new Error("Enter an amount such as 20pp or -15 gp");
+  const match = /^\s*([+-]?)\s*(\d+)\s*(a?d|pp|gp|sp|cp)?\s*$/iu.exec(value);
+  if (match === null) throw new Error("Enter an amount such as 50 or -15 sp");
   const count = Number(match[2]);
-  const coin = match[3]?.toLocaleLowerCase() as
-    CurrencyDenomination | undefined;
-  if (coin === undefined || !Number.isSafeInteger(count))
+  const typed = match[3]?.toLocaleLowerCase() ?? "gp";
+  const coin = (typed === "d" ? "ad" : typed) as CurrencyDenomination;
+  if (!Number.isSafeInteger(count))
     throw new Error("Currency adjustment is too large");
   return { coin, count: match[1] === "-" ? -count : count };
 }
 
 /**
  * Applies a typed coin adjustment to the coins themselves rather than
- * re-minting the wallet from a copper total (the legacy purchase order in
- * {@link adjustWalletCurrency}). Added coins are carried. Spent coins come
+ * re-minting the wallet from a copper total. Added coins are carried. Spent
+ * coins come
  * from that coin, carried before stored; only a shortfall makes change, by
  * breaking the nearest larger coins (or, failing that, spending smaller ones,
  * largest first), with the change returned to carried coins.
@@ -489,6 +432,62 @@ export function adjustWalletCoins(
   for (const denomination of CURRENCY_DENOMINATIONS)
     nextCarried[denomination] += change[denomination];
   return { carried: nextCarried, stored: nextStored };
+}
+
+/** Pays a copper amount from one location's coins: its gold, silver and
+ * copper parts each as {@link adjustWalletCoins} spends a typed coin. */
+function spendCoins(amount: CurrencyAmount, copper: number): CurrencyAmount {
+  const cost = goldCurrencyFromCopper(copper);
+  let remaining = amount;
+  for (const coin of ["gp", "sp", "cp"] as const) {
+    if (cost[coin] > 0)
+      remaining = adjustWalletCoins(remaining, ZERO_CURRENCY, {
+        coin,
+        count: -cost[coin],
+      }).carried;
+  }
+  return remaining;
+}
+
+/**
+ * Pays a purchase in the recovered legacy order, carried funds before stored,
+ * but from the coins themselves: each location keeps its other coins and
+ * breaks a larger one only for a shortfall, never re-minting the wallet.
+ */
+export function payWalletCopper(
+  carried: CurrencyAmount,
+  stored: CurrencyAmount,
+  cost: number,
+): { readonly carried: CurrencyAmount; readonly stored: CurrencyAmount } {
+  if (!validCurrencyCount(cost))
+    throw new Error("Copper value must be a non-negative safe integer");
+  const carriedCopper = currencyToCopper(carried);
+  const storedCopper = currencyToCopper(stored);
+  if (!Number.isSafeInteger(carriedCopper + storedCopper))
+    throw new Error("Current funds are too large to adjust safely");
+  if (cost > carriedCopper + storedCopper)
+    throw new Error("Insufficient currency");
+  if (cost <= carriedCopper)
+    return { carried: spendCoins(carried, cost), stored };
+  return {
+    carried: ZERO_CURRENCY,
+    stored: spendCoins(stored, cost - carriedCopper),
+  };
+}
+
+/** Adds sale proceeds to carried coins as gold, silver and copper. */
+export function receiveWalletCopper(
+  carried: CurrencyAmount,
+  proceeds: number,
+): CurrencyAmount {
+  const received = goldCurrencyFromCopper(proceeds);
+  const next: Record<CurrencyDenomination, number> = { ...carried };
+  for (const denomination of CURRENCY_DENOMINATIONS) {
+    next[denomination] += received[denomination];
+    if (!Number.isSafeInteger(next[denomination]))
+      throw new Error("Currency transaction exceeds the safe integer range");
+  }
+  return next;
 }
 
 export function characterWalletTextKey(
@@ -738,8 +737,6 @@ export type CharacterCommand =
       readonly entry: BuildInventoryEntry;
       /** Per-unit price in copper pieces. */
       readonly priceCopper: number;
-      /** Prevent automatic promotion of gold into larger denominations. */
-      readonly keepLargeAmountsInGold?: boolean;
     }
   | {
       readonly kind: "sell-inventory";
@@ -748,8 +745,6 @@ export type CharacterCommand =
       /** Per-unit list price in copper pieces. */
       readonly priceCopper: number;
       readonly percentage: 20 | 50 | 100;
-      /** Prevent automatic promotion of gold into larger denominations. */
-      readonly keepLargeAmountsInGold?: boolean;
     }
   | {
       readonly kind: "set-text";
@@ -827,17 +822,12 @@ function multipliedCopper(...factors: readonly number[]): number {
   return result;
 }
 
-function withCurrentWalletCopper(
+function withCurrentWallet(
   build: CharacterBuild,
   wallet: CharacterWalletKind,
-  copper: number,
-  keepLargeAmountsInGold = false,
+  amount: CurrencyAmount,
 ): CharacterBuild {
   const key = characterWalletTextKey(build.effectiveLevel, wallet);
-  const previous = resolveCharacterWallet(build, wallet).amount;
-  const amount = keepLargeAmountsInGold
-    ? currencyFromCopperKeepingLargeCoins(copper, previous)
-    : currencyFromCopper(copper);
   return {
     ...build,
     textStrings: {
@@ -1052,36 +1042,17 @@ export function applyCharacterCommand(
         command.priceCopper,
         command.entry.quantity,
       );
-      const carried = currencyToCopper(
-        resolveCharacterWallet(build, "carried").amount,
-      );
-      const stored = currencyToCopper(
-        resolveCharacterWallet(build, "stored").amount,
-      );
-      const available = carried + stored;
-      if (!Number.isSafeInteger(available))
-        throw new Error("Currency transaction exceeds the safe integer range");
-      if (cost > available) throw new Error("Insufficient currency");
-      const carriedAfter = Math.max(0, carried - cost);
-      const storedAfter = stored - Math.max(0, cost - carried);
+      const carried = resolveCharacterWallet(build, "carried").amount;
+      const stored = resolveCharacterWallet(build, "stored").amount;
+      const paid = payWalletCopper(carried, stored, cost);
       let updated: CharacterBuild = {
         ...build,
         inventory: [...build.inventory, command.entry],
       };
       if (cost > 0) {
-        updated = withCurrentWalletCopper(
-          updated,
-          "carried",
-          carriedAfter,
-          command.keepLargeAmountsInGold,
-        );
-        if (cost > carried)
-          updated = withCurrentWalletCopper(
-            updated,
-            "stored",
-            storedAfter,
-            command.keepLargeAmountsInGold,
-          );
+        updated = withCurrentWallet(updated, "carried", paid.carried);
+        if (cost > currencyToCopper(carried))
+          updated = withCurrentWallet(updated, "stored", paid.stored);
       }
       return updated;
     }
@@ -1095,11 +1066,10 @@ export function applyCharacterCommand(
       const proceeds = Math.floor(
         multipliedCopper(command.priceCopper, command.percentage) / 100,
       );
-      const carried = currencyToCopper(
+      const carried = receiveWalletCopper(
         resolveCharacterWallet(build, "carried").amount,
+        proceeds,
       );
-      if (!Number.isSafeInteger(carried + proceeds))
-        throw new Error("Currency transaction exceeds the safe integer range");
       const updatedEntry = inventoryEntryWithQuantity(
         entry,
         entry.quantity - 1,
@@ -1114,12 +1084,7 @@ export function applyCharacterCommand(
       };
       return proceeds === 0
         ? updated
-        : withCurrentWalletCopper(
-            updated,
-            "carried",
-            carried + proceeds,
-            command.keepLargeAmountsInGold,
-          );
+        : withCurrentWallet(updated, "carried", carried);
     }
     case "set-text": {
       const textStrings = { ...build.textStrings };

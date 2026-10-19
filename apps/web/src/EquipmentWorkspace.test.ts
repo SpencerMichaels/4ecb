@@ -10,6 +10,7 @@ import {
   catalogItemDetail,
   inventoryEquippedStatus,
   inventoryItemDetail,
+  consolidatedWallet,
   shownWalletCoins,
   walletWithCoinCount,
 } from "./EquipmentWorkspace";
@@ -91,6 +92,18 @@ describe("equipment item details", () => {
       ad: 0,
     });
     expect(shownWalletCoins(wallet, "stored").gp).toBe(40);
+  });
+
+  it("consolidates each location's coins on its own, up to platinum", () => {
+    const wallet = { carried: coins(250, 1_234, 1), stored: coins(0, 150) };
+    expect(consolidatedWallet(wallet, undefined)).toEqual({
+      carried: { copper: 0, silver: 5, gold: 36, platinum: 13, astral: 0 },
+      stored: coins(0, 50, 1),
+    });
+    expect(consolidatedWallet(wallet, "stored")).toEqual({
+      carried: wallet.carried,
+      stored: coins(0, 50, 1),
+    });
   });
 
   it("edits merged coin counts carried first, keeping stored coins", () => {

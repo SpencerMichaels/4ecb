@@ -91,16 +91,6 @@ function contrast(foreground: string, background: string): number {
 }
 
 describe("release accessibility contract", () => {
-  it("persists the gold normalization preference under Display", () => {
-    expect(settingsPage).toContain("Keep large amounts in gold");
-    expect(settingsPage).toContain("checked={keepLargeAmountsInGold}");
-    expect(app).toContain("KEEP_LARGE_AMOUNTS_IN_GOLD_STORAGE_KEY");
-    expect(app).toContain(
-      'localStorage.setItem(KEEP_LARGE_AMOUNTS_IN_GOLD_STORAGE_KEY, "1")',
-    );
-    expect(characterEditor).toContain("keepLargeAmountsInGold,");
-  });
-
   it("keeps interactive power-card presentation options enabled by default", () => {
     expect(settingsPage).toContain("Count coin weight");
     expect(settingsPage).toContain("checked={countCoinWeight}");
@@ -843,7 +833,7 @@ describe("release accessibility contract", () => {
     expect(equipmentWorkspace.match(/<FundsPane/g)).toHaveLength(1);
     expect(characterEditor).toContain("<CharacterWallet");
     expect(equipmentWorkspace).toContain(
-      "Adjust funds, for example -15 gp or 20pp",
+      "Adjust funds, for example 50, -15 sp or 20pp",
     );
     // Coin counts are edited in place; there is no edit-funds dialog.
     expect(equipmentWorkspace).not.toContain('aria-label="Edit funds"');
@@ -867,7 +857,7 @@ describe("release accessibility contract", () => {
       /\.shared-choice-detail\.shop-rail\s*\{[^}]*position: sticky;/s,
     );
     expect(equipmentWorkspace).toContain(
-      "` is-adjusted is-${walletPulse.direction}`",
+      '` is-adjusted is-${delta < 0 ? "decrease" : "increase"}`',
     );
     expect(styles).toContain(
       ".inventory-wallet-denominations > div.is-adjusted.is-decrease",
