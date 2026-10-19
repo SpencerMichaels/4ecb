@@ -2345,8 +2345,10 @@ the nearest larger coin only for a shortfall, as quick adjust does. A sale adds
 its proceeds as gold, silver and copper. The preference is removed.
 Consolidation is an explicit wallet action (`consolidateCurrency`): coins
 become the fewest of equal value up to platinum, each location on its own.
-Astral diamonds are kept and never minted. They are treasure rather than
-change, and a level-30 hoard still reads fine in platinum.
+Like moving a character to trash it takes two clicks (it sits beside the
+quick-adjust field, so a misclick is easy). Astral diamonds are kept and never
+minted. They are treasure rather than change, and a level-30 hoard still
+reads fine in platinum.
 
 Quick adjust takes a bare number as gold (`50`, `-15`) and `d` as well as `ad`
 for astral diamonds, since prices are

@@ -100,6 +100,12 @@
   box-shadow: inset 0 0 0 2px var(--funds-focus);
   outline: none;
 }
+/* Click-to-arm, click-again-to-confirm, like moving a character to trash:
+   armed, it fills gold and shows a check. */
+.funds-pane-actions .funds-consolidate[data-armed="true"] {
+  background: var(--funds-focus);
+  color: var(--surface);
+}
 
 /* Coin counts read as plain numbers and edit in place on double-click or
    Enter. */
@@ -505,6 +511,12 @@
 
 .builder-status > .builder-health-error {
   color: var(--danger);
+}
+
+/* The "update available" icon, accent-colored as on the library page; here,
+   after the muted toolbar buttons, so it isn't muted with them. */
+.builder-status > .update-ready {
+  color: var(--accent);
 }
 
 .builder-status > .builder-health-house-rule {

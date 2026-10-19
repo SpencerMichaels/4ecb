@@ -521,6 +521,8 @@ function FundsPane({
     readonly deltas: Partial<Record<keyof CurrencyAmount, number>>;
   }>({ generation: 0, deltas: {} });
   const adjustmentInput = useRef<HTMLInputElement>(null);
+  // Consolidate sits beside the quick-adjust field, so it takes two clicks.
+  const consolidateAction = useArmedAction("funds-consolidate-trigger");
   const totalWallet = useMemo(
     () => shownWalletCoins(wallet, location),
     [location, wallet],
@@ -689,6 +691,8 @@ function FundsPane({
     );
   };
 
+  const consolidateArmed =
+    canConsolidate && consolidateAction.isArmed("wallet");
   const adjustmentError =
     adjustmentMessage?.kind === "error" ? adjustmentMessage.text : undefined;
 
@@ -787,18 +791,33 @@ function FundsPane({
               </span>
             </form>
             <button
-              aria-label="Consolidate coins"
+              aria-label={
+                consolidateArmed
+                  ? "Confirm consolidating coins"
+                  : "Consolidate coins"
+              }
               className="funds-consolidate"
+              data-armed={consolidateArmed || undefined}
+              data-funds-consolidate-trigger="wallet"
               disabled={!canConsolidate}
               title={
-                canConsolidate
-                  ? "Consolidate coins: exchange them for the fewest coins of the same value, up to platinum. Diamonds stay as they are."
-                  : "Coins are already consolidated"
+                !canConsolidate
+                  ? "Coins are already consolidated"
+                  : consolidateArmed
+                    ? "Click again to consolidate"
+                    : "Consolidate coins: exchange them for the fewest coins of the same value, up to platinum. Diamonds stay as they are."
               }
               type="button"
-              onClick={consolidate}
+              onClick={() => {
+                if (!consolidateArmed) {
+                  consolidateAction.arm("wallet");
+                  return;
+                }
+                consolidateAction.disarm();
+                consolidate();
+              }}
             >
-              <Icon name="consolidate" />
+              <Icon name={consolidateArmed ? "check" : "consolidate"} />
             </button>
           </dd>
         </div>
