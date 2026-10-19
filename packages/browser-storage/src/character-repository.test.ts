@@ -436,6 +436,29 @@ describe("CharacterRepository", () => {
     await expect(destination.get("first")).resolves.toBeUndefined();
   });
 
+  it("imports a character package as new active records without overwriting", async () => {
+    const source = repository();
+    await source.put({ ...character("kept"), portrait });
+    const exported = await source.exportCharacter("kept");
+    await source.updateMetadata("kept", { portrait: null });
+    await source.moveToTrash("kept");
+
+    const [copy] = await source.importCharacters(exported);
+
+    expect(copy?.id).not.toBe("kept");
+    expect(copy?.deletedAt).toBeUndefined();
+    expect(copy?.portrait).toEqual(portrait);
+    await expect(source.get(copy?.id ?? "")).resolves.toEqual(copy);
+    await expect(source.get("kept")).resolves.toMatchObject({
+      deletedAt: expect.any(String),
+    });
+    await expect(source.get("kept")).resolves.not.toHaveProperty("portrait");
+
+    const destination = repository();
+    const [fresh] = await destination.importCharacters(exported);
+    expect(fresh?.id).toBe("kept");
+  });
+
   it("rejects a modified checksummed backup before writing", async () => {
     const source = repository();
     await source.put(character());

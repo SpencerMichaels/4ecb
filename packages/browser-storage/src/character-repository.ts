@@ -553,6 +553,38 @@ export class CharacterRepository {
     }
   }
 
+  /** Adds the characters in a native package (.4ecb or full backup) to the
+   *  library as active records. Unlike a restore, it never overwrites: a
+   *  character whose ID is already stored (active or trashed) is added under
+   *  a fresh ID. */
+  async importCharacters(backup: unknown): Promise<CharacterRecord[]> {
+    const supported = await validateBackup(backup);
+    const db = await database(this.#databaseName);
+    try {
+      const existing = new Set(await db.getAllKeys("characters"));
+      const characters = supported.characters.map((stored) => {
+        const { deletedAt: _deletedAt, id, ...record } = upgradeRecord(stored);
+        void _deletedAt;
+        const importedId = existing.has(id) ? crypto.randomUUID() : id;
+        existing.add(importedId);
+        return { ...record, id: importedId };
+      });
+      const transaction = db.transaction(
+        ["characters", "characterMetadata", "characterPortraits"],
+        "readwrite",
+      );
+      await Promise.all(
+        characters.map((character) =>
+          writeStoredCharacter(transaction, character),
+        ),
+      );
+      await transaction.done;
+      return characters;
+    } finally {
+      db.close();
+    }
+  }
+
   async required(id: string): Promise<CharacterRecord> {
     const character = await this.get(id);
     if (character === undefined) throw new Error(`Character not found: ${id}`);

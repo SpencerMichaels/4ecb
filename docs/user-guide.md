@@ -130,9 +130,12 @@ until that revision is restored or a migration is previewed and adopted.
    Direct score entry is available for rolled or custom arrays, which are kept
    but identified as house rules when they do not satisfy point-buy legality.
    The profile supplies the remaining required mechanical choices.
-2. To bring in an existing character instead, choose **Import .dnd4e**.
-   Character files are limited to 10 MiB. Read the import report; unknown
-   extensions remain preserved and warnings are not silently discarded.
+2. To bring in an existing character instead, choose **Import** and pick a
+   `.dnd4e` or `.4ecb` file. `.dnd4e` files are limited to 10 MiB. Read the
+   import report; unknown extensions remain preserved and warnings are not
+   silently discarded. A `.4ecb` package is added as-is, with its portrait and
+   content binding; importing one whose character is already in the library
+   adds a second copy rather than replacing it.
 3. Use **Edit build** for level history, ability inputs, choices, inventory,
    retraining, undo, and redo. The bound exact profile supplies candidates and
    rules evaluation. **Current level** under **Character details** can jump to
@@ -217,8 +220,10 @@ new preview.
 Open the export icon on a character card and choose one of three formats:
 
 - **.4ecb** creates a checksummed, versioned native package containing the
-  complete current character record. Restore it from **Settings → Character
-  library** just like a full-library JSON backup.
+  complete current character record, including its portrait. Import it from
+  the character library's **Import** button (adds a copy, never overwrites), or
+  restore it from **Settings → Character library** like a full-library JSON
+  backup (replaces a character with the same ID).
 - **.dnd4e** always evaluates and regenerates the current edited state for
   Legacy Character Builder 0.07a. It re-imports the result and blocks download
   if the semantic round trip differs. The imported original XML remains

@@ -76,6 +76,10 @@ export function CharacterLibraryPage({
   }, [refresh, reportFailure]);
 
   async function importCharacter(file: File): Promise<void> {
+    if (/\.(4ecb|json)$/i.test(file.name)) {
+      await importNativeCharacters(file);
+      return;
+    }
     if (file.size > 10 * 1024 * 1024)
       throw new Error("Character file exceeds the 10 MiB import limit");
     const imported = importDnd4e(await file.text());
@@ -107,6 +111,21 @@ export function CharacterLibraryPage({
         title: `Imported ${character.title} with warnings`,
         messages: warnings.map((warning) => warning.message),
       });
+  }
+
+  /** A .4ecb package keeps its own content binding and portrait; it is
+   *  added alongside, never over, characters already in the library. */
+  async function importNativeCharacters(file: File): Promise<void> {
+    if (file.size > 100 * 1024 * 1024)
+      throw new Error("Character package exceeds the 100 MiB import limit");
+    let value: unknown;
+    try {
+      value = JSON.parse(await file.text());
+    } catch {
+      throw new Error("Not a valid .4ecb character package");
+    }
+    await repository.importCharacters(value);
+    await refresh();
   }
 
   async function createCharacter(): Promise<void> {
@@ -163,13 +182,16 @@ export function CharacterLibraryPage({
           <BuildVersion />
         </div>
         <div className="page-actions">
-          <label className="icon-only-button" title="Import .dnd4e character">
+          <label
+            className="icon-only-button"
+            title="Import character (.4ecb or .dnd4e)"
+          >
             <Icon name="import" />
             <input
-              aria-label="Import .dnd4e character"
+              aria-label="Import character (.4ecb or .dnd4e)"
               className="visually-hidden"
               type="file"
-              accept=".dnd4e,application/xml,text/xml"
+              accept=".4ecb,.dnd4e,application/json,application/xml,text/xml"
               onChange={(event) => {
                 const file = event.currentTarget.files?.[0];
                 if (file !== undefined)
@@ -224,8 +246,8 @@ export function CharacterLibraryPage({
         <div className="empty-state">
           <h2>No characters yet</h2>
           <p>
-            Create one with New character, or import a .dnd4e file from the
-            legacy Character Builder.
+            Create one with New character, import a .4ecb character, or import a
+            .dnd4e file from the legacy Character Builder.
           </p>
         </div>
       ) : (
