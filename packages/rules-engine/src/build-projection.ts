@@ -1,6 +1,5 @@
 import {
-  isFreeformCharacterDetailTextKey,
-  isWalletTextKey,
+  isRulesInertTextKey,
   type BuildOccurrence,
   type BuildUserRule,
   type CharacterBuild,
@@ -701,8 +700,7 @@ export function projectBuildForEvaluation(
   // full re-evaluation for edits that can't change it.
   const textStrings = Object.fromEntries(
     Object.entries(build.textStrings).filter(
-      ([key]) =>
-        !isWalletTextKey(key) && !isFreeformCharacterDetailTextKey(key),
+      ([key]) => !isRulesInertTextKey(key),
     ),
   );
   return {

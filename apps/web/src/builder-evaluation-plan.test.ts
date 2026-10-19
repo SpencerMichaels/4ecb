@@ -1,12 +1,56 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyCharacterCommand,
+  characterWalletTextKey,
+  type CharacterBuild,
+} from "@4ecb/character-domain";
+
+import {
   currentCandidateDetailLevels,
   evaluationDispatchOrder,
   planningCandidateDetailLevels,
   publishEvaluationResult,
   selectedCandidateDetailLevels,
+  sameRulesInputs,
 } from "./builder-evaluation-plan";
+
+const build: CharacterBuild = {
+  formatVersion: 1,
+  effectiveLevel: 1,
+  levels: [],
+  grabbag: [],
+  inventory: [],
+  alternates: [],
+  baseAbilities: { Strength: 14 },
+  textStrings: { "Sneak Attack Die": "d8" },
+};
+const setText = (name: string, value: string) =>
+  applyCharacterCommand(build, { kind: "set-text", name, value });
+
+describe("rules-input comparison", () => {
+  it("ignores free-text details and wallet amounts", () => {
+    expect(
+      sameRulesInputs(build, setText("NOTE_Personality Traits", "Gruff")),
+    ).toBe(true);
+    expect(
+      sameRulesInputs(
+        build,
+        setText(characterWalletTextKey(1, "carried"), "5"),
+      ),
+    ).toBe(true);
+  });
+
+  it("notices text and build changes evaluation reads", () => {
+    expect(sameRulesInputs(build, setText("Sneak Attack Die", "d6"))).toBe(
+      false,
+    );
+    expect(
+      sameRulesInputs(build, { ...build, baseAbilities: { Strength: 16 } }),
+    ).toBe(false);
+    expect(sameRulesInputs(build, { ...build, effectiveLevel: 2 })).toBe(false);
+  });
+});
 
 describe("builder evaluation planning", () => {
   it("requests full candidates only for the visible Build level", () => {

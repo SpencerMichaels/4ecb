@@ -1,4 +1,41 @@
+import {
+  isRulesInertTextKey,
+  type CharacterBuild,
+} from "@4ecb/character-domain";
+
 import type { BuilderWorkspaceTab } from "./routes";
+
+/**
+ * True when two builds give rules evaluation the same input: they differ at
+ * most in wallet amounts and free-text details/notes, which evaluation never
+ * reads. Lets a text edit skip the evaluation round trip entirely.
+ */
+export function sameRulesInputs(
+  previous: CharacterBuild,
+  next: CharacterBuild,
+): boolean {
+  if (previous === next) return true;
+  const keys = new Set([...Object.keys(previous), ...Object.keys(next)]);
+  for (const key of keys) {
+    if (key === "textStrings") continue;
+    if (
+      previous[key as keyof CharacterBuild] !==
+      next[key as keyof CharacterBuild]
+    )
+      return false;
+  }
+  const textKeys = new Set([
+    ...Object.keys(previous.textStrings),
+    ...Object.keys(next.textStrings),
+  ]);
+  for (const key of textKeys)
+    if (
+      !isRulesInertTextKey(key) &&
+      previous.textStrings[key] !== next.textStrings[key]
+    )
+      return false;
+  return true;
+}
 
 function uniqueLevels(levels: readonly number[]): readonly number[] {
   return [...new Set(levels)].sort((left, right) => left - right);

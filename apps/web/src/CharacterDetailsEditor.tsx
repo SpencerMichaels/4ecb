@@ -15,6 +15,10 @@ import { type InspectedOption } from "./CandidateSelectionTable";
 import { ChoiceEditor } from "./ChoiceEditors";
 import { Icon } from "./Icon";
 
+/** Typing pause after which a text field saves. Every save re-evaluates the
+ *  character, so it waits for a real pause, not a gap between words. */
+const TEXT_SAVE_DELAY_MS = 2000;
+
 export function CharacterTextField({
   name,
   label,
@@ -42,35 +46,54 @@ export function CharacterTextField({
   const pendingCommit = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
+  const focused = useRef(false);
+  // The latest props and text, for commits fired from timers and unmount.
+  const latest = useRef({ draft, value, onDispatch });
+  latest.current = { draft, value, onDispatch };
 
-  useEffect(() => setDraft(value), [value]);
-  useEffect(
-    () => () => {
-      if (pendingCommit.current !== undefined)
-        clearTimeout(pendingCommit.current);
-    },
-    [],
-  );
+  // Take outside changes (undo, another field's save) only while not being
+  // edited, so a save landing mid-typing never rolls back newer text.
+  useEffect(() => {
+    if (!focused.current && pendingCommit.current === undefined)
+      setDraft(value);
+  }, [value]);
 
-  const commit = (next: string) => {
+  const commit = () => {
     if (pendingCommit.current !== undefined) {
       clearTimeout(pendingCommit.current);
       pendingCommit.current = undefined;
     }
-    const committed = name === "Name" ? next.trim() : next;
+    const { draft: current, value: saved, onDispatch: save } = latest.current;
+    const committed = name === "Name" ? current.trim() : current;
     if (name === "Name" && committed.length === 0) {
-      setDraft(value);
+      setDraft(saved);
       return;
     }
-    if (committed !== draft) setDraft(committed);
-    if (committed !== value)
-      onDispatch({ kind: "set-text", name, value: committed });
+    if (committed !== current) setDraft(committed);
+    if (committed !== saved) save({ kind: "set-text", name, value: committed });
   };
+  // Leaving the page saves what was typed instead of dropping it.
+  const commitRef = useRef(commit);
+  commitRef.current = commit;
+  useEffect(
+    () => () => {
+      if (pendingCommit.current !== undefined) commitRef.current();
+    },
+    [],
+  );
   const change = (next: string) => {
     setDraft(next);
+    latest.current = { ...latest.current, draft: next };
     if (pendingCommit.current !== undefined)
       clearTimeout(pendingCommit.current);
-    pendingCommit.current = setTimeout(() => commit(next), 500);
+    pendingCommit.current = setTimeout(commit, TEXT_SAVE_DELAY_MS);
+  };
+  const focus = () => {
+    focused.current = true;
+  };
+  const blur = () => {
+    focused.current = false;
+    commit();
   };
 
   const input = (
@@ -78,7 +101,8 @@ export function CharacterTextField({
       {...(name === "Name" ? { maxLength: 120, required: true } : {})}
       size={fitContent ? 1 : undefined}
       value={draft}
-      onBlur={() => commit(draft)}
+      onBlur={blur}
+      onFocus={focus}
       onChange={(event) => change(event.currentTarget.value)}
     />
   );
@@ -106,7 +130,8 @@ export function CharacterTextField({
         <textarea
           rows={5}
           value={draft}
-          onBlur={() => commit(draft)}
+          onBlur={blur}
+          onFocus={focus}
           onChange={(event) => change(event.currentTarget.value)}
         />
       ) : fitContent ? (

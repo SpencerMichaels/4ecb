@@ -553,6 +553,12 @@ export function isFreeformCharacterDetailTextKey(key: string): boolean {
   return FREEFORM_CHARACTER_DETAIL_TEXT_KEYS.has(key);
 }
 
+/** True for text keys rules evaluation never reads: wallet amounts and the
+ *  free-text details/notes above. */
+export function isRulesInertTextKey(key: string): boolean {
+  return isWalletTextKey(key) || isFreeformCharacterDetailTextKey(key);
+}
+
 /** Resolves the latest defined per-level value at or before the requested level. */
 export function resolveCharacterWallet(
   build: CharacterBuild,

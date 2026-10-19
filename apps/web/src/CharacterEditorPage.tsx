@@ -23,6 +23,7 @@ import {
   evaluationDispatchOrder,
   planningCandidateDetailLevels,
   publishEvaluationResult,
+  sameRulesInputs,
   selectedCandidateDetailLevels,
 } from "./builder-evaluation-plan";
 import {
@@ -473,6 +474,16 @@ export function CharacterEditorPage({
   }, [boundProfileResolution, contentDigest, packId]);
 
   const build = transaction.current?.current;
+  // What evaluation sees: the build, kept as the previous object while edits
+  // only touch text evaluation never reads, so those don't re-run it.
+  const evaluationBuildRef = useRef(build);
+  if (
+    build === undefined ||
+    evaluationBuildRef.current === undefined ||
+    !sameRulesInputs(evaluationBuildRef.current, build)
+  )
+    evaluationBuildRef.current = build;
+  const evaluationBuild = evaluationBuildRef.current;
   const planningHorizon =
     build === undefined
       ? selectedLevel
@@ -573,7 +584,7 @@ export function CharacterEditorPage({
   useEffect(() => {
     const client = rulesClient.current;
     if (
-      build === undefined ||
+      evaluationBuild === undefined ||
       entities.length === 0 ||
       packId === undefined ||
       readyPackId !== packId ||
@@ -599,16 +610,16 @@ export function CharacterEditorPage({
     // finishes first; see evaluationDispatchOrder. Reuse (which result a tied
     // consumer receives) is unchanged from before this reordering.
     const dispatchOrder = evaluationDispatchOrder(
-      build.effectiveLevel,
+      evaluationBuild.effectiveLevel,
       selectedLevel,
       planningHorizon,
     );
     const distinctCurrentRequest = dispatchOrder.includes("current")
       ? client.evaluate({
-          ...project(projectBuildForLegacyExport(build), "current"),
+          ...project(projectBuildForLegacyExport(evaluationBuild), "current"),
           candidateDetailLevels: currentCandidateDetailLevels(
             workspaceTab,
-            build.effectiveLevel,
+            evaluationBuild.effectiveLevel,
             selectedLevel,
           ),
           includePowers: false,
@@ -616,7 +627,10 @@ export function CharacterEditorPage({
       : undefined;
     const distinctSelectedRequest = dispatchOrder.includes("selected")
       ? client.evaluate({
-          ...project({ ...build, effectiveLevel: selectedLevel }, "selected"),
+          ...project(
+            { ...evaluationBuild, effectiveLevel: selectedLevel },
+            "selected",
+          ),
           candidateDetailLevels: selectedCandidateDetailLevels(
             workspaceTab,
             selectedLevel,
@@ -625,7 +639,10 @@ export function CharacterEditorPage({
         })
       : undefined;
     const planningRequest = client.evaluate({
-      ...project({ ...build, effectiveLevel: planningHorizon }, "planning"),
+      ...project(
+        { ...evaluationBuild, effectiveLevel: planningHorizon },
+        "planning",
+      ),
       candidateDetailLevels: planningCandidateDetailLevels(
         workspaceTab,
         selectedLevel,
@@ -640,7 +657,7 @@ export function CharacterEditorPage({
     const currentRequest = distinctCurrentRequest ?? planningRequest;
     const selectedLevelRequest =
       distinctSelectedRequest ??
-      (selectedLevel === build.effectiveLevel
+      (selectedLevel === evaluationBuild.effectiveLevel
         ? currentRequest
         : planningRequest);
     const publish = (
@@ -679,7 +696,7 @@ export function CharacterEditorPage({
         );
       });
   }, [
-    build,
+    evaluationBuild,
     characterId,
     characterDetailLevelKey,
     contentDigest,
@@ -995,8 +1012,10 @@ export function CharacterEditorPage({
     const queue = saveQueue.current;
     if (active === undefined || queue === undefined) return;
     try {
+      const previous = active.current;
       const next = active.dispatch(command);
-      setEvaluationStatus("Evaluating current build and plan…");
+      if (!sameRulesInputs(previous, next))
+        setEvaluationStatus("Evaluating current build and plan…");
       setRevision((value) => value + 1);
       queue.enqueue(next, "Saved locally");
     } catch (reason: unknown) {
@@ -1074,8 +1093,10 @@ export function CharacterEditorPage({
     const active = transaction.current;
     const queue = saveQueue.current;
     if (active === undefined || queue === undefined || !active.canUndo) return;
+    const previous = active.current;
     const next = active.undo();
-    setEvaluationStatus("Evaluating current build and plan…");
+    if (!sameRulesInputs(previous, next))
+      setEvaluationStatus("Evaluating current build and plan…");
     setRevision((value) => value + 1);
     queue.enqueue(next, "Undo saved locally");
   }
@@ -1084,8 +1105,10 @@ export function CharacterEditorPage({
     const active = transaction.current;
     const queue = saveQueue.current;
     if (active === undefined || queue === undefined || !active.canRedo) return;
+    const previous = active.current;
     const next = active.redo();
-    setEvaluationStatus("Evaluating current build and plan…");
+    if (!sameRulesInputs(previous, next))
+      setEvaluationStatus("Evaluating current build and plan…");
     setRevision((value) => value + 1);
     queue.enqueue(next, "Redo saved locally");
   }
