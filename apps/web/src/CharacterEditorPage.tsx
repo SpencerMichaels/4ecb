@@ -102,6 +102,7 @@ import {
 } from "./builder-ui";
 import { CandidateInspectionScope } from "./builder-choice-context";
 import { Icon, type IconName } from "./Icon";
+import { UpdateButton } from "./PwaUpdate";
 import { BuilderCharacterStats } from "./BuilderCharacterStats";
 import { LevelPicker, type LevelPickerEntry } from "./LevelPicker";
 import { LoadingPane, LoadingScreen } from "./LoadingScreen";
@@ -2171,6 +2172,7 @@ export function CharacterEditorPage({
                     },
                   ]}
                 />
+                <UpdateButton />
                 <a
                   aria-label="Settings"
                   className="icon-only-button button-icon"

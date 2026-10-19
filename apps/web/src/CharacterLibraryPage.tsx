@@ -12,6 +12,7 @@ import { importDnd4e } from "@4ecb/legacy-dnd4e";
 
 import { activeProfileBinding } from "./content-update";
 import { Icon } from "./Icon";
+import { UpdateButton } from "./PwaUpdate";
 import { BuildVersion } from "./BuildVersion";
 import { createNativeCharacter } from "./new-character";
 import { PortraitImage } from "./PortraitEditor";
@@ -207,6 +208,7 @@ export function CharacterLibraryPage({
             <span aria-hidden="true">{trash.length}</span>
           </button>
           <span aria-hidden="true" className="builder-actions-divider" />
+          <UpdateButton />
           <a
             aria-label="Settings"
             className="icon-only-button button-icon"

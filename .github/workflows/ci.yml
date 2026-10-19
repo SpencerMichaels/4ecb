@@ -57,6 +57,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # The app shows the build's commit; Docker builds have no .git to read it
+      # from (apps/web/vite.config.ts), so pass it in.
+      - id: commit
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
       - id: meta
         uses: docker/metadata-action@v6
         with:
@@ -69,6 +73,7 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
+          build-args: FOURECB_COMMIT=${{ steps.commit.outputs.short }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

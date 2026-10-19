@@ -20,6 +20,7 @@ import {
   ChevronsUp,
   Church,
   Circle,
+  CircleArrowUp,
   CircleDashed,
   CircleDollarSign,
   CircleHelp,
@@ -132,6 +133,7 @@ export type IconName =
   | "chevron"
   | "church"
   | "circle"
+  | "circle-arrow-up"
   | "circle-dollar-sign"
   | "circle-help"
   | "circle-x"
@@ -245,6 +247,7 @@ const icons: Record<IconName, LucideIcon> = {
   chevron: ChevronRight,
   church: Church,
   circle: Circle,
+  "circle-arrow-up": CircleArrowUp,
   "circle-dollar-sign": CircleDollarSign,
   "circle-help": CircleHelp,
   "circle-x": CircleX,

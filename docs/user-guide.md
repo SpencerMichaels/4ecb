@@ -34,8 +34,10 @@ pack.
 
 For a hosted deployment, open its HTTPS URL and use the browser's install
 action when offered. Installation is optional; the same application works in a
-normal tab. After the service worker finishes, the header reports that the
-shell is ready offline.
+normal tab. Once it has loaded, it also works offline; it doesn't announce
+this. When a new version is available, an update icon (an arrow in a circle)
+appears in the top bar to the left of Settings; clicking it reloads into the
+new version and keeps your characters.
 
 To run the reference container from this repository, use only the project-local
 Nix environment:

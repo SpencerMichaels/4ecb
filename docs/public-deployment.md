@@ -116,11 +116,11 @@ and camera/geolocation/microphone/payment/USB-denial headers on every route.
 Deployments that replace nginx should preserve or strengthen those response
 headers; the HTML policy remains a defense-in-depth baseline.
 
-When a new service worker is ready, the application prompts rather than
-refreshing silently. The user may defer the update; choosing **Reload and
-update** keeps IndexedDB data and replaces only the versioned application shell.
-The application also announces when its shell is ready for offline use and when
-the browser is currently offline.
+When a new service worker is ready, the application shows an update icon in the
+library and builder top bars (left of Settings) rather than refreshing
+silently. The user may ignore it; clicking it keeps IndexedDB data and replaces
+only the versioned application shell. Offline readiness and connectivity are
+not announced: there is nothing for the user to do about either.
 
 The production shell loads the character library initially and requests
 Settings, editor, and sheet workspaces as separate content-hashed chunks. All

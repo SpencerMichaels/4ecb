@@ -457,7 +457,7 @@ try {
             target.scrollWidth > target.clientWidth + 1
           ).map((target) => target.textContent?.trim() ?? "unnamed");
         const hidden = [
-          ".app-header", ".pwa-status",
+          ".app-header", ".update-ready",
           ".screen-sheet-view", ".print-preview-toolbar", ".sheet-toolbar", ".cache-warning", ".sheet-page > .status"
         ].every((selector) => {
           const element = document.querySelector(selector);
@@ -1957,7 +1957,6 @@ async function inspectPdf(
       `${path} is missing text: ${required}`,
     );
   for (const hidden of [
-    "Ready offline",
     "Unofficial, local-first software",
     "Print or save PDF",
     "Blank hit points",

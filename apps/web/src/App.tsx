@@ -37,7 +37,7 @@ import {
   shouldFocusMainContentAfterRouteChange,
 } from "./route-focus";
 import { LoadingScreen } from "./LoadingScreen";
-import { PwaStatus } from "./PwaStatus";
+import { PwaUpdateProvider } from "./PwaUpdate";
 import {
   downloadAdvertisedPack,
   parseRuntimeContentConfig,
@@ -570,114 +570,124 @@ export function App() {
   }, [route]);
 
   return (
-    <div className="app-shell">
-      <a className="skip-link" href="#main-content">
-        Skip to main content
-      </a>
-      <PwaStatus />
+    <PwaUpdateProvider>
+      <div className="app-shell">
+        <a className="skip-link" href="#main-content">
+          Skip to main content
+        </a>
+        {error === undefined ? null : (
+          <div className="global-error error" role="alert">
+            <strong>Storage problem</strong>
+            <span>{error}</span>
+          </div>
+        )}
 
-      {error === undefined ? null : (
-        <div className="global-error error" role="alert">
-          <strong>Storage problem</strong>
-          <span>{error}</span>
-        </div>
-      )}
-
-      <HideFlavortextContext.Provider value={hideFlavortext}>
-        <ShowEntitySourceContext.Provider value={showEntitySource}>
-          {!storageReady ? (
-            <LoadingScreen label="Loading local content profiles…" />
-          ) : (
-            <Suspense
-              fallback={
-                <LoadingScreen
-                  className="route-loading-state"
-                  label="Loading workspace…"
-                  routeLoading
-                />
-              }
-            >
-              <RouteFocusOnMount enabled={focusRouteOnMount} focusKey={hash}>
-                {route.page === "settings" ? (
-                  <SettingsRoute
-                    installedPacks={installedPacks}
-                    advertisedPacks={advertisedPacks}
-                    contentDownloads={contentDownloads}
-                    {...(activeProfile === undefined ? {} : { activeProfile })}
-                    {...(runtimeContentError === undefined
-                      ? {}
-                      : { runtimeContentError })}
-                    onChanged={refreshAfterContentChange}
-                    onRetryAdvertised={installAdvertisedPack}
-                    theme={theme}
-                    onThemeChange={setTheme}
-                    hideFlavortext={hideFlavortext}
-                    onHideFlavortextChange={setHideFlavortext}
-                    showEntitySource={showEntitySource}
-                    onShowEntitySourceChange={setShowEntitySource}
-                    keepLargeAmountsInGold={keepLargeAmountsInGold}
-                    onKeepLargeAmountsInGoldChange={setKeepLargeAmountsInGold}
-                    mergeFunds={mergeFunds}
-                    onMergeFundsChange={setMergeFunds}
-                    countCoinWeight={countCoinWeight}
-                    onCountCoinWeightChange={setCountCoinWeight}
-                    resolveAbilityChoices={resolveAbilityChoices}
-                    onResolveAbilityChoicesChange={setResolveAbilityChoices}
-                    abbreviateAbilityValues={abbreviateAbilityValues}
-                    onAbbreviateAbilityValuesChange={setAbbreviateAbilityValues}
-                    showEquippedAttackBonus={showEquippedAttackBonus}
-                    onShowEquippedAttackBonusChange={setShowEquippedAttackBonus}
-                    showPrintTitleActionIcon={showPrintTitleActionIcon}
-                    onShowPrintTitleActionIconChange={
-                      setShowPrintTitleActionIcon
-                    }
-                    printCardTextSize={printCardTextSize}
-                    onPrintCardTextSizeChange={setPrintCardTextSize}
-                    paperSize={paperSize}
-                    onPaperSizeChange={setPaperSize}
-                    closeHref={settingsReturnHash}
+        <HideFlavortextContext.Provider value={hideFlavortext}>
+          <ShowEntitySourceContext.Provider value={showEntitySource}>
+            {!storageReady ? (
+              <LoadingScreen label="Loading local content profiles…" />
+            ) : (
+              <Suspense
+                fallback={
+                  <LoadingScreen
+                    className="route-loading-state"
+                    label="Loading workspace…"
+                    routeLoading
                   />
-                ) : route.characterId === undefined ? (
-                  <CharacterLibraryPage
-                    manifests={manifests}
-                    {...(activePackId === undefined ? {} : { activePackId })}
-                    {...(activeProfile === undefined ? {} : { activeProfile })}
-                  />
-                ) : route.mode === "edit" ? (
-                  <EditorRoute
-                    characterId={route.characterId}
-                    navigation={route.builder ?? { workspace: "build" }}
-                    onNavigate={navigateBuilder}
-                    keepLargeAmountsInGold={keepLargeAmountsInGold}
-                    mergeFunds={mergeFunds}
-                    resolveAbilityChoices={resolveAbilityChoices}
-                    abbreviateAbilityValues={abbreviateAbilityValues}
-                    showEquippedAttackBonus={showEquippedAttackBonus}
-                    {...(activeManifest === undefined
-                      ? {}
-                      : { activeManifest })}
-                    {...(activeProfile === undefined ? {} : { activeProfile })}
-                  />
-                ) : (
-                  <SheetRoute
-                    characterId={route.characterId}
-                    manifests={manifests}
-                    printOnReady={route.print === true}
-                    openPrintPreview={route.preview === true}
-                    countCoinWeight={countCoinWeight}
-                    resolveAbilityChoices={resolveAbilityChoices}
-                    abbreviateAbilityValues={abbreviateAbilityValues}
-                    showEquippedAttackBonus={showEquippedAttackBonus}
-                    showPrintTitleActionIcon={showPrintTitleActionIcon}
-                    printCardTextSize={printCardTextSize}
-                    paper={paperSize}
-                  />
-                )}
-              </RouteFocusOnMount>
-            </Suspense>
-          )}
-        </ShowEntitySourceContext.Provider>
-      </HideFlavortextContext.Provider>
-    </div>
+                }
+              >
+                <RouteFocusOnMount enabled={focusRouteOnMount} focusKey={hash}>
+                  {route.page === "settings" ? (
+                    <SettingsRoute
+                      installedPacks={installedPacks}
+                      advertisedPacks={advertisedPacks}
+                      contentDownloads={contentDownloads}
+                      {...(activeProfile === undefined
+                        ? {}
+                        : { activeProfile })}
+                      {...(runtimeContentError === undefined
+                        ? {}
+                        : { runtimeContentError })}
+                      onChanged={refreshAfterContentChange}
+                      onRetryAdvertised={installAdvertisedPack}
+                      theme={theme}
+                      onThemeChange={setTheme}
+                      hideFlavortext={hideFlavortext}
+                      onHideFlavortextChange={setHideFlavortext}
+                      showEntitySource={showEntitySource}
+                      onShowEntitySourceChange={setShowEntitySource}
+                      keepLargeAmountsInGold={keepLargeAmountsInGold}
+                      onKeepLargeAmountsInGoldChange={setKeepLargeAmountsInGold}
+                      mergeFunds={mergeFunds}
+                      onMergeFundsChange={setMergeFunds}
+                      countCoinWeight={countCoinWeight}
+                      onCountCoinWeightChange={setCountCoinWeight}
+                      resolveAbilityChoices={resolveAbilityChoices}
+                      onResolveAbilityChoicesChange={setResolveAbilityChoices}
+                      abbreviateAbilityValues={abbreviateAbilityValues}
+                      onAbbreviateAbilityValuesChange={
+                        setAbbreviateAbilityValues
+                      }
+                      showEquippedAttackBonus={showEquippedAttackBonus}
+                      onShowEquippedAttackBonusChange={
+                        setShowEquippedAttackBonus
+                      }
+                      showPrintTitleActionIcon={showPrintTitleActionIcon}
+                      onShowPrintTitleActionIconChange={
+                        setShowPrintTitleActionIcon
+                      }
+                      printCardTextSize={printCardTextSize}
+                      onPrintCardTextSizeChange={setPrintCardTextSize}
+                      paperSize={paperSize}
+                      onPaperSizeChange={setPaperSize}
+                      closeHref={settingsReturnHash}
+                    />
+                  ) : route.characterId === undefined ? (
+                    <CharacterLibraryPage
+                      manifests={manifests}
+                      {...(activePackId === undefined ? {} : { activePackId })}
+                      {...(activeProfile === undefined
+                        ? {}
+                        : { activeProfile })}
+                    />
+                  ) : route.mode === "edit" ? (
+                    <EditorRoute
+                      characterId={route.characterId}
+                      navigation={route.builder ?? { workspace: "build" }}
+                      onNavigate={navigateBuilder}
+                      keepLargeAmountsInGold={keepLargeAmountsInGold}
+                      mergeFunds={mergeFunds}
+                      resolveAbilityChoices={resolveAbilityChoices}
+                      abbreviateAbilityValues={abbreviateAbilityValues}
+                      showEquippedAttackBonus={showEquippedAttackBonus}
+                      {...(activeManifest === undefined
+                        ? {}
+                        : { activeManifest })}
+                      {...(activeProfile === undefined
+                        ? {}
+                        : { activeProfile })}
+                    />
+                  ) : (
+                    <SheetRoute
+                      characterId={route.characterId}
+                      manifests={manifests}
+                      printOnReady={route.print === true}
+                      openPrintPreview={route.preview === true}
+                      countCoinWeight={countCoinWeight}
+                      resolveAbilityChoices={resolveAbilityChoices}
+                      abbreviateAbilityValues={abbreviateAbilityValues}
+                      showEquippedAttackBonus={showEquippedAttackBonus}
+                      showPrintTitleActionIcon={showPrintTitleActionIcon}
+                      printCardTextSize={printCardTextSize}
+                      paper={paperSize}
+                    />
+                  )}
+                </RouteFocusOnMount>
+              </Suspense>
+            )}
+          </ShowEntitySourceContext.Provider>
+        </HideFlavortextContext.Provider>
+      </div>
+    </PwaUpdateProvider>
   );
 }
