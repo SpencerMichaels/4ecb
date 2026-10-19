@@ -321,7 +321,7 @@ describe("print layout contract", () => {
       /\.print-card-variant-table td\s*\{[^}]*border:\s*0;/,
     );
     expect(styles).toMatch(
-      /\.print-card-variant-table tbody tr:nth-child\(odd\)\s*\{[^}]*background:\s*color-mix/,
+      /\.print-card-variant-table tbody tr:nth-child\(even\)\s*\{[^}]*background:\s*color-mix/,
     );
     expect(styles).not.toMatch(
       /\.print-card-variant-table th:first-child\s*\{[^}]*width:/,

@@ -2500,10 +2500,10 @@ textarea {
   background: color-mix(in srgb, var(--card-color) 10%, var(--card-paper));
 }
 .print-card-variant-table tbody tr:nth-child(odd) {
-  background: color-mix(in srgb, var(--card-color) 5%, var(--card-paper));
+  background: var(--card-paper);
 }
 .print-card-variant-table tbody tr:nth-child(even) {
-  background: var(--card-paper);
+  background: color-mix(in srgb, var(--card-color) 5%, var(--card-paper));
 }
 /* A wrapped weapon name hangs under its first word so the continuation
    cannot be mistaken for another weapon. */
@@ -2606,6 +2606,9 @@ textarea {
   --print-card-text-size: var(--panel-card-text-size);
   --print-card-body-size: 10pt;
   --print-card-section-gap: 0.3rem;
+  /* At least a printed card's proportions (2.47in x 3.405in): with a visible
+     overflow, aspect-ratio only sets a minimum and long cards still grow. */
+  aspect-ratio: 2.47 / 3.405;
   background: var(--card-paper);
   border-width: 2px;
   display: flex;
@@ -2654,6 +2657,7 @@ textarea {
   padding-inline: 0.55rem;
 }
 .print-reference-card.is-panel .print-card-body {
+  flex: 1 0 auto;
   overflow: visible;
   padding: 0.5rem 0.55rem;
 }
@@ -2701,6 +2705,8 @@ textarea {
   margin: 0;
 }
 .print-card-flavor {
+  /* Same tint as the keyword band beneath it. */
+  background: color-mix(in srgb, var(--card-color) 12%, var(--card-paper));
   border-bottom: 1px solid
     color-mix(in srgb, var(--card-color) 35%, var(--card-paper));
   color: var(--card-ink);
@@ -2713,6 +2719,7 @@ textarea {
    solid title band, card-color border and uppercase type bar (D079). */
 .candidate-detail.reference-entity-card {
   --card-color: var(--tone-neutral);
+  aspect-ratio: 2.47 / 3.405;
   border: 2px solid var(--card-color);
   display: flex;
   flex-direction: column;
@@ -2720,15 +2727,17 @@ textarea {
   padding: 0;
   width: var(--panel-card-width);
 }
-.reference-card-title {
-  background: var(--card-color);
-  color: #fff;
-  padding: 0.35rem 0.55rem;
-}
-.reference-card-title {
+/* Outranks .candidate-detail > header, whose padding, margin and divider
+   otherwise left about a line of empty space under the title band. */
+.reference-entity-card > .reference-card-title {
   align-items: center;
+  background: var(--card-color);
+  border-bottom: 0;
+  color: #fff;
   display: flex;
   gap: 0.4rem;
+  margin: 0;
+  padding: 0.35rem 0.55rem;
 }
 .reference-card-title h3 {
   align-items: center;
@@ -2823,10 +2832,10 @@ textarea {
     --item-power-heading-daily: #34383f;
   }
   :root[data-theme="dark"] .print-reference-card.is-panel {
-    --card-color: #1f7a3e;
+    --card-color: #2d6644;
   }
   :root[data-theme="dark"] .print-power-card.is-panel.usage-encounter {
-    --card-color: #a82424;
+    --card-color: #8c3535;
   }
   :root[data-theme="dark"] .print-power-card.is-panel.usage-daily {
     --card-color: #6b7280;
@@ -2851,7 +2860,7 @@ textarea {
     .print-reference-card.is-panel
     .print-card-variant-table
     tbody
-    tr:nth-child(odd) {
+    tr:nth-child(even) {
     background: color-mix(in srgb, var(--card-color) 20%, var(--card-paper));
   }
 }
@@ -2864,10 +2873,10 @@ textarea {
     --item-power-heading-daily: #34383f;
   }
   :root:not([data-theme]) .print-reference-card.is-panel {
-    --card-color: #1f7a3e;
+    --card-color: #2d6644;
   }
   :root:not([data-theme]) .print-power-card.is-panel.usage-encounter {
-    --card-color: #a82424;
+    --card-color: #8c3535;
   }
   :root:not([data-theme]) .print-power-card.is-panel.usage-daily {
     --card-color: #6b7280;
@@ -2892,7 +2901,7 @@ textarea {
     .print-reference-card.is-panel
     .print-card-variant-table
     tbody
-    tr:nth-child(odd) {
+    tr:nth-child(even) {
     background: color-mix(in srgb, var(--card-color) 20%, var(--card-paper));
   }
 }
@@ -3438,6 +3447,7 @@ textarea {
   background: #fff;
   color: #111;
 }
+.sheet-monochrome .print-card-flavor,
 .sheet-monochrome .print-item-stats {
   background: #eee;
 }
@@ -3456,7 +3466,7 @@ textarea {
 .editor-page {
   margin: 0 auto;
   max-width: 100rem;
-  padding: 1.5rem;
+  padding: 0.75rem;
 }
 .panel {
   background: var(--surface);
@@ -7271,10 +7281,6 @@ button.inventory-icon-action:disabled {
 
   .collision-list {
     columns: 1;
-  }
-
-  .editor-page {
-    padding-inline: 0.75rem;
   }
 
   .timeline-heading {
