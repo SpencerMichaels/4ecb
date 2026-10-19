@@ -18,6 +18,7 @@ export type BuilderIssueKind =
 export type BuilderIssueTarget =
   | { readonly kind: "abilities" }
   | { readonly kind: "content-update" }
+  | { readonly kind: "settings" }
   | { readonly kind: "choice"; readonly choiceId: string };
 
 export interface BuilderIssue {
@@ -120,6 +121,36 @@ export function contentUpdateIssue(characterTitle: string): BuilderIssue {
     effect:
       "Rules, powers and items stay as they were until you review and apply the update.",
     target: { kind: "content-update" },
+  };
+}
+
+/** The content the character is pinned to isn't in this browser. When other
+ * content is active, moving onto it is the fix; otherwise Settings is. */
+export function contentNotInstalledIssue(
+  characterTitle: string,
+  canUpdate: boolean,
+): BuilderIssue {
+  return {
+    key: "content:not-installed",
+    kind: "error",
+    title: "Game content isn't installed",
+    detail: `The game content ${characterTitle || "this character"} uses isn't in this browser, so its choices can't be calculated. Its history stays editable.`,
+    effect: canUpdate
+      ? "Review moves it onto the game content in use."
+      : "Import or turn on its game content in Settings.",
+    target: canUpdate ? { kind: "content-update" } : { kind: "settings" },
+  };
+}
+
+/** The rules worker failed; cleared by the next successful evaluation. */
+export function evaluationFailedIssue(message: string): BuilderIssue {
+  return {
+    key: "rules:evaluation-failed",
+    kind: "error",
+    title: "Rules couldn't be calculated",
+    detail: message,
+    effect:
+      "Values and choices may be missing or out of date until this is fixed.",
   };
 }
 

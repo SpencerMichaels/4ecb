@@ -5,8 +5,10 @@ import type { EvaluatedCharacter, EvaluatedChoice } from "@4ecb/rules-engine";
 import type { DeityAlignmentConstraint } from "./builder-ui";
 import {
   builderIssueGroups,
+  contentNotInstalledIssue,
   contentUpdateIssue,
   deityAlignmentIssue,
+  evaluationFailedIssue,
   withCharacterIssues,
 } from "./builder-diagnostics";
 
@@ -521,5 +523,22 @@ describe("deity alignment", () => {
       deityAlignmentIssue(constraint, chosen("GOOD"), byId),
     ).toBeUndefined();
     expect(deityAlignmentIssue(constraint, evaluation(), byId)).toBeUndefined();
+  });
+  it("raises missing content and failed evaluation as errors, not banners", () => {
+    expect(contentNotInstalledIssue("Ingi", true)).toMatchObject({
+      kind: "error",
+      title: "Game content isn't installed",
+      target: { kind: "content-update" },
+    });
+    expect(contentNotInstalledIssue("Ingi", false).target).toEqual({
+      kind: "settings",
+    });
+    const failed = evaluationFailedIssue("Worker crashed");
+    expect(failed).toMatchObject({ kind: "error", detail: "Worker crashed" });
+    const groups = withCharacterIssues(
+      { unresolved: [], warnings: [], errors: [], houseRules: [] },
+      [failed],
+    );
+    expect(groups.errors).toEqual([failed]);
   });
 });

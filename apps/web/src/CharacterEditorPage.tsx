@@ -27,7 +27,9 @@ import {
 } from "./builder-evaluation-plan";
 import {
   builderIssueGroups,
+  contentNotInstalledIssue,
   contentUpdateIssue,
+  evaluationFailedIssue,
   deityAlignmentIssue,
   withCharacterIssues,
   type BuilderIssue,
@@ -144,6 +146,9 @@ import type {
 
 const characters = new CharacterRepository();
 type LevelChoiceTab = LegacyChoiceSection | "Retraining";
+
+/** evaluationStatus while the rules worker has failed, before its message. */
+const EVALUATION_FAILED_PREFIX = "Rules evaluation failed: ";
 
 /** Level sections whose detail cards are mostly long text. */
 const WIDE_DETAIL_SECTIONS: ReadonlySet<LevelChoiceTab> = new Set([
@@ -488,7 +493,7 @@ export function CharacterEditorPage({
       (boundProfileResolution !== "available" ||
         entities.length === 0 ||
         currentEvaluation !== undefined ||
-        evaluationStatus.startsWith("Rules evaluation failed")));
+        evaluationStatus.startsWith(EVALUATION_FAILED_PREFIX)));
   useEffect(() => {
     if (initialLoadReady) setInitialLoadSettled(true);
   }, [initialLoadReady]);
@@ -661,7 +666,7 @@ export function CharacterEditorPage({
       .catch((reason: unknown) => {
         if (evaluationRevision.current !== revision) return;
         setEvaluationStatus(
-          `Rules evaluation failed: ${reason instanceof Error ? reason.message : String(reason)}`,
+          `${EVALUATION_FAILED_PREFIX}${reason instanceof Error ? reason.message : String(reason)}`,
         );
       });
   }, [
@@ -1139,6 +1144,12 @@ export function CharacterEditorPage({
     deityAlignment === undefined || planningEvaluation === undefined
       ? undefined
       : deityAlignmentIssue(deityAlignment, planningEvaluation, byId);
+  const contentMissing = shouldShowBoundProfileWarning(boundProfileResolution);
+  const evaluationFailure = evaluationStatus.startsWith(
+    EVALUATION_FAILED_PREFIX,
+  )
+    ? evaluationStatus.slice(EVALUATION_FAILED_PREFIX.length)
+    : undefined;
   const builderIssues = withCharacterIssues(
     builderIssueGroups({
       evaluation: planningEvaluation,
@@ -1149,9 +1160,20 @@ export function CharacterEditorPage({
       abilityScoresHouseRuled,
     }),
     [
-      ...(needsContentUpdate(character.profileBinding, activeManifest)
-        ? [contentUpdateIssue(character.title)]
-        : []),
+      // One cause, one issue: missing content outranks "content updated".
+      ...(contentMissing
+        ? [
+            contentNotInstalledIssue(
+              character.title,
+              activeManifest !== undefined,
+            ),
+          ]
+        : needsContentUpdate(character.profileBinding, activeManifest)
+          ? [contentUpdateIssue(character.title)]
+          : []),
+      ...(evaluationFailure === undefined
+        ? []
+        : [evaluationFailedIssue(evaluationFailure)]),
       ...(alignmentIssue === undefined ? [] : [alignmentIssue]),
     ],
   );
@@ -1161,6 +1183,10 @@ export function CharacterEditorPage({
   const houseRuleCount = builderIssues.houseRules.length;
   const navigateToDiagnosticIssue = (issue: BuilderIssue): void => {
     setAccordionOverride(undefined);
+    if (issue.target?.kind === "settings") {
+      window.location.hash = "#/settings";
+      return;
+    }
     if (issue.target?.kind === "content-update") {
       setReviewingContentUpdate(true);
       return;
@@ -1894,20 +1920,6 @@ export function CharacterEditorPage({
                   setReloadKey((key) => key + 1);
                 }}
               />
-            ) : null}
-
-            {shouldShowBoundProfileWarning(boundProfileResolution) ? (
-              <div className="profile-warning panel-warning">
-                <Icon name="warning" /> Install or restore this character&apos;s
-                bound content profile to evaluate choices. Its authoritative
-                history remains editable.
-              </div>
-            ) : null}
-
-            {evaluationStatus.startsWith("Rules evaluation failed") ? (
-              <div className="error" role="alert">
-                {evaluationStatus}
-              </div>
             ) : null}
 
             <div className="builder-tabs-bar">
