@@ -87,6 +87,7 @@ import {
   isOptionalRetrainingChoice,
   isRequiredClassDeityChoice,
   isUnresolvedChoice,
+  pickLegality,
   jumpToLevelCommand,
   levelChoiceProgress,
   levelRailChoiceStatus,
@@ -1091,9 +1092,7 @@ export function CharacterEditorPage({
             provider?.acquiredLevel ??
             selectedLevelEvaluation.level,
           legality:
-            candidate === undefined || candidate.eligible
-              ? "rules-legal"
-              : "houserule",
+            candidate === undefined ? "rules-legal" : pickLegality(candidate),
           children: [],
           unresolved: false,
         },

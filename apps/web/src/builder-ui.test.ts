@@ -60,6 +60,7 @@ import {
   jumpToLevelCommand,
   levelChoiceProgress,
   levelRailChoiceStatus,
+  pickLegality,
   planningEvaluationHorizon,
   planningHorizonCommand,
   pointBuyStepControl,
@@ -1765,6 +1766,23 @@ describe("builder planning UI", () => {
     expect(candidateReason(["prerequisite", "prerequisite-unverified"])).toBe(
       "Does not meet prerequisites; Prerequisites could not be verified",
     );
+  });
+
+  it("saves a pick as a house rule only when it is known to break a rule", () => {
+    expect(pickLegality({ eligible: true, reasons: [] })).toBe("rules-legal");
+    // An unreadable prerequisite is reported live, not frozen into the pick.
+    expect(
+      pickLegality({ eligible: false, reasons: ["prerequisite-unverified"] }),
+    ).toBe("rules-legal");
+    expect(pickLegality({ eligible: false, reasons: ["prerequisite"] })).toBe(
+      "houserule",
+    );
+    expect(
+      pickLegality({
+        eligible: false,
+        reasons: ["prerequisite-unverified", "category"],
+      }),
+    ).toBe("houserule");
   });
 
   it("never exposes category mismatches through the Show all filter", () => {

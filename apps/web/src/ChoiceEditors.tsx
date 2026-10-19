@@ -37,6 +37,7 @@ import {
   isCandidateSelectable,
   isCandidateVisible,
   isUnresolvedChoice,
+  pickLegality,
   repeatedChoiceGroupTitle,
   selectedChoiceIsHouseRule,
   selectedDefinitionId,
@@ -534,7 +535,7 @@ function ReplacementEditor({
           type: definition.type,
         },
         acquiredLevel: buildProvider.acquiredLevel,
-        legality: candidate.eligible ? "rules-legal" : "houserule",
+        legality: pickLegality(candidate),
         children: [],
         unresolved: false,
       },
@@ -830,7 +831,7 @@ export function ChoiceEditor({
         buildProvider?.acquiredLevel ??
         provider?.acquiredLevel ??
         evaluation.level,
-      legality: candidate.eligible ? "rules-legal" : "houserule",
+      legality: pickLegality(candidate),
       children: [],
       unresolved: false,
     };
@@ -1341,9 +1342,7 @@ export function AbilityIncreaseEditor({
                     buildProvider?.acquiredLevel ??
                     provider?.acquiredLevel ??
                     evaluation.level,
-                  legality: targetCandidate.eligible
-                    ? "rules-legal"
-                    : "houserule",
+                  legality: pickLegality(targetCandidate),
                   children: [],
                   unresolved: false,
                 };
@@ -1634,7 +1633,7 @@ function RepeatedCandidateTableEditor({
           buildProvider?.acquiredLevel ??
           provider?.acquiredLevel ??
           evaluation.level,
-        legality: candidate.eligible ? "rules-legal" : "houserule",
+        legality: pickLegality(candidate),
         children: [],
         unresolved: false,
       },
@@ -2001,9 +2000,7 @@ export function SkillTrainingEditor({
                                 buildProvider?.acquiredLevel ??
                                 provider?.acquiredLevel ??
                                 evaluation.level,
-                              legality: targetCandidate.eligible
-                                ? "rules-legal"
-                                : "houserule",
+                              legality: pickLegality(targetCandidate),
                               children: [],
                               unresolved: false,
                             };

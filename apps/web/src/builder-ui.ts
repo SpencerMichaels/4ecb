@@ -1319,6 +1319,20 @@ export function jumpToLevelCommand(
   };
 }
 
+/**
+ * The legality a pick is saved with. Only a candidate that is known to break
+ * a rule is a house rule; one whose prerequisite merely can't be read yet is
+ * saved rules-legal, and the live "unverified" warning speaks for it.
+ */
+export function pickLegality(
+  candidate: Pick<CandidateDecision, "eligible" | "reasons">,
+): "rules-legal" | "houserule" {
+  return candidate.eligible ||
+    candidate.reasons.every((reason) => reason === "prerequisite-unverified")
+    ? "rules-legal"
+    : "houserule";
+}
+
 export function candidateReason(reasons: readonly string[]): string {
   if (reasons.length === 0) return "Available";
   const labels: Readonly<Record<string, string>> = {

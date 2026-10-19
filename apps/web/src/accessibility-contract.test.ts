@@ -663,9 +663,7 @@ describe("release accessibility contract", () => {
     expect(characterEditor).toContain(
       "(candidate !== undefined && !isCandidateSelectable(candidate))",
     );
-    expect(characterEditor).toContain(
-      "candidate === undefined || candidate.eligible",
-    );
+    expect(characterEditor).toContain(": pickLegality(candidate)");
     expect(styles).toMatch(
       /\.race-ability-choice\.is-selected\s*\{(?![^}]*border-left-color)[^}]*background: var\(--selected-soft\)/,
     );

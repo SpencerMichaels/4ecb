@@ -2360,6 +2360,26 @@ above as it shrinks, the rightmost first, while its tile pulses. A count typed
 into its own cell changes without either: the user already knows the number.
 With reduced motion the new digits show at once.
 
+### D087 — A saved house-rule flag yields to the live check
+
+Status: accepted (2026-10-19).
+
+Each selection stores `legality: "rules-legal" | "houserule"`. The `.dnd4e`
+format carries it, so it must round-trip, and it marks a deliberate house rule.
+But it was also used to freeze the builder's verdict at the moment of the
+pick, and it was never re-checked. So it disagreed with the live evaluation
+whenever that verdict changed: a prerequisite the parser couldn't read yet
+("Training in Endurance"), or training gained after the pick.
+
+Now a pick whose only problem is an unverifiable prerequisite is saved
+rules-legal (`pickLegality`); the live `prerequisite.unverified` warning
+speaks for it. And the evaluator honors a saved `houserule` flag on a
+selected choice only while that pick is still ineligible: once it is eligible
+with a satisfied prerequisite, the occurrence evaluates as rules-legal, with no
+house-rule warning and no effect on `legal`. Selections without a choice to
+re-check (roots, grants) keep their flag. The stored flag itself is unchanged,
+so a `.dnd4e` export still writes it until the pick is re-chosen.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

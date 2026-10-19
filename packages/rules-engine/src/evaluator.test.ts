@@ -2081,6 +2081,98 @@ describe("character evaluator", () => {
     );
   });
 
+  it("honors a saved house-rule flag only while the pick is still ineligible", () => {
+    const evaluateWith = (pick: string) =>
+      evaluateCharacter(
+        {
+          level: 6,
+          baseAbilities: {},
+          occurrences: [
+            {
+              id: "ranger",
+              definitionId: "RANGER",
+              acquiredLevel: 1,
+              kind: "root",
+            },
+            {
+              id: "elf",
+              definitionId: "ELF",
+              acquiredLevel: 1,
+              kind: "grabbag",
+            },
+            {
+              id: "nature",
+              definitionId: "NATURE",
+              acquiredLevel: 1,
+              kind: "grabbag",
+            },
+            {
+              id: "slot",
+              definitionId: "UTILITY_SLOT",
+              acquiredLevel: 6,
+              kind: "grabbag",
+            },
+            {
+              id: "pick",
+              definitionId: pick,
+              acquiredLevel: 6,
+              parentId: "slot",
+              ruleOrdinal: 0,
+              choiceIndex: 0,
+              kind: "choice",
+              legality: "houserule",
+            },
+          ],
+          inventory: [],
+        },
+        [
+          entity("RANGER", "Ranger", "Class"),
+          entity("ELF", "Elf", "Race"),
+          entity("NATURE", "Nature", "Skill Training"),
+          entity("DWARF", "Dwarf", "Race"),
+          entity("UTILITY_SLOT", "Level 6 utility", "Level", {
+            rules: [
+              rule(
+                "select",
+                { type: "Power", Category: "$$CLASS,Utility,6" },
+                0,
+              ),
+            ],
+          }),
+          entity("SKILL_UTILITY", "Skill utility", "Power", {
+            categories: ["RANGER", "Utility", "6"],
+            prerequisites: "Training in Nature",
+            specifics: { Level: "6", _SkillPower: "NATURE" },
+          }),
+          entity("DWARF_UTILITY", "Dwarf utility", "Power", {
+            categories: ["ID_FMP_CLASS_0", "Utility", "6"],
+            prerequisites: "Dwarf",
+            specifics: { Level: "6", Class: "DWARF" },
+          }),
+        ],
+      );
+    const houseRuled = (result: ReturnType<typeof evaluateWith>) => ({
+      legal: result.legal,
+      legality: result.occurrences.find(({ id }) => id === "pick")?.legality,
+      warned: result.diagnostics.some(
+        ({ code }) => code === "occurrence.houserule",
+      ),
+    });
+
+    // Flagged when its prerequisite couldn't be read; it now passes.
+    expect(houseRuled(evaluateWith("SKILL_UTILITY"))).toEqual({
+      legal: true,
+      legality: "rules-legal",
+      warned: false,
+    });
+    // Still breaks its prerequisite, so the flag stands.
+    expect(houseRuled(evaluateWith("DWARF_UTILITY"))).toEqual({
+      legal: false,
+      legality: "houserule",
+      warned: true,
+    });
+  });
+
   it("uses distinct hybrid components for both hybrid and primary class categories", () => {
     const result = evaluateCharacter(
       {

@@ -38,7 +38,7 @@ import { evaluatePowers, type EvaluatedPower } from "./powers";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v17-2026-10-19-training-in-prerequisite";
+  "evaluated-character-v18-2026-10-19-live-house-rules";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -2067,6 +2067,8 @@ function evaluateCharacterInternal(
         occurrenceId: choice.providerOccurrenceId,
         ruleOrdinal: choice.ruleOrdinal,
       });
+  // House-ruled selections that the live checks below now find legal.
+  const nowLegalOccurrenceIds = new Set<string>();
   for (const choice of choices) {
     if (choice.selectedOccurrenceId === undefined) continue;
     const selectedOccurrence = occurrences.find(
@@ -2136,6 +2138,31 @@ function evaluateCharacterInternal(
         occurrenceId: choice.selectedOccurrenceId,
         ruleOrdinal: choice.ruleOrdinal,
       });
+    // A saved house-rule flag stands only while the pick is still ineligible.
+    // One that now passes every check (a prerequisite the parser has since
+    // learned to read, a training gained later) is rules-legal again.
+    if (
+      selectedOccurrence?.legality === "houserule" &&
+      selected?.eligible === true &&
+      prerequisite.status === "satisfied"
+    )
+      nowLegalOccurrenceIds.add(selectedOccurrence.id);
+  }
+  if (nowLegalOccurrenceIds.size > 0) {
+    occurrences = occurrences.map((occurrence) =>
+      nowLegalOccurrenceIds.has(occurrence.id)
+        ? { ...occurrence, legality: "rules-legal" }
+        : occurrence,
+    );
+    for (let index = diagnostics.length - 1; index >= 0; index -= 1) {
+      const diagnostic = diagnostics[index]!;
+      if (
+        diagnostic.code === "occurrence.houserule" &&
+        diagnostic.occurrenceId !== undefined &&
+        nowLegalOccurrenceIds.has(diagnostic.occurrenceId)
+      )
+        diagnostics.splice(index, 1);
+    }
   }
   const complete =
     converged &&

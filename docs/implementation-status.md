@@ -1,6 +1,6 @@
 # Implementation status
 
-## "Training in X" prerequisites are verified (2026-10-19)
+## "Training in X" prerequisites; live house-rule legality (2026-10-19)
 
 Player report: Ingi's Swift Recovery ("Training in Endurance") showed as
 house-ruled though he is trained in Endurance. The prerequisite parser knew
@@ -8,9 +8,16 @@ house-ruled though he is trained in Endurance. The prerequisite parser knew
 "Training in", so the check stayed unverified, which makes a character not
 rules-legal. It now accepts that wording (27 entries use it; simple ones such
 as Swift Recovery and Combat Medic now verify, while "training in any two
-of …" stays unverified). Evaluation cache bumped to v17. Verification: the
-supplied Ingi export evaluates legal with no unverified prerequisite; focused
-prerequisite tests, lint, typecheck and the workspace tests pass.
+of …" stays unverified).
+
+The saved per-pick house-rule flag could also disagree with the live check
+(D087). A pick that only fails an unverifiable prerequisite is now saved
+rules-legal, and a saved `houserule` flag on a choice counts only while the
+live check still finds the pick ineligible. Evaluation cache bumped to v17,
+then v18.
+Verification: the supplied Ingi export evaluates legal with no unverified
+prerequisite; new prerequisite, evaluator and `pickLegality` tests; format,
+lint, typecheck and 970 workspace tests pass.
 
 ## Wallet: no automatic consolidation; clearer quick adjust (2026-10-19)
 
