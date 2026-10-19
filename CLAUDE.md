@@ -83,6 +83,13 @@ This runs format:check, lint, test, build, check:print, PWA artifact checks,
 and a deterministic content-pack build/validate/diff/benchmark round-trip
 against `fixtures/content/synthetic.dnd40.xml`.
 
+Release (push to GitHub `main` and wait for the published image; the homelab
+deploys it automatically — see `docs/public-deployment.md`):
+
+```sh
+scripts/deploy.sh    # --skip-checks, --no-wait
+```
+
 Private-corpus-only commands (require the supplied proprietary data; never
 required by public tests/CI):
 

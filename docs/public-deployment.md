@@ -74,7 +74,15 @@ public checks (everything but the separate print check) pass on every push to
 `main`, tagged with the full commit SHA
 (`sha-<sha>`) and `main`. It is built from the same Dockerfile and build context
 as above, so it holds no private content. Deployments should pin the image by
-digest and update deliberately; the product owner's homelab does this.
+digest; the product owner's homelab re-pins and deploys automatically whenever
+`main` gets a new image.
+
+To release, run `scripts/deploy.sh` from a clean `main`: it runs the checks that
+gate publishing (in a temporary worktree), pushes to GitHub `main`, and waits
+until the image for that commit is published. The product owner's homelab then
+deploys it automatically within about ten minutes. `--skip-checks` and
+`--no-wait` shorten it; it refuses uncommitted changes and a `main` that has
+diverged from GitHub's.
 
 ## HTTPS and reverse proxies
 
