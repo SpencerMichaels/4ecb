@@ -1,5 +1,6 @@
 import {
   Anvil,
+  ArrowDownUp,
   ArrowLeft,
   Award,
   Backpack,
@@ -196,6 +197,7 @@ export type IconName =
   | "settings"
   | "sheet"
   | "back"
+  | "change-level"
   | "print"
   | "shield"
   | "shop"
@@ -308,6 +310,7 @@ const icons: Record<IconName, LucideIcon> = {
   settings: Settings,
   sheet: FileText,
   back: ArrowLeft,
+  "change-level": ArrowDownUp,
   print: Printer,
   shield: Shield,
   shop: ShoppingCart,

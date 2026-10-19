@@ -38,8 +38,6 @@ export function LevelPicker({
   const panelId = useId();
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
-  const byLevel = new Map(entries.map((entry) => [entry.level, entry]));
-
   useEffect(() => {
     if (!open) return;
     // Start keyboard users on the current level.
@@ -90,46 +88,76 @@ export function LevelPicker({
           id={panelId}
           role="group"
         >
-          {tiers.map((tier) => (
-            <section className="level-picker-tier" key={tier.id}>
-              <h4>{tier.label}</h4>
-              <ol>
-                {Array.from(
-                  { length: tier.lastLevel - tier.firstLevel + 1 },
-                  (_, index) => tier.firstLevel + index,
-                ).map((level) => {
-                  const entry = byLevel.get(level);
-                  const status = entry?.status ?? "future";
-                  const label = entry?.statusLabel ?? "no choices made";
-                  return (
-                    <li key={level}>
-                      <button
-                        aria-current={
-                          level === selectedLevel ? "step" : undefined
-                        }
-                        aria-label={`Level ${level}, ${label}`}
-                        className={`level-rail-button level-rail-${status}`}
-                        title={`Level ${level}: ${label}`}
-                        type="button"
-                        onClick={() => {
-                          setOpen(false);
-                          onSelect(level);
-                        }}
-                      >
-                        <span>{level}</span>
-                        <span
-                          aria-hidden="true"
-                          className="level-rail-status"
-                        />
-                      </button>
-                    </li>
-                  );
-                })}
-              </ol>
-            </section>
-          ))}
+          <LevelGrid
+            tiers={tiers}
+            entries={entries}
+            currentLevel={selectedLevel}
+            onChoose={(level) => {
+              setOpen(false);
+              onSelect(level);
+            }}
+          />
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * The tier-by-level grid (Heroic / Paragon / Epic) with each level's plan
+ * status, shared by the Build tab's level picker and the Set level dialog.
+ * `currentLevel` is marked as the current step; `chosenLevel`, when given,
+ * is the pending pick.
+ */
+export function LevelGrid({
+  tiers,
+  entries,
+  currentLevel,
+  chosenLevel,
+  onChoose,
+}: {
+  readonly tiers: readonly LevelPickerTier[];
+  readonly entries: readonly LevelPickerEntry[];
+  readonly currentLevel: number;
+  readonly chosenLevel?: number;
+  readonly onChoose: (level: number) => void;
+}) {
+  const byLevel = new Map(entries.map((entry) => [entry.level, entry]));
+  return (
+    <div className="level-grid">
+      {tiers.map((tier) => (
+        <section className="level-picker-tier" key={tier.id}>
+          <h4>{tier.label}</h4>
+          <ol>
+            {Array.from(
+              { length: tier.lastLevel - tier.firstLevel + 1 },
+              (_, index) => tier.firstLevel + index,
+            ).map((level) => {
+              const entry = byLevel.get(level);
+              const status = entry?.status ?? "future";
+              const label = entry?.statusLabel ?? "no choices made";
+              return (
+                <li key={level}>
+                  <button
+                    aria-current={level === currentLevel ? "step" : undefined}
+                    {...(chosenLevel === undefined
+                      ? {}
+                      : { "aria-pressed": level === chosenLevel })}
+                    aria-label={`Level ${level}, ${label}`}
+                    className={`level-rail-button level-rail-${status}`}
+                    title={`Level ${level}: ${label}`}
+                    type="button"
+                    onClick={() => onChoose(level)}
+                  >
+                    <span>{level}</span>
+                    <span aria-hidden="true" className="level-rail-status" />
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      ))}
     </div>
   );
 }

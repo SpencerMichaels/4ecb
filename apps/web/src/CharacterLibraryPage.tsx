@@ -6,28 +6,21 @@ import {
   type CharacterLibraryEntry,
   type ContentProfileDefinition,
 } from "@4ecb/browser-storage";
-import {
-  newCharacterRecord,
-  type CharacterRecord,
-} from "@4ecb/character-domain";
+import { newCharacterRecord } from "@4ecb/character-domain";
 import type { ContentPackManifest } from "@4ecb/content-pack";
-import {
-  compareEditedDnd4eRoundTrip,
-  exportEditedDnd4e,
-  importDnd4e,
-  projectBuildForLegacyExport,
-} from "@4ecb/legacy-dnd4e";
-import { projectBuildForEvaluation } from "@4ecb/rules-engine";
+import { importDnd4e } from "@4ecb/legacy-dnd4e";
 
-import { contentProfileMatchesRevision } from "./profile-migration";
 import { activeProfileBinding } from "./content-update";
-import { download } from "./download";
 import { Icon } from "./Icon";
 import { BuildVersion } from "./BuildVersion";
-import { RulesWorkerClient } from "./rules-client";
 import { createNativeCharacter } from "./new-character";
 import { PortraitImage } from "./PortraitEditor";
 import { holdCharacterDraft } from "./character-drafts";
+import { ActionMenu } from "./ActionMenu";
+import {
+  exportCharacterBackup,
+  exportCharacterDnd4e,
+} from "./character-export";
 import { PersistenceBanner } from "./PersistenceBanner";
 import { ToastRegion, useToasts } from "./Toasts";
 import { TrashDialog } from "./TrashDialog";
@@ -35,10 +28,6 @@ import { useArmedAction } from "./useArmedAction";
 
 const repository = new CharacterRepository();
 const contentRepository = new ContentPackRepository();
-
-function fileBase(character: CharacterRecord): string {
-  return character.title.replace(/[^a-z0-9_-]+/gi, "-");
-}
 
 export interface CharacterLibraryPageProps {
   readonly manifests: readonly ContentPackManifest[];
@@ -67,7 +56,6 @@ export function CharacterLibraryPage({
     [pushToast],
   );
   const [creatingCharacter, setCreatingCharacter] = useState(false);
-  const [openExportId, setOpenExportId] = useState<string>();
   // A "Move to trash"/"Delete permanently" click arms the button (a second
   // click confirms) instead of a native confirm() dialog; clicking
   // elsewhere or pressing Escape disarms it.
@@ -118,64 +106,6 @@ export function CharacterLibraryPage({
         title: `Imported ${character.title} with warnings`,
         messages: warnings.map((warning) => warning.message),
       });
-  }
-
-  async function exportNativeCharacter(
-    summary: CharacterLibraryEntry,
-  ): Promise<void> {
-    const character = await repository.required(summary.id);
-    const backup = await repository.exportCharacter(character.id);
-    download(
-      `${fileBase(character)}.4ecb`,
-      JSON.stringify(backup, null, 2),
-      "application/json",
-    );
-  }
-
-  async function exportCharacter(
-    summary: CharacterLibraryEntry,
-  ): Promise<void> {
-    const character = await repository.required(summary.id);
-    const binding = character.profileBinding;
-    if (binding?.contentDigest === undefined)
-      throw new Error(
-        "Regenerated .dnd4e export requires an exact content profile revision bound to this character.",
-      );
-    const pack = await contentRepository.get(binding.packId);
-    if (
-      pack === undefined ||
-      !contentProfileMatchesRevision(binding, pack.manifest)
-    )
-      throw new Error(
-        "Regenerated .dnd4e export requires the exact content profile revision bound to this character.",
-      );
-    const client = new RulesWorkerClient();
-    try {
-      await client.initialize(binding.packId, binding.contentDigest);
-      const evaluation = await client.evaluate(
-        projectBuildForEvaluation(character.build, pack.entities),
-      );
-      const xml = exportEditedDnd4e({
-        target: "legacy-builder-0.07a",
-        envelope: character.legacy,
-        snapshot: character.snapshot,
-        build: character.build,
-        evaluation,
-        content: pack.entities,
-      });
-      const reimported = importDnd4e(xml);
-      const comparison = compareEditedDnd4eRoundTrip(
-        projectBuildForLegacyExport(character.build),
-        reimported.build,
-      );
-      if (!comparison.equivalent)
-        throw new Error(
-          `Edited export re-import check failed: ${comparison.differences.join(" ")}`,
-        );
-      download(`${fileBase(character)}.dnd4e`, xml, "application/xml");
-    } finally {
-      client.terminate();
-    }
   }
 
   async function createCharacter(): Promise<void> {
@@ -345,73 +275,36 @@ export function CharacterLibraryPage({
                     >
                       <Icon name="sheet" />
                     </a>
-                    <div className="character-export-menu">
-                      <button
-                        type="button"
-                        className="character-card-action"
-                        aria-label={`Export ${character.title}`}
-                        aria-expanded={openExportId === character.id}
-                        aria-controls={`export-${character.id}`}
-                        title="Export"
-                        onClick={() =>
-                          setOpenExportId((current) =>
-                            current === character.id ? undefined : character.id,
-                          )
-                        }
-                      >
-                        <Icon name="export" />
-                      </button>
-                      {openExportId === character.id ? (
-                        <div
-                          id={`export-${character.id}`}
-                          className="character-export-options"
-                          aria-label={`Export ${character.title} as`}
-                          onKeyDown={(event) => {
-                            if (event.key !== "Escape") return;
-                            setOpenExportId(undefined);
-                            const trigger =
-                              event.currentTarget.previousElementSibling;
-                            if (trigger instanceof HTMLElement) trigger.focus();
-                          }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setOpenExportId(undefined);
-                              void exportNativeCharacter(character).catch(
-                                (reason: unknown) =>
-                                  reportFailure(
-                                    reason,
-                                    `Couldn't export ${character.title}`,
-                                  ),
-                              );
-                            }}
-                          >
-                            .4ecb
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setOpenExportId(undefined);
-                              void exportCharacter(character).catch(
-                                (reason: unknown) =>
-                                  reportFailure(
-                                    reason,
-                                    `Couldn't export ${character.title}`,
-                                  ),
-                              );
-                            }}
-                          >
-                            .dnd4e
-                          </button>
-                          <a
-                            href={`#/characters/${encodeURIComponent(character.id)}?print=1`}
-                          >
-                            PDF
-                          </a>
-                        </div>
-                      ) : null}
-                    </div>
+                    <ActionMenu
+                      icon="export"
+                      label={`Export ${character.title}`}
+                      menuLabel={`Export ${character.title} as`}
+                      triggerClassName="character-card-action"
+                      items={[
+                        {
+                          label: ".4ecb",
+                          onSelect: () =>
+                            void exportCharacterBackup(character.id).catch(
+                              (reason: unknown) =>
+                                reportFailure(
+                                  reason,
+                                  `Couldn't export ${character.title}`,
+                                ),
+                            ),
+                        },
+                        {
+                          label: ".dnd4e",
+                          onSelect: () =>
+                            void exportCharacterDnd4e(character.id).catch(
+                              (reason: unknown) =>
+                                reportFailure(
+                                  reason,
+                                  `Couldn't export ${character.title}`,
+                                ),
+                            ),
+                        },
+                      ]}
+                    />
                     <button
                       className="character-card-action"
                       type="button"

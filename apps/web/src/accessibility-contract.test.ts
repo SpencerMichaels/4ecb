@@ -379,13 +379,12 @@ describe("release accessibility contract", () => {
     );
   });
 
-  it("keeps sidebar identity editable and changes the current level beside race and class", () => {
+  it("keeps sidebar identity editable and changes the level from a tab-bar menu", () => {
     const header = characterEditor.slice(
       characterEditor.indexOf('<header className="builder-sidebar-identity">'),
-      characterEditor.indexOf(
-        "{shouldShowBoundProfileWarning(boundProfileResolution)",
-      ),
+      characterEditor.indexOf('<div className="builder-sidebar-panel">'),
     );
+    expect(header.length).toBeGreaterThan(0);
     const details = characterDetailsEditor.slice(
       characterDetailsEditor.indexOf("export function CharacterDetailsEditor("),
     );
@@ -394,14 +393,21 @@ describe("release accessibility contract", () => {
     expect(header).toContain('label="Character name"');
     expect(header).toContain('name="Name"');
     expect(header).toContain("characterHeaderSubtitle(");
-    expect(header).toContain('aria-label="Current level"');
-    expect(header).toContain(
-      "changeCurrentLevel(Number(event.currentTarget.value))",
+    // The sidebar only shows the level; changing it (rare, build-wide) is
+    // the tab bar's Change level menu: Level up, or Set level… (a dialog
+    // with the level plan grid, confirmed by its primary button).
+    expect(header).toContain("build.effectiveLevel,");
+    expect(header).not.toContain("<select");
+    expect(characterEditor).toContain('icon="change-level"');
+    expect(characterEditor).toContain('label="Change level"');
+    expect(characterEditor).toContain(
+      "changeCurrentLevel(build.effectiveLevel + 1)",
     );
+    expect(characterEditor).toContain("<SetLevelDialog");
     expect(header).not.toContain("Experience");
     expect(header).not.toContain("snapshot.details.XP");
     // Details holds neither the level nor the name (both in the sidebar).
-    expect(details).not.toContain('aria-label="Current level"');
+    expect(details).not.toContain("changeCurrentLevel");
     expect(details).not.toContain('name: "Name"');
     expect(styles).toMatch(
       /\.builder-sidebar-identity \.portrait-trigger\s*\{[^}]*height: 9rem;[^}]*width: 9rem;/,

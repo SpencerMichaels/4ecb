@@ -226,6 +226,11 @@ instances listed.
 - **Things in the wrong place.** Level editing in Details; the character name
   editable in two places; a Clear that cleared the selection rather than the
   search. Rule: each value has one home, where users expect it.
+- **Momentous changes behind trivial controls.** The character level was a
+  frameless dropdown in the sidebar (and its hover cue covered a label that
+  didn’t open it). Rule: rare, build-wide changes get a deliberate entry
+  point (the tab bar’s Change level menu: Level up, or Set level… confirmed
+  in a dialog); the place that shows a value needn’t be where it’s edited.
 - **Locked where it should advise.** Alignment forced to the deity's. Rule:
   don't lock legal-but-unusual choices; mark them as house rules.
 - **Settings defaults.** New, optional detail (entity sources) shown by

@@ -114,6 +114,13 @@ import { loadoutChangeCommand } from "./equipment-ui";
 import { type InspectedOption } from "./CandidateSelectionTable";
 import { CandidateDetail } from "./CandidateDetail";
 import { ChoiceAccordionItem } from "./ChoiceAccordionItem";
+import { ActionMenu } from "./ActionMenu";
+import { SetLevelDialog } from "./SetLevelDialog";
+import {
+  exportCharacterBackup,
+  exportCharacterDnd4e,
+} from "./character-export";
+import { ToastRegion, useToasts } from "./Toasts";
 import { RetrainingWorkspace } from "./RetrainingWorkspace";
 import { BaseAbilityScoreEditor } from "./BaseAbilityScoreEditor";
 import {
@@ -304,6 +311,23 @@ export function CharacterEditorPage({
   const [selectedChoiceId, setSelectedChoiceId] = useState<string>();
   // The accordion item the user opened (or null: all folded) on one level
   // tab; elsewhere, and after a tab change or Review jump, the default rules.
+  const [settingLevel, setSettingLevel] = useState(false);
+  const toasts = useToasts();
+  // Exports read the stored record: wait for pending saves, and store a new
+  // character that was never changed (exporting it is a deliberate ask).
+  const exportFrom = (write: (id: string) => Promise<void>): void => {
+    void (async () => {
+      await saveQueue.current?.whenIdle();
+      await persistCharacterDraft(characters, characterId);
+      await write(characterId);
+    })().catch((reason: unknown) =>
+      toasts.push({
+        tone: "error",
+        title: `Couldn't export ${character?.title ?? "the character"}`,
+        messages: [reason instanceof Error ? reason.message : String(reason)],
+      }),
+    );
+  };
   const [accordionOverride, setAccordionOverride] = useState<{
     readonly tab: string;
     readonly key: string | null;
@@ -1860,33 +1884,16 @@ export function CharacterEditorPage({
                   onDispatch={dispatch}
                 />
               </h2>
-              {/* Race and class, then the current level, changed here (it
-                  isn't a Details field: it reshapes the whole build). */}
+              {/* Race, class and level; the level changes from the tab
+                  bar's Change level menu (a rare, build-wide change). */}
               <p className="builder-character-facts">
-                <span>
-                  {characterHeaderSubtitle(
-                    race,
-                    currentEvaluation === undefined
-                      ? character.snapshot.details.Class
-                      : selectedClass?.name,
-                  )}
-                </span>
-                <label className="builder-level-select">
-                  Level
-                  <select
-                    aria-label="Current level"
-                    value={build.effectiveLevel}
-                    onChange={(event) =>
-                      changeCurrentLevel(Number(event.currentTarget.value))
-                    }
-                  >
-                    {Array.from({ length: MAX_CHARACTER_LEVEL }, (_, index) => (
-                      <option key={index + 1} value={index + 1}>
-                        {index + 1}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                {characterHeaderSubtitle(
+                  race,
+                  currentEvaluation === undefined
+                    ? character.snapshot.details.Class
+                    : selectedClass?.name,
+                  build.effectiveLevel,
+                )}
               </p>
             </header>
             <div className="builder-sidebar-panel">
@@ -1903,6 +1910,22 @@ export function CharacterEditorPage({
             <BuildVersion />
           </aside>
           <div className="builder-main">
+            {settingLevel ? (
+              <SetLevelDialog
+                name={
+                  characterDisplayName({ build, title: character.title }) ||
+                  "This character"
+                }
+                currentLevel={build.effectiveLevel}
+                tiers={CHARACTER_TIERS}
+                entries={levelPlanEntries}
+                onCancel={() => setSettingLevel(false)}
+                onSet={(level) => {
+                  setSettingLevel(false);
+                  changeCurrentLevel(level);
+                }}
+              />
+            ) : null}
             {reviewingContentUpdate &&
             character !== undefined &&
             activeManifest !== undefined ? (
@@ -2100,6 +2123,30 @@ export function CharacterEditorPage({
                   <Icon name="redo" />
                 </button>
                 <span aria-hidden="true" className="builder-actions-divider" />
+                <ActionMenu
+                  icon="change-level"
+                  label="Change level"
+                  menuLabel="Change level"
+                  triggerClassName="icon-only-button button-icon"
+                  items={[
+                    {
+                      label:
+                        build.effectiveLevel >= MAX_CHARACTER_LEVEL
+                          ? `Level up (${MAX_CHARACTER_LEVEL} is the highest)`
+                          : `Level up to ${build.effectiveLevel + 1}`,
+                      disabled:
+                        entities.length === 0 ||
+                        build.effectiveLevel >= MAX_CHARACTER_LEVEL,
+                      onSelect: () =>
+                        changeCurrentLevel(build.effectiveLevel + 1),
+                    },
+                    {
+                      label: "Set level…",
+                      disabled: entities.length === 0,
+                      onSelect: () => setSettingLevel(true),
+                    },
+                  ]}
+                />
                 <a
                   aria-label="Character sheet"
                   className="icon-only-button button-icon"
@@ -2108,6 +2155,22 @@ export function CharacterEditorPage({
                 >
                   <Icon name="sheet" />
                 </a>
+                <ActionMenu
+                  icon="export"
+                  label="Export"
+                  menuLabel={`Export ${character.title} as`}
+                  triggerClassName="icon-only-button button-icon"
+                  items={[
+                    {
+                      label: ".4ecb",
+                      onSelect: () => exportFrom(exportCharacterBackup),
+                    },
+                    {
+                      label: ".dnd4e",
+                      onSelect: () => exportFrom(exportCharacterDnd4e),
+                    },
+                  ]}
+                />
                 <a
                   aria-label="Settings"
                   className="icon-only-button button-icon"
@@ -2559,6 +2622,7 @@ export function CharacterEditorPage({
             </div>
           </div>
         </div>
+        <ToastRegion toasts={toasts.toasts} onDismiss={toasts.dismiss} />
       </main>
     </BuilderCardContext.Provider>
   );

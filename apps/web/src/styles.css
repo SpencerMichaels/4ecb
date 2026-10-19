@@ -1165,14 +1165,15 @@ textarea {
   border-color: var(--danger);
   color: var(--surface);
 }
-.character-export-menu {
+/* ActionMenu: an icon button with a small list of actions below it. */
+.action-menu {
   position: relative;
 }
-.character-export-menu > .character-card-action[aria-expanded="true"] {
+.action-menu > [aria-expanded="true"] {
   background: var(--surface-subtle);
   border-color: var(--border);
 }
-.character-export-options {
+.action-menu-options {
   background: var(--surface-raised);
   border: 1px solid var(--border-strong);
   box-shadow: 0 0.35rem 0.8rem rgb(0 0 0 / 20%);
@@ -1182,9 +1183,9 @@ textarea {
   position: absolute;
   right: 0;
   top: calc(100% + 0.25rem);
-  z-index: 5;
+  z-index: 20;
 }
-.character-export-options :is(a, button) {
+.action-menu-options :is(a, button) {
   background: transparent;
   border: 0;
   border-radius: 2px;
@@ -1192,12 +1193,13 @@ textarea {
   padding: 0.45rem 0.65rem;
   text-align: left;
   text-decoration: none;
+  white-space: nowrap;
 }
-.character-export-options :is(a, button):hover {
+.action-menu-options :is(a, button):not(:disabled):hover {
   background: var(--surface-subtle);
   box-shadow: none;
 }
-.character-export-options :is(a, button):focus-visible {
+.action-menu-options :is(a, button):focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: -1px;
 }
@@ -3688,35 +3690,6 @@ textarea {
   margin: 0;
 }
 
-/* "Level [7]": the current level changes here, beside race and class. Like
-   the name field above, the dropdown shows no frame until hovered or
-   focused. */
-.builder-level-select {
-  align-items: baseline;
-  display: inline-flex;
-  gap: 0.2rem;
-}
-
-.builder-level-select select {
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid transparent;
-  border-radius: 0;
-  color: var(--text);
-  font-weight: 800;
-  padding: 0 0.1rem;
-}
-
-.builder-level-select select:not(:disabled):hover {
-  border-color: transparent;
-  box-shadow: inset 0 -1px var(--border-strong);
-}
-
-.builder-level-select select:focus-visible {
-  box-shadow: inset 0 -3px var(--focus);
-  outline: none;
-}
-
 .builder-character-name-heading {
   margin-bottom: 0.15rem;
 }
@@ -3888,7 +3861,8 @@ textarea {
   gap: 0.2rem;
 }
 
-.builder-status > :is(button, a, .save-status) {
+.builder-status > :is(button, a, .save-status),
+.builder-status > .action-menu > button {
   align-items: center;
   background: transparent;
   border: 0;
@@ -3909,7 +3883,9 @@ textarea {
 }
 
 .builder-status > :is(button, a):not(:disabled):hover,
-.builder-status > :is(button, a):focus-visible {
+.builder-status > :is(button, a):focus-visible,
+.builder-status > .action-menu > button:not(:disabled):hover,
+.builder-status > .action-menu > button:focus-visible {
   background: var(--surface-subtle);
   border-color: transparent;
   box-shadow: none;
@@ -4084,7 +4060,12 @@ textarea {
   padding: 0;
 }
 
-.level-picker-panel .level-rail-button {
+.level-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.level-grid .level-rail-button {
   flex-direction: column;
   min-height: 2.6rem;
   padding-inline: 0;
@@ -4113,6 +4094,14 @@ textarea {
 .level-rail-button[aria-current="step"]:not(:disabled):hover {
   background: var(--accent-soft);
   box-shadow: inset 0 -3px var(--accent);
+  color: var(--text);
+}
+
+/* A pending pick in the Set level dialog: the selection blue. */
+.level-rail-button[aria-pressed="true"],
+.level-rail-button[aria-pressed="true"]:not(:disabled):hover {
+  background: var(--selected-soft);
+  box-shadow: inset 0 -3px var(--selected);
   color: var(--text);
 }
 
@@ -7880,4 +7869,20 @@ button.toast-dismiss:not(:disabled):hover {
 .replace-retrain-body {
   margin: 0;
   padding: 1rem;
+}
+
+/* Set level: the level plan grid in a dialog; the pending pick is blue. */
+.set-level-dialog {
+  overflow: auto;
+  width: min(30rem, calc(100vw - 2rem));
+}
+
+.set-level-body {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+}
+
+.set-level-body > p {
+  margin: 0;
 }

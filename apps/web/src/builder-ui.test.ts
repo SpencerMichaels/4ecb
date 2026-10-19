@@ -187,6 +187,10 @@ describe("builder planning UI", () => {
     expect(characterHeaderSubtitle("Dwarf", "Paladin")).toBe("Dwarf Paladin");
     expect(characterHeaderSubtitle(undefined, "Paladin")).toBe("Paladin");
     expect(characterHeaderSubtitle("  Dwarf  ", "")).toBe("Dwarf");
+    expect(characterHeaderSubtitle("Dwarf", "Paladin", 7)).toBe(
+      "Dwarf Paladin 7",
+    );
+    expect(characterHeaderSubtitle(undefined, undefined, 1)).toBe("Level 1");
   });
 
   it("presents class key abilities from structured metadata in authored order", () => {

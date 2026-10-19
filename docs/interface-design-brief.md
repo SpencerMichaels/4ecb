@@ -51,10 +51,15 @@ and invited-beta hostability preparation; desktop/tablet Play moves to M5.8.
   appearance without a textbox border or fill; pointer hover adds only a subtle
   underline, while keyboard focus replaces it with a thicker accent-colored
   underline rather than a rectangular outline. Its visible text shares the exact
-  left edge of the race/class/level subtitle. The current level is edited in
-  that subtitle ("Dwarf Paladin · Level [7]", a frameless dropdown styled like
-  the name field), not in Character details: it reshapes the whole build
-  rather than describing the character. A wide, shallow statistics strip to
+  left edge of the race/class/level subtitle. The subtitle shows the current
+  level ("Dwarf Paladin 7") but doesn't edit it: changing the level is
+  rare and reshapes the whole build, so it is the tab bar's **Change level**
+  menu (arrow-down-up icon, beside Character sheet) with **Level up to N+1**
+  and **Set level…**, a dialog with the Build tab's level plan grid whose
+  pick is confirmed by its primary button (2026-10-18). The library's Export
+  menu (.4ecb, .dnd4e) also sits right of Character sheet; it waits for
+  pending saves first. Export is files only: printing or saving a PDF is the
+  character sheet's Print / save PDF. A wide, shallow statistics strip to
   the identity block's right shows the effective character level's evaluated
   maximum HP, Speed, Initiative, AC/Fortitude/Reflex/Will, and six ability
   scores. Four visually distinct clusters communicate hit points, movement,
@@ -286,14 +291,13 @@ and invited-beta hostability preparation; desktop/tablet Play moves to M5.8.
   of selection communicates unresolved state without adding “Unresolved” as a
   fake candidate. Larger or information-rich sets use the shared table. Clear
   remains a real edit that restores the exact slot to an unresolved placeholder,
-  autosaves, and remains undoable. The compact current-level control may remain
-  a dropdown because it selects one scalar from a long, familiar numeric range.
+  autosaves, and remains undoable.
 - Character details is compact: Player, Company and RPGA # (and Age, Height,
   Weight) are inline-label fields side by side; Gender and Alignment are
   segmented controls as wide as their options, labelled on the left; Deity
   uses the shared table with the adjacent detail pane; the six notes sit under
   one row of tabs (a dot marks notes with text). The name is edited only in
-  the sidebar and the level beside it.
+  the sidebar; the level from the tab bar's Change level menu.
 - Equipment and Diagnostics are full workspace tabs beside Build, Overview, and
   Character details. They do not remain as collapsed disclosures below every
   workspace; the Equipment tab is the integration point for the forthcoming

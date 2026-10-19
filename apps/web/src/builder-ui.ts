@@ -91,13 +91,17 @@ export function pointBuyStepControl(
 }
 
 /** "Dwarf Paladin" for the sidebar; the level is its own control there. */
+/** "Dwarf Paladin 7", or "Level 1" before a race or class is chosen. */
 export function characterHeaderSubtitle(
   race: string | undefined,
   characterClass: string | undefined,
+  level?: number,
 ): string {
-  return [race?.trim(), characterClass?.trim()]
+  const identity = [race?.trim(), characterClass?.trim()]
     .filter((value): value is string => Boolean(value))
     .join(" ");
+  if (level === undefined) return identity;
+  return identity === "" ? `Level ${level}` : `${identity} ${level}`;
 }
 
 export function choiceLevel(choice: EvaluatedChoice): number {

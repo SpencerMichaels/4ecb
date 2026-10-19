@@ -170,7 +170,7 @@ describe("builder header integration", () => {
   });
   it("gives every control right of the tabs one borderless, centered style", () => {
     expect(styles).toMatch(
-      /\.builder-status > :is\(button, a, \.save-status\)\s*\{[^}]*border: 0;[^}]*display: inline-flex;[^}]*height: 2rem;[^}]*justify-content: center;/,
+      /\.builder-status > :is\(button, a, \.save-status\),\s*\.builder-status > \.action-menu > button\s*\{[^}]*border: 0;[^}]*display: inline-flex;[^}]*height: 2rem;[^}]*justify-content: center;/,
     );
     expect(styles).toMatch(/\.builder-status \.icon\s*\{[^}]*height: 1\.1rem;/);
     expect(styles).not.toContain(".builder-status .icon-only-button");
