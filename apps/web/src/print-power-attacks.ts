@@ -91,18 +91,16 @@ export function defaultPrintAttacks(
   );
 }
 
-export function printAttackHeader(
-  attack: SheetPowerAttack,
-  showEquippedAttackBonus: boolean,
-): string {
+/** An attack band's header: the ability formula against the defense. The
+ *  equipped weapon's total to-hit bonus isn't shown here; each card's weapon
+ *  table lists every weapon's bonus (D085). */
+export function printAttackHeader(attack: SheetPowerAttack): string {
   const ability = abilityAbbreviation(attack.ability);
   const formula = `${ability}${attack.powerBonus === 0 ? "" : attack.powerBonus > 0 ? `+${attack.powerBonus}` : attack.powerBonus}`;
   const total = attack.attack
     .replace(/\bFortitude\b/gi, "Fort")
     .replace(/\bReflex\b/gi, "Ref");
-  return showEquippedAttackBonus
-    ? total.replace(/^(.+?)\s+vs\s+(.+)$/i, `$1 · ${formula} vs $2`)
-    : `${formula} vs ${total.match(/\bvs\s+(.+)$/i)?.[1] ?? "defense"}`;
+  return `${formula} vs ${total.match(/\bvs\s+(.+)$/i)?.[1] ?? "defense"}`;
 }
 
 export function groupedPrintRules(

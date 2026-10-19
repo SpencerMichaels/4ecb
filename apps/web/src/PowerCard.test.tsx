@@ -26,8 +26,6 @@ describe("panel power card", () => {
       createElement(PowerCard, {
         card,
         characterLevel: 1,
-        showEquippedAttackBonus: false,
-        showPrintTitleActionIcon: true,
         layout: "panel",
         panel: { flavor: "A synthetic flourish." },
       }),
@@ -44,8 +42,6 @@ describe("panel power card", () => {
       createElement(PowerCard, {
         card: { ...card, flavor: "A synthetic flourish." },
         characterLevel: 1,
-        showEquippedAttackBonus: false,
-        showPrintTitleActionIcon: true,
       }),
     );
     expect(markup).not.toContain("A synthetic flourish.");

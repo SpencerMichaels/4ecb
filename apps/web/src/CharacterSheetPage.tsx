@@ -82,16 +82,12 @@ function PrintCard({
   name,
   portrait,
   characterLevel,
-  showEquippedAttackBonus,
-  showPrintTitleActionIcon,
 }: {
   readonly card: PrintableCard;
   readonly model: CharacterSheetModel;
   readonly name: string;
   readonly portrait: CharacterPortrait | undefined;
   readonly characterLevel: number;
-  readonly showEquippedAttackBonus: boolean;
-  readonly showPrintTitleActionIcon: boolean;
 }) {
   if (isPlayCard(card))
     return card.kind === "play-character" ? (
@@ -100,14 +96,9 @@ function PrintCard({
       <PrintSkillsCard model={model} />
     );
   return card.kind === "power" ? (
-    <PowerCard
-      card={card}
-      characterLevel={characterLevel}
-      showEquippedAttackBonus={showEquippedAttackBonus}
-      showPrintTitleActionIcon={showPrintTitleActionIcon}
-    />
+    <PowerCard card={card} characterLevel={characterLevel} />
   ) : (
-    <ItemCard card={card} showActionIcons={showPrintTitleActionIcon} />
+    <ItemCard card={card} />
   );
 }
 
@@ -184,8 +175,6 @@ export function CharacterSheetPage({
   openPrintPreview = false,
   resolveAbilityChoices = true,
   abbreviateAbilityValues = true,
-  showEquippedAttackBonus = true,
-  showPrintTitleActionIcon = true,
   printCardTextSize = 8,
   countCoinWeight = true,
   paper = "letter",
@@ -196,8 +185,6 @@ export function CharacterSheetPage({
   readonly openPrintPreview?: boolean;
   readonly resolveAbilityChoices?: boolean;
   readonly abbreviateAbilityValues?: boolean;
-  readonly showEquippedAttackBonus?: boolean;
-  readonly showPrintTitleActionIcon?: boolean;
   readonly printCardTextSize?: number;
   readonly countCoinWeight?: boolean;
   /** The app-wide paper size (a preference, not per-character data). */
@@ -634,8 +621,6 @@ export function CharacterSheetPage({
                   key={`${card.name}-${index}`}
                   card={card}
                   characterLevel={characterLevel}
-                  showEquippedAttackBonus={showEquippedAttackBonus}
-                  showPrintTitleActionIcon
                   layout="panel"
                   panel={{
                     textPresentation: cardTextPresentation(
@@ -673,7 +658,6 @@ export function CharacterSheetPage({
                   <ItemCard
                     key={`${card.name}-${index}`}
                     card={card}
-                    showActionIcons
                     layout="panel"
                   />
                 ))}
@@ -754,8 +738,6 @@ export function CharacterSheetPage({
                     name={characterName}
                     portrait={character.portrait}
                     characterLevel={characterLevel}
-                    showEquippedAttackBonus={showEquippedAttackBonus}
-                    showPrintTitleActionIcon={showPrintTitleActionIcon}
                     key={`${card.kind}-${isPlayCard(card) ? "" : (card.id ?? card.name)}-${index}`}
                   />
                 ))}

@@ -65,16 +65,15 @@ describe("printed authored attack phases", () => {
     );
   });
   it.each([
-    ["Strength", 0, "+12 vs AC", "+12 · STR vs AC", "STR vs AC"],
-    ["Dexterity", 2, "+14 vs Reflex", "+14 · DEX+2 vs Ref", "DEX+2 vs Ref"],
-    ["Wisdom", -1, "+8 vs Fortitude", "+8 · WIS-1 vs Fort", "WIS-1 vs Fort"],
-    ["Charisma", 0, "— vs Will", "— · CHA vs Will", "CHA vs Will"],
+    ["Strength", 0, "+12 vs AC", "STR vs AC"],
+    ["Dexterity", 2, "+14 vs Reflex", "DEX+2 vs Ref"],
+    ["Wisdom", -1, "+8 vs Fortitude", "WIS-1 vs Fort"],
+    ["Charisma", 0, "— vs Will", "CHA vs Will"],
   ] as const)(
-    "formats %s headers with or without the equipped bonus",
-    (ability, powerBonus, attack, shown, hidden) => {
+    "formats %s headers without the equipped bonus (D085)",
+    (ability, powerBonus, attack, header) => {
       const phase = { id: "phase", ordinal: 2, ability, powerBonus, attack };
-      expect(printAttackHeader(phase, true)).toBe(shown);
-      expect(printAttackHeader(phase, false)).toBe(hidden);
+      expect(printAttackHeader(phase)).toBe(header);
     },
   );
   it("retains both headers and both Hit blocks with only a cached primary total", () => {

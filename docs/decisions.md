@@ -2314,6 +2314,21 @@ without the slot's current pick: per the product owner, what a retrain gives
 up can never count toward what it takes. The retrained definition itself is
 not offered (Endurance → Endurance changes nothing).
 
+### D085 — Action icons and attack headers are fixed, not settings
+
+Status: accepted (2026-10-19).
+
+Two printed-card display settings are removed, each keeping one behavior.
+Action icons are integral to how the rest of the app presents powers, so
+printed power cards always show the action symbol beside the power name (the
+action band shows the timer icon) and item cards always show it in item-power
+headers. Attack headers never include the equipped weapon's total to-hit
+bonus: the weapon table on each card lists every weapon's bonus, and one place
+to look it up is clearer than two. Headers show the ability formula against
+the defense (`STR vs AC`, `DEX+2 vs Ref`). The settings' stored preferences
+(`4ecb.showEquippedAttackBonus.v1`, `4ecb.showPrintTitleActionIcon.v1`) are no
+longer read.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

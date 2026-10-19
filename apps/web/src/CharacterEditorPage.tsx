@@ -261,7 +261,6 @@ export function CharacterEditorPage({
   mergeFunds,
   resolveAbilityChoices,
   abbreviateAbilityValues,
-  showEquippedAttackBonus,
   activeManifest,
   activeProfile,
 }: {
@@ -276,7 +275,6 @@ export function CharacterEditorPage({
   readonly mergeFunds: boolean;
   readonly resolveAbilityChoices: boolean;
   readonly abbreviateAbilityValues: boolean;
-  readonly showEquippedAttackBonus: boolean;
   readonly activeManifest?: ContentPackManifest;
   readonly activeProfile?: ContentProfileDefinition;
 }) {
@@ -558,9 +556,8 @@ export function CharacterEditorPage({
     () => ({
       resolveAbilityChoices,
       abbreviateAbilityValues,
-      showEquippedAttackBonus,
     }),
-    [abbreviateAbilityValues, resolveAbilityChoices, showEquippedAttackBonus],
+    [abbreviateAbilityValues, resolveAbilityChoices],
   );
   const equipmentCardSettings = useMemo(
     () =>

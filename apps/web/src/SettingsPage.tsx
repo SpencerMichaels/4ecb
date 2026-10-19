@@ -123,10 +123,6 @@ export interface SettingsPageProps {
   readonly onResolveAbilityChoicesChange: (value: boolean) => void;
   readonly abbreviateAbilityValues: boolean;
   readonly onAbbreviateAbilityValuesChange: (value: boolean) => void;
-  readonly showEquippedAttackBonus: boolean;
-  readonly onShowEquippedAttackBonusChange: (value: boolean) => void;
-  readonly showPrintTitleActionIcon: boolean;
-  readonly onShowPrintTitleActionIconChange: (value: boolean) => void;
   readonly printCardTextSize: number;
   readonly onPrintCardTextSizeChange: (value: number) => void;
   readonly paperSize: PaperSize;
@@ -198,10 +194,6 @@ export function SettingsPage({
   onResolveAbilityChoicesChange,
   abbreviateAbilityValues,
   onAbbreviateAbilityValuesChange,
-  showEquippedAttackBonus,
-  onShowEquippedAttackBonusChange,
-  showPrintTitleActionIcon,
-  onShowPrintTitleActionIconChange,
   printCardTextSize,
   onPrintCardTextSizeChange,
   paperSize,
@@ -588,12 +580,6 @@ export function SettingsPage({
                 label="Use the best ability in power descriptions"
                 help="When a power lets you choose an ability, show only the one with the highest modifier. Ties go to the higher score, then your class's key abilities, then the power's first option."
               />
-              <CheckboxSetting
-                checked={showEquippedAttackBonus}
-                onChange={onShowEquippedAttackBonusChange}
-                label="Show equipped weapon to-hit bonus in attack headers"
-                help="Turn this off if you often switch weapons. Each card's weapon table always lists every weapon's bonus."
-              />
             </div>
           </section>
         </div>
@@ -618,12 +604,6 @@ export function SettingsPage({
                 onChange={onCountCoinWeightChange}
                 label="Count coin weight"
                 help="Include carried coins in encumbrance. Turn this off if your group ignores coin weight. Stored coins never count."
-              />
-              <CheckboxSetting
-                checked={showPrintTitleActionIcon}
-                onChange={onShowPrintTitleActionIconChange}
-                label="Show action icons on printed cards"
-                help="Show the action symbol beside each power name and in item-power headers. When off, power symbols appear only beside the action description."
               />
               <div className="settings-option">
                 <label

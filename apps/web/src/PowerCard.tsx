@@ -91,14 +91,12 @@ const isPersonal = (value: string) => /^\s*personal\s*$/i.test(value);
 
 function PrintAttackBand({
   attack,
-  showEquippedAttackBonus,
   secondary = false,
 }: {
   readonly attack: SheetPowerAttack;
-  readonly showEquippedAttackBonus: boolean;
   readonly secondary?: boolean;
 }) {
-  const total = printAttackHeader(attack, showEquippedAttackBonus);
+  const total = printAttackHeader(attack);
   return (
     <dl className={`print-card-combat-band${secondary ? " is-secondary" : ""}`}>
       <div className="print-card-attack-total">
@@ -175,15 +173,11 @@ export function CardPanelSubheading({
 export function PowerCard({
   card,
   characterLevel,
-  showEquippedAttackBonus,
-  showPrintTitleActionIcon,
   layout = "print",
   panel = {},
 }: {
   readonly card: SheetCard;
   readonly characterLevel: number;
-  readonly showEquippedAttackBonus: boolean;
-  readonly showPrintTitleActionIcon: boolean;
   readonly layout?: CardLayout;
   readonly panel?: CardPanelProps;
 }) {
@@ -233,7 +227,7 @@ export function PowerCard({
     >
       <header>
         <h3>
-          {showPrintTitleActionIcon && card.actionType?.trim() ? (
+          {card.actionType?.trim() ? (
             <ActionTypeIcon decorative value={card.actionType} />
           ) : null}
           <span
@@ -272,7 +266,7 @@ export function PowerCard({
         <div className="print-card-action-band">
           <span className="print-card-action-types">
             <span className="print-card-action-line">
-              {showPrintTitleActionIcon && card.actionType?.trim() ? (
+              {card.actionType?.trim() ? (
                 <Icon name="timer" />
               ) : (
                 <ActionTypeIcon decorative value={card.actionType} />
@@ -319,11 +313,7 @@ export function PowerCard({
         ) : null}
         {attacks.map((attack, attackIndex) => (
           <section className="print-card-attack-section" key={attack.id}>
-            <PrintAttackBand
-              attack={attack}
-              showEquippedAttackBonus={showEquippedAttackBonus}
-              secondary={attackIndex > 0}
-            />
+            <PrintAttackBand attack={attack} secondary={attackIndex > 0} />
             <div className="print-card-attack-rules">
               {attackIndex === 0 ? (
                 <>

@@ -128,30 +128,14 @@ describe("release accessibility contract", () => {
     expect(app).toContain("ABBREVIATE_ABILITY_VALUES_STORAGE_KEY");
     expect(app).not.toContain("EXPAND_WEAPON_DICE_STORAGE_KEY");
     expect(settingsPage).not.toContain("Color utility powers");
-    expect(settingsPage).toContain(
-      "Show equipped weapon to-hit bonus in attack headers",
-    );
-    expect(settingsPage).toContain("checked={showEquippedAttackBonus}");
-    expect(app).toContain(
-      'localStorage.getItem(SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY) !== "0"',
-    );
-    expect(app).toContain(
-      'localStorage.setItem(SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY, "0")',
-    );
-    expect(app).toContain("showEquippedAttackBonus={showEquippedAttackBonus}");
-    expect(settingsPage).toContain("Show action icons on printed cards");
+    // Attack headers never show the equipped to-hit bonus, and printed cards
+    // always show action icons; neither is a setting (D085).
+    expect(settingsPage).not.toContain("to-hit bonus in attack headers");
+    expect(app).not.toContain("SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY");
+    expect(settingsPage).not.toContain("Show action icons on printed cards");
+    expect(app).not.toContain("SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY");
     expect(settingsPage).toContain("Printed card text size");
     expect(settingsPage).toContain('type="range"');
-    expect(settingsPage).toContain("checked={showPrintTitleActionIcon}");
-    expect(app).toContain(
-      'localStorage.getItem(SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY) !== "0"',
-    );
-    expect(app).toContain(
-      'localStorage.setItem(SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY, "0")',
-    );
-    expect(app).toContain(
-      "showPrintTitleActionIcon={showPrintTitleActionIcon}",
-    );
     // Builder details render the sheet's evaluated cards (D079).
     expect(characterEditor).toContain("evaluatedBuilderCardSettings(");
     expect(builderCards).toContain("createSheetPowerCardFinder(");

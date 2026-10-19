@@ -117,10 +117,6 @@ export const RESOLVE_ABILITY_CHOICES_STORAGE_KEY =
   "4ecb.resolveAbilityChoices.v1";
 export const ABBREVIATE_ABILITY_VALUES_STORAGE_KEY =
   "4ecb.abbreviateAbilityValues.v1";
-export const SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY =
-  "4ecb.showEquippedAttackBonus.v1";
-export const SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY =
-  "4ecb.showPrintTitleActionIcon.v1";
 export const PRINT_CARD_TEXT_SIZE_STORAGE_KEY = "4ecb.printCardTextSize.v1";
 export const COUNT_COIN_WEIGHT_STORAGE_KEY = "4ecb.countCoinWeight.v1";
 
@@ -244,27 +240,7 @@ export function App() {
       // The encumbrance preference still applies for this session.
     }
   }, [countCoinWeight]);
-  const [showEquippedAttackBonus, setShowEquippedAttackBonus] = useState(() => {
-    try {
-      return (
-        localStorage.getItem(SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY) !== "0"
-      );
-    } catch {
-      return true;
-    }
-  });
   const runtimeContentStarted = useRef(false);
-  const [showPrintTitleActionIcon, setShowPrintTitleActionIcon] = useState(
-    () => {
-      try {
-        return (
-          localStorage.getItem(SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY) !== "0"
-        );
-      } catch {
-        return true;
-      }
-    },
-  );
   const [printCardTextSize, setPrintCardTextSize] = useState(() => {
     try {
       return preferredPrintCardTextSize(
@@ -356,24 +332,6 @@ export function App() {
       // The power-card display preference still applies for this session.
     }
   }, [abbreviateAbilityValues]);
-  useEffect(() => {
-    try {
-      if (showEquippedAttackBonus)
-        localStorage.removeItem(SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY);
-      else localStorage.setItem(SHOW_EQUIPPED_ATTACK_BONUS_STORAGE_KEY, "0");
-    } catch {
-      // The printed-card preference still applies for this session.
-    }
-  }, [showEquippedAttackBonus]);
-  useEffect(() => {
-    try {
-      if (showPrintTitleActionIcon)
-        localStorage.removeItem(SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY);
-      else localStorage.setItem(SHOW_PRINT_TITLE_ACTION_ICON_STORAGE_KEY, "0");
-    } catch {
-      // The printed-card preference still applies for this session.
-    }
-  }, [showPrintTitleActionIcon]);
 
   useEffect(() => {
     try {
@@ -628,14 +586,6 @@ export function App() {
                       onAbbreviateAbilityValuesChange={
                         setAbbreviateAbilityValues
                       }
-                      showEquippedAttackBonus={showEquippedAttackBonus}
-                      onShowEquippedAttackBonusChange={
-                        setShowEquippedAttackBonus
-                      }
-                      showPrintTitleActionIcon={showPrintTitleActionIcon}
-                      onShowPrintTitleActionIconChange={
-                        setShowPrintTitleActionIcon
-                      }
                       printCardTextSize={printCardTextSize}
                       onPrintCardTextSizeChange={setPrintCardTextSize}
                       paperSize={paperSize}
@@ -659,7 +609,6 @@ export function App() {
                       mergeFunds={mergeFunds}
                       resolveAbilityChoices={resolveAbilityChoices}
                       abbreviateAbilityValues={abbreviateAbilityValues}
-                      showEquippedAttackBonus={showEquippedAttackBonus}
                       {...(activeManifest === undefined
                         ? {}
                         : { activeManifest })}
@@ -676,8 +625,6 @@ export function App() {
                       countCoinWeight={countCoinWeight}
                       resolveAbilityChoices={resolveAbilityChoices}
                       abbreviateAbilityValues={abbreviateAbilityValues}
-                      showEquippedAttackBonus={showEquippedAttackBonus}
-                      showPrintTitleActionIcon={showPrintTitleActionIcon}
                       printCardTextSize={printCardTextSize}
                       paper={paperSize}
                     />

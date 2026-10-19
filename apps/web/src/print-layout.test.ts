@@ -360,7 +360,9 @@ describe("print layout contract", () => {
     expect(styles).toMatch(
       /\.print-card-combat-band\s*\{[^}]*grid-template-columns:\s*var\(--print-card-header-first-column, max-content\)\s*minmax\(0, 1fr\)/,
     );
-    expect(sheetSource).toContain("`$1 · ${formula} vs $2`");
+    // Headers show the formula against the defense, never the equipped total (D085).
+    expect(sheetSource).toContain("`${formula} vs ${total.match(");
+    expect(sheetSource).not.toContain("`$1 · ${formula} vs $2`");
     expect(sheetSource).not.toContain("`${attack.ordinal} · `");
     expect(sheetSource).toContain("const isUtility = classification.utility");
     expect(sheetSource).toContain("defaultPrintAttacks(card)");

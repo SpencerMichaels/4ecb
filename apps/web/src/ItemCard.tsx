@@ -20,12 +20,10 @@ import { usePrintCardFit } from "./use-print-card-fit";
 /** The one item card format, shared by the printed sheet and builder panes. */
 export function ItemCard({
   card,
-  showActionIcons,
   layout = "print",
   panel = {},
 }: {
   readonly card: SheetCard;
-  readonly showActionIcons: boolean;
   readonly layout?: CardLayout;
   readonly panel?: CardPanelProps;
 }) {
@@ -121,13 +119,11 @@ export function ItemCard({
             >
               {power ? (
                 <div
-                  className={`print-item-power-heading${power.usage ? ` usage-${power.usage.toLocaleLowerCase()}` : ""}${power.actionType && showActionIcons ? " has-action-icon" : ""}`}
+                  className={`print-item-power-heading${power.usage ? ` usage-${power.usage.toLocaleLowerCase()}` : ""}${power.actionType ? " has-action-icon" : ""}`}
                 >
                   {power.actionType ? (
                     <>
-                      {showActionIcons ? (
-                        <ActionTypeIcon decorative value={power.actionType} />
-                      ) : null}
+                      <ActionTypeIcon decorative value={power.actionType} />
                       <div className="print-item-power-content">
                         <div className="print-item-power-action">
                           <span>{power.actionType}</span>

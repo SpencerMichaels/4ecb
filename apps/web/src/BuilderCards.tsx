@@ -34,14 +34,12 @@ export interface BuilderCardSettings {
   readonly powerCardFor: (entity: ContentEntity) => SheetCard;
   /** Selects the power text tier shown on cards. */
   readonly characterLevel: number;
-  readonly showEquippedAttackBonus: boolean;
   readonly abbreviateAbilityValues: boolean;
 }
 
 export interface BuilderCardPreferences {
   readonly resolveAbilityChoices: boolean;
   readonly abbreviateAbilityValues: boolean;
-  readonly showEquippedAttackBonus: boolean;
 }
 
 /** Evaluated cards for one character state. Powers the character does not
@@ -92,7 +90,6 @@ export function evaluatedBuilderCardSettings(
         owned.get(entity.id.toLocaleLowerCase()) ?? hypotheticalPower(entity),
       ),
     characterLevel: evaluation.level,
-    showEquippedAttackBonus: preferences.showEquippedAttackBonus,
     abbreviateAbilityValues: preferences.abbreviateAbilityValues,
   };
 }
@@ -105,7 +102,6 @@ export function authoredBuilderCardSettings(
     powerCardFor: (entity) =>
       authoredSheetPowerCard(entity, abbreviatePowerAbilities),
     characterLevel,
-    showEquippedAttackBonus: false,
     abbreviateAbilityValues: false,
   };
 }
@@ -147,8 +143,6 @@ export function BuilderPowerCard({
     <PowerCard
       card={card}
       characterLevel={settings.characterLevel}
-      showEquippedAttackBonus={settings.showEquippedAttackBonus}
-      showPrintTitleActionIcon
       layout="panel"
       panel={{
         headingId: headingIdFor(entity, headingSuffix),
@@ -192,7 +186,6 @@ export function BuilderItemCard({
   return (
     <ItemCard
       card={card}
-      showActionIcons
       layout="panel"
       panel={{
         headingId: headingIdFor(entity, headingSuffix),
