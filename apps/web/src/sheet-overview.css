@@ -717,6 +717,11 @@ body:has(.sp-prototype) {
 }
 .ov-reference-table td:first-child .action-type-icon {
   margin-right: 0.35em;
+  /* An icon-only inline-flex box sits its bottom on the baseline. Middle
+     centers it on the x-height; lift it toward the capitals. */
+  position: relative;
+  top: -0.06em;
+  vertical-align: middle;
 }
 .sheet-overview.sp-monochrome .ov-reference-pane > header {
   background: #eee;
@@ -1679,6 +1684,12 @@ body:has(.sp-prototype) {
 }
 .ov-power-trackers .sp-shared-power:first-child {
   margin-top: 0;
+}
+/* Centered on the line box, the icon rides above the text, whose ascender
+   space exceeds its descender space; drop it to the text's middle. */
+.ov-power-trackers .sp-shared-power .action-type-icon {
+  position: relative;
+  top: 0.03em;
 }
 .sheet-overview.sp-monochrome
   .ov-paper[aria-label="Play scratchpad"]
