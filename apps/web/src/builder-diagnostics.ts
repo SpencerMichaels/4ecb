@@ -13,7 +13,7 @@ import {
 } from "./builder-ui";
 
 export type BuilderIssueKind =
-  "unresolved" | "warning" | "error" | "house-rule";
+  "unresolved" | "warning" | "error" | "house-rule" | "update";
 
 export type BuilderIssueTarget =
   | { readonly kind: "abilities" }
@@ -35,6 +35,8 @@ export interface BuilderIssueGroups {
   readonly warnings: readonly BuilderIssue[];
   readonly errors: readonly BuilderIssue[];
   readonly houseRules: readonly BuilderIssue[];
+  /** News, not problems: an available game-content update. */
+  readonly updates: readonly BuilderIssue[];
 }
 
 function selectedOccurrence(
@@ -115,7 +117,7 @@ function deduplicate(issues: readonly BuilderIssue[]): BuilderIssue[] {
 export function contentUpdateIssue(characterTitle: string): BuilderIssue {
   return {
     key: "content:update-available",
-    kind: "warning",
+    kind: "update",
     title: "Game content has been updated",
     detail: `${characterTitle || "This character"} still uses the older version of the game content.`,
     effect:
@@ -207,6 +209,10 @@ export function withCharacterIssues(
       ...groups.houseRules,
       ...issues.filter((issue) => issue.kind === "house-rule"),
     ],
+    updates: [
+      ...groups.updates,
+      ...issues.filter((issue) => issue.kind === "update"),
+    ],
   };
 }
 
@@ -226,7 +232,13 @@ export function builderIssueGroups({
   readonly abilityScoresHouseRuled: boolean;
 }): BuilderIssueGroups {
   if (evaluation === undefined)
-    return { unresolved: [], warnings: [], errors: [], houseRules: [] };
+    return {
+      unresolved: [],
+      warnings: [],
+      errors: [],
+      houseRules: [],
+      updates: [],
+    };
 
   const unresolved: BuilderIssue[] = evaluation.choices.flatMap((choice) =>
     choice.level <= effectiveLevel &&
@@ -482,5 +494,6 @@ export function builderIssueGroups({
         (issue) => issue.kind === "house-rule",
       ),
     ]),
+    updates: [],
   };
 }

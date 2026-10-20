@@ -513,8 +513,9 @@ describe("builder issue groups", () => {
 describe("character issues outside rules evaluation", () => {
   it("raises available content updates as a reviewable warning", () => {
     const issue = contentUpdateIssue("Ingi");
+    // News, not a problem: it has its own badge, never counted as a warning.
     expect(issue).toMatchObject({
-      kind: "warning",
+      kind: "update",
       title: "Game content has been updated",
       target: { kind: "content-update" },
     });
@@ -522,10 +523,17 @@ describe("character issues outside rules evaluation", () => {
     expect(contentUpdateIssue("").detail).toContain("This character");
 
     const groups = withCharacterIssues(
-      { unresolved: [], warnings: [], errors: [], houseRules: [] },
+      {
+        unresolved: [],
+        warnings: [],
+        errors: [],
+        houseRules: [],
+        updates: [],
+      },
       [issue],
     );
-    expect(groups.warnings).toEqual([issue]);
+    expect(groups.updates).toEqual([issue]);
+    expect(groups.warnings).toEqual([]);
     expect(groups.unresolved).toEqual([]);
   });
 });
@@ -586,7 +594,13 @@ describe("deity alignment", () => {
     const failed = evaluationFailedIssue("Worker crashed");
     expect(failed).toMatchObject({ kind: "error", detail: "Worker crashed" });
     const groups = withCharacterIssues(
-      { unresolved: [], warnings: [], errors: [], houseRules: [] },
+      {
+        unresolved: [],
+        warnings: [],
+        errors: [],
+        houseRules: [],
+        updates: [],
+      },
       [failed],
     );
     expect(groups.errors).toEqual([failed]);

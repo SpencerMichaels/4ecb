@@ -277,10 +277,11 @@ separate header or level rail.
   powers in code; fix content errata in `content/corrections/*.part`, merged
   by `scripts/build-private-content.sh` after the CBLoader parity check.
 - **Content updates.** Characters stay pinned to their content; an available
-  update is an ordinary builder warning (`contentUpdateIssue` in
-  `builder-diagnostics.ts`, raised via `withCharacterIssues`) whose Review
-  opens `ContentUpdateDialog.tsx` (`content-update.ts`, backed by
-  `previewProfileMigration`) to move a character onto the active content.
+  update is a character issue of kind `update` (`contentUpdateIssue` in
+  `builder-diagnostics.ts`, raised via `withCharacterIssues`), not a warning:
+  its own status badge opens `ContentUpdateDialog.tsx` (`content-update.ts`,
+  backed by `previewProfileMigration`) to move a character onto the active
+  content.
   Raise new character issues the same way, never as one-off banners.
   Settings' content table logic lives in `content-profile-ui.ts`.
 - **Legacy viewer source.** When available locally,

@@ -35,7 +35,8 @@ Amended 2026-10-19: a browser whose active content is made only of server
 packs activates a newly advertised server revision on its next load, without
 asking, so content updates reach users without manual steps. Content a user
 assembled with packs of their own is left alone. Characters still stay pinned;
-each shows the content-update warning until the user reviews and accepts it.
+each shows a content-update badge (news, not a warning) until the user reviews
+and accepts it.
 
 ### D005 — Separate durable character, play state, and derived snapshot
 

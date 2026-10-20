@@ -1233,6 +1233,7 @@ export function CharacterEditorPage({
   const warningCount = builderIssues.warnings.length;
   const errorCount = builderIssues.errors.length;
   const houseRuleCount = builderIssues.houseRules.length;
+  const contentUpdate = builderIssues.updates[0];
   const navigateToDiagnosticIssue = (issue: BuilderIssue): void => {
     setAccordionOverride(undefined);
     if (issue.target?.kind === "settings") {
@@ -2081,6 +2082,17 @@ export function CharacterEditorPage({
                     <span aria-hidden="true">{errorCount}</span>
                   </button>
                 ) : null}
+                {contentUpdate === undefined ? null : (
+                  <button
+                    aria-label="Game content update available, review it"
+                    className="builder-health builder-health-update"
+                    title={`${contentUpdate.title}. ${contentUpdate.effect}`}
+                    type="button"
+                    onClick={() => navigateToDiagnosticIssue(contentUpdate)}
+                  >
+                    <Icon name="content" />
+                  </button>
+                )}
                 {houseRuleCount > 0 ? (
                   <button
                     aria-label={`${houseRuleCount} ${houseRuleCount === 1 ? "house rule" : "house rules"}, open house rules`}
