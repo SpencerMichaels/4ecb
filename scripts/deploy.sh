@@ -107,7 +107,8 @@ fi
 say "Waiting for GitHub CI to publish the image (usually 5-10 minutes)"
 token=$(curl -fsS "https://ghcr.io/token?scope=repository:$image:pull" | jq -r .token)
 published() {
-  curl -fsS -o /dev/null -H "Authorization: Bearer $token" \
+  # -s without -S: the 404s before the image exists are expected, not errors.
+  curl -fs -o /dev/null -H "Authorization: Bearer $token" \
     -H "Accept: application/vnd.oci.image.index.v1+json" \
     "https://ghcr.io/v2/$image/manifests/sha-$commit"
 }

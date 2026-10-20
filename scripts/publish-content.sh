@@ -71,7 +71,14 @@ fi
 [[ -f "$homenet/apps/4ecb/pack.yml" ]] ||
   die "no homenet checkout at $homenet (set HOMENET_DIR, or use --no-push)"
 say "Copying deploy/ to the server (homenet apps/4ecb/pack.yml; needs the Admin VLAN)"
-(cd "$homenet" && nix develop --command ssh/keys.sh dmz -- \
+echo "  homenet asks for your KeePassXC master password to unlock its deploy key."
+# homenet's .envrc points SOPS at its KeePassXC pop-up (SOPS_AGE_KEY_CMD) and names the
+# database; take those exports from it rather than duplicating them (direnv may not be
+# allowed there).
+# shellcheck disable=SC2016
+(cd "$homenet" && nix develop --command bash -c \
+  'eval "$(grep "^export " .envrc)" && exec "$@"' homenet-env \
+  ssh/keys.sh dmz -- \
   ansible-playbook -i apps/4ecb/inventory.yml apps/4ecb/pack.yml \
   -e pack_src="$project_root/deploy") ||
   die "the push failed (are you on the Admin VLAN, with your age key?); deploy/ is ready to retry"
