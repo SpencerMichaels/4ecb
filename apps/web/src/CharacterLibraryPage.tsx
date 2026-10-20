@@ -62,6 +62,28 @@ export function CharacterLibraryPage({
   // elsewhere or pressing Escape disarms it.
   const trashAction = useArmedAction("character-trash-trigger");
   const [trashOpen, setTrashOpen] = useState(false);
+  // A .dnd4e export evaluates the character in a fresh rules worker, which
+  // takes a while; its card's Export button spins until the download starts.
+  const [exportingIds, setExportingIds] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
+  const exportCharacter = (
+    character: { readonly id: string; readonly title: string },
+    write: (id: string) => Promise<void>,
+  ): void => {
+    setExportingIds((current) => new Set(current).add(character.id));
+    void write(character.id)
+      .catch((reason: unknown) =>
+        reportFailure(reason, `Couldn't export ${character.title}`),
+      )
+      .finally(() =>
+        setExportingIds((current) => {
+          const next = new Set(current);
+          next.delete(character.id);
+          return next;
+        }),
+      );
+  };
 
   const refresh = useCallback(async () => {
     const { active, deleted } = await repository.listMetadataPartitioned();
@@ -302,30 +324,21 @@ export function CharacterLibraryPage({
                     <ActionMenu
                       icon="export"
                       label={`Export ${character.title}`}
+                      {...(exportingIds.has(character.id)
+                        ? { busyLabel: `Exporting ${character.title}…` }
+                        : {})}
                       menuLabel={`Export ${character.title} as`}
                       triggerClassName="character-card-action"
                       items={[
                         {
                           label: ".4ecb",
                           onSelect: () =>
-                            void exportCharacterBackup(character.id).catch(
-                              (reason: unknown) =>
-                                reportFailure(
-                                  reason,
-                                  `Couldn't export ${character.title}`,
-                                ),
-                            ),
+                            exportCharacter(character, exportCharacterBackup),
                         },
                         {
                           label: ".dnd4e",
                           onSelect: () =>
-                            void exportCharacterDnd4e(character.id).catch(
-                              (reason: unknown) =>
-                                reportFailure(
-                                  reason,
-                                  `Couldn't export ${character.title}`,
-                                ),
-                            ),
+                            exportCharacter(character, exportCharacterDnd4e),
                         },
                       ]}
                     />

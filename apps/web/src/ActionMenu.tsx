@@ -20,6 +20,7 @@ export function ActionMenu({
   menuLabel,
   triggerClassName,
   items,
+  busyLabel,
 }: {
   readonly icon: IconName;
   /** The trigger's accessible name and tooltip. */
@@ -27,7 +28,11 @@ export function ActionMenu({
   readonly menuLabel: string;
   readonly triggerClassName: string;
   readonly items: readonly ActionMenuItem[];
+  /** Set while a picked action is still working (a slow export): the trigger
+   *  spins, says so, and ignores clicks until it is done. */
+  readonly busyLabel?: string;
 }) {
+  const busy = busyLabel !== undefined;
   const [open, setOpen] = useState(false);
   const menuId = useId();
   const root = useRef<HTMLDivElement>(null);
@@ -59,15 +64,23 @@ export function ActionMenu({
     <div className="action-menu" ref={root}>
       <button
         aria-controls={menuId}
+        aria-busy={busy || undefined}
+        aria-disabled={busy || undefined}
         aria-expanded={open}
-        aria-label={label}
+        aria-label={busyLabel ?? label}
         className={triggerClassName}
         ref={trigger}
-        title={label}
+        title={busyLabel ?? label}
         type="button"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => {
+          if (!busy) setOpen((current) => !current);
+        }}
       >
-        <Icon name={icon} />
+        {busy ? (
+          <span aria-hidden="true" className="icon loading-spinner" />
+        ) : (
+          <Icon name={icon} />
+        )}
       </button>
       {open ? (
         <div aria-label={menuLabel} className="action-menu-options" id={menuId}>

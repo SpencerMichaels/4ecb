@@ -315,18 +315,24 @@ export function CharacterEditorPage({
   const toasts = useToasts();
   // Exports read the stored record: wait for pending saves, and store a new
   // character that was never changed (exporting it is a deliberate ask).
+  // A .dnd4e export evaluates the character in a fresh rules worker, which
+  // takes a while; the Export button spins until the download starts.
+  const [exporting, setExporting] = useState(false);
   const exportFrom = (write: (id: string) => Promise<void>): void => {
+    setExporting(true);
     void (async () => {
       await saveQueue.current?.whenIdle();
       await persistCharacterDraft(characters, characterId);
       await write(characterId);
-    })().catch((reason: unknown) =>
-      toasts.push({
-        tone: "error",
-        title: `Couldn't export ${character?.title ?? "the character"}`,
-        messages: [reason instanceof Error ? reason.message : String(reason)],
-      }),
-    );
+    })()
+      .catch((reason: unknown) =>
+        toasts.push({
+          tone: "error",
+          title: `Couldn't export ${character?.title ?? "the character"}`,
+          messages: [reason instanceof Error ? reason.message : String(reason)],
+        }),
+      )
+      .finally(() => setExporting(false));
   };
   const [accordionOverride, setAccordionOverride] = useState<{
     readonly tab: string;
@@ -2156,6 +2162,9 @@ export function CharacterEditorPage({
                 <ActionMenu
                   icon="export"
                   label="Export"
+                  {...(exporting
+                    ? { busyLabel: `Exporting ${character.title}…` }
+                    : {})}
                   menuLabel={`Export ${character.title} as`}
                   triggerClassName="icon-only-button button-icon"
                   items={[

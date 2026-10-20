@@ -56,7 +56,9 @@ describe("compact character library", () => {
 
   it("regenerates dnd4e from edited state and sends PDF through the sheet", () => {
     // Shared by the library and the builder (character-export.ts).
-    expect(library).toContain("exportCharacterDnd4e(character.id)");
+    expect(library).toContain(
+      "exportCharacter(character, exportCharacterDnd4e)",
+    );
     expect(characterExport).toContain('target: "legacy-builder-0.07a"');
     expect(characterExport).toContain(
       "projectBuildForEvaluation(character.build",

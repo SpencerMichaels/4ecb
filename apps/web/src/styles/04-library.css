@@ -67,6 +67,16 @@
 .action-menu {
   position: relative;
 }
+/* A trigger whose action is still working (a slow export) spins the loader
+   ring at its icon's size instead of the icon. */
+.action-menu > [aria-busy="true"] {
+  cursor: progress;
+}
+.action-menu > [aria-busy="true"] .loading-spinner {
+  border-width: 2px;
+  display: inline-block;
+  position: relative;
+}
 .action-menu > [aria-expanded="true"] {
   background: var(--surface-subtle);
   border-color: var(--border);
