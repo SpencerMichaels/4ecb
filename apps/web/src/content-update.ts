@@ -6,6 +6,7 @@ import {
   contentProfileMatchesRevision,
   type ContentProfileRevision,
 } from "./profile-migration";
+import type { ProfileMigrationPreviewProgress } from "./rules-worker-messages";
 
 /** True when the character is pinned to content other than the active content. */
 export function needsContentUpdate(
@@ -191,4 +192,34 @@ export function activeProfileBinding(
         }
       : {}),
   };
+}
+
+/**
+ * "(2/3) Calculating with the new content (40%)" for a running migration
+ * preview. Without the old content there's nothing to compare, so the last
+ * step is skipped. Decoding holds at 99% for the final parse, like the
+ * character loading screens.
+ */
+export function contentUpdateProgressDetail(
+  progress: ProfileMigrationPreviewProgress,
+): string {
+  const steps = [
+    ["content", "Opening game content"],
+    ["target", "Calculating with the new content"],
+    ...(progress.sourceAvailable
+      ? [["source", "Calculating with the old content"] as const]
+      : []),
+  ] as const;
+  const step = steps.findIndex(([id]) => id === progress.step);
+  const label = steps[step]?.[1] ?? "";
+  const percent =
+    progress.total <= 0
+      ? undefined
+      : Math.min(
+          progress.step === "content" ? 99 : 100,
+          Math.floor((100 * progress.completed) / progress.total),
+        );
+  return `(${step + 1}/${steps.length}) ${label}${
+    percent === undefined ? "" : ` (${percent}%)`
+  }`;
 }

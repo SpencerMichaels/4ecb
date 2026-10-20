@@ -1938,6 +1938,7 @@ export function CharacterEditorPage({
                 character={character}
                 target={activeManifest}
                 activeProfile={activeProfile}
+                rulesClient={readyRulesClient}
                 onClose={() => setReviewingContentUpdate(false)}
                 onUpdated={() => {
                   setReviewingContentUpdate(false);

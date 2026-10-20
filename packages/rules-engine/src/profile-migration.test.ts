@@ -115,4 +115,22 @@ describe("content profile migration preview", () => {
     expect(preview.changedDefinitionIds).toEqual([]);
     expect(preview.missingDefinitionIds).toEqual(["MISSING", "SELECTED"]);
   });
+
+  it("reports progress through the new evaluation, then the old", () => {
+    const steps: string[] = [];
+    previewProfileMigration(
+      build,
+      [entity("LEVEL", "+1")],
+      [entity("LEVEL", "+1")],
+      {
+        onProgress: ({ evaluation, completed, total }) =>
+          steps.push(`${evaluation} ${completed}/${total}`),
+      },
+    );
+    expect(steps[0]).toMatch(/^target 0\//);
+    expect(steps.at(-1)).toMatch(/^source (\d+)\/\1$/);
+    expect(
+      steps.findIndex((step) => step.startsWith("source")),
+    ).toBeGreaterThan(steps.findLastIndex((step) => step.startsWith("target")));
+  });
 });

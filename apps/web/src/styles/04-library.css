@@ -182,6 +182,9 @@
 .content-update-body :is(h3, p, ul) {
   margin: 0;
 }
+.content-update-body > .loading-pane {
+  min-height: 8rem;
+}
 .content-update-body h3 {
   font-size: 1rem;
   margin-top: 0.4rem;

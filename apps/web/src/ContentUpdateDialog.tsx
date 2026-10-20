@@ -12,11 +12,14 @@ import type { ContentPackManifest } from "@4ecb/content-pack";
 
 import {
   activeProfileBinding,
+  contentUpdateProgressDetail,
   describeContentUpdate,
   type ContentUpdateSummary,
 } from "./content-update";
+import type { RulesRuntimeClient } from "./app-runtime";
 import { download } from "./download";
 import { Icon } from "./Icon";
+import { LoadingPane } from "./LoadingScreen";
 import { RulesWorkerClient } from "./rules-client";
 
 const repository = new CharacterRepository();
@@ -29,17 +32,22 @@ export function ContentUpdateDialog({
   character,
   target,
   activeProfile,
+  rulesClient,
   onUpdated,
   onClose,
 }: {
   readonly character: CharacterRecord;
   readonly target: ContentPackManifest;
   readonly activeProfile: ContentProfileDefinition | undefined;
+  /** The page's rules client, already holding the character's current
+   *  content; without one the preview uses a temporary worker. */
+  readonly rulesClient?: RulesRuntimeClient | undefined;
   readonly onUpdated: () => void;
   readonly onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [summary, setSummary] = useState<ContentUpdateSummary>();
+  const [progress, setProgress] = useState<string>();
   const [error, setError] = useState<string>();
   const [updating, setUpdating] = useState(false);
   const name = character.title || "this character";
@@ -51,13 +59,16 @@ export function ContentUpdateDialog({
 
   useEffect(() => {
     let cancelled = false;
-    const client = new RulesWorkerClient();
+    const client = rulesClient ?? new RulesWorkerClient();
     client
       .previewProfileMigration(
         character.build,
         target.packId,
         character.profileBinding?.packId,
         character.profileBinding?.contentDigest,
+        (next) => {
+          if (!cancelled) setProgress(contentUpdateProgressDetail(next));
+        },
       )
       .then((preview) => {
         if (!cancelled) setSummary(describeContentUpdate(preview));
@@ -66,11 +77,14 @@ export function ContentUpdateDialog({
         if (!cancelled)
           setError(reason instanceof Error ? reason.message : String(reason));
       })
-      .finally(() => client.terminate());
+      .finally(() => {
+        // The page's client is borrowed; only a temporary one is ours to end.
+        if (client !== rulesClient) client.terminate();
+      });
     return () => {
       cancelled = true;
     };
-  }, [character, target.packId]);
+  }, [character, rulesClient, target.packId]);
 
   function close(): void {
     dialog.current?.close();
@@ -144,7 +158,7 @@ export function ContentUpdateDialog({
             Couldn&apos;t check what would change: {error}
           </p>
         ) : summary === undefined ? (
-          <p aria-live="polite">Checking what would change…</p>
+          <LoadingPane label="Checking what would change…" detail={progress} />
         ) : (
           <div aria-live="polite">
             {!summary.changesKnown ? (

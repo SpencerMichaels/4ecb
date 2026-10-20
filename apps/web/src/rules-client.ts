@@ -6,6 +6,7 @@ import type {
 } from "@4ecb/rules-engine";
 
 import type {
+  ProfileMigrationPreviewProgress,
   RulesWorkerRequest,
   RulesWorkerResponse,
 } from "./rules-worker-messages";
@@ -45,6 +46,10 @@ type RequestWithoutId =
 export class RulesWorkerClient {
   readonly #worker: Worker;
   readonly #pending = new Map<number, PendingRequest>();
+  readonly #migrationProgress = new Map<
+    number,
+    (progress: ProfileMigrationPreviewProgress) => void
+  >();
   #nextRequestId = 1;
   // Evaluations since the worker was last idle, so back-to-back requests
   // read as one batch instead of restarting at 0%.
@@ -76,6 +81,11 @@ export class RulesWorkerClient {
         this.#notifyProgress();
         return;
       }
+      if (response.type === "profile-migration-progress") {
+        this.#migrationProgress.get(response.requestId)?.(response.progress);
+        return;
+      }
+      this.#migrationProgress.delete(response.requestId);
       const pending = this.#pending.get(response.requestId);
       if (pending === undefined) return;
       this.#pending.delete(response.requestId);
@@ -125,7 +135,10 @@ export class RulesWorkerClient {
     targetPackId: string,
     sourcePackId?: string,
     sourceContentDigest?: string,
+    onProgress?: (progress: ProfileMigrationPreviewProgress) => void,
   ): Promise<ProfileMigrationPreview> {
+    if (onProgress !== undefined)
+      this.#migrationProgress.set(this.#nextRequestId, onProgress);
     const response = await this.#request({
       type: "preview-profile-migration",
       build,
@@ -192,6 +205,7 @@ export class RulesWorkerClient {
   #rejectAll(error: Error): void {
     for (const pending of this.#pending.values()) pending.reject(error);
     this.#pending.clear();
+    this.#migrationProgress.clear();
     this.#batch.clear();
   }
 }

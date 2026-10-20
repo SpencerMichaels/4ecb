@@ -15,6 +15,7 @@ import type {
 import { RULES_EVALUATION_CACHE_VERSION } from "@4ecb/rules-engine";
 
 import { RulesWorkerClient, type RulesProgressListener } from "./rules-client";
+import type { ProfileMigrationPreviewProgress } from "./rules-worker-messages";
 import { recordLoadDuration } from "./load-performance";
 
 export interface RulesRuntimeClient {
@@ -25,6 +26,7 @@ export interface RulesRuntimeClient {
     targetPackId: string,
     sourcePackId?: string,
     sourceContentDigest?: string,
+    onProgress?: (progress: ProfileMigrationPreviewProgress) => void,
   ): Promise<ProfileMigrationPreview>;
   /** Optional: clients that can't report progress just show no percentage. */
   subscribeProgress?(listener: RulesProgressListener): () => void;
@@ -224,12 +226,14 @@ class MemoizedRulesClient implements RulesRuntimeClient {
     targetPackId: string,
     sourcePackId?: string,
     sourceContentDigest?: string,
+    onProgress?: (progress: ProfileMigrationPreviewProgress) => void,
   ): Promise<ProfileMigrationPreview> {
     return this.#delegate.previewProfileMigration(
       build,
       targetPackId,
       sourcePackId,
       sourceContentDigest,
+      onProgress,
     );
   }
 

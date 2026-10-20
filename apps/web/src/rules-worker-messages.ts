@@ -5,6 +5,18 @@ import type {
   ProfileMigrationPreview,
 } from "@4ecb/rules-engine";
 
+/**
+ * A migration preview's current step: decoding both packs (bytes), then
+ * evaluating with the new content and the old (work items each).
+ */
+export interface ProfileMigrationPreviewProgress {
+  readonly step: "content" | "target" | "source";
+  /** Whether the old content will be evaluated too (a third step). */
+  readonly sourceAvailable: boolean;
+  readonly completed: number;
+  readonly total: number;
+}
+
 export type RulesWorkerRequest =
   | {
       readonly type: "initialize";
@@ -55,6 +67,12 @@ export type RulesWorkerResponse =
       readonly requestId: number;
       readonly completed: number;
       readonly total: number;
+    }
+  | {
+      /** Interim update for a pending migration preview; not a reply. */
+      readonly type: "profile-migration-progress";
+      readonly requestId: number;
+      readonly progress: ProfileMigrationPreviewProgress;
     }
   | {
       readonly type: "profile-migration-preview";

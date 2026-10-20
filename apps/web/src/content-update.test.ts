@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { ProfileMigrationPreview } from "@4ecb/rules-engine";
 
-import { describeContentUpdate, needsContentUpdate } from "./content-update";
+import {
+  contentUpdateProgressDetail,
+  describeContentUpdate,
+  needsContentUpdate,
+} from "./content-update";
 
 const summary = {
   converged: true,
@@ -94,5 +98,34 @@ describe("content update summary", () => {
       ),
     ).toBe(false);
     expect(needsContentUpdate(undefined, active)).toBe(false);
+  });
+});
+
+describe("content update progress", () => {
+  it("numbers the steps and skips the old evaluation without old content", () => {
+    expect(
+      contentUpdateProgressDetail({
+        step: "content",
+        sourceAvailable: true,
+        completed: 1000,
+        total: 1000,
+      }),
+    ).toBe("(1/3) Opening game content (99%)");
+    expect(
+      contentUpdateProgressDetail({
+        step: "source",
+        sourceAvailable: true,
+        completed: 3,
+        total: 4,
+      }),
+    ).toBe("(3/3) Calculating with the old content (75%)");
+    expect(
+      contentUpdateProgressDetail({
+        step: "target",
+        sourceAvailable: false,
+        completed: 0,
+        total: 0,
+      }),
+    ).toBe("(2/2) Calculating with the new content");
   });
 });

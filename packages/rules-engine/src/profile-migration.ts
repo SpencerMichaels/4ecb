@@ -7,6 +7,7 @@ import {
   evaluateCharacter,
   type EngineDiagnostic,
   type EvaluatedCharacter,
+  type EvaluationProgress,
 } from "./evaluator";
 
 export interface ProfileMigrationValueChange {
@@ -66,6 +67,15 @@ export interface ProfileMigrationPreview {
   readonly newDiagnosticCodes: readonly string[];
   readonly resolvedDiagnosticCodes: readonly string[];
   readonly targetDiagnostics: readonly EngineDiagnostic[];
+}
+
+/** Progress of one of the preview's two evaluations (new content first). */
+export interface ProfileMigrationProgress extends EvaluationProgress {
+  readonly evaluation: "target" | "source";
+}
+
+export interface ProfileMigrationOptions {
+  readonly onProgress?: (progress: ProfileMigrationProgress) => void;
 }
 
 function key(value: string): string {
@@ -204,6 +214,7 @@ export function previewProfileMigration(
   build: CharacterBuild,
   sourceEntities: readonly ContentEntity[] | undefined,
   targetEntities: readonly ContentEntity[],
+  options: ProfileMigrationOptions = {},
 ): ProfileMigrationPreview {
   const referenced = referencedDefinitionIds(build);
   const targetById = new Map(
@@ -232,6 +243,10 @@ export function previewProfileMigration(
   const targetEvaluation = evaluateCharacter(
     projectBuildForEvaluation(build, targetEntities),
     targetEntities,
+    {
+      onProgress: (progress) =>
+        options.onProgress?.({ ...progress, evaluation: "target" }),
+    },
   );
   const sourceEvaluation =
     sourceEntities === undefined
@@ -239,6 +254,10 @@ export function previewProfileMigration(
       : evaluateCharacter(
           projectBuildForEvaluation(build, sourceEntities),
           sourceEntities,
+          {
+            onProgress: (progress) =>
+              options.onProgress?.({ ...progress, evaluation: "source" }),
+          },
         );
 
   const statChanges =

@@ -5,6 +5,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import { evaluateCharacter, previewProfileMigration } from "@4ecb/rules-engine";
 
 import type {
+  ProfileMigrationPreviewProgress,
   RulesWorkerRequest,
   RulesWorkerResponse,
 } from "./rules-worker-messages";
@@ -124,25 +125,81 @@ async function handle(request: RulesWorkerRequest): Promise<void> {
     }
     case "preview-profile-migration": {
       const repository = new ContentPackRepository();
-      const [source, target] = await Promise.all([
-        request.sourcePackId === undefined
-          ? Promise.resolve(undefined)
-          : repository.get(request.sourcePackId),
-        repository.get(request.targetPackId),
+      const progress = (
+        step: ProfileMigrationPreviewProgress["step"],
+        sourceAvailable: boolean,
+        completed: number,
+        total: number,
+      ) =>
+        respond({
+          type: "profile-migration-progress",
+          requestId: request.requestId,
+          progress: { step, sourceAvailable, completed, total },
+        });
+      // The worker's own content is usually the character's current pack:
+      // reuse it (and its rules index) rather than decoding a second copy.
+      const reuseSource =
+        request.sourcePackId !== undefined &&
+        initializedProfile?.packId === request.sourcePackId &&
+        (request.sourceContentDigest === undefined ||
+          initializedProfile.contentDigest === request.sourceContentDigest);
+      const decodeSource = request.sourcePackId !== undefined && !reuseSource;
+      // Packs being decoded load at once, so report their combined bytes.
+      const decoded = new Map<string, { completed: number; total: number }>();
+      const decodeProgress =
+        (pack: string) =>
+        ({ completed, total }: { completed: number; total: number }) => {
+          decoded.set(pack, { completed, total });
+          // Wait for every total, so the combined percentage never dips.
+          if (decoded.size < (decodeSource ? 2 : 1)) return;
+          let sumCompleted = 0;
+          let sumTotal = 0;
+          for (const entry of decoded.values()) {
+            sumCompleted += entry.completed;
+            sumTotal += entry.total;
+          }
+          progress(
+            "content",
+            request.sourcePackId !== undefined,
+            sumCompleted,
+            sumTotal,
+          );
+        };
+      const [sourceEntities, target] = await Promise.all([
+        reuseSource
+          ? evaluationEntities()
+          : request.sourcePackId === undefined
+            ? Promise.resolve(undefined)
+            : repository
+                .get(request.sourcePackId, {
+                  onProgress: decodeProgress("source"),
+                })
+                .then((source) =>
+                  source !== undefined &&
+                  (request.sourceContentDigest === undefined ||
+                    source.manifest.contentDigest ===
+                      request.sourceContentDigest)
+                    ? source.entities
+                    : undefined,
+                ),
+        repository.get(request.targetPackId, {
+          onProgress: decodeProgress("target"),
+        }),
       ]);
       if (target === undefined)
         throw new Error(
           `Installed target content pack ${request.targetPackId} was not found`,
         );
       const started = performance.now();
-      const sourceMatchesBinding =
-        source !== undefined &&
-        (request.sourceContentDigest === undefined ||
-          source.manifest.contentDigest === request.sourceContentDigest);
+      const sourceAvailable = sourceEntities !== undefined;
       const result = previewProfileMigration(
         request.build,
-        sourceMatchesBinding ? source.entities : undefined,
+        sourceEntities,
         target.entities,
+        {
+          onProgress: ({ evaluation, completed, total }) =>
+            progress(evaluation, sourceAvailable, completed, total),
+        },
       );
       respond({
         type: "profile-migration-preview",
