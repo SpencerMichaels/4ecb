@@ -57,8 +57,8 @@ export function SetLevelDialog({
       </header>
       <div className="set-level-body">
         <p>
-          {name} is level {currentLevel}. Choices for higher levels are kept as
-          a plan when you lower it.
+          {name} is level {currentLevel}. If you lower the level, choices for
+          the levels above it are kept as a plan.
         </p>
         <LevelGrid
           tiers={tiers}
