@@ -41,6 +41,7 @@ import { PwaUpdateProvider } from "./PwaUpdate";
 import {
   downloadAdvertisedPack,
   parseRuntimeContentConfig,
+  shouldActivateAdvertisedContent,
   type AdvertisedContentPack,
 } from "./runtime-content";
 import { appContentRuntime } from "./app-runtime";
@@ -459,13 +460,19 @@ export function App() {
       );
       for (const advertised of configured.contentPacks)
         await installAdvertisedPack(advertised, installed);
-      // A browser with no content yet starts on the group's content; once any
-      // content is active, switching stays an explicit choice in Settings.
+      // The browser follows the group's content: it starts on it, and moves
+      // to a newly advertised revision unless the user assembled content of
+      // their own. Characters stay pinned until the user reviews the update.
+      const available = await repository.listInstalled();
       if (
-        configured.contentPacks.length > 0 &&
-        (await repository.activeProfile()) === undefined
+        shouldActivateAdvertisedContent(
+          await repository.activeProfile(),
+          configured.contentPacks,
+          (packId) =>
+            available.find(({ manifest }) => manifest.packId === packId)
+              ?.origin,
+        )
       ) {
-        const available = await repository.listInstalled();
         if (
           configured.contentPacks.every((advertised) =>
             available.some(

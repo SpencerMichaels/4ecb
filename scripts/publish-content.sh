@@ -10,8 +10,9 @@
 #   scripts/publish-content.sh --rebuild   # rebuild even if the inputs are unchanged
 #
 # The pack ID is derived from the inputs (local-wotc-corrected-<hash>), so it changes exactly
-# when the content does: characters pin a pack by ID and digest, and users adopt a new pack
-# in the app's Content settings. The push copies only the advertised pack and removes older
+# when the content does: characters pin a pack by ID and digest. Browsers on the server's
+# content switch to a new pack on their next load, and characters move to it once their
+# users review the update. The push copies only the advertised pack and removes older
 # ones from the server (homenet apps/4ecb/pack.yml). HOMENET_DIR overrides the homenet
 # checkout (default: ../homenet next to this checkout).
 set -euo pipefail
@@ -83,4 +84,5 @@ echo "  homenet asks for your KeePassXC master password to unlock its deploy key
   -e pack_src="$project_root/deploy") ||
   die "the push failed (are you on the Admin VLAN, with your age key?); deploy/ is ready to retry"
 echo
-echo "Done. Users switch to $pack_id in the app's Content settings."
+echo "Done. Browsers switch to $pack_id on their next load; characters move once their"
+echo "users review the content update."

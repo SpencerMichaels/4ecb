@@ -4,6 +4,7 @@ import type { ParsedContentSource } from "@4ecb/content-domain";
 import {
   downloadAdvertisedPack,
   parseRuntimeContentConfig,
+  shouldActivateAdvertisedContent,
 } from "./runtime-content";
 
 const source: ParsedContentSource = {
@@ -99,5 +100,46 @@ describe("runtime content", () => {
           }),
       ),
     ).rejects.toThrow("128 MiB");
+  });
+
+  it("follows a newly advertised server pack unless the user added their own", () => {
+    const old = { packId: "server-old", contentDigest: "a", url: "/old.4ecp" };
+    const next = { packId: "server-new", contentDigest: "b", url: "/new.4ecp" };
+    const origins: Record<string, string> = {
+      "server-old": "server",
+      "server-new": "server",
+      homebrew: "personal",
+    };
+    const originOf = (packId: string) => origins[packId];
+    const layers = (...packs: { packId: string; contentDigest: string }[]) => ({
+      layers: packs.map(({ packId, contentDigest }) => ({
+        packId,
+        contentDigest,
+      })),
+    });
+    // No content yet: start on the server's.
+    expect(shouldActivateAdvertisedContent(undefined, [next], originOf)).toBe(
+      true,
+    );
+    // The server moved on: follow it.
+    expect(shouldActivateAdvertisedContent(layers(old), [next], originOf)).toBe(
+      true,
+    );
+    // Already on it: nothing to do.
+    expect(
+      shouldActivateAdvertisedContent(layers(next), [next], originOf),
+    ).toBe(false);
+    // The user layered their own pack on top: leave their content alone.
+    expect(
+      shouldActivateAdvertisedContent(
+        layers(old, { packId: "homebrew", contentDigest: "c" }),
+        [next],
+        originOf,
+      ),
+    ).toBe(false);
+    // Nothing advertised: never switch.
+    expect(shouldActivateAdvertisedContent(layers(old), [], originOf)).toBe(
+      false,
+    );
   });
 });

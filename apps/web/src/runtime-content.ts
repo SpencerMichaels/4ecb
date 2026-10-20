@@ -18,6 +18,39 @@ export interface RuntimeContentConfig {
   readonly contentPacks: readonly AdvertisedContentPack[];
 }
 
+/**
+ * Whether the browser should activate the server's advertised content: when it
+ * has no content yet, or when its active content is made only of server packs
+ * and the server now advertises a different set (a content update). Content a
+ * user assembled with packs of their own is left alone. Characters stay pinned
+ * to their content either way; moving them is the user's choice (D004).
+ */
+export function shouldActivateAdvertisedContent(
+  active:
+    | {
+        readonly layers: readonly {
+          readonly packId: string;
+          readonly contentDigest: string;
+        }[];
+      }
+    | undefined,
+  advertised: readonly AdvertisedContentPack[],
+  originOf: (packId: string) => string | undefined,
+): boolean {
+  if (advertised.length === 0) return false;
+  if (active === undefined) return true;
+  if (!active.layers.every((layer) => originOf(layer.packId) === "server"))
+    return false;
+  return (
+    active.layers.length !== advertised.length ||
+    active.layers.some(
+      (layer, index) =>
+        layer.packId !== advertised[index]?.packId ||
+        layer.contentDigest !== advertised[index]?.contentDigest,
+    )
+  );
+}
+
 export function parseRuntimeContentConfig(
   value: unknown,
   baseUrl = globalThis.location?.href ?? "https://localhost/",

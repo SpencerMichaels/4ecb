@@ -213,7 +213,9 @@ origin.
 
 **New content revisions.** A rebuilt pack with a different digest should get a
 new `packId` (characters bind pack identity and digest), then rerun
-`content-tool advertise`. Testers adopt the new profile explicitly.
+`content-tool advertise`. Browsers on the server's content switch to the new
+revision on their next load; each character keeps its content until the user
+reviews the update (D004).
 
 For the product owner's homelab, `scripts/publish-content.sh` does the whole
 content update in one step, separately from code releases: it rebuilds the pack

@@ -311,7 +311,8 @@ The implementation materializes the resolved profile as another verified local
 pack so query and rules workers retain one immutable input. Server-advertised
 packs form a fixed ordered prefix; personal packs may be reordered only above
 it. Stable-ID collisions resolve from first to last (`last-pack-wins-v1`) and
-remain visible in preview diagnostics. Activation is explicit. Character
+remain visible in preview diagnostics. Activation is explicit, except that a browser on the server's content
+alone follows a newly advertised server revision (D004). Character
 bindings retain both the materialized ID/digest and ordered source ID/digest
 list, so later downloads cannot alter an existing evaluation.
 
