@@ -90,6 +90,13 @@ deploys it automatically — see `docs/public-deployment.md`):
 scripts/deploy.sh    # --skip-checks, --no-wait
 ```
 
+Content updates are separate from code releases (private data, homenet's deploy
+key, Admin VLAN only): rebuild the corrections pack and push it to the homelab:
+
+```sh
+scripts/publish-content.sh    # --no-push, --rebuild
+```
+
 Private-corpus-only commands (require the supplied proprietary data; never
 required by public tests/CI):
 

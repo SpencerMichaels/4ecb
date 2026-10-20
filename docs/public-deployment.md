@@ -215,6 +215,15 @@ origin.
 new `packId` (characters bind pack identity and digest), then rerun
 `content-tool advertise`. Testers adopt the new profile explicitly.
 
+For the product owner's homelab, `scripts/publish-content.sh` does the whole
+content update in one step, separately from code releases: it rebuilds the pack
+from the supplied legacy data, the CBLoader parts and `content/corrections/`
+under an ID derived from those inputs (`local-wotc-corrected-<hash>`, so the ID
+changes exactly when the content does), advertises it in `deploy/`, and copies
+`deploy/` to the server with the homenet repo's `apps/4ecb/pack.yml` (from the
+Admin VLAN; `HOMENET_DIR` overrides `../homenet`). `--no-push` stops after
+`deploy/`; unchanged inputs skip the rebuild.
+
 ## M5.7 invited-beta boundary
 
 The unprivileged static image, health endpoint, runtime-configuration path,
