@@ -12,6 +12,8 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import {
   aggregateInventory,
   applyFieldOverlays,
+  halfLevel,
+  parseRules,
   projectBuildForEvaluation,
   type EvaluatedCharacter,
 } from "@4ecb/rules-engine";
@@ -595,19 +597,119 @@ function baseAbilityScoresXml(build: CharacterBuild): string {
   );
 }
 
-function statBlockXml(evaluation: EvaluatedCharacter): string {
+/** Legacy `statadd` value attributes: a number, a stat link, or a string. */
+function statAddValue(value: string) {
+  const trimmed = value.trim();
+  if (/^[+-]?\d+(?:\.\d+)?$/.test(trimmed))
+    return { value: String(Number(trimmed)) };
+  const ability = /^([+-]?)ABILITYMOD\((.+)\)$/i.exec(trimmed);
+  if (ability?.[2] !== undefined)
+    return {
+      value: ability[1] === "-" ? "-1" : "1",
+      statlink: ability[2],
+      abilmod: "true",
+    };
+  const link = /^([+-])(.+)$/.exec(trimmed);
+  if (link?.[1] !== undefined && link[2] !== undefined)
+    return { value: link[1] === "-" ? "-1" : "1", statlink: link[2] };
+  return { String: trimmed, value: "0" };
+}
+
+/**
+ * Third-party readers such as iPlay4e reject a StatBlock whose stats lack the
+ * legacy per-bonus `statadd` children, so each evaluated contribution is
+ * written back in the legacy shape alongside the total.
+ */
+function statBlockXml(
+  evaluation: EvaluatedCharacter,
+  tokens: ReadonlyMap<string, string>,
+  entities: ReadonlyMap<string, ContentEntity>,
+): string {
+  const occurrences = new Map(
+    evaluation.occurrences.map((occurrence) => [occurrence.id, occurrence]),
+  );
+  // Legacy writes one Stat per stat with every alias ("Dexterity", "dex"),
+  // and its statlinks name the stat itself, never an alias.
+  const canonicalNames = new Map<string, string>();
+  const aliasesOf = new Map<string, string[]>();
+  for (const occurrence of evaluation.occurrences) {
+    const entity = entities.get(key(occurrence.definitionId));
+    if (entity === undefined) continue;
+    for (const rule of parseRules(entity.id, entity.rules)) {
+      if (rule.kind !== "statalias") continue;
+      canonicalNames.set(key(rule.alias), rule.name);
+      aliasesOf.set(key(rule.name), [
+        ...(aliasesOf.get(key(rule.name)) ?? []),
+        rule.alias,
+      ]);
+    }
+  }
+  const canonical = (name: string) => canonicalNames.get(key(name)) ?? name;
+  const groups = new Map<
+    string,
+    { name: string; names: string[]; stat: EvaluatedCharacter["stats"][string] }
+  >();
+  for (const [name, stat] of Object.entries(evaluation.stats)) {
+    const primary = canonical(name);
+    const group = groups.get(key(primary));
+    if (group === undefined)
+      groups.set(key(primary), { name: primary, names: [name], stat });
+    else {
+      group.names.push(name);
+      if (key(name) === key(primary)) group.stat = stat;
+    }
+  }
+  // Legacy also lists every stat a statlink names, at 0 when nothing adds to
+  // it ("Acrobatics Trained" for an untrained skill).
+  for (const stat of Object.values(evaluation.stats))
+    for (const contribution of stat.contributions) {
+      const value = statAddValue(contribution.value);
+      if (!("statlink" in value) || value.statlink === undefined) continue;
+      const linked = canonical(value.statlink);
+      if (!groups.has(key(linked)))
+        groups.set(key(linked), {
+          name: linked,
+          names: [linked],
+          stat: { name: linked, value: 0, contributions: [] },
+        });
+    }
   return element(
     "StatBlock",
     {},
-    Object.entries(evaluation.stats)
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([name, stat]) =>
-        element(
+    [...groups.values()]
+      .sort((left, right) => left.name.localeCompare(right.name))
+      .map(({ name, names, stat }) => {
+        const aliases = [
+          name,
+          ...names,
+          ...(aliasesOf.get(key(name)) ?? []),
+        ].filter(
+          (alias, index, all) =>
+            all.findIndex((other) => key(other) === key(alias)) === index,
+        );
+        return element(
           "Stat",
           { value: String(stat.value) },
-          element("alias", { name }),
-        ),
-      )
+          `${aliases.map((alias) => element("alias", { name: alias })).join("")}${stat.contributions
+            .map((contribution) => {
+              const occurrence = occurrences.get(contribution.providerId);
+              const value = statAddValue(contribution.value);
+              return element("statadd", {
+                type: contribution.bonusType,
+                Level: occurrence?.acquiredLevel,
+                ...value,
+                ...("statlink" in value && value.statlink !== undefined
+                  ? { statlink: canonical(value.statlink) }
+                  : {}),
+                condition: contribution.condition,
+                wearing: contribution.wearing,
+                "not-wearing": contribution.notWearing,
+                charelem: tokens.get(contribution.providerId),
+              });
+            })
+            .join("")}`,
+        );
+      })
       .join(""),
   );
 }
@@ -740,7 +842,105 @@ function lootTallyXml(
   );
 }
 
-function powerStatsXml(evaluation: EvaluatedCharacter): string {
+function powerSpecificsXml(
+  power: EvaluatedCharacter["powers"][number],
+  evaluation: EvaluatedCharacter,
+  entities: ReadonlyMap<string, ContentEntity>,
+): string {
+  const entity = entities.get(key(power.definitionId));
+  const fields: Record<string, string> = {
+    ...(entity?.flavor === undefined ? {} : { Flavor: entity.flavor }),
+    ...(entity === undefined
+      ? {}
+      : applyFieldOverlays(entity, evaluation.overlays)),
+  };
+  for (const [name, value] of [
+    ["Power Usage", power.usage],
+    ["Action Type", power.actionType],
+  ] as const) {
+    const existing =
+      Object.keys(fields).find((field) => key(field) === key(name)) ?? name;
+    if (value !== undefined) fields[existing] = value;
+  }
+  return Object.entries(fields)
+    .map(([name, value]) => element("specific", { name }, escapeText(value)))
+    .join("");
+}
+
+/**
+ * Legacy always writes every weapon field, empty when it does not apply;
+ * iPlay4e rejects a file whose power weapons omit Damage or
+ * DamageComponents, and shows no power cards without the power's text.
+ */
+type PowerComponentPart =
+  EvaluatedCharacter["powers"][number]["variants"][number]["attackComponents"][number];
+
+/**
+ * Legacy writes each value padded with one space (`<AttackBonus> 11 </...>`);
+ * iPlay4e rejects the file without the padding.
+ */
+function padded(value: string): string {
+  return ` ${value} `;
+}
+
+/**
+ * Legacy component text: " +5 Wisdom modifier.\r\n+4 half your level.\r\n"
+ * then a blank line and the closing indentation. A bonus from another
+ * element reads "+2 bonus - <source>"; the power's own bonus is "power
+ * modifier", listed first. iPlay4e rejects other layouts.
+ */
+function legacyComponentText(parts: readonly PowerComponentPart[]): string {
+  const signed = (value: number) => (value >= 0 ? `+${value}` : `${value}`);
+  const lines = [...parts]
+    .filter((part) => !(part.label === "Unknown modifier" && part.value === 0))
+    .sort(
+      (left, right) =>
+        Number(right.label === "power attack bonus") -
+        Number(left.label === "power attack bonus"),
+    )
+    .map((part) =>
+      part.label === "power attack bonus"
+        ? `${signed(part.value)} power modifier.`
+        : part.source !== undefined
+          ? `${signed(part.value)} bonus - ${part.source}`
+          : `${signed(part.value)} ${part.label}.`,
+    );
+  const indent = "               ";
+  return lines.length === 0
+    ? ` \r\n${indent}`
+    : ` ${lines.join("\r\n")}\r\n\r\n${indent}`;
+}
+
+/** "cold and lightning" → "Cold and Lightning", as legacy's DamageType. */
+function legacyDamageType(value: string): string {
+  return value.replace(
+    /\b([a-z])([a-z]*)/g,
+    (word, first: string, rest: string) =>
+      ["and", "or"].includes(word) ? word : first.toUpperCase() + rest,
+  );
+}
+
+function powerStatsXml(
+  evaluation: EvaluatedCharacter,
+  entities: ReadonlyMap<string, ContentEntity>,
+): string {
+  // Legacy keeps a placeholder Unarmed row on a Healing power without a Hit
+  // line so its healing bonus has somewhere to live; readers expect it.
+  const healingRow =
+    (): EvaluatedCharacter["powers"][number]["variants"][number] => {
+      const half = halfLevel(evaluation.level);
+      return {
+        id: "healing-placeholder",
+        equipmentName: "Unarmed",
+        attackStat: "Unknown",
+        defense: "Unknown",
+        attackBonus: half,
+        attackComponents: [{ label: "half your level", value: half }],
+        damageComponents: [],
+        conditionalDamage: [],
+        proficient: true,
+      };
+    };
   return element(
     "PowerStats",
     {},
@@ -749,56 +949,55 @@ function powerStatsXml(evaluation: EvaluatedCharacter): string {
         element(
           "Power",
           { name: power.name },
-          `${power.usage === undefined ? "" : element("specific", { name: "Power Usage" }, escapeText(power.usage))}${
-            power.actionType === undefined
-              ? ""
-              : element(
-                  "specific",
-                  { name: "Action Type" },
-                  escapeText(power.actionType),
-                )
-          }${power.variants
+          `${powerSpecificsXml(power, evaluation, entities)}${(power.variants
+            .length === 0 &&
+          power.keywords.some((keyword) => key(keyword) === "healing")
+            ? [healingRow()]
+            : power.variants
+          )
             .map((variant) =>
               element(
                 "Weapon",
                 { name: variant.equipmentName },
-                `${variant.attackBonus === undefined ? "" : element("AttackBonus", {}, escapeText(String(variant.attackBonus)))}${
-                  variant.damage === undefined
-                    ? ""
-                    : element("Damage", {}, escapeText(variant.damage))
-                }${
-                  variant.attackStat === undefined
-                    ? ""
-                    : element("AttackStat", {}, escapeText(variant.attackStat))
-                }${
-                  variant.defense === undefined
-                    ? ""
-                    : element("Defense", {}, escapeText(variant.defense))
-                }${
-                  variant.attackComponents.length === 0
+                `${element("AttackBonus", {}, escapeText(padded(variant.attackBonus === undefined ? "" : String(variant.attackBonus))))}${element(
+                  "Damage",
+                  {},
+                  escapeText(padded(variant.damage ?? "")),
+                )}${
+                  variant.damageType === undefined
                     ? ""
                     : element(
-                        "HitComponents",
+                        "DamageType",
                         {},
                         escapeText(
-                          variant.attackComponents
-                            .map((part) => `${part.label} ${part.value}`)
-                            .join(" + "),
+                          padded(legacyDamageType(variant.damageType)),
                         ),
                       )
-                }${
-                  variant.damageComponents.length === 0
+                }${element(
+                  "AttackStat",
+                  {},
+                  escapeText(padded(variant.attackStat ?? "")),
+                )}${element("Defense", {}, escapeText(padded(variant.defense ?? "")))}${
+                  power.healing === undefined || power.healing.bonus === 0
                     ? ""
                     : element(
-                        "DamageComponents",
+                        "Healing",
                         {},
                         escapeText(
-                          variant.damageComponents
-                            .map((part) => `${part.label} ${part.value}`)
-                            .join(" + "),
+                          padded(
+                            `regain an additional ${power.healing.bonus} hit points.`,
+                          ),
                         ),
                       )
-                }${
+                }${element(
+                  "HitComponents",
+                  {},
+                  escapeText(legacyComponentText(variant.attackComponents)),
+                )}${element(
+                  "DamageComponents",
+                  {},
+                  escapeText(legacyComponentText(variant.damageComponents)),
+                )}${
                   variant.conditionalDamage.length === 0
                     ? ""
                     : element(
@@ -845,10 +1044,10 @@ function characterSheetXml(
     {},
     `${detailsXml(input.snapshot, input.build, input.evaluation, entities)}${baseAbilityScoresXml(
       input.build,
-    )}${statBlockXml(input.evaluation)}${ruleTallyXml(
+    )}${statBlockXml(input.evaluation, tokens, entities)}${ruleTallyXml(
       input.evaluation,
       entities,
-    )}${lootTallyXml(input.build, tokens)}${powerStatsXml(input.evaluation)}${preserved}`,
+    )}${lootTallyXml(input.build, tokens)}${powerStatsXml(input.evaluation, entities)}${preserved}`,
   );
 }
 

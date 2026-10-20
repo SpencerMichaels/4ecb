@@ -206,6 +206,180 @@ describe("power evaluation", () => {
       power?.variants.find((v) => v.equipmentId === "orb")?.attackBonus,
     ).toBe(10);
   });
+  it("adds a weapon's proficiency bonus only with its weapon proficiency", () => {
+    // Legacy GetProficiencyBonus/IsProficient: "Weapon Proficiency (<base>)",
+    // or the magic item's "Proficient As".
+    const attackWith = (activeDefinitionIds: readonly string[]) =>
+      evaluatePowers({
+        level: 2,
+        activeDefinitionIds: ["POWER", ...activeDefinitionIds],
+        overlays: [],
+        entities: [
+          entity("POWER", "Synthetic strike", "Power", {
+            Keywords: "Weapon",
+            "Attack Type": "Melee weapon",
+            Attack: "Strength vs. AC",
+            Hit: "1[W] + Strength modifier damage.",
+          }),
+          entity("SWORD", "Longsword", "Weapon", {
+            Damage: "1d8",
+            "Proficiency Bonus": "3",
+            "Weapon Category": "Military Melee",
+          }),
+          entity("BLADE", "Synthetic Blade +1", "Magic Item", {
+            "Magic Item Type": "Weapon",
+            "Proficient As": "Dagger",
+            Enhancement: "+1 attack rolls and damage rolls",
+          }),
+          entity(
+            "LONG_PROF",
+            "Weapon Proficiency (Longsword)",
+            "Proficiency",
+            {},
+          ),
+          entity(
+            "DAGGER_PROF",
+            "Weapon Proficiency (Dagger)",
+            "Proficiency",
+            {},
+          ),
+          entity("CLUB_PROF", "Weapon Proficiency (Club)", "Proficiency", {}),
+        ],
+        inventory: [
+          {
+            id: "sword",
+            definitionIds: ["SWORD", "BLADE"],
+            quantity: 1,
+            equippedQuantity: 1,
+            acquiredLevel: 1,
+          },
+        ],
+        stats: { "Strength modifier": stat("Strength modifier", 4) },
+      })[0]?.variants.find((variant) => variant.equipmentId === "sword")
+        ?.attackBonus;
+    expect(attackWith(["LONG_PROF"])).toBe(9);
+    expect(attackWith(["DAGGER_PROF"])).toBe(9);
+    expect(attackWith(["CLUB_PROF"])).toBe(6);
+  });
+
+  it("matches bonuses keyed by the power's class ID and the weapon's ID", () => {
+    // Hexblade content keys Pact Reward as `<class ID>:damage` and its
+    // pact-blade bonuses as `<weapon ID>,<class ID>:attack` (CalcKeywords).
+    const [power] = evaluatePowers({
+      level: 8,
+      activeDefinitionIds: ["POWER", "CLASS_ID"],
+      overlays: [],
+      entities: [
+        entity("CLASS_ID", "Synthetic Hexblade", "Class", {}),
+        entity("POWER", "Synthetic bolt", "Power", {
+          Keywords: "Arcane, Implement",
+          Class: "CLASS_ID",
+          "Attack Type": "Ranged 10",
+          Attack: "Charisma vs. Reflex",
+          Hit: "1d10 + Charisma modifier damage.",
+        }),
+        entity("PACT", "Pact Sword", "Weapon", {
+          Damage: "1d8",
+          "Weapon Category": "Military Melee",
+          _ImplementForClass: "CLASS_ID",
+        }),
+      ],
+      inventory: [
+        {
+          id: "pact",
+          definitionIds: ["PACT"],
+          quantity: 1,
+          equippedQuantity: 1,
+          acquiredLevel: 1,
+        },
+      ],
+      stats: {
+        "Charisma modifier": stat("Charisma modifier", 5),
+        "CLASS_ID:damage": combatStat("CLASS_ID:damage", 7),
+        "PACT,CLASS_ID:attack": combatStat("PACT,CLASS_ID:attack", 1),
+      },
+    });
+    const pact = power?.variants.find(
+      (variant) => variant.equipmentId === "pact",
+    );
+    expect(pact?.attackBonus).toBe(10);
+    expect(pact?.damage).toBe("1d10+12");
+    const unarmed = power?.variants.find(
+      (variant) => variant.equipmentId === "unarmed",
+    );
+    expect(unarmed?.attackBonus).toBe(9);
+    expect(unarmed?.damage).toBe("1d10+12");
+  });
+
+  it("takes the implement path for a power that is both Weapon and Implement", () => {
+    const [power] = evaluatePowers({
+      level: 8,
+      activeDefinitionIds: ["POWER"],
+      overlays: [],
+      entities: [
+        entity("POWER", "Synthetic blade spell", "Power", {
+          Keywords: "Arcane, Implement, Weapon",
+          "Attack Type": "Melee weapon",
+          Attack: "Charisma vs. AC",
+          Hit: "1[W] + Charisma modifier damage.",
+        }),
+        entity("ROD", "Synthetic Rod +2", "Magic Item", {
+          "Magic Item Type": "Rod",
+          Enhancement: "+2 attack rolls and damage rolls",
+        }),
+        entity("SWORD", "Synthetic Sword", "Weapon", {
+          Damage: "1d8",
+          "Weapon Category": "Military Melee",
+        }),
+      ],
+      inventory: ["ROD", "SWORD"].map((id) => ({
+        id,
+        definitionIds: [id],
+        quantity: 1,
+        equippedQuantity: 1,
+        acquiredLevel: 1,
+      })),
+      stats: { "Charisma modifier": stat("Charisma modifier", 5) },
+    });
+    // Legacy lists the rod, and with no weapon die it deals only the ability.
+    expect(
+      power?.variants.find((variant) => variant.equipmentId === "ROD")?.damage,
+    ).toBe("5");
+    expect(
+      power?.variants.find((variant) => variant.equipmentId === "SWORD")
+        ?.damage,
+    ).toBe("1d8+5");
+  });
+
+  it("applies defense-keyed damage bonuses to powers that target that defense", () => {
+    // Legacy Resplendent Gloves: `will:damage +2` adds to Hold Foe's damage.
+    const powers = evaluatePowers({
+      level: 9,
+      activeDefinitionIds: ["WILL", "REFLEX"],
+      overlays: [],
+      entities: [
+        entity("WILL", "Synthetic will spell", "Power", {
+          Keywords: "Implement",
+          Attack: "Wisdom vs. Will",
+          Hit: "2d6 + Wisdom modifier damage.",
+        }),
+        entity("REFLEX", "Synthetic reflex spell", "Power", {
+          Keywords: "Implement",
+          Attack: "Wisdom vs. Reflex",
+          Hit: "1d6 + Wisdom modifier damage.",
+        }),
+      ],
+      inventory: [],
+      stats: {
+        "Wisdom modifier": stat("Wisdom modifier", 5),
+        "will:damage": combatStat("will:damage", 2),
+      },
+    });
+    const damage = (name: string) =>
+      powers.find((power) => power.name === name)?.variants[0]?.damage;
+    expect(damage("Synthetic will spell")).toBe("2d6+7");
+    expect(damage("Synthetic reflex spell")).toBe("1d6+5");
+  });
   it.each(["Will", "Reflex", "Fortitude"])(
     "resolves implement bonuses per attack defense (%s), keyword and selected item",
     (defense) => {
@@ -615,9 +789,11 @@ describe("power evaluation", () => {
     expect(variant("SWEEP", "Synthetic Axe")?.attackBonus).toBe(13);
     expect(variant("SWEEP", "Synthetic Bow")?.attackBonus).toBe(11);
     expect(variant("BRASH", "Synthetic Axe")?.damage).toBe("1d12+7");
-    expect(variant("BRASH", "Synthetic Bow")?.damage).toBe("1d10+5");
+    // Legacy IsValidPowerCombo: a ranged weapon is not offered to a melee
+    // power, but a close weapon power takes both.
+    expect(variant("BRASH", "Synthetic Bow")).toBeUndefined();
     expect(variant("CRUSH", "Synthetic Axe")?.damage).toBe("2d12+7");
-    expect(variant("CRUSH", "Synthetic Bow")?.damage).toBe("2d10+5");
+    expect(variant("CRUSH", "Synthetic Bow")).toBeUndefined();
   });
 
   it("uses recovered implement aliases and variant-specific range channels", () => {
@@ -1109,7 +1285,9 @@ describe("power evaluation", () => {
     );
   });
 
-  it("retains the legacy half-level calculation for close effect powers", () => {
+  it("calculates no rows for a power with neither an attack nor a Hit line", () => {
+    // Legacy PowerStats returns no row without a Hit line; it only kept a
+    // placeholder row for Healing powers, which now report healing instead.
     const [power] = evaluatePowers({
       level: 8,
       activeDefinitionIds: ["POWER"],
@@ -1124,14 +1302,161 @@ describe("power evaluation", () => {
       ],
     });
 
-    expect(power?.variants).toMatchObject([
+    expect(power?.variants).toEqual([]);
+  });
+
+  it("totals legacy healing stats for Healing powers, sharing typed maxima", () => {
+    const typed = (name: string, value: number, bonusType: string) => {
+      const base = combatStat(name, value);
+      return {
+        ...base,
+        contributions: base.contributions.map((contribution) => ({
+          ...contribution,
+          id: `${name}:${bonusType}`,
+          bonusType,
+        })),
+      };
+    };
+    const evaluate = (keywords: string) =>
+      evaluatePowers({
+        level: 8,
+        activeDefinitionIds: ["POWER"],
+        inventory: [],
+        stats: {
+          Healing: combatStat("Healing", 2),
+          "Healing Word:healing": typed("Healing Word:healing", 3, "Item"),
+          "CLASS_ID:healing": typed("CLASS_ID:healing", 1, "Item"),
+          "Other Power:healing": combatStat("Other Power:healing", 9),
+        },
+        overlays: [],
+        entities: [
+          entity("POWER", "Healing Word", "Power", {
+            Keywords: keywords,
+            Class: "CLASS_ID",
+            Effect: "The target can spend a healing surge.",
+          }),
+        ],
+      })[0];
+
+    const healing = evaluate("Healing");
+    expect(healing?.variants).toEqual([]);
+    expect(healing?.healing?.bonus).toBe(5);
+    expect(healing?.healing?.components.map((part) => part.label)).toEqual([
+      "Healing",
+      "Healing Word:healing",
+    ]);
+    expect(evaluate("Divine")?.healing).toBeUndefined();
+  });
+
+  it("counts a class power's power source for keyed healing", () => {
+    // Healing Word is a divine healing power though its keywords omit Divine.
+    const [power] = evaluatePowers({
+      level: 8,
+      activeDefinitionIds: ["POWER", "CLERIC"],
+      inventory: [],
+      stats: { "divine:healing": combatStat("divine:healing", 6) },
+      overlays: [],
+      entities: [
+        entity("CLERIC", "Synthetic Cleric", "Class", {
+          "Power Source": "Divine. You wield divine power.",
+        }),
+        entity("POWER", "Synthetic word", "Power", {
+          Keywords: "Healing",
+          Class: "CLERIC",
+          Effect: "The target can spend a healing surge.",
+        }),
+      ],
+    });
+    expect(power?.healing?.bonus).toBe(6);
+  });
+
+  it("counts healing keyed by power ID or keyword, and reminds of conditional healing", () => {
+    const [power] = evaluatePowers({
+      level: 8,
+      activeDefinitionIds: ["POWER"],
+      inventory: [],
+      stats: {
+        "POWER:healing": combatStat("POWER:healing", 3),
+        "divine:healing": combatStat("divine:healing", 25),
+        "Primal:healing": combatStat("Primal:healing", 99),
+        Healing: {
+          name: "Healing",
+          value: 0,
+          contributions: [
+            {
+              id: "bloodied",
+              stat: "Healing",
+              value: "4",
+              providerId: "feat",
+              providerName: "Draconic Healing",
+              condition: "while you are bloodied",
+              numericValue: 4,
+              applied: false,
+              reason: "conditional",
+            },
+          ],
+        },
+        "divine:healing ": {
+          name: "divine:healing ",
+          value: 0,
+          contributions: [
+            {
+              id: "gift",
+              stat: "divine:healing",
+              value: "+1d6",
+              providerId: "feature",
+              providerName: "Gift of Life",
+              condition: "to a bloodied target",
+              numericValue: 0,
+              applied: false,
+              reason: "conditional",
+            },
+          ],
+        },
+      },
+      overlays: [],
+      entities: [
+        entity("POWER", "Synthetic prayer", "Power", {
+          Keywords: "Divine, Healing",
+          Effect: "The target can spend a healing surge.",
+        }),
+      ],
+    });
+    expect(power?.healing?.bonus).toBe(28);
+    expect(power?.healing?.conditional).toEqual([
       {
-        equipmentName: "Unarmed",
-        attackStat: "Unknown",
-        defense: "Unknown",
-        attackBonus: 4,
+        amount: "4",
+        condition: "while you are bloodied",
+        source: "Draconic Healing",
+        provenanceId: "bloodied",
+      },
+      {
+        amount: "1d6",
+        condition: "to a bloodied target",
+        source: "Gift of Life",
+        provenanceId: "gift",
       },
     ]);
+  });
+
+  it("calculates a correction-supplied hit line for a prose-only damage power", () => {
+    const [power] = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["POWER"],
+      inventory: [],
+      stats: { "Intelligence modifier": stat("Intelligence modifier", 4) },
+      overlays: [],
+      entities: [
+        entity("POWER", "Storm Pillar", "Power", {
+          Keywords: "Arcane, Implement, Lightning",
+          Effect:
+            "Each enemy that moves adjacent takes 1d6 + Intelligence modifier lightning damage.",
+          _CalculatedHit: "1d6 + Intelligence modifier lightning damage.",
+        }),
+      ],
+    });
+
+    expect(power?.variants[0]?.damage).toBe("1d6+4");
   });
 
   it("chooses the best attack ability and retains explicit power bonuses", () => {
@@ -1488,27 +1813,6 @@ describe("power evaluation", () => {
     expect(power?.unsupported).toContain("companion-ability:POWER");
   });
 
-  it("retains a legacy calculation variant for effect-only utilities", () => {
-    const [power] = evaluatePowers({
-      level: 3,
-      activeDefinitionIds: ["POWER"],
-      inventory: [],
-      stats: {},
-      overlays: [],
-      entities: [
-        entity("POWER", "Regeneration", "Power", {
-          "Attack Type": "Personal",
-          Effect: "You gain regeneration 5.",
-        }),
-      ],
-    });
-
-    expect(power?.variants[0]).toMatchObject({
-      equipmentName: "Unarmed",
-      attackBonus: 1,
-    });
-  });
-
   it("recognizes ongoing damage expressed through an ability modifier", () => {
     const [power] = evaluatePowers({
       level: 7,
@@ -1772,6 +2076,7 @@ describe("power evaluation", () => {
         "Proficiency Bonus": "2",
         Properties: "Heavy Thrown, Off-Hand",
         "Weapon Category": "Simple Melee",
+        Range: "5/10",
       }),
     ];
     const [power] = evaluatePowers({
@@ -2315,7 +2620,7 @@ describe("implement power equipment", () => {
     equippedQuantity: 1,
     acquiredLevel: 1,
   });
-  const names = (activeDefinitionIds: readonly string[]) =>
+  const variants = (activeDefinitionIds: readonly string[]) =>
     evaluatePowers({
       level: 8,
       activeDefinitionIds,
@@ -2323,7 +2628,26 @@ describe("implement power equipment", () => {
       stats: { "Wisdom modifier": stat("Wisdom modifier", 5) },
       overlays: [],
       entities,
-    })[0]?.variants.map((variant) => variant.equipmentName);
+    })[0]?.variants ?? [];
+  // The D081 view: variants the character is proficient with.
+  const names = (activeDefinitionIds: readonly string[]) =>
+    variants(activeDefinitionIds)
+      .filter((variant) => variant.proficient)
+      .map((variant) => variant.equipmentName);
+
+  it("lists every owned weapon and implement like legacy, marking proficiency", () => {
+    expect(
+      variants(["POWER", "SYMBOL_PROFICIENCY"]).map((variant) => [
+        variant.equipmentName,
+        variant.proficient,
+      ]),
+    ).toEqual([
+      ["Symbol of Hope +1", true],
+      ["Orb of Light +1", false],
+      ["War Pick", false],
+      ["Unarmed", true],
+    ]);
+  });
 
   it("offers only proficient implements and Unarmed, never a plain weapon", () => {
     expect(names(["POWER", "SYMBOL_PROFICIENCY"])).toEqual([
@@ -2421,7 +2745,9 @@ describe("item implement metadata", () => {
       stats: {},
       overlays: [],
       entities: [...base, ...items],
-    })[0]?.variants.map((variant) => variant.equipmentName);
+    })[0]
+      ?.variants.filter((variant) => variant.proficient)
+      .map((variant) => variant.equipmentName);
 
   it("uses a pact blade only for its class's powers", () => {
     const blade = entity("BLADE", "Pact Blade +1", "Magic Item", {

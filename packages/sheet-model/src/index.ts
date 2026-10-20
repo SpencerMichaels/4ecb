@@ -193,6 +193,12 @@ function sheetCurrency(
 export interface SheetModelOptions {
   readonly countCoinWeight?: boolean;
   readonly resolveAbilityChoices?: boolean;
+  /**
+   * Hide implement-power variants for items the character is not proficient
+   * with as implements (D081). Legacy lists every owned weapon and implement;
+   * defaults to true.
+   */
+  readonly proficientEquipmentOnly?: boolean;
   readonly inventoryCategory?: (
     elements: readonly BuildInventoryElement[],
   ) => string | undefined;
@@ -755,6 +761,7 @@ function evaluatedPowerCards(
   personalize: (text: string) => string,
   irrelevantFeatureClauses: ReadonlySet<string>,
   inventoryNames: ReadonlyMap<string, string>,
+  proficientEquipmentOnly: boolean,
 ): SheetCard[] {
   // Older in-memory evaluations lack equipmentId but retain the exact native
   // power:inventory variant identity. Never join equipment by its display name.
@@ -781,8 +788,9 @@ function evaluatedPowerCards(
         value: personalize(value),
       })),
   ];
-  const variants: readonly SheetPowerVariant[] = power.variants.map(
-    (variant) => ({
+  const variants: readonly SheetPowerVariant[] = power.variants
+    .filter((variant) => !proficientEquipmentOnly || variant.proficient)
+    .map((variant) => ({
       id: variant.id,
       equipmentName:
         (variant.equipmentId === undefined
@@ -853,12 +861,34 @@ function evaluatedPowerCards(
           provider: effect.source,
         })),
       ],
-    }),
-  );
+    }));
   const defaultVariant =
     variants.find((variant) => variant.equipped && variant.hand === "main") ??
     variants.find((variant) => variant.equipped) ??
     variants[0];
+  // Healing bonuses other features grant this power (Healer's Lore), like
+  // legacy's "regain an additional N hit points", plus the situational ones
+  // ("while you are bloodied") as reminders.
+  const healingEffects: SheetAdditionalEffect[] = [
+    ...(power.healing?.components ?? []).map((component) => ({
+      text: `Regain an additional ${component.value} hit points.`,
+      source: "authoritative-evaluation" as const,
+      provider: component.source ?? component.label,
+      ...(component.provenanceId === undefined
+        ? {}
+        : { provenanceId: component.provenanceId }),
+    })),
+    ...(power.healing?.conditional ?? []).map((bonus) => ({
+      text: `Regain an additional ${bonus.amount} hit points ${bonus.condition}.`,
+      source: "authoritative-evaluation" as const,
+      provider: bonus.source,
+      provenanceId: bonus.provenanceId,
+    })),
+  ];
+  const additionalEffects = [
+    ...(defaultVariant?.additionalEffects ?? []),
+    ...healingEffects,
+  ];
   return [
     {
       id: power.definitionId,
@@ -881,9 +911,7 @@ function evaluatedPowerCards(
         ? {}
         : { damage: defaultVariant.damage }),
       ...(variants.length === 0 ? {} : { variants }),
-      ...(defaultVariant?.additionalEffects?.length
-        ? { additionalEffects: defaultVariant.additionalEffects }
-        : {}),
+      ...(additionalEffects.length > 0 ? { additionalEffects } : {}),
       fields: commonFields,
       ...(power.unsupported.length === 0
         ? {}
@@ -943,7 +971,10 @@ export function authoredSheetPowerCard(
 export function createSheetPowerCardFinder(
   evaluation: EvaluatedCharacter,
   content: readonly ContentEntity[],
-  options: { readonly resolveAbilityChoices?: boolean } = {},
+  options: Pick<
+    SheetModelOptions,
+    "resolveAbilityChoices" | "proficientEquipmentOnly"
+  > = {},
 ): (entity: ContentEntity, power: EvaluatedPower | undefined) => SheetCard {
   const personalize = createEvaluatedPowerTextPersonalizer(
     evaluation,
@@ -969,6 +1000,7 @@ export function createSheetPowerCardFinder(
             personalize,
             irrelevantFeatureClauses,
             new Map(),
+            options.proficientEquipmentOnly !== false,
           )[0]!;
     cache.set(key, card);
     return card;
@@ -1631,6 +1663,7 @@ export function buildEvaluatedSheetModel(
         personalizePowerText,
         irrelevantFeatureClauses,
         inventoryNames,
+        options.proficientEquipmentOnly !== false,
       ),
     ),
     evaluation,

@@ -55,7 +55,7 @@ export type PrerequisiteIr =
       readonly text: string;
       readonly value: string;
     }
-  | { readonly kind: "hybrid" | "never"; readonly text: string }
+  | { readonly kind: "hybrid" | "never" | "ignored"; readonly text: string }
   | { readonly kind: "unverified"; readonly text: string };
 
 export interface PrerequisiteResult {
@@ -192,6 +192,49 @@ function resolveDefinitions(
         (value) => normalized(value) === wanted,
       ),
   );
+}
+
+/**
+ * Clauses the legacy engine skips as always met (`Ignore`): every playable
+ * race is a living humanoid, and the rest are not checkable from a record.
+ */
+const LEGACY_IGNORED_CLAUSES = new Set([
+  "living humanoid race",
+  "humanoid race",
+  "natural humanoid",
+  "humanoid",
+  "higher utility power",
+  "member of the gatekeepers",
+  "ability to mark a foe",
+  "must adhere to amoth's precepts",
+]);
+
+const COUNTS_AS_ALTERNATES: Readonly<Record<string, string>> = {
+  class: "CountsAsClass",
+  "class feature": "CountsAsFeature",
+  race: "CountsAsRace",
+};
+
+/**
+ * Legacy CreateElementPrereq (ConnectAlternate): a class, class feature or
+ * race requirement is also met by the same-named CountsAsClass,
+ * CountsAsFeature or CountsAsRace element, which hybrid classes and their
+ * hybrid class features grant. Negated requirements take no alternate.
+ */
+function withCountsAsAlternates(
+  matches: readonly ContentEntity[],
+  context: PrerequisiteContext,
+): readonly ContentEntity[] {
+  const alternates = matches.flatMap((definition) => {
+    const type = COUNTS_AS_ALTERNATES[normalized(definition.type)];
+    return type === undefined
+      ? []
+      : resolveDefinitions(definition.name, context, type);
+  });
+  return [
+    ...matches,
+    ...alternates.filter((alternate) => !matches.includes(alternate)),
+  ];
 }
 
 function typedReference(
@@ -340,10 +383,15 @@ function internalizeLeaf(
   if (proficiency?.[1] !== undefined)
     return { kind: "proficiency", text, value: proficiency[1] };
   if (/^hybrid character$/i.test(canonical)) return { kind: "hybrid", text };
+  if (LEGACY_IGNORED_CLAUSES.has(normalized(canonical)))
+    return { kind: "ignored", text };
 
   const negated = canonical.startsWith("!");
   const bareReference = negated ? canonical.slice(1).trim() : canonical;
-  const exactMatches = resolveDefinitions(bareReference, context);
+  const exactResolved = resolveDefinitions(bareReference, context);
+  const exactMatches = negated
+    ? exactResolved
+    : withCountsAsAlternates(exactResolved, context);
   if (exactMatches.length > 0)
     return {
       kind: "element",
@@ -352,7 +400,10 @@ function internalizeLeaf(
       negated,
     };
   const reference = typedReference(bareReference, context);
-  const matches = resolveDefinitions(reference.name, context, reference.type);
+  const resolved = resolveDefinitions(reference.name, context, reference.type);
+  const matches = negated
+    ? resolved
+    : withCountsAsAlternates(resolved, context);
   if (matches.length > 0)
     return {
       kind: "element",
@@ -514,10 +565,12 @@ export function evaluatePrerequisiteIr(
         ? "satisfied"
         : "failed";
     case "class":
+      // A hybrid owns "Hybrid Warlord" and a CountsAsClass named "Warlord".
       return context.owned.some(
         (entity) =>
-          ["class", "hybrid class"].includes(normalized(entity.type)) &&
-          normalized(entity.name) === normalized(ir.value),
+          ["class", "hybrid class", "countsasclass"].includes(
+            normalized(entity.type),
+          ) && normalized(entity.name) === normalized(ir.value),
       )
         ? "satisfied"
         : "failed";
@@ -553,6 +606,8 @@ export function evaluatePrerequisiteIr(
         ? "satisfied"
         : "unverified";
     }
+    case "ignored":
+      return "satisfied";
     case "hybrid":
       return context.owned.some(
         (entity) => normalized(entity.type) === "hybrid class",

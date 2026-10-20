@@ -38,7 +38,7 @@ import { evaluatePowers, type EvaluatedPower } from "./powers";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v18-2026-10-19-live-house-rules";
+  "evaluated-character-v19-2026-10-19-legacy-power-rows-and-grants";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -237,34 +237,6 @@ function sourceEntitlementChecker(
     return result;
   };
   return check;
-}
-
-function nativeSpecificStatBonuses(
-  entity: ContentEntity,
-): readonly { stat: string; value: number; source: string }[] {
-  const result: { stat: string; value: number; source: string }[] = [];
-  const skillBonuses = field(entity, "Skill Bonuses");
-  if (key(entity.type) === "race" && skillBonuses !== undefined)
-    for (const match of skillBonuses.matchAll(
-      /([+-]\d+)\s+([A-Za-z][A-Za-z ]*)/g,
-    ))
-      result.push({
-        stat: `${match[2]!.trim()} Misc`,
-        value: Number(match[1]!),
-        source: "Skill Bonuses",
-      });
-
-  const benefit = field(entity, "Benefit");
-  if (key(entity.type) === "background" && benefit !== undefined)
-    for (const match of benefit.matchAll(
-      /([+-]\d+)\s+bonus\s+(?:on|to)\s+([A-Za-z]+)(?:\s+skill)?\s+checks/gi,
-    ))
-      result.push({
-        stat: `${match[2]![0]!.toUpperCase()}${match[2]!.slice(1)} Misc`,
-        value: Number(match[1]!),
-        source: "Benefit",
-      });
-  return result;
 }
 
 export class RulesIndex {
@@ -1331,25 +1303,9 @@ function evaluateCharacterInternal(
         message: `${entity.name} is marked as a house rule.`,
         occurrenceId: occurrence.id,
       });
-    for (const [ordinal, bonus] of nativeSpecificStatBonuses(
-      entity,
-    ).entries()) {
-      const explicitBonusName = `${bonus.stat.replace(/ Misc$/i, "")} Bonus`;
-      if (
-        key(entity.type) === "race" &&
-        ownedDefinitions.some(
-          (definition) => key(definition.name) === key(explicitBonusName),
-        )
-      )
-        continue;
-      stats.add({
-        id: `${occurrence.id}:native-specific:${bonus.source}:${ordinal}`,
-        stat: bonus.stat,
-        value: String(bonus.value),
-        providerId: occurrence.id,
-        providerName: entity.name,
-      });
-    }
+    // Race "Skill Bonuses" and background "Benefit" text is display-only: the
+    // native engine never reads either field, and content grants the real
+    // bonuses through rules (parsing the text double-counted them).
     for (const rule of parseRules(entity.id, entity.rules)) {
       if (
         !activeAt(rule, input.level) ||

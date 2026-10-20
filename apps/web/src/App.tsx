@@ -113,6 +113,8 @@ const SHOW_ENTITY_SOURCE_STORAGE_KEY = "4ecb.showEntitySource.v1";
 export const MERGE_FUNDS_STORAGE_KEY = "4ecb.mergeFunds.v1";
 export const RESOLVE_ABILITY_CHOICES_STORAGE_KEY =
   "4ecb.resolveAbilityChoices.v1";
+export const PROFICIENT_EQUIPMENT_ONLY_STORAGE_KEY =
+  "4ecb.proficientEquipmentOnly.v1";
 export const ABBREVIATE_ABILITY_VALUES_STORAGE_KEY =
   "4ecb.abbreviateAbilityValues.v1";
 export const PRINT_CARD_TEXT_SIZE_STORAGE_KEY = "4ecb.printCardTextSize.v1";
@@ -189,6 +191,15 @@ export function App() {
   const [resolveAbilityChoices, setResolveAbilityChoices] = useState(() => {
     try {
       return localStorage.getItem(RESOLVE_ABILITY_CHOICES_STORAGE_KEY) !== "0";
+    } catch {
+      return true;
+    }
+  });
+  const [proficientEquipmentOnly, setProficientEquipmentOnly] = useState(() => {
+    try {
+      return (
+        localStorage.getItem(PROFICIENT_EQUIPMENT_ONLY_STORAGE_KEY) !== "0"
+      );
     } catch {
       return true;
     }
@@ -295,6 +306,15 @@ export function App() {
       // The power-card display preference still applies for this session.
     }
   }, [resolveAbilityChoices]);
+  useEffect(() => {
+    try {
+      if (proficientEquipmentOnly)
+        localStorage.removeItem(PROFICIENT_EQUIPMENT_ONLY_STORAGE_KEY);
+      else localStorage.setItem(PROFICIENT_EQUIPMENT_ONLY_STORAGE_KEY, "0");
+    } catch {
+      // The power-card display preference still applies for this session.
+    }
+  }, [proficientEquipmentOnly]);
   useEffect(() => {
     try {
       if (mergeFunds) localStorage.removeItem(MERGE_FUNDS_STORAGE_KEY);
@@ -560,6 +580,10 @@ export function App() {
                       onCountCoinWeightChange={setCountCoinWeight}
                       resolveAbilityChoices={resolveAbilityChoices}
                       onResolveAbilityChoicesChange={setResolveAbilityChoices}
+                      proficientEquipmentOnly={proficientEquipmentOnly}
+                      onProficientEquipmentOnlyChange={
+                        setProficientEquipmentOnly
+                      }
                       abbreviateAbilityValues={abbreviateAbilityValues}
                       onAbbreviateAbilityValuesChange={
                         setAbbreviateAbilityValues
@@ -585,6 +609,7 @@ export function App() {
                       onNavigate={navigateBuilder}
                       mergeFunds={mergeFunds}
                       resolveAbilityChoices={resolveAbilityChoices}
+                      proficientEquipmentOnly={proficientEquipmentOnly}
                       abbreviateAbilityValues={abbreviateAbilityValues}
                       {...(activeManifest === undefined
                         ? {}
@@ -601,6 +626,7 @@ export function App() {
                       openPrintPreview={route.preview === true}
                       countCoinWeight={countCoinWeight}
                       resolveAbilityChoices={resolveAbilityChoices}
+                      proficientEquipmentOnly={proficientEquipmentOnly}
                       abbreviateAbilityValues={abbreviateAbilityValues}
                       printCardTextSize={printCardTextSize}
                       paper={paperSize}

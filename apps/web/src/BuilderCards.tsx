@@ -39,6 +39,7 @@ export interface BuilderCardSettings {
 
 export interface BuilderCardPreferences {
   readonly resolveAbilityChoices: boolean;
+  readonly proficientEquipmentOnly: boolean;
   readonly abbreviateAbilityValues: boolean;
 }
 
@@ -72,7 +73,10 @@ export function evaluatedBuilderCardSettings(
   const cardFor = createSheetPowerCardFinder(
     { ...evaluation, powers },
     entities,
-    { resolveAbilityChoices: preferences.resolveAbilityChoices },
+    {
+      resolveAbilityChoices: preferences.resolveAbilityChoices,
+      proficientEquipmentOnly: preferences.proficientEquipmentOnly,
+    },
   );
   const owned = new Map(
     powers.map((power) => [power.definitionId.toLocaleLowerCase(), power]),

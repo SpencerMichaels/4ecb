@@ -286,8 +286,17 @@ describe("legacy .dnd4e import", () => {
               {
                 id: "POWER:weapon",
                 equipmentName: "Test blade",
+                proficient: true,
                 damage: "1d8+4",
-                attackComponents: [],
+                attackComponents: [
+                  { label: "Strength modifier", value: 4 },
+                  { label: "power attack bonus", value: 2 },
+                  {
+                    label: "weapon:attack",
+                    value: 1,
+                    source: "Test gauntlets",
+                  },
+                ],
                 damageComponents: [],
                 conditionalDamage: [
                   {
@@ -301,12 +310,55 @@ describe("legacy .dnd4e import", () => {
             recoveries: [],
             unsupported: [],
           },
+          {
+            definitionId: "MEND",
+            name: "Mending Word",
+            keywords: ["Divine", "Healing"],
+            variants: [],
+            recoveries: [],
+            healing: { bonus: 3, components: [], conditional: [] },
+            unsupported: [],
+          },
         ],
       },
-      content,
+      content: [
+        ...content,
+        {
+          ...entity("POWER", "Conditional Strike", "Power"),
+          flavor: "A swift cut.",
+          specifics: [
+            {
+              name: "Power Usage",
+              value: "At-Will",
+              extraAttributes: [],
+              ordinal: 0,
+            },
+            {
+              name: "Keywords",
+              value: "Weapon",
+              extraAttributes: [],
+              ordinal: 1,
+            },
+          ],
+        },
+      ],
     });
     expect(conditionalXml).toContain(
       "<Conditions>+3d8 to damage once per round against your quarry (Hunter's Quarry)</Conditions>",
+    );
+    // iPlay4e rejects weapons missing any legacy field, unpadded values, or
+    // component text in another layout, and shows no power cards without the
+    // power's text, so all are written exactly as legacy does.
+    expect(conditionalXml).toContain(
+      '<Power name="Conditional Strike"><specific name="Flavor">A swift cut.</specific><specific name="Power Usage">At-Will</specific><specific name="Keywords">Weapon</specific><Weapon name="Test blade"><AttackBonus>  </AttackBonus><Damage> 1d8+4 </Damage><AttackStat>  </AttackStat><Defense>  </Defense><HitComponents> +2 power modifier.\r\n+4 Strength modifier.\r\n+1 bonus - Test gauntlets\r\n\r\n               </HitComponents><DamageComponents> \r\n               </DamageComponents><Conditions>',
+    );
+    // Legacy writes a placeholder Unarmed row to carry a Healing power's bonus.
+    expect(conditionalXml).toContain(
+      '<Power name="Mending Word"><Weapon name="Unarmed"><AttackBonus> 0 </AttackBonus><Damage>  </Damage><AttackStat> Unknown </AttackStat><Defense> Unknown </Defense><Healing> regain an additional 3 hit points. </Healing><HitComponents> +0 half your level.\r\n\r\n               </HitComponents>',
+    );
+    // iPlay4e also rejects stats without their legacy statadd children.
+    expect(xml).toContain(
+      '<Stat value="18"><alias name="Strength"/><statadd value="18"/></Stat>',
     );
     expect(xml).toContain('charelem="4ecb-1"');
     expect(xml).toMatch(/charelem="4ecb-3" replaces="4ecb-2"/);

@@ -117,8 +117,11 @@ damage contributions in this matrix while retaining explicit two-handed choices
 in the correction corpus. Native `CalcBonuses` also recognizes the `Weapon`
 specific whose text says the wielder gains a bonus to the damage roll equal to
 Constitution modifier; accepting that recovered wording closes both Crushing
-Blow variants. It also recovers race `Skill Bonuses` and background `Benefit`
-specifics (seven numeric aliases) and prevents equipped-loadout predicates from
+Blow variants. It also recovers background `Benefit` specifics and the race
+`Skill Bonuses` specifics (seven numeric aliases; the race half was withdrawn
+on 2026-10-19 because the native engine never reads that field: the bundled
+heroes' race bonuses come from current-content racial-trait grants once saved
+grant children are matched to grant rules by target rather than position) and prevents equipped-loadout predicates from
 affecting carried alternate weapon variants (nine power fields).
 
 ### Exhaustive residual accounting (2026-09-01)

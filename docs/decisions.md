@@ -2229,7 +2229,16 @@ title and Settings gear, and Settings has a close button.
 
 ### D081 — Implement powers list only usable implements (rules over legacy)
 
-Status: accepted (2026-10-18).
+Status: accepted (2026-10-18); amended 2026-10-19 (now a display setting).
+
+Amendment (2026-10-19): legacy offers every _owned_ weapon and implement, not
+only equipped ones: its `CheckPower` ends in an unconditional `return true`,
+so the unequipped Quick Crossbow appears on Arizona's Sacred Flame. The engine
+now lists every owned weapon and implement for an implement power like legacy,
+and marks each variant `proficient`. The rule below is a presentation setting,
+"Only show implements you're proficient with" (on by default), applied by the
+sheet model on screen and in print. `.dnd4e` export writes every variant, so
+cached-parity tools no longer report these rows as mismatches.
 
 The legacy builder's PowerStats offers every equipped item to an Implement
 power and even adds a plain weapon's enhancement bonus (Hu Sheng-Ming's
@@ -2379,6 +2388,51 @@ with a satisfied prerequisite, the occurrence evaluates as rules-legal, with no
 house-rule warning and no effect on `legal`. Selections without a choice to
 re-check (roots, grants) keep their flag. The stored flag itself is unchanged,
 so a `.dnd4e` export still writes it until the pick is re-chosen.
+
+### D088 — Power rows follow legacy PowerStats; healing has its own line
+
+Status: accepted (2026-10-19).
+
+Legacy `D20Workspace.PowerStats` gives a power calculated rows ("weapon rows")
+only when it has a Hit line. Two exceptions are hardcoded: Storm Pillar gets a
+substitute damage line, and a power whose Keywords include "Healing" gets a
+placeholder Unarmed row so `CalcHealing` can attach "regain an additional N
+hit points" (from the `Healing`, `<power>:healing` and `<class>:healing`
+stats, typed bonuses sharing one maximum). Weapon powers keep a weapon only if
+its category matches the power's range (`FigureWeaponType`, `IsMeleePower`,
+`IsRangedPower`): a thrown melee weapon is also ranged, close weapon powers
+take both, a "ranged" power with the thrown-melee requirement is melee, and
+"Stab and Shoot" is ranged. A power with both the Implement and Weapon
+keywords takes the implement path (`IsValidPowerCombo` tests Implement first),
+listing every owned weapon and implement; an implement without a weapon die
+(a rod) deals only the ability modifier on a `[W]` power. Combat bonuses match
+the power keywords native `CalcKeywords` adds: the power's name and internal
+ID, its Class references and their names, `_ExtraKeywords`, `_Associated
+Feats` as "<feat> association", and Power Usage, plus the equipment's
+definition IDs (Hexblade content keys Pact Reward as `ID_FMP_CLASS_7:damage`).
+Dual Implement Spellcaster's bonus is an "off-hand enhancement", sharing one
+maximum with pact-blade transfers of the same bonus.
+
+We match the range rule, and give rows only to a power with an attack or a Hit
+line (keeping an attack without a Hit line, for its attack bonus). Healing is
+not hijacked onto a weapon row: an evaluated power carries `healing` (bonus and
+sources), shown on its card as one additional effect per source ("Healer's
+Lore: Regain an additional 5 hit points."). Beyond legacy, which reads only
+`Healing`, `<power name>:healing` and `<class>:healing`, healing keyed by the
+power's internal ID (Vigorous Spirit) or one of its keywords (Golden Halo's
+`divine:healing`) also counts, as the game rules intend; a class power also
+counts as its class's power source (Healing Word is a divine healing power,
+though its keywords omit Divine); conditional healing
+bonuses ("while you are bloodied") become reminders. Content corrections stay
+a last resort, for elements that carry no rules at all: always-on Healer's
+Lore, Improved Inspiring Word, Tactical Inspiration, Expert Rejuvenation and
+Beatific Healer, and conditional Holy Resolve, Revitalizing Dabbler,
+Protector Spirit, Scar's Gift, Gift of Life (+1d6) and Mournland Dedicate
+(+2d6). Jadehand Action already reminds on the Action Point card. `.dnd4e` export still
+writes legacy's placeholder row and `<Healing>` element for compatibility.
+Storm Pillar's damage line is a content correction, the hidden
+`_CalculatedHit` field, not a name check in code. A weapon without a category
+(custom content) is offered to any weapon power.
 
 ## Deferred decisions and decision points
 

@@ -533,9 +533,9 @@ async function main(): Promise<void> {
         `Edited export CharacterSheet base ability ${ability} is ${String(actual)}; expected ${expected}.`,
       );
   }
-  const occurrenceTokens = [...xml.matchAll(/\bcharelem="([^"]+)"/g)].map(
-    (match) => match[1],
-  );
+  const occurrenceTokens = [
+    ...xml.matchAll(/<RulesElement\b[^>]*\bcharelem="([^"]+)"/g),
+  ].map((match) => match[1]);
   if (new Set(occurrenceTokens).size !== occurrenceTokens.length)
     throw new Error("Edited export contains duplicate charelem tokens.");
   if (outputPath !== undefined)

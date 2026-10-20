@@ -1291,13 +1291,15 @@ describe("character evaluator", () => {
     ).toBe("Focused Expertise (Synthetic Strike)");
   });
 
-  it("materializes native race and background skill bonuses from specifics", () => {
+  it("ignores display-only race Skill Bonuses and background Benefit text", () => {
     const content = [
       entity("ROOT", "Root", "Test", {
         rules: [],
       }),
       entity("RACE", "Synthetic Race", "Race", {
-        specifics: { "Skill Bonuses": "+2 Arcana, +2 History" },
+        specifics: {
+          "Skill Bonuses": "+2 Arcana, +2 History, +2 to choice of one other",
+        },
       }),
       entity("BACKGROUND", "Synthetic Region", "Background", {
         specifics: {
@@ -1339,9 +1341,11 @@ describe("character evaluator", () => {
       content,
     );
 
-    expect(evaluated.stats["Arcana Misc"]?.value).toBe(2);
-    expect(evaluated.stats["History Misc"]?.value).toBe(2);
-    expect(evaluated.stats["Initiative Misc"]?.value).toBe(1);
+    expect(evaluated.stats["Arcana Misc"]).toBeUndefined();
+    expect(evaluated.stats["History Misc"]).toBeUndefined();
+    expect(evaluated.stats["to choice of one other Misc"]).toBeUndefined();
+    expect(evaluated.stats["initiative Misc"]).toBeUndefined();
+    expect(evaluated.stats["Initiative Misc"]).toBeUndefined();
 
     const withExplicitBonus = evaluateCharacter(
       {

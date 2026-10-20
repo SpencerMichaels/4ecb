@@ -119,6 +119,8 @@ export interface SettingsPageProps {
   readonly onMergeFundsChange: (value: boolean) => void;
   readonly resolveAbilityChoices: boolean;
   readonly onResolveAbilityChoicesChange: (value: boolean) => void;
+  readonly proficientEquipmentOnly: boolean;
+  readonly onProficientEquipmentOnlyChange: (value: boolean) => void;
   readonly abbreviateAbilityValues: boolean;
   readonly onAbbreviateAbilityValuesChange: (value: boolean) => void;
   readonly printCardTextSize: number;
@@ -188,6 +190,8 @@ export function SettingsPage({
   onMergeFundsChange,
   resolveAbilityChoices,
   onResolveAbilityChoicesChange,
+  proficientEquipmentOnly,
+  onProficientEquipmentOnlyChange,
   abbreviateAbilityValues,
   onAbbreviateAbilityValuesChange,
   printCardTextSize,
@@ -570,6 +574,12 @@ export function SettingsPage({
                 onChange={onResolveAbilityChoicesChange}
                 label="Use the best ability in power descriptions"
                 help="When a power lets you choose an ability, show only the one with the highest modifier. Ties go to the higher score, then your class's key abilities, then the power's first option."
+              />
+              <CheckboxSetting
+                checked={proficientEquipmentOnly}
+                onChange={onProficientEquipmentOnlyChange}
+                label="Only show implements you're proficient with"
+                help="On implement powers, list attack and damage only for implements you are proficient with. Turn off to list every weapon and implement you own, as the original Character Builder does."
               />
             </div>
           </section>

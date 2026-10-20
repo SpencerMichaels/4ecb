@@ -35,6 +35,12 @@ export interface PowerVariant {
   readonly damageComponents: readonly PowerComponent[];
   readonly conditionalDamage: readonly PowerConditionalDamage[];
   readonly additionalEffects?: readonly PowerAdditionalEffect[];
+  /**
+   * False for an implement-power variant whose item the character is not
+   * proficient with as an implement. Legacy lists every owned weapon and
+   * implement; presentation may hide these (D081).
+   */
+  readonly proficient: boolean;
 }
 
 export interface PowerAdditionalEffect {
@@ -77,7 +83,25 @@ export interface EvaluatedPower {
   readonly keywords: readonly string[];
   readonly variants: readonly PowerVariant[];
   readonly recoveries: readonly PowerRecovery[];
+  /** Extra hit points a Healing power restores (legacy CalcHealing). */
+  readonly healing?: PowerHealing;
   readonly unsupported: readonly string[];
+}
+
+export interface PowerHealing {
+  /** Always-on extra hit points (legacy "regain an additional N"). */
+  readonly bonus: number;
+  readonly components: readonly PowerComponent[];
+  /** Extra hit points that apply only sometimes, for reminders. */
+  readonly conditional: readonly PowerConditionalHealing[];
+}
+
+export interface PowerConditionalHealing {
+  /** Extra hit points: a number or dice ("1d6"). */
+  readonly amount: string;
+  readonly condition: string;
+  readonly source: string;
+  readonly provenanceId: string;
 }
 
 export interface PowerRecovery {
@@ -91,6 +115,12 @@ interface Loadout {
   readonly definitionIds: readonly string[];
   readonly weaponDamage?: string;
   readonly proficiency: number;
+  /**
+   * Names whose "Weapon Proficiency (…)" makes the proficiency bonus apply:
+   * the base weapon (a staff without one is a Quarterstaff) and any magic
+   * item's "Proficient As". Empty for anything that is not a weapon.
+   */
+  readonly proficiencyNames: readonly string[];
   readonly enhancement: number;
   readonly critical?: string;
   readonly unarmed: boolean;
@@ -333,6 +363,17 @@ function loadouts(
       proficiency:
         Number(field(weapon ?? emptyEntity, "Proficiency Bonus")) ||
         (/staff/i.test(magicType ?? "") ? 2 : 0),
+      proficiencyNames: [
+        ...(weapon !== undefined
+          ? [weapon.name]
+          : /staff/i.test(magicType ?? "")
+            ? ["Quarterstaff"]
+            : []),
+        ...parts.flatMap((entity) => {
+          const proficientAs = field(entity, "Proficient As");
+          return proficientAs === undefined ? [] : [proficientAs];
+        }),
+      ],
       enhancement: parseEnhancement(magic),
       ...(critical ? { critical } : {}),
       unarmed: false,
@@ -402,6 +443,7 @@ function loadouts(
     definitionIds: [],
     weaponDamage: "1d4",
     proficiency: 0,
+    proficiencyNames: [],
     enhancement: 0,
     unarmed: true,
     weaponDefinition: false,
@@ -589,10 +631,41 @@ function recoveryExpressions(
   );
 }
 
+/**
+ * Power keywords native CalcKeywords adds beyond the authored Keywords: the
+ * power's name and internal ID, each Class reference and that class's name,
+ * `_ExtraKeywords`, `_Associated Feats` as "<feat> association", and Power
+ * Usage. Content keys bonuses by these (Hexblade Pact Reward is
+ * `ID_FMP_CLASS_7:damage`).
+ */
+function legacyPowerKeywordTags(
+  power: ContentEntity,
+  byId: ReadonlyMap<string, ContentEntity>,
+): string[] {
+  const list = (name: string) =>
+    (field(power, name) ?? "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+  return [
+    power.name,
+    power.id,
+    ...list("Class").flatMap((reference) => [
+      reference,
+      byId.get(key(reference))?.name ?? "",
+    ]),
+    ...list("_ExtraKeywords"),
+    ...list("_Associated Feats").map((feat) => `${feat} association`),
+    field(power, "Power Usage") ?? "",
+  ]
+    .map(key)
+    .filter(Boolean);
+}
+
 function combatStatComponents(
   stats: Readonly<Record<string, EvaluatedStat>>,
   equipment: Loadout,
-  powerName: string,
+  power: ContentEntity,
   kind: "weapon" | "implement",
   fieldName: "attack" | "damage",
   attackType: string | undefined,
@@ -601,6 +674,11 @@ function combatStatComponents(
     defense?: string;
     byId: ReadonlyMap<string, ContentEntity>;
     basicAttackKind?: "melee" | "ranged" | undefined;
+    /** Built-in typed bonuses that share maxima with matching stats. */
+    typedExtras?: readonly {
+      readonly bonusType: string;
+      readonly component: PowerComponent;
+    }[];
   },
 ): PowerComponent[] {
   const suffix = `${kind}:${fieldName}`;
@@ -615,14 +693,16 @@ function combatStatComponents(
     );
   })();
   const powerTags = [
-    key(powerName),
-    key(powerName).replace(/\s+attack$/, ""),
+    key(power.name),
+    key(power.name).replace(/\s+attack$/, ""),
     ...attackTypeTags,
     ...(context.basicAttackKind ? [`${context.basicAttackKind} basic`] : []),
   ].filter(Boolean);
   const tags = new Set([
     ...equipment.tags.filter((tag) => tag !== "weapon" && tag !== "implement"),
+    ...equipment.definitionIds.map(key),
     ...powerTags,
+    ...legacyPowerKeywordTags(power, context.byId),
     ...context.keywords.map(key),
     key(context.defense ?? ""),
   ]);
@@ -693,6 +773,11 @@ function combatStatComponents(
           },
         ];
       });
+    });
+  for (const extra of context.typedExtras ?? [])
+    components.push({
+      bonusType: key(extra.bonusType),
+      component: extra.component,
     });
   // Native AttackKeyword/DamageKeyword share typed maxima across matching
   // channels; qualifying the same type more narrowly must not stack it twice.
@@ -1127,9 +1212,9 @@ function powerAdditionalEffects(input: {
     ...input.equipment.properties,
     key(input.power.name),
     ...input.power.categories.map(key),
-    key(field(input.power, "Class") ?? ""),
+    ...input.equipment.definitionIds.map(key),
+    ...legacyPowerKeywordTags(input.power, input.byId),
     key(field(input.power, "Class ID") ?? ""),
-    key(field(input.power, "Power Usage") ?? ""),
     key(input.attackStat),
     key(input.defense),
     ...["melee", "ranged", "close", "area"].filter((tag) =>
@@ -1235,6 +1320,112 @@ function powerAdditionalEffects(input: {
   });
 }
 
+/**
+ * Legacy CalcHealing reads the "Healing", "<power name>:healing" and
+ * "<class>:healing" stats, typed bonuses sharing one maximum. Content also
+ * keys healing by the power's internal ID (Vigorous Spirit) or a keyword
+ * (Golden Halo's "divine:healing"), which legacy never reads but the rules
+ * intend, so those count too. Conditional bonuses become reminders.
+ */
+function powerHealing(
+  stats: Readonly<Record<string, EvaluatedStat>>,
+  names: readonly string[],
+): PowerHealing | undefined {
+  const wanted = new Set(names.map(key));
+  const untyped: PowerComponent[] = [];
+  const typed = new Map<string, PowerComponent>();
+  const conditional: PowerConditionalHealing[] = [];
+  const seen = new Set<string>();
+  for (const [name, stat] of Object.entries(stats)) {
+    if (!wanted.has(key(name))) continue;
+    for (const contribution of stat.contributions) {
+      if (seen.has(contribution.id)) continue;
+      seen.add(contribution.id);
+      if (!contribution.applied) {
+        const dice = /^\+?(\d+d\d+)$/i.exec(contribution.value.trim())?.[1];
+        const amount =
+          dice ??
+          (contribution.numericValue === undefined
+            ? undefined
+            : String(contribution.numericValue));
+        if (
+          contribution.reason === "conditional" &&
+          contribution.condition !== undefined &&
+          amount !== undefined
+        )
+          conditional.push({
+            amount,
+            condition: contribution.condition,
+            source: contribution.providerName,
+            provenanceId: contribution.id,
+          });
+        continue;
+      }
+      if (contribution.numericValue === undefined) continue;
+      const component: PowerComponent = {
+        label: name,
+        value: contribution.numericValue,
+        source: contribution.providerName,
+        provenanceId: contribution.id,
+      };
+      const type = key(contribution.bonusType ?? "");
+      if (type === "") untyped.push(component);
+      else if ((typed.get(type)?.value ?? -Infinity) < component.value)
+        typed.set(type, component);
+    }
+  }
+  const components = [...untyped, ...typed.values()];
+  const bonus = components.reduce((sum, part) => sum + part.value, 0);
+  return bonus === 0 && conditional.length === 0
+    ? undefined
+    : { bonus, components: bonus === 0 ? [] : components, conditional };
+}
+
+interface PowerRange {
+  readonly melee: boolean;
+  readonly ranged: boolean;
+}
+
+const THROWN_MELEE_REQUIREMENT =
+  "you must throw your melee weapon at the target.";
+
+/** Legacy IsMeleePower/IsRangedPower, from the power's Attack Type. */
+function legacyPowerRange(
+  power: ContentEntity,
+  attackType: string | undefined,
+  weaponPower: boolean,
+  fields: { readonly requirement: string | undefined },
+): PowerRange {
+  const type = key(attackType ?? "");
+  const close = /close (?:burst|blast)/.test(type);
+  const thrownMelee =
+    key(fields.requirement ?? "") === THROWN_MELEE_REQUIREMENT;
+  return {
+    melee: type.includes("melee") || (close && weaponPower) || thrownMelee,
+    ranged:
+      close ||
+      type.includes("area burst") ||
+      (type.includes("ranged") && !thrownMelee) ||
+      key(power.name) === "stab and shoot",
+  };
+}
+
+/**
+ * Legacy FigureWeaponType: a weapon's "Weapon Category" makes it melee or
+ * ranged, and a melee weapon with a Range (thrown) is also ranged. A staff
+ * without a weapon base is used as a quarterstaff, which is melee.
+ */
+function weaponFitsPowerRange(item: Loadout, range: PowerRange): boolean {
+  const category =
+    item.weaponCategory ?? (item.weaponDefinition ? "" : "melee");
+  // Every published weapon has a category; custom content without one is
+  // offered to any weapon power rather than to none.
+  if (category === "") return true;
+  const melee = category.includes("melee");
+  const ranged = category.includes("ranged") || (melee && item.rangedWeapon);
+  return (melee && range.melee) || (ranged && range.ranged);
+}
+
 export function evaluatePowers(input: {
   readonly level: number;
   readonly activeDefinitionIds: readonly string[];
@@ -1248,6 +1439,22 @@ export function evaluatePowers(input: {
     input.entities.map((entity) => [key(entity.id), entity]),
   );
   const equipped = loadouts(input.inventory, byId, input.textStrings ?? {});
+  // Legacy GetProficiencyBonus/IsProficient: the bonus needs an owned
+  // "Weapon Proficiency (<base weapon or Proficient As>)".
+  const weaponProficiencies = new Set(
+    input.activeDefinitionIds.flatMap((id) => {
+      const match = /^weapon proficiency \((.+)\)$/i.exec(
+        byId.get(key(id))?.name.trim() ?? "",
+      );
+      return match?.[1] === undefined ? [] : [key(match[1])];
+    }),
+  );
+  // Without any recorded weapon proficiency (incomplete or custom content),
+  // keep the bonus rather than strip it from every weapon, as for implements.
+  const proficientWithWeapon = (item: Loadout) =>
+    weaponProficiencies.size === 0 ||
+    item.proficiencyNames.length === 0 ||
+    item.proficiencyNames.some((name) => weaponProficiencies.has(key(name)));
   // Deliberate departure from legacy PowerStats, which offered every
   // equipped item to implement powers (D081).
   const characterImplementProficiencies = implementProficiencies(
@@ -1297,8 +1504,12 @@ export function evaluatePowers(input: {
             : undefined;
     const attackDefinitions = authoredAttacks(power, input.overlays);
     const attackLine = attackDefinitions[0]?.line;
+    // `_CalculatedHit` (content corrections) supplies a damage line for a
+    // power whose damage is only in prose, as legacy hardcodes Storm Pillar.
     const hitLine = lineAtLevel(
-      attackDefinitions[0]?.hit ?? effectiveField(power, "Hit", input.overlays),
+      attackDefinitions[0]?.hit ??
+        effectiveField(power, "Hit", input.overlays) ??
+        effectiveField(power, "_CalculatedHit", input.overlays),
       input.level,
     );
     const effectLine = effectiveField(power, "Effect", input.overlays);
@@ -1313,36 +1524,43 @@ export function evaluatePowers(input: {
       byId,
       entitiesByName,
     );
-    const effectOnlyCalculation = !hasAttack && effectLine !== undefined;
-    const candidates = !hasAttack
-      ? effectOnlyCalculation
-        ? weaponPower
+    // Legacy PowerStats calculates rows only for a power with a Hit line. We
+    // also keep an attack without one, for its attack bonus; a power with
+    // neither (Divine Fortune and other utilities) gets no rows.
+    const calculated = hasAttack || hitLine !== undefined;
+    const ownedImplement = (item: Loadout) =>
+      item.unarmed ||
+      item.weaponDefinition ||
+      item.implementDefinition ||
+      item.universalImplement ||
+      item.implementScopes.length > 0;
+    const powerRange = legacyPowerRange(power, attackType, weaponPower, {
+      requirement: effectiveField(power, "Requirement", input.overlays),
+    });
+    // Legacy IsValidPowerCombo tests the Implement keyword first, so a power
+    // that is both (Hexblade, Swordmage) takes the implement path.
+    const candidates = !calculated
+      ? []
+      : implementPower
+        ? // Legacy offers every owned weapon and implement (its CheckPower
+          // accepts any); proficiency only marks the variant (D081).
+          equipped.filter(ownedImplement)
+        : weaponPower
           ? equipped.filter(
-              (item) => item.weaponDamage !== undefined || item.unarmed,
-            )
-          : implementPower
-            ? equipped.filter((item) =>
-                usableAsImplement(
-                  item,
-                  characterImplementProficiencies,
-                  powerImplementScope,
-                ),
-              )
-            : equipped.filter((item) => item.unarmed)
-        : []
-      : weaponPower
-        ? equipped.filter(
-            (item) => item.weaponDamage !== undefined || item.unarmed,
-          )
-        : implementPower
-          ? equipped.filter((item) =>
-              usableAsImplement(
-                item,
-                characterImplementProficiencies,
-                powerImplementScope,
-              ),
+              (item) =>
+                item.unarmed ||
+                (item.weaponDamage !== undefined &&
+                  weaponFitsPowerRange(item, powerRange)),
             )
           : equipped.filter((item) => item.unarmed);
+    const proficientFor = (item: Loadout) =>
+      !implementPower ||
+      (weaponPower && item.weaponDefinition) ||
+      usableAsImplement(
+        item,
+        characterImplementProficiencies,
+        powerImplementScope,
+      );
     // Legacy PowerStats retains every legal equipment variant even for prose
     // that names one hand. The saved main-hand selection describes the active
     // pairing; it must not erase the alternate variants a user can select.
@@ -1409,7 +1627,11 @@ export function evaluatePowers(input: {
           },
           { label: "half your level", value: halfLevel(input.level) },
         ];
-        if (weaponPower && equipment.proficiency !== 0)
+        if (
+          weaponPower &&
+          equipment.proficiency !== 0 &&
+          proficientWithWeapon(equipment)
+        )
           attackComponents.push({
             label: "proficiency bonus",
             value: equipment.proficiency,
@@ -1423,7 +1645,7 @@ export function evaluatePowers(input: {
           ...combatStatComponents(
             input.stats,
             equipment,
-            power.name,
+            power,
             weaponPower ? "weapon" : "implement",
             "attack",
             phaseAttackType,
@@ -1435,7 +1657,7 @@ export function evaluatePowers(input: {
             ...combatStatComponents(
               input.stats,
               equipment,
-              power.name,
+              power,
               "weapon",
               "attack",
               phaseAttackType,
@@ -1495,15 +1717,26 @@ export function evaluatePowers(input: {
         const damageComponents: PowerComponent[] = [];
         const specialDamage = nativeSpecialDamage(power, hitLine, input.level);
         const weaponMatch = selectedHitClause?.match(/(\d+)\[W\]/i);
+        // Legacy: an implement with no weapon die (a rod) on a [W] power
+        // deals only the ability modifier.
+        const dieless =
+          weaponMatch !== null &&
+          weaponMatch !== undefined &&
+          equipment.implementDefinition &&
+          !equipment.weaponDefinition &&
+          equipment.weaponDamage === undefined;
+        const abilityOnly = specialDamage?.abilityOnly === true || dieless;
         const fixedMatch = selectedHitClause?.match(/(\d+d\d+)/i);
         const dice =
           specialDamage?.dice ??
           (weaponMatch !== null && weaponMatch !== undefined
             ? [
-                diceTimes(
-                  equipment.weaponDamage ?? "1d4",
-                  Number(weaponMatch[1]),
-                ),
+                dieless
+                  ? undefined
+                  : diceTimes(
+                      equipment.weaponDamage ?? "1d4",
+                      Number(weaponMatch[1]),
+                    ),
                 key(power.name) === "howling strike"
                   ? fixedMatch?.[1]
                   : undefined,
@@ -1556,11 +1789,7 @@ export function evaluatePowers(input: {
               value: numericStat(input.stats, `${ability} modifier`),
             })),
           );
-        if (
-          dice !== undefined &&
-          !specialDamage?.abilityOnly &&
-          equipment.enhancement !== 0
-        )
+        if (dice !== undefined && !abilityOnly && equipment.enhancement !== 0)
           damageComponents.push({
             label: "enhancement bonus",
             value: equipment.enhancement,
@@ -1579,26 +1808,38 @@ export function evaluatePowers(input: {
           offHandImplements.length === 1
             ? offHandImplements[0]
             : undefined;
-        if (
-          dice !== undefined &&
-          !specialDamage?.abilityOnly &&
-          (pairedImplement?.enhancement ?? 0) !== 0
-        )
-          damageComponents.push({
-            label: "off-hand implement enhancement bonus",
-            value: pairedImplement?.enhancement ?? 0,
-            source: "Dual Implement Spellcaster",
-          });
-        if (dice !== undefined && !specialDamage?.abilityOnly)
+        // Legacy types Dual Implement Spellcaster's bonus as an off-hand
+        // enhancement, sharing one maximum with pact-blade transfers of the
+        // same bonus ("[Doesn't Stack]").
+        const offHandEnhancement = pairedImplement?.enhancement ?? 0;
+        if (dice !== undefined && !abilityOnly)
           damageComponents.push(
             ...combatStatComponents(
               input.stats,
               equipment,
-              power.name,
+              power,
               weaponPower ? "weapon" : "implement",
               "damage",
               attackType,
-              { keywords, byId, basicAttackKind },
+              {
+                keywords,
+                defense,
+                byId,
+                basicAttackKind,
+                typedExtras:
+                  offHandEnhancement === 0
+                    ? []
+                    : [
+                        {
+                          bonusType: "off-hand enhancement",
+                          component: {
+                            label: "off-hand implement enhancement bonus",
+                            value: offHandEnhancement,
+                            source: "Dual Implement Spellcaster",
+                          },
+                        },
+                      ],
+              },
             ),
           );
         if (
@@ -1613,7 +1854,7 @@ export function evaluatePowers(input: {
           });
         if (
           dice !== undefined &&
-          !specialDamage?.abilityOnly &&
+          !abilityOnly &&
           implementPower &&
           equipment.weaponDefinition
         )
@@ -1621,11 +1862,11 @@ export function evaluatePowers(input: {
             ...combatStatComponents(
               input.stats,
               equipment,
-              power.name,
+              power,
               "weapon",
               "damage",
               attackType,
-              { keywords, byId, basicAttackKind },
+              { keywords, defense, byId, basicAttackKind },
             ),
           );
         const powerDamageBonus = Number(
@@ -1633,11 +1874,7 @@ export function evaluatePowers(input: {
             /\+\s*(\d+)\s+(?:[a-z]+\s+)*damage\b/i,
           )?.[1] ?? 0,
         );
-        if (
-          dice !== undefined &&
-          !specialDamage?.abilityOnly &&
-          powerDamageBonus !== 0
-        )
+        if (dice !== undefined && !abilityOnly && powerDamageBonus !== 0)
           damageComponents.push({
             label: "power damage bonus",
             value: powerDamageBonus,
@@ -1684,7 +1921,7 @@ export function evaluatePowers(input: {
                 ? { damage: "Ongoing" }
                 : {}
               : {
-                  damage: specialDamage?.abilityOnly
+                  damage: abilityOnly
                     ? String(damageBonus)
                     : formatDamage(dice, damageBonus),
                 }),
@@ -1748,6 +1985,7 @@ export function evaluatePowers(input: {
         id: `${power.id}:${equipment.id}`,
         equipmentName: equipment.name,
         equipmentId: equipment.id,
+        proficient: proficientFor(equipment),
         ...(equipment.unarmed
           ? { basicAttackTypes: ["melee" as const] }
           : equipment.weaponCategory?.includes("melee")
@@ -1836,6 +2074,26 @@ export function evaluatePowers(input: {
       unsupported.push(`companion-ability:${power.id}`);
     const usage = effectiveField(power, "Power Usage", input.overlays);
     const actionType = effectiveField(power, "Action Type", input.overlays);
+    const healing = keywords.some((value) => key(value) === "healing")
+      ? powerHealing(input.stats, [
+          "Healing",
+          `${power.name}:healing`,
+          `${power.id}:healing`,
+          ...(field(power, "Class") ?? "").split(",").flatMap((reference) => {
+            // A class power belongs to the class's power source: Healing
+            // Word is a divine healing power though its keywords omit it.
+            const source = /^\s*([A-Za-z]+)/.exec(
+              field(byId.get(key(reference)) ?? emptyEntity, "Power Source") ??
+                "",
+            )?.[1];
+            return [
+              `${reference.trim()}:healing`,
+              ...(source === undefined ? [] : [`${source}:healing`]),
+            ];
+          }),
+          ...keywords.map((keyword) => `${keyword}:healing`),
+        ])
+      : undefined;
     return [
       {
         definitionId: power.id,
@@ -1847,6 +2105,7 @@ export function evaluatePowers(input: {
         keywords,
         variants,
         recoveries,
+        ...(healing === undefined ? {} : { healing }),
         unsupported,
       },
     ];

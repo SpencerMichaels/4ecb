@@ -174,6 +174,7 @@ export function CharacterSheetPage({
   printOnReady = false,
   openPrintPreview = false,
   resolveAbilityChoices = true,
+  proficientEquipmentOnly = true,
   abbreviateAbilityValues = true,
   printCardTextSize = 8,
   countCoinWeight = true,
@@ -184,6 +185,7 @@ export function CharacterSheetPage({
   readonly printOnReady?: boolean;
   readonly openPrintPreview?: boolean;
   readonly resolveAbilityChoices?: boolean;
+  readonly proficientEquipmentOnly?: boolean;
   readonly abbreviateAbilityValues?: boolean;
   readonly printCardTextSize?: number;
   readonly countCoinWeight?: boolean;
@@ -292,6 +294,7 @@ export function CharacterSheetPage({
     const options = {
       countCoinWeight,
       resolveAbilityChoices,
+      proficientEquipmentOnly,
       inventoryCategory: (
         elements: Parameters<typeof inventoryCategory>[0]["elements"],
       ) => inventoryCategory({ elements }, byId),
@@ -315,6 +318,7 @@ export function CharacterSheetPage({
     evaluation,
     exactProfile,
     resolveAbilityChoices,
+    proficientEquipmentOnly,
     countCoinWeight,
   ]);
   const evaluatedSheetReady =

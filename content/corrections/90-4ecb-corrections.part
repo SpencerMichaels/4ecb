@@ -22,6 +22,80 @@
     </rules>
   </AppendNodes>
 
+  <!-- Storm Pillar has no Hit line; its damage is in the Effect zone text.
+       Legacy hardcodes a substitute hit line for it by name. `_CalculatedHit`
+       gives the rules engine that line without showing a "Hit:" on the card. -->
+  <AppendNodes internal-id="ID_FMP_POWER_4309">
+    <specific name="_CalculatedHit">1d6 + Intelligence modifier lightning damage.
+Level 21: 2d6 + Intelligence modifier lightning damage.</specific>
+  </AppendNodes>
+
+  <!-- Healer's Lore has no rules; older content gave cleric powers its
+       Wisdom-modifier healing bonus as a class-keyed healing stat, which the
+       engine reports as a power's healing (legacy CalcHealing). -->
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_395">
+    <rules>
+      <statadd name="ID_FMP_CLASS_2:healing" value="+Wisdom modifier" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Always-on healing bonuses whose elements carry no rules at all. -->
+  <AppendNodes internal-id="ID_FMP_FEAT_218">
+    <rules>
+      <statadd name="Inspiring Word:healing" value="+Charisma modifier" />
+    </rules>
+  </AppendNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_822">
+    <rules>
+      <statadd name="Inspiring Word:healing" value="+Intelligence modifier" />
+    </rules>
+  </AppendNodes>
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_4164">
+    <rules>
+      <statadd name="Healing" value="+4" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Healing bonuses for healing powers whose elements carry no rule for
+       them; the conditional ones are shown as reminders on the power. -->
+  <AppendNodes internal-id="ID_FMP_FEAT_1593">
+    <!-- Beatific Healer: shared type so a divine Healing Word counts once. -->
+    <rules>
+      <statadd name="Healing Word:healing" value="+Charisma modifier" type="Beatific Healer" />
+      <statadd name="divine:healing" value="+Charisma modifier" type="Beatific Healer" />
+    </rules>
+  </AppendNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1534">
+    <rules>
+      <statadd name="ID_FMP_CLASS_2:healing" value="+Strength modifier" condition="until the end of your next turn after you use warforged resolve" />
+    </rules>
+  </AppendNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2879">
+    <rules>
+      <statadd name="Healing" value="+3" condition="until the end of your next turn after you hit with your Dilettante power" />
+    </rules>
+  </AppendNodes>
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_1251">
+    <rules>
+      <statadd name="Healing" value="+Constitution modifier" condition="to an ally adjacent to your spirit companion" />
+    </rules>
+  </AppendNodes>
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_2017">
+    <rules>
+      <statadd name="primal:healing" value="+Constitution modifier" condition="to a target adjacent to your spirit companion" />
+    </rules>
+  </AppendNodes>
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_1699">
+    <rules>
+      <statadd name="divine:healing" value="+1d6" condition="to a bloodied target" />
+    </rules>
+  </AppendNodes>
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_1651">
+    <rules>
+      <statadd name="Healing" value="+2d6" condition="while outside the Mournland, to you or an ally within 5 squares of you" />
+    </rules>
+  </AppendNodes>
+
   <!-- Stoneheart Warrior only noted the free action; also change the action. -->
   <AppendNodes internal-id="ID_FMP_FEAT_902">
     <rules>

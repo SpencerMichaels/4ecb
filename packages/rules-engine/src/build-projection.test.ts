@@ -125,6 +125,83 @@ describe("build projection", () => {
     );
   });
 
+  it("matches saved grants to current grant rules by target, not position", () => {
+    // Saved against older content: a direct trait (OLD_POWER) sat where the
+    // current content grants SKILL_BONUS, and the old trait is now the
+    // selection inside a new container grant (POWER_SELECTION).
+    const content = [
+      entity("GRANTS", "Synthetic people", "Grants", [
+        statement("grant", { name: "SIZE", type: "Size" }, 0),
+        statement("grant", { name: "SKILL_BONUS", type: "Racial Trait" }, 1),
+        statement(
+          "grant",
+          { name: "POWER_SELECTION", type: "Racial Trait" },
+          2,
+        ),
+        statement("grant", { name: "LANGUAGE", type: "Language" }, 3),
+      ]),
+      entity("SIZE", "Medium", "Size"),
+      entity("LANGUAGE", "Common", "Language"),
+      entity("SKILL_BONUS", "Diplomacy Bonus", "Racial Trait", [
+        statement("statadd", { name: "Diplomacy Misc", value: "+2" }, 0),
+      ]),
+      entity("POWER_SELECTION", "Power Selection", "Racial Trait", [
+        statement(
+          "select",
+          { type: "Racial Trait", number: "1", Category: "Power Selection" },
+          0,
+        ),
+      ]),
+      {
+        ...entity("OLD_POWER", "Bonus Power", "Racial Trait", [
+          statement("statadd", { name: "Bonus Power Taken", value: "+1" }, 0),
+        ]),
+        categories: ["POWER_SELECTION"],
+      },
+    ];
+    const occurrence = (
+      id: string,
+      definitionId: string,
+      children: CharacterBuild["levels"][number]["root"]["children"] = [],
+    ) => ({
+      id,
+      identity: { definitionId, name: id, type: id },
+      acquiredLevel: 1,
+      legality: "rules-legal" as const,
+      unresolved: false,
+      children,
+    });
+    const build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 1,
+      levels: [
+        {
+          level: 1,
+          root: occurrence("grants", "GRANTS", [
+            occurrence("size", "SIZE"),
+            occurrence("old-power", "OLD_POWER"),
+            occurrence("language", "LANGUAGE"),
+          ]),
+        },
+      ],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    const projected = projectBuildForEvaluation(build, content);
+    expect(projected.occurrences).toContainEqual(
+      expect.objectContaining({ id: "language", ruleOrdinal: 3 }),
+    );
+    const evaluated = evaluateCharacter(projected, content);
+    expect(evaluated.stats["Diplomacy Misc"]?.value).toBe(2);
+    expect(evaluated.stats["Bonus Power Taken"]?.value).toBe(1);
+    expect(evaluated.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "choice.required" }),
+    );
+  });
+
   it("maps serialized child slots to rule ordinals and avoids duplicate grants", () => {
     const content = [
       entity("LEVEL", "1", "Level", [

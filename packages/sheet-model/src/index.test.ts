@@ -574,6 +574,7 @@ describe("sheet model", () => {
             {
               id: "wand-entry",
               equipmentName: "Test wand",
+              proficient: true,
               attackBonus: 7,
               defense: "Reflex",
               damage: "1d6+4",
@@ -901,6 +902,65 @@ describe("sheet model", () => {
         text: "+2d6 to damage once per turn (Synthetic striker).",
         source: "authoritative-evaluation",
         provider: "Synthetic striker",
+      },
+    ]);
+    // A healing bonus another feature grants is one more additional effect.
+    const healingCard = createSheetPowerCardFinder(
+      {
+        ...evaluation,
+        powers: [
+          {
+            ...ownedPower,
+            healing: {
+              bonus: 5,
+              components: [
+                {
+                  label: "ID_CLASS:healing",
+                  value: 5,
+                  source: "Healer's Lore",
+                  provenanceId: "lore:1",
+                },
+              ],
+              conditional: [],
+            },
+          },
+        ],
+      },
+      content,
+    )(ownedEntity!, {
+      ...ownedPower,
+      healing: {
+        bonus: 5,
+        components: [
+          {
+            label: "ID_CLASS:healing",
+            value: 5,
+            source: "Healer's Lore",
+            provenanceId: "lore:1",
+          },
+        ],
+        conditional: [
+          {
+            amount: "4",
+            condition: "while you are bloodied",
+            source: "Draconic Healing",
+            provenanceId: "draconic:1",
+          },
+        ],
+      },
+    });
+    expect(healingCard.additionalEffects?.slice(-2)).toEqual([
+      {
+        text: "Regain an additional 5 hit points.",
+        source: "authoritative-evaluation",
+        provider: "Healer's Lore",
+        provenanceId: "lore:1",
+      },
+      {
+        text: "Regain an additional 4 hit points while you are bloodied.",
+        source: "authoritative-evaluation",
+        provider: "Draconic Healing",
+        provenanceId: "draconic:1",
       },
     ]);
     expect(model.identity).toContainEqual({ label: "Level", value: "3" });

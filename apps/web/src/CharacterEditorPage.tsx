@@ -260,6 +260,7 @@ export function CharacterEditorPage({
   onNavigate,
   mergeFunds,
   resolveAbilityChoices,
+  proficientEquipmentOnly = true,
   abbreviateAbilityValues,
   activeManifest,
   activeProfile,
@@ -273,6 +274,7 @@ export function CharacterEditorPage({
   ) => void;
   readonly mergeFunds: boolean;
   readonly resolveAbilityChoices: boolean;
+  readonly proficientEquipmentOnly?: boolean;
   readonly abbreviateAbilityValues: boolean;
   readonly activeManifest?: ContentPackManifest;
   readonly activeProfile?: ContentProfileDefinition;
@@ -554,9 +556,10 @@ export function CharacterEditorPage({
   const cardPreferences = useMemo(
     () => ({
       resolveAbilityChoices,
+      proficientEquipmentOnly,
       abbreviateAbilityValues,
     }),
-    [abbreviateAbilityValues, resolveAbilityChoices],
+    [abbreviateAbilityValues, proficientEquipmentOnly, resolveAbilityChoices],
   );
   const equipmentCardSettings = useMemo(
     () =>

@@ -67,6 +67,32 @@ banners for missing content and failed evaluation became error issues. All
 dialogs share one header/footer contract. Verification: web typecheck, lint,
 format and tests pass; visual review is pending.
 
+## Legacy power rows, healing, and saved grants (2026-10-19)
+
+D081 amended and D088 added. Implement powers now list every owned weapon and
+implement like legacy, marking `proficient`; the "Only show implements you're
+proficient with" setting (default on) hides the rest on screen and in print,
+and `.dnd4e` export writes them all. Weapon powers keep only weapons of the
+power's range. Powers with neither an attack nor a Hit line get no rows;
+Healing powers report a healing bonus as an additional effect per source, exported as
+legacy's placeholder Unarmed row with `<Healing>`. Storm Pillar's damage comes
+from the `_CalculatedHit` content correction. Healer's Lore, which has no rules in
+current content, gets its older `ID_FMP_CLASS_2:healing` (+Wisdom modifier)
+back as a correction, matching bundled hero Omin Dran's cached +2. Defense-keyed damage
+(`will:damage`) applies to powers targeting that defense. Saved grant
+children match grant rules by target, not position; race `Skill Bonuses`
+and background `Benefit` text is no longer parsed. Hexblade (Beatrix): ID-keyed
+combat bonuses now match, Weapon+Implement powers take the implement path, and
+a rod deals ability-only damage on `[W]` powers (38/38 cached power fields).
+A saved trait that newer content wraps in a selection container is adopted as
+its selection. Hybrids meet class and class-feature prerequisites through
+their CountsAsClass/CountsAsFeature elements, as legacy `CreateElementPrereq`
+does ("warlord class", class IDs, "Battlefront Leader class feature"); rule
+`requires=` expressions naming class IDs are not yet checked for hybrids. `.dnd4e` export now writes full power text, every
+weapon field, and per-bonus `statadd` lines, which iPlay4e requires.
+Evaluation cache bumped to v19. Visual review of the healing additional effects and the
+new setting is pending.
+
 ## Implement power equipment (2026-10-18)
 
 D081: Implement powers list only implements the character is proficient

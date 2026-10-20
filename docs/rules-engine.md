@@ -205,9 +205,30 @@ semantics. The latest audit corrected two direct legacy-engine differences:
 Versatile damage now requires the serialized
 `_INTERNAL_VersatileUsedTwoHanded` choice, and the alternate native `Weapon`
 clause wording used by Crushing Blow adds the Constitution modifier for an
-axe, hammer, or mace. Native race `Skill Bonuses` and background `Benefit`
-specifics now materialize their old merged-database contributions without
-duplicating explicit racial bonus grants. Equipped-loadout predicates also no
+axe, hammer, or mace. Background `Benefit` text is display-only too
+(2026-10-19): the native engine never reads it, and parsing it double-counted
+real rules (Luskan Benefit, the Shifter backgrounds), applied conditional
+bonuses ("+5 to Endurance checks made due to thirst") unconditionally, and
+invented a `skill Misc` stat. Bundled hero Japheth's Streetwise +2 came from a
+`statadd` on the Baldur's Gate element itself in older content; the current
+Forgotten Realms regional backgrounds carry no rules. Race `Skill Bonuses` text is display-only
+(2026-10-19): the native engine never reads that field, every race grants its
+bonuses through `<Skill> Bonus` racial traits, and parsing the text invented
+stats such as "to choice of one other Misc" (Kalashtar, Shardmind) and gave
+Moon/Sun Elf eladrin the standard Arcana/History bonuses on top of their
+chosen ones. The parser had masked a projection defect: saved grant children
+were matched to their parent's grant rules by position, so a record saved
+against older content (bundled heroes Omin Dran, Binwin Bronzebottom) shifted
+onto the wrong slots and suppressed current grants such as Diplomacy Bonus.
+Saved grant children now first claim the grant whose target they are
+(`assignChildSlots`); a child whose categories name an unclaimed container
+grant becomes that container's selection (Bonus At-Will Power under Human
+Power Selection, Dilettante under Half-Elf Power Selection); others keep their
+own position if free. Aeofel's
+Arcana/History remain short because current content moved them behind the
+Eladrin Subrace choice his record never made. Defense-keyed damage stats (`will:damage`, e.g. Resplendent
+Gloves) apply to powers that target that defense, as legacy Hold Foe shows.
+Equipped-loadout predicates also no
 longer leak onto carried alternate power variants. These samples were created
 against unidentified older content and are
 cross-profile compatibility evidence, not exact public test fixtures.

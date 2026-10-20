@@ -57,6 +57,57 @@ const kiFocusProficiency = {
 } as ContentEntity;
 
 describe("legacy prerequisites", () => {
+  it("treats the clauses legacy ignores as met", () => {
+    expect(
+      evaluatePrerequisite("Living humanoid race; Multiclass", context).status,
+    ).toBe("satisfied");
+    expect(
+      evaluatePrerequisite("Must adhere to Amoth's precepts", context).status,
+    ).toBe("satisfied");
+  });
+
+  it("counts a hybrid as both classes and its hybrid features as the base ones", () => {
+    // Legacy CreateElementPrereq: a class or class feature requirement is also
+    // met by the same-named CountsAsClass/CountsAsFeature the hybrid owns.
+    const hybridOwned = [
+      { id: "HYBRID_WARLORD", name: "Hybrid Warlord", type: "Hybrid Class" },
+      { id: "COUNTS_WARLORD", name: "Warlord", type: "CountsAsClass" },
+      {
+        id: "COUNTS_BATTLEFRONT",
+        name: "Battlefront Leader",
+        type: "CountsAsFeature",
+      },
+    ] as unknown as ContentEntity[];
+    const hybridContext = {
+      owned: hybridOwned,
+      definitions: [
+        ...hybridOwned,
+        { id: "ID_WARLORD", name: "Warlord", type: "Class" },
+        {
+          id: "BATTLEFRONT",
+          name: "Battlefront Leader",
+          type: "Class Feature",
+        },
+      ] as unknown as ContentEntity[],
+      level: 8,
+      abilities: {},
+    };
+    for (const prerequisite of [
+      "Warlord",
+      "warlord class",
+      "ID_WARLORD",
+      "Battlefront Leader class feature",
+    ])
+      expect(
+        evaluatePrerequisite(prerequisite, hybridContext).status,
+        prerequisite,
+      ).toBe("satisfied");
+    // Negated requirements take no alternate.
+    expect(evaluatePrerequisite("!ID_WARLORD", hybridContext).status).toBe(
+      "satisfied",
+    );
+  });
+
   it("evaluates ability, level, training, source, identity, and boolean clauses", () => {
     expect(
       evaluatePrerequisite("Str 13, Wis 13; Multiclass; !Wizard", context)

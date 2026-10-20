@@ -25,6 +25,8 @@ interface ChildSlot {
   readonly choiceIndex: number;
   readonly kind: "choice" | "grant";
   readonly minimumLevel: number;
+  /** A grant's target name or internal ID, as authored. */
+  readonly grantTarget?: string;
 }
 
 function childSlots(
@@ -46,6 +48,7 @@ function childSlots(
           choiceIndex: 0,
           kind: "grant" as const,
           minimumLevel: rule.source.level.minimum,
+          grantTarget: rule.name,
         },
       ];
     if (rule.kind === "select")
@@ -98,17 +101,119 @@ export function itemChoiceSlots(
   });
 }
 
+interface ChildAssignment {
+  /** The rule slot each saved child fills, by child index. */
+  readonly slots: readonly (ChildSlot | undefined)[];
+  /**
+   * Children that are the selection of a container grant nobody claimed,
+   * by child index: the grant slot and the container's select slot.
+   */
+  readonly adopted: ReadonlyMap<
+    number,
+    { readonly grant: ChildSlot; readonly select: ChildSlot }
+  >;
+}
+
+/**
+ * Pairs saved children with their parent's rule slots. Saved children follow
+ * rule order, but a record saved against older content can list a different
+ * set of grants, which shifts every later child onto the wrong slot (and lets
+ * a stale child suppress a current grant). So, in order:
+ * 1. a grant slot claims the saved child that is its target;
+ * 2. a child is adopted as the selection of an unclaimed container grant when
+ *    its categories name the container (current content wraps formerly direct
+ *    traits in selections: Bonus At-Will Power under Human Power Selection,
+ *    Dilettante under Half-Elf Power Selection);
+ * 3. any other child keeps the slot at its own position if still free;
+ * 4. the rest fill free choice slots in order, never another grant's slot,
+ *    and any left over stay unslotted.
+ * Adoption needs content lookups, so callers without them skip step 2.
+ */
+function assignChildSlots(
+  occurrence: BuildOccurrence,
+  entity: ContentEntity | undefined,
+  entityById?: (id: string) => ContentEntity | undefined,
+): ChildAssignment {
+  const slots = childSlots(occurrence, entity);
+  const assigned: (ChildSlot | undefined)[] = occurrence.children.map(
+    () => undefined,
+  );
+  const adopted = new Map<number, { grant: ChildSlot; select: ChildSlot }>();
+  const claimed = new Set<ChildSlot>();
+  const lower = (value: string) => value.trim().toLocaleLowerCase();
+  const matches = (child: BuildOccurrence, target: string) =>
+    [child.identity.definitionId, child.identity.name].some(
+      (value) => value !== undefined && lower(value) === lower(target),
+    );
+  const free = (index: number) =>
+    assigned[index] === undefined && !adopted.has(index);
+  for (const slot of slots) {
+    if (slot.grantTarget === undefined) continue;
+    const index = occurrence.children.findIndex(
+      (child, childIndex) =>
+        free(childIndex) && matches(child, slot.grantTarget!),
+    );
+    if (index < 0) continue;
+    assigned[index] = slot;
+    claimed.add(slot);
+  }
+  if (entityById !== undefined)
+    for (const grant of slots) {
+      if (grant.grantTarget === undefined || claimed.has(grant)) continue;
+      const container = entityById(grant.grantTarget);
+      if (container === undefined) continue;
+      const select = childSlots(
+        { ...occurrence, children: [] },
+        container,
+      ).find((slot) => slot.kind === "choice");
+      if (select === undefined) continue;
+      const index = occurrence.children.findIndex((child, childIndex) => {
+        if (!free(childIndex) || child.identity.definitionId === undefined)
+          return false;
+        return (entityById(child.identity.definitionId)?.categories ?? []).some(
+          (category) =>
+            lower(category) === lower(container.id) ||
+            lower(category) === lower(container.name),
+        );
+      });
+      if (index < 0) continue;
+      adopted.set(index, { grant, select });
+      claimed.add(grant);
+    }
+  occurrence.children.forEach((_, index) => {
+    const positional = slots[index];
+    if (!free(index) || positional === undefined || claimed.has(positional))
+      return;
+    assigned[index] = positional;
+    claimed.add(positional);
+  });
+  const remaining = slots.filter(
+    (slot) => !claimed.has(slot) && slot.grantTarget === undefined,
+  );
+  let next = 0;
+  return {
+    slots: assigned.map((slot, index) =>
+      slot !== undefined || adopted.has(index) ? slot : remaining[next++],
+    ),
+    adopted,
+  };
+}
+
 export function findBuildChildIndex(
   occurrence: BuildOccurrence,
   entity: ContentEntity | undefined,
   ruleOrdinal: number,
   choiceIndex: number,
 ): number {
-  const slots = childSlots(occurrence, entity);
-  const index = slots.findIndex(
-    (slot) =>
-      slot.ruleOrdinal === ruleOrdinal && slot.choiceIndex === choiceIndex,
+  const matching = (slot: ChildSlot | undefined) =>
+    slot !== undefined &&
+    slot.ruleOrdinal === ruleOrdinal &&
+    slot.choiceIndex === choiceIndex;
+  const existing = assignChildSlots(occurrence, entity).slots.findIndex(
+    matching,
   );
+  if (existing >= 0) return existing;
+  const index = childSlots(occurrence, entity).findIndex(matching);
   return index < 0 ? occurrence.children.length : index;
 }
 
@@ -493,8 +598,20 @@ export function projectBuildForEvaluation(
       occurrence.identity.definitionId === undefined
         ? undefined
         : entityById(occurrence.identity.definitionId);
-    const slots = childSlots(occurrence, entity);
+    const { slots, adopted } = assignChildSlots(occurrence, entity, entityById);
     occurrence.children.forEach((child, index) => {
+      const adoption = adopted.get(index);
+      if (adoption !== undefined) {
+        // The evaluator materializes the container grant under this ID.
+        visit(
+          child,
+          "choice",
+          `${occurrence.id}:grant:${adoption.grant.ruleOrdinal}`,
+          adoption.select,
+          effectiveAcquiredLevel,
+        );
+        return;
+      }
       const childSlot = slots[index] ?? {
         ruleOrdinal: index,
         choiceIndex: 0,
@@ -605,7 +722,7 @@ export function projectBuildForEvaluation(
         element.definitionId === undefined
           ? undefined
           : entityById(element.definitionId);
-      const slots = childSlots(provider, entity);
+      const { slots } = assignChildSlots(provider, entity);
       children.forEach((child, index) => {
         const slot = slots[index] ?? {
           ruleOrdinal: index,
