@@ -2087,11 +2087,11 @@ export function CharacterEditorPage({
                   <button
                     aria-label="Game content update available, review it"
                     className="builder-health builder-health-update"
-                    title={`${contentUpdate.title}. ${contentUpdate.effect}`}
+                    title="Review the game content update. Until you apply it, rules, powers and items stay as they were."
                     type="button"
                     onClick={() => navigateToDiagnosticIssue(contentUpdate)}
                   >
-                    <Icon name="content" />
+                    <Icon name="archive-restore" />
                   </button>
                 )}
                 {houseRuleCount > 0 ? (

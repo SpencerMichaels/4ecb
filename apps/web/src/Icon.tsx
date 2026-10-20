@@ -1,5 +1,6 @@
 import {
   Anvil,
+  ArchiveRestore,
   ArrowDownUp,
   ArrowLeft,
   Award,
@@ -116,6 +117,7 @@ export type IconName =
   | "action-opportunity"
   | "action-reaction"
   | "anvil"
+  | "archive-restore"
   | "arms"
   | "attack-area"
   | "attack-close"
@@ -233,6 +235,7 @@ const icons: Record<IconName, LucideIcon> = {
   "action-opportunity": RedoDot,
   "action-reaction": Redo2,
   anvil: Anvil,
+  "archive-restore": ArchiveRestore,
   arms: BicepsFlexed,
   "attack-area": CircleDashed,
   "attack-close": ScanLine,
