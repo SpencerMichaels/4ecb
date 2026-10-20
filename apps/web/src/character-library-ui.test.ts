@@ -73,6 +73,6 @@ describe("compact character library", () => {
     expect(editor).toContain("exportFrom(exportCharacterDnd4e)");
     expect(editor).toContain("await saveQueue.current?.whenIdle();");
     expect(sheet).toContain("printOnReady = false");
-    expect(sheet).toContain("window.print()");
+    expect(sheet).toContain("printWithFileName(");
   });
 });

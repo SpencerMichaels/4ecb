@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -45,6 +46,7 @@ import { loadingStepDetail, useLoadingProgress } from "./use-loading-progress";
 import { PowerCard } from "./PowerCard";
 import { cardTextPresentation } from "./BuilderCards";
 import { preferredPrintCardTextSize } from "./print-card-fit";
+import { printWithFileName } from "./print-file-name";
 import { Prose } from "./Prose";
 import { SheetOverview } from "./SheetOverview";
 
@@ -333,6 +335,23 @@ export function CharacterSheetPage({
     rulesClient,
     !initialLoadReady,
   );
+  // A saved PDF is named "Ingi - Level 8.pdf", from the title and print path.
+  const pdfTitle =
+    character === undefined
+      ? undefined
+      : `${characterDisplayName(character) || "Unnamed character"} - Level ${character.build.effectiveLevel}`;
+  useEffect(() => {
+    if (pdfTitle === undefined) return;
+    const previous = document.title;
+    document.title = pdfTitle;
+    return () => {
+      document.title = previous;
+    };
+  }, [pdfTitle]);
+  const print = useCallback(
+    () => printWithFileName(pdfTitle ?? document.title),
+    [pdfTitle],
+  );
   useEffect(() => {
     if (
       !printOnReady ||
@@ -352,13 +371,13 @@ export function CharacterSheetPage({
       );
     let finalFrame: number | undefined;
     const initialFrame = window.requestAnimationFrame(() => {
-      finalFrame = window.requestAnimationFrame(() => window.print());
+      finalFrame = window.requestAnimationFrame(print);
     });
     return () => {
       window.cancelAnimationFrame(initialFrame);
       if (finalFrame !== undefined) window.cancelAnimationFrame(finalFrame);
     };
-  }, [contentLoaded, error, evaluatedSheetReady, model, printOnReady]);
+  }, [contentLoaded, error, evaluatedSheetReady, model, print, printOnReady]);
   const printPaper = paper;
   useEffect(() => {
     const link = document.createElement("link");
@@ -369,19 +388,6 @@ export function CharacterSheetPage({
     document.head.append(link);
     return () => link.remove();
   }, [printPaper]);
-  // Browsers name a saved PDF after the page title ("Ingi - Level 8.pdf").
-  const pdfTitle =
-    character === undefined
-      ? undefined
-      : `${characterDisplayName(character) || "Unnamed character"} - Level ${character.build.effectiveLevel}`;
-  useEffect(() => {
-    if (pdfTitle === undefined) return;
-    const previous = document.title;
-    document.title = pdfTitle;
-    return () => {
-      document.title = previous;
-    };
-  }, [pdfTitle]);
   if (error !== undefined)
     return (
       <main className="sheet-page" id="main-content">
@@ -532,7 +538,7 @@ export function CharacterSheetPage({
             className="icon-only-button button-icon"
             title="Print or save as PDF"
             type="button"
-            onClick={() => window.print()}
+            onClick={print}
           >
             <Icon name="print" />
           </button>
