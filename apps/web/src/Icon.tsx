@@ -18,6 +18,7 @@ import {
   Check,
   ChartPie,
   ChevronRight,
+  ChevronsRight,
   ChevronsUp,
   Church,
   Circle,
@@ -110,6 +111,7 @@ import {
 export type IconName =
   | "ability"
   | "action-minor"
+  | "action-move"
   | "action-none"
   | "action-opportunity"
   | "action-reaction"
@@ -226,6 +228,7 @@ export type IconName =
 const icons: Record<IconName, LucideIcon> = {
   ability: ChartNoAxesColumnIncreasing,
   "action-minor": ChartPie,
+  "action-move": ChevronsRight,
   "action-none": Minus,
   "action-opportunity": RedoDot,
   "action-reaction": Redo2,

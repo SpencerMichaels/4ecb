@@ -61,7 +61,7 @@ describe("ActionTypeIcon", () => {
     for (const [value, icon] of [
       ["Standard Action", "lucide-circle"],
       ["Minor Action", "lucide-chart-pie"],
-      ["Move Action", "lucide-chevron-right"],
+      ["Move Action", "lucide-chevrons-right"],
       ["Free Action", "lucide-circle"],
     ] as const) {
       const markup = renderToStaticMarkup(

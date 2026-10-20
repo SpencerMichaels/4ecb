@@ -9,7 +9,7 @@ import { Icon, type IconName } from "./Icon";
 const SYMBOL_ICONS: Readonly<Record<PowerActionSymbol, IconName>> = {
   "●": "circle",
   "◔": "action-minor",
-  "≫": "chevron",
+  "≫": "action-move",
   "○": "circle",
   "↻": "action-reaction",
   "↯": "trending-up",
