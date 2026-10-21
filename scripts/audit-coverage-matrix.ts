@@ -638,8 +638,24 @@ function equip(run: MatrixRun, state: CharacterState, lineIndex: number) {
     pick(run.weapons, 7),
     pick(run.armors, 3),
     pick(run.magicItems, 101),
-    pick(run.rituals, 13),
   ].filter((item): item is ContentEntity => item !== undefined);
+  // A ritual is a known record, not gear.
+  const ritual = pick(run.rituals, 13);
+  if (ritual !== undefined)
+    state.transaction.dispatch({
+      kind: "learn-known",
+      entry: {
+        id: "audit:known:1",
+        acquiredLevel: 1,
+        element: {
+          definitionId: ritual.id,
+          name: ritual.name,
+          type: ritual.type,
+        },
+        acquisition: "free",
+      },
+      priceCopper: 0,
+    });
   items.forEach((item, index) =>
     state.transaction.dispatch({
       kind: "put-inventory",
@@ -887,17 +903,30 @@ function runLine(
     }
   };
   const carried = [...state.transaction.current.inventory];
+  const drop = (entry: (typeof carried)[number]) => ({
+    command: { kind: "remove-inventory" as const, entryId: entry.id },
+    definitionId: entry.elements[0]?.definitionId ?? entry.id,
+    name: entry.name ?? "",
+  });
   // Magic items and rituals first: they carry the most rules.
-  const dropOrder = [...carried.slice(2), ...carried.slice(0, 2).reverse()];
-  for (const entry of dropOrder) {
+  const dropOrder = [
+    ...carried.slice(2).map(drop),
+    ...state.transaction.current.known.map((entry) => ({
+      command: { kind: "remove-known" as const, id: entry.id },
+      definitionId: entry.element.definitionId ?? entry.id,
+      name: entry.element.name,
+    })),
+    ...carried.slice(0, 2).reverse().map(drop),
+  ];
+  for (const { command, definitionId, name } of dropOrder) {
     if (converges()) break;
-    state.transaction.dispatch({ kind: "remove-inventory", entryId: entry.id });
+    state.transaction.dispatch(command);
     if (converges())
       run.problem({
         character: plan.label,
         level: 1,
         kind: "nonconvergent-item",
-        detail: `${entry.elements[0]?.definitionId ?? entry.id} (${entry.name ?? ""}) keeps a level-1 character from converging`,
+        detail: `${definitionId} (${name}) keeps a level-1 character from converging`,
       });
   }
   const preference: CandidatePreference = {
