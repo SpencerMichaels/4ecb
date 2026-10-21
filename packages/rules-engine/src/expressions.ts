@@ -108,10 +108,14 @@ export interface ExpressionContext {
   readonly categoryValuesFor?: (entity: ContentEntity) => ReadonlySet<string>;
 }
 
+// One collator: localeCompare with options builds a new one on every call,
+// which dominated evaluation time.
+const accentCollator = new Intl.Collator(undefined, { sensitivity: "accent" });
+
 function same(left: string, right: string): boolean {
   return (
-    left.localeCompare(right, undefined, { sensitivity: "accent" }) === 0 ||
-    left.toLocaleLowerCase() === right.toLocaleLowerCase()
+    left.toLocaleLowerCase() === right.toLocaleLowerCase() ||
+    accentCollator.compare(left, right) === 0
   );
 }
 
