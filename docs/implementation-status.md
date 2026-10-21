@@ -1,5 +1,31 @@
 # Implementation status
 
+## Story-membership prerequisites (D090, 2026-10-21)
+
+Commit `d79eb12`; corrections only, in
+`content/corrections/93-prerequisites.part`. Each clause is rewritten as
+"<representing option> or <original wording>"; the existing OR semantics
+(satisfied, else unverified, else failed) do the rest.
+
+- **Harpers:** Harper of Legend's clause is met by the Harper Agent background
+  or theme.
+- **House Vadalis:** Vigorous Familiar's clause is met by any Vadalis
+  background, as well as Mark of Handling.
+- **Spellscar:** a new "Spellscar" CountsAsFeature
+  (`ID_4ECB_COUNTSASFEATURE_SPELLSCAR`) is granted by Student of the Plague,
+  its three Spellscarred-category features, and the Spellscarred Harbinger
+  theme's starting feature. It meets 24 feats and Spellscarred Savant.
+- **Circle of Smoke and Whispers:** stays unverified.
+
+A before/after dump of all 11,321 records' parsed prerequisites changed exactly
+the 28 targeted records. Not rewritten: the three Harper of Legend class
+features. They have no `print-prereqs`, so a rewrite would change what
+players read, and they are only granted, never chosen. No cache bump: the
+content profile revision changes the cache key.
+
+Verification: both directions checked on the real pack; 1067 workspace tests
+pass.
+
 ## Legacy power and item requirements (2026-10-21)
 
 Commit `94987ee`.
