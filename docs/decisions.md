@@ -2477,7 +2477,8 @@ represents it:
 
 - **Harpers:** the Harper Agent background or theme.
 - **House Vadalis:** a Vadalis background.
-- **Spellscar:** Student of the Plague or any Spellscarred class feature.
+- **Spellscar:** Student of the Plague, any Spellscarred class feature, or
+  the Spellscarred Harbinger theme or background.
 
 Otherwise the clause stays unverified. That is a warning, not illegal, because
 the DM can grant the membership in play. A membership with no representing

@@ -270,17 +270,18 @@
   <AppendNodes internal-id="ID_FMP_FEAT_1710"><Prereqs>11th level, artificer, Arcane Familiar feat, Mark of Handling feat or Vadalis Handler or Vadalis Griffon Rider or Vadalis Botanist or member of House Vadalis</Prereqs></AppendNodes>
   <!-- Spellscar: a CountsAsFeature granted by Student of the Plague, the
        Spellscarred class features it selects from, and the Spellscarred
-       Harbinger theme's starting feature. Student of the Plague's own clause
-       names only the theme feature, since the feat and its selection would
-       otherwise satisfy it themselves. -->
+       Harbinger theme (its starting feature) and background. Student of the
+       Plague's own clause names only the Harbinger options, since the feat
+       and its selection would otherwise satisfy it themselves. -->
   <RulesElement name="Spellscar" type="CountsAsFeature" source="4ecb corrections" internal-id="ID_4ECB_COUNTSASFEATURE_SPELLSCAR" />
   <AppendNodes internal-id="ID_FMP_FEAT_651"><rules><grant name="ID_4ECB_COUNTSASFEATURE_SPELLSCAR" type="CountsAsFeature" /></rules></AppendNodes>
   <AppendNodes internal-id="ID_INTERNAL_CLASS_FEATURE_SIGHT_OF_THE_UNSEEN"><rules><grant name="ID_4ECB_COUNTSASFEATURE_SPELLSCAR" type="CountsAsFeature" /></rules></AppendNodes>
   <AppendNodes internal-id="ID_INTERNAL_CLASS_FEATURE_FLAMESPEED"><rules><grant name="ID_4ECB_COUNTSASFEATURE_SPELLSCAR" type="CountsAsFeature" /></rules></AppendNodes>
   <AppendNodes internal-id="ID_INTERNAL_CLASS_FEATURE_LARGER_THAN_LIFE"><rules><grant name="ID_4ECB_COUNTSASFEATURE_SPELLSCAR" type="CountsAsFeature" /></rules></AppendNodes>
   <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_3949"><rules><grant name="ID_4ECB_COUNTSASFEATURE_SPELLSCAR" type="CountsAsFeature" /></rules></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_BACKGROUND_784"><rules><grant name="ID_4ECB_COUNTSASFEATURE_SPELLSCAR" type="CountsAsFeature" /></rules></AppendNodes>
   <RemoveNodes internal-id="ID_FMP_FEAT_651"><Prereqs /></RemoveNodes>
-  <AppendNodes internal-id="ID_FMP_FEAT_651"><Prereqs>Spellscarred Harbinger Starting Feature or You have a spellscar; ~MULTICLASS or Unlimited Multiclass</Prereqs></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_651"><Prereqs>Spellscarred Harbinger Starting Feature or Spellscarred Harbinger or You have a spellscar; ~MULTICLASS or Unlimited Multiclass</Prereqs></AppendNodes>
   <RemoveNodes internal-id="ID_FMP_FEAT_2838"><Prereqs /></RemoveNodes>
   <AppendNodes internal-id="ID_FMP_FEAT_2838"><Prereqs>Any arcane class, Spellscar or you have a spellscar</Prereqs></AppendNodes>
   <RemoveNodes internal-id="ID_FMP_FEAT_2839"><Prereqs /></RemoveNodes>
