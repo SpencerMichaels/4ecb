@@ -2463,6 +2463,27 @@ A record's machine-read `Prereqs` text counts as structure: a correction may
 rewrite it into a form the prerequisite parser resolves, since players see
 `print-prereqs`, which stays as published (product owner, 2026-10-21).
 
+### D090 — Story memberships are met by a matching option, else unverified
+
+Status: accepted (2026-10-21).
+
+Some prerequisites name a story membership or condition: "membership in the
+Harpers", "member of House Vadalis", "Membership in the Circle of Smoke and
+Whispers", "you have a spellscar". Legacy maps these to Internal records that
+no content grants, so it fails them for every character.
+
+We count such a clause as met when the character owns an option that
+represents it:
+
+- **Harpers:** the Harper Agent background or theme.
+- **House Vadalis:** a Vadalis background.
+- **Spellscar:** Student of the Plague or any Spellscarred class feature.
+
+Otherwise the clause stays unverified. That is a warning, not illegal, because
+the DM can grant the membership in play. A membership with no representing
+option (the Circle of Smoke and Whispers) is always unverified. Implemented as
+prerequisite corrections under D089.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed
