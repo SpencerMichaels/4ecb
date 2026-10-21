@@ -260,7 +260,11 @@ async function main(): Promise<void> {
 
   await mkdir(outDir, { recursive: true });
   const report = {
-    pack: { path: packPath, id: pack.manifest.id, digest: pack.manifest },
+    pack: {
+      path: packPath,
+      id: pack.manifest.packId,
+      digest: pack.manifest.contentDigest,
+    },
     types: typeRows,
     staleRegistry,
     references: referenceRows,
