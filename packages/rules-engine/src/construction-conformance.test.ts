@@ -74,8 +74,12 @@ function input(level: number, occurrences: readonly CharacterOccurrence[]) {
 describe("native construction conformance", () => {
   it("keeps a saved choice dormant while its select requirement is false", () => {
     const content = [
-      entity("RANGER", "Ranger", "Class", [
+      // As in the real content, the style is chosen under a different
+      // element: a requirement never sees its own element's children.
+      entity("STYLE", "Fighting Style", "Class Feature", [
         statement("select", { type: "Fighting Style", number: "1" }, 0),
+      ]),
+      entity("RANGER", "Ranger", "Class", [
         statement(
           "select",
           {
@@ -103,11 +107,12 @@ describe("native construction conformance", () => {
       "BEAST_MASTERY",
       1,
       "choice",
-      { parentId: ranger.id, ruleOrdinal: 0, choiceIndex: 0 },
+      { parentId: "style", ruleOrdinal: 0, choiceIndex: 0 },
     );
+    const style = occurrence("style", "STYLE", 1, "root");
 
     const beastMaster = evaluateCharacter(
-      input(1, [ranger, beastMastery, primeShot]),
+      input(1, [ranger, style, beastMastery, primeShot]),
       content,
     );
     expect(beastMaster.activeDefinitionIds).not.toContain("PRIME_SHOT");
@@ -119,6 +124,7 @@ describe("native construction conformance", () => {
     const archer = evaluateCharacter(
       input(1, [
         ranger,
+        style,
         { ...beastMastery, definitionId: "ARCHER" },
         primeShot,
       ]),

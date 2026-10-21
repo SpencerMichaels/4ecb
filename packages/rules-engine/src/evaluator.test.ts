@@ -2420,6 +2420,112 @@ describe("character evaluator", () => {
     expect(duplicated.occurrences.map(({ id }) => id)).not.toContain("again");
   });
 
+  it("keeps a grant whose requirement excludes what it grants", () => {
+    // Master Trickster: `grant Ghost Sound requires="!Ghost Sound"`. A named
+    // requirement ignores the checking element's own children (native
+    // MeetsRequires), so the grant neither drops itself nor oscillates.
+    const definitions = [
+      entity("TRAIT", "Master Trickster", "Racial Trait", {
+        rules: [
+          rule(
+            "modify",
+            {
+              name: "SPELL",
+              type: "Power",
+              Field: "Power Usage",
+              value: "Encounter",
+              requires: "!SPELL",
+            },
+            0,
+          ),
+          rule(
+            "grant",
+            { name: "SPELL", type: "Power", requires: "!SPELL" },
+            1,
+          ),
+        ],
+      }),
+      entity("SPELL", "Ghost Sound", "Power"),
+      entity("CLASS", "Wizard", "Class", {
+        rules: [rule("grant", { name: "SPELL", type: "Power" }, 0)],
+      }),
+    ];
+    const trait: CharacterOccurrence = {
+      id: "trait",
+      definitionId: "TRAIT",
+      acquiredLevel: 1,
+      kind: "root",
+    };
+    const granted = evaluateCharacter(
+      { level: 1, baseAbilities: {}, occurrences: [trait], inventory: [] },
+      definitions,
+    );
+    expect(granted.converged).toBe(true);
+    expect(granted.occurrences).toContainEqual(
+      expect.objectContaining({ id: "trait:grant:1", definitionId: "SPELL" }),
+    );
+    expect(granted.overlays).toContainEqual(
+      expect.objectContaining({ field: "Power Usage", value: "Encounter" }),
+    );
+
+    // Owning it some other way still switches the grant off.
+    const owned = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          trait,
+          {
+            id: "class",
+            definitionId: "CLASS",
+            acquiredLevel: 1,
+            kind: "root",
+          },
+        ],
+        inventory: [],
+      },
+      definitions,
+    );
+    expect(owned.converged).toBe(true);
+    expect(owned.occurrences.map(({ id }) => id)).not.toContain(
+      "trait:grant:1",
+    );
+    expect(owned.overlays).not.toContainEqual(
+      expect.objectContaining({ field: "Power Usage" }),
+    );
+  });
+
+  it("converges when a drop removes what another element grants", () => {
+    // Born of Shadow drops Fey Origin, which the race keeps granting.
+    const result = evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          { id: "race", definitionId: "RACE", acquiredLevel: 1, kind: "root" },
+          { id: "feat", definitionId: "FEAT", acquiredLevel: 1, kind: "root" },
+        ],
+        inventory: [],
+      },
+      [
+        entity("RACE", "Gnome", "Race", {
+          rules: [rule("grant", { name: "ORIGIN", type: "Racial Trait" }, 0)],
+        }),
+        entity("FEAT", "Born of Shadow", "Feat", {
+          rules: [
+            rule("drop", { name: "ORIGIN", type: "Racial Trait" }, 0),
+            rule("grant", { name: "SHADOW", type: "Racial Trait" }, 1),
+          ],
+        }),
+        entity("ORIGIN", "Fey Origin", "Racial Trait"),
+        entity("SHADOW", "Shadow Origin", "Racial Trait"),
+      ],
+    );
+    expect(result.converged).toBe(true);
+    expect(result.activeDefinitionIds).toContain("SHADOW");
+    expect(result.activeDefinitionIds).not.toContain("ORIGIN");
+  });
+
   it("keeps house rules visible but makes the result non-legal", () => {
     const result = evaluateCharacter(
       {

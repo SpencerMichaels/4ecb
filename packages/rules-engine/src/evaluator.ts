@@ -41,7 +41,7 @@ import { evaluatePowers, type EvaluatedPower } from "./powers";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v27-2026-10-21-power-swap-targets";
+  "evaluated-character-v28-2026-10-21-own-children-requires";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -711,6 +711,78 @@ function evaluateCharacterInternal(
     }
     return false;
   };
+  // Native MeetsRequires passes the rule's owner as `checker`, and a named
+  // requirement ignores elements whose parent is that owner. So Master
+  // Trickster's `grant Ghost Sound requires="!Ghost Sound"` keeps the power it
+  // granted instead of dropping it every other pass.
+  const ownChildrenIndex = new WeakMap<
+    readonly CharacterOccurrence[],
+    {
+      readonly children: ReadonlyMap<string, readonly CharacterOccurrence[]>;
+      readonly counts: ReadonlyMap<string, number>;
+    }
+  >();
+  const ruleRequiresMet = (
+    requires: string | undefined,
+    owner: CharacterOccurrence,
+    activeOccurrences: readonly CharacterOccurrence[],
+    context: ExpressionContext,
+  ): boolean => {
+    if (requires === undefined) return true;
+    const expression = parseRequires(requires);
+    let indexed = ownChildrenIndex.get(activeOccurrences);
+    if (indexed === undefined) {
+      const children = new Map<string, CharacterOccurrence[]>();
+      const counts = new Map<string, number>();
+      for (const occurrence of activeOccurrences) {
+        const definitionKey = key(occurrence.definitionId);
+        counts.set(definitionKey, (counts.get(definitionKey) ?? 0) + 1);
+        if (occurrence.parentId !== undefined)
+          children.set(occurrence.parentId, [
+            ...(children.get(occurrence.parentId) ?? []),
+            occurrence,
+          ]);
+      }
+      indexed = { children, counts };
+      ownChildrenIndex.set(activeOccurrences, indexed);
+    }
+    const ownChildren = indexed.children.get(owner.id) ?? [];
+    const childCounts = new Map<string, number>();
+    for (const child of ownChildren) {
+      const definitionKey = key(child.definitionId);
+      childCounts.set(definitionKey, (childCounts.get(definitionKey) ?? 0) + 1);
+    }
+    // Definitions owned only through the owner's own children.
+    const ignored = new Set(
+      [...childCounts].flatMap(([definitionKey, count]) =>
+        indexed.counts.get(definitionKey) === count ? [definitionKey] : [],
+      ),
+    );
+    return evaluateRequires(
+      expression,
+      ignored.size === 0
+        ? context
+        : {
+            ...context,
+            namedOwned: context.owned.filter(
+              (entity) => !ignored.has(key(entity.id)),
+            ),
+          },
+    );
+  };
+  const droppedBy = (
+    drop: { readonly name?: string; readonly type?: string },
+    candidate: CharacterOccurrence,
+  ): boolean => {
+    const definition = index.get(candidate.definitionId);
+    return (
+      definition !== undefined &&
+      (drop.name === undefined ||
+        key(definition.name) === key(drop.name) ||
+        key(definition.id) === key(drop.name)) &&
+      (drop.type === undefined || key(definition.type) === key(drop.type))
+    );
+  };
   let converged = false;
   let iterations = 0;
 
@@ -760,8 +832,7 @@ function evaluateCharacterInternal(
     if (rule === undefined) return true;
     return (
       activeAt(rule, input.level) &&
-      (rule.requires === undefined ||
-        evaluateRequires(parseRequires(rule.requires), context))
+      ruleRequiresMet(rule.requires, parent, activeOccurrences, context)
     );
   };
   const reactivatableSaved = saved.filter(
@@ -783,6 +854,7 @@ function evaluateCharacterInternal(
     const context = expressionContextFor(occurrences);
     const additions: CharacterOccurrence[] = [];
     const dropped = new Set<string>();
+    const namedDrops: { readonly name?: string; readonly type?: string }[] = [];
     for (const occurrence of occurrences)
       if (!activeProviderRule(occurrence, occurrences, context))
         dropped.add(occurrence.id);
@@ -792,8 +864,7 @@ function evaluateCharacterInternal(
       for (const rule of parseRules(entity.id, entity.rules)) {
         if (
           !activeAt(rule, input.level) ||
-          (rule.requires !== undefined &&
-            !evaluateRequires(parseRequires(rule.requires), context))
+          !ruleRequiresMet(rule.requires, occurrence, occurrences, context)
         )
           continue;
         if (rule.kind === "grant") {
@@ -868,18 +939,9 @@ function evaluateCharacterInternal(
             }
             continue;
           }
-          for (const candidate of occurrences) {
-            const definition = index.get(candidate.definitionId);
-            if (
-              definition !== undefined &&
-              (rule.name === undefined ||
-                key(definition.name) === key(rule.name) ||
-                key(definition.id) === key(rule.name)) &&
-              (rule.type === undefined ||
-                key(definition.type) === key(rule.type))
-            )
-              dropped.add(candidate.id);
-          }
+          namedDrops.push(rule);
+          for (const candidate of occurrences)
+            if (droppedBy(rule, candidate)) dropped.add(candidate.id);
         } else if (rule.kind === "select" && rule.defaultId !== undefined) {
           const target = index.find(rule.defaultId, rule.type);
           if (target === undefined || !isSourceEntitled(target)) continue;
@@ -975,7 +1037,12 @@ function evaluateCharacterInternal(
         dropped.add(candidate.id);
     occurrences = [
       ...occurrences.filter((occurrence) => !dropped.has(occurrence.id)),
-      ...additions,
+      // A drop also suppresses a grant of what it drops; otherwise the
+      // grant re-adds it every other pass (Born of Shadow drops the Fey
+      // Origin its race grants).
+      ...additions.filter(
+        (addition) => !namedDrops.some((drop) => droppedBy(drop, addition)),
+      ),
     ];
     const after = occurrences.map((occurrence) => occurrence.id).join("\0");
     if (before === after) {
@@ -1058,8 +1125,12 @@ function evaluateCharacterInternal(
       if (
         rule.kind !== "grant" ||
         !activeAt(rule, input.level) ||
-        (rule.requires !== undefined &&
-          !evaluateRequires(parseRequires(rule.requires), expressionContext))
+        !ruleRequiresMet(
+          rule.requires,
+          provider,
+          occurrences,
+          expressionContext,
+        )
       )
         continue;
       const target = index.find(rule.name, rule.type);
@@ -1142,8 +1213,12 @@ function evaluateCharacterInternal(
         key(rule.field) !== "universalclassskill" ||
         key(rule.value ?? "") !== "true" ||
         !activeAt(rule, input.level) ||
-        (rule.requires !== undefined &&
-          !evaluateRequires(parseRequires(rule.requires), expressionContext))
+        !ruleRequiresMet(
+          rule.requires,
+          occurrence,
+          occurrences,
+          expressionContext,
+        )
       )
         continue;
       for (const candidate of index.type(rule.type ?? "Skill Training"))
@@ -1341,8 +1416,12 @@ function evaluateCharacterInternal(
     for (const rule of parseRules(entity.id, entity.rules)) {
       if (
         !activeAt(rule, input.level) ||
-        (rule.requires !== undefined &&
-          !evaluateRequires(parseRequires(rule.requires), expressionContext))
+        !ruleRequiresMet(
+          rule.requires,
+          occurrence,
+          occurrences,
+          expressionContext,
+        )
       )
         continue;
       switch (rule.kind) {

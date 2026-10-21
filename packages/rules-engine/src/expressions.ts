@@ -102,6 +102,12 @@ export function parseCategoryExpression(value: string): CategoryExpression {
 
 export interface ExpressionContext {
   readonly owned: readonly ContentEntity[];
+  /**
+   * What a named requirement ("X", "!X") sees, when narrower than `owned`.
+   * Native MeetsRequires ignores the checking element's own children, so a
+   * rule like `grant X requires="!X"` doesn't switch itself off.
+   */
+  readonly namedOwned?: readonly ContentEntity[];
   readonly level: number;
   readonly dynamicCategories?: Readonly<Record<string, ReadonlySet<string>>>;
   readonly categoryAliases?: ReadonlyMap<string, ReadonlySet<string>>;
@@ -196,7 +202,7 @@ export function evaluateRequires(
 ): boolean {
   switch (expression.kind) {
     case "owned":
-      return context.owned.some(
+      return (context.namedOwned ?? context.owned).some(
         (entity) =>
           same(entity.id, expression.token) ||
           same(entity.name, expression.token) ||
