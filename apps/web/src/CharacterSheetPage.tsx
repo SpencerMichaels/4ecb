@@ -26,7 +26,6 @@ import {
   type CharacterSheetModel,
   type SheetCard,
   type SheetCompanionCard,
-  type SheetLearnedReference,
   type SheetValue,
 } from "@4ecb/sheet-model";
 
@@ -50,7 +49,6 @@ import { PowerCard } from "./PowerCard";
 import { cardTextPresentation } from "./BuilderCards";
 import { preferredPrintCardTextSize } from "./print-card-fit";
 import { printWithFileName } from "./print-file-name";
-import { Prose } from "./Prose";
 import { SheetOverview } from "./SheetOverview";
 
 const characters = new CharacterRepository();
@@ -114,65 +112,6 @@ function chunks<Value>(values: readonly Value[], size: number): Value[][] {
   for (let index = 0; index < values.length; index += size)
     result.push(values.slice(index, index + size));
   return result;
-}
-
-const learnedReferenceLabels: Readonly<
-  Record<SheetLearnedReference["kind"], string>
-> = {
-  ritual: "Ritual",
-  "alchemical-formula": "Alchemical formula",
-  "martial-practice": "Martial practice",
-};
-
-function LearnedReference({
-  reference,
-}: {
-  readonly reference: SheetLearnedReference;
-}) {
-  return (
-    <article className="learned-reference-card">
-      <header>
-        <div>
-          <p className="eyebrow">{learnedReferenceLabels[reference.kind]}</p>
-          <h3>{reference.name}</h3>
-        </div>
-        {reference.quantity > 1 ? <span>×{reference.quantity}</span> : null}
-      </header>
-      {reference.flavor === undefined ? null : (
-        <div className="learned-reference-flavor">
-          <Prose value={reference.flavor} />
-        </div>
-      )}
-      {reference.prerequisites === undefined ? null : (
-        <dl className="sheet-card-rules">
-          <div>
-            <dt>Prerequisite</dt>
-            <dd>
-              <Prose value={reference.prerequisites} />
-            </dd>
-          </div>
-        </dl>
-      )}
-      {reference.fields.length === 0 ? null : (
-        <dl className="sheet-card-rules">
-          {reference.fields.map((field, index) => (
-            <div key={`${field.label}-${field.value}-${index}`}>
-              <dt>{field.label}</dt>
-              <dd>
-                <Prose value={field.value} />
-              </dd>
-            </div>
-          ))}
-        </dl>
-      )}
-      {reference.description === undefined ? null : (
-        <Prose value={reference.description} />
-      )}
-      {reference.source === undefined ? null : (
-        <footer>{reference.source}</footer>
-      )}
-    </article>
-  );
 }
 
 export function CharacterSheetPage({
@@ -701,11 +640,28 @@ export function CharacterSheetPage({
               <p className="eyebrow">Learned references</p>
               <h2>Rituals &amp; practices</h2>
             </header>
-            <div className="view-reference-grid">
+            <div className="view-card-grid">
               {model.learnedReferences.map((reference, index) => (
-                <LearnedReference
+                <ItemCard
                   key={`${reference.kind}-${reference.id ?? reference.name}-${index}`}
-                  reference={reference}
+                  card={reference.card}
+                  layout="panel"
+                  panel={{
+                    ...(reference.origin?.kind === "granted"
+                      ? {
+                          subheading: (
+                            <p className="candidate-relationship">
+                              {reference.origin.provider
+                                ? `Granted by ${reference.origin.provider}`
+                                : "Granted"}
+                            </p>
+                          ),
+                        }
+                      : {}),
+                    textPresentation: cardTextPresentation(
+                      abbreviateAbilityValues,
+                    ),
+                  }}
                 />
               ))}
             </div>

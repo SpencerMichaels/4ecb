@@ -255,9 +255,6 @@
   .view-feature-grid {
     grid-template-columns: minmax(0, 1fr);
   }
-  .view-reference-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .identity-block .sheet-values,
   .card-grid,
   .report-facts {

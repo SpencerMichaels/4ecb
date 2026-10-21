@@ -193,48 +193,6 @@
   padding: 0.8rem;
 }
 
-.view-reference-grid {
-  display: grid;
-  gap: 0.8rem;
-  grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
-  padding: 0.8rem;
-}
-
-.learned-reference-card {
-  border: 1px solid var(--border);
-  min-width: 0;
-  padding: 0.65rem;
-}
-
-.learned-reference-card > header {
-  align-items: start;
-  border-bottom: 2px solid var(--brand-navy);
-  display: flex;
-  justify-content: space-between;
-  margin: -0.65rem -0.65rem 0.55rem;
-  padding: 0.55rem 0.65rem;
-}
-
-.learned-reference-card > header h3,
-.learned-reference-card > header p,
-.learned-reference-card .prose-blocks {
-  margin: 0;
-}
-
-.learned-reference-flavor {
-  color: var(--muted);
-  font-style: italic;
-  margin-bottom: 0.5rem;
-}
-
-.learned-reference-card footer {
-  border-top: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 0.72rem;
-  margin-top: 0.55rem;
-  padding-top: 0.35rem;
-}
-
 .view-equipment-list {
   display: grid;
   gap: 0;

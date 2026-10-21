@@ -19,6 +19,7 @@ import {
   aggregateInventory,
   applyFieldOverlays,
   halfLevel,
+  knownRecords,
   type EvaluatedCharacter,
   type EvaluatedPower,
 } from "@4ecb/rules-engine";
@@ -164,12 +165,29 @@ export interface SheetAdditionalEffect {
 export type SheetLearnedReferenceKind =
   "ritual" | "alchemical-formula" | "martial-practice";
 
-/** A learned rules reference, distinct from quantity-bearing physical gear. */
+/** Known-record groups in their sheet and builder order. */
+export const LEARNED_REFERENCE_KINDS: readonly SheetLearnedReferenceKind[] = [
+  "ritual",
+  "alchemical-formula",
+  "martial-practice",
+];
+
+/** Why an evaluated sheet knows a record. Legacy caches can't tell. */
+export interface SheetLearnedReferenceOrigin {
+  readonly kind: "learned" | "granted";
+  /** The granting element ("Druid") for a granted record. */
+  readonly provider?: string;
+}
+
+/** A known rules reference, distinct from quantity-bearing physical gear. */
 export interface SheetLearnedReference {
   readonly id?: string;
   readonly kind: SheetLearnedReferenceKind;
   readonly name: string;
-  readonly quantity: number;
+  /** Learned or granted (evaluated sheets only). */
+  readonly origin?: SheetLearnedReferenceOrigin;
+  /** The one card format (D079) for on-screen surfaces. */
+  readonly card: SheetCard;
   readonly fields: readonly SheetValue[];
   readonly flavor?: string;
   readonly prerequisites?: string;
@@ -533,14 +551,19 @@ function learnedReferenceKind(
 function learnedReference(
   kind: SheetLearnedReferenceKind,
   name: string,
-  quantity: number,
   entity: ContentEntity | undefined,
+  origin?: SheetLearnedReferenceOrigin,
 ): SheetLearnedReference {
   return {
     ...(entity === undefined ? {} : { id: entity.id }),
     kind,
     name,
-    quantity,
+    ...(origin === undefined ? {} : { origin }),
+    card: sheetItemCard({
+      name,
+      entities: entity === undefined ? [] : [entity],
+      itemType: entity?.type ?? "Ritual",
+    }),
     fields: entityFields(entity),
     ...entityPresentation(entity),
   };
@@ -1363,7 +1386,7 @@ export function buildSheetModel(
     ({ loot, entity, referenceKind }) =>
       referenceKind === undefined
         ? []
-        : [learnedReference(referenceKind, loot.name, loot.count, entity)],
+        : [learnedReference(referenceKind, loot.name, entity)],
   );
   const detail = detailsWithLegacyTextStrings(
     snapshot.details,
@@ -1724,12 +1747,27 @@ export function buildEvaluatedSheetModel(
       ];
     },
   );
-  const learnedReferences = inventoryPresentations.flatMap(
-    ({ entry, entity, name, referenceKind }) =>
-      referenceKind === undefined
-        ? []
-        : [learnedReference(referenceKind, name, entry.quantity, entity)],
-  );
+  // Known records: the build's learned entries plus what the evaluation
+  // grants (`grant type="Ritual"`, `FREEBEE:`), once each, with their source.
+  const learnedReferences = knownRecords(build, evaluation, (id) =>
+    entities.get(id.toLocaleLowerCase()),
+  )
+    .map((record) =>
+      learnedReference(
+        learnedReferenceKind(record.entity, [record.element.type]) ?? "ritual",
+        record.entity?.name ?? record.element.name,
+        record.entity,
+        record.source.kind === "granted"
+          ? { kind: "granted", provider: record.source.provider }
+          : { kind: "learned" },
+      ),
+    )
+    .sort(
+      (left, right) =>
+        LEARNED_REFERENCE_KINDS.indexOf(left.kind) -
+          LEARNED_REFERENCE_KINDS.indexOf(right.kind) ||
+        left.name.localeCompare(right.name),
+    );
 
   const irrelevantFeatureClauses = irrelevantFeatureClauseNames(
     evaluation,

@@ -2265,6 +2265,9 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
       group: "Rituals & practices",
       source: learned.source ?? "",
       parts: [
+        ...(learned.origin?.kind === "granted"
+          ? referenceParts(learned.origin.provider || "—", "Granted by")
+          : []),
         ...referenceParts(learned.description ?? ""),
         ...learned.fields.flatMap((field) =>
           referenceParts(field.value, field.label),

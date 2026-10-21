@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import type {
-  CharacterBuild,
-  LegacyCharacterSnapshot,
+import {
+  separateKnownHoldings,
+  type CharacterBuild,
+  type LegacyCharacterSnapshot,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import type { EvaluatedCharacter } from "@4ecb/rules-engine";
@@ -1436,7 +1437,6 @@ describe("sheet model", () => {
         id: ritual.id,
         kind: "ritual",
         name: ritual.name,
-        quantity: 1,
         flavor: `${ritual.name} flavor.`,
         prerequisites: "Trained in Arcana",
         description: `${ritual.name} rules text.`,
@@ -1481,11 +1481,11 @@ describe("sheet model", () => {
     ];
     const build: CharacterBuild = {
       formatVersion: 2,
-      known: [],
       effectiveLevel: 1,
       levels: [],
       grabbag: [],
-      inventory,
+      // Rituals, formulas and practices are known records, not inventory.
+      ...separateKnownHoldings(inventory),
       alternates: [],
       baseAbilities: {},
       textStrings: {},
@@ -1514,12 +1514,73 @@ describe("sheet model", () => {
       content,
     );
     expect(
-      evaluated.learnedReferences.map(({ name, kind }) => ({ name, kind })),
+      evaluated.learnedReferences.map(({ name, kind, origin }) => ({
+        name,
+        kind,
+        origin,
+      })),
     ).toEqual([
-      { name: ritual.name, kind: "ritual" },
-      { name: formula.name, kind: "alchemical-formula" },
-      { name: practice.name, kind: "martial-practice" },
+      { name: ritual.name, kind: "ritual", origin: { kind: "learned" } },
+      {
+        name: formula.name,
+        kind: "alchemical-formula",
+        origin: { kind: "learned" },
+      },
+      {
+        name: practice.name,
+        kind: "martial-practice",
+        origin: { kind: "learned" },
+      },
     ]);
+    // The on-screen sheet renders each with the one card format (D079).
+    expect(evaluated.learnedReferences[0]?.card).toMatchObject({
+      kind: "item",
+      name: ritual.name,
+      itemType: "Ritual",
+    });
+    // A record the evaluation grants joins the list once, with its provider,
+    // even when an imported copy of it is also stored.
+    const provider = {
+      ...ritual,
+      id: "PROVIDER",
+      name: "Synthetic Feature",
+      type: "Class Feature",
+    };
+    const granted = buildEvaluatedSheetModel(
+      legacySnapshot,
+      build,
+      {
+        ...evaluation,
+        occurrences: [
+          {
+            id: "provider",
+            definitionId: provider.id,
+            acquiredLevel: 1,
+            kind: "choice",
+          },
+          {
+            id: "grant-1",
+            definitionId: ritual.id,
+            acquiredLevel: 1,
+            kind: "grant",
+            parentId: "provider",
+          },
+          {
+            id: "grant-2",
+            definitionId: ritual.id,
+            acquiredLevel: 1,
+            kind: "grant",
+            parentId: "provider",
+          },
+        ],
+      },
+      [...content, provider],
+    );
+    expect(
+      granted.learnedReferences
+        .filter(({ name }) => name === ritual.name)
+        .map(({ origin }) => origin),
+    ).toEqual([{ kind: "granted", provider: "Synthetic Feature" }]);
     expect(evaluated.equipment.map(({ label }) => label)).toEqual([
       scroll.name,
       "Unresolved custom keepsake",
