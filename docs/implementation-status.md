@@ -1,5 +1,33 @@
 # Implementation status
 
+## Shared words and carried prefixes in prerequisites (2026-10-21)
+
+Commit `31375bc`. Legacy splits at every " or " and reads each side alone,
+carrying only the prefix's record type. The parser now does four more things:
+
+- It carries a prefix's type to later comma parts and alternatives, so
+  "trained in Bluff or Stealth" means Stealth training (65 uses).
+- It distributes shared words across alternatives that don't resolve alone:
+  "Any martial or divine class", and "proficiency with light or heavy
+  shields".
+- It drops ignored alternatives. "Nth-level or higher utility power" (8
+  records) had been always met.
+- It reads "<name> class" as a class requirement only when a class of that
+  name exists, which fixes 14 silent always-fails (e.g. "divine class",
+  "!Hunter class").
+
+A dump of all 11,321 records' parsed prerequisites changed 75, all reviewed.
+`scripts/audit-prerequisites.ts` gained four failing checks (and
+`--parser=PATH`); they flag the previous parser and pass the new one.
+Evaluation cache v23. 1087 workspace tests pass.
+
+Still read the legacy way (see 08):
+
+- elliptical tails whose fragments resolve alone ("any axe, hammer, or mace
+  that has the versatile property" accepts any hammer);
+- "Rogue from Cormyr, the Dalelands, …";
+- "21st-level wizard/bard" on records without `print-prereqs`.
+
 ## Prerequisites never split inside a name (2026-10-21)
 
 Commit `736503e`. Legacy splits prerequisite blocks at every comma and
