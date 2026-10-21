@@ -15,7 +15,8 @@
  * alternative only (a trailing relative clause, a first alternative's
  * "any", a "<head> from" heading the list), unverified clauses joining two
  * requirements that each resolve ("21st-level wizard", "<A> with the <B>"),
- * and a bare "and" inside an alternative split off as an alternative. The
+ * a bare "and" inside an alternative split off as an alternative, and a
+ * "deity of the <name> domain" clause that no deity in the pack meets. The
  * pack and the output stay private.
  *
  *   tsx scripts/audit-prerequisites.ts [PACK.4ecp] [--limit=N] [--json=PATH]
@@ -29,6 +30,7 @@ import { promisify } from "node:util";
 import { decodeContentPack } from "@4ecb/content-pack";
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
+  evaluatePrerequisiteIr,
   internalizePrerequisite as currentParser,
   type PrerequisiteContext,
   type PrerequisiteIr,
@@ -397,6 +399,38 @@ function unjoinedClauses(
     : [];
 }
 
+/**
+ * "must worship a deity of the <name> domain" clauses no deity in the pack
+ * meets (a deity lists its domains as Domain IDs).
+ */
+function unmetDomains(
+  ir: PrerequisiteIr,
+  deities: readonly ContentEntity[],
+  definitions: readonly ContentEntity[],
+  memo: Map<string, boolean>,
+): string[] {
+  if (ir.kind === "all" || ir.kind === "any")
+    return ir.children.flatMap((child) =>
+      unmetDomains(child, deities, definitions, memo),
+    );
+  if (ir.kind !== "worship-domain") return [];
+  const value = lower(ir.value);
+  let met = memo.get(value);
+  if (met === undefined) {
+    met = deities.some(
+      (deity) =>
+        evaluatePrerequisiteIr(ir, {
+          owned: [deity],
+          level: 1,
+          abilities: {},
+          definitions,
+        }) === "satisfied",
+    );
+    memo.set(value, met);
+  }
+  return met ? [] : [ir.text];
+}
+
 /** `or` alternatives split at a bare " and " that joins inside one of them. */
 function splitConjunctions(ir: PrerequisiteIr): string[] {
   if (ir.kind !== "all" && ir.kind !== "any") return [];
@@ -495,6 +529,11 @@ async function main(): Promise<void> {
   const heads = new Map<string, Finding>();
   const unjoined = new Map<string, Finding>();
   const conjunctions = new Map<string, Finding>();
+  const domains = new Map<string, Finding>();
+  const deities = definitions.filter(
+    (definition) => lower(definition.type) === "deity",
+  );
+  const domainMemo = new Map<string, boolean>();
   const cutNames = new Map<string, Finding>();
   const cutPhrases = new Map<string, Finding>();
   const suspectPairs = new Map<string, Finding>();
@@ -533,6 +572,8 @@ async function main(): Promise<void> {
       record(unjoined, lower(clause), `${subject.id} "${subject.name}"`);
     for (const clause of splitConjunctions(ir))
       record(conjunctions, lower(clause), `${subject.id} "${subject.name}"`);
+    for (const clause of unmetDomains(ir, deities, definitions, domainMemo))
+      record(domains, lower(clause), `${subject.id} "${subject.name}"`);
     records += 1;
     const label = `${subject.id} ${subject.type} "${subject.name}"`;
     const source = lower(subject.prerequisites);
@@ -632,6 +673,11 @@ async function main(): Promise<void> {
     conjunctions,
     limit,
   );
+  const domainFindings = report(
+    "deity-domain clause no deity meets (should be 0)",
+    domains,
+    limit,
+  );
   const pairs = report(
     "adjacent unverified split fragments (review)",
     suspectPairs,
@@ -655,6 +701,7 @@ async function main(): Promise<void> {
           undistributedHeads: headFindings,
           unjoinedClauses: unjoinedFindings,
           splitConjunctions: conjunctionFindings,
+          unmetDomains: domainFindings,
           unverifiedPairs: pairs,
         },
         null,
@@ -673,6 +720,7 @@ async function main(): Promise<void> {
       headFindings,
       unjoinedFindings,
       conjunctionFindings,
+      domainFindings,
     ].some((finding) => finding.uses > 0)
   )
     process.exitCode = 1;

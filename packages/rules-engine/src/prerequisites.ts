@@ -1631,6 +1631,100 @@ function ownsDefinition(
   return false;
 }
 
+const domainIdCache = new WeakMap<
+  readonly ContentEntity[],
+  Map<string, ReadonlySet<string>>
+>();
+
+/** Normalized IDs of the Domain definitions with this normalized name. */
+function domainIdsNamed(
+  context: PrerequisiteContext,
+  name: string,
+): ReadonlySet<string> {
+  const definitions = context.definitions;
+  if (definitions === undefined) return new Set();
+  let byName = domainIdCache.get(definitions);
+  if (byName === undefined) {
+    byName = new Map();
+    for (const definition of definitions) {
+      if (normalized(definition.type) !== "domain") continue;
+      const key = normalized(definition.name);
+      byName.set(
+        key,
+        new Set([...(byName.get(key) ?? []), normalized(definition.id)]),
+      );
+    }
+    domainIdCache.set(definitions, byName);
+  }
+  return byName.get(name) ?? new Set();
+}
+
+/** The owned-definition tokens prerequisite clauses are matched against. */
+export function ownedPrerequisiteTokens(
+  owned: readonly ContentEntity[],
+): ReadonlySet<string> {
+  return new Set(
+    owned.flatMap((entity) =>
+      [
+        entity.id,
+        entity.name,
+        `${entity.name} ${entity.type}`,
+        `${entity.type} ${entity.name}`,
+      ].map((value) => value.trim().toLocaleLowerCase().replaceAll("_", " ")),
+    ),
+  );
+}
+
+/**
+ * The definitions a choice's own pick sets aside while that choice's
+ * candidates and pick are checked: the pick and what it grants directly,
+ * except CountsAsClass grants. Legacy `D20Choice::UpdateArrays` clears their
+ * ownership (`Preserve`) for the check, so a pick never fails a prerequisite
+ * on what it brings ("!Dwarf CountsAsRace" on the trait granting it). Stats
+ * keep the pick's contributions, as in legacy.
+ */
+export function choiceSelectionSetAside(
+  selected: { readonly id: string; readonly definitionId: string } | undefined,
+  occurrences: readonly {
+    readonly parentId?: string | undefined;
+    readonly definitionId: string;
+  }[],
+  definitionOf: (definitionId: string) => ContentEntity | undefined,
+): readonly string[] {
+  if (selected === undefined) return [];
+  return [
+    selected.definitionId,
+    ...occurrences
+      .filter(
+        (occurrence) =>
+          occurrence.parentId === selected.id &&
+          normalized(definitionOf(occurrence.definitionId)?.type ?? "") !==
+            "countsasclass",
+      )
+      .map((occurrence) => occurrence.definitionId),
+  ];
+}
+
+/** The context without some owned definitions (by ID). */
+export function withoutOwnedDefinitions(
+  context: PrerequisiteContext,
+  definitionIds: readonly string[],
+): PrerequisiteContext {
+  if (definitionIds.length === 0) return context;
+  const excluded = new Set(definitionIds.map(normalized));
+  const owned = context.owned.filter(
+    (entity) => !excluded.has(normalized(entity.id)),
+  );
+  if (owned.length === context.owned.length) return context;
+  return {
+    ...context,
+    owned,
+    ...(context.ownedTokens === undefined
+      ? {}
+      : { ownedTokens: ownedPrerequisiteTokens(owned) }),
+  };
+}
+
 function aggregate(
   kind: "all" | "any",
   statuses: readonly PrerequisiteStatus[],
@@ -1711,17 +1805,25 @@ export function evaluatePrerequisiteIr(
       )
         ? "satisfied"
         : "failed";
-    case "worship-domain":
-      return context.owned.some(
-        (entity) =>
-          normalized(entity.type) === "deity" &&
+    case "worship-domain": {
+      // Legacy reads "<name> domain" as the Domain record, which the deity
+      // grants; a deity's `Domains` field lists Domain IDs.
+      const wanted = normalized(ir.value);
+      const domainIds = domainIdsNamed(context, wanted);
+      return context.owned.some((entity) => {
+        const type = normalized(entity.type);
+        if (type === "domain") return normalized(entity.name) === wanted;
+        return (
+          type === "deity" &&
           [
             ...entity.categories.map(normalized),
             ...fieldValues(entity, ["Domain", "Domains"]),
-          ].includes(normalized(ir.value)),
-      )
+          ].some((value) => value === wanted || domainIds.has(value))
+        );
+      })
         ? "satisfied"
         : "failed";
+    }
     case "proficiency": {
       const requested = normalized(ir.value)
         .replace(/^(?:a|an|the|any|all)\s+/i, "")

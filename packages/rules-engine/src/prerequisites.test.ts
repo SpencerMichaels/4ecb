@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import type { ContentEntity } from "@4ecb/content-domain";
 
-import { evaluatePrerequisite, internalizePrerequisite } from "./prerequisites";
+import {
+  choiceSelectionSetAside,
+  evaluatePrerequisite,
+  internalizePrerequisite,
+  withoutOwnedDefinitions,
+} from "./prerequisites";
 
 const owned = [
   { id: "CLASS", name: "Avenger", type: "Class" },
@@ -269,6 +274,84 @@ describe("legacy prerequisites", () => {
         .status,
     ).toBe("satisfied");
     expect(evaluatePrerequisite("Unselectable", context).status).toBe("failed");
+  });
+
+  it("reads a deity's domains as the Domain IDs it lists or grants", () => {
+    const skill = { id: "DOMAIN_SKILL", name: "Skill", type: "Domain" };
+    const war = { id: "DOMAIN_WAR", name: "War", type: "Domain" };
+    const deity = {
+      id: "DEITY_SKILLED",
+      name: "Skilled God",
+      type: "Deity",
+      categories: [],
+      specifics: [
+        {
+          name: "Domains",
+          value: " DOMAIN_SKILL, DOMAIN_WAR ",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+    const domainless = { ...deity, id: "DEITY_NONE", specifics: [] };
+    const domainDefinitions = [
+      ...definitions,
+      skill,
+      war,
+      deity,
+      domainless,
+    ] as unknown as ContentEntity[];
+    const clause = "must worship a deity of the skill domain";
+    const statusWith = (worshipped: readonly object[]) =>
+      evaluatePrerequisite(clause, {
+        ...context,
+        definitions: domainDefinitions,
+        owned: worshipped as ContentEntity[],
+      }).status;
+
+    expect(statusWith([deity])).toBe("satisfied");
+    expect(statusWith([domainless, skill])).toBe("satisfied");
+    expect(statusWith([domainless])).toBe("failed");
+    expect(statusWith([domainless, war])).toBe("failed");
+  });
+
+  it("sets a choice's pick and its direct grants aside, except CountsAsClass", () => {
+    const types: Record<string, string> = {
+      PICK: "Racial Trait",
+      RACE: "CountsAsRace",
+      CLASS: "CountsAsClass",
+      DEEP: "Feat",
+    };
+    const setAside = choiceSelectionSetAside(
+      { id: "pick", definitionId: "PICK" },
+      [
+        { definitionId: "PICK" },
+        { parentId: "pick", definitionId: "RACE" },
+        { parentId: "pick", definitionId: "CLASS" },
+        { parentId: "race-occurrence", definitionId: "DEEP" },
+      ],
+      (id) => ({ type: types[id] }) as ContentEntity,
+    );
+    expect(setAside).toEqual(["PICK", "RACE"]);
+    expect(choiceSelectionSetAside(undefined, [], () => undefined)).toEqual([]);
+
+    const dwarfOwned = [
+      { id: "COUNTS_DWARF", name: "Dwarf", type: "CountsAsRace" },
+    ] as unknown as ContentEntity[];
+    const dwarfContext = {
+      ...context,
+      owned: dwarfOwned,
+      definitions: [...definitions, ...dwarfOwned],
+    };
+    expect(
+      evaluatePrerequisite("!Dwarf CountsAsRace", dwarfContext).status,
+    ).toBe("failed");
+    expect(
+      evaluatePrerequisite(
+        "!Dwarf CountsAsRace",
+        withoutOwnedDefinitions(dwarfContext, ["COUNTS_DWARF"]),
+      ).status,
+    ).toBe("satisfied");
   });
 
   it("resolves implement-use prose to exact proficiency definitions", () => {
