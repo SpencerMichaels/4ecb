@@ -68,6 +68,8 @@ application's architecture.
 21. [Known rituals proposal](known-rituals-proposal.md) moves rituals,
     formulas and practices out of inventory into a known list with a Rituals
     tab, including granted and free rituals.
+22. [Companion card proposal](companion-card-proposal.md) specifies beast
+    companion statistics and their printed and builder card (familiar step 2).
 
 ## Definition hierarchy
 

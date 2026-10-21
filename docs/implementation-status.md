@@ -1,5 +1,13 @@
 # Implementation status
 
+## Deferred: associates and summoned creatures (2026-10-21)
+
+Possible future improvement, owner-acknowledged: associates (54 records),
+hexblade summons (e.g. Lesser Planar Ally), Animal Master minions, the Veiled
+Horde Shadow and their community card sets have no sheet presentation beyond
+community power cards. Their stats exist only as prose, so they need their own
+data model; see `docs/companion-card-proposal.md`, "Scope".
+
 ## Prerequisite qualifiers scope over the whole list (2026-10-21)
 
 Commit `1149276` (D091: correct meaning over legacy's mis-parse; each
