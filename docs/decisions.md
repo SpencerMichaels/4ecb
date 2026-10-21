@@ -2485,6 +2485,26 @@ the DM can grant the membership in play. A membership with no representing
 option (the Circle of Smoke and Whispers) is always unverified. Implemented as
 prerequisite corrections under D089.
 
+### D091 — Legacy import first; export to the old builder is best-effort
+
+Status: accepted (2026-10-21).
+
+Priority goes to importing legacy characters into this app correctly. Export
+back to the original builder is best-effort: we don't maintain backwards
+compatibility with it. Where a better feature in this app conflicts with the
+old builder's behavior, the new builder wins.
+
+Consequences:
+
+- Content corrections, new records (for example the `ID_4ECB_*` aliases) and
+  fields only this app reads are allowed, even though an exported `.dnd4e`
+  may then carry elements the old builder doesn't know.
+- No legacy-safe corrections bundle is maintained, and export is not filtered
+  for the old builder, unless a concrete need comes up.
+- The legacy engine remains the behavioral oracle for interpreting legacy
+  characters and content (AGENTS.md). This decision is about which way
+  compatibility must hold, not about how rules are recovered.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed

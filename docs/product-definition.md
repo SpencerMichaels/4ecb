@@ -48,7 +48,9 @@ back up portable user-owned files without maintaining user accounts.
 1. **Local-first, account-free.** Character ownership must not depend on an
    operator account or central database. Network features are optional.
 2. **Compatibility at the boundaries.** Legacy formats are import/export
-   adapters, not the internal domain model.
+   adapters, not the internal domain model. Import fidelity comes first; export
+   to the original builder is best-effort, and new-builder features win
+   conflicts (D091).
 3. **Deterministic and explainable rules.** Calculated values must be reproducible
    and expose modifier provenance.
 4. **Versioned content, rules, and schemas.** Existing characters do not silently
