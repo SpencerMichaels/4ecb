@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Ports of legacy native special cases (pnpm audit:legacy-special-cases) that
+  the data can express (D089). Merged after the CBLoader parts by
+  scripts/build-private-content.sh. Structure only; no official text.
+-->
+<D20Rules game-system="D&amp;D4E">
+  <!-- Prerequisite SpecialCase: a bare "Shifter" prerequisite means a
+       Razorclaw or Longtooth shifter. A same-named CountsAsRace granted by
+       both races lets the ordinary name lookup resolve it. -->
+  <RulesElement name="Shifter" type="CountsAsRace" source="4ecb corrections" internal-id="ID_4ECB_COUNTSASRACE_SHIFTER" />
+  <AppendNodes internal-id="ID_FMP_RACE_27">
+    <rules>
+      <grant name="ID_4ECB_COUNTSASRACE_SHIFTER" type="CountsAsRace" />
+    </rules>
+  </AppendNodes>
+  <AppendNodes internal-id="ID_FMP_RACE_30">
+    <rules>
+      <grant name="ID_4ECB_COUNTSASRACE_SHIFTER" type="CountsAsRace" />
+    </rules>
+  </AppendNodes>
+</D20Rules>

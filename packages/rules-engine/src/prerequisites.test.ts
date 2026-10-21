@@ -108,6 +108,36 @@ describe("legacy prerequisites", () => {
     );
   });
 
+  it("resolves a bare race-family name through a granted CountsAsRace", () => {
+    // Legacy SpecialCase maps "Shifter" to either shifter race; the
+    // corrections pack expresses that as a CountsAsRace both races grant.
+    const shifter = {
+      id: "COUNTS_SHIFTER",
+      name: "Shifter",
+      type: "CountsAsRace",
+    } as ContentEntity;
+    const razorclaw = {
+      id: "RAZORCLAW",
+      name: "Razorclaw Shifter",
+      type: "Race",
+    } as ContentEntity;
+    const shifterDefinitions = [...definitions, shifter, razorclaw];
+    const shifterContext = {
+      ...context,
+      owned: [razorclaw, shifter],
+      definitions: shifterDefinitions,
+    };
+    expect(evaluatePrerequisite("Shifter, Wis 13", shifterContext).status).toBe(
+      "satisfied",
+    );
+    expect(
+      evaluatePrerequisite("Shifter", {
+        ...context,
+        definitions: shifterDefinitions,
+      }).status,
+    ).toBe("failed");
+  });
+
   it("evaluates ability, level, training, source, identity, and boolean clauses", () => {
     expect(
       evaluatePrerequisite("Str 13, Wis 13; Multiclass; !Wizard", context)
