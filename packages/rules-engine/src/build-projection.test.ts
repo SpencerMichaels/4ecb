@@ -413,6 +413,135 @@ describe("build projection", () => {
     expect(completed.stats.AC?.value).toBe(1);
   });
 
+  it("fills a power-swap replacement whose provider is a generated grant", () => {
+    // Essentials class features grant their own power swaps (Level 03
+    // Controller Encounter Power); the swap must be fillable before the
+    // granted feature is ever saved.
+    const power = (id: string, usage: string, level: string) => ({
+      ...entity(id, id, "Power"),
+      categories: ["Synthetic", usage],
+      specifics: [
+        { name: "Level", value: level, extraAttributes: [], ordinal: 0 },
+      ],
+    });
+    const content = [
+      entity("LEVEL_1", "1", "Level", [
+        statement(
+          "select",
+          { type: "Power", number: "2", Category: "Synthetic" },
+          0,
+        ),
+      ]),
+      entity("LEVEL_2", "2", "Level"),
+      entity("LEVEL_3", "3", "Level", [
+        statement("grant", { name: "SWAP", type: "Class Feature" }, 0),
+      ]),
+      entity("SWAP", "Level 3 swap", "Class Feature", [
+        statement(
+          "replace",
+          { name: "Power Encounter 3", powerswap: "Synthetic,encounter,3" },
+          0,
+        ),
+      ]),
+      power("OLD_ENCOUNTER", "encounter", "1"),
+      power("OLD_DAILY", "daily", "1"),
+      power("NEW_ENCOUNTER", "encounter", "3"),
+    ];
+    const root = (id: string, definitionId: string, level: number) => ({
+      id,
+      identity: { definitionId, name: String(level), type: "Level" },
+      acquiredLevel: level,
+      legality: "rules-legal" as const,
+      unresolved: false,
+      children: [],
+    });
+    const chosen = (id: string, definitionId: string) => ({
+      id,
+      identity: { definitionId, name: definitionId, type: "Power" },
+      acquiredLevel: 1,
+      legality: "rules-legal" as const,
+      unresolved: false,
+      children: [],
+    });
+    const build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 3,
+      levels: [
+        {
+          level: 1,
+          root: {
+            ...root("level-1", "LEVEL_1", 1),
+            children: [
+              chosen("old-encounter", "OLD_ENCOUNTER"),
+              chosen("old-daily", "OLD_DAILY"),
+            ],
+          },
+        },
+        { level: 2, root: root("level-2", "LEVEL_2", 2) },
+        { level: 3, root: root("level-3", "LEVEL_3", 3) },
+      ],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    const initial = evaluateCharacter(
+      projectBuildForEvaluation(build, content),
+      content,
+    );
+    const swap = initial.choices.find(({ type }) => type === "Replacement")!;
+    expect(swap.providerOccurrenceId).toBe("level-3:grant:0");
+    // Only a power within the swap's category can be lost.
+    expect(
+      swap.replacementOptions?.map(
+        ({ replacesOccurrenceId }) => replacesOccurrenceId,
+      ),
+    ).toEqual(["old-encounter"]);
+    const command = commandForEvaluatedChoice(
+      build,
+      swap,
+      initial.occurrences,
+      content,
+      {
+        id: "new-encounter",
+        identity: {
+          definitionId: "NEW_ENCOUNTER",
+          name: "NEW_ENCOUNTER",
+          type: "Power",
+        },
+        acquiredLevel: 3,
+        legality: "rules-legal",
+        children: [],
+        unresolved: false,
+        replacesId: "old-encounter",
+      },
+      (index) => `placeholder:${index}`,
+    );
+    expect(command).toMatchObject({
+      kind: "choose",
+      parentId: "level-3",
+      index: 0,
+      occurrence: {
+        id: "level-3:grant:0",
+        children: [{ id: "new-encounter", replacesId: "old-encounter" }],
+      },
+    });
+    const completed = evaluateCharacter(
+      projectBuildForEvaluation(
+        applyCharacterCommand(build, command!),
+        content,
+      ),
+      content,
+    );
+    expect(
+      completed.choices.find(({ type }) => type === "Replacement"),
+    ).toMatchObject({ selectedOccurrenceId: "new-encounter" });
+    expect(completed.activeDefinitionIds).toContain("NEW_ENCOUNTER");
+    expect(completed.activeDefinitionIds).not.toContain("OLD_ENCOUNTER");
+    expect(completed.complete).toBe(true);
+  });
+
   it("materializes an arbitrarily nested generated grant chain", () => {
     const content = [
       entity("LEVEL", "1", "Level", [

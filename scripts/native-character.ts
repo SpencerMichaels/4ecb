@@ -9,13 +9,17 @@ import { resolve } from "node:path";
 import { gunzip } from "node:zlib";
 import { promisify } from "node:util";
 
-import type { BuildOccurrence, CharacterBuild } from "@4ecb/character-domain";
+import type {
+  BuildOccurrence,
+  CharacterBuild,
+  CharacterCommand,
+} from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import { decodeContentPack, type ContentPack } from "@4ecb/content-pack";
 import {
+  commandForEvaluatedChoice,
   evaluateCharacter,
   evaluatePrerequisite,
-  findBuildChildIndex,
   projectBuildForEvaluation,
   type EvaluatedCharacter,
   type EvaluatedChoice,
@@ -244,25 +248,33 @@ export function candidateFor(
     )[0]?.candidate;
 }
 
+/**
+ * A command that fills a replacement choice, and the definition it gains.
+ * The provider may be a generated grant (an Essentials class feature); the
+ * command then materializes it beneath its nearest saved ancestor.
+ */
 export function replacementCommand(
   build: CharacterBuild,
   choice: EvaluatedChoice,
+  entities: readonly ContentEntity[],
   entitiesById: ReadonlyMap<string, ContentEntity>,
   evaluation: EvaluatedCharacter,
   preference: CandidatePreference,
   serial: number,
-) {
-  const provider = findOccurrence(build, choice.providerOccurrenceId);
+): { command: CharacterCommand; definitionId: string } | undefined {
+  const provider = evaluation.occurrences.find(
+    (occurrence) => occurrence.id === choice.providerOccurrenceId,
+  );
   if (provider === undefined) return undefined;
-  const providerEntity =
-    provider.identity.definitionId === undefined
-      ? undefined
-      : entitiesById.get(key(provider.identity.definitionId));
   const prerequisiteContext = prerequisiteContextFor(evaluation, entitiesById);
   const option = (choice.replacementOptions ?? [])
     .flatMap((value) =>
       value.candidates
-        .filter((candidate) => candidate.eligible)
+        .filter(
+          (candidate) =>
+            candidate.eligible &&
+            !(preference.excluded?.has(key(candidate.definitionId)) ?? false),
+        )
         .map((candidate) => entitiesById.get(key(candidate.definitionId)))
         .filter(
           (candidate): candidate is ContentEntity => candidate !== undefined,
@@ -286,22 +298,21 @@ export function replacementCommand(
         left.candidate.id.localeCompare(right.candidate.id),
     )[0];
   if (option?.candidate === undefined) return undefined;
-  return {
-    kind: "retrain" as const,
-    parentId: provider.id,
-    index: findBuildChildIndex(
-      provider,
-      providerEntity,
-      choice.ruleOrdinal,
-      choice.index,
-    ),
+  const replacement = {
+    ...occurrenceFor(option.candidate, provider.acquiredLevel, serial),
     replacesId: option.value.replacesOccurrenceId,
-    replacement: occurrenceFor(
-      option.candidate,
-      provider.acquiredLevel,
-      serial,
-    ),
   };
+  const command = commandForEvaluatedChoice(
+    build,
+    choice,
+    evaluation.occurrences,
+    entities,
+    replacement,
+    (index) => `${replacement.id}:placeholder:${index}`,
+  );
+  return command === undefined
+    ? undefined
+    : { command, definitionId: option.candidate.id };
 }
 
 export function evaluate(

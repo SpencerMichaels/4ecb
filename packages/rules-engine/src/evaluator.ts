@@ -41,7 +41,7 @@ import { evaluatePowers, type EvaluatedPower } from "./powers";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v26-2026-10-21-choice-set-aside";
+  "evaluated-character-v27-2026-10-21-power-swap-targets";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -1614,6 +1614,19 @@ function evaluateCharacterInternal(
                   : { ...originalSelect, category: rule.powerSwap };
               const gainProvider =
                 rule.powerSwap === undefined ? originalProvider : occurrence;
+              // Native CheckReplaceElem: a power swap can only lose a power
+              // that matches its own category (class, usage, level or
+              // lower), so a level-13 encounter swap never offers a daily.
+              const lost = index.get(candidate.definitionId);
+              if (
+                rule.powerSwap !== undefined &&
+                candidate.id !== selected?.replacesId &&
+                lost !== undefined &&
+                candidateFor(gainSelect, gainProvider, lost).reasons.includes(
+                  "category",
+                )
+              )
+                return [];
               return [
                 {
                   replacesOccurrenceId: candidate.id,

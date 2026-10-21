@@ -9,7 +9,6 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import {
   canMaterializeEvaluatedChoiceProvider,
   commandForEvaluatedChoice,
-  findBuildChildIndex,
   type CandidateDecision,
   type EvaluatedCharacter,
   type EvaluatedChoice,
@@ -361,8 +360,6 @@ function ReplacementEditor({
   evaluation,
   build,
   entities,
-  buildProvider,
-  providerEntity,
   byId,
   disabled,
   targetType,
@@ -373,8 +370,6 @@ function ReplacementEditor({
   readonly evaluation: EvaluatedCharacter;
   readonly build: CharacterRecord["build"];
   readonly entities: readonly ContentEntity[];
-  readonly buildProvider: BuildOccurrence;
-  readonly providerEntity: ContentEntity | undefined;
   readonly byId: ReadonlyMap<string, ContentEntity>;
   readonly disabled: boolean;
   readonly targetType?: string;
@@ -517,29 +512,32 @@ function ReplacementEditor({
     setOptimisticSelectedId(candidate.definitionId);
     setPerusedId(candidate.definitionId);
     inspect(candidate);
-    onDispatch({
-      kind: "retrain",
-      parentId: buildProvider.id,
-      index: findBuildChildIndex(
-        buildProvider,
-        providerEntity,
-        choice.ruleOrdinal,
-        choice.index,
-      ),
-      replacesId: replacementTarget.replacesOccurrenceId,
-      replacement: {
+    // The provider may be a generated grant (an Essentials class feature),
+    // materialized beneath its nearest saved ancestor like any choice.
+    const command = commandForEvaluatedChoice(
+      build,
+      choice,
+      evaluation.occurrences,
+      entities,
+      {
         id: `web:${crypto.randomUUID()}`,
         identity: {
           definitionId: definition.id,
           name: definition.name,
           type: definition.type,
         },
-        acquiredLevel: buildProvider.acquiredLevel,
+        acquiredLevel:
+          evaluation.occurrences.find(
+            ({ id }) => id === choice.providerOccurrenceId,
+          )?.acquiredLevel ?? choice.level,
         legality: pickLegality(candidate),
         children: [],
         unresolved: false,
+        replacesId: replacementTarget.replacesOccurrenceId,
       },
-    });
+      (index) => `web:placeholder:${index}:${crypto.randomUUID()}`,
+    );
+    if (command !== undefined) onDispatch(command);
   };
 
   const chooseTarget = (nextTargetId: string): void => {
@@ -779,19 +777,13 @@ export function ChoiceEditor({
     );
   }, [optimisticSelectedId, perusedId, showAll, visibleCandidates]);
 
-  if (choice.type === "Replacement" && buildProvider !== undefined)
+  if (choice.type === "Replacement" && materializableProvider)
     return (
       <ReplacementEditor
         choice={choice}
         evaluation={evaluation}
         build={build}
         entities={entities}
-        buildProvider={buildProvider}
-        providerEntity={
-          provider === undefined
-            ? undefined
-            : byId.get(provider.definitionId.toLocaleLowerCase())
-        }
         byId={byId}
         disabled={disabled}
         {...(replacementTargetType === undefined

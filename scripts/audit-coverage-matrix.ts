@@ -445,18 +445,20 @@ function resolveLevel(
       try {
         const before = state.transaction.current;
         if (key(choice.type) === "replacement") {
-          const command = replacementCommand(
+          const replacement = replacementCommand(
             before,
             choice,
+            run.entities,
             run.byId,
             current,
             choicePreference,
             state.serial,
           );
-          if (command === undefined) continue;
+          if (replacement === undefined) continue;
+          excluded.add(key(replacement.definitionId));
           state.serial += 1;
-          state.transaction.dispatch(command);
-          thisBatch.picks.push(command.replacement.identity.definitionId ?? "");
+          state.transaction.dispatch(replacement.command);
+          thisBatch.picks.push(replacement.definitionId);
         } else {
           const definition = candidateFor(
             choice,

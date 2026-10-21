@@ -122,6 +122,7 @@ async function main(): Promise<void> {
               ? replacementCommand(
                   transaction.current,
                   choice,
+                  pack.entities,
                   byId,
                   current,
                   preference,
@@ -162,7 +163,7 @@ async function main(): Promise<void> {
       const { choice, replacement, definition } = resolution;
       if (replacement !== undefined) {
         const before = transaction.current;
-        const after = transaction.dispatch(replacement);
+        const after = transaction.dispatch(replacement.command);
         assertNoRemovedOccurrences(before, after, `Resolving ${choice.id}`);
         serial += 1;
         retrainings += 1;

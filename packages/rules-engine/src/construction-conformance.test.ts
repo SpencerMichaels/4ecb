@@ -241,7 +241,14 @@ describe("native construction conformance", () => {
         entity("REPLACE_PROVIDER", "Replacement provider", "Level", [
           statement("replace", mode, 0),
         ]),
-        entity("OLD", "Old power", "Power"),
+        // Within the power-swap category, which a swap can only lose from.
+        {
+          ...entity("OLD", "Old power", "Power"),
+          categories: ["Synthetic", "encounter"],
+          specifics: [
+            { name: "Level", value: "1", extraAttributes: [], ordinal: 0 },
+          ],
+        },
         entity("NEW", "New power", "Power"),
       ];
       const saved = [
