@@ -231,6 +231,88 @@ function findBuildOccurrence(
 }
 
 /**
+ * Whether an evaluated occurrence exists only in the evaluator's graph and
+ * can be materialized at its slot: a grant, or a rule default (a choice
+ * occurrence stored nowhere, unlike a spellbook alternate or item choice).
+ */
+function isGeneratedOccurrence(
+  build: CharacterBuild,
+  occurrence: CharacterOccurrence,
+): boolean {
+  if (occurrence.kind === "grant") return true;
+  if (occurrence.kind !== "choice") return false;
+  const stored = (value: BuildOccurrence): boolean =>
+    value.id === occurrence.id || value.children.some(stored);
+  return (
+    findBuildOccurrence(build, occurrence.id) === undefined &&
+    !build.alternates.some((alternate) => stored(alternate.choice)) &&
+    findInventoryProvider(build, occurrence.id) === undefined
+  );
+}
+
+/**
+ * An inventory-owned choice provider: an item definition (the evaluator's
+ * synthetic `<entry>:definition:<index>` provider) or an occurrence stored
+ * beneath one, with a way to rebuild the entry around new children.
+ */
+function findInventoryProvider(
+  build: CharacterBuild,
+  id: string,
+):
+  | {
+      readonly occurrence: BuildOccurrence;
+      readonly withChildren: (
+        children: readonly BuildOccurrence[],
+      ) => CharacterBuild["inventory"][number];
+    }
+  | undefined {
+  for (const entry of build.inventory)
+    for (const [elementIndex, element] of entry.elements.entries()) {
+      const withElementChildren = (children: readonly BuildOccurrence[]) => ({
+        ...entry,
+        elements: entry.elements.map((value, index) =>
+          index === elementIndex ? { ...value, children } : value,
+        ),
+      });
+      const root: BuildOccurrence = {
+        id: `${entry.id}:definition:${elementIndex}`,
+        identity: element,
+        acquiredLevel: entry.acquiredLevel,
+        legality: entry.legality,
+        children: element.children ?? [],
+        unresolved: element.definitionId === undefined,
+      };
+      const search = (
+        occurrence: BuildOccurrence,
+        rebuild: (
+          children: readonly BuildOccurrence[],
+        ) => ReturnType<typeof withElementChildren>,
+      ):
+        | {
+            occurrence: BuildOccurrence;
+            withChildren: typeof rebuild;
+          }
+        | undefined => {
+        if (occurrence.id === id) return { occurrence, withChildren: rebuild };
+        for (const [childIndex, child] of occurrence.children.entries()) {
+          const found = search(child, (children) =>
+            rebuild(
+              occurrence.children.map((value, index) =>
+                index === childIndex ? { ...child, children } : value,
+              ),
+            ),
+          );
+          if (found !== undefined) return found;
+        }
+        return undefined;
+      };
+      const found = search(root, withElementChildren);
+      if (found !== undefined) return found;
+    }
+  return undefined;
+}
+
+/**
  * Creates a durable choice command, materializing generated grant ancestors
  * back to the nearest saved occurrence when the provider exists only in the
  * evaluator's fixed-point graph.
@@ -308,41 +390,6 @@ export function commandForEvaluatedChoice(
             rule.source.ordinal === choice.ruleOrdinal &&
             rule.kind === "select",
         );
-  if (
-    providerEntity !== undefined &&
-    providerRule?.kind === "select" &&
-    providerRule.spellbook !== undefined
-  ) {
-    const spellbook = providerRule.spellbook;
-    const sameProvider = (alternate: CharacterBuild["alternates"][number]) =>
-      alternate.provider.definitionId !== undefined
-        ? alternate.provider.definitionId.toLocaleLowerCase() ===
-          providerEntity.id.toLocaleLowerCase()
-        : alternate.provider.name.toLocaleLowerCase() ===
-            providerEntity.name.toLocaleLowerCase() &&
-          alternate.provider.type.toLocaleLowerCase() ===
-            providerEntity.type.toLocaleLowerCase();
-    const existing = build.alternates.find(
-      (alternate) =>
-        alternate.choice.id === choice.selectedOccurrenceId ||
-        (sameProvider(alternate) &&
-          alternate.selectName.toLocaleLowerCase() ===
-            spellbook.toLocaleLowerCase()),
-    );
-    return {
-      kind: "put-alternate",
-      alternate: {
-        id: existing?.id ?? `web:alternate:${selected.id}`,
-        selectName: existing?.selectName ?? spellbook,
-        provider: existing?.provider ?? {
-          definitionId: providerEntity.id,
-          name: providerEntity.name,
-          type: providerEntity.type,
-        },
-        choice: atStorageLevel(selected, choice.level),
-      },
-    };
-  }
   const generatedWithChild = (
     occurrence: CharacterOccurrence,
     entity: ContentEntity,
@@ -378,6 +425,158 @@ export function commandForEvaluatedChoice(
       ],
     };
   };
+  // A generated provider is a grant or a rule default (a default selection
+  // that has choices of its own, like Eldritch Blast's ability).
+  const generated = (occurrence: CharacterOccurrence) =>
+    isGeneratedOccurrence(build, occurrence);
+  /**
+   * Stores `materialized` (the generated `cursor`, already carrying its new
+   * child) beneath the nearest saved ancestor, materializing each generated
+   * ancestor in between.
+   */
+  const materializeBeneathSaved = (
+    start: CharacterOccurrence,
+    occurrence: BuildOccurrence,
+  ): CharacterCommand | undefined => {
+    let cursor = start;
+    let materialized = occurrence;
+    for (let depth = 0; depth < evaluatedOccurrences.length; depth += 1) {
+      if (cursor.parentId === undefined || cursor.ruleOrdinal === undefined)
+        return undefined;
+      const durableParent = findBuildOccurrence(build, cursor.parentId);
+      if (durableParent !== undefined) {
+        const parentEvaluation = evaluatedOccurrences.find(
+          (value) => value.id === durableParent.id,
+        );
+        const parentEntity =
+          parentEvaluation === undefined
+            ? undefined
+            : byId.get(parentEvaluation.definitionId.toLocaleLowerCase());
+        return chooseAt(
+          durableParent,
+          findBuildChildIndex(
+            durableParent,
+            parentEntity,
+            cursor.ruleOrdinal,
+            cursor.choiceIndex ?? 0,
+          ),
+          materialized,
+        );
+      }
+      const evaluatedParent = evaluatedOccurrences.find(
+        (value) => value.id === cursor.parentId,
+      );
+      if (evaluatedParent === undefined || !generated(evaluatedParent))
+        return undefined;
+      const parentEntity = byId.get(
+        evaluatedParent.definitionId.toLocaleLowerCase(),
+      );
+      if (parentEntity === undefined) return undefined;
+      materialized = generatedWithChild(
+        evaluatedParent,
+        parentEntity,
+        cursor.ruleOrdinal,
+        cursor.choiceIndex ?? 0,
+        materialized,
+      );
+      cursor = evaluatedParent;
+    }
+    return undefined;
+  };
+  if (
+    providerEntity !== undefined &&
+    providerRule?.kind === "select" &&
+    providerRule.spellbook !== undefined
+  ) {
+    const spellbook = providerRule.spellbook;
+    const sameProvider = (alternate: CharacterBuild["alternates"][number]) =>
+      alternate.provider.definitionId !== undefined
+        ? alternate.provider.definitionId.toLocaleLowerCase() ===
+          providerEntity.id.toLocaleLowerCase()
+        : alternate.provider.name.toLocaleLowerCase() ===
+            providerEntity.name.toLocaleLowerCase() &&
+          alternate.provider.type.toLocaleLowerCase() ===
+            providerEntity.type.toLocaleLowerCase();
+    const existing = build.alternates.find(
+      (alternate) =>
+        alternate.choice.id === choice.selectedOccurrenceId ||
+        (sameProvider(alternate) &&
+          alternate.selectName.toLocaleLowerCase() ===
+            spellbook.toLocaleLowerCase()),
+    );
+    const putAlternate: CharacterCommand = {
+      kind: "put-alternate",
+      alternate: {
+        id: existing?.id ?? `web:alternate:${selected.id}`,
+        selectName: existing?.selectName ?? spellbook,
+        provider: existing?.provider ?? {
+          definitionId: providerEntity.id,
+          name: providerEntity.name,
+          type: providerEntity.type,
+        },
+        choice: atStorageLevel(selected, choice.level),
+      },
+    };
+    // An alternate finds its provider among saved occurrences, so a
+    // generated provider (the Spellbook a wizard's class grants) is saved
+    // first; otherwise the pick would land in the grabbag.
+    if (
+      durableProvider !== undefined ||
+      evaluatedProvider === undefined ||
+      !generated(evaluatedProvider)
+    )
+      return putAlternate;
+    const materialize = materializeBeneathSaved(evaluatedProvider, {
+      id: evaluatedProvider.id,
+      identity: {
+        definitionId: providerEntity.id,
+        name: providerEntity.name,
+        type: providerEntity.type,
+      },
+      acquiredLevel: evaluatedProvider.acquiredLevel,
+      legality: "rules-legal",
+      children: [],
+      unresolved: false,
+    });
+    return materialize === undefined
+      ? putAlternate
+      : { kind: "batch", commands: [materialize, putAlternate] };
+  }
+  const inventoryProvider = findInventoryProvider(
+    build,
+    choice.providerOccurrenceId,
+  );
+  if (inventoryProvider !== undefined) {
+    const { occurrence } = inventoryProvider;
+    const index = findBuildChildIndex(
+      occurrence,
+      providerEntity ??
+        (occurrence.identity.definitionId === undefined
+          ? undefined
+          : byId.get(occurrence.identity.definitionId.toLocaleLowerCase())),
+      choice.ruleOrdinal,
+      choice.index,
+    );
+    const children = [
+      ...occurrence.children,
+      ...Array.from(
+        { length: Math.max(0, index - occurrence.children.length) },
+        (_, offset): BuildOccurrence => ({
+          id: placeholderId(occurrence.children.length + offset),
+          identity: { name: "", type: "" },
+          acquiredLevel: occurrence.acquiredLevel,
+          legality: "rules-legal",
+          children: [],
+          unresolved: true,
+        }),
+      ),
+    ];
+    children[index] = atStorageLevel(selected, occurrence.acquiredLevel);
+    return {
+      kind: "put-inventory",
+      entry: inventoryProvider.withChildren(children),
+    };
+  }
   if (durableProvider !== undefined) {
     const index = findBuildChildIndex(
       durableProvider,
@@ -388,61 +587,21 @@ export function commandForEvaluatedChoice(
     return chooseAt(durableProvider, index, selected);
   }
   if (
-    evaluatedProvider?.kind !== "grant" ||
-    evaluatedProvider.parentId === undefined ||
-    evaluatedProvider.ruleOrdinal === undefined ||
+    evaluatedProvider === undefined ||
+    !generated(evaluatedProvider) ||
     providerEntity === undefined
   )
     return undefined;
-  let cursor = evaluatedProvider;
-  let materialized = generatedWithChild(
-    cursor,
-    providerEntity,
-    choice.ruleOrdinal,
-    choice.index,
-    selected,
+  return materializeBeneathSaved(
+    evaluatedProvider,
+    generatedWithChild(
+      evaluatedProvider,
+      providerEntity,
+      choice.ruleOrdinal,
+      choice.index,
+      selected,
+    ),
   );
-  for (let depth = 0; depth < evaluatedOccurrences.length; depth += 1) {
-    if (cursor.parentId === undefined || cursor.ruleOrdinal === undefined)
-      return undefined;
-    const durableParent = findBuildOccurrence(build, cursor.parentId);
-    if (durableParent !== undefined) {
-      const parentEvaluation = evaluatedOccurrences.find(
-        (occurrence) => occurrence.id === durableParent.id,
-      );
-      const parentEntity =
-        parentEvaluation === undefined
-          ? undefined
-          : byId.get(parentEvaluation.definitionId.toLocaleLowerCase());
-      return chooseAt(
-        durableParent,
-        findBuildChildIndex(
-          durableParent,
-          parentEntity,
-          cursor.ruleOrdinal,
-          cursor.choiceIndex ?? 0,
-        ),
-        materialized,
-      );
-    }
-    const evaluatedParent = evaluatedOccurrences.find(
-      (occurrence) => occurrence.id === cursor.parentId,
-    );
-    if (evaluatedParent?.kind !== "grant") return undefined;
-    const parentEntity = byId.get(
-      evaluatedParent.definitionId.toLocaleLowerCase(),
-    );
-    if (parentEntity === undefined) return undefined;
-    materialized = generatedWithChild(
-      evaluatedParent,
-      parentEntity,
-      cursor.ruleOrdinal,
-      cursor.choiceIndex ?? 0,
-      materialized,
-    );
-    cursor = evaluatedParent;
-  }
-  return undefined;
 }
 
 /**
@@ -459,7 +618,10 @@ export function canMaterializeEvaluatedChoiceProvider(
   evaluatedOccurrences: readonly CharacterOccurrence[],
   entities: readonly ContentEntity[],
 ): boolean {
-  if (findBuildOccurrence(build, choice.providerOccurrenceId) !== undefined)
+  if (
+    findBuildOccurrence(build, choice.providerOccurrenceId) !== undefined ||
+    findInventoryProvider(build, choice.providerOccurrenceId) !== undefined
+  )
     return true;
 
   const byId = new Map(
@@ -470,7 +632,8 @@ export function canMaterializeEvaluatedChoiceProvider(
   );
   for (let depth = 0; depth < evaluatedOccurrences.length; depth += 1) {
     if (
-      cursor?.kind !== "grant" ||
+      cursor === undefined ||
+      !isGeneratedOccurrence(build, cursor) ||
       cursor.parentId === undefined ||
       cursor.ruleOrdinal === undefined ||
       !byId.has(cursor.definitionId.toLocaleLowerCase())

@@ -850,6 +850,269 @@ describe("build projection", () => {
     expect(evaluated.complete).toBe(true);
   });
 
+  it("fills an owned item's own choice through its inventory entry", () => {
+    const content = [
+      entity("ITEM", "Armor of Resistance", "Magic Item", [
+        statement("statadd", { name: "AC", value: "+1" }, 0),
+        statement("select", { type: "Class Feature", number: "1" }, 1),
+      ]),
+      entity("POISON", "Poison", "Class Feature"),
+    ];
+    const build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 1,
+      levels: [],
+      grabbag: [],
+      inventory: [
+        {
+          id: "loot",
+          acquiredLevel: 1,
+          quantity: 1,
+          equippedQuantity: 1,
+          elements: [
+            {
+              definitionId: "ITEM",
+              name: "Armor of Resistance",
+              type: "Magic Item",
+            },
+          ],
+          overrides: {},
+          legality: "rules-legal",
+        },
+      ],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    const initial = evaluateCharacter(
+      projectBuildForEvaluation(build, content),
+      content,
+    );
+    const choice = initial.choices.find(
+      ({ providerOccurrenceId }) =>
+        providerOccurrenceId === "loot:definition:0",
+    )!;
+    expect(
+      canMaterializeEvaluatedChoiceProvider(
+        build,
+        choice,
+        initial.occurrences,
+        content,
+      ),
+    ).toBe(true);
+    const command = commandForEvaluatedChoice(
+      build,
+      choice,
+      initial.occurrences,
+      content,
+      {
+        id: "poison",
+        identity: {
+          definitionId: "POISON",
+          name: "Poison",
+          type: "Class Feature",
+        },
+        acquiredLevel: 1,
+        legality: "rules-legal",
+        children: [],
+        unresolved: false,
+      },
+      (index) => `placeholder:${index}`,
+    );
+    expect(command).toMatchObject({
+      kind: "put-inventory",
+      entry: {
+        id: "loot",
+        elements: [{ children: [{ id: "poison" }] }],
+      },
+    });
+    const completed = evaluateCharacter(
+      projectBuildForEvaluation(
+        applyCharacterCommand(build, command!),
+        content,
+      ),
+      content,
+    );
+    expect(completed.choices.find(({ id }) => id === choice.id)).toMatchObject({
+      selectedOccurrenceId: "poison",
+    });
+  });
+
+  it("materializes a default selection to fill a choice it provides", () => {
+    // Eldritch Blast is a warlock's default pick and asks for its ability.
+    const content = [
+      entity("LEVEL", "1", "Level", [
+        statement(
+          "select",
+          { type: "Power", number: "1", default: "BLAST" },
+          0,
+        ),
+      ]),
+      entity("BLAST", "Eldritch Blast", "Power", [
+        statement("select", { type: "Class Feature", number: "1" }, 0),
+      ]),
+      entity("CHARISMA", "Charisma blast", "Class Feature"),
+    ];
+    const build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 1,
+      levels: [
+        {
+          level: 1,
+          root: {
+            id: "level",
+            identity: { definitionId: "LEVEL", name: "1", type: "Level" },
+            acquiredLevel: 1,
+            legality: "rules-legal",
+            unresolved: false,
+            children: [],
+          },
+        },
+      ],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    const initial = evaluateCharacter(
+      projectBuildForEvaluation(build, content),
+      content,
+    );
+    const choice = initial.choices.find(
+      ({ type }) => type === "Class Feature",
+    )!;
+    expect(choice.providerOccurrenceId).toBe("level:default:0:0");
+    const command = commandForEvaluatedChoice(
+      build,
+      choice,
+      initial.occurrences,
+      content,
+      {
+        id: "charisma",
+        identity: {
+          definitionId: "CHARISMA",
+          name: "Charisma blast",
+          type: "Class Feature",
+        },
+        acquiredLevel: 1,
+        legality: "rules-legal",
+        children: [],
+        unresolved: false,
+      },
+      (index) => `placeholder:${index}`,
+    );
+    expect(command).toMatchObject({
+      kind: "choose",
+      parentId: "level",
+      index: 0,
+      occurrence: {
+        id: "level:default:0:0",
+        identity: { definitionId: "BLAST" },
+        children: [{ id: "charisma" }],
+      },
+    });
+    const completed = evaluateCharacter(
+      projectBuildForEvaluation(
+        applyCharacterCommand(build, command!),
+        content,
+      ),
+      content,
+    );
+    expect(completed.complete).toBe(true);
+    expect(completed.activeDefinitionIds).toEqual(
+      expect.arrayContaining(["BLAST", "CHARISMA"]),
+    );
+  });
+
+  it("saves a generated spellbook provider so its alternate pick attaches", () => {
+    // Grants Wizard grants Spellbook; nothing saved it until the first pick.
+    const content = [
+      entity("LEVEL", "1", "Level", [
+        statement("grant", { name: "SPELLBOOK", type: "Class Feature" }, 0),
+      ]),
+      entity("SPELLBOOK", "Spellbook", "Class Feature", [
+        statement(
+          "select",
+          { type: "Power", number: "1", spellbook: "Power Daily 1" },
+          0,
+        ),
+        statement(
+          "select",
+          { type: "Power", number: "1", spellbook: "Power Utility 2" },
+          1,
+        ),
+      ]),
+      entity("SLEEP", "Sleep", "Power"),
+      entity("SHIELD", "Shield", "Power"),
+    ];
+    let build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 1,
+      levels: [
+        {
+          level: 1,
+          root: {
+            id: "level",
+            identity: { definitionId: "LEVEL", name: "1", type: "Level" },
+            acquiredLevel: 1,
+            legality: "rules-legal",
+            unresolved: false,
+            children: [],
+          },
+        },
+      ],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    const pick = (definitionId: string, ordinal: number) => {
+      const evaluated = evaluateCharacter(
+        projectBuildForEvaluation(build, content),
+        content,
+      );
+      const choice = evaluated.choices.find(
+        ({ ruleOrdinal, providerOccurrenceId }) =>
+          providerOccurrenceId === "level:grant:0" && ruleOrdinal === ordinal,
+      )!;
+      const command = commandForEvaluatedChoice(
+        build,
+        choice,
+        evaluated.occurrences,
+        content,
+        {
+          id: definitionId.toLowerCase(),
+          identity: { definitionId, name: definitionId, type: "Power" },
+          acquiredLevel: 1,
+          legality: "rules-legal",
+          children: [],
+          unresolved: false,
+        },
+        (index) => `placeholder:${index}`,
+      );
+      build = applyCharacterCommand(build, command!);
+    };
+    pick("SLEEP", 0);
+    pick("SHIELD", 1);
+    const completed = evaluateCharacter(
+      projectBuildForEvaluation(build, content),
+      content,
+    );
+    expect(build.levels[0]!.root.children).toMatchObject([
+      { id: "level:grant:0", identity: { definitionId: "SPELLBOOK" } },
+    ]);
+    expect(build.alternates.map(({ choice }) => choice.id)).toEqual([
+      "sleep",
+      "shield",
+    ]);
+    expect(
+      completed.choices.map(({ selectedOccurrenceId }) => selectedOccurrenceId),
+    ).toEqual(["sleep", "shield"]);
+    expect(completed.complete).toBe(true);
+  });
+
   it("projects modern loadout assignments into equipment-backed defenses", () => {
     const content = [
       entity("ROOT", "Root", "Test", [
