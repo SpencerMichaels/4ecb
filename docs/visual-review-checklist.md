@@ -59,10 +59,14 @@ wizard, ranger, druid or half-elf.
     wrapping next to the "Level N" tag.
   - Page-1 reminder labels with a choice (a fighter's Fighting Style or Weapon
     Talent shows it better than Beatrix).
-- [ ] **Background benefit line** (in progress): a separate "Background
-      benefit: …" entry for every character, including Hystan and Hu.
-- [ ] **Granted race aliases** (in progress): e.g. "Dual Heritage: counts as
-      Elf, Human".
+- [ ] **Background benefit card** after the background cards: "Background
+      benefit: …" with its Benefit text. Hu Sheng-Ming has six backgrounds
+      before it; Beatrix's Luskan card no longer has a suffix.
+- [ ] **Granted aliases on feature rows:** "Dual Heritage: counts as Elf,
+      Human" (Hystan), "Battle Awareness: Athletics; counts as Fighter" (Hu),
+      "Fey Pact of the White Well Boon: counts as Fey Pact" (Beatrix). Does
+      "; counts as" read well after a choice? Check both the printed and
+      on-screen feature lists.
 
 ## Builder status
 

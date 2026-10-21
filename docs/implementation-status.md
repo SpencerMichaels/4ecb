@@ -18,13 +18,16 @@ Commit `3e61a5e`.
   CountsAsRace (when chosen), Background Choice and Proficiency are now
   presented, which the coverage matrix confirms on targeted lines.
 
-Open (owner):
+Follow-up (`84715db`, `cd9bec3`, owner decisions):
 
-- A generic background benefit on a character with several backgrounds stays
-  unattached, because nothing links it to one of them (Hystan, Hu Sheng-Ming).
-- Granted CountsAsRace aliases (Half-Elf Dual Heritage, Past Spirit) are not
-  shown.
-- "Luskan: Luskan Benefit" repeats the background name.
+- **Background benefit row.** Every character gets one, after the backgrounds,
+  because the benefit belongs to all backgrounds together. This replaces the
+  "Luskan: Luskan Benefit" attachment, and Hystan's and Hu's benefits now
+  show.
+- **Granted aliases.** CountsAsRace, CountsAsClass and CountsAsPact aliases
+  show on their granting feature's row ("Dual Heritage: counts as Elf,
+  Human"). Aliases granted by the race or class itself are counted as shown
+  on the identity line.
 
 Visual review pending. 1116 workspace tests pass.
 
