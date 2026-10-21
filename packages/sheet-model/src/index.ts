@@ -968,9 +968,23 @@ function evaluatedPowerCards(
       provenanceId: bonus.provenanceId,
     })),
   ];
+  // Extra damage dice other features add (Assassin's Strike upgrades), summed
+  // into one line on the card; the evaluated power keeps each source, and the
+  // features themselves have their own page-1 rows.
+  const extraDamageEffects: SheetAdditionalEffect[] =
+    power.extraDamage === undefined
+      ? []
+      : [
+          {
+            text: `+${power.extraDamage.dice} extra damage.`,
+            source: "authoritative-evaluation" as const,
+            cardOnly: true,
+          },
+        ];
   const additionalEffects = [
     ...(defaultVariant?.additionalEffects ?? []),
     ...healingEffects,
+    ...extraDamageEffects,
   ];
   return [
     {

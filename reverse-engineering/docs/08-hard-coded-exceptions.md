@@ -464,6 +464,28 @@ The exact output is richer than `ability modifier + half level + proficiency +
 enhancement`. Use the saved `PowerStats` corpus as golden oracles and keep every
 component explainable.
 
+### Extra damage dice (modern channel)
+
+Legacy has no stat that adds damage dice to a power. The community
+`37-hybrid.part` upgrades Assassin's Strike (Hybrid) by overwriting its
+`Effect` text with the new total (`modify field="Effect"`), and lacked most
+upgrade records. The modern evaluator reads a `<power ID>:extra damage` (or
+`<power name>:extra damage`) stat whose applied contributions are dice
+(`+1d10`) and reports them as `EvaluatedPower.extraDamage`; the card prints
+the sum as one additional effect ("+2d10 extra damage."). The upgrades are
+rebuilt on that stat in `content/corrections/97-hybrid-assassins-strike.part`
+(D089: structure, no copied text), so the published `Effect` stays as
+written. Exported `.dnd4e` files keep the upgrade selections; the old
+builder sees the base text (D091).
+
+A related content pattern: `requires` follows the legacy grammar, where a
+leading `!` negates everything after it, so `!A|!B|!C` means
+`!(A | !B | !C)`. The Level 5 Scholar Feature's language choice was written
+that way meaning "lacks one of the three"; 96-content-fixes.part rewrites it
+as `!A&B&C`. Other `!x|y|z` uses in the corpus (the genasi elemental
+manifestations, `!Psionic First Class|Psionic Second Class`) do mean "none
+of these".
+
 ### Power requirement restrictions
 
 Recovered path: `WritePower` writes one `PowerStats` row per

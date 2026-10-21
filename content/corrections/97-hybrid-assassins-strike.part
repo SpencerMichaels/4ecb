@@ -1,0 +1,179 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Assassin's Strike (Hybrid) upgrades (owner decision, 2026-10-21). Merged
+  after the CBLoader parts by scripts/build-private-content.sh. Structure
+  only; no official text.
+
+  A hybrid executioner may take +1d10 Assassin's Strike damage instead of an
+  encounter attack power at levels 7, 13, 17, 23 and 27. The community part
+  (37-hybrid.part) had only some "Level L ... Upgrade k" records (the k-th
+  upgrade taken at level L), wrote each one's total into the power's Effect
+  text, and put Level 27 Upgrade 3's prerequisite in its Category; levels 13
+  and 23 offered nothing after an earlier upgrade. Every level now offers
+  the upgrade whatever came before: each record adds "+1d10" to the power's
+  "<power ID>:extra damage" stat, which the power card prints as an
+  additional effect, and the published Effect text stays as written. A
+  record's prerequisite is "has a (k-1)-th upgrade from an earlier level and
+  no earlier k-th one", so exactly one record is open at each level.
+-->
+<D20Rules game-system="D&amp;D4E">
+  <RemoveNodes internal-id="ID_CDJ_CLASS_FEATURE_HYBRID_ASSASSINS_STRIKE"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_CDJ_CLASS_FEATURE_HYBRID_ASSASSINS_STRIKE">
+    <rules>
+      <select type="Class Feature" Category="ID_CDJ_CLASS_FEATURE_LV7_ASSASSINS_STRIKE_1" number="1" level="7" optional="true" />
+      <select type="Class Feature" Category="ID_CDJ_CLASS_FEATURE_LV13_ASSASSINS_STRIKE_1|ID_4ECB_CLASS_FEATURE_LV13_ASSASSINS_STRIKE_2" number="1" level="13" optional="true" />
+      <select type="Class Feature" Category="ID_CDJ_CLASS_FEATURE_LV17_ASSASSINS_STRIKE_1|ID_CDJ_CLASS_FEATURE_LV17_ASSASSINS_STRIKE_2|ID_4ECB_CLASS_FEATURE_LV17_ASSASSINS_STRIKE_3" number="1" level="17" optional="true" />
+      <select type="Class Feature" Category="ID_CDJ_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_1|ID_CDJ_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_2|ID_4ECB_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_3|ID_4ECB_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_4" number="1" level="23" optional="true" />
+      <select type="Class Feature" Category="ID_CDJ_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_1|ID_CDJ_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_2|ID_CDJ_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_3|ID_4ECB_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_4|ID_4ECB_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_5" number="1" level="27" optional="true" />
+    </rules>
+  </AppendNodes>
+  <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV7_ASSASSINS_STRIKE_1" name="Level 7 Assassin's Strike Upgrade 1" type="Class Feature" source="Dragon Magazine 400">
+    <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
+    <specific name="Level"> 7 </specific>
+    <rules>
+      <grant type="Internal" name="ID_INTERNAL_NO_LV7_ENCOUNTER_POWER" />
+      <grant type="Internal" name="ID_INTERNAL_BLOCK_LV7_HYBRID_PSONICS" />
+      <statadd name="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE:extra damage" value="+1d10" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV13_ASSASSINS_STRIKE_1" name="Level 13 Assassin's Strike Upgrade 1" type="Class Feature" source="Dragon Magazine 400">
+    <Prereqs> !Level 7 Assassin's Strike Upgrade 1 </Prereqs>
+    <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
+    <specific name="Level"> 13 </specific>
+    <rules>
+      <grant type="Internal" name="ID_INTERNAL_NO_LV13_ENCOUNTER_POWER" />
+      <grant type="Internal" name="ID_INTERNAL_BLOCK_LV13_HYBRID_PSONICS" />
+      <statadd name="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE:extra damage" value="+1d10" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_4ECB_CLASS_FEATURE_LV13_ASSASSINS_STRIKE_2" name="Level 13 Assassin's Strike Upgrade 2" type="Class Feature" source="Dragon Magazine 400">
+    <Prereqs> Level 7 Assassin's Strike Upgrade 1 </Prereqs>
+    <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
+    <specific name="Level"> 13 </specific>
+    <rules>
+      <grant type="Internal" name="ID_INTERNAL_NO_LV13_ENCOUNTER_POWER" />
+      <grant type="Internal" name="ID_INTERNAL_BLOCK_LV13_HYBRID_PSONICS" />
+      <statadd name="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE:extra damage" value="+1d10" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV17_ASSASSINS_STRIKE_1" name="Level 17 Assassin's Strike Upgrade 1" type="Class Feature" source="Dragon Magazine 400">
+    <Prereqs> !Level 7 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 1 </Prereqs>
+    <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
+    <specific name="Level"> 17 </specific>
+    <rules>
+      <grant type="Internal" name="ID_INTERNAL_NO_LV17_ENCOUNTER_POWER" />
+      <grant type="Internal" name="ID_INTERNAL_BLOCK_LV17_HYBRID_PSONICS" />
+      <statadd name="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE:extra damage" value="+1d10" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV17_ASSASSINS_STRIKE_2" name="Level 17 Assassin's Strike Upgrade 2" type="Class Feature" source="Dragon Magazine 400">
+    <Prereqs> Level 7 Assassin's Strike Upgrade 1 or Level 13 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 2 </Prereqs>
+    <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
+    <specific name="Level"> 17 </specific>
+    <rules>
+      <grant type="Internal" name="ID_INTERNAL_NO_LV17_ENCOUNTER_POWER" />
+      <grant type="Internal" name="ID_INTERNAL_BLOCK_LV17_HYBRID_PSONICS" />
+      <statadd name="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE:extra damage" value="+1d10" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_4ECB_CLASS_FEATURE_LV17_ASSASSINS_STRIKE_3" name="Level 17 Assassin's Strike Upgrade 3" type="Class Feature" source="Dragon Magazine 400">
+    <Prereqs> Level 13 Assassin's Strike Upgrade 2 </Prereqs>
+    <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
+    <specific name="Level"> 17 </specific>
+    <rules>
+      <grant type="Internal" name="ID_INTERNAL_NO_LV17_ENCOUNTER_POWER" />
+      <grant type="Internal" name="ID_INTERNAL_BLOCK_LV17_HYBRID_PSONICS" />
+      <statadd name="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE:extra damage" value="+1d10" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_1" name="Level 23 Assassin's Strike Upgrade 1" type="Class Feature" source="Dragon Magazine 400">
+    <Prereqs> !Level 7 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 1, !Level 17 Assassin's Strike Upgrade 1 </Prereqs>
+    <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
+    <specific name="Level"> 23 </specific>
+    <rules>
+      <grant type="Internal" name="ID_INTERNAL_NO_LV23_ENCOUNTER_POWER" />
+      <grant type="Internal" name="ID_INTERNAL_BLOCK_LV23_HYBRID_PSONICS" />
+      <statadd name="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE:extra damage" value="+1d10" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_2" name="Level 23 Assassin's Strike Upgrade 2" type="Class Feature" source="Dragon Magazine 400">
+    <Prereqs> Level 7 Assassin's Strike Upgrade 1 or Level 13 Assassin's Strike Upgrade 1 or Level 17 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 2, !Level 17 Assassin's Strike Upgrade 2 </Prereqs>
+    <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
+    <specific name="Level"> 23 </specific>
+    <rules>
+      <grant type="Internal" name="ID_INTERNAL_NO_LV23_ENCOUNTER_POWER" />
+      <grant type="Internal" name="ID_INTERNAL_BLOCK_LV23_HYBRID_PSONICS" />
+      <statadd name="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE:extra damage" value="+1d10" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_4ECB_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_3" name="Level 23 Assassin's Strike Upgrade 3" type="Class Feature" source="Dragon Magazine 400">
+    <Prereqs> Level 13 Assassin's Strike Upgrade 2 or Level 17 Assassin's Strike Upgrade 2, !Level 17 Assassin's Strike Upgrade 3 </Prereqs>
+    <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
+    <specific name="Level"> 23 </specific>
+    <rules>
+      <grant type="Internal" name="ID_INTERNAL_NO_LV23_ENCOUNTER_POWER" />
+      <grant type="Internal" name="ID_INTERNAL_BLOCK_LV23_HYBRID_PSONICS" />
+      <statadd name="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE:extra damage" value="+1d10" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_4ECB_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_4" name="Level 23 Assassin's Strike Upgrade 4" type="Class Feature" source="Dragon Magazine 400">
+    <Prereqs> Level 17 Assassin's Strike Upgrade 3 </Prereqs>
+    <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
+    <specific name="Level"> 23 </specific>
+    <rules>
+      <grant type="Internal" name="ID_INTERNAL_NO_LV23_ENCOUNTER_POWER" />
+      <grant type="Internal" name="ID_INTERNAL_BLOCK_LV23_HYBRID_PSONICS" />
+      <statadd name="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE:extra damage" value="+1d10" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_1" name="Level 27 Assassin's Strike Upgrade 1" type="Class Feature" source="Dragon Magazine 400">
+    <Prereqs> !Level 7 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 1, !Level 17 Assassin's Strike Upgrade 1, !Level 23 Assassin's Strike Upgrade 1 </Prereqs>
+    <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
+    <specific name="Level"> 27 </specific>
+    <rules>
+      <grant type="Internal" name="ID_INTERNAL_NO_LV27_ENCOUNTER_POWER" />
+      <grant type="Internal" name="ID_INTERNAL_BLOCK_LV27_HYBRID_PSONICS" />
+      <statadd name="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE:extra damage" value="+1d10" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_2" name="Level 27 Assassin's Strike Upgrade 2" type="Class Feature" source="Dragon Magazine 400">
+    <Prereqs> Level 7 Assassin's Strike Upgrade 1 or Level 13 Assassin's Strike Upgrade 1 or Level 17 Assassin's Strike Upgrade 1 or Level 23 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 2, !Level 17 Assassin's Strike Upgrade 2, !Level 23 Assassin's Strike Upgrade 2 </Prereqs>
+    <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
+    <specific name="Level"> 27 </specific>
+    <rules>
+      <grant type="Internal" name="ID_INTERNAL_NO_LV27_ENCOUNTER_POWER" />
+      <grant type="Internal" name="ID_INTERNAL_BLOCK_LV27_HYBRID_PSONICS" />
+      <statadd name="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE:extra damage" value="+1d10" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_3" name="Level 27 Assassin's Strike Upgrade 3" type="Class Feature" source="Dragon Magazine 400">
+    <Prereqs> Level 13 Assassin's Strike Upgrade 2 or Level 17 Assassin's Strike Upgrade 2 or Level 23 Assassin's Strike Upgrade 2, !Level 17 Assassin's Strike Upgrade 3, !Level 23 Assassin's Strike Upgrade 3 </Prereqs>
+    <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
+    <specific name="Level"> 27 </specific>
+    <rules>
+      <grant type="Internal" name="ID_INTERNAL_NO_LV27_ENCOUNTER_POWER" />
+      <grant type="Internal" name="ID_INTERNAL_BLOCK_LV27_HYBRID_PSONICS" />
+      <statadd name="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE:extra damage" value="+1d10" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_4ECB_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_4" name="Level 27 Assassin's Strike Upgrade 4" type="Class Feature" source="Dragon Magazine 400">
+    <Prereqs> Level 17 Assassin's Strike Upgrade 3 or Level 23 Assassin's Strike Upgrade 3, !Level 23 Assassin's Strike Upgrade 4 </Prereqs>
+    <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
+    <specific name="Level"> 27 </specific>
+    <rules>
+      <grant type="Internal" name="ID_INTERNAL_NO_LV27_ENCOUNTER_POWER" />
+      <grant type="Internal" name="ID_INTERNAL_BLOCK_LV27_HYBRID_PSONICS" />
+      <statadd name="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE:extra damage" value="+1d10" />
+    </rules>
+  </RulesElement>
+  <RulesElement internal-id="ID_4ECB_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_5" name="Level 27 Assassin's Strike Upgrade 5" type="Class Feature" source="Dragon Magazine 400">
+    <Prereqs> Level 23 Assassin's Strike Upgrade 4 </Prereqs>
+    <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
+    <specific name="Level"> 27 </specific>
+    <rules>
+      <grant type="Internal" name="ID_INTERNAL_NO_LV27_ENCOUNTER_POWER" />
+      <grant type="Internal" name="ID_INTERNAL_BLOCK_LV27_HYBRID_PSONICS" />
+      <statadd name="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE:extra damage" value="+1d10" />
+    </rules>
+  </RulesElement>
+</D20Rules>

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ContentEntity } from "@4ecb/content-domain";
 
 import { evaluatePowers, powerAttackProfile } from "./powers";
-import type { EvaluatedStat } from "./stats";
+import { StatAccumulator, type EvaluatedStat } from "./stats";
 
 function entity(
   id: string,
@@ -2861,5 +2861,66 @@ describe("power attack profile", () => {
       abilities: [],
       defenses: [],
     });
+  });
+});
+
+describe("extra damage dice", () => {
+  it("sums dice statadds keyed by the power's ID or name", () => {
+    const stats = new StatAccumulator();
+    const add = (
+      id: string,
+      statName: string,
+      value: string,
+      condition?: string,
+    ) =>
+      stats.add({
+        id,
+        stat: statName,
+        value,
+        providerId: id,
+        providerName: `Upgrade ${id}`,
+        ...(condition === undefined ? {} : { condition }),
+      });
+    add("1", "POWER:extra damage", "+1d10");
+    add("2", "POWER:extra damage", "+1d10");
+    add("3", "Synthetic strike:extra damage", "+1d6");
+    add("4", "POWER:extra damage", "+1d10", "against a helpless target");
+    add("5", "OTHER:extra damage", "+4d10");
+    const evaluated = Object.fromEntries(
+      stats.allNames().map((name) => [name, stats.evaluate(name)]),
+    );
+    const [power] = evaluatePowers({
+      level: 13,
+      activeDefinitionIds: ["POWER"],
+      inventory: [],
+      stats: evaluated,
+      overlays: [],
+      entities: [
+        entity("POWER", "Synthetic strike", "Power", {
+          "Action Type": "No Action",
+          Effect: "The target takes 1d10 extra damage.",
+        }),
+      ],
+    });
+
+    expect(power?.variants).toEqual([]);
+    expect(power?.extraDamage?.dice).toBe("2d10 + 1d6");
+    expect(power?.extraDamage?.components.map((part) => part.source)).toEqual([
+      "Upgrade 1",
+      "Upgrade 2",
+      "Upgrade 3",
+    ]);
+  });
+
+  it("reports nothing without extra damage stats", () => {
+    const [power] = evaluatePowers({
+      level: 1,
+      activeDefinitionIds: ["POWER"],
+      inventory: [],
+      stats: {},
+      overlays: [],
+      entities: [entity("POWER", "Synthetic strike", "Power", {})],
+    });
+    expect(power?.extraDamage).toBeUndefined();
   });
 });

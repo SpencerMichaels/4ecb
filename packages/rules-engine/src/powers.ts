@@ -95,7 +95,26 @@ export interface EvaluatedPower {
   readonly recoveries: readonly PowerRecovery[];
   /** Extra hit points a Healing power restores (legacy CalcHealing). */
   readonly healing?: PowerHealing;
+  /** Extra damage dice other features add to this power. */
+  readonly extraDamage?: PowerExtraDamage;
   readonly unsupported: readonly string[];
+}
+
+/**
+ * Extra damage dice from the "<power ID>:extra damage" (or "<power
+ * name>:extra damage") stat, e.g. each Assassin's Strike (Hybrid) upgrade's
+ * "+1d10". Added to whatever damage the power's own text deals.
+ */
+export interface PowerExtraDamage {
+  /** The summed dice, largest die first: "2d10", "1d10 + 1d6". */
+  readonly dice: string;
+  readonly components: readonly PowerDiceComponent[];
+}
+
+export interface PowerDiceComponent {
+  readonly dice: string;
+  readonly source: string;
+  readonly provenanceId: string;
 }
 
 export interface PowerHealing {
@@ -1468,6 +1487,43 @@ function powerHealing(
     : { bonus, components: bonus === 0 ? [] : components, conditional };
 }
 
+/** Sums the applied "+NdM" contributions to the power's extra-damage stats. */
+function powerExtraDamage(
+  stats: Readonly<Record<string, EvaluatedStat>>,
+  names: readonly string[],
+): PowerExtraDamage | undefined {
+  const wanted = new Set(names.map(key));
+  const components: PowerDiceComponent[] = [];
+  const seen = new Set<string>();
+  for (const [name, stat] of Object.entries(stats)) {
+    if (!wanted.has(key(name))) continue;
+    for (const contribution of stat.contributions) {
+      if (!contribution.applied || seen.has(contribution.id)) continue;
+      seen.add(contribution.id);
+      const dice = /^\+?(\d+d\d+)$/i.exec(contribution.value.trim())?.[1];
+      if (dice !== undefined)
+        components.push({
+          dice: dice.toLocaleLowerCase(),
+          source: contribution.providerName,
+          provenanceId: contribution.id,
+        });
+    }
+  }
+  if (components.length === 0) return undefined;
+  const bySize = new Map<number, number>();
+  for (const { dice } of components) {
+    const [count, size] = dice.split("d").map(Number) as [number, number];
+    bySize.set(size, (bySize.get(size) ?? 0) + count);
+  }
+  return {
+    dice: [...bySize]
+      .sort(([left], [right]) => right - left)
+      .map(([size, count]) => `${count}d${size}`)
+      .join(" + "),
+    components,
+  };
+}
+
 interface PowerRange {
   readonly melee: boolean;
   readonly ranged: boolean;
@@ -2373,6 +2429,10 @@ export function evaluatePowers(input: {
           ...keywords.map((keyword) => `${keyword}:healing`),
         ])
       : undefined;
+    const extraDamage = powerExtraDamage(input.stats, [
+      `${power.id}:extra damage`,
+      `${power.name}:extra damage`,
+    ]);
     return [
       {
         definitionId: power.id,
@@ -2385,6 +2445,7 @@ export function evaluatePowers(input: {
         variants,
         recoveries,
         ...(healing === undefined ? {} : { healing }),
+        ...(extraDamage === undefined ? {} : { extraDamage }),
         unsupported,
       },
     ];
