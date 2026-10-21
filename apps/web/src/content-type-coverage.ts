@@ -5,8 +5,10 @@
  * public test covers the synthetic pack's types.
  *
  * - presented: a sheet surface lists it (and the builder offers or shows it).
- *   "choices" is the row of the listed feature it was chosen under
- *   ("Past life: Eladrin").
+ *   "choices" is the row of the listed feature it was chosen under or that
+ *   granted it as an alias ("Past life: Eladrin", "Dual Heritage: counts as
+ *   Elf, Human"), or a group's own row ("Background benefit: History class
+ *   skill").
  * - applied: only its effect shows, through calculated values.
  * - internal: rules plumbing or reference data a character never owns.
  * - gap: a character can have it, but nothing presents it yet.
@@ -71,7 +73,12 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   Familiar: presented("companions"),
   Skill: presented("skills"),
   "Trait Package": presented("choices"),
+  // Aliases, chosen or granted, on the row of the feature that offered
+  // them. A class's own CountsAsClass grants are implied by its identity
+  // line and stay unshown.
   CountsAsRace: presented("choices"),
+  CountsAsClass: presented("choices"),
+  CountsAsPact: presented("choices"),
   "Background Choice": presented("choices"),
   // Character Reference pages, grouped by kind after the inventory.
   Proficiency: presented("proficiencies"),
@@ -103,8 +110,6 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   Internal: internal("Engine flags (No Encounter Powers, Ki Focus User…)."),
   Grants: internal("Grant bundles for races and classes."),
   CountsAsFeature: internal("Aliases matched by prerequisites."),
-  CountsAsClass: internal("Aliases matched by prerequisites."),
-  CountsAsPact: internal("Aliases matched by prerequisites."),
   Level1Rules: internal("Character-creation rule bundles."),
   "Build Suggestions": internal("Suggested builds per class."),
   "Background Association": internal("Background skill/language links."),

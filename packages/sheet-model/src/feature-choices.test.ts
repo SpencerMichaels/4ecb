@@ -114,7 +114,10 @@ describe("feature sub-choices", () => {
     entity("RULES", "Expansion", "Level1Rules"),
     entity("BACKGROUND", "Harbor Town", "Background"),
     entity("HELPER", "Background Benefit", "Internal"),
-    entity("BENEFIT", "+2 to Streetwise", "Background Choice"),
+    {
+      ...entity("BENEFIT", "+2 to Streetwise", "Background Choice"),
+      description: "Gain a +2 bonus to Streetwise checks.",
+    },
     entity("FEAT", "Skill Focus", "Feat"),
     entity("SKILL_A", "Athletics", "Skill Training"),
     entity("SKILL_B", "Nature", "Skill Training"),
@@ -153,13 +156,31 @@ describe("feature sub-choices", () => {
     );
   });
 
-  it("gives a helper's choice to the one listed feature granted beside it", () => {
-    expect(row(model, "Harbor Town")?.choices).toEqual([
-      { id: "BENEFIT", name: "+2 to Streetwise", type: "Background Choice" },
+  it("gives a helper's choice beside one type of feature a row of its own", () => {
+    expect(row(model, "Harbor Town")?.choices).toBeUndefined();
+    const background = model.features.find(
+      ({ group }) => group === "Background",
+    );
+    expect(background?.entries.map(({ label }) => label)).toEqual([
+      "Harbor Town",
+      "Background benefit",
+    ]);
+    expect(row(model, "Background benefit")).toEqual({
+      label: "Background benefit",
+      value: "Gain a +2 bonus to Streetwise checks.",
+      choices: [
+        { id: "BENEFIT", name: "+2 to Streetwise", type: "Background Choice" },
+      ],
+    });
+    const feature = model.overview?.features.find(
+      ({ name }) => name === "Background benefit",
+    );
+    expect(feature?.fields).toEqual([
+      { label: "Benefit", value: "Gain a +2 bonus to Streetwise checks." },
     ]);
   });
 
-  it("follows the choice's supports link among several listed features", () => {
+  it("keeps the background benefit apart from several backgrounds, even a linked one", () => {
     const linked = sheet(
       [
         ...content,
@@ -188,10 +209,61 @@ describe("feature sub-choices", () => {
         occurrence("second", "SECOND", "rules", "choice"),
       ],
     );
-    expect(featureChoiceText(row(linked, "Mountain Pass")?.choices)).toBe(
+    expect(row(linked, "Mountain Pass")?.choices).toBeUndefined();
+    expect(row(linked, "Harbor Town")?.choices).toBeUndefined();
+    expect(featureChoiceText(row(linked, "Background benefit")?.choices)).toBe(
       "Mountain Pass Benefit",
     );
-    expect(row(linked, "Harbor Town")?.choices).toBeUndefined();
+  });
+
+  it("shows granted aliases on the granting feature's row", () => {
+    const aliases = sheet(
+      [
+        ...content,
+        entity("HERITAGE", "Dual Heritage", "Racial Trait"),
+        entity("ELF", "Elf", "CountsAsRace"),
+        entity("HUMAN", "Human", "CountsAsRace"),
+        entity("POWER", "Synthetic Power", "Power"),
+        entity("MULTICLASS", "Initiate", "Feat"),
+        entity("FIGHTER", "Fighter", "CountsAsClass"),
+        entity("CLASS_ALIAS", "Synthetic Class", "CountsAsClass"),
+      ],
+      [
+        occurrence("level", "LEVEL", undefined, "root"),
+        occurrence("race", "RACE", "level", "choice"),
+        occurrence("grants", "GRANTS", "race"),
+        occurrence("heritage", "HERITAGE", "grants"),
+        occurrence("elf", "ELF", "heritage"),
+        occurrence("human", "HUMAN", "heritage"),
+        // Other grants stay on their own surfaces.
+        occurrence("power", "POWER", "heritage"),
+        occurrence("trait", "TRAIT", "grants"),
+        occurrence("alias", "ALIAS", "trait", "choice"),
+        occurrence("feat", "MULTICLASS", "level", "choice"),
+        occurrence("training", "SKILL_A", "feat", "choice"),
+        occurrence("fighter", "FIGHTER", "feat"),
+        // The identity line already names the class it aliases.
+        occurrence("class", "CLASS", "level", "choice"),
+        occurrence("class-grants", "GRANTS", "class"),
+        occurrence("class-alias", "CLASS_ALIAS", "class-grants"),
+      ],
+    );
+    expect(featureChoiceText(row(aliases, "Dual Heritage")?.choices)).toBe(
+      "counts as Elf, Human",
+    );
+    expect(featureChoiceText(row(aliases, "Former life")?.choices)).toBe(
+      "Other Ancestry",
+    );
+    expect(featureChoiceText(row(aliases, "Initiate")?.choices)).toBe(
+      "Athletics; counts as Fighter",
+    );
+    expect(
+      aliases.features
+        .flatMap(({ entries }) =>
+          entries.flatMap(({ choices }) => choices ?? []),
+        )
+        .map(({ id }) => id),
+    ).not.toContain("CLASS_ALIAS");
   });
 
   it("never attaches a choice to an unlisted parent or an ambiguous helper", () => {
@@ -215,6 +287,8 @@ describe("feature sub-choices", () => {
     );
     expect(row(ambiguous, "Harbor Town")?.choices).toBeUndefined();
     expect(row(ambiguous, "Wanderer")?.choices).toBeUndefined();
+    // Features of two types beside the helper: no group owns its choice.
+    expect(row(ambiguous, "Background benefit")).toBeUndefined();
     // A level root holds every top-level choice; its one feat does not own
     // the details or background picked through other helpers.
     const levelRoot = sheet(

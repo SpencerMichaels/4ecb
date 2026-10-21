@@ -112,12 +112,19 @@ is listed as the group and the weapons it grants are not repeated
 A choice made under a listed feature shows on that feature's row, wherever the
 row renders (reference card heading, page-1/continuation reminder label, screen
 features list): "Past life: Eladrin", "Pact Choice: Fey Pact of the White
-Well". `sheet-model/src/feature-choices.ts` derives it from occurrence
-parentage only: the choice's parent is the listed feature, or an unlisted helper
-whose grantor (not a level root) granted exactly one listed feature, or several
-of which the choice's `_SupportsID` names one (a background and its "Background
-Benefit"). A generic benefit with two or more backgrounds and no link stays
-unattached.
+Well". An alias the feature grants (CountsAsRace, CountsAsClass, CountsAsPact)
+shows the same way, after any choice: "Dual Heritage: counts as Elf, Human",
+"Battle Awareness: Athletics; counts as Fighter". A class's own CountsAsClass
+grants come through its grant bundle, not a listed feature, and stay implied
+by the identity line. The background benefit is one choice drawn from all of
+a character's backgrounds, so it is a row of its own after them, not part of
+any one background: "Background benefit: History class skill", with the
+chosen benefit's text as its Benefit (a Background benefit reference card).
+`sheet-model/src/feature-choices.ts` derives all of this from occurrence
+parentage only: the choice's parent is the listed feature; or it is an
+unlisted helper whose grantor (not a level root) also granted listed features
+all of one type, and the choice becomes that group's own row, named after the
+helper in sentence case. No content names are special-cased.
 Features/rituals/character prose use stacked category-local
 two-column blocks under full-width headings. Measured splits balance column
 heights while preserving down-then-across level/name order. The power

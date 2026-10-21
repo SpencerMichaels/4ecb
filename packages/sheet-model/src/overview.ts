@@ -251,6 +251,10 @@ export function withSheetOverview(
         !fields.some((field) => /^prerequisites?$/i.test(field.label))
       )
         fields.unshift({ label: "Prerequisite", value: entity.prerequisites });
+      // A group's own choice row (Background benefit) has no entity; the
+      // chosen benefit's text is its benefit.
+      if (entity === undefined && entry.choices?.length && entry.value.trim())
+        fields.push({ label: "Benefit", value: entry.value });
       features.push({
         id,
         name: entry.label,

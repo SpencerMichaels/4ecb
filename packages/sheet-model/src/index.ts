@@ -1571,7 +1571,7 @@ export function buildEvaluatedSheetModel(
   const activeEntities = new Map(
     active.map(({ occurrence, entity }) => [occurrence.id, entity]),
   );
-  const choicesUnder = featureChoices(
+  const { byFeature: choicesUnder, rows: choiceRows } = featureChoices(
     evaluation.occurrences,
     (occurrence) => activeEntities.get(occurrence.id),
     (occurrence) =>
@@ -1609,6 +1609,26 @@ export function buildEvaluatedSheetModel(
       },
     ]);
   }
+  // A choice belonging to a whole group (the one background benefit) is a
+  // row of its own after that group's features; its text is the chosen
+  // benefit's.
+  for (const row of choiceRows)
+    features.set(row.group, [
+      ...(features.get(row.group) ?? []),
+      {
+        label: row.label,
+        value: row.choices
+          .map(({ id }) => {
+            const chosen = entities.get(id.toLocaleLowerCase());
+            return chosen === undefined
+              ? ""
+              : field(chosen, "Short Description") || chosen.description;
+          })
+          .filter(Boolean)
+          .join(" "),
+        choices: row.choices,
+      },
+    ]);
 
   const inventory = aggregateInventory(
     build.inventory.map((entry) => ({

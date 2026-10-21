@@ -182,6 +182,78 @@ describe("real-data sheet overview", () => {
     );
     expect(html).toContain("Former life: Other Ancestry</strong>");
   });
+  it("cards the background benefit after the backgrounds", () => {
+    const background = {
+      group: "Background",
+      summary: "",
+      source: "Synthetic",
+      fullTextAvailable: true,
+    };
+    const fixture = {
+      ...model,
+      overview: {
+        ...model.overview!,
+        features: [
+          {
+            ...background,
+            id: "Background:Background benefit",
+            name: "Background benefit",
+            description: "Add History to your list of class skills.",
+            fields: [
+              {
+                label: "Benefit",
+                value: "Add History to your list of class skills.",
+              },
+            ],
+            choices: [
+              {
+                id: "HISTORY",
+                name: "History class skill",
+                type: "Background Choice",
+              },
+            ],
+          },
+          ...["Tomb Robber", "Disbeliever"].map((name) => ({
+            ...background,
+            id: name,
+            name,
+            level: 1,
+            description: "",
+            fields: [{ label: "Associated Skills", value: "Stealth" }],
+          })),
+        ],
+        reminders: [],
+      },
+    };
+    const entries = references(fixture).filter(
+      (entry) => entry.group === "Background",
+    );
+    expect(entries.map(({ name, choice }) => [name, choice])).toEqual([
+      ["Disbeliever", undefined],
+      ["Tomb Robber", undefined],
+      ["Background benefit", "History class skill"],
+    ]);
+    expect(entries[2]!.parts.map((part) => [part.label, part.block])).toEqual([
+      [
+        "Benefit",
+        {
+          kind: "paragraph",
+          text: "Add History to your list of class skills.",
+        },
+      ],
+    ]);
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={fixture}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+      />,
+    );
+    expect(html).toContain(
+      'Background benefit<span class="ov-reference-choice">: History class skill</span>',
+    );
+  });
   it("places muted quantity-inclusive weights beside inventory names", () => {
     const fixture = {
       ...model,
