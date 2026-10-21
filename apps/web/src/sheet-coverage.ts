@@ -6,6 +6,7 @@
 import type { ContentEntity } from "@4ecb/content-domain";
 import type { CharacterOccurrence } from "@4ecb/rules-engine";
 import {
+  SHEET_ALIAS_TYPES,
   SHEET_IDENTITY_TYPES,
   type CharacterSheetModel,
 } from "@4ecb/sheet-model";
@@ -229,6 +230,23 @@ export function sheetPresence(
       continue;
     }
     const surfaces = sheetSurfacesOf(entity, index);
+    // An alias the identity line's own race or class grants (Longtooth
+    // Shifter counts as Shifter; Hexblade, through its grant bundle, as
+    // Warlock) is implied by that line. The first shown ancestor decides.
+    if (surfaces.length === 0 && SHEET_ALIAS_TYPES.includes(entity.type))
+      for (
+        let ancestor = parent;
+        ancestor !== undefined;
+        ancestor =
+          ancestor.parentId === undefined
+            ? undefined
+            : byOccurrence.get(ancestor.parentId)
+      ) {
+        const shown = entities.get(key(ancestor.definitionId));
+        const on = shown === undefined ? [] : sheetSurfacesOf(shown, index);
+        if (on.includes("identity")) surfaces.push("identity");
+        if (on.length > 0) break;
+      }
     const coverage = contentTypeCoverage(entity.type);
     const status: PresenceStatus =
       surfaces.length > 0

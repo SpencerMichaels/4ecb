@@ -1,6 +1,10 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { SHEET_FEATURE_TYPES, SHEET_IDENTITY_TYPES } from "@4ecb/sheet-model";
+import {
+  SHEET_ALIAS_TYPES,
+  SHEET_FEATURE_TYPES,
+  SHEET_IDENTITY_TYPES,
+} from "@4ecb/sheet-model";
 
 import { CONTENT_TYPE_COVERAGE } from "./content-type-coverage";
 
@@ -29,8 +33,14 @@ describe("content type coverage registry", () => {
         `${type}: registry and SHEET_FEATURE_TYPES disagree`,
       ).toBe(SHEET_FEATURE_TYPES.includes(type));
       if (surfaces.includes("identity"))
-        // A hybrid's classes fill the Class identity line.
-        expect(identity.has(type) || type === "Hybrid Class", type).toBe(true);
+        // A hybrid's classes fill the Class identity line; an alias the
+        // identity race or class grants is implied by that line.
+        expect(
+          identity.has(type) ||
+            type === "Hybrid Class" ||
+            SHEET_ALIAS_TYPES.includes(type),
+          type,
+        ).toBe(true);
     }
   });
 });

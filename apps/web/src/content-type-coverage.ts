@@ -74,10 +74,10 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   Skill: presented("skills"),
   "Trait Package": presented("choices"),
   // Aliases, chosen or granted, on the row of the feature that offered
-  // them. A class's own CountsAsClass grants are implied by its identity
-  // line and stay unshown.
-  CountsAsRace: presented("choices"),
-  CountsAsClass: presented("choices"),
+  // them; one the identity line's race or class grants (Longtooth Shifter
+  // as Shifter, Hexblade as Warlock) is implied by that line.
+  CountsAsRace: presented("choices", "identity"),
+  CountsAsClass: presented("identity"),
   CountsAsPact: presented("choices"),
   "Background Choice": presented("choices"),
   // Character Reference pages, grouped by kind after the inventory.

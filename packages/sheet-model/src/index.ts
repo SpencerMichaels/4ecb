@@ -50,7 +50,11 @@ import {
   sheetProficiencies,
   type SheetProficiencyGroup,
 } from "./proficiencies";
-export { featureChoiceText, type SheetFeatureChoice } from "./feature-choices";
+export {
+  featureChoiceText,
+  SHEET_ALIAS_TYPES,
+  type SheetFeatureChoice,
+} from "./feature-choices";
 export type {
   SheetProficiencyGroup,
   SheetProficiencyKind,

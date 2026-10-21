@@ -237,6 +237,40 @@ describe("sheet presence", () => {
     expect(surfaces("ID_PACT")).toEqual([]);
   });
 
+  it("counts an alias the identity line's class grants as shown there", () => {
+    const content = new Map(
+      [
+        ...entities,
+        entity("ID_AS_WARBLADE", "Warblade", "CountsAsClass"),
+        entity("ID_AS_FIGHTER", "Fighter", "CountsAsClass"),
+      ].map((value) => [value.id.toLowerCase(), value]),
+    );
+    const shown = sheetPresence(
+      [
+        occurrence("class", "ID_CLASS"),
+        occurrence("grants", "ID_GRANTS", "class"),
+        occurrence("alias", "ID_AS_WARBLADE", "grants"),
+        occurrence("feature", "ID_FEATURE", "class"),
+        // A listed feature's alias needs its row; the class does not imply it.
+        occurrence("feature-alias", "ID_AS_FIGHTER", "feature"),
+      ],
+      content,
+      sheet({
+        identity: [{ label: "Class", value: "Warblade" }],
+        features: [
+          {
+            group: "Class Feature",
+            entries: [{ label: "Blade Focus", value: "" }],
+          },
+        ],
+      }),
+    );
+    const surfaces = (id: string) =>
+      shown.find((value) => value.definitionId === id)?.surfaces;
+    expect(surfaces("ID_AS_WARBLADE")).toEqual(["identity"]);
+    expect(surfaces("ID_AS_FIGHTER")).toEqual([]);
+  });
+
   it("splits a hybrid's Class identity line into its classes", () => {
     const hybrid = sheetPresence(
       [occurrence("hybrid", "ID_HYBRID_A")],
