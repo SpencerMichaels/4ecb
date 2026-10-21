@@ -2,7 +2,9 @@
  * Private coverage audit (docs/coverage-audit-proposal.md, steps 1 and 2):
  * classifies every content type in an exact pack against the checked-in
  * registry, and lists the reference fields that point from one entity to
- * another. Writes JSON and Markdown reports; the pack and reports stay ignored.
+ * another. It also lists every grant or select target the pack lacks (a
+ * dangling ID does nothing in legacy or here), outside a reviewed allowlist.
+ * Writes JSON and Markdown reports; the pack and reports stay ignored.
  *
  *   pnpm audit:coverage [PACK.4ecp] [--out=DIR]
  */
@@ -13,7 +15,11 @@ import { promisify } from "node:util";
 
 import type { ContentEntity } from "@4ecb/content-domain";
 import { decodeContentPack } from "@4ecb/content-pack";
-import { parseRules, type EvaluatedChoice } from "@4ecb/rules-engine";
+import {
+  RulesIndex,
+  parseRules,
+  type EvaluatedChoice,
+} from "@4ecb/rules-engine";
 import {
   SHEET_FEATURE_TYPES,
   SHEET_IDENTITY_TYPES,
@@ -101,6 +107,90 @@ function registryProblems(
   if (coverage.kind === "internal" && selectRules > 0)
     problems.push("registry says internal, but a choice selects it");
   return problems;
+}
+
+/**
+ * Grant or select targets known to be missing, with the reason each stays.
+ * Anything else missing fails the audit, so new dangling IDs are caught.
+ */
+const MISSING_TARGET_ALLOWLIST: Readonly<Record<string, string>> = {
+  "[Dilettante]":
+    "Adept Dilettante's placeholder for the Dilettante power's class; legacy FindDilettante, unported (legacy-special-cases.ts).",
+  ID_TIV_COMPANION_INVISIBLE_STALKER:
+    "Summon Invisible Stalker's community summon card was never authored; adding it would copy the published stat block.",
+  ID_PGF_CLASS_FEATURE_ENTANGLINGFLAIL:
+    "Power Strike Specialization lists specializations from a part that is not supplied; the six supplied ones are offered.",
+  ID_PGF_CLASS_FEATURE_PIERCINGSPEAR:
+    "Power Strike Specialization lists specializations from a part that is not supplied.",
+  ID_PGF_CLASS_FEATURE_RUPTURINGPICK:
+    "Power Strike Specialization lists specializations from a part that is not supplied.",
+  ID_PGF_CLASS_FEATURE_SMASHINGHAMMER:
+    "Power Strike Specialization lists specializations from a part that is not supplied.",
+  ID_PGF_POWER_WHIRLINGFLAIL:
+    "Power Strike Specialization lists specializations from a part that is not supplied.",
+};
+
+interface MissingTarget {
+  readonly target: string;
+  /** "case-only": the ID matches a record only ignoring case. */
+  readonly rule: "grant" | "select" | "case-only";
+  readonly providers: readonly string[];
+  readonly allowed: string | undefined;
+}
+
+/**
+ * Grant targets the engine cannot resolve (by ID, else by name and type, as
+ * RulesIndex.find does) and ID tokens in select categories that no entity's
+ * ID, name or Category carries.
+ */
+function missingTargets(entities: readonly ContentEntity[]): MissingTarget[] {
+  const index = new RulesIndex(entities);
+  const categoryValues = new Set(
+    entities.flatMap((entity) => [...index.categoryValues(entity)]),
+  );
+  const missing = new Map<
+    string,
+    { rule: MissingTarget["rule"]; providers: Set<string> }
+  >();
+  const note = (target: string, rule: MissingTarget["rule"], owner: string) => {
+    const row = missing.get(`${rule}\0${target}`) ?? {
+      rule,
+      providers: new Set<string>(),
+    };
+    row.providers.add(owner);
+    missing.set(`${rule}\0${target}`, row);
+  };
+  for (const entity of entities)
+    for (const rule of parseRules(entity.id, entity.rules)) {
+      if (rule.kind === "grant") {
+        const target = index.find(rule.name, rule.type);
+        if (target === undefined) note(rule.name.trim(), "grant", entity.id);
+        // Lookups ignore case, so a case-only match resolves here; legacy
+        // may differ, and the match can be the wrong record (horse-6).
+        else if (
+          key(target.id) === key(rule.name) &&
+          target.id !== rule.name.trim()
+        )
+          note(rule.name.trim(), "case-only", entity.id);
+      } else if (rule.kind === "select" && rule.category !== undefined) {
+        for (const token of rule.category.split(/[|,]/)) {
+          const value = token.trim().replace(/^!/, "");
+          if (/^ID_/i.test(value) && !categoryValues.has(key(value)))
+            note(value, "select", entity.id);
+        }
+      }
+    }
+  return [...missing]
+    .map(([rowKey, row]) => {
+      const target = rowKey.slice(rowKey.indexOf("\0") + 1);
+      return {
+        target,
+        rule: row.rule,
+        providers: [...row.providers].sort(),
+        allowed: MISSING_TARGET_ALLOWLIST[target],
+      };
+    })
+    .sort((left, right) => left.target.localeCompare(right.target));
 }
 
 function idTokens(value: string): string[] {
@@ -258,6 +348,11 @@ async function main(): Promise<void> {
     }))
     .sort((left, right) => right.entities - left.entities);
 
+  const missing = missingTargets(entities);
+  const unexpectedMissing = missing.filter(
+    (row) => row.rule !== "case-only" && row.allowed === undefined,
+  );
+
   await mkdir(outDir, { recursive: true });
   const report = {
     pack: {
@@ -268,6 +363,7 @@ async function main(): Promise<void> {
     types: typeRows,
     staleRegistry,
     references: referenceRows,
+    missingTargets: missing,
   };
   await writeFile(
     resolve(outDir, "coverage.json"),
@@ -297,6 +393,15 @@ async function main(): Promise<void> {
       ),
     ...staleRegistry.map(
       (type) => `- **${type}**: in the registry, not in the pack`,
+    ),
+    "",
+    "## Missing grant and select targets",
+    "",
+    "| Target | Rule | Providers | Allowlisted because |",
+    "| --- | --- | --- | --- |",
+    ...missing.map(
+      (row) =>
+        `| ${cell(row.target)} | ${row.rule} | ${cell(row.providers.slice(0, 3).join(", "))}${row.providers.length > 3 ? ` (+${row.providers.length - 3})` : ""} | ${cell(row.allowed ?? (row.rule === "case-only" ? "resolves ignoring case; check it is the intended record" : "**not allowlisted**"))} |`,
     ),
     "",
     "## Gaps (registry), by how often a character can get them",
@@ -371,10 +476,14 @@ async function main(): Promise<void> {
   console.log(
     `${typeRows.length} types, ${problems} with registry problems, ` +
       `${referenceRows.length} reference fields ` +
-      `(${unshown.length} not shown). ` +
+      `(${unshown.length} not shown), ` +
+      `${unexpectedMissing.length} missing grant/select targets ` +
+      `(${missing.filter((row) => row.allowed !== undefined).length} allowlisted, ` +
+      `${missing.filter((row) => row.rule === "case-only").length} matching only ignoring case). ` +
       `Reports in ${outDir}.`,
   );
-  if (problems > 0 || staleRegistry.length > 0) process.exitCode = 1;
+  if (problems > 0 || staleRegistry.length > 0 || unexpectedMissing.length > 0)
+    process.exitCode = 1;
 }
 
 await main();

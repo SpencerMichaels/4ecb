@@ -89,4 +89,182 @@
       <modify Field="Attack" value="Base + 4 vs. AC" />
     </rules>
   </RulesElement>
+
+  <!-- Dangling grant IDs in the merged XML (audit:coverage's missing grant
+       targets); legacy dropped each grant, so the option did nothing. -->
+  <!-- Typos for the Athletics and Endurance associations, so these
+       backgrounds' benefit never offered that skill. -->
+  <RemoveNodes internal-id="ID_FMP_BACKGROUND_731"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_BACKGROUND_731">
+    <rules>
+      <grant name="ID_INTERNAL_BACKGROUND_ASSOCIATION_ATHLETICS" type="Background Association" />
+      <grant name="ID_INTERNAL_BACKGROUND_ASSOCIATION_PERCEPTION" type="Background Association" />
+    </rules>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_BACKGROUND_714"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_BACKGROUND_714">
+    <rules>
+      <grant name="ID_INTERNAL_BACKGROUND_ASSOCIATION_HISTORY" type="Background Association" />
+      <grant name="ID_INTERNAL_BACKGROUND_ASSOCIATION_ENDURANCE" type="Background Association" />
+    </rules>
+  </AppendNodes>
+  <!-- The four mul backgrounds grant a "Mul" association no record defines
+       (associations are skills and languages; mul have no racial language),
+       so it is dropped. Driven to Vengeance lists Associated Languages but
+       never granted them; it now does, like other backgrounds with a
+       language list (Tablelands - Herder). -->
+  <RemoveNodes internal-id="ID_FMP_BACKGROUND_715"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_BACKGROUND_715">
+    <rules>
+      <grant name="ID_INTERNAL_BACKGROUND_ASSOCIATION_HISTORY" type="Background Association" />
+      <grant name="ID_INTERNAL_BACKGROUND_ASSOCIATION_DUNGEONEERING" type="Background Association" />
+      <grant name="ID_INTERNAL_BACKGROUND_ASSOCIATION_DEEP_SPEECH" type="Background Association" />
+      <grant name="ID_INTERNAL_BACKGROUND_ASSOCIATION_DRACONIC" type="Background Association" />
+      <grant name="ID_INTERNAL_BACKGROUND_ASSOCIATION_ELVEN" type="Background Association" />
+      <grant name="ID_INTERNAL_BACKGROUND_ASSOCIATION_GIANT" type="Background Association" />
+    </rules>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_BACKGROUND_716"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_BACKGROUND_716">
+    <rules>
+      <grant name="ID_INTERNAL_BACKGROUND_ASSOCIATION_NATURE" type="Background Association" />
+      <grant name="ID_INTERNAL_BACKGROUND_ASSOCIATION_PERCEPTION" type="Background Association" />
+    </rules>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_BACKGROUND_717"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_BACKGROUND_717">
+    <rules>
+      <grant name="ID_INTERNAL_BACKGROUND_ASSOCIATION_INTIMIDATE" type="Background Association" />
+      <grant name="ID_INTERNAL_BACKGROUND_ASSOCIATION_STEALTH" type="Background Association" />
+    </rules>
+  </AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_BACKGROUND_718"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_BACKGROUND_718">
+    <rules>
+      <grant name="ID_INTERNAL_BACKGROUND_ASSOCIATION_ATHLETICS" type="Background Association" />
+      <grant name="ID_INTERNAL_BACKGROUND_ASSOCIATION_INTIMIDATE" type="Background Association" />
+    </rules>
+  </AppendNodes>
+  <!-- Pact Initiate (Sorcerer-King pact) misspells the CountsAsPact ID, so
+       it never counted as the pact (the warlock's own feature does). -->
+  <RemoveNodes internal-id="ID_INTERNAL_CLASS_FEATURE_SORCERERKING_PACT_INITIATE"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_INTERNAL_CLASS_FEATURE_SORCERERKING_PACT_INITIATE">
+    <rules>
+      <grant name="ID_FMP_POWER_12887" type="Power" />
+      <modify Field="Power Usage" value="Encounter" />
+      <grant name="ID_INTERNAL_COUNTSASPACT_SORCERER-KING_PACT" type="CountsAsPact" />
+    </rules>
+  </AppendNodes>
+  <!-- Serene Blade grants one-handed military heavy blades plus a
+       "two-handed" group no record defines, then glaive, greatsword and
+       falchion one by one. The Military Heavy Blade group grants exactly
+       those seven weapons. -->
+  <RemoveNodes internal-id="ID_FMP_CLASS_FEATURE_4261"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_4261">
+    <rules>
+      <grant name="ID_INTERNAL_PROFICIENCY_MILITARY_HEAVY_BLADE" type="Proficiency" />
+      <statadd name="AC" value="+Wisdom modifier" type="Ability" not-wearing="armor:heavy" />
+    </rules>
+  </AppendNodes>
+  <!-- Tivaan's companion cards (36-companion.part): the Simian 6 record was
+       authored under the ID ID_TIV_FEAT_COMPANION-horse-6, and Simian 18-7
+       under BEAR-18-7. So the horse had no level 6 record and got the
+       simian's (which changes nothing on a horse), the simian had neither,
+       and the bear and horse had no 18-7 record (ability increases at 4, 8
+       and 14). Each record is restored under the ID its companion grants;
+       the horse matches the simian's level 6 numbers at every other level,
+       and an 18-7 record has the same scores as its 18-8 record (three
+       increases either way). -->
+  <DeleteElement internal-id="ID_TIV_FEAT_COMPANION-horse-6" />
+  <RulesElement name="Companion Horse 6" type="Companion" internal-id="ID_TIV_FEAT_COMPANION-HORSE-6" source="Tivaan's Companion Cards">
+    <Prereqs> Unselectable; 6th Level </Prereqs>
+    <specific name="Short Description"> Horse Companion: 6th Level </specific>
+    <specific name="type" />
+    <specific name="Associated Power Info" />
+    <specific name="Associated Powers" />
+    <rules>
+      <modify name="Companion: Horse" type="Power" Field="Companion" value="Horse 6th Level" />
+      <modify name="Companion: Horse" type="Power" Field="Defenses" value="AC 20; Fortitude 19, Reflex 18, Will 18" />
+      <modify name="Companion: Horse" type="Power" Field="Hit Points" value="62" />
+      <modify name="Companion: Horse" type="Power" Field="Healing Surge Value" value="Healing Surge Value: 15 (2 Surges per day)" />
+    </rules>
+  </RulesElement>
+  <RulesElement name="Companion Simian 6" type="Companion" internal-id="ID_TIV_FEAT_COMPANION-SIMIAN-6" source="Tivaan's Companion Cards">
+    <Prereqs> Unselectable; 6th Level </Prereqs>
+    <specific name="Short Description"> Simian Companion: 6th Level </specific>
+    <specific name="type" />
+    <specific name="Associated Power Info" />
+    <specific name="Associated Powers" />
+    <rules>
+      <modify name="Companion: Simian" type="Power" Field="Companion" value="Simian 6th Level" />
+      <modify name="Companion: Simian" type="Power" Field="Defenses" value="AC 20; Fortitude 19, Reflex 18, Will 18" />
+      <modify name="Companion: Simian" type="Power" Field="Hit Points" value="62" />
+      <modify name="Companion: Simian" type="Power" Field="Healing Surge Value" value="Healing Surge Value: 15 (2 Surges per day)" />
+    </rules>
+  </RulesElement>
+  <RulesElement name="Companion Simian 18-7" type="Companion" internal-id="ID_TIV_FEAT_COMPANION-SIMIAN-18-7" source="Tivaan's Companion Cards">
+    <Prereqs> Unselectable; 18th Level </Prereqs>
+    <specific name="Short Description" />
+    <specific name="type" />
+    <specific name="Associated Power Info" />
+    <specific name="Associated Powers" />
+    <rules>
+      <modify name="Companion: Simian" type="Power" Field="Strength" value="18" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_STRENGTH&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_STRENGTH&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_STRENGTH" />
+      <modify name="Companion: Simian" type="Power" Field="Constitution" value="18" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_CONSTITUTION&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_CONSTITUTION&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_CONSTITUTION" />
+      <modify name="Companion: Simian" type="Power" Field="Dexterity" value="20" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_DEXTERITY&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_DEXTERITY&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_DEXTERITY" />
+      <modify name="Companion: Simian" type="Power" Field="Intelligence" value="10" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_INTELLIGENCE&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_INTELLIGENCE&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_INTELLIGENCE" />
+      <modify name="Companion: Simian" type="Power" Field="Wisdom" value="16" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_WISDOM&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_WISDOM&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_WISDOM" />
+      <modify name="Companion: Simian" type="Power" Field="Charisma" value="10" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_CHARISMA&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_CHARISMA&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_CHARISMA" />
+    </rules>
+  </RulesElement>
+  <RulesElement name="Companion Bear 18-7" type="Companion" internal-id="ID_TIV_FEAT_COMPANION-BEAR-18-7" source="Tivaan's Companion Cards">
+    <Prereqs> Unselectable; 18th Level </Prereqs>
+    <specific name="Short Description" />
+    <specific name="type" />
+    <specific name="Associated Power Info" />
+    <specific name="Associated Powers" />
+    <rules>
+      <modify name="Companion: Bear" type="Power" Field="Strength" value="20" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_STRENGTH&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_STRENGTH&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_STRENGTH" />
+      <modify name="Companion: Bear" type="Power" Field="Constitution" value="18" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_CONSTITUTION&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_CONSTITUTION&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_CONSTITUTION" />
+      <modify name="Companion: Bear" type="Power" Field="Dexterity" value="16" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_DEXTERITY&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_DEXTERITY&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_DEXTERITY" />
+      <modify name="Companion: Bear" type="Power" Field="Intelligence" value="10" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_INTELLIGENCE&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_INTELLIGENCE&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_INTELLIGENCE" />
+      <modify name="Companion: Bear" type="Power" Field="Wisdom" value="16" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_WISDOM&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_WISDOM&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_WISDOM" />
+      <modify name="Companion: Bear" type="Power" Field="Charisma" value="10" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_CHARISMA&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_CHARISMA&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_CHARISMA" />
+    </rules>
+  </RulesElement>
+  <RulesElement name="Companion Horse 18-7" type="Companion" internal-id="ID_TIV_FEAT_COMPANION-HORSE-18-7" source="Tivaan's Companion Cards">
+    <Prereqs> Unselectable; 18th Level </Prereqs>
+    <specific name="Short Description" />
+    <specific name="type" />
+    <specific name="Associated Power Info" />
+    <specific name="Associated Powers" />
+    <rules>
+      <modify name="Companion: Horse" type="Power" Field="Strength" value="18" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_STRENGTH&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_STRENGTH&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_STRENGTH" />
+      <modify name="Companion: Horse" type="Power" Field="Constitution" value="18" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_CONSTITUTION&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_CONSTITUTION&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_CONSTITUTION" />
+      <modify name="Companion: Horse" type="Power" Field="Dexterity" value="20" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_DEXTERITY&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_DEXTERITY&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_DEXTERITY" />
+      <modify name="Companion: Horse" type="Power" Field="Intelligence" value="10" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_INTELLIGENCE&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_INTELLIGENCE&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_INTELLIGENCE" />
+      <modify name="Companion: Horse" type="Power" Field="Wisdom" value="16" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_WISDOM&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_WISDOM&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_WISDOM" />
+      <modify name="Companion: Horse" type="Power" Field="Charisma" value="10" Requires="ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_4)_CHARISMA&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_8)_CHARISMA&amp;ID_INTERNAL_COMPANION_ABILITY_INCREASE_(LEVEL_14)_CHARISMA" />
+    </rules>
+  </RulesElement>
+
+  <!-- Level 5 Scholar Feature (Dragon 399 theme). Its Draconic/Dwarven/
+       Elven language choice requires "!L2|!L3|!L4", which the legacy grammar
+       reads as "!(L2 | !L3 | !L4)", i.e. lacks Draconic but knows Dwarven and
+       Elven, so most scholars got no language at level 5. And the Level 10
+       Scholar Feature grants every language, which switched the "knows all
+       three" alternative on at 10th level with nothing left to choose, an
+       unresolvable required choice. The intended conditions are written in
+       the same grammar, and from 10th level neither choice is needed. -->
+  <RemoveNodes internal-id="ID_FMP_CLASS_FEATURE_3883"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_3883">
+    <rules>
+      <select type="Class Feature" number="1" Category="Level 5 Scholar Feature" requires="ID_INTERNAL_SKILL_TRAINING_ARCANA&amp;ID_INTERNAL_SKILL_TRAINING_DUNGEONEERING&amp;ID_INTERNAL_SKILL_TRAINING_HISTORY&amp;ID_INTERNAL_SKILL_TRAINING_NATURE&amp;ID_INTERNAL_SKILL_TRAINING_RELIGION">
+Choose a Skill for +2 Bonus
+      </select>
+      <select type="Skill Training" number="1" Category="ID_FMP_SKILL_2|ID_FMP_SKILL_7|ID_FMP_SKILL_11|ID_FMP_SKILL_16|ID_FMP_SKILL_18" requires="!MaxedOutSkillsScholar" />
+      <select type="Language" number="1" Category="ID_FMP_LANGUAGE_1|ID_FMP_LANGUAGE_6|ID_FMP_LANGUAGE_7|ID_FMP_LANGUAGE_8|ID_FMP_LANGUAGE_18|ID_FMP_LANGUAGE_19|ID_FMP_LANGUAGE_20" requires="ID_FMP_LANGUAGE_2&amp;ID_FMP_LANGUAGE_3&amp;ID_FMP_LANGUAGE_4&amp;!ID_FMP_CLASS_FEATURE_3884" />
+      <select type="Language" number="1" Category="ID_FMP_LANGUAGE_2|ID_FMP_LANGUAGE_3|ID_FMP_LANGUAGE_4" requires="!ID_FMP_LANGUAGE_2&amp;ID_FMP_LANGUAGE_3&amp;ID_FMP_LANGUAGE_4|ID_FMP_CLASS_FEATURE_3884" />
+    </rules>
+  </AppendNodes>
 </D20Rules>
