@@ -59,7 +59,6 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   "Epic Destiny": presented("features", "identity"),
   Race: presented("identity"),
   Class: presented("identity"),
-  "Hybrid Class": presented("identity"),
   Size: presented("identity"),
   Gender: presented("identity"),
   Alignment: presented("identity"),
@@ -115,6 +114,10 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   "Item Set": internal("Set metadata for Item Set Benefit."),
 
   // Known gaps, for triage
+  "Hybrid Class": gap(
+    'The Class identity line shows "Hybrid" (the hybrid marker class) ' +
+      "instead of the two hybrid classes.",
+  ),
   "Trait Package": gap(
     "Its class features are listed, but the package itself (e.g. the pact) " +
       "is not named on the sheet.",

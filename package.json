@@ -23,6 +23,7 @@
     "audit:rules": "tsx scripts/audit-rules.ts",
     "audit:coverage": "tsx scripts/audit-coverage.ts",
     "audit:native-workflow": "tsx scripts/audit-native-workflow.ts",
+    "audit:coverage-matrix": "tsx scripts/audit-coverage-matrix.ts",
     "audit:legacy-special-cases": "tsx scripts/audit-legacy-special-cases.ts",
     "evaluate:character": "tsx scripts/evaluate-character.ts",
     "evaluate:matrix": "bash scripts/evaluate-character-matrix.sh",
