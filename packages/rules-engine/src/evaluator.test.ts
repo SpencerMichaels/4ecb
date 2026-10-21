@@ -478,9 +478,10 @@ describe("character evaluator", () => {
         definitionId: "BLOCKED",
         eligible: false,
         sourceEntitled: false,
-        rulesLegal: true,
+        // Already owned (imported), so choosing it again would be dropped.
+        rulesLegal: false,
         activeDefinition: true,
-        reasons: ["source-unentitled"],
+        reasons: ["source-unentitled", "owned"],
       },
       {
         definitionId: "DEPENDENT",
@@ -726,6 +727,77 @@ describe("character evaluator", () => {
     );
     expect(result.diagnostics).not.toContainEqual(
       expect.objectContaining({ code: "prerequisite.failed" }),
+    );
+  });
+
+  it("checks a choice's pick without what the pick itself grants", () => {
+    const definitions = [
+      entity("ROOT", "1", "Level", {
+        rules: [rule("select", { type: "Racial Trait", Category: "BORN" }, 0)],
+      }),
+      entity("DWARF", "Dwarf", "Race"),
+      entity("COUNTS_DWARF", "Dwarf", "CountsAsRace"),
+      entity("COUNTS_HUMAN", "Human", "CountsAsRace"),
+      entity("BORN_DWARF", "Born (Dwarf)", "Racial Trait", {
+        categories: ["BORN"],
+        prerequisites: "!Dwarf Race,!Dwarf CountsAsRace",
+        rules: [
+          rule("grant", { name: "COUNTS_DWARF", type: "CountsAsRace" }, 0),
+        ],
+      }),
+      entity("BORN_HUMAN", "Born (Human)", "Racial Trait", {
+        categories: ["BORN"],
+        prerequisites: "!Human Race,!Human CountsAsRace",
+        rules: [
+          rule("grant", { name: "COUNTS_HUMAN", type: "CountsAsRace" }, 0),
+        ],
+      }),
+    ];
+    const evaluateWith = (extra: CharacterOccurrence[]) =>
+      evaluateCharacter(
+        {
+          level: 1,
+          baseAbilities: {},
+          occurrences: [
+            rootOccurrence,
+            ...extra,
+            {
+              id: "born",
+              definitionId: "BORN_DWARF",
+              acquiredLevel: 1,
+              parentId: "root",
+              ruleOrdinal: 0,
+              choiceIndex: 0,
+              kind: "choice",
+            },
+          ],
+          inventory: [],
+        },
+        definitions,
+      );
+
+    const mixed = evaluateWith([]);
+    expect(mixed.activeDefinitionIds).toContain("COUNTS_DWARF");
+    expect(mixed.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "prerequisite.failed" }),
+    );
+    expect(mixed.choices[0]?.candidates).toContainEqual(
+      expect.objectContaining({ definitionId: "BORN_DWARF", eligible: true }),
+    );
+    // A real dwarf still fails it.
+    const dwarf = evaluateWith([
+      {
+        id: "race",
+        definitionId: "DWARF",
+        acquiredLevel: 1,
+        kind: "choice",
+      },
+    ]);
+    expect(dwarf.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "prerequisite.failed",
+        occurrenceId: "born",
+      }),
     );
   });
 
@@ -2267,6 +2339,85 @@ describe("character evaluator", () => {
     expect(result.choices[3]?.candidates).toMatchObject([
       { definitionId: "CLERIC_SKILL", eligible: true, reasons: [] },
     ]);
+  });
+
+  it("does not offer a definition already owned by the choice's level", () => {
+    // A pick that duplicates an owned definition is dropped by the topology
+    // pass, so offering it would make the pick silently vanish.
+    const definitions = [
+      entity("LEVEL_1", "1", "Level", {
+        rules: [rule("select", { type: "Feat" }, 0)],
+      }),
+      entity("LEVEL_2", "2", "Level", {
+        rules: [rule("select", { type: "Feat" }, 0)],
+      }),
+      entity("TAKEN", "Taken feat", "Feat"),
+      entity("OTHER", "Other feat", "Feat"),
+    ];
+    const occurrences: CharacterOccurrence[] = [
+      {
+        id: "level-1",
+        definitionId: "LEVEL_1",
+        acquiredLevel: 1,
+        kind: "root",
+      },
+      {
+        id: "level-2",
+        definitionId: "LEVEL_2",
+        acquiredLevel: 2,
+        kind: "root",
+      },
+      {
+        id: "taken",
+        definitionId: "TAKEN",
+        acquiredLevel: 1,
+        parentId: "level-1",
+        ruleOrdinal: 0,
+        choiceIndex: 0,
+        kind: "choice",
+      },
+    ];
+    const open = evaluateCharacter(
+      { level: 2, baseAbilities: {}, occurrences, inventory: [] },
+      definitions,
+    );
+    const levelOne = open.choices.find(
+      ({ providerOccurrenceId }) => providerOccurrenceId === "level-1",
+    );
+    const levelTwo = open.choices.find(
+      ({ providerOccurrenceId }) => providerOccurrenceId === "level-2",
+    );
+    expect(levelOne?.candidates).toMatchObject([
+      { definitionId: "TAKEN", eligible: true, reasons: [] },
+      { definitionId: "OTHER", eligible: true, reasons: [] },
+    ]);
+    expect(levelTwo?.candidates).toMatchObject([
+      { definitionId: "TAKEN", eligible: false, reasons: ["owned"] },
+      { definitionId: "OTHER", eligible: true, reasons: [] },
+    ]);
+
+    // Choosing it anyway (a house rule) is dropped, matching the offer.
+    const duplicated = evaluateCharacter(
+      {
+        level: 2,
+        baseAbilities: {},
+        occurrences: [
+          ...occurrences,
+          {
+            id: "again",
+            definitionId: "TAKEN",
+            acquiredLevel: 2,
+            parentId: "level-2",
+            ruleOrdinal: 0,
+            choiceIndex: 0,
+            kind: "choice",
+          },
+        ],
+        inventory: [],
+      },
+      definitions,
+    );
+    expect(duplicated.occurrences.map(({ id }) => id)).not.toContain("again");
   });
 
   it("keeps house rules visible but makes the result non-legal", () => {

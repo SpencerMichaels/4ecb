@@ -32,14 +32,16 @@ import {
 } from "./ir";
 import { StatAccumulator, type EvaluatedStat } from "./stats";
 import {
+  choiceSelectionSetAside,
   evaluatePrerequisite,
+  withoutOwnedDefinitions,
   type PrerequisiteContext,
 } from "./prerequisites";
 import { evaluatePowers, type EvaluatedPower } from "./powers";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v24-2026-10-21-scoped-qualifiers";
+  "evaluated-character-v25-2026-10-21-owned-candidates";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -1187,6 +1189,35 @@ function evaluateCharacterInternal(
     );
   };
 
+  const occurrencesByDefinition = new Map<string, CharacterOccurrence[]>();
+  for (const occurrence of occurrences) {
+    const definitionKey = key(occurrence.definitionId);
+    occurrencesByDefinition.set(definitionKey, [
+      ...(occurrencesByDefinition.get(definitionKey) ?? []),
+      occurrence,
+    ]);
+  }
+  /**
+   * Whether choosing `definition` in a slot at `choiceLevel` would duplicate
+   * an occurrence owned by then. Mirrors the topology pass's duplicate drop:
+   * the slot's own selection and its descendants don't count.
+   */
+  const ownedElsewhere = (
+    definition: ContentEntity,
+    equivalent: ContentEntity,
+    choiceLevel: number,
+    selected: CharacterOccurrence | undefined,
+  ): boolean =>
+    [definition, ...(equivalent === definition ? [] : [equivalent])].some(
+      (entity) =>
+        (occurrencesByDefinition.get(key(entity.id)) ?? []).some(
+          (owned) =>
+            owned.acquiredLevel <= choiceLevel &&
+            (selected === undefined ||
+              (owned.id !== selected.id &&
+                !isDescendantOf(owned, selected.id))),
+        ),
+    );
   const candidateFor = (
     rule: SelectRule,
     provider: CharacterOccurrence,
@@ -1429,7 +1460,6 @@ function evaluateCharacterInternal(
                 const definition = index.get(candidate.definitionId);
                 if (
                   rule.existing ||
-                  siblingDefinitionIds.size === 0 ||
                   definition === undefined ||
                   key(definition.name) === key(defaultName(rule) ?? "")
                 )
@@ -1439,12 +1469,23 @@ function evaluateCharacterInternal(
                   siblingDefinitionIds.has(key(definition.id)) ||
                   (equivalent !== definition &&
                     siblingDefinitionIds.has(key(equivalent.id)));
-                return duplicate
+                if (duplicate)
+                  return {
+                    ...candidate,
+                    eligible: false,
+                    rulesLegal: false,
+                    reasons: [...candidate.reasons, "duplicate"],
+                  };
+                // The topology pass drops a selection whose definition is
+                // already owned by the choice's level (legacy marks such a
+                // candidate Selected), so offering it would let a pick vanish.
+                return !candidate.reasons.includes("self") &&
+                  ownedElsewhere(definition, equivalent, choiceLevel, selected)
                   ? {
                       ...candidate,
                       eligible: false,
                       rulesLegal: false,
-                      reasons: [...candidate.reasons, "duplicate"],
+                      reasons: [...candidate.reasons, "owned"],
                     }
                   : candidate;
               })
@@ -1915,6 +1956,7 @@ function evaluateCharacterInternal(
     level: number,
     candidate: CandidateDecision,
     excludedIds: readonly string[] = [],
+    setAside: readonly string[] = [],
   ): CandidateDecision => {
     const candidateEntity = index.get(candidate.definitionId);
     if (
@@ -1922,11 +1964,16 @@ function evaluateCharacterInternal(
       candidateEntity.prerequisites.trim().length === 0
     )
       return candidate;
-    const prerequisiteContext = prerequisiteScopeAt(level, excludedIds).context;
+    const prerequisiteContext = withoutOwnedDefinitions(
+      prerequisiteScopeAt(level, excludedIds).context,
+      setAside,
+    );
     const candidateKey = [
       level,
       key(candidate.definitionId),
       ...[...excludedIds].sort(),
+      "",
+      ...[...setAside].map(key).sort(),
     ].join("\0");
     let prerequisiteStatus = candidatePrerequisiteStatuses.get(candidateKey);
     if (prerequisiteStatus === undefined) {
@@ -1962,27 +2009,37 @@ function evaluateCharacterInternal(
   // Prerequisites hold for every offered candidate, including what a
   // replacement (retraining, power swap) may take, checked at its level
   // without what it gives up (nor the slot's current pick, being redone).
-  choices = choices.map((choice) => ({
-    ...choice,
-    candidates: choice.candidates.map((candidate) =>
-      withPrerequisites(choice.level, candidate),
-    ),
-    ...(choice.replacementOptions === undefined
-      ? {}
-      : {
-          replacementOptions: choice.replacementOptions.map((option) => ({
-            ...option,
-            candidates: option.candidates.map((candidate) =>
-              withPrerequisites(choice.level, candidate, [
-                option.replacesOccurrenceId,
-                ...(choice.selectedOccurrenceId === undefined
-                  ? []
-                  : [choice.selectedOccurrenceId]),
-              ]),
-            ),
-          })),
-        }),
-  }));
+  // An ordinary slot's candidates are checked with its own pick set aside.
+  const selectionSetAside = (choice: (typeof choices)[number]) =>
+    choiceSelectionSetAside(
+      occurrences.find(({ id }) => id === choice.selectedOccurrenceId),
+      occurrences,
+      (definitionId) => index.get(definitionId),
+    );
+  choices = choices.map((choice) => {
+    const setAside = selectionSetAside(choice);
+    return {
+      ...choice,
+      candidates: choice.candidates.map((candidate) =>
+        withPrerequisites(choice.level, candidate, [], setAside),
+      ),
+      ...(choice.replacementOptions === undefined
+        ? {}
+        : {
+            replacementOptions: choice.replacementOptions.map((option) => ({
+              ...option,
+              candidates: option.candidates.map((candidate) =>
+                withPrerequisites(choice.level, candidate, [
+                  option.replacesOccurrenceId,
+                  ...(choice.selectedOccurrenceId === undefined
+                    ? []
+                    : [choice.selectedOccurrenceId]),
+                ]),
+              ),
+            })),
+          }),
+    };
+  });
   if (shouldChooseDeity(ownedDefinitions))
     choices = choices.map((choice) =>
       key(choice.type) === "deity" ? { ...choice, optional: false } : choice,
@@ -2051,7 +2108,10 @@ function evaluateCharacterInternal(
         ? prerequisiteScopes.get(String(input.level))!
         : prerequisiteScopeAt(choice.level);
     const prerequisite = evaluatePrerequisite(selectedEntity?.prerequisites, {
-      ...prerequisiteScope.context,
+      ...withoutOwnedDefinitions(
+        prerequisiteScope.context,
+        selectionSetAside(choice),
+      ),
       ...(selectedEntity === undefined ? {} : { subject: selectedEntity }),
     });
     const exactOwnedPrerequisite =
