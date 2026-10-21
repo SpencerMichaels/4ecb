@@ -1,5 +1,26 @@
 # Implementation status
 
+## Prerequisites never split inside a name (2026-10-21)
+
+Commit `736503e`. Legacy splits prerequisite blocks at every comma and
+" and ". It keeps only two exact phrases whole: Harper training and the Circle
+of Smoke and Whispers. The parser now generalises that:
+
+- It never splits inside a record name that contains a comma, "and" or "or"
+  (`knownNameSpans`).
+- It reads "training in any N of …" as the OR of every N-skill combination.
+
+A dump of all 11,321 records' parsed prerequisites changed exactly 5:
+
+- The two Circle of Smoke and Whispers records now hold one unverified clause.
+- The three Harper of Legend class features now require two of the four
+  skills; before, any one passed.
+
+`scripts/audit-prerequisites.ts` now fails on a split inside a known name or
+a legacy whole clause; it flags the old parser and passes the new one. The
+Spellscarred Harbinger background's spellscar grant is verified on the
+rebuilt pack. Evaluation cache v22. 1079 workspace tests pass.
+
 ## Story-membership prerequisites (D090, 2026-10-21)
 
 Commit `d79eb12`; corrections only, in
