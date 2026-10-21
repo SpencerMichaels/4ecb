@@ -1,5 +1,45 @@
 # Implementation status
 
+## Known rituals, slice 1 (2026-10-21)
+
+`docs/known-rituals-proposal.md` §1, §2 and §4–§7. Commits `eec8a8d`,
+`640924d`, `db22ff1`, `40a9db2`.
+
+- **Model.** `CharacterBuild` format v2 with `known` entries, and the
+  `learn-known` (pays like a purchase) and `remove-known` (no refund)
+  commands. Saved characters migrate on load, from storage, recovery and
+  backup. Known entries still reach the rules engine.
+- **Granted rituals.** These are worked out after evaluation in
+  `rules-engine/src/known-records.ts`: `grant type="Ritual"` and
+  `FREEBEE:` stats, one per content ID, with the grant taking precedence
+  over a stored copy.
+- **Legacy files.** Ritual loot imports as known, keeping the original
+  record. Export writes it back as loot, adding FREEBEE rituals with their
+  `Given` marker (best-effort, D091).
+- **Builder.** A Rituals tab after Shop:
+  - the free-rituals text;
+  - a Known list grouped Rituals / Alchemical formulas / Martial practices,
+    with empty states;
+  - Learn rituals (Buy / Learn free);
+  - Remove for learned entries only.
+
+  The three learning categories have left Shop, and old links redirect.
+
+- **Sheet.** Learned references come from the known records, with
+  "Granted by X" on granted ones. The on-screen sheet uses the D079 card.
+- **Checks.** Piri's Animal Messenger appears once, granted by Druid, and
+  round-trips. The sample characters' evaluations are unchanged, and the
+  coverage matrix no longer flags granted rituals. No cache bump: the
+  evaluation inputs are unchanged.
+
+Accepted defaults:
+
+- A Buy at price 0 is recorded as free.
+- Export re-adds a FREEBEE ritual even if it was removed in legacy (D091).
+
+Next slices: FREEBEE items (§3), then the structured free-ritual allowance
+counter.
+
 ## Coverage matrix: engine fixes (2026-10-21)
 
 Commits `dcc062a` … `5a8ec47`; evaluation cache v29.

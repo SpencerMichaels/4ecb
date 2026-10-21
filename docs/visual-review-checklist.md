@@ -82,3 +82,27 @@ wizard, ranger, druid or half-elf.
 
 - [ ] **"Equipped item requirement"** house-rule issue: equip a
       living-construct or ki-focus item without qualifying.
+
+## Rituals tab (known rituals)
+
+- [ ] **The Rituals tab** after Shop, with a book-marked icon. At the top, the
+      Free rituals text block, with the provider in parentheses. Then "Known
+      (N)" and **Learn rituals**.
+- [ ] **Groups** Rituals / Alchemical formulas / Martial practices, always
+      shown, with italic empty states.
+- [ ] **Rows:** a book icon, the name, a muted source line ("Granted by
+      Druid"), Level, Category and Key skill.
+- [ ] **Remove** (trash icon, armed red state) on learned entries only.
+      Granted entries have none.
+- [ ] **Learning view:** a "← Known rituals" back button, the Type select
+      limited to the three catalogs, a "Search rituals…" placeholder, a Known
+      chip and column, and Buy / Learn free buttons.
+- [ ] **Detail card:** the source as its subheading, plus the empty-state
+      text.
+- [ ] **Shop:** the Type list no longer has Rituals, Alchemical formulas or
+      Martial practices. Ritual Scrolls are still under Consumables.
+- [ ] **Printed reference pages:** granted entries show "Granted by: X".
+- [ ] **On-screen sheet:** "Rituals & practices" uses the standard panel item
+      cards.
+- [ ] **Old links:** Shop ritual links and `section=practices` land on the
+      Rituals tab.
