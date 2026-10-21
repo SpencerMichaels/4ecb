@@ -6,9 +6,11 @@
   each a named branch or a weapon group/thrown property. A requirement whose
   wording that grammar cannot read rejects every weapon. `_WeaponRequirement`
   restates such a requirement in the grammar; the published `Requirement`
-  players see is untouched. Wordings the grammar cannot express (named
-  weapons, "and" pairs, conditional ranges) are listed in
-  reverse-engineering/docs/08-hard-coded-exceptions.md. Merged after the
+  players see is untouched. Beyond legacy, `_WeaponRequirement` also reads
+  weapon selectors (weapon:<ID>, group:, property:, melee, thrown melee,
+  "A & B" pairs, "& free hand", any; see extendedClause in
+  power-requirements.ts and
+  reverse-engineering/docs/08-hard-coded-exceptions.md). Merged after the
   CBLoader parts by scripts/build-private-content.sh. Structure only; no
   official text.
 -->
@@ -32,4 +34,46 @@
   <AppendNodes internal-id="ID_TIV_POWER_DRAGONMAGAZINE413_4"><specific name="_WeaponRequirement">You must be wielding a light thrown or a heavy thrown weapon to make a melee attack with this power.</specific></AppendNodes>
   <!-- Bloody Throw names the hands; the native branch accepts either. -->
   <AppendNodes internal-id="ID_FMP_POWER_10615"><specific name="_WeaponRequirement">You must be wielding both a thrown weapon and a melee weapon.</specific></AppendNodes>
+  <!-- Named weapons (extended selectors); any size or magic weapon on that base counts. -->
+  <!-- Bola. -->
+  <AppendNodes internal-id="ID_FMP_POWER_5250"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_76.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_5252"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_76.</specific></AppendNodes>
+  <!-- Net; Net Snare's "use it for this attack" is the row itself. -->
+  <AppendNodes internal-id="ID_FMP_POWER_5253"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_74.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_5254"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_74.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_5255"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_74.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_12355"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_74.</specific></AppendNodes>
+  <!-- Cahulaks, dragon paw, gouge, gythka, lotulis. -->
+  <AppendNodes internal-id="ID_FMP_POWER_12915"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_128.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_12917"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_128.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_12919"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_133.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_12920"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_133.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_12922"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_136.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_12923"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_136.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_12925"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_137.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_12926"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_137.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_12929"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_138.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_12930"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_138.</specific></AppendNodes>
+  <!-- Either of two named weapons: greatbow or longbow; rapier or short sword. -->
+  <AppendNodes internal-id="ID_FMP_POWER_11005"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_72, a weapon:ID_FMP_WEAPON_40.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_11006"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_72, a weapon:ID_FMP_WEAPON_40.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_10881"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_29, a weapon:ID_FMP_WEAPON_20.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_10882"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_29, a weapon:ID_FMP_WEAPON_20.</specific></AppendNodes>
+  <!-- Pairs, one hand each: longsword and another melee weapon; crossbow and light blade. -->
+  <AppendNodes internal-id="ID_FMP_POWER_4682"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_19 &amp; melee.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_4683"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_19 &amp; melee.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_4684"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_19 &amp; melee.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_4725"><specific name="_WeaponRequirement">You must be wielding a group:crossbow &amp; group:light blade.</specific></AppendNodes>
+  <!-- An off-hand weapon with the other hand empty. -->
+  <AppendNodes internal-id="ID_FMP_POWER_4678"><specific name="_WeaponRequirement">You must be wielding a property:off-hand &amp; free hand.</specific></AppendNodes>
+  <!-- Melee use takes any melee weapon; the ranged use's thrown condition is
+       met by a melee weapon too, so ranged-only weapons are what it rejects. -->
+  <AppendNodes internal-id="ID_FMP_POWER_2455"><specific name="_WeaponRequirement">You must be wielding a melee.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_2460"><specific name="_WeaponRequirement">You must be wielding a melee.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_9944"><specific name="_WeaponRequirement">You must be wielding a melee.</specific></AppendNodes>
+  <!-- A melee weapon thrown at a ranged target: melee weapons, not Unarmed. -->
+  <AppendNodes internal-id="ID_FMP_POWER_4360"><specific name="_WeaponRequirement">You must be wielding a thrown melee.</specific></AppendNodes>
+  <!-- A grappling hook is gear the sheet cannot equip: unverifiable, so the
+       power keeps its no-weapon row. -->
+  <AppendNodes internal-id="ID_FMP_POWER_12831"><specific name="_WeaponRequirement">You must be wielding any.</specific></AppendNodes>
 </D20Rules>

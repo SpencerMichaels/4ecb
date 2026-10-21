@@ -5,6 +5,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import { EXCEPTION_IDS, meetsItemRequirement } from "./exceptions";
 import {
   isPowerRestricted,
+  weaponRequirementThrowsMelee,
   wieldingClauses,
   type PowerRequirementContext,
 } from "./power-requirements";
@@ -205,6 +206,136 @@ describe("legacy power requirement grammar (IsRestricted)", () => {
   });
 });
 
+describe("extended `_WeaponRequirement` selectors", () => {
+  const largeDagger = {
+    ...weapon("Dagger (Large)", "Light Blade", { Properties: "Off-hand" }),
+    id: "W:LargeDagger",
+  };
+  const secondEnd = weapon("Urgrosh - Secondary end", "Spear", {
+    "_Primary End": "W:Urgrosh",
+  });
+  const urgrosh = weapon("Urgrosh", "Axe");
+  const records = [dagger, largeDagger, urgrosh, secondEnd, longsword];
+  const resolveWeapon = (reference: string) =>
+    records.find(
+      (record) =>
+        record.id.toLowerCase() === reference.toLowerCase() ||
+        record.name.toLowerCase() === reference.toLowerCase(),
+    );
+  const extended = (requirement: string, overrides = {}) =>
+    isPowerRestricted(
+      power,
+      requirement,
+      context({ resolveWeapon, ...overrides }),
+      { extended: true },
+    );
+
+  it("names a weapon by ID or name, across sizes and double-weapon ends", () => {
+    const byId = "You must be wielding a weapon:W:Dagger.";
+    expect(extended(byId, { mainBase: dagger })).toBe(false);
+    expect(extended(byId, { mainBase: largeDagger })).toBe(false);
+    expect(extended(byId, { mainBase: longsword })).toBe(true);
+    expect(
+      extended("You must be wielding a weapon:urgrosh.", {
+        mainBase: secondEnd,
+      }),
+    ).toBe(false);
+    expect(
+      extended("You must be wielding a weapon:W:Dagger, a weapon:Longsword.", {
+        mainBase: longsword,
+      }),
+    ).toBe(false);
+  });
+
+  it("is read only from `_WeaponRequirement`", () => {
+    // The legacy grammar reads the same text as an unknown group clause.
+    expect(
+      restricted("You must be wielding a weapon:W:Dagger.", {
+        mainBase: dagger,
+        resolveWeapon,
+      }),
+    ).toBe(true);
+    // Legacy clauses still read as before inside an extended requirement.
+    expect(
+      extended("You must be wielding a light blade.", { mainBase: dagger }),
+    ).toBe(false);
+  });
+
+  it("matches group, property, melee and ranged selectors", () => {
+    expect(
+      extended("You must be wielding a group:heavy blade.", {
+        mainBase: longsword,
+      }),
+    ).toBe(false);
+    expect(
+      extended("You must be wielding a property:light thrown.", {
+        mainBase: longsword,
+      }),
+    ).toBe(true);
+    expect(
+      extended("You must be wielding a melee.", { mainBase: dagger }),
+    ).toBe(false);
+    expect(
+      extended("You must be wielding a melee.", { mainBase: longbow }),
+    ).toBe(true);
+    expect(
+      extended("You must be wielding a ranged.", { mainBase: longbow }),
+    ).toBe(false);
+  });
+
+  it("never lets Unarmed meet a group or category selector", () => {
+    const unarmed = weapon("Unarmed attack", "Unarmed", {
+      "Weapon Category": "Improvised Melee",
+    });
+    expect(
+      extended("You must be wielding a melee.", {
+        mainBase: unarmed,
+        unarmed: true,
+      }),
+    ).toBe(true);
+    expect(extended("You must be wielding any.", { unarmed: true })).toBe(
+      false,
+    );
+  });
+
+  it("pairs one hand with each selector, in either order", () => {
+    const pair = "You must be wielding a weapon:Longsword & melee.";
+    expect(extended(pair, { mainBase: longsword, offhandBase: dagger })).toBe(
+      false,
+    );
+    expect(extended(pair, { mainBase: dagger, offhandBase: longsword })).toBe(
+      false,
+    );
+    expect(extended(pair, { mainBase: longsword })).toBe(true);
+    expect(extended(pair, { mainBase: dagger, offhandBase: dagger })).toBe(
+      true,
+    );
+    expect(extended(pair, { mainBase: longsword, offhandBase: longbow })).toBe(
+      true,
+    );
+  });
+
+  it("needs the other hand empty for a free hand", () => {
+    const free = "You must be wielding a property:off-hand & free hand.";
+    expect(extended(free, { mainBase: dagger })).toBe(false);
+    expect(extended(free, { mainBase: dagger, offhandBase: longsword })).toBe(
+      true,
+    );
+    expect(extended(free, { mainBase: dagger, shield: true })).toBe(true);
+    expect(extended(free, { mainBase: longsword })).toBe(true);
+  });
+
+  it("marks `thrown melee` as a thrown melee power", () => {
+    expect(
+      weaponRequirementThrowsMelee("You must be wielding a thrown melee."),
+    ).toBe(true);
+    expect(weaponRequirementThrowsMelee("You must be wielding a melee.")).toBe(
+      false,
+    );
+    expect(weaponRequirementThrowsMelee(undefined)).toBe(false);
+  });
+});
+
 const stats: Record<string, EvaluatedStat> = {
   "Strength modifier": {
     name: "Strength modifier",
@@ -307,6 +438,38 @@ describe("power variants under a Requirement", () => {
         inventory,
       ),
     ).toEqual([]);
+  });
+
+  it("offers the rows an extended `_WeaponRequirement` names", () => {
+    expect(
+      variantNames(
+        {
+          Requirement: "You must be wielding a longsword and a dagger.",
+          _WeaponRequirement:
+            "You must be wielding a weapon:W:Longsword & weapon:Dagger.",
+        },
+        [
+          { id: "Sword", weapon: longsword, equipped: 1 },
+          { id: "Knife", weapon: dagger, equipped: 1 },
+          { id: "Bow", weapon: longbow, equipped: 0 },
+        ],
+      ),
+    ).toEqual(["Sword", "Knife"]);
+    // A thrown melee weapon power is melee only: a ranged attack type no
+    // longer needs a thrown weapon, and neither the bow nor Unarmed fits.
+    expect(
+      variantNames(
+        {
+          "Attack Type": "Ranged 5",
+          Requirement: "You must be wielding a melee weapon.",
+          _WeaponRequirement: "You must be wielding a thrown melee.",
+        },
+        inventory,
+      ),
+    ).toEqual(["Sword A", "Sword B", "Spare dagger"]);
+    expect(
+      variantNames({ _WeaponRequirement: "You must be wielding any." }, []),
+    ).toEqual(["Unarmed"]);
   });
 
   it("gives Coordinated Assault Attack no variants (IsValidPowerCombo)", () => {

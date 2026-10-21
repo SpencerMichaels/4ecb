@@ -11,6 +11,7 @@ import {
   isPowerRestricted,
   machineReadRequirement,
   WEAPON_REQUIREMENT_FIELD,
+  weaponRequirementThrowsMelee,
   type PowerRequirementContext,
 } from "./power-requirements";
 
@@ -1480,12 +1481,16 @@ function legacyPowerRange(
   power: ContentEntity,
   attackType: string | undefined,
   weaponPower: boolean,
-  fields: { readonly requirement: string | undefined },
+  fields: {
+    readonly requirement: string | undefined;
+    readonly weaponRequirement: string | undefined;
+  },
 ): PowerRange {
   const type = key(attackType ?? "");
   const close = /close (?:burst|blast)/.test(type);
   const thrownMelee =
-    key(fields.requirement ?? "") === THROWN_MELEE_REQUIREMENT;
+    key(fields.requirement ?? "") === THROWN_MELEE_REQUIREMENT ||
+    weaponRequirementThrowsMelee(fields.weaponRequirement);
   return {
     melee: type.includes("melee") || (close && weaponPower) || thrownMelee,
     ranged:
@@ -1625,6 +1630,7 @@ function legacyRequirementContext(input: {
         mainBase: meleePower ? unarmedBase : undefined,
         offhandBase: undefined,
         monkWeapon: true,
+        unarmed: true,
       };
     const offhand = offhandFor(item);
     return {
@@ -1778,18 +1784,26 @@ export function evaluatePowers(input: {
       item.implementDefinition ||
       item.universalImplement ||
       item.implementScopes.length > 0;
+    const weaponRequirement = effectiveField(
+      power,
+      WEAPON_REQUIREMENT_FIELD,
+      input.overlays,
+    );
     const powerRange = legacyPowerRange(power, attackType, weaponPower, {
       requirement: effectiveField(power, "Requirement", input.overlays),
+      weaponRequirement,
     });
     // Legacy IsValidPowerCombo tests the Implement keyword first, so a power
     // that is both (Hexblade, Swordmage) takes the implement path.
     // Legacy IsRestricted: the power's Requirement may reject a pairing. It
     // checks every weapon-power item and, through AllowUnarmed, Unarmed for
-    // any power; an implement power's own items are not checked.
+    // any power; an implement power's own items are not checked. A
+    // `_WeaponRequirement` also reads the extended weapon selectors.
     const requirement = machineReadRequirement(
       effectiveField(power, "Requirement", input.overlays),
-      effectiveField(power, WEAPON_REQUIREMENT_FIELD, input.overlays),
+      weaponRequirement,
     );
+    const extendedRequirement = (weaponRequirement?.trim() ?? "") !== "";
     const restricted = (item: Loadout) =>
       requirement !== "" &&
       (item.unarmed || weaponPower) &&
@@ -1797,6 +1811,7 @@ export function evaluatePowers(input: {
         power,
         requirement,
         requirementContext(item, powerRange.melee),
+        { extended: extendedRequirement },
       );
     const candidates =
       !calculated ||

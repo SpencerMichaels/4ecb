@@ -355,15 +355,36 @@ as in legacy. Where the published wording is a restatable variant, a
 machine-read `_WeaponRequirement` in `content/corrections/94-power-requirements.part`
 restates it in the grammar (15 powers: `X or a Y` lists, trailing conditions
 the sheet cannot check, a reworded named branch, Bloody Throw's hand-specific
-pair). Still rejected as in legacy, because the grammar reads groups and
-properties, not weapon names or pairs: bola, net, cahulaks, gouge, dragon
-paw, gythka, lotulis and grappling-hook powers, `greatbow or a longbow`,
-`rapier or a short sword`, `longsword and another melee weapon`, `crossbow
-and a light blade`, `an off-hand weapon and have a hand free`, `a melee
-weapon` (Coward's Reward), and the range-conditional thrown wordings (Tag
-Quarry, New Victim, Form of the First Hunter Attack). Implement powers with a
-wielding requirement (tome, wand, orb, bow) lose only their Unarmed row, as in
-legacy.
+pair). Implement powers with a wielding requirement (tome, wand, orb,
+bow) lose only their Unarmed row, as in legacy.
+
+Beyond legacy (product owner, 2026-10-21): `_WeaponRequirement`, and only
+it, also reads weapon selectors (`extendedClause`, gated so every power
+without the field stays branch-exact): `weapon:<ID or name>` (same
+normalized name, so Large sizes, double-weapon ends and magic weapons on the
+base count), `group:`, `property:`, `melee`, `ranged`, `thrown melee`
+(also makes the power melee-only, like the native thrown-melee Requirement),
+`A & B` (one hand each, either order, using DetermineOffhand), `A & free
+hand` (no off-hand weapon or implement and no shield), and `any`. Only
+`weapon:` can match the Unarmed row. A condition the sheet cannot check is
+dropped for row eligibility, as for the trailing conditions above. This gives
+the 30 powers legacy left without weapon rows exactly the rows their
+Requirement allows: bola, net (Net Snare's "use it for this attack" is the
+row), cahulaks, dragon paw, gouge, gythka and lotulis powers by weapon;
+`greatbow or a longbow` and `rapier or a short sword` as two weapons;
+Steel Scream, Soothing Reverberation and Mind-Bending Blades as longsword `&`
+melee; Fang and Web Strike as crossbow group `&` light blade group;
+Shocking Skewer as off-hand property `&` free hand; Tag Quarry, New Victim
+and Form of the First Hunter Attack as `melee` (their thrown-at-range
+condition is met by a melee weapon, so it rejects only ranged-only weapons);
+Coward's Reward (Ranged 5, the weapon is thrown) as `thrown melee`; and
+Throw Grapple as `any`, because a grappling hook is gear the app cannot
+equip. Soothing Reverberation and Net Shield have no attack or Hit line, so
+they still get no rows, as for any utility. Verified on the private pack
+with every weapon (single rows) and equipped pairs (longsword with dagger,
+bow, or a second longsword; hand crossbow with dagger or mace; off-hand
+weapon with a sword or shield; magic weapons on the base); the eight sample
+characters' cached PowerStats comparison is unchanged.
 
 ### Item requirements
 

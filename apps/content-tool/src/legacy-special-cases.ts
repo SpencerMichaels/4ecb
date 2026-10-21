@@ -430,7 +430,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     IsRestricted: code(
       "Power Requirement 'You must be wielding ...' grammar (bow or crossbow, two shields, thrown and melee, reach, blowgun, dagger, spiked chain, ...) limits weapon variants; other clauses match a weapon Group or thrown property, or a WeaponSwap text.",
-      "rules-engine power-requirements.ts isPowerRestricted; one-off wordings restated as `_WeaponRequirement` in content/corrections/94-power-requirements.part; wordings naming weapons stay rejected as in legacy (08-hard-coded-exceptions.md)",
+      "rules-engine power-requirements.ts isPowerRestricted; one-off wordings restated as `_WeaponRequirement` in content/corrections/94-power-requirements.part, whose extended selectors (named weapons, pairs, free hand) also cover the wordings legacy rejects (08-hard-coded-exceptions.md)",
     ),
     "?A0x7555d940.OtherRestrictions": code(
       "Requirement 'You must be using a shield.' needs a shield.",
@@ -438,7 +438,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.IsMeleePower": code(
       "Melee power, or the thrown-melee Requirement.",
-      "powers.ts THROWN_MELEE_REQUIREMENT (inline prose)",
+      "powers.ts THROWN_MELEE_REQUIREMENT (inline prose), or a `thrown melee` `_WeaponRequirement` selector (power-requirements.ts weaponRequirementThrowsMelee)",
     ),
     "?A0x7555d940.IsRangedPower": code(
       "Ranged power (area burst, ranged, thrown requirement, Stab and Shoot by name).",
