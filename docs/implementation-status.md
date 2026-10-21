@@ -1,5 +1,33 @@
 # Implementation status
 
+## Proficiencies and sub-choices on the sheet (2026-10-21)
+
+Commit `3e61a5e`.
+
+- **Proficiencies.** A Proficiencies pane on the Character Reference pages,
+  after Equipped and Inventory (not on page 1, per the owner). It has one line
+  per kind: armor, shields, weapons, implements. A group proficiency collapses
+  what it grants. Code: `packages/sheet-model/src/proficiencies.ts`.
+- **Sub-choices on their parent feature's row** (owner-approved rule;
+  `feature-choices.ts`). It works from the occurrence tree only, and shows
+  in reference card headings, page-1 reminder labels and the screen features
+  list. Beatrix: "Pact Choice: Fey Pact of the White Well", "Past life:
+  Eladrin", "Luskan: Luskan Benefit", "Level 1 Hexblade Daily Power: Crown of
+  Stars".
+- **Registry.** New `choices` and `proficiencies` surfaces. Trait Package,
+  CountsAsRace (when chosen), Background Choice and Proficiency are now
+  presented, which the coverage matrix confirms on targeted lines.
+
+Open (owner):
+
+- A generic background benefit on a character with several backgrounds stays
+  unattached, because nothing links it to one of them (Hystan, Hu Sheng-Ming).
+- Granted CountsAsRace aliases (Half-Elf Dual Heritage, Past Spirit) are not
+  shown.
+- "Luskan: Luskan Benefit" repeats the background name.
+
+Visual review pending. 1116 workspace tests pass.
+
 ## Coverage matrix: content and prerequisite errors (2026-10-21)
 
 - **Missing grant targets** (`3b60f85`,
