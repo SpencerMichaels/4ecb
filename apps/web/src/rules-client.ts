@@ -1,4 +1,7 @@
-import type { CharacterBuild } from "@4ecb/character-domain";
+import type {
+  CharacterBuild,
+  LegacyCharacterSnapshot,
+} from "@4ecb/character-domain";
 import type {
   EvaluatedCharacter,
   EvaluationInput,
@@ -10,6 +13,7 @@ import type {
   RulesWorkerRequest,
   RulesWorkerResponse,
 } from "./rules-worker-messages";
+import type { LibrarySummaryValue } from "./library-summary";
 import { recordLoadDuration } from "./load-performance";
 
 /** Work items done across every evaluation currently in flight. */
@@ -38,6 +42,7 @@ interface PendingRequest {
 type RequestWithoutId =
   | Omit<Extract<RulesWorkerRequest, { type: "initialize" }>, "requestId">
   | Omit<Extract<RulesWorkerRequest, { type: "evaluate" }>, "requestId">
+  | Omit<Extract<RulesWorkerRequest, { type: "library-summary" }>, "requestId">
   | Omit<
       Extract<RulesWorkerRequest, { type: "preview-profile-migration" }>,
       "requestId"
@@ -127,6 +132,22 @@ export class RulesWorkerClient {
       contentLoadMilliseconds: response.contentLoadMilliseconds,
       evaluationMilliseconds: response.evaluationMilliseconds,
     });
+    return response.result;
+  }
+
+  /** Evaluates a character in the worker and returns its library summary
+   *  (role line and Play data stats). */
+  async librarySummary(
+    snapshot: LegacyCharacterSnapshot,
+    build: CharacterBuild,
+  ): Promise<LibrarySummaryValue> {
+    const response = await this.#request({
+      type: "library-summary",
+      snapshot,
+      build,
+    });
+    if (response.type !== "library-summary")
+      throw new Error("Unexpected rules-worker library summary response");
     return response.result;
   }
 

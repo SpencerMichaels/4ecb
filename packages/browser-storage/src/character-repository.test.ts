@@ -697,4 +697,65 @@ describe("CharacterRepository", () => {
     ).rejects.toThrow("invalid record");
     expect(await storage.list()).toEqual([]);
   });
+
+  it("keeps a library summary only while it matches the character revision", async () => {
+    const name = `4ecb-character-library-summary-${crypto.randomUUID()}`;
+    databases.push(name);
+    const storage = new CharacterRepository(name);
+    const bound = {
+      ...character("summarized"),
+      profileBinding: { packId: "synthetic", contentDigest: "digest-1" },
+    };
+    await storage.put(bound);
+    const summary = {
+      engineVersion: "engine-1",
+      summaryVersion: 1,
+      updatedAt: bound.updatedAt,
+      packId: "synthetic",
+      contentDigest: "digest-1",
+      value: { roleLine: "Divine Defender" },
+    };
+    const listed = async () =>
+      (await storage.listMetadataPartitioned()).active[0]?.librarySummary;
+
+    // A summary for another revision or other content is never saved.
+    await expect(
+      storage.putLibrarySummary(bound.id, {
+        ...summary,
+        updatedAt: "2025-01-01T00:00:00.000Z",
+      }),
+    ).resolves.toBe(false);
+    await expect(
+      storage.putLibrarySummary(bound.id, {
+        ...summary,
+        contentDigest: "digest-0",
+      }),
+    ).resolves.toBe(false);
+    await expect(storage.putLibrarySummary("missing", summary)).resolves.toBe(
+      false,
+    );
+    expect(await listed()).toBeUndefined();
+
+    await expect(storage.putLibrarySummary(bound.id, summary)).resolves.toBe(
+      true,
+    );
+    expect(await listed()).toEqual(summary);
+
+    // Rewriting the same revision (a migration) or re-deriving an older
+    // metadata row keeps it.
+    await storage.put(bound);
+    expect(await listed()).toEqual(summary);
+    const db = await openDB(name);
+    const row = await db.get("characterMetadata", bound.id);
+    await db.put("characterMetadata", { ...row, metadataVersion: 1 });
+    db.close();
+    expect(await listed()).toEqual(summary);
+
+    // Any saved change drops it.
+    await storage.updateBuild(bound.id, {
+      ...bound.build,
+      textStrings: { Name: "Renamed" },
+    });
+    expect(await listed()).toBeUndefined();
+  });
 });

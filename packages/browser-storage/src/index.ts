@@ -10,8 +10,10 @@ export {
 export type { ContentProfileLayer } from "@4ecb/content-pack";
 export {
   CharacterRepository,
+  librarySummaryMatchesCharacter,
   type CharacterBackupInspection,
   type CharacterLibraryEntry,
+  type CharacterLibrarySummary,
   type CharacterMetadata,
   type PartitionedCharacterMetadata,
 } from "./character-repository";

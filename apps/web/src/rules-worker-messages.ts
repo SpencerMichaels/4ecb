@@ -1,9 +1,14 @@
-import type { CharacterBuild } from "@4ecb/character-domain";
+import type {
+  CharacterBuild,
+  LegacyCharacterSnapshot,
+} from "@4ecb/character-domain";
 import type {
   EvaluatedCharacter,
   EvaluationInput,
   ProfileMigrationPreview,
 } from "@4ecb/rules-engine";
+
+import type { LibrarySummaryValue } from "./library-summary";
 
 /**
  * A migration preview's current step: decoding both packs (bytes), then
@@ -28,6 +33,14 @@ export type RulesWorkerRequest =
       readonly type: "evaluate";
       readonly requestId: number;
       readonly input: EvaluationInput;
+    }
+  | {
+      /** Evaluates a stored character and returns only its library summary,
+       *  so the library never decodes content on the main thread. */
+      readonly type: "library-summary";
+      readonly requestId: number;
+      readonly snapshot: LegacyCharacterSnapshot;
+      readonly build: CharacterBuild;
     }
   | {
       readonly type: "preview-profile-migration";
@@ -79,6 +92,11 @@ export type RulesWorkerResponse =
       readonly requestId: number;
       readonly result: ProfileMigrationPreview;
       readonly elapsedMilliseconds: number;
+    }
+  | {
+      readonly type: "library-summary";
+      readonly requestId: number;
+      readonly result: LibrarySummaryValue;
     }
   | {
       readonly type: "error";

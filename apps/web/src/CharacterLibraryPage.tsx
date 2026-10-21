@@ -37,6 +37,7 @@ import { PersistenceBanner } from "./PersistenceBanner";
 import { ToastRegion, useToasts } from "./Toasts";
 import { TrashDialog } from "./TrashDialog";
 import { useArmedAction } from "./useArmedAction";
+import { useLibrarySummary } from "./use-library-summary";
 
 const repository = new CharacterRepository();
 const contentRepository = new ContentPackRepository();
@@ -218,6 +219,8 @@ export function CharacterLibraryPage({
   const rows = filterLibrary(sorted, filter);
   const selectedId = librarySelection(sorted, rows, view.selectedId);
   const selected = characters.find(({ id }) => id === selectedId);
+  // Role line and stats: the saved summary, or evaluated in the background.
+  const stats = useLibrarySummary(selected);
   const updateIds = new Set(
     characters
       .filter((character) =>
@@ -331,7 +334,7 @@ export function CharacterLibraryPage({
             updateView((current) => ({ ...current, selectedId: id }));
           }}
         />
-        {selected === undefined ? (
+        {selected === undefined || stats === undefined ? (
           <div className="empty-state library-empty">
             <h2>No characters yet</h2>
             <p>
@@ -342,6 +345,7 @@ export function CharacterLibraryPage({
         ) : (
           <CharacterLibraryDetail
             character={selected}
+            stats={stats}
             now={now}
             updateAvailable={updateIds.has(selected.id)}
             exporting={exportingIds.has(selected.id)}

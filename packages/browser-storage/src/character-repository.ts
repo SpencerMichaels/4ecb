@@ -109,6 +109,54 @@ export interface CharacterMetadata {
     readonly packId: string;
     readonly contentDigest?: string;
   };
+  /** A disposable cache of the character's evaluated stats for the library
+   *  (see CharacterLibrarySummary); never a source of truth. */
+  readonly librarySummary?: CharacterLibrarySummary;
+}
+
+/**
+ * What the library shows for a character that needs evaluation (role line,
+ * Play data stats), saved after the builder or library evaluated it. The
+ * stamp says what it was computed from, and a summary whose stamp no longer
+ * matches the character, its content or the engine is a cache miss. Storage
+ * keeps it on the metadata row and checks the character half of the stamp;
+ * the app checks the versions and validates `value`.
+ */
+export interface CharacterLibrarySummary {
+  /** The rules engine's evaluation cache version it was computed with. */
+  readonly engineVersion: string;
+  /** The app's own format version for `value`. */
+  readonly summaryVersion: number;
+  /** The record's updatedAt and content binding it was computed from. */
+  readonly updatedAt: string;
+  readonly packId: string;
+  readonly contentDigest: string;
+  readonly value: unknown;
+}
+
+/** Whether a summary was computed from this metadata's character revision
+ *  and content binding. */
+export function librarySummaryMatchesCharacter(
+  summary: CharacterLibrarySummary,
+  metadata: Pick<CharacterMetadata, "updatedAt" | "contentRevision">,
+): boolean {
+  return (
+    summary.updatedAt === metadata.updatedAt &&
+    summary.packId === metadata.contentRevision?.packId &&
+    summary.contentDigest === metadata.contentRevision.contentDigest
+  );
+}
+
+/** A re-derived metadata row keeps the previous row's summary while it still
+ *  describes the same character revision and content. */
+function withPreviousSummary(
+  next: StoredCharacterMetadata,
+  previous: StoredCharacterMetadata | undefined,
+): StoredCharacterMetadata {
+  const summary = previous?.librarySummary;
+  return summary === undefined || !librarySummaryMatchesCharacter(summary, next)
+    ? next
+    : { ...next, librarySummary: summary };
 }
 
 /** Bumped whenever characterMetadata() derives new fields: rows from an
@@ -302,7 +350,7 @@ async function refreshStaleMetadata(
       if (row.metadataVersion === CHARACTER_METADATA_VERSION) return row;
       const record = await transaction.objectStore("characters").get(row.id);
       if (record === undefined) return row;
-      const next = characterMetadata(record);
+      const next = withPreviousSummary(characterMetadata(record), row);
       await transaction.objectStore("characterMetadata").put(next);
       return next;
     }),
@@ -333,9 +381,13 @@ async function writeStoredCharacter(
   character: StoredCharacterRecord,
 ): Promise<void> {
   await transaction.objectStore("characters").put(character);
-  await transaction
-    .objectStore("characterMetadata")
-    .put(characterMetadata(character));
+  const metadata = transaction.objectStore("characterMetadata");
+  await metadata.put(
+    withPreviousSummary(
+      characterMetadata(character),
+      await metadata.get(character.id),
+    ),
+  );
   const thumbnail = characterPortraitThumbnail(character);
   if (thumbnail === undefined)
     await transaction.objectStore("characterPortraits").delete(character.id);
@@ -432,6 +484,28 @@ export class CharacterRepository {
         (record.deletedAt === undefined ? active : deleted).push(entry);
       }
       return { active, deleted };
+    } finally {
+      db.close();
+    }
+  }
+
+  /** Saves a library summary on the character's metadata row, unless the
+   *  character changed (or is gone) since the summary was computed; returns
+   *  whether it was saved. */
+  async putLibrarySummary(
+    id: string,
+    summary: CharacterLibrarySummary,
+  ): Promise<boolean> {
+    const db = await database(this.#databaseName);
+    try {
+      const transaction = db.transaction("characterMetadata", "readwrite");
+      const row = await transaction.store.get(id);
+      const saved =
+        row !== undefined && librarySummaryMatchesCharacter(summary, row);
+      if (saved)
+        await transaction.store.put({ ...row, librarySummary: summary });
+      await transaction.done;
+      return saved;
     } finally {
       db.close();
     }

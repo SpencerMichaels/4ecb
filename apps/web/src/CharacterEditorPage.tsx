@@ -146,6 +146,7 @@ import {
   type EquipmentWalletView,
 } from "./EquipmentWorkspace";
 import { OptimisticBuildSaveQueue } from "./optimistic-save";
+import { useBuilderLibrarySummary } from "./use-builder-library-summary";
 import { PortraitEditor } from "./PortraitEditor";
 import { BuildVersion } from "./BuildVersion";
 import {
@@ -365,6 +366,11 @@ export function CharacterEditorPage({
   >(undefined);
   const rulesClient = useRef<RulesRuntimeClient | undefined>(undefined);
   const evaluationRevision = useRef(0);
+  // The build each published current-level evaluation was computed from,
+  // so the library summary is written only for the build that was saved.
+  const evaluatedBuilds = useRef(
+    new WeakMap<EvaluatedCharacter, CharacterBuild>(),
+  );
   const characterLoadStartedAt = useRef(performance.now());
   const firstEvaluationRecorded = useRef(false);
 
@@ -710,7 +716,10 @@ export function CharacterEditorPage({
           );
         },
       );
-    const currentPublished = publish(currentRequest, setCurrentEvaluation);
+    const currentPublished = publish(currentRequest, (evaluation) => {
+      evaluatedBuilds.current.set(evaluation, evaluationBuild);
+      setCurrentEvaluation(evaluation);
+    });
     const planningPublished = publish(planningRequest, setPlanningEvaluation);
     const selectedPublished = publish(
       selectedLevelRequest,
@@ -740,6 +749,18 @@ export function CharacterEditorPage({
     selectedLevel,
     workspaceTab,
   ]);
+
+  useBuilderLibrarySummary({
+    characters,
+    character,
+    evaluation: currentEvaluation,
+    evaluatedBuild:
+      currentEvaluation === undefined
+        ? undefined
+        : evaluatedBuilds.current.get(currentEvaluation),
+    entities,
+    saved: saveState.phase === "saved",
+  });
 
   const levelChoices = useMemo(
     () => choicesAtLevel(selectedLevel, planningEvaluation),

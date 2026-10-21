@@ -9,6 +9,10 @@ import type {
   RulesWorkerRequest,
   RulesWorkerResponse,
 } from "./rules-worker-messages";
+import {
+  libraryCharacterSummary,
+  libraryEvaluationInput,
+} from "./library-summary";
 import { contentProfileMatchesRevision } from "./profile-migration";
 
 const worker = self as DedicatedWorkerGlobalScope;
@@ -120,6 +124,24 @@ async function handle(request: RulesWorkerRequest): Promise<void> {
         elapsedMilliseconds: completed - started,
         contentLoadMilliseconds: evaluationStarted - started,
         evaluationMilliseconds: completed - evaluationStarted,
+      });
+      break;
+    }
+    case "library-summary": {
+      const content = await evaluationEntities();
+      const evaluation = evaluateCharacter(
+        libraryEvaluationInput(request.build, content),
+        content,
+      );
+      respond({
+        type: "library-summary",
+        requestId: request.requestId,
+        result: libraryCharacterSummary(
+          request.snapshot,
+          request.build,
+          evaluation,
+          content,
+        ),
       });
       break;
     }

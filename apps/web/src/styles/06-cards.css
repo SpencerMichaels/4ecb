@@ -830,17 +830,26 @@
   font-size: 7.5pt;
   margin: 0;
 }
-.print-play-note {
+.print-play-note,
+.print-play-body .play-data-note {
   font-size: 7pt;
   margin: 0;
 }
-.print-play-note strong {
+.print-play-note strong,
+.print-play-body .play-data-note strong {
   color: var(--card-color);
 }
-.print-play-row {
+/* The shared Play data stat body (PlayDataStats), also in the library's
+   detail pane: the row's proportions are shared, the card sets its sizes. */
+.play-data-note {
+  margin: 0;
+}
+.play-data-row {
   display: grid;
-  gap: 0.045in;
   grid-template-columns: 1fr 1fr 2.2fr;
+}
+.print-play-body .play-data-row {
+  gap: 0.045in;
 }
 .print-play-skills {
   border-collapse: collapse;
