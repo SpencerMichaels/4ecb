@@ -15,10 +15,20 @@ import { Icon } from "./Icon";
 import { UpdateButton } from "./PwaUpdate";
 import { BuildVersion } from "./BuildVersion";
 import { createNativeCharacter } from "./new-character";
-import { PortraitImage } from "./PortraitEditor";
 import { holdCharacterDraft } from "./character-drafts";
-import { characterCount, characterIdentity } from "./character-library-ui";
-import { ActionMenu } from "./ActionMenu";
+import {
+  characterCount,
+  filterLibrary,
+  libraryNeedsContentUpdate,
+  librarySelection,
+  nextLibrarySort,
+  readLibraryView,
+  sortLibrary,
+  writeLibraryView,
+  type LibraryView,
+} from "./character-library-ui";
+import { CharacterLibraryDetail } from "./CharacterLibraryDetail";
+import { CharacterLibraryTable } from "./CharacterLibraryTable";
 import {
   exportCharacterBackup,
   exportCharacterDnd4e,
@@ -63,6 +73,18 @@ export function CharacterLibraryPage({
   // elsewhere or pressing Escape disarms it.
   const trashAction = useArmedAction("character-trash-trigger");
   const [trashOpen, setTrashOpen] = useState(false);
+  // Sort and selection are remembered per browser; the filter is not.
+  const [view, setView] = useState<LibraryView>(() => readLibraryView());
+  const [filter, setFilter] = useState("");
+  const updateView = useCallback(
+    (change: (current: LibraryView) => LibraryView) =>
+      setView((current) => {
+        const next = change(current);
+        writeLibraryView(next);
+        return next;
+      }),
+    [],
+  );
   // A .dnd4e export evaluates the character in a fresh rules worker, which
   // takes a while; its card's Export button spins until the download starts.
   const [exportingIds, setExportingIds] = useState<ReadonlySet<string>>(
@@ -191,6 +213,19 @@ export function CharacterLibraryPage({
         ? "Creating character…"
         : "New character";
 
+  const now = new Date();
+  const sorted = sortLibrary(characters, view.sort);
+  const rows = filterLibrary(sorted, filter);
+  const selectedId = librarySelection(sorted, rows, view.selectedId);
+  const selected = characters.find(({ id }) => id === selectedId);
+  const updateIds = new Set(
+    characters
+      .filter((character) =>
+        libraryNeedsContentUpdate(character, manifests, activePackId),
+      )
+      .map(({ id }) => id),
+  );
+
   return (
     <main className="characters-page" id="main-content">
       <header className="page-heading library-heading">
@@ -204,12 +239,33 @@ export function CharacterLibraryPage({
           </h1>
           <BuildVersion />
         </div>
-        <div className="page-actions">
-          <label
-            className="icon-only-button"
-            title="Import character (.4ecb or .dnd4e)"
+        <div className="page-actions library-page-actions">
+          <button
+            aria-label="New character"
+            {...(newCharacterLabel === "New character"
+              ? {}
+              : { "aria-description": newCharacterLabel })}
+            className="button-icon"
+            type="button"
+            title={newCharacterLabel}
+            // aria-disabled, not disabled, so the tooltip saying why shows.
+            aria-disabled={activePackId === undefined || undefined}
+            disabled={creatingCharacter}
+            onClick={() => {
+              if (activePackId === undefined) return;
+              void createCharacter().catch((reason: unknown) =>
+                reportFailure(reason),
+              );
+            }}
           >
+            <Icon name="new-character" />
+            <span className="page-action-label">New</span>
+          </button>
+          <label title="Import character (.4ecb or .dnd4e)">
             <Icon name="import" />
+            <span aria-hidden="true" className="page-action-label">
+              Import
+            </span>
             <input
               aria-label="Import character (.4ecb or .dnd4e)"
               className="visually-hidden"
@@ -226,175 +282,102 @@ export function CharacterLibraryPage({
             />
           </label>
           <button
-            aria-label={newCharacterLabel}
-            className="icon-only-button button-icon"
-            type="button"
-            title={newCharacterLabel}
-            // aria-disabled, not disabled, so the tooltip saying why shows.
-            aria-disabled={activePackId === undefined || undefined}
-            disabled={creatingCharacter}
-            onClick={() => {
-              if (activePackId === undefined) return;
-              void createCharacter().catch((reason: unknown) =>
-                reportFailure(reason),
-              );
-            }}
-          >
-            <Icon name="new-character" />
-          </button>
-          <button
             aria-label={`Trash, ${characterCount(trash.length)}`}
-            className="icon-only-button button-icon page-action-count"
+            className="button-icon"
             title={`Trash (${trash.length})`}
             type="button"
             onClick={() => setTrashOpen(true)}
           >
             <Icon name="trash" />
-            <span aria-hidden="true">{trash.length}</span>
+            <span aria-hidden="true" className="page-action-label">
+              Trash
+            </span>
+            <span aria-hidden="true" className="page-action-count">
+              {trash.length}
+            </span>
           </button>
           <span aria-hidden="true" className="builder-actions-divider" />
-          <UpdateButton />
-          <a
-            aria-label="Settings"
-            className="icon-only-button button-icon"
-            href="#/settings"
-            title="Settings"
-          >
+          <UpdateButton label="Update" />
+          <a aria-label="Settings" href="#/settings" title="Settings">
             <Icon name="settings" />
+            <span aria-hidden="true" className="page-action-label">
+              Settings
+            </span>
           </a>
         </div>
       </header>
       <ToastRegion toasts={toasts.toasts} onDismiss={toasts.dismiss} />
-      {characters.length === 0 ? (
-        <div className="empty-state">
-          <h2>No characters yet</h2>
-          <p>
-            Create one with New character, import a .4ecb character, or import a
-            .dnd4e file from the legacy Character Builder.
-          </p>
-        </div>
-      ) : (
-        <>
-          <PersistenceBanner onFailure={reportFailure} />
-          <ul className="character-grid">
-            {characters.map((character) => {
-              const identity = characterIdentity(character);
-              return (
-                <li key={character.id}>
-                  <div className="character-card-heading">
-                    <PortraitImage
-                      className="library-portrait"
-                      name={character.title}
-                      portrait={
-                        character.renderedPortraitDataUrl === undefined
-                          ? undefined
-                          : {
-                              renderedDataUrl:
-                                character.renderedPortraitDataUrl,
-                            }
-                      }
-                    />
-                    <div>
-                      <h3>{character.title}</h3>
-                      <p className="character-summary">{identity}</p>
-                    </div>
-                  </div>
-                  <div className="character-card-actions">
-                    <a
-                      className="character-card-action"
-                      href={`#/characters/${encodeURIComponent(character.id)}/edit`}
-                      aria-label={`Edit ${character.title} build`}
-                      title="Edit build"
-                    >
-                      <Icon name="edit" />
-                    </a>
-                    <a
-                      className="character-card-action"
-                      href={`#/characters/${encodeURIComponent(character.id)}?preview=1`}
-                      aria-label={`View ${character.title} character sheet`}
-                      title="View character sheet"
-                    >
-                      <Icon name="sheet" />
-                    </a>
-                    <ActionMenu
-                      icon="export"
-                      label={`Export ${character.title}`}
-                      {...(exportingIds.has(character.id)
-                        ? { busyLabel: `Exporting ${character.title}…` }
-                        : {})}
-                      menuLabel={`Export ${character.title} as`}
-                      triggerClassName="character-card-action"
-                      items={[
-                        {
-                          label: ".4ecb",
-                          onSelect: () =>
-                            exportCharacter(character, exportCharacterBackup),
-                        },
-                        {
-                          label: ".dnd4e",
-                          onSelect: () =>
-                            exportCharacter(character, exportCharacterDnd4e),
-                        },
-                      ]}
-                    />
-                    <button
-                      className="character-card-action"
-                      type="button"
-                      aria-label={`Duplicate ${character.title}`}
-                      title="Duplicate"
-                      onClick={() =>
-                        void repository
-                          .duplicate(character.id)
-                          .then(refresh)
-                          .catch((reason: unknown) => reportFailure(reason))
-                      }
-                    >
-                      <Icon name="duplicate" />
-                    </button>
-                    <button
-                      className="character-card-action danger-action"
-                      type="button"
-                      data-character-trash-trigger={character.id}
-                      data-armed={
-                        trashAction.isArmed(character.id) || undefined
-                      }
-                      aria-label={
-                        trashAction.isArmed(character.id)
-                          ? `Confirm moving ${character.title} to trash`
-                          : `Move ${character.title} to trash`
-                      }
-                      title={
-                        trashAction.isArmed(character.id)
-                          ? "Click again to move to trash"
-                          : "Move to trash"
-                      }
-                      onClick={() => {
-                        if (!trashAction.isArmed(character.id)) {
-                          trashAction.arm(character.id);
-                          return;
-                        }
-                        trashAction.disarm();
-                        void repository
-                          .moveToTrash(character.id)
-                          .then(refresh)
-                          .catch((reason: unknown) => reportFailure(reason));
-                      }}
-                    >
-                      <Icon
-                        name={
-                          trashAction.isArmed(character.id)
-                            ? "warning"
-                            : "trash"
-                        }
-                      />
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </>
+      {characters.length === 0 ? null : (
+        <PersistenceBanner onFailure={reportFailure} />
       )}
+      <div className="library-workspace">
+        <CharacterLibraryTable
+          characters={rows}
+          totalCount={characters.length}
+          filter={filter}
+          sort={view.sort}
+          selectedId={selectedId}
+          updateIds={updateIds}
+          now={now}
+          onFilterChange={setFilter}
+          onSortChange={(column) =>
+            updateView((current) => ({
+              ...current,
+              sort: nextLibrarySort(current.sort, column),
+            }))
+          }
+          onSelect={(id) => {
+            if (id !== selectedId) trashAction.disarm();
+            updateView((current) => ({ ...current, selectedId: id }));
+          }}
+        />
+        {selected === undefined ? (
+          <div className="empty-state library-empty">
+            <h2>No characters yet</h2>
+            <p>
+              Create one with New character, import a .4ecb character, or import
+              a .dnd4e file from the legacy Character Builder.
+            </p>
+          </div>
+        ) : (
+          <CharacterLibraryDetail
+            character={selected}
+            now={now}
+            updateAvailable={updateIds.has(selected.id)}
+            exporting={exportingIds.has(selected.id)}
+            trashArmed={trashAction.isArmed(selected.id)}
+            onExportBackup={() =>
+              exportCharacter(selected, exportCharacterBackup)
+            }
+            onExportDnd4e={() =>
+              exportCharacter(selected, exportCharacterDnd4e)
+            }
+            onDuplicate={() =>
+              void repository
+                .duplicate(selected.id)
+                .then((copy) => {
+                  updateView((current) => ({
+                    ...current,
+                    selectedId: copy.id,
+                  }));
+                  return refresh();
+                })
+                .catch((reason: unknown) => reportFailure(reason))
+            }
+            onTrash={() => {
+              if (!trashAction.isArmed(selected.id)) {
+                trashAction.arm(selected.id);
+                return;
+              }
+              trashAction.disarm();
+              void repository
+                .moveToTrash(selected.id)
+                .then(refresh)
+                .catch((reason: unknown) => reportFailure(reason));
+            }}
+          />
+        )}
+      </div>
       {trashOpen ? (
         <TrashDialog
           characters={trash}

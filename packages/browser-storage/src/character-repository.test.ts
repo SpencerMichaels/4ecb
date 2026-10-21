@@ -3,7 +3,10 @@ import "fake-indexeddb/auto";
 import { afterEach, describe, expect, it } from "vitest";
 import { openDB } from "idb";
 
-import { newCharacterRecord } from "@4ecb/character-domain";
+import {
+  newCharacterRecord,
+  type BuildOccurrence,
+} from "@4ecb/character-domain";
 import { buildContentPack } from "@4ecb/content-pack";
 import type { ParsedContentSource } from "@4ecb/content-domain";
 
@@ -419,6 +422,92 @@ describe("CharacterRepository", () => {
     expect(await db.get("characterPortraits", "kept")).toBeDefined();
     db.close();
     await expect(storage.emptyTrash()).resolves.toBe(0);
+  });
+
+  it("lists paragon path and epic destiny, backfilling rows saved without them", async () => {
+    const name = `4ecb-character-paragon-${crypto.randomUUID()}`;
+    databases.push(name);
+    const occurrence = (
+      id: string,
+      type: string,
+      itemName: string,
+      level: number,
+      children: readonly BuildOccurrence[] = [],
+    ): BuildOccurrence => ({
+      id,
+      identity: { name: itemName, type },
+      acquiredLevel: level,
+      legality: "rules-legal",
+      children,
+      unresolved: false,
+    });
+    const base = character("epic-hero");
+    const epic = {
+      ...base,
+      profileBinding: { packId: "synthetic", contentDigest: "digest-1" },
+      build: {
+        ...base.build,
+        effectiveLevel: 21,
+        levels: [
+          {
+            level: 1,
+            root: occurrence("l1", "Level", "1", 1, [
+              occurrence("race", "Race", "Human", 1),
+              occurrence("class", "Class", "Cleric", 1),
+            ]),
+          },
+          {
+            level: 11,
+            root: occurrence("l11", "Level", "11", 11, [
+              occurrence("pp", "Paragon Path", "Radiant Servant", 11),
+            ]),
+          },
+          {
+            level: 21,
+            root: occurrence("l21", "Level", "21", 21, [
+              occurrence("ed", "Epic Destiny", "Demigod", 21),
+            ]),
+          },
+        ],
+      },
+    };
+    const storage = new CharacterRepository(name);
+    await storage.put(epic);
+    await expect(storage.listMetadataPartitioned()).resolves.toMatchObject({
+      active: [
+        {
+          id: "epic-hero",
+          race: "Human",
+          className: "Cleric",
+          paragonPath: "Radiant Servant",
+          epicDestiny: "Demigod",
+          contentRevision: { packId: "synthetic", contentDigest: "digest-1" },
+        },
+      ],
+    });
+
+    // A row stored before paragon/epic were derived (no metadataVersion) is
+    // re-derived from its record on the next read and written back.
+    const db = await openDB(name);
+    await db.put("characterMetadata", {
+      id: epic.id,
+      title: epic.title,
+      updatedAt: epic.updatedAt,
+      effectiveLevel: 21,
+    });
+    db.close();
+    const { active } = await storage.listMetadataPartitioned();
+    expect(active[0]).toMatchObject({
+      paragonPath: "Radiant Servant",
+      epicDestiny: "Demigod",
+    });
+    expect(active[0]).not.toHaveProperty("metadataVersion");
+    const reopened = await openDB(name);
+    expect(await reopened.get("characterMetadata", epic.id)).toMatchObject({
+      paragonPath: "Radiant Servant",
+      metadataVersion: 2,
+    });
+    reopened.close();
   });
 
   it("lists lightweight metadata once and partitions active and trashed records", async () => {

@@ -465,23 +465,3 @@ textarea {
   font: inherit;
   resize: vertical;
 }
-
-.character-grid {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr));
-  list-style: none;
-  margin: 0 0 1rem;
-  padding: 0;
-}
-.character-grid > li {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  padding: 1rem;
-}
-.character-grid > li {
-  align-items: start;
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: minmax(0, 1fr) auto;
-}

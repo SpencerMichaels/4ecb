@@ -38,8 +38,9 @@ export function PwaUpdateProvider({ children }: { children: ReactNode }) {
 }
 
 /** Top-bar icon shown only while an update is waiting; clicking it reloads
- *  into the new version. Sits to the left of the Settings gear. */
-export function UpdateButton() {
+ *  into the new version. Sits to the left of the Settings gear. The library
+ *  header passes a one-word visible label; the builder stays icon-only. */
+export function UpdateButton({ label }: { readonly label?: string } = {}) {
   const { ready, apply } = useContext(PwaUpdateContext);
   return ready ? (
     <button
@@ -50,6 +51,9 @@ export function UpdateButton() {
       onClick={apply}
     >
       <Icon name="circle-arrow-up" />
+      {label === undefined ? null : (
+        <span className="page-action-label">{label}</span>
+      )}
     </button>
   ) : null;
 }

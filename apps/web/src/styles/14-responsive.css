@@ -233,8 +233,16 @@
   .timeline-heading {
     position: static;
   }
-  .character-grid {
+  /* The library pane drops below the table, which keeps Name, Level and
+     Class. */
+  .library-workspace {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .library-detail {
+    position: static;
+  }
+  .library-table :is(.library-col-race, .library-col-edited) {
+    display: none;
   }
   .sheet-columns,
   .print-summary-columns {
@@ -266,16 +274,10 @@
 }
 
 @media (max-width: 36rem) {
-  .character-grid > li {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .character-card-actions {
     grid-column: 1;
     grid-row: 1;
     justify-self: end;
-  }
-  .character-grid .character-card-heading {
-    grid-row: 2;
   }
 }
 

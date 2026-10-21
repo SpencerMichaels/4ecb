@@ -203,6 +203,28 @@ describe("release accessibility contract", () => {
       ).toBeGreaterThanOrEqual(4.5);
   });
 
+  it("keeps the library pane's light-on-navy text above WCAG AA in both themes", () => {
+    // Navy is theme-invariant, so the band's colors are fixed values.
+    const band = styles.match(/\.library-detail-header \{([^}]*)\}/)?.[1] ?? "";
+    const token = (name: string) =>
+      band.match(new RegExp(`--library-band-${name}: (#[0-9a-f]{6})`))?.[1];
+    const navy = "#1d3d5d";
+    // The hovered action: 12% white over navy.
+    const hovered = "#38546f";
+    for (const name of ["ink", "soft", "muted", "danger"]) {
+      const color = token(name);
+      expect(color, name).toBeDefined();
+      for (const background of [navy, hovered])
+        expect(
+          contrast(color!, background),
+          `${name} on ${background}`,
+        ).toBeGreaterThanOrEqual(4.5);
+    }
+    expect(contrast(token("ink")!, token("armed")!)).toBeGreaterThanOrEqual(
+      4.5,
+    );
+  });
+
   it("does not force a desktop viewport and stacks dense layouts for tablets", () => {
     expect(styles.match(/body\s*\{[^}]*\}/)?.[0]).not.toContain("min-width");
     expect(styles).toMatch(

@@ -71,7 +71,7 @@ interface CharacterDatabase extends DBSchema {
   };
   characterMetadata: {
     key: string;
-    value: CharacterMetadata;
+    value: StoredCharacterMetadata;
     indexes: { "by-updated": string; "by-deleted": string };
   };
   characterPortraits: {
@@ -100,6 +100,24 @@ export interface CharacterMetadata {
   readonly effectiveLevel: number;
   readonly race?: string;
   readonly className?: string;
+  /** The build's latest paragon path and epic destiny, when it has them. */
+  readonly paragonPath?: string;
+  readonly epicDestiny?: string;
+  /** The content the character is pinned to (packId and digest only), so
+   *  the library can tell when a content update is waiting. */
+  readonly contentRevision?: {
+    readonly packId: string;
+    readonly contentDigest?: string;
+  };
+}
+
+/** Bumped whenever characterMetadata() derives new fields: rows from an
+ *  older derivation are re-derived from their records on the next library
+ *  read (refreshStaleMetadata). */
+const CHARACTER_METADATA_VERSION = 2;
+
+interface StoredCharacterMetadata extends CharacterMetadata {
+  readonly metadataVersion?: number;
 }
 
 export interface CharacterLibraryEntry extends CharacterMetadata {
@@ -214,7 +232,9 @@ async function database(name: string) {
   });
 }
 
-function characterMetadata(record: StoredCharacterRecord): CharacterMetadata {
+function characterMetadata(
+  record: StoredCharacterRecord,
+): StoredCharacterMetadata {
   const current = record.schemaVersion === 2 ? record : undefined;
   // Read race/class from the edited build; the import-time snapshot is only
   // a fallback for v1 records that have no build.
@@ -228,7 +248,18 @@ function characterMetadata(record: StoredCharacterRecord): CharacterMetadata {
       : (buildElementNames(current.build, "Class")[0] ??
         (buildElementNames(current.build, "Hybrid Class").join(" / ") ||
           undefined));
+  // Like race and class, read from the build up to its effective level (a
+  // v1 record without a build shows neither).
+  const paragonPath =
+    current === undefined
+      ? undefined
+      : buildElementNames(current.build, "Paragon Path").at(-1);
+  const epicDestiny =
+    current === undefined
+      ? undefined
+      : buildElementNames(current.build, "Epic Destiny").at(-1);
   return {
+    metadataVersion: CHARACTER_METADATA_VERSION,
     id: record.id,
     title: current === undefined ? record.title : characterDisplayName(current),
     updatedAt: record.updatedAt,
@@ -237,7 +268,47 @@ function characterMetadata(record: StoredCharacterRecord): CharacterMetadata {
       current?.build.effectiveLevel ?? record.snapshot.levelCount ?? 1,
     ...(race === undefined ? {} : { race }),
     ...(className === undefined ? {} : { className }),
+    ...(paragonPath === undefined ? {} : { paragonPath }),
+    ...(epicDestiny === undefined ? {} : { epicDestiny }),
+    ...(record.profileBinding === undefined
+      ? {}
+      : {
+          contentRevision: {
+            packId: record.profileBinding.packId,
+            ...(record.profileBinding.contentDigest === undefined
+              ? {}
+              : { contentDigest: record.profileBinding.contentDigest }),
+          },
+        }),
   };
+}
+
+/** Lazy metadata migration: rows written by an older characterMetadata()
+ *  (or by the content repository's copy of the v5 upgrade) are re-derived
+ *  from their records and written back, so later reads stay a plain index
+ *  scan. A row whose record is missing is returned as it is. */
+async function refreshStaleMetadata(
+  db: Awaited<ReturnType<typeof database>>,
+  rows: readonly StoredCharacterMetadata[],
+): Promise<readonly StoredCharacterMetadata[]> {
+  if (rows.every((row) => row.metadataVersion === CHARACTER_METADATA_VERSION))
+    return rows;
+  const transaction = db.transaction(
+    ["characters", "characterMetadata"],
+    "readwrite",
+  );
+  const refreshed = await Promise.all(
+    rows.map(async (row) => {
+      if (row.metadataVersion === CHARACTER_METADATA_VERSION) return row;
+      const record = await transaction.objectStore("characters").get(row.id);
+      if (record === undefined) return row;
+      const next = characterMetadata(record);
+      await transaction.objectStore("characterMetadata").put(next);
+      return next;
+    }),
+  );
+  await transaction.done;
+  return refreshed;
 }
 
 function characterPortraitThumbnail(
@@ -342,15 +413,18 @@ export class CharacterRepository {
         transaction.objectStore("characterPortraits").getAll(),
       ]);
       await transaction.done;
+      const current = await refreshStaleMetadata(db, records);
       const portraitById = new Map(
         thumbnails.map(({ id, renderedDataUrl }) => [id, renderedDataUrl]),
       );
       const active: CharacterLibraryEntry[] = [];
       const deleted: CharacterLibraryEntry[] = [];
-      for (const record of records.reverse()) {
+      for (const record of [...current].reverse()) {
         const renderedPortraitDataUrl = portraitById.get(record.id);
+        const { metadataVersion: _metadataVersion, ...metadata } = record;
+        void _metadataVersion;
         const entry = {
-          ...record,
+          ...metadata,
           ...(renderedPortraitDataUrl === undefined
             ? {}
             : { renderedPortraitDataUrl }),

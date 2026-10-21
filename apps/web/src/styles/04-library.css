@@ -1,28 +1,11 @@
-/* Character library cards, menus, portraits, content-update and preset dialogs. */
+/* Character library table and detail pane, action buttons, menus, portraits,
+   content-update and preset dialogs. */
 
-.character-card-heading,
 .builder-character-heading,
 .sheet-title-identity {
   align-items: center;
   display: flex;
   gap: 0.85rem;
-}
-.character-grid .character-card-heading {
-  grid-column: 1;
-  grid-row: 1;
-}
-.character-card-heading > div {
-  min-width: 0;
-}
-.character-card-heading h3,
-.character-card-heading p {
-  margin-bottom: 0.25rem;
-}
-.character-card-heading h3 {
-  margin-top: 0;
-}
-.character-summary {
-  color: var(--muted);
 }
 .character-card-actions {
   align-items: center;
@@ -62,6 +45,216 @@
   background: var(--danger);
   border-color: var(--danger);
   color: var(--surface);
+}
+
+/* Characters page: the character table and the selected character's detail
+   pane side by side, like the builder's selection table and detail card
+   (the pane sticky, at most the wide detail-card width). */
+.library-workspace {
+  align-items: start;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) clamp(22rem, 34%, 30rem);
+}
+.library-table-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.library-table-toolbar .selection-table-search {
+  flex: 0 1 24rem;
+}
+/* The builder's selection-table look (legacy-neutral header, striped rows,
+   selected tint), but the page scrolls, not the table, and it fits its
+   column instead of keeping the builder's minimum width. */
+.library-table-scroll {
+  border-top: 1px solid var(--border);
+  max-height: none;
+}
+.library-table-scroll table.library-table {
+  font-size: 0.9rem;
+  min-width: 0;
+}
+.library-table :is(th, td) {
+  vertical-align: middle;
+}
+/* No tone bar on plain rows; the selected row gets the accent bar. */
+.library-table tbody tr {
+  --tone: transparent;
+}
+.library-table tbody tr.selection-row-selected > td:first-child {
+  box-shadow: inset 6px 0 var(--selected);
+}
+.library-table
+  :is(.library-col-portrait, .library-col-level, .library-col-edited) {
+  white-space: nowrap;
+  width: 1%;
+}
+.library-table td.library-col-edited {
+  color: var(--muted);
+}
+.library-table-portrait {
+  height: 2.25rem;
+  width: 2.25rem;
+}
+.library-table-name {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.45rem;
+}
+.library-table-name a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+.library-table-name a:focus-visible {
+  color: var(--accent-strong);
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  text-decoration: underline;
+}
+.library-table-empty td {
+  color: var(--muted);
+  padding: 2rem 1rem;
+  text-align: center;
+}
+/* A waiting content update: the builder's `update` issue, as a small tag. */
+.library-update-badge {
+  background: var(--warning-soft);
+  border-radius: 2px;
+  color: var(--warning);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+  padding: 0 0.35rem;
+  white-space: nowrap;
+}
+.library-detail {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  min-width: 0;
+  position: sticky;
+  top: 1rem;
+}
+/* The navy band of dialogs and detail cards. Navy is the same in both
+   themes, so the light-on-navy colors are fixed rather than theme tokens. */
+.library-detail-header {
+  --library-band-ink: #ffffff;
+  --library-band-soft: #dbe7f1;
+  --library-band-muted: #b6d2e8;
+  --library-band-danger: #ffc0b8;
+  --library-band-armed: #8b0000;
+  --library-band-focus: #72c1f0;
+  --library-band-rule: rgb(255 255 255 / 18%);
+  background: var(--brand-navy);
+  border-bottom: 3px solid var(--brand-blue);
+  color: var(--library-band-ink);
+}
+.library-detail-identity {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+}
+/* The builder sidebar's portrait size, shrinking in a narrow pane. */
+.library-detail-portrait {
+  border: 3px solid rgb(255 255 255 / 85%);
+  flex: none;
+  height: auto;
+  width: min(9rem, 38%);
+}
+.library-detail-text {
+  min-width: 0;
+}
+.library-detail-text h2 {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  line-height: 1.1;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.library-detail-text p {
+  color: var(--library-band-soft);
+  font-size: 0.9rem;
+  margin: 0.15rem 0 0;
+}
+.library-detail-text p.library-detail-meta {
+  align-items: center;
+  color: var(--library-band-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  gap: 0.2rem 0.5rem;
+}
+/* Five equal buttons, icon over a one-word label, in one row at any width
+   (labels ellipsize rather than wrap). The 1px gaps over the rule color
+   draw the dividers. */
+.library-detail-actions {
+  background: var(--library-band-rule);
+  border-top: 1px solid var(--library-band-rule);
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.library-detail-actions > .action-menu {
+  display: flex;
+  min-width: 0;
+}
+.library-detail-action {
+  align-items: center;
+  background: var(--brand-navy);
+  border: 0;
+  border-radius: 0;
+  color: var(--library-band-ink);
+  display: flex;
+  flex-direction: column;
+  font-size: 0.75rem;
+  font-weight: 600;
+  gap: 0.2rem;
+  justify-content: center;
+  min-width: 0;
+  padding: 0.5rem 0.2rem 0.45rem;
+  text-decoration: none;
+  width: 100%;
+}
+.library-detail-action > span:not(.icon) {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.library-detail-action .icon {
+  height: 1.1rem;
+  width: 1.1rem;
+}
+.library-detail-actions
+  .library-detail-action:not([aria-disabled="true"]):hover,
+.library-detail-actions .library-detail-action[aria-expanded="true"] {
+  background: color-mix(in srgb, #fff 12%, var(--brand-navy));
+  box-shadow: inset 0 -2px var(--library-band-focus);
+}
+.library-detail-action:focus-visible {
+  outline: 3px solid var(--library-band-focus);
+  outline-offset: -3px;
+}
+.library-detail-action.danger-action {
+  color: var(--library-band-danger);
+}
+.library-detail-actions
+  .library-detail-action.danger-action[data-armed="true"] {
+  background: var(--library-band-armed);
+  color: var(--library-band-ink);
+}
+.library-detail-actions .loading-spinner {
+  border-color: rgb(255 255 255 / 30%);
+  border-top-color: var(--library-band-ink);
+  height: 1.1rem;
+  width: 1.1rem;
+}
+.library-detail-body:empty {
+  display: none;
 }
 /* ActionMenu: an icon button with a small list of actions below it. */
 .action-menu {
@@ -129,11 +322,6 @@
 .portrait-placeholder svg {
   height: 52%;
   width: 52%;
-}
-.library-portrait {
-  flex: 0 0 auto;
-  height: 5rem;
-  width: 5rem;
 }
 .portrait-trigger {
   background: transparent;

@@ -21,6 +21,7 @@ export function ActionMenu({
   triggerClassName,
   items,
   busyLabel,
+  visibleLabel,
 }: {
   readonly icon: IconName;
   /** The trigger's accessible name and tooltip. */
@@ -31,6 +32,9 @@ export function ActionMenu({
   /** Set while a picked action is still working (a slow export): the trigger
    *  spins, says so, and ignores clicks until it is done. */
   readonly busyLabel?: string;
+  /** A short word shown beside (or under) the icon; the full action stays
+   *  the accessible name and tooltip. */
+  readonly visibleLabel?: string;
 }) {
   const busy = busyLabel !== undefined;
   const [open, setOpen] = useState(false);
@@ -80,6 +84,9 @@ export function ActionMenu({
           <span aria-hidden="true" className="icon loading-spinner" />
         ) : (
           <Icon name={icon} />
+        )}
+        {visibleLabel === undefined ? null : (
+          <span className="action-menu-label">{visibleLabel}</span>
         )}
       </button>
       {open ? (
