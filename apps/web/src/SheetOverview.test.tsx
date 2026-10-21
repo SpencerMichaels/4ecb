@@ -110,6 +110,78 @@ describe("real-data sheet overview", () => {
       false,
     );
   });
+  it("lists proficiencies by kind after the inventory and names sub-choices", () => {
+    const fixture = {
+      ...model,
+      proficiencies: [
+        {
+          kind: "Armor" as const,
+          values: ["cloth", "leather"],
+          definitionIds: [],
+        },
+        {
+          kind: "Weapons" as const,
+          values: ["simple melee", "pact blade"],
+          definitionIds: [],
+        },
+      ],
+      overview: {
+        ...model.overview!,
+        features: [
+          {
+            id: "former-life",
+            name: "Former life",
+            group: "Racial Trait",
+            summary: "You lived before.",
+            description: "You lived before.",
+            fields: [],
+            source: "Synthetic",
+            fullTextAvailable: true,
+            choices: [
+              { id: "ALIAS", name: "Other Ancestry", type: "CountsAsRace" },
+            ],
+          },
+        ],
+        reminders: [
+          {
+            label: "Former life",
+            value: "You lived before.",
+            category: "Racial features" as const,
+            choice: "Other Ancestry",
+          },
+        ],
+      },
+    };
+    const entries = references(fixture);
+    const items = entries.filter((entry) => entry.group === "Items");
+    expect(items.map((entry) => entry.id)).toEqual([
+      "inventory:true",
+      "inventory:false",
+      "proficiencies",
+    ]);
+    expect(items[2]!.parts.map((part) => [part.label, part.block])).toEqual([
+      ["Armor", { kind: "paragraph", text: "cloth, leather" }],
+      ["Weapons", { kind: "paragraph", text: "simple melee, pact blade" }],
+    ]);
+    expect(entries.find((entry) => entry.id === "former-life")?.choice).toBe(
+      "Other Ancestry",
+    );
+    expect(
+      references(model).some((entry) => entry.id === "proficiencies"),
+    ).toBe(false);
+    const html = renderToStaticMarkup(
+      <SheetOverview
+        model={fixture}
+        name="Fixture"
+        portrait={undefined}
+        paper="letter"
+      />,
+    );
+    expect(html).toContain(
+      'Former life<span class="ov-reference-choice">: Other Ancestry</span>',
+    );
+    expect(html).toContain("Former life: Other Ancestry</strong>");
+  });
   it("places muted quantity-inclusive weights beside inventory names", () => {
     const fixture = {
       ...model,

@@ -14,6 +14,7 @@ import { equippedItemPropertyReminders } from "./item-reminders";
 import { overviewSenses } from "./senses";
 import { corePowerReminders } from "./core-power-reminders";
 import { featureReferenceMetadata } from "./feature-reference";
+import { featureChoiceText, type SheetFeatureChoice } from "./feature-choices";
 
 export interface OverviewFeature {
   readonly id: string;
@@ -29,6 +30,8 @@ export interface OverviewFeature {
   /** A display heuristic, not a claim that every other benefit is calculated. */
   readonly playReminder?: boolean;
   readonly accessOnly?: boolean;
+  /** Choices made under the feature, shown after its name. */
+  readonly choices?: readonly SheetFeatureChoice[];
 }
 export interface OverviewInventory {
   readonly itemType?: string | undefined;
@@ -44,6 +47,8 @@ export interface OverviewInventory {
   readonly category?: string;
 }
 export interface OverviewReminder extends SheetValue {
+  /** What was chosen under the reminder's feature ("Eladrin"). */
+  readonly choice?: string;
   /** Distinct authored benefits; paragraphs inside one benefit stay together. */
   readonly elements?: readonly string[];
   readonly category?:
@@ -260,6 +265,7 @@ export function withSheetOverview(
           !accessOnly(entity, benefit || summary) &&
           hasPlayReminder(summary, benefit),
         accessOnly: accessOnly(entity, benefit || summary),
+        ...(entry.choices === undefined ? {} : { choices: entry.choices }),
       });
     }
   // Rules Item powers are authored reference entities, not invokable actions.
@@ -386,6 +392,7 @@ export function withSheetOverview(
     value: string,
     category: OverviewReminder["category"] = "Other reminders",
     elements?: readonly string[],
+    choice?: string,
   ) => {
     const identity = `${label}:${value}`;
     if (!value.trim() || reminderKeys.has(identity)) return;
@@ -395,6 +402,7 @@ export function withSheetOverview(
       value,
       category,
       ...(elements && elements.length > 1 ? { elements } : {}),
+      ...(choice === undefined ? {} : { choice }),
     });
   };
   for (const feature of features)
@@ -406,6 +414,8 @@ export function withSheetOverview(
         feature.name,
         feature.summary || feature.description,
         reminderCategory(feature.group),
+        undefined,
+        featureChoiceText(feature.choices),
       );
       const index = reminders.findIndex(
         (reminder) =>
@@ -442,14 +452,22 @@ export function withSheetOverview(
         (namedFeatures.length === 1 ? namedFeatures[0] : undefined);
       if (feature && !feature.accessOnly) {
         const existing = reminderByFeature.get(feature.id);
+        const choice = featureChoiceText(feature.choices);
         const canonical = {
           label: feature.name,
           value: feature.summary || feature.description,
           category: reminderCategory(feature.group),
+          ...(choice === undefined ? {} : { choice }),
         };
         if (existing !== undefined) reminders[existing] = canonical;
         else {
-          addReminder(canonical.label, canonical.value, canonical.category);
+          addReminder(
+            canonical.label,
+            canonical.value,
+            canonical.category,
+            undefined,
+            choice,
+          );
           const index = reminders.findIndex(
             (reminder) =>
               reminder.label === canonical.label &&

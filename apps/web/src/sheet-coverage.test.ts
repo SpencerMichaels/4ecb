@@ -183,6 +183,60 @@ describe("sheet presence", () => {
     expect(shown[0]?.surfaces).toEqual(["powers"]);
   });
 
+  it("counts sub-choices on their feature's row and listed proficiencies", () => {
+    const content = new Map(
+      [
+        entity("ID_PACKAGE", "Bond of Stars", "Trait Package"),
+        entity("ID_SIMPLE", "Simple Melee", "Proficiency"),
+        entity("ID_CLUB", "Weapon Proficiency (Club)", "Proficiency"),
+        entity("ID_PACT", "Weapon Proficiency (Pact)", "Proficiency"),
+      ].map((value) => [value.id.toLowerCase(), value]),
+    );
+    const shown = sheetPresence(
+      [
+        occurrence("package", "ID_PACKAGE"),
+        occurrence("simple", "ID_SIMPLE"),
+        occurrence("club", "ID_CLUB", "simple"),
+        occurrence("pact", "ID_PACT"),
+      ],
+      content,
+      sheet({
+        features: [
+          {
+            group: "Class Feature",
+            entries: [
+              {
+                label: "Bond Choice",
+                value: "",
+                choices: [
+                  {
+                    id: "ID_PACKAGE",
+                    name: "Bond of Stars",
+                    type: "Trait Package",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        proficiencies: [
+          {
+            kind: "Weapons",
+            values: ["simple melee"],
+            definitionIds: ["ID_SIMPLE", "ID_CLUB"],
+          },
+        ],
+      }),
+    );
+    const surfaces = (id: string) =>
+      shown.find((value) => value.definitionId === id)?.surfaces;
+    expect(surfaces("ID_PACKAGE")).toEqual(["choices"]);
+    expect(surfaces("ID_SIMPLE")).toEqual(["proficiencies"]);
+    // A weapon the listed group covers is shown through the group.
+    expect(surfaces("ID_CLUB")).toEqual(["proficiencies"]);
+    expect(surfaces("ID_PACT")).toEqual([]);
+  });
+
   it("splits a hybrid's Class identity line into its classes", () => {
     const hybrid = sheetPresence(
       [occurrence("hybrid", "ID_HYBRID_A")],
@@ -239,6 +293,20 @@ describe("registry findings", () => {
         ({ problem }) => problem === "not in the registry",
       ),
     ).toBe(true);
+  });
+
+  it("treats a choice named on its feature's row as incidental", () => {
+    const tallies = new Map<string, TypePresenceTally>([
+      // Applied, but named on a feat's row: no contradiction.
+      ["Skill Training", { rows: 4, presented: 1, surfaces: { choices: 1 } }],
+      // Listed as a feature, and also chosen under one.
+      ["Feat", { rows: 2, presented: 2, surfaces: { features: 2 } }],
+      // A gap that now shows contradicts its entry.
+      ["Domain", { rows: 1, presented: 1, surfaces: { choices: 1 } }],
+    ]);
+    expect(registryFindings(tallies).map(({ type }) => type)).toEqual([
+      "Domain",
+    ]);
   });
 });
 

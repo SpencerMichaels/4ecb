@@ -506,6 +506,10 @@ body:has(.sp-prototype) {
   font-weight: 400;
   white-space: nowrap;
 }
+/* What was chosen under the feature, after its name. */
+.ov-reference-choice {
+  font-weight: 400;
+}
 .ov-reference-card .sp-feature-body {
   font-size: 10pt;
   line-height: 1.35;

@@ -50,10 +50,7 @@ import {
   sheetProficiencies,
   type SheetProficiencyGroup,
 } from "./proficiencies";
-export {
-  featureChoiceText,
-  type SheetFeatureChoice,
-} from "./feature-choices";
+export { featureChoiceText, type SheetFeatureChoice } from "./feature-choices";
 export type {
   SheetProficiencyGroup,
   SheetProficiencyKind,
@@ -1578,7 +1575,9 @@ export function buildEvaluatedSheetModel(
     evaluation.occurrences,
     (occurrence) => activeEntities.get(occurrence.id),
     (occurrence) =>
-      SHEET_FEATURE_TYPES.includes(activeEntities.get(occurrence.id)?.type ?? ""),
+      SHEET_FEATURE_TYPES.includes(
+        activeEntities.get(occurrence.id)?.type ?? "",
+      ),
   );
   // A feature listed once collects the choices made under every occurrence.
   const featureChoicesById = new Map<string, SheetFeatureChoice[]>();

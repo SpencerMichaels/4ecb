@@ -33,6 +33,10 @@ export interface SheetIndex {
   readonly referenceNames: ReadonlySet<string>;
   readonly companionIds: ReadonlySet<string>;
   readonly skills: ReadonlySet<string>;
+  /** Definitions chosen under a listed feature, shown on its row. */
+  readonly choiceIds: ReadonlySet<string>;
+  /** Proficiency definitions the proficiency list shows or covers. */
+  readonly proficiencyIds: ReadonlySet<string>;
 }
 
 export function sheetIndex(sheet: CharacterSheetModel): SheetIndex {
@@ -72,6 +76,16 @@ export function sheetIndex(sheet: CharacterSheetModel): SheetIndex {
     ),
     companionIds: ids(sheet.companions),
     skills: new Set(sheet.skills.map(({ label }) => key(label))),
+    choiceIds: ids(
+      sheet.features.flatMap(({ entries }) =>
+        entries.flatMap(({ choices }) => choices ?? []),
+      ),
+    ),
+    proficiencyIds: new Set(
+      (sheet.proficiencies ?? []).flatMap(({ definitionIds }) =>
+        definitionIds.map(key),
+      ),
+    ),
   };
 }
 
@@ -129,6 +143,11 @@ export function sheetSurfacesOf(
   if (index.referenceIds.has(id) || index.referenceNames.has(name))
     surfaces.push("references");
   if (index.companionIds.has(id)) surfaces.push("companions");
+  if (index.proficiencyIds.has(id)) surfaces.push("proficiencies");
+  // Naming a choice on its feature's row ("Pact Choice: Fey Pact") counts
+  // only for what no other surface shows.
+  if (surfaces.length === 0 && index.choiceIds.has(id))
+    surfaces.push("choices");
   if (key(entity.type) === "skill" && index.skills.has(name))
     surfaces.push("skills");
   return surfaces;
@@ -322,12 +341,19 @@ export function registryFindings(
       );
       if (unseen.length > 0)
         finding(`registered on ${unseen.join(", ")}, never seen there`);
+      // A choice named on its feature's row is incidental for any type.
       const unclaimed = (Object.keys(tally.surfaces) as SheetSurface[]).filter(
-        (surface) => !coverage.surfaces.includes(surface),
+        (surface) =>
+          surface !== "choices" && !coverage.surfaces.includes(surface),
       );
       if (unclaimed.length > 0)
         finding(`also shown on unregistered ${unclaimed.join(", ")}`);
-    } else if (tally.presented > 0)
+    } else if (
+      tally.presented >
+      (coverage.kind === "gap" ? 0 : (tally.surfaces.choices ?? 0))
+    )
+      // An applied or internal row named only as a choice on its feature's
+      // row still has only its registered effect (a Skill Training choice).
       finding(
         `registered ${coverage.kind}, but shown on ${Object.keys(tally.surfaces).join(", ")} ` +
           `for ${tally.presented} of ${tally.rows}`,

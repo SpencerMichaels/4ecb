@@ -103,6 +103,21 @@ page column may split, with its heading repeated. Quantities lead item names as
 Category headings stay flush left, with names naturally indented. Striping restarts
 within each category. A clear central gutter separates columns.
 Equipped superscripts stay attached to each item, and every owned item remains.
+A Proficiencies pane follows Inventory (not page 1: proficiencies are mostly
+applied automatically and rarely looked up). It lists the evaluated Proficiency
+occurrences by kind ("Armor: cloth, leather · Weapons: simple melee, military
+melee"); a proficiency that grants others (Simple Melee, Weapon Group (Mace))
+is listed as the group and the weapons it grants are not repeated
+(`sheet-model/src/proficiencies.ts`).
+A choice made under a listed feature shows on that feature's row, wherever the
+row renders (reference card heading, page-1/continuation reminder label, screen
+features list): "Past life: Eladrin", "Pact Choice: Fey Pact of the White
+Well". `sheet-model/src/feature-choices.ts` derives it from occurrence
+parentage only: the choice's parent is the listed feature, or an unlisted helper
+whose grantor (not a level root) granted exactly one listed feature, or several
+of which the choice's `_SupportsID` names one (a background and its "Background
+Benefit"). A generic benefit with two or more backgrounds and no link stays
+unattached.
 Features/rituals/character prose use stacked category-local
 two-column blocks under full-width headings. Measured splits balance column
 heights while preserving down-then-across level/name order. The power

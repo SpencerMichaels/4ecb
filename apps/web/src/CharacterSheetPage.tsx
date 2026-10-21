@@ -22,6 +22,7 @@ import {
 import {
   buildEvaluatedSheetModel,
   buildSheetModel,
+  featureChoiceText,
   type CharacterSheetModel,
   type SheetCard,
   type SheetCompanionCard,
@@ -720,7 +721,14 @@ export function CharacterSheetPage({
             {model.features.map((group) => (
               <section key={group.group}>
                 <h3>{group.group}</h3>
-                <ValueList values={group.entries} />
+                <ValueList
+                  values={group.entries.map((entry) => {
+                    const choice = featureChoiceText(entry.choices);
+                    return choice === undefined
+                      ? entry
+                      : { ...entry, label: `${entry.label}: ${choice}` };
+                  })}
+                />
               </section>
             ))}
           </div>

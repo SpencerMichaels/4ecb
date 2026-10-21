@@ -11,11 +11,12 @@ import {
   type ReactNode,
 } from "react";
 import type { CharacterPortrait } from "@4ecb/character-domain";
-import type {
-  CharacterSheetModel,
-  SheetCard,
-  SheetPowerVariant,
-  SheetValue,
+import {
+  featureChoiceText,
+  type CharacterSheetModel,
+  type SheetCard,
+  type SheetPowerVariant,
+  type SheetValue,
 } from "@4ecb/sheet-model";
 import { Icon, type IconName } from "./Icon";
 import { ActionTypeIcon } from "./ActionTypeIcon";
@@ -392,6 +393,7 @@ function Reminders({
         <div key={index} data-reminder-index={indices?.[index]}>
           <strong>
             {entry.label.replace(/\s*\([^()]*\)/g, "").trim() || entry.label}
+            {entry.choice ? `: ${entry.choice}` : null}
           </strong>{" "}
           {entry.elements && entry.elements.length > 1 ? (
             <ul className="ov-reminder-elements">
@@ -1783,6 +1785,8 @@ interface ReferencePart {
 export interface ReferenceEntry {
   id: string;
   name: string;
+  /** What was chosen under the feature, shown after its name. */
+  choice?: string;
   group: string;
   source: string;
   parts: readonly ReferencePart[];
@@ -1966,10 +1970,12 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
           : []),
       ];
       if (structuredBackground && !parts.length) return [];
+      const choice = featureChoiceText(feature.choices);
       return [
         {
           id: feature.id,
           name: feature.name,
+          ...(choice === undefined ? {} : { choice }),
           group: groupName(
             feature.referenceGroup ??
               (order.includes(feature.group)
@@ -2088,6 +2094,18 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
         })),
       });
   }
+  // Proficiencies are mostly applied automatically and rarely looked up, so
+  // they follow the inventory rather than taking page-1 space.
+  if (model.proficiencies?.length)
+    result.push({
+      id: "proficiencies",
+      name: "Proficiencies",
+      group: "Items",
+      source: "",
+      parts: model.proficiencies.flatMap(({ kind, values }) =>
+        referenceParts(values.join(", "), kind),
+      ),
+    });
   const equipped = result.find((entry) => entry.id === "inventory:true")!;
   // Ordinary open slots remain useful lookup rows. Conditional implement and
   // companion slots appear only when represented in the actual loadout.
@@ -2521,6 +2539,9 @@ function ReferenceCard({
           <Icon name={referenceIcon(entry.group)} />
           <h3>
             {entry.name}
+            {entry.choice ? (
+              <span className="ov-reference-choice">: {entry.choice}</span>
+            ) : null}
             {entry.continued ? " (continued)" : ""}
           </h3>
           {entry.feature ? (
@@ -3060,6 +3081,7 @@ export function summaryContinuationEntries(
               id: `summary-reminder:${index}`,
               name:
                 entry.label.replace(/\s*\([^()]*\)/g, "").trim() || entry.label,
+              ...(entry.choice === undefined ? {} : { choice: entry.choice }),
               group: category,
               reminder: entry,
               source: "",

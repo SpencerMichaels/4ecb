@@ -5,6 +5,8 @@
  * public test covers the synthetic pack's types.
  *
  * - presented: a sheet surface lists it (and the builder offers or shows it).
+ *   "choices" is the row of the listed feature it was chosen under
+ *   ("Past life: Eladrin").
  * - applied: only its effect shows, through calculated values.
  * - internal: rules plumbing or reference data a character never owns.
  * - gap: a character can have it, but nothing presents it yet.
@@ -16,7 +18,9 @@ export type SheetSurface =
   | "items"
   | "references"
   | "companions"
-  | "skills";
+  | "skills"
+  | "choices"
+  | "proficiencies";
 
 export type ContentTypeCoverage =
   | { readonly kind: "presented"; readonly surfaces: readonly SheetSurface[] }
@@ -66,6 +70,11 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   Deity: presented("identity"),
   Familiar: presented("companions"),
   Skill: presented("skills"),
+  "Trait Package": presented("choices"),
+  CountsAsRace: presented("choices"),
+  "Background Choice": presented("choices"),
+  // Character Reference pages, grouped by kind after the inventory.
+  Proficiency: presented("proficiencies"),
 
   // Inventory
   "Magic Item": presented("items"),
@@ -115,22 +124,11 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   "Item Set": internal("Set metadata for Item Set Benefit."),
 
   // Known gaps, for triage
-  "Trait Package": gap(
-    "Its class features are listed, but the package itself (e.g. the pact) " +
-      "is not named on the sheet.",
-  ),
   Domain: gap("A cleric's chosen domains are not shown."),
-  "Background Choice": gap(
-    "The chosen background benefit (e.g. a skill bonus) is not shown.",
-  ),
   "God Fragment": gap("A chosen god fragment and its powers are not shown."),
   "Item Set Benefit": gap("Active item-set bonuses are not shown."),
-  Proficiency: gap("Proficiencies are applied but not listed on the sheet."),
   Companion: gap(
     "Beast companions have no stat block (familiar card proposal, step 2).",
-  ),
-  CountsAsRace: gap(
-    "A revenant's past-life race is chosen but not shown on the sheet.",
   ),
   Associate: gap("Associates and summoned-creature stat blocks are not shown."),
   "Companion Ability Increase (Level 4)": companionAbilityIncrease,
