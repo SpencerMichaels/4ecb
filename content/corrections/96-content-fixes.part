@@ -1,0 +1,92 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Content errors the coverage matrix found (pnpm audit:coverage-matrix),
+  fixed in data per D089. Merged after the CBLoader parts by
+  scripts/build-private-content.sh. Structure only; no official text.
+-->
+<D20Rules game-system="D&amp;D4E">
+  <!-- Deep Delver's level 10 feature, two items and a feat grant
+       ID_INTERNAL_VISION_BLINDSIGHT, but the core Vision records stop at
+       Truesight, so legacy dropped the grant. Add the record beside the
+       other core senses. -->
+  <RulesElement name="Blindsight" type="Vision" source="Core" internal-id="ID_INTERNAL_VISION_BLINDSIGHT" />
+
+  <!-- Companion classes (DMG2): 36-companion.part gives the level 17
+       encounter power record the level 13 ID, so it replaced the level 13
+       record and the level 17 grant names a missing ID. Legacy therefore
+       offered a level 17 power at level 13 and nothing at 17. Restore the
+       level 13 record and add the level 17 one under the ID the class
+       grants. -->
+  <RulesElement name="Level 13 Defender Encounter Power" type="Class Feature" internal-id="ID_WOG_DEFENDER_CLASS_FEATURE_ENCOUNTER_LEVEL_13" source="Dungeon Master's Guide 2">
+    <Category>13</Category>
+    <specific name="Level"> 13 </specific>
+    <specific name="_CS_ShortDescription"> @ </specific>
+    <rules>
+      <replace name="Power Encounter 13" powerswap="ID_FMP_CLASS_3|ID_FMP_CLASS_4|ID_FMP_CLASS_134|ID_FMP_CLASS_53,encounter,13" />
+      <modify Field="Attack" value="Base + 4 vs. AC" />
+    </rules>
+  </RulesElement>
+  <RulesElement name="Level 17 Defender Encounter Power" type="Class Feature" internal-id="ID_WOG_DEFENDER_CLASS_FEATURE_ENCOUNTER_LEVEL_17" source="Dungeon Master's Guide 2">
+    <Category>17</Category>
+    <specific name="Level"> 17 </specific>
+    <specific name="_CS_ShortDescription"> @ </specific>
+    <rules>
+      <replace name="Power Encounter 17" powerswap="ID_FMP_CLASS_3|ID_FMP_CLASS_4|ID_FMP_CLASS_134|ID_FMP_CLASS_53,encounter,17" />
+      <modify Field="Attack" value="Base + 4 vs. AC" />
+    </rules>
+  </RulesElement>
+  <RulesElement name="Level 13 Leader Encounter Power" type="Class Feature" internal-id="ID_WOG_LEADER_CLASS_FEATURE_ENCOUNTER_LEVEL_13" source="Dungeon Master's Guide 2">
+    <Category>13</Category>
+    <specific name="Level"> 13 </specific>
+    <specific name="_CS_ShortDescription"> @ </specific>
+    <rules>
+      <replace name="Power Encounter 13" powerswap="ID_FMP_CLASS_2|ID_FMP_CLASS_8|ID_FMP_CLASS_104|ID_FMP_CLASS_147|ID_FMP_CLASS_602|ID_FMP_CLASS_125,encounter,13" />
+      <modify Field="Attack" value="Base + 4 vs. AC" />
+    </rules>
+  </RulesElement>
+  <RulesElement name="Level 17 Leader Encounter Power" type="Class Feature" internal-id="ID_WOG_LEADER_CLASS_FEATURE_ENCOUNTER_LEVEL_17" source="Dungeon Master's Guide 2">
+    <Category>17</Category>
+    <specific name="Level"> 17 </specific>
+    <specific name="_CS_ShortDescription"> @ </specific>
+    <rules>
+      <replace name="Power Encounter 17" powerswap="ID_FMP_CLASS_2|ID_FMP_CLASS_8|ID_FMP_CLASS_104|ID_FMP_CLASS_147|ID_FMP_CLASS_602|ID_FMP_CLASS_125,encounter,17" />
+      <modify Field="Attack" value="Base + 4 vs. AC" />
+    </rules>
+  </RulesElement>
+  <RulesElement name="Level 13 Striker Encounter Power" type="Class Feature" internal-id="ID_WOG_STRIKER_CLASS_FEATURE_ENCOUNTER_LEVEL_13" source="Dungeon Master's Guide 2">
+    <Category>13</Category>
+    <specific name="Level"> 13 </specific>
+    <specific name="_CS_ShortDescription"> @ </specific>
+    <rules>
+      <replace name="Power Encounter 13" powerswap="ID_FMP_CLASS_5|ID_FMP_CLASS_6|ID_FMP_CLASS_7|ID_FMP_CLASS_129|ID_FMP_CLASS_148|ID_FMP_CLASS_128|ID_FMP_CLASS_466,encounter,13" />
+      <modify Field="Attack" value="Base + 4 vs. AC" />
+    </rules>
+  </RulesElement>
+  <RulesElement name="Level 17 Striker Encounter Power" type="Class Feature" internal-id="ID_WOG_STRIKER_CLASS_FEATURE_ENCOUNTER_LEVEL_17" source="Dungeon Master's Guide 2">
+    <Category>17</Category>
+    <specific name="Level"> 17 </specific>
+    <specific name="_CS_ShortDescription"> @ </specific>
+    <rules>
+      <replace name="Power Encounter 17" powerswap="ID_FMP_CLASS_5|ID_FMP_CLASS_6|ID_FMP_CLASS_7|ID_FMP_CLASS_129|ID_FMP_CLASS_148|ID_FMP_CLASS_128|ID_FMP_CLASS_466,encounter,17" />
+      <modify Field="Attack" value="Base + 4 vs. AC" />
+    </rules>
+  </RulesElement>
+  <RulesElement name="Level 13 Controller Encounter Power" type="Class Feature" internal-id="ID_WOG_CONTROLLER_CLASS_FEATURE_ENCOUNTER_LEVEL_13" source="Dungeon Master's Guide 2">
+    <Category>13</Category>
+    <specific name="Level"> 13 </specific>
+    <specific name="_CS_ShortDescription"> @ </specific>
+    <rules>
+      <replace name="Power Encounter 13" powerswap="ID_FMP_CLASS_9|ID_FMP_CLASS_126|ID_FMP_CLASS_127|ID_FMP_CLASS_472,encounter,13" />
+      <modify Field="Attack" value="Base + 4 vs. AC" />
+    </rules>
+  </RulesElement>
+  <RulesElement name="Level 17 Controller Encounter Power" type="Class Feature" internal-id="ID_WOG_CONTROLLER_CLASS_FEATURE_ENCOUNTER_LEVEL_17" source="Dungeon Master's Guide 2">
+    <Category>17</Category>
+    <specific name="Level"> 17 </specific>
+    <specific name="_CS_ShortDescription"> @ </specific>
+    <rules>
+      <replace name="Power Encounter 17" powerswap="ID_FMP_CLASS_9|ID_FMP_CLASS_126|ID_FMP_CLASS_127|ID_FMP_CLASS_472,encounter,17" />
+      <modify Field="Attack" value="Base + 4 vs. AC" />
+    </rules>
+  </RulesElement>
+</D20Rules>

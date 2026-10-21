@@ -308,6 +308,32 @@ unverified: Circle of Smoke (no representing option),
 (need choice provenance), aliased clauses on granted class features without
 `print-prereqs`, and freeform prose the legacy parser also cannot read.
 
+A choice's own pick is set aside (2026-10-21, recovered, not an exception).
+`D20Choice::UpdateArrays` calls `Preserve` before it checks the slot's
+candidates and its current pick, and `Restore` after. `Preserve` zeroes the
+level-ownership bitmask of the picked record and of up to six of its
+direct child elements, except children of type `CountsAsClass`.
+`HasRulesElement` reads that bitmask, so the pick and what it grants are
+unowned for the check, by definition and wherever else they come from.
+Stats are not recomputed. Many options rely on this: Born of Two Races
+(Dwarf) is `!Dwarf Race,!Dwarf CountsAsRace` and grants the Dwarf
+CountsAsRace; Past Spirit, the Moteborn default language and the treasure
+hunter's skill focus choices are built the same way. The modern evaluator
+checks an ordinary slot's candidates and its pick with
+`choiceSelectionSetAside` / `withoutOwnedDefinitions`
+(`prerequisites.ts`); the six-child cap is not copied. Replacement options
+already re-evaluate without the slot's pick and what it replaces. Before,
+48 generated-character matrix errors failed on their own grants.
+
+Deity domains: legacy reads `must worship a deity of the skill domain` as
+the `Skill` Domain record (prefix dropped, `"<name> <type>"` lookup),
+which a deity grants. The modern `worship-domain` clause compared the name
+with the deity's `Domains` field, which lists Domain IDs, so no deity met
+it. It now matches an owned Domain of that name or a listed Domain ID, and
+`audit-prerequisites.ts` fails on a domain clause no deity meets. Hu
+Sheng-Ming's Power of Skill still fails: Aurom lists no domains, and the
+legacy file has that feat, and the character, as `houserule`.
+
 ## Equipment predicates and tally
 
 The `wearing`/`not-wearing` evaluator has named branches for:
