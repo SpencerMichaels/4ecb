@@ -62,6 +62,9 @@ application's architecture.
 19. [Familiar card proposal](familiar-card-proposal.md) specifies the printed
     and builder familiar card, the rulebook basis for familiar statistics, and
     the community companion card sets it replaces.
+20. [Coverage audit proposal](coverage-audit-proposal.md) plans the private
+    audits that show every character option is presented, and the legacy
+    special-case inventory.
 
 ## Definition hierarchy
 

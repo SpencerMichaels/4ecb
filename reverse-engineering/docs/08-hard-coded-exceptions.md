@@ -194,6 +194,10 @@ component explainable.
 
 ## Porting policy
 
+Superseded by D089 (`docs/decisions.md`, 2026-10-20): fix content-specific
+special cases in the corrections pack where the data can express them, and
+keep code for engine semantics. The original policy follows for history.
+
 Initially port these branches verbatim in observable behavior and give each a named
 test. Once parity exists, replace ID/name checks with declarative compatibility
 metadata where possible. Do not "clean up" the exceptions during the first generic

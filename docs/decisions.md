@@ -2441,6 +2441,24 @@ Storm Pillar's damage line is a content correction, the hidden
 `_CalculatedHit` field, not a name check in code. A weapon without a category
 (custom content) is offered to any weapon power.
 
+### D089 — Content special cases go in corrections, not code
+
+Status: accepted (2026-10-20). See `docs/coverage-audit-proposal.md`.
+
+When legacy behavior, or a gap in the content, targets particular content (an
+ID, a name, a field value), we fix it in `content/corrections/*.part` wherever
+the rule language or a field can express it: a field overlay, an added grant or
+statadd, `Unselectable`, a type change. Code is reserved for engine semantics
+the data cannot express. Any IDs or names that code keys on live in one
+registry (`EXCEPTION_IDS`), each with a test, never as inline literals.
+
+Existing code exceptions are reviewed against the coverage audit's legacy
+special-case inventory, and each is moved into corrections or justified there.
+Corrections never add copied published prose; they may change structure,
+fields, rules and numbers. Where only prose would fix something, presentation
+handling or leaving it is preferred. This supersedes the "port verbatim first"
+policy in `reverse-engineering/docs/08-hard-coded-exceptions.md`.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed
