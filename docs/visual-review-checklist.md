@@ -70,5 +70,15 @@ wizard, ranger, druid or half-elf.
 
 ## Builder status
 
+- [ ] **"Already owned" candidates:** a choice no longer offers something the
+      character already has; it shows as unavailable with that reason.
+- [ ] **Essentials power swaps** (e.g. Hexblade, Binder, Blackguard, DMG2
+      companion classes): the required replacement choices can be filled in
+      the Build/Retraining replacement editor, and only offer powers of the
+      matching kind to lose.
+- [ ] **Wizard spellbook** picks stick, and item or default choices (e.g. a
+      warlock's Eldritch Blast) can be edited.
+- [ ] **Gnome characters** load and evaluate.
+
 - [ ] **"Equipped item requirement"** house-rule issue: equip a
       living-construct or ki-focus item without qualifying.

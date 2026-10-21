@@ -1,5 +1,46 @@
 # Implementation status
 
+## Coverage matrix: engine fixes (2026-10-21)
+
+Commits `dcc062a` … `5a8ec47`; evaluation cache v29.
+
+1. **Picks no longer delete each other.** A candidate the character already
+   owns is now ineligible ("Already owned"), as in legacy `UpdateArrays`;
+   before, picking it made the slot reopen and flip-flop.
+2. **Convergence.** Rule requirements ignore the owner's own children, as
+   native `MeetsRequires` does. Gnome's Master Trickster and four wands no
+   longer oscillate. A drop also suppresses grants of what it drops (Born of
+   Shadow).
+3. **Essentials power swaps fill.** Swaps provided by generated grants are
+   now commandable in the builder's replacement editor (they could not be
+   filled before). A swap offers only powers of its own category to lose
+   (native `CheckReplaceElem`). A dropped named select is removed, not
+   reopened (`VerifyDrop`). Only a live replacement displaces its target.
+4. **Spellbook picks** save their class-granted provider, so they no longer
+   land in the grabbag.
+5. **Item and default choices** (e.g. the warlock's default Eldritch Blast)
+   are commandable.
+6. **Hybrid classes** show "A / B" on the Class identity line.
+
+Full matrix run (pack `7c75a5c7a39f`, 512 characters, 788 sheets):
+
+| Measure                | Before         | After     |
+| ---------------------- | -------------- | --------- |
+| Evaluation errors      | 463            | 3         |
+| Audit problems         | 43             | 0         |
+| Incomplete sheets      | 99             | 3         |
+| Not rules-legal sheets | 85             | 11        |
+| Gnome                  | not converging | converges |
+
+`audit:native-workflow` now completes all 30 levels, complete and legal.
+Legacy samples, bundled heroes and Beatrix are unchanged.
+
+Still open:
+
+- the Level 5 Scholar Feature language choice (one Gnome hybrid line);
+- 11 sheets not rules-legal with no errors (L048 Bugbear Warpriest, L091
+  Warforged Mage).
+
 ## Proficiencies and sub-choices on the sheet (2026-10-21)
 
 Commit `3e61a5e`.
