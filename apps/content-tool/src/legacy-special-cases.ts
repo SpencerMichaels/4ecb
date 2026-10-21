@@ -159,15 +159,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
         "'Two knowledge skills': any two of Arcana, Dungeoneering, History, Nature, Religion trained.",
       note: "content/corrections/93-prerequisites.part rewrites the clause to the trained pairs",
     },
-    HarperTraining: {
-      status: "declarative",
-      description:
-        "Harper prerequisite: training in any two of four named skills.",
-      note: "content/corrections/93-prerequisites.part rewrites the clause to the trained pairs",
-    },
-    InternalizeBlock: notHandled(
-      "Clause 'membership in the Circle of Smoke and Whispers' maps to that record before comma splitting; also applies the Prefixes table (training, worship, follower of, affiliated with, fluent in, ...) and carries a prefix's type to later comma parts.",
-      `Prefixes and proficiency type carry-over: prerequisites.ts LEGACY_PREFIXES. Circle of Smoke: ${PREREQ_UNVERIFIED} (its target record is granted by nothing, so legacy always fails it)`,
+    HarperTraining: code(
+      "Harper prerequisite: training in any two of four named skills, read whole before comma splitting.",
+      "prerequisites.ts trainingInAnyOf reads any 'training in any N of A, B, ... or Z' block whole as the trained combinations; 93-prerequisites.part also rewrites the Harper of Legend clause to the trained pairs",
+    ),
+    InternalizeBlock: code(
+      "Clause 'membership in the Circle of Smoke and Whispers' maps to that record before comma splitting (LineParse otherwise splits at every depth-zero comma and ' and '); also applies the Prefixes table (training, worship, follower of, affiliated with, fluent in, ...) and carries a prefix's type to later comma parts.",
+      "Prefixes and proficiency type carry-over: prerequisites.ts LEGACY_PREFIXES. Whole clause, generalized: prerequisites.ts knownNameSpans never splits inside a known record name that contains a connector, so the Circle of Smoke clause stays one clause; it stays unverified (D090: its record is granted by nothing, so legacy always fails it). scripts/audit-prerequisites.ts reports any split inside a known name or a legacy whole clause",
     ),
     InternalizeElement: generic(
       "Name lookup for a prerequisite token; excludes CountsAsRace for non-feats and the 'assassin' class/paragon name clash.",

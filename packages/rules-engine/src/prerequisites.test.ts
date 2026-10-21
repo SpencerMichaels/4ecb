@@ -724,3 +724,99 @@ describe("ported legacy prerequisite grammar", () => {
     ).toBe("unverified");
   });
 });
+
+describe("connectors inside names", () => {
+  const circle = entity("CIRCLE", "Circle of Smoke and Whispers", "Internal");
+  const stance = entity("STANCE", "Hammer and Anvil", "Feat");
+  const style = entity("STYLE", "Sword or Shield Style", "Feat");
+  const lodge = entity("LODGE", "Lodge of Ash, Ember", "Background");
+  const hammer = entity("HAMMER", "Hammer", "Feat");
+  const anvil = entity("ANVIL", "Anvil", "Feat");
+  const fighter = entity("FIGHTER", "Fighter", "Class");
+  const all = [circle, stance, style, lodge, hammer, anvil, fighter];
+  const evaluate = (prerequisite: string, owned: readonly ContentEntity[]) =>
+    evaluatePrerequisite(prerequisite, {
+      owned,
+      level: 1,
+      abilities: {},
+      definitions: all,
+    });
+
+  it("keeps a membership naming a known record whole", () => {
+    // Legacy InternalizeBlock keeps this clause whole before LineParse splits
+    // at " and "; D090 leaves it unverified, as one clause.
+    const result = evaluate(
+      "Membership in the Circle of Smoke and Whispers",
+      [],
+    );
+    expect(result.ir).toEqual({
+      kind: "unverified",
+      text: "Membership in the Circle of Smoke and Whispers",
+    });
+    expect(result.status).toBe("unverified");
+  });
+
+  it("does not split and, or, or a comma inside a known name", () => {
+    expect(evaluate("Fighter, Hammer and Anvil feat", [fighter]).status).toBe(
+      "failed",
+    );
+    expect(
+      evaluate("Fighter, Hammer and Anvil feat", [fighter, stance]).status,
+    ).toBe("satisfied");
+    // The parts alone would have passed.
+    expect(
+      evaluate("Fighter, Hammer and Anvil feat", [fighter, hammer, anvil])
+        .status,
+    ).toBe("failed");
+    expect(evaluate("Sword or Shield Style", [style]).status).toBe("satisfied");
+    expect(evaluate("Sword or Shield Style", []).status).toBe("failed");
+    expect(
+      evaluate("Fighter, Lodge of Ash, Ember", [fighter, lodge]).status,
+    ).toBe("satisfied");
+    expect(evaluate("Fighter, Lodge of Ash, Ember", [fighter]).clauses).toEqual(
+      [
+        { text: "Fighter", status: "satisfied" },
+        { text: "Lodge of Ash, Ember", status: "failed" },
+      ],
+    );
+  });
+
+  it("still splits at connectors outside names", () => {
+    // The longest known name wins: bare "Hammer and Anvil" is the feat.
+    expect(evaluate("Hammer and Anvil", [hammer, anvil]).status).toBe("failed");
+    expect(evaluate("Hammer feat and Anvil feat", [hammer, anvil]).status).toBe(
+      "satisfied",
+    );
+    expect(evaluate("Hammer feat and Anvil feat", [hammer]).status).toBe(
+      "failed",
+    );
+    expect(evaluate("Fighter and Hammer", [fighter, hammer]).status).toBe(
+      "satisfied",
+    );
+    // A name is matched on word boundaries only.
+    expect(
+      evaluate("Warhammer and Anvil", []).clauses.map((clause) => clause.text),
+    ).toEqual(["Warhammer", "Anvil"]);
+  });
+
+  it("reads training in any two of a list as one clause", () => {
+    // Legacy HarperTraining, read before the block's commas split it.
+    const training = (name: string) =>
+      entity(`TRAINING_${name}`, name, "Skill Training");
+    const prerequisite =
+      "training in any two of Diplomacy, Insight, Nature, or Stealth";
+    const status = (names: readonly string[]) =>
+      evaluate(prerequisite, names.map(training)).status;
+    expect(status(["Insight"])).toBe("failed");
+    expect(status(["Insight", "Stealth"])).toBe("satisfied");
+    expect(status(["Diplomacy", "Nature"])).toBe("satisfied");
+    expect(status(["Athletics", "Nature"])).toBe("failed");
+    const ir = internalizePrerequisite(prerequisite, {
+      owned: [],
+      level: 1,
+      abilities: {},
+      definitions: all,
+    });
+    expect(ir?.kind === "any" ? ir.children.length : 0).toBe(6);
+  });
+});

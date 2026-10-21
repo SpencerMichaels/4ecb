@@ -125,8 +125,11 @@ well-tested structured matchers. Unknown prose should produce an
 
 Recovered parser order (`InternalizeBlock` -> `InternalizeOr` ->
 `InternalizeItem` -> `InternalizeElement`): a trailing period is dropped;
-`HarperTraining` and the Circle of Smoke clause are matched whole; the block is
-split at commas, and each part loses a `Prefixes` entry (`Training in`,
+`HarperTraining` and the Circle of Smoke clause are matched whole (exact
+literals; nothing else is protected); the block is split by `LineParse` at
+every comma (`, or ` makes the list OR, `, and ` is one separator) and every
+depth-zero ` and `, with no knowledge of names, and each part loses a
+`Prefixes` entry (`Training in`,
 `Trained in`, `You must (be trained|have training) in` -> Skill Training;
 `Must worship`, `You must worship`, `Worship`, `Follower of` -> Deity;
 `Affiliated with` -> Background; `Proficiency with`, `Proficient with`, `Can
@@ -158,7 +161,29 @@ Names it keys on are in `EXCEPTION_NAMES`. The exact-text aliases are
 with `print-prereqs` only, so what players read is unchanged) and the
 Shifter CountsAsRace in `92-legacy-special-cases.part`. Across the private
 pack this took unverified clause uses from 650 (257 distinct) to 122 (59),
-measured by `tsx scripts/audit-prerequisites.ts`. Story memberships
+measured by `tsx scripts/audit-prerequisites.ts`.
+
+Connectors inside names (2026-10-21): the modern block grammar generalizes
+legacy's two whole-clause literals instead of copying them. Before splitting a
+block at a comma, ` and ` or ` or `, `knownNameSpans` marks every word-bounded
+occurrence of a profile record name that itself contains a connector (longest
+name first) and the split skips connectors inside those spans; and
+`trainingInAnyOf` reads `training in any N of A, B, ... or Z` whole as the OR
+of every N-skill training combination (HarperTraining's tree). On the private
+pack this changed exactly five of 11,321 parsed trees: Champion of the Vigil
+and Traveler's Unpredictable Power (Remain Vigilant) now keep `Membership in
+the Circle of Smoke and Whispers` as one unverified clause (it was split into
+`...Circle of Smoke` and `Whispers`), and Harper's Study, Blessing of
+Mielikki and Spectral Harpist now need two of the four trainings (one skill
+had passed); unverified clause uses went from 122 (59 distinct) to 120
+(58). No other name in the pack containing a connector appears in a
+`Prereqs` text. `audit-prerequisites.ts` reports any split inside a known name
+or inside a legacy whole clause (expected 0, nonzero exit otherwise) and, for
+review, adjacent split fragments that are both unverified. Coordinated
+ellipsis (`Any martial or divine class` -> `Any martial` | `divine class`) is
+a different gap, left unverified like legacy's unrecognized fragment.
+
+Story memberships
 deliberately differ (D090): legacy maps spellscar, Harper, House Vadalis and
 Circle of Smoke membership to records nothing grants, so it always fails
 them; the rewrites instead accept a representing option (Harper Agent

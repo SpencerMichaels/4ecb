@@ -39,7 +39,7 @@ import { evaluatePowers, type EvaluatedPower } from "./powers";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v21-2026-10-21-legacy-power-and-item-requirements";
+  "evaluated-character-v22-2026-10-21-connectors-inside-names";
 
 export interface CharacterOccurrence {
   readonly id: string;

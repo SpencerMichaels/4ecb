@@ -86,7 +86,12 @@ function normalized(value: string): string {
 interface DefinitionIndex {
   readonly byNameOrId: ReadonlyMap<string, readonly ContentEntity[]>;
   readonly typesByLength: readonly string[];
+  /** Normalized names that contain a block connector, longest first. */
+  readonly connectorNames: readonly string[];
 }
+
+/** Text the block grammar splits at: a comma, ` and ` or ` or `. */
+const CONNECTOR = /,|\s(?:and|or)\s/i;
 
 const definitionIndexCache = new WeakMap<
   readonly ContentEntity[],
@@ -117,6 +122,13 @@ function definitionIndex(
     typesByLength: [
       ...new Set(definitions.map((definition) => definition.type)),
     ].sort((left, right) => right.length - left.length),
+    connectorNames: [
+      ...new Set(
+        definitions
+          .map((definition) => normalized(definition.name))
+          .filter((name) => CONNECTOR.test(name)),
+      ),
+    ].sort((left, right) => right.length - left.length),
   };
   definitionIndexCache.set(definitions, index);
   return index;
@@ -140,10 +152,54 @@ interface Segment {
   readonly delimiter: string;
 }
 
-/** Split only at depth zero, retaining the delimiter that introduced a part. */
+interface Span {
+  readonly start: number;
+  readonly end: number;
+}
+
+const WORD_CHARACTER = /[\p{L}\p{N}'-]/u;
+
+/**
+ * Where the text names a known record whose name contains a connector
+ * ("Circle of Smoke and Whispers"), longest name first, so the block grammar
+ * never splits inside a name. Legacy LineParse splits at every depth-zero
+ * comma and ` and `, and keeps only its one such clause whole by a literal
+ * InternalizeBlock check; this keeps every such name whole.
+ */
+function knownNameSpans(
+  input: string,
+  context: PrerequisiteContext,
+): readonly Span[] {
+  if (context.definitions === undefined || !CONNECTOR.test(input)) return [];
+  const source = input
+    .toLocaleLowerCase()
+    .replaceAll("_", " ")
+    .replace(/[\u2018\u2019]/g, "'");
+  const spans: Span[] = [];
+  for (const name of definitionIndex(context.definitions).connectorNames) {
+    let start = source.indexOf(name);
+    while (start >= 0) {
+      const end = start + name.length;
+      if (
+        !WORD_CHARACTER.test(source[start - 1] ?? " ") &&
+        !WORD_CHARACTER.test(source[end] ?? " ") &&
+        !spans.some((span) => start < span.end && span.start < end)
+      )
+        spans.push({ start, end });
+      start = source.indexOf(name, start + 1);
+    }
+  }
+  return spans;
+}
+
+/**
+ * Split only at depth zero and outside the protected spans, retaining the
+ * delimiter that introduced a part.
+ */
 function splitTopLevel(
   input: string,
   delimiters: readonly RegExp[],
+  protectedSpans: readonly Span[] = [],
 ): readonly Segment[] {
   const parts: Segment[] = [];
   let depth = 0;
@@ -154,6 +210,8 @@ function splitTopLevel(
     if (character === "(") depth += 1;
     else if (character === ")") depth = Math.max(0, depth - 1);
     if (depth !== 0) continue;
+    if (protectedSpans.some((span) => span.start < index && index < span.end))
+      continue;
     const rest = input.slice(index);
     const match = delimiters
       .map((pattern) => pattern.exec(rest)?.[0])
@@ -911,6 +969,61 @@ function legacyPrefixType(text: string): string | null | undefined {
   return prefix === undefined ? undefined : (prefix[1] ?? null);
 }
 
+const COUNT_WORDS: Readonly<Record<string, number>> = {
+  two: 2,
+  three: 3,
+  four: 4,
+};
+
+/**
+ * Legacy HarperTraining, generalized: "training in any two of A, B, C, or D"
+ * is one clause (any pair of those trainings), read before the block is
+ * split at its commas.
+ */
+function trainingInAnyOf(
+  text: string,
+  context: PrerequisiteContext,
+): PrerequisiteIr | undefined {
+  const match =
+    /^(?:you must (?:be trained|have training)|trained|training) in any (two|three|four|\d+) of (.+?)\.?$/i.exec(
+      text,
+    );
+  if (match?.[1] === undefined || match[2] === undefined) return undefined;
+  const count = COUNT_WORDS[match[1].toLocaleLowerCase()] ?? Number(match[1]);
+  const skills = splitTopLevel(
+    match[2],
+    [/^,\s*(?:or\s+|and\s+)?/i, /^\s+(?:or|and)\s+/i],
+    knownNameSpans(match[2], context),
+  ).map((part) => part.text);
+  if (count < 1 || count > skills.length) return undefined;
+  const combinations = (from: number, size: number): string[][] =>
+    size === 0
+      ? [[]]
+      : skills
+          .slice(from)
+          .flatMap((skill, offset) =>
+            combinations(from + offset + 1, size - 1).map((rest) => [
+              skill,
+              ...rest,
+            ]),
+          );
+  return connective(
+    "any",
+    text,
+    combinations(0, count).map((chosen) =>
+      connective(
+        "all",
+        chosen.map((skill) => `training in ${skill}`).join(" and "),
+        chosen.map((skill) => ({
+          kind: "training",
+          text: `training in ${skill}`,
+          value: skill,
+        })),
+      ),
+    ),
+  );
+}
+
 function internalizeBlock(
   original: string,
   context: PrerequisiteContext,
@@ -919,10 +1032,14 @@ function internalizeBlock(
   const text = original.trim();
   if (hasOuterParentheses(text))
     return internalizeBlock(text.slice(1, -1), context, inheritedType);
-  const commaAnd = splitTopLevel(text, [
-    /^,\s*(?:or\s+|and\s+)?/i,
-    /^\s+and\s+/i,
-  ]);
+  const anyOf = trainingInAnyOf(text, context);
+  if (anyOf !== undefined) return anyOf;
+  const names = knownNameSpans(text, context);
+  const commaAnd = splitTopLevel(
+    text,
+    [/^,\s*(?:or\s+|and\s+)?/i, /^\s+and\s+/i],
+    names,
+  );
   if (commaAnd.length > 1) {
     let type = inheritedType;
     const isOrList = commaAnd.some((part) =>
@@ -941,7 +1058,7 @@ function internalizeBlock(
   // Legacy InternalizeOr does not split "1 or more".
   const alternatives = /\b1\s+or\s+more\b/i.test(text)
     ? [{ text, delimiter: "" }]
-    : splitTopLevel(text, [/^\s+or\s+/i]);
+    : splitTopLevel(text, [/^\s+or\s+/i], names);
   if (alternatives.length > 1) {
     const prefixType = legacyPrefixType(text);
     const type =
