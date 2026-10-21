@@ -8,7 +8,8 @@
   untouched, so only records that have one are rewritten. Generic legacy
   grammar (prefix and suffix tables, Nth-level, any X feat, paragon
   multiclassing, race plus class, proficiency forms) is code in
-  packages/rules-engine/src/prerequisites.ts. Merged after the CBLoader parts
+  packages/rules-engine/src/prerequisites.ts. The D090 section at the end
+  deliberately differs from legacy for story memberships. Merged after the CBLoader parts
   by scripts/build-private-content.sh. Structure only; no official text.
 -->
 <D20Rules game-system="D&amp;D4E">
@@ -19,9 +20,9 @@
   <AppendNodes internal-id="ID_FMP_EPIC_DESTINY_209"><Prereqs>(21st level and wizard); eladrin or elf</Prereqs></AppendNodes>
   <RemoveNodes internal-id="ID_FMP_EPIC_DESTINY_286"><Prereqs /></RemoveNodes>
   <AppendNodes internal-id="ID_FMP_EPIC_DESTINY_286"><Prereqs>(21st level and bard)</Prereqs></AppendNodes>
-  <!-- HarperTraining. -->
+  <!-- HarperTraining; Harpers membership as in D090 below. -->
   <RemoveNodes internal-id="ID_FMP_EPIC_DESTINY_210"><Prereqs /></RemoveNodes>
-  <AppendNodes internal-id="ID_FMP_EPIC_DESTINY_210"><Prereqs>21st level; good or lawful good alignment; ((trained in Diplomacy and trained in Insight) or (trained in Diplomacy and trained in Nature) or (trained in Diplomacy and trained in Stealth) or (trained in Insight and trained in Nature) or (trained in Insight and trained in Stealth) or (trained in Nature and trained in Stealth)); membership in the Harpers (see the sidebar)</Prereqs></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_EPIC_DESTINY_210"><Prereqs>21st level; good or lawful good alignment; ((trained in Diplomacy and trained in Insight) or (trained in Diplomacy and trained in Nature) or (trained in Diplomacy and trained in Stealth) or (trained in Insight and trained in Nature) or (trained in Insight and trained in Stealth) or (trained in Nature and trained in Stealth)); Harper Agent or membership in the Harpers (see the sidebar)</Prereqs></AppendNodes>
   <!-- TwoKnowledgeSkills. -->
   <RemoveNodes internal-id="ID_FMP_EPIC_DESTINY_289"><Prereqs /></RemoveNodes>
   <AppendNodes internal-id="ID_FMP_EPIC_DESTINY_289"><Prereqs>21st level, Intelligence 21 or Wisdom 21, ((trained in Arcana and trained in Dungeoneering) or (trained in Arcana and trained in History) or (trained in Arcana and trained in Nature) or (trained in Arcana and trained in Religion) or (trained in Dungeoneering and trained in History) or (trained in Dungeoneering and trained in Nature) or (trained in Dungeoneering and trained in Religion) or (trained in History and trained in Nature) or (trained in History and trained in Religion) or (trained in Nature and trained in Religion))</Prereqs></AppendNodes>
@@ -41,9 +42,9 @@
   <AppendNodes internal-id="ID_FMP_FEAT_2964"><Prereqs>21st level, Defender role; Epic Tier</Prereqs></AppendNodes>
   <RemoveNodes internal-id="ID_FMP_FEAT_2965"><Prereqs /></RemoveNodes>
   <AppendNodes internal-id="ID_FMP_FEAT_2965"><Prereqs>21st level, Defender role; Epic Tier</Prereqs></AppendNodes>
-  <!-- SpecialCase: multiclass feats by name. -->
+  <!-- SpecialCase: multiclass feats by name; spellscar as in D090 below. -->
   <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_62"><Prereqs /></RemoveNodes>
-  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_62"><Prereqs>Must have at least one spellscar, Student of the Plague feat</Prereqs></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_62"><Prereqs>Spellscar or Must have at least one spellscar, Student of the Plague feat</Prereqs></AppendNodes>
   <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_107"><Prereqs /></RemoveNodes>
   <AppendNodes internal-id="ID_FMP_PARAGON_PATH_107"><Prereqs>Warlord, Warrior of the Wild feat.</Prereqs></AppendNodes>
   <!-- SpecialCase: Cormyr means either Cormyr background. -->
@@ -260,4 +261,72 @@
   <!-- SpecialCase: psionic class means Psionic Augmentation. -->
   <RemoveNodes internal-id="ID_FMP_FEAT_2943"><Prereqs /></RemoveNodes>
   <AppendNodes internal-id="ID_FMP_FEAT_2943"><Prereqs>Shardmind, Psionic Augmentation class feature</Prereqs></AppendNodes>
+  <!-- D090 story memberships. Legacy maps these clauses to records nothing
+       grants, so it fails them for every character. Here each clause is met
+       by an option that represents it and otherwise stays unverified: the
+       original wording remains as an OR branch the parser cannot resolve. -->
+  <!-- House Vadalis: a Vadalis background. -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_1710"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1710"><Prereqs>11th level, artificer, Arcane Familiar feat, Mark of Handling feat or Vadalis Handler or Vadalis Griffon Rider or Vadalis Botanist or member of House Vadalis</Prereqs></AppendNodes>
+  <!-- Spellscar: a CountsAsFeature granted by Student of the Plague, the
+       Spellscarred class features it selects from, and the Spellscarred
+       Harbinger theme's starting feature. Student of the Plague's own clause
+       names only the theme feature, since the feat and its selection would
+       otherwise satisfy it themselves. -->
+  <RulesElement name="Spellscar" type="CountsAsFeature" source="4ecb corrections" internal-id="ID_4ECB_COUNTSASFEATURE_SPELLSCAR" />
+  <AppendNodes internal-id="ID_FMP_FEAT_651"><rules><grant name="ID_4ECB_COUNTSASFEATURE_SPELLSCAR" type="CountsAsFeature" /></rules></AppendNodes>
+  <AppendNodes internal-id="ID_INTERNAL_CLASS_FEATURE_SIGHT_OF_THE_UNSEEN"><rules><grant name="ID_4ECB_COUNTSASFEATURE_SPELLSCAR" type="CountsAsFeature" /></rules></AppendNodes>
+  <AppendNodes internal-id="ID_INTERNAL_CLASS_FEATURE_FLAMESPEED"><rules><grant name="ID_4ECB_COUNTSASFEATURE_SPELLSCAR" type="CountsAsFeature" /></rules></AppendNodes>
+  <AppendNodes internal-id="ID_INTERNAL_CLASS_FEATURE_LARGER_THAN_LIFE"><rules><grant name="ID_4ECB_COUNTSASFEATURE_SPELLSCAR" type="CountsAsFeature" /></rules></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_3949"><rules><grant name="ID_4ECB_COUNTSASFEATURE_SPELLSCAR" type="CountsAsFeature" /></rules></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_651"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_651"><Prereqs>Spellscarred Harbinger Starting Feature or You have a spellscar; ~MULTICLASS or Unlimited Multiclass</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2838"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2838"><Prereqs>Any arcane class, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2839"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2839"><Prereqs>Spellscar or You have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2840"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2840"><Prereqs>Goliath, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2841"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2841"><Prereqs>Razorclaw shifter, razorclaw shifting racial power, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2842"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2842"><Prereqs>Gnome, fade away racial power, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2843"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2843"><Prereqs>Deva, memory of a thousand lifetimes racial power, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2844"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2844"><Prereqs>Human, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2845"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2845"><Prereqs>Spellscar or You have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2846"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2846"><Prereqs>Halfling, second chance racial power, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2847"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2847"><Prereqs>Dragonborn, dragon breath racial power, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2848"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2848"><Prereqs>Longtooth shifter, longtooth shifting racial power, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2849"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2849"><Prereqs>Elf, elven accuracy racial power, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2850"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2850"><Prereqs>Tiefling, Bloodhunt racial trait, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2851"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2851"><Prereqs>Eladrin, fey step racial power, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2852"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2852"><Prereqs>Dwarf, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2853"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2853"><Prereqs>Spellscar or You have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2854"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2854"><Prereqs>Half-orc, furious assault racial power, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2855"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2855"><Prereqs>Revenant, dark reaping racial power, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2856"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2856"><Prereqs>Any divine class, Channel Divinity class feature, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2857"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2857"><Prereqs>Drow, darkfire racial power, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2858"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2858"><Prereqs>Any primal class, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2859"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2859"><Prereqs>Any martial class, Spellscar or you have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2881"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2881"><Prereqs>Spellscar or You have a spellscar</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2882"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2882"><Prereqs>Half-elf, Spellscar or you have a spellscar</Prereqs></AppendNodes>
 </D20Rules>

@@ -138,6 +138,67 @@ describe("legacy prerequisites", () => {
     ).toBe("failed");
   });
 
+  it("meets a story membership by a representing option, else leaves it unverified", () => {
+    // D090: corrections rewrite a membership clause as "<option> or <the
+    // original wording>"; an OR is met by any met branch, otherwise it is
+    // unverified while any branch is, and only fails when every branch does.
+    const agent = {
+      id: "AGENT_BACKGROUND",
+      name: "Lodge Agent",
+      type: "Background",
+    } as ContentEntity;
+    const scar = {
+      id: "COUNTS_SCAR",
+      name: "Scar",
+      type: "CountsAsFeature",
+    } as ContentEntity;
+    const storyDefinitions = [...definitions, agent, scar];
+    const without = { ...context, definitions: storyDefinitions };
+    const withAgent = { ...without, owned: [...owned, agent] };
+    const withScar = { ...without, owned: [...owned, scar] };
+    const membership = "Lodge Agent or membership in the Lodge";
+    expect(evaluatePrerequisite(membership, withAgent).status).toBe(
+      "satisfied",
+    );
+    expect(evaluatePrerequisite(membership, without).status).toBe("unverified");
+    expect(evaluatePrerequisite(membership, without).clauses).toEqual([
+      { text: "Lodge Agent", status: "failed" },
+      { text: "membership in the Lodge", status: "unverified" },
+    ]);
+    // Inside a comma list the other clauses still decide failure.
+    expect(
+      evaluatePrerequisite(
+        "Any divine class, Scar or you have a scar",
+        withScar,
+      ).status,
+    ).toBe("satisfied");
+    expect(
+      evaluatePrerequisite("Any divine class, Scar or you have a scar", without)
+        .status,
+    ).toBe("unverified");
+    expect(
+      evaluatePrerequisite("Any arcane class, Scar or you have a scar", without)
+        .status,
+    ).toBe("failed");
+    // An alternative chain keeps earlier alternatives.
+    expect(
+      evaluatePrerequisite(
+        "Blood Thirst feat or Lodge Agent or member of the Lodge",
+        without,
+      ).status,
+    ).toBe("unverified");
+    expect(
+      evaluatePrerequisite(
+        "Avenger or Lodge Agent or member of the Lodge",
+        without,
+      ).status,
+    ).toBe("satisfied");
+    // An OR of only resolvable branches still fails.
+    expect(
+      evaluatePrerequisite("Blood Thirst feat or Lodge Agent", without).status,
+    ).toBe("failed");
+  });
+
   it("evaluates ability, level, training, source, identity, and boolean clauses", () => {
     expect(
       evaluatePrerequisite("Str 13, Wis 13; Multiclass; !Wizard", context)

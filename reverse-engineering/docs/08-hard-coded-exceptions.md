@@ -158,9 +158,15 @@ Names it keys on are in `EXCEPTION_NAMES`. The exact-text aliases are
 with `print-prereqs` only, so what players read is unchanged) and the
 Shifter CountsAsRace in `92-legacy-special-cases.part`. Across the private
 pack this took unverified clause uses from 650 (257 distinct) to 122 (59),
-measured by `tsx scripts/audit-prerequisites.ts`. Deliberately left
-unverified: spellscar, Harper, House Vadalis and Circle of Smoke membership
-(legacy maps them to records nothing grants, so it always fails them),
+measured by `tsx scripts/audit-prerequisites.ts`. Story memberships
+deliberately differ (D090): legacy maps spellscar, Harper, House Vadalis and
+Circle of Smoke membership to records nothing grants, so it always fails
+them; the rewrites instead accept a representing option (Harper Agent
+background or theme; a Vadalis background; a `Spellscar` CountsAsFeature
+granted by Student of the Plague, its Spellscarred class features and the
+Spellscarred Harbinger starting feature) and keep the original wording as
+an unverified alternative, so the audit still counts it. Also left
+unverified: Circle of Smoke (no representing option),
 `1 or more power points` (no power-point stat), the Dilettante predicates
 (need choice provenance), aliased clauses on granted class features without
 `print-prereqs`, and freeform prose the legacy parser also cannot read.
