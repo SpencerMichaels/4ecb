@@ -692,8 +692,7 @@ function linePlans(
     ids: [entity.id],
     classes: [entity],
   }));
-  for (let index = 0; index < hybrids.length; index += 2) {
-    const pair = [hybrids[index]!, hybrids[(index + 1) % hybrids.length]!];
+  for (const pair of hybridPairs(hybrids)) {
     classSpecs.push({
       label: pair.map(({ name }) => name).join(" / "),
       ids: [HYBRID_CLASS_ID, ...pair.map(({ id }) => id)],
@@ -712,6 +711,38 @@ function linePlans(
     };
   });
   return { plans, axes };
+}
+
+/** Whether either hybrid class's prerequisites rule out the other (Hybrid
+ * Blackguard, Hybrid Cavalier and Hybrid Paladin exclude each other). */
+function hybridsExclude(left: ContentEntity, right: ContentEntity): boolean {
+  const excludes = (entity: ContentEntity, other: ContentEntity) =>
+    (entity.prerequisites ?? "")
+      .split(/[,;]/)
+      .some((part) => key(part) === `!${key(other.id)}`);
+  return excludes(left, right) || excludes(right, left);
+}
+
+/**
+ * Pairs hybrid classes in order, each with the next unpaired class that it
+ * can legally combine with; an odd one out pairs with the first compatible
+ * class.
+ */
+function hybridPairs(hybrids: readonly ContentEntity[]): ContentEntity[][] {
+  const unpaired = [...hybrids];
+  const pairs: ContentEntity[][] = [];
+  while (unpaired.length > 0) {
+    const first = unpaired.shift()!;
+    const index = unpaired.findIndex((other) => !hybridsExclude(first, other));
+    const partner =
+      index >= 0
+        ? unpaired.splice(index, 1)[0]
+        : hybrids.find(
+            (other) => other !== first && !hybridsExclude(first, other),
+          );
+    if (partner !== undefined) pairs.push([first, partner]);
+  }
+  return pairs;
 }
 
 /** "Race Class (Theme)" from a build's chosen occurrences. */
