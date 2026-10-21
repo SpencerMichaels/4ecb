@@ -100,9 +100,27 @@ only, with no rule behind it.
   written in our own words, like the synthesized Action Point/Second Wind
   cards.
 - **The community "Familiar: X" power cards are removed** from the pack, so the
-  familiar is not shown twice with conflicting numbers. The mechanism (a
-  content correction or a build-time exclusion) is chosen during
-  implementation. There is no special-casing by name in code.
+  familiar is not shown twice with conflicting numbers. There is no
+  special-casing by name in code.
+  - **Mechanism:** `content/corrections/91-familiar-cards.part` replaces each
+    card with an inert `Internal` record under the same ID. The cards cannot
+    simply be deleted, for three reasons:
+    - Each familiar grants its card, and a missing grant target is an
+      evaluation error. `RemoveNodes` can only clear a record's whole rules
+      block, which would also drop the familiar's real rules.
+    - Characters imported from CBLoader-era `.dnd4e` files store granted
+      elements by ID, so the ID must keep resolving.
+    - `CBLoader/Custom` stays unmodified, and the build checks it against
+      CBLoader's own merged cache before corrections apply.
+  - **The Widow of Arach-Tinilith theme** (_Dragon_ 413) was never in the
+    official data; the community coded the whole theme. Its spiderling familiar
+    existed only as one of these cards. The correction turns that card into a
+    `Familiar` record: its type and source change and its speed splits into
+    base and secondary, with no text copied. The familiar card also reads the
+    community's "Passive Benefits"/"Active Benefits" field names and flavor.
+  - **Duplicates:** the same community part appended cards to nine misspelled
+    IDs (`ID_MSR_FAMILIAR_*`), creating empty duplicates of real familiars.
+    These are marked `Unselectable`.
 
 ### Layout
 

@@ -74,10 +74,14 @@ export function sheetFamiliarCard(
     tier: field(entity, "Tier"),
     speed: speed === "" ? undefined : speed,
     senses: field(entity, "Senses"),
-    constantBenefits: field(entity, "Constant Benefits"),
-    activeBenefits: field(entity, "Power"),
+    // Community-coded familiars (the Widow of Arach-Tinilith spiderling) name
+    // the benefits as their printed headings and keep their lore as flavor.
+    constantBenefits:
+      field(entity, "Constant Benefits") ?? field(entity, "Passive Benefits"),
+    activeBenefits: field(entity, "Power") ?? field(entity, "Active Benefits"),
     quirks: field(entity, "Quirks"),
-    description: entity.description.trim() || undefined,
+    description:
+      entity.description.trim() || entity.flavor?.trim() || undefined,
   };
   return {
     kind: "familiar",

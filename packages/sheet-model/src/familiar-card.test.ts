@@ -69,6 +69,25 @@ describe("familiar card", () => {
     });
   });
 
+  it("reads community-coded benefit names and flavor", () => {
+    const card = sheetFamiliarCard(
+      {
+        ...familiar({
+          "Passive Benefits": "Venom affinity.",
+          "Active Benefits": "Slide a poisoned creature.",
+        }),
+        description: "",
+        flavor: "Lolth's children.",
+      },
+      {},
+    );
+    expect(card).toMatchObject({
+      constantBenefits: "Venom affinity.",
+      activeBenefits: "Slide a poisoned creature.",
+      description: "Lolth's children.",
+    });
+  });
+
   it("defaults to Tiny and omits what the familiar doesn't author", () => {
     const card = sheetFamiliarCard(familiar({ Size: " " }), {});
     expect(card.size).toBe("Tiny");

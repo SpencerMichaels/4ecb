@@ -6,8 +6,9 @@
   of those cards becomes an inert Internal record under the same ID: the
   familiar's grant still resolves, and no power card is printed.
 
-  Kept: ID_TIV_FAMILIAR-413-5, the Widow of Arach-Tinilith theme's spider,
-  which is not a Familiar element and so gets no familiar card.
+  Except ID_TIV_FAMILIAR-413-5: the Widow of Arach-Tinilith theme (Dragon 413,
+  community-coded) grants its spiderling familiar only as such a card, with no
+  Familiar element behind it. That card becomes the Familiar element instead.
 -->
 <D20Rules game-system="D&amp;D4E">
   <RulesElement name="Familiar: Sprite" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR_SPRITE-1" />
@@ -116,4 +117,16 @@
   <AppendNodes internal-id="ID_MSR_FAMILIAR_SITAK"><Prereqs> Unselectable </Prereqs></AppendNodes>
   <AppendNodes internal-id="ID_MSR_FAMILIAR_WRAB"><Prereqs> Unselectable </Prereqs></AppendNodes>
   <AppendNodes internal-id="ID_MSR_FAMILIAR_ZTAL"><Prereqs> Unselectable </Prereqs></AppendNodes>
+
+  <!-- The spiderling: a Familiar, with its speed split into base and
+       secondary speed like every other familiar so speed bonuses apply. -->
+  <RemoveNodes internal-id="ID_TIV_FAMILIAR-413-5">
+    <specific name="Speed" />
+    <specific name="Power Usage" />
+    <specific name="Action Type" />
+  </RemoveNodes>
+  <AppendNodes internal-id="ID_TIV_FAMILIAR-413-5" name="Spiderling of Lolth" type="Familiar" source="Dragon Magazine 413">
+    <specific name="Speed">4</specific>
+    <specific name="Secondary Speed">climb 4 (spider climb)</specific>
+  </AppendNodes>
 </D20Rules>

@@ -12,9 +12,10 @@ Player reports. A familiar had no place on the sheet beyond a community
   `companions` from evaluated `Familiar` occurrences. `FamiliarCard` prints
   after the Skills card and is the builder's familiar detail card.
 - **Content.** `content/corrections/91-familiar-cards.part` turns 93
-  community familiar cards into inert Internal records, keeping the Widow of
-  Arach-Tinilith spider. It also hides nine empty duplicate familiars that the
-  community part created by appending to misspelled IDs.
+  community familiar cards into inert Internal records. The Widow of
+  Arach-Tinilith theme's spiderling, which existed only as such a card, becomes
+  a Familiar instead. The file also hides nine empty duplicate familiars that
+  the community part created by appending to misspelled IDs.
 - **Trait packages.** Pacts, domains, virtues and bloodlines are followed by a
   card for each class feature in `_PARSED_CLASS_FEATURE`, then the powers each
   feature grants or names for display, including later-level ones. The White
