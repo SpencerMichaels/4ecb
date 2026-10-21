@@ -40,6 +40,13 @@ export const EXCEPTION_NAMES = {
   stabAndShoot: "Stab and Shoot",
   /** DualImplementSpellcaster looks the feat up by name. */
   dualImplementSpellcaster: "Dual Implement Spellcaster",
+  /** Prerequisite AnyClassSpecific: counted as class-specific multiclass feats. */
+  studentOfThePlague: "Student of the Plague",
+  adeptDilettante: "Adept Dilettante",
+  /** IsPsionicClass / AnyClassMoreSpecific: `_PARSED_CLASS_FEATURE` names it. */
+  psionicAugmentation: "Psionic Augmentation",
+  /** Prerequisite HealingInfusion: power names with this prefix. */
+  healingInfusionPrefix: "Healing Infusion:",
 } as const;
 
 /** Exact class name excluded by the recovered native deity-choice predicate. */

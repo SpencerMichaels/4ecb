@@ -462,3 +462,204 @@ describe("legacy prerequisites", () => {
     ).toBe("failed");
   });
 });
+
+function entity(
+  id: string,
+  name: string,
+  type: string,
+  fields: Readonly<Record<string, string>> = {},
+  extra: Partial<ContentEntity> = {},
+): ContentEntity {
+  return {
+    id,
+    name,
+    type,
+    categories: [],
+    rules: [],
+    specifics: Object.entries(fields).map(([fieldName, value], ordinal) => ({
+      name: fieldName,
+      value,
+      extraAttributes: [],
+      ordinal,
+    })),
+    ...extra,
+  } as unknown as ContentEntity;
+}
+
+describe("ported legacy prerequisite grammar", () => {
+  const dwarf = entity("DWARF", "Dwarf", "Race");
+  const fighter = entity("FIGHTER", "Fighter", "Class", {
+    "Power Source": "Martial",
+  });
+  const psion = entity("PSION", "Psion", "Class", {
+    "Power Source": "Psionic",
+    _PARSED_CLASS_FEATURE: "Psionic Augmentation, Discipline Focus",
+  });
+  const breath = entity("BREATH", "Dragon Breath", "Power");
+  const deity = entity("BAHAMUT", "Bahamut", "Deity");
+  const region = entity("REGION", "East Rift", "Background");
+  const ritualCaster = entity("RITUAL_CASTER", "Ritual Caster", "Feat");
+  const ritual = entity("RITUAL", "Some Ritual", "Ritual");
+  const fighterMulticlass = entity(
+    "MC_FIGHTER",
+    "Student of the Sword",
+    "Feat",
+    {
+      type: "Multiclass Fighter",
+    },
+  );
+  const psionMulticlass = entity("MC_PSION", "Psion Talent", "Feat", {
+    type: "Multiclass Psion",
+  });
+  const plague = entity("PLAGUE", "Student of the Plague", "Feat", {
+    type: "Multiclass Spellscarred",
+  });
+  const arena = entity("ARENA", "Arena Style", "Feat", {
+    type: "Arena Fighting",
+  });
+  const paragonMulticlassing = entity(
+    "ID_INTERNAL_PARAGON_PATH_PARAGON_MULTICLASSING",
+    "Paragon Multiclassing",
+    "Paragon Path",
+  );
+  const countsAsFighter = entity("COUNTS_FIGHTER", "Fighter", "CountsAsClass");
+  const pact = entity("PACT", "Fey Pact", "CountsAsPact");
+  const flail = entity("FLAIL", "Flail", "Weapon", {
+    Group: "Flail",
+    "Hands Required": "One-Handed",
+  });
+  const flailGroup = entity("FLAIL_GROUP", "Flail", "Weapon Group");
+  const flailProficiency = entity(
+    "FLAIL_PROF",
+    "Weapon Proficiency (Flail)",
+    "Proficiency",
+  );
+  const chainmail = entity(
+    "CHAIN_PROF",
+    "Armor Proficiency (Chainmail)",
+    "Proficiency",
+  );
+  const psionicDaily = entity("PSI_DAILY", "Mind Storm", "Power", {
+    "Power Type": "Attack",
+    "Power Usage": "Daily",
+    Keywords: "Psionic, Psychic",
+  });
+  const infusion = entity("INFUSION", "Healing Infusion: Remedy", "Power");
+  const all = [
+    dwarf,
+    fighter,
+    psion,
+    breath,
+    deity,
+    region,
+    ritualCaster,
+    ritual,
+    fighterMulticlass,
+    psionMulticlass,
+    plague,
+    arena,
+    paragonMulticlassing,
+    countsAsFighter,
+    pact,
+    flail,
+    flailGroup,
+    flailProficiency,
+    chainmail,
+    psionicDaily,
+    infusion,
+  ];
+  const status = (
+    prerequisite: string,
+    owned: readonly ContentEntity[],
+    level = 1,
+  ) =>
+    evaluatePrerequisite(prerequisite, {
+      owned,
+      level,
+      abilities: {},
+      definitions: all,
+    }).status;
+
+  // Each form is met by the owning character and failed (not unverified)
+  // without it.
+  it.each([
+    ["dragon breath racial power", [breath]],
+    ["Follower of Bahamut", [deity]],
+    ["you must worship Bahamut", [deity]],
+    ["East Rift regional background", [region]],
+    ["you must have the dragon breath power", [breath]],
+    ["Ritual Caster feat", [ritualCaster]],
+    ["dwarf fighter", [dwarf, fighter]],
+    ["any multiclass fighter feat", [fighterMulticlass]],
+    ["at least one arena fighting feat", [arena]],
+    [
+      "paragon multiclassing as a fighter",
+      [paragonMulticlassing, fighterMulticlass],
+    ],
+    [
+      "paragon multiclassing in a martial class",
+      [paragonMulticlassing, countsAsFighter],
+    ],
+    ["any class-specific multiclass feat", [plague]],
+    [
+      "any class-specific multiclass feat for a class that has the Psionic Augmentation class feature",
+      [psionMulticlass],
+    ],
+    [
+      "any class that doesn't have the Psionic Augmentation class feature",
+      [fighter],
+    ],
+    ["any warlock pact", [pact]],
+    ["training with chainmail", [chainmail]],
+    ["at least one psionic daily attack power", [psionicDaily]],
+    ["at least one healing infusion power", [infusion]],
+  ] as const)("reads %s", (prerequisite, owned) => {
+    expect(status(prerequisite, owned)).toBe("satisfied");
+    expect(status(prerequisite, [])).toBe("failed");
+  });
+
+  it("does not count a psionic class's multiclass feat as non-psionic", () => {
+    expect(
+      status(
+        "any class-specific multiclass feat for a class that doesn't have the Psionic Augmentation class feature",
+        [psionMulticlass],
+      ),
+    ).toBe("failed");
+    expect(
+      status(
+        "any class that doesn't have the Psionic Augmentation class feature",
+        [psion],
+      ),
+    ).toBe("failed");
+  });
+
+  it("reads hyphenated levels and curly apostrophes", () => {
+    expect(status("21st-level", [], 21)).toBe("satisfied");
+    expect(status("21st-level", [], 20)).toBe("failed");
+    const quote = entity("QUOTE", "Templar's Fist", "Power");
+    expect(
+      evaluatePrerequisite("templar’s fist power", {
+        owned: [quote],
+        level: 1,
+        abilities: {},
+        definitions: [quote],
+      }).status,
+    ).toBe("satisfied");
+  });
+
+  it("carries a proficiency prefix to later weapon-group clauses", () => {
+    const prerequisite =
+      "proficiency with any one-handed hammer, one-handed flail, or one-handed mace";
+    expect(status(prerequisite, [flailProficiency])).toBe("satisfied");
+    // The first clause keeps the lenient modern proficiency reading.
+    expect(status(prerequisite, [])).toBe("unverified");
+    // Without the prefix the bare group form stays unread.
+    expect(status("one-handed flail", [flailProficiency])).toBe("unverified");
+  });
+
+  it("does not split 1 or more", () => {
+    expect(
+      internalizePrerequisite("1 or more power points", context)?.kind,
+    ).toBe("unverified");
+  });
+});
