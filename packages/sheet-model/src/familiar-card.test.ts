@@ -73,7 +73,7 @@ describe("familiar card", () => {
     const card = sheetFamiliarCard(
       {
         ...familiar({
-          "Passive Benefits": "Venom affinity.",
+          "Passive Benefits": "See Below:\n* Venom affinity.",
           "Active Benefits": "Slide a poisoned creature.",
         }),
         description: "",
@@ -82,7 +82,7 @@ describe("familiar card", () => {
       {},
     );
     expect(card).toMatchObject({
-      constantBenefits: "Venom affinity.",
+      constantBenefits: "* Venom affinity.",
       activeBenefits: "Slide a poisoned creature.",
       description: "Lolth's children.",
     });

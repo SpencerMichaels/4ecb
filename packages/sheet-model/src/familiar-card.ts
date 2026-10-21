@@ -54,6 +54,12 @@ function field(entity: ContentEntity, name: string): string | undefined {
   return value === undefined || value === "" ? undefined : value;
 }
 
+/** Community cards lead a list with a "See Below:" placeholder line. */
+function withoutSeeBelow(value: string | undefined): string | undefined {
+  const rest = value?.replace(/^see below:?\s*/i, "");
+  return rest === "" ? undefined : rest;
+}
+
 export function isFamiliarEntity(entity: ContentEntity): boolean {
   return entity.type.trim().toLocaleLowerCase() === "familiar";
 }
@@ -77,7 +83,8 @@ export function sheetFamiliarCard(
     // Community-coded familiars (the Widow of Arach-Tinilith spiderling) name
     // the benefits as their printed headings and keep their lore as flavor.
     constantBenefits:
-      field(entity, "Constant Benefits") ?? field(entity, "Passive Benefits"),
+      field(entity, "Constant Benefits") ??
+      withoutSeeBelow(field(entity, "Passive Benefits")),
     activeBenefits: field(entity, "Power") ?? field(entity, "Active Benefits"),
     quirks: field(entity, "Quirks"),
     description:
