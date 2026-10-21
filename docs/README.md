@@ -65,6 +65,9 @@ application's architecture.
 20. [Coverage audit proposal](coverage-audit-proposal.md) plans the private
     audits that show every character option is presented, and the legacy
     special-case inventory.
+21. [Known rituals proposal](known-rituals-proposal.md) moves rituals,
+    formulas and practices out of inventory into a known list with a Rituals
+    tab, including granted and free rituals.
 
 ## Definition hierarchy
 
