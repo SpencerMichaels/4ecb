@@ -1,5 +1,33 @@
 # Implementation status
 
+## Prerequisite qualifiers scope over the whole list (2026-10-21)
+
+Commit `1149276` (D091: correct meaning over legacy's mis-parse; each
+difference is documented in 08):
+
+- Trailing relative clauses apply to every alternative ("any axe, hammer, or
+  mace that has the versatile property").
+- "any" carries to later proficiency alternatives.
+- A "from" head applies to the whole list: Ghost of Eventide is Rogue AND one
+  of the regions. Each region is a background, and regions with no background
+  stay unverified (D090).
+- In "A, or B and C", the "and" stays inside the last alternative (Doomlord).
+- Joined clauses ("21st-level wizard", "warlock with the fey pact",
+  "affiliated with Cormyr") read as both requirements.
+- "class that can use an implement" and "class that uses power points" are
+  read.
+- The Ghost of Eventide and Silverstar rewrites are removed from
+  `93-prerequisites.part`; the parser reads the published text.
+
+Results:
+
+- 35 of 11,321 records' parsed prerequisites changed, all reviewed.
+- Unverified clause uses fell from 121 (58 distinct) to 93 (45).
+- Four new failing audit checks flag the previous parser.
+- No sample character's legality changed.
+
+Evaluation cache v24. 1095 workspace tests pass.
+
 ## Coverage audit, steps 3–4: generated-character matrix (2026-10-21)
 
 `pnpm audit:coverage-matrix [PACK] [--levels=…] [--limit=N] [--only=…]
@@ -70,12 +98,8 @@ A dump of all 11,321 records' parsed prerequisites changed 75, all reviewed.
 `--parser=PATH`); they flag the previous parser and pass the new one.
 Evaluation cache v23. 1087 workspace tests pass.
 
-Still read the legacy way (see 08):
-
-- elliptical tails whose fragments resolve alone ("any axe, hammer, or mace
-  that has the versatile property" accepts any hammer);
-- "Rogue from Cormyr, the Dalelands, …";
-- "21st-level wizard/bard" on records without `print-prereqs`.
+The three readings this left matching legacy were fixed next; see "Prerequisite
+qualifiers scope over the whole list".
 
 ## Prerequisites never split inside a name (2026-10-21)
 
