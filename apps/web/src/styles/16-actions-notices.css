@@ -197,38 +197,121 @@ button.toast-dismiss:not(:disabled):hover {
   font-weight: 700;
 }
 
+/* The trash dialog is a compact copy of the library's rows: portrait, name,
+   "Level N Race Class · Trashed …", then Restore and Delete permanently.
+   The list scrolls between the fixed header and the Empty trash footer. */
 .trash-dialog {
-  overflow: auto;
-  width: 28rem;
+  flex-direction: column;
+  width: 38rem;
+}
+
+.trash-dialog[open] {
+  display: flex;
+}
+
+.trash-dialog-count {
+  font-size: 0.9rem;
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 .trash-empty {
   color: var(--muted);
   margin: 0;
-  padding: 1rem;
+  padding: 2rem 1rem;
+  text-align: center;
 }
 
 .trash-list {
+  flex: 1 1 auto;
   list-style: none;
   margin: 0;
-  padding: 0.4rem 1rem 0.8rem;
+  min-height: 0;
+  overflow: auto;
+  padding: 0;
 }
 
 .trash-list > li {
   align-items: center;
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
   display: flex;
-  gap: 0.6rem;
-  justify-content: space-between;
-  padding: 0.35rem 0;
+  gap: 0.8rem;
+  padding: 0.6rem 1rem;
+}
+
+.trash-list > li:nth-child(even) {
+  background: var(--surface-subtle);
 }
 
 .trash-list > li:last-child {
   border-bottom: 0;
 }
 
-.trash-list > li > span {
+.trash-portrait {
+  flex: 0 0 auto;
+  height: 2.75rem;
+  width: 2.75rem;
+}
+
+.trash-identity {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.trash-identity > strong {
+  display: block;
+}
+
+.trash-identity > span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.trash-dialog > footer {
+  flex-wrap: wrap;
+}
+
+.trash-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* Empty trash (outlined) and its confirmation's Delete N characters (solid). */
+.trash-dialog .danger-button,
+.empty-trash-dialog .danger-button {
+  align-items: center;
+  border-color: var(--danger);
+  color: var(--danger);
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.empty-trash-dialog .danger-button {
+  background: var(--danger);
+  color: var(--surface);
+  font-weight: 800;
+}
+
+.empty-trash-dialog {
+  overflow: auto;
+  width: 28rem;
+}
+
+.empty-trash-body {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.empty-trash-body :is(p, ul) {
+  margin: 0;
+}
+
+.empty-trash-body ul {
+  overflow-wrap: anywhere;
+  padding-inline-start: 1.2rem;
 }
 
 /* Retraining tab: the levels that can retrain (one retrain per level), then

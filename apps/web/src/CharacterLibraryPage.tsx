@@ -17,6 +17,7 @@ import { BuildVersion } from "./BuildVersion";
 import { createNativeCharacter } from "./new-character";
 import { PortraitImage } from "./PortraitEditor";
 import { holdCharacterDraft } from "./character-drafts";
+import { characterCount, characterIdentity } from "./character-library-ui";
 import { ActionMenu } from "./ActionMenu";
 import {
   exportCharacterBackup,
@@ -242,7 +243,7 @@ export function CharacterLibraryPage({
             <Icon name="new-character" />
           </button>
           <button
-            aria-label={`Trash, ${trash.length} ${trash.length === 1 ? "character" : "characters"}`}
+            aria-label={`Trash, ${characterCount(trash.length)}`}
             className="icon-only-button button-icon page-action-count"
             title={`Trash (${trash.length})`}
             type="button"
@@ -277,13 +278,7 @@ export function CharacterLibraryPage({
           <PersistenceBanner onFailure={reportFailure} />
           <ul className="character-grid">
             {characters.map((character) => {
-              const identity = [
-                `Level ${character.effectiveLevel}`,
-                character.race,
-                character.className,
-              ]
-                .filter(Boolean)
-                .join(" ");
+              const identity = characterIdentity(character);
               return (
                 <li key={character.id}>
                   <div className="character-card-heading">
@@ -418,6 +413,14 @@ export function CharacterLibraryPage({
               .then(refresh)
               .catch((reason: unknown) =>
                 reportFailure(reason, `Couldn't delete ${character.title}`),
+              )
+          }
+          onEmpty={() =>
+            void repository
+              .emptyTrash()
+              .then(refresh)
+              .catch((reason: unknown) =>
+                reportFailure(reason, "Couldn't empty the trash"),
               )
           }
         />

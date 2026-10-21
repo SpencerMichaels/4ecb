@@ -478,6 +478,35 @@ export class CharacterRepository {
     }
   }
 
+  /** Permanently deletes every trashed character (record, metadata and
+   *  portrait) in one transaction; returns how many were deleted. */
+  async emptyTrash(): Promise<number> {
+    const db = await database(this.#databaseName);
+    try {
+      const transaction = db.transaction(
+        ["characters", "characterMetadata", "characterPortraits"],
+        "readwrite",
+      );
+      const characters = transaction.objectStore("characters");
+      const metadata = transaction.objectStore("characterMetadata");
+      const portraits = transaction.objectStore("characterPortraits");
+      // Only records with a deletedAt appear in the by-deleted index.
+      const ids = new Set([
+        ...(await characters.index("by-deleted").getAllKeys()),
+        ...(await metadata.index("by-deleted").getAllKeys()),
+      ]);
+      for (const id of ids) {
+        await characters.delete(id);
+        await metadata.delete(id);
+        await portraits.delete(id);
+      }
+      await transaction.done;
+      return ids.size;
+    } finally {
+      db.close();
+    }
+  }
+
   async exportBackup(): Promise<CharacterBackup> {
     const db = await database(this.#databaseName);
     try {

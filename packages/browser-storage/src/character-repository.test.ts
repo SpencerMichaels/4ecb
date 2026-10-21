@@ -398,6 +398,29 @@ describe("CharacterRepository", () => {
     expect(await storage.list()).toHaveLength(2);
   });
 
+  it("empties the trash without touching active characters", async () => {
+    const name = `4ecb-character-empty-trash-${crypto.randomUUID()}`;
+    databases.push(name);
+    const storage = new CharacterRepository(name);
+    await storage.put({ ...character("kept"), portrait });
+    await storage.put({ ...character("trashed-one"), portrait });
+    await storage.put(character("trashed-two"));
+    await storage.moveToTrash("trashed-one");
+    await storage.moveToTrash("trashed-two");
+
+    await expect(storage.emptyTrash()).resolves.toBe(2);
+    const { active, deleted } = await storage.listMetadataPartitioned();
+    expect(active.map(({ id }) => id)).toEqual(["kept"]);
+    expect(deleted).toEqual([]);
+    expect(await storage.get("trashed-one")).toBeUndefined();
+    expect(await storage.get("trashed-two")).toBeUndefined();
+    const db = await openDB(name);
+    expect(await db.get("characterPortraits", "trashed-one")).toBeUndefined();
+    expect(await db.get("characterPortraits", "kept")).toBeDefined();
+    db.close();
+    await expect(storage.emptyTrash()).resolves.toBe(0);
+  });
+
   it("lists lightweight metadata once and partitions active and trashed records", async () => {
     const name = `4ecb-character-summary-${crypto.randomUUID()}`;
     databases.push(name);

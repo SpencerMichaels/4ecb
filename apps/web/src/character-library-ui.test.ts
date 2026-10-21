@@ -2,6 +2,11 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import {
+  characterCount,
+  characterIdentity,
+  trashOrder,
+} from "./character-library-ui";
 import { appStyles } from "./test-styles";
 
 const library = readFileSync(
@@ -74,5 +79,37 @@ describe("compact character library", () => {
     expect(editor).toContain("await saveQueue.current?.whenIdle();");
     expect(sheet).toContain("printOnReady = false");
     expect(sheet).toContain("printWithFileName(");
+  });
+});
+
+describe("library helpers", () => {
+  it("composes the identity line and orders the trash newest first", () => {
+    expect(
+      characterIdentity({
+        effectiveLevel: 3,
+        race: "Elf",
+        className: "Wizard",
+      }),
+    ).toBe("Level 3 Elf Wizard");
+    expect(characterIdentity({ effectiveLevel: 1 })).toBe("Level 1");
+    expect(
+      trashOrder([
+        { id: "a", deletedAt: "2026-10-01T00:00:00.000Z" },
+        { id: "b" },
+        { id: "c", deletedAt: "2026-10-20T00:00:00.000Z" },
+      ]).map(({ id }) => id),
+    ).toEqual(["c", "a", "b"]);
+    expect(characterCount(1)).toBe("1 character");
+    expect(characterCount(0)).toBe("0 characters");
+  });
+
+  it("wires Empty trash to the repository and styles trash rows like the library", () => {
+    expect(library).toContain(".emptyTrash()");
+    expect(library).toContain("Couldn't empty the trash");
+    expect(styles).toMatch(
+      /\.trash-list > li:nth-child\(even\) \{[^}]*background: var\(--surface-subtle\)/,
+    );
+    expect(styles).toMatch(/\.trash-portrait \{[^}]*height: 2\.75rem/);
+    expect(styles).toMatch(/\.trash-list \{[^}]*overflow: auto/);
   });
 });
