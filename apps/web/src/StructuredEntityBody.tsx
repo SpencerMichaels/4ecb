@@ -13,12 +13,10 @@ import { Prose } from "./Prose";
 /**
  * Race, class and background cards lead with their rules (the published
  * "Racial Traits"/"Class Traits" box: a compact stat grid, then granted traits
- * or features listed inside the card), with the lore after them. A trait
- * package (a hexblade pact, a cavalier virtue…) lists the class features it
- * swaps in. Fields this layout doesn't place still show, under "More".
+ * or features listed inside the card), with the lore after them. Fields this
+ * layout doesn't place still show, under "More".
  */
-export type StructuredEntityKind =
-  "race" | "class" | "background" | "trait package";
+export type StructuredEntityKind = "race" | "class" | "background";
 
 export function structuredEntityKind(
   entity: ContentEntity,
@@ -27,7 +25,6 @@ export function structuredEntityKind(
   if (type === "race") return "race";
   if (type === "class" || type === "hybrid class") return "class";
   if (type === "background") return "background";
-  if (type === "trait package") return "trait package";
   return undefined;
 }
 
@@ -252,14 +249,15 @@ const CLASS_LORE = [
 ] as const;
 
 /**
- * Class features listed in `_PARSED_CLASS_FEATURE`: by id (trait packages) or
- * by name (classes: Channel Divinity, Lay on Hands…), preferring a named
- * record that belongs to the owner over a same-named one.
+ * Class features listed in `_PARSED_CLASS_FEATURE`: by id (trait packages:
+ * a hexblade pact, a cavalier virtue…) or by name (classes: Channel Divinity,
+ * Lay on Hands…), preferring a named record that belongs to the owner over a
+ * same-named one.
  */
-function namedClassFeatures(
+export function namedClassFeatures(
   owner: ContentEntity,
   references: ReadonlyMap<string, ContentEntity>,
-): readonly Trait[] {
+): readonly ContentEntity[] {
   const keys = (contentSpecificValue(owner, "_PARSED_CLASS_FEATURE") ?? "")
     .split(",")
     .map(normalized)
@@ -287,7 +285,7 @@ function namedClassFeatures(
           ) ?? named[0]);
     if (feature === undefined || seen.has(feature.id)) return [];
     seen.add(feature.id);
-    return [traitOf(feature)];
+    return [feature];
   });
 }
 
@@ -307,7 +305,7 @@ function ClassBody({
     .filter(Boolean)
     .join(" · ");
   const features = useMemo(
-    () => namedClassFeatures(entity, references),
+    () => namedClassFeatures(entity, references).map(traitOf),
     [entity, references],
   );
   return (
@@ -342,28 +340,6 @@ function ClassBody({
           "Trait Package",
         ]}
       />
-    </>
-  );
-}
-
-function TraitPackageBody({
-  entity,
-  references,
-}: {
-  readonly entity: ContentEntity;
-  readonly references: ReadonlyMap<string, ContentEntity>;
-}) {
-  const features = useMemo(
-    () => namedClassFeatures(entity, references),
-    [entity, references],
-  );
-  return (
-    <>
-      {entity.description.trim() === "" ? null : (
-        <Prose value={entity.description} />
-      )}
-      <TraitList heading="Benefits" traits={features} />
-      <MoreFields entity={entity} placed={[]} />
     </>
   );
 }
@@ -414,8 +390,7 @@ function BackgroundBody({ entity }: { readonly entity: ContentEntity }) {
   );
 }
 
-/** Body of a race, class, background or trait package card (see
- * `structuredEntityKind`). */
+/** Body of a race, class or background card (see `structuredEntityKind`). */
 export function StructuredEntityBody({
   entity,
   kind,
@@ -457,8 +432,6 @@ export function StructuredEntityBody({
         <RaceBody entity={entity} references={references} />
       ) : kind === "class" ? (
         <ClassBody entity={entity} references={references} />
-      ) : kind === "trait package" ? (
-        <TraitPackageBody entity={entity} references={references} />
       ) : (
         <BackgroundBody entity={entity} />
       )}

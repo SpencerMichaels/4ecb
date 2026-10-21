@@ -257,7 +257,8 @@
   min-width: 0;
 }
 
-.theme-power-cards {
+.theme-power-cards,
+.trait-package-feature-cards {
   display: grid;
   gap: 0.75rem;
   min-width: 0;

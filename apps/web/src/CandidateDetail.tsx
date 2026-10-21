@@ -26,6 +26,7 @@ import { ShowEntitySourceContext } from "./ShowEntitySourceContext";
 import { Icon } from "./Icon";
 import { ProseBlocks, proseBlocks } from "./Prose";
 import {
+  namedClassFeatures,
   StructuredEntityBody,
   structuredEntityKind,
 } from "./StructuredEntityBody";
@@ -57,6 +58,12 @@ export function CandidateDetail({
 
   const referenceIndex = candidateReferenceIndex(byId);
   const themePowers = themePowerGroups(entity, byId.values());
+  // A trait package (a hexblade pact, a cavalier virtue…) is only a list of
+  // the class features it swaps in; show each one's card, like theme powers.
+  const packageFeatures =
+    entity.type.trim().toLocaleLowerCase() === "trait package"
+      ? namedClassFeatures(entity, referenceIndex)
+      : [];
   const grantedEntities = grantedDetailEntities(entity, referenceIndex).filter(
     (granted) =>
       themePowers.length === 0 ||
@@ -89,6 +96,16 @@ export function CandidateDetail({
               <CandidateDetailCard entity={power} key={power.id} />
             )),
           )}
+        </section>
+      )}
+      {packageFeatures.length === 0 ? null : (
+        <section
+          aria-label={`${entity.name} benefits`}
+          className="trait-package-feature-cards"
+        >
+          {packageFeatures.map((feature) => (
+            <CandidateDetailCard entity={feature} key={feature.id} />
+          ))}
         </section>
       )}
     </div>
