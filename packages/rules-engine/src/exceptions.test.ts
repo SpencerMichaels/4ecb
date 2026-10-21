@@ -5,6 +5,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import {
   diverseStudyException,
   EXCEPTION_IDS,
+  EXCEPTION_NAMES,
   isCustomChoiceException,
   isUniversalSkill,
   matchingDeityAlignmentClasses,
@@ -188,5 +189,18 @@ describe("named compatibility exceptions", () => {
       ["Hybrid Talent Options", "Channel Divinity (Hybrid Paladin)"],
     ]);
     expect(matchingDeityAlignmentClasses([hybrid], [hybrid])).toEqual([]);
+  });
+});
+
+describe("exception registry", () => {
+  it("keys every code exception on one distinct, well-formed ID or name", () => {
+    const ids = Object.values(EXCEPTION_IDS);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const id of ids) expect(id).toMatch(/^ID_[A-Z0-9_]+$/);
+    const names = Object.values(EXCEPTION_NAMES).map((name) =>
+      name.toLocaleLowerCase(),
+    );
+    expect(new Set(names).size).toBe(names.length);
+    for (const name of names) expect(name.trim()).toBe(name);
   });
 });

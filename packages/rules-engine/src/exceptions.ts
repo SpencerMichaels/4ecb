@@ -11,10 +11,39 @@ export const EXCEPTION_IDS = {
   cleverShotMastery: "ID_CDJ_CLASS_FEATURE_34501",
   rapidShotMastery: "ID_CDJ_CLASS_FEATURE_34502",
   aimedShotMastery: "ID_CDJ_CLASS_FEATURE_34503",
+  // Striker features (native CalcStrikers/HasStrikerFeature): each hybrid
+  // feature applies only to powers of its class.
+  rangerClass: "ID_FMP_CLASS_5",
+  rogueClass: "ID_FMP_CLASS_6",
+  warlockClass: "ID_FMP_CLASS_7",
+  huntersQuarry: "ID_FMP_CLASS_FEATURE_602",
+  hybridHuntersQuarry: "ID_FMP_CLASS_FEATURE_1530",
+  warlocksCurse: "ID_FMP_CLASS_FEATURE_605",
+  hybridWarlocksCurse: "ID_FMP_CLASS_FEATURE_1533",
+  sneakAttack: "ID_FMP_CLASS_FEATURE_322",
+  hybridSneakAttack: "ID_FMP_CLASS_FEATURE_1531",
+  dualImplementSpellcaster: "ID_FMP_FEAT_1127",
+} as const;
+
+/**
+ * Exact (case-insensitive) record names native branches key on, where the
+ * legacy engine compares names rather than IDs.
+ */
+export const EXCEPTION_NAMES = {
+  /** ShouldChooseDeity excludes this class. */
+  warpriest: "Warpriest",
+  /** Power SpecialCase: fixed 1d10/2d10 damage. */
+  bondOfCensure: "Bond of Censure",
+  /** Strength-modifier-only damage (power SpecialCase hit-line prefix). */
+  knockdownAssault: "Knockdown Assault",
+  /** IsRangedPower: also a ranged power. */
+  stabAndShoot: "Stab and Shoot",
+  /** DualImplementSpellcaster looks the feat up by name. */
+  dualImplementSpellcaster: "Dual Implement Spellcaster",
 } as const;
 
 /** Exact class name excluded by the recovered native deity-choice predicate. */
-export const DEITY_CHOICE_EXCLUDED_CLASS_NAME = "Warpriest";
+export const DEITY_CHOICE_EXCLUDED_CLASS_NAME = EXCEPTION_NAMES.warpriest;
 
 const archeryMasteryPowers = new Map([
   [EXCEPTION_IDS.cleverShotMastery.toLocaleLowerCase(), "ID_FMP_POWER_13586"],
@@ -106,7 +135,8 @@ export function archeryMasteryPowerId(
 export function isLeveledRangerAtWillAttack(candidate: ContentEntity): boolean {
   return (
     candidate.type.toLocaleLowerCase() === "power" &&
-    field(candidate, "Class")?.toLocaleLowerCase() === "id_fmp_class_5" &&
+    field(candidate, "Class")?.toLocaleLowerCase() ===
+      EXCEPTION_IDS.rangerClass.toLocaleLowerCase() &&
     field(candidate, "Power Usage")?.toLocaleLowerCase() === "at-will" &&
     field(candidate, "Power Type")?.toLocaleLowerCase() === "attack" &&
     (field(candidate, "Level")?.trim().length ?? 0) > 0

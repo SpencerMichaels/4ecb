@@ -4,6 +4,7 @@ import { weaponPropertyText, type ContentEntity } from "@4ecb/content-domain";
 import type { CharacterInventoryEntry, FieldOverlay } from "./evaluator";
 import type { EvaluatedStat } from "./stats";
 import { halfLevel } from "./derived-values";
+import { EXCEPTION_IDS, EXCEPTION_NAMES } from "./exceptions";
 
 export interface PowerComponent {
   readonly label: string;
@@ -535,9 +536,9 @@ function nativeSpecialDamage(
   | undefined {
   // The legacy engine checks this exact power name before parsing its
   // conditional movement prose.
-  if (key(power.name) === "bond of censure")
+  if (key(power.name) === key(EXCEPTION_NAMES.bondOfCensure))
     return { dice: level >= 21 ? "2d10" : "1d10", suppressAbility: true };
-  if (key(power.name) === "knockdown assault")
+  if (key(power.name) === key(EXCEPTION_NAMES.knockdownAssault))
     return { dice: "", ability: "Strength", abilityOnly: true };
 
   const hit = key(hitLine ?? "");
@@ -1116,23 +1117,23 @@ function lineAtLevel(
 const strikerFeatures = [
   {
     name: "Hunter's Quarry",
-    standardId: "id_fmp_class_feature_602",
-    hybridId: "id_fmp_class_feature_1530",
-    hybridClassId: "id_fmp_class_5",
+    standardId: key(EXCEPTION_IDS.huntersQuarry),
+    hybridId: key(EXCEPTION_IDS.hybridHuntersQuarry),
+    hybridClassId: key(EXCEPTION_IDS.rangerClass),
     condition: "once per round against your quarry",
   },
   {
     name: "Warlock's Curse",
-    standardId: "id_fmp_class_feature_605",
-    hybridId: "id_fmp_class_feature_1533",
-    hybridClassId: "id_fmp_class_7",
+    standardId: key(EXCEPTION_IDS.warlocksCurse),
+    hybridId: key(EXCEPTION_IDS.hybridWarlocksCurse),
+    hybridClassId: key(EXCEPTION_IDS.warlockClass),
     condition: "once per turn against a cursed target",
   },
   {
     name: "Sneak Attack",
-    standardId: "id_fmp_class_feature_322",
-    hybridId: "id_fmp_class_feature_1531",
-    hybridClassId: "id_fmp_class_6",
+    standardId: key(EXCEPTION_IDS.sneakAttack),
+    hybridId: key(EXCEPTION_IDS.hybridSneakAttack),
+    hybridClassId: key(EXCEPTION_IDS.rogueClass),
     condition: "once per turn with combat advantage and an eligible weapon",
     weaponRestricted: true,
   },
@@ -1406,7 +1407,7 @@ function legacyPowerRange(
       close ||
       type.includes("area burst") ||
       (type.includes("ranged") && !thrownMelee) ||
-      key(power.name) === "stab and shoot",
+      key(power.name) === key(EXCEPTION_NAMES.stabAndShoot),
   };
 }
 
@@ -1568,8 +1569,9 @@ export function evaluatePowers(input: {
     const hasDualImplementSpellcaster = input.activeDefinitionIds.some((id) => {
       const entity = byId.get(key(id));
       return (
-        key(id) === "id_fmp_feat_1127" ||
-        key(entity?.name ?? "") === "dual implement spellcaster"
+        key(id) === key(EXCEPTION_IDS.dualImplementSpellcaster) ||
+        key(entity?.name ?? "") ===
+          key(EXCEPTION_NAMES.dualImplementSpellcaster)
       );
     });
     const preferredAbilities = classKeyAbilities(
