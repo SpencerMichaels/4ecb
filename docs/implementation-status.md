@@ -49,12 +49,20 @@ Verification: against all 8 samples' cached legacy PowerStats (122 powers),
 extra modern weapon variants fell from 14 to 0, with no new missing variants.
 Attack and damage matches are unchanged. 1065 workspace tests pass.
 
-Open (owner decision): about 30 powers whose Requirement names specific
-weapons or pairs (bola, net, "greatbow or a longbow", "rapier or a short
-sword", …) now show no weapon rows, exactly as legacy. They showed every
-weapon before. Proposed fix: let `_WeaponRequirement` name weapons, and add
-corrections for these powers. The list is in
-`reverse-engineering/docs/08-hard-coded-exceptions.md`.
+Follow-up (`8626be5`, owner approved): about 30 powers name specific weapons
+or pairs (bola, net, "greatbow or a longbow", "rapier or a short sword", …).
+Legacy's grammar can't read those, so they had no weapon rows.
+`_WeaponRequirement` now also accepts selectors, read only from that field;
+powers without it keep the legacy-exact path:
+
+- `weapon:<id|name>`, which matches a magic weapon on that base and Large
+  sizes
+- `group:`, `property:`, `melee`, `ranged` and `thrown melee`
+- `A & B` for weapon pairs, `A & free hand`, and `any`
+
+`94-power-requirements.part` covers all 30 powers, and each now lists exactly
+the weapons its Requirement allows. The sample characters' output is
+unchanged.
 
 ## Legacy prerequisite grammar and aliases (2026-10-21)
 
