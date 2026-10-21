@@ -1,5 +1,37 @@
 # Implementation status
 
+## Coverage audit, steps 1–2 (2026-10-20)
+
+`pnpm audit:coverage [PACK]` (`docs/coverage-audit-proposal.md`) writes
+`tmp/coverage-audit/coverage.{json,md}`.
+
+- **Registry check.** Every pack type is checked against the registry
+  `apps/web/src/content-type-coverage.ts`: presented, applied, internal or
+  gap. Sheet claims are verified against the newly exported
+  `SHEET_FEATURE_TYPES`/`SHEET_IDENTITY_TYPES`, and the run reports each
+  type's detail-pane renderer and builder section.
+- **Reference-field scan.** It lists ID-valued fields, separates followed and
+  plumbing fields, and computes how many references the detail pane shows as
+  granted cards.
+- **Public test.** A test keeps the registry consistent with the sheet's type
+  lists.
+
+First run on the full pack: 74 types, all classified; 98 reference fields, 36
+not shown. Fixed along the way:
+
+- Superior implements now get the item card.
+- A revenant's past-life choice is filed under Race instead of Other.
+
+Open gaps for triage:
+
+- Not on the sheet: Domain, Background Choice, God Fragment, Item Set Benefit,
+  Proficiency, Trait Package names, the past-life race, beast companions and
+  associates.
+- Not in detail panes: paragon path and epic destiny class features, theme
+  level features, deity domains, and racial trait sub-options.
+
+Verification: format, lint, typecheck and 997 workspace tests pass.
+
 ## Familiar card; trait package benefits (2026-10-20)
 
 Player reports. A familiar had no place on the sheet beyond a community

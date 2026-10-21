@@ -21,6 +21,7 @@
   "scripts": {
     "benchmark:query": "tsx scripts/benchmark-query.ts",
     "audit:rules": "tsx scripts/audit-rules.ts",
+    "audit:coverage": "tsx scripts/audit-coverage.ts",
     "audit:native-workflow": "tsx scripts/audit-native-workflow.ts",
     "evaluate:character": "tsx scripts/evaluate-character.ts",
     "evaluate:matrix": "bash scripts/evaluate-character-matrix.sh",

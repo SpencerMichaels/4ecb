@@ -1596,7 +1596,13 @@ export function legacyChoiceSection(
     ].includes(type)
   )
     return "Class";
-  if (type === "race" || type === "racial trait" || type === "language")
+  if (
+    type === "race" ||
+    type === "racial trait" ||
+    type === "language" ||
+    // A revenant's past life.
+    type === "countsasrace"
+  )
     return "Race";
   if (type === "background" || type === "background choice")
     return "Background";

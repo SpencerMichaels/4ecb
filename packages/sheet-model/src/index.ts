@@ -70,6 +70,31 @@ export type {
   OverviewInventory,
 } from "./overview";
 
+/** Content types listed by name in the sheet's features section. */
+export const SHEET_FEATURE_TYPES: readonly string[] = [
+  "Racial Trait",
+  "Class Feature",
+  "Feat",
+  "Theme",
+  "Background",
+  "Paragon Path",
+  "Epic Destiny",
+  "Language",
+];
+
+/** Content types shown in the sheet's identity block, with their detail key. */
+export const SHEET_IDENTITY_TYPES = [
+  ["Race", "Race"],
+  ["Class", "Class"],
+  ["Theme", "Theme"],
+  ["Paragon Path", "ParagonPath"],
+  ["Epic Destiny", "EpicDestiny"],
+  ["Size", "Size"],
+  ["Gender", "Gender"],
+  ["Alignment", "Alignment"],
+  ["Deity", "Deity"],
+] as const;
+
 export interface SheetValue {
   readonly label: string;
   readonly value: string;
@@ -1259,19 +1284,7 @@ export function buildSheetModel(
   const keyAbilities = classKeyAbilities(selectedClass);
   const ruleGroups = new Map<string, SheetValue[]>();
   for (const rule of snapshot.selectedRules) {
-    if (
-      ![
-        "Racial Trait",
-        "Class Feature",
-        "Feat",
-        "Theme",
-        "Background",
-        "Paragon Path",
-        "Epic Destiny",
-        "Language",
-      ].includes(rule.type)
-    )
-      continue;
+    if (!SHEET_FEATURE_TYPES.includes(rule.type)) continue;
     const entry: SheetValue = {
       label: rule.name,
       value: [
@@ -1517,17 +1530,7 @@ export function buildEvaluatedSheetModel(
       ? {}
       : { RPGA: build.textStrings.RPGA }),
   };
-  for (const [type, detailName] of [
-    ["Race", "Race"],
-    ["Class", "Class"],
-    ["Theme", "Theme"],
-    ["Paragon Path", "ParagonPath"],
-    ["Epic Destiny", "EpicDestiny"],
-    ["Size", "Size"],
-    ["Gender", "Gender"],
-    ["Alignment", "Alignment"],
-    ["Deity", "Deity"],
-  ] as const) {
+  for (const [type, detailName] of SHEET_IDENTITY_TYPES) {
     const namesOf = (entityType: string) =>
       active
         .filter(
@@ -1550,16 +1553,7 @@ export function buildEvaluatedSheetModel(
   const seenFeatures = new Set<string>();
   for (const { occurrence, entity } of active) {
     if (
-      ![
-        "Racial Trait",
-        "Class Feature",
-        "Feat",
-        "Theme",
-        "Background",
-        "Paragon Path",
-        "Epic Destiny",
-        "Language",
-      ].includes(entity.type) ||
+      !SHEET_FEATURE_TYPES.includes(entity.type) ||
       seenFeatures.has(entity.id)
     )
       continue;

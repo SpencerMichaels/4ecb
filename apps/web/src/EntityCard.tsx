@@ -46,6 +46,7 @@ const ITEM_TYPES = new Set([
   "magic item",
   "ritual",
   "ritual scroll",
+  "superior implement",
   "weapon",
 ]);
 
