@@ -22,9 +22,11 @@
   illegal: his deity Aurom has no domains, and legacy marks the same feat a
   house rule.
 - **Evaluation cache:** v26 (`7694de8`).
-- **Not fixed (owner decision):** Assassin's Strike (Hybrid) choices at levels
-  13 and 23 are empty after earlier upgrades. The content lacks the upgrade
-  records, and adding them would mean copying published effect text.
+- **Queued (owner decided: fix it):** Assassin's Strike (Hybrid) choices at
+  levels 13 and 23 are empty after earlier upgrades, because the content lacks
+  the upgrade records. Fix: add the missing upgrades as a structured
+  extra-damage-dice field, printed on the card in our own words (no copied
+  effect text, D089).
 
 Verification: pack rebuilt (41 warnings); 1111 workspace tests pass; no sample
 character's legality changed.
