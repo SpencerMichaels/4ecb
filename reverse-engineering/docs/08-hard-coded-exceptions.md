@@ -5,6 +5,65 @@ have explicit native branches and must be ported or deliberately converted into
 new declarative compatibility rules. Function names and relevant locations are
 searchable in `../generated/decompiled/D20RulesEngine/-Module-.cs`.
 
+## Inventory command
+
+`pnpm audit:legacy-special-cases [PACK.4ecp]` (private; needs the decompiled
+code and a local pack) is the complete, checkable form of this catalogue. It
+decodes every string literal in `D20RulesEngine` (the native `data(..)`
+comments: UTF-16LE for `_W` arrays, single-byte otherwise),
+`RulesEngineCommon`, `CharacterSheetViewer` and `CharacterBuilder` (whose
+literals are SmartAssembly-encrypted; the audit recovers the resource key from
+the call sites), classifies each against the pack, and groups the
+content-targeting ones by member. Each member's modern status is reviewed in
+`apps/content-tool/src/legacy-special-cases.ts`; the audit lists members
+without a review and checks hand-maintained modern mirrors of legacy lists
+(the boon types, the ignored prerequisite clauses) against the decompiled
+literals. `--show=Member[,Member]` prints a member's decompiled source with its
+literals decoded. Reports go to the ignored `tmp/legacy-special-cases/`.
+
+Families recovered by the inventory beyond the sections below:
+
+- **Prerequisite alias table.** Prerequisite `SpecialCase` maps about sixty
+  exact clauses to other records or combinations (a bare `Shifter` means
+  either shifter race; spellscar, weapon-talent, Flurry of Blows, Turn Undead,
+  21st-level class, Harper, manifestation, healing-infusion and dragon-breath
+  damage-type clauses, and more). `FirstSpecialCase`, `TwoKnowledgeSkills`,
+  `HarperTraining`, `AnyClassSpecific`/`AnyClassMoreSpecific`/`AnyClassNoPsi`,
+  `AnyWarlockPact`, `MulticlassDivine`, `ParagonMulticlassing`,
+  `RememberedKnack`, `MoreThanOneClass`, `NonSpearPolearm` and `HeavyArmor` are
+  further named clause predicates. `Ignore` skips eight clauses; `Unrecognized`
+  turns any other unknown clause into an always-failing stub.
+- **Item requirements.** `MeetsItemRequirement` maps two exact item
+  `Requirement` texts to Internal records (living construct to Can Use
+  Components; ki focus users to Ki Focus User); `MeetsItemPrereq` passes the
+  familiar active-mode clause.
+- **Boons.** `RulesElementIsBoon` treats a Magic Item Type containing `boon` or
+  `training`, or equal to one of eleven exact types, as a boon.
+- **Power restrictions.** `IsRestricted` parses `You must be wielding ...`
+  Requirement grammar to limit a power's weapon variants; `OtherRestrictions`
+  handles the shield requirement; `IsValidPowerCombo` excludes one power by ID;
+  `NonDamagePower` suppresses damage for four powers (two by name, two by ID).
+- **Attack and damage text.** `AttackPowerModRepl` and `ParseIncreaseLine`
+  rewrite a handful of exact level-increase lines (plus two powers by name);
+  `ExtractPowerMods` adds a Wisdom power bonus for one exact suffix;
+  `AttackSpecialCase`/`ChosenAbility` resolve `Highest Mental Ability` and
+  `Chosen Ability`; `HigherLevelDamage` and `CalcDamage` key a few powers by
+  name.
+- **Encounter uses.** `RulesElementEncounterUses` gives the six powers with one
+  exact "twice per encounter" Special text two uses (three from level 16), and
+  adds `_ADDITIONAL_USES` field and `<ID>_ADDITIONAL_USES` stat uses; only the
+  character-sheet tracker reads it.
+- **Arena Training.** `AddArenaWeapons` and `ArenaTrainingImprovisedWeapon`
+  extend weapon keywords and improvised-weapon rules for the Arena Training
+  feature.
+- **Size.** `CanUseLargeWeapons`/`SmallWithNonSmallWeapon`/`ItemSlot` change
+  wielding by the `Oversized`, `One Size Larger` and `Small` text strings.
+- **Applications.** The builder and viewer key a few records by ID or name
+  outside the engine: Awaken God Fragment and Mage's Spellbook show their
+  wizard pages, Beast Mastery shows the companion page and sheet panel,
+  Student of Sword Magic adds a spellbook, and mount names map to monster
+  stat blocks. The rest of the application literals are presentation.
+
 ## Dynamic category exceptions
 
 - `DiverseStudyException`: permits powers associated with the diverse-study class
