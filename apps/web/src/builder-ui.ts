@@ -555,6 +555,34 @@ export function grantedDetailEntities(
   });
 }
 
+/**
+ * Feats and powers a class feature offers: its direct grants, then the ones it
+ * names for display (`Powers`/`_DisplayPowers`) but grants later or by a
+ * choice, such as a domain's level 3 power or a transformation's secondary
+ * power.
+ */
+export function classFeatureDetailEntities(
+  feature: ContentEntity,
+  references: ReadonlyMap<string, ContentEntity>,
+): readonly ContentEntity[] {
+  const displayed = ["Powers", "_DisplayPowers"].flatMap((field) =>
+    (contentSpecificValue(feature, field) ?? "").split(",").flatMap((id) => {
+      const entity = references.get(id.trim().toLocaleLowerCase());
+      return entity !== undefined &&
+        ["feat", "power"].includes(entity.type.trim().toLocaleLowerCase())
+        ? [entity]
+        : [];
+    }),
+  );
+  return [
+    ...new Map(
+      [...grantedDetailEntities(feature, references), ...displayed].map(
+        (entity) => [entity.id.trim().toLocaleLowerCase(), entity],
+      ),
+    ).values(),
+  ];
+}
+
 export interface ThemePowerGroup {
   readonly level: number | undefined;
   readonly powers: readonly ContentEntity[];

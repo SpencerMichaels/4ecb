@@ -5,6 +5,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 
 import {
   candidateReason,
+  classFeatureDetailEntities,
   primaryDetailTypeLabel,
   grantedDetailEntities,
   themePowerGroups,
@@ -59,10 +60,22 @@ export function CandidateDetail({
   const referenceIndex = candidateReferenceIndex(byId);
   const themePowers = themePowerGroups(entity, byId.values());
   // A trait package (a hexblade pact, a cavalier virtue…) is only a list of
-  // the class features it swaps in; show each one's card, like theme powers.
+  // the class features it swaps in; show each one's card, then the powers it
+  // grants, so the package can be judged before it is picked.
+  const shownGrants = new Set<string>();
   const packageFeatures =
     entity.type.trim().toLocaleLowerCase() === "trait package"
-      ? namedClassFeatures(entity, referenceIndex)
+      ? namedClassFeatures(entity, referenceIndex).map((feature) => ({
+          feature,
+          granted: classFeatureDetailEntities(feature, referenceIndex).filter(
+            (granted) => {
+              const id = granted.id.trim().toLocaleLowerCase();
+              if (shownGrants.has(id)) return false;
+              shownGrants.add(id);
+              return true;
+            },
+          ),
+        }))
       : [];
   const grantedEntities = grantedDetailEntities(entity, referenceIndex).filter(
     (granted) =>
@@ -103,9 +116,16 @@ export function CandidateDetail({
           aria-label={`${entity.name} benefits`}
           className="trait-package-feature-cards"
         >
-          {packageFeatures.map((feature) => (
-            <CandidateDetailCard entity={feature} key={feature.id} />
-          ))}
+          {packageFeatures.flatMap(({ feature, granted }) => [
+            <CandidateDetailCard entity={feature} key={feature.id} />,
+            ...granted.map((grant) => (
+              <CandidateDetailCard
+                entity={grant}
+                key={`${feature.id}:${grant.id}`}
+                relationship={`Granted ${grant.type.toLocaleLowerCase()}`}
+              />
+            )),
+          ])}
         </section>
       )}
     </div>
