@@ -12,6 +12,7 @@ import {
   isLeveledRangerAtWillAttack,
   isCustomChoiceException,
   isUniversalSkill,
+  meetsItemRequirement,
   seekerException,
   shouldChooseDeity,
   versatileMasterException,
@@ -38,7 +39,7 @@ import { evaluatePowers, type EvaluatedPower } from "./powers";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v20-2026-10-21-legacy-prerequisite-grammar";
+  "evaluated-character-v21-2026-10-21-legacy-power-and-item-requirements";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -2120,6 +2121,28 @@ function evaluateCharacterInternal(
         diagnostics.splice(index, 1);
     }
   }
+  // Legacy EquipLoot/MeetsItemRequirement: an equipped item whose
+  // Requirement the character does not meet is "custom equipment", a house
+  // rule. It stays equipped and its rules still apply (ShouldExecute ignores
+  // the flag); an unequipped one is not reported.
+  const activeIds = new Set(
+    occurrences.map((occurrence) => key(occurrence.definitionId)),
+  );
+  let itemRequirementUnmet = false;
+  for (const entry of inventory) {
+    if (entry.equippedQuantity <= 0 || entry.quantity <= 0) continue;
+    for (const definitionId of entry.definitionIds) {
+      const entity = index.get(definitionId);
+      if (entity === undefined || meetsItemRequirement(entity, activeIds))
+        continue;
+      itemRequirementUnmet = true;
+      diagnostics.push({
+        severity: "warning",
+        code: "item.requirement-unmet",
+        message: `${entry.name ?? entity.name}: ${field(entity, "Requirement") ?? ""}`,
+      });
+    }
+  }
   const complete =
     converged &&
     !diagnostics.some((diagnostic) => diagnostic.code === "choice.required");
@@ -2131,6 +2154,7 @@ function evaluateCharacterInternal(
           diagnostic.code !== "choice.required") ||
         diagnostic.code === "prerequisite.unverified",
     ) &&
+    !itemRequirementUnmet &&
     !occurrences.some((occurrence) => occurrence.legality === "houserule");
   const activeDefinitionIds = occurrences.map(
     (occurrence) => occurrence.definitionId,
@@ -2145,6 +2169,8 @@ function evaluateCharacterInternal(
           stats: evaluatedStats,
           overlays,
           textStrings: text,
+          textContributions,
+          equipment,
           entities: evaluationEntities,
         });
   return {

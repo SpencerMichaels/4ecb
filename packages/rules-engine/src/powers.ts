@@ -5,6 +5,14 @@ import type { CharacterInventoryEntry, FieldOverlay } from "./evaluator";
 import type { EvaluatedStat } from "./stats";
 import { halfLevel } from "./derived-values";
 import { EXCEPTION_IDS, EXCEPTION_NAMES } from "./exceptions";
+import { equipmentPredicate, type EquipmentState } from "./equipment";
+import {
+  isLegacyMonkWeapon,
+  isPowerRestricted,
+  machineReadRequirement,
+  WEAPON_REQUIREMENT_FIELD,
+  type PowerRequirementContext,
+} from "./power-requirements";
 
 export interface PowerComponent {
   readonly label: string;
@@ -143,6 +151,14 @@ interface Loadout {
   readonly properties: readonly string[];
   readonly weaponCategory?: string;
   readonly rangedWeapon: boolean;
+  /** Legacy IsRestricted inputs: the item's base record (CharLoot base),
+   * its WeaponBase for a weapon power, its equipped count, whether legacy
+   * DetermineOffhand may pick it as the off hand, and IsStaff. */
+  readonly baseRecord?: ContentEntity;
+  readonly requirementBase?: ContentEntity;
+  readonly equippedQuantity: number;
+  readonly offhandCandidate: boolean;
+  readonly staff: boolean;
 }
 
 function key(value: string): string {
@@ -319,9 +335,49 @@ function equipmentName(parts: readonly ContentEntity[]): string {
   );
 }
 
+/** Legacy IsStaff for an item's base record. */
+function legacyIsStaff(entity: ContentEntity): boolean {
+  switch (key(entity.type)) {
+    case "magic item":
+      return key(field(entity, "Magic Item Type") ?? "") === "staff";
+    case "weapon":
+      return key(entity.id) === key(EXCEPTION_IDS.quarterstaff);
+    case "superior implement":
+      return key(field(entity, "Group") ?? "") === "staff";
+    default:
+      return [
+        EXCEPTION_NAMES.staffImplement,
+        EXCEPTION_NAMES.staffImplementAlternate,
+      ].some((name) => key(name) === key(entity.name));
+  }
+}
+
+/** Legacy WeaponEquiv: a "name[:type]" or ID naming the record the item
+ * attacks as (a superior implement or shield that is also a weapon). */
+function legacyWeaponEquiv(
+  entity: ContentEntity,
+  byId: ReadonlyMap<string, ContentEntity>,
+  byName: ReadonlyMap<string, readonly ContentEntity[]>,
+): ContentEntity | undefined {
+  const value = field(entity, "WeaponEquiv")?.trim() ?? "";
+  if (value === "") return undefined;
+  const typed = /^(.*):([^:]*)$/u.exec(value);
+  const name = (typed?.[1] ?? value).trim();
+  const type = typed?.[2]?.trim();
+  return (
+    byId.get(key(name)) ??
+    byName
+      .get(key(name))
+      ?.find(
+        (candidate) => type === undefined || key(candidate.type) === key(type),
+      )
+  );
+}
+
 function loadouts(
   inventory: readonly CharacterInventoryEntry[],
   byId: ReadonlyMap<string, ContentEntity>,
+  byName: ReadonlyMap<string, readonly ContentEntity[]>,
   textStrings: Readonly<Record<string, string>>,
 ): readonly Loadout[] {
   const result: Loadout[] = [];
@@ -349,6 +405,11 @@ function loadouts(
     });
     if (weapon === undefined && implement === undefined) continue;
     const critical = field(magic ?? emptyEntity, "Critical");
+    const baseRecord = weapon ?? parts[0];
+    const enchantRecord = parts.find(
+      (entity) => entity !== baseRecord && key(entity.type) === "magic item",
+    );
+    const staff = baseRecord !== undefined && legacyIsStaff(baseRecord);
     result.push({
       id: entry.id,
       name: entry.name ?? equipmentName(parts),
@@ -436,6 +497,27 @@ function loadouts(
         ? {}
         : { weaponCategory: key(field(weapon, "Weapon Category") ?? "") }),
       rangedWeapon: Boolean(field(weapon ?? emptyEntity, "Range")),
+      ...(baseRecord === undefined
+        ? {}
+        : {
+            baseRecord,
+            requirementBase:
+              legacyWeaponEquiv(baseRecord, byId, byName) ??
+              (enchantRecord === undefined
+                ? undefined
+                : legacyWeaponEquiv(enchantRecord, byId, byName)) ??
+              (staff
+                ? (byId.get(key(EXCEPTION_IDS.quarterstaff)) ?? baseRecord)
+                : baseRecord),
+          }),
+      equippedQuantity: entry.equippedQuantity,
+      offhandCandidate:
+        key(baseRecord?.type ?? "") === "weapon" ||
+        (implement !== undefined &&
+          !/ki focus/iu.test(
+            `${magicType ?? ""} ${field(implement, "Magic Item Type") ?? ""} ${implement.name}`,
+          )),
+      staff,
     });
   }
   result.push({
@@ -457,6 +539,9 @@ function loadouts(
     properties: [],
     weaponCategory: "melee",
     rangedWeapon: false,
+    equippedQuantity: 0,
+    offhandCandidate: false,
+    staff: false,
   });
   const mainHandName = Object.entries(textStrings).find(
     ([name]) => key(name) === "_internal_mainhandweapon",
@@ -1427,6 +1512,134 @@ function weaponFitsPowerRange(item: Loadout, range: PowerRange): boolean {
   return (melee && range.melee) || (ranged && range.ranged);
 }
 
+/** Legacy IsDoubleWeapon. */
+function legacyIsDoubleWeapon(weapon: ContentEntity | undefined): boolean {
+  if (weapon === undefined) return false;
+  return (
+    (key(field(weapon, "Hands Required") ?? "") === "two-handed" &&
+      /off-hand/iu.test(field(weapon, "Properties") ?? "")) ||
+    (field(weapon, "_Secondary End")?.trim() ?? "") !== ""
+  );
+}
+
+/**
+ * The character-level inputs of legacy IsRestricted, bound per item:
+ * WeaponBase, DetermineOffhand/OffhandWeaponBase, IsMonkWeapon, the shield
+ * checks, VersatileUsedInTwoHands and GetStatText.
+ */
+function legacyRequirementContext(input: {
+  readonly equipped: readonly Loadout[];
+  readonly activeDefinitionIds: readonly string[];
+  readonly textStrings: Readonly<Record<string, string>>;
+  readonly textContributions:
+    readonly { readonly name: string; readonly value: string }[] | undefined;
+  readonly equipment: EquipmentState | undefined;
+  readonly versatileUsedTwoHanded: boolean;
+  readonly byId: ReadonlyMap<string, ContentEntity>;
+  readonly byName: ReadonlyMap<string, readonly ContentEntity[]>;
+}): (item: Loadout, meleePower: boolean) => PowerRequirementContext {
+  const resolve = (reference: string, type?: string) =>
+    input.byId.get(key(reference)) ??
+    input.byName
+      .get(key(reference))
+      ?.find((entity) => type === undefined || key(entity.type) === type) ??
+    (type === undefined ? undefined : input.byName.get(key(reference))?.[0]);
+  const resolveWeapon = (reference: string) => resolve(reference, "weapon");
+  const active = input.activeDefinitionIds.flatMap((id) => {
+    const entity = input.byId.get(key(id));
+    return entity === undefined ? [] : [entity];
+  });
+  const owns = (type: string, name: string) =>
+    active.some(
+      (entity) => key(entity.type) === type && key(entity.name) === key(name),
+    );
+  // Legacy SmallWithNonSmallWeapon.
+  const small =
+    owns("size", EXCEPTION_NAMES.smallSize) &&
+    !owns("internal", EXCEPTION_NAMES.oneSizeLarger);
+  const statText = (name: string): string | undefined => {
+    if (input.textContributions === undefined)
+      return textValue(input.textStrings, name);
+    const values = input.textContributions
+      .filter((contribution) => key(contribution.name) === key(name))
+      .map((contribution) => contribution.value);
+    return values.length === 0 ? undefined : values.join("+");
+  };
+  const unarmedText = textValue(
+    input.textStrings,
+    EXCEPTION_NAMES.unarmedWeaponText,
+  );
+  const unarmedBase =
+    (unarmedText === undefined || unarmedText.trim() === ""
+      ? undefined
+      : resolveWeapon(unarmedText)) ??
+    resolveWeapon(EXCEPTION_NAMES.unarmedAttack);
+  const shield =
+    input.equipment !== undefined &&
+    equipmentPredicate(input.equipment, "armor:shield");
+  const dualShields =
+    input.equipment !== undefined &&
+    equipmentPredicate(input.equipment, "dual-shield:");
+  const shared = {
+    dualShields,
+    shield,
+    versatileUsedTwoHanded: (weapon: ContentEntity) =>
+      (small && !/small/iu.test(field(weapon, "Properties") ?? "")) ||
+      input.versatileUsedTwoHanded,
+    statText,
+    resolveWeapon,
+  };
+  // Legacy DetermineOffhand: the same item when two are equipped, else the
+  // first other equipped weapon or non-ki-focus implement, else a double
+  // weapon's other end.
+  const offhandFor = (item: Loadout): Loadout | undefined => {
+    if (item.equippedQuantity > 1) return item;
+    if (item.equippedQuantity === 1) {
+      const other = input.equipped.find(
+        (candidate) =>
+          candidate !== item &&
+          !candidate.unarmed &&
+          candidate.equippedQuantity >= 1 &&
+          candidate.offhandCandidate,
+      );
+      if (other !== undefined) return other;
+    }
+    return legacyIsDoubleWeapon(item.requirementBase) ? item : undefined;
+  };
+  // Legacy OffhandWeaponBase: a double weapon's `_Secondary End`.
+  const offhandBase = (item: Loadout): ContentEntity | undefined => {
+    const secondary = field(
+      item.baseRecord ?? emptyEntity,
+      "_Secondary End",
+    )?.trim();
+    return (
+      (secondary === undefined || secondary === ""
+        ? undefined
+        : resolve(secondary)) ?? item.requirementBase
+    );
+  };
+  return (item, meleePower) => {
+    if (item.unarmed)
+      return {
+        ...shared,
+        mainBase: meleePower ? unarmedBase : undefined,
+        offhandBase: undefined,
+        monkWeapon: true,
+      };
+    const offhand = offhandFor(item);
+    return {
+      ...shared,
+      mainBase: item.requirementBase,
+      offhandBase: offhand === undefined ? undefined : offhandBase(offhand),
+      monkWeapon: isLegacyMonkWeapon(
+        item.requirementBase,
+        item.staff,
+        resolveWeapon,
+      ),
+    };
+  };
+}
+
 export function evaluatePowers(input: {
   readonly level: number;
   readonly activeDefinitionIds: readonly string[];
@@ -1434,12 +1647,30 @@ export function evaluatePowers(input: {
   readonly stats: Readonly<Record<string, EvaluatedStat>>;
   readonly overlays: readonly FieldOverlay[];
   readonly textStrings?: Readonly<Record<string, string>>;
+  /** Every applied text string, for legacy GetStatText's '+'-joined values. */
+  readonly textContributions?: readonly {
+    readonly name: string;
+    readonly value: string;
+  }[];
+  /** The equipped items, for the legacy shield requirements. */
+  readonly equipment?: EquipmentState;
   readonly entities: readonly ContentEntity[];
 }): readonly EvaluatedPower[] {
   const byId = new Map(
     input.entities.map((entity) => [key(entity.id), entity]),
   );
-  const equipped = loadouts(input.inventory, byId, input.textStrings ?? {});
+  const byName = new Map<string, ContentEntity[]>();
+  for (const entity of input.entities) {
+    const named = byName.get(key(entity.name));
+    if (named === undefined) byName.set(key(entity.name), [entity]);
+    else named.push(entity);
+  }
+  const equipped = loadouts(
+    input.inventory,
+    byId,
+    byName,
+    input.textStrings ?? {},
+  );
   // Legacy GetProficiencyBonus/IsProficient: the bonus needs an owned
   // "Weapon Proficiency (<base weapon or Proficient As>)".
   const weaponProficiencies = new Set(
@@ -1466,10 +1697,22 @@ export function evaluatePowers(input: {
   for (const entity of byId.values())
     if (!entitiesByName.has(key(entity.name)))
       entitiesByName.set(key(entity.name), entity);
+  // Legacy VersatileUsedInTwoHands: _wtoi of the text, false when absent.
   const versatileUsedTwoHanded =
     Number(
-      textValue(input.textStrings ?? {}, "_INTERNAL_VersatileUsedTwoHanded"),
+      textValue(input.textStrings ?? {}, "_INTERNAL_VersatileUsedTwoHanded") ??
+        0,
     ) !== 0;
+  const requirementContext = legacyRequirementContext({
+    equipped,
+    activeDefinitionIds: input.activeDefinitionIds,
+    textStrings: input.textStrings ?? {},
+    textContributions: input.textContributions,
+    equipment: input.equipment,
+    versatileUsedTwoHanded,
+    byId,
+    byName,
+  });
   const activePowerIds = [
     ...new Set(
       input.activeDefinitionIds.flatMap((definitionId) => {
@@ -1540,20 +1783,39 @@ export function evaluatePowers(input: {
     });
     // Legacy IsValidPowerCombo tests the Implement keyword first, so a power
     // that is both (Hexblade, Swordmage) takes the implement path.
-    const candidates = !calculated
-      ? []
-      : implementPower
-        ? // Legacy offers every owned weapon and implement (its CheckPower
-          // accepts any); proficiency only marks the variant (D081).
-          equipped.filter(ownedImplement)
-        : weaponPower
-          ? equipped.filter(
-              (item) =>
-                item.unarmed ||
-                (item.weaponDamage !== undefined &&
-                  weaponFitsPowerRange(item, powerRange)),
-            )
-          : equipped.filter((item) => item.unarmed);
+    // Legacy IsRestricted: the power's Requirement may reject a pairing. It
+    // checks every weapon-power item and, through AllowUnarmed, Unarmed for
+    // any power; an implement power's own items are not checked.
+    const requirement = machineReadRequirement(
+      effectiveField(power, "Requirement", input.overlays),
+      effectiveField(power, WEAPON_REQUIREMENT_FIELD, input.overlays),
+    );
+    const restricted = (item: Loadout) =>
+      requirement !== "" &&
+      (item.unarmed || weaponPower) &&
+      isPowerRestricted(
+        power,
+        requirement,
+        requirementContext(item, powerRange.melee),
+      );
+    const candidates =
+      !calculated ||
+      key(power.id) === key(EXCEPTION_IDS.coordinatedAssaultAttack)
+        ? []
+        : (implementPower
+            ? // Legacy offers every owned weapon and implement (its
+              // CheckPower accepts any); proficiency only marks the
+              // variant (D081).
+              equipped.filter(ownedImplement)
+            : weaponPower
+              ? equipped.filter(
+                  (item) =>
+                    item.unarmed ||
+                    (item.weaponDamage !== undefined &&
+                      weaponFitsPowerRange(item, powerRange)),
+                )
+              : equipped.filter((item) => item.unarmed)
+          ).filter((item) => !restricted(item));
     const proficientFor = (item: Loadout) =>
       !implementPower ||
       (weaponPower && item.weaponDefinition) ||

@@ -344,6 +344,18 @@ export function builderIssueGroups({
           }),
     });
   }
+  // Legacy lists an equipped item whose Requirement is unmet as "custom
+  // equipment" among the house rules.
+  for (const diagnostic of evaluation.diagnostics)
+    if (diagnostic.code === "item.requirement-unmet")
+      houseRules.push({
+        key: `house-rule:item-requirement:${diagnostic.message}`,
+        kind: "house-rule",
+        title: "Equipped item requirement",
+        detail: diagnostic.message,
+        effect:
+          "The item stays equipped and its properties apply, but the character is marked as using house rules.",
+      });
   if (abilityScoresHouseRuled)
     houseRules.push({
       key: "abilities:house-rule",
@@ -365,6 +377,7 @@ export function builderIssueGroups({
     if (
       diagnostic.code === "choice.required" ||
       diagnostic.code === "occurrence.houserule" ||
+      diagnostic.code === "item.requirement-unmet" ||
       (diagnostic.occurrenceId !== undefined &&
         houseRuleOccurrenceIds.has(diagnostic.occurrenceId) &&
         ignoredHouseRuleDiagnostics.has(diagnostic.code)) ||

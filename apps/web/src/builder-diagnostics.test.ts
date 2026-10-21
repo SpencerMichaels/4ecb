@@ -77,6 +77,28 @@ describe("builder issue groups", () => {
     expect(result.warnings).toHaveLength(0);
   });
 
+  it("lists an equipped item's unmet requirement as a house rule", () => {
+    const result = builderIssueGroups({
+      ...common,
+      evaluation: evaluation({
+        legal: false,
+        diagnostics: [
+          {
+            severity: "warning",
+            code: "item.requirement-unmet",
+            message: "Synthetic Ki Focus +1: Must be able to use Ki Focuses.",
+          },
+        ],
+      }),
+    });
+
+    expect(result.warnings).toHaveLength(0);
+    expect(result.houseRules).toHaveLength(1);
+    expect(result.houseRules[0]?.detail).toBe(
+      "Synthetic Ki Focus +1: Must be able to use Ki Focuses.",
+    );
+  });
+
   it("separates house rules from evaluation warnings and errors", () => {
     const result = builderIssueGroups({
       ...common,

@@ -36,13 +36,15 @@ Families recovered by the inventory beyond the sections below:
 - **Item requirements.** `MeetsItemRequirement` maps two exact item
   `Requirement` texts to Internal records (living construct to Can Use
   Components; ki focus users to Ki Focus User); `MeetsItemPrereq` passes the
-  familiar active-mode clause.
+  familiar active-mode clause (and every other). See "Item requirements"
+  below for the port.
 - **Boons.** `RulesElementIsBoon` treats a Magic Item Type containing `boon` or
   `training`, or equal to one of eleven exact types, as a boon.
 - **Power restrictions.** `IsRestricted` parses `You must be wielding ...`
   Requirement grammar to limit a power's weapon variants; `OtherRestrictions`
   handles the shield requirement; `IsValidPowerCombo` excludes one power by ID;
   `NonDamagePower` suppresses damage for four powers (two by name, two by ID).
+  See "Power requirement restrictions" below for the port.
 - **Attack and damage text.** `AttackPowerModRepl` and `ParseIncreaseLine`
   rewrite a handful of exact level-increase lines (plus two powers by name);
   `ExtractPowerMods` adds a Wisdom power bonus for one exact suffix;
@@ -292,6 +294,82 @@ preserves these authored paths and leaves their prerequisite checks intact.
 The exact output is richer than `ability modifier + half level + proficiency +
 enhancement`. Use the saved `PowerStats` corpus as golden oracles and keep every
 component explainable.
+
+### Power requirement restrictions
+
+Recovered path: `WritePower` writes one `PowerStats` row per
+`IterateWeapons` item (every owned weapon or implement) and one with no
+weapon, each only if `IsValidPowerCombo` passes. That rejects
+`ID_FMP_POWER_11615` outright; with no weapon it returns `AllowUnarmed`
+(`!IsRestricted(null, null)`) for any power; an Implement-keyword power then
+takes `IsValidImplement` and never reads its Requirement; a Weapon power
+needs a `WeaponBase`, `!IsRestricted(weapon, DetermineOffhand(weapon))`, and
+the melee/ranged fit.
+
+`IsRestricted` reads `Requirement`. Without the `You must be wielding `
+prefix it returns `OtherRestrictions`: only the exact `You must be using a
+shield.` restricts, unless an equipped shield (`HasLoot("armor:shield")`).
+Otherwise the rest is cut at commas; each clause loses leading space, then a
+leading `a ` or `or a ` (not `an `), then one trailing `.`; a blank final
+clause ends the loop. The requirement is met as soon as one clause is, and
+restricted if none is. Clauses compare case-insensitively against fixed
+branches, in order: `bow or a crossbow` (Group contains `bow`), `monk weapon`
+(`IsMonkWeapon`: Club, Dagger, Spear, Monk Unarmed Strike by normalized name,
+a staff, or no weapon), `two shields` (two equipped shields), `both a thrown
+weapon and a melee weapon` (no off hand returns restricted at once; else one
+hand melee and the other thrown), `light thrown or a heavy thrown weapon to
+make a melee attack with this power` (a ranged-capable weapon), `two melee
+weapons` (main and off-hand bases both melee); and, only with a weapon record:
+`two melee weapons or a ranged weapon`, `ranged weapon`, `two-handed weapon`
+(and its charge variant; Hands Required or stout), `melee weapon in two
+hands` (`IsUsedTwoHanded`, with versatile use from Small without One Size
+Larger or `_INTERNAL_VersatileUsedTwoHanded`), `two-handed reach weapon`,
+`light blade with the light thrown property`, `heavy blade or light blade`,
+`blowgun and use it for this attack`, `reach weapon`, `dagger` (and its
+critical-hit variant), `spiked chain` (by name). Any other clause matches the
+weapon's Group by substring (`light/heavy/thrown weapon` match Properties
+instead) or `WeaponSwap`: a `<power Class>-<clause>` or `<associated feat>
+association-<clause>` text listing the weapon's normalized name or `<Group>
+group` (Rogue weapon talents, Harrowing Swarm). The weapon record is
+`WeaponBase`: `WeaponEquiv` of the base or enchantment, a staff as
+Quarterstaff (`ID_FMP_WEAPON_10`), else the base; with no weapon, a melee
+power uses the `Unarmed Weapon` text's weapon or Unarmed Attack and a ranged
+power has none. `DetermineOffhand` is the item itself when two are equipped,
+else the first other equipped weapon or non-ki-focus implement, else the item
+when it is a double weapon; `OffhandWeaponBase` prefers its `_Secondary End`.
+
+Modern port (2026-10-21, D089): `packages/rules-engine/src/power-requirements.ts`
+(`isPowerRestricted`) with the inputs bound per item in `powers.ts`
+(`legacyRequirementContext`); names and IDs are in `EXCEPTION_IDS` /
+`EXCEPTION_NAMES`. On the eight sample characters it removes all 14 variants
+legacy did not list (Twin Strike, Dire Wolverine Strike, Sudden Strike,
+Ruffling Sting, Howling Strike) and adds no mismatch; cached attack/damage
+matches are unchanged. Wordings the grammar cannot read reject every weapon,
+as in legacy. Where the published wording is a restatable variant, a
+machine-read `_WeaponRequirement` in `content/corrections/94-power-requirements.part`
+restates it in the grammar (15 powers: `X or a Y` lists, trailing conditions
+the sheet cannot check, a reworded named branch, Bloody Throw's hand-specific
+pair). Still rejected as in legacy, because the grammar reads groups and
+properties, not weapon names or pairs: bola, net, cahulaks, gouge, dragon
+paw, gythka, lotulis and grappling-hook powers, `greatbow or a longbow`,
+`rapier or a short sword`, `longsword and another melee weapon`, `crossbow
+and a light blade`, `an off-hand weapon and have a hand free`, `a melee
+weapon` (Coward's Reward), and the range-conditional thrown wordings (Tag
+Quarry, New Victim, Form of the First Hunter Attack). Implement powers with a
+wielding requirement (tome, wand, orb, bow) lose only their Unarmed row, as in
+legacy.
+
+### Item requirements
+
+`MeetsItemRequirement` is called by `EquipLoot` (and the auto-build `IsLegal`)
+for each item's base and enchantment. A failure flags the item; an equipped
+one makes the character not legal, listed by `UpdateHouserules` as custom
+equipment. The item stays in the shop, can be bought and equipped, and its
+rules still execute. Modern port: `meetsItemRequirement` and
+`ITEM_REQUIREMENT_RECORDS` in `packages/rules-engine/src/exceptions.ts`; the
+evaluator raises `item.requirement-unmet` for an equipped item that fails,
+clears `legal`, and the builder shows it as a house-rule issue. The shop
+does not filter or flag it, as in legacy.
 
 ## Porting policy
 

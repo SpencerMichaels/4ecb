@@ -2811,3 +2811,61 @@ describe("character evaluator", () => {
     ]);
   });
 });
+
+describe("legacy item requirements", () => {
+  const evaluate = (ownsKiFocusUser: boolean, equippedQuantity: number) =>
+    evaluateCharacter(
+      {
+        level: 1,
+        baseAbilities: {},
+        occurrences: [
+          rootOccurrence,
+          ...(ownsKiFocusUser
+            ? [
+                {
+                  id: "ki",
+                  definitionId: EXCEPTION_IDS.kiFocusUser,
+                  acquiredLevel: 1,
+                  kind: "grant" as const,
+                },
+              ]
+            : []),
+        ],
+        inventory: [
+          {
+            id: "focus",
+            definitionIds: ["KI_FOCUS"],
+            quantity: 1,
+            equippedQuantity,
+            acquiredLevel: 1,
+          },
+        ],
+      },
+      [
+        entity("ROOT", "1", "Level"),
+        entity(EXCEPTION_IDS.kiFocusUser, "Ki Focus User", "Internal"),
+        entity("KI_FOCUS", "Synthetic Ki Focus +1", "Magic Item", {
+          specifics: {
+            "Magic Item Type": "Ki Focus",
+            Requirement: "Must be able to use Ki Focuses as an implement.",
+          },
+        }),
+      ],
+    );
+  const unmet = (evaluated: ReturnType<typeof evaluate>) =>
+    evaluated.diagnostics.filter(
+      (diagnostic) => diagnostic.code === "item.requirement-unmet",
+    );
+
+  it("marks an equipped item whose Requirement is unmet as a house rule", () => {
+    const evaluated = evaluate(false, 1);
+    expect(unmet(evaluated)).toHaveLength(1);
+    expect(evaluated.legal).toBe(false);
+  });
+
+  it("accepts the item once the Internal record is owned, or unequipped", () => {
+    expect(unmet(evaluate(true, 1))).toEqual([]);
+    expect(evaluate(true, 1).legal).toBe(true);
+    expect(unmet(evaluate(false, 0))).toEqual([]);
+  });
+});

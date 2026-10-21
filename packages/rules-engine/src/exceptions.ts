@@ -23,7 +23,49 @@ export const EXCEPTION_IDS = {
   sneakAttack: "ID_FMP_CLASS_FEATURE_322",
   hybridSneakAttack: "ID_FMP_CLASS_FEATURE_1531",
   dualImplementSpellcaster: "ID_FMP_FEAT_1127",
+  /** IsValidPowerCombo: this power (an ally's attack) gets no variants. */
+  coordinatedAssaultAttack: "ID_FMP_POWER_11615",
+  /** WeaponBase/IsStaff: a staff used as a weapon is this Quarterstaff. */
+  quarterstaff: "ID_FMP_WEAPON_10",
+  /** MeetsItemRequirement: the Internal records two item Requirements need. */
+  canUseComponents: "ID_INTERNAL_INTERNAL_CAN_USE_COMPONENTS",
+  kiFocusUser: "ID_INTERNAL_INTERNAL_KI_FOCUS_USER",
 } as const;
+
+/**
+ * Legacy MeetsItemRequirement: the two exact (case-insensitive) item
+ * `Requirement` texts the native engine checks, each against an owned
+ * Internal record. Every other Requirement passes, as does every item
+ * `Prerequisite` (MeetsItemPrereq always succeeds).
+ */
+export const ITEM_REQUIREMENT_RECORDS: readonly {
+  readonly requirement: string;
+  readonly internalId: string;
+}[] = [
+  {
+    requirement:
+      "You must have the living construct racial trait to use this item.",
+    internalId: EXCEPTION_IDS.canUseComponents,
+  },
+  {
+    requirement: "Must be able to use Ki Focuses as an implement.",
+    internalId: EXCEPTION_IDS.kiFocusUser,
+  },
+];
+
+/** Whether the character (its owned definition IDs, lower case) meets an
+ * item's Requirement, as legacy MeetsItemRequirement decides it. */
+export function meetsItemRequirement(
+  item: ContentEntity,
+  ownedIds: ReadonlySet<string>,
+): boolean {
+  const requirement = field(item, "Requirement")?.trim().toLocaleLowerCase();
+  if (requirement === undefined || requirement === "") return true;
+  const known = ITEM_REQUIREMENT_RECORDS.find(
+    (entry) => entry.requirement.toLocaleLowerCase() === requirement,
+  );
+  return known === undefined || owns(ownedIds, known.internalId);
+}
 
 /**
  * Exact (case-insensitive) record names native branches key on, where the
@@ -47,6 +89,25 @@ export const EXCEPTION_NAMES = {
   psionicAugmentation: "Psionic Augmentation",
   /** Prerequisite HealingInfusion: power names with this prefix. */
   healingInfusionPrefix: "Healing Infusion:",
+  /** WeaponBase: an unarmed melee power uses the "Unarmed Weapon" text's
+   * weapon, else this one. */
+  unarmedWeaponText: "Unarmed Weapon",
+  unarmedAttack: "Unarmed Attack",
+  /** IsMonkWeapon: weapons a "monk weapon" requirement accepts (or a
+   * staff); IsDagger also compares the name. */
+  club: "Club",
+  dagger: "Dagger",
+  spear: "Spear",
+  monkUnarmedStrike: "Monk Unarmed Strike",
+  /** IsRestricted "spiked chain" compares the weapon's name. */
+  spikedChain: "Spiked Chain",
+  /** IsStaff: implement records named as staffs. */
+  staffImplement: "Implement, Staff",
+  staffImplementAlternate: "Staff Implement",
+  /** SmallWithNonSmallWeapon: a Small size without One Size Larger uses a
+   * non-small versatile weapon two-handed. */
+  smallSize: "Small",
+  oneSizeLarger: "One Size Larger",
 } as const;
 
 /** Exact class name excluded by the recovered native deity-choice predicate. */

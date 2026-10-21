@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Machine-read power requirement rewrites (D089). Legacy IsRestricted reads a
+  power's `Requirement` with a fixed "You must be wielding ..." grammar
+  (packages/rules-engine/src/power-requirements.ts): comma-separated clauses,
+  each a named branch or a weapon group/thrown property. A requirement whose
+  wording that grammar cannot read rejects every weapon. `_WeaponRequirement`
+  restates such a requirement in the grammar; the published `Requirement`
+  players see is untouched. Wordings the grammar cannot express (named
+  weapons, "and" pairs, conditional ranges) are listed in
+  reverse-engineering/docs/08-hard-coded-exceptions.md. Merged after the
+  CBLoader parts by scripts/build-private-content.sh. Structure only; no
+  official text.
+-->
+<D20Rules game-system="D&amp;D4E">
+  <!-- "X or a Y" is one clause to the native loop; list the groups. -->
+  <AppendNodes internal-id="ID_FMP_POWER_10876"><specific name="_WeaponRequirement">You must be wielding a crossbow, a light blade.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_10824"><specific name="_WeaponRequirement">You must be wielding a crossbow, a sling.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_4348"><specific name="_WeaponRequirement">You must be wielding a polearm, a spear.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_11462"><specific name="_WeaponRequirement">You must be wielding a light thrown weapon, a heavy thrown weapon.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_6027"><specific name="_WeaponRequirement">You must be wielding a light thrown weapon, a heavy thrown weapon.</specific></AppendNodes>
+  <!-- A trailing condition the sheet cannot check hides the weapon group. -->
+  <AppendNodes internal-id="ID_FMP_POWER_4180"><specific name="_WeaponRequirement">You must be wielding a spear.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_1013"><specific name="_WeaponRequirement">You must be wielding a light blade.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_1491"><specific name="_WeaponRequirement">You must be wielding a light blade.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_10780"><specific name="_WeaponRequirement">You must be wielding a light blade.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_12241"><specific name="_WeaponRequirement">You must be wielding a light blade.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_12242"><specific name="_WeaponRequirement">You must be wielding a light blade.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_11770"><specific name="_WeaponRequirement">You must be wielding a heavy blade or light blade.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_11771"><specific name="_WeaponRequirement">You must be wielding a heavy blade or light blade.</specific></AppendNodes>
+  <!-- Variant wordings of named branches. -->
+  <AppendNodes internal-id="ID_TIV_POWER_DRAGONMAGAZINE413_4"><specific name="_WeaponRequirement">You must be wielding a light thrown or a heavy thrown weapon to make a melee attack with this power.</specific></AppendNodes>
+  <!-- Bloody Throw names the hands; the native branch accepts either. -->
+  <AppendNodes internal-id="ID_FMP_POWER_10615"><specific name="_WeaponRequirement">You must be wielding both a thrown weapon and a melee weapon.</specific></AppendNodes>
+</D20Rules>

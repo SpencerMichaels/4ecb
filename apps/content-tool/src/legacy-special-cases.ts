@@ -57,8 +57,6 @@ const drift = (description: string, note: string): LegacySpecialCase => ({
 const PREREQ_UNVERIFIED =
   "modern prerequisites.ts has no equivalent; the clause evaluates as unverified (shown, not blocking)";
 const AUTO_BUILD = "the modern builder has no auto-build/suggestion engine";
-const POWER_RESTRICTIONS =
-  "modern powers.ts offers every owned weapon that fits the range; no Requirement-prose restriction";
 
 export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
   {
@@ -240,13 +238,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Dragonshard Augment magic items are augments of another item.",
       "equipment-ui.ts files augments under special items; no augment slot model",
     ),
-    MeetsItemRequirement: notHandled(
-      "Two item Requirement texts check Internal records (living construct -> Can Use Components; ki focus users -> Ki Focus User); other items check their Prerequisite.",
-      "the modern shop/equipment does not enforce item requirements",
+    MeetsItemRequirement: code(
+      "Two item Requirement texts check Internal records (living construct -> Can Use Components; ki focus users -> Ki Focus User); other items check their Prerequisite. EquipLoot lists an equipped item that fails as custom equipment (a house rule); the shop neither hides nor blocks it.",
+      "rules-engine exceptions.ts ITEM_REQUIREMENT_RECORDS / meetsItemRequirement; evaluator item.requirement-unmet (equipped items only, character not rules-legal) shown as a house-rule issue",
     ),
-    "?A0xf75eff9b.MeetsItemPrereq": notHandled(
-      "Item prerequisite 'familiar must be in active mode' always passes.",
-      "item prerequisites are not evaluated",
+    "?A0xf75eff9b.MeetsItemPrereq": code(
+      "Item prerequisite 'familiar must be in active mode' always passes; so does every other.",
+      "meetsItemRequirement ignores item Prerequisite, as legacy always passes it",
     ),
     "D20Workspace.IsValidLoot": code(
       "Enchantment/base compatibility: staff group via Quarterstaff (ID_FMP_WEAPON_10), shields, armor categories, minimum enhancement.",
@@ -318,7 +316,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.WeaponBase": code(
       "Weapon base for a power: Unarmed Attack (or the 'Unarmed Weapon' text override) for melee without a weapon; staff as Quarterstaff.",
-      "powers.ts unarmed loadout; the 'Unarmed Weapon' override is not read",
+      "powers.ts unarmed loadout; Loadout.requirementBase and the 'Unarmed Weapon' text for requirements (EXCEPTION_NAMES)",
     ),
     "?A0x7555d940.AddWeaponKeywords": code(
       "Weapon keyword channels (category, group, properties, slot); staff as Quarterstaff.",
@@ -360,10 +358,13 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "A weapon is usable melee and ranged; a staff whose default power is Magic Missile counts as dual.",
       "no modern default-power model for staffs",
     ),
-    IsDagger: code("Dagger by name.", "equipment selectors"),
+    IsDagger: code(
+      "Dagger by name.",
+      "equipment selectors; power-requirements.ts dagger clause (EXCEPTION_NAMES.dagger)",
+    ),
     IsMonkWeapon: code(
       "Monk weapons: club, dagger, spear, Monk Unarmed Strike by name, or a staff.",
-      "partial: content-driven; not special-cased",
+      "power-requirements.ts isLegacyMonkWeapon (EXCEPTION_NAMES)",
     ),
     IsTwoHandedWeapon: code(
       "Two-handed by Hands Required, except the stout property.",
@@ -378,9 +379,9 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Oversized / One Size Larger / Small character text strings change which weapon sizes fit.",
       "size-based wielding is not modeled",
     ),
-    "?A0x0bed2cbe.SmallWithNonSmallWeapon": notHandled(
-      "Small characters wield non-small weapons two-handed unless Oversized.",
-      "size-based wielding is not modeled",
+    "?A0x0bed2cbe.SmallWithNonSmallWeapon": code(
+      "Small characters wield non-small weapons two-handed unless One Size Larger.",
+      "partial: power-requirements.ts versatile two-handed use for requirements (EXCEPTION_NAMES.smallSize/oneSizeLarger); slots and damage do not model size",
     ),
     "?A0x0bed2cbe.ItemSlot": code(
       "Slot of a held item: versatile two-hands, small/large adjustments, Ambidextrous.",
@@ -423,17 +424,17 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Four powers (two by name prefix, ID_FMP_POWER_7157, ID_FMP_POWER_11126) never get a damage line.",
       "modern parses their Hit prose; a correction could mark them non-damaging once a field exists",
     ),
-    "D20Workspace.IsValidPowerCombo": notHandled(
-      "Coordinated Assault Attack (ID_FMP_POWER_11615) gets no weapon variants; otherwise implement/weapon/range checks.",
-      POWER_RESTRICTIONS,
+    "D20Workspace.IsValidPowerCombo": code(
+      "Coordinated Assault Attack (ID_FMP_POWER_11615) gets no weapon variants; otherwise implement/weapon/range checks, and IsRestricted for weapon powers and (AllowUnarmed) Unarmed.",
+      "powers.ts candidates; EXCEPTION_IDS.coordinatedAssaultAttack",
     ),
-    IsRestricted: notHandled(
-      "Power Requirement 'You must be wielding ...' grammar (bow or crossbow, two shields, thrown and melee, reach, blowgun, dagger, spiked chain, ...) limits weapon variants.",
-      POWER_RESTRICTIONS,
+    IsRestricted: code(
+      "Power Requirement 'You must be wielding ...' grammar (bow or crossbow, two shields, thrown and melee, reach, blowgun, dagger, spiked chain, ...) limits weapon variants; other clauses match a weapon Group or thrown property, or a WeaponSwap text.",
+      "rules-engine power-requirements.ts isPowerRestricted; one-off wordings restated as `_WeaponRequirement` in content/corrections/94-power-requirements.part; wordings naming weapons stay rejected as in legacy (08-hard-coded-exceptions.md)",
     ),
-    "?A0x7555d940.OtherRestrictions": notHandled(
+    "?A0x7555d940.OtherRestrictions": code(
       "Requirement 'You must be using a shield.' needs a shield.",
-      POWER_RESTRICTIONS,
+      "power-requirements.ts isPowerRestricted (equipment armor:shield)",
     ),
     "?A0x7555d940.IsMeleePower": code(
       "Melee power, or the thrown-melee Requirement.",
@@ -454,7 +455,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     "?A0x7555d940.DetermineOffhand": code(
       "Off-hand pairing; ki focus excluded.",
-      "powers.ts loadouts",
+      "powers.ts loadouts; legacyRequirementContext for requirements",
     ),
     "?A0x7555d940.DeterminePower": code(
       "Basic attack powers by _BasicAttack or the Melee/Ranged Basic Attack names.",
