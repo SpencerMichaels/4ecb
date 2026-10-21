@@ -553,9 +553,71 @@ function proficiencySpecialCase(
     );
   }
   const phrase = LEGACY_WEAPON_PHRASES[lower];
-  return phrase === undefined
+  if (phrase !== undefined) return weaponProficiencies(text, context, phrase);
+  // Legacy's armor and shield literals ("hide armor", "chainmail", "heavy
+  // shields"), generalized: the armor or shield proficiency of that name.
+  const armor = /^(.+?)(?: armor)?$/.exec(lower)?.[1];
+  const armorProficiency =
+    armor === undefined
+      ? undefined
+      : namedElement(
+          text,
+          `Armor Proficiency (${armor})`,
+          context,
+          "Proficiency",
+        );
+  if (armorProficiency !== undefined) return armorProficiency;
+  const shield = /^(.+?) shields?$/.exec(lower)?.[1];
+  return shield === undefined
     ? undefined
-    : weaponProficiencies(text, context, phrase);
+    : namedElement(
+        text,
+        `Shield Proficiency (${shield})`,
+        context,
+        "Proficiency",
+      );
+}
+
+const CLASS_TYPES: ReadonlySet<string> = new Set([
+  "class",
+  "hybrid class",
+  "countsasclass",
+]);
+
+/** Whether "<name> class" names a class (always, without definitions). */
+function isClassName(name: string, context: PrerequisiteContext): boolean {
+  if (context.definitions === undefined) return !name.trim().startsWith("!");
+  return resolveDefinitions(name, context).some((definition) =>
+    CLASS_TYPES.has(normalized(definition.type)),
+  );
+}
+
+/**
+ * Legacy InternalizeBlock: a prefix's type limits every later part it
+ * carries to (CreateElementPrereq skips records of any other type), so
+ * "trained in Bluff or Stealth" reads Stealth as a skill training and
+ * "proficiency with longbow or shortbow" reads shortbow as a proficiency.
+ * Undefined when nothing of that type matches, and the part is then read as
+ * if it had no prefix.
+ */
+function inheritedTypeClause(
+  text: string,
+  canonical: string,
+  context: PrerequisiteContext,
+  type: string,
+): PrerequisiteIr | undefined {
+  const name = canonical.trim();
+  if (type === "Skill Training")
+    return resolveDefinitions(name, context, type).length > 0
+      ? { kind: "training", text, value: name }
+      : undefined;
+  if (type === "Proficiency")
+    return proficiencySpecialCase(
+      text,
+      normalized(name).replace(/\s+/g, " "),
+      context,
+    );
+  return namedElement(text, name, context, type);
 }
 
 /**
@@ -697,18 +759,9 @@ function legacyClause(
   text: string,
   canonical: string,
   context: PrerequisiteContext,
-  inheritedType?: string,
 ): PrerequisiteIr | undefined {
   if (context.definitions === undefined) return undefined;
   const lower = normalized(canonical).replace(/\s+/g, " ");
-  // A "Proficiency with ..." prefix carries to the next comma parts.
-  if (
-    inheritedType === "Proficiency" &&
-    legacyPrefixType(canonical) === undefined
-  ) {
-    const proficiency = proficiencySpecialCase(text, lower, context);
-    if (proficiency !== undefined) return proficiency;
-  }
   const armor = /^training with (.+?)(?: armor\b.*)?$/.exec(lower);
   if (armor?.[1] !== undefined)
     return namedElement(
@@ -780,6 +833,35 @@ function legacyClause(
         return { kind: "all", text, children: [left, right] };
     }
   }
+  // Legacy SpecialCase "any defender (class)" (generalized over roles).
+  const role = /^any (.+?)(?: class)?$/.exec(lower)?.[1];
+  const roleElement =
+    role === undefined ? undefined : namedElement(text, role, context, "Role");
+  if (roleElement !== undefined) return roleElement;
+  // Legacy MulticlassDivine (generalized over sources): a multiclass feat
+  // for a class of that power source.
+  const multiclassSource = /^multiclass (\S+) class$/.exec(lower)?.[1];
+  if (multiclassSource !== undefined)
+    return elementOf(
+      text,
+      definitionsOfType(context, "Feat").filter((feat) => {
+        const target = multiclassTarget(feat);
+        return (
+          target !== undefined &&
+          resolveDefinitions(target, context, "Class").some((entity) =>
+            normalized(rawField(entity, "Power Source")).startsWith(
+              multiclassSource,
+            ),
+          )
+        );
+      }),
+    );
+  // Legacy MoreThanOneClass: any CountsAsClass, or the Hybrid class.
+  if (lower === "must have more than one class")
+    return elementOf(text, [
+      ...definitionsOfType(context, "CountsAsClass"),
+      ...resolveDefinitions(EXCEPTION_NAMES.hybridClass, context, "Class"),
+    ]);
   const feat = /^(?:any|at least one) (.+) feat$/.exec(lower);
   if (feat?.[1] !== undefined) return anyFeat(text, feat[1], context);
   const paragon = /^paragon multiclassing as (?:an? )?(.+)$/.exec(lower);
@@ -867,8 +949,10 @@ function internalizeLeaf(
     );
   if (training?.[1] !== undefined)
     return { kind: "training", text, value: training[1] };
+  // Legacy SpecialCase reads "Arcane Class" as "Any Arcane Class"
+  // (generalized over sources).
   const source =
-    /^any (arcane|divine|martial|primal|psionic|shadow) class$/i.exec(
+    /^(?:any )?(arcane|divine|martial|primal|psionic|shadow) class$/i.exec(
       canonical,
     );
   if (source?.[1] !== undefined)
@@ -880,7 +964,7 @@ function internalizeLeaf(
   );
   if (paragonInSource !== undefined) return paragonInSource;
   const className = /^(.+?)\s+class$/i.exec(canonical);
-  if (className?.[1] !== undefined)
+  if (className?.[1] !== undefined && isClassName(className[1], context))
     return { kind: "class", text, value: className[1] };
   const domain = /^must worship (?:a deity of )?the (.+?) domain$/i.exec(
     canonical,
@@ -916,6 +1000,10 @@ function internalizeLeaf(
     return { kind: "ignored", text };
 
   const negated = canonical.startsWith("!");
+  if (inheritedType !== undefined && !negated) {
+    const typed = inheritedTypeClause(text, canonical, context, inheritedType);
+    if (typed !== undefined) return typed;
+  }
   const bareReference = negated ? canonical.slice(1).trim() : canonical;
   const exactResolved = resolveDefinitions(bareReference, context);
   const exactMatches = negated
@@ -946,9 +1034,7 @@ function internalizeLeaf(
   if (known || owned)
     return { kind: "element", text, definitionIds: [token], negated };
   return (
-    (negated
-      ? undefined
-      : legacyClause(text, canonical, context, inheritedType)) ?? {
+    (negated ? undefined : legacyClause(text, canonical, context)) ?? {
       kind: "unverified",
       text,
     }
@@ -1041,35 +1127,154 @@ function internalizeBlock(
     names,
   );
   if (commaAnd.length > 1) {
-    let type = inheritedType;
     const isOrList = commaAnd.some((part) =>
       /^,\s*or\s+/i.test(part.delimiter),
     );
-    return connective(
-      isOrList ? "any" : "all",
-      text,
-      commaAnd.map((part) => {
-        const prefixType = legacyPrefixType(part.text);
-        if (prefixType !== undefined) type = prefixType ?? undefined;
-        return internalizeBlock(part.text, context, type);
-      }),
-    );
+    return isOrList
+      ? alternativesOf(text, commaAnd, context, inheritedType)
+      : connective(
+          "all",
+          text,
+          carriedParts(commaAnd, inheritedType).map(([part, type]) =>
+            internalizeBlock(part, context, type),
+          ),
+        );
   }
   // Legacy InternalizeOr does not split "1 or more".
   const alternatives = /\b1\s+or\s+more\b/i.test(text)
     ? [{ text, delimiter: "" }]
     : splitTopLevel(text, [/^\s+or\s+/i], names);
-  if (alternatives.length > 1) {
-    const prefixType = legacyPrefixType(text);
-    const type =
-      prefixType === undefined ? inheritedType : (prefixType ?? undefined);
-    return connective(
-      "any",
-      text,
-      alternatives.map((part) => internalizeBlock(part.text, context, type)),
-    );
-  }
+  if (alternatives.length > 1)
+    return alternativesOf(text, alternatives, context, inheritedType);
   return internalizeLeaf(text, context, inheritedType);
+}
+
+/**
+ * Each part with the type legacy reads it under: a part's prefix sets the
+ * type for it and every later part until another prefix (InternalizeBlock
+ * carries it across comma parts; InternalizeOr hands it to the rest of the
+ * text after an ` or `).
+ */
+function carriedParts(
+  parts: readonly Segment[],
+  inheritedType: string | undefined,
+): readonly (readonly [string, string | undefined])[] {
+  let type = inheritedType;
+  return parts.map((part) => {
+    const prefixType = legacyPrefixType(part.text);
+    if (prefixType !== undefined) type = prefixType ?? undefined;
+    return [part.text, type] as const;
+  });
+}
+
+function alternativesOf(
+  text: string,
+  parts: readonly Segment[],
+  context: PrerequisiteContext,
+  inheritedType: string | undefined,
+): PrerequisiteIr {
+  const carried = carriedParts(parts, inheritedType);
+  const children = distributeSharedWords(
+    carried,
+    carried.map(([part, type]) => internalizeBlock(part, context, type)),
+    context,
+  );
+  // Legacy Ignore yields no prerequisite, and InternalizeOr then keeps only
+  // the other side: "6th-level or higher utility power" needs 6th level.
+  const kept = children.filter((child) => child.kind !== "ignored");
+  if (kept.length === 0 || kept.length === children.length)
+    return connective("any", text, children);
+  return kept.length === 1 && kept[0] !== undefined
+    ? { ...kept[0], text }
+    : connective("any", text, kept);
+}
+
+/** A leaf the parser read to something it can check. */
+function resolves(ir: PrerequisiteIr, context: PrerequisiteContext): boolean {
+  if (ir.kind === "unverified") return false;
+  if (ir.kind === "training" && context.definitions !== undefined)
+    return ["Skill Training", "Skill"].some(
+      (type) => resolveDefinitions(ir.value, context, type).length > 0,
+    );
+  return true;
+}
+
+/** The words of an alternative that another may share: no brackets. */
+function shareableWords(text: string): readonly string[] {
+  const words = text.replace(/[.]$/, "").trim().split(/\s+/);
+  return words.some((word) => /[()[\]]/.test(word)) ? [] : words;
+}
+
+/**
+ * Shared-word (elliptical) coordination: "Any martial or divine class" is
+ * "any martial class" or "any divine class", and "proficiency with light
+ * or heavy shields" is light shields or heavy shields. Legacy InternalizeOr
+ * reads each side of an ` or ` alone, so a side that lacks the shared
+ * words (`Any martial`) is Unrecognized and always fails. An alternative
+ * that does not resolve alone takes the last alternative's trailing words,
+ * the first alternative's leading words, or both, when that distributed
+ * clause resolves. When none does but a distributed clause starts with one
+ * that resolves (`Any arcane` + `class that can use an implement`), the
+ * alternative is that whole distributed clause, still unverified, rather
+ * than a fragment.
+ */
+function distributeSharedWords(
+  parts: readonly (readonly [string, string | undefined])[],
+  children: readonly PrerequisiteIr[],
+  context: PrerequisiteContext,
+): readonly PrerequisiteIr[] {
+  if (context.definitions === undefined) return children;
+  const first = shareableWords(parts[0]?.[0] ?? "");
+  const last = shareableWords(parts[parts.length - 1]?.[0] ?? "");
+  return children.map((child, index) => {
+    const [part, type] = parts[index] ?? ["", undefined];
+    const own = part.replace(/[.]$/, "").trim();
+    const tails =
+      index < parts.length - 1
+        ? last.slice(1).map((_, offset) => last.slice(offset + 1))
+        : [];
+    const heads =
+      index > 0
+        ? first.slice(1).map((_, offset) => first.slice(0, offset + 1))
+        : [];
+    if (child.kind === "proficiency") {
+      // "proficiency with light" + "shields": the proficiency it names.
+      const value = normalized(child.value).replace(/\s+/g, " ");
+      if (proficiencySpecialCase(child.text, value, context) !== undefined)
+        return child;
+      for (const tail of tails) {
+        const distributed = `${own} ${tail.join(" ")}`;
+        const read = proficiencySpecialCase(
+          distributed,
+          `${value} ${normalized(tail.join(" "))}`,
+          context,
+        );
+        if (read !== undefined) return read;
+      }
+      return child;
+    }
+    if (child.kind !== "unverified") return child;
+    const candidates = [
+      ...tails.map((tail) => [own, ...tail]),
+      ...heads.map((head) => [...head, own]),
+      ...heads.flatMap((head) => tails.map((tail) => [...head, own, ...tail])),
+    ].map((words) => words.join(" "));
+    for (const candidate of candidates) {
+      const read = internalizeLeaf(candidate, context, type);
+      if (resolves(read, context)) return read;
+    }
+    for (const tail of tails)
+      for (let length = tail.length - 1; length >= 1; length -= 1) {
+        const lead = internalizeLeaf(
+          [own, ...tail.slice(0, length)].join(" "),
+          context,
+          type,
+        );
+        if (resolves(lead, context))
+          return { kind: "unverified", text: [own, ...tail].join(" ") };
+      }
+    return child;
+  });
 }
 
 export function internalizePrerequisite(

@@ -131,7 +131,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     ProficiencySpecialCase: code(
       "Proficiency clause grammar: chosen skill, weapon groups by hands, non-spear polearm, superior weapon, heavy blade properties, armor/shield names.",
-      "prerequisites.ts proficiencySpecialCase for clauses after a 'Proficiency with' prefix (weapon, group, hand-and-group, property phrases); the prefixed clause itself keeps the 'proficiency' kind name-substring match",
+      "prerequisites.ts proficiencySpecialCase for comma and 'or' parts after a 'Proficiency with' prefix (weapon, group, hand-and-group, property phrases, and the armor/shield literals generalized to any Armor/Shield Proficiency record), read before a same-named weapon or armor record; the prefixed clause itself keeps the 'proficiency' kind name-substring match unless a shared tail completes it ('light or heavy shields')",
     ),
     NonSpearPolearm: code(
       "'Non-spear polearm' proficiency: polearm group without the spear group.",
@@ -165,7 +165,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     InternalizeBlock: code(
       "Clause 'membership in the Circle of Smoke and Whispers' maps to that record before comma splitting (LineParse otherwise splits at every depth-zero comma and ' and '); also applies the Prefixes table (training, worship, follower of, affiliated with, fluent in, ...) and carries a prefix's type to later comma parts.",
-      "Prefixes and proficiency type carry-over: prerequisites.ts LEGACY_PREFIXES. Whole clause, generalized: prerequisites.ts knownNameSpans never splits inside a known record name that contains a connector, so the Circle of Smoke clause stays one clause; it stays unverified (D090: its record is granted by nothing, so legacy always fails it). scripts/audit-prerequisites.ts reports any split inside a known name or a legacy whole clause",
+      "Prefixes: prerequisites.ts LEGACY_PREFIXES. Type carry-over (CreateElementPrereq skips other types): carriedParts hands a prefix's type to later comma parts and, as InternalizeOr hands the rest of the text to InternalizeBlock, to later ' or ' alternatives; inheritedTypeClause reads them as that type first ('trained in Bluff or Stealth' is Stealth training, not the Stealth skill). Whole clause, generalized: prerequisites.ts knownNameSpans never splits inside a known record name that contains a connector, so the Circle of Smoke clause stays one clause; it stays unverified (D090: its record is granted by nothing, so legacy always fails it). scripts/audit-prerequisites.ts reports any split inside a known name or a legacy whole clause, and any part read as another type than its carried prefix",
     ),
     InternalizeElement: generic(
       "Name lookup for a prerequisite token; excludes CountsAsRace for non-feats and the 'assassin' class/paragon name clash.",
@@ -186,9 +186,9 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "'Any warlock pact': any CountsAsPact or Eldritch Pact-category record.",
       "prerequisites.ts legacyClause",
     ),
-    MulticlassDivine: notHandled(
+    MulticlassDivine: code(
       "'Multiclass divine class': any multiclass feat of a divine class.",
-      "no record in the current pack uses this clause",
+      "prerequisites.ts legacyClause, generalized to 'multiclass <source> class'",
     ),
     ParagonMulticlassing: code(
       "'Paragon multiclassing as a X': Paragon Multiclassing plus any multiclass X feat.",
@@ -198,9 +198,9 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "'Any class-specific multiclassing feat that grants training in a skill'.",
       "prerequisites.ts classSpecificFamily",
     ),
-    MoreThanOneClass: notHandled(
+    MoreThanOneClass: code(
       "'Must have more than one class': hybrid or a CountsAsClass record.",
-      "no record in the current pack uses this clause",
+      "prerequisites.ts legacyClause (the Hybrid class name is EXCEPTION_NAMES.hybridClass)",
     ),
     HealingInfusion: generic(
       "Detects 'Healing Infusion:' power names for infusion-count clauses.",
@@ -211,11 +211,11 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     AnyXXXClass: code(
       "'Any <source> Class' and 'non-<source>' class prerequisites.",
-      "prerequisites.ts class-source kind (positive forms only)",
+      "prerequisites.ts class-source kind (positive forms only; SpecialCase's 'Arcane Class' alias generalized to '<source> class'). A '<name> class' clause is a class requirement only when a class, hybrid class or CountsAsClass has that name; SpecialCase's 'any defender (class)' is generalized to any Role. Shared-word coordination ('Any martial or divine class'), which legacy InternalizeOr splits into an Unrecognized 'Any martial', is read as each alternative with the shared words (distributeSharedWords)",
     ),
     Ignore: code(
       "Prerequisite clauses the parser skips (humanoid forms, three unverifiable clauses).",
-      "prerequisites.ts LEGACY_IGNORED_CLAUSES, a hand list this audit checks against the legacy literals",
+      "prerequisites.ts LEGACY_IGNORED_CLAUSES, a hand list this audit checks against the legacy literals. Ignore yields no prerequisite, so InternalizeOr keeps only the other side: an ignored ' or ' alternative is dropped ('6th-level or higher utility power' needs 6th level)",
     ),
     Unrecognized: generic(
       "Unrecognized clauses become an illegal stub; four known non-clauses only suppress the debug log.",

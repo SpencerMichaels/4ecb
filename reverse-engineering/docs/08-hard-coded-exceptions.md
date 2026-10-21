@@ -179,9 +179,62 @@ had passed); unverified clause uses went from 122 (59 distinct) to 120
 (58). No other name in the pack containing a connector appears in a
 `Prereqs` text. `audit-prerequisites.ts` reports any split inside a known name
 or inside a legacy whole clause (expected 0, nonzero exit otherwise) and, for
-review, adjacent split fragments that are both unverified. Coordinated
-ellipsis (`Any martial or divine class` -> `Any martial` | `divine class`) is
-a different gap, left unverified like legacy's unrecognized fragment.
+review, adjacent split fragments that are both unverified.
+
+Shared words and carried types (2026-10-21): legacy `InternalizeOr` splits at
+every depth-zero ` or ` and reads each side alone, so in `Any martial or
+divine class` the side `Any martial` is `Unrecognized` (an illegal stub that
+always fails) and `divine class` is unrecognized too (only the exact `Arcane
+Class` is aliased). The prefix type, however, is carried: `InternalizeOr`
+passes `typeLimit` to both sides, and the right side goes back through
+`InternalizeBlock`, which strips its own prefix; `CreateElementPrereq` skips
+any record not of that type, so `trained in Bluff or Stealth` is Stealth
+*training*, and `proficiency with longbow or shortbow` reads `shortbow` with
+`ProficiencySpecialCase`. `Ignore` returns no prerequisite, and
+`InternalizeOr` then returns the other side alone. The modern parser
+(`prerequisites.ts`) now:
+
+- carries a prefix's type to later comma parts and later ` or `
+  alternatives (`carriedParts`) and reads a part as that type first
+  (`inheritedTypeClause`: a Skill Training name is training, a Proficiency
+  part goes through `proficiencySpecialCase`, other types by name). Before,
+  a bare name resolved to every same-named record (the Stealth skill every
+  character has, a Weapon or Armor record, the Heavy Shields category);
+- distributes shared words (`distributeSharedWords`, D089 rule-based, no
+  literals): an `or` alternative that does not resolve alone takes the last
+  alternative's trailing words, the first one's leading words, or both,
+  when that resolves (`Any martial` -> `Any martial class`; `proficiency
+  with light` + `shields`). When none resolves but the distributed clause
+  starts with one that does, the alternative becomes that whole clause,
+  still unverified (`Any arcane class that can use an implement`);
+- drops an ignored `or` alternative (`6th-level or higher utility power`
+  needs 6th level; before, the ignored side made it always met);
+- reads `<name> class` as a class requirement only when a class, hybrid
+  class or CountsAsClass has that name (before, `divine class`, `Any
+  defender class`, `multiclass divine class`, `must have more than one
+  class` and `!Hunter class` silently became classes no record names and
+  always failed, the last dropping its negation), generalizes `Arcane Class`
+  to `[any] <source> class` and `any defender (class)` to any Role, and
+  ports `MulticlassDivine` (as `multiclass <source> class`) and
+  `MoreThanOneClass`;
+- generalizes the `ProficiencySpecialCase` armor and shield literals to any
+  `Armor Proficiency (<name>)` / `Shield Proficiency (<name>)` record.
+
+On the private pack this changed 75 of 11,321 parsed trees and nothing else;
+every difference was reviewed. Unverified clause uses went from 120 (58
+distinct) to 121 (58): `Any martial` resolved, and `any other arcane class`
+(Resourceful Magician and its Traveler power) went from a silent class
+named "any other arcane" to unverified (legacy fails it as unrecognized).
+`audit-prerequisites.ts` now also fails on an `or` alternative that
+resolves once shared words are distributed, a class clause naming no
+class, a part read as another type than its carried prefix while a record
+of that type exists, and an ignored `or` alternative; with `--parser=` it
+runs another prerequisites module (HEAD's flagged 1, 14, 65 and 8 uses).
+Still read as legacy does: elliptical tails whose fragments resolve alone
+(`proficiency with any axe, hammer, or mace that has the versatile
+property` accepts any hammer; `Rogue from Cormyr, the Dalelands, ...`
+needs Rogue only for Cormyr), and `21st-level wizard` on records without
+`print-prereqs` stays unverified.
 
 Story memberships
 deliberately differ (D090): legacy maps spellscar, Harper, House Vadalis and

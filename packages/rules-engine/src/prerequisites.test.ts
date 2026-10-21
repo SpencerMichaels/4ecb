@@ -820,3 +820,198 @@ describe("connectors inside names", () => {
     expect(ir?.kind === "any" ? ir.children.length : 0).toBe(6);
   });
 });
+
+describe("shared words in coordinated alternatives", () => {
+  const martial = entity("MARTIAL", "Martial", "Power Source");
+  const divine = entity("DIVINE", "Divine", "Power Source");
+  const fighter = entity("FIGHTER", "Fighter", "Class", {
+    "Power Source": "Martial",
+  });
+  const cleric = entity("CLERIC", "Cleric", "Class", {
+    "Power Source": "Divine",
+  });
+  const skill = entity("SKILL_STEALTH", "Stealth", "Skill");
+  const bluff = entity("TRAINING_BLUFF", "Bluff", "Skill Training");
+  const stealth = entity("TRAINING_STEALTH", "Stealth", "Skill Training");
+  const longbow = entity("LONGBOW", "Longbow", "Weapon", { Group: "Bow" });
+  const shortbow = entity("SHORTBOW", "Shortbow", "Weapon", { Group: "Bow" });
+  const longbowProficiency = entity(
+    "PROF_LONGBOW",
+    "Weapon Proficiency (Longbow)",
+    "Proficiency",
+  );
+  const shortbowProficiency = entity(
+    "PROF_SHORTBOW",
+    "Weapon Proficiency (Shortbow)",
+    "Proficiency",
+  );
+  const lightShield = entity(
+    "PROF_LIGHT",
+    "Shield Proficiency (Light)",
+    "Proficiency",
+  );
+  const heavyShield = entity(
+    "PROF_HEAVY",
+    "Shield Proficiency (Heavy)",
+    "Proficiency",
+  );
+  const heavyShields = entity("HEAVY_SHIELDS", "Heavy Shields", "Category");
+  const defender = entity("DEFENDER", "Defender", "Role");
+  const hunter = entity("HUNTER", "Hunter", "Class");
+  const all = [
+    martial,
+    divine,
+    fighter,
+    cleric,
+    skill,
+    bluff,
+    stealth,
+    longbow,
+    shortbow,
+    longbowProficiency,
+    shortbowProficiency,
+    lightShield,
+    heavyShield,
+    heavyShields,
+    defender,
+    hunter,
+  ];
+  const evaluate = (
+    prerequisite: string,
+    owned: readonly ContentEntity[],
+    level = 1,
+  ) =>
+    evaluatePrerequisite(prerequisite, {
+      owned,
+      level,
+      abilities: {},
+      definitions: all,
+    });
+
+  it("distributes a shared head or tail to an alternative missing it", () => {
+    // Legacy reads "Any martial" alone (Unrecognized, always fails).
+    const prerequisite = "Any martial or divine class";
+    expect(evaluate(prerequisite, [martial]).status).toBe("satisfied");
+    expect(evaluate(prerequisite, [divine]).status).toBe("satisfied");
+    expect(evaluate(prerequisite, []).status).toBe("failed");
+    expect(evaluate(prerequisite, []).clauses.map((c) => c.text)).toEqual([
+      "Any martial class",
+      "divine class",
+    ]);
+    expect(evaluate("any martial class or divine class", [divine]).status).toBe(
+      "satisfied",
+    );
+  });
+
+  it("keeps an unresolvable elliptical alternative whole, not a fragment", () => {
+    expect(
+      evaluate("Any arcane or divine class that can use an implement", [])
+        .clauses,
+    ).toEqual([
+      {
+        text: "Any arcane class that can use an implement",
+        status: "unverified",
+      },
+      { text: "divine class that can use an implement", status: "unverified" },
+    ]);
+  });
+
+  it("leaves alternatives that resolve alone untouched", () => {
+    expect(
+      evaluate("Fighter or Cleric", [cleric]).clauses.map((c) => c.text),
+    ).toEqual(["Fighter", "Cleric"]);
+    expect(
+      evaluate("Elturgard or Evereska", []).clauses.map((c) => c.text),
+    ).toEqual(["Elturgard", "Evereska"]);
+  });
+
+  it("carries a prefix's type to the alternatives after it", () => {
+    // Every character owns the Stealth skill; only the training counts.
+    expect(evaluate("trained in Bluff or Stealth", [skill]).status).toBe(
+      "failed",
+    );
+    expect(evaluate("trained in Bluff or Stealth", [stealth]).status).toBe(
+      "satisfied",
+    );
+    expect(evaluate("Trained in Bluff, Stealth", [bluff, skill]).status).toBe(
+      "failed",
+    );
+    // Legacy InternalizeOr hands the rest of the text after " or " to
+    // InternalizeBlock, which reads the prefix there.
+    expect(
+      evaluate("Fighter or trained in Bluff or Stealth", [stealth]).status,
+    ).toBe("satisfied");
+    expect(
+      evaluate("proficiency with longbow or shortbow", [shortbow]).status,
+    ).not.toBe("satisfied");
+    expect(
+      evaluate("proficiency with longbow or shortbow", [shortbowProficiency])
+        .status,
+    ).toBe("satisfied");
+  });
+
+  it("reads armor and shield proficiencies, sharing a tail", () => {
+    const prerequisite = "proficiency with light or heavy shields";
+    expect(evaluate(prerequisite, [heavyShield]).status).toBe("satisfied");
+    expect(evaluate(prerequisite, [lightShield]).status).toBe("satisfied");
+    expect(evaluate(prerequisite, [heavyShields]).status).not.toBe("satisfied");
+    expect(evaluate(prerequisite, []).clauses.map((c) => c.text)).toEqual([
+      "proficiency with light shields",
+      "heavy shields",
+    ]);
+  });
+
+  it("drops an ignored alternative, as legacy InternalizeOr does", () => {
+    const prerequisite = "6th-level or higher utility power";
+    expect(evaluate(prerequisite, [], 5).status).toBe("failed");
+    expect(evaluate(prerequisite, [], 6).status).toBe("satisfied");
+  });
+
+  it("reads a class clause only when it names a class", () => {
+    expect(evaluate("Arcane class", []).ir).toMatchObject({
+      kind: "class-source",
+      value: "Arcane",
+    });
+    expect(evaluate("Any defender class", [defender]).status).toBe("satisfied");
+    expect(evaluate("Any defender class", []).status).toBe("failed");
+    expect(evaluate("!Hunter class", []).status).toBe("satisfied");
+    expect(evaluate("!Hunter class", [hunter]).status).toBe("failed");
+    expect(evaluate("any other arcane class", []).status).toBe("unverified");
+  });
+
+  it("reads multiclass source and more-than-one-class clauses", () => {
+    const divineMulticlass = entity("MC_CLERIC", "Initiate", "Feat", {
+      type: "Multiclass Cleric",
+    });
+    const martialMulticlass = entity("MC_FIGHTER", "Student", "Feat", {
+      type: "Multiclass Fighter",
+    });
+    const countsAs = entity("COUNTS_CLERIC", "Cleric", "CountsAsClass");
+    const hybrid = entity("HYBRID", "Hybrid", "Class");
+    const definitions = [
+      ...all,
+      divineMulticlass,
+      martialMulticlass,
+      countsAs,
+      hybrid,
+    ];
+    const status = (prerequisite: string, owned: readonly ContentEntity[]) =>
+      evaluatePrerequisite(prerequisite, {
+        owned,
+        level: 1,
+        abilities: {},
+        definitions,
+      }).status;
+    expect(status("multiclass divine class", [divineMulticlass])).toBe(
+      "satisfied",
+    );
+    expect(status("multiclass divine class", [martialMulticlass])).toBe(
+      "failed",
+    );
+    expect(status("must have more than one class", [countsAs])).toBe(
+      "satisfied",
+    );
+    expect(status("must have more than one class", [hybrid])).toBe("satisfied");
+    expect(status("must have more than one class", [cleric])).toBe("failed");
+  });
+});

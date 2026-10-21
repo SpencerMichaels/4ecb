@@ -108,6 +108,8 @@ export const EXCEPTION_NAMES = {
    * non-small versatile weapon two-handed. */
   smallSize: "Small",
   oneSizeLarger: "One Size Larger",
+  /** Prerequisite MoreThanOneClass: this Class (or any CountsAsClass). */
+  hybridClass: "Hybrid",
 } as const;
 
 /** Exact class name excluded by the recovered native deity-choice predicate. */
