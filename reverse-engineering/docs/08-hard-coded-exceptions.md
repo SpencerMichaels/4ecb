@@ -121,6 +121,48 @@ original prerequisite text and port the special predicates behind explicit IDs o
 well-tested structured matchers. Unknown prose should produce an
 "unverified prerequisite" diagnostic, not automatically pass as legal.
 
+Recovered parser order (`InternalizeBlock` -> `InternalizeOr` ->
+`InternalizeItem` -> `InternalizeElement`): a trailing period is dropped;
+`HarperTraining` and the Circle of Smoke clause are matched whole; the block is
+split at commas, and each part loses a `Prefixes` entry (`Training in`,
+`Trained in`, `You must (be trained|have training) in` -> Skill Training;
+`Must worship`, `You must worship`, `Worship`, `Follower of` -> Deity;
+`Affiliated with` -> Background; `Proficiency with`, `Proficient with`, `Can
+use the` -> Proficiency; `Fluent in` -> Language; `must worship a deity of
+the`, `be a`, `(you )?must have the`, `have the`, `Either` -> no type). The
+prefix's type persists into later comma parts until another prefix matches.
+Each part splits at depth-zero ` or ` (never `1 or more`); an untyped item
+loses a `Suffixes` entry (` Elemental Manifestation`, ` Racial Feature` ->
+Racial Trait; ` Spell Source`, ` Paragon Path Feature`, ` Guild Training` ->
+Class Feature; ` Regional Benefit`, ` Regional Background` -> Background;
+` Racial Power`, ` Channel Divinity Power` -> Power; ` Class Character` ->
+Class). The tables are native data decoded from `D20RulesEngine.dll`. Then
+`InternalizeElement` tries `FirstSpecialCase`, every same-named record, the
+ID, and the `"<name> <type>"` complex name (each with its CountsAs
+alternate), then `SpecialCase`, `AbilityCheck`, `Ignore`, and finally
+`Unrecognized` (always fails).
+
+Modern port (2026-10-21, D089): the generic grammar is code in
+`packages/rules-engine/src/prerequisites.ts` (`legacyClause`, applied only to
+clauses the modern parser left unverified, except that `1 or more` no
+longer splits and `paragon multiclassing in a <source> class` is read before
+the `X class` form): the prefix/suffix tables, the Proficiency prefix carry-over, `Nth-level`,
+the complex-name lookup, race-plus-class, `Any`/`At least one X feat`,
+paragon multiclassing as/in, the class-specific multiclass families,
+`Any warlock pact`, armor training, the weapon-group/hand/property
+proficiency forms, and the psionic-daily and healing-infusion predicates.
+Names it keys on are in `EXCEPTION_NAMES`. The exact-text aliases are
+`Prereqs` rewrites in `content/corrections/93-prerequisites.part` (records
+with `print-prereqs` only, so what players read is unchanged) and the
+Shifter CountsAsRace in `92-legacy-special-cases.part`. Across the private
+pack this took unverified clause uses from 650 (257 distinct) to 122 (59),
+measured by `tsx scripts/audit-prerequisites.ts`. Deliberately left
+unverified: spellscar, Harper, House Vadalis and Circle of Smoke membership
+(legacy maps them to records nothing grants, so it always fails them),
+`1 or more power points` (no power-point stat), the Dilettante predicates
+(need choice provenance), aliased clauses on granted class features without
+`print-prereqs`, and freeform prose the legacy parser also cannot read.
+
 ## Equipment predicates and tally
 
 The `wearing`/`not-wearing` evaluator has named branches for:

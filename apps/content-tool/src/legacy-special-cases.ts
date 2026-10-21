@@ -79,9 +79,9 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "A class is psionic when _PARSED_CLASS_FEATURE names Psionic Augmentation (power points, augmentable at-wills).",
       "no modern psionic/power-point model; augmentable powers are not calculated",
     ),
-    PsionicDaily: notHandled(
+    PsionicDaily: code(
       "Prerequisite 'at least one psionic daily attack power': owned daily psionic attack powers.",
-      PREREQ_UNVERIFIED,
+      "prerequisites.ts predicate kind (psionic-daily-attack)",
     ),
     "?A0xca3c2cf6.PsionicConventionalist": notHandled(
       "Psionic Conventionalist (ID_FMP_FEAT_2732) removes 2/4/6 power points by swapped power level.",
@@ -93,7 +93,7 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
     FindDilettante: notHandled(
       "Prerequisite clauses about the Dilettante power's kind look up the Dilettante racial trait's chosen power by ID.",
-      PREREQ_UNVERIFIED,
+      `${PREREQ_UNVERIFIED}; needs choice provenance in the prerequisite context (3 records)`,
     ),
     "?A0x7555d940.FromMulticlassing": code(
       "Multiclass-sourced powers (Dilettante, Paragon Multiclassing IDs, multiclass feats) get the multiclass keyword.",
@@ -121,25 +121,27 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     ),
 
     // --- D20RulesEngine: prerequisite parser ---------------------------
-    SpecialCase: notHandled(
-      "Prerequisite alias table: about 60 exact clauses mapped to other records or combinations (shifter -> Razorclaw/Longtooth, spellscar, Fighter Weapon Talent, Flurry of Blows, 21st-level wizard/bard, Turn Undead, Harpers, House Vadalis, manifestations, healing infusions, dragon breath damage types, ...).",
-      `${PREREQ_UNVERIFIED}; about 100 records still affected. The bare "Shifter" alias (47 records) is a correction: 92-legacy-special-cases.part`,
-    ),
+    SpecialCase: {
+      status: "declarative",
+      description:
+        "Prerequisite alias table: about 60 exact clauses mapped to other records or combinations (shifter -> Razorclaw/Longtooth, spellscar, Fighter Weapon Talent, Flurry of Blows, 21st-level wizard/bard, Turn Undead, Harpers, House Vadalis, manifestations, healing infusions, dragon breath damage types, ...), plus generic Nth-level, race-plus-class and family branches.",
+      note: "Exact aliases are Prereqs rewrites in content/corrections/93-prerequisites.part (records with print-prereqs) and the Shifter CountsAsRace in 92-legacy-special-cases.part; generic branches are prerequisites.ts legacyClause. Unported: spellscar, Harpers, House Vadalis and Circle of Smoke (their targets are records nothing grants, so legacy always fails them), 1 or more power points (no power-point stat), and the Dilettante predicates",
+    },
     FirstSpecialCase: notHandled(
       "Before name lookup: 'familiar' means Arcane Familiar; 'weapon focus'/'weapon expertise' mean any feat of that container.",
-      PREREQ_UNVERIFIED,
+      "no record in the current pack uses these bare clauses unresolved",
     ),
-    ProficiencySpecialCase: notHandled(
+    ProficiencySpecialCase: code(
       "Proficiency clause grammar: chosen skill, weapon groups by hands, non-spear polearm, superior weapon, heavy blade properties, armor/shield names.",
-      "prerequisites.ts 'proficiency' kind matches by name substring; group/hand forms are unverified",
+      "prerequisites.ts proficiencySpecialCase for clauses after a 'Proficiency with' prefix (weapon, group, hand-and-group, property phrases); the prefixed clause itself keeps the 'proficiency' kind name-substring match",
     ),
-    NonSpearPolearm: notHandled(
+    NonSpearPolearm: code(
       "'Non-spear polearm' proficiency: polearm group without the spear group.",
-      PREREQ_UNVERIFIED,
+      "prerequisites.ts LEGACY_WEAPON_PHRASES",
     ),
     HeavyArmor: notHandled(
       "'Heavy armor' proficiency: any armor proficiency whose armor is heavy.",
-      PREREQ_UNVERIFIED,
+      "no unresolved record uses it",
     ),
     Proficiency: generic(
       "Builds '<kind> proficiency (<name>)' lookups for the proficiency parser.",
@@ -147,63 +149,69 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
     "?A0xf75eff9b.ProficiencyWeapon": generic(
       "Resolves the weapon named in a 'Weapon Proficiency (...)' record.",
     ),
-    CompanionSpecialCase: notHandled(
-      "Beast companion clauses (wolf/cat, 'Beast Mastery Class Feature (x or y)') resolve to Companion records.",
-      PREREQ_UNVERIFIED,
-    ),
-    TwoKnowledgeSkills: notHandled(
-      "'Two knowledge skills': any two of Arcana, Dungeoneering, History, Nature, Religion trained.",
-      PREREQ_UNVERIFIED,
-    ),
-    HarperTraining: notHandled(
-      "Harper prerequisite: training in any two of four named skills.",
-      PREREQ_UNVERIFIED,
-    ),
+    CompanionSpecialCase: {
+      status: "declarative",
+      description:
+        "Beast companion clauses (wolf/cat, 'Beast Mastery Class Feature (x or y)') resolve to Companion records.",
+      note: "content/corrections/93-prerequisites.part rewrites them to 'X [Beast] Companion'",
+    },
+    TwoKnowledgeSkills: {
+      status: "declarative",
+      description:
+        "'Two knowledge skills': any two of Arcana, Dungeoneering, History, Nature, Religion trained.",
+      note: "content/corrections/93-prerequisites.part rewrites the clause to the trained pairs",
+    },
+    HarperTraining: {
+      status: "declarative",
+      description:
+        "Harper prerequisite: training in any two of four named skills.",
+      note: "content/corrections/93-prerequisites.part rewrites the clause to the trained pairs",
+    },
     InternalizeBlock: notHandled(
-      "Clause 'membership in the Circle of Smoke and Whispers' maps to that record before comma splitting.",
-      `${PREREQ_UNVERIFIED} (it is split at the comma)`,
+      "Clause 'membership in the Circle of Smoke and Whispers' maps to that record before comma splitting; also applies the Prefixes table (training, worship, follower of, affiliated with, fluent in, ...) and carries a prefix's type to later comma parts.",
+      `Prefixes and proficiency type carry-over: prerequisites.ts LEGACY_PREFIXES. Circle of Smoke: ${PREREQ_UNVERIFIED} (its target record is granted by nothing, so legacy always fails it)`,
     ),
     InternalizeElement: generic(
       "Name lookup for a prerequisite token; excludes CountsAsRace for non-feats and the 'assassin' class/paragon name clash.",
     ),
-    AnyClassSpecific: notHandled(
+    AnyClassSpecific: code(
       "'Any class-specific multiclass feat': every multiclass feat, plus Student of the Plague and Adept Dilettante by name.",
-      PREREQ_UNVERIFIED,
+      "prerequisites.ts classSpecificFamily",
     ),
-    AnyClassMoreSpecific: notHandled(
+    AnyClassMoreSpecific: code(
       "Class-specific multiclass feats for classes with or without Psionic Augmentation.",
-      PREREQ_UNVERIFIED,
+      "prerequisites.ts classSpecificFamily",
     ),
-    AnyClassNoPsi: notHandled(
+    AnyClassNoPsi: code(
       "'Any class that doesn't have the Psionic Augmentation class feature'.",
-      PREREQ_UNVERIFIED,
+      "prerequisites.ts classSpecificFamily",
     ),
-    AnyWarlockPact: notHandled(
+    AnyWarlockPact: code(
       "'Any warlock pact': any CountsAsPact or Eldritch Pact-category record.",
-      PREREQ_UNVERIFIED,
+      "prerequisites.ts legacyClause",
     ),
     MulticlassDivine: notHandled(
       "'Multiclass divine class': any multiclass feat of a divine class.",
-      PREREQ_UNVERIFIED,
+      "no record in the current pack uses this clause",
     ),
-    ParagonMulticlassing: notHandled(
+    ParagonMulticlassing: code(
       "'Paragon multiclassing as a X': Paragon Multiclassing plus any multiclass X feat.",
-      PREREQ_UNVERIFIED,
+      "prerequisites.ts legacyClause (and paragonMulticlassingInSource for 'in a martial class')",
     ),
-    RememberedKnack: notHandled(
+    RememberedKnack: code(
       "'Any class-specific multiclassing feat that grants training in a skill'.",
-      PREREQ_UNVERIFIED,
+      "prerequisites.ts classSpecificFamily",
     ),
     MoreThanOneClass: notHandled(
       "'Must have more than one class': hybrid or a CountsAsClass record.",
-      PREREQ_UNVERIFIED,
+      "no record in the current pack uses this clause",
     ),
     HealingInfusion: generic(
       "Detects 'Healing Infusion:' power names for infusion-count clauses.",
     ),
     AnyFeat: code(
       "'Any X feat' / 'At least one X feat' / 'vampire bloodline feat' count feats by type.",
-      "partly: typedReference resolves 'X feat'; counted forms are unverified",
+      "prerequisites.ts anyFeat ('any'/'at least one' X feat by feat type); 'vampire bloodline feat' is a content/corrections/93-prerequisites.part rewrite",
     ),
     AnyXXXClass: code(
       "'Any <source> Class' and 'non-<source>' class prerequisites.",

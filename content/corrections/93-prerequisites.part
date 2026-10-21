@@ -1,0 +1,263 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Machine-read prerequisite rewrites (D089): each record's `Prereqs` is
+  replaced by a form the modern parser resolves, porting the exact-text
+  aliases of the legacy prerequisite SpecialCase / CompanionSpecialCase /
+  TwoKnowledgeSkills / HarperTraining branches
+  (pnpm audit:legacy-special-cases). `print-prereqs`, which players see, is
+  untouched, so only records that have one are rewritten. Generic legacy
+  grammar (prefix and suffix tables, Nth-level, any X feat, paragon
+  multiclassing, race plus class, proficiency forms) is code in
+  packages/rules-engine/src/prerequisites.ts. Merged after the CBLoader parts
+  by scripts/build-private-content.sh. Structure only; no official text.
+-->
+<D20Rules game-system="D&amp;D4E">
+  <!-- SpecialCase: 21st-level wizard / bard. -->
+  <RemoveNodes internal-id="ID_FMP_EPIC_DESTINY_13"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_EPIC_DESTINY_13"><Prereqs>(21st level and wizard)</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_EPIC_DESTINY_209"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_EPIC_DESTINY_209"><Prereqs>(21st level and wizard); eladrin or elf</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_EPIC_DESTINY_286"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_EPIC_DESTINY_286"><Prereqs>(21st level and bard)</Prereqs></AppendNodes>
+  <!-- HarperTraining. -->
+  <RemoveNodes internal-id="ID_FMP_EPIC_DESTINY_210"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_EPIC_DESTINY_210"><Prereqs>21st level; good or lawful good alignment; ((trained in Diplomacy and trained in Insight) or (trained in Diplomacy and trained in Nature) or (trained in Diplomacy and trained in Stealth) or (trained in Insight and trained in Nature) or (trained in Insight and trained in Stealth) or (trained in Nature and trained in Stealth)); membership in the Harpers (see the sidebar)</Prereqs></AppendNodes>
+  <!-- TwoKnowledgeSkills. -->
+  <RemoveNodes internal-id="ID_FMP_EPIC_DESTINY_289"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_EPIC_DESTINY_289"><Prereqs>21st level, Intelligence 21 or Wisdom 21, ((trained in Arcana and trained in Dungeoneering) or (trained in Arcana and trained in History) or (trained in Arcana and trained in Nature) or (trained in Arcana and trained in Religion) or (trained in Dungeoneering and trained in History) or (trained in Dungeoneering and trained in Nature) or (trained in Dungeoneering and trained in Religion) or (trained in History and trained in Nature) or (trained in History and trained in Religion) or (trained in Nature and trained in Religion))</Prereqs></AppendNodes>
+  <!-- SpecialCase: warlock pacts. -->
+  <RemoveNodes internal-id="ID_FMP_EPIC_DESTINY_338"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_EPIC_DESTINY_338"><Prereqs>21st level; any arcane class; must have the fey origin, be a half-elf, or (warlock and Fey Pact)</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_239"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_239"><Prereqs>Rogue and (warlock and Infernal Pact), Impiltur regional benefit</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_543"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_543"><Prereqs>Fighter and Infernal Pact class feature or Pact Initiate (Infernal Pact) class feature</Prereqs></AppendNodes>
+  <!-- SpecialCase: any defender. -->
+  <RemoveNodes internal-id="ID_FMP_EPIC_DESTINY_689"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_EPIC_DESTINY_689"><Prereqs>Defender role</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2578"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2578"><Prereqs>Tiefling, Mantle of Misfortune feat, Defender role; !bloodline or Tiefling Bloodline</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2964"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2964"><Prereqs>21st level, Defender role; Epic Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2965"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2965"><Prereqs>21st level, Defender role; Epic Tier</Prereqs></AppendNodes>
+  <!-- SpecialCase: multiclass feats by name. -->
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_62"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_62"><Prereqs>Must have at least one spellscar, Student of the Plague feat</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_107"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_107"><Prereqs>Warlord, Warrior of the Wild feat.</Prereqs></AppendNodes>
+  <!-- SpecialCase: Cormyr means either Cormyr background. -->
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_66"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_66"><Prereqs>Wizard, Cormyr (Wheloon) or Cormyr (General)</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_67"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_67"><Prereqs>(rogue and (Cormyr (Wheloon) or Cormyr (General))), Dalelands, Elturgard, Evereska, Gray Vale, Luruar, or Sembia</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_85"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_85"><Prereqs>Fighter, paladin, or warlord; Cormyr (Wheloon) or Cormyr (General)</Prereqs></AppendNodes>
+  <!-- Errata: wordings the legacy parser also could not read. -->
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_143"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_143"><Prereqs>any arcane class or divine class that can use an implement; must worship Selûne</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_295"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_295"><Prereqs>any martial class or divine class, must worship Bane</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_372"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_372"><Prereqs>!Warforged, artificer</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_1078"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1078"><Prereqs>Avenger, Armor of Faith class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_1979"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1979"><Prereqs>Akanûl regional background</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_1980"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1980"><Prereqs>Akanûl regional background</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_TIV_PARAGON_PATH_DRAGON_406-3"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_TIV_PARAGON_PATH_DRAGON_406-3"><Prereqs>Fey origin or half-elf or (warlock and Fey Pact) or Fey Bond feat; Training in Acrobatics</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_965"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_965"><Prereqs>Earthforger theme, firecrafter theme, primordial adept theme, or (warlock and Elemental Pact)</Prereqs></AppendNodes>
+  <!-- CompanionSpecialCase: beast companions. -->
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_176"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_176"><Prereqs>Ranger, Beast Mastery class feature, Wolf [Beast] Companion</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_180"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_180"><Prereqs>Ranger, Beast Mastery class feature, Cat [Beast] Companion</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2031"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2031"><Prereqs>Ranger, Wolf [Beast] Companion, Beast Mastery class feature, Vistani Heritage; !bloodline or Vistani Bloodline</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2402"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2402"><Prereqs>Ranger, Serpent [Beast] Companion</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2422"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2422"><Prereqs>Ranger, Boar [Beast] Companion</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2425"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2425"><Prereqs>Ranger, Raptor [Beast] Companion</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2447"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2447"><Prereqs>Ranger, Bear [Beast] Companion</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2453"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2453"><Prereqs>Ranger, Cat [Beast] Companion</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2461"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2461"><Prereqs>Ranger, Wolf [Beast] Companion</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2465"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2465"><Prereqs>Ranger, Lizard [Beast] Companion</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2474"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2474"><Prereqs>Ranger, Spider [Beast] Companion</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2482"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2482"><Prereqs>11th level, ranger, Boar [Beast] Companion or Lizard [Beast] Companion; Paragon Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2502"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2502"><Prereqs>11th level, ranger, Cat [Beast] Companion or Raptor [Beast] Companion; Paragon Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2510"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2510"><Prereqs>11th level, ranger, Serpent [Beast] Companion or Spider [Beast] Companion; Paragon Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2512"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2512"><Prereqs>11th level, ranger, Bear [Beast] Companion or Wolf [Beast] Companion; Paragon Tier</Prereqs></AppendNodes>
+  <!-- SpecialCase: Fighter Weapon Talent means either weapon talent. -->
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_512"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_512"><Prereqs>Fighter, One-handed Weapon Talent class feature or Two-handed Weapon Talent class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_513"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_513"><Prereqs>Fighter, One-handed Weapon Talent class feature or Two-handed Weapon Talent class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_1969"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1969"><Prereqs>Fighter, One-handed Weapon Talent class feature or Two-handed Weapon Talent class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_1970"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1970"><Prereqs>Fighter, One-handed Weapon Talent class feature or Two-handed Weapon Talent class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_1971"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1971"><Prereqs>Fighter, One-handed Weapon Talent class feature or Two-handed Weapon Talent class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_1972"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1972"><Prereqs>Fighter, One-handed Weapon Talent class feature or Two-handed Weapon Talent class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_1974"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1974"><Prereqs>11th level, fighter, One-handed Weapon Talent class feature or Two-handed Weapon Talent class feature; Paragon Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_1975"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1975"><Prereqs>11th level, fighter, One-handed Weapon Talent class feature or Two-handed Weapon Talent class feature; Paragon Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_1976"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1976"><Prereqs>11th level, fighter, One-handed Weapon Talent class feature or Two-handed Weapon Talent class feature; Paragon Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_1978"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1978"><Prereqs>21st level, fighter, One-handed Weapon Talent class feature or Two-handed Weapon Talent class feature; Epic Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2475"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2475"><Prereqs>Human, fighter, One-handed Weapon Talent class feature or Two-handed Weapon Talent class feature</Prereqs></AppendNodes>
+  <!-- SpecialCase: genasi manifestations. -->
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_518"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_518"><Prereqs>Genasi, Cindersoul or Causticsoul or Plaguesoul or Voidsoul</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_921"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_921"><Prereqs>Genasi, Earthsoul</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_923"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_923"><Prereqs>Genasi, Firesoul</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_1989"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1989"><Prereqs>Genasi, Cindersoul or Causticsoul or Plaguesoul or Voidsoul</Prereqs></AppendNodes>
+  <!-- SpecialCase: Tome Implement Mastery. -->
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_521"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_521"><Prereqs>Wizard, Tome of Binding or Tome of Readiness</Prereqs></AppendNodes>
+  <!-- SpecialCase: healing infusions are 'Healing Infusion: X' powers. -->
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_526"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_526"><Prereqs>Artificer, Healing Infusion: Shielding Elixir power</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2111"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2111"><Prereqs>Artificer, Healing Infusion: Shielding Elixir power</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3023"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3023"><Prereqs>Deva, artificer, Healing Infusion: Shielding Elixir power</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3024"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3024"><Prereqs>Warforged, artificer, Healing Infusion: Curative Admixture power</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3026"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3026"><Prereqs>Minotaur, artificer, Healing Infusion: Curative Admixture power</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3037"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3037"><Prereqs>Githzerai, artificer, iron mind racial power, Healing Infusion: Resistive Formula power</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3041"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3041"><Prereqs>Gnome, fade away racial power, artificer, Healing Infusion: Shielding Elixir power</Prereqs></AppendNodes>
+  <!-- SpecialCase: dragon breath damage types are Dragon Breath <type> racial traits. -->
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_535"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_535"><Prereqs>Dragonborn, any primal class, Dragon Breath Lightning racial trait</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2211"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2211"><Prereqs>11th level, dragonborn, Dragon Breath Fire racial trait; Paragon Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2213"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2213"><Prereqs>11th level, dragonborn, Dragon Breath Acid racial trait; Paragon Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2214"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2214"><Prereqs>11th level, dragonborn, Dragon Breath Cold racial trait; Paragon Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2217"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2217"><Prereqs>11th level, dragonborn, Dragon Breath Lightning racial trait; Paragon Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2218"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2218"><Prereqs>11th level, dragonborn, Dragon Breath Poison racial trait; Paragon Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2219"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2219"><Prereqs>21st level, dragonborn, Dragon Breath Lightning racial trait, Thundering Breath feat; Epic Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2220"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2220"><Prereqs>21st level, dragonborn, Dragon Breath Fire racial trait, Burning Breath feat; Epic Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2221"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2221"><Prereqs>21st level, dragonborn, Dragon Breath Poison racial trait, Toxic Breath feat; Epic Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2222"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2222"><Prereqs>21st level, dragonborn, Dragon Breath Acid racial trait, Corrosive Breath feat; Epic Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2225"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2225"><Prereqs>21st level, dragonborn, Dragon Breath Cold racial trait, Frost Breath feat; Epic Tier</Prereqs></AppendNodes>
+  <!-- SpecialCase: class features that are powers. -->
+  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_684"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_684"><Prereqs>Assassin, avenger, Oath of Enmity power or assassin's shroud power</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2501"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2501"><Prereqs>11th level, warlord, Inspiring Word power; Paragon Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2786"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2786"><Prereqs>Kalashtar, ardent, Ardent Outrage power</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2789"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2789"><Prereqs>Kalashtar, psion, Distract power</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2796"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2796"><Prereqs>Elf, warden, Warden's Grasp power</Prereqs></AppendNodes>
+  <!-- SpecialCase: shield proficiency. -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_259"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_259"><Prereqs>11th level, Dex 15, Shield Proficiency (Light) or Shield Proficiency (Heavy); Paragon Tier</Prereqs></AppendNodes>
+  <!-- SpecialCase: deity aliases. -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_597"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_597"><Prereqs>Channel Divinity class feature, Polytheist or must worship Berronar Truesilver</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_1386"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1386"><Prereqs>Channel Divinity class feature, Polytheist or must worship The Path of Light</Prereqs></AppendNodes>
+  <!-- SpecialCase: swordmage with an aegis. -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_602"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_602"><Prereqs>Genasi, (swordmage and Aegis of Assault)</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_603"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_603"><Prereqs>(swordmage and Aegis of Assault)</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_619"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_619"><Prereqs>(swordmage and Aegis of Shielding)</Prereqs></AppendNodes>
+  <!-- SpecialCase: Turn Undead. -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_1089"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1089"><Prereqs>Cleric, Turn Undead power</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_1093"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1093"><Prereqs>11th level, cleric, Turn Undead power; Paragon Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_1096"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1096"><Prereqs>11th level, cleric, Turn Undead power; Paragon Tier</Prereqs></AppendNodes>
+  <!-- AnyFeat: vampire bloodline feat. -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_1110"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1110"><Prereqs>21st level, any vampire bloodline feat; Epic Tier; !bloodline or Vampire Bloodline</Prereqs></AppendNodes>
+  <!-- Unrecognized: never met (legacy illegal stub). -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_1528"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1528"><Prereqs>Changeling, any divine class</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_1555"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1555"><Prereqs>Changeling, avenger, oath of enmity power</Prereqs></AppendNodes>
+  <!-- SpecialCase: Flurry of Blows means the Monastic Tradition class feature. -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_1985"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_1985"><Prereqs>Monk, Monastic Tradition class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2589"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2589"><Prereqs>Monk, Monastic Tradition class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2636"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2636"><Prereqs>11th level, monk, Monastic Tradition class feature; Paragon Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_2665"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2665"><Prereqs>11th level, monk, Monastic Tradition class feature; Paragon Tier</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3166"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3166"><Prereqs>Eladrin, monk, Monastic Tradition class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3171"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3171"><Prereqs>Revenant, monk, Monastic Tradition class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3319"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3319"><Prereqs>Monk, Monastic Tradition class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3326"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3326"><Prereqs>Half-orc, furious assault racial power, monk, Monastic Tradition class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3401"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3401"><Prereqs>Foulborn Heritage, monk, Monastic Tradition class feature; !bloodline or Foulborn Bloodline</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3404"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3404"><Prereqs>Elan Heritage, monk, Monastic Tradition class feature; !bloodline or Elan Bloodline</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3409"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3409"><Prereqs>11th level, Elan Heritage, Monastic Tradition class feature; Paragon Tier; !bloodline or Elan Bloodline</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3205"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3205"><Prereqs>Thri-kreen, monk, Monastic Tradition class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3697"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3697"><Prereqs>Monk, Monastic Tradition class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3698"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3698"><Prereqs>Monk, Monastic Tradition class feature, Unarmed Combatant class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3701"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3701"><Prereqs>Monk, Monastic Tradition class feature</Prereqs></AppendNodes>
+  <RemoveNodes internal-id="ID_FMP_FEAT_3702"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_3702"><Prereqs>Monk, Monastic Tradition class feature</Prereqs></AppendNodes>
+  <!-- SpecialCase: Dragon Magic sorcerer. -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_2175"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2175"><Prereqs>Dragonborn, Dragon Magic class feature, dragon breath racial power</Prereqs></AppendNodes>
+  <!-- SpecialCase: human with the Bonus At-Will Power trait. -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_2580"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2580"><Prereqs>2nd level, human, Bonus At-Will Power racial trait</Prereqs></AppendNodes>
+  <!-- SpecialCase: Lolthtouched is a racial trait. -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_2817"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2817"><Prereqs>Drow, assassin, Lolthtouched racial trait, shade form power</Prereqs></AppendNodes>
+  <!-- SpecialCase: psionic class means Psionic Augmentation. -->
+  <RemoveNodes internal-id="ID_FMP_FEAT_2943"><Prereqs /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_FEAT_2943"><Prereqs>Shardmind, Psionic Augmentation class feature</Prereqs></AppendNodes>
+</D20Rules>
