@@ -1012,7 +1012,8 @@ function printCharacter() {
       source: "legacy-cache",
     },
     build: {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 18,
       levels: [],
       grabbag: [],

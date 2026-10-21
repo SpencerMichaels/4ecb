@@ -962,17 +962,36 @@ export function projectBuildForEvaluation(
     }
   }
 
-  const inventory: CharacterInventoryEntry[] = build.inventory.map((entry) => ({
-    id: entry.id,
-    ...(entry.name === undefined ? {} : { name: entry.name }),
-    definitionIds: entry.elements.flatMap((element) =>
-      element.definitionId === undefined ? [] : [element.definitionId],
-    ),
-    quantity: entry.quantity,
-    equippedQuantity: entry.equippedQuantity,
-    acquiredLevel: entry.acquiredLevel,
-    overrides: entry.overrides,
-  }));
+  const inventory: CharacterInventoryEntry[] = [
+    ...build.inventory.map((entry) => ({
+      id: entry.id,
+      ...(entry.name === undefined ? {} : { name: entry.name }),
+      definitionIds: entry.elements.flatMap((element) =>
+        element.definitionId === undefined ? [] : [element.definitionId],
+      ),
+      quantity: entry.quantity,
+      equippedQuantity: entry.equippedQuantity,
+      acquiredLevel: entry.acquiredLevel,
+      overrides: entry.overrides,
+    })),
+    // Known rituals are owned elements whose own rules (a community ritual's
+    // granted power) still apply. They enter evaluation exactly as an
+    // unequipped ritual holding did before they left the inventory.
+    ...build.known.map((entry) => ({
+      id: entry.id,
+      ...(entry.legacyLoot?.name === undefined
+        ? {}
+        : { name: entry.legacyLoot.name }),
+      definitionIds:
+        entry.element.definitionId === undefined
+          ? []
+          : [entry.element.definitionId],
+      quantity: 1,
+      equippedQuantity: 0,
+      acquiredLevel: entry.acquiredLevel,
+      overrides: entry.legacyLoot?.overrides ?? {},
+    })),
+  ];
   // Wallet edits and free-text character details/notes change
   // build.textStrings but never affect rules evaluation. Excluding them keeps
   // otherwise-identical builds hashing to the same EvaluationInput, so

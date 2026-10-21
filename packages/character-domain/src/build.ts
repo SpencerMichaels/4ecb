@@ -175,15 +175,140 @@ export interface BuildAlternate {
   readonly choice: BuildOccurrence;
 }
 
+/** How a learned ritual, formula or practice was acquired. */
+export type BuildKnownAcquisition = "bought" | "free";
+
+/**
+ * A ritual, alchemical formula or martial practice the character has learned.
+ * Known records are not physical gear: they carry no quantity, and owning a
+ * Ritual Scroll never makes its ritual known (D044). Granted records (a
+ * `grant type="Ritual"` or a `FREEBEE:` stat) are derived from evaluation and
+ * never stored here.
+ */
+export interface BuildKnownEntry {
+  /** Stable occurrence ID. */
+  readonly id: string;
+  /** The level it was learned at; hidden when viewing below it. */
+  readonly acquiredLevel: number;
+  /** The exact Ritual record. Its kind comes from the record's authored type. */
+  readonly element: BuildElementIdentity;
+  readonly acquisition: BuildKnownAcquisition;
+  /** Only for imported loot: the original record, re-emitted on export. */
+  readonly legacyLoot?: Omit<BuildInventoryEntry, "id" | "acquiredLevel">;
+}
+
+export const CHARACTER_BUILD_FORMAT_VERSION = 2 as const;
+
 export interface CharacterBuild {
-  readonly formatVersion: 1;
+  readonly formatVersion: typeof CHARACTER_BUILD_FORMAT_VERSION;
   readonly effectiveLevel: number;
   readonly levels: readonly BuildLevelFrame[];
   readonly grabbag: readonly BuildOccurrence[];
   readonly inventory: readonly BuildInventoryEntry[];
+  /** Learned rituals, alchemical formulas and martial practices. */
+  readonly known: readonly BuildKnownEntry[];
   readonly alternates: readonly BuildAlternate[];
   readonly baseAbilities: Readonly<Record<string, number>>;
   readonly textStrings: Readonly<Record<string, string>>;
+}
+
+/** A saved build from before known records left the inventory. */
+export interface CharacterBuildV1 extends Omit<
+  CharacterBuild,
+  "formatVersion" | "known"
+> {
+  readonly formatVersion: 1;
+}
+
+/**
+ * Whether an inventory holding is a learned Ritual record (ritual, formula or
+ * practice) rather than gear. It reads only the saved element type, so it
+ * needs no content. Ritual Scrolls are a different type and stay gear.
+ */
+export function isKnownRecordHolding(
+  entry: Pick<BuildInventoryEntry, "elements">,
+): boolean {
+  return entry.elements[0]?.type.trim().toLocaleLowerCase() === "ritual";
+}
+
+/**
+ * Maps a legacy ritual `loot` holding to a known entry. Legacy does not record
+ * whether a ritual was paid for, so it is "free"; the whole original record is
+ * kept for export.
+ */
+export function knownEntryFromHolding(
+  entry: BuildInventoryEntry,
+): BuildKnownEntry {
+  const { id, acquiredLevel, ...legacyLoot } = entry;
+  const element = entry.elements[0]!;
+  return {
+    id,
+    acquiredLevel,
+    element: {
+      ...(element.definitionId === undefined
+        ? {}
+        : { definitionId: element.definitionId }),
+      name: element.name,
+      type: element.type,
+      ...(element.url === undefined ? {} : { url: element.url }),
+    },
+    acquisition: "free",
+    legacyLoot,
+  };
+}
+
+/**
+ * Splits ritual holdings out of an inventory. A holding with no remaining
+ * count (`count="0"`) is not known; it stays in the inventory so its record
+ * is still exported.
+ */
+export function separateKnownHoldings(
+  inventory: readonly BuildInventoryEntry[],
+): {
+  readonly inventory: readonly BuildInventoryEntry[];
+  readonly known: readonly BuildKnownEntry[];
+} {
+  const known: BuildKnownEntry[] = [];
+  const remaining: BuildInventoryEntry[] = [];
+  for (const entry of inventory) {
+    if (isKnownRecordHolding(entry) && entry.quantity > 0)
+      known.push(knownEntryFromHolding(entry));
+    else remaining.push(entry);
+  }
+  return { inventory: remaining, known };
+}
+
+/**
+ * Upgrades a saved build to the current format. Restartable and idempotent:
+ * a current build is returned unchanged, and no entry is ever dropped.
+ */
+export function upgradeCharacterBuild(
+  build: CharacterBuild | CharacterBuildV1,
+): CharacterBuild {
+  if (build.formatVersion === CHARACTER_BUILD_FORMAT_VERSION) return build;
+  const { inventory, known } = separateKnownHoldings(build.inventory);
+  return {
+    ...build,
+    formatVersion: CHARACTER_BUILD_FORMAT_VERSION,
+    inventory,
+    known,
+  };
+}
+
+/** The content identity a known record is deduplicated by. */
+export function knownElementKey(element: BuildElementIdentity): string {
+  return (
+    element.definitionId ?? `${element.type}\0${element.name}`
+  ).toLocaleLowerCase();
+}
+
+/** Whether the build already stores this exact record as known. */
+export function isKnownElementStored(
+  build: Pick<CharacterBuild, "known">,
+  element: BuildElementIdentity,
+): boolean {
+  const target = knownElementKey(element);
+  return build.known.some((entry) => knownElementKey(entry.element) === target);
 }
 
 export const CURRENCY_DENOMINATIONS = ["ad", "pp", "gp", "sp", "cp"] as const;
@@ -664,7 +789,7 @@ export const LEGACY_DETAIL_TEXT_MAP = {
  * the import-time snapshot, which goes stale once the build is edited.
  */
 export function buildElementNames(
-  build: CharacterBuild,
+  build: Pick<CharacterBuild, "levels" | "effectiveLevel">,
   type: string,
 ): string[] {
   const wanted = type.toLocaleLowerCase();
@@ -745,6 +870,17 @@ export type CharacterCommand =
       /** Per-unit list price in copper pieces. */
       readonly priceCopper: number;
       readonly percentage: 20 | 50 | 100;
+    }
+  | {
+      readonly kind: "learn-known";
+      readonly entry: BuildKnownEntry;
+      /** Market price in copper pieces; 0 when learned free. */
+      readonly priceCopper: number;
+    }
+  | {
+      /** An editing control: the rules have no mechanic for forgetting. No refund. */
+      readonly kind: "remove-known";
+      readonly id: string;
     }
   | {
       readonly kind: "set-text";
@@ -1085,6 +1221,45 @@ export function applyCharacterCommand(
       return proceeds === 0
         ? updated
         : withCurrentWallet(updated, "carried", carried);
+    }
+    case "learn-known": {
+      assertCopperPrice(command.priceCopper);
+      const { entry } = command;
+      if (
+        !Number.isInteger(entry.acquiredLevel) ||
+        entry.acquiredLevel < 1 ||
+        entry.acquiredLevel > 30
+      )
+        throw new Error(
+          "Known entries must be learned at a level from 1 to 30",
+        );
+      if (entry.element.type.trim().toLocaleLowerCase() !== "ritual")
+        throw new Error("Only Ritual records can be learned");
+      if (build.known.some(({ id }) => id === entry.id))
+        throw new Error(`Known entry already exists: ${entry.id}`);
+      if (isKnownElementStored(build, entry.element))
+        throw new Error(`Already known: ${entry.element.name}`);
+      const carried = resolveCharacterWallet(build, "carried").amount;
+      const stored = resolveCharacterWallet(build, "stored").amount;
+      const paid = payWalletCopper(carried, stored, command.priceCopper);
+      let updated: CharacterBuild = {
+        ...build,
+        known: [...build.known, entry],
+      };
+      if (command.priceCopper > 0) {
+        updated = withCurrentWallet(updated, "carried", paid.carried);
+        if (command.priceCopper > currencyToCopper(carried))
+          updated = withCurrentWallet(updated, "stored", paid.stored);
+      }
+      return updated;
+    }
+    case "remove-known": {
+      if (!build.known.some(({ id }) => id === command.id))
+        throw new Error(`Known entry not found: ${command.id}`);
+      return {
+        ...build,
+        known: build.known.filter(({ id }) => id !== command.id),
+      };
     }
     case "set-text": {
       const textStrings = { ...build.textStrings };

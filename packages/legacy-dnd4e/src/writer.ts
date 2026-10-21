@@ -1,7 +1,9 @@
 import {
   detailsWithLegacyTextStrings,
+  isKnownElementStored,
   type BuildElementIdentity,
   type BuildInventoryEntry,
+  type BuildKnownEntry,
   type BuildOccurrence,
   type BuildUserRule,
   type CharacterBuild,
@@ -12,6 +14,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import {
   aggregateInventory,
   applyFieldOverlays,
+  grantedKnownRecords,
   halfLevel,
   parseRules,
   projectBuildForEvaluation,
@@ -294,6 +297,14 @@ function semanticBuild(build: CharacterBuild): unknown {
           }),
     })),
     grabbag: build.grabbag.map(occurrence),
+    // Legacy records neither whether a ritual was bought nor a native entry's
+    // ID, so a known record means its exact element at its level.
+    known: build.known.map((entry) => ({
+      acquiredLevel: entry.acquiredLevel,
+      definitionId: entry.element.definitionId,
+      name: entry.element.name,
+      type: entry.element.type,
+    })),
     inventory: build.inventory.map((entry) => ({
       acquiredLevel: entry.acquiredLevel,
       quantity: entry.quantity,
@@ -819,6 +830,7 @@ export function projectBuildForLegacyExport(
     inventory: build.inventory.filter(
       (entry) => entry.acquiredLevel <= activeLevel,
     ),
+    known: build.known.filter((entry) => entry.acquiredLevel <= activeLevel),
     alternates: build.alternates.flatMap((alternate) =>
       alternate.choice.acquiredLevel <= activeLevel &&
       (alternate.choice.replacesId === undefined ||
@@ -826,6 +838,81 @@ export function projectBuildForLegacyExport(
         ? [{ ...alternate, choice: activeOccurrence(alternate.choice) }]
         : [],
     ),
+  };
+}
+
+/**
+ * Legacy gives each `FREEBEE:<ritual id>` once, as loot, and marks textstring
+ * `<id>` = `Given` (MainWindow.GiveFreebees). This app derives those rituals
+ * from the grant instead (D091), so export writes what the old builder would
+ * have stored itself: every FREEBEE ritual not already known becomes a known
+ * entry at its provider's level, with the `Given` marker. `grant`-granted
+ * rituals add nothing; legacy keeps them as granted elements.
+ */
+export function withLegacyFreebeeRituals(
+  build: CharacterBuild,
+  evaluation: Pick<EvaluatedCharacter, "occurrences" | "stats">,
+  content: readonly ContentEntity[],
+): CharacterBuild {
+  const entities = contentMap(content);
+  const additions = grantedKnownRecords(evaluation, (id) =>
+    entities.get(key(id)),
+  ).flatMap((granted): BuildKnownEntry[] => {
+    const entity = entities.get(key(granted.definitionId));
+    if (granted.via !== "freebee" || entity === undefined) return [];
+    const element = {
+      definitionId: entity.id,
+      name: entity.name,
+      type: entity.type,
+    };
+    if (isKnownElementStored(build, element)) return [];
+    return [
+      {
+        id: `export:freebee:${entity.id}`,
+        acquiredLevel: Math.min(
+          build.effectiveLevel,
+          Math.max(1, granted.acquiredLevel ?? 1),
+        ),
+        element,
+        acquisition: "free",
+      },
+    ];
+  });
+  if (additions.length === 0) return build;
+  return {
+    ...build,
+    known: [...build.known, ...additions],
+    textStrings: {
+      ...build.textStrings,
+      ...Object.fromEntries(
+        additions.map(({ element }) => [element.definitionId!, "Given"]),
+      ),
+    },
+  };
+}
+
+/** A known record as the `loot` legacy stores it in. */
+function knownHolding(entry: BuildKnownEntry): BuildInventoryEntry {
+  return {
+    id: entry.id,
+    acquiredLevel: entry.acquiredLevel,
+    ...(entry.legacyLoot ?? {
+      quantity: 1,
+      equippedQuantity: 0,
+      elements: [entry.element],
+      showPowerCard: true,
+      overrides: {},
+      legality: "rules-legal" as const,
+    }),
+  };
+}
+
+/** Legacy has no known list: each known record is written back as loot. */
+function withKnownAsLoot(build: CharacterBuild): CharacterBuild {
+  return {
+    ...build,
+    inventory: [...build.inventory, ...build.known.map(knownHolding)],
+    known: [],
   };
 }
 
@@ -1060,7 +1147,11 @@ export function exportEditedDnd4e(input: EditedDnd4eExportInput): string {
     throw new Error("Edited export requires a converged rules evaluation");
   if (input.evaluation.level !== input.build.effectiveLevel)
     throw new Error("Edited export evaluation does not match the build level");
-  const build = projectBuildForLegacyExport(input.build);
+  const build = withKnownAsLoot(
+    projectBuildForLegacyExport(
+      withLegacyFreebeeRituals(input.build, input.evaluation, input.content),
+    ),
+  );
 
   const sourceXml = input.envelope.sourceXml.startsWith("\uFEFF")
     ? input.envelope.sourceXml.slice(1)

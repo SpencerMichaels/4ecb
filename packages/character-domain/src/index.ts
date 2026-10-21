@@ -1,7 +1,15 @@
 export * from "./build";
 
-import { EQUIPMENT_SLOT_IDS, equippedQuantityFromSlots } from "./build";
-import type { BuildElementIdentity, CharacterBuild } from "./build";
+import {
+  CHARACTER_BUILD_FORMAT_VERSION,
+  EQUIPMENT_SLOT_IDS,
+  equippedQuantityFromSlots,
+} from "./build";
+import type {
+  BuildElementIdentity,
+  CharacterBuild,
+  CharacterBuildV1,
+} from "./build";
 
 export const CHARACTER_SCHEMA_VERSION = 2 as const;
 
@@ -138,7 +146,26 @@ export interface LegacyCharacterRecordV1 extends Omit<
   readonly schemaVersion: 1;
 }
 
-export type StoredCharacterRecord = CharacterRecord | LegacyCharacterRecordV1;
+/** A schema-2 record saved before known records left the inventory. */
+export interface CharacterRecordWithBuildV1 extends Omit<
+  CharacterRecord,
+  "build"
+> {
+  readonly build: CharacterBuildV1;
+}
+
+export type StoredCharacterRecord =
+  CharacterRecord | CharacterRecordWithBuildV1 | LegacyCharacterRecordV1;
+
+/** Whether a stored record already has the current schema and build format. */
+export function isCurrentStoredRecord(
+  record: StoredCharacterRecord,
+): record is CharacterRecord {
+  return (
+    record.schemaVersion === CHARACTER_SCHEMA_VERSION &&
+    record.build.formatVersion === CHARACTER_BUILD_FORMAT_VERSION
+  );
+}
 
 export interface CharacterBackup {
   readonly format: "4ecb-character-backup";
@@ -351,14 +378,94 @@ function buildUserRule(value: unknown, depth: number): boolean {
   );
 }
 
-function characterBuild(value: unknown): boolean {
+function characterBuild(value: unknown, formatVersion: 1 | 2): boolean {
   const build = object(value);
-  if (build === undefined) return false;
+  if (build === undefined || build.formatVersion !== formatVersion)
+    return false;
   const seen = new WeakSet<object>();
   const knownEquipmentSlots = new Set<string>(EQUIPMENT_SLOT_IDS);
   const occupiedEquipmentSlots = new Set<string>();
+  // The holding fields shared by inventory entries and a known entry's
+  // preserved legacy loot. Slots are only exclusive across one inventory.
+  const inventoryHolding = (
+    entry: Record<string, unknown>,
+    occupiedEquipmentSlots: Set<string>,
+  ): boolean =>
+    Number.isInteger(entry.quantity) &&
+    typeof entry.quantity === "number" &&
+    entry.quantity >= 0 &&
+    Number.isInteger(entry.equippedQuantity) &&
+    typeof entry.equippedQuantity === "number" &&
+    entry.equippedQuantity >= 0 &&
+    entry.equippedQuantity <= entry.quantity &&
+    (entry.equippedSlots === undefined ||
+      (() => {
+        if (!Array.isArray(entry.equippedSlots)) return false;
+        if (
+          typeof entry.quantity !== "number" ||
+          typeof entry.equippedQuantity !== "number"
+        )
+          return false;
+        const quantity = entry.quantity;
+        const equippedQuantity = entry.equippedQuantity;
+        const localSlots = new Set<string>();
+        const assignments = entry.equippedSlots.flatMap((value) => {
+          const assignment = object(value);
+          if (
+            assignment === undefined ||
+            typeof assignment.slot !== "string" ||
+            !knownEquipmentSlots.has(assignment.slot) ||
+            localSlots.has(assignment.slot) ||
+            occupiedEquipmentSlots.has(assignment.slot) ||
+            !Number.isInteger(assignment.quantityIndex) ||
+            typeof assignment.quantityIndex !== "number" ||
+            assignment.quantityIndex < 0 ||
+            assignment.quantityIndex >= quantity
+          )
+            return [];
+          localSlots.add(assignment.slot);
+          return [
+            {
+              slot: assignment.slot as (typeof EQUIPMENT_SLOT_IDS)[number],
+              quantityIndex: assignment.quantityIndex,
+            },
+          ];
+        });
+        if (assignments.length !== entry.equippedSlots.length) return false;
+        for (const { slot } of assignments) occupiedEquipmentSlots.add(slot);
+        return equippedQuantity === equippedQuantityFromSlots(assignments);
+      })()) &&
+    Array.isArray(entry.elements) &&
+    entry.elements.every((element) => inventoryElement(element, seen)) &&
+    optionalString(entry.name) &&
+    (entry.showPowerCard === undefined ||
+      typeof entry.showPowerCard === "boolean") &&
+    stringRecord(entry.overrides) &&
+    (entry.legality === "rules-legal" || entry.legality === "houserule");
+  const levelledEntry = (
+    entry: Record<string, unknown> | undefined,
+  ): entry is Record<string, unknown> =>
+    entry !== undefined &&
+    typeof entry.id === "string" &&
+    Number.isInteger(entry.acquiredLevel) &&
+    typeof entry.acquiredLevel === "number" &&
+    entry.acquiredLevel >= 0 &&
+    entry.acquiredLevel <= 30;
   return (
-    build.formatVersion === 1 &&
+    (formatVersion === 1 ||
+      (Array.isArray(build.known) &&
+        build.known.every((value) => {
+          const entry = object(value);
+          const legacyLoot = object(entry?.legacyLoot);
+          return (
+            levelledEntry(entry) &&
+            elementIdentity(entry.element) &&
+            (entry.acquisition === "bought" || entry.acquisition === "free") &&
+            (entry.legacyLoot === undefined ||
+              (legacyLoot !== undefined &&
+                inventoryHolding(legacyLoot, new Set<string>())))
+          );
+        }))) &&
     Number.isInteger(build.effectiveLevel) &&
     typeof build.effectiveLevel === "number" &&
     build.effectiveLevel >= 1 &&
@@ -391,64 +498,7 @@ function characterBuild(value: unknown): boolean {
     build.inventory.every((value) => {
       const entry = object(value);
       return (
-        entry !== undefined &&
-        typeof entry.id === "string" &&
-        Number.isInteger(entry.acquiredLevel) &&
-        typeof entry.acquiredLevel === "number" &&
-        entry.acquiredLevel >= 0 &&
-        entry.acquiredLevel <= 30 &&
-        Number.isInteger(entry.quantity) &&
-        typeof entry.quantity === "number" &&
-        entry.quantity >= 0 &&
-        Number.isInteger(entry.equippedQuantity) &&
-        typeof entry.equippedQuantity === "number" &&
-        entry.equippedQuantity >= 0 &&
-        entry.equippedQuantity <= entry.quantity &&
-        (entry.equippedSlots === undefined ||
-          (() => {
-            if (!Array.isArray(entry.equippedSlots)) return false;
-            if (
-              typeof entry.quantity !== "number" ||
-              typeof entry.equippedQuantity !== "number"
-            )
-              return false;
-            const quantity = entry.quantity;
-            const equippedQuantity = entry.equippedQuantity;
-            const localSlots = new Set<string>();
-            const assignments = entry.equippedSlots.flatMap((value) => {
-              const assignment = object(value);
-              if (
-                assignment === undefined ||
-                typeof assignment.slot !== "string" ||
-                !knownEquipmentSlots.has(assignment.slot) ||
-                localSlots.has(assignment.slot) ||
-                occupiedEquipmentSlots.has(assignment.slot) ||
-                !Number.isInteger(assignment.quantityIndex) ||
-                typeof assignment.quantityIndex !== "number" ||
-                assignment.quantityIndex < 0 ||
-                assignment.quantityIndex >= quantity
-              )
-                return [];
-              localSlots.add(assignment.slot);
-              return [
-                {
-                  slot: assignment.slot as (typeof EQUIPMENT_SLOT_IDS)[number],
-                  quantityIndex: assignment.quantityIndex,
-                },
-              ];
-            });
-            if (assignments.length !== entry.equippedSlots.length) return false;
-            for (const { slot } of assignments)
-              occupiedEquipmentSlots.add(slot);
-            return equippedQuantity === equippedQuantityFromSlots(assignments);
-          })()) &&
-        Array.isArray(entry.elements) &&
-        entry.elements.every((element) => inventoryElement(element, seen)) &&
-        optionalString(entry.name) &&
-        (entry.showPowerCard === undefined ||
-          typeof entry.showPowerCard === "boolean") &&
-        stringRecord(entry.overrides) &&
-        (entry.legality === "rules-legal" || entry.legality === "houserule")
+        levelledEntry(entry) && inventoryHolding(entry, occupiedEquipmentSlots)
       );
     }) &&
     Array.isArray(build.alternates) &&
@@ -597,7 +647,14 @@ function portraitCropFitsSource(
 
 export function isCharacterRecord(value: unknown): value is CharacterRecord {
   const record = characterRecordBase(value);
-  return record?.schemaVersion === 2 && characterBuild(record.build);
+  return record?.schemaVersion === 2 && characterBuild(record.build, 2);
+}
+
+export function isCharacterRecordWithBuildV1(
+  value: unknown,
+): value is CharacterRecordWithBuildV1 {
+  const record = characterRecordBase(value);
+  return record?.schemaVersion === 2 && characterBuild(record.build, 1);
 }
 
 export function isLegacyCharacterRecordV1(
@@ -611,9 +668,10 @@ export function isLegacyCharacterRecordV1(
  * what the builder edits; `snapshot.details.name` is the import-time legacy
  * cache and goes stale after a rename, so it is never consulted here.
  */
-export function characterDisplayName(
-  record: Pick<CharacterRecord, "build" | "title">,
-): string {
+export function characterDisplayName(record: {
+  readonly build: Pick<CharacterBuild, "textStrings">;
+  readonly title: string;
+}): string {
   return record.build.textStrings.Name?.trim() || record.title;
 }
 
@@ -700,7 +758,7 @@ export function newNativeCharacterRecord(
     source: "native-empty",
   };
   const build: CharacterBuild = {
-    formatVersion: 1,
+    formatVersion: CHARACTER_BUILD_FORMAT_VERSION,
     effectiveLevel: 1,
     levels: [
       {
@@ -717,6 +775,7 @@ export function newNativeCharacterRecord(
     ],
     grabbag: [],
     inventory: [],
+    known: [],
     alternates: [],
     baseAbilities: NATIVE_BASE_ABILITIES,
     textStrings: { Name: name },

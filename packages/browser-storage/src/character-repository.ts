@@ -3,7 +3,10 @@ import {
   characterDisplayName,
   duplicateCharacterRecord,
   isCharacterRecord,
+  isCharacterRecordWithBuildV1,
+  isCurrentStoredRecord,
   isLegacyCharacterRecordV1,
+  upgradeCharacterBuild,
   type CharacterBuild,
   type CharacterBackup,
   type CharacterProfileBinding,
@@ -620,11 +623,23 @@ async function validateBackup(
 }
 
 function isStoredCharacter(value: unknown): value is StoredCharacterRecord {
-  return isCharacterRecord(value) || isLegacyCharacterRecordV1(value);
+  return (
+    isCharacterRecord(value) ||
+    isCharacterRecordWithBuildV1(value) ||
+    isLegacyCharacterRecordV1(value)
+  );
 }
 
+/**
+ * Upgrades a stored record to the current schema and build format. Schema-1
+ * records are re-imported from their source; a format-1 build moves its
+ * ritual holdings into the known list. Both are idempotent and keep every
+ * entry.
+ */
 function upgradeRecord(value: StoredCharacterRecord): CharacterRecord {
-  if (value.schemaVersion === 2) return value;
+  if (isCurrentStoredRecord(value)) return value;
+  if (value.schemaVersion === 2)
+    return { ...value, build: upgradeCharacterBuild(value.build) };
   const legacy: LegacyCharacterRecordV1 = value;
   const imported = importDnd4e(legacy.legacy.sourceXml);
   return {
@@ -638,7 +653,7 @@ async function migrateStoredRecord(
   db: Awaited<ReturnType<typeof database>>,
   stored: StoredCharacterRecord,
 ): Promise<CharacterRecord> {
-  if (stored.schemaVersion === 2) return stored;
+  if (isCurrentStoredRecord(stored)) return stored;
   await db.put("characterMigrations", {
     id: stored.id,
     previous: stored,
@@ -666,10 +681,7 @@ async function recoverCharacterMigrations(
   const journals = await db.getAll("characterMigrations");
   for (const journal of journals) {
     const current = await db.get("characters", journal.id);
-    if (
-      current !== undefined &&
-      (current as { readonly schemaVersion: number }).schemaVersion === 2
-    ) {
+    if (current !== undefined && isCurrentStoredRecord(current)) {
       await db.delete("characterMigrations", journal.id);
       continue;
     }

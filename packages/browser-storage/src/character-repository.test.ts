@@ -36,7 +36,8 @@ function character(id = "character-one") {
       source: "legacy-cache",
     },
     {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 1,
       levels: [],
       grabbag: [],
@@ -191,7 +192,7 @@ describe("CharacterRepository", () => {
     expect(upgradedCharacter).toMatchObject({
       id: legacy.id,
       schemaVersion: 2,
-      build: { formatVersion: 1 },
+      build: { formatVersion: 2 },
     });
     const upgradedContent = new ContentPackRepository(name);
     await expect(upgradedContent.activePackId()).resolves.toBe("v2-profile");
@@ -243,13 +244,76 @@ describe("CharacterRepository", () => {
 
     const recovered = await new CharacterRepository(name).get(legacy.id);
     expect(recovered).toMatchObject({ id: legacy.id, schemaVersion: 2 });
-    expect(recovered?.build.formatVersion).toBe(1);
+    expect(recovered?.build.formatVersion).toBe(2);
     await expect(
       new CharacterRepository(name).listMetadataPartitioned(),
     ).resolves.toMatchObject({
       active: [{ id: legacy.id, effectiveLevel: 1 }],
       deleted: [],
     });
+  });
+
+  it("moves a format-1 build's ritual loot into its known list on load", async () => {
+    const name = `4ecb-known-migration-${crypto.randomUUID()}`;
+    databases.push(name);
+    const current = character("format-1");
+    const { known: _known, ...build } = current.build;
+    void _known;
+    const ritual = {
+      id: "legacy:loot:1:0",
+      acquiredLevel: 1,
+      quantity: 1,
+      equippedQuantity: 0,
+      elements: [
+        { definitionId: "ID_RITUAL", name: "Synthetic Rite", type: "Ritual" },
+      ],
+      overrides: {},
+      legality: "rules-legal" as const,
+    };
+    const scroll = {
+      ...ritual,
+      id: "legacy:loot:1:1",
+      quantity: 2,
+      elements: [
+        {
+          definitionId: "ID_SCROLL",
+          name: "Rite Scroll",
+          type: "Ritual Scroll",
+        },
+      ],
+    };
+    const stored = {
+      ...current,
+      build: { ...build, formatVersion: 1, inventory: [ritual, scroll] },
+    };
+    const storage = new CharacterRepository(name);
+    await storage.put(current);
+    const db = await openDB(name);
+    await db.put("characters", stored);
+    db.close();
+
+    const migrated = await storage.get("format-1");
+    expect(migrated?.build.formatVersion).toBe(2);
+    expect(migrated?.build.inventory.map(({ id }) => id)).toEqual([
+      "legacy:loot:1:1",
+    ]);
+    expect(migrated?.build.known).toMatchObject([
+      {
+        id: "legacy:loot:1:0",
+        acquiredLevel: 1,
+        element: { definitionId: "ID_RITUAL", type: "Ritual" },
+        acquisition: "free",
+        legacyLoot: { quantity: 1, elements: ritual.elements },
+      },
+    ]);
+    // The upgrade is written back once and is a no-op afterwards.
+    const reopened = await openDB(name);
+    expect(
+      (await reopened.get("characters", "format-1")).build.formatVersion,
+    ).toBe(2);
+    expect(await reopened.getAll("characterMigrations")).toHaveLength(0);
+    reopened.close();
+    await expect(storage.get("format-1")).resolves.toEqual(migrated);
   });
 
   it("moves schema-4 rendered portraits out of metadata during upgrade", async () => {

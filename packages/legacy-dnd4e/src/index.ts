@@ -14,6 +14,10 @@ import type {
   LegacyRuleElement,
   LegacyWeaponSnapshot,
 } from "@4ecb/character-domain";
+import {
+  CHARACTER_BUILD_FORMAT_VERSION,
+  separateKnownHoldings,
+} from "@4ecb/character-domain";
 import { SaxesParser } from "saxes";
 
 export * from "./writer";
@@ -402,8 +406,12 @@ function buildFrom(
       ];
     },
   );
+  // A ritual, formula or practice in `loot` is a known record, not gear.
+  const { inventory, known } = separateKnownHoldings(
+    inventoryFrom(root, sheet),
+  );
   return {
-    formatVersion: 1,
+    formatVersion: CHARACTER_BUILD_FORMAT_VERSION,
     effectiveLevel: Math.max(1, parsedLevels.length),
     levels: levelRoots.map((rootOccurrence, index) => {
       const userEdit = userEditFrom(parsedLevelEntries[index]?.node, index + 1);
@@ -414,7 +422,8 @@ function buildFrom(
       };
     }),
     grabbag,
-    inventory: inventoryFrom(root, sheet),
+    inventory,
+    known,
     alternates,
     baseAbilities: snapshotAbilities,
     textStrings,

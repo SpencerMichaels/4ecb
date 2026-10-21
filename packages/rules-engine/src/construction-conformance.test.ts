@@ -429,7 +429,8 @@ describe("native construction conformance", () => {
       entity("SPELL", "Prepared spell", "Power"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 1,
       levels: [
         {

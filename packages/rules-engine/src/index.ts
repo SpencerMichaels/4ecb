@@ -5,6 +5,7 @@ export * from "./evaluator";
 export * from "./exceptions";
 export * from "./expressions";
 export * from "./ir";
+export * from "./known-records";
 export * from "./prerequisites";
 export * from "./powers";
 export * from "./profile-migration";

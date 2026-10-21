@@ -17,6 +17,7 @@ import {
   formatLegacyCurrency,
   inventoryEntryWithQuantity,
   isCharacterRecord,
+  isCharacterRecordWithBuildV1,
   isFreeformCharacterDetailTextKey,
   isLegacyCharacterRecordV1,
   isWalletTextKey,
@@ -28,7 +29,10 @@ import {
   resolveCharacterWallet,
   subtractCurrency,
   type CharacterBuild,
+  type CharacterBuildV1,
   type BuildInventoryEntry,
+  type BuildKnownEntry,
+  upgradeCharacterBuild,
   type CurrencyAmount,
   ZERO_CURRENCY,
 } from ".";
@@ -46,7 +50,8 @@ const snapshot = {
 };
 
 const build: CharacterBuild = {
-  formatVersion: 1,
+  formatVersion: 2,
+  known: [],
   effectiveLevel: 1,
   levels: [
     {
@@ -792,5 +797,160 @@ describe("buildElementNames", () => {
     expect(buildElementNames({ ...build, effectiveLevel: 0 }, "Level")).toEqual(
       [],
     );
+  });
+});
+
+describe("known rituals, formulas and practices", () => {
+  const ritualHolding = (
+    id: string,
+    quantity: number,
+    type = "Ritual",
+  ): BuildInventoryEntry => ({
+    id,
+    acquiredLevel: 1,
+    quantity,
+    equippedQuantity: 0,
+    elements: [
+      {
+        definitionId: `ID_${id.toUpperCase()}`,
+        name: `Record ${id}`,
+        type,
+        url: `https://example.test/${id}`,
+      },
+    ],
+    showPowerCard: true,
+    overrides: { custom: "kept" },
+    legality: "rules-legal",
+  });
+  const learned = (id: string, definitionId: string): BuildKnownEntry => ({
+    id,
+    acquiredLevel: 1,
+    element: { definitionId, name: definitionId, type: "Ritual" },
+    acquisition: "bought",
+  });
+
+  it("learns a record once, paying its price, and removes it without refund", () => {
+    const funded: CharacterBuild = {
+      ...build,
+      textStrings: { "_PER_LEVEL_1_Carried Money": "50 gp" },
+    };
+    const bought = applyCharacterCommand(funded, {
+      kind: "learn-known",
+      entry: learned("comprehend", "ID_RITUAL_COMPREHEND"),
+      priceCopper: 1_000,
+    });
+    expect(bought.known.map(({ id }) => id)).toEqual(["comprehend"]);
+    expect(bought.inventory).toEqual([]);
+    expect(bought.textStrings["_PER_LEVEL_1_Carried Money"]).toBe("40 gp");
+
+    const free = applyCharacterCommand(bought, {
+      kind: "learn-known",
+      entry: { ...learned("light", "ID_RITUAL_LIGHT"), acquisition: "free" },
+      priceCopper: 0,
+    });
+    expect(free.textStrings["_PER_LEVEL_1_Carried Money"]).toBe("40 gp");
+    expect(() =>
+      applyCharacterCommand(free, {
+        kind: "learn-known",
+        entry: learned("again", "id_ritual_comprehend"),
+        priceCopper: 0,
+      }),
+    ).toThrow("Already known");
+    expect(() =>
+      applyCharacterCommand(free, {
+        kind: "learn-known",
+        entry: learned("costly", "ID_RITUAL_COSTLY"),
+        priceCopper: 100_000,
+      }),
+    ).toThrow("Insufficient currency");
+    expect(() =>
+      applyCharacterCommand(free, {
+        kind: "learn-known",
+        entry: {
+          ...learned("scroll", "ID_SCROLL"),
+          element: { name: "Scroll", type: "Ritual Scroll" },
+        },
+        priceCopper: 0,
+      }),
+    ).toThrow("Only Ritual records");
+
+    const removed = applyCharacterCommand(free, {
+      kind: "remove-known",
+      id: "comprehend",
+    });
+    expect(removed.known.map(({ id }) => id)).toEqual(["light"]);
+    expect(removed.textStrings["_PER_LEVEL_1_Carried Money"]).toBe("40 gp");
+    expect(() =>
+      applyCharacterCommand(removed, { kind: "remove-known", id: "missing" }),
+    ).toThrow("Known entry not found");
+
+    const transaction = new CharacterTransaction(free);
+    transaction.dispatch({ kind: "remove-known", id: "light" });
+    expect(transaction.undo().known.map(({ id }) => id)).toEqual([
+      "comprehend",
+      "light",
+    ]);
+  });
+
+  it("upgrades a format-1 build idempotently, keeping every entry", () => {
+    const { known: _known, ...rest } = build;
+    void _known;
+    const v1: CharacterBuildV1 = {
+      ...rest,
+      formatVersion: 1,
+      inventory: [
+        ritualHolding("book", 1, "Gear"),
+        ritualHolding("messenger", 1),
+        ritualHolding("scroll", 2, "Ritual Scroll"),
+        ritualHolding("sold", 0),
+      ],
+    };
+    const upgraded = upgradeCharacterBuild(v1);
+    expect(upgraded.formatVersion).toBe(2);
+    expect(upgraded.inventory.map(({ id }) => id)).toEqual([
+      "book",
+      "scroll",
+      "sold",
+    ]);
+    expect(upgraded.known).toEqual([
+      {
+        id: "messenger",
+        acquiredLevel: 1,
+        element: {
+          definitionId: "ID_MESSENGER",
+          name: "Record messenger",
+          type: "Ritual",
+          url: "https://example.test/messenger",
+        },
+        acquisition: "free",
+        legacyLoot: {
+          quantity: 1,
+          equippedQuantity: 0,
+          elements: ritualHolding("messenger", 1).elements,
+          showPowerCard: true,
+          overrides: { custom: "kept" },
+          legality: "rules-legal",
+        },
+      },
+    ]);
+    expect(upgradeCharacterBuild(upgraded)).toBe(upgraded);
+
+    const record = newCharacterRecord(
+      { format: "dnd4e", sourceXml: "<D20Character/>" },
+      snapshot,
+      upgraded,
+      { id: "known", now: "2026-01-01T00:00:00.000Z" },
+    );
+    expect(isCharacterRecord(record)).toBe(true);
+    expect(isCharacterRecordWithBuildV1(record)).toBe(false);
+    const stored = { ...record, build: v1 };
+    expect(isCharacterRecord(stored)).toBe(false);
+    expect(isCharacterRecordWithBuildV1(stored)).toBe(true);
+    expect(
+      isCharacterRecord({
+        ...record,
+        build: { ...upgraded, known: [{ id: "bad", acquisition: "stolen" }] },
+      }),
+    ).toBe(false);
   });
 });

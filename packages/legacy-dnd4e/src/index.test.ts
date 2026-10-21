@@ -18,6 +18,7 @@ import {
   legacyEquipmentIdentityMatches,
   legacyPowerValueMatches,
   projectBuildForLegacyExport,
+  withLegacyFreebeeRituals,
 } from ".";
 
 function entity(id: string, name: string, type: string): ContentEntity {
@@ -84,7 +85,8 @@ describe("legacy .dnd4e import", () => {
       "Preserve & escape user text.",
     );
     expect(imported.build).toMatchObject({
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 1,
       levels: [
         {
@@ -174,6 +176,132 @@ describe("legacy .dnd4e import", () => {
       importDnd4e(exported).build.inventory[0]?.elements[1]?.children?.[0]
         ?.identity.definitionId,
     ).toBe("POISON");
+  });
+
+  it("imports ritual loot as known records and exports them back as loot", () => {
+    const rule = (
+      name: string,
+      attributes: Record<string, string>,
+      ordinal: number,
+    ) => ({
+      name,
+      attributes: Object.entries(attributes).map(([key, value]) => ({
+        name: key,
+        value,
+      })),
+      text: "",
+      children: [],
+      ordinal,
+    });
+    const content = [
+      entity("L1", "1", "Level"),
+      {
+        ...entity("CLASS", "Synthetic Druid", "Class"),
+        rules: [
+          rule("statadd", { name: "FREEBEE:RITUAL_FREE", value: "+1" }, 0),
+          rule("grant", { name: "RITUAL_GRANTED", type: "Ritual" }, 1),
+        ],
+      },
+      entity("RITUAL_KNOWN", "Known Rite", "Ritual"),
+      entity("RITUAL_FREE", "Gifted Rite", "Ritual"),
+      entity("RITUAL_GRANTED", "Granted Rite", "Ritual"),
+      entity("RITUAL_NATIVE", "Native Rite", "Ritual"),
+      entity("RITUAL_GONE", "Sold Rite", "Ritual"),
+      entity("SCROLL", "Known Rite Scroll", "Ritual Scroll"),
+    ];
+    const imported = importDnd4e(
+      `<D20Character game-system="D&amp;D4E"><Level><RulesElement name="1" type="Level" internal-id="L1" charelem="l1"><RulesElement name="Synthetic Druid" type="Class" internal-id="CLASS" charelem="class"/></RulesElement><loot count="1" equip-count="0" ShowPowerCard="1"><RulesElement name="Known Rite" type="Ritual" internal-id="RITUAL_KNOWN" url="https://example.test/known"/></loot><loot count="2" equip-count="0"><RulesElement name="Known Rite Scroll" type="Ritual Scroll" internal-id="SCROLL"/></loot><loot count="0" equip-count="0"><RulesElement name="Sold Rite" type="Ritual" internal-id="RITUAL_GONE"/></loot></Level></D20Character>`,
+    );
+    expect(imported.build.known).toEqual([
+      {
+        id: "legacy:loot:1:0",
+        acquiredLevel: 1,
+        element: {
+          definitionId: "RITUAL_KNOWN",
+          name: "Known Rite",
+          type: "Ritual",
+          url: "https://example.test/known",
+        },
+        acquisition: "free",
+        legacyLoot: expect.objectContaining({
+          quantity: 1,
+          equippedQuantity: 0,
+          showPowerCard: true,
+        }),
+      },
+    ]);
+    // A scroll never makes its ritual known; a count-0 record is not known
+    // but its loot is kept for export.
+    expect(
+      imported.build.inventory.map(({ elements }) => elements[0]?.definitionId),
+    ).toEqual(["SCROLL", "RITUAL_GONE"]);
+
+    const build = {
+      ...imported.build,
+      known: [
+        ...imported.build.known,
+        {
+          id: "web:native",
+          acquiredLevel: 1,
+          element: {
+            definitionId: "RITUAL_NATIVE",
+            name: "Native Rite",
+            type: "Ritual",
+          },
+          acquisition: "bought" as const,
+        },
+      ],
+    };
+    const evaluation = evaluateCharacter(
+      projectBuildForEvaluation(build, content),
+      content,
+    );
+    const xml = exportEditedDnd4e({
+      target: "legacy-builder-0.07a",
+      envelope: imported.envelope,
+      snapshot: imported.snapshot,
+      build,
+      evaluation,
+      content,
+    });
+    const reimported = importDnd4e(xml);
+    expect(
+      reimported.build.known.map(({ element }) => element.definitionId),
+    ).toEqual(["RITUAL_KNOWN", "RITUAL_NATIVE", "RITUAL_FREE"]);
+    expect(reimported.build.textStrings.RITUAL_FREE).toBe("Given");
+    expect(reimported.build.textStrings.RITUAL_GRANTED).toBeUndefined();
+    const tally = /<LootTally>(.*?)<\/LootTally>/su.exec(xml)?.[1] ?? "";
+    expect(tally).not.toContain('internal-id="RITUAL_GRANTED"');
+    for (const id of ["RITUAL_KNOWN", "RITUAL_NATIVE", "RITUAL_FREE", "SCROLL"])
+      expect(tally).toContain(`internal-id="${id}"`);
+    expect(
+      reimported.build.inventory.map(
+        ({ elements }) => elements[0]?.definitionId,
+      ),
+    ).toEqual(["SCROLL", "RITUAL_GONE"]);
+    expect(
+      compareEditedDnd4eRoundTrip(
+        projectBuildForLegacyExport(
+          withLegacyFreebeeRituals(build, evaluation, content),
+        ),
+        reimported.build,
+      ),
+    ).toEqual({ equivalent: true, differences: [] });
+    // Once stored and marked Given, a second export adds nothing more.
+    const again = exportEditedDnd4e({
+      target: "legacy-builder-0.07a",
+      envelope: reimported.envelope,
+      snapshot: reimported.snapshot,
+      build: reimported.build,
+      evaluation: evaluateCharacter(
+        projectBuildForEvaluation(reimported.build, content),
+        content,
+      ),
+      content,
+    });
+    expect(
+      importDnd4e(again).build.known.map(({ element }) => element.definitionId),
+    ).toEqual(["RITUAL_KNOWN", "RITUAL_NATIVE", "RITUAL_FREE"]);
   });
 
   it("rejects unrelated XML", () => {

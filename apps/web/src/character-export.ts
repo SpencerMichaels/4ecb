@@ -8,6 +8,7 @@ import {
   exportEditedDnd4e,
   importDnd4e,
   projectBuildForLegacyExport,
+  withLegacyFreebeeRituals,
 } from "@4ecb/legacy-dnd4e";
 import { projectBuildForEvaluation } from "@4ecb/rules-engine";
 
@@ -69,7 +70,9 @@ export async function exportCharacterDnd4e(id: string): Promise<void> {
     });
     const reimported = importDnd4e(xml);
     const comparison = compareEditedDnd4eRoundTrip(
-      projectBuildForLegacyExport(character.build),
+      projectBuildForLegacyExport(
+        withLegacyFreebeeRituals(character.build, evaluation, pack.entities),
+      ),
       reimported.build,
     );
     if (!comparison.equivalent)

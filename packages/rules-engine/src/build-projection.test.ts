@@ -90,7 +90,8 @@ describe("build projection", () => {
       children,
     });
     const build: CharacterBuild = {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 1,
       levels: [
         {
@@ -172,7 +173,8 @@ describe("build projection", () => {
       children,
     });
     const build: CharacterBuild = {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 1,
       levels: [
         {
@@ -213,7 +215,8 @@ describe("build projection", () => {
       entity("FEAT", "Feat", "Feat"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 1,
       levels: [
         {
@@ -280,7 +283,8 @@ describe("build projection", () => {
       entity("SPELL", "Prepared spell", "Power"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 1,
       levels: [
         {
@@ -343,7 +347,8 @@ describe("build projection", () => {
       entity("FEAT", "Chosen feat", "Feat"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 1,
       levels: [
         {
@@ -464,7 +469,8 @@ describe("build projection", () => {
       children: [],
     });
     const build: CharacterBuild = {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 3,
       levels: [
         {
@@ -556,7 +562,8 @@ describe("build projection", () => {
       entity("FEAT", "Chosen feat", "Feat"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 1,
       levels: [
         {
@@ -645,7 +652,8 @@ describe("build projection", () => {
       entity("POWER", "Level 2 power", "Power"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 2,
       levels: [
         {
@@ -728,7 +736,8 @@ describe("build projection", () => {
       entity("FEAT", "Feat", "Feat"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 1,
       levels: [
         {
@@ -799,7 +808,8 @@ describe("build projection", () => {
       entity("POISON", "Poison", "Class Feature"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 1,
       levels: [],
       grabbag: [],
@@ -859,7 +869,8 @@ describe("build projection", () => {
       entity("POISON", "Poison", "Class Feature"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 1,
       levels: [],
       grabbag: [],
@@ -954,7 +965,8 @@ describe("build projection", () => {
       entity("CHARISMA", "Charisma blast", "Class Feature"),
     ];
     const build: CharacterBuild = {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 1,
       levels: [
         {
@@ -1047,7 +1059,8 @@ describe("build projection", () => {
       entity("SHIELD", "Shield", "Power"),
     ];
     let build: CharacterBuild = {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 1,
       levels: [
         {
@@ -1146,7 +1159,8 @@ describe("build projection", () => {
       legality: "rules-legal" as const,
     });
     const build: CharacterBuild = {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 1,
       levels: [],
       grabbag: [
@@ -1200,7 +1214,8 @@ describe("build projection", () => {
 
   it("excludes wallet and freeform detail text keys from evaluation input so those edits reuse cached results", () => {
     const build: CharacterBuild = {
-      formatVersion: 1,
+      formatVersion: 2,
+      known: [],
       effectiveLevel: 1,
       levels: [],
       grabbag: [],
@@ -1230,6 +1245,48 @@ describe("build projection", () => {
       _internal_mainhandweapon: "Longsword",
     });
     expect(projectedAfterEdits.textStrings).toEqual(projected.textStrings);
+  });
+
+  it("feeds known rituals to evaluation as owned, unequipped elements", () => {
+    const build: CharacterBuild = {
+      formatVersion: 2,
+      known: [
+        {
+          id: "known-1",
+          acquiredLevel: 2,
+          element: { definitionId: "ID_RITUAL", name: "Rite", type: "Ritual" },
+          acquisition: "free",
+          legacyLoot: {
+            quantity: 1,
+            equippedQuantity: 0,
+            elements: [
+              { definitionId: "ID_RITUAL", name: "Rite", type: "Ritual" },
+            ],
+            name: "Rite of Old",
+            overrides: { note: "kept" },
+            legality: "rules-legal",
+          },
+        },
+      ],
+      effectiveLevel: 2,
+      levels: [],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    expect(projectBuildForEvaluation(build, []).inventory).toEqual([
+      {
+        id: "known-1",
+        name: "Rite of Old",
+        definitionIds: ["ID_RITUAL"],
+        quantity: 1,
+        equippedQuantity: 0,
+        acquiredLevel: 2,
+        overrides: { note: "kept" },
+      },
+    ]);
   });
 
   describe("item-owned choice slots", () => {

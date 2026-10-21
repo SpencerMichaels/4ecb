@@ -100,6 +100,7 @@ function referencedDefinitionIds(build: CharacterBuild): string[] {
   build.inventory.forEach((entry) =>
     entry.elements.forEach((element) => add(element.definitionId)),
   );
+  build.known.forEach((entry) => add(entry.element.definitionId));
   return [...ids.values()].sort((left, right) => left.localeCompare(right));
 }
 
