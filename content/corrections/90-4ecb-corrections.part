@@ -22,6 +22,17 @@
     </rules>
   </AppendNodes>
 
+  <!-- The White Well hexblade pact was copied from the Star pact and still
+       says "You have the Star pact" in its table summary. -->
+  <RemoveNodes internal-id="ID_WOG_HEXBLADE_TRAIT_PACKAGE_4">
+    <specific name="Short Description" />
+    <specific name="_CS_ShortDescription" />
+  </RemoveNodes>
+  <AppendNodes internal-id="ID_WOG_HEXBLADE_TRAIT_PACKAGE_4">
+    <specific name="Short Description">You have the Fey pact of the White Well.</specific>
+    <specific name="_CS_ShortDescription">Gain White Well pact benefits</specific>
+  </AppendNodes>
+
   <!-- Storm Pillar has no Hit line; its damage is in the Effect zone text.
        Legacy hardcodes a substitute hit line for it by name. `_CalculatedHit`
        gives the rules engine that line without showing a "Hit:" on the card. -->

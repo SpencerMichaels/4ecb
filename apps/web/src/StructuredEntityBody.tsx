@@ -13,10 +13,12 @@ import { Prose } from "./Prose";
 /**
  * Race, class and background cards lead with their rules (the published
  * "Racial Traits"/"Class Traits" box: a compact stat grid, then granted traits
- * or features listed inside the card), with the lore after them. Fields this
- * layout doesn't place still show, under "More".
+ * or features listed inside the card), with the lore after them. A trait
+ * package (a hexblade pact, a cavalier virtue…) lists the class features it
+ * swaps in. Fields this layout doesn't place still show, under "More".
  */
-export type StructuredEntityKind = "race" | "class" | "background";
+export type StructuredEntityKind =
+  "race" | "class" | "background" | "trait package";
 
 export function structuredEntityKind(
   entity: ContentEntity,
@@ -25,6 +27,7 @@ export function structuredEntityKind(
   if (type === "race") return "race";
   if (type === "class" || type === "hybrid class") return "class";
   if (type === "background") return "background";
+  if (type === "trait package") return "trait package";
   return undefined;
 }
 
@@ -248,6 +251,46 @@ const CLASS_LORE = [
   ["Supplemental", "Supplemental"],
 ] as const;
 
+/**
+ * Class features listed in `_PARSED_CLASS_FEATURE`: by id (trait packages) or
+ * by name (classes: Channel Divinity, Lay on Hands…), preferring a named
+ * record that belongs to the owner over a same-named one.
+ */
+function namedClassFeatures(
+  owner: ContentEntity,
+  references: ReadonlyMap<string, ContentEntity>,
+): readonly Trait[] {
+  const keys = (contentSpecificValue(owner, "_PARSED_CLASS_FEATURE") ?? "")
+    .split(",")
+    .map(normalized)
+    .filter(Boolean);
+  if (keys.length === 0) return [];
+  const isFeature = (candidate: ContentEntity) =>
+    normalized(candidate.type) === "class feature";
+  const candidates = [...new Set(references.values())].filter(
+    (candidate) =>
+      isFeature(candidate) && keys.includes(normalized(candidate.name)),
+  );
+  const seen = new Set<string>();
+  return keys.flatMap((key) => {
+    const byId = references.get(key);
+    const named = candidates.filter(
+      (candidate) => normalized(candidate.name) === key,
+    );
+    const feature =
+      byId !== undefined && isFeature(byId) && normalized(byId.id) === key
+        ? byId
+        : (named.find(
+            (candidate) =>
+              normalized(contentSpecificValue(candidate, "Class") ?? "") ===
+              normalized(owner.id),
+          ) ?? named[0]);
+    if (feature === undefined || seen.has(feature.id)) return [];
+    seen.add(feature.id);
+    return [traitOf(feature)];
+  });
+}
+
 function ClassBody({
   entity,
   references,
@@ -263,32 +306,10 @@ function ClassBody({
   ]
     .filter(Boolean)
     .join(" · ");
-  // Class features named by the class (Channel Divinity, Lay on Hands…),
-  // preferring the record that belongs to this class over a same-named one.
-  const features = useMemo(() => {
-    const names = (contentSpecificValue(entity, "_PARSED_CLASS_FEATURE") ?? "")
-      .split(",")
-      .map(normalized)
-      .filter(Boolean);
-    if (names.length === 0) return [];
-    const candidates = [...new Set(references.values())].filter(
-      (candidate) =>
-        normalized(candidate.type) === "class feature" &&
-        names.includes(normalized(candidate.name)),
-    );
-    return names.flatMap((name) => {
-      const named = candidates.filter(
-        (candidate) => normalized(candidate.name) === name,
-      );
-      const feature =
-        named.find(
-          (candidate) =>
-            normalized(contentSpecificValue(candidate, "Class") ?? "") ===
-            normalized(entity.id),
-        ) ?? named[0];
-      return feature === undefined ? [] : [traitOf(feature)];
-    });
-  }, [entity, references]);
+  const features = useMemo(
+    () => namedClassFeatures(entity, references),
+    [entity, references],
+  );
   return (
     <>
       {summary === "" ? null : <p className="entity-card-summary">{summary}</p>}
@@ -321,6 +342,28 @@ function ClassBody({
           "Trait Package",
         ]}
       />
+    </>
+  );
+}
+
+function TraitPackageBody({
+  entity,
+  references,
+}: {
+  readonly entity: ContentEntity;
+  readonly references: ReadonlyMap<string, ContentEntity>;
+}) {
+  const features = useMemo(
+    () => namedClassFeatures(entity, references),
+    [entity, references],
+  );
+  return (
+    <>
+      {entity.description.trim() === "" ? null : (
+        <Prose value={entity.description} />
+      )}
+      <TraitList heading="Benefits" traits={features} />
+      <MoreFields entity={entity} placed={[]} />
     </>
   );
 }
@@ -371,7 +414,8 @@ function BackgroundBody({ entity }: { readonly entity: ContentEntity }) {
   );
 }
 
-/** Body of a race, class or background card (see `structuredEntityKind`). */
+/** Body of a race, class, background or trait package card (see
+ * `structuredEntityKind`). */
 export function StructuredEntityBody({
   entity,
   kind,
@@ -413,6 +457,8 @@ export function StructuredEntityBody({
         <RaceBody entity={entity} references={references} />
       ) : kind === "class" ? (
         <ClassBody entity={entity} references={references} />
+      ) : kind === "trait package" ? (
+        <TraitPackageBody entity={entity} references={references} />
       ) : (
         <BackgroundBody entity={entity} />
       )}

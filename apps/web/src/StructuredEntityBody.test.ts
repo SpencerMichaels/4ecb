@@ -145,7 +145,38 @@ describe("structured race, class and background cards", () => {
     );
   });
 
-  it("applies only to races, classes and backgrounds", () => {
+  it("lists the class features a trait package swaps in, by id", () => {
+    const pact = entity(
+      "PACT_TEST",
+      "Test Pact",
+      "Trait Package",
+      {
+        _PARSED_CLASS_FEATURE: " FEATURE_BOON, FEATURE_MISSING,FEATURE_REWARD ",
+      },
+      "You gain the following benefits:",
+    );
+    const boon = entity("FEATURE_BOON", "Test Pact Boon", "Class Feature", {
+      "Short Description": "You gain the soul step power.",
+    });
+    const reward = entity(
+      "FEATURE_REWARD",
+      "Test Pact Reward",
+      "Class Feature",
+      {},
+      "Add your Dexterity modifier to damage rolls.",
+    );
+    const markup = render(pact, [reward, boon]);
+
+    expect(markup).toContain("<h5>Benefits</h5>");
+    expect(markup).toContain("You gain the soul step power.");
+    expect(markup.indexOf("Test Pact Boon")).toBeLessThan(
+      markup.indexOf("Test Pact Reward"),
+    );
+    expect(markup).toContain("Add your Dexterity modifier to damage rolls.");
+    expect(markup).not.toContain("FEATURE_MISSING");
+  });
+
+  it("applies only to races, classes, backgrounds and trait packages", () => {
     expect(
       structuredEntityKind(entity("FEAT", "Toughness", "Feat", {})),
     ).toBeUndefined();
