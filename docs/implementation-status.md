@@ -1,5 +1,35 @@
 # Implementation status
 
+## Legacy power and item requirements (2026-10-21)
+
+Commit `94987ee`.
+
+- **Power requirements.** `packages/rules-engine/src/power-requirements.ts`
+  ports legacy `IsValidPowerCombo`/`IsRestricted`/`OtherRestrictions`
+  branch for branch. A weapon power keeps only the weapon (and Unarmed) rows
+  its Requirement allows. `content/corrections/94-power-requirements.part`
+  gives 15 powers a hidden machine-read `_WeaponRequirement` the grammar can
+  read; the published text is untouched.
+- **Item requirements.** Legacy `MeetsItemRequirement`: an equipped item
+  needing a living construct or a ki focus user, without the matching record,
+  raises an `item.requirement-unmet` issue and makes the character not
+  rules-legal. The shop is unchanged, as in legacy.
+- **Versatile weapons.** An absent `_INTERNAL_VersatileUsedTwoHanded` text
+  now reads as false, as in legacy. Natively built characters had been getting
+  the two-handed versatile +1 damage on every versatile weapon.
+- **Evaluation cache:** v21.
+
+Verification: against all 8 samples' cached legacy PowerStats (122 powers),
+extra modern weapon variants fell from 14 to 0, with no new missing variants.
+Attack and damage matches are unchanged. 1065 workspace tests pass.
+
+Open (owner decision): about 30 powers whose Requirement names specific
+weapons or pairs (bola, net, "greatbow or a longbow", "rapier or a short
+sword", …) now show no weapon rows, exactly as legacy. They showed every
+weapon before. Proposed fix: let `_WeaponRequirement` name weapons, and add
+corrections for these powers. The list is in
+`reverse-engineering/docs/08-hard-coded-exceptions.md`.
+
 ## Legacy prerequisite grammar and aliases (2026-10-21)
 
 Unverified prerequisite clause uses across the private pack fell from 650 (256
