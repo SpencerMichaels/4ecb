@@ -46,6 +46,10 @@ wizard, ranger, druid or half-elf.
   - Throw Grapple has a no-weapon row.
   - Coward's Reward lists ordinary melee weapons.
 
+- [ ] **Assassin's Strike (Hybrid)** with upgrades: "Additional effects:
+      +Nd10 extra damage." on the printed and panel cards. The Build tab's
+      upgrade choices at levels 7/13/17/23/27 each offer one option.
+
 ## Printed sheet: pages
 
 - [ ] **Hybrid characters:** the Class identity line reads "Artificer /
@@ -80,6 +84,10 @@ wizard, ranger, druid or half-elf.
       warlock's Eldritch Blast) can be edited.
 - [ ] **Gnome characters** load and evaluate.
 
+- [ ] **Scholar (Hybrid Sentinel/Shaman etc.):** a Draconic/Dwarven/Elven
+      choice at level 5 when one is missing; none from level 10.
+- [ ] **Serene Blade runepriest:** Proficiencies reads "military heavy
+      blades".
 - [ ] **"Equipped item requirement"** house-rule issue: equip a
       living-construct or ki-focus item without qualifying.
 

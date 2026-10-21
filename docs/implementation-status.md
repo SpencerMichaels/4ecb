@@ -1,5 +1,37 @@
 # Implementation status
 
+## Assassin's Strike upgrades, grant targets, Scholar (2026-10-21)
+
+Commits `1a2b2ce`, `ba8b751`, `7fc3738`; evaluation cache v30.
+
+- **Extra damage dice.** A `<power>:extra damage` stat of dice (e.g.
+  `+1d10`) is summed per die size into `EvaluatedPower.extraDamage`, and
+  the card shows one additional effect, "+Nd10 extra damage.".
+  `97-hybrid-assassins-strike.part` rebuilds the hybrid assassin's five
+  upgrade selects and all 15 upgrade records with this stat, without the
+  copied Effect prose. Every level 7/13/17/23/27 choice can now be filled.
+- **Grant targets** (`96-content-fixes.part`):
+  - background association typos fixed, and the undefined Mul association
+    dropped;
+  - the Sorcerer-King pact ID fixed;
+  - Serene Blade gets the military heavy blade group;
+  - the community horse/simian/bear companion helpers that had wrong IDs are
+    re-keyed.
+
+  `audit:coverage` now fails on any unresolvable grant or select target: 0
+  unexpected, 7 allowlisted, 1 case-only match.
+
+- **Scholar.** The level-5 language choice's `requires` was written as
+  `!A|!B|!C`; in the legacy grammar a leading `!` negates the whole rest.
+  It is rewritten so a scholar lacking one of the three languages gets the
+  choice, and none from level 10.
+- **The 11 not-legal matrix sheets are legitimate.** They come from items
+  handed out by rotation whose requirements aren't met.
+
+Full matrix: 0 evaluation errors, 0 incomplete sheets, 1 never-fillable
+choice (intentional), 0 audit problems. The 17 sample characters are
+unchanged. 1138 tests pass.
+
 ## Known rituals, slice 1 (2026-10-21)
 
 `docs/known-rituals-proposal.md` §1, §2 and §4–§7. Commits `eec8a8d`,
