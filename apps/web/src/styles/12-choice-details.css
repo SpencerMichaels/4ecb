@@ -258,7 +258,7 @@
 }
 
 .theme-power-cards,
-.trait-package-feature-cards {
+.candidate-detail-benefits {
   display: grid;
   gap: 0.75rem;
   min-width: 0;

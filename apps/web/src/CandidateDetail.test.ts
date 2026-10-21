@@ -173,3 +173,39 @@ describe("familiar detail", () => {
     expect(markup).toContain("4, fly 6");
   });
 });
+
+describe("option detail benefits", () => {
+  it("follows a deity's card with its domains' cards", () => {
+    const deity = entity(
+      "DEITY_TEST",
+      "Test Deity",
+      "Deity",
+      { Domains: "DOMAIN_CHANGE" },
+      "The god of change.",
+    );
+    const change = entity(
+      "DOMAIN_CHANGE",
+      "Change",
+      "Domain",
+      {},
+      "Change is ever-renewing opportunity.",
+    );
+    const markup = renderToStaticMarkup(
+      createElement(CandidateDetail, {
+        candidate: { ...candidate, definitionId: deity.id },
+        entity: deity,
+        byId: new Map(
+          [deity, change].map((item) => [item.id.toLowerCase(), item]),
+        ),
+      }),
+    );
+    const benefits = markup.slice(
+      markup.indexOf('aria-label="Test Deity benefits"'),
+    );
+    expect(markup.indexOf("The god of change.")).toBeLessThan(
+      markup.indexOf('aria-label="Test Deity benefits"'),
+    );
+    expect(benefits.match(/reference-entity-card/g)).toHaveLength(1);
+    expect(benefits).toContain("Change is ever-renewing opportunity.");
+  });
+});

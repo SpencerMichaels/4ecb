@@ -20,7 +20,7 @@ import {
   type CharacterBuild,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
-import { grantedDetailEntities } from "./builder-ui";
+import { offeredDetailEntities } from "./detail-stack";
 import {
   alchemicalFormulaItems,
   comparableSaleProceeds,
@@ -281,11 +281,12 @@ export function ItemDetail({
     const name = candidate.name.trim().toLocaleLowerCase();
     if (!references.has(name)) references.set(name, candidate);
   }
-  // Powers granted by any component, and an item-owned choice resolved to a
-  // power (e.g. the Power picked for a Genasi Soul Armor), are sibling cards.
+  // Powers any component grants or names (an artifact's, a wand's), and an
+  // item-owned choice resolved to a power (e.g. the Power picked for a Genasi
+  // Soul Armor), are sibling cards.
   const powers = [
     ...item.entities.flatMap((component) =>
-      grantedDetailEntities(component, references),
+      offeredDetailEntities(component, references),
     ),
     ...(item.resolvedChoiceEntities ?? []),
   ].filter(

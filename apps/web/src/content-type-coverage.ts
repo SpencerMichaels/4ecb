@@ -149,12 +149,11 @@ export function contentTypeCoverage(
 
 /**
  * ID-valued fields ("Owner Type.Field") the detail pane or sheet follows to the
- * entities they name, with where. The audit lists every other one.
+ * entities they name, with where. The audit measures the detail stack's cards
+ * (detailStackEntries) itself, so only other ways of following belong here.
  */
 export const FOLLOWED_REFERENCE_FIELDS: Readonly<Record<string, string>> = {
   "Race.Racial Traits": "Race card lists the traits (StructuredEntityBody).",
-  "Trait Package._PARSED_CLASS_FEATURE":
-    "Detail stack shows each feature's card (CandidateDetail).",
 };
 
 /**

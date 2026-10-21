@@ -20,11 +20,9 @@ import {
   isFamiliarEntity,
 } from "@4ecb/sheet-model";
 
-import {
-  grantedDetailEntities,
-  legacyChoiceSection,
-} from "../apps/web/src/builder-ui";
+import { legacyChoiceSection } from "../apps/web/src/builder-ui";
 import { candidateReferenceIndex } from "../apps/web/src/CandidateSelectionTable";
+import { detailStackEntries } from "../apps/web/src/detail-stack";
 import {
   CONTENT_TYPE_COVERAGE,
   FOLLOWED_REFERENCE_FIELDS,
@@ -55,8 +53,8 @@ interface ReferenceRow {
   readonly entities: number;
   readonly references: number;
   readonly examples: readonly string[];
-  /** Share of the references the detail pane shows as granted cards. */
-  readonly viaGrants: number;
+  /** Share of the references the detail stack shows as cards. */
+  readonly inStack: number;
   readonly followed: string | undefined;
   readonly plumbing: string | undefined;
 }
@@ -177,6 +175,20 @@ async function main(): Promise<void> {
   const referenceIndex = candidateReferenceIndex(
     new Map(entities.map((entity) => [entity.id, entity])),
   );
+  // What the detail pane's stack shows under the entity as its root.
+  const stacks = new Map<string, ReadonlySet<string>>();
+  const shownInStack = (entity: ContentEntity) => {
+    let shown = stacks.get(entity.id);
+    if (shown === undefined) {
+      shown = new Set(
+        detailStackEntries(entity, referenceIndex).map(
+          ({ entity }) => entity.id,
+        ),
+      );
+      stacks.set(entity.id, shown);
+    }
+    return shown;
+  };
   const references = new Map<
     string,
     {
@@ -185,7 +197,7 @@ async function main(): Promise<void> {
       targetTypes: Map<string, number>;
       owners: Set<string>;
       references: number;
-      viaGrants: number;
+      inStack: number;
       examples: string[];
     }
   >();
@@ -205,7 +217,7 @@ async function main(): Promise<void> {
         targetTypes: new Map<string, number>(),
         owners: new Set<string>(),
         references: 0,
-        viaGrants: 0,
+        inStack: 0,
         examples: [],
       };
       for (const target of targets) {
@@ -215,16 +227,10 @@ async function main(): Promise<void> {
           (row.targetTypes.get(targetType) ?? 0) + 1,
         );
       }
-      const granted = new Set(
-        grantedDetailEntities(entity, referenceIndex).map(
-          (target) => target.id,
-        ),
-      );
+      const shown = shownInStack(entity);
       row.owners.add(entity.id);
       row.references += targets.length;
-      row.viaGrants += targets.filter((target) =>
-        granted.has(target.id),
-      ).length;
+      row.inStack += targets.filter((target) => shown.has(target.id)).length;
       if (row.examples.length < 3)
         row.examples.push(
           `${entity.name} → ${targets
@@ -244,7 +250,7 @@ async function main(): Promise<void> {
       entities: row.owners.size,
       references: row.references,
       examples: row.examples,
-      viaGrants: row.references === 0 ? 0 : row.viaGrants / row.references,
+      inStack: row.references === 0 ? 0 : row.inStack / row.references,
       followed: FOLLOWED_REFERENCE_FIELDS[`${row.ownerType}.${row.field}`],
       plumbing:
         PLUMBING_REFERENCE_FIELDS[`${row.ownerType}.${row.field}`] ??
@@ -268,7 +274,7 @@ async function main(): Promise<void> {
     (row) =>
       row.followed === undefined &&
       row.plumbing === undefined &&
-      row.viaGrants < 0.95,
+      row.inStack < 0.95,
   );
   const cell = (value: string | number | undefined) =>
     String(value ?? "").replaceAll("|", "\\|");
@@ -321,9 +327,9 @@ async function main(): Promise<void> {
     "## Reference fields not shown, by owning entities",
     "",
     "Not followed by the detail pane or sheet, not plumbing, and under 95% shown",
-    "as granted cards.",
+    "as cards in the detail stack.",
     "",
-    "| Owner type | Field | Owners | Targets | Shown via grants | Example |",
+    "| Owner type | Field | Owners | Targets | Shown in stack | Example |",
     "| --- | --- | --- | --- | --- | --- |",
     ...unshown.map(
       (row) =>
@@ -331,7 +337,7 @@ async function main(): Promise<void> {
           Object.entries(row.targetTypes)
             .map(([type, count]) => `${type} ${count}`)
             .join(", "),
-        )} | ${Math.round(row.viaGrants * 100)}% | ${cell(row.examples[0])} |`,
+        )} | ${Math.round(row.inStack * 100)}% | ${cell(row.examples[0])} |`,
     ),
     "",
     "## Reference fields shown",
@@ -342,7 +348,7 @@ async function main(): Promise<void> {
         (row) =>
           `- ${row.ownerType}.${row.field} (${row.entities}): ${
             row.followed ??
-            `${Math.round(row.viaGrants * 100)}% as granted cards`
+            `${Math.round(row.inStack * 100)}% as detail-stack cards`
           }`,
       ),
     "",

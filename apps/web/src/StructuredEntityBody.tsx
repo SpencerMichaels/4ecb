@@ -8,6 +8,7 @@ import {
   classTableMetadata,
   contentSpecificValue,
 } from "./builder-ui";
+import { namedClassFeatures } from "./detail-stack";
 import { Prose } from "./Prose";
 
 /**
@@ -247,47 +248,6 @@ const CLASS_LORE = [
   ["Implement", "Implement"],
   ["Supplemental", "Supplemental"],
 ] as const;
-
-/**
- * Class features listed in `_PARSED_CLASS_FEATURE`: by id (trait packages:
- * a hexblade pact, a cavalier virtue…) or by name (classes: Channel Divinity,
- * Lay on Hands…), preferring a named record that belongs to the owner over a
- * same-named one.
- */
-export function namedClassFeatures(
-  owner: ContentEntity,
-  references: ReadonlyMap<string, ContentEntity>,
-): readonly ContentEntity[] {
-  const keys = (contentSpecificValue(owner, "_PARSED_CLASS_FEATURE") ?? "")
-    .split(",")
-    .map(normalized)
-    .filter(Boolean);
-  if (keys.length === 0) return [];
-  const isFeature = (candidate: ContentEntity) =>
-    normalized(candidate.type) === "class feature";
-  const candidates = [...new Set(references.values())].filter(
-    (candidate) =>
-      isFeature(candidate) && keys.includes(normalized(candidate.name)),
-  );
-  const seen = new Set<string>();
-  return keys.flatMap((key) => {
-    const byId = references.get(key);
-    const named = candidates.filter(
-      (candidate) => normalized(candidate.name) === key,
-    );
-    const feature =
-      byId !== undefined && isFeature(byId) && normalized(byId.id) === key
-        ? byId
-        : (named.find(
-            (candidate) =>
-              normalized(contentSpecificValue(candidate, "Class") ?? "") ===
-              normalized(owner.id),
-          ) ?? named[0]);
-    if (feature === undefined || seen.has(feature.id)) return [];
-    seen.add(feature.id);
-    return [feature];
-  });
-}
 
 function ClassBody({
   entity,

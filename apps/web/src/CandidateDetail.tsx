@@ -6,9 +6,7 @@ import { isFamiliarEntity } from "@4ecb/sheet-model";
 
 import {
   candidateReason,
-  classFeatureDetailEntities,
   primaryDetailTypeLabel,
-  grantedDetailEntities,
   themePowerGroups,
 } from "./builder-ui";
 import {
@@ -21,6 +19,7 @@ import {
   useCandidateFavorites,
 } from "./candidate-favorites";
 import { candidateReferenceIndex } from "./CandidateSelectionTable";
+import { detailStackEntries } from "./detail-stack";
 import {
   EntityCardBody,
   EntityCardLeadingIcon,
@@ -32,7 +31,6 @@ import { ShowEntitySourceContext } from "./ShowEntitySourceContext";
 import { Icon } from "./Icon";
 import { ProseBlocks, proseBlocks } from "./Prose";
 import {
-  namedClassFeatures,
   StructuredEntityBody,
   structuredEntityKind,
 } from "./StructuredEntityBody";
@@ -64,28 +62,13 @@ export function CandidateDetail({
 
   const referenceIndex = candidateReferenceIndex(byId);
   const themePowers = themePowerGroups(entity, byId.values());
-  // A trait package (a hexblade pact, a cavalier virtue…) is only a list of
-  // the class features it swaps in; show each one's card, then the powers it
-  // grants, so the package can be judged before it is picked.
-  const shownGrants = new Set<string>();
-  const packageFeatures =
-    entity.type.trim().toLocaleLowerCase() === "trait package"
-      ? namedClassFeatures(entity, referenceIndex).map((feature) => ({
-          feature,
-          granted: classFeatureDetailEntities(feature, referenceIndex).filter(
-            (granted) => {
-              const id = granted.id.trim().toLocaleLowerCase();
-              if (shownGrants.has(id)) return false;
-              shownGrants.add(id);
-              return true;
-            },
-          ),
-        }))
-      : [];
-  const grantedEntities = grantedDetailEntities(entity, referenceIndex).filter(
-    (granted) =>
-      themePowers.length === 0 ||
-      granted.type.trim().toLocaleLowerCase() !== "power",
+  // Everything the option will eventually give (a paragon path's features
+  // and powers, a pact's class features, a deity's domains, a choice's
+  // options…), each shown once, so it can be judged before it is picked.
+  const benefits = detailStackEntries(
+    entity,
+    referenceIndex,
+    themePowers.flatMap((group) => group.powers.map((power) => power.id)),
   );
   return (
     <div className="candidate-detail-stack">
@@ -95,13 +78,20 @@ export function CandidateDetail({
         favoritable={favoritable}
         references={referenceIndex}
       />
-      {grantedEntities.map((granted) => (
-        <CandidateDetailCard
-          key={granted.id}
-          entity={granted}
-          relationship={`Granted ${granted.type.toLocaleLowerCase()}`}
-        />
-      ))}
+      {benefits.length === 0 ? null : (
+        <section
+          aria-label={`${entity.name} benefits`}
+          className="candidate-detail-benefits"
+        >
+          {benefits.map(({ entity: benefit, relationship }) => (
+            <CandidateDetailCard
+              entity={benefit}
+              key={benefit.id}
+              {...(relationship === undefined ? {} : { relationship })}
+            />
+          ))}
+        </section>
+      )}
       {themePowers.length === 0 ? null : (
         <section
           aria-label={`${entity.name} powers`}
@@ -114,23 +104,6 @@ export function CandidateDetail({
               <CandidateDetailCard entity={power} key={power.id} />
             )),
           )}
-        </section>
-      )}
-      {packageFeatures.length === 0 ? null : (
-        <section
-          aria-label={`${entity.name} benefits`}
-          className="trait-package-feature-cards"
-        >
-          {packageFeatures.flatMap(({ feature, granted }) => [
-            <CandidateDetailCard entity={feature} key={feature.id} />,
-            ...granted.map((grant) => (
-              <CandidateDetailCard
-                entity={grant}
-                key={`${feature.id}:${grant.id}`}
-                relationship={`Granted ${grant.type.toLocaleLowerCase()}`}
-              />
-            )),
-          ])}
         </section>
       )}
     </div>
