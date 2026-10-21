@@ -230,11 +230,70 @@ resolves once shared words are distributed, a class clause naming no
 class, a part read as another type than its carried prefix while a record
 of that type exists, and an ignored `or` alternative; with `--parser=` it
 runs another prerequisites module (HEAD's flagged 1, 14, 65 and 8 uses).
-Still read as legacy does: elliptical tails whose fragments resolve alone
-(`proficiency with any axe, hammer, or mace that has the versatile
-property` accepts any hammer; `Rogue from Cormyr, the Dalelands, ...`
-needs Rogue only for Cormyr), and `21st-level wizard` on records without
-`print-prereqs` stays unverified.
+
+Qualifiers that scope over a list (2026-10-21). These deliberately differ
+from legacy (D091: a mis-parse is a bug; legacy stays the oracle for what
+the data means). Legacy reads each `or` alternative alone, so a qualifier
+written once applies to one alternative only. The parser
+(`prerequisites.ts`) now:
+
+- distributes a trailing relative clause (`that` / `which` / `who`) on
+  the last alternative to every earlier one (`distributeQualifiers`):
+  `proficiency with any axe, hammer, or mace that has the versatile
+  property` needs a versatile axe or hammer (legacy: any axe, any hammer);
+- distributes the first proficiency alternative's `any` (`proficiency
+  with any bow or crossbow` is any crossbow, not only the Crossbow);
+- if a qualified alternative cannot be checked, leaves it unverified, not
+  read without the qualifier;
+- holds a first alternative's `<head> from` over the whole list
+  (`sharedFromHead`). `Rogue from Cormyr, the Dalelands, ..., or Sembia`
+  is a rogue and one of the places, each place read as a Background. A
+  place with no background (Elturgard, Evereska, Sembia) is story-only and
+  unverified (D090). Legacy needed a rogue only for Cormyr;
+- in `A, or B and C`, keeps the bare ` and ` inside the last alternative.
+  Legacy LineParse splits there, so Doomlord's scale armor alone
+  qualified;
+- reads clauses joining two requirements as both (`qualifiedClause`,
+  each side must resolve): `21st-level wizard`, `<A> with the <B>` (`be
+  a warlock with the fey pact`, `Human with the Tuathan theme`), `<A>
+  from <place>`, `<B> <class>` (`infernal pact warlock`; legacy's
+  race-plus-class takes only the first word), and `the <X>`. Legacy
+  fails them as Unrecognized, except the 21st-level wizard and bard
+  aliases, which only reached records with `print-prereqs`;
+- under a typed prefix, reads a name with no record as every
+  `<name> (<variant>)` record of that type. This generalizes the legacy
+  alias "Cormyr means either Cormyr background", so `affiliated with
+  Cormyr` now resolves;
+- reads `[any] <source> class that can use an implement` (a class with an
+  `Implements` field) and `... that uses power points` (a class with
+  Psionic Augmentation). Legacy reads neither;
+- generalizes the weapon-property phrases to `<group> that has the
+  <property> property`, and `a superior weapon` to `a <category> weapon`.
+
+The Ghost of Eventide and Silverstar `Prereqs` rewrites are removed from
+`93-prerequisites.part`. They copied legacy's readings (a rogue only for
+Cormyr; `any arcane class` without the implement qualifier), and the
+parser now reads the published text. A dump of all 11,321 parsed trees
+(rebuilt pack, against the previous parser and pack) changed 35 records.
+Every difference was reviewed and nothing else moved. Eight of the 35
+differ only in clause text: the `any one-handed spear` / `any two-handed
+hammer` forms read the same records as before. Unverified clause uses
+went from 121 (58 distinct) to 93 (45). The legality of the eight sample
+characters is unchanged.
+
+`audit-prerequisites.ts` gained four failing checks:
+
+- a qualifier read on one alternative only (reported when the explicit
+  form means something else);
+- a `<head> from` on the first alternative only;
+- an unverified clause joining requirements that each resolve;
+- a bare `and` split as an alternative.
+
+The previous parser fails them with 4, 1, 19 and 1 uses; the new one
+passes. Still read as legacy does: alternatives with a type tail that
+already resolve to the same-named record of several types (`longtooth
+shifting or razorclaw shifting racial power`, `aegis of assault or ...
+power`), which own the same thing in practice.
 
 Story memberships
 deliberately differ (D090): legacy maps spellscar, Harper, House Vadalis and

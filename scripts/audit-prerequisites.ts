@@ -11,7 +11,12 @@
  * ("Any martial or divine class"), a "<name> class" clause naming no class,
  * a part read as another type than the "trained in" / "proficiency with"
  * prefix carried to it, and an ignored alternative of an `or` (legacy drops
- * it, so the other side must hold). The pack and the output stay private.
+ * it, so the other side must hold). It also fails on qualifiers read on one
+ * alternative only (a trailing relative clause, a first alternative's
+ * "any", a "<head> from" heading the list), unverified clauses joining two
+ * requirements that each resolve ("21st-level wizard", "<A> with the <B>"),
+ * and a bare "and" inside an alternative split off as an alternative. The
+ * pack and the output stay private.
  *
  *   tsx scripts/audit-prerequisites.ts [PACK.4ecp] [--limit=N] [--json=PATH]
  *     [--parser=PATH]   internalize with another prerequisites module
@@ -256,6 +261,157 @@ function ignoredAlternatives(ir: PrerequisiteIr): string[] {
   return [...own, ...ir.children.flatMap(ignoredAlternatives)];
 }
 
+const RELATIVE_CLAUSE = /^(.+?)\s+((?:that|which|who)\s+.+)$/i;
+const PROFICIENCY_ANY = /^(?:proficiency with|proficient with)\s+any\s/i;
+const DETERMINER_OR_PREFIX =
+  /^(?:any|an?|the|all|proficiency with|proficient with|can use the)\s/i;
+
+/** What a tree requires, ignoring the text each clause carries. */
+function meaning(ir: PrerequisiteIr | undefined): string {
+  if (ir === undefined) return "";
+  if (ir.kind === "all" || ir.kind === "any")
+    return `${ir.kind}(${ir.children.map(meaning).join(",")})`;
+  return JSON.stringify(
+    "definitionIds" in ir
+      ? { ...ir, definitionIds: [...ir.definitionIds].sort() }
+      : ir,
+    (key, value: unknown) => (key === "text" ? undefined : value),
+  );
+}
+
+/**
+ * `or` nodes whose qualifier scopes over every alternative but was read on
+ * one only: a trailing relative clause on the last alternative ("any axe,
+ * hammer, or mace that has the versatile property") or the first
+ * proficiency alternative's "any" ("proficiency with any bow or
+ * crossbow"). Reported when the explicit form, with the qualifier written
+ * on every alternative, means something else.
+ */
+function undistributedQualifiers(
+  ir: PrerequisiteIr,
+  internalize: (text: string) => PrerequisiteIr | undefined,
+): string[] {
+  if (ir.kind !== "all" && ir.kind !== "any") return [];
+  const found: string[] = [];
+  const children = ir.children;
+  if (ir.kind === "any" && children.length > 1) {
+    const lastText = children.at(-1)?.text.replace(/[.]$/, "").trim() ?? "";
+    const relative = /[()[\]]/.test(lastText)
+      ? undefined
+      : RELATIVE_CLAUSE.exec(lastText)?.[2];
+    const anyHead = PROFICIENCY_ANY.test(children[0]?.text ?? "");
+    let changed = false;
+    const explicit = children.map((child, index) => {
+      let text = child.text.replace(/[.]$/, "").trim();
+      if (child.kind === "all" || child.kind === "any") return `(${text})`;
+      if (anyHead && index > 0 && !DETERMINER_OR_PREFIX.test(text)) {
+        text = `any ${text}`;
+        changed = true;
+      }
+      if (
+        relative !== undefined &&
+        index < children.length - 1 &&
+        !/\b(?:that|which|who)\b/i.test(text)
+      ) {
+        text = `${text} ${relative}`;
+        changed = true;
+      }
+      return text;
+    });
+    if (changed) {
+      const rewritten = explicit.join(" or ");
+      if (meaning(internalize(ir.text)) !== meaning(internalize(rewritten)))
+        found.push(`${ir.text} -> ${rewritten}`);
+    }
+  }
+  return [
+    ...found,
+    ...children.flatMap((child) => undistributedQualifiers(child, internalize)),
+  ];
+}
+
+/**
+ * `or` nodes whose first alternative holds a "<head> from <place>" that
+ * scopes over the whole list ("Rogue from Cormyr, the Dalelands, ...").
+ */
+function undistributedHeads(ir: PrerequisiteIr, lookup: Lookup): string[] {
+  if (ir.kind !== "all" && ir.kind !== "any") return [];
+  const first = ir.children[0];
+  const own =
+    ir.kind === "any" &&
+    ir.children.length > 1 &&
+    first !== undefined &&
+    first.kind !== "all" &&
+    first.kind !== "any" &&
+    /\sfrom\s/i.test(first.text) &&
+    !lookup.byName.has(lower(first.text).replace(/[.]$/, "")) &&
+    !ir.children.slice(1).some((child) => /\sfrom\s/i.test(child.text))
+      ? [`${ir.text} -> ${first.text}`]
+      : [];
+  return [
+    ...own,
+    ...ir.children.flatMap((child) => undistributedHeads(child, lookup)),
+  ];
+}
+
+/**
+ * Unverified clauses joining two requirements that each resolve:
+ * "21st-level wizard", "<A> with the <B>", "<A> from <B>", "<B> <class>",
+ * "the <X>", and a typed name standing for its "<name> (<variant>)"
+ * records ("affiliated with Cormyr").
+ */
+function unjoinedClauses(
+  ir: PrerequisiteIr,
+  internalize: (text: string) => PrerequisiteIr | undefined,
+  lookup: Lookup,
+): string[] {
+  if (ir.kind === "all" || ir.kind === "any")
+    return ir.children.flatMap((child) =>
+      unjoinedClauses(child, internalize, lookup),
+    );
+  if (ir.kind !== "unverified") return [];
+  const text = ir.text.replace(/[.]$/, "").trim().replace(ANY_PREFIX, "");
+  const explicit: string[] = [];
+  const levelled = /^(\d+)(?:st|nd|rd|th)[\s-]+level\s+(.+)$/i.exec(text);
+  if (levelled?.[2] !== undefined)
+    explicit.push(`${levelled[1]} level, ${levelled[2]}`);
+  const joined = /^(.+?)\s+(?:with|from)\s+(?:the\s+|an?\s+)?(.+)$/i.exec(text);
+  if (joined?.[2] !== undefined) explicit.push(`${joined[1]}, ${joined[2]}`);
+  const words = text.split(/\s+/);
+  for (let split = 1; split < words.length; split += 1)
+    if ([...namedTypes(lookup, words.slice(split).join(" "))].includes("class"))
+      explicit.push(
+        `${words.slice(0, split).join(" ")}, ${words.slice(split).join(" ")}`,
+      );
+  if (/^the\s/i.test(text)) explicit.push(text.slice(4));
+  const resolved = explicit.find((candidate) => {
+    const read = internalize(candidate);
+    return read !== undefined && treeResolves(read, lookup);
+  });
+  if (resolved !== undefined) return [`${ir.text} -> ${resolved}`];
+  const name = lower(text).replace(/^the\s+/, "");
+  return [...lookup.byName.keys()].some(
+    (key) => key.startsWith(`${name} (`) && key.endsWith(")"),
+  )
+    ? [`${ir.text} -> ${name} (...)`]
+    : [];
+}
+
+/** `or` alternatives split at a bare " and " that joins inside one of them. */
+function splitConjunctions(ir: PrerequisiteIr): string[] {
+  if (ir.kind !== "all" && ir.kind !== "any") return [];
+  const source = lower(ir.text);
+  const own: string[] = [];
+  if (ir.kind === "any")
+    for (let index = 1; index < ir.children.length; index += 1) {
+      const pair = `${lower(ir.children[index - 1]?.text ?? "")} and ${lower(
+        ir.children[index]?.text ?? "",
+      )}`;
+      if (source.includes(pair)) own.push(`${ir.text} -> ${pair}`);
+    }
+  return [...own, ...ir.children.flatMap(splitConjunctions)];
+}
+
 interface Finding {
   uses: number;
   examples: string[];
@@ -335,6 +491,10 @@ async function main(): Promise<void> {
   const classMisreads = new Map<string, Finding>();
   const typeMisreads = new Map<string, Finding>();
   const droppedIgnores = new Map<string, Finding>();
+  const qualifiers = new Map<string, Finding>();
+  const heads = new Map<string, Finding>();
+  const unjoined = new Map<string, Finding>();
+  const conjunctions = new Map<string, Finding>();
   const cutNames = new Map<string, Finding>();
   const cutPhrases = new Map<string, Finding>();
   const suspectPairs = new Map<string, Finding>();
@@ -363,6 +523,16 @@ async function main(): Promise<void> {
       record(typeMisreads, lower(clause), `${subject.id} "${subject.name}"`);
     for (const clause of ignoredAlternatives(ir))
       record(droppedIgnores, lower(clause), `${subject.id} "${subject.name}"`);
+    const internalizeHere = (text: string) =>
+      internalizePrerequisite(text, context);
+    for (const clause of undistributedQualifiers(ir, internalizeHere))
+      record(qualifiers, lower(clause), `${subject.id} "${subject.name}"`);
+    for (const clause of undistributedHeads(ir, lookup))
+      record(heads, lower(clause), `${subject.id} "${subject.name}"`);
+    for (const clause of unjoinedClauses(ir, internalizeHere, lookup))
+      record(unjoined, lower(clause), `${subject.id} "${subject.name}"`);
+    for (const clause of splitConjunctions(ir))
+      record(conjunctions, lower(clause), `${subject.id} "${subject.name}"`);
     records += 1;
     const label = `${subject.id} ${subject.type} "${subject.name}"`;
     const source = lower(subject.prerequisites);
@@ -442,6 +612,26 @@ async function main(): Promise<void> {
     droppedIgnores,
     limit,
   );
+  const qualifierFindings = report(
+    "qualifier read on one alternative only (should be 0)",
+    qualifiers,
+    limit,
+  );
+  const headFindings = report(
+    "'<head> from' read on the first alternative only (should be 0)",
+    heads,
+    limit,
+  );
+  const unjoinedFindings = report(
+    "unverified clause joining requirements that resolve (should be 0)",
+    unjoined,
+    limit,
+  );
+  const conjunctionFindings = report(
+    "bare 'and' inside an alternative split as an alternative (should be 0)",
+    conjunctions,
+    limit,
+  );
   const pairs = report(
     "adjacent unverified split fragments (review)",
     suspectPairs,
@@ -461,6 +651,10 @@ async function main(): Promise<void> {
           classMisreads: classes,
           carriedTypeMisreads: types,
           ignoredAlternatives: ignores,
+          undistributedQualifiers: qualifierFindings,
+          undistributedHeads: headFindings,
+          unjoinedClauses: unjoinedFindings,
+          splitConjunctions: conjunctionFindings,
           unverifiedPairs: pairs,
         },
         null,
@@ -468,9 +662,18 @@ async function main(): Promise<void> {
       )}\n`,
     );
   if (
-    [names, phrases, distributable, classes, types, ignores].some(
-      (finding) => finding.uses > 0,
-    )
+    [
+      names,
+      phrases,
+      distributable,
+      classes,
+      types,
+      ignores,
+      qualifierFindings,
+      headFindings,
+      unjoinedFindings,
+      conjunctionFindings,
+    ].some((finding) => finding.uses > 0)
   )
     process.exitCode = 1;
 }

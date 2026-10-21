@@ -1015,3 +1015,213 @@ describe("shared words in coordinated alternatives", () => {
     expect(status("must have more than one class", [cleric])).toBe("failed");
   });
 });
+
+describe("qualifiers that scope over a whole list", () => {
+  const weapon = (id: string, name: string, group: string, properties = "") =>
+    entity(id, name, "Weapon", {
+      Group: group,
+      Properties: properties,
+      "Weapon Category": "Military Melee",
+    });
+  const proficiency = (id: string, name: string) =>
+    entity(`PROF_${id}`, `Weapon Proficiency (${name})`, "Proficiency");
+  const battleaxe = weapon("BATTLEAXE", "Battleaxe", "Axe", "Versatile");
+  const handaxe = weapon("HANDAXE", "Handaxe", "Axe", "Heavy Thrown");
+  const warhammer = weapon("WARHAMMER", "Warhammer", "Hammer", "Versatile");
+  const maul = weapon("MAUL", "Maul", "Hammer");
+  const crossbow = entity("CROSSBOW", "Crossbow", "Weapon", {
+    Group: "Crossbow",
+    "Weapon Category": "Simple Ranged",
+  });
+  const handCrossbow = entity("HAND_CROSSBOW", "Hand crossbow", "Weapon", {
+    Group: "Crossbow",
+    "Weapon Category": "Simple Ranged",
+  });
+  const mace = weapon("MACE", "Mace", "Mace", "Versatile");
+  const groups = ["Axe", "Hammer", "Mace", "Crossbow"].map((group) =>
+    entity(`GROUP_${group}`, group, "Weapon Group"),
+  );
+  const versatile = entity("VERSATILE", "Versatile", "Weapon Property");
+  const proficiencies = {
+    battleaxe: proficiency("BATTLEAXE", "Battleaxe"),
+    handaxe: proficiency("HANDAXE", "Handaxe"),
+    warhammer: proficiency("WARHAMMER", "Warhammer"),
+    maul: proficiency("MAUL", "Maul"),
+    mace: proficiency("MACE", "Mace"),
+    crossbow: proficiency("CROSSBOW", "Crossbow"),
+    handCrossbow: proficiency("HAND_CROSSBOW", "Hand crossbow"),
+  };
+  const scale = entity(
+    "PROF_SCALE",
+    "Armor Proficiency (Scale)",
+    "Proficiency",
+  );
+  const theme = entity("IRONWROUGHT", "Ironwrought", "Theme");
+  const arcane = entity("ARCANE", "Arcane", "Power Source");
+  const wizard = entity("WIZARD", "Wizard", "Class", {
+    "Power Source": "Arcane. You study magic.",
+    Implements: "Orbs, staffs, wands",
+  });
+  const swordless = entity("BLADE_CASTER", "Bladecaster", "Class", {
+    "Power Source": "Arcane. You fight with spells.",
+  });
+  const psionic = entity("PSIONIC", "Psionic", "Power Source");
+  const psion = entity("PSION", "Psion", "Class", {
+    "Power Source": "Psionic. You focus your mind.",
+    _PARSED_CLASS_FEATURE: "Psionic Augmentation, Discipline Focus",
+  });
+  const monk = entity("MONK", "Monk", "Class", {
+    "Power Source": "Psionic. You train your body.",
+  });
+  const rogue = entity("ROGUE", "Rogue", "Class");
+  const warlock = entity("WARLOCK", "Warlock", "Class");
+  const feyPact = entity("FEY_PACT", "Fey Pact", "Class Feature");
+  const human = entity("HUMAN", "Human", "Race");
+  const tuathan = entity("TUATHAN", "Tuathan", "Theme");
+  const cormyrA = entity("CORMYR_A", "Cormyr (General)", "Background");
+  const cormyrB = entity("CORMYR_B", "Cormyr (Wheloon)", "Background");
+  const dalelands = entity("DALELANDS", "Dalelands", "Background");
+  const oath = entity("OATH", "Oath of Enmity", "Power");
+  const all = [
+    battleaxe,
+    handaxe,
+    warhammer,
+    maul,
+    mace,
+    crossbow,
+    handCrossbow,
+    ...groups,
+    versatile,
+    ...Object.values(proficiencies),
+    scale,
+    theme,
+    arcane,
+    wizard,
+    swordless,
+    psionic,
+    psion,
+    monk,
+    rogue,
+    warlock,
+    feyPact,
+    human,
+    tuathan,
+    cormyrA,
+    cormyrB,
+    dalelands,
+    oath,
+  ];
+  const evaluate = (
+    prerequisite: string,
+    owned: readonly ContentEntity[],
+    level = 1,
+  ) =>
+    evaluatePrerequisite(prerequisite, {
+      owned,
+      level,
+      abilities: {},
+      definitions: all,
+    });
+  const status = (
+    prerequisite: string,
+    owned: readonly ContentEntity[],
+    level = 1,
+  ) => evaluate(prerequisite, owned, level).status;
+
+  it("distributes a trailing relative clause to every alternative", () => {
+    // Legacy reads "any axe" and "hammer" alone, so any axe or hammer passed.
+    const prerequisite =
+      "proficiency with any axe, hammer, or mace that has the versatile property";
+    expect(status(prerequisite, [proficiencies.battleaxe])).toBe("satisfied");
+    expect(status(prerequisite, [proficiencies.warhammer])).toBe("satisfied");
+    expect(status(prerequisite, [proficiencies.handaxe])).toBe("failed");
+    expect(status(prerequisite, [proficiencies.maul])).toBe("failed");
+    expect(evaluate(prerequisite, []).clauses.map((c) => c.text)).toEqual([
+      "proficiency with any axe that has the versatile property",
+      "any hammer that has the versatile property",
+      "any mace that has the versatile property",
+    ]);
+  });
+
+  it("distributes a first alternative's any over a proficiency list", () => {
+    // Legacy reads "crossbow" as the Crossbow weapon only.
+    const prerequisite = "proficiency with any axe or crossbow";
+    expect(status(prerequisite, [proficiencies.handCrossbow])).toBe(
+      "satisfied",
+    );
+    expect(evaluate(prerequisite, []).clauses.map((c) => c.text)).toEqual([
+      "proficiency with any axe",
+      "any crossbow",
+    ]);
+  });
+
+  it("reads a class that can use an implement or uses power points", () => {
+    const implement = "Any arcane class that can use an implement";
+    expect(status(implement, [wizard])).toBe("satisfied");
+    expect(status(implement, [swordless])).toBe("failed");
+    const points = "any psionic class that uses power points";
+    expect(status(points, [psion])).toBe("satisfied");
+    expect(status(points, [monk])).toBe("failed");
+    // A qualifier that cannot be checked leaves the alternative unverified
+    // rather than read without it.
+    expect(
+      evaluate("any arcane class or divine class that can use an implement", [
+        swordless,
+      ]).clauses.map((clause) => clause.text),
+    ).toEqual([
+      "any arcane class that can use an implement",
+      "divine class that can use an implement",
+    ]);
+  });
+
+  it("keeps a bare and inside the alternative of an or list", () => {
+    // Legacy splits at the "and", so scale armor alone qualified.
+    const prerequisite =
+      "Ironwrought theme, or proficiency with scale armor and a military melee weapon";
+    expect(status(prerequisite, [theme])).toBe("satisfied");
+    expect(status(prerequisite, [scale, proficiencies.battleaxe])).toBe(
+      "satisfied",
+    );
+    expect(status(prerequisite, [scale])).not.toBe("satisfied");
+    expect(status(prerequisite, [proficiencies.battleaxe])).not.toBe(
+      "satisfied",
+    );
+  });
+
+  it("reads Nth-level <class> as the level and the class", () => {
+    expect(status("21st-level wizard", [wizard], 21)).toBe("satisfied");
+    expect(status("21st-level wizard", [wizard], 20)).toBe("failed");
+    expect(status("21st-level wizard", [rogue], 21)).toBe("failed");
+  });
+
+  it("reads joined requirements in one clause as both", () => {
+    const fey = "be a warlock with the fey pact";
+    expect(status(fey, [warlock, feyPact])).toBe("satisfied");
+    expect(status(fey, [warlock])).toBe("failed");
+    expect(status("Human with the Tuathan theme", [human, tuathan])).toBe(
+      "satisfied",
+    );
+    expect(status("Human with the Tuathan theme", [human])).toBe("failed");
+    expect(status("fey pact warlock", [warlock, feyPact])).toBe("satisfied");
+    expect(status("fey pact warlock", [warlock])).toBe("failed");
+    expect(status("either the oath of enmity", [oath])).toBe("satisfied");
+  });
+
+  it("reads a name as its qualified variants under a typed prefix", () => {
+    // Legacy SpecialCase: Cormyr means either Cormyr background.
+    expect(status("affiliated with Cormyr", [cormyrB])).toBe("satisfied");
+    expect(status("affiliated with Cormyr", [dalelands])).toBe("failed");
+  });
+
+  it("holds a '<head> from' over the whole list of places (D090)", () => {
+    // Legacy needs a rogue only for Cormyr; any Dalelands native passed.
+    const prerequisite =
+      "Rogue from Cormyr, the Dalelands, Elturgard, or Sembia";
+    expect(status(prerequisite, [rogue, cormyrA])).toBe("satisfied");
+    expect(status(prerequisite, [rogue, dalelands])).toBe("satisfied");
+    expect(status(prerequisite, [dalelands])).toBe("failed");
+    // Elturgard and Sembia have no background: story-only, so unverified.
+    expect(status(prerequisite, [rogue])).toBe("unverified");
+    expect(status(prerequisite, [])).toBe("failed");
+  });
+});

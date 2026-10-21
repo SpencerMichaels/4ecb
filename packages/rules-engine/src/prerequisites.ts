@@ -435,6 +435,37 @@ function namedElement(
   );
 }
 
+const LEADING_ARTICLE = /^(?:the|an?)\s+/i;
+
+/**
+ * A record of that type by name, else without a leading article ("the
+ * Dalelands"), else, when no record has the name, every "<name> (<variant>)"
+ * record of the type: legacy SpecialCase reads "Cormyr" as either Cormyr
+ * background, generalized.
+ */
+function typedElement(
+  text: string,
+  name: string,
+  context: PrerequisiteContext,
+  type: string,
+): PrerequisiteIr | undefined {
+  const exact = namedElement(text, name, context, type);
+  if (exact !== undefined) return exact;
+  const bare = name.trim().replace(LEADING_ARTICLE, "").trim();
+  if (bare !== name.trim()) {
+    const stripped = namedElement(text, bare, context, type);
+    if (stripped !== undefined) return stripped;
+  }
+  const variant = `${normalized(bare)} (`;
+  return elementOf(
+    text,
+    definitionsOfType(context, type).filter((definition) => {
+      const candidate = normalized(definition.name);
+      return candidate.startsWith(variant) && candidate.endsWith(")");
+    }),
+  );
+}
+
 /** Legacy CountsAsClassPowerSource: CountsAsClass records of a source's classes. */
 function countsAsClassOfSource(
   source: string,
@@ -554,6 +585,30 @@ function proficiencySpecialCase(
   }
   const phrase = LEGACY_WEAPON_PHRASES[lower];
   if (phrase !== undefined) return weaponProficiencies(text, context, phrase);
+  // The property phrases above, generalized: "any <group> that has the
+  // <property> property" for any weapon group and weapon property.
+  const qualified =
+    /^(?:any |an? )?(.+?) (?:that has|with) the (.+?) property$/.exec(lower);
+  if (
+    qualified?.[1] !== undefined &&
+    qualified[2] !== undefined &&
+    isGroup(qualified[1]) &&
+    resolveDefinitions(qualified[2], context, "Weapon Property").length > 0
+  ) {
+    const [, propertyGroup, property] = qualified;
+    return weaponProficiencies(text, context, (weapon) =>
+      groupAndProperty(weapon, propertyGroup, normalized(property)),
+    );
+  }
+  // "a superior weapon", generalized: "a military melee weapon" is any
+  // weapon of that category.
+  const category = /^(?:any |an? )(.+?) weapons?$/.exec(lower)?.[1];
+  if (category !== undefined) {
+    const categoryWeapons = weaponProficiencies(text, context, (weapon) =>
+      normalized(rawField(weapon, "Weapon Category")).includes(category),
+    );
+    if (categoryWeapons !== undefined) return categoryWeapons;
+  }
   // Legacy's armor and shield literals ("hide armor", "chainmail", "heavy
   // shields"), generalized: the armor or shield proficiency of that name.
   const armor = /^(.+?)(?: armor)?$/.exec(lower)?.[1];
@@ -617,7 +672,7 @@ function inheritedTypeClause(
       normalized(name).replace(/\s+/g, " "),
       context,
     );
-  return namedElement(text, name, context, type);
+  return typedElement(text, name, context, type);
 }
 
 /**
@@ -781,7 +836,7 @@ function legacyClause(
       return { kind: "training", text, value: rest };
     if (type === "Proficiency")
       return { kind: "proficiency", text, value: rest };
-    if (type !== undefined) return namedElement(text, rest, context, type);
+    if (type !== undefined) return typedElement(text, rest, context, type);
     const inner = internalizeLeaf(rest, context);
     return inner.kind === "unverified" ? undefined : { ...inner, text };
   }
@@ -879,7 +934,133 @@ function legacyClause(
     return { kind: "predicate", text, predicate: "psionic-daily-attack" };
   if (lower === "at least one healing infusion power")
     return { kind: "predicate", text, predicate: "healing-infusion-power" };
-  return undefined;
+  return (
+    qualifiedClass(text, lower, context) ??
+    qualifiedClause(text, canonical.trim(), context)
+  );
+}
+
+/** Whether a class's power source (its field's first sentence) names this source. */
+function classHasSource(entity: ContentEntity, source: string): boolean {
+  const sources = normalized(rawField(entity, "Power Source")).split(".")[0];
+  return (sources ?? "").split(/\W+/).includes(source);
+}
+
+/**
+ * "[any] <source> class that can use an implement" (a class whose
+ * Implements field names one) and "... that uses power points" (a class
+ * with the Psionic Augmentation class feature, which grants power points),
+ * with each class's CountsAsClass alternate. Legacy reads neither.
+ */
+function qualifiedClass(
+  text: string,
+  lower: string,
+  context: PrerequisiteContext,
+): PrerequisiteIr | undefined {
+  const match =
+    /^(?:any )?(\S+) class that (can use an implement|uses power points)$/.exec(
+      lower,
+    );
+  if (
+    match?.[1] === undefined ||
+    match[2] === undefined ||
+    resolveDefinitions(match[1], context, "Power Source").length === 0
+  )
+    return undefined;
+  const [, source, qualifier] = match;
+  return elementOf(
+    text,
+    withCountsAsAlternates(
+      definitionsOfType(context, "Class").filter(
+        (entity) =>
+          classHasSource(entity, source) &&
+          (qualifier === "uses power points"
+            ? isPsionicClass(entity)
+            : rawField(entity, "Implements").trim().length > 0),
+      ),
+      context,
+    ),
+  );
+}
+
+/**
+ * A clause that joins two requirements in one phrase, read as both (legacy
+ * reads only "<race> <class>"; the rest are Unrecognized, always failing):
+ *
+ * - "21st-level wizard": that level and a wizard;
+ * - "<A> with the <B>": "warlock with the fey pact", "Human with the
+ *   Tuathan theme";
+ * - "<A> from <place>": A and the place's regional background, unverified
+ *   when the content has no such background (a story-only region, D090);
+ * - "<B> <class>": "infernal pact warlock";
+ * - "the <X>": X ("either the oath of enmity").
+ *
+ * Each side must resolve (the place excepted), so prose stays unverified.
+ */
+function qualifiedClause(
+  text: string,
+  canonical: string,
+  context: PrerequisiteContext,
+): PrerequisiteIr | undefined {
+  const read = (part: string) => {
+    const ir = internalizeLeaf(part, context);
+    return resolves(ir, context) ? ir : undefined;
+  };
+  const both = (
+    left: PrerequisiteIr | undefined,
+    right: PrerequisiteIr | undefined,
+  ): PrerequisiteIr | undefined =>
+    left === undefined || right === undefined
+      ? undefined
+      : { kind: "all", text, children: [left, right] };
+  const levelled = /^((\d+)(?:st|nd|rd|th)[\s-]+level)\s+(.+)$/i.exec(
+    canonical,
+  );
+  if (
+    levelled?.[1] !== undefined &&
+    levelled[2] !== undefined &&
+    levelled[3] !== undefined
+  ) {
+    const joined = both(
+      {
+        kind: "level",
+        text: levelled[1],
+        minimum: Number(levelled[2]),
+      },
+      read(levelled[3]),
+    );
+    if (joined !== undefined) return joined;
+  }
+  const withQualifier = /^(.+?)\s+with\s+(?:the\s+|an?\s+)?(.+)$/i.exec(
+    canonical,
+  );
+  if (withQualifier?.[1] !== undefined && withQualifier[2] !== undefined) {
+    const joined = both(read(withQualifier[1]), read(withQualifier[2]));
+    if (joined !== undefined) return joined;
+  }
+  const fromPlace = /^(.+?)\s+from\s+(.+)$/i.exec(canonical);
+  if (fromPlace?.[1] !== undefined && fromPlace[2] !== undefined) {
+    const place = fromPlace[2];
+    const joined = both(
+      read(fromPlace[1]),
+      typedElement(place, place, context, "Background") ??
+        read(place) ?? { kind: "unverified", text: place },
+    );
+    if (joined !== undefined) return joined;
+  }
+  const words = canonical.split(/\s+/);
+  for (let split = words.length - 1; split >= 1; split -= 1) {
+    const className = words.slice(split).join(" ");
+    if (resolveDefinitions(className, context, "Class").length === 0) continue;
+    const joined = both(
+      read(words.slice(0, split).join(" ")),
+      namedElement(className, className, context),
+    );
+    if (joined !== undefined) return joined;
+  }
+  return LEADING_ARTICLE.test(canonical)
+    ? read(canonical.replace(LEADING_ARTICLE, ""))
+    : undefined;
 }
 
 function internalizeLeaf(
@@ -1130,8 +1311,16 @@ function internalizeBlock(
     const isOrList = commaAnd.some((part) =>
       /^,\s*or\s+/i.test(part.delimiter),
     );
+    // In "A, or B and C" the bare " and " joins B and C inside the last
+    // alternative (legacy LineParse splits there too, making C an
+    // alternative); only the commas separate the alternatives.
     return isOrList
-      ? alternativesOf(text, commaAnd, context, inheritedType)
+      ? alternativesOf(
+          text,
+          splitTopLevel(text, [/^,\s*(?:or\s+|and\s+)?/i], names),
+          context,
+          inheritedType,
+        )
       : connective(
           "all",
           text,
@@ -1173,10 +1362,16 @@ function alternativesOf(
   context: PrerequisiteContext,
   inheritedType: string | undefined,
 ): PrerequisiteIr {
+  const sharedHead = sharedFromHead(text, parts, context, inheritedType);
+  if (sharedHead !== undefined) return sharedHead;
   const carried = carriedParts(parts, inheritedType);
   const children = distributeSharedWords(
     carried,
-    carried.map(([part, type]) => internalizeBlock(part, context, type)),
+    distributeQualifiers(
+      carried,
+      carried.map(([part, type]) => internalizeBlock(part, context, type)),
+      context,
+    ),
     context,
   );
   // Legacy Ignore yields no prerequisite, and InternalizeOr then keeps only
@@ -1203,6 +1398,113 @@ function resolves(ir: PrerequisiteIr, context: PrerequisiteContext): boolean {
 function shareableWords(text: string): readonly string[] {
   const words = text.replace(/[.]$/, "").trim().split(/\s+/);
   return words.some((word) => /[()[\]]/.test(word)) ? [] : words;
+}
+
+/**
+ * "Rogue from Cormyr, the Dalelands, ..., or Sembia": the head before
+ * "from" holds for the whole list, and the list is of places (regional
+ * backgrounds), so it is the head and any of the places. Legacy reads
+ * "Rogue from Cormyr" as one Unrecognized alternative, so a character
+ * from any other place qualifies without being a rogue. A place with no
+ * background stays unverified (D090).
+ */
+function sharedFromHead(
+  text: string,
+  parts: readonly Segment[],
+  context: PrerequisiteContext,
+  inheritedType: string | undefined,
+): PrerequisiteIr | undefined {
+  const first = parts[0]?.text.replace(/[.]$/, "").trim() ?? "";
+  const match = /^(.+?)\s+from\s+(.+)$/i.exec(first);
+  if (
+    context.definitions === undefined ||
+    parts.length < 2 ||
+    match?.[1] === undefined ||
+    match[2] === undefined ||
+    resolveDefinitions(first, context).length > 0 ||
+    parts.slice(1).some((part) => /\sfrom\s/i.test(part.text))
+  )
+    return undefined;
+  const head = internalizeLeaf(match[1], context, inheritedType);
+  if (!resolves(head, context)) return undefined;
+  const places = [{ text: match[2], delimiter: "" }, ...parts.slice(1)];
+  const placesText = text
+    .slice(text.search(/\sfrom\s/i))
+    .replace(/^\s*from\s+/i, "");
+  return {
+    kind: "all",
+    text,
+    children: [head, alternativesOf(placesText, places, context, "Background")],
+  };
+}
+
+const RELATIVE_CLAUSE = /^(.+?)\s+((?:that|which|who)\s+.+)$/i;
+const PROFICIENCY_PREFIX =
+  /^(?:proficiency with|proficient with|can use the)\s+/i;
+const DETERMINER = /^(?:any|an?|the|all)\s/i;
+
+/**
+ * Qualifiers that scope over every alternative although only one carries
+ * them, where each alternative also resolves alone (so shared-word
+ * distribution, which only completes fragments, leaves them):
+ *
+ * - a trailing relative clause on the last alternative: in "proficiency
+ *   with any axe, hammer, or mace that has the versatile property" the
+ *   axe and the hammer must be versatile too;
+ * - the first proficiency alternative's "any": in "proficiency with any
+ *   bow or crossbow" the crossbow is any crossbow, not the Crossbow.
+ *
+ * Legacy reads each alternative alone. When the qualified alternative
+ * cannot be checked it is unverified rather than read without the
+ * qualifier.
+ */
+function distributeQualifiers(
+  parts: readonly (readonly [string, string | undefined])[],
+  children: readonly PrerequisiteIr[],
+  context: PrerequisiteContext,
+): readonly PrerequisiteIr[] {
+  if (context.definitions === undefined || parts.length < 2) return children;
+  const last = (parts[parts.length - 1]?.[0] ?? "").replace(/[.]$/, "").trim();
+  const relative =
+    shareableWords(last).length === 0
+      ? undefined
+      : RELATIVE_CLAUSE.exec(last)?.[2];
+  const firstValue = (parts[0]?.[0] ?? "")
+    .trim()
+    .replace(PROFICIENCY_PREFIX, "");
+  const anyHead = parts[0]?.[1] === "Proficiency" && /^any\s/i.test(firstValue);
+  return children.map((child, index) => {
+    const [part, type] = parts[index] ?? ["", undefined];
+    const own = part.replace(/[.]$/, "").trim();
+    if (child.kind === "all" || child.kind === "any") return child;
+    const tail =
+      relative !== undefined &&
+      index < parts.length - 1 &&
+      !/\b(?:that|which|who)\b/i.test(own)
+        ? ` ${relative}`
+        : "";
+    if (type === "Proficiency") {
+      const prefix = PROFICIENCY_PREFIX.exec(own)?.[0] ?? "";
+      const value = own.slice(prefix.length);
+      const head =
+        anyHead && index > 0 && !DETERMINER.test(value) ? "any " : "";
+      if (head === "" && tail === "") return child;
+      const distributed = `${prefix}${head}${value}${tail}`;
+      const read = proficiencySpecialCase(
+        distributed,
+        normalized(`${head}${value}${tail}`).replace(/\s+/g, " "),
+        context,
+      );
+      if (read !== undefined) return read;
+      return tail === "" ? child : { kind: "unverified", text: distributed };
+    }
+    if (tail === "" || child.kind === "unverified") return child;
+    const distributed = `${own}${tail}`;
+    const read = internalizeLeaf(distributed, context, type);
+    return resolves(read, context)
+      ? read
+      : { kind: "unverified", text: distributed };
+  });
 }
 
 /**

@@ -50,13 +50,14 @@
   <!-- SpecialCase: Cormyr means either Cormyr background. -->
   <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_66"><Prereqs /></RemoveNodes>
   <AppendNodes internal-id="ID_FMP_PARAGON_PATH_66"><Prereqs>Wizard, Cormyr (Wheloon) or Cormyr (General)</Prereqs></AppendNodes>
-  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_67"><Prereqs /></RemoveNodes>
-  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_67"><Prereqs>(rogue and (Cormyr (Wheloon) or Cormyr (General))), Dalelands, Elturgard, Evereska, Gray Vale, Luruar, or Sembia</Prereqs></AppendNodes>
+  <!-- Ghost of Eventide (ID_FMP_PARAGON_PATH_67) is not rewritten: legacy's
+       alias needed a rogue only for Cormyr; the parser reads the published
+       "Rogue from Cormyr, the Dalelands, ..." as a rogue from any of them. -->
   <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_85"><Prereqs /></RemoveNodes>
   <AppendNodes internal-id="ID_FMP_PARAGON_PATH_85"><Prereqs>Fighter, paladin, or warlord; Cormyr (Wheloon) or Cormyr (General)</Prereqs></AppendNodes>
   <!-- Errata: wordings the legacy parser also could not read. -->
-  <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_143"><Prereqs /></RemoveNodes>
-  <AppendNodes internal-id="ID_FMP_PARAGON_PATH_143"><Prereqs>any arcane class or divine class that can use an implement; must worship Selûne</Prereqs></AppendNodes>
+  <!-- Silverstar (ID_FMP_PARAGON_PATH_143) is not rewritten: the parser
+       reads "Any arcane or divine class that can use an implement" whole. -->
   <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_295"><Prereqs /></RemoveNodes>
   <AppendNodes internal-id="ID_FMP_PARAGON_PATH_295"><Prereqs>any martial class or divine class, must worship Bane</Prereqs></AppendNodes>
   <RemoveNodes internal-id="ID_FMP_PARAGON_PATH_372"><Prereqs /></RemoveNodes>
