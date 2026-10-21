@@ -1,5 +1,34 @@
 # Implementation status
 
+## Coverage matrix: content and prerequisite errors (2026-10-21)
+
+- **Missing grant targets** (`3b60f85`,
+  `content/corrections/96-content-fixes.part`):
+  - Blindsight vision now exists, covering Deep Delver, two items and a feat.
+  - In the community part, the DMG2 companion classes' "Level 17 Encounter
+    Power" records reused the level 13 IDs. The level 13 records are restored
+    and the level 17 ones added.
+  - Other dangling grant IDs found in the merged XML are not yet fixed:
+    background-association typos, Bladesinger CountsAsClass, the Sorcerer-King
+    pact, a two-handed heavy-blade proficiency, and community companion
+    helpers.
+- **Prerequisites of a choice's own pick** (`9dce3a2`): legacy
+  `D20Choice::UpdateArrays` sets a slot's pick and its direct grants aside
+  while checking legality. This is now ported, fixing Born of Two Races, Past
+  Spirit, Moteborn's Primordial and treasure-hunter Skill Focus.
+- **Deity-domain clauses** (`9dce3a2`): a deity's `Domains` lists Domain
+  IDs, so no deity had ever met "worship a deity of the X domain". It now
+  matches, and the prerequisite audit checks for it. Hu Sheng-Ming stays
+  illegal: his deity Aurom has no domains, and legacy marks the same feat a
+  house rule.
+- **Evaluation cache:** v26 (`7694de8`).
+- **Not fixed (owner decision):** Assassin's Strike (Hybrid) choices at levels
+  13 and 23 are empty after earlier upgrades. The content lacks the upgrade
+  records, and adding them would mean copying published effect text.
+
+Verification: pack rebuilt (41 warnings); 1111 workspace tests pass; no sample
+character's legality changed.
+
 ## Deferred: associates and summoned creatures (2026-10-21)
 
 Possible future improvement, owner-acknowledged: associates (54 records),
