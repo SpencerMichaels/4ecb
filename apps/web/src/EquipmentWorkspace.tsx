@@ -261,18 +261,23 @@ export function catalogItemDetail(
 export function ItemDetail({
   item,
   byId,
+  note,
+  empty,
 }: {
   readonly item: InspectedItemDetail | undefined;
   readonly byId: ReadonlyMap<string, ContentEntity>;
+  /** A builder addition shown below the card (D079), e.g. a known source. */
+  readonly note?: string;
+  readonly empty?: { readonly heading: string; readonly hint: string };
 }) {
   const entity = item?.entities.at(-1);
   if (item === undefined || entity === undefined)
     return (
       <aside className="candidate-detail candidate-detail-empty">
-        <h4>Choose an item to inspect it</h4>
+        <h4>{empty?.heading ?? "Choose an item to inspect it"}</h4>
         <p>
-          The same detail viewer follows selections across Inventory, Loadout,
-          and Shop.
+          {empty?.hint ??
+            "The same detail viewer follows selections across Inventory, Loadout, and Shop."}
         </p>
       </aside>
     );
@@ -306,7 +311,15 @@ export function ItemDetail({
   return (
     <div className="candidate-detail-stack">
       <div className="candidate-card-panel">
-        <BuilderItemCard name={item.displayName} entities={item.entities} />
+        <BuilderItemCard
+          name={item.displayName}
+          entities={item.entities}
+          {...(note === undefined
+            ? {}
+            : {
+                subheading: <p className="candidate-relationship">{note}</p>,
+              })}
+        />
       </div>
       {powers.map((power) => (
         <BuilderPowerCard
@@ -1430,7 +1443,10 @@ export function EquipmentWorkspace({
                 })
               }
               onAcquire={onPurchase}
-              onBrowseChange={(category) => onShopCategoryChange(category)}
+              // Shop mode offers only item categories (learning is in Rituals).
+              onBrowseChange={(category) =>
+                onShopCategoryChange(category as ShopCategory)
+              }
             />
           )}
         </div>

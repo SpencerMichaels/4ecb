@@ -82,9 +82,20 @@ describe("hash routes", () => {
       {
         navigation: {
           workspace: "shop" as const,
+          category: "consumables" as const,
+        },
+        expected: { workspace: "shop", category: "consumables" },
+      },
+      {
+        navigation: { workspace: "rituals" as const },
+        expected: { workspace: "rituals" },
+      },
+      {
+        navigation: {
+          workspace: "rituals" as const,
           category: "martial-practices" as const,
         },
-        expected: { workspace: "shop", category: "martial-practices" },
+        expected: { workspace: "rituals", category: "martial-practices" },
       },
       {
         navigation: { workspace: "diagnostics" as const },
@@ -133,8 +144,14 @@ describe("hash routes", () => {
     expect(
       parseHashRoute("#/characters/one/edit?tab=equipment&section=practices"),
     ).toMatchObject({
-      builder: { workspace: "shop", category: "rituals" },
+      builder: { workspace: "rituals" },
     });
+    // Learning moved out of Shop: old Shop learning links open the Rituals tab.
+    expect(
+      canonicalHashRedirect(
+        "#/characters/one/edit?tab=shop&category=alchemical-formulas",
+      ),
+    ).toBe("#/characters/one/edit?tab=rituals&category=alchemical-formulas");
     expect(
       parseHashRoute("#/characters/one/edit?tab=equipment&section=shop"),
     ).toMatchObject({

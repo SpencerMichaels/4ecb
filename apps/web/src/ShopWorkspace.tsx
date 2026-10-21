@@ -24,6 +24,7 @@ import {
   itemProficiencyStatus,
   practiceKind,
   recommendedMagicItemVariant,
+  RITUAL_BROWSE_CATEGORIES,
   SHOP_BROWSE_CATEGORIES,
   shopBrowseCategory,
   shopDisplayName,
@@ -45,6 +46,16 @@ export type AcquisitionDialogPage =
 type PhysicalSortColumn = "name" | "type";
 
 const SHOP_SESSION_KEY = "4ecb.shopPreferences.v1";
+const LEARNING_SESSION_KEY = "4ecb.ritualCatalogPreferences.v1";
+
+/** Shop sells items; the Rituals tab reuses the catalog to learn records. */
+export type CatalogMode = "shop" | "learning";
+
+function catalogCategories(mode: CatalogMode) {
+  return mode === "learning"
+    ? RITUAL_BROWSE_CATEGORIES
+    : SHOP_BROWSE_CATEGORIES;
+}
 
 interface ShopSessionPreferences {
   readonly browse: ShopBrowseId;
@@ -81,8 +92,11 @@ const DEFAULT_SHOP_SESSION_PREFERENCES: ShopSessionPreferences = {
   sort: { column: "name", direction: "ascending" },
 };
 
-function isShopBrowseId(value: unknown): value is ShopBrowseId {
-  return SHOP_BROWSE_CATEGORIES.some(({ id }) => id === value);
+function isShopBrowseId(
+  value: unknown,
+  mode: CatalogMode = "shop",
+): value is ShopBrowseId {
+  return catalogCategories(mode).some(({ id }) => id === value);
 }
 
 function isSortColumn(value: unknown): value is SortColumn {
@@ -97,20 +111,27 @@ export function readShopSessionPreferences(
   storage: Pick<Storage, "getItem"> | undefined = typeof window === "undefined"
     ? undefined
     : window.sessionStorage,
+  mode: CatalogMode = "shop",
 ): ShopSessionPreferences {
-  if (storage === undefined) return DEFAULT_SHOP_SESSION_PREFERENCES;
+  const defaults =
+    mode === "learning"
+      ? { ...DEFAULT_SHOP_SESSION_PREFERENCES, browse: "rituals" as const }
+      : DEFAULT_SHOP_SESSION_PREFERENCES;
+  if (storage === undefined) return defaults;
   try {
-    const raw = storage.getItem(SHOP_SESSION_KEY);
-    if (raw === null) return DEFAULT_SHOP_SESSION_PREFERENCES;
+    const raw = storage.getItem(
+      mode === "learning" ? LEARNING_SESSION_KEY : SHOP_SESSION_KEY,
+    );
+    if (raw === null) return defaults;
     const saved = JSON.parse(raw) as Record<string, unknown>;
     const savedSort =
       typeof saved.sort === "object" && saved.sort !== null
         ? (saved.sort as Record<string, unknown>)
         : {};
     return {
-      browse: isShopBrowseId(saved.browse)
+      browse: isShopBrowseId(saved.browse, mode)
         ? saved.browse
-        : DEFAULT_SHOP_SESSION_PREFERENCES.browse,
+        : defaults.browse,
       search: typeof saved.search === "string" ? saved.search : "",
       slot: typeof saved.slot === "string" ? saved.slot : "",
       subtype: typeof saved.subtype === "string" ? saved.subtype : "",
@@ -133,7 +154,7 @@ export function readShopSessionPreferences(
       },
     };
   } catch {
-    return DEFAULT_SHOP_SESSION_PREFERENCES;
+    return defaults;
   }
 }
 
@@ -142,10 +163,14 @@ export function writeShopSessionPreferences(
   storage: Pick<Storage, "setItem"> | undefined = typeof window === "undefined"
     ? undefined
     : window.sessionStorage,
+  mode: CatalogMode = "shop",
 ): void {
   if (storage === undefined) return;
   try {
-    storage.setItem(SHOP_SESSION_KEY, JSON.stringify(preferences));
+    storage.setItem(
+      mode === "learning" ? LEARNING_SESSION_KEY : SHOP_SESSION_KEY,
+      JSON.stringify(preferences),
+    );
   } catch {
     // Shop preferences are deliberately best-effort session UI state.
   }
@@ -333,14 +358,16 @@ interface ShopWorkspaceProps {
   ) => void;
   readonly onAcquire: (entry: BuildInventoryEntry, priceCopper: number) => void;
   readonly onBrowseChange: (browse: ShopBrowseId) => void;
+  /** "learning" lists rituals, formulas and practices to learn, not items. */
+  readonly mode?: CatalogMode;
+  /** Lower-case content IDs the character already knows (learned or granted). */
+  readonly knownDefinitionIds?: ReadonlySet<string>;
+  /** Learning mode: learn a record, paying `priceCopper` (0 when free). */
+  readonly onLearn?: (entity: ContentEntity, priceCopper: number) => void;
 }
 
 const PAGE_SIZE = 200;
-const LEARNING_CATEGORIES = new Set<ShopBrowseId>([
-  "rituals",
-  "alchemical-formulas",
-  "martial-practices",
-]);
+const NO_KNOWN_IDS: ReadonlySet<string> = new Set();
 
 function normalized(value: string | undefined): string {
   return value?.trim().toLocaleLowerCase() ?? "";
@@ -440,8 +467,15 @@ export function ShopWorkspace({
   onInspect,
   onAcquire,
   onBrowseChange,
+  mode = "shop",
+  knownDefinitionIds = NO_KNOWN_IDS,
+  onLearn,
 }: ShopWorkspaceProps) {
-  const initialPreferences = useMemo(readShopSessionPreferences, []);
+  const initialPreferences = useMemo(
+    () => readShopSessionPreferences(undefined, mode),
+    [mode],
+  );
+  const categories = catalogCategories(mode);
   const [search, setSearch] = useState(initialPreferences.search);
   const [slot, setSlot] = useState(initialPreferences.slot);
   const [subtype, setSubtype] = useState(initialPreferences.subtype);
@@ -485,21 +519,25 @@ export function ShopWorkspace({
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    writeShopSessionPreferences({
-      browse,
-      search,
-      slot,
-      subtype,
-      affordable,
-      proficient,
-      knownOnly,
-      advancedOpen,
-      legacy,
-      source,
-      rarity,
-      tier,
-      sort,
-    });
+    writeShopSessionPreferences(
+      {
+        browse,
+        search,
+        slot,
+        subtype,
+        affordable,
+        proficient,
+        knownOnly,
+        advancedOpen,
+        legacy,
+        source,
+        rarity,
+        tier,
+        sort,
+      },
+      undefined,
+      mode,
+    );
   }, [
     advancedOpen,
     affordable,
@@ -514,12 +552,16 @@ export function ShopWorkspace({
     source,
     subtype,
     tier,
+    mode,
   ]);
 
-  const catalog = useMemo(
-    () => entities.filter((entity) => shopBrowseCategory(entity) !== undefined),
-    [entities],
-  );
+  const catalog = useMemo(() => {
+    const offered = new Set(categories.map(({ id }) => id));
+    return entities.filter((entity) => {
+      const category = shopBrowseCategory(entity);
+      return category !== undefined && offered.has(category);
+    });
+  }, [categories, entities]);
   const byId = useMemo(
     () =>
       new Map(
@@ -527,13 +569,15 @@ export function ShopWorkspace({
       ),
     [entities],
   );
-  const learning = LEARNING_CATEGORIES.has(browse);
+  const learning = mode === "learning";
+  // Known records live in the build's known list (learned or granted), never
+  // in inventory; a Ritual Scroll is an item, not a known record.
   const known = (entity: ContentEntity) => {
     const kind = practiceKind(entity);
     return (
       kind !== undefined &&
       kind !== "scroll" &&
-      ownedCount(entity, inventory) > 0
+      knownDefinitionIds.has(entity.id.toLocaleLowerCase())
     );
   };
   const categoryRecords = useMemo(
@@ -592,6 +636,7 @@ export function ShopWorkspace({
   }, [
     advancedRecords,
     affordable,
+    knownDefinitionIds,
     knownOnly,
     learning,
     ownedDefinitions,
@@ -658,7 +703,7 @@ export function ShopWorkspace({
       if (sort.column === "level") return shopItemLevel(entity);
       if (sort.column === "price")
         return entityCurrencyCopper(entity) ?? Number.MAX_SAFE_INTEGER;
-      return ownedCount(entity, inventory);
+      return learning ? Number(known(entity)) : ownedCount(entity, inventory);
     };
     const leftValue = value(left);
     const rightValue = value(right);
@@ -704,7 +749,15 @@ export function ShopWorkspace({
     }));
   };
 
-  const beginAcquire = (entity: ContentEntity, mode: AcquireMode) => {
+  const beginAcquire = (entity: ContentEntity, acquireMode: AcquireMode) => {
+    // A learned record has no physical form or item choices to settle.
+    if (learning) {
+      onLearn?.(
+        entity,
+        acquireMode === "buy" ? (entityCurrencyCopper(entity) ?? 0) : 0,
+      );
+      return;
+    }
     const compatible = compatibleBaseItems(entity, catalog);
     const hasStandardImplement = isImplementEnchantment(entity);
     const physicalChoiceCount =
@@ -714,11 +767,11 @@ export function ShopWorkspace({
       const physical = compatible[0];
       onAcquire(
         inventoryEntryForEntity(entity, characterLevel, physical),
-        mode === "buy" ? (entityCurrencyCopper(entity) ?? 0) : 0,
+        acquireMode === "buy" ? (entityCurrencyCopper(entity) ?? 0) : 0,
       );
       return;
     }
-    setAcquisition({ entity, mode });
+    setAcquisition({ entity, mode: acquireMode });
     setPhysicalSearch("");
     setPhysicalSubtype("");
     setPhysicalSort({ column: "name", direction: "ascending" });
@@ -946,7 +999,13 @@ export function ShopWorkspace({
             : (contentSpecificValue(entity, "Level") ?? "—")}
         </td>
         <td>{formatCopperPrice(price)}</td>
-        <td>{isKnown ? "Known" : ownedCount(entity, inventory) || "—"}</td>
+        <td>
+          {isKnown
+            ? "Known"
+            : learning
+              ? "—"
+              : ownedCount(entity, inventory) || "—"}
+        </td>
         <td>
           <div className="shop-row-actions">
             <span
@@ -972,8 +1031,10 @@ export function ShopWorkspace({
             <button
               className="button-icon"
               type="button"
-              aria-label={`Give ${displayName}`}
-              title="Give"
+              aria-label={
+                learning ? `Learn ${displayName} free` : `Give ${displayName}`
+              }
+              title={learning ? "Learn free" : "Give"}
               disabled={isKnown}
               onClick={() => beginAcquire(entity, "give")}
             >
@@ -1007,7 +1068,7 @@ export function ShopWorkspace({
               setOffset(0);
             }}
           >
-            {SHOP_BROWSE_CATEGORIES.map((category) => (
+            {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.label}
               </option>
@@ -1066,7 +1127,7 @@ export function ShopWorkspace({
             <input
               type="search"
               value={search}
-              placeholder="Search all items…"
+              placeholder={learning ? "Search rituals…" : "Search all items…"}
               onChange={(event) => {
                 setSearch(event.currentTarget.value);
                 setOffset(0);
@@ -1181,7 +1242,9 @@ export function ShopWorkspace({
                   >
                     {column === "name"
                       ? "Name"
-                      : column[0]!.toUpperCase() + column.slice(1)}
+                      : column === "owned" && learning
+                        ? "Known"
+                        : column[0]!.toUpperCase() + column.slice(1)}
                     <Icon name="chevron" />
                   </button>
                 </th>
@@ -1195,13 +1258,16 @@ export function ShopWorkspace({
             <tbody>
               <tr className="shop-empty-row">
                 <td colSpan={5} className="shop-empty">
-                  No items match these filters.
+                  {learning
+                    ? "No records match these filters."
+                    : "No items match these filters."}
                 </td>
               </tr>
             </tbody>
           ) : null}
-          {SHOP_BROWSE_CATEGORIES.filter(({ id }) => id !== "all").map(
-            (category) => {
+          {categories
+            .filter(({ id }) => id !== "all")
+            .map((category) => {
               const categoryRows =
                 browse === "all"
                   ? pageRows.filter(
@@ -1275,8 +1341,7 @@ export function ShopWorkspace({
                   </tbody>
                 </Fragment>
               );
-            },
-          )}
+            })}
         </table>
       </div>
       <div className="equipment-pagination">

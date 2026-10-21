@@ -888,3 +888,37 @@ button.inventory-icon-action:disabled {
     animation: none;
   }
 }
+
+/* Rituals tab: known rituals, formulas and practices and the learning
+ * catalog, which reuses the Shop table in learning mode. */
+.rituals-allowance {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.rituals-allowance p {
+  margin: 0;
+}
+
+.rituals-allowance-source,
+.rituals-known-source {
+  color: var(--muted);
+}
+
+.rituals-known-header {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.rituals-known-header h3 {
+  margin: 0;
+}
+
+.rituals-empty-row td {
+  color: var(--muted);
+  font-style: italic;
+}

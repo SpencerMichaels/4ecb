@@ -805,11 +805,13 @@ describe("release accessibility contract", () => {
 
   it("keeps Shop filtering local, labeled, and independent of acquisition", () => {
     expect(shopWorkspace).toContain('type="search"');
-    expect(shopWorkspace).toContain('placeholder="Search all items…"');
+    expect(shopWorkspace).toContain('"Search all items…"');
+    expect(shopWorkspace).toContain('"Search rituals…"');
     expect(shopWorkspace).toContain("aria-pressed={affordable}");
     expect(shopWorkspace).toContain("aria-pressed={proficient}");
     expect(shopWorkspace).toContain("aria-label={`Buy ${displayName}`}");
-    expect(shopWorkspace).toContain("aria-label={`Give ${displayName}`}");
+    expect(shopWorkspace).toContain("`Give ${displayName}`");
+    expect(shopWorkspace).toContain("`Learn ${displayName} free`");
     expect(shopWorkspace).toContain('role="radiogroup"');
     expect(shopWorkspace).toContain('className="shop-result-tools"');
     expect(shopWorkspace).toContain('className="shop-physical-choice"');

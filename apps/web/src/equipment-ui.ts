@@ -162,7 +162,6 @@ export const SHOP_BROWSE_CATEGORIES: readonly {
 }[] = [
   { id: "all", label: "All items" },
   { id: "adventuring-gear", label: "Adventuring gear" },
-  { id: "alchemical-formulas", label: "Alchemical formulas" },
   { id: "ammunition", label: "Ammunition" },
   { id: "armor-shields", label: "Armor & shields" },
   { id: "armor-enchantments", label: "Armor & shield enchantments" },
@@ -170,13 +169,21 @@ export const SHOP_BROWSE_CATEGORIES: readonly {
   { id: "consumables", label: "Consumables" },
   { id: "implement-enchantments", label: "Implement enchantments" },
   { id: "implements", label: "Implements" },
-  { id: "martial-practices", label: "Martial practices" },
-  { id: "rituals", label: "Rituals" },
   { id: "special-items", label: "Special items" },
   { id: "weapons", label: "Weapons" },
   { id: "weapon-enchantments", label: "Weapon enchantments" },
   { id: "wondrous-items", label: "Wondrous items" },
   { id: "worn-items", label: "Worn items" },
+];
+
+/** The learning catalogs, in the Rituals tab rather than Shop. */
+export const RITUAL_BROWSE_CATEGORIES: readonly {
+  readonly id: ShopBrowseId;
+  readonly label: string;
+}[] = [
+  { id: "rituals", label: "Rituals" },
+  { id: "alchemical-formulas", label: "Alchemical formulas" },
+  { id: "martial-practices", label: "Martial practices" },
 ];
 
 export type InventoryCategoryId =

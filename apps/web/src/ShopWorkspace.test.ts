@@ -370,7 +370,9 @@ describe("Shop workspace", () => {
     );
 
     expect(markup).toContain("All items");
-    expect(markup).toContain("Alchemical formulas");
+    // Learning catalogs live in the Rituals tab, not Shop.
+    expect(markup).not.toContain("Alchemical formulas");
+    expect(markup).not.toContain("Martial practices");
     expect(markup).toContain("Implement enchantments");
     expect(markup).toMatch(
       /aria-pressed="true"><svg[^>]*lucide-coins[\s\S]*?<\/svg> Affordable/,
@@ -435,5 +437,68 @@ describe("Shop workspace", () => {
       /Subtype<\/span><select disabled=""[^>]*><option>—<\/option>/,
     );
     expect(markup).not.toContain("All subtypes");
+  });
+});
+
+describe("Shop catalog in learning mode", () => {
+  const ritual: ContentEntity = {
+    ...potion,
+    id: "PUBLIC_RITUAL",
+    name: "Public Rite",
+    type: "Ritual",
+    specifics: [
+      { name: "Level", value: "1", extraAttributes: [], ordinal: 0 },
+      { name: "Market Price", value: "50 gp", extraAttributes: [], ordinal: 1 },
+      { name: "type", value: "Ritual", extraAttributes: [], ordinal: 2 },
+    ],
+  };
+  const formula: ContentEntity = {
+    ...ritual,
+    id: "PUBLIC_FORMULA",
+    name: "Public Formula",
+    specifics: [
+      ...ritual.specifics.slice(0, 2),
+      {
+        name: "type",
+        value: "Alchemical Formula",
+        extraAttributes: [],
+        ordinal: 2,
+      },
+    ],
+  };
+  const render = (knownDefinitionIds: ReadonlySet<string>) =>
+    renderToStaticMarkup(
+      createElement(ShopWorkspace, {
+        mode: "learning",
+        browse: "rituals",
+        characterLevel: 1,
+        entities: [potion, ritual, formula],
+        inventory: [],
+        ownedDefinitions: [],
+        walletCopper: 100_000,
+        knownDefinitionIds,
+        onInspect: vi.fn(),
+        onAcquire: vi.fn(),
+        onBrowseChange: vi.fn(),
+        onLearn: vi.fn(),
+      }),
+    );
+
+  it("offers only the learning catalogs, with Buy and Learn free", () => {
+    const markup = render(new Set());
+    expect(markup).toContain('aria-label="Buy Public Rite"');
+    expect(markup).toContain('aria-label="Learn Public Rite free"');
+    expect(markup).not.toContain("Public Potion");
+    expect(markup).not.toContain("Public Formula");
+    expect(markup).toContain("Alchemical formulas");
+    expect(markup).not.toContain("All items");
+    expect(markup).toMatch(/aria-pressed="false">.*Known<\/button>/);
+  });
+
+  it("marks known records, learned or granted, and disables learning them", () => {
+    const markup = render(new Set(["public_ritual"]));
+    expect(markup).toContain(">Known</td>");
+    expect(markup).toMatch(/aria-label="Buy Public Rite"[^>]*disabled/);
+    expect(markup).toMatch(/aria-label="Learn Public Rite free"[^>]*disabled/);
   });
 });
