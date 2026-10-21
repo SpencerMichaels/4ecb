@@ -27,10 +27,35 @@ Open gaps for triage:
 - Not on the sheet: Domain, Background Choice, God Fragment, Item Set Benefit,
   Proficiency, Trait Package names, the past-life race, beast companions and
   associates.
-- Not in detail panes: paragon path and epic destiny class features, theme
-  level features, deity domains, and racial trait sub-options.
 
 Verification: format, lint, typecheck and 997 workspace tests pass.
+
+**Detail-pane gaps closed (2026-10-21).** `apps/web/src/detail-stack.ts`
+follows each card in the builder detail stack with:
+
+- **The parts it names:** `Class Features`, `_PARSED_CLASS_FEATURE`,
+  `_PARSED_SUB_FEATURES`, `_PARSED_CHILD_FEATURES` and `Domains`.
+- **What it offers:** unconditional grants plus everything named in
+  `Powers`, `_DisplayPowers`, `_ChildPower`, `Granted Powers` and
+  `_DisplayWeapons`.
+
+The walk goes at most three levels deep and shows each card once. This covers
+paragon path and epic destiny features, theme level features, deity domains,
+racial-trait and feature sub-options, and every power an option will grant,
+including later-level ones. Equipment item details show conditional item
+powers too.
+
+The audit now measures the stack itself: reference fields not shown fell from
+36 to 9. The rest are associates, companions and item sets.
+
+Pending owner review:
+
+- **Long stacks:** up to about 38 cards, for the Fey and binder pacts.
+- **Flat stack:** a sub-option's power isn't visually nested under it.
+- **"Granted" label:** choice options such as cantrips are also labelled
+  "Granted".
+
+Verification: 1004 workspace tests, lint and typecheck pass.
 
 ## Familiar card; trait package benefits (2026-10-20)
 
