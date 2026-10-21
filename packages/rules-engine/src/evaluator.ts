@@ -41,7 +41,7 @@ import { evaluatePowers, type EvaluatedPower } from "./powers";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v28-2026-10-21-own-children-requires";
+  "evaluated-character-v29-2026-10-21-dormant-swaps";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -667,6 +667,8 @@ function evaluateCharacterInternal(
   let occurrences = saved.filter(
     (occurrence) => !replacedIds.has(occurrence.id),
   );
+  // Occurrences currently displaced by a replacement (see displacedBy).
+  let displacedIds: ReadonlySet<string> = replacedIds;
   const replacementIncludes = (
     candidate: CharacterOccurrence,
     targetId: string,
@@ -783,6 +785,7 @@ function evaluateCharacterInternal(
       (drop.type === undefined || key(definition.type) === key(drop.type))
     );
   };
+  let droppedSelectSlots: ReadonlySet<string> = new Set();
   let converged = false;
   let iterations = 0;
 
@@ -835,18 +838,46 @@ function evaluateCharacterInternal(
       ruleRequiresMet(rule.requires, parent, activeOccurrences, context)
     );
   };
+  const savedById = new Map(
+    saved.map((occurrence) => [occurrence.id, occurrence]),
+  );
+  const savedReplacements = saved.filter(
+    (occurrence) => occurrence.replacesId !== undefined,
+  );
+  /**
+   * Occurrences displaced by a replacement whose slot is live, following
+   * each chain. A replacement whose provider rule went dormant (a level-17
+   * swap once an Assassin's Strike upgrade grants No Level 17 Encounter
+   * Power) displaces nothing, so its target is active again. A replacement
+   * merely dropped by a drop rule still displaces its target.
+   */
+  const displacedBy = (
+    active: readonly CharacterOccurrence[],
+    context: ExpressionContext,
+  ): ReadonlySet<string> => {
+    const ids = new Set<string>();
+    for (const replacement of savedReplacements) {
+      if (!activeProviderRule(replacement, active, context)) continue;
+      let replacedId = replacement.replacesId;
+      while (replacedId !== undefined && !ids.has(replacedId)) {
+        ids.add(replacedId);
+        replacedId = savedById.get(replacedId)?.replacesId;
+      }
+    }
+    return ids;
+  };
   const reactivatableSaved = saved.filter(
     (occurrence) =>
-      !replacedIds.has(occurrence.id) &&
-      occurrence.parentId !== undefined &&
-      occurrence.ruleOrdinal !== undefined,
+      occurrence.parentId !== undefined && occurrence.ruleOrdinal !== undefined,
   );
 
   for (iterations = 1; iterations <= 30; iterations += 1) {
     const before = occurrences.map((occurrence) => occurrence.id).join("\0");
     const preliminaryContext = expressionContextFor(occurrences);
+    displacedIds = displacedBy(occurrences, preliminaryContext);
     const restored = reactivatableSaved.filter(
       (occurrence) =>
+        !displacedIds.has(occurrence.id) &&
         !occurrences.some((candidate) => candidate.id === occurrence.id) &&
         activeProviderRule(occurrence, occurrences, preliminaryContext),
     );
@@ -855,8 +886,16 @@ function evaluateCharacterInternal(
     const additions: CharacterOccurrence[] = [];
     const dropped = new Set<string>();
     const namedDrops: { readonly name?: string; readonly type?: string }[] = [];
+    // Native VerifyDrop unlinks a named select's slot element, so the slot
+    // is no longer an active choice (Level 19 Cavalier Daily Power drops
+    // the level-5 daily select).
+    const droppedSlots = new Set<string>();
+    droppedSelectSlots = droppedSlots;
     for (const occurrence of occurrences)
-      if (!activeProviderRule(occurrence, occurrences, context))
+      if (
+        displacedIds.has(occurrence.id) ||
+        !activeProviderRule(occurrence, occurrences, context)
+      )
         dropped.add(occurrence.id);
     for (const occurrence of occurrences) {
       const entity = index.get(occurrence.definitionId);
@@ -921,6 +960,9 @@ function evaluateCharacterInternal(
                   choiceIndex < selectRule.number;
                   choiceIndex += 1
                 ) {
+                  droppedSlots.add(
+                    `${selectProvider.id}:${selectRule.source.ordinal}:${choiceIndex}`,
+                  );
                   const selected = saved.find(
                     (candidate) =>
                       candidate.parentId === selectProvider.id &&
@@ -1281,18 +1323,42 @@ function evaluateCharacterInternal(
     definition: ContentEntity,
     equivalent: ContentEntity,
     choiceLevel: number,
-    selected: CharacterOccurrence | undefined,
+    excludedIds: readonly string[],
   ): boolean =>
     [definition, ...(equivalent === definition ? [] : [equivalent])].some(
       (entity) =>
         (occurrencesByDefinition.get(key(entity.id)) ?? []).some(
           (owned) =>
             owned.acquiredLevel <= choiceLevel &&
-            (selected === undefined ||
-              (owned.id !== selected.id &&
-                !isDescendantOf(owned, selected.id))),
+            excludedIds.every(
+              (id) => owned.id !== id && !isDescendantOf(owned, id),
+            ),
         ),
     );
+  /** A gain candidate already owned is marked like a select's (native
+   * UpdateArrays runs for a replacement's gain list too). */
+  const markOwned = (
+    candidate: CandidateDecision,
+    choiceLevel: number,
+    excludedIds: readonly string[],
+  ): CandidateDecision => {
+    const definition = index.get(candidate.definitionId);
+    return definition !== undefined &&
+      !candidate.reasons.includes("self") &&
+      ownedElsewhere(
+        definition,
+        passThroughDefinition(definition),
+        choiceLevel,
+        excludedIds,
+      )
+      ? {
+          ...candidate,
+          eligible: false,
+          rulesLegal: false,
+          reasons: [...candidate.reasons, "owned"],
+        }
+      : candidate;
+  };
   const candidateFor = (
     rule: SelectRule,
     provider: CharacterOccurrence,
@@ -1486,6 +1552,12 @@ function evaluateCharacterInternal(
             choiceIndex < rule.number;
             choiceIndex += 1
           ) {
+            if (
+              droppedSelectSlots.has(
+                `${occurrence.id}:${rule.source.ordinal}:${choiceIndex}`,
+              )
+            )
+              continue;
             const directSelection = saved.find(
               (candidate) =>
                 candidate.parentId === occurrence.id &&
@@ -1559,7 +1631,12 @@ function evaluateCharacterInternal(
                 // already owned by the choice's level (legacy marks such a
                 // candidate Selected), so offering it would let a pick vanish.
                 return !candidate.reasons.includes("self") &&
-                  ownedElsewhere(definition, equivalent, choiceLevel, selected)
+                  ownedElsewhere(
+                    definition,
+                    equivalent,
+                    choiceLevel,
+                    selected === undefined ? [] : [selected.id],
+                  )
                   ? {
                       ...candidate,
                       eligible: false,
@@ -1637,7 +1714,7 @@ function evaluateCharacterInternal(
                 rule.retrain === undefined ||
                 ["feat", "power", "skill training"].includes(candidateType);
               return (
-                (!replacedIds.has(candidate.id) ||
+                (!displacedIds.has(candidate.id) ||
                   candidate.id === selected?.replacesId) &&
                 candidate.acquiredLevel < replacementLevel &&
                 candidate.kind === "choice" &&
@@ -1712,11 +1789,18 @@ function evaluateCharacterInternal(
                   definitionId: candidate.definitionId,
                   // Retraining X into X changes nothing, so it isn't offered.
                   candidates: detailedReplacement
-                    ? candidatesFor(gainSelect, gainProvider).filter(
-                        (decision) =>
-                          key(decision.definitionId) !==
-                          key(candidate.definitionId),
-                      )
+                    ? candidatesFor(gainSelect, gainProvider)
+                        .filter(
+                          (decision) =>
+                            key(decision.definitionId) !==
+                            key(candidate.definitionId),
+                        )
+                        .map((decision) =>
+                          markOwned(decision, replacementLevel, [
+                            candidate.id,
+                            ...(selected === undefined ? [] : [selected.id]),
+                          ]),
+                        )
                     : selectedReplacement === undefined
                       ? []
                       : [
@@ -1823,7 +1907,7 @@ function evaluateCharacterInternal(
         const candidateEntity = index.get(candidate.definitionId);
         return candidate.kind === "choice" &&
           candidate.acquiredLevel <= occurrence.acquiredLevel &&
-          (!replacedIds.has(candidate.id) ||
+          (!displacedIds.has(candidate.id) ||
             candidate.id === selected?.replacesId) &&
           candidateEntity !== undefined &&
           isLeveledRangerAtWillAttack(candidateEntity)

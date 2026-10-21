@@ -571,6 +571,104 @@ describe("native construction conformance", () => {
     expect(result.complete).toBe(true);
   });
 
+  it("restores a power whose swap went dormant", () => {
+    // Taking an Assassin's Strike upgrade grants No Level 17 Encounter
+    // Power, which switches off the level-17 swap made earlier: the power
+    // it displaced is active again and its slot stays filled.
+    const content = [
+      entity("LEVEL_3", "3", "Level", [
+        statement("select", { type: "Power", number: "1" }, 0),
+      ]),
+      entity("LEVEL_17", "17", "Level", [
+        statement(
+          "replace",
+          { powerswap: "Synthetic", requires: "!NO_SWAP" },
+          0,
+        ),
+      ]),
+      entity("UPGRADE", "Strike upgrade", "Class Feature", [
+        statement("grant", { name: "NO_SWAP", type: "Internal" }, 0),
+      ]),
+      entity("NO_SWAP", "No Level 17 Encounter Power", "Internal"),
+      { ...entity("OLD", "Old power", "Power"), categories: ["Synthetic"] },
+      { ...entity("NEW", "New power", "Power"), categories: ["Synthetic"] },
+    ];
+    const saved = [
+      occurrence("level-3", "LEVEL_3", 3, "root"),
+      occurrence("old", "OLD", 3, "choice", {
+        parentId: "level-3",
+        ruleOrdinal: 0,
+        choiceIndex: 0,
+      }),
+      occurrence("level-17", "LEVEL_17", 17, "root"),
+      occurrence("new", "NEW", 17, "choice", {
+        parentId: "level-17",
+        ruleOrdinal: 0,
+        choiceIndex: 0,
+        replacesId: "old",
+      }),
+    ];
+    const swapped = evaluateCharacter(input(17, saved), content);
+    expect(swapped.activeDefinitionIds).toContain("NEW");
+    expect(swapped.activeDefinitionIds).not.toContain("OLD");
+
+    const dormant = evaluateCharacter(
+      input(17, [...saved, occurrence("upgrade", "UPGRADE", 17, "root")]),
+      content,
+    );
+    expect(dormant.converged).toBe(true);
+    expect(dormant.activeDefinitionIds).toContain("OLD");
+    expect(dormant.activeDefinitionIds).not.toContain("NEW");
+    expect(dormant.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "choice.required" }),
+    );
+  });
+
+  it("does not offer a swap gain the character already owns", () => {
+    const content = [
+      entity("LEVEL_1", "1", "Level", [
+        statement("select", { type: "Power", number: "2" }, 0),
+      ]),
+      entity("LEVEL_13", "13", "Level", [
+        statement("replace", { powerswap: "Synthetic" }, 0),
+      ]),
+      { ...entity("LOST", "Lost power", "Power"), categories: ["Synthetic"] },
+      { ...entity("KEPT", "Kept power", "Power"), categories: ["Synthetic"] },
+      { ...entity("FRESH", "Fresh power", "Power"), categories: ["Synthetic"] },
+    ];
+    const result = evaluateCharacter(
+      input(13, [
+        occurrence("level-1", "LEVEL_1", 1, "root"),
+        occurrence("lost", "LOST", 1, "choice", {
+          parentId: "level-1",
+          ruleOrdinal: 0,
+          choiceIndex: 0,
+        }),
+        occurrence("kept", "KEPT", 1, "choice", {
+          parentId: "level-1",
+          ruleOrdinal: 0,
+          choiceIndex: 1,
+        }),
+        occurrence("level-13", "LEVEL_13", 13, "root"),
+      ]),
+      content,
+    );
+    const swap = result.choices.find(({ type }) => type === "Replacement");
+    const losingLost = swap?.replacementOptions?.find(
+      ({ replacesOccurrenceId }) => replacesOccurrenceId === "lost",
+    );
+    expect(losingLost?.candidates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          definitionId: "KEPT",
+          eligible: false,
+          reasons: ["owned"],
+        }),
+        expect.objectContaining({ definitionId: "FRESH", eligible: true }),
+      ]),
+    );
+  });
+
   it("drops the active replacement-chain tip selected by a named select", () => {
     const content = [
       entity("CHOOSER", "Chooser", "Feature", [
@@ -606,6 +704,14 @@ describe("native construction conformance", () => {
     expect(result.activeDefinitionIds).not.toContain("OLD");
     expect(result.activeDefinitionIds).not.toContain("NEW");
     expect(saved.map(({ id }) => id)).toContain("new");
+    // The dropped select is unlinked, not reopened (Level 19 Cavalier Daily
+    // Power drops the level-5 daily select).
+    expect(result.choices).not.toContainEqual(
+      expect.objectContaining({ providerOccurrenceId: "chooser" }),
+    );
+    expect(result.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "choice.required" }),
+    );
   });
 
   it("applies a blank select default and restarts topology", () => {
