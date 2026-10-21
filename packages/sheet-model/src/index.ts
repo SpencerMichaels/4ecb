@@ -45,6 +45,19 @@ import {
   type SheetOverview,
   type OverviewInventory,
 } from "./overview";
+import { featureChoices, type SheetFeatureChoice } from "./feature-choices";
+import {
+  sheetProficiencies,
+  type SheetProficiencyGroup,
+} from "./proficiencies";
+export {
+  featureChoiceText,
+  type SheetFeatureChoice,
+} from "./feature-choices";
+export type {
+  SheetProficiencyGroup,
+  SheetProficiencyKind,
+} from "./proficiencies";
 export {
   classifyPower,
   classifyPowerCard,
@@ -98,6 +111,11 @@ export const SHEET_IDENTITY_TYPES = [
 export interface SheetValue {
   readonly label: string;
   readonly value: string;
+}
+
+/** A features-section row; choices made under it show on the row. */
+export interface SheetFeatureEntry extends SheetValue {
+  readonly choices?: readonly SheetFeatureChoice[];
 }
 
 export interface SheetCard {
@@ -202,8 +220,10 @@ export interface CharacterSheetModel {
   readonly equipment: readonly SheetValue[];
   readonly features: readonly {
     readonly group: string;
-    readonly entries: readonly SheetValue[];
+    readonly entries: readonly SheetFeatureEntry[];
   }[];
+  /** Proficiencies by kind (evaluated sheets only). */
+  readonly proficiencies?: readonly SheetProficiencyGroup[];
   readonly powers: readonly SheetCard[];
   readonly items: readonly SheetCard[];
   /** Familiars (and later beast companions), printed after the Skills card. */
@@ -1538,19 +1558,36 @@ export function buildEvaluatedSheetModel(
             entity.type.toLocaleLowerCase() === entityType.toLocaleLowerCase(),
         )
         .map(({ entity }) => entity.name);
-    const selected =
-      namesOf(type)[0] ??
-      (type === "Class"
-        ? [...new Set(namesOf("Hybrid Class"))].join(" / ") || undefined
-        : undefined);
+    // A hybrid character also owns the "Hybrid" marker class; its identity
+    // is the two hybrid classes.
+    const hybrid =
+      type === "Class" ? [...new Set(namesOf("Hybrid Class"))].join(" / ") : "";
+    const selected = hybrid !== "" ? hybrid : namesOf(type)[0];
     // The evaluated build is authoritative: an element cleared in the
     // builder must not fall back to the import-time snapshot's value.
     if (selected === undefined) delete identityDetails[detailName];
     else identityDetails[detailName] = selected;
   }
 
-  const features = new Map<string, SheetValue[]>();
+  const features = new Map<string, SheetFeatureEntry[]>();
   const seenFeatures = new Set<string>();
+  const activeEntities = new Map(
+    active.map(({ occurrence, entity }) => [occurrence.id, entity]),
+  );
+  const choicesUnder = featureChoices(
+    evaluation.occurrences,
+    (occurrence) => activeEntities.get(occurrence.id),
+    (occurrence) =>
+      SHEET_FEATURE_TYPES.includes(activeEntities.get(occurrence.id)?.type ?? ""),
+  );
+  // A feature listed once collects the choices made under every occurrence.
+  const featureChoicesById = new Map<string, SheetFeatureChoice[]>();
+  for (const { occurrence, entity } of active)
+    for (const choice of choicesUnder.get(occurrence.id) ?? []) {
+      const choices = featureChoicesById.get(entity.id) ?? [];
+      if (!choices.some(({ id }) => id === choice.id)) choices.push(choice);
+      featureChoicesById.set(entity.id, choices);
+    }
   for (const { occurrence, entity } of active) {
     if (
       !SHEET_FEATURE_TYPES.includes(entity.type) ||
@@ -1558,6 +1595,7 @@ export function buildEvaluatedSheetModel(
     )
       continue;
     seenFeatures.add(entity.id);
+    const choices = featureChoicesById.get(entity.id);
     features.set(entity.type, [
       ...(features.get(entity.type) ?? []),
       {
@@ -1568,6 +1606,7 @@ export function buildEvaluatedSheetModel(
         ]
           .filter(Boolean)
           .join(" · "),
+        ...(choices === undefined ? {} : { choices }),
       },
     ]);
   }
@@ -1805,6 +1844,7 @@ export function buildEvaluatedSheetModel(
           : [],
     ),
     features: [...features].map(([group, entries]) => ({ group, entries })),
+    proficiencies: sheetProficiencies(active),
     powers: powerCards,
     items: itemCards,
     companions: familiarCards,

@@ -76,6 +76,18 @@ const entities = [
   entity("ID_SKILL", "Athletics", "Skill"),
   entity("ID_TRAINING", "Athletics", "Skill Training"),
   entity("ID_HYBRID_A", "Hybrid Warblade", "Hybrid Class"),
+  {
+    ...entity("ID_HYBRID", "Hybrid", "Class"),
+    rules: [
+      {
+        name: "select",
+        attributes: [{ name: "type", value: "Hybrid Class" }],
+        text: "",
+        children: [],
+        ordinal: 0,
+      },
+    ],
+  },
 ];
 const byId = new Map(entities.map((value) => [value.id.toLowerCase(), value]));
 
@@ -180,6 +192,17 @@ describe("sheet presence", () => {
       }),
     );
     expect(hybrid[0]?.surfaces).toEqual(["identity"]);
+  });
+
+  it("counts the hybrid marker class as shown by the hybrid Class line", () => {
+    const presence = (value: string) =>
+      sheetPresence(
+        [occurrence("marker", "ID_HYBRID")],
+        byId,
+        sheet({ identity: [{ label: "Class", value }] }),
+      )[0]?.surfaces;
+    expect(presence("Hybrid Warblade / Hybrid Seer")).toEqual(["identity"]);
+    expect(presence("Warblade")).toEqual([]);
   });
 });
 

@@ -75,6 +75,17 @@ export function sheetIndex(sheet: CharacterSheetModel): SheetIndex {
   };
 }
 
+function selectsHybridClasses(entity: ContentEntity): boolean {
+  return entity.rules.some(
+    (rule) =>
+      key(rule.name) === "select" &&
+      rule.attributes.some(
+        ({ name, value }) =>
+          key(name) === "type" && key(value) === "hybrid class",
+      ),
+  );
+}
+
 /** Every sheet surface that shows the entity. */
 export function sheetSurfacesOf(
   entity: ContentEntity,
@@ -85,7 +96,14 @@ export function sheetSurfacesOf(
   const surfaces: SheetSurface[] = [];
   if (index.features.get(key(entity.type))?.has(name) === true)
     surfaces.push("features");
-  if (index.identity.get(key(entity.type))?.has(name) === true)
+  if (
+    index.identity.get(key(entity.type))?.has(name) === true ||
+    // The hybrid marker class (it selects the hybrid classes) is shown as
+    // the hybrid classes on the Class line.
+    (key(entity.type) === "class" &&
+      selectsHybridClasses(entity) &&
+      (index.identity.get("hybrid class")?.size ?? 0) > 1)
+  )
     surfaces.push("identity");
   // An augmentable power's cards are its augment versions.
   const augmentVersions =

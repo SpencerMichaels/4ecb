@@ -34,6 +34,115 @@ describe("sheet model", () => {
     ).toBe(95);
     expect(snapshot.stats.Weight).toBe("95");
   });
+  it("names a hybrid's two classes on the Class identity line", () => {
+    const entity = (
+      id: string,
+      name: string,
+      type: string,
+      rules: ContentEntity["rules"] = [],
+    ): ContentEntity => ({
+      id,
+      name,
+      type,
+      source: "test",
+      sources: ["test"],
+      attributes: [],
+      categories: [],
+      specifics: [],
+      rules,
+      description: "",
+      extensions: [],
+      provenance: { sourceKey: "test", sourceOrdinal: 0 },
+    });
+    const content = [
+      entity("HYBRID", "Hybrid", "Class", [
+        {
+          name: "select",
+          attributes: [
+            { name: "type", value: "Hybrid Class" },
+            { name: "number", value: "2" },
+          ],
+          text: "",
+          children: [],
+          ordinal: 0,
+        },
+      ]),
+      entity("HYBRID_A", "Hybrid Warblade", "Hybrid Class"),
+      entity("HYBRID_B", "Hybrid Seer", "Hybrid Class"),
+      entity("PLAIN", "Warblade", "Class"),
+    ];
+    const occurrence = (
+      id: string,
+      definitionId: string,
+      extra: Partial<EvaluatedCharacter["occurrences"][number]> = {},
+    ): EvaluatedCharacter["occurrences"][number] => ({
+      id,
+      definitionId,
+      acquiredLevel: 1,
+      kind: "choice",
+      ...extra,
+    });
+    const snapshot: LegacyCharacterSnapshot = {
+      details: {},
+      abilities: {},
+      stats: {},
+      selectedRules: [],
+      loot: [],
+      powers: [],
+      textStrings: {},
+      levelCount: 1,
+      source: "legacy-cache",
+    };
+    const build: CharacterBuild = {
+      formatVersion: 1,
+      effectiveLevel: 1,
+      levels: [],
+      grabbag: [],
+      inventory: [],
+      alternates: [],
+      baseAbilities: {},
+      textStrings: {},
+    };
+    const classLine = (occurrences: EvaluatedCharacter["occurrences"]) => {
+      const evaluation: EvaluatedCharacter = {
+        level: 1,
+        converged: true,
+        iterations: 1,
+        complete: true,
+        legal: true,
+        occurrences,
+        activeDefinitionIds: occurrences.map(
+          ({ definitionId }) => definitionId,
+        ),
+        activeDefinitions: [],
+        choices: [],
+        stats: {},
+        overlays: [],
+        suggestions: [],
+        textStrings: {},
+        textContributions: [],
+        diagnostics: [],
+        powers: [],
+      } as unknown as EvaluatedCharacter;
+      return buildEvaluatedSheetModel(
+        snapshot,
+        build,
+        evaluation,
+        content,
+      ).identity.find(({ label }) => label === "Class")?.value;
+    };
+    expect(
+      classLine([
+        occurrence("hybrid", "HYBRID", { kind: "root" }),
+        occurrence("a", "HYBRID_A", { parentId: "hybrid" }),
+        occurrence("b", "HYBRID_B", { parentId: "hybrid" }),
+      ]),
+    ).toBe("Hybrid Warblade / Hybrid Seer");
+    expect(classLine([occurrence("plain", "PLAIN", { kind: "root" })])).toBe(
+      "Warblade",
+    );
+  });
+
   it("retains physical and identity details and cached encumbrance for legacy references", () => {
     const model = buildSheetModel({
       details: {
