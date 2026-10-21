@@ -59,6 +59,9 @@ application's architecture.
 18. [Printed overview design study](sheet-overview-prototype.md) documents the
     M5.6 summary/scratchpad/reference-page design study, real-data print integration,
     and remaining review boundaries.
+19. [Familiar card proposal](familiar-card-proposal.md) specifies the printed
+    and builder familiar card, the rulebook basis for familiar statistics, and
+    the community companion card sets it replaces.
 
 ## Definition hierarchy
 
