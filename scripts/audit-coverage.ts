@@ -91,8 +91,11 @@ function registryProblems(
         surface === "features"
           ? SHEET_FEATURE_TYPES.includes(type)
           : surface === "identity"
-            ? // A hybrid's classes fill the Class identity line.
-              identityTypes.has(type) || type === "Hybrid Class"
+            ? // A hybrid's classes fill the Class identity line, and the
+              // race and class aliases the identity's race or class grants
+              // are implied by it (sheet-coverage.ts).
+              identityTypes.has(type) ||
+              ["Hybrid Class", "CountsAsRace", "CountsAsClass"].includes(type)
             : surface === "powers"
               ? key(type) === "power"
               : surface === "companions"
