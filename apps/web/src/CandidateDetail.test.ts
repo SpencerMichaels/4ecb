@@ -151,3 +151,25 @@ describe("trait package detail", () => {
     expect(markup).not.toContain("FEATURE_MISSING");
   });
 });
+
+describe("familiar detail", () => {
+  it("shows the familiar card", () => {
+    const sprite = entity(
+      "FAMILIAR_TEST",
+      "Test Sprite",
+      "Familiar",
+      { Speed: "4", "Secondary Speed": "fly 6" },
+      "A helpful spirit.",
+    );
+    const markup = renderToStaticMarkup(
+      createElement(CandidateDetail, {
+        candidate: { ...candidate, definitionId: sprite.id },
+        entity: sprite,
+        byId: new Map([[sprite.id.toLowerCase(), sprite]]),
+      }),
+    );
+    expect(markup).toContain("print-familiar-card is-panel");
+    expect(markup).toContain("Tiny familiar");
+    expect(markup).toContain("4, fly 6");
+  });
+});

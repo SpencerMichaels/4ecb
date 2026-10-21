@@ -1,5 +1,31 @@
 # Implementation status
 
+## Familiar card; trait package benefits (2026-10-20)
+
+Player reports. A familiar had no place on the sheet beyond a community
+"Familiar: X" power card, and a pact's builder detail pane listed no benefits.
+
+- **Familiar card** (`docs/familiar-card-proposal.md`). Rules-engine
+  `familiarSpeed`/`familiarDefenses` follow legacy `GetCompanionStat`
+  (`ALLY.` + `COMPANION.` + `FAMILIAR.` bonuses) and the _Arcane Power_
+  familiar rules (your defenses, 1 hit point). `sheet-model` builds
+  `companions` from evaluated `Familiar` occurrences. `FamiliarCard` prints
+  after the Skills card and is the builder's familiar detail card.
+- **Content.** `content/corrections/91-familiar-cards.part` turns 93
+  community familiar cards into inert Internal records, keeping the Widow of
+  Arach-Tinilith spider. It also hides nine empty duplicate familiars that the
+  community part created by appending to misspelled IDs.
+- **Trait packages.** Pacts, domains, virtues and bloodlines are followed by a
+  card for each class feature in `_PARSED_CLASS_FEATURE`, then the powers each
+  feature grants or names for display, including later-level ones. The White
+  Well pact's "Star pact" summary is corrected.
+
+Verification: the private pack rebuilds with no new warnings. A copy of Beatrix
+with Arcane Familiar (Sprite) and Vigorous Familiar evaluates to a Sprite card
+with AC +1 and speed 6, fly 6, and no "Familiar:" power card. All 103 familiars
+produce a card. Format, lint, typecheck and 994 workspace tests pass. Visual
+review of the printed deck and builder pane is pending.
+
 ## "Training in X" prerequisites; live house-rule legality (2026-10-19)
 
 Player report: Ingi's Swift Recovery ("Training in Endurance") showed as

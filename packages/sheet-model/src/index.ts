@@ -30,6 +30,11 @@ import {
 import { universalPowerDefinitionIds } from "./power-reference";
 import { withUniversalActionCards } from "./universal-action-cards";
 import {
+  isFamiliarEntity,
+  sheetFamiliarCard,
+  type SheetCompanionCard,
+} from "./familiar-card";
+import {
   inventoryWeight,
   inventoryHoldingWeight,
   sheetEncumbrance,
@@ -52,6 +57,13 @@ export {
   type PowerClassificationInput,
   type PowerUsageCategory,
 } from "./power-classification";
+export {
+  FAMILIAR_RULES_REMINDER,
+  isFamiliarEntity,
+  sheetFamiliarCard,
+  type SheetCompanionCard,
+  type SheetFamiliarCard,
+} from "./familiar-card";
 export type {
   SheetOverview,
   OverviewFeature,
@@ -169,6 +181,8 @@ export interface CharacterSheetModel {
   }[];
   readonly powers: readonly SheetCard[];
   readonly items: readonly SheetCard[];
+  /** Familiars (and later beast companions), printed after the Skills card. */
+  readonly companions: readonly SheetCompanionCard[];
   readonly learnedReferences: readonly SheetLearnedReference[];
   readonly notes: readonly SheetValue[];
 }
@@ -1411,6 +1425,7 @@ export function buildSheetModel(
       powerCard(power, entities, snapshot, keyAbilities, options),
     ),
     items: itemCards,
+    companions: [],
     learnedReferences,
     notes: [
       ...[
@@ -1480,6 +1495,16 @@ export function buildEvaluatedSheetModel(
     const entity = entities.get(occurrence.definitionId.toLocaleLowerCase());
     return entity === undefined ? [] : [{ occurrence, entity }];
   });
+  const familiarCards = [
+    ...new Map(
+      active
+        .filter(({ entity }) => isFamiliarEntity(entity))
+        .map(({ entity }) => [
+          entity.id,
+          sheetFamiliarCard(entity, evaluation.stats),
+        ]),
+    ).values(),
+  ];
   const personalizePowerText = createEvaluatedPowerTextPersonalizer(
     evaluation,
     content,
@@ -1788,6 +1813,7 @@ export function buildEvaluatedSheetModel(
     features: [...features].map(([group, entries]) => ({ group, entries })),
     powers: powerCards,
     items: itemCards,
+    companions: familiarCards,
     learnedReferences,
     notes: [
       ...[

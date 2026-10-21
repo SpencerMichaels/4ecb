@@ -4,6 +4,8 @@ import {
   abilityModifier,
   bloodiedValue,
   evaluatedHealingSurgeValue,
+  familiarDefenses,
+  familiarSpeed,
   halfLevel,
   healingSurgeValue,
 } from "./derived-values";
@@ -36,5 +38,42 @@ describe("healing surge value", () => {
         },
       }),
     ).toBe(17);
+  });
+});
+
+describe("familiar statistics", () => {
+  const stat = (name: string, value: number) =>
+    [name, { name, value, contributions: [] }] as const;
+  const stats = Object.fromEntries([
+    stat("AC", 18),
+    stat("Fortitude Defense", 14),
+    stat("Reflex Defense", 16),
+    stat("Will Defense", 17),
+    stat("FAMILIAR.AC", 1),
+    stat("ally.ac", 1),
+    stat("FAMILIAR.Speed", 2),
+    stat("COMPANION.Speed", 1),
+  ]);
+
+  it("uses the master's defenses plus companion bonuses", () => {
+    expect(familiarDefenses(stats)).toEqual({
+      ac: 20,
+      fortitude: 14,
+      reflex: 16,
+      will: 17,
+    });
+    expect(familiarDefenses({})).toEqual({
+      ac: undefined,
+      fortitude: undefined,
+      reflex: undefined,
+      will: undefined,
+    });
+  });
+
+  it("adds companion speed bonuses to a whole-number base speed", () => {
+    expect(familiarSpeed(" 4 ", stats)).toBe("7");
+    expect(familiarSpeed("4", {})).toBe("4");
+    expect(familiarSpeed("see text", stats)).toBe("see text");
+    expect(familiarSpeed(undefined, stats)).toBeUndefined();
   });
 });

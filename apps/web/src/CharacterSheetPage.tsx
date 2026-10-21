@@ -24,6 +24,7 @@ import {
   buildSheetModel,
   type CharacterSheetModel,
   type SheetCard,
+  type SheetCompanionCard,
   type SheetLearnedReference,
   type SheetValue,
 } from "@4ecb/sheet-model";
@@ -40,6 +41,7 @@ import {
   PrintSkillsCard,
   type PlayCardKind,
 } from "./PrintPlayCards";
+import { FamiliarCard } from "./FamiliarCard";
 import { ItemCard } from "./ItemCard";
 import { LoadingScreen } from "./LoadingScreen";
 import { loadingStepDetail, useLoadingProgress } from "./use-loading-progress";
@@ -71,7 +73,8 @@ function ValueList({
   );
 }
 
-type PrintableCard = SheetCard | { readonly kind: PlayCardKind };
+type PrintableCard =
+  SheetCard | SheetCompanionCard | { readonly kind: PlayCardKind };
 
 const isPlayCard = (
   card: PrintableCard,
@@ -97,6 +100,7 @@ function PrintCard({
     ) : (
       <PrintSkillsCard model={model} />
     );
+  if (card.kind === "familiar") return <FamiliarCard card={card} />;
   return card.kind === "power" ? (
     <PowerCard card={card} characterLevel={characterLevel} />
   ) : (
@@ -484,6 +488,7 @@ export function CharacterSheetPage({
   const printableCards: PrintableCard[] = [
     { kind: "play-character" as const },
     { kind: "play-skills" as const },
+    ...model.companions,
     ...specialCards,
     ...powerCards.filter((card) => !specialCards.includes(card)),
     ...model.items,

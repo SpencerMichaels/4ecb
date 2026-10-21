@@ -11,13 +11,16 @@ import {
 import {
   authoredSheetPowerCard,
   createSheetPowerCardFinder,
+  sheetFamiliarCard,
   sheetItemCard,
   type SheetCard,
+  type SheetFamiliarCard,
 } from "@4ecb/sheet-model";
 
 import { entityCardSource } from "./EntityCard";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { ShowEntitySourceContext } from "./ShowEntitySourceContext";
+import { FamiliarCard } from "./FamiliarCard";
 import { ItemCard } from "./ItemCard";
 import { PowerCard, type CardTextPresentation } from "./PowerCard";
 import {
@@ -32,6 +35,8 @@ import {
  */
 export interface BuilderCardSettings {
   readonly powerCardFor: (entity: ContentEntity) => SheetCard;
+  /** A familiar with this character's defenses and companion bonuses. */
+  readonly familiarCardFor: (entity: ContentEntity) => SheetFamiliarCard;
   /** Selects the power text tier shown on cards. */
   readonly characterLevel: number;
   readonly abbreviateAbilityValues: boolean;
@@ -93,6 +98,7 @@ export function evaluatedBuilderCardSettings(
         entity,
         owned.get(entity.id.toLocaleLowerCase()) ?? hypotheticalPower(entity),
       ),
+    familiarCardFor: (entity) => sheetFamiliarCard(entity, evaluation.stats),
     characterLevel: evaluation.level,
     abbreviateAbilityValues: preferences.abbreviateAbilityValues,
   };
@@ -105,6 +111,7 @@ export function authoredBuilderCardSettings(
   return {
     powerCardFor: (entity) =>
       authoredSheetPowerCard(entity, abbreviatePowerAbilities),
+    familiarCardFor: (entity) => sheetFamiliarCard(entity, {}),
     characterLevel,
     abbreviateAbilityValues: false,
   };
@@ -203,6 +210,38 @@ export function BuilderItemCard({
         ...(hideFlavortext || card.flavor === undefined
           ? {}
           : { flavor: card.flavor }),
+        textPresentation: cardTextPresentation(
+          settings.abbreviateAbilityValues,
+        ),
+      }}
+    />
+  );
+}
+
+export function BuilderFamiliarCard({
+  entity,
+  headingSuffix,
+  subheading,
+  headerAction,
+}: {
+  readonly entity: ContentEntity;
+  readonly headingSuffix?: string;
+  readonly subheading?: ReactNode;
+  readonly headerAction?: ReactNode;
+}) {
+  const settings = useContext(BuilderCardContext);
+  const showSource = useContext(ShowEntitySourceContext);
+  return (
+    <FamiliarCard
+      card={settings.familiarCardFor(entity)}
+      layout="panel"
+      panel={{
+        headingId: headingIdFor(entity, headingSuffix),
+        subheading,
+        headerAction,
+        ...(showSource
+          ? { source: `Source: ${entityCardSource(entity)}` }
+          : {}),
         textPresentation: cardTextPresentation(
           settings.abbreviateAbilityValues,
         ),

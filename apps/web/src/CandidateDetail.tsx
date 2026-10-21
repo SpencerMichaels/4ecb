@@ -2,6 +2,7 @@ import { useContext, useState } from "react";
 
 import type { CandidateDecision } from "@4ecb/rules-engine";
 import type { ContentEntity } from "@4ecb/content-domain";
+import { isFamiliarEntity } from "@4ecb/sheet-model";
 
 import {
   candidateReason,
@@ -10,7 +11,11 @@ import {
   grantedDetailEntities,
   themePowerGroups,
 } from "./builder-ui";
-import { BuilderItemCard, BuilderPowerCard } from "./BuilderCards";
+import {
+  BuilderFamiliarCard,
+  BuilderItemCard,
+  BuilderPowerCard,
+} from "./BuilderCards";
 import {
   toggleCandidateFavorite,
   useCandidateFavorites,
@@ -232,6 +237,17 @@ export function CandidateDetailCard({
           </>
         ) : null}
       </>
+    );
+  if (isFamiliarEntity(entity))
+    return (
+      <div className="candidate-card-panel">
+        <BuilderFamiliarCard
+          entity={entity}
+          headingSuffix={headingSuffix}
+          subheading={subheading}
+          headerAction={headerAction}
+        />
+      </div>
     );
   if (isPower || isItemEntity(entity))
     return (

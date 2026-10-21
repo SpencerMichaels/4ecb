@@ -1,0 +1,119 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  The community "Tivaan's Familiar Cards" (CBLoader/Custom/36-companion.part)
+  give each familiar a fake at-will power card that restates its statistics.
+  4ecb prints a familiar card instead (docs/familiar-card-proposal.md), so each
+  of those cards becomes an inert Internal record under the same ID: the
+  familiar's grant still resolves, and no power card is printed.
+
+  Kept: ID_TIV_FAMILIAR-413-5, the Widow of Arach-Tinilith theme's spider,
+  which is not a Familiar element and so gets no familiar card.
+-->
+<D20Rules game-system="D&amp;D4E">
+  <RulesElement name="Familiar: Sprite" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR_SPRITE-1" />
+  <RulesElement name="Familiar: Bat" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-1" />
+  <RulesElement name="Familiar: Book Imp" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-2" />
+  <RulesElement name="Familiar: Owl" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-3" />
+  <RulesElement name="Familiar: Bound Demon" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-4" />
+  <RulesElement name="Familiar: Crafter Homunculus" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-5" />
+  <RulesElement name="Familiar: Dragonling" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-6" />
+  <RulesElement name="Familiar: Falcon" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-7" />
+  <RulesElement name="Familiar: Rat" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-8" />
+  <RulesElement name="Familiar: Raven" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-9" />
+  <RulesElement name="Familiar: Cat" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-10" />
+  <RulesElement name="Familiar: Serpent" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-11" />
+  <RulesElement name="Familiar: Spider" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-12" />
+  <RulesElement name="Familiar: Arcane Eye" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-13" />
+  <RulesElement name="Familiar: Badger" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-14" />
+  <RulesElement name="Familiar: Canine Construct" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-15" />
+  <RulesElement name="Familiar: Disembodied Hand" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-16" />
+  <RulesElement name="Familiar: Fire Lizard" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-17" />
+  <RulesElement name="Familiar: Lightning Lizard" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-18" />
+  <RulesElement name="Familiar: Ooze" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-19" />
+  <RulesElement name="Familiar: Parrot" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-20" />
+  <RulesElement name="Familiar: Rootling" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-21" />
+  <RulesElement name="Familiar: Scout Homunculus" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-22" />
+  <RulesElement name="Familiar: Skull" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-23" />
+  <RulesElement name="Familiar: Toad" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-24" />
+  <RulesElement name="Familiar: Weasel" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-25" />
+  <RulesElement name="Familiar: Air Mephit" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-26" />
+  <RulesElement name="Familiar: Arcane Wisp" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-27" />
+  <RulesElement name="Familiar: Beholderkin" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-28" />
+  <RulesElement name="Familiar: Blackspawn Darkling" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-29" />
+  <RulesElement name="Familiar: Bluespawn Nimblespark" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-30" />
+  <RulesElement name="Familiar: Earth Mephit" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-31" />
+  <RulesElement name="Familiar: Fire Mephit" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-32" />
+  <RulesElement name="Familiar: Grayspawn Shortfang" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-33" />
+  <RulesElement name="Familiar: Greenspawn Banespeak" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-34" />
+  <RulesElement name="Familiar: Ice Mephit" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-35" />
+  <RulesElement name="Familiar: Rakshasa Claw" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-36" />
+  <RulesElement name="Familiar: Redspawn Spirfire" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-37" />
+  <RulesElement name="Familiar: Stone Fowl" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-38" />
+  <RulesElement name="Familiar: Whitespawn Snowstepper" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-39" />
+  <RulesElement name="Familiar: Blazing Skull" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-40" />
+  <RulesElement name="Familiar: Chaos Shard" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-41" />
+  <RulesElement name="Familiar: Gibbering Pet" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-42" />
+  <RulesElement name="Familiar: Shadow Incarnate" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-43" />
+  <RulesElement name="Familiar: Oso de la Fez, Former Show Bear" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-44" />
+  <RulesElement name="Familiar: Bantam Fastieth" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-45" />
+  <RulesElement name="Familiar: Bloodthorn Vine Barb" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-46" />
+  <RulesElement name="Familiar: Clockwork Scorpion" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-47" />
+  <RulesElement name="Familiar: Dragonmark Reflection" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-48" />
+  <RulesElement name="Familiar: Floating Weapon" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-49" />
+  <RulesElement name="Familiar: Gadfly" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-50" />
+  <RulesElement name="Familiar: Magpie" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-51" />
+  <RulesElement name="Familiar: Marmoset" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-52" />
+  <RulesElement name="Familiar: Octopus" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-53" />
+  <RulesElement name="Familiar: Saddle Squire" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-54" />
+  <RulesElement name="Familiar: Soarwood Wings" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-55" />
+  <RulesElement name="Familiar: Summoner Homunculus" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-56" />
+  <RulesElement name="Familiar: Tome Caddy" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-57" />
+  <RulesElement name="Familiar: Warforged Faceplate" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-58" />
+  <RulesElement name="Familiar: Ambush Vine Shoot" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-59" />
+  <RulesElement name="Familiar: Crawling Clot" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-60" />
+  <RulesElement name="Familiar: Dimensional Pet" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-61" />
+  <RulesElement name="Familiar: Living Infusion" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-62" />
+  <RulesElement name="Familiar: Minor Foulspawn" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-63" />
+  <RulesElement name="Familiar: Smith's Hammer" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-64" />
+  <RulesElement name="Familiar: Tinker Feyling" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-65" />
+  <RulesElement name="Familiar: Lingering Nightmare" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-66" />
+  <RulesElement name="Familiar: Silver Lamp" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-67" />
+  <RulesElement name="Familiar: Muse Sprite" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-68" />
+  <RulesElement name="Familiar: White-Eyed Crow" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-69" />
+  <RulesElement name="Familiar: Gallant Hawk" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-70" />
+  <RulesElement name="Familiar: Moon Wisp" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-71" />
+  <RulesElement name="Familiar: Specter" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-72" />
+  <RulesElement name="Familiar: Least Air Elemental" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-73" />
+  <RulesElement name="Familiar: Tiny Gelatinous Cube" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-74" />
+  <RulesElement name="Familiar: Least Earth Elemental" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-75" />
+  <RulesElement name="Familiar: Fiddling Grig" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-76" />
+  <RulesElement name="Familiar: Faerie Dragonling" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-77" />
+  <RulesElement name="Familiar: Coure Attendant" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-78" />
+  <RulesElement name="Familiar: Critic Lizard" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-79" />
+  <RulesElement name="Familiar: Floating Polyp" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-80" />
+  <RulesElement name="Familiar: Hurrum" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-81" />
+  <RulesElement name="Familiar: Jank" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-82" />
+  <RulesElement name="Familiar: Kes'trekel" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-83" />
+  <RulesElement name="Familiar: Kivit" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-84" />
+  <RulesElement name="Familiar: Sitak" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-85" />
+  <RulesElement name="Familiar: Wrab" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-86" />
+  <RulesElement name="Familiar: Z'tal" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-87" />
+  <RulesElement name="Familiar: Shadow Raven" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR-88" />
+  <RulesElement name="Familiar: Daolanin" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR_DAOLANIN-1" />
+  <RulesElement name="Familiar: Djinnling" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR_DJINNLING-1" />
+  <RulesElement name="Familiar: Efreetkin" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR_EFREETKIN-1" />
+  <RulesElement name="Familiar: Maridan" type="Internal" source="4ecb corrections" internal-id="ID_TIV_FAMILIAR_MARIDAN-1" />
+
+  <!-- The same part appends those cards to nine misspelled familiar IDs
+       (ID_MSR_FAMILIAR_*), creating empty duplicates of real familiars
+       (ID_FMP_FAMILIAR_93-101). Hide the duplicates from new picks. -->
+  <AppendNodes internal-id="ID_MSR_FAMILIAR_CRITIC_LIZARD"><Prereqs> Unselectable </Prereqs></AppendNodes>
+  <AppendNodes internal-id="ID_MSR_FAMILIAR_FLOATING_POLYP"><Prereqs> Unselectable </Prereqs></AppendNodes>
+  <AppendNodes internal-id="ID_MSR_FAMILIAR_HURRUM"><Prereqs> Unselectable </Prereqs></AppendNodes>
+  <AppendNodes internal-id="ID_MSR_FAMILIAR_JANK"><Prereqs> Unselectable </Prereqs></AppendNodes>
+  <AppendNodes internal-id="ID_MSR_FAMILIAR_KESTREKEL"><Prereqs> Unselectable </Prereqs></AppendNodes>
+  <AppendNodes internal-id="ID_MSR_FAMILIAR_KIVIT"><Prereqs> Unselectable </Prereqs></AppendNodes>
+  <AppendNodes internal-id="ID_MSR_FAMILIAR_SITAK"><Prereqs> Unselectable </Prereqs></AppendNodes>
+  <AppendNodes internal-id="ID_MSR_FAMILIAR_WRAB"><Prereqs> Unselectable </Prereqs></AppendNodes>
+  <AppendNodes internal-id="ID_MSR_FAMILIAR_ZTAL"><Prereqs> Unselectable </Prereqs></AppendNodes>
+</D20Rules>

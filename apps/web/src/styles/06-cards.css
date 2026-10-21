@@ -898,6 +898,39 @@
   font-weight: 700;
   margin-left: 0.02in;
 }
+/* Familiar: the Play data frame, with its benefits as card text. */
+.print-familiar-card .print-play-body,
+.print-familiar-card .print-play-identity {
+  color: var(--card-ink);
+}
+.print-familiar-card .print-play-identity {
+  opacity: 0.75;
+}
+.print-familiar-card > header h3 {
+  align-items: center;
+  display: flex;
+  gap: 0.04in;
+}
+.print-familiar-row {
+  display: grid;
+  gap: 0.045in;
+  grid-template-columns: 1fr 3fr;
+}
+.print-familiar-rules {
+  font-style: italic;
+}
+.print-familiar-section h4 {
+  color: var(--card-color);
+  font-size: 1em;
+  margin: 0;
+}
+.print-familiar-section :is(p, ul) {
+  margin: 0;
+}
+.print-familiar-description {
+  font-style: italic;
+  margin: 0;
+}
 .print-item-card {
   --card-color: #ff8c00;
   grid-template-columns: minmax(0, 1fr);

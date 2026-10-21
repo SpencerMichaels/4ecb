@@ -1,6 +1,7 @@
 # Familiar card proposal
 
-Status: accepted by the product owner (2026-10-20). Step 1 of 2; step 2
+Status: accepted by the product owner and implemented (2026-10-20); visual
+review pending. See implementation-status.md. Step 1 of 2; step 2
 (beast/animal companion stat block) is a later, separate proposal.
 
 ## Problem
