@@ -1,5 +1,48 @@
 # Implementation status
 
+## Legacy prerequisite grammar and aliases (2026-10-21)
+
+Unverified prerequisite clause uses across the private pack fell from 650 (256
+distinct) to 122 (59). Records with any unverified clause fell from 577 to 110.
+Measured with `tsx scripts/audit-prerequisites.ts`.
+
+- **Code** (`64783ff`). The legacy `SpecialCase` family was traced and
+  ported into `prerequisites.ts`. It applies only to clauses that were
+  otherwise unverified, and covers:
+  - the decoded native prefix and suffix tables ("Follower of", "X racial
+    power", "regional benefit", …);
+  - Nth-level, race + class, "any"/"at least one X feat";
+  - paragon multiclassing and the multiclass families;
+  - armor and weapon proficiency forms, carried across comma parts;
+  - owned-power checks.
+
+  Names are keyed through `EXCEPTION_NAMES`. The evaluation cache is v20.
+
+- **Corrections** (`c76a729`, `content/corrections/93-prerequisites.part`).
+  It rewrites the machine-read `Prereqs` of 111 records with exact legacy
+  aliases (D089), and `print-prereqs` is untouched.
+
+Legality: no saved sample character became illegal. Piri and chopper farlund
+are now legal; five warnings now pass.
+
+Behaviour changes:
+
+- "1 or more power points" is now unverified; it used to pass by mistake.
+- Lorekeeper, Harper of Legend's skill pairs, martial/psionic paragon
+  multiclassing and il-Yannah/Berronar worship are now actually checked.
+
+Left unverified on purpose:
+
+- Spellscar/Harpers/House Vadalis clauses (about 33). Legacy maps these to
+  records nothing grants, so it always fails them. Pending an owner
+  interpretation.
+- About 45 granted epic-destiny features that have no `print-prereqs`.
+- Dilettante checks and power points (engine gaps).
+- Freeform prose and missing records.
+
+Verification: 1046 workspace tests, format, lint and typecheck pass; the pack
+rebuilds with 41 warnings.
+
 ## Coverage audit, step 3: legacy special cases (2026-10-21)
 
 `pnpm audit:legacy-special-cases [PACK]` builds the inventory. Its decoder
