@@ -21,6 +21,7 @@ import {
   inventoryEntryForEntity,
   inventoryLoadoutToggle,
   inventorySlotCandidates,
+  isLegacyBoonType,
   inventoryRequiresBothHands,
   itemChoiceCandidates,
   LOADOUT_SLOT_COLUMNS,
@@ -314,6 +315,29 @@ describe("Shop presentation model", () => {
         entities,
       ).map(({ id }) => id),
     ).toEqual(["FIRE", "POISON"]);
+  });
+});
+
+describe("legacy boon types", () => {
+  it("mirrors RulesElementIsBoon's words and exact types", () => {
+    expect(isLegacyBoonType("Legendary Boon")).toBe(true);
+    expect(isLegacyBoonType("Grandmaster Training")).toBe(true);
+    expect(isLegacyBoonType("Battle Scars")).toBe(true);
+    expect(isLegacyBoonType("wanderer's secret")).toBe(true);
+    expect(isLegacyBoonType("Secret")).toBe(false);
+    expect(isLegacyBoonType("Alternative Reward")).toBe(false);
+    expect(isLegacyBoonType(undefined)).toBe(false);
+  });
+
+  it("files every boon with the special items", () => {
+    for (const type of ["Battle Scars", "Martial Training", "Unheard-of Boon"])
+      expect(
+        shopBrowseCategory(
+          entity("BOON", "Public Boon", "Magic Item", {
+            "Magic Item Type": type,
+          }),
+        ),
+      ).toBe("special-items");
   });
 });
 

@@ -261,32 +261,45 @@ export const CONSUMABLE_KINDS = [
   "drink",
 ] as const;
 
+/**
+ * Legacy D20Workspace.RulesElementIsBoon: a Magic Item Type containing one
+ * of these words, or equal to one of the exact types below, is a boon (the
+ * legacy BOONS category). `pnpm audit:legacy-special-cases` checks both
+ * lists against the decompiled legacy engine.
+ */
+export const LEGACY_BOON_TYPE_WORDS = ["boon", "training"] as const;
+export const LEGACY_BOON_TYPES = [
+  "psionic talent",
+  "echo of power",
+  "elemental gift",
+  "glory boon",
+  "martial training",
+  "primal blessing",
+  "templar brand",
+  "veiled alliance mystery",
+  "wanderer's secret",
+  "secret of the way",
+  "battle scars",
+] as const;
+
+/** Whether a Magic Item Type is a legacy boon (case-insensitive). */
+export function isLegacyBoonType(magicItemType: string | undefined): boolean {
+  const type = normalized(magicItemType);
+  return (
+    LEGACY_BOON_TYPE_WORDS.some((word) => type.includes(word)) ||
+    LEGACY_BOON_TYPES.some((boon) => type === boon)
+  );
+}
+
+/** Non-boon rewards that also belong with the special items. */
 const REWARD_KINDS = [
   "alternative reward",
-  "divine boon",
-  "legendary boon",
-  "other boon",
-  "boon",
   "gift",
   "blessing",
-  "grandmaster training",
-  "training",
   "talent",
   "secret",
   "mystery",
-  "templar brand",
   "brand",
-  "elemental gift",
-  "sorcerer-king's boon",
-  "primal blessing",
-  "psionic talent",
-  "fey magic gift (boon)",
-  "glory boon",
-  "veiled alliance mystery",
-  "secret of the way",
-  "wanderer's secret",
-  "echo of power",
-  "iggwilv's boon",
 ] as const;
 
 const MUNDANE_IMPLEMENT_IDS = new Set([
@@ -560,6 +573,7 @@ export function shopBrowseCategory(
     if (magicType.includes("wondrous")) return "wondrous-items";
     if (
       magicType === "special" ||
+      isLegacyBoonType(magicType) ||
       REWARD_KINDS.some((kind) => magicType === kind) ||
       ["artifact", "intelligent item", "item set", "augment"].some((kind) =>
         magicType.includes(kind),

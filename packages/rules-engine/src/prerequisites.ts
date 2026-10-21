@@ -197,8 +197,10 @@ function resolveDefinitions(
 /**
  * Clauses the legacy engine skips as always met (`Ignore`): every playable
  * race is a living humanoid, and the rest are not checkable from a record.
+ * `pnpm audit:legacy-special-cases` checks this list against the decompiled
+ * engine.
  */
-const LEGACY_IGNORED_CLAUSES = new Set([
+export const LEGACY_IGNORED_CLAUSES: ReadonlySet<string> = new Set([
   "living humanoid race",
   "humanoid race",
   "natural humanoid",
