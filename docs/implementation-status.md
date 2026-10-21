@@ -1,5 +1,51 @@
 # Implementation status
 
+## Coverage audit, step 3: legacy special cases (2026-10-21)
+
+`pnpm audit:legacy-special-cases [PACK]` builds the inventory. Its decoder
+and classifier are `apps/content-tool/src/legacy-literals.ts`, and the
+reviewed statuses are in `legacy-special-cases.ts`.
+
+- **What it reads:** it decodes every string literal in the decompiled legacy
+  applications: native `data()` literals, C# literals, and CharacterBuilder's
+  SmartAssembly-encrypted strings. That is 3,050 distinct literals.
+- **What it finds:** it groups content-targeting literals by member, giving 206
+  special cases. Each has a reviewed modern status:
+  - 84 handled in code
+  - 1 handled declaratively
+  - 1 drift risk
+  - 43 not handled
+  - 13 out of scope (auto-build and wizard pages)
+  - 64 generic
+- **Drift checks:** it fails when two hand-maintained modern lists drift from
+  the legacy literals: the boon types and the ignored prerequisite clauses.
+
+Fixes:
+
+- The boon list now matches legacy `RulesElementIsBoon` exactly, adding
+  Battle Scars and Martial Training.
+- Power-math IDs and names that were inline literals now live in
+  `EXCEPTION_IDS`/`EXCEPTION_NAMES`.
+- `content/corrections/92-legacy-special-cases.part` resolves the bare
+  "Shifter" prerequisite (47 records) through a CountsAsRace alias granted by
+  both shifter races. Unverified prerequisite clauses across the pack fell
+  from 697 to 650.
+
+Open for owner decisions, ranked:
+
+1. The prerequisite alias table and clause predicates (650 unverified uses).
+2. Power requirement restrictions on weapon variants.
+3. Item requirements (living construct, ki focus user).
+4. The psionic power-point model.
+5. Exact level-increase damage lines and non-damage powers.
+6. Extra encounter uses.
+7. Arena Training and size-based wielding.
+8. App gaps that overlap the coverage audit: God Fragment, the beast
+   companion card, and Student of Sword Magic.
+
+Verification: format, lint, typecheck and 1016 workspace tests pass; both
+audits run against the rebuilt pack, which has 41 warnings as before.
+
 ## Coverage audit, steps 1–2 (2026-10-20)
 
 `pnpm audit:coverage [PACK]` (`docs/coverage-audit-proposal.md`) writes
