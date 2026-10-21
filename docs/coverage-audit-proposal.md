@@ -3,7 +3,8 @@
 Status: accepted by the product owner (2026-10-20); policy recorded as D089.
 Steps 1–2 (registry, reference fields) implemented as `pnpm audit:coverage`;
 the legacy special-case inventory as `pnpm audit:legacy-special-cases`.
-Remaining: the generated-character matrix and choice reachability.
+and the generated-character matrix and choice reachability as
+`pnpm audit:coverage-matrix`. All steps implemented.
 
 ## Problem
 

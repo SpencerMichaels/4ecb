@@ -1,5 +1,54 @@
 # Implementation status
 
+## Coverage audit, steps 3–4: generated-character matrix (2026-10-21)
+
+`pnpm audit:coverage-matrix [PACK] [--levels=…] [--limit=N] [--only=…]
+[--jobs=N]` (`0b92093`; shared helpers in `scripts/native-character.ts`,
+`fdf42ec`) generates characters across every class, hybrid class, race, theme,
+paragon path and epic destiny. It checks:
+
+- that every active occurrence appears on a sheet surface
+  (`apps/web/src/sheet-coverage.ts`);
+- evaluation errors;
+- choice reachability.
+
+Final run, on pack `fc0d65b4aadb`: 511 characters, 787 sheets at levels
+1/11/21/30, 23 minutes with 4 jobs, deterministic for a given job count.
+Coverage of each option kind:
+
+- classes 50/52 and hybrid classes 31/31;
+- races 45/46 (Gnome doesn't converge);
+- themes 85/119;
+- paragon paths 384/579 (194 never eligible for any line);
+- epic destinies 99/115.
+
+Engine speed: `same()` in `expressions.ts` reuses one collator (`eb65054`),
+with identical results, making evaluation about 5× faster.
+
+Findings, ranked by characters affected:
+
+- **Engine bugs:**
+  - Picking a choice removes an earlier pick, e.g. level-21 feat choices
+    flip-flop (32 cases; `audit:native-workflow` hits it at level 2).
+  - Gnome, four wands and one feat stop a character converging.
+  - Essentials-style required replacement power choices have no candidates
+    (Controller/Defender/Leader/Striker, Binder, Blackguard, Hexblade).
+  - Spellbook choices are left unresolved, and magic-item class-feature
+    choices can't be made into commands.
+- **Content errors:**
+  - Missing grant targets: Deep Delver's blindsight, and the level-17
+    companion-class features.
+  - Assassin's Strike (Hybrid) choices point at the wrong category.
+  - Default or granted picks fail their prerequisites (Born of Two Races,
+    Past Spirit, Moteborn's Primordial).
+- **Sheet gaps:**
+  - not shown: proficiencies, CountsAsRace, trait package names, background
+    choices, companions;
+  - granted (non-inventory) magic items and rituals;
+  - hybrid classes: the identity line shows "Hybrid" instead of the classes.
+- 707 of 1,213 select rules were offered to some character, and none lands in
+  the builder's Other section.
+
 ## Shared words and carried prefixes in prerequisites (2026-10-21)
 
 Commit `31375bc`. Legacy splits at every " or " and reads each side alone,
