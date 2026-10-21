@@ -2459,6 +2459,10 @@ fields, rules and numbers. Where only prose would fix something, presentation
 handling or leaving it is preferred. This supersedes the "port verbatim first"
 policy in `reverse-engineering/docs/08-hard-coded-exceptions.md`.
 
+A record's machine-read `Prereqs` text counts as structure: a correction may
+rewrite it into a form the prerequisite parser resolves, since players see
+`print-prereqs`, which stays as published (product owner, 2026-10-21).
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed
