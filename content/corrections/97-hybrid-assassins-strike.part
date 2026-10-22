@@ -15,19 +15,29 @@
   additional effect, and the published Effect text stays as written. A
   record's prerequisite is "has a (k-1)-th upgrade from an earlier level and
   no earlier k-th one", so exactly one record is open at each level.
+
+  The upgrades need the power (owner decision, 2026-10-21). A hybrid
+  executioner takes Assassin's Strike (Hybrid) as a level-1 encounter
+  attack power, it is not granted, so each upgrade's prerequisite starts
+  with "Assassin's Strike (Hybrid) Power", and the five optional selects
+  require ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE, so a character without the
+  power is not offered the upgrade choices at all. (The class feature has
+  the same name as the power, hence the type in the prerequisite and the
+  ID in the requires.)
 -->
 <D20Rules game-system="D&amp;D4E">
   <RemoveNodes internal-id="ID_CDJ_CLASS_FEATURE_HYBRID_ASSASSINS_STRIKE"><rules /></RemoveNodes>
   <AppendNodes internal-id="ID_CDJ_CLASS_FEATURE_HYBRID_ASSASSINS_STRIKE">
     <rules>
-      <select type="Class Feature" Category="ID_CDJ_CLASS_FEATURE_LV7_ASSASSINS_STRIKE_1" number="1" level="7" optional="true" />
-      <select type="Class Feature" Category="ID_CDJ_CLASS_FEATURE_LV13_ASSASSINS_STRIKE_1|ID_4ECB_CLASS_FEATURE_LV13_ASSASSINS_STRIKE_2" number="1" level="13" optional="true" />
-      <select type="Class Feature" Category="ID_CDJ_CLASS_FEATURE_LV17_ASSASSINS_STRIKE_1|ID_CDJ_CLASS_FEATURE_LV17_ASSASSINS_STRIKE_2|ID_4ECB_CLASS_FEATURE_LV17_ASSASSINS_STRIKE_3" number="1" level="17" optional="true" />
-      <select type="Class Feature" Category="ID_CDJ_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_1|ID_CDJ_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_2|ID_4ECB_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_3|ID_4ECB_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_4" number="1" level="23" optional="true" />
-      <select type="Class Feature" Category="ID_CDJ_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_1|ID_CDJ_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_2|ID_CDJ_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_3|ID_4ECB_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_4|ID_4ECB_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_5" number="1" level="27" optional="true" />
+      <select type="Class Feature" Category="ID_CDJ_CLASS_FEATURE_LV7_ASSASSINS_STRIKE_1" number="1" level="7" optional="true" requires="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE" />
+      <select type="Class Feature" Category="ID_CDJ_CLASS_FEATURE_LV13_ASSASSINS_STRIKE_1|ID_4ECB_CLASS_FEATURE_LV13_ASSASSINS_STRIKE_2" number="1" level="13" optional="true" requires="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE" />
+      <select type="Class Feature" Category="ID_CDJ_CLASS_FEATURE_LV17_ASSASSINS_STRIKE_1|ID_CDJ_CLASS_FEATURE_LV17_ASSASSINS_STRIKE_2|ID_4ECB_CLASS_FEATURE_LV17_ASSASSINS_STRIKE_3" number="1" level="17" optional="true" requires="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE" />
+      <select type="Class Feature" Category="ID_CDJ_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_1|ID_CDJ_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_2|ID_4ECB_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_3|ID_4ECB_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_4" number="1" level="23" optional="true" requires="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE" />
+      <select type="Class Feature" Category="ID_CDJ_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_1|ID_CDJ_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_2|ID_CDJ_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_3|ID_4ECB_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_4|ID_4ECB_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_5" number="1" level="27" optional="true" requires="ID_CDJ_POWER_HYBRID_ASSASSINS_STRIKE" />
     </rules>
   </AppendNodes>
   <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV7_ASSASSINS_STRIKE_1" name="Level 7 Assassin's Strike Upgrade 1" type="Class Feature" source="Dragon Magazine 400">
+    <Prereqs> Assassin's Strike (Hybrid) Power </Prereqs>
     <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
     <specific name="Level"> 7 </specific>
     <rules>
@@ -37,7 +47,7 @@
     </rules>
   </RulesElement>
   <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV13_ASSASSINS_STRIKE_1" name="Level 13 Assassin's Strike Upgrade 1" type="Class Feature" source="Dragon Magazine 400">
-    <Prereqs> !Level 7 Assassin's Strike Upgrade 1 </Prereqs>
+    <Prereqs> Assassin's Strike (Hybrid) Power, !Level 7 Assassin's Strike Upgrade 1 </Prereqs>
     <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
     <specific name="Level"> 13 </specific>
     <rules>
@@ -47,7 +57,7 @@
     </rules>
   </RulesElement>
   <RulesElement internal-id="ID_4ECB_CLASS_FEATURE_LV13_ASSASSINS_STRIKE_2" name="Level 13 Assassin's Strike Upgrade 2" type="Class Feature" source="Dragon Magazine 400">
-    <Prereqs> Level 7 Assassin's Strike Upgrade 1 </Prereqs>
+    <Prereqs> Assassin's Strike (Hybrid) Power, Level 7 Assassin's Strike Upgrade 1 </Prereqs>
     <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
     <specific name="Level"> 13 </specific>
     <rules>
@@ -57,7 +67,7 @@
     </rules>
   </RulesElement>
   <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV17_ASSASSINS_STRIKE_1" name="Level 17 Assassin's Strike Upgrade 1" type="Class Feature" source="Dragon Magazine 400">
-    <Prereqs> !Level 7 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 1 </Prereqs>
+    <Prereqs> Assassin's Strike (Hybrid) Power, !Level 7 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 1 </Prereqs>
     <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
     <specific name="Level"> 17 </specific>
     <rules>
@@ -67,7 +77,7 @@
     </rules>
   </RulesElement>
   <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV17_ASSASSINS_STRIKE_2" name="Level 17 Assassin's Strike Upgrade 2" type="Class Feature" source="Dragon Magazine 400">
-    <Prereqs> Level 7 Assassin's Strike Upgrade 1 or Level 13 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 2 </Prereqs>
+    <Prereqs> Assassin's Strike (Hybrid) Power, Level 7 Assassin's Strike Upgrade 1 or Level 13 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 2 </Prereqs>
     <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
     <specific name="Level"> 17 </specific>
     <rules>
@@ -77,7 +87,7 @@
     </rules>
   </RulesElement>
   <RulesElement internal-id="ID_4ECB_CLASS_FEATURE_LV17_ASSASSINS_STRIKE_3" name="Level 17 Assassin's Strike Upgrade 3" type="Class Feature" source="Dragon Magazine 400">
-    <Prereqs> Level 13 Assassin's Strike Upgrade 2 </Prereqs>
+    <Prereqs> Assassin's Strike (Hybrid) Power, Level 13 Assassin's Strike Upgrade 2 </Prereqs>
     <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
     <specific name="Level"> 17 </specific>
     <rules>
@@ -87,7 +97,7 @@
     </rules>
   </RulesElement>
   <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_1" name="Level 23 Assassin's Strike Upgrade 1" type="Class Feature" source="Dragon Magazine 400">
-    <Prereqs> !Level 7 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 1, !Level 17 Assassin's Strike Upgrade 1 </Prereqs>
+    <Prereqs> Assassin's Strike (Hybrid) Power, !Level 7 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 1, !Level 17 Assassin's Strike Upgrade 1 </Prereqs>
     <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
     <specific name="Level"> 23 </specific>
     <rules>
@@ -97,7 +107,7 @@
     </rules>
   </RulesElement>
   <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_2" name="Level 23 Assassin's Strike Upgrade 2" type="Class Feature" source="Dragon Magazine 400">
-    <Prereqs> Level 7 Assassin's Strike Upgrade 1 or Level 13 Assassin's Strike Upgrade 1 or Level 17 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 2, !Level 17 Assassin's Strike Upgrade 2 </Prereqs>
+    <Prereqs> Assassin's Strike (Hybrid) Power, Level 7 Assassin's Strike Upgrade 1 or Level 13 Assassin's Strike Upgrade 1 or Level 17 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 2, !Level 17 Assassin's Strike Upgrade 2 </Prereqs>
     <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
     <specific name="Level"> 23 </specific>
     <rules>
@@ -107,7 +117,7 @@
     </rules>
   </RulesElement>
   <RulesElement internal-id="ID_4ECB_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_3" name="Level 23 Assassin's Strike Upgrade 3" type="Class Feature" source="Dragon Magazine 400">
-    <Prereqs> Level 13 Assassin's Strike Upgrade 2 or Level 17 Assassin's Strike Upgrade 2, !Level 17 Assassin's Strike Upgrade 3 </Prereqs>
+    <Prereqs> Assassin's Strike (Hybrid) Power, Level 13 Assassin's Strike Upgrade 2 or Level 17 Assassin's Strike Upgrade 2, !Level 17 Assassin's Strike Upgrade 3 </Prereqs>
     <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
     <specific name="Level"> 23 </specific>
     <rules>
@@ -117,7 +127,7 @@
     </rules>
   </RulesElement>
   <RulesElement internal-id="ID_4ECB_CLASS_FEATURE_LV23_ASSASSINS_STRIKE_4" name="Level 23 Assassin's Strike Upgrade 4" type="Class Feature" source="Dragon Magazine 400">
-    <Prereqs> Level 17 Assassin's Strike Upgrade 3 </Prereqs>
+    <Prereqs> Assassin's Strike (Hybrid) Power, Level 17 Assassin's Strike Upgrade 3 </Prereqs>
     <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
     <specific name="Level"> 23 </specific>
     <rules>
@@ -127,7 +137,7 @@
     </rules>
   </RulesElement>
   <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_1" name="Level 27 Assassin's Strike Upgrade 1" type="Class Feature" source="Dragon Magazine 400">
-    <Prereqs> !Level 7 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 1, !Level 17 Assassin's Strike Upgrade 1, !Level 23 Assassin's Strike Upgrade 1 </Prereqs>
+    <Prereqs> Assassin's Strike (Hybrid) Power, !Level 7 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 1, !Level 17 Assassin's Strike Upgrade 1, !Level 23 Assassin's Strike Upgrade 1 </Prereqs>
     <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
     <specific name="Level"> 27 </specific>
     <rules>
@@ -137,7 +147,7 @@
     </rules>
   </RulesElement>
   <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_2" name="Level 27 Assassin's Strike Upgrade 2" type="Class Feature" source="Dragon Magazine 400">
-    <Prereqs> Level 7 Assassin's Strike Upgrade 1 or Level 13 Assassin's Strike Upgrade 1 or Level 17 Assassin's Strike Upgrade 1 or Level 23 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 2, !Level 17 Assassin's Strike Upgrade 2, !Level 23 Assassin's Strike Upgrade 2 </Prereqs>
+    <Prereqs> Assassin's Strike (Hybrid) Power, Level 7 Assassin's Strike Upgrade 1 or Level 13 Assassin's Strike Upgrade 1 or Level 17 Assassin's Strike Upgrade 1 or Level 23 Assassin's Strike Upgrade 1, !Level 13 Assassin's Strike Upgrade 2, !Level 17 Assassin's Strike Upgrade 2, !Level 23 Assassin's Strike Upgrade 2 </Prereqs>
     <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
     <specific name="Level"> 27 </specific>
     <rules>
@@ -147,7 +157,7 @@
     </rules>
   </RulesElement>
   <RulesElement internal-id="ID_CDJ_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_3" name="Level 27 Assassin's Strike Upgrade 3" type="Class Feature" source="Dragon Magazine 400">
-    <Prereqs> Level 13 Assassin's Strike Upgrade 2 or Level 17 Assassin's Strike Upgrade 2 or Level 23 Assassin's Strike Upgrade 2, !Level 17 Assassin's Strike Upgrade 3, !Level 23 Assassin's Strike Upgrade 3 </Prereqs>
+    <Prereqs> Assassin's Strike (Hybrid) Power, Level 13 Assassin's Strike Upgrade 2 or Level 17 Assassin's Strike Upgrade 2 or Level 23 Assassin's Strike Upgrade 2, !Level 17 Assassin's Strike Upgrade 3, !Level 23 Assassin's Strike Upgrade 3 </Prereqs>
     <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
     <specific name="Level"> 27 </specific>
     <rules>
@@ -157,7 +167,7 @@
     </rules>
   </RulesElement>
   <RulesElement internal-id="ID_4ECB_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_4" name="Level 27 Assassin's Strike Upgrade 4" type="Class Feature" source="Dragon Magazine 400">
-    <Prereqs> Level 17 Assassin's Strike Upgrade 3 or Level 23 Assassin's Strike Upgrade 3, !Level 23 Assassin's Strike Upgrade 4 </Prereqs>
+    <Prereqs> Assassin's Strike (Hybrid) Power, Level 17 Assassin's Strike Upgrade 3 or Level 23 Assassin's Strike Upgrade 3, !Level 23 Assassin's Strike Upgrade 4 </Prereqs>
     <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
     <specific name="Level"> 27 </specific>
     <rules>
@@ -167,7 +177,7 @@
     </rules>
   </RulesElement>
   <RulesElement internal-id="ID_4ECB_CLASS_FEATURE_LV27_ASSASSINS_STRIKE_5" name="Level 27 Assassin's Strike Upgrade 5" type="Class Feature" source="Dragon Magazine 400">
-    <Prereqs> Level 23 Assassin's Strike Upgrade 4 </Prereqs>
+    <Prereqs> Assassin's Strike (Hybrid) Power, Level 23 Assassin's Strike Upgrade 4 </Prereqs>
     <specific name="Short Description"> +1d10 Assassin's Strike damage </specific>
     <specific name="Level"> 27 </specific>
     <rules>
