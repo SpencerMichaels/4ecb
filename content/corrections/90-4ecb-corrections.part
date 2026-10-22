@@ -24,11 +24,17 @@
 
   <!-- The White Well hexblade pact was copied from the Star pact and still
        says "You have the Star pact" in its table summary. -->
+  <!-- It also lists the plain Fey Pact's Legendary Hexblade features (_1A to
+       _6A) in its _PARSED_CLASS_FEATURE, but each Legendary Hexblade feature
+       grants a White Well character the _1D to _6D one (requires
+       TRAIT_PACKAGE_4). The list names those instead. -->
   <RemoveNodes internal-id="ID_WOG_HEXBLADE_TRAIT_PACKAGE_4">
     <specific name="Short Description" />
     <specific name="_CS_ShortDescription" />
+    <specific name="_PARSED_CLASS_FEATURE" />
   </RemoveNodes>
   <AppendNodes internal-id="ID_WOG_HEXBLADE_TRAIT_PACKAGE_4">
+    <specific name="_PARSED_CLASS_FEATURE">ID_WOG_HEXBLADE_CLASS_FEATURE_1D,ID_WOG_HEXBLADE_CLASS_FEATURE_2D,ID_WOG_HEXBLADE_CLASS_FEATURE_3D,ID_WOG_HEXBLADE_CLASS_FEATURE_11D,ID_WOG_HEXBLADE_CLASS_FEATURE_12D,ID_WOG_LEGENDARY_HEXBLADE_CLASS_FEATURE_1D,ID_WOG_VALIANT_HEXBLADE_CLASS_FEATURE_1,ID_WOG_LEGENDARY_HEXBLADE_CLASS_FEATURE_2D,ID_WOG_VALIANT_HEXBLADE_CLASS_FEATURE_2,ID_WOG_LEGENDARY_HEXBLADE_CLASS_FEATURE_3D,ID_WOG_VALIANT_HEXBLADE_CLASS_FEATURE_3,ID_WOG_LEGENDARY_HEXBLADE_CLASS_FEATURE_4D,ID_WOG_VALIANT_HEXBLADE_CLASS_FEATURE_4,ID_WOG_LEGENDARY_HEXBLADE_CLASS_FEATURE_5D,ID_WOG_VALIANT_HEXBLADE_CLASS_FEATURE_5,ID_WOG_LEGENDARY_HEXBLADE_CLASS_FEATURE_6D,ID_WOG_VALIANT_HEXBLADE_CLASS_FEATURE_6,ID_WOG_HEXBLADE_CLASS_FEATURE_19D</specific>
     <specific name="Short Description">You have the Fey pact of the White Well.</specific>
     <specific name="_CS_ShortDescription">Gain White Well pact benefits</specific>
   </AppendNodes>
