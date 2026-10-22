@@ -79,7 +79,7 @@ styling as the builder's selection table with its detail card.
 - **Pane header** (the navy header band, as on dialogs and detail cards)
   holds everything about who the character is (decided): a large portrait
   (the builder sidebar's size), the name, the identity line, a **role line**
-  (power source plus role in title case, decided: "Divine Defender",
+  (power source plus role, one title-cased word each as in the class table, e.g. Berserker is "Martial Defender", decided: "Divine Defender",
   "Martial Striker"; a hybrid shows both halves, "Divine Leader / Arcane
   Controller"), then small secondary lines for paragon path, epic destiny,
   "Edited …", and the content-update status badge when there is one: the

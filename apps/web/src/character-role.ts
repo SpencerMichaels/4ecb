@@ -1,26 +1,18 @@
 import type { ContentEntity } from "@4ecb/content-domain";
 import type { EvaluatedCharacter } from "@4ecb/rules-engine";
 
-import { contentSpecificValue } from "./builder-ui";
+import { contentSpecificValue, splitLabeledDescription } from "./builder-ui";
 
-/** A class field's name part: its first sentence ("Defender. You…" →
- *  "Defender", "Martial and Shadow." → "Martial and Shadow"), title-cased
- *  but for its joining words. */
+/** A class field's one-word label, as the class table shows it
+ *  ("Defender. You…" → "Defender", "Martial and Shadow." → "Martial"),
+ *  title-cased. */
 function fieldName(entity: ContentEntity, field: string): string | undefined {
-  const sentence = contentSpecificValue(entity, field)
-    ?.split(".")[0]
-    ?.trim()
-    .replaceAll(/\s+/g, " ");
-  if (!sentence) return undefined;
-  return sentence
-    .split(" ")
-    .map((word) =>
-      /^(and|or)$/i.test(word)
-        ? word.toLocaleLowerCase()
-        : word.charAt(0).toLocaleUpperCase() +
-          word.slice(1).toLocaleLowerCase(),
-    )
-    .join(" ");
+  const word = splitLabeledDescription(
+    contentSpecificValue(entity, field),
+  ).label;
+  return word === undefined
+    ? undefined
+    : word.charAt(0).toLocaleUpperCase() + word.slice(1).toLocaleLowerCase();
 }
 
 /** One class's "Power source Role", e.g. "Divine Defender". */
