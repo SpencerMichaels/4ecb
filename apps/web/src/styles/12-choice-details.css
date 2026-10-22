@@ -256,6 +256,17 @@
   gap: 1rem;
   min-width: 0;
 }
+/* A lone detail card keeps the printed card's proportions; in a stack of
+   several (a pact's benefits, an item's powers and set) each card sizes to
+   its content instead, so short cards don't leave empty height. */
+.candidate-detail-stack:has(
+    > :nth-child(n + 2).print-reference-card,
+    > :nth-child(n + 2) .print-reference-card,
+    > :nth-child(n + 2) .reference-entity-card
+  )
+  :is(.print-reference-card.is-panel, .candidate-detail.reference-entity-card) {
+  aspect-ratio: auto;
+}
 
 .theme-power-cards,
 .candidate-detail-benefits {
