@@ -2896,10 +2896,17 @@ function roseScythe(c: ReviewCharacter, where: "builder" | "print"): Check[] {
     ),
     ...(where === "print"
       ? [
+          // The header shows the formula (D085); the number is in the
+          // scythe's own row of the weapon table.
           contains(
-            `The printed ${card?.name} attack line uses it`,
+            `The printed ${card?.name} card has a Rose Scythe row`,
             printedDeck(c).find((value) => value.card === card)?.text ?? "",
-            `+${bonus(c.evaluation)} vs`,
+            "Rose Scythe of Chauntea",
+          ),
+          contains(
+            `The printed ${card?.name} card shows its +${bonus(c.evaluation)} attack`,
+            printedDeck(c).find((value) => value.card === card)?.text ?? "",
+            `+${bonus(c.evaluation)}`,
           ),
         ]
       : []),
