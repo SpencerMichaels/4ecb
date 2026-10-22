@@ -32,6 +32,11 @@ wizard, ranger, druid or half-elf.
 - [ ] **Familiar choice:** the detail pane shows the familiar card (panel
       layout, dark theme on screen).
 
+- [ ] **Multi-card detail stacks** (owner request): in a stack of several
+      cards (White Well pact, an item with powers or a set), each card is only
+      as tall as its content. A lone detail card keeps the printed
+      proportions.
+
 ## Printed sheet: cards
 
 - [ ] **Familiar card** after the Skills card (e.g. Sprite with Vigorous
