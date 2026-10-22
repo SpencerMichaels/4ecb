@@ -35,7 +35,7 @@ function capitalized(text: string): string {
 }
 
 /**
- * The Characters page's table: sortable, filterable, one row per character.
+ * The Characters page's table: sortable, one row per character.
  * A click (or the arrow keys on the focused name) selects a row for the
  * detail pane; Enter or a double-click opens the builder. Each name is a
  * real link to the builder, so middle-click and "open in new tab" work;
@@ -43,34 +43,22 @@ function capitalized(text: string): string {
  */
 export function CharacterLibraryTable({
   characters,
-  totalCount,
-  filter,
   sort,
   selectedId,
-  updateIds,
   now,
-  onFilterChange,
   onSortChange,
   onSelect,
 }: {
-  /** Already filtered and sorted. */
+  /** Already sorted. */
   readonly characters: readonly CharacterLibraryEntry[];
-  /** Characters in the library before filtering. */
-  readonly totalCount: number;
-  readonly filter: string;
   readonly sort: LibrarySort;
   readonly selectedId: string | undefined;
-  /** Characters with a content update waiting. */
-  readonly updateIds: ReadonlySet<string>;
   readonly now: Date;
-  readonly onFilterChange: (filter: string) => void;
   readonly onSortChange: (column: LibrarySortColumn) => void;
   readonly onSelect: (id: string) => void;
 }) {
-  const filterInput = useRef<HTMLInputElement>(null);
   const body = useRef<HTMLTableSectionElement>(null);
-  // The one row in the tab order: the selection while it is listed, else the
-  // first row.
+  // The one row in the tab order: the selection, else the first row.
   const focusId = characters.some(({ id }) => id === selectedId)
     ? selectedId
     : characters[0]?.id;
@@ -101,34 +89,6 @@ export function CharacterLibraryTable({
 
   return (
     <section aria-label="Characters" className="library-table-column">
-      <div className="selection-table-toolbar library-table-toolbar">
-        <div className="selection-table-search">
-          <label>
-            <span className="visually-hidden">Filter characters</span>
-            <input
-              placeholder="Filter by name, race or class"
-              ref={filterInput}
-              type="search"
-              value={filter}
-              onChange={(event) => onFilterChange(event.currentTarget.value)}
-            />
-          </label>
-          {filter === "" ? null : (
-            <button
-              aria-label="Clear filter"
-              className="selection-table-search-clear"
-              title="Clear filter"
-              type="button"
-              onClick={() => {
-                onFilterChange("");
-                filterInput.current?.focus();
-              }}
-            >
-              <Icon name="remove" />
-            </button>
-          )}
-        </div>
-      </div>
       <div className="selection-table-scroll library-table-scroll">
         <table className="library-table">
           <thead>
@@ -166,11 +126,7 @@ export function CharacterLibraryTable({
           <tbody ref={body}>
             {characters.length === 0 ? (
               <tr className="library-table-empty">
-                <td colSpan={COLUMNS.length + 1}>
-                  {totalCount === 0
-                    ? "No characters yet."
-                    : `No characters match “${filter.trim()}”.`}
-                </td>
+                <td colSpan={COLUMNS.length + 1}>No characters yet.</td>
               </tr>
             ) : (
               characters.map((character, index) => {
@@ -236,14 +192,6 @@ export function CharacterLibraryTable({
                         >
                           {character.title}
                         </a>
-                        {updateIds.has(character.id) ? (
-                          <span
-                            className="library-update-badge"
-                            title="Game content has been updated. Open the character to review it."
-                          >
-                            Update
-                          </span>
-                        ) : null}
                       </span>
                     </td>
                     <td className="library-col-level">

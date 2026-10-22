@@ -1,7 +1,4 @@
-import type {
-  CharacterBuild,
-  LegacyCharacterSnapshot,
-} from "@4ecb/character-domain";
+import type { CharacterBuild } from "@4ecb/character-domain";
 import type {
   EvaluatedCharacter,
   EvaluationInput,
@@ -39,7 +36,6 @@ export type RulesWorkerRequest =
        *  so the library never decodes content on the main thread. */
       readonly type: "library-summary";
       readonly requestId: number;
-      readonly snapshot: LegacyCharacterSnapshot;
       readonly build: CharacterBuild;
     }
   | {

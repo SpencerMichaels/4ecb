@@ -2509,19 +2509,22 @@ Consequences:
 
 Status: accepted (2026-10-21). Refines D045's "compact library surface".
 
-The Characters page lists characters in a sortable, filterable table with a
-sticky detail pane, as the builder's selection tables do. Per-character
-actions live only in the pane. Its stats use the Play data card's layout
-through one shared component, so the two can't drift apart. The page
+The Characters page lists characters in a sortable table with a sticky
+detail pane, as the builder's selection tables do. Per-character actions
+live only in the pane, which is just a header band (identity, role line,
+actions). The product owner simplified it on 2026-10-21: no filter box, no
+Play data stats in the pane, and no content-update indicator in the
+library, since an update applies to every character at once and the
+builder's status badge handles it when a character is opened. The page
 header's buttons carry one-word text labels (the builder header stays
 icon-only). Emptying the trash, a bulk irreversible action, uses an explicit
 confirmation dialog rather than the two-click arm.
 
 Consequences:
 
-- The library may show evaluated values. They come from a disposable
-  library summary, never a source of truth, or from a live evaluation in a
-  worker that never blocks the page.
+- The library may show evaluated values (today only the role line). They
+  come from a disposable library summary, never a source of truth, or from
+  a live evaluation in a worker that never blocks the page.
 - New library metadata fields bump `CHARACTER_METADATA_VERSION`, so
   existing rows backfill on read.
 

@@ -2,15 +2,11 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import type { ContentPackManifest } from "@4ecb/content-pack";
-
 import {
   DEFAULT_LIBRARY_SORT,
   LIBRARY_VIEW_STORAGE_KEY,
   characterCount,
   characterIdentity,
-  filterLibrary,
-  libraryNeedsContentUpdate,
   librarySelection,
   nextLibrarySort,
   readLibraryView,
@@ -61,7 +57,12 @@ describe("character library table and detail pane", () => {
     expect(styles).toMatch(/\.library-table-portrait \{[^}]*height: 2\.25rem/);
     // The empty message renders inside the table, which always stays.
     expect(table).toContain('className="library-table-empty"');
-    expect(table).toContain("No characters match");
+    expect(table).toContain("No characters yet.");
+    // No filter box: the table starts level with the pane's header band.
+    expect(table).not.toContain("selection-table-toolbar");
+    expect(table).not.toContain('type="search"');
+    expect(styles).not.toContain(".library-table-toolbar");
+    expect(styles).toMatch(/\.library-workspace \{[^}]*align-items: start/);
   });
 
   it("selects rows with click and arrow keys and opens with Enter or double-click", () => {
@@ -259,21 +260,11 @@ describe("library table helpers", () => {
     ).toEqual(DEFAULT_LIBRARY_SORT);
   });
 
-  it("filters by name, race and class", () => {
-    expect(ids(filterLibrary(rows, "  ALD "))).toEqual(["b"]);
-    expect(ids(filterLibrary(rows, "elf"))).toEqual(["a"]);
-    expect(ids(filterLibrary(rows, "paladin"))).toEqual(["b"]);
-    expect(ids(filterLibrary(rows, ""))).toEqual(["a", "b", "c"]);
-    expect(filterLibrary(rows, "nobody")).toEqual([]);
-  });
-
   it("keeps a remembered selection and falls back to the first row", () => {
-    expect(librarySelection(rows, rows, "c")).toBe("c");
-    // Still shown while the filter hides it.
-    expect(librarySelection(rows, [rows[0]!], "c")).toBe("c");
-    expect(librarySelection(rows, [rows[1]!], "gone")).toBe("b");
-    expect(librarySelection(rows, [], "gone")).toBe("a");
-    expect(librarySelection([], [], "gone")).toBeUndefined();
+    expect(librarySelection(rows, "c")).toBe("c");
+    expect(librarySelection(rows, "gone")).toBe("a");
+    expect(librarySelection(rows, undefined)).toBe("a");
+    expect(librarySelection([], "gone")).toBeUndefined();
   });
 
   it("remembers sort and selection, tolerating bad or blocked storage", () => {
@@ -306,35 +297,5 @@ describe("library table helpers", () => {
     };
     expect(readLibraryView(blocked)).toEqual({ sort: DEFAULT_LIBRARY_SORT });
     expect(() => writeLibraryView(view, blocked)).not.toThrow();
-  });
-
-  it("flags a content update the way the builder does", () => {
-    const manifest = (packId: string, contentDigest: string) =>
-      ({ packId, contentDigest }) as ContentPackManifest;
-    const installed = [manifest("old", "d1"), manifest("new", "d2")];
-    const pinned = (packId: string, contentDigest?: string) => ({
-      contentRevision: {
-        packId,
-        ...(contentDigest === undefined ? {} : { contentDigest }),
-      },
-    });
-    expect(
-      libraryNeedsContentUpdate(pinned("old", "d1"), installed, "new"),
-    ).toBe(true);
-    expect(
-      libraryNeedsContentUpdate(pinned("new", "d2"), installed, "new"),
-    ).toBe(false);
-    // Unbound, no active content, or pinned content missing (an error the
-    // builder reports instead) raise no update.
-    expect(libraryNeedsContentUpdate({}, installed, "new")).toBe(false);
-    expect(
-      libraryNeedsContentUpdate(pinned("old", "d1"), installed, undefined),
-    ).toBe(false);
-    expect(
-      libraryNeedsContentUpdate(pinned("gone", "d9"), installed, "new"),
-    ).toBe(false);
-    expect(
-      libraryNeedsContentUpdate(pinned("old", "stale"), installed, "new"),
-    ).toBe(false);
   });
 });

@@ -7,7 +7,6 @@ import {
   type LibrarySummaryWorker,
 } from "./library-summary-loader";
 import type { LibrarySummaryValue } from "./library-summary";
-import { PLACEHOLDER_PLAY_DATA } from "./play-data";
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -24,7 +23,6 @@ const record = (id: string, packId = "pack") =>
     id,
     updatedAt: `2026-10-21T10:00:00.000Z`,
     profileBinding: { packId, contentDigest: `${packId}-digest` },
-    snapshot: { id },
     build: { id },
   }) as unknown as CharacterRecord;
 
@@ -35,9 +33,9 @@ function fixture() {
   }[] = [];
   const worker = {
     initialize: vi.fn(() => Promise.resolve()),
-    librarySummary: vi.fn((snapshot: { id: string }) => {
+    librarySummary: vi.fn((build: { id: string }) => {
       const result = deferred<LibrarySummaryValue>();
-      evaluations.push({ id: snapshot.id, result });
+      evaluations.push({ id: build.id, result });
       return result.promise;
     }),
     terminate: vi.fn(),
@@ -63,10 +61,7 @@ function fixture() {
   return { loader, worker, characters, createWorker, evaluations };
 }
 
-const value = (roleLine: string): LibrarySummaryValue => ({
-  roleLine,
-  playData: PLACEHOLDER_PLAY_DATA,
-});
+const value = (roleLine: string): LibrarySummaryValue => ({ roleLine });
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe("library summary loader", () => {

@@ -3,27 +3,24 @@ import type { CharacterLibraryEntry } from "@4ecb/browser-storage";
 import { ActionMenu } from "./ActionMenu";
 import { characterEditHref } from "./CharacterLibraryTable";
 import { Icon } from "./Icon";
-import { PlayDataStats } from "./PlayDataStats";
 import { PortraitImage } from "./PortraitEditor";
 import { characterIdentity } from "./character-library-ui";
-import { PLACEHOLDER_PLAY_DATA } from "./play-data";
 import { exactDateTime, relativeDay } from "./relative-time";
-import type { LibraryStats } from "./use-library-summary";
+import type { LibraryRoleLine } from "./use-library-summary";
 
 /**
- * The Characters page's detail pane for the selected row: a navy header band
- * with who the character is (portrait, name, identity, paragon path, epic
- * destiny, last edit, content-update badge) and the five actions along its
- * bottom edge, then the Play data stats. Everything but the role line and
- * the stats comes from library metadata, so it renders at once; those two
- * come from the library summary (`stats`) and show a loading state, at
- * full size, until it arrives.
+ * The Characters page's detail pane for the selected row: just a navy
+ * header band with who the character is (portrait, name, identity, role
+ * line, paragon path, epic destiny, last edit) and the five actions along
+ * its bottom edge. Everything but the role line comes from library
+ * metadata, so it renders at once; the role line comes from the library
+ * summary (`roleLine`), holds its place with a bar while that loads, and
+ * is left out if it can't be calculated.
  */
 export function CharacterLibraryDetail({
   character,
-  stats,
+  roleLine,
   now,
-  updateAvailable,
   exporting,
   trashArmed,
   onExportBackup,
@@ -32,9 +29,8 @@ export function CharacterLibraryDetail({
   onTrash,
 }: {
   readonly character: CharacterLibraryEntry;
-  readonly stats: LibraryStats;
+  readonly roleLine: LibraryRoleLine;
   readonly now: Date;
-  readonly updateAvailable: boolean;
   readonly exporting: boolean;
   /** Trash's first click arms it; the second (onTrash again) confirms. */
   readonly trashArmed: boolean;
@@ -45,8 +41,7 @@ export function CharacterLibraryDetail({
 }) {
   const { title } = character;
   const edited = relativeDay(character.updatedAt, now);
-  const roleLine =
-    stats.status === "ready" ? stats.summary.roleLine : undefined;
+  const role = roleLine.status === "ready" ? roleLine.roleLine : undefined;
   return (
     <aside
       aria-label={`${title} overview`}
@@ -67,12 +62,12 @@ export function CharacterLibraryDetail({
           <div className="library-detail-text">
             <h2>{title}</h2>
             <p>{characterIdentity(character)}</p>
-            {stats.status === "loading" ? (
+            {roleLine.status === "loading" ? (
               <p className="library-detail-role">
                 <span aria-hidden="true" className="library-detail-role-wait" />
               </p>
-            ) : roleLine === undefined ? null : (
-              <p className="library-detail-role">{roleLine}</p>
+            ) : role === undefined ? null : (
+              <p className="library-detail-role">{role}</p>
             )}
             {character.paragonPath === undefined ? null : (
               <p className="library-detail-meta">
@@ -84,21 +79,13 @@ export function CharacterLibraryDetail({
                 Epic destiny: {character.epicDestiny}
               </p>
             )}
-            <p className="library-detail-meta">
-              {edited === undefined ? null : (
+            {edited === undefined ? null : (
+              <p className="library-detail-meta">
                 <span title={exactDateTime(character.updatedAt)}>
                   Edited {edited}
                 </span>
-              )}
-              {updateAvailable ? (
-                <span
-                  className="library-update-badge"
-                  title="Game content has been updated. Open the character to review it; until then its rules, powers and items stay as they were."
-                >
-                  Update available
-                </span>
-              ) : null}
-            </p>
+              </p>
+            )}
           </div>
         </div>
         <div
@@ -166,38 +153,6 @@ export function CharacterLibraryDetail({
           </button>
         </div>
       </header>
-      <div className="library-detail-body">
-        <p
-          className="library-stats-status"
-          role="status"
-          {...(stats.status === "error" ? { title: stats.message } : {})}
-        >
-          {stats.status === "loading" ? (
-            <>
-              <span aria-hidden="true" className="loading-spinner" />
-              Calculating stats…
-            </>
-          ) : stats.status === "error" ? (
-            <>
-              <Icon name="warning" />
-              Stats unavailable
-            </>
-          ) : null}
-        </p>
-        <div
-          className="library-stats"
-          data-state={stats.status}
-          {...(stats.status === "loading" ? { "aria-busy": true } : {})}
-        >
-          <PlayDataStats
-            data={
-              stats.status === "ready"
-                ? stats.summary.playData
-                : PLACEHOLDER_PLAY_DATA
-            }
-          />
-        </div>
-      </div>
     </aside>
   );
 }

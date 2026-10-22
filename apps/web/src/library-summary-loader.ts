@@ -2,10 +2,7 @@ import type {
   CharacterLibrarySummary,
   CharacterRepository,
 } from "@4ecb/browser-storage";
-import type {
-  CharacterBuild,
-  LegacyCharacterSnapshot,
-} from "@4ecb/character-domain";
+import type { CharacterBuild } from "@4ecb/character-domain";
 
 import {
   stampedLibrarySummary,
@@ -15,10 +12,7 @@ import {
 /** The part of RulesWorkerClient the loader uses. */
 export interface LibrarySummaryWorker {
   initialize(packId: string, contentDigest?: string): Promise<void>;
-  librarySummary(
-    snapshot: LegacyCharacterSnapshot,
-    build: CharacterBuild,
-  ): Promise<LibrarySummaryValue>;
+  librarySummary(build: CharacterBuild): Promise<LibrarySummaryValue>;
   terminate(reason?: string): void;
 }
 
@@ -120,7 +114,7 @@ export class LibrarySummaryLoader {
     }
     const summary = stampedLibrarySummary(
       character,
-      await worker.librarySummary(character.snapshot, character.build),
+      await worker.librarySummary(character.build),
     );
     if (summary === undefined) return undefined;
     // A failed save only loses the cache; the summary is still shown.

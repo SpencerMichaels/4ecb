@@ -18,8 +18,6 @@ import { createNativeCharacter } from "./new-character";
 import { holdCharacterDraft } from "./character-drafts";
 import {
   characterCount,
-  filterLibrary,
-  libraryNeedsContentUpdate,
   librarySelection,
   nextLibrarySort,
   readLibraryView,
@@ -74,9 +72,8 @@ export function CharacterLibraryPage({
   // elsewhere or pressing Escape disarms it.
   const trashAction = useArmedAction("character-trash-trigger");
   const [trashOpen, setTrashOpen] = useState(false);
-  // Sort and selection are remembered per browser; the filter is not.
+  // Sort and selection are remembered per browser.
   const [view, setView] = useState<LibraryView>(() => readLibraryView());
-  const [filter, setFilter] = useState("");
   const updateView = useCallback(
     (change: (current: LibraryView) => LibraryView) =>
       setView((current) => {
@@ -216,18 +213,10 @@ export function CharacterLibraryPage({
 
   const now = new Date();
   const sorted = sortLibrary(characters, view.sort);
-  const rows = filterLibrary(sorted, filter);
-  const selectedId = librarySelection(sorted, rows, view.selectedId);
+  const selectedId = librarySelection(sorted, view.selectedId);
   const selected = characters.find(({ id }) => id === selectedId);
-  // Role line and stats: the saved summary, or evaluated in the background.
-  const stats = useLibrarySummary(selected);
-  const updateIds = new Set(
-    characters
-      .filter((character) =>
-        libraryNeedsContentUpdate(character, manifests, activePackId),
-      )
-      .map(({ id }) => id),
-  );
+  // Role line: the saved summary, or evaluated in the background.
+  const roleLine = useLibrarySummary(selected);
 
   return (
     <main className="characters-page" id="main-content">
@@ -315,14 +304,10 @@ export function CharacterLibraryPage({
       )}
       <div className="library-workspace">
         <CharacterLibraryTable
-          characters={rows}
-          totalCount={characters.length}
-          filter={filter}
+          characters={sorted}
           sort={view.sort}
           selectedId={selectedId}
-          updateIds={updateIds}
           now={now}
-          onFilterChange={setFilter}
           onSortChange={(column) =>
             updateView((current) => ({
               ...current,
@@ -334,7 +319,7 @@ export function CharacterLibraryPage({
             updateView((current) => ({ ...current, selectedId: id }));
           }}
         />
-        {selected === undefined || stats === undefined ? (
+        {selected === undefined || roleLine === undefined ? (
           <div className="empty-state library-empty">
             <h2>No characters yet</h2>
             <p>
@@ -345,9 +330,8 @@ export function CharacterLibraryPage({
         ) : (
           <CharacterLibraryDetail
             character={selected}
-            stats={stats}
+            roleLine={roleLine}
             now={now}
-            updateAvailable={updateIds.has(selected.id)}
             exporting={exportingIds.has(selected.id)}
             trashArmed={trashAction.isArmed(selected.id)}
             onExportBackup={() =>

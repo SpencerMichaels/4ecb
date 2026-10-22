@@ -6,10 +6,7 @@ import {
   type CharacterLibrarySummary,
 } from "@4ecb/browser-storage";
 
-import {
-  freshLibrarySummary,
-  type LibrarySummaryValue,
-} from "./library-summary";
+import { freshLibrarySummary } from "./library-summary";
 import {
   LibrarySummaryLoader,
   type LibrarySummaryCharacters,
@@ -17,9 +14,11 @@ import {
 } from "./library-summary-loader";
 import { RulesWorkerClient } from "./rules-client";
 
-/** What the detail pane shows for the selected character's stats. */
-export type LibraryStats =
-  | { readonly status: "ready"; readonly summary: LibrarySummaryValue }
+/** The selected character's role line, the one part of the detail pane
+ *  that waits on evaluation. Ready without a roleLine when its classes
+ *  have none. */
+export type LibraryRoleLine =
+  | { readonly status: "ready"; readonly roleLine?: string }
   | { readonly status: "loading" }
   | { readonly status: "error"; readonly message: string };
 
@@ -34,8 +33,8 @@ const SELECTION_SETTLE_MS = 200;
 /**
  * The selected character's library summary: the saved one when it is
  * fresh, otherwise evaluated off the main thread (LibrarySummaryLoader) and
- * backfilled. Nothing waits on it: the pane renders a loading state until
- * it arrives. Results for rows the user has moved past are kept, so going
+ * backfilled. Nothing else waits on it: the pane holds the role line's
+ * place until it arrives. Results for rows the user has moved past are kept, so going
  * back to one shows it at once. The worker stops when the page unmounts.
  */
 export function useLibrarySummary(
@@ -44,7 +43,7 @@ export function useLibrarySummary(
     readonly createWorker?: () => LibrarySummaryWorker;
     readonly characters?: LibrarySummaryCharacters;
   } = {},
-): LibraryStats | undefined {
+): LibraryRoleLine | undefined {
   const [outcomes, setOutcomes] = useState<ReadonlyMap<string, Outcome>>(
     new Map(),
   );
@@ -62,10 +61,10 @@ export function useLibrarySummary(
     };
   }, []);
 
-  const stats = libraryStats(character, outcomes);
+  const roleLine = libraryRoleLine(character, outcomes);
   const id = character?.id;
   const updatedAt = character?.updatedAt;
-  const needsEvaluation = stats?.status === "loading";
+  const needsEvaluation = roleLine?.status === "loading";
   useEffect(() => {
     if (!needsEvaluation || id === undefined || updatedAt === undefined) return;
     const current = loader.current;
@@ -92,18 +91,24 @@ export function useLibrarySummary(
       if (!settled) window.clearTimeout(timer);
     };
   }, [id, needsEvaluation, updatedAt]);
-  return stats;
+  return roleLine;
 }
 
-/** The pane's stats state for a library entry, from its saved summary or a
- *  result the library computed since it loaded. */
-export function libraryStats(
+const ready = ({ roleLine }: { readonly roleLine?: string }) =>
+  ({
+    status: "ready",
+    ...(roleLine === undefined ? {} : { roleLine }),
+  }) as const;
+
+/** The pane's role-line state for a library entry, from its saved summary
+ *  or a result the library computed since it loaded. */
+export function libraryRoleLine(
   character: CharacterLibraryEntry | undefined,
   outcomes: ReadonlyMap<string, Outcome>,
-): LibraryStats | undefined {
+): LibraryRoleLine | undefined {
   if (character === undefined) return undefined;
   const saved = freshLibrarySummary(character);
-  if (saved !== undefined) return { status: "ready", summary: saved };
+  if (saved !== undefined) return ready(saved);
   const outcome = outcomes.get(character.id);
   if (outcome !== undefined && "summary" in outcome) {
     // Computed from this revision just now: shown even if the entry's
@@ -122,7 +127,7 @@ export function libraryStats(
             summary,
           )
         : undefined;
-    if (computed !== undefined) return { status: "ready", summary: computed };
+    if (computed !== undefined) return ready(computed);
   } else if (outcome?.updatedAt === character.updatedAt)
     return { status: "error", message: outcome.message };
   return { status: "loading" };

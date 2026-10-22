@@ -2,7 +2,12 @@
 
 Status: accepted and implemented (2026-10-21; commits `98d83ce`, `f748323`,
 `d62b51e`, D092); visual review pending. Decisions made by the product owner
-are marked **(decided)** and summarized at the end. Mockup (private):
+are marked **(decided)** and summarized at the end. Three of them were later
+simplified by the product owner (2026-10-21, see "Later simplifications"):
+the pane is just its header band (no stats), the library shows no
+content-update indicator, and the table has no filter box. The sections
+below describe the shipped design. Mockup (private, predates the
+simplifications):
 https://claude.ai/artifact/MoTG4dNJiNW4kVD96Rb6VK
 
 ## Problem
@@ -34,24 +39,20 @@ styling as the builder's selection table with its detail card.
 ```
 ┌ 4E Character Builder ──────── [+ New][Import][Trash 3] | [Update][⚙ Settings] ┐
 ├────────────────────────────────────────────┬──────────────────────────────────┤
-│ [ Filter characters…               ]       │▓(portrait) Aldric Vey           ▓│
-│ ┌──┬──────────────┬────┬───────┬─────────┐ │▓           Level 11 Human Paladin▓│
-│ │  │ Name       ▲ │ Lv │ Race  │ Class   │ │▓           Divine Defender      ▓│
-│ ├──┼──────────────┼────┼───────┼─────────┤ │▓           Paragon path: Astral…▓│
-│ │◯ │ Aldric Vey   │ 11 │ Human │ Paladin │ │▓           Edited 2 hours ago   ▓│
-│ │◯ │ Brisa        │  4 │ Elf   │ Ranger  │ │▓  ✎   │  ▤   │  ⇥   │  ⧉   │  🗑 ▓│
-│ │◯ │ Korrin       │  1 │ Dwarf │ Fighter │ │▓ Edit │Sheet │Export│Dupl. │Trash▓│
-│ └──┴──────────────┴────┴───────┴─────────┘ │ [19 STR +4][14 CON +2][10 DEX +0]│
-│   (Edited column at the far right,         │ [10 INT +0][13 WIS +1][19 CHA +4]│
-│    cut off in this sketch)                 │ [AC 27][Fort 24][Ref 21][Will 23]│
-│                                            │ [Max HP][Bloodied][Surges][SrgHP]│
-│                                            │ [Init][Speed][Pass.Ins][Pass.Pc.]│
-│                                            │ Senses Normal vision             │
-└────────────────────────────────────────────┴──────────────────────────────────┘
-  ▓ = navy pane header band
+│ ┌──┬──────────────┬────┬───────┬─────────┐ │▓(portrait) Aldric Vey           ▓│
+│ │  │ Name       ▲ │ Lv │ Race  │ Class   │ │▓           Level 11 Human Paladin▓│
+│ ├──┼──────────────┼────┼───────┼─────────┤ │▓           Divine Defender      ▓│
+│ │◯ │ Aldric Vey   │ 11 │ Human │ Paladin │ │▓           Paragon path: Astral…▓│
+│ │◯ │ Brisa        │  4 │ Elf   │ Ranger  │ │▓           Edited 2 hours ago   ▓│
+│ │◯ │ Korrin       │  1 │ Dwarf │ Fighter │ │▓  ✎   │  ▤   │  ⇥   │  ⧉   │  🗑 ▓│
+│ └──┴──────────────┴────┴───────┴─────────┘ │▓ Edit │Sheet │Export│Dupl. │Trash▓│
+│   (Edited column at the far right,         └──────────────────────────────────┤
+│    cut off in this sketch)                                                    │
+└───────────────────────────────────────────────────────────────────────────────┘
+  ▓ = navy pane header band; the table's top edge is level with its top
 ```
 
-**Table** (decided: sortable, filterable, remembered)
+**Table** (decided: sortable, remembered)
 
 - Columns: small portrait thumbnail, Name, Level, Race, Class, Edited
   (relative time with the exact time as a tooltip). Hybrid classes show as
@@ -59,10 +60,11 @@ styling as the builder's selection table with its detail card.
 - Click a column header to sort it, with the same header styling and
   `aria-sort` behavior as the builder's selection tables. Default sort is
   Edited, newest first, which matches today's order.
-- A filter box above the table matches name, race and class, using the same
-  input styling as the selection-table search. When nothing matches, the
-  empty-state message goes inside the table and the table itself stays
-  (no surprise controls).
+- No filter box (product-owner decision, 2026-10-21): players won't have
+  enough characters to need text search, sorting by Name covers quick
+  lookup, and with nothing above it the table's top edge lines up with the
+  pane header's. An empty library shows its message inside the table, which
+  itself stays (no surprise controls).
 - Single click (or arrow keys on the focused row) selects a row and fills the
   detail pane. Double-click or Enter opens the builder (decided). The name
   cell is also a real link to `#/characters/:id/edit`, so middle-click and
@@ -74,16 +76,19 @@ styling as the builder's selection table with its detail card.
   It uses the cached 512px rendering the library already loads, so it costs
   no extra I/O.
 
-**Detail pane** (decided: identity, key stats, role; actions live here)
+**Detail pane** (decided: identity and role; actions live here; header
+band only)
 
 - **Pane header** (the navy header band, as on dialogs and detail cards)
   holds everything about who the character is (decided): a large portrait
   (the builder sidebar's size), the name, the identity line, a **role line**
   (power source plus role in title case, decided: "Divine Defender",
   "Martial Striker"; a hybrid shows both halves, "Divine Leader / Arcane
-  Controller"), then small secondary lines for paragon path, epic destiny,
-  "Edited …", and the content-update status badge when there is one: the
-  same `update` character issue the builder raises, not a banner.
+  Controller"), then small secondary lines for paragon path, epic destiny
+  and "Edited …". There is no content-update indicator (product-owner
+  decision, 2026-10-21): after a content update every character has one at
+  once, and it isn't actionable until the character is opened, where the
+  builder's status badge handles it.
 - **Action toolbar** across the bottom of the pane header (decided): one
   evenly spaced row of five equal-width buttons, each an icon over a
   one-word label: Edit, Sheet, Export ▾ (.4ecb / .dnd4e, with the same busy
@@ -93,39 +98,27 @@ styling as the builder's selection table with its detail card.
   two-click arm, and its armed label is just "Confirm", so the row never
   reflows. The icons are the app's existing `Icon` names (`edit`, `sheet`,
   `export`, `duplicate`, `trash`).
-- **Stats in the Play data card's layout and order** (decided: matches the
-  first card on the cards page, `PrintCharacterCard` in
-  `PrintPlayCards.tsx`):
-  1. Ability scores: compact 3 × 2 tiles, score then abbreviation then
-     modifier ("19 STR +4").
-  2. Defenses: AC, Fort, Ref, Will.
-  3. Health: Max HP, Bloodied, Surges, Surge HP.
-  4. One row: Initiative | Speed | Passive senses (Pass. Insight, Pass.
-     Perc.), in the card's 1 : 1 : 2.2 proportions.
-  5. The card's note lines when present: Senses, Saves, Resistances,
-     Vulnerabilities, Immunities, Other.
-
-  The card's stat body is extracted into one shared component that both the
-  print card and the detail pane render, sized in em through `StatGroup`.
-  The two can't drift apart, and every number still comes from evaluated
-  stats and `derived-values.ts`. Nothing is re-derived in library code.
-
+- **No stats** (product-owner decision, 2026-10-21): the pane is just the
+  header band. An earlier version showed the Play data card's stat body
+  below it; the print Play data card keeps that shared body
+  (`PlayDataStats`).
 - Empty library: the pane shows the existing "No characters yet" guidance
   and the table shows an empty row. Both controls stay in place.
 
-**Where the stats and role come from**
+**Where the role line comes from**
 
-Library metadata today is only id, title, level, race, class, updatedAt and
-the portrait (`characterMetadata` in `character-repository.ts`). Stats and
-role need evaluation. Decided approach: a saved summary with a live
-fallback.
+Library metadata is id, title, level, race, class, paragon path, epic
+destiny, updatedAt, content revision and the portrait (`characterMetadata`
+in `character-repository.ts`). Only the role line needs evaluation.
+Decided approach: a saved summary with a live fallback.
 
 1. **Saved library summary.** When the builder saves a character with a
    fresh evaluation, it also writes a small `librarySummary` alongside the
-   metadata. The summary holds role/power source, paragon/epic names, and the
-   Play data stat values and note lines, stamped with `RULES_EVALUATION_CACHE_VERSION`
-   and the profile revision. It is a disposable cache, like the evaluation
-   cache, and is never treated as a source of truth.
+   metadata. The summary holds just the role line (`LibrarySummaryValue`
+   is `{ roleLine? }`; format version 4), stamped with
+   `RULES_EVALUATION_CACHE_VERSION`, the character revision and the
+   profile revision. It is a disposable cache, like the evaluation cache,
+   and is never treated as a source of truth.
 2. **Live fallback.** If the summary is missing or stale (imported and never
    opened, an engine version bump, a content update), selecting the row
    evaluates the character in the rules worker. This uses the evaluation path
@@ -133,13 +126,11 @@ fallback.
    summary.
 3. **Never hang (decided).** The live evaluation runs off the main thread
    and nothing waits on it. Identity, paragon/epic, edited time and the
-   action bar render at once from metadata. Only the stat tiles and role
-   line show a loading state: the tiles keep their size, with "—" values
-   and the app's loading ring, so nothing jumps when the values arrive. The
-   table stays fully usable meanwhile. Selecting another row stops showing
-   the pending result, but it still backfills the summary. If evaluation
-   fails, the tiles show "Stats unavailable" with the error in a tooltip,
-   and the rest of the pane keeps working.
+   action bar render at once from metadata. Only the role line waits: a
+   placeholder bar holds its place while it loads. The table stays fully
+   usable meanwhile. Selecting another row stops showing the pending
+   result, but it still backfills the summary. If evaluation fails, the
+   role line is simply left out and the rest of the pane keeps working.
 
 Paragon path and epic destiny names can come straight from the build
 (`buildElementNames`, as race and class already do), so they never wait on
@@ -200,14 +191,14 @@ characters look like the characters they were.
 
 All UI work is in `apps/web`:
 
-| Area                 | Files                                                                                                                                                                                   |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Library table + pane | `CharacterLibraryPage.tsx` (split into `CharacterLibraryTable.tsx` and `CharacterLibraryDetail.tsx`); sort/filter/remembered-state helpers in `character-library-ui.ts` with unit tests |
-| Trash                | `TrashDialog.tsx`; new `EmptyTrashDialog.tsx`                                                                                                                                           |
-| Styles               | `04-library.css` (table, pane, trash rows); remove `.character-grid` rules from `03-shared.css`; breakpoints in `14-responsive.css`                                                     |
-| Stats                | Extract the Play data card's stat body from `PrintCharacterCard` into a shared component used by the print card and the detail pane                                                     |
-| Summary              | `browser-storage`: `librarySummary` on metadata plus `purgeAll`/`emptyTrash`; builder save path writes the summary                                                                      |
-| Docs                 | `interface-design-brief.md`, a decision entry in `decisions.md`, `visual-review-checklist.md`, `implementation-status.md`                                                               |
+| Area                 | Files                                                                                                                                                                            |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Library table + pane | `CharacterLibraryPage.tsx` (split into `CharacterLibraryTable.tsx` and `CharacterLibraryDetail.tsx`); sort/remembered-state helpers in `character-library-ui.ts` with unit tests |
+| Trash                | `TrashDialog.tsx`; new `EmptyTrashDialog.tsx`                                                                                                                                    |
+| Styles               | `04-library.css` (table, pane, trash rows); remove `.character-grid` rules from `03-shared.css`; breakpoints in `14-responsive.css`                                              |
+| Stats                | Extract the Play data card's stat body from `PrintCharacterCard` into a shared component (`PlayDataStats`, now used only by the print card)                                      |
+| Summary              | `browser-storage`: `librarySummary` on metadata plus `purgeAll`/`emptyTrash`; builder save path writes the summary                                                               |
+| Docs                 | `interface-design-brief.md`, a decision entry in `decisions.md`, `visual-review-checklist.md`, `implementation-status.md`                                                        |
 
 Suggested slices, each committed separately:
 
@@ -229,3 +220,18 @@ coordinated with it. Slice 2 is web-only and can start immediately.
 - Stats come from a saved summary with a non-blocking live fallback.
 - The role line uses title case ("Divine Defender").
 - The detail pane shows no Notes excerpt and no content-set name.
+
+## Later simplifications (product-owner decisions, 2026-10-21)
+
+- **Header-only pane.** The pane is just its navy header band; the Play data
+  stats below it were removed. The library summary shrank to the role line
+  (summary format version 4, so older summaries are misses), and the
+  library's worker evaluation and the builder's summary write no longer
+  build a sheet model.
+- **No content-update indicator.** The table's name cell and the pane no
+  longer flag a waiting content update: after a content update it applies to
+  every character at once and isn't actionable until the character is
+  opened, where the builder's `update` status badge already handles it.
+- **No filter box.** Characters are few enough that sorting by Name covers
+  quick lookup, and without it the table's top lines up with the pane
+  header's.

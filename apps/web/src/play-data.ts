@@ -1,15 +1,12 @@
 import type { CharacterSheetModel, SheetValue } from "@4ecb/sheet-model";
 
-import { ABILITY_ABBREVIATIONS } from "./ability-abbreviations";
 import type { StatTileValue } from "./StatTiles";
 import { defensiveBonusText, isSavingThrowTrait } from "./defensive-text";
 
 /**
  * The Play data card's stat body as display-ready strings: the ability
  * scores, defenses, health, the Init | Speed | Passive senses row and the
- * note lines. The print card and the library's detail pane both render this
- * one value (PlayDataStats), so the two can't drift; it is plain data so the
- * library can keep it in its saved summary.
+ * note lines, rendered by PlayDataStats on the print Play data card.
  */
 export interface PlayData {
   readonly abilities: readonly StatTileValue[];
@@ -115,58 +112,4 @@ export function playData(model: CharacterSheetModel): PlayData {
       .filter(([, text]) => text)
       .map(([label, text]) => ({ label, text })),
   };
-}
-
-const placeholder = (label: string): StatTileValue => ({ label, value: "—" });
-
-/** The same tiles with "—" for every value, so a pane waiting on evaluation
- *  keeps the layout it will have once the numbers arrive. */
-export const PLACEHOLDER_PLAY_DATA: PlayData = {
-  abilities: ABILITY_ABBREVIATIONS.map(([, label]) => ({
-    lead: "—",
-    label,
-    value: "—",
-  })),
-  defenses: ["AC", "Fort", "Ref", "Will"].map(placeholder),
-  health: ["Max HP", "Bloodied", "Surges", "Surge HP"].map(placeholder),
-  initiative: [placeholder("Init")],
-  speed: [placeholder("Speed")],
-  passives: ["Pass. Insight", "Pass. Perc."].map(placeholder),
-  notes: [],
-};
-
-function isTileList(value: unknown): value is readonly StatTileValue[] {
-  return (
-    Array.isArray(value) &&
-    value.every(
-      (tile: unknown) =>
-        tile !== null &&
-        typeof tile === "object" &&
-        typeof (tile as StatTileValue).label === "string" &&
-        typeof (tile as StatTileValue).value === "string" &&
-        ["string", "undefined"].includes(typeof (tile as StatTileValue).lead),
-    )
-  );
-}
-
-/** Whether a stored value (a saved library summary) is a PlayData. */
-export function isPlayData(value: unknown): value is PlayData {
-  if (value === null || typeof value !== "object") return false;
-  const candidate = value as Record<keyof PlayData, unknown>;
-  return (
-    isTileList(candidate.abilities) &&
-    isTileList(candidate.defenses) &&
-    isTileList(candidate.health) &&
-    isTileList(candidate.initiative) &&
-    isTileList(candidate.speed) &&
-    isTileList(candidate.passives) &&
-    Array.isArray(candidate.notes) &&
-    candidate.notes.every(
-      (note: unknown) =>
-        note !== null &&
-        typeof note === "object" &&
-        typeof (note as PlayDataNote).label === "string" &&
-        typeof (note as PlayDataNote).text === "string",
-    )
-  );
 }

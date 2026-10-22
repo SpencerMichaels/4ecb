@@ -125,30 +125,30 @@ Check in light and dark themes and at 140% zoom.
       tooltip gives the reason.
 - [ ] **Table:** uppercase header, sort chevrons, striped rows, hover tint,
       selected row tint with the accent bar, 2.25rem portraits, and the
-      Edited tooltip with the exact time. The filter (and its clear x)
-      shows a no-match message inside the table.
+      Edited tooltip with the exact time. No filter box: the table's top
+      edge lines up with the top of the pane's navy band. An empty library
+      shows "No characters yet." inside the table.
 - [ ] **Keyboard and mouse:** Arrow Up/Down and Home/End move the selection
       with a visible focus ring. Enter and double-click open the builder,
       and middle-click on a name opens a new tab. The sort and selection
       survive a reload.
 - [ ] **Pane band:** portrait size, name font, identity line, role line
       ("Divine Defender", hybrids "X / Y"), paragon and epic lines, Edited
-      tooltip, and the Update available badge contrast.
+      tooltip. The pane is just the band: nothing below it, and no
+      content-update indicator in the pane or the table.
 - [ ] **Action row:** five equal buttons (Edit, Sheet, Export, Duplicate,
       Trash) that never wrap, with hover and focus states. The Export menu
       hangs below the sticky pane, with its spinner during a .dnd4e export.
       Trash arms to a red "Confirm".
-- [ ] **Stats:** the Play data layout (abilities 3×2, Defenses, Health,
-      Init | Speed | Passive senses, note lines) matches the Play data card.
-      The print Play data card looks unchanged.
-- [ ] **Loading:** import a .dnd4e (or Duplicate a character) and select it.
-      The tiles keep their size with "—", "Calculating stats…" shows with
-      the spinner, and the role line shows a placeholder bar, then
-      everything fills in. Arrowing quickly through rows stays responsive.
-- [ ] **Saved summary:** edit a character in the builder, wait about 2s,
-      return to the library. Its stats appear immediately.
-- [ ] **Error:** a character whose content isn't installed shows "Stats
-      unavailable" with a tooltip, and the rest of the pane works.
+- [ ] **Role line loading:** import a .dnd4e (or Duplicate a character) and
+      select it. The role line shows a placeholder bar, then fills in;
+      nothing else in the band moves. Arrowing quickly through rows stays
+      responsive.
+- [ ] **Saved role line:** edit a character in the builder, wait about 2s,
+      return to the library. Its role line appears immediately.
+- [ ] **Role line error:** a character whose content isn't installed shows no
+      role line (and no placeholder), and the rest of the pane works.
+- [ ] **Print Play data card:** looks unchanged.
 - [ ] **Narrow (< 60rem, about a 1344px window at 140% zoom):** the pane
       moves under the table, Race and Edited hide, and nothing scrolls
       sideways.

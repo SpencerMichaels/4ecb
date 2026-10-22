@@ -1,7 +1,4 @@
-import type {
-  CharacterBuild,
-  LegacyCharacterSnapshot,
-} from "@4ecb/character-domain";
+import type { CharacterBuild } from "@4ecb/character-domain";
 import type {
   EvaluatedCharacter,
   EvaluationInput,
@@ -136,16 +133,9 @@ export class RulesWorkerClient {
   }
 
   /** Evaluates a character in the worker and returns its library summary
-   *  (role line and Play data stats). */
-  async librarySummary(
-    snapshot: LegacyCharacterSnapshot,
-    build: CharacterBuild,
-  ): Promise<LibrarySummaryValue> {
-    const response = await this.#request({
-      type: "library-summary",
-      snapshot,
-      build,
-    });
+   *  (its role line). */
+  async librarySummary(build: CharacterBuild): Promise<LibrarySummaryValue> {
+    const response = await this.#request({ type: "library-summary", build });
     if (response.type !== "library-summary")
       throw new Error("Unexpected rules-worker library summary response");
     return response.result;

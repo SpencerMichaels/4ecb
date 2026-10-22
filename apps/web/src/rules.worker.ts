@@ -136,12 +136,7 @@ async function handle(request: RulesWorkerRequest): Promise<void> {
       respond({
         type: "library-summary",
         requestId: request.requestId,
-        result: libraryCharacterSummary(
-          request.snapshot,
-          request.build,
-          evaluation,
-          content,
-        ),
+        result: libraryCharacterSummary(evaluation, content),
       });
       break;
     }

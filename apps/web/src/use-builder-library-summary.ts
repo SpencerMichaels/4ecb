@@ -29,7 +29,7 @@ function whenIdle(task: () => void, delay: number): () => void {
 }
 
 /**
- * Writes the library summary (role line and Play data stats) for the
+ * Writes the library summary (the role line) for the
  * character open in the builder, from the evaluation the builder already
  * has: once the saved record and the current-level evaluation describe the
  * same rules inputs, and the edits have settled, in idle time. It is off
@@ -75,12 +75,7 @@ export function useBuilderLibrarySummary({
       try {
         const summary = stampedLibrarySummary(
           character,
-          libraryCharacterSummary(
-            character.snapshot,
-            character.build,
-            evaluation,
-            entities,
-          ),
+          libraryCharacterSummary(evaluation, entities),
         );
         if (summary !== undefined)
           void characters

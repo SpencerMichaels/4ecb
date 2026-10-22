@@ -1,11 +1,4 @@
 import type { CharacterMetadata } from "@4ecb/browser-storage";
-import type { ContentPackManifest } from "@4ecb/content-pack";
-
-import {
-  resolvedBoundProfile,
-  shouldShowBoundProfileWarning,
-} from "./bound-profile-resolution";
-import { needsContentUpdate } from "./content-update";
 
 /** "Level N Race Class": the identity line under a character's name in the
  *  library and the trash. */
@@ -120,33 +113,15 @@ export function sortLibrary<T extends LibraryRow>(
   });
 }
 
-/** The filter box matches name, race and class, ignoring case. */
-export function filterLibrary<T extends LibraryRow>(
-  characters: readonly T[],
-  filter: string,
-): T[] {
-  const wanted = filter.trim().toLocaleLowerCase();
-  if (wanted === "") return [...characters];
-  return characters.filter((character) =>
-    [character.title, character.race, character.className]
-      .filter(Boolean)
-      .join(" ")
-      .toLocaleLowerCase()
-      .includes(wanted),
-  );
-}
-
 /** The row to show in the detail pane: the remembered one while it is still
- *  in the library (even when the filter hides it), otherwise the first
- *  listed row, or the library's first when the filter matches nothing. */
+ *  in the library, otherwise the first row. */
 export function librarySelection(
   library: readonly Pick<CharacterMetadata, "id">[],
-  listed: readonly Pick<CharacterMetadata, "id">[],
   rememberedId: string | undefined,
 ): string | undefined {
   return library.some(({ id }) => id === rememberedId)
     ? rememberedId
-    : (listed[0]?.id ?? library[0]?.id);
+    : library[0]?.id;
 }
 
 export const LIBRARY_VIEW_STORAGE_KEY = "4ecb.libraryView.v1";
@@ -197,28 +172,4 @@ export function writeLibraryView(
   } catch {
     // Remembering the view is a convenience; blocked storage just forgets it.
   }
-}
-
-/** Whether the library should flag a waiting content update: the same
- *  `update` issue the builder raises (contentUpdateIssue), and not when the
- *  pinned content is missing, which the builder reports as an error
- *  instead. */
-export function libraryNeedsContentUpdate(
-  character: Pick<CharacterMetadata, "contentRevision">,
-  installed: readonly ContentPackManifest[],
-  activePackId: string | undefined,
-): boolean {
-  const binding = character.contentRevision;
-  if (binding === undefined) return false;
-  const pinned = installed.find(({ packId }) => packId === binding.packId);
-  if (
-    shouldShowBoundProfileWarning(
-      resolvedBoundProfile(binding, pinned?.contentDigest),
-    )
-  )
-    return false;
-  return needsContentUpdate(
-    binding,
-    installed.find(({ packId }) => packId === activePackId),
-  );
 }

@@ -41,26 +41,30 @@ unchanged. 1138 tests pass.
   most recent first. **Empty trash…** opens its own confirmation
   (`EmptyTrashDialog.tsx`) backed by `CharacterRepository.emptyTrash()`
   in one transaction.
-- **Library.** A sortable, filterable table (`CharacterLibraryTable.tsx`)
-  beside a sticky detail pane (`CharacterLibraryDetail.tsx`). The sort and
-  selection are remembered per browser. The page header buttons are New,
-  Import, Trash, Update, Settings, with one-word labels.
-- **Detail pane.** A navy band holds the portrait, identity, role line,
-  paragon path, epic destiny, edited time, the content-update badge, and a
-  five-button action row. Below it are the Play data card's stats, which
-  are now one shared body (`play-data.ts`, `PlayDataStats.tsx`) rendered by
-  both the print card and the pane.
+- **Library.** A sortable table (`CharacterLibraryTable.tsx`, no filter
+  box, its top level with the pane's) beside a sticky detail pane
+  (`CharacterLibraryDetail.tsx`). The sort and selection are remembered per
+  browser. The page header buttons are New, Import, Trash, Update, Settings,
+  with one-word labels.
+- **Detail pane.** Just a navy band: the portrait, identity, role line,
+  paragon path, epic destiny, edited time, and a five-button action row.
+  No stats and no content-update indicator (product-owner simplifications,
+  2026-10-21; the builder's `update` status badge covers updates). The
+  Play data card's stat body stays one shared body (`play-data.ts`,
+  `PlayDataStats.tsx`) for the print card.
 - **Metadata.** It now carries paragon path, epic destiny and the content
   revision, with existing rows backfilled on read (`metadataVersion`).
 - **Library summary.** A disposable `librarySummary` on the metadata row
-  holds the play data and role line. It is stamped with the engine version,
+  holds just the role line (summary format 4). It is stamped with the engine version,
   `updatedAt` and the content digest. The builder writes it when idle after
   a converged evaluation. A missing or stale summary is evaluated live in
-  the library's own rules worker (`library-summary` request), one at a time
-  and never blocking the page, then backfilled.
+  the library's own rules worker (`library-summary` request, no powers and
+  no sheet model), one at a time and never blocking the page, then
+  backfilled. While it loads a placeholder bar holds the role line's place;
+  on error the role line is left out.
 
-805 tests pass (apps/web, browser-storage, sheet-model). Web and
-browser-storage typecheck and lint are clean. Print checks not run (user
+810 tests pass (apps/web, browser-storage, sheet-model) after the
+simplifications. Web and browser-storage typecheck and lint are clean. Print checks not run (user
 visual review).
 
 ## Known rituals, slice 1 (2026-10-21)
