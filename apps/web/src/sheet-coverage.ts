@@ -69,9 +69,21 @@ export function sheetIndex(sheet: CharacterSheetModel): SheetIndex {
     identity,
     powerIds: ids(sheet.powers),
     powerNames: new Set(sheet.powers.map(({ name }) => key(name))),
-    itemIds: ids(sheet.items),
+    // An item set card lists its set's benefits.
+    itemIds: new Set([
+      ...ids(sheet.items),
+      ...(sheet.itemSets ?? []).flatMap(({ benefits }) =>
+        benefits.map(({ id }) => key(id)),
+      ),
+    ]),
     itemNames: sheet.items.map(({ name }) => key(name)),
-    referenceIds: ids(sheet.learnedReferences),
+    // The Deity reference entry names its domains.
+    referenceIds: new Set([
+      ...ids(sheet.learnedReferences),
+      ...(sheet.deity === undefined
+        ? []
+        : [sheet.deity, ...sheet.deity.domains].map(({ id }) => key(id))),
+    ]),
     referenceNames: new Set(
       sheet.learnedReferences.map(({ name }) => key(name)),
     ),

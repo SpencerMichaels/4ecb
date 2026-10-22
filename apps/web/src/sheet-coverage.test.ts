@@ -69,7 +69,7 @@ const entities = [
   entity("ID_LEVEL_1", "1", "Level"),
   entity("ID_CLASS", "Warblade", "Class"),
   entity("ID_FEATURE", "Blade Focus", "Class Feature"),
-  entity("ID_DOMAIN", "Storm", "Domain"),
+  entity("ID_ASSOCIATE", "Storm Spirit", "Associate"),
   entity("ID_GRANTS", "Warblade", "Grants"),
   entity("ID_POWER", "Cleaving Cut", "Power"),
   entity("ID_SWORD", "Longsword", "Weapon"),
@@ -98,7 +98,7 @@ describe("sheet presence", () => {
     occurrence("grants", "ID_GRANTS", "class"),
     occurrence("feature", "ID_FEATURE", "class"),
     occurrence("feature-again", "ID_FEATURE", "level"),
-    occurrence("domain", "ID_DOMAIN", "feature"),
+    occurrence("associate", "ID_ASSOCIATE", "feature"),
     occurrence("power", "ID_POWER", "class"),
     occurrence("sword", "ID_SWORD"),
     occurrence("skill", "ID_SKILL", "level"),
@@ -140,8 +140,8 @@ describe("sheet presence", () => {
   it("classifies what is not shown against the registry", () => {
     expect(row("ID_GRANTS")?.status).toBe("accounted");
     expect(row("ID_TRAINING")?.status).toBe("accounted");
-    expect(row("ID_DOMAIN")?.status).toBe("unpresented");
-    expect(row("ID_DOMAIN")?.provider).toEqual({
+    expect(row("ID_ASSOCIATE")?.status).toBe("unpresented");
+    expect(row("ID_ASSOCIATE")?.provider).toEqual({
       id: "ID_FEATURE",
       name: "Blade Focus",
       type: "Class Feature",
@@ -301,15 +301,18 @@ describe("registry findings", () => {
       tallies,
       sheetPresence(
         [
-          occurrence("domain", "ID_DOMAIN"),
+          occurrence("associate", "ID_ASSOCIATE"),
           occurrence("power", "ID_POWER"),
           occurrence("feature", "ID_FEATURE"),
         ],
         byId,
         sheet({
-          // A domain shows (contradicting its gap entry); the power has no card.
+          // An associate shows (contradicting its gap entry); the power has no card.
           features: [
-            { group: "Domain", entries: [{ label: "Storm", value: "" }] },
+            {
+              group: "Associate",
+              entries: [{ label: "Storm Spirit", value: "" }],
+            },
             {
               group: "Class Feature",
               entries: [{ label: "Blade Focus", value: "" }],
@@ -319,7 +322,7 @@ describe("registry findings", () => {
       ),
     );
     expect(registryFindings(tallies).map(({ type }) => type)).toEqual([
-      "Domain",
+      "Associate",
       "Power",
     ]);
     expect(
@@ -336,10 +339,10 @@ describe("registry findings", () => {
       // Listed as a feature, and also chosen under one.
       ["Feat", { rows: 2, presented: 2, surfaces: { features: 2 } }],
       // A gap that now shows contradicts its entry.
-      ["Domain", { rows: 1, presented: 1, surfaces: { choices: 1 } }],
+      ["Associate", { rows: 1, presented: 1, surfaces: { choices: 1 } }],
     ]);
     expect(registryFindings(tallies).map(({ type }) => type)).toEqual([
-      "Domain",
+      "Associate",
     ]);
   });
 });
@@ -381,14 +384,14 @@ describe("choice reachability", () => {
     ]);
     mergeTallies(tallies, [
       ["Feat", { rows: 3, presented: 3, surfaces: { features: 2, powers: 1 } }],
-      ["Domain", { rows: 1, presented: 0, surfaces: {} }],
+      ["Associate", { rows: 1, presented: 0, surfaces: {} }],
     ]);
     expect(tallies.get("Feat")).toEqual({
       rows: 5,
       presented: 4,
       surfaces: { features: 3, powers: 1 },
     });
-    expect(tallies.get("Domain")?.rows).toBe(1);
+    expect(tallies.get("Associate")?.rows).toBe(1);
   });
 
   it("groups by key, most frequent first, with examples", () => {
@@ -399,5 +402,61 @@ describe("choice reachability", () => {
       { key: "a", count: 2, examples: ["a", "a"] },
       { key: "c", count: 1, examples: ["c"] },
     ]);
+  });
+});
+
+describe("deity, god fragment and item set surfaces", () => {
+  const records = new Map(
+    [
+      entity("ID_DEITY", "Synthetic Moon", "Deity"),
+      entity("ID_DOMAIN", "Tides", "Domain"),
+      entity("ID_FRAGMENT", "Shard of the Moon", "God Fragment"),
+      entity("ID_BENEFIT", "Synthetic Regalia (2)", "Item Set Benefit"),
+    ].map((value) => [value.id.toLowerCase(), value]),
+  );
+  const rows = sheetPresence(
+    [
+      occurrence("deity", "ID_DEITY"),
+      occurrence("domain", "ID_DOMAIN", "deity"),
+      occurrence("fragment", "ID_FRAGMENT"),
+      occurrence("benefit", "ID_BENEFIT"),
+    ],
+    records,
+    sheet({
+      identity: [{ label: "Deity", value: "Synthetic Moon" }],
+      deity: {
+        id: "ID_DEITY",
+        name: "Synthetic Moon",
+        domains: [{ id: "ID_DOMAIN", name: "Tides" }],
+        description: "",
+        source: "",
+      },
+      powers: [{ id: "ID_FRAGMENT", kind: "power", name: "Shard", fields: [] }],
+      itemSets: [
+        {
+          kind: "item-set",
+          id: "ID_SET",
+          name: "Synthetic Regalia",
+          group: false,
+          pieces: 2,
+          pieceIds: [],
+          benefits: [
+            { id: "ID_BENEFIT", pieceCount: 2, text: "", active: true },
+          ],
+        },
+      ],
+    }),
+  );
+
+  it("finds each on the surface the registry claims", () => {
+    expect(rows.map(({ type, surfaces }) => [type, surfaces])).toEqual([
+      ["Deity", ["identity", "references"]],
+      ["Domain", ["references"]],
+      ["God Fragment", ["powers"]],
+      ["Item Set Benefit", ["items"]],
+    ]);
+    const tallies = new Map<string, TypePresenceTally>();
+    tallyPresence(tallies, rows);
+    expect(registryFindings(tallies)).toEqual([]);
   });
 });

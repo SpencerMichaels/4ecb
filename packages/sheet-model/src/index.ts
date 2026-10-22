@@ -49,6 +49,30 @@ import {
 } from "./overview";
 import { featureChoices, type SheetFeatureChoice } from "./feature-choices";
 import {
+  sheetDeityReference,
+  type SheetDeityReference,
+} from "./deity-reference";
+import { godFragmentPowerCards } from "./god-fragment-card";
+import { sheetItemSetCards, type SheetItemSetCard } from "./item-set-card";
+export {
+  deityDomains,
+  deityDomainsText,
+  type SheetDeityReference,
+} from "./deity-reference";
+export {
+  godFragmentConstantBenefits,
+  godFragmentPowerCard,
+  isGodFragmentEntity,
+} from "./god-fragment-card";
+export {
+  itemSetOf,
+  sheetItemSetCard,
+  sheetItemSetCards,
+  withItemSetCards,
+  type SheetItemSetBenefit,
+  type SheetItemSetCard,
+} from "./item-set-card";
+import {
   sheetProficiencies,
   type SheetProficiencyGroup,
 } from "./proficiencies";
@@ -258,6 +282,10 @@ export interface CharacterSheetModel {
   readonly items: readonly SheetCard[];
   /** The beast companion, then familiars, printed after the Skills card. */
   readonly companions: readonly SheetCompanionCard[];
+  /** Sets the character owns pieces of; each card follows its pieces'. */
+  readonly itemSets?: readonly SheetItemSetCard[];
+  /** The deity's Character Reference entry (evaluated sheets only). */
+  readonly deity?: SheetDeityReference;
   readonly learnedReferences: readonly SheetLearnedReference[];
   readonly notes: readonly SheetValue[];
 }
@@ -1835,19 +1863,34 @@ export function buildEvaluatedSheetModel(
     content,
   );
   const powerCards = withUniversalActionCards(
-    evaluation.powers.flatMap((power) =>
-      evaluatedPowerCards(
-        power,
-        entities.get(power.definitionId.toLocaleLowerCase()),
-        evaluation,
-        personalizePowerText,
-        irrelevantFeatureClauses,
-        inventoryNames,
-        options.proficientEquipmentOnly !== false,
+    [
+      ...evaluation.powers.flatMap((power) =>
+        evaluatedPowerCards(
+          power,
+          entities.get(power.definitionId.toLocaleLowerCase()),
+          evaluation,
+          personalizePowerText,
+          irrelevantFeatureClauses,
+          inventoryNames,
+          options.proficientEquipmentOnly !== false,
+        ),
       ),
-    ),
+      // A god fragment's ability is in its own fields, not a Power record.
+      ...godFragmentPowerCards(active.map(({ entity }) => entity)),
+    ],
     evaluation,
   );
+  const lookup = (id: string) => entities.get(id.toLocaleLowerCase());
+  const itemSets = sheetItemSetCards(
+    inventoryPresentations
+      .filter(({ entry }) => entry.quantity > 0)
+      .map(({ itemEntities }) => itemEntities),
+    lookup,
+    evaluation.itemSets,
+  );
+  const deityEntity = active.find(
+    ({ entity }) => entity.type.trim().toLocaleLowerCase() === "deity",
+  )?.entity;
   const evaluatedValues = (names: readonly string[]) =>
     names.flatMap((name) => {
       const value = evaluatedStat(evaluation, name);
@@ -1970,6 +2013,10 @@ export function buildEvaluatedSheetModel(
     powers: powerCards,
     items: itemCards,
     companions: companionCards,
+    ...(itemSets.length === 0 ? {} : { itemSets }),
+    ...(deityEntity === undefined
+      ? {}
+      : { deity: sheetDeityReference(deityEntity, lookup) }),
     learnedReferences,
     notes: [
       ...[

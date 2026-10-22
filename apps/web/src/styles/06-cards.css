@@ -1048,6 +1048,18 @@
 .print-item-footer-details {
   text-align: right;
 }
+/* Item set card (legacy PowerCardItemSetInfo): locked benefits recede. */
+.print-item-set-benefit:not(.is-active) {
+  opacity: 0.6;
+}
+.print-item-set-benefit .icon {
+  height: 0.9em;
+  vertical-align: -0.1em;
+  width: 0.9em;
+}
+.print-item-set-note {
+  font-style: italic;
+}
 /* "Show entity source": a second footer line under an item's type and
    cost; power cards get it as their own footer row (same style). */
 .print-item-card > .print-item-footer > .print-card-source {

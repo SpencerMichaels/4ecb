@@ -20,6 +20,9 @@ import {
   type SheetBeastCompanionCard,
   type SheetCard,
   type SheetFamiliarCard,
+  itemSetOf,
+  sheetItemSetCard,
+  type SheetItemSetCard,
 } from "@4ecb/sheet-model";
 
 import { entityCardSource } from "./EntityCard";
@@ -52,6 +55,10 @@ export interface BuilderCardSettings {
   /** Selects the power text tier shown on cards. */
   readonly characterLevel: number;
   readonly abbreviateAbilityValues: boolean;
+  /** The item set card of a set piece, with this character's count. */
+  readonly itemSetCardFor?: (
+    piece: ContentEntity,
+  ) => SheetItemSetCard | undefined;
 }
 
 export interface BuilderCardPreferences {
@@ -104,6 +111,7 @@ export function evaluatedBuilderCardSettings(
         power.definitionId.toLocaleLowerCase() ===
         entity.id.toLocaleLowerCase(),
     );
+  let contentById: Map<string, ContentEntity> | undefined;
   return {
     powerCardFor: (entity) =>
       cardFor(
@@ -134,6 +142,19 @@ export function evaluatedBuilderCardSettings(
     },
     characterLevel: evaluation.level,
     abbreviateAbilityValues: preferences.abbreviateAbilityValues,
+    itemSetCardFor: (piece) => {
+      const lookup = (id: string) =>
+        (contentById ??= new Map(
+          evaluationEntities.map((entity) => [
+            entity.id.toLocaleLowerCase(),
+            entity,
+          ]),
+        )).get(id.trim().toLocaleLowerCase());
+      const set = itemSetOf(piece, lookup);
+      return set === undefined
+        ? undefined
+        : sheetItemSetCard(set, lookup, evaluation.itemSets);
+    },
   };
 }
 

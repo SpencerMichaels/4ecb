@@ -46,6 +46,7 @@ import type { ShopCategory } from "./routes";
 import { preferredShopBrowse, ShopWorkspace } from "./ShopWorkspace";
 import { useArmedAction } from "./useArmedAction";
 import { BuilderItemCard, BuilderPowerCard } from "./BuilderCards";
+import { BuilderItemSetCard } from "./BuilderItemSetCard";
 
 type MoneyLocation = "carried" | "stored";
 type Denomination = "copper" | "silver" | "gold" | "platinum" | "astral";
@@ -328,6 +329,7 @@ export function ItemDetail({
           key={power.id}
         />
       ))}
+      <BuilderItemSetCard pieces={item.entities} byId={byId} />
       {formulaItem === undefined ? null : (
         <div className="candidate-card-panel">
           <BuilderItemCard

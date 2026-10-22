@@ -254,6 +254,48 @@ describe("real-data sheet overview", () => {
       'Background benefit<span class="ov-reference-choice">: History class skill</span>',
     );
   });
+  it("starts the deity entry with its domains, after the background", () => {
+    const feature = {
+      summary: "",
+      source: "Synthetic",
+      fullTextAvailable: true,
+      playReminder: false,
+    };
+    const fixture = {
+      ...model,
+      overview: {
+        ...model.overview!,
+        features: [
+          {
+            ...feature,
+            id: "DEITY",
+            name: "Synthetic Moon",
+            group: "Deity",
+            description: "God of synthetic tides.",
+            fields: [{ label: "Domains", value: "Dusk, Tides" }],
+            fieldsFirst: true,
+          },
+          {
+            ...feature,
+            id: "BACKGROUND",
+            name: "Tomb Robber",
+            group: "Background",
+            description: "",
+            fields: [{ label: "Associated Skills", value: "Stealth" }],
+          },
+        ],
+        reminders: [],
+      },
+    };
+    const entries = references(fixture).filter(({ group }) =>
+      ["Background", "Deity"].includes(group),
+    );
+    expect(entries.map(({ group }) => group)).toEqual(["Background", "Deity"]);
+    expect(entries[1]!.parts.map((part) => [part.label, part.block])).toEqual([
+      ["Domains", { kind: "paragraph", text: "Dusk, Tides" }],
+      [undefined, { kind: "paragraph", text: "God of synthetic tides." }],
+    ]);
+  });
   it("places muted quantity-inclusive weights beside inventory names", () => {
     const fixture = {
       ...model,

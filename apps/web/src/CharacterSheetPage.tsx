@@ -23,9 +23,11 @@ import {
   buildEvaluatedSheetModel,
   buildSheetModel,
   featureChoiceText,
+  withItemSetCards,
   type CharacterSheetModel,
   type SheetCard,
   type SheetCompanionCard,
+  type SheetItemSetCard,
   type SheetValue,
 } from "@4ecb/sheet-model";
 
@@ -44,6 +46,7 @@ import {
 import { BeastCompanionCard } from "./BeastCompanionCard";
 import { FamiliarCard } from "./FamiliarCard";
 import { ItemCard } from "./ItemCard";
+import { ItemSetCard } from "./ItemSetCard";
 import { LoadingScreen } from "./LoadingScreen";
 import { loadingStepDetail, useLoadingProgress } from "./use-loading-progress";
 import { PowerCard } from "./PowerCard";
@@ -74,7 +77,10 @@ function ValueList({
 }
 
 type PrintableCard =
-  SheetCard | SheetCompanionCard | { readonly kind: PlayCardKind };
+  | SheetCard
+  | SheetCompanionCard
+  | SheetItemSetCard
+  | { readonly kind: PlayCardKind };
 
 const isPlayCard = (
   card: PrintableCard,
@@ -102,6 +108,7 @@ function PrintCard({
     );
   if (card.kind === "beast") return <BeastCompanionCard card={card} />;
   if (card.kind === "familiar") return <FamiliarCard card={card} />;
+  if (card.kind === "item-set") return <ItemSetCard card={card} />;
   return card.kind === "power" ? (
     <PowerCard card={card} characterLevel={characterLevel} />
   ) : (
@@ -435,7 +442,8 @@ export function CharacterSheetPage({
     ...model.companions,
     ...specialCards,
     ...powerCards.filter((card) => !specialCards.includes(card)),
-    ...model.items,
+    // Each item set's card follows its pieces' cards (legacy CharTracker).
+    ...withItemSetCards(model.items, model.itemSets ?? []),
   ];
   const printCardPages = chunks(printableCards, 9);
   const characterLevel =

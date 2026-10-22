@@ -15,6 +15,8 @@ import { overviewSenses } from "./senses";
 import { corePowerReminders } from "./core-power-reminders";
 import { featureReferenceMetadata } from "./feature-reference";
 import { featureChoiceText, type SheetFeatureChoice } from "./feature-choices";
+import type { SheetDeityReference } from "./deity-reference";
+import { godFragmentConstantBenefits } from "./god-fragment-card";
 
 export interface OverviewFeature {
   readonly id: string;
@@ -32,6 +34,26 @@ export interface OverviewFeature {
   readonly accessOnly?: boolean;
   /** Choices made under the feature, shown after its name. */
   readonly choices?: readonly SheetFeatureChoice[];
+  /** Its fields lead its body, before the description (a deity's domains). */
+  readonly fieldsFirst?: boolean;
+}
+
+/** The deity's reference entry: "Domains: Love, Moon, Trickery", then its
+ *  description. Page 1's identity table keeps just the name. */
+function deityFeature(deity: SheetDeityReference): OverviewFeature {
+  const domains = deity.domains.map(({ name }) => name.trim()).join(", ");
+  return {
+    id: deity.id,
+    name: deity.name,
+    group: "Deity",
+    summary: deity.description,
+    description: deity.description,
+    fields: domains ? [{ label: "Domains", value: domains }] : [],
+    source: deity.source,
+    fullTextAvailable: true,
+    playReminder: false,
+    fieldsFirst: true,
+  };
 }
 export interface OverviewInventory {
   readonly itemType?: string | undefined;
@@ -255,6 +277,17 @@ export function withSheetOverview(
       // chosen benefit's text is its benefit.
       if (entity === undefined && entry.choices?.length && entry.value.trim())
         fields.push({ label: "Benefit", value: entry.value });
+      // A chosen god fragment's constant benefit is the feature's benefit;
+      // its ability is a power card of its own.
+      for (const choice of entry.choices ?? []) {
+        const chosen = definitions.get(key(choice.id));
+        const constant =
+          chosen === undefined
+            ? undefined
+            : godFragmentConstantBenefits(chosen);
+        if (constant !== undefined)
+          fields.push({ label: "Constant Benefits", value: constant });
+      }
       features.push({
         id,
         name: entry.label,
@@ -272,6 +305,7 @@ export function withSheetOverview(
         ...(entry.choices === undefined ? {} : { choices: entry.choices }),
       });
     }
+  if (model.deity !== undefined) features.push(deityFeature(model.deity));
   // Rules Item powers are authored reference entities, not invokable actions.
   // Project their complete text beside features, using explicit origin metadata
   // before grant ancestry; never infer the category from a power/publication name.

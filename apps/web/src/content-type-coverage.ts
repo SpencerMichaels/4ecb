@@ -69,7 +69,8 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   Size: presented("identity"),
   Gender: presented("identity"),
   Alignment: presented("identity"),
-  Deity: presented("identity"),
+  // Page 1 names the deity; its Character Reference entry has the text.
+  Deity: presented("identity", "references"),
   Familiar: presented("companions"),
   Skill: presented("skills"),
   "Trait Package": presented("choices"),
@@ -82,6 +83,10 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   "Background Choice": presented("choices"),
   // Character Reference pages, grouped by kind after the inventory.
   Proficiency: presented("proficiencies"),
+  // The Deity entry starts "Domains: Love, Moon, Trickery".
+  Domain: presented("references"),
+  // Chosen under its feat's row; its ability is a power card of its own.
+  "God Fragment": presented("powers"),
 
   // Inventory
   "Magic Item": presented("items"),
@@ -91,6 +96,8 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   "Ritual Scroll": presented("items"),
   "Superior Implement": presented("items"),
   Ritual: presented("references"),
+  // Listed on its set's Item Set card, the unlocked ones marked.
+  "Item Set Benefit": presented("items"),
 
   // Effects only
   "Skill Training": applied("Marks the skill trained."),
@@ -126,12 +133,9 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   "Weapon Group": internal("Reference text for item cards."),
   "Ability Score": internal("Reference text."),
   Money: internal("Coin reference; the wallet is separate."),
-  "Item Set": internal("Set metadata for Item Set Benefit."),
+  "Item Set": internal("Never owned; its card lists its Item Set Benefits."),
 
   // Known gaps, for triage
-  Domain: gap("A cleric's chosen domains are not shown."),
-  "God Fragment": gap("A chosen god fragment and its powers are not shown."),
-  "Item Set Benefit": gap("Active item-set bonuses are not shown."),
   Companion: gap(
     "Beast companions have no stat block (familiar card proposal, step 2).",
   ),

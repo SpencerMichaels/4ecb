@@ -1914,6 +1914,7 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
     "Racial Trait",
     "Theme",
     "Background",
+    "Deity",
     "Paragon Path",
     "Epic Destiny",
     "Feat",
@@ -1950,19 +1951,20 @@ export function references(model: CharacterSheetModel): ReferenceEntry[] {
         !fields.some((field) => /^benefits?$/i.test(field.label.trim()))
           ? /\bBenefit:\s*([\s\S]+)/i.exec(feature.description)?.[1]
           : undefined;
+      const fieldParts = fields
+        .filter(
+          (field) =>
+            !(
+              /^(?:benefit|flavor(?: text)?|description)$/i.test(field.label) &&
+              description.includes(field.value)
+            ),
+        )
+        .flatMap((field) => referenceParts(field.value, field.label));
       const parts = [
+        ...(feature.fieldsFirst ? fieldParts : []),
         ...referenceParts(description),
         ...(inlineBenefit ? referenceParts(inlineBenefit, "Benefit") : []),
-        ...fields
-          .filter(
-            (field) =>
-              !(
-                /^(?:benefit|flavor(?: text)?|description)$/i.test(
-                  field.label,
-                ) && description.includes(field.value)
-              ),
-          )
-          .flatMap((field) => referenceParts(field.value, field.label)),
+        ...(feature.fieldsFirst ? [] : fieldParts),
         ...(!feature.fullTextAvailable
           ? referenceParts(
               "Full rules unavailable for this content profile; the retained abbreviated description is shown.",
@@ -2318,7 +2320,9 @@ const referenceIcon = (group: string): IconName =>
           ? "item"
           : group === "Background"
             ? "background"
-            : "book";
+            : group === "Deity"
+              ? "church"
+              : "book";
 function EquippedTables({ parts }: { parts: readonly ReferencePart[] }) {
   return (
     <div className="ov-equipped-columns">
@@ -3006,6 +3010,7 @@ function Details({
       "Racial features",
       "Theme",
       "Background",
+      "Deity",
       "Paragon paths",
       "Epic destinies",
       "Feats",

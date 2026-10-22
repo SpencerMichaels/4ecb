@@ -43,10 +43,11 @@ import {
   isBeastCompanionEntity,
   type EvaluatedBeastCompanion,
 } from "./beast-companion";
+import { evaluateItemSets, type EvaluatedItemSet } from "./item-sets";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v32-2026-10-21-beast-notes-retraining";
+  "evaluated-character-v33-2026-10-21-item-sets";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -191,6 +192,8 @@ export interface EvaluatedCharacter {
   readonly powers: readonly EvaluatedPower[];
   /** The beast companion's statistics, when the character has one. */
   readonly beastCompanion?: EvaluatedBeastCompanion;
+  /** Item sets the character has pieces of (legacy `ItemSetCount`). */
+  readonly itemSets?: readonly EvaluatedItemSet[];
   readonly suggestions: readonly {
     readonly providerOccurrenceId: string;
     readonly definitionId: string;
@@ -663,11 +666,17 @@ function evaluateCharacterInternal(
                 ],
           ),
   );
-  const saved: CharacterOccurrence[] = [
+  const executed: CharacterOccurrence[] = [
     ...input.occurrences.filter(
       (occurrence) => occurrence.acquiredLevel <= input.level,
     ),
     ...inventoryOccurrences,
+  ];
+  // Unlocked item set benefits are elements too (legacy native Sets).
+  const itemSets = evaluateItemSets(executed, index, input.textStrings ?? {});
+  const saved: CharacterOccurrence[] = [
+    ...executed,
+    ...itemSets.benefitOccurrences,
   ];
   const replacedIds = new Set(
     saved.flatMap((occurrence) =>
@@ -2450,6 +2459,7 @@ function evaluateCharacterInternal(
     overlays,
     powers,
     ...(beastCompanion === undefined ? {} : { beastCompanion }),
+    ...(itemSets.itemSets.length === 0 ? {} : { itemSets: itemSets.itemSets }),
     suggestions,
     diagnostics,
   };

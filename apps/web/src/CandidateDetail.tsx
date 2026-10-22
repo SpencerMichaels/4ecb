@@ -21,6 +21,7 @@ import {
   useCandidateFavorites,
 } from "./candidate-favorites";
 import { candidateReferenceIndex } from "./CandidateSelectionTable";
+import { DeityDomains } from "./DeityDomains";
 import { detailStackEntries } from "./detail-stack";
 import {
   EntityCardBody,
@@ -288,6 +289,9 @@ export function CandidateDetailCard({
             />
           ) : (
             <EntityCardBody
+              beforeNarrative={
+                <DeityDomains entity={entity} references={references} />
+              }
               entity={entity}
               hideFlavortext={hideFlavortext}
               showSource={false}
