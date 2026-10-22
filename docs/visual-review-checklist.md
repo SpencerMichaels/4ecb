@@ -56,6 +56,11 @@ wizard, ranger, druid or half-elf.
       "Arcane Striker", and a "Key abilities" row in the class traits grid
       (Charisma, Dexterity, …).
 
+- [ ] **Summoned allies** (White Well hexblade at level 25): Mourning
+      Handmaiden's Attack reads "Level+5 vs Ref", and Spectral Protector's
+      Attack and Opportunity read "Level+5 vs Will" with a number. There's no
+      "UNKNOWN" anywhere.
+
 ## Printed sheet: cards
 
 - [ ] **Familiar card** after the Skills card (e.g. Sprite with Vigorous

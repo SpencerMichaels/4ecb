@@ -1,5 +1,54 @@
 # Implementation status
 
+## Owner review round 1 (2026-10-22)
+
+From the owner's first pass through the visual review and the new auto checks
+(`pnpm review:verify`, `1687060`: 107 checklist rows verified
+automatically, 44 left for the owner):
+
+- **Content layering** (`6a05782`). `composeContentPacks` now overrides an
+  entity whose ID differs only in case. A capitalisation-fixing correction
+  made the composed profile fail validation ("Duplicate entity ID").
+- **Detail panes.**
+  - `4d4aa5c`: in a multi-card stack each card sizes to its content.
+  - `06cd2af`: options granting benefits at several levels (pacts, themes,
+    paragon paths, epic destinies) fold them into collapsible per-level
+    sections. A folded section's bullets sit inside its clickable heading
+    and hide when expanded. From level 11, benefits that depend on the
+    paragon path get one section per path ("Legendary Hexblade (Levels
+    11–20)"), and a chosen path hides the others.
+  - Generic option cards now put Prerequisites before the description.
+  - `05a377e`: class cards are headed "Arcane Striker", with a Key
+    abilities row.
+- **Builder tables** (`5ff311f`): every option shows its Short Description
+  when it has one; the White Well pact had shown its long flavor text.
+- **Weapons** (`555d6e6`, `a89dc68`): weapons are tagged with each of
+  their groups, after Group overlays, and as "military" when their category
+  says so, as legacy `AddWeaponKeywords`/`InsertList` do. Githzerai Blade
+  Master's bonus now reaches the glaive, and, per Arena Training, the other
+  arena weapon.
+- **Summoned allies** (`74da1b4`, `9B-summoned-allies.part`): 22 hexblade
+  and binder summon attacks written as "Beast's attack bonus" printed
+  "UNKNOWN". They now use the published "your level + N vs. X" (from
+  HotFK, Heroes of Shadow, and Dragon 393/406 via the compendium), which the
+  engine resolves. An unresolvable attack prints "— vs X".
+- **Content fixes:**
+  - the White Well pact lists the Legendary Hexblade features White Well
+    characters are actually granted (`_1D`–`_6D`);
+  - nine executioner attacks name their weapon (`bbefdd2`);
+  - Rose Scythe of Chauntea is an implement for divine and primal powers
+    (`c5ae1a6`; D081 amendment `d5e5329`).
+- **Evaluation cache:** v36.
+
+Open:
+
+- Weapon-requirement gaps outside the executioner, not yet fixable: Zadatl
+  Grab/Control, Tiger Jump/Slashing Frenzy (expressible); Crescendo Sword, the
+  cleric "simple weapon" powers, Wrathful Lightning/Thunder of Justice and
+  Shield Block (need new selectors).
+
+Verification: 1266 tests; `audit:coverage` and `audit:requires` clean.
+
 ## Visual-review harness (2026-10-22)
 
 `pnpm review:build` (`d1e70bd`; scripts/build-visual-review.ts,
