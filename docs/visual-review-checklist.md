@@ -52,9 +52,9 @@ wizard, ranger, druid or half-elf.
   - At 140% zoom and in dark theme: headings wrap without clipping, and the
     focus ring is visible.
 
-- [ ] **Class detail card** (e.g. Hexblade on the Class tab): heading line
-      "Arcane Striker", and a "Key abilities" row in the class traits grid
-      (Charisma, Dexterity, …).
+- [ ] **Class detail card** (e.g. Hexblade on the Class tab): description
+      starts "Arcane Striker. You wield …" in one paragraph, and a "Key
+      abilities" row in the class traits grid (Charisma, Dexterity, …).
 
 - [ ] **Summoned allies** (White Well hexblade at level 25): Mourning
       Handmaiden's Attack reads "Level+5 vs Ref", and Spectral Protector's
