@@ -461,6 +461,8 @@ function characterBuild(value: unknown, formatVersion: 1 | 2): boolean {
             levelledEntry(entry) &&
             elementIdentity(entry.element) &&
             (entry.acquisition === "bought" || entry.acquisition === "free") &&
+            (entry.allowance === undefined ||
+              typeof entry.allowance === "string") &&
             (entry.legacyLoot === undefined ||
               (legacyLoot !== undefined &&
                 inventoryHolding(legacyLoot, new Set<string>())))

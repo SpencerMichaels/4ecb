@@ -212,6 +212,7 @@ describe("known records", () => {
       {
         text: "As a druid you have been given the Gifted Rite.",
         provider: "Synthetic Druid",
+        providerId: "CLASS",
       },
     ]);
   });

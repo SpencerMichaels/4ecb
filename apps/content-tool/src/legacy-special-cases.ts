@@ -690,9 +690,15 @@ export const LEGACY_SPECIAL_CASES: Readonly<Record<string, LegacySpecialCase>> =
       "Mage's Spellbook (ID_FMP_CLASS_FEATURE_2868) shows the spellbook page.",
       "modern spellbook choices come from content select rules",
     ),
-    "FeatPage.DoChooseFeat": notHandled(
-      "Choosing Student of Sword Magic adds a Spellbook to inventory.",
-      "feat-granted gear is not added",
+    "FeatPage.DoChooseFeat": {
+      status: "declarative",
+      description:
+        "Choosing Student of Sword Magic adds a Spellbook to inventory.",
+      note: "content/corrections/98-ritual-allowances.part gives the feat a FREEBEE:ID_FMP_GEAR_33 stat, so the Spellbook is a one-time free item (MainWindow.GiveFreebees) instead of being added on every pick",
+    },
+    "MainWindow.GiveFreebees": code(
+      "Gear page, Rituals page and auto-level: each FREEBEE:<id> character stat whose textstring <id> is not 'Given' adds one copy of <id> as loot (only marked when already owned), sets <id> = 'Given', then equips each given item that has an Item Slot, unequipping that slot.",
+      "apps/web/src/freebee-gifts.ts + rules-engine freebees.ts pendingFreebeeItems + the character-domain give-freebees command, run by the builder whenever the current level is evaluated and folded into the edit's undo step. Deliberately different (D091): rituals are derived known records, not loot (known-records.ts); a gift takes only a free slot and never unequips the player's item. Associates are not given (companion model).",
     ),
     "FeatPage.CategoryFromPrereq": generic(
       "Feat list grouping by prerequisite type.",

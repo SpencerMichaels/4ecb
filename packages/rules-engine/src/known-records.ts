@@ -33,6 +33,8 @@ export type KnownRecordSource =
       readonly entryId: string;
       readonly acquisition: BuildKnownAcquisition;
       readonly acquiredLevel: number;
+      /** The free-ritual allowance it was learned from (ritual-allowances.ts). */
+      readonly allowance?: string;
     }
   | {
       readonly kind: "granted";
@@ -163,6 +165,9 @@ export function knownRecords(
         entryId: entry.id,
         acquisition: entry.acquisition,
         acquiredLevel: entry.acquiredLevel,
+        ...(entry.allowance === undefined
+          ? {}
+          : { allowance: entry.allowance }),
       },
     });
   }
@@ -172,24 +177,27 @@ export function knownRecords(
 export interface FreeRitualAllowanceText {
   readonly text: string;
   readonly provider: string;
+  /** The providing element, which may also carry a structured allowance. */
+  readonly providerId: string;
 }
 
 /**
  * The "Free Rituals" text a class or feat emits ("As a wizard, you are
- * entitled to three 1st-level rituals…"). It is shown, not enforced.
+ * entitled to three 1st-level rituals…"). It is shown, not enforced; the
+ * structured counts are in `ritual-allowances.ts`.
  */
 export function freeRitualAllowanceTexts(
   evaluation: Pick<EvaluatedCharacter, "textContributions"> | undefined,
 ): readonly FreeRitualAllowanceText[] {
   const seen = new Set<string>();
   return (evaluation?.textContributions ?? []).flatMap(
-    ({ name, value, providerName }) => {
+    ({ name, value, providerName, definitionId }) => {
       const text = value.trim().replace(/^\*\s*/u, "");
       if (name.trim().toLocaleLowerCase() !== "free rituals" || text === "")
         return [];
       if (seen.has(text)) return [];
       seen.add(text);
-      return [{ text, provider: providerName }];
+      return [{ text, provider: providerName, providerId: definitionId }];
     },
   );
 }

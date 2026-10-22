@@ -114,6 +114,7 @@ import { ContentUpdateDialog } from "./ContentUpdateDialog";
 import { loadCharacter, persistCharacterDraft } from "./character-drafts";
 import { needsContentUpdate } from "./content-update";
 import { loadoutChangeCommand } from "./equipment-ui";
+import { freebeeGiftCommand } from "./freebee-gifts";
 import { type InspectedOption } from "./CandidateSelectionTable";
 import { CandidateDetail } from "./CandidateDetail";
 import { ChoiceAccordionItem } from "./ChoiceAccordionItem";
@@ -762,6 +763,19 @@ export function CharacterEditorPage({
     saved: saveState.phase === "saved",
   });
 
+  // Free items (legacy GiveFreebees): once the current level is evaluated
+  // for exactly this build, give any FREEBEE item not yet marked as given.
+  // It joins the edit that entitled the character to it, so undo removes
+  // both together; the marker keeps a removed gift from coming back.
+  useEffect(() => {
+    if (build === undefined || currentEvaluation === undefined) return;
+    if (evaluatedBuilds.current.get(currentEvaluation) !== evaluationBuild)
+      return;
+    if (currentEvaluation.level !== build.effectiveLevel) return;
+    const command = freebeeGiftCommand(build, currentEvaluation, byId);
+    if (command !== undefined) amend(command);
+  }, [build, byId, currentEvaluation, evaluationBuild]);
+
   const levelChoices = useMemo(
     () => choicesAtLevel(selectedLevel, planningEvaluation),
     [planningEvaluation, selectedLevel],
@@ -1067,6 +1081,26 @@ export function CharacterEditorPage({
     try {
       const previous = active.current;
       const next = active.dispatch(command);
+      if (!sameRulesInputs(previous, next))
+        setEvaluationStatus("Evaluating current build and plan…");
+      setRevision((value) => value + 1);
+      queue.enqueue(next, "Saved locally");
+    } catch (reason: unknown) {
+      setSaveState({
+        phase: "failed",
+        message: `Change rejected: ${reason instanceof Error ? reason.message : String(reason)}`,
+      });
+    }
+  }
+
+  /** Applies a follow-up into the current undo step (see CharacterTransaction.amend). */
+  function amend(command: CharacterCommand): void {
+    const active = transaction.current;
+    const queue = saveQueue.current;
+    if (active === undefined || queue === undefined) return;
+    try {
+      const previous = active.current;
+      const next = active.amend(command);
       if (!sameRulesInputs(previous, next))
         setEvaluationStatus("Evaluating current build and plan…");
       setRevision((value) => value + 1);

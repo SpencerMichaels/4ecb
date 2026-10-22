@@ -193,8 +193,40 @@ export interface BuildKnownEntry {
   /** The exact Ritual record. Its kind comes from the record's authored type. */
   readonly element: BuildElementIdentity;
   readonly acquisition: BuildKnownAcquisition;
+  /**
+   * The free-ritual allowance a "free" entry was learned from (the key the
+   * rules engine gives it). Absent on bought entries, DM gifts and imported
+   * loot; imported free entries are matched to allowances when counted.
+   */
+  readonly allowance?: string;
   /** Only for imported loot: the original record, re-emitted on export. */
   readonly legacyLoot?: Omit<BuildInventoryEntry, "id" | "acquiredLevel">;
+}
+
+/** The textstring value legacy writes once a free item has been given. */
+export const FREEBEE_GIVEN = "Given";
+
+/**
+ * One legacy `FREEBEE:<id>` gift (MainWindow.GiveFreebees): `marker` is the
+ * textstring `<id>`, set to "Given" so the gift is never repeated. `entry` is
+ * the gifted holding, absent when the character already owns one.
+ */
+export interface FreebeeGift {
+  readonly marker: string;
+  readonly entry?: BuildInventoryEntry;
+}
+
+/** Whether textstring `marker` already records the gift (case-insensitive key). */
+export function isFreebeeGiven(
+  textStrings: Readonly<Record<string, string>>,
+  marker: string,
+): boolean {
+  const target = marker.trim().toLocaleLowerCase();
+  return Object.entries(textStrings).some(
+    ([name, value]) =>
+      name.trim().toLocaleLowerCase() === target &&
+      value.trim().toLocaleLowerCase() === FREEBEE_GIVEN.toLocaleLowerCase(),
+  );
 }
 
 export const CHARACTER_BUILD_FORMAT_VERSION = 2 as const;
@@ -883,6 +915,16 @@ export type CharacterCommand =
       readonly id: string;
     }
   | {
+      /**
+       * Gives free items once (legacy GiveFreebees): each gift not yet marked
+       * adds its holding at no cost and sets its marker to "Given". A gift
+       * never displaces an equipped item, and a marked gift is skipped, so
+       * the command is idempotent.
+       */
+      readonly kind: "give-freebees";
+      readonly gifts: readonly FreebeeGift[];
+    }
+  | {
       readonly kind: "set-text";
       readonly name: string;
       readonly value: string;
@@ -1235,6 +1277,11 @@ export function applyCharacterCommand(
         );
       if (entry.element.type.trim().toLocaleLowerCase() !== "ritual")
         throw new Error("Only Ritual records can be learned");
+      if (
+        entry.allowance !== undefined &&
+        (entry.acquisition !== "free" || command.priceCopper > 0)
+      )
+        throw new Error("Only free entries use a free-ritual allowance");
       if (build.known.some(({ id }) => id === entry.id))
         throw new Error(`Known entry already exists: ${entry.id}`);
       if (isKnownElementStored(build, entry.element))
@@ -1260,6 +1307,44 @@ export function applyCharacterCommand(
         ...build,
         known: build.known.filter(({ id }) => id !== command.id),
       };
+    }
+    case "give-freebees": {
+      let inventory = build.inventory;
+      const textStrings = { ...build.textStrings };
+      for (const gift of command.gifts) {
+        if (gift.marker.trim() === "")
+          throw new Error("A free item needs its marker");
+        if (isFreebeeGiven(textStrings, gift.marker)) continue;
+        const { entry } = gift;
+        if (entry !== undefined) {
+          assertInventoryQuantities(entry);
+          if (entry.quantity <= 0)
+            throw new Error("A free item must have a positive quantity");
+          if (inventory.some(({ id }) => id === entry.id))
+            throw new Error(`Inventory entry already exists: ${entry.id}`);
+          const occupied = new Set(
+            inventory.flatMap(({ equippedSlots }) =>
+              (equippedSlots ?? []).map(({ slot }) => slot),
+            ),
+          );
+          const { equippedSlots: requested, ...holding } = entry;
+          const equippedSlots = (requested ?? []).filter(
+            ({ slot }) => !occupied.has(slot),
+          );
+          inventory = [
+            ...inventory,
+            equippedSlots.length === 0
+              ? { ...holding, equippedQuantity: 0 }
+              : {
+                  ...holding,
+                  equippedSlots,
+                  equippedQuantity: equippedQuantityFromSlots(equippedSlots),
+                },
+          ];
+        }
+        textStrings[gift.marker] = FREEBEE_GIVEN;
+      }
+      return { ...build, inventory, textStrings };
     }
     case "set-text": {
       const textStrings = { ...build.textStrings };
@@ -1295,6 +1380,17 @@ export class CharacterTransaction {
     this.#future = [];
     this.#current = next;
     return next;
+  }
+
+  /**
+   * Applies a follow-up of the current state into the same history step
+   * (free items the last edit entitles the character to), so undoing that
+   * edit also undoes the follow-up instead of re-triggering it. Redo keeps
+   * its states.
+   */
+  amend(command: CharacterCommand): CharacterBuild {
+    this.#current = applyCharacterCommand(this.#current, command);
+    return this.#current;
   }
 
   undo(): CharacterBuild {

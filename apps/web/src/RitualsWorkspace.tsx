@@ -1,12 +1,17 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
 import type { BuildKnownEntry, CharacterBuild } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
+  eligibleRitualAllowances,
   freeRitualAllowanceTexts,
   knownRecords,
+  ritualAllowanceStatuses,
   type EvaluatedCharacter,
   type KnownRecord,
+  type RitualAllowance,
+  type RitualAllowanceKind,
+  type RitualAllowanceStatus,
 } from "@4ecb/rules-engine";
 
 import { contentSpecificValue } from "./builder-ui";
@@ -47,14 +52,145 @@ export function knownRecordKind(record: KnownRecord): KnownRecordKind {
     : "ritual";
 }
 
-/** Why the character knows a record: its grant, or how and when it was learned. */
-export function knownRecordSourceLabel(record: KnownRecord): string {
+/**
+ * Why the character knows a record: its grant, or how and when it was
+ * learned, with the provider of the free-ritual allowance it used.
+ */
+export function knownRecordSourceLabel(
+  record: KnownRecord,
+  allowanceProvider: (key: string) => string | undefined = () => undefined,
+): string {
   const { source } = record;
   if (source.kind === "granted")
     return source.provider === "" ? "Granted" : `Granted by ${source.provider}`;
-  return source.acquisition === "bought"
-    ? `Bought at level ${source.acquiredLevel}`
-    : `Learned free at level ${source.acquiredLevel}`;
+  if (source.acquisition === "bought")
+    return `Bought at level ${source.acquiredLevel}`;
+  const provider =
+    source.allowance === undefined
+      ? undefined
+      : allowanceProvider(source.allowance);
+  return `Learned free at level ${source.acquiredLevel}${provider === undefined ? "" : ` (${provider})`}`;
+}
+
+const ALLOWANCE_NOUNS: Readonly<
+  Record<RitualAllowanceKind, readonly [string, string]>
+> = {
+  Ritual: ["ritual", "rituals"],
+  "Alchemical Formula": ["alchemical formula", "alchemical formulas"],
+  "Martial Practice": ["martial practice", "martial practices"],
+};
+
+function listNames(names: readonly string[]): string {
+  return names.length <= 1
+    ? (names[0] ?? "")
+    : `${names.slice(0, -1).join(", ")} or ${names.at(-1)!}`;
+}
+
+/**
+ * The counter shown beside an allowance's text: "2 free 1st-level rituals
+ * left", "1 free ritual of level 5 or lower left: …", "All 3 free rituals
+ * used".
+ */
+export function ritualAllowanceLabel(
+  status: RitualAllowanceStatus,
+  nameOf: (id: string) => string = (id) => id,
+): string {
+  const [one, many] = ALLOWANCE_NOUNS[status.allowance.kind];
+  const noun = (count: number) => (count === 1 ? one : many);
+  if (status.total === 0) return `No free ${many} yet`;
+  if (status.remaining === 0)
+    return `All ${status.total} free ${noun(status.total)} used`;
+  const parts = status.remainders.map(({ count, maxLevel }) =>
+    maxLevel === undefined
+      ? `${count} free ${noun(count)}`
+      : maxLevel <= 1
+        ? `${count} free 1st-level ${noun(count)}`
+        : `${count} free ${noun(count)} of level ${maxLevel} or lower`,
+  );
+  const from =
+    status.allowance.from === undefined
+      ? ""
+      : `: ${listNames(status.allowance.from.map(nameOf))}`;
+  return `${parts.join(" and ")} left${from}`;
+}
+
+/** Chooses the allowance a free ritual uses when several fit (Learn free). */
+function AllowanceChoiceDialog({
+  name,
+  allowances,
+  onLearn,
+  onCancel,
+}: {
+  readonly name: string;
+  readonly allowances: readonly RitualAllowance[];
+  readonly onLearn: (allowance: RitualAllowance | undefined) => void;
+  readonly onCancel: () => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const [chosen, setChosen] = useState(allowances[0]?.key ?? "");
+  useEffect(() => {
+    const current = dialog.current;
+    if (current !== null && !current.open) current.showModal();
+  }, []);
+  return (
+    <dialog
+      aria-labelledby="ritual-allowance-title"
+      className="ritual-allowance-dialog dialog-shell"
+      ref={dialog}
+      onCancel={(event) => {
+        event.preventDefault();
+        onCancel();
+      }}
+    >
+      <header>
+        <h2 id="ritual-allowance-title">Learn {name} free</h2>
+        <button
+          aria-label="Close"
+          className="button-icon dialog-close"
+          title="Close"
+          type="button"
+          onClick={onCancel}
+        >
+          <Icon name="remove" />
+        </button>
+      </header>
+      <fieldset className="ritual-allowance-body">
+        <legend>Use a free ritual from</legend>
+        {allowances.map((allowance) => (
+          <label key={allowance.key}>
+            <input
+              type="radio"
+              name="ritual-allowance"
+              checked={chosen === allowance.key}
+              onChange={() => setChosen(allowance.key)}
+            />{" "}
+            {allowance.provider}
+          </label>
+        ))}
+        <label>
+          <input
+            type="radio"
+            name="ritual-allowance"
+            checked={chosen === ""}
+            onChange={() => setChosen("")}
+          />{" "}
+          None (a gift)
+        </label>
+      </fieldset>
+      <footer>
+        <button type="button" onClick={onCancel}>
+          Cancel
+        </button>
+        <button
+          className="button-primary"
+          type="button"
+          onClick={() => onLearn(allowances.find(({ key }) => key === chosen))}
+        >
+          Learn free
+        </button>
+      </footer>
+    </dialog>
+  );
 }
 
 export function groupKnownRecords(
@@ -107,6 +243,10 @@ export function RitualsWorkspace({
     InspectedItemDetail & { readonly note?: string }
   >();
   const removeAction = useArmedAction("known-remove-trigger");
+  const [pendingFree, setPendingFree] = useState<{
+    readonly entity: ContentEntity;
+    readonly allowances: readonly RitualAllowance[];
+  }>();
   const records = useMemo(
     () =>
       knownRecords(
@@ -120,6 +260,67 @@ export function RitualsWorkspace({
   const groups = useMemo(() => groupKnownRecords(records), [records]);
   const knownIds = useMemo(() => new Set(records.map(recordKey)), [records]);
   const allowances = freeRitualAllowanceTexts(evaluation);
+  const statuses = useMemo(
+    () =>
+      evaluation === undefined
+        ? []
+        : ritualAllowanceStatuses(
+            build,
+            evaluation,
+            (id) => byId.get(id.toLocaleLowerCase()),
+            build.effectiveLevel,
+          ),
+    [build, evaluation, byId],
+  );
+  const nameOf = (id: string) => byId.get(id.toLocaleLowerCase())?.name ?? id;
+  const allowanceProvider = (allowanceKey: string) =>
+    statuses.find(
+      ({ allowance }) =>
+        allowance.key.toLocaleLowerCase() === allowanceKey.toLocaleLowerCase(),
+    )?.allowance.provider;
+  // Counters without a "Free Rituals" text of their own are listed after.
+  const untexted = statuses.filter(
+    ({ allowance }) =>
+      !allowances.some(
+        ({ providerId }) =>
+          providerId.toLocaleLowerCase() ===
+          allowance.providerId.toLocaleLowerCase(),
+      ),
+  );
+  const counters = (providerId: string) =>
+    statuses.filter(
+      ({ allowance }) =>
+        allowance.providerId.toLocaleLowerCase() ===
+        providerId.toLocaleLowerCase(),
+    );
+  const learn = (
+    entity: ContentEntity,
+    priceCopper: number,
+    allowance?: RitualAllowance,
+  ) =>
+    onLearn(
+      {
+        id: `web:${crypto.randomUUID()}`,
+        acquiredLevel: build.effectiveLevel,
+        element: {
+          definitionId: entity.id,
+          name: entity.name,
+          type: entity.type,
+        },
+        acquisition: priceCopper > 0 ? "bought" : "free",
+        ...(allowance === undefined ? {} : { allowance: allowance.key }),
+      },
+      priceCopper,
+    );
+  const learnFree = (entity: ContentEntity) => {
+    const eligible = eligibleRitualAllowances(
+      statuses,
+      entity,
+      build.effectiveLevel,
+    );
+    if (eligible.length > 1) setPendingFree({ entity, allowances: eligible });
+    else learn(entity, 0, eligible[0]);
+  };
   const ownedDefinitions = useMemo(
     () =>
       (evaluation?.activeDefinitionIds ?? []).flatMap((id) => {
@@ -137,7 +338,7 @@ export function RitualsWorkspace({
             entities: [record.entity],
             displayName: record.entity.name,
             effectiveLevel: build.effectiveLevel,
-            note: knownRecordSourceLabel(record),
+            note: knownRecordSourceLabel(record, allowanceProvider),
           },
     );
 
@@ -153,17 +354,39 @@ export function RitualsWorkspace({
             category === undefined ? "Known rituals" : "Learn rituals"
           }
         >
-          {allowances.length === 0 ? null : (
+          {allowances.length === 0 && untexted.length === 0 ? null : (
             <div className="rituals-allowance">
-              {allowances.map(({ text, provider }) => (
-                <p key={text}>
-                  <strong>Free rituals:</strong> {text}
-                  {provider === "" ? null : (
-                    <span className="rituals-allowance-source">
-                      {" "}
-                      ({provider})
-                    </span>
-                  )}
+              {allowances.map(({ text, provider, providerId }) => (
+                <div key={text}>
+                  <p>
+                    <strong>Free rituals:</strong> {text}
+                    {provider === "" ? null : (
+                      <span className="rituals-allowance-source">
+                        {" "}
+                        ({provider})
+                      </span>
+                    )}
+                  </p>
+                  {counters(providerId).map((status) => (
+                    <p
+                      className="rituals-allowance-count"
+                      key={status.allowance.key}
+                    >
+                      {ritualAllowanceLabel(status, nameOf)}
+                    </p>
+                  ))}
+                </div>
+              ))}
+              {untexted.map((status) => (
+                <p
+                  className="rituals-allowance-count"
+                  key={status.allowance.key}
+                >
+                  {ritualAllowanceLabel(status, nameOf)}
+                  <span className="rituals-allowance-source">
+                    {" "}
+                    ({status.allowance.provider})
+                  </span>
                 </p>
               ))}
             </div>
@@ -220,8 +443,10 @@ export function RitualsWorkspace({
                             group.map((record) => {
                               const name =
                                 record.entity?.name ?? record.element.name;
-                              const sourceLabel =
-                                knownRecordSourceLabel(record);
+                              const sourceLabel = knownRecordSourceLabel(
+                                record,
+                                allowanceProvider,
+                              );
                               const entryId =
                                 record.source.kind === "learned"
                                   ? record.source.entryId
@@ -346,24 +571,25 @@ export function RitualsWorkspace({
                   onCategoryChange(browse as RitualCategory)
                 }
                 onLearn={(entity, priceCopper) =>
-                  onLearn(
-                    {
-                      id: `web:${crypto.randomUUID()}`,
-                      acquiredLevel: build.effectiveLevel,
-                      element: {
-                        definitionId: entity.id,
-                        name: entity.name,
-                        type: entity.type,
-                      },
-                      acquisition: priceCopper > 0 ? "bought" : "free",
-                    },
-                    priceCopper,
-                  )
+                  priceCopper > 0
+                    ? learn(entity, priceCopper)
+                    : learnFree(entity)
                 }
               />
             </>
           )}
         </div>
+        {pendingFree === undefined ? null : (
+          <AllowanceChoiceDialog
+            name={pendingFree.entity.name}
+            allowances={pendingFree.allowances}
+            onCancel={() => setPendingFree(undefined)}
+            onLearn={(allowance) => {
+              learn(pendingFree.entity, 0, allowance);
+              setPendingFree(undefined);
+            }}
+          />
+        )}
         <div className="shared-choice-detail shop-rail">
           <ItemDetail
             byId={byId}

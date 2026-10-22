@@ -19,6 +19,7 @@ import {
   isCharacterRecord,
   isCharacterRecordWithBuildV1,
   isFreeformCharacterDetailTextKey,
+  isFreebeeGiven,
   isLegacyCharacterRecordV1,
   isWalletTextKey,
   newCharacterRecord,
@@ -952,5 +953,115 @@ describe("known rituals, formulas and practices", () => {
         build: { ...upgraded, known: [{ id: "bad", acquisition: "stolen" }] },
       }),
     ).toBe(false);
+  });
+});
+
+describe("free items (FREEBEE)", () => {
+  const holding = (
+    id: string,
+    slots: BuildInventoryEntry["equippedSlots"] = undefined,
+  ): BuildInventoryEntry => ({
+    id,
+    acquiredLevel: 1,
+    quantity: 1,
+    equippedQuantity: slots?.length ?? 0,
+    ...(slots === undefined ? {} : { equippedSlots: slots }),
+    elements: [{ definitionId: `ID_${id}`, name: id, type: "Weapon" }],
+    overrides: {},
+    legality: "rules-legal",
+  });
+
+  it("gives each gift once, marks it, and never displaces equipment", () => {
+    const equipped: CharacterBuild = {
+      ...build,
+      inventory: [holding("sword", [{ slot: "main-hand", quantityIndex: 0 }])],
+    };
+    const given = applyCharacterCommand(equipped, {
+      kind: "give-freebees",
+      gifts: [
+        {
+          marker: "ID_FIST",
+          entry: holding("fist", [{ slot: "main-hand", quantityIndex: 0 }]),
+        },
+        {
+          marker: "ID_BLADE",
+          entry: holding("blade", [{ slot: "off-hand", quantityIndex: 0 }]),
+        },
+        { marker: "ID_OWNED" },
+      ],
+    });
+    expect(given.inventory.map(({ id }) => id)).toEqual([
+      "sword",
+      "fist",
+      "blade",
+    ]);
+    expect(given.inventory[1]).toMatchObject({ equippedQuantity: 0 });
+    expect(given.inventory[1]!.equippedSlots).toBeUndefined();
+    expect(given.inventory[2]).toMatchObject({
+      equippedQuantity: 1,
+      equippedSlots: [{ slot: "off-hand", quantityIndex: 0 }],
+    });
+    expect(given.textStrings).toMatchObject({
+      ID_FIST: "Given",
+      ID_BLADE: "Given",
+      ID_OWNED: "Given",
+    });
+    expect(isFreebeeGiven(given.textStrings, "id_fist")).toBe(true);
+
+    // Idempotent: a marked gift is skipped, even after its item is removed.
+    const removed = applyCharacterCommand(given, {
+      kind: "remove-inventory",
+      entryId: "fist",
+    });
+    expect(
+      applyCharacterCommand(removed, {
+        kind: "give-freebees",
+        gifts: [{ marker: "id_fist", entry: holding("fist-again") }],
+      }),
+    ).toEqual(removed);
+    expect(() =>
+      applyCharacterCommand(build, {
+        kind: "give-freebees",
+        gifts: [{ marker: " ", entry: holding("x") }],
+      }),
+    ).toThrow("marker");
+  });
+
+  it("folds an amended gift into the edit's undo step", () => {
+    const transaction = new CharacterTransaction(build);
+    transaction.dispatch({ kind: "set-text", name: "Name", value: "Hero" });
+    transaction.amend({
+      kind: "give-freebees",
+      gifts: [{ marker: "ID_BOOK", entry: holding("book") }],
+    });
+    expect(transaction.current.inventory.map(({ id }) => id)).toEqual(["book"]);
+    const undone = transaction.undo();
+    expect(undone.inventory).toEqual([]);
+    expect(undone.textStrings.ID_BOOK).toBeUndefined();
+    expect(transaction.canUndo).toBe(false);
+    expect(transaction.redo().inventory.map(({ id }) => id)).toEqual(["book"]);
+  });
+
+  it("keeps an allowance only on free known entries", () => {
+    const entry: BuildKnownEntry = {
+      id: "rite",
+      acquiredLevel: 1,
+      element: { definitionId: "ID_RITE", name: "Rite", type: "Ritual" },
+      acquisition: "free",
+      allowance: "ID_SPELLBOOK",
+    };
+    const learned = applyCharacterCommand(build, {
+      kind: "learn-known",
+      entry,
+      priceCopper: 0,
+    });
+    expect(learned.known[0]?.allowance).toBe("ID_SPELLBOOK");
+    expect(() =>
+      applyCharacterCommand(build, {
+        kind: "learn-known",
+        entry: { ...entry, acquisition: "bought" },
+        priceCopper: 0,
+      }),
+    ).toThrow("allowance");
   });
 });

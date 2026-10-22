@@ -8,11 +8,13 @@ import {
   evaluateCharacter,
   knownRecords,
   projectBuildForEvaluation,
+  type RitualAllowanceStatus,
 } from "@4ecb/rules-engine";
 
 import {
   groupKnownRecords,
   knownRecordSourceLabel,
+  ritualAllowanceLabel,
   RitualsWorkspace,
 } from "./RitualsWorkspace";
 
@@ -68,6 +70,7 @@ function entity(
 const content = [
   entity("L1", "1", "Level"),
   entity("CLASS", "Synthetic Druid", "Class", {
+    specifics: { _FreeRitualAllowance: "Ritual; 1@1<=1" },
     rules: [
       rule("statadd", { name: "FREEBEE:RITUAL_GIFT", value: "+1" }, 0),
       rule(
@@ -180,10 +183,9 @@ describe("Rituals workspace", () => {
       byId.get(id.toLowerCase()),
     );
     const groups = groupKnownRecords(records);
-    expect(groups.get("ritual")?.map(knownRecordSourceLabel)).toEqual([
-      "Bought at level 1",
-      "Granted by Synthetic Druid",
-    ]);
+    expect(
+      groups.get("ritual")?.map((record) => knownRecordSourceLabel(record)),
+    ).toEqual(["Bought at level 1", "Granted by Synthetic Druid"]);
     expect(groups.get("alchemical-formula")).toEqual([]);
     expect(groups.get("martial-practice")).toEqual([]);
   });
@@ -207,6 +209,81 @@ describe("Rituals workspace", () => {
     // A granted record has no Remove, even with an imported stored copy.
     expect(markup).not.toContain('aria-label="Remove Gifted Rite"');
     expect(markup).toContain("<td>Exploration</td><td>Nature</td>");
+    // The structured allowance's counter sits under its text; the granted
+    // and bought rituals don't use it.
+    expect(markup).toContain(
+      '<p class="rituals-allowance-count">1 free 1st-level ritual left</p>',
+    );
+  });
+
+  it("labels allowance counters and the allowance a ritual used", () => {
+    const status = (
+      value: Partial<RitualAllowanceStatus> &
+        Pick<RitualAllowanceStatus, "remainders">,
+      kind: RitualAllowanceStatus["allowance"]["kind"] = "Ritual",
+      from?: readonly string[],
+    ): RitualAllowanceStatus => ({
+      allowance: {
+        key: "P",
+        providerId: "P",
+        provider: "Spellbook",
+        kind,
+        steps: [],
+        ...(from === undefined ? {} : { from }),
+      },
+      total: 5,
+      used: 0,
+      remaining: 5,
+      entryIds: [],
+      ...value,
+    });
+    expect(
+      ritualAllowanceLabel(
+        status({
+          remainders: [
+            { count: 3, maxLevel: 1 },
+            { count: 2, maxLevel: 5 },
+          ],
+        }),
+      ),
+    ).toBe(
+      "3 free 1st-level rituals and 2 free rituals of level 5 or lower left",
+    );
+    expect(
+      ritualAllowanceLabel(
+        status({ remaining: 1, remainders: [{ count: 1 }] }, "Ritual", [
+          "a",
+          "b",
+          "c",
+        ]),
+        (id) => id.toUpperCase(),
+      ),
+    ).toBe("1 free ritual left: A, B or C");
+    expect(
+      ritualAllowanceLabel(
+        status({ total: 2, remaining: 0, remainders: [] }, "Martial Practice"),
+      ),
+    ).toBe("All 2 free martial practices used");
+    const [record] = knownRecords(
+      {
+        known: [
+          {
+            id: "free",
+            acquiredLevel: 3,
+            element: { name: "Rite", type: "Ritual" },
+            acquisition: "free",
+            allowance: "P",
+          },
+        ],
+      },
+      undefined,
+      () => undefined,
+    );
+    expect(
+      knownRecordSourceLabel(record!, (key) =>
+        key === "P" ? "Spellbook" : undefined,
+      ),
+    ).toBe("Learned free at level 3 (Spellbook)");
   });
 
   it("swaps the main pane to the learning catalog", () => {

@@ -467,7 +467,13 @@ async function main(): Promise<void> {
   };
 
   const specialCases: SpecialCaseRow[] = [...members]
-    .filter(([, entry]) => entry.targets.size > 0)
+    // A reviewed member that uses only engine vocabulary (GiveFreebees's
+    // "FREEBEE:" stat) is still a special case.
+    .filter(
+      ([key, entry]) =>
+        entry.targets.size > 0 ||
+        LEGACY_SPECIAL_CASES[key.slice(key.indexOf(":") + 1)] !== undefined,
+    )
     .map(([key, entry]) => {
       const member = key.slice(key.indexOf(":") + 1);
       const annotation = LEGACY_SPECIAL_CASES[member];
