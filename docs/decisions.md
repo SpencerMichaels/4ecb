@@ -2238,6 +2238,12 @@ title and Settings gear, and Settings has a close button.
 
 Status: accepted (2026-10-18); amended 2026-10-19 (now a display setting).
 
+Amendment (2026-10-22, owner): any item the engine decides this character can use
+as an implement counts as proficient for implement powers, whatever field makes
+it an implement (e.g. Rose Scythe of Chauntea for a divine or primal character).
+On weapon attacks it still needs weapon proficiency. The display filter reuses
+the engine's implement decision rather than re-deriving it.
+
 Amendment (2026-10-19): legacy offers every _owned_ weapon and implement, not
 only equipped ones: its `CheckPower` ends in an unconditional `return true`,
 so the unequipped Quick Crossbow appears on Arizona's Sacred Flame. The engine
