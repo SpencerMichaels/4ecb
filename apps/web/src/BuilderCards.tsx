@@ -153,7 +153,7 @@ export function evaluatedBuilderCardSettings(
       const set = itemSetOf(piece, lookup);
       return set === undefined
         ? undefined
-        : sheetItemSetCard(set, lookup, evaluation.itemSets);
+        : sheetItemSetCard(set, lookup, evaluation.itemSets, input.textStrings);
     },
   };
 }

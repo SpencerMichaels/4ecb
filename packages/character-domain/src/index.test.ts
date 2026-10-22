@@ -276,6 +276,15 @@ describe("character records", () => {
     expect(transaction.redo().textStrings.Player).toBe("Ada");
   });
 
+  it("sets and clears a group item set's party count textstring", () => {
+    const transaction = new CharacterTransaction(build);
+    const name = "ID_SET Set Count";
+    transaction.dispatch({ kind: "set-text", name, value: "3" });
+    expect(transaction.current.textStrings[name]).toBe("3");
+    transaction.dispatch({ kind: "set-text", name, value: "" });
+    expect(Object.hasOwn(transaction.current.textStrings, name)).toBe(false);
+  });
+
   it("edits a positional choice without mutating the previous build", () => {
     const choice = {
       id: "choice",

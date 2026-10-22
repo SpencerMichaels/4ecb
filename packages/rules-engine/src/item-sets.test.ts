@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
 
 import { evaluateCharacter, type CharacterInventoryEntry } from "./evaluator";
+import { itemSetPartyCountName, itemSetPartyPieces } from "./item-sets";
 
 function rule(
   name: string,
@@ -85,6 +86,7 @@ const content = [
   }),
   entity("GROUP_2", "Synthetic Company Arms (2)", "Item Set Benefit", {
     specifics: { _Item_Set_ID: "GROUP", "Piece Count": "2" },
+    rules: [rule("statadd", { name: "Insight", value: "+2" }, 0)],
   }),
   piece("BLADE", "Synthetic Company Blade", "GROUP", "Equipped Count"),
 ];
@@ -152,6 +154,31 @@ describe("item sets", () => {
     ]);
     expect(evaluate([holding("blade", "BLADE", 0)], party).itemSets).toBe(
       undefined,
+    );
+  });
+
+  it("applies a group set's benefits at the entered party count", () => {
+    const blade = [holding("blade", "BLADE", 1)];
+    const unset = evaluate(blade);
+    expect(unset.itemSets?.[0]?.pieces).toBe(0);
+    expect(unset.stats.Insight?.value ?? 0).toBe(0);
+    const below = evaluate(blade, { "GROUP Set Count": "1" });
+    expect(below.activeDefinitionIds).not.toContain("GROUP_2");
+    // The key matches ignoring case, as legacy textstrings may differ.
+    const entered = evaluate(blade, { "group set count": "2" });
+    expect(entered.activeDefinitionIds).toContain("GROUP_2");
+    expect(entered.stats.Insight?.value).toBe(2);
+  });
+
+  it("reads and names the party count textstring", () => {
+    expect(itemSetPartyPieces("GROUP", {})).toBeUndefined();
+    expect(itemSetPartyPieces("GROUP", { "GROUP Set Count": "" })).toBe(
+      undefined,
+    );
+    expect(itemSetPartyPieces("GROUP", { "Group set count": "4" })).toBe(4);
+    expect(itemSetPartyCountName("GROUP")).toBe("GROUP Set Count");
+    expect(itemSetPartyCountName("GROUP", { "group set count": "4" })).toBe(
+      "group set count",
     );
   });
 });

@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, type ReactNode } from "react";
 
 import type { SheetItemSetCard } from "@4ecb/sheet-model";
 
@@ -33,11 +33,22 @@ export function ItemSetCard({
   const cardRef = usePrintCardFit(layout === "print");
   const hideFlavortext = useContext(HideFlavortextContext);
   const isPanel = layout === "panel";
-  const stats = [
-    {
-      label: card.group ? "Group pieces" : "Pieces",
-      value: String(card.pieces),
-    },
+  // A group set whose party count is unset: a blank to write the count in,
+  // and every benefit listed without marking any inactive.
+  const countUnknown = card.group && card.partyPieces === undefined;
+  const stats: { label: string; value: ReactNode }[] = [
+    card.group
+      ? {
+          label: "Party pieces",
+          value: countUnknown ? (
+            <span className="print-write-in">
+              <span className="visually-hidden">Not entered</span>
+            </span>
+          ) : (
+            String(card.partyPieces)
+          ),
+        }
+      : { label: "Pieces", value: String(card.pieces) },
     ...(card.tier === undefined || card.group
       ? []
       : [{ label: "Tier", value: card.tier }]),
@@ -53,7 +64,7 @@ export function ItemSetCard({
               : { "aria-labelledby": panel.headingId }),
           }
         : {})}
-      className={`print-reference-card print-item-card print-item-set-card${isPanel ? " is-panel" : ""}`}
+      className={`print-reference-card print-item-card print-item-set-card${countUnknown ? " is-count-unknown" : ""}${isPanel ? " is-panel" : ""}`}
     >
       <header>
         <h3>

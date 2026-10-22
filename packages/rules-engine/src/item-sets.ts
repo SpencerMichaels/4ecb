@@ -46,6 +46,36 @@ export function isGroupItemSet(entity: ContentEntity): boolean {
   return key(field(entity, "Tier") ?? "") === "group";
 }
 
+/**
+ * The textstring holding a group set's party piece count ("<set id> Set
+ * Count"): the character's existing key when one matches (ignoring case),
+ * else the canonical name.
+ */
+export function itemSetPartyCountName(
+  setId: string,
+  textStrings: Readonly<Record<string, string>> = {},
+): string {
+  const name = `${setId} Set Count`;
+  return (
+    Object.keys(textStrings).find((other) => key(other) === key(name)) ?? name
+  );
+}
+
+/**
+ * The party's pieces of a group set, from its "<set id> Set Count"
+ * textstring; undefined while unset or unreadable.
+ */
+export function itemSetPartyPieces(
+  setId: string,
+  textStrings: Readonly<Record<string, string>>,
+): number | undefined {
+  const value = Number.parseInt(
+    textStrings[itemSetPartyCountName(setId, textStrings)] ?? "",
+    10,
+  );
+  return Number.isFinite(value) ? value : undefined;
+}
+
 /** The set's benefit records in their authored order. */
 export function itemSetBenefits(
   set: ContentEntity,
@@ -116,10 +146,7 @@ export function evaluateItemSets(
       isGroupItemSet(set) &&
       numeric(counts.evaluate(`${set.id} Equipped Count`).value) !== 0
     ) {
-      const party = Object.entries(textStrings).find(
-        ([name]) => key(name) === key(`${set.id} Set Count`),
-      )?.[1];
-      pieces += Number.parseInt(party ?? "", 10) || 0;
+      pieces += itemSetPartyPieces(set.id, textStrings) ?? 0;
     }
     const active = itemSetBenefits(set, index).filter(
       (benefit) => pieces >= itemSetBenefitPieceCount(benefit),

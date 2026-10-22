@@ -1887,6 +1887,7 @@ export function buildEvaluatedSheetModel(
       .map(({ itemEntities }) => itemEntities),
     lookup,
     evaluation.itemSets,
+    build.textStrings,
   );
   const deityEntity = active.find(
     ({ entity }) => entity.type.trim().toLocaleLowerCase() === "deity",

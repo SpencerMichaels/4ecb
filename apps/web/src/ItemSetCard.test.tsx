@@ -3,6 +3,12 @@ import { describe, expect, it } from "vitest";
 import type { ContentEntity } from "@4ecb/content-domain";
 import type { SheetItemSetCard } from "@4ecb/sheet-model";
 
+import {
+  authoredBuilderCardSettings,
+  BuilderCardContext,
+  type BuilderCardSettings,
+} from "./BuilderCards";
+import { BuilderItemSetCard, parsePartyPieces } from "./BuilderItemSetCard";
 import { DeityDomains } from "./DeityDomains";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { ItemSetCard } from "./ItemSetCard";
@@ -55,14 +61,85 @@ describe("item set card", () => {
 
   it("explains a group set's count and an empty benefit list", () => {
     const html = renderToStaticMarkup(
-      <ItemSetCard card={{ ...card, group: true, benefits: [] }} />,
+      <ItemSetCard
+        card={{ ...card, group: true, partyPieces: 2, benefits: [] }}
+      />,
     );
-    expect(html).toContain("<dt>Group pieces</dt><dd>2</dd>");
+    expect(html).toContain("<dt>Party pieces</dt><dd>2</dd>");
     expect(html).toContain("you and your allies wield");
     expect(html).toContain("This set lists no benefits.");
   });
+
+  it("leaves a blank for an unset party count and dims no benefit", () => {
+    const group = { ...card, group: true, pieces: 0 };
+    const unset = renderToStaticMarkup(
+      <ItemSetCard
+        card={{
+          ...group,
+          benefits: group.benefits.map((benefit) => ({
+            ...benefit,
+            active: false,
+          })),
+        }}
+      />,
+    );
+    expect(unset).toContain("print-item-set-card is-count-unknown");
+    expect(unset).toContain(
+      '<dt>Party pieces</dt><dd><span class="print-write-in">',
+    );
+    expect(unset).toContain("2 pieces: ");
+    expect(unset).toContain("4 pieces: ");
+    expect(unset).not.toContain("(active)");
+    const entered = renderToStaticMarkup(
+      <ItemSetCard card={{ ...group, pieces: 2, partyPieces: 2 }} />,
+    );
+    expect(entered).not.toContain("is-count-unknown");
+    expect(entered).toContain("<dt>Party pieces</dt><dd>2</dd>");
+    expect(entered).toContain("2 pieces (active): ");
+    // Unknown counts are a group-set state only.
+    expect(renderToStaticMarkup(<ItemSetCard card={card} />)).not.toContain(
+      "is-count-unknown",
+    );
+  });
 });
 
+describe("party pieces field", () => {
+  it("accepts a non-negative whole number, or empty to clear", () => {
+    expect(parsePartyPieces("3")).toEqual({ pieces: 3 });
+    expect(parsePartyPieces(" 0 ")).toEqual({ pieces: 0 });
+    expect(parsePartyPieces("")).toEqual({ pieces: undefined });
+    expect(parsePartyPieces("-1")).toBeUndefined();
+    expect(parsePartyPieces("1.5")).toBeUndefined();
+    expect(parsePartyPieces("two")).toBeUndefined();
+  });
+
+  const settings = (group: boolean) =>
+    ({
+      ...authoredBuilderCardSettings(1),
+      itemSetCardFor: () => ({
+        ...card,
+        group,
+        ...(group ? { partyPieces: 4 } : {}),
+      }),
+    }) satisfies BuilderCardSettings;
+  const render = (group: boolean) =>
+    renderToStaticMarkup(
+      <BuilderCardContext.Provider value={settings(group)}>
+        <BuilderItemSetCard
+          pieces={[entity("CROWN", "Synthetic Crown", "Magic Item")]}
+          byId={new Map()}
+          onSetPartyPieces={() => undefined}
+        />
+      </BuilderCardContext.Provider>,
+    );
+
+  it("sits on a group set's builder card with the entered count", () => {
+    const html = render(true);
+    expect(html).toContain("<span>Party pieces</span>");
+    expect(html).toMatch(/<input type="number"[^>]*value="4"/u);
+    expect(render(false)).not.toContain("<span>Party pieces</span>");
+  });
+});
 const entity = (
   id: string,
   name: string,

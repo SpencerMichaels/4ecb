@@ -2712,6 +2712,9 @@ export function CharacterEditorPage({
                       );
                       if (command !== undefined) dispatch(command);
                     }}
+                    onSetText={(name, value) =>
+                      dispatch({ kind: "set-text", name, value })
+                    }
                   />
                 </BuilderCardContext.Provider>
               )}

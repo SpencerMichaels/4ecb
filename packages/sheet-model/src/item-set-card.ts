@@ -4,6 +4,7 @@ import {
   isItemSetEntity,
   itemSetBenefitPieceCount,
   itemSetBenefits,
+  itemSetPartyPieces,
   type EvaluatedItemSet,
 } from "@4ecb/rules-engine";
 
@@ -34,6 +35,9 @@ export interface SheetItemSetCard {
   readonly group: boolean;
   /** The set's piece count (equipped pieces; a group set's party count). */
   readonly pieces: number;
+  /** A group set's entered party count ("<set> Set Count"); absent while
+   *  unset, when the card leaves a blank to write in and dims nothing. */
+  readonly partyPieces?: number;
   /** Definitions of the set's pieces, matched against item cards' IDs. */
   readonly pieceIds: readonly string[];
   readonly benefits: readonly SheetItemSetBenefit[];
@@ -61,18 +65,25 @@ export function sheetItemSetCard(
   set: ContentEntity,
   lookup: (id: string) => ContentEntity | undefined,
   evaluated: readonly EvaluatedItemSet[] | undefined,
+  /** The build's textstrings, holding a group set's party count. */
+  textStrings: Readonly<Record<string, string>> = {},
 ): SheetItemSetCard {
   const state = evaluated?.find(({ setId }) => key(setId) === key(set.id));
   const active = new Set(state?.activeBenefitIds.map(key) ?? []);
   const tier = field(set, "Tier");
   const description = set.description.trim();
+  const group = isGroupItemSet(set);
+  const partyPieces = group
+    ? itemSetPartyPieces(set.id, textStrings)
+    : undefined;
   return {
     kind: "item-set",
     id: set.id,
     name: set.name,
     ...(tier === undefined ? {} : { tier }),
-    group: isGroupItemSet(set),
+    group,
     pieces: state?.pieces ?? 0,
+    ...(partyPieces === undefined ? {} : { partyPieces }),
     pieceIds: (field(set, "Set Items") ?? "")
       .split(",")
       .map((id) => id.trim())
@@ -98,6 +109,7 @@ export function sheetItemSetCards(
   ownedItems: readonly (readonly ContentEntity[])[],
   lookup: (id: string) => ContentEntity | undefined,
   evaluated: readonly EvaluatedItemSet[] | undefined,
+  textStrings: Readonly<Record<string, string>> = {},
 ): SheetItemSetCard[] {
   const sets = new Map<string, ContentEntity>();
   for (const entities of ownedItems)
@@ -107,7 +119,7 @@ export function sheetItemSetCards(
         sets.set(key(set.id), set);
     }
   return [...sets.values()].map((set) =>
-    sheetItemSetCard(set, lookup, evaluated),
+    sheetItemSetCard(set, lookup, evaluated, textStrings),
   );
 }
 

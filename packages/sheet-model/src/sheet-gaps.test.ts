@@ -302,6 +302,35 @@ describe("item sets", () => {
     expect(sheetItemSetCards([[lookup("RING")!]], lookup, [])).toEqual([]);
   });
 
+  it("carries a group set's entered party count, absent while unset", () => {
+    const group = entity("GROUP", "Synthetic Company Arms", "Item Set", {
+      Tier: "Group",
+      Benefits: "GROUP_2",
+    });
+    const groupLookup = (id: string) =>
+      id.toLowerCase() === "group" ? group : lookup(id);
+    const blade = entity("BLADE", "Synthetic Blade", "Magic Item", {
+      _Item_Set_ID: "GROUP",
+    });
+    const unset = sheetItemSetCards([[blade]], groupLookup, [], {});
+    expect(unset[0]?.group).toBe(true);
+    expect(unset[0]).not.toHaveProperty("partyPieces");
+    const [set] = sheetItemSetCards(
+      [[blade]],
+      groupLookup,
+      [{ setId: "GROUP", pieces: 3, activeBenefitIds: [] }],
+      { "group set count": "3" },
+    );
+    expect(set?.partyPieces).toBe(3);
+    expect(set?.pieces).toBe(3);
+    // A non-group set ignores the textstring.
+    expect(
+      sheetItemSetCards([[lookup("CLOAK")!]], lookup, [], {
+        "SET Set Count": "3",
+      })[0],
+    ).not.toHaveProperty("partyPieces");
+  });
+
   it("places each set's card after the last of its pieces' cards", () => {
     const card = (id: string): SheetCard => ({
       id,

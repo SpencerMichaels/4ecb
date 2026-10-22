@@ -1049,8 +1049,15 @@
   text-align: right;
 }
 /* Item set card (legacy PowerCardItemSetInfo): locked benefits recede. */
-.print-item-set-benefit:not(.is-active) {
+.print-item-set-card:not(.is-count-unknown)
+  .print-item-set-benefit:not(.is-active) {
   opacity: 0.6;
+}
+/* "Party pieces: ___" while a group set's count is unset. */
+.print-write-in {
+  border-bottom: 1px solid currentcolor;
+  display: inline-block;
+  min-width: 2.5em;
 }
 .print-item-set-benefit .icon {
   height: 0.9em;
@@ -1059,6 +1066,22 @@
 }
 .print-item-set-note {
   font-style: italic;
+}
+/* Builder only: a group set's "Party pieces" field under the subheading. */
+.item-set-party-pieces {
+  flex-basis: 100%;
+}
+.item-set-party-pieces label {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+.item-set-party-pieces input {
+  width: 5em;
+}
+.item-set-party-pieces-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 /* "Show entity source": a second footer line under an item's type and
    cost; power cards get it as their own footer row (same style). */

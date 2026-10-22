@@ -20,6 +20,7 @@ import {
   type CharacterBuild,
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
+import { itemSetPartyCountName } from "@4ecb/rules-engine";
 import { offeredDetailEntities } from "./detail-stack";
 import {
   alchemicalFormulaItems,
@@ -264,12 +265,18 @@ export function ItemDetail({
   byId,
   note,
   empty,
+  onSetItemSetPartyPieces,
 }: {
   readonly item: InspectedItemDetail | undefined;
   readonly byId: ReadonlyMap<string, ContentEntity>;
   /** A builder addition shown below the card (D079), e.g. a known source. */
   readonly note?: string;
   readonly empty?: { readonly heading: string; readonly hint: string };
+  /** Sets or clears a group item set's party count (Equipment and Shop). */
+  readonly onSetItemSetPartyPieces?: (
+    setId: string,
+    pieces: number | undefined,
+  ) => void;
 }) {
   const entity = item?.entities.at(-1);
   if (item === undefined || entity === undefined)
@@ -329,7 +336,13 @@ export function ItemDetail({
           key={power.id}
         />
       ))}
-      <BuilderItemSetCard pieces={item.entities} byId={byId} />
+      <BuilderItemSetCard
+        pieces={item.entities}
+        byId={byId}
+        {...(onSetItemSetPartyPieces === undefined
+          ? {}
+          : { onSetPartyPieces: onSetItemSetPartyPieces })}
+      />
       {formulaItem === undefined ? null : (
         <div className="candidate-card-panel">
           <BuilderItemCard
@@ -891,6 +904,7 @@ export function EquipmentWorkspace({
   onPurchase,
   onSell,
   onEquipSlot,
+  onSetText,
 }: {
   readonly build: CharacterBuild;
   readonly entities: readonly ContentEntity[];
@@ -917,6 +931,8 @@ export function EquipmentWorkspace({
     currentEntryId?: string,
     currentSlots?: readonly string[],
   ) => void;
+  /** Saves a textstring (a group item set's party count); "" clears it. */
+  readonly onSetText: (name: string, value: string) => void;
 }) {
   const [inspected, setInspected] = useState<InspectedItemDetail>();
   const [openSaleId, setOpenSaleId] = useState<string>();
@@ -1455,7 +1471,16 @@ export function EquipmentWorkspace({
         <div
           className={`shared-choice-detail${workspace === "shop" ? " shop-rail" : ""}`}
         >
-          <ItemDetail byId={byId} item={inspected} />
+          <ItemDetail
+            byId={byId}
+            item={inspected}
+            onSetItemSetPartyPieces={(setId, pieces) =>
+              onSetText(
+                itemSetPartyCountName(setId, build.textStrings),
+                pieces === undefined ? "" : String(pieces),
+              )
+            }
+          />
         </div>
       </div>
     </section>
