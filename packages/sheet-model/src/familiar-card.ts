@@ -6,6 +6,8 @@ import {
   type EvaluatedStat,
 } from "@4ecb/rules-engine";
 
+import type { SheetBeastCompanionCard } from "./beast-companion-card";
+
 /**
  * A familiar's card (legacy `FamiliarBlock` panel), with the general familiar
  * rules from Arcane Power the content does not encode: the master's defenses,
@@ -34,8 +36,8 @@ export interface SheetFamiliarCard {
   readonly source: string;
 }
 
-/** Cards for creatures that accompany the character; beast companions later. */
-export type SheetCompanionCard = SheetFamiliarCard;
+/** Cards for creatures that accompany the character: beast, then familiars. */
+export type SheetCompanionCard = SheetBeastCompanionCard | SheetFamiliarCard;
 
 /** The familiar rules every familiar shares, in brief (Arcane Power). */
 export const FAMILIAR_RULES_REMINDER =

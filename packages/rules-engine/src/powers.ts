@@ -3,7 +3,11 @@ import { weaponPropertyText, type ContentEntity } from "@4ecb/content-domain";
 
 import type { CharacterInventoryEntry, FieldOverlay } from "./evaluator";
 import type { EvaluatedStat } from "./stats";
-import { halfLevel } from "./derived-values";
+import {
+  companionStatBonus,
+  halfLevel,
+  type BeastCompanionStatistics,
+} from "./derived-values";
 import { EXCEPTION_IDS, EXCEPTION_NAMES } from "./exceptions";
 import { equipmentPredicate, type EquipmentState } from "./equipment";
 import {
@@ -51,6 +55,8 @@ export interface PowerVariant {
    * implement; presentation may hide these (D081).
    */
   readonly proficient: boolean;
+  /** Every attack of this variant is the beast companion's own. */
+  readonly attacker?: "beast";
 }
 
 export interface PowerAdditionalEffect {
@@ -73,6 +79,8 @@ export interface PowerAttack {
   readonly damageComponents?: readonly PowerComponent[];
   readonly weaponRole?: "main" | "off";
   readonly eligible?: boolean;
+  /** The beast companion makes this attack, with its own numbers. */
+  readonly attacker?: "beast";
   readonly attackComponents: readonly PowerComponent[];
 }
 
@@ -690,6 +698,154 @@ function withoutCompanionAbilityDamage(value: string): string {
     /\b(?:your\s+)?beast(?:'s)?\s+(?:Strength|Constitution|Dexterity|Intelligence|Wisdom|Charisma)\s+modifier\b/gi,
     "",
   );
+}
+
+/** Legacy CalcBAB: an attack line made with "Beast's attack bonus". */
+const BEAST_ATTACK_LINE = /^\s*(?:your\s+)?beast(?:'s)?\s+attack\s+bonus\b/i;
+/** The attack stat of a beast companion's attack. */
+export const BEAST_ATTACK_STAT = "Beast";
+/** "beast's Strength modifier", "your beast's ability modifier", and the
+ *  content's "beast Strength's modifier" typo. */
+const BEAST_ABILITY_DAMAGE =
+  /\b(?:your\s+)?beast(?:'s)?\s+(Strength|Constitution|Dexterity|Intelligence|Wisdom|Charisma|ability)(?:'s)?\s+modifier\b/gi;
+
+function isBeastAttackLine(line: string | undefined): boolean {
+  return BEAST_ATTACK_LINE.test(line ?? "");
+}
+
+function isBeastHit(hit: string | undefined): boolean {
+  return /\d+\s*\[B\]/i.test(hit ?? "") || hasCompanionAbilityDamage(hit);
+}
+
+/** Bonuses keyed to this one power: "<power ID>:attack", "<name>:damage". */
+function powerSpecificComponents(
+  stats: Readonly<Record<string, EvaluatedStat>>,
+  power: ContentEntity,
+  fieldName: "attack" | "damage",
+): PowerComponent[] {
+  const wanted = new Set([
+    `${key(power.id)}:${fieldName}`,
+    `${key(power.name)}:${fieldName}`,
+  ]);
+  return Object.entries(stats).flatMap(([name, stat]) =>
+    wanted.has(key(name))
+      ? stat.contributions.flatMap((contribution) =>
+          contribution.applied && contribution.numericValue !== undefined
+            ? [
+                {
+                  label: name,
+                  value: contribution.numericValue,
+                  source: contribution.providerName,
+                  provenanceId: contribution.id,
+                },
+              ]
+            : [],
+        )
+      : [],
+  );
+}
+
+/**
+ * A beast companion's damage on a hit (legacy FigureWeaponDice with
+ * `is_beast`, ParseBeastAbilityMod): `[B]` is the beast's damage die, "beast's
+ * X modifier" its own ability modifier and "beast's ability modifier" the
+ * record's damage ability; "your X modifier" stays the character's. Only the
+ * beast's own bonuses apply, never the character's weapon or implement.
+ */
+function beastDamage(input: {
+  readonly hitClause: string;
+  readonly beast: BeastCompanionStatistics;
+  readonly stats: Readonly<Record<string, EvaluatedStat>>;
+  readonly power: ContentEntity;
+}): Pick<PowerVariant, "damage" | "damageType" | "damageComponents"> {
+  const clause = input.hitClause.split(/\bdamage\b/i)[0] ?? "";
+  const beastDice = clause.match(/(\d+)\s*\[B\]/i);
+  const dice =
+    beastDice === null
+      ? clause.match(/(\d+d\d+)/i)?.[1]
+      : diceTimes(input.beast.damage.die, Number(beastDice[1]));
+  if (dice === undefined || dice === "") return { damageComponents: [] };
+  const components: PowerComponent[] = [];
+  if (beastDice !== null && input.beast.damage.bonus !== 0)
+    components.push({
+      label: "beast's damage bonus",
+      value: input.beast.damage.bonus,
+    });
+  for (const match of clause.matchAll(BEAST_ABILITY_DAMAGE)) {
+    const named = abilityNames.find(
+      (ability) => key(ability) === key(match[1] ?? ""),
+    );
+    if (named === undefined)
+      components.push(
+        ...input.beast.damage.abilities.map((ability) => ({
+          label: `${ability.owner === "beast" ? "beast's" : "your"} ${ability.ability} modifier`,
+          value: ability.modifier,
+        })),
+      );
+    else
+      components.push({
+        label: `beast's ${named} modifier`,
+        value: input.beast.abilities[named].modifier,
+      });
+  }
+  const ownClause = clause.replace(BEAST_ABILITY_DAMAGE, "");
+  for (const ability of abilityNames)
+    if (new RegExp(`\\b${ability} modifier\\b`, "i").test(ownClause))
+      components.push({
+        label: `${ability} modifier`,
+        value: numericStat(input.stats, `${ability} modifier`),
+      });
+  // Flat additions: "1d8 + 2 + your Wisdom modifier", "2d8 + 4".
+  const powerBonus = [...clause.matchAll(/\+\s*(\d+)\b(?!\s*(?:\[|d\d))/gi)]
+    .map((match) => Number(match[1]))
+    .reduce((sum, value) => sum + value, 0);
+  if (powerBonus !== 0)
+    components.push({ label: "power damage bonus", value: powerBonus });
+  const companionBonus = companionStatBonus(
+    input.stats,
+    "BEAST",
+    "damage rolls",
+  );
+  if (companionBonus !== 0)
+    components.push({
+      label: "beast damage bonus",
+      value: companionBonus,
+    });
+  components.push(
+    ...powerSpecificComponents(input.stats, input.power, "damage"),
+  );
+  const damageType = clause.match(
+    /\b(?:acid|cold|fire|force|lightning|necrotic|poison|psychic|radiant|thunder)(?:\s*(?:,|and|or)\s*(?:acid|cold|fire|force|lightning|necrotic|poison|psychic|radiant|thunder))*\b/i,
+  )?.[0];
+  return {
+    damage: formatDamage(
+      dice,
+      components.reduce((sum, component) => sum + component.value, 0),
+    ),
+    ...(damageType === undefined ? {} : { damageType: key(damageType) }),
+    damageComponents: components,
+  };
+}
+
+/** The beast's situational attack and damage bonuses, as card reminders. */
+function beastAdditionalEffects(
+  beast: BeastCompanionStatistics,
+): PowerAdditionalEffect[] {
+  return beast.conditionalBonuses.flatMap((bonus) => {
+    const stat = key(bonus.stat);
+    if (stat !== "attack rolls" && stat !== "damage rolls") return [];
+    const value = Number(bonus.value);
+    const amount = Number.isFinite(value)
+      ? `${value > 0 ? "+" : ""}${value}`
+      : bonus.value;
+    return [
+      {
+        text: `${amount} to the beast's ${stat} ${bonus.condition} - ${bonus.source}.`,
+        source: bonus.source,
+        provenanceId: bonus.provenanceId,
+      },
+    ];
+  });
 }
 
 function criticalExpression(
@@ -1717,7 +1873,10 @@ export function evaluatePowers(input: {
   /** The equipped items, for the legacy shield requirements. */
   readonly equipment?: EquipmentState;
   readonly entities: readonly ContentEntity[];
+  /** The beast companion's statistics, for "beast's attack bonus" and [B]. */
+  readonly beastCompanion?: BeastCompanionStatistics;
 }): readonly EvaluatedPower[] {
+  const beast = input.beastCompanion;
   const byId = new Map(
     input.entities.map((entity) => [key(entity.id), entity]),
   );
@@ -1887,6 +2046,20 @@ export function evaluatePowers(input: {
                 )
               : equipped.filter((item) => item.unarmed)
           ).filter((item) => !restricted(item));
+    // A power only the beast attacks with uses none of the character's
+    // equipment: one variant, not one per weapon with the same numbers.
+    const beastOnly =
+      beast !== undefined &&
+      calculated &&
+      (attackDefinitions.length > 0
+        ? attackDefinitions.every((definition) =>
+            isBeastAttackLine(definition.line),
+          )
+        : isBeastHit(hitLine));
+    if (beastOnly && candidates.length > 1) {
+      const single = candidates.find((item) => item.unarmed) ?? candidates[0]!;
+      candidates.splice(0, candidates.length, single);
+    }
     const proficientFor = (item: Loadout) =>
       !implementPower ||
       (weaponPower && item.weaponDefinition) ||
@@ -1941,6 +2114,40 @@ export function evaluatePowers(input: {
                 : phaseAlternatives[0]) ?? definition.line)
             : definition.line;
         const attack = authoredLine.match(ATTACK_LINE_PATTERN);
+        // Legacy CalcBAB: the beast's attack bonus replaces the whole
+        // calculation; only bonuses keyed to this power add to it.
+        if (beast !== undefined && isBeastAttackLine(authoredLine)) {
+          const powerBonus =
+            Number(
+              /attack\s+bonus\s*\+\s*(\d+)/i.exec(authoredLine)?.[1] ?? 0,
+            ) || powerBonusAtLevel(authoredLine, input.level);
+          const attackComponents: PowerComponent[] = [
+            { label: "beast's attack bonus", value: beast.attackBonus },
+            ...(powerBonus === 0
+              ? []
+              : [{ label: "power attack bonus", value: powerBonus }]),
+            ...powerSpecificComponents(input.stats, power, "attack"),
+          ];
+          return {
+            id: `${power.id}:attack-${definition.ordinal}`,
+            ordinal: definition.ordinal,
+            attackStat: BEAST_ATTACK_STAT,
+            powerBonus,
+            defense: attack?.[2] ?? "Unknown",
+            attackBonus: attackComponents.reduce(
+              (sum, component) => sum + component.value,
+              0,
+            ),
+            ...(definition.target === undefined
+              ? {}
+              : { target: definition.target }),
+            ...(phaseAttackType === undefined
+              ? {}
+              : { attackType: phaseAttackType }),
+            attacker: "beast",
+            attackComponents,
+          };
+        }
         let attackStat = attackLineAbility(
           authoredLine,
           input.stats,
@@ -2049,6 +2256,19 @@ export function evaluatePowers(input: {
               ? hitClauses.at(-1)
               : hitClauses[0]
             : hitLine;
+        if (
+          beast !== undefined &&
+          (attackStat === BEAST_ATTACK_STAT || isBeastHit(selectedHitClause))
+        )
+          return {
+            ...beastDamage({
+              hitClause: selectedHitClause ?? "",
+              beast,
+              stats: input.stats,
+              power,
+            }),
+            conditionalDamage: [],
+          };
         const damageComponents: PowerComponent[] = [];
         const specialDamage = nativeSpecialDamage(power, hitLine, input.level);
         const weaponMatch = selectedHitClause?.match(/(\d+)\[W\]/i);
@@ -2289,12 +2509,19 @@ export function evaluatePowers(input: {
               const usesMain = /\bmain(?:[- ]hand)? weapon\b/i.test(roleText);
               const weaponRole =
                 usesOff === usesMain ? undefined : usesOff ? "off" : "main";
+              // Without a beast companion (none chosen), a beast phase has
+              // no numbers to show.
               const companion =
-                /\bbeast(?:'s)?\b/i.test(definition?.line ?? "") ||
-                hasCompanionAbilityDamage(phaseHit);
+                beast === undefined &&
+                (/\bbeast(?:'s)?\b/i.test(definition?.line ?? "") ||
+                  hasCompanionAbilityDamage(phaseHit));
+              const beastPhase =
+                beast !== undefined &&
+                (attack.attacker === "beast" || isBeastHit(phaseHit));
               const eligible =
                 !companion &&
-                (weaponRole === undefined ||
+                (beastPhase ||
+                  weaponRole === undefined ||
                   equipment.hand === undefined ||
                   equipment.hand === weaponRole);
               return {
@@ -2320,7 +2547,7 @@ export function evaluatePowers(input: {
         id: `${power.id}:${equipment.id}`,
         equipmentName: equipment.name,
         equipmentId: equipment.id,
-        proficient: proficientFor(equipment),
+        proficient: beastOnly || proficientFor(equipment),
         ...(equipment.unarmed
           ? { basicAttackTypes: ["melee" as const] }
           : equipment.weaponCategory?.includes("melee")
@@ -2349,23 +2576,31 @@ export function evaluatePowers(input: {
           ? {}
           : { attackBonus: primaryAttack.attackBonus }),
         ...damage,
-        additionalEffects: powerAdditionalEffects({
-          stats: input.stats,
-          power,
-          equipment,
-          keywords,
-          ...(attackType === undefined ? {} : { attackType }),
-          attackStat,
-          defense,
-          hasAttack,
-          ...(damage.damage === undefined ? {} : { damage: damage.damage }),
-          byId,
-          basicAttackKind,
-        }),
-        ...(critical === undefined ? {} : { critical }),
-        ...(brutal === undefined ? {} : { brutal: Number(brutal) }),
+        additionalEffects:
+          beastOnly && beast !== undefined
+            ? beastAdditionalEffects(beast)
+            : powerAdditionalEffects({
+                stats: input.stats,
+                power,
+                equipment,
+                keywords,
+                ...(attackType === undefined ? {} : { attackType }),
+                attackStat,
+                defense,
+                hasAttack,
+                ...(damage.damage === undefined
+                  ? {}
+                  : { damage: damage.damage }),
+                byId,
+                basicAttackKind,
+              }),
+        ...(critical === undefined || beastOnly ? {} : { critical }),
+        ...(brutal === undefined || beastOnly
+          ? {}
+          : { brutal: Number(brutal) }),
         attackComponents,
         attacks,
+        ...(beastOnly ? { attacker: "beast" as const } : {}),
       };
     });
     const unsupported: string[] = [];
@@ -2399,12 +2634,13 @@ export function evaluatePowers(input: {
     if (unresolvedNativeSpecialCase(hitLine))
       unsupported.push(`native-special-case:${power.id}`);
     if (
-      hasCompanionAbilityDamage(hitLine) ||
-      attackDefinitions.some(
-        (attack) =>
-          hasCompanionAbilityDamage(attack.hit) ||
-          /\bbeast(?:'s)?\b/i.test(attack.line),
-      )
+      beast === undefined &&
+      (hasCompanionAbilityDamage(hitLine) ||
+        attackDefinitions.some(
+          (attack) =>
+            hasCompanionAbilityDamage(attack.hit) ||
+            /\bbeast(?:'s)?\b/i.test(attack.line),
+        ))
     )
       unsupported.push(`companion-ability:${power.id}`);
     const usage = effectiveField(power, "Power Usage", input.overlays);

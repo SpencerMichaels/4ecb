@@ -38,10 +38,14 @@ import {
   type PrerequisiteContext,
 } from "./prerequisites";
 import { evaluatePowers, type EvaluatedPower } from "./powers";
+import {
+  evaluateBeastCompanion,
+  type EvaluatedBeastCompanion,
+} from "./beast-companion";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v30-2026-10-21-extra-damage-dice";
+  "evaluated-character-v31-2026-10-21-beast-companion";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -184,6 +188,8 @@ export interface EvaluatedCharacter {
   readonly textContributions?: readonly EvaluatedTextContribution[];
   readonly overlays: readonly FieldOverlay[];
   readonly powers: readonly EvaluatedPower[];
+  /** The beast companion's statistics, when the character has one. */
+  readonly beastCompanion?: EvaluatedBeastCompanion;
   readonly suggestions: readonly {
     readonly providerOccurrenceId: string;
     readonly definitionId: string;
@@ -2395,6 +2401,15 @@ function evaluateCharacterInternal(
   const activeDefinitionIds = occurrences.map(
     (occurrence) => occurrence.definitionId,
   );
+  const beastCompanion = prerequisiteContextOnly
+    ? undefined
+    : evaluateBeastCompanion({
+        level: input.level,
+        occurrences,
+        stats: evaluatedStats,
+        fieldsOf: (entity) => applyFieldOverlays(entity, overlays),
+        content: index,
+      });
   const powers =
     prerequisiteContextOnly || input.includePowers === false
       ? []
@@ -2408,6 +2423,9 @@ function evaluateCharacterInternal(
           textContributions,
           equipment,
           entities: evaluationEntities,
+          ...(beastCompanion === undefined
+            ? {}
+            : { beastCompanion: beastCompanion.statistics }),
         });
   return {
     level: input.level,
@@ -2424,6 +2442,7 @@ function evaluateCharacterInternal(
     textContributions,
     overlays,
     powers,
+    ...(beastCompanion === undefined ? {} : { beastCompanion }),
     suggestions,
     diagnostics,
   };

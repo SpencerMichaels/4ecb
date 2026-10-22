@@ -35,6 +35,7 @@ import {
   sheetFamiliarCard,
   type SheetCompanionCard,
 } from "./familiar-card";
+import { sheetBeastCompanionCard } from "./beast-companion-card";
 import {
   inventoryWeight,
   inventoryHoldingWeight,
@@ -79,6 +80,12 @@ export {
   type SheetCompanionCard,
   type SheetFamiliarCard,
 } from "./familiar-card";
+export {
+  BEAST_COMPANION_COMMANDS,
+  SENTINEL_COMPANION_COMMANDS,
+  sheetBeastCompanionCard,
+  type SheetBeastCompanionCard,
+} from "./beast-companion-card";
 export type {
   SheetOverview,
   OverviewFeature,
@@ -245,7 +252,7 @@ export interface CharacterSheetModel {
   readonly proficiencies?: readonly SheetProficiencyGroup[];
   readonly powers: readonly SheetCard[];
   readonly items: readonly SheetCard[];
-  /** Familiars (and later beast companions), printed after the Skills card. */
+  /** The beast companion, then familiars, printed after the Skills card. */
   readonly companions: readonly SheetCompanionCard[];
   readonly learnedReferences: readonly SheetLearnedReference[];
   readonly notes: readonly SheetValue[];
@@ -1576,6 +1583,25 @@ export function buildEvaluatedSheetModel(
         ]),
     ).values(),
   ];
+  const beastEntity =
+    evaluation.beastCompanion === undefined
+      ? undefined
+      : entities.get(
+          evaluation.beastCompanion.definitionId.toLocaleLowerCase(),
+        );
+  // The beast companion's card comes before the familiars' (owner answer 5,
+  // docs/companion-card-proposal.md).
+  const companionCards: SheetCompanionCard[] = [
+    ...(beastEntity === undefined || evaluation.beastCompanion === undefined
+      ? []
+      : [
+          sheetBeastCompanionCard(beastEntity, evaluation.beastCompanion, {
+            textStrings: { ...evaluation.textStrings, ...build.textStrings },
+            powers: evaluation.powers,
+          }),
+        ]),
+    ...familiarCards,
+  ];
   const personalizePowerText = createEvaluatedPowerTextPersonalizer(
     evaluation,
     content,
@@ -1922,7 +1948,7 @@ export function buildEvaluatedSheetModel(
     proficiencies: sheetProficiencies(active),
     powers: powerCards,
     items: itemCards,
-    companions: familiarCards,
+    companions: companionCards,
     learnedReferences,
     notes: [
       ...[
