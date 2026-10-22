@@ -47,7 +47,7 @@ import { evaluateItemSets, type EvaluatedItemSet } from "./item-sets";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v34-2026-10-22-level-attacks";
+  "evaluated-character-v35-2026-10-22-weapon-groups";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -151,6 +151,8 @@ export interface FieldOverlay {
   readonly targetDefinitionIds: readonly string[];
   /** The rule's target name, kept even when no owned definition matches it. */
   readonly targetName?: string;
+  /** The rule's target type, which qualifies `targetName`. */
+  readonly targetType?: string;
   readonly field: string;
   readonly value?: string;
   readonly listAddition?: string;
@@ -2501,6 +2503,7 @@ function overlay(
     providerOccurrenceId: provider.id,
     targetDefinitionIds,
     ...(rule.name === undefined ? {} : { targetName: rule.name }),
+    ...(rule.type === undefined ? {} : { targetType: rule.type }),
     field: rule.field,
     ...(rule.value === undefined ? {} : { value: rule.value }),
     ...(rule.listAddition === undefined

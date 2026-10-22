@@ -18,6 +18,7 @@ import {
   weaponRequirementThrowsMelee,
   type PowerRequirementContext,
 } from "./power-requirements";
+import { weaponGroups } from "./weapon-groups";
 
 export interface PowerComponent {
   readonly label: string;
@@ -407,6 +408,7 @@ function loadouts(
   byId: ReadonlyMap<string, ContentEntity>,
   byName: ReadonlyMap<string, readonly ContentEntity[]>,
   textStrings: Readonly<Record<string, string>>,
+  overlays: readonly FieldOverlay[],
 ): readonly Loadout[] {
   const result: Loadout[] = [];
   for (const entry of inventory.filter((item) => item.quantity > 0)) {
@@ -438,6 +440,7 @@ function loadouts(
       (entity) => entity !== baseRecord && key(entity.type) === "magic item",
     );
     const staff = baseRecord !== undefined && legacyIsStaff(baseRecord);
+    const groups = weapon === undefined ? [] : weaponGroups(weapon, overlays);
     result.push({
       id: entry.id,
       name: entry.name ?? equipmentName(parts),
@@ -475,8 +478,8 @@ function loadouts(
         ...(weapon === undefined
           ? []
           : [
-              field(weapon, "Group") ?? "",
-              `${field(weapon, "Group") ?? ""} group`,
+              ...groups,
+              ...groups.map((group) => `${group} group`),
               field(weapon, "Item Slot") ?? "",
               field(weapon, "Hands Required") ?? "",
               ...(field(weapon, "Properties") ?? "").split(","),
@@ -497,9 +500,7 @@ function loadouts(
               field(implement, "Group") ?? "",
               implement.name,
             ]),
-        ...(weapon === undefined
-          ? []
-          : [weapon.name, field(weapon, "Group") ?? ""]),
+        ...(weapon === undefined ? [] : [weapon.name, ...groups]),
         // A weapon that counts as an implement kind, e.g. a holy symbol.
         ...listField(parts, "_ImplementEquiv").map((kind) =>
           kind.replace(/\s*\([^)]*\)\s*$/u, ""),
@@ -1898,6 +1899,7 @@ export function evaluatePowers(input: {
     byId,
     byName,
     input.textStrings ?? {},
+    input.overlays,
   );
   // Legacy GetProficiencyBonus/IsProficient: the bonus needs an owned
   // "Weapon Proficiency (<base weapon or Proficient As>)".
