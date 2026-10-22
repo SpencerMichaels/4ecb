@@ -15,12 +15,29 @@ from the private pack and writes the following to ignored
 It reads `docs/visual-review-checklist.md` on every run and reports unmapped
 items; all 69 are mapped.
 
-Found while building it (fix in progress):
+Fixed after building it (`ddf2357`, `2b45fe7`, `cb1f7ec`, `87d8179`,
+`4be5e16`, `f66004b`):
 
-- **Backup restore** rejects characters imported from legacy files with
-  negative per-level loot quantities (Hu Sheng-Ming, Piri). A real library
-  backup containing one fails to restore.
-- **Hybrid identity** reads "Hybrid Artificer / Hybrid Ardent".
+- **Backup restore.** Legacy per-level loot entries are changes, not totals:
+  removals are -1, an unequip is equip -1, and equipping an earlier purchase
+  is 0/+1. `isCharacterRecord` rejected them, so a backup containing 6 of
+  the 8 sample characters failed to restore. A slotless entry now only needs
+  whole numbers; concrete holdings stay strict. All 17 sample characters and
+  heroes round-trip through backup and restore.
+- **Hybrid identity.** `sheet-model/src/class-identity.ts` names each hybrid
+  by its base class, and subclass hybrids by their own class (Hybrid
+  Blackguard → Blackguard): "Warlord / Fighter". The builder sidebar too.
+- **Reserve Maneuver / Martial Versatility errors** came from the matrix
+  generator choosing a feat with no possible power. It now backs out such
+  picks. The full run has 0 errors and 0 incomplete sheets.
+- **Beast candidate preview** includes the candidate's own statadds (a
+  sentinel candidate shares surges).
+- **Harness rebuilt** with all 17 characters, including Hu and Piri. 69
+  checklist items, 0 unmapped.
+
+Open (external library code): the library table's Class column likely reads
+"Hybrid" for hybrids. `characterMetadata` in `character-repository.ts`
+takes the first Class element; it could use `characterClassName`.
 
 ## Beast companion card (companion proposal, slice 2; 2026-10-21)
 
