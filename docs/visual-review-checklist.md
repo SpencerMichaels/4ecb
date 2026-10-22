@@ -107,7 +107,7 @@ wizard, ranger, druid or half-elf.
 - [ ] **Scholar (Hybrid Sentinel/Shaman etc.):** a Draconic/Dwarven/Elven
       choice at level 5 when one is missing; none from level 10.
 - [ ] **Serene Blade runepriest:** Proficiencies reads "military heavy
-      blades".
+      blade" (the proficiency's own name).
 - [ ] **"Equipped item requirement"** house-rule issue: equip a
       living-construct or ki-focus item without qualifying.
 
@@ -227,7 +227,7 @@ Check in light and dark themes and at 140% zoom.
 - [ ] **Printed Deity entry** after Background (church icon): the Domains
       line, then the description with its bullets.
 - [ ] **Awaken God Fragment** reference entry: a "Constant Benefits:" line.
-      The fragment's Encounter power card (Free action icon, keyword band)
+      The fragment's Encounter power card (Free action icon; this fragment has no keywords)
       sits among the encounter powers, printed and on screen.
 - [ ] **Item Set card** (orange) after the set's last item card:
   - the Pieces/Tier row;
@@ -235,7 +235,8 @@ Check in light and dark themes and at 140% zoom.
     dimmed;
   - no set introduction in print.
 
-  Group sets show a "Group pieces" label and an italic note.
+  Group sets show a "Party pieces" label, a "Group" tag on the type bar and an
+  italic note.
 
 - [ ] **Equipment and Shop item detail:** an Item Set panel card under a set
       piece.
@@ -258,9 +259,9 @@ Check in light and dark themes and at 140% zoom.
   - does the full stat block fit one card at high levels with several traits?
   - a sentinel's Surges tile reads "Yours".
 - [ ] **Builder Companion pane:** the chosen beast's card, and a candidate
-      preview (e.g. bear: 16 Str, 15 Con).
+      preview (e.g. the bear).
 - [ ] **Name and Appearance** inputs in the Companion section, and the card
-      title (e.g. "Ash — timber wolf").
+      title (e.g. "Ash — Wolf").
 - [ ] **Retraining:** a "Retrain a companion" option, with the Kind column
       reading "Companion".
 - [ ] **Beast power cards:** a "Beast +N vs AC" header and a "Beast damage"
