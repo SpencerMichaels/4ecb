@@ -1,0 +1,226 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Beast companions (docs/companion-card-proposal.md). 4ecb derives a beast
+  companion's statistics from its record and the character's companion stats
+  (rules-engine beastCompanionStatistics) and prints them on its own card.
+
+  1. The community "Tivaan's Companion Cards" (CBLoader/Custom/36-companion.part)
+     give each Beast Mastery companion a fake at-will "Companion: X" power card
+     with hand-copied statistics. Each becomes an inert Internal record under
+     the same ID, so imported characters still resolve and no card prints.
+  2. The same part appends to each of those 11 companion records 29 per-level
+     helper grants, which in turn grant one helper per Companion Ability
+     Increase pick (1,515 elements), all only rewriting the fake card. The
+     records' rules are rebuilt without them; the helpers stay in the pack,
+     ungranted, so their IDs still resolve.
+  3. Legacy CalcBeast adds your Wisdom modifier to enclose the prey's damage
+     when the companion is a cat, a spider or a wolf (Martial Power). That is
+     a statadd on those three records here, not a special case in code (D089).
+  4. A sentinel's animal companion has hit points equal to your bloodied
+     value (Heroes of the Forgotten Kingdoms pp. 89-90; product owner,
+     2026-10-21). The content approximates it with a "Pet Hit Points" running
+     total that leaves out Constitution; that chain is removed and the two
+     companions carry "_Hit Points" = bloodied, a field only 4ecb reads.
+-->
+<D20Rules game-system="D&amp;D4E">
+  <!-- 1. The fake power cards. -->
+  <RulesElement name="Companion: Bear" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION-BEAR-1" />
+  <RulesElement name="Companion: Boar" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION-BOAR-1" />
+  <RulesElement name="Companion: Cat" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION-CAT-1" />
+  <RulesElement name="Companion: Lizard" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION-LIZARD-1" />
+  <RulesElement name="Companion: Raptor" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION-RAPTOR-1" />
+  <RulesElement name="Companion: Serpent" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION-SERPENT-1" />
+  <RulesElement name="Companion: Spider" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION-SPIDER-1" />
+  <RulesElement name="Companion: Wolf" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION-WOLF-1" />
+  <RulesElement name="Companion: Vadalis-bred Griffon" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION-VADALIS-BRED_GRIFFON-1" />
+  <RulesElement name="Companion: Horse" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION-HORSE-1" />
+  <RulesElement name="Companion: Simian" type="Internal" source="4ecb corrections" internal-id="ID_TIV_COMPANION-SIMIAN-1" />
+
+  <!-- 2 and 3. The companion records without the helper grants. -->
+  <!-- Bear (Martial Power) -->
+  <RemoveNodes internal-id="ID_FMP_COMPANION_1"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_COMPANION_1">
+    <rules>
+      <statadd name="Companion.Strength" value="+16" />
+      <statadd name="Companion.Constitution" value="+14" />
+      <statadd name="Companion.Dexterity" value="+12" />
+      <statadd name="Companion.Intelligence" value="+6" />
+      <statadd name="Companion.Wisdom" value="+12" />
+      <statadd name="Companion.Charisma" value="+6" />
+      <grant name="ID_INTERNAL_POWER_BEAST_MELEE_BASIC_ATTACK" type="Power" />
+      <statadd name="FREEBEE:ID_FMP_RITUAL_187" value="+1" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Boar (Martial Power) -->
+  <RemoveNodes internal-id="ID_FMP_COMPANION_2"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_COMPANION_2">
+    <rules>
+      <statadd name="Companion.Strength" value="+16" />
+      <statadd name="Companion.Constitution" value="+16" />
+      <statadd name="Companion.Dexterity" value="+14" />
+      <statadd name="Companion.Intelligence" value="+6" />
+      <statadd name="Companion.Wisdom" value="+12" />
+      <statadd name="Companion.Charisma" value="+6" />
+      <grant name="ID_INTERNAL_POWER_BEAST_MELEE_BASIC_ATTACK" type="Power" />
+      <statadd name="FREEBEE:ID_FMP_RITUAL_187" value="+1" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Cat (Martial Power) -->
+  <RemoveNodes internal-id="ID_FMP_COMPANION_3"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_COMPANION_3">
+    <rules>
+      <statadd name="Companion.Strength" value="+14" />
+      <statadd name="Companion.Constitution" value="+12" />
+      <statadd name="Companion.Dexterity" value="+16" />
+      <statadd name="Companion.Intelligence" value="+6" />
+      <statadd name="Companion.Wisdom" value="+14" />
+      <statadd name="Companion.Charisma" value="+6" />
+      <grant name="ID_INTERNAL_POWER_BEAST_MELEE_BASIC_ATTACK" type="Power" />
+      <statadd name="FREEBEE:ID_FMP_RITUAL_187" value="+1" />
+      <!-- Legacy CalcBeast: enclose the prey adds your Wisdom modifier for a cat, spider or wolf. -->
+      <statadd name="ID_FMP_POWER_4370:damage" value="+Wisdom modifier" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Lizard (Martial Power) -->
+  <RemoveNodes internal-id="ID_FMP_COMPANION_4"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_COMPANION_4">
+    <rules>
+      <statadd name="Companion.Strength" value="+16" />
+      <statadd name="Companion.Constitution" value="+14" />
+      <statadd name="Companion.Dexterity" value="+16" />
+      <statadd name="Companion.Intelligence" value="+6" />
+      <statadd name="Companion.Wisdom" value="+12" />
+      <statadd name="Companion.Charisma" value="+6" />
+      <grant name="ID_INTERNAL_POWER_BEAST_MELEE_BASIC_ATTACK" type="Power" />
+      <statadd name="FREEBEE:ID_FMP_RITUAL_187" value="+1" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Raptor (Martial Power) -->
+  <RemoveNodes internal-id="ID_FMP_COMPANION_5"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_COMPANION_5">
+    <rules>
+      <statadd name="Companion.Strength" value="+12" />
+      <statadd name="Companion.Constitution" value="+12" />
+      <statadd name="Companion.Dexterity" value="+18" />
+      <statadd name="Companion.Intelligence" value="+6" />
+      <statadd name="Companion.Wisdom" value="+12" />
+      <statadd name="Companion.Charisma" value="+6" />
+      <grant name="ID_INTERNAL_POWER_BEAST_MELEE_BASIC_ATTACK" type="Power" />
+      <statadd name="FREEBEE:ID_FMP_RITUAL_187" value="+1" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Serpent (Martial Power) -->
+  <RemoveNodes internal-id="ID_FMP_COMPANION_6"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_COMPANION_6">
+    <rules>
+      <statadd name="Companion.Strength" value="+14" />
+      <statadd name="Companion.Constitution" value="+14" />
+      <statadd name="Companion.Dexterity" value="+16" />
+      <statadd name="Companion.Intelligence" value="+6" />
+      <statadd name="Companion.Wisdom" value="+12" />
+      <statadd name="Companion.Charisma" value="+6" />
+      <grant name="ID_INTERNAL_POWER_BEAST_MELEE_BASIC_ATTACK" type="Power" />
+      <statadd name="FREEBEE:ID_FMP_RITUAL_187" value="+1" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Spider (Martial Power) -->
+  <RemoveNodes internal-id="ID_FMP_COMPANION_7"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_COMPANION_7">
+    <rules>
+      <statadd name="Companion.Strength" value="+14" />
+      <statadd name="Companion.Constitution" value="+12" />
+      <statadd name="Companion.Dexterity" value="+16" />
+      <statadd name="Companion.Intelligence" value="+6" />
+      <statadd name="Companion.Wisdom" value="+12" />
+      <statadd name="Companion.Charisma" value="+6" />
+      <grant name="ID_INTERNAL_POWER_BEAST_MELEE_BASIC_ATTACK" type="Power" />
+      <statadd name="FREEBEE:ID_FMP_RITUAL_187" value="+1" />
+      <!-- Legacy CalcBeast: enclose the prey adds your Wisdom modifier for a cat, spider or wolf. -->
+      <statadd name="ID_FMP_POWER_4370:damage" value="+Wisdom modifier" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Wolf (Martial Power) -->
+  <RemoveNodes internal-id="ID_FMP_COMPANION_8"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_COMPANION_8">
+    <rules>
+      <statadd name="Companion.Strength" value="+14" />
+      <statadd name="Companion.Constitution" value="+14" />
+      <statadd name="Companion.Dexterity" value="+14" />
+      <statadd name="Companion.Intelligence" value="+6" />
+      <statadd name="Companion.Wisdom" value="+14" />
+      <statadd name="Companion.Charisma" value="+6" />
+      <grant name="ID_INTERNAL_POWER_BEAST_MELEE_BASIC_ATTACK" type="Power" />
+      <statadd name="FREEBEE:ID_FMP_RITUAL_187" value="+1" />
+      <!-- Legacy CalcBeast: enclose the prey adds your Wisdom modifier for a cat, spider or wolf. -->
+      <statadd name="ID_FMP_POWER_4370:damage" value="+Wisdom modifier" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Vadalis-bred Griffon (Eberron Player's Guide) -->
+  <RemoveNodes internal-id="ID_FMP_COMPANION_54"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_COMPANION_54">
+    <rules>
+      <statadd name="Companion.Strength" value="+20" />
+      <statadd name="Companion.Constitution" value="+18" />
+      <statadd name="Companion.Dexterity" value="+16" />
+      <statadd name="Companion.Intelligence" value="+2" />
+      <statadd name="Companion.Wisdom" value="+12" />
+      <statadd name="Companion.Charisma" value="+6" />
+      <grant name="ID_INTERNAL_POWER_BEAST_MELEE_BASIC_ATTACK" type="Power" />
+      <statadd name="FREEBEE:ID_FMP_RITUAL_187" value="+1" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Horse (Dragon Magazine 392) -->
+  <RemoveNodes internal-id="ID_FMP_COMPANION_90"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_COMPANION_90">
+    <rules>
+      <statadd name="Companion.Strength" value="+14" />
+      <statadd name="Companion.Constitution" value="+14" />
+      <statadd name="Companion.Dexterity" value="+16" />
+      <statadd name="Companion.Intelligence" value="+6" />
+      <statadd name="Companion.Wisdom" value="+12" />
+      <statadd name="Companion.Charisma" value="+6" />
+      <grant name="ID_INTERNAL_POWER_BEAST_MELEE_BASIC_ATTACK" type="Power" />
+      <grant name="ID_FMP_POWER_MOUNTED_COMPANION" type="Power" />
+    </rules>
+  </AppendNodes>
+
+  <!-- Simian (Dragon Magazine 392) -->
+  <RemoveNodes internal-id="ID_FMP_COMPANION_91"><rules /></RemoveNodes>
+  <AppendNodes internal-id="ID_FMP_COMPANION_91">
+    <rules>
+      <statadd name="Companion.Strength" value="+14" />
+      <statadd name="Companion.Constitution" value="+14" />
+      <statadd name="Companion.Dexterity" value="+16" />
+      <statadd name="Companion.Intelligence" value="+6" />
+      <statadd name="Companion.Wisdom" value="+12" />
+      <statadd name="Companion.Charisma" value="+6" />
+      <grant name="ID_INTERNAL_POWER_BEAST_MELEE_BASIC_ATTACK" type="Power" />
+    </rules>
+  </AppendNodes>
+
+
+  <!-- 4. Sentinel companions: hit points are your bloodied value. -->
+  <RemoveNodes internal-id="ID_WOG_SENTINEL_CLASS_FEATURE_2">
+    <rules />
+    <specific name="Pet Hit Points" />
+    <specific name="Pet Toughness" />
+    <specific name="HALF-CON" />
+  </RemoveNodes>
+  <AppendNodes internal-id="ID_WOG_SENTINEL_CLASS_FEATURE_2">
+    <rules>
+      <grant name="ID_WOG_SENTINEL_CLASS_FEATURE_2A" type="Class Feature" requires="ID_WOG_SENTINEL_TRAIT_PACKAGE_1|ID_CDJ_HYBRID_SENTINEL_TRAIT_PACKAGE_1" />
+      <grant name="ID_WOG_SENTINEL_CLASS_FEATURE_2B" type="Class Feature" requires="ID_WOG_SENTINEL_TRAIT_PACKAGE_2|ID_CDJ_HYBRID_SENTINEL_TRAIT_PACKAGE_2" />
+    </rules>
+  </AppendNodes>
+  <AppendNodes internal-id="ID_WOG_COMPANION_1"><specific name="_Hit Points">bloodied</specific></AppendNodes>
+  <AppendNodes internal-id="ID_WOG_COMPANION_2"><specific name="_Hit Points">bloodied</specific></AppendNodes>
+</D20Rules>
