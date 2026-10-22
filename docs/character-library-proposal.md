@@ -1,8 +1,8 @@
 # Character library and trash proposal
 
-Status: proposed (2026-10-21); all product-owner questions answered, mockup
-under review. Decisions made by the product owner are marked **(decided)**
-and summarized at the end. Mockup (private):
+Status: accepted and implemented (2026-10-21; commits `98d83ce`, `f748323`,
+`d62b51e`, D092); visual review pending. Decisions made by the product owner
+are marked **(decided)** and summarized at the end. Mockup (private):
 https://claude.ai/artifact/MoTG4dNJiNW4kVD96Rb6VK
 
 ## Problem

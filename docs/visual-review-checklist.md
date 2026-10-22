@@ -114,3 +114,48 @@ wizard, ranger, druid or half-elf.
       cards.
 - [ ] **Old links:** Shop ritual links and `section=practices` land on the
       Rituals tab.
+
+## Character library and trash
+
+Check in light and dark themes and at 140% zoom.
+
+- [ ] **Header:** New, Import, Trash plus a count tag, divider, Update (only
+      when an update is waiting), Settings (gear), each with a one-word
+      label. Labels collapse to icons at phone width. New's disabled
+      tooltip gives the reason.
+- [ ] **Table:** uppercase header, sort chevrons, striped rows, hover tint,
+      selected row tint with the accent bar, 2.25rem portraits, and the
+      Edited tooltip with the exact time. The filter (and its clear x)
+      shows a no-match message inside the table.
+- [ ] **Keyboard and mouse:** Arrow Up/Down and Home/End move the selection
+      with a visible focus ring. Enter and double-click open the builder,
+      and middle-click on a name opens a new tab. The sort and selection
+      survive a reload.
+- [ ] **Pane band:** portrait size, name font, identity line, role line
+      ("Divine Defender", hybrids "X / Y"), paragon and epic lines, Edited
+      tooltip, and the Update available badge contrast.
+- [ ] **Action row:** five equal buttons (Edit, Sheet, Export, Duplicate,
+      Trash) that never wrap, with hover and focus states. The Export menu
+      hangs below the sticky pane, with its spinner during a .dnd4e export.
+      Trash arms to a red "Confirm".
+- [ ] **Stats:** the Play data layout (abilities 3×2, Defenses, Health,
+      Init | Speed | Passive senses, note lines) matches the Play data card.
+      The print Play data card looks unchanged.
+- [ ] **Loading:** import a .dnd4e (or Duplicate a character) and select it.
+      The tiles keep their size with "—", "Calculating stats…" shows with
+      the spinner, and the role line shows a placeholder bar, then
+      everything fills in. Arrowing quickly through rows stays responsive.
+- [ ] **Saved summary:** edit a character in the builder, wait about 2s,
+      return to the library. Its stats appear immediately.
+- [ ] **Error:** a character whose content isn't installed shows "Stats
+      unavailable" with a tooltip, and the rest of the pane works.
+- [ ] **Narrow (< 60rem, about a 1344px window at 140% zoom):** the pane
+      moves under the table, Race and Edited hide, and nothing scrolls
+      sideways.
+- [ ] **Trash dialog:** portraits and placeholders, striped rows, "Trashed …"
+      tooltip, newest first. The footer hint sits on the left and Empty
+      trash… on the right, disabled when the trash is empty.
+- [ ] **Empty trash confirmation:** stacks above the trash dialog, focus
+      starts on Cancel, Esc cancels and leaves the trash dialog open, and
+      the singular wording reads right with 1 character. Afterwards the
+      trash shows "The trash is empty." and the library count reads 0.

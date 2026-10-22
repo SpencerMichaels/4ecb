@@ -32,6 +32,37 @@ Full matrix: 0 evaluation errors, 0 incomplete sheets, 1 never-fillable
 choice (intentional), 0 audit problems. The 17 sample characters are
 unchanged. 1138 tests pass.
 
+## Character library table, detail pane and trash (2026-10-21)
+
+`docs/character-library-proposal.md`, all of it. Commits `98d83ce`,
+`f748323`, `d62b51e`. Visual review pending.
+
+- **Trash.** Rows show the portrait, identity line and "Trashed N ago",
+  most recent first. **Empty trash…** opens its own confirmation
+  (`EmptyTrashDialog.tsx`) backed by `CharacterRepository.emptyTrash()`
+  in one transaction.
+- **Library.** A sortable, filterable table (`CharacterLibraryTable.tsx`)
+  beside a sticky detail pane (`CharacterLibraryDetail.tsx`). The sort and
+  selection are remembered per browser. The page header buttons are New,
+  Import, Trash, Update, Settings, with one-word labels.
+- **Detail pane.** A navy band holds the portrait, identity, role line,
+  paragon path, epic destiny, edited time, the content-update badge, and a
+  five-button action row. Below it are the Play data card's stats, which
+  are now one shared body (`play-data.ts`, `PlayDataStats.tsx`) rendered by
+  both the print card and the pane.
+- **Metadata.** It now carries paragon path, epic destiny and the content
+  revision, with existing rows backfilled on read (`metadataVersion`).
+- **Library summary.** A disposable `librarySummary` on the metadata row
+  holds the play data and role line. It is stamped with the engine version,
+  `updatedAt` and the content digest. The builder writes it when idle after
+  a converged evaluation. A missing or stale summary is evaluated live in
+  the library's own rules worker (`library-summary` request), one at a time
+  and never blocking the page, then backfilled.
+
+805 tests pass (apps/web, browser-storage, sheet-model). Web and
+browser-storage typecheck and lint are clean. Print checks not run (user
+visual review).
+
 ## Known rituals, slice 1 (2026-10-21)
 
 `docs/known-rituals-proposal.md` §1, §2 and §4–§7. Commits `eec8a8d`,

@@ -2505,6 +2505,26 @@ Consequences:
   characters and content (AGENTS.md). This decision is about which way
   compatibility must hold, not about how rules are recovered.
 
+### D092 — The character library is a table with a detail pane
+
+Status: accepted (2026-10-21). Refines D045's "compact library surface".
+
+The Characters page lists characters in a sortable, filterable table with a
+sticky detail pane, as the builder's selection tables do. Per-character
+actions live only in the pane. Its stats use the Play data card's layout
+through one shared component, so the two can't drift apart. The page
+header's buttons carry one-word text labels (the builder header stays
+icon-only). Emptying the trash, a bulk irreversible action, uses an explicit
+confirmation dialog rather than the two-click arm.
+
+Consequences:
+
+- The library may show evaluated values. They come from a disposable
+  library summary, never a source of truth, or from a live evaluation in a
+  worker that never blocks the page.
+- New library metadata fields bump `CHARACTER_METADATA_VERSION`, so
+  existing rows backfill on read.
+
 ## Deferred decisions and decision points
 
 These are deliberately deferred until a milestone produces the evidence needed
