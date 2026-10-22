@@ -23,7 +23,12 @@ Commit `c958f77`; evaluation cache v33.
 
 Open:
 
-- Group sets need a party-count control; there is none yet.
+- **Party pieces** (`4e6812c`, owner decision). A group set's builder panel
+  card (Equipment and Shop item detail) has a "Party pieces" number field. It
+  writes the `<set> Set Count` textstring through `set-text`, and clearing
+  it returns to unset. When unset, the printed card shows "Party pieces ___"
+  to fill in by hand and lists every benefit with none dimmed. The textstring
+  is read only by the `itemSetPartyPieces` helper.
 - The matrix never picks a deity, a god fragment or multiple set pieces, so
   these were confirmed on modified real data rather than in the matrix.
 

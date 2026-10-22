@@ -221,3 +221,13 @@ Check in light and dark themes and at 140% zoom.
       piece.
 - [ ] **Numbers:** 2+ equipped pieces of a set now give its unlocked bonuses
       (e.g. Aleheart: +2 Dungeoneering and Endurance).
+- [ ] **Party pieces field** (group item sets, e.g. Caelynnvala's Boons): in
+      the Equipment and Shop item detail, a field and hint under "Item set" on
+      the dark panel card (check the layout at 140% zoom).
+  - Entering a count marks the unlocked benefits active and changes the
+    totals.
+  - Clearing it returns to a blank with nothing dimmed.
+  - -1 and 1.5 are rejected, with a changed hint.
+- [ ] **Printed group-set card:** unset shows "Party pieces" with a blank line
+      and full-strength benefits; set shows the count with locked benefits
+      dimmed. Non-group sets still read Pieces and Tier.
