@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from "react";
 
-import type { CharacterBuild } from "@4ecb/character-domain";
+import type { BuildOccurrence, CharacterBuild } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import { projectBuildForLegacyExport } from "@4ecb/legacy-dnd4e";
 import {
@@ -59,6 +59,31 @@ export interface BuilderCardSettings {
   readonly itemSetCardFor?: (
     piece: ContentEntity,
   ) => SheetItemSetCard | undefined;
+  /** The paragon path the character has taken, at any level: detail panes
+   *  show only its path-dependent benefits (a pact's Legendary Hexblade
+   *  features). */
+  readonly paragonPathId?: string;
+}
+
+/** The paragon path picked anywhere in the build, unless retrained away. */
+export function buildParagonPathId(build: CharacterBuild): string | undefined {
+  const occurrences: BuildOccurrence[] = [];
+  const visit = (occurrence: BuildOccurrence) => {
+    occurrences.push(occurrence);
+    occurrence.children.forEach(visit);
+  };
+  for (const frame of build.levels) visit(frame.root);
+  const replaced = new Set(
+    occurrences.flatMap(({ replacesId }) =>
+      replacesId === undefined ? [] : [replacesId],
+    ),
+  );
+  return occurrences.findLast(
+    (occurrence) =>
+      !replaced.has(occurrence.id) &&
+      occurrence.identity.definitionId !== undefined &&
+      occurrence.identity.type.trim().toLocaleLowerCase() === "paragon path",
+  )?.identity.definitionId;
 }
 
 export interface BuilderCardPreferences {
@@ -112,7 +137,9 @@ export function evaluatedBuilderCardSettings(
         entity.id.toLocaleLowerCase(),
     );
   let contentById: Map<string, ContentEntity> | undefined;
+  const paragonPathId = buildParagonPathId(build);
   return {
+    ...(paragonPathId === undefined ? {} : { paragonPathId }),
     powerCardFor: (entity) =>
       cardFor(
         entity,

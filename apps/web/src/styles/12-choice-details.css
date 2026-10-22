@@ -275,6 +275,111 @@
   min-width: 0;
 }
 
+/* Benefits granted at different levels: one fold per level. Its heading
+   reads "Level 9 · 1 feature, 3 powers"; the benefits' names stay listed
+   under it while folded. */
+.candidate-detail-benefits.is-by-level {
+  gap: 0;
+}
+
+.detail-level-section {
+  border-top: 1px solid var(--border);
+}
+
+.detail-level-section:last-child {
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-level-heading {
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.detail-level-heading > button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--text);
+  display: flex;
+  flex-wrap: wrap;
+  font: inherit;
+  gap: 0.15rem 0.5rem;
+  padding: 0.55rem 0.4rem;
+  position: relative;
+  text-align: left;
+  width: 100%;
+}
+
+.detail-level-heading > button:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  box-shadow: none;
+}
+
+.detail-level-heading > button > .icon {
+  flex: none;
+  height: 0.95rem;
+  transition: transform 100ms ease;
+  width: 0.95rem;
+}
+
+.detail-level-heading > button[aria-expanded="true"] > .icon {
+  transform: rotate(90deg);
+}
+
+.detail-level-title {
+  font-weight: 800;
+}
+
+.detail-level-count {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.detail-level-summary {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* While folded, the benefits it holds, bulleted under the title (past the
+   chevron). */
+.detail-level-benefits {
+  display: grid;
+  flex: 1 0 100%;
+  font-size: 0.88rem;
+  font-weight: 400;
+  gap: 0.1rem;
+  overflow-wrap: anywhere;
+  padding-left: calc(0.95rem + 0.5rem + 1.1em);
+}
+
+.detail-level-benefit {
+  display: list-item;
+  list-style: disc;
+}
+
+.detail-level-cards {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.25rem 0 0.9rem;
+}
+
+.detail-level-cards[hidden] {
+  display: none;
+}
+
+.detail-level-subheading {
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  margin: 0.35rem 0 0;
+  padding-bottom: 0.2rem;
+  text-transform: uppercase;
+}
+
 .theme-candidate-description p {
   margin-bottom: 0.65rem;
 }

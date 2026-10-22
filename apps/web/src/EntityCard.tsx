@@ -441,17 +441,20 @@ export function EntityCardBody({
       {entity.flavor === undefined || hideFlavortext ? null : (
         <p className="candidate-flavor entity-card-flavor">{entity.flavor}</p>
       )}
-      {entity.description.length === 0
-        ? null
-        : (renderDescription?.(entity.description) ?? (
-            <Prose value={entity.description} />
-          ))}
+      {/* The book order: flavor, prerequisites, then the text, so a lead-in
+          ("You gain the following benefits:") ends right above the
+          benefits it introduces. */}
       {entity.printPrerequisites === undefined ? null : (
         <section>
           <h5>Prerequisites</h5>
           <Prose value={entity.printPrerequisites} />
         </section>
       )}
+      {entity.description.length === 0
+        ? null
+        : (renderDescription?.(entity.description) ?? (
+            <Prose value={entity.description} />
+          ))}
       {afterNarrative}
       <DefaultSpecifics entity={entity} fields={fields} />
       {afterFields}

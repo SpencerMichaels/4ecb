@@ -276,3 +276,264 @@ describe("option detail benefits", () => {
     expect(benefits).toContain("Change is ever-renewing opportunity.");
   });
 });
+
+describe("option detail benefits by level", () => {
+  const withLevel = (item: ContentEntity, level: string): ContentEntity => ({
+    ...item,
+    specifics: [
+      ...item.specifics,
+      {
+        name: "Level",
+        value: level,
+        extraAttributes: [],
+        ordinal: item.specifics.length,
+      },
+    ],
+  });
+  const grants = (item: ContentEntity, ...ids: readonly string[]) => ({
+    ...item,
+    rules: ids.map((id, ordinal) => ({
+      name: "grant",
+      attributes: [{ name: "name", value: id }],
+      text: "",
+      children: [],
+      ordinal,
+    })),
+  });
+  const pact = entity(
+    "PACT_LEVELS",
+    "Levelled Pact",
+    "Trait Package",
+    { _PARSED_CLASS_FEATURE: "FEATURE_BOON, FEATURE_ALLY, FEATURE_CURSE" },
+    "You gain the following benefits:",
+  );
+  const boon = withLevel(
+    entity("FEATURE_BOON", "Levelled Pact Boon", "Class Feature", {}),
+    "1",
+  );
+  const summoned = entity("POWER_SUMMON", "Summoned Creature", "Power", {
+    "Power Usage": "Daily",
+  });
+  const handmaiden = entity("POWER_HANDMAIDEN", "Handmaiden", "Power", {
+    "Power Usage": "At-Will",
+  });
+  const ally = grants(
+    withLevel(
+      entity("FEATURE_ALLY", "Level 9 Summon Ally", "Class Feature", {}),
+      "9",
+    ),
+    summoned.id,
+    handmaiden.id,
+  );
+  const curse = withLevel(
+    entity("FEATURE_CURSE", "Level 11 Pact Curse", "Class Feature", {}),
+    "11",
+  );
+  const render = (root: ContentEntity, level: number) =>
+    renderToStaticMarkup(
+      createElement(
+        BuilderCardContext.Provider,
+        { value: authoredBuilderCardSettings(level) },
+        createElement(CandidateDetail, {
+          candidate: { ...candidate, definitionId: root.id },
+          entity: root,
+          byId: new Map(
+            [pact, boon, summoned, handmaiden, ally, curse, root].map(
+              (item) => [item.id.toLowerCase(), item],
+            ),
+          ),
+        }),
+      ),
+    );
+  const sections = (markup: string) =>
+    [
+      ...markup.matchAll(
+        /<div class="detail-level-section( is-open)?"><h3 class="detail-level-heading"><button([^>]*)>(.*?)<\/button><\/h3><div class="detail-level-cards"( hidden="")?/g,
+      ),
+    ].map(([, open, button = "", content = "", hidden]) => ({
+      open: open !== undefined,
+      expanded: button.includes('aria-expanded="true"'),
+      described: button.includes("aria-describedby"),
+      hidden: hidden !== undefined,
+      heading: (
+        /class="detail-level-summary"[^>]*>(.*?)<\/span><\/span>/.exec(
+          content,
+        )?.[1] ?? ""
+      )
+        .replaceAll(/<[^>]+>/g, "")
+        .replaceAll("&#x27;", "'"),
+      // Listed in the toggle only while folded.
+      names: [
+        ...content.matchAll(/class="detail-level-benefit">(.*?)<\/span>/g),
+      ].map(([, name]) => name),
+    }));
+
+  it("folds each level's benefits under a heading that counts them", () => {
+    const markup = render(pact, 9);
+    expect(sections(markup)).toEqual([
+      {
+        open: true,
+        expanded: true,
+        described: false,
+        hidden: false,
+        heading: "Level 1 ·: 1 feature",
+        names: [],
+      },
+      {
+        open: true,
+        expanded: true,
+        described: false,
+        hidden: false,
+        heading: "Level 9 ·: 1 feature, 2 powers",
+        names: [],
+      },
+      {
+        open: false,
+        expanded: false,
+        described: true,
+        hidden: true,
+        heading: "Level 11 ·: 1 feature",
+        names: ["Pact Curse"],
+      },
+    ]);
+    // The level 9 feature is followed by the powers it grants.
+    const nine = markup.slice(markup.indexOf("Level 9 Summon Ally"));
+    expect(nine.indexOf("Summoned Creature")).toBeLessThan(
+      nine.indexOf("Level 11 Pact Curse"),
+    );
+    expect(nine.indexOf("Handmaiden")).toBeLessThan(
+      nine.indexOf("Level 11 Pact Curse"),
+    );
+    expect(markup).toContain('aria-label="Levelled Pact benefits"');
+  });
+
+  it("opens the levels up to the one the pane is viewing", () => {
+    expect(sections(render(pact, 1)).map(({ open }) => open)).toEqual([
+      true,
+      false,
+      false,
+    ]);
+    expect(sections(render(pact, 20)).map(({ open }) => open)).toEqual([
+      true,
+      true,
+      true,
+    ]);
+  });
+
+  it("files a theme's powers under their level and keeps one-level stacks flat", () => {
+    const feature = withLevel(
+      entity("THEME_FEATURE_5", "Level 5 Test Feature", "Class Feature", {}),
+      "5",
+    );
+    const power = withLevel(
+      entity("THEME_POWER_2", "Test Theme Utility", "Power", {
+        "Power Usage": "Encounter",
+        Class: "THEME_LEVELS",
+      }),
+      "2",
+    );
+    const theme = entity("THEME_LEVELS", "Test Theme", "Theme", {
+      _PARSED_SUB_FEATURES: feature.id,
+    });
+    const markup = renderToStaticMarkup(
+      createElement(CandidateDetail, {
+        candidate: { ...candidate, definitionId: theme.id },
+        entity: theme,
+        byId: new Map(
+          [theme, feature, power].map((item) => [item.id.toLowerCase(), item]),
+        ),
+      }),
+    );
+    expect(sections(markup).map(({ heading }) => heading)).toEqual([
+      "Level 2 ·: 1 power",
+      "Level 5 ·: 1 feature",
+    ]);
+    expect(markup).not.toContain("theme-power-cards");
+
+    const flat = render(
+      entity("PACT_FLAT", "Flat Pact", "Trait Package", {
+        _PARSED_CLASS_FEATURE: "FEATURE_BOON",
+      }),
+      1,
+    );
+    expect(flat).toContain('aria-label="Flat Pact benefits"');
+    expect(flat).not.toContain("detail-level-section");
+  });
+
+  it("shows a paragon path's benefits under plain level headings, only the chosen path's", () => {
+    const pathCurse = withLevel(
+      entity(
+        "FEATURE_PATH_CURSE",
+        "Level 11 Dark Curse (Test Path)",
+        "Class Feature",
+        {},
+      ),
+      "11",
+    );
+    const pathInvocation = withLevel(
+      entity(
+        "FEATURE_PATH_INVOCATION",
+        "Level 12 Dark Invocation",
+        "Class Feature",
+        {},
+      ),
+      "12",
+    );
+    const path = entity("PATH_TEST", "Test Path", "Paragon Path", {
+      "Class Features": "FEATURE_PATH_CURSE, FEATURE_PATH_INVOCATION",
+    });
+    const pathPact = entity("PACT_PATHS", "Path Pact", "Trait Package", {
+      _PARSED_CLASS_FEATURE:
+        "FEATURE_BOON, FEATURE_PATH_CURSE, FEATURE_PATH_INVOCATION",
+    });
+    const markupFor = (paragonPathId?: string) =>
+      renderToStaticMarkup(
+        createElement(
+          BuilderCardContext.Provider,
+          {
+            value: {
+              ...authoredBuilderCardSettings(11),
+              ...(paragonPathId === undefined ? {} : { paragonPathId }),
+            },
+          },
+          createElement(CandidateDetail, {
+            candidate: { ...candidate, definitionId: pathPact.id },
+            entity: pathPact,
+            byId: new Map(
+              [pathPact, boon, path, pathCurse, pathInvocation].map((item) => [
+                item.id.toLowerCase(),
+                item,
+              ]),
+            ),
+          }),
+        ),
+      );
+    const markup = markupFor();
+    expect(
+      sections(markup).map(({ heading, open }) => [heading, open]),
+    ).toEqual([
+      ["Level 1 ·: 1 feature", true],
+      ["Test Path (Levels 11–12) ·: 2 features", true],
+    ]);
+    const pathCards = markup.slice(markup.indexOf("Test Path (Levels"));
+    expect(pathCards).toContain(
+      '<h4 class="detail-level-subheading">Level 11</h4>',
+    );
+    expect(pathCards.indexOf("Level 11 Dark Curse")).toBeLessThan(
+      pathCards.indexOf("Level 12</h4>"),
+    );
+    expect(sections(markupFor("PATH_TEST"))).toHaveLength(2);
+    // Another path taken: none of this one's benefits, and one level left.
+    const other = markupFor("PATH_OTHER");
+    expect(other).not.toContain("detail-level-section");
+    expect(other).not.toContain("Dark Curse");
+  });
+
+  it("puts an option's prerequisites before its text", () => {
+    const prerequisite = { ...pact, printPrerequisites: "Hexblade" };
+    const markup = render(prerequisite, 1);
+    expect(markup.indexOf("<h5>Prerequisites</h5>")).toBeLessThan(
+      markup.indexOf("You gain the following benefits:"),
+    );
+  });
+});

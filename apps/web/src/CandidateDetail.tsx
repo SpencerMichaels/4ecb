@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { Fragment, useContext, useState } from "react";
 
 import type { CandidateDecision } from "@4ecb/rules-engine";
 import type { ContentEntity } from "@4ecb/content-domain";
@@ -22,7 +22,15 @@ import {
 } from "./candidate-favorites";
 import { candidateReferenceIndex } from "./CandidateSelectionTable";
 import { DeityDomains } from "./DeityDomains";
-import { detailStackEntries } from "./detail-stack";
+import {
+  detailStackEntries,
+  detailStackSectionHeading,
+  entriesForParagonPath,
+  detailStackSections,
+  optionBenefitEntry,
+  type DetailStackEntry,
+  type DetailStackSection,
+} from "./detail-stack";
 import {
   EntityCardBody,
   EntityCardLeadingIcon,
@@ -50,6 +58,7 @@ export function CandidateDetail({
   /** The option came from a selection table: offer the favorite star. */
   readonly favoritable?: boolean;
 }) {
+  const { characterLevel, paragonPathId } = useContext(BuilderCardContext);
   if (candidate === undefined || entity === undefined)
     return (
       <aside
@@ -68,11 +77,55 @@ export function CandidateDetail({
   // Everything the option will eventually give (a paragon path's features
   // and powers, a pact's class features, a deity's domains, a choice's
   // options…), each shown once, so it can be judged before it is picked.
-  const benefits = detailStackEntries(
-    entity,
-    referenceIndex,
-    themePowers.flatMap((group) => group.powers.map((power) => power.id)),
+  const benefits = entriesForParagonPath(
+    detailStackEntries(
+      entity,
+      referenceIndex,
+      themePowers.flatMap((group) => group.powers.map((power) => power.id)),
+    ),
+    paragonPathId,
   );
+  // Benefits granted at different levels (a pact's, a theme's, a paragon
+  // path's…) fold into one section per level, theme powers included, and
+  // what only one paragon path gets into one per path: only the
+  // character's, once it has taken one.
+  const levelSections = detailStackSections(
+    [
+      ...benefits,
+      ...themePowers.flatMap((group) =>
+        group.powers.map((power) => optionBenefitEntry(entity, power)),
+      ),
+    ],
+    { paragonPathId },
+  );
+  if (levelSections.length > 0)
+    return (
+      <div className="candidate-detail-stack">
+        <CandidateDetailCard
+          candidate={candidate}
+          entity={entity}
+          favoritable={favoritable}
+          references={referenceIndex}
+        />
+        <section
+          aria-label={`${entity.name} benefits`}
+          className="candidate-detail-benefits is-by-level"
+        >
+          {levelSections.map((section) => {
+            // Levels the pane is viewing or past start open.
+            const open = section.level <= characterLevel;
+            return (
+              <DetailLevelSection
+                defaultOpen={open}
+                key={`${entity.id}:${detailSectionKey(section)}:${String(open)}`}
+                ownerId={entity.id}
+                section={section}
+              />
+            );
+          })}
+        </section>
+      </div>
+    );
   return (
     <div className="candidate-detail-stack">
       <CandidateDetailCard
@@ -86,12 +139,8 @@ export function CandidateDetail({
           aria-label={`${entity.name} benefits`}
           className="candidate-detail-benefits"
         >
-          {benefits.map(({ entity: benefit, relationship }) => (
-            <CandidateDetailCard
-              entity={benefit}
-              key={benefit.id}
-              {...(relationship === undefined ? {} : { relationship })}
-            />
+          {benefits.map((entry) => (
+            <DetailStackCard entry={entry} key={entry.entity.id} />
           ))}
         </section>
       )}
@@ -109,6 +158,93 @@ export function CandidateDetail({
           )}
         </section>
       )}
+    </div>
+  );
+}
+
+function DetailStackCard({ entry }: { readonly entry: DetailStackEntry }) {
+  return (
+    <CandidateDetailCard
+      entity={entry.entity}
+      {...(entry.relationship === undefined
+        ? {}
+        : { relationship: entry.relationship })}
+    />
+  );
+}
+
+const detailSectionKey = (section: DetailStackSection) =>
+  section.path === undefined
+    ? `level-${String(section.level)}`
+    : `path-${section.path.id}`;
+
+/** One level's benefits (or one paragon path's, by level), each followed
+ * by what it offers, folded behind a heading that counts the cards; the
+ * benefits' names stay listed under it while folded. */
+function DetailLevelSection({
+  defaultOpen,
+  ownerId,
+  section,
+}: {
+  readonly defaultOpen: boolean;
+  readonly ownerId: string;
+  readonly section: DetailStackSection;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const heading = detailStackSectionHeading(section);
+  const cardsId = `candidate-${`${ownerId}-${detailSectionKey(section)}`.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const titleId = `${cardsId}-title`;
+  const namesId = `${cardsId}-benefits`;
+  return (
+    <div className={`detail-level-section${open ? " is-open" : ""}`}>
+      <h3 className="detail-level-heading">
+        {/* Named by its title and count alone; while folded, the list of
+            benefits in it (part of the toggle) describes it. */}
+        <button
+          aria-controls={cardsId}
+          aria-expanded={open}
+          aria-labelledby={titleId}
+          type="button"
+          onClick={() => setOpen((current) => !current)}
+          {...(open ? {} : { "aria-describedby": namesId })}
+        >
+          <Icon name="chevron" />
+          <span className="detail-level-summary" id={titleId}>
+            <span className="detail-level-title">{heading.label}</span>{" "}
+            <span className="detail-level-count">
+              <span aria-hidden="true">·</span>
+              <span className="visually-hidden">:</span> {heading.count}
+            </span>
+          </span>
+          {open ? null : (
+            <span className="detail-level-benefits" id={namesId}>
+              {heading.names.map((name, index) => (
+                <span
+                  className="detail-level-benefit"
+                  key={`${String(index)}:${name}`}
+                >
+                  {name}
+                </span>
+              ))}
+            </span>
+          )}
+        </button>
+      </h3>
+      <div className="detail-level-cards" hidden={!open} id={cardsId}>
+        {section.path === undefined
+          ? section.entries.map((entry) => (
+              <DetailStackCard entry={entry} key={entry.entity.id} />
+            ))
+          : // A path's benefits under plain level headings, not folds.
+            section.levels.map((group) => (
+              <Fragment key={group.level}>
+                <h4 className="detail-level-subheading">Level {group.level}</h4>
+                {group.entries.map((entry) => (
+                  <DetailStackCard entry={entry} key={entry.entity.id} />
+                ))}
+              </Fragment>
+            ))}
+      </div>
     </div>
   );
 }
