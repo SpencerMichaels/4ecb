@@ -5,10 +5,13 @@
 Owner placement decisions for the last three registry gaps. Work starts after
 the companion card UI slice.
 
-- **Domains.** They are lore only (no rules) and granted by the deity, so they
-  go on the identity line next to the deity: "Deity: Sehanine (Love, Moon,
-  Trickery)". This follows the owner's rule: non-mechanical goes to identity,
-  mechanical to features.
+- **Domains.** They are lore only (no rules) and granted by the deity. Page
+  1's identity table keeps just the deity name. Their card bodies start with
+  "**Domains:** Love, Moon, Trickery", in two places:
+  - the builder's deity detail card, above the description; the domain lore
+    cards still follow in the stack;
+  - a new Deity entry on the Character Reference pages, alongside the
+    background.
 - **God fragments** (Dragon 382, via Awaken God Fragment). A feature row
   ("Awaken God Fragment: Fragment of Avandra") with its constant benefit,
   plus a power card built from the fragment's ability fields (like the Action
