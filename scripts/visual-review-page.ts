@@ -180,7 +180,7 @@ export function renderReviewPage(input: ReviewPageInput): {
   ) => {
     const anchor = `${slug}-${index}`;
     const hash = hashFor(characterId, link.path);
-    return `<section class="link" id="${anchor}"><h4><a class="app-link" data-hash="${escapeHtml(hash)}" data-char="${escapeHtml(characterId)}" target="_blank" rel="noopener">${escapeHtml(link.label)}</a> <code class="hash">${escapeHtml(hash.replace(/^#\/characters\/[^/?]+/, "…"))}</code></h4><ul class="items">${link.items
+    return `<section class="link" id="${anchor}"><h4><a class="app-link" data-hash="${escapeHtml(hash)}" target="_blank" rel="noopener">${escapeHtml(link.label)}</a> <code class="hash">${escapeHtml(hash.replace(/^#\/characters\/[^/?]+/, "…"))}</code></h4><ul class="items">${link.items
       .map((entry) =>
         itemRow(`${slug}|${index}`, entry, anchor, `${title}: ${link.label}`),
       )
@@ -248,11 +248,7 @@ export function renderReviewPage(input: ReviewPageInput): {
             : `<li><a class="app-link" data-hash="#/characters" target="_blank" rel="noopener">${escapeHtml(variant.title)}</a> — ${escapeHtml(variant.purpose)}</li>`;
         })
         .join("");
-      const manual =
-        character.facts.restorable || review.spec.kind !== "import"
-          ? ""
-          : `<div class="manual"><p><strong>Not in the backup:</strong> the app's backup restore rejects this record (its legacy per-level loot entries have negative quantities), so import it by hand: library <strong>Import</strong> → <code>${escapeHtml(review.spec.source)}</code>. Then open it and paste its ID (from the address bar, after <code>#/characters/</code>) here so the links below point at it:</p><label>Character ID <input type="text" data-id-for="${escapeHtml(character.record.id)}" placeholder="paste the imported character's ID"></label></div>`;
-      return `<article class="character" id="${slug}"><h2>${escapeHtml(title)}</h2><p class="purpose">${escapeHtml(review.purpose)}</p>${manual}${factsHtml(character)}${variants === "" ? "" : `<p class="variants-label">Copies for library checks (see General):</p><ul class="variants">${variants}</ul>`}${review.links
+      return `<article class="character" id="${slug}"><h2>${escapeHtml(title)}</h2><p class="purpose">${escapeHtml(review.purpose)}</p>${factsHtml(character)}${variants === "" ? "" : `<p class="variants-label">Copies for library checks (see General):</p><ul class="variants">${variants}</ul>`}${review.links
         .map((link, index) =>
           linkBlock(slug, character.record.id, link, index, title),
         )
@@ -301,7 +297,7 @@ export function renderReviewPage(input: ReviewPageInput): {
         `<li><a href="#${spec.slug}">${escapeHtml(spec.title)}</a></li>`,
     )
     .join("");
-  const count = built.filter(({ facts }) => facts.restorable).length;
+  const count = built.length;
   const { reviewPack, sourcePack } = input;
 
   const html = `<!doctype html>
@@ -347,7 +343,7 @@ code{font:.85em ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhe
 .item-body ul{margin:.2rem 0;padding-left:1.2rem}
 .diagnostics{font-size:.88rem;color:var(--muted);margin-bottom:.4rem}
 .variants-label{margin:.4rem 0 0;font-size:.92rem}
-.manual{border-left:3px solid var(--bad);padding:.2rem .7rem;margin:.4rem 0 .6rem}.manual input{width:22rem;max-width:100%;padding:.25rem .4rem;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)}
+
 .variants{margin:.2rem 0 .4rem;font-size:.92rem}
 ol.steps-list li{margin:.35rem 0}
 .toc{columns:2 18rem;padding-left:1.2rem}
@@ -400,23 +396,10 @@ ${unmappedSection}
   var baseInput = document.getElementById("base");
   var savedBase = store.get(PREFIX + "base");
   if (savedBase) baseInput.value = savedBase;
-  var idInputs = Array.prototype.slice.call(document.querySelectorAll("input[data-id-for]"));
-  idInputs.forEach(function (input) {
-    input.value = store.get(PREFIX + "id:" + input.getAttribute("data-id-for")) || "";
-    input.addEventListener("input", function () {
-      store.set(PREFIX + "id:" + input.getAttribute("data-id-for"), input.value.trim());
-      applyBase();
-    });
-  });
   function applyBase() {
     var base = baseInput.value.trim().replace(/\\/+$/, "");
-    var ids = {};
-    idInputs.forEach(function (input) { if (input.value.trim()) ids[input.getAttribute("data-id-for")] = input.value.trim(); });
     document.querySelectorAll("a[data-hash]").forEach(function (a) {
-      var hash = a.getAttribute("data-hash");
-      var original = a.getAttribute("data-char");
-      if (original && ids[original]) hash = hash.replace(encodeURIComponent(original), encodeURIComponent(ids[original]));
-      a.href = base + "/" + hash;
+      a.href = base + "/" + a.getAttribute("data-hash");
     });
   }
   baseInput.addEventListener("input", function () { store.set(PREFIX + "base", baseInput.value.trim()); applyBase(); });

@@ -278,8 +278,6 @@ export interface CharacterFacts {
   readonly equipped: readonly string[];
   readonly known: readonly string[];
   readonly powers: number;
-  /** False when the backup can't carry it (see finish). */
-  readonly restorable: boolean;
 }
 
 const ITEM_TYPES = new Set(["weapon", "armor", "gear", "magic item"]);
@@ -762,12 +760,11 @@ function finish(
   candidate: CharacterRecord,
 ): BuiltCharacter {
   const decoded = JSON.parse(JSON.stringify(candidate)) as unknown;
-  // A record the domain decoder rejects can't go in a backup (restore
-  // validates every record); an imported one is then imported by hand.
-  const restorable = isCharacterRecord(decoded);
-  if (!restorable && spec.kind === "native")
+  // Restore validates every record, so a record the domain decoder rejects
+  // can't go in the backup.
+  if (!isCharacterRecord(decoded))
     throw new Error(`${spec.slug}: record failed the domain decoder`);
-  const saved = restorable ? decoded : candidate;
+  const saved = decoded;
   const evaluation = evaluate(saved.build, context.entities);
   const sheet = buildEvaluatedSheetModel(
     saved.snapshot,
@@ -838,7 +835,6 @@ function finish(
       ),
     known: saved.build.known.map(({ element }) => element.name),
     powers: evaluation.powers.length,
-    restorable,
   };
   return { slug: spec.slug, record: saved, facts };
 }
@@ -947,14 +943,7 @@ async function main(): Promise<void> {
       });
     }
 
-  const characters = built
-    .filter(({ facts }) => facts.restorable)
-    .map(({ record }) => record);
-  for (const { slug, facts } of built)
-    if (!facts.restorable)
-      process.stdout.write(
-        `${slug}: the domain decoder rejects the imported record, so it is not in the backup; the page explains importing it by hand.\n`,
-      );
+  const characters = built.map(({ record }) => record);
   const backup = {
     format: "4ecb-character-backup" as const,
     version: 2 as const,
