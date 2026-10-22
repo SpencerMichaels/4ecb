@@ -115,6 +115,14 @@ wizard, ranger, druid or half-elf.
 - [ ] **Old links:** Shop ritual links and `section=practices` land on the
       Rituals tab.
 
+- [ ] **Free-ritual counter:** a bold line under each "Free rituals:" text,
+      e.g. "3 free 1st-level rituals and 2 free rituals of level 5 or lower
+      left" (wizard at level 5), or "All … used".
+- [ ] **"Learn X free" dialog** when several allowances fit (e.g. a psion
+      learning Tenser's Floating Disk): choose a pool, "None (a gift)" or
+      Cancel.
+- [ ] **Known-list source line:** "Learned free at level N (Spellbook)".
+
 ## Character library and trash
 
 Check in light and dark themes and at 140% zoom.
@@ -159,13 +167,6 @@ Check in light and dark themes and at 140% zoom.
       starts on Cancel, Esc cancels and leaves the trash dialog open, and
       the singular wording reads right with 1 character. Afterwards the
       trash shows "The trash is empty." and the library count reads 0.
-- [ ] **Free-ritual counter:** a bold line under each "Free rituals:" text,
-      e.g. "3 free 1st-level rituals and 2 free rituals of level 5 or lower
-      left" (wizard at level 5), or "All … used".
-- [ ] **"Learn X free" dialog** when several allowances fit (e.g. a psion
-      learning Tenser's Floating Disk): choose a pool, "None (a gift)" or
-      Cancel.
-- [ ] **Known-list source line:** "Learned free at level N (Spellbook)".
 
 ## Free items
 
