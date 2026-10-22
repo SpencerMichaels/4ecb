@@ -518,6 +518,72 @@ rule("beatrix", "Build, level 1: Class", "White Well pact summary", (c) => {
   ];
 });
 
+/** A class's detail card: the heading line and the Key abilities row. */
+function classCard(c: ReviewCharacter, entity: ContentEntity) {
+  const html = candidateDetailHtml(c, entity);
+  const rows = elementsWithClass(html, "entity-stat-grid").flatMap((grid) =>
+    [...grid.matchAll(/<dt>([\s\S]*?)<\/dt><dd>([\s\S]*?)<\/dd>/g)].map(
+      ([, label, value]) => [textOf(label!), textOf(value!)] as const,
+    ),
+  );
+  // The authored fields, independent of the card's own parsing: the first
+  // word of "Striker. You …" and "Arcane. You …"; the key abilities as
+  // written ("Charisma, Dexterity, …").
+  const firstWord = (field: string) =>
+    /^\s*([A-Za-z]+)/.exec(contentSpecificValue(entity, field) ?? "")?.[1];
+  return {
+    summary: elementsWithClass(html, "entity-card-summary").map(textOf),
+    rows,
+    expectedSummary: [firstWord("Power Source"), firstWord("Role")]
+      .filter(Boolean)
+      .join(" "),
+    expectedKeyAbilities: (contentSpecificValue(entity, "Key Abilities") ?? "")
+      .split(/\s*,\s*/)
+      .filter(Boolean)
+      .join(", "),
+  };
+}
+
+rule("beatrix", "Build, level 1: Class", "Class detail card", (c) => {
+  const choice = choicesAt(c, 1).find((item) => key(item.type) === "class");
+  const evaluation = c.atLevels([1]);
+  const selected =
+    choice === undefined
+      ? undefined
+      : selectedDefinition(c, choice, evaluation);
+  const hexblade = c.context.named("Hexblade", "Class");
+  const paladin = c.context.named("Paladin", "Class");
+  return [
+    equal("The Class row's pick", selected?.name, "Hexblade"),
+    ...[
+      [hexblade, "Arcane Striker"],
+      [paladin, "Divine Defender"],
+    ].flatMap(([entity, heading]) => {
+      const card = classCard(c, entity as ContentEntity);
+      const name = (entity as ContentEntity).name;
+      const keyRow = card.rows.filter(([label]) => label === "Key abilities");
+      return [
+        equal(`${name}: the heading line`, card.summary, [heading]),
+        equal(
+          `${name}: the heading is the power source then the role`,
+          card.summary[0],
+          card.expectedSummary,
+        ),
+        equal(
+          `${name}: one "Key abilities" row lists the class's key abilities`,
+          keyRow.map(([, value]) => value),
+          [card.expectedKeyAbilities],
+        ),
+        equal(
+          `${name}: the row heads the class traits grid`,
+          card.rows.findIndex(([label]) => label === "Key abilities"),
+          card.rows.findIndex(([label]) => label === "Armor") - 1,
+        ),
+      ];
+    }),
+  ];
+});
+
 // Beatrix (hexblade 8) has no required swap yet; the hybrid executioner's
 // level-27 encounter swap (Coward's Reward) is the review's Essentials swap.
 rule(
@@ -703,6 +769,128 @@ rule("beatrix", "Print preview", "Printed Deity entry", (c) =>
 rule("beatrix", "Sheet (on screen)", "Granted aliases on feature rows", (c) => [
   onScreenFeature(c, "Fey Pact of the White Well Boon: counts as Fey Pact"),
 ]);
+
+/* ------------------------------------------------------------------ */
+/* White Well hexblade (level 25)                                      */
+/* ------------------------------------------------------------------ */
+
+const HEXBLADE_25 = "hexblade-white-well";
+
+rule(HEXBLADE_25, "Build, level 1: Class", "Benefits by level", (c) => {
+  const pact = c.context.entity(WHITE_WELL);
+  const legendary = c.context.named("Legendary Hexblade", "Paragon Path");
+  const views = [1, 11, 25].map((level) => ({
+    level,
+    ...levelSections(c, pact, level),
+  }));
+  return [
+    equal(
+      "The character's paragon path",
+      entityName(c, c.cards().paragonPathId),
+      legendary.name,
+    ),
+    ...views.map(({ level, sections }) =>
+      equal(
+        `Viewed at level ${level}: only Legendary Hexblade's path section`,
+        sections
+          .map(({ title }) => title)
+          .filter((title) => /Hexblade \(Levels/.test(title)),
+        ["Legendary Hexblade (Levels 11–20)"],
+      ),
+    ),
+    // The White Well's own Legendary Hexblade features (_1D to _6D).
+    equal(
+      "Legendary Hexblade's section: the White Well features' levels",
+      views[0]!.sections.find(({ title }) => /^Legendary Hexblade/.test(title))
+        ?.subheadings,
+      ["Level 11", "Level 12", "Level 16", "Level 20"],
+    ),
+    ...views.map(({ level, sections }) =>
+      equal(
+        `Viewed at level ${level}: sections at or below it start open`,
+        sections.map(
+          ({ title, open }) => `${title}:${open ? "open" : "folded"}`,
+        ),
+        sections.map(({ title }) => {
+          const start = Number(/(\d+)/.exec(title)?.[1] ?? 0);
+          return `${title}:${start <= level ? "open" : "folded"}`;
+        }),
+      ),
+    ),
+  ];
+});
+
+rule(HEXBLADE_25, "Build, level 11", "Other detail stacks", (c) =>
+  detailStack(c, c.context.named("Legendary Hexblade", "Paragon Path")),
+);
+
+/** A printed card's table cells, as text. */
+const tableCells = (html: string): string[] =>
+  [...html.matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/g)].map(([, cell]) =>
+    textOf(cell!),
+  );
+
+rule(HEXBLADE_25, "Print preview", "Summoned allies", (c) => {
+  const deck = printedDeck(c);
+  const level = c.build.effectiveLevel;
+  const attacks = [
+    ["ID_WOG_COMPANION_6_POWERCARD_2", "Ref"],
+    ["ID_WOG_COMPANION_10_POWERCARD_2", "Will"],
+    ["ID_WOG_COMPANION_10_POWERCARD_4", "Will"],
+  ] as const;
+  const checks: Check[] = [equal("The character's level", level, 25)];
+  for (const [id, defense] of attacks) {
+    const name = c.context.entity(id).name;
+    const printed = deck.find(({ label }) => key(label) === key(name));
+    const evaluated = c.evaluation.powers.find(
+      ({ definitionId }) => key(definitionId) === key(id),
+    );
+    const bonuses = (evaluated?.variants ?? []).flatMap((variant) =>
+      (variant.attacks ?? []).map(({ attackBonus }) => attackBonus),
+    );
+    // "your level + 5": the published bonus; no ability, weapon or
+    // implement applies.
+    const expected = level + 5;
+    checks.push(
+      truthy(`${name} is printed`, printed !== undefined),
+      contains(
+        `${name}: the attack header`,
+        printed?.text ?? "",
+        `Level+5 vs ${defense}`,
+      ),
+      equal(
+        `${name}: the evaluated attack bonus is your level + 5`,
+        [...new Set(bonuses)],
+        [expected],
+      ),
+      truthy(
+        `${name}: the card's table prints +${expected}`,
+        tableCells(printed?.html ?? "").includes(`+${expected}`),
+        tableCells(printed?.html ?? "").join(" | "),
+      ),
+    );
+  }
+  const unknown = deck.filter(({ text }) => /unknown/i.test(text));
+  const dashed = deck.filter(({ text }) => /— vs /.test(text));
+  checks.push(
+    truthy(
+      'No printed card reads "UNKNOWN"',
+      unknown.length === 0,
+      unknown.map(({ label }) => label).join(", ") || `${deck.length} cards`,
+    ),
+    lacks(
+      'The printed pages have no "UNKNOWN"',
+      printedPagesFor(c).text.toLocaleUpperCase(),
+      "UNKNOWN",
+    ),
+    truthy(
+      "No attack header falls back to a dash",
+      dashed.length === 0,
+      dashed.map(({ label }) => label).join(", ") || "none",
+    ),
+  );
+  return checks;
+});
 
 /* ------------------------------------------------------------------ */
 /* Hystan and Hu                                                       */

@@ -74,6 +74,9 @@ const UPGRADES_27 = [
   upgrade("4ECB", 27, 5),
 ];
 
+/** Fey Pact of the White Well (hexblade). */
+const WHITE_WELL = "ID_WOG_HEXBLADE_TRAIT_PACKAGE_4";
+
 const preview = "preview";
 const sheet = "sheet";
 const build = (level: number, section?: string) =>
@@ -114,6 +117,10 @@ const reviews: ReviewCharacter[] = [
           [
             "Benefits by level",
             "The White Well pact's level sections, viewed at levels 1, 9 and 12 (change the Build level); also Alchemist, Feytouched and Archmage.",
+          ],
+          [
+            "Class detail card",
+            'Select the Class row (Hexblade): the card\'s heading line reads "Arcane Striker"; a "Key abilities" row with the other class traits.',
           ],
         ],
       },
@@ -184,6 +191,63 @@ const reviews: ReviewCharacter[] = [
           [
             "Granted aliases on feature rows",
             "The on-screen feature list shows the same alias text.",
+          ],
+        ],
+      },
+    ],
+  },
+  {
+    spec: {
+      kind: "native",
+      slug: "hexblade-white-well",
+      title: "Review – White Well Hexblade L25 (Legendary Hexblade)",
+      level: 25,
+      classes: ["ID_FMP_CLASS_793"],
+      preferred: [
+        "ID_FMP_RACE_7",
+        "ID_FMP_CLASS_793",
+        WHITE_WELL,
+        "ID_FMP_PARAGON_PATH_796",
+      ],
+      expectLegal: true,
+      required: [
+        WHITE_WELL,
+        "ID_FMP_PARAGON_PATH_796",
+        "ID_WOG_COMPANION_6_POWERCARD_2",
+        "ID_WOG_COMPANION_10_POWERCARD_2",
+        "ID_WOG_COMPANION_10_POWERCARD_4",
+      ],
+    },
+    purpose:
+      "Human hexblade of the White Well at level 25 with Legendary Hexblade: the Mourning Handmaiden and Spectral Protector summoned allies.",
+    links: [
+      {
+        label: "Build, level 1: Class",
+        path: build(1, "class"),
+        items: [
+          [
+            "Benefits by level",
+            "The White Well pact's level sections with Legendary Hexblade chosen: only its path section (the White Well's own features at levels 11, 12, 16 and 20). Change the Build level to 11 and 25 to see the sections open.",
+          ],
+        ],
+      },
+      {
+        label: "Build, level 11",
+        path: build(11),
+        items: [
+          [
+            "Other detail stacks",
+            "Paragon path: the Legendary Hexblade stack.",
+          ],
+        ],
+      },
+      {
+        label: "Print preview",
+        path: preview,
+        items: [
+          [
+            "Summoned allies",
+            'Mourning Handmaiden\'s Attack "Level+5 vs Ref"; Spectral Protector\'s Attack and Opportunity "Level+5 vs Will", each with its number; no "UNKNOWN" on any card.',
           ],
         ],
       },

@@ -34,6 +34,10 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
     "The required replacement choices exist, are filled, and offer only powers of the matching kind to lose.",
     "Filling one in the Build replacement editor feels right.",
   ),
+  "beatrix|0|class detail card": mixed(
+    'The Hexblade card\'s heading line is "Arcane Striker" (power source, then role; Paladin\'s "Divine Defender" too), and one "Key abilities" row at the head of the class traits grid lists the class\'s key abilities as authored.',
+    "How the heading line and the Key abilities row look beside the other traits.",
+  ),
   "beatrix|1|revenant past life": auto(
     "The Past life (CountsAsRace) choice is in the Race section, picked as Eladrin.",
   ),
@@ -65,6 +69,19 @@ export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
   ),
   "beatrix|5|granted aliases on feature rows": auto(
     "The on-screen feature list shows the same alias text.",
+  ),
+  // White Well hexblade (level 25)
+  "hexblade-white-well|0|benefits by level": mixed(
+    "With Legendary Hexblade chosen, only its path section remains, with Level 11 / 12 / 16 / 20 subheadings, and the sections at or below the viewed level (1, 11, 25) start open.",
+    "How the path section reads when opened.",
+  ),
+  "hexblade-white-well|1|other detail stacks": mixed(
+    "Legendary Hexblade's stack lists its features and powers.",
+    "How the stack looks.",
+  ),
+  "hexblade-white-well|2|summoned allies": mixed(
+    'Mourning Handmaiden\'s Attack is headed "Level+5 vs Ref" and Spectral Protector\'s Attack and Opportunity "Level+5 vs Will", each evaluated and printed as your level + 5 (+30 at level 25); no printed card or page reads "UNKNOWN", and no attack header falls back to a dash.',
+    "How the summoned allies' cards look.",
   ),
   // Hystan
   "hystan|0|granted aliases on feature rows": auto(
