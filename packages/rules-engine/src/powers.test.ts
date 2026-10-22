@@ -2761,6 +2761,7 @@ describe("item implement metadata", () => {
     entity("WARLOCK", "Warlock", "Class", {}),
     entity("CLERIC", "Cleric", "Class", {}),
     entity("ARCANE", "Arcane", "Power Source", {}),
+    entity("DIVINE", "Divine", "Power Source", {}),
     entity("DWARF", "Dwarf", "Race", {}),
     entity("DAGGER", "Dagger", "Weapon", {
       Damage: "1d4",
@@ -2845,6 +2846,18 @@ describe("item implement metadata", () => {
       "Holy Avenger Dagger +5",
     );
     expect(variantsFor("PRAYER", [avenger])).toEqual(["Unarmed"]);
+  });
+
+  it("uses a weapon scoped to a power source as an implement for its powers", () => {
+    // Rose Scythe of Chauntea: a staff implement for a divine or primal
+    // character, whatever their weapon proficiencies.
+    const scythe = entity("SCYTHE", "Rose Scythe +2", "Magic Item", {
+      "Magic Item Type": "Weapon",
+      Enhancement: "+2 attack rolls and damage rolls",
+      _ImplementForPower: "DIVINE, PRIMAL",
+    });
+    expect(variantsFor("PRAYER", [scythe])).toContain("Rose Scythe Dagger +2");
+    expect(variantsFor("CURSE", [scythe], ["WARLOCK"])).toEqual(["Unarmed"]);
   });
 
   it("matches power-source and paragon-path scopes and universal implements", () => {

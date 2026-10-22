@@ -79,9 +79,14 @@
   <!-- Rose Scythe of Chauntea +1 to +6: the implement bonus requires
        "divine class or primal class", prose that names no record, so it
        never applied. It now requires the Divine or Primal power source,
-       which every divine or primal class (hybrids included) grants. -->
+       which every divine or primal class (hybrids included) grants.
+       The scythe "functions as a staff implement" for such a character, but
+       only in prose, so the engine never counted it as an implement and the
+       proficient-implements filter (D081) hid its row on implement powers.
+       `_ImplementForPower` scopes it to divine and primal powers. -->
   <RemoveNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-1"><rules /></RemoveNodes>
   <AppendNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-1">
+    <specific name="_ImplementForPower">ID_FMP_POWER_SOURCE_3, ID_FMP_POWER_SOURCE_4</specific>
     <rules>
       <statadd name="implement:attack" value="+1" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
       <statadd name="implement:damage" value="+1" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
@@ -89,6 +94,7 @@
   </AppendNodes>
   <RemoveNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-2"><rules /></RemoveNodes>
   <AppendNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-2">
+    <specific name="_ImplementForPower">ID_FMP_POWER_SOURCE_3, ID_FMP_POWER_SOURCE_4</specific>
     <rules>
       <statadd name="implement:attack" value="+2" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
       <statadd name="implement:damage" value="+2" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
@@ -96,6 +102,7 @@
   </AppendNodes>
   <RemoveNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-3"><rules /></RemoveNodes>
   <AppendNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-3">
+    <specific name="_ImplementForPower">ID_FMP_POWER_SOURCE_3, ID_FMP_POWER_SOURCE_4</specific>
     <rules>
       <statadd name="implement:attack" value="+3" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
       <statadd name="implement:damage" value="+3" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
@@ -103,6 +110,7 @@
   </AppendNodes>
   <RemoveNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-4"><rules /></RemoveNodes>
   <AppendNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-4">
+    <specific name="_ImplementForPower">ID_FMP_POWER_SOURCE_3, ID_FMP_POWER_SOURCE_4</specific>
     <rules>
       <statadd name="implement:attack" value="+4" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
       <statadd name="implement:damage" value="+4" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
@@ -110,6 +118,7 @@
   </AppendNodes>
   <RemoveNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-5"><rules /></RemoveNodes>
   <AppendNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-5">
+    <specific name="_ImplementForPower">ID_FMP_POWER_SOURCE_3, ID_FMP_POWER_SOURCE_4</specific>
     <rules>
       <statadd name="implement:attack" value="+5" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
       <statadd name="implement:damage" value="+5" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
@@ -117,6 +126,7 @@
   </AppendNodes>
   <RemoveNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-6"><rules /></RemoveNodes>
   <AppendNodes internal-id="ID_TIV_MAGIC_ITEM_DRAGON_MAGAZINE_412-18-6">
+    <specific name="_ImplementForPower">ID_FMP_POWER_SOURCE_3, ID_FMP_POWER_SOURCE_4</specific>
     <rules>
       <statadd name="implement:attack" value="+6" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
       <statadd name="implement:damage" value="+6" type="item" requires="ID_FMP_POWER_SOURCE_3|ID_FMP_POWER_SOURCE_4" />
