@@ -131,6 +131,34 @@ describe("content pack", () => {
     );
   });
 
+  it("overrides an earlier layer's entity whose ID differs only in case", async () => {
+    const baseline = await buildContentPack(
+      {
+        ...source,
+        entities: [{ ...source.entities[0]!, id: "ID_TEST_horse-6" }],
+      },
+      { packId: "baseline", name: "Baseline" },
+    );
+    const corrections = await buildContentPack(
+      {
+        ...source,
+        sourceKey: "corrections.xml",
+        entities: [
+          { ...source.entities[0]!, id: "ID_TEST_HORSE-6", name: "Fixed" },
+        ],
+      },
+      { packId: "corrections", name: "Corrections" },
+    );
+    const composed = await composeContentPacks([baseline, corrections], {
+      packId: "profile",
+      name: "Layered profile",
+    });
+    expect(composed.pack.entities.map(({ id, name }) => [id, name])).toEqual([
+      ["ID_TEST_HORSE-6", "Fixed"],
+    ]);
+    expect((await validateContentPack(composed.pack)).valid).toBe(true);
+  });
+
   it("rejects unsafe or oversized profile identity fields", async () => {
     expect(contentPackIdentityErrors("../private", "Local rules")).toHaveLength(
       1,

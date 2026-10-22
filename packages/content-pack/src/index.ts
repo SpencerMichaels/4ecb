@@ -235,9 +235,12 @@ export async function composeContentPacks(
   }
   const resolved = new Map<string, ContentEntity>();
   const collisions: ContentDiagnostic[] = [];
+  // Keyed ignoring case, as entity IDs are everywhere else (validation, rule
+  // lookup): a later layer that corrects an ID's capitalisation overrides it.
   for (const pack of packs) {
     for (const entity of pack.entities) {
-      const previous = resolved.get(entity.id);
+      const key = entity.id.toLocaleLowerCase();
+      const previous = resolved.get(key);
       if (previous !== undefined)
         collisions.push({
           severity: "info",
@@ -245,7 +248,7 @@ export async function composeContentPacks(
           message: `${entity.id} from ${pack.manifest.packId} overrides an earlier layer`,
           entityId: entity.id,
         });
-      resolved.set(entity.id, entity);
+      resolved.set(key, entity);
     }
   }
   const entities = [...resolved.values()].sort((left, right) =>
