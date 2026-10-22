@@ -6,6 +6,7 @@ import {
   type BeastCompanionSkillInput,
   type BeastCompanionStatistics,
 } from "./derived-values";
+import { parseRules } from "./ir";
 import type { EvaluatedStat } from "./stats";
 
 /** The character's beast companion, evaluated once per character evaluation. */
@@ -105,6 +106,37 @@ export function evaluateBeastCompanion(input: {
   return undefined;
 }
 
+const ABILITY_STAT =
+  /^companion\.(?:strength|constitution|dexterity|intelligence|wisdom|charisma)$/i;
+
+/**
+ * A candidate record's own unconditional, numeric statadds at `level`, as
+ * choosing it would add them. Its `Companion.<Ability>` statadds are left
+ * out: the preview reads abilities from the record's fields.
+ */
+function candidateOwnStats(
+  entity: ContentEntity,
+  level: number,
+): Record<string, number> {
+  const own: Record<string, number> = {};
+  for (const rule of parseRules(entity.id, entity.rules)) {
+    if (
+      rule.kind !== "statadd" ||
+      ABILITY_STAT.test(rule.name.trim()) ||
+      rule.requires !== undefined ||
+      rule.condition !== undefined ||
+      rule.wearing !== undefined ||
+      rule.notWearing !== undefined ||
+      level < rule.source.level.minimum ||
+      level > rule.source.level.maximum ||
+      !/^[+-]?\d+$/.test(rule.value.trim())
+    )
+      continue;
+    own[rule.name] = (own[rule.name] ?? 0) + Number(rule.value.trim());
+  }
+  return own;
+}
+
 /** A `Companion` record with a beast stat block (`isBeastCompanionFields`). */
 export function isBeastCompanionEntity(
   entity: ContentEntity | undefined,
@@ -120,8 +152,9 @@ export function isBeastCompanionEntity(
 /**
  * A beast companion record as the character would have it: the evaluated
  * beast itself when it is the one chosen, else a preview (builder candidate
- * pane) from the record's fields and the character's companion bonuses from
- * other sources, without the chosen beast's own contributions.
+ * pane) from the record's fields, its own statadds, and the character's
+ * companion bonuses from other sources, without the chosen beast's own
+ * contributions.
  */
 export function previewBeastCompanion(input: {
   readonly entity: ContentEntity;
@@ -150,6 +183,7 @@ export function previewBeastCompanion(input: {
       skills: beastCompanionSkills(fields, input.content),
       candidate: {
         replacedProviderIds: chosen === undefined ? [] : [chosen.occurrenceId],
+        ownStats: candidateOwnStats(entity, input.level),
       },
     }),
   };

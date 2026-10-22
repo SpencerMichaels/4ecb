@@ -270,6 +270,59 @@ const BEAST_DEFENSE_STATS = [
   ["will", "Will Defense", ["Will Defense", "Will"]],
 ] as const;
 
+/**
+ * The character's stats as a candidate beast would leave them: without the
+ * applied contributions of the providers it replaces, and with its own
+ * statadds.
+ */
+function candidateStats(
+  stats: Readonly<Record<string, EvaluatedStat>>,
+  candidate: {
+    readonly replacedProviderIds: readonly string[];
+    readonly ownStats?: Readonly<Record<string, number>>;
+  },
+): Record<string, EvaluatedStat> {
+  const replaced = new Set(candidate.replacedProviderIds);
+  const adjusted: Record<string, EvaluatedStat> = {};
+  for (const [name, stat] of Object.entries(stats)) {
+    const removed = stat.contributions.filter((contribution) =>
+      replaced.has(contribution.providerId),
+    );
+    if (removed.length === 0 || typeof stat.value !== "number") {
+      adjusted[name] = stat;
+      continue;
+    }
+    adjusted[name] = {
+      ...stat,
+      value:
+        stat.value -
+        removed
+          .filter((contribution) => contribution.applied)
+          .reduce(
+            (total, contribution) => total + (contribution.numericValue ?? 0),
+            0,
+          ),
+      contributions: stat.contributions.filter(
+        (contribution) => !replaced.has(contribution.providerId),
+      ),
+    };
+  }
+  for (const [name, value] of Object.entries(candidate.ownStats ?? {})) {
+    const wanted = name.trim().toLocaleLowerCase();
+    const existing = Object.keys(adjusted).find(
+      (candidateName) => candidateName.trim().toLocaleLowerCase() === wanted,
+    );
+    const stat = existing === undefined ? undefined : adjusted[existing];
+    const current = Number(stat?.value ?? 0);
+    adjusted[existing ?? name] = {
+      name: stat?.name ?? name,
+      value: (Number.isFinite(current) ? current : 0) + value,
+      contributions: stat?.contributions ?? [],
+    };
+  }
+  return adjusted;
+}
+
 function formatModifierDamage(die: string, modifier: number): string {
   return modifier === 0 ? die : `${die}${modifier > 0 ? "+" : ""}${modifier}`;
 }
@@ -282,17 +335,27 @@ function formatModifierDamage(die: string, modifier: number): string {
  *
  * Abilities are the `Companion.<Ability>` stats (the record's own statadds,
  * Companion Ability Increase picks and the tier +1s). For a candidate record
- * that is not chosen, pass `candidate`: its fields replace the contributions
- * of the providers it would replace (the currently chosen beast).
+ * that is not chosen, pass `candidate`: its fields and its own statadds
+ * (`ownStats`, such as a sentinel companion's `BEAST.Healing Surges -2`)
+ * replace the contributions of the providers it would replace (the
+ * currently chosen beast).
  */
 export function beastCompanionStatistics(input: {
   readonly fields: Readonly<Record<string, string>>;
   readonly stats: Readonly<Record<string, EvaluatedStat>>;
   readonly level: number;
   readonly skills?: readonly BeastCompanionSkillInput[];
-  readonly candidate?: { readonly replacedProviderIds: readonly string[] };
+  readonly candidate?: {
+    readonly replacedProviderIds: readonly string[];
+    /** The candidate's own statadds other than its abilities, by stat. */
+    readonly ownStats?: Readonly<Record<string, number>>;
+  };
 }): BeastCompanionStatistics {
-  const { fields, stats, level } = input;
+  const { fields, level } = input;
+  const stats =
+    input.candidate === undefined
+      ? input.stats
+      : candidateStats(input.stats, input.candidate);
   const bonus = (stat: string) => companionStatBonus(stats, "BEAST", stat);
   const read: EvaluatedStat[] = [];
   const track = (name: string) => {
@@ -304,7 +367,6 @@ export function beastCompanionStatistics(input: {
       track(`${prefix}.${stat}`);
   };
 
-  const replaced = new Set(input.candidate?.replacedProviderIds ?? []);
   const abilities = Object.fromEntries(
     BEAST_ABILITY_NAMES.map((ability) => {
       const statName = `Companion.${ability}`;
@@ -313,17 +375,7 @@ export function beastCompanionStatistics(input: {
         input.candidate === undefined
           ? (numericStat(stats, statName) ?? leadingNumber(fields[ability]))
           : leadingNumber(fieldValue(fields, ability)) +
-            (evaluatedStat(stats, statName)?.contributions ?? [])
-              .filter(
-                (contribution) =>
-                  contribution.applied &&
-                  !replaced.has(contribution.providerId),
-              )
-              .reduce(
-                (total, contribution) =>
-                  total + (contribution.numericValue ?? 0),
-                0,
-              );
+            (numericStat(stats, statName) ?? 0);
       return [ability, { score, modifier: abilityModifier(score) }];
     }),
   ) as Record<BeastAbilityName, BeastCompanionAbility>;

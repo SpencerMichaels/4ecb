@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import type { ContentEntity, RuleStatement } from "@4ecb/content-domain";
 
-import { evaluateCharacter, type CharacterOccurrence } from "./evaluator";
+import { previewBeastCompanion } from "./beast-companion";
+import {
+  evaluateCharacter,
+  sharedRulesIndex,
+  type CharacterOccurrence,
+} from "./evaluator";
 import {
   beastCompanionStatistics,
   companionStatBonus,
@@ -90,6 +95,18 @@ const bearFields = {
   "Trained Skills": "SKILL_ATHLETICS, SKILL_ENDURANCE",
 };
 
+// A sentinel companion (Heroes of the Forgotten Kingdoms): it spends your
+// surges, which the record writes as its own statadd.
+const sentinelWolfFields = {
+  ...bearFields,
+  Strength: "14",
+  Dexterity: "18",
+  "Hit Points at 1st Level": "",
+  "Hit Points per Level Gained": "",
+  "_Hit Points": "bloodied",
+  "Ability Score": "your Wisdom + your Constitution",
+};
+
 const content: ContentEntity[] = [
   entity("ROOT", "1", "Level", {
     rules: [
@@ -126,6 +143,16 @@ const content: ContentEntity[] = [
         statadd(`Companion.${ability}`, `+${bearFields[ability]}`),
       ),
       rule("grant", { name: "BEAST_BASIC_ATTACK", type: "Power" }),
+    ],
+  }),
+  entity("SENTINEL_WOLF", "Wolf Companion", "Companion", {
+    specifics: sentinelWolfFields,
+    rules: [
+      ...ABILITIES.map((ability) =>
+        statadd(`Companion.${ability}`, `+${sentinelWolfFields[ability]}`),
+      ),
+      statadd("BEAST.Healing Surges", "-2"),
+      statadd("BEAST.AC", "+1", { Level: "11" }),
     ],
   }),
   ...ABILITIES.map((ability) =>
@@ -213,7 +240,11 @@ const tiers = (level: number) => [
   ...(level >= 21 ? [occurrence("TIER_EPIC", 21)] : []),
 ];
 
-function evaluate(level: number, extra: readonly string[] = []) {
+function evaluate(
+  level: number,
+  extra: readonly string[] = [],
+  beast = "BEAR",
+) {
   return evaluateCharacter(
     {
       level,
@@ -222,7 +253,7 @@ function evaluate(level: number, extra: readonly string[] = []) {
         occurrence("ROOT"),
         ...tiers(level),
         occurrence("BEAST_MASTERY"),
-        occurrence("BEAR"),
+        occurrence(beast),
         occurrence("BEAST_BASIC_ATTACK"),
         ...extra.map((id) => occurrence(id)),
       ],
@@ -402,6 +433,62 @@ describe("beast companion statistics", () => {
     });
     // 20 + the paragon +1, without the chosen bear's own 16.
     expect(candidate.abilities.Strength.score).toBe(21);
+  });
+
+  it("previews a candidate with its own statadds, as choosing it would", () => {
+    const preview = (candidateId: string, chosenId: string, level: number) => {
+      const evaluation = evaluate(level, ["STURDY_BEAST"], chosenId);
+      return previewBeastCompanion({
+        entity: content.find(({ id }) => id === candidateId)!,
+        level,
+        stats: evaluation.stats,
+        chosen: evaluation.beastCompanion!,
+        fieldsOf: (record) =>
+          Object.fromEntries(
+            record.specifics.map(({ name, value }) => [name, value]),
+          ),
+        content: sharedRulesIndex(content),
+      })!.statistics;
+    };
+    const chosen = (beast: string, level: number) => {
+      const { contributions: _contributions, ...statistics } = evaluate(
+        level,
+        ["STURDY_BEAST"],
+        beast,
+      ).beastCompanion!.statistics;
+      void _contributions;
+      return statistics;
+    };
+    for (const level of [3, 11]) {
+      // The wolf's own -2 surges (Sturdy Beast's +1 is not enough to share
+      // no surges), and its 11th-level +1 AC.
+      expect(preview("SENTINEL_WOLF", "BEAR", level)).toMatchObject(
+        chosen("SENTINEL_WOLF", level),
+      );
+      // The chosen wolf's own statadds leave a bear candidate.
+      expect(preview("BEAR", "SENTINEL_WOLF", level)).toMatchObject(
+        chosen("BEAR", level),
+      );
+    }
+    expect(preview("SENTINEL_WOLF", "BEAR", 3)).toMatchObject({
+      healingSurgesPerDay: 1,
+      sharesHealingSurges: false,
+    });
+    expect(preview("BEAR", "SENTINEL_WOLF", 3).healingSurgesPerDay).toBe(3);
+    // Without Sturdy Beast the wolf candidate shares your surges ("Yours").
+    expect(
+      previewBeastCompanion({
+        entity: content.find(({ id }) => id === "SENTINEL_WOLF")!,
+        level: 3,
+        stats: evaluate(3).stats,
+        chosen: evaluate(3).beastCompanion!,
+        fieldsOf: (record) =>
+          Object.fromEntries(
+            record.specifics.map(({ name, value }) => [name, value]),
+          ),
+        content: sharedRulesIndex(content),
+      })!.statistics,
+    ).toMatchObject({ healingSurgesPerDay: 0, sharesHealingSurges: true });
   });
 
   it("gives the sentinel's companion your bloodied value and your surges", () => {
