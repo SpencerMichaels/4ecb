@@ -719,6 +719,51 @@ describe("builder planning UI", () => {
     expect(choiceTableSummary(feat, "feat")).toBe("Gain a +2 feat bonus.");
     expect(choiceTableSummary(power, "power")).toBe("Move before striking.");
     expect(choiceTableSummary(deity, "deity")).toBe("Lawful Good");
+    const pact = {
+      ...level(0),
+      type: "Trait Package",
+      flavor: "A long paragraph about the pact.",
+      specifics: [
+        {
+          name: "Short Description",
+          value: "You have the Synthetic pact.",
+          extraAttributes: [],
+          ordinal: 0,
+        },
+      ],
+    };
+    expect(choiceTableSummary(pact, "option")).toBe(
+      "You have the Synthetic pact.",
+    );
+    expect(choiceTableSummary({ ...pact, specifics: [] }, "option")).toBe(
+      "A long paragraph about the pact.",
+    );
+    // The Short Description rule holds for every option type, not just
+    // trait packages; deities and presets keep their own columns.
+    for (const [type, kind] of [
+      ["Racial Trait", "option"],
+      ["Background", "background"],
+      ["Power", "power"],
+      ["Class Feature", "feature"],
+    ] as const)
+      expect(choiceTableSummary({ ...pact, type }, kind)).toBe(
+        "You have the Synthetic pact.",
+      );
+    expect(choiceTableSummary({ ...pact, specifics: [] }, "feat")).toBe(
+      undefined,
+    );
+    expect(
+      choiceTableSummary(
+        { ...pact, specifics: [], description: "First. Second." },
+        "feature",
+      ),
+    ).toBe("First.");
+    expect(
+      choiceTableSummary(
+        { ...deity, specifics: [...deity.specifics, ...pact.specifics] },
+        "deity",
+      ),
+    ).toBe("Lawful Good");
     expect(deityTableDescription(deity)).toBe(
       "Uphold justice wherever it is threatened.",
     );

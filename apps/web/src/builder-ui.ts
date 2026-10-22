@@ -640,16 +640,17 @@ export function choiceTableSummary(
   entity: ContentEntity,
   kind: ChoiceSelectionTableKind,
 ): string | undefined {
-  if (kind === "feat") return contentSpecificValue(entity, "Short Description");
-  if (kind === "class")
-    return contentSpecificValue(entity, "Short Description");
-  if (kind === "feature")
-    return (
-      contentSpecificValue(entity, "Short Description") ??
-      firstSentence(entity.description)
-    );
   if (kind === "deity") return contentSpecificValue(entity, "Alignment");
   if (kind === "preset") return firstSentence(entity.description);
+  // Any other option summarizes itself by its authored one-line Short
+  // Description when it has one (a feat's benefit, a pact's "You have the Fey
+  // pact."); its flavor is often a paragraph. Without one, feats and classes
+  // show nothing, features their first sentence and other options their
+  // flavor or description.
+  const short = contentSpecificValue(entity, "Short Description")?.trim();
+  if (short) return short;
+  if (kind === "feat" || kind === "class") return undefined;
+  if (kind === "feature") return firstSentence(entity.description);
   return entity.flavor?.trim() || entity.description.trim() || undefined;
 }
 
