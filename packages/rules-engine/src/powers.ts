@@ -709,6 +709,13 @@ export const BEAST_ATTACK_STAT = "Beast";
 const BEAST_ABILITY_DAMAGE =
   /\b(?:your\s+)?beast(?:'s)?\s+(Strength|Constitution|Dexterity|Intelligence|Wisdom|Charisma|ability)(?:'s)?\s+modifier\b/gi;
 
+/** A summoned creature's fixed attack line: "your level + 5 vs. Will". The
+ *  summoner attacks through the creature with this bonus alone. */
+const LEVEL_ATTACK_LINE =
+  /^\s*(?:your\s+)?level\s*\+\s*(\d+)\s+vs\.?\s+([A-Za-z]+)/i;
+/** The attack stat of a "your level + N" attack. */
+export const LEVEL_ATTACK_STAT = "Level";
+
 function isBeastAttackLine(line: string | undefined): boolean {
   return BEAST_ATTACK_LINE.test(line ?? "");
 }
@@ -2145,6 +2152,36 @@ export function evaluatePowers(input: {
               ? {}
               : { attackType: phaseAttackType }),
             attacker: "beast",
+            attackComponents,
+          };
+        }
+        // A summoned creature attacks with your level plus a fixed bonus;
+        // no ability, weapon or implement applies, only bonuses keyed to
+        // this power.
+        const levelAttack = LEVEL_ATTACK_LINE.exec(authoredLine);
+        if (levelAttack !== null) {
+          const powerBonus = Number(levelAttack[1]);
+          const attackComponents: PowerComponent[] = [
+            { label: "your level", value: input.level },
+            { label: "power attack bonus", value: powerBonus },
+            ...powerSpecificComponents(input.stats, power, "attack"),
+          ];
+          return {
+            id: `${power.id}:attack-${definition.ordinal}`,
+            ordinal: definition.ordinal,
+            attackStat: LEVEL_ATTACK_STAT,
+            powerBonus,
+            defense: levelAttack[2] ?? "Unknown",
+            attackBonus: attackComponents.reduce(
+              (sum, component) => sum + component.value,
+              0,
+            ),
+            ...(definition.target === undefined
+              ? {}
+              : { target: definition.target }),
+            ...(phaseAttackType === undefined
+              ? {}
+              : { attackType: phaseAttackType }),
             attackComponents,
           };
         }

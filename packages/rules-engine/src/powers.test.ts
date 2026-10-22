@@ -1960,6 +1960,68 @@ describe("power evaluation", () => {
 
     expect(power?.variants[0]?.damage).toBe("1d8");
     expect(power?.unsupported).toContain("companion-ability:BEAST_POWER");
+    // With no beast the attack stays unresolved and unusable, never a
+    // character attack bonus.
+    expect(power?.variants[0]?.attacks?.[0]).toMatchObject({
+      attackStat: "Unknown",
+      defense: "Will",
+      eligible: false,
+    });
+  });
+
+  it("attacks through a summoned creature with your level plus its bonus", () => {
+    const summoned = (attack: string, overlay?: string) =>
+      evaluatePowers({
+        level: 25,
+        activeDefinitionIds: ["SUMMONED"],
+        inventory: [],
+        stats: {
+          "Charisma modifier": stat("Charisma modifier", 6),
+          "Strength modifier": stat("Strength modifier", 2),
+        },
+        overlays:
+          overlay === undefined
+            ? []
+            : [
+                {
+                  providerOccurrenceId: "SUMMONED",
+                  targetDefinitionIds: ["SUMMONED"],
+                  field: "Attack",
+                  value: overlay,
+                },
+              ],
+        entities: [
+          entity("SUMMONED", "Synthetic Summoned Attack", "Power", {
+            "Attack Type": "Close blast 3",
+            Target: "Enemies in the blast",
+            Attack: attack,
+            Hit: "2d12 + your Charisma modifier psychic damage.",
+          }),
+        ],
+      })[0];
+
+    const direct = summoned("Your level + 5 vs. Will");
+    expect(direct?.variants).toHaveLength(1);
+    expect(direct?.variants[0]?.attacks?.[0]).toMatchObject({
+      attackStat: "Level",
+      powerBonus: 5,
+      defense: "Will",
+      attackBonus: 30,
+      damage: "2d12+6",
+    });
+    expect(direct?.variants[0]?.attacks?.[0]?.eligible).toBeUndefined();
+    expect(direct?.unsupported).toEqual([]);
+
+    // A content correction overlays a beast-phrased line with the formula.
+    const corrected = summoned(
+      "Beast's attack bonus vs. Will",
+      "your level + 3 vs. Will",
+    );
+    expect(corrected?.variants[0]?.attacks?.[0]).toMatchObject({
+      attackStat: "Level",
+      attackBonus: 28,
+    });
+    expect(corrected?.unsupported).toEqual([]);
   });
 
   it("classifies healing surges and temporary hit point effects", () => {

@@ -88,6 +88,28 @@ describe("printed authored attack phases", () => {
       }),
     ).toBe("Beast +12 vs Ref");
   });
+  it("heads a summoned creature's attack with your level and its bonus", () => {
+    expect(
+      printAttackHeader({
+        id: "summoned",
+        ordinal: 1,
+        ability: "Level",
+        powerBonus: 5,
+        attack: "+30 vs Will",
+      }),
+    ).toBe("Level+5 vs Will");
+  });
+  it("heads an unresolved attack with a dash, never UNKNOWN", () => {
+    expect(
+      printAttackHeader({
+        id: "unresolved",
+        ordinal: 1,
+        ability: "Unknown",
+        powerBonus: 0,
+        attack: "+12 vs Will",
+      }),
+    ).toBe("— vs Will");
+  });
   it("retains both headers and both Hit blocks with only a cached primary total", () => {
     const attacks = fallbackPrintAttacks(card, {
       id: "weapon",

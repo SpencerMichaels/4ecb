@@ -1,0 +1,64 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Summoned allies whose attack lines were authored as a beast companion's.
+  The content writes each attack of a hexblade's summoned warlock's ally and
+  a binder's ally as "Beast's attack bonus vs. X", but these creatures are
+  not beast companions: the summoner attacks through the creature with a
+  fixed bonus of "your level + N" (Heroes of the Forgotten Kingdoms
+  pp. 227-236; Heroes of Shadow pp. 77-81 and 94-96; Dragon 393 and 406 via
+  the D&D Insider compendium's associate entries). With no beast companion
+  the rules engine had no attack bonus to use and cards printed "UNKNOWN".
+
+  Each power overlays its own machine-read Attack field with the published
+  formula (a field fix, no prose; D089). The overlay keeps the field in
+  place, so the Hit line stays grouped under its attack on the card. The
+  defenses are unchanged; only the bonus differs where the creature's is
+  not + 5.
+-->
+<D20Rules game-system="D&amp;D4E">
+  <!-- Hexblade: Summon Warlock's Ally (level 9). -->
+  <!-- Wood woad guardian (Fey; HotFK p. 227). -->
+  <AppendNodes internal-id="ID_WOG_COMPANION_3_POWERCARD_2"><rules><modify name="ID_WOG_COMPANION_3_POWERCARD_2" Field="Attack" value="your level + 5 vs. Fortitude" /></rules></AppendNodes>
+  <!-- Spined devil lackey (Infernal; HotFK p. 233): both attacks. -->
+  <AppendNodes internal-id="ID_WOG_COMPANION_4_POWERCARD_2"><rules><modify name="ID_WOG_COMPANION_4_POWERCARD_2" Field="Attack" value="your level + 5 vs. Reflex" /></rules></AppendNodes>
+  <AppendNodes internal-id="ID_WOG_COMPANION_4_POWERCARD_3"><rules><modify name="ID_WOG_COMPANION_4_POWERCARD_3" Field="Attack" value="your level + 5 vs. Reflex" /></rules></AppendNodes>
+  <!-- Thought phantom (Star; Dragon 393): + 3, not + 5. -->
+  <AppendNodes internal-id="ID_WOG_COMPANION_5_POWERCARD_2"><rules><modify name="ID_WOG_COMPANION_5_POWERCARD_2" Field="Attack" value="your level + 3 vs. Will" /></rules></AppendNodes>
+  <!-- Mourning handmaiden (White Well; Dragon 393). -->
+  <AppendNodes internal-id="ID_WOG_COMPANION_6_POWERCARD_2"><rules><modify name="ID_WOG_COMPANION_6_POWERCARD_2" Field="Attack" value="your level + 5 vs. Reflex" /></rules></AppendNodes>
+  <!-- Dark creeper (Gloom; Heroes of Shadow p. 94): + 7. -->
+  <AppendNodes internal-id="ID_HOS_COMPANION_1_POWERCARD_2"><rules><modify name="ID_HOS_COMPANION_1_POWERCARD_2" Field="Attack" value="your level + 7 vs. AC" /></rules></AppendNodes>
+
+  <!-- Hexblade: Greater Summon Warlock's Ally (level 25). -->
+  <!-- Frostblight treant protector (Fey; HotFK p. 230): attack and opportunity attack. -->
+  <AppendNodes internal-id="ID_WOG_COMPANION_7_POWERCARD_2"><rules><modify name="ID_WOG_COMPANION_7_POWERCARD_2" Field="Attack" value="your level + 5 vs. Fortitude" /></rules></AppendNodes>
+  <AppendNodes internal-id="ID_WOG_COMPANION_7_POWERCARD_4"><rules><modify name="ID_WOG_COMPANION_7_POWERCARD_4" Field="Attack" value="your level + 5 vs. Reflex" /></rules></AppendNodes>
+  <!-- Pit fiend servitor (Infernal; HotFK p. 236): attack and opportunity attack. -->
+  <AppendNodes internal-id="ID_WOG_COMPANION_8_POWERCARD_2"><rules><modify name="ID_WOG_COMPANION_8_POWERCARD_2" Field="Attack" value="your level + 5 vs. Reflex" /></rules></AppendNodes>
+  <AppendNodes internal-id="ID_WOG_COMPANION_8_POWERCARD_4"><rules><modify name="ID_WOG_COMPANION_8_POWERCARD_4" Field="Attack" value="your level + 5 vs. Fortitude" /></rules></AppendNodes>
+  <!-- Way walker (Star; Dragon 393). -->
+  <AppendNodes internal-id="ID_WOG_COMPANION_9_POWERCARD_2"><rules><modify name="ID_WOG_COMPANION_9_POWERCARD_2" Field="Attack" value="your level + 5 vs. Will" /></rules></AppendNodes>
+  <!-- Spectral protector (White Well; Dragon 393): attack and opportunity attack. -->
+  <AppendNodes internal-id="ID_WOG_COMPANION_10_POWERCARD_2"><rules><modify name="ID_WOG_COMPANION_10_POWERCARD_2" Field="Attack" value="your level + 5 vs. Will" /></rules></AppendNodes>
+  <AppendNodes internal-id="ID_WOG_COMPANION_10_POWERCARD_4"><rules><modify name="ID_WOG_COMPANION_10_POWERCARD_4" Field="Attack" value="your level + 5 vs. Will" /></rules></AppendNodes>
+  <!-- Sorrowsworn (Gloom; Heroes of Shadow p. 96): + 7 attack, + 5 opportunity attack. -->
+  <AppendNodes internal-id="ID_HOS_COMPANION_2_POWERCARD_2"><rules><modify name="ID_HOS_COMPANION_2_POWERCARD_2" Field="Attack" value="your level + 7 vs. AC" /></rules></AppendNodes>
+  <AppendNodes internal-id="ID_HOS_COMPANION_2_POWERCARD_3"><rules><modify name="ID_HOS_COMPANION_2_POWERCARD_3" Field="Attack" value="your level + 5 vs. Will" /></rules></AppendNodes>
+
+  <!-- Binder (warlock): Binder's Ally. -->
+  <!-- Shadow lurk (Gloom; Heroes of Shadow p. 77). -->
+  <AppendNodes internal-id="ID_HOS_COMPANION_3_POWERCARD_2"><rules><modify name="ID_HOS_COMPANION_3_POWERCARD_2" Field="Attack" value="your level + 5 vs. Reflex" /></rules></AppendNodes>
+  <!-- Soul eater (Star; Heroes of Shadow p. 80). -->
+  <AppendNodes internal-id="ID_HOS_COMPANION_4_POWERCARD_2"><rules><modify name="ID_HOS_COMPANION_4_POWERCARD_2" Field="Attack" value="your level + 5 vs. Fortitude" /></rules></AppendNodes>
+  <!-- Satyr of the night (Fey; Dragon 406): + 6. -->
+  <AppendNodes internal-id="ID_HOS_COMPANION_7_POWERCARD_2"><rules><modify name="ID_HOS_COMPANION_7_POWERCARD_2" Field="Attack" value="your level + 6 vs. AC" /></rules></AppendNodes>
+
+  <!-- Binder (warlock): Greater Binder's Ally. -->
+  <!-- Gloom beast (Gloom; Heroes of Shadow p. 78): attack and reaction. -->
+  <AppendNodes internal-id="ID_HOS_COMPANION_5_POWERCARD_2"><rules><modify name="ID_HOS_COMPANION_5_POWERCARD_2" Field="Attack" value="your level + 5 vs. Fortitude" /></rules></AppendNodes>
+  <AppendNodes internal-id="ID_HOS_COMPANION_5_POWERCARD_3"><rules><modify name="ID_HOS_COMPANION_5_POWERCARD_3" Field="Attack" value="your level + 5 vs. Fortitude" /></rules></AppendNodes>
+  <!-- Doom hulk (Star; Heroes of Shadow p. 81). -->
+  <AppendNodes internal-id="ID_HOS_COMPANION_6_POWERCARD_2"><rules><modify name="ID_HOS_COMPANION_6_POWERCARD_2" Field="Attack" value="your level + 5 vs. Reflex" /></rules></AppendNodes>
+  <!-- Displacer beast (Fey; Dragon 406). -->
+  <AppendNodes internal-id="ID_HOS_COMPANION_8_POWERCARD_2"><rules><modify name="ID_HOS_COMPANION_8_POWERCARD_2" Field="Attack" value="your level + 5 vs. Reflex" /></rules></AppendNodes>
+</D20Rules>

@@ -5,6 +5,8 @@ import type {
   SheetValue,
 } from "@4ecb/sheet-model";
 
+import { LEVEL_ATTACK_STAT } from "@4ecb/rules-engine";
+
 import { abilityAbbreviation } from "./ability-abbreviations";
 
 function namedOrdinal(label: string): number | undefined {
@@ -95,13 +97,21 @@ export function defaultPrintAttacks(
  *  equipped weapon's total to-hit bonus isn't shown here; each card's weapon
  *  table lists every weapon's bonus (D085). A beast companion's attack has
  *  no weapon and no ability formula, so its header is the beast's own
- *  attack line: "Beast +12 vs AC". */
+ *  attack line: "Beast +12 vs AC". A summoned creature's reads "Level+5 vs
+ *  Will"; an ability the engine could not resolve (a beast's attack with no
+ *  beast companion) is a dash, never "UNKNOWN". */
 export function printAttackHeader(attack: SheetPowerAttack): string {
   const total = attack.attack
     .replace(/\bFortitude\b/gi, "Fort")
     .replace(/\bReflex\b/gi, "Ref");
   if (attack.attacker === "beast") return `Beast ${total}`;
-  const ability = abilityAbbreviation(attack.ability);
+  const name = attack.ability.trim().toLocaleLowerCase();
+  if (name === "unknown")
+    return `— vs ${total.match(/\bvs\s+(.+)$/i)?.[1] ?? "defense"}`;
+  const ability =
+    name === LEVEL_ATTACK_STAT.toLocaleLowerCase()
+      ? LEVEL_ATTACK_STAT
+      : abilityAbbreviation(attack.ability);
   const formula = `${ability}${attack.powerBonus === 0 ? "" : attack.powerBonus > 0 ? `+${attack.powerBonus}` : attack.powerBonus}`;
   return `${formula} vs ${total.match(/\bvs\s+(.+)$/i)?.[1] ?? "defense"}`;
 }
