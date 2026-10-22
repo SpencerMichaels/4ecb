@@ -1,5 +1,23 @@
 # Implementation status
 
+## Queued: domains, god fragments, item sets (owner decisions, 2026-10-21)
+
+Owner placement decisions for the last three registry gaps. Work starts after
+the companion card UI slice.
+
+- **Domains.** They are lore only (no rules) and granted by the deity, so they
+  go on the identity line next to the deity: "Deity: Sehanine (Love, Moon,
+  Trickery)". This follows the owner's rule: non-mechanical goes to identity,
+  mechanical to features.
+- **God fragments** (Dragon 382, via Awaken God Fragment). A feature row
+  ("Awaken God Fragment: Fragment of Avandra") with its constant benefit,
+  plus a power card built from the fragment's ability fields (like the Action
+  Point and Second Wind cards, no copied prose).
+- **Item sets.** Follow legacy `PowerCardItemSetInfo`: a separate orange
+  "Item Set" card in the deck for each set the character owns pieces of,
+  placed after the set's item cards, listing its benefits by piece count with
+  the unlocked ones marked.
+
 ## Beast companion engine (companion proposal, slice 1; 2026-10-21)
 
 Commits `6b52544`, `2a0571f`; evaluation cache v31.
