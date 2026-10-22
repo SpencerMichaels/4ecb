@@ -14,6 +14,13 @@
   place, so the Hit line stays grouped under its attack on the card. The
   defenses are unchanged; only the bonus differs where the creature's is
   not + 5.
+
+  Each creature's stat-block power (_POWERCARD_1) also adds that same + N to
+  its attacks as statadds, so the bonus counted twice (level + 2N). The
+  overlay's + N is the single source: the stat blocks' rules, which hold
+  only those statadds, are removed. Shadow Lurk's pointed at the wood woad's
+  attack (ID_WOG_COMPANION_3_POWERCARD_2), a typo for its own; removing it
+  fixes that too.
 -->
 <D20Rules game-system="D&amp;D4E">
   <!-- Hexblade: Summon Warlock's Ally (level 9). -->
@@ -61,4 +68,22 @@
   <AppendNodes internal-id="ID_HOS_COMPANION_6_POWERCARD_2"><rules><modify name="ID_HOS_COMPANION_6_POWERCARD_2" Field="Attack" value="your level + 5 vs. Reflex" /></rules></AppendNodes>
   <!-- Displacer beast (Fey; Dragon 406). -->
   <AppendNodes internal-id="ID_HOS_COMPANION_8_POWERCARD_2"><rules><modify name="ID_HOS_COMPANION_8_POWERCARD_2" Field="Attack" value="your level + 5 vs. Reflex" /></rules></AppendNodes>
+
+  <!-- Each stat-block power's duplicate + N statadds (see above). -->
+  <RemoveNodes internal-id="ID_WOG_COMPANION_3_POWERCARD_1"><rules /></RemoveNodes>
+  <RemoveNodes internal-id="ID_WOG_COMPANION_4_POWERCARD_1"><rules /></RemoveNodes>
+  <RemoveNodes internal-id="ID_WOG_COMPANION_5_POWERCARD_1"><rules /></RemoveNodes>
+  <RemoveNodes internal-id="ID_WOG_COMPANION_6_POWERCARD_1"><rules /></RemoveNodes>
+  <RemoveNodes internal-id="ID_HOS_COMPANION_1_POWERCARD_1"><rules /></RemoveNodes>
+  <RemoveNodes internal-id="ID_WOG_COMPANION_7_POWERCARD_1"><rules /></RemoveNodes>
+  <RemoveNodes internal-id="ID_WOG_COMPANION_8_POWERCARD_1"><rules /></RemoveNodes>
+  <RemoveNodes internal-id="ID_WOG_COMPANION_9_POWERCARD_1"><rules /></RemoveNodes>
+  <RemoveNodes internal-id="ID_WOG_COMPANION_10_POWERCARD_1"><rules /></RemoveNodes>
+  <RemoveNodes internal-id="ID_HOS_COMPANION_2_POWERCARD_1"><rules /></RemoveNodes>
+  <RemoveNodes internal-id="ID_HOS_COMPANION_3_POWERCARD_1"><rules /></RemoveNodes>
+  <RemoveNodes internal-id="ID_HOS_COMPANION_4_POWERCARD_1"><rules /></RemoveNodes>
+  <RemoveNodes internal-id="ID_HOS_COMPANION_7_POWERCARD_1"><rules /></RemoveNodes>
+  <RemoveNodes internal-id="ID_HOS_COMPANION_5_POWERCARD_1"><rules /></RemoveNodes>
+  <RemoveNodes internal-id="ID_HOS_COMPANION_6_POWERCARD_1"><rules /></RemoveNodes>
+  <RemoveNodes internal-id="ID_HOS_COMPANION_8_POWERCARD_1"><rules /></RemoveNodes>
 </D20Rules>
