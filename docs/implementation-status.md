@@ -1,5 +1,27 @@
 # Implementation status
 
+## Visual-review harness (2026-10-22)
+
+`pnpm review:build` (`d1e70bd`; scripts/build-visual-review.ts,
+visual-review-plan.ts, visual-review-page.ts) synthesizes review characters
+from the private pack and writes the following to ignored
+`tmp/visual-review/`:
+
+- a restorable backup, with fixed `visual-review-<slug>` IDs;
+- a re-ID'd copy of the content pack;
+- `index.html`, grouped by character, with deep links into the dev server
+  and a checkbox per checklist item.
+
+It reads `docs/visual-review-checklist.md` on every run and reports unmapped
+items; all 69 are mapped.
+
+Found while building it (fix in progress):
+
+- **Backup restore** rejects characters imported from legacy files with
+  negative per-level loot quantities (Hu Sheng-Ming, Piri). A real library
+  backup containing one fails to restore.
+- **Hybrid identity** reads "Hybrid Artificer / Hybrid Ardent".
+
 ## Beast companion card (companion proposal, slice 2; 2026-10-21)
 
 Commits `36c0188`, `1df9924`, `a31f505`. The matrix and audit script
