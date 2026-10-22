@@ -1,5 +1,57 @@
 # Implementation status
 
+## Beast companion engine (companion proposal, slice 1; 2026-10-21)
+
+Commits `6b52544`, `2a0571f`; evaluation cache v31.
+
+- **Derived statistics.** `beastCompanionStatistics` (`derived-values.ts`)
+  covers all 13 beasts at levels 1–30, from the legacy formulas and the owner
+  answers. Bonuses are `ALLY.` + `COMPANION.` + `BEAST.`.
+  - abilities: the `Companion.*` stats
+  - defenses: field + level
+  - HP: base + level × per level, or your bloodied value for the sentinel
+  - surges: 2 + bonus, or shared
+  - attack and damage: `[B]` + modifier
+  - skills: ability modifier + half level + 5 if trained (PHB p. 178; DMG2
+    p. 27; consistent with the Monster Manual)
+  - situational bonuses as notes
+
+  The result is stored as `EvaluatedCharacter.beastCompanion`, with the
+  beast identified structurally.
+
+- **Beast powers get numbers.** In `powers.ts`, the beast's attack bonus,
+  `[B]` and "beast's X modifier" are filled in, with `attacker: "beast"`
+  on variants.
+- **Content** (`99-companions.part`):
+  - the 11 community "Companion: X" cards become inert;
+  - the 11 companion records no longer grant the 1,515 per-level helpers;
+  - enclose the prey becomes a stat;
+  - sentinel HP equals your bloodied value.
+- **Verified.** Checked against the community tables: 325 of 330 rows agree,
+  and the other 5 are the known typos.
+- **Sheet model.** `SheetBeastCompanionCard` data comes first in
+  `companions`. The print deck skips it until the UI slice.
+
+## Mis-written `requires` conditions (2026-10-21)
+
+Commits `67f4c36`, `130867b`.
+
+- **Assassin's Strike (Hybrid).** The upgrades now require the power, and
+  their selects are offered only to characters with it.
+- **`pnpm audit:requires`** parses all 12,928 conditions with the engine
+  grammar. It flags leading-`!` and similar mis-writings and fails on
+  anything not fixed or allowlisted (73 deliberate, 0 unexpected).
+- **17 conditions fixed** in `95-requires-grammar.part`:
+  - Order Adept's PowersAsClass;
+  - Spear Expertise [Arena Fighter] tiers;
+  - the Githzerai Blade Master "GLAVE" typo;
+  - Thundertusk Companion;
+  - the Rose Scythe of Chauntea divine/primal implement bonus.
+- **Grammar difference.** Legacy reads a bare inner `!B` as a lookup, not
+  negation; corrections use `(!B)`, which both engines read the same way.
+
+1200 tests pass; audit:coverage is clean.
+
 ## Known rituals, slice 2: free items and allowances (2026-10-21)
 
 Commits `46621bc`, `f8df178`.

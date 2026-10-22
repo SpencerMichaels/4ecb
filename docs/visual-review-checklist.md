@@ -178,3 +178,23 @@ Check in light and dark themes and at 140% zoom.
       the gift keeps it gone.
 - [ ] **Older native characters** get their missing gifts the first time
       they're opened.
+
+## Conditions fixed (requires scan)
+
+- [ ] **Hybrid executioner without Assassin's Strike (Hybrid):** no upgrade
+      choice at 7/13/17/23/27. With the power, the upgrade's prerequisite
+      lists it first.
+- [ ] **Order Adept with a spellbook** (or feature 318): Order Adept powers
+      are no longer offered as class powers.
+- [ ] **Spear Expertise [Arena Fighter]:** lower charging damage at heroic
+      and paragon tier.
+- [ ] **Githzerai Blade Master with an arena glaive:** +2 arena damage.
+- [ ] **Rose Scythe of Chauntea** on a divine or primal character: the
+      implement bonus applies.
+
+## Beast companion powers
+
+- [ ] **Beast Mastery ranger:** the beast's attack powers show numbers (beast
+      attack bonus vs. defense, [B] damage), and there's no "Companion: X"
+      power card. The print header currently reads "BEAST vs AC"; the UI
+      slice will tidy that up. The stat card itself comes with the UI slice.
