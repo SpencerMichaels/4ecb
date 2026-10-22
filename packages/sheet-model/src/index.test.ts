@@ -35,12 +35,13 @@ describe("sheet model", () => {
     ).toBe(95);
     expect(snapshot.stats.Weight).toBe("95");
   });
-  it("names a hybrid's two classes on the Class identity line", () => {
+  it("names a hybrid's two base classes on the Class identity line", () => {
     const entity = (
       id: string,
       name: string,
       type: string,
       rules: ContentEntity["rules"] = [],
+      fields: Record<string, string> = {},
     ): ContentEntity => ({
       id,
       name,
@@ -49,7 +50,12 @@ describe("sheet model", () => {
       sources: ["test"],
       attributes: [],
       categories: [],
-      specifics: [],
+      specifics: Object.entries(fields).map(([name, value], ordinal) => ({
+        name,
+        value,
+        extraAttributes: [],
+        ordinal,
+      })),
       rules,
       description: "",
       extensions: [],
@@ -68,9 +74,19 @@ describe("sheet model", () => {
           ordinal: 0,
         },
       ]),
-      entity("HYBRID_A", "Hybrid Warblade", "Hybrid Class"),
+      entity("HYBRID_A", "Hybrid Warblade", "Hybrid Class", [], {
+        _BaseClass: "PLAIN",
+      }),
+      // Content without a base class link falls back to the hybrid's name.
       entity("HYBRID_B", "Hybrid Seer", "Hybrid Class"),
-      entity("PLAIN", "Warblade", "Class"),
+      // A subclass hybrid's base is the parent class; it reads as the
+      // subclass whose _ParentClass is that base.
+      entity("HYBRID_C", "Hybrid Darkblade", "Hybrid Class", [], {
+        _BaseClass: "PLAIN",
+        _ParentClass: "PLAIN",
+      }),
+      entity("PLAIN", "Warblade", "Class", [], { _ParentClass: "" }),
+      entity("SUBCLASS", "Darkblade", "Class", [], { _ParentClass: "PLAIN" }),
     ];
     const occurrence = (
       id: string,
@@ -139,7 +155,14 @@ describe("sheet model", () => {
         occurrence("a", "HYBRID_A", { parentId: "hybrid" }),
         occurrence("b", "HYBRID_B", { parentId: "hybrid" }),
       ]),
-    ).toBe("Hybrid Warblade / Hybrid Seer");
+    ).toBe("Warblade / Seer");
+    expect(
+      classLine([
+        occurrence("hybrid", "HYBRID", { kind: "root" }),
+        occurrence("c", "HYBRID_C", { parentId: "hybrid" }),
+        occurrence("b", "HYBRID_B", { parentId: "hybrid" }),
+      ]),
+    ).toBe("Darkblade / Seer");
     expect(classLine([occurrence("plain", "PLAIN", { kind: "root" })])).toBe(
       "Warblade",
     );

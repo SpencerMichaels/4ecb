@@ -54,6 +54,8 @@ import {
 } from "./deity-reference";
 import { godFragmentPowerCards } from "./god-fragment-card";
 import { sheetItemSetCards, type SheetItemSetCard } from "./item-set-card";
+import { characterClassName } from "./class-identity";
+export { characterClassName, hybridClassName } from "./class-identity";
 export {
   deityDomains,
   deityDomainsText,
@@ -1671,11 +1673,13 @@ export function buildEvaluatedSheetModel(
             entity.type.toLocaleLowerCase() === entityType.toLocaleLowerCase(),
         )
         .map(({ entity }) => entity.name);
-    // A hybrid character also owns the "Hybrid" marker class; its identity
-    // is the two hybrid classes.
-    const hybrid =
-      type === "Class" ? [...new Set(namesOf("Hybrid Class"))].join(" / ") : "";
-    const selected = hybrid !== "" ? hybrid : namesOf(type)[0];
+    const selected =
+      type === "Class"
+        ? characterClassName(
+            active.map(({ entity }) => entity),
+            entities,
+          )
+        : namesOf(type)[0];
     // The evaluated build is authoritative: an element cleared in the
     // builder must not fall back to the import-time snapshot's value.
     if (selected === undefined) delete identityDetails[detailName];

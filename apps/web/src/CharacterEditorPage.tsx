@@ -53,6 +53,7 @@ import {
 } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import { projectBuildForLegacyExport } from "@4ecb/legacy-dnd4e";
+import { characterClassName } from "@4ecb/sheet-model";
 import {
   ABILITY_SCORE_NAMES,
   assessAbilityPointBuy,
@@ -1245,6 +1246,19 @@ export function CharacterEditorPage({
       ? character.snapshot.details.Race
       : entityOfType("Race")?.name;
   const selectedClass = entityOfType("Class") ?? entityOfType("Hybrid Class");
+  // The sheet's Class identity line: a hybrid reads "Artificer / Ardent".
+  const className =
+    currentEvaluation === undefined
+      ? character.snapshot.details.Class
+      : characterClassName(
+          currentEvaluation.occurrences.flatMap((occurrence) => {
+            const entity = byId.get(
+              occurrence.definitionId.toLocaleLowerCase(),
+            );
+            return entity === undefined ? [] : [entity];
+          }),
+          byId,
+        );
   const selectedClassKeyAbilities = classKeyAbilities(selectedClass);
   const keyAbilitiesSentence = classKeyAbilitiesSentence(
     selectedClass,
@@ -1950,13 +1964,7 @@ export function CharacterEditorPage({
               {/* Race, class and level; the level changes from the tab
                   bar's Change level menu (a rare, build-wide change). */}
               <p className="builder-character-facts">
-                {characterHeaderSubtitle(
-                  race,
-                  currentEvaluation === undefined
-                    ? character.snapshot.details.Class
-                    : selectedClass?.name,
-                  build.effectiveLevel,
-                )}
+                {characterHeaderSubtitle(race, className, build.effectiveLevel)}
               </p>
             </header>
             <div className="builder-sidebar-panel">
