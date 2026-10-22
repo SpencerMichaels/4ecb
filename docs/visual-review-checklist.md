@@ -37,6 +37,21 @@ wizard, ranger, druid or half-elf.
       as tall as its content. A lone detail card keeps the printed
       proportions.
 
+- [ ] **Benefits by level** (pacts, themes, paragon paths, epic destinies):
+      e.g. Fey Pact of the White Well viewed at levels 1, 9 and 12.
+  - Sections: Level 1, 7, 9, Legendary Hexblade (Levels 11–20), Valiant
+    Hexblade (Levels 11–20), Level 25.
+  - Toggles read like "Level 9 · 1 feature, 3 powers". While folded they
+    show bulleted names; click anywhere or press Enter/Space to expand, and
+    the bullets disappear.
+  - Path sections use plain Level subheadings. A chosen path leaves only its
+    own section.
+  - The pact card reads flavor, Prerequisites, then "You gain the following
+    benefits:".
+  - Also check Alchemist, Feytouched and Archmage.
+  - At 140% zoom and in dark theme: headings wrap without clipping, and the
+    focus ring is visible.
+
 ## Printed sheet: cards
 
 - [ ] **Familiar card** after the Skills card (e.g. Sprite with Vigorous
