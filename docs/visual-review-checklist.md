@@ -199,3 +199,25 @@ Check in light and dark themes and at 140% zoom.
       attack bonus vs. defense, [B] damage), and there's no "Companion: X"
       power card. The print header currently reads "BEAST vs AC"; the UI
       slice will tidy that up. The stat card itself comes with the UI slice.
+
+## Domains, god fragments, item sets
+
+- [ ] **Builder deity card** (Details tab): a "Domains: …" line above the
+      description, with the domain cards below.
+- [ ] **Printed Deity entry** after Background (church icon): the Domains
+      line, then the description with its bullets.
+- [ ] **Awaken God Fragment** reference entry: a "Constant Benefits:" line.
+      The fragment's Encounter power card (Free action icon, keyword band)
+      sits among the encounter powers, printed and on screen.
+- [ ] **Item Set card** (orange) after the set's last item card:
+  - the Pieces/Tier row;
+  - a check icon and "(active)" on unlocked benefits, with locked ones
+    dimmed;
+  - no set introduction in print.
+
+  Group sets show a "Group pieces" label and an italic note.
+
+- [ ] **Equipment and Shop item detail:** an Item Set panel card under a set
+      piece.
+- [ ] **Numbers:** 2+ equipped pieces of a set now give its unlocked bonuses
+      (e.g. Aleheart: +2 Dungeoneering and Endurance).

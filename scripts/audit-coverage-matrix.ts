@@ -726,8 +726,48 @@ function linePlans(
       abilities: abilitiesFor(spec.classes),
     };
   });
+  // Beast companion lines: the companion is chosen at 1st level, so these
+  // run from level 1 like main lines rather than forking a level-10 build.
+  const byId = new Map(entities.map((entity) => [key(entity.id), entity]));
+  for (const preferred of BEAST_COMPANION_LINES) {
+    const classes = preferred.flatMap((id) => {
+      const entity = byId.get(key(id));
+      return entity !== undefined &&
+        ["class", "hybrid class"].includes(key(entity.type)) &&
+        key(entity.id) !== HYBRID_CLASS_ID
+        ? [entity]
+        : [];
+    });
+    if (classes.length === 0 || preferred.some((id) => !byId.has(key(id))))
+      continue;
+    plans.push({
+      label: `L${String(plans.length + 1).padStart(3, "0")}`,
+      preferred: [...preferred],
+      abilities: abilitiesFor(classes),
+    });
+  }
   return { plans, axes };
 }
+
+/**
+ * Lines that take a beast companion (docs/companion-card-proposal.md), so
+ * the Companion and Companion Ability Increase selects are exercised: a Beast
+ * Mastery ranger, a hybrid ranger with Beast Mastery (Hybrid) through Hybrid
+ * Talent, and a sentinel of spring (wolf) and of summer (bear). The beast
+ * itself is the first eligible companion no earlier line has had.
+ */
+const BEAST_COMPANION_LINES: readonly (readonly string[])[] = [
+  ["ID_FMP_CLASS_5", "ID_FMP_CLASS_FEATURE_1030"],
+  [
+    HYBRID_CLASS_ID,
+    "ID_FMP_HYBRID_CLASS_355",
+    "ID_FMP_FEAT_1366",
+    "ID_FMP_CLASS_FEATURE_1836",
+    "ID_FMP_CLASS_FEATURE_2448",
+  ],
+  ["ID_FMP_CLASS_779", "ID_WOG_SENTINEL_TRAIT_PACKAGE_1"],
+  ["ID_FMP_CLASS_779", "ID_WOG_SENTINEL_TRAIT_PACKAGE_2"],
+];
 
 /** Whether either hybrid class's prerequisites rule out the other (Hybrid
  * Blackguard, Hybrid Cavalier and Hybrid Paladin exclude each other). */

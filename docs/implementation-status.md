@@ -1,25 +1,31 @@
 # Implementation status
 
-## Queued: domains, god fragments, item sets (owner decisions, 2026-10-21)
+## Domains, god fragments, item sets (owner decisions, 2026-10-21)
 
-Owner placement decisions for the last three registry gaps. Work starts after
-the companion card UI slice.
+Commit `c958f77`; evaluation cache v33.
 
-- **Domains.** They are lore only (no rules) and granted by the deity. Page
-  1's identity table keeps just the deity name. Their card bodies start with
-  "**Domains:** Love, Moon, Trickery", in two places:
-  - the builder's deity detail card, above the description; the domain lore
-    cards still follow in the stack;
-  - a new Deity entry on the Character Reference pages, alongside the
-    background.
-- **God fragments** (Dragon 382, via Awaken God Fragment). A feature row
-  ("Awaken God Fragment: Fragment of Avandra") with its constant benefit,
-  plus a power card built from the fragment's ability fields (like the Action
-  Point and Second Wind cards, no copied prose).
-- **Item sets.** Follow legacy `PowerCardItemSetInfo`: a separate orange
-  "Item Set" card in the deck for each set the character owns pieces of,
-  placed after the set's item cards, listing its benefits by piece count with
-  the unlocked ones marked.
+- **Domains.** The builder's deity card opens with "**Domains:** Love, Moon,
+  Trickery" (`DeityDomains.tsx`). The Character Reference pages get a Deity
+  entry after Background, with the same line first. Page 1 keeps the name.
+  Shared helper: `sheet-model/src/deity-reference.ts`.
+- **God fragments.** The fragment shows on the Awaken God Fragment row with a
+  "Constant Benefits:" line. `god-fragment-card.ts` builds a power card from
+  the fragment's own fields, detected structurally, with no copied prose.
+- **Item sets.** Legacy `Sets`/`GroupSetCounts` were missing, so set
+  benefits never applied. `rules-engine/src/item-sets.ts` now applies the
+  unlocked benefits, counting equipped pieces (a group set also uses its party
+  count). This is a rules change for characters with 2+ equipped pieces of a
+  set. Following legacy `PowerCardItemSetInfo`, each set with an owned piece
+  gets an orange Item Set card after its last piece in the deck, with unlocked
+  benefits marked. Equipment and Shop show it as a panel card.
+- **Registry.** Domain, God Fragment, Item Set Benefit and Deity are now
+  presented. No registry gaps remain except Associate (deferred).
+
+Open:
+
+- Group sets need a party-count control; there is none yet.
+- The matrix never picks a deity, a god fragment or multiple set pieces, so
+  these were confirmed on modified real data rather than in the matrix.
 
 ## Beast companion engine (companion proposal, slice 1; 2026-10-21)
 

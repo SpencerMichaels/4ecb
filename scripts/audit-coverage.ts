@@ -17,6 +17,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import { decodeContentPack } from "@4ecb/content-pack";
 import {
   RulesIndex,
+  isBeastCompanionEntity,
   parseRules,
   type EvaluatedChoice,
 } from "@4ecb/rules-engine";
@@ -69,6 +70,7 @@ function detailRenderer(entity: ContentEntity): string {
   if (key(entity.type) === "power") return "power card";
   if (isItemEntity(entity)) return "item card";
   if (isFamiliarEntity(entity)) return "familiar card";
+  if (isBeastCompanionEntity(entity)) return "beast companion card";
   const structured = structuredEntityKind(entity);
   return structured === undefined ? "generic" : `structured (${structured})`;
 }
@@ -99,7 +101,11 @@ function registryProblems(
             : surface === "powers"
               ? key(type) === "power"
               : surface === "companions"
-                ? isFamiliarEntity(sample)
+                ? // Familiar cards, and the beast companion card with the
+                  // Companion Ability Increase picks its abilities include.
+                  isFamiliarEntity(sample) ||
+                  key(type) === "companion" ||
+                  /^companion ability increase\b/i.test(type)
                 : surface === "items"
                   ? isItemEntity(sample)
                   : true;
