@@ -532,7 +532,11 @@ function classCard(c: ReviewCharacter, entity: ContentEntity) {
   const firstWord = (field: string) =>
     /^\s*([A-Za-z]+)/.exec(contentSpecificValue(entity, field) ?? "")?.[1];
   return {
-    summary: elementsWithClass(html, "entity-card-summary").map(textOf),
+    // The lede leads with the heading: "Arcane Striker. You wield …".
+    lede: elementsWithClass(html, "entity-card-lede").map(textOf),
+    shortDescription: (
+      contentSpecificValue(entity, "Short Description") ?? ""
+    ).trim(),
     rows,
     expectedSummary: [firstWord("Power Source"), firstWord("Role")]
       .filter(Boolean)
@@ -563,10 +567,14 @@ rule("beatrix", "Build, level 1: Class", "Class detail card", (c) => {
       const name = (entity as ContentEntity).name;
       const keyRow = card.rows.filter(([label]) => label === "Key abilities");
       return [
-        equal(`${name}: the heading line`, card.summary, [heading]),
+        equal(
+          `${name}: the lede reads "${heading}." then the short description`,
+          card.lede,
+          [[`${heading}.`, card.shortDescription].filter(Boolean).join(" ")],
+        ),
         equal(
           `${name}: the heading is the power source then the role`,
-          card.summary[0],
+          heading,
           card.expectedSummary,
         ),
         equal(
