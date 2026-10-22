@@ -76,4 +76,20 @@
   <!-- A grappling hook is gear the sheet cannot equip: unverifiable, so the
        power keeps its no-weapon row. -->
   <AppendNodes internal-id="ID_FMP_POWER_12831"><specific name="_WeaponRequirement">You must be wielding any.</specific></AppendNodes>
+  <!-- Executioner (assassin) weapon attacks say "You must use this power with
+       a <weapon>", which the native grammar does not read, so every weapon
+       and Unarmed was offered. Name the weapon; Hidden Stab also needs a
+       free hand. -->
+  <!-- Garrote, dagger, bola, blowgun, hand crossbow. -->
+  <AppendNodes internal-id="ID_FMP_POWER_13793"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_78.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_13794"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_3.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_13796"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_76.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_13797"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_77.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_13798"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_36.</specific></AppendNodes>
+  <!-- Light blade with a free hand. -->
+  <AppendNodes internal-id="ID_FMP_POWER_13806"><specific name="_WeaponRequirement">You must be wielding a group:light blade &amp; free hand.</specific></AppendNodes>
+  <!-- Short sword, shuriken, kusari-gama (Dragon 404). -->
+  <AppendNodes internal-id="ID_FMP_POWER_15911"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_20.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_15912"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_41.</specific></AppendNodes>
+  <AppendNodes internal-id="ID_FMP_POWER_15913"><specific name="_WeaponRequirement">You must be wielding a weapon:ID_FMP_WEAPON_D404_CAA_1.</specific></AppendNodes>
 </D20Rules>
