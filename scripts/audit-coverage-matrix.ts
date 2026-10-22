@@ -284,7 +284,10 @@ class MatrixRun {
 
 interface CharacterState {
   transaction: CharacterTransaction;
-  /** Picks whose evaluation did not converge; never picked again. */
+  /**
+   * Picks whose evaluation did not converge, or whose own required choice
+   * had no candidate; never picked again.
+   */
   readonly poisoned: Set<string>;
   serial: number;
   /** Optional choices already attempted once. */
@@ -339,6 +342,15 @@ function resolveLevel(
   let singleStep = false;
   // Choices whose resolution removed earlier picks; retrying them oscillates.
   const unstable = new Set<string>();
+  // The build before each pick of this level, by the picked occurrence's
+  // id. A pick whose own required choice has no candidate is a dead end
+  // (Reserve Maneuver for a class without encounter attack powers): the
+  // legacy builder allows it but leaves its choice unfilled, so the audit
+  // undoes it and takes the next candidate instead.
+  const beforePick = new Map<
+    string,
+    { build: CharacterBuild; attempted: string[]; definitionId: string }
+  >();
   for (
     let iteration = 0;
     iteration < MAX_ITERATIONS_PER_LEVEL;
@@ -493,6 +505,12 @@ function resolveLevel(
             });
             continue;
           }
+          if (!choice.optional)
+            beforePick.set(selected.id, {
+              build: before,
+              attempted: [...state.attempted],
+              definitionId: definition.id,
+            });
           state.transaction.dispatch(command);
           thisBatch.picks.push(definition.id);
         }
@@ -523,7 +541,24 @@ function resolveLevel(
         });
       }
     }
-    if (dispatched === 0) return settle(last, unfilled);
+    if (dispatched === 0) {
+      // Nothing else can be picked: a required choice still empty under a
+      // pick of this level is a dead end.
+      const deadEnd = unfilled.find(
+        (choice) =>
+          key(choice.type) !== "replacement" &&
+          choice.providerOccurrenceId !== undefined &&
+          beforePick.has(choice.providerOccurrenceId) &&
+          run.pickable(choice, current).length === 0,
+      );
+      if (deadEnd === undefined) return settle(last, unfilled);
+      const pick = beforePick.get(deadEnd.providerOccurrenceId!)!;
+      state.transaction = new CharacterTransaction(pick.build);
+      state.attempted.clear();
+      pick.attempted.forEach((id) => state.attempted.add(id));
+      state.poisoned.add(key(pick.definitionId));
+      batch = undefined;
+    }
   }
   run.problem({
     character,
