@@ -31,7 +31,12 @@ automatically, 44 left for the owner):
   and binder summon attacks written as "Beast's attack bonus" printed
   "UNKNOWN". They now use the published "your level + N vs. X" (from
   HotFK, Heroes of Shadow, and Dragon 393/406 via the compendium), which the
-  engine resolves. An unresolvable attack prints "— vs X".
+  engine resolves. An unresolvable attack prints "— vs X". The stat-block
+  powers' own duplicate +N statadds are removed, so each bonus counts once:
+  level + N, e.g. +30 for White Well at level 25 (`3b7b18c`; this also drops
+  Shadow Lurk's +5, which was misaimed at the Wood Woad's attack).
+- **Class card** (`6eae474`): the description opens with power source and
+  role ("Arcane Striker. You wield …"), and key abilities get their own row.
 - **Content fixes:**
   - the White Well pact lists the Legendary Hexblade features White Well
     characters are actually granted (`_1D`–`_6D`);
