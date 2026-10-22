@@ -1,9 +1,9 @@
 # Known rituals, formulas and practices proposal
 
 Status: accepted by the product owner (2026-10-21); see "Product-owner
-answers". §1, §2 and §4–§7 are implemented (see implementation-status.md). The
-sheet field is named `origin`, since `source` is the book source. Still
-to do: §3 (FREEBEE items) and the structured allowance counter.
+answers". All sections and the structured allowance counter are implemented (see
+implementation-status.md). The sheet field is named `origin`, since
+`source` is the book source.
 
 ## Problem
 

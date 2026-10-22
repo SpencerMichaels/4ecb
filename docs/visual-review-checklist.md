@@ -159,3 +159,22 @@ Check in light and dark themes and at 140% zoom.
       starts on Cancel, Esc cancels and leaves the trash dialog open, and
       the singular wording reads right with 1 character. Afterwards the
       trash shows "The trash is empty." and the library count reads 0.
+- [ ] **Free-ritual counter:** a bold line under each "Free rituals:" text,
+      e.g. "3 free 1st-level rituals and 2 free rituals of level 5 or lower
+      left" (wizard at level 5), or "All … used".
+- [ ] **"Learn X free" dialog** when several allowances fit (e.g. a psion
+      learning Tenser's Floating Disk): choose a pool, "None (a gift)" or
+      Cancel.
+- [ ] **Known-list source line:** "Learned free at level N (Spellbook)".
+
+## Free items
+
+- [ ] **A free item appears** in Equipment inventory and as a sheet item card
+      when you pick a class or feature that gives it (Ritual Book, Spellbook,
+      also from Student of Sword Magic; pact weapons; poison doses; Harper
+      Pin; Trap-Making Kit). A monk's Unarmed Strike is equipped in the
+      off-hand.
+- [ ] **Undo and Remove:** undoing that pick also removes the gift. Removing
+      the gift keeps it gone.
+- [ ] **Older native characters** get their missing gifts the first time
+      they're opened.

@@ -1,5 +1,37 @@
 # Implementation status
 
+## Known rituals, slice 2: free items and allowances (2026-10-21)
+
+Commits `46621bc`, `f8df178`.
+
+- **Free items** (legacy `GiveFreebees`). `rules-engine/src/freebees.ts`
+  lists pending `FREEBEE:<id>` item gifts. The new `give-freebees` command
+  adds each one at no cost, equipping it only into a free slot, and sets the
+  `Given` marker. The builder runs it after an evaluation of the current
+  build, folded into the triggering edit's undo step. A removed gift is never
+  re-added. Examples: a wizard's Spellbook, a druid's or psion's Ritual Book,
+  pact weapons, poison doses, a monk's Unarmed Strike. Student of Sword
+  Magic's Spellbook is now data (`98` part), not code.
+- **Free-ritual allowances** (owner answer 4). The structured
+  `_FreeRitualAllowance` field is added in
+  `content/corrections/98-ritual-allowances.part` for the Wizard Spellbook,
+  Bard, Cleric, Druid, Invoker, Psion (plus a named pool), Alchemist,
+  Practiced Prodigy and Wild Sage. `rules-engine/src/ritual-allowances.ts`
+  counts free-learned entries per pool; granted rituals don't count. The
+  Rituals tab shows "N free … left" under each text. "Learn free" asks which
+  pool to use when several fit.
+- **Imported characters.** The 8 sample characters are unchanged. Four
+  bundled heroes get only the `Given` marker for books they already own.
+
+Evaluation output unchanged (v30). 1200 tests pass.
+
+Open (minor):
+
+- A gift can't be undone separately from its triggering edit; use Remove.
+- Unslotted gifted magic items (e.g. Master of Secrets Workaround) are never
+  equipped, as in legacy. Whether their equipped-only grants apply is
+  unverified.
+
 ## Assassin's Strike upgrades, grant targets, Scholar (2026-10-21)
 
 Commits `1a2b2ce`, `ba8b751`, `7fc3738`; evaluation cache v30.
