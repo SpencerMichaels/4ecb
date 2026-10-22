@@ -1,5 +1,37 @@
 # Implementation status
 
+## Beast companion card (companion proposal, slice 2; 2026-10-21)
+
+Commits `36c0188`, `1df9924`, `a31f505`. The matrix and audit script
+changes landed in the orchestrator's `15f4992` (shared staging area).
+
+- **Card.** `BeastCompanionCard.tsx` in the familiar/Play data frame. It
+  shows defenses, health tiles (a sentinel's surges read "Yours"), abilities,
+  speed and vision, the attack line, saves, resistances, trained skill totals,
+  situational notes, traits, the command line and the description. It prints
+  after Skills and before the familiar, and is the Companion choice's builder
+  detail card. Candidates are previewed with `previewBeastCompanion`.
+- **Name and appearance** inputs (`CompanionNameFields.tsx`) edit
+  `_COMPANION_NAME`/`_COMPANION_APPEARANCE`.
+- **Retraining.** A "Retrain a companion" option in the Retraining tab,
+  mutually exclusive with feat, power and skill (Martial Power p. 42).
+- **Beast power cards.** Headed "Beast +N vs AC". All-beast powers collapse
+  the weapon table to one "Beast damage" line.
+- **Notes filter** (owner decision 2). Only `BEAST.`/`COMPANION.` bonuses,
+  and `ALLY.` ones whose condition names the companion.
+- **Timeless Body.** The 13th-level sentinel damage overlay was overriding the
+  25th-level one; it is now conditioned off at 25 (`99-companions.part`).
+- **Coverage.** Companion and Companion Ability Increase are presented. Four
+  beast companion matrix lines were added (L093–L096). The full run has 2
+  unrelated `choice.required` (Reserve Maneuver/Martial Versatility).
+  Animal Master and Quasit helpers stay deferred (associates, step 3).
+
+Open:
+
+- A candidate preview omits the candidate's own non-ability statadds; a
+  sentinel candidate shows 2 surges until chosen.
+- 2 `choice.required` errors on Reserve Maneuver/Martial Versatility.
+
 ## Domains, god fragments, item sets (owner decisions, 2026-10-21)
 
 Commit `c958f77`; evaluation cache v33.

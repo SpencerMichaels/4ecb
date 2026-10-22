@@ -231,3 +231,18 @@ Check in light and dark themes and at 140% zoom.
 - [ ] **Printed group-set card:** unset shows "Party pieces" with a blank line
       and full-strength benefits; set shows the count with locked benefits
       dimmed. Non-group sets still read Pieces and Tier.
+
+## Beast companion card
+
+- [ ] **Printed beast card** between Skills and the familiar:
+  - does the full stat block fit one card at high levels with several traits?
+  - a sentinel's Surges tile reads "Yours".
+- [ ] **Builder Companion pane:** the chosen beast's card, and a candidate
+      preview (e.g. bear: 16 Str, 15 Con).
+- [ ] **Name and Appearance** inputs in the Companion section, and the card
+      title (e.g. "Ash — timber wolf").
+- [ ] **Retraining:** a "Retrain a companion" option, with the Kind column
+      reading "Companion".
+- [ ] **Beast power cards:** a "Beast +N vs AC" header and a "Beast damage"
+      line instead of the weapon table. Mixed powers (Distracting Team) keep
+      their table with beast cells.
