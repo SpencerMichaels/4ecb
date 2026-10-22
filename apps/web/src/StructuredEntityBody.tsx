@@ -369,12 +369,7 @@ export function StructuredEntityBody({
             .join(" ");
         })()
       : "";
-  const lede = [
-    classHeading === "" ? "" : `${classHeading}.`,
-    shortDescription?.trim() ?? "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const description = shortDescription?.trim() ?? "";
   // A background's campaign and kind ("Forgotten Realms · Campaign").
   const context =
     kind === "background"
@@ -391,7 +386,17 @@ export function StructuredEntityBody({
         <p className="candidate-flavor entity-card-flavor">{entity.flavor}</p>
       )}
       {context === "" ? null : <p className="entity-card-context">{context}</p>}
-      {lede === "" ? null : <p className="entity-card-lede">{lede}</p>}
+      {classHeading === "" ? (
+        description === "" ? null : (
+          <p className="entity-card-lede">{description}</p>
+        )
+      ) : (
+        // Only the heading is bold; the description after it reads as prose.
+        <p className="entity-card-lede is-headed">
+          <strong className="entity-card-summary">{classHeading}.</strong>
+          {description === "" ? null : ` ${description}`}
+        </p>
+      )}
       {entity.printPrerequisites === undefined ? null : (
         <section>
           <h5>Prerequisites</h5>

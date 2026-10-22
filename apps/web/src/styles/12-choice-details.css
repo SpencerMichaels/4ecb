@@ -622,6 +622,10 @@
   font-weight: 600;
 }
 
+.entity-card-lede.is-headed {
+  font-weight: normal;
+}
+
 .entity-card-summary {
   font-weight: 800;
 }
