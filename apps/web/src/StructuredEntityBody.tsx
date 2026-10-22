@@ -391,8 +391,7 @@ export function StructuredEntityBody({
           <p className="entity-card-lede">{description}</p>
         )
       ) : (
-        // Only the heading is bold; the description after it reads as prose.
-        <p className="entity-card-lede is-headed">
+        <p className="entity-card-lede">
           <strong className="entity-card-summary">{classHeading}.</strong>
           {description === "" ? null : ` ${description}`}
         </p>

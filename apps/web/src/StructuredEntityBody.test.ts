@@ -124,7 +124,7 @@ describe("structured race, class and background cards", () => {
     const markup = render(classEntity, [otherFeature, ownFeature]);
 
     expect(markup).toContain(
-      `<p class="entity-card-lede is-headed"><strong class="entity-card-summary">Martial Defender.</strong> You stand firm.</p>`,
+      `<p class="entity-card-lede"><strong class="entity-card-summary">Martial Defender.</strong> You stand firm.</p>`,
     );
     expect(markup).toContain(
       "<dt>Key abilities</dt><dd>Strength, Constitution</dd>",
