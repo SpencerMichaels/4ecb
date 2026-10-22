@@ -194,6 +194,8 @@ export interface BeastCompanionSkill {
 export interface BeastCompanionConditionalBonus {
   /** The statistic, without its `BEAST.`/`ALLY.`/`COMPANION.` prefix. */
   readonly stat: string;
+  /** The prefix: `ALLY` bonuses reach every ally, the others the companion. */
+  readonly prefix: "ALLY" | "COMPANION" | "BEAST";
   readonly value: string;
   readonly condition: string;
   readonly source: string;
@@ -461,8 +463,10 @@ export function beastCompanionStatistics(input: {
   // Every companion-prefixed situational bonus is a note, as page 1 lists
   // conditional bonuses (owner answer 2, docs/companion-card-proposal.md).
   const conditionalBonuses = Object.entries(stats).flatMap(([name, stat]) => {
-    const match = /^(?:ALLY|COMPANION|BEAST)\.(.+)$/i.exec(name.trim());
+    const match = /^(ALLY|COMPANION|BEAST)\.(.+)$/i.exec(name.trim());
     if (match === null) return [];
+    const prefix =
+      match[1]!.toLocaleUpperCase() as BeastCompanionConditionalBonus["prefix"];
     return stat.contributions.flatMap(
       (contribution): BeastCompanionConditionalBonus[] =>
         !contribution.applied &&
@@ -470,7 +474,8 @@ export function beastCompanionStatistics(input: {
         contribution.condition !== undefined
           ? [
               {
-                stat: match[1]!.trim(),
+                stat: match[2]!.trim(),
+                prefix,
                 value: contribution.value,
                 condition: contribution.condition,
                 source: contribution.providerName,

@@ -1,6 +1,7 @@
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
   BEAST_ABILITY_NAMES,
+  type BeastCompanionConditionalBonus,
   type EvaluatedBeastCompanion,
   type EvaluatedPower,
 } from "@4ecb/rules-engine";
@@ -59,7 +60,8 @@ export interface SheetBeastCompanionCard {
     readonly total: number;
     readonly trained: boolean;
   }[];
-  /** Situational bonuses, like a power card's additional effects. */
+  /** Situational bonuses aimed at the companion itself, like a power card's
+   *  additional effects (`companionNotes`). */
   readonly notes: readonly {
     readonly text: string;
     readonly source: string;
@@ -70,6 +72,8 @@ export interface SheetBeastCompanionCard {
   readonly commands: string;
   readonly description?: string;
   readonly source: string;
+  /** Companion Ability Increase records whose picks the abilities include. */
+  readonly abilityIncreaseIds: readonly string[];
 }
 
 /** Martial Power p. 41, in brief. */
@@ -92,6 +96,31 @@ const TRAIT_FIELDS = [
   "Mount Companion",
   "Quirks",
 ] as const;
+
+/** An `ALLY.` bonus names the companion when its condition does. */
+const NAMES_COMPANION =
+  /\b(?:beast|animal) companion\b|\byour (?:beast|companion)\b/i;
+
+/**
+ * The card's notes (owner decision, 2026-10-21): situational bonuses that
+ * target the companion: `BEAST.` and `COMPANION.` stats, and `ALLY.` ones
+ * whose condition names the companion. General ally bonuses (a leader's
+ * aura, "against your quarry") reach every ally and stay off the card.
+ */
+export function companionNotes(
+  bonuses: readonly BeastCompanionConditionalBonus[],
+): SheetBeastCompanionCard["notes"] {
+  return bonuses
+    .filter(
+      (bonus) =>
+        bonus.prefix !== "ALLY" || NAMES_COMPANION.test(bonus.condition),
+    )
+    .map((bonus) => ({
+      text: `${/^[+-]/.test(bonus.value) ? "" : "+"}${bonus.value} ${bonus.stat} ${bonus.condition}.`,
+      source: bonus.source,
+      provenanceId: bonus.provenanceId,
+    }));
+}
 
 function field(entity: ContentEntity, name: string): string | undefined {
   const value = entity.specifics
@@ -128,6 +157,8 @@ export function sheetBeastCompanionCard(
   options: {
     readonly textStrings?: Readonly<Record<string, string>>;
     readonly powers?: readonly EvaluatedPower[];
+    /** Companion Ability Increase records the character has picked. */
+    readonly abilityIncreaseIds?: readonly string[];
   } = {},
 ): SheetBeastCompanionCard {
   const statistics = beast.statistics;
@@ -203,16 +234,13 @@ export function sheetBeastCompanionCard(
       total,
       trained,
     })),
-    notes: statistics.conditionalBonuses.map((bonus) => ({
-      text: `${/^[+-]/.test(bonus.value) ? "" : "+"}${bonus.value} ${bonus.stat} ${bonus.condition}.`,
-      source: bonus.source,
-      provenanceId: bonus.provenanceId,
-    })),
+    notes: companionNotes(statistics.conditionalBonuses),
     traits,
     commands: statistics.sharesHealingSurges
       ? SENTINEL_COMPANION_COMMANDS
       : BEAST_COMPANION_COMMANDS,
     source: entity.source,
+    abilityIncreaseIds: options.abilityIncreaseIds ?? [],
     ...Object.fromEntries(
       Object.entries(optional).filter(([, value]) => value !== undefined),
     ),

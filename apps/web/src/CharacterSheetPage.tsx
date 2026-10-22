@@ -41,6 +41,7 @@ import {
   PrintSkillsCard,
   type PlayCardKind,
 } from "./PrintPlayCards";
+import { BeastCompanionCard } from "./BeastCompanionCard";
 import { FamiliarCard } from "./FamiliarCard";
 import { ItemCard } from "./ItemCard";
 import { LoadingScreen } from "./LoadingScreen";
@@ -99,7 +100,7 @@ function PrintCard({
     ) : (
       <PrintSkillsCard model={model} />
     );
-  if (card.kind === "beast") return null;
+  if (card.kind === "beast") return <BeastCompanionCard card={card} />;
   if (card.kind === "familiar") return <FamiliarCard card={card} />;
   return card.kind === "power" ? (
     <PowerCard card={card} characterLevel={characterLevel} />
@@ -429,9 +430,9 @@ export function CharacterSheetPage({
   const printableCards: PrintableCard[] = [
     { kind: "play-character" as const },
     { kind: "play-skills" as const },
-    // The beast companion card prints once its card is built (companion
-    // card proposal, UI slice); its data is already on the model.
-    ...model.companions.filter((card) => card.kind !== "beast"),
+    // The beast companion, then familiars (companion card proposal, owner
+    // answer 5).
+    ...model.companions,
     ...specialCards,
     ...powerCards.filter((card) => !specialCards.includes(card)),
     ...model.items,

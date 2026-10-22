@@ -24,6 +24,21 @@ import { Icon } from "./Icon";
 
 const CATEGORIES: readonly RetrainingCategory[] = ["skill", "feat", "power"];
 
+/**
+ * What a level can retrain. A character with a beast companion choice can
+ * change the beast instead (Martial Power p. 42), so the option is always
+ * there for it, empty at a level with nothing to change.
+ */
+export function retrainingCategories(
+  evaluation: EvaluatedCharacter,
+): readonly RetrainingCategory[] {
+  return evaluation.choices.some(
+    (choice) => choice.type.trim().toLocaleLowerCase() === "companion",
+  )
+    ? [...CATEGORIES, "companion"]
+    : CATEGORIES;
+}
+
 export interface LevelRetrain {
   readonly choice: EvaluatedChoice;
   readonly category: RetrainingCategory | undefined;
@@ -372,7 +387,7 @@ function LevelRetraining({
 
   return (
     <div className="retraining-level" aria-label={`Level ${level} retraining`}>
-      {CATEGORIES.map((category) => {
+      {retrainingCategories(evaluation).map((category) => {
         const isRetrained = retrain?.category === category;
         return (
           <ChoiceAccordionItem
@@ -389,7 +404,9 @@ function LevelRetraining({
           >
             {choice === undefined || !hasOptions(category) ? (
               <p className="retraining-empty">
-                No {category}s can be retrained at level {level}.
+                {category === "companion"
+                  ? `No beast companion can be retrained at level ${level}.`
+                  : `No ${category}s can be retrained at level ${level}.`}
               </p>
             ) : (
               <div className="retraining-editor">

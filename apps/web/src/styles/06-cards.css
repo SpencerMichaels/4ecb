@@ -940,6 +940,17 @@
   font-style: italic;
   margin: 0;
 }
+/* Beast companion: the familiar card's frame with a full stat block. */
+.print-beast-notes p {
+  margin: 0;
+}
+.print-beast-note-source {
+  opacity: 0.75;
+}
+/* A beast power's damage, in place of the weapon table. */
+.print-card-beast-damage p {
+  margin: 0;
+}
 .print-item-card {
   --card-color: #ff8c00;
   grid-template-columns: minmax(0, 1fr);

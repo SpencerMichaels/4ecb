@@ -199,6 +199,66 @@ describe("beast companion card", () => {
     });
   });
 
+  it("notes only situational bonuses aimed at the companion", () => {
+    const conditional = (
+      id: string,
+      statName: string,
+      condition: string,
+      providerName: string,
+    ) =>
+      stat(statName, 0, [
+        {
+          id,
+          stat: statName,
+          value: "+1",
+          providerId: `own-${id}`,
+          providerName,
+          condition,
+          applied: false,
+          reason: "conditional",
+        },
+      ]);
+    const card = sheetBeastCompanionCard(
+      wolf(),
+      beast(
+        Object.fromEntries([
+          ...Object.entries(stats),
+          conditional(
+            "aura",
+            "ALLY.AC",
+            "to bloodied allies who can see and hear you",
+            "Leader Aura",
+          ),
+          conditional(
+            "quarry",
+            "ALLY.attack rolls",
+            "against your quarry",
+            "Hunter's Bond",
+          ),
+          conditional(
+            "named",
+            "ALLY.Reflex Defense",
+            "while your beast companion is adjacent to you",
+            "Shared Guard",
+          ),
+          conditional(
+            "companion",
+            "COMPANION.Will Defense",
+            "against charm attacks",
+            "Steady Companion",
+          ),
+        ]),
+      ),
+      { abilityIncreaseIds: ["CAI_4_STR"] },
+    );
+    expect(card.notes.map((note) => note.source)).toEqual([
+      "Nimble Companion",
+      "Shared Guard",
+      "Steady Companion",
+    ]);
+    expect(card.abilityIncreaseIds).toEqual(["CAI_4_STR"]);
+  });
+
   it("uses the sentinel's shared surges and command line", () => {
     const card = sheetBeastCompanionCard(
       wolf(),

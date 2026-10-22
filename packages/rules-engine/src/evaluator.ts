@@ -40,12 +40,13 @@ import {
 import { evaluatePowers, type EvaluatedPower } from "./powers";
 import {
   evaluateBeastCompanion,
+  isBeastCompanionEntity,
   type EvaluatedBeastCompanion,
 } from "./beast-companion";
 
 /** Bump whenever EvaluationInput semantics or EvaluatedCharacter shape changes. */
 export const RULES_EVALUATION_CACHE_VERSION =
-  "evaluated-character-v31-2026-10-21-beast-companion";
+  "evaluated-character-v32-2026-10-21-beast-notes-retraining";
 
 export interface CharacterOccurrence {
   readonly id: string;
@@ -309,7 +310,10 @@ const sharedRulesIndexCache = new WeakMap<
   RulesIndex
 >();
 
-function sharedRulesIndex(entities: readonly ContentEntity[]): RulesIndex {
+/** One index per entity array, shared by every evaluation of that array. */
+export function sharedRulesIndex(
+  entities: readonly ContentEntity[],
+): RulesIndex {
   const cached = sharedRulesIndexCache.get(entities);
   if (cached !== undefined) return cached;
   const created = new RulesIndex(entities);
@@ -1716,9 +1720,12 @@ function evaluateCharacterInternal(
                 rule.powerReplace !== undefined ||
                 rule.multiclass !== undefined ||
                 rule.powerSwap !== undefined;
+              // Martial Power p. 42: instead of a feat, a power or a skill,
+              // a retrain can change the beast companion.
               const ordinaryRetraining =
                 rule.retrain === undefined ||
-                ["feat", "power", "skill training"].includes(candidateType);
+                ["feat", "power", "skill training"].includes(candidateType) ||
+                isBeastCompanionEntity(index.get(candidate.definitionId));
               return (
                 (!displacedIds.has(candidate.id) ||
                   candidate.id === selected?.replacesId) &&

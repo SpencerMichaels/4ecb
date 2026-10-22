@@ -283,6 +283,55 @@ describe("native construction conformance", () => {
     },
   );
 
+  it("lets a level's retrain change the beast companion (Martial Power p. 42)", () => {
+    const beast = (id: string, name: string): ContentEntity => ({
+      ...entity(id, name, "Companion"),
+      specifics: [
+        { name: "Attack Bonus", value: "2", extraAttributes: [], ordinal: 0 },
+        { name: "Damage", value: "1d8", extraAttributes: [], ordinal: 1 },
+      ],
+    });
+    const content = [
+      entity("BEAST_MASTERY", "Beast Mastery", "Class Feature", [
+        statement("select", { type: "Companion", number: "1" }, 0),
+        statement("select", { type: "Familiar", number: "1" }, 1),
+      ]),
+      entity("LEVEL_5", "Level 5", "Level", [
+        statement("replace", { retrain: "true" }, 0),
+      ]),
+      beast("WOLF", "Wolf"),
+      beast("BEAR", "Bear"),
+      // A Companion record without a beast stat block is not retrained.
+      entity("SUMMON_LORE", "Summon lore", "Companion"),
+      entity("SPRITE", "Sprite", "Familiar"),
+    ];
+    const saved = [
+      occurrence("mastery", "BEAST_MASTERY", 1, "root"),
+      occurrence("wolf", "WOLF", 1, "choice", {
+        parentId: "mastery",
+        ruleOrdinal: 0,
+        choiceIndex: 0,
+      }),
+      occurrence("sprite", "SPRITE", 1, "choice", {
+        parentId: "mastery",
+        ruleOrdinal: 1,
+        choiceIndex: 0,
+      }),
+      occurrence("level-5", "LEVEL_5", 5, "root"),
+    ];
+    const retraining = evaluateCharacter(input(5, saved), content).choices.find(
+      (choice) => choice.type === "Replacement",
+    );
+    expect(
+      retraining?.replacementOptions?.map((option) => option.definitionId),
+    ).toEqual(["WOLF"]);
+    expect(
+      retraining?.replacementOptions?.[0]?.candidates.map(
+        (candidate) => candidate.definitionId,
+      ),
+    ).toEqual(expect.arrayContaining(["BEAR"]));
+  });
+
   it("uses a power-swap rule's gain category instead of the displaced slot", () => {
     const oldPower = {
       ...entity("OLD", "Old power", "Power"),

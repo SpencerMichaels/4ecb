@@ -10,6 +10,8 @@ import {
   themePowerGroups,
 } from "./builder-ui";
 import {
+  BuilderBeastCompanionCard,
+  BuilderCardContext,
   BuilderFamiliarCard,
   BuilderItemCard,
   BuilderPowerCard,
@@ -178,6 +180,7 @@ export function CandidateDetailCard({
 }) {
   const hideFlavortext = useContext(HideFlavortextContext);
   const showSource = useContext(ShowEntitySourceContext);
+  const builderCards = useContext(BuilderCardContext);
   const headingSuffix = relationship === undefined ? "" : "-granted";
   const headingId = `candidate-${entity.id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}${headingSuffix}`;
   const isThemeCandidate =
@@ -210,6 +213,19 @@ export function CandidateDetailCard({
           </>
         ) : null}
       </>
+    );
+  const beastCard = builderCards.beastCardFor(entity);
+  if (beastCard !== undefined)
+    return (
+      <div className="candidate-card-panel">
+        <BuilderBeastCompanionCard
+          card={beastCard}
+          entity={entity}
+          headingSuffix={headingSuffix}
+          subheading={subheading}
+          headerAction={headerAction}
+        />
+      </div>
     );
   if (isFamiliarEntity(entity))
     return (

@@ -214,6 +214,8 @@ export interface SheetPowerVariant {
   readonly powerBonus?: number;
   readonly attack?: string;
   readonly attacks?: readonly SheetPowerAttack[];
+  /** Every attack of this variant is the beast companion's own. */
+  readonly attacker?: "beast";
   readonly damage?: string;
   readonly damageType?: string;
   readonly additionalEffects?: readonly SheetAdditionalEffect[];
@@ -230,6 +232,8 @@ export interface SheetPowerAttack {
   readonly damageType?: string;
   readonly weaponRole?: "main" | "off";
   readonly eligible?: boolean;
+  /** The beast companion makes this attack, with its own numbers. */
+  readonly attacker?: "beast";
 }
 
 export interface CharacterSheetModel {
@@ -928,8 +932,12 @@ function evaluatedPowerCards(
               ...(attack.eligible === undefined
                 ? {}
                 : { eligible: attack.eligible }),
+              ...(attack.attacker === undefined
+                ? {}
+                : { attacker: attack.attacker }),
             })),
           }),
+      ...(variant.attacker === undefined ? {} : { attacker: variant.attacker }),
       ...(variant.damage === undefined ? {} : { damage: variant.damage }),
       ...(variant.damageType === undefined
         ? {}
@@ -1598,6 +1606,19 @@ export function buildEvaluatedSheetModel(
           sheetBeastCompanionCard(beastEntity, evaluation.beastCompanion, {
             textStrings: { ...evaluation.textStrings, ...build.textStrings },
             powers: evaluation.powers,
+            abilityIncreaseIds: [
+              ...new Set(
+                evaluation.occurrences.flatMap((occurrence) => {
+                  const entity = entities.get(
+                    occurrence.definitionId.toLocaleLowerCase(),
+                  );
+                  return entity !== undefined &&
+                    /^companion ability increase\b/i.test(entity.type.trim())
+                    ? [entity.id]
+                    : [];
+                }),
+              ),
+            ],
           }),
         ]),
     ...familiarCards,

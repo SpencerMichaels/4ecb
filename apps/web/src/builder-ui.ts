@@ -412,15 +412,21 @@ export function isOptionalRetrainingChoice(choice: EvaluatedChoice): boolean {
   );
 }
 
-/** Which kind of thing a retrain replaces: a skill, a feat or a power. */
-export type RetrainingCategory = "skill" | "feat" | "power";
+/** Which kind of thing a retrain replaces: a skill, a feat, a power or (Martial
+ *  Power p. 42) a beast companion. */
+export type RetrainingCategory = "skill" | "feat" | "power" | "companion";
 
 export function retrainingCategory(
   type: string | undefined,
 ): RetrainingCategory | undefined {
   const normalized = type?.trim().toLocaleLowerCase();
   if (normalized === "skill training" || normalized === "skill") return "skill";
-  if (normalized === "feat" || normalized === "power") return normalized;
+  if (
+    normalized === "feat" ||
+    normalized === "power" ||
+    normalized === "companion"
+  )
+    return normalized;
   return undefined;
 }
 

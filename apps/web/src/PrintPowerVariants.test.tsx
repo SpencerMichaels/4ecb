@@ -271,3 +271,25 @@ describe("implement power Unarmed row", () => {
     expect(weapon).not.toContain("No implement");
   });
 });
+
+describe("beast companion attacks", () => {
+  it("replace the weapon table with the beast's damage", () => {
+    const beastAttack = attack(1, {
+      ability: "Beast",
+      attack: "+12 vs AC",
+      damage: "1d8 + 3",
+      attacker: "beast",
+    });
+    const markup = render([beastAttack], { attacker: "beast" });
+    expect(markup).not.toContain("<table");
+    expect(text(markup)).toBe("Beast damage 1d8+3");
+  });
+
+  it("keep the table when you attack too", () => {
+    const markup = render([
+      attack(1),
+      attack(2, { ability: "Beast", attacker: "beast" }),
+    ]);
+    expect(markup).toContain("<table");
+  });
+});

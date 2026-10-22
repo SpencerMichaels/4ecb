@@ -104,3 +104,53 @@ export function evaluateBeastCompanion(input: {
   }
   return undefined;
 }
+
+/** A `Companion` record with a beast stat block (`isBeastCompanionFields`). */
+export function isBeastCompanionEntity(
+  entity: ContentEntity | undefined,
+): entity is ContentEntity {
+  if (entity === undefined || key(entity.type) !== "companion") return false;
+  return isBeastCompanionFields(
+    Object.fromEntries(
+      entity.specifics.map((specific) => [specific.name, specific.value]),
+    ),
+  );
+}
+
+/**
+ * A beast companion record as the character would have it: the evaluated
+ * beast itself when it is the one chosen, else a preview (builder candidate
+ * pane) from the record's fields and the character's companion bonuses from
+ * other sources, without the chosen beast's own contributions.
+ */
+export function previewBeastCompanion(input: {
+  readonly entity: ContentEntity;
+  readonly level: number;
+  readonly stats: Readonly<Record<string, EvaluatedStat>>;
+  readonly chosen?: EvaluatedBeastCompanion;
+  readonly fieldsOf: (
+    entity: ContentEntity,
+  ) => Readonly<Record<string, string>>;
+  readonly content: ContentLookup;
+}): EvaluatedBeastCompanion | undefined {
+  const { entity, chosen } = input;
+  if (chosen !== undefined && key(chosen.definitionId) === key(entity.id))
+    return chosen;
+  if (key(entity.type) !== "companion") return undefined;
+  const fields = input.fieldsOf(entity);
+  if (!isBeastCompanionFields(fields)) return undefined;
+  return {
+    occurrenceId: "",
+    definitionId: entity.id,
+    name: entity.name,
+    statistics: beastCompanionStatistics({
+      fields,
+      stats: input.stats,
+      level: input.level,
+      skills: beastCompanionSkills(fields, input.content),
+      candidate: {
+        replacedProviderIds: chosen === undefined ? [] : [chosen.occurrenceId],
+      },
+    }),
+  };
+}

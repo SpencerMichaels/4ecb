@@ -4,15 +4,20 @@ import type { CharacterBuild } from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import { projectBuildForLegacyExport } from "@4ecb/legacy-dnd4e";
 import {
+  applyFieldOverlays,
   evaluatePowers,
+  previewBeastCompanion,
   projectBuildForEvaluation,
+  sharedRulesIndex,
   type EvaluatedCharacter,
 } from "@4ecb/rules-engine";
 import {
   authoredSheetPowerCard,
   createSheetPowerCardFinder,
+  sheetBeastCompanionCard,
   sheetFamiliarCard,
   sheetItemCard,
+  type SheetBeastCompanionCard,
   type SheetCard,
   type SheetFamiliarCard,
 } from "@4ecb/sheet-model";
@@ -20,6 +25,7 @@ import {
 import { entityCardSource } from "./EntityCard";
 import { HideFlavortextContext } from "./HideFlavortextContext";
 import { ShowEntitySourceContext } from "./ShowEntitySourceContext";
+import { BeastCompanionCard } from "./BeastCompanionCard";
 import { FamiliarCard } from "./FamiliarCard";
 import { ItemCard } from "./ItemCard";
 import { PowerCard, type CardTextPresentation } from "./PowerCard";
@@ -37,6 +43,12 @@ export interface BuilderCardSettings {
   readonly powerCardFor: (entity: ContentEntity) => SheetCard;
   /** A familiar with this character's defenses and companion bonuses. */
   readonly familiarCardFor: (entity: ContentEntity) => SheetFamiliarCard;
+  /** A beast companion record as this character would have it: the chosen
+   *  beast's evaluated card, or a candidate's preview. Undefined for a
+   *  companion without a beast stat block. */
+  readonly beastCardFor: (
+    entity: ContentEntity,
+  ) => SheetBeastCompanionCard | undefined;
   /** Selects the power text tier shown on cards. */
   readonly characterLevel: number;
   readonly abbreviateAbilityValues: boolean;
@@ -99,6 +111,27 @@ export function evaluatedBuilderCardSettings(
         owned.get(entity.id.toLocaleLowerCase()) ?? hypotheticalPower(entity),
       ),
     familiarCardFor: (entity) => sheetFamiliarCard(entity, evaluation.stats),
+    beastCardFor: (entity) => {
+      const beast = previewBeastCompanion({
+        entity,
+        level: evaluation.level,
+        stats: evaluation.stats,
+        ...(evaluation.beastCompanion === undefined
+          ? {}
+          : { chosen: evaluation.beastCompanion }),
+        fieldsOf: (record) => applyFieldOverlays(record, evaluation.overlays),
+        content: sharedRulesIndex(evaluationEntities),
+      });
+      return beast === undefined
+        ? undefined
+        : sheetBeastCompanionCard(entity, beast, {
+            textStrings: {
+              ...evaluation.textStrings,
+              ...input.textStrings,
+            },
+            powers,
+          });
+    },
     characterLevel: evaluation.level,
     abbreviateAbilityValues: preferences.abbreviateAbilityValues,
   };
@@ -112,6 +145,7 @@ export function authoredBuilderCardSettings(
     powerCardFor: (entity) =>
       authoredSheetPowerCard(entity, abbreviatePowerAbilities),
     familiarCardFor: (entity) => sheetFamiliarCard(entity, {}),
+    beastCardFor: () => undefined,
     characterLevel,
     abbreviateAbilityValues: false,
   };
@@ -234,6 +268,40 @@ export function BuilderFamiliarCard({
   return (
     <FamiliarCard
       card={settings.familiarCardFor(entity)}
+      layout="panel"
+      panel={{
+        headingId: headingIdFor(entity, headingSuffix),
+        subheading,
+        headerAction,
+        ...(showSource
+          ? { source: `Source: ${entityCardSource(entity)}` }
+          : {}),
+        textPresentation: cardTextPresentation(
+          settings.abbreviateAbilityValues,
+        ),
+      }}
+    />
+  );
+}
+
+export function BuilderBeastCompanionCard({
+  card,
+  entity,
+  headingSuffix,
+  subheading,
+  headerAction,
+}: {
+  readonly card: SheetBeastCompanionCard;
+  readonly entity: ContentEntity;
+  readonly headingSuffix?: string;
+  readonly subheading?: ReactNode;
+  readonly headerAction?: ReactNode;
+}) {
+  const settings = useContext(BuilderCardContext);
+  const showSource = useContext(ShowEntitySourceContext);
+  return (
+    <BeastCompanionCard
+      card={card}
       layout="panel"
       panel={{
         headingId: headingIdFor(entity, headingSuffix),

@@ -76,6 +76,18 @@ describe("printed authored attack phases", () => {
       expect(printAttackHeader(phase)).toBe(header);
     },
   );
+  it("heads a beast companion's attack with its own attack line", () => {
+    expect(
+      printAttackHeader({
+        id: "beast",
+        ordinal: 1,
+        ability: "Beast",
+        powerBonus: 0,
+        attack: "+12 vs Reflex",
+        attacker: "beast",
+      }),
+    ).toBe("Beast +12 vs Ref");
+  });
   it("retains both headers and both Hit blocks with only a cached primary total", () => {
     const attacks = fallbackPrintAttacks(card, {
       id: "weapon",

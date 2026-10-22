@@ -2,7 +2,7 @@ import type { ContentEntity } from "@4ecb/content-domain";
 import type { EvaluatedCharacter, EvaluatedChoice } from "@4ecb/rules-engine";
 import { describe, expect, it } from "vitest";
 
-import { levelRetrain } from "./RetrainingWorkspace";
+import { levelRetrain, retrainingCategories } from "./RetrainingWorkspace";
 
 describe("level retrain summary", () => {
   const byId = new Map<string, ContentEntity>([
@@ -54,3 +54,49 @@ describe("level retrain summary", () => {
     ).toBeUndefined();
   });
 });
+
+describe("beast companion retraining", () => {
+  it("is one of the level's retraining options for a character with a beast", () => {
+    const companionChoice = {
+      type: "Companion",
+    } as unknown as EvaluatedChoice;
+    expect(
+      retrainingCategories({
+        choices: [companionChoice],
+      } as unknown as EvaluatedCharacter),
+    ).toEqual(["skill", "feat", "power", "companion"]);
+    expect(
+      retrainingCategories({ choices: [] } as unknown as EvaluatedCharacter),
+    ).toEqual(["skill", "feat", "power"]);
+  });
+
+  it("summarizes a beast swap as a companion retrain", () => {
+    const evaluation = {
+      occurrences: [
+        { id: "old", definitionId: "Wolf" },
+        { id: "new", definitionId: "Bear", replacesId: "old" },
+      ],
+    } as unknown as EvaluatedCharacter;
+    expect(
+      levelRetrain(
+        [
+          {
+            id: "retrain-5",
+            level: 5,
+            type: "Replacement",
+            optional: true,
+            selectedOccurrenceId: "new",
+            candidates: [],
+          } as unknown as EvaluatedChoice,
+        ],
+        evaluation,
+        byIdForBeasts,
+      ),
+    ).toMatchObject({ category: "companion", from: "Wolf", to: "Bear" });
+  });
+});
+
+const byIdForBeasts = new Map<string, ContentEntity>([
+  ["wolf", { id: "Wolf", name: "Wolf", type: "Companion" } as ContentEntity],
+  ["bear", { id: "Bear", name: "Bear", type: "Companion" } as ContentEntity],
+]);

@@ -76,6 +76,34 @@ function AttackSummary({ cell }: { readonly cell: AttackCell | undefined }) {
   );
 }
 
+function BeastDamage({ variant }: { readonly variant: SheetPowerVariant }) {
+  const attacks = (
+    variant.attacks ?? [
+      {
+        ordinal: 1,
+        ...(variant.damage === undefined ? {} : { damage: variant.damage }),
+      },
+    ]
+  ).filter((attack) => attack.damage !== undefined);
+  if (attacks.length === 0) return null;
+  return (
+    <div className="print-card-weapon-variants print-card-beast-damage">
+      {attacks.map((attack) => (
+        <p key={attack.ordinal}>
+          <strong>
+            {attacks.length === 1
+              ? "Beast damage"
+              : `Beast damage ${attack.ordinal}`}
+          </strong>{" "}
+          <span className="print-variant-expression">
+            {attack.damage!.replace(/\s*\+\s*/g, "+")}
+          </span>
+        </p>
+      ))}
+    </div>
+  );
+}
+
 const isUnarmed = (variant: SheetPowerVariant) =>
   variant.id.endsWith(":unarmed") ||
   variant.equipmentName.trim().toLocaleLowerCase() === "unarmed";
@@ -91,6 +119,10 @@ export function PrintPowerVariants({
   readonly implementPower?: boolean;
 }) {
   if (variants.length === 0) return null;
+  // A beast companion's attack uses none of your weapons: no weapon table,
+  // just its damage (the attack band's header has its attack line).
+  if (variants.every((variant) => variant.attacker === "beast"))
+    return <BeastDamage variant={variants[0]!} />;
   const ordinals = [
     ...new Set([
       ...attackOrdinals,

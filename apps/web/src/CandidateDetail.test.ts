@@ -3,8 +3,17 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import type { ContentEntity } from "@4ecb/content-domain";
-import type { CandidateDecision } from "@4ecb/rules-engine";
+import {
+  previewBeastCompanion,
+  RulesIndex,
+  type CandidateDecision,
+} from "@4ecb/rules-engine";
+import { sheetBeastCompanionCard } from "@4ecb/sheet-model";
 
+import {
+  authoredBuilderCardSettings,
+  BuilderCardContext,
+} from "./BuilderCards";
 import { CandidateDetail } from "./CandidateDetail";
 
 const alignment: ContentEntity = {
@@ -171,6 +180,64 @@ describe("familiar detail", () => {
     expect(markup).toContain("print-familiar-card is-panel");
     expect(markup).toContain("Tiny familiar");
     expect(markup).toContain("4, fly 6");
+  });
+});
+
+describe("beast companion detail", () => {
+  it("previews a candidate beast's card from its record", () => {
+    const fields = {
+      Strength: "16",
+      Constitution: "14",
+      Dexterity: "12",
+      Intelligence: "6",
+      Wisdom: "12",
+      Charisma: "6",
+      "Attack Bonus": "2",
+      Damage: "1d12",
+      "Armor Class": "12",
+      "Fortitude Defense": "14",
+      "Reflex Defense": "10",
+      "Will Defense": "12",
+      "Hit Points at 1st Level": "16",
+      "Hit Points per Level Gained": "10",
+      Size: "Medium",
+      Speed: "5",
+      Attack: "Claw",
+      "Ability Score": "Strength",
+    };
+    const bear = entity("BEAR_TEST", "Bear", "Companion", fields);
+    const settings = {
+      ...authoredBuilderCardSettings(1),
+      beastCardFor: (record: ContentEntity) => {
+        const beast = previewBeastCompanion({
+          entity: record,
+          level: 1,
+          stats: {},
+          fieldsOf: () => fields,
+          content: new RulesIndex([record]),
+        });
+        return beast === undefined
+          ? undefined
+          : sheetBeastCompanionCard(record, beast);
+      },
+    };
+    const markup = renderToStaticMarkup(
+      createElement(
+        BuilderCardContext.Provider,
+        { value: settings },
+        createElement(CandidateDetail, {
+          candidate: { ...candidate, definitionId: bear.id },
+          entity: bear,
+          byId: new Map([[bear.id.toLowerCase(), bear]]),
+        }),
+      ),
+    );
+    expect(markup).toContain("print-beast-card is-panel");
+    expect(markup).toContain("Level 1 Medium beast");
+    // 16 + 1 × 10 hit points; AC 12 + level.
+    expect(markup).toContain("<dt>HP</dt><dd>26</dd>");
+    expect(markup).toContain("<dt>AC</dt><dd>13</dd>");
+    expect(markup).toContain("<strong>Claw</strong> +3 vs AC · 1d12+3 damage");
   });
 });
 

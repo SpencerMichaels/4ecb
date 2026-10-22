@@ -93,13 +93,16 @@ export function defaultPrintAttacks(
 
 /** An attack band's header: the ability formula against the defense. The
  *  equipped weapon's total to-hit bonus isn't shown here; each card's weapon
- *  table lists every weapon's bonus (D085). */
+ *  table lists every weapon's bonus (D085). A beast companion's attack has
+ *  no weapon and no ability formula, so its header is the beast's own
+ *  attack line: "Beast +12 vs AC". */
 export function printAttackHeader(attack: SheetPowerAttack): string {
-  const ability = abilityAbbreviation(attack.ability);
-  const formula = `${ability}${attack.powerBonus === 0 ? "" : attack.powerBonus > 0 ? `+${attack.powerBonus}` : attack.powerBonus}`;
   const total = attack.attack
     .replace(/\bFortitude\b/gi, "Fort")
     .replace(/\bReflex\b/gi, "Ref");
+  if (attack.attacker === "beast") return `Beast ${total}`;
+  const ability = abilityAbbreviation(attack.ability);
+  const formula = `${ability}${attack.powerBonus === 0 ? "" : attack.powerBonus > 0 ? `+${attack.powerBonus}` : attack.powerBonus}`;
   return `${formula} vs ${total.match(/\bvs\s+(.+)$/i)?.[1] ?? "defense"}`;
 }
 

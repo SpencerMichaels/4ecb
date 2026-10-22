@@ -126,6 +126,7 @@ import {
 } from "./character-export";
 import { ToastRegion, useToasts } from "./Toasts";
 import { RetrainingWorkspace } from "./RetrainingWorkspace";
+import { CompanionNameFields, hasCompanionChoice } from "./CompanionNameFields";
 import { RitualsWorkspace } from "./RitualsWorkspace";
 import { BaseAbilityScoreEditor } from "./BaseAbilityScoreEditor";
 import {
@@ -2516,6 +2517,15 @@ export function CharacterEditorPage({
                                     </Fragment>
                                   ),
                                 )}
+                                {activeChoiceSection.section === "Companion" &&
+                                hasCompanionChoice(
+                                  activeChoiceSection.choices,
+                                ) ? (
+                                  <CompanionNameFields
+                                    build={build}
+                                    onDispatch={dispatch}
+                                  />
+                                ) : null}
                               </div>
                             </section>
                           )}
