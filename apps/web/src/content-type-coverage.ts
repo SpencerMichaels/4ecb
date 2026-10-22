@@ -45,10 +45,8 @@ const internal = (note: string): ContentTypeCoverage => ({
 const gap = (note: string): ContentTypeCoverage => ({ kind: "gap", note });
 
 const abilityIncrease = applied("Raises an ability score.");
-const companionAbilityIncrease = gap(
-  "Raises a beast companion's ability score; companions have no stat block " +
-    "yet (familiar card proposal, step 2).",
-);
+// The beast companion card's abilities include the picks.
+const companionAbilityIncrease = presented("companions");
 
 export const CONTENT_TYPE_COVERAGE: Readonly<
   Record<string, ContentTypeCoverage>
@@ -72,6 +70,15 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   // Page 1 names the deity; its Character Reference entry has the text.
   Deity: presented("identity", "references"),
   Familiar: presented("companions"),
+  // The beast companion card. Associates and summons (step 3 of
+  // docs/companion-card-proposal.md) stay unpresented.
+  Companion: presented("companions"),
+  "Companion Ability Increase (Level 4)": companionAbilityIncrease,
+  "Companion Ability Increase (Level 8)": companionAbilityIncrease,
+  "Companion Ability Increase (Level 14)": companionAbilityIncrease,
+  "Companion Ability Increase (Level 18)": companionAbilityIncrease,
+  "Companion Ability Increase (Level 24)": companionAbilityIncrease,
+  "Companion Ability Increase (Level 28)": companionAbilityIncrease,
   Skill: presented("skills"),
   "Trait Package": presented("choices"),
   // Aliases, chosen or granted, on the row of the feature that offered
@@ -136,16 +143,7 @@ export const CONTENT_TYPE_COVERAGE: Readonly<
   "Item Set": internal("Never owned; its card lists its Item Set Benefits."),
 
   // Known gaps, for triage
-  Companion: gap(
-    "Beast companions have no stat block (familiar card proposal, step 2).",
-  ),
   Associate: gap("Associates and summoned-creature stat blocks are not shown."),
-  "Companion Ability Increase (Level 4)": companionAbilityIncrease,
-  "Companion Ability Increase (Level 8)": companionAbilityIncrease,
-  "Companion Ability Increase (Level 14)": companionAbilityIncrease,
-  "Companion Ability Increase (Level 18)": companionAbilityIncrease,
-  "Companion Ability Increase (Level 24)": companionAbilityIncrease,
-  "Companion Ability Increase (Level 28)": companionAbilityIncrease,
 };
 
 export function contentTypeCoverage(

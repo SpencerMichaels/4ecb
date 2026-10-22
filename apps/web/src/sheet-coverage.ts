@@ -87,7 +87,13 @@ export function sheetIndex(sheet: CharacterSheetModel): SheetIndex {
     referenceNames: new Set(
       sheet.learnedReferences.map(({ name }) => key(name)),
     ),
-    companionIds: ids(sheet.companions),
+    // A beast companion card also shows its Companion Ability Increase picks.
+    companionIds: new Set([
+      ...ids(sheet.companions),
+      ...sheet.companions.flatMap((card) =>
+        card.kind === "beast" ? card.abilityIncreaseIds.map(key) : [],
+      ),
+    ]),
     skills: new Set(sheet.skills.map(({ label }) => key(label))),
     choiceIds: ids(
       sheet.features.flatMap(({ entries }) =>
