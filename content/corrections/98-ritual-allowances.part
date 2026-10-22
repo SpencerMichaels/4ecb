@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Free-ritual allowances as data (D089; docs/known-rituals-proposal.md,
+  product-owner answer 4). Each provider of a "Free Rituals" textstring that
+  entitles the character to choose free rituals, formulas or practices gets a
+  machine-read `_FreeRitualAllowance`:
+
+    KIND; COUNT@LEVEL[,LEVEL…][<=MAX]; …[; from=ID|ID…]
+
+  KIND is the learned record's type (Ritual, Alchemical Formula, Martial
+  Practice); each step gives COUNT more at the listed character levels; MAX
+  is a level, `step` (that step's level or lower) or `level` (the level it
+  is learned at or lower), none for any level; `from=` limits the choice to
+  the listed records. Parsed by packages/rules-engine/src/ritual-allowances.ts.
+  Rituals a provider grants outright (FREEBEE) are not counted here. The
+  published text stays as it is and is still shown. Merged after the CBLoader
+  parts by scripts/build-private-content.sh. Structure and numbers only; no
+  official text.
+-->
+<D20Rules game-system="D&amp;D4E">
+  <!-- Wizard Spellbook: 3 of level 1, then 2 more at 5, 11, 15, 21, 25 of
+       that level or lower. -->
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_318"><specific name="_FreeRitualAllowance">Ritual; 3@1&lt;=1; 2@5,11,15,21,25&lt;=step</specific></AppendNodes>
+  <!-- Bard: 2 of level 1 (the bard-prerequisite rule stays in the text). -->
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_847"><specific name="_FreeRitualAllowance">Ritual; 2@1&lt;=1</specific></AppendNodes>
+  <AppendNodes internal-id="ID_INTERNAL_GRANTS_CLERIC"><specific name="_FreeRitualAllowance">Ritual; 2@1&lt;=1</specific></AppendNodes>
+  <!-- Druid, invoker: one more of level 1 beside the granted ritual. -->
+  <AppendNodes internal-id="ID_INTERNAL_GRANTS_DRUID"><specific name="_FreeRitualAllowance">Ritual; 1@1&lt;=1</specific></AppendNodes>
+  <AppendNodes internal-id="ID_INTERNAL_GRANTS_INVOKER"><specific name="_FreeRitualAllowance">Ritual; 1@1&lt;=1</specific></AppendNodes>
+  <!-- Psion: one of level 1, plus a choice of Sending or Tenser's Floating
+       Disk. -->
+  <AppendNodes internal-id="ID_INTERNAL_GRANTS_PSION"><specific name="_FreeRitualAllowance">Ritual; 1@1&lt;=1</specific><specific name="_FreeRitualAllowance">Ritual; 1@1; from=ID_FMP_RITUAL_55|ID_FMP_RITUAL_60</specific></AppendNodes>
+  <!-- Alchemist (Level 1 Alchemist Feature): 1 formula of level 1, then 1
+       more at 5 and 10 of that level or lower. -->
+  <AppendNodes internal-id="ID_FMP_CLASS_FEATURE_3866"><specific name="_FreeRitualAllowance">Alchemical Formula; 1@1&lt;=1; 1@5,10&lt;=step</specific></AppendNodes>
+  <!-- Practiced Prodigy: 2 practices of your level or lower, then 1 more at
+       5, 11, 15, 21, 25. -->
+  <AppendNodes internal-id="ID_FMP_FEAT_2454"><specific name="_FreeRitualAllowance">Martial Practice; 2@1&lt;=level; 1@5,11,15,21,25&lt;=level</specific></AppendNodes>
+  <!-- Wild Sage: one of Dowsing Rod, Portend Weather, Traveler's
+       Camouflage. -->
+  <AppendNodes internal-id="ID_FMP_FEAT_1885"><specific name="_FreeRitualAllowance">Ritual; 1@1; from=ID_FMP_RITUAL_285|ID_FMP_RITUAL_287|ID_FMP_RITUAL_291</specific></AppendNodes>
+
+  <!-- Legacy FeatPage.DoChooseFeat adds a Spellbook (ID_FMP_GEAR_33) as loot
+       whenever Student of Sword Magic is chosen. Express it as the content's
+       own free-item stat, given once (MainWindow.GiveFreebees). -->
+  <AppendNodes internal-id="ID_FMP_FEAT_627"><rules><statadd name="FREEBEE:ID_FMP_GEAR_33" value="+1" /></rules></AppendNodes>
+</D20Rules>
