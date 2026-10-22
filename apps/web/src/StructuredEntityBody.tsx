@@ -255,12 +255,7 @@ function ClassBody({
   readonly entity: ContentEntity;
   readonly references: ReadonlyMap<string, ContentEntity>;
 }) {
-  const metadata = classTableMetadata(entity);
-  // "Arcane Striker", as the books head a class; key abilities get their own
-  // labelled row with the other class traits.
-  const summary = [metadata.powerSource.label, metadata.role.label]
-    .filter(Boolean)
-    .join(" ");
+  // Key abilities get their own labelled row with the other class traits.
   const keyAbilities = classKeyAbilities(entity).join(", ");
   const features = useMemo(
     () => namedClassFeatures(entity, references).map(traitOf),
@@ -268,7 +263,6 @@ function ClassBody({
   );
   return (
     <>
-      {summary === "" ? null : <p className="entity-card-summary">{summary}</p>}
       <StatGrid
         rows={CLASS_STATS.map(([field, label]) => ({
           label,
@@ -364,6 +358,23 @@ export function StructuredEntityBody({
   readonly hideFlavortext: boolean;
 }) {
   const shortDescription = contentSpecificValue(entity, "Short Description");
+  // A class leads with its power source and role, as the books head it:
+  // "Arcane Striker. You wield a deadly weapon…".
+  const classHeading =
+    kind === "class"
+      ? (() => {
+          const metadata = classTableMetadata(entity);
+          return [metadata.powerSource.label, metadata.role.label]
+            .filter(Boolean)
+            .join(" ");
+        })()
+      : "";
+  const lede = [
+    classHeading === "" ? "" : `${classHeading}.`,
+    shortDescription?.trim() ?? "",
+  ]
+    .filter(Boolean)
+    .join(" ");
   // A background's campaign and kind ("Forgotten Realms · Campaign").
   const context =
     kind === "background"
@@ -380,9 +391,7 @@ export function StructuredEntityBody({
         <p className="candidate-flavor entity-card-flavor">{entity.flavor}</p>
       )}
       {context === "" ? null : <p className="entity-card-context">{context}</p>}
-      {shortDescription === undefined ? null : (
-        <p className="entity-card-lede">{shortDescription}</p>
-      )}
+      {lede === "" ? null : <p className="entity-card-lede">{lede}</p>}
       {entity.printPrerequisites === undefined ? null : (
         <section>
           <h5>Prerequisites</h5>

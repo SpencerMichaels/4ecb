@@ -104,6 +104,7 @@ describe("structured race, class and background cards", () => {
       "Power Source": "Martial. Training, not magic.",
       "Key Abilities": "Strength, Constitution",
       "Hit Points at 1st Level": "15 + Constitution score",
+      "Short Description": "You stand firm.",
       _PARSED_CLASS_FEATURE: "Guard Stance",
     });
     const ownFeature = entity(
@@ -122,7 +123,9 @@ describe("structured race, class and background cards", () => {
     );
     const markup = render(classEntity, [otherFeature, ownFeature]);
 
-    expect(markup).toContain("Martial Defender");
+    expect(markup).toContain(
+      `<p class="entity-card-lede">Martial Defender. You stand firm.</p>`,
+    );
     expect(markup).toContain(
       "<dt>Key abilities</dt><dd>Strength, Constitution</dd>",
     );
