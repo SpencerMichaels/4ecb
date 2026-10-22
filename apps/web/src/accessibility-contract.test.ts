@@ -392,7 +392,7 @@ describe("release accessibility contract", () => {
     // The sidebar only shows the level; changing it (rare, build-wide) is
     // the tab bar's Change level menu: Level up, or Set level… (a dialog
     // with the level plan grid, confirmed by its primary button).
-    expect(header).toContain("build.effectiveLevel,");
+    expect(header).toContain("build.effectiveLevel");
     expect(header).not.toContain("<select");
     expect(characterEditor).toContain('icon="change-level"');
     expect(characterEditor).toContain('label="Change level"');

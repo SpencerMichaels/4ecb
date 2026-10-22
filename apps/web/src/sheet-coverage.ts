@@ -8,6 +8,7 @@ import type { CharacterOccurrence } from "@4ecb/rules-engine";
 import {
   SHEET_ALIAS_TYPES,
   SHEET_IDENTITY_TYPES,
+  hybridClassName,
   type CharacterSheetModel,
 } from "@4ecb/sheet-model";
 
@@ -57,7 +58,7 @@ export function sheetIndex(sheet: CharacterSheetModel): SheetIndex {
     for (const [type, detailName] of SHEET_IDENTITY_TYPES) {
       if (detailName !== label) continue;
       addIdentity(type, value);
-      // A hybrid's classes share the Class line ("Hybrid Cleric / Hybrid Rogue").
+      // A hybrid's classes share the Class line ("Cleric / Rogue").
       if (type === "Class")
         for (const part of value.split(" / "))
           addIdentity("Hybrid Class", part);
@@ -119,10 +120,15 @@ function selectsHybridClasses(entity: ContentEntity): boolean {
   );
 }
 
-/** Every sheet surface that shows the entity. */
+/**
+ * Every sheet surface that shows the entity. A Hybrid Class is shown on the
+ * Class line by its base class's name (`hybridClassName`), which needs the
+ * content's `entities`.
+ */
 export function sheetSurfacesOf(
   entity: ContentEntity,
   index: SheetIndex,
+  entities?: ReadonlyMap<string, ContentEntity>,
 ): SheetSurface[] {
   const id = key(entity.id);
   const name = key(entity.name);
@@ -131,6 +137,11 @@ export function sheetSurfacesOf(
     surfaces.push("features");
   if (
     index.identity.get(key(entity.type))?.has(name) === true ||
+    (key(entity.type) === "hybrid class" &&
+      entities !== undefined &&
+      index.identity
+        .get("hybrid class")
+        ?.has(key(hybridClassName(entity, entities))) === true) ||
     // The hybrid marker class (it selects the hybrid classes) is shown as
     // the hybrid classes on the Class line.
     (key(entity.type) === "class" &&
@@ -247,7 +258,7 @@ export function sheetPresence(
       });
       continue;
     }
-    const surfaces = sheetSurfacesOf(entity, index);
+    const surfaces = sheetSurfacesOf(entity, index, entities);
     // An alias the identity line's own race or class grants (Longtooth
     // Shifter counts as Shifter; Hexblade, through its grant bundle, as
     // Warlock) is implied by that line. The first shown ancestor decides.
@@ -261,7 +272,8 @@ export function sheetPresence(
             : byOccurrence.get(ancestor.parentId)
       ) {
         const shown = entities.get(key(ancestor.definitionId));
-        const on = shown === undefined ? [] : sheetSurfacesOf(shown, index);
+        const on =
+          shown === undefined ? [] : sheetSurfacesOf(shown, index, entities);
         if (on.includes("identity")) surfaces.push("identity");
         if (on.length > 0) break;
       }

@@ -75,7 +75,17 @@ const entities = [
   entity("ID_SWORD", "Longsword", "Weapon"),
   entity("ID_SKILL", "Athletics", "Skill"),
   entity("ID_TRAINING", "Athletics", "Skill Training"),
-  entity("ID_HYBRID_A", "Hybrid Warblade", "Hybrid Class"),
+  {
+    ...entity("ID_HYBRID_A", "Hybrid Warblade", "Hybrid Class"),
+    specifics: [
+      {
+        name: "_BaseClass",
+        value: "ID_CLASS",
+        extraAttributes: [],
+        ordinal: 0,
+      },
+    ],
+  },
   {
     ...entity("ID_HYBRID", "Hybrid", "Class"),
     rules: [
@@ -271,15 +281,15 @@ describe("sheet presence", () => {
     expect(surfaces("ID_AS_FIGHTER")).toEqual([]);
   });
 
-  it("splits a hybrid's Class identity line into its classes", () => {
-    const hybrid = sheetPresence(
-      [occurrence("hybrid", "ID_HYBRID_A")],
-      byId,
-      sheet({
-        identity: [{ label: "Class", value: "Hybrid Warblade / Hybrid Seer" }],
-      }),
-    );
-    expect(hybrid[0]?.surfaces).toEqual(["identity"]);
+  it("splits a hybrid's Class identity line into its base classes", () => {
+    const hybrid = (value: string) =>
+      sheetPresence(
+        [occurrence("hybrid", "ID_HYBRID_A")],
+        byId,
+        sheet({ identity: [{ label: "Class", value }] }),
+      )[0]?.surfaces;
+    expect(hybrid("Warblade / Seer")).toEqual(["identity"]);
+    expect(hybrid("Seer / Mystic")).toEqual([]);
   });
 
   it("counts the hybrid marker class as shown by the hybrid Class line", () => {
@@ -289,7 +299,7 @@ describe("sheet presence", () => {
         byId,
         sheet({ identity: [{ label: "Class", value }] }),
       )[0]?.surfaces;
-    expect(presence("Hybrid Warblade / Hybrid Seer")).toEqual(["identity"]);
+    expect(presence("Warblade / Seer")).toEqual(["identity"]);
     expect(presence("Warblade")).toEqual([]);
   });
 });
