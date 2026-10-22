@@ -23,11 +23,7 @@ import {
   buildEvaluatedSheetModel,
   buildSheetModel,
   featureChoiceText,
-  withItemSetCards,
   type CharacterSheetModel,
-  type SheetCard,
-  type SheetCompanionCard,
-  type SheetItemSetCard,
   type SheetValue,
 } from "@4ecb/sheet-model";
 
@@ -39,10 +35,11 @@ import { PortraitImage } from "./PortraitEditor";
 import { inventoryCategory } from "./equipment-ui";
 import { sortedPowerCards } from "./power-card-order";
 import {
-  PrintCharacterCard,
-  PrintSkillsCard,
-  type PlayCardKind,
-} from "./PrintPlayCards";
+  isPlayCard,
+  printableSheetCards,
+  type PrintableCard,
+} from "./print-card-sequence";
+import { PrintCharacterCard, PrintSkillsCard } from "./PrintPlayCards";
 import { BeastCompanionCard } from "./BeastCompanionCard";
 import { FamiliarCard } from "./FamiliarCard";
 import { ItemCard } from "./ItemCard";
@@ -75,17 +72,6 @@ function ValueList({
     </dl>
   );
 }
-
-type PrintableCard =
-  | SheetCard
-  | SheetCompanionCard
-  | SheetItemSetCard
-  | { readonly kind: PlayCardKind };
-
-const isPlayCard = (
-  card: PrintableCard,
-): card is { readonly kind: PlayCardKind } =>
-  card.kind === "play-character" || card.kind === "play-skills";
 
 function PrintCard({
   card,
@@ -427,24 +413,7 @@ export function CharacterSheetPage({
       </>
     );
   const powerCards = sortedPowerCards(model.powers);
-  // Like the legacy builder, the special Action Point and Second Wind cards
-  // follow the play-data cards.
-  const specialCardRank = (card: SheetCard) =>
-    ["action point", "second wind"].indexOf(card.name.trim().toLowerCase());
-  const specialCards = powerCards
-    .filter((card) => card.universal && specialCardRank(card) >= 0)
-    .sort((a, b) => specialCardRank(a) - specialCardRank(b));
-  const printableCards: PrintableCard[] = [
-    { kind: "play-character" as const },
-    { kind: "play-skills" as const },
-    // The beast companion, then familiars (companion card proposal, owner
-    // answer 5).
-    ...model.companions,
-    ...specialCards,
-    ...powerCards.filter((card) => !specialCards.includes(card)),
-    // Each item set's card follows its pieces' cards (legacy CharTracker).
-    ...withItemSetCards(model.items, model.itemSets ?? []),
-  ];
+  const printableCards = printableSheetCards(model);
   const printCardPages = chunks(printableCards, 9);
   const characterLevel =
     Number(

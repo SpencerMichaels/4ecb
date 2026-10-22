@@ -107,6 +107,14 @@ const reviews: ReviewCharacter[] = [
             "Essentials power swaps",
             "Hexblade swaps: open each required replacement in the Build replacement editor; only powers of the matching kind are offered to lose.",
           ],
+          [
+            "Multi-card detail stacks",
+            "The White Well pact's stack: each card only as tall as its content; a lone detail card keeps the printed proportions.",
+          ],
+          [
+            "Benefits by level",
+            "The White Well pact's level sections, viewed at levels 1, 9 and 12 (change the Build level); also Alchemist, Feytouched and Archmage.",
+          ],
         ],
       },
       {

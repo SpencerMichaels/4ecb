@@ -15,6 +15,7 @@ const a4Styles = readFileSync(
 );
 const sheetSource = [
   "./CharacterSheetPage.tsx",
+  "./print-card-sequence.ts",
   "./PowerCard.tsx",
   "./ItemCard.tsx",
   "./use-print-card-fit.ts",

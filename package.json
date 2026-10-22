@@ -28,6 +28,7 @@
     "audit:requires": "tsx scripts/audit-requires.ts",
     "evaluate:character": "tsx scripts/evaluate-character.ts",
     "review:build": "tsx scripts/build-visual-review.ts",
+    "review:verify": "tsx --tsconfig apps/web/tsconfig.app.json --import ./apps/web/scripts/visual-review-css-stub.mjs apps/web/scripts/verify-visual-review.ts",
     "evaluate:matrix": "bash scripts/evaluate-character-matrix.sh",
     "regenerate:edited-dnd4e": "tsx scripts/regenerate-edited-dnd4e.ts",
     "build": "pnpm typecheck && pnpm --filter @4ecb/web build",

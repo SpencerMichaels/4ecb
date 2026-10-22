@@ -8,7 +8,7 @@
  *
  *   pnpm review:build [--pack=tmp/content/full-local.4ecp]
  *     [--out=tmp/visual-review] [--base=http://localhost:5173]
- *     [--only=slug,...]
+ *     [--only=slug,...] [--no-verify] [--pages-only]
  *
  * The characters are bound to a re-identified copy of the pack
  * (`visual-review-<digest>`, same entities), so it installs beside any other
@@ -18,7 +18,14 @@
  * others from the previous run's cache (same pack only). The checklist is
  * read on every run; items no character covers are printed and listed at
  * the end of the page.
+ *
+ * After the build it runs the verifier (`pnpm review:verify`,
+ * apps/web/scripts/verify-visual-review.ts), which checks the factual rows
+ * and rewrites the pages with its results (scripts/visual-review-output.ts):
+ * index.html and the visual-only index-visual.html. `--no-verify` skips
+ * it; `--pages-only` only rewrites the pages from the last build.
  */
+import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -78,9 +85,15 @@ import {
   type CandidatePreference,
 } from "./native-character";
 import { reviewPlan, type ReviewPlan } from "./visual-review-plan";
-import { renderReviewPage, parseChecklist } from "./visual-review-page";
+import {
+  writeReviewPages,
+  withVariants,
+  type PageInput,
+  type WrittenPages,
+} from "./visual-review-output";
 
 const gzip = promisify(gzipCallback);
+const run = promisify(execFile);
 const ABILITIES = [
   "Strength",
   "Constitution",
@@ -91,7 +104,6 @@ const ABILITIES = [
 ] as const;
 const ABILITY_SCORES = [18, 16, 14, 12, 11, 10];
 const MAX_PASSES_PER_LEVEL = 256;
-const CHECKLIST_PATH = "docs/visual-review-checklist.md";
 
 /* ------------------------------------------------------------------ */
 /* Character specifications                                            */
@@ -154,6 +166,8 @@ interface Args {
   readonly outDir: string;
   readonly base: string | undefined;
   readonly only: readonly string[] | undefined;
+  readonly verify: boolean;
+  readonly pagesOnly: boolean;
 }
 
 function parseArgs(argv: readonly string[]): Args {
@@ -164,6 +178,8 @@ function parseArgs(argv: readonly string[]): Args {
     outDir: resolve(option("out") ?? "tmp/visual-review"),
     base: option("base"),
     only: option("only")?.split(",").filter(Boolean),
+    verify: !argv.includes("--no-verify"),
+    pagesOnly: argv.includes("--pages-only"),
   };
 }
 
@@ -857,8 +873,33 @@ async function detectBase(): Promise<string> {
   return "http://localhost:5173";
 }
 
+function reportPages(pages: WrittenPages): void {
+  const { summary } = pages;
+  process.stdout.write(
+    `Checklist: ${pages.checklist.length} items, ${pages.unmapped.length} unmapped.\n`,
+  );
+  pages.unmapped.forEach((item) =>
+    process.stdout.write(`  unmapped: ${item.title}\n`),
+  );
+  pages.unknownKeys.forEach((name) =>
+    process.stdout.write(`  plan names a missing checklist item: ${name}\n`),
+  );
+  pages.unknownClassified.forEach((key) =>
+    process.stdout.write(`  classification names a missing row: ${key}\n`),
+  );
+  process.stdout.write(
+    pages.verified
+      ? `Rows: ${summary.autoPassed} verified, ${summary.autoFailed.length} failed, ${summary.visual} for the owner.\n`
+      : `Rows: ${summary.autoPending} awaiting verification, ${summary.visual} for the owner.\n`,
+  );
+}
+
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
+  if (args.pagesOnly) {
+    reportPages(await writeReviewPages(args.outDir));
+    return;
+  }
   await mkdir(resolve(args.outDir, "cache"), { recursive: true });
   process.stderr.write(`Loading ${args.packPath}...\n`);
   const source = await loadPack(args.packPath);
@@ -911,39 +952,8 @@ async function main(): Promise<void> {
     );
     built.push(character);
   }
-  for (const review of plan.reviews)
-    for (const variant of review.variants ?? []) {
-      const original = built.find(({ slug }) => slug === review.spec.slug);
-      if (original === undefined) continue;
-      built.push({
-        slug: variant.slug,
-        facts: original.facts,
-        record: {
-          ...original.record,
-          id: `visual-review-${variant.slug}`,
-          title: variant.title,
-          build: {
-            ...original.record.build,
-            textStrings: {
-              ...original.record.build.textStrings,
-              Name: variant.title,
-            },
-          },
-          profileBinding:
-            variant.binding === "update"
-              ? {
-                  packId: reviewPack.manifest.packId,
-                  contentDigest: reviewPack.manifest.contentDigest,
-                }
-              : {
-                  packId: "visual-review-missing-content",
-                  contentDigest: "0".repeat(64),
-                },
-        },
-      });
-    }
-
-  const characters = built.map(({ record }) => record);
+  const withCopies = withVariants(plan, built, reviewPack.manifest);
+  const characters = withCopies.map(({ record }) => record);
   const backup = {
     format: "4ecb-character-backup" as const,
     version: 2 as const,
@@ -956,21 +966,20 @@ async function main(): Promise<void> {
   const backupFile = resolve(args.outDir, "review-characters.4ecb");
   await writeFile(backupFile, `${JSON.stringify(backup, null, 2)}\n`);
 
-  const checklist = parseChecklist(await readFile(CHECKLIST_PATH, "utf8"));
-  const base = args.base ?? (await detectBase());
-  const { html, unmapped, unknownKeys } = renderReviewPage({
-    plan,
-    built,
-    checklist,
-    base,
+  const pageInput: PageInput = {
+    base: args.base ?? (await detectBase()),
     packFile,
     backupFile,
     reviewPack: reviewPack.manifest,
     sourcePack: source.manifest,
     generatedAt: context.now,
-  });
+  };
+  await writeFile(
+    resolve(args.outDir, "page-input.json"),
+    `${JSON.stringify(pageInput, null, 2)}\n`,
+  );
   const pageFile = resolve(args.outDir, "index.html");
-  await writeFile(pageFile, html);
+  let pages = await writeReviewPages(args.outDir);
 
   let failures = 0;
   for (const { slug, facts } of built) {
@@ -989,18 +998,26 @@ async function main(): Promise<void> {
         .forEach((line) => process.stdout.write(`    ${line}\n`));
     }
   }
+  if (args.verify) {
+    process.stderr.write("Verifying the factual rows...\n");
+    try {
+      const { stdout } = await run(
+        "pnpm",
+        ["--silent", "review:verify", `--out=${args.outDir}`],
+        { maxBuffer: 64 * 1024 * 1024 },
+      );
+      process.stdout.write(stdout);
+      pages = await writeReviewPages(args.outDir);
+    } catch (error) {
+      process.stdout.write(
+        `Verification did not finish: ${(error as Error).message}\n`,
+      );
+    }
+  }
   process.stdout.write(
-    `\nWrote ${backupFile}\n      ${packFile}\n      ${pageFile}\n`,
+    `\nWrote ${backupFile}\n      ${packFile}\n      ${pageFile}\n      ${resolve(args.outDir, "index-visual.html")}\n`,
   );
-  process.stdout.write(
-    `Checklist: ${checklist.length} items, ${unmapped.length} unmapped.\n`,
-  );
-  unmapped.forEach((item) =>
-    process.stdout.write(`  unmapped: ${item.title}\n`),
-  );
-  unknownKeys.forEach((name) =>
-    process.stdout.write(`  plan names a missing checklist item: ${name}\n`),
-  );
+  reportPages(pages);
   if (failures > 0)
     process.stdout.write(`${failures} character(s) need attention.\n`);
 }

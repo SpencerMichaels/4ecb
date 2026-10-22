@@ -1,0 +1,399 @@
+/**
+ * Which review-page rows (scripts/visual-review-plan.ts, keyed as the page's
+ * checkboxes are: `<slug>|<link index>|<item title>` or
+ * `general|<section index>|<item title>`) code can verify. "auto" rows are
+ * checked by apps/web/scripts/verify-visual-review.ts and need no owner
+ * checkbox; "mixed" rows have a factual part verified there and a visual
+ * part (`visual`) left for the owner; any row not listed is visual.
+ */
+export type RowClass =
+  | { readonly kind: "auto"; readonly auto: string }
+  | { readonly kind: "mixed"; readonly auto: string; readonly visual: string };
+
+const auto = (text: string): RowClass => ({ kind: "auto", auto: text });
+const mixed = (text: string, visual: string): RowClass => ({
+  kind: "mixed",
+  auto: text,
+  visual,
+});
+
+export const ROW_CLASSIFICATION: Readonly<Record<string, RowClass>> = {
+  // Beatrix
+  "beatrix|0|trait package benefits": mixed(
+    'The pact\'s detail stack: the pact card, then each benefit card, each followed by its "Granted power" cards; the card count; "Granted …" labels on choice options.',
+    'How the long stack reads: whether a power under a sub-option looks nested (indent / "from X"?), and the 0.75rem spacing inside the benefits section.',
+  ),
+  "beatrix|0|white well pact summary": auto(
+    'The pact table row summary text is "You have the Fey pact of the White Well."',
+  ),
+  "beatrix|0|benefits by level": mixed(
+    'Sections (Level 1, 7, 9, both hexblade paths, 25), "Level 9 · 1 feature, 3 powers" counts, open by viewed level (1, 9, 12), bullets only while folded, plain Level subheadings in path sections, a chosen path leaving only its section, the pact card\'s flavor → Prerequisites → benefits order, and sections for Alchemist, Feytouched and Archmage.',
+    "Click / Enter / Space toggling and the bullets disappearing; at 140% zoom and in dark theme headings wrap without clipping and the focus ring shows.",
+  ),
+  "beatrix|0|essentials power swaps": mixed(
+    "The required replacement choices exist, are filled, and offer only powers of the matching kind to lose.",
+    "Filling one in the Build replacement editor feels right.",
+  ),
+  "beatrix|1|revenant past life": auto(
+    "The Past life (CountsAsRace) choice is in the Race section, picked as Eladrin.",
+  ),
+  "beatrix|2|essentials power swaps": mixed(
+    "The Retraining tab lists the replacement levels and their options match the power kind.",
+    "Filling one from the Retraining editor feels right.",
+  ),
+  "beatrix|3|superior implements": auto(
+    "The accurate rod's detail pane renders the item card (not a power or reference card).",
+  ),
+  "beatrix|3|a free item appears": auto(
+    "The pact weapon gift is in the inventory and has a sheet item card.",
+  ),
+  "beatrix|4|sub-choices on feature rows": mixed(
+    'Reference headings "Pact Choice: Fey Pact of the White Well", "Past life: Eladrin", "Level 1 Hexblade Daily Power: Crown of Stars".',
+    'Wrapping of those headings next to the "Level N" tag.',
+  ),
+  "beatrix|4|background benefit card": auto(
+    'The Luskan card has no suffix and a "Background benefit: …" card with its Benefit text follows it.',
+  ),
+  "beatrix|4|granted aliases on feature rows": auto(
+    'The printed feature row reads "Fey Pact of the White Well Boon: counts as Fey Pact".',
+  ),
+  "beatrix|4|proficiencies pane": auto(
+    "Proficiencies follows Equipped and Inventory with Armor / Shields / Weapons / Implements lines in lower case.",
+  ),
+  "beatrix|4|printed deity entry": auto(
+    "Sehanine's entry follows Background, with the church icon, a Domains line, then the description.",
+  ),
+  "beatrix|5|granted aliases on feature rows": auto(
+    "The on-screen feature list shows the same alias text.",
+  ),
+  // Hystan
+  "hystan|0|granted aliases on feature rows": auto(
+    '"Dual Heritage: counts as Elf, Human" on the printed feature rows.',
+  ),
+  "hystan|0|background benefit card": auto(
+    "Two background cards, then the background benefit card with its Benefit text.",
+  ),
+  "hystan|1|granted aliases on feature rows": auto(
+    "The Dual Heritage alias in the on-screen feature list.",
+  ),
+  // Hu
+  "hu|0|background benefit card": auto(
+    'Six background cards, then "Background benefit: …" with its Benefit text.',
+  ),
+  "hu|0|granted aliases on feature rows": mixed(
+    '"Battle Awareness: Athletics; counts as Fighter" on the printed feature rows.',
+    'Does "; counts as" read well after a choice?',
+  ),
+  "hu|1|granted aliases on feature rows": auto(
+    "The Battle Awareness alias in the on-screen feature list.",
+  ),
+  // Piri
+  "piri|0|rows": auto(
+    'The druid-granted ritual\'s source line reads "Granted by Druid".',
+  ),
+  "piri|0|free-ritual counter": mixed(
+    "The counter line under the druid's Free rituals text (its text).",
+    "It reads as a bold line under the text.",
+  ),
+  "piri|1|printed reference pages": auto(
+    'Granted ritual entries show "Granted by: Druid".',
+  ),
+  // Beast Mastery ranger
+  "ranger-beast|0|builder companion pane": auto(
+    "The chosen wolf's detail pane is the beast card; another beast gets a candidate preview card.",
+  ),
+  "ranger-beast|0|name and appearance": mixed(
+    'Name ("Ash") and Appearance inputs render in the Companion section; the card title reads "Ash — wolf".',
+    "The inputs' layout in the section.",
+  ),
+  "ranger-beast|1|retraining": auto(
+    'A "Retrain a companion" option exists with beast options; a companion retrain\'s Kind cell reads "Companion".',
+  ),
+  "ranger-beast|2|beast mastery ranger": auto(
+    'Beast attack powers have beast attack and damage numbers; no "Companion: X" power card.',
+  ),
+  "ranger-beast|2|printed beast card": auto(
+    "The beast card is printed right after the Skills card, before any familiar.",
+  ),
+  "ranger-beast|2|beast power cards": auto(
+    '"Beast +N vs AC" header and "Beast damage" line on beast powers; Distracting Team keeps its table with beast cells.',
+  ),
+  // Sentinel (bear)
+  "sentinel-bear|0|builder companion pane": auto(
+    "The bear's card in the Companion pane (candidate preview: 16 Str, 15 Con).",
+  ),
+  "sentinel-bear|1|other detail stacks": mixed(
+    "Archmage's detail stack lists its features and powers.",
+    "How the stack looks.",
+  ),
+  "sentinel-bear|2|printed beast card": mixed(
+    'The Surges tile reads "Yours".',
+    "Does the full stat block fit one card at level 25 with several traits?",
+  ),
+  "sentinel-bear|2|beast power cards": auto(
+    '"Beast +N vs AC" header and "Beast damage" lines on the companion powers.',
+  ),
+  // Gnome wizard
+  "wizard-gnome|0|gnome characters": auto(
+    "The gnome evaluates, complete and legal.",
+  ),
+  "wizard-gnome|0|other detail stacks": mixed(
+    "Genasi's Elemental Manifestation stack lists its sub-options (about 26 cards).",
+    "How the stack looks.",
+  ),
+  "wizard-gnome|1|other detail stacks": mixed(
+    "Warlord's Commanding Presence and Cleric's Channel Divinity (12 powers) stacks.",
+    "How the stacks look.",
+  ),
+  "wizard-gnome|2|other detail stacks": mixed(
+    "Alchemist's stack lists its features and powers.",
+    "How the stack looks.",
+  ),
+  "wizard-gnome|3|wizard spellbook": auto(
+    "Replacing a spellbook pick keeps the new pick after re-evaluation.",
+  ),
+  "wizard-gnome|4|already owned candidates": auto(
+    'Feats taken earlier are unavailable at level 4 with the reason "Already owned".',
+  ),
+  "wizard-gnome|5|order adept with a spellbook": auto(
+    "No class power choice at level 5 offers an Order Adept theme power.",
+  ),
+  "wizard-gnome|6|free-ritual counter": mixed(
+    'The Spellbook counter text ("… free 1st-level rituals and … free rituals of level 5 or lower left").',
+    "It reads as a bold line under the text.",
+  ),
+  "wizard-gnome|6|known-list source line": auto(
+    'Comprehend Language reads "Learned free at level 1 (Spellbook)".',
+  ),
+  "wizard-gnome|6|learn x free dialog": mixed(
+    "The wizard's Spellbook is one allowance (no dialog); with a psion's allowance beside it, Tenser's Floating Disk fits both, so Learn free asks.",
+    'The dialog: choose a pool, "None (a gift)" or Cancel.',
+  ),
+  "wizard-gnome|7|a free item appears": auto(
+    "The Spellbook gift is in the inventory and has a sheet item card.",
+  ),
+  "wizard-gnome|8|equipment item details": auto(
+    "A wand's detail pane lists the powers it grants.",
+  ),
+  "wizard-gnome|9|equipment item details": auto(
+    "The Eye of Vecna's detail pane lists its conditional powers.",
+  ),
+  "wizard-gnome|9|other detail stacks": mixed(
+    "The Eye of Vecna's detail stack.",
+    "How the stack looks.",
+  ),
+  // Fey warlock
+  "warlock-fey|0|wizard spellbook": auto(
+    "Eldritch Blast's ability choice offers Charisma and Constitution and can be changed and back.",
+  ),
+  "warlock-fey|1|other detail stacks": mixed(
+    "Feytouched's stack lists its features and powers.",
+    "Its powers don't look nested under sub-options.",
+  ),
+  "warlock-fey|1|familiar choice": mixed(
+    "The familiar choice's detail pane is the Arcane Wisp familiar card in panel layout.",
+    "Dark theme on screen.",
+  ),
+  "warlock-fey|2|familiar card": mixed(
+    'Arcane Wisp card after Skills, speed "fly 8 (hover)", the rules line, no "Familiar: X" power card, Hide flavor text drops the description.',
+    "Card fit and the defense / HP / speed tiles' look.",
+  ),
+  // Hybrid executioner/fighter
+  "executioner-fighter|0|assassin's strike (hybrid)": auto(
+    "The level-7 upgrade choice shows exactly one available option.",
+  ),
+  "executioner-fighter|0|hybrid executioner without assassin's strike (hybrid)":
+    auto("The upgrade's prerequisite lists Assassin's Strike (Hybrid) first."),
+  "executioner-fighter|1|assassin's strike (hybrid)": auto(
+    "The level-13 upgrade choice shows exactly one available option.",
+  ),
+  "executioner-fighter|2|assassin's strike (hybrid)": auto(
+    "The level-17 upgrade choice shows exactly one available option.",
+  ),
+  "executioner-fighter|3|assassin's strike (hybrid)": auto(
+    "The level-23 upgrade choice shows exactly one available option.",
+  ),
+  "executioner-fighter|4|assassin's strike (hybrid)": auto(
+    "The level-27 upgrade choice shows exactly one available option.",
+  ),
+  "executioner-fighter|5|a free item appears": auto(
+    "The hybrid's Poison Use (Hybrid) gives no gift, so no poison doses (the full executioner's poison gift is checked under General).",
+  ),
+  "executioner-fighter|6|assassin's strike (hybrid)": auto(
+    '"Additional effects: +4d10 extra damage." on the printed card.',
+  ),
+  "executioner-fighter|6|power weapon rows": auto(
+    "Bola Takedown lists only the bola; Coward's Reward lists the rapier, not the bola.",
+  ),
+  "executioner-fighter|6|hybrid characters": auto(
+    'Class identity line "Executioner / Fighter".',
+  ),
+  "executioner-fighter|7|assassin's strike (hybrid)": auto(
+    'The builder panel card also shows "+4d10 extra damage".',
+  ),
+  // Hybrid executioner/rogue
+  "executioner-rogue|0|hybrid executioner without assassin's strike (hybrid)":
+    auto("No Assassin's Strike upgrade choice at level 7."),
+  "executioner-rogue|1|equipped item requirement": auto(
+    "An Equipped item requirement issue names the Warsoul Weapon.",
+  ),
+  "executioner-rogue|2|power weapon rows": auto(
+    "Throw Grapple has a no-weapon row; rogue weapon powers list only the allowed weapons.",
+  ),
+  // Hybrid artificer/ardent
+  "artificer-ardent|0|familiar choice": mixed(
+    "The familiar choice's detail pane is the Sprite familiar card in panel layout.",
+    "Dark theme on screen.",
+  ),
+  "artificer-ardent|1|hybrid characters": auto(
+    'Class identity line "Artificer / Ardent".',
+  ),
+  "artificer-ardent|1|familiar card": auto(
+    'Sprite with Vigorous Familiar: AC +1, speed "6, fly 6"; no "Familiar: Sprite" power card.',
+  ),
+  // Drow invoker
+  "invoker-drow|0|the rituals tab": mixed(
+    "Rituals tab after Shop with the book-marked icon; Free rituals text with the provider in parentheses, then Known (N) and Learn rituals.",
+    "How the tab and the top of the page look.",
+  ),
+  "invoker-drow|0|free-ritual counter": mixed(
+    "The counter text under the invoker's Free rituals text (its one ritual used).",
+    "It reads as a bold line under the text.",
+  ),
+  "invoker-drow|0|groups": mixed(
+    "The three groups are always shown, empty ones with their empty-state text.",
+    "The empty states are italic.",
+  ),
+  "invoker-drow|0|rows": mixed(
+    'Each row has the book icon, name, the "Granted by Invoker" source line, Level, Category and Key skill.',
+    "The source line looks muted.",
+  ),
+  "invoker-drow|0|remove": mixed(
+    "Remove (trash icon) on learned entries only; granted entries have none.",
+    "The armed red state.",
+  ),
+  "invoker-drow|0|detail card": auto(
+    "A selected row's card has its source as the subheading; with nothing selected, the empty-state text.",
+  ),
+  "invoker-drow|1|learning view": mixed(
+    '"← Known rituals" back button, Type select with only the three catalogs, "Search rituals…", Known chip and column, Buy / Learn free buttons.',
+    "How the learning view looks.",
+  ),
+  "invoker-drow|2|shop": auto(
+    "The Shop's Type list has no Rituals, Alchemical formulas or Martial practices; Ritual Scrolls are under Consumables.",
+  ),
+  "invoker-drow|3|old links": auto(
+    "tab=shop&category=rituals canonicalizes to the Rituals tab's learning view.",
+  ),
+  "invoker-drow|4|old links": auto(
+    "tab=equipment&section=practices canonicalizes to the Rituals tab.",
+  ),
+  "invoker-drow|5|printed reference pages": auto(
+    'Granted ritual entries show "Granted by: Invoker".',
+  ),
+  "invoker-drow|6|on-screen sheet": auto(
+    '"Rituals & practices" renders the learned references as panel item cards.',
+  ),
+  "invoker-drow|7|builder deity card": auto(
+    'Avandra\'s card: "Domains: …" above the description, domain cards below.',
+  ),
+  "invoker-drow|7|other detail stacks": mixed(
+    "Lolth's stack lists her domain cards.",
+    "How the stack looks.",
+  ),
+  "invoker-drow|8|awaken god fragment": auto(
+    "The feat and its fragment choice; the fragment's Encounter power card (Free action, keyword band) among the encounter powers.",
+  ),
+  "invoker-drow|9|equipment and shop item detail": auto(
+    "The Scarf of Reconciliation's detail pane has an Item Set panel card.",
+  ),
+  "invoker-drow|9|party pieces field": mixed(
+    "Entering a count marks unlocked benefits active and changes totals; clearing returns to blank with nothing dimmed; -1 and 1.5 are rejected with the changed hint.",
+    'The field and hint under "Item set" at 140% zoom.',
+  ),
+  "invoker-drow|9|rose scythe of chauntea": auto(
+    "The Rose Scythe's implement bonus applies to invoker implement attacks (compared with it unequipped).",
+  ),
+  "invoker-drow|10|superior implements": auto(
+    "An accurate symbol's Shop detail pane renders the item card.",
+  ),
+  "invoker-drow|10|equipment and shop item detail": auto(
+    "A Caelynnvala's Boons piece in the Shop has the Item Set panel card and the Party pieces field.",
+  ),
+  "invoker-drow|11|printed deity entry": auto(
+    "Avandra's entry follows Background, with the church icon, a Domains line, then the description with its bullets.",
+  ),
+  "invoker-drow|11|awaken god fragment": auto(
+    'Reference entry with a "Constant Benefits:" line; the fragment\'s Encounter power card among the encounter powers.',
+  ),
+  "invoker-drow|11|familiar card": auto(
+    'The "Spiderling of Lolth" card is printed after Skills.',
+  ),
+  "invoker-drow|11|item set card": mixed(
+    'Caelynnvala\'s Boons card after its last item card with the "Group pieces" label and its note.',
+    "Orange, and the note in italics.",
+  ),
+  "invoker-drow|11|printed group-set card": auto(
+    'Unset: "Party pieces" with a blank line, full-strength benefits; with a count: the count and locked benefits dimmed.',
+  ),
+  "invoker-drow|11|rose scythe of chauntea": auto(
+    "The implement bonus shows in the printed implement attack lines.",
+  ),
+  "invoker-drow|12|awaken god fragment": auto(
+    "The fragment's Encounter power card is on the on-screen sheet.",
+  ),
+  // Githzerai arena fighter
+  "fighter-arena|0|equipment and shop item detail": auto(
+    "The Clear-Blood Baldric's detail pane has an Item Set panel card.",
+  ),
+  "fighter-arena|1|sub-choices on feature rows": auto(
+    "The Fighter Weapon Talent reminder label shows Arena Training.",
+  ),
+  "fighter-arena|1|spear expertise [arena fighter]": auto(
+    "Charging damage with a spear uses the lower heroic/paragon value.",
+  ),
+  "fighter-arena|1|githzerai blade master with an arena glaive": auto(
+    "+2 arena damage on the glaive rows.",
+  ),
+  "fighter-arena|1|numbers": auto(
+    "Aleheart (2 pieces): +2 Dungeoneering and Endurance.",
+  ),
+  "fighter-arena|1|item set card": mixed(
+    'Aleheart\'s card after its last item card: Pieces/Tier row, "(active)" and the check icon on the 2-piece benefit, the 4-piece one marked inactive, no set introduction.',
+    "The dimmed look of the locked benefit.",
+  ),
+  // Runepriest
+  "runepriest-scholar|0|scholar (hybrid sentinel/shaman etc.)": auto(
+    "A Draconic/Dwarven/Elven choice at level 5 when one is missing.",
+  ),
+  "runepriest-scholar|1|scholar (hybrid sentinel/shaman etc.)": auto(
+    "No such language choice from level 10.",
+  ),
+  "runepriest-scholar|2|serene blade runepriest": auto(
+    'Proficiencies reads "military heavy blades".',
+  ),
+  // Monk
+  "monk|0|older native characters": auto(
+    "Opening the character gives the missing gifts (the app's first-open gift command).",
+  ),
+  "monk|1|a free item appears": auto(
+    "After the gifts, the monk's Unarmed Strike is equipped in the off-hand.",
+  ),
+  // General: library
+  "general|0|pane band": mixed(
+    'Role lines ("Divine Defender"-style, hybrids "X / Y") for the review characters.',
+    "Portrait size, name font, identity, paragon and epic lines, Edited tooltip; nothing below the band.",
+  ),
+  "general|0|empty trash confirmation": mixed(
+    "The singular wording with one character.",
+    "Stacking above the trash dialog, focus on Cancel, Esc, the empty state and count afterwards.",
+  ),
+  // General: free items
+  "general|1|undo and remove": mixed(
+    "Picking Wizard gives the Spellbook; without the pick nothing is given; removing the Spellbook keeps it gone (its marker).",
+    "In the app, one Undo takes back the Wizard pick and the Spellbook together (the gift joins the pick's edit).",
+  ),
+  "general|1|a free item appears": auto(
+    "Student of Sword Magic, a hexblade's pact weapon, an executioner's poison, Harper Agent's Harper Pin and the Trap-Making Kit each give their item.",
+  ),
+};
