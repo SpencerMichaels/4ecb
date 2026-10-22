@@ -387,17 +387,23 @@ function characterBuild(value: unknown, formatVersion: 1 | 2): boolean {
   const occupiedEquipmentSlots = new Set<string>();
   // The holding fields shared by inventory entries and a known entry's
   // preserved legacy loot. Slots are only exclusive across one inventory.
+  // A legacy per-level loot entry is a delta: a later level records a
+  // removal or an unequip as a negative count, or equips a holding gained
+  // earlier (count 0, equip-count 1). The evaluator sums them per item, so
+  // an entry without slot assignments only needs integer quantities. An
+  // entry with slot assignments is a concrete holding and stays strict.
   const inventoryHolding = (
     entry: Record<string, unknown>,
     occupiedEquipmentSlots: Set<string>,
   ): boolean =>
-    Number.isInteger(entry.quantity) &&
+    Number.isSafeInteger(entry.quantity) &&
     typeof entry.quantity === "number" &&
-    entry.quantity >= 0 &&
-    Number.isInteger(entry.equippedQuantity) &&
+    Number.isSafeInteger(entry.equippedQuantity) &&
     typeof entry.equippedQuantity === "number" &&
-    entry.equippedQuantity >= 0 &&
-    entry.equippedQuantity <= entry.quantity &&
+    (entry.equippedSlots === undefined ||
+      (entry.quantity >= 0 &&
+        entry.equippedQuantity >= 0 &&
+        entry.equippedQuantity <= entry.quantity)) &&
     (entry.equippedSlots === undefined ||
       (() => {
         if (!Array.isArray(entry.equippedSlots)) return false;

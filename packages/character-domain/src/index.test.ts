@@ -120,6 +120,43 @@ describe("character records", () => {
     expect(isCharacterRecord(source)).toBe(true);
   });
 
+  it("accepts legacy per-level loot deltas and keeps slotted holdings strict", () => {
+    const record = (inventory: unknown[]) => ({
+      ...newCharacterRecord(
+        { format: "dnd4e", sourceXml: "<D20Character/>" },
+        snapshot,
+        build,
+        { id: "deltas", now: "2026-01-01T00:00:00.000Z" },
+      ),
+      build: { ...build, inventory },
+    });
+    const removed = { ...inventoryEntry("sold"), acquiredLevel: 2 };
+    // A later level sells, unequips, or equips a holding gained earlier.
+    expect(
+      isCharacterRecord(
+        record([
+          { ...inventoryEntry("sold"), equippedQuantity: 1 },
+          { ...removed, quantity: -1, equippedQuantity: -1 },
+          { ...inventoryEntry("worn"), quantity: 0, equippedQuantity: 1 },
+          { ...inventoryEntry("doffed"), quantity: 0, equippedQuantity: -1 },
+        ]),
+      ),
+    ).toBe(true);
+    for (const invalid of [
+      { ...removed, quantity: 0.5 },
+      { ...removed, quantity: "1" },
+      { ...removed, equippedQuantity: Number.NaN },
+      { ...removed, quantity: -1, equippedQuantity: 0, equippedSlots: [] },
+      {
+        ...removed,
+        quantity: 0,
+        equippedQuantity: 1,
+        equippedSlots: [{ slot: "ring-1", quantityIndex: 0 }],
+      },
+    ])
+      expect(isCharacterRecord(record([invalid]))).toBe(false);
+  });
+
   it("validates and duplicates browser-local portrait metadata", () => {
     const source = {
       ...newCharacterRecord(

@@ -2,7 +2,11 @@ import { readFile } from "node:fs/promises";
 
 import { describe, expect, it } from "vitest";
 
-import { newNativeCharacterRecord } from "@4ecb/character-domain";
+import {
+  isCharacterRecord,
+  newCharacterRecord,
+  newNativeCharacterRecord,
+} from "@4ecb/character-domain";
 import type { ContentEntity } from "@4ecb/content-domain";
 import {
   evaluateCharacter,
@@ -302,6 +306,33 @@ describe("legacy .dnd4e import", () => {
     expect(
       importDnd4e(again).build.known.map(({ element }) => element.definitionId),
     ).toEqual(["RITUAL_KNOWN", "RITUAL_NATIVE", "RITUAL_FREE"]);
+  });
+
+  it("imports per-level loot removals as records the domain decoder accepts", () => {
+    const imported = importDnd4e(
+      `<D20Character game-system="D&amp;D4E"><Level><RulesElement name="1" type="Level" internal-id="L1"/><loot count="1" equip-count="1"><RulesElement name="Old blade" type="Weapon" internal-id="BLADE"/></loot><loot count="1" equip-count="0"><RulesElement name="Spare cloak" type="Magic Item" internal-id="CLOAK"/></loot><loot count="1" equip-count="0"><RulesElement name="Lost Rite" type="Ritual" internal-id="RITE"/></loot></Level><Level><RulesElement name="2" type="Level" internal-id="L2"/><loot count="-1" equip-count="-1"><RulesElement name="Old blade" type="Weapon" internal-id="BLADE"/></loot><loot count="0" equip-count="1"><RulesElement name="Spare cloak" type="Magic Item" internal-id="CLOAK"/></loot><loot count="-1" equip-count="0"><RulesElement name="Lost Rite" type="Ritual" internal-id="RITE"/></loot></Level></D20Character>`,
+    );
+    expect(
+      imported.build.inventory
+        .filter(({ acquiredLevel }) => acquiredLevel === 2)
+        .map(({ quantity, equippedQuantity }) => [quantity, equippedQuantity]),
+    ).toEqual(
+      expect.arrayContaining([
+        [-1, -1],
+        [0, 1],
+      ]),
+    );
+    const record = JSON.parse(
+      JSON.stringify(
+        newCharacterRecord(
+          imported.envelope,
+          imported.snapshot,
+          imported.build,
+          { id: "deltas", now: "2026-01-01T00:00:00.000Z" },
+        ),
+      ),
+    ) as unknown;
+    expect(isCharacterRecord(record)).toBe(true);
   });
 
   it("rejects unrelated XML", () => {
